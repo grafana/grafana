@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -53,15 +52,8 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controllerapp"
 	informer "github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
-	deleteresourcespkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/deleteresources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/fixfoldermetadata"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
-	movepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/perftest"
-	releaseresourcespkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/releaseresources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/workers"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
 	"github.com/grafana/grafana/pkg/router"
@@ -81,14 +73,6 @@ const repoControllerWorkers = 1
 // controllerShutdownTimeout bounds how long the in-process controllers get to
 // drain once the apiserver stops.
 const controllerShutdownTimeout = 30 * time.Second
-
-// jobClaimExpiry is how long a job claim is considered valid before it is
-// treated as abandoned. It governs both claim staleness in the job store and
-// the cleanup controller that reaps expired jobs, so the two must use the same
-// value. The lease renewal interval is derived as a fraction of this so a
-// worker renews several times before its claim goes stale; otherwise a single
-// delayed renewal can let a running job be reaped and re-run by another worker.
-const jobClaimExpiry = 60 * time.Second
 
 var (
 	_ builder.APIGroupBuilder               = (*APIBuilder)(nil)
@@ -974,11 +958,11 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// user at creation time and the validator enforces that the recorded author
 	// is immutable.
 	b.admissionHandler.RegisterMutator(provisioning.JobResourceInfo.GetName(), appjobs.NewAdmissionMutator())
-	jobAuthz := appjobs.NewAuthzValidator(NewJobsConnector(b, b, b, nil, b.access, b.clients, performanceEnabled))
+	jobAuthz := appjobs.NewAuthzValidator(NewJobsConnector(b, b, b, nil, b.access, b.clients, perftest.Enabled))
 	b.admissionHandler.RegisterValidator(
 		provisioning.JobResourceInfo.GetName(),
 		appadmission.NewCombinedValidator(
-			appjobs.NewAdmissionValidator(b.jobSupportedResources, performanceEnabled),
+			appjobs.NewAdmissionValidator(b.jobSupportedResources, perftest.Enabled),
 			jobAuthz,
 		))
 	b.admissionHandler.RegisterValidator(provisioning.HistoricJobResourceInfo.GetName(), appjobs.NewHistoricJobAdmissionValidator())
@@ -1055,7 +1039,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = WithTimeout(NewListConnector(b, b.resourceLister), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("stats")] = WithTimeout(NewStatsConnector(b.resourceLister), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = WithTimeout(NewHistorySubresource(b), 30*time.Second)
-	jobsConnector := NewJobsConnector(b, b, b, jobHistory, b.access, b.clients, performanceEnabled)
+	jobsConnector := NewJobsConnector(b, b, b, jobHistory, b.access, b.clients, perftest.Enabled)
 	jobsConnector.SetMaxBodySize(b.maxJobBodySize)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = WithTimeout(jobsConnector, 30*time.Second)
 
@@ -1068,13 +1052,6 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 
 	apiGroupInfo.VersionedResourcesStorageMap[b.gv.Version] = storage
 	return nil
-}
-
-// performanceEnabled reports whether the synthetic "test" job type is enabled.
-// It is evaluated per request via OpenFeature (rather than captured once at
-// startup) so the flag behaves consistently with the other provisioning flags.
-func performanceEnabled(ctx context.Context) bool {
-	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningPerformance, false, openfeature.TransactionContext(ctx))
 }
 
 // Mutate delegates to the admission handler for resource-specific mutation
@@ -1129,7 +1106,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			b.client = c.ProvisioningV0alpha1()
 
 			// Initialize the API client-based job store
-			b.jobs, err = jobs.NewJobStore(b.client, jobClaimExpiry, b.registry)
+			b.jobs, err = jobs.NewJobStore(b.client, jobs.ClaimExpiry, b.registry)
 			if err != nil {
 				return fmt.Errorf("create API client job store: %w", err)
 			}
@@ -1170,75 +1147,17 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			b.usageStats.RegisterMetricsFunc(usageMetricCollector)
 
 			metrics := jobs.RegisterJobMetrics(b.registry)
-
-			stageIfPossible := repository.WrapWithStageAndPushIfPossible
-
-			// Standalone export generates new UIDs so exported files don't
-			// reference existing resource identifiers.
-			exportWorker := export.NewExportWorker(
-				b.clients,
-				b.repositoryResources,
-				export.ExportAllWithNewUIDs,
-				stageIfPossible,
-				metrics,
-			)
-
-			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10, metrics, b.syncResourceTimeout) //nolint:staticcheck
-			syncWorker := sync.NewSyncWorker(
-				b.clients,
-				b.repositoryResources,
-				b.statusPatcher.Patch,
-				syncer,
-				metrics,
-				b.tracer,
-				10,
-				b.maxFileSize,
-			)
-
-			// Migration export preserves original names so the takeover
-			// allowlist can correlate resources during the sync phase.
-			migrateExportWorker := export.NewExportWorker(
-				b.clients,
-				b.repositoryResources,
-				export.ExportAll,
-				stageIfPossible,
-				metrics,
-			)
-			cleaner := migrate.NewNamespaceCleaner(b.clients)
-			unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
-				cleaner,
-				migrateExportWorker,
-				syncWorker,
-			)
-			migrationWorker := migrate.NewMigrationWorker(
-				unifiedStorageMigrator,
-			)
-
-			deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
-			moveWorker := movepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
-			fixMetadataWorker := fixfoldermetadata.NewWorker(b.clients)
-			releaseResourcesWorker := releaseresourcespkg.NewWorker(b.resourceLister, b.clients, 10)
-			deleteResourcesWorker := deleteresourcespkg.NewWorker(b.resourceLister, b.clients, 10)
-
-			// Synthetic load-testing worker; a no-op unless provisioning.performance is enabled.
-			perfTestWorker := perftest.NewWorker(performanceEnabled)
-
-			// All workers registered - export/migrate/perftest check their feature flag at runtime
-			workers := make([]jobs.Worker, 0, 9+len(b.extraWorkers))
-			workers = append(workers,
-				deleteResourcesWorker,
-				deleteWorker,
-				exportWorker,
-				fixMetadataWorker,
-				migrationWorker,
-				moveWorker,
-				perfTestWorker,
-				releaseResourcesWorker,
-				syncWorker,
-			)
-
-			// Add any extra workers
-			workers = append(workers, b.extraWorkers...)
+			jobWorkers := append(workers.New(workers.Config{
+				Clients:             b.clients,
+				RepositoryResources: b.repositoryResources,
+				ResourceLister:      b.resourceLister,
+				PatchStatus:         b.statusPatcher.Patch,
+				Tracer:              b.tracer,
+				Metrics:             metrics,
+				MaxSyncWorkers:      10,
+				SyncResourceTimeout: b.syncResourceTimeout,
+				MaxFileSize:         b.maxFileSize,
+			}), b.extraWorkers...)
 
 			var jobHistoryWriter jobs.HistoryWriter
 			if b.jobHistoryLoki != nil {
@@ -1249,21 +1168,11 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			repoGetter := resources.NewRepositoryGetter(b.repoFactory, b.client)
 
-			// Create job cleanup controller
 			jobCleanupController := jobs.NewJobCleanupController(
 				b.jobs,
 				jobHistoryWriter,
-				jobClaimExpiry,
+				jobs.ClaimExpiry,
 			)
-
-			// Renew the lease well before it expires. Using jobClaimExpiry as
-			// the renewal interval would schedule the single renewal at the
-			// exact moment the claim goes stale, so any delay (GC pause,
-			// apiserver blip) lets the cleanup controller reap a job that is
-			// still running and risks duplicate execution. A third of the
-			// expiry gives three renewal attempts before the claim is
-			// considered abandoned.
-			leaseRenewalInterval := jobClaimExpiry / 3
 
 			// The jobs informer resyncs on job_poll_interval (default 30s) rather
 			// than the controllers' resync_interval, preserving the job pickup
@@ -1277,15 +1186,15 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			// This is basically our own JobQueue system
 			driver, err := jobs.NewConcurrentJobDriver(
-				3,                    // 3 drivers for now
-				20*time.Minute,       // Max time for each job
-				jobPollInterval,      // Jobs informer resync = post-claim cooldown
-				leaseRenewalInterval, // Lease renewal interval
+				3,                                // 3 drivers for now
+				20*time.Minute,                   // Max time for each job
+				jobPollInterval,                  // Jobs informer resync = post-claim cooldown
+				jobs.DefaultLeaseRenewalInterval, // Lease renewal interval
 				b.jobs, repoGetter, jobHistoryWriter,
 				b.registry,
 				&metrics,
 				nats.Enabled(b.natsSubscriber),
-				workers...,
+				jobWorkers...,
 			)
 			if err != nil {
 				return err
@@ -1356,16 +1265,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				nats.Enabled(b.natsSubscriber),
 			)
 			// The controllers only start their workers once their kind's handler
-			// has processed the initial list. The jobs informer feeds the driver's
-			// work queue: live create events plus the periodic resync/re-list,
-			// which re-delivers unclaimed jobs and is the driver's only recovery
-			// path.
+			// has processed the initial list.
 			kinds := []controllerapp.WatchedKind{
-				{
-					Info:    provisioning.JobResourceInfo,
-					Source:  informer.NewJobDeltaSource(b.natsSubscriber, c, jobPollInterval, b.registry),
-					Handler: driver.EventHandler(),
-				},
+				controllerapp.JobQueue(b.natsSubscriber, c, jobPollInterval, b.registry, driver),
 				{
 					Info:    provisioning.RepositoryResourceInfo,
 					Source:  repoSource,
@@ -1386,26 +1288,15 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				},
 			}
 
-			// If Loki not used, initialize the API client-based history writer and start the controller for history jobs
+			// Without Loki, historic jobs are stored as resources and must be
+			// cleaned up. Configurable via [provisioning] history_expiration; <=0
+			// falls back to the default.
 			if b.jobHistoryLoki == nil {
-				// Periodically clean up expired historic jobs. Cleanup is age-based and
-				// needs no live events: with NATS off the source is an apiserver
-				// informer (watch-fed cache replayed on resync), with NATS on it is a
-				// cron-style periodic re-list. Configurable via [provisioning]
-				// history_expiration; <=0 falls back to the default.
 				historyJobExpiration := b.historyExpiration
 				if historyJobExpiration <= 0 {
 					historyJobExpiration = setting.ProvisioningHistoryExpirationDefault
 				}
-				historyJobController := appcontroller.NewHistoryJobController(
-					b.GetClient(),
-					historyJobExpiration,
-				)
-				kinds = append(kinds, controllerapp.WatchedKind{
-					Info:    provisioning.HistoricJobResourceInfo,
-					Source:  informer.NewHistoricJobDeltaSource(nats.Enabled(b.natsSubscriber), c, historyJobExpiration),
-					Handler: historyJobController.EventHandler(),
-				})
+				kinds = append(kinds, controllerapp.HistoricJobs(c, nats.Enabled(b.natsSubscriber), historyJobExpiration))
 			}
 
 			logger := logging.FromContext(postStartHookCtx.Context)
@@ -1413,18 +1304,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			if err != nil {
 				return err
 			}
-			app.AddRunnable(controllerapp.RunnableFunc(func(ctx context.Context) error {
-				if err := driver.Run(ctx); err != nil {
-					logger.Error("job driver failed", "error", err)
-				}
-				return nil
-			}))
-			app.AddRunnable(controllerapp.RunnableFunc(func(ctx context.Context) error {
-				if err := jobCleanupController.Run(ctx); err != nil {
-					logger.Error("job cleanup controller failed", "error", err)
-				}
-				return nil
-			}))
+			app.AddRunnable(controllerapp.LogErrors(logger, "job driver", driver.Run))
+			app.AddRunnable(controllerapp.LogErrors(logger, "job cleanup controller", jobCleanupController.Run))
 
 			// Run off the hot path so apiserver startup isn't blocked.
 			go func() {

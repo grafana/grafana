@@ -64,7 +64,7 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (r
 		return err
 	}
 
-	jobs, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobClaimExpiry, deps.Registerer)
+	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobs.ClaimExpiry, deps.Registerer)
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
@@ -118,7 +118,7 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (r
 		connectionFactory,
 		resourceLister,
 		clients,
-		jobs,
+		jobStore,
 		healthChecker,
 		statusPatcher,
 		deps.Registerer,

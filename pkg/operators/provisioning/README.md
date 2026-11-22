@@ -15,6 +15,14 @@ ships its event-bus informer and paged lister, the informer supplier is the piec
 
 The app's metrics are registered under the `grafana_provisioning_controller` namespace.
 
+The operators and the API server also build the same controllers from shared code:
+
+- `controllerapp.JobQueue` and `controllerapp.HistoricJobs` build the job queue and historic-job cleanup kinds.
+- `controllerapp.LogErrors` runs the job driver and the expired-job cleanup as app runnables.
+- `jobs/workers.New` builds the built-in job workers. Each deployment appends its own extras: the pull request worker
+  here, and the injected extra workers in the API server.
+- `jobs.ClaimExpiry` and `jobs.DefaultLeaseRenewalInterval` are the claim timings both deployments use.
+
 ## Jobs Controller
 
 ### Behavior
