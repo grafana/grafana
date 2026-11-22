@@ -212,6 +212,24 @@ describe('FilterByNameTransformerEditor', () => {
     expect(getPill('B')).toHaveAttribute('aria-pressed', 'false');
   });
 
+  it('keeps every field deselected when Deselect all clears a saved pattern', async () => {
+    const onChange = jest.fn();
+    const { rerender } = render(
+      <FilterByNameTransformerEditor
+        input={frameWithFields('A', 'B')}
+        options={{ include: { pattern: 'A' } }}
+        onChange={onChange}
+      />
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Deselect all' }));
+    const saved: FilterFieldsByNameTransformerOptions = onChange.mock.lastCall[0];
+
+    rerender(<FilterByNameTransformerEditor input={frameWithFields('A', 'B')} options={saved} onChange={onChange} />);
+
+    expect(pillStates()).toEqual(['A:false', 'B:false']);
+  });
+
   it('keeps every field deselected when the input brings the same fields in a new order', async () => {
     const onChange = jest.fn();
     const { rerender } = render(

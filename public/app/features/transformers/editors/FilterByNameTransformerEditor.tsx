@@ -119,13 +119,15 @@ export function FilterByNameTransformerEditor({ input, options, onChange }: Filt
   ) {
     const isNewFieldNames = prev.fieldNamesKey !== fieldNamesKey;
     const isNewOptions = prev.optionsKey !== optionsKey && optionsKey !== sentOptionsKey;
+    const isNewVariableValue =
+      prev.pattern === options.include?.pattern && prev.interpolatedPattern !== interpolatedPattern;
 
     setPrev({ fieldNamesKey, optionsKey, pattern: options.include?.pattern, interpolatedPattern });
     if (prev.optionsKey !== optionsKey) {
       setSentOptionsKey(undefined);
     }
 
-    if (isNewFieldNames || isNewOptions || prev.interpolatedPattern !== interpolatedPattern) {
+    if (isNewFieldNames || isNewOptions || isNewVariableValue) {
       setSelected(getSelectedNames(fieldNames, options));
       setByVariable(options.byVariable || false);
       setVariable(options.include?.variable);
