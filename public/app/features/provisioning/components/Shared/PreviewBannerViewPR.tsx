@@ -9,7 +9,7 @@ import { RepoTypeDisplay } from 'app/features/provisioning/Wizard/types';
 import { isValidRepoType } from 'app/features/provisioning/guards';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 
-import { appendPullRequestTitleParam } from '../../utils/pullRequestTitle';
+import { appendPullRequestDescriptionParam, appendPullRequestTitleParam } from '../../utils/pullRequestTitle';
 import { isGitProvider } from '../../utils/repositoryTypes';
 import { getBranchUrl } from '../utils/url';
 
@@ -48,12 +48,16 @@ const commonAlertProps = {
  */
 export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, branchInfo, action, originalUrl }: Props) {
   const styles = useStyles2(getStyles);
-  const { repoType, action: paramAction, prTitle } = usePullRequestParam();
+  const { repoType, action: paramAction, prTitle, prDescription } = usePullRequestParam();
 
   const capitalizedRepoType = isValidRepoType(repoType) ? RepoTypeDisplay[repoType] : 'repository';
-  // Prefill the provider's "open pull request" form title from pullRequest.titleTemplate; only the
-  // PR/compare URL carries it. Returns prURL unchanged when no title was threaded through.
-  const prLink = appendPullRequestTitleParam(prURL, repoType, prTitle);
+  // Prefill the provider's "open pull request" form title and description; only the PR/compare URL
+  // carries them. Returns prURL unchanged when neither was threaded through.
+  const prLink = appendPullRequestDescriptionParam(
+    appendPullRequestTitleParam(prURL, repoType, prTitle),
+    repoType,
+    prDescription
+  );
   // Folder flows also pass repository fallbacks through prURL; pure Git has no PR links.
   const hasPullRequestLink = Boolean(prLink) && repoType !== 'git';
   // When the PR/compare link is unavailable (e.g. the branch was removed after the PR was closed),

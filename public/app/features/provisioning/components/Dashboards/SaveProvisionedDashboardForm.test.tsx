@@ -118,6 +118,25 @@ jest.mock('../../hooks/useGetRepositoryFolders', () => ({
   useGetRepositoryFolders: jest.fn().mockReturnValue({ options: [], loading: false, error: null }),
 }));
 
+// The LLM app isn't available under Jest. Tests flip `enabled` and answer through the captured `onResponse`.
+const mockLLMStream: { enabled: boolean; onResponse?: (reply: string) => void } = { enabled: false };
+const mockSetLLMMessages = jest.fn();
+jest.mock('app/features/dashboard/components/GenAI/hooks', () => ({
+  ...jest.requireActual('app/features/dashboard/components/GenAI/hooks'),
+  useLLMStream: (options: { onResponse?: (reply: string) => void }) => {
+    mockLLMStream.onResponse = options.onResponse;
+    return {
+      setMessages: mockSetLLMMessages,
+      stopGeneration: jest.fn(),
+      messages: [],
+      reply: '',
+      streamStatus: 'idle',
+      error: undefined,
+      value: { enabled: mockLLMStream.enabled },
+    };
+  },
+}));
+
 jest.mock('app/features/dashboard-scene/saving/SaveDashboardForm', () => {
   const actual = jest.requireActual('app/features/dashboard-scene/saving/SaveDashboardForm');
   return {
@@ -297,7 +316,7 @@ describe('SaveProvisionedDashboardForm', () => {
     // Wait for async RTK Query operations to settle
     expect(await screen.findByRole('form')).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /title/i })).toBeInTheDocument();
-    expect(screen.getByRole('textbox', { name: /description/i })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: /^description$/i })).toBeInTheDocument();
     expect(screen.getByTestId('folder-picker')).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: /folder/i })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /filename/i })).toBeInTheDocument();
@@ -317,7 +336,7 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(screen.getByRole('textbox', { name: /comment/i })).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: /branch/i })).toBeInTheDocument();
     expect(screen.queryByRole('textbox', { name: /title/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('textbox', { name: /description/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: /^description$/i })).not.toBeInTheDocument();
   });
 
   it('should save a new dashboard successfully', async () => {
@@ -2393,5 +2412,154 @@ describe('SaveProvisionedDashboardForm branch name template', () => {
         expect(props.drawer.saveFormDraft).toEqual({ title: 'Typed title', description: 'Test Description' })
       );
     });
+  });
+});
+
+describe('SaveProvisionedDashboardForm AI commit details', () => {
+  const generatedReply = JSON.stringify({
+    commitMessage: 'Add CPU usage panel\n\n- Adds a CPU usage time series',
+    branch: 'dashboard/add-cpu-usage',
+    pullRequestDescription: 'Adds a CPU usage panel.\n\n## Changes\n- New time series',
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockLLMStream.enabled = true;
+    (validationSrv.validateNewDashboardName as jest.Mock).mockResolvedValue(true);
+  });
+
+  afterAll(() => {
+    mockLLMStream.enabled = false;
+  });
+
+  function setupExistingOnNewBranch() {
+    const dashboard = makeNotDirtyDashboard();
+    dashboard.getSaveResourceFromSpec = jest.fn().mockReturnValue({
+      apiVersion: 'dashboard.grafana.app/vXyz',
+      metadata: { name: 'test-dashboard' },
+      spec: { title: 'Test Dashboard' },
+    });
+    return setup({
+      dashboard,
+      isNew: false,
+      changeInfo: {
+        changedSaveModel: {
+          title: 'Test Dashboard',
+          schemaVersion: 41,
+          panels: [{ id: 1, type: 'timeseries', title: 'CPU usage' }],
+        },
+        initialSaveModel: { title: 'Test Dashboard', schemaVersion: 41, panels: [] },
+        diffCount: 1,
+        hasChanges: true,
+        hasTimeChanges: false,
+        hasVariableValueChanges: false,
+        hasRefreshChange: false,
+        diffs: {
+          panels: [
+            {
+              op: 'add',
+              path: ['panels', '0'],
+              value: { title: 'CPU usage' },
+              originalValue: undefined,
+              startLineNumber: 0,
+              endLineNumber: 0,
+            },
+          ],
+        },
+      },
+      defaultValues: {
+        ref: 'dashboard/2023-01-01-abcde',
+        path: 'test-dashboard.json',
+        repo: 'test-repo',
+        comment: '',
+        folder: { uid: 'folder-uid', title: '' },
+        title: 'Test Dashboard',
+        description: 'Test Description',
+      },
+    });
+  }
+
+  it('sends the dashboard panels and diff to the LLM, asking for all three fields on a new GitHub branch', async () => {
+    const { user } = setupExistingOnNewBranch();
+
+    await user.click(await screen.findByRole('button', { name: /generate commit details with ai/i }));
+
+    expect(mockSetLLMMessages).toHaveBeenCalledTimes(1);
+    const [system, userMessage] = mockSetLLMMessages.mock.calls[0][0];
+    expect(system.content).toContain('"commitMessage"');
+    expect(system.content).toContain('"branch"');
+    expect(system.content).toContain('"pullRequestDescription"');
+    expect(userMessage.content).toContain('Panels (1):\n- CPU usage');
+    expect(userMessage.content).toContain('Changes to the dashboard JSON:\nadded panels.0: {"title":"CPU usage"}');
+  });
+
+  it('fills the fields from the reply, commits with them and carries the PR title and description to the preview', async () => {
+    let savedUrl: URL | null = null;
+    server.use(
+      http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        savedUrl = new URL(request.url);
+        return saveSuccessResponse(request, 'test-dashboard', 'Test Dashboard');
+      })
+    );
+    const { user } = setupExistingOnNewBranch();
+
+    await user.click(await screen.findByRole('button', { name: /generate commit details with ai/i }));
+    await act(async () => mockLLMStream.onResponse?.(generatedReply));
+
+    expect(screen.getByRole('textbox', { name: /comment/i })).toHaveValue(
+      'Add CPU usage panel\n\n- Adds a CPU usage time series'
+    );
+    const branch = screen.getByRole('combobox', { name: /branch/i });
+    expect(branch).toHaveDisplayValue(/^dashboard\/add-cpu-usage-[a-z0-9]{4}$/);
+    expect(screen.getByRole('textbox', { name: /pull request description/i })).toHaveValue(
+      'Adds a CPU usage panel.\n\n## Changes\n- New time series'
+    );
+
+    await user.click(screen.getByRole('button', { name: /save/i }));
+
+    await waitFor(() => expect(savedUrl).not.toBeNull());
+    expect(savedUrl!.searchParams.get('message')).toBe('Add CPU usage panel\n\n- Adds a CPU usage time series');
+    expect(savedUrl!.searchParams.get('ref')).toBe((branch as HTMLInputElement).value);
+
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalled());
+    const target = new URL(mockNavigate.mock.calls.at(-1)![0] as string, 'http://localhost');
+    expect(target.searchParams.get('pr_title')).toBe('Add CPU usage panel');
+    expect(target.searchParams.get('pr_description')).toBe('Adds a CPU usage panel.\n\n## Changes\n- New time series');
+  });
+
+  it('keeps the configured branch when committing directly to it, and hides the PR description', async () => {
+    const { user } = setup({
+      isNew: false,
+      defaultValues: {
+        ref: 'main',
+        path: 'test-dashboard.json',
+        repo: 'test-repo',
+        comment: '',
+        folder: { uid: 'folder-uid', title: '' },
+        title: 'Test Dashboard',
+        description: 'Test Description',
+      },
+    });
+
+    await user.click(await screen.findByRole('button', { name: /generate commit details with ai/i }));
+    expect(mockSetLLMMessages.mock.calls[0][0][0].content).not.toContain('"branch"');
+    await act(async () => mockLLMStream.onResponse?.(generatedReply));
+
+    expect(screen.getByRole('textbox', { name: /comment/i })).toHaveValue(
+      'Add CPU usage panel\n\n- Adds a CPU usage time series'
+    );
+    expect(screen.getByRole('combobox', { name: /branch/i })).toHaveValue('main');
+    expect(screen.queryByRole('textbox', { name: /pull request description/i })).not.toBeInTheDocument();
+  });
+
+  it('leaves the fields untouched and offers a retry when the reply is not valid JSON', async () => {
+    const { user } = setupExistingOnNewBranch();
+
+    await user.click(await screen.findByRole('button', { name: /generate commit details with ai/i }));
+    await act(async () => mockLLMStream.onResponse?.('Sure! Here is a commit message: Add CPU panel'));
+
+    expect(await screen.findByRole('button', { name: /retry/i })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: /comment/i })).toHaveValue('');
+    expect(screen.getByRole('combobox', { name: /branch/i })).toHaveValue('dashboard/2023-01-01-abcde');
   });
 });

@@ -8286,6 +8286,7 @@
       "cannot-be-saved": "This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy the JSON or save it to a file below, then you can update your dashboard in the provisioning source.",
       "copy-json-to-clipboard": "Copy JSON to clipboard",
       "create-folder": "Create",
+      "description-pr-description": "Pre-fills the description when you open the pull request (optional)",
       "error-saving": "An error occurred while saving.",
       "file-path": "<strong>File path:</strong> {{filePath}}",
       "folder-create-error": "Failed to create folder",
@@ -8299,6 +8300,7 @@
       "json-preview-label": "Provisioned dashboard JSON",
       "label-description": "Description",
       "label-folder-name": "Folder name",
+      "label-pr-description": "Pull request description",
       "label-target-folder": "Target folder",
       "label-title": "Title",
       "new-folder": "New folder",
@@ -15268,6 +15270,13 @@
       "placeholder-search": "Search",
       "unmanaged-resources_one": "{{count}} resources aren't managed by Git sync.",
       "unmanaged-resources_other": "{{count}} resources aren't managed by Git sync."
+    },
+    "generate-commit-details": {
+      "error-tooltip": "Failed to generate commit details. Please try again or if the problem persists, contact your organization admin.",
+      "generate": "Generate commit details with AI",
+      "retry": "Retry",
+      "stop": "Stop generating",
+      "tooltip": "Generates the commit message, branch name and pull request description from the dashboard and its changes"
     },
     "get-default-values": {
       "title": {

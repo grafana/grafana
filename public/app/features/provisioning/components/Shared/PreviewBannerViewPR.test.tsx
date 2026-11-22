@@ -25,6 +25,7 @@ function setup(
     action?: string;
     actionProp?: 'create' | 'update' | 'delete' | 'move';
     prTitle?: string;
+    prDescription?: string;
     branchInfo?: PreviewBranchInfo;
     originalUrl?: string;
     behindBranch?: boolean;
@@ -52,6 +53,7 @@ function setup(
     resourcePushedTo: 'abc',
     action: options.action,
     prTitle: options.prTitle,
+    prDescription: options.prDescription,
   });
 
   return { ...render(<PreviewBannerViewPR {...componentProps} />), props: componentProps };
@@ -355,6 +357,39 @@ describe('PreviewBannerViewPR', () => {
       setup({ prURL: githubPrURL, repoType: 'github' });
 
       expect(screen.getByRole('link', { name: /pull request in GitHub/i })).toHaveAttribute('href', githubPrURL);
+    });
+  });
+
+  describe('PR description prefill', () => {
+    const githubPrURL = 'https://github.com/org/repo/compare/main...feature?quick_pull=1';
+
+    it('appends an encoded body param after the title for GitHub', () => {
+      setup({ prURL: githubPrURL, repoType: 'github', prTitle: 'Add CPU panel', prDescription: '## Changes\n- CPU' });
+
+      expect(screen.getByRole('link', { name: /pull request in GitHub/i })).toHaveAttribute(
+        'href',
+        `${githubPrURL}&title=Add%20CPU%20panel&body=%23%23%20Changes%0A-%20CPU`
+      );
+    });
+
+    it('uses merge_request[description] for GitLab', () => {
+      const gitlabPrURL = 'https://gitlab.com/org/repo/-/merge_requests/new?merge_request[source_branch]=feature';
+      setup({ prURL: gitlabPrURL, repoType: 'gitlab', prDescription: 'Adds a panel' });
+
+      expect(screen.getByRole('link', { name: /pull request in GitLab/i })).toHaveAttribute(
+        'href',
+        `${gitlabPrURL}&merge_request[description]=Adds%20a%20panel`
+      );
+    });
+
+    it('does not append a description for Bitbucket, which has no description param', () => {
+      const bitbucketPrURL = 'https://bitbucket.org/org/repo/pull-requests/new?source=feature';
+      setup({ prURL: bitbucketPrURL, repoType: 'bitbucket', prTitle: 'Hi', prDescription: 'Adds a panel' });
+
+      expect(screen.getByRole('link', { name: /pull request in Bitbucket/i })).toHaveAttribute(
+        'href',
+        `${bitbucketPrURL}&title=Hi`
+      );
     });
   });
 });

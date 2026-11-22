@@ -14,6 +14,8 @@ type ResourceBranchUrlOptions = {
   action?: ResourceBranchAction;
   /** Pull-request title, forwarded as the `pr_title` query param for the PR banner. */
   prTitle?: string;
+  /** Pull-request description, forwarded as the `pr_description` query param for the PR banner. */
+  prDescription?: string;
   /** Target branch the change was pushed to, for the PR banner's branch display. */
   ref?: string;
   /** Repository's configured (default) branch, for the PR banner's branch display. */
@@ -29,6 +31,7 @@ export function buildResourceBranchRedirectUrl({
   repoType,
   action,
   prTitle,
+  prDescription,
   ref,
   configuredBranch,
   repoUrl,
@@ -49,6 +52,10 @@ export function buildResourceBranchRedirectUrl({
 
   if (prTitle) {
     params.set('pr_title', prTitle);
+  }
+
+  if (prDescription) {
+    params.set('pr_description', prDescription);
   }
 
   if (ref) {

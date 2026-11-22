@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm, FormProvider } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
@@ -41,10 +41,15 @@ import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { useCommitTarget } from '../../hooks/useCommitTarget';
 import { type ProvisionedDashboardFormData } from '../../types/form';
+import { generateBranchToken } from '../../utils/branchName';
+import { type CommitDetails, getCommitDetailsMessages, getCommitTitle } from '../../utils/commitDetails';
 import { type CommitTemplateVars, getResourceCommitMessage } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
+import { supportsPullRequestDescription } from '../../utils/pullRequestTitle';
 import { buildResourceBranchRedirectUrl, getSavedDashboardPath } from '../../utils/redirect';
+import { isGitProvider } from '../../utils/repositoryTypes';
 import { getRequestRef } from '../../utils/workflow';
+import { GenerateCommitDetailsButton } from '../Shared/GenerateCommitDetailsButton';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
@@ -192,6 +197,48 @@ export function SaveProvisionedDashboardForm({
     setRef: (value) => setValue('ref', value, { shouldDirty: false }),
   });
 
+  // A generated name only replaces a branch the commit would create; it never moves the commit off
+  // the configured branch or an existing branch the user picked.
+  const canGenerateBranch = isNewBranch && !lockBranch;
+  const showPrDescription = isNewBranch && supportsPullRequestDescription(repository?.type);
+  const showGenerateCommitDetails =
+    !readOnly && isGitProvider(repository?.type) && (!locked || canGenerateBranch || showPrDescription);
+  // Suffix keeps a generated name from landing on an existing branch with the same name.
+  const generatedBranchToken = useMemo(() => generateBranchToken(4), []);
+  const [isCommitMessageGenerated, setIsCommitMessageGenerated] = useState(false);
+
+  // The commit message's first line titles the PR, unless the repository enforces its PR title template.
+  const commitTitle = isNewBranch ? getCommitTitle(message) : '';
+  const preferCommitTitle = isCommitMessageGenerated && !repository?.pullRequest?.enforceTemplate;
+  const pullRequestTitle = (preferCommitTitle ? commitTitle : prTitle) || commitTitle;
+  const prDescription = showPrDescription ? (watch('prDescription') ?? '').trim() : '';
+
+  const getGenerateMessages = () =>
+    getCommitDetailsMessages({
+      action: createsFile ? 'create' : 'update',
+      title: title ?? '',
+      description,
+      path,
+      saveModel: changeInfo.changedSaveModel,
+      diffs: isNew ? undefined : changeInfo.diffs,
+      includeBranch: canGenerateBranch,
+      includePullRequestDescription: showPrDescription,
+    });
+
+  const applyCommitDetails = (details: CommitDetails) => {
+    // Marked dirty so the repository's commit/branch templates don't overwrite the generated values.
+    if (details.commitMessage && !locked) {
+      setValue('comment', details.commitMessage, { shouldDirty: true });
+      setIsCommitMessageGenerated(true);
+    }
+    if (details.branch && canGenerateBranch) {
+      setValue('ref', `${details.branch}-${generatedBranchToken}`, { shouldDirty: true, shouldValidate: true });
+    }
+    if (details.pullRequestDescription && showPrDescription) {
+      setValue('prDescription', details.pullRequestDescription, { shouldDirty: true });
+    }
+  };
+
   // Sync filename from title for new dashboards.
   // dirtyFields.path is false when only setValue() has updated the path (shouldDirty defaults to false),
   // and becomes true when the user manually types in the filename input (Controller onChange marks it dirty).
@@ -235,11 +282,12 @@ export function SaveProvisionedDashboardForm({
         paramName: 'ref',
         paramValue: ref,
         repoType,
-        prTitle,
+        prTitle: pullRequestTitle,
+        prDescription,
       });
       navigate(url);
     },
-    [navigate, defaultValues.repo, prTitle]
+    [navigate, defaultValues.repo, pullRequestTitle, prDescription]
   );
 
   const handleDismiss = useCallback(
@@ -596,6 +644,16 @@ export function SaveProvisionedDashboardForm({
 
           {!isNew && !readOnly && <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />}
 
+          {showGenerateCommitDetails && (
+            <div>
+              <GenerateCommitDetailsButton
+                getMessages={getGenerateMessages}
+                onGenerate={applyCommitDetails}
+                disabled={isSubmitting || request.isLoading}
+              />
+            </div>
+          )}
+
           <ResourceEditFormSharedFields
             resourceType="dashboard"
             readOnly={readOnly}
@@ -607,6 +665,23 @@ export function SaveProvisionedDashboardForm({
             commitMessage={message}
             lockBranch={lockBranch}
           />
+
+          {showPrDescription && (
+            <Field
+              noMargin
+              htmlFor="provisioned-pr-description"
+              label={t(
+                'dashboard-scene.save-provisioned-dashboard-form.label-pr-description',
+                'Pull request description'
+              )}
+              description={t(
+                'dashboard-scene.save-provisioned-dashboard-form.description-pr-description',
+                'Pre-fills the description when you open the pull request (optional)'
+              )}
+            >
+              <TextArea id="provisioned-pr-description" {...register('prDescription')} rows={5} />
+            </Field>
+          )}
 
           {saveAsCopy && (
             <Field noMargin label={t('dashboard-scene.save-dashboard-as-form.label-copy-tags', 'Copy tags')}>

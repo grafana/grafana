@@ -13,4 +13,6 @@ export interface ProvisionedDashboardFormData extends BaseProvisionedFormData {
     title?: string;
   };
   copyTags?: boolean;
+  /** Pre-fills the provider's "open pull request" form when the commit creates a branch. */
+  prDescription?: string;
 }
