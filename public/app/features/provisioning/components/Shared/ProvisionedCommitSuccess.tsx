@@ -24,6 +24,8 @@ interface Props {
   commitHash?: string;
   /** Link to the committed file at `commitHash`. */
   sourceUrl?: string;
+  /** How many resources the commit covers. Bulk actions pass their selection count. */
+  count?: number;
 }
 
 /**
@@ -42,6 +44,7 @@ export function ProvisionedCommitSuccess({
   commitMessage,
   commitHash,
   sourceUrl,
+  count = 1,
 }: Props) {
   const styles = useStyles2(getStyles);
   const isDirect = !branch || branch === configuredBranch;
@@ -56,11 +59,7 @@ export function ProvisionedCommitSuccess({
         <Icon name="check-circle" className={styles.successIcon} />
         <Stack direction="column" gap={0.5}>
           <Text weight="medium">
-            {isDirect
-              ? t('provisioning.commit-success.committed-to', 'Committed to {{branch}}.', {
-                  branch: branch || configuredBranch,
-                })
-              : getBranchHeadline(action, provider)}
+            {isDirect ? getDirectHeadline(branch || configuredBranch) : getBranchHeadline(action, provider, count)}
           </Text>
           <Text variant="bodySmall" color="secondary">
             {isDirect ? (
@@ -127,7 +126,6 @@ export function ProvisionedCommitSuccess({
           </Stack>
         </Box>
       )}
-
     </Stack>
   );
 }
@@ -179,36 +177,43 @@ function BranchRow({ label, branch, note, href }: BranchRowProps) {
   );
 }
 
-function getBranchHeadline(action: CommitAction, provider: string): string {
+/** A repository without a configured branch (a local one, say) has no branch to name. */
+function getDirectHeadline(branch?: string): string {
+  return branch
+    ? t('provisioning.commit-success.committed-to', 'Committed to {{branch}}.', { branch })
+    : t('provisioning.commit-success.committed', 'Changes committed.');
+}
+
+function getBranchHeadline(action: CommitAction, provider: string, count: number): string {
   switch (action) {
     case 'update':
-      return t(
-        'provisioning.commit-success.title-updated',
-        'The resource has been updated in a branch in {{provider}}.',
-        {
-          provider,
-        }
-      );
-    case 'delete':
-      return t(
-        'provisioning.commit-success.title-deleted',
-        'The resource has been deleted in a branch in {{provider}}.',
-        {
-          provider,
-        }
-      );
-    case 'move':
-      return t('provisioning.commit-success.title-moved', 'The resource has been moved in a branch in {{provider}}.', {
+      return t('provisioning.commit-success.title-updated', '', {
+        count,
         provider,
+        defaultValue_one: 'The resource has been updated in a branch in {{provider}}.',
+        defaultValue_other: 'The resources have been updated in a branch in {{provider}}.',
+      });
+    case 'delete':
+      return t('provisioning.commit-success.title-deleted', '', {
+        count,
+        provider,
+        defaultValue_one: 'The resource has been deleted in a branch in {{provider}}.',
+        defaultValue_other: 'The resources have been deleted in a branch in {{provider}}.',
+      });
+    case 'move':
+      return t('provisioning.commit-success.title-moved', '', {
+        count,
+        provider,
+        defaultValue_one: 'The resource has been moved in a branch in {{provider}}.',
+        defaultValue_other: 'The resources have been moved in a branch in {{provider}}.',
       });
     default:
-      return t(
-        'provisioning.commit-success.title-created',
-        'A new resource has been created in a branch in {{provider}}.',
-        {
-          provider,
-        }
-      );
+      return t('provisioning.commit-success.title-created', '', {
+        count,
+        provider,
+        defaultValue_one: 'A new resource has been created in a branch in {{provider}}.',
+        defaultValue_other: 'New resources have been created in a branch in {{provider}}.',
+      });
   }
 }
 

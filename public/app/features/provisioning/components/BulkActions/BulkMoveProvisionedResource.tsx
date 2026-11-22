@@ -18,6 +18,7 @@ import {
 } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { isRootFolderUID } from 'app/features/search/constants';
 
+import { type JobSuccess } from '../../Wizard/types';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { getJobRef, useResourceJob } from '../../hooks/useResourceJob';
 import { useSelectedItemParentUIDs } from '../../hooks/useSelectedItemParentUIDs';
@@ -32,6 +33,7 @@ import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolder
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { ResourceJobStatus } from '../Shared/ResourceJobStatus';
 
+import { BulkActionOutcome } from './BulkActionOutcome';
 import {
   type BulkActionFormData,
   type BulkActionProvisionResourceProps,
@@ -56,6 +58,7 @@ function FormContent({
   onJobCreated,
 }: FormProps) {
   const [targetFolderUID, setTargetFolderUID] = useState<string | undefined>(undefined);
+  const [outcome, setOutcome] = useState<JobSuccess | undefined>(undefined);
 
   const { submitted, submit, isCreating } = useResourceJob({ repository });
   const selectedItemParentUIDs = useSelectedItemParentUIDs(selectedItems);
@@ -167,15 +170,20 @@ function FormContent({
       <form onSubmit={handleSubmit(handleSubmitForm)}>
         <Stack direction="column" gap={2}>
           {submitted ? (
-            <ResourceJobStatus
-              job={submitted.job}
-              jobType="move"
-              successTitle={
-                getJobRef(submitted.jobSpec)
-                  ? t('provisioning.bulk-action.success-title-branch', 'Requested changes were pushed to a branch')
-                  : t('browse-dashboards.bulk-move-resources-form.success-title', 'Resources moved successfully')
-              }
-            />
+            outcome ? (
+              <BulkActionOutcome
+                action="move"
+                jobRef={getJobRef(submitted.jobSpec)}
+                repository={repository}
+                urls={outcome.urls}
+                commitMessage={message}
+                count={collectSelectedItems(selectedItems).length}
+                prTitle={submitted.prTitle}
+                onDismiss={onDismiss}
+              />
+            ) : (
+              <ResourceJobStatus job={submitted.job} jobType="move" onSuccess={setOutcome} />
+            )
           ) : (
             <>
               <MoveActionAvailableTargetWarning />

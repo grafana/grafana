@@ -245,7 +245,7 @@ describe('BulkMoveProvisionedResource', () => {
       })
     );
 
-    expect(await screen.findByRole('status')).toBeInTheDocument();
+    expect(await screen.findByText(/moved in a branch in GitHub/i)).toBeInTheDocument();
     expect(onJobCreated).toHaveBeenCalledTimes(1);
   });
 
@@ -540,7 +540,7 @@ describe('BulkMoveProvisionedResource', () => {
 
     await user.click(screen.getByTestId('folder-picker'));
     await user.click(screen.getByRole('button', { name: /Move/i }));
-    expect(await screen.findByRole('status')).toBeInTheDocument();
+    expect(await screen.findByText(/moved in a branch in GitHub/i)).toBeInTheDocument();
 
     mockUseSelectionRepoValidation.mockReturnValue({
       selectedItemsRepoUID: undefined,
@@ -551,7 +551,8 @@ describe('BulkMoveProvisionedResource', () => {
 
     rerender(<BulkMoveProvisionedResource folderUid={undefined} selectedItems={selectedItems} onDismiss={onDismiss} />);
 
-    expect(screen.getByRole('status')).toBeInTheDocument();
+    // The ref should preserve the repo UID, so the job outcome remains visible
+    expect(screen.getByText(/moved in a branch in GitHub/i)).toBeInTheDocument();
     expect(screen.queryByText(/Repository not found/)).not.toBeInTheDocument();
   });
 
@@ -562,7 +563,7 @@ describe('BulkMoveProvisionedResource', () => {
     await user.click(screen.getByTestId('folder-picker'));
     await user.click(screen.getByRole('button', { name: /Move/i }));
 
-    expect(await screen.findByText('Requested changes were pushed to a branch')).toBeInTheDocument();
+    expect(await screen.findByText(/moved in a branch in GitHub/i)).toBeInTheDocument();
   });
 
   it('shows the configured-branch success message when the job completes on the write workflow', async () => {
@@ -578,7 +579,8 @@ describe('BulkMoveProvisionedResource', () => {
     await user.click(screen.getByTestId('folder-picker'));
     await user.click(screen.getByRole('button', { name: /Move/i }));
 
-    expect(await screen.findByText('Resources moved successfully')).toBeInTheDocument();
+    // The write-only fixture names no configured branch, so the headline cannot name one either.
+    expect(await screen.findByText(/changes committed/i)).toBeInTheDocument();
   });
 
   describe('commit message template', () => {

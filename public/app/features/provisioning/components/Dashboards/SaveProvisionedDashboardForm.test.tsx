@@ -2,6 +2,7 @@ import { HttpResponse, http } from 'msw';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { type GrafanaConfig, locationUtil } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { type Dashboard } from '@grafana/schema';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
@@ -22,6 +23,38 @@ import { setupProvisioningMswServer } from '../../mocks/server';
 import { type Props, SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
 
 setupProvisioningMswServer();
+
+type User = ReturnType<typeof render>['user'];
+
+/** The step's primary action, which carries the same test id on both steps. */
+const primaryButton = () => screen.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton);
+
+/** Waits for the repository lookup to render the form, whose primary is the step's action. */
+async function findPrimaryButton() {
+  return screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton);
+}
+
+/** The commit fields live on a second step, which the details step's primary advances to. */
+async function goToCommitStep(user: User) {
+  await findPrimaryButton();
+  if (screen.queryByRole('button', { name: /^commit to/i })) {
+    return;
+  }
+  await user.click(screen.getByRole('button', { name: /^next$/i }));
+  await screen.findByRole('button', { name: /^commit to/i });
+}
+
+/** Returns to the details step, where the dashboard's own fields live. */
+async function goBackToDetails(user: User) {
+  await user.click(screen.getByRole('button', { name: /back to details/i }));
+  await screen.findByRole('button', { name: /^next$/i });
+}
+
+/** Saving means reaching the commit step, from wherever the test already is, and committing. */
+async function commitSave(user: User) {
+  await goToCommitStep(user);
+  await user.click(screen.getByRole('button', { name: /^commit to/i }));
+}
 
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
@@ -282,33 +315,45 @@ describe('SaveProvisionedDashboardForm', () => {
     window.history.replaceState({}, '', originalHref);
   });
 
-  it('should render the form with correct fields for a new dashboard', async () => {
-    setup();
+  it('should render the dashboard fields on the details step for a new dashboard', async () => {
+    const { user } = setup();
 
     // Wait for async RTK Query operations to settle
     expect(await screen.findByRole('form')).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /title/i })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /description/i })).toBeInTheDocument();
     expect(screen.getByTestId('folder-picker')).toBeInTheDocument();
-    expect(screen.getByRole('combobox', { name: /folder/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
+    // The commit is its own step, so none of its fields are here yet.
+    expect(screen.queryByRole('textbox', { name: /filename/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: /comment/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: /branch/i })).not.toBeInTheDocument();
+
+    await goToCommitStep(user);
+
+    expect(screen.getByRole('combobox', { name: /repository folder/i })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /filename/i })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /comment/i })).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: /branch/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /back to details/i })).toBeInTheDocument();
+    // The dashboard fields belong to the step behind it.
+    expect(screen.queryByRole('textbox', { name: /title/i })).not.toBeInTheDocument();
   });
 
   it('should render the form with correct fields for an existing dashboard', async () => {
     // existing dashboards show "Common Options" instead of the title/desc fields
-    setup({ isNew: false });
+    const { user } = setup({ isNew: false });
 
     expect(await screen.findByTestId('common-options')).toBeInTheDocument();
-    expect(screen.getByRole('combobox', { name: /folder/i })).toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: /title/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: /description/i })).not.toBeInTheDocument();
+
+    await goToCommitStep(user);
+
+    expect(screen.getByRole('combobox', { name: /repository folder/i })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /filename/i })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /comment/i })).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: /branch/i })).toBeInTheDocument();
-    expect(screen.queryByRole('textbox', { name: /title/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('textbox', { name: /description/i })).not.toBeInTheDocument();
   });
 
   it('should save a new dashboard successfully', async () => {
@@ -340,22 +385,21 @@ describe('SaveProvisionedDashboardForm', () => {
 
     const titleInput = screen.getByRole('textbox', { name: /title/i });
     const descriptionInput = screen.getByRole('textbox', { name: /description/i });
-    const filenameInput = screen.getByRole('textbox', { name: /filename/i });
-    const commentInput = screen.getByRole('textbox', { name: /comment/i });
-
     await user.clear(titleInput);
-    await user.clear(descriptionInput);
-    await user.clear(commentInput);
-
     await user.type(titleInput, 'New Dashboard');
+    await user.clear(descriptionInput);
     await user.type(descriptionInput, 'New Description');
 
+    await goToCommitStep(user);
+
+    const filenameInput = screen.getByRole('textbox', { name: /filename/i });
     await user.clear(filenameInput);
     await user.type(filenameInput, 'custom-filename.json');
+    const commentInput = screen.getByRole('textbox', { name: /comment/i });
+    await user.clear(commentInput);
     await user.type(commentInput, 'Initial commit');
 
-    const submitButton = screen.getByRole('button', { name: /save/i });
-    await user.click(submitButton);
+    await commitSave(user);
 
     await waitFor(() => {
       expect(capturedRequest).not.toBeNull();
@@ -405,10 +449,11 @@ describe('SaveProvisionedDashboardForm', () => {
       spec: { title: 'Test Dashboard', panels: [], schemaVersion: 36 },
     });
 
+    await goToCommitStep(user);
     const commentInput = screen.getByRole('textbox', { name: /comment/i });
     await user.clear(commentInput);
 
-    await user.click(screen.getByRole('button', { name: /save/i }));
+    await commitSave(user);
 
     await waitFor(() => {
       expect(capturedRequest).not.toBeNull();
@@ -473,13 +518,13 @@ describe('SaveProvisionedDashboardForm', () => {
       } as unknown as DashboardScene,
     });
 
+    await goToCommitStep(user);
     expect(screen.getByRole('textbox', { name: /filename/i })).toBeInTheDocument();
 
     const commentInput = screen.getByRole('textbox', { name: /comment/i });
     await user.clear(commentInput);
     await user.type(commentInput, 'Update dashboard');
-    const submitButton = screen.getByRole('button', { name: /save/i });
-    await user.click(submitButton);
+    await commitSave(user);
 
     await waitFor(() => {
       expect(capturedRequest).not.toBeNull();
@@ -566,7 +611,7 @@ describe('SaveProvisionedDashboardForm', () => {
       } as unknown as DashboardScene,
     });
 
-    await user.click(screen.getByRole('button', { name: /save/i }));
+    await commitSave(user);
 
     await waitFor(() => {
       expect(capturedRequest).not.toBeNull();
@@ -587,7 +632,7 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(saveCompleted).not.toHaveBeenCalledWith(fullSaveModel, expect.anything(), expect.anything());
   });
 
-  it('shows the in-progress state on Save while new dashboard validation is pending', async () => {
+  it('holds the details step while new dashboard validation is pending', async () => {
     server.use(
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const url = new URL(request.url);
@@ -619,25 +664,27 @@ describe('SaveProvisionedDashboardForm', () => {
     await user.clear(titleInput);
     await user.type(titleInput, 'New Dashboard');
 
-    const filenameInput = screen.getByRole('textbox', { name: /filename/i });
-    await user.clear(filenameInput);
-    await user.type(filenameInput, 'custom-filename.json');
+    await user.click(screen.getByRole('button', { name: /^next$/i }));
 
-    await user.click(screen.getByRole('button', { name: /save/i }));
-
-    // The button reflects the in-progress submit during validation, before the create POST fires.
-    const savingButton = await screen.findByRole('button', { name: /saving/i });
-    expect(savingButton).toBeDisabled();
+    // The title is checked before the commit step opens, so the details step holds meanwhile.
+    const pendingButton = await screen.findByRole('button', { name: /checking/i });
+    expect(pendingButton).toBeDisabled();
+    expect(screen.queryByRole('textbox', { name: /filename/i })).not.toBeInTheDocument();
     expect(capturedRequest).toBeNull();
 
-    // Completing validation lets the create POST go out.
+    // Completing validation opens the commit step, and committing there fires the create POST.
     await act(async () => {
       resolveValidation(true);
     });
+    const filenameInput = await screen.findByRole('textbox', { name: /filename/i });
+    await user.clear(filenameInput);
+    await user.type(filenameInput, 'custom-filename.json');
+
+    await commitSave(user);
     await waitFor(() => expect(capturedRequest).not.toBeNull());
   });
 
-  it('re-enables Save and skips the write when new dashboard validation fails', async () => {
+  it('stays on the details step and skips the write when new dashboard validation fails', async () => {
     server.use(
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const url = new URL(request.url);
@@ -664,12 +711,13 @@ describe('SaveProvisionedDashboardForm', () => {
     await user.clear(titleInput);
     await user.type(titleInput, 'New Dashboard');
 
-    await user.click(screen.getByRole('button', { name: /save/i }));
+    await user.click(screen.getByRole('button', { name: /^next$/i }));
 
-    // Failed validation re-enables the button and never fires the create POST.
+    // Failed validation re-enables the button, never opens the commit step, and never POSTs.
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /save/i })).not.toBeDisabled();
+      expect(primaryButton()).not.toBeDisabled();
     });
+    expect(screen.queryByRole('button', { name: /^commit to/i })).not.toBeInTheDocument();
     expect(capturedRequest).toBeNull();
   });
 
@@ -737,13 +785,14 @@ describe('SaveProvisionedDashboardForm', () => {
       } as unknown as DashboardScene,
     });
 
+    await goToCommitStep(user);
     const commentInput = screen.getByRole('textbox', { name: /comment/i });
     await user.clear(commentInput);
     await user.type(commentInput, 'Update dashboard');
-    await user.click(screen.getByRole('button', { name: /save/i }));
+    await commitSave(user);
 
     // The in-progress state shows for edits too, while the write is in flight.
-    const savingButton = await screen.findByRole('button', { name: /saving/i });
+    const savingButton = await screen.findByRole('button', { name: /committing/i });
     expect(savingButton).toBeDisabled();
     expect(capturedRequest).toBeNull();
 
@@ -820,6 +869,7 @@ describe('SaveProvisionedDashboardForm', () => {
       } as unknown as DashboardScene,
     });
 
+    await goToCommitStep(user);
     const filenameInput = screen.getByRole('textbox', { name: /filename/i });
     await user.clear(filenameInput);
     await user.type(filenameInput, 'renamed-dashboard.json');
@@ -827,8 +877,7 @@ describe('SaveProvisionedDashboardForm', () => {
     const commentInput = screen.getByRole('textbox', { name: /comment/i });
     await user.type(commentInput, 'Rename dashboard');
 
-    const submitButton = screen.getByRole('button', { name: /save/i });
-    await user.click(submitButton);
+    await commitSave(user);
 
     await waitFor(() => {
       expect(capturedRequest).not.toBeNull();
@@ -908,11 +957,11 @@ describe('SaveProvisionedDashboardForm', () => {
       } as unknown as DashboardScene,
     });
 
+    await goToCommitStep(user);
     const commentInput = screen.getByRole('textbox', { name: /comment/i });
     await user.type(commentInput, 'Update dashboard');
 
-    const submitButton = screen.getByRole('button', { name: /save/i });
-    await user.click(submitButton);
+    await commitSave(user);
 
     await waitFor(() => {
       expect(capturedRequest).not.toBeNull();
@@ -970,8 +1019,9 @@ describe('SaveProvisionedDashboardForm', () => {
       } as unknown as DashboardScene,
     });
 
+    await goToCommitStep(user);
     const filenameInput = screen.getByRole('textbox', { name: /filename/i });
-    const saveButton = screen.getByRole('button', { name: /save/i });
+    const saveButton = primaryButton();
 
     expect(saveButton).toBeDisabled();
 
@@ -1012,22 +1062,21 @@ describe('SaveProvisionedDashboardForm', () => {
 
     const titleInput = screen.getByRole('textbox', { name: /title/i });
     const descriptionInput = screen.getByRole('textbox', { name: /description/i });
-    const filenameInput = screen.getByRole('textbox', { name: /filename/i });
-    const commentInput = screen.getByRole('textbox', { name: /comment/i });
-
     await user.clear(titleInput);
-    await user.clear(descriptionInput);
-    await user.clear(commentInput);
-
     await user.type(titleInput, 'New Dashboard');
+    await user.clear(descriptionInput);
     await user.type(descriptionInput, 'New Description');
 
+    await goToCommitStep(user);
+
+    const filenameInput = screen.getByRole('textbox', { name: /filename/i });
     await user.clear(filenameInput);
     await user.type(filenameInput, 'error-dashboard.json');
+    const commentInput = screen.getByRole('textbox', { name: /comment/i });
+    await user.clear(commentInput);
     await user.type(commentInput, 'Error commit');
 
-    const submitButton = screen.getByRole('button', { name: /save/i });
-    await user.click(submitButton);
+    await commitSave(user);
 
     await waitFor(() => {
       expect(capturedRequest).not.toBeNull();
@@ -1040,8 +1089,8 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(request.body).toEqual(newDashboard);
   });
 
-  it('should disable save button when dashboard is not dirty', () => {
-    setup({
+  it('should disable save button when dashboard is not dirty', async () => {
+    const { user } = setup({
       dashboard: {
         state: {
           meta: {
@@ -1073,20 +1122,22 @@ describe('SaveProvisionedDashboardForm', () => {
       } as unknown as DashboardScene,
     });
 
-    expect(screen.getByRole('button', { name: /save/i })).toBeDisabled();
+    await goToCommitStep(user);
+    expect(primaryButton()).toBeDisabled();
   });
 
   it('should enable save when the target branch is changed even if the dashboard is not dirty', async () => {
     const { user } = setup({ dashboard: makeNotDirtyDashboard() });
 
-    // Baseline: nothing changed yet, so Save is disabled.
-    expect(screen.getByRole('button', { name: /save/i })).toBeDisabled();
+    // Baseline: nothing changed yet, so the commit is disabled.
+    await goToCommitStep(user);
+    expect(primaryButton()).toBeDisabled();
 
     // Enter a new branch name (retargeting is a committable change on its own).
     const branchCombobox = screen.getByRole('combobox', { name: /branch/i });
     await user.type(branchCombobox, 'brand-new-branch{Enter}');
 
-    expect(await screen.findByRole('button', { name: /save/i })).toBeEnabled();
+    expect(primaryButton()).toBeEnabled();
   });
 
   it('should enable save in the deleted-branch recovery with no other changes', async () => {
@@ -1099,7 +1150,7 @@ describe('SaveProvisionedDashboardForm', () => {
       recoverToNewBranch: { fileExistsOnConfiguredBranch: true },
     });
 
-    await waitFor(() => expect(screen.getByRole('button', { name: /save/i })).toBeEnabled());
+    await waitFor(() => expect(primaryButton()).toBeEnabled());
   });
 
   it('creates (not updates) in the deleted-branch recovery when the dashboard only existed on that branch', async () => {
@@ -1152,7 +1203,7 @@ describe('SaveProvisionedDashboardForm', () => {
       },
     });
 
-    await user.click(screen.getByRole('button', { name: /save/i }));
+    await commitSave(user);
 
     await waitFor(() => expect(capturedRequest).not.toBeNull());
     const request = requireCapturedRequest(capturedRequest);
@@ -1206,7 +1257,7 @@ describe('SaveProvisionedDashboardForm', () => {
       },
     });
 
-    await user.click(screen.getByRole('button', { name: /save/i }));
+    await commitSave(user);
 
     await waitFor(() => expect(capturedRequest).not.toBeNull());
     const request = requireCapturedRequest(capturedRequest);
@@ -1273,10 +1324,11 @@ describe('SaveProvisionedDashboardForm', () => {
     });
 
     // The scene is not dirty, so a comment change is what enables Save.
+    await goToCommitStep(user);
     const commentInput = screen.getByRole('textbox', { name: /comment/i });
     await user.type(commentInput, 'Save to develop');
 
-    await user.click(screen.getByRole('button', { name: /save/i }));
+    await commitSave(user);
 
     await waitFor(() => expect(savedUrl).not.toBeNull());
     expect(savedUrl!.searchParams.get('ref')).toBe('develop');
@@ -1301,7 +1353,7 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(screen.getByRole('alert', { name: 'This repository is read only' })).toBeInTheDocument();
 
     // Save button is disabled
-    const saveButton = screen.getByRole('button', { name: /save/i });
+    const saveButton = primaryButton();
     expect(saveButton).toBeDisabled();
 
     // Common options are not shown for existing dashboards
@@ -1347,8 +1399,9 @@ describe('SaveProvisionedDashboardForm', () => {
       } as unknown as DashboardScene,
     });
 
+    await goToCommitStep(user);
     const commentInput = screen.getByRole('textbox', { name: /comment/i });
-    const saveButton = screen.getByRole('button', { name: /save/i });
+    const saveButton = primaryButton();
 
     expect(saveButton).toBeDisabled();
 
@@ -1400,10 +1453,11 @@ describe('SaveProvisionedDashboardForm', () => {
         spec: { title: 'Test Dashboard', panels: [], schemaVersion: 36 },
       });
 
+      await goToCommitStep(user);
       const branch = await screen.findByRole('textbox', { name: /branch/i });
       await waitFor(() => expect(branch).toHaveValue('grafana/create-test-dashboard'));
 
-      await user.click(screen.getByRole('button', { name: /save/i }));
+      await commitSave(user);
 
       await waitFor(() => expect(capturedRequest).not.toBeNull());
       const request = requireCapturedRequest(capturedRequest);
@@ -1428,6 +1482,7 @@ describe('SaveProvisionedDashboardForm', () => {
       const titleInput = screen.getByRole('textbox', { name: /title/i });
       await user.type(titleInput, 'My Cool Dashboard');
 
+      await goToCommitStep(user);
       const filenameInput = screen.getByRole('textbox', { name: /filename/i });
       await waitFor(() => {
         expect(filenameInput).toHaveValue('my-cool-dashboard.json');
@@ -1450,6 +1505,7 @@ describe('SaveProvisionedDashboardForm', () => {
       const titleInput = screen.getByRole('textbox', { name: /title/i });
       await user.type(titleInput, 'My Cool Dashboard');
 
+      await goToCommitStep(user);
       const filenameInput = screen.getByRole('textbox', { name: /filename/i });
       const folderCombobox = screen.getByRole('combobox', { name: /folder/i });
       await waitFor(() => {
@@ -1471,25 +1527,27 @@ describe('SaveProvisionedDashboardForm', () => {
         },
       });
 
-      const titleInput = screen.getByRole('textbox', { name: /title/i });
-      const filenameInput = screen.getByRole('textbox', { name: /filename/i });
-
       // First verify auto-sync is working
-      await user.type(titleInput, 'First Title');
+      await user.type(screen.getByRole('textbox', { name: /title/i }), 'First Title');
+      await goToCommitStep(user);
       await waitFor(() => {
-        expect(filenameInput).toHaveValue('first-title.json');
+        expect(screen.getByRole('textbox', { name: /filename/i })).toHaveValue('first-title.json');
       });
 
       // Manually edit the filename to stop auto-sync
+      const filenameInput = screen.getByRole('textbox', { name: /filename/i });
       await user.clear(filenameInput);
       await user.type(filenameInput, 'custom-name.json');
 
       // Change the title again — filename should NOT update
+      await goBackToDetails(user);
+      const titleInput = screen.getByRole('textbox', { name: /title/i });
       await user.clear(titleInput);
       await user.type(titleInput, 'Second Title');
 
+      await goToCommitStep(user);
       await waitFor(() => {
-        expect(filenameInput).toHaveValue('custom-name.json');
+        expect(screen.getByRole('textbox', { name: /filename/i })).toHaveValue('custom-name.json');
       });
     });
 
@@ -1509,12 +1567,13 @@ describe('SaveProvisionedDashboardForm', () => {
       const titleInput = screen.getByRole('textbox', { name: /title/i });
       await user.type(titleInput, '!!!');
 
+      await goToCommitStep(user);
       const filenameInput = screen.getByRole('textbox', { name: /filename/i });
       expect(filenameInput).toHaveValue('new-dashboard-2023-01-01-abcde.json');
     });
 
     it('should not auto-sync for existing dashboards', async () => {
-      setup({
+      const { user } = setup({
         isNew: false,
         defaultValues: {
           ref: 'dashboard/2023-01-01-abcde',
@@ -1527,6 +1586,7 @@ describe('SaveProvisionedDashboardForm', () => {
         },
       });
 
+      await goToCommitStep(user);
       const filenameInput = screen.getByRole('textbox', { name: /filename/i });
       expect(filenameInput).toHaveValue('existing-dashboard.json');
     });
@@ -1593,9 +1653,10 @@ describe('SaveProvisionedDashboardForm', () => {
       } as unknown as DashboardScene,
     });
 
-    const saveButton = screen.getByRole('button', { name: /save/i });
+    const saveButton = primaryButton();
     await waitFor(() => expect(saveButton).toBeEnabled());
 
+    await goToCommitStep(user);
     const commentInput = screen.getByRole('textbox', { name: /comment/i });
     await user.clear(commentInput);
     await user.type(commentInput, 'Save with raw JSON');
@@ -1716,10 +1777,13 @@ describe('SaveProvisionedDashboardForm', () => {
       />
     );
 
+    await goToCommitStep(user);
+    await goToCommitStep(user);
+
     const folderCombobox = screen.getByRole('combobox', { name: /repository folder/i });
     await waitFor(() => expect(folderCombobox).toHaveValue(''));
 
-    await user.click(screen.getByRole('button', { name: /save/i }));
+    await commitSave(user);
 
     await waitFor(() => expect(dashboardRequest).not.toBeNull());
     expect(decodeURIComponent(dashboardRequest!.url.pathname)).toContain(
@@ -1751,10 +1815,12 @@ describe('SaveProvisionedDashboardForm', () => {
     });
 
     // A customised filename makes the path dirty, so the defaults reset alone can no longer fix it
+    await goToCommitStep(user);
     const filenameInput = await screen.findByRole('textbox', { name: /filename/i });
     await user.clear(filenameInput);
     await user.type(filenameInput, 'custom-name.json');
 
+    await goBackToDetails(user);
     await user.click(screen.getByTestId('folder-picker-root'));
     rerender(
       <SaveProvisionedDashboardForm
@@ -1763,11 +1829,13 @@ describe('SaveProvisionedDashboardForm', () => {
       />
     );
 
+    await goToCommitStep(user);
+
     const folderCombobox = screen.getByRole('combobox', { name: /repository folder/i });
     await waitFor(() => expect(folderCombobox).toHaveValue(''));
-    expect(filenameInput).toHaveValue('custom-name.json');
+    expect(screen.getByRole('textbox', { name: /filename/i })).toHaveValue('custom-name.json');
 
-    await user.click(screen.getByRole('button', { name: /save/i }));
+    await commitSave(user);
 
     // The save must land at the repository root, not under the folder meta no longer points at
     await waitFor(() => expect(dashboardRequest).not.toBeNull());
@@ -1780,10 +1848,12 @@ describe('SaveProvisionedDashboardForm', () => {
   it('moves a customised filename into the repository path of a picked folder', async () => {
     const { user, props, rerender } = setupFolderless();
 
+    await goToCommitStep(user);
     const filenameInput = await screen.findByRole('textbox', { name: /filename/i });
     await user.clear(filenameInput);
     await user.type(filenameInput, 'custom-name.json');
 
+    await goBackToDetails(user);
     await user.click(screen.getByTestId('folder-picker'));
     rerender(
       <SaveProvisionedDashboardForm
@@ -1796,10 +1866,12 @@ describe('SaveProvisionedDashboardForm', () => {
       />
     );
 
+    await goToCommitStep(user);
+
     // The dirty filename survives, but its directory follows the pick instead of pinning the old one
     const folderCombobox = screen.getByRole('combobox', { name: /repository folder/i });
     await waitFor(() => expect(folderCombobox).toHaveValue('Picked Folder'));
-    expect(filenameInput).toHaveValue('custom-name.json');
+    expect(screen.getByRole('textbox', { name: /filename/i })).toHaveValue('custom-name.json');
   });
 
   it('keeps the k8s identity but drops the old folder annotations when a copy changes folder', async () => {
@@ -1904,7 +1976,7 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(decodeURIComponent(folderRequest!.url.pathname)).toContain('/repositories/test-repo/files/My Team/');
 
     // saving the dashboard after folder creation should place it inside the new folder
-    await user.click(screen.getByRole('button', { name: /save/i }));
+    await commitSave(user);
     await waitFor(() => expect(dashboardRequest).not.toBeNull());
     expect(decodeURIComponent(dashboardRequest!.url.pathname)).toContain(
       '/repositories/test-repo/files/My Team/test-dashboard.json'
@@ -1939,7 +2011,7 @@ describe('SaveProvisionedDashboardForm', () => {
     await user.type(screen.getByRole('textbox', { name: /folder name/i }), 'My Team{Enter}{Enter}');
 
     // while the folder POST is in flight, a dashboard save must not race the path update
-    expect(screen.getByRole('button', { name: /save/i })).toBeDisabled();
+    expect(primaryButton()).toBeDisabled();
     releaseFolderPost();
 
     await waitFor(() => expect(screen.queryByRole('textbox', { name: /folder name/i })).not.toBeInTheDocument());
@@ -2009,7 +2081,7 @@ describe('SaveProvisionedDashboardForm', () => {
     );
 
     // the dashboard path should follow the folder into its nested location
-    await user.click(screen.getByRole('button', { name: /save/i }));
+    await commitSave(user);
     await waitFor(() => expect(dashboardRequest).not.toBeNull());
     expect(decodeURIComponent(dashboardRequest!.url.pathname)).toContain(
       '/repositories/test-repo/files/dashboards/My Team/test-dashboard.json'
@@ -2072,7 +2144,7 @@ describe('SaveProvisionedDashboardForm', () => {
       />
     );
 
-    await user.click(screen.getByRole('button', { name: /save/i }));
+    await commitSave(user);
     await waitFor(() => expect(dashboardRequest).not.toBeNull());
     expect(decodeURIComponent(dashboardRequest!.url.pathname)).toContain(
       '/repositories/test-repo/files/My Team/test-dashboard.json'
@@ -2111,7 +2183,7 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(props.dashboard.setState).not.toHaveBeenCalled();
 
     // the dashboard still saves into the folder created in git
-    await user.click(screen.getByRole('button', { name: /save/i }));
+    await commitSave(user);
     await waitFor(() => expect(dashboardRequest).not.toBeNull());
     expect(decodeURIComponent(dashboardRequest!.url.pathname)).toContain(
       '/repositories/test-repo/files/My Team/test-dashboard.json'
@@ -2217,10 +2289,11 @@ describe('SaveProvisionedDashboardForm', () => {
 
     // Populate the commit comment so the committed message is deterministic ('Retry save') rather
     // than the template/default rendered from the form title.
+    await goToCommitStep(user);
     const commentInput = screen.getByRole('textbox', { name: /comment/i });
     await user.type(commentInput, 'Retry save');
 
-    await user.click(screen.getByRole('button', { name: /save/i }));
+    await commitSave(user);
 
     // Submit must enter the suppressed state before the error path is exercised;
     // the whole point of the regression is that a *subsequent* error still clears it.
@@ -2237,7 +2310,7 @@ describe('SaveProvisionedDashboardForm', () => {
 
 describe('SaveProvisionedDashboardForm commit message template', () => {
   it('pre-fills Comment from the repository template', async () => {
-    setup({
+    const { user } = setup({
       repository: {
         type: 'github',
         name: 'test-repo',
@@ -2247,6 +2320,8 @@ describe('SaveProvisionedDashboardForm commit message template', () => {
         commit: { singleResourceMessageTemplate: 'feat({{resourceKind}}s): {{action}} {{title}}' },
       },
     });
+
+    await goToCommitStep(user);
 
     const comment = await screen.findByRole('textbox', { name: /comment/i });
     await waitFor(() => expect(comment).toHaveValue('feat(dashboards): create Test Dashboard'));
@@ -2266,7 +2341,7 @@ describe('SaveProvisionedDashboardForm branch name template', () => {
   };
 
   it('pre-fills the branch name from the repository template for a new branch', async () => {
-    setup({
+    const { user } = setup({
       repository: {
         type: 'github',
         name: 'test-repo',
@@ -2278,13 +2353,15 @@ describe('SaveProvisionedDashboardForm branch name template', () => {
       defaultValues: branchDefaultValues,
     });
 
+    await goToCommitStep(user);
+
     const branch = await screen.findByRole('combobox', { name: /branch/i });
     await waitFor(() => expect(branch).toHaveValue('grafana/create-test-dashboard'));
     expect(branch).not.toHaveAttribute('readonly');
   });
 
   it('renders the branch field read-only when the template is enforced', async () => {
-    setup({
+    const { user } = setup({
       repository: {
         type: 'github',
         name: 'test-repo',
@@ -2295,6 +2372,8 @@ describe('SaveProvisionedDashboardForm branch name template', () => {
       },
       defaultValues: branchDefaultValues,
     });
+
+    await goToCommitStep(user);
 
     const branch = await screen.findByRole('textbox', { name: /branch/i });
     await waitFor(() => expect(branch).toHaveValue('grafana/create-test-dashboard'));

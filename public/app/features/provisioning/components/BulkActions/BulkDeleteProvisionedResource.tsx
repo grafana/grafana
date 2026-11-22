@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
@@ -15,6 +15,7 @@ import {
 } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { isRootFolderUID } from 'app/features/search/constants';
 
+import { type JobSuccess } from '../../Wizard/types';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { getJobRef, useResourceJob } from '../../hooks/useResourceJob';
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
@@ -27,6 +28,7 @@ import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFi
 import { ResourceJobStatus } from '../Shared/ResourceJobStatus';
 import { getCanPushToConfiguredBranch } from '../defaults';
 
+import { BulkActionOutcome } from './BulkActionOutcome';
 import {
   type BulkActionFormData,
   type BulkActionProvisionResourceProps,
@@ -49,6 +51,7 @@ function FormContent({
   onJobCreated,
 }: FormProps) {
   const { submitted, submit, isCreating } = useResourceJob({ repository });
+  const [outcome, setOutcome] = useState<JobSuccess | undefined>(undefined);
   const methods = useForm<BulkActionFormData>({ defaultValues: initialValues });
   const { handleSubmit, watch, setValue, formState } = methods;
 
@@ -116,15 +119,20 @@ function FormContent({
       <form onSubmit={handleSubmit(handleSubmitForm)}>
         <Stack direction="column" gap={2}>
           {submitted ? (
-            <ResourceJobStatus
-              job={submitted.job}
-              jobType="delete"
-              successTitle={
-                getJobRef(submitted.jobSpec)
-                  ? t('provisioning.bulk-action.success-title-branch', 'Requested changes were pushed to a branch')
-                  : t('browse-dashboards.bulk-delete-resources-form.success-title', 'Resources deleted successfully')
-              }
-            />
+            outcome ? (
+              <BulkActionOutcome
+                action="delete"
+                jobRef={getJobRef(submitted.jobSpec)}
+                repository={repository}
+                urls={outcome.urls}
+                commitMessage={message}
+                count={collectSelectedItems(selectedItems).length}
+                prTitle={submitted.prTitle}
+                onDismiss={onDismiss}
+              />
+            ) : (
+              <ResourceJobStatus job={submitted.job} jobType="delete" onSuccess={setOutcome} />
+            )
           ) : (
             <>
               <AffectedFolderContents

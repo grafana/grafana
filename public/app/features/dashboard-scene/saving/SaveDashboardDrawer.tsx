@@ -5,7 +5,6 @@ import { AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types'
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
 import { FolderDeadEndAlert } from 'app/features/provisioning/components/Dashboards/FolderDeadEndAlert';
 import { SaveProvisionedDashboard } from 'app/features/provisioning/components/Dashboards/SaveProvisionedDashboard';
-import { SaveTargetSwitch } from 'app/features/provisioning/components/Shared/SaveTargetSwitch';
 import { useDashboardRepositoryView } from 'app/features/provisioning/hooks/useDashboardRepositoryView';
 import { RepoViewStatus } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { getSaveTarget, type SaveTarget } from 'app/features/provisioning/hooks/useSaveRepositoryView';
@@ -42,7 +41,7 @@ interface SaveDashboardDrawerState extends SceneObjectState {
   recoverToNewBranch?: RecoverToNewBranch;
   /** Where a new save at the root of a folderless repository goes; unset means wherever the lookup says */
   saveTarget?: SaveTarget;
-  /** The provisioned save landed and the drawer is reporting it, so the save-time controls are done. */
+  /** The provisioned save landed, so the diff would describe changes already in the commit. */
   committed?: boolean;
 }
 
@@ -221,13 +220,6 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
             <Stack direction="column" gap={2}>
               {isNewSave && <FolderDeadEndAlert {...view.lookup} />}
               {renderForm()}
-              {view.canChooseTarget && !committed && (
-                <SaveTargetSwitch
-                  resource="dashboard"
-                  target={target}
-                  onChange={(saveTarget) => model.setState({ saveTarget })}
-                />
-              )}
             </Stack>
           </Box>
         </ScrollContainer>

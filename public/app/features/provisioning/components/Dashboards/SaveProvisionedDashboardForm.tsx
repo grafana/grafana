@@ -89,6 +89,10 @@ export function SaveProvisionedDashboardForm({
   const { isDirty } = dashboard.useState();
   const [error, setError] = useState<string | undefined>(undefined);
   const [outcome, setOutcome] = useState<DashboardCommitOutcome | undefined>(undefined);
+  const [step, setStep] = useState<'details' | 'commit'>('details');
+  // The title check that gates the commit step is a round trip, so the advance owns its own
+  // pending flag rather than borrowing the form's (`trigger` does not raise `isValidating`).
+  const [isAdvancing, setIsAdvancing] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [folderError, setFolderError] = useState<string | undefined>(undefined);
   const [showNewFolderForm, setShowNewFolderForm] = useState(false);
@@ -468,6 +472,50 @@ export function SaveProvisionedDashboardForm({
   // Creating a folder from here writes it to the configured branch, which the repository must allow.
   const isDirectWrite = canPushToConfiguredBranch && workflow === 'write';
 
+  // Advancing cannot require a change: comment, path and ref are what usually make the form dirty,
+  // and they only exist on the commit step. Only the commit itself needs something to commit.
+  const isBlocked = readOnly || isCreatingFolder || isHeld;
+  const isPrimaryDisabled =
+    step === 'details'
+      ? isBlocked || isAdvancing
+      : isBlocked || request.isLoading || !isDirtyState || isSubmitting || isValidating || isResolving;
+
+  // Advancing validates what the details step owns, so the commit step is only reached with a
+  // dashboard that can actually be committed.
+  const goToCommitStep = async () => {
+    const detailFields: Array<keyof ProvisionedDashboardFormData> = isNew ? ['title', 'description', 'folder'] : [];
+    if (detailFields.length) {
+      setIsAdvancing(true);
+      try {
+        if (!(await methods.trigger(detailFields))) {
+          return;
+        }
+      } finally {
+        setIsAdvancing(false);
+      }
+    }
+    setStep('commit');
+  };
+
+  const primaryLabel = () => {
+    if (step === 'details') {
+      // The title is validated before the commit step opens, which can take a round trip.
+      return isAdvancing
+        ? t('dashboard-scene.save-provisioned-dashboard-form.checking', 'Checking...')
+        : t('dashboard-scene.save-provisioned-dashboard-form.next', 'Next');
+    }
+    if (request.isLoading || isSubmitting || isValidating) {
+      return t('dashboard-scene.save-provisioned-dashboard-form.committing', 'Committing...');
+    }
+    // Naming the branch makes the consequence explicit: a direct commit is dual-written, so it is
+    // live for everyone immediately, where a branch commit is not.
+    return isDirectWrite && repository?.branch
+      ? t('dashboard-scene.save-provisioned-dashboard-form.commit-to-configured', 'Commit to {{branch}}', {
+          branch: repository.branch,
+        })
+      : t('dashboard-scene.save-provisioned-dashboard-form.commit-to-branch', 'Commit to branch');
+  };
+
   if (outcome) {
     const prUrl = appendPullRequestTitleParam(outcome.urls?.newPullRequestURL, repository?.type, prTitle);
     return (
@@ -517,167 +565,180 @@ export function SaveProvisionedDashboardForm({
             />
           )}
 
-          {isNew && (
-            <>
-              <Field
-                noMargin
-                label={t('dashboard-scene.save-provisioned-dashboard-form.label-title', 'Title')}
-                invalid={!!methods.formState.errors.title}
-                error={methods.formState.errors.title?.message}
-              >
-                <Input
-                  id="dashboard-title"
-                  data-testid={selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput}
-                  {...register('title', {
-                    required: t(
-                      'dashboard-scene.save-provisioned-dashboard-form.title-required',
-                      'Dashboard title is required'
-                    ),
-                    validate: validateTitle,
-                  })}
-                />
-              </Field>
-              <Field
-                noMargin
-                label={t('dashboard-scene.save-provisioned-dashboard-form.label-description', 'Description')}
-                invalid={!!methods.formState.errors.description}
-                error={methods.formState.errors.description?.message}
-              >
-                <TextArea id="dashboard-description" {...register('description')} />
-              </Field>
-
-              <Field
-                noMargin
-                label={t('dashboard-scene.save-provisioned-dashboard-form.label-target-folder', 'Target folder')}
-              >
-                <Controller
-                  control={control}
-                  name={'folder'}
-                  render={({ field: { ref, value, onChange, ...field } }) => {
-                    return (
-                      <ProvisioningAwareFolderPicker
-                        onChange={selectFolder}
-                        value={value.uid}
-                        {...field}
-                        showAllFolders
-                      />
-                    );
-                  }}
-                />
-              </Field>
-              {isFolderless && isDirectWrite && (
+          {step === 'details' && (
+            <Stack direction="column" gap={2}>
+              {isNew && (
                 <>
-                  {!showNewFolderForm && (
-                    <div>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        icon="plus"
-                        onClick={() => {
-                          setFolderError(undefined);
-                          setShowNewFolderForm(true);
-                        }}
-                        disabled={isHeld}
-                      >
-                        <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.new-folder">New folder</Trans>
-                      </Button>
-                    </div>
-                  )}
+                  <Field
+                    noMargin
+                    label={t('dashboard-scene.save-provisioned-dashboard-form.label-title', 'Title')}
+                    invalid={!!methods.formState.errors.title}
+                    error={methods.formState.errors.title?.message}
+                  >
+                    <Input
+                      id="dashboard-title"
+                      data-testid={selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput}
+                      {...register('title', {
+                        required: t(
+                          'dashboard-scene.save-provisioned-dashboard-form.title-required',
+                          'Dashboard title is required'
+                        ),
+                        validate: validateTitle,
+                      })}
+                    />
+                  </Field>
+                  <Field
+                    noMargin
+                    label={t('dashboard-scene.save-provisioned-dashboard-form.label-description', 'Description')}
+                    invalid={!!methods.formState.errors.description}
+                    error={methods.formState.errors.description?.message}
+                  >
+                    <TextArea id="dashboard-description" {...register('description')} />
+                  </Field>
 
-                  {showNewFolderForm && (
-                    <Stack direction="column" gap={1}>
-                      <Field
-                        noMargin
-                        label={t('dashboard-scene.save-provisioned-dashboard-form.label-folder-name', 'Folder name')}
-                      >
-                        <Input
-                          value={newFolderName}
-                          onChange={(e) => setNewFolderName(e.currentTarget.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              handleCreateFolder();
-                            }
-                          }}
-                        />
-                      </Field>
-                      {folderError && <ProvisioningAlert error={folderError} />}
-                      <Stack gap={1}>
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          icon={isCreatingFolder ? 'spinner' : undefined}
-                          onClick={handleCreateFolder}
-                          disabled={!newFolderName || isCreatingFolder || isHeld}
-                        >
-                          <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.create-folder">Create</Trans>
-                        </Button>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          fill="outline"
-                          onClick={() => {
-                            folderCreationCancelledRef.current = true;
-                            setShowNewFolderForm(false);
-                            setNewFolderName('');
-                            setFolderError(undefined);
-                          }}
-                        >
-                          <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.cancel-folder">Cancel</Trans>
-                        </Button>
-                      </Stack>
-                    </Stack>
+                  <Field
+                    noMargin
+                    label={t('dashboard-scene.save-provisioned-dashboard-form.label-target-folder', 'Target folder')}
+                  >
+                    <Controller
+                      control={control}
+                      name={'folder'}
+                      render={({ field: { ref, value, onChange, ...field } }) => {
+                        return (
+                          <ProvisioningAwareFolderPicker
+                            onChange={selectFolder}
+                            value={value.uid}
+                            {...field}
+                            showAllFolders
+                          />
+                        );
+                      }}
+                    />
+                  </Field>
+                  {isFolderless && isDirectWrite && (
+                    <>
+                      {!showNewFolderForm && (
+                        <div>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            icon="plus"
+                            onClick={() => {
+                              setFolderError(undefined);
+                              setShowNewFolderForm(true);
+                            }}
+                            disabled={isHeld}
+                          >
+                            <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.new-folder">
+                              New folder
+                            </Trans>
+                          </Button>
+                        </div>
+                      )}
+
+                      {showNewFolderForm && (
+                        <Stack direction="column" gap={1}>
+                          <Field
+                            noMargin
+                            label={t(
+                              'dashboard-scene.save-provisioned-dashboard-form.label-folder-name',
+                              'Folder name'
+                            )}
+                          >
+                            <Input
+                              value={newFolderName}
+                              onChange={(e) => setNewFolderName(e.currentTarget.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleCreateFolder();
+                                }
+                              }}
+                            />
+                          </Field>
+                          {folderError && <ProvisioningAlert error={folderError} />}
+                          <Stack gap={1}>
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              icon={isCreatingFolder ? 'spinner' : undefined}
+                              onClick={handleCreateFolder}
+                              disabled={!newFolderName || isCreatingFolder || isHeld}
+                            >
+                              <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.create-folder">
+                                Create
+                              </Trans>
+                            </Button>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              fill="outline"
+                              onClick={() => {
+                                folderCreationCancelledRef.current = true;
+                                setShowNewFolderForm(false);
+                                setNewFolderName('');
+                                setFolderError(undefined);
+                              }}
+                            >
+                              <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.cancel-folder">
+                                Cancel
+                              </Trans>
+                            </Button>
+                          </Stack>
+                        </Stack>
+                      )}
+                    </>
                   )}
                 </>
               )}
-            </>
+
+              {!isNew && !readOnly && <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />}
+
+              {saveAsCopy && (
+                <Field noMargin label={t('dashboard-scene.save-dashboard-as-form.label-copy-tags', 'Copy tags')}>
+                  <Switch {...register('copyTags')} />
+                </Field>
+              )}
+            </Stack>
           )}
 
-          {!isNew && !readOnly && <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />}
+          {step === 'commit' && (
+            <Stack direction="column" gap={2}>
+              <ResourceEditFormSharedFields
+                resourceType="dashboard"
+                readOnly={readOnly}
+                canPushToConfiguredBranch={canPushToConfiguredBranch}
+                repository={repository}
+                isNew={isNew}
+                allowPathEdit={!isNew && !readOnly}
+                lockComment={locked}
+                commitMessage={message}
+                lockBranch={lockBranch}
+              />
 
-          <ResourceEditFormSharedFields
-            resourceType="dashboard"
-            readOnly={readOnly}
-            canPushToConfiguredBranch={canPushToConfiguredBranch}
-            repository={repository}
-            isNew={isNew}
-            allowPathEdit={!isNew && !readOnly}
-            lockComment={locked}
-            commitMessage={message}
-            lockBranch={lockBranch}
-          />
-
-          {saveAsCopy && (
-            <Field noMargin label={t('dashboard-scene.save-dashboard-as-form.label-copy-tags', 'Copy tags')}>
-              <Switch {...register('copyTags')} />
-            </Field>
+              {error && <ProvisioningAlert error={error} />}
+            </Stack>
           )}
-
-          {error && <ProvisioningAlert error={error} />}
 
           <Stack gap={2}>
-            <Button variant="secondary" onClick={drawer.onClose} fill="outline">
-              <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.cancel">Cancel</Trans>
-            </Button>
             <Button
               variant="primary"
-              type="submit"
+              type={step === 'commit' ? 'submit' : 'button'}
+              onClick={step === 'details' ? goToCommitStep : undefined}
               data-testid={selectors.components.Drawer.DashboardSaveDrawer.saveButton}
-              disabled={
-                request.isLoading ||
-                readOnly ||
-                !isDirtyState ||
-                isSubmitting ||
-                isValidating ||
-                isResolving ||
-                isCreatingFolder ||
-                isHeld
-              }
+              disabled={isPrimaryDisabled}
             >
-              {request.isLoading || isSubmitting || isValidating
-                ? t('dashboard-scene.save-provisioned-dashboard-form.saving', 'Saving...')
-                : t('dashboard-scene.save-provisioned-dashboard-form.save', 'Save')}
+              {primaryLabel()}
             </Button>
+            {step === 'commit' ? (
+              <Button variant="secondary" fill="outline" icon="angle-left" onClick={() => setStep('details')}>
+                <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.back-to-details">Back to details</Trans>
+              </Button>
+            ) : (
+              <Button variant="secondary" onClick={drawer.onClose} fill="outline">
+                <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.cancel">Cancel</Trans>
+              </Button>
+            )}
           </Stack>
         </Stack>
       </form>

@@ -105,6 +105,23 @@ class TestDashboard extends SceneObjectBase<TestDashboardState> {
   }
 }
 
+type User = ReturnType<typeof render>['user'];
+
+/** The commit fields live on a second step, which the details step's primary advances to. */
+async function goToCommitStep(user: User) {
+  if (screen.queryByRole('button', { name: /^commit to/i })) {
+    return;
+  }
+  await user.click(await screen.findByRole('button', { name: /^next$/i }));
+  await screen.findByRole('button', { name: /^commit to/i });
+}
+
+/** Returns to the details step, where the dashboard's own fields and the folder picker live. */
+async function goBackToDetails(user: User) {
+  await user.click(screen.getByRole('button', { name: /back to details/i }));
+  await screen.findByRole('button', { name: /^next$/i });
+}
+
 function repositoryFolder() {
   return (screen.getByLabelText(/Repository folder/i) as HTMLInputElement).value;
 }
@@ -116,7 +133,12 @@ function filename() {
 /** Records every distinct value the filename field takes, so a one-render flicker is visible */
 function watchFilename(seen: string[]) {
   const observer = new MutationObserver(() => {
-    const value = filename();
+    // The field only exists on the commit step, and the watch spans steps.
+    const input = screen.queryByRole('textbox', { name: /filename/i });
+    if (!input) {
+      return;
+    }
+    const value = (input as HTMLInputElement).value;
     if (seen[seen.length - 1] !== value) {
       seen.push(value);
     }
@@ -201,10 +223,13 @@ describe('SaveProvisionedDashboard in the save drawer', () => {
   it("moves the file to the repository root when the picker's root row is chosen", async () => {
     const { user } = setup();
     await screen.findByTestId('pick-folder');
+    await goToCommitStep(user);
     expect(repositoryFolder()).toBe('team-a');
 
+    await goBackToDetails(user);
     await user.click(screen.getByTestId('pick-root'));
 
+    await goToCommitStep(user);
     await waitFor(() => expect(repositoryFolder()).toBe(''));
     expect(filename()).toBe('my-dash.json');
   });
@@ -216,6 +241,7 @@ describe('SaveProvisionedDashboard in the save drawer', () => {
     await user.click(screen.getByTestId('pick-folder'));
 
     await waitFor(() => expect(dashboard.state.meta.folderUid).toBe('f1'));
+    await goToCommitStep(user);
     await waitFor(() => expect(repositoryFolder()).toBe('team-b'));
   });
 
@@ -224,26 +250,34 @@ describe('SaveProvisionedDashboard in the save drawer', () => {
     await screen.findByTestId('pick-folder');
 
     await user.click(screen.getByTestId('pick-folder'));
+    await goToCommitStep(user);
     await waitFor(() => expect(repositoryFolder()).toBe('team-b'));
 
+    await goBackToDetails(user);
     await user.click(screen.getByTestId('pick-root'));
 
     await waitFor(() => expect(dashboard.state.meta.folderUid).toBe(''));
+    await goToCommitStep(user);
     await waitFor(() => expect(repositoryFolder()).toBe(''));
-    expect(screen.getByRole('button', { name: /^save$/i })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /^commit to/i })).toBeEnabled();
   });
 
   it('never shows a throwaway timestamped filename while the folder changes', async () => {
     const { user } = setupNewDashboard();
     await screen.findByTestId('pick-folder');
+    await goToCommitStep(user);
     expect(filename()).toBe('my-dash.json');
 
     const seen: string[] = [filename()];
     const observer = watchFilename(seen);
 
+    await goBackToDetails(user);
     await user.click(screen.getByTestId('pick-folder'));
+    await goToCommitStep(user);
     await waitFor(() => expect(repositoryFolder()).toBe('team-b'));
+    await goBackToDetails(user);
     await user.click(screen.getByTestId('pick-root'));
+    await goToCommitStep(user);
     await waitFor(() => expect(repositoryFolder()).toBe(''));
 
     observer.disconnect();
@@ -263,81 +297,58 @@ describe('SaveProvisionedDashboard in the save drawer', () => {
     // The repository lookup dead-ends on ghost-repo, but the picker must survive to undo the pick
     expect(await screen.findByText('The selected folder cannot be saved to')).toBeInTheDocument();
     expect(screen.getByTestId('pick-orphaned-folder')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^save$/i })).toBeDisabled();
 
     await user.click(screen.getByTestId('pick-root'));
 
     await waitFor(() => expect(dashboard.state.meta.folderUid).toBe(''));
     await waitFor(() => expect(screen.queryByText('The selected folder cannot be saved to')).not.toBeInTheDocument());
+    await goToCommitStep(user);
     await waitFor(() => expect(repositoryFolder()).toBe(''));
-    expect(screen.getByRole('button', { name: /^save$/i })).toBeEnabled();
-  });
-
-  it('switches between the Git form and the database form at the root, keeping the typed title', async () => {
-    const { user } = setupNewDashboard();
-
-    const gitTitle = await screen.findByRole('textbox', { name: /^title$/i });
-    await user.clear(gitTitle);
-    await user.type(gitTitle, 'Typed title');
-
-    await user.click(screen.getByRole('button', { name: 'Save to Grafana database instead' }));
-
-    const databaseTitle = await screen.findByRole('textbox', { name: /save dashboard title field/i });
-    expect(databaseTitle).toHaveValue('Typed title');
-    expect(screen.queryByRole('textbox', { name: /filename/i })).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: 'Save to Git repository instead' }));
-
-    expect(await screen.findByRole('textbox', { name: /^title$/i })).toHaveValue('Typed title');
-    await waitFor(() => expect(filename()).toBe('typed-title.json'));
-  });
-
-  it('hides the database switch once a folder is picked', async () => {
-    const { user } = setupNewDashboard();
-    await screen.findByTestId('pick-folder');
-    expect(screen.getByRole('button', { name: 'Save to Grafana database instead' })).toBeInTheDocument();
-
-    await user.click(screen.getByTestId('pick-folder'));
-    await waitFor(() => expect(repositoryFolder()).toBe('team-b'));
-
-    expect(screen.queryByRole('button', { name: /instead$/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^commit to/i })).toBeEnabled();
   });
 
   it('suffixes a copy title once, even after a folder pick recomputes the defaults', async () => {
     const { user } = renderDrawer({ folderUid: undefined }, { saveAsCopy: true });
 
     expect(await screen.findByRole('textbox', { name: /^title$/i })).toHaveValue('My Dash Copy');
+    await goToCommitStep(user);
     await waitFor(() => expect(filename()).toBe('my-dash-copy.json'));
 
+    await goBackToDetails(user);
     await user.click(screen.getByTestId('pick-folder'));
+    await goToCommitStep(user);
     await waitFor(() => expect(repositoryFolder()).toBe('team-b'));
-
-    expect(screen.getByRole('textbox', { name: /^title$/i })).toHaveValue('My Dash Copy');
     expect(filename()).toBe('my-dash-copy.json');
+
+    await goBackToDetails(user);
+    expect(screen.getByRole('textbox', { name: /^title$/i })).toHaveValue('My Dash Copy');
   });
 
   it('resolves a new save whose manager annotation names a deleted repository from the root instead of dead-ending', async () => {
-    renderDrawer({
+    const { user } = renderDrawer({
       folderUid: undefined,
       k8s: { annotations: { [AnnoKeyManagerKind]: ManagerKind.Repo, [AnnoKeyManagerIdentity]: 'ghost-repo' } },
     });
 
     // The Git form for the folderless root, not the database form and not an orphaned notice
     expect(await screen.findByRole('textbox', { name: /^title$/i })).toBeInTheDocument();
-    expect(repositoryFolder()).toBe('');
-    await waitFor(() => expect(filename()).toBe('my-dash.json'));
     expect(screen.queryByText('The selected folder cannot be saved to')).not.toBeInTheDocument();
     expect(screen.queryByText(/no longer exists/)).not.toBeInTheDocument();
+
+    await goToCommitStep(user);
+    expect(repositoryFolder()).toBe('');
+    await waitFor(() => expect(filename()).toBe('my-dash.json'));
   });
 
   it('resolves a new dashboard opened with the general folder uid at the folderless root', async () => {
-    renderDrawer({ folderUid: 'general' });
+    const { user } = renderDrawer({ folderUid: 'general' });
 
     // The Git form for the folderless root, with the database switch: not a folder lookup for "general"
     expect(await screen.findByRole('textbox', { name: /^title$/i })).toBeInTheDocument();
+
+    await goToCommitStep(user);
     expect(repositoryFolder()).toBe('');
     await waitFor(() => expect(filename()).toBe('my-dash.json'));
-    expect(screen.getByRole('button', { name: 'Save to Grafana database instead' })).toBeInTheDocument();
   });
 
   it('keeps a directory created without sync across a Changes/Details tab round trip', async () => {
@@ -348,8 +359,10 @@ describe('SaveProvisionedDashboard in the save drawer', () => {
     await user.click(await screen.findByRole('button', { name: /new folder/i }));
     await user.type(screen.getByRole('textbox', { name: /folder name/i }), 'team-c');
     await user.click(screen.getByRole('button', { name: /^create$/i }));
+    await goToCommitStep(user);
     await waitFor(() => expect(repositoryFolder()).toBe('team-c'));
 
+    await goBackToDetails(user);
     const title = screen.getByRole('textbox', { name: /^title$/i });
     await user.clear(title);
     await user.type(title, 'Renamed');
@@ -362,6 +375,7 @@ describe('SaveProvisionedDashboard in the save drawer', () => {
       drawer.setState({ showDiff: false });
     });
 
+    await goToCommitStep(user);
     expect(repositoryFolder()).toBe('team-c');
   });
 });

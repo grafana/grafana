@@ -3,7 +3,6 @@ import { skipToken } from '@reduxjs/toolkit/query/react';
 import { memo, useCallback } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';

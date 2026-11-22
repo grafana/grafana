@@ -4773,8 +4773,7 @@
       "folder-empty_one": "Selected folder is empty",
       "folder-empty_other": "Selected folders are empty",
       "folder-not-empty_one": "Selected folder contains resources that will be deleted",
-      "folder-not-empty_other": "Selected folders contain resources that will be deleted",
-      "success-title": "Resources deleted successfully"
+      "folder-not-empty_other": "Selected folders contain resources that will be deleted"
     },
     "bulk-move-resources-form": {
       "button-cancel": "Cancel",
@@ -4795,7 +4794,6 @@
       "folder-not-empty_other": "Selected folders contain resources that will be moved with them",
       "move-warning": "This will move selected folders and their descendants. Available target folders depend on the selected resources.",
       "move-warning-tooltip": "You can only move provisioned resources within their provisioned folder, and local resources to local folders.",
-      "success-title": "Resources moved successfully",
       "target-folder": "Target Folder"
     },
     "create-new": {
@@ -8169,9 +8167,14 @@
     "save-provisioned-dashboard-form": {
       "advanced-options": "Advanced options",
       "back-to-dashboards": "Back to all dashboards",
+      "back-to-details": "Back to details",
       "cancel": "Cancel",
       "cancel-folder": "Cancel",
       "cannot-be-saved": "This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy the JSON or save it to a file below, then you can update your dashboard in the provisioning source.",
+      "checking": "Checking...",
+      "commit-to-branch": "Commit to branch",
+      "commit-to-configured": "Commit to {{branch}}",
+      "committing": "Committing...",
       "copy-json-to-clipboard": "Copy JSON to clipboard",
       "create-folder": "Create",
       "error-saving": "An error occurred while saving.",
@@ -8190,11 +8193,10 @@
       "label-target-folder": "Target folder",
       "label-title": "Title",
       "new-folder": "New folder",
+      "next": "Next",
       "open-pull-request": "Open pull request",
       "repo-path-required": "Missing required fields for saving",
-      "save": "Save",
       "save-json-to-file": "Save JSON to file",
-      "saving": "Saving...",
       "see-docs": "See <2>documentation</2> for more information about provisioning.",
       "title-required": "Dashboard title is required",
       "title-same-as-folder": "Dashboard name cannot be the same as the folder name",
@@ -14874,8 +14876,9 @@
       "label-name-template": "Branch name template",
       "placeholder-name-template": "grafana/{{actionVar}}-{{titleVar}}-{{randomVar}}"
     },
-    "bulk-action": {
-      "success-title-branch": "Requested changes were pushed to a branch"
+    "bulk-action-outcome": {
+      "close": "Close",
+      "open-pull-request": "Open pull request"
     },
     "cloud-info-box": {
       "body": "Skip the setup and get Git Sync fully managed and hosted on Grafana Cloud with the <2>free-forever Grafana Cloud plan</2>.",
@@ -14907,6 +14910,7 @@
     },
     "commit-success": {
       "branch-body": "The rest of the Grafana users in your organization will still see the current version saved to the configured branch until this branch is merged.",
+      "committed": "Changes committed.",
       "committed-to": "Committed to {{branch}}.",
       "configured-branch": "configured branch",
       "direct-body": "This version is already live in Grafana for everyone in your organization.",
@@ -14915,10 +14919,14 @@
       "open-branch": "Open {{branch}} in the repository",
       "open-commit": "Open the committed file at {{hash}}",
       "repository": "the repository",
-      "title-created": "A new resource has been created in a branch in {{provider}}.",
-      "title-deleted": "The resource has been deleted in a branch in {{provider}}.",
-      "title-moved": "The resource has been moved in a branch in {{provider}}.",
-      "title-updated": "The resource has been updated in a branch in {{provider}}.",
+      "title-created_one": "A new resource has been created in a branch in {{provider}}.",
+      "title-created_other": "New resources have been created in a branch in {{provider}}.",
+      "title-deleted_one": "The resource has been deleted in a branch in {{provider}}.",
+      "title-deleted_other": "The resources have been deleted in a branch in {{provider}}.",
+      "title-moved_one": "The resource has been moved in a branch in {{provider}}.",
+      "title-moved_other": "The resources have been moved in a branch in {{provider}}.",
+      "title-updated_one": "The resource has been updated in a branch in {{provider}}.",
+      "title-updated_other": "The resources have been updated in a branch in {{provider}}.",
       "your-branch": "Your branch"
     },
     "config-form": {

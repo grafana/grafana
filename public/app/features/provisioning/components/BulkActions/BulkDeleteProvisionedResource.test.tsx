@@ -223,7 +223,7 @@ describe('BulkDeleteProvisionedResource', () => {
       })
     );
 
-    expect(await screen.findByRole('status')).toBeInTheDocument();
+    expect(await screen.findByText(/deleted in a branch in GitHub/i)).toBeInTheDocument();
     expect(onJobCreated).toHaveBeenCalledTimes(1);
   });
 
@@ -320,7 +320,7 @@ describe('BulkDeleteProvisionedResource', () => {
     );
 
     await user.click(screen.getByRole('button', { name: /Delete/i }));
-    expect(await screen.findByRole('status')).toBeInTheDocument();
+    expect(await screen.findByText(/deleted in a branch in GitHub/i)).toBeInTheDocument();
 
     // Simulate selection clearing after job starts
     mockUseSelectionRepoValidation.mockReturnValue({
@@ -334,8 +334,8 @@ describe('BulkDeleteProvisionedResource', () => {
       <BulkDeleteProvisionedResource folderUid={undefined} selectedItems={selectedItems} onDismiss={onDismiss} />
     );
 
-    // The ref should preserve the repo UID, so the job status remains visible
-    expect(screen.getByRole('status')).toBeInTheDocument();
+    // The ref should preserve the repo UID, so the job outcome remains visible
+    expect(screen.getByText(/deleted in a branch in GitHub/i)).toBeInTheDocument();
     expect(screen.queryByText(/Repository not found/)).not.toBeInTheDocument();
   });
 
@@ -392,7 +392,7 @@ describe('BulkDeleteProvisionedResource', () => {
 
     await user.click(screen.getByRole('button', { name: /Delete/i }));
 
-    expect(await screen.findByText('Requested changes were pushed to a branch')).toBeInTheDocument();
+    expect(await screen.findByText(/deleted in a branch in GitHub/i)).toBeInTheDocument();
   });
 
   it('shows the configured-branch success message when the job completes on the write workflow', async () => {
@@ -407,7 +407,8 @@ describe('BulkDeleteProvisionedResource', () => {
 
     await user.click(screen.getByRole('button', { name: /Delete/i }));
 
-    expect(await screen.findByText('Resources deleted successfully')).toBeInTheDocument();
+    // The write-only fixture names no configured branch, so the headline cannot name one either.
+    expect(await screen.findByText(/changes committed/i)).toBeInTheDocument();
   });
 
   describe('commit message template', () => {
