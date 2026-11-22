@@ -1551,6 +1551,7 @@
           "dashboard": "",
           "datasource": "",
           "folder": "",
+          "folder-uid": "",
           "health": "",
           "label": "",
           "metric": "",
@@ -1571,12 +1572,14 @@
         "invalid-tokens": "",
         "invalid-value": "",
         "label": "",
+        "missing-value": "",
         "placeholder": "",
         "property": {
           "contact-point": "",
           "dashboard": "",
           "datasource": "",
           "folder": "",
+          "folder-uid": "",
           "health": "",
           "labels": "",
           "metric": "",
@@ -1612,6 +1615,8 @@
         "tooltip-with-interval": ""
       },
       "shared": {
+        "folder-search-limit": "",
+        "folder-search-limit-description": "",
         "load-more": "",
         "load-more-error": "",
         "loading-rules": "",
@@ -1990,6 +1995,7 @@
         "routing": "Instradamento delle notifiche",
         "routing-none": "Nessuna struttura dei criteri selezionata",
         "routing-tree": "Struttura dei criteri: {{name}}",
+        "rules-error": "",
         "rules-skipped": "Le regole di avviso non verranno importate.",
         "rules-title": "",
         "skipped": "Saltato",
@@ -2002,6 +2008,7 @@
         "validation-warning": "Alcune risorse verranno rinominate per evitare conflitti.",
         "will-import-config": "Importazione di questa configurazione",
         "will-import-rules": "Importazione delle regole",
+        "yaml-datasource": "",
         "will-import-rules-count_one": "Importazione di {{count}} regola",
         "will-import-rules-count_other": "Importazione di {{count}} regole"
       },
@@ -2108,9 +2115,14 @@
         "target-datasource-required": "Seleziona un'origine dei dati di destinazione",
         "target-folder": "Cartella di destinazione",
         "target-folder-desc": "Cartella in cui verranno archiviate le regole importate",
+        "yaml-empty-group": "",
         "yaml-error": "Impossibile analizzare il file YAML: {{error}}",
         "yaml-file": "File YAML delle regole",
-        "yaml-required": "Seleziona un file"
+        "yaml-no-rules": "",
+        "yaml-required": "Seleziona un file",
+        "yaml-target-datasource": "",
+        "yaml-target-datasource-desc": "",
+        "yaml-target-datasource-required": ""
       },
       "success": "Regole di avviso importate correttamente nelle regole gestite da Grafana.",
       "target-folder": {
@@ -5741,6 +5753,10 @@
       "label": "",
       "label-plural": ""
     },
+    "notebook": {
+      "label": "",
+      "label-plural": ""
+    },
     "playlist": {
       "label": "",
       "label-plural": ""
@@ -6254,7 +6270,10 @@
       "add-visualization-body": "Seleziona un'origine dati, quindi esegui query e visualizza i dati con grafici, statistiche e tabelle o crea elenchi, markdown e altri widget.",
       "add-visualization-button": "Aggiungi visualizzazione",
       "add-visualization-header": "Avvia il tuo nuovo dashboard aggiungendo una visualizzazione",
+      "assistant-limit-reached": "",
       "assistant-placeholder": "Descrivi la tua dashboard. Questa operazione aprirà la chat di Assistant e avvierà una conversazione.",
+      "assistant-placeholder-template": "",
+      "assistant-sign-in": "",
       "auto-grid": "Griglia automatica",
       "auto-grid-description": "I pannelli si ridimensionano per adattarsi e formare griglie uniformi",
       "build-assistant": "Crea la tua dashboard con Assistant",
@@ -6268,6 +6287,8 @@
       "mobile-not-available": "",
       "or-start-blank": "Oppure creala tu stesso",
       "select-layout-header": "Seleziona layout",
+      "templates-empty": "",
+      "templates-title": "",
       "title": "Nuova dashboard"
     },
     "errors": {
@@ -7238,6 +7259,7 @@
   },
   "dashboard-library": {
     "card": {
+      "attach-template-button-label": "",
       "community-badge": "Community",
       "customize-with-assistant-button": "Personalizza con Assistant",
       "customize-with-assistant-button-label": "Personalizza con Assistant: {{title}}",
@@ -7254,6 +7276,9 @@
       "edit-template-menu-item": "Modifica",
       "more-actions-label": "Altre azioni per {{title}}",
       "no-preview": "Nessuna anteprima disponibile ",
+      "preview-template-button": "",
+      "preview-template-button-label": "",
+      "provisioned-by-grafana": "",
       "use-template-button": "Usa modello",
       "use-template-button-label": "Usa modello: {{title}}",
       "view-dashboard-button": "Visualizza dashboard",
@@ -7289,6 +7314,10 @@
     "custom-dashboard-template-filters": {
       "creator-placeholder": "Filtra per creato da",
       "search-placeholder": "Cerca",
+      "sort": {
+        "asc": "",
+        "desc": ""
+      },
       "sort-placeholder": "Ordina"
     },
     "dashboard-card": {
@@ -11982,13 +12011,19 @@
       "filter-apps": "",
       "filter-dashboards": "",
       "filter-explore": "",
+      "filter-folders": "",
       "filter-label": "",
+      "filter-notebooks": "",
       "filter-pages": "",
+      "filter-playlists": "",
       "kind-alerting": "",
       "kind-app": "",
       "kind-dashboard": "",
       "kind-explore": "",
+      "kind-folder": "",
+      "kind-notebook": "",
       "kind-page": "",
+      "kind-playlist": "",
       "loading": ""
     },
     "recommendations": {
@@ -13628,7 +13663,7 @@
       "page-assistant-below": "",
       "page-floating-assistant": "",
       "page-only": "",
-      "pop-up": "",
+      "pop-out": "",
       "right": ""
     },
     "assistant-workspace": {
@@ -13932,8 +13967,8 @@
       "list-none": "Non hai ancora blocchi appunti. Creane uno invece.",
       "list-none-read-only": "Non hai ancora nessun blocco appunti e non hai l'autorizzazione per crearne uno.",
       "list-truncated": "Non vengono mostrati tutti i blocchi appunti. Restringi la ricerca per trovarne altri.",
-      "lock-time-range": "",
       "lock-time-range-description": "",
+      "lock-time-range-short": "",
       "lock-time-ranges": "",
       "lock-time-ranges-description": "",
       "note-description": "",
@@ -17642,6 +17677,16 @@
       "text_one": "",
       "text_other": ""
     },
+    "display-completion": {
+      "color": "",
+      "helper": "",
+      "icon": "",
+      "numeric": "",
+      "percent": "",
+      "prefix": "",
+      "suffix": "",
+      "text": ""
+    },
     "editor": {
       "aria-label-content": "Contenuto del testo",
       "aria-label-mode": "Modalità testo: {{mode}}",
@@ -17785,7 +17830,6 @@
     },
     "time-range": {
       "apply": "Applica intervallo di tempo",
-      "aria-role": "Selezione dell'intervallo di tempo",
       "default-title": "Intervalli di tempo",
       "dialog-label": "",
       "example-title": "Esempi di intervalli di tempo",

@@ -1550,7 +1550,8 @@
           "contact-point": "Közvetlen kapcsolattartási pont (kölcsönösen kizárt a következő házirenddel:).",
           "dashboard": "Az irányítópult, amelyhez a szabály kapcsolódik (a kanonikus érték az irányítópult UID-je).",
           "datasource": "A szabály által hivatkozott adatforrás lekérdezése (a kanonikus érték az UID).",
-          "folder": "Mappa (a kanonikus érték a mappa UID-je).",
+          "folder": "",
+          "folder-uid": "",
           "health": "Szabály állapota: rendben, nincs adat, hiba vagy ismeretlen.",
           "label": "Címke-egyeztető: címke:kulcs (létezik), címke:!kulcs (hiányzik), címke:kulcs=érték (egyenlő), címke:kulcs!=érték (nem egyenlő), címke:kulcs=~re (regex), címke:kulcs!~re (nem reguláris kifejezés). Tegyen idézőjelbe egy szóközt tartalmazó értéket: címke:csapat=\"a b\".",
           "metric": "Rögzített metrikanév (pontos egyezés).",
@@ -1571,12 +1572,14 @@
         "invalid-tokens": "Néhány szűrőt nem sikerült alkalmazni: {{tokens}}",
         "invalid-value": "Használja ezen értékek egyikét a(z) {{key}} esetében: {{values}}",
         "label": "Keresés",
+        "missing-value": "",
         "placeholder": "Keresés név alapján, vagy szűrőlekérdezés megadása...",
         "property": {
           "contact-point": "Kapcsolattartási pont",
           "dashboard": "Irányítópult",
           "datasource": "Lekérdezési adatforrás",
           "folder": "Mappa",
+          "folder-uid": "",
           "health": "Állapot",
           "labels": "Címkék",
           "metric": "Rögzített metrika",
@@ -1612,6 +1615,8 @@
         "tooltip-with-interval": ""
       },
       "shared": {
+        "folder-search-limit": "",
+        "folder-search-limit-description": "",
         "load-more": "Továbbiak betöltése",
         "load-more-error": "A további találatok betöltése nem sikerült",
         "loading-rules": "Szabályok betöltése",
@@ -1990,6 +1995,7 @@
         "routing": "Értesítési útválasztás",
         "routing-none": "Nincs kijelölt házirendfa",
         "routing-tree": "Házirendfa: {{name}}",
+        "rules-error": "",
         "rules-skipped": "A riasztási szabályok nem lesznek importálva.",
         "rules-title": "",
         "skipped": "Kihagyva",
@@ -2002,6 +2008,7 @@
         "validation-warning": "Az ütközések elkerülése érdekében bizonyos erőforrások át lesznek nevezve.",
         "will-import-config": "Ezt a konfigurációt fogja importálni",
         "will-import-rules": "Szabályokat fog importálni",
+        "yaml-datasource": "",
         "will-import-rules-count_one": "{{count}} szabályt fog importálni",
         "will-import-rules-count_other": "{{count}} szabályt fog importálni"
       },
@@ -2108,9 +2115,14 @@
         "target-datasource-required": "Először jelöljön ki egy céladatforrást",
         "target-folder": "Célmappa",
         "target-folder-desc": "Az importált szabályok tárolási mappája",
+        "yaml-empty-group": "",
         "yaml-error": "Nem sikerült feldolgozni a YAML-fájlt: {{error}}",
         "yaml-file": "Szabályok YAML-fájlja",
-        "yaml-required": "Válasszon egy fájlt"
+        "yaml-no-rules": "",
+        "yaml-required": "Válasszon egy fájlt",
+        "yaml-target-datasource": "",
+        "yaml-target-datasource-desc": "",
+        "yaml-target-datasource-required": ""
       },
       "success": "Sikeresen importálta a riasztási szabályokat a Grafana által felügyelt szabályokba.",
       "target-folder": {
@@ -5741,6 +5753,10 @@
       "label": "",
       "label-plural": ""
     },
+    "notebook": {
+      "label": "",
+      "label-plural": ""
+    },
     "playlist": {
       "label": "",
       "label-plural": ""
@@ -6254,7 +6270,10 @@
       "add-visualization-body": "Válasszon ki egy adatforrást, majd kérdezze le és jelenítse meg az adatait diagramokkal, statisztikákkal és táblázatokkal, vagy hozzon létre listákat, Markdown-elemeket és egyéb widgeteket.",
       "add-visualization-button": "Vizualizáció hozzáadása",
       "add-visualization-header": "Indítsa el az új irányítópultot vizualizáció hozzáadásával",
+      "assistant-limit-reached": "",
       "assistant-placeholder": "Ismertesse az irányítópultját. Ez megnyitja az asszisztens csevegését, és elindít egy beszélgetést.",
+      "assistant-placeholder-template": "",
+      "assistant-sign-in": "",
       "auto-grid": "Automatikus rács",
       "auto-grid-description": "A panelek átméretezése, hogy illeszkedjenek és egységes rácsokat alkossanak",
       "build-assistant": "Hozza létre az irányítópultját az Asszisztenssel",
@@ -6268,6 +6287,8 @@
       "mobile-not-available": "",
       "or-start-blank": "Vagy építse fel saját maga",
       "select-layout-header": "Elrendezés kiválasztása",
+      "templates-empty": "",
+      "templates-title": "",
       "title": "Új irányítópult"
     },
     "errors": {
@@ -7238,6 +7259,7 @@
   },
   "dashboard-library": {
     "card": {
+      "attach-template-button-label": "",
       "community-badge": "Közösség",
       "customize-with-assistant-button": "Testreszabás az Asszisztenssel",
       "customize-with-assistant-button-label": "Testreszabás az Asszisztenssel: {{title}}",
@@ -7254,6 +7276,9 @@
       "edit-template-menu-item": "Szerkesztés",
       "more-actions-label": "További műveletek a következőhöz: {{title}}",
       "no-preview": "Nincs elérhető előnézet ",
+      "preview-template-button": "",
+      "preview-template-button-label": "",
+      "provisioned-by-grafana": "",
       "use-template-button": "Sablon használata",
       "use-template-button-label": "Sablon használata: {{title}}",
       "view-dashboard-button": "Irányítópult megtekintése",
@@ -7289,6 +7314,10 @@
     "custom-dashboard-template-filters": {
       "creator-placeholder": "Szűrés a létrehozó alapján",
       "search-placeholder": "Keresés",
+      "sort": {
+        "asc": "",
+        "desc": ""
+      },
       "sort-placeholder": "Rendezés"
     },
     "dashboard-card": {
@@ -11982,13 +12011,19 @@
       "filter-apps": "Alkalmazások",
       "filter-dashboards": "Irányítópultok",
       "filter-explore": "Explore",
+      "filter-folders": "",
       "filter-label": "Csak megjelenítés",
+      "filter-notebooks": "",
       "filter-pages": "Oldalak",
+      "filter-playlists": "",
       "kind-alerting": "Riasztás",
       "kind-app": "Alkalmazás",
       "kind-dashboard": "Irányítópult",
       "kind-explore": "Explore",
+      "kind-folder": "",
+      "kind-notebook": "",
       "kind-page": "Oldal",
+      "kind-playlist": "",
       "loading": "Legutóbbi tevékenysége betöltése…"
     },
     "recommendations": {
@@ -13628,7 +13663,7 @@
       "page-assistant-below": "",
       "page-floating-assistant": "",
       "page-only": "",
-      "pop-up": "",
+      "pop-out": "",
       "right": ""
     },
     "assistant-workspace": {
@@ -13932,8 +13967,8 @@
       "list-none": "Még nincsenek jegyzetfüzetei. Hozzon létre inkább egyet.",
       "list-none-read-only": "Még nincsenek jegyzetfüzetei, és nincs engedélye létrehozni egyet.",
       "list-truncated": "Nem minden jegyzetfüzet jelenik meg. Szűkítse a keresést, hogy megtalálja a többit.",
-      "lock-time-range": "Zárolás a következőhöz: {{range}}",
       "lock-time-range-description": "Tartsa meg ezt a vizualizációt azon az ablakon, amelyben rögzítették. Feloldva a jegyzetfüzet időtartományát követi.",
+      "lock-time-range-short": "",
       "lock-time-ranges": "Panelek zárolása az általuk megjelenített időtartományokhoz",
       "lock-time-ranges-description": "Minden megjelenítést tartson meg abban az ablakban, amelyben rögzítve lett. Feloldva a jegyzetfüzet időtartományát követik.",
       "note-description": "",
@@ -17642,6 +17677,16 @@
       "text_one": "",
       "text_other": ""
     },
+    "display-completion": {
+      "color": "",
+      "helper": "",
+      "icon": "",
+      "numeric": "",
+      "percent": "",
+      "prefix": "",
+      "suffix": "",
+      "text": ""
+    },
     "editor": {
       "aria-label-content": "Szövegtartalom",
       "aria-label-mode": "Szöveges mód: {{mode}}",
@@ -17785,7 +17830,6 @@
     },
     "time-range": {
       "apply": "Időtartomány alkalmazása",
-      "aria-role": "Időtartomány kijelölése",
       "default-title": "Időtartományok",
       "dialog-label": "Relatív időtartomány-választó",
       "example-title": "Példa időtartományokra",
