@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Controller, useForm, FormProvider } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { locationUtil } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -8,9 +7,8 @@ import { Trans, t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { Alert, Button, Field, Input, LinkButton, Stack, TextArea, Switch } from '@grafana/ui';
+import { Alert, Button, Field, Input, Stack, TextArea, Switch } from '@grafana/ui';
 import {
-  type RepositoryUrLs,
   type RepositoryView,
   type ResourceWrapper,
   type Unstructured,
@@ -47,7 +45,6 @@ import { getCurrentCommitUser } from '../../utils/currentUser';
 import { appendPullRequestTitleParam } from '../../utils/pullRequestTitle';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { getRequestRef } from '../../utils/workflow';
-import { ProvisionedCommitSuccess } from '../Shared/ProvisionedCommitSuccess';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
@@ -67,17 +64,6 @@ export interface Props extends SaveProvisionedDashboardProps {
   isHeld: boolean;
 }
 
-/** The commit that landed, which the drawer reports in place of the form. */
-interface DashboardCommitOutcome {
-  /** Branch the commit landed on; absent for a direct write to the configured branch. */
-  ref?: string;
-  message: string;
-  hash?: string;
-  urls?: RepositoryUrLs;
-  /** Where "View dashboard" goes: the branch preview, or the saved dashboard. */
-  viewUrl?: string;
-}
-
 export function SaveProvisionedDashboardForm({
   defaultValues,
   dashboard,
@@ -91,10 +77,8 @@ export function SaveProvisionedDashboardForm({
   recoverToNewBranch,
   isHeld,
 }: Props) {
-  const navigate = useNavigate();
   const { isDirty } = dashboard.useState();
   const [error, setError] = useState<string | undefined>(undefined);
-  const [outcome, setOutcome] = useState<DashboardCommitOutcome | undefined>(undefined);
   // An update usually has nothing to fill in before the commit: the details step only has content
   // for a new dashboard, a copy, or a change the common options can carry. Without it the step
   // would be an empty screen behind a Next button, so such a save opens on the commit directly.
@@ -239,6 +223,21 @@ export function SaveProvisionedDashboardForm({
     }
   }, [title, path, isNew, dirtyFields.path, setValue]);
 
+  // The repository is read here, while it still resolves: after the commit a created dashboard is
+  // no longer a new save and a branch commit is not in Grafana, so the lookup comes back empty.
+  const commitSnapshot = useCallback(
+    (wrapper: ResourceWrapper) => ({
+      message,
+      hash: wrapper.hash,
+      sourceUrl: wrapper.urls?.sourceURL,
+      prUrl: appendPullRequestTitleParam(wrapper.urls?.newPullRequestURL, repository?.type, prTitle),
+      repoUrl: wrapper.urls?.repositoryURL ?? repository?.url,
+      configuredBranch: repository?.branch,
+      repoType: repository?.type,
+    }),
+    [message, prTitle, repository?.branch, repository?.type, repository?.url]
+  );
+
   const showError = (error: unknown) => {
     setError(
       getProvisionedRequestError(
@@ -268,16 +267,26 @@ export function SaveProvisionedDashboardForm({
       const model = savedSpecRef.current ?? dashboard.getSaveModel();
       const resourceData = wrapper.resource.upsert || wrapper.resource.dryRun;
       const saveResponse = createSaveResponseFromResource(resourceData);
+      // A new dashboard is committed with the title and description typed into the drawer, which the
+      // scene does not have yet. Handing them over makes the scene adopt them, so the re-baselined
+      // model matches and leaving the reported commit does not read as an unsaved edit.
+      const saveAsSource = isNew
+        ? { title: getValues('title'), description: getValues('description'), tags: dashboard.state.tags }
+        : undefined;
       // The drawer stays open to report the commit, so the save must not drop it as the overlay.
-      await dashboard.saveCompleted(model, saveResponse, defaultValues.folder?.uid, undefined, {
+      await dashboard.saveCompleted(model, saveResponse, defaultValues.folder?.uid, saveAsSource, {
         keepOverlay: true,
       });
       dashboardWatcher.clearIgnoreSave();
+      // The commit is the save. A new dashboard committed to a branch is not in Grafana yet, so the
+      // re-baselined model cannot match the scene and change detection would keep reading as an
+      // unsaved edit; leaving the reported commit must not ask to save it again.
+      dashboard.setState({ isDirty: false });
       if (pendingChanges) {
         await finishCommittingPendingChanges(dashboard, pendingChanges, { showSaved });
       }
     },
-    [dashboard, defaultValues.folder?.uid, pendingChanges]
+    [dashboard, defaultValues.folder?.uid, pendingChanges, isNew, getValues]
   );
 
   const onWriteSuccess = useCallback(
@@ -292,17 +301,17 @@ export function SaveProvisionedDashboardForm({
         editPanel: null,
       });
 
-      drawer.setState({ committed: true });
-      setOutcome({
-        message,
-        hash: wrapper.hash,
-        urls: wrapper.urls,
-        // Staying on the preview URL would keep showing the deleted branch (and its recovery
-        // banner) for a draft that was just saved, so point at the saved dashboard instead.
-        viewUrl: upsert?.metadata?.name ? CORE_KINDS.dashboard.getRoute(upsert.metadata.name) : undefined,
+      drawer.setState({
+        commitOutcome: {
+          ...commitSnapshot(wrapper),
+          action: isNew ? 'create' : 'update',
+          // Staying on the preview URL would keep showing the deleted branch (and its recovery
+          // banner) for a draft that was just saved, so point at the saved dashboard instead.
+          viewUrl: upsert?.metadata?.name ? CORE_KINDS.dashboard.getRoute(upsert.metadata.name) : undefined,
+        },
       });
     },
-    [isNew, recoverToNewBranch, handleDismiss, message, drawer]
+    [isNew, recoverToNewBranch, handleDismiss, commitSnapshot, drawer]
   );
 
   const onBranchSuccess = useCallback(
@@ -314,22 +323,22 @@ export function SaveProvisionedDashboardForm({
       wrapper: ResourceWrapper
     ) => {
       handleDismiss(wrapper, { showSaved: false });
-      drawer.setState({ committed: true });
-      setOutcome({
-        ref,
-        message,
-        hash: wrapper.hash,
-        urls: wrapper.urls,
-        // Unlike most kinds, a dashboard on a branch is viewable. A new one is reached at its own
-        // URL; an existing one needs the preview route to be rendered from that ref rather than
-        // from what is on the configured branch.
-        viewUrl:
-          isNew && upsert?.metadata?.name
-            ? CORE_KINDS.dashboard.getRoute(upsert.metadata.name)
-            : getPreviewUrl(ref, path, info.repoType),
+      drawer.setState({
+        commitOutcome: {
+          ...commitSnapshot(wrapper),
+          action: isNew ? 'create' : 'update',
+          branch: ref,
+          // Unlike most kinds, a dashboard on a branch is viewable. A new one is reached at its own
+          // URL; an existing one needs the preview route to be rendered from that ref rather than
+          // from what is on the configured branch.
+          viewUrl:
+            isNew && upsert?.metadata?.name
+              ? CORE_KINDS.dashboard.getRoute(upsert.metadata.name)
+              : getPreviewUrl(ref, path, info.repoType),
+        },
       });
     },
-    [isNew, getPreviewUrl, handleDismiss, message, drawer]
+    [isNew, getPreviewUrl, handleDismiss, commitSnapshot, drawer]
   );
   // Meta is where the drawer resolves the repository from and where the defaults (path, folder) recompute from
   const selectFolder = useCallback(
@@ -545,46 +554,6 @@ export function SaveProvisionedDashboardForm({
         })
       : t('dashboard-scene.save-provisioned-dashboard-form.commit-to-branch', 'Commit to branch');
   };
-
-  if (outcome) {
-    const prUrl = appendPullRequestTitleParam(outcome.urls?.newPullRequestURL, repository?.type, prTitle);
-    const repoUrl = outcome.urls?.repositoryURL ?? repository?.url;
-    // A plain git remote opens no pull request, so the way out to the server is the repository itself.
-    const externalUrl = prUrl || (outcome.ref ? repoUrl : undefined);
-    return (
-      <Stack direction="column" gap={3}>
-        <ProvisionedCommitSuccess
-          action={isNew ? 'create' : 'update'}
-          branch={outcome.ref}
-          configuredBranch={repository?.branch}
-          repoType={repository?.type}
-          repoUrl={repoUrl}
-          commitMessage={outcome.message}
-          commitHash={outcome.hash}
-          sourceUrl={outcome.urls?.sourceURL}
-        />
-        <Stack gap={2} wrap="wrap">
-          {externalUrl && (
-            <LinkButton href={externalUrl} target="_blank" variant="primary" icon="external-link-alt">
-              {prUrl
-                ? t('dashboard-scene.save-provisioned-dashboard-form.open-pull-request', 'Open pull request')
-                : t('dashboard-scene.save-provisioned-dashboard-form.open-repository', 'Open repository')}
-            </LinkButton>
-          )}
-          {outcome.viewUrl && (
-            <Button variant="secondary" onClick={() => navigate(outcome.viewUrl!)}>
-              <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.view-dashboard">View dashboard</Trans>
-            </Button>
-          )}
-          <Button variant="secondary" onClick={() => navigate('/dashboards')}>
-            <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.back-to-dashboards">
-              Back to all dashboards
-            </Trans>
-          </Button>
-        </Stack>
-      </Stack>
-    );
-  }
 
   return (
     <FormProvider {...methods}>

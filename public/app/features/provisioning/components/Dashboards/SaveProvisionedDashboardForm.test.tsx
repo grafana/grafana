@@ -432,20 +432,23 @@ describe('SaveProvisionedDashboardForm', () => {
     // Success path completes the save and reports the commit, offering the new dashboard as a step
     await waitFor(() => {
       expect(props.dashboard.saveCompleted).toHaveBeenCalled();
-      // The drawer reports the commit in place, so the save must not drop it as the scene overlay.
+      // The drawer reports the commit in place, so the save must not drop it as the scene overlay,
+      // and the scene has to adopt the title typed into the drawer or it reads as an unsaved edit.
       expect(props.dashboard.saveCompleted).toHaveBeenCalledWith(
         expect.anything(),
         expect.anything(),
         expect.anything(),
-        undefined,
+        expect.objectContaining({ title: 'New Dashboard', description: 'New Description' }),
         { keepOverlay: true }
       );
+      expect(props.dashboard.setState).toHaveBeenCalledWith({ isDirty: false });
     });
-    expect(await screen.findByText(/created in a branch/i)).toBeInTheDocument();
+    await waitFor(() =>
+      expect(props.drawer.setState).toHaveBeenCalledWith({
+        commitOutcome: expect.objectContaining({ action: 'create', viewUrl: '/d/new-dashboard' }),
+      })
+    );
     expect(mockNavigate).not.toHaveBeenCalled();
-
-    await user.click(screen.getByRole('button', { name: /view dashboard/i }));
-    expect(mockNavigate).toHaveBeenCalledWith('/d/new-dashboard');
     expect(dashboardWatcher.clearIgnoreSave).toHaveBeenCalled();
   });
 
@@ -1272,7 +1275,7 @@ describe('SaveProvisionedDashboardForm', () => {
       spec: { title: 'Test Dashboard' },
     });
 
-    const { user } = setup({
+    const { user, props } = setup({
       dashboard,
       isNew: false,
       recoverToNewBranch: { fileExistsOnConfiguredBranch: true },
@@ -1304,10 +1307,11 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(request.url.pathname).toContain('/repositories/test-repo/files/test-dashboard.json');
 
     await waitFor(() => expect(dashboard.saveCompleted).toHaveBeenCalled());
-    expect(await screen.findByText(/committed to main/i)).toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: /view dashboard/i }));
-    expect(mockNavigate).toHaveBeenCalledWith('/d/test-dashboard');
+    // A direct write names no branch, and points at the saved dashboard.
+    await waitFor(() => expect(props.drawer.setState).toHaveBeenCalled());
+    const outcome = jest.mocked(props.drawer.setState).mock.calls.at(-1)![0].commitOutcome;
+    expect(outcome?.branch).toBeUndefined();
+    expect(outcome?.viewUrl).toBe('/d/test-dashboard');
   });
 
   describe('pending changes', () => {
@@ -1423,7 +1427,7 @@ describe('SaveProvisionedDashboardForm', () => {
       spec: { title: 'Test Dashboard' },
     });
 
-    const { user } = setup({
+    const { user, props } = setup({
       dashboard,
       isNew: false,
       repository: {
@@ -1456,13 +1460,12 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(savedUrl!.searchParams.get('ref')).toBe('develop');
 
     // A dashboard on a branch is viewable, so the preview is offered as a step rather than forced.
-    expect(await screen.findByText(/updated in a branch/i)).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: /view dashboard/i }));
-
-    await waitFor(() => expect(mockNavigate).toHaveBeenCalled());
-    const target = mockNavigate.mock.calls.at(-1)![0] as string;
-    expect(target).toContain('/preview/');
-    expect(target).toContain('ref=develop');
+    // A dashboard on a branch is viewable, so the preview is offered rather than forced.
+    await waitFor(() => expect(props.drawer.setState).toHaveBeenCalled());
+    const outcome = jest.mocked(props.drawer.setState).mock.calls.at(-1)![0].commitOutcome;
+    expect(outcome).toEqual(expect.objectContaining({ action: 'update', branch: 'develop' }));
+    expect(outcome?.viewUrl).toContain('/preview/');
+    expect(outcome?.viewUrl).toContain('ref=develop');
   });
 
   it('should properly handle read-only state for a repository without workflows', () => {

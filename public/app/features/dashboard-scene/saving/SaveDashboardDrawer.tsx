@@ -4,6 +4,10 @@ import { Box, Drawer, EmptyState, ScrollContainer, Spinner, Stack, Tab, TabsBar 
 import { AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
 import { FolderDeadEndAlert } from 'app/features/provisioning/components/Dashboards/FolderDeadEndAlert';
+import {
+  type DashboardCommitOutcome,
+  ProvisionedDashboardOutcome,
+} from 'app/features/provisioning/components/Dashboards/ProvisionedDashboardOutcome';
 import { SaveProvisionedDashboard } from 'app/features/provisioning/components/Dashboards/SaveProvisionedDashboard';
 import { useDashboardRepositoryView } from 'app/features/provisioning/hooks/useDashboardRepositoryView';
 import { RepoViewStatus } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
@@ -41,8 +45,8 @@ interface SaveDashboardDrawerState extends SceneObjectState {
   recoverToNewBranch?: RecoverToNewBranch;
   /** Where a new save at the root of a folderless repository goes; unset means wherever the lookup says */
   saveTarget?: SaveTarget;
-  /** The provisioned save landed, so the diff would describe changes already in the commit. */
-  committed?: boolean;
+  /** Set once a provisioned save lands; the drawer then reports it instead of offering a form. */
+  commitOutcome?: DashboardCommitOutcome;
 }
 
 /** Title and description a save form shows, so a form swap can hand them to the next one */
@@ -96,7 +100,7 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
     saveRefresh,
     recoverToNewBranch,
     saveTarget,
-    committed,
+    commitOutcome,
   } = model.useState();
 
   const changeInfo = useDashboardSaveChanges(
@@ -131,7 +135,7 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
         active={!showDiff}
         onChangeTab={() => model.setState({ showDiff: false })}
       />
-      {(changesCount > 0 || showDiff) && !managedResourceCannotBeEdited && !committed && (
+      {(changesCount > 0 || showDiff) && !managedResourceCannotBeEdited && !commitOutcome && (
         <Tab
           label={t('dashboard-scene.save-dashboard-drawer.tabs.label-changes', 'Changes')}
           active={showDiff}
@@ -175,6 +179,13 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
     // dashboard: they are committed to it then, as any other change is. A copy of them is a new dashboard.
     if (!saveAsCopy && target !== 'repository' && savesPendingChanges(dashboard)) {
       return <SavePendingChangesForm dashboard={dashboard} changeInfo={changeInfo} drawer={model} />;
+    }
+
+    // A landed commit is reported from its own snapshot. Nothing may re-resolve here: the save
+    // moved the ground underneath `target`, since a created dashboard is no longer a new save and a
+    // branch commit is not in Grafana at all, so the repository lookup comes back empty.
+    if (commitOutcome) {
+      return <ProvisionedDashboardOutcome outcome={commitOutcome} />;
     }
 
     if (target === 'repository') {
