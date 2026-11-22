@@ -328,6 +328,12 @@ describe('migrateFmt', () => {
         reason: 'namespace',
       },
       {
+        desc: 'a lookup with hash arguments, since display would read row= as its own',
+        content: '{{#each data}}{{lookup fmt "cpu" row=@root.data.[1]}}{{/each}}',
+        read: 'fmt',
+        reason: 'namespace',
+      },
+      {
         desc: 'a lookup of fmt by name',
         content: '{{#each data}}{{lookup this "fmt"}}{{/each}}',
         read: '{{lookup this "fmt"}}',
