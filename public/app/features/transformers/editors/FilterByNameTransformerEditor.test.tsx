@@ -7,11 +7,13 @@ import { type FilterFieldsByNameTransformerOptions } from '@grafana/data/interna
 
 import { FilterByNameTransformerEditor } from './FilterByNameTransformerEditor';
 
+let mockInterface = 'eth0';
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getTemplateSrv: () => ({
     getVariables: () => [],
-    replace: (target: string) => target.replace('${interface}', 'eth0'),
+    replace: (target: string) => target.replace('${interface}', mockInterface),
   }),
 }));
 
@@ -137,6 +139,26 @@ describe('FilterByNameTransformerEditor', () => {
     );
 
     expect(pillStates()).toEqual(['record_time:true', 'eth0:rx:true', 'eth1:rx:false']);
+  });
+
+  it('follows a variable change in a saved pattern', () => {
+    const options = { include: { pattern: '^(record_time|${interface}:rx)$' } };
+    const fields = ['record_time', 'eth0:rx', 'eth1:rx'];
+    const { rerender } = render(
+      <FilterByNameTransformerEditor input={frameWithFields(...fields)} options={options} onChange={jest.fn()} />
+    );
+
+    try {
+      mockInterface = 'eth1';
+      // The panel runs its queries again, so the input is new but the field names are the same.
+      rerender(
+        <FilterByNameTransformerEditor input={frameWithFields(...fields)} options={options} onChange={jest.fn()} />
+      );
+
+      expect(pillStates()).toEqual(['record_time:true', 'eth0:rx:false', 'eth1:rx:true']);
+    } finally {
+      mockInterface = 'eth0';
+    }
   });
 
   it.each([

@@ -91,6 +91,8 @@ export function FilterByNameTransformerEditor({ input, options, onChange }: Filt
   // options change. Sorted so a reorder alone does not count as new names.
   const fieldNamesKey = JSON.stringify(fieldNames.map((n) => n.name).sort());
   const optionsKey = JSON.stringify(options);
+  // A dashboard variable change gives the saved pattern a new meaning without changing the options.
+  const interpolatedPattern = options.include?.pattern && getTemplateSrv().replace(options.include.pattern);
 
   // The options this editor last sent. When they come back, local state already matches them, and
   // resetting would turn "no fields selected" (saved as an empty include) back into "all fields selected".
@@ -104,17 +106,26 @@ export function FilterByNameTransformerEditor({ input, options, onChange }: Filt
   // transformation's after the list is reordered: the panel editor keys rows by position, so this
   // instance stays mounted. The regex only resets when its saved pattern changes, so an unrelated
   // options change keeps an in-progress regex that is not yet valid.
-  const [prev, setPrev] = useState({ fieldNamesKey, optionsKey, pattern: options.include?.pattern });
-  if (prev.fieldNamesKey !== fieldNamesKey || prev.optionsKey !== optionsKey) {
+  const [prev, setPrev] = useState({
+    fieldNamesKey,
+    optionsKey,
+    pattern: options.include?.pattern,
+    interpolatedPattern,
+  });
+  if (
+    prev.fieldNamesKey !== fieldNamesKey ||
+    prev.optionsKey !== optionsKey ||
+    prev.interpolatedPattern !== interpolatedPattern
+  ) {
     const isNewFieldNames = prev.fieldNamesKey !== fieldNamesKey;
     const isNewOptions = prev.optionsKey !== optionsKey && optionsKey !== sentOptionsKey;
 
-    setPrev({ fieldNamesKey, optionsKey, pattern: options.include?.pattern });
+    setPrev({ fieldNamesKey, optionsKey, pattern: options.include?.pattern, interpolatedPattern });
     if (prev.optionsKey !== optionsKey) {
       setSentOptionsKey(undefined);
     }
 
-    if (isNewFieldNames || isNewOptions) {
+    if (isNewFieldNames || isNewOptions || prev.interpolatedPattern !== interpolatedPattern) {
       setSelected(getSelectedNames(fieldNames, options));
       setByVariable(options.byVariable || false);
       setVariable(options.include?.variable);
