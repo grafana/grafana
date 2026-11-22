@@ -67,7 +67,8 @@ export {
   usePanelChromeHeaderControls,
   type PanelChromeHeaderControls,
 } from '../components/PanelChrome/PanelChromeHeaderControlsContext';
-export { type ButtonLinkProps, getButtonStyles } from '../components/Button/Button';
+export { getButtonStyles } from '../components/Button/StyledButton.styles';
+export { type ButtonLinkProps } from '../components/LinkButton/LinkButton';
 export {
   type TableSortByFieldState,
   type TableFieldOptions,
@@ -129,5 +130,5 @@ export { getInternalRadius, getExternalRadius } from '../themes/mixins';
 export { BrandingContext, useBranding, type BrandingContextValue } from '../components/Branding/BrandingContext';
 export { DRAWER_INSIDE_ATTRIBUTE } from '../components/Drawer/Drawer';
 
-// Core-only: lets Grafana core build CodeMirror editors on the same setup as @grafana/ui.
-export { loadCodeMirrorSetup } from '../components/CodeMirror/loadCodeMirrorSetup';
+export { InternalCodeMirrorEditor } from '../components/CodeMirror/CodeEditorLazy';
+export type { InternalCodeMirrorEditorProps } from '../components/CodeMirror/types';

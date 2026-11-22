@@ -3,6 +3,7 @@ package kindstore
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -10,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -517,4 +519,70 @@ func TestStoreReadContext(t *testing.T) {
 	t.Run("a namespaced kind keeps the user", func(t *testing.T) {
 		require.Same(t, user, readAs(testStore(false, false), user))
 	})
+}
+
+func TestStoreReadContextNamespaceReadable(t *testing.T) {
+	user := &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, OrgID: 3, Namespace: "org-3"}
+	anonymous := &identity.StaticRequester{Type: claims.TypeAnonymous, OrgID: 3, Namespace: "org-3"}
+	service := &identity.StaticRequester{Type: claims.TypeAccessPolicy, OrgID: 1, Namespace: "*"}
+
+	namespaceReadable := func() *Store {
+		s := testStore(false, false)
+		s.namespaceReadable = true
+		return s
+	}
+	readAs := func(s *Store, ns string, requester identity.Requester) identity.Requester {
+		ctx := identity.WithRequester(context.Background(), requester)
+		if ns != "" {
+			ctx = request.WithNamespace(ctx, ns)
+		}
+		r, err := identity.GetRequester(s.readContext(ctx))
+		require.NoError(t, err)
+		return r
+	}
+
+	for _, tt := range []struct {
+		name      string
+		namespace string
+		orgID     int64
+		caller    identity.Requester
+	}{
+		{name: "a user", namespace: "org-3", orgID: 3, caller: user},
+		{name: "an anonymous user", namespace: "org-3", orgID: 3, caller: anonymous},
+		{name: "a user in the default org", namespace: "default", orgID: 1, caller: user},
+		{name: "a user in a stack", namespace: "stacks-12", orgID: 1, caller: user},
+	} {
+		t.Run(tt.name+" reads as the service, limited to the namespace", func(t *testing.T) {
+			r := readAs(namespaceReadable(), tt.namespace, tt.caller)
+			require.True(t, identity.IsServiceIdentityAuth(r))
+			require.Equal(t, tt.namespace, r.GetNamespace())
+			require.Equal(t, tt.orgID, r.GetOrgID())
+		})
+	}
+
+	for _, ns := range []string{"", "*", "not-a-namespace"} {
+		t.Run(fmt.Sprintf("a request in namespace %q keeps the user", ns), func(t *testing.T) {
+			require.Same(t, user, readAs(namespaceReadable(), ns, user))
+		})
+	}
+
+	t.Run("an access policy keeps its own identity", func(t *testing.T) {
+		require.Same(t, service, readAs(namespaceReadable(), "org-3", service))
+	})
+}
+
+func TestNewNamespaceReadable(t *testing.T) {
+	gvk := schema.GroupVersionKind{Group: "test.grafana.app", Version: "v0alpha1", Kind: "TestKind"}
+	newStore := func(t *testing.T, scope string) *Store {
+		t.Helper()
+		opts, _ := newStoreOpts(t, gvk)
+		opts.NamespaceReadable = true
+		kind := app.ManifestVersionKind{Kind: gvk.Kind, Plural: "TestKinds", Resource: "testkinds", Scope: scope}
+		s, err := New(gvk, kind, nil, nil, opts, nil)
+		require.NoError(t, err)
+		return s
+	}
+
+	require.True(t, newStore(t, "Namespaced").namespaceReadable)
+	require.False(t, newStore(t, ClusterScope).namespaceReadable, "ignored for cluster-scoped kinds")
 }

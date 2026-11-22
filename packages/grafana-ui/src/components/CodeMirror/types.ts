@@ -227,3 +227,8 @@ interface ReadOnlyProps {
 }
 
 export type CodeMirrorEditorProps = (EditableProps | ReadOnlyProps) & CodeMirrorEditorStaticProps;
+
+export type BaseCodeEditorProps = (EditableProps | ReadOnlyProps) &
+  Omit<CodeMirrorEditorStaticProps, 'loadingFallback'>;
+
+export type InternalCodeMirrorEditorProps = CodeMirrorEditorProps;
