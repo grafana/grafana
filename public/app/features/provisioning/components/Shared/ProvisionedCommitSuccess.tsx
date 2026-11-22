@@ -30,8 +30,8 @@ interface Props {
  * What the drawer shows once the commit lands: where the change went, and where to go next.
  *
  * The two states differ in consequence, not just in wording — a commit on the configured branch is
- * live for the whole organization once the sync runs, while a commit on another branch is visible
- * only to its author until the pull request merges.
+ * dual-written, so it is already live for the whole organization, while a commit on another branch
+ * exists only on that branch until the pull request merges.
  */
 export function ProvisionedCommitSuccess({
   action,
@@ -65,7 +65,7 @@ export function ProvisionedCommitSuccess({
           <Text variant="bodySmall" color="secondary">
             {isDirect ? (
               <Trans i18nKey="provisioning.commit-success.direct-body">
-                Everyone in your organization will see this version once the sync runs.
+                This version is already live in Grafana for everyone in your organization.
               </Trans>
             ) : (
               <Trans i18nKey="provisioning.commit-success.branch-body">

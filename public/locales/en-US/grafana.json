@@ -8168,6 +8168,7 @@
     },
     "save-provisioned-dashboard-form": {
       "advanced-options": "Advanced options",
+      "back-to-dashboards": "Back to all dashboards",
       "cancel": "Cancel",
       "cancel-folder": "Cancel",
       "cannot-be-saved": "This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy the JSON or save it to a file below, then you can update your dashboard in the provisioning source.",
@@ -8189,6 +8190,7 @@
       "label-target-folder": "Target folder",
       "label-title": "Title",
       "new-folder": "New folder",
+      "open-pull-request": "Open pull request",
       "repo-path-required": "Missing required fields for saving",
       "save": "Save",
       "save-json-to-file": "Save JSON to file",
@@ -8196,7 +8198,8 @@
       "see-docs": "See <2>documentation</2> for more information about provisioning.",
       "title-required": "Dashboard title is required",
       "title-same-as-folder": "Dashboard name cannot be the same as the folder name",
-      "title-validation-failed": "Dashboard title validation failed."
+      "title-validation-failed": "Dashboard title validation failed.",
+      "view-dashboard": "View dashboard"
     },
     "scenes-new-rule-from-panel-button": {
       "body-no-alerting-capable-query-found": "Cannot create alerts from this panel because no query to an alerting capable datasource is found.",
@@ -14766,7 +14769,7 @@
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Add a note to describe your changes (optional)",
       "commit-target-branch": "Once it's pushed, you'll open the pull request into {{branch}} from {{provider}}.",
-      "commit-target-direct": "This commit goes straight to {{branch}}, so everyone in your organization gets it once the sync runs.",
+      "commit-target-direct": "This commit goes straight to {{branch}} and applies in Grafana right away, for everyone in your organization.",
       "custom-value-description": "Press Enter to create new branch",
       "description-branch": "Select an existing branch or enter a new branch name to create a branch",
       "description-branch-enforced": "The branch name is set by the repository's branch naming template and can't be changed",
@@ -14906,7 +14909,7 @@
       "branch-body": "The rest of the Grafana users in your organization will still see the current version saved to the configured branch until this branch is merged.",
       "committed-to": "Committed to {{branch}}.",
       "configured-branch": "configured branch",
-      "direct-body": "Everyone in your organization will see this version once the sync runs.",
+      "direct-body": "This version is already live in Grafana for everyone in your organization.",
       "last-commit": "Last commit",
       "merges-into": "Merges into",
       "open-branch": "Open {{branch}} in the repository",

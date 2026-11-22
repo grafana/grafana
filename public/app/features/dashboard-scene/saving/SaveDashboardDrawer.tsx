@@ -42,6 +42,8 @@ interface SaveDashboardDrawerState extends SceneObjectState {
   recoverToNewBranch?: RecoverToNewBranch;
   /** Where a new save at the root of a folderless repository goes; unset means wherever the lookup says */
   saveTarget?: SaveTarget;
+  /** The provisioned save landed and the drawer is reporting it, so the save-time controls are done. */
+  committed?: boolean;
 }
 
 /** Title and description a save form shows, so a form swap can hand them to the next one */
@@ -95,6 +97,7 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
     saveRefresh,
     recoverToNewBranch,
     saveTarget,
+    committed,
   } = model.useState();
 
   const changeInfo = useDashboardSaveChanges(
@@ -129,7 +132,7 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
         active={!showDiff}
         onChangeTab={() => model.setState({ showDiff: false })}
       />
-      {(changesCount > 0 || showDiff) && !managedResourceCannotBeEdited && (
+      {(changesCount > 0 || showDiff) && !managedResourceCannotBeEdited && !committed && (
         <Tab
           label={t('dashboard-scene.save-dashboard-drawer.tabs.label-changes', 'Changes')}
           active={showDiff}
@@ -218,7 +221,7 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
             <Stack direction="column" gap={2}>
               {isNewSave && <FolderDeadEndAlert {...view.lookup} />}
               {renderForm()}
-              {view.canChooseTarget && (
+              {view.canChooseTarget && !committed && (
                 <SaveTargetSwitch
                   resource="dashboard"
                   target={target}

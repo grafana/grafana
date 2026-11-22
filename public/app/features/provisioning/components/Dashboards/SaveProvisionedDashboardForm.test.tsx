@@ -143,6 +143,7 @@ function setup(props: Partial<Props> = {}) {
     } as unknown as DashboardScene,
     drawer: {
       onClose: jest.fn(),
+      setState: jest.fn(),
     } as unknown as SaveDashboardDrawer,
     changeInfo: {
       changedSaveModel: mockDashboard,
@@ -366,10 +367,14 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(request.url.searchParams.get('message')).toBe('Initial commit');
     expect(request.body).toEqual(newDashboard);
 
-    // Success path completes the save and navigates to the newly created dashboard
+    // Success path completes the save and reports the commit, offering the new dashboard as a step
     await waitFor(() => {
       expect(props.dashboard.saveCompleted).toHaveBeenCalled();
     });
+    expect(await screen.findByText(/created in a branch/i)).toBeInTheDocument();
+    expect(mockNavigate).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: /view dashboard/i }));
     expect(mockNavigate).toHaveBeenCalledWith('/d/new-dashboard/new-dashboard');
     expect(dashboardWatcher.clearIgnoreSave).toHaveBeenCalled();
   });
@@ -1210,10 +1215,13 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(request.url.pathname).toContain('/repositories/test-repo/files/test-dashboard.json');
 
     await waitFor(() => expect(dashboard.saveCompleted).toHaveBeenCalled());
+    expect(await screen.findByText(/committed to main/i)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /view dashboard/i }));
     expect(mockNavigate).toHaveBeenCalledWith('/d/test-dashboard');
   });
 
-  it('sends the ref and lands on the preview when saving to an existing non-configured branch', async () => {
+  it('sends the ref and offers the preview when saving to an existing non-configured branch', async () => {
     let savedUrl: URL | null = null;
     const handler = async ({ request }: { request: Request }) => {
       savedUrl = new URL(request.url);
@@ -1272,6 +1280,10 @@ describe('SaveProvisionedDashboardForm', () => {
 
     await waitFor(() => expect(savedUrl).not.toBeNull());
     expect(savedUrl!.searchParams.get('ref')).toBe('develop');
+
+    // A dashboard on a branch is viewable, so the preview is offered as a step rather than forced.
+    expect(await screen.findByText(/updated in a branch/i)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /view dashboard/i }));
 
     await waitFor(() => expect(mockNavigate).toHaveBeenCalled());
     const target = mockNavigate.mock.calls.at(-1)![0] as string;

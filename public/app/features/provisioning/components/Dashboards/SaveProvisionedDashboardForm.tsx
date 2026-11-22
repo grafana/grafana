@@ -8,8 +8,9 @@ import { Trans, t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { Button, Field, Input, Stack, TextArea, Switch } from '@grafana/ui';
+import { Button, Field, Input, LinkButton, Stack, TextArea, Switch } from '@grafana/ui';
 import {
+  type RepositoryUrLs,
   type RepositoryView,
   type ResourceWrapper,
   type Unstructured,
@@ -37,8 +38,10 @@ import { useCommitTarget } from '../../hooks/useCommitTarget';
 import { type ProvisionedDashboardFormData } from '../../types/form';
 import { type CommitTemplateVars, getResourceCommitMessage } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
+import { appendPullRequestTitleParam } from '../../utils/pullRequestTitle';
 import { buildResourceBranchRedirectUrl, getSavedDashboardPath } from '../../utils/redirect';
 import { getRequestRef } from '../../utils/workflow';
+import { ProvisionedCommitSuccess } from '../Shared/ProvisionedCommitSuccess';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
@@ -58,6 +61,17 @@ export interface Props extends SaveProvisionedDashboardProps {
   isHeld: boolean;
 }
 
+/** The commit that landed, which the drawer reports in place of the form. */
+interface DashboardCommitOutcome {
+  /** Branch the commit landed on; absent for a direct write to the configured branch. */
+  ref?: string;
+  message: string;
+  hash?: string;
+  urls?: RepositoryUrLs;
+  /** Where "View dashboard" goes: the branch preview, or the saved dashboard. */
+  viewUrl?: string;
+}
+
 export function SaveProvisionedDashboardForm({
   defaultValues,
   dashboard,
@@ -74,6 +88,7 @@ export function SaveProvisionedDashboardForm({
   const navigate = useNavigate();
   const { isDirty } = dashboard.useState();
   const [error, setError] = useState<string | undefined>(undefined);
+  const [outcome, setOutcome] = useState<DashboardCommitOutcome | undefined>(undefined);
   const [newFolderName, setNewFolderName] = useState('');
   const [folderError, setFolderError] = useState<string | undefined>(undefined);
   const [showNewFolderForm, setShowNewFolderForm] = useState(false);
@@ -208,25 +223,16 @@ export function SaveProvisionedDashboardForm({
     );
   };
 
-  const handleNewDashboard = useCallback(
-    (upsert: Resource<Dashboard>) => {
-      navigate(getSavedDashboardPath(upsert.metadata.name, upsert.spec.title));
-    },
-    [navigate]
-  );
-
-  const navigateToPreview = useCallback(
-    (ref: string, path: string, repoType?: string) => {
-      const url = buildResourceBranchRedirectUrl({
+  const getPreviewUrl = useCallback(
+    (ref: string, path: string, repoType?: string) =>
+      buildResourceBranchRedirectUrl({
         baseUrl: `${PROVISIONING_PREVIEW_URL}/${defaultValues.repo}/preview/${path}`,
         paramName: 'ref',
         paramValue: ref,
         repoType,
         prTitle,
-      });
-      navigate(url);
-    },
-    [navigate, defaultValues.repo, prTitle]
+      }),
+    [defaultValues.repo, prTitle]
   );
 
   const handleDismiss = useCallback(
@@ -246,23 +252,29 @@ export function SaveProvisionedDashboardForm({
   const onWriteSuccess = useCallback(
     (upsert: Resource<Dashboard>, wrapper: ResourceWrapper) => {
       handleDismiss(wrapper);
-      if (isNew && upsert?.metadata.name) {
-        handleNewDashboard(upsert);
-      }
 
-      // Staying on the preview URL would keep showing the deleted branch (and its recovery banner)
-      // for a draft that was just saved, so go to the saved dashboard instead.
-      if (recoverToNewBranch && upsert?.metadata?.name) {
-        navigate(`/d/${upsert.metadata.name}`);
-        return;
-      }
-
+      // The drawer stays open to report the commit, so the panel-edit params are cleared here
+      // rather than by navigating away.
       locationService.partial({
         viewPanel: null,
         editPanel: null,
       });
+
+      drawer.setState({ committed: true });
+      setOutcome({
+        message,
+        hash: wrapper.hash,
+        urls: wrapper.urls,
+        // Staying on the preview URL would keep showing the deleted branch (and its recovery
+        // banner) for a draft that was just saved, so point at the saved dashboard instead.
+        viewUrl: upsert?.metadata?.name
+          ? recoverToNewBranch
+            ? `/d/${upsert.metadata.name}`
+            : getSavedDashboardPath(upsert.metadata.name, upsert.spec.title)
+          : undefined,
+      });
     },
-    [isNew, recoverToNewBranch, navigate, handleDismiss, handleNewDashboard]
+    [recoverToNewBranch, handleDismiss, message, drawer]
   );
 
   const onBranchSuccess = useCallback(
@@ -274,13 +286,22 @@ export function SaveProvisionedDashboardForm({
       wrapper: ResourceWrapper
     ) => {
       handleDismiss(wrapper);
-      if (isNew && upsert?.metadata?.name) {
-        handleNewDashboard(upsert);
-      } else {
-        navigateToPreview(ref, path, info.repoType);
-      }
+      drawer.setState({ committed: true });
+      setOutcome({
+        ref,
+        message,
+        hash: wrapper.hash,
+        urls: wrapper.urls,
+        // Unlike most kinds, a dashboard on a branch is viewable. A new one is reached at its own
+        // URL; an existing one needs the preview route to be rendered from that ref rather than
+        // from what is on the configured branch.
+        viewUrl:
+          isNew && upsert?.metadata?.name
+            ? getSavedDashboardPath(upsert.metadata.name, upsert.spec.title)
+            : getPreviewUrl(ref, path, info.repoType),
+      });
     },
-    [isNew, navigateToPreview, handleNewDashboard, handleDismiss]
+    [isNew, getPreviewUrl, handleDismiss, message, drawer]
   );
   // Meta is where the drawer resolves the repository from and where the defaults (path, folder) recompute from
   const selectFolder = useCallback(
@@ -446,6 +467,43 @@ export function SaveProvisionedDashboardForm({
 
   // Creating a folder from here writes it to the configured branch, which the repository must allow.
   const isDirectWrite = canPushToConfiguredBranch && workflow === 'write';
+
+  if (outcome) {
+    const prUrl = appendPullRequestTitleParam(outcome.urls?.newPullRequestURL, repository?.type, prTitle);
+    return (
+      <Stack direction="column" gap={3}>
+        <ProvisionedCommitSuccess
+          action={isNew ? 'create' : 'update'}
+          branch={outcome.ref}
+          configuredBranch={repository?.branch}
+          repoType={repository?.type}
+          repoUrl={outcome.urls?.repositoryURL ?? repository?.url}
+          commitMessage={outcome.message}
+          commitHash={outcome.hash}
+          sourceUrl={outcome.urls?.sourceURL}
+        />
+        <Stack gap={2} wrap="wrap">
+          {prUrl && (
+            <LinkButton href={prUrl} target="_blank" variant="primary" icon="external-link-alt">
+              <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.open-pull-request">
+                Open pull request
+              </Trans>
+            </LinkButton>
+          )}
+          {outcome.viewUrl && (
+            <Button variant="secondary" onClick={() => navigate(outcome.viewUrl!)}>
+              <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.view-dashboard">View dashboard</Trans>
+            </Button>
+          )}
+          <Button variant="secondary" onClick={() => navigate('/dashboards')}>
+            <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.back-to-dashboards">
+              Back to all dashboards
+            </Trans>
+          </Button>
+        </Stack>
+      </Stack>
+    );
+  }
 
   return (
     <FormProvider {...methods}>

@@ -235,8 +235,8 @@ function FormContent({
     if (isDelete) {
       return t('provisioning.save-resource.button-delete', 'Delete');
     }
-    // Naming the branch makes the consequence of a direct commit explicit: it is live for everyone
-    // once the sync runs, where a branch commit is not.
+    // Naming the branch makes the consequence of a direct commit explicit: it is dual-written, so
+    // it is live for everyone immediately, where a branch commit is not.
     return isDirectWrite && repository?.branch
       ? t('provisioning.save-resource.button-commit-to-configured', 'Commit to {{branch}}', {
           branch: repository.branch,

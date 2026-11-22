@@ -5,11 +5,11 @@ import { ProvisionedCommitSuccess } from './ProvisionedCommitSuccess';
 const repoUrl = 'https://github.com/your-org/your-repo';
 
 describe('ProvisionedCommitSuccess', () => {
-  it('reports a direct commit as live for the organization once the sync runs', () => {
+  it('reports a direct commit as already live for the organization', () => {
     render(<ProvisionedCommitSuccess action="update" configuredBranch="main" repoType="github" repoUrl={repoUrl} />);
 
     expect(screen.getByText('Committed to main.')).toBeInTheDocument();
-    expect(screen.getByText(/everyone in your organization will see this version/i)).toBeInTheDocument();
+    expect(screen.getByText(/already live in Grafana for everyone in your organization/i)).toBeInTheDocument();
     // A direct commit has no branch to compare, so neither branch row is offered.
     expect(screen.queryByText('Your branch')).not.toBeInTheDocument();
   });
