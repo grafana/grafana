@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-app-sdk/logging"
-	"k8s.io/client-go/tools/cache"
 
 	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
@@ -91,19 +90,20 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 		nats.Enabled(controllerCfg.natsSubscriber),
 	)
 
-	reg, err := connSource.AddEventHandler(connController.EventHandler())
+	app, err := newOperatorApp("provisioning-connection", logger, watchedKind{
+		info:    apisprovisioning.ConnectionResourceInfo,
+		source:  connSource,
+		handler: connController.EventHandler(),
+	})
 	if err != nil {
-		return fmt.Errorf("failed to add connection event handler: %w", err)
+		return err
 	}
-	go connSource.Run(ctx.Done())
-
-	if !cache.WaitForCacheSync(ctx.Done(), reg.HasSynced) {
-		return fmt.Errorf("connection controller informer cache sync failed")
-	}
-
-	connController.Run(ctx, controllerCfg.NumberOfWorkers(), func() {
-		logger.Info("connection operator is ready")
-		deps.HealthNotifier.SetReady()
-	}, func() {})
-	return nil
+	app.AddSyncedRunnable(func(ctx context.Context) error {
+		connController.Run(ctx, controllerCfg.NumberOfWorkers(), func() {
+			logger.Info("connection operator is ready")
+			deps.HealthNotifier.SetReady()
+		}, func() {})
+		return nil
+	})
+	return app.Run(ctx, deps.Registerer, controllerCfg.DrainTimeout()+appShutdownGrace, logger)
 }

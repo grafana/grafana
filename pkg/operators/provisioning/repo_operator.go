@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"k8s.io/client-go/tools/cache"
 
 	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/nats"
@@ -135,22 +134,23 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (r
 		controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30*24*time.Hour),
 		nats.Enabled(controllerCfg.natsSubscriber),
 	)
-	reg, err := repoSource.AddEventHandler(controller.EventHandler())
-	if err != nil {
-		return fmt.Errorf("failed to add repository event handler: %w", err)
-	}
-	go repoSource.Run(ctx.Done())
-
-	if !cache.WaitForCacheSync(ctx.Done(), reg.HasSynced) {
-		return fmt.Errorf("failed to sync repository informer cache")
-	}
-
-	controller.Run(ctx, controllerCfg.NumberOfWorkers(), func() {
-		logger.Info("repository operator is ready")
-		deps.HealthNotifier.SetReady()
-	}, func() {
-		logger.Info("repository operator shutting down")
-		deps.HealthNotifier.SetNotReady()
+	app, err := newOperatorApp("provisioning-repo", logger, watchedKind{
+		info:    apisprovisioning.RepositoryResourceInfo,
+		source:  repoSource,
+		handler: controller.EventHandler(),
 	})
-	return nil
+	if err != nil {
+		return err
+	}
+	app.AddSyncedRunnable(func(ctx context.Context) error {
+		controller.Run(ctx, controllerCfg.NumberOfWorkers(), func() {
+			logger.Info("repository operator is ready")
+			deps.HealthNotifier.SetReady()
+		}, func() {
+			logger.Info("repository operator shutting down")
+			deps.HealthNotifier.SetNotReady()
+		})
+		return nil
+	})
+	return app.Run(ctx, deps.Registerer, controllerCfg.DrainTimeout()+appShutdownGrace, logger)
 }

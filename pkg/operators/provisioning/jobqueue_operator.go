@@ -6,18 +6,17 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-app-sdk/logging"
+	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/operators/internal/supervision"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
-	"k8s.io/client-go/tools/cache"
 )
 
 // jobClaimExpiry is how long a job claim is considered valid before the cleanup
@@ -99,50 +98,33 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 	// The jobs informer resyncs on job_interval (default 30s) rather than the
 	// controllers' resync_interval, preserving the job pickup cadence (and config
 	// key) of the polling design this replaced.
-	jobInformer := informer.NewJobDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.jobInterval, deps.Registerer)
-	reg, err := jobInformer.AddEventHandler(driver.EventHandler())
+	app, err := newOperatorApp("provisioning-jobqueue", logger, watchedKind{
+		info:    apisprovisioning.JobResourceInfo,
+		source:  informer.NewJobDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.jobInterval, deps.Registerer),
+		handler: driver.EventHandler(),
+	})
 	if err != nil {
-		return fmt.Errorf("failed to add job event handler: %w", err)
+		return err
 	}
-
-	var wg sync.WaitGroup
-
-	wg.Go(func() {
+	app.AddRunnable(runnableFunc(func(ctx context.Context) error {
 		logger.Info("job queue controller started")
 		if err := driver.Run(ctx); err != nil {
 			logger.Error("job driver failed", "error", err)
 		}
 		logger.Info("job driver stopped")
+		return nil
+	}))
+	app.AddSyncedRunnable(func(ctx context.Context) error {
+		logger.Info("job queue operator is ready")
+		deps.HealthNotifier.SetReady()
+		context.AfterFunc(ctx, deps.HealthNotifier.SetNotReady)
+		return nil
 	})
 
-	// Start the informer and wait for its cache to sync.
-	go jobInformer.Run(ctx.Done())
-
-	if !cache.WaitForCacheSync(ctx.Done(), reg.HasSynced) {
-		return fmt.Errorf("failed to sync job informer cache")
+	if err := app.Run(ctx, deps.Registerer, controllerCfg.maxJobTimeout+appShutdownGrace, logger); err != nil {
+		return err
 	}
-
-	logger.Info("job queue operator is ready")
-	deps.HealthNotifier.SetReady()
-
-	<-ctx.Done()
-	deps.HealthNotifier.SetNotReady()
-	logger.Info("shutdown signal received, waiting for goroutines to finish")
-
-	shutdownTimeout := controllerCfg.maxJobTimeout + 30*time.Second
-	done := make(chan struct{})
-	go func() {
-		wg.Wait()
-		close(done)
-	}()
-
-	select {
-	case <-done:
-		logger.Info("job queue operator shutdown complete")
-	case <-time.After(shutdownTimeout):
-		logger.Warn("shutdown timeout exceeded, forcing exit", "timeout", shutdownTimeout)
-	}
-
+	logger.Info("job queue operator shutdown complete")
 	return nil
 }
 

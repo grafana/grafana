@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -40,16 +40,17 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 	// runs when a history expiration is configured; the expired-job reaper below
 	// runs regardless. The source choice reads the NATS config flag directly, not a
 	// subscriber: this operator has no NATS consumer role and holds no subscriber.
-	var historySource informer.DeltaSource
+	var kinds []watchedKind
 	if controllerCfg.historyExpiration > 0 {
 		historyJobController := controller.NewHistoryJobController(
 			provisioningClient.ProvisioningV0alpha1(),
 			controllerCfg.historyExpiration,
 		)
-		historySource = informer.NewHistoricJobDeltaSource(controllerCfg.Settings.NATS.Enabled, provisioningClient, controllerCfg.historyExpiration)
-		if _, err := historySource.AddEventHandler(historyJobController.EventHandler()); err != nil {
-			return fmt.Errorf("add history job event handler: %w", err)
-		}
+		kinds = append(kinds, watchedKind{
+			info:    apisprovisioning.HistoricJobResourceInfo,
+			source:  informer.NewHistoricJobDeltaSource(controllerCfg.Settings.NATS.Enabled, provisioningClient, controllerCfg.historyExpiration),
+			handler: historyJobController.EventHandler(),
+		})
 		logger.Info("history cleanup enabled", "expiration", controllerCfg.historyExpiration.String())
 	} else {
 		logger.Info("history cleanup disabled", "history_expiration", controllerCfg.historyExpiration.String())
@@ -70,47 +71,34 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 		return fmt.Errorf("create API client job store: %w", err)
 	}
 
-	var wg sync.WaitGroup
-
-	wg.Go(func() {
-		jobCleanupController := jobs.NewJobCleanupController(
-			jobStore,
-			jobHistoryWriter,
-			controllerCfg.cleanupInterval,
-		)
+	// Historic-job cleanup runs off the source's re-lists, so readiness does not
+	// wait for its first pass.
+	app, err := newOperatorApp("provisioning-jobs", logger, kinds...)
+	if err != nil {
+		return err
+	}
+	jobCleanupController := jobs.NewJobCleanupController(
+		jobStore,
+		jobHistoryWriter,
+		controllerCfg.cleanupInterval,
+	)
+	app.AddRunnable(runnableFunc(func(ctx context.Context) error {
 		if err := jobCleanupController.Run(ctx); err != nil {
 			logger.Error("job cleanup controller failed", "error", err)
 		}
 		logger.Info("job cleanup controller stopped")
-	})
-
-	// Start the historic-job source when history cleanup is enabled; cleanup runs
-	// off its re-lists.
-	if historySource != nil {
-		go historySource.Run(ctx.Done())
-	}
+		return nil
+	}))
 
 	logger.Info("jobs operator is ready")
 	deps.HealthNotifier.SetReady()
+	context.AfterFunc(ctx, deps.HealthNotifier.SetNotReady)
+	defer deps.HealthNotifier.SetNotReady()
 
-	<-ctx.Done()
-	deps.HealthNotifier.SetNotReady()
-	logger.Info("shutdown signal received, waiting for goroutines to finish")
-
-	shutdownTimeout := 30 * time.Second
-	done := make(chan struct{})
-	go func() {
-		wg.Wait()
-		close(done)
-	}()
-
-	select {
-	case <-done:
-		logger.Info("jobs operator shutdown complete")
-	case <-time.After(shutdownTimeout):
-		logger.Warn("shutdown timeout exceeded, forcing exit", "timeout", shutdownTimeout)
+	if err := app.Run(ctx, deps.Registerer, appShutdownGrace, logger); err != nil {
+		return err
 	}
-
+	logger.Info("jobs operator shutdown complete")
 	return nil
 }
 
