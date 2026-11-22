@@ -50,11 +50,6 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 		return fmt.Errorf("failed to start NATS subscriber: %w", err)
 	}
 
-	tracer, err := controllerCfg.Tracer()
-	if err != nil {
-		return fmt.Errorf("failed to provide tracing service: %w", err)
-	}
-
 	provisioningClient, err := controllerCfg.ProvisioningClient()
 	if err != nil {
 		return fmt.Errorf("failed to create provisioning client: %w", err)
@@ -66,21 +61,7 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 		return fmt.Errorf("create API client job store: %w", err)
 	}
 
-	driver, err := buildDriver(
-		deps.Config,
-		&controllerCfg.ControllerConfig,
-		deps.Registerer,
-		tracer,
-		driverConfig{
-			concurrentDrivers:    controllerCfg.concurrentDrivers,
-			maxJobTimeout:        controllerCfg.maxJobTimeout,
-			jobInterval:          controllerCfg.jobInterval,
-			leaseRenewalInterval: controllerCfg.leaseRenewalInterval,
-			maxSyncWorkers:       controllerCfg.maxSyncWorkers,
-		},
-		jobStore,
-		jobHistoryWriter,
-	)
+	driver, err := buildDriver(controllerCfg, deps.Registerer, jobStore, jobHistoryWriter)
 	if err != nil {
 		return fmt.Errorf("build driver: %w", err)
 	}
