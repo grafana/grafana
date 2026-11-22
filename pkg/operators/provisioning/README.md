@@ -21,6 +21,9 @@ The operators and the API server also build the same controllers from shared cod
 - `controllerapp.LogErrors` runs the job driver and the expired-job cleanup as app runnables.
 - `jobs/workers.New` builds the built-in job workers. Each deployment appends its own extras: the pull request worker
   here, and the injected extra workers in the API server.
+- `controller/keyqueue` runs the keyed worker loop of the repository and connection controllers: deduplicating queue,
+  retries, processed and queue-lag metrics, and drain on shutdown. Each controller supplies only its process function
+  and which errors are worth retrying. The job driver keeps its own loop because jobs are claimed and leased.
 - `jobs.ClaimExpiry` and `jobs.DefaultLeaseRenewalInterval` are the claim timings both deployments use.
 
 ## Jobs Controller

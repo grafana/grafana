@@ -4,18 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/tools/cache"
-	"k8s.io/client-go/util/workqueue"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -24,6 +20,7 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller/keyqueue"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
@@ -58,19 +55,8 @@ type ConnectionController struct {
 	tokenMetrics      *connectionTokenMetrics
 	tracer            tracing.Tracer
 
-	// processed classifies each delivery (encapsulating the NATS/apiserver
-	// backend) and counts the start of each reconcile by what enqueued it.
-	processed  *usinformer.ProcessedMetrics
-	triggersMu sync.Mutex
-	triggers   map[string]usinformer.ProcessTrigger
-
-	// To allow injection for testing.
-	processFn func(ctx context.Context, key string) error
-
-	queue          workqueue.TypedRateLimitingInterface[string]
-	queueLag       queueLagTracker
+	workers        *keyqueue.Workers
 	resyncInterval time.Duration
-	drainTimeout   time.Duration
 }
 
 // NewConnectionController creates a new ConnectionController.
@@ -88,101 +74,32 @@ func NewConnectionController(
 	cc := &ConnectionController{
 		conns:             conns,
 		tracer:            tracer,
-		processed:         usinformer.NewProcessedMetrics(registry, "connections", natsBacked),
-		triggers:          make(map[string]usinformer.ProcessTrigger),
 		statusPatcher:     statusPatcher,
 		healthChecker:     healthChecker,
 		connectionFactory: connectionFactory,
 		tokenMetrics:      registerConnectionTokenMetrics(registry),
 		logger:            logging.DefaultLogger.With("logger", connectionLoggerName),
 		resyncInterval:    resyncInterval,
-		drainTimeout:      drainTimeout,
 	}
-
-	cc.queue = newWorkerQueue(&cc.queueLag, workqueue.DefaultTypedControllerRateLimiter[string](), workqueue.TypedQueueConfig[string]{
-		Name:            "provisioningConnectionController",
-		MetricsProvider: newWorkerQueueWaitProvider(registry, "connection"),
+	cc.workers = keyqueue.New(keyqueue.Config{
+		Controller:   "ConnectionController",
+		Kind:         "connection",
+		Logger:       cc.logger,
+		Registry:     registry,
+		Processed:    usinformer.NewProcessedMetrics(registry, "connections", natsBacked),
+		MaxAttempts:  connectionMaxAttempts,
+		Retryable:    apierrors.IsServiceUnavailable,
+		DrainTimeout: drainTimeout,
+	}, func(ctx context.Context, key string) ([]any, error) {
+		return nil, cc.process(ctx, key)
 	})
-	cc.processFn = cc.process
-
-	// Expose the local work-queue depth as a scrape-time gauge. The queue is
-	// per-replica, so Prometheus target labels (pod/instance) distinguish replicas;
-	// no metric label is needed. A GaugeFunc reads the authoritative Len() at scrape
-	// time, so it cannot drift the way manual inc/dec would.
-	registry.MustRegister(prometheus.NewGaugeFunc(
-		prometheus.GaugeOpts{
-			Name: "grafana_provisioning_connection_worker_queue_size",
-			Help: "Number of connection keys waiting in this replica's local work queue",
-		},
-		func() float64 { return float64(cc.queue.Len()) },
-	))
-
-	// Queue lag: age of the oldest unfinished key. Unlike the pickup-observed
-	// wait histogram it climbs live, so a stalled queue or a saturated worker
-	// pool shows up even after the queue has drained.
-	registry.MustRegister(prometheus.NewGaugeFunc(
-		prometheus.GaugeOpts{
-			Name: "grafana_provisioning_connection_worker_queue_lag_seconds",
-			Help: "Age in seconds of the oldest unfinished connection queue entry (waiting or in flight) in this replica, measured from that entry's enqueue, excluding retry backoff.",
-		},
-		func() float64 { return cc.queueLag.lag().Seconds() },
-	))
-
 	return cc
 }
 
 // EventHandler returns the informer event handlers for the controller. Register
 // it with the Connection informer to enqueue connections on add and update.
 func (cc *ConnectionController) EventHandler() cache.ResourceEventHandlerDetailedFuncs {
-	return cache.ResourceEventHandlerDetailedFuncs{
-		AddFunc: func(obj interface{}, isInInitialList bool) {
-			cc.enqueue(obj, cc.processed.ClassifyAdd(resourceVersion(obj), isInInitialList))
-		},
-		UpdateFunc: func(oldObj, newObj interface{}) {
-			cc.enqueue(newObj, cc.processed.ClassifyUpdate(resourceVersion(oldObj), resourceVersion(newObj)))
-		},
-	}
-}
-
-func (cc *ConnectionController) enqueue(obj interface{}, trigger usinformer.ProcessTrigger) {
-	key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
-	if err != nil {
-		cc.logger.Error("failed to get key for object", "error", err)
-		return
-	}
-	// Store the attribution before a worker can pick up the key.
-	cc.setTrigger(key, trigger)
-	cc.queue.Add(key)
-	namespace, name, _ := cache.SplitMetaNamespaceKey(key)
-	// Log lag at enqueue so backlog is visible on add, not only at pickup.
-	cc.logger.Info("ConnectionController enqueued key",
-		"work_key", key, "namespace", namespace, "connection", name,
-		"queue_len", cc.queue.Len(), "queue_lag", cc.queueLag.lag())
-}
-
-// The first enqueue owns the attribution when subsequent events coalesce onto
-// the same key. Lazy initialization also supports controllers built as literals.
-func (cc *ConnectionController) setTrigger(key string, trigger usinformer.ProcessTrigger) {
-	cc.triggersMu.Lock()
-	defer cc.triggersMu.Unlock()
-	if cc.triggers == nil {
-		cc.triggers = make(map[string]usinformer.ProcessTrigger)
-	}
-	if _, ok := cc.triggers[key]; !ok {
-		cc.triggers[key] = trigger
-	}
-}
-
-// Pop attribution at pickup so terminal outcomes cannot erase a newer event
-// received during reconciliation. Retries restore the popped attribution.
-func (cc *ConnectionController) popTrigger(key string) (usinformer.ProcessTrigger, bool) {
-	cc.triggersMu.Lock()
-	defer cc.triggersMu.Unlock()
-	trigger, ok := cc.triggers[key]
-	if ok {
-		delete(cc.triggers, key)
-	}
-	return trigger, ok
+	return cc.workers.EventHandler()
 }
 
 // connSpanAttrs returns the resource-identifying attributes stamped on every
@@ -196,119 +113,9 @@ func connSpanAttrs(conn *provisioning.Connection) trace.SpanStartOption {
 	)
 }
 
-// Run starts the ConnectionController. The onStarted callback is invoked once
-// all workers have been launched, before blocking on ctx.Done().
+// Run starts the ConnectionController's workers. See keyqueue.Workers.Run.
 func (cc *ConnectionController) Run(ctx context.Context, workerCount int, onStarted func(), onShutdown func()) {
-	defer utilruntime.HandleCrash()
-	defer cc.queue.ShutDown()
-
-	logger := cc.logger
-	ctx = logging.Context(ctx, logger)
-	logger.Info("Starting ConnectionController")
-	defer logger.Info("Shutting down ConnectionController")
-
-	logger.Info("Starting workers", "count", workerCount)
-	for i := range workerCount {
-		workerCtx := logging.Context(ctx, logger.With("worker_id", i))
-		go wait.UntilWithContext(workerCtx, cc.runWorker, time.Second)
-	}
-
-	logger.Info("Started workers")
-	onStarted()
-
-	<-ctx.Done()
-	onShutdown()
-	logger.Info("Shutting down workers, draining queue")
-
-	drainDone := make(chan struct{})
-	go func() {
-		cc.queue.ShutDownWithDrain()
-		close(drainDone)
-	}()
-
-	select {
-	case <-drainDone:
-		logger.Info("Queue drained successfully")
-	case <-time.After(cc.drainTimeout):
-		logger.Warn("Drain timeout exceeded, forcing shutdown")
-		cc.queue.ShutDown()
-	}
-}
-
-func (cc *ConnectionController) runWorker(ctx context.Context) {
-	for cc.processNextWorkItem(ctx) {
-	}
-}
-
-func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
-	key, quit := cc.queue.Get()
-	if quit {
-		return false
-	}
-	defer cc.queue.Done(key)
-	// Safety net: clear inflight even if the reconcile panics.
-	defer cc.queueLag.done(key)
-
-	namespace, name, _ := cache.SplitMetaNamespaceKey(key)
-	// queue_len is the backlog still waiting after this pickup (Get removed the
-	// current key), so a growing queue is visible per reconcile in the logs.
-	logger := logging.FromContext(ctx).With("work_key", key, "namespace", namespace, "connection", name, "queue_len", cc.queue.Len())
-	// Move waiting -> inflight and log how long the key waited before pickup.
-	if enqueuedAt, ok := cc.queueLag.get(key); ok {
-		logger = logger.With("queue_wait", time.Since(enqueuedAt))
-	}
-	logger.Info("ConnectionController processing key")
-
-	trigger, ok := cc.popTrigger(key)
-	// NumRequeues counts prior AddRateLimited calls, excluding this attempt.
-	attempts := cc.queue.NumRequeues(key) + 1
-	// Only informer-driven first attempts count. Internal AddAfter reschedules
-	// have no attribution, and rate-limited retries must not be counted again.
-	if ok && attempts == 1 {
-		cc.processed.RecordProcessed(trigger)
-	}
-
-	start := time.Now()
-	err := cc.processFn(ctx, key)
-	logger = logger.With("duration", time.Since(start))
-	// Count every reconcile execution (each pickup, including retries) by outcome,
-	// so this counter is the denominator for the reconcile error rate.
-	cc.processed.RecordReconcile(err)
-	if err == nil {
-		// Finished: drop from inflight before reading lag so queue_lag reflects
-		// the remaining backlog, not the key just completed.
-		cc.queueLag.done(key)
-		cc.queue.Forget(key)
-		logger.With("queue_lag", cc.queueLag.lag()).Info("ConnectionController finished processing key")
-		return true
-	}
-
-	logger = logger.With("queue_lag", cc.queueLag.lag(), "error", err, "attempts", attempts)
-	logger.Error("ConnectionController failed to process key")
-	cc.queueLag.done(key)
-
-	if attempts >= connectionMaxAttempts {
-		logger.Error("ConnectionController failed too many times")
-		cc.queue.Forget(key)
-		return true
-	}
-
-	if !apierrors.IsServiceUnavailable(err) {
-		logger.Info("ConnectionController will not retry")
-		cc.queue.Forget(key)
-		return true
-	}
-
-	utilruntime.HandleError(fmt.Errorf("%v failed with: %v", key, err))
-	// Keep retry attribution without overwriting an event received in flight or
-	// inventing attribution for an internal reschedule.
-	if ok {
-		cc.setTrigger(key, trigger)
-	}
-	cc.queue.AddRateLimited(key)
-	logger.Info("ConnectionController will retry as service is unavailable", "queue_len", cc.queue.Len())
-
-	return true
+	cc.workers.Run(ctx, workerCount, onStarted, onShutdown)
 }
 
 func (cc *ConnectionController) process(ctx context.Context, key string) (err error) {
@@ -398,9 +205,9 @@ func (cc *ConnectionController) process(ctx context.Context, key string) (err er
 			// be readable from the store yet. Wait for it rather than regenerating, which
 			// would delete it and can loop under secret-store read-after-write lag.
 			if tokenRecentlyCreated(time.UnixMilli(conn.Status.Token.LastUpdated)) {
-				cc.queue.AddAfter(key, tokenWriteRetryDelay)
+				cc.workers.Queue().AddAfter(key, tokenWriteRetryDelay)
 				logger.Info("connection token secret not yet readable after recent write; will retry",
-					"error", err, "retry_after", tokenWriteRetryDelay, "queue_len", cc.queue.Len())
+					"error", err, "retry_after", tokenWriteRetryDelay, "queue_len", cc.workers.Queue().Len())
 				return nil
 			}
 			logger.Warn("connection token secret could not be decrypted, regenerating", "error", err)

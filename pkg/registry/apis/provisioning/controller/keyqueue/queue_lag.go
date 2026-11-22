@@ -1,4 +1,4 @@
-package controller
+package keyqueue
 
 import (
 	"container/list"

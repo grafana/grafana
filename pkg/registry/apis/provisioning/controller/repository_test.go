@@ -21,13 +21,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
-	"k8s.io/client-go/util/workqueue"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller/keyqueue"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller/mocks"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -5198,580 +5197,6 @@ func TestRepositoryController_process_FailedFlushDoesNotDuplicatePatches(t *test
 	require.Contains(t, err.Error(), "status patch operations failed")
 }
 
-// TestRepositoryController_DeduplicatesEnqueueWhileProcessing verifies that multiple enqueue
-// calls for the same key while it is being processed result in exactly one additional processing
-// round, not one per enqueue call. This guards against memory and CPU growth from status-update
-// feedback loops where every reconciliation triggers a new status patch which re-enqueues the
-// same key.
-func TestRepositoryController_DeduplicatesEnqueueWhileProcessing(t *testing.T) {
-	var processCount atomic.Int32
-	firstProcessingStarted := make(chan struct{})
-	releaseFirst := make(chan struct{})
-	secondProcessingDone := make(chan struct{})
-
-	rc := &RepositoryController{
-		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-			workqueue.DefaultTypedControllerRateLimiter[string](),
-			workqueue.TypedRateLimitingQueueConfig[string]{
-				Name: "test-dedup",
-			},
-		),
-		logger:       logging.DefaultLogger.With("logger", "test"),
-		drainTimeout: 5 * time.Second,
-	}
-
-	rc.processFn = func(key string) (string, error) {
-		switch processCount.Add(1) {
-		case 1:
-			close(firstProcessingStarted)
-			<-releaseFirst
-		case 2:
-			close(secondProcessingDone)
-		}
-		return "", nil
-	}
-
-	rc.queue.Add("test/repo")
-
-	ctx, cancel := context.WithCancel(t.Context())
-	runDone := make(chan struct{})
-	go func() {
-		rc.Run(ctx, 1, func() {}, func() {})
-		close(runDone)
-	}()
-
-	// Wait for the first processing round to start, then enqueue the same key several times.
-	<-firstProcessingStarted
-	for range 5 {
-		rc.queue.Add("test/repo")
-	}
-	close(releaseFirst)
-
-	// Wait for the second round to finish, then shut down. Once Run returns no further
-	// calls to processFn are possible, so the count is final.
-	<-secondProcessingDone
-	cancel()
-	<-runDone
-	assert.Equal(t, int32(2), processCount.Load(), "5 enqueues while processing must collapse to 1 additional round")
-}
-
-// TestRepositoryController_DeduplicatesEnqueueBeforeProcessing verifies that adding
-// the same key multiple times before any worker picks it up results in exactly one
-// processing round. This is the complement to the while-processing dedup test and
-// directly tests the dirty-set no-op path in Add() (queue.go:233).
-func TestRepositoryController_DeduplicatesEnqueueBeforeProcessing(t *testing.T) {
-	var processCount atomic.Int32
-	processingDone := make(chan struct{})
-
-	rc := &RepositoryController{
-		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-			workqueue.DefaultTypedControllerRateLimiter[string](),
-			workqueue.TypedRateLimitingQueueConfig[string]{
-				Name: "test-dedup-before",
-			},
-		),
-		logger:       logging.DefaultLogger.With("logger", "test"),
-		drainTimeout: 5 * time.Second,
-	}
-
-	rc.processFn = func(key string) (string, error) {
-		processCount.Add(1)
-		close(processingDone)
-		return "", nil
-	}
-
-	// Enqueue the same key several times before any worker starts.
-	for range 5 {
-		rc.queue.Add("test/repo")
-	}
-
-	ctx, cancel := context.WithCancel(t.Context())
-	runDone := make(chan struct{})
-	go func() {
-		rc.Run(ctx, 1, func() {}, func() {})
-		close(runDone)
-	}()
-
-	// Wait for the one expected round, then shut down. Once Run returns the count is final.
-	<-processingDone
-	cancel()
-	<-runDone
-	assert.Equal(t, int32(1), processCount.Load(), "5 enqueues before pickup must collapse to 1 processing round")
-}
-
-// TestRepositoryController_ServiceUnavailableRetriesUpToMaxAttempts verifies that a
-// ServiceUnavailable error causes the key to be re-queued with backoff, and that
-// processing stops after maxAttempts total attempts. This tests the NumRequeues-based
-// attempt counting that replaced the old item.attempts field on queueItem.
-func TestRepositoryController_ServiceUnavailableRetriesUpToMaxAttempts(t *testing.T) {
-	// The process-global error backoff retains wall time from package initialization.
-	// Keep error logging while excluding that unrelated throttle from fake-time retries.
-	previousHandlers := utilruntime.ErrorHandlers
-	utilruntime.ErrorHandlers = previousHandlers[:1]
-	t.Cleanup(func() { utilruntime.ErrorHandlers = previousHandlers })
-
-	for name, processErr := range map[string]error{
-		"service unavailable":    apierrors.NewServiceUnavailable("test"),
-		"repository unavailable": repository.ErrServerUnavailable,
-		"wrapped timeout":        fmt.Errorf("get default branch: %w: %w", repository.ErrServerUnavailable, context.DeadlineExceeded),
-		"status write failure":   errors.Join(fmt.Errorf("build: %w", repository.ErrServerUnavailable), errors.New("status write failed")),
-	} {
-		t.Run(name, func(t *testing.T) {
-			synctest.Test(t, func(t *testing.T) {
-				rc := &RepositoryController{
-					queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-						workqueue.DefaultTypedControllerRateLimiter[string](),
-						workqueue.TypedRateLimitingQueueConfig[string]{
-							Name: "test-retry",
-						},
-					),
-					logger: logging.DefaultLogger.With("logger", "test"),
-				}
-				t.Cleanup(rc.queue.ShutDown)
-				processCount := 0
-
-				rc.processFn = func(key string) (string, error) {
-					processCount++
-					return "", processErr
-				}
-
-				rc.queue.Add("test/repo")
-				for attempt := range maxAttempts {
-					require.True(t, rc.processNextWorkItem(t.Context()))
-					if attempt == maxAttempts-1 {
-						break
-					}
-					assert.Equal(t, attempt+1, rc.queue.NumRequeues("test/repo"))
-
-					// Let the delaying queue register this attempt's exponential backoff timer.
-					synctest.Wait()
-
-					delay := 5 * time.Millisecond * (1 << attempt)
-
-					// Stop just before the retry deadline to verify that backoff gates delivery.
-					synctest.Sleep(delay - time.Nanosecond)
-
-					assert.Zero(t, rc.queue.Len(), "the retry must wait for its exponential backoff")
-
-					// Reach the retry deadline and let the delaying queue make the key available.
-					synctest.Sleep(time.Nanosecond)
-
-					require.Equal(t, 1, rc.queue.Len())
-				}
-
-				assert.Equal(t, maxAttempts, processCount, "ServiceUnavailable should retry exactly maxAttempts times then give up")
-				assert.Zero(t, rc.queue.NumRequeues("test/repo"), "the final attempt must clear the retry budget")
-				assert.Zero(t, rc.queue.Len())
-			})
-		})
-	}
-}
-
-// TestRepositoryController_DecryptFailureRetriesUpToMaxAttempts verifies that a
-// decrypt/KMS outage (ErrSecretDecryptFailed) is re-queued for a fast retry by the
-// worker just like a Kubernetes 503, even though it is a plain sentinel rather than
-// a 503 StatusError. This exercises the queue decision in processNextWorkItem, which
-// the direct-call process() tests do not reach.
-func TestRepositoryController_DecryptFailureRetriesUpToMaxAttempts(t *testing.T) {
-	var processCount atomic.Int32
-	allAttemptsDone := make(chan struct{})
-
-	rc := &RepositoryController{
-		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-			workqueue.DefaultTypedControllerRateLimiter[string](),
-			workqueue.TypedRateLimitingQueueConfig[string]{
-				Name: "test-decrypt-retry",
-			},
-		),
-		logger:       logging.DefaultLogger.With("logger", "test"),
-		drainTimeout: 5 * time.Second,
-	}
-
-	rc.processFn = func(key string) (string, error) {
-		if processCount.Add(1) == maxAttempts {
-			close(allAttemptsDone)
-		}
-		return "", fmt.Errorf("create repository from configuration: %w", repository.ErrSecretDecryptFailed)
-	}
-
-	rc.queue.Add("test/repo")
-
-	ctx, cancel := context.WithCancel(t.Context())
-	runDone := make(chan struct{})
-	go func() {
-		rc.Run(ctx, 1, func() {}, func() {})
-		close(runDone)
-	}()
-
-	<-allAttemptsDone
-	cancel()
-	<-runDone
-	assert.Equal(t, int32(maxAttempts), processCount.Load(), "a decrypt outage should retry exactly maxAttempts times then give up")
-}
-
-// TestRepositoryController_NonRetryableErrorIsNotRetried verifies that errors other
-// than ServiceUnavailable are dropped after a single attempt with no re-queue.
-func TestRepositoryController_NonRetryableErrorIsNotRetried(t *testing.T) {
-	var processCount atomic.Int32
-	processingDone := make(chan struct{})
-
-	rc := &RepositoryController{
-		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-			workqueue.DefaultTypedControllerRateLimiter[string](),
-			workqueue.TypedRateLimitingQueueConfig[string]{
-				Name: "test-no-retry",
-			},
-		),
-		logger:       logging.DefaultLogger.With("logger", "test"),
-		drainTimeout: 5 * time.Second,
-	}
-
-	rc.processFn = func(key string) (string, error) {
-		processCount.Add(1)
-		close(processingDone)
-		return "", errors.New("some non-retryable error")
-	}
-
-	rc.queue.Add("test/repo")
-
-	ctx, cancel := context.WithCancel(t.Context())
-	runDone := make(chan struct{})
-	go func() {
-		rc.Run(ctx, 1, func() {}, func() {})
-		close(runDone)
-	}()
-
-	// Wait for the one expected attempt, then shut down. Once Run returns the count is final.
-	<-processingDone
-	cancel()
-	<-runDone
-	assert.Equal(t, int32(1), processCount.Load(), "non-retryable errors must not be retried")
-}
-
-func TestRepositoryController_Run_DrainWaitsForInFlight(t *testing.T) {
-	processCh := make(chan struct{})
-	processingStarted := make(chan struct{})
-	var processed atomic.Bool
-
-	rc := &RepositoryController{
-		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-			workqueue.DefaultTypedControllerRateLimiter[string](),
-			workqueue.TypedRateLimitingQueueConfig[string]{
-				Name: "test-drain",
-			},
-		),
-		logger:       logging.DefaultLogger.With("logger", "test"),
-		drainTimeout: 5 * time.Second,
-	}
-
-	rc.processFn = func(key string) (string, error) {
-		close(processingStarted)
-		<-processCh
-		processed.Store(true)
-		return "", nil
-	}
-
-	rc.queue.Add("test/repo")
-
-	ctx, cancel := context.WithCancel(context.Background())
-	runDone := make(chan struct{})
-	go func() {
-		rc.Run(ctx, 1, func() {}, func() {})
-		close(runDone)
-	}()
-
-	// Wait until the worker has actually picked up the item
-	<-processingStarted
-
-	// Cancel context to trigger shutdown
-	cancel()
-
-	// Run should NOT return yet because item is still being processed
-	select {
-	case <-runDone:
-		t.Fatal("Run returned before in-flight item completed")
-	case <-time.After(200 * time.Millisecond):
-		// Expected: still waiting for drain
-	}
-
-	// Complete the in-flight item
-	close(processCh)
-
-	// Now Run should return
-	select {
-	case <-runDone:
-		assert.True(t, processed.Load(), "item should have been fully processed")
-	case <-time.After(2 * time.Second):
-		t.Fatal("Run did not return after in-flight item completed")
-	}
-}
-
-func TestRepositoryController_Run_DrainTimeoutForcesShutdown(t *testing.T) {
-	processingStarted := make(chan struct{})
-
-	rc := &RepositoryController{
-		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-			workqueue.DefaultTypedControllerRateLimiter[string](),
-			workqueue.TypedRateLimitingQueueConfig[string]{
-				Name: "test-drain-timeout",
-			},
-		),
-		logger:       logging.DefaultLogger.With("logger", "test"),
-		drainTimeout: 200 * time.Millisecond,
-	}
-
-	// processFn blocks forever to simulate a stuck reconciliation
-	rc.processFn = func(key string) (string, error) {
-		close(processingStarted)
-		select {}
-	}
-
-	rc.queue.Add("test/stuck")
-
-	ctx, cancel := context.WithCancel(context.Background())
-	runDone := make(chan struct{})
-	go func() {
-		rc.Run(ctx, 1, func() {}, func() {})
-		close(runDone)
-	}()
-
-	// Wait until the worker has actually picked up the item
-	<-processingStarted
-	cancel()
-
-	// Run should return within the drain timeout + some buffer
-	select {
-	case <-runDone:
-		// Expected: drain timeout kicked in
-	case <-time.After(2 * time.Second):
-		t.Fatal("Run did not return after drain timeout")
-	}
-}
-
-func TestRepositoryController_Run_OnShutdownCalledBeforeDrain(t *testing.T) {
-	var shutdownCalledAt time.Time
-	var runReturnedAt time.Time
-	processCh := make(chan struct{})
-	processingStarted := make(chan struct{})
-	shutdownCalled := make(chan struct{})
-
-	rc := &RepositoryController{
-		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-			workqueue.DefaultTypedControllerRateLimiter[string](),
-			workqueue.TypedRateLimitingQueueConfig[string]{
-				Name: "test-shutdown-ordering",
-			},
-		),
-		logger:       logging.DefaultLogger.With("logger", "test"),
-		drainTimeout: 5 * time.Second,
-	}
-
-	rc.processFn = func(key string) (string, error) {
-		close(processingStarted)
-		<-processCh
-		return "", nil
-	}
-
-	rc.queue.Add("test/ordering")
-
-	ctx, cancel := context.WithCancel(context.Background())
-	runDone := make(chan struct{})
-	go func() {
-		rc.Run(ctx, 1, func() {}, func() {
-			shutdownCalledAt = time.Now()
-			close(shutdownCalled)
-		})
-		runReturnedAt = time.Now()
-		close(runDone)
-	}()
-
-	<-processingStarted
-	cancel()
-
-	// Wait for onShutdown to be called before releasing the drain
-	<-shutdownCalled
-	close(processCh)
-
-	select {
-	case <-runDone:
-		require.False(t, shutdownCalledAt.IsZero(), "onShutdown should have been called")
-		require.False(t, runReturnedAt.IsZero(), "Run should have returned")
-		assert.True(t, shutdownCalledAt.Before(runReturnedAt),
-			"onShutdown should be called before Run returns (drain completes)")
-	case <-time.After(2 * time.Second):
-		t.Fatal("Run did not return")
-	}
-}
-
-// TestRepositoryController_RecordsProcessingByTrigger verifies the controller
-// counts the start of each reconcile under resource="repositories", attributed
-// to what enqueued the key.
-func TestRepositoryController_RecordsProcessingByTrigger(t *testing.T) {
-	repo := func(rv string) *provisioning.Repository {
-		return &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "repo", ResourceVersion: rv}}
-	}
-	tests := []struct {
-		name        string
-		natsBacked  bool
-		feed        func(h cache.ResourceEventHandlerDetailedFuncs)
-		wantTrigger string
-	}{
-		{
-			name:        "apiserver live add",
-			feed:        func(h cache.ResourceEventHandlerDetailedFuncs) { h.AddFunc(repo("5"), false) },
-			wantTrigger: "live",
-		},
-		{
-			name:        "initial list add",
-			feed:        func(h cache.ResourceEventHandlerDetailedFuncs) { h.AddFunc(repo("5"), true) },
-			wantTrigger: "initial",
-		},
-		{
-			name:        "resync update is relist",
-			feed:        func(h cache.ResourceEventHandlerDetailedFuncs) { h.UpdateFunc(repo("5"), repo("5")) },
-			wantTrigger: "relist",
-		},
-		{
-			name:        "nats relist add",
-			natsBacked:  true,
-			feed:        func(h cache.ResourceEventHandlerDetailedFuncs) { h.AddFunc(repo("5"), false) },
-			wantTrigger: "relist",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			reg := prometheus.NewPedanticRegistry()
-			processedDone := make(chan struct{})
-
-			rc := &RepositoryController{
-				queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-					workqueue.DefaultTypedControllerRateLimiter[string](),
-					workqueue.TypedRateLimitingQueueConfig[string]{Name: "test-processed"},
-				),
-				logger:       logging.DefaultLogger.With("logger", "test"),
-				drainTimeout: 5 * time.Second,
-				processed:    usinformer.NewProcessedMetrics(reg, "repositories", tt.natsBacked),
-				keyFunc:      repoKeyFunc,
-				processFn: func(string) (string, error) {
-					close(processedDone)
-					return "", nil
-				},
-			}
-			rc.enqueueRepository = rc.enqueue
-
-			tt.feed(rc.EventHandler())
-
-			ctx, cancel := context.WithCancel(context.Background())
-			runDone := make(chan struct{})
-			go func() {
-				rc.Run(ctx, 1, func() {}, func() {})
-				close(runDone)
-			}()
-
-			select {
-			case <-processedDone:
-			case <-time.After(5 * time.Second):
-				t.Fatal("key was not processed")
-			}
-			cancel()
-			<-runDone
-
-			assertOnlyProcessedTrigger(t, reg, "repositories", tt.wantTrigger)
-		})
-	}
-}
-
-// TestRepositoryController_DirtyRedeliveryKeepsLiveTrigger reproduces the race a
-// live event (e.g. a status update the reconcile itself produces) that arrives
-// while the key is in flight: it marks the key dirty and records a fresh live
-// attribution, which the completing reconcile's queue.Forget must not clobber.
-// So the redelivery is counted as live, not misattributed to relist.
-func TestRepositoryController_DirtyRedeliveryKeepsLiveTrigger(t *testing.T) {
-	reg := prometheus.NewPedanticRegistry()
-
-	rc := &RepositoryController{
-		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-			workqueue.DefaultTypedControllerRateLimiter[string](),
-			workqueue.TypedRateLimitingQueueConfig[string]{Name: "test-dirty"},
-		),
-		logger:    logging.DefaultLogger.With("logger", "test"),
-		processed: usinformer.NewProcessedMetrics(reg, "repositories", false),
-		keyFunc:   repoKeyFunc,
-	}
-	rc.enqueueRepository = rc.enqueue
-
-	var enqueuedDuringFlight atomic.Bool
-	rc.processFn = func(string) (string, error) {
-		// On the first reconcile, a live update (bumped RV) arrives while the key
-		// is in flight — the classic self-induced status update — marking it dirty.
-		if enqueuedDuringFlight.CompareAndSwap(false, true) {
-			rc.EventHandler().UpdateFunc(
-				&provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "repo", ResourceVersion: "5"}},
-				&provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "repo", ResourceVersion: "6"}},
-			)
-		}
-		return "", nil
-	}
-
-	// Initial live add (apiserver watch, full RV, non-initial).
-	rc.EventHandler().AddFunc(&provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "repo", ResourceVersion: "5"}}, false)
-
-	ctx := context.Background()
-	require.True(t, rc.processNextWorkItem(ctx)) // first pickup: live; enqueues the dirty live update
-	require.True(t, rc.processNextWorkItem(ctx)) // dirty redelivery: must stay live
-
-	assert.Equal(t, 2.0, processedCounterValue(t, reg, "repositories", "live"), "both pickups are live")
-	assert.Equal(t, 0.0, processedCounterValue(t, reg, "repositories", "relist"), "no pickup falls back to relist")
-}
-
-// TestRepositoryController_InternalRescheduleNotCounted verifies that a pickup
-// with no informer-set attribution — an internal re-schedule such as the token
-// read-after-write AddAfter, which re-adds the key directly — records nothing,
-// rather than masquerading as a relist recovery.
-func TestRepositoryController_InternalRescheduleNotCounted(t *testing.T) {
-	reg := prometheus.NewPedanticRegistry()
-	processedDone := make(chan struct{})
-
-	rc := &RepositoryController{
-		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-			workqueue.DefaultTypedControllerRateLimiter[string](),
-			workqueue.TypedRateLimitingQueueConfig[string]{Name: "test-internal"},
-		),
-		logger:    logging.DefaultLogger.With("logger", "test"),
-		processed: usinformer.NewProcessedMetrics(reg, "repositories", false),
-		keyFunc:   repoKeyFunc,
-		processFn: func(string) (string, error) {
-			close(processedDone)
-			return "", nil
-		},
-	}
-	rc.enqueueRepository = rc.enqueue
-
-	// Queue the key directly, as the token read-after-write AddAfter does — no
-	// informer event, no trigger entry.
-	rc.queue.Add("ns/repo")
-
-	ctx, cancel := context.WithCancel(context.Background())
-	runDone := make(chan struct{})
-	go func() {
-		rc.Run(ctx, 1, func() {}, func() {})
-		close(runDone)
-	}()
-
-	select {
-	case <-processedDone:
-	case <-time.After(5 * time.Second):
-		t.Fatal("key was not processed")
-	}
-	cancel()
-	<-runDone
-
-	for _, source := range []string{"live", "relist", "initial"} {
-		assert.Equal(t, 0.0, processedCounterValue(t, reg, "repositories", source), "%s must not be recorded for an internal re-schedule", source)
-	}
-}
-
 // TestRepositoryController_WorkerQueueWaitHistogram verifies the queue-wait histogram
 // records one observation each time a worker picks a key up off the queue.
 func TestRepositoryController_WorkerQueueWaitHistogram(t *testing.T) {
@@ -5795,16 +5220,16 @@ func TestRepositoryController_WorkerQueueWaitHistogram(t *testing.T) {
 	// Two distinct keys, but repo-a is enqueued twice: the workqueue coalesces the
 	// re-add onto the still-queued key, so only two keys are ever picked up and only
 	// two wait times are observed.
-	rc.queue.Add("ns/repo-a")
-	rc.queue.Add("ns/repo-a")
-	rc.queue.Add("ns/repo-b")
+	rc.workers.Queue().Add("ns/repo-a")
+	rc.workers.Queue().Add("ns/repo-a")
+	rc.workers.Queue().Add("ns/repo-b")
 
-	key, _ := rc.queue.Get()
-	rc.queue.Done(key)
+	key, _ := rc.workers.Queue().Get()
+	rc.workers.Queue().Done(key)
 	require.Equal(t, uint64(1), histogramSampleCountByName(t, reg, metricName))
 
-	key, _ = rc.queue.Get()
-	rc.queue.Done(key)
+	key, _ = rc.workers.Queue().Get()
+	rc.workers.Queue().Done(key)
 	require.Equal(t, uint64(2), histogramSampleCountByName(t, reg, metricName))
 }
 
@@ -5828,13 +5253,13 @@ func TestRepositoryController_WorkerQueueSizeGauge(t *testing.T) {
 
 	require.Equal(t, 0.0, gaugeValueByName(t, reg, metricName))
 
-	rc.queue.Add("ns/repo-a")
-	rc.queue.Add("ns/repo-b")
+	rc.workers.Queue().Add("ns/repo-a")
+	rc.workers.Queue().Add("ns/repo-b")
 	require.Equal(t, 2.0, gaugeValueByName(t, reg, metricName))
 
 	// Get removes the key from the queue (Len drops); Done clears it from processing.
-	key, _ := rc.queue.Get()
-	rc.queue.Done(key)
+	key, _ := rc.workers.Queue().Get()
+	rc.workers.Queue().Done(key)
 	require.Equal(t, 1.0, gaugeValueByName(t, reg, metricName))
 }
 
@@ -5889,45 +5314,52 @@ func TestRepositoryController_recordReconcileError(t *testing.T) {
 	assert.Equal(t, 0.0, reconcileErrorCount(t, reg, reconcilePhaseHook, reconcileCauseUser))
 }
 
-// The apiserver informer delivers a whole Repository and the NATS one a metadata
-// projection, so keying must accept both: a key that cannot be computed is a
-// repository that never gets enqueued, with no error.
-func TestRepoKeyFuncAcceptsBothFeeds(t *testing.T) {
-	for _, tc := range []struct {
-		name string
-		obj  any
-	}{
-		{
-			name: "whole repository, from the apiserver informer",
-			obj: &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{
-				Namespace: "ns", Name: "repo", ResourceVersion: "42",
-			}},
-		},
-		{
-			name: "metadata projection, from the NATS informer",
-			obj: &metav1.PartialObjectMetadata{ObjectMeta: metav1.ObjectMeta{
-				Namespace: "ns", Name: "repo", ResourceVersion: "42",
-			}},
-		},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			key, err := repoKeyFunc(tc.obj)
-			require.NoError(t, err)
-			assert.Equal(t, "ns/repo", key)
-			assert.Equal(t, "42", resourceVersion(tc.obj))
-		})
-	}
+// assertRepositoryStatusFailurePreservesPendingQueueLag processes key while an
+// update for it arrives, and checks that a failure reported on the status is
+// not retried and the pending update keeps its own enqueue time.
+func assertRepositoryStatusFailurePreservesPendingQueueLag(t *testing.T, rc *RepositoryController, key string) {
+	t.Helper()
+	var pendingAt time.Time
+	rc.workers = keyqueue.New(keyqueue.Config{
+		Controller:  "RepositoryController",
+		Kind:        "repository",
+		Logger:      rc.logger,
+		Registry:    prometheus.NewRegistry(),
+		MaxAttempts: maxAttempts,
+		Retryable:   isRetryableProcessError,
+	}, func(_ context.Context, key string) ([]any, error) {
+		pendingAt = time.Now()
+		rc.workers.Queue().Add(key)
+		_, err := rc.process(key)
+		require.NoError(t, err, "status-reported failure must not become a controller retry")
+		return nil, err
+	})
+	t.Cleanup(rc.workers.Queue().ShutDown)
+
+	rc.workers.Queue().Add(key)
+	require.True(t, rc.workers.ProcessNextWorkItem(t.Context()))
+
+	assert.LessOrEqual(t, rc.workers.Lag(), time.Since(pendingAt), "pending update must keep its own enqueue time")
+	assert.Equal(t, 1, rc.workers.Queue().Len(), "only the pending update should remain")
+	assert.Zero(t, rc.workers.Queue().NumRequeues(key))
 }
 
-// A delete tombstone carries no metadata to read.
-func TestRepoKeyFuncHandlesTombstones(t *testing.T) {
-	tombstone := cache.DeletedFinalStateUnknown{
-		Key: "ns/repo",
-		Obj: &metav1.PartialObjectMetadata{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "repo"}},
+func TestIsRetryableProcessError(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+		want bool
+	}{
+		{name: "service unavailable", err: apierrors.NewServiceUnavailable("storage unavailable"), want: true},
+		{name: "repository server unavailable", err: repository.ErrServerUnavailable, want: true},
+		{name: "wrapped server unavailable", err: fmt.Errorf("list refs: %w", repository.ErrServerUnavailable), want: true},
+		{name: "joined server unavailable", err: errors.Join(errors.New("timeout"), repository.ErrServerUnavailable), want: true},
+		{name: "secret decrypt failure", err: fmt.Errorf("build repository: %w", repository.ErrSecretDecryptFailed), want: true},
+		{name: "other error", err: errors.New("boom"), want: false},
 	}
-
-	key, err := repoKeyFunc(tombstone)
-	require.NoError(t, err)
-	assert.Equal(t, "ns/repo", key)
-	assert.Empty(t, resourceVersion(tombstone), "nothing to read a version from")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, isRetryableProcessError(tt.err))
+		})
+	}
 }

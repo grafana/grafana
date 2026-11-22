@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"reflect"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -15,15 +14,11 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/retry"
-	"k8s.io/client-go/util/workqueue"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
@@ -33,6 +28,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller/keyqueue"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -69,24 +65,10 @@ type RepositoryController struct {
 	connectionFactory connection.Factory
 	healthChecker     *RepositoryHealthChecker
 	quotaChecker      *RepositoryQuotaChecker
-	// To allow injection for testing.
-	processFn         func(key string) (repoType string, err error)
-	enqueueRepository func(obj any, trigger usinformer.ProcessTrigger)
-	keyFunc           func(obj any) (string, error)
 
-	queue           workqueue.TypedRateLimitingInterface[string]
-	queueLag        queueLagTracker
+	workers         *keyqueue.Workers
 	resyncInterval  time.Duration
 	minSyncInterval time.Duration
-	drainTimeout    time.Duration
-
-	// processed classifies each delivery (encapsulating the NATS/apiserver
-	// backend) and records the processing metrics by what enqueued the key.
-	// triggers carries that attribution from enqueue to dequeue, guarded by
-	// triggersMu (entries live only between enqueue and Forget).
-	processed  *usinformer.ProcessedMetrics
-	triggersMu sync.Mutex
-	triggers   map[string]usinformer.ProcessTrigger
 
 	registry                      prometheus.Registerer
 	tracer                        tracing.Tracer
@@ -136,8 +118,6 @@ func NewRepositoryController(
 	rc := &RepositoryController{
 		client:            provisioningClient,
 		repos:             repos,
-		processed:         usinformer.NewProcessedMetrics(registry, "repositories", natsBacked),
-		triggers:          make(map[string]usinformer.ProcessTrigger),
 		repoFactory:       repoFactory,
 		connectionFactory: connectionFactory,
 		healthChecker:     healthChecker,
@@ -157,7 +137,6 @@ func NewRepositoryController(
 		tracer:                        tracer,
 		resyncInterval:                resyncInterval,
 		minSyncInterval:               minSyncInterval,
-		drainTimeout:                  drainTimeout,
 		quotaGetter:                   quotaGetter,
 		quotaMetrics:                  quotaMetrics,
 		tokenMetrics:                  repoTokenMetrics,
@@ -168,36 +147,22 @@ func NewRepositoryController(
 		webhookSecretRotationInterval: webhookSecretRotationInterval,
 	}
 
-	rc.queue = newWorkerQueue(&rc.queueLag, workqueue.DefaultTypedControllerRateLimiter[string](), workqueue.TypedQueueConfig[string]{
-		Name:            "provisioningRepositoryController",
-		MetricsProvider: newWorkerQueueWaitProvider(registry, "repository"),
+	rc.workers = keyqueue.New(keyqueue.Config{
+		Controller:   "RepositoryController",
+		Kind:         "repository",
+		Logger:       rc.logger,
+		Registry:     registry,
+		Processed:    usinformer.NewProcessedMetrics(registry, "repositories", natsBacked),
+		MaxAttempts:  maxAttempts,
+		Retryable:    isRetryableProcessError,
+		DrainTimeout: drainTimeout,
+	}, func(_ context.Context, key string) ([]any, error) {
+		repoType, err := rc.process(key)
+		// repoType is empty when process failed before resolving the object;
+		// the field is still emitted so type-scoped log filters match every
+		// outcome line for a resolvable repository.
+		return []any{"repositoryType", repoType}, err
 	})
-	rc.processFn = rc.process
-	rc.enqueueRepository = rc.enqueue
-	rc.keyFunc = repoKeyFunc
-
-	// Expose the local work-queue depth as a scrape-time gauge. The queue is
-	// per-replica, so Prometheus target labels (pod/instance) distinguish replicas;
-	// no metric label is needed. A GaugeFunc reads the authoritative Len() at scrape
-	// time, so it cannot drift the way manual inc/dec would.
-	registry.MustRegister(prometheus.NewGaugeFunc(
-		prometheus.GaugeOpts{
-			Name: "grafana_provisioning_repository_worker_queue_size",
-			Help: "Number of repository keys waiting in this replica's local work queue",
-		},
-		func() float64 { return float64(rc.queue.Len()) },
-	))
-
-	// Queue lag: age of the oldest unfinished key. Unlike the pickup-observed
-	// wait histogram it climbs live, so a stalled queue or a saturated worker
-	// pool shows up even after the queue has drained.
-	registry.MustRegister(prometheus.NewGaugeFunc(
-		prometheus.GaugeOpts{
-			Name: "grafana_provisioning_repository_worker_queue_lag_seconds",
-			Help: "Age in seconds of the oldest unfinished repository queue entry (waiting or in flight) in this replica, measured from that entry's enqueue, excluding retry backoff.",
-		},
-		func() float64 { return rc.queueLag.lag().Seconds() },
-	))
 
 	return rc
 }
@@ -205,130 +170,15 @@ func NewRepositoryController(
 // EventHandler returns the informer event handlers for the controller. Register
 // it with the Repository informer to enqueue repositories on add and update.
 func (rc *RepositoryController) EventHandler() cache.ResourceEventHandlerDetailedFuncs {
-	return cache.ResourceEventHandlerDetailedFuncs{
-		AddFunc: func(obj interface{}, isInInitialList bool) {
-			rc.enqueueRepository(obj, rc.processed.ClassifyAdd(resourceVersion(obj), isInInitialList))
-		},
-		UpdateFunc: func(oldObj, newObj interface{}) {
-			rc.enqueueRepository(newObj, rc.processed.ClassifyUpdate(resourceVersion(oldObj), resourceVersion(newObj)))
-		},
-	}
+	return rc.workers.EventHandler()
 }
 
-// repoKeyFunc keys a delivered object of any type: the NATS informer delivers a
-// projection of a Repository, not the whole object.
-func repoKeyFunc(obj any) (string, error) {
-	return cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
-}
-
-// resourceVersion returns the resource version of a delivered object, or "" for
-// a delete tombstone.
-func resourceVersion(obj any) string {
-	acc, err := meta.Accessor(obj)
-	if err != nil {
-		return ""
-	}
-	return acc.GetResourceVersion()
-}
-
-// Run starts the RepositoryController.
-//
-// The onStarted callback is invoked once all workers have been launched.
-// The onShutdown callback is invoked immediately when context cancellation is
-// detected, before draining in-flight work.
+// Run starts the RepositoryController's workers. See keyqueue.Workers.Run.
 //
 // Note: This function intentionally does NOT create a tracing span because it runs indefinitely
 // until shutdown. Individual processing operations already have their own spans.
 func (rc *RepositoryController) Run(ctx context.Context, workerCount int, onStarted func(), onShutdown func()) {
-	defer utilruntime.HandleCrash()
-	defer rc.queue.ShutDown()
-
-	logger := rc.logger
-	ctx = logging.Context(ctx, logger)
-	logger.Info("Starting RepositoryController")
-	defer logger.Info("Shutting down RepositoryController")
-
-	logger.Info("Starting workers", "count", workerCount)
-	for i := range workerCount {
-		workerCtx := logging.Context(ctx, logger.With("worker_id", i))
-		go wait.UntilWithContext(workerCtx, rc.runWorker, time.Second)
-	}
-
-	logger.Info("Started workers")
-	onStarted()
-
-	<-ctx.Done()
-	onShutdown()
-	logger.Info("Shutting down workers, draining queue")
-
-	drainDone := make(chan struct{})
-	go func() {
-		rc.queue.ShutDownWithDrain()
-		close(drainDone)
-	}()
-
-	select {
-	case <-drainDone:
-		logger.Info("Queue drained successfully")
-	case <-time.After(rc.drainTimeout):
-		logger.Warn("Drain timeout exceeded, forcing shutdown")
-		rc.queue.ShutDown()
-	}
-}
-
-func (rc *RepositoryController) runWorker(ctx context.Context) {
-	for rc.processNextWorkItem(ctx) {
-	}
-}
-
-func (rc *RepositoryController) enqueue(obj interface{}, trigger usinformer.ProcessTrigger) {
-	key, err := rc.keyFunc(obj)
-	if err != nil {
-		utilruntime.HandleError(fmt.Errorf("couldn't get key for object: %v", err))
-		return
-	}
-	// Attribute the key before the enqueue so a worker that dequeues immediately
-	// sees it.
-	rc.setTrigger(key, trigger)
-	rc.queue.Add(key)
-	namespace, name, _ := cache.SplitMetaNamespaceKey(key)
-	// Log lag at enqueue so backlog is visible on add, not only at pickup.
-	rc.logger.Info("RepositoryController enqueued key",
-		"work_key", key, "namespace", namespace, "repository", name,
-		"queue_len", rc.queue.Len(), "queue_lag", rc.queueLag.lag())
-}
-
-// setTrigger records what enqueued key, first-wins: the enqueue that first
-// queued the key owns the attribution, and later deliveries that coalesce onto
-// the still-queued key (or a retry re-set) leave it alone — the source that
-// actually caused the pickup. The map is lazily created so tests that build the
-// controller as a struct literal need not initialize it.
-func (rc *RepositoryController) setTrigger(key string, trigger usinformer.ProcessTrigger) {
-	rc.triggersMu.Lock()
-	defer rc.triggersMu.Unlock()
-	if rc.triggers == nil {
-		rc.triggers = make(map[string]usinformer.ProcessTrigger)
-	}
-	if _, ok := rc.triggers[key]; !ok {
-		rc.triggers[key] = trigger
-	}
-}
-
-// popTrigger reads and removes key's attribution. Each pickup pops its own entry
-// up front, so the entry never outlives the key however the pickup ends, and a
-// concurrent enqueue that races an in-flight reconcile (setting a fresh entry
-// and marking the key dirty — e.g. a status update the reconcile itself
-// produced) keeps its attribution for the redelivery, which a terminal
-// queue.Forget must not clobber. A retry re-sets the popped trigger before
-// re-queuing so later attempts keep the original attribution.
-func (rc *RepositoryController) popTrigger(key string) (usinformer.ProcessTrigger, bool) {
-	rc.triggersMu.Lock()
-	defer rc.triggersMu.Unlock()
-	trigger, ok := rc.triggers[key]
-	if ok {
-		delete(rc.triggers, key)
-	}
-	return trigger, ok
+	rc.workers.Run(ctx, workerCount, onStarted, onShutdown)
 }
 
 // isRetryableProcessError reports whether a process() error should be re-queued
@@ -340,92 +190,6 @@ func (rc *RepositoryController) popTrigger(key string) (usinformer.ProcessTrigge
 // delete branch's error-preference switch consult it, so they cannot drift.
 func isRetryableProcessError(err error) bool {
 	return apierrors.IsServiceUnavailable(err) || errors.Is(err, repository.ErrSecretDecryptFailed)
-}
-
-// processNextWorkItem deals with one key off the queue.
-// It returns false when it's time to quit.
-func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
-	key, quit := rc.queue.Get()
-	if quit {
-		return false
-	}
-	defer rc.queue.Done(key)
-	// Safety net: clear inflight even if the reconcile panics.
-	defer rc.queueLag.done(key)
-
-	namespace, name, _ := cache.SplitMetaNamespaceKey(key)
-	// queue_len is the backlog still waiting after this pickup (Get removed the
-	// current key), so a growing queue is visible per reconcile in the logs.
-	logger := logging.FromContext(ctx).With("work_key", key, "namespace", namespace, "repository", name, "queue_len", rc.queue.Len())
-	// Move waiting -> inflight and log how long the key waited before pickup.
-	if enqueuedAt, ok := rc.queueLag.get(key); ok {
-		logger = logger.With("queue_wait", time.Since(enqueuedAt))
-	}
-	logger.Info("RepositoryController processing key")
-
-	// Pop this pickup's attribution up front so the entry is cleared however the
-	// key leaves this function, without a terminal Forget clobbering a newer
-	// attribution set by a concurrent enqueue while the key was in flight.
-	trigger, ok := rc.popTrigger(key)
-
-	// NumRequeues counts prior AddRateLimited calls; add 1 for the current attempt.
-	attempts := rc.queue.NumRequeues(key) + 1
-	// Count the start of processing once per pickup, but only for a pickup that
-	// corresponds to an informer delivery (a present entry). A missing entry is
-	// an internal re-schedule with no informer event behind it — the token
-	// read-after-write AddAfter below re-adds the key without an entry — so it
-	// must not be counted, or it would masquerade as a relist recovery. Retries
-	// keep the entry (re-set below) but bump NumRequeues, so they are not
-	// recounted.
-	if ok && attempts == 1 {
-		rc.processed.RecordProcessed(trigger)
-	}
-
-	start := time.Now()
-	repoType, err := rc.processFn(key)
-	logger = logger.With("duration", time.Since(start))
-	// Count every reconcile execution (each pickup, including retries) by outcome,
-	// so this counter is the denominator for the reconcile error rate.
-	rc.processed.RecordReconcile(err)
-	if err == nil {
-		// Finished: drop from inflight before reading lag so queue_lag reflects
-		// the remaining backlog, not the key just completed.
-		rc.queueLag.done(key)
-		rc.queue.Forget(key)
-		logger.With("repositoryType", repoType, "queue_lag", rc.queueLag.lag()).Info("RepositoryController finished processing key")
-		return true
-	}
-
-	// repoType is empty when process failed before resolving the object (bad key
-	// or not-found); the field is still emitted so type-scoped log filters match
-	// every failure/retry line for a resolvable repository.
-	logger = logger.With("repositoryType", repoType, "queue_lag", rc.queueLag.lag(), "error", err, "attempts", attempts)
-	logger.Error("RepositoryController failed to process key")
-	rc.queueLag.done(key)
-
-	if attempts >= maxAttempts {
-		logger.Error("RepositoryController failed too many times")
-		rc.queue.Forget(key)
-		return true
-	}
-
-	if !isRetryableProcessError(err) {
-		logger.Info("RepositoryController will not retry")
-		rc.queue.Forget(key)
-		return true
-	}
-
-	utilruntime.HandleError(fmt.Errorf("%v failed with: %v", key, err))
-	// Re-set the attribution the pickup popped so the retry keeps it (unless a
-	// concurrent enqueue set a newer one). Only if this pickup had one: an
-	// internal re-schedule carries no attribution and must not fabricate one.
-	if ok {
-		rc.setTrigger(key, trigger)
-	}
-	rc.queue.AddRateLimited(key)
-	logger.Info("RepositoryController will retry as the failure is transient", "queue_len", rc.queue.Len())
-
-	return true
 }
 
 func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provisioning.Repository) error {
@@ -1221,9 +985,9 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			// readable from the store yet. Wait for it rather than regenerating, which would
 			// delete it and can loop under secret-store read-after-write lag.
 			if tokenRecentlyCreated(time.UnixMilli(obj.Status.Token.LastUpdated)) {
-				rc.queue.AddAfter(key, tokenWriteRetryDelay)
+				rc.workers.Queue().AddAfter(key, tokenWriteRetryDelay)
 				logger.Info("repository token secret not yet readable after recent write; will retry",
-					"error", err, "retry_after", tokenWriteRetryDelay, "queue_len", rc.queue.Len())
+					"error", err, "retry_after", tokenWriteRetryDelay, "queue_len", rc.workers.Queue().Len())
 				return repoType, nil
 			}
 
