@@ -3,7 +3,7 @@ import { useAsync } from 'react-use';
 import { getWrapper, render, screen, waitFor, within } from 'test/test-utils';
 
 import { EventBusSrv, store } from '@grafana/data';
-import { setAppEvents, usePluginLinks } from '@grafana/runtime';
+import { reportInteraction, setAppEvents, usePluginLinks } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { PortalContainer } from '@grafana/ui';
 import { AppChromeService } from 'app/core/components/AppChrome/AppChromeService';
@@ -45,6 +45,7 @@ jest.mock('@grafana/runtime', () => {
       return actual.locationService;
     },
     usePluginLinks: jest.fn(),
+    reportInteraction: jest.fn(),
   };
 });
 
@@ -501,29 +502,29 @@ describe('AssistantChatButton', () => {
     expect(openButton()).toBeInTheDocument();
   });
 
-  describe('Pop up', () => {
+  describe('Pop out', () => {
     it('opens the Assistant in a new window while the Assistant can open one, showing it too', async () => {
       const onPopOut = jest.fn();
       const unsubscribe = subscribeToExtensionSidebarPopOut(onPopOut);
       const { user } = renderButtons();
       const menu = await openMenuWithKeyboard(user, openButton());
       // The last of the ways to move the Assistant.
-      expect(itemNames(menu, 'Move Assistant')).toEqual(['Left', 'Right', 'Bottom', 'Floating (checked)', 'Pop up']);
+      expect(itemNames(menu, 'Move Assistant')).toEqual(['Left', 'Right', 'Bottom', 'Floating (checked)', 'Pop out']);
       await user.keyboard('{Escape}');
 
-      await chooseFromMenu(user, openButton(), 'Pop up');
+      await chooseFromMenu(user, openButton(), 'Pop out');
 
       expect(onPopOut).toHaveBeenCalledTimes(1);
       expect(closeButton()).toBeInTheDocument();
       unsubscribe();
     });
 
-    it('marks Pop up while the Assistant is in its own window, and brings it back to the layout chosen', async () => {
+    it('marks Pop out while the Assistant is in its own window, and brings it back to the layout chosen', async () => {
       const popIn = jest.fn();
       const stop = trackExtensionSidebarPopOut(popIn);
       const { user } = renderButtons();
       const menu = await openMenuWithKeyboard(user, openButton());
-      expect(itemNames(menu, 'Move Assistant')).toEqual(['Left', 'Right', 'Bottom', 'Floating', 'Pop up (checked)']);
+      expect(itemNames(menu, 'Move Assistant')).toEqual(['Left', 'Right', 'Bottom', 'Floating', 'Pop out (checked)']);
       await user.keyboard('{Escape}');
 
       await chooseFromMenu(user, openButton(), 'Right');
@@ -586,12 +587,65 @@ describe('AssistantChatButton', () => {
       unsubscribe();
     });
 
+    it('closes the Assistant in its own window when ctrl+alt+5 is pressed again, without bringing it back first', async () => {
+      const popIn = jest.fn();
+      let stop: (() => void) | undefined;
+      // As the Assistant does: asked to pop out, it opens its window and tracks it.
+      const unsubscribe = subscribeToExtensionSidebarPopOut(() => {
+        stop = trackExtensionSidebarPopOut(popIn);
+      });
+      const { user } = renderButtons();
+
+      await user.keyboard('{Control>}{Alt>}5{/Alt}{/Control}');
+      expect(closeButton()).toBeInTheDocument();
+
+      await user.keyboard('{Control>}{Alt>}5{/Alt}{/Control}');
+
+      expect(openButton()).toBeInTheDocument();
+      expect(popIn).not.toHaveBeenCalled();
+      act(() => stop?.());
+      unsubscribe();
+    });
+
     it('offers no new window while nothing can open one', async () => {
       const { user } = renderButtons();
 
       const menu = await openMenuWithKeyboard(user, openButton());
 
-      expect(within(menu).queryByRole('menuitemradio', { name: 'Pop up' })).not.toBeInTheDocument();
+      expect(within(menu).queryByRole('menuitemradio', { name: 'Pop out' })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('analytics', () => {
+    /** What was reported as `event`, without the event name. */
+    const reported = (event: string) =>
+      jest
+        .mocked(reportInteraction)
+        .mock.calls.filter(([name]) => name === event)
+        .map(([, properties]) => properties);
+
+    it('reports a layout chosen from the menu apart from one chosen with a shortcut', async () => {
+      const { user } = renderButtons();
+
+      await chooseFromMenu(user, openButton(), 'Left');
+      await user.keyboard('{Control>}{Alt>}3{/Alt}{/Control}');
+
+      expect(reported('grafana_extension_sidebar_placement_changed')).toEqual([
+        { placement: 'left', previous_placement: 'floating', source: 'chat_menu' },
+        { placement: 'bottom', previous_placement: 'left', source: 'shortcut' },
+      ]);
+    });
+
+    it('reports each preset chosen, from the menu or with a shortcut', async () => {
+      const { user } = renderButtons();
+
+      await chooseFromMenu(user, openButton(), 'Page only');
+      await user.keyboard('{Control>}{Alt>}{Shift>}1{/Shift}{/Alt}{/Control}');
+
+      expect(reported('grafana_assistant_window_arranged')).toEqual([
+        { preset: 'page_only', source: 'chat_menu' },
+        { preset: 'with_navigation', source: 'shortcut' },
+      ]);
     });
   });
 
@@ -607,6 +661,22 @@ describe('AssistantChatButton', () => {
       await user.keyboard('{Control>}{Alt>}4{/Alt}{/Control}');
 
       expect(getRequestedExtensionSidebarPresentation()).toBe('floating');
+      expect(closeButton()).toBeInTheDocument();
+    });
+
+    it('hides the Assistant when the shortcut of the layout it shows in is pressed again, and shows it there on the next press', async () => {
+      const { user } = renderButtons();
+
+      await user.keyboard('{Control>}{Alt>}1{/Alt}{/Control}');
+      expect(placementNow()).toEqual({ presentation: 'docked', side: 'left' });
+      expect(closeButton()).toBeInTheDocument();
+
+      await user.keyboard('{Control>}{Alt>}1{/Alt}{/Control}');
+      expect(openButton()).toBeInTheDocument();
+
+      await user.keyboard('{Control>}{Alt>}1{/Alt}{/Control}');
+      expect(placementNow()).toEqual({ presentation: 'docked', side: 'left' });
+      expect(closeButton()).toBeInTheDocument();
     });
 
     it('arranges the window with ctrl+alt+shift and the digit of its tile', async () => {

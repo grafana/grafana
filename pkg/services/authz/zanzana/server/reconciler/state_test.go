@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
 
@@ -105,7 +104,7 @@ func (f *fakeStateStore) record(t *testing.T, key string, state namespaceState) 
 	f.values[key] = string(raw)
 }
 
-func newReconcilerWithState(srv *stubServer, cf resources.ClientFactory, ss StateStore) *Reconciler {
+func newReconcilerWithState(srv *stubServer, cf ClientFactory, ss StateStore) *Reconciler {
 	r := newReconcilerForTest(srv, cf)
 	r.stateStore = ss
 	return r

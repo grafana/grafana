@@ -2,7 +2,7 @@ import { EditorView } from '@codemirror/view';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { CodeEditor } from './CodeEditor';
+import { BaseCodeEditor } from './BaseCodeEditor';
 import { CodeMirrorEditor } from './CodeEditorLazy';
 
 const query = `{
@@ -22,16 +22,16 @@ describe('CodeMirrorEditor copy button', () => {
   });
 
   it('shows the button over the editor only while showCopyButton is set, keeping the same editor', async () => {
-    const { rerender } = render(<CodeEditor value={query} onChange={jest.fn()} readOnly aria-label="Query" />);
+    const { rerender } = render(<BaseCodeEditor value={query} onChange={jest.fn()} readOnly aria-label="Query" />);
     const view = EditorView.findFromDOM(await screen.findByRole('textbox', { name: 'Query' }));
     expect(screen.queryByRole('button', { name: 'Copy to clipboard' })).not.toBeInTheDocument();
 
-    rerender(<CodeEditor value={query} onChange={jest.fn()} readOnly aria-label="Query" showCopyButton />);
+    rerender(<BaseCodeEditor value={query} onChange={jest.fn()} readOnly aria-label="Query" showCopyButton />);
     const button = await screen.findByRole('button', { name: 'Copy to clipboard' });
     expect(view?.dom).toContainElement(button);
     expect(button.parentElement).toHaveStyle({ position: 'absolute' });
 
-    rerender(<CodeEditor value={query} onChange={jest.fn()} readOnly aria-label="Query" />);
+    rerender(<BaseCodeEditor value={query} onChange={jest.fn()} readOnly aria-label="Query" />);
     expect(screen.queryByRole('button', { name: 'Copy to clipboard' })).not.toBeInTheDocument();
     expect(EditorView.findFromDOM(screen.getByRole('textbox', { name: 'Query' }))).toBe(view);
   });
@@ -51,7 +51,7 @@ describe('CodeMirrorEditor copy button', () => {
 
   it('copies the current document of an editable editor rather than the last value prop', async () => {
     const user = userEvent.setup();
-    render(<CodeEditor value="SELECT 1" onChange={jest.fn()} aria-label="Query" showCopyButton />);
+    render(<BaseCodeEditor value="SELECT 1" onChange={jest.fn()} aria-label="Query" showCopyButton />);
     const view = EditorView.findFromDOM(await screen.findByRole('textbox', { name: 'Query' }));
     act(() => view?.dispatch({ changes: { from: 8, insert: '0' } }));
 
@@ -64,7 +64,7 @@ describe('CodeMirrorEditor copy button', () => {
     jest.useFakeTimers();
     const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
     jest.spyOn(navigator.clipboard, 'writeText').mockRejectedValue(new DOMException('Denied', 'NotAllowedError'));
-    render(<CodeEditor value={query} onChange={jest.fn()} readOnly aria-label="Query" showCopyButton />);
+    render(<BaseCodeEditor value={query} onChange={jest.fn()} readOnly aria-label="Query" showCopyButton />);
 
     await user.click(await screen.findByRole('button', { name: 'Copy to clipboard' }));
 
@@ -77,7 +77,7 @@ describe('CodeMirrorEditor copy button', () => {
 
   it('is reached with Tab from a read-only editor and copies with Enter', async () => {
     const user = userEvent.setup();
-    render(<CodeEditor value={query} onChange={jest.fn()} readOnly aria-label="Query" showCopyButton />);
+    render(<BaseCodeEditor value={query} onChange={jest.fn()} readOnly aria-label="Query" showCopyButton />);
     const button = await screen.findByRole('button', { name: 'Copy to clipboard' });
 
     await user.click(screen.getByRole('textbox', { name: 'Query' }));

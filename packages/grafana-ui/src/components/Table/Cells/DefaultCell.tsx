@@ -57,22 +57,24 @@ export const DefaultCell = (props: TableCellProps) => {
     rowExpanded
   );
 
+  let style = cellProps.style;
+
   if (isStringValue) {
-    let justifyContent = cellProps.style?.justifyContent;
+    let justifyContent = style?.justifyContent;
 
     if (justifyContent === 'flex-end') {
-      cellProps.style = { ...cellProps.style, textAlign: 'right' };
+      style = { ...style, textAlign: 'right' };
     } else if (justifyContent === 'center') {
-      cellProps.style = { ...cellProps.style, textAlign: 'center' };
+      style = { ...style, textAlign: 'center' };
     }
   }
 
   if (height) {
-    cellProps.style = { ...cellProps.style, height };
+    style = { ...style, height };
   }
 
   if (textWrapped) {
-    cellProps.style = { ...cellProps.style, textWrap: 'wrap' };
+    style = { ...style, textWrap: 'wrap' };
   }
 
   const { key, ...rest } = cellProps;
@@ -88,7 +90,7 @@ export const DefaultCell = (props: TableCellProps) => {
       key={key}
       {...rest}
       className={cellStyle}
-      style={{ ...cellProps.style, cursor: hasMultipleLinksOrActions ? 'context-menu' : 'auto' }}
+      style={{ ...style, cursor: hasMultipleLinksOrActions ? 'context-menu' : 'auto' }}
       onClick={tooltipOnClickHandler(setTooltipCoords)}
     >
       {shouldShowLink ? (

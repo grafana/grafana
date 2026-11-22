@@ -56,6 +56,7 @@ export function useImportNotifications() {
         identifier: params.configIdentifier,
         forceReplace: true,
         promote: params.promote,
+        source: 'wizard',
       }).unwrap();
     },
     [convertAlertmanagerConfig]
@@ -91,6 +92,7 @@ export function useImportRules() {
         notificationSettings,
         // Imported rules stay editable in the UI.
         disableProvenance: true,
+        source: 'wizard',
       }).unwrap();
     },
     [convert]

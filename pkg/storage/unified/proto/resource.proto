@@ -168,6 +168,11 @@ message DeleteRequest {
   // Preconditions: make sure the uid matches the current saved value
   // +optional
   string uid = 3;
+
+  // The user to record as the deleter (updatedBy on the deletion marker) when the caller acts on
+  // that user's behalf. Only honored when the caller is a service identity; ignored otherwise.
+  // +optional
+  string acting_user_uid = 4;
 }
 
 message DeleteResponse {

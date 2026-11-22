@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -16,9 +17,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/apps/dashvalidator/pkg/validator"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -40,7 +38,7 @@ func TestHandleCheck_InvalidDatasourceUID(t *testing.T) {
 		},
 		{
 			name:          "UID too long",
-			uid:           strings.Repeat("a", util.MaxUIDLength+1),
+			uid:           strings.Repeat("a", maxUIDLength+1),
 			expectedError: "UID is longer than",
 		},
 		{
@@ -102,7 +100,7 @@ func TestHandleCheck_ValidDatasourceUID(t *testing.T) {
 		{"hyphens", "test-uid"},
 		{"underscores", "test_uid"},
 		{"mixed characters", "Test-UID_123"},
-		{"max length UID", strings.Repeat("a", util.MaxUIDLength)},
+		{"max length UID", strings.Repeat("a", maxUIDLength)},
 	}
 
 	for _, tt := range tests {
@@ -174,9 +172,8 @@ func TestHandleCheck_InvalidJSON(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	handler := handleCheckRoute(
 		logging.DefaultLogger,
-		nil, nil,
+		nil, // datasources - not reached for invalid JSON
 		map[string]validator.DatasourceValidator{},
-		nil, // ac - not reached for invalid JSON
 	)
 
 	_ = handler(context.Background(), recorder, req)
@@ -226,7 +223,8 @@ func TestHandleCheck_ZeroDatasources(t *testing.T) {
 // ============================================================================
 
 func TestHandleCheck_DatasourcePermissions(t *testing.T) {
-	ac := acimpl.ProvideAccessControl(nil)
+	// Grants access only to "target-ds"; Get reports not found so the handler stops right after the permission check.
+	provider := &fakeDatasourceProvider{allowedUIDs: map[string]bool{"target-ds": true}}
 
 	// Valid request body — passes input validation, reaches the permission check
 	body := checkRequest{
@@ -253,7 +251,7 @@ func TestHandleCheck_DatasourcePermissions(t *testing.T) {
 	}
 
 	t.Run("no identity in context returns 401", func(t *testing.T) {
-		handler := handleCheckRoute(logging.DefaultLogger, nil, nil, map[string]validator.DatasourceValidator{}, ac)
+		handler := handleCheckRoute(logging.DefaultLogger, provider, map[string]validator.DatasourceValidator{})
 		recorder, req := makeRequest(context.Background())
 
 		_ = handler(context.Background(), recorder, req)
@@ -264,48 +262,27 @@ func TestHandleCheck_DatasourcePermissions(t *testing.T) {
 		assert.Equal(t, "auth_error", resp["code"])
 	})
 
-	t.Run("user with scoped access passes permission check", func(t *testing.T) {
-		ctx := identity.WithRequester(context.TODO(), &identity.StaticRequester{
-			OrgRole: identity.RoleEditor,
-			UserID:  1,
-			OrgID:   1,
-			Permissions: map[int64]map[string][]string{
-				1: {
-					datasources.ActionRead:  {"datasources:uid:target-ds"},
-					datasources.ActionQuery: {"datasources:uid:target-ds"},
-				},
-			},
-		})
+	user := &identity.StaticRequester{OrgRole: identity.RoleEditor, UserID: 1, OrgID: 1}
 
-		handler := handleCheckRoute(logging.DefaultLogger, nil, nil, map[string]validator.DatasourceValidator{}, ac)
+	t.Run("user with scoped access passes permission check", func(t *testing.T) {
+		ctx := identity.WithRequester(context.TODO(), user)
+
+		handler := handleCheckRoute(logging.DefaultLogger, provider, map[string]validator.DatasourceValidator{})
 		recorder, req := makeRequest(ctx)
 
-		// Will panic on nil datasourceSvc AFTER passing the permission check
-		func() {
-			defer func() { _ = recover() }()
-			_ = handler(ctx, recorder, req)
-		}()
+		_ = handler(ctx, recorder, req)
 
-		// Should NOT be 401 or 403 — permission check passed
-		assert.NotEqual(t, http.StatusUnauthorized, recorder.Code)
-		assert.NotEqual(t, http.StatusForbidden, recorder.Code)
+		// Reaches the datasource lookup, which the fake reports as not found
+		assert.Equal(t, http.StatusNotFound, recorder.Code)
+		assert.Equal(t, []string{"target-ds"}, provider.checkedUIDs)
 	})
 
 	// the "user lacks scoped access" test case
 	t.Run("user without scoped access returns 403", func(t *testing.T) {
-		ctx := identity.WithRequester(context.TODO(), &identity.StaticRequester{
-			OrgRole: identity.RoleEditor,
-			UserID:  1,
-			OrgID:   1,
-			Permissions: map[int64]map[string][]string{
-				1: {
-					datasources.ActionRead:  {"datasources:uid:not-target-ds"},
-					datasources.ActionQuery: {"datasources:uid:not-target-ds"},
-				},
-			},
-		})
+		provider := &fakeDatasourceProvider{allowedUIDs: map[string]bool{"not-target-ds": true}}
+		ctx := identity.WithRequester(context.TODO(), user)
 
-		handler := handleCheckRoute(logging.DefaultLogger, nil, nil, map[string]validator.DatasourceValidator{}, ac)
+		handler := handleCheckRoute(logging.DefaultLogger, provider, map[string]validator.DatasourceValidator{})
 
 		recorder, req := makeRequest(ctx)
 		_ = handler(ctx, recorder, req)
@@ -470,14 +447,12 @@ func executeValidationRequest(t *testing.T, body checkRequest) *httptest.Respons
 	// Create handler with nil dependencies - validation happens before they're used
 	handler := handleCheckRoute(
 		logging.DefaultLogger,
-		nil, // datasourceSvc - not reached during validation failures
-		nil, // httpClientProvider
+		nil, // datasources - not reached during validation failures
 		map[string]validator.DatasourceValidator{},
-		nil, // ac - not reached during validation failures
 	)
 
 	// For validation tests, we only care about responses written before the panic.
-	// Valid inputs will panic when hitting nil datasourceSvc, but that's after
+	// Valid inputs will panic when hitting the nil datasource provider, but that's after
 	// validation passes - the recorder already has the validation error response.
 	func() {
 		defer func() {
@@ -488,4 +463,18 @@ func executeValidationRequest(t *testing.T, body checkRequest) *httptest.Respons
 	}()
 
 	return recorder
+}
+
+type fakeDatasourceProvider struct {
+	allowedUIDs map[string]bool
+	checkedUIDs []string
+}
+
+func (f *fakeDatasourceProvider) CanQuery(_ context.Context, _ identity.Requester, uid string) (bool, error) {
+	f.checkedUIDs = append(f.checkedUIDs, uid)
+	return f.allowedUIDs[uid], nil
+}
+
+func (f *fakeDatasourceProvider) Get(_ context.Context, _, uid, _ string) (*Datasource, error) {
+	return nil, fmt.Errorf("%w: %s", ErrDatasourceNotFound, uid)
 }
