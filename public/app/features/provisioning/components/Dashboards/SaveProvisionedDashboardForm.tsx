@@ -599,6 +599,17 @@ export function SaveProvisionedDashboardForm({
                   <Field
                     noMargin
                     label={t('dashboard-scene.save-provisioned-dashboard-form.label-target-folder', 'Target folder')}
+                    // The folder is what decides whether this save goes to Git at all, so it says
+                    // so here rather than leaving the Next button to imply it.
+                    description={
+                      repository
+                        ? t(
+                            'dashboard-scene.save-provisioned-dashboard-form.description-target-folder-synced',
+                            'Synced with {{repository}}. Choosing a folder that is not synced saves the dashboard in Grafana instead.',
+                            { repository: repository.title || repository.name }
+                          )
+                        : undefined
+                    }
                   >
                     <Controller
                       control={control}
