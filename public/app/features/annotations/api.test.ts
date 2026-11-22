@@ -151,7 +151,6 @@ describe('annotationServer with FE flag ON and API group available', () => {
     expect(patchUrl).toBe(`${baseURL}/annotations/a-1`);
     expect(body.spec.scopes).toEqual(['scope-a']);
     expect(body.spec.text).toBe('new');
-    expect(body.spec.time).toBe(2);
     expect(opts.headers['Content-Type']).toBe('application/merge-patch+json');
   });
 

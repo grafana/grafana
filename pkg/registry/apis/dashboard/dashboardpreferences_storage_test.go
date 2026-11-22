@@ -22,7 +22,6 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -36,6 +35,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardpreferences"
 )
 
 func TestDashboardPreferencesStorageUpdate(t *testing.T) {
@@ -331,7 +331,7 @@ func TestDashboardPreferencesStorageUpdate(t *testing.T) {
 
 		obj, created, err := newStore(fake).Update(ctx, "user-u1", mergePatch("user-u1", patch), nil, nil, false, &metav1.UpdateOptions{})
 		require.True(t, apierrors.IsNotFound(err), "expected NotFound, got %v", err)
-		require.True(t, isDashboardPreferencesNotFound(err, "user-u1"), "expected the object's own NotFound, got %v", err)
+		require.True(t, dashboardpreferences.IsNotFound(err, "user-u1"), "expected the object's own NotFound, got %v", err)
 		require.Nil(t, obj)
 		require.False(t, created)
 
@@ -401,31 +401,6 @@ func TestDashboardPreferencesStorageHidesWatchAndDeleteCollection(t *testing.T) 
 	require.NotImplements(t, (*rest.CollectionDeleter)(nil), store)
 }
 
-func TestIsDashboardPreferencesNotFound(t *testing.T) {
-	gr := dashv2beta1.DashboardPreferencesResourceInfo.GroupResource()
-
-	tests := []struct {
-		name string
-		err  error
-		want bool
-	}{
-		{name: "this resource and name", err: apierrors.NewNotFound(gr, "folder-f1"), want: true},
-		{name: "wrapped", err: fmt.Errorf("update: %w", apierrors.NewNotFound(gr, "folder-f1")), want: true},
-		{name: "another name", err: apierrors.NewNotFound(gr, "folder-f2")},
-		{name: "another resource", err: apierrors.NewNotFound(schema.GroupResource{Group: gr.Group, Resource: "dashboards"}, "folder-f1")},
-		{name: "another group", err: apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: gr.Resource}, "folder-f1")},
-		{name: "a folder", err: apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), "f1")},
-		{name: "a NotFound without details", err: &apierrors.StatusError{ErrStatus: metav1.Status{Reason: metav1.StatusReasonNotFound}}},
-		{name: "another failure for this object", err: apierrors.NewForbidden(gr, "folder-f1", errors.New("nope"))},
-		{name: "not an API error", err: errors.New("dashboard preferences not found")},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			require.Equal(t, tt.want, isDashboardPreferencesNotFound(tt.err, "folder-f1"))
-		})
-	}
-}
-
 func TestIsNotFoundForObject(t *testing.T) {
 	gr := folders.FolderResourceInfo.GroupResource()
 
@@ -471,15 +446,15 @@ func TestDashboardPreferencesStorageList(t *testing.T) {
 		return &metainternalversion.ListOptions{FieldSelector: fields.OneTermEqualSelector("metadata.name", name)}
 	}
 
-	u1 := dashboardPreferencesRequester(authlib.TypeUser, "u1", identity.RoleViewer)
-	u3 := dashboardPreferencesRequester(authlib.TypeUser, "u3", identity.RoleViewer)
-	serviceAccount := dashboardPreferencesRequester(authlib.TypeServiceAccount, "sa", identity.RoleAdmin)
-	serviceAccountU1 := dashboardPreferencesRequester(authlib.TypeServiceAccount, "u1", identity.RoleAdmin)
-	render := dashboardPreferencesRequester(authlib.TypeRenderService, "", identity.RoleViewer)
-	grafanaAdmin := dashboardPreferencesRequester(authlib.TypeUser, "u1", identity.RoleAdmin)
+	u1 := dashboardPreferencesRequester(authlib.TypeUser, "u1", authlib.RoleViewer)
+	u3 := dashboardPreferencesRequester(authlib.TypeUser, "u3", authlib.RoleViewer)
+	serviceAccount := dashboardPreferencesRequester(authlib.TypeServiceAccount, "sa", authlib.RoleAdmin)
+	serviceAccountU1 := dashboardPreferencesRequester(authlib.TypeServiceAccount, "u1", authlib.RoleAdmin)
+	render := dashboardPreferencesRequester(authlib.TypeRenderService, "", authlib.RoleViewer)
+	grafanaAdmin := dashboardPreferencesRequester(authlib.TypeUser, "u1", authlib.RoleAdmin)
 	grafanaAdmin.IsGrafanaAdmin = true
 	// Grafana admins pass the namespace authorizer for every namespace.
-	otherNamespace := dashboardPreferencesRequester(authlib.TypeUser, "u1", identity.RoleAdmin)
+	otherNamespace := dashboardPreferencesRequester(authlib.TypeUser, "u1", authlib.RoleAdmin)
 	otherNamespace.IsGrafanaAdmin = true
 	otherNamespace.Namespace = "stacks-2"
 

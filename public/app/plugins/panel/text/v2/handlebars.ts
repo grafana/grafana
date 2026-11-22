@@ -5,7 +5,9 @@ import {
   type DateTimeInput,
   type Field,
   dateTimeFormat,
+  type DisplayValue,
   formattedValueToString,
+  getDisplayProcessor,
   getFieldDisplayName,
   type InterpolateFunction,
   isDateTime,
@@ -32,6 +34,57 @@ export type TemplateContext = TemplateRow | AllRowsContext;
 /** Throws when the template fails to render; callers surface the error. */
 export type CompiledTemplate = (context: TemplateContext) => string;
 
+export const DISPLAY_PROPERTIES = [
+  'text',
+  'prefix',
+  'suffix',
+  'numeric',
+  'color',
+  'percent',
+  'icon',
+] as const satisfies ReadonlyArray<keyof DisplayValue>;
+
+export type DisplayProperty = (typeof DISPLAY_PROPERTIES)[number];
+
+class FieldDisplayValue implements Readonly<DisplayValue> {
+  readonly text: DisplayValue['text'];
+  readonly prefix: DisplayValue['prefix'];
+  readonly suffix: DisplayValue['suffix'];
+  readonly numeric: DisplayValue['numeric'];
+  readonly color: DisplayValue['color'];
+  readonly percent: DisplayValue['percent'];
+  readonly icon: DisplayValue['icon'];
+
+  constructor({ text, prefix, suffix, numeric, color, percent, icon }: DisplayValue) {
+    this.text = text;
+    this.prefix = prefix;
+    this.suffix = suffix;
+    this.numeric = numeric;
+    this.color = color;
+    this.percent = percent;
+    this.icon = icon;
+  }
+
+  toString(): string {
+    return formattedValueToString(this);
+  }
+}
+
+interface RowSource {
+  fields: Field[];
+  fieldIndexes: Map<string, number>;
+  rowIndex: number;
+  displayValues?: Array<FieldDisplayValue | undefined>;
+}
+
+// `display` depends on row object identity. Helpers that sort or filter rows must preserve
+// the original row objects; cloning them loses their source and makes `display` render nothing.
+const rowSources = new WeakMap<object, RowSource>();
+
+export function getFieldNames(frame: DataFrame, series: DataFrame[]): string[] {
+  return frame.fields.map((field) => getFieldDisplayName(field, frame, series));
+}
+
 // Values stay raw so the numeric helpers can compare them; `fmt` holds the
 // display strings. Fields are assigned last so a field named `fmt` wins.
 //
@@ -40,7 +93,8 @@ export type CompiledTemplate = (context: TemplateContext) => string;
 // Own accessors rather than a Proxy: the interpreter only reads own properties, so a Proxy
 // would run two traps on every read.
 export function buildRows(frame: DataFrame, series: DataFrame[], maxRows = Infinity, startRow = 0): TemplateRow[] {
-  const names = frame.fields.map((field) => getFieldDisplayName(field, frame, series));
+  const names = getFieldNames(frame, series);
+  const fieldIndexes = new Map(names.map((name, fieldIndex) => [name, fieldIndex]));
   const formattedRows = new WeakMap<object, FormattedRow>();
   const state: FormattingState = { eager: false };
   const formattedFields = createFormattedFields(frame, names, formattedRows, state);
@@ -70,8 +124,26 @@ export function buildRows(frame: DataFrame, series: DataFrame[], maxRows = Infin
       row[names[fieldIndex]] = field.values[rowIndex];
     });
 
+    rowSources.set(row, { fields: frame.fields, fieldIndexes, rowIndex });
+
     return row;
   });
+}
+
+function getDisplayValue(row: unknown, name: string): FieldDisplayValue | undefined {
+  const source = isObject(row) ? rowSources.get(row) : undefined;
+  const fieldIndex = source?.fieldIndexes.get(name);
+
+  if (!source || fieldIndex === undefined) {
+    return undefined;
+  }
+
+  const field = source.fields[fieldIndex];
+  source.displayValues ??= [];
+
+  return (source.displayValues[fieldIndex] ??= new FieldDisplayValue(
+    (field.display ?? getDisplayProcessor())(field.values[source.rowIndex])
+  ));
 }
 
 const FORMATTED_KEY = 'fmt';
@@ -218,6 +290,21 @@ const helperArgs = (args: unknown[]): unknown[] => args.slice(0, -1);
 // `#if` counts `0` and an empty array as falsy, so the boolean helpers have to agree.
 const isTruthy = (value: unknown): boolean => Boolean(value) && !Handlebars.Utils.isEmpty(value);
 
+const isObject = (value: unknown): value is object => typeof value === 'object' && value !== null;
+
+const hasOwn = (target: unknown, key: string): target is object =>
+  isObject(target) && Object.prototype.hasOwnProperty.call(target, key);
+
+const readOwn = (target: unknown, key: string): unknown => (hasOwn(target, key) ? Reflect.get(target, key) : undefined);
+
+const isDisplayProperty = (name: string): name is DisplayProperty =>
+  DISPLAY_PROPERTIES.some((property) => property === name);
+
+const readDisplayProperty = (
+  value: FieldDisplayValue | undefined,
+  name: string
+): DisplayValue[DisplayProperty] | undefined => (value && isDisplayProperty(name) ? value[name] : undefined);
+
 // Fresh per call: the variable helpers close over this panel's replaceVariables.
 function createEnvironment(replaceVariables: InterpolateFunction) {
   const env = Handlebars.create();
@@ -264,6 +351,28 @@ function createEnvironment(replaceVariables: InterpolateFunction) {
       return values;
     },
     variableValue: (name: unknown) => replaceVariables(`$${toText(name)}`),
+    display(this: unknown, ...args: unknown[]) {
+      const params = helperArgs(args);
+      const options = args[args.length - 1];
+      const isBlock = typeof readOwn(options, 'fn') === 'function';
+
+      if (params.length === 0) {
+        const field = readOwn(this, 'display');
+        return isBlock ? env.helpers.blockHelperMissing.call(this, field, options) : field;
+      }
+
+      const [name, property] = params;
+      const hash = readOwn(options, 'hash');
+      const row = hasOwn(hash, 'row') ? Reflect.get(hash, 'row') : this;
+      const value = getDisplayValue(row, toText(name));
+      const result = params.length === 1 ? value : readDisplayProperty(value, toText(property));
+
+      if (isBlock) {
+        return env.helpers.with.call(this, result, options);
+      }
+
+      return result instanceof FieldDisplayValue ? result.toString() : result;
+    },
   });
 
   return env;
