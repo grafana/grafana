@@ -1044,11 +1044,6 @@
       "count": 1
     }
   },
-  "public/app/core/components/Signup/SignupPage.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 6
-    }
-  },
   "public/app/core/components/SuggestionsInput/SuggestionsInput.tsx": {
     "react-hooks/refs": {
       "count": 1
