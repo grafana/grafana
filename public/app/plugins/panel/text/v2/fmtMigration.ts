@@ -3,7 +3,7 @@ import Handlebars from 'handlebars';
 import { RenderMode, type TextMode } from '../panelcfg.gen';
 
 import { compileProgram } from './handlebars';
-import { isScoped } from './handlebarsInterpreter';
+import { isScoped, isSimpleId, KNOWN_HELPERS } from './handlebarsInterpreter';
 import { escapeCommentedTemplates, interpretsHandlebars } from './renderContent';
 
 export type FmtReadReason = 'namespace' | 'helper' | 'expression' | 'row' | 'shadowed' | 'name';
@@ -52,7 +52,6 @@ const SCALAR = 64;
 const NOTHING = 128;
 const UNKNOWN = 256;
 
-const BLOCK_HELPERS = new Set(['each', 'with', 'if', 'unless']);
 const DATA_SCALARS = new Set(['index', 'key', 'first', 'last']);
 const KEYWORDS = new Set(['true', 'false', 'null', 'undefined', 'this']);
 const IDENTIFIER = /^[A-Za-z_$][\w$-]*$/;
@@ -190,11 +189,18 @@ function analyze(program: hbs.AST.Program, root: number, shadowed: boolean, sour
     return undefined;
   };
 
-  const isParam = (scope: Scope, path: hbs.AST.PathExpression) =>
-    path.depth === 0 && !isScoped(path) && path.parts.length > 0 && findParam(scope, path.parts[0]) !== undefined;
+  function resolveHelper(path: hbs.AST.PathExpression, scope: Scope, hasArgs: boolean): string | undefined {
+    const [name] = path.parts;
+    const simple = isSimpleId(path);
 
-  const isSimple = (path: hbs.AST.PathExpression) =>
-    !path.data && path.depth === 0 && path.parts.length === 1 && !isScoped(path);
+    if (name === undefined || (simple && findParam(scope, name) !== undefined)) {
+      return undefined;
+    }
+    if (KNOWN_HELPERS.has(name) && (hasArgs || simple)) {
+      return name;
+    }
+    return simple ? name : undefined;
+  }
 
   function getReason(
     read: Read,
@@ -309,12 +315,13 @@ function analyze(program: hbs.AST.Program, root: number, shadowed: boolean, sour
 
   function call(node: hbs.AST.SubExpression | hbs.AST.MustacheStatement, scope: Scope): number {
     const path = isPath(node.path) ? node.path : undefined;
+    const helper = path ? resolveHelper(path, scope, true) : undefined;
+
     if (path) {
       resolve(path, scope, 'callee');
     }
 
     const values = args(node, scope);
-    const helper = path && !isParam(scope, path) ? path.parts[0] : undefined;
 
     if (helper === 'lookup') {
       const [, key] = node.params;
@@ -325,11 +332,11 @@ function analyze(program: hbs.AST.Program, root: number, shadowed: boolean, sour
       return propertyKind(values[0] ?? NOTHING, name, shadowed);
     }
 
-    if (path && isSimple(path) && (helper === 'split' || helper === 'variable')) {
+    if (helper === 'split' || helper === 'variable') {
       return OBJECT;
     }
 
-    return path && isSimple(path) && helper === HELPER && node.params.length > 0 ? SCALAR | NOTHING : UNKNOWN;
+    return helper === HELPER && node.params.length > 0 ? SCALAR | NOTHING : UNKNOWN;
   }
 
   function mustache(node: hbs.AST.MustacheStatement, scope: Scope) {
@@ -344,22 +351,13 @@ function analyze(program: hbs.AST.Program, root: number, shadowed: boolean, sour
 
   function block(node: hbs.AST.BlockStatement, scope: Scope) {
     const path = isPath(node.path) ? node.path : undefined;
+    const helper = path ? resolveHelper(path, scope, node.params.length > 0 || Boolean(node.hash)) : undefined;
     if (path) {
       resolve(path, scope, 'callee');
     }
 
     const values = args(node, scope);
     const [value = NOTHING] = values;
-    const first = path && !isParam(scope, path) ? path.parts[0] : undefined;
-    const simple = path !== undefined && isSimple(path);
-    const hasArgs = node.params.length > 0 || Boolean(node.hash);
-
-    let helper: string | undefined;
-    if (first !== undefined && BLOCK_HELPERS.has(first) && (hasArgs || simple)) {
-      helper = first;
-    } else if (simple && node.params.length > 0 && first === HELPER) {
-      helper = HELPER;
-    }
 
     if (helper === 'each') {
       const item = itemKind(value);
@@ -368,7 +366,7 @@ function analyze(program: hbs.AST.Program, root: number, shadowed: boolean, sour
       enter(node.program, scope, value, true, [value]);
     } else if (helper === 'if' || helper === 'unless') {
       enter(node.program, scope, scope.context, false, []);
-    } else if (helper === HELPER) {
+    } else if (helper === HELPER && values.length > 0) {
       const display = values.length === 1 ? OBJECT : SCALAR;
       enter(node.program, scope, display, true, [display]);
     } else {

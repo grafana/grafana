@@ -230,6 +230,16 @@ describe('migrateFmt', () => {
         expected: '{{#each frames as |data|}}{{display "cpu" row=this.data.[0]}}{{/each}}',
       },
       {
+        desc: 'a read inside each called through this, which the renderer still treats as each',
+        content: '{{#this.each data}}{{fmt.cpu}}{{/this.each}}',
+        expected: '{{#this.each data}}{{display "cpu"}}{{/this.each}}',
+      },
+      {
+        desc: 'a data path named like a block param, which the renderer resolves to the block param',
+        content: '{{#each data as |row|}}{{@row.fmt.cpu}}{{/each}}',
+        expected: '{{#each data as |row|}}{{display "cpu" row=@row}}{{/each}}',
+      },
+      {
         desc: 'field names written in brackets or with slashes, as quoted names',
         renderMode: RenderMode.PerRow,
         content:
