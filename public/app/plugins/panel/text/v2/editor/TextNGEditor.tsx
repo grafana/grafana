@@ -5,7 +5,18 @@ import { useDebounce, useMeasure } from 'react-use';
 
 import { type DataFrame, type GrafanaTheme2, type InterpolateFunction, type VariableSuggestion } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Alert, Button, Dropdown, Icon, Menu, RadioButtonGroup, Stack, useStyles2, useTheme2 } from '@grafana/ui';
+import {
+  Alert,
+  Button,
+  Dropdown,
+  ErrorBoundary,
+  Icon,
+  Menu,
+  RadioButtonGroup,
+  Stack,
+  useStyles2,
+  useTheme2,
+} from '@grafana/ui';
 import { CodeMirrorEditor, createCodeEditorTheme, type CodeMirrorEditorLanguage } from '@grafana/ui/unstable';
 import config from 'app/core/config';
 
@@ -330,16 +341,22 @@ export function TextNGEditor({
         </Stack>
       </div>
 
-      <FmtMigrationNotice
-        content={previewSource}
-        mode={mode}
-        renderMode={renderMode}
-        format={format}
-        frames={allFrames ?? series ?? NO_FRAMES}
-        replaceVariables={replaceVariables}
-        getDraft={() => draftRef.current}
-        onConvert={replaceDraft}
-      />
+      <ErrorBoundary boundaryName="text-fmt-migration-notice">
+        {({ error }) =>
+          error ? null : (
+            <FmtMigrationNotice
+              content={previewSource}
+              mode={mode}
+              renderMode={renderMode}
+              format={format}
+              frames={allFrames ?? series ?? NO_FRAMES}
+              replaceVariables={replaceVariables}
+              getDraft={() => draftRef.current}
+              onConvert={replaceDraft}
+            />
+          )
+        }
+      </ErrorBoundary>
 
       <div className={cx(styles.body, view === 'split' && styles.splitBody)}>
         {showEditor && (

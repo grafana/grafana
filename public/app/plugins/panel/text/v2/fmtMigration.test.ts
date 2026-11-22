@@ -591,6 +591,14 @@ describe('migrateFmt', () => {
     ])('leaves a template the panel cannot compile alone: $desc', ({ content }) => {
       expect(migrate(content, { renderMode: RenderMode.PerRow })).toEqual({ content, changes: [], unconverted: [] });
     });
+
+    it('leaves a template nested deeper than it can follow alone, instead of running out of stack', () => {
+      const nested = (depth: number) =>
+        `${'{{#if true}}'.repeat(depth)}{{#each data}}{{fmt.cpu}}{{/each}}${'{{/if}}'.repeat(depth)}`;
+
+      expect(migrate(nested(150)).changes).toHaveLength(1);
+      expect(migrate(nested(1500))).toEqual({ content: nested(1500), changes: [], unconverted: [] });
+    });
   });
 });
 
