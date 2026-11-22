@@ -1,0 +1,28 @@
+{
+  "apiVersion": "provisioning.grafana.app/v0alpha1",
+  "kind": "Repository",
+  "metadata": {
+    "name": "gitea"
+  },
+  "spec": {
+    "title": "gdev Gitea",
+    "description": "The devenv Gitea repository, seeded by the gitea docker block.",
+    "type": "git",
+    "git": {
+      "url": "http://localhost:3002/grafana/devenv.git",
+      "branch": "main",
+      "tokenUser": "grafana"
+    },
+    "workflows": ["branch", "write"],
+    "sync": {
+      "enabled": true,
+      "target": "folder",
+      "intervalSeconds": 10
+    }
+  },
+  "secure": {
+    "token": {
+      "create": "grafana-devenv"
+    }
+  }
+}

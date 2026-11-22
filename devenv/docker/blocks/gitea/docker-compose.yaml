@@ -1,0 +1,28 @@
+  gitea:
+    image: gitea/gitea:${gitea_version}
+    # Seeding needs the running server, so this backgrounds it ahead of the image's own command.
+    command: ["/bin/sh", "-c", "sh /gitea-seed/seed.sh & exec /usr/bin/s6-svscan /etc/s6"]
+    ports:
+      - "3002:3000"
+    environment:
+      GITEA__database__DB_TYPE: sqlite3
+      GITEA__database__SQLITE_JOURNAL_MODE: WAL
+      GITEA__database__SQLITE_TIMEOUT: "10000"
+      # Skips the web installer, so the server comes up ready to seed.
+      GITEA__security__INSTALL_LOCK: "true"
+      # Keeps the seeded password simple; nothing here is worth protecting.
+      GITEA__security__PASSWORD_COMPLEXITY: "off"
+      GITEA__server__HTTP_PORT: "3000"
+      # Reachable from the host, where `make run` serves Grafana.
+      GITEA__server__ROOT_URL: http://localhost:3002/
+      GITEA__server__DISABLE_SSH: "true"
+      GITEA__service__DISABLE_REGISTRATION: "true"
+      GITEA__mailer__ENABLED: "false"
+    volumes:
+      - ./docker/blocks/gitea/seed.sh:/gitea-seed/seed.sh:ro
+      - ./docker/blocks/gitea/repo:/gitea-seed/repo:ro
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3000/api/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
