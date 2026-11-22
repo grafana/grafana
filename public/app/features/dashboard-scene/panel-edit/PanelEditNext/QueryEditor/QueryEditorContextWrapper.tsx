@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { type DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { SceneDataTransformer } from '@grafana/scenes';
@@ -32,13 +32,9 @@ import { getEditorType, getTransformId } from './utils';
  */
 export function QueryEditorContextWrapper({
   dataPane,
-  onSwitchToClassic,
-  showVersionBanner,
   children,
 }: {
   dataPane: PanelDataPaneNext;
-  onSwitchToClassic?: () => void;
-  showVersionBanner?: boolean;
   children: ReactNode;
 }) {
   const theme = useTheme2();
@@ -324,13 +320,24 @@ export function QueryEditorContextWrapper({
 
   const { selectedQueryDsData, selectedQueryDsLoading } = useSelectedQueryDatasource(selectedQuery, dsSettings, panel);
 
+  // A ref keeps activateStackedItem stable; the stack's IntersectionObserver re-subscribes when it changes.
+  const activeCardIdsRef = useRef({ queryRefId: activeQueryRefId, transformationId: activeTransformationId });
+  useLayoutEffect(() => {
+    activeCardIdsRef.current = { queryRefId: activeQueryRefId, transformationId: activeTransformationId };
+  });
+
   // Scrolling the stack activates the card coming into view, which is navigation — so keep the
   // bulk selection so checkboxes ticked in the sidebar survive scrolling the stack.
   const activateStackedItem = useCallback(
     (queryRefId: string | null, transformationId: string | null) => {
+      // Help and debug views follow the active card, so close them rather than let them jump to the next one.
+      const { queryRefId: activeQuery, transformationId: activeTransformation } = activeCardIdsRef.current;
+      if (queryRefId !== activeQuery || transformationId !== activeTransformation) {
+        resetUIToggles();
+      }
       onCardSelectionChange(queryRefId, transformationId, { bulk: 'keep' });
     },
-    [onCardSelectionChange]
+    [onCardSelectionChange, resetUIToggles]
   );
 
   // Composed after useSelectedCard so `isAlertView` reads the resolved alert card, matching the
@@ -385,7 +392,6 @@ export function QueryEditorContextWrapper({
       setPendingTransformation,
       finalizePendingTransformation,
       stackedMode,
-      showVersionBanner: Boolean(showVersionBanner),
       confirmingDeleteActionKey,
       setConfirmingDeleteActionKey,
     }),
@@ -424,14 +430,12 @@ export function QueryEditorContextWrapper({
       pendingTransformation,
       setPendingTransformation,
       finalizePendingTransformation,
-      showVersionBanner,
       confirmingDeleteActionKey,
     ]
   );
 
   const actions = useMemo(
     () => ({
-      onSwitchToClassic,
       updateQueries: dataPane.updateQueries,
       updateSelectedQuery: (updatedQuery: DataQuery, originalRefId: string) => {
         dataPane.updateSelectedQuery(updatedQuery, originalRefId);
@@ -454,6 +458,7 @@ export function QueryEditorContextWrapper({
         dataPane.changeDataSource(getDataSourceRef(settings), queryRefId);
       },
       onQueryOptionsChange: dataPane.onQueryOptionsChange,
+      onQueryEdited: dataPane.onQueryEdited,
       addTransformation: addTransformationAction,
       deleteTransformation: (transformId: string) => {
         const index = findTransformationIndex(transformId);
@@ -491,7 +496,6 @@ export function QueryEditorContextWrapper({
       addTransformationAction,
       dataPane,
       findTransformationIndex,
-      onSwitchToClassic,
       removeQueryFromSelection,
       removeTransformationFromSelection,
       setMultiSelectModeState,

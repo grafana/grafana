@@ -6,6 +6,14 @@ export function findStarredNames(stars: StarsList | undefined, group: string, ki
   return stars?.items?.[0]?.spec.resource.find((r) => r.group === group && r.kind === kind)?.names ?? [];
 }
 
+/**
+ * Whether the current user has a stars resource to read and write. Anonymous users and identities without a uid
+ * have none, so the API rejects their `user-` name.
+ */
+export function canUseStars(): boolean {
+  return contextSrv.isSignedIn && Boolean(contextSrv.user.uid);
+}
+
 /** Field selector for the current user's stars resource (one Stars object per user, named `user-<uid>`). */
 export function userStarsFieldSelector(): string {
   return `metadata.name=user-${contextSrv.user.uid}`;

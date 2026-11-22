@@ -139,17 +139,17 @@ func TestKvStorageBackend_WriteEvent_PreviousImportedRevision(t *testing.T) {
 			created := newBulkImportRequest("test-namespace", "item-1", resourcepb.BulkRequest_ADDED)
 			updated := newBulkImportRequest("test-namespace", "item-1", resourcepb.BulkRequest_MODIFIED)
 			updated.Folder = "imported-folder"
-			resp := backend.ProcessBulk(ctx, BulkSettings{
+			resp, err := backend.ProcessBulk(ctx, BulkSettings{
 				Collection: []*resourcepb.ResourceKey{{
 					Namespace: created.Key.Namespace,
 					Group:     created.Key.Group,
 					Resource:  created.Key.Resource,
 				}},
 			}, newBatchOnlyBulkIterator([]*resourcepb.BulkRequest{created, updated}))
-			require.Nil(t, resp.Error)
+			require.NoError(t, err)
 			require.Empty(t, resp.Rejected)
 			require.Equal(t, int64(2), resp.Processed)
-			_, err := backend.eventStore.LastEventKey(ctx)
+			_, err = backend.eventStore.LastEventKey(ctx)
 			require.ErrorIs(t, err, ErrNotFound, "bulk imports must not emit replayable events")
 
 			key, err := backend.dataStore.GetLatestResourceKey(ctx, GetRequestKey{

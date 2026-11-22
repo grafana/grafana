@@ -3,13 +3,13 @@ import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, LinkButton, Stack } from '@grafana/ui';
 import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 
 import { StatusBadge } from '../Shared/StatusBadge';
 import { WorkflowBadges } from '../components/WorkflowBadges';
-import { CONNECTIONS_URL, PROVISIONING_URL } from '../constants';
 import { getRepoHrefForProvider } from '../utils/git';
-import { getRepositoryTypeConfig } from '../utils/repositoryTypes';
-import { getRepositoryRoute, resourceKindInfos } from '../utils/resourceKinds';
+import { getRepositoryEditUrl } from '../utils/repository';
+import { getRepositoryTypeIcon } from '../utils/repositoryTypes';
 
 import { SyncRepository } from './SyncRepository';
 
@@ -23,22 +23,16 @@ export function RepositoryActions({ repository }: RepositoryActionsProps) {
   const repoHref = rawRepoHref ? textUtil.sanitizeUrl(rawRepoHref) : undefined;
   const connectionName = repository.spec?.connection?.name;
 
-  const repoType = repository.spec?.type;
-  const repoConfig = repoType ? getRepositoryTypeConfig(repoType) : undefined;
-  const providerIcon = repoConfig?.icon || 'external-link-alt';
+  const providerIcon = getRepositoryTypeIcon(repository.spec?.type);
   // The repository's resources are contained in a folder named after it.
   const isFolderContained = repository.spec?.sync.target === 'folder';
 
   return (
     <Stack wrap="wrap" alignItems="center">
       <StatusBadge repo={repository} displayOnly />
-      <WorkflowBadges workflows={repository.spec?.workflows} repoType={repoType} />
+      <WorkflowBadges workflows={repository.spec?.workflows} />
       {isFolderContained && (
-        <LinkButton
-          variant="secondary"
-          icon="folder-open"
-          href={getRepositoryRoute(resourceKindInfos.folder, repository)}
-        >
+        <LinkButton variant="secondary" icon="folder-open" href={CORE_KINDS.folder.getRoute(name)}>
           <Trans i18nKey="provisioning.repository-actions.view-folder">View folder</Trans>
         </LinkButton>
       )}
@@ -52,7 +46,7 @@ export function RepositoryActions({ repository }: RepositoryActionsProps) {
         <LinkButton
           variant="secondary"
           icon="link"
-          href={`${CONNECTIONS_URL}/${connectionName}/edit`}
+          href={CORE_KINDS.connection.getRoute(connectionName)}
           onClick={() => {
             reportInteraction('grafana_provisioning_repository_connection_opened', {
               repositoryName: name,
@@ -66,7 +60,7 @@ export function RepositoryActions({ repository }: RepositoryActionsProps) {
       <LinkButton
         variant="secondary"
         icon="cog"
-        href={`${PROVISIONING_URL}/${name}/edit`}
+        href={getRepositoryEditUrl(name)}
         onClick={() => {
           reportInteraction('grafana_provisioning_repository_settings_opened', {
             repositoryName: name,

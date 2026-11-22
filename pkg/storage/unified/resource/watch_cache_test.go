@@ -143,6 +143,62 @@ func TestWrittenEventSizeBytes(t *testing.T) {
 	require.Equal(t, int64(1024), event.sizeBytes())
 }
 
+func TestWatchCacheCollectionFloors(t *testing.T) {
+	first := GroupResource{Group: "g", Resource: "first"}
+	second := GroupResource{Group: "g", Resource: "second"}
+	unknown := GroupResource{Group: "g", Resource: "unknown"}
+	cache := newWatchCache(2, writtenEventIdentity)
+	require.NoError(t, cache.seed(cacheSeed[*WrittenEvent]{
+		collectionFloors: map[GroupResource]int64{first: 1000, second: 50},
+	}))
+	validate := func(gr GroupResource, since int64) error {
+		return cache.validateResume(watchResume{groupResource: gr, since: since, requestedRV: since})
+	}
+	// Per-collection RVs are not comparable, so each collection has its own floor.
+	require.True(t, IsResourceVersionExpired(validate(first, 999)))
+	require.NoError(t, validate(first, 1000))
+	require.True(t, IsResourceVersionExpired(validate(second, 49)))
+	require.NoError(t, validate(second, 50))
+	// A collection without writes before the stream started has every write.
+	require.NoError(t, validate(unknown, 1))
+
+	// A late arrival evicted after a higher RV must not lower the floor.
+	cache.add(cacheEvent(second, 80))
+	cache.add(cacheEvent(second, 70))
+	cache.add(cacheEvent(second, 90))
+	cache.add(cacheEvent(second, 100))
+	require.True(t, IsResourceVersionExpired(validate(second, 79)))
+	require.NoError(t, validate(second, 80))
+}
+
+func TestWatchCacheByteEvictionRaisesCollectionFloor(t *testing.T) {
+	gr := GroupResource{Group: "g", Resource: "r"}
+	cache := newWatchCache(10, writtenEventIdentity)
+	require.NoError(t, cache.seed(cacheSeed[*WrittenEvent]{collectionFloors: map[GroupResource]int64{gr: 50}}))
+	validate := func(since int64) error {
+		return cache.validateResume(watchResume{groupResource: gr, since: since, requestedRV: since})
+	}
+
+	first := cacheEvent(gr, 80)
+	first.Value = make([]byte, 1024)
+	cache.maxBytes = first.sizeBytes()
+	cache.add(first)
+	next := cacheEvent(gr, 90)
+	next.Value = make([]byte, 1024)
+	// The byte limit, not the count, evicts the first event.
+	cache.add(next)
+	require.Equal(t, 1, cache.events.len)
+	require.True(t, IsResourceVersionExpired(validate(79)))
+	require.NoError(t, validate(80))
+
+	// An event too large to cache raises the floor too.
+	huge := cacheEvent(gr, 100)
+	huge.Value = make([]byte, 4096)
+	cache.add(huge)
+	require.True(t, IsResourceVersionExpired(validate(99)))
+	require.NoError(t, validate(100))
+}
+
 func TestWatchCacheRejectsOversizedSeed(t *testing.T) {
 	cache := newWatchCache[int](1, nil)
 	require.ErrorContains(t, cache.seed(cacheSeed[int]{items: []int{1, 2}, initialCacheFloor: 50}), "cache capacity")

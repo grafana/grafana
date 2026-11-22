@@ -21,6 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -89,6 +90,26 @@ func TestTeamAPIEndpoint_SearchTeams(t *testing.T) {
 		assert.Equal(t, http.StatusOK, res.StatusCode)
 		require.NoError(t, res.Body.Close())
 	})
+
+	for name, input := range map[string]struct {
+		err  error
+		code int
+	}{
+		"bad request": {err: errutil.BadRequest("team.test").Errorf("bad page"), code: http.StatusBadRequest},
+		"plain":       {err: errors.New("search failed"), code: http.StatusInternalServerError},
+	} {
+		t.Run("Search error status is preserved: "+name, func(t *testing.T) {
+			server := SetupAPITestServer(t, &teamtest.FakeService{ExpectedError: input.err})
+			req := server.NewGetRequest(searchTeamsURL)
+			req = webtest.RequestWithSignedInUser(req, authedUserWithPermissions(1, 1, []accesscontrol.Permission{
+				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
+			}))
+			res, err := server.Send(req)
+			require.NoError(t, err)
+			assert.Equal(t, input.code, res.StatusCode)
+			require.NoError(t, res.Body.Close())
+		})
+	}
 }
 
 func TestTeamAPIEndpoint_GetTeamByID(t *testing.T) {
@@ -335,9 +356,9 @@ func TestDeleteTeamPreservesFolderSearchErrorStatus(t *testing.T) {
 			err  error
 			code int
 		}{
-			"embedded": {resp: &resourcepb.ResourceSearchResponse{Error: &resourcepb.ErrorResult{
+			"detailed": {err: resource.GRPCStatusError(&resourcepb.ErrorResult{
 				Code: http.StatusTooManyRequests, Message: "index busy",
-			}}, code: http.StatusTooManyRequests},
+			}), code: http.StatusTooManyRequests},
 			"transport": {err: status.Error(codes.Unavailable, "index unavailable"), code: http.StatusServiceUnavailable},
 			"plain":     {err: errors.New("private database failure"), code: http.StatusInternalServerError},
 		} {
@@ -346,7 +367,7 @@ func TestDeleteTeamPreservesFolderSearchErrorStatus(t *testing.T) {
 				searcher := &teamFolderSearchClient{response: input.resp, err: input.err}
 				service := &deleteTeamService{FakeService: &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}}}
 				if redirected {
-					service.err = resource.StatusErrorFromResponse(input.resp.GetError(), input.err)
+					service.err = resource.StatusErrorFromGRPC(input.err)
 				}
 				server := SetupAPITestServer(t, service, func(tapi *TeamAPI) {
 					tapi.folderSearcher = searcher

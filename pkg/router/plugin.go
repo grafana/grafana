@@ -6,9 +6,9 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
-	"slices"
 	"strings"
 
 	"github.com/grafana/authlib/authn"
@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
+	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -202,16 +203,12 @@ func initLocalPlugins(ctx context.Context, deps PluginLoaderDependencies) error 
 }
 
 // declareLocalManifestRoles declares the roles of a manifest served by the
-// local plugin loader. A routable core group keeps the roles its own app
-// declares, and an invalid group gets none.
+// local plugin loader. An invalid group gets none.
 func declareLocalManifestRoles(ctx context.Context, service accesscontrol.Service, pluginID, pluginName string, manifest *app.ManifestData) error {
 	if manifest == nil {
 		return nil
 	}
 	group := manifest.Group
-	if slices.Contains(routableCoreGroups, group) {
-		return nil
-	}
 	if !isPluginManifestGroup(group) || len(validation.IsDNS1123Subdomain(group)) > 0 {
 		logging.FromContext(ctx).Warn("router: skipping roles for invalid manifest group", "pluginId", pluginID, "group", group)
 		return nil
@@ -251,6 +248,9 @@ func loadLocalPluginDefinitions(ctx context.Context, registry sources.Registry, 
 
 	if err != nil {
 		return nil, fmt.Errorf("error getting list of app plugins: %w", err)
+	}
+	for i := range pluginDefs {
+		loadSettingsManifest(ctx, &pluginDefs[i])
 	}
 	return pluginDefs, nil
 }
@@ -311,13 +311,20 @@ func (pl PluginLoader) prepareBackends(ctx context.Context, pluginDefs []definit
 // invalidate each other's handlers and active watches.
 func pluginManifestKeyData(plugin definition.PluginDefinition, manifest *app.ManifestData, host string) ([]byte, error) {
 	plugin.Manifests = nil
-	plugin.Manifest = nil //nolint:staticcheck
+	if manifest != nil {
+		// Only the settings backend serves the settings manifest.
+		plugin.Settings = nil
+	}
 	return json.Marshal(struct {
 		Definition definition.PluginDefinition
 		Manifest   *app.ManifestData
 		Host       string
 	}{plugin, manifest, host})
 }
+
+// errNoServedVersions is returned for a manifest that declares no served
+// version, which leaves nothing to route.
+var errNoServedVersions = errors.New("no served versions")
 
 // pluginManifestGroupSuffix is required on manifest groups: unified storage
 // always enforces RBAC on it, and no core Grafana group uses it.
@@ -347,18 +354,18 @@ func (pl PluginLoader) Notify(ctx context.Context) (<-chan struct{}, error) {
 // BACKEND
 //-----------------------
 
-// routableCoreGroups are the core groups a plugin backend may serve in place of
-// the embedded API server, from any source, local and remote plugins included.
-// This is deliberate: these groups are low risk, so any plugin may shadow them.
-// A misbehaving or malicious plugin serving one of them can do no serious harm,
-// which is why the router may route them before their authorization moves too.
-// Before adding a group, confirm the same holds for it: never add a group
-// whose data or permissions matter, such as dashboards, folders or IAM.
-var routableCoreGroups = []string{"playlist.grafana.app", "example.grafana.app"}
-
 // newPluginBackend builds the backend for one plugin manifest. Its group must be
-// a plugin group (*.ext.grafana.app) or one of routableCoreGroups.
-func newPluginBackend(pluginID string, manifest *app.ManifestData, client PluginClientProvider, deps PluginDependencies, key []byte) (_ *PluginBackend, err error) {
+// a plugin group (*.ext.grafana.app): plugins may not claim core groups.
+func newPluginBackend(pluginID string, manifest *app.ManifestData, client PluginClientProvider, deps PluginDependencies, key []byte) (*PluginBackend, error) {
+	return buildPluginBackend(pluginID, manifest, client, deps, key, false)
+}
+
+// buildPluginBackend is newPluginBackend, where trusted lets the backend serve
+// any group. Only sources the operator or Grafana itself controls are trusted:
+// the core_url source and the core apps built from Grafana's own installers.
+// Local plugins, dev targets and plugin deployments are not, or they could
+// claim groups such as dashboards or IAM.
+func buildPluginBackend(pluginID string, manifest *app.ManifestData, client PluginClientProvider, deps PluginDependencies, key []byte, trusted bool) (_ *PluginBackend, err error) {
 	// The plugin API builder panics on an invalid manifest. Plugins are loaded
 	// inside the reconcile loop, so a panic here would stop it for every group.
 	defer func() {
@@ -370,15 +377,15 @@ func newPluginBackend(pluginID string, manifest *app.ManifestData, client Plugin
 	if manifest == nil {
 		return nil, fmt.Errorf("plugin %q: missing manifest", pluginID)
 	}
-	if !isPluginManifestGroup(manifest.Group) && !slices.Contains(routableCoreGroups, manifest.Group) {
-		return nil, fmt.Errorf("plugin %q: API group %q must end in %s, or be a routable core group", pluginID, manifest.Group, pluginManifestGroupSuffix)
+	if !trusted && !isPluginManifestGroup(manifest.Group) {
+		return nil, fmt.Errorf("plugin %q: API group %q must end in %s", pluginID, manifest.Group, pluginManifestGroupSuffix)
 	}
 	if err := pluginroute.ValidateManifest(pluginID, manifest); err != nil {
 		return nil, err
 	}
 	group := pluginroute.APIGroup(manifest)
 	if len(group.Versions) == 0 {
-		return nil, fmt.Errorf("plugin %q has no served versions", pluginID)
+		return nil, fmt.Errorf("plugin %q has %w", pluginID, errNoServedVersions)
 	}
 	h := sha256.New()
 	_, _ = h.Write(key)
@@ -416,6 +423,7 @@ func newPluginSettingsBackend(plugin definition.PluginDefinition, client PluginC
 		pluginID:   id,
 		info:       plugin.JSONData.Info,
 		group:      metav1.APIGroup{Name: id, Versions: []metav1.GroupVersionForDiscovery{version}, PreferredVersion: version},
+		manifest:   plugin.Settings,
 		settings:   &plugin,
 		client:     client,
 		deps:       deps,
@@ -439,8 +447,11 @@ type PluginBackend struct {
 	client    PluginClientProvider
 	deps      PluginDependencies
 
-	// settings is set instead of manifest for the backend that serves the
-	// plugin's settings API under its plugin ID.
+	// settings is set for the backend that serves the plugin's settings API
+	// under its plugin ID. Its manifest, the settings manifest, is only
+	// published: what it serves is built from settings. It is published as
+	// served, with its x-grafana-proxy routes, so a plugin can declare it in
+	// place of its plugin.json routes.
 	settings *definition.PluginDefinition
 
 	// hasBackend is whether the plugin runs a backend process, for the
@@ -604,4 +615,12 @@ func (e *authOutcomeExchanger) Exchange(ctx context.Context, r authn.TokenExchan
 		setContextFailure(ctx, failureAuth)
 	}
 	return res, err
+}
+
+// loadSettingsManifest describes the plugin's settings API, with the proxy
+// routes it serves, once its manifests are loaded.
+func loadSettingsManifest(ctx context.Context, plugin *definition.PluginDefinition) {
+	if err := plugin.LoadSettings(pluginproxy.MatchRoute); err != nil {
+		logging.FromContext(ctx).Warn("router: parts of the plugin settings manifest are not served", "pluginId", plugin.JSONData.ID, "reason", err)
+	}
 }

@@ -70,7 +70,8 @@ func (c *connectionAuthorizeConnector) Connect(ctx context.Context, name string,
 
 		var req provisioning.ConnectionAuthorizeRequest
 		if err := unmarshalJSON(r, defaultMaxBodySize, &req); err != nil {
-			responder.Error(apierrors.NewBadRequest("error decoding ConnectionAuthorizeRequest from request"))
+			logger.Warn("failed to decode authorize request", "error", err, "content_length", r.ContentLength)
+			responder.Error(newDecodeError("ConnectionAuthorizeRequest", err))
 			return
 		}
 		if req.Spec.Code == "" {

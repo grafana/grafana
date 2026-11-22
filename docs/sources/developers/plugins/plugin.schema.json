@@ -100,7 +100,7 @@
             "properties": {
               "name": {
                 "type": "string",
-                "description": "Display name of the link. Special names with predefined behavior: <br/>• `documentation` - sets Documentation link on plugins detail page<br/>• `repository` - used to determine and link to repository of the plugin<br/>• `license` - sets License link on plugins detail page<br/>• `raise issue` - sets `Raise an Issue` link on plugins detail page<br/>• `sponsorship` - sets `Sponsor this developer` link on plugins detail page to direct users to how they can support your work"
+                "description": "Display name of the link. Special names with predefined behavior: <br/>• `documentation` - sets Documentation link on plugins detail page<br/>• `repository` - used to determine and link to repository of the plugin<br/>• `license` - sets License link on plugins detail page. **Required for marketplace plugins**<br/>• `privacy` - sets Privacy link on plugins detail page. **Required for marketplace plugins**<br/>• `raise issue` - sets `Raise an Issue` link on plugins detail page<br/>• `sponsorship` - sets `Sponsor this developer` link on plugins detail page to direct users to how they can support your work"
               },
               "url": {
                 "type": "string",
@@ -514,6 +514,10 @@
     "skipDataQuery": {
       "type": "boolean",
       "description": "For panel plugins. Hides the query editor."
+    },
+    "skipDefaultQuery": {
+      "type": "boolean",
+      "description": "Alpha. For panel plugins, suppress the automatic starter query while allowing users to add queries explicitly. If both skipDataQuery and skipDefaultQuery are true, skipDataQuery takes precedence."
     },
     "state": {
       "type": "string",

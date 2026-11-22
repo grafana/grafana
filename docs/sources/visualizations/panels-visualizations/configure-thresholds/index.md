@@ -187,6 +187,7 @@ You can add as many thresholds to a visualization as you want. Grafana automatic
 1. Under **Show thresholds**, set how the threshold is displayed or turn it off.
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back** and then **Exit edit**.
+1. Click **Back**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 To delete a threshold, navigate to the panel that contains the threshold and click the trash icon next to the threshold you want to remove.

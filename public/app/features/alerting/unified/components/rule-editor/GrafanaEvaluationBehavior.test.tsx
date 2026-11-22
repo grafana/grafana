@@ -6,7 +6,7 @@ import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 import { setupMswServer } from '../../mockApi';
 import { grafanaRulerRule } from '../../mocks/grafanaRulerApi';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL, getDefaultFormValues } from '../../rule-editor/formDefaults';
-import { type RuleFormValues } from '../../types/rule-form';
+import { RuleFormType, type RuleFormValues } from '../../types/rule-form';
 
 import {
   EvaluationGroupCreationModal,
@@ -302,6 +302,46 @@ describe('GrafanaEvaluationBehaviorStep — evaluateEvery validation (rule-based
 
     expect(screen.queryByText(/Cannot be less than \d+ seconds/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Must be a multiple of \d+ seconds/)).not.toBeInTheDocument();
+  });
+});
+
+function AlertingRuleWrapper({ isUngroupedRuleGroup }: { isUngroupedRuleGroup: boolean }) {
+  const formApi = useForm<RuleFormValues>({
+    defaultValues: { ...getDefaultFormValues(), type: RuleFormType.grafana, isUngroupedRuleGroup },
+  });
+  return (
+    <FormProvider {...formApi}>
+      <GrafanaEvaluationBehaviorStep existing={false} enableProvisionedGroups={false} />
+    </FormProvider>
+  );
+}
+
+const selectedQuickPicks = () =>
+  screen.queryAllByRole('option', { selected: true }).map((option) => option.textContent);
+
+describe('GrafanaEvaluationBehaviorStep — quick picks follow typed durations', () => {
+  it('selects the pending period and keep firing for quick picks matching what was typed', async () => {
+    const { user } = render(<AlertingRuleWrapper isUngroupedRuleGroup={false} />);
+
+    const pendingPeriod = screen.getByRole('textbox', { name: /pending period/i });
+    await user.clear(pendingPeriod);
+    await user.type(pendingPeriod, '3m');
+    const keepFiringFor = screen.getByRole('textbox', { name: /keep firing for/i });
+    await user.clear(keepFiringFor);
+    await user.type(keepFiringFor, '4m');
+
+    expect(selectedQuickPicks()).toEqual(['3m', '4m']);
+  });
+
+  it('selects the evaluation interval quick pick matching what was typed', async () => {
+    const { user } = render(<AlertingRuleWrapper isUngroupedRuleGroup />);
+
+    const input = screen.getByRole('textbox', { name: /evaluation interval/i });
+    await user.clear(input);
+    await user.type(input, '5m');
+
+    // The evaluation interval picks come first; "None" is the default keep firing for
+    expect(selectedQuickPicks()).toEqual(['5m', 'None']);
   });
 });
 

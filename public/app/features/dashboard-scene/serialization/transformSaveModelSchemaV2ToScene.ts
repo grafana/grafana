@@ -1,5 +1,3 @@
-import { uniqueId } from 'lodash';
-
 import { config } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
@@ -69,7 +67,7 @@ import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsIn
 import { DefaultControlsBehavior } from '../behaviors/DefaultControlsBehavior';
 import { type LoadDashboardOptions } from '../pages/DashboardScenePageStateManager';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
-import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
+import { type DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
@@ -77,13 +75,13 @@ import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
-import { applySupportsMultiValueOperators } from '../utils/applySupportsMultiValueOperators';
+import { resolveMultiValueOperatorsOnActivate } from '../utils/resolveMultiValueOperatorsOnActivate';
 import { getIntervalsFromQueryString } from '../utils/utils';
 
-import { transformV2ToV1AnnotationQuery } from './annotations';
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
 import { migrateGroupByVariablesV2 } from './groupByMigration';
 import { layoutDeserializerRegistry } from './layoutSerializers/layoutSerializerRegistry';
+import { annotationQueryKindToLayer } from './layoutSerializers/sectionAnnotations';
 import { getDataSourceForQuery, getRuntimeVariableDataSource } from './layoutSerializers/utils';
 import { buildSceneTimeRange } from './shared/timeSettings';
 import { registerPanelInteractionsReporter } from './transformSaveModelToScene';
@@ -128,20 +126,7 @@ export function transformSaveModelSchemaV2ToScene(
       annotations.unshift(getGrafanaBuiltInAnnotation());
     }
 
-    annotationLayers = annotations.map((annotation) => {
-      const annotationQuerySpec = transformV2ToV1AnnotationQuery(annotation);
-
-      const layerState = {
-        key: uniqueId('annotations-'),
-        query: annotationQuerySpec,
-        name: annotation.spec.name,
-        isEnabled: Boolean(annotation.spec.enable),
-        isHidden: Boolean(annotation.spec.hide),
-        placement: annotation.spec.placement,
-      };
-
-      return new DashboardAnnotationsDataLayer(layerState);
-    });
+    annotationLayers = annotations.map((annotation) => annotationQueryKindToLayer(annotation));
   }
 
   // Create alert states data layer if unified alerting is enabled
@@ -194,7 +179,7 @@ export function transformSaveModelSchemaV2ToScene(
 
   const layoutManager: DashboardLayoutManager = layoutDeserializerRegistry
     .get(dashboard.layout.kind)
-    .deserialize(dashboard.layout, dashboard.elements, dashboard.preload);
+    .deserialize(dashboard.layout, dashboard.elements, dashboard.preload, undefined, isSnapshot);
 
   let templateLayoutManager: DashboardLayoutManager | undefined = undefined;
   if (dashboard.preferences?.layout) {
@@ -274,7 +259,6 @@ export function transformSaveModelSchemaV2ToScene(
         refreshPicker: new SceneRefreshPicker({
           refresh: dashboard.timeSettings.autoRefresh,
           intervals: dashboard.timeSettings.autoRefreshIntervals,
-          withText: true,
         }),
         hideTimeControls: dashboard.timeSettings.hideTimepicker,
       }),
@@ -317,7 +301,7 @@ function createVariablesForDashboard(dashboard: DashboardV2Spec, defaultVariable
   }).filter((v) => !localNames.has(v.state.name));
 
   // Explicitly disable scopes for public dashboards
-  if (config.featureToggles.scopeFilters && !config.publicDashboardAccessToken) {
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.ScopeFilters, false) && !config.publicDashboardAccessToken) {
     variableObjects.push(new ScopesVariable({ enable: true }));
   }
 
@@ -389,7 +373,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       useQueriesAsFilterForOptions: true,
       applicabilityEnabled: getFeatureFlagClient().getBooleanValue(FlagKeys.PerPanelNonApplicableDrilldowns, false),
       drilldownRecommendationsEnabled: true,
-      $behaviors: [new ReportInteractionBehavior({})],
+      $behaviors: [new ReportInteractionBehavior({}), resolveMultiValueOperatorsOnActivate],
       supportsMultiValueOperators: false,
       collapsible: true,
       enableGroupBy: variable.spec.enableGroupBy ?? false,
@@ -397,9 +381,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     if (variable.spec.allowCustomValue !== undefined) {
       adhocVariableState.allowCustomValue = variable.spec.allowCustomValue;
     }
-    const adhocVariable = new AdHocFiltersVariable(adhocVariableState);
-    applySupportsMultiValueOperators(adhocVariable, ds?.type);
-    return adhocVariable;
+    return new AdHocFiltersVariable(adhocVariableState);
   }
 
   if (variable.kind === defaultCustomVariableKind().kind) {
@@ -598,9 +580,8 @@ function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVariableSe
             ),
             supportsMultiValueOperators: false,
             enableGroupBy: v.spec.enableGroupBy ?? false,
-            $behaviors: [new ReportInteractionBehavior({})],
+            $behaviors: [new ReportInteractionBehavior({}), resolveMultiValueOperatorsOnActivate],
           });
-          applySupportsMultiValueOperators(adhocVariable, ds?.type);
           return adhocVariable;
         }
         // for other variable types we are using the SnapshotVariable

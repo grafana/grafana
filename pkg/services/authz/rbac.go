@@ -97,6 +97,7 @@ func ProvideAuthZClients(
 	eventualResourceClient *resource.EventualClient,
 	legacyLoader *legacypermissions.Loader,
 	scopeResolvers *accesscontrol.ScopeResolverRegistry,
+	accessControl accesscontrol.AccessControl,
 ) (*AuthZClients, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	zanzanaEnabled := features.IsEnabledGlobally(featuremgmt.FlagZanzana)
@@ -209,6 +210,16 @@ func ProvideAuthZClients(
 			channel,
 			legacyclient.WithLegacyTracerClientOption(tracer),
 		)
+		if configurable, ok := accessControl.(legacyclient.LegacyCheckClientSetter); ok {
+			if err := configurable.SetLegacyCheckClient(
+				legacyAccessClient,
+				cfg.IDUseExternalGroupsForGroupsClaim,
+				apirequest.GetNamespaceMapper(cfg),
+				reg,
+			); err != nil {
+				return nil, err
+			}
+		}
 
 		configureUserPermissionsClient(acService, rbacClient, cfg.IDUseExternalGroupsForGroupsClaim)
 		var accessClient authlib.AccessClient = rbacClient

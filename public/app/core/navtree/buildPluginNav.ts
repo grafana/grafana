@@ -5,6 +5,8 @@ import {
   type PluginInclude,
   PluginIncludeType,
 } from '@grafana/data';
+import { ASSISTANT_APP_ID } from 'app/core/appPluginIds';
+import { ASSISTANT_PAGES_PATH } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getNavTitle } from 'app/core/utils/navBarItem-translations';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -15,7 +17,7 @@ import { PLUGIN_NAV_OVERRIDES } from './pluginNavOverrides';
 import {
   appendIntoSection,
   findNavById,
-  hoistedPluginPageId,
+  hoistAppPages,
   pluginPageId,
   standalonePluginPageId,
   updateNavById,
@@ -28,6 +30,17 @@ import {
 // permissions map flattens scopes away, so the per-plugin scope the server
 // applies (plugins:id:*) cannot be checked here.
 const ORG_ROLE_RANK: Record<string, number> = { None: 0, Viewer: 1, Editor: 2, Admin: 3 };
+
+// No pluginId: routes.tsx registers a catch-all app route for every plugin nav
+// item, which would make the pages section own every Assistant url.
+const ASSISTANT_CREATE_PAGE_ACTION: NavModelItem = {
+  text: 'New Grafana Page',
+  id: 'assistant/pages/new',
+  icon: 'plus',
+  url: `${ASSISTANT_PAGES_PATH}/new`,
+  hideFromTabs: true,
+  isCreateAction: true,
+};
 
 // Apps with no nav config all carry the same sort weight, so sortNavTree leaves
 // them in whatever order they were placed. Order them here, by the title
@@ -119,7 +132,7 @@ function buildAppLink(app: AppPluginConfig): {
   const children: NavModelItem[] = [];
   const standalonePages: StandalonePage[] = [];
   const navConfig = appNavConfigFor(app.id);
-  const { filterInclude, hoistPages } = navConfig ?? {};
+  const { filterInclude } = navConfig ?? {};
 
   for (const include of app.includes ?? []) {
     if (!hasAccessToInclude(include) || (filterInclude && !filterInclude(include))) {
@@ -151,10 +164,8 @@ function buildAppLink(app: AppPluginConfig): {
       icon: toIconName(include.icon),
       pluginId: app.id,
       url: include.path,
-      // A hoisted app has no node of its own, so its pages carry the standalone
-      // id. Only pages: a dashboard include left with a `/d/<uid>` standalone id
-      // would register that url as an app route and shadow the dashboard itself
-      ...(hoistPages && { id: hoistedPluginPageId(include.path) }),
+      // Attached before placement, so the action follows the page wherever it lands
+      ...(canCreateAssistantPage(app, include) && { children: [ASSISTANT_CREATE_PAGE_ACTION] }),
     };
 
     // A page with its own placement leaves the app entirely, so it is not one of
@@ -311,27 +322,18 @@ function placeAppInSection(tree: NavModelItem[], app: AppPluginConfig, appLink: 
   ];
 }
 
-// Hoisted pages without a pinned slot sort above the section's app entries
-// (which sit at small positive weights) while keeping their own relative order
-const HOISTED_PAGE_WEIGHT_OFFSET = -100;
-
 /**
- * Expands an app's pages into its target section as standalone entries instead
- * of nesting them under an app node (`hoistPages` in the app's nav config).
- * Pages pinned by `slotWeightByPath` take that section slot; the rest sort
- * above the section's app entries in their own order.
+ * Whether this include is the Assistant's pages section, asking for the nav,
+ * with the permission to create a page. Built here rather than as an override
+ * because only the include says whether the page wanted the nav at all.
  */
-function hoistAppPages(
-  appLink: NavModelItem,
-  { slotWeightByPath = {} }: NonNullable<AppNavConfig['hoistPages']>
-): NavModelItem[] {
-  return (appLink.children ?? []).map((child) => {
-    const slotWeight = child.url ? slotWeightByPath[child.url] : undefined;
-    return {
-      ...child,
-      sortWeight: slotWeight ?? HOISTED_PAGE_WEIGHT_OFFSET + (child.sortWeight ?? 0),
-    };
-  });
+function canCreateAssistantPage(app: AppPluginConfig, include: PluginInclude): boolean {
+  return (
+    app.id === ASSISTANT_APP_ID &&
+    include.path === ASSISTANT_PAGES_PATH &&
+    Boolean(include.addToNav) &&
+    contextSrv.hasPermission('assistant.ext.grafana.app/pages:create')
+  );
 }
 
 function hasAccessToInclude(include: PluginInclude): boolean {

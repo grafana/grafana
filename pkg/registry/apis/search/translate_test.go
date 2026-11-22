@@ -1013,7 +1013,7 @@ func TestTranslateGlobalSearchQuery_FolderTree(t *testing.T) {
 		}})
 	}
 
-	req, errs := TranslateGlobalSearchQuery(filter("In", "a", "b"), "default")
+	req, errs := TranslateGlobalSearchQuery(&searchv0.GlobalSearchQuery{SearchQuery: *filter("In", "a", "b")}, "default")
 	require.Empty(t, errs)
 	require.Len(t, req.Options.Fields, 1)
 	assert.Equal(t, resource.SEARCH_FIELD_FOLDER_TREE, req.Options.Fields[0].Key)
@@ -1033,7 +1033,7 @@ func TestTranslateGlobalSearchQuery_FolderTree(t *testing.T) {
 		{"an empty folder for the root", filter("In", "a", ""), "where.filter.values[1]"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			_, errs := TranslateGlobalSearchQuery(tc.q, "default")
+			_, errs := TranslateGlobalSearchQuery(&searchv0.GlobalSearchQuery{SearchQuery: *tc.q}, "default")
 			require.Len(t, errs, 1, errs)
 			assert.Equal(t, tc.wantField, errs[0].Field)
 		})
@@ -1084,7 +1084,7 @@ func TestTranslateSearchQuery_StandardFieldCapabilities(t *testing.T) {
 			}
 			_, errs := TranslateSearchQuery(tc.q, dashboardsGVR, "default", testProvider())
 			assert.Len(t, errs, want, errs)
-			_, errs = TranslateGlobalSearchQuery(tc.q, "default")
+			_, errs = TranslateGlobalSearchQuery(&searchv0.GlobalSearchQuery{SearchQuery: *tc.q}, "default")
 			assert.Len(t, errs, want, errs)
 		})
 	}

@@ -38,6 +38,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Annotation",
 					Plural:     "Annotations",
+					Resource:   "annotations",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaAnnotationv0alpha1,

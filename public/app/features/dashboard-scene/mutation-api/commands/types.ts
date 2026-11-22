@@ -5,12 +5,13 @@
  * plus the MutationContext passed to handlers and reusable permission checks.
  */
 
-import type * as z from 'zod';
+import type * as z from 'zod/mini';
 
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
+import { isMobileEditDeprecated } from '../../utils/mobileEditDeprecation';
 import type { MutationResult } from '../types';
 
 /** The `actor` recorded on undo entries the mutation API creates, and the `trigger` of its undo/redo interactions. */
@@ -42,7 +43,7 @@ export interface MutationCommand<T = unknown, TScene = DashboardScene> {
   /** Human-readable description. */
   description: string;
   /** Zod schema for runtime payload validation. Single source of truth. */
-  payloadSchema: z.ZodType<T>;
+  payloadSchema: z.ZodMiniType<T>;
   /** Permission check run before execution. Must be a pure predicate (no side effects). */
   permission: PermissionCheck<TScene>;
   /**
@@ -75,6 +76,14 @@ export function requiresEdit(scene: DashboardScene): PermissionCheckResult {
     return {
       allowed: false,
       error: 'Cannot edit dashboard: insufficient permissions or dashboard is a snapshot',
+    };
+  }
+  if (isMobileEditDeprecated()) {
+    return {
+      allowed: false,
+      error:
+        'Dashboard editing is not available on small screens. Tell the user to switch to a larger screen ' +
+        '(tablet or desktop) to build or edit dashboards, and do not retry this action.',
     };
   }
   return { allowed: true };

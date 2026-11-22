@@ -1,21 +1,19 @@
 import { t } from '@grafana/i18n';
 import { Badge } from '@grafana/ui';
+import { ReadOnlyBadge } from 'app/core/components/ReadOnlyBadge/ReadOnlyBadge';
 
-import { type RepoType } from '../Wizard/types';
 import { type RepoWorkflows } from '../types';
 import { getIsReadOnlyWorkflows } from '../utils/repository';
-
-import { ReadOnlyBadge } from './ReadOnlyBadge';
+import { getReadOnlyRepositoryTooltip } from '../utils/tooltip';
 
 interface WorkflowBadgesProps {
   workflows?: RepoWorkflows;
-  repoType?: RepoType;
 }
 
 /** Shows how people can save changes to a repository: read-only, direct push, pull request. */
-export function WorkflowBadges({ workflows, repoType }: WorkflowBadgesProps) {
+export function WorkflowBadges({ workflows }: WorkflowBadgesProps) {
   if (getIsReadOnlyWorkflows(workflows)) {
-    return <ReadOnlyBadge repoType={repoType} />;
+    return <ReadOnlyBadge tooltip={getReadOnlyRepositoryTooltip()} />;
   }
 
   return (

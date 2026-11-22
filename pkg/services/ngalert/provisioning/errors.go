@@ -36,10 +36,14 @@ var (
 		errutil.WithPublic("Time interval '{{ .Public.Name }}' cannot be {{ .Public.Action }}d because it belongs to an imported configuration. Finish the import of the configuration first."),
 	)
 
-	ErrTemplateNotFound = errutil.NotFound("alerting.notifications.templates.notFound")
-	ErrTemplateInvalid  = errutil.BadRequest("alerting.notifications.templates.invalidFormat").MustTemplate("Invalid format of the submitted template", errutil.WithPublic("Template is in invalid format. Correct the payload and try again."))
-	ErrTemplateExists   = errutil.BadRequest("alerting.notifications.templates.nameExists", errutil.WithPublicMessage("Template file with this name already exists. Use a different name or update existing one."))
-	ErrTemplateOrigin   = errutil.BadRequest("alerting.notifications.templates.originInvalid").MustTemplate(
+	ErrTemplateNotFound  = errutil.NotFound("alerting.notifications.templates.notFound")
+	ErrTemplateInvalid   = errutil.BadRequest("alerting.notifications.templates.invalidFormat").MustTemplate("Invalid format of the submitted template", errutil.WithPublic("Template is in invalid format. Correct the payload and try again."))
+	ErrTemplateExists    = errutil.BadRequest("alerting.notifications.templates.nameExists", errutil.WithPublicMessage("Template file with this name already exists. Use a different name or update existing one."))
+	templateUidExists    = "Template with UID '{{ .Public.UID }}' already exists. Use a different UID."
+	ErrTemplateUidExists = errutil.Conflict("alerting.notifications.templates.uidExists").MustTemplate(
+		templateUidExists, errutil.WithPublic(templateUidExists),
+	)
+	ErrTemplateOrigin = errutil.BadRequest("alerting.notifications.templates.originInvalid").MustTemplate(
 		"Template '{{ .Public.Name }}' cannot be {{ .Public.Action }}d because it belongs to an imported configuration.",
 		errutil.WithPublic("Template '{{ .Public.Name }}' cannot be {{ .Public.Action }}d because it belongs to an imported configuration. Finish the import of the configuration first."),
 	)
@@ -133,6 +137,14 @@ func MakeErrTimeIntervalDependentResourcesProvenance(usedByRoutes bool, rules []
 
 func MakeErrTimeIntervalUidExists(uid string) error {
 	return ErrTimeIntervalUidExists.Build(errutil.TemplateData{
+		Public: map[string]any{
+			"UID": uid,
+		},
+	})
+}
+
+func MakeErrTemplateUidExists(uid string) error {
+	return ErrTemplateUidExists.Build(errutil.TemplateData{
 		Public: map[string]any{
 			"UID": uid,
 		},

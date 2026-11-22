@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	authlib "github.com/grafana/authlib/types"
 )
 
 const (
@@ -148,17 +148,17 @@ type ExtensionsDependencies struct {
 }
 
 type Includes struct {
-	Name       string            `json:"name"`
-	Path       string            `json:"path"`
-	Type       string            `json:"type"`
-	Component  string            `json:"component"`
-	Role       identity.RoleType `json:"role"`
-	Action     string            `json:"action,omitempty"`
-	AddToNav   bool              `json:"addToNav"`
-	DefaultNav bool              `json:"defaultNav"`
-	Slug       string            `json:"slug"`
-	Icon       string            `json:"icon"`
-	UID        string            `json:"uid"`
+	Name       string           `json:"name"`
+	Path       string           `json:"path"`
+	Type       string           `json:"type"`
+	Component  string           `json:"component"`
+	Role       authlib.RoleType `json:"role"`
+	Action     string           `json:"action,omitempty"`
+	AddToNav   bool             `json:"addToNav"`
+	DefaultNav bool             `json:"defaultNav"`
+	Slug       string           `json:"slug"`
+	Icon       string           `json:"icon"`
+	UID        string           `json:"uid"`
 
 	ID string `json:"-"`
 }
@@ -312,22 +312,23 @@ type DataSourceDTO struct {
 }
 
 type PanelDTO struct {
-	ID              string            `json:"id"`
-	Name            string            `json:"name"`
-	AliasIDs        []string          `json:"aliasIDs,omitempty"`
-	Info            Info              `json:"info"`
-	HideFromList    bool              `json:"hideFromList"`
-	Sort            int               `json:"sort"`
-	SkipDataQuery   bool              `json:"skipDataQuery"`
-	Suggestions     bool              `json:"suggestions,omitempty"`
-	ReleaseState    string            `json:"state"`
-	BaseURL         string            `json:"baseUrl"`
-	Signature       string            `json:"signature"`
-	Module          string            `json:"module"`
-	Angular         AngularMeta       `json:"angular"`
-	LoadingStrategy LoadingStrategy   `json:"loadingStrategy"`
-	ModuleHash      string            `json:"moduleHash,omitempty"`
-	Translations    map[string]string `json:"translations,omitempty"`
+	ID               string            `json:"id"`
+	Name             string            `json:"name"`
+	AliasIDs         []string          `json:"aliasIDs,omitempty"`
+	Info             Info              `json:"info"`
+	HideFromList     bool              `json:"hideFromList"`
+	Sort             int               `json:"sort"`
+	SkipDataQuery    bool              `json:"skipDataQuery"`
+	SkipDefaultQuery bool              `json:"skipDefaultQuery,omitempty"`
+	Suggestions      bool              `json:"suggestions,omitempty"`
+	ReleaseState     string            `json:"state"`
+	BaseURL          string            `json:"baseUrl"`
+	Signature        string            `json:"signature"`
+	Module           string            `json:"module"`
+	Angular          AngularMeta       `json:"angular"`
+	LoadingStrategy  LoadingStrategy   `json:"loadingStrategy"`
+	ModuleHash       string            `json:"moduleHash,omitempty"`
+	Translations     map[string]string `json:"translations,omitempty"`
 }
 
 type AppDTO struct {

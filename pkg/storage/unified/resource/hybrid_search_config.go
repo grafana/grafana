@@ -52,7 +52,7 @@ func (r *HybridSearchConfigRegistry) Reload(sources ...[]*app.ManifestData) {
 			declared := make(map[schema.GroupResource]hybridSearchConfig)
 			for _, version := range manifest.Versions {
 				for _, kind := range version.Kinds {
-					key := schema.GroupResource{Group: manifest.Group, Resource: ManifestResourceName(kind)}
+					key := schema.GroupResource{Group: manifest.Group, Resource: kind.Resource}
 					config := declared[key]
 					if config.kind == "" {
 						config.kind = kind.Kind

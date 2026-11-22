@@ -3,6 +3,7 @@ package app_test
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -345,6 +346,28 @@ func TestAlertRuleValidation_Errors(t *testing.T) {
 			"A": v1.AlertRuleExpression{Model: map[string]any{"expr": "1"}, Source: new(true), DatasourceUID: &dsUID},
 		}
 	}), "want query expression requires relative time range error")
+
+	// A check the legacy rule store makes when it writes a rule.
+	assert.Error(t, mk(func(r *v1.AlertRule) { r.Name = "has.dot" }), "want invalid name characters error")
+	assert.Error(t, mk(func(r *v1.AlertRule) { r.Name = strings.Repeat("a", v1.AlertRuleMaxNameLength+1) }), "want name too long error")
+	assert.Error(t, mk(func(r *v1.AlertRule) { r.Spec.Title = "" }), "want empty title error")
+}
+
+func TestAlertRuleValidation_StoreParityOnUpdate(t *testing.T) {
+	update := func(mut func(r *v1.AlertRule)) error {
+		old := baseAlertRule()
+		old.Labels = map[string]string{v1.GroupLabelKey: "grp", v1.GroupIndexLabelKey: "0"}
+		r := old.DeepCopy()
+		mut(r)
+		return alertRuleValidator(t, makeDefaultRuntimeConfig()).Validate(context.Background(), &appsdk.AdmissionRequest{Action: resource.AdmissionActionUpdate, Object: r, OldObject: old})
+	}
+
+	require.NoError(t, update(func(r *v1.AlertRule) {}))
+	// The name can't change on update, so it is only checked when the rule is created.
+	require.NoError(t, update(func(r *v1.AlertRule) { r.Name = "has.dot" }))
+	assert.Error(t, update(func(r *v1.AlertRule) {
+		r.Labels[v1.GroupLabelKey] = strings.Repeat("g", v1.AlertRuleMaxRuleGroupNameLength+1)
+	}), "want group name too long error")
 }
 
 func baseAlertRule() *v1.AlertRule {
@@ -505,6 +528,56 @@ func TestRecordingRuleValidation_Errors(t *testing.T) {
 			"A": v1.RecordingRuleExpression{Model: map[string]any{"expr": "1"}, Source: new(true), DatasourceUID: &dsUID},
 		}
 	}), "want query expression requires relative time range error")
+
+	// A check the legacy rule store makes when it writes a rule.
+	assert.Error(t, mk(func(r *v1.RecordingRule) { r.Name = "has.dot" }), "want invalid name characters error")
+	assert.Error(t, mk(func(r *v1.RecordingRule) { r.Name = strings.Repeat("a", v1.AlertRuleMaxNameLength+1) }), "want name too long error")
+	assert.Error(t, mk(func(r *v1.RecordingRule) { r.Spec.Title = "" }), "want empty title error")
+}
+
+func TestRuleValidation_AllowGroupLabelWrites(t *testing.T) {
+	grouped := func(labels map[string]string) map[string]string {
+		labels[v1.GroupLabelKey] = "g1"
+		labels[v1.GroupIndexLabelKey] = "0"
+		return labels
+	}
+	// optIn is the annotation value, or "" to leave the annotation off.
+	validators := map[string]func(action resource.AdmissionAction, optIn string) error{
+		"alertrule": func(action resource.AdmissionAction, optIn string) error {
+			r := baseAlertRule()
+			r.Labels = grouped(r.Labels)
+			if optIn != "" {
+				r.Annotations[v1.AllowGroupWritesAnnotationKey] = optIn
+			}
+			req := &appsdk.AdmissionRequest{Action: action, Object: r}
+			if action == resource.AdmissionActionUpdate {
+				req.OldObject = baseAlertRule()
+			}
+			return alertRuleValidator(t, makeDefaultRuntimeConfig()).Validate(context.Background(), req)
+		},
+		"recordingrule": func(action resource.AdmissionAction, optIn string) error {
+			r := baseRecordingRule()
+			r.Labels = grouped(r.Labels)
+			if optIn != "" {
+				r.Annotations[v1.AllowGroupWritesAnnotationKey] = optIn
+			}
+			req := &appsdk.AdmissionRequest{Action: action, Object: r}
+			if action == resource.AdmissionActionUpdate {
+				req.OldObject = baseRecordingRule()
+			}
+			return recordingRuleValidator(t, makeDefaultRuntimeConfig()).Validate(context.Background(), req)
+		},
+	}
+	for name, validate := range validators {
+		for _, action := range []resource.AdmissionAction{resource.AdmissionActionCreate, resource.AdmissionActionUpdate} {
+			t.Run(name+"/"+string(action), func(t *testing.T) {
+				require.Error(t, validate(action, ""), "no annotation keeps the rejection")
+				require.Error(t, validate(action, "false"))
+				require.Error(t, validate(action, "True"), "only the exact value true opts in")
+				require.NoError(t, validate(action, "true"))
+			})
+		}
+	}
 }
 
 func TestAlertRuleValidation_DeleteAndMoveGuardrails(t *testing.T) {
@@ -639,10 +712,12 @@ func ruleSequenceRuntimeConfig() config.RuntimeConfig {
 	cfg := makeDefaultRuntimeConfig()
 	cfg.ResolveRuleRef = func(ctx context.Context, uid string) (config.RuleRef, bool, error) {
 		switch uid {
-		case "rec-1", "rec-2", "alert-1":
+		case "rec-1", "rec-2":
+			return config.RuleRef{UID: uid, FolderUID: "f1", IsRecording: true}, true, nil
+		case "alert-1":
 			return config.RuleRef{UID: uid, FolderUID: "f1"}, true, nil
 		case "other-folder-rule":
-			return config.RuleRef{UID: uid, FolderUID: "f2"}, true, nil
+			return config.RuleRef{UID: uid, FolderUID: "f2", IsRecording: true}, true, nil
 		default:
 			return config.RuleRef{}, false, nil
 		}
@@ -726,6 +801,21 @@ func TestRuleSequenceValidation_Errors(t *testing.T) {
 			r.Spec.AlertRules = nil
 		})
 		require.Error(t, err)
+	})
+
+	t.Run("alert rule in recording rules", func(t *testing.T) {
+		err := mk(func(r *v1.RuleSequence) {
+			r.Spec.RecordingRules = []v1.RuleSequenceRuleRef{{Name: "alert-1"}}
+			r.Spec.AlertRules = nil
+		})
+		require.ErrorContains(t, err, `rule "alert-1" is an alert rule but is listed in recordingRules`)
+	})
+
+	t.Run("recording rule in alert rules", func(t *testing.T) {
+		err := mk(func(r *v1.RuleSequence) {
+			r.Spec.AlertRules = []v1.RuleSequenceRuleRef{{Name: "rec-2"}}
+		})
+		require.ErrorContains(t, err, `rule "rec-2" is a recording rule but is listed in alertRules`)
 	})
 
 	t.Run("invalid provenance", func(t *testing.T) {

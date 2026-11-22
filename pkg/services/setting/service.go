@@ -433,15 +433,18 @@ func (s *remoteSettingService) fetchPage(ctx context.Context, namespace, labelSe
 
 	var settings []*Setting
 	var nextToken string
+	attempt := 0
+	var lastErr error
 	err := retry.OnError(retry.DefaultBackoff, isTransientConnError, func() error {
-		stream, err := req.Stream(ctx)
-		if err != nil {
-			return fmt.Errorf("request failed: %w", err)
+		attempt++
+		if lastErr != nil {
+			s.log.FromContext(ctx).Warn("Retrying settings page fetch after transient connection error",
+				"grafana.namespace.name", namespace, "attempt", attempt, "error", lastErr)
+			span.AddEvent("retry", trace.WithAttributes(
+				attribute.Int("attempt", attempt), attribute.String("error", lastErr.Error())))
 		}
-		defer func() { _ = stream.Close() }()
-
-		settings, nextToken, err = parseSettingList(ctx, stream)
-		return err
+		settings, nextToken, lastErr = streamPage(ctx, req)
+		return lastErr
 	})
 	if err != nil {
 		return nil, "", err
@@ -449,12 +452,23 @@ func (s *remoteSettingService) fetchPage(ctx context.Context, namespace, labelSe
 	return settings, nextToken, nil
 }
 
+func streamPage(ctx context.Context, req *rest.Request) ([]*Setting, string, error) {
+	stream, err := req.Stream(ctx)
+	if err != nil {
+		return nil, "", fmt.Errorf("request failed: %w", err)
+	}
+	defer func() { _ = stream.Close() }()
+
+	return parseSettingList(ctx, stream)
+}
+
 // isTransientConnError matches the GET errors that client-go retries in Request.Do but not in
-// Request.Stream. It also matches a connection that drops while the body streams, which
-// Request.Do does not retry either.
+// Request.Stream. It also matches a connection that drops while the body streams, and a
+// refused connection (e.g. a pod that is shutting down), which Request.Do does not retry.
 func isTransientConnError(err error) bool {
 	return utilnet.IsConnectionReset(err) || utilnet.IsProbableEOF(err) ||
-		utilnet.IsHTTP2ConnectionLost(err) || errors.Is(err, io.ErrUnexpectedEOF)
+		utilnet.IsHTTP2ConnectionLost(err) || utilnet.IsConnectionRefused(err) ||
+		errors.Is(err, io.ErrUnexpectedEOF)
 }
 
 // parseSettingList parses a SettingList JSON response using token-by-token streaming.

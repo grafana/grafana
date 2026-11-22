@@ -2,14 +2,15 @@ import { type ListAlertRuleSearchRulesV0Alpha1RequestBody } from '@grafana/api-c
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
 import { type SourcedLeaf, buildHealthLeaves, buildSharedLeaves, toWhere } from '../rule-search/searchQueryLeaves';
+import { type RuleSearchApiArgs } from '../rule-search/sharedRuleFilter';
 
 import { type AlertFilterKey, type AlertRuleFilter, DEFAULT_POLICY, STATE_API_VALUES } from './alertRuleFilters';
 
-export function buildAlertRuleSearchQuery(filter: AlertRuleFilter, continueToken?: string) {
+export function buildAlertRuleSearchQuery(apiArgs: RuleSearchApiArgs<AlertRuleFilter>, continueToken?: string) {
   return {
     apiVersion: 'search.grafana.app/v0alpha1',
     kind: 'SearchQuery',
-    where: toWhere(buildAlertRuleLeaves(filter)),
+    where: toWhere(buildAlertRuleLeaves(apiArgs)),
     sort: [{ field: 'title', direction: 'asc' }],
     fields: ALERT_RULE_FIELDS,
     limit: DEFAULT_PER_PAGE_PAGINATION,
@@ -18,8 +19,8 @@ export function buildAlertRuleSearchQuery(filter: AlertRuleFilter, continueToken
 }
 
 /** The request's leaves in order, each with the filter it came from. */
-export function buildAlertRuleLeaves(filter: AlertRuleFilter): Array<SourcedLeaf<AlertFilterKey>> {
-  return [...buildSharedLeaves(filter), ...buildRoutingLeaves(filter), ...buildStatusLeaves(filter)];
+export function buildAlertRuleLeaves(apiArgs: RuleSearchApiArgs<AlertRuleFilter>): Array<SourcedLeaf<AlertFilterKey>> {
+  return [...buildSharedLeaves(apiArgs), ...buildRoutingLeaves(apiArgs.filter), ...buildStatusLeaves(apiArgs.filter)];
 }
 
 function buildRoutingLeaves(filter: AlertRuleFilter): Array<SourcedLeaf<AlertFilterKey>> {
@@ -62,6 +63,7 @@ function buildStatusLeaves(filter: AlertRuleFilter): Array<SourcedLeaf<AlertFilt
 // `state`, `health`, and `lastError` are status fields populated by `alerting.ruleStatusSync`.
 // `annotations` returns as a JSON-encoded string; `interval` is the evaluation cadence.
 // `labels` returns as a flat string array ("key" and "key=value" entries); `datasourceUIDs` as a string array.
+// `totals*` are instance counts per state, also populated by `alerting.ruleStatusSync`.
 const ALERT_RULE_FIELDS = [
   'title',
   'folder',
@@ -73,4 +75,13 @@ const ALERT_RULE_FIELDS = [
   'interval',
   'labels',
   'datasourceUIDs',
+  'totalsHealthy',
+  'totalsFiring',
+  'totalsPending',
+  'totalsRecovering',
+  'totalsNoData',
+  'totalsError',
+  'notificationType',
+  'receiver',
+  'routingTree',
 ];

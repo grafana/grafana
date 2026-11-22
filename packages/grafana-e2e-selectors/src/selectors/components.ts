@@ -630,6 +630,9 @@ export const versionedComponents = {
       PanelGroupByHeaderAction: {
         '12.4.0': 'data-testid Panel group by header action',
       },
+      PanelAdHocChangesHeaderAction: {
+        '13.3.0': 'data-testid Panel ad hoc changes header action',
+      },
     },
     Visualization: {
       Graph: {
@@ -1158,6 +1161,11 @@ export const versionedComponents = {
       [MIN_GRAFANA_VERSION]: (refId: string) => `Query editor row ${refId}`,
     },
   },
+  QueryEditorNext: {
+    queryName: {
+      '13.4.0': 'data-testid query-editor-next query name',
+    },
+  },
   AlertTab: {
     content: {
       '10.2.3': 'data-testid Alert editor tab content',
@@ -1444,6 +1452,15 @@ export const versionedComponents = {
       },
       pastePanelButton: {
         '11.1.0': 'data-testid Paste panel button',
+      },
+      modePickerButton: {
+        '13.4.0': 'data-testid Dashboard mode picker button',
+      },
+      modeViewingOption: {
+        '13.4.0': 'data-testid Dashboard mode viewing option',
+      },
+      modeEditingOption: {
+        '13.4.0': 'data-testid Dashboard mode editing option',
       },
       planningBuildButton: {
         '13.3.0': 'data-testid Build dashboard plan button',

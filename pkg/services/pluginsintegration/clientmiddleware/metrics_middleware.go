@@ -194,7 +194,7 @@ func (m *MetricsMiddleware) QueryChunkedData(ctx context.Context, req *backend.Q
 	// reflect partial failures the same way QueryData inspects per-refID response errors.
 	cw := &errorRecordingChunkedWriter{ChunkedDataWriter: w}
 	return m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
-		innerErr := m.BaseHandler.QueryChunkedData(ctx, req, cw)
+		innerErr := m.BaseHandler.QueryChunkedData(ctx, req, cw.writer())
 		return cw.requestStatus(innerErr), innerErr
 	})
 }
@@ -284,37 +284,4 @@ func (m *MetricsMiddleware) RunStream(ctx context.Context, req *backend.RunStrea
 		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
 	})
 	return err
-}
-
-func (m *MetricsMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
-	var resp *backend.ValidationResponse
-	err := m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
-		var innerErr error
-		resp, innerErr = m.BaseHandler.ValidateAdmission(ctx, req)
-		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
-	})
-
-	return resp, err
-}
-
-func (m *MetricsMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
-	var resp *backend.MutationResponse
-	err := m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
-		var innerErr error
-		resp, innerErr = m.BaseHandler.MutateAdmission(ctx, req)
-		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
-	})
-
-	return resp, err
-}
-
-func (m *MetricsMiddleware) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-	var resp *backend.ConversionResponse
-	err := m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
-		var innerErr error
-		resp, innerErr = m.BaseHandler.ConvertObjects(ctx, req)
-		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
-	})
-
-	return resp, err
 }

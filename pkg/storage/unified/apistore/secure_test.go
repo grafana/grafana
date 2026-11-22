@@ -9,16 +9,17 @@ import (
 	"slices"
 	"testing"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	grpccodes "google.golang.org/grpc/codes"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/storage"
 
-	claims "github.com/grafana/authlib/types"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -414,7 +415,7 @@ func TestSecureLifecycle(t *testing.T) {
 			return out, nil, nil
 		}
 
-		requester := &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, OrgRole: identity.RoleAdmin, IsGrafanaAdmin: true}
+		requester := &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, OrgRole: claims.RoleAdmin, IsGrafanaAdmin: true}
 		ctx := identity.WithRequester(context.Background(), requester)
 
 		err := s.GuaranteedUpdate(ctx, "example/test", &unstructured.Unstructured{}, false, &storage.Preconditions{}, tryUpdate, nil)
@@ -436,7 +437,7 @@ func (c *conflictOnceClient) Read(context.Context, *resourcepb.ReadRequest, ...g
 func (c *conflictOnceClient) Update(context.Context, *resourcepb.UpdateRequest, ...grpc.CallOption) (*resourcepb.UpdateResponse, error) {
 	c.updates++
 	if c.updates == 1 {
-		return &resourcepb.UpdateResponse{Error: &resourcepb.ErrorResult{Code: http.StatusConflict}}, nil
+		return nil, grpcErrorWithResult(grpccodes.Aborted, &resourcepb.ErrorResult{Code: http.StatusConflict})
 	}
 	return &resourcepb.UpdateResponse{ResourceVersion: 2}, nil
 }

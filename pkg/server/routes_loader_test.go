@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
@@ -150,4 +151,37 @@ func TestDefaultRouterCoreURL(t *testing.T) {
 			assert.Equal(t, tc.want, got)
 		})
 	}
+}
+
+func TestRouterSecureValues(t *testing.T) {
+	tracer := noop.NewTracerProvider().Tracer("test")
+
+	t.Run("nil when the secrets manager gRPC client is disabled", func(t *testing.T) {
+		cfg := setting.NewCfg()
+
+		got, err := routerSecureValues(cfg, tracer, nil)
+		require.NoError(t, err)
+		assert.Nil(t, got)
+	})
+
+	t.Run("gRPC client when enabled", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.SecretsManagement.GrpcClientEnable = true
+		cfg.SecretsManagement.GrpcServerAddress = "secrets.example:10000"
+		auth := cfg.SectionWithEnvOverrides("grpc_client_authentication")
+		auth.Key("token").SetValue("token")
+		auth.Key("token_exchange_url").SetValue("http://auth.example/v1/sign-access-token")
+
+		got, err := routerSecureValues(cfg, tracer, nil)
+		require.NoError(t, err)
+		assert.NotNil(t, got)
+	})
+
+	t.Run("error when enabled without an address", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.SecretsManagement.GrpcClientEnable = true
+
+		_, err := routerSecureValues(cfg, tracer, nil)
+		require.Error(t, err)
+	})
 }

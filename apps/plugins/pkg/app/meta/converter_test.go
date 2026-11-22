@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"testing"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/pluginassets"
@@ -180,6 +180,7 @@ func TestJsonDataToMetaJSONData(t *testing.T) {
 			MultiValueFilterOperators: true,
 			Preload:                   true,
 			SkipDataQuery:             true,
+			SkipDefaultQuery:          true,
 			Streaming:                 true,
 			Tracing:                   true,
 		}
@@ -196,8 +197,23 @@ func TestJsonDataToMetaJSONData(t *testing.T) {
 		assert.True(t, *meta.MultiValueFilterOperators)
 		assert.True(t, *meta.Preload)
 		assert.True(t, *meta.SkipDataQuery)
+		assert.Nil(t, meta.SkipDefaultQuery)
 		assert.True(t, *meta.Streaming)
 		assert.True(t, *meta.Tracing)
+	})
+
+	t.Run("copies skipDefaultQuery only for panels", func(t *testing.T) {
+		for _, pluginType := range []plugins.Type{plugins.TypePanel, plugins.TypeDataSource, plugins.TypeApp, plugins.TypeRenderer} {
+			for _, enabled := range []bool{false, true} {
+				meta := jsonDataToMetaJSONData(plugins.JSONData{Type: pluginType, SkipDefaultQuery: enabled})
+				if pluginType == plugins.TypePanel && enabled {
+					require.NotNil(t, meta.SkipDefaultQuery)
+					assert.True(t, *meta.SkipDefaultQuery)
+				} else {
+					assert.Nil(t, meta.SkipDefaultQuery)
+				}
+			}
+		}
 	})
 
 	t.Run("omits optional fields when empty", func(t *testing.T) {
@@ -233,14 +249,14 @@ func TestJsonDataToMetaJSONData(t *testing.T) {
 					Type:       "dashboard",
 					Name:       "Dashboard 1",
 					Component:  "dashboard",
-					Role:       identity.RoleAdmin,
+					Role:       authlib.RoleAdmin,
 					Action:     "read",
 					Path:       "/dashboards/1",
 					AddToNav:   true,
 					DefaultNav: true,
 					Icon:       "dashboard",
 				},
-				{UID: "page-1", Type: "page", Name: "Page 1", Role: identity.RoleViewer},
+				{UID: "page-1", Type: "page", Name: "Page 1", Role: authlib.RoleViewer},
 			},
 		}
 
@@ -254,13 +270,13 @@ func TestJsonDataToMetaJSONData(t *testing.T) {
 
 	t.Run("converts include role types", func(t *testing.T) {
 		testCases := []struct {
-			role     identity.RoleType
+			role     authlib.RoleType
 			expected pluginsv0alpha1.MetaIncludeRole
 		}{
-			{identity.RoleAdmin, pluginsv0alpha1.MetaIncludeRoleAdmin},
-			{identity.RoleEditor, pluginsv0alpha1.MetaIncludeRoleEditor},
-			{identity.RoleViewer, pluginsv0alpha1.MetaIncludeRoleViewer},
-			{identity.RoleNone, pluginsv0alpha1.MetaIncludeRoleNone},
+			{authlib.RoleAdmin, pluginsv0alpha1.MetaIncludeRoleAdmin},
+			{authlib.RoleEditor, pluginsv0alpha1.MetaIncludeRoleEditor},
+			{authlib.RoleViewer, pluginsv0alpha1.MetaIncludeRoleViewer},
+			{authlib.RoleNone, pluginsv0alpha1.MetaIncludeRoleNone},
 		}
 
 		for _, tc := range testCases {
@@ -288,7 +304,7 @@ func TestJsonDataToMetaJSONData(t *testing.T) {
 					Path:      "/api/endpoint",
 					Method:    "GET",
 					URL:       "https://api.example.com",
-					ReqRole:   identity.RoleAdmin,
+					ReqRole:   authlib.RoleAdmin,
 					ReqAction: "read",
 					Headers:   []plugins.Header{{Name: "Authorization", Content: "Bearer token"}},
 					URLParams: []plugins.URLParam{{Name: "param1", Content: "value1"}},

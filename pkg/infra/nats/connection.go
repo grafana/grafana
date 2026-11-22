@@ -311,7 +311,9 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 		}),
 	}
 
-	if tls := c.config.TLS(); tls.Enabled {
+	// The in-process connection has no transport to secure; requesting TLS on it
+	// fails every connect with ErrSecureConnWanted.
+	if tls := c.config.TLS(); tls.Enabled && !c.config.inProcess() {
 		tc, err := buildTLSConfig(tls)
 		if err != nil {
 			return nil, err

@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -22,6 +23,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -837,7 +839,7 @@ func TestKvStorageBackend_WatchWriteEvents_BatchesValueReads(t *testing.T) {
 	tripsBefore, keysBefore := kvStore.stats()
 
 	out := make(chan *WrittenEvent, numEvents)
-	require.True(t, backend.emitWriteEvents(ctx, batch, out))
+	require.True(t, backend.emitWriteEvents(ctx, batch, out, nil))
 	close(out)
 
 	receivedRVs := make([]int64, 0, numEvents)
@@ -955,7 +957,7 @@ func TestKvStorageBackend_WatchWriteEvents_ReadFailuresAreNotReportedAsMissing(t
 		backend := setupTestStorageBackend(t, withKV(kvStore), withLogger(logger))
 
 		out := make(chan *WrittenEvent, dataBatchSize)
-		assert.True(t, backend.emitWriteEvents(t.Context(), newBatch(), out),
+		assert.True(t, backend.emitWriteEvents(t.Context(), newBatch(), out, nil),
 			"a storage error should not tear down the watch stream")
 
 		assert.Empty(t, out)
@@ -971,7 +973,7 @@ func TestKvStorageBackend_WatchWriteEvents_ReadFailuresAreNotReportedAsMissing(t
 		cancel()
 
 		out := make(chan *WrittenEvent, dataBatchSize)
-		assert.False(t, backend.emitWriteEvents(ctx, newBatch(), out),
+		assert.False(t, backend.emitWriteEvents(ctx, newBatch(), out, nil),
 			"a cancelled context should stop the stream rather than drain the backlog")
 
 		assert.Empty(t, out)
@@ -1019,7 +1021,7 @@ func TestKvStorageBackend_WatchWriteEvents_ReadFailuresAreNotReportedAsMissing(t
 		require.Len(t, batch, numEvents)
 
 		out := make(chan *WrittenEvent, numEvents)
-		require.True(t, backend.emitWriteEvents(ctx, batch, out),
+		require.True(t, backend.emitWriteEvents(ctx, batch, out, nil),
 			"one unreadable value should not tear down the watch stream")
 		close(out)
 
@@ -1035,6 +1037,49 @@ func TestKvStorageBackend_WatchWriteEvents_ReadFailuresAreNotReportedAsMissing(t
 		assert.Equal(t, 1, logger.ErrorLogs.Calls, "the read failure alone should be logged")
 		assert.Equal(t, "failed to read data for event", logger.ErrorLogs.Message)
 	})
+}
+
+// The history pruner removes a notified value only once newer versions of the
+// key exist, which are notified too, so the seeded stream skips an absent value
+// without expiring the watches or rejecting resumes. A read failure loses the
+// write.
+func TestKvStorageBackend_SeededWatchLosesOnlyUnreadWrites(t *testing.T) {
+	gr := GroupResource{Group: appsNamespace.Group, Resource: appsNamespace.Resource}
+	batch := []Event{
+		{Namespace: appsNamespace.Namespace, Group: gr.Group, Resource: gr.Resource, Name: "first", ResourceVersion: 10, Action: DataActionCreated},
+		{Namespace: appsNamespace.Namespace, Group: gr.Group, Resource: gr.Resource, Name: "second", ResourceVersion: 20, Action: DataActionCreated},
+	}
+	for _, tc := range []struct {
+		name      string
+		kv        func(KV) KV
+		lost      bool
+		wantFloor int64
+	}{
+		{name: "pruned values", kv: func(store KV) KV { return store }},
+		{name: "failed read", kv: func(store KV) KV { return &failingBatchGetKV{KV: store, err: errors.New("storage is down")} }, lost: true, wantFloor: 20},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := setupTestStorageBackend(t, withKV(tc.kv(setupBadgerKV(t))), withLogger(newFakeLogger()))
+			expiry := NewWatchExpiry()
+			backend.watchInvalidator = expiry
+			watches := expiry.WatchInvalidation()
+			floors := newRaisedFloors()
+
+			out := make(chan *WrittenEvent, len(batch))
+			require.True(t, backend.emitWriteEvents(t.Context(), batch, out, backend.lostWatchEvents(floors)))
+			require.Empty(t, out)
+
+			select {
+			case <-watches:
+				require.True(t, tc.lost, "watches expired for values the pruner removed")
+			default:
+				require.False(t, tc.lost, "watches did not expire for a failed read")
+			}
+			floor, held := floors.get(gr)
+			require.False(t, held)
+			require.Equal(t, tc.wantFloor, floor)
+		})
+	}
 }
 
 // TestIntegrationKvStorageBackend_WatchWriteEvents_ConcurrentWrites verifies that when many
@@ -1264,9 +1309,7 @@ func TestKvStorageBackend_ReadResource_ErrorStatus(t *testing.T) {
 					require.NotNil(t, response.Error)
 					require.Contains(t, response.Error.Message, tc.err.Error())
 					require.Equal(t, tc.want, grpcCodeFromErrorResult(response.Error))
-					_, err := UnaryErrorResultInterceptor()(t.Context(), req, nil, func(context.Context, any) (any, error) {
-						return &resourcepb.ReadResponse{Error: response.Error}, nil
-					})
+					err := GRPCStatusError(response.Error)
 					require.Equal(t, tc.want, status.Code(err))
 				})
 			}
@@ -1305,7 +1348,7 @@ func TestKvStorageBackend_ReadResource_JoinedReadCloseErrors(t *testing.T) {
 			require.NotNil(t, response.Error)
 			require.Contains(t, response.Error.Message, tc.closeErr.Error())
 			require.Equal(t, tc.want, grpcCodeFromErrorResult(response.Error))
-			require.Equal(t, tc.want, status.Code(errorResultStatus(response.Error)))
+			require.Equal(t, tc.want, status.Code(GRPCStatusError(response.Error)))
 		})
 	}
 }
@@ -2551,6 +2594,136 @@ func TestKvStorageBackend_ListIterator_KeysOnly_ContinueTokenPinsSnapshot(t *tes
 	}
 }
 
+// Continue tokens name the last item handed to the caller and resume strictly
+// after it. Names extending one another, or sorting around the '/' key
+// separator, must neither repeat nor go missing across pages.
+func TestKvStorageBackend_ListIterator_ContinueTokenResumesAfterLastItem(t *testing.T) {
+	names := []string{"abc", "abc-x", "abc.y", "abc0", "abc0-x", "abca", "abd"}
+
+	for _, tc := range []struct {
+		name      string
+		namespace string
+		keysOnly  bool
+	}{
+		{name: "namespaced", namespace: appsNamespace.Namespace},
+		{name: "namespaced keys-only", namespace: appsNamespace.Namespace, keysOnly: true},
+		{name: "cross-namespace", namespace: ""},
+		{name: "cross-namespace keys-only", namespace: "", keysOnly: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := setupTestStorageBackend(t)
+			ctx := t.Context()
+			for _, ns := range []string{appsNamespace.Namespace, "ns-two"} {
+				target := appsNamespace
+				target.Namespace = ns
+				for _, name := range names {
+					obj, rv := writeTestObjectIn(t, backend, ctx, target, name)
+					if name == "abc" {
+						// Several revisions of the continue item must all be skipped.
+						updateTestObject(t, backend, ctx, obj, rv, target, name, "updated")
+					}
+				}
+			}
+
+			req := appsCollectionRequest(tc.keysOnly)
+			req.Options.Key.Namespace = tc.namespace
+
+			all, _ := collectListItems(t, backend, ctx, req)
+			var want []string
+			for _, item := range all {
+				want = append(want, item.namespace+"/"+item.name)
+			}
+			wantLen := len(names)
+			if tc.namespace == "" {
+				wantLen *= 2
+			}
+			require.Len(t, want, wantLen)
+
+			var got []string
+			token := ""
+			for range wantLen + 1 {
+				req.NextPageToken = token
+				token = ""
+				_, err := backend.ListIterator(ctx, req, func(iter ListIterator) error {
+					if !iter.Next() {
+						return iter.Error()
+					}
+					got = append(got, iter.Namespace()+"/"+iter.Name())
+					token = iter.ContinueToken()
+
+					decoded, err := GetContinueToken(token)
+					require.NoError(t, err)
+					require.Equal(t, iter.Name(), decoded.Name)
+					return iter.Error()
+				})
+				require.NoError(t, err)
+				if token == "" {
+					break
+				}
+			}
+			require.Equal(t, want, got)
+		})
+	}
+}
+
+// Tokens from servers that predate the exclusive cursor named the next item to
+// list under "n". They must be rejected, never read as exclusive, which would
+// silently drop that item.
+func TestKvStorageBackend_ListRejectsPreExclusiveContinueToken(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := t.Context()
+	for _, name := range []string{"aaa", "bbb", "ccc"} {
+		seedResource(t, backend, ctx, name, "")
+	}
+	_, listRV := collectListItems(t, backend, ctx, appsCollectionRequest(false))
+
+	for _, keysOnly := range []bool{false, true} {
+		t.Run(fmt.Sprintf("keysOnly=%v", keysOnly), func(t *testing.T) {
+			req := appsCollectionRequest(keysOnly)
+			req.NextPageToken = preExclusiveContinueToken(t, "bbb", listRV, keysOnly)
+
+			_, err := backend.ListIterator(ctx, req, func(ListIterator) error { return nil })
+			require.True(t, apierrors.IsBadRequest(err), "ListIterator: %v", err)
+
+			_, err = backend.ListKeys(ctx, req, func(ListKeyIterator) error { return nil })
+			require.True(t, apierrors.IsBadRequest(err), "ListKeys: %v", err)
+		})
+	}
+}
+
+func preExclusiveContinueToken(t *testing.T, name string, rv int64, keysOnly bool) string {
+	t.Helper()
+	raw := map[string]any{"n": name, "v": rv}
+	if keysOnly {
+		raw["ko"] = true
+		raw["ns"] = appsNamespace.Namespace
+	}
+	b, err := json.Marshal(raw)
+	require.NoError(t, err)
+	return base64.StdEncoding.EncodeToString(b)
+}
+
+func writeTestObjectIn(t *testing.T, backend *kvStorageBackend, ctx context.Context, target NamespacedResource, name string) (*unstructured.Unstructured, int64) {
+	t.Helper()
+	obj, err := createTestObjectWithName(name, target, "data-"+name)
+	require.NoError(t, err)
+	meta, err := utils.MetaAccessor(obj)
+	require.NoError(t, err)
+	rv, err := backend.WriteEvent(ctx, WriteEvent{
+		Type: resourcepb.WatchEvent_ADDED,
+		Key: &resourcepb.ResourceKey{
+			Namespace: target.Namespace,
+			Group:     target.Group,
+			Resource:  target.Resource,
+			Name:      name,
+		},
+		Value:  objectToJSONBytes(t, obj),
+		Object: meta,
+	})
+	require.NoError(t, err)
+	return obj, rv
+}
+
 func TestKvStorageBackend_ListIterator_EmptyResult(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	ctx := context.Background()
@@ -2631,15 +2804,18 @@ func TestKvStorageBackend_ListIterator_InvalidContinueToken(t *testing.T) {
 				Resource:  "resources",
 			},
 		},
-		Limit:         10,
-		NextPageToken: "invalid-token",
+		Limit: 10,
 	}
 
-	_, err := backend.ListIterator(ctx, listReq, func(iter ListIterator) error {
-		return nil
-	})
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "invalid continue token")
+	for _, token := range []string{"invalid-token", "bm90LWpzb24=", ContinueToken{ResourceVersion: 1}.String()} {
+		listReq.NextPageToken = token
+		_, err := backend.ListIterator(ctx, listReq, func(iter ListIterator) error {
+			t.Fatal("malformed continuation must fail before iteration")
+			return nil
+		})
+		require.True(t, apierrors.IsBadRequest(err), "got %v", err)
+		require.Contains(t, err.Error(), "invalid continue token")
+	}
 }
 
 func TestKvStorageBackend_ListIterator_KeysOnlyRejectsContinueTokenScopeChanges(t *testing.T) {

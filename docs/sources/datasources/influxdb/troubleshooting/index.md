@@ -421,7 +421,8 @@ The following errors occur when using InfluxDB annotations on dashboards.
 
 **Solution:**
 
-1. Navigate to the dashboard you want to update and click **Edit**.
+1. Navigate to the dashboard you want to update.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the **Dashboard options** icon to open the sidebar.
 1. Expand the **Annotations** section.
 1. Select the InfluxDB annotation.

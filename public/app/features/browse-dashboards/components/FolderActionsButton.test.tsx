@@ -6,7 +6,7 @@ import { appEvents } from 'app/core/app_events';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
-import { useDeleteFolderMutationFacade } from '../../../api/clients/folder/v1beta1/hooks';
+import { useDeleteFolderMutation } from '../api/browseDashboardsAPI';
 import { mockFolderDTO } from '../fixtures/folder.fixture';
 import * as permissions from '../permissions';
 
@@ -19,9 +19,9 @@ jest.mock('app/core/components/AccessControl/Permissions', () => ({
   Permissions: () => <div>Hello!</div>,
 }));
 
-jest.mock('../../../api/clients/folder/v1beta1/hooks', () => ({
-  ...jest.requireActual('../../../api/clients/folder/v1beta1/hooks'),
-  useDeleteFolderMutationFacade: jest.fn(),
+jest.mock('../api/browseDashboardsAPI', () => ({
+  ...jest.requireActual('../api/browseDashboardsAPI'),
+  useDeleteFolderMutation: jest.fn(),
 }));
 
 const managePermissionsLabel = /Manage permissions/i;
@@ -50,7 +50,7 @@ describe('browse-dashboards FolderActionsButton', () => {
 
   beforeEach(() => {
     jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => mockPermissions);
-    (useDeleteFolderMutationFacade as jest.Mock).mockReturnValue(jest.fn());
+    (useDeleteFolderMutation as jest.Mock).mockReturnValue([jest.fn(), {}]);
   });
 
   afterEach(() => {
@@ -173,7 +173,7 @@ describe('browse-dashboards FolderActionsButton', () => {
     const mockDeleteFolder = jest.fn().mockResolvedValue({
       error: { status: 400, data: { message: backendMessage } },
     });
-    (useDeleteFolderMutationFacade as jest.Mock).mockReturnValue(mockDeleteFolder);
+    (useDeleteFolderMutation as jest.Mock).mockReturnValue([mockDeleteFolder, {}]);
     const publishSpy = jest.spyOn(appEvents, 'publish');
 
     render(<FolderActionsButton folder={mockFolder} />);
@@ -196,7 +196,7 @@ describe('browse-dashboards FolderActionsButton', () => {
     const mockDeleteFolder = jest.fn().mockResolvedValue({
       error: { status: 500 },
     });
-    (useDeleteFolderMutationFacade as jest.Mock).mockReturnValue(mockDeleteFolder);
+    (useDeleteFolderMutation as jest.Mock).mockReturnValue([mockDeleteFolder, {}]);
     const publishSpy = jest.spyOn(appEvents, 'publish');
 
     render(<FolderActionsButton folder={mockFolder} />);

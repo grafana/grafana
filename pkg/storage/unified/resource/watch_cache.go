@@ -3,6 +3,7 @@ package resource
 import (
 	"fmt"
 	"io"
+	"sync"
 )
 
 type eventIdentity[T any] func(T) (GroupResource, int64)
@@ -16,17 +17,70 @@ type watchResume struct {
 type cacheSeed[T any] struct {
 	items             []T
 	initialCacheFloor int64
+	// collectionFloors override initialCacheFloor for per-collection RVs.
+	collectionFloors map[GroupResource]int64
 }
 
 // watchCache is owned by the broadcaster's event loop so eviction and resume
 // validation cannot race with replay and subscriber registration.
 type watchCache[T any] struct {
-	events         ringBuffer[T]
-	initialFloor   int64
-	evictedThrough map[GroupResource]int64
-	identity       eventIdentity[T]
-	maxBytes       int64
-	sizeBytes      int64
+	events           ringBuffer[T]
+	initialFloor     int64
+	collectionFloors map[GroupResource]int64
+	evictedThrough   map[GroupResource]int64
+	identity         eventIdentity[T]
+	maxBytes         int64
+	sizeBytes        int64
+	raised           *raisedFloors
+}
+
+// raisedFloors are resume floors raised after startup, for writes the
+// stream lost. Unlike the cache they are updated from other goroutines.
+type raisedFloors struct {
+	mu     sync.Mutex
+	floors map[GroupResource]int64
+	// all applies to every collection, for backends whose RVs are global.
+	all  int64
+	held bool
+}
+
+func newRaisedFloors() *raisedFloors {
+	return &raisedFloors{floors: make(map[GroupResource]int64)}
+}
+
+func (f *raisedFloors) Raise(gr GroupResource, rv int64) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.floors[gr] = max(f.floors[gr], rv)
+}
+
+// raiseAll rejects resumes from before rv in every collection.
+func (f *raisedFloors) raiseAll(rv int64) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.all = max(f.all, rv)
+}
+
+func (f *raisedFloors) Hold() {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.held = true
+}
+
+func (f *raisedFloors) Release() {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.held = false
+}
+
+// get returns the collection's raised floor, and whether every resume is held.
+func (f *raisedFloors) get(gr GroupResource) (int64, bool) {
+	if f == nil {
+		return 0, false
+	}
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return max(f.floors[gr], f.all), f.held
 }
 
 func newWatchCache[T any](size int, identity eventIdentity[T]) watchCache[T] {
@@ -43,6 +97,7 @@ func (c *watchCache[T]) seed(seed cacheSeed[T]) error {
 		return fmt.Errorf("watch seed exceeds cache capacity")
 	}
 	c.initialFloor = seed.initialCacheFloor
+	c.collectionFloors = seed.collectionFloors
 	for _, item := range seed.items {
 		c.add(item)
 	}
@@ -83,11 +138,13 @@ func (c *watchCache[T]) validateResume(resume watchResume) error {
 	if c.identity == nil {
 		return fmt.Errorf("checked resume requires a seeded watch cache")
 	}
-	floor, ok := c.evictedThrough[resume.groupResource]
+	floor, ok := c.collectionFloors[resume.groupResource]
 	if !ok {
 		floor = c.initialFloor
 	}
-	if resume.since < floor {
+	raised, held := c.raised.get(resume.groupResource)
+	floor = max(floor, c.evictedThrough[resume.groupResource], raised)
+	if held || resume.since < floor {
 		return NewResourceVersionExpiredError(resume.requestedRV)
 	}
 	return nil

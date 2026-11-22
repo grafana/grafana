@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"gocloud.dev/blob/memblob"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -187,6 +186,8 @@ func TestNormalizeBulkBlobUploadsRequiresStreamingBackend(t *testing.T) {
 
 func TestNormalizeBulkBlobUploadsRejectsFailedUploads(t *testing.T) {
 	transportErr := status.Error(codes.Unavailable, "upload transport failed")
+	statusFailure := &resourcepb.ErrorResult{Code: http.StatusServiceUnavailable, Message: "upload response failed"}
+	statusErr := GRPCStatusError(statusFailure)
 	cases := []struct {
 		name string
 		put  func(context.Context, *resourcepb.PutBlobRequest, io.Reader) (*resourcepb.PutBlobResponse, error)
@@ -195,11 +196,16 @@ func TestNormalizeBulkBlobUploadsRejectsFailedUploads(t *testing.T) {
 		{"transport error", func(context.Context, *resourcepb.PutBlobRequest, io.Reader) (*resourcepb.PutBlobResponse, error) {
 			return nil, transportErr
 		}, "upload transport failed"},
-		{"response error", func(context.Context, *resourcepb.PutBlobRequest, io.Reader) (*resourcepb.PutBlobResponse, error) {
-			return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{Code: http.StatusServiceUnavailable, Message: "upload response failed"}}, nil
+		{"status error", func(_ context.Context, _ *resourcepb.PutBlobRequest, r io.Reader) (*resourcepb.PutBlobResponse, error) {
+			if _, err := completedBulkBlobUpload(r); err != nil {
+				return nil, err
+			}
+			return nil, statusErr
 		}, "upload response failed"},
-		{"both errors", func(context.Context, *resourcepb.PutBlobRequest, io.Reader) (*resourcepb.PutBlobResponse, error) {
-			return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{Code: http.StatusBadRequest, Message: "secondary"}}, transportErr
+		{"error with response", func(_ context.Context, _ *resourcepb.PutBlobRequest, r io.Reader) (*resourcepb.PutBlobResponse, error) {
+			response, err := completedBulkBlobUpload(r)
+			require.NoError(t, err)
+			return response, transportErr
 		}, "upload transport failed"},
 		{"nil response", func(context.Context, *resourcepb.PutBlobRequest, io.Reader) (*resourcepb.PutBlobResponse, error) {
 			return nil, nil
@@ -243,8 +249,11 @@ func TestNormalizeBulkBlobUploadsRejectsFailedUploads(t *testing.T) {
 			require.Nil(t, result)
 			require.ErrorContains(t, err, tc.want)
 			require.True(t, proto.Equal(original, req))
-			if tc.name == "both errors" || tc.name == "transport error" {
+			switch tc.name {
+			case "error with response", "transport error":
 				require.ErrorIs(t, err, transportErr)
+			case "status error":
+				requireRPCError(t, err, statusFailure)
 			}
 		})
 	}
@@ -317,28 +326,15 @@ func TestNormalizeBulkBlobUploadsNullBlobs(t *testing.T) {
 
 func TestNormalizeBulkBlobUploadsBackendRoundTrip(t *testing.T) {
 	for _, tc := range []struct {
-		name, backend, contentType, downloadedContentType string
+		name, contentType, downloadedContentType string
 	}{
-		{"kv", "kv", "application/json", "application/json"},
-		{"bucket", "bucket", "application/json", "application/json"},
-		{"kv profile", "kv", "application/json; profile=foo", "application/json; profile=foo"},
-		// Bucket downloads currently lose non-charset parameters when decoding resource references.
-		{"bucket boundary", "bucket", "multipart/form-data; boundary=abc", "multipart/form-data"},
-		{"kv profile and charset", "kv", "application/json; charset=utf-8; profile=foo", "application/json; charset=utf-8; profile=foo"},
-		{"kv quoted charset", "kv", `text/plain; charset="x;y"`, `text/plain; charset="x;y"`},
-		{"bucket quoted charset", "bucket", `text/plain; charset="x;y"`, "text/plain; charset=x;y"},
+		{"json", "application/json", "application/json"},
+		{"profile", "application/json; profile=foo", "application/json; profile=foo"},
+		{"profile and charset", "application/json; charset=utf-8; profile=foo", "application/json; charset=utf-8; profile=foo"},
+		{"quoted charset", `text/plain; charset="x;y"`, `text/plain; charset="x;y"`},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			var store BlobSupport
-			if tc.backend == "kv" {
-				store = NewKVBlobSupport(setupBadgerKV(t))
-			} else {
-				bucket := memblob.OpenBucket(nil)
-				t.Cleanup(func() { require.NoError(t, bucket.Close()) })
-				var err error
-				store, err = NewCDKBlobSupport(t.Context(), CDKBlobSupportOptions{Bucket: bucket})
-				require.NoError(t, err)
-			}
+			store := NewKVBlobSupport(setupBadgerKV(t))
 			req := newBulkBlobNormalizationRequest()
 			req.BlobUploads[0].ContentType = tc.contentType
 			stream := &testBulkProcessServer{requests: []*resourcepb.BulkRequest{bulkTestChunk("dashboard", []byte("abc"), false), bulkTestChunk("dashboard", nil, true)}}
@@ -359,11 +355,10 @@ func TestNormalizeBulkBlobUploadsBackendRoundTrip(t *testing.T) {
 			ctx := ctxWithUserInNs(req.Key.Namespace)
 			created, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: req.Key, Value: result.Value})
 			require.NoError(t, err)
-			require.Nil(t, created.Error)
+			require.NotNil(t, created)
 			client := NewLocalResourceClient(srv)
 			get, err := client.GetBlob(ctx, &resourcepb.GetBlobRequest{Resource: req.Key, Uid: ref.UID, MustProxyBytes: true})
 			require.NoError(t, err)
-			require.Nil(t, get.Error)
 			require.Equal(t, tc.downloadedContentType, get.ContentType)
 			require.Equal(t, []byte("abc"), get.Value)
 		})

@@ -2,8 +2,11 @@ import { render, screen, waitFor } from 'test/test-utils';
 
 import { TemplateFilters } from './TemplateFilters';
 
-function setup(overrides: Partial<React.ComponentProps<typeof TemplateFilters>> = {}) {
-  const props: React.ComponentProps<typeof TemplateFilters> = {
+// The variant with the tag and creator filters, as the custom templates tab renders it.
+type AllFiltersProps = Extract<React.ComponentProps<typeof TemplateFilters>, { onTagsChange: unknown }>;
+
+function setup(overrides: Partial<AllFiltersProps> = {}) {
+  const props: AllFiltersProps = {
     searchQuery: '',
     onSearchChange: jest.fn(),
     tags: [],
@@ -60,6 +63,23 @@ describe('TemplateFilters', () => {
     await waitFor(() => {
       expect(props.getTagOptions).toHaveBeenCalled();
     });
+  });
+
+  it('shows only the search and the sort without the tag and creator filters', async () => {
+    render(
+      <TemplateFilters
+        searchQuery=""
+        onSearchChange={jest.fn()}
+        sortValue={undefined}
+        onSortChange={jest.fn()}
+        getSortOptions={jest.fn().mockResolvedValue([{ label: 'A-Z', value: 'alpha-asc' }])}
+      />
+    );
+
+    expect(screen.getByPlaceholderText('Search')).toBeInTheDocument();
+    expect(await screen.findByRole('combobox', { name: 'Sort' })).toBeInTheDocument();
+    expect(screen.queryByText(/Filter by tag/i)).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Filter by created by')).not.toBeInTheDocument();
   });
 
   it('invokes getSortOptions when the sort picker mounts', async () => {
