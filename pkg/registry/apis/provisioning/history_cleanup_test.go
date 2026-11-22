@@ -16,22 +16,25 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/loki"
 	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestHistoryJobCleanupService_IsDisabled(t *testing.T) {
 	tests := []struct {
-		name     string
-		builder  *APIBuilder
-		disabled bool
+		name               string
+		builder            *APIBuilder
+		disableControllers bool
+		disabled           bool
 	}{
 		{name: "provisioning disabled", builder: nil, disabled: true},
-		{name: "API server only", builder: &APIBuilder{onlyApiServer: true}, disabled: true},
+		{name: "controllers disabled", builder: &APIBuilder{}, disableControllers: true, disabled: true},
 		{name: "Loki history", builder: &APIBuilder{jobHistoryConfig: &JobHistoryConfig{Loki: &loki.Config{}}}, disabled: true},
 		{name: "unified storage history", builder: &APIBuilder{jobHistoryConfig: &JobHistoryConfig{}}, disabled: false},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.disabled, ProvideHistoryJobCleanupService(tc.builder, apiserver.WithoutRestConfig).IsDisabled())
+			cfg := &setting.Cfg{DisableControllers: tc.disableControllers}
+			assert.Equal(t, tc.disabled, ProvideHistoryJobCleanupService(cfg, tc.builder, apiserver.WithoutRestConfig).IsDisabled())
 		})
 	}
 }
@@ -55,7 +58,7 @@ func TestHistoryJobCleanupService_Run(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		done := make(chan error, 1)
 		go func() {
-			done <- ProvideHistoryJobCleanupService(&APIBuilder{historyExpiration: time.Hour}, configProvider).Run(ctx)
+			done <- ProvideHistoryJobCleanupService(&setting.Cfg{}, &APIBuilder{historyExpiration: time.Hour}, configProvider).Run(ctx)
 		}()
 
 		close(ready)
@@ -72,11 +75,11 @@ func TestHistoryJobCleanupService_Run(t *testing.T) {
 		})
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
-		require.NoError(t, ProvideHistoryJobCleanupService(&APIBuilder{}, configProvider).Run(ctx))
+		require.NoError(t, ProvideHistoryJobCleanupService(&setting.Cfg{}, &APIBuilder{}, configProvider).Run(ctx))
 	})
 
 	t.Run("returns the rest config error", func(t *testing.T) {
-		err := ProvideHistoryJobCleanupService(&APIBuilder{}, apiserver.WithoutRestConfig).Run(context.Background())
+		err := ProvideHistoryJobCleanupService(&setting.Cfg{}, &APIBuilder{}, apiserver.WithoutRestConfig).Run(context.Background())
 		require.Error(t, err)
 	})
 }

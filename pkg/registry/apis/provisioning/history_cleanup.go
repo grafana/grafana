@@ -18,20 +18,25 @@ var _ registry.CanBeDisabled = (*HistoryJobCleanupService)(nil)
 // HistoryJobCleanupService periodically deletes expired HistoricJobs. Run blocks
 // until the Grafana API server is running, then runs the cleanup until shutdown.
 type HistoryJobCleanupService struct {
-	builder        *APIBuilder
-	configProvider apiserver.RestConfigProvider
+	builder            *APIBuilder
+	configProvider     apiserver.RestConfigProvider
+	disableControllers bool
 }
 
-func ProvideHistoryJobCleanupService(builder *APIBuilder, configProvider apiserver.RestConfigProvider) *HistoryJobCleanupService {
-	return &HistoryJobCleanupService{builder: builder, configProvider: configProvider}
+func ProvideHistoryJobCleanupService(cfg *setting.Cfg, builder *APIBuilder, configProvider apiserver.RestConfigProvider) *HistoryJobCleanupService {
+	return &HistoryJobCleanupService{
+		builder:            builder,
+		configProvider:     configProvider,
+		disableControllers: cfg.DisableControllers,
+	}
 }
 
 // IsDisabled reports whether there is nothing for this instance to clean: the
-// builder is nil when provisioning is disabled, controllers are off when running
-// solely as an API server, and Loki-backed history stores no HistoricJobs.
+// builder is nil when provisioning is disabled, controllers can be turned off by
+// configuration, and Loki-backed history stores no HistoricJobs.
 func (s *HistoryJobCleanupService) IsDisabled() bool {
 	b := s.builder
-	return b == nil || b.onlyApiServer || (b.jobHistoryConfig != nil && b.jobHistoryConfig.Loki != nil)
+	return b == nil || s.disableControllers || (b.jobHistoryConfig != nil && b.jobHistoryConfig.Loki != nil)
 }
 
 func (s *HistoryJobCleanupService) Run(ctx context.Context) error {
