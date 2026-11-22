@@ -311,12 +311,16 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	if obj.GetName() != previous.GetName() {
 		return v, apierrors.NewBadRequest("name mismatch between existing and updated object")
 	}
+	if obj.GetNamespace() == "" {
+		obj.SetNamespace(previous.GetNamespace()) // set a missing namespace
+	} else if obj.GetNamespace() != previous.GetNamespace() {
+		return v, apierrors.NewBadRequest("namespace mismatch")
+	}
 
 	obj.SetCreatedBy(previous.GetCreatedBy())
 	obj.SetCreationTimestamp(previous.GetCreationTimestamp())
 	obj.SetResourceVersion("")                           // removed from saved JSON because the RV is not yet calculated
 	obj.SetAnnotation(utils.AnnoKeyGrantPermissions, "") // Grant is ignored for update requests
-	obj.SetNamespace(previous.GetNamespace())
 
 	// Make sure the deprecated internalID does not change
 	obj.SetDeprecatedInternalID(previous.GetDeprecatedInternalID()) // nolint:staticcheck

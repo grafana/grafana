@@ -440,7 +440,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 	})
 }
 
-func TestPrepareObjectForUpdatePreservesNamespace(t *testing.T) {
+func TestPrepareObjectForUpdateNamespace(t *testing.T) {
 	s := &Storage{serializer: &jsonSerializer{}, opts: StorageOptions{GVK: dashv1.DashboardResourceInfo.GroupVersionKind()}}
 	for _, namespace := range []string{"", "default", "other"} {
 		t.Run(fmt.Sprintf("submitted namespace %q", namespace), func(t *testing.T) {
@@ -451,6 +451,12 @@ func TestPrepareObjectForUpdatePreservesNamespace(t *testing.T) {
 			updated := previous.DeepCopy()
 			updated.Namespace = namespace
 			result, err := s.prepareObjectForUpdate(ctx, updated, previous)
+			if namespace == "other" {
+				require.Error(t, err)
+				require.True(t, apierrors.IsBadRequest(err))
+				require.ErrorContains(t, err, "namespace mismatch")
+				return
+			}
 			require.NoError(t, err)
 			require.False(t, result.hasChanged)
 			stored := &dashv1.Dashboard{}
