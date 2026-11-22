@@ -34,7 +34,7 @@ export interface FmtMigration {
 export interface FmtMigrationOptions {
   mode: TextMode;
   renderMode?: RenderMode;
-  fieldNames: readonly string[];
+  hasFmtField: boolean;
 }
 
 const NAMESPACE = 'fmt';
@@ -121,7 +121,7 @@ export function migrateFmt(content: string, options: FmtMigrationOptions): FmtMi
   return { content: migrated, changes, unconverted };
 }
 
-function analyzeContent(content: string, { mode, renderMode, fieldNames }: FmtMigrationOptions) {
+function analyzeContent(content: string, { mode, renderMode, hasFmtField }: FmtMigrationOptions) {
   if (!interpretsHandlebars(mode) || !content.includes(NAMESPACE)) {
     return undefined;
   }
@@ -134,7 +134,7 @@ function analyzeContent(content: string, { mode, renderMode, fieldNames }: FmtMi
   }
 
   const root = renderMode === RenderMode.PerRow ? ROW | ROOT : ROOT;
-  const { edits, unconverted, replacements } = analyze(program, root, fieldNames.includes(NAMESPACE), source);
+  const { edits, unconverted, replacements } = analyze(program, root, hasFmtField, source);
   const toContent = mapToContentOffsets(content, source);
 
   return {

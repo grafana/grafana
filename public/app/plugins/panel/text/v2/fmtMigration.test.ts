@@ -146,13 +146,13 @@ const displayField = () =>
     }),
   ]);
 
-const fieldNamesOf = (series: DataFrame[]) => series.flatMap((frame) => getFieldNames(frame, [frame]));
+const hasFmtFieldIn = (series: DataFrame[]) => series.some((frame) => getFieldNames(frame, [frame]).includes('fmt'));
 
 function migrate(content: string, options: Partial<FmtMigrationOptions> = {}) {
   return migrateFmt(content, {
     mode: TextMode.Markdown,
     renderMode: RenderMode.Once,
-    fieldNames: fieldNamesOf(fleet()),
+    hasFmtField: false,
     ...options,
   });
 }
@@ -361,7 +361,7 @@ describe('migrateFmt', () => {
 
     it('leaves every read of a row when a field is displayed as fmt, since fmt is then that field', () => {
       const content = '{{#each data}}[{{fmt.cpu}}]{{/each}}';
-      const migration = migrate(content, { fieldNames: fieldNamesOf(shadowed()) });
+      const migration = migrate(content, { hasFmtField: true });
 
       expect(migration).toEqual({ content, changes: [], unconverted: [{ from: 17, to: 24, reason: 'shadowed' }] });
       expect(render(content, shadowed())).toBe('[own][]');
@@ -370,7 +370,7 @@ describe('migrateFmt', () => {
 
     it('reads a block param named root as that block param, not as @root, the way Handlebars does', () => {
       const content = '{{#each data as |root|}}[{{@root.fmt.cpu}}]{{/each}}';
-      const migration = migrate(content, { fieldNames: fieldNamesOf(shadowed()) });
+      const migration = migrate(content, { hasFmtField: true });
 
       expect(migration.content).toBe(content);
       expect(migration.unconverted.map(({ from, to, reason }) => ({ read: content.slice(from, to), reason }))).toEqual([
@@ -415,7 +415,7 @@ describe('migrateFmt', () => {
       { desc: 'a call', content: '{{#each data}}{{#with (display row=this)}}[{{fmt.cpu}}]{{/with}}{{/each}}' },
       { desc: 'a block', content: '{{#each data}}{{#display row=this}}[{{fmt.cpu}}]{{/display}}{{/each}}' },
     ])('leaves reads under display without a field name, which gives the field named display: $desc', ({ content }) => {
-      const migration = migrate(content, { fieldNames: fieldNamesOf(displayField()) });
+      const migration = migrate(content, { hasFmtField: false });
 
       expect(migration.content).toBe(content);
       expect(migration.unconverted.map(({ from, to, reason }) => ({ read: content.slice(from, to), reason }))).toEqual([
@@ -438,7 +438,7 @@ describe('migrateFmt', () => {
         read: '../fmt.cpu',
       },
     ])('resolves parent paths past $desc', ({ content, read }) => {
-      const migration = migrate(content, { fieldNames: fieldNamesOf(shadowed()) });
+      const migration = migrate(content, { hasFmtField: true });
 
       expect(migration.unconverted.map(({ from, to, reason }) => ({ read: content.slice(from, to), reason }))).toEqual([
         { read, reason: 'shadowed' },
@@ -589,13 +589,13 @@ describe('rendering after the conversion', () => {
     { name: 'no query results', series: (): DataFrame[] => [] },
   ])('with $name', ({ series }) => {
     it.each(templates)('renders $content the same in Once and Per row modes', ({ content, once, perRow }) => {
-      const fieldNames = fieldNamesOf(series());
+      const hasFmtField = hasFmtFieldIn(series());
 
       for (const { renderMode, expected } of [
         { renderMode: RenderMode.Once, expected: once },
         { renderMode: RenderMode.PerRow, expected: perRow },
       ]) {
-        const migration = migrate(content, { renderMode, fieldNames });
+        const migration = migrate(content, { renderMode, hasFmtField });
 
         expect(migration.changes).toHaveLength(expected);
         expect(render(migration.content, series(), renderMode)).toBe(render(content, series(), renderMode));
@@ -624,7 +624,7 @@ describe('rendering after the conversion', () => {
 
       for (const renderMode of [RenderMode.Once, RenderMode.PerRow]) {
         for (const series of [fleet, frames, shadowed]) {
-          const migration = migrate(content, { renderMode, fieldNames: fieldNamesOf(series()) });
+          const migration = migrate(content, { renderMode, hasFmtField: hasFmtFieldIn(series()) });
           converted += migration.changes.length;
 
           expect({ content, renderMode, output: render(migration.content, series(), renderMode) }).toEqual({
@@ -632,7 +632,7 @@ describe('rendering after the conversion', () => {
             renderMode,
             output: render(content, series(), renderMode),
           });
-          expect(migrate(migration.content, { renderMode, fieldNames: fieldNamesOf(series()) }).changes).toEqual([]);
+          expect(migrate(migration.content, { renderMode, hasFmtField: hasFmtFieldIn(series()) }).changes).toEqual([]);
         }
       }
     }
