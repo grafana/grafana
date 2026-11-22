@@ -1550,7 +1550,8 @@
           "contact-point": "Direkter Kontaktpunkt (schließt sich gegenseitig mit der Richtlinie aus:).",
           "dashboard": "Dashboard, mit dem die Regel verknüpft ist (der kanonische Wert ist die Dashboard-UID).",
           "datasource": "Datenquelle abfragen, auf die die Regel verweist (der kanonische Wert ist die UID).",
-          "folder": "Ordner (der kanonische Wert ist die Ordner-UID).",
+          "folder": "",
+          "folder-uid": "",
           "health": "Regelzustand: ok, keine Daten, Fehler oder unbekannt.",
           "label": "Label-Matcher: label:key (vorhanden), label:!key (nicht vorhanden), label:key=value (gleich), label:key!=value (ungleich), label:key=~re (Regex), label:key!~re (kein regulärer Ausdruck). Setzen Sie einen Wert mit Leerzeichen in Anführungszeichen: label:team=\"a b\".",
           "metric": "Aufgezeichneter Metrikname (exakte Übereinstimmung).",
@@ -1571,12 +1572,14 @@
         "invalid-tokens": "Einige Filter konnten nicht angewendet werden: {{tokens}}",
         "invalid-value": "Verwenden Sie einen dieser Werte für {{key}}: {{values}}",
         "label": "Suchen",
+        "missing-value": "",
         "placeholder": "Nach Name suchen oder Filterabfrage eingeben …",
         "property": {
           "contact-point": "Kontaktpunkt",
           "dashboard": "Dashboard",
           "datasource": "Datenquelle abfragen",
           "folder": "Ordner",
+          "folder-uid": "",
           "health": "Zustand",
           "labels": "Labels",
           "metric": "Aufgezeichnete Metrik",
@@ -1612,6 +1615,8 @@
         "tooltip-with-interval": ""
       },
       "shared": {
+        "folder-search-limit": "",
+        "folder-search-limit-description": "",
         "load-more": "Mehr laden",
         "load-more-error": "Es konnten keine weiteren Ergebnisse geladen werden",
         "loading-rules": "Regeln werden geladen",
@@ -1990,6 +1995,7 @@
         "routing": "Benachrichtigungs-Routing",
         "routing-none": "Keine Richtlinienstruktur ausgewählt",
         "routing-tree": "Richtlinienstruktur: {{name}}",
+        "rules-error": "",
         "rules-skipped": "Warnregeln werden nicht importiert.",
         "rules-title": "",
         "skipped": "Übersprungen",
@@ -2002,6 +2008,7 @@
         "validation-warning": "Einige Ressourcen werden umbenannt, um Konflikte zu vermeiden.",
         "will-import-config": "Importiert diese Konfiguration",
         "will-import-rules": "Importiert Regeln",
+        "yaml-datasource": "",
         "will-import-rules-count_one": " Importiert {{count}} Regeln",
         "will-import-rules-count_other": " Importiert {{count}} Regeln"
       },
@@ -2108,9 +2115,14 @@
         "target-datasource-required": "Bitte wählen Sie eine Zieldatenquelle aus",
         "target-folder": "Zielordner",
         "target-folder-desc": "Ordner, in dem die importierten Regeln gespeichert werden",
+        "yaml-empty-group": "",
         "yaml-error": "Die YAML-Datei konnte nicht geparst werden: {{error}}",
         "yaml-file": "Regel-Datei (YAML)",
-        "yaml-required": "Bitte wählen Sie eine Datei"
+        "yaml-no-rules": "",
+        "yaml-required": "Bitte wählen Sie eine Datei",
+        "yaml-target-datasource": "",
+        "yaml-target-datasource-desc": "",
+        "yaml-target-datasource-required": ""
       },
       "success": "Die Warnregeln wurden erfolgreich zu von Grafana verwalteten Regeln importiert.",
       "target-folder": {
@@ -5741,6 +5753,10 @@
       "label": "",
       "label-plural": ""
     },
+    "notebook": {
+      "label": "",
+      "label-plural": ""
+    },
     "playlist": {
       "label": "",
       "label-plural": ""
@@ -6254,7 +6270,10 @@
       "add-visualization-body": "Wählen Sie eine Datenquelle aus und visualisieren und fragen Sie dann Ihre Daten mit Diagrammen, Statistiken und Tabellen ab oder erstellen Sie Listen, Markierungen und andere Widgets.",
       "add-visualization-button": "Visualisierung hinzufügen",
       "add-visualization-header": "Starten Sie Ihr neues Dashboard, indem Sie eine Visualisierung hinzufügen",
+      "assistant-limit-reached": "",
       "assistant-placeholder": "Beschreiben Sie Ihr Dashboard. Dadurch wird der Assistenten-Chat geöffnet und ein Gespräch gestartet.",
+      "assistant-placeholder-template": "",
+      "assistant-sign-in": "",
       "auto-grid": "Automatisches Raster",
       "auto-grid-description": "Die Größe der Panels wird zur Bildung einheitlicher Raster angepasst",
       "build-assistant": "Erstellen Sie Ihr Dashboard mit Assistant",
@@ -6268,6 +6287,8 @@
       "mobile-not-available": "",
       "or-start-blank": "Oder erstellen Sie es selbst",
       "select-layout-header": "Layout auswählen",
+      "templates-empty": "",
+      "templates-title": "",
       "title": "Neues Dashboard"
     },
     "errors": {
@@ -7238,6 +7259,7 @@
   },
   "dashboard-library": {
     "card": {
+      "attach-template-button-label": "",
       "community-badge": "Community",
       "customize-with-assistant-button": "Mit Assistant anpassen",
       "customize-with-assistant-button-label": "Mit Assistant anpassen: {{title}}",
@@ -7254,6 +7276,9 @@
       "edit-template-menu-item": "Bearbeiten",
       "more-actions-label": "Weitere Aktionen für {{title}}",
       "no-preview": "Keine Vorschau verfügbar ",
+      "preview-template-button": "",
+      "preview-template-button-label": "",
+      "provisioned-by-grafana": "",
       "use-template-button": "Vorlage verwenden",
       "use-template-button-label": "Vorlage verwenden: {{title}}",
       "view-dashboard-button": "Dashboard anzeigen",
@@ -7289,6 +7314,10 @@
     "custom-dashboard-template-filters": {
       "creator-placeholder": "Filtern nach erstellt von",
       "search-placeholder": "Suchen",
+      "sort": {
+        "asc": "",
+        "desc": ""
+      },
       "sort-placeholder": "Sortieren"
     },
     "dashboard-card": {
@@ -11982,13 +12011,19 @@
       "filter-apps": "Apps",
       "filter-dashboards": "Dashboards",
       "filter-explore": "Explore",
+      "filter-folders": "",
       "filter-label": "Zeige nur ",
+      "filter-notebooks": "",
       "filter-pages": "Seiten",
+      "filter-playlists": "",
       "kind-alerting": "Warnungen",
       "kind-app": "App",
       "kind-dashboard": "Dashboard",
       "kind-explore": "Explore",
+      "kind-folder": "",
+      "kind-notebook": "",
       "kind-page": "Seite",
+      "kind-playlist": "",
       "loading": "Ihre letzte Aktivität wird geladen …"
     },
     "recommendations": {
@@ -13628,7 +13663,7 @@
       "page-assistant-below": "",
       "page-floating-assistant": "",
       "page-only": "",
-      "pop-up": "",
+      "pop-out": "",
       "right": ""
     },
     "assistant-workspace": {
@@ -13932,8 +13967,8 @@
       "list-none": "Sie haben noch keine Notizbücher. Erstellen Sie stattdessen eines.",
       "list-none-read-only": "Sie haben noch keine Notizbücher und keine Berechtigung, eines zu erstellen.",
       "list-truncated": "Es wird nicht jedes Notizbuch angezeigt. Schränken Sie die Suche ein, um andere zu finden.",
-      "lock-time-range": "Sperren für {{range}}",
       "lock-time-range-description": "Behalten Sie diese Visualisierung in dem Fenster, in dem sie erfasst wurde. Wenn sie nicht gesperrt ist, folgt sie dem Zeitbereich des Notizbuchs.",
+      "lock-time-range-short": "",
       "lock-time-ranges": "Panels auf die von ihnen angezeigten Zeitbereiche fixieren",
       "lock-time-ranges-description": "Behalten Sie jede Visualisierung in dem Fenster, in dem sie erfasst wurde. Wenn sie nicht gesperrt sind, folgen sie dem Zeitbereich des Notizbuchs.",
       "note-description": "",
@@ -17642,6 +17677,16 @@
       "text_one": "",
       "text_other": ""
     },
+    "display-completion": {
+      "color": "",
+      "helper": "",
+      "icon": "",
+      "numeric": "",
+      "percent": "",
+      "prefix": "",
+      "suffix": "",
+      "text": ""
+    },
     "editor": {
       "aria-label-content": "Textinhalt",
       "aria-label-mode": "Textmodus: {{mode}}",
@@ -17785,7 +17830,6 @@
     },
     "time-range": {
       "apply": "Zeitbereich anwenden",
-      "aria-role": "Zeitbereichauswahl",
       "default-title": "Zeitbereiche",
       "dialog-label": "Auswahl des relativen Zeitbereichs",
       "example-title": "Zeitbereiche-Beispiel",
