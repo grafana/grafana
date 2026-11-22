@@ -4107,13 +4107,13 @@
           "Repository"
         ],
         "summary": "Submit a pull request",
-        "description": "Open a pull request from a branch into the repository branch, authored by the user who obtained the authorization code",
+        "description": "Open a pull request from a branch into the repository branch, using the repository's credentials",
         "operationId": "createRepositorySubmit",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "description": "PullRequestSubmission opens a pull request from a branch into the repository's configured branch, authored by the requesting user rather than by the repository's own credentials. It is the request and response body of the repository submit subresource.",
+                "description": "PullRequestSubmission opens a pull request from a branch into the repository's configured branch, using the repository's own credentials. It is the request and response body of the repository submit subresource.",
                 "type": "object",
                 "required": [
                   "spec"
@@ -5681,7 +5681,7 @@
         }
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.PullRequestSubmission": {
-        "description": "PullRequestSubmission opens a pull request from a branch into the repository's configured branch, authored by the requesting user rather than by the repository's own credentials. It is the request and response body of the repository submit subresource.",
+        "description": "PullRequestSubmission opens a pull request from a branch into the repository's configured branch, using the repository's own credentials. It is the request and response body of the repository submit subresource.",
         "type": "object",
         "required": [
           "spec"
@@ -5717,21 +5717,11 @@
         "type": "object",
         "required": [
           "ref",
-          "title",
-          "code"
+          "title"
         ],
         "properties": {
-          "code": {
-            "description": "The authorization code the provider returned to the user, exchanged for a token that acts as the user so that they author the pull request",
-            "type": "string",
-            "default": ""
-          },
           "description": {
             "description": "The pull request description",
-            "type": "string"
-          },
-          "redirectURI": {
-            "description": "The redirect URI used in the authorization request",
             "type": "string"
           },
           "ref": {

@@ -448,50 +448,6 @@ func TestConnection_ExchangeAuthorizationCode(t *testing.T) {
 	}
 }
 
-func TestConnection_ExchangeUserAuthorizationCode(t *testing.T) {
-	tests := []struct {
-		name         string
-		code         string
-		response     map[string]any
-		responseCode int
-		expectedErr  string
-	}{
-		{
-			name: "success returns only the access token",
-			code: "auth-code",
-			response: map[string]any{
-				"access_token":  "user-access",
-				"refresh_token": "user-refresh",
-			},
-		},
-		{
-			name:        "failure - empty code",
-			expectedErr: "an authorization code is required",
-		},
-		{
-			name:         "failure - endpoint rejects code",
-			code:         "auth-code",
-			responseCode: http.StatusBadRequest,
-			expectedErr:  "exchange authorization code",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			srv := newTokenServer(t, tt.responseCode, tt.response)
-			conn := newConnection(newMockProvider(t, srv.URL), provisioning.GitHubRepositoryType, testOAuthConfig, "client-secret", "")
-
-			token, err := conn.ExchangeUserAuthorizationCode(t.Context(), tt.code, "https://grafana.example/callback")
-			if tt.expectedErr != "" {
-				require.ErrorContains(t, err, tt.expectedErr)
-				return
-			}
-			require.NoError(t, err)
-			assert.Equal(t, common.RawSecureValue("user-access"), token)
-		})
-	}
-}
-
 func TestConnection_ValidateToken(t *testing.T) {
 	expiry := time.Now().Add(time.Hour).Truncate(time.Second)
 

@@ -737,8 +737,7 @@ func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a autho
 		}, ""))
 
 	// submit opens a pull request for a branch an editor pushed through the files/push-job
-	// flow, so it is gated like creating that job. The provider then authorizes the
-	// pull request itself against the user's own token.
+	// flow, so it is gated like creating that job.
 	case "submit":
 		return toAuthorizerDecision(b.accessWithEditor.Check(ctx, authlib.CheckRequest{
 			Verb:      apiutils.VerbCreate,
@@ -1580,7 +1579,7 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 	sub = oas.Paths.Paths[repoprefix+"/submit"]
 	if sub != nil {
 		submissionSchema := defs[compBase+"PullRequestSubmission"].Schema
-		sub.Post.Description = "Open a pull request from a branch into the repository branch, authored by the user who obtained the authorization code"
+		sub.Post.Description = "Open a pull request from a branch into the repository branch, using the repository's credentials"
 		sub.Post.Summary = "Submit a pull request"
 		sub.Post.RequestBody = &spec3.RequestBody{
 			RequestBodyProps: spec3.RequestBodyProps{

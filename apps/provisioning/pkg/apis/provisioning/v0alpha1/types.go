@@ -1250,8 +1250,8 @@ func (RefItem) OpenAPIModelName() string {
 }
 
 // PullRequestSubmission opens a pull request from a branch into the repository's
-// configured branch, authored by the requesting user rather than by the repository's
-// own credentials. It is the request and response body of the repository submit subresource.
+// configured branch, using the repository's own credentials. It is the request and
+// response body of the repository submit subresource.
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type PullRequestSubmission struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -1276,13 +1276,6 @@ type PullRequestSubmissionSpec struct {
 
 	// The pull request description
 	Description string `json:"description,omitempty"`
-
-	// The authorization code the provider returned to the user, exchanged for a
-	// token that acts as the user so that they author the pull request
-	Code string `json:"code"`
-
-	// The redirect URI used in the authorization request
-	RedirectURI string `json:"redirectURI,omitempty"`
 }
 
 func (PullRequestSubmissionSpec) OpenAPIModelName() string {

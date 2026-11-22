@@ -2333,7 +2333,7 @@ func schema_pkg_apis_provisioning_v0alpha1_PullRequestSubmission(ref common.Refe
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "PullRequestSubmission opens a pull request from a branch into the repository's configured branch, authored by the requesting user rather than by the repository's own credentials. It is the request and response body of the repository submit subresource.",
+				Description: "PullRequestSubmission opens a pull request from a branch into the repository's configured branch, using the repository's own credentials. It is the request and response body of the repository submit subresource.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
@@ -2406,23 +2406,8 @@ func schema_pkg_apis_provisioning_v0alpha1_PullRequestSubmissionSpec(ref common.
 							Format:      "",
 						},
 					},
-					"code": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The authorization code the provider returned to the user, exchanged for a token that acts as the user so that they author the pull request",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"redirectURI": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The redirect URI used in the authorization request",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 				},
-				Required: []string{"ref", "title", "code"},
+				Required: []string{"ref", "title"},
 			},
 		},
 	}

@@ -2315,12 +2315,8 @@ export type ResourceCountList = {
   metadata?: ListMeta;
 };
 export type PullRequestSubmissionSpec = {
-  /** The authorization code the provider returned to the user, exchanged for a token that acts as the user so that they author the pull request */
-  code: string;
   /** The pull request description */
   description?: string;
-  /** The redirect URI used in the authorization request */
-  redirectURI?: string;
   /** The branch holding the changes */
   ref: string;
   /** The pull request title */

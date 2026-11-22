@@ -8,7 +8,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 // FIXME: the name of the mock is different because there is another generated mock for Repository
@@ -314,9 +313,9 @@ type SubmittedPullRequest struct {
 }
 
 // PullRequestSubmitter is implemented by repositories that can open a pull request
-// acting as the given user token, so that the provider records the user as its author.
+// with their own credentials.
 //
 //go:generate mockery --name PullRequestSubmitter --structname MockPullRequestSubmitter --inpackage --filename pull_request_submitter_mock.go --with-expecter
 type PullRequestSubmitter interface {
-	SubmitPullRequest(ctx context.Context, userToken common.RawSecureValue, pr NewPullRequest) (*SubmittedPullRequest, error)
+	SubmitPullRequest(ctx context.Context, pr NewPullRequest) (*SubmittedPullRequest, error)
 }

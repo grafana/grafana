@@ -9,6 +9,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -46,9 +47,8 @@ func TestIntegrationProvisioning_GithubOAuthSubmitPullRequest(t *testing.T) {
 	const name = "github-oauth-submit"
 	oauthsuite.CreateConnection(t, helper, githubProvider, name)
 	oauthsuite.Authorize(t, helper, name, oauthsuite.MockNonExpiringCode)
-	// The mock issues "<clientID>-<n>" tokens in order: the connection got the first one
-	// when it was authorized, so the user's exchanged code yields the second.
-	const connectionToken, userToken = name + "-client-1", name + "-client-2"
+	// The mock issues "<clientID>-<n>" tokens in order, and the connection got the first one.
+	const connectionToken = name + "-client-1"
 
 	_, err := helper.Repositories.Resource.Create(t.Context(), &unstructured.Unstructured{Object: map[string]any{
 		"apiVersion": provisioning.APIVERSION,
@@ -64,6 +64,12 @@ func TestIntegrationProvisioning_GithubOAuthSubmitPullRequest(t *testing.T) {
 		},
 	}}, metav1.CreateOptions{})
 	require.NoError(t, err, "failed to create repository")
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		repo, err := helper.Repositories.Resource.Get(t.Context(), name, metav1.GetOptions{})
+		require.NoError(c, err)
+		lastUpdated, _, _ := unstructured.NestedInt64(repo.Object, "status", "token", "lastUpdated")
+		assert.NotZero(c, lastUpdated, "the controller has not issued the repository token yet")
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 
 	submit := func(t *testing.T, spec provisioning.PullRequestSubmissionSpec) (*provisioning.PullRequestSubmission, int, error) {
 		t.Helper()
@@ -90,35 +96,25 @@ func TestIntegrationProvisioning_GithubOAuthSubmitPullRequest(t *testing.T) {
 		return res, statusCode, nil
 	}
 
-	t.Run("opens the pull request with the token of the user who authorized the code", func(t *testing.T) {
+	t.Run("opens the pull request with the connection's token", func(t *testing.T) {
 		res, statusCode, err := submit(t, provisioning.PullRequestSubmissionSpec{
 			Ref:         "grafana-changes",
 			Title:       "Update dashboards",
 			Description: "Made in Grafana",
-			Code:        oauthsuite.MockNonExpiringCode,
-			RedirectURI: oauthsuite.RedirectURI,
 		})
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, statusCode)
 		require.Equal(t, provisioning.PullRequestSubmissionStatus{Number: 1, URL: "https://github.com/oauth-owner-1/oauth-repo-1/pull/1"}, res.Status)
-		require.Empty(t, res.Spec.Code, "the authorization code must not be echoed back")
 
 		pulls := mock.submittedPulls()
 		require.Len(t, pulls, 1)
 		require.Equal(t, "/repos/oauth-owner-1/oauth-repo-1/pulls", pulls[0].path)
-		require.Equal(t, "Bearer "+userToken, pulls[0].authorization, "the pull request must be authored by the user")
-		require.NotEqual(t, "Bearer "+connectionToken, pulls[0].authorization, "the pull request must not be authored by the connection")
+		require.Equal(t, "Bearer "+connectionToken, pulls[0].authorization)
 		require.Equal(t, map[string]any{"head": "grafana-changes", "base": "main", "title": "Update dashboards", "body": "Made in Grafana"}, pulls[0].body)
 	})
 
-	t.Run("rejects an authorization code the provider does not accept", func(t *testing.T) {
-		_, statusCode, err := submit(t, provisioning.PullRequestSubmissionSpec{Ref: "grafana-changes", Title: "Update dashboards", Code: "bogus"})
-		require.Error(t, err)
-		require.Equal(t, http.StatusBadRequest, statusCode)
-	})
-
 	t.Run("rejects submitting the repository branch", func(t *testing.T) {
-		_, statusCode, err := submit(t, provisioning.PullRequestSubmissionSpec{Ref: "main", Title: "Update dashboards", Code: oauthsuite.MockNonExpiringCode})
+		_, statusCode, err := submit(t, provisioning.PullRequestSubmissionSpec{Ref: "main", Title: "Update dashboards"})
 		require.Error(t, err)
 		require.Equal(t, http.StatusBadRequest, statusCode)
 	})

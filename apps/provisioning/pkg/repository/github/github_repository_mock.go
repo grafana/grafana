@@ -5,11 +5,8 @@ package github
 import (
 	context "context"
 
-	commonv0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-
-	mock "github.com/stretchr/testify/mock"
-
 	repository "github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	mock "github.com/stretchr/testify/mock"
 
 	v0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
@@ -1024,9 +1021,9 @@ func (_c *MockGithubRepository_Stage_Call) RunAndReturn(run func(context.Context
 	return _c
 }
 
-// SubmitPullRequest provides a mock function with given fields: ctx, userToken, pr
-func (_m *MockGithubRepository) SubmitPullRequest(ctx context.Context, userToken commonv0alpha1.RawSecureValue, pr repository.NewPullRequest) (*repository.SubmittedPullRequest, error) {
-	ret := _m.Called(ctx, userToken, pr)
+// SubmitPullRequest provides a mock function with given fields: ctx, pr
+func (_m *MockGithubRepository) SubmitPullRequest(ctx context.Context, pr repository.NewPullRequest) (*repository.SubmittedPullRequest, error) {
+	ret := _m.Called(ctx, pr)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SubmitPullRequest")
@@ -1034,19 +1031,19 @@ func (_m *MockGithubRepository) SubmitPullRequest(ctx context.Context, userToken
 
 	var r0 *repository.SubmittedPullRequest
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, commonv0alpha1.RawSecureValue, repository.NewPullRequest) (*repository.SubmittedPullRequest, error)); ok {
-		return rf(ctx, userToken, pr)
+	if rf, ok := ret.Get(0).(func(context.Context, repository.NewPullRequest) (*repository.SubmittedPullRequest, error)); ok {
+		return rf(ctx, pr)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, commonv0alpha1.RawSecureValue, repository.NewPullRequest) *repository.SubmittedPullRequest); ok {
-		r0 = rf(ctx, userToken, pr)
+	if rf, ok := ret.Get(0).(func(context.Context, repository.NewPullRequest) *repository.SubmittedPullRequest); ok {
+		r0 = rf(ctx, pr)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*repository.SubmittedPullRequest)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, commonv0alpha1.RawSecureValue, repository.NewPullRequest) error); ok {
-		r1 = rf(ctx, userToken, pr)
+	if rf, ok := ret.Get(1).(func(context.Context, repository.NewPullRequest) error); ok {
+		r1 = rf(ctx, pr)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -1061,15 +1058,14 @@ type MockGithubRepository_SubmitPullRequest_Call struct {
 
 // SubmitPullRequest is a helper method to define mock.On call
 //   - ctx context.Context
-//   - userToken commonv0alpha1.RawSecureValue
 //   - pr repository.NewPullRequest
-func (_e *MockGithubRepository_Expecter) SubmitPullRequest(ctx interface{}, userToken interface{}, pr interface{}) *MockGithubRepository_SubmitPullRequest_Call {
-	return &MockGithubRepository_SubmitPullRequest_Call{Call: _e.mock.On("SubmitPullRequest", ctx, userToken, pr)}
+func (_e *MockGithubRepository_Expecter) SubmitPullRequest(ctx interface{}, pr interface{}) *MockGithubRepository_SubmitPullRequest_Call {
+	return &MockGithubRepository_SubmitPullRequest_Call{Call: _e.mock.On("SubmitPullRequest", ctx, pr)}
 }
 
-func (_c *MockGithubRepository_SubmitPullRequest_Call) Run(run func(ctx context.Context, userToken commonv0alpha1.RawSecureValue, pr repository.NewPullRequest)) *MockGithubRepository_SubmitPullRequest_Call {
+func (_c *MockGithubRepository_SubmitPullRequest_Call) Run(run func(ctx context.Context, pr repository.NewPullRequest)) *MockGithubRepository_SubmitPullRequest_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(commonv0alpha1.RawSecureValue), args[2].(repository.NewPullRequest))
+		run(args[0].(context.Context), args[1].(repository.NewPullRequest))
 	})
 	return _c
 }
@@ -1079,7 +1075,7 @@ func (_c *MockGithubRepository_SubmitPullRequest_Call) Return(_a0 *repository.Su
 	return _c
 }
 
-func (_c *MockGithubRepository_SubmitPullRequest_Call) RunAndReturn(run func(context.Context, commonv0alpha1.RawSecureValue, repository.NewPullRequest) (*repository.SubmittedPullRequest, error)) *MockGithubRepository_SubmitPullRequest_Call {
+func (_c *MockGithubRepository_SubmitPullRequest_Call) RunAndReturn(run func(context.Context, repository.NewPullRequest) (*repository.SubmittedPullRequest, error)) *MockGithubRepository_SubmitPullRequest_Call {
 	_c.Call.Return(run)
 	return _c
 }

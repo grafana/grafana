@@ -12,9 +12,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 type submittableRepository struct {
@@ -22,22 +20,13 @@ type submittableRepository struct {
 	*repository.MockPullRequestSubmitter
 }
 
-type userAuthorizingConnection struct {
-	*connection.MockConnection
-	*connection.MockUserAuthorizer
-}
-
-const validSubmission = `{"spec":{"ref":"feature","title":"Add dashboard","description":"Made in Grafana","code":"abc","redirectURI":"https://grafana.example/callback"}}`
+const validSubmission = `{"spec":{"ref":"feature","title":"Add dashboard","description":"Made in Grafana"}}`
 
 func TestSubmitConnector(t *testing.T) {
-	t.Run("opens the pull request as the user who authorized the code", func(t *testing.T) {
-		repo := newSubmittableRepository(t, testSubmitRepository("oauth-connection"))
-		conn := newUserAuthorizingConnection(t)
-		conn.MockUserAuthorizer.EXPECT().
-			ExchangeUserAuthorizationCode(mock.Anything, "abc", "https://grafana.example/callback").
-			Return(common.RawSecureValue("user-token"), nil)
+	t.Run("opens the pull request and returns its number and URL", func(t *testing.T) {
+		repo := newSubmittableRepository(t)
 		repo.MockPullRequestSubmitter.EXPECT().
-			SubmitPullRequest(mock.Anything, common.RawSecureValue("user-token"), repository.NewPullRequest{
+			SubmitPullRequest(mock.Anything, repository.NewPullRequest{
 				Head:  "feature",
 				Title: "Add dashboard",
 				Body:  "Made in Grafana",
@@ -45,7 +34,6 @@ func TestSubmitConnector(t *testing.T) {
 			Return(&repository.SubmittedPullRequest{Number: 42, URL: "https://github.com/grafana/grafana/pull/42"}, nil)
 		access := NewMockSubmitAccess(t)
 		access.EXPECT().GetRepository(mock.Anything, "test-repo").Return(repo, nil)
-		access.EXPECT().GetConnection(mock.Anything, "oauth-connection").Return(conn, nil)
 
 		responder := serveSubmit(t, access, http.MethodPost, validSubmission)
 
@@ -54,7 +42,6 @@ func TestSubmitConnector(t *testing.T) {
 		res, ok := responder.obj.(*provisioning.PullRequestSubmission)
 		require.True(t, ok)
 		require.Equal(t, provisioning.PullRequestSubmissionStatus{Number: 42, URL: "https://github.com/grafana/grafana/pull/42"}, res.Status)
-		require.Empty(t, res.Spec.Code, "the authorization code must not be echoed back")
 	})
 
 	t.Run("rejects non-POST methods", func(t *testing.T) {
@@ -64,10 +51,9 @@ func TestSubmitConnector(t *testing.T) {
 	})
 
 	for name, body := range map[string]string{
-		"missing ref":   `{"spec":{"title":"t","code":"abc"}}`,
-		"missing title": `{"spec":{"ref":"feature","code":"abc"}}`,
-		"missing code":  `{"spec":{"ref":"feature","title":"t"}}`,
-		"unknown field": `{"spec":{"ref":"feature","title":"t","code":"abc","bogus":true}}`,
+		"missing ref":   `{"spec":{"title":"t"}}`,
+		"missing title": `{"spec":{"ref":"feature"}}`,
+		"unknown field": `{"spec":{"ref":"feature","title":"t","bogus":true}}`,
 	} {
 		t.Run("rejects "+name, func(t *testing.T) {
 			responder := serveSubmit(t, NewMockSubmitAccess(t), http.MethodPost, body)
@@ -78,10 +64,9 @@ func TestSubmitConnector(t *testing.T) {
 
 	t.Run("rejects a ref that is the repository branch", func(t *testing.T) {
 		access := NewMockSubmitAccess(t)
-		access.EXPECT().GetRepository(mock.Anything, "test-repo").
-			Return(newSubmittableRepository(t, testSubmitRepository("oauth-connection")), nil)
+		access.EXPECT().GetRepository(mock.Anything, "test-repo").Return(newSubmittableRepository(t), nil)
 
-		responder := serveSubmit(t, access, http.MethodPost, `{"spec":{"ref":"main","title":"t","code":"abc"}}`)
+		responder := serveSubmit(t, access, http.MethodPost, `{"spec":{"ref":"main","title":"t"}}`)
 
 		require.True(t, apierrors.IsBadRequest(responder.err), "got %v", responder.err)
 	})
@@ -105,54 +90,13 @@ func TestSubmitConnector(t *testing.T) {
 		requireStatusCode(t, responder.err, http.StatusNotImplemented)
 	})
 
-	t.Run("returns NotImplemented for repositories without a connection", func(t *testing.T) {
-		access := NewMockSubmitAccess(t)
-		access.EXPECT().GetRepository(mock.Anything, "test-repo").
-			Return(newSubmittableRepository(t, testSubmitRepository("")), nil)
-
-		responder := serveSubmit(t, access, http.MethodPost, validSubmission)
-
-		requireStatusCode(t, responder.err, http.StatusNotImplemented)
-	})
-
-	t.Run("returns NotImplemented for connections that cannot act as the user", func(t *testing.T) {
-		access := NewMockSubmitAccess(t)
-		access.EXPECT().GetRepository(mock.Anything, "test-repo").
-			Return(newSubmittableRepository(t, testSubmitRepository("app-connection")), nil)
-		access.EXPECT().GetConnection(mock.Anything, "app-connection").Return(connection.NewMockConnection(t), nil)
-
-		responder := serveSubmit(t, access, http.MethodPost, validSubmission)
-
-		requireStatusCode(t, responder.err, http.StatusNotImplemented)
-	})
-
-	t.Run("returns BadRequest when the provider rejects the code", func(t *testing.T) {
-		conn := newUserAuthorizingConnection(t)
-		conn.MockUserAuthorizer.EXPECT().
-			ExchangeUserAuthorizationCode(mock.Anything, "abc", "https://grafana.example/callback").
-			Return("", errors.New("bad_verification_code"))
-		access := NewMockSubmitAccess(t)
-		access.EXPECT().GetRepository(mock.Anything, "test-repo").
-			Return(newSubmittableRepository(t, testSubmitRepository("oauth-connection")), nil)
-		access.EXPECT().GetConnection(mock.Anything, "oauth-connection").Return(conn, nil)
-
-		responder := serveSubmit(t, access, http.MethodPost, validSubmission)
-
-		require.True(t, apierrors.IsBadRequest(responder.err), "got %v", responder.err)
-	})
-
 	t.Run("returns the provider's status when the pull request is rejected", func(t *testing.T) {
-		repo := newSubmittableRepository(t, testSubmitRepository("oauth-connection"))
+		repo := newSubmittableRepository(t)
 		repo.MockPullRequestSubmitter.EXPECT().
-			SubmitPullRequest(mock.Anything, mock.Anything, mock.Anything).
+			SubmitPullRequest(mock.Anything, mock.Anything).
 			Return(nil, repository.ErrPermissionDenied)
-		conn := newUserAuthorizingConnection(t)
-		conn.MockUserAuthorizer.EXPECT().
-			ExchangeUserAuthorizationCode(mock.Anything, mock.Anything, mock.Anything).
-			Return(common.RawSecureValue("user-token"), nil)
 		access := NewMockSubmitAccess(t)
 		access.EXPECT().GetRepository(mock.Anything, "test-repo").Return(repo, nil)
-		access.EXPECT().GetConnection(mock.Anything, "oauth-connection").Return(conn, nil)
 
 		responder := serveSubmit(t, access, http.MethodPost, validSubmission)
 
@@ -175,24 +119,12 @@ func serveSubmit(t *testing.T, access SubmitAccess, method, body string) *mockRe
 	return responder
 }
 
-func newSubmittableRepository(t *testing.T, cfg *provisioning.Repository) *submittableRepository {
+func newSubmittableRepository(t *testing.T) *submittableRepository {
 	repo := &submittableRepository{
 		MockConfigRepository:     repository.NewMockConfigRepository(t),
 		MockPullRequestSubmitter: repository.NewMockPullRequestSubmitter(t),
 	}
-	repo.MockConfigRepository.EXPECT().Config().Return(cfg).Maybe()
-	return repo
-}
-
-func newUserAuthorizingConnection(t *testing.T) *userAuthorizingConnection {
-	return &userAuthorizingConnection{
-		MockConnection:     connection.NewMockConnection(t),
-		MockUserAuthorizer: connection.NewMockUserAuthorizer(t),
-	}
-}
-
-func testSubmitRepository(connectionName string) *provisioning.Repository {
-	cfg := &provisioning.Repository{
+	repo.MockConfigRepository.EXPECT().Config().Return(&provisioning.Repository{
 		Spec: provisioning.RepositorySpec{
 			Type: provisioning.GitHubRepositoryType,
 			GitHub: &provisioning.GitHubRepositoryConfig{
@@ -200,11 +132,8 @@ func testSubmitRepository(connectionName string) *provisioning.Repository {
 				Branch: "main",
 			},
 		},
-	}
-	if connectionName != "" {
-		cfg.Spec.Connection = &provisioning.ConnectionInfo{Name: connectionName}
-	}
-	return cfg
+	}).Maybe()
+	return repo
 }
 
 func requireStatusCode(t *testing.T, err error, code int) {

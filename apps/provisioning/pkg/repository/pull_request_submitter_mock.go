@@ -5,7 +5,6 @@ package repository
 import (
 	context "context"
 
-	v0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -22,9 +21,9 @@ func (_m *MockPullRequestSubmitter) EXPECT() *MockPullRequestSubmitter_Expecter 
 	return &MockPullRequestSubmitter_Expecter{mock: &_m.Mock}
 }
 
-// SubmitPullRequest provides a mock function with given fields: ctx, userToken, pr
-func (_m *MockPullRequestSubmitter) SubmitPullRequest(ctx context.Context, userToken v0alpha1.RawSecureValue, pr NewPullRequest) (*SubmittedPullRequest, error) {
-	ret := _m.Called(ctx, userToken, pr)
+// SubmitPullRequest provides a mock function with given fields: ctx, pr
+func (_m *MockPullRequestSubmitter) SubmitPullRequest(ctx context.Context, pr NewPullRequest) (*SubmittedPullRequest, error) {
+	ret := _m.Called(ctx, pr)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SubmitPullRequest")
@@ -32,19 +31,19 @@ func (_m *MockPullRequestSubmitter) SubmitPullRequest(ctx context.Context, userT
 
 	var r0 *SubmittedPullRequest
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, v0alpha1.RawSecureValue, NewPullRequest) (*SubmittedPullRequest, error)); ok {
-		return rf(ctx, userToken, pr)
+	if rf, ok := ret.Get(0).(func(context.Context, NewPullRequest) (*SubmittedPullRequest, error)); ok {
+		return rf(ctx, pr)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, v0alpha1.RawSecureValue, NewPullRequest) *SubmittedPullRequest); ok {
-		r0 = rf(ctx, userToken, pr)
+	if rf, ok := ret.Get(0).(func(context.Context, NewPullRequest) *SubmittedPullRequest); ok {
+		r0 = rf(ctx, pr)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*SubmittedPullRequest)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, v0alpha1.RawSecureValue, NewPullRequest) error); ok {
-		r1 = rf(ctx, userToken, pr)
+	if rf, ok := ret.Get(1).(func(context.Context, NewPullRequest) error); ok {
+		r1 = rf(ctx, pr)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -59,15 +58,14 @@ type MockPullRequestSubmitter_SubmitPullRequest_Call struct {
 
 // SubmitPullRequest is a helper method to define mock.On call
 //   - ctx context.Context
-//   - userToken v0alpha1.RawSecureValue
 //   - pr NewPullRequest
-func (_e *MockPullRequestSubmitter_Expecter) SubmitPullRequest(ctx interface{}, userToken interface{}, pr interface{}) *MockPullRequestSubmitter_SubmitPullRequest_Call {
-	return &MockPullRequestSubmitter_SubmitPullRequest_Call{Call: _e.mock.On("SubmitPullRequest", ctx, userToken, pr)}
+func (_e *MockPullRequestSubmitter_Expecter) SubmitPullRequest(ctx interface{}, pr interface{}) *MockPullRequestSubmitter_SubmitPullRequest_Call {
+	return &MockPullRequestSubmitter_SubmitPullRequest_Call{Call: _e.mock.On("SubmitPullRequest", ctx, pr)}
 }
 
-func (_c *MockPullRequestSubmitter_SubmitPullRequest_Call) Run(run func(ctx context.Context, userToken v0alpha1.RawSecureValue, pr NewPullRequest)) *MockPullRequestSubmitter_SubmitPullRequest_Call {
+func (_c *MockPullRequestSubmitter_SubmitPullRequest_Call) Run(run func(ctx context.Context, pr NewPullRequest)) *MockPullRequestSubmitter_SubmitPullRequest_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(v0alpha1.RawSecureValue), args[2].(NewPullRequest))
+		run(args[0].(context.Context), args[1].(NewPullRequest))
 	})
 	return _c
 }
@@ -77,7 +75,7 @@ func (_c *MockPullRequestSubmitter_SubmitPullRequest_Call) Return(_a0 *Submitted
 	return _c
 }
 
-func (_c *MockPullRequestSubmitter_SubmitPullRequest_Call) RunAndReturn(run func(context.Context, v0alpha1.RawSecureValue, NewPullRequest) (*SubmittedPullRequest, error)) *MockPullRequestSubmitter_SubmitPullRequest_Call {
+func (_c *MockPullRequestSubmitter_SubmitPullRequest_Call) RunAndReturn(run func(context.Context, NewPullRequest) (*SubmittedPullRequest, error)) *MockPullRequestSubmitter_SubmitPullRequest_Call {
 	_c.Call.Return(run)
 	return _c
 }
