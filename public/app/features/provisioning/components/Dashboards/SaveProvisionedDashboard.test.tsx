@@ -110,11 +110,11 @@ type User = ReturnType<typeof render>['user'];
 
 /** The commit fields live on a second step, which the details step's primary advances to. */
 async function goToCommitStep(user: User) {
-  if (screen.queryByRole('button', { name: /^commit to/i })) {
+  if (screen.queryByRole('button', { name: /^commit/i })) {
     return;
   }
   await user.click(await screen.findByRole('button', { name: /^next$/i }));
-  await screen.findByRole('button', { name: /^commit to/i });
+  await screen.findByRole('button', { name: /^commit/i });
 }
 
 /** Returns to the details step, where the dashboard's own fields and the folder picker live. */
@@ -316,7 +316,7 @@ describe('SaveProvisionedDashboard in the save drawer', () => {
     await waitFor(() => expect(dashboard.state.meta.folderUid).toBe(''));
     await waitFor(() => expect(screen.queryByText('The selected folder cannot be saved to')).not.toBeInTheDocument());
     await goToCommitStep(user);
-    expect(await screen.findByRole('button', { name: /^commit to/i })).toBeEnabled();
+    expect(await screen.findByRole('button', { name: /^commit/i })).toBeEnabled();
   });
 
   it('suffixes a copy title once, even after a folder pick recomputes the defaults', async () => {

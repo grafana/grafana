@@ -758,7 +758,7 @@ describe('SaveProvisionedDashboardForm', () => {
     await waitFor(() => {
       expect(primaryButton()).not.toBeDisabled();
     });
-    expect(screen.queryByRole('button', { name: /^commit to/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^commit/i })).not.toBeInTheDocument();
     expect(capturedRequest).toBeNull();
   });
 

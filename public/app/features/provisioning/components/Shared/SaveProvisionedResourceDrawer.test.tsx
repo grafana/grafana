@@ -130,7 +130,7 @@ describe('SaveProvisionedResourceDrawer', () => {
       setup();
 
       expect(await screen.findByRole('heading', { name: /save provisioned resource/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /^commit to/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^commit/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /comment/i })).toBeInTheDocument();
     });
@@ -144,7 +144,7 @@ describe('SaveProvisionedResourceDrawer', () => {
       );
 
       const { user } = setup();
-      await user.click(await screen.findByRole('button', { name: /^commit to/i }));
+      await user.click(await screen.findByRole('button', { name: /^commit/i }));
 
       await waitFor(() => expect(capturedRequest).not.toBeNull());
       const req = requireCapturedRequest(capturedRequest);
@@ -179,7 +179,7 @@ describe('SaveProvisionedResourceDrawer', () => {
       );
 
       const { user } = setup();
-      await user.click(await screen.findByRole('button', { name: /^commit to/i }));
+      await user.click(await screen.findByRole('button', { name: /^commit/i }));
 
       await waitFor(() => expect(capturedRequest).not.toBeNull());
       expect(requireCapturedRequest(capturedRequest).url.searchParams.get('ref')).toBeTruthy();
@@ -197,7 +197,7 @@ describe('SaveProvisionedResourceDrawer', () => {
       );
 
       const { user } = setup();
-      await user.click(await screen.findByRole('button', { name: /^commit to/i }));
+      await user.click(await screen.findByRole('button', { name: /^commit/i }));
 
       await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
     });
@@ -210,7 +210,7 @@ describe('SaveProvisionedResourceDrawer', () => {
         },
       });
 
-      await user.click(await screen.findByRole('button', { name: /^commit to/i }));
+      await user.click(await screen.findByRole('button', { name: /^commit/i }));
 
       await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
     });
@@ -219,14 +219,14 @@ describe('SaveProvisionedResourceDrawer', () => {
       mockRepoView({ isReadOnlyRepo: true });
       setup();
 
-      expect(screen.queryByRole('button', { name: /^commit to/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /^commit/i })).not.toBeInTheDocument();
     });
 
     it('shows the missing-repository banner when no repository resolves', () => {
       mockRepoView({ repository: undefined, isMissingRepo: true });
       setup();
 
-      expect(screen.queryByRole('button', { name: /^commit to/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /^commit/i })).not.toBeInTheDocument();
     });
   });
 
@@ -250,7 +250,7 @@ describe('SaveProvisionedResourceDrawer', () => {
         />
       );
 
-      await user.click(await screen.findByRole('button', { name: /^commit to/i }));
+      await user.click(await screen.findByRole('button', { name: /^commit/i }));
 
       await waitFor(() => expect(capturedRequest).not.toBeNull());
       const req = requireCapturedRequest(capturedRequest);
@@ -285,7 +285,7 @@ describe('SaveProvisionedResourceDrawer', () => {
       const pathInput = await screen.findByDisplayValue('my-new-playlist.json');
       await user.clear(pathInput);
       await user.type(pathInput, 'custom/folder/my-file.json');
-      await user.click(screen.getByRole('button', { name: /^commit to/i }));
+      await user.click(screen.getByRole('button', { name: /^commit/i }));
 
       await waitFor(() => expect(capturedRequest).not.toBeNull());
       expect(requireCapturedRequest(capturedRequest).url.pathname).toContain(
@@ -356,7 +356,7 @@ describe('SaveProvisionedResourceDrawer', () => {
       const branch = await screen.findByRole('textbox', { name: /branch/i });
       await waitFor(() => expect(branch).toHaveValue('grafana/enforced-branch'));
 
-      await user.click(screen.getByRole('button', { name: /^commit to/i }));
+      await user.click(screen.getByRole('button', { name: /^commit/i }));
 
       await waitFor(() => expect(capturedRequest).not.toBeNull());
       expect(requireCapturedRequest(capturedRequest).url.searchParams.get('ref')).toBe('grafana/enforced-branch');

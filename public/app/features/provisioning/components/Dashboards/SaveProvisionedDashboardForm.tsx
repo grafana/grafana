@@ -552,7 +552,7 @@ export function SaveProvisionedDashboardForm({
       ? t('dashboard-scene.save-provisioned-dashboard-form.commit-to-configured', 'Commit to {{branch}}', {
           branch: repository.branch,
         })
-      : t('dashboard-scene.save-provisioned-dashboard-form.commit-to-branch', 'Commit to branch');
+      : t('dashboard-scene.save-provisioned-dashboard-form.commit', 'Commit');
   };
 
   return (

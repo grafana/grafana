@@ -247,7 +247,7 @@ function FormContent({
       ? t('provisioning.save-resource.button-commit-to-configured', 'Commit to {{branch}}', {
           branch: repository.branch,
         })
-      : t('provisioning.save-resource.button-commit-to-branch', 'Commit to branch');
+      : t('provisioning.save-resource.button-commit', 'Commit');
   };
 
   return (
