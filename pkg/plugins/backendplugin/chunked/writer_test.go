@@ -123,12 +123,39 @@ func TestRawChunkWriter_OnChunk(t *testing.T) {
 	})
 }
 
+// TestRawChunkWriter_WriteError writes the error of one blocked query and then the frame of another query, in
+// the order of a guardrail that rejects one query of a chunked request.
 func TestRawChunkWriter_WriteError(t *testing.T) {
-	w := httptest.NewRecorder()
-	writer := NewChunkedHTTPWriter(w)
-	err := writer.WriteError(context.Background(), "ref", backend.StatusOK, nil)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "rawChunkWriter does not support: WriteError")
+	for _, tc := range []struct {
+		name       string
+		err        error
+		wantSource backend.ErrorSource
+	}{
+		{name: "downstream error", err: backend.DownstreamError(errors.New("blocked by a rule")), wantSource: backend.ErrorSourceDownstream},
+		{name: "error without a source", err: errors.New("blocked by a rule")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			recorder := httptest.NewRecorder()
+			writer := NewChunkedHTTPWriter(recorder)
+			require.NoError(t, writer.WriteError(context.Background(), "B", backend.StatusForbidden, tc.err))
+			frame, err := data.NewFrame("result", data.NewField("value", nil, []int64{42})).MarshalJSON()
+			require.NoError(t, err)
+			require.NoError(t, writer.OnChunk(&pluginv2.QueryChunkedDataResponse{
+				RefId: "A", FrameId: "1", Frame: frame, Format: pluginv2.DataFrameFormat_JSON, Status: http.StatusOK,
+			}))
+			require.True(t, recorder.Flushed)
+
+			rsp, err := AccumulateJSONLines(recorder.Body)
+			require.NoError(t, err)
+			require.Equal(t, backend.StatusForbidden, rsp.Responses["B"].Status)
+			require.EqualError(t, rsp.Responses["B"].Error, "blocked by a rule")
+			require.Equal(t, tc.wantSource, rsp.Responses["B"].ErrorSource)
+			require.Empty(t, rsp.Responses["B"].Frames)
+			require.Equal(t, backend.StatusOK, rsp.Responses["A"].Status)
+			require.NoError(t, rsp.Responses["A"].Error)
+			require.Len(t, rsp.Responses["A"].Frames, 1)
+		})
+	}
 }
 
 func TestRawChunkWriter_WriteFrame(t *testing.T) {
