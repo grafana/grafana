@@ -4,6 +4,7 @@ import { of } from 'rxjs';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { locationService } from '@grafana/runtime';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { useResourceRepositorySelection } from 'app/features/provisioning/hooks/useResourceRepositorySelection';
 
@@ -55,9 +56,16 @@ async function getTestContext(
   const { rerender } = render(
     <TestProvider>
       <PlaylistEditPage />
+      <BreadcrumbActions />
     </TestProvider>
   );
   return { rerender, backendSrvMock };
+}
+
+/** The managed badge is rendered into the app chrome's breadcrumb slot, not into the page itself. */
+function BreadcrumbActions() {
+  const { chrome } = useGrafana();
+  return <>{chrome.useState().breadcrumbActions}</>;
 }
 
 describe('PlaylistEditPage', () => {
@@ -86,6 +94,13 @@ describe('PlaylistEditPage', () => {
 
       expect(await screen.findByRole('heading', { name: /edit playlist/i })).toBeInTheDocument();
       expect(await screen.findByTestId('icon-exchange-alt')).toBeInTheDocument();
+    });
+
+    it('then it should lock the badge for a manager that does not allow edits', async () => {
+      await getTestContext({ 'grafana.app/managedBy': 'terraform' });
+
+      expect(await screen.findByRole('heading', { name: /edit playlist/i })).toBeInTheDocument();
+      expect(await screen.findByTestId('icon-exchange-alt-lock')).toBeInTheDocument();
     });
   });
 

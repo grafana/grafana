@@ -5,7 +5,13 @@ import { config } from '@grafana/runtime';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
-import { ManagerKind } from 'app/features/apiserver/types';
+import {
+  AnnoKeyManagerAllowsEdits,
+  AnnoKeyManagerIdentity,
+  AnnoKeyManagerKind,
+  AnnoKeySourcePath,
+  ManagerKind,
+} from 'app/features/apiserver/types';
 import { setupProvisioningMswServer } from 'app/features/provisioning/mocks/server';
 
 import { DashboardScene } from './DashboardScene';
@@ -18,18 +24,39 @@ function mockRepositories(repositories: Array<Partial<RepositoryView>>) {
   server.use(http.get(`${BASE}/settings`, () => HttpResponse.json({ items: repositories })));
 }
 
-function buildDashboard(kind?: ManagerKind, id?: string): DashboardScene {
-  const dashboard = new DashboardScene({
+interface DashboardOptions {
+  kind?: ManagerKind;
+  id?: string;
+  canEdit?: boolean;
+  managerAllowsEdits?: boolean;
+}
+
+function buildDashboard({ kind, id, canEdit = false, managerAllowsEdits = false }: DashboardOptions): DashboardScene {
+  const annotations: Record<string, string> = { [AnnoKeySourcePath]: 'dashboards/test.json' };
+  if (kind) {
+    annotations[AnnoKeyManagerKind] = kind;
+  }
+  if (id) {
+    annotations[AnnoKeyManagerIdentity] = id;
+  }
+  if (managerAllowsEdits) {
+    annotations[AnnoKeyManagerAllowsEdits] = 'true';
+  }
+
+  return new DashboardScene({
     title: 'test dashboard',
     uid: 'dash-1',
+    meta: { canEdit, k8s: { annotations } },
   });
-
-  jest.spyOn(dashboard, 'getManagerKind').mockReturnValue(kind);
-  jest.spyOn(dashboard, 'getManagerIdentity').mockReturnValue(id);
-  jest.spyOn(dashboard, 'getPath').mockReturnValue('dashboards/test.json');
-
-  return dashboard;
 }
+
+const readOnlyRepo: Partial<RepositoryView> = {
+  name: 'repo-main',
+  title: 'Main Repo',
+  target: 'folder',
+  type: 'github',
+  workflows: [],
+};
 
 describe('ManagedDashboardNavBarBadge', () => {
   let originalProvisioning: boolean;
@@ -41,11 +68,10 @@ describe('ManagedDashboardNavBarBadge', () => {
 
   afterEach(() => {
     config.provisioningEnabled = originalProvisioning;
-    jest.restoreAllMocks();
   });
 
   it('returns null when manager kind is missing', () => {
-    const dashboard = buildDashboard(undefined, undefined);
+    const dashboard = buildDashboard({});
     const { container } = render(<ManagedDashboardNavBarBadge dashboard={dashboard} />);
 
     expect(container.firstChild).toBeNull();
@@ -54,7 +80,7 @@ describe('ManagedDashboardNavBarBadge', () => {
   it('renders orphaned repository badge when the repository no longer exists', async () => {
     mockRepositories([]);
 
-    const dashboard = buildDashboard(ManagerKind.Repo, 'repo-main');
+    const dashboard = buildDashboard({ kind: ManagerKind.Repo, id: 'repo-main' });
     const { user } = render(<ManagedDashboardNavBarBadge dashboard={dashboard} />);
 
     const badgeIcon = await screen.findByTestId('icon-exclamation-triangle');
@@ -64,9 +90,9 @@ describe('ManagedDashboardNavBarBadge', () => {
   });
 
   it('renders managed repository tooltip with the repository title when repo exists', async () => {
-    mockRepositories([{ name: 'repo-main', title: 'Main Repo', target: 'folder', type: 'github', workflows: [] }]);
+    mockRepositories([{ ...readOnlyRepo, workflows: ['write'] }]);
 
-    const dashboard = buildDashboard(ManagerKind.Repo, 'repo-main');
+    const dashboard = buildDashboard({ kind: ManagerKind.Repo, id: 'repo-main' });
     const { user } = render(<ManagedDashboardNavBarBadge dashboard={dashboard} />);
 
     const badgeIcon = await screen.findByTestId('icon-exchange-alt');
@@ -78,10 +104,40 @@ describe('ManagedDashboardNavBarBadge', () => {
   });
 
   it('renders a non-repository managed badge without repository lookup', async () => {
-    const dashboard = buildDashboard(ManagerKind.Terraform, undefined);
+    const dashboard = buildDashboard({ kind: ManagerKind.Terraform, managerAllowsEdits: true });
     const { user } = render(<ManagedDashboardNavBarBadge dashboard={dashboard} />);
 
     await user.hover(screen.getByTestId('icon-exchange-alt'));
     expect(await screen.findByText('Managed by: Terraform')).toBeInTheDocument();
+  });
+
+  it('locks the badge on a read-only repository for a user who could otherwise edit', async () => {
+    mockRepositories([readOnlyRepo]);
+
+    const dashboard = buildDashboard({ kind: ManagerKind.Repo, id: 'repo-main', canEdit: true });
+    const { user } = render(<ManagedDashboardNavBarBadge dashboard={dashboard} />);
+
+    await user.hover(await screen.findByTestId('icon-exchange-alt-lock'));
+
+    expect(await screen.findByText('Read only, Managed by: Repository Main Repo')).toBeInTheDocument();
+  });
+
+  it('leaves the badge unlocked for a user who cannot edit the dashboard anyway', async () => {
+    mockRepositories([readOnlyRepo]);
+
+    const dashboard = buildDashboard({ kind: ManagerKind.Repo, id: 'repo-main' });
+    render(<ManagedDashboardNavBarBadge dashboard={dashboard} />);
+
+    expect(await screen.findByTestId('icon-exchange-alt')).toBeInTheDocument();
+    expect(screen.queryByTestId('icon-exchange-alt-lock')).not.toBeInTheDocument();
+  });
+
+  it('locks the badge when a non-repository manager does not allow edits', async () => {
+    const dashboard = buildDashboard({ kind: ManagerKind.Terraform, canEdit: true });
+    const { user } = render(<ManagedDashboardNavBarBadge dashboard={dashboard} />);
+
+    await user.hover(screen.getByTestId('icon-exchange-alt-lock'));
+
+    expect(await screen.findByText('Read only, Managed by: Terraform')).toBeInTheDocument();
   });
 });

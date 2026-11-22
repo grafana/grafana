@@ -14,7 +14,6 @@ import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { trackDashboardSceneEditButtonClicked } from 'app/features/dashboard-scene/utils/tracking';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
-import { ReadOnlyBadge } from 'app/features/provisioning/components/ReadOnlyBadge';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/tooltip';
 import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
@@ -62,7 +61,12 @@ export const NavToolbarActions = memo<Props>(({ dashboard }) => {
       actions={<Actions dashboard={dashboard} />}
     />
   ) : (
-    <AppChromeUpdate actions={<ToolbarActions dashboard={dashboard} />} />
+    <AppChromeUpdate
+      // Visible to viewers too, so they know the dashboard is externally managed;
+      // the badge itself gates its actions (source/repo links) by permission.
+      breadcrumbActions={dashboard.isManaged() ? <ManagedDashboardNavBarBadge dashboard={dashboard} /> : undefined}
+      actions={<ToolbarActions dashboard={dashboard} />}
+    />
   );
 });
 
@@ -141,27 +145,6 @@ export function ToolbarActions({ dashboard }: Props) {
       return <PublicDashboardBadge key="public-dashboard-badge" dashboard={dashboard} />;
     },
   });
-
-  // Only users who could otherwise edit need to know why they can't.
-  toolbarActions.push({
-    group: 'icon-actions',
-    condition: isReadOnlyRepo && dashboard.canEditDashboard(),
-    render: () => {
-      return <ReadOnlyBadge key="read-only-badge" repoType={repoType} />;
-    },
-  });
-
-  // Visible to viewers too, so they know the dashboard is externally managed;
-  // the badge itself gates its actions (source/repo links) by permission.
-  if (dashboard.isManaged()) {
-    toolbarActions.push({
-      group: 'icon-actions',
-      condition: true,
-      render: () => {
-        return <ManagedDashboardNavBarBadge dashboard={dashboard} key="managed-dashboard-badge" />;
-      },
-    });
-  }
 
   toolbarActions.push({
     group: 'icon-actions',

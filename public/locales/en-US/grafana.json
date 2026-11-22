@@ -15423,8 +15423,7 @@
       "provisioned": "Provisioned",
       "read-only": "Read only, {{managedBy}}",
       "terraform": "Managed by: Terraform",
-      "view-source": "View source",
-      "view-source-file": "View source file"
+      "view-source": "View source"
     },
     "managed-by-repository-tooltip": "Managed by: Repository",
     "managed-by-repository-tooltip-with-title": "Managed by: Repository {{title}}",

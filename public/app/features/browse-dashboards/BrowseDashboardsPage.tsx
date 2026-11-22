@@ -10,6 +10,7 @@ import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Drawer, FilterInput, IconButton, useStyles2, Text, Stack } from '@grafana/ui';
 import { useGetCombinedFolderQuery, useUpdateFolder } from 'app/api/clients/folder/v1beta1/hooks';
+import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
 import { NavID } from 'app/core/navtree/constants';
 import { useDashboardsPageNav } from 'app/features/browse-dashboards/hooks/useDashboardsPageNav';
@@ -170,12 +171,6 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
             onClick={() => setShowRenameDrawer(true)}
           />
         )}
-        <FolderRepo
-          folder={folder}
-          enableRepositoryLink
-          sourcePath={folderResource ? getSourcePath(folderResource) : undefined}
-          canEdit={canEditItemType('folder', permissions)}
-        />
       </Stack>
     );
   };
@@ -188,6 +183,16 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
       renderTitle={renderTitle}
       actions={<FolderDetailsActions folderDTO={folderDTO} showRecentlyDeleted={!tabsNav?.children} />}
     >
+      <AppChromeUpdate
+        breadcrumbActions={
+          <FolderRepo
+            folder={folder}
+            enableRepositoryLink
+            sourcePath={folderResource ? getSourcePath(folderResource) : undefined}
+            canEdit={canEditItemType('folder', permissions)}
+          />
+        }
+      />
       <Page.Contents className={styles.pageContents}>
         <ProvisionedFolderPreviewBanner queryParams={queryParams} />
 

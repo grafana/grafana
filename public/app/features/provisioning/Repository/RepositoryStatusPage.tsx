@@ -6,12 +6,21 @@ import { Trans, t } from '@grafana/i18n';
 import { Alert, EmptyState, Spinner, Stack, Tab, TabContent, TabsBar, Text, TextLink } from '@grafana/ui';
 import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
 import { useListRepositoryQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { isNotFoundError } from 'app/features/alerting/unified/api/util';
 
 import { RepoIcon } from '../Shared/RepoIcon';
+import { ManagedResourceBadge } from '../components/ManagedResourceBadge';
 import { PROVISIONING_URL } from '../constants';
+import {
+  getManagerIdentity,
+  getManagerKind,
+  getSourcePath,
+  isManaged,
+  isProvisioningResourceReadOnly,
+} from '../utils/managedResource';
 
 import { RepositoryActions } from './RepositoryActions';
 import { RepositoryOverview } from './RepositoryOverview';
@@ -69,6 +78,19 @@ export default function RepositoryStatusPage() {
       )}
       actions={data && <RepositoryActions repository={data} />}
     >
+      {data && isManaged(data) && (
+        <AppChromeUpdate
+          breadcrumbActions={
+            <ManagedResourceBadge
+              managerKind={getManagerKind(data)}
+              name={getManagerIdentity(data)}
+              isReadOnly={isProvisioningResourceReadOnly(data)}
+              repositoryName={getManagerIdentity(data)}
+              sourcePath={getSourcePath(data)}
+            />
+          }
+        />
+      )}
       <Page.Contents isLoading={query.isLoading}>
         {hasError && (
           <Alert severity="error" title={t('provisioning.repository-status.error', 'Failed to load repository')}>
