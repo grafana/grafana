@@ -67,3 +67,14 @@ type OAuthConnection interface {
 	// refresh path, so an OAuth token's very first lifetime is also observable.
 	ExchangeAuthorizationCode(ctx context.Context, code, redirectURI string) (*ExpirableSecureValue, error)
 }
+
+// UserAuthorizer is an optional interface that connections can implement if their
+// provider can issue a token that acts as an end user rather than as the connection.
+//
+//go:generate mockery --name UserAuthorizer --structname MockUserAuthorizer --inpackage --filename connection_user_authorizer_mock.go --with-expecter
+type UserAuthorizer interface {
+	// ExchangeUserAuthorizationCode exchanges an authorization code the user obtained
+	// from the provider for an access token acting as that user. The token is meant
+	// for the request at hand and must not be persisted.
+	ExchangeUserAuthorizationCode(ctx context.Context, code, redirectURI string) (common.RawSecureValue, error)
+}

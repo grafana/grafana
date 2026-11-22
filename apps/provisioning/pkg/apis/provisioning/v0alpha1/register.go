@@ -204,6 +204,7 @@ func AddKnownTypes(gv schema.GroupVersion, scheme *runtime.Scheme) error {
 		&Job{},
 		&JobList{},
 		&RefList{},
+		&PullRequestSubmission{},
 		&HistoricJob{},
 		&HistoricJobList{},
 		&Connection{},

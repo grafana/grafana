@@ -227,6 +227,37 @@ func isOAuthReauthRequired(err error) bool {
 // ExchangeAuthorizationCode exchanges an OAuth authorization code for tokens.
 // Implements the connection.OAuthConnection interface.
 func (c *oauthConnection) ExchangeAuthorizationCode(ctx context.Context, code, redirectURI string) (*connection.ExpirableSecureValue, error) {
+	token, err := c.exchange(ctx, code, redirectURI)
+	if err != nil {
+		return nil, err
+	}
+
+	raw, err := marshalToken(token)
+	if err != nil {
+		return nil, err
+	}
+
+	// token.Expiry is zero when the provider issues a non-expiring access token.
+	return &connection.ExpirableSecureValue{Token: raw, ExpiresAt: token.Expiry}, nil
+}
+
+// ExchangeUserAuthorizationCode exchanges an authorization code a user obtained
+// through this OAuth app for an access token acting as that user. Unlike
+// ExchangeAuthorizationCode, only the access token is returned: it is used for
+// the request at hand, so the refresh token is of no use.
+// Implements the connection.UserAuthorizer interface.
+func (c *oauthConnection) ExchangeUserAuthorizationCode(ctx context.Context, code, redirectURI string) (common.RawSecureValue, error) {
+	token, err := c.exchange(ctx, code, redirectURI)
+	if err != nil {
+		return "", err
+	}
+	if token.AccessToken == "" {
+		return "", errors.New("the provider returned no access token")
+	}
+	return common.RawSecureValue(token.AccessToken), nil
+}
+
+func (c *oauthConnection) exchange(ctx context.Context, code, redirectURI string) (*oauth2.Token, error) {
 	if code == "" {
 		return nil, errors.New("an authorization code is required")
 	}
@@ -242,14 +273,7 @@ func (c *oauthConnection) ExchangeAuthorizationCode(ctx context.Context, code, r
 	if err != nil {
 		return nil, fmt.Errorf("exchange authorization code: %w", err)
 	}
-
-	raw, err := marshalToken(token)
-	if err != nil {
-		return nil, err
-	}
-
-	// token.Expiry is zero when the provider issues a non-expiring access token.
-	return &connection.ExpirableSecureValue{Token: raw, ExpiresAt: token.Expiry}, nil
+	return token, nil
 }
 
 // ValidateToken checks the stored token. A missing expiry means the provider
@@ -297,5 +321,6 @@ var (
 	_ connection.Connection       = (*oauthConnection)(nil)
 	_ connection.TokenConnection  = (*oauthConnection)(nil)
 	_ connection.OAuthConnection  = (*oauthConnection)(nil)
+	_ connection.UserAuthorizer   = (*oauthConnection)(nil)
 	_ connection.RepositoryLister = (*listingConnection)(nil)
 )

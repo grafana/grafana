@@ -25,6 +25,10 @@ type githubRepository struct {
 
 	owner string
 	repo  string
+
+	// factory and clientOpts build clients acting as someone other than the repository.
+	factory    *Factory
+	clientOpts []ClientOption
 }
 
 // GithubRepository is an interface that combines all repository capabilities
@@ -39,6 +43,7 @@ type GithubRepository interface {
 	repository.RepositoryWithURLs
 	repository.StageableRepository
 	repository.BranchHandler
+	repository.PullRequestSubmitter
 	Owner() string
 	Repo() string
 	Client() Client
@@ -79,7 +84,24 @@ func newRepository(
 		gh:            ghClient,
 		owner:         owner,
 		repo:          repo,
+		factory:       factory,
+		clientOpts:    opts,
 	}, nil
+}
+
+// SubmitPullRequest opens a pull request from pr.Head into the configured branch
+// with a client acting as userToken, so that GitHub records its owner as the author.
+func (r *githubRepository) SubmitPullRequest(ctx context.Context, userToken common.RawSecureValue, pr repository.NewPullRequest) (*repository.SubmittedPullRequest, error) {
+	if userToken.IsZero() {
+		return nil, errors.New("a user token is required to submit a pull request")
+	}
+
+	userClient, err := r.factory.New(r.owner, r.repo, userToken, r.clientOpts...)
+	if err != nil {
+		return nil, fmt.Errorf("create github client for user: %w", err)
+	}
+
+	return userClient.CreatePullRequest(ctx, r.config.Branch(), pr)
 }
 
 func (r *githubRepository) Owner() string {

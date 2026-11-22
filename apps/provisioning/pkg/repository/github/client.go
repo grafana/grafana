@@ -31,6 +31,7 @@ type Client interface {
 
 	// Pull requests
 	repository.PullRequestClient
+	CreatePullRequest(ctx context.Context, base string, pr repository.NewPullRequest) (*repository.SubmittedPullRequest, error)
 }
 
 type Repository struct {

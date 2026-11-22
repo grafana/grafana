@@ -8,6 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 // FIXME: the name of the mock is different because there is another generated mock for Repository
@@ -297,4 +298,25 @@ type PullRequestRepo interface {
 	Read(ctx context.Context, path, ref string) (*FileInfo, error)
 	CompareFiles(ctx context.Context, base, ref string) ([]VersionedFileChange, error)
 	PullRequestClient() PullRequestClient
+}
+
+// NewPullRequest describes a pull request to open from Head into the repository's
+// configured branch.
+type NewPullRequest struct {
+	Head  string
+	Title string
+	Body  string
+}
+
+type SubmittedPullRequest struct {
+	Number int
+	URL    string
+}
+
+// PullRequestSubmitter is implemented by repositories that can open a pull request
+// acting as the given user token, so that the provider records the user as its author.
+//
+//go:generate mockery --name PullRequestSubmitter --structname MockPullRequestSubmitter --inpackage --filename pull_request_submitter_mock.go --with-expecter
+type PullRequestSubmitter interface {
+	SubmitPullRequest(ctx context.Context, userToken common.RawSecureValue, pr NewPullRequest) (*SubmittedPullRequest, error)
 }

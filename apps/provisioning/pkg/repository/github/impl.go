@@ -10,6 +10,9 @@ import (
 	"time"
 
 	"github.com/google/go-github/v82/github"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	repo "github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -542,6 +545,39 @@ func (r *githubClient) MergeBase(ctx context.Context, base, head string) (string
 	}
 
 	return sha, nil
+}
+
+func (r *githubClient) CreatePullRequest(ctx context.Context, base string, pr repo.NewPullRequest) (*repo.SubmittedPullRequest, error) {
+	created, _, err := r.gh.PullRequests.Create(ctx, r.owner, r.repo, &github.NewPullRequest{
+		Title: github.Ptr(pr.Title),
+		Head:  github.Ptr(pr.Head),
+		Base:  github.Ptr(base),
+		Body:  github.Ptr(pr.Body),
+	})
+	if err != nil {
+		// GitHub answers 422 for requests it cannot turn into a pull request (one already
+		// exists for the branch, no commits between the branches, ...); its message is
+		// the only thing that tells the user what to fix.
+		var ghErr *github.ErrorResponse
+		if errors.As(err, &ghErr) && ghErr.Response != nil && ghErr.Response.StatusCode == http.StatusUnprocessableEntity {
+			message := ghErr.Message
+			if details := formatGitHubErrorDetails(ghErr.Errors); details != "" {
+				message = fmt.Sprintf("%s: %s", message, details)
+			}
+			return nil, &apierrors.StatusError{ErrStatus: metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    http.StatusUnprocessableEntity,
+				Reason:  metav1.StatusReasonInvalid,
+				Message: fmt.Sprintf("GitHub rejected the pull request: %s", message),
+			}}
+		}
+		return nil, translateGitHubError(err)
+	}
+
+	return &repo.SubmittedPullRequest{
+		Number: created.GetNumber(),
+		URL:    created.GetHTMLURL(),
+	}, nil
 }
 
 func (r *githubClient) CreatePullRequestComment(ctx context.Context, number int, body string) error {

@@ -607,7 +607,7 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 //
 // Repositories:
 //   - CRUD: repositories:create/read/write/delete
-//   - Subresources: files (any auth), refs (editor), resources/stats/history/status (admin)
+//   - Subresources: files (any auth), refs/submit (editor), resources/stats/history/status (admin)
 //   - Test: repositories:write
 //   - Jobs subresource: jobs:create/read
 //
@@ -729,6 +729,17 @@ func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a autho
 		}, ""); err == nil {
 			return authorizer.DecisionAllow, "", nil
 		}
+		return toAuthorizerDecision(b.accessWithEditor.Check(ctx, authlib.CheckRequest{
+			Verb:      apiutils.VerbCreate,
+			Group:     provisioning.GROUP,
+			Resource:  provisioning.JobResourceInfo.GetName(),
+			Namespace: a.GetNamespace(),
+		}, ""))
+
+	// submit opens a pull request for a branch an editor pushed through the files/push-job
+	// flow, so it is gated like creating that job. The provider then authorizes the
+	// pull request itself against the user's own token.
+	case "submit":
 		return toAuthorizerDecision(b.accessWithEditor.Check(ctx, authlib.CheckRequest{
 			Verb:      apiutils.VerbCreate,
 			Group:     provisioning.GROUP,
@@ -1048,6 +1059,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	filesAccess := auth.NewVerbAwareAccessChecker(b.accessWithViewer, b.accessWithEditor)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = WithTimeout(NewFilesConnector(b, b.parsers, b.clients, filesAccess, b.accessWithAdmin, b.maxFileSize), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = WithTimeout(NewRefsConnector(b), 30*time.Second)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("submit")] = WithTimeout(NewSubmitConnector(b), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = WithTimeout(NewListConnector(b, b.resourceLister), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("stats")] = WithTimeout(NewStatsConnector(b.resourceLister), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = WithTimeout(NewHistorySubresource(b), 30*time.Second)
@@ -1563,6 +1575,26 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 		mt := sub.Get.Responses.StatusCodeResponses[200].Content
 		s := defs[compBase+"RefList"].Schema
 		mt["*/*"].Schema = &s
+	}
+
+	sub = oas.Paths.Paths[repoprefix+"/submit"]
+	if sub != nil {
+		submissionSchema := defs[compBase+"PullRequestSubmission"].Schema
+		sub.Post.Description = "Open a pull request from a branch into the repository branch, authored by the user who obtained the authorization code"
+		sub.Post.Summary = "Submit a pull request"
+		sub.Post.RequestBody = &spec3.RequestBody{
+			RequestBodyProps: spec3.RequestBodyProps{
+				Required: true,
+				Content: map[string]*spec3.MediaType{
+					"application/json": {
+						MediaTypeProps: spec3.MediaTypeProps{
+							Schema: &submissionSchema,
+						},
+					},
+				},
+			},
+		}
+		sub.Post.Responses = getJSONResponse("#/components/schemas/" + refsBase + "PullRequestSubmission")
 	}
 
 	sub = oas.Paths.Paths[repoprefix+"/stats"]

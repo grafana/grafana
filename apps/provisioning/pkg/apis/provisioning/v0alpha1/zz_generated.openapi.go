@@ -64,6 +64,9 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		MoveJobOptions{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_MoveJobOptions(ref),
 		PullRequestJobOptions{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_PullRequestJobOptions(ref),
 		PullRequestOptions{}.OpenAPIModelName():                    schema_pkg_apis_provisioning_v0alpha1_PullRequestOptions(ref),
+		PullRequestSubmission{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_PullRequestSubmission(ref),
+		PullRequestSubmissionSpec{}.OpenAPIModelName():             schema_pkg_apis_provisioning_v0alpha1_PullRequestSubmissionSpec(ref),
+		PullRequestSubmissionStatus{}.OpenAPIModelName():           schema_pkg_apis_provisioning_v0alpha1_PullRequestSubmissionStatus(ref),
 		QuotaStatus{}.OpenAPIModelName():                           schema_pkg_apis_provisioning_v0alpha1_QuotaStatus(ref),
 		RefItem{}.OpenAPIModelName():                               schema_pkg_apis_provisioning_v0alpha1_RefItem(ref),
 		RefList{}.OpenAPIModelName():                               schema_pkg_apis_provisioning_v0alpha1_RefList(ref),
@@ -2317,6 +2320,131 @@ func schema_pkg_apis_provisioning_v0alpha1_PullRequestOptions(ref common.Referen
 						SchemaProps: spec.SchemaProps{
 							Description: "Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews).",
 							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_PullRequestSubmission(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "PullRequestSubmission opens a pull request from a branch into the repository's configured branch, authored by the requesting user rather than by the repository's own credentials. It is the request and response body of the repository submit subresource.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(PullRequestSubmissionSpec{}.OpenAPIModelName()),
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(PullRequestSubmissionStatus{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"spec"},
+			},
+		},
+		Dependencies: []string{
+			PullRequestSubmissionSpec{}.OpenAPIModelName(), PullRequestSubmissionStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_PullRequestSubmissionSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"ref": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The branch holding the changes",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The pull request title",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"description": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The pull request description",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"code": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The authorization code the provider returned to the user, exchanged for a token that acts as the user so that they author the pull request",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"redirectURI": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The redirect URI used in the authorization request",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"ref", "title", "code"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_PullRequestSubmissionStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"number": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The pull request number",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The URL of the pull request",
+							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
