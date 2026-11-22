@@ -9,7 +9,6 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -18,14 +17,9 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
-	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-app-sdk/app"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
-	iam "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	provisioningresources "github.com/grafana/grafana/apps/provisioning/pkg/resources"
-	"github.com/grafana/grafana/pkg/services/apiserver"
-	"github.com/grafana/grafana/pkg/services/apiserver/client"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 // Capabilities a supported resource can declare. Each names the opt-in state; absence is
@@ -47,9 +41,10 @@ var KnownCapabilities = sets.New(CapabilityFolder, CapabilitySkipValidation, Cap
 
 // Dashboard GVR/GVK values are re-exported from apps/provisioning/pkg/resources
 // so there is a single source of truth. Folder and User live here because
-// pkg/registry/apis/provisioning is the only caller for those.
+// pkg/registry/apis/provisioning is the only caller for those. The IAM app's
+// module depends on the main Grafana module, so the user GVR is spelled out.
 var (
-	UserResource              = iam.UserResourceInfo.GroupVersionResource()
+	UserResource              = schema.GroupVersionResource{Group: "iam.grafana.app", Version: "v0alpha1", Resource: "users"}
 	FolderResource            = folders.FolderResourceInfo.GroupVersionResource()
 	FolderKind                = folders.FolderResourceInfo.GroupVersionKind()
 	DashboardResource         = provisioningresources.DashboardResource
@@ -260,24 +255,49 @@ type ResourceClients interface {
 	SupportedResources() []SupportedResource
 }
 
+// RestConfigProvider returns the rest config for an API server.
+type RestConfigProvider interface {
+	GetRestConfig(context.Context) (*rest.Config, error)
+}
+
+// DiscoveryClient is the part of API discovery the resource clients use.
+type DiscoveryClient interface {
+	GetResourceForKind(ctx context.Context, gvk schema.GroupVersionKind) (schema.GroupVersionResource, error)
+	GetKindForResource(gvr schema.GroupVersionResource) (schema.GroupVersionKind, error)
+	GetPreferredVersion(ctx context.Context, gr schema.GroupResource) (schema.GroupVersionResource, schema.GroupVersionKind, error)
+	GetPreferredVersionForKind(ctx context.Context, gk schema.GroupKind) (schema.GroupVersionResource, schema.GroupVersionKind, error)
+	PreferredResources(ctx context.Context, relevant func(group string) bool) ([]*metav1.APIResourceList, error)
+}
+
+// NewDiscoveryClientFunc builds a DiscoveryClient for an API server.
+type NewDiscoveryClientFunc func(*rest.Config) (DiscoveryClient, error)
+
+// DiscoveryFrom adapts a constructor that returns a concrete discovery client.
+func DiscoveryFrom[D DiscoveryClient](newClient func(*rest.Config) (D, error)) NewDiscoveryClientFunc {
+	return func(cfg *rest.Config) (DiscoveryClient, error) {
+		return newClient(cfg)
+	}
+}
+
 type clientsProvider interface {
-	GetClientsForKind(ctx context.Context, gvk schema.GroupVersionKind) (dynamic.Interface, client.DiscoveryClient, error)
-	GetClientsForResource(ctx context.Context, gvr schema.GroupVersionResource) (dynamic.Interface, client.DiscoveryClient, error)
+	GetClientsForKind(ctx context.Context, gvk schema.GroupVersionKind) (dynamic.Interface, DiscoveryClient, error)
+	GetClientsForResource(ctx context.Context, gvr schema.GroupVersionResource) (dynamic.Interface, DiscoveryClient, error)
 }
 
 // singleAPIClients provides clients for all registered APIs
 // It implements ClientsProvider by creating a dynamic client and discovery client
 // for the given rest config provider
 type singleAPIClients struct {
-	configProvider apiserver.RestConfigProvider
+	configProvider RestConfigProvider
+	newDiscovery   NewDiscoveryClientFunc
 	once           sync.Once
 	dynamic        dynamic.Interface
-	discovery      client.DiscoveryClient
+	discovery      DiscoveryClient
 	initErr        error
 }
 
-func newSingleAPIClients(configProvider apiserver.RestConfigProvider) clientsProvider {
-	return &singleAPIClients{configProvider: configProvider}
+func newSingleAPIClients(configProvider RestConfigProvider, newDiscovery NewDiscoveryClientFunc) clientsProvider {
+	return &singleAPIClients{configProvider: configProvider, newDiscovery: newDiscovery}
 }
 
 func (p *singleAPIClients) onlyOnce(ctx context.Context) error {
@@ -305,7 +325,7 @@ func (p *singleAPIClients) onlyOnce(ctx context.Context) error {
 			return
 		}
 
-		p.discovery, e = client.NewDiscoveryClient(restConfig)
+		p.discovery, e = p.newDiscovery(restConfig)
 		if e != nil {
 			p.initErr = fmt.Errorf("create discovery client: %w", e)
 			return
@@ -315,7 +335,7 @@ func (p *singleAPIClients) onlyOnce(ctx context.Context) error {
 	return p.initErr
 }
 
-func (p *singleAPIClients) GetClientsForKind(ctx context.Context, _ schema.GroupVersionKind) (dynamic.Interface, client.DiscoveryClient, error) {
+func (p *singleAPIClients) GetClientsForKind(ctx context.Context, _ schema.GroupVersionKind) (dynamic.Interface, DiscoveryClient, error) {
 	if err := p.onlyOnce(ctx); err != nil {
 		return nil, nil, fmt.Errorf("get clients: %w", err)
 	}
@@ -323,7 +343,7 @@ func (p *singleAPIClients) GetClientsForKind(ctx context.Context, _ schema.Group
 	return p.dynamic, p.discovery, nil
 }
 
-func (p *singleAPIClients) GetClientsForResource(ctx context.Context, _ schema.GroupVersionResource) (dynamic.Interface, client.DiscoveryClient, error) {
+func (p *singleAPIClients) GetClientsForResource(ctx context.Context, _ schema.GroupVersionResource) (dynamic.Interface, DiscoveryClient, error) {
 	if err := p.onlyOnce(ctx); err != nil {
 		return nil, nil, fmt.Errorf("get clients: %w", err)
 	}
@@ -335,12 +355,12 @@ func (p *singleAPIClients) GetClientsForResource(ctx context.Context, _ schema.G
 // resources that can be managed from the UI; the ResourceClients it produces expose only
 // the enabled subset via SupportedResources(). When none is provided it falls back to the
 // static SupportedProvisioningResources base set.
-func NewClientFactory(configProvider apiserver.RestConfigProvider, supportedResourceProvider SupportedResourceProvider) ClientFactory {
+func NewClientFactory(configProvider RestConfigProvider, newDiscovery NewDiscoveryClientFunc, supportedResourceProvider SupportedResourceProvider) ClientFactory {
 	if supportedResourceProvider == nil {
 		supportedResourceProvider = NewSupportedResourceProvider(nil)
 	}
 	return &clientFactory{
-		clientsProvider:           newSingleAPIClients(configProvider),
+		clientsProvider:           newSingleAPIClients(configProvider, newDiscovery),
 		supportedResourceProvider: supportedResourceProvider,
 	}
 }
@@ -352,14 +372,14 @@ func NewClientFactory(configProvider apiserver.RestConfigProvider, supportedReso
 // declared on its own is resolved the same way wherever it is resolved. Only the server that holds
 // a collection expands it: its members reach the merged set from there, and a server that holds no
 // collection asks discovery nothing, so its outage cannot fail the clients for other groups.
-func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.RestConfigProvider, supportedResourceProvider SupportedResourceProvider) ClientFactory {
+func NewClientFactoryForMultipleAPIServers(configProviders map[string]RestConfigProvider, newDiscovery NewDiscoveryClientFunc, supportedResourceProvider SupportedResourceProvider) ClientFactory {
 	if supportedResourceProvider == nil {
 		supportedResourceProvider = NewSupportedResourceProvider(nil)
 	}
 	clientFactories := make(map[string]ClientFactory)
 	for api, configProvider := range configProviders {
 		clientFactories[api] = &clientFactory{
-			clientsProvider:           newSingleAPIClients(configProvider),
+			clientsProvider:           newSingleAPIClients(configProvider, newDiscovery),
 			supportedResourceProvider: supportedResourceProvider,
 			storageGroup:              api,
 		}
@@ -393,7 +413,7 @@ func defaultSupportedResources(supported []SupportedResource) []SupportedResourc
 type SupportedResourceProvider interface {
 	// Get returns the supported resources at the time of the call.
 	Get() []SupportedResource
-	// Update is the callback of a resource.ManifestWatcher. It replaces the added kinds with each
+	// Update is the callback of the unified storage manifest watcher. It replaces the added kinds with each
 	// kind that a published app manifest opts in to provisioning. A configured resource, or a
 	// configured collection that covers a kind, takes precedence over the kind.
 	Update(manifests []*app.ManifestData)
@@ -401,14 +421,6 @@ type SupportedResourceProvider interface {
 	Configured() []SupportedResource
 	// Added returns the kinds that the app manifests added.
 	Added() []SupportedResource
-}
-
-func NewRemoteManifestWatcher(supportedResourceProvider SupportedResourceProvider, reg prometheus.Registerer, cfg resource.ManifestWatcherConfig) (services.Service, error) {
-	if cfg.DiscoveryURL == "" {
-		return services.NewIdleService(nil, nil), nil
-	}
-	watcherReg := prometheus.WrapRegistererWith(prometheus.Labels{"component": "provisioning"}, reg)
-	return resource.NewManifestWatcher(cfg, watcherReg, supportedResourceProvider.Update)
 }
 
 func NewSupportedResourceProvider(configured []SupportedResource) SupportedResourceProvider {

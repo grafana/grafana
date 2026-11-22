@@ -17,7 +17,7 @@ import (
 	"k8s.io/client-go/rest"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 )
 
 // serveResources stands up the repository resources subresource, answering each request with the
@@ -242,7 +242,7 @@ func TestResourceListerFromProvisioningAPI_ListErrorsSurviveTranslation(t *testi
 			_, err := lister.List(t.Context(), "stacks-1", "repo-1", ListOptions{})
 			require.True(t, tc.assert(err), "reader returned %v", err)
 
-			translated := resource.StatusErrorFromGRPC(err)
+			translated := resourceutil.StatusErrorFromGRPC(err)
 			require.True(t, tc.assert(translated), "translation returned %v", translated)
 			require.Equal(t, tc.status.Message, translated.(apierrors.APIStatus).Status().Message)
 		})
@@ -292,7 +292,7 @@ func TestResourceListerFromProvisioningAPI_RepositoryStatsNotFound(t *testing.T)
 
 	_, err := lister.RepositoryStats(t.Context(), "stacks-1", "repo-1")
 	require.True(t, apierrors.IsNotFound(err), "got %v", err)
-	require.True(t, apierrors.IsNotFound(resource.StatusErrorFromGRPC(err)), "got %v", err)
+	require.True(t, apierrors.IsNotFound(resourceutil.StatusErrorFromGRPC(err)), "got %v", err)
 }
 
 // The namespace-wide counts are a different route, not this subresource with an empty name.

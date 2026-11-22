@@ -3,6 +3,7 @@ package webhooks
 import (
 	"context"
 	"fmt"
+	apiserverclient "github.com/grafana/grafana/pkg/services/apiserver/client"
 	"net"
 	"net/url"
 	"strings"
@@ -146,7 +147,7 @@ func ProvideWebhooksWithImages(
 		isPublic:    isPublic,
 		urlProvider: urls.Public,
 		ExtraBuilder: func(b *provisioningapis.APIBuilder) provisioningapis.Extra {
-			clients := resources.NewClientFactory(configProvider, supportedResourceProvider)
+			clients := resources.NewClientFactory(configProvider, resources.DiscoveryFrom(apiserverclient.NewDiscoveryClient), supportedResourceProvider)
 			parsers := resources.NewParserFactory(clients)
 
 			screenshotRenderer := pullrequest.NewScreenshotRenderer(renderer, blobstore)

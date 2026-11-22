@@ -22,13 +22,12 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	foldermodel "github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 // ParserFactory is a factory for creating parsers for a given repository
@@ -330,7 +329,7 @@ func (f *ParsedResource) ExistingFolder() string {
 	if err != nil {
 		return ""
 	}
-	return foldermodel.ToLegacyFolderUID(meta.GetFolder())
+	return ToLegacyFolderUID(meta.GetFolder())
 }
 
 func (f *ParsedResource) IsFolder() bool {

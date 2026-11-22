@@ -9,7 +9,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 )
 
 // ResourceOwnershipConflictError represents an error that occurred when a resource
@@ -260,7 +259,7 @@ func IsFolderDepthExceededAPIError(err error) bool {
 
 	// In-process: the original sentinel or the structured errutil base
 	// error are still in the chain.
-	if errors.Is(err, ErrFolderDepthExceeded) || errors.Is(err, foldermodel.ErrMaximumDepthReached) {
+	if errors.Is(err, ErrFolderDepthExceeded) || errors.Is(err, ErrFolderMaximumDepthReached) {
 		return true
 	}
 
@@ -441,14 +440,14 @@ func IsFolderNotEmptyAPIError(err error) bool {
 		return false
 	}
 
-	if errors.Is(err, foldermodel.ErrFolderNotEmpty) {
+	if errors.Is(err, ErrFolderNotEmpty) {
 		return true
 	}
 
 	var statusErr apierrors.APIStatus
 	if errors.As(err, &statusErr) {
 		status := statusErr.Status()
-		return status.Code == http.StatusBadRequest && status.Details != nil && status.Details.UID == "folder.not-empty"
+		return status.Code == http.StatusBadRequest && status.Details != nil && status.Details.UID == folderNotEmptyMessageID
 	}
 
 	return false

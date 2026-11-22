@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"slices"
 	"testing"
 	"time"
@@ -13,10 +14,8 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
-	folderapierrors "github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -1044,8 +1043,19 @@ func TestEnsureFolderExists_DuplicateErrorCompatibility(t *testing.T) {
 	const repoName = "repo-a"
 	const folderID = "folder-id"
 
-	legacyErr := folderapierrors.ToFolderStatusError(foldermodel.ErrVersionMismatch)
-	alreadyExistsErr := folderapierrors.ToFolderStatusError(apierrors.NewAlreadyExists(FolderResource.GroupResource(), folderID))
+	// The shapes the folder API returns for its version-mismatch and
+	// already-exists errors.
+	legacyErr := apierrors.StatusError{ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Message: FolderVersionMismatchMessage,
+		Code:    http.StatusPreconditionFailed,
+	}}
+	alreadyExistsErr := apierrors.StatusError{ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Reason:  metav1.StatusReasonAlreadyExists,
+		Message: "a folder with the same UID already exists",
+		Code:    http.StatusConflict,
+	}}
 	for encoding, createErr := range map[string]error{
 		"legacy version mismatch":   &legacyErr,
 		"structured already exists": &alreadyExistsErr,

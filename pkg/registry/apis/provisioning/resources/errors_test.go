@@ -11,7 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 )
 
 func TestResourceValidationError(t *testing.T) {
@@ -429,7 +428,7 @@ func TestIsFolderDepthExceededAPIError(t *testing.T) {
 
 	t.Run("matches the structured errutil error via errors.Is", func(t *testing.T) {
 		// The in-process error returned by validateOnUpdate.
-		err := foldermodel.ErrMaximumDepthReached.Errorf("maximum folder depth reached")
+		err := ErrFolderMaximumDepthReached.Errorf("maximum folder depth reached")
 		require.True(t, IsFolderDepthExceededAPIError(err))
 	})
 
@@ -629,7 +628,7 @@ func TestIsFolderNotEmptyAPIError(t *testing.T) {
 
 	require.True(t, IsFolderNotEmptyAPIError(statusErr))
 	require.True(t, IsFolderNotEmptyAPIError(fmt.Errorf("delete folder: %w", statusErr)))
-	require.True(t, IsFolderNotEmptyAPIError(foldermodel.ErrFolderNotEmpty.Errorf("folder contains a dashboard")))
+	require.True(t, IsFolderNotEmptyAPIError(ErrFolderNotEmpty.Errorf("folder contains a dashboard")))
 	require.False(t, IsFolderNotEmptyAPIError(apierrors.NewBadRequest("bad request")))
 	require.False(t, IsFolderNotEmptyAPIError(nil))
 }

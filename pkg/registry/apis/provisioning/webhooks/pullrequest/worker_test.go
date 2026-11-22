@@ -53,11 +53,11 @@ func TestProvidePullRequestWorker_SupportedResources(t *testing.T) {
 	}
 	require.False(t, parse().FolderScoped)
 
-	watcher, err := resources.NewRemoteManifestWatcher(supportedResourceProvider, nil, resource.ManifestWatcherConfig{
+	watcher, err := resource.NewManifestWatcher(resource.ManifestWatcherConfig{
 		DiscoveryURL:      router.URL,
 		DiscoveryAudience: provisioning.GROUP,
 		Exchanger:         authn.NewStaticTokenExchanger("router-token"),
-	})
+	}, prometheus.NewRegistry(), supportedResourceProvider.Update)
 	require.NoError(t, err)
 	require.NoError(t, services.StartAndAwaitRunning(t.Context(), watcher))
 	t.Cleanup(watcher.StopAsync)

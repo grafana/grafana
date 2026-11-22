@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"fmt"
+	apiserverclient "github.com/grafana/grafana/pkg/services/apiserver/client"
 	"net"
 	"net/http"
 	"net/url"
@@ -228,7 +229,7 @@ func NewAPIBuilder(
 	if newStandaloneClientFactoryFunc != nil {
 		clients = newStandaloneClientFactoryFunc(configProvider)
 	} else {
-		clients = resources.NewClientFactory(configProvider, supportedResourceProvider)
+		clients = resources.NewClientFactory(configProvider, resources.DiscoveryFrom(apiserverclient.NewDiscoveryClient), supportedResourceProvider)
 	}
 	if gv.Version == "" {
 		return nil, fmt.Errorf("invalid provisioning group/version")

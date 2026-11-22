@@ -14,10 +14,9 @@ import (
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	foldermodel "github.com/grafana/grafana/pkg/services/folder"
-	grafanautil "github.com/grafana/grafana/pkg/util"
 )
 
 const MaxNumberOfFolders = 10000
@@ -341,7 +340,7 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 			Title:        currentTitle,
 			Path:         source.Path,
 			MetadataHash: source.Checksum,
-			ParentID:     foldermodel.ToLegacyFolderUID(meta.GetFolder()),
+			ParentID:     ToLegacyFolderUID(meta.GetFolder()),
 		}
 
 		if takeover || !folder.Equal(existing) {
@@ -419,7 +418,7 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 		// there is a potential race here where two syncs can be triggered
 		// if we try to create and there is an error, check if it is from another sync
 		// job for this repo that created it
-		if apierrors.IsAlreadyExists(err) || err.Error() == foldermodel.ErrVersionMismatch.Error() {
+		if apierrors.IsAlreadyExists(err) || err.Error() == FolderVersionMismatchMessage {
 			obj, err2 := fm.client.Get(ctx, folder.ID, metav1.GetOptions{})
 			if err2 != nil {
 				return fmt.Errorf("failed to get folder: %w", err2)
@@ -683,7 +682,7 @@ func (fm *FolderManager) EnsureFolderTreeExists(ctx context.Context, tree Folder
 
 		manifestID := folder.ID
 		if opts.GenerateNewFolderIDs {
-			manifestID = grafanautil.GenerateShortUID()
+			manifestID = util.GenerateShortUID()
 		}
 		msg := fmt.Sprintf("Add folder and folder metadata %s", p)
 		manifest := NewFolderManifest(manifestID, folder.Title, fm.folderGVK)

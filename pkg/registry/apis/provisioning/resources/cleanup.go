@@ -8,7 +8,6 @@ import (
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 )
 
 // JSONPatchOperation represents a single JSON Patch (RFC 6902) operation.
@@ -109,8 +108,8 @@ func SortResourceListForDeletion(list *provisioning.ResourceList) {
 		// Both "" and the "general" sentinel denote root (no parent); treat them
 		// alike so root-parented entries sort to the end and their children are
 		// deleted first.
-		hasFolderI := !foldermodel.IsRootFolderUID(list.Items[i].Folder)
-		hasFolderJ := !foldermodel.IsRootFolderUID(list.Items[j].Folder)
+		hasFolderI := !IsRootFolderUID(list.Items[i].Folder)
+		hasFolderJ := !IsRootFolderUID(list.Items[j].Folder)
 		if hasFolderI != hasFolderJ {
 			return hasFolderI
 		}

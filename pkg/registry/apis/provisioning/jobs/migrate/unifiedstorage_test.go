@@ -926,7 +926,7 @@ func TestUnifiedStorageMigrator_SelectiveResources(t *testing.T) {
 // must not see it.
 func TestUnifiedStorageMigrator_CleanupSeesTheKindsOfTheExport(t *testing.T) {
 	supportedResourceProvider := resources.NewSupportedResourceProvider(nil)
-	factory := resources.NewClientFactory(nil, supportedResourceProvider)
+	factory := resources.NewClientFactory(nil, nil, supportedResourceProvider)
 	supported := func(ctx context.Context) []resources.SupportedResource {
 		clients, err := factory.Clients(ctx, "test-ns")
 		require.NoError(t, err)

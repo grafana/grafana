@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	grafanautils "github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 )
 
 // Use a GVR not in EnableFolderSupport to avoid FolderManager dependency
@@ -688,16 +687,6 @@ func TestWrapAsValidationErrorIfNeeded(t *testing.T) {
 		})
 		wrapped := fmt.Errorf("writing resource: %w", invalid)
 		got := wrapAsValidationErrorIfNeeded(wrapped)
-		requireWrappedAsValidation(t, got)
-	})
-
-	t.Run("DashboardErr is wrapped as a warning", func(t *testing.T) {
-		dErr := dashboardaccess.DashboardErr{
-			StatusCode: 400,
-			Status:     "bad-request",
-			Reason:     "Dashboard refresh interval is too low",
-		}
-		got := wrapAsValidationErrorIfNeeded(dErr)
 		requireWrappedAsValidation(t, got)
 	})
 

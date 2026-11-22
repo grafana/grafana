@@ -21,8 +21,6 @@ import (
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	"github.com/grafana/grafana/pkg/services/apiserver"
-	"github.com/grafana/grafana/pkg/services/apiserver/client"
 )
 
 // playlistKind is an arbitrary identifier used only to exercise the supported-set plumbing
@@ -35,7 +33,7 @@ var (
 
 func TestResourceClients_SupportedResources(t *testing.T) {
 	t.Run("falls back to the static base set when none is configured", func(t *testing.T) {
-		clients, err := NewClientFactory(nil, NewSupportedResourceProvider(nil)).Clients(t.Context(), "default")
+		clients, err := NewClientFactory(nil, nil, NewSupportedResourceProvider(nil)).Clients(t.Context(), "default")
 		require.NoError(t, err)
 
 		assert.Equal(t, SupportedProvisioningResources, clients.SupportedResources())
@@ -45,7 +43,7 @@ func TestResourceClients_SupportedResources(t *testing.T) {
 		active := SupportedResource{GroupKind: DashboardKind.GroupKind(), Capabilities: sets.New(CapabilityFolder)}
 		disabled := SupportedResource{GroupKind: playlistKind, Capabilities: sets.New(CapabilityDisabled)}
 
-		clients, err := NewClientFactory(nil, NewSupportedResourceProvider([]SupportedResource{active, disabled})).Clients(t.Context(), "default")
+		clients, err := NewClientFactory(nil, nil, NewSupportedResourceProvider([]SupportedResource{active, disabled})).Clients(t.Context(), "default")
 		require.NoError(t, err)
 
 		// Disabled resources are not acted on, so they are excluded from the active set.
@@ -55,15 +53,15 @@ func TestResourceClients_SupportedResources(t *testing.T) {
 
 func TestMultiClientFactory_AnyGroup(t *testing.T) {
 	widget := schema.GroupVersionKind{Group: "example.ext.grafana.app", Version: "v1", Kind: "Widget"}
-	providers := map[string]apiserver.RestConfigProvider{DashboardResource.Group: apiserver.WithoutRestConfig}
+	providers := map[string]RestConfigProvider{DashboardResource.Group: withoutRestConfig}
 
-	clients, err := NewClientFactoryForMultipleAPIServers(providers, NewSupportedResourceProvider(nil)).Clients(t.Context(), "default")
+	clients, err := NewClientFactoryForMultipleAPIServers(providers, nil, NewSupportedResourceProvider(nil)).Clients(t.Context(), "default")
 	require.NoError(t, err)
 	_, _, err = clients.ForKind(t.Context(), widget)
 	require.ErrorContains(t, err, "no clients provider for group example.ext.grafana.app")
 
-	providers[AnyGroup] = apiserver.WithoutRestConfig
-	clients, err = NewClientFactoryForMultipleAPIServers(providers, NewSupportedResourceProvider(nil)).Clients(t.Context(), "default")
+	providers[AnyGroup] = withoutRestConfig
+	clients, err = NewClientFactoryForMultipleAPIServers(providers, nil, NewSupportedResourceProvider(nil)).Clients(t.Context(), "default")
 	require.NoError(t, err)
 	_, _, err = clients.ForKind(t.Context(), widget)
 	require.ErrorContains(t, err, "rest config will not be available")
@@ -186,11 +184,11 @@ func TestSingleAPIClients_PropagatesTraceContext(t *testing.T) {
 	otel.SetTextMapPropagator(propagation.TraceContext{})
 	t.Cleanup(func() { otel.SetTextMapPropagator(prevProp) })
 
-	provider := apiserver.RestConfigProviderFunc(func(_ context.Context) (*rest.Config, error) {
+	provider := restConfigFunc(func(_ context.Context) (*rest.Config, error) {
 		return &rest.Config{Host: srv.URL}, nil
 	})
 
-	clients := newSingleAPIClients(provider)
+	clients := newSingleAPIClients(provider, func(*rest.Config) (DiscoveryClient, error) { return nil, nil })
 	dyn, _, err := clients.GetClientsForResource(context.Background(), schema.GroupVersionResource{})
 	require.NoError(t, err)
 
@@ -491,10 +489,10 @@ func TestClientFactorySupportedResourcesRetriesAfterFailure(t *testing.T) {
 type flakyClientsProvider struct {
 	err       error
 	calls     int
-	discovery client.DiscoveryClient
+	discovery DiscoveryClient
 }
 
-func (p *flakyClientsProvider) GetClientsForKind(context.Context, schema.GroupVersionKind) (dynamic.Interface, client.DiscoveryClient, error) {
+func (p *flakyClientsProvider) GetClientsForKind(context.Context, schema.GroupVersionKind) (dynamic.Interface, DiscoveryClient, error) {
 	p.calls++
 	if p.err != nil {
 		return nil, nil, p.err
@@ -505,11 +503,11 @@ func (p *flakyClientsProvider) GetClientsForKind(context.Context, schema.GroupVe
 	return nil, emptyDiscoveryClient{}, nil
 }
 
-func (p *flakyClientsProvider) GetClientsForResource(context.Context, schema.GroupVersionResource) (dynamic.Interface, client.DiscoveryClient, error) {
+func (p *flakyClientsProvider) GetClientsForResource(context.Context, schema.GroupVersionResource) (dynamic.Interface, DiscoveryClient, error) {
 	return nil, nil, p.err
 }
 
-type emptyDiscoveryClient struct{ client.DiscoveryClient }
+type emptyDiscoveryClient struct{ DiscoveryClient }
 
 func (emptyDiscoveryClient) PreferredResources(context.Context, func(string) bool) ([]*metav1.APIResourceList, error) {
 	return nil, nil
@@ -536,7 +534,7 @@ func TestClientFactorySupportedResourcesDropsDisabledMembers(t *testing.T) {
 }
 
 // servedDiscoveryClient serves two data source plugin groups.
-type servedDiscoveryClient struct{ client.DiscoveryClient }
+type servedDiscoveryClient struct{ DiscoveryClient }
 
 func (servedDiscoveryClient) PreferredResources(context.Context, func(string) bool) ([]*metav1.APIResourceList, error) {
 	return []*metav1.APIResourceList{
@@ -566,7 +564,7 @@ func TestDiscoveryKindsIgnoresFailuresOutsideCollections(t *testing.T) {
 
 // capturingDiscoveryClient keeps the relevance predicate it was called with.
 type capturingDiscoveryClient struct {
-	client.DiscoveryClient
+	DiscoveryClient
 	relevant func(string) bool
 }
 
@@ -590,7 +588,7 @@ func TestClientFactoryPerServerExpansion(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	factoryFor := func(api string, discovery client.DiscoveryClient) *clientFactory {
+	factoryFor := func(api string, discovery DiscoveryClient) *clientFactory {
 		return &clientFactory{
 			clientsProvider:           &flakyClientsProvider{discovery: discovery},
 			supportedResourceProvider: NewSupportedResourceProvider(configured),
@@ -699,7 +697,7 @@ func TestSupportedResourceProvider(t *testing.T) {
 
 	t.Run("adds the kinds to the clients of a factory", func(t *testing.T) {
 		supportedResourceProvider := NewSupportedResourceProvider([]SupportedResource{folder})
-		factory := NewClientFactory(nil, supportedResourceProvider)
+		factory := NewClientFactory(nil, nil, supportedResourceProvider)
 
 		supportedResourceProvider.Update(testManifests(widget))
 
@@ -726,3 +724,13 @@ func testManifests(resources ...SupportedResource) []*app.ManifestData {
 	}
 	return []*app.ManifestData{{Group: testManifestGroup, Versions: []app.ManifestVersion{version}}}
 }
+
+type restConfigFunc func(context.Context) (*rest.Config, error)
+
+func (f restConfigFunc) GetRestConfig(ctx context.Context) (*rest.Config, error) {
+	return f(ctx)
+}
+
+var withoutRestConfig = restConfigFunc(func(context.Context) (*rest.Config, error) {
+	return nil, errors.New("rest config will not be available (unit test?)")
+})

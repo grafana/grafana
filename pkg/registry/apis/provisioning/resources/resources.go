@@ -19,8 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
-	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 )
 
 var (
@@ -34,7 +32,6 @@ var (
 //   - Kubernetes field validation errors
 //   - Kubernetes API BadRequest errors (which often wrap dashboard/resource validation errors)
 //   - Kubernetes API Invalid errors (StatusReasonInvalid, HTTP 422)
-//   - Dashboard validation errors (all DashboardErr types)
 //   - Duplicate resource errors
 //   - Resource already in repository errors
 func wrapAsValidationErrorIfNeeded(err error) error {
@@ -59,11 +56,6 @@ func wrapAsValidationErrorIfNeeded(err error) error {
 	//     rejections, e.g. CUE schema mismatches and immutable-field
 	//     violations.
 	if apierrors.IsBadRequest(err) || apierrors.IsInvalid(err) {
-		return NewResourceValidationError(err)
-	}
-
-	// Check if it's a dashboard validation error (wrap all dashboard errors as validation errors)
-	if _, ok := errors.AsType[dashboardaccess.DashboardErr](err); ok {
 		return NewResourceValidationError(err)
 	}
 
@@ -176,7 +168,7 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 	// the repository root: route the write there and stamp the meta folder with
 	// the repo's root id rather than the generic "general".
 	var fid Folder
-	if foldermodel.IsRootFolderUID(folder) {
+	if IsRootFolderUID(folder) {
 		fid = Folder{ID: rootFolder}
 		meta.SetFolder(rootFolder) // Set the folder in the metadata to the root folder
 	} else {

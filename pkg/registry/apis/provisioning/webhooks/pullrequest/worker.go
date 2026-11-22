@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	apiserverclient "github.com/grafana/grafana/pkg/services/apiserver/client"
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -46,7 +47,7 @@ func ProvidePullRequestWorker(
 
 	// FIXME: we should create providers for client and parsers, so that we don't have
 	// multiple connections for webhooks
-	clients := resources.NewClientFactory(configProvider, supportedResourceProvider)
+	clients := resources.NewClientFactory(configProvider, resources.DiscoveryFrom(apiserverclient.NewDiscoveryClient), supportedResourceProvider)
 	parsers := resources.NewParserFactory(clients)
 	screenshotRenderer := NewScreenshotRenderer(renderer, blobstore)
 	evaluator := NewEvaluator(screenshotRenderer, parsers, urls, registry)

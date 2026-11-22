@@ -1,6 +1,7 @@
 package provisioning
 
 import (
+	apiserverclient "github.com/grafana/grafana/pkg/services/apiserver/client"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -14,7 +15,7 @@ import (
 func TestIntegrationProvisioning_Client(t *testing.T) {
 	helper := sharedHelper(t)
 
-	clientFactory := resources.NewClientFactory(&helper.Org1.Admin, resources.NewSupportedResourceProvider(nil))
+	clientFactory := resources.NewClientFactory(&helper.Org1.Admin, resources.DiscoveryFrom(apiserverclient.NewDiscoveryClient), resources.NewSupportedResourceProvider(nil))
 	clients, err := clientFactory.Clients(t.Context(), "default")
 	require.NoError(t, err)
 

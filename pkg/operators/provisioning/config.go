@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/x509"
 	"fmt"
+	apiserverclient "github.com/grafana/grafana/pkg/services/apiserver/client"
 	"net/http"
 	"os"
 	"time"
@@ -330,7 +331,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		apiServerURLs[resources.AnyGroup] = aggregatedServerURL
 	}
 
-	configProviders := make(map[string]apiserver.RestConfigProvider)
+	configProviders := make(map[string]resources.RestConfigProvider)
 
 	tlsConfigForTransport, err := rest.TLSConfigFor(&rest.Config{TLSClientConfig: tlsConfig})
 	if err != nil {
@@ -366,7 +367,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		configProviders[group] = NewDirectConfigProvider(config)
 	}
 
-	c.manifestWatcher, err = resources.NewRemoteManifestWatcher(supportedResourceProvider, c.Registry(), resource.ManifestWatcherConfig{
+	c.manifestWatcher, err = newManifestWatcher(supportedResourceProvider, c.Registry(), resource.ManifestWatcherConfig{
 		DiscoveryURL:      aggregatedServerURL,
 		DiscoveryAudience: provisioning.GROUP,
 		Exchanger:         tokenExchangeClient,
@@ -377,9 +378,20 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create manifest watcher: %w", err)
 	}
-	clients := resources.NewClientFactoryForMultipleAPIServers(configProviders, supportedResourceProvider)
+	clients := resources.NewClientFactoryForMultipleAPIServers(configProviders, resources.DiscoveryFrom(apiserverclient.NewDiscoveryClient), supportedResourceProvider)
 	c.clients = clients
 	return clients, nil
+}
+
+// newManifestWatcher keeps the supported resources in step with the app
+// manifests that the aggregated API server publishes. Without a discovery URL
+// the supported set is the configured one.
+func newManifestWatcher(supportedResourceProvider resources.SupportedResourceProvider, reg prometheus.Registerer, cfg resource.ManifestWatcherConfig) (services.Service, error) {
+	if cfg.DiscoveryURL == "" {
+		return services.NewIdleService(nil, nil), nil
+	}
+	watcherReg := prometheus.WrapRegistererWith(prometheus.Labels{"component": "provisioning"}, reg)
+	return resource.NewManifestWatcher(cfg, watcherReg, supportedResourceProvider.Update)
 }
 
 func (c *ControllerConfig) ProvisioningClient() (*client.Clientset, error) {
