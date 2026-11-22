@@ -3308,6 +3308,14 @@ var (
 			Generate:    Generate{Go: true, React: true},
 		},
 		{
+			Name:        "grafana.pluginNavAvailability",
+			Description: "Let plugin.json include entries gate their nav visibility with the 'available' feature-flag expression field",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendNavigation,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
+		},
+		{
 			Name:        "pluginsForceTls13",
 			Description: "Forces the plugin HTTP client to use TLS 1.3 - if the plugin is using the SDK client",
 			Stage:       FeatureStageExperimental,

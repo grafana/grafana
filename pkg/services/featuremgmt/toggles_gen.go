@@ -1030,6 +1030,10 @@ const (
 	// Nest app plugin navigation items in the mega menu based on their URL path hierarchy
 	FlagGrafanaPluginPathNesting = "grafana.pluginPathNesting"
 
+	// FlagGrafanaPluginNavAvailability
+	// Let plugin.json include entries gate their nav visibility with the 'available' feature-flag expression field
+	FlagGrafanaPluginNavAvailability = "grafana.pluginNavAvailability"
+
 	// FlagPluginsForceTls13
 	// Forces the plugin HTTP client to use TLS 1.3 - if the plugin is using the SDK client
 	FlagPluginsForceTls13 = "pluginsForceTls13"
