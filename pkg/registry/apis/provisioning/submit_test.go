@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -33,7 +34,7 @@ func TestSubmitConnector(t *testing.T) {
 			}).
 			Return(&repository.SubmittedPullRequest{Number: 42, URL: "https://github.com/grafana/grafana/pull/42"}, nil)
 		access := NewMockSubmitAccess(t)
-		access.EXPECT().GetRepository(mock.Anything, "test-repo").Return(repo, nil)
+		access.EXPECT().GetHealthyRepository(mock.Anything, "test-repo").Return(repo, nil)
 
 		responder := serveSubmit(t, access, http.MethodPost, validSubmission)
 
@@ -64,7 +65,7 @@ func TestSubmitConnector(t *testing.T) {
 
 	t.Run("rejects a ref that is the repository branch", func(t *testing.T) {
 		access := NewMockSubmitAccess(t)
-		access.EXPECT().GetRepository(mock.Anything, "test-repo").Return(newSubmittableRepository(t), nil)
+		access.EXPECT().GetHealthyRepository(mock.Anything, "test-repo").Return(newSubmittableRepository(t), nil)
 
 		responder := serveSubmit(t, access, http.MethodPost, `{"spec":{"ref":"main","title":"t"}}`)
 
@@ -73,7 +74,7 @@ func TestSubmitConnector(t *testing.T) {
 
 	t.Run("returns the error when the repository cannot be found", func(t *testing.T) {
 		access := NewMockSubmitAccess(t)
-		access.EXPECT().GetRepository(mock.Anything, "test-repo").
+		access.EXPECT().GetHealthyRepository(mock.Anything, "test-repo").
 			Return(nil, apierrors.NewNotFound(provisioning.RepositoryResourceInfo.GroupResource(), "test-repo"))
 
 		responder := serveSubmit(t, access, http.MethodPost, validSubmission)
@@ -81,9 +82,19 @@ func TestSubmitConnector(t *testing.T) {
 		require.True(t, apierrors.IsNotFound(responder.err))
 	})
 
+	t.Run("returns the error when the repository is not healthy", func(t *testing.T) {
+		access := NewMockSubmitAccess(t)
+		access.EXPECT().GetHealthyRepository(mock.Anything, "test-repo").
+			Return(nil, &apierrors.StatusError{ErrStatus: metav1.Status{Code: http.StatusFailedDependency}})
+
+		responder := serveSubmit(t, access, http.MethodPost, validSubmission)
+
+		requireStatusCode(t, responder.err, http.StatusFailedDependency)
+	})
+
 	t.Run("returns NotImplemented for repositories that cannot submit pull requests", func(t *testing.T) {
 		access := NewMockSubmitAccess(t)
-		access.EXPECT().GetRepository(mock.Anything, "test-repo").Return(repository.NewMockConfigRepository(t), nil)
+		access.EXPECT().GetHealthyRepository(mock.Anything, "test-repo").Return(repository.NewMockConfigRepository(t), nil)
 
 		responder := serveSubmit(t, access, http.MethodPost, validSubmission)
 
@@ -96,7 +107,7 @@ func TestSubmitConnector(t *testing.T) {
 			SubmitPullRequest(mock.Anything, mock.Anything).
 			Return(nil, repository.ErrPermissionDenied)
 		access := NewMockSubmitAccess(t)
-		access.EXPECT().GetRepository(mock.Anything, "test-repo").Return(repo, nil)
+		access.EXPECT().GetHealthyRepository(mock.Anything, "test-repo").Return(repo, nil)
 
 		responder := serveSubmit(t, access, http.MethodPost, validSubmission)
 

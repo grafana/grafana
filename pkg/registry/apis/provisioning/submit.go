@@ -74,7 +74,7 @@ func (c *submitConnector) Connect(ctx context.Context, name string, opts runtime
 			return
 		}
 
-		repo, err := c.access.GetRepository(ctx, name)
+		repo, err := c.access.GetHealthyRepository(ctx, name)
 		if err != nil {
 			logger.Debug("failed to find repository", "error", err)
 			responder.Error(err)

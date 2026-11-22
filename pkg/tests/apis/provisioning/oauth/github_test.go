@@ -8,11 +8,13 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/types"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
@@ -69,7 +71,21 @@ func TestIntegrationProvisioning_GithubOAuthSubmitPullRequest(t *testing.T) {
 		require.NoError(c, err)
 		lastUpdated, _, _ := unstructured.NestedInt64(repo.Object, "status", "token", "lastUpdated")
 		assert.NotZero(c, lastUpdated, "the controller has not issued the repository token yet")
+		checked, _, _ := unstructured.NestedInt64(repo.Object, "status", "health", "checked")
+		assert.NotZero(c, checked, "the controller has not checked the repository health yet")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
+
+	// The health check clones over git, which the fake GitHub does not serve. A healthy
+	// result stays recent for minutes, so the controller won't recheck during the test.
+	healthy, err := json.Marshal(map[string]any{"status": map[string]any{"health": map[string]any{
+		"healthy": true,
+		"checked": time.Now().UnixMilli(),
+		"error":   nil,
+		"message": nil,
+	}}})
+	require.NoError(t, err)
+	_, err = helper.Repositories.Resource.Patch(t.Context(), name, types.MergePatchType, healthy, metav1.PatchOptions{}, "status")
+	require.NoError(t, err, "failed to mark the repository healthy")
 
 	submit := func(t *testing.T, spec provisioning.PullRequestSubmissionSpec) (*provisioning.PullRequestSubmission, int, error) {
 		t.Helper()
