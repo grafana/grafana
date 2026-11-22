@@ -8309,6 +8309,7 @@
       "new-folder": "New folder",
       "next": "Next",
       "open-pull-request": "Open pull request",
+      "open-repository": "Open repository",
       "repo-path-required": "Missing required fields for saving",
       "save-json-to-file": "Save JSON to file",
       "see-docs": "See <2>documentation</2> for more information about provisioning.",
@@ -15006,7 +15007,8 @@
     },
     "bulk-action-outcome": {
       "close": "Close",
-      "open-pull-request": "Open pull request"
+      "open-pull-request": "Open pull request",
+      "open-repository": "Open repository"
     },
     "cloud-info-box": {
       "body": "Skip the setup and get Git Sync fully managed and hosted on Grafana Cloud with the <2>free-forever Grafana Cloud plan</2>.",
@@ -15046,6 +15048,7 @@
       "merges-into": "Merges into",
       "open-branch": "Open {{branch}} in the repository",
       "open-commit": "Open the committed file at {{hash}}",
+      "open-pull-request-yourself": "Open the repository and create a pull or merge request from the branch you saved to.",
       "repository": "the repository",
       "title-created_one": "A new resource has been created in a branch in {{provider}}.",
       "title-created_other": "New resources have been created in a branch in {{provider}}.",
@@ -15851,6 +15854,7 @@
       "next-list": "Back to all {{resources}}",
       "next-view": "View {{resource}}",
       "open-pull-request": "Open pull request",
+      "open-repository": "Open repository",
       "read-only-message": "To edit this resource, please update it in your repository directly."
     },
     "save-target-switch": {

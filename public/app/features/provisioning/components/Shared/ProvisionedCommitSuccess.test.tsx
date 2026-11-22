@@ -78,6 +78,18 @@ describe('ProvisionedCommitSuccess', () => {
     expect(screen.getByText(expected)).toBeInTheDocument();
   });
 
+  it('tells the user to open the pull request themselves on a plain git remote', () => {
+    render(<ProvisionedCommitSuccess action="create" branch="feature" configuredBranch="main" repoType="git" />);
+
+    expect(screen.getByText(/create a pull or merge request from the branch you saved to/i)).toBeInTheDocument();
+  });
+
+  it('does not ask for a manual pull request where the provider opens one', () => {
+    render(<ProvisionedCommitSuccess action="create" branch="feature" configuredBranch="main" repoType="github" />);
+
+    expect(screen.queryByText(/create a pull or merge request/i)).not.toBeInTheDocument();
+  });
+
   it('omits the branch links when the repository has no browsable branch URLs', () => {
     render(<ProvisionedCommitSuccess action="create" branch="feature" configuredBranch="main" repoType="local" />);
 

@@ -5,7 +5,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import {
@@ -302,6 +302,9 @@ function SuccessContent({ kindKey, action, resourceName, redirectUrl, repository
   const kind: ResourceKindInfo = resourceKindInfos[kindKey];
   const isDirect = !outcome.ref;
   const prUrl = appendPullRequestTitleParam(outcome.urls?.newPullRequestURL, repository?.type, outcome.prTitle);
+  // A plain git remote opens no pull request, so the way out to the server is the repository itself.
+  const repoUrl = outcome.urls?.repositoryURL ?? repository?.url;
+  const externalUrl = prUrl || (isDirect ? undefined : repoUrl);
 
   // Only a direct commit is live in Grafana: a branch commit exists on the branch alone until the
   // pull request merges, so there is nothing to view yet.
@@ -312,9 +315,11 @@ function SuccessContent({ kindKey, action, resourceName, redirectUrl, repository
       footer={
         <>
           {/* Opening the pull request is what carries a branch commit forward. */}
-          {prUrl && (
-            <LinkButton href={prUrl} target="_blank" variant="primary" icon="external-link-alt">
-              <Trans i18nKey="provisioning.save-resource.open-pull-request">Open pull request</Trans>
+          {externalUrl && (
+            <LinkButton href={externalUrl} target="_blank" variant="primary" icon="external-link-alt">
+              {prUrl
+                ? t('provisioning.save-resource.open-pull-request', 'Open pull request')
+                : t('provisioning.save-resource.open-repository', 'Open repository')}
             </LinkButton>
           )}
           {resourceRoute && (
@@ -338,7 +343,7 @@ function SuccessContent({ kindKey, action, resourceName, redirectUrl, repository
         branch={outcome.ref}
         configuredBranch={repository?.branch}
         repoType={repository?.type}
-        repoUrl={outcome.urls?.repositoryURL ?? repository?.url}
+        repoUrl={repoUrl}
         commitMessage={outcome.message}
         commitHash={outcome.hash}
         sourceUrl={outcome.urls?.sourceURL}

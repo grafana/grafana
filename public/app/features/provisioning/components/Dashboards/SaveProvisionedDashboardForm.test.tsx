@@ -45,10 +45,12 @@ async function findPrimaryButton() {
  */
 async function goToCommitStep(user: User) {
   await findPrimaryButton();
-  if (screen.queryByRole('button', { name: /back to details/i })) {
+  // An update with nothing to fill in opens on the commit step, so there is no Next to click.
+  const next = screen.queryByRole('button', { name: /^next$/i });
+  if (!next) {
     return;
   }
-  await user.click(screen.getByRole('button', { name: /^next$/i }));
+  await user.click(next);
   await screen.findByRole('button', { name: /back to details/i });
 }
 
@@ -344,20 +346,23 @@ describe('SaveProvisionedDashboardForm', () => {
 
     await goToCommitStep(user);
 
-    expect(screen.getByRole('combobox', { name: /repository folder/i })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /filename/i })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /comment/i })).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: /branch/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /back to details/i })).toBeInTheDocument();
+    // The Target folder on the details step already set the directory.
+    expect(screen.queryByRole('combobox', { name: /repository folder/i })).not.toBeInTheDocument();
     // The dashboard fields belong to the step behind it.
     expect(screen.queryByRole('textbox', { name: /title/i })).not.toBeInTheDocument();
   });
 
-  it('should render the form with correct fields for an existing dashboard', async () => {
-    // existing dashboards show "Common Options" instead of the title/desc fields
+  it('opens an existing dashboard straight on the commit step', async () => {
+    // Nothing to fill in before the commit, so the details step would only be an empty screen.
     const { user } = setup({ isNew: false });
 
-    expect(await screen.findByTestId('common-options')).toBeInTheDocument();
+    expect(await screen.findByRole('textbox', { name: /comment/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^next$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /back to details/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('textbox', { name: /title/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('textbox', { name: /description/i })).not.toBeInTheDocument();
 
@@ -1586,7 +1591,9 @@ describe('SaveProvisionedDashboardForm', () => {
       });
     });
 
-    it('should keep directory in folder picker when auto-syncing filename', async () => {
+    // The directory the defaults carried is asserted through the committed path in
+    // SaveProvisionedDashboard.test.tsx; here the filename sync is what matters.
+    it('syncs the filename from the title without touching the directory', async () => {
       const { user } = setup({
         defaultValues: {
           ref: 'dashboard/2023-01-01-abcde',
@@ -1603,11 +1610,8 @@ describe('SaveProvisionedDashboardForm', () => {
       await user.type(titleInput, 'My Cool Dashboard');
 
       await goToCommitStep(user);
-      const filenameInput = screen.getByRole('textbox', { name: /filename/i });
-      const folderCombobox = screen.getByRole('combobox', { name: /folder/i });
       await waitFor(() => {
-        expect(filenameInput).toHaveValue('my-cool-dashboard.json');
-        expect(folderCombobox).toHaveValue('dashboards');
+        expect(screen.getByRole('textbox', { name: /filename/i })).toHaveValue('my-cool-dashboard.json');
       });
     });
 
@@ -1877,9 +1881,6 @@ describe('SaveProvisionedDashboardForm', () => {
     await goToCommitStep(user);
     await goToCommitStep(user);
 
-    const folderCombobox = screen.getByRole('combobox', { name: /repository folder/i });
-    await waitFor(() => expect(folderCombobox).toHaveValue(''));
-
     await commitSave(user);
 
     await waitFor(() => expect(dashboardRequest).not.toBeNull());
@@ -1928,8 +1929,6 @@ describe('SaveProvisionedDashboardForm', () => {
 
     await goToCommitStep(user);
 
-    const folderCombobox = screen.getByRole('combobox', { name: /repository folder/i });
-    await waitFor(() => expect(folderCombobox).toHaveValue(''));
     expect(screen.getByRole('textbox', { name: /filename/i })).toHaveValue('custom-name.json');
 
     await commitSave(user);
@@ -1965,9 +1964,7 @@ describe('SaveProvisionedDashboardForm', () => {
 
     await goToCommitStep(user);
 
-    // The dirty filename survives, but its directory follows the pick instead of pinning the old one
-    const folderCombobox = screen.getByRole('combobox', { name: /repository folder/i });
-    await waitFor(() => expect(folderCombobox).toHaveValue('Picked Folder'));
+    // The dirty filename survives, and its directory follows the pick instead of pinning the old one
     expect(screen.getByRole('textbox', { name: /filename/i })).toHaveValue('custom-name.json');
   });
 

@@ -95,7 +95,15 @@ export function SaveProvisionedDashboardForm({
   const { isDirty } = dashboard.useState();
   const [error, setError] = useState<string | undefined>(undefined);
   const [outcome, setOutcome] = useState<DashboardCommitOutcome | undefined>(undefined);
-  const [step, setStep] = useState<'details' | 'commit'>('details');
+  // An update usually has nothing to fill in before the commit: the details step only has content
+  // for a new dashboard, a copy, or a change the common options can carry. Without it the step
+  // would be an empty screen behind a Next button, so such a save opens on the commit directly.
+  const hasDetailsStep =
+    isNew ||
+    Boolean(saveAsCopy) ||
+    (!readOnly &&
+      Boolean(changeInfo.hasTimeChanges || changeInfo.hasRefreshChange || changeInfo.hasVariableValueChanges));
+  const [step, setStep] = useState<'details' | 'commit'>(hasDetailsStep ? 'details' : 'commit');
   // The title check that gates the commit step is a round trip, so the advance owns its own
   // pending flag rather than borrowing the form's (`trigger` does not raise `isValidating`).
   const [isAdvancing, setIsAdvancing] = useState(false);
@@ -537,6 +545,9 @@ export function SaveProvisionedDashboardForm({
 
   if (outcome) {
     const prUrl = appendPullRequestTitleParam(outcome.urls?.newPullRequestURL, repository?.type, prTitle);
+    const repoUrl = outcome.urls?.repositoryURL ?? repository?.url;
+    // A plain git remote opens no pull request, so the way out to the server is the repository itself.
+    const externalUrl = prUrl || (outcome.ref ? repoUrl : undefined);
     return (
       <Stack direction="column" gap={3}>
         <ProvisionedCommitSuccess
@@ -544,17 +555,17 @@ export function SaveProvisionedDashboardForm({
           branch={outcome.ref}
           configuredBranch={repository?.branch}
           repoType={repository?.type}
-          repoUrl={outcome.urls?.repositoryURL ?? repository?.url}
+          repoUrl={repoUrl}
           commitMessage={outcome.message}
           commitHash={outcome.hash}
           sourceUrl={outcome.urls?.sourceURL}
         />
         <Stack gap={2} wrap="wrap">
-          {prUrl && (
-            <LinkButton href={prUrl} target="_blank" variant="primary" icon="external-link-alt">
-              <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.open-pull-request">
-                Open pull request
-              </Trans>
+          {externalUrl && (
+            <LinkButton href={externalUrl} target="_blank" variant="primary" icon="external-link-alt">
+              {prUrl
+                ? t('dashboard-scene.save-provisioned-dashboard-form.open-pull-request', 'Open pull request')
+                : t('dashboard-scene.save-provisioned-dashboard-form.open-repository', 'Open repository')}
             </LinkButton>
           )}
           {outcome.viewUrl && (
@@ -744,6 +755,9 @@ export function SaveProvisionedDashboardForm({
                 lockComment={locked}
                 commitMessage={message}
                 lockBranch={lockBranch}
+                // A new dashboard picks its destination with the Target folder on the details step,
+                // which is what sets the repository directory; asking again here would ask twice.
+                hiddenFields={isNew ? ['folder'] : undefined}
               />
 
               {error && <ProvisioningAlert error={error} />}
@@ -787,7 +801,7 @@ export function SaveProvisionedDashboardForm({
             >
               {primaryLabel()}
             </Button>
-            {step === 'commit' ? (
+            {step === 'commit' && hasDetailsStep ? (
               <Button variant="secondary" fill="outline" icon="angle-left" onClick={() => setStep('details')}>
                 <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.back-to-details">Back to details</Trans>
               </Button>

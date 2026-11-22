@@ -73,6 +73,14 @@ export function ProvisionedCommitSuccess({
               </Trans>
             )}
           </Text>
+          {/* A plain git remote has no pull request API, so opening one is a manual step. */}
+          {!isDirect && repoType === 'git' && (
+            <Text variant="bodySmall" color="secondary">
+              <Trans i18nKey="provisioning.commit-success.open-pull-request-yourself">
+                Open the repository and create a pull or merge request from the branch you saved to.
+              </Trans>
+            </Text>
+          )}
         </Stack>
       </Stack>
 

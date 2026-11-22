@@ -1,6 +1,7 @@
 import { HttpResponse, http } from 'msw';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { SceneObjectBase, type SceneObjectRef, type SceneObjectState } from '@grafana/scenes';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
@@ -122,8 +123,26 @@ async function goBackToDetails(user: User) {
   await screen.findByRole('button', { name: /^next$/i });
 }
 
-function repositoryFolder() {
-  return (screen.getByLabelText(/Repository folder/i) as HTMLInputElement).value;
+/** Captures the path a commit writes to, which is where the picked folder now shows up. */
+function captureCommitPath() {
+  const seen: { path?: string } = {};
+  const handler = ({ request }: { request: Request }) => {
+    seen.path = decodeURIComponent(new URL(request.url).pathname.split('/files/')[1] ?? '');
+    // The form builds a save response from the upserted resource, so it has to come back.
+    return HttpResponse.json({
+      resource: { upsert: { metadata: { name: 'my-dash' }, spec: { title: 'My Dash' } } },
+    });
+  };
+  server.use(
+    http.post(`${BASE}/repositories/:name/files/*`, handler),
+    http.put(`${BASE}/repositories/:name/files/*`, handler)
+  );
+  return seen;
+}
+
+async function commit(user: User) {
+  await goToCommitStep(user);
+  await user.click(screen.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
 }
 
 function filename() {
@@ -223,47 +242,43 @@ describe('SaveProvisionedDashboard in the save drawer', () => {
   it("moves the file to the repository root when the picker's root row is chosen", async () => {
     const { user } = setup();
     await screen.findByTestId('pick-folder');
-    await goToCommitStep(user);
-    expect(repositoryFolder()).toBe('team-a');
+    const committed = captureCommitPath();
 
-    await goBackToDetails(user);
     await user.click(screen.getByTestId('pick-root'));
+    await commit(user);
 
-    await goToCommitStep(user);
-    await waitFor(() => expect(repositoryFolder()).toBe(''));
-    expect(filename()).toBe('my-dash.json');
+    await waitFor(() => expect(committed.path).toBe('my-dash.json'));
   });
 
   it('moves the file into a newly picked folder', async () => {
     const { user, dashboard } = setup();
     await screen.findByTestId('pick-folder');
 
+    const committed = captureCommitPath();
     await user.click(screen.getByTestId('pick-folder'));
 
     await waitFor(() => expect(dashboard.state.meta.folderUid).toBe('f1'));
-    await goToCommitStep(user);
-    await waitFor(() => expect(repositoryFolder()).toBe('team-b'));
+    await commit(user);
+
+    await waitFor(() => expect(committed.path).toBe('team-b/my-dash.json'));
   });
 
   it('returns to the repository root after a provisioned folder was picked', async () => {
     const { user, dashboard } = setup();
     await screen.findByTestId('pick-folder');
 
+    const committed = captureCommitPath();
     await user.click(screen.getByTestId('pick-folder'));
-    await goToCommitStep(user);
-    await waitFor(() => expect(repositoryFolder()).toBe('team-b'));
-
-    await goBackToDetails(user);
     await user.click(screen.getByTestId('pick-root'));
 
     await waitFor(() => expect(dashboard.state.meta.folderUid).toBe(''));
-    await goToCommitStep(user);
-    await waitFor(() => expect(repositoryFolder()).toBe(''));
-    expect(screen.getByRole('button', { name: /^commit to/i })).toBeEnabled();
+    await commit(user);
+
+    await waitFor(() => expect(committed.path).toBe('my-dash.json'));
   });
 
   it('never shows a throwaway timestamped filename while the folder changes', async () => {
-    const { user } = setupNewDashboard();
+    const { user, dashboard } = setupNewDashboard();
     await screen.findByTestId('pick-folder');
     await goToCommitStep(user);
     expect(filename()).toBe('my-dash.json');
@@ -273,12 +288,10 @@ describe('SaveProvisionedDashboard in the save drawer', () => {
 
     await goBackToDetails(user);
     await user.click(screen.getByTestId('pick-folder'));
-    await goToCommitStep(user);
-    await waitFor(() => expect(repositoryFolder()).toBe('team-b'));
-    await goBackToDetails(user);
+    await waitFor(() => expect(dashboard.state.meta.folderUid).toBe('f1'));
     await user.click(screen.getByTestId('pick-root'));
+    await waitFor(() => expect(dashboard.state.meta.folderUid).toBe(''));
     await goToCommitStep(user);
-    await waitFor(() => expect(repositoryFolder()).toBe(''));
 
     observer.disconnect();
 
@@ -303,8 +316,7 @@ describe('SaveProvisionedDashboard in the save drawer', () => {
     await waitFor(() => expect(dashboard.state.meta.folderUid).toBe(''));
     await waitFor(() => expect(screen.queryByText('The selected folder cannot be saved to')).not.toBeInTheDocument());
     await goToCommitStep(user);
-    await waitFor(() => expect(repositoryFolder()).toBe(''));
-    expect(screen.getByRole('button', { name: /^commit to/i })).toBeEnabled();
+    expect(await screen.findByRole('button', { name: /^commit to/i })).toBeEnabled();
   });
 
   it('suffixes a copy title once, even after a folder pick recomputes the defaults', async () => {
@@ -317,7 +329,6 @@ describe('SaveProvisionedDashboard in the save drawer', () => {
     await goBackToDetails(user);
     await user.click(screen.getByTestId('pick-folder'));
     await goToCommitStep(user);
-    await waitFor(() => expect(repositoryFolder()).toBe('team-b'));
     expect(filename()).toBe('my-dash-copy.json');
 
     await goBackToDetails(user);
@@ -336,7 +347,6 @@ describe('SaveProvisionedDashboard in the save drawer', () => {
     expect(screen.queryByText(/no longer exists/)).not.toBeInTheDocument();
 
     await goToCommitStep(user);
-    expect(repositoryFolder()).toBe('');
     await waitFor(() => expect(filename()).toBe('my-dash.json'));
   });
 
@@ -347,7 +357,6 @@ describe('SaveProvisionedDashboard in the save drawer', () => {
     expect(await screen.findByRole('textbox', { name: /^title$/i })).toBeInTheDocument();
 
     await goToCommitStep(user);
-    expect(repositoryFolder()).toBe('');
     await waitFor(() => expect(filename()).toBe('my-dash.json'));
   });
 
@@ -359,10 +368,7 @@ describe('SaveProvisionedDashboard in the save drawer', () => {
     await user.click(await screen.findByRole('button', { name: /new folder/i }));
     await user.type(screen.getByRole('textbox', { name: /folder name/i }), 'team-c');
     await user.click(screen.getByRole('button', { name: /^create$/i }));
-    await goToCommitStep(user);
-    await waitFor(() => expect(repositoryFolder()).toBe('team-c'));
 
-    await goBackToDetails(user);
     const title = screen.getByRole('textbox', { name: /^title$/i });
     await user.clear(title);
     await user.type(title, 'Renamed');
@@ -375,7 +381,9 @@ describe('SaveProvisionedDashboard in the save drawer', () => {
       drawer.setState({ showDiff: false });
     });
 
-    await goToCommitStep(user);
-    expect(repositoryFolder()).toBe('team-c');
+    const committed = captureCommitPath();
+    await commit(user);
+    // The directory is what must survive; whether the title re-synced the filename is not the point.
+    await waitFor(() => expect(committed.path).toMatch(/^team-c\//));
   });
 });

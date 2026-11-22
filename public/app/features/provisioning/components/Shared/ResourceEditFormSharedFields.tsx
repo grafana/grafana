@@ -26,7 +26,7 @@ import { type ResourceKindKey } from '../../utils/resourceKinds';
 import { getWorkflowForRef, isKnownRef } from '../../utils/workflow';
 import { joinPath, splitPath } from '../utils/path';
 
-type SharedFieldName = 'path' | 'comment';
+type SharedFieldName = 'path' | 'folder' | 'comment';
 
 interface DashboardEditFormSharedFieldsProps {
   resourceType: ResourceKindKey;
@@ -257,45 +257,47 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
               const { directory: dir, filename: file } = splitPath(value || '');
               return (
                 <>
-                  <Field
-                    noMargin
-                    htmlFor="folder-path"
-                    label={t(
-                      'provisioned-resource-form.save-or-delete-resource-shared-fields.label-repository-folder',
-                      'Repository folder'
-                    )}
-                    description={
-                      configuredRepoPath
-                        ? t(
-                            'provisioned-resource-form.save-or-delete-resource-shared-fields.description-folder-with-path',
-                            'Folder inside the repository. Leave empty for the configured repository path ({{path}}).',
-                            { path: configuredRepoPath, interpolation: { escapeValue: false } }
-                          )
-                        : t(
-                            'provisioned-resource-form.save-or-delete-resource-shared-fields.description-folder',
-                            'Folder inside the repository. Leave empty for the repository root.'
-                          )
-                    }
-                  >
-                    <Combobox
-                      id="folder-path"
-                      value={dir}
-                      onChange={(option) => {
-                        setValue('path', joinPath(option?.value ?? '', file), {
-                          shouldDirty: !isNew,
-                          shouldValidate: true,
-                        });
-                      }}
-                      options={folderOptions}
-                      loading={isFoldersLoading}
-                      createCustomValue
-                      isClearable
-                      placeholder={t(
-                        'provisioned-resource-form.save-or-delete-resource-shared-fields.placeholder-folder',
-                        'Select or enter folder path'
+                  {!hiddenFields?.includes('folder') && (
+                    <Field
+                      noMargin
+                      htmlFor="folder-path"
+                      label={t(
+                        'provisioned-resource-form.save-or-delete-resource-shared-fields.label-repository-folder',
+                        'Repository folder'
                       )}
-                    />
-                  </Field>
+                      description={
+                        configuredRepoPath
+                          ? t(
+                              'provisioned-resource-form.save-or-delete-resource-shared-fields.description-folder-with-path',
+                              'Folder inside the repository. Leave empty for the configured repository path ({{path}}).',
+                              { path: configuredRepoPath, interpolation: { escapeValue: false } }
+                            )
+                          : t(
+                              'provisioned-resource-form.save-or-delete-resource-shared-fields.description-folder',
+                              'Folder inside the repository. Leave empty for the repository root.'
+                            )
+                      }
+                    >
+                      <Combobox
+                        id="folder-path"
+                        value={dir}
+                        onChange={(option) => {
+                          setValue('path', joinPath(option?.value ?? '', file), {
+                            shouldDirty: !isNew,
+                            shouldValidate: true,
+                          });
+                        }}
+                        options={folderOptions}
+                        loading={isFoldersLoading}
+                        createCustomValue
+                        isClearable
+                        placeholder={t(
+                          'provisioned-resource-form.save-or-delete-resource-shared-fields.placeholder-folder',
+                          'Select or enter folder path'
+                        )}
+                      />
+                    </Field>
+                  )}
                   <Field
                     noMargin
                     htmlFor="dashboard-filename"

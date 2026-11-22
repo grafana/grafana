@@ -1,4 +1,4 @@
-import { Trans, t } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Button, LinkButton, Stack } from '@grafana/ui';
 import { type RepositoryUrLs, type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
@@ -36,6 +36,9 @@ export function BulkActionOutcome({
   onDismiss,
 }: Props) {
   const prUrl = appendPullRequestTitleParam(urls?.newPullRequestURL, repository.type, prTitle);
+  const repoUrl = urls?.repositoryURL ?? repository.url;
+  // A plain git remote opens no pull request, so the way out to the server is the repository itself.
+  const externalUrl = prUrl || (jobRef ? repoUrl : undefined);
 
   return (
     <Stack direction="column" gap={3}>
@@ -44,14 +47,16 @@ export function BulkActionOutcome({
         branch={jobRef}
         configuredBranch={repository.branch}
         repoType={repository.type}
-        repoUrl={urls?.repositoryURL ?? repository.url}
+        repoUrl={repoUrl}
         commitMessage={commitMessage}
         count={count}
       />
       <Stack gap={2} wrap="wrap">
-        {prUrl && (
-          <LinkButton href={prUrl} target="_blank" variant="primary" icon="external-link-alt">
-            <Trans i18nKey="provisioning.bulk-action-outcome.open-pull-request">Open pull request</Trans>
+        {externalUrl && (
+          <LinkButton href={externalUrl} target="_blank" variant="primary" icon="external-link-alt">
+            {prUrl
+              ? t('provisioning.bulk-action-outcome.open-pull-request', 'Open pull request')
+              : t('provisioning.bulk-action-outcome.open-repository', 'Open repository')}
           </LinkButton>
         )}
         <Button variant="secondary" onClick={onDismiss}>
