@@ -132,6 +132,8 @@ export const resourceKindInfos = {
  */
 export type ResourceKindKey = keyof typeof resourceKindInfos;
 
+export type AnyResourceKindKey = ResourceKindKey | (string & {});
+
 /**
  * Tree-view labels for the provisioning *resource* kinds (`Folder`, `Dashboard`, ...), derived from
  * the registry's `kind`s so the set stays in lockstep with the kinds above. The full tree

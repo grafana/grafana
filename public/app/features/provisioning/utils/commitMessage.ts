@@ -1,10 +1,10 @@
 import { t } from '@grafana/i18n';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
-import { type ResourceKindKey } from './resourceKinds';
+import { type AnyResourceKindKey } from './resourceKinds';
 
 type CommitAction = 'create' | 'update' | 'delete' | 'move' | 'rename';
-type CommitResourceKind = ResourceKindKey;
+type CommitResourceKind = AnyResourceKindKey;
 type CommitResourceID = string;
 
 interface BaseCommitTemplateVars {

@@ -25,10 +25,10 @@ import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { getManagerIdentity, getSourcePath, type ManagedResource } from '../../utils/managedResource';
 import {
+  type AnyResourceKindKey,
+  getKindInfoByGroupKind,
   getKindKeyByGroupKind,
-  resourceKindInfos,
   type ResourceKindInfo,
-  type ResourceKindKey,
 } from '../../utils/resourceKinds';
 import { getRequestRef } from '../../utils/workflow';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
@@ -101,7 +101,8 @@ export type SaveProvisionedResourceDrawerProps = BaseDrawerProps &
   ({ action: 'create'; repositoryName: string } | { action: 'update' | 'delete'; repositoryName?: never });
 
 interface FormProps {
-  kindKey: ResourceKindKey;
+  kindKey: AnyResourceKindKey;
+  kind: ResourceKindInfo;
   redirectUrl: string;
   resourceName: string;
   title: string;
@@ -117,6 +118,7 @@ interface FormProps {
 
 function FormContent({
   kindKey,
+  kind,
   redirectUrl,
   resourceName,
   title,
@@ -130,7 +132,6 @@ function FormContent({
   onDismiss,
 }: FormProps) {
   const [error, setError] = useState<string | undefined>(undefined);
-  const kind: ResourceKindInfo = resourceKindInfos[kindKey];
   const isDelete = action === 'delete';
   // New resources are POSTed (create), existing ones PUT (replace). The wrapper keys off the
   // original path: passing it selects update, omitting it selects create.
@@ -274,8 +275,10 @@ function FormContent({
 export function SaveProvisionedResourceDrawer(props: SaveProvisionedResourceDrawerProps) {
   // The resource carries its own identity: its API group (from apiVersion) + Kubernetes kind resolve
   // the registry key, so callers don't pass the kind separately.
-  const kindKey = getKindKeyByGroupKind(props.resource.apiVersion?.split('/')[0], props.resource.kind);
-  if (!kindKey) {
+  const group = props.resource.apiVersion?.split('/')[0];
+  const kind = getKindInfoByGroupKind(group, props.resource.kind);
+  const kindKey = getKindKeyByGroupKind(group, props.resource.kind) ?? kind?.kind.toLowerCase();
+  if (!kind || !kindKey) {
     // Pages only open this for known managed resources, so an unresolved kind means a bad fixture or a
     // new kind wired into a page before its registry entry exists. Warn in dev so it's a visible signal
     // rather than a silent no-op where the user clicks save/delete and nothing happens.
@@ -286,13 +289,17 @@ export function SaveProvisionedResourceDrawer(props: SaveProvisionedResourceDraw
     }
     return null;
   }
-  return <ResourceDrawerContent {...props} kindKey={kindKey} />;
+  return <ResourceDrawerContent {...props} kindKey={kindKey} kind={kind} />;
 }
 
-type ResourceDrawerContentProps = SaveProvisionedResourceDrawerProps & { kindKey: ResourceKindKey };
+type ResourceDrawerContentProps = SaveProvisionedResourceDrawerProps & {
+  kindKey: AnyResourceKindKey;
+  kind: ResourceKindInfo;
+};
 
 function ResourceDrawerContent({
   kindKey,
+  kind,
   redirectUrl,
   resource,
   action,
@@ -342,7 +349,7 @@ function ResourceDrawerContent({
 
   // Title combines a shared translated template with the kind's translated noun (interpolated, so
   // translators control word order), instead of a per-kind "Save/Delete provisioned <kind>" string.
-  const resourceLabel = resourceKindInfos[kindKey].getLabel({ upperFirst: false });
+  const resourceLabel = kind.getLabel({ upperFirst: false });
   const drawerTitle = isDelete
     ? t('provisioning.save-resource.drawer-title-delete', 'Delete provisioned {{resource}}', {
         resource: resourceLabel,
@@ -387,6 +394,7 @@ function ResourceDrawerContent({
         {initialValues && (
           <FormContent
             kindKey={kindKey}
+            kind={kind}
             redirectUrl={redirectUrl}
             resourceName={resourceName}
             title={title}
