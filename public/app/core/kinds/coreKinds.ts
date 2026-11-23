@@ -83,7 +83,7 @@ export const CORE_KINDS = {
     getLabel: label(() => t('core-kinds.playlist.label', 'playlist')),
     getPluralLabel: label(() => t('core-kinds.playlist.label-plural', 'playlists')),
     icon: 'presentation-play',
-    iconColor: 'semi-dark-orange',
+    iconColor: 'semi-dark-yellow',
     // The edit page, not /playlists/play, which starts the fullscreen slideshow at once
     getRoute: page('/playlists/edit'),
   },
