@@ -3,7 +3,7 @@ import { useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { rangeUtil, type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import {
   Box,
@@ -15,6 +15,7 @@ import {
   Modal,
   RadioButtonGroup,
   Stack,
+  TextArea,
   TextLink,
   useStyles2,
 } from '@grafana/ui';
@@ -29,6 +30,7 @@ import { canCreateNotebooks, canEditNotebooks } from '../permissions';
 import { type PanelElement } from '../types';
 import { loadSourceForEntryPoint, notebookEditHref, notebookViewUrl } from '../urls';
 
+import { ConvertToAbsoluteField } from './ConvertToAbsoluteField';
 import { CreateNotebookFields } from './CreateNotebookFields';
 import { LockTimeRangeField } from './LockTimeRangeField';
 import { NotebookPickerList } from './NotebookPickerList';
@@ -41,7 +43,12 @@ import {
   createNotebookWithContent,
 } from './addPanelToNotebook';
 import { type AppendedCellSource, type AppendedElement } from './appendPanelToNotebook';
-import { shouldLockCapturedTimeRange, withCapturedTimeRange, type CapturedTimeRange } from './capturedTimeRange';
+import {
+  shouldLockCapturedTimeRange,
+  toAbsoluteCapturedTimeRange,
+  withCapturedTimeRange,
+  type CapturedTimeRange,
+} from './capturedTimeRange';
 import { getSortOptions, useNotebookPicker } from './useNotebookPicker';
 
 const FORM_ID = 'add-panel-to-notebook';
@@ -55,6 +62,7 @@ interface BaseProps {
   onDismiss: () => void;
   /** Which surface opened this modal, for the notebook_created analytics event when it creates one. */
   entryPoint: NotebookEntryPoint;
+  originPluginId?: string;
   /** Prefills the new-notebook title. */
   defaultTitle?: string;
   /** Called once the write succeeds, after the toast. */
@@ -91,39 +99,63 @@ interface CellsProps extends BaseProps {
 
 type Props = SinglePanelProps | CellsProps;
 
+interface LockOptions {
+  lockTimeRange: boolean;
+  convertToAbsolute: boolean;
+}
+
 /**
  * Locks whenever asked, relative windows included: the checkbox named this panel's own window. Applied
  * here rather than in either builder, which serialize what the source has without deciding what the
  * notebook keeps.
  */
-async function buildSinglePanelCell(props: SinglePanelProps, lockTimeRange: boolean): Promise<AppendedElement[]> {
+async function buildSinglePanelCell(
+  props: SinglePanelProps,
+  { lockTimeRange, convertToAbsolute }: LockOptions
+): Promise<AppendedElement[]> {
   const built = await props.buildPanel();
-  const panel = lockTimeRange ? withCapturedTimeRange(built, props.capturedTimeRange) : built;
+  const range = convertToAbsolute ? toAbsoluteCapturedTimeRange(props.capturedTimeRange) : props.capturedTimeRange;
+  const panel = lockTimeRange ? withCapturedTimeRange(built, range) : built;
   return [{ kind: 'panel', panel, isLibraryPanel: props.isLibraryPanel }];
 }
 
-async function buildCells(cells: AddNotebookCell[], lockTimeRange: boolean): Promise<AppendedElement[]> {
+async function buildCells(
+  cells: AddNotebookCell[],
+  { lockTimeRange, convertToAbsolute }: LockOptions
+): Promise<AppendedElement[]> {
   return Promise.all(
     cells.map(async (cell): Promise<AppendedElement> => {
       if (cell.kind === 'markdown') {
         return { kind: 'markdown', text: cell.text };
       }
       const built = await cell.buildPanel();
-      // Only absolute captures lock: a relative one has no window to keep and follows the notebook.
-      const lock = lockTimeRange && shouldLockCapturedTimeRange(cell.capturedTimeRange);
-      return { kind: 'panel', panel: lock ? withCapturedTimeRange(built, cell.capturedTimeRange) : built };
+      // Only absolute captures lock, unless the person asked to pin relative ones to the instants they
+      // cover now: otherwise a relative one has no window to keep and follows the notebook.
+      const pinRelative = convertToAbsolute && rangeUtil.isRelativeTimeRange(cell.capturedTimeRange);
+      const lock = lockTimeRange && (pinRelative || shouldLockCapturedTimeRange(cell.capturedTimeRange));
+      const range = pinRelative ? toAbsoluteCapturedTimeRange(cell.capturedTimeRange) : cell.capturedTimeRange;
+      return { kind: 'panel', panel: lock ? withCapturedTimeRange(built, range) : built };
     })
   );
 }
 
+// The conversion only applies while the field offering it is on screen, so a choice made and then hidden
+// again by unlocking is not carried into the write.
+function lockOptions(values: AddPanelFormValues): LockOptions {
+  return { lockTimeRange: values.lockTimeRange, convertToAbsolute: values.lockTimeRange && values.convertToAbsolute };
+}
+
 export function AddPanelToNotebookModalBody(props: Props) {
-  const { onDismiss, entryPoint, defaultTitle, onAdded } = props;
+  const { onDismiss, entryPoint, defaultTitle, onAdded, originPluginId } = props;
   // With several cells the checkbox offers only what it can lock; a single panel can be locked either way.
   const capturedTimeRanges = props.cells
     ? props.cells.flatMap((cell) =>
         cell.kind === 'panel' && shouldLockCapturedTimeRange(cell.capturedTimeRange) ? [cell.capturedTimeRange] : []
       )
     : [props.capturedTimeRange];
+  const hasRelativeTimeRange = props.cells
+    ? props.cells.some((cell) => cell.kind === 'panel' && rangeUtil.isRelativeTimeRange(cell.capturedTimeRange))
+    : rangeUtil.isRelativeTimeRange(props.capturedTimeRange);
   const styles = useStyles2(getStyles);
   const canAddToExisting = canEditNotebooks();
   const canCreate = canCreateNotebooks();
@@ -148,8 +180,15 @@ export function AddPanelToNotebookModalBody(props: Props) {
       saveTarget: saveTargets[0]?.value,
       title: defaultTitle ?? '',
       lockTimeRange: capturedTimeRanges.some(shouldLockCapturedTimeRange),
+      convertToAbsolute: false,
+      note: '',
     },
   });
+
+  // Shown for any relative capture so it can be found, but only usable while the window is locked:
+  // unlocked, the panel follows the notebook's range and there is nothing to resolve.
+  const lockTimeRange = watch('lockTimeRange');
+  const showConvertToAbsolute = hasRelativeTimeRange && capturedTimeRanges.length > 0;
 
   // With only one route open to this user there is nothing to choose, so the control is not rendered
   // and the single permitted target stands in for what it would have said.
@@ -185,6 +224,7 @@ export function AddPanelToNotebookModalBody(props: Props) {
       }
 
       isSubmittingRef.current = true;
+      const hasText = values.note.trim().length > 0;
 
       // A failed serialize and a failed write both land in the catch below, as plain Errors. This
       // tells them apart.
@@ -194,13 +234,31 @@ export function AddPanelToNotebookModalBody(props: Props) {
       try {
         const title = values.title.trim();
         const source = props.cellSource ?? 'user';
-        const cells = props.cells
-          ? await buildCells(props.cells, values.lockTimeRange)
-          : await buildSinglePanelCell(props, values.lockTimeRange);
+        const built = props.cells
+          ? await buildCells(props.cells, lockOptions(values))
+          : await buildSinglePanelCell(props, lockOptions(values));
+        const note = values.note.trim();
+        const cells: AppendedElement[] = note ? [{ kind: 'markdown', text: note }, ...built] : built;
         panelWasBuilt = true;
         added = existingUid
-          ? await addToExistingNotebook(existingUid, cells, entryPoint, source, values.lockTimeRange)
-          : await createNotebookWithContent({ title }, cells, entryPoint, source, values.lockTimeRange);
+          ? await addToExistingNotebook(
+              existingUid,
+              cells,
+              entryPoint,
+              source,
+              values.lockTimeRange,
+              hasText,
+              originPluginId
+            )
+          : await createNotebookWithContent(
+              { title },
+              cells,
+              entryPoint,
+              source,
+              values.lockTimeRange,
+              hasText,
+              originPluginId
+            );
 
         dispatch(
           notifyApp(
@@ -231,7 +289,9 @@ export function AddPanelToNotebookModalBody(props: Props) {
           entryPoint,
           existingUid ? NOTEBOOK_ADD_TARGET.EXISTING : NOTEBOOK_ADD_TARGET.NEW,
           addPanelFailureReason(error, panelWasBuilt),
-          values.lockTimeRange
+          values.lockTimeRange,
+          hasText,
+          originPluginId
         );
 
         dispatch(notifyApp(createErrorNotification(addPanelErrorMessage(error))));
@@ -348,12 +408,28 @@ export function AddPanelToNotebookModalBody(props: Props) {
               />
             )}
 
+            <Field
+              noMargin
+              label={t('notebooks.add-panel.note-label', 'Text above the panel (optional)')}
+              description={t(
+                'notebooks.add-panel.note-description',
+                'Added to the notebook as a text block before the panel.'
+              )}
+            >
+              <TextArea {...register('note')} id="add-panel-note" rows={3} disabled={isSubmitting} />
+            </Field>
+
             {/* Wrapped so the column Stack stretches the div rather than the Checkbox inside. Checkbox is
                 an inline-grid with no column sizes, so stretching it hands the spare width to the
                 checkbox column and pushes the label away from its box. */}
             {capturedTimeRanges.length > 0 && (
               <div>
                 <LockTimeRangeField control={control} capturedTimeRanges={capturedTimeRanges} disabled={isSubmitting} />
+              </div>
+            )}
+            {showConvertToAbsolute && (
+              <div>
+                <ConvertToAbsoluteField control={control} disabled={isSubmitting || !lockTimeRange} />
               </div>
             )}
           </Stack>

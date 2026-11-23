@@ -519,7 +519,7 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 		UserID:  1,
 		UserUID: "user-uid-1",
 		OrgID:   1,
-		OrgRole: identity.RoleAdmin,
+		OrgRole: types.RoleAdmin,
 		Login:   "testuser",
 		Name:    "Test User",
 	})
@@ -715,32 +715,28 @@ func TestIntegrationSQLBackendWatchesFromNATS(t *testing.T) {
 	writerEvents, err := writer.WatchWriteEvents(ctx)
 	require.NoError(t, err)
 
-	created, err := unitest.WriteEvent(ctx, writer, "item", resourcepb.WatchEvent_ADDED)
-	require.NoError(t, err)
-	updated, err := unitest.WriteEvent(ctx, writer, "item", resourcepb.WatchEvent_MODIFIED, unitest.WithNamespaceAndRV("namespace", created))
-	require.NoError(t, err)
-	deleted, err := unitest.WriteEvent(ctx, writer, "item", resourcepb.WatchEvent_DELETED, unitest.WithNamespaceAndRV("namespace", updated))
-	require.NoError(t, err)
+	streams := map[string]<-chan *resource.WrittenEvent{"other instance": readerEvents, "writing instance": writerEvents}
+	var previousRV int64
+	for _, typ := range []resourcepb.WatchEvent_Type{resourcepb.WatchEvent_ADDED, resourcepb.WatchEvent_MODIFIED, resourcepb.WatchEvent_DELETED} {
+		rv, err := unitest.WriteEvent(ctx, writer, "item", typ, unitest.WithNamespaceAndRV("namespace", previousRV))
+		require.NoError(t, err)
 
-	want := []struct {
-		typ    resourcepb.WatchEvent_Type
-		rv     int64
-		prevRV int64
-	}{
-		{resourcepb.WatchEvent_ADDED, created, 0},
-		{resourcepb.WatchEvent_MODIFIED, updated, created},
-		{resourcepb.WatchEvent_DELETED, deleted, updated},
-	}
-	for name, events := range map[string]<-chan *resource.WrittenEvent{"other instance": readerEvents, "writing instance": writerEvents} {
-		for _, w := range want {
+		for name, events := range streams {
 			got := receiveWritten(t, events)
-			require.Equal(t, w.typ, got.Type, name)
-			require.Equal(t, w.rv, got.ResourceVersion, name)
-			require.Equal(t, w.prevRV, got.PreviousRV, name)
+			require.Equal(t, typ, got.Type, name)
+			require.Equal(t, rv, got.ResourceVersion, name)
+			require.Equal(t, previousRV, got.PreviousRV, name)
 			require.Equal(t, "item", got.Key.Name, name)
 			require.Equal(t, "folderuid", got.Folder, name)
-			require.Contains(t, string(got.Value), "item "+w.typ.String(), name)
+			require.Contains(t, string(got.Value), "item "+typ.String(), name)
+
+			listRV, err := reader.ListIterator(ctx, &resourcepb.ListRequest{
+				Options: &resourcepb.ListOptions{Key: got.Key},
+			}, func(resource.ListIterator) error { return nil })
+			require.NoError(t, err)
+			require.GreaterOrEqual(t, listRV, got.ResourceVersion, "a current list RV must cover an already published event")
 		}
+		previousRV = rv
 	}
 }
 

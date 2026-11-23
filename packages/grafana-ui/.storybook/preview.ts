@@ -33,7 +33,14 @@ const handleThemeChange = (theme: GrafanaTheme2) => {
   }
 };
 
-const allowedExtraThemes: string[] = ['deut_prot_dark', 'deut_prot_light', 'tritanopia_dark', 'tritanopia_light'];
+const allowedExtraThemes: string[] = [
+  'deut_prot_dark',
+  'deut_prot_light',
+  'tritanopia_dark',
+  'tritanopia_light',
+  'visual_refresh_dark',
+  'visual_refresh_light',
+];
 
 if (process.env.NODE_ENV === 'development') {
   allowedExtraThemes.push('debug');
@@ -42,8 +49,6 @@ if (process.env.NODE_ENV === 'development') {
   allowedExtraThemes.push('gloom');
   allowedExtraThemes.push('sapphiredusk');
   allowedExtraThemes.push('tron');
-  allowedExtraThemes.push('visual_refresh_dark');
-  allowedExtraThemes.push('visual_refresh_light');
 }
 
 /*

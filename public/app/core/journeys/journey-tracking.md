@@ -19,6 +19,7 @@ This documentation describes the Critical User Journey tracking framework in Gra
     - [panel_edit](#panel_edit)
     - [datasource_configure](#datasource_configure)
     - [explore_to_dashboard](#explore_to_dashboard)
+    - [datasource_picker_select](#datasource_picker_select)
   - [Adding a New Journey](#adding-a-new-journey)
     - [Step 0: Decide whether you need a journey](#step-0-decide-whether-you-need-a-journey)
     - [Step 1: Plan the journey shape](#step-1-plan-the-journey-shape)
@@ -316,6 +317,33 @@ User adds a panel from Explore to a dashboard via the "Add to dashboard" form.
 **Silent interactions added by this journey:** `explore_to_dashboard_panel_applied` (emitted by `addPanelsOnLoadBehavior` when the panel is applied), `e_2_d_discarded` (emitted on form dismiss).
 
 **Key behavior:** Single-tab case ends on success cleanly. New-tab case currently times out after 60 seconds because the `panel_applied` event fires in a different tab and cross-tab correlation is not implemented. Cross-tab correlation is a backlog item.
+
+### datasource_picker_select
+
+**File:** `public/app/core/journeys/datasourcePickerSelect.ts`
+
+User opens the data source picker dropdown and selects a data source. The same `DataSourcePicker` is used in Explore, the panel query editor, query/ad hoc/group by variable editors, annotation editors and alerting, so the journey records a `surface` attribute. It comes from the URL, or from the picker's `journeySurface` prop where the URL can't tell (variable and annotation editors, including the dashboard edit pane). Data source variables use a plain type select, not the picker, so they are not covered.
+
+| Event           | Trigger                                                                            | Action                                                                                                                                                               |
+| --------------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Start           | `dashboards_dspicker_opened`                                                       | Dropdown opened by click, typing or arrow keys; records `surface`                                                                                                    |
+| Step (duration) | `dashboards_dspicker_list_rendered`                                                | Ends the `list_render` step once the list's rows are painted; then sets `totalConfigured` (all data sources, counted once per session)                               |
+| Event           | `dashboards_dspicker_clicked` / `dashboards_dspickermodal_clicked` (`item=search`) | `search` event                                                                                                                                                       |
+| Event           | `item=config_new_ds_empty_state` (dropdown or modal)                               | `config_new_ds` event; the link opens a new tab and the picker stays open. If the user stays in the new tab for over 60s, the journey ends as abandoned (hidden tab) |
+| Event           | `dashboards_dspicker_clicked` (`item=open_advanced_ds_picker`)                     | `open_advanced` event; later selection is tagged `selectedIn=modal`                                                                                                  |
+| End (success)   | `dashboards_dspicker_clicked` (`item=select_ds`)                                   | A different data source was selected (`changed=true`)                                                                                                                |
+| End (success)   | `dashboards_dspicker_current_reselected`                                           | The current data source was picked again, in the dropdown or the advanced modal (`changed=false`)                                                                    |
+| End (discarded) | `dashboards_dspicker_dismissed`                                                    | Dropdown closed without a selection                                                                                                                                  |
+| End (discarded) | `dashboards_dspickermodal_clicked` (`item=dismiss`)                                | Advanced modal closed without a selection                                                                                                                            |
+| End (abandoned) | `dashboards_dspicker_dismissed` (`reason=unmount`)                                 | Picker unmounted while open                                                                                                                                          |
+| End (abandoned) | Route pathname change                                                              | User navigated away                                                                                                                                                  |
+| End (abandoned) | `dashboards_dspickermodal_clicked` (`item=config_new_ds`)                          | User closed the advanced modal to configure a new data source                                                                                                        |
+
+**Silent interactions added by this journey:** `dashboards_dspicker_opened`, `dashboards_dspicker_dismissed`, `dashboards_dspicker_current_reselected` and `dashboards_dspicker_list_rendered`, all reported from `DataSourcePicker.tsx` (`DataSourceList` only calls back when its rows are painted). Each carries the open's `cycle_id`, and the journey ignores events from another open, so a late event from one picker can't end another picker's journey.
+
+**Key behavior:** The `list_render` step is the time from opening the dropdown until the list has been filtered, sorted and its visible rows painted (two animation frames after mount, so the virtualizer has rendered the rows). It is the main signal for instances with very many data sources; exclude `filtered=true` steps (opened by typing, so the list mounted already narrowed) when analyzing full-list render time. Modal events count only when the modal was opened from the picker (`src=ds_picker`), not when it's opened on its own, as from the query editor. Every open starts a fresh journey, and `cancelOnRestart` cancels any instance still active. The journey nests under `panel_edit` or `dashboard_edit` when either is active. `totalConfigured` is counted once per session. Once it's known, every later journey sets it when it starts, so all outcomes carry it; the first open of a session gets it after `list_render`, unless the journey has already ended.
+
+**Known gaps:** browsers pause animation frames in background tabs, so a `list_render` step during which the user switches tabs includes the hidden time. The `search` event and the advanced modal's events don't carry `cycle_id`; they're only sent while that picker or its modal is open, and a pending search is sent before the open ends.
 
 ## Adding a New Journey
 
