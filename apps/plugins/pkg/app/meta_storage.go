@@ -259,6 +259,11 @@ func (s *MetaStorage) Get(ctx context.Context, name string, options *metav1.GetO
 		Name:      name,
 	})
 	if err != nil {
+		// Only classify context errors; other errors (e.g. NotFound) already carry the right status.
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			logger.Warn("Get plugin request ended before completion", "name", name, "error", err)
+			return nil, wrapStorageError(fmt.Errorf("failed to get plugin: %w", err), "get", s.gr, name)
+		}
 		return nil, err
 	}
 

@@ -224,6 +224,27 @@ func TestMetaStorage_List_ClientCancelledIsNotReportedAsServerFault(t *testing.T
 	assert.EqualValues(t, 499, statusErr.Status().Code, "a client cancellation must not be reported as a 500")
 }
 
+func TestMetaStorage_Get_ClientCancelledIsNotReportedAsServerFault(t *testing.T) {
+	provider := meta.NewProviderManager(&stubProvider{})
+
+	mockClient := &mockResourceClient{
+		getFunc: func(_ context.Context, _ resource.Identifier) (resource.Object, error) {
+			return nil, context.Canceled
+		},
+	}
+
+	storage := NewMetaStorage(&logging.NoOpLogger{}, provider, func(_ context.Context) (*pluginsv0alpha1.PluginClient, error) {
+		return pluginsv0alpha1.NewPluginClient(mockClient), nil
+	})
+
+	_, err := storage.Get(testContext("default"), "test-plugin", &metav1.GetOptions{})
+	require.Error(t, err)
+
+	var statusErr *apierrors.StatusError
+	require.True(t, errors.As(err, &statusErr), "expected a *apierrors.StatusError, got %T", err)
+	assert.EqualValues(t, 499, statusErr.Status().Code)
+}
+
 func TestWrapStorageError(t *testing.T) {
 	gr := schema.GroupResource{Group: "plugins.grafana.app", Resource: "metas"}
 
