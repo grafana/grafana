@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -318,7 +319,7 @@ func shouldNudgeRepo(t *testing.T, h *common.GitTestHelper, repoName string) boo
 	if repo.Status.Sync.Finished == 0 {
 		return false
 	}
-	syncInterval := time.Duration(repo.Spec.Sync.IntervalSeconds) * time.Second
+	syncInterval := time.Duration(ptr.Deref(repo.Spec.Sync.IntervalSeconds, 0)) * time.Second
 	// shouldResync() uses a 1s tolerance on the controller side; match it here
 	// so we don't race the controller with a nudge that's a few ms too early.
 	tolerance := time.Second

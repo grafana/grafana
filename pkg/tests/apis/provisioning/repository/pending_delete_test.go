@@ -9,6 +9,7 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
@@ -41,7 +42,7 @@ func TestIntegrationProvisioning_PendingDeleteLabel_SkipsReconciliation(t *testi
 	// Mutate the spec (changing the sync interval increments metadata.Generation)
 	// and simultaneously set the pending-delete label.  Both mutations go in one
 	// Update so the controller sees the label from the very first reconcile attempt.
-	newInterval := initialRepo.Spec.Sync.IntervalSeconds + 10
+	newInterval := ptr.Deref(initialRepo.Spec.Sync.IntervalSeconds, 0) + 10
 	repoObj.Object["spec"].(map[string]interface{})["sync"].(map[string]interface{})["intervalSeconds"] = newInterval
 
 	labels := repoObj.GetLabels()

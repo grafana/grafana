@@ -5,6 +5,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
@@ -32,21 +33,21 @@ func Validate(_ context.Context, obj runtime.Object, resolver *LocalFolderResolv
 	var list field.ErrorList
 
 	// The path value must be set for local provisioning
-	if cfg.Path == "" {
+	if ptr.Deref(cfg.Path, "") == "" {
 		list = append(list, field.Required(field.NewPath("spec", "local", "path"), "must enter a path to local file"))
 		return list
 	}
 
-	if err := safepath.IsSafe(cfg.Path); err != nil {
-		list = append(list, field.Invalid(field.NewPath("spec", "local", "path"), cfg.Path, err.Error()))
+	if err := safepath.IsSafe(ptr.Deref(cfg.Path, "")); err != nil {
+		list = append(list, field.Invalid(field.NewPath("spec", "local", "path"), ptr.Deref(cfg.Path, ""), err.Error()))
 		return list
 	}
 
 	// Check if it is valid according to permitted prefixes
 	if resolver != nil {
-		_, err := resolver.LocalPath(cfg.Path)
+		_, err := resolver.LocalPath(ptr.Deref(cfg.Path, ""))
 		if err != nil {
-			list = append(list, field.Invalid(field.NewPath("spec", "local", "path"), cfg.Path, err.Error()))
+			list = append(list, field.Invalid(field.NewPath("spec", "local", "path"), ptr.Deref(cfg.Path, ""), err.Error()))
 		}
 	}
 

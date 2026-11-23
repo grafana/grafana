@@ -16,6 +16,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -1107,16 +1108,16 @@ func (r *gitRepository) createSignature(ctx context.Context) (nanogit.Author, na
 		author.Time = time.Now()
 	}
 
-	if commit := r.config.Spec.Commit; commit != nil && (commit.AuthorName != "" || commit.AuthorEmail != "") {
-		author.Name = cmp.Or(commit.AuthorName, "Grafana")
-		author.Email = cmp.Or(commit.AuthorEmail, "noreply@grafana.com")
+	if commit := r.config.Spec.Commit; commit != nil && (ptr.Deref(commit.AuthorName, "") != "" || ptr.Deref(commit.AuthorEmail, "") != "") {
+		author.Name = cmp.Or(ptr.Deref(commit.AuthorName, ""), "Grafana")
+		author.Email = cmp.Or(ptr.Deref(commit.AuthorEmail, ""), "noreply@grafana.com")
 	}
 
 	committer := nanogit.Committer(author)
-	if commit := r.config.Spec.Commit; commit != nil && (commit.SignerName != "" || commit.SignerEmail != "") {
-		committer.Name = cmp.Or(commit.SignerName, "Grafana")
-		committer.Email = cmp.Or(commit.SignerEmail, "noreply@grafana.com")
-		if commit.SignerIsAuthor {
+	if commit := r.config.Spec.Commit; commit != nil && (ptr.Deref(commit.SignerName, "") != "" || ptr.Deref(commit.SignerEmail, "") != "") {
+		committer.Name = cmp.Or(ptr.Deref(commit.SignerName, ""), "Grafana")
+		committer.Email = cmp.Or(ptr.Deref(commit.SignerEmail, ""), "noreply@grafana.com")
+		if ptr.Deref(commit.SignerIsAuthor, false) {
 			author.Name = committer.Name
 			author.Email = committer.Email
 		}

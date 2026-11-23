@@ -44,7 +44,7 @@ func ghRepo(ns, connName string, webhookDisabled bool) *provisioning.Repository 
 		Spec: provisioning.RepositorySpec{
 			Type: provisioning.RepositorySpecTypeGithub,
 			Github: &provisioning.RepositoryGitHubRepositoryConfig{
-				Url: "https://github.com/org/repo",
+				Url: new("https://github.com/org/repo"),
 			},
 		},
 	}
@@ -52,7 +52,7 @@ func ghRepo(ns, connName string, webhookDisabled bool) *provisioning.Repository 
 		r.Spec.Connection = &provisioning.RepositoryConnectionInfo{Name: connName}
 	}
 	if webhookDisabled {
-		r.Spec.Webhook = &provisioning.RepositoryWebhookConfig{Disabled: true}
+		r.Spec.Webhook = &provisioning.RepositoryWebhookConfig{Disabled: new(true)}
 	}
 	return r
 }

@@ -172,9 +172,9 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					Type: provisioning.RepositorySpecTypeGithub,
 					Sync: provisioning.RepositorySyncOptions{Enabled: false},
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url:    "https://github.com/org/repo",
+						Url:    new("https://github.com/org/repo"),
 						Branch: "main",
-						Path:   "grafana/",
+						Path:   new("grafana/"),
 					},
 				},
 			},
@@ -184,9 +184,9 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Type: provisioning.RepositorySpecTypeGithub,
 						Github: &provisioning.RepositoryGitHubRepositoryConfig{
-							Url:    "https://github.com/org/repo",
+							Url:    new("https://github.com/org/repo"),
 							Branch: "main",
-							Path:   "grafana/",
+							Path:   new("grafana/"),
 						},
 					},
 				},
@@ -202,8 +202,8 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					Type: provisioning.RepositorySpecTypeGithub,
 					Sync: provisioning.RepositorySyncOptions{Enabled: false},
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url:  "https://github.com/org/repo",
-						Path: "",
+						Url:  new("https://github.com/org/repo"),
+						Path: new(""),
 					},
 				},
 			},
@@ -213,9 +213,9 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Type: provisioning.RepositorySpecTypeGithub,
 						Github: &provisioning.RepositoryGitHubRepositoryConfig{
-							Url:    "https://github.com/org/repo",
+							Url:    new("https://github.com/org/repo"),
 							Branch: "main",
-							Path:   "",
+							Path:   new(""),
 						},
 					},
 				},
@@ -231,9 +231,9 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					Type: provisioning.RepositorySpecTypeGithub,
 					Sync: provisioning.RepositorySyncOptions{Enabled: false},
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url:    "https://github.com/org/repo",
+						Url:    new("https://github.com/org/repo"),
 						Branch: "main",
-						Path:   "",
+						Path:   new(""),
 					},
 				},
 			},
@@ -243,9 +243,9 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Type: provisioning.RepositorySpecTypeGithub,
 						Github: &provisioning.RepositoryGitHubRepositoryConfig{
-							Url:    "https://github.com/org/repo",
+							Url:    new("https://github.com/org/repo"),
 							Branch: "main",
-							Path:   "",
+							Path:   new(""),
 						},
 					},
 				},
@@ -261,8 +261,8 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					Type: provisioning.RepositorySpecTypeGithub,
 					Sync: provisioning.RepositorySyncOptions{Enabled: true},
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url:  "https://github.com/org/repo2",
-						Path: "",
+						Url:  new("https://github.com/org/repo2"),
+						Path: new(""),
 					},
 				},
 			},
@@ -272,8 +272,8 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Type: provisioning.RepositorySpecTypeGithub,
 						Github: &provisioning.RepositoryGitHubRepositoryConfig{
-							Url:  "https://github.com/org/repo1",
-							Path: "",
+							Url:  new("https://github.com/org/repo1"),
+							Path: new(""),
 						},
 					},
 				},
@@ -289,9 +289,9 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					Type: provisioning.RepositorySpecTypeGithub,
 					Sync: provisioning.RepositorySyncOptions{Enabled: true},
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url:    "https://github.com/org/repo",
+						Url:    new("https://github.com/org/repo"),
 						Branch: "develop",
-						Path:   "grafana/",
+						Path:   new("grafana/"),
 					},
 				},
 			},
@@ -301,9 +301,9 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Type: provisioning.RepositorySpecTypeGithub,
 						Github: &provisioning.RepositoryGitHubRepositoryConfig{
-							Url:    "https://github.com/org/repo",
+							Url:    new("https://github.com/org/repo"),
 							Branch: "main",
-							Path:   "grafana/",
+							Path:   new("grafana/"),
 						},
 					},
 				},
@@ -319,9 +319,9 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					Type: provisioning.RepositorySpecTypeGithub,
 					Sync: provisioning.RepositorySyncOptions{Enabled: true},
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url:    "https://github.com/org/repo",
+						Url:    new("https://github.com/org/repo"),
 						Branch: "develop",
-						Path:   "",
+						Path:   new(""),
 					},
 				},
 			},
@@ -331,9 +331,9 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Type: provisioning.RepositorySpecTypeGithub,
 						Github: &provisioning.RepositoryGitHubRepositoryConfig{
-							Url:    "https://github.com/org/repo",
+							Url:    new("https://github.com/org/repo"),
 							Branch: "main",
-							Path:   "",
+							Path:   new(""),
 						},
 					},
 				},
@@ -349,9 +349,9 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					Type: provisioning.RepositorySpecTypeGithub,
 					Sync: provisioning.RepositorySyncOptions{Enabled: true},
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url:    "https://github.com/org/repo",
+						Url:    new("https://github.com/org/repo"),
 						Branch: "develop",
-						Path:   "grafana/dashboards/",
+						Path:   new("grafana/dashboards/"),
 					},
 				},
 			},
@@ -361,9 +361,9 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Type: provisioning.RepositorySpecTypeGithub,
 						Github: &provisioning.RepositoryGitHubRepositoryConfig{
-							Url:    "https://github.com/org/repo",
+							Url:    new("https://github.com/org/repo"),
 							Branch: "main",
-							Path:   "grafana/",
+							Path:   new("grafana/"),
 						},
 					},
 				},
@@ -379,9 +379,9 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					Type: provisioning.RepositorySpecTypeGithub,
 					Sync: provisioning.RepositorySyncOptions{Enabled: true},
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url:    "https://github.com/org/repo",
+						Url:    new("https://github.com/org/repo"),
 						Branch: "main",
-						Path:   "grafana/",
+						Path:   new("grafana/"),
 					},
 				},
 			},
@@ -391,9 +391,9 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Type: provisioning.RepositorySpecTypeGithub,
 						Github: &provisioning.RepositoryGitHubRepositoryConfig{
-							Url:    "https://github.com/org/repo",
+							Url:    new("https://github.com/org/repo"),
 							Branch: "main",
-							Path:   "grafana/",
+							Path:   new("grafana/"),
 						},
 					},
 				},
@@ -409,7 +409,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					Type: provisioning.RepositorySpecTypeLocal,
 					Sync: provisioning.RepositorySyncOptions{Enabled: true},
 					Local: &provisioning.RepositoryLocalRepositoryConfig{
-						Path: "/data/grafana",
+						Path: new("/data/grafana"),
 					},
 				},
 			},
@@ -419,7 +419,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Type: provisioning.RepositorySpecTypeLocal,
 						Local: &provisioning.RepositoryLocalRepositoryConfig{
-							Path: "/data/grafana",
+							Path: new("/data/grafana"),
 						},
 					},
 				},
@@ -435,8 +435,8 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					Type: provisioning.RepositorySpecTypeGithub,
 					Sync: provisioning.RepositorySyncOptions{Enabled: false},
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url:  "https://github.com/org/repo",
-						Path: "grafana/dashboards/",
+						Url:  new("https://github.com/org/repo"),
+						Path: new("grafana/dashboards/"),
 					},
 				},
 			},
@@ -446,8 +446,8 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Type: provisioning.RepositorySpecTypeGithub,
 						Github: &provisioning.RepositoryGitHubRepositoryConfig{
-							Url:  "https://github.com/org/repo",
-							Path: "grafana/",
+							Url:  new("https://github.com/org/repo"),
+							Path: new("grafana/"),
 						},
 					},
 				},
@@ -463,8 +463,8 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					Type: provisioning.RepositorySpecTypeGithub,
 					Sync: provisioning.RepositorySyncOptions{Enabled: false},
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url:  "https://github.com/org/repo",
-						Path: "",
+						Url:  new("https://github.com/org/repo"),
+						Path: new(""),
 					},
 				},
 			},
@@ -474,8 +474,8 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Type: provisioning.RepositorySpecTypeGithub,
 						Github: &provisioning.RepositoryGitHubRepositoryConfig{
-							Url:  "https://github.com/org/repo",
-							Path: "grafana/",
+							Url:  new("https://github.com/org/repo"),
+							Path: new("grafana/"),
 						},
 					},
 				},
@@ -491,8 +491,8 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					Type: provisioning.RepositorySpecTypeGithub,
 					Sync: provisioning.RepositorySyncOptions{Enabled: true},
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url:  "https://github.com/org/repo",
-						Path: "other/",
+						Url:  new("https://github.com/org/repo"),
+						Path: new("other/"),
 					},
 				},
 			},
@@ -502,8 +502,8 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Type: provisioning.RepositorySpecTypeGithub,
 						Github: &provisioning.RepositoryGitHubRepositoryConfig{
-							Url:  "https://github.com/org/repo",
-							Path: "grafana/",
+							Url:  new("https://github.com/org/repo"),
+							Path: new("grafana/"),
 						},
 					},
 				},
@@ -519,8 +519,8 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					Type: provisioning.RepositorySpecTypeGithub,
 					Sync: provisioning.RepositorySyncOptions{Enabled: true},
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url:  "https://github.com/org/repo2",
-						Path: "grafana/",
+						Url:  new("https://github.com/org/repo2"),
+						Path: new("grafana/"),
 					},
 				},
 			},
@@ -530,8 +530,8 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Type: provisioning.RepositorySpecTypeGithub,
 						Github: &provisioning.RepositoryGitHubRepositoryConfig{
-							Url:  "https://github.com/org/repo1",
-							Path: "grafana/",
+							Url:  new("https://github.com/org/repo1"),
+							Path: new("grafana/"),
 						},
 					},
 				},

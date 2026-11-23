@@ -23,6 +23,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -117,7 +118,7 @@ func NewRepository(config *provisioning.Repository, resolver *LocalFolderResolve
 	}
 
 	if config.Spec.Local != nil {
-		r.path, _ = resolver.LocalPath(config.Spec.Local.Path)
+		r.path, _ = resolver.LocalPath(ptr.Deref(config.Spec.Local.Path, ""))
 		if r.path != "" && !safepath.IsDir(r.path) {
 			r.path += "/"
 		}
@@ -134,18 +135,18 @@ func (r *localRepository) Config() *provisioning.Repository {
 // NOTE: Validate has been called (and passed) before this function should be called
 func (r *localRepository) Test(ctx context.Context) (*provisioning.TestResults, error) {
 	path := field.NewPath("spec", "local", "path")
-	if r.config.Spec.Local.Path == "" {
+	if ptr.Deref(r.config.Spec.Local.Path, "") == "" {
 		return repository.FromFieldError(field.Required(path, "no path is configured")), nil
 	}
 
-	_, err := r.resolver.LocalPath(r.config.Spec.Local.Path)
+	_, err := r.resolver.LocalPath(ptr.Deref(r.config.Spec.Local.Path, ""))
 	if err != nil {
-		return repository.FromFieldError(field.Invalid(path, r.config.Spec.Local.Path, err.Error())), nil
+		return repository.FromFieldError(field.Invalid(path, ptr.Deref(r.config.Spec.Local.Path, ""), err.Error())), nil
 	}
 
 	_, err = os.Stat(r.path)
 	if errors.Is(err, os.ErrNotExist) {
-		return repository.FromFieldError(field.NotFound(path, r.config.Spec.Local.Path)), nil
+		return repository.FromFieldError(field.NotFound(path, ptr.Deref(r.config.Spec.Local.Path, ""))), nil
 	}
 
 	return &provisioning.TestResults{

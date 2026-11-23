@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -33,7 +34,7 @@ func TestNewGitHub(t *testing.T) {
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url:    "https://github.com/grafana/grafana",
+						Url:    new("https://github.com/grafana/grafana"),
 						Branch: "main",
 					},
 					Type: provisioning.RepositorySpecTypeGithub,
@@ -49,7 +50,7 @@ func TestNewGitHub(t *testing.T) {
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url:    "invalid-url",
+						Url:    new("invalid-url"),
 						Branch: "main",
 					},
 					Type: provisioning.RepositorySpecTypeGithub,
@@ -63,7 +64,7 @@ func TestNewGitHub(t *testing.T) {
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url:    "https://github.com/grafana/grafana.git",
+						Url:    new("https://github.com/grafana/grafana.git"),
 						Branch: "main",
 					},
 					Type: provisioning.RepositorySpecTypeGithub,
@@ -82,7 +83,7 @@ func TestNewGitHub(t *testing.T) {
 			factory.Client = http.DefaultClient
 
 			gitRepo := git.NewMockGitRepository(t)
-			gitRepo.EXPECT().URL().Return(tt.config.Spec.Github.Url).Maybe()
+			gitRepo.EXPECT().URL().Return(ptr.Deref(tt.config.Spec.Github.Url, "")).Maybe()
 
 			// Call the function under test
 			repo, err := NewRepository(
@@ -177,7 +178,7 @@ func TestGitHubRepositoryTest(t *testing.T) {
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url:    "https://github.com/grafana/grafana",
+						Url:    new("https://github.com/grafana/grafana"),
 						Branch: "main",
 					},
 					Type: provisioning.RepositorySpecTypeGithub,
@@ -204,7 +205,7 @@ func TestGitHubRepositoryTest(t *testing.T) {
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url:    "invalid-url",
+						Url:    new("invalid-url"),
 						Branch: "main",
 					},
 					Type: provisioning.RepositorySpecTypeGithub,
@@ -287,7 +288,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
-						Path:   "dashboards",
+						Path:   new("dashboards"),
 					},
 					Type: provisioning.RepositorySpecTypeGithub,
 				},
@@ -336,7 +337,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
-						Path:   "dashboards",
+						Path:   new("dashboards"),
 					},
 					Type: provisioning.RepositorySpecTypeGithub,
 				},
@@ -355,7 +356,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
-						Path:   "dashboards",
+						Path:   new("dashboards"),
 					},
 					Type: provisioning.RepositorySpecTypeGithub,
 				},
@@ -399,7 +400,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
-						Path:   "dashboards",
+						Path:   new("dashboards"),
 					},
 					Type: provisioning.RepositorySpecTypeGithub,
 				},
@@ -453,7 +454,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
-						Path:   "dashboards",
+						Path:   new("dashboards"),
 					},
 					Type: provisioning.RepositorySpecTypeGithub,
 				},
@@ -488,7 +489,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
-						Path:   "dashboards",
+						Path:   new("dashboards"),
 					},
 					Type: provisioning.RepositorySpecTypeGithub,
 				},
@@ -507,7 +508,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
-						Path:   "dashboards",
+						Path:   new("dashboards"),
 					},
 					Type: provisioning.RepositorySpecTypeGithub,
 				},
@@ -526,7 +527,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
-						Path:   "dashboards",
+						Path:   new("dashboards"),
 					},
 					Type: provisioning.RepositorySpecTypeGithub,
 				},
@@ -545,7 +546,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
-						Path:   "dashboards",
+						Path:   new("dashboards"),
 					},
 					Type: provisioning.RepositorySpecTypeGithub,
 				},
@@ -564,7 +565,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
-						Path:   "dashboards",
+						Path:   new("dashboards"),
 					},
 					Type: provisioning.RepositorySpecTypeGithub,
 				},
@@ -631,7 +632,7 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url:    "https://github.com/grafana/grafana",
+						Url:    new("https://github.com/grafana/grafana"),
 						Branch: "main",
 					},
 				},
@@ -652,9 +653,9 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url:    "https://github.com/grafana/grafana",
+						Url:    new("https://github.com/grafana/grafana"),
 						Branch: "main",
-						Path:   "grafana",
+						Path:   new("grafana"),
 					},
 				},
 			},
@@ -674,7 +675,7 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url:    "https://github.com/grafana/grafana",
+						Url:    new("https://github.com/grafana/grafana"),
 						Branch: "main",
 					},
 				},
@@ -695,7 +696,7 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url:    "https://github.com/grafana/grafana",
+						Url:    new("https://github.com/grafana/grafana"),
 						Branch: "main",
 					},
 				},
@@ -714,7 +715,7 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url:    "https://github.com/grafana/grafana",
+						Url:    new("https://github.com/grafana/grafana"),
 						Branch: "main",
 					},
 				},
@@ -772,7 +773,7 @@ func TestGitHubRepositoryRefURLs(t *testing.T) {
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url:    "https://github.com/grafana/grafana",
+						Url:    new("https://github.com/grafana/grafana"),
 						Branch: "main",
 					},
 				},
@@ -789,7 +790,7 @@ func TestGitHubRepositoryRefURLs(t *testing.T) {
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url:    "https://github.com/grafana/grafana",
+						Url:    new("https://github.com/grafana/grafana"),
 						Branch: "main",
 					},
 				},
@@ -804,7 +805,7 @@ func TestGitHubRepositoryRefURLs(t *testing.T) {
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url:    "https://github.com/grafana/grafana",
+						Url:    new("https://github.com/grafana/grafana"),
 						Branch: "main",
 					},
 				},
@@ -852,7 +853,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 	config := &provisioning.Repository{
 		Spec: provisioning.RepositorySpec{
 			Github: &provisioning.RepositoryGitHubRepositoryConfig{
-				Url:    "https://github.com/grafana/grafana",
+				Url:    new("https://github.com/grafana/grafana"),
 				Branch: "main",
 			},
 			Type: provisioning.RepositorySpecTypeGithub,
@@ -1074,7 +1075,7 @@ func TestGitHubRepositoryAccessors(t *testing.T) {
 	config := &provisioning.Repository{
 		Spec: provisioning.RepositorySpec{
 			Github: &provisioning.RepositoryGitHubRepositoryConfig{
-				Url:    "https://github.com/grafana/grafana",
+				Url:    new("https://github.com/grafana/grafana"),
 				Branch: "main",
 			},
 			Type: provisioning.RepositorySpecTypeGithub,
@@ -1132,7 +1133,7 @@ func TestGitHubRepositoryAccessors(t *testing.T) {
 		emptyBranchConfig := &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
 				Github: &provisioning.RepositoryGitHubRepositoryConfig{
-					Url:    "https://github.com/grafana/grafana",
+					Url:    new("https://github.com/grafana/grafana"),
 					Branch: "",
 				},
 				Type: provisioning.RepositorySpecTypeGithub,
@@ -1226,7 +1227,7 @@ func TestGitHubRepository_GetDefaultBranch(t *testing.T) {
 			config := &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url:    "https://github.com/grafana/grafana",
+						Url:    new("https://github.com/grafana/grafana"),
 						Branch: "",
 					},
 				},
@@ -1315,7 +1316,7 @@ func TestGithubRepository_Move(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.RepositorySpecTypeGithub,
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url: "https://github.com/example/repo",
+						Url: new("https://github.com/example/repo"),
 					},
 				},
 			}
@@ -1454,7 +1455,7 @@ func TestGitHubRepository_Test_BranchProtection(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Workflows: tt.workflows,
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url:    "https://github.com/grafana/grafana",
+						Url:    new("https://github.com/grafana/grafana"),
 						Branch: tt.branch,
 					},
 					Type: provisioning.RepositorySpecTypeGithub,
@@ -1674,7 +1675,7 @@ func TestGitHubRepository_Test_Rulesets(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Workflows: tt.workflows,
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url:    "https://github.com/grafana/grafana",
+						Url:    new("https://github.com/grafana/grafana"),
 						Branch: tt.branch,
 					},
 					Type: provisioning.RepositorySpecTypeGithub,
@@ -1830,7 +1831,7 @@ func TestGitHubRepository_Test_CombinedProtection(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Workflows: tt.workflows,
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url:    "https://github.com/grafana/grafana",
+						Url:    new("https://github.com/grafana/grafana"),
 						Branch: tt.branch,
 					},
 					Type: provisioning.RepositorySpecTypeGithub,
@@ -2016,9 +2017,9 @@ func TestGitHubRepository_Test_EmptyBranch(t *testing.T) {
 			config := &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url:    "https://github.com/grafana/grafana",
+						Url:    new("https://github.com/grafana/grafana"),
 						Branch: tt.initialBranch,
-						Path:   "grafana/",
+						Path:   new("grafana/"),
 					},
 					Type: provisioning.RepositorySpecTypeGithub,
 				},

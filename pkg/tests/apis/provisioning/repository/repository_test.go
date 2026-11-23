@@ -21,6 +21,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
@@ -835,7 +836,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		require.NoError(t, err)
 
 		createdRepo := common.MustFromUnstructured[provisioning.Repository](t, created)
-		require.Equal(t, int64(10), createdRepo.Spec.Sync.IntervalSeconds, "interval should be updated with default value")
+		require.Equal(t, int64(10), ptr.Deref(createdRepo.Spec.Sync.IntervalSeconds, 0), "interval should be updated with default value")
 	})
 
 	t.Run("should automatically add finalizers during creation", func(t *testing.T) {
@@ -1148,7 +1149,7 @@ func TestIntegrationProvisioning_WebhookConfig(t *testing.T) {
 
 		createdRepo := common.MustFromUnstructured[provisioning.Repository](t, created)
 		require.NotNil(t, createdRepo.Spec.Webhook, "webhook config should be persisted")
-		require.Equal(t, "https://grafana.example.com", createdRepo.Spec.Webhook.BaseUrl, "trailing slash should be trimmed by mutator")
+		require.Equal(t, "https://grafana.example.com", ptr.Deref(createdRepo.Spec.Webhook.BaseUrl, ""), "trailing slash should be trimmed by mutator")
 	})
 
 	t.Run("create repository with HTTP webhook base URL", func(t *testing.T) {
@@ -1185,7 +1186,7 @@ func TestIntegrationProvisioning_WebhookConfig(t *testing.T) {
 
 		createdRepo := common.MustFromUnstructured[provisioning.Repository](t, created)
 		require.NotNil(t, createdRepo.Spec.Webhook)
-		require.Equal(t, "http://internal-proxy.example.com", createdRepo.Spec.Webhook.BaseUrl, "trailing slash should be trimmed by mutator")
+		require.Equal(t, "http://internal-proxy.example.com", ptr.Deref(createdRepo.Spec.Webhook.BaseUrl, ""), "trailing slash should be trimmed by mutator")
 	})
 
 	t.Run("read back webhook config", func(t *testing.T) {
@@ -1194,7 +1195,7 @@ func TestIntegrationProvisioning_WebhookConfig(t *testing.T) {
 
 		repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
 		require.NotNil(t, repo.Spec.Webhook, "webhook config should be present on read")
-		require.Equal(t, "https://grafana.example.com", repo.Spec.Webhook.BaseUrl)
+		require.Equal(t, "https://grafana.example.com", ptr.Deref(repo.Spec.Webhook.BaseUrl, ""))
 	})
 
 	t.Run("update repository to change webhook base URL", func(t *testing.T) {
@@ -1203,7 +1204,7 @@ func TestIntegrationProvisioning_WebhookConfig(t *testing.T) {
 			require.NoError(t, err)
 
 			repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
-			repo.Spec.Webhook.BaseUrl = "https://new-proxy.example.com/"
+			repo.Spec.Webhook.BaseUrl = new("https://new-proxy.example.com/")
 			updated := common.MustToUnstructured(t, repo)
 
 			result, err := helper.Repositories.Resource.Update(t.Context(), updated, metav1.UpdateOptions{})
@@ -1211,7 +1212,7 @@ func TestIntegrationProvisioning_WebhookConfig(t *testing.T) {
 
 			updatedRepo := common.MustFromUnstructured[provisioning.Repository](t, result)
 			require.NotNil(collect, updatedRepo.Spec.Webhook)
-			assert.Equal(collect, "https://new-proxy.example.com", updatedRepo.Spec.Webhook.BaseUrl, "trailing slash should be trimmed by mutator")
+			assert.Equal(collect, "https://new-proxy.example.com", ptr.Deref(updatedRepo.Spec.Webhook.BaseUrl, ""), "trailing slash should be trimmed by mutator")
 		}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 	})
 

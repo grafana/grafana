@@ -10,6 +10,7 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
@@ -30,8 +31,8 @@ type WebhookExtraBuilder struct {
 
 // FIXME: separate the URL provider from connector to simplify operators
 func (b *WebhookExtraBuilder) WebhookURL(ctx context.Context, r *provisioning.Repository) string {
-	if r.Spec.Webhook != nil && r.Spec.Webhook.BaseUrl != "" {
-		return buildWebhookURL(r.Spec.Webhook.BaseUrl, r)
+	if r.Spec.Webhook != nil && ptr.Deref(r.Spec.Webhook.BaseUrl, "") != "" {
+		return buildWebhookURL(ptr.Deref(r.Spec.Webhook.BaseUrl, ""), r)
 	}
 
 	if !b.isPublic {

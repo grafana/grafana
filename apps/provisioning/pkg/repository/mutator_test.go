@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"strings"
 	"testing"
@@ -14,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authentication/user"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -107,7 +109,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test", Finalizers: []string{"existing"}},
 				Spec: provisioning.RepositorySpec{
-					Sync: provisioning.RepositorySyncOptions{IntervalSeconds: 0},
+					Sync: provisioning.RepositorySyncOptions{IntervalSeconds: new(int64(0))},
 				},
 			},
 			minSyncInterval: 60 * time.Second,
@@ -120,7 +122,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test", Finalizers: []string{"existing"}},
 				Spec: provisioning.RepositorySpec{
-					Sync: provisioning.RepositorySyncOptions{IntervalSeconds: 20},
+					Sync: provisioning.RepositorySyncOptions{IntervalSeconds: new(int64(20))},
 				},
 			},
 			minSyncInterval: 60 * time.Second,
@@ -133,7 +135,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test", Finalizers: []string{"existing"}},
 				Spec: provisioning.RepositorySpec{
-					Sync: provisioning.RepositorySyncOptions{IntervalSeconds: 120},
+					Sync: provisioning.RepositorySyncOptions{IntervalSeconds: new(int64(120))},
 				},
 			},
 			minSyncInterval: 60 * time.Second,
@@ -226,7 +228,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test", Finalizers: []string{"existing"}},
 				Spec: provisioning.RepositorySpec{
-					Webhook: &provisioning.RepositoryWebhookConfig{BaseUrl: "https://grafana.example.com/"},
+					Webhook: &provisioning.RepositoryWebhookConfig{BaseUrl: new("https://grafana.example.com/")},
 				},
 			},
 			operation:      admission.Create,
@@ -239,7 +241,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test", Finalizers: []string{"existing"}},
 				Spec: provisioning.RepositorySpec{
-					Webhook: &provisioning.RepositoryWebhookConfig{BaseUrl: "https://grafana.example.com///"},
+					Webhook: &provisioning.RepositoryWebhookConfig{BaseUrl: new("https://grafana.example.com///")},
 				},
 			},
 			operation:      admission.Create,
@@ -252,7 +254,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test", Finalizers: []string{"existing"}},
 				Spec: provisioning.RepositorySpec{
-					Webhook: &provisioning.RepositoryWebhookConfig{BaseUrl: "https://grafana.example.com"},
+					Webhook: &provisioning.RepositoryWebhookConfig{BaseUrl: new("https://grafana.example.com")},
 				},
 			},
 			operation:      admission.Create,
@@ -311,14 +313,14 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 				assert.Equal(t, tt.wantFinalizers, repo.Finalizers)
 			}
 			if tt.wantInterval > 0 {
-				assert.Equal(t, tt.wantInterval, repo.Spec.Sync.IntervalSeconds)
+				assert.Equal(t, tt.wantInterval, ptr.Deref(repo.Spec.Sync.IntervalSeconds, 0))
 			}
 			if tt.wantWorkflows != nil {
 				assert.Equal(t, tt.wantWorkflows, repo.Spec.Workflows)
 			}
 			if tt.wantWebhookURL != nil {
 				require.NotNil(t, repo.Spec.Webhook)
-				assert.Equal(t, *tt.wantWebhookURL, repo.Spec.Webhook.BaseUrl)
+				assert.Equal(t, *tt.wantWebhookURL, ptr.Deref(repo.Spec.Webhook.BaseUrl, ""))
 			}
 		})
 	}
@@ -330,7 +332,7 @@ func TestAdmissionMutator_Mutate_ForwardsOldObjectToFactory(t *testing.T) {
 	oldRepo := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test"},
 		Spec: provisioning.RepositorySpec{
-			Sync: provisioning.RepositorySyncOptions{IntervalSeconds: 30},
+			Sync: provisioning.RepositorySyncOptions{IntervalSeconds: new(int64(30))},
 		},
 	}
 	newRepo := &provisioning.Repository{
@@ -353,7 +355,7 @@ func TestAdmissionMutator_Mutate_SkipsSubresourcePatches(t *testing.T) {
 
 	repo := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test"},
-		Spec:       provisioning.RepositorySpec{Sync: provisioning.RepositorySyncOptions{IntervalSeconds: 0}},
+		Spec:       provisioning.RepositorySpec{Sync: provisioning.RepositorySyncOptions{IntervalSeconds: new(int64(0))}},
 	}
 	old := repo.DeepCopy()
 
@@ -365,17 +367,17 @@ func TestAdmissionMutator_Mutate_SkipsSubresourcePatches(t *testing.T) {
 	// Defaulting logic (finalizers, sync interval, workflows) must not run either -
 	// spec fields shouldn't be touched by a status-only patch.
 	assert.Empty(t, repo.Finalizers)
-	assert.Equal(t, int64(0), repo.Spec.Sync.IntervalSeconds)
+	assert.Equal(t, int64(0), ptr.Deref(repo.Spec.Sync.IntervalSeconds, 0))
 	assert.Nil(t, repo.Spec.Workflows)
 }
 
 func TestAdmissionMutator_Mutate_RunsForBundledSpecChange(t *testing.T) {
 	old := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test"},
-		Spec:       provisioning.RepositorySpec{Sync: provisioning.RepositorySyncOptions{IntervalSeconds: 0}},
+		Spec:       provisioning.RepositorySpec{Sync: provisioning.RepositorySyncOptions{IntervalSeconds: new(int64(0))}},
 	}
 	repo := old.DeepCopy()
-	repo.Spec.Sync.IntervalSeconds = 5 // below minSyncInterval, so defaulting must clamp it
+	repo.Spec.Sync.IntervalSeconds = new(int64(5)) // below minSyncInterval, so defaulting must clamp it
 
 	factory := NewMockFactory(t)
 	factory.EXPECT().Mutate(mock.Anything, mock.Anything, old).Return(nil).Once()
@@ -387,7 +389,46 @@ func TestAdmissionMutator_Mutate_RunsForBundledSpecChange(t *testing.T) {
 
 	// A bundled spec change on a /status request still goes through the normal
 	// spec mutation/defaulting path, not just the raw incoming value.
-	assert.Equal(t, int64(60), repo.Spec.Sync.IntervalSeconds)
+	assert.Equal(t, int64(60), ptr.Deref(repo.Spec.Sync.IntervalSeconds, 0))
+}
+
+func TestAdmissionMutator_Mutate_StoresZeroOptionalFieldsAsAbsent(t *testing.T) {
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test", Finalizers: []string{"existing"}},
+		Spec: provisioning.RepositorySpec{
+			Title:       "Test",
+			Description: new(""),
+			Type:        provisioning.RepositorySpecTypeGithub,
+			Workflows:   []provisioning.RepositorySpecWorkflows{},
+			Sync:        provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetFolder},
+			Github: &provisioning.RepositoryGitHubRepositoryConfig{
+				Url:                       new("https://github.com/grafana/example"),
+				Branch:                    "main",
+				Path:                      new(""),
+				GenerateDashboardPreviews: new(false),
+			},
+			Commit:  &provisioning.RepositoryCommitOptions{EnforceTemplate: new(false), SignerName: new("Grot")},
+			Webhook: &provisioning.RepositoryWebhookConfig{BaseUrl: new("")},
+		},
+	}
+
+	factory := NewMockFactory(t)
+	factory.EXPECT().Mutate(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+
+	m := NewAdmissionMutator(factory, 0)
+	require.NoError(t, m.Mutate(context.Background(), newMutatorTestAttributes(repo, nil, admission.Create), nil))
+
+	got, err := json.Marshal(repo.Spec)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{
+		"title": "Test",
+		"type": "github",
+		"workflows": [],
+		"sync": {"enabled": false, "target": "folder"},
+		"github": {"url": "https://github.com/grafana/example", "branch": "main"},
+		"commit": {"signerName": "Grot"},
+		"webhook": {}
+	}`, string(got))
 }
 
 func TestCopySecureValues(t *testing.T) {
@@ -472,7 +513,7 @@ func TestInvalidateConnectionTokenOnURLChange(t *testing.T) {
 		return &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
 				Type:       provisioning.RepositorySpecTypeGithub,
-				Github:     &provisioning.RepositoryGitHubRepositoryConfig{Url: url},
+				Github:     &provisioning.RepositoryGitHubRepositoryConfig{Url: new(url)},
 				Connection: &provisioning.RepositoryConnectionInfo{Name: "gh-app"},
 			},
 			Secure: provisioning.SecureValues{Token: token},
@@ -533,13 +574,13 @@ func TestInvalidateConnectionTokenOnURLChange(t *testing.T) {
 			new: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Type:   provisioning.RepositorySpecTypeGithub,
-					Github: &provisioning.RepositoryGitHubRepositoryConfig{Url: "https://github.com/grafana/new"},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{Url: new("https://github.com/grafana/new")},
 				},
 			},
 			old: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Type:   provisioning.RepositorySpecTypeGithub,
-					Github: &provisioning.RepositoryGitHubRepositoryConfig{Url: "https://github.com/grafana/old"},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{Url: new("https://github.com/grafana/old")},
 				},
 				Secure: provisioning.SecureValues{Token: resource.InlineSecureValue{Name: "old-token"}},
 			},
@@ -562,7 +603,7 @@ func TestInvalidateConnectionTokenDoesNotBypassHostCheck(t *testing.T) {
 		return &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
 				Type:       provisioning.RepositorySpecTypeGithub,
-				Github:     &provisioning.RepositoryGitHubRepositoryConfig{Url: url},
+				Github:     &provisioning.RepositoryGitHubRepositoryConfig{Url: new(url)},
 				Connection: &provisioning.RepositoryConnectionInfo{Name: "gh-app"},
 			},
 			Secure: provisioning.SecureValues{Token: token},
@@ -588,9 +629,9 @@ func TestAdmissionMutator_Mutate_InvalidatesAfterURLNormalization(t *testing.T) 
 			ObjectMeta: metav1.ObjectMeta{Name: "test", Finalizers: []string{CleanFinalizer}},
 			Spec: provisioning.RepositorySpec{
 				Type:       provisioning.RepositorySpecTypeGithub,
-				Github:     &provisioning.RepositoryGitHubRepositoryConfig{Url: url},
+				Github:     &provisioning.RepositoryGitHubRepositoryConfig{Url: new(url)},
 				Connection: &provisioning.RepositoryConnectionInfo{Name: "gh-app"},
-				Sync:       provisioning.RepositorySyncOptions{IntervalSeconds: 60},
+				Sync:       provisioning.RepositorySyncOptions{IntervalSeconds: new(int64(60))},
 			},
 		}
 	}
@@ -627,7 +668,7 @@ func TestAdmissionMutator_Mutate_InvalidatesAfterURLNormalization(t *testing.T) 
 			factory.EXPECT().Mutate(mock.Anything, mock.Anything, mock.Anything).
 				RunAndReturn(func(_ context.Context, obj runtime.Object, _ runtime.Object) error {
 					r := obj.(*provisioning.Repository)
-					r.Spec.Github.Url = strings.TrimSuffix(strings.TrimRight(r.Spec.Github.Url, "/"), ".git")
+					r.Spec.Github.Url = new(strings.TrimSuffix(strings.TrimRight(ptr.Deref(r.Spec.Github.Url, ""), "/"), ".git"))
 					return nil
 				}).Once()
 

@@ -74,7 +74,7 @@ func TestValidate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.RepositorySpecTypeGithub,
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url:    "http://github.com/grafana/grafana",
+						Url:    new("http://github.com/grafana/grafana"),
 						Branch: "main",
 					},
 				},
@@ -96,7 +96,7 @@ func TestValidate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.RepositorySpecTypeGithub,
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url:    "http://github.com/grafana/grafana",
+						Url:    new("http://github.com/grafana/grafana"),
 						Branch: "main",
 					},
 				},
@@ -117,7 +117,7 @@ func TestValidate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.RepositorySpecTypeGithub,
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url:    "http://github.com/grafana/grafana",
+						Url:    new("http://github.com/grafana/grafana"),
 						Branch: "main",
 					},
 				},
@@ -132,9 +132,9 @@ func TestValidate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.RepositorySpecTypeGithub,
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url:    "https://github.com/grafana/grafana",
+						Url:    new("https://github.com/grafana/grafana"),
 						Branch: "main",
-						Path:   "grafana",
+						Path:   new("grafana"),
 					},
 				},
 				Secure: provisioning.SecureValues{
@@ -151,10 +151,10 @@ func TestValidate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.RepositorySpecTypeGithub,
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url:    "https://github.com/grafana/grafana",
+						Url:    new("https://github.com/grafana/grafana"),
 						Branch: "main",
 					},
-					Webhook: &provisioning.RepositoryWebhookConfig{Disabled: true},
+					Webhook: &provisioning.RepositoryWebhookConfig{Disabled: new(true)},
 				},
 			},
 		},
@@ -165,12 +165,12 @@ func TestValidate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.RepositorySpecTypeGithub,
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url:    "https://github.com/grafana/grafana",
+						Url:    new("https://github.com/grafana/grafana"),
 						Branch: "main",
 					},
 					Webhook: &provisioning.RepositoryWebhookConfig{
-						Disabled: true,
-						BaseUrl:  "https://grafana.example.com",
+						Disabled: new(true),
+						BaseUrl:  new("https://grafana.example.com"),
 					},
 				},
 			},

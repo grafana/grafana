@@ -4,6 +4,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	openapicommon "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/validation/spec"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana-app-sdk/resource"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -52,7 +53,7 @@ func (v SecureValues) IsZero() bool {
 }
 
 type RepositoryLocalRepositoryConfig struct {
-	Path string `json:"path,omitempty"`
+	Path *string `json:"path,omitempty"`
 }
 
 func (RepositoryLocalRepositoryConfig) OpenAPIModelName() string {
@@ -72,7 +73,7 @@ const (
 
 type RepositoryGitHubRepositoryConfig struct {
 	// The repository URL (e.g. `https://github.com/example/test`).
-	Url string `json:"url,omitempty"`
+	Url *string `json:"url,omitempty"`
 
 	// The branch to use in the repository.
 	Branch string `json:"branch"`
@@ -80,14 +81,14 @@ type RepositoryGitHubRepositoryConfig struct {
 	// Whether we should show dashboard previews for pull requests.
 	// By default, this is false (i.e. we will not create previews).
 	// TODO: deprecate this field in favor of PullRequestOptions.GenerateDashboardPreviews once all Github repositories have been backfilled.
-	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`
+	GenerateDashboardPreviews *bool `json:"generateDashboardPreviews,omitempty"`
 
 	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
 	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
 	// The path is relative to the root of the repository, regardless of the leading slash.
 	//
 	// When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.
-	Path string `json:"path,omitempty"`
+	Path *string `json:"path,omitempty"`
 }
 
 func (RepositoryGitHubRepositoryConfig) OpenAPIModelName() string {
@@ -98,16 +99,16 @@ func (RepositoryGitHubRepositoryConfig) OpenAPIModelName() string {
 // GitHub Enterprise Server (GHES) instance.
 type RepositoryGitHubEnterpriseRepositoryConfig struct {
 	// The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).
-	ServerUrl string `json:"serverUrl,omitempty"`
+	ServerUrl *string `json:"serverUrl,omitempty"`
 
 	// The repository URL on the GHES server (e.g. `https://ghes.example.com/example/test`).
-	Url string `json:"url,omitempty"`
+	Url *string `json:"url,omitempty"`
 
 	// The branch to use in the repository.
 	Branch string `json:"branch"`
 
 	// Path is the subdirectory for the Grafana data inside the repository.
-	Path string `json:"path,omitempty"`
+	Path *string `json:"path,omitempty"`
 }
 
 func (RepositoryGitHubEnterpriseRepositoryConfig) OpenAPIModelName() string {
@@ -116,17 +117,17 @@ func (RepositoryGitHubEnterpriseRepositoryConfig) OpenAPIModelName() string {
 
 type RepositoryGitRepositoryConfig struct {
 	// The repository URL (e.g. `https://github.com/example/test`).
-	Url string `json:"url,omitempty"`
+	Url *string `json:"url,omitempty"`
 	// The branch to use in the repository.
 	Branch string `json:"branch"`
 	// TokenUser is the user that will be used to access the repository if it's a personal access token.
-	TokenUser string `json:"tokenUser,omitempty"`
+	TokenUser *string `json:"tokenUser,omitempty"`
 	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
 	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
 	// The path is relative to the root of the repository, regardless of the leading slash.
 	//
 	// When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.
-	Path string `json:"path,omitempty"`
+	Path *string `json:"path,omitempty"`
 }
 
 func (RepositoryGitRepositoryConfig) OpenAPIModelName() string {
@@ -135,19 +136,19 @@ func (RepositoryGitRepositoryConfig) OpenAPIModelName() string {
 
 type RepositoryBitbucketRepositoryConfig struct {
 	// The repository URL (e.g. `https://bitbucket.org/example/test`).
-	Url string `json:"url,omitempty"`
+	Url *string `json:"url,omitempty"`
 	// The branch to use in the repository.
 	Branch string `json:"branch"`
 	// TokenUser is the user that will be used to access the repository if it's a personal access token.
-	TokenUser string `json:"tokenUser,omitempty"`
+	TokenUser *string `json:"tokenUser,omitempty"`
 	// Email is the Atlassian account email used to authenticate the Bitbucket REST API. Required to enable webhooks.
-	Email string `json:"email,omitempty"`
+	Email *string `json:"email,omitempty"`
 	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
 	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
 	// The path is relative to the root of the repository, regardless of the leading slash.
 	//
 	// When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.
-	Path string `json:"path,omitempty"`
+	Path *string `json:"path,omitempty"`
 }
 
 func (RepositoryBitbucketRepositoryConfig) OpenAPIModelName() string {
@@ -156,7 +157,7 @@ func (RepositoryBitbucketRepositoryConfig) OpenAPIModelName() string {
 
 type RepositoryGitLabRepositoryConfig struct {
 	// The repository URL (e.g. `https://gitlab.com/example/test`).
-	Url string `json:"url,omitempty"`
+	Url *string `json:"url,omitempty"`
 	// The branch to use in the repository.
 	Branch string `json:"branch"`
 	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
@@ -164,13 +165,13 @@ type RepositoryGitLabRepositoryConfig struct {
 	// The path is relative to the root of the repository, regardless of the leading slash.
 	//
 	// When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.
-	Path string `json:"path,omitempty"`
+	Path *string `json:"path,omitempty"`
 
 	// RepoID is the GitLab project's immutable numeric ID. Resolved and set
 	// automatically whenever URL is set or changed; it survives a project
 	// transfer/move even if the project's path changes. Read-only: it is
 	// always system-derived and never taken from client-supplied input.
-	RepoID string `json:"repoID,omitempty"`
+	RepoID *string `json:"repoID,omitempty"`
 }
 
 func (RepositoryGitLabRepositoryConfig) OpenAPIModelName() string {
@@ -290,23 +291,23 @@ func (r *Repository) URL() string {
 	switch r.Spec.Type {
 	case RepositorySpecTypeGithub:
 		if r.Spec.Github != nil {
-			return r.Spec.Github.Url
+			return ptr.Deref(r.Spec.Github.Url, "")
 		}
 	case RepositorySpecTypeGithubEnterprise:
 		if r.Spec.GithubEnterprise != nil {
-			return r.Spec.GithubEnterprise.Url
+			return ptr.Deref(r.Spec.GithubEnterprise.Url, "")
 		}
 	case RepositorySpecTypeGit:
 		if r.Spec.Git != nil {
-			return r.Spec.Git.Url
+			return ptr.Deref(r.Spec.Git.Url, "")
 		}
 	case RepositorySpecTypeBitbucket:
 		if r.Spec.Bitbucket != nil {
-			return r.Spec.Bitbucket.Url
+			return ptr.Deref(r.Spec.Bitbucket.Url, "")
 		}
 	case RepositorySpecTypeGitlab:
 		if r.Spec.Gitlab != nil {
-			return r.Spec.Gitlab.Url
+			return ptr.Deref(r.Spec.Gitlab.Url, "")
 		}
 	default:
 		return ""
@@ -319,27 +320,27 @@ func (r *Repository) Path() string {
 	switch r.Spec.Type {
 	case RepositorySpecTypeGithub:
 		if r.Spec.Github != nil {
-			return r.Spec.Github.Path
+			return ptr.Deref(r.Spec.Github.Path, "")
 		}
 	case RepositorySpecTypeGithubEnterprise:
 		if r.Spec.GithubEnterprise != nil {
-			return r.Spec.GithubEnterprise.Path
+			return ptr.Deref(r.Spec.GithubEnterprise.Path, "")
 		}
 	case RepositorySpecTypeGit:
 		if r.Spec.Git != nil {
-			return r.Spec.Git.Path
+			return ptr.Deref(r.Spec.Git.Path, "")
 		}
 	case RepositorySpecTypeBitbucket:
 		if r.Spec.Bitbucket != nil {
-			return r.Spec.Bitbucket.Path
+			return ptr.Deref(r.Spec.Bitbucket.Path, "")
 		}
 	case RepositorySpecTypeGitlab:
 		if r.Spec.Gitlab != nil {
-			return r.Spec.Gitlab.Path
+			return ptr.Deref(r.Spec.Gitlab.Path, "")
 		}
 	case RepositorySpecTypeLocal:
 		if r.Spec.Local != nil {
-			return r.Spec.Local.Path
+			return ptr.Deref(r.Spec.Local.Path, "")
 		}
 	default:
 		return ""
@@ -352,9 +353,9 @@ func (r *Repository) ShouldGenerateDashboardPreviews() bool {
 	// GitHub keeps this on its own config until existing repositories are backfilled
 	// onto PullRequest options. Every other provider reads it from PullRequest.
 	if r.Spec.Type == RepositorySpecTypeGithub {
-		return r.Spec.Github != nil && r.Spec.Github.GenerateDashboardPreviews
+		return r.Spec.Github != nil && ptr.Deref(r.Spec.Github.GenerateDashboardPreviews, false)
 	}
-	return r.Spec.PullRequest != nil && r.Spec.PullRequest.GenerateDashboardPreviews
+	return r.Spec.PullRequest != nil && ptr.Deref(r.Spec.PullRequest.GenerateDashboardPreviews, false)
 }
 
 // ConnectionName returns the name of the connection referenced by this repository,
@@ -386,42 +387,42 @@ type RepositoryCommitOptions struct {
 	// Supports variables: {{action}}, {{resourceKind}}, {{resourceID}}, {{title}},
 	// {{userName}}, {{userLogin}}, {{userEmail}}.
 	// When empty, a built-in default is used (e.g. "Save dashboard: <title>").
-	SingleResourceMessageTemplate string `json:"singleResourceMessageTemplate,omitempty"`
+	SingleResourceMessageTemplate *string `json:"singleResourceMessageTemplate,omitempty"`
 
 	// When true, the Comment field in Save drawers is pre-filled from
 	// SingleResourceMessageTemplate and rendered read-only.
-	EnforceTemplate bool `json:"enforceTemplate,omitempty"`
+	EnforceTemplate *bool `json:"enforceTemplate,omitempty"`
 
 	// Name used as the commit author instead of the user who triggered the
 	// commit. Only valid when signingMethod is unset.
-	AuthorName string `json:"authorName,omitempty"`
+	AuthorName *string `json:"authorName,omitempty"`
 
 	// Email used as the commit author instead of the user who triggered the
 	// commit. Only valid when signingMethod is unset.
-	AuthorEmail string `json:"authorEmail,omitempty"`
+	AuthorEmail *string `json:"authorEmail,omitempty"`
 
 	// Name used as the commit signer. Required for the signing key's identity
 	// to match the commit, which providers need to mark commits as Verified. When
 	// empty, defaults to "Grafana".
-	SignerName string `json:"signerName,omitempty"`
+	SignerName *string `json:"signerName,omitempty"`
 
 	// Email used as the commit signer. Must match the signing key's identity
 	// and a verified email on the account where the matching public key is
 	// registered. When empty, defaults to "noreply@grafana.com".
-	SignerEmail string `json:"signerEmail,omitempty"`
+	SignerEmail *string `json:"signerEmail,omitempty"`
 
 	// Method used to sign commits with the key in secure.commitSigningKey. One of "gpg", "ssh", or "smime".
 	// When empty, commits are not signed.
-	SigningMethod RepositoryCommitOptionsSigningMethod `json:"signingMethod,omitempty"`
+	SigningMethod *RepositoryCommitOptionsSigningMethod `json:"signingMethod,omitempty"`
 
 	// When true, commits are authored by the signer identity
 	// (signerName/signerEmail).
-	SignerIsAuthor bool `json:"signerIsAuthor,omitempty"`
+	SignerIsAuthor *bool `json:"signerIsAuthor,omitempty"`
 
 	// PEM-encoded X.509 certificate paired with secure.commitSigningKey when
 	// signingMethod is "smime". This is public (not a secret) and is embedded
 	// in the commit signature. Unused for the gpg and ssh formats.
-	SmimeCertificate string `json:"smimeCertificate,omitempty"`
+	SmimeCertificate *string `json:"smimeCertificate,omitempty"`
 }
 
 // SigningMethod selects how commits are signed.
@@ -446,10 +447,10 @@ type RepositoryBranchOptions struct {
 	// time to avoid collisions. The result is sanitised to a valid git ref
 	// (lowercase, alphanumeric + dashes, max 100 chars).
 	// When empty, the current auto-generated name is preserved.
-	NameTemplate string `json:"nameTemplate,omitempty"`
+	NameTemplate *string `json:"nameTemplate,omitempty"`
 
 	// When true, the branch name field in Save drawers is read-only.
-	EnforceTemplate bool `json:"enforceTemplate,omitempty"`
+	EnforceTemplate *bool `json:"enforceTemplate,omitempty"`
 }
 
 func (RepositoryBranchOptions) OpenAPIModelName() string {
@@ -461,14 +462,14 @@ type RepositoryPullRequestOptions struct {
 	// Supports the same variables as BranchOptions.NameTemplate
 	// ({{random}} is available but rarely useful here).
 	// When empty, the first line of the commit message is used.
-	TitleTemplate string `json:"titleTemplate,omitempty"`
+	TitleTemplate *string `json:"titleTemplate,omitempty"`
 
 	// When true, the PR title field in Save drawers is read-only.
-	EnforceTemplate bool `json:"enforceTemplate,omitempty"`
+	EnforceTemplate *bool `json:"enforceTemplate,omitempty"`
 
 	// Whether we should show dashboard previews for pull requests.
 	// By default, this is false (i.e. we will not create previews).
-	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`
+	GenerateDashboardPreviews *bool `json:"generateDashboardPreviews,omitempty"`
 }
 
 func (RepositoryPullRequestOptions) OpenAPIModelName() string {
@@ -480,7 +481,7 @@ type RepositorySpec struct {
 	Title string `json:"title"`
 
 	// Repository description
-	Description string `json:"description,omitempty"`
+	Description *string `json:"description,omitempty"`
 
 	// Commit message options. Currently only contains the template used by
 	// single-resource UI operations; future siblings (bulk, sync) can live here.
@@ -582,7 +583,7 @@ type RepositorySyncOptions struct {
 	// The interval between sync runs.
 	// The system defines a default value for this field, which will overwrite the
 	// user-defined one in case the latter is zero or lower than the system-defined one.
-	IntervalSeconds int64 `json:"intervalSeconds,omitempty"`
+	IntervalSeconds *int64 `json:"intervalSeconds,omitempty"`
 }
 
 func (RepositorySyncOptions) OpenAPIModelName() string {
@@ -595,13 +596,13 @@ type RepositoryWebhookConfig struct {
 	// provided (e.g. `https://grafana.example.com`); the API path, namespace,
 	// and resource name are appended automatically. Trailing slashes are stripped.
 	// Must be a valid HTTP or HTTPS URL.
-	BaseUrl string `json:"baseUrl,omitempty"`
+	BaseUrl *string `json:"baseUrl,omitempty"`
 
 	// Disabled turns off webhook integration for this repository. When true,
 	// Grafana will not register or receive webhook events from the Git provider
 	// and will poll the repository on an interval instead. Use this when Grafana
 	// is not reachable from the public internet.
-	Disabled bool `json:"disabled,omitempty"`
+	Disabled *bool `json:"disabled,omitempty"`
 }
 
 func (RepositoryWebhookConfig) OpenAPIModelName() string {

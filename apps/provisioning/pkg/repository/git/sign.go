@@ -4,20 +4,21 @@ import (
 	"fmt"
 
 	"github.com/grafana/nanogit"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
 func SigningMethodFromSpec(r *provisioning.Repository) provisioning.RepositoryCommitOptionsSigningMethod {
 	if r.Spec.Commit != nil {
-		return r.Spec.Commit.SigningMethod
+		return ptr.Deref(r.Spec.Commit.SigningMethod, "")
 	}
 	return ""
 }
 
 func SMIMECertificateFromSpec(r *provisioning.Repository) string {
 	if r.Spec.Commit != nil {
-		return r.Spec.Commit.SmimeCertificate
+		return ptr.Deref(r.Spec.Commit.SmimeCertificate, "")
 	}
 	return ""
 }

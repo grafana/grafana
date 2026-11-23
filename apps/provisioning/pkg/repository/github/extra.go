@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -50,7 +51,7 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 	if r == nil || r.Spec.Github == nil {
 		return nil, fmt.Errorf("github configuration is required")
 	}
-	logger := logging.FromContext(ctx).With("url", r.Spec.Github.Url, "branch", r.Spec.Github.Branch, "path", r.Spec.Github.Path)
+	logger := logging.FromContext(ctx).With("url", ptr.Deref(r.Spec.Github.Url, ""), "branch", r.Spec.Github.Branch, "path", ptr.Deref(r.Spec.Github.Path, ""))
 	logger.Info("Instantiating Github repository")
 
 	secure := e.decrypter(r)
@@ -65,9 +66,9 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 	}
 
 	gitRepo, err := git.NewRepository(ctx, r, git.RepositoryConfig{
-		URL:              r.Spec.Github.Url,
+		URL:              ptr.Deref(r.Spec.Github.Url, ""),
 		Branch:           r.Spec.Github.Branch,
-		Path:             r.Spec.Github.Path,
+		Path:             ptr.Deref(r.Spec.Github.Path, ""),
 		Token:            token,
 		CommitSigningKey: signingKey,
 		SigningMethod:    git.SigningMethodFromSpec(r),
@@ -106,7 +107,7 @@ func MaybeWrapWithWebhook(
 	// used instead. Skip registration even if a webhook URL would otherwise be available.
 	// If there is a webhook already registered from a previous enabled state, wrap with
 	// GithubWebhookRepository anyway so OnUpdate can delete the stale hook from GitHub.
-	if r.Spec.Webhook != nil && r.Spec.Webhook.Disabled {
+	if r.Spec.Webhook != nil && ptr.Deref(r.Spec.Webhook.Disabled, false) {
 		if repository.GetID(r.Status.Webhook).IsEmpty() {
 			logger.Debug("Skipping webhook setup: webhook is disabled")
 			return base, nil

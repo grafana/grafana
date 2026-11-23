@@ -247,7 +247,7 @@ func TestIsWriteAllowed(t *testing.T) {
 					Type:      provisioning.RepositorySpecTypeGit,
 					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 					Git: &provisioning.RepositoryGitRepositoryConfig{
-						Url:    "https://git.example.com/repo.git",
+						Url:    new("https://git.example.com/repo.git"),
 						Branch: "main",
 					},
 				},
@@ -262,7 +262,7 @@ func TestIsWriteAllowed(t *testing.T) {
 					Type:      provisioning.RepositorySpecTypeGit,
 					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 					Git: &provisioning.RepositoryGitRepositoryConfig{
-						Url:    "https://git.example.com/repo.git",
+						Url:    new("https://git.example.com/repo.git"),
 						Branch: "develop",
 					},
 				},
@@ -277,7 +277,7 @@ func TestIsWriteAllowed(t *testing.T) {
 					Type:      provisioning.RepositorySpecTypeGit,
 					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsBranch},
 					Git: &provisioning.RepositoryGitRepositoryConfig{
-						Url:    "https://git.example.com/repo.git",
+						Url:    new("https://git.example.com/repo.git"),
 						Branch: "main",
 					},
 				},
@@ -294,7 +294,7 @@ func TestIsWriteAllowed(t *testing.T) {
 					Type:      provisioning.RepositorySpecTypeGit,
 					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsBranch},
 					Git: &provisioning.RepositoryGitRepositoryConfig{
-						Url:    "https://git.example.com/repo.git",
+						Url:    new("https://git.example.com/repo.git"),
 						Branch: "main",
 					},
 				},
@@ -311,7 +311,7 @@ func TestIsWriteAllowed(t *testing.T) {
 					Type:      provisioning.RepositorySpecTypeGit,
 					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsBranch},
 					Git: &provisioning.RepositoryGitRepositoryConfig{
-						Url:    "https://git.example.com/repo.git",
+						Url:    new("https://git.example.com/repo.git"),
 						Branch: "main",
 					},
 				},
@@ -326,7 +326,7 @@ func TestIsWriteAllowed(t *testing.T) {
 					Type:      provisioning.RepositorySpecTypeGit,
 					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 					Git: &provisioning.RepositoryGitRepositoryConfig{
-						Url:    "https://git.example.com/repo.git",
+						Url:    new("https://git.example.com/repo.git"),
 						Branch: "main",
 					},
 				},
@@ -343,7 +343,7 @@ func TestIsWriteAllowed(t *testing.T) {
 					Type:      provisioning.RepositorySpecTypeGit,
 					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite, provisioning.RepositorySpecWorkflowsBranch},
 					Git: &provisioning.RepositoryGitRepositoryConfig{
-						Url:    "https://git.example.com/repo.git",
+						Url:    new("https://git.example.com/repo.git"),
 						Branch: "main",
 					},
 				},
@@ -358,7 +358,7 @@ func TestIsWriteAllowed(t *testing.T) {
 					Type:      provisioning.RepositorySpecTypeGit,
 					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite, provisioning.RepositorySpecWorkflowsBranch},
 					Git: &provisioning.RepositoryGitRepositoryConfig{
-						Url:    "https://git.example.com/repo.git",
+						Url:    new("https://git.example.com/repo.git"),
 						Branch: "main",
 					},
 				},
@@ -373,7 +373,7 @@ func TestIsWriteAllowed(t *testing.T) {
 					Type:      provisioning.RepositorySpecTypeGit,
 					Workflows: []provisioning.RepositorySpecWorkflows{},
 					Git: &provisioning.RepositoryGitRepositoryConfig{
-						Url:    "https://git.example.com/repo.git",
+						Url:    new("https://git.example.com/repo.git"),
 						Branch: "main",
 					},
 				},
@@ -390,7 +390,7 @@ func TestIsWriteAllowed(t *testing.T) {
 					Type:      provisioning.RepositorySpecTypeGit,
 					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 					Git: &provisioning.RepositoryGitRepositoryConfig{
-						Url:    "https://git.example.com/repo.git",
+						Url:    new("https://git.example.com/repo.git"),
 						Branch: "",
 					},
 				},
@@ -405,7 +405,7 @@ func TestIsWriteAllowed(t *testing.T) {
 					Type:      provisioning.RepositorySpecTypeGit,
 					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsBranch},
 					Git: &provisioning.RepositoryGitRepositoryConfig{
-						Url:    "https://git.example.com/repo.git",
+						Url:    new("https://git.example.com/repo.git"),
 						Branch: "",
 					},
 				},

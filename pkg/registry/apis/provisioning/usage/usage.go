@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -251,7 +252,7 @@ func (a *repoAggregate) observe(repo *provisioning.Repository, syncTargetCounts,
 	if hasBranch {
 		a.branchWorkflow++
 	}
-	if repo.Spec.Webhook != nil && repo.Spec.Webhook.Disabled {
+	if repo.Spec.Webhook != nil && ptr.Deref(repo.Spec.Webhook.Disabled, false) {
 		a.webhookDisabled++
 	}
 	if t := repo.Spec.Sync.Target; t != "" {

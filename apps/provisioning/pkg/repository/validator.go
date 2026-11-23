@@ -14,6 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
+	"k8s.io/utils/ptr"
 
 	provisioningadmission "github.com/grafana/grafana/apps/provisioning/pkg/apis/admission"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -156,8 +157,8 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 
 	list = append(list, v.validateDashboardPreviews(cfg)...)
 
-	if cfg.Spec.Webhook != nil && cfg.Spec.Webhook.BaseUrl != "" {
-		list = append(list, validateWebhookBaseURL(cfg.Spec.Webhook.BaseUrl)...)
+	if cfg.Spec.Webhook != nil && ptr.Deref(cfg.Spec.Webhook.BaseUrl, "") != "" {
+		list = append(list, validateWebhookBaseURL(ptr.Deref(cfg.Spec.Webhook.BaseUrl, ""))...)
 	}
 	list = append(list, v.validatePrivateEndpoint(ctx, cfg)...)
 
@@ -244,27 +245,27 @@ func validateCommitOptions(cfg *provisioning.Repository) field.ErrorList {
 	path := field.NewPath("spec", "commit")
 	var list field.ErrorList
 
-	if commit.SigningMethod == "" {
+	if ptr.Deref(commit.SigningMethod, "") == "" {
 		const detail = "signer identity requires a signing method; use authorName/authorEmail to set the commit author without signing"
-		if commit.SignerName != "" {
-			list = append(list, field.Invalid(path.Child("signerName"), commit.SignerName, detail))
+		if ptr.Deref(commit.SignerName, "") != "" {
+			list = append(list, field.Invalid(path.Child("signerName"), ptr.Deref(commit.SignerName, ""), detail))
 		}
-		if commit.SignerEmail != "" {
-			list = append(list, field.Invalid(path.Child("signerEmail"), commit.SignerEmail, detail))
+		if ptr.Deref(commit.SignerEmail, "") != "" {
+			list = append(list, field.Invalid(path.Child("signerEmail"), ptr.Deref(commit.SignerEmail, ""), detail))
 		}
-		if commit.SignerIsAuthor {
-			list = append(list, field.Invalid(path.Child("signerIsAuthor"), commit.SignerIsAuthor, detail))
+		if ptr.Deref(commit.SignerIsAuthor, false) {
+			list = append(list, field.Invalid(path.Child("signerIsAuthor"), ptr.Deref(commit.SignerIsAuthor, false), detail))
 		}
 
 		return list
 	}
 
 	const detail = "author override is not allowed when commit signing is enabled; use signerName/signerEmail with signerIsAuthor instead"
-	if commit.AuthorName != "" {
-		list = append(list, field.Invalid(path.Child("authorName"), commit.AuthorName, detail))
+	if ptr.Deref(commit.AuthorName, "") != "" {
+		list = append(list, field.Invalid(path.Child("authorName"), ptr.Deref(commit.AuthorName, ""), detail))
 	}
-	if commit.AuthorEmail != "" {
-		list = append(list, field.Invalid(path.Child("authorEmail"), commit.AuthorEmail, detail))
+	if ptr.Deref(commit.AuthorEmail, "") != "" {
+		list = append(list, field.Invalid(path.Child("authorEmail"), ptr.Deref(commit.AuthorEmail, ""), detail))
 	}
 
 	return list

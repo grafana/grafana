@@ -496,7 +496,7 @@ func TestExportWorker_ProcessGitRepository(t *testing.T) {
 		Spec: v0alpha1.RepositorySpec{
 			Type: v0alpha1.RepositorySpecTypeGit,
 			Git: &v0alpha1.RepositoryGitRepositoryConfig{
-				Url:    "https://git.example.com/repo.git",
+				Url:    new("https://git.example.com/repo.git"),
 				Branch: "main",
 			},
 			Workflows: []v0alpha1.RepositorySpecWorkflows{v0alpha1.RepositorySpecWorkflowsWrite},
@@ -549,7 +549,7 @@ func TestExportWorker_ProcessGitRepositoryExportFnError(t *testing.T) {
 		Spec: v0alpha1.RepositorySpec{
 			Type: v0alpha1.RepositorySpecTypeGit,
 			Git: &v0alpha1.RepositoryGitRepositoryConfig{
-				Url:    "https://git.example.com/repo.git",
+				Url:    new("https://git.example.com/repo.git"),
 				Branch: "main",
 			},
 			Workflows: []v0alpha1.RepositorySpecWorkflows{v0alpha1.RepositorySpecWorkflowsWrite},

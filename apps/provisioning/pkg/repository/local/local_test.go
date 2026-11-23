@@ -71,7 +71,7 @@ func TestLocalResolver(t *testing.T) {
 	repo := NewRepository(&provisioning.Repository{
 		Spec: provisioning.RepositorySpec{
 			Local: &provisioning.RepositoryLocalRepositoryConfig{
-				Path: tempDir,
+				Path: new(tempDir),
 			},
 		},
 	}, resolver, nil)
@@ -128,7 +128,7 @@ func TestLocal(t *testing.T) {
 			r := NewRepository(&provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Local: &provisioning.RepositoryLocalRepositoryConfig{
-						Path: tc.Path,
+						Path: new(tc.Path),
 					},
 				},
 			}, &LocalFolderResolver{PermittedPrefixes: tc.PermittedPrefixes, HomePath: "/home/grafana"}, nil)
@@ -153,7 +153,7 @@ func TestLocal(t *testing.T) {
 			r := NewRepository(&provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Local: &provisioning.RepositoryLocalRepositoryConfig{
-						Path: tc.Path,
+						Path: new(tc.Path),
 					},
 				},
 			}, &LocalFolderResolver{PermittedPrefixes: tc.PermittedPrefixes, HomePath: "/home/grafana"}, nil)
@@ -234,7 +234,7 @@ func TestLocalRepository_Test(t *testing.T) {
 			repo := NewRepository(&provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Local: &provisioning.RepositoryLocalRepositoryConfig{
-						Path: tc.path,
+						Path: new(tc.path),
 					},
 				},
 			}, resolver, nil)
@@ -351,7 +351,7 @@ func TestLocalRepository_Delete(t *testing.T) {
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
 							Local: &provisioning.RepositoryLocalRepositoryConfig{
-								Path: tempDir,
+								Path: new(tempDir),
 							},
 						},
 					},
@@ -379,7 +379,7 @@ func TestLocalRepository_Delete(t *testing.T) {
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
 							Local: &provisioning.RepositoryLocalRepositoryConfig{
-								Path: tempDir,
+								Path: new(tempDir),
 							},
 						},
 					},
@@ -407,7 +407,7 @@ func TestLocalRepository_Delete(t *testing.T) {
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
 							Local: &provisioning.RepositoryLocalRepositoryConfig{
-								Path: tempDir,
+								Path: new(tempDir),
 							},
 						},
 					},
@@ -442,7 +442,7 @@ func TestLocalRepository_Delete(t *testing.T) {
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
 							Local: &provisioning.RepositoryLocalRepositoryConfig{
-								Path: tempDir,
+								Path: new(tempDir),
 							},
 						},
 					},
@@ -511,7 +511,7 @@ func TestLocalRepository_Update(t *testing.T) {
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
 							Local: &provisioning.RepositoryLocalRepositoryConfig{
-								Path: tempDir,
+								Path: new(tempDir),
 							},
 						},
 					},
@@ -542,7 +542,7 @@ func TestLocalRepository_Update(t *testing.T) {
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
 							Local: &provisioning.RepositoryLocalRepositoryConfig{
-								Path: tempDir,
+								Path: new(tempDir),
 							},
 						},
 					},
@@ -569,7 +569,7 @@ func TestLocalRepository_Update(t *testing.T) {
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
 							Local: &provisioning.RepositoryLocalRepositoryConfig{
-								Path: tempDir,
+								Path: new(tempDir),
 							},
 						},
 					},
@@ -600,7 +600,7 @@ func TestLocalRepository_Update(t *testing.T) {
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
 							Local: &provisioning.RepositoryLocalRepositoryConfig{
-								Path: tempDir,
+								Path: new(tempDir),
 							},
 						},
 					},
@@ -631,7 +631,7 @@ func TestLocalRepository_Update(t *testing.T) {
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
 							Local: &provisioning.RepositoryLocalRepositoryConfig{
-								Path: tempDir,
+								Path: new(tempDir),
 							},
 						},
 					},
@@ -693,7 +693,7 @@ func TestLocalRepository_Write(t *testing.T) {
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
 							Local: &provisioning.RepositoryLocalRepositoryConfig{
-								Path: tempDir,
+								Path: new(tempDir),
 							},
 						},
 					},
@@ -722,7 +722,7 @@ func TestLocalRepository_Write(t *testing.T) {
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
 							Local: &provisioning.RepositoryLocalRepositoryConfig{
-								Path: tempDir,
+								Path: new(tempDir),
 							},
 						},
 					},
@@ -746,7 +746,7 @@ func TestLocalRepository_Write(t *testing.T) {
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
 							Local: &provisioning.RepositoryLocalRepositoryConfig{
-								Path: tempDir,
+								Path: new(tempDir),
 							},
 						},
 					},
@@ -770,7 +770,7 @@ func TestLocalRepository_Write(t *testing.T) {
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
 							Local: &provisioning.RepositoryLocalRepositoryConfig{
-								Path: tempDir,
+								Path: new(tempDir),
 							},
 						},
 					},
@@ -794,7 +794,7 @@ func TestLocalRepository_Write(t *testing.T) {
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
 							Local: &provisioning.RepositoryLocalRepositoryConfig{
-								Path: tempDir,
+								Path: new(tempDir),
 							},
 						},
 					},
@@ -822,7 +822,7 @@ func TestLocalRepository_Write(t *testing.T) {
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
 							Local: &provisioning.RepositoryLocalRepositoryConfig{
-								Path: tempDir,
+								Path: new(tempDir),
 							},
 						},
 					},
@@ -894,7 +894,7 @@ func TestLocalRepository_Create(t *testing.T) {
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
 							Local: &provisioning.RepositoryLocalRepositoryConfig{
-								Path: tempDir,
+								Path: new(tempDir),
 							},
 						},
 					},
@@ -918,7 +918,7 @@ func TestLocalRepository_Create(t *testing.T) {
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
 							Local: &provisioning.RepositoryLocalRepositoryConfig{
-								Path: tempDir,
+								Path: new(tempDir),
 							},
 						},
 					},
@@ -942,7 +942,7 @@ func TestLocalRepository_Create(t *testing.T) {
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
 							Local: &provisioning.RepositoryLocalRepositoryConfig{
-								Path: tempDir,
+								Path: new(tempDir),
 							},
 						},
 					},
@@ -971,7 +971,7 @@ func TestLocalRepository_Create(t *testing.T) {
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
 							Local: &provisioning.RepositoryLocalRepositoryConfig{
-								Path: tempDir,
+								Path: new(tempDir),
 							},
 						},
 					},
@@ -996,7 +996,7 @@ func TestLocalRepository_Create(t *testing.T) {
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
 							Local: &provisioning.RepositoryLocalRepositoryConfig{
-								Path: tempDir,
+								Path: new(tempDir),
 							},
 						},
 					},
@@ -1021,7 +1021,7 @@ func TestLocalRepository_Create(t *testing.T) {
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
 							Local: &provisioning.RepositoryLocalRepositoryConfig{
-								Path: tempDir,
+								Path: new(tempDir),
 							},
 						},
 					},
@@ -1099,7 +1099,7 @@ func TestLocalRepository_Read(t *testing.T) {
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
 							Local: &provisioning.RepositoryLocalRepositoryConfig{
-								Path: tempDir,
+								Path: new(tempDir),
 							},
 						},
 					},
@@ -1127,7 +1127,7 @@ func TestLocalRepository_Read(t *testing.T) {
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
 							Local: &provisioning.RepositoryLocalRepositoryConfig{
-								Path: tempDir,
+								Path: new(tempDir),
 							},
 						},
 					},
@@ -1156,7 +1156,7 @@ func TestLocalRepository_Read(t *testing.T) {
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
 							Local: &provisioning.RepositoryLocalRepositoryConfig{
-								Path: tempDir,
+								Path: new(tempDir),
 							},
 						},
 					},
@@ -1185,7 +1185,7 @@ func TestLocalRepository_Read(t *testing.T) {
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
 							Local: &provisioning.RepositoryLocalRepositoryConfig{
-								Path: tempDir,
+								Path: new(tempDir),
 							},
 						},
 					},
@@ -1246,7 +1246,7 @@ func TestLocalRepository_ReadTree(t *testing.T) {
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
 							Local: &provisioning.RepositoryLocalRepositoryConfig{
-								Path: tempDir,
+								Path: new(tempDir),
 							},
 						},
 					},
@@ -1276,7 +1276,7 @@ func TestLocalRepository_ReadTree(t *testing.T) {
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
 							Local: &provisioning.RepositoryLocalRepositoryConfig{
-								Path: tempDir,
+								Path: new(tempDir),
 							},
 						},
 					},
@@ -1304,7 +1304,7 @@ func TestLocalRepository_ReadTree(t *testing.T) {
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
 							Local: &provisioning.RepositoryLocalRepositoryConfig{
-								Path: tempDir,
+								Path: new(tempDir),
 							},
 						},
 					},
@@ -1329,7 +1329,7 @@ func TestLocalRepository_ReadTree(t *testing.T) {
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
 							Local: &provisioning.RepositoryLocalRepositoryConfig{
-								Path: nonExistentDir,
+								Path: new(nonExistentDir),
 							},
 						},
 					},
@@ -1406,7 +1406,7 @@ func TestLocalRepository_ReadTree_HiddenPaths(t *testing.T) {
 
 	repo := NewRepository(&provisioning.Repository{
 		Spec: provisioning.RepositorySpec{
-			Local: &provisioning.RepositoryLocalRepositoryConfig{Path: root},
+			Local: &provisioning.RepositoryLocalRepositoryConfig{Path: new(root)},
 		},
 	}, &LocalFolderResolver{PermittedPrefixes: []string{root}}, nil)
 
@@ -1521,7 +1521,7 @@ func TestLocalRepository_Config(t *testing.T) {
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Local: &provisioning.RepositoryLocalRepositoryConfig{
-						Path: "/some/path",
+						Path: new("/some/path"),
 					},
 				},
 			},
@@ -1573,7 +1573,7 @@ func TestLocalRepository_Move(t *testing.T) {
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
 							Local: &provisioning.RepositoryLocalRepositoryConfig{
-								Path: tempDir,
+								Path: new(tempDir),
 							},
 						},
 					},
@@ -1606,7 +1606,7 @@ func TestLocalRepository_Move(t *testing.T) {
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
 							Local: &provisioning.RepositoryLocalRepositoryConfig{
-								Path: tempDir,
+								Path: new(tempDir),
 							},
 						},
 					},
@@ -1634,7 +1634,7 @@ func TestLocalRepository_Move(t *testing.T) {
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
 							Local: &provisioning.RepositoryLocalRepositoryConfig{
-								Path: tempDir,
+								Path: new(tempDir),
 							},
 						},
 					},
@@ -1671,7 +1671,7 @@ func TestLocalRepository_Move(t *testing.T) {
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
 							Local: &provisioning.RepositoryLocalRepositoryConfig{
-								Path: tempDir,
+								Path: new(tempDir),
 							},
 						},
 					},
@@ -1708,7 +1708,7 @@ func TestLocalRepository_Move(t *testing.T) {
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
 							Local: &provisioning.RepositoryLocalRepositoryConfig{
-								Path: tempDir,
+								Path: new(tempDir),
 							},
 						},
 					},
@@ -1741,7 +1741,7 @@ func TestLocalRepository_Move(t *testing.T) {
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
 							Local: &provisioning.RepositoryLocalRepositoryConfig{
-								Path: tempDir,
+								Path: new(tempDir),
 							},
 						},
 					},
@@ -1774,7 +1774,7 @@ func TestLocalRepository_Move(t *testing.T) {
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
 							Local: &provisioning.RepositoryLocalRepositoryConfig{
-								Path: tempDir,
+								Path: new(tempDir),
 							},
 						},
 					},
@@ -1838,7 +1838,7 @@ func TestLocalRepositoryUnresolvedRootFailsReadsInsteadOfLookingEmpty(t *testing
 		&provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
 				Type:  provisioning.RepositorySpecTypeLocal,
-				Local: &provisioning.RepositoryLocalRepositoryConfig{Path: "/no/longer/permitted"},
+				Local: &provisioning.RepositoryLocalRepositoryConfig{Path: new("/no/longer/permitted")},
 			},
 		},
 		&LocalFolderResolver{PermittedPrefixes: []string{"/etc/grafana/provisioning"}, HomePath: "/usr/share/grafana"},
@@ -1934,7 +1934,7 @@ func TestLocalPathDoesNotDependOnARepositoryHavingBeenBuilt(t *testing.T) {
 	NewRepository(&provisioning.Repository{
 		Spec: provisioning.RepositorySpec{
 			Type:  provisioning.RepositorySpecTypeLocal,
-			Local: &provisioning.RepositoryLocalRepositoryConfig{Path: "repo/"},
+			Local: &provisioning.RepositoryLocalRepositoryConfig{Path: new("repo/")},
 		},
 	}, resolver, nil)
 

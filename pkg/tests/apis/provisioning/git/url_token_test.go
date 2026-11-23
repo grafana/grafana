@@ -13,6 +13,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
@@ -49,15 +50,15 @@ func TestIntegrationProvisioning_GitRequiresNewTokenWhenRepositoryURLChanges(t *
 			require.NoError(collect, err)
 
 			repoObj := common.MustFromUnstructured[provisioning.Repository](t, repo)
-			repoObj.Spec.Git.Url = changedRemote.URL
-			repoObj.Spec.Git.TokenUser = changedUser.Username
+			repoObj.Spec.Git.Url = new(changedRemote.URL)
+			repoObj.Spec.Git.TokenUser = new(changedUser.Username)
 			repoObj.Secure.Token = resource.InlineSecureValue{Create: resource.RawSecureValue(changedUser.Password)}
 
 			result, err := helper.Repositories.Resource.Update(t.Context(), common.MustToUnstructured(t, repoObj), metav1.UpdateOptions{})
 			require.NoError(collect, err)
 
 			updatedRepo := common.MustFromUnstructured[provisioning.Repository](t, result)
-			require.Equal(collect, changedRemote.URL, updatedRepo.Spec.Git.Url)
+			require.Equal(collect, changedRemote.URL, ptr.Deref(updatedRepo.Spec.Git.Url, ""))
 			require.NotEmpty(collect, updatedRepo.Secure.Token.Name)
 		}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 	})

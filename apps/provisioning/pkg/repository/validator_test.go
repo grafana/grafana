@@ -67,7 +67,7 @@ func TestValidator_Validate(t *testing.T) {
 						Title: "Test Repo",
 						Sync: provisioning.RepositorySyncOptions{
 							Enabled:         true,
-							IntervalSeconds: 10,
+							IntervalSeconds: new(int64(10)),
 						}},
 				}
 			}(),
@@ -89,7 +89,7 @@ func TestValidator_Validate(t *testing.T) {
 						Sync: provisioning.RepositorySyncOptions{
 							Enabled:         true,
 							Target:          provisioning.RepositorySyncOptionsTargetFolder,
-							IntervalSeconds: 10,
+							IntervalSeconds: new(int64(10)),
 						}},
 				}
 			}(),
@@ -146,7 +146,7 @@ func TestValidator_Validate(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Title:  "Test Repo",
 						Type:   provisioning.RepositorySpecTypeGithub,
-						Github: &provisioning.RepositoryGitHubRepositoryConfig{GenerateDashboardPreviews: true},
+						Github: &provisioning.RepositoryGitHubRepositoryConfig{GenerateDashboardPreviews: new(true)},
 					},
 				}
 			}(),
@@ -166,7 +166,7 @@ func TestValidator_Validate(t *testing.T) {
 						Title:            "Test Repo",
 						Type:             provisioning.RepositorySpecTypeGithubEnterprise,
 						GithubEnterprise: &provisioning.RepositoryGitHubEnterpriseRepositoryConfig{},
-						PullRequest:      &provisioning.RepositoryPullRequestOptions{GenerateDashboardPreviews: true},
+						PullRequest:      &provisioning.RepositoryPullRequestOptions{GenerateDashboardPreviews: new(true)},
 					},
 				}
 			}(),
@@ -206,7 +206,7 @@ func TestValidator_Validate(t *testing.T) {
 						Title: "Test Repo",
 						Sync: provisioning.RepositorySyncOptions{
 							Enabled:         true,
-							IntervalSeconds: 5,
+							IntervalSeconds: new(int64(5)),
 							Target:          "",
 						},
 					},
@@ -246,7 +246,7 @@ func TestValidator_Validate(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Title:  "Test Repo",
 						Type:   provisioning.RepositorySpecTypeLocal,
-						Branch: &provisioning.RepositoryBranchOptions{NameTemplate: "{{title}}"},
+						Branch: &provisioning.RepositoryBranchOptions{NameTemplate: new("{{title}}")},
 					},
 				}
 			}(),
@@ -266,7 +266,7 @@ func TestValidator_Validate(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Title:  "Test Repo",
 						Type:   provisioning.RepositorySpecTypeLocal,
-						Commit: &provisioning.RepositoryCommitOptions{SingleResourceMessageTemplate: "{{title}}"},
+						Commit: &provisioning.RepositoryCommitOptions{SingleResourceMessageTemplate: new("{{title}}")},
 					},
 				}
 			}(),
@@ -286,7 +286,7 @@ func TestValidator_Validate(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Title:       "Test Repo",
 						Type:        provisioning.RepositorySpecTypeLocal,
-						PullRequest: &provisioning.RepositoryPullRequestOptions{TitleTemplate: "{{title}}"},
+						PullRequest: &provisioning.RepositoryPullRequestOptions{TitleTemplate: new("{{title}}")},
 					},
 				}
 			}(),
@@ -306,9 +306,9 @@ func TestValidator_Validate(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Title:       "Test Repo",
 						Type:        provisioning.RepositorySpecTypeLocal,
-						Branch:      &provisioning.RepositoryBranchOptions{NameTemplate: "{{title}}"},
-						Commit:      &provisioning.RepositoryCommitOptions{SingleResourceMessageTemplate: "{{title}}"},
-						PullRequest: &provisioning.RepositoryPullRequestOptions{TitleTemplate: "{{title}}"},
+						Branch:      &provisioning.RepositoryBranchOptions{NameTemplate: new("{{title}}")},
+						Commit:      &provisioning.RepositoryCommitOptions{SingleResourceMessageTemplate: new("{{title}}")},
+						PullRequest: &provisioning.RepositoryPullRequestOptions{TitleTemplate: new("{{title}}")},
 					},
 				}
 			}(),
@@ -329,9 +329,9 @@ func TestValidator_Validate(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Title:       "Test Repo",
 						Type:        provisioning.RepositorySpecTypeGithub,
-						Branch:      &provisioning.RepositoryBranchOptions{NameTemplate: "{{title}}"},
-						Commit:      &provisioning.RepositoryCommitOptions{SingleResourceMessageTemplate: "{{title}}"},
-						PullRequest: &provisioning.RepositoryPullRequestOptions{TitleTemplate: "{{title}}"},
+						Branch:      &provisioning.RepositoryBranchOptions{NameTemplate: new("{{title}}")},
+						Commit:      &provisioning.RepositoryCommitOptions{SingleResourceMessageTemplate: new("{{title}}")},
+						PullRequest: &provisioning.RepositoryPullRequestOptions{TitleTemplate: new("{{title}}")},
 					},
 				}
 			}(),
@@ -347,7 +347,7 @@ func TestValidator_Validate(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Title:       "Test Repo",
 						Type:        provisioning.RepositorySpecTypeGit,
-						PullRequest: &provisioning.RepositoryPullRequestOptions{TitleTemplate: "{{title}}"},
+						PullRequest: &provisioning.RepositoryPullRequestOptions{TitleTemplate: new("{{title}}")},
 					},
 				}
 			}(),
@@ -367,8 +367,8 @@ func TestValidator_Validate(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Title:  "Test Repo",
 						Type:   provisioning.RepositorySpecTypeGit,
-						Branch: &provisioning.RepositoryBranchOptions{NameTemplate: "{{title}}"},
-						Commit: &provisioning.RepositoryCommitOptions{SingleResourceMessageTemplate: "{{title}}"},
+						Branch: &provisioning.RepositoryBranchOptions{NameTemplate: new("{{title}}")},
+						Commit: &provisioning.RepositoryCommitOptions{SingleResourceMessageTemplate: new("{{title}}")},
 					},
 				}
 			}(),
@@ -440,7 +440,7 @@ func TestValidator_Validate(t *testing.T) {
 					},
 					Spec: provisioning.RepositorySpec{
 						Title:   "Test Repo",
-						Webhook: &provisioning.RepositoryWebhookConfig{BaseUrl: "https://grafana.example.com/"},
+						Webhook: &provisioning.RepositoryWebhookConfig{BaseUrl: new("https://grafana.example.com/")},
 					},
 				}
 			}(),
@@ -455,7 +455,7 @@ func TestValidator_Validate(t *testing.T) {
 					},
 					Spec: provisioning.RepositorySpec{
 						Title:   "Test Repo",
-						Webhook: &provisioning.RepositoryWebhookConfig{BaseUrl: "http://grafana.example.com"},
+						Webhook: &provisioning.RepositoryWebhookConfig{BaseUrl: new("http://grafana.example.com")},
 					},
 				}
 			}(),
@@ -470,7 +470,7 @@ func TestValidator_Validate(t *testing.T) {
 					},
 					Spec: provisioning.RepositorySpec{
 						Title:   "Test Repo",
-						Webhook: &provisioning.RepositoryWebhookConfig{BaseUrl: "ftp://grafana.example.com/"},
+						Webhook: &provisioning.RepositoryWebhookConfig{BaseUrl: new("ftp://grafana.example.com/")},
 					},
 				}
 			}(),
@@ -488,7 +488,7 @@ func TestValidator_Validate(t *testing.T) {
 					},
 					Spec: provisioning.RepositorySpec{
 						Title:   "Test Repo",
-						Webhook: &provisioning.RepositoryWebhookConfig{BaseUrl: "https://"},
+						Webhook: &provisioning.RepositoryWebhookConfig{BaseUrl: new("https://")},
 					},
 				}
 			}(),
@@ -657,12 +657,12 @@ func testPrivateEndpointGitRepository(repoType provisioning.RepositorySpecType, 
 	switch repoType {
 	case provisioning.RepositorySpecTypeGit:
 		repo.Spec.Git = &provisioning.RepositoryGitRepositoryConfig{
-			Url:    rawURL,
+			Url:    new(rawURL),
 			Branch: "main",
 		}
 	case provisioning.RepositorySpecTypeGithub:
 		repo.Spec.Github = &provisioning.RepositoryGitHubRepositoryConfig{
-			Url:    rawURL,
+			Url:    new(rawURL),
 			Branch: "main",
 		}
 	default:
@@ -710,7 +710,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Title: "Test Repo",
 					Type:  provisioning.RepositorySpecTypeGithub,
-					Sync:  provisioning.RepositorySyncOptions{IntervalSeconds: 60},
+					Sync:  provisioning.RepositorySyncOptions{IntervalSeconds: new(int64(60))},
 				},
 			},
 			operation: admission.Create,
@@ -780,7 +780,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Title: "Test Repo",
 					Type:  provisioning.RepositorySpecTypeGit, // Changed from github
-					Sync:  provisioning.RepositorySyncOptions{IntervalSeconds: 60},
+					Sync:  provisioning.RepositorySyncOptions{IntervalSeconds: new(int64(60))},
 				},
 			},
 			old: &provisioning.Repository{
@@ -791,7 +791,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Title: "Test Repo",
 					Type:  provisioning.RepositorySpecTypeGithub,
-					Sync:  provisioning.RepositorySyncOptions{IntervalSeconds: 60},
+					Sync:  provisioning.RepositorySyncOptions{IntervalSeconds: new(int64(60))},
 				},
 			},
 			operation:       admission.Update,
@@ -808,7 +808,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Title: "Test Repo",
 					Type:  provisioning.RepositorySpecTypeGithub,
-					Sync:  provisioning.RepositorySyncOptions{IntervalSeconds: 60, Target: provisioning.RepositorySyncOptionsTargetInstance},
+					Sync:  provisioning.RepositorySyncOptions{IntervalSeconds: new(int64(60)), Target: provisioning.RepositorySyncOptionsTargetInstance},
 				},
 			},
 			old: &provisioning.Repository{
@@ -819,7 +819,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Title: "Test Repo",
 					Type:  provisioning.RepositorySpecTypeGithub,
-					Sync:  provisioning.RepositorySyncOptions{IntervalSeconds: 60, Target: provisioning.RepositorySyncOptionsTargetFolder},
+					Sync:  provisioning.RepositorySyncOptions{IntervalSeconds: new(int64(60)), Target: provisioning.RepositorySyncOptionsTargetFolder},
 				},
 				Status: provisioning.RepositoryStatus{
 					Stats: []provisioning.ResourceCount{{Resource: "Dashboard", Count: 1}},
@@ -866,7 +866,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Title: "Test Repo",
 					Type:  provisioning.RepositorySpecTypeGithub,
-					Sync:  provisioning.RepositorySyncOptions{IntervalSeconds: 60},
+					Sync:  provisioning.RepositorySyncOptions{IntervalSeconds: new(int64(60))},
 				},
 			},
 			old: &provisioning.Repository{
@@ -878,7 +878,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Title: "Test Repo",
 					Type:  provisioning.RepositorySpecTypeGithub,
-					Sync:  provisioning.RepositorySyncOptions{IntervalSeconds: 60},
+					Sync:  provisioning.RepositorySyncOptions{IntervalSeconds: new(int64(60))},
 				},
 			},
 			operation: admission.Update,
@@ -895,7 +895,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Title: "Test Repo",
 					Type:  provisioning.RepositorySpecTypeGithub,
-					Sync:  provisioning.RepositorySyncOptions{IntervalSeconds: 60},
+					Sync:  provisioning.RepositorySyncOptions{IntervalSeconds: new(int64(60))},
 				},
 			},
 			old: &provisioning.Repository{
@@ -906,7 +906,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Title: "Test Repo",
 					Type:  provisioning.RepositorySpecTypeGithub,
-					Sync:  provisioning.RepositorySyncOptions{IntervalSeconds: 60},
+					Sync:  provisioning.RepositorySyncOptions{IntervalSeconds: new(int64(60))},
 				},
 			},
 			operation: admission.Update,
@@ -1034,7 +1034,7 @@ func TestAdmissionValidator_CopiesSecureValuesOnUpdate(t *testing.T) {
 		Spec: provisioning.RepositorySpec{
 			Title: "Test Repo",
 			Type:  provisioning.RepositorySpecTypeGithub,
-			Sync:  provisioning.RepositorySyncOptions{IntervalSeconds: 60},
+			Sync:  provisioning.RepositorySyncOptions{IntervalSeconds: new(int64(60))},
 		},
 		Secure: provisioning.SecureValues{
 			Token:         resource.InlineSecureValue{Name: "old-token"},
@@ -1050,7 +1050,7 @@ func TestAdmissionValidator_CopiesSecureValuesOnUpdate(t *testing.T) {
 		Spec: provisioning.RepositorySpec{
 			Title: "Test Repo",
 			Type:  provisioning.RepositorySpecTypeGithub,
-			Sync:  provisioning.RepositorySyncOptions{IntervalSeconds: 60},
+			Sync:  provisioning.RepositorySyncOptions{IntervalSeconds: new(int64(60))},
 		},
 		// No secure values set
 	}
@@ -1166,10 +1166,10 @@ func newGitHubRepositoryForURLChangeTest(url string) *provisioning.Repository {
 			Title: "Test Repo",
 			Type:  provisioning.RepositorySpecTypeGithub,
 			Github: &provisioning.RepositoryGitHubRepositoryConfig{
-				Url:    url,
+				Url:    new(url),
 				Branch: "main",
 			},
-			Sync: provisioning.RepositorySyncOptions{IntervalSeconds: 60},
+			Sync: provisioning.RepositorySyncOptions{IntervalSeconds: new(int64(60))},
 		},
 	}
 }
@@ -1206,7 +1206,7 @@ func TestAdmissionValidator_CallsMultipleValidators(t *testing.T) {
 		Spec: provisioning.RepositorySpec{
 			Title: "Test Repo",
 			Type:  provisioning.RepositorySpecTypeGithub,
-			Sync:  provisioning.RepositorySyncOptions{IntervalSeconds: 60},
+			Sync:  provisioning.RepositorySyncOptions{IntervalSeconds: new(int64(60))},
 		},
 	}
 
@@ -1240,7 +1240,7 @@ func TestAdmissionValidator_ValidatorError(t *testing.T) {
 		Spec: provisioning.RepositorySpec{
 			Title: "Test Repo",
 			Type:  provisioning.RepositorySpecTypeGithub,
-			Sync:  provisioning.RepositorySyncOptions{IntervalSeconds: 60},
+			Sync:  provisioning.RepositorySyncOptions{IntervalSeconds: new(int64(60))},
 		},
 	}
 
@@ -1263,40 +1263,40 @@ func TestValidateCommitOptions(t *testing.T) {
 		},
 		{
 			name:   "author override without signing",
-			commit: &provisioning.RepositoryCommitOptions{AuthorName: "Sync Bot", AuthorEmail: "bot@example.com"},
+			commit: &provisioning.RepositoryCommitOptions{AuthorName: new("Sync Bot"), AuthorEmail: new("bot@example.com")},
 		},
 		{
 			name:   "signing without author override",
-			commit: &provisioning.RepositoryCommitOptions{SigningMethod: provisioning.RepositoryCommitOptionsSigningMethodSsh, SignerName: "Bot Signer"},
+			commit: &provisioning.RepositoryCommitOptions{SigningMethod: new(provisioning.RepositoryCommitOptionsSigningMethodSsh), SignerName: new("Bot Signer")},
 		},
 		{
 			name: "signer without a signing method",
 			commit: &provisioning.RepositoryCommitOptions{
-				SignerName:     "Bot Signer",
-				SignerEmail:    "signer@example.com",
-				SignerIsAuthor: true,
+				SignerName:     new("Bot Signer"),
+				SignerEmail:    new("signer@example.com"),
+				SignerIsAuthor: new(true),
 			},
 			expectedErrs: []string{"spec.commit.signerName", "spec.commit.signerEmail", "spec.commit.signerIsAuthor"},
 		},
 		{
 			name:         "signer as author without a signing method",
-			commit:       &provisioning.RepositoryCommitOptions{SignerIsAuthor: true},
+			commit:       &provisioning.RepositoryCommitOptions{SignerIsAuthor: new(true)},
 			expectedErrs: []string{"spec.commit.signerIsAuthor"},
 		},
 		{
 			name: "author override with signing",
 			commit: &provisioning.RepositoryCommitOptions{
-				AuthorName:    "Sync Bot",
-				AuthorEmail:   "bot@example.com",
-				SigningMethod: provisioning.RepositoryCommitOptionsSigningMethodSsh,
+				AuthorName:    new("Sync Bot"),
+				AuthorEmail:   new("bot@example.com"),
+				SigningMethod: new(provisioning.RepositoryCommitOptionsSigningMethodSsh),
 			},
 			expectedErrs: []string{"spec.commit.authorName", "spec.commit.authorEmail"},
 		},
 		{
 			name: "author email override with signing",
 			commit: &provisioning.RepositoryCommitOptions{
-				AuthorEmail:   "bot@example.com",
-				SigningMethod: provisioning.RepositoryCommitOptionsSigningMethodSsh,
+				AuthorEmail:   new("bot@example.com"),
+				SigningMethod: new(provisioning.RepositoryCommitOptionsSigningMethodSsh),
 			},
 			expectedErrs: []string{"spec.commit.authorEmail"},
 		},
@@ -1330,7 +1330,7 @@ func TestAdmissionValidator_Validate_AllowsDisablingSyncWithoutRevalidatingTheSp
 		Spec: provisioning.RepositorySpec{
 			Title: "Bootstrap",
 			Type:  provisioning.RepositorySpecTypeLocal,
-			Local: &provisioning.RepositoryLocalRepositoryConfig{Path: "/no/longer/permitted"},
+			Local: &provisioning.RepositoryLocalRepositoryConfig{Path: new("/no/longer/permitted")},
 			Sync:  provisioning.RepositorySyncOptions{Enabled: true, Target: provisioning.RepositorySyncOptionsTargetFolderless},
 		},
 	}
@@ -1359,14 +1359,14 @@ func TestAdmissionValidator_Validate_StillValidatesChangesBundledWithDisablingSy
 		Spec: provisioning.RepositorySpec{
 			Title: "Bootstrap",
 			Type:  provisioning.RepositorySpecTypeLocal,
-			Local: &provisioning.RepositoryLocalRepositoryConfig{Path: "conf/provisioning/bootstrap"},
+			Local: &provisioning.RepositoryLocalRepositoryConfig{Path: new("conf/provisioning/bootstrap")},
 			Sync:  provisioning.RepositorySyncOptions{Enabled: true, Target: provisioning.RepositorySyncOptionsTargetFolderless},
 		},
 	}
 	// Repointing the path while switching the sync off must not ride the exemption.
 	repo := old.DeepCopy()
 	repo.Spec.Sync.Enabled = false
-	repo.Spec.Local = &provisioning.RepositoryLocalRepositoryConfig{Path: "/somewhere/else"}
+	repo.Spec.Local = &provisioning.RepositoryLocalRepositoryConfig{Path: new("/somewhere/else")}
 
 	mockFactory := NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).
@@ -1393,7 +1393,7 @@ func TestAdmissionValidator_Validate_StillValidatesWhenEnablingSync(t *testing.T
 		Spec: provisioning.RepositorySpec{
 			Title: "Bootstrap",
 			Type:  provisioning.RepositorySpecTypeLocal,
-			Local: &provisioning.RepositoryLocalRepositoryConfig{Path: "/no/longer/permitted"},
+			Local: &provisioning.RepositoryLocalRepositoryConfig{Path: new("/no/longer/permitted")},
 			Sync:  provisioning.RepositorySyncOptions{Enabled: false, Target: provisioning.RepositorySyncOptionsTargetFolderless},
 		},
 	}
@@ -1426,7 +1426,7 @@ func TestAdmissionValidator_Validate_StillValidatesFinalizersBundledWithDisablin
 		Spec: provisioning.RepositorySpec{
 			Title: "Bootstrap",
 			Type:  provisioning.RepositorySpecTypeLocal,
-			Local: &provisioning.RepositoryLocalRepositoryConfig{Path: "conf/provisioning/bootstrap"},
+			Local: &provisioning.RepositoryLocalRepositoryConfig{Path: new("conf/provisioning/bootstrap")},
 			Sync:  provisioning.RepositorySyncOptions{Enabled: true, Target: provisioning.RepositorySyncOptionsTargetFolderless},
 		},
 	}
@@ -1458,7 +1458,7 @@ func TestAdmissionValidator_Validate_StillValidatesSecureValuesBundledWithDisabl
 		Spec: provisioning.RepositorySpec{
 			Title: "Bootstrap",
 			Type:  provisioning.RepositorySpecTypeLocal,
-			Local: &provisioning.RepositoryLocalRepositoryConfig{Path: "conf/provisioning/bootstrap"},
+			Local: &provisioning.RepositoryLocalRepositoryConfig{Path: new("conf/provisioning/bootstrap")},
 			Sync:  provisioning.RepositorySyncOptions{Enabled: true, Target: provisioning.RepositorySyncOptionsTargetFolderless},
 		},
 	}
@@ -1494,18 +1494,18 @@ func TestAdmissionValidator_Validate_AllowsDisablingSyncAfterTheIntervalWasClamp
 		Spec: provisioning.RepositorySpec{
 			Title: "Bootstrap",
 			Type:  provisioning.RepositorySpecTypeLocal,
-			Local: &provisioning.RepositoryLocalRepositoryConfig{Path: "/no/longer/permitted"},
+			Local: &provisioning.RepositoryLocalRepositoryConfig{Path: new("/no/longer/permitted")},
 			Sync: provisioning.RepositorySyncOptions{
 				Enabled:         true,
 				Target:          provisioning.RepositorySyncOptionsTargetFolderless,
-				IntervalSeconds: 10,
+				IntervalSeconds: new(int64(10)),
 			},
 		},
 	}
 	// What the mutator leaves behind once min_sync_interval has been raised to 60s.
 	repo := old.DeepCopy()
 	repo.Spec.Sync.Enabled = false
-	repo.Spec.Sync.IntervalSeconds = 60
+	repo.Spec.Sync.IntervalSeconds = new(int64(60))
 
 	// No EXPECT() for Validate: the type validators, which would reject the path, must not run.
 	mockFactory := NewMockFactory(t)

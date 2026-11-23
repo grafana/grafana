@@ -241,7 +241,7 @@ func TestRepository_ShouldGenerateDashboardPreviews(t *testing.T) {
 			repo: v0alpha1.Repository{
 				Spec: v0alpha1.RepositorySpec{
 					Type:   v0alpha1.RepositorySpecTypeGithub,
-					Github: &v0alpha1.RepositoryGitHubRepositoryConfig{GenerateDashboardPreviews: true},
+					Github: &v0alpha1.RepositoryGitHubRepositoryConfig{GenerateDashboardPreviews: new(true)},
 				},
 			},
 			want: true,
@@ -251,7 +251,7 @@ func TestRepository_ShouldGenerateDashboardPreviews(t *testing.T) {
 			repo: v0alpha1.Repository{
 				Spec: v0alpha1.RepositorySpec{
 					Type:   v0alpha1.RepositorySpecTypeGithub,
-					Github: &v0alpha1.RepositoryGitHubRepositoryConfig{GenerateDashboardPreviews: false},
+					Github: &v0alpha1.RepositoryGitHubRepositoryConfig{GenerateDashboardPreviews: new(false)},
 				},
 			},
 			want: false,
@@ -270,7 +270,7 @@ func TestRepository_ShouldGenerateDashboardPreviews(t *testing.T) {
 			repo: v0alpha1.Repository{
 				Spec: v0alpha1.RepositorySpec{
 					Type:        v0alpha1.RepositorySpecTypeGithubEnterprise,
-					PullRequest: &v0alpha1.RepositoryPullRequestOptions{GenerateDashboardPreviews: true},
+					PullRequest: &v0alpha1.RepositoryPullRequestOptions{GenerateDashboardPreviews: new(true)},
 				},
 			},
 			want: true,
@@ -280,7 +280,7 @@ func TestRepository_ShouldGenerateDashboardPreviews(t *testing.T) {
 			repo: v0alpha1.Repository{
 				Spec: v0alpha1.RepositorySpec{
 					Type:        v0alpha1.RepositorySpecTypeGithubEnterprise,
-					PullRequest: &v0alpha1.RepositoryPullRequestOptions{GenerateDashboardPreviews: false},
+					PullRequest: &v0alpha1.RepositoryPullRequestOptions{GenerateDashboardPreviews: new(false)},
 				},
 			},
 			want: false,
@@ -299,7 +299,7 @@ func TestRepository_ShouldGenerateDashboardPreviews(t *testing.T) {
 			repo: v0alpha1.Repository{
 				Spec: v0alpha1.RepositorySpec{
 					Type:        v0alpha1.RepositorySpecTypeGitlab,
-					PullRequest: &v0alpha1.RepositoryPullRequestOptions{GenerateDashboardPreviews: true},
+					PullRequest: &v0alpha1.RepositoryPullRequestOptions{GenerateDashboardPreviews: new(true)},
 				},
 			},
 			want: true,

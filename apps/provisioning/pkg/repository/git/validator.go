@@ -6,6 +6,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
@@ -37,7 +38,7 @@ func Validate(_ context.Context, obj runtime.Object, allowInsecure bool) field.E
 // validateGitConfig validates the git configuration fields.
 // This is extracted to be reusable by other git-based repository types (github, gitlab, bitbucket).
 func validateGitConfig(repo *provisioning.Repository, cfg *provisioning.RepositoryGitRepositoryConfig, allowInsecure bool) field.ErrorList {
-	return ValidateGitConfigFields(repo, cfg.Url, cfg.Branch, cfg.Path, allowInsecure)
+	return ValidateGitConfigFields(repo, ptr.Deref(cfg.Url, ""), cfg.Branch, ptr.Deref(cfg.Path, ""), allowInsecure)
 }
 
 // IsInsecureURLWithToken reports whether url is an http:// URL that would

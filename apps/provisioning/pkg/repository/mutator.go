@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"reflect"
 	"strings"
 	"time"
 
 	"k8s.io/apiserver/pkg/admission"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana-app-sdk/resource"
 	provisioningadmission "github.com/grafana/grafana/apps/provisioning/pkg/apis/admission"
@@ -58,16 +60,16 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 		}
 	}
 
-	if r.Spec.Sync.IntervalSeconds == 0 || r.Spec.Sync.IntervalSeconds < int64(m.minSyncInterval.Seconds()) {
-		r.Spec.Sync.IntervalSeconds = int64(m.minSyncInterval.Seconds())
+	if minInterval := int64(m.minSyncInterval.Seconds()); ptr.Deref(r.Spec.Sync.IntervalSeconds, 0) < minInterval {
+		r.Spec.Sync.IntervalSeconds = new(minInterval)
 	}
 
 	if r.Spec.Workflows == nil {
 		r.Spec.Workflows = []provisioning.RepositorySpecWorkflows{}
 	}
 
-	if r.Spec.Webhook != nil && r.Spec.Webhook.BaseUrl != "" {
-		r.Spec.Webhook.BaseUrl = strings.TrimRight(r.Spec.Webhook.BaseUrl, "/")
+	if r.Spec.Webhook != nil && r.Spec.Webhook.BaseUrl != nil {
+		r.Spec.Webhook.BaseUrl = new(strings.TrimRight(*r.Spec.Webhook.BaseUrl, "/"))
 	}
 
 	// Extra mutators from factory
@@ -82,7 +84,28 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 		}
 	}
 
+	clearZeroPointers(reflect.ValueOf(&r.Spec).Elem())
+
 	return nil
+}
+
+// clearZeroPointers sets every pointer to a zero scalar in the struct v to nil, recursing into
+// nested structs. Optional spec fields are pointers, so without this a client sending "" or
+// false would get it stored and echoed back, where omitempty on the old value fields dropped it.
+func clearZeroPointers(v reflect.Value) {
+	for i := 0; i < v.NumField(); i++ {
+		f := v.Field(i)
+		switch {
+		case !f.CanSet():
+		case f.Kind() == reflect.Struct:
+			clearZeroPointers(f)
+		case f.Kind() != reflect.Pointer || f.IsNil():
+		case f.Elem().Kind() == reflect.Struct:
+			clearZeroPointers(f.Elem())
+		case f.Elem().IsZero():
+			f.SetZero()
+		}
+	}
 }
 
 // CopySecureValues copies secure values from old to new repository if they are zero in the new one.

@@ -150,7 +150,7 @@ func TestWebhookOnCreate(t *testing.T) {
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
 					},
-					Webhook: &provisioning.RepositoryWebhookConfig{Disabled: true},
+					Webhook: &provisioning.RepositoryWebhookConfig{Disabled: new(true)},
 				},
 			},
 			webhookURL:    "https://example.com/webhook",
@@ -597,7 +597,7 @@ func TestWebhookOnUpdate(t *testing.T) {
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
 					},
-					Webhook: &provisioning.RepositoryWebhookConfig{Disabled: true},
+					Webhook: &provisioning.RepositoryWebhookConfig{Disabled: new(true)},
 				},
 				Status: provisioning.RepositoryStatus{
 					Webhook: &provisioning.RepositoryWebhookStatus{
@@ -620,7 +620,7 @@ func TestWebhookOnUpdate(t *testing.T) {
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
 					},
-					Webhook: &provisioning.RepositoryWebhookConfig{Disabled: true},
+					Webhook: &provisioning.RepositoryWebhookConfig{Disabled: new(true)},
 				},
 				Status: provisioning.RepositoryStatus{
 					Webhook: nil,

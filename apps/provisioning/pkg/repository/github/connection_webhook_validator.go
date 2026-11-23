@@ -6,6 +6,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -31,7 +32,7 @@ func (v *connectionWebhookValidator) Validate(ctx context.Context, cfg *provisio
 		return nil
 	}
 
-	if cfg.Spec.Webhook != nil && cfg.Spec.Webhook.Disabled {
+	if cfg.Spec.Webhook != nil && ptr.Deref(cfg.Spec.Webhook.Disabled, false) {
 		return nil
 	}
 

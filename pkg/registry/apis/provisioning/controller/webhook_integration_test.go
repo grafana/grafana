@@ -165,7 +165,7 @@ func TestIntegrationWebhookController_ReconcileLifecycle(t *testing.T) {
 		Spec: provisioning.RepositorySpec{
 			Type:      provisioning.RepositorySpecTypeGithub,
 			Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
-			Github:    &provisioning.RepositoryGitHubRepositoryConfig{Url: repoURL, Branch: "main"},
+			Github:    &provisioning.RepositoryGitHubRepositoryConfig{Url: new(repoURL), Branch: "main"},
 		},
 	}
 

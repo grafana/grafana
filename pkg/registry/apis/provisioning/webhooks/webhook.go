@@ -14,6 +14,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -167,7 +168,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 		hooks, ok := repo.(repository.WebhookRepository)
 		if !ok {
 			cfg := repo.Config()
-			if cfg.Spec.Webhook != nil && cfg.Spec.Webhook.Disabled {
+			if cfg.Spec.Webhook != nil && ptr.Deref(cfg.Spec.Webhook.Disabled, false) {
 				responder.Error(errors.NewBadRequest("webhook integration is disabled for this repository"))
 				return
 			}

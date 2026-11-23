@@ -24,6 +24,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/retry"
 	"k8s.io/client-go/util/workqueue"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
@@ -599,7 +600,7 @@ func (rc *RepositoryController) shouldResync(ctx context.Context, obj *provision
 	checkAge := time.Since(time.UnixMilli(max(obj.Status.Sync.Finished, obj.Status.Sync.LastChecked)))
 	// In case the sync interval is lower than the minimum sync interval set by the system
 	// we should default to the latter
-	syncInterval := max(time.Duration(obj.Spec.Sync.IntervalSeconds)*time.Second, rc.minSyncInterval)
+	syncInterval := max(time.Duration(ptr.Deref(obj.Spec.Sync.IntervalSeconds, 0))*time.Second, rc.minSyncInterval)
 	tolerance := time.Second
 
 	// Check for stale sync status - if sync status indicates a job is running but the job no longer exists
@@ -1149,7 +1150,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	// shouldResync stays true for good. determineSyncStrategy refuses to sync it anyway.
 	case shouldResync && !isOverQuota:
 		reason = "resync_interval"
-		logger.Info("sync interval triggered", "sync_interval", time.Duration(obj.Spec.Sync.IntervalSeconds)*time.Second, "sync_status", obj.Status.Sync)
+		logger.Info("sync interval triggered", "sync_interval", time.Duration(ptr.Deref(obj.Spec.Sync.IntervalSeconds, 0))*time.Second, "sync_status", obj.Status.Sync)
 	case shouldCheckHealth:
 		reason = "health_stale"
 		logger.Info("health is stale", "health_status", obj.Status.Health.Healthy)

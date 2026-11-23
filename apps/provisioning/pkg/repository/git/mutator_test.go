@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
@@ -73,7 +74,7 @@ func TestMutate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.RepositorySpecTypeGit,
 					Git: &provisioning.RepositoryGitRepositoryConfig{
-						Url: "https://github.com/grafana/grafana",
+						Url: new("https://github.com/grafana/grafana"),
 					},
 				},
 			},
@@ -89,7 +90,7 @@ func TestMutate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.RepositorySpecTypeGit,
 					Git: &provisioning.RepositoryGitRepositoryConfig{
-						Url: "https://github.com/grafana/grafana.git",
+						Url: new("https://github.com/grafana/grafana.git"),
 					},
 				},
 			},
@@ -105,7 +106,7 @@ func TestMutate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.RepositorySpecTypeGit,
 					Git: &provisioning.RepositoryGitRepositoryConfig{
-						Url: "https://github.com/grafana/grafana/",
+						Url: new("https://github.com/grafana/grafana/"),
 					},
 				},
 			},
@@ -121,7 +122,7 @@ func TestMutate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.RepositorySpecTypeGit,
 					Git: &provisioning.RepositoryGitRepositoryConfig{
-						Url: "  https://github.com/grafana/grafana  ",
+						Url: new("  https://github.com/grafana/grafana  "),
 					},
 				},
 			},
@@ -137,7 +138,7 @@ func TestMutate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.RepositorySpecTypeGit,
 					Git: &provisioning.RepositoryGitRepositoryConfig{
-						Url: "   ",
+						Url: new("   "),
 					},
 				},
 			},
@@ -158,7 +159,7 @@ func TestMutate(t *testing.T) {
 				if repo, ok := tt.obj.(*provisioning.Repository); ok && repo.Spec.Git != nil {
 					// Check URL normalization
 					if tt.expectedURL != "" {
-						assert.Equal(t, tt.expectedURL, repo.Spec.Git.Url, "URL should be normalized correctly")
+						assert.Equal(t, tt.expectedURL, ptr.Deref(repo.Spec.Git.Url, ""), "URL should be normalized correctly")
 					}
 				}
 			}

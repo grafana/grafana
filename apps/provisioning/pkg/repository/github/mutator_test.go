@@ -28,7 +28,7 @@ func TestMutator(t *testing.T) {
 				},
 				Spec: provisioning.RepositorySpec{
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url: "https://github.com/org/repo.git/",
+						Url: new("https://github.com/org/repo.git/"),
 					},
 				},
 			},
@@ -39,7 +39,7 @@ func TestMutator(t *testing.T) {
 				},
 				Spec: provisioning.RepositorySpec{
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url: "https://github.com/org/repo",
+						Url: new("https://github.com/org/repo"),
 					},
 				},
 			},
@@ -53,7 +53,7 @@ func TestMutator(t *testing.T) {
 				},
 				Spec: provisioning.RepositorySpec{
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url: "https://github.com/org/repo/",
+						Url: new("https://github.com/org/repo/"),
 					},
 				},
 			},
@@ -64,7 +64,7 @@ func TestMutator(t *testing.T) {
 				},
 				Spec: provisioning.RepositorySpec{
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url: "https://github.com/org/repo",
+						Url: new("https://github.com/org/repo"),
 					},
 				},
 			},
@@ -78,7 +78,7 @@ func TestMutator(t *testing.T) {
 				},
 				Spec: provisioning.RepositorySpec{
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url: "https://github.com/org/repo.git",
+						Url: new("https://github.com/org/repo.git"),
 					},
 				},
 			},
@@ -89,7 +89,7 @@ func TestMutator(t *testing.T) {
 				},
 				Spec: provisioning.RepositorySpec{
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url: "https://github.com/org/repo",
+						Url: new("https://github.com/org/repo"),
 					},
 				},
 			},
@@ -103,7 +103,7 @@ func TestMutator(t *testing.T) {
 				},
 				Spec: provisioning.RepositorySpec{
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url: "https://github.com/org/repo",
+						Url: new("https://github.com/org/repo"),
 					},
 				},
 			},
@@ -114,7 +114,7 @@ func TestMutator(t *testing.T) {
 				},
 				Spec: provisioning.RepositorySpec{
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url: "https://github.com/org/repo",
+						Url: new("https://github.com/org/repo"),
 					},
 				},
 			},

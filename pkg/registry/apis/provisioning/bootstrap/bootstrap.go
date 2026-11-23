@@ -9,6 +9,7 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -191,19 +192,19 @@ func (c Config) apply(repo *provisioning.Repository) {
 
 // applySpec replaces spec, so a field it does not set is zero rather than what was stored.
 func applySpec(spec *provisioning.RepositorySpec, path string) {
-	interval := spec.Sync.IntervalSeconds
+	interval := ptr.Deref(spec.Sync.IntervalSeconds, 0)
 	*spec = provisioning.RepositorySpec{
 		Title:       title,
-		Description: description,
+		Description: new(description),
 		Type:        provisioning.RepositorySpecTypeLocal,
-		Local:       &provisioning.RepositoryLocalRepositoryConfig{Path: path},
+		Local:       &provisioning.RepositoryLocalRepositoryConfig{Path: new(path)},
 		// Edits to provisioned resources route to the files endpoint, which needs this.
 		Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 		Sync: provisioning.RepositorySyncOptions{
 			Enabled: true,
 			// The directory is instance configuration, not a folder of dashboards.
 			Target:          SyncTarget,
-			IntervalSeconds: interval,
+			IntervalSeconds: new(interval),
 		},
 	}
 }

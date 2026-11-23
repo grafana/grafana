@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/utils/ptr"
 )
 
 type extra struct {
@@ -51,10 +52,10 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 	}
 
 	return NewRepository(ctx, r, RepositoryConfig{
-		URL:              cfg.Url,
+		URL:              ptr.Deref(cfg.Url, ""),
 		Branch:           cfg.Branch,
-		Path:             cfg.Path,
-		TokenUser:        cfg.TokenUser,
+		Path:             ptr.Deref(cfg.Path, ""),
+		TokenUser:        ptr.Deref(cfg.TokenUser, ""),
 		Token:            token,
 		CommitSigningKey: signingKey,
 		SigningMethod:    SigningMethodFromSpec(r),

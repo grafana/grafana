@@ -164,7 +164,7 @@ func TestExtra_BuildUsesUserAgent(t *testing.T) {
 	decrypter := func(*provisioning.Repository) repository.SecureValues { return emptySecureValues{} }
 	config := &provisioning.Repository{Spec: provisioning.RepositorySpec{
 		Type: provisioning.RepositorySpecTypeGit,
-		Git:  &provisioning.RepositoryGitRepositoryConfig{Url: "https://git.example.com/owner/repo.git", Branch: "main"},
+		Git:  &provisioning.RepositoryGitRepositoryConfig{Url: new("https://git.example.com/owner/repo.git"), Branch: "main"},
 	}}
 
 	repo, err := Extra(decrypter, false, nil, nil, "custom-agent/1.0").Build(t.Context(), config)
@@ -2338,8 +2338,8 @@ func TestGitRepository_createSignature(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.RepositorySpecTypeGithub,
 					Commit: &provisioning.RepositoryCommitOptions{
-						SignerName:  "Bot Signer",
-						SignerEmail: "signer@example.com",
+						SignerName:  new("Bot Signer"),
+						SignerEmail: new("signer@example.com"),
 					},
 				},
 			},
@@ -2358,7 +2358,7 @@ func TestGitRepository_createSignature(t *testing.T) {
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Type:   provisioning.RepositorySpecTypeGithub,
-					Commit: &provisioning.RepositoryCommitOptions{SignerName: "Bot Signer"},
+					Commit: &provisioning.RepositoryCommitOptions{SignerName: new("Bot Signer")},
 				},
 			},
 		}
@@ -2376,8 +2376,8 @@ func TestGitRepository_createSignature(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.RepositorySpecTypeGithub,
 					Commit: &provisioning.RepositoryCommitOptions{
-						SignerName:  "Bot Signer",
-						SignerEmail: "signer@example.com",
+						SignerName:  new("Bot Signer"),
+						SignerEmail: new("signer@example.com"),
 					},
 				},
 			},
@@ -2401,8 +2401,8 @@ func TestGitRepository_createSignature(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.RepositorySpecTypeGithub,
 					Commit: &provisioning.RepositoryCommitOptions{
-						AuthorName:  "Sync Bot",
-						AuthorEmail: "bot@example.com",
+						AuthorName:  new("Sync Bot"),
+						AuthorEmail: new("bot@example.com"),
 					},
 				},
 			},
@@ -2425,7 +2425,7 @@ func TestGitRepository_createSignature(t *testing.T) {
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Type:   provisioning.RepositorySpecTypeGithub,
-					Commit: &provisioning.RepositoryCommitOptions{AuthorEmail: "bot@example.com"},
+					Commit: &provisioning.RepositoryCommitOptions{AuthorEmail: new("bot@example.com")},
 				},
 			},
 		}
@@ -2448,10 +2448,10 @@ func TestGitRepository_createSignature(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.RepositorySpecTypeGithub,
 					Commit: &provisioning.RepositoryCommitOptions{
-						AuthorName:  "Sync Bot",
-						AuthorEmail: "bot@example.com",
-						SignerName:  "Bot Signer",
-						SignerEmail: "signer@example.com",
+						AuthorName:  new("Sync Bot"),
+						AuthorEmail: new("bot@example.com"),
+						SignerName:  new("Bot Signer"),
+						SignerEmail: new("signer@example.com"),
 					},
 				},
 			},
@@ -5301,7 +5301,7 @@ func TestGitRepository_GetDefaultBranch(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Type: provisioning.RepositorySpecTypeGit,
 						Git: &provisioning.RepositoryGitRepositoryConfig{
-							Url: "https://git.example.com/owner/repo.git",
+							Url: new("https://git.example.com/owner/repo.git"),
 						},
 					},
 				},
@@ -5353,7 +5353,7 @@ func TestGitRepository_GetCurrentBranch(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Type: provisioning.RepositorySpecTypeGit,
 						Git: &provisioning.RepositoryGitRepositoryConfig{
-							Url:    "https://git.example.com/owner/repo.git",
+							Url:    new("https://git.example.com/owner/repo.git"),
 							Branch: tt.branchInConfig,
 						},
 					},

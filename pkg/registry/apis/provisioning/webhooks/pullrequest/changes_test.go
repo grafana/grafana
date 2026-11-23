@@ -76,7 +76,7 @@ func TestCalculateChanges(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Type: provisioning.RepositorySpecTypeGithub,
 						Github: &provisioning.RepositoryGitHubRepositoryConfig{
-							GenerateDashboardPreviews: true,
+							GenerateDashboardPreviews: new(true),
 						},
 					},
 				})
@@ -151,7 +151,7 @@ func TestCalculateChanges(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Type: provisioning.RepositorySpecTypeGithub,
 						Github: &provisioning.RepositoryGitHubRepositoryConfig{
-							GenerateDashboardPreviews: true,
+							GenerateDashboardPreviews: new(true),
 						},
 					},
 				})
@@ -231,7 +231,7 @@ func TestCalculateChanges(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Type: provisioning.RepositorySpecTypeGithub,
 						Github: &provisioning.RepositoryGitHubRepositoryConfig{
-							GenerateDashboardPreviews: true,
+							GenerateDashboardPreviews: new(true),
 						},
 					},
 				})
@@ -306,7 +306,7 @@ func TestCalculateChanges(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Type: provisioning.RepositorySpecTypeGithub,
 						Github: &provisioning.RepositoryGitHubRepositoryConfig{
-							GenerateDashboardPreviews: true,
+							GenerateDashboardPreviews: new(true),
 						},
 					},
 				})
@@ -384,10 +384,10 @@ func TestCalculateChanges(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Type: provisioning.RepositorySpecTypeGithub,
 						Github: &provisioning.RepositoryGitHubRepositoryConfig{
-							GenerateDashboardPreviews: true,
+							GenerateDashboardPreviews: new(true),
 						},
 						Webhook: &provisioning.RepositoryWebhookConfig{
-							BaseUrl: "https://webhook-only.example.com",
+							BaseUrl: new("https://webhook-only.example.com"),
 						},
 					},
 				})
@@ -462,7 +462,7 @@ func TestCalculateChanges(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Type: provisioning.RepositorySpecTypeGithub,
 						Github: &provisioning.RepositoryGitHubRepositoryConfig{
-							GenerateDashboardPreviews: true,
+							GenerateDashboardPreviews: new(true),
 						},
 					},
 				})
@@ -535,7 +535,7 @@ func TestCalculateChanges(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Type: provisioning.RepositorySpecTypeGithub,
 						Github: &provisioning.RepositoryGitHubRepositoryConfig{
-							GenerateDashboardPreviews: true,
+							GenerateDashboardPreviews: new(true),
 						},
 					},
 				})
@@ -608,7 +608,7 @@ func TestCalculateChanges(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Type: provisioning.RepositorySpecTypeGithub,
 						Github: &provisioning.RepositoryGitHubRepositoryConfig{
-							GenerateDashboardPreviews: true,
+							GenerateDashboardPreviews: new(true),
 						},
 					},
 				})
@@ -857,7 +857,7 @@ func TestCalculateChanges(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Type: provisioning.RepositorySpecTypeGithub,
 						Github: &provisioning.RepositoryGitHubRepositoryConfig{
-							GenerateDashboardPreviews: true,
+							GenerateDashboardPreviews: new(true),
 						},
 					},
 				})
@@ -1205,7 +1205,7 @@ func TestCalculateChanges(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Type: provisioning.RepositorySpecTypeGithub,
 						Github: &provisioning.RepositoryGitHubRepositoryConfig{
-							GenerateDashboardPreviews: true,
+							GenerateDashboardPreviews: new(true),
 						},
 					},
 				})
@@ -1279,7 +1279,7 @@ func TestCalculateChanges(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Type: provisioning.RepositorySpecTypeGithub,
 						Github: &provisioning.RepositoryGitHubRepositoryConfig{
-							GenerateDashboardPreviews: true,
+							GenerateDashboardPreviews: new(true),
 						},
 					},
 				})
@@ -1350,7 +1350,7 @@ func TestCalculateChanges(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Type: provisioning.RepositorySpecTypeGithub,
 						Github: &provisioning.RepositoryGitHubRepositoryConfig{
-							GenerateDashboardPreviews: true,
+							GenerateDashboardPreviews: new(true),
 						},
 					},
 				})
@@ -1483,7 +1483,7 @@ func TestEvaluate_PopulatesSourceAndRepositoryURLs(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "x"},
 		Spec: provisioning.RepositorySpec{
 			Type:   provisioning.RepositorySpecTypeGithub,
-			Github: &provisioning.RepositoryGitHubRepositoryConfig{Url: "https://github.com/example/repo"},
+			Github: &provisioning.RepositoryGitHubRepositoryConfig{Url: new("https://github.com/example/repo")},
 		},
 	})
 	reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
@@ -1547,7 +1547,7 @@ func TestEvaluate_StripsCredentialsFromURLs(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "creds-repo", Namespace: "x"},
 		Spec: provisioning.RepositorySpec{
 			Type:   provisioning.RepositorySpecTypeGithub,
-			Github: &provisioning.RepositoryGitHubRepositoryConfig{Url: "https://user:token@github.com/example/repo"}, // trufflehog:ignore
+			Github: &provisioning.RepositoryGitHubRepositoryConfig{Url: new("https://user:token@github.com/example/repo")}, // trufflehog:ignore
 		},
 	})
 	reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
@@ -1621,7 +1621,7 @@ func TestEvaluate_FolderGetsGrafanaAndSourceURL(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "x"},
 		Spec: provisioning.RepositorySpec{
 			Type:   provisioning.RepositorySpecTypeGithub,
-			Github: &provisioning.RepositoryGitHubRepositoryConfig{Url: "https://github.com/example/repo"},
+			Github: &provisioning.RepositoryGitHubRepositoryConfig{Url: new("https://github.com/example/repo")},
 		},
 	})
 	reader.On("Read", mock.Anything, "team/_folder.json", "ref").Return(finfo, nil)
@@ -1708,7 +1708,7 @@ func TestEvaluate_DeletedFilePopulatesSourceURL(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "x"},
 		Spec: provisioning.RepositorySpec{
 			Type:   provisioning.RepositorySpecTypeGithub,
-			Github: &provisioning.RepositoryGitHubRepositoryConfig{Url: "https://github.com/example/repo"},
+			Github: &provisioning.RepositoryGitHubRepositoryConfig{Url: new("https://github.com/example/repo")},
 		},
 	})
 	reader.On("Read", mock.Anything, "team/_folder.json", "base-ref").Return(finfo, nil)
@@ -1779,7 +1779,7 @@ func TestEvaluate_GitHubEnterpriseDoesNotPanic(t *testing.T) {
 		Spec: provisioning.RepositorySpec{
 			Type: provisioning.RepositorySpecTypeGithubEnterprise,
 			PullRequest: &provisioning.RepositoryPullRequestOptions{
-				GenerateDashboardPreviews: true,
+				GenerateDashboardPreviews: new(true),
 			},
 		},
 	})

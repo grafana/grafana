@@ -161,7 +161,7 @@ func TestMetricCollector_RepositoryDimensions(t *testing.T) {
 					Type:       provisioning.RepositorySpecTypeGithub,
 					Workflows:  []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite, provisioning.RepositorySpecWorkflowsWrite, provisioning.RepositorySpecWorkflowsBranch},
 					Sync:       provisioning.RepositorySyncOptions{Enabled: true, Target: provisioning.RepositorySyncOptionsTargetInstance},
-					Webhook:    &provisioning.RepositoryWebhookConfig{Disabled: true},
+					Webhook:    &provisioning.RepositoryWebhookConfig{Disabled: new(true)},
 					Connection: &provisioning.RepositoryConnectionInfo{Name: "my-conn"},
 				},
 				Status: provisioning.RepositoryStatus{
@@ -177,7 +177,7 @@ func TestMetricCollector_RepositoryDimensions(t *testing.T) {
 				// last sync errored, local repository (auth method "none").
 				Spec: provisioning.RepositorySpec{
 					Type:  provisioning.RepositorySpecTypeLocal,
-					Local: &provisioning.RepositoryLocalRepositoryConfig{Path: "/tmp/repo"},
+					Local: &provisioning.RepositoryLocalRepositoryConfig{Path: new("/tmp/repo")},
 					Sync:  provisioning.RepositorySyncOptions{Enabled: false, Target: provisioning.RepositorySyncOptionsTargetFolder},
 				},
 				Status: provisioning.RepositoryStatus{

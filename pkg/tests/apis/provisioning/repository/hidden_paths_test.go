@@ -70,7 +70,7 @@ func TestIntegrationRepository_HiddenPathContract(t *testing.T) {
 			localRepo := local.NewRepository(&provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Type:  provisioning.RepositorySpecTypeLocal,
-					Local: &provisioning.RepositoryLocalRepositoryConfig{Path: filepath.Join(checkout.Path, prefix)},
+					Local: &provisioning.RepositoryLocalRepositoryConfig{Path: new(filepath.Join(checkout.Path, prefix))},
 				},
 			}, &local.LocalFolderResolver{PermittedPrefixes: []string{checkout.Path}}, nil)
 

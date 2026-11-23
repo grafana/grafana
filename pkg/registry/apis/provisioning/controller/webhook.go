@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"k8s.io/utils/ptr"
 )
 
 func webhookOnCreate(ctx context.Context, repo repository.WebhookRepository) ([]map[string]any, error) {
@@ -23,7 +24,7 @@ func webhookOnCreate(ctx context.Context, repo repository.WebhookRepository) ([]
 
 	// The repository may be webhook-capable while spec.webhook.disabled is true so
 	// a stale webhook can be cleaned up, but OnCreate must never register a new one.
-	if cfg.Spec.Webhook != nil && cfg.Spec.Webhook.Disabled {
+	if cfg.Spec.Webhook != nil && ptr.Deref(cfg.Spec.Webhook.Disabled, false) {
 		logging.FromContext(ctx).Warn("webhook hooks invoked while spec.webhook.disabled is true; skipping")
 		return nil, nil
 	}
@@ -44,7 +45,7 @@ func webhookOnUpdate(ctx context.Context, repo repository.WebhookRepository) ([]
 	status := cfg.Status.Webhook
 
 	// When disabled, remove any webhook that was registered before this flag was set.
-	if cfg.Spec.Webhook != nil && cfg.Spec.Webhook.Disabled {
+	if cfg.Spec.Webhook != nil && ptr.Deref(cfg.Spec.Webhook.Disabled, false) {
 		if status != nil {
 			if err := deleteWebhook(ctx, repo); err != nil {
 				return nil, err

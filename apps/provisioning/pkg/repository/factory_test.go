@@ -882,7 +882,7 @@ func TestFactory_Mutate(t *testing.T) {
 		oldRepo := &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
 				Type: provisioning.RepositorySpecTypeLocal,
-				Sync: provisioning.RepositorySyncOptions{IntervalSeconds: 30},
+				Sync: provisioning.RepositorySyncOptions{IntervalSeconds: new(int64(30))},
 			},
 		}
 

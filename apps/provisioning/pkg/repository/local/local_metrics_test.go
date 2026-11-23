@@ -29,7 +29,7 @@ func TestLocalRepository_OperationMetrics(t *testing.T) {
 	repo := NewRepository(&provisioning.Repository{
 		Spec: provisioning.RepositorySpec{
 			Type:  provisioning.RepositorySpecTypeLocal,
-			Local: &provisioning.RepositoryLocalRepositoryConfig{Path: tempDir},
+			Local: &provisioning.RepositoryLocalRepositoryConfig{Path: new(tempDir)},
 		},
 	}, &LocalFolderResolver{PermittedPrefixes: []string{tempDir}, HomePath: tempDir}, testMetrics)
 

@@ -26,6 +26,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller/mocks"
@@ -926,7 +927,7 @@ func TestRepositoryController_process_UnhealthyRepositoryStatusUpdate(t *testing
 				Spec: provisioning.RepositorySpec{
 					Sync: provisioning.RepositorySyncOptions{
 						Enabled:         true,
-						IntervalSeconds: 300,
+						IntervalSeconds: new(int64(300)),
 					},
 				},
 				Status: provisioning.RepositoryStatus{
@@ -963,7 +964,7 @@ func TestRepositoryController_process_UnhealthyRepositoryStatusUpdate(t *testing
 				Spec: provisioning.RepositorySpec{
 					Sync: provisioning.RepositorySyncOptions{
 						Enabled:         true,
-						IntervalSeconds: 300,
+						IntervalSeconds: new(int64(300)),
 					},
 				},
 				Status: provisioning.RepositoryStatus{
@@ -1000,7 +1001,7 @@ func TestRepositoryController_process_UnhealthyRepositoryStatusUpdate(t *testing
 				Spec: provisioning.RepositorySpec{
 					Sync: provisioning.RepositorySyncOptions{
 						Enabled:         true,
-						IntervalSeconds: 300,
+						IntervalSeconds: new(int64(300)),
 					},
 				},
 				Status: provisioning.RepositoryStatus{
@@ -1079,7 +1080,7 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Sync: provisioning.RepositorySyncOptions{
 						Enabled:         true,
-						IntervalSeconds: 300,
+						IntervalSeconds: new(int64(300)),
 					},
 				},
 				Status: provisioning.RepositoryStatus{
@@ -1105,7 +1106,7 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Sync: provisioning.RepositorySyncOptions{
 						Enabled:         true,
-						IntervalSeconds: 300,
+						IntervalSeconds: new(int64(300)),
 					},
 				},
 				Status: provisioning.RepositoryStatus{
@@ -1131,7 +1132,7 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Sync: provisioning.RepositorySyncOptions{
 						Enabled:         true,
-						IntervalSeconds: 300,
+						IntervalSeconds: new(int64(300)),
 					},
 				},
 				Status: provisioning.RepositoryStatus{
@@ -1157,7 +1158,7 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Sync: provisioning.RepositorySyncOptions{
 						Enabled:         true,
-						IntervalSeconds: 300,
+						IntervalSeconds: new(int64(300)),
 					},
 				},
 				Status: provisioning.RepositoryStatus{
@@ -1183,7 +1184,7 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Sync: provisioning.RepositorySyncOptions{
 						Enabled:         true,
-						IntervalSeconds: 300,
+						IntervalSeconds: new(int64(300)),
 					},
 				},
 				Status: provisioning.RepositoryStatus{
@@ -1208,7 +1209,7 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Sync: provisioning.RepositorySyncOptions{
 						Enabled:         true,
-						IntervalSeconds: 300,
+						IntervalSeconds: new(int64(300)),
 					},
 				},
 				Status: provisioning.RepositoryStatus{
@@ -1269,7 +1270,7 @@ func newIntervalController(t *testing.T, state provisioning.JobState) (*Reposito
 		ObjectMeta: metav1.ObjectMeta{Name: "repo", Namespace: "default", Generation: 1},
 		Spec: provisioning.RepositorySpec{
 			Type: provisioning.RepositorySpecTypeGit,
-			Sync: provisioning.RepositorySyncOptions{Enabled: true, IntervalSeconds: 300},
+			Sync: provisioning.RepositorySyncOptions{Enabled: true, IntervalSeconds: new(int64(300))},
 		},
 		Status: provisioning.RepositoryStatus{
 			ObservedGeneration: 1,
@@ -1436,7 +1437,7 @@ func TestRepositoryController_shouldResync_LastChecked(t *testing.T) {
 			rc := &RepositoryController{minSyncInterval: tt.minInterval}
 			obj := &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{Sync: provisioning.RepositorySyncOptions{
-					Enabled: !tt.disabled, IntervalSeconds: 300,
+					Enabled: !tt.disabled, IntervalSeconds: new(int64(300)),
 				}},
 				Status: provisioning.RepositoryStatus{Sync: tt.sync},
 			}
@@ -1454,7 +1455,7 @@ func TestRepositoryController_shouldResync_MissingJobUsesFinished(t *testing.T) 
 			rc := &RepositoryController{jobs: &mockJobsQueueStore{MockStore: store}}
 			obj := &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Namespace: "default"},
-				Spec:       provisioning.RepositorySpec{Sync: provisioning.RepositorySyncOptions{Enabled: true, IntervalSeconds: 300}},
+				Spec:       provisioning.RepositorySpec{Sync: provisioning.RepositorySyncOptions{Enabled: true, IntervalSeconds: new(int64(300))}},
 				Status: provisioning.RepositoryStatus{Sync: provisioning.RepositorySyncStatus{
 					State: state, Job: "missing-job",
 					Finished:    time.Now().Add(-time.Hour).UnixMilli(),
@@ -1829,7 +1830,7 @@ func (p *raceSimulatingPatcher) Patch(_ context.Context, _ *provisioning.Reposit
 		if path == "/spec/gitlab/url" {
 			var currentURL string
 			if p.storage.Spec.Gitlab != nil {
-				currentURL = p.storage.Spec.Gitlab.Url
+				currentURL = ptr.Deref(p.storage.Spec.Gitlab.Url, "")
 			}
 			if currentURL != op["value"] {
 				return apierrors.NewGenericServerResponse(
@@ -1841,7 +1842,8 @@ func (p *raceSimulatingPatcher) Patch(_ context.Context, _ *provisioning.Reposit
 
 	for _, op := range patchOperations {
 		if op["op"] == "add" && op["path"] == "/spec/gitlab/repoID" && p.storage.Spec.Gitlab != nil {
-			p.storage.Spec.Gitlab.RepoID, _ = op["value"].(string)
+			repoID, _ := op["value"].(string)
+			p.storage.Spec.Gitlab.RepoID = new(repoID)
 		}
 	}
 
@@ -1869,7 +1871,7 @@ func TestRepositoryController_process_RepoIDBackfillGuardsAgainstStaleURL(t *tes
 			},
 			Spec: provisioning.RepositorySpec{
 				Type:   provisioning.RepositorySpecTypeGitlab,
-				Gitlab: &provisioning.RepositoryGitLabRepositoryConfig{Url: url},
+				Gitlab: &provisioning.RepositoryGitLabRepositoryConfig{Url: new(url)},
 			},
 			Status: provisioning.RepositoryStatus{
 				ObservedGeneration: 0, // Generation != ObservedGeneration triggers reconciliation.
@@ -1960,10 +1962,10 @@ func TestRepositoryController_process_RepoIDBackfillGuardsAgainstStaleURL(t *tes
 			}
 
 			if tc.wantRepoIDSet {
-				assert.Equal(t, "resolved-for-a", storage.Spec.Gitlab.RepoID,
+				assert.Equal(t, "resolved-for-a", ptr.Deref(storage.Spec.Gitlab.RepoID, ""),
 					"repoID should be backfilled when the url has not changed")
 			} else {
-				assert.Empty(t, storage.Spec.Gitlab.RepoID,
+				assert.Empty(t, ptr.Deref(storage.Spec.Gitlab.RepoID, ""),
 					"a stale reconciliation must not pin a repoID resolved for a different url")
 			}
 		})
@@ -2591,7 +2593,7 @@ func TestRepositoryController_process_DefaultBranchFailure(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default", Generation: 2},
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.RepositorySpecTypeGit,
-					Git:  &provisioning.RepositoryGitRepositoryConfig{Url: "https://git.example.com/repo.git"},
+					Git:  &provisioning.RepositoryGitRepositoryConfig{Url: new("https://git.example.com/repo.git")},
 				},
 				Status: provisioning.RepositoryStatus{
 					ObservedGeneration: 1,
@@ -4533,7 +4535,7 @@ func blockedOverQuotaRepo(namespace, name string, checked time.Time, syncEnabled
 		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace, Generation: 1},
 		Spec: provisioning.RepositorySpec{
 			Type: provisioning.RepositorySpecTypeGithub,
-			Sync: provisioning.RepositorySyncOptions{Enabled: syncEnabled, IntervalSeconds: 60},
+			Sync: provisioning.RepositorySyncOptions{Enabled: syncEnabled, IntervalSeconds: new(int64(60))},
 		},
 		Status: provisioning.RepositoryStatus{
 			ObservedGeneration: 1,

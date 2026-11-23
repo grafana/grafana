@@ -18,6 +18,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/util/retry"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -51,9 +52,9 @@ func TestIntegrationProvisioning_GitHubAppURLChangeRemovesToken(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "url-change-repo", Namespace: "default"},
 		Spec: provisioning.RepositorySpec{
 			Title: "URL change repository", Type: provisioning.RepositorySpecTypeGithub,
-			Github:     &provisioning.RepositoryGitHubRepositoryConfig{Url: "https://github.com/grafana/old", Branch: "main"},
+			Github:     &provisioning.RepositoryGitHubRepositoryConfig{Url: new("https://github.com/grafana/old"), Branch: "main"},
 			Connection: &provisioning.RepositoryConnectionInfo{Name: conn.Name},
-			Webhook:    &provisioning.RepositoryWebhookConfig{Disabled: true},
+			Webhook:    &provisioning.RepositoryWebhookConfig{Disabled: new(true)},
 			Sync:       provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetFolder},
 		},
 		Secure: provisioning.SecureValues{
@@ -82,7 +83,7 @@ func TestIntegrationProvisioning_GitHubAppURLChangeRemovesToken(t *testing.T) {
 				}
 				updated := common.MustFromUnstructured[provisioning.Repository](t, current)
 				require.NotEmpty(t, updated.Secure.Token.Name)
-				updated.Spec.Github.Url += "-new"
+				updated.Spec.Github.Url = new(ptr.Deref(updated.Spec.Github.Url, "") + "-new")
 				if !includeTokenReference {
 					updated.Secure.Token = resource.InlineSecureValue{}
 				}
@@ -180,9 +181,9 @@ func TestIntegrationProvisioning_GitHubAppURLChangeTestEndpoint(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "url-change-test-repo", Namespace: "default"},
 		Spec: provisioning.RepositorySpec{
 			Title: "URL change test repository", Type: provisioning.RepositorySpecTypeGithub,
-			Github:     &provisioning.RepositoryGitHubRepositoryConfig{Url: gitServer.URL + "/grafana/old", Branch: "main"},
+			Github:     &provisioning.RepositoryGitHubRepositoryConfig{Url: new(gitServer.URL + "/grafana/old"), Branch: "main"},
 			Connection: &provisioning.RepositoryConnectionInfo{Name: conn.GetName()},
-			Webhook:    &provisioning.RepositoryWebhookConfig{Disabled: true},
+			Webhook:    &provisioning.RepositoryWebhookConfig{Disabled: new(true)},
 			Sync:       provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetFolder},
 		},
 	}
@@ -207,7 +208,7 @@ func TestIntegrationProvisioning_GitHubAppURLChangeTestEndpoint(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			updated := stored.DeepCopy()
-			updated.Spec.Github.Url = gitServer.URL + "/grafana/" + tc.repository
+			updated.Spec.Github.Url = new(gitServer.URL + "/grafana/" + tc.repository)
 			updated.Secure.Token = tc.token
 			body, err := json.Marshal(updated)
 			require.NoError(t, err)
@@ -315,7 +316,7 @@ func TestIntegrationProvisioning_ConnectionRepositoryURLChange(t *testing.T) {
 		require.NoError(t, err)
 
 		stored := common.MustFromUnstructured[provisioning.Repository](t, result)
-		assert.Equal(t, "https://github.com/grafana/repo-b", stored.Spec.Github.Url)
+		assert.Equal(t, "https://github.com/grafana/repo-b", ptr.Deref(stored.Spec.Github.Url, ""))
 
 		// A GitHub App token is scoped to the repository it was minted for, so the old one
 		// cannot reach repo-b. The controller has to replace it rather than keep it.
@@ -339,7 +340,7 @@ func TestIntegrationProvisioning_ConnectionRepositoryURLChange(t *testing.T) {
 		current, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 		require.NoError(t, err)
 		stored := common.MustFromUnstructured[provisioning.Repository](t, current)
-		assert.Equal(t, "https://github.com/grafana/repo-b", stored.Spec.Github.Url, "url must not have moved host")
+		assert.Equal(t, "https://github.com/grafana/repo-b", ptr.Deref(stored.Spec.Github.Url, ""), "url must not have moved host")
 	})
 }
 

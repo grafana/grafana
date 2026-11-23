@@ -1693,7 +1693,7 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.RepositorySpecTypeGithub,
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url: "https://github.com/test-owner/test-repo",
+						Url: new("https://github.com/test-owner/test-repo"),
 					},
 				},
 			},
@@ -1742,7 +1742,7 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.RepositorySpecTypeGithub,
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url: "https://github.com/test-owner/test-repo",
+						Url: new("https://github.com/test-owner/test-repo"),
 					},
 				},
 			},
@@ -1796,7 +1796,7 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.RepositorySpecTypeGithub,
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url: "invalid-url",
+						Url: new("invalid-url"),
 					},
 				},
 			},
@@ -1824,7 +1824,7 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.RepositorySpecTypeGithub,
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url: "https://github.com/test-owner/test-repo",
+						Url: new("https://github.com/test-owner/test-repo"),
 					},
 				},
 			},
@@ -1858,7 +1858,7 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.RepositorySpecTypeGithub,
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url: "https://github.com/test-owner/test-repo",
+						Url: new("https://github.com/test-owner/test-repo"),
 					},
 				},
 			},
@@ -1892,7 +1892,7 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.RepositorySpecTypeGithub,
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url: "https://github.com/test-owner/test-repo",
+						Url: new("https://github.com/test-owner/test-repo"),
 					},
 				},
 			},
@@ -1926,7 +1926,7 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.RepositorySpecTypeGithub,
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{
-						Url: "https://github.com/test-owner/test-repo",
+						Url: new("https://github.com/test-owner/test-repo"),
 					},
 				},
 			},

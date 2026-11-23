@@ -7,6 +7,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -38,19 +39,19 @@ var RepositoryResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 			var target string
 			switch m.Spec.Type {
 			case RepositorySpecTypeLocal:
-				target = m.Spec.Local.Path
+				target = ptr.Deref(m.Spec.Local.Path, "")
 			case RepositorySpecTypeGithub:
-				target = m.Spec.Github.Url
+				target = ptr.Deref(m.Spec.Github.Url, "")
 			case RepositorySpecTypeGithubEnterprise:
 				if m.Spec.GithubEnterprise != nil {
-					target = m.Spec.GithubEnterprise.Url
+					target = ptr.Deref(m.Spec.GithubEnterprise.Url, "")
 				}
 			case RepositorySpecTypeGit:
-				target = m.Spec.Git.Url
+				target = ptr.Deref(m.Spec.Git.Url, "")
 			case RepositorySpecTypeBitbucket:
-				target = m.Spec.Bitbucket.Url
+				target = ptr.Deref(m.Spec.Bitbucket.Url, "")
 			case RepositorySpecTypeGitlab:
-				target = m.Spec.Gitlab.Url
+				target = ptr.Deref(m.Spec.Gitlab.Url, "")
 			}
 
 			return []interface{}{

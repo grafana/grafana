@@ -64,7 +64,7 @@ func TestValidate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.RepositorySpecTypeLocal,
 					Local: &provisioning.RepositoryLocalRepositoryConfig{
-						Path: "",
+						Path: new(""),
 					},
 				},
 			},
@@ -81,7 +81,7 @@ func TestValidate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.RepositorySpecTypeLocal,
 					Local: &provisioning.RepositoryLocalRepositoryConfig{
-						Path: "../../etc/passwd",
+						Path: new("../../etc/passwd"),
 					},
 				},
 			},
@@ -101,7 +101,7 @@ func TestValidate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.RepositorySpecTypeLocal,
 					Local: &provisioning.RepositoryLocalRepositoryConfig{
-						Path: "/tmp/not-allowed",
+						Path: new("/tmp/not-allowed"),
 					},
 				},
 			},
@@ -118,7 +118,7 @@ func TestValidate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.RepositorySpecTypeLocal,
 					Local: &provisioning.RepositoryLocalRepositoryConfig{
-						Path: "invalid/path",
+						Path: new("invalid/path"),
 					},
 				},
 			},
@@ -138,7 +138,7 @@ func TestValidate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.RepositorySpecTypeLocal,
 					Local: &provisioning.RepositoryLocalRepositoryConfig{
-						Path: "invalid/path",
+						Path: new("invalid/path"),
 					},
 				},
 			},
@@ -158,7 +158,7 @@ func TestValidate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.RepositorySpecTypeLocal,
 					Local: &provisioning.RepositoryLocalRepositoryConfig{
-						Path: "devenv/test",
+						Path: new("devenv/test"),
 					},
 				},
 			},
@@ -176,7 +176,7 @@ func TestValidate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.RepositorySpecTypeLocal,
 					Local: &provisioning.RepositoryLocalRepositoryConfig{
-						Path: "/devenv/test",
+						Path: new("/devenv/test"),
 					},
 				},
 			},
@@ -194,7 +194,7 @@ func TestValidate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.RepositorySpecTypeLocal,
 					Local: &provisioning.RepositoryLocalRepositoryConfig{
-						Path: "devenv/test",
+						Path: new("devenv/test"),
 					},
 				},
 			},
@@ -212,7 +212,7 @@ func TestValidate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.RepositorySpecTypeLocal,
 					Local: &provisioning.RepositoryLocalRepositoryConfig{
-						Path: "/devenv/test",
+						Path: new("/devenv/test"),
 					},
 				},
 			},
@@ -230,7 +230,7 @@ func TestValidate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.RepositorySpecTypeLocal,
 					Local: &provisioning.RepositoryLocalRepositoryConfig{
-						Path: "allowed/test",
+						Path: new("allowed/test"),
 					},
 				},
 			},
@@ -245,7 +245,7 @@ func TestValidate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.RepositorySpecTypeLocal,
 					Local: &provisioning.RepositoryLocalRepositoryConfig{
-						Path: "test",
+						Path: new("test"),
 					},
 				},
 			},

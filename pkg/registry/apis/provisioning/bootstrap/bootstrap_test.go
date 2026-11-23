@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	clienttesting "k8s.io/client-go/testing"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	fakeclientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
@@ -31,7 +32,7 @@ func TestReconcileCreatesALocalRepository(t *testing.T) {
 	repo, err := repositories(client).Get(context.Background(), Name, metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, provisioning.RepositorySpecTypeLocal, repo.Spec.Type)
-	assert.Equal(t, config.Path, repo.Spec.Local.Path)
+	assert.Equal(t, config.Path, ptr.Deref(repo.Spec.Local.Path, ""))
 	assert.True(t, repo.Spec.Sync.Enabled)
 	assert.Equal(t, provisioning.RepositorySyncOptionsTargetFolderless, repo.Spec.Sync.Target)
 	assert.Equal(t, []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite}, repo.Spec.Workflows,
@@ -88,23 +89,23 @@ func TestReconcileIsIdempotent(t *testing.T) {
 func TestReconcilePreservesTheClampedSyncInterval(t *testing.T) {
 	client := newClientset(repositoryWith(func(repo *provisioning.Repository) {
 		config.apply(repo)
-		repo.Spec.Sync.IntervalSeconds = 60
-		repo.Spec.Local.Path = "conf/provisioning/stale"
+		repo.Spec.Sync.IntervalSeconds = new(int64(60))
+		repo.Spec.Local.Path = new("conf/provisioning/stale")
 	}))
 
 	require.NoError(t, Reconcile(context.Background(), repositories(client), config))
 
 	repo, err := repositories(client).Get(context.Background(), Name, metav1.GetOptions{})
 	require.NoError(t, err)
-	assert.Equal(t, config.Path, repo.Spec.Local.Path)
-	assert.EqualValues(t, 60, repo.Spec.Sync.IntervalSeconds)
+	assert.Equal(t, config.Path, ptr.Deref(repo.Spec.Local.Path, ""))
+	assert.EqualValues(t, 60, ptr.Deref(repo.Spec.Sync.IntervalSeconds, 0))
 }
 
 func TestReconcileRepairsADivertedRepository(t *testing.T) {
 	client := newClientset(repositoryWith(func(repo *provisioning.Repository) {
 		config.apply(repo)
 		repo.Spec.Type = provisioning.RepositorySpecTypeGithub
-		repo.Spec.Github = &provisioning.RepositoryGitHubRepositoryConfig{Url: "https://github.com/acme/elsewhere"}
+		repo.Spec.Github = &provisioning.RepositoryGitHubRepositoryConfig{Url: new("https://github.com/acme/elsewhere")}
 		repo.Spec.Workflows = []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsBranch}
 		repo.Spec.Sync.Enabled = false
 	}))
@@ -134,7 +135,7 @@ func TestReconcileToleratesAnotherReplicaWinningTheCreate(t *testing.T) {
 func TestReconcileLeavesAnUnrelatedRepositoryOfTheSameNameAlone(t *testing.T) {
 	unrelated := repositoryWith(func(repo *provisioning.Repository) {
 		repo.Spec.Type = provisioning.RepositorySpecTypeLocal
-		repo.Spec.Local = &provisioning.RepositoryLocalRepositoryConfig{Path: "conf/provisioning/someone-elses"}
+		repo.Spec.Local = &provisioning.RepositoryLocalRepositoryConfig{Path: new("conf/provisioning/someone-elses")}
 		repo.Spec.Sync = provisioning.RepositorySyncOptions{Enabled: true, Target: provisioning.RepositorySyncOptionsTargetFolderless}
 	})
 	client := newClientset(unrelated)
@@ -144,7 +145,7 @@ func TestReconcileLeavesAnUnrelatedRepositoryOfTheSameNameAlone(t *testing.T) {
 	require.ErrorContains(t, err, "already exists and is not managed by file-provisioning")
 	repo, getErr := repositories(client).Get(context.Background(), Name, metav1.GetOptions{})
 	require.NoError(t, getErr)
-	assert.Equal(t, "conf/provisioning/someone-elses", repo.Spec.Local.Path,
+	assert.Equal(t, "conf/provisioning/someone-elses", ptr.Deref(repo.Spec.Local.Path, ""),
 		"repointing it would hand its resources to another source")
 }
 
@@ -190,7 +191,7 @@ func onceNotFound() clienttesting.ReactionFunc {
 func TestReconcileRetriesAnUpdateConflict(t *testing.T) {
 	client := newClientset(repositoryWith(func(repo *provisioning.Repository) {
 		config.apply(repo)
-		repo.Spec.Local.Path = "conf/provisioning/stale"
+		repo.Spec.Local.Path = new("conf/provisioning/stale")
 	}))
 	var updates int
 	client.PrependReactor("update", "repositories", func(clienttesting.Action) (bool, runtime.Object, error) {
@@ -204,14 +205,14 @@ func TestReconcileRetriesAnUpdateConflict(t *testing.T) {
 
 	repo, err := repositories(client).Get(context.Background(), Name, metav1.GetOptions{})
 	require.NoError(t, err)
-	assert.Equal(t, config.Path, repo.Spec.Local.Path)
+	assert.Equal(t, config.Path, ptr.Deref(repo.Spec.Local.Path, ""))
 	assert.Equal(t, 2, updates, "the second attempt should re-read and retry")
 }
 
 func TestReconcileGivesUpOnPersistentConflicts(t *testing.T) {
 	client := newClientset(repositoryWith(func(repo *provisioning.Repository) {
 		config.apply(repo)
-		repo.Spec.Local.Path = "conf/provisioning/stale"
+		repo.Spec.Local.Path = new("conf/provisioning/stale")
 	}))
 	client.PrependReactor("update", "repositories", func(clienttesting.Action) (bool, runtime.Object, error) {
 		return true, nil, apierrors.NewConflict(schema.GroupResource{Resource: "repositories"}, Name, errors.New("stale"))
@@ -296,7 +297,7 @@ func TestReconcileDeletesOnlyTheObjectItVouchedFor(t *testing.T) {
 func TestReconcileLeavesAReplacementItDidNotReadAlone(t *testing.T) {
 	replacement := repositoryWith(func(repo *provisioning.Repository) {
 		repo.Spec.Type = provisioning.RepositorySpecTypeLocal
-		repo.Spec.Local = &provisioning.RepositoryLocalRepositoryConfig{Path: "conf/provisioning/someone-elses"}
+		repo.Spec.Local = &provisioning.RepositoryLocalRepositoryConfig{Path: new("conf/provisioning/someone-elses")}
 	})
 	client := newClientset(repositoryWith(config.apply))
 	client.PrependReactor("get", "repositories", onceThen(replacement))
@@ -334,7 +335,7 @@ func TestReconcileReportsAFailedDelete(t *testing.T) {
 func TestReconcileDoesNotRemoveARepositoryItDoesNotOwn(t *testing.T) {
 	client := newClientset(repositoryWith(func(repo *provisioning.Repository) {
 		repo.Spec.Type = provisioning.RepositorySpecTypeLocal
-		repo.Spec.Local = &provisioning.RepositoryLocalRepositoryConfig{Path: "conf/provisioning/someone-elses"}
+		repo.Spec.Local = &provisioning.RepositoryLocalRepositoryConfig{Path: new("conf/provisioning/someone-elses")}
 		repo.Spec.Sync = provisioning.RepositorySyncOptions{Enabled: true, Target: provisioning.RepositorySyncOptionsTargetFolderless}
 	}))
 
@@ -342,7 +343,7 @@ func TestReconcileDoesNotRemoveARepositoryItDoesNotOwn(t *testing.T) {
 
 	repo, err := repositories(client).Get(context.Background(), Name, metav1.GetOptions{})
 	require.NoError(t, err, "an unrelated repository of the same name is not ours to remove")
-	assert.Equal(t, "conf/provisioning/someone-elses", repo.Spec.Local.Path)
+	assert.Equal(t, "conf/provisioning/someone-elses", ptr.Deref(repo.Spec.Local.Path, ""))
 }
 
 func TestReconcileIsANoOpWhenNoRepositoryWasEverRegistered(t *testing.T) {
