@@ -3412,6 +3412,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.logsFieldSelectorValues",
+        "resourceVersion": "1795435200000",
+        "creationTimestamp": "2026-11-23T12:00:00Z"
+      },
+      "spec": {
+        "description": "Shows the top values of a field with counts in the logs field selector",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.logsInfiniteScrollTop",
         "resourceVersion": "1794950185352",
         "creationTimestamp": "2026-11-17T21:16:25Z"

@@ -5,13 +5,14 @@ import { type DataFrame, FieldType, store, toDataFrame } from '@grafana/data';
 import { type FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
 
 import { createLogLine } from '../mocks/logRow';
-import { LogListContext } from '../panel/LogListContext';
+import { LogListContext, type LogListContextData } from '../panel/LogListContext';
 import { defaultValue } from '../panel/__mocks__/LogListContext';
 import { type LogListModel } from '../panel/processing';
 
 import { FIELD_SELECTOR_MIN_WIDTH } from './FieldSelector';
 import { LogListFieldSelector } from './LogListFieldSelector';
 import { LogsTableFieldSelector } from './LogsTableFieldSelector';
+import { LOG_LINE_BODY_FIELD_NAME } from './logFields';
 
 const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
 
@@ -225,6 +226,115 @@ describe('LogListFieldSelector', () => {
     expect(screen.getAllByText('service_name').length).toBeGreaterThan(0);
     expect(screen.getAllByText('message').length).toBeGreaterThan(0);
     expect(screen.getAllByText('app').length).toBeGreaterThan(0);
+  });
+});
+
+describe('LogListFieldSelector field values', () => {
+  const onClickShowField = jest.fn();
+
+  const contextValue = {
+    ...defaultValue,
+    displayedFields: [],
+    onClickShowField,
+    onClickHideField: jest.fn(),
+    setDisplayedFields: jest.fn(),
+  };
+
+  const Selector = ({
+    context = {},
+    lines = logs,
+  }: {
+    context?: Partial<LogListContextData>;
+    lines?: LogListModel[];
+  }) => (
+    <LogListContext.Provider value={{ ...contextValue, ...context }}>
+      <LogListFieldSelector containerElement={containerElement} logs={lines} dataFrames={dataFrames} />
+    </LogListContext.Provider>
+  );
+
+  const expandField = (name: RegExp) => userEvent.click(screen.getByRole('button', { name, expanded: false }));
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test('does not make fields expandable when the feature toggle is off', async () => {
+    render(<Selector />);
+
+    expect(screen.queryByRole('button', { name: /level/, expanded: false })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByText('level'));
+    expect(onClickShowField).toHaveBeenCalledWith('level');
+  });
+
+  describe('with the feature toggle on', () => {
+    beforeEach(() => {
+      setBooleanFlags({ 'grafana.logsFieldSelectorValues': true });
+    });
+
+    test('expands a field from its row and toggles the field only from the checkbox', async () => {
+      render(<Selector />);
+
+      await expandField(/level/);
+
+      expect(screen.getByRole('button', { name: /level/, expanded: true })).toBeInTheDocument();
+      expect(screen.getByText('Top values in 2 loaded lines')).toBeInTheDocument();
+      expect(screen.getByText('info').closest('li')).toHaveTextContent('50%');
+      expect(onClickShowField).not.toHaveBeenCalled();
+
+      await userEvent.click(screen.getByLabelText('Show level in log lines'));
+      expect(onClickShowField).toHaveBeenCalledWith('level');
+    });
+
+    test('does not list empty values', async () => {
+      const lines = [
+        createLogLine({ uid: '1', labels: { service: '' } }),
+        createLogLine({ uid: '2', labels: { service: 'backend' } }),
+      ];
+      render(<Selector lines={lines} />);
+
+      await expandField(/service/);
+
+      expect(screen.getAllByRole('listitem')).toHaveLength(1);
+      expect(screen.getByRole('listitem')).toHaveTextContent('backend150%');
+    });
+
+    test('shows a message when no loaded line has a value', async () => {
+      render(<Selector lines={[createLogLine({ uid: '1', labels: { service: '' } })]} />);
+
+      await expandField(/service/);
+
+      expect(screen.getByText('No values in the loaded lines')).toBeInTheDocument();
+    });
+
+    test('shows the ten most frequent values of a frame field', async () => {
+      const lines = Array.from({ length: 12 }, (_, i) => {
+        const line = createLogLine({ uid: String(i), labels: {} });
+        line.dataFrame = {
+          ...line.dataFrame,
+          fields: [
+            ...line.dataFrame.fields,
+            { name: 'service', type: FieldType.string, config: {}, values: [`s${i}`] },
+          ],
+        };
+        return line;
+      });
+      render(<Selector lines={lines} />);
+
+      await expandField(/service/);
+
+      expect(screen.getAllByRole('listitem')).toHaveLength(10);
+      expect(screen.getByText('Top values in 12 loaded lines')).toBeInTheDocument();
+    });
+
+    test('keeps the drag handle on fields without values and moves it to the icon on expandable fields', () => {
+      render(<Selector context={{ displayedFields: [LOG_LINE_BODY_FIELD_NAME, 'service'] }} />);
+
+      const handles = screen.getAllByRole('button', { description: /Press space bar to start a drag/ });
+      expect(handles).toHaveLength(2);
+      expect(handles[0]).toHaveTextContent('Log line');
+      expect(handles[1]).not.toHaveTextContent('service');
+    });
   });
 });
 

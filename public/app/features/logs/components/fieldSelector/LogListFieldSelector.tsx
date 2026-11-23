@@ -12,6 +12,7 @@ import { reportInteractionOnce } from '../panel/analytics';
 import { type LogListModel } from '../panel/processing';
 
 import { FieldSelector, FIELD_SELECTOR_MIN_WIDTH, getDefaultFieldSelectorWidth } from './FieldSelector';
+import { FieldValuesContextProvider } from './FieldValuesContext';
 import { getFieldSelectorWidth } from './fieldSelectorUtils';
 import { getFieldsWithStats } from './getFieldsWithStats';
 import { logsFieldSelectorWrapperStyles } from './styles';
@@ -138,17 +139,19 @@ export const LogListFieldSelector = ({ containerElement, dataFrames, logs }: Log
       onResize={handleResize}
     >
       {sidebarWidth > FIELD_SELECTOR_MIN_WIDTH * 2 ? (
-        <FieldSelector
-          activeFields={displayedFields}
-          clear={clearFields}
-          collapse={collapse}
-          fields={fields}
-          logLevelActive={showLevel}
-          reorder={setDisplayedFields}
-          suggestedFields={suggestedFields}
-          toggle={toggleField}
-          toggleLevel={toggleLevel}
-        />
+        <FieldValuesContextProvider logs={logs}>
+          <FieldSelector
+            activeFields={displayedFields}
+            clear={clearFields}
+            collapse={collapse}
+            fields={fields}
+            logLevelActive={showLevel}
+            reorder={setDisplayedFields}
+            suggestedFields={suggestedFields}
+            toggle={toggleField}
+            toggleLevel={toggleLevel}
+          />
+        </FieldValuesContextProvider>
       ) : (
         <div className={logsFieldSelectorWrapperStyles.collapsedButtonContainer}>
           <IconButton

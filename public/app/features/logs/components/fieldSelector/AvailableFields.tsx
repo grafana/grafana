@@ -7,6 +7,7 @@ import { getLogsFieldsStyles } from './ActiveFields';
 import { EmptyFields } from './EmptyFields';
 import { Field } from './Field';
 import { type FieldWithStats } from './FieldSelector';
+import { fieldSupportsValues, useFieldValuesContext } from './FieldValuesContext';
 
 interface Props {
   activeFields: string[];
@@ -17,6 +18,7 @@ interface Props {
 
 export const AvailableFields = ({ activeFields, fields, toggle, reorder }: Props): JSX.Element => {
   const styles = useStyles2(getLogsFieldsStyles);
+  const fieldValues = useFieldValuesContext();
 
   const availableFields = useMemo(
     () => fields.filter((field) => !activeFields.includes(field.name)).sort(sortFields),
@@ -30,10 +32,14 @@ export const AvailableFields = ({ activeFields, fields, toggle, reorder }: Props
           <div
             key={field.name}
             className={styles.wrap}
-            title={t('logs.field-selector.label-title', `{{fieldName}} appears in {{percentage}}% of log lines`, {
-              fieldName: field.name,
-              percentage: field.stats.percentOfLinesWithLabel,
-            })}
+            title={
+              fieldValues && fieldSupportsValues(field.name)
+                ? undefined
+                : t('logs.field-selector.label-title', `{{fieldName}} appears in {{percentage}}% of log lines`, {
+                    fieldName: field.name,
+                    percentage: field.stats.percentOfLinesWithLabel,
+                  })
+            }
           >
             <Field field={field} toggle={toggle} showCount />
           </div>

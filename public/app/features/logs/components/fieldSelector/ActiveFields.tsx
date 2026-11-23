@@ -9,6 +9,7 @@ import { useStyles2 } from '@grafana/ui';
 
 import { Field } from './Field';
 import { type FieldWithStats } from './FieldSelector';
+import { fieldSupportsValues, useFieldValuesContext } from './FieldValuesContext';
 import { LogLevelField } from './LogLevelField';
 
 interface Props {
@@ -33,6 +34,8 @@ export const ActiveFields = ({
   toggleLevel,
 }: Props) => {
   const styles = useStyles2(getLogsFieldsStyles);
+  const fieldValues = useFieldValuesContext();
+  const collapseFieldValues = fieldValues?.collapseField;
 
   const onDragEnd = useCallback(
     (result: DropResult) => {
@@ -93,7 +96,10 @@ export const ActiveFields = ({
               </button>
             )}
           </div>
-          <DragDropContext onDragEnd={onDragEnd}>
+          <DragDropContext
+            onBeforeCapture={({ draggableId }) => collapseFieldValues?.(draggableId)}
+            onDragEnd={onDragEnd}
+          >
             <Droppable droppableId="order-fields" direction="vertical">
               {(provided) => (
                 <div className={styles.columnWrapper} {...provided.droppableProps} ref={provided.innerRef}>
@@ -109,18 +115,23 @@ export const ActiveFields = ({
                           className={cx(styles.wrap, snapshot.isDragging ? styles.dragging : undefined)}
                           ref={provided.innerRef}
                           {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          title={t(
-                            'logs.field-selector.label-title',
-                            `{{fieldName}} appears in {{percentage}}% of log lines`,
-                            { fieldName: field.name, percentage: field.stats.percentOfLinesWithLabel }
-                          )}
+                          {...(fieldValues && fieldSupportsValues(field.name) ? undefined : provided.dragHandleProps)}
+                          title={
+                            fieldValues && fieldSupportsValues(field.name)
+                              ? undefined
+                              : t(
+                                  'logs.field-selector.label-title',
+                                  `{{fieldName}} appears in {{percentage}}% of log lines`,
+                                  { fieldName: field.name, percentage: field.stats.percentOfLinesWithLabel }
+                                )
+                          }
                         >
                           <Field
                             active={activeFields.includes(field.name)}
                             field={field}
                             toggle={toggle}
                             draggable={activeFields.includes(field.name)}
+                            dragHandleProps={provided.dragHandleProps}
                           />
                         </div>
                       )}

@@ -12690,9 +12690,15 @@
     "description-wrap-lines": "Display logs as a single line or wrap long log entries to fit the panel.",
     "field-selector": {
       "aria-label-drag-and-drop-icon": "Drag and drop icon",
+      "aria-label-show-field": "Show {{fieldName}} in log lines",
       "clear-button": "Clear",
       "collapse": "Collapse sidebar",
       "expand": "Expand sidebar",
+      "field-values": {
+        "empty": "No values in the loaded lines",
+        "loaded-lines_one": "Top values in {{count}} loaded line",
+        "loaded-lines_other": "Top values in {{count}} loaded lines"
+      },
       "label-title": "{{fieldName}} appears in {{percentage}}% of log lines",
       "log-level": "Show log level",
       "placeholder-search-fields-by-name": "Search fields by name",

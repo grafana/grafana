@@ -230,6 +230,8 @@ export const FlagKeys = {
   GrafanaKubernetesAnnotationsClient: "grafana.kubernetesAnnotationsClient",
   /** Enables log level inference from log line contents when level is not defined as a field or a label */
   GrafanaLogLevelInference: "grafana.logLevelInference",
+  /** Shows the top values of a field with counts in the logs field selector */
+  GrafanaLogsFieldSelectorValues: "grafana.logsFieldSelectorValues",
   /** Enable infinite scroll for logs when scrolling top */
   GrafanaLogsInfiniteScrollTop: "grafana.logsInfiniteScrollTop",
   /** Opens the mega menu over the page while the pointer rests on its toggle, and docks it when the toggle is clicked on wide screens. The toggle in the docked menu's header closes it, in place of the footer's dock button */
@@ -1612,6 +1614,17 @@ export const useFlagGrafanaKubernetesAnnotationsClient = (options?: ReactFlagEva
  */
 export const useFlagGrafanaLogLevelInference = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.logLevelInference", false, options).value;
+};
+
+/**
+ * Shows the top values of a field with counts in the logs field selector
+ *
+ * **Details:**
+ * - flag key: `grafana.logsFieldSelectorValues`
+ * - default value: `false`
+ */
+export const useFlagGrafanaLogsFieldSelectorValues = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.logsFieldSelectorValues", false, options).value;
 };
 
 /**
