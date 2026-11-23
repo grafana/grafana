@@ -45,7 +45,8 @@ function copyTextToClipboardFallback(text: string, appendTo?: Ref) {
     textarea.focus();
     textarea.select();
     // execCommand reports a refused copy by returning false rather than throwing.
-    if (!document.execCommand('copy')) {
+    const copiedResult = document.execCommand('copy');
+    if (!copiedResult) {
       throw new Error('Copying to the clipboard was refused by the browser');
     }
   } finally {
