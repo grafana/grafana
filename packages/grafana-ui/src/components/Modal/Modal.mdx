@@ -6,26 +6,7 @@ import { ModalTabsHeader } from './ModalTabsHeader';
 
 # Modal
 
-Generic Modal component.
-
-Example usage:
-
-```tsx
-<Modal title="title" isOpen={true}>
-  <div>Some body</div>
-  <Modal.ButtonRow>
-    <Button variant="secondary" fill="outline">
-      Cancel
-    </Button>
-    <Button>Save</Button>
-  </Modal.ButtonRow>
-</Modal>
-```
-
-For buttons at the bottom of the modal you should always use:
-
-- Modal.ButtonRow - this makes sure the Buttons are right aligned
-- If you have a Cancel button use fill="outline" and variant="secondary" and place it on the left side of any other button.
+Generic Modal component. It opens a dialog over the page, with a backdrop behind it.
 
 ## When to use
 
@@ -33,22 +14,120 @@ For buttons at the bottom of the modal you should always use:
 - Notify the user of urgent information concerning their current work.
 - Confirm a user decision.
 
-## When not to use
+## Never use for
 
-- Avoid using a modal when the task should be repeatedly done by the user.
-- Do not use modals for non-essential information that is not related to the current workflow.
+- **A simple confirmation, such as deleting an item.** Use `ConfirmModal`. It builds the title, body, and confirm and dismiss buttons on top of `Modal`.
+- **Additional information that shouldn't hide the page.** Use `Drawer`, which slides in from the edge of the screen and leaves the main content visible.
+- A task the user repeats often. Avoid using a modal when the task should be repeatedly done by the user.
+- Non-essential information that isn't related to the current workflow.
+
+## Do's and don'ts
+
+### Buttons
+
+For buttons at the bottom of the modal you should always use:
+
+- `Modal.ButtonRow`. This makes sure the buttons are right aligned. Pass `leftItems` for anything that belongs on the left.
+- If you have a Cancel button, use `fill="outline"` and `variant="secondary"` and place it on the left side of any other button.
+
+```tsx
+// Don't
+<div className={css({ display: 'flex', justifyContent: 'flex-end', gap: 16 })}>
+  <Button onClick={onSave}>Save</Button>
+  <Button onClick={onDismiss}>Cancel</Button>
+</div>
+
+// Do
+<Modal.ButtonRow>
+  <Button variant="secondary" fill="outline" onClick={onDismiss}>
+    Cancel
+  </Button>
+  <Button onClick={onSave}>Save</Button>
+</Modal.ButtonRow>
+```
+
+### Closing
+
+Always pass `onDismiss` and set `isOpen` to `false` in it. The close button, the Escape key and a backdrop click all call `onDismiss`. Without it, the close button does nothing.
+
+### Styling
+
+Use `className` to style the dialog, for example to change its width, and `contentClassName` to style the content area. Don't select the modal's inner elements with `:nth-child` or `> div`, because its markup isn't part of its API. See [styling a component's internal elements](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/guidance/patterns/styling-internals.md).
+
+```tsx
+// Don't
+<Modal title="Edit query" isOpen={isOpen} onDismiss={onDismiss} className={css({ '& > div:nth-child(2)': { padding: 0 } })}>
+  {editor}
+</Modal>
+
+// Do
+<Modal title="Edit query" isOpen={isOpen} onDismiss={onDismiss} contentClassName={css({ padding: 0 })}>
+  {editor}
+</Modal>
+```
+
+## Usage
+
+```tsx
+import { Button, Modal } from '@grafana/ui';
+
+<Modal title="title" isOpen={isOpen} onDismiss={() => setIsOpen(false)}>
+  <div>Some body</div>
+  <Modal.ButtonRow>
+    <Button variant="secondary" fill="outline" onClick={() => setIsOpen(false)}>
+      Cancel
+    </Button>
+    <Button>Save</Button>
+  </Modal.ButtonRow>
+</Modal>;
+```
+
+`Modal` renders nothing while `isOpen` is `false`, which is the default. When open, it renders in a portal over the page.
+
+### Dismissing
+
+- `closeOnEscape` (default `true`) closes the modal when the user presses Escape.
+- `closeOnBackdropClick` (default `true`) closes the modal when the user clicks the backdrop.
+- `onClickBackdrop` replaces the backdrop behavior. When set, a backdrop click calls it instead of `onDismiss`.
+
+### Tabs in the header
+
+`ModalTabsHeader` is a custom header element with tabs. Pass it as `title`, and set `ariaLabel` on the `Modal`, because a custom title element doesn't name the dialog.
+
+```tsx
+<Modal
+  title={
+    <ModalTabsHeader title="Share" tabs={tabs} activeTab={activeTab} onChangeTab={(tab) => setActiveTab(tab.value)} />
+  }
+  ariaLabel="Share"
+  isOpen={isOpen}
+  onDismiss={onDismiss}
+>
+  {content}
+</Modal>
+```
 
 ## Accessibility
 
-Follow the [W3C Dialog (Modal) Pattern](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/) when building a modal. We have noticed that when the content is overflowing, the user cannot scroll it unless:
+Follow the [W3C Dialog (Modal) Pattern](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/) when building a modal.
 
-- The modal contains interactive elements, such as buttons, on the bottom.
-- The content has `tabIndex = 0`, and therefore, it can be keyboard-focusable.
+`Modal` handles:
+
+- **Role and name:** the dialog has `role="dialog"`. A string `title` renders as a heading and names the dialog through `aria-labelledby`.
+- **Focus:** focus is trapped inside the modal while it's open (`trapFocus`, default `true`). When it opens, focus moves to the first tabbable element, which is usually the close button. Pass `initialFocus` to choose another element, or a negative number when the content focuses itself, for example an input that autofocuses on mount.
+- **Close button:** the close icon button has the label "Close".
+
+You provide:
+
+- `ariaLabel` when `title` is a custom element, such as `ModalTabsHeader`. The types require it in that case.
+- A way to scroll overflowing content. We have noticed that when the content is overflowing, the user cannot scroll it unless:
+  - The modal contains interactive elements, such as buttons, on the bottom.
+  - The content has `tabIndex = 0`, and therefore, it can be keyboard-focusable.
+
+## Props
 
 <ArgTypes of={Modal} />
 
-# ModalTabsHeader
-
-Custom header element with tabs
+### ModalTabsHeader
 
 <ArgTypes of={ModalTabsHeader} />
