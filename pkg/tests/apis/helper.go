@@ -42,6 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/search"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
@@ -1165,6 +1166,13 @@ func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h 
 			}
 		}
 
+		// Types a distribution adds to the global search are named apart, so this
+		// snapshot covers only what every build serves.
+		if dropAddedGlobalSearchTypes(rsp.Result) {
+			body, err = rsp.Result.MarshalJSON()
+			require.NoError(t, err)
+		}
+
 		var prettyJSON bytes.Buffer
 		err = json.Indent(&prettyJSON, body, "", "  ")
 		require.NoError(t, err)
@@ -1194,6 +1202,26 @@ func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h 
 			}
 		}
 	})
+}
+
+// dropAddedGlobalSearchTypes removes the paragraph of the global search
+// description that names the types a distribution adds, and reports whether
+// there was one.
+func dropAddedGlobalSearchTypes(api *spec3.OpenAPI) bool {
+	if api == nil || api.Paths == nil {
+		return false
+	}
+	dropped := false
+	for _, path := range api.Paths.Paths {
+		if path == nil || path.Post == nil {
+			continue
+		}
+		if before, _, found := strings.Cut(path.Post.Description, "\n\n"+search.GlobalSearchDeploymentTypesPrefix); found {
+			path.Post.Description = before
+			dropped = true
+		}
+	}
+	return dropped
 }
 
 // CreateServiceAccount creates a service account with the specified name, organization, and role using the HTTP API

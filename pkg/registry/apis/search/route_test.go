@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
@@ -134,10 +135,8 @@ func TestGlobalSearchRoute_DescribesItsFieldsAndHasAValidExample(t *testing.T) {
 	for _, field := range []string{resource.SEARCH_FIELD_GROUP_RESOURCE, resource.SEARCH_FIELD_FOLDER_TREE} {
 		assert.Contains(t, r.Spec.Post.Description, "`"+field+"`")
 	}
-	// The types searched depend on the apps compiled in, so naming them would make
-	// the published spec differ between builds.
 	for _, gr := range resource.GlobalSearchResourceTypes() {
-		assert.NotContains(t, r.Spec.Post.Description, gr.Group+"/"+gr.Resource)
+		assert.Contains(t, r.Spec.Post.Description, gr.Group+"/"+gr.Resource)
 	}
 
 	// Sent through the handler that serves the route, as for the search of one kind.
@@ -154,6 +153,20 @@ func TestGlobalSearchRoute_DescribesItsFieldsAndHasAValidExample(t *testing.T) {
 			assert.Contains(t, r.Schemas, ref, "%s references %s, which is not published", name, ref)
 		}
 	}
+}
+
+// A type a distribution adds is named in a closing paragraph of its own, so the
+// rest of the description is the same in every build.
+func TestGlobalSearchDescription_NamesAddedTypesLast(t *testing.T) {
+	dashboards := schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
+	templates := schema.GroupResource{Group: "dashboardtemplates.grafana.app", Resource: "dashboardtemplates"}
+	builtin := []schema.GroupResource{dashboards}
+
+	without := globalSearchDescription(builtin, builtin)
+	assert.NotContains(t, without, GlobalSearchDeploymentTypesPrefix)
+
+	with := globalSearchDescription(builtin, []schema.GroupResource{dashboards, templates})
+	assert.Equal(t, without+"\n\n"+GlobalSearchDeploymentTypesPrefix+"`dashboardtemplates.grafana.app/dashboardtemplates`.", with)
 }
 
 func TestTrashRoute_EveryRefResolves(t *testing.T) {
