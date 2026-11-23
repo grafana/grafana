@@ -195,7 +195,7 @@ func TestRegisterAppInstaller_UnifiedAlertingEnabled(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			enabled := tt.enabled
 			cfg := &setting.Cfg{UnifiedAlerting: setting.UnifiedAlertingSettings{Enabled: &enabled}}
-			ng := &ngalert.AlertNG{Cfg: cfg, Api: &api.API{LegacyRuleService: &legacy.LegacyRuleService{}}}
+			ng := &ngalert.AlertNG{Cfg: cfg, Api: &api.API{LegacyRules: &legacy.Service{}}}
 
 			inst, err := RegisterAppInstaller(cfg, ng, nil, nil, nil)
 			if err != nil {

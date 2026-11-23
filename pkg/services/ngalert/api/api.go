@@ -81,7 +81,7 @@ type API struct {
 	MuteTimings           *provisioning.MuteTimingService
 	InhibitionRules       *inhibition_rules.Service
 	AlertRules            *provisioning.AlertRuleService
-	LegacyRuleService     *legacy.LegacyRuleService
+	LegacyRules           *legacy.Service
 	AlertsRouter          *sender.AlertsRouter
 	EvaluatorFactory      eval.EvaluatorFactory
 	ConditionValidator    *eval.ConditionValidator

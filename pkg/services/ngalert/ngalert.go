@@ -601,9 +601,9 @@ func (ng *AlertNG) init() error {
 		ng.Cfg.UnifiedAlerting.RulesPerRuleGroupLimit, ng.Log, notifier.NewNotificationSettingsValidationService(ng.store),
 		ac.NewRuleService(ng.accesscontrol), ng.ruleMutationValidator)
 
-	legacyRuleService := legacy.NewLegacyRuleService(ng.ruleStore, ng.provenanceStore, ng.folderService, ng.QuotaService, ng.store,
+	legacyRules := legacy.New(ng.ruleStore, ng.provenanceStore, ng.folderService, ng.QuotaService, ng.store,
 		int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()), ng.Log, notifier.NewNotificationSettingsValidationService(ng.store),
-		ac.NewRuleService(ng.accesscontrol), ng.ruleMutationValidator)
+		ac.NewRuleService(ng.accesscontrol), ng.ruleMutationValidator, request.GetNamespaceMapper(ng.Cfg))
 
 	// External Mimir ruler sync worker. Routes the ruler config GET through
 	// the datasource proxy service (same transport, auth and egress validation as
@@ -650,7 +650,7 @@ func (ng *AlertNG) init() error {
 		MuteTimings:           muteTimingService,
 		InhibitionRules:       inhibitionRuleService,
 		AlertRules:            alertRuleService,
-		LegacyRuleService:     legacyRuleService,
+		LegacyRules:           legacyRules,
 		AlertsRouter:          alertsRouter,
 		ExternalRulerSync:     ng.externalRulerSyncer,
 		EvaluatorFactory:      evalFactory,
