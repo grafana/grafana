@@ -116,11 +116,21 @@ A namespaced kind can be readable by anyone the router lets into its namespace,
 with no RBAC grant. Its `get` and `list` are then served to storage as the
 service identity, limited to the request's namespace
 (`kindstore.Options.NamespaceReadable`). A request that names no single tenant
-namespace, writes and watches keep the caller, so storage still authorizes them,
-and an access policy is held to its token as for any other kind. The manifest
-cannot declare this yet, so `hardcodedNamespaceReadable` names the kinds:
-today only `banners.grafana.app/announcement-banners`, which every user of an
-instance sees.
+namespace, writes and watches keep the caller. The router checks every verb
+other than `get` and `list` against the kind's RBAC mapping (`mapper.go` in
+`pkg/services/authz/rbac`) through the access client, since storage enforces
+that mapping only where it enforces RBAC for the group. An access policy is
+held to its token as for any other kind. The manifest cannot declare this yet,
+so `hardcodedNamespaceReadable` names the kinds:
+
+- `banners.grafana.app/announcement-banners`, which every user of an instance
+  sees. Writes need `banners:write`.
+- the Logs Drilldown defaults (`logsdrilldowndefaults`,
+  `logsdrilldowndefaultcolumns`, `logsdrilldowndefaultlabels`). Writes to the
+  default columns and labels need `plugins:write`, as in the embedded API
+  server. Writes to `logsdrilldowndefaults` need `plugins:install`, standing in
+  for the embedded server's Grafana-server-admin rule (see
+  [the Logs Drilldown spec](../../../../apps/logsdrilldown/specs/2026-11-23-logsdrilldown-defaults-authz.md)).
 
 An access policy is held to the permissions in its own token for every kind,
 namespaced or cluster-scoped, because storage is called with a token this
@@ -288,10 +298,23 @@ one per user for each service, which the naming strategy cannot declare yet.
 - A put or patch of a missing object is not found (`createOnUpdate` is off), as
   in the embedded API server.
 
+Logs Drilldown (`logsdrilldown.grafana.app`) is configured the same way, to
+match its embedded API server authorizer:
+
+- `logsdrilldowns` holds each user's settings, named `<service>:<user_uid>`.
+  `hardcodedOwnerFromName` sets `readScope` to `readAll`: every user may get and
+  list them, and only the owner (or a Grafana server admin) writes them. Unlike
+  the embedded API server, a create is checked against the name, and a user
+  without `datasources:explore` may still write their own settings, since an
+  identity the standalone router authenticates carries no permissions.
+- The defaults kinds are namespace readable (see
+  [Authorization](#authorization)).
+
 `router.registerCoreAPIs` (with `grafana.useRouterMiddleware`)
 serves `collections.grafana.app`, `preferences.grafana.app` and
 `userstorage.grafana.app` from their apps, run in this process, ahead of the
-embedded API server. The app authenticates
+embedded API server. It serves `logsdrilldown.grafana.app` the same way when
+`kubernetesLogsDrilldown` installs the app. The app authenticates
 through the same local token exchange as a plugin process (see above), so its
 calls to Grafana act as the caller. Grafana must sign plugin tokens itself for
 this.

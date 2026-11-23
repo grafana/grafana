@@ -21,32 +21,59 @@ func hardcodedNonUserNamespaceOnly(group, resource string) bool {
 // hardcodedNamespaceReadable lists the namespaced kinds that anyone allowed
 // into a namespace may get and list, with no RBAC grant: storage reads them as
 // the service, limited to that namespace (kindstore.Options.NamespaceReadable).
-// Writes and watches still go to storage as the caller.
+// Every other verb needs the action the RBAC mapper maps the kind's verb to,
+// which the router checks and storage checks again where it enforces RBAC.
 //
-// Announcement banners are shown to every user of an instance, including those
-// with no basic role, and the embedded API server serves them that way. Only
-// trusted core apps may serve a core group, so no plugin can claim this one.
+//   - Announcement banners are shown to every user of an instance, including
+//     those with no basic role. Writes need banners:write.
+//   - The Logs Drilldown defaults are read by every Logs Drilldown user. Writes
+//     need plugins:write, or plugins:install for logsdrilldowndefaults.
+//
+// Only trusted core apps may serve a core group, so no plugin can claim these.
 // TODO: this moves to the app manifest, as a declaration on the kind.
 func hardcodedNamespaceReadable(group, resource string) bool {
-	return group == "banners.grafana.app" && resource == "announcement-banners"
+	switch group {
+	case "banners.grafana.app":
+		return resource == "announcement-banners"
+	case logsDrilldownGroup:
+		return resource == "logsdrilldowndefaults" ||
+			resource == "logsdrilldowndefaultcolumns" ||
+			resource == "logsdrilldowndefaultlabels"
+	}
+	return false
 }
 
 // hardcodedOwnerFromName is a naming strategy the app manifest cannot declare
-// yet: user storage objects are named <service>:<user_uid>, so a user owns one
-// object per service. The names a user owns cannot be listed from the user, so
-// users may not list or watch; Grafana server admins may do anything.
+// yet. User storage and Logs Drilldown settings are named <service>:<user_uid>,
+// so a user owns one object per service, and Grafana server admins may do
+// anything.
+//   - User storage is private: the names a user owns cannot be listed from the
+//     user, so users may not list or watch.
+//   - Logs Drilldown settings are readable by every user, as the embedded API
+//     server serves them, but written only by their owner.
+//
 // TODO: this moves to the app manifest, as a naming strategy.
 func hardcodedOwnerFromName(group, kindResource string) *ownerFromName {
-	if group != "userstorage.grafana.app" || kindResource != "user-storage" {
-		return nil
+	switch {
+	case group == "userstorage.grafana.app" && kindResource == "user-storage":
+		return &ownerFromName{
+			owners:            []resource.Owner{resource.UserResourceOwner},
+			ownerOfName:       parseServiceUserName,
+			allowGrafanaAdmin: true,
+			readScope:         readNone,
+		}
+	case group == logsDrilldownGroup && kindResource == "logsdrilldowns":
+		return &ownerFromName{
+			owners:            []resource.Owner{resource.UserResourceOwner},
+			ownerOfName:       parseServiceUserName,
+			allowGrafanaAdmin: true,
+			readScope:         readAll,
+		}
 	}
-	return &ownerFromName{
-		owners:            []resource.Owner{resource.UserResourceOwner},
-		ownerOfName:       parseServiceUserName,
-		allowGrafanaAdmin: true,
-		readScope:         readNone,
-	}
+	return nil
 }
+
+const logsDrilldownGroup = "logsdrilldown.grafana.app"
 
 // parseServiceUserName reads the user from a <service>:<user_uid> name: one
 // object per user for each service, as user storage and Logs Drilldown name

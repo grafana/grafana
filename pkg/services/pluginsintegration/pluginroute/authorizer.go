@@ -35,6 +35,10 @@ type kindPolicy struct {
 	// The name defines the access control
 	ownerFromName *ownerFromName
 
+	// Anyone in the namespace may get and list it, and every other verb needs
+	// the action the RBAC mapper maps it to
+	namespaceReadable bool
+
 	// customRoutes are the subresources the manifest mounts for this kind,
 	// unioned across its served versions -- the authorizer runs before the
 	// request is dispatched to one.
@@ -69,6 +73,7 @@ func kindPolicies(manifest *app.ManifestData) map[string]kindPolicy {
 
 			if !seen {
 				policy.ownerFromName = ownerFromKind(manifest.Group, kind)
+				policy.namespaceReadable = !policy.clusterScoped && hardcodedNamespaceReadable(manifest.Group, kind.Resource)
 			}
 
 			policies[resource] = policy
@@ -143,11 +148,15 @@ func (b *manifestBuilder) authorizeKind(ctx context.Context, requester identity.
 		return authorizer.DecisionAllow, "", nil
 	}
 
-	// Check the naming strategy. An access policy is held to its token's
-	// permissions below, as storage cannot decide for it.
+	// Check the naming strategy, or a namespace-readable kind's RBAC mapping. An
+	// access policy is held to its token's permissions below, as storage cannot
+	// decide for it.
 	isAccessPolicy := authlib.IsIdentityType(requester.GetIdentityType(), authlib.TypeAccessPolicy)
 	if policy.ownerFromName != nil && !isAccessPolicy {
 		return policy.ownerFromName.authorize(ctx, requester, attr, b.accessClient)
+	}
+	if policy.namespaceReadable && !isAccessPolicy {
+		return authorizeNamespaceReadable(ctx, requester, attr, b.accessClient)
 	}
 
 	// A custom route never reaches unified storage, so the plugin's app access
@@ -189,4 +198,34 @@ func authorizeTokenPermissions(requester authlib.AuthInfo, attr authorizer.Attri
 		return authorizer.DecisionAllow, "", nil
 	}
 	return authorizer.DecisionDeny, fmt.Sprintf("access policy does not grant %s/%s:%s", attr.GetAPIGroup(), attr.GetResource(), verb), nil
+}
+
+// authorizeNamespaceReadable allows a get or list of a namespace-readable kind,
+// which storage serves as the service, and checks every other verb against the
+// kind's RBAC mapping. Storage checks the same mapping again where it enforces
+// RBAC, but not every deployment enforces it for core groups, so the router
+// must not leave writes to storage alone.
+func authorizeNamespaceReadable(ctx context.Context, requester identity.Requester, attr authorizer.Attributes, ac authlib.AccessChecker) (authorizer.Decision, string, error) {
+	switch attr.GetVerb() {
+	case utils.VerbGet, utils.VerbList:
+		return authorizer.DecisionAllow, "", nil
+	}
+	if ac == nil {
+		return authorizer.DecisionDeny, "no access client configured", nil
+	}
+	rsp, err := ac.Check(ctx, requester, authlib.CheckRequest{
+		Verb:        attr.GetVerb(),
+		Group:       attr.GetAPIGroup(),
+		Resource:    attr.GetResource(),
+		Subresource: attr.GetSubresource(),
+		Namespace:   attr.GetNamespace(),
+		Name:        attr.GetName(),
+	}, "")
+	if err != nil {
+		return authorizer.DecisionDeny, "error checking permissions", err
+	}
+	if !rsp.Allowed {
+		return authorizer.DecisionDeny, fmt.Sprintf("missing permission to %s %s", attr.GetVerb(), attr.GetResource()), nil
+	}
+	return authorizer.DecisionAllow, "", nil
 }

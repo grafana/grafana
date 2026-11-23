@@ -592,26 +592,32 @@ func newSettingsTranslation() translation {
 // newBannersTranslation maps banners.grafana.app/announcement-banners to the
 // enterprise banners:write action, which is granted without a scope: banners
 // apply to the whole namespace.
-//
-// Reads map to banners:write too. Storage authorizes a read as the caller only
-// for writers: an update or delete reads the current object as the caller
-// first. Everyone else reads banners through the router, which serves the
-// kind's reads as the service (pluginroute hardcodedNamespaceReadable), so no
-// read action is needed and none is open to every identity.
 func newBannersTranslation() translation {
+	return newNamespaceReadableTranslation("banners", "banners:write")
+}
+
+// newNamespaceReadableTranslation maps every verb of a namespace-wide kind to
+// one unscoped action.
+//
+// Reads map to the action too. Storage authorizes a read as the caller only
+// for writers: an update or delete reads the current object as the caller
+// first. Everyone else reads the kind through the router, which serves its
+// reads as the service (pluginroute hardcodedNamespaceReadable), so no read
+// action is needed and none is open to every identity.
+func newNamespaceReadableTranslation(resource, action string) translation {
 	verbs := []string{
 		utils.VerbGet, utils.VerbList, utils.VerbWatch,
 		utils.VerbCreate, utils.VerbUpdate, utils.VerbPatch, utils.VerbDelete, utils.VerbDeleteCollection,
 	}
 	t := translation{
-		resource:        "banners",
+		resource:        resource,
 		attribute:       "uid",
 		verbMapping:     map[string]string{},
 		skipScopeOnVerb: map[string]bool{},
 		folderSupport:   false,
 	}
 	for _, verb := range verbs {
-		t.verbMapping[verb] = "banners:write"
+		t.verbMapping[verb] = action
 		t.skipScopeOnVerb[verb] = true
 	}
 	return t
@@ -920,6 +926,15 @@ func NewMapperRegistry() MapperRegistry {
 		},
 		"banners.grafana.app": {
 			"announcement-banners": newBannersTranslation(),
+		},
+		// The Logs Drilldown defaults apply to the whole namespace. Changing the
+		// default columns and labels needs plugins:write, as the embedded API
+		// server requires; the defaults themselves were for Grafana server
+		// admins only, which plugins:install stands in for.
+		"logsdrilldown.grafana.app": {
+			"logsdrilldowndefaults":       newNamespaceReadableTranslation("logsdrilldowndefaults", "plugins:install"),
+			"logsdrilldowndefaultcolumns": newNamespaceReadableTranslation("logsdrilldowndefaultcolumns", "plugins:write"),
+			"logsdrilldowndefaultlabels":  newNamespaceReadableTranslation("logsdrilldowndefaultlabels", "plugins:write"),
 		},
 	})
 

@@ -755,6 +755,33 @@ func TestMapperRegistry_Banners(t *testing.T) {
 	assert.False(t, mapping.HasFolderSupport())
 }
 
+func TestMapperRegistry_LogsDrilldownDefaults(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	for resource, want := range map[string]string{
+		"logsdrilldowndefaults":       "plugins:install",
+		"logsdrilldowndefaultcolumns": "plugins:write",
+		"logsdrilldowndefaultlabels":  "plugins:write",
+	} {
+		mapping, ok := reg.Get("logsdrilldown.grafana.app", resource, "")
+		require.True(t, ok, "%s should be registered in the mapper", resource)
+		for _, verb := range []string{
+			utils.VerbGet, utils.VerbList, utils.VerbWatch,
+			utils.VerbCreate, utils.VerbUpdate, utils.VerbPatch, utils.VerbDelete, utils.VerbDeleteCollection,
+		} {
+			action, ok := mapping.Action(verb)
+			assert.True(t, ok)
+			assert.Equal(t, want, action, "%s verb %q", resource, verb)
+			assert.True(t, mapping.SkipScope(verb), "%s verb %q", resource, verb)
+		}
+		assert.False(t, mapping.HasFolderSupport())
+	}
+
+	// Each user's settings are authorized by the owner in the name, not mapped.
+	_, ok := reg.Get("logsdrilldown.grafana.app", "logsdrilldowns", "")
+	assert.False(t, ok)
+}
+
 func TestMapperRegistry_Settings(t *testing.T) {
 	reg := NewMapperRegistry()
 
