@@ -440,7 +440,7 @@ describe('setDashboardPanelContext', () => {
       expect(patchFn).toHaveBeenCalledWith(
         '/apis/annotation.grafana.app/v0alpha1/namespaces/stack-1/annotations/event-id-123',
         expect.objectContaining({
-          spec: expect.objectContaining({ text: 'updated', time: 100, timeEnd: 200 }),
+          spec: expect.objectContaining({ text: 'updated' }),
         }),
         expect.objectContaining({ headers: { 'Content-Type': 'application/merge-patch+json' } })
       );

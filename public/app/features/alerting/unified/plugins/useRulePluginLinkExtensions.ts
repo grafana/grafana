@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 
 import { type PluginExtensionLink, PluginExtensionPoints } from '@grafana/data';
 import { usePluginLinks } from '@grafana/runtime';
@@ -21,21 +21,21 @@ interface AlertingRuleExtensionContext extends BaseRuleExtensionContext {
 
 interface RecordingRuleExtensionContext extends BaseRuleExtensionContext {}
 
-export function useRulePluginLinkExtension(rule: Rule | undefined, groupIdentifier: RuleGroupIdentifierV2) {
-  // This ref provides a stable reference to an empty array, which is used to avoid re-renders when the rule is undefined.
-  const emptyResponse = useRef<PluginExtensionLink[]>([]);
+// Stable empty array so consumers don't re-render when the rule has no extensions.
+const EMPTY_LINKS: PluginExtensionLink[] = [];
 
+export function useRulePluginLinkExtension(rule: Rule | undefined, groupIdentifier: RuleGroupIdentifierV2) {
   const ruleExtensionPoint = useRuleExtensionPoint(rule, groupIdentifier);
   const { links } = usePluginLinks(ruleExtensionPoint);
 
   if (!rule) {
-    return emptyResponse.current;
+    return EMPTY_LINKS;
   }
 
   const ruleOrigin = getRulePluginOrigin(rule);
   const ruleType = rule.type;
   if (!ruleOrigin || !ruleType) {
-    return emptyResponse.current;
+    return EMPTY_LINKS;
   }
 
   const { pluginId } = ruleOrigin;

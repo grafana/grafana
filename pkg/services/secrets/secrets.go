@@ -51,6 +51,9 @@ type Store interface {
 	DisableDataKeys(ctx context.Context) error
 	DeleteDataKey(ctx context.Context, id string) error
 	ReEncryptDataKeys(ctx context.Context, providers map[ProviderID]Provider, currProvider ProviderID) error
+	// Tenant names, by stack id and slug, the tenant whose data keys ctx resolves to: a data key read
+	// through one context may be used for another only if both return the same name.
+	Tenant(ctx context.Context) (string, error)
 }
 
 // Provider is a key encryption key provider for envelope encryption

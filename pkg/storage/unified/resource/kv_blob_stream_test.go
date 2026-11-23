@@ -13,13 +13,13 @@ import (
 
 	"github.com/fullstorydev/grpchan"
 	"github.com/fullstorydev/grpchan/inprocgrpc"
+	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
@@ -76,7 +76,7 @@ func TestBulkBlobCallerTransactionInProcess(t *testing.T) {
 	channel := &inprocgrpc.Channel{}
 	channel.RegisterService(grpchan.InterceptServer(&resourcepb.BulkStore_ServiceDesc, nil,
 		func(_ any, stream grpc.ServerStream, _ *grpc.StreamServerInfo, next grpc.StreamHandler) error {
-			ctx := authlib.WithAuthInfo(stream.Context(), &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", OrgRole: identity.RoleAdmin})
+			ctx := authlib.WithAuthInfo(stream.Context(), &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", OrgRole: authlib.RoleAdmin})
 			return next(srv, contextStream{ServerStream: stream, ctx: ctx})
 		}), srv)
 	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)

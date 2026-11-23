@@ -19,6 +19,7 @@ import { DashboardLinksSet } from '../../settings/links/DashboardLinksSet';
 import { DashboardFiltersSet } from '../../settings/variables/DashboardFiltersSet';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { VariablesDependenciesButton } from '../../variables/VariablesDependenciesButton';
+import { useQuestionsCategory } from '../questions/QuestionsList';
 import { SidebarCategoryType } from '../types';
 
 import { AddAnnotationButton, DashboardAnnotationsList } from './DashboardAnnotationsList';
@@ -60,6 +61,7 @@ function useDashboardSidebarOptions(dashboard: DashboardScene): OptionsPaneCateg
   const variablesCategory = useVariablesCategory(dashboard);
   const annotationsCategory = useAnnotationsCategory(dashboardSceneGraph.getDataLayers(dashboard));
   const linksCategory = useLinksCategory(dashboard);
+  const questionsCategory = useQuestionsCategory(dashboard, 'dashboard');
 
   return [
     dashboardOptions,
@@ -68,6 +70,7 @@ function useDashboardSidebarOptions(dashboard: DashboardScene): OptionsPaneCateg
     ...variablesCategory,
     ...annotationsCategory,
     ...linksCategory,
+    ...questionsCategory,
   ];
 }
 

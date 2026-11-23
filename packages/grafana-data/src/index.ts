@@ -636,6 +636,8 @@ export {
   type PluginExtensionEventHelpers,
   type DataSourceConfigErrorStatusContext,
   type PluginExtensionPanelContext,
+  type PluginExtensionDashboardControlsContext,
+  type PluginExtensionDashboardControlsPanel,
   type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
   type PluginExtensionQueryEditorRowActionsV1Context,
   type PluginExtensionDataSourceConfigContext,

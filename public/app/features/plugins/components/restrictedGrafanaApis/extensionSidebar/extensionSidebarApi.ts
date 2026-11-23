@@ -3,9 +3,11 @@ import {
   canFloatExtensionSidebar,
   canPlaceExtensionSidebar,
   type ExtensionSidebarPlacement,
+  type FloatingExtensionSidebarHeightOptions,
   getFloatingExtensionSidebarPlacement,
   getRequestedExtensionSidebarDockSide,
   setExtensionSidebarPlacement,
+  setFloatingExtensionSidebarHeightOptions,
   subscribeToExtensionSidebarPopOut,
   subscribeToExtensionSidebarPresentation,
   subscribeToFloatingExtensionSidebarCollapse,
@@ -16,6 +18,28 @@ const PLACEMENTS: readonly ExtensionSidebarPlacement[] = ['left', 'right', 'bott
 
 function isPlacement(value: unknown): value is ExtensionSidebarPlacement {
   return PLACEMENTS.some((placement) => placement === value);
+}
+
+function isPositiveNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+/**
+ * The floating height in what a plugin passed to `setSizing`, which untyped code calls too: without a usable `min`
+ * core shows no height handles, and a `collapsed` that is not below `min` is left out.
+ */
+function toFloatingHeightOptions(sizing: unknown): FloatingExtensionSidebarHeightOptions | null {
+  const height = isRecord(sizing) && isRecord(sizing.floating) ? sizing.floating.height : undefined;
+  if (!isRecord(height) || !isPositiveNumber(height.min)) {
+    return null;
+  }
+  const minHeight = Math.round(height.min);
+  const collapsedHeight = isPositiveNumber(height.collapsed) ? Math.round(height.collapsed) : 0;
+  return collapsedHeight > 0 && collapsedHeight < minHeight ? { minHeight, collapsedHeight } : { minHeight };
 }
 
 export const extensionSidebarApi: ExtensionSidebarAPI = {
@@ -36,6 +60,10 @@ export const extensionSidebarApi: ExtensionSidebarAPI = {
     return subscribeToFloatingExtensionSidebarCollapse(listener);
   },
   canDragToFloat: () => canFloatExtensionSidebar(),
+  // Not behind the floating flag: Composer floats the sidebar without it.
+  setSizing: (sizing) => {
+    setFloatingExtensionSidebarHeightOptions(toFloatingHeightOptions(sizing));
+  },
   // Absent while placements are off, so an extension keeps the controls it shows on a core without them. Read when
   // the extension reads them, after the flags load.
   get subscribeToPopOut() {

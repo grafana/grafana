@@ -120,6 +120,7 @@ func ProvideWebhooksWithImages(
 	renderer rendering.Service,
 	blobstore resource.ResourceClient,
 	configProvider apiserver.RestConfigProvider,
+	supportedResourceProvider resources.SupportedResourceProvider,
 	registry prometheus.Registerer,
 ) *WebhookExtraBuilder {
 	// Webhook callbacks and screenshot images embedded in PR comments must be
@@ -145,7 +146,7 @@ func ProvideWebhooksWithImages(
 		isPublic:    isPublic,
 		urlProvider: urls.Public,
 		ExtraBuilder: func(b *provisioningapis.APIBuilder) provisioningapis.Extra {
-			clients := resources.NewClientFactory(configProvider)
+			clients := resources.NewClientFactory(configProvider, supportedResourceProvider)
 			parsers := resources.NewParserFactory(clients)
 
 			screenshotRenderer := pullrequest.NewScreenshotRenderer(renderer, blobstore)
