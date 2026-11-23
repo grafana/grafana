@@ -98,6 +98,16 @@ describe('api', () => {
         expect(getBackendSrv().post).not.toHaveBeenCalled();
       });
 
+      it('should fall back to the legacy api when the plugin has no resource in the new api', async () => {
+        uninstallPluginMetaMock.mockRejectedValue(
+          new Error('Failed to uninstall plugin myorg-test-panel 404:Not Found')
+        );
+
+        await uninstallPlugin('myorg-test-panel');
+
+        expect(getBackendSrv().post).toHaveBeenCalledWith('/api/plugins/myorg-test-panel/uninstall');
+      });
+
       it('should fall back to the legacy api and log when the new api fails', async () => {
         uninstallPluginMetaMock.mockRejectedValue(new Error('Network Error'));
 

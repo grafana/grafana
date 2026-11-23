@@ -99,11 +99,6 @@ export async function uninstallPluginMeta(pluginId: string): Promise<void> {
     }
   );
 
-  // Nothing to remove when the plugin has no resource, which is the state an uninstall is after.
-  if (result.status === 404) {
-    return;
-  }
-
   throwIfNotOk(result, 'uninstall', pluginId);
 }
 

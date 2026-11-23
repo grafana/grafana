@@ -348,10 +348,12 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
       );
     });
 
-    it('should not throw when the plugin resource does not exist', async () => {
+    it('should throw when the plugin resource does not exist so callers can fall back', async () => {
       global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 404, statusText: 'Not Found' });
 
-      await expect(uninstallPluginMeta('myorg-test-panel')).resolves.toBeUndefined();
+      await expect(uninstallPluginMeta('myorg-test-panel')).rejects.toThrow(
+        'Failed to uninstall plugin myorg-test-panel 404:Not Found'
+      );
     });
 
     it('should throw an error if response is not ok', async () => {
