@@ -155,6 +155,24 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, helper *legacysql.Lega
 	}, err
 }
 
+// withStatementTimeout runs fn in a transaction whose Postgres statement_timeout is d. The legacy
+// read is one statement that stays open while every row is sent, and executeQuery reuses the
+// transaction on the context, so the read runs under d. Without a positive d it runs fn as is.
+func (a *dashboardSqlAccess) withStatementTimeout(ctx context.Context, helper *legacysql.LegacyDatabaseHelper, d time.Duration, fn func(context.Context) error) error {
+	if d <= 0 {
+		return fn(ctx)
+	}
+	return helper.DB.InTransaction(ctx, func(ctx context.Context) error {
+		if err := helper.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			_, err := sess.Exec(migrations.StatementTimeoutSQL(d))
+			return err
+		}); err != nil {
+			return fmt.Errorf("failed to set statement timeout: %w", err)
+		}
+		return fn(ctx)
+	})
+}
+
 // MigrateDashboards handles the dashboard migration logic
 func (a *dashboardSqlAccess) MigrateDashboards(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 	query := &DashboardQuery{
@@ -171,6 +189,12 @@ func (a *dashboardSqlAccess) MigrateDashboards(ctx context.Context, orgId int64,
 	}
 
 	opts.Progress(-1, "migrating dashboards...")
+	return a.withStatementTimeout(ctx, sql, opts.StatementTimeout, func(ctx context.Context) error {
+		return a.sendDashboards(ctx, sql, query, opts, stream)
+	})
+}
+
+func (a *dashboardSqlAccess) sendDashboards(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, query *DashboardQuery, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 	rows, err := a.getRows(ctx, sql, query)
 	if rows != nil {
 		defer func() {
@@ -262,6 +286,12 @@ func (a *dashboardSqlAccess) MigrateFolders(ctx context.Context, orgId int64, op
 	}
 
 	opts.Progress(-1, "migrating folders...")
+	return a.withStatementTimeout(ctx, sql, opts.StatementTimeout, func(ctx context.Context) error {
+		return a.sendFolders(ctx, sql, query, opts, stream)
+	})
+}
+
+func (a *dashboardSqlAccess) sendFolders(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, query *DashboardQuery, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 	rows, err := a.getRows(ctx, sql, query)
 	if rows != nil {
 		defer func() {

@@ -174,22 +174,23 @@ func NewStorageBackend(
 
 	if !cfg.EnableSQLKVBackend {
 		return NewBackend(BackendOptions{
-			DBProvider:              eDB,
-			Reg:                     reg,
-			IsHA:                    isHA,
-			storageMetrics:          storageMetrics,
-			LastImportTimeMaxAge:    cfg.MaxFileIndexAge,
-			GCGate:                  gcGate,
-			GarbageCollection:       NewGarbageCollectionConfig(cfg),
-			SimulatedNetworkLatency: cfg.SimulatedNetworkLatency,
-			MigrationParquetBuffer:  cfg.MigrationParquetBuffer,
-			MigrationChunkedWrites:  cfg.MigrationChunkedWrites,
-			MigrationChunkMaxBytes:  cfg.MigrationChunkMaxBytes,
-			TmpDir:                  tmpDir(cfg.DataPath),
-			DisableStorageServices:  disableStorageServices,
-			DisablePruner:           cfg.DisablePruner,
-			DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
-			BatchTransactionTimeout: cfg.ResourceVersionBatchTransactionTimeout,
+			DBProvider:                eDB,
+			Reg:                       reg,
+			IsHA:                      isHA,
+			storageMetrics:            storageMetrics,
+			LastImportTimeMaxAge:      cfg.MaxFileIndexAge,
+			GCGate:                    gcGate,
+			GarbageCollection:         NewGarbageCollectionConfig(cfg),
+			SimulatedNetworkLatency:   cfg.SimulatedNetworkLatency,
+			MigrationParquetBuffer:    cfg.MigrationParquetBuffer,
+			MigrationChunkedWrites:    cfg.MigrationChunkedWrites,
+			MigrationChunkMaxBytes:    cfg.MigrationChunkMaxBytes,
+			MigrationStatementTimeout: cfg.MigrationStatementTimeout,
+			TmpDir:                    tmpDir(cfg.DataPath),
+			DisableStorageServices:    disableStorageServices,
+			DisablePruner:             cfg.DisablePruner,
+			DashboardVersionsToKeep:   cfg.DashboardVersionsToKeep,
+			BatchTransactionTimeout:   cfg.ResourceVersionBatchTransactionTimeout,
 			// TODO: remove this when sql/backend backwards compatibility is no longer needed.
 			LogCalls: cfg.LogSQLBackendCalls,
 		})
@@ -304,6 +305,10 @@ type BackendOptions struct {
 	// when MigrationChunkedWrites is enabled.
 	MigrationChunkMaxBytes int64
 
+	// MigrationStatementTimeout overrides the Postgres statement_timeout for bulk migration
+	// transactions only. Zero keeps the database or role setting.
+	MigrationStatementTimeout time.Duration
+
 	// Directory for temporary Parquet files during bulk migration.
 	// Defaults to the OS temp dir when empty. Set to cfg.DataPath/tmp to
 	// support containers with readonlyRootFilesystem enabled.
@@ -342,30 +347,31 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		garbageCollection.BatchWait = defaultGarbageCollectionBatchWait
 	}
 	backend := &backend{
-		isHA:                    opts.IsHA,
-		disableStorageServices:  opts.DisableStorageServices,
-		disablePruner:           opts.DisablePruner,
-		dashboardVersionsToKeep: opts.DashboardVersionsToKeep,
-		done:                    ctx.Done(),
-		cancel:                  cancel,
-		log:                     logging.DefaultLogger.With("logger", "sql-resource-server"),
-		reg:                     opts.Reg,
-		dbProvider:              opts.DBProvider,
-		pollingInterval:         opts.PollingInterval,
-		watchBufferSize:         opts.WatchBufferSize,
-		storageMetrics:          opts.storageMetrics,
-		bulkLock:                &bulkLock{running: make(map[string]bool)},
-		analyzeBulkRowThreshold: analyzeResourceHistoryRowThreshold,
-		simulatedNetworkLatency: opts.SimulatedNetworkLatency,
-		migrationParquetBuffer:  opts.MigrationParquetBuffer,
-		migrationChunkedWrites:  opts.MigrationChunkedWrites,
-		migrationChunkMaxBytes:  opts.MigrationChunkMaxBytes,
-		tmpDir:                  opts.TmpDir,
-		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
-		batchTxnTimeout:         opts.BatchTransactionTimeout,
-		garbageCollection:       garbageCollection,
-		gcGate:                  opts.GCGate,
-		logCalls:                opts.LogCalls,
+		isHA:                      opts.IsHA,
+		disableStorageServices:    opts.DisableStorageServices,
+		disablePruner:             opts.DisablePruner,
+		dashboardVersionsToKeep:   opts.DashboardVersionsToKeep,
+		done:                      ctx.Done(),
+		cancel:                    cancel,
+		log:                       logging.DefaultLogger.With("logger", "sql-resource-server"),
+		reg:                       opts.Reg,
+		dbProvider:                opts.DBProvider,
+		pollingInterval:           opts.PollingInterval,
+		watchBufferSize:           opts.WatchBufferSize,
+		storageMetrics:            opts.storageMetrics,
+		bulkLock:                  &bulkLock{running: make(map[string]bool)},
+		analyzeBulkRowThreshold:   analyzeResourceHistoryRowThreshold,
+		simulatedNetworkLatency:   opts.SimulatedNetworkLatency,
+		migrationParquetBuffer:    opts.MigrationParquetBuffer,
+		migrationChunkedWrites:    opts.MigrationChunkedWrites,
+		migrationChunkMaxBytes:    opts.MigrationChunkMaxBytes,
+		migrationStatementTimeout: opts.MigrationStatementTimeout,
+		tmpDir:                    opts.TmpDir,
+		lastImportTimeMaxAge:      opts.LastImportTimeMaxAge,
+		batchTxnTimeout:           opts.BatchTransactionTimeout,
+		garbageCollection:         garbageCollection,
+		gcGate:                    opts.GCGate,
+		logCalls:                  opts.LogCalls,
 	}
 	if err := backend.Init(ctx); err != nil {
 		return nil, err
@@ -436,6 +442,8 @@ type backend struct {
 	migrationChunkedWrites bool
 	// migrationChunkMaxBytes is the soft maximum byte budget per migration chunk.
 	migrationChunkMaxBytes int64
+	// migrationStatementTimeout overrides the Postgres statement_timeout in bulk migration transactions.
+	migrationStatementTimeout time.Duration
 
 	// tmpDir is the directory for temporary Parquet files; empty means OS default.
 	tmpDir string
@@ -1204,6 +1212,11 @@ func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, c
 
 	iter := &listIter{sortAsc: false}
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
+		if resource.MigrationReadFromContext(ctx) {
+			if err := b.setMigrationStatementTimeout(ctx, tx); err != nil {
+				return err
+			}
+		}
 		var err error
 		iter.listRV, err = b.fetchLatestRV(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
 		if err != nil {
