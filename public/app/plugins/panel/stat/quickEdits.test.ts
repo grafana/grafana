@@ -44,6 +44,10 @@ describe('stat quick edits', () => {
     expect(named.filter((id) => !ids.includes(id))).toEqual([]);
   });
 
+  it('offers the choice to show all values with the calculation, so the calculation can be brought back', () => {
+    expect(getQuickEdit('calculation').optionIds.slice(0, 2)).toEqual(['reduceOptions.values', 'reduceOptions.calcs']);
+  });
+
   it('relabels only options it names', () => {
     for (const edit of plugin.getQuickEdits()) {
       expect(Object.keys(edit.labels ?? {}).filter((id) => !edit.optionIds.includes(id))).toEqual([]);
@@ -53,6 +57,7 @@ describe('stat quick edits', () => {
   it.each([
     { id: 'calculation', options: { reduceOptions: { calcs: ['mean'] } }, text: 'Mean' },
     { id: 'calculation', options: { reduceOptions: { calcs: [] } }, text: 'Last *' },
+    { id: 'calculation', options: { reduceOptions: { values: true, calcs: ['mean'] } }, text: 'All values' },
     { id: 'color', options: { colorMode: BigValueColorMode.BackgroundSolid }, text: 'Background Solid' },
     { id: 'text', options: { textMode: BigValueTextMode.ValueAndName }, text: 'Value and name' },
   ])('summarizes $id as $text', ({ id, options, text }) => {
