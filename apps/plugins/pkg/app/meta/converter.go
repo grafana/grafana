@@ -9,8 +9,8 @@ import (
 	"path"
 
 	authlib "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana-app-sdk/logging"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/pluginassets"
@@ -336,8 +336,8 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 			}
 			if route.TokenAuth != nil {
 				v0Route.TokenAuth = &pluginsv0alpha1.MetaV0alpha1RouteTokenAuth{}
-				if route.TokenAuth.Url != "" {
-					v0Route.TokenAuth.Url = &route.TokenAuth.Url
+				if route.TokenAuth.URL != "" {
+					v0Route.TokenAuth.Url = &route.TokenAuth.URL
 				}
 				if len(route.TokenAuth.Scopes) > 0 {
 					v0Route.TokenAuth.Scopes = route.TokenAuth.Scopes
@@ -361,8 +361,8 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 			}
 			if route.JwtTokenAuth != nil {
 				v0Route.JwtTokenAuth = &pluginsv0alpha1.MetaV0alpha1RouteJwtTokenAuth{}
-				if route.JwtTokenAuth.Url != "" {
-					v0Route.JwtTokenAuth.Url = &route.JwtTokenAuth.Url
+				if route.JwtTokenAuth.URL != "" {
+					v0Route.JwtTokenAuth.Url = &route.JwtTokenAuth.URL
 				}
 				if len(route.JwtTokenAuth.Scopes) > 0 {
 					v0Route.JwtTokenAuth.Scopes = route.JwtTokenAuth.Scopes
