@@ -671,10 +671,9 @@ func (g *GrafanaLive) ServeWS(w http.ResponseWriter, r *http.Request, _ string) 
 }
 
 func (g *GrafanaLive) serveWebsocket(w http.ResponseWriter, r *http.Request, user identity.Requester) {
-	id, _ := user.GetInternalID()
 	// Centrifuge expects Credentials in context with a current user ID.
 	cred := &centrifuge.Credentials{
-		UserID: strconv.FormatInt(id, 10),
+		UserID: orgchannel.UserID(user),
 	}
 	newCtx := centrifuge.SetCredentials(r.Context(), cred)
 	newCtx = identity.WithRequester(newCtx, user)
