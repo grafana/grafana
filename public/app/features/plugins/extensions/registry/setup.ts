@@ -10,6 +10,7 @@ import { OpenQueryLibraryExposedComponent } from 'app/features/explore/QueryLibr
 import { PrometheusQueryResultsContainer } from 'app/features/explore/RawPrometheus/PrometheusQueryResultsContainer';
 import { NotebookViewLazy } from 'app/features/notebook/embed/NotebookViewLazy';
 import { AddToNotebookFormExposedComponent } from 'app/features/notebook/extensions/AddToNotebookFormExposedComponent';
+import { ManagedBadgeExposedComponent } from 'app/features/provisioning/components/ManagedBadgeExposedComponent';
 import { SaveResourceDrawerExposedComponent } from 'app/features/provisioning/components/Shared/SaveResourceDrawerExposedComponent';
 
 import { getCoreExtensionConfigurations } from '../getCoreExtensionConfigurations';
@@ -86,6 +87,12 @@ function registerCoreExtensions({ addedLinksRegistry, exposedComponentsRegistry 
         title: 'Save resource drawer',
         description: 'Commits a resource to a Git Sync repository and reports where the commit went',
         component: SaveResourceDrawerExposedComponent,
+      },
+      {
+        id: PluginExtensionExposedComponents.ManagedBadgeV1Alpha,
+        title: 'Managed badge',
+        description: 'Shows which system manages a resource, with Git Sync repository links',
+        component: ManagedBadgeExposedComponent,
       },
       // Only with notebooks on: plugins treat the form's absence as notebooks being unavailable.
       ...(getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNotebooks, false)

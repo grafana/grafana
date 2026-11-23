@@ -272,6 +272,7 @@ export enum PluginExtensionExposedComponents {
   FolderPermissionsV1 = 'grafana/folder-permissions/v1',
   DashboardViewV1 = 'grafana/dashboard-view/v1',
   SaveResourceDrawerV1Alpha = 'grafana/provisioning-save-resource-drawer/v1-alpha',
+  ManagedBadgeV1Alpha = 'grafana/provisioning-managed-badge/v1-alpha',
 }
 
 export type PluginExtensionPanelContext = {

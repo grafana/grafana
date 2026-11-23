@@ -653,6 +653,7 @@ export {
   type CentralAlertHistorySceneV1Props,
 } from './types/pluginExtensions';
 export {
+  type ManagedBadgeV1AlphaProps,
   type PrometheusQueryResultsV1Props,
   type SaveResourceDrawerV1AlphaProps,
 } from './types/exposedComponentProps';
