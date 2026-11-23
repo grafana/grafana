@@ -3,7 +3,6 @@ package manager
 import (
 	"context"
 	"errors"
-	"fmt"
 	"testing"
 	"time"
 
@@ -22,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -36,7 +34,7 @@ func TestIntegrationSecretsService_EnvelopeEncryption(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	testDB := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	store := database.ProvideSecretsStore(legacysql.NewDatabaseProvider(testDB))
+	store := database.ProvideSecretsStore(testDB)
 	svc := SetupTestService(t, store)
 	ctx := context.Background()
 
@@ -98,7 +96,7 @@ func TestIntegrationSecretsService_DataKeys(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	testDB := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	store := database.ProvideSecretsStore(legacysql.NewDatabaseProvider(testDB))
+	store := database.ProvideSecretsStore(testDB)
 	ctx := context.Background()
 
 	dataKey := &secrets.DataKey{
@@ -179,7 +177,7 @@ func TestIntegrationSecretsService_UseCurrentProvider(t *testing.T) {
 
 	t.Run("When encryption_provider is not specified explicitly, should use 'secretKey' as a current provider", func(t *testing.T) {
 		testDB := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-		svc := SetupTestService(t, database.ProvideSecretsStore(legacysql.NewDatabaseProvider(testDB)))
+		svc := SetupTestService(t, database.ProvideSecretsStore(testDB))
 		assert.Equal(t, secrets.ProviderID("secretKey.v1"), svc.currentProviderID)
 	})
 
@@ -207,7 +205,7 @@ func TestIntegrationSecretsService_UseCurrentProvider(t *testing.T) {
 		features := featuremgmt.WithFeatures()
 		kms := newFakeKMS(osskmsproviders.ProvideService(encryptionService, cfg, features))
 		testDB := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-		secretStore := database.ProvideSecretsStore(legacysql.NewDatabaseProvider(testDB))
+		secretStore := database.ProvideSecretsStore(testDB)
 
 		secretsService, err := ProvideSecretsService(
 			tracing.InitializeTracerForTest(),
@@ -286,7 +284,7 @@ func TestIntegrationSecretsService_Run(t *testing.T) {
 
 	ctx := context.Background()
 	testDB := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	store := database.ProvideSecretsStore(legacysql.NewDatabaseProvider(testDB))
+	store := database.ProvideSecretsStore(testDB)
 	svc := SetupTestService(t, store)
 
 	t.Run("should stop with no error once the context's finished", func(t *testing.T) {
@@ -338,7 +336,7 @@ func TestIntegrationSecretsService_ReEncryptDataKeys(t *testing.T) {
 
 	ctx := context.Background()
 	testDB := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	store := database.ProvideSecretsStore(legacysql.NewDatabaseProvider(testDB))
+	store := database.ProvideSecretsStore(testDB)
 	svc := SetupTestService(t, store)
 
 	// Encrypt to generate data encryption key
@@ -387,7 +385,7 @@ func TestIntegrationSecretsService_Decrypt(t *testing.T) {
 
 	ctx := context.Background()
 	testDB := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	store := database.ProvideSecretsStore(legacysql.NewDatabaseProvider(testDB))
+	store := database.ProvideSecretsStore(testDB)
 
 	t.Run("empty payload should fail", func(t *testing.T) {
 		svc := SetupTestService(t, store)
@@ -503,7 +501,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 	for name, tc := range tcs {
 		t.Run(name, func(t *testing.T) {
 			testDB := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-			svc := SetupTestService(t, database.ProvideSecretsStore(legacysql.NewDatabaseProvider(testDB)))
+			svc := SetupTestService(t, database.ProvideSecretsStore(testDB))
 
 			// Here's what actually matters and varies on each test: look at the test case name.
 			//
@@ -530,92 +528,6 @@ func TestIntegration_SecretsService(t *testing.T) {
 			assert.Equal(t, toEncrypt, decrypted)
 		})
 	}
-}
-
-type tenantCtxKey struct{}
-
-// TestIntegrationSecretsService_IsolatesTenants asserts that a data key cached for one tenant is
-// never used for another tenant, whose data keys live in a different table.
-func TestIntegrationSecretsService_IsolatesTenants(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-	restoreTimeNowAfterTestExec(t)
-
-	testDB := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	ctxs := make([]context.Context, 0, 2)
-	for _, prefix := range []string{"manager_tenant_a_", "manager_tenant_b_"} {
-		table := prefix + "data_keys"
-		require.NoError(t, testDB.WithDbSession(context.Background(), func(sess *db.Session) error {
-			_, err := sess.Exec(fmt.Sprintf("CREATE TABLE %s AS SELECT * FROM data_keys WHERE 1 = 0", table))
-			return err
-		}))
-		t.Cleanup(func() {
-			_ = testDB.WithDbSession(context.Background(), func(sess *db.Session) error {
-				_, err := sess.Exec("DROP TABLE " + table)
-				return err
-			})
-		})
-		ctxs = append(ctxs, context.WithValue(context.Background(), tenantCtxKey{}, prefix))
-	}
-	ctxA, ctxB := ctxs[0], ctxs[1]
-
-	store := database.ProvideSecretsStore(func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
-		prefix, ok := ctx.Value(tenantCtxKey{}).(string)
-		if !ok {
-			return nil, fmt.Errorf("no tenant in context")
-		}
-		return &legacysql.LegacyDatabaseHelper{
-			DB:    testDB,
-			Table: func(n string) string { return prefix + n },
-			Slug:  prefix,
-		}, nil
-	})
-	svc := SetupTestService(t, store)
-
-	ciphertextA, err := svc.Encrypt(ctxA, []byte("a"), secrets.WithoutScope())
-	require.NoError(t, err)
-
-	// Ten minutes later (after caution period), reading tenant A's data key caches it by id and by label.
-	// Look SecretsService.cacheDataKey for more details.
-	now = func() time.Time { return time.Now().Add(10 * time.Minute) }
-	_, err = svc.Decrypt(ctxA, ciphertextA)
-	require.NoError(t, err)
-	require.Len(t, svc.dataKeyCache.byLabel, 1)
-
-	ciphertextB, err := svc.Encrypt(ctxB, []byte("b"), secrets.WithoutScope())
-	require.NoError(t, err)
-
-	t.Run("encrypting creates a data key in the tenant's own store", func(t *testing.T) {
-		keysA, err := store.GetAllDataKeys(ctxA)
-		require.NoError(t, err)
-		require.Len(t, keysA, 1)
-
-		keysB, err := store.GetAllDataKeys(ctxB)
-		require.NoError(t, err)
-		require.Len(t, keysB, 1)
-		require.NotEqual(t, keysA[0].Id, keysB[0].Id)
-	})
-
-	t.Run("a tenant cannot decrypt with another tenant's cached data key", func(t *testing.T) {
-		_, err := svc.Decrypt(ctxB, ciphertextA)
-		require.ErrorIs(t, err, secrets.ErrDataKeyNotFound)
-	})
-
-	t.Run("each tenant decrypts its secrets after a restart", func(t *testing.T) {
-		for _, tc := range []struct {
-			ctx        context.Context
-			ciphertext []byte
-			want       string
-		}{
-			{ctxA, ciphertextA, "a"},
-			{ctxB, ciphertextB, "b"},
-		} {
-			// A fresh service per tenant, so neither decryption is served by a data key the other cached.
-			restarted := SetupTestService(t, store)
-			plaintext, err := restarted.Decrypt(tc.ctx, tc.ciphertext)
-			require.NoError(t, err)
-			require.Equal(t, tc.want, string(plaintext))
-		}
-	})
 }
 
 // Use this function at the beginning of those tests

@@ -9,7 +9,6 @@ import (
 )
 
 type dataKeyCacheEntry struct {
-	tenant     string
 	id         string
 	label      string
 	dataKey    []byte
@@ -21,33 +20,26 @@ func (e dataKeyCacheEntry) expired() bool {
 	return e.expiration.Before(now())
 }
 
-// dataKeyCacheKey scopes a cached data key to the tenant whose store it was read from. Tenants'
-// data keys can share a label, and a tenant must only ever use the data keys its own store holds.
-type dataKeyCacheKey struct {
-	tenant string
-	value  string // the data key's id or label
-}
-
 type dataKeyCache struct {
 	mtx      sync.RWMutex
-	byId     map[dataKeyCacheKey]*dataKeyCacheEntry
-	byLabel  map[dataKeyCacheKey]*dataKeyCacheEntry
+	byId     map[string]*dataKeyCacheEntry
+	byLabel  map[string]*dataKeyCacheEntry
 	cacheTTL time.Duration
 }
 
 func newDataKeyCache(ttl time.Duration) *dataKeyCache {
 	return &dataKeyCache{
-		byId:     make(map[dataKeyCacheKey]*dataKeyCacheEntry),
-		byLabel:  make(map[dataKeyCacheKey]*dataKeyCacheEntry),
+		byId:     make(map[string]*dataKeyCacheEntry),
+		byLabel:  make(map[string]*dataKeyCacheEntry),
 		cacheTTL: ttl,
 	}
 }
 
-func (c *dataKeyCache) getById(tenant string, id string) (*dataKeyCacheEntry, bool) {
+func (c *dataKeyCache) getById(id string) (*dataKeyCacheEntry, bool) {
 	c.mtx.RLock()
 	defer c.mtx.RUnlock()
 
-	entry, exists := c.byId[dataKeyCacheKey{tenant: tenant, value: id}]
+	entry, exists := c.byId[id]
 
 	cacheReadsCounter.With(prometheus.Labels{
 		"hit":    strconv.FormatBool(exists),
@@ -61,11 +53,11 @@ func (c *dataKeyCache) getById(tenant string, id string) (*dataKeyCacheEntry, bo
 	return entry, true
 }
 
-func (c *dataKeyCache) getByLabel(tenant string, label string) (*dataKeyCacheEntry, bool) {
+func (c *dataKeyCache) getByLabel(label string) (*dataKeyCacheEntry, bool) {
 	c.mtx.RLock()
 	defer c.mtx.RUnlock()
 
-	entry, exists := c.byLabel[dataKeyCacheKey{tenant: tenant, value: label}]
+	entry, exists := c.byLabel[label]
 
 	cacheReadsCounter.With(prometheus.Labels{
 		"hit":    strconv.FormatBool(exists),
@@ -85,7 +77,7 @@ func (c *dataKeyCache) addById(entry *dataKeyCacheEntry) {
 
 	entry.expiration = now().Add(c.cacheTTL)
 
-	c.byId[dataKeyCacheKey{tenant: entry.tenant, value: entry.id}] = entry
+	c.byId[entry.id] = entry
 }
 
 func (c *dataKeyCache) addByLabel(entry *dataKeyCacheEntry) {
@@ -94,29 +86,29 @@ func (c *dataKeyCache) addByLabel(entry *dataKeyCacheEntry) {
 
 	entry.expiration = now().Add(c.cacheTTL)
 
-	c.byLabel[dataKeyCacheKey{tenant: entry.tenant, value: entry.label}] = entry
+	c.byLabel[entry.label] = entry
 }
 
 func (c *dataKeyCache) removeExpired() {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
-	for key, entry := range c.byId {
+	for id, entry := range c.byId {
 		if entry.expired() {
-			delete(c.byId, key)
+			delete(c.byId, id)
 		}
 	}
 
-	for key, entry := range c.byLabel {
+	for label, entry := range c.byLabel {
 		if entry.expired() {
-			delete(c.byLabel, key)
+			delete(c.byLabel, label)
 		}
 	}
 }
 
 func (c *dataKeyCache) flush() {
 	c.mtx.Lock()
-	c.byId = make(map[dataKeyCacheKey]*dataKeyCacheEntry)
-	c.byLabel = make(map[dataKeyCacheKey]*dataKeyCacheEntry)
+	c.byId = make(map[string]*dataKeyCacheEntry)
+	c.byLabel = make(map[string]*dataKeyCacheEntry)
 	c.mtx.Unlock()
 }
