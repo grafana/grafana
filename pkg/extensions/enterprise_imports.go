@@ -13,6 +13,7 @@ import (
 	_ "github.com/Azure/azure-sdk-for-go/services/keyvault/v7.1/keyvault"
 	_ "github.com/Azure/go-autorest/autorest"
 	_ "github.com/Azure/go-autorest/autorest/adal"
+	_ "github.com/apache/arrow-go/v18/arrow/ipc"
 	_ "github.com/aws/aws-sdk-go-v2/aws"
 	_ "github.com/aws/aws-sdk-go-v2/config"
 	_ "github.com/aws/aws-sdk-go-v2/credentials"
