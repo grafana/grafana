@@ -33,6 +33,7 @@ const gitlabConnection: Connection = {
   spec: { type: 'gitlabOAuth', title: 'GitLab OAuth' },
   status: {
     observedGeneration: 1,
+    token: {},
     health: { healthy: true, checked: 2 },
     conditions: [
       {

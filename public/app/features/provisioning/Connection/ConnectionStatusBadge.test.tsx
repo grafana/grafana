@@ -7,6 +7,7 @@ import { ConnectionStatusBadge } from './ConnectionStatusBadge';
 const createMockStatus = (overrides: Partial<ConnectionStatus> = {}): ConnectionStatus => ({
   health: { healthy: true },
   observedGeneration: 1,
+  token: {},
   conditions: [
     {
       type: 'Ready',

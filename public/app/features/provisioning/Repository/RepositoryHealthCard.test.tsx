@@ -42,6 +42,7 @@ const createMockConnection = (overrides: Partial<Connection> = {}): Connection =
   status: {
     health: { healthy: true },
     observedGeneration: 1,
+    token: {},
     conditions: [
       {
         type: 'Ready',

@@ -1325,6 +1325,7 @@ export type CreateRepositoryTestApiArg = {
     kind?: string;
     metadata?: any;
     secure?: any;
+    /** Spec is the spec of the Repository */
     spec?: any;
     status?: any;
   };
@@ -1491,11 +1492,11 @@ export type ConnectionSecure = {
   /** Token is the reference of the token used to act as the Connection. This value is stored securely and cannot be read back */
   token?: ComGithubGrafanaGrafanaAppSdkResourceInlineSecureValue;
 };
-export type BitbucketConnectionConfig = {
+export type ConnectionBitbucketConfig = {
   /** The workspace the OAuth consumer belongs to */
   workspace: string;
 };
-export type GitOAuthConnectionConfig = {
+export type ConnectionGitOAuthConfig = {
   /** The provider's OAuth authorization endpoint (e.g. `https://gitlab.example.com/oauth/authorize`). */
   authURL: string;
   /** The OAuth scopes to request, granting git read and write access. */
@@ -1503,13 +1504,13 @@ export type GitOAuthConnectionConfig = {
   /** The provider's OAuth token endpoint (e.g. `https://gitlab.example.com/oauth/token`). */
   tokenURL: string;
 };
-export type GitHubConnectionConfig = {
+export type ConnectionGitHubConfig = {
   /** GitHub App ID */
   appID: string;
   /** GitHub App installation ID */
   installationID: string;
 };
-export type GitHubEnterpriseConnectionConfig = {
+export type ConnectionGitHubEnterpriseConfig = {
   /** GitHub App ID */
   appID: string;
   /** GitHub App installation ID */
@@ -1517,7 +1518,7 @@ export type GitHubEnterpriseConnectionConfig = {
   /** The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`). */
   serverUrl: string;
 };
-export type GitHubEnterpriseOAuthConnectionConfig = {
+export type ConnectionGitHubEnterpriseOAuthConfig = {
   /** The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`). */
   serverUrl: string;
 };
@@ -1531,17 +1532,17 @@ export type ConnectionWebhookConfig = {
 };
 export type ConnectionSpec = {
   /** Bitbucket connection configuration Only applicable when provider is "bitbucketOAuth" */
-  bitbucket?: BitbucketConnectionConfig;
+  bitbucket?: ConnectionBitbucketConfig;
   /** The connection description */
   description?: string;
   /** Generic git OAuth app connection configuration Only applicable when provider is "gitOAuth" */
-  gitOAuth?: GitOAuthConnectionConfig;
+  gitOAuth?: ConnectionGitOAuthConfig;
   /** GitHub connection configuration Only applicable when provider is "github" */
-  github?: GitHubConnectionConfig;
+  github?: ConnectionGitHubConfig;
   /** GitHub Enterprise Server connection configuration Only applicable when provider is "githubEnterprise" */
-  githubEnterprise?: GitHubEnterpriseConnectionConfig;
+  githubEnterprise?: ConnectionGitHubEnterpriseConfig;
   /** GitHub Enterprise Server OAuth app connection configuration Only applicable when provider is "githubEnterpriseOAuth" */
-  githubEnterpriseOAuth?: GitHubEnterpriseOAuthConnectionConfig;
+  githubEnterpriseOAuth?: ConnectionGitHubEnterpriseOAuthConfig;
   /** OAuth app configuration shared by all OAuth app providers */
   oauth?: ConnectionOAuthConfig;
   /** The connection display name (shown in the UI) */
@@ -1570,7 +1571,7 @@ export type ConnectionSpec = {
   webhook?: ConnectionWebhookConfig;
 };
 export type ConnectionCondition = {
-  /** lastTransitionTime is the last time the condition transitioned from one status to another. */
+  /** lastTransitionTime is the last time the condition transitioned from one status to another. Null when unset, matching the encoding of the zero metav1.Time. */
   lastTransitionTime: string;
   /** message is a human readable message indicating details about the transition. */
   message: string;
@@ -1583,7 +1584,7 @@ export type ConnectionCondition = {
   /** type of condition in CamelCase or in foo.example.com/CamelCase. */
   type: string;
 };
-export type ErrorDetails = {
+export type ConnectionErrorDetails = {
   /** BadValue is the value of the field that was determined to be invalid, if applicable. This can be any type. This field is optional and may be omitted if not relevant. */
   badValue?: any;
   /** Detail provides a human-readable explanation of what went wrong. This message may be shown directly to users and should be actionable. */
@@ -1595,7 +1596,7 @@ export type ErrorDetails = {
   /** Type is a machine-readable description of the cause of the error. This is intended for programmatic handling and matches Kubernetes' CauseType values. */
   type: string;
 };
-export type HealthStatus = {
+export type ConnectionHealthStatus = {
   /** When the health was checked last time */
   checked?: number;
   /** The type of the error
@@ -1609,7 +1610,7 @@ export type HealthStatus = {
   /** Summary messages (can be shown to users) Will only be populated when not healthy */
   message?: string[];
 };
-export type TokenStatus = {
+export type ConnectionTokenStatus = {
   expiration?: number;
   lastUpdated?: number;
 };
@@ -1617,13 +1618,13 @@ export type ConnectionStatus = {
   /** Conditions represent the latest available observations of the connection's state. */
   conditions?: ConnectionCondition[];
   /** FieldErrors are errors that occurred during validation of the connection spec. These errors are intended to help users identify and fix issues in the spec. */
-  fieldErrors?: ErrorDetails[];
+  fieldErrors?: ConnectionErrorDetails[];
   /** The connection health status */
-  health: HealthStatus;
+  health: ConnectionHealthStatus;
   /** The generation of the spec last time reconciliation ran */
   observedGeneration: number;
   /** Token holds metadata about the last generated connection token, used to avoid regenerating a token whose secret was written recently but is not yet readable. */
-  token?: TokenStatus;
+  token: ConnectionTokenStatus;
 };
 export type Connection = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -1632,6 +1633,7 @@ export type Connection = {
   kind?: string;
   metadata?: ObjectMeta;
   secure?: ConnectionSecure;
+  /** Spec is the spec of the Connection */
   spec?: ConnectionSpec;
   status?: ConnectionStatus;
 };
@@ -1717,7 +1719,7 @@ export type ConnectionAuthorizeRequest = {
   spec: ConnectionAuthorizeRequestSpec;
   status?: ConnectionAuthorizeRequestStatus;
 };
-export type ProvisioningResourceRef = {
+export type JobResourceRef = {
   /** Group is the group of the resource, such as "dashboard.grafana.app". */
   group?: string;
   /** Kind is the type of resource, for example, "Dashboard". */
@@ -1725,19 +1727,19 @@ export type ProvisioningResourceRef = {
   /** Name is the name of the resource, such as a dashboard UID. */
   name?: string;
 };
-export type DeleteJobOptions = {
+export type JobDeleteJobOptions = {
   /** Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks */
   paths?: string[];
   /** Ref to the branch or commit hash to delete from */
   ref?: string;
   /** Resources to delete This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths. */
-  resources?: ProvisioningResourceRef[];
+  resources?: JobResourceRef[];
 };
-export type FixFolderMetadataJobOptions = {
+export type JobFixFolderMetadataJobOptions = {
   /** Ref to the branch to create the commit on (uses repository's default branch if not specified) */
   ref?: string;
 };
-export type MigrateJobOptions = {
+export type JobMigrateJobOptions = {
   /** Target branch for the migration (git only). When set to a branch other than the repository's configured branch, the migration writes the exported resources to that branch (a pull request workflow) and removes the migrated resources from the instance instead of taking ownership of them — they return as managed resources once the branch is merged and a regular sync runs on the configured branch. When empty (or equal to the configured branch), the migration writes directly to the configured branch and takes ownership of the exported resources. */
   branch?: string;
   /** GenerateNewFolderIDs writes a freshly generated identifier into each exported folder's metadata (_folder.json) instead of preserving the existing folder UID. The subsequent pull creates new folders rather than taking over the originals. Has no effect when folder metadata is not written. */
@@ -1745,21 +1747,21 @@ export type MigrateJobOptions = {
   /** Message to use when committing the changes in a single commit. Deprecated: set JobSpec.Message instead. This field is kept for backwards compatibility and is only used when JobSpec.Message is empty. */
   message?: string;
   /** Resources to migrate. When empty, every unmanaged resource in the namespace is migrated (legacy behavior). When non-empty, only the listed resources are exported to the repository — the folder hierarchy is still emitted so parent paths resolve, and the subsequent pull phase only takes ownership of those resources. Currently only unmanaged Dashboards are supported. */
-  resources?: ProvisioningResourceRef[];
+  resources?: JobResourceRef[];
   /** SkipResourceDeletion keeps the migrated resources on the instance instead of removing them. By default a migration deletes the resources it moved (the whole namespace for an instance target, or the exported resources for a branch migration); when true, no deletion happens and the resources are left in place. */
   skipResourceDeletion?: boolean;
 };
-export type MoveJobOptions = {
+export type JobMoveJobOptions = {
   /** Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks */
   paths?: string[];
   /** Ref to the branch or commit hash that should move */
   ref?: string;
   /** Resources to move This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths. */
-  resources?: ProvisioningResourceRef[];
+  resources?: JobResourceRef[];
   /** Destination path for the move (e.g. "new-location/") */
   targetPath?: string;
 };
-export type PullRequestJobOptions = {
+export type JobPullRequestJobOptions = {
   /** URL of the head repository for a pull request from a fork, when available. */
   forkURL?: string;
   /** The specific commit hash that triggered this notice */
@@ -1773,11 +1775,11 @@ export type PullRequestJobOptions = {
   /** URL to the originator (eg, PR URL) */
   url?: string;
 };
-export type SyncJobOptions = {
+export type JobSyncJobOptions = {
   /** Incremental synchronization for versioned repositories */
   incremental: boolean;
 };
-export type ExportJobOptions = {
+export type JobExportJobOptions = {
   /** FIXME: we should validate this in admission hooks Target branch for export (only git) */
   branch?: string;
   /** The source folder (or empty) to export */
@@ -1789,27 +1791,26 @@ export type ExportJobOptions = {
   /** FIXME: we should validate this in admission hooks Prefix in target file system */
   path?: string;
   /** Resources to export. When empty, every unmanaged resource in the namespace is exported (legacy behavior). When non-empty, only the listed resources are exported — the folder hierarchy is still emitted so parent paths resolve. Currently only unmanaged Dashboards are supported. */
-  resources?: ProvisioningResourceRef[];
+  resources?: JobResourceRef[];
 };
-export type Duration = string;
-export type TestJobOptions = {
+export type JobTestJobOptions = {
   /** Duration is how long the job should sleep before completing, expressed as a Go duration string (for example "10s" or "2m"). It must be positive and is capped by the server to keep a single job's runtime predictable. */
-  duration?: Duration;
+  duration?: string;
   /** ProgressUpdates controls how many progress notifications the job emits while running. A value of 0 uses the server default. */
   progressUpdates?: number;
 };
 export type JobSpec = {
   /** Possible enum values:
-     - `"delete"` deletes files in the remote repository
-     - `"deleteResources"` deletes all resources managed by a repository that no longer exists or is stuck in Terminating state. This action has inverted validation: it is only allowed when the repository does not exist or has a DeletionTimestamp set.
-     - `"fixFolderMetadata"` is a placeholder job that will eventually regenerate folder metadata files. Currently a no-op to unblock frontend development.
-     - `"migrate"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.
-     - `"move"` moves files in the remote repository
-     - `"pr"` adds additional useful information to a PR, such as comments with preview links and rendered images.
-     - `"pull"` replicates the remote branch in the local copy of the repository.
-     - `"push"` replicates the local copy of the repository in the remote branch.
-     - `"releaseResources"` removes ownership annotations from all resources managed by a repository that no longer exists or is stuck in Terminating state. Resources remain in Grafana but become unmanaged. This action has inverted validation: it is only allowed when the repository does not exist or has a DeletionTimestamp set.
-     - `"test"` is a synthetic job that does no real work: it simply sleeps for a configurable duration and then completes successfully. It exists only to generate controlled load on the job queue and controllers for performance testing, and is gated behind the provisioning.performance feature flag. */
+     - `"delete"`
+     - `"deleteResources"`
+     - `"fixFolderMetadata"`
+     - `"migrate"`
+     - `"move"`
+     - `"pr"`
+     - `"pull"`
+     - `"push"`
+     - `"releaseResources"`
+     - `"test"` */
   action:
     | 'delete'
     | 'deleteResources'
@@ -1822,30 +1823,30 @@ export type JobSpec = {
     | 'releaseResources'
     | 'test';
   /** Delete when the action is `delete` */
-  delete?: DeleteJobOptions;
+  delete?: JobDeleteJobOptions;
   /** Options when the action is `fix-folder-metadata` */
-  fixFolderMetadata?: FixFolderMetadataJobOptions;
+  fixFolderMetadata?: JobFixFolderMetadataJobOptions;
   /** Commit message for this job. Applies to job actions that produce commits (delete, move, migrate, push, fixFolderMetadata). When empty, the backend falls back to the action-specific message field (ExportJobOptions.Message, MigrateJobOptions.Message) for backwards compatibility, then to a built-in default. */
   message?: string;
   /** Required when the action is `migrate` */
-  migrate?: MigrateJobOptions;
+  migrate?: JobMigrateJobOptions;
   /** Move when the action is `move` */
-  move?: MoveJobOptions;
+  move?: JobMoveJobOptions;
   /** Pull request options */
-  pr?: PullRequestJobOptions;
+  pr?: JobPullRequestJobOptions;
   /** Required when the action is `pull` */
-  pull?: SyncJobOptions;
+  pull?: JobSyncJobOptions;
   /** Required when the action is `push` */
-  push?: ExportJobOptions;
+  push?: JobExportJobOptions;
   /** The the repository reference (for now also in labels) This value is required, but will be popuplated from the job making the request */
   repository?: string;
   /** Required when the action is `test` */
-  test?: TestJobOptions;
+  test?: JobTestJobOptions;
 };
 export type JobResourceSummary = {
   create?: number;
   delete?: number;
-  /** Create or update (export) */
+  /** The error count */
   error?: number;
   /** Report errors/warnings for this resource type This may not be an exhaustive list and recommend looking at the logs for more info */
   errors?: string[];
@@ -1853,16 +1854,18 @@ export type JobResourceSummary = {
   kind?: string;
   /** No action required (useful for sync) */
   noop?: number;
+  /** The count (if known) */
   total?: number;
   /** TotalChanges is the action-aware count of resources changed for this group/kind, set by the progress recorder as results are recorded. Used for the job-duration histogram's resources_changed bucket. */
   totalChanges?: number;
   update?: number;
-  /** The error count */
+  /** The warning count */
   warning?: number;
   warnings?: string[];
+  /** Create or update (export) */
   write?: number;
 };
-export type RepositoryUrLs = {
+export type JobRepositoryUrLs = {
   /** Compare this version to the target branch */
   compareURL?: string;
   /** A URL that will create a new pull request for this branch */
@@ -1882,16 +1885,16 @@ export type JobStatus = {
   progressUpdates?: number;
   started?: number;
   /** Possible enum values:
-     - `"error"` Finished with errors
-     - `"pending"` Job has been submitted, but not processed yet
-     - `"success"` Finished with success
-     - `"warning"` Finished with some non-critical errors
-     - `"working"` The job is running */
+     - `"error"`
+     - `"pending"`
+     - `"success"`
+     - `"warning"`
+     - `"working"` */
   state?: 'error' | 'pending' | 'success' | 'warning' | 'working';
   /** Summary of processed actions */
   summary?: JobResourceSummary[];
   /** URLs contains URLs for the reference branch or commit if applicable. */
-  url?: RepositoryUrLs;
+  url?: JobRepositoryUrLs;
   warnings?: string[];
 };
 export type Job = {
@@ -1900,6 +1903,7 @@ export type Job = {
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata?: ObjectMeta;
+  /** Spec is the spec of the Job */
   spec?: JobSpec;
   status?: JobStatus;
 };
@@ -1919,27 +1923,25 @@ export type SecureValues = {
   /** Some webhooks (including github) require a secret key value */
   webhookSecret?: ComGithubGrafanaGrafanaAppSdkResourceInlineSecureValue;
 };
-export type BitbucketRepositoryConfig = {
+export type RepositoryBitbucketRepositoryConfig = {
   /** The branch to use in the repository. */
   branch: string;
   /** Email is the Atlassian account email used to authenticate the Bitbucket REST API. Required to enable webhooks. */
   email?: string;
-  /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.
-    
-    When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
+  /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. */
   path?: string;
   /** TokenUser is the user that will be used to access the repository if it's a personal access token. */
   tokenUser?: string;
   /** The repository URL (e.g. `https://bitbucket.org/example/test`). */
   url?: string;
 };
-export type BranchOptions = {
+export type RepositoryBranchOptions = {
   /** When true, the branch name field in Save drawers is read-only. */
   enforceTemplate?: boolean;
   /** Template for the branch name created in branch workflow. Supports variables: {{action}}, {{resourceKind}}, {{title}}, {{userLogin}}, {{random}}. {{random}} is a 6-character alphanumeric token generated at render time to avoid collisions. The result is sanitised to a valid git ref (lowercase, alphanumeric + dashes, max 100 chars). When empty, the current auto-generated name is preserved. */
   nameTemplate?: string;
 };
-export type CommitOptions = {
+export type RepositoryCommitOptions = {
   /** Email used as the commit author instead of the user who triggered the commit. Only valid when signingMethod is unset. */
   authorEmail?: string;
   /** Name used as the commit author instead of the user who triggered the commit. Only valid when signingMethod is unset. */
@@ -1964,22 +1966,20 @@ export type CommitOptions = {
   /** PEM-encoded X.509 certificate paired with secure.commitSigningKey when signingMethod is "smime". This is public (not a secret) and is embedded in the commit signature. Unused for the gpg and ssh formats. */
   smimeCertificate?: string;
 };
-export type ConnectionInfo = {
+export type RepositoryConnectionInfo = {
   name: string;
 };
-export type GitRepositoryConfig = {
+export type RepositoryGitRepositoryConfig = {
   /** The branch to use in the repository. */
   branch: string;
-  /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.
-    
-    When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
+  /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. */
   path?: string;
   /** TokenUser is the user that will be used to access the repository if it's a personal access token. */
   tokenUser?: string;
   /** The repository URL (e.g. `https://github.com/example/test`). */
   url?: string;
 };
-export type GitHubRepositoryConfig = {
+export type RepositoryGitHubRepositoryConfig = {
   /** The branch to use in the repository. */
   branch: string;
   /** Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews). */
@@ -1991,7 +1991,7 @@ export type GitHubRepositoryConfig = {
   /** The repository URL (e.g. `https://github.com/example/test`). */
   url?: string;
 };
-export type GitHubEnterpriseRepositoryConfig = {
+export type RepositoryGitHubEnterpriseRepositoryConfig = {
   /** The branch to use in the repository. */
   branch: string;
   /** Path is the subdirectory for the Grafana data inside the repository. */
@@ -2001,22 +2001,20 @@ export type GitHubEnterpriseRepositoryConfig = {
   /** The repository URL on the GHES server (e.g. `https://ghes.example.com/example/test`). */
   url?: string;
 };
-export type GitLabRepositoryConfig = {
+export type RepositoryGitLabRepositoryConfig = {
   /** The branch to use in the repository. */
   branch: string;
-  /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.
-    
-    When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
+  /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. */
   path?: string;
   /** RepoID is the GitLab project's immutable numeric ID. Resolved and set automatically whenever URL is set or changed; it survives a project transfer/move even if the project's path changes. Read-only: it is always system-derived and never taken from client-supplied input. */
   repoID?: string;
   /** The repository URL (e.g. `https://gitlab.com/example/test`). */
   url?: string;
 };
-export type LocalRepositoryConfig = {
+export type RepositoryLocalRepositoryConfig = {
   path?: string;
 };
-export type PullRequestOptions = {
+export type RepositoryPullRequestOptions = {
   /** When true, the PR title field in Save drawers is read-only. */
   enforceTemplate?: boolean;
   /** Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews). */
@@ -2024,7 +2022,7 @@ export type PullRequestOptions = {
   /** Template for pull request titles. Supports the same variables as BranchOptions.NameTemplate ({{random}} is available but rarely useful here). When empty, the first line of the commit message is used. */
   titleTemplate?: string;
 };
-export type SyncOptions = {
+export type RepositorySyncOptions = {
   /** Enabled must be saved as true before any sync job will run */
   enabled: boolean;
   /** The interval between sync runs. The system defines a default value for this field, which will overwrite the user-defined one in case the latter is zero or lower than the system-defined one. */
@@ -2032,12 +2030,12 @@ export type SyncOptions = {
   /** Where values should be saved
     
     Possible enum values:
-     - `"folder"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name
-     - `"folderless"` Resources are saved at the top level without a wrapper folder. Like `folder`, multiple `folderless` repositories may coexist with each other, with `folder` repositories, and with unprovisioned resources. Unlike `folder`, no repo-named container folder is created: files at the repository path root become top-level resources and subdirectories become top-level folders. Ownership is tracked per-resource via manager annotations rather than by folder containment.
-     - `"instance"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible) */
+     - `"folder"`
+     - `"folderless"`
+     - `"instance"` */
   target: 'folder' | 'folderless' | 'instance';
 };
-export type WebhookConfig = {
+export type RepositoryWebhookConfig = {
   /** Base URL of the Grafana instance used to construct the webhook endpoint registered with the external Git provider. Only the base URL should be provided (e.g. `https://grafana.example.com`); the API path, namespace, and resource name are appended automatically. Trailing slashes are stripped. Must be a valid HTTP or HTTPS URL. */
   baseUrl?: string;
   /** Disabled turns off webhook integration for this repository. When true, Grafana will not register or receive webhook events from the Git provider and will poll the repository on an interval instead. Use this when Grafana is not reachable from the public internet. */
@@ -2045,29 +2043,29 @@ export type WebhookConfig = {
 };
 export type RepositorySpec = {
   /** The repository on Bitbucket. Mutually exclusive with local | github | git. */
-  bitbucket?: BitbucketRepositoryConfig;
+  bitbucket?: RepositoryBitbucketRepositoryConfig;
   /** Branch naming options. Only meaningful when Workflows includes "branch". */
-  branch?: BranchOptions;
+  branch?: RepositoryBranchOptions;
   /** Commit message options. Currently only contains the template used by single-resource UI operations; future siblings (bulk, sync) can live here. */
-  commit?: CommitOptions;
+  commit?: RepositoryCommitOptions;
   /** The connection the repository references. This means the Repository is interacting with git via a Connection. */
-  connection?: ConnectionInfo;
+  connection?: RepositoryConnectionInfo;
   /** Repository description */
   description?: string;
   /** The repository on Git. Mutually exclusive with local | github | git. */
-  git?: GitRepositoryConfig;
+  git?: RepositoryGitRepositoryConfig;
   /** The repository on GitHub. Mutually exclusive with local | github | git. */
-  github?: GitHubRepositoryConfig;
+  github?: RepositoryGitHubRepositoryConfig;
   /** The repository on a self-managed GitHub Enterprise Server (GHES). Mutually exclusive with local | github | git. */
-  githubEnterprise?: GitHubEnterpriseRepositoryConfig;
+  githubEnterprise?: RepositoryGitHubEnterpriseRepositoryConfig;
   /** The repository on GitLab. Mutually exclusive with local | github | git. */
-  gitlab?: GitLabRepositoryConfig;
+  gitlab?: RepositoryGitLabRepositoryConfig;
   /** The repository on the local file system. Mutually exclusive with local | github. */
-  local?: LocalRepositoryConfig;
+  local?: RepositoryLocalRepositoryConfig;
   /** Pull request options. Only meaningful when Workflows includes "branch". */
-  pullRequest?: PullRequestOptions;
+  pullRequest?: RepositoryPullRequestOptions;
   /** Sync settings -- how values are pulled from the repository into grafana */
-  sync: SyncOptions;
+  sync: RepositorySyncOptions;
   /** The repository display name (shown in the UI) */
   title: string;
   /** The repository type.  When selected oneOf the values below should be non-nil
@@ -2081,12 +2079,12 @@ export type RepositorySpec = {
      - `"local"` */
   type: 'bitbucket' | 'git' | 'github' | 'githubEnterprise' | 'gitlab' | 'local';
   /** Webhook settings for the repository. When specified, the base URL overrides the auto-detected Grafana public URL used to register webhooks with the external Git provider. */
-  webhook?: WebhookConfig;
+  webhook?: RepositoryWebhookConfig;
   /** UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly) */
   workflows: ('branch' | 'write')[];
 };
 export type RepositoryCondition = {
-  /** lastTransitionTime is the last time the condition transitioned from one status to another. */
+  /** lastTransitionTime is the last time the condition transitioned from one status to another. Null when unset, matching the encoding of the zero metav1.Time. */
   lastTransitionTime: string;
   /** message is a human readable message indicating details about the transition. */
   message: string;
@@ -2099,24 +2097,47 @@ export type RepositoryCondition = {
   /** type of condition in CamelCase or in foo.example.com/CamelCase. */
   type: string;
 };
-export type DeletionStatus = {
+export type RepositoryDeletionStatus = {
   /** Cause classifies the blocking error. It may be absent on older statuses.
     
     Possible enum values:
-     - `"system"` indicates an infrastructure or unclassified failure.
-     - `"user"` indicates a failure that requires user intervention. */
+     - `"system"`
+     - `"user"` */
   cause?: 'system' | 'user';
   /** Finalizer names the finalizer whose teardown is blocking deletion, i.e. which deletion step failed. A client force-removing deletion removes exactly this finalizer. */
   finalizer?: string;
   /** Message is a human-readable explanation of what went wrong, suitable for showing to users. */
   message?: string;
-  /** State is the phase of the deletion.
+  /** State is the phase of the deletion. */
+  state?: string;
+};
+export type RepositoryErrorDetails = {
+  /** BadValue is the value of the field that was determined to be invalid, if applicable. This can be any type. This field is optional and may be omitted if not relevant. */
+  badValue?: any;
+  /** Detail provides a human-readable explanation of what went wrong. This message may be shown directly to users and should be actionable. */
+  detail?: string;
+  /** Field is the path to the field or JSON pointer that caused the error. This helps users and tools identify exactly where to correct the problem. This field is optional and may be empty if not applicable. */
+  field?: string;
+  /** Origin indicates where the error originated in validation, or the name of the external service that reported the error. This can be useful for tooling or debugging, and may reference a specific rule, function, or service. This field is optional and may be empty. */
+  origin?: string;
+  /** Type is a machine-readable description of the cause of the error. This is intended for programmatic handling and matches Kubernetes' CauseType values. */
+  type: string;
+};
+export type RepositoryHealthStatus = {
+  /** When the health was checked last time */
+  checked?: number;
+  /** The type of the error
     
     Possible enum values:
-     - `"Blocked"` indicates the latest finalizer pass failed and deletion did not complete. The controller keeps retrying, so a transient failure (a brief outage, an API conflict) may still clear on its own; a persistent one (credentials expired, a webhook that cannot be removed) needs the user to force-remove the blocking finalizer. Finalizer is the finalizer that failed on that pass. This is the only state the controller emits: status.deletion is written only when a pass fails. While finalizers are still running, status.deletion is absent, which (together with a set deletionTimestamp) is itself the "in progress" signal — so no separate Working state is needed. */
-  state?: 'Blocked';
+     - `"health"`
+     - `"hook"` */
+  error?: 'health' | 'hook';
+  /** When not healthy, requests will not be executed */
+  healthy: boolean;
+  /** Summary messages (can be shown to users) Will only be populated when not healthy */
+  message?: string[];
 };
-export type QuotaStatus = {
+export type RepositoryQuotaStatus = {
   /** MaxRepositories is the maximum number of repositories allowed. 0 means unlimited. */
   maxRepositories?: number;
   /** MaxResourcesPerRepository is the maximum number of resources allowed per repository. 0 means unlimited. */
@@ -2124,12 +2145,12 @@ export type QuotaStatus = {
   /** UpdatedAt is when the controller last successfully refreshed these quota limits. It is expressed as Unix milliseconds. 0 means the quota limits have not been refreshed yet. */
   updatedAt?: number;
 };
-export type ResourceCount = {
+export type RepositoryResourceCount = {
   count: number;
   group: string;
   resource: string;
 };
-export type SyncStatus = {
+export type RepositorySyncStatus = {
   /** When the sync job finished */
   finished?: number;
   /** Incremental synchronization for versioned repositories */
@@ -2146,17 +2167,21 @@ export type SyncStatus = {
   scheduled?: number;
   /** When the sync job started */
   started?: number;
-  /** pending, running, success, error
+  /** pending, working, success, warning, error
     
     Possible enum values:
-     - `"error"` Finished with errors
-     - `"pending"` Job has been submitted, but not processed yet
-     - `"success"` Finished with success
-     - `"warning"` Finished with some non-critical errors
-     - `"working"` The job is running */
+     - `"error"`
+     - `"pending"`
+     - `"success"`
+     - `"warning"`
+     - `"working"` */
   state: 'error' | 'pending' | 'success' | 'warning' | 'working';
 };
-export type WebhookStatus = {
+export type RepositoryTokenStatus = {
+  expiration?: number;
+  lastUpdated?: number;
+};
+export type RepositoryWebhookStatus = {
   id?: number;
   lastEvent?: number;
   lastRotated?: number;
@@ -2170,23 +2195,23 @@ export type RepositoryStatus = {
   /** Error information during repository deletion (if any). Deprecated: prefer the structured Deletion field. Retained for backwards compatibility with clients that read the concise string. */
   deleteError?: string;
   /** Deletion reports the progress of an in-progress deletion and the problem blocking it, so a client can explain the holdup and force-remove the blocking finalizer. Populated only while the repository is Terminating. */
-  deletion?: DeletionStatus;
+  deletion?: RepositoryDeletionStatus;
   /** FieldErrors are errors that occurred during validation of the repository spec. These errors are intended to help users identify and fix issues in the spec. */
-  fieldErrors?: ErrorDetails[];
+  fieldErrors?: RepositoryErrorDetails[];
   /** This will get updated with the current health status (and updated periodically) */
-  health: HealthStatus;
+  health: RepositoryHealthStatus;
   /** The generation of the spec last time reconciliation ran */
   observedGeneration: number;
   /** Quota contains the configured quota limits for this repository */
-  quota: QuotaStatus;
+  quota: RepositoryQuotaStatus;
   /** The object count when sync last ran */
-  stats?: ResourceCount[];
+  stats?: RepositoryResourceCount[];
   /** Sync information with the last sync information */
-  sync: SyncStatus;
+  sync: RepositorySyncStatus;
   /** Token will get updated with current token information */
-  token: TokenStatus;
+  token: RepositoryTokenStatus;
   /** Webhook Information (if applicable) */
-  webhook: WebhookStatus;
+  webhook: RepositoryWebhookStatus;
 };
 export type Repository = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -2195,6 +2220,7 @@ export type Repository = {
   kind?: string;
   metadata?: ObjectMeta;
   secure?: SecureValues;
+  /** Spec is the spec of the Repository */
   spec?: RepositorySpec;
   status?: RepositoryStatus;
 };
@@ -2261,6 +2287,16 @@ export type ResourceObjects = {
   /** For write events, this will return the value that was added or updated */
   upsert?: Unstructured;
 };
+export type RepositoryUrLs = {
+  /** Compare this version to the target branch */
+  compareURL?: string;
+  /** A URL that will create a new pull request for this branch */
+  newPullRequestURL?: string;
+  /** A URL pointing to the repository this lives in */
+  repositoryURL?: string;
+  /** A URL pointing to the file or ref in the repository */
+  sourceURL?: string;
+};
 export type ResourceWrapper = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
@@ -2302,6 +2338,11 @@ export type ResourceList = {
   kind?: string;
   metadata?: ListMeta;
 };
+export type ResourceCount = {
+  count: number;
+  group: string;
+  resource: string;
+};
 export type ResourceCountList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
@@ -2309,6 +2350,18 @@ export type ResourceCountList = {
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata?: ListMeta;
+};
+export type ErrorDetails = {
+  /** BadValue is the value of the field that was determined to be invalid, if applicable. This can be any type. This field is optional and may be omitted if not relevant. */
+  badValue?: any;
+  /** Detail provides a human-readable explanation of what went wrong. This message may be shown directly to users and should be actionable. */
+  detail?: string;
+  /** Field is the path to the field or JSON pointer that caused the error. This helps users and tools identify exactly where to correct the problem. This field is optional and may be empty if not applicable. */
+  field?: string;
+  /** Origin indicates where the error originated in validation, or the name of the external service that reported the error. This can be useful for tooling or debugging, and may reference a specific rule, function, or service. This field is optional and may be empty. */
+  origin?: string;
+  /** Type is a machine-readable description of the cause of the error. This is intended for programmatic handling and matches Kubernetes' CauseType values. */
+  type: string;
 };
 export type TestResults = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -2346,21 +2399,21 @@ export type RepositoryView = {
   /** For git, this is the target branch */
   branch?: string;
   /** Branch naming options. Mirrors spec.branch. Exposed under `branchOptions` rather than `branch` because the view already uses `branch` for the git target branch name. */
-  branchOptions?: BranchOptions;
+  branchOptions?: RepositoryBranchOptions;
   /** Commit message options. Mirrors the same-named field on the repository spec. */
-  commit?: CommitOptions;
+  commit?: RepositoryCommitOptions;
   /** The k8s name for this repository */
   name: string;
   /** For git, this is the target path */
   path?: string;
   /** Pull request options. Mirrors the same-named field on the repository spec. */
-  pullRequest?: PullRequestOptions;
+  pullRequest?: RepositoryPullRequestOptions;
   /** When syncing, where values are saved
     
     Possible enum values:
-     - `"folder"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name
-     - `"folderless"` Resources are saved at the top level without a wrapper folder. Like `folder`, multiple `folderless` repositories may coexist with each other, with `folder` repositories, and with unprovisioned resources. Unlike `folder`, no repo-named container folder is created: files at the repository path root become top-level resources and subdirectories become top-level folders. Ownership is tracked per-resource via manager annotations rather than by folder containment.
-     - `"instance"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible) */
+     - `"folder"`
+     - `"folderless"`
+     - `"instance"` */
   target: 'folder' | 'folderless' | 'instance';
   /** Repository display */
   title: string;

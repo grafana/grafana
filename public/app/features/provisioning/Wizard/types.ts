@@ -1,4 +1,8 @@
-import { type RepositorySpec, type RepositoryUrLs, type SyncOptions } from 'app/api/clients/provisioning/v0alpha1';
+import {
+  type RepositorySpec,
+  type RepositorySyncOptions,
+  type RepositoryUrLs,
+} from 'app/api/clients/provisioning/v0alpha1';
 
 import { type AlertAction } from '../Shared/ProvisioningAlert';
 import { type RepositoryFormData, type StatusInfo } from '../types';
@@ -30,7 +34,7 @@ export interface WizardFormData {
   };
 }
 
-export type Target = SyncOptions['target'];
+export type Target = RepositorySyncOptions['target'];
 
 export interface ModeOption {
   target: Target;

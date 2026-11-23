@@ -1,5 +1,5 @@
 import { type IconName } from '@grafana/ui';
-import { type SyncStatus } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositorySyncStatus } from 'app/api/clients/provisioning/v0alpha1';
 
 /**
  * Generic type for Kubernetes resources with generation tracking
@@ -20,7 +20,7 @@ export function isResourceReconciled(resource?: ReconciledResource): boolean {
   return generation !== undefined && observedGeneration !== undefined && observedGeneration >= generation;
 }
 
-export const getStatusColor = (state?: SyncStatus['state']) => {
+export const getStatusColor = (state?: RepositorySyncStatus['state']) => {
   switch (state) {
     case 'success':
       return 'green';
@@ -37,7 +37,7 @@ export const getStatusColor = (state?: SyncStatus['state']) => {
   }
 };
 
-export const getStatusIcon = (state?: SyncStatus['state']): IconName => {
+export const getStatusIcon = (state?: RepositorySyncStatus['state']): IconName => {
   switch (state) {
     case 'success':
       return 'check';

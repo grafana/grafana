@@ -1,13 +1,13 @@
 import {
-  type BitbucketRepositoryConfig,
-  type BranchOptions,
-  type CommitOptions,
-  type GitHubConnectionConfig,
-  type GitHubEnterpriseConnectionConfig,
-  type GitHubRepositoryConfig,
-  type GitLabRepositoryConfig,
-  type GitRepositoryConfig,
-  type LocalRepositoryConfig,
+  type ConnectionGitHubConfig as GitHubConnectionConfig,
+  type ConnectionGitHubEnterpriseConfig as GitHubEnterpriseConnectionConfig,
+  type RepositoryBitbucketRepositoryConfig as BitbucketRepositoryConfig,
+  type RepositoryBranchOptions as BranchOptions,
+  type RepositoryCommitOptions as CommitOptions,
+  type RepositoryGitHubRepositoryConfig as GitHubRepositoryConfig,
+  type RepositoryGitLabRepositoryConfig as GitLabRepositoryConfig,
+  type RepositoryGitRepositoryConfig as GitRepositoryConfig,
+  type RepositoryLocalRepositoryConfig as LocalRepositoryConfig,
   type RepositorySpec,
 } from '../../api/clients/provisioning/v0alpha1';
 
