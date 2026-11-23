@@ -5,6 +5,30 @@ import { TimeRangeInput } from './TimeRangeInput';
 
 A variant of `TimeRangePicker` for use in forms.
 
+## When to use
+
+No component-specific guidance documented yet.
+
+## Never use for
+
+No component-specific guidance documented yet.
+
+## Do's and don'ts
+
+No component-specific guidance documented yet.
+
+## Usage
+
+```jsx
+import { TimeRangeInput } from '@grafana/ui';
+
+<TimeRangeInput
+  value={timeRange}
+  onChange={(range) => console.log('range', range)}
+  onChangeTimeZone={(tz) => console.log('timezone', tz)}
+/>;
+```
+
 `dateTime(null)` can be used to provide empty time range value. The shape of the return value on input clear is:
 
 ```javascript
@@ -20,18 +44,10 @@ A variant of `TimeRangePicker` for use in forms.
 
 `dateMath.isValid()` from `@grafana/data` can be used to check for a valid time range value.
 
-### Usage
+## Accessibility
 
-```jsx
-import { TimeRangeInput } from '@grafana/ui';
+No component-specific guidance documented yet.
 
-<TimeRangeInput
-  value={timeRange}
-  onChange={(range) => console.log('range', range)}
-  onChangeTimeZone={(tz) => console.log('timezone', tz)}
-/>;
-```
-
-### Props
+## Props
 
 <ArgTypes of={TimeRangeInput} />
