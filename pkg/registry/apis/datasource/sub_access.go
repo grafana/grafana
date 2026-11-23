@@ -2,14 +2,18 @@ package datasource
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
+	authlib "github.com/grafana/authlib/types"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasourceV0alpha1 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
@@ -51,11 +55,91 @@ func (r *subAccessREST) Connect(ctx context.Context, name string, opts runtime.O
 	}), nil
 }
 
+type datasourceAccessAction struct {
+	verb string
+	name string
+}
+
+// Keep each batch on a single subresource so the authorization client can
+// route it to the same backend as an individual check.
+var datasourceAccessChecks = []struct {
+	subresource string
+	actions     []datasourceAccessAction
+}{
+	{"", []datasourceAccessAction{
+		{utils.VerbGet, datasources.ActionRead},
+		{utils.VerbUpdate, datasources.ActionWrite},
+		{utils.VerbDelete, datasources.ActionDelete},
+		{utils.VerbGetPermissions, datasources.ActionPermissionsRead},
+		{utils.VerbSetPermissions, datasources.ActionPermissionsWrite},
+	}},
+	{"query", []datasourceAccessAction{
+		{utils.VerbCreate, datasources.ActionQuery},
+	}},
+	{"caching", []datasourceAccessAction{
+		{utils.VerbGet, "datasources.caching:read"},
+		{utils.VerbUpdate, "datasources.caching:write"},
+	}},
+	{"alertrules", []datasourceAccessAction{
+		{utils.VerbGet, accesscontrol.ActionAlertingRuleExternalRead},
+		{utils.VerbUpdate, accesscontrol.ActionAlertingRuleExternalWrite},
+	}},
+	{"alertinstances", []datasourceAccessAction{
+		{utils.VerbGet, accesscontrol.ActionAlertingInstancesExternalRead},
+		{utils.VerbUpdate, accesscontrol.ActionAlertingInstancesExternalWrite},
+	}},
+	{"alertnotifications", []datasourceAccessAction{
+		{utils.VerbGet, accesscontrol.ActionAlertingNotificationsExternalRead},
+		{utils.VerbUpdate, accesscontrol.ActionAlertingNotificationsExternalWrite},
+	}},
+}
+
 func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*datasourceV0alpha1.DatasourceAccessInfo, error) {
-	reqContext := contexthandler.FromContext(ctx)
-	resourceIDs := map[string]bool{name: true}
-	access := accesscontrol.GetResourcesMetadata(reqContext.Req.Context(), reqContext.GetPermissions(), datasources.ScopePrefix, resourceIDs)
-	return &datasourceV0alpha1.DatasourceAccessInfo{
-		Permissions: access[name],
-	}, nil
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+	namespace := request.NamespaceValue(ctx)
+	if namespace == "" {
+		return nil, fmt.Errorf("missing datasource namespace")
+	}
+
+	resource := r.builder.datasourceResourceInfo.GroupResource()
+	result := &datasourceV0alpha1.DatasourceAccessInfo{}
+	for _, batch := range datasourceAccessChecks {
+		checks := make([]authlib.BatchCheckItem, 0, len(batch.actions))
+		for _, action := range batch.actions {
+			checks = append(checks, authlib.BatchCheckItem{
+				CorrelationID: action.name,
+				Group:         resource.Group,
+				Resource:      resource.Resource,
+				Subresource:   batch.subresource,
+				Verb:          action.verb,
+				Name:          name,
+			})
+		}
+		resp, err := r.builder.accessClient.BatchCheck(ctx, user, authlib.BatchCheckRequest{
+			Namespace: namespace,
+			Checks:    checks,
+		})
+		if err != nil {
+			return nil, err
+		}
+		for _, check := range checks {
+			decision, ok := resp.Results[check.CorrelationID]
+			if !ok {
+				return nil, fmt.Errorf("missing authorization result for %s", check.CorrelationID)
+			}
+			if decision.Error != nil {
+				return nil, decision.Error
+			}
+			if decision.Allowed {
+				if result.Permissions == nil {
+					result.Permissions = accesscontrol.Metadata{}
+				}
+				result.Permissions[check.CorrelationID] = true
+			}
+		}
+	}
+	return result, nil
 }
