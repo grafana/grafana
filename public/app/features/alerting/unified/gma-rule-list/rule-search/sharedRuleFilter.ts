@@ -14,6 +14,7 @@ export interface SharedRuleFilter {
   labels: SearchLabelMatcher[];
   hidePluginRules: boolean;
   health?: HealthValue;
+  paused?: 'true';
 }
 
 /** The rule search takes folder UIDs only, so `filter.folder` is resolved to `folderUids` first. */

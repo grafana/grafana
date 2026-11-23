@@ -39,6 +39,7 @@ describe('buildRecordingRuleSearchQuery', () => {
     ['metric:cpu_usage', { filter: { field: 'metric', operator: 'In', values: ['cpu_usage'] } }],
     ['targetDatasource:prom-1', { filter: { field: 'targetDatasourceUID', operator: 'In', values: ['prom-1'] } }],
     ['health:ok', { filter: { field: 'health', operator: 'In', values: ['Recording'] } }],
+    ['paused:true', { filter: { field: 'paused', operator: 'In', values: ['true'] } }],
   ])('builds the where clause for %j', (query, where) => {
     expect(buildRecordingRuleSearchQuery(apiArgs(parse(query, recordingRuleSearchSchema).filter)).where).toEqual(where);
   });
