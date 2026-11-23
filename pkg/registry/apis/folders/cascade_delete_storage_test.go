@@ -1603,7 +1603,18 @@ func TestCascadeDelete_RejectsCollectionDeleteOfFinalizerFolders(t *testing.T) {
 		require.False(t, store.deletedCollection)
 	})
 
-	t.Run("resource version constraints are not supported", func(t *testing.T) {
+	t.Run("resource version constraints are accepted with a limit and reach the preflight", func(t *testing.T) {
+		store := newStore(newFolder("a"), newFolder("b"))
+		opts := &metainternalversion.ListOptions{Limit: 1, ResourceVersion: "7", ResourceVersionMatch: metav1.ResourceVersionMatchNotOlderThan}
+		_, err := deleter(store).DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, opts)
+		require.NoError(t, err)
+		require.True(t, store.deletedCollection)
+		require.Len(t, store.listCalls, 1)
+		require.Equal(t, "7", store.listCalls[0].ResourceVersion)
+		require.Equal(t, metav1.ResourceVersionMatchNotOlderThan, store.listCalls[0].ResourceVersionMatch)
+	})
+
+	t.Run("resource version constraints are not supported without a limit", func(t *testing.T) {
 		for name, opts := range map[string]*metainternalversion.ListOptions{
 			"resourceVersion":      {ResourceVersion: "7"},
 			"resourceVersionMatch": {ResourceVersionMatch: metav1.ResourceVersionMatchExact},
