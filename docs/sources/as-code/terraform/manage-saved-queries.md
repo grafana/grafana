@@ -52,6 +52,9 @@ terraform {
 provider "grafana" {
   url  = "<Grafana-URL>"
   auth = "<Service-account-token>"
+
+  # Required in Grafana Cloud. Remove for Grafana Enterprise.
+  stack_id = "<Stack-ID>"
 }
 ```
 
@@ -59,6 +62,9 @@ Replace the following field values:
 
 - `Grafana-URL` with the URL of your Grafana instance, for example `https://my-stack.grafana.net/`
 - `Service-account-token` with the service account token that you created
+- `Stack-ID` with your numeric Grafana Cloud stack ID, for example `123456`
+
+Saved queries are App Platform resources. In Grafana Cloud, the provider needs `stack_id` to send requests to your stack, otherwise Terraform fails with an `HTTP 403 - Forbidden` error. To learn more, refer to [Configure the Grafana provider for App Platform resources in Grafana Cloud](../terraform-app-platform-resources/).
 
 ## Create a saved query resource
 
