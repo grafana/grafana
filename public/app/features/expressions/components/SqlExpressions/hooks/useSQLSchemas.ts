@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useMemo } from 'react';
+import { useLayoutEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useDeepCompareEffect } from 'react-use';
 
 import { getAPINamespace } from '@grafana/api-clients';
@@ -57,11 +57,13 @@ export function useSQLSchemas({ queries, enabled, timeRange, scopedVars, filters
   // Store queries/scopedVars/filters in refs so we can access current values
   // without triggering the fetch effect on every parent render.
   const queriesRef = useRef(queries);
-  queriesRef.current = queries;
   const scopedVarsRef = useRef(scopedVars);
-  scopedVarsRef.current = scopedVars;
   const filtersRef = useRef(filters);
-  filtersRef.current = filters;
+  useLayoutEffect(() => {
+    queriesRef.current = queries;
+    scopedVarsRef.current = scopedVars;
+    filtersRef.current = filters;
+  });
 
   const fetchSchemas = useCallback(async () => {
     if (!enabled || !isFeatureEnabled) {
