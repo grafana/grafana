@@ -1105,7 +1105,7 @@ func TestValidateJob(t *testing.T) {
 				Spec: provisioning.JobSpec{
 					Action:     provisioning.JobActionTest,
 					Repository: new("test-repo"),
-					Test:       &provisioning.JobTestJobOptions{Duration: new((10 * time.Second).String())},
+					Test:       &provisioning.JobTestJobOptions{Duration: metav1.Duration{Duration: 10 * time.Second}},
 				},
 			},
 			wantErr: false,
@@ -1131,7 +1131,7 @@ func TestValidateJob(t *testing.T) {
 				Spec: provisioning.JobSpec{
 					Action:     provisioning.JobActionTest,
 					Repository: new("test-repo"),
-					Test:       &provisioning.JobTestJobOptions{Duration: new("0s")},
+					Test:       &provisioning.JobTestJobOptions{Duration: metav1.Duration{Duration: 0}},
 				},
 			},
 			wantErr: true,
@@ -1147,7 +1147,7 @@ func TestValidateJob(t *testing.T) {
 				Spec: provisioning.JobSpec{
 					Action:     provisioning.JobActionTest,
 					Repository: new("test-repo"),
-					Test:       &provisioning.JobTestJobOptions{Duration: new((MaxTestJobDuration + time.Second).String())},
+					Test:       &provisioning.JobTestJobOptions{Duration: metav1.Duration{Duration: MaxTestJobDuration + time.Second}},
 				},
 			},
 			wantErr: true,
@@ -1164,7 +1164,7 @@ func TestValidateJob(t *testing.T) {
 					Action:     provisioning.JobActionTest,
 					Repository: new("test-repo"),
 					Test: &provisioning.JobTestJobOptions{
-						Duration:        new((10 * time.Second).String()),
+						Duration:        metav1.Duration{Duration: 10 * time.Second},
 						ProgressUpdates: new(int32(-1)),
 					},
 				},
@@ -1184,7 +1184,7 @@ func TestValidateJob(t *testing.T) {
 					Repository: new("test-repo"),
 					Test: &provisioning.JobTestJobOptions{
 						// 1s / 100 updates = 10ms apart, far below the throttle.
-						Duration:        new((time.Second).String()),
+						Duration:        metav1.Duration{Duration: time.Second},
 						ProgressUpdates: new(int32(100)),
 					},
 				},
@@ -1204,7 +1204,7 @@ func TestValidateJob(t *testing.T) {
 					Repository: new("test-repo"),
 					Test: &provisioning.JobTestJobOptions{
 						// 10s / 20 updates = 500ms apart, exactly deliverable.
-						Duration:        new((10 * time.Second).String()),
+						Duration:        metav1.Duration{Duration: 10 * time.Second},
 						ProgressUpdates: new(int32(20)),
 					},
 				},
@@ -1219,7 +1219,7 @@ func TestValidateJob(t *testing.T) {
 					Action:     provisioning.JobActionTest,
 					Repository: new("test-repo"),
 					Test: &provisioning.JobTestJobOptions{
-						Duration:        new((10 * time.Second).String()),
+						Duration:        metav1.Duration{Duration: 10 * time.Second},
 						ProgressUpdates: new(int32(MaxTestJobProgressUpdates + 1)),
 					},
 				},
@@ -1277,7 +1277,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 				Spec: provisioning.JobSpec{
 					Action:     provisioning.JobActionTest,
 					Repository: new("test-repo"),
-					Test:       &provisioning.JobTestJobOptions{Duration: new((10 * time.Second).String())},
+					Test:       &provisioning.JobTestJobOptions{Duration: metav1.Duration{Duration: 10 * time.Second}},
 				},
 			},
 			operation:       admission.Create,
@@ -1292,7 +1292,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 				Spec: provisioning.JobSpec{
 					Action:     provisioning.JobActionTest,
 					Repository: new("test-repo"),
-					Test:       &provisioning.JobTestJobOptions{Duration: new((10 * time.Second).String())},
+					Test:       &provisioning.JobTestJobOptions{Duration: metav1.Duration{Duration: 10 * time.Second}},
 				},
 			},
 			operation:   admission.Create,

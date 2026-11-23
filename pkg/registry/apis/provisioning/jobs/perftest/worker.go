@@ -49,10 +49,7 @@ func (w *Worker) Process(ctx context.Context, _ repository.Repository, job provi
 	if job.Spec.Test == nil {
 		return errors.New("missing test settings")
 	}
-	duration, err := job.Spec.Test.ParseDuration()
-	if err != nil {
-		return fmt.Errorf("parse test duration: %w", err)
-	}
+	duration := job.Spec.Test.Duration.Duration
 	if duration <= 0 {
 		return errors.New("test duration must be positive")
 	}

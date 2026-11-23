@@ -35,6 +35,14 @@ func TestJSONRoundTrip(t *testing.T) {
 	}
 }
 
+func TestUnsetTestJobDurationEncodesZero(t *testing.T) {
+	for _, obj := range []any{v0alpha1.JobTestJobOptions{}, v0alpha1.HistoricJobTestJobOptions{}} {
+		got, err := json.Marshal(obj)
+		require.NoError(t, err)
+		require.JSONEq(t, `{"duration":"0s"}`, string(got))
+	}
+}
+
 func TestJobHistoricConversionRoundTrip(t *testing.T) {
 	raw, err := os.ReadFile(filepath.Join("testdata", "job-full.json"))
 	require.NoError(t, err)

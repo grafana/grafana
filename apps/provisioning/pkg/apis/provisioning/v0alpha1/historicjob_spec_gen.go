@@ -2,6 +2,8 @@
 
 package v0alpha1
 
+import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 // +enum
 // +k8s:openapi-gen=true
 type HistoricJobAction string
@@ -243,7 +245,7 @@ type HistoricJobTestJobOptions struct {
 	// Duration is how long the job should sleep before completing, expressed as a
 	// Go duration string (for example "10s" or "2m"). It must be positive and is
 	// capped by the server to keep a single job's runtime predictable.
-	Duration *string `json:"duration,omitempty"`
+	Duration metav1.Duration `json:"duration,omitempty"`
 	// ProgressUpdates controls how many progress notifications the job emits while
 	// running. A value of 0 uses the server default.
 	ProgressUpdates *int32 `json:"progressUpdates,omitempty"`

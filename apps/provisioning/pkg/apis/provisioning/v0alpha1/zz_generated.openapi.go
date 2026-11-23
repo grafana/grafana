@@ -1860,8 +1860,7 @@ func schema_pkg_apis_provisioning_v0alpha1_HistoricJobTestJobOptions(ref common.
 					"duration": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Duration is how long the job should sleep before completing, expressed as a Go duration string (for example \"10s\" or \"2m\"). It must be positive and is capped by the server to keep a single job's runtime predictable.",
-							Type:        []string{"string"},
-							Format:      "",
+							Ref:         ref("io.k8s.apimachinery.pkg.apis.meta.v1.Duration"),
 						},
 					},
 					"progressUpdates": {
@@ -1874,6 +1873,8 @@ func schema_pkg_apis_provisioning_v0alpha1_HistoricJobTestJobOptions(ref common.
 				},
 			},
 		},
+		Dependencies: []string{
+			"io.k8s.apimachinery.pkg.apis.meta.v1.Duration"},
 	}
 }
 
@@ -2769,8 +2770,7 @@ func schema_pkg_apis_provisioning_v0alpha1_JobTestJobOptions(ref common.Referenc
 					"duration": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Duration is how long the job should sleep before completing, expressed as a Go duration string (for example \"10s\" or \"2m\"). It must be positive and is capped by the server to keep a single job's runtime predictable.",
-							Type:        []string{"string"},
-							Format:      "",
+							Ref:         ref("io.k8s.apimachinery.pkg.apis.meta.v1.Duration"),
 						},
 					},
 					"progressUpdates": {
@@ -2783,6 +2783,8 @@ func schema_pkg_apis_provisioning_v0alpha1_JobTestJobOptions(ref common.Referenc
 				},
 			},
 		},
+		Dependencies: []string{
+			"io.k8s.apimachinery.pkg.apis.meta.v1.Duration"},
 	}
 }
 

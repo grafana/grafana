@@ -1793,9 +1793,10 @@ export type JobExportJobOptions = {
   /** Resources to export. When empty, every unmanaged resource in the namespace is exported (legacy behavior). When non-empty, only the listed resources are exported — the folder hierarchy is still emitted so parent paths resolve. Currently only unmanaged Dashboards are supported. */
   resources?: JobResourceRef[];
 };
+export type Duration = string;
 export type JobTestJobOptions = {
   /** Duration is how long the job should sleep before completing, expressed as a Go duration string (for example "10s" or "2m"). It must be positive and is capped by the server to keep a single job's runtime predictable. */
-  duration?: string;
+  duration?: Duration;
   /** ProgressUpdates controls how many progress notifications the job emits while running. A value of 0 uses the server default. */
   progressUpdates?: number;
 };

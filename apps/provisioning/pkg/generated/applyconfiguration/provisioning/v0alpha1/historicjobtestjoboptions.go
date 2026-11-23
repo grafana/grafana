@@ -4,13 +4,17 @@
 
 package v0alpha1
 
+import (
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
 // HistoricJobTestJobOptionsApplyConfiguration represents a declarative configuration of the HistoricJobTestJobOptions type for use
 // with apply.
 type HistoricJobTestJobOptionsApplyConfiguration struct {
 	// Duration is how long the job should sleep before completing, expressed as a
 	// Go duration string (for example "10s" or "2m"). It must be positive and is
 	// capped by the server to keep a single job's runtime predictable.
-	Duration *string `json:"duration,omitempty"`
+	Duration *v1.Duration `json:"duration,omitempty"`
 	// ProgressUpdates controls how many progress notifications the job emits while
 	// running. A value of 0 uses the server default.
 	ProgressUpdates *int32 `json:"progressUpdates,omitempty"`
@@ -25,7 +29,7 @@ func HistoricJobTestJobOptions() *HistoricJobTestJobOptionsApplyConfiguration {
 // WithDuration sets the Duration field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Duration field is set to the value of the last call.
-func (b *HistoricJobTestJobOptionsApplyConfiguration) WithDuration(value string) *HistoricJobTestJobOptionsApplyConfiguration {
+func (b *HistoricJobTestJobOptionsApplyConfiguration) WithDuration(value v1.Duration) *HistoricJobTestJobOptionsApplyConfiguration {
 	b.Duration = &value
 	return b
 }

@@ -2,7 +2,6 @@ package v0alpha1
 
 import (
 	"encoding/json"
-	"time"
 
 	"k8s.io/utils/ptr"
 )
@@ -29,15 +28,6 @@ func (in JobStatus) ToSyncStatus(jobId string) RepositorySyncStatus {
 	}
 
 	return s
-}
-
-// ParseDuration parses Duration, which uses the metav1.Duration encoding (time.Duration.String).
-// An unset duration is zero.
-func (o JobTestJobOptions) ParseDuration() (time.Duration, error) {
-	if o.Duration == nil {
-		return 0, nil
-	}
-	return time.ParseDuration(*o.Duration)
 }
 
 // ToHistoric converts a job spec to its HistoricJob copy. Both are generated from the same
