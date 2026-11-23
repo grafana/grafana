@@ -1,16 +1,16 @@
 import { chunk } from 'lodash';
 
+import {
+  API_GROUP as SEARCH_API_GROUP,
+  API_VERSION as SEARCH_API_VERSION,
+  type GlobalResultItem,
+  type GlobalSearchQuery,
+  type GlobalSearchResults,
+  type WhereNode,
+} from '@grafana/api-clients/rtkq/search/v0alpha1';
 import { locationUtil } from '@grafana/data';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { getAPIBaseURL } from 'app/api/utils';
-import {
-  SEARCH_API_VERSION,
-  SEARCH_QUERY_KIND,
-  type SearchQueryBody,
-  type SearchResultItem,
-  type SearchResults,
-  type WhereNode,
-} from 'app/features/apiserver/search';
 import { type SearchHit } from 'app/features/search/service/unified';
 
 import { type KindSearchStarredKind, type StarredNamesOfKind } from './kinds';
@@ -18,7 +18,9 @@ import { type KindSearchStarredKind, type StarredNamesOfKind } from './kinds';
 /**
  * Resolves starred names of an app kind to titles and folders through the kind's own search
  * endpoint, `POST /apis/{group}/{version}/namespaces/{ns}/{plural}/search`, which the app platform
- * mounts for every served namespaced kind whose manifest enables search.
+ * mounts for every served namespaced kind whose manifest enables search. No client is generated
+ * for a kind found at runtime, so the request is built here. Its query and results are those of
+ * the global search, less what only a search across kinds has, so the types are that client's.
  */
 
 // Server page-size cap for a single search request
@@ -59,21 +61,24 @@ export async function searchStarredHits(
   }
 
   const url = `${getAPIBaseURL(kind.group, kind.version)}/${kind.resource}/search`;
-  let items: SearchResultItem[];
+  let items: GlobalResultItem[];
   try {
     // A name matches one object at most, so a request for no more names than the page cap is never cut short.
     // The requests succeed or fail together: part of a kind's stars would read as all of them
     const pages = await Promise.all(
       chunk(names, MAX_SEARCH_LIMIT).map((values) => {
         const leaves: WhereNode[] = [{ filter: { field: 'name', operator: 'In', values } }, ...filterLeaves];
-        const query: SearchQueryBody = {
+        const query: GlobalSearchQuery = {
+          // The server refuses a query without its envelope
+          apiVersion: `${SEARCH_API_GROUP}/${SEARCH_API_VERSION}`,
+          kind: 'SearchQuery',
           where: leaves.length === 1 ? leaves[0] : { and: leaves },
           fields: ['title', 'folder', 'description', 'tags'],
           limit: values.length,
         };
-        return getBackendSrv().post<SearchResults>(
+        return getBackendSrv().post<GlobalSearchResults>(
           url,
-          { apiVersion: SEARCH_API_VERSION, kind: SEARCH_QUERY_KIND, ...query },
+          query,
           // The kind's stars are simply not shown; a global toast for an optional plugin API would only confuse
           { showErrorAlert: false }
         );

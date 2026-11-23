@@ -3,9 +3,8 @@ import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
 
 import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
-import { type SearchResultItem, type SearchResults } from 'app/features/apiserver/search';
 
-import { useSearchNotebooksInfiniteQuery } from './notebookSearchApi';
+import { type ResultItem, type SearchResults, useSearchNotebooksInfiniteQuery } from './notebookSearchApi';
 import { NOTEBOOKS_PAGE_LIMIT, useNotebooksList } from './useNotebooksList';
 
 jest.mock('app/api/clients/iam/v0alpha1', () => ({
@@ -29,7 +28,7 @@ function makeHit(overrides: {
   createdBy?: string;
   created?: number;
   updated?: number;
-}): SearchResultItem {
+}): ResultItem {
   return {
     resource: { group: 'dashboard.grafana.app', resource: 'notebooks', kind: 'Notebook', name: overrides.name },
     fields: {
@@ -67,7 +66,7 @@ interface SearchExtras {
 const mockFetchNextPage = jest.fn();
 
 /** One page of results, as the endpoint returns it. */
-function searchPage(items: SearchResultItem[], extra: SearchExtras = {}): SearchResults {
+function searchPage(items: ResultItem[], extra: SearchExtras = {}): SearchResults {
   return {
     items,
     metadata: {
@@ -101,7 +100,7 @@ function setSearchPages(pages: SearchResults[], extra: SearchExtras = {}) {
   } as unknown as ReturnType<typeof useSearchNotebooksInfiniteQuery>);
 }
 
-function setSearch(items: SearchResultItem[], extra: SearchExtras = {}) {
+function setSearch(items: ResultItem[], extra: SearchExtras = {}) {
   setSearchPages([searchPage(items, extra)], extra);
 }
 
@@ -120,7 +119,7 @@ function setDisplayNames(names: Record<string, string>) {
 }
 
 /** A page the server filled to the limit, which is what truncation looks like on the wire. */
-function fullPage(): SearchResultItem[] {
+function fullPage(): ResultItem[] {
   return Array.from({ length: NOTEBOOKS_PAGE_LIMIT }, (_, i) => makeHit({ name: `nb${i}`, title: `Notebook ${i}` }));
 }
 
@@ -337,7 +336,7 @@ describe('useNotebooksList', () => {
       const malformed = {
         resource: { group: 'g', resource: 'notebooks', kind: 'Notebook', name: 'nb1' },
         fields: { title: 42, tags: ['ok', 7, null], created: 'yesterday' },
-      } as unknown as SearchResultItem;
+      } as unknown as ResultItem;
       setSearch([malformed]);
 
       const { result } = setupHook();
