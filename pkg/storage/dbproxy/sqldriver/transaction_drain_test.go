@@ -30,13 +30,17 @@ func TestStalledTransactionRowsAbortOnClose(t *testing.T) {
 					t.Fatal(err)
 				}
 				pool := sql.OpenDB(connector)
-				defer pool.Close()
+				defer func() {
+					if err := pool.Close(); err != nil {
+						t.Errorf("close pool: %v", err)
+					}
+				}()
 				ctx := sqldriver.WithQuery(t.Context(), "stacks-1", "read.stalled")
 				tx, err := pool.BeginTx(ctx, nil)
 				if err != nil {
 					t.Fatal(err)
 				}
-				defer tx.Rollback()
+				defer func() { _ = tx.Rollback() }()
 				rows, err := tx.QueryContext(ctx, "SELECT n")
 				if err != nil {
 					t.Fatal(err)
