@@ -40,9 +40,11 @@ import { type DashboardQuery } from './types';
  * Copies a field's value buffers.
  *
  * The source panel keeps holding the frames this returns copies of, so the buffers cannot be
- * shared: anything downstream that mutates a frame in place - a MutableDataFrame built from it, a
- * table transformation, the data inspector - would otherwise overwrite the source panel's own data,
- * which then renders as undefined until it re-queries.
+ * shared. The panel renderer empties the previous render's buffers in place when a panel
+ * re-renders (scenes' `useClearPreviousData` sets `values.length = 0` on every array it no longer
+ * sees), so a shared buffer would be truncated to zero length in the source panel's own frames,
+ * which then read back as undefined until the source re-queries. Other in-place writers, such as a
+ * MutableDataFrame built from a frame, reach the source through the same alias.
  */
 function copyFieldBuffers(field: Field): Field {
   return {
