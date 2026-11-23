@@ -6,14 +6,25 @@ import {
   type FieldConfigSource,
   FieldType,
   getDefaultTimeRange,
+  identityOverrideProcessor,
   LoadingState,
+  numberOverrideProcessor,
   type PanelOptionsEditorBuilder,
   type PanelPlugin,
   Registry,
+  standardEditorsRegistry,
+  stringOverrideProcessor,
+  ThresholdsMode,
   type StandardEditorContext,
   toDataFrame,
 } from '@grafana/data';
+import { getPanelPlugin } from '@grafana/data/test';
+import { getTemplateSrv, setTemplateSrv } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
+import { getAllOptionEditors } from 'app/core/components/OptionsUI/registry';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
+
+import { initTemplateSrv } from '../../../../../test/helpers/initTemplateSrv';
 
 import {
   getStandardEditorContext,
@@ -21,8 +32,22 @@ import {
   isFieldConfigOptionVisible,
 } from './getVisualizationOptions';
 
+standardEditorsRegistry.setInit(getAllOptionEditors);
+
 describe('getVisualizationOptions', () => {
   describe('getStandardEditorContext', () => {
+    let originalTemplateSrv: ReturnType<typeof getTemplateSrv>;
+
+    beforeEach(() => {
+      originalTemplateSrv = getTemplateSrv();
+      // Suggestions use the registered service, independently of the context's replaceVariables callback.
+      setTemplateSrv(initTemplateSrv('visualization-options', []));
+    });
+
+    afterEach(() => {
+      setTemplateSrv(originalTemplateSrv);
+    });
+
     it('defaults the series data to an empty array', () => {
       const editorContext = getStandardEditorContext({
         data: undefined,
@@ -440,6 +465,622 @@ describe('getVisualizationOptions', () => {
     });
   });
 
+  describe('set_visualization_option reporting', () => {
+    let setVisualOption: jest.SpyInstance;
+
+    beforeEach(() => {
+      setVisualOption = jest.spyOn(DashboardInteractions, 'setVisualOption').mockImplementation();
+    });
+
+    afterEach(() => {
+      setVisualOption.mockRestore();
+    });
+
+    const buildFieldConfigProperty = (overrides: Partial<FieldConfigPropertyItem>): FieldConfigPropertyItem => ({
+      id: 'min',
+      path: 'min',
+      name: 'Min',
+      process: numberOverrideProcessor,
+      shouldApply: () => true,
+      override: jest.fn(),
+      editor: jest.fn(),
+      ...overrides,
+    });
+
+    const buildFieldConfigPlugin = (properties: FieldConfigPropertyItem[]) =>
+      ({
+        meta: { id: 'stat', skipDataQuery: false, name: 'Stat' },
+        getPanelOptionsSupplier: jest.fn,
+        fieldConfigRegistry: new Registry<FieldConfigPropertyItem>(() => properties),
+      }) as unknown as PanelPlugin;
+
+    const changeFirstItem = (vizOptions: ReturnType<typeof getVisualizationOptions2>, value: unknown) => {
+      const item = vizOptions[0].items[0];
+      const element = item.props.render(item) as React.ReactElement<{ onChange: (v: unknown) => void }>;
+      element.props.onChange(value);
+    };
+
+    it('reports a panel option change with the new value, the panel type and the panel id', () => {
+      const plugin = getPanelPlugin({ id: 'stat' }).setPanelOptions((builder) =>
+        builder.addBooleanSwitch({ path: 'showThing', name: 'Show thing', defaultValue: false })
+      );
+      const vizPanel = new VizPanel({ title: 'Panel A', pluginId: 'stat', key: 'panel-12' });
+      jest.spyOn(vizPanel, 'onOptionsChange').mockImplementation();
+
+      const vizOptions = getVisualizationOptions2({
+        panel: vizPanel,
+        eventBus: new EventBusSrv(),
+        plugin,
+        instanceState: {},
+        currentOptions: { showThing: false },
+        currentFieldConfig: { defaults: {}, overrides: [] },
+        reportInteractionUI: 'panel-edit',
+      });
+      changeFirstItem(vizOptions, true);
+
+      expect(setVisualOption).toHaveBeenCalledTimes(1);
+      expect(setVisualOption).toHaveBeenCalledWith({
+        ui: 'panel-edit',
+        option: 'showThing',
+        value: 'true',
+        value_type: 'boolean',
+        panel_type: 'stat',
+        panel_id: 12,
+      });
+    });
+
+    it('reports a field config default change with the new value rather than the previous one', () => {
+      const plugin = buildFieldConfigPlugin([buildFieldConfigProperty({ id: 'min', path: 'min' })]);
+      const vizPanel = new VizPanel({ title: 'Panel A', pluginId: 'stat', key: 'panel-7' });
+      jest.spyOn(vizPanel, 'onFieldConfigChange').mockImplementation();
+
+      const vizOptions = getVisualizationOptions2({
+        panel: vizPanel,
+        eventBus: new EventBusSrv(),
+        plugin,
+        instanceState: {},
+        currentOptions: {},
+        currentFieldConfig: { defaults: { min: 0 }, overrides: [] },
+        reportInteractionUI: 'panel-edit',
+      });
+      changeFirstItem(vizOptions, 42);
+
+      expect(setVisualOption).toHaveBeenCalledTimes(1);
+      expect(setVisualOption).toHaveBeenCalledWith({
+        ui: 'panel-edit',
+        option: '?min',
+        value: '42',
+        value_type: 'number',
+        panel_type: 'stat',
+        panel_id: 7,
+      });
+    });
+
+    it('reports a custom field config change under a ?custom. option from the view panel', () => {
+      const plugin = buildFieldConfigPlugin([
+        buildFieldConfigProperty({ id: 'custom.lineWidth', path: 'lineWidth', name: 'Line width', isCustom: true }),
+      ]);
+      const vizPanel = new VizPanel({ title: 'Panel A', pluginId: 'stat', key: 'panel-3' });
+
+      const vizOptions = getVisualizationOptions2({
+        panel: vizPanel,
+        eventBus: new EventBusSrv(),
+        plugin,
+        instanceState: {},
+        currentOptions: {},
+        currentFieldConfig: { defaults: { custom: { lineWidth: 1 } }, overrides: [] },
+        reportInteractionUI: 'view-panel',
+        onFieldConfigChange: jest.fn(),
+      });
+      changeFirstItem(vizOptions, 5);
+
+      expect(setVisualOption).toHaveBeenCalledWith({
+        ui: 'view-panel',
+        option: '?custom.lineWidth',
+        value: '5',
+        value_type: 'number',
+        panel_type: 'stat',
+        panel_id: 3,
+      });
+    });
+
+    it('reports a typed panel option without its value', () => {
+      const plugin = getPanelPlugin({ id: 'text' }).setPanelOptions((builder) =>
+        builder.addTextInput({ path: 'content', name: 'Content' })
+      );
+      const vizPanel = new VizPanel({ title: 'Panel A', pluginId: 'text', key: 'panel-5' });
+      jest.spyOn(vizPanel, 'onOptionsChange').mockImplementation();
+
+      const vizOptions = getVisualizationOptions2({
+        panel: vizPanel,
+        eventBus: new EventBusSrv(),
+        plugin,
+        instanceState: {},
+        currentOptions: { content: '' },
+        currentFieldConfig: { defaults: {}, overrides: [] },
+        reportInteractionUI: 'panel-edit',
+      });
+      changeFirstItem(vizOptions, 'my secret note');
+
+      expect(setVisualOption).toHaveBeenCalledWith({
+        ui: 'panel-edit',
+        option: 'content',
+        value_type: 'string',
+        panel_type: 'text',
+        panel_id: 5,
+      });
+      expect(JSON.stringify(setVisualOption.mock.calls)).not.toContain('my secret note');
+    });
+
+    it('reports a panel option chosen from a fixed list with its value', () => {
+      const plugin = getPanelPlugin({ id: 'stat' }).setPanelOptions((builder) =>
+        builder.addRadio({
+          path: 'placement',
+          name: 'Placement',
+          settings: {
+            options: [
+              { value: 'bottom', label: 'Bottom' },
+              { value: 'right', label: 'Right' },
+            ],
+          },
+        })
+      );
+      const vizPanel = new VizPanel({ title: 'Panel A', pluginId: 'stat', key: 'panel-6' });
+      jest.spyOn(vizPanel, 'onOptionsChange').mockImplementation();
+
+      const vizOptions = getVisualizationOptions2({
+        panel: vizPanel,
+        eventBus: new EventBusSrv(),
+        plugin,
+        instanceState: {},
+        currentOptions: { placement: 'bottom' },
+        currentFieldConfig: { defaults: {}, overrides: [] },
+        reportInteractionUI: 'panel-edit',
+      });
+      changeFirstItem(vizOptions, 'right');
+
+      expect(setVisualOption).toHaveBeenCalledWith({
+        ui: 'panel-edit',
+        option: 'placement',
+        value: '"right"',
+        value_type: 'string',
+        panel_type: 'stat',
+        panel_id: 6,
+      });
+    });
+
+    it('reports a typed field config default without its value', () => {
+      const plugin = buildFieldConfigPlugin([
+        buildFieldConfigProperty({ id: 'displayName', path: 'displayName', name: 'Display name' }),
+      ]);
+      const vizPanel = new VizPanel({ title: 'Panel A', pluginId: 'stat', key: 'panel-8' });
+      jest.spyOn(vizPanel, 'onFieldConfigChange').mockImplementation();
+
+      const vizOptions = getVisualizationOptions2({
+        panel: vizPanel,
+        eventBus: new EventBusSrv(),
+        plugin,
+        instanceState: {},
+        currentOptions: {},
+        currentFieldConfig: { defaults: {}, overrides: [] },
+        reportInteractionUI: 'panel-edit',
+      });
+      changeFirstItem(vizOptions, 'Revenue per customer');
+
+      expect(setVisualOption).toHaveBeenCalledWith({
+        ui: 'panel-edit',
+        option: '?displayName',
+        value_type: 'string',
+        panel_type: 'stat',
+        panel_id: 8,
+      });
+      expect(JSON.stringify(setVisualOption.mock.calls)).not.toContain('Revenue per customer');
+    });
+
+    it('reports a field config default chosen from a fixed list with its value', () => {
+      const plugin = buildFieldConfigPlugin([
+        buildFieldConfigProperty({
+          id: 'color.mode',
+          path: 'color.mode',
+          name: 'Color scheme',
+          settings: {
+            options: [
+              { value: 'palette-classic', label: 'Classic palette' },
+              { value: 'thresholds', label: 'From thresholds' },
+            ],
+          },
+        }),
+      ]);
+      const vizPanel = new VizPanel({ title: 'Panel A', pluginId: 'stat', key: 'panel-9' });
+      jest.spyOn(vizPanel, 'onFieldConfigChange').mockImplementation();
+
+      const vizOptions = getVisualizationOptions2({
+        panel: vizPanel,
+        eventBus: new EventBusSrv(),
+        plugin,
+        instanceState: {},
+        currentOptions: {},
+        currentFieldConfig: { defaults: {}, overrides: [] },
+        reportInteractionUI: 'panel-edit',
+      });
+      changeFirstItem(vizOptions, 'thresholds');
+
+      expect(setVisualOption).toHaveBeenCalledWith({
+        ui: 'panel-edit',
+        option: '?color.mode',
+        value: '"thresholds"',
+        value_type: 'string',
+        panel_type: 'stat',
+        panel_id: 9,
+      });
+    });
+  });
+
+  describe('varMappings wiring', () => {
+    const buildMinProperty = (
+      process: FieldConfigPropertyItem['process'] = numberOverrideProcessor
+    ): FieldConfigPropertyItem => ({
+      id: 'min',
+      path: 'min',
+      name: 'Min',
+      process,
+      shouldApply: () => true,
+      override: jest.fn(),
+      editor: standardEditorsRegistry.get('number').editor,
+    });
+
+    const buildPlugin = (fieldConfigItems: FieldConfigPropertyItem[]) =>
+      ({
+        meta: { skipDataQuery: false, name: 'Timeseries' },
+        getPanelOptionsSupplier: jest.fn,
+        fieldConfigRegistry: new Registry<FieldConfigPropertyItem>(() => fieldConfigItems),
+      }) as unknown as PanelPlugin;
+
+    it('uses the plugin editor and the stored number when the flag is off, and a typed number drops the expression', () => {
+      const minProperty = buildMinProperty();
+      const plugin = buildPlugin([minProperty]);
+      const vizPanel = new VizPanel({ title: 'Panel A', pluginId: 'timeseries', key: 'panel-var-off' });
+      const onFieldConfigChange = jest.spyOn(vizPanel, 'onFieldConfigChange').mockImplementation();
+
+      const vizOptions = getVisualizationOptions2({
+        panel: vizPanel,
+        eventBus: new EventBusSrv(),
+        plugin,
+        instanceState: {},
+        currentOptions: {},
+        currentFieldConfig: { defaults: { min: 0, varMappings: { min: '$myVar' } }, overrides: [] },
+        reportInteractionUI: 'panel-edit',
+      });
+
+      const item = vizOptions[0].items[0];
+      const element = item.props.render(item) as React.ReactElement<{
+        value: unknown;
+        onChange: (v: unknown) => void;
+      }>;
+      expect(element.type).toBe(minProperty.editor);
+      expect(element.props.value).toBe(0);
+
+      element.props.onChange(42);
+      expect(onFieldConfigChange).toHaveBeenCalledWith({ defaults: { min: 42 }, overrides: [] }, true);
+    });
+
+    it('keeps other expressions when a typed number drops one with the flag off', () => {
+      const plugin = buildPlugin([buildMinProperty()]);
+      const vizPanel = new VizPanel({ title: 'Panel A', pluginId: 'timeseries', key: 'panel-var-off-2' });
+      const onFieldConfigChange = jest.spyOn(vizPanel, 'onFieldConfigChange').mockImplementation();
+
+      const vizOptions = getVisualizationOptions2({
+        panel: vizPanel,
+        eventBus: new EventBusSrv(),
+        plugin,
+        instanceState: {},
+        currentOptions: {},
+        currentFieldConfig: { defaults: { min: 0, varMappings: { min: '$myVar', max: '$other' } }, overrides: [] },
+        reportInteractionUI: 'panel-edit',
+      });
+
+      const item = vizOptions[0].items[0];
+      const element = item.props.render(item) as React.ReactElement<{ onChange: (v: unknown) => void }>;
+      element.props.onChange(42);
+
+      expect(onFieldConfigChange).toHaveBeenCalledWith(
+        { defaults: { min: 42, varMappings: { max: '$other' } }, overrides: [] },
+        true
+      );
+    });
+
+    it('displays the stored expression instead of the numeric value when varMappings holds one', () => {
+      const plugin = buildPlugin([buildMinProperty()]);
+      const vizPanel = new VizPanel({ title: 'Panel A', pluginId: 'timeseries', key: 'panel-var-1' });
+
+      const vizOptions = getVisualizationOptions2({
+        panel: vizPanel,
+        eventBus: new EventBusSrv(),
+        plugin,
+        instanceState: {},
+        currentOptions: {},
+        currentFieldConfig: { defaults: { min: 0, varMappings: { min: '$myVar' } }, overrides: [] },
+        reportInteractionUI: 'panel-edit',
+        varMappingsEnabled: true,
+      });
+
+      const item = vizOptions[0].items[0];
+      const element = item.props.render(item) as React.ReactElement<{ value: unknown }>;
+      expect(element.props.value).toBe('$myVar');
+    });
+
+    it('routes a $-containing onChange value into defaults.varMappings, leaving the stored value untouched', () => {
+      const plugin = buildPlugin([buildMinProperty()]);
+      const vizPanel = new VizPanel({ title: 'Panel A', pluginId: 'timeseries', key: 'panel-var-2' });
+      const onFieldConfigChange = jest.spyOn(vizPanel, 'onFieldConfigChange').mockImplementation();
+
+      const vizOptions = getVisualizationOptions2({
+        panel: vizPanel,
+        eventBus: new EventBusSrv(),
+        plugin,
+        instanceState: {},
+        currentOptions: {},
+        currentFieldConfig: { defaults: { min: 0 }, overrides: [] },
+        reportInteractionUI: 'panel-edit',
+        varMappingsEnabled: true,
+      });
+
+      const item = vizOptions[0].items[0];
+      const element = item.props.render(item) as React.ReactElement<{ onChange: (v: unknown) => void }>;
+      element.props.onChange('$myVar');
+
+      expect(onFieldConfigChange).toHaveBeenCalledWith(
+        { defaults: { min: 0, varMappings: { min: '$myVar' } }, overrides: [] },
+        true
+      );
+    });
+
+    it('drops the expression through onFieldConfigChange too, as view panel quick toggles do', () => {
+      const plugin = buildPlugin([buildMinProperty()]);
+      const vizPanel = new VizPanel({ title: 'Panel A', pluginId: 'timeseries', key: 'panel-var-view' });
+      const onFieldConfigChange = jest.fn();
+
+      const vizOptions = getVisualizationOptions2({
+        panel: vizPanel,
+        eventBus: new EventBusSrv(),
+        plugin,
+        instanceState: {},
+        currentOptions: {},
+        currentFieldConfig: { defaults: { min: 0, varMappings: { min: '$myVar' } }, overrides: [] },
+        reportInteractionUI: 'view-panel',
+        onFieldConfigChange,
+      });
+
+      const item = vizOptions[0].items[0];
+      const element = item.props.render(item) as React.ReactElement<{ onChange: (v: unknown) => void }>;
+      element.props.onChange(42);
+
+      expect(onFieldConfigChange).toHaveBeenCalledWith({ defaults: { min: 42 }, overrides: [] }, 'Min', 'Timeseries');
+    });
+
+    it('clears an existing varMappings entry when a plain number is committed', () => {
+      const plugin = buildPlugin([buildMinProperty()]);
+      const vizPanel = new VizPanel({ title: 'Panel A', pluginId: 'timeseries', key: 'panel-var-3' });
+      const onFieldConfigChange = jest.spyOn(vizPanel, 'onFieldConfigChange').mockImplementation();
+
+      const vizOptions = getVisualizationOptions2({
+        panel: vizPanel,
+        eventBus: new EventBusSrv(),
+        plugin,
+        instanceState: {},
+        currentOptions: {},
+        currentFieldConfig: { defaults: { min: 0, varMappings: { min: '$myVar' } }, overrides: [] },
+        reportInteractionUI: 'panel-edit',
+        varMappingsEnabled: true,
+      });
+
+      const item = vizOptions[0].items[0];
+      const element = item.props.render(item) as React.ReactElement<{ onChange: (v: unknown) => void }>;
+      element.props.onChange(42);
+
+      expect(onFieldConfigChange).toHaveBeenCalledWith({ defaults: { min: 42 }, overrides: [] }, true);
+    });
+
+    it('does not route a string onChange value into varMappings for a non-numeric property', () => {
+      const plugin = buildPlugin([buildMinProperty(identityOverrideProcessor)]);
+      const vizPanel = new VizPanel({ title: 'Panel A', pluginId: 'timeseries', key: 'panel-var-4' });
+      const onFieldConfigChange = jest.spyOn(vizPanel, 'onFieldConfigChange').mockImplementation();
+
+      const vizOptions = getVisualizationOptions2({
+        panel: vizPanel,
+        eventBus: new EventBusSrv(),
+        plugin,
+        instanceState: {},
+        currentOptions: {},
+        currentFieldConfig: { defaults: { min: 0 }, overrides: [] },
+        reportInteractionUI: 'panel-edit',
+        varMappingsEnabled: true,
+      });
+
+      const item = vizOptions[0].items[0];
+      const element = item.props.render(item) as React.ReactElement<{ onChange: (v: unknown) => void }>;
+      element.props.onChange('$myVar');
+
+      expect(onFieldConfigChange).toHaveBeenCalledWith({ defaults: { min: '$myVar' }, overrides: [] }, true);
+    });
+
+    describe('unit', () => {
+      const unitProperty: FieldConfigPropertyItem = {
+        id: 'unit',
+        path: 'unit',
+        name: 'Unit',
+        process: stringOverrideProcessor,
+        shouldApply: () => true,
+        override: jest.fn(),
+        editor: jest.fn(),
+      };
+
+      function renderUnit(currentFieldConfig: FieldConfigSource, varMappingsEnabled: boolean) {
+        const vizPanel = new VizPanel({ title: 'Panel A', pluginId: 'timeseries', key: 'panel-unit' });
+        const onFieldConfigChange = jest.spyOn(vizPanel, 'onFieldConfigChange').mockImplementation();
+        const vizOptions = getVisualizationOptions2({
+          panel: vizPanel,
+          eventBus: new EventBusSrv(),
+          plugin: buildPlugin([unitProperty]),
+          instanceState: {},
+          currentOptions: {},
+          currentFieldConfig,
+          reportInteractionUI: 'panel-edit',
+          varMappingsEnabled,
+        });
+        const item = vizOptions[0].items[0];
+        const element = item.props.render(item) as React.ReactElement<{
+          value: unknown;
+          onChange: (v: unknown) => void;
+        }>;
+        return { element, onFieldConfigChange };
+      }
+
+      it('uses the unit picker and shows the stored expression with the flag on', () => {
+        const { element } = renderUnit(
+          { defaults: { unit: 'short', varMappings: { unit: '$unit' } }, overrides: [] },
+          true
+        );
+
+        expect(element.type).toBe(unitProperty.editor);
+        expect(element.props.value).toBe('$unit');
+      });
+
+      it('writes an expression to varMappings and keeps the stored unit', () => {
+        const { element, onFieldConfigChange } = renderUnit({ defaults: { unit: 'short' }, overrides: [] }, true);
+
+        element.props.onChange('$unit');
+        expect(onFieldConfigChange).toHaveBeenCalledWith(
+          { defaults: { unit: 'short', varMappings: { unit: '$unit' } }, overrides: [] },
+          true
+        );
+      });
+
+      it('writes a plain unit, a $ custom unit or a clear as a unit and drops the expression', () => {
+        const fieldConfig = { defaults: { unit: 'short', varMappings: { unit: '$unit' } }, overrides: [] };
+
+        for (const [input, expected] of [
+          ['bytes', { unit: 'bytes' }],
+          ['prefix:$', { unit: 'prefix:$' }],
+          ['', {}],
+        ] as const) {
+          const { element, onFieldConfigChange } = renderUnit(fieldConfig, true);
+          element.props.onChange(input);
+          expect(onFieldConfigChange).toHaveBeenCalledWith({ defaults: expected, overrides: [] }, true);
+        }
+      });
+
+      it('shows the stored unit with the flag off, and a picked unit drops the expression', () => {
+        const { element, onFieldConfigChange } = renderUnit(
+          { defaults: { unit: 'short', varMappings: { unit: '$unit' } }, overrides: [] },
+          false
+        );
+
+        expect(element.props.value).toBe('short');
+
+        element.props.onChange('bytes');
+        expect(onFieldConfigChange).toHaveBeenCalledWith({ defaults: { unit: 'bytes' }, overrides: [] }, true);
+      });
+    });
+
+    describe('thresholds', () => {
+      const thresholdsProperty: FieldConfigPropertyItem = {
+        id: 'thresholds',
+        path: 'thresholds',
+        name: 'Thresholds',
+        process: (value) => value,
+        shouldApply: () => true,
+        override: jest.fn(),
+        editor: jest.fn(),
+      };
+      const thresholds = {
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: -Infinity, color: 'green' },
+          { value: 50, color: 'orange', valueExpr: '$warn' },
+        ],
+      };
+      const currentFieldConfig = {
+        defaults: { thresholds },
+        overrides: [],
+      };
+
+      function renderThresholds(varMappingsEnabled: boolean) {
+        const vizPanel = new VizPanel({ title: 'Panel A', pluginId: 'timeseries', key: 'panel-thresholds' });
+        const onFieldConfigChange = jest.spyOn(vizPanel, 'onFieldConfigChange').mockImplementation();
+        const vizOptions = getVisualizationOptions2({
+          panel: vizPanel,
+          eventBus: new EventBusSrv(),
+          plugin: buildPlugin([thresholdsProperty]),
+          instanceState: {},
+          currentOptions: {},
+          currentFieldConfig,
+          reportInteractionUI: 'panel-edit',
+          varMappingsEnabled,
+        });
+        const item = vizOptions[0].items[0];
+        const element = item.props.render(item) as React.ReactElement<{
+          value: { steps: unknown[] };
+          onChange: (v: unknown) => void;
+        }>;
+        return { element, onFieldConfigChange };
+      }
+
+      it('edits the thresholds with their step valueExprs as stored', () => {
+        const { element, onFieldConfigChange } = renderThresholds(true);
+
+        expect(element.props.value).toEqual(thresholds);
+
+        const edited = {
+          ...thresholds,
+          steps: [
+            { value: -Infinity, color: 'green' },
+            { value: 10, color: 'red' },
+            { value: 50, color: 'orange', valueExpr: '$warn' },
+          ],
+        };
+        element.props.onChange(edited);
+        expect(onFieldConfigChange).toHaveBeenCalledWith({ defaults: { thresholds: edited }, overrides: [] }, true);
+      });
+    });
+
+    it('routes a $-containing onChange value into varMappings for a custom addNumberInput property too', () => {
+      const customLineWidth: FieldConfigPropertyItem = {
+        id: 'custom.lineWidth',
+        path: 'lineWidth',
+        name: 'Line width',
+        isCustom: true,
+        process: numberOverrideProcessor,
+        shouldApply: () => true,
+        override: jest.fn(),
+        editor: standardEditorsRegistry.get('number').editor,
+      };
+      const plugin = buildPlugin([customLineWidth]);
+      const vizPanel = new VizPanel({ title: 'Panel A', pluginId: 'timeseries', key: 'panel-var-5' });
+      const onFieldConfigChange = jest.spyOn(vizPanel, 'onFieldConfigChange').mockImplementation();
+
+      const vizOptions = getVisualizationOptions2({
+        panel: vizPanel,
+        eventBus: new EventBusSrv(),
+        plugin,
+        instanceState: {},
+        currentOptions: {},
+        currentFieldConfig: { defaults: { custom: { lineWidth: 2 } }, overrides: [] },
+        reportInteractionUI: 'panel-edit',
+        varMappingsEnabled: true,
+      });
+
+      const item = vizOptions[0].items[0];
+      const element = item.props.render(item) as React.ReactElement<{ onChange: (v: unknown) => void }>;
+      element.props.onChange('$myVar');
+
+      expect(onFieldConfigChange).toHaveBeenCalledWith(
+        { defaults: { custom: { lineWidth: 2 }, varMappings: { 'custom.lineWidth': '$myVar' } }, overrides: [] },
+        true
+      );
+    });
+  });
+
   describe('isFieldConfigOptionVisible', () => {
     const fieldConfig: FieldConfigSource = {
       defaults: {
@@ -564,6 +1205,7 @@ describe('getVisualizationOptions', () => {
         currentOptions,
         currentFieldConfig: fieldConfig,
         reportInteractionUI: 'panel-edit',
+        varMappingsEnabled: true,
       });
 
     it('hands a field config showIf the panel options and the whole field config', () => {

@@ -1,5 +1,5 @@
 import { isEqual } from 'lodash';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import { LoadingState, type PanelData } from '@grafana/data';
 import { type DataQuery } from '@grafana/schema';
@@ -50,14 +50,16 @@ export function useQueryProposalTransaction({
   startQueryPreview,
 }: QueryProposalTransactionOptions) {
   const queryRef = useRef(query);
-  queryRef.current = query;
   const queriesRef = useRef(queries);
-  queriesRef.current = queries;
+  const runQueriesRef = useRef(runQueries);
+  useLayoutEffect(() => {
+    queryRef.current = query;
+    queriesRef.current = queries;
+    runQueriesRef.current = runQueries;
+  });
   const transactionRef = useRef<QueryProposalTransactionState | undefined>(undefined);
   const proposalRef = useRef<DataQuery | undefined>(undefined);
   const previewRef = useRef<QueryPreview | undefined>(undefined);
-  const runQueriesRef = useRef(runQueries);
-  runQueriesRef.current = runQueries;
   const [proposal, setProposal] = useState<DataQuery | undefined>(undefined);
   const [previewPhase, setPreviewPhase] = useState<'idle' | 'pending' | 'running' | 'complete'>('idle');
   const [previewData, setPreviewData] = useState<PanelData>();

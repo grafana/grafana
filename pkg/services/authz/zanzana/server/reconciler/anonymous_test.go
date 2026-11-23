@@ -18,48 +18,19 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
-
-// --- fakes for resources.ClientFactory / ResourceClients ---
 
 type fakeAnonClientFactory struct {
 	dyn            dynamic.Interface
 	forResourceErr error
 }
 
-func (f fakeAnonClientFactory) Clients(_ context.Context, ns string) (resources.ResourceClients, error) {
-	return fakeAnonResourceClients{dyn: f.dyn, ns: ns, forResourceErr: f.forResourceErr}, nil
-}
-
-type fakeAnonResourceClients struct {
-	dyn            dynamic.Interface
-	ns             string
-	forResourceErr error
-}
-
-func (f fakeAnonResourceClients) ForResource(_ context.Context, gvr schema.GroupVersionResource) (dynamic.ResourceInterface, schema.GroupVersionKind, error) {
+func (f fakeAnonClientFactory) ForResource(_ context.Context, ns string, gvr schema.GroupVersionResource) (dynamic.ResourceInterface, error) {
 	if f.forResourceErr != nil {
-		return nil, schema.GroupVersionKind{}, f.forResourceErr
+		return nil, f.forResourceErr
 	}
-	return f.dyn.Resource(gvr).Namespace(f.ns), schema.GroupVersionKind{}, nil
-}
-
-func (f fakeAnonResourceClients) ForKind(context.Context, schema.GroupVersionKind) (dynamic.ResourceInterface, schema.GroupVersionResource, error) {
-	return nil, schema.GroupVersionResource{}, nil
-}
-
-func (f fakeAnonResourceClients) Folder(context.Context) (dynamic.ResourceInterface, schema.GroupVersionKind, error) {
-	return nil, schema.GroupVersionKind{}, nil
-}
-
-func (f fakeAnonResourceClients) User(context.Context) (dynamic.ResourceInterface, error) {
-	return nil, nil
-}
-
-func (f fakeAnonResourceClients) SupportedResources() []resources.SupportedResource {
-	return nil
+	return f.dyn.Resource(gvr).Namespace(ns), nil
 }
 
 func anonSetting(section, key, value string) *unstructured.Unstructured {

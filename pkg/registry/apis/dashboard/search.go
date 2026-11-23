@@ -54,6 +54,8 @@ type SearchHandler struct {
 	client   resourcepb.ResourceIndexClient
 	tracer   trace.Tracer
 	features featuremgmt.FeatureToggles
+
+	lifecycleExtras DashboardLifecycleExtras
 }
 
 func NewSearchHandler(tracer trace.Tracer, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles) *SearchHandler {
@@ -97,6 +99,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 										Description: "user query string",
 										Required:    false,
 										Schema:      spec.StringProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "lifecycle",
+										In:          "query",
+										Description: "dashboard lifecycle filter: draft returns only drafts, all returns drafts and published. When empty, drafts are hidden if the namespace hides them by default",
+										Required:    false,
+										Schema:      spec.StringProperty().WithEnum("draft", "all"),
 									},
 								},
 								{
@@ -224,6 +235,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 										Name:        "limit",
 										In:          "query",
 										Description: "number of results to return",
+										Required:    false,
+										Schema:      spec.Int64Property(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "offset",
+										In:          "query",
+										Description: "number of results to skip",
 										Required:    false,
 										Schema:      spec.Int64Property(),
 									},
@@ -413,103 +433,6 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 			},
 			Handler: s.DoVectorSearch,
 		})
-
-		routes.Namespace = append(routes.Namespace, builder.APIRouteHandler{
-			Path: "search/hybrid",
-			Spec: &spec3.PathProps{
-				Get: &spec3.Operation{
-					OperationProps: spec3.OperationProps{
-						Tags:        []string{"Search"},
-						OperationId: "hybridSearchDashboards",
-						Description: "Hybrid search for dashboards: lexical and semantic legs fused server-side. Top-k contract; scores are opaque (higher = better) and results are one row per dashboard",
-						Parameters: []*spec3.Parameter{
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "namespace",
-									In:          "path",
-									Required:    true,
-									Example:     "default",
-									Description: "workspace",
-									Schema:      spec.StringProperty(),
-								},
-							},
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "query",
-									In:          "query",
-									Description: "query string, used for both search legs",
-									Required:    true,
-									Schema:      spec.StringProperty(),
-								},
-							},
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "semanticQuery",
-									In:          "query",
-									Description: "optional richer phrasing embedded for the semantic leg instead of query",
-									Required:    false,
-									Schema:      spec.StringProperty(),
-								},
-							},
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "folder",
-									In:          "query",
-									Description: "restrict results to a folder (not recursive)",
-									Required:    false,
-									Schema:      spec.StringProperty(),
-								},
-							},
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "limit",
-									In:          "query",
-									Description: "maximum number of results to return (default 50, max 200)",
-									Required:    false,
-									Schema:      spec.Int64Property(),
-								},
-							},
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "minRelevance",
-									In:          "query",
-									Description: "minimum reranker relevance a result must reach: lowest, low, medium, high, or highest. Empty keeps every result. Best-effort: ignored when the backend has no reranker configured. Cannot be combined with skipRerank",
-									Required:    false,
-									Schema:      spec.StringProperty(),
-								},
-							},
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "skipRerank",
-									In:          "query",
-									Description: "skip the reranking stage and return RRF-fused ordering directly, trading result quality for latency",
-									Required:    false,
-									Schema:      spec.BooleanProperty(),
-								},
-							},
-						},
-						Responses: &spec3.Responses{
-							ResponsesProps: spec3.ResponsesProps{
-								StatusCodeResponses: map[int]*spec3.Response{
-									200: {
-										ResponseProps: spec3.ResponseProps{
-											Content: map[string]*spec3.MediaType{
-												"application/json": {
-													MediaTypeProps: spec3.MediaTypeProps{
-														Schema: &searchResults,
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			Handler: s.DoHybridSearch,
-		})
 	}
 
 	return routes
@@ -604,6 +527,16 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 			errhttp.Write(ctx, err, w)
 		}
 		return
+	}
+
+	hideDrafts := s.lifecycleExtras != nil && s.lifecycleExtras.HideDraftsByDefault(ctx)
+	req, err := draftSearchRequirement(queryParams.Get("lifecycle"), hideDrafts)
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
+	}
+	if req != nil {
+		searchRequest.Options.Labels = append(searchRequest.Options.Labels, req)
 	}
 
 	result, err := s.client.Search(ctx, searchRequest)
@@ -712,124 +645,6 @@ func vectorSearchResultsToSearchResults(result *resourcepb.VectorSearchResponse)
 			Folder:   r.GetFolder(),
 			Score:    r.GetScore(),
 			Field:    field,
-		})
-	}
-
-	out := &dashboardv0alpha1.SearchResults{Hits: hits, TotalHits: int64(len(hits))}
-	if len(hits) > 0 {
-		out.MaxScore = hits[0].Score
-	}
-	return out
-}
-
-// errHybridSearchNotConfigured is returned (HTTP 501) when the hybrid search
-// endpoint is enabled by feature toggle but the unified storage backend has no
-// embedder/vector store configured (or predates the HybridSearch RPC).
-var errHybridSearchNotConfigured = errutil.NotImplemented("dashboard.hybridSearchNotConfigured")
-
-// DoHybridSearch serves the hybrid (lexical + semantic, RRF-fused) search
-// endpoint. Registered only when the dashboardVectorSearch feature toggle is
-// enabled. Like DoVectorSearch it does not fall back on Unimplemented.
-func (s *SearchHandler) DoHybridSearch(w http.ResponseWriter, r *http.Request) {
-	ctx, span := s.tracer.Start(r.Context(), "dashboard.hybridSearch")
-	defer span.End()
-
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		errhttp.Write(ctx, err, w)
-		return
-	}
-
-	queryParams, err := url.ParseQuery(r.URL.RawQuery)
-	if err != nil {
-		errhttp.Write(ctx, err, w)
-		return
-	}
-
-	key, err := asResourceKey(user.GetNamespace(), dashboardv0alpha1.DASHBOARD_RESOURCE)
-	if err != nil {
-		errhttp.Write(ctx, err, w)
-		return
-	}
-
-	limit := 50
-	if queryParams.Has("limit") {
-		if l, parseErr := strconv.Atoi(queryParams.Get("limit")); parseErr == nil && l > 0 {
-			limit = l
-		}
-	}
-
-	req := &resourcepb.HybridSearchRequest{
-		Key:           key, //nolint:staticcheck // Older search servers require key.
-		Query:         queryParams.Get("query"),
-		SemanticQuery: queryParams.Get("semanticQuery"),
-		Limit:         int64(limit),
-		// Both validated server-side; an unknown min_relevance or the
-		// min_relevance+skip_rerank combination surfaces as InvalidArgument.
-		MinRelevance: queryParams.Get("minRelevance"),
-		SkipRerank:   queryParams.Get("skipRerank") == "true",
-	}
-	if folder := queryParams.Get("folder"); folder != "" {
-		folder = foldermodel.ToLegacyFolderUID(folder)
-		req.Filters = append(req.Filters, &resourcepb.Requirement{
-			Key:      "folder",
-			Operator: string(selection.In),
-			Values:   []string{folder},
-		})
-	}
-
-	result, err := s.client.HybridSearch(ctx, req)
-	if err != nil {
-		if status.Code(err) == codes.Unimplemented {
-			errhttp.Write(ctx, errHybridSearchNotConfigured.Errorf("hybrid search is not configured on this instance"), w)
-			return
-		}
-		errhttp.Write(ctx, resource.StatusError(resource.AsErrorResult(err)), w)
-		return
-	}
-
-	s.write(w, hybridSearchResultsToSearchResults(result))
-}
-
-// One hit per dashboard, in fused order. Score is opaque (higher = better),
-// unlike the vector endpoint's cosine distance. The best chunk's content is
-// surfaced as "snippet"/"subresource" for parity with the vector endpoint;
-// the full chunk list rides along under "chunks".
-func hybridSearchResultsToSearchResults(response *resourcepb.HybridSearchResponse) *dashboardv0alpha1.SearchResults {
-	results := response.GetResults()
-	hits := make([]dashboardv0alpha1.DashboardHit, 0, len(results))
-	for _, r := range results {
-		field := &commonv0.Unstructured{}
-		field.Set("score", r.GetScore())
-		resultChunks := r.GetChunks()
-		chunks := make([]any, 0, len(resultChunks))
-		for _, c := range resultChunks {
-			chunks = append(chunks, map[string]any{
-				"subresource": c.GetSubresource(),
-				"snippet":     c.GetContent(),
-			})
-		}
-		field.Set("chunks", chunks)
-		if len(resultChunks) > 0 {
-			field.Set("subresource", resultChunks[0].GetSubresource())
-			field.Set("snippet", resultChunks[0].GetContent())
-		}
-		if r.GetFolderTitle() != "" {
-			field.Set("folderTitle", r.GetFolderTitle())
-		}
-
-		hits = append(hits, dashboardv0alpha1.DashboardHit{
-			Resource: dashboardv0alpha1.DASHBOARD_RESOURCE,
-			Name:     r.GetKey().GetName(),
-			Title:    r.GetTitle(),
-			Folder:   r.GetFolder(),
-			Score:    r.GetScore(),
-			Tags:     r.GetTags(),
-			ManagedBy: dashboardv0alpha1.ManagedBy{
-				Kind: utils.ManagerKind(r.GetManagedByKind()),
-				ID:   r.GetManagedById(),
-			},
-			Field: field,
 		})
 	}
 
@@ -1272,4 +1087,23 @@ func nameLookupRequest(key *resourcepb.ResourceKey, names []string, permission d
 			}},
 		},
 	}
+}
+
+// draftSearchRequirement maps the `lifecycle` query param to a label requirement:
+// "draft" returns only drafts, "all" returns everything, and no value hides drafts when hideDrafts is set.
+// Any other value is rejected so a typo cannot silently hide drafts.
+func draftSearchRequirement(lifecycle string, hideDrafts bool) (*resourcepb.Requirement, error) {
+	switch lifecycle {
+	case utils.LifecycleDraft:
+		return &resourcepb.Requirement{Key: utils.LabelKeyLifecycle, Operator: string(selection.Equals), Values: []string{utils.LifecycleDraft}}, nil
+	case "all":
+		return nil, nil
+	case "":
+	default:
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("lifecycle must be %q or %q", utils.LifecycleDraft, "all"))
+	}
+	if !hideDrafts {
+		return nil, nil
+	}
+	return &resourcepb.Requirement{Key: utils.LabelKeyLifecycle, Operator: string(selection.NotIn), Values: []string{utils.LifecycleDraft}}, nil
 }

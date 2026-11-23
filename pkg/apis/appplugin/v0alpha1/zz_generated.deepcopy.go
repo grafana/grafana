@@ -8,7 +8,7 @@
 package v0alpha1
 
 import (
-	commonv0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	resource "github.com/grafana/grafana-app-sdk/resource"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -49,7 +49,7 @@ func (in *Settings) DeepCopyInto(out *Settings) {
 	in.Spec.DeepCopyInto(&out.Spec)
 	if in.Secure != nil {
 		in, out := &in.Secure, &out.Secure
-		*out = make(map[string]commonv0alpha1.InlineSecureValue, len(*in))
+		*out = make(map[string]resource.InlineSecureValue, len(*in))
 		for key, val := range *in {
 			(*out)[key] = *val.DeepCopy()
 		}

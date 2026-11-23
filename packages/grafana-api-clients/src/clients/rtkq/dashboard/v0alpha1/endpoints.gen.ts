@@ -203,6 +203,7 @@ const injectedRtkApi = api
           url: `/search`,
           params: {
             query: queryArg.query,
+            lifecycle: queryArg.lifecycle,
             type: queryArg['type'],
             folder: queryArg.folder,
             name: queryArg.name,
@@ -215,6 +216,7 @@ const injectedRtkApi = api
             permission: queryArg.permission,
             sort: queryArg.sort,
             limit: queryArg.limit,
+            offset: queryArg.offset,
             ownerReference: queryArg.ownerReference,
             createdBy: queryArg.createdBy,
             panelTitleSearch: queryArg.panelTitleSearch,
@@ -509,6 +511,8 @@ export type SearchDashboardsAndFoldersApiResponse = /** status 200 undefined */ 
 export type SearchDashboardsAndFoldersApiArg = {
   /** user query string */
   query?: string;
+  /** dashboard lifecycle filter: draft returns only drafts, all returns drafts and published. When empty, drafts are hidden if the namespace hides them by default */
+  lifecycle?: 'draft' | 'all';
   /** search dashboards or folders.  When empty, this will search both */
   type?: 'folder' | 'dashboard';
   /** search/list within a folder (not recursive) */
@@ -533,6 +537,8 @@ export type SearchDashboardsAndFoldersApiArg = {
   sort?: string;
   /** number of results to return */
   limit?: number;
+  /** number of results to skip */
+  offset?: number;
   /** filter by owner reference in the format {Group}/{Kind}/{Name}. When you pass multiple values, the filter matches any of them. */
   ownerReference?: string[];
   /** filter by the user who created the resource (format: user:<uid>) */

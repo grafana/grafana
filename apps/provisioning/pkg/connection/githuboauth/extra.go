@@ -3,11 +3,11 @@ package githuboauth
 import (
 	"context"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection/oauth"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 func Extra(decrypter connection.Decrypter, factory *github.Factory) connection.Extra {
@@ -23,7 +23,7 @@ func Extra(decrypter connection.Decrypter, factory *github.Factory) connection.E
 }
 
 func newProvider(factory *github.Factory, _ provisioning.ConnectionSpec, accessToken string) (oauth.Provider, error) {
-	client, err := factory.New("", "", common.RawSecureValue(accessToken))
+	client, err := factory.New("", "", resource.RawSecureValue(accessToken))
 	if err != nil {
 		return nil, err
 	}

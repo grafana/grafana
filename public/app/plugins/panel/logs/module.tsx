@@ -139,7 +139,7 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
       category,
       description: t(
         'logs.description-enable-infinite-scrolling',
-        'Experimental. Request more results by scrolling to the bottom of the logs list.'
+        'Experimental. Request more results by scrolling on the edge of the logs list.'
       ),
       defaultValue: false,
     });

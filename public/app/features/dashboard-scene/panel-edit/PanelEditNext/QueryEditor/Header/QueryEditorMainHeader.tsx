@@ -6,7 +6,6 @@ import { Text, useStyles2 } from '@grafana/ui';
 
 import { usePanelContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
 
-import { ExperimentalFeedbackButton } from './ExperimentalFeedbackButton';
 import { QueryOptionsBar } from './QueryOptionsBar';
 import { StackedViewToggle } from './StackedViewToggle';
 
@@ -15,7 +14,8 @@ export function QueryEditorMainHeader() {
   const { queries } = useQueryRunnerContext();
   const { transformations } = usePanelContext();
   const { stackedMode } = useQueryEditorUIContext();
-  const count = queries.length + transformations.length;
+  // Outside stacked view only the selected item is rendered.
+  const count = stackedMode.enabled ? queries.length + transformations.length : 1;
 
   return (
     <div className={styles.container}>
@@ -29,9 +29,9 @@ export function QueryEditorMainHeader() {
           })}
         </Text>
       </div>
-      <QueryOptionsBar />
-      {/* Stacked items hide their own feedback button, so the stack shows a single one here. */}
-      {stackedMode.enabled && <ExperimentalFeedbackButton />}
+      <div className={styles.rightSection}>
+        <QueryOptionsBar />
+      </div>
     </div>
   );
 }
@@ -52,5 +52,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     gap: theme.spacing(1),
     flexShrink: 0,
+  }),
+  rightSection: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    flex: 1,
+    minWidth: 0,
   }),
 });

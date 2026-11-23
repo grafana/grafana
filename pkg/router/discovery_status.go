@@ -13,6 +13,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/util/errhttp"
@@ -153,7 +154,7 @@ func (r *GrafanaRouter) authorizeStatus(w http.ResponseWriter, req *http.Request
 		_ = errhttp.Write(ctx, apierrors.NewUnauthorized("missing requester"), w)
 		return false
 	}
-	if requester.GetIsGrafanaAdmin() || (r.statusOpenToAdmin && requester.GetOrgRole() == identity.RoleAdmin) {
+	if requester.GetIsGrafanaAdmin() || (r.statusOpenToAdmin && requester.GetOrgRole() == authlib.RoleAdmin) {
 		return true
 	}
 	setRoute(req, routeForbidden)

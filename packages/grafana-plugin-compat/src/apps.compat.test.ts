@@ -1,19 +1,15 @@
 import { type PluginMeta } from '@grafana/data';
 import { type BackendSrv, setBackendSrv } from '@grafana/runtime';
 
-import { getAppPluginHealth, getPluginSettings, updateAppPluginSettings } from './apps';
+import { getAppPluginHealth, getPluginSettings, updateAppPluginSettings, callAppPluginProxy } from './apps';
 import { getMockedBackendSrv } from './utils/mocks';
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  getPluginSettings: undefined,
-  updateAppPluginSettings: undefined,
-}));
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getPluginSettings: undefined,
   updateAppPluginSettings: undefined,
   getAppPluginHealth: undefined,
+  callAppPluginProxy: undefined,
 }));
 
 const mockBackendSrv = getMockedBackendSrv();
@@ -218,5 +214,93 @@ describe('getAppPluginHealth', () => {
     setBackendSrv(undefined as unknown as BackendSrv);
 
     await expect(getAppPluginHealth('grafana-exploretraces-app')).rejects.toThrow();
+  });
+});
+
+describe('callAppPluginProxy', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+    setBackendSrv(mockBackendSrv);
+    mockBackendSrv.get = jest.fn().mockResolvedValue({});
+  });
+
+  it('should call correct function when callAppPluginProxy does not exist', async () => {
+    await callAppPluginProxy({ pluginId: 'grafana-exploretraces-app', routePath: 'some/route' });
+
+    expect(mockBackendSrv.get).toHaveBeenCalled();
+    expect(mockBackendSrv.get).toHaveBeenCalledWith(
+      `/api/plugin-proxy/grafana-exploretraces-app/some/route`,
+      undefined,
+      undefined,
+      {
+        showErrorAlert: false,
+        validatePath: true,
+      }
+    );
+  });
+
+  it('should pass through showErrorAlert when callAppPluginProxy does not exist', async () => {
+    await callAppPluginProxy({ pluginId: 'grafana-exploretraces-app', routePath: 'some/route', showErrorAlert: true });
+
+    expect(mockBackendSrv.get).toHaveBeenCalled();
+    expect(mockBackendSrv.get).toHaveBeenCalledWith(
+      `/api/plugin-proxy/grafana-exploretraces-app/some/route`,
+      undefined,
+      undefined,
+      {
+        showErrorAlert: true,
+        validatePath: true,
+      }
+    );
+  });
+
+  it('should reject unauthorized requests and mark them handled', async () => {
+    mockBackendSrv.get = jest.fn().mockRejectedValue({
+      status: 401,
+      data: { message: 'Unauthorized' },
+    });
+
+    await expect(
+      callAppPluginProxy({ pluginId: 'grafana-exploretraces-app', routePath: 'some/route' })
+    ).rejects.toEqual({
+      status: 401,
+      data: { message: 'Unauthorized' },
+      isHandled: true,
+    });
+  });
+
+  it('should reject forbidden requests and mark them handled', async () => {
+    mockBackendSrv.get = jest.fn().mockRejectedValue({
+      status: 403,
+      data: { message: 'Forbidden' },
+    });
+
+    await expect(
+      callAppPluginProxy({ pluginId: 'grafana-exploretraces-app', routePath: 'some/route' })
+    ).rejects.toEqual({
+      status: 403,
+      data: { message: 'Forbidden' },
+      isHandled: true,
+    });
+  });
+
+  it('should reject thrown error if error status is not 403 or 401', async () => {
+    const error = { status: 404, message: 'Not found' };
+    mockBackendSrv.get = jest.fn().mockRejectedValue(error);
+
+    await expect(
+      callAppPluginProxy({ pluginId: 'grafana-exploretraces-app', routePath: 'some/route' })
+    ).rejects.toEqual({
+      status: 404,
+      message: 'Not found',
+    });
+  });
+
+  it('should reject when getBackendSrv is not setup', async () => {
+    setBackendSrv(undefined as unknown as BackendSrv);
+
+    await expect(
+      callAppPluginProxy({ pluginId: 'grafana-exploretraces-app', routePath: 'some/route' })
+    ).rejects.toThrow();
   });
 });

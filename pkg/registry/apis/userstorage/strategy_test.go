@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/apps/userstorage/pkg/apis/userstorage/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"

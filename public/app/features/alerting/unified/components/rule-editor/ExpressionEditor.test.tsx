@@ -5,8 +5,8 @@ import { DataSourceApi, DataSourcePlugin, type DataSourcePluginMeta, type QueryE
 import { setDataSourcePluginImporter } from '@grafana/runtime/internal';
 import { type DataQuery } from '@grafana/schema';
 
-import { mockDataSource } from '../../mocks';
 import { setupDataSources } from '../../testSetup/datasources';
+import { mockDataSource } from '../../testSetup/mockDataSource';
 
 import { ExpressionEditor, type ExpressionEditorProps } from './ExpressionEditor';
 

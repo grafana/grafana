@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	v1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	v1alpha1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1alpha1"
 	v1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 )
 
@@ -33,11 +34,12 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Folder",
 					Plural:     "Folders",
+					Resource:   "folders",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{
-						Hybrid: func(b bool) *bool { return &b }(true),
-						Global: func(b bool) *bool { return &b }(true),
+						Hybrid: new(true),
+						Global: new(true),
 					},
 					Embed: &app.ManifestVersionKindEmbed{
 						Fields: []app.ManifestVersionKindEmbedField{
@@ -59,17 +61,35 @@ var appManifestData = app.ManifestData{
 		},
 
 		{
+			Name:   "v1alpha1",
+			Served: true,
+			Kinds: []app.ManifestVersionKind{
+				{
+					Kind:       "PendingFolderDeletion",
+					Plural:     "PendingFolderDeletions",
+					Resource:   "pendingfolderdeletions",
+					Scope:      "Namespaced",
+					Conversion: false,
+					Search: &app.ManifestVersionKindSearch{
+						Endpoint: new(false),
+					},
+				},
+			},
+		},
+
+		{
 			Name:   "v1beta1",
 			Served: true,
 			Kinds: []app.ManifestVersionKind{
 				{
 					Kind:       "Folder",
 					Plural:     "Folders",
+					Resource:   "folders",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{
-						Hybrid: func(b bool) *bool { return &b }(true),
-						Global: func(b bool) *bool { return &b }(true),
+						Hybrid: new(true),
+						Global: new(true),
 					},
 					Embed: &app.ManifestVersionKindEmbed{
 						Fields: []app.ManifestVersionKindEmbedField{
@@ -101,8 +121,9 @@ func RemoteManifest() app.Manifest {
 }
 
 var kindVersionToGoType = map[string]resource.Kind{
-	"Folder/v1":      v1.FolderKind(),
-	"Folder/v1beta1": v1beta1.FolderKind(),
+	"Folder/v1":                      v1.FolderKind(),
+	"PendingFolderDeletion/v1alpha1": v1alpha1.PendingFolderDeletionKind(),
+	"Folder/v1beta1":                 v1beta1.FolderKind(),
 }
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.

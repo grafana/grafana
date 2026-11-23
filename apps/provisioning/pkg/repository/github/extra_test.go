@@ -5,10 +5,10 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -17,23 +17,23 @@ import (
 )
 
 type mockSecureValues struct {
-	token         common.RawSecureValue
+	token         resource.RawSecureValue
 	tokenErr      error
-	webhookSecret common.RawSecureValue
+	webhookSecret resource.RawSecureValue
 	webhookErr    error
-	signingKey    common.RawSecureValue
+	signingKey    resource.RawSecureValue
 	signingErr    error
 }
 
-func (m *mockSecureValues) Token(_ context.Context) (common.RawSecureValue, error) {
+func (m *mockSecureValues) Token(_ context.Context) (resource.RawSecureValue, error) {
 	return m.token, m.tokenErr
 }
 
-func (m *mockSecureValues) WebhookSecret(_ context.Context) (common.RawSecureValue, error) {
+func (m *mockSecureValues) WebhookSecret(_ context.Context) (resource.RawSecureValue, error) {
 	return m.webhookSecret, m.webhookErr
 }
 
-func (m *mockSecureValues) CommitSigningKey(_ context.Context) (common.RawSecureValue, error) {
+func (m *mockSecureValues) CommitSigningKey(_ context.Context) (resource.RawSecureValue, error) {
 	return m.signingKey, m.signingErr
 }
 
@@ -125,7 +125,7 @@ func TestExtra_Build(t *testing.T) {
 			setupDecrypter: func() repository.Decrypter {
 				return func(r *provisioning.Repository) repository.SecureValues {
 					return &mockSecureValues{
-						token: common.RawSecureValue("test-token"),
+						token: resource.RawSecureValue("test-token"),
 					}
 				}
 			},
@@ -154,8 +154,8 @@ func TestExtra_Build(t *testing.T) {
 			setupDecrypter: func() repository.Decrypter {
 				return func(r *provisioning.Repository) repository.SecureValues {
 					return &mockSecureValues{
-						token:         common.RawSecureValue("test-token"),
-						webhookSecret: common.RawSecureValue("webhook-secret"),
+						token:         resource.RawSecureValue("test-token"),
+						webhookSecret: resource.RawSecureValue("webhook-secret"),
 					}
 				}
 			},
@@ -187,7 +187,7 @@ func TestExtra_Build(t *testing.T) {
 			setupDecrypter: func() repository.Decrypter {
 				return func(r *provisioning.Repository) repository.SecureValues {
 					return &mockSecureValues{
-						token: common.RawSecureValue("test-token"),
+						token: resource.RawSecureValue("test-token"),
 					}
 				}
 			},
@@ -224,7 +224,7 @@ func TestExtra_Build(t *testing.T) {
 			setupDecrypter: func() repository.Decrypter {
 				return func(r *provisioning.Repository) repository.SecureValues {
 					return &mockSecureValues{
-						token: common.RawSecureValue("test-token"),
+						token: resource.RawSecureValue("test-token"),
 					}
 				}
 			},
@@ -255,7 +255,7 @@ func TestExtra_Build(t *testing.T) {
 			setupDecrypter: func() repository.Decrypter {
 				return func(r *provisioning.Repository) repository.SecureValues {
 					return &mockSecureValues{
-						token: common.RawSecureValue("test-token"),
+						token: resource.RawSecureValue("test-token"),
 					}
 				}
 			},
@@ -286,7 +286,7 @@ func TestExtra_Build(t *testing.T) {
 			setupDecrypter: func() repository.Decrypter {
 				return func(r *provisioning.Repository) repository.SecureValues {
 					return &mockSecureValues{
-						token:      common.RawSecureValue("test-token"),
+						token:      resource.RawSecureValue("test-token"),
 						webhookErr: errors.New("webhook decryption failed"),
 					}
 				}
@@ -319,7 +319,7 @@ func TestExtra_Build(t *testing.T) {
 			setupDecrypter: func() repository.Decrypter {
 				return func(r *provisioning.Repository) repository.SecureValues {
 					return &mockSecureValues{
-						token:      common.RawSecureValue("test-token"),
+						token:      resource.RawSecureValue("test-token"),
 						signingErr: errors.New("signing key decryption failed"),
 					}
 				}
@@ -348,8 +348,8 @@ func TestExtra_Build(t *testing.T) {
 			setupDecrypter: func() repository.Decrypter {
 				return func(r *provisioning.Repository) repository.SecureValues {
 					return &mockSecureValues{
-						token:      common.RawSecureValue("test-token"),
-						signingKey: common.RawSecureValue("ssh-key"),
+						token:      resource.RawSecureValue("test-token"),
+						signingKey: resource.RawSecureValue("ssh-key"),
 					}
 				}
 			},
@@ -379,7 +379,7 @@ func TestExtra_Build(t *testing.T) {
 			setupDecrypter: func() repository.Decrypter {
 				return func(r *provisioning.Repository) repository.SecureValues {
 					return &mockSecureValues{
-						token: common.RawSecureValue("test-token"),
+						token: resource.RawSecureValue("test-token"),
 					}
 				}
 			},

@@ -68,15 +68,18 @@ func (m *legacyStatsMetrics) observe(resource string, start time.Time, err error
 	if m == nil {
 		return
 	}
-	outcome := legacyOutcomeOK
+	m.duration.WithLabelValues(resource, legacyOutcome(err)).Observe(time.Since(start).Seconds())
+}
+
+func legacyOutcome(err error) string {
 	switch {
 	case err == nil:
+		return legacyOutcomeOK
 	case errors.Is(err, context.Canceled):
-		outcome = legacyOutcomeCanceled
+		return legacyOutcomeCanceled
 	default:
-		outcome = legacyOutcomeError
+		return legacyOutcomeError
 	}
-	m.duration.WithLabelValues(resource, outcome).Observe(time.Since(start).Seconds())
 }
 
 func (m *legacyStatsMetrics) skip(resource, reason string) {

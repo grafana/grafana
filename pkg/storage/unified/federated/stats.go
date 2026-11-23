@@ -6,15 +6,18 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	claims "github.com/grafana/authlib/types"
 
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 )
 
 // folderBatchSize caps how many folder UIDs are bound into a single IN (...)
@@ -32,7 +35,8 @@ const (
 )
 
 // LegacyCountedResources is guarded by a test: once one of these gets a migration
-// registered, legacyTableIsStale has to read the migration status instead of config.
+// registered, it needs an entry in migrationLogIDs so legacyTableIsStale reads the
+// migration log for it.
 var LegacyCountedResources = []string{alertRuleResource, recordingRuleResource}
 
 // Read stats from legacy SQL
@@ -41,6 +45,9 @@ type LegacyStatsGetter struct {
 	Cfg *setting.Cfg
 
 	metrics *legacyStatsMetrics
+	logger  log.Logger // defaults to the folder.counts logger
+
+	unavailableLogged atomic.Bool
 }
 
 // CountError identifies which legacy resource count failed while preserving the underlying error.
@@ -54,48 +61,59 @@ func (e *CountError) Unwrap() error { return e.Err }
 
 var ErrLegacyStatsUnavailable = errors.New("legacy stats source is unavailable")
 
-// kv_store convention used to mark a resource as fully migrated for one stack: namespace
-// "unified_storage.is_migrated", key "<resource>.<group>" (the same string shape as our own
-// alertRuleResource-style constants), org_id always 0 for this entry specifically (unlike
-// every other row in these stack databases, which use 1).
-const (
-	migratedKVNamespace = "unified_storage.is_migrated"
-	migratedKVValue     = "true"
-)
+// migrationLogIDs maps the resources whose legacy table can be migrated to the
+// unifiedstorage_migration_log ID that marks the migration as done. Resources absent here
+// (alert and recording rules) are not migrated yet, so their legacy table is never stale
+// because of a migration.
+var migrationLogIDs = map[string]string{
+	libraryPanelResource: libraryPanelMigration,
+}
 
 // From mode 4 on nothing writes the legacy table, so its rows are leftovers and counting
-// them would warn about resources that no longer exist. Library panels can also be
-// migrated while still in mode 1, so their successful migration log takes precedence
-// over config, as it does for the dual-writer's storage mode resolution.
-//
-// A caller with no DualWriterMode config at all (nil Cfg) falls back to a per-stack kv_store
-// marker instead -- the only signal that exists there today.
+// them would warn about resources that no longer exist. A successful migration log entry
+// marks a table stale and takes precedence over config, as it does for the dual-writer's
+// storage mode resolution. That holds for callers without config too, since they have no
+// other way to know a resource lives only in unified storage.
 func (s *LegacyStatsGetter) legacyTableIsStale(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper, resource string) (bool, error) {
-	if s.Cfg != nil {
-		if resource == libraryPanelResource {
-			exists, err := sess.IsTableExist(helper.Table(migrationLogTable))
+	if id, ok := migrationLogIDs[resource]; ok {
+		exists, err := tableExists(sess, helper, helper.Table(migrationLogTable))
+		if err != nil {
+			return false, err
+		}
+		if exists {
+			count, err := sess.Table(helper.Table(migrationLogTable)).
+				Where("migration_id = ? AND success = ?", id, true).
+				Count()
 			if err != nil {
 				return false, err
 			}
-			if exists {
-				count, err := sess.Table(helper.Table(migrationLogTable)).
-					Where("migration_id = ? AND success = ?", libraryPanelMigration, true).
-					Count()
-				if err != nil {
-					return false, err
-				}
-				if count > 0 {
-					return true, nil
-				}
+			if count > 0 {
+				return true, nil
 			}
 		}
+	}
+	if s.Cfg != nil {
 		return s.Cfg.UnifiedStorage[resource].DualWriterMode >= grafanarest.Mode4, nil
 	}
+	return false, nil
+}
 
-	count, err := sess.Table(helper.Table("kv_store")).
-		Where("org_id = 0 AND namespace = ? AND "+helper.DB.Quote("key")+" = ? AND value = ?", migratedKVNamespace, resource, migratedKVValue).
-		Count()
-	if err != nil {
+// tableExists reports whether table exists. A helper can name its tables with a schema, as
+// when one connection serves several databases, and IsTableExist would then look for a table
+// literally named "schema.table" in the connection's default schema, which never exists.
+func tableExists(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper, table string) (bool, error) {
+	schema, name, qualified := strings.Cut(table, ".")
+	if !qualified {
+		return sess.IsTableExist(table)
+	}
+	query := "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = ? AND table_name = ?"
+	args := []any{schema, name}
+	if helper.DB.GetDBType() == core.SQLITE {
+		query = "SELECT COUNT(*) FROM " + helper.DB.Quote(schema) + ".sqlite_master WHERE type = 'table' AND name = ?"
+		args = []any{name}
+	}
+	var count int64
+	if _, err := sess.SQL(query, args...).Get(&count); err != nil {
 		return false, err
 	}
 	return count > 0, nil
@@ -103,7 +121,7 @@ func (s *LegacyStatsGetter) legacyTableIsStale(sess *sqlstore.DBSession, helper 
 
 func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
 	if s.SQL == nil {
-		s.metrics.observeAll(time.Now(), ErrLegacyStatsUnavailable)
+		s.lookupFailed(ctx, in, ErrLegacyStatsUnavailable, time.Now())
 		return nil, &CountError{Resources: LegacyCountedResources, Err: ErrLegacyStatsUnavailable}
 	}
 	info, err := claims.ParseNamespace(in.Namespace)
@@ -123,12 +141,12 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 		// including a stack that is only unavailable (e.g. archived or suspended), still fails:
 		// its legacy rows can come back, so it must not be treated as empty.
 		for _, resource := range legacyResources {
-			s.metrics.skip(resource, legacySkipNamespaceDeleted)
+			s.skipped(ctx, in, "", resource, legacySkipNamespaceDeleted)
 		}
 		return &resourcepb.ResourceStatsResponse{}, nil
 	}
 	if err != nil {
-		s.metrics.observeAll(lookupStart, err)
+		s.lookupFailed(ctx, in, err, lookupStart)
 		return nil, &CountError{Resources: LegacyCountedResources, Err: err}
 	}
 
@@ -147,7 +165,7 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 				}
 				start := time.Now()
 				c, err := sess.Table(tableName).Where(where, args...).Count()
-				s.metrics.observe(r, start, err)
+				s.accessed(ctx, in, helper.Server, r, start, err)
 				return c, err
 			}
 
@@ -183,7 +201,7 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 			start := time.Now()
 			stale, err := s.legacyTableIsStale(sess, helper, configKey)
 			if err != nil {
-				s.metrics.observe(name, start, err)
+				s.accessed(ctx, in, helper.Server, name, start, err)
 				return false, &CountError{Resources: []string{name}, Err: err}
 			}
 			return stale, nil
@@ -204,7 +222,7 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 			return err
 		}
 		if alertRulesStale {
-			s.metrics.skip(legacyAlertRules, legacySkipMigrated)
+			s.skipped(ctx, in, helper.Server, legacyAlertRules, legacySkipMigrated)
 		} else {
 			err = fn("alert_rule", "namespace_uid", group, legacyAlertRules, "(record IS NULL OR record = '')")
 			if err != nil {
@@ -217,7 +235,7 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 			return err
 		}
 		if recordingRulesStale {
-			s.metrics.skip(legacyRecordingRules, legacySkipMigrated)
+			s.skipped(ctx, in, helper.Server, legacyRecordingRules, legacySkipMigrated)
 		} else {
 			err = fn("alert_rule", "namespace_uid", group, legacyRecordingRules, "(record IS NOT NULL AND record != '')")
 			if err != nil {
@@ -231,7 +249,7 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 			return err
 		}
 		if libraryPanelsStale {
-			s.metrics.skip(legacyLibraryElements, legacySkipMigrated)
+			s.skipped(ctx, in, helper.Server, legacyLibraryElements, legacySkipMigrated)
 		} else {
 			err = fn("library_element", "folder_uid", group, legacyLibraryElements, "")
 			if err != nil {
@@ -242,6 +260,85 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 	})
 
 	return rsp, err
+}
+
+type callerKey struct{}
+
+// WithCaller names who asked for a folder count, so its log lines can say so. The value only
+// travels in-process.
+func WithCaller(ctx context.Context, caller string) context.Context {
+	return context.WithValue(ctx, callerKey{}, caller)
+}
+
+// CallerFrom returns the caller set by WithCaller, or an empty string.
+func CallerFrom(ctx context.Context) string {
+	caller, _ := ctx.Value(callerKey{}).(string)
+	return caller
+}
+
+// countsLogger is the default logger of the folder count paths.
+var countsLogger = log.New("folder.counts")
+
+// log returns the logger carrying the request's trace context.
+func (s *LegacyStatsGetter) log(ctx context.Context) log.Logger {
+	if s.logger != nil {
+		return s.logger.FromContext(ctx)
+	}
+	return countsLogger.FromContext(ctx)
+}
+
+// logFields are the fields shared by every folder count log line. A request can carry many
+// folders, so only the first is named.
+func logFields(ctx context.Context, in *resourcepb.ResourceStatsRequest, server, resource string) []any {
+	fields := []any{"namespace", in.Namespace, "folderCount", len(in.Folder), "resource", resource}
+	if caller := CallerFrom(ctx); caller != "" {
+		fields = append(fields, "caller", caller)
+	}
+	if len(in.Folder) > 0 {
+		fields = append(fields, "folder", in.Folder[0])
+	}
+	if server != "" {
+		fields = append(fields, "dbServer", server)
+	}
+	return fields
+}
+
+// accessed records the metric and the log line for one legacy database query. A caller that went
+// away is not a failure, so it only logs at debug level.
+func (s *LegacyStatsGetter) accessed(ctx context.Context, in *resourcepb.ResourceStatsRequest, server, resource string, start time.Time, err error) {
+	s.metrics.observe(resource, start, err)
+	fields := append(logFields(ctx, in, server, resource), "duration", time.Since(start), "outcome", legacyOutcome(err))
+	switch {
+	case err == nil:
+		s.log(ctx).Debug("Counted legacy resources", fields...)
+	case errors.Is(err, context.Canceled):
+		s.log(ctx).Debug("Legacy count canceled", append(fields, "error", err)...)
+	default:
+		s.log(ctx).Error("Legacy count failed", append(fields, "error", err)...)
+	}
+}
+
+// skipped records the metric and the log line for a legacy count that was not run.
+func (s *LegacyStatsGetter) skipped(ctx context.Context, in *resourcepb.ResourceStatsRequest, server, resource, reason string) {
+	s.metrics.skip(resource, reason)
+	s.log(ctx).Debug("Skipped legacy count", append(logFields(ctx, in, server, resource), "reason", reason)...)
+}
+
+// lookupFailed records a failure to reach the legacy database before any resource is counted.
+func (s *LegacyStatsGetter) lookupFailed(ctx context.Context, in *resourcepb.ResourceStatsRequest, err error, start time.Time) {
+	s.metrics.observeAll(start, err)
+	fields := append(logFields(ctx, in, "", "all"), "duration", time.Since(start), "outcome", legacyOutcome(err), "error", err)
+	// A missing legacy source is a configuration state that repeats on every request, so only
+	// its first occurrence is an error; the outcome metric still counts each one.
+	if errors.Is(err, ErrLegacyStatsUnavailable) && s.unavailableLogged.Swap(true) {
+		s.log(ctx).Debug("Legacy count source still unavailable", fields...)
+		return
+	}
+	if errors.Is(err, context.Canceled) {
+		s.log(ctx).Debug("Legacy database lookup canceled", fields...)
+		return
+	}
+	s.log(ctx).Error("Legacy database lookup failed", fields...)
 }
 
 // folderSet returns in.Folder deduped, with empty entries dropped. Returns

@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -58,9 +59,10 @@ func seedGrant(t *testing.T, sql db.DB, name string, orgID, userID int64, permis
 
 func TestIntegrationGetUserPermissionsSources(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
-	for _, enterprise := range []bool{false, true} {
+	for _, mode := range []string{"oss", "enterprise", "standalone"} {
 		for _, cached := range []bool{false, true} {
-			t.Run(fmt.Sprintf("enterprise=%t/cache=%t", enterprise, cached), func(t *testing.T) {
+			t.Run(fmt.Sprintf("%s/cache=%t", mode, cached), func(t *testing.T) {
+				enterprise := mode != "oss"
 				sql := db.NewTestStore(t)
 				catalog := legacypermissions.NewRoleCatalog()
 				catalog.Replace(map[string][]accesscontrol.Permission{"Viewer": {{Action: "users:read", Scope: "users:*"}}})
@@ -69,6 +71,10 @@ func TestIntegrationGetUserPermissionsSources(t *testing.T) {
 				loader := legacypermissions.NewLoader(sql, catalog, resolver, localcache.New(0, 0),
 					loaderConfig(cached), featuremgmt.WithFeatures(), &enforcementLicense{enabled: enterprise}, nil,
 				)
+				if mode == "standalone" {
+					loader = legacypermissions.NewEnforcedLoader(legacysql.NewDatabaseProvider(sql), resolver,
+						localcache.New(0, 0), loaderConfig(cached), featuremgmt.WithFeatures(), nil, nil)
+				}
 				seedGrant(t, sql, "managed:direct", 1, 7, accesscontrol.Permission{Action: "folders:view", Scope: "folders:uid:one"})
 				seedGrant(t, sql, "custom:direct", 1, 7, accesscontrol.Permission{Action: "users:create"})
 				seedGrant(t, sql, "extsvc:global", 0, 7, accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:global"})
