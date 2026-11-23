@@ -15,7 +15,7 @@ describe('callDataSourcePluginProxy', () => {
     mockStableCallDataSourcePluginProxy.mockResolvedValue({});
   });
 
-  it('should prefer the stable export over the unstable one', async () => {
+  it('should prefer the stable export', async () => {
     const result = await callDataSourcePluginProxy({
       pluginId: 'grafana-testdata-datasource',
       uid: 'tempo-dev',
