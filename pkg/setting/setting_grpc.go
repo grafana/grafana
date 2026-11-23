@@ -2,6 +2,7 @@ package setting
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"io/fs"
 	"os"
@@ -36,9 +37,10 @@ type GRPCServerSettings struct {
 	ReportGRPCCodesInInstrumentationLabelEnabled bool
 
 	// Internal fields
-	useTLS   bool
-	certFile string
-	keyFile  string
+	clientCAFile string
+	useTLS       bool
+	certFile     string
+	keyFile      string
 }
 
 func gRPCServerSettingsError(msg string, args ...interface{}) error {
@@ -55,6 +57,9 @@ func (c *GRPCServerSettings) Process() error {
 }
 
 func (c *GRPCServerSettings) processTLSConfig() error {
+	if !c.useTLS && c.clientCAFile != "" {
+		return gRPCServerSettingsError("client_ca_file requires use_tls")
+	}
 	if !c.useTLS {
 		return nil
 	}
@@ -65,6 +70,18 @@ func (c *GRPCServerSettings) processTLSConfig() error {
 	c.TLSConfig = &tls.Config{
 		Certificates: []tls.Certificate{serverCert},
 		ClientAuth:   tls.NoClientCert,
+	}
+	if c.clientCAFile != "" {
+		pem, err := os.ReadFile(c.clientCAFile)
+		if err != nil {
+			return fmt.Errorf("grpc client CA: %w", err)
+		}
+		pool := x509.NewCertPool()
+		if !pool.AppendCertsFromPEM(pem) {
+			return gRPCServerSettingsError("invalid client CA")
+		}
+		c.TLSConfig.ClientCAs = pool
+		c.TLSConfig.ClientAuth = tls.VerifyClientCertIfGiven
 	}
 	return nil
 }
@@ -119,6 +136,7 @@ func readGRPCServerSettings(cfg *Cfg, iniFile *ini.File) error {
 
 	cfg.GRPCServer.Enabled = server.Key("enabled").MustBool(false)
 
+	cfg.GRPCServer.clientCAFile = server.Key("client_ca_file").String()
 	cfg.GRPCServer.useTLS = server.Key("use_tls").MustBool(false)
 	cfg.GRPCServer.certFile = server.Key("cert_file").String()
 	cfg.GRPCServer.keyFile = server.Key("cert_key").String()
