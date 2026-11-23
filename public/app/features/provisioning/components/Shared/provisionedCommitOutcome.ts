@@ -3,7 +3,7 @@ import { locationService } from '@grafana/runtime';
 import { type RepositoryUrLs, type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { type RepoType } from 'app/features/provisioning/Wizard/types';
 
-import { COMMIT_OUTCOME_PARAM } from '../../constants';
+import { COMMIT_OUTCOME_STORAGE_KEY } from '../../constants';
 import { isValidRepoType } from '../../guards';
 import { appendPullRequestTitleParam } from '../../utils/pullRequestTitle';
 import { isResourceKindKey, type ResourceKindKey } from '../../utils/resourceKinds';
@@ -78,7 +78,7 @@ export function isDirectCommit({ branch, configuredBranch }: ProvisionedCommitOu
   return !branch || branch === configuredBranch;
 }
 
-export interface CommitOutcomeParam {
+export interface StoredCommitOutcome {
   outcome: ProvisionedCommitOutcome;
   kindKey?: ResourceKindKey;
   resourceName?: string;
@@ -86,15 +86,19 @@ export interface CommitOutcomeParam {
 
 const COMMIT_ACTIONS: CommitAction[] = ['create', 'update', 'delete', 'move'];
 
-export function setCommitOutcomeParam({ outcome, kindKey, resourceName }: CommitOutcomeParam) {
-  locationService.partial({ [COMMIT_OUTCOME_PARAM]: JSON.stringify({ ...outcome, kindKey, resourceName }) }, true);
+export function storeCommitOutcome({ outcome, kindKey, resourceName }: StoredCommitOutcome) {
+  const path = locationService.getLocation().pathname;
+  window.sessionStorage.setItem(
+    COMMIT_OUTCOME_STORAGE_KEY,
+    JSON.stringify({ ...outcome, kindKey, resourceName, path })
+  );
 }
 
-export function clearCommitOutcomeParam() {
-  locationService.partial({ [COMMIT_OUTCOME_PARAM]: null }, true);
+export function clearStoredCommitOutcome() {
+  window.sessionStorage.removeItem(COMMIT_OUTCOME_STORAGE_KEY);
 }
 
-export function parseCommitOutcomeParam(raw: string): CommitOutcomeParam | undefined {
+export function parseStoredCommitOutcome(raw: string, pathname: string): StoredCommitOutcome | undefined {
   let value: unknown;
   try {
     value = JSON.parse(raw);
@@ -114,7 +118,7 @@ export function parseCommitOutcomeParam(raw: string): CommitOutcomeParam | undef
     return field ? textUtil.sanitizeUrl(field) : undefined;
   };
   const action = COMMIT_ACTIONS.find((a) => a === text('action'));
-  if (!action) {
+  if (!action || text('path') !== pathname) {
     return undefined;
   }
   const repoType = text('repoType');

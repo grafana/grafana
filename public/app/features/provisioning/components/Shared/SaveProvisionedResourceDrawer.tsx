@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import { customAlphabet } from 'nanoid';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -50,9 +51,9 @@ import { ResourceEditFormSharedFields } from './ResourceEditFormSharedFields';
 import {
   type ProvisionedCommitOutcome,
   buildCommitOutcome,
-  clearCommitOutcomeParam,
-  parseCommitOutcomeParam,
-  setCommitOutcomeParam,
+  clearStoredCommitOutcome,
+  parseStoredCommitOutcome,
+  storeCommitOutcome,
 } from './provisionedCommitOutcome';
 
 /** Commit action handled by this drawer. */
@@ -352,15 +353,22 @@ function getDrawerTitle(isDelete: boolean) {
     : t('provisioning.save-resource.drawer-title-save', 'Save provisioned resource');
 }
 
-export function CommitOutcomeDrawer({ param, onDismiss }: { param: string; onDismiss: () => void }) {
-  const parsed = useMemo(() => parseCommitOutcomeParam(param), [param]);
+export function CommitOutcomeDrawer({ stored, onDismiss }: { stored: string; onDismiss: () => void }) {
+  const { pathname } = useLocation();
+  const parsed = useMemo(() => parseStoredCommitOutcome(stored, pathname), [stored, pathname]);
+  const dismiss = () => {
+    clearStoredCommitOutcome();
+    onDismiss();
+  };
+  useEffect(() => {
+    if (!parsed) {
+      clearStoredCommitOutcome();
+      onDismiss();
+    }
+  }, [parsed, onDismiss]);
   if (!parsed) {
     return null;
   }
-  const dismiss = () => {
-    clearCommitOutcomeParam();
-    onDismiss();
-  };
   return (
     <Drawer
       size="sm"
@@ -431,6 +439,7 @@ function ResourceDrawerContent({
   const isNew = action === 'create';
   const isDelete = action === 'delete';
   const [outcome, setOutcome] = useState<ProvisionedCommitOutcome | undefined>(undefined);
+  useEffect(() => (outcome ? clearStoredCommitOutcome : undefined), [outcome]);
   const [selectedRepository, setSelectedRepository] = useState(repositoryName);
 
   // A new resource needs a name; generate one once for the lifetime of the drawer as a fallback.
@@ -469,16 +478,9 @@ function ResourceDrawerContent({
 
   const drawerTitle = getDrawerTitle(isDelete);
 
-  const dismiss = () => {
-    if (outcome) {
-      clearCommitOutcomeParam();
-    }
-    onDismiss?.();
-  };
-
   const onCommitted = (committed: ProvisionedCommitOutcome) => {
     setOutcome(committed);
-    setCommitOutcomeParam({ outcome: committed, kindKey, resourceName });
+    storeCommitOutcome({ outcome: committed, kindKey, resourceName });
   };
 
   const initialValues = useMemo<BaseProvisionedFormData | undefined>(() => {
@@ -509,10 +511,10 @@ function ResourceDrawerContent({
           </Text>
         )
       }
-      onClose={dismiss}
+      onClose={() => onDismiss?.()}
     >
       {outcome ? (
-        <SuccessContent kindKey={kindKey} resourceName={resourceName} outcome={outcome} onDismiss={dismiss} />
+        <SuccessContent kindKey={kindKey} resourceName={resourceName} outcome={outcome} onDismiss={onDismiss} />
       ) : isNew && !selectedRepository ? (
         <RepositoryStep onSelect={setSelectedRepository} onDismiss={onDismiss} />
       ) : (
