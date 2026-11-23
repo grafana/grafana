@@ -23,11 +23,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/inhibition_rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -48,7 +48,7 @@ type AlertingStore interface {
 type RuleAccessControlService interface {
 	HasAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) (bool, error)
 	AuthorizeAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
-	AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error
+	AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *ngrulesvc.GroupDelta) error
 	AuthorizeNotificationSettings(ctx context.Context, user identity.Requester, receivers []accesscontrol.ReceiverRef) error
 	AuthorizeDatasourceAccessForRule(ctx context.Context, user identity.Requester, rule *models.AlertRule) error
 	AuthorizeDatasourceAccessForRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
@@ -118,6 +118,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		api.MultiOrgAlertmanager,
 		accesscontrol.NewAlertmanagerImportsAccess(api.AccessControl),
 		api.ExternalRulerSync,
+		m.ConvertRequests,
 	)
 
 	// Register endpoints for proxying to Alertmanager-compatible backends.

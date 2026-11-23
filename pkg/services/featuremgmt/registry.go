@@ -112,6 +112,16 @@ var (
 			Generate:        Generate{Go: true},
 		},
 		{
+			Name:            "router.registerCoreAPIs",
+			Description:     "register the wired-in core APIs with the router",
+			Stage:           FeatureStageExperimental,
+			HideFromDocs:    true,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true,
+			Expression:      "false",
+			Generate:        Generate{Go: true},
+		},
+		{
 			Name:            "grafana.useRouterMiddleware",
 			Description:     "intercept /apis/... and /openapi/v3/... requests in middleware.",
 			Stage:           FeatureStageExperimental,
@@ -244,15 +254,6 @@ var (
 			Owner:           grafanaAppPlatformSquad,
 			Expression:      "false",
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true, React: true},
-		},
-		{
-			Name:            "provisioningFolderMetadata",
-			Description:     "Allow setting folder metadata for provisioned folders",
-			Stage:           FeatureStageGeneralAvailability,
-			RequiresRestart: true,
-			Owner:           grafanaAppPlatformSquad,
-			Expression:      "true",
-			Generate:        Generate{LegacyGo: true, React: true},
 		},
 		{
 			Name:            "provisioningExport",
@@ -397,6 +398,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true},
+		},
+		{
+			Name:         "folder.pendingDeletionWrites",
+			Description:  "Record durable pending folder deletions before sending folder deletes to storage",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSearchAndStorageSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
 		},
 		{
 			Name:         "folder.asyncCascadeDeleteThroughController",
@@ -728,7 +738,7 @@ var (
 		{
 			Name:        "dashboardUndoRedo",
 			Description: "Enables undo/redo in dynamic dashboards",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
@@ -1038,14 +1048,6 @@ var (
 			Expression:  "true",                                                      // enabled by default
 		},
 		{
-			Name:        "newSavedQueriesExperience",
-			Description: "Enables the new Saved queries (query library) modal experience",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaSharingSquad,
-			Generate:    Generate{LegacyFrontend: true, React: true},
-			Expression:  "true", // enabled by default
-		},
-		{
 			Name:        "dashboardLibrary",
 			Description: "Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page",
 			Stage:       FeatureStageExperimental,
@@ -1080,7 +1082,7 @@ var (
 		{
 			Name:        "grafana.customDashboardTemplates",
 			Description: "Enables custom dashboard templates for enterprise",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaSharingSquad,
 			Generate:    Generate{Go: true, React: true},
 			Expression:  "false",
@@ -1492,6 +1494,15 @@ var (
 			Generate:     Generate{Go: true, LegacyFrontend: true, React: true},
 		},
 		{
+			Name:         "alerting.ruleQualityTeamPolicies",
+			Description:  "Enable team-scoped alert rule quality policies, one per team, alongside the org policy.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:         "alerting.ruleQualityFix",
 			Description:  "Enable fixing alert rule quality issues with Grafana Assistant on the alert quality page.",
 			Stage:        FeatureStageExperimental,
@@ -1541,6 +1552,15 @@ var (
 			Generate:    Generate{Go: true},
 			Owner:       identityAccessTeam,
 			Expression:  "false",
+		},
+		{
+			Name:         "datasources.rejectProvisionedLBACRules",
+			Description:  "Reject embedded LBAC rules in data source provisioning files",
+			HideFromDocs: true,
+			Stage:        FeatureStageGeneralAvailability,
+			Generate:     Generate{Go: true},
+			Owner:        identityAccessTeam,
+			Expression:   "true",
 		},
 		{
 			Name:        "datasources.teamHttpHeadersWriteGuard",
@@ -1628,15 +1648,6 @@ var (
 			RequiresRestart: true,
 			Expression:      "true",
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:         "useScopesNavigationEndpoint",
-			Description:  "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
-			Stage:        FeatureStagePublicPreview,
-			Owner:        grafanaOperatorExperienceSquad,
-			Generate:     Generate{LegacyFrontend: true, React: true},
-			HideFromDocs: true,
-			Expression:   "true",
 		},
 		{
 			Name:         "scopeSearchAllLevels",
@@ -2070,6 +2081,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "dataviz.reverseColorScheme",
+			Description: "Enable the option to reverse by value color schemes",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDatavizSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "jaegerEnableGrpcEndpoint",
 			Description: "Enable querying trace data through Jaeger's gRPC endpoint (HTTP)",
 			Stage:       FeatureStageExperimental,
@@ -2183,7 +2202,7 @@ var (
 		{
 			Name:         "plugins.useMTPlugins",
 			Description:  "Enables plugins decoupling from bootdata",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaCatalogSquad,
 			Generate:     Generate{Go: true, React: true},
 			Expression:   "false",
@@ -2279,10 +2298,10 @@ var (
 		{
 			Name:        "queryEditorNext",
 			Description: "Enables next generation query editor experience",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaDataProSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "queryeditor.coauthoringUi",
@@ -2574,12 +2593,13 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "flameGraph.tableNg",
-			Description: "Renders the flame graph's top table using TableNG instead of the legacy Table",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaObservabilityTracesAndProfilingSquad,
-			Generate:    Generate{React: true},
-			Expression:  "false",
+			Name:         "flameGraph.tableNg",
+			Description:  "Renders the flame graph's top table using TableNG instead of the legacy Table",
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			HideFromDocs: true,
+			Generate:     Generate{React: true},
+			Expression:   "true",
 		},
 		{
 			Name:        "inlineLogDetailsNoScrolls",
@@ -2894,7 +2914,7 @@ var (
 			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
-			Expression:   "true",
+			Expression:   "false",
 			Generate:     Generate{React: true},
 		},
 		{
@@ -2931,6 +2951,14 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
+			Name:        "grafana.cmdkHybridSearchSkipRerank",
+			Description: "Skips reranking in command palette hybrid dashboard search",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendNavigation,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:        "grafana.cmdkDashboardTags",
 			Description: "Shows dashboard tags in the command palette",
 			Stage:       FeatureStageExperimental,
@@ -2940,7 +2968,7 @@ var (
 		},
 		{
 			Name:        "assistant.fullscreenWorkspace",
-			Description: "Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar",
+			Description: "Shows the Grafana Assistant Chat and Workspace buttons in the top bar, and Exit Workspace on the Assistant Workspace page",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaFrontendPlatformSquad,
 			Expression:  "false",
@@ -2962,14 +2990,6 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true},
-		},
-		{
-			Name:        "grafana.queryVarEditorRedesign",
-			Description: "Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaDashboardsSquad,
-			Expression:  "true",
-			Generate:    Generate{React: true},
 		},
 		{
 			Name:         "table.paginationPageSize",
@@ -3010,10 +3030,10 @@ var (
 		{
 			Name:         "table.inspectDataTableNG",
 			Description:  "Enables TableNG in the panel inspector's Data tab, replacing the legacy Table (TableRT)",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaDatavizSquad,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true",
 			Generate:     Generate{React: true},
 		},
 		{
@@ -3179,6 +3199,14 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
+			Name:        "assistant.dashboardPlanEditing",
+			Description: "Lets users rearrange and edit an assistant dashboard plan in its preview before it is built",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:         "features.legacyOverrideLookupBypass",
 			Description:  "Skips checking for flag overrides.",
 			Stage:        FeatureStageExperimental,
@@ -3203,6 +3231,14 @@ var (
 			Owner:       grafanaFrontendNavigation,
 			Expression:  "false",
 			Generate:    Generate{Go: true, React: true},
+		},
+		{
+			Name:        "grafana.navigationAdminSubNav",
+			Description: "Shows Administration as a single row in the mega menu, with its destinations in the section nav",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendNavigation,
+			Expression:  "false",
+			Generate:    Generate{React: true},
 		},
 		{
 			Name:        "grafana.exploreMetricsSidebar",
@@ -3280,12 +3316,13 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "rawPrometheus.tableNg",
-			Description: "Renders the raw Prometheus query results table using TableNG instead of the legacy Table",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaDataSourcesPlugins,
-			Generate:    Generate{React: true},
-			Expression:  "false",
+			Name:         "rawPrometheus.tableNg",
+			Description:  "Renders the raw Prometheus query results table using TableNG instead of the legacy Table",
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        grafanaDataSourcesPlugins,
+			HideFromDocs: true,
+			Generate:     Generate{React: true},
+			Expression:   "true",
 		},
 		{
 			Name:         "datasources.queryGateway",
@@ -3314,13 +3351,12 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
-			Name:         "grafana.dashboardsAutoHeightPanels",
-			Description:  "Enables the auto-height feature for dashboard panels",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDashboardsSquad,
-			Expression:   "false",
-			Generate:     Generate{React: true},
-			HideFromDocs: true,
+			Name:        "grafana.dashboardsAutoHeightPanels",
+			Description: "Enables the auto-height feature for dashboard panels",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
 		},
 		{
 			Name:        "grafana.dashboardAutoGridDefault",
@@ -3400,6 +3436,22 @@ var (
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{React: true},
 			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "grafana.extensionSidebarPlacements",
+			Description: "Lets Grafana Assistant dock the extension sidebar on the left or at the bottom, or pop it up, from the Chat button's menu, its shortcuts and its own layout menu. Needs grafana.extensionSidebarFloating",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "grafana.megaMenuPeekAndDock",
+			Description: "Opens the mega menu over the page while the pointer rests on its toggle, and docks it when the toggle is clicked on wide screens. The toggle in the docked menu's header closes it, in place of the footer's dock button",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaFrontendNavigation,
 			Expression:  "false",
 		},
 		{
@@ -3497,6 +3549,42 @@ var (
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
 			Generate:    Generate{React: true},
+		},
+		{
+			Name:         "datasources.gatewayRateLimits",
+			Description:  "Enable support for query gateway rate limits",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataSourcesPlugins,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true, React: true},
+		},
+		{
+			Name:         "plugins.disableMTPluginsFallback",
+			Description:  "Disables the ST fallback for multi-tenant plugin api calls",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			Generate:     Generate{React: true},
+			Expression:   "false",
+			HideFromDocs: true,
+		},
+		{
+			Name:         "grafana.logsInfiniteScrollTop",
+			Description:  "Enable infinite scroll for logs when scrolling top",
+			Stage:        FeatureStagePublicPreview,
+			Owner:        grafanaObservabilityLogsSquad,
+			Generate:     Generate{React: true},
+			Expression:   "false",
+			HideFromDocs: true,
+		},
+		{
+			Name:         "grafana.dashboardQuestions",
+			Description:  "Lets editors save questions on dashboards, rows, and tabs, which plugins offer to viewers in the dashboard controls",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
 		},
 
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!

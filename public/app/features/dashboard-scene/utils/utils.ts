@@ -183,6 +183,12 @@ export function getCurrentValueForOldIntervalModel(variable: IntervalVariableMod
   return intervals[0];
 }
 
+/** Whether the object is in a dashboard that is saved with the v2 schema */
+export function isInV2Dashboard(sceneObject: SceneObject): boolean {
+  const root = sceneObject.getRoot();
+  return root instanceof DashboardScene && root.isV2();
+}
+
 export function getDashboardSceneFor(sceneObject: SceneObject): DashboardScene {
   const root = sceneObject.getRoot();
 

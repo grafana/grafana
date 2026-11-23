@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -12,7 +13,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
@@ -33,7 +33,7 @@ func TestValidateOnCreate(t *testing.T) {
 			AuthID:     "cn=test",
 		},
 	}
-	adminCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: types.TypeUser, OrgRole: identity.RoleAdmin})
+	adminCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: types.TypeUser, OrgRole: types.RoleAdmin})
 	someErr := errors.New("boom")
 
 	tests := []struct {
@@ -97,7 +97,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			},
 		}
 	}
-	adminCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: types.TypeUser, OrgRole: identity.RoleAdmin})
+	adminCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: types.TypeUser, OrgRole: types.RoleAdmin})
 	old := newObj("user-1", "ldap", "cn=old")
 
 	t.Run("authID can change", func(t *testing.T) {

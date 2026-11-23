@@ -117,6 +117,42 @@ function captureCreate(name: string | null = 'nb2'): CapturedRequest {
   return captured;
 }
 
+describe('plugin attribution', () => {
+  it('passes the origin through successful creation and addition writes', async () => {
+    captureCreate();
+    captureWrite();
+    const cells = [{ kind: 'markdown' as const, text: 'Investigation notes' }];
+    await createNotebookWithContent(
+      { title: 'Investigation' },
+      cells,
+      'plugin',
+      'assistant',
+      false,
+      false,
+      'grafana-assistant-app'
+    );
+    expect(NotebookAnalytics.created).toHaveBeenCalledWith(
+      'nb2',
+      'plugin',
+      1,
+      undefined,
+      false,
+      false,
+      'grafana-assistant-app'
+    );
+    await addToExistingNotebook('nb1', cells, 'plugin', 'assistant', false, false, 'grafana-assistant-app');
+    expect(NotebookAnalytics.cellAddedFromAddToNotebook).toHaveBeenCalledWith(
+      'nb1',
+      'plugin',
+      0,
+      undefined,
+      false,
+      false,
+      'grafana-assistant-app'
+    );
+  });
+});
+
 describe('addToExistingNotebook', () => {
   it('writes back the fetched notebook with the panel appended', async () => {
     const captured = captureWrite();
@@ -128,7 +164,7 @@ describe('addToExistingNotebook', () => {
     );
 
     expect(added).toEqual({ uid: 'nb1', title: 'Checkout error spike' });
-    expect(Object.keys(captured.body!.spec!.elements)).toEqual(['p95-latency']);
+    expect(Object.keys(captured.body!.spec!.elements)).toEqual([expect.stringMatching(/^p95-latency-[a-z0-9]{6}$/)]);
     expect(captured.body!.spec!.layout.spec.cells).toHaveLength(1);
     // Everything the notebook already had survives the round trip.
     expect(captured.body!.spec!.tags).toEqual(['incident']);
@@ -210,7 +246,9 @@ describe('addToExistingNotebook', () => {
       NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL,
       0,
       { panel: panel('p95 latency'), isLibraryPanel: false },
-      false
+      false,
+      false,
+      undefined
     );
   });
 
@@ -230,7 +268,9 @@ describe('addToExistingNotebook', () => {
       NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL,
       0,
       { panel: panel('p95 latency'), isLibraryPanel: true },
-      false
+      false,
+      false,
+      undefined
     );
   });
 
@@ -255,7 +295,9 @@ describe('addToExistingNotebook', () => {
       NOTEBOOK_ENTRY_POINT.PLUGIN,
       0,
       undefined,
-      false
+      false,
+      false,
+      undefined
     );
     expect(NotebookAnalytics.cellAddedFromAddToNotebook).toHaveBeenNthCalledWith(
       2,
@@ -263,7 +305,9 @@ describe('addToExistingNotebook', () => {
       NOTEBOOK_ENTRY_POINT.PLUGIN,
       1,
       { panel: panel('p95 latency'), isLibraryPanel: false },
-      false
+      false,
+      false,
+      undefined
     );
   });
 
@@ -284,7 +328,38 @@ describe('addToExistingNotebook', () => {
       NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL,
       0,
       { panel: panel('p95 latency'), isLibraryPanel: false },
+      true,
+      false,
+      undefined
+    );
+  });
+
+  // The text typed in the modal rides along as the first cell. Reporting it as a markdown cell of its own
+  // would read as an unrelated event, so it is a flag on the cells it came with.
+  it('reports typed text as a flag on the panel instead of as a cell of its own', async () => {
+    captureWrite();
+
+    await addToExistingNotebook(
+      'nb1',
+      [
+        { kind: 'markdown', text: 'Latency spiked after the deploy' },
+        { kind: 'panel', panel: panel('p95 latency'), isLibraryPanel: false },
+      ],
+      NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL,
+      'user',
+      false,
       true
+    );
+
+    expect(NotebookAnalytics.cellAddedFromAddToNotebook).toHaveBeenCalledTimes(1);
+    expect(NotebookAnalytics.cellAddedFromAddToNotebook).toHaveBeenCalledWith(
+      'nb1',
+      NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL,
+      1,
+      { panel: panel('p95 latency'), isLibraryPanel: false },
+      false,
+      true,
+      undefined
     );
   });
 
@@ -321,7 +396,7 @@ describe('createNotebookWithContent', () => {
     expect(added).toEqual({ uid: 'nb2', title: 'Checkout latency investigation' });
     expect(captured.body!.spec).toMatchObject({ title: 'Checkout latency investigation', tags: [] });
     expect(captured.body!.spec).not.toHaveProperty('description');
-    expect(Object.keys(captured.body!.spec!.elements)).toEqual(['p95-latency']);
+    expect(Object.keys(captured.body!.spec!.elements)).toEqual([expect.stringMatching(/^p95-latency-[a-z0-9]{6}$/)]);
   });
 
   it('attributes the panel to the source given', async () => {
@@ -383,7 +458,9 @@ describe('createNotebookWithContent', () => {
       'plugin',
       2,
       { panel: panel('Chart'), isLibraryPanel: true },
-      false
+      false,
+      false,
+      undefined
     );
   });
 
@@ -399,7 +476,7 @@ describe('createNotebookWithContent', () => {
       'plugin'
     );
 
-    expect(NotebookAnalytics.created).toHaveBeenCalledWith('nb2', 'plugin', 2, undefined, false);
+    expect(NotebookAnalytics.created).toHaveBeenCalledWith('nb2', 'plugin', 2, undefined, false, false, undefined);
   });
 
   it('passes on whether the modal locked the time range', async () => {
@@ -410,7 +487,8 @@ describe('createNotebookWithContent', () => {
       [{ kind: 'panel', panel: panel('Chart'), isLibraryPanel: false }],
       'explore',
       'user',
-      true
+      true,
+      undefined
     );
 
     expect(NotebookAnalytics.created).toHaveBeenCalledWith(
@@ -418,7 +496,35 @@ describe('createNotebookWithContent', () => {
       'explore',
       1,
       { panel: panel('Chart'), isLibraryPanel: false },
+      true,
+      false,
+      undefined
+    );
+  });
+
+  it('passes on that the person typed text, which counts toward the cell count', async () => {
+    captureCreate();
+
+    await createNotebookWithContent(
+      { title: 'Untitled' },
+      [
+        { kind: 'markdown', text: 'Latency spiked after the deploy' },
+        { kind: 'panel', panel: panel('Chart'), isLibraryPanel: false },
+      ],
+      'explore',
+      'user',
+      false,
       true
+    );
+
+    expect(NotebookAnalytics.created).toHaveBeenCalledWith(
+      'nb2',
+      'explore',
+      2,
+      { panel: panel('Chart'), isLibraryPanel: false },
+      false,
+      true,
+      undefined
     );
   });
 
@@ -437,7 +543,9 @@ describe('createNotebookWithContent', () => {
       'explore',
       1,
       { panel: panel('Chart'), isLibraryPanel: false },
-      false
+      false,
+      false,
+      undefined
     );
     // The cell arrived as part of the creation, and `created` already carries the cell count.
     expect(NotebookAnalytics.cellAddedFromAddToNotebook).not.toHaveBeenCalled();

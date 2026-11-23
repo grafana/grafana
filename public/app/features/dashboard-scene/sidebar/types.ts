@@ -36,6 +36,7 @@ export interface DashboardSidebarLike extends SceneObject<DashboardSidebarState>
   disableSelection(): void;
   clearSelection(noEvent?: boolean): void;
   selectObject(obj: SceneObject, options?: ElementSelectionOnSelectOptions): void;
+  openElementSettings(obj: SceneObject): void;
   openPane(openPane: DashboardSidebarPane): void;
   closePane(reason?: PaneCloseReason): void;
   refreshAfterRebuild(): void;
@@ -45,6 +46,8 @@ export interface DashboardSidebarLike extends SceneObject<DashboardSidebarState>
   redoAction(): void;
   redoLastAction(trigger?: string): void;
   pendingChangesHistory(): PendingChangesHistory | undefined;
+  /** Whether Undo and Redo step through the pending changes' history while the Assistant edits them. */
+  stepsPendingChangesHistory(): boolean;
   recordCompletedEdit(action: DashboardEditActionEventPayload): void;
   clearHistory(): void;
   goBackToPrevious(): void;
@@ -82,4 +85,7 @@ export enum SidebarCategoryType {
   TabSectionAnnotationsList = 'tab-section-annotations-list',
   RowSectionAnnotations = 'dash-row-section-annotations',
   RowSectionAnnotationsList = 'dash-row-section-annotations-list',
+  DashboardQuestions = 'dashboard-questions',
+  RowQuestions = 'dash-row-questions',
+  TabQuestions = 'tab-questions',
 }

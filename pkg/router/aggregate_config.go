@@ -17,6 +17,9 @@ type aggregateTargetConfig struct {
 	PollInterval time.Duration
 	URL          string
 	Audience     string
+	// TokenNamespace is the namespace of the CAP token for discovery polls;
+	// empty means the wildcard namespace.
+	TokenNamespace string
 	// DiscoveryAuth is how the router authenticates its own discovery polls:
 	// discoveryAuthCAPToken (also the empty default), discoveryAuthBearer or
 	// discoveryAuthNone.
@@ -114,7 +117,7 @@ func splitGroupPatterns(raw string) []string {
 		return nil
 	}
 	var patterns []string
-	for _, p := range strings.Split(raw, ",") {
+	for p := range strings.SplitSeq(raw, ",") {
 		patterns = append(patterns, strings.TrimSpace(p))
 	}
 	return patterns

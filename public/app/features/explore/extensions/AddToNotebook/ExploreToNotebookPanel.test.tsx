@@ -55,7 +55,7 @@ function setup({ withDatasource = true, rawRange = { from: 'now-6h', to: 'now' }
           },
         },
       } as unknown as ExploreState,
-      user: { ...initialUserState, timeZone: 'utc' },
+      user: { ...initialUserState, timeZone: 'utc', fiscalYearStartMonth: 3 },
     },
   });
 
@@ -109,12 +109,13 @@ describe('ExploreToNotebookPanel', () => {
       from: '2026-10-05T08:00:00.000Z',
       to: '2026-10-05T09:30:00.000Z',
       timeZone: 'utc',
+      fiscalYearStartMonth: 3,
     });
   });
 
   it('captures a relative window as the picker wrote it', () => {
     const { props } = setup();
 
-    expect(props.capturedTimeRange).toEqual({ from: 'now-6h', to: 'now', timeZone: 'utc' });
+    expect(props.capturedTimeRange).toEqual({ from: 'now-6h', to: 'now', timeZone: 'utc', fiscalYearStartMonth: 3 });
   });
 });

@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { type Field, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 
@@ -18,7 +18,7 @@ interface Props {
 }
 
 export const Filter = ({ column, field, tableStyles }: Props) => {
-  const ref = useRef<HTMLButtonElement>(null);
+  const [buttonElement, setButtonElement] = useState<HTMLButtonElement | null>(null);
   const [isPopoverVisible, setPopoverVisible] = useState<boolean>(false);
   const styles = useStyles2(getStyles);
   const filterEnabled = useMemo(() => Boolean(column.filterValue), [column.filterValue]);
@@ -33,12 +33,12 @@ export const Filter = ({ column, field, tableStyles }: Props) => {
   return (
     <button
       className={cx(tableStyles.headerFilter, filterEnabled ? styles.filterIconEnabled : styles.filterIconDisabled)}
-      ref={ref}
+      ref={setButtonElement}
       type="button"
       onClick={onShowPopover}
     >
       <Icon name="filter" />
-      {isPopoverVisible && ref.current && (
+      {isPopoverVisible && buttonElement && (
         <Popover
           content={
             <FilterPopup
@@ -53,7 +53,7 @@ export const Filter = ({ column, field, tableStyles }: Props) => {
             />
           }
           placement="bottom-start"
-          referenceElement={ref.current}
+          referenceElement={buttonElement}
           show
         />
       )}

@@ -19,7 +19,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TableCellBackgroundDisplayMode } from '@grafana/schema';
-import { mockBoundingClientRect, mockClientSize } from '@grafana/test-utils';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 
 import { type PanelContext, PanelContextProvider } from '../../PanelChrome';
 import { TableCellDisplayMode } from '../types';
@@ -32,7 +32,6 @@ import { FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS, NESTED_LAST_ROW_CLASS, OVERFLOW_
 beforeAll(() => {
   // Keep offsetWidth consistent with clientWidth so delayed scrollbar measurement cannot go negative.
   mockBoundingClientRect({ width: 800, height: 600 });
-  mockClientSize({ width: 800, height: 600 });
   // Keep bounding and offset dimensions consistent with the client box for viewport measurement.
   mockBoundingClientRect({ width: 800, height: 600 });
 });
@@ -1076,6 +1075,84 @@ describe('TableNG', () => {
 
       // The nested footer value (sum of Nested B = 30) must be visible
       expect(screen.getByText('30')).toBeInTheDocument();
+    });
+
+    describe('expandAllRows across data updates', () => {
+      const makeExpandAllFrame = (keys: string[], expandAllRows = true): DataFrame =>
+        withFieldOverrides(
+          toDataFrame({
+            name: 'ExpandAll',
+            length: keys.length,
+            meta: { custom: { expandAllRows } },
+            fields: [
+              { name: 'Label', type: FieldType.string, values: keys.map((k) => `Row ${k}`), config: {} },
+              {
+                name: '__nestedFrames',
+                type: FieldType.nestedFrames,
+                values: keys.map((k) => [
+                  {
+                    meta: { custom: { stableRowKey: k, noHeader: true } },
+                    length: 1,
+                    fields: [{ name: 'Info', type: FieldType.string, values: [`nested-${k}`], config: {} }],
+                  },
+                ]),
+                config: {},
+              },
+            ],
+          })
+        );
+
+      it('expands a row that a later result adds', () => {
+        const { rerender } = render(<TableNG data={makeExpandAllFrame(['A', 'B'])} width={800} height={600} />);
+        expect(screen.getByText('nested-A')).toBeInTheDocument();
+        expect(screen.getByText('nested-B')).toBeInTheDocument();
+
+        rerender(<TableNG data={makeExpandAllFrame(['A', 'B', 'C'])} width={800} height={600} />);
+
+        expect(screen.getByText('nested-A')).toBeInTheDocument();
+        expect(screen.getByText('nested-B')).toBeInTheDocument();
+        expect(screen.getByText('nested-C')).toBeInTheDocument();
+      });
+
+      it('keeps a row the user collapsed closed when a later result adds a row', async () => {
+        const { rerender } = render(<TableNG data={makeExpandAllFrame(['A', 'B'])} width={800} height={600} />);
+
+        await user.click(screen.getAllByRole('button', { name: 'Collapse row' })[0]);
+        expect(screen.queryByText('nested-A')).not.toBeInTheDocument();
+
+        rerender(<TableNG data={makeExpandAllFrame(['A', 'B', 'C'])} width={800} height={600} />);
+
+        expect(screen.queryByText('nested-A')).not.toBeInTheDocument();
+        expect(screen.getByText('nested-B')).toBeInTheDocument();
+        expect(screen.getByText('nested-C')).toBeInTheDocument();
+      });
+
+      it('keeps a row the user collapsed closed when it leaves the result and returns', async () => {
+        const { rerender } = render(<TableNG data={makeExpandAllFrame(['A', 'B'])} width={800} height={600} />);
+
+        await user.click(screen.getAllByRole('button', { name: 'Collapse row' })[0]);
+        rerender(<TableNG data={makeExpandAllFrame(['B'])} width={800} height={600} />);
+        rerender(<TableNG data={makeExpandAllFrame(['A', 'B'])} width={800} height={600} />);
+
+        expect(screen.queryByText('nested-A')).not.toBeInTheDocument();
+        expect(screen.getByText('nested-B')).toBeInTheDocument();
+      });
+
+      it('applies a changed default to the rows the user has not toggled', async () => {
+        const { rerender } = render(<TableNG data={makeExpandAllFrame(['A', 'B'], false)} width={800} height={600} />);
+
+        await user.click(screen.getAllByRole('button', { name: 'Expand row' })[0]);
+        await user.click(screen.getAllByRole('button', { name: 'Collapse row' })[0]);
+        rerender(<TableNG data={makeExpandAllFrame(['A', 'B'], true)} width={800} height={600} />);
+
+        expect(screen.queryByText('nested-A')).not.toBeInTheDocument();
+        expect(screen.getByText('nested-B')).toBeInTheDocument();
+
+        rerender(<TableNG data={makeExpandAllFrame(['A', 'B'], false)} width={800} height={600} />);
+
+        expect(screen.queryByText('nested-A')).not.toBeInTheDocument();
+        expect(screen.queryByText('nested-B')).not.toBeInTheDocument();
+      });
     });
 
     it('preserves expanded state by stable key when row order changes on re-render', async () => {
@@ -3577,6 +3654,23 @@ describe('TableNG', () => {
 
       expect(screen.getByText('Test Title')).toBeInTheDocument();
       expect(screen.getByText('Test Title2')).toBeInTheDocument();
+    });
+
+    it('shows data links as menu items with the table refresh enabled', async () => {
+      const dataFrame = createBasicDataFrame();
+      const links: DataLink[] = [
+        { url: 'http://asdasd.com', title: 'Test Title' },
+        { url: 'http://asdasd2.com', title: 'Test Title2' },
+      ];
+
+      dataFrame.fields[0].config.links = links;
+      dataFrame.fields[0].getLinks = () => links.map(toLinkModel);
+
+      render(<TableNG data={dataFrame} width={800} height={600} tableRefreshEnabled />);
+
+      await userEvent.click(screen.getByText('A1'));
+
+      expect(screen.getByRole('menuitem', { name: 'Test Title' })).toHaveAttribute('href', 'http://asdasd.com');
     });
 
     it('does not show tooltip for a single link', async () => {

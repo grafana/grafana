@@ -33,11 +33,10 @@ import (
 
 // TODO: it does not support folders yet
 type DualReadWriter struct {
-	repo                  repository.ReaderWriter
-	parser                Parser
-	folders               *FolderManager
-	authorizer            Authorizer
-	folderMetadataEnabled bool
+	repo       repository.ReaderWriter
+	parser     Parser
+	folders    *FolderManager
+	authorizer Authorizer
 	// maxFileSize caps the bytes committed for a file; zero disables the check.
 	maxFileSize int64
 }
@@ -55,14 +54,13 @@ type DualWriteOptions struct {
 	Branch       string // Configured default branch
 }
 
-func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, authorizer Authorizer, folderMetadataEnabled bool, maxFileSize int64) *DualReadWriter {
+func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, authorizer Authorizer, maxFileSize int64) *DualReadWriter {
 	return &DualReadWriter{
-		repo:                  repo,
-		parser:                parser,
-		folders:               folders,
-		authorizer:            authorizer,
-		folderMetadataEnabled: folderMetadataEnabled,
-		maxFileSize:           maxFileSize,
+		repo:        repo,
+		parser:      parser,
+		folders:     folders,
+		authorizer:  authorizer,
+		maxFileSize: maxFileSize,
 	}
 }
 

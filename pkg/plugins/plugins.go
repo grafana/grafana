@@ -14,8 +14,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
+	authlib "github.com/grafana/authlib/types"
 	v3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -73,8 +73,6 @@ var (
 	_ backend.QueryChunkedDataHandler = (*Plugin)(nil)
 	_ backend.CallResourceHandler     = (*Plugin)(nil)
 	_ backend.StreamHandler           = (*Plugin)(nil)
-	_ backend.AdmissionHandler        = (*Plugin)(nil)
-	_ backend.ConversionHandler       = (*Plugin)(nil)
 )
 
 type AngularMeta struct {
@@ -187,11 +185,11 @@ func ReadPluginJSON(reader io.Reader) (JSONData, error) {
 
 	for _, include := range plugin.Includes {
 		if include.Role == "" {
-			include.Role = identity.RoleViewer
+			include.Role = authlib.RoleViewer
 		}
 
 		// Default to app access for app plugins
-		if plugin.Type == TypeApp && include.Role == identity.RoleViewer && include.Action == "" {
+		if plugin.Type == TypeApp && include.Role == authlib.RoleViewer && include.Action == "" {
 			include.Action = ActionAppAccess
 		}
 	}
@@ -220,17 +218,17 @@ func (d JSONData) DashboardIncludes() []*Includes {
 // Route describes a plugin route that is defined in
 // the plugin.json file for a plugin.
 type Route struct {
-	Path         string            `json:"path"`
-	Method       string            `json:"method"`
-	ReqRole      identity.RoleType `json:"reqRole"`
-	ReqAction    string            `json:"reqAction"`
-	URL          string            `json:"url"`
-	URLParams    []URLParam        `json:"urlParams"`
-	Headers      []Header          `json:"headers"`
-	AuthType     string            `json:"authType"`
-	TokenAuth    *JWTTokenAuth     `json:"tokenAuth"`
-	JwtTokenAuth *JWTTokenAuth     `json:"jwtTokenAuth"`
-	Body         json.RawMessage   `json:"body"`
+	Path         string           `json:"path"`
+	Method       string           `json:"method"`
+	ReqRole      authlib.RoleType `json:"reqRole"`
+	ReqAction    string           `json:"reqAction"`
+	URL          string           `json:"url"`
+	URLParams    []URLParam       `json:"urlParams"`
+	Headers      []Header         `json:"headers"`
+	AuthType     string           `json:"authType"`
+	TokenAuth    *JWTTokenAuth    `json:"tokenAuth"`
+	JwtTokenAuth *JWTTokenAuth    `json:"jwtTokenAuth"`
+	Body         json.RawMessage  `json:"body"`
 }
 
 // Header describes an HTTP header that is forwarded with
@@ -394,33 +392,6 @@ func (p *Plugin) RunStream(ctx context.Context, req *backend.RunStreamRequest, s
 	return pluginClient.RunStream(ctx, req, sender)
 }
 
-// ValidateAdmission implements backend.AdmissionHandler.
-func (p *Plugin) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
-	pluginClient, ok := p.Client()
-	if !ok {
-		return nil, ErrPluginUnavailable
-	}
-	return pluginClient.ValidateAdmission(ctx, req)
-}
-
-// MutateAdmission implements backend.AdmissionHandler.
-func (p *Plugin) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
-	pluginClient, ok := p.Client()
-	if !ok {
-		return nil, ErrPluginUnavailable
-	}
-	return pluginClient.MutateAdmission(ctx, req)
-}
-
-// ConvertObject implements backend.AdmissionHandler.
-func (p *Plugin) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-	pluginClient, ok := p.Client()
-	if !ok {
-		return nil, ErrPluginUnavailable
-	}
-	return pluginClient.ConvertObjects(ctx, req)
-}
-
 func (p *Plugin) File(name string) (fs.File, error) {
 	cleanPath, err := CleanRelativePath(name)
 	if err != nil {
@@ -484,8 +455,6 @@ type PluginClient interface {
 	backend.CollectMetricsHandler
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
-	backend.AdmissionHandler
-	backend.ConversionHandler
 	backend.StreamHandler
 }
 

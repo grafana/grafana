@@ -6,11 +6,10 @@ import (
 	"testing"
 
 	"github.com/go-ldap/ldap/v3"
+	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 const (
@@ -528,7 +527,7 @@ func TestServer_Users(t *testing.T) {
 			require.Len(t, res[0].OrgRoles, 1)
 			role, mappingExist := res[0].OrgRoles[2]
 			require.True(t, mappingExist)
-			require.Equal(t, identity.RoleAdmin, role)
+			require.Equal(t, authlib.RoleAdmin, role)
 			require.False(t, res[0].IsDisabled)
 			require.NotNil(t, res[0].IsGrafanaAdmin)
 			assert.True(t, *res[0].IsGrafanaAdmin)
@@ -542,7 +541,7 @@ func TestServer_Users(t *testing.T) {
 			require.Len(t, res[0].OrgRoles, 1)
 			role, mappingExist := res[0].OrgRoles[2]
 			require.True(t, mappingExist)
-			require.Equal(t, identity.RoleEditor, role)
+			require.Equal(t, authlib.RoleEditor, role)
 			require.False(t, res[0].IsDisabled)
 			require.NotNil(t, res[0].IsGrafanaAdmin)
 			assert.False(t, *res[0].IsGrafanaAdmin)
