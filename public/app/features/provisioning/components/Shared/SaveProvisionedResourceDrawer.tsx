@@ -1,14 +1,12 @@
-import { css } from '@emotion/css';
 import { customAlphabet } from 'nanoid';
 import { useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { useLocation } from 'react-router-dom-v5-compat';
+import { useLocation, useNavigate } from 'react-router-dom-v5-compat';
 import useMountedState from 'react-use/lib/useMountedState';
 
-import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, Drawer, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Button, Drawer, Stack, Text } from '@grafana/ui';
 import {
   type RepositoryView,
   useDeleteRepositoryFilesWithPathMutation,
@@ -103,7 +101,8 @@ export interface SaveProvisionedResourceDrawerProps {
   branchPrefix?: string;
   action: ProvisionedResourceAction;
   repositoryName?: string;
-  onDismiss?: (outcome?: ProvisionedCommitOutcome) => void;
+  redirectUrl?: string;
+  onDismiss?: () => void;
 }
 
 interface FormProps {
@@ -219,7 +218,6 @@ function FormContent({
           message,
           prTitle,
           repository,
-          filePath: path,
           pendingSync: !isDelete && !data.resource?.upsert,
         })
       );
@@ -272,10 +270,8 @@ function FormContent({
 }
 
 interface SuccessProps {
-  kindKey?: ResourceKindKey;
-  resourceName?: string;
   outcome: ProvisionedCommitOutcome;
-  onDismiss?: (outcome: ProvisionedCommitOutcome) => void;
+  onDismiss: () => void;
 }
 
 interface RepositoryStepProps {
@@ -317,35 +313,30 @@ function RepositoryStep({ onSelect, onDismiss }: RepositoryStepProps) {
   );
 }
 
-function SuccessContent({ kindKey, resourceName, outcome, onDismiss }: SuccessProps) {
+function SuccessContent({ outcome, onDismiss }: SuccessProps) {
   return (
-    <ProvisionedDrawerLayout
-      footer={
-        <ProvisionedCommitSteps
-          kindKey={kindKey}
-          outcome={outcome}
-          resourceName={resourceName}
-          onDismiss={() => onDismiss?.(outcome)}
-        />
-      }
-    >
+    <ProvisionedDrawerLayout footer={<ProvisionedCommitSteps outcome={outcome} onDismiss={onDismiss} />}>
       <ProvisionedCommitSuccess outcome={outcome} />
     </ProvisionedDrawerLayout>
   );
 }
 
-function getDrawerTitle(isDelete: boolean) {
+function getDrawerTitle(isDelete: boolean, resource: string) {
   return isDelete
-    ? t('provisioning.save-resource.title-delete-resource', 'Delete provisioned resource')
-    : t('provisioning.save-resource.title-save-resource', 'Save provisioned resource');
+    ? t('provisioning.save-resource.drawer-title-delete', 'Delete provisioned {{resource}}', { resource })
+    : t('provisioning.save-resource.drawer-title-save', 'Save provisioned {{resource}}', { resource });
 }
 
 export function CommitOutcomeDrawer({ stored, onDismiss }: { stored: string; onDismiss: () => void }) {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const parsed = useMemo(() => parseStoredCommitOutcome(stored, pathname), [stored, pathname]);
   const dismiss = () => {
     clearStoredCommitOutcome();
     onDismiss();
+    if (parsed?.redirectUrl) {
+      navigate(parsed.redirectUrl);
+    }
   };
   useEffect(() => {
     if (!parsed) {
@@ -360,15 +351,10 @@ export function CommitOutcomeDrawer({ stored, onDismiss }: { stored: string; onD
     <Drawer
       size="sm"
       scrollableContent={false}
-      title={getDrawerTitle(parsed.outcome.action === 'delete')}
+      title={getDrawerTitle(parsed.outcome.action === 'delete', parsed.kindLabel)}
       onClose={dismiss}
     >
-      <SuccessContent
-        kindKey={parsed.kindKey}
-        resourceName={parsed.resourceName}
-        outcome={parsed.outcome}
-        onDismiss={dismiss}
-      />
+      <SuccessContent outcome={parsed.outcome} onDismiss={dismiss} />
     </Drawer>
   );
 }
@@ -408,9 +394,10 @@ function ResourceDrawerContent({
   repositoryName,
   readOnlyMessage,
   branchPrefix,
+  redirectUrl,
   onDismiss,
 }: ResourceDrawerContentProps) {
-  const styles = useStyles2(getStyles);
+  const navigate = useNavigate();
   const isNew = action === 'create';
   const isDelete = action === 'delete';
   const [outcome, setOutcome] = useState<ProvisionedCommitOutcome | undefined>(undefined);
@@ -452,14 +439,22 @@ function ResourceDrawerContent({
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
   const sourcePath = getSourcePath(managedResource);
 
-  const drawerTitle = getDrawerTitle(isDelete);
+  const kindLabel = resourceKindInfos[kindKey].getLabel({ upperFirst: false });
+  const drawerTitle = getDrawerTitle(isDelete, kindLabel);
 
   const onCommitted = (committed: ProvisionedCommitOutcome) => {
     if (!isMounted()) {
       return;
     }
     setOutcome(committed);
-    storeCommitOutcome({ outcome: committed, kindKey, resourceName });
+    storeCommitOutcome({ outcome: committed, kindLabel, redirectUrl });
+  };
+
+  const dismiss = () => {
+    onDismiss?.();
+    if (outcome && redirectUrl) {
+      navigate(redirectUrl);
+    }
   };
 
   const initialValues = useMemo<BaseProvisionedFormData | undefined>(() => {
@@ -479,20 +474,16 @@ function ResourceDrawerContent({
     <Drawer
       size="sm"
       scrollableContent={false}
-      title={drawerTitle}
-      subtitle={
-        outcome?.filePath || sourcePath ? (
-          <span className={styles.path}>{outcome?.filePath || sourcePath}</span>
-        ) : (
-          <Text variant="bodySmall" color="secondary">
-            {title}
-          </Text>
-        )
+      title={
+        <Text variant="h3" element="h2">
+          {drawerTitle}
+        </Text>
       }
-      onClose={() => onDismiss?.(outcome)}
+      subtitle={title}
+      onClose={dismiss}
     >
       {outcome ? (
-        <SuccessContent kindKey={kindKey} resourceName={resourceName} outcome={outcome} onDismiss={onDismiss} />
+        <SuccessContent outcome={outcome} onDismiss={dismiss} />
       ) : isNew && !selectedRepository ? (
         <RepositoryStep onSelect={setSelectedRepository} onDismiss={onDismiss} />
       ) : (
@@ -528,12 +519,3 @@ function ResourceDrawerContent({
     </Drawer>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  path: css({
-    color: theme.colors.text.secondary,
-    fontFamily: theme.typography.fontFamilyMonospace,
-    fontSize: theme.typography.bodySmall.fontSize,
-    wordBreak: 'break-all',
-  }),
-});

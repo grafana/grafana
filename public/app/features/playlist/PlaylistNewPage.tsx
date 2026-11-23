@@ -55,8 +55,9 @@ export const PlaylistNewPage = () => {
           resource={provisionedPlaylist}
           title={provisionedPlaylist.spec?.title ?? ''}
           action="create"
+          redirectUrl={PLAYLISTS_URL}
           repositoryName={selectedRepository}
-          onDismiss={(outcome) => (outcome ? locationService.push(PLAYLISTS_URL) : setProvisionedPlaylist(undefined))}
+          onDismiss={() => setProvisionedPlaylist(undefined)}
         />
       )}
     </Page>

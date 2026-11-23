@@ -12,8 +12,7 @@ function storedOutcome(overrides: Record<string, unknown> = {}) {
     action: 'update',
     configuredBranch: 'main',
     repoType: 'github',
-    kindKey: 'playlist',
-    resourceName: 'wall-tv',
+    kindLabel: 'playlist',
     path: '/playlists',
     ...overrides,
   });
@@ -31,12 +30,13 @@ describe('StoredCommitOutcome', () => {
     setup(storedOutcome());
 
     expect(await screen.findByText(/committed to main/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'View playlist' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Save provisioned playlist' })).toBeInTheDocument();
   });
 
   it.each([
     ['a malformed record', 'not json'],
     ['an unknown action', storedOutcome({ action: 'rename' })],
+    ['a record without a kind', storedOutcome({ kindLabel: undefined })],
     ['a record from another page', storedOutcome({ path: '/dashboards' })],
   ])('drops %s without opening the drawer', async (_, stored) => {
     setup(stored);
@@ -52,6 +52,14 @@ describe('StoredCommitOutcome', () => {
 
     expect(window.sessionStorage.getItem(COMMIT_OUTCOME_STORAGE_KEY)).toBeNull();
     expect(screen.queryByText(/committed to main/i)).not.toBeInTheDocument();
+  });
+
+  it('opens the redirect page when the drawer closes', async () => {
+    const { user } = setup(storedOutcome({ redirectUrl: '/playlists/list' }));
+
+    await user.click(await screen.findByTestId(selectors.components.Drawer.General.close));
+
+    expect(locationService.getLocation().pathname).toBe('/playlists/list');
   });
 
   it('drops the record when the user leaves the page', async () => {

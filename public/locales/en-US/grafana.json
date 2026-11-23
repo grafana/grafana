@@ -15079,8 +15079,7 @@
     "commit-steps": {
       "close": "Close",
       "open-pull-request": "Open pull request",
-      "open-repository": "Open repository",
-      "view": "View {{resource}}"
+      "open-repository": "Open repository"
     },
     "commit-success": {
       "branch-body": "The rest of the Grafana users in your organization will still see the current version saved to the configured branch until this branch is merged.",
@@ -15886,12 +15885,12 @@
       "button-delete": "Delete",
       "button-deleting": "Deleting...",
       "button-next": "Next",
+      "drawer-title-delete": "Delete provisioned {{resource}}",
+      "drawer-title-save": "Save provisioned {{resource}}",
       "error-saving": "Failed to save changes",
       "missing-info": "Missing required fields for saving",
       "read-only-message": "To edit this resource, please update it in your repository directly.",
-      "repository-description": "The repository to commit this resource to. This can't be changed after the resource is created.",
-      "title-delete-resource": "Delete provisioned resource",
-      "title-save-resource": "Save provisioned resource"
+      "repository-description": "The repository to commit this resource to. This can't be changed after the resource is created."
     },
     "save-target-switch": {
       "create-in-database": "Create in Grafana database instead",

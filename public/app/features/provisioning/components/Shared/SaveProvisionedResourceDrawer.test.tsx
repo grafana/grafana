@@ -129,7 +129,7 @@ describe('SaveProvisionedResourceDrawer', () => {
     it('renders the drawer header, shared fields and commit/cancel buttons', async () => {
       setup();
 
-      expect(await screen.findByRole('heading', { name: /save provisioned resource/i })).toBeInTheDocument();
+      expect(await screen.findByRole('heading', { name: /save provisioned playlist/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /^commit/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /comment/i })).toBeInTheDocument();
@@ -289,8 +289,6 @@ describe('SaveProvisionedResourceDrawer', () => {
       expect(requireCapturedRequest(capturedRequest).url.pathname).toContain(
         '/repositories/test-repo/files/custom/folder/my-file.json'
       );
-      await screen.findByText(/committed to main/i);
-      expect(screen.getByText('custom/folder/my-file.json')).toBeInTheDocument();
     });
   });
 
@@ -298,7 +296,7 @@ describe('SaveProvisionedResourceDrawer', () => {
     it('renders the delete drawer with a Delete button', async () => {
       setup({ action: 'delete' });
 
-      expect(await screen.findByRole('heading', { name: /delete provisioned resource/i })).toBeInTheDocument();
+      expect(await screen.findByRole('heading', { name: /delete provisioned playlist/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /^delete$/i })).toBeInTheDocument();
     });
 
@@ -389,10 +387,9 @@ describe('SaveProvisionedResourceDrawer', () => {
       await user.click(await screen.findByRole('button', { name: /^commit/i }));
 
       expect(await screen.findByText(/next time it syncs the repository/i)).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'View playlist' })).not.toBeInTheDocument();
     });
 
-    it('passes the outcome to onDismiss when the drawer closes after a commit', async () => {
+    it('opens redirectUrl when the drawer closes after a commit', async () => {
       respondWith({ path: 'playlists/test-playlist.json', resource: { upsert: {} } });
       const onDismiss = jest.fn();
 
@@ -401,14 +398,17 @@ describe('SaveProvisionedResourceDrawer', () => {
           resource={mockPlaylist}
           title="Test Playlist"
           action="update"
+          redirectUrl="/playlists"
           onDismiss={onDismiss}
         />
       );
       await user.click(await screen.findByRole('button', { name: /^commit/i }));
       await screen.findByText(/committed to main/i);
+      expect(mockNavigate).not.toHaveBeenCalled();
       await user.click(screen.getByTestId(selectors.components.Drawer.General.close));
 
-      expect(onDismiss).toHaveBeenCalledWith(expect.objectContaining({ action: 'update' }));
+      expect(onDismiss).toHaveBeenCalled();
+      expect(mockNavigate).toHaveBeenCalledWith('/playlists');
     });
 
     it('stores the outcome for a reload until the drawer goes away', async () => {

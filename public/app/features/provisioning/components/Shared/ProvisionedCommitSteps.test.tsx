@@ -3,12 +3,6 @@ import { render, screen } from 'test/test-utils';
 import { ProvisionedCommitSteps } from './ProvisionedCommitSteps';
 import { type ProvisionedCommitOutcome } from './provisionedCommitOutcome';
 
-const mockNavigate = jest.fn();
-jest.mock('react-router-dom-v5-compat', () => ({
-  ...jest.requireActual('react-router-dom-v5-compat'),
-  useNavigate: () => mockNavigate,
-}));
-
 const onDismiss = jest.fn();
 
 const direct: ProvisionedCommitOutcome = {
@@ -23,62 +17,23 @@ const onBranch: ProvisionedCommitOutcome = { ...direct, branch: 'grafana-sync/up
 describe('ProvisionedCommitSteps', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('builds the resource step from the kind registry, naming the kind', () => {
-    render(<ProvisionedCommitSteps kindKey="playlist" outcome={direct} resourceName="wall-tv" onDismiss={onDismiss} />);
-
-    expect(screen.getByRole('button', { name: 'View playlist' })).toBeInTheDocument();
-  });
-
-  it.each([
-    ['playlist', '/playlists/edit/wall-tv'],
-    ['dashboard', '/d/wall-tv'],
-  ] as const)('routes the %s step to the page its entry declares', async (kindKey, resourceRoute) => {
-    const { user } = render(
-      <ProvisionedCommitSteps kindKey={kindKey} outcome={direct} resourceName="wall-tv" onDismiss={onDismiss} />
-    );
-
-    await user.click(screen.getByRole('button', { name: /^view/i }));
-    expect(mockNavigate).toHaveBeenCalledWith(resourceRoute);
-    expect(onDismiss).toHaveBeenCalledTimes(1);
-  });
-
-  it('offers no way to view a branch commit', () => {
-    render(
-      <ProvisionedCommitSteps kindKey="playlist" outcome={onBranch} resourceName="wall-tv" onDismiss={onDismiss} />
-    );
-
-    expect(screen.queryByRole('button', { name: /^view/i })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Open repository' })).toBeInTheDocument();
-  });
-
-  it('offers no resource step for a delete, which leaves nothing to look at', () => {
-    render(
-      <ProvisionedCommitSteps
-        kindKey="playlist"
-        outcome={{ ...direct, action: 'delete' }}
-        resourceName="wall-tv"
-        onDismiss={onDismiss}
-      />
-    );
-
-    expect(screen.queryByRole('button', { name: /^view/i })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument();
-  });
-
-  it('falls back to closing when no kind is named and the commit opened nothing', async () => {
+  it('offers closing after a direct commit', async () => {
     const { user } = render(<ProvisionedCommitSteps outcome={direct} onDismiss={onDismiss} />);
 
     await user.click(screen.getByRole('button', { name: 'Close' }));
     expect(onDismiss).toHaveBeenCalledTimes(1);
   });
 
-  it('prefers the pull request over the repository as the way out to the provider', () => {
+  it('offers the repository after a branch commit without a pull request', () => {
+    render(<ProvisionedCommitSteps outcome={onBranch} onDismiss={onDismiss} />);
+
+    expect(screen.getByRole('link', { name: 'Open repository' })).toHaveAttribute('href', direct.repoUrl);
+    expect(screen.queryByRole('button', { name: 'Close' })).not.toBeInTheDocument();
+  });
+
+  it('prefers the pull request over the repository', () => {
     render(
-      <ProvisionedCommitSteps
-        kindKey="playlist"
-        outcome={{ ...onBranch, prUrl: 'https://example.com/pr/1' }}
-        onDismiss={onDismiss}
-      />
+      <ProvisionedCommitSteps outcome={{ ...onBranch, prUrl: 'https://example.com/pr/1' }} onDismiss={onDismiss} />
     );
 
     expect(screen.getByRole('link', { name: 'Open pull request' })).toHaveAttribute('href', 'https://example.com/pr/1');
