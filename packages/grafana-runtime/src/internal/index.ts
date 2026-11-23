@@ -110,5 +110,8 @@ export {
   FALLBACK_TO_LEGACY_SETTINGS_WARNING,
 } from '../services/dataSource/constants';
 export { setExpressionDataSourceInstance } from '../services/dataSource/expressionDs';
+export { isMTDataSourceFillEnabled } from '../services/dataSource/sources/selectSource';
+export { getDataSourceConnections } from '../services/dataSource/sources/mt/connections';
+export type { DataSourceConnectionWithMeta } from '../services/dataSource/sources/mt/mappers';
 export { isSignedInOrAnonymous } from '../services/user';
 export { assertPluginIdFormat } from '../services/pluginUtils';

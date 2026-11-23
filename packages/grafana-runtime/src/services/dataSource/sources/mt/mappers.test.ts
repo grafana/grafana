@@ -1,6 +1,6 @@
 import { type DataSourceInstanceListItem, type DataSourcePluginMeta } from '@grafana/data';
 
-import { toInstanceSettings, toListSnapshot } from './mappers';
+import { joinConnectionsWithMetas, toInstanceSettings, toListSnapshot } from './mappers';
 import { type DataSourceConnection, type DataSourceResource } from './types';
 
 function meta(overrides: Partial<DataSourcePluginMeta>): DataSourcePluginMeta {
@@ -98,6 +98,59 @@ describe('toListSnapshot', () => {
       readOnly: false,
       isDefault: false,
     });
+  });
+});
+
+describe('joinConnectionsWithMetas', () => {
+  it('joins a connection with the meta of its installed plugin', () => {
+    const joined = joinConnectionsWithMetas([connection({ labels: { default: 'true' } })], [prometheus]);
+
+    expect(joined).toEqual([
+      {
+        uid: 'uid-prom',
+        name: 'Prom',
+        type: 'prometheus',
+        isDefault: true,
+        meta: prometheus,
+      },
+    ]);
+  });
+
+  it('keeps a connection whose plugin has no meta, without a meta and with the stored type', () => {
+    const joined = joinConnectionsWithMetas(
+      [connection({ name: 'uid-x', plugin: 'not-installed', group: 'not-installed.datasource.grafana.app' })],
+      [prometheus]
+    );
+
+    expect(joined).toEqual([
+      {
+        uid: 'uid-x',
+        name: 'Prom',
+        type: 'not-installed',
+        isDefault: false,
+      },
+    ]);
+  });
+
+  it('normalizes an aliased plugin type to the plugin id', () => {
+    const joined = joinConnectionsWithMetas([connection({ plugin: 'postgres' })], [postgres]);
+
+    expect(joined[0].type).toBe('grafana-postgresql-datasource');
+    expect(joined[0].meta).toBe(postgres);
+  });
+
+  it('derives the stored type of an orphan from the group when the connection omits it', () => {
+    const joined = joinConnectionsWithMetas(
+      [connection({ plugin: undefined, group: 'not-installed.datasource.grafana.app' })],
+      [prometheus]
+    );
+
+    expect(joined[0].type).toBe('not-installed');
+    expect(joined[0].meta).toBeUndefined();
+  });
+
+  it('does not add the built-in data sources', () => {
+    expect(joinConnectionsWithMetas([], [prometheus, grafanaBuiltIn])).toEqual([]);
   });
 });
 

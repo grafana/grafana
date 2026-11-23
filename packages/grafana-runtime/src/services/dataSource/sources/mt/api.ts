@@ -17,16 +17,15 @@ function getDataSourceResourceUrl(connection: DataSourceConnection): string {
 
 export interface FetchConnectionsOptions {
   /** Shared by every page request, so a newer fetch with the same id cancels the request in flight. */
-  requestId: string;
+  requestId?: string;
   /** Checked before each page. A fetch that a newer one replaced stops and resolves `undefined`. */
-  isCurrent: () => boolean;
+  isCurrent?: () => boolean;
 }
 
 /** Every connection: the API returns at most 1000 per page, so this follows `metadata.continue`. */
-export async function fetchConnections({
-  requestId,
-  isCurrent,
-}: FetchConnectionsOptions): Promise<DataSourceConnectionList | undefined> {
+export async function fetchConnections({ requestId, isCurrent = () => true }: FetchConnectionsOptions = {}): Promise<
+  DataSourceConnectionList | undefined
+> {
   const items: DataSourceConnection[] = [];
   let next: string | undefined;
   do {
