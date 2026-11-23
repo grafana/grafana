@@ -160,17 +160,29 @@ function getDirectHeadline(branch?: string): string {
 function getBranchHeadline(action: CommitAction, provider: string): string {
   switch (action) {
     case 'update':
-      return t('provisioning.commit-success.title-updated', 'The resource has been updated in a branch in {{provider}}.', {
-        provider,
-      });
+      return t(
+        'provisioning.commit-success.title-updated',
+        'The resource has been updated in a branch in {{provider}}.',
+        {
+          provider,
+        }
+      );
     case 'delete':
-      return t('provisioning.commit-success.title-deleted', 'The resource has been deleted in a branch in {{provider}}.', {
-        provider,
-      });
+      return t(
+        'provisioning.commit-success.title-deleted',
+        'The resource has been deleted in a branch in {{provider}}.',
+        {
+          provider,
+        }
+      );
     default:
-      return t('provisioning.commit-success.title-created', 'A new resource has been created in a branch in {{provider}}.', {
-        provider,
-      });
+      return t(
+        'provisioning.commit-success.title-created',
+        'A new resource has been created in a branch in {{provider}}.',
+        {
+          provider,
+        }
+      );
   }
 }
 
