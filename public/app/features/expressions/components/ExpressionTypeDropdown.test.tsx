@@ -65,8 +65,5 @@ describe('ExpressionTypeDropdown', () => {
         const menu = await screen.findByRole('menu');
         const math = within(menu).getByRole('menuitem', { name: 'Math' });
         expect(math.querySelectorAll('svg[tabindex="0"]')).toHaveLength(1);
-  });
-  
-
-  
+  });  
 });
