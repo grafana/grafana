@@ -44,7 +44,7 @@ export interface StarredResourceFilter {
  * API is unavailable (plugin disabled, apiserver down, search not enabled for the kind) yields nothing: its stars
  * go unshown rather than failing the list around them.
  */
-export async function searchStarredHits(
+async function searchStarredHits(
   kind: KindSearchStarredKind,
   names: string[],
   filter: StarredResourceFilter = {}

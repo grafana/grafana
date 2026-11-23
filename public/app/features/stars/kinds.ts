@@ -153,22 +153,20 @@ export function getStarredKinds(): readonly StarredKind[] {
   return store ? selectStarredKinds(store.getState()) : GRAFANA_KINDS;
 }
 
-/** Discovers the app kinds, or waits for the discovery already running. Resolves either way. */
-export async function loadStarredKinds(): Promise<void> {
-  // Not subscribed: the endpoint keeps its result for the page's life, and a subscription would never be released
-  await dispatch(appKindsAPI.endpoints.discoverAppKinds.initiate(undefined, { subscribe: false }));
-}
-
 /** Whether the stars hold an object of a kind other than Grafana's own, which only discovery can describe. */
 export function starsHoldAppKind(stars: StarsList | undefined): boolean {
   const resources = stars?.items?.[0]?.spec.resource ?? [];
   return resources.some(({ group, kind, names }) => names.length > 0 && !findKind(group, kind));
 }
 
-/** Loads the app kinds when the stars hold an object of one; stars of Grafana's own kinds need no discovery. */
+/**
+ * Discovers the app kinds when the stars hold an object of one, or waits for the discovery already running;
+ * stars of Grafana's own kinds need no discovery. Resolves either way.
+ */
 export async function loadStarredKindsFor(stars: StarsList | undefined): Promise<void> {
   if (starsHoldAppKind(stars)) {
-    await loadStarredKinds();
+    // Not subscribed: the endpoint keeps its result for the page's life, and a subscription would never be released
+    await dispatch(appKindsAPI.endpoints.discoverAppKinds.initiate(undefined, { subscribe: false }));
   }
 }
 

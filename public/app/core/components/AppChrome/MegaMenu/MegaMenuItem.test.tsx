@@ -143,6 +143,8 @@ describe('MegaMenuItem rendering branches', () => {
 
     renderMenuItem(service, { link: bootDataLeaf });
 
+    // The icon renders, hidden from screen readers as an untitled icon is
+    expect(screen.getByTestId('icon-apps')).toHaveAttribute('aria-hidden', 'true');
     expect(screen.queryByTitle('Dashboard')).not.toBeInTheDocument();
   });
 

@@ -3,6 +3,7 @@ import { http, HttpResponse } from 'msw';
 import { type Store } from 'redux';
 import { testWithStarsUser } from 'test/helpers/testWithStarsUser';
 
+import { type NavModelItem } from '@grafana/data';
 import { config, setBackendSrv } from '@grafana/runtime';
 import {
   getCustomSearchHandler,
@@ -266,19 +267,23 @@ describe('Unified Storage Searcher', () => {
 
     const findStarredSearchRequest = () => searchRequests.find((url) => url.searchParams.getAll('name').length > 0);
 
-    beforeEach(() => {
-      searchRequests = [];
-      thingsRequested.mockClear();
-      // starred() reads stars via an RTK Query dispatch on the global store, and the app kinds find their
-      // plugin page in its nav tree, so wire one up with both.
+    // starred() reads stars via an RTK Query dispatch on the global store, and the app kinds find their
+    // plugin page in its nav tree, so wire one up with both.
+    const setStoreWithPluginPages = (...pluginPages: NavModelItem[]) => {
       const store = configureStore({
         reducer: {
           [collectionsAPIv1alpha1.reducerPath]: collectionsAPIv1alpha1.reducer,
-          navBarTree: () => [MOCK_STARRED_KIND_PAGE],
+          navBarTree: () => pluginPages,
         },
         middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(collectionsAPIv1alpha1.middleware),
       });
       setStore(store as unknown as Store);
+    };
+
+    beforeEach(() => {
+      searchRequests = [];
+      thingsRequested.mockClear();
+      setStoreWithPluginPages(MOCK_STARRED_KIND_PAGE);
     });
 
     it('searches for starred folders alongside dashboards', async () => {
@@ -350,11 +355,17 @@ describe('Unified Storage Searcher', () => {
         server.use(getKindDiscoveryHandler(MOCK_STARRED_KIND_SERVED));
       });
 
+      afterEach(() => {
+        jest.restoreAllMocks();
+      });
+
       it('appends the plugin rows after the dashboard and folder rows, linking into the plugin', async () => {
         server.use(
           starsHandler([...bothStarredResources, thingResource]),
           captureSearchHandler(starredHits),
-          getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [starredThing])
+          getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [
+            { ...starredThing, description: 'Hot nodes', tags: ['prod'] },
+          ])
         );
 
         const searcher = new UnifiedSearcher();
@@ -370,6 +381,21 @@ describe('Unified Storage Searcher', () => {
         expect(thingRow.name).toBe('Thing 1');
         expect(thingRow.url).toBe(THING_URL);
         expect(thingRow.location).toBe('f1');
+        expect(thingRow.description).toBe('Hot nodes');
+        expect(thingRow.tags).toEqual(['prod']);
+      });
+
+      it('names a plugin row after the object when it has no title', async () => {
+        server.use(
+          starsHandler([thingResource]),
+          captureSearchHandler([]),
+          getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [{ name: 't1', title: '' }])
+        );
+
+        const searcher = new UnifiedSearcher();
+        const response = await searcher.starred({});
+
+        expect(response.view.get(0).name).toBe('t1');
       });
 
       it('pages through the dashboard rows before appending the plugin rows', async () => {
@@ -400,20 +426,34 @@ describe('Unified Storage Searcher', () => {
         expect(searchRequests.map((url) => url.searchParams.get('offset')).filter(Boolean)).toEqual(['1']);
       });
 
-      it('orders the plugin rows Z-A among themselves for a descending title sort', async () => {
+      it('lists the rows of every plugin kind as one list by title, Z-A for a descending title sort', async () => {
+        const widgetsServed = { group: 'widgets.ext.grafana.app', version: 'v1', kind: 'Widget', plural: 'widgets' };
+        setStoreWithPluginPages(MOCK_STARRED_KIND_PAGE, {
+          id: 'widgets',
+          text: 'Widgets',
+          url: '/a/test-widgets-app/widgets',
+        });
         server.use(
-          starsHandler([{ ...thingResource, names: ['t1', 't2'] }]),
+          getKindDiscoveryHandler(MOCK_STARRED_KIND_SERVED, widgetsServed),
+          starsHandler([
+            { ...thingResource, names: ['t1', 't2'] },
+            { group: widgetsServed.group, kind: widgetsServed.kind, names: ['w1'] },
+          ]),
           captureSearchHandler([]),
           getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [
-            starredThing,
-            { name: 't2', title: 'Zebra thing', folder: 'f1' },
-          ])
+            { name: 't1', title: 'Zulu' },
+            { name: 't2', title: 'Alpha' },
+          ]),
+          // Sorts between the two things, so rows grouped by kind would not be in title order
+          getKindSearchHandler(widgetsServed, [{ name: 'w1', title: 'Mike' }])
         );
 
         const searcher = new UnifiedSearcher();
-        const response = await searcher.starred({ sort: '-name_sort' });
+        const ascending = await searcher.starred({});
+        const descending = await searcher.starred({ sort: '-name_sort' });
 
-        expect([response.view.get(0).name, response.view.get(1).name]).toEqual(['Zebra thing', 'Thing 1']);
+        expect(ascending.view.toArray().map((row) => row.name)).toEqual(['Alpha', 'Mike', 'Zulu']);
+        expect(descending.view.toArray().map((row) => row.name)).toEqual(['Zulu', 'Mike', 'Alpha']);
       });
 
       it('returns only plugin rows without a dashboard search when only plugin objects are starred', async () => {
@@ -432,6 +472,67 @@ describe('Unified Storage Searcher', () => {
         expect(findStarredSearchRequest()).toBeUndefined();
       });
 
+      it('lists every plugin row of a star set larger than one page of the kind search', async () => {
+        const names = Array.from({ length: 501 }, (_, index) => `t${index}`);
+        server.use(
+          starsHandler([{ ...thingResource, names }]),
+          captureSearchHandler([]),
+          getKindSearchHandler(
+            MOCK_STARRED_KIND_SERVED,
+            names.map((name) => ({ name, title: name }))
+          )
+        );
+
+        const searcher = new UnifiedSearcher();
+        const response = await searcher.starred({});
+
+        expect(response.totalRows).toBe(501);
+      });
+
+      it.each([
+        {
+          desc: 'the starred names alone when the query matches everything',
+          query: { query: '*' },
+          where: { filter: { field: 'name', operator: 'In', values: ['t1'] } },
+        },
+        {
+          desc: 'the starred names narrowed by the text, tags and folder searched for',
+          query: { query: 'cpu', tags: ['prod', 'eu'], location: 'f1' },
+          where: {
+            and: [
+              { filter: { field: 'name', operator: 'In', values: ['t1'] } },
+              { text: { value: 'cpu', fields: ['title', 'description'] } },
+              { filter: { field: 'tags', operator: 'All', values: ['prod', 'eu'] } },
+              { filter: { field: 'folder', operator: 'In', values: ['f1'] } },
+            ],
+          },
+        },
+      ])('asks the kind search for $desc', async ({ query, where }) => {
+        const thingsQueries: unknown[] = [];
+        server.use(
+          starsHandler([thingResource]),
+          captureSearchHandler([]),
+          http.post(kindSearchRoute(MOCK_STARRED_KIND_SERVED), async ({ request }) => {
+            thingsQueries.push(await request.json());
+            return HttpResponse.json({ metadata: { totalHits: 0, totalHitsRelation: 'eq' }, items: [] });
+          })
+        );
+
+        const searcher = new UnifiedSearcher();
+        await searcher.starred(query);
+
+        // The server decodes strictly, so the whole body is the contract
+        expect(thingsQueries).toEqual([
+          {
+            apiVersion: 'search.grafana.app/v0alpha1',
+            kind: 'SearchQuery',
+            where,
+            fields: ['title', 'folder', 'description', 'tags'],
+            limit: 1,
+          },
+        ]);
+      });
+
       it('ignores stars of a kind no plugin lists', async () => {
         server.use(
           getKindDiscoveryHandler(),
@@ -442,8 +543,7 @@ describe('Unified Storage Searcher', () => {
         const searcher = new UnifiedSearcher();
         const response = await searcher.starred({ kind: ['dashboard', 'folder'] });
 
-        expect(response.totalRows).toBe(2);
-        expect(thingsRequested).not.toHaveBeenCalled();
+        expect(response.view.toArray().map((row) => row.kind)).toEqual(['dashboard', 'folder']);
       });
 
       it.each([
@@ -463,21 +563,51 @@ describe('Unified Storage Searcher', () => {
         expect(thingsRequested).not.toHaveBeenCalled();
       });
 
-      it('still returns the dashboard rows when the plugin kind API fails', async () => {
+      it.each([
+        { status: 404, level: 'warn', says: 'its app manifest does not enable search' },
+        { status: 500, level: 'error', says: 'Failed to resolve starred things.ext.grafana.app/Thing' },
+      ] as const)(
+        'returns the dashboard rows and logs a console $level when the kind search answers $status',
+        async ({ status, level, says }) => {
+          server.use(
+            starsHandler([...bothStarredResources, thingResource]),
+            captureSearchHandler(starredHits),
+            rejectThingsHandler(status)
+          );
+          const log = jest.spyOn(console, level).mockImplementation(() => {});
+
+          const searcher = new UnifiedSearcher();
+          const response = await searcher.starred({ kind: ['dashboard', 'folder'] });
+
+          expect(response.view.toArray().map((row) => row.kind)).toEqual(['dashboard', 'folder']);
+          expect(log).toHaveBeenCalledTimes(1);
+          expect(log.mock.calls[0][0]).toContain(says);
+        }
+      );
+
+      it('asks what the instance serves again after a failed attempt, and no more once one succeeds', async () => {
+        const discovery = jest.fn();
         server.use(
-          starsHandler([...bothStarredResources, thingResource]),
-          captureSearchHandler(starredHits),
-          rejectThingsHandler(500)
+          starsHandler([thingResource]),
+          captureSearchHandler([]),
+          getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [starredThing]),
+          // Counts the request and leaves the answer to the handlers below: one failure, then the served kind
+          http.get('/apis', () => {
+            discovery();
+          }),
+          http.get('/apis', () => new HttpResponse(null, { status: 503 }), { once: true })
         );
         jest.spyOn(console, 'error').mockImplementation(() => {});
 
         const searcher = new UnifiedSearcher();
-        const response = await searcher.starred({ kind: ['dashboard', 'folder'] });
+        const whileDown = await searcher.starred({});
+        const recovered = await searcher.starred({});
+        const later = await searcher.starred({});
 
-        expect(thingsRequested).toHaveBeenCalledTimes(1);
-        expect(response.totalRows).toBe(2);
-        expect(response.view.get(0).kind).toBe('dashboard');
-        expect(response.view.get(1).kind).toBe('folder');
+        expect(whileDown.totalRows).toBe(0);
+        expect(recovered.totalRows).toBe(1);
+        expect(later.totalRows).toBe(1);
+        expect(discovery).toHaveBeenCalledTimes(2);
       });
     });
   });

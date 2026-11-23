@@ -828,9 +828,7 @@ describe('MegaMenu', () => {
     setMockStarredPluginKind(MOCK_STARRED_KIND_SERVED.group, MOCK_STARRED_KIND_SERVED.kind, [thingUuid]);
     server.use(
       getKindDiscoveryHandler(MOCK_STARRED_KIND_SERVED),
-      getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [
-        { name: thingUuid, title: 'Capacity review', folder: folderB.item.uid },
-      ])
+      getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [{ name: thingUuid, title: 'Capacity review' }])
     );
     setupSearcher([]);
 
@@ -839,15 +837,15 @@ describe('MegaMenu', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Expand section: Starred' }));
 
-    const starredSection = () => within(screen.getByRole('link', { name: 'Starred' }).closest('li')!);
-    await waitFor(() => {
-      expect(starredSection().getByRole('link', { name: 'Capacity review' })).toHaveAttribute(
-        'href',
-        `/a/test-things-app/things/${thingUuid}`
-      );
-    });
+    // Waits on the row's text: a role query polled over the whole menu is slow
+    await screen.findByText('Capacity review');
+    const starredSection = within(screen.getByRole('link', { name: 'Starred' }).closest('li')!);
+    expect(starredSection.getByRole('link', { name: 'Capacity review' })).toHaveAttribute(
+      'href',
+      `/a/test-things-app/things/${thingUuid}`
+    );
 
     // The kind icon doubles as the row's accessible kind, like the dashboard/folder icons do.
-    expect(starredSection().getByTitle('Thing')).toBe(starredSection().getByTestId('icon-cube'));
+    expect(starredSection.getByTitle('Thing')).toBe(starredSection.getByTestId('icon-cube'));
   });
 });
