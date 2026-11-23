@@ -153,7 +153,10 @@ function BranchRow({ label, branch, note, href }: BranchRowProps) {
 
 function getDirectHeadline(branch?: string): string {
   return branch
-    ? t('provisioning.commit-success.committed-to', 'Committed to {{branch}}.', { branch })
+    ? t('provisioning.commit-success.committed-to', 'Committed to {{branch}}.', {
+        branch,
+        interpolation: { escapeValue: false },
+      })
     : t('provisioning.commit-success.committed', 'Changes committed.');
 }
 
