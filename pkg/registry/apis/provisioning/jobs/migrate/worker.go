@@ -23,12 +23,6 @@ type MigrationWorker struct {
 	unifiedMigrator Migrator
 }
 
-func NewMigrationWorkerFromUnified(unifiedMigrator Migrator) *MigrationWorker {
-	return &MigrationWorker{
-		unifiedMigrator: unifiedMigrator,
-	}
-}
-
 func NewMigrationWorker(unifiedMigrator Migrator) *MigrationWorker {
 	return &MigrationWorker{
 		unifiedMigrator: unifiedMigrator,

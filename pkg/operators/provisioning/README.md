@@ -2,6 +2,30 @@
 
 Git sync has two different controllers: the jobs controller and the repo controller.
 
+## Runtime (proof of concept)
+
+Each operator runs as a grafana-app-sdk `simple.App` built by `pkg/registry/apis/provisioning/controllerapp`. The
+provisioning API server uses the same package to run its in-process controllers as one app. The SDK runs the
+informers, dispatches their events through its `InformerController`, and runs the controller workers as app runnables.
+
+The SDK cannot yet take a kind's events from NATS or re-list it through the keys-only lister, so each kind keeps its
+provisioning delta source (`pkg/registry/apis/provisioning/informer`), handed to the app through its `InformerSupplier`.
+Every delivery reaches the controller's handler unchanged, including tombstones and `isInInitialList`. When the SDK
+ships its event-bus informer and paged lister, the informer supplier is the piece to replace.
+
+The app's metrics are registered under the `grafana_provisioning_controller` namespace.
+
+The operators and the API server also build the same controllers from shared code:
+
+- `controllerapp.JobQueue` and `controllerapp.HistoricJobs` build the job queue and historic-job cleanup kinds.
+- `controllerapp.LogErrors` runs the job driver and the expired-job cleanup as app runnables.
+- `jobs/workers.New` builds the built-in job workers. Each deployment appends its own extras: the pull request worker
+  here, and the injected extra workers in the API server.
+- `controller/keyqueue` runs the keyed worker loop of the repository and connection controllers: deduplicating queue,
+  retries, processed and queue-lag metrics, and drain on shutdown. Each controller supplies only its process function
+  and which errors are worth retrying. The job driver keeps its own loop because jobs are claimed and leased.
+- `jobs.ClaimExpiry` and `jobs.DefaultLeaseRenewalInterval` are the claim timings both deployments use.
+
 ## Jobs Controller
 
 ### Behavior

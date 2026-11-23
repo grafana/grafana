@@ -43,6 +43,20 @@ const (
 	LabelJobOriginalUID = "provisioning.grafana.app/original-uid"
 )
 
+const (
+	// ClaimExpiry is how long a job claim is considered valid before it is
+	// treated as abandoned. The job store and the cleanup controller that reaps
+	// expired claims must use the same value, in every process that runs them.
+	ClaimExpiry = 60 * time.Second
+	// DefaultLeaseRenewalInterval renews a claim well before it expires.
+	// Renewing at ClaimExpiry would schedule the single renewal at the exact
+	// moment the claim goes stale, so any delay (GC pause, apiserver blip) lets
+	// the cleanup controller reap a job that is still running and risks
+	// duplicate execution. A third gives three attempts before the claim is
+	// considered abandoned.
+	DefaultLeaseRenewalInterval = ClaimExpiry / 3
+)
+
 // ErrLeaseLost indicates the job's claim in the store is no longer the one we placed:
 // the job was reaped and re-created, or another worker has taken it over. A worker that
 // sees this must stop processing immediately so two workers do not run the same job.

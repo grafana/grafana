@@ -12,12 +12,12 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"k8s.io/client-go/tools/cache"
 
 	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/operators/internal/supervision"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controllerapp"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/server"
@@ -64,7 +64,7 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (r
 		return err
 	}
 
-	jobs, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobClaimExpiry, deps.Registerer)
+	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobs.ClaimExpiry, deps.Registerer)
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
@@ -118,7 +118,7 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (r
 		connectionFactory,
 		resourceLister,
 		clients,
-		jobs,
+		jobStore,
 		healthChecker,
 		statusPatcher,
 		deps.Registerer,
@@ -135,22 +135,23 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (r
 		controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30*24*time.Hour),
 		nats.Enabled(controllerCfg.natsSubscriber),
 	)
-	reg, err := repoSource.AddEventHandler(controller.EventHandler())
-	if err != nil {
-		return fmt.Errorf("failed to add repository event handler: %w", err)
-	}
-	go repoSource.Run(ctx.Done())
-
-	if !cache.WaitForCacheSync(ctx.Done(), reg.HasSynced) {
-		return fmt.Errorf("failed to sync repository informer cache")
-	}
-
-	controller.Run(ctx, controllerCfg.NumberOfWorkers(), func() {
-		logger.Info("repository operator is ready")
-		deps.HealthNotifier.SetReady()
-	}, func() {
-		logger.Info("repository operator shutting down")
-		deps.HealthNotifier.SetNotReady()
+	app, err := controllerapp.New("provisioning-repo", logger, deps.Registerer, controllerapp.WatchedKind{
+		Info:    apisprovisioning.RepositoryResourceInfo,
+		Source:  repoSource,
+		Handler: controller.EventHandler(),
+		OnSynced: func(ctx context.Context) error {
+			controller.Run(ctx, controllerCfg.NumberOfWorkers(), func() {
+				logger.Info("repository operator is ready")
+				deps.HealthNotifier.SetReady()
+			}, func() {
+				logger.Info("repository operator shutting down")
+				deps.HealthNotifier.SetNotReady()
+			})
+			return nil
+		},
 	})
-	return nil
+	if err != nil {
+		return err
+	}
+	return app.Run(ctx, controllerCfg.DrainTimeout()+shutdownGrace, logger)
 }

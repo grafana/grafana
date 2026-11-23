@@ -1,4 +1,4 @@
-package controller
+package keyqueue
 
 import (
 	"github.com/prometheus/client_golang/prometheus"

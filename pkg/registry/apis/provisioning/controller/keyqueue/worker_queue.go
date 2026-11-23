@@ -1,4 +1,4 @@
-package controller
+package keyqueue
 
 import "k8s.io/client-go/util/workqueue"
 

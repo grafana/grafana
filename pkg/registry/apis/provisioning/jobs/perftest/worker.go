@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // defaultProgressUpdates is how many progress notifications a test job emits
@@ -37,6 +39,13 @@ type Worker struct {
 // worker never claims a job.
 func NewWorker(enabled func(ctx context.Context) bool) *Worker {
 	return &Worker{enabled: enabled}
+}
+
+// Enabled reports whether the provisioning.performance flag enables the "test"
+// job type. It is evaluated per call via OpenFeature, not captured at startup,
+// so the flag behaves consistently with the other provisioning flags.
+func Enabled(ctx context.Context) bool {
+	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningPerformance, false, openfeature.TransactionContext(ctx))
 }
 
 func (w *Worker) IsSupported(ctx context.Context, job provisioning.Job) bool {
