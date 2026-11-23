@@ -191,8 +191,7 @@ func (s *Service) validateLegacyCheckNamespace(ctx context.Context, req *authzex
 		}
 		if orgID == accesscontrol.GlobalOrgID || orgID == accesscontrol.NoOrgID {
 			// Global requester state still needs a concrete instance namespace for transport.
-			const anchorOrgID int64 = 1
-			orgID = anchorOrgID
+			orgID = 1
 		}
 		namespace = s.legacyScopeNamespace(orgID)
 	}
