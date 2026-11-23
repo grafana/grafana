@@ -47,11 +47,6 @@ func ProvideService(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, trac
 // writes on the legacy watch subjects. It is separate so wire sets without the
 // NATS bus, such as the CLI's, can keep using ProvideService.
 func ProvideServiceWithWatch(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, tracer tracing.Tracer, configProvider apiserver.DirectRestConfigProvider, iamFeatures iamapi.Features, legacyWatch *legacywatch.Publisher) (*Service, error) {
-	return ProvideServiceWithDeleted(sql, cfg, tracer, configProvider, iamFeatures, legacyWatch, nil)
-}
-
-// ProvideServiceWithDeleted is ProvideServiceWithWatch that also runs the registered handlers after a team is deleted.
-func ProvideServiceWithDeleted(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, tracer tracing.Tracer, configProvider apiserver.DirectRestConfigProvider, iamFeatures iamapi.Features, legacyWatch *legacywatch.Publisher, deleted *teamdelete.DeletedRegistry) (*Service, error) {
 	legacyService, err := NewLegacyService(sql, tracer, legacyWatch)
 	if err != nil {
 		return nil, err
@@ -66,12 +61,28 @@ func ProvideServiceWithDeleted(sql legacysql.LegacyDatabaseProvider, cfg *settin
 		iamFeatures:       iamFeatures,
 		logger:            log.New("team"),
 		tracer:            tracer,
-		deleted:           deleted,
+		deleted:           teamdelete.ProvideDeletedRegistry(),
 	}, nil
 }
 
 func ProvideDeleteRegistrar(service *Service) teamdelete.Registrar {
 	return service
+}
+
+func ProvideDeletedRegistrar(service *Service) teamdelete.DeletedRegistrar {
+	return service
+}
+
+var _ teamdelete.DeletedRegistrar = (*Service)(nil)
+
+// RegisterDeleted adds a handler that runs after a team is deleted.
+func (s *Service) RegisterDeleted(handler teamdelete.DeletedHandler) {
+	s.deleted.RegisterDeleted(handler)
+}
+
+// DeletedRegistry is the registry that holds the handlers shared by every team deletion path.
+func (s *Service) DeletedRegistry() *teamdelete.DeletedRegistry {
+	return s.deleted
 }
 
 func (s *Service) CreateTeam(ctx context.Context, cmd *team.CreateTeamCommand) (team.Team, error) {
@@ -100,9 +111,7 @@ func (s *Service) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCommand) e
 	if err != nil {
 		return err
 	}
-	if s.deleted != nil {
-		s.deleted.Run(ctx, teamdelete.Deleted{OrgID: cmd.OrgID, TeamID: cmd.ID, TeamUID: uid})
-	}
+	s.deleted.Run(ctx, teamdelete.Deleted{OrgID: cmd.OrgID, TeamID: cmd.ID, TeamUID: uid})
 	return nil
 }
 

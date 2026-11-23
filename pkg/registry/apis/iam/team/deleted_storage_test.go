@@ -50,6 +50,11 @@ type fakeWatchTeamStorage struct {
 	rest.Watcher
 }
 
+type fakeMetaTeamStorage struct {
+	fakeWatchTeamStorage
+	registryMetadata
+}
+
 func TestWithDeletedHandlers(t *testing.T) {
 	ctx := genericapirequest.WithNamespace(context.Background(), "default")
 	missing := apierrors.NewNotFound(schema.GroupResource{Resource: "teams"}, "uid-1")
@@ -134,4 +139,23 @@ func TestWithDeletedHandlersKeepsWatch(t *testing.T) {
 	require.True(t, ok)
 	inner := &fakeTeamStorage{}
 	require.Same(t, inner, WithDeletedHandlers(inner, nil))
+}
+
+func TestWithDeletedHandlersKeepsRegistryMetadata(t *testing.T) {
+	registry := teamdelete.ProvideDeletedRegistry()
+
+	_, ok := WithDeletedHandlers(&fakeWatchTeamStorage{}, registry).(registryMetadata)
+	require.False(t, ok)
+
+	wrapped := WithDeletedHandlers(&fakeMetaTeamStorage{}, registry)
+	_, ok = wrapped.(registryMetadata)
+	require.True(t, ok)
+	_, ok = wrapped.(rest.Watcher)
+	require.True(t, ok)
+	_, ok = wrapped.(rest.CollectionDeleter)
+	require.False(t, ok)
+
+	// The roster store keeps the metadata of the wrapped storage.
+	_, ok = NewRosterStore(wrapped, nil, nil, nil).(registryMetadata)
+	require.True(t, ok)
 }

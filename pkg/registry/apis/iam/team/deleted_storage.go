@@ -21,8 +21,25 @@ func WithDeletedHandlers(inner grafanarest.Storage, registry *teamdelete.Deleted
 		return inner
 	}
 	deleted := &deletedStorage{Storage: inner, registry: registry}
-	if watcher, ok := inner.(rest.Watcher); ok {
-		return &deletedWatchStorage{deletedStorage: deleted, Watcher: watcher}
+	watcher, isWatcher := inner.(rest.Watcher)
+	meta, hasMeta := inner.(registryMetadata)
+	switch {
+	case isWatcher && hasMeta:
+		return struct {
+			*deletedStorage
+			rest.Watcher
+			registryMetadata
+		}{deleted, watcher, meta}
+	case isWatcher:
+		return struct {
+			*deletedStorage
+			rest.Watcher
+		}{deleted, watcher}
+	case hasMeta:
+		return struct {
+			*deletedStorage
+			registryMetadata
+		}{deleted, meta}
 	}
 	return deleted
 }
@@ -30,12 +47,6 @@ func WithDeletedHandlers(inner grafanarest.Storage, registry *teamdelete.Deleted
 type deletedStorage struct {
 	grafanarest.Storage
 	registry *teamdelete.DeletedRegistry
-}
-
-// deletedWatchStorage keeps the watch support of an inner storage that has it.
-type deletedWatchStorage struct {
-	*deletedStorage
-	rest.Watcher
 }
 
 func (s *deletedStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {

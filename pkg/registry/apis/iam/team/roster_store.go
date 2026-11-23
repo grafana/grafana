@@ -57,10 +57,25 @@ func NewRosterStore(inner grafanarest.Storage, access authlib.AccessClient, dire
 				rest.CollectionDeleter
 			}{s, watcher, d}
 		}
+		if reg, ok := inner.(registryMetadata); ok {
+			return struct {
+				*rosterStore
+				rest.Watcher
+				registryMetadata
+			}{s, watcher, reg}
+		}
 		return struct {
 			*rosterStore
 			rest.Watcher
 		}{s, watcher}
+	}
+	if reg, ok := inner.(registryMetadata); ok {
+		if _, isDeleter := inner.(rest.CollectionDeleter); !isDeleter {
+			return struct {
+				*rosterStore
+				registryMetadata
+			}{s, reg}
+		}
 	}
 	if d, ok := inner.(rest.CollectionDeleter); ok {
 		return struct {

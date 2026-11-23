@@ -109,7 +109,6 @@ func RegisterAPIService(
 	legacyAuthInfoStore *authinfoimpl.Store,
 	remoteCache remotecache.CacheStorage,
 	legacyWatch *legacywatch.Publisher,
-	teamDeleted *teamdelete.DeletedRegistry,
 ) (*IdentityAccessManagementAPIBuilder, error) {
 	dbProvider := legacysql.NewDatabaseProvider(sql)
 	store := legacy.WithWatchNotifications(legacy.NewLegacySQLStores(dbProvider), legacyWatch)
@@ -205,7 +204,7 @@ func RegisterAPIService(
 		ssoLoginConfig:  sso.NewLoginConfigHandler(cfgProvider, ssoService),
 		userPermissions: userpermissions.NewHandler(userPermissionsClient, cfg.IDUseExternalGroupsForGroupsClaim),
 		features:        features,
-		teamDeleted:     teamDeleted,
+		teamDeleted:     teamDeletedRegistry(teamService),
 		userPreferences: dashboardpreferences.ProvideUserCleaner(restConfig),
 	}
 	builder.userSearchHandler = user.NewSearchHandler(tracing, builder.userSearchClient, accessClient)
@@ -1469,4 +1468,14 @@ func legacyTeamSearchService(svc teamservice.Service) teamservice.Service {
 		return p.LegacySearchService()
 	}
 	return svc
+}
+
+// teamDeletedRegistry returns the registry of the in-process team service, or nil when there is none.
+func teamDeletedRegistry(svc teamservice.Service) *teamdelete.DeletedRegistry {
+	if provider, ok := svc.(interface {
+		DeletedRegistry() *teamdelete.DeletedRegistry
+	}); ok {
+		return provider.DeletedRegistry()
+	}
+	return nil
 }

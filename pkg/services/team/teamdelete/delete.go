@@ -55,6 +55,9 @@ func (r *DeletedRegistry) RegisterDeleted(handler DeletedHandler) {
 
 // Run calls every handler in registration order, logging errors and panics so they never fail a completed deletion.
 func (r *DeletedRegistry) Run(ctx context.Context, deleted Deleted) {
+	if r == nil {
+		return
+	}
 	r.mu.RLock()
 	handlers := r.handlers[:len(r.handlers):len(r.handlers)]
 	r.mu.RUnlock()
