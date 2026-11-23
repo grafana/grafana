@@ -17,6 +17,7 @@ export const recordingRuleSearchSchema: RuleSearchSchema<RecordingRuleFilter, Re
     sharedFilters.rule,
     sharedFilters.label,
     sharedFilters.folder,
+    sharedFilters.folderUid,
     sharedFilters.datasource,
     sharedFilters.plugins,
     {
@@ -47,5 +48,6 @@ export const recordingRuleSearchSchema: RuleSearchSchema<RecordingRuleFilter, Re
         filter.targetDataSourceUid && hasWildcard(filter.targetDataSourceUid) ? 'invalid' : undefined,
     },
     sharedFilters.health,
+    sharedFilters.paused,
   ],
 };

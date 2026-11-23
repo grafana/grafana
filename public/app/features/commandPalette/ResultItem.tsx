@@ -6,7 +6,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useFlagGrafanaCmdkDashboardTags } from '@grafana/runtime/internal';
 import { useStyles2 } from '@grafana/ui';
-import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
+import { ManagedResourceBadge } from 'app/features/provisioning/components/ManagedResourceBadge';
 
 import { ResultTags } from './ResultTags';
 import { getActionManagedBy, getActionTags } from './types';
@@ -75,7 +75,7 @@ export const ResultItem = React.forwardRef(
           {action.subtitle && <span className={styles.subtitleText}>{action.subtitle}</span>}
           {showProvisionedBadge && (
             <span className={styles.managedBadge}>
-              <ManagedBadge managerKind={managedBy} />
+              <ManagedResourceBadge managerKind={managedBy} />
             </span>
           )}
           {dashboardTagsEnabled && tags && tags.length > 0 && <ResultTags tags={tags} />}

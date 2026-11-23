@@ -208,7 +208,7 @@ type FolderPermission struct {
 	Permission string
 	User       apis.User
 	// Team       team.Team
-	// Role       identity.RoleType
+	// Role       authlib.RoleType
 }
 
 func (f *FolderDefinition) CreateWithLegacyAPI(t *testing.T, h *apis.K8sTestHelper, parent string) {

@@ -4,12 +4,11 @@ import { useState } from 'react';
 
 import { applyFieldOverrides, createDataFrame, createTheme, FieldType } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
-import { mockBoundingClientRect, mockClientSize } from '@grafana/test-utils';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 
 import { TableNG } from './TableNG';
 
 beforeAll(() => {
-  mockClientSize({ width: 800, height: 600 });
   mockBoundingClientRect({ width: 800, height: 600 });
 });
 

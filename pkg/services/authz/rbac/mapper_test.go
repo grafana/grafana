@@ -43,7 +43,7 @@ func TestMapperRegistry_DatasourceAliases(t *testing.T) {
 func TestMapperRegistry_DatasourceSharedGroup(t *testing.T) {
 	reg := NewMapperRegistry()
 
-	for _, subresource := range []string{"", "query", "caching"} {
+	for _, subresource := range []string{"", "query", "caching", "alertrules", "alertinstances", "alertnotifications"} {
 		shared, ok := reg.Get("datasource.grafana.app", "datasources", subresource)
 		require.True(t, ok)
 		plugin, ok := reg.Get("loki.datasource.grafana.app", "datasources", subresource)
@@ -109,7 +109,10 @@ func TestMapperRegistry_DatasourceEnumeration(t *testing.T) {
 	for _, mapping := range mappings {
 		resources = append(resources, mapping.APIResource)
 	}
-	assert.ElementsMatch(t, []string{"datasources", "datasources/query", "datasources/caching"}, resources)
+	assert.ElementsMatch(t, []string{
+		"datasources", "datasources/query", "datasources/caching",
+		"datasources/alertrules", "datasources/alertinstances", "datasources/alertnotifications",
+	}, resources)
 
 	// A plugin's own registered resources must not be replaced with shared datasource mappings.
 	reg.(mapper)["loki.datasource.grafana.app"] = map[string]translation{
@@ -732,6 +735,24 @@ func TestMapper_AnnotationSubresource_ActionSets(t *testing.T) {
 			assert.ElementsMatch(t, tt.expected, mapping.ActionSets(tt.verb))
 		})
 	}
+}
+
+func TestMapperRegistry_Banners(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	mapping, ok := reg.Get("banners.grafana.app", "announcement-banners", "")
+	require.True(t, ok, "announcement-banners should be registered in the mapper")
+
+	for _, verb := range []string{
+		utils.VerbGet, utils.VerbList, utils.VerbWatch,
+		utils.VerbCreate, utils.VerbUpdate, utils.VerbPatch, utils.VerbDelete, utils.VerbDeleteCollection,
+	} {
+		action, ok := mapping.Action(verb)
+		assert.True(t, ok)
+		assert.Equal(t, "banners:write", action, "verb %q", verb)
+		assert.True(t, mapping.SkipScope(verb), "verb %q", verb)
+	}
+	assert.False(t, mapping.HasFolderSupport())
 }
 
 func TestMapperRegistry_Settings(t *testing.T) {

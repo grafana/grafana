@@ -1800,6 +1800,37 @@
             "subformOptions": null
           },
           {
+            "element": "select",
+            "inputType": "",
+            "label": "API type",
+            "description": "The Jira API type",
+            "placeholder": "",
+            "propertyName": "api_type",
+            "selectOptions": [
+              {
+                "value": "auto",
+                "label": "Auto"
+              },
+              {
+                "value": "cloud",
+                "label": "Cloud"
+              },
+              {
+                "value": "datacenter",
+                "label": "Data Center"
+              }
+            ],
+            "showWhen": {
+              "field": "",
+              "is": ""
+            },
+            "required": false,
+            "validationRule": "",
+            "secure": false,
+            "dependsOn": "",
+            "subformOptions": null
+          },
+          {
             "element": "input",
             "inputType": "text",
             "label": "Project Key",
@@ -1836,11 +1867,11 @@
             "subformOptions": null
           },
           {
-            "element": "input",
-            "inputType": "text",
+            "element": "subform",
+            "inputType": "",
             "label": "Summary",
             "description": "Issue summary template",
-            "placeholder": "{{ template \"jira.default.summary\" . }}",
+            "placeholder": "",
             "propertyName": "summary",
             "selectOptions": null,
             "showWhen": {
@@ -1851,14 +1882,51 @@
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
-            "subformOptions": null
+            "subformOptions": [
+              {
+                "element": "input",
+                "inputType": "text",
+                "label": "Template",
+                "description": "Issue summary template",
+                "placeholder": "{{ template \"jira.default.summary\" . }}",
+                "propertyName": "template",
+                "selectOptions": null,
+                "showWhen": {
+                  "field": "",
+                  "is": ""
+                },
+                "required": false,
+                "validationRule": "",
+                "secure": false,
+                "dependsOn": "",
+                "subformOptions": null
+              },
+              {
+                "element": "checkbox",
+                "inputType": "",
+                "label": "Enable update",
+                "description": "Update this field when an existing issue is found",
+                "placeholder": "",
+                "propertyName": "enable_update",
+                "selectOptions": null,
+                "showWhen": {
+                  "field": "",
+                  "is": ""
+                },
+                "required": false,
+                "validationRule": "",
+                "secure": false,
+                "dependsOn": "",
+                "subformOptions": null
+              }
+            ]
           },
           {
-            "element": "textarea",
+            "element": "subform",
             "inputType": "",
             "label": "Description",
             "description": "Issue description template",
-            "placeholder": "{{ template \"jira.default.description\" . }}",
+            "placeholder": "",
             "propertyName": "description",
             "selectOptions": null,
             "showWhen": {
@@ -1869,7 +1937,44 @@
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
-            "subformOptions": null
+            "subformOptions": [
+              {
+                "element": "textarea",
+                "inputType": "",
+                "label": "Template",
+                "description": "Issue description template",
+                "placeholder": "{{ template \"jira.default.description\" . }}",
+                "propertyName": "template",
+                "selectOptions": null,
+                "showWhen": {
+                  "field": "",
+                  "is": ""
+                },
+                "required": false,
+                "validationRule": "",
+                "secure": false,
+                "dependsOn": "",
+                "subformOptions": null
+              },
+              {
+                "element": "checkbox",
+                "inputType": "",
+                "label": "Enable update",
+                "description": "Update this field when an existing issue is found",
+                "placeholder": "",
+                "propertyName": "enable_update",
+                "selectOptions": null,
+                "showWhen": {
+                  "field": "",
+                  "is": ""
+                },
+                "required": false,
+                "validationRule": "",
+                "secure": false,
+                "dependsOn": "",
+                "subformOptions": null
+              }
+            ]
           },
           {
             "element": "string_array",
