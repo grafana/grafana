@@ -623,17 +623,42 @@ export function getColorByStringHash(colors: string[], string: string) {
   return colors[Math.abs(stringHash(string)) % colors.length];
 }
 
-// Two darker steps roughly halve near-identical picks for ~10 values on the light categorical
-// palettes; lighter steps barely differ from these already light colors.
-const BY_VALUE_SHADE_STEPS = [15, 30];
-// Darker shades can vanish on a dark panel background; base colors are kept regardless.
+const BY_VALUE_SHADE_STEPS = [0.5, 1];
+const BY_VALUE_SHADE_DARKEN = 30;
 const BY_VALUE_SHADE_MIN_CONTRAST = 2;
 
 function withDarkerShades(colors: string[], theme: GrafanaTheme2): string[] {
   const background = theme.components.panel.background;
-  const shades = BY_VALUE_SHADE_STEPS.flatMap((amount) =>
-    colors.map((color) => tinycolor(theme.visualization.getColorByName(color)).darken(amount).toHexString())
-  ).filter((shade) => getContrastRatio(shade, background) >= BY_VALUE_SHADE_MIN_CONTRAST);
+  const shadeRanges = colors.map((name) => {
+    const color = theme.visualization.getColorByName(name);
+    let minDarken = 0;
+    // Light backgrounds may need a minimum amount of darkening for either shade to be visible.
+    if (theme.isLight) {
+      while (
+        minDarken < 100 &&
+        getContrastRatio(tinycolor(color).darken(minDarken).toHexString(), background) < BY_VALUE_SHADE_MIN_CONTRAST
+      ) {
+        minDarken++;
+      }
+    }
+    let maxDarken = Math.max(BY_VALUE_SHADE_DARKEN, minDarken + BY_VALUE_SHADE_DARKEN / 2);
+    // Keep every slot in the same position across themes; filtering changes the hash modulus
+    // and assigns unrelated hues. Reduce both shade steps together so they stay distinct.
+    while (
+      maxDarken > minDarken &&
+      getContrastRatio(tinycolor(color).darken(maxDarken).toHexString(), background) < BY_VALUE_SHADE_MIN_CONTRAST
+    ) {
+      maxDarken--;
+    }
+    return { color, minDarken, maxDarken };
+  });
+  const shades = BY_VALUE_SHADE_STEPS.flatMap((step) =>
+    shadeRanges.map(({ color, minDarken, maxDarken }) =>
+      tinycolor(color)
+        .darken(minDarken + (maxDarken - minDarken) * step)
+        .toHexString()
+    )
+  );
 
   return [...colors, ...shades];
 }

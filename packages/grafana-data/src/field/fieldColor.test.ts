@@ -1,3 +1,5 @@
+import tinycolor from 'tinycolor2';
+
 import { getContrastRatio } from '../themes/colorManipulator';
 import { createTheme } from '../themes/createTheme';
 import { type DataFrame, type Field, FieldType } from '../types/dataFrame';
@@ -289,6 +291,29 @@ describe('color by value', () => {
       shades.forEach((c) => expect(getContrastRatio(c, t.components.panel.background)).toBeGreaterThanOrEqual(2));
     }
   );
+
+  it.each([
+    FieldColorModeId.PaletteCategoricalNext,
+    FieldColorModeId.PaletteCategoricalNext2,
+    FieldColorModeId.PaletteCategoricalNext3,
+  ])('preserves the hue of each %s color slot across themes', (id) => {
+    for (const mode of ['dark', 'light'] as const) {
+      const t = createTheme({ colors: { mode } });
+      const base = getFieldColorMode(id).getColors!(t);
+      const palette = getFieldColorMode(id, false, true).getColors!(t);
+
+      expect(palette).toHaveLength(120);
+      for (let i = 0; i < base.length; i++) {
+        const shades = [palette[i], palette[i + 40], palette[i + 80]];
+        expect(new Set(shades).size).toBe(3);
+        for (const shade of shades.slice(1)) {
+          expect(getContrastRatio(shade, t.components.panel.background)).toBeGreaterThanOrEqual(2);
+          // Hex quantization can shift the hue slightly, especially for low-saturation colors.
+          expect(Math.abs(tinycolor(shade).toHsl().h - tinycolor(base[i]).toHsl().h)).toBeLessThan(1);
+        }
+      }
+    }
+  });
 
   it.each([FieldColorModeId.PaletteClassic, FieldColorModeId.PaletteColorblind])('keeps the %s palette as is', (id) => {
     expect(getFieldColorMode(id, false, true).getColors!(theme)).toEqual(getFieldColorMode(id).getColors!(theme));
