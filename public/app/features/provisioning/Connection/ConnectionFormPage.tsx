@@ -8,7 +8,7 @@ import { isFetchError } from '@grafana/runtime';
 import { Card, Collapse, EmptyState, Stack, Text, TextLink } from '@grafana/ui';
 import { useGetConnectionRepositoriesQuery, useListRepositoryQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
-import { CORE_KINDS } from 'app/core/kinds/coreKinds';
+import { dynamicKindRegistry } from 'app/core/kinds/dynamicKinds';
 
 import { CONNECTIONS_URL } from '../constants';
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
@@ -80,7 +80,7 @@ export default function ConnectionFormPage() {
                       {connectedRepos.map((repo) => (
                         <TextLink
                           key={repo.metadata?.name}
-                          href={CORE_KINDS.repository.getRoute(repo.metadata?.name ?? '')}
+                          href={dynamicKindRegistry.coreKinds.repository.getRoute(repo.metadata?.name ?? '')}
                         >
                           {repo.spec?.title || repo.metadata?.name}
                         </TextLink>

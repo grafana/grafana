@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { t } from '@grafana/i18n';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
-import { CORE_KINDS } from 'app/core/kinds/coreKinds';
+import { dynamicKindRegistry } from 'app/core/kinds/dynamicKinds';
 import { AnnoKeyFolder, type ResourceForCreate } from 'app/features/apiserver/types';
 import {
   DASHBOARD_API_GROUP,
@@ -80,7 +80,7 @@ export function useImportProvisionedSave({ repository }: { repository?: Reposito
 
       const body: ResourceForCreate<unknown> = {
         apiVersion: `${DASHBOARD_API_GROUP}/${resolvedVersion}`,
-        kind: CORE_KINDS.dashboard.kind,
+        kind: dynamicKindRegistry.coreKinds.dashboard.kind,
         metadata: {
           annotations: { [AnnoKeyFolder]: targetFolderUid },
           ...(uid ? { name: uid } : { generateName: 'd' }),
@@ -114,7 +114,9 @@ export function useImportProvisionedSave({ repository }: { repository?: Reposito
               // have a dashboard uid to navigate to.
               const dashboardUid = upsert?.metadata?.name;
               if (!dashboardUid) {
-                navigate(targetFolderUid ? CORE_KINDS.folder.getRoute(targetFolderUid) : '/dashboards');
+                navigate(
+                  targetFolderUid ? dynamicKindRegistry.coreKinds.folder.getRoute(targetFolderUid) : '/dashboards'
+                );
                 return;
               }
               navigate(getSavedDashboardPath(dashboardUid, title));

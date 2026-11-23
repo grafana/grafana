@@ -1,5 +1,5 @@
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
-import { CORE_KINDS } from 'app/core/kinds/coreKinds';
+import { dynamicKindRegistry } from 'app/core/kinds/dynamicKinds';
 import { ancestorsOf } from 'app/features/browse-dashboards/state/utils';
 import { type BrowseDashboardsState } from 'app/features/browse-dashboards/types';
 import { type DashboardViewItem } from 'app/features/search/types';
@@ -9,24 +9,24 @@ import { type RepoWorkflows } from '../types';
 import { isItemManagedByRepository } from './managedResource';
 
 export function getRepositoryResourcesUrl(name: string, resource: string): string {
-  return `${CORE_KINDS.repository.getRoute(name)}?tab=resources&resource=${resource}`;
+  return `${dynamicKindRegistry.coreKinds.repository.getRoute(name)}?tab=resources&resource=${resource}`;
 }
 
 export function getRepositoryOverviewUrl(name: string): string {
-  return `${CORE_KINDS.repository.getRoute(name)}/?tab=overview`;
+  return `${dynamicKindRegistry.coreKinds.repository.getRoute(name)}/?tab=overview`;
 }
 
 export function getRepositoryEditUrl(name: string): string {
-  return `${CORE_KINDS.repository.getRoute(name)}/edit`;
+  return `${dynamicKindRegistry.coreKinds.repository.getRoute(name)}/edit`;
 }
 
 export function getFileStatusUrl(repositoryName: string, path: string, ref?: string): string {
-  const url = `${CORE_KINDS.repository.getRoute(repositoryName)}/file/${path}`;
+  const url = `${dynamicKindRegistry.coreKinds.repository.getRoute(repositoryName)}/file/${path}`;
   return ref === undefined ? url : `${url}?${new URLSearchParams({ ref }).toString()}`;
 }
 
 export function getFileHistoryUrl(repositoryName: string, path: string): string {
-  return `${CORE_KINDS.repository.getRoute(repositoryName)}/history/${path}`;
+  return `${dynamicKindRegistry.coreKinds.repository.getRoute(repositoryName)}/history/${path}`;
 }
 
 export function getIsReadOnlyWorkflows(workflows?: RepoWorkflows): boolean {

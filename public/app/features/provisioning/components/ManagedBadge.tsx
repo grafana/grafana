@@ -4,7 +4,7 @@ import { type GrafanaTheme2, textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Badge, type BadgeColor, Dropdown, Icon, type IconName, Menu, Text, useStyles2 } from '@grafana/ui';
-import { CORE_KINDS } from 'app/core/kinds/coreKinds';
+import { dynamicKindRegistry } from 'app/core/kinds/dynamicKinds';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -107,7 +107,7 @@ function RepoManagedBadge({ name, repositoryName, sourcePath }: RepoManagedBadge
   // so it would match every logged-in user.
   const manageUrl =
     repository && contextSrv.hasPermission(AccessControlAction.ProvisioningRepositoriesWrite)
-      ? CORE_KINDS.repository.getRoute(repository.name ?? repositoryName)
+      ? dynamicKindRegistry.coreKinds.repository.getRoute(repository.name ?? repositoryName)
       : undefined;
 
   if (isOrphaned || (!sourceUrl && !manageUrl)) {

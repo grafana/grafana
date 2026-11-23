@@ -7,7 +7,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { Alert, Button, Field, Input, Stack, Text } from '@grafana/ui';
 import { type Folder } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView, useCreateRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
-import { CORE_KINDS } from 'app/core/kinds/coreKinds';
+import { dynamicKindRegistry } from 'app/core/kinds/dynamicKinds';
 import { useUrlParams } from 'app/core/navigation/hooks';
 import { type Resource } from 'app/features/apiserver/types';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
@@ -122,7 +122,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
   const onWriteSuccess = (resource: Resource<FolderDTO>) => {
     // Navigation for new folders (resource-specific concern)
     if (resource?.metadata?.name) {
-      navigate(CORE_KINDS.folder.getRoute(resource.metadata.name));
+      navigate(dynamicKindRegistry.coreKinds.folder.getRoute(resource.metadata.name));
       return;
     }
 

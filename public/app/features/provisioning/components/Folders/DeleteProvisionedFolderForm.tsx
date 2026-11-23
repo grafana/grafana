@@ -5,7 +5,7 @@ import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Stack } from '@grafana/ui';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
-import { CORE_KINDS } from 'app/core/kinds/coreKinds';
+import { dynamicKindRegistry } from 'app/core/kinds/dynamicKinds';
 import { AffectedFolderContents } from 'app/features/browse-dashboards/components/BrowseActions/AffectedFolderContents';
 import { type FolderDTO } from 'app/types/folders';
 
@@ -100,7 +100,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
       message,
       delete: {
         ref: getRequestRef(repository, ref),
-        resources: [toResourceRef(CORE_KINDS.folder, resourceId)],
+        resources: [toResourceRef(dynamicKindRegistry.coreKinds.folder, resourceId)],
       },
     };
 

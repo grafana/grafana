@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { API_GROUP, API_VERSION } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { config } from '@grafana/runtime';
-import { CORE_KINDS } from 'app/core/kinds/coreKinds';
+import { dynamicKindRegistry } from 'app/core/kinds/dynamicKinds';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import { isProvisionedDashboard as isProvisionedDashboardFromMeta } from 'app/features/browse-dashboards/api/isProvisioned';
 import { type SelectedItemRef, getSelectedItemRefs } from 'app/features/browse-dashboards/utils/dashboards';
@@ -36,7 +36,7 @@ export function useSelectionProvisioningStatus(
       new ScopedResourceClient({
         group: API_GROUP,
         version: API_VERSION,
-        resource: CORE_KINDS.folder.resource,
+        resource: dynamicKindRegistry.coreKinds.folder.resource,
       }),
     []
   );
