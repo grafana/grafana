@@ -194,6 +194,11 @@ type APIBuilder struct {
 	informerMetricsOnce     gosync.Once
 	relistProjectionMetrics *informer.RelistProjectionMetrics
 	freshnessMetrics        *informer.FreshnessMetrics
+
+	// loopbackConfig is the rest config the post-start hook resolved, set
+	// before loopbackReady is closed.
+	loopbackConfig *clientrest.Config
+	loopbackReady  chan struct{}
 }
 
 // NewAPIBuilder creates an API builder for the provisioning API.
@@ -294,6 +299,7 @@ func NewAPIBuilder(
 		maxFileSize: maxFileSize,
 		// Request body cap for job creation. Non-positive (<=0) uses the default.
 		maxJobBodySize: maxJobBodySize,
+		loopbackReady:  make(chan struct{}),
 	}
 
 	b.setResourceLister(resources.NewResourceLister(unified, clients, supportedResourceProvider.Get()))
@@ -314,6 +320,22 @@ func (b *APIBuilder) resyncInterval() time.Duration {
 		return setting.ProvisioningControllerResyncIntervalDefault
 	}
 	return b.controllerResyncInterval
+}
+
+func (b *APIBuilder) publishLoopbackConfig(config *clientrest.Config) {
+	b.loopbackConfig = config
+	close(b.loopbackReady)
+}
+
+// awaitLoopbackConfig blocks until the post-start hook has run, which is when
+// the provisioning API is served, and returns the rest config it resolved.
+func (b *APIBuilder) awaitLoopbackConfig(ctx context.Context) (*clientrest.Config, error) {
+	select {
+	case <-b.loopbackReady:
+		return b.loopbackConfig, nil
+	case <-ctx.Done():
+		return nil, context.Cause(ctx)
+	}
 }
 
 func (b *APIBuilder) informerMetrics() (*informer.RelistProjectionMetrics, *informer.FreshnessMetrics) {
@@ -1149,6 +1171,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			b.client = c.ProvisioningV0alpha1()
+			b.publishLoopbackConfig(config)
 
 			// Initialize the API client-based job store
 			b.jobs, err = jobs.NewJobStore(b.client, jobClaimExpiry, b.registry)
