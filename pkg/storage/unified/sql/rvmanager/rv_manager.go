@@ -294,17 +294,8 @@ func (m *ResourceVersionManager) execBatch(ctx context.Context, group, resource 
 		attribute.String("resource", resource),
 	)
 
-	var err error
-	timer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
-		status := "success"
-		if err != nil {
-			status = "error"
-		}
-		m.metrics.execBatchDuration.WithLabelValues(group, resource, status).Observe(v)
-	}))
-	defer timer.ObserveDuration()
-
-	retryCtx := ctx
+	// Retries without a failed write share this deadline, so they cannot hold the
+	// group/resource's batch processor longer than a single batch could.
 	ctx, cancel := context.WithTimeout(ctx, m.batchTransactionTimeout())
 	defer cancel()
 
@@ -410,55 +401,74 @@ func (m *ResourceVersionManager) execBatch(ctx context.Context, group, resource 
 		})
 	}
 
-	err = runBatch()
-	if err != nil && sqlite.IsBusyOrLocked(err) {
-		boff := backoff.New(ctx, backoff.Config{
-			MinBackoff: sqliteBusyMinBackoff,
-			MaxBackoff: sqliteBusyMaxBackoff,
-			MaxRetries: sqliteBusyMaxRetries,
-		})
-		for boff.Ongoing() {
-			span.AddEvent("batch_transaction_retry_sqlite_busy", trace.WithAttributes(
-				attribute.Int("attempt", boff.NumRetries()+1),
+	for {
+		var err error
+		timer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
+			status := "success"
+			if err != nil {
+				status = "error"
+			}
+			m.metrics.execBatchDuration.WithLabelValues(group, resource, status).Observe(v)
+		}))
+
+		err = runBatch()
+		if err != nil && sqlite.IsBusyOrLocked(err) {
+			boff := backoff.New(ctx, backoff.Config{
+				MinBackoff: sqliteBusyMinBackoff,
+				MaxBackoff: sqliteBusyMaxBackoff,
+				MaxRetries: sqliteBusyMaxRetries,
+			})
+			for boff.Ongoing() {
+				span.AddEvent("batch_transaction_retry_sqlite_busy", trace.WithAttributes(
+					attribute.Int("attempt", boff.NumRetries()+1),
+					attribute.String("error", err.Error()),
+				))
+				boff.Wait()
+				if ctx.Err() != nil {
+					break
+				}
+				err = runBatch()
+				if err == nil || !sqlite.IsBusyOrLocked(err) {
+					break
+				}
+			}
+		}
+		timer.ObserveDuration()
+
+		if err != nil {
+			span.AddEvent("batch_transaction_failed", trace.WithAttributes(
 				attribute.String("error", err.Error()),
 			))
-			boff.Wait()
-			if ctx.Err() != nil {
-				break
-			}
-			err = runBatch()
-			if err == nil || !sqlite.IsBusyOrLocked(err) {
-				break
+		} else {
+			span.AddEvent("batch_transaction_completed")
+		}
+
+		// One write's own error rolled back the others with it. Fail only that write and
+		// retry the rest, so it does not fail writes that merely shared its batch. Busy and
+		// timeout errors are not specific to that write, so they still fail the whole batch.
+		// Two caveats: a transient error such as a deadlock is still blamed on the write that
+		// hit it, and a write can fail because of an earlier write in the batch that the
+		// retry then fails to commit.
+		if err != nil && failedOp >= 0 && len(batch) > 1 && ctx.Err() == nil && !sqlite.IsBusyOrLocked(err) {
+			batch[failedOp].done <- writeOpResult{err: err, batchTraceLink: trace.LinkFromContext(ctx)}
+			batch = append(batch[:failedOp:failedOp], batch[failedOp+1:]...)
+			span.AddEvent("batch_retry_without_failed_operation", trace.WithAttributes(
+				attribute.Int("operation_index", failedOp),
+				attribute.Int("remaining_operations", len(batch)),
+			))
+			continue
+		}
+
+		// notify the caller that the operations are done
+		for i := range batch {
+			batch[i].done <- writeOpResult{
+				guid:           guids[i],
+				rv:             rvs[i],
+				err:            err,
+				batchTraceLink: trace.LinkFromContext(ctx),
 			}
 		}
-	}
-
-	if err != nil {
-		span.AddEvent("batch_transaction_failed", trace.WithAttributes(
-			attribute.String("error", err.Error()),
-		))
-	} else {
-		span.AddEvent("batch_transaction_completed")
-	}
-
-	// One write's own error rolled back the others with it. Fail only that write and
-	// retry the rest, so it does not fail writes that merely shared its batch. Busy and
-	// timeout errors are not specific to that write, so they still fail the whole batch.
-	if err != nil && failedOp >= 0 && len(batch) > 1 && ctx.Err() == nil && !sqlite.IsBusyOrLocked(err) {
-		batch[failedOp].done <- writeOpResult{err: err, batchTraceLink: trace.LinkFromContext(ctx)}
-		rest := append(batch[:failedOp:failedOp], batch[failedOp+1:]...)
-		m.execBatch(retryCtx, group, resource, rest)
 		return
-	}
-
-	// notify the caller that the operations are done
-	for i := range batch {
-		batch[i].done <- writeOpResult{
-			guid:           guids[i],
-			rv:             rvs[i],
-			err:            err,
-			batchTraceLink: trace.LinkFromContext(ctx),
-		}
 	}
 }
 

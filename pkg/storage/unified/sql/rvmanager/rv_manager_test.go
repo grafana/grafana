@@ -206,6 +206,8 @@ func TestExecBatch_RetriesOnSQLiteBusy(t *testing.T) {
 		}, nil)
 		require.Error(t, err)
 		require.ErrorIs(t, err, boom)
+		// A failed single-write batch must not start another transaction.
+		require.NoError(t, dbp.SQLMock.ExpectationsWereMet())
 	})
 }
 
@@ -220,13 +222,15 @@ func TestExecBatch_FailedWriteDoesNotFailOthers(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	// The batch rolls back because the first write fails.
+	// The batch rolls back because the middle write fails.
 	dbp.SQLMock.ExpectBegin()
+	dbp.SQLMock.ExpectExec("insert first").WillReturnResult(sqlmock.NewResult(1, 1))
 	dbp.SQLMock.ExpectExec("insert failing").WillReturnError(errors.New("already exists"))
 	dbp.SQLMock.ExpectRollback()
-	// The second write is retried without it.
+	// The other writes are retried, in order, without it.
 	dbp.SQLMock.ExpectBegin()
-	dbp.SQLMock.ExpectExec("insert ok").WillReturnResult(sqlmock.NewResult(1, 1))
+	dbp.SQLMock.ExpectExec("insert first").WillReturnResult(sqlmock.NewResult(1, 1))
+	dbp.SQLMock.ExpectExec("insert last").WillReturnResult(sqlmock.NewResult(1, 1))
 	expectSuccessfulResourceVersionExec(t, dbp)
 	dbp.SQLMock.ExpectCommit()
 
@@ -240,14 +244,15 @@ func TestExecBatch_FailedWriteDoesNotFailOthers(t *testing.T) {
 			done: make(chan writeOpResult, 1),
 		}
 	}
-	failing, ok := newOp("insert failing", "guid-1"), newOp("insert ok", "guid-2")
-	manager.execBatch(context.Background(), "g", "r", []writeOp{failing, ok})
+	first, failing, last := newOp("insert first", "guid-1"), newOp("insert failing", "guid-2"), newOp("insert last", "guid-3")
+	manager.execBatch(testutil.NewDefaultTestContext(t), "g", "r", []writeOp{first, failing, last})
 
 	require.ErrorContains(t, (<-failing.done).err, "already exists")
-	res := <-ok.done
-	require.NoError(t, res.err)
-	require.Equal(t, "guid-2", res.guid)
-	require.Equal(t, int64(200), res.rv)
+	for i, op := range []writeOp{first, last} {
+		res := <-op.done
+		require.NoError(t, res.err)
+		require.Equal(t, int64(200+i), res.rv)
+	}
 	require.NoError(t, dbp.SQLMock.ExpectationsWereMet())
 }
 
