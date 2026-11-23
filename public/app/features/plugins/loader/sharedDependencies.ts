@@ -77,8 +77,14 @@ export const sharedDependenciesMap = {
   },
   d3: () => import('d3'),
   emotion: () => import('@emotion/css'),
-  // bundling grafana-ui in plugins requires sharing i18next state
-  i18next: () => import('@grafana/i18n/internal').then((module) => module.getI18nInstance()),
+  // bundling grafana-ui in plugins requires sharing i18next state.
+  // SystemJS only copies enumerable props, which drops EventEmitter methods (on/off) that
+  // react-i18next >= 18 needs; `default` hands @grafana/i18n's getI18nInstance() the real instance.
+  i18next: () =>
+    import('@grafana/i18n/internal').then(({ getI18nInstance }) => {
+      const instance = getI18nInstance();
+      return Object.assign(instance, { default: instance });
+    }),
   jquery: () => loadJqueryWithFlot().then((module) => ({ default: module.default, __useDefault: true })),
   ...jQueryFlotDeps,
   // add move to lodash for backward compatabilty with plugins

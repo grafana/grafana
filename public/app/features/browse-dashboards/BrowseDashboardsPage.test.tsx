@@ -18,6 +18,8 @@ import { contextSrv } from 'app/core/services/context_srv';
 import BrowseDashboardsPage from './BrowseDashboardsPage';
 import * as permissions from './permissions';
 
+jest.mock('./permissions', () => makeSpyable('./permissions'));
+
 setBackendSrv(backendSrv);
 setupMockServer();
 

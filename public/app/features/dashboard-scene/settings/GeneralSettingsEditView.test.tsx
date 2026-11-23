@@ -17,6 +17,8 @@ import { activateFullSceneTree } from '../utils/test-utils';
 
 import { GeneralSettingsEditView } from './GeneralSettingsEditView';
 
+jest.mock('../pages/utils', () => makeSpyable('../pages/utils'));
+
 jest.mock('app/features/dashboard/components/GenAI/LazyGenAIButtons', () => ({
   LazyGenAIDashTitleButton: () => null,
   LazyGenAIDashDescriptionButton: () => null,
