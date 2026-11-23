@@ -34,19 +34,11 @@ export interface UseElementSelectionResult {
 }
 
 export function useElementSelection(id: string | undefined): UseElementSelectionResult {
-  if (!id) {
-    return {};
-  }
-
   const context = useContext(ElementSelectionContext);
-  if (!context) {
-    return {};
-  }
 
-  const isSelected = context.selected.some((item) => item.id === id);
   const onSelect = useCallback(
     (evt: MouseEvent, options: ElementSelectionOnSelectOptions = {}) => {
-      if (!context.enabled) {
+      if (!id || !context?.enabled) {
         return;
       }
 
@@ -65,12 +57,18 @@ export function useElementSelection(id: string | undefined): UseElementSelection
   );
 
   const onClear = useCallback(() => {
-    if (!context.enabled) {
+    if (!context?.enabled) {
       return;
     }
 
     context.onClear();
   }, [context]);
+
+  if (!id || !context) {
+    return {};
+  }
+
+  const isSelected = context.selected.some((item) => item.id === id);
 
   return { isSelected, onSelect, onClear, isSelectable: context.enabled };
 }
