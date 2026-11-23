@@ -10,7 +10,7 @@ import { Trans, t } from '@grafana/i18n';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { Button, ClipboardButton, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import { CodeMirrorEditor } from '@grafana/ui/unstable';
-import { createSuccessNotification } from 'app/core/copy/appNotification';
+import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { ExportFormat } from 'app/features/dashboard/api/types';
 import { dispatch } from 'app/store/store';
@@ -40,7 +40,13 @@ export function ExportAsCodeRenderer({ model }: SceneComponentProps<ExportAsCode
   const stringifiedDashboard = isViewingYAML ? stringifiedDashboardYAML : stringifiedDashboardJson;
 
   const onClickDownload = async () => {
-    await model.onSaveAsFile();
+    const saved = await model.onSaveAsFile();
+    if (!saved) {
+      const message = t('export.json.download-failed_toast_message', 'Failed to download the dashboard');
+      dispatch(notifyApp(createErrorNotification(message)));
+      return;
+    }
+
     const message = t('export.json.download-successful_toast_message', 'Your JSON has been downloaded');
     dispatch(notifyApp(createSuccessNotification(message)));
   };
