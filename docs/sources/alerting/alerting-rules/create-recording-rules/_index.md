@@ -162,4 +162,4 @@ Optionally, you can add custom labels to the resulting metric by selecting exist
 
 Click **Save rule** or **Save rule and exit** to save the rule.
 
-Once saved, the new recording metric is available for use in dashboards and alert rules.
+After saved, the new recording metric is available for use in dashboards and alert rules.
