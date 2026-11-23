@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/grafana/grafana-app-sdk/routes"
 	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-azure-sdk-go/v2/aztokenprovider"
-
-	"github.com/grafana/grafana/pkg/plugins"
 )
 
 type azureAccessTokenProvider struct {
@@ -18,7 +17,7 @@ type azureAccessTokenProvider struct {
 	scopes        []string
 }
 
-func newAzureAccessTokenProvider(ctx context.Context, settings *DataSourceProxySettings, authParams *plugins.JWTTokenAuth) (*azureAccessTokenProvider, error) {
+func newAzureAccessTokenProvider(ctx context.Context, settings *DataSourceProxySettings, authParams *routes.ProxyTokenAuth) (*azureAccessTokenProvider, error) {
 	if settings.GetAzureSettings == nil {
 		return nil, fmt.Errorf("missing azure settings")
 	}
@@ -42,7 +41,7 @@ func (provider *azureAccessTokenProvider) GetAccessToken() (string, error) {
 	return provider.tokenProvider.GetAccessToken(provider.ctx, provider.scopes)
 }
 
-func getAzureCredentials(settings *azsettings.AzureSettings, authParams *plugins.JWTTokenAuth) azcredentials.AzureCredentials {
+func getAzureCredentials(settings *azsettings.AzureSettings, authParams *routes.ProxyTokenAuth) azcredentials.AzureCredentials {
 	authType := strings.ToLower(authParams.Params["azure_auth_type"])
 	clientId := authParams.Params["client_id"]
 
@@ -59,7 +58,7 @@ func getAzureCredentials(settings *azsettings.AzureSettings, authParams *plugins
 	}
 	return &azcredentials.AzureClientSecretCredentials{
 		AzureCloud:   authParams.Params["azure_cloud"],
-		Authority:    authParams.Url,
+		Authority:    authParams.URL,
 		TenantId:     authParams.Params["tenant_id"],
 		ClientId:     authParams.Params["client_id"],
 		ClientSecret: authParams.Params["client_secret"],

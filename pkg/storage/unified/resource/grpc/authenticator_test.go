@@ -20,7 +20,7 @@ func TestBasicEncodeDecode(t *testing.T) {
 		Login:   "test",
 		Type:    claims.TypeUser,
 		OrgID:   456,
-		OrgRole: identity.RoleAdmin,
+		OrgRole: claims.RoleAdmin,
 	}
 
 	auth := &Authenticator{Tracer: noop.NewTracerProvider().Tracer("")}

@@ -6,8 +6,8 @@ require (
 	github.com/go-jose/go-jose/v4 v4.1.9
 	github.com/grafana/authlib v0.0.0-20261120113603-423cd15e9545 // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20261120113603-423cd15e9545 // @grafana/identity-access-team
+	github.com/grafana/grafana-app-sdk v0.63.3
 	github.com/stretchr/testify v1.12.1
-	go.yaml.in/yaml/v3 v3.0.6
 	k8s.io/apimachinery v0.37.2
 	k8s.io/apiserver v0.37.2
 	k8s.io/kube-openapi v0.0.0-20260821135717-be32def86098
@@ -33,7 +33,6 @@ require (
 	github.com/go-openapi/swag/stringutils v0.29.2 // indirect
 	github.com/go-openapi/swag/typeutils v0.29.2 // indirect
 	github.com/go-openapi/swag/yamlutils v0.29.2 // indirect
-	github.com/go-openapi/testify/enable/yaml/v2 v2.8.0 // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600 // indirect
@@ -50,6 +49,7 @@ require (
 	go.opentelemetry.io/otel/metric v1.47.0 // indirect
 	go.opentelemetry.io/otel/trace v1.47.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.5 // indirect
+	go.yaml.in/yaml/v3 v3.0.6 // indirect
 	golang.org/x/net v0.62.0 // indirect
 	golang.org/x/sync v0.25.0 // indirect
 	golang.org/x/sys v0.50.0 // indirect
