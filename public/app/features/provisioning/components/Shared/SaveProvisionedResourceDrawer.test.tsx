@@ -5,6 +5,7 @@ import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { type Playlist } from 'app/api/clients/playlist/v1';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { addKinds } from 'app/core/kinds/dynamicKinds';
 
 import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
 import { setupProvisioningMswServer } from '../../mocks/server';
@@ -361,6 +362,49 @@ describe('SaveProvisionedResourceDrawer', () => {
       await waitFor(() => expect(capturedRequest).not.toBeNull());
       expect(requireCapturedRequest(capturedRequest).url.searchParams.get('ref')).toBe('grafana/enforced-branch');
     });
+  });
+
+  it('opens for a plugin kind with its label and commits under its lowercased kind', async () => {
+    addKinds([
+      {
+        group: 'example.ext.grafana.app',
+        kind: 'Thing',
+        resource: 'things',
+        folderScoped: false,
+        getLabel: ({ upperFirst = true } = {}) => (upperFirst ? 'Plugin thing' : 'plugin thing'),
+        getPluralLabel: () => 'Plugin things',
+        icon: 'tag-alt',
+      },
+    ]);
+    server.use(
+      http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        capturedRequest = { url: new URL(request.url), body: await request.json() };
+        return HttpResponse.json({ path: 'things/my-thing.json', resource: { upsert: {} } });
+      })
+    );
+
+    const { user } = setup({
+      title: 'My thing',
+      resource: {
+        apiVersion: 'example.ext.grafana.app/v1alpha1',
+        kind: 'Thing',
+        metadata: {
+          name: 'thing-1',
+          annotations: {
+            'grafana.app/managedBy': 'repo',
+            'grafana.app/managerId': 'test-repo',
+            'grafana.app/sourcePath': 'things/my-thing.json',
+          },
+        },
+        spec: { title: 'My thing' },
+      },
+    });
+
+    expect(await screen.findByRole('heading', { name: /save provisioned plugin thing/i })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /^save$/i }));
+
+    await waitFor(() => expect(capturedRequest).not.toBeNull());
+    expect(requireCapturedRequest(capturedRequest).url.searchParams.get('message')).toBe('Save thing: My thing');
   });
 
   it('renders nothing and warns in dev when the resource is not a registered provisioning kind', () => {

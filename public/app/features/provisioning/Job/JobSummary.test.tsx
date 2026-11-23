@@ -1,6 +1,7 @@
 import { render, screen, within } from 'test/test-utils';
 
 import { type JobResourceSummary } from 'app/api/clients/provisioning/v0alpha1';
+import { addKinds } from 'app/core/kinds/dynamicKinds';
 
 import { JobSummary } from './JobSummary';
 
@@ -34,8 +35,8 @@ describe('JobSummary', () => {
       { group: 'dashboard.grafana.app', kind: 'Dashboard', create: 2 },
     ]);
 
-    expect(await screen.findAllByText('DataSource')).toHaveLength(1);
-    const row = await rowFor('DataSource');
+    expect(await screen.findAllByText('Data source')).toHaveLength(1);
+    const row = await rowFor('Data source');
     const cells = within(row).getAllByRole('cell');
     // Created 3 + 1, updated 2, deleted none, errors 1, total 4 + 2 + 1.
     expect(cells[1]).toHaveTextContent('4');
@@ -44,6 +45,24 @@ describe('JobSummary', () => {
     expect(cells[cells.length - 1]).toHaveTextContent('7');
 
     expect(await rowFor('Dashboard')).toBeInTheDocument();
+  });
+
+  it('shows the label that a plugin adds for its kind', async () => {
+    addKinds([
+      {
+        group: 'example.ext.grafana.app',
+        kind: 'Thing',
+        resource: 'things',
+        folderScoped: false,
+        getLabel: ({ upperFirst = true } = {}) => (upperFirst ? 'Plugin thing' : 'plugin thing'),
+        getPluralLabel: () => 'Plugin things',
+        icon: 'tag-alt',
+      },
+    ]);
+    setup([{ group: 'example.ext.grafana.app', kind: 'Thing', create: 1 }]);
+
+    const row = await rowFor('Plugin thing');
+    expect(within(row).getByText('Plugin thing')).toBeInTheDocument();
   });
 
   it('computes the total from the action counts', async () => {

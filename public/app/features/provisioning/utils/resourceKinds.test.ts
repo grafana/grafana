@@ -2,6 +2,7 @@ import { HttpResponse, http } from 'msw';
 
 import server from '@grafana/test-utils/server';
 import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
+import { addKinds } from 'app/core/kinds/dynamicKinds';
 
 import { setupProvisioningMswServer } from '../mocks/server';
 
@@ -436,5 +437,43 @@ describe('listing a collection kind', () => {
     server.use(discovery([{ name: 'dashboard.grafana.app', version: 'v1beta1', resource: 'dashboards' }]));
 
     await expect(list([{ group: 'datasource.grafana.app', kind: 'DataSource' }])).resolves.toEqual([]);
+  });
+});
+
+describe('plugin kinds', () => {
+  const group = 'example.ext.grafana.app';
+
+  beforeAll(() => {
+    addKinds([
+      {
+        group: 'example.ext.grafana.app',
+        kind: 'Thing',
+        resource: 'things',
+        folderScoped: false,
+        getLabel: ({ upperFirst = true } = {}) => (upperFirst ? 'Plugin thing' : 'plugin thing'),
+        getPluralLabel: () => 'Plugin things',
+        icon: 'tag-alt',
+      },
+    ]);
+  });
+
+  it('finds a plugin kind by its resource, kind, stat and group', () => {
+    expect(getKindInfoByResource('things')?.getLabel()).toBe('Plugin thing');
+    expect(getKindInfoByKind('Thing')?.icon).toBe('tag-alt');
+    expect(getKindInfoByStat({ group, resource: 'things' })?.getPluralLabel()).toBe('Plugin things');
+    expect(getKindInfoByGroupKind(group, 'Thing')?.resource).toBe('things');
+    expect(getKindInfoByStatGroup(group)?.kind).toBe('Thing');
+  });
+
+  it('reports a plugin kind as available once the backend enables it', () => {
+    expect(getAvailableResourceKinds([{ group, kind: 'Thing' }]).map((info) => info.kind)).toEqual(['Thing']);
+  });
+
+  it('does not offer a plugin kind for migration', () => {
+    const available = [
+      { group, kind: 'Thing' },
+      { group: 'dashboard.grafana.app', kind: 'Dashboard' },
+    ];
+    expect(getMigratableKinds(available).map((info) => info.kind)).toEqual(['Dashboard']);
   });
 });
