@@ -131,10 +131,10 @@ require (
 	github.com/google/wire v0.7.0 // @grafana/grafana-backend-group
 	github.com/googleapis/gax-go/v2 v2.24.1 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
-	github.com/grafana/alerting v0.0.0-20261113222548-56ba26dfa050 // @grafana/alerting-backend
+	github.com/grafana/alerting v0.0.0-20261120142630-6b20a0ecf293 // @grafana/alerting-backend
 	github.com/grafana/alerting/apps/historian v0.0.0-20260729133334-340f1168af6c // @grafana/alerting-backend
-	github.com/grafana/authlib v0.0.0-20261108003752-80ed9e737add // @grafana/identity-access-team
-	github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3 // @grafana/identity-access-team
+	github.com/grafana/authlib v0.0.0-20261120113603-423cd15e9545 // @grafana/identity-access-team
+	github.com/grafana/authlib/types v0.0.0-20261120113603-423cd15e9545 // @grafana/identity-access-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
 	github.com/grafana/dataplane/sdata v0.0.10 // @grafana/observability-metrics
 	github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600 // @grafana/grafana-backend-group
@@ -142,8 +142,8 @@ require (
 	github.com/grafana/gofpdf v0.0.0-20250307124105-3b9c5d35577f // @grafana/sharing-squad
 	github.com/grafana/gomemcache v0.0.0-20260728143316-9448343bd654 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-api-golang-client v0.27.0 // @grafana/alerting-backend
-	github.com/grafana/grafana-app-sdk v0.63.2 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana-app-sdk/logging v0.63.2 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana-app-sdk v0.63.3 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana-app-sdk/logging v0.63.3 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-aws-sdk v1.5.5 // @grafana/data-sources-plugins
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.4.1 // @grafana/data-sources-plugins
 	github.com/grafana/grafana-cloud-migration-snapshot v1.11.0 // @grafana/grafana-operator-experience-squad
@@ -197,7 +197,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/grafana-search-and-storage
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.1 // @grafana/grafana-catalog
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.4 // @grafana/grafana-backend-group
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.33.0 // @grafana/identity-access-team
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.34.0 // @grafana/identity-access-team
 	github.com/hashicorp/go-hclog v1.6.3 // @grafana/grafana-catalog
 	github.com/hashicorp/go-multierror v1.1.1 // @grafana/alerting-squad
 	github.com/hashicorp/go-plugin v1.8.0 // @grafana/grafana-catalog
@@ -278,7 +278,7 @@ require (
 	go.yaml.in/yaml/v3 v3.0.6 // @grafana/alerting-backend
 	gocloud.dev v0.46.0 // @grafana/grafana-app-platform-squad
 	gocloud.dev/secrets/hashivault v0.45.0 // @grafana/grafana-operator-experience-squad
-	golang.org/x/mod v0.42.0 // @grafana/grafana-search-and-storage
+	golang.org/x/mod v0.43.0 // @grafana/grafana-search-and-storage
 	golang.org/x/net v0.62.0 // @grafana/data-sources-plugins
 	golang.org/x/oauth2 v0.38.0 // @grafana/identity-access-team
 	golang.org/x/sync v0.25.0 // @grafana/alerting-backend
@@ -286,7 +286,7 @@ require (
 	golang.org/x/time v0.16.0 // @grafana/grafana-backend-group
 	gonum.org/v1/gonum v0.17.0 // @grafana/data-sources-plugins
 	google.golang.org/api v0.297.0 // @grafana/grafana-backend-group
-	google.golang.org/genproto/googleapis/api v0.0.0-20261104224025-d1e00e9f33ab // @grafana/identity-access-team
+	google.golang.org/genproto/googleapis/api v0.0.0-20261110000943-09e21b237f2c // @grafana/identity-access-team
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20261104224025-d1e00e9f33ab // @grafana/identity-access-team
 	google.golang.org/grpc v1.85.0 // @grafana/grafana-catalog
 	google.golang.org/protobuf v1.36.12 // @grafana/grafana-catalog
@@ -360,7 +360,6 @@ require (
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aws/aws-sdk-go v1.55.8 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.11 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager v0.2.3 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.5.2 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.8.2 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.5.2 // indirect
@@ -599,7 +598,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/power-devops/perfstat v0.0.0-20260916203055-22a1a467d9f0 // indirect
 	github.com/prometheus/client_golang/exp v0.0.0-20260602051030-3537b20ac86b // indirect
-	github.com/prometheus/common/sigv4 v0.1.0 // indirect
 	github.com/prometheus/exporter-toolkit v0.19.0 // indirect
 	github.com/prometheus/otlptranslator v1.0.0 // indirect
 	github.com/prometheus/procfs v0.23.0 // indirect
@@ -640,7 +638,6 @@ require (
 	github.com/tjhop/slog-gokit v0.2.0 // indirect; @grafana/grafana-app-platform-squad
 	github.com/tklauser/go-sysconf v0.4.0 // indirect
 	github.com/tklauser/numcpus v0.12.0 // indirect
-	github.com/trivago/tgo v1.0.7 // indirect
 	github.com/uber/jaeger-client-go v2.30.0+incompatible // indirect
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	github.com/unknwon/bra v0.0.0-20200517080246-1e3013ecaff8 // indirect
@@ -689,11 +686,11 @@ require (
 	go.yaml.in/yaml/v2 v2.4.5 // indirect
 	go.yaml.in/yaml/v4 v4.0.0 // indirect
 	golang.org/x/crypto v0.59.0 // indirect
-	golang.org/x/exp v0.0.0-20261014143641-f0251eb4aa3e // indirect
+	golang.org/x/exp v0.0.0-20261113113407-e3970619a1a4 // indirect
 	golang.org/x/sys v0.50.0 // indirect
 	golang.org/x/telemetry v0.0.0-20261009151841-97e8ea77aa2a // indirect
 	golang.org/x/term v0.48.0 // indirect
-	golang.org/x/tools v0.52.0 // indirect
+	golang.org/x/tools v0.52.1-0.20261106145633-d407941a339a // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	gomodules.xyz/jsonpatch/v3 v3.0.1 // indirect
 	gomodules.xyz/orderedmap v0.1.0 // indirect
@@ -731,7 +728,7 @@ replace (
 	github.com/hashicorp/memberlist => github.com/grafana/memberlist v0.3.1-0.20260515134459-1798cf41aca7
 
 	// Use our fork of the upstream Alertmanager.
-	github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20261009142442-7daeb08a4623
+	github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20261119191137-fc531ea850e6
 )
 
 // This was retracted, but seems to be known by the Go module proxy,

@@ -384,7 +384,7 @@ type QueueConfig struct {
 }
 
 type BlobConfig struct {
-	// The CDK configuration URL
+	// Retained to reject configured external storage instead of silently losing access to its blobs.
 	URL string
 
 	// Directly implemented blob support
@@ -720,14 +720,6 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		return nil, err
 	}
 
-	if b, ok := opts.Backend.(*kvStorageBackend); ok {
-		if external, ok := blobstore.(*cdkBlobSupport); ok {
-			b.blobGCMu.Lock()
-			b.blobGC = NewBlobGarbageCollector(NewCDKBlobGCStore(external.bucket, external.root), b.garbageCollection.BatchSize, b.garbageCollection.BatchWait)
-			b.blobGCMu.Unlock()
-		}
-	}
-
 	logger := log.New("resource-server")
 	// Make this cancelable
 	ctx, cancel := context.WithCancel(context.Background())
@@ -798,22 +790,20 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 	return s, nil
 }
 
+func ValidateBlobURL(url string) error {
+	if url != "" {
+		return fmt.Errorf("blob_url is no longer supported by unified storage")
+	}
+	return nil
+}
+
 // initializeBlobStorage initializes blob storage from the provided options.
 func initializeBlobStorage(opts ResourceServerOptions) (BlobSupport, error) {
+	if err := ValidateBlobURL(opts.Blob.URL); err != nil {
+		return nil, err
+	}
 	if opts.Blob.Backend != nil {
 		return opts.Blob.Backend, nil
-	}
-
-	if opts.Blob.URL != "" {
-		ctx := context.Background()
-		bucket, err := OpenBlobBucket(ctx, opts.Blob.URL)
-		if err != nil {
-			return nil, err
-		}
-
-		return NewCDKBlobSupport(ctx, CDKBlobSupportOptions{
-			Bucket: NewInstrumentedBucket(bucket, opts.Reg),
-		})
 	}
 
 	// Check if the backend supports blob storage

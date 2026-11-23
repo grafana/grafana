@@ -1346,7 +1346,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			v := NewAdmissionValidator(nil, func(context.Context) bool { return tt.perfEnabled })
+			v := NewAdmissionValidator(func() []provisioning.SupportedResource { return nil }, func(context.Context) bool { return tt.perfEnabled })
 
 			var obj runtime.Object
 			if tt.obj != nil {
@@ -1355,7 +1355,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 
 			attr := newAdmissionTestAttributes(obj, tt.operation)
 
-			err := v.Validate(context.Background(), attr, nil)
+			err := v.Validate(t.Context(), attr, nil)
 
 			if tt.wantErr {
 				require.Error(t, err)
@@ -1368,6 +1368,31 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 			require.NoError(t, err)
 		})
 	}
+}
+
+// The supported resources can change while the process runs, so the validator reads them on
+// each validation.
+func TestAdmissionValidator_ReadsTheSupportedResourcesOnEachValidation(t *testing.T) {
+	dashboard := provisioning.SupportedResource{Group: "dashboard.grafana.app", Kind: "Dashboard"}
+	widget := provisioning.SupportedResource{Group: "example.ext.grafana.app", Kind: "Widget"}
+	supported := []provisioning.SupportedResource{dashboard}
+	v := NewAdmissionValidator(func() []provisioning.SupportedResource { return supported }, nil)
+	job := &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+		Spec: provisioning.JobSpec{
+			Action:     provisioning.JobActionPush,
+			Repository: "test-repo",
+			Push: &provisioning.ExportJobOptions{
+				Resources: []provisioning.ResourceRef{{Name: "widget-1", Kind: "Widget", Group: "example.ext.grafana.app"}},
+			},
+		},
+	}
+
+	err := v.Validate(t.Context(), newAdmissionTestAttributes(job, admission.Create), nil)
+	require.ErrorContains(t, err, "kind is not supported for export")
+
+	supported = []provisioning.SupportedResource{dashboard, widget}
+	require.NoError(t, v.Validate(t.Context(), newAdmissionTestAttributes(job, admission.Create), nil))
 }
 
 func newAdmissionTestAttributes(obj runtime.Object, op admission.Operation) admission.Attributes {

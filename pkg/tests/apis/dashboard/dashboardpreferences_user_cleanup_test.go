@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"testing"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -39,7 +40,7 @@ func TestIntegrationDashboardPreferencesUserCleanup(t *testing.T) {
 
 	t.Run("removing a user from an org deletes their preferences in that org only", func(t *testing.T) {
 		u, id, uid := createDashboardPreferencesCleanupViewer(t, helper, "prefs-cleanup-org-removal")
-		helper.AddUserToOrg(u, apis.Org2, identity.RoleViewer)
+		helper.AddUserToOrg(u, apis.Org2, authlib.RoleViewer)
 		seedDashboardPreferencesUserTier(t, helper, 1, uid)
 		seedDashboardPreferencesUserTier(t, helper, orgB, uid)
 
@@ -57,7 +58,7 @@ func TestIntegrationDashboardPreferencesUserCleanup(t *testing.T) {
 
 	t.Run("deleting a user deletes their preferences in every org", func(t *testing.T) {
 		u, id, uid := createDashboardPreferencesCleanupViewer(t, helper, "prefs-cleanup-user-delete")
-		helper.AddUserToOrg(u, apis.Org2, identity.RoleViewer)
+		helper.AddUserToOrg(u, apis.Org2, authlib.RoleViewer)
 		seedDashboardPreferencesUserTier(t, helper, 1, uid)
 		seedDashboardPreferencesUserTier(t, helper, orgB, uid)
 
@@ -182,7 +183,7 @@ func TestIntegrationDashboardPreferencesUserCleanupKubernetesUsers(t *testing.T)
 // createDashboardPreferencesCleanupViewer creates a Viewer in org 1 and returns the user, its ID and its UID.
 func createDashboardPreferencesCleanupViewer(t *testing.T, helper *apis.K8sTestHelper, name string) (apis.User, int64, string) {
 	t.Helper()
-	u := helper.CreateUser(name, apis.Org1, identity.RoleViewer, nil)
+	u := helper.CreateUser(name, apis.Org1, authlib.RoleViewer, nil)
 	id, err := identity.UserIdentifier(u.Identity.GetID())
 	require.NoError(t, err)
 	uid := u.Identity.GetIdentifier()

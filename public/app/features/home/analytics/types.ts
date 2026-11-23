@@ -35,6 +35,12 @@ export interface RecentActivityShown extends EventProperty {
   total_count: number;
   /** Dashboards in history. */
   dashboard_count: number;
+  /** Folders in history. */
+  folder_count: number;
+  /** Notebooks in history. */
+  notebook_count: number;
+  /** Playlists in history. */
+  playlist_count: number;
   /** Grafana Pages in history. */
   page_count: number;
   /** Explore sessions in history. */
