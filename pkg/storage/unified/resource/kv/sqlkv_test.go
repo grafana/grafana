@@ -37,13 +37,13 @@ func TestSQLKVUnixTimestamp(t *testing.T) {
 		driverName string
 		query      string
 	}{
-		{driverName: "mysql", query: "SELECT UNIX_TIMESTAMP()"},
-		{driverName: "postgres", query: "SELECT FLOOR(EXTRACT(EPOCH FROM statement_timestamp()))::BIGINT"},
-		{driverName: "sqlite", query: "SELECT unixepoch('now')"},
+		{driverName: "mysql", query: "SELECT UNIX_TIMESTAMP() * 1000 + MICROSECOND(NOW(6)) DIV 1000"},
+		{driverName: "postgres", query: "SELECT FLOOR(EXTRACT(EPOCH FROM statement_timestamp()) * 1000)::BIGINT"},
+		{driverName: "sqlite", query: "SELECT CAST(ROUND((julianday('now') - 2440587.5) * 86400000) AS INTEGER)"},
 	} {
 		t.Run(tc.driverName, func(t *testing.T) {
 			store, _, mock := setupSQLKVMock(t, tc.driverName)
-			const expected int64 = 1234567890
+			const expected int64 = 1234567890123
 			mock.ExpectQuery(regexp.QuoteMeta(tc.query)).
 				WillReturnRows(sqlmock.NewRows([]string{"timestamp"}).AddRow(expected))
 
@@ -68,7 +68,7 @@ func TestSQLKVUnixTimestampErrors(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			store, _, mock := setupSQLKVMock(t, "sqlite")
-			expectation := mock.ExpectQuery(regexp.QuoteMeta("SELECT unixepoch('now')"))
+			expectation := mock.ExpectQuery(regexp.QuoteMeta("SELECT CAST(ROUND((julianday('now') - 2440587.5) * 86400000) AS INTEGER)"))
 			if tc.rows != nil {
 				expectation.WillReturnRows(tc.rows)
 			} else {
@@ -94,8 +94,8 @@ func TestSQLKVUnixTimestampUsesContextTransaction(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = tx.Rollback() })
 
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT unixepoch('now')")).
-		WillReturnRows(sqlmock.NewRows([]string{"timestamp"}).AddRow(int64(1234567890)))
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT CAST(ROUND((julianday('now') - 2440587.5) * 86400000) AS INTEGER)")).
+		WillReturnRows(sqlmock.NewRows([]string{"timestamp"}).AddRow(int64(1234567890123)))
 	mock.ExpectRollback()
 
 	// Bound the pool wait if UnixTimestamp stops reusing the transaction's connection.
@@ -104,7 +104,7 @@ func TestSQLKVUnixTimestampUsesContextTransaction(t *testing.T) {
 
 	timestamp, err := store.UnixTimestamp(ContextWithDBTX(ctx, tx))
 	require.NoError(t, err)
-	require.Equal(t, int64(1234567890), timestamp)
+	require.Equal(t, int64(1234567890123), timestamp)
 	require.NoError(t, tx.Rollback())
 	require.NoError(t, mock.ExpectationsWereMet())
 }

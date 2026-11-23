@@ -19,7 +19,7 @@ import {
   filterByValueTransformer,
   organizeFieldsTransformer,
 } from '@grafana/data/internal';
-import { mockClientSize } from '@grafana/test-utils';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 
 import { type PanelRuntimeTransformations } from '../../PanelChrome/PanelContext';
 
@@ -41,7 +41,7 @@ standardTransformersRegistry.setInit(() =>
   }))
 );
 
-beforeAll(() => mockClientSize({ width: 800, height: 600 }));
+beforeAll(() => mockBoundingClientRect({ width: 800, height: 600 }));
 
 it.each<{ name: string; options: RangeValueMatcherOptions; editable: boolean }>([
   { name: 'legacy exclusive range', options: { from: 10, to: 30 }, editable: false },

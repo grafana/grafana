@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/prom"
-	storerules "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
+	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 )
 
@@ -79,14 +79,14 @@ func TestConvertedRuleReApplyProducesNoDelta(t *testing.T) {
 	}
 
 	groupKey := models.AlertRuleGroupKey{OrgID: 1, NamespaceUID: "folder-uid", RuleGroup: "availability"}
-	delta, err := storerules.CalculateChanges(ctx, fakeStore, groupKey, submitted)
+	delta, err := ngrulesvc.CalculateChanges(ctx, fakeStore, groupKey, submitted)
 	require.NoError(t, err)
 	// CalculateChanges correctly finds no real change (converter is deterministic).
 	require.Empty(t, delta.New)
 	require.Empty(t, delta.Update)
 	require.Empty(t, delta.Delete)
 
-	delta = storerules.UpdateCalculatedRuleFields(delta)
+	delta = ngrulesvc.UpdateCalculatedRuleFields(delta)
 	for _, u := range delta.Update {
 		require.Empty(t, u.Diff.Paths(), "the injected updates carry no real diff")
 	}

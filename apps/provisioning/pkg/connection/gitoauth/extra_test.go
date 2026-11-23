@@ -6,9 +6,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection/gitoauth"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 func TestExtra_Validate(t *testing.T) {
@@ -77,7 +77,7 @@ func TestExtra_Validate(t *testing.T) {
 					GitOAuth: tt.gitOAuth,
 				},
 				Secure: provisioning.ConnectionSecure{
-					ClientSecret: common.InlineSecureValue{Create: common.NewSecretValue("client-secret")},
+					ClientSecret: resource.InlineSecureValue{Create: resource.NewSecretValue("client-secret")},
 				},
 			}
 

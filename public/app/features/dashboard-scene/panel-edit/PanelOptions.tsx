@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import * as React from 'react';
 
 import { type PanelData } from '@grafana/data';
@@ -16,6 +16,8 @@ import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { getLibraryPanelBehavior, isInV2Dashboard, isLibraryPanel } from '../utils/utils';
 
 import { getPanelFrameOptions, getPanelStylesOptions } from './getPanelFrameOptions';
+import { getVarMappingVariableSource } from './getVarMappingVariableSource';
+import { createOverrideChangeReporter } from './overrideChangeReporter';
 
 interface Props {
   panel: VizPanel;
@@ -28,6 +30,11 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
   const { options, fieldConfig, _pluginInstanceState } = panel.useState();
   // Expressions are only stored in the v2 schema, so only v2 dashboards get the expression editors
   const varMappingsEnabled = useFlagGrafanaPanelOptionInterpolation() && isInV2Dashboard(panel);
+
+  const varMappingVariables = useMemo(
+    () => (varMappingsEnabled ? getVarMappingVariableSource(panel) : undefined),
+    [panel, varMappingsEnabled]
+  );
 
   const panelFrameOptions = useMemo(() => getPanelFrameOptions(panel), [panel]);
   const panelStylesOptions = useMemo(() => getPanelStylesOptions(panel), [panel]);
@@ -48,8 +55,9 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
       currentFieldConfig: fieldConfig,
       reportInteractionUI: 'panel-edit',
       varMappingsEnabled,
+      varMappingVariables,
     });
-  }, [data, panel, options, fieldConfig, _pluginInstanceState, varMappingsEnabled]);
+  }, [data, panel, options, fieldConfig, _pluginInstanceState, varMappingsEnabled, varMappingVariables]);
 
   const libraryPanelOptions = useMemo(() => {
     if (panel instanceof VizPanel && isLibraryPanel(panel)) {
@@ -64,6 +72,9 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
     return;
   }, [panel]);
 
+  const overrideChangeReporter = useMemo(() => createOverrideChangeReporter(panel), [panel]);
+  useEffect(() => () => overrideChangeReporter.flush(), [overrideChangeReporter]);
+
   const justOverrides = useMemo(
     () =>
       getFieldOverrideCategories(
@@ -75,9 +86,11 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
           panel.onFieldConfigChange(newConfig, true);
         },
         options,
-        varMappingsEnabled
+        varMappingsEnabled,
+        varMappingVariables,
+        overrideChangeReporter.report
       ),
-    [data, searchQuery, panel, fieldConfig, options, varMappingsEnabled]
+    [data, searchQuery, panel, fieldConfig, options, varMappingsEnabled, varMappingVariables, overrideChangeReporter]
   );
 
   const isSearching = searchQuery.length > 0;

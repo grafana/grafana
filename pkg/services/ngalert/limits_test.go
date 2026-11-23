@@ -41,6 +41,21 @@ func TestUsageReporter(t *testing.T) {
 		require.Equal(t, int64(30), val)
 	})
 
+	t.Run("reports zero org usage for org without rules", func(t *testing.T) {
+		rules := newFakeUsageReader(map[int64]int64{1: 10, 2: 20})
+		params := quota.ScopeParameters{
+			OrgID: 3,
+		}
+
+		res, err := UsageReporter(rules)(context.Background(), &params)
+
+		require.NoError(t, err)
+		rulesOrg, _ := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.OrgScope)
+		val, ok := res.Get(rulesOrg)
+		require.True(t, ok, "reporter did not report on org 3 rules usage")
+		require.Equal(t, int64(0), val)
+	})
+
 	t.Run("reports global usage if scope params are nil", func(t *testing.T) {
 		rules := newFakeUsageReader(map[int64]int64{1: 10, 2: 20})
 
@@ -97,17 +112,10 @@ func newFakeUsageReader(usage map[int64]int64) fakeUsageReader {
 	}
 }
 
-func (f fakeUsageReader) Count(_ context.Context, orgID int64) (int64, error) {
-	if orgID == 0 {
-		total := int64(0)
-		for _, count := range f.usage {
-			total += count
-		}
-		return total, nil
-	}
+func (f fakeUsageReader) Count(_ context.Context, _ int64) (int64, error) {
+	panic("usage reporter must use CountByOrg")
+}
 
-	if c, ok := f.usage[orgID]; ok {
-		return c, nil
-	}
-	return 0, nil
+func (f fakeUsageReader) CountByOrg(_ context.Context) (map[int64]int64, error) {
+	return f.usage, nil
 }

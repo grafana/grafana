@@ -12,15 +12,10 @@ import { buildPanelEditScene } from '../PanelEditor';
 import { PanelDataPaneNext } from './PanelDataPaneNext';
 import { VizAndDataPaneNext } from './VizAndDataPaneNext';
 import { SidebarSize } from './constants';
-import { useQueryEditorBanner, useVizAndDataPaneLayout } from './hooks';
+import { useVizAndDataPaneLayout } from './hooks';
 
 jest.mock('./hooks', () => ({
   useVizAndDataPaneLayout: jest.fn(),
-  useQueryEditorBanner: jest.fn().mockReturnValue({ showBanner: false, dismissBanner: jest.fn() }),
-}));
-
-jest.mock('../QueryEditorBanner', () => ({
-  QueryEditorBanner: () => <div data-testid="query-editor-banner" />,
 }));
 
 jest.mock('./QueryEditor/QueryEditorContextWrapper', () => ({
@@ -158,14 +153,6 @@ describe('VizAndDataPaneNext', () => {
       render(<VizAndDataPaneNext model={panelEditor} />);
       expect(screen.getByTestId('data-pane-content')).toBeInTheDocument();
     });
-
-    it('renders the query editor banner when enabled', () => {
-      jest.mocked(useQueryEditorBanner).mockReturnValue({ showBanner: true, dismissBanner: jest.fn() });
-
-      render(<VizAndDataPaneNext model={panelEditor} />);
-
-      expect(screen.getByTestId('query-editor-banner')).toBeInTheDocument();
-    });
   });
 
   /**
@@ -234,15 +221,6 @@ describe('VizAndDataPaneNext', () => {
       await userEvent.click(expand);
 
       expect(layout.vizDataSplitter.onToggleCollapse).toHaveBeenCalled();
-    });
-
-    // The banner sits inside the bottom pane, so a collapsed query pane must hide it too.
-    it('hides the banner while the query pane is collapsed', () => {
-      jest.mocked(useQueryEditorBanner).mockReturnValue({ showBanner: true, dismissBanner: jest.fn() });
-
-      renderCollapsed({ vizData: true });
-
-      expect(screen.queryByTestId('query-editor-banner')).not.toBeInTheDocument();
     });
   });
 });

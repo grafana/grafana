@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -9,12 +10,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/dskit/services"
 	natsserver "github.com/nats-io/nats-server/v2/server"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"gopkg.in/ini.v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/rest"
 
@@ -25,6 +30,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/router/routertest"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -51,7 +57,7 @@ func TestConnectionFactoryUsesConfiguredTypes(t *testing.T) {
 	require.ElementsMatch(t, []apisprovisioning.ConnectionType{configuredType}, factory.Types())
 }
 
-func TestDefaultConnectionTypes(t *testing.T) {
+func TestConnectionFactoryEnablesAllRegisteredTypesByDefault(t *testing.T) {
 	registeredTypes := []apisprovisioning.ConnectionType{
 		apisprovisioning.GithubConnectionType,
 		apisprovisioning.GithubEnterpriseConnectionType,
@@ -59,6 +65,7 @@ func TestDefaultConnectionTypes(t *testing.T) {
 		apisprovisioning.GithubEnterpriseOAuthConnectionType,
 		apisprovisioning.BitbucketOAuthConnectionType,
 		apisprovisioning.GitlabOAuthConnectionType,
+		apisprovisioning.GitOAuthConnectionType,
 	}
 	extras := make([]connection.Extra, 0, len(registeredTypes))
 	for _, connectionType := range registeredTypes {
@@ -67,7 +74,14 @@ func TestDefaultConnectionTypes(t *testing.T) {
 		extras = append(extras, extra)
 	}
 
-	require.ElementsMatch(t, []string{"github", "githubEnterprise"}, defaultConnectionTypes(extras))
+	cfg := ControllerConfig{
+		Settings:         &setting.Cfg{},
+		connectionExtras: extras,
+		tracer:           tracing.NewNoopTracerService(),
+	}
+	factory, err := cfg.ConnectionFactory()
+	require.NoError(t, err)
+	require.ElementsMatch(t, registeredTypes, factory.Types())
 }
 
 // roundTripperFunc lets a plain function stand in as an http.RoundTripper.
@@ -156,6 +170,61 @@ func TestProvisioningRESTClientCarriesTheExchangedToken(t *testing.T) {
 	assert.Equal(t, "/apis/provisioning.grafana.app/v0alpha1/connections/list-keys", gotPath)
 }
 
+// The aggregated server is the router: it publishes the app manifests, and it serves each group
+// that has no server URL. Both requests carry a token for the provisioning audience.
+func TestClientsServeManifestKindsFromTheAggregatedServer(t *testing.T) {
+	router := routertest.NewServer(t, map[string]string{
+		"/apis/discovery/v1alpha2/manifests":                          `{"apiVersion":"apps.grafana.app/v1alpha2","kind":"AppManifestList","items":[{"apiVersion":"apps.grafana.app/v1alpha2","kind":"AppManifest","metadata":{"name":"example"},"spec":{"appName":"example","group":"example.ext.grafana.app","versions":[{"name":"v1","served":true,"kinds":[{"kind":"Widget","scope":"Namespaced","extensions":{"provisioning":{"enabled":true}}}]}]}}]}`,
+		"/apis/" + stubRouterGroup + "/v1":                            `{"kind":"APIResourceList","apiVersion":"v1","groupVersion":"example.ext.grafana.app/v1","resources":[{"name":"widgets","namespaced":true,"kind":"Widget","verbs":["get","list"]}]}`,
+		"/apis/" + stubRouterGroup + "/v1/namespaces/default/widgets": `{"apiVersion":"example.ext.grafana.app/v1","kind":"WidgetList","items":[]}`,
+	})
+	cfg := newClientsConfig(t, newStubSigner(t).URL, map[string]string{"aggregated_server_url": router.URL})
+
+	factory, err := cfg.Clients()
+	require.NoError(t, err)
+	require.NoError(t, services.StartAndAwaitRunning(t.Context(), cfg.manifestWatcher))
+	t.Cleanup(cfg.manifestWatcher.StopAsync)
+
+	clients, err := factory.Clients(t.Context(), "default")
+	require.NoError(t, err)
+	widget := schema.GroupVersionKind{Group: stubRouterGroup, Version: "v1", Kind: "Widget"}
+	require.Contains(t, clients.SupportedResources(), resources.SupportedResource{GroupKind: widget.GroupKind(), Capabilities: sets.New(resources.CapabilityFolder)})
+
+	client, _, err := clients.ForKind(t.Context(), widget)
+	require.NoError(t, err)
+	_, err = client.List(t.Context(), metav1.ListOptions{})
+	require.NoError(t, err)
+
+	token := "Bearer token-for-" + apisprovisioning.GROUP
+	require.Equal(t, token, router.AccessToken("/apis/discovery/v1alpha2/manifests"))
+	require.Equal(t, token, router.AccessToken("/apis/"+stubRouterGroup+"/v1/namespaces/default/widgets"))
+}
+
+// Production has no aggregated server yet, so the operators must run with the configured
+// resources only.
+func TestClientsWithoutAnAggregatedServer(t *testing.T) {
+	t.Run("serves the configured resources and watches no manifests", func(t *testing.T) {
+		cfg := newClientsConfig(t, newStubSigner(t).URL, nil)
+
+		factory, err := cfg.Clients()
+		require.NoError(t, err)
+		require.NoError(t, services.StartAndAwaitRunning(t.Context(), cfg.manifestWatcher))
+		t.Cleanup(cfg.manifestWatcher.StopAsync)
+
+		clients, err := factory.Clients(t.Context(), "default")
+		require.NoError(t, err)
+		require.Len(t, clients.SupportedResources(), len(cfg.Settings.ProvisioningResources))
+	})
+
+	t.Run("fails for a configured resource that has no server", func(t *testing.T) {
+		cfg := newClientsConfig(t, newStubSigner(t).URL, nil)
+		cfg.Settings.ProvisioningResources = append(cfg.Settings.ProvisioningResources, "playlist.grafana.app/Playlist")
+
+		_, err := cfg.Clients()
+		require.ErrorContains(t, err, "aggregated_server_url is required")
+	})
+}
+
 func TestControllersOwnNATSSubscriber(t *testing.T) {
 	originalOptions := registeredConfigOptions
 	t.Cleanup(func() { registeredConfigOptions = originalOptions })
@@ -198,6 +267,7 @@ func TestControllersOwnNATSSubscriber(t *testing.T) {
 				cfg.provisioningClient = provisioningClient
 				cfg.provisioningRESTCfg = restCfg
 				cfg.clients = resources.NewMockClientFactory(t)
+				cfg.manifestWatcher = services.NewIdleService(nil, nil)
 				cfg.repositoryFactory, err = repository.ProvideFactory(nil, nil, cfg.tracer)
 				if err != nil {
 					return err
@@ -300,4 +370,46 @@ func TestControllerConfigResourceLister(t *testing.T) {
 		_, err := newConfig().ResourceLister()
 		require.ErrorContains(t, err, "failed to create provisioning REST client")
 	})
+}
+
+const stubRouterGroup = "example.ext.grafana.app"
+
+// newClientsConfig returns a config with the settings that Clients needs, plus the given
+// [operator] keys. Dashboards and folders have server URLs that no test calls.
+func newClientsConfig(t *testing.T, signerURL string, operator map[string]string) *ControllerConfig {
+	t.Helper()
+	cfg := setting.NewCfg()
+	cfg.ProvisioningResources = []string{"folder.grafana.app/Folder:folder", "dashboard.grafana.app/Dashboard:folder"}
+	sections := map[string]map[string]string{
+		"grpc_client_authentication": {"token": "operator-token", "token_exchange_url": signerURL},
+		"operator":                   {"dashboards_server_url": "https://dashboards.invalid", "folders_server_url": "https://folders.invalid"},
+	}
+	for k, v := range operator {
+		sections["operator"][k] = v
+	}
+	for section, keys := range sections {
+		for k, v := range keys {
+			_, err := cfg.Raw.Section(section).NewKey(k, v)
+			require.NoError(t, err)
+		}
+	}
+	return &ControllerConfig{Settings: cfg, tracer: tracing.NewNoopTracerService()}
+}
+
+// newStubSigner returns a token exchange server. Each token names the audiences of its request.
+func newStubSigner(t *testing.T) *httptest.Server {
+	t.Helper()
+	signer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Audiences []string `json:"audiences"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{"data": map[string]string{"token": "token-for-" + strings.Join(req.Audiences, ",")}})
+	}))
+	t.Cleanup(signer.Close)
+	return signer
 }

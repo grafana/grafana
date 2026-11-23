@@ -89,6 +89,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	dashboardimportservice "github.com/grafana/grafana/pkg/services/dashboardimport/service"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardpreferences"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	dashboardclient "github.com/grafana/grafana/pkg/services/dashboards/service/client"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
@@ -383,12 +384,13 @@ var wireBasicSet = wire.NewSet(
 	publicdashboards.ProvideApi,
 	starApi.ProvideApi,
 	prefapi.ProvideK8sHandler,
+	dashboardpreferences.ProvideUserCleaner,
 	annotationsapi.ProvideTokenExchanger,
 	annotationsapi.ProvideMigrationProxy,
 	starApi.ProvideK8sClients,
-	userimpl.ProvideServiceWithWatch,
+	userimpl.ProvideServiceWithPreferencesCleanup,
 	wire.Bind(new(user.Service), new(*userimpl.Service)),
-	orgimpl.ProvideServiceWithWatch,
+	orgimpl.ProvideServiceWithPreferencesCleanup,
 	orgimpl.ProvideDeletionService,
 	orgimpl.ProvideDeleteRegistrar,
 	wire.Bind(new(org.DeletionService), new(*orgimpl.DeletionService)),
