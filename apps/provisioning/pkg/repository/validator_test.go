@@ -15,9 +15,9 @@ import (
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authentication/user"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 func TestValidator_Validate(t *testing.T) {
@@ -1037,8 +1037,8 @@ func TestAdmissionValidator_CopiesSecureValuesOnUpdate(t *testing.T) {
 			Sync:  provisioning.SyncOptions{IntervalSeconds: 60},
 		},
 		Secure: provisioning.SecureValues{
-			Token:         common.InlineSecureValue{Name: "old-token"},
-			WebhookSecret: common.InlineSecureValue{Name: "old-secret"},
+			Token:         resource.InlineSecureValue{Name: "old-token"},
+			WebhookSecret: resource.InlineSecureValue{Name: "old-secret"},
 		},
 	}
 
@@ -1070,7 +1070,7 @@ func TestAdmissionValidator_RequiresNewTokenWhenURLChanges(t *testing.T) {
 		name            string
 		oldURL          string
 		newURL          string
-		newToken        common.InlineSecureValue
+		newToken        resource.InlineSecureValue
 		connection      string
 		wantErr         bool
 		wantErrContains string
@@ -1086,7 +1086,7 @@ func TestAdmissionValidator_RequiresNewTokenWhenURLChanges(t *testing.T) {
 			name:     "allows url change with new token",
 			oldURL:   "https://github.com/grafana/old",
 			newURL:   "https://github.com/grafana/new",
-			newToken: common.InlineSecureValue{Create: "new-token"},
+			newToken: resource.InlineSecureValue{Create: "new-token"},
 			wantErr:  false,
 		},
 		{
@@ -1106,7 +1106,7 @@ func TestAdmissionValidator_RequiresNewTokenWhenURLChanges(t *testing.T) {
 			name:            "rejects url change when the stored token reference is echoed back",
 			oldURL:          "https://github.com/grafana/old",
 			newURL:          "https://github.com/grafana/new",
-			newToken:        common.InlineSecureValue{Name: "old-token"},
+			newToken:        resource.InlineSecureValue{Name: "old-token"},
 			wantErr:         true,
 			wantErrContains: "secure.token",
 		},
@@ -1132,7 +1132,7 @@ func TestAdmissionValidator_RequiresNewTokenWhenURLChanges(t *testing.T) {
 			)
 
 			oldRepo := newGitHubRepositoryForURLChangeTest(tt.oldURL)
-			oldRepo.Secure.Token = common.InlineSecureValue{Name: "old-token"}
+			oldRepo.Secure.Token = resource.InlineSecureValue{Name: "old-token"}
 
 			newRepo := newGitHubRepositoryForURLChangeTest(tt.newURL)
 			newRepo.Secure.Token = tt.newToken
@@ -1465,7 +1465,7 @@ func TestAdmissionValidator_Validate_StillValidatesSecureValuesBundledWithDisabl
 	// A new token riding along with the disable is content the validators have to see.
 	repo := old.DeepCopy()
 	repo.Spec.Sync.Enabled = false
-	repo.Secure.Token = common.InlineSecureValue{Create: "new-token"}
+	repo.Secure.Token = resource.InlineSecureValue{Create: "new-token"}
 
 	mockFactory := NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).

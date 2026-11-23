@@ -1541,12 +1541,13 @@
           "contact-point": "直接聯絡點（與政策互斥：）。",
           "dashboard": "規則連結至其中的儀表板（標準值是儀表板 UID）。",
           "datasource": "規則參照的查詢資料來源（標準值是 UID）。",
-          "folder": "資料夾（標準值是資料夾 UID）。",
+          "folder": "",
+          "folder-uid": "",
           "health": "規則健康狀態：正常、無資料、錯誤或未知。",
           "label": "標籤比對器：label:key（存在）、label:!key（不存在）、label:key=value（等於）、label:key!=value（不等於）、label:key=~re（正規表達式）、label:key!~re（非正規表達式）。將含有空格的值加上引號：label:team=\"a b\"。",
           "metric": "已記錄的指標名稱（完全相符）。",
           "panel-id": "規則連結至其中的面板。面板 ID 僅限於該儀表板內；請搭配 dashboard: 使用。",
-          "paused": "規則是否已暫停 (true/false)。",
+          "paused": "",
           "plugins": "plugins:hide 會排除由外掛程式建立的規則。",
           "policy": "已命名的通知政策（與聯絡點互斥：）。",
           "rule": "規則標題文字搜尋（相當於自由文字）。",
@@ -1562,13 +1563,14 @@
         "invalid-tokens": "無法套用部分篩選條件：{{tokens}}",
         "invalid-value": "使用其中一個值，適用於 {{key}}：{{values}}",
         "label": "搜尋",
-        "not-paused-unavailable": "目前尚不支援依「未暫停」篩選。",
+        "missing-value": "",
         "placeholder": "按名稱搜尋或輸入篩選條件查詢…",
         "property": {
           "contact-point": "聯絡點",
           "dashboard": "儀表板",
           "datasource": "查詢資料來源",
           "folder": "資料夾",
+          "folder-uid": "",
           "health": "使用情況",
           "labels": "標籤",
           "metric": "已記錄的指標",
@@ -1604,11 +1606,72 @@
         "tooltip-with-interval": ""
       },
       "shared": {
+        "folder-search-limit": "",
+        "folder-search-limit-description": "",
         "load-more": "載入更多",
         "load-more-error": "無法載入更多結果",
         "loading-rules": "正在載入規則",
         "refresh-error": "無法重新整理結果",
         "retry": "再試一次"
+      },
+      "sidebar": {
+        "all": "",
+        "contact-point": "",
+        "contact-point-description": "",
+        "contact-point-help": "",
+        "contact-point-placeholder": "",
+        "dashboard": "",
+        "datasource": "",
+        "datasource-placeholder": "",
+        "filters": "",
+        "folder": "",
+        "folder-description": "",
+        "folder-help": "",
+        "folder-placeholder": "",
+        "health": "",
+        "health-error": "",
+        "health-nodata": "",
+        "health-ok": "",
+        "health-unknown": "",
+        "label-add": "",
+        "label-key": "",
+        "label-key-placeholder": "",
+        "label-operator": "",
+        "label-remove": "",
+        "label-value": "",
+        "label-value-any": "",
+        "label-value-placeholder": "",
+        "label-value-unset": "",
+        "labels": "",
+        "metric": "",
+        "metric-placeholder": "",
+        "operator-absent": "",
+        "operator-absent-description": "",
+        "operator-equal": "",
+        "operator-exists": "",
+        "operator-exists-description": "",
+        "operator-not-equal": "",
+        "operator-not-regex": "",
+        "operator-regex": "",
+        "panel-id": "",
+        "paused": "",
+        "paused-true": "",
+        "plugin-rules": "",
+        "plugin-rules-hide": "",
+        "plugin-rules-show": "",
+        "policy": "",
+        "policy-description": "",
+        "policy-help": "",
+        "policy-placeholder": "",
+        "rule-name": "",
+        "rule-name-placeholder": "",
+        "state": "",
+        "state-firing": "",
+        "state-normal": "",
+        "state-pending": "",
+        "state-recovering": "",
+        "target-datasource": "",
+        "target-datasource-placeholder": ""
       },
       "status": {
         "error": "無法評估規則",
@@ -1922,6 +1985,7 @@
         "routing": "通知路由",
         "routing-none": "未選取政策樹",
         "routing-tree": "政策樹：{{name}}",
+        "rules-error": "",
         "rules-skipped": "警示規則不會匯入。",
         "rules-title": "",
         "skipped": "已跳過",
@@ -1934,6 +1998,7 @@
         "validation-warning": "為避免衝突，某些資源將重新命名。",
         "will-import-config": "將匯入此設定",
         "will-import-rules": "將匯入規則",
+        "yaml-datasource": "",
         "will-import-rules-count_other": "將匯入 {{count}} 個規則"
       },
       "rules-preview": "警示規則預覽",
@@ -2038,9 +2103,14 @@
         "target-datasource-required": "請選擇目標資料來源",
         "target-folder": "目標資料夾",
         "target-folder-desc": "用於儲存匯入的規則的資料夾",
+        "yaml-empty-group": "",
         "yaml-error": "無法剖析 YAML 檔案：{{error}}",
         "yaml-file": "規則 YAML 檔案",
-        "yaml-required": "請選擇一個檔案"
+        "yaml-no-rules": "",
+        "yaml-required": "請選擇一個檔案",
+        "yaml-target-datasource": "",
+        "yaml-target-datasource-desc": "",
+        "yaml-target-datasource-required": ""
       },
       "success": "已成功將警報規則匯入至 Grafana 管理的規則。",
       "target-folder": {
@@ -4811,6 +4881,12 @@
     "folder-owners": {
       "owned-by": "擁有者："
     },
+    "folder-permissions": {
+      "no-access": ""
+    },
+    "folder-permissions-exposed": {
+      "not-found": ""
+    },
     "folder-picker": {
       "accessible-label": "選取資料夾：「{{ label }}」目前已選取",
       "button-label": "選擇資料夾",
@@ -5607,6 +5683,40 @@
       "view-json-diff": "檢視 JSON diff 以查看所有變更"
     }
   },
+  "core-kinds": {
+    "connection": {
+      "label": "",
+      "label-plural": ""
+    },
+    "dashboard": {
+      "label": "",
+      "label-plural": ""
+    },
+    "datasource": {
+      "label": "",
+      "label-plural": ""
+    },
+    "folder": {
+      "label": "",
+      "label-plural": ""
+    },
+    "librarypanel": {
+      "label": "",
+      "label-plural": ""
+    },
+    "notebook": {
+      "label": "",
+      "label-plural": ""
+    },
+    "playlist": {
+      "label": "",
+      "label-plural": ""
+    },
+    "repository": {
+      "label": "",
+      "label-plural": ""
+    }
+  },
   "correlations": {
     "add-new": "新增",
     "alert": {
@@ -6111,7 +6221,10 @@
       "add-visualization-body": "選取資料來源，然後使用圖表、統計資料及表格查詢並將資料可視化，或建立清單、標記及其他小工具。",
       "add-visualization-button": "新增可視化",
       "add-visualization-header": "透過新增可視化來啟動您的新儀表板",
+      "assistant-limit-reached": "",
       "assistant-placeholder": "描述您的儀表板。這將開啟助理聊天，並開始對話。",
+      "assistant-placeholder-template": "",
+      "assistant-sign-in": "",
       "auto-grid": "自動網格",
       "auto-grid-description": "面板調整大小以調整並形成統一的網格",
       "build-assistant": "使用助理建立您的儀表板",
@@ -6125,6 +6238,8 @@
       "mobile-not-available": "",
       "or-start-blank": "或者自行建立",
       "select-layout-header": "選取版面",
+      "templates-empty": "",
+      "templates-title": "",
       "title": "新儀表板"
     },
     "errors": {
@@ -7092,6 +7207,7 @@
   },
   "dashboard-library": {
     "card": {
+      "attach-template-button-label": "",
       "community-badge": "社群",
       "customize-with-assistant-button": "使用助理進行自訂",
       "customize-with-assistant-button-label": "使用助理進行自訂：{{title}}",
@@ -7108,6 +7224,9 @@
       "edit-template-menu-item": "編輯",
       "more-actions-label": "更多動作，適用於{{title}}",
       "no-preview": "無預覽可用",
+      "preview-template-button": "",
+      "preview-template-button-label": "",
+      "provisioned-by-grafana": "",
       "use-template-button": "使用範本",
       "use-template-button-label": "使用範本：{{title}}",
       "view-dashboard-button": "檢視儀表板",
@@ -7142,6 +7261,10 @@
     "custom-dashboard-template-filters": {
       "creator-placeholder": "依建立者篩選",
       "search-placeholder": "搜尋",
+      "sort": {
+        "asc": "",
+        "desc": ""
+      },
       "sort-placeholder": "排序"
     },
     "dashboard-card": {
@@ -7920,16 +8043,6 @@
     },
     "query-editor": {
       "query": "查詢"
-    },
-    "query-editor-banner": {
-      "description-classic": "嘗試改進後的查詢編輯體驗。",
-      "description-new": "歡迎使用改進後的查詢編輯體驗。",
-      "dismiss": "關閉",
-      "downgrade-title": "新查詢編輯器",
-      "give-feedback": "提供意見回饋",
-      "go-back": "返回經典版",
-      "try-it": "試用",
-      "upgrade-title": "新編輯器可用"
     },
     "query-variable-editor": {
       "modal": {
@@ -11328,6 +11441,9 @@
       },
       "wrapping-disabled-warning": "由於某個值過長，此欄位的文字自動換行功能已停用。使用「檢查值」以檢視完整內容。"
     },
+    "tag": {
+      "remove": ""
+    },
     "tags": {
       "list-label": "標籤"
     },
@@ -11812,13 +11928,19 @@
       "filter-apps": "應用程式",
       "filter-dashboards": "儀表板",
       "filter-explore": "探索",
+      "filter-folders": "",
       "filter-label": "僅顯示",
+      "filter-notebooks": "",
       "filter-pages": "頁面",
+      "filter-playlists": "",
       "kind-alerting": "警報",
       "kind-app": "應用程式",
       "kind-dashboard": "儀表板",
       "kind-explore": "探索",
+      "kind-folder": "",
+      "kind-notebook": "",
       "kind-page": "頁面",
+      "kind-playlist": "",
       "loading": "正在載入您最近的活動……"
     },
     "recommendations": {
@@ -13436,7 +13558,7 @@
       "page-assistant-below": "",
       "page-floating-assistant": "",
       "page-only": "",
-      "pop-up": "",
+      "pop-out": "",
       "right": ""
     },
     "assistant-workspace": {
@@ -13459,7 +13581,8 @@
         "open": "開啟 {{title}}",
         "open-all": "開啟 AI 助理和側邊欄應用程式"
       },
-      "floating-resize": "調整側邊欄寬度"
+      "floating-resize": "調整側邊欄寬度",
+      "floating-resize-height": ""
     },
     "help": {
       "aria-label": "說明",
@@ -13718,6 +13841,8 @@
       "cancel": "取消",
       "card-author": "由{{author}}執行",
       "card-updated": "{{when}} 已更新",
+      "convert-to-absolute": "",
+      "convert-to-absolute-description": "",
       "create-name": "筆記本名稱",
       "create-name-required": "必須輸入筆記本名稱",
       "create-name-taken": "已有同名的筆記本",
@@ -13732,10 +13857,12 @@
       "list-none": "您目前沒有筆記本。請建立新的筆記本。",
       "list-none-read-only": "您目前沒有筆記本，也沒有建立筆記本的權限。",
       "list-truncated": "並非所有筆記本都會顯示。請縮小搜尋範圍以尋找其他筆記本。",
-      "lock-time-range": "鎖定至 {{range}}",
       "lock-time-range-description": "將此視覺化保留在其擷取時所在的視窗中。解鎖後，它會遵循筆記本的時間範圍。",
+      "lock-time-range-short": "",
       "lock-time-ranges": "將面板鎖定在其顯示的時間範圍",
       "lock-time-ranges-description": "將每個視覺化保留在其擷取時所在的視窗中。未鎖定的話，它們會遵循筆記本的時間範圍。",
+      "note-description": "",
+      "note-label": "",
       "search-placeholder": "依標題搜尋",
       "sort-alphabetical": "依字母順序 (A–Z)",
       "sort-label": "排序筆記本",
@@ -15017,9 +15144,6 @@
       "success-title": "已成功修復資料夾中繼資料",
       "title": "修正資料夾中繼資料"
     },
-    "folder-permissions": {
-      "loading": "正在載入…"
-    },
     "folder-repository-list": {
       "no-results-matching-your-query": "沒有符合您查詢的結果",
       "partial-managed": "{{managedCount}}/{{resourceCount}} 個資源由 Git 同步管理。",
@@ -15172,13 +15296,16 @@
       "path-required": "儲存庫路徑為必填"
     },
     "managed-badge": {
+      "actions": "",
       "classic-file-provisioning": "管理者：檔案佈建",
       "file-provisioning": "",
       "kubectl": "管理者：Kubectl",
       "manage-repository": "管理儲存庫",
       "plugin": "管理者：外掛程式 {{id}}",
       "provisioned": "已佈建",
+      "read-only": "",
       "terraform": "管理者：Terraform",
+      "view-source": "",
       "view-source-file": "檢視來源檔案"
     },
     "managed-by-repository-tooltip": "管理者：儲存庫",
@@ -15356,8 +15483,6 @@
         }
       }
     },
-    "pull-only-local-tooltip": "",
-    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "在儲存對話方塊中使用上方範本預先填入拉取請求標題，並將其設為唯讀。",
       "description-title-template": "由分支工作流程開啟的拉取請求標題範本。可用的預留位置：{{actionVar}}、{{kindVar}}、{{titleVar}}、{{userLoginVar}}。留空以使用提交訊息的第一行。",
@@ -15379,9 +15504,6 @@
       "message-repository-onprem_other": "您的執行個體限於 {{count}} 個連接的儲存庫。",
       "message-resource_other": "您的帳戶限於每個儲存庫 {{count}} 個同步的資源。",
       "message-resource-onprem_other": "您的執行個體限於每個儲存庫 {{count}} 個同步的資源。"
-    },
-    "read-only-badge": {
-      "pull-only": ""
     },
     "read-only-local-tooltip": "此資源為唯讀，並透過檔案佈建進行佈建。若要進行任何變更，請更新連線的儲存庫。若要修改設定，請依序前往「管理」>「佈建」>「儲存庫」。",
     "read-only-remote-tooltip": "此資源為唯讀，並透過 Git 進行佈建。若要進行任何變更，請更新連線的儲存庫。若要修改設定，請依序前往「管理」>「佈建」>「儲存庫」。",
@@ -15510,22 +15632,6 @@
       "pure-git": "純 Git",
       "pure-git-description": "連接到任何 Git 儲存庫",
       "pure-git-tooltip": "使用 Smart HTTP 通訊協定 v2 連接到任何 Git 儲存庫。不含提供者特定功能（Webhook、PR 留言、深層連結）的核心同步工作流程。"
-    },
-    "resource-kind": {
-      "connection": "",
-      "connections": "",
-      "dashboard": "儀表板",
-      "dashboards": "儀表板",
-      "datasource": "",
-      "datasources": "",
-      "folder": "資料夾",
-      "folders": "資料夾",
-      "library-panel": "資料庫面板",
-      "library-panels": "資料庫面板",
-      "playlist": "播放清單",
-      "playlists": "播放清單",
-      "repositories": "",
-      "repository": ""
     },
     "resource-tree": {
       "header-hash": "雜湊",
@@ -16090,12 +16196,6 @@
       "width-of-panel": "面板寬度"
     },
     "edit-query-name": "編輯查詢名稱",
-    "experimental-button": {
-      "aria-label": "實驗性功能選項",
-      "back-to-classic": "返回經典版編輯器",
-      "give-feedback": "提供意見回饋",
-      "tooltip": "實驗性功能選項"
-    },
     "header": {
       "alert": "警示",
       "enter-stacked-view": "",
@@ -16458,8 +16558,6 @@
       "location-header": "位置",
       "name-header": "名稱",
       "tags-header": "標籤",
-      "type-dashboard": "儀表板",
-      "type-folder": "資料夾",
       "type-header": "類型"
     },
     "search-input": {
@@ -17437,6 +17535,16 @@
       "review": "",
       "text_other": ""
     },
+    "display-completion": {
+      "color": "",
+      "helper": "",
+      "icon": "",
+      "numeric": "",
+      "percent": "",
+      "prefix": "",
+      "suffix": "",
+      "text": ""
+    },
     "editor": {
       "aria-label-content": "文字內容",
       "aria-label-mode": "文字模式：{{mode}}",
@@ -17580,7 +17688,6 @@
     },
     "time-range": {
       "apply": "套用時間範圍",
-      "aria-role": "時間範圍選取",
       "default-title": "時間範圍",
       "dialog-label": "相對時間範圍選擇器",
       "example-title": "時間範圍範例",

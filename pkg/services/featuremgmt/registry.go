@@ -94,12 +94,20 @@ var (
 			Name:            "live.runAPIServer",
 			Description:     "Registers a live apiserver",
 			Stage:           FeatureStageExperimental,
-			RequiresDevMode: true,
 			HideFromDocs:    true,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true,
 			Expression:      "false",
 			Generate:        Generate{Go: true},
+		},
+		{
+			Name:         "live.useAPIServerWebsocket",
+			Description:  "Connects Grafana Live to the live.grafana.app websocket instead of /api/live/ws",
+			Stage:        FeatureStageExperimental,
+			HideFromDocs: true,
+			Owner:        grafanaAppPlatformSquad,
+			Expression:   "false",
+			Generate:     Generate{React: true},
 		},
 		{
 			Name:            "live.keepHAPrefixInCloud",
@@ -2298,10 +2306,10 @@ var (
 		{
 			Name:        "queryEditorNext",
 			Description: "Enables next generation query editor experience",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaDataProSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "queryeditor.coauthoringUi",
@@ -2914,7 +2922,7 @@ var (
 			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
-			Expression:   "true",
+			Expression:   "false",
 			Generate:     Generate{React: true},
 		},
 		{
@@ -3576,6 +3584,15 @@ var (
 			Generate:     Generate{React: true},
 			Expression:   "false",
 			HideFromDocs: true,
+		},
+		{
+			Name:         "grafana.dashboardQuestions",
+			Description:  "Lets editors save questions on dashboards, rows, and tabs, which plugins offer to viewers in the dashboard controls",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
 		},
 
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!

@@ -3082,6 +3082,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.dashboardQuestions",
+        "resourceVersion": "1794393400338",
+        "creationTimestamp": "2026-11-11T10:36:40Z"
+      },
+      "spec": {
+        "description": "Lets editors save questions on dashboards, rows, and tabs, which plugins offer to viewers in the dashboard controls",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.dashboardSettingsRedesign",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-07-03T08:21:52Z"
@@ -4047,10 +4062,10 @@
     {
       "metadata": {
         "name": "grafana.visualDesignRefresh",
-        "resourceVersion": "1794390113100",
+        "resourceVersion": "1794999519670",
         "creationTimestamp": "2026-06-12T11:11:47Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-11-11 09:41:53.100333 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-11-18 10:58:39.670875 +0000 UTC"
         }
       },
       "spec": {
@@ -4059,7 +4074,7 @@
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true,
         "hideFromDocs": true,
-        "expression": "true"
+        "expression": "false"
       }
     },
     {
@@ -4854,15 +4869,35 @@
     {
       "metadata": {
         "name": "live.runAPIServer",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-05-14T12:37:47Z"
+        "resourceVersion": "1795434432420",
+        "creationTimestamp": "2026-05-14T12:37:47Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-23 11:47:12.420025 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Registers a live apiserver",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
-        "requiresDevMode": true,
         "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "live.useAPIServerWebsocket",
+        "resourceVersion": "1795434496471",
+        "creationTimestamp": "2026-11-23T11:33:35Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-23 11:48:16.471971 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Connects Grafana Live to the live.grafana.app websocket instead of /api/live/ws",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -5678,15 +5713,18 @@
     {
       "metadata": {
         "name": "queryEditorNext",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-01-23T18:40:47Z"
+        "resourceVersion": "1794414145067",
+        "creationTimestamp": "2026-01-23T18:40:47Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-11 16:22:25.067667 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables next generation query editor experience",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/datapro",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {

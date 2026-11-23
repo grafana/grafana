@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/authlib/types"
 
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -114,9 +115,9 @@ type IdentityAccessManagementAPIBuilder struct {
 
 	tracing tracing.Tracer
 
-	// Getters for existence validation during TeamBinding create
-	teamGetter rest.Getter
-	userGetter rest.Getter
+	// Internal reads need the complete roster for membership and access checks.
+	teamStorage grafanarest.Storage
+	userGetter  rest.Getter
 
 	// Runs handlers after each team is deleted through the Team API, not set in standalone.
 	teamDeleted *teamdelete.DeletedRegistry

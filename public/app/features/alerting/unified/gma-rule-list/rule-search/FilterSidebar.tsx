@@ -19,9 +19,9 @@ export function FilterSidebarLayout({ sidebar, children }: { sidebar: ReactNode;
 
   // The rules keep their place in the tree across layouts, so resizing doesn't remount the list.
   return (
-    <Stack direction={isWide ? 'row' : 'column'} gap={2}>
+    <Stack direction={isWide ? 'row' : 'column'} gap={1}>
       {isWide ? (
-        <Box width={32} shrink={0} paddingBottom={2}>
+        <Box width={32} shrink={0}>
           {sidebar}
         </Box>
       ) : (
@@ -172,6 +172,23 @@ export function HealthFilter({
         { label: t('alerting.gma-rule-list.sidebar.health-error', 'Error'), value: 'error' },
         { label: t('alerting.gma-rule-list.sidebar.health-unknown', 'Unknown'), value: 'unknown' },
       ]}
+    />
+  );
+}
+
+export function PausedFilter({
+  paused,
+  onChange,
+}: {
+  paused: 'true' | undefined;
+  onChange: (paused: 'true' | undefined) => void;
+}) {
+  return (
+    <ChoiceFilter
+      label={t('alerting.gma-rule-list.sidebar.paused', 'Paused')}
+      value={paused}
+      onChange={onChange}
+      options={[{ label: t('alerting.gma-rule-list.sidebar.paused-true', 'Paused'), value: 'true' }]}
     />
   );
 }

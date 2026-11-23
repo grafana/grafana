@@ -70,8 +70,8 @@ export function AttachToIncidentModal({ uid, title, onDismiss }: Props) {
         attachURL={notebookShareUrl(uid)}
         defaultCaption={t('notebooks.incidents.caption', 'Notebook: {{title}}', {
           title,
-          // Data, not display: IRM stores this as the attachment's label, so `errors/sec` must not
-          // be filed as `errors&#x2F;sec`.
+          // Data, not display: IRM stores this as the attachment's label, so `Checkout's` must not
+          // be filed as `Checkout&#39;s`.
           interpolation: { escapeValue: false },
         })}
         onAttach={onAttach}

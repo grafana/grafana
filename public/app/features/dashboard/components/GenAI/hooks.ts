@@ -85,10 +85,7 @@ export function useLLMStream(options: Options = defaultOptions): UseLLMStreamRes
     }
   }, [messages]);
 
-  const { error: enabledError, value: enabled } = useAsync(
-    async () => await isLLMPluginEnabled(),
-    [isLLMPluginEnabled]
-  );
+  const { error: enabledError, value: enabled } = useAsync(async () => await isLLMPluginEnabled(), []);
 
   const { error: asyncError, value } = useAsync(async () => {
     if (!enabled || !messages.length) {
