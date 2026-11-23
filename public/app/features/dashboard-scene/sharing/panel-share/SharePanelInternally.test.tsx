@@ -60,7 +60,7 @@ describe('SharePanelInternally', () => {
   });
 
   it('should copy image link when copy image link button is clicked', async () => {
-    document.execCommand = jest.fn();
+    document.execCommand = jest.fn().mockReturnValue(true);
 
     config.rendererAvailable = true;
     buildAndRenderScenario();
