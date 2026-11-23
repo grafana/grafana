@@ -89,20 +89,23 @@ func (g guardedCollectionDeleter) DeleteCollection(ctx context.Context, validati
 	return g.CollectionDeleter.DeleteCollection(ctx, validation, options, listOptions)
 }
 
+var deletedLogger = log.New("team.deleted")
+
 // Delete runs the deleted handlers once after the delete completes, for every dual-write mode.
+// A Team deleted through finalizers does not run them, because the delete completes in Update.
 func (s *rosterStore) Delete(ctx context.Context, name string, validation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	if !s.deleted.HasHandlers() {
 		return s.Storage.Delete(ctx, name, validation, options)
 	}
 	// The internal ID is only on the stored object, so read it before it is gone.
 	var teamID int64
-	logger := log.New("team.deleted").FromContext(ctx)
+	logger := deletedLogger.FromContext(ctx)
 	if obj, err := s.Storage.Get(ctx, name, &metav1.GetOptions{}); err != nil {
 		if !apierrors.IsNotFound(err) {
-			logger.Error("team ID unknown for deleted handlers, get failed", "teamUID", name, "error", err)
+			logger.Error("team ID unknown for deleted handlers, get failed", "teamUID", name, "err", err)
 		}
 	} else if meta, err := utils.MetaAccessor(obj); err != nil {
-		logger.Error("team ID unknown for deleted handlers, no accessor", "teamUID", name, "error", err)
+		logger.Error("team ID unknown for deleted handlers, no accessor", "teamUID", name, "err", err)
 	} else {
 		teamID = meta.GetDeprecatedInternalID() // nolint:staticcheck
 	}
@@ -112,7 +115,7 @@ func (s *rosterStore) Delete(ctx context.Context, name string, validation rest.V
 	}
 	ns, err := grafanarequest.NamespaceInfoFrom(ctx, true)
 	if err != nil {
-		logger.Error("team deleted handlers skipped, no namespace", "teamUID", name, "error", err)
+		logger.Error("team deleted handlers skipped, no namespace", "teamUID", name, "err", err)
 		return obj, deleted, nil
 	}
 	s.deleted.Run(ctx, teamdelete.Deleted{OrgID: ns.OrgID, TeamID: teamID, TeamUID: name})

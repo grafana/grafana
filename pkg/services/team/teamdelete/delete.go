@@ -21,6 +21,7 @@ type Registrar interface {
 }
 
 // Deleted describes a team that has been deleted.
+// TeamID is 0 when it is unknown on the Team API path.
 type Deleted struct {
 	OrgID   int64
 	TeamID  int64
@@ -28,6 +29,7 @@ type Deleted struct {
 }
 
 // DeletedHandler runs after a team is deleted. Its error is logged and never fails the deletion.
+// Handlers run synchronously in the delete request, so they should be fast.
 type DeletedHandler func(ctx context.Context, deleted Deleted) error
 
 // DeletedRegistry holds the handlers shared by every team deletion path.

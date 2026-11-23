@@ -25,7 +25,6 @@ func (s *deleteStore) Delete(context.Context, *team.DeleteTeamCommand) (string, 
 	return s.uid, s.err
 }
 
-// deleteK8sService records deletes.
 type deleteK8sService struct {
 	teamtest.FakeService
 	deletes int
