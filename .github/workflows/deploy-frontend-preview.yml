@@ -7,11 +7,6 @@ name: Deploy frontend preview
 # PRs with backend changes still deploy, but the status comment warns that the
 # preview may not work correctly. Backend-only PRs are not deployed; the bot
 # comments instead.
-#
-# NOTE: the `/deploy-to-fs` command is temporary, while we test this
-# mechanism. The plan is to later fold it into `/deploy-to-hg`: that command
-# will deploy a frontend preview for frontend-only PRs, and an ephemeral
-# instance for everything else.
 
 on:
   issue_comment:
@@ -40,35 +35,70 @@ jobs:
       )
     runs-on: ubuntu-arm64-small
     permissions:
-      contents: read
       pull-requests: read
     outputs:
       should-deploy: ${{ steps.check.outputs.should-deploy }}
-      pr-number: ${{ steps.pr.outputs.number }}
+      pr-number: ${{ steps.check.outputs.pr-number }}
       head-sha: ${{ steps.check.outputs.head-sha }}
       has-backend-changes: ${{ steps.check.outputs.has-backend-changes }}
       backend-only: ${{ steps.check.outputs.backend-only }}
     steps:
-      # Checkout the default branch (not the PR merge ref) so the local
-      # actions used by this job always run trusted code
-      - name: Checkout code
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ github.event.repository.default_branch }}
-          persist-credentials: false
-
-      - name: Get PR number
-        id: pr
-        env:
-          PR_NUMBER: ${{ github.event.issue.number || github.event.pull_request.number }}
-        run: echo "number=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
-
       - name: Check PR is eligible for a frontend preview
         id: check
-        uses: ./.github/actions/frontend-preview-check
-        with:
-          pr-number: ${{ steps.pr.outputs.number }}
-          token: ${{ github.token }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.issue.number || github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          pr=$(gh api "repos/${REPO}/pulls/${PR_NUMBER}")
+
+          head_sha=$(jq -r '.head.sha' <<< "$pr")
+          head_repo=$(jq -r '.head.repo.full_name // ""' <<< "$pr")
+
+          is_fork=true
+          if [ "$head_repo" = "$REPO" ]; then
+            is_fork=false
+          fi
+
+          files=$(gh api "repos/${REPO}/pulls/${PR_NUMBER}/files" --paginate --jq '.[].filename')
+
+          # A preview only swaps out the frontend assets served by an existing
+          # instance, so backend changes in the PR would not be reflected.
+          has_backend_changes=false
+          backend_only=true
+          if [ -z "$files" ]; then
+            backend_only=false
+          fi
+
+          while IFS= read -r file; do
+            case "$file" in
+              pkg/*)
+                echo "Backend change found: ${file}"
+                has_backend_changes=true
+                ;;
+              *)
+                backend_only=false
+                ;;
+            esac
+          done <<< "$files"
+
+          should_deploy=false
+          if [ "$is_fork" = "false" ] && [ "$backend_only" = "false" ]; then
+            should_deploy=true
+          fi
+
+          {
+            echo "should-deploy=${should_deploy}"
+            echo "has-backend-changes=${has_backend_changes}"
+            echo "backend-only=${backend_only}"
+            echo "pr-number=${PR_NUMBER}"
+            echo "head-sha=${head_sha}"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "PR #${PR_NUMBER}: should-deploy=${should_deploy} (has-backend-changes=${has_backend_changes}, backend-only=${backend_only}, is-fork=${is_fork}), head-sha=${head_sha}"
 
   label:
     name: Label PR for future deploys
