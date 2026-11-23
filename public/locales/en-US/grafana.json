@@ -14377,7 +14377,8 @@
     },
     "get-panel-links-variable-suggestions": {
       "label": {
-        "all-variables": "All variables"
+        "all-variables": "All variables",
+        "current-dashboard-tabs": "Current dashboard tabs"
       }
     },
     "header-menu": {
