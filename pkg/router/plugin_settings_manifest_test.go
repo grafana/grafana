@@ -7,12 +7,13 @@ import (
 	"strings"
 	"testing"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 
-	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/app"
 	appmanifestv1alpha2 "github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
+	"github.com/grafana/grafana-app-sdk/routes"
 	manifestroutes "github.com/grafana/grafana-app-sdk/routes"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -31,9 +32,9 @@ func TestPublishedSettingsManifestReplacesPluginJSONRoutes(t *testing.T) {
 			Path:      "token",
 			Method:    http.MethodPost,
 			URL:       "https://login.example.com",
-			Headers:   []plugins.Header{{Name: "Authorization", Content: "Bearer {{.SecureJsonData.token}}"}},
-			URLParams: []plugins.URLParam{{Name: "key", Content: "{{.SecureJsonData.key}}"}},
-			TokenAuth: &plugins.JWTTokenAuth{Url: "https://login.example.com/{{.JsonData.tenant}}", Scopes: []string{"a"}},
+			Headers:   []routes.ProxyHeader{{Name: "Authorization", Content: "Bearer {{.SecureJsonData.token}}"}},
+			URLParams: []routes.ProxyURLParam{{Name: "key", Content: "{{.SecureJsonData.key}}"}},
+			TokenAuth: &routes.ProxyTokenAuth{URL: "https://login.example.com/{{.JsonData.tenant}}", Scopes: []string{"a"}},
 			Body:      json.RawMessage(`{"grant_type": "client_credentials"}`),
 		},
 	}}}
