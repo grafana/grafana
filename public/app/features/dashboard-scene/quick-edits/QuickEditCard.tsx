@@ -1,6 +1,7 @@
 import { css, keyframes } from '@emotion/css';
 import { autoUpdate, flip, offset, shift, size, useFloating } from '@floating-ui/react';
 import { type KeyboardEvent, type ReactNode, useEffect, useLayoutEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 
 import { colorManipulator, type GrafanaTheme2, type IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -131,24 +132,15 @@ export function QuickEditCard({ title, icon, panel, bar, onClose, children }: Pr
 
 /**
  * The panel's outline, drawn over it rather than styled onto it, as the panel's own classes change while the card is
- * open, e.g. as it is selected.
+ * open, e.g. as it is selected. It is drawn inside the panel, which the layouts position, so it stays under the
+ * panel's actions bar, which overlaps the panel's top edge.
  */
 function PanelOutline({ panel }: { panel: Element }) {
   const styles = useStyles2(getStyles);
-  const outline = useRef<HTMLDivElement>(null);
-
-  useLayoutEffect(() => {
-    const element = outline.current;
-    if (!element) {
-      return;
-    }
-    return autoUpdate(panel, element, () => {
-      const { top, left, width, height } = panel.getBoundingClientRect();
-      Object.assign(element.style, { top: `${top}px`, left: `${left}px`, width: `${width}px`, height: `${height}px` });
-    });
-  }, [panel]);
-
-  return <div ref={outline} className={styles.panelOutline} data-testid="quick-edit-panel-outline" aria-hidden />;
+  return createPortal(
+    <div className={styles.panelOutline} data-testid="quick-edit-panel-outline" aria-hidden />,
+    panel
+  );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -182,8 +174,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     // Solid, unlike the dashed outline of a selected element, in the accent of the open quick edit's button.
     panelOutline: css({
-      position: 'fixed',
-      zIndex: theme.zIndex.portal,
+      position: 'absolute',
+      inset: 0,
+      // Above the panel's content, the highest of which sits at 1; last in the panel, so it wins the tie.
+      zIndex: 1,
       pointerEvents: 'none',
       outline: `2px solid ${accent}`,
       outlineOffset: 2,

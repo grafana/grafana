@@ -797,7 +797,8 @@ describe('<PanelActionsWrapper />', () => {
         await user.click(within(getToolbar()).getByRole('button', { name: 'Quick edits' }));
         await user.click(within(getToolbar()).getByRole('button', { name: 'Legend: Shown' }));
 
-        expect(screen.getByTestId('quick-edit-panel-outline')).toBeInTheDocument();
+        // Inside the panel, so it stays under the actions bar that overlaps the panel's top edge.
+        expect(screen.getByTestId('reference-child')).toContainElement(screen.getByTestId('quick-edit-panel-outline'));
 
         await user.click(within(screen.getByRole('dialog', { name: 'Legend' })).getByRole('button', { name: 'Close' }));
 
