@@ -221,7 +221,7 @@ export function getKindInfoByKind(kind: string): ResourceKindInfo | undefined {
  * share an API group, so the group alone does not always identify the kind.
  */
 export function getKindInfoByStatGroup(group?: string): ResourceKindInfo | undefined {
-  return allKindInfos.find((info) => (group !== undefined && coversGroup(info, group)) || info.resource === group);
+  return knownKindInfos().find((info) => (group !== undefined && coversGroup(info, group)) || info.resource === group);
 }
 
 function isResourceKindKey(key: string): key is ResourceKindKey {
@@ -247,8 +247,10 @@ export function getKindKeyByGroupKind(group?: string, kind?: string): ResourceKi
 
 /** Look up a kind from a resource or a job summary row; see {@link getKindKeyByGroupKind}. */
 export function getKindInfoByGroupKind(group?: string, kind?: string): ResourceKindInfo | undefined {
-  const key = getKindKeyByGroupKind(group, kind);
-  return key && resourceKindInfos[key];
+  if (!group && !kind) {
+    return undefined;
+  }
+  return knownKindInfos().find((info) => (!group || coversGroup(info, group)) && (!kind || info.kind === kind));
 }
 
 /**
