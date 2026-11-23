@@ -16,6 +16,7 @@ import (
 	_ "github.com/grafana/grafana-plugin-sdk-go/backend/handlertest"
 	_ "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	_ "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
+	_ "github.com/grafana/grafana/apps/live/pkg/apis/live/v1alpha1"
 	_ "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	_ "github.com/grafana/grafana/pkg/infra/db/dbtest"
 	_ "github.com/grafana/grafana/pkg/infra/log/logtest"

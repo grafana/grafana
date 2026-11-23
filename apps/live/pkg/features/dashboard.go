@@ -6,14 +6,20 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/apps/live/pkg/model"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/infra/log"
 )
+
+var logger = log.New("live.features")
+
+// DashboardAccess checks whether a user may get or update a dashboard.
+type DashboardAccess interface {
+	HasDashboardAccess(ctx context.Context, user identity.Requester, verb string, namespace string, name string) (bool, error)
+}
 
 type actionType string
 
@@ -36,7 +42,7 @@ type dashboardEvent struct {
 type DashboardHandler struct {
 	Publisher     model.ChannelPublisher
 	ClientCount   model.ChannelClientCount
-	AccessControl dashboards.DashboardAccessService
+	AccessControl DashboardAccess
 }
 
 // GetHandlerForPath called on init
@@ -50,8 +56,7 @@ func (h *DashboardHandler) OnSubscribe(ctx context.Context, user identity.Reques
 
 	// make sure can view this dashboard
 	if len(parts) == 2 && parts[0] == "uid" {
-		ns := types.OrgNamespaceFormatter(user.GetOrgID())
-		ok, err := h.AccessControl.HasDashboardAccess(ctx, user, utils.VerbGet, ns, parts[1])
+		ok, err := h.AccessControl.HasDashboardAccess(ctx, user, utils.VerbGet, user.GetNamespace(), parts[1])
 		if ok && err == nil {
 			return model.SubscribeReply{
 				Presence:  true,
@@ -82,8 +87,7 @@ func (h *DashboardHandler) OnPublish(ctx context.Context, requester identity.Req
 			return model.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("ignore???")
 		}
 
-		ns := types.OrgNamespaceFormatter(requester.GetOrgID())
-		ok, err := h.AccessControl.HasDashboardAccess(ctx, requester, utils.VerbUpdate, ns, parts[1])
+		ok, err := h.AccessControl.HasDashboardAccess(ctx, requester, utils.VerbUpdate, requester.GetNamespace(), parts[1])
 		if ok && err == nil {
 			msg, err := json.Marshal(event)
 			if err != nil {

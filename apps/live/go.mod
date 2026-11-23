@@ -4,6 +4,8 @@ go 1.27.4
 
 require (
 	github.com/centrifugal/centrifuge v0.39.0
+	github.com/go-jose/go-jose/v4 v4.1.9
+	github.com/gobwas/glob v0.2.3
 	github.com/golang/mock v1.7.0-rc.1
 	github.com/golang/snappy v1.0.0
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674
@@ -43,7 +45,6 @@ require (
 	github.com/felixge/httpsnoop v1.1.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.6 // indirect
 	github.com/getkin/kin-openapi v0.153.0 // indirect
-	github.com/go-jose/go-jose/v4 v4.1.9 // indirect
 	github.com/go-kit/log v0.2.1 // indirect
 	github.com/go-logfmt/logfmt v0.6.1 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
@@ -119,6 +120,7 @@ require (
 	github.com/segmentio/encoding v0.5.4 // indirect
 	github.com/shadowspore/fossil-delta v0.0.0-20241213113458-1d797d70cbe3 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
+	github.com/stretchr/objx v0.8.0 // indirect
 	github.com/tjhop/slog-gokit v0.2.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
