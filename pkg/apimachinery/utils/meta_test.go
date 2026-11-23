@@ -119,7 +119,7 @@ func (in *TestResource2) DeepCopyObject() runtime.Object {
 	return nil
 }
 
-// Spec defines model for Spec.
+// Test secure values
 type ExplicitSecureValues struct {
 	// Non-pointer
 	Value1 resource.InlineSecureValue `json:"v1,omitempty"`
