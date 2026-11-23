@@ -82,6 +82,11 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 		}
 	}
 
+	// After CopySecureValues, so an update that leaves the secrets alone is not read as changing them.
+	if err := provisioningadmission.ValidateFileProvisionedConfiguration(ctx, a, meta); err != nil {
+		return err
+	}
+
 	// Structural validation without decryption
 	list := v.factory.Validate(ctx, c)
 	list = append(list, v.validatePrivateEndpoints(ctx, c)...)
