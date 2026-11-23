@@ -48,7 +48,7 @@ Use Alerts to inform users of updates, changes, or issues. Providing users feedb
 
 ### Actions
 
-Pass a separate action in `action`, and dismissal in `onRemove`. `Alert` lays them out together and wraps them below the message when space is narrow. Don't position your own button over the alert.
+Pass a separate action in `action`, and dismissal in `onRemove`. `Alert` places `action` beside the message and wraps it below the message when space is narrow. If you also set `buttonContent`, the dismiss button joins `action` and wraps with it. With `onRemove` alone, the close icon sits at the alert's edge instead. Don't position your own button over the alert.
 
 ```tsx
 // Don't
@@ -76,13 +76,13 @@ With `onRemove` alone, `Alert` shows a close icon button. Add `buttonContent` to
 
 Use `bottomSpacing` and `topSpacing` to change the space around an alert. They take theme spacing units: the defaults are `2` below and `0` above.
 
-Don't select the alert's inner elements with `className`, for example to change its padding. Its markup isn't part of its API. See [styling a component's internal elements](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/guidance/patterns/styling-internals.md).
+No prop controls the alert's inner padding. Don't change it by selecting the alert's inner elements with `className`, because its markup isn't part of its API. See [styling a component's internal elements](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/guidance/patterns/styling-internals.md).
 
 ```tsx
-// Don't
+// Don't: override the inner padding
 <Alert title="Saved" severity="success" className={css({ '& > div': { padding: 0 } })} />
 
-// Do
+// Do: change only the space around the alert
 <Alert title="Saved" severity="success" bottomSpacing={0} />
 ```
 
