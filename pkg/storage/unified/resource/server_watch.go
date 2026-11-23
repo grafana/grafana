@@ -196,6 +196,18 @@ func (w *watchStartup) expiryAtCapture() <-chan struct{} {
 	return w.expiry
 }
 
+func (s *server) watchState() (*broadcaster[*WrittenEvent], *watchStartup) {
+	s.watchMu.Lock()
+	defer s.watchMu.Unlock()
+	return s.broadcaster, s.watchStartup
+}
+
+func (s *server) setWatchState(b *broadcaster[*WrittenEvent], startup *watchStartup) {
+	s.watchMu.Lock()
+	defer s.watchMu.Unlock()
+	s.broadcaster, s.watchStartup = b, startup
+}
+
 func (s *server) initSeededWatcher(backend seededWatchBackend) {
 	raised := newRaisedFloors()
 	out := make(chan *WrittenEvent, producerChanSize)
@@ -249,15 +261,12 @@ func (s *server) initSeededWatcher(backend seededWatchBackend) {
 	}
 
 	// Construction stays asynchronous even if NATS has not entered Run yet.
-	b := newBroadcasterWithSizes(s.ctx, out, watchChanSize, defaultOverflowCap, metrics, func(e *WrittenEvent) string {
-		return e.Key.Resource
-	}, &seededCacheConfig[*WrittenEvent]{
-		identity:   writtenEventIdentity,
+	b := newBroadcasterWithSizes(s.ctx, out, watchChanSize, defaultOverflowCap, metrics, writtenEventIdentity, &seededCacheConfig[*WrittenEvent]{
 		initialize: initialize,
 		raised:     raised,
 	})
 	startup.broadcaster = b
-	s.broadcaster, s.watchStartup = b, startup
+	s.setWatchState(b, startup)
 	go func() {
 		<-b.terminated
 		capture.Wait()

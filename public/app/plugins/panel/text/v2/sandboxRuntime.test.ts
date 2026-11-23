@@ -7,6 +7,7 @@ const command = {
   protocol: TEXT_FRAME_PROTOCOL,
   channel: 'test-channel',
   type: 'render',
+  revision: 0,
   html: '<p>Visible content</p>',
   globalCss: 'p{color:red}',
   diagramError: 'Diagram failed',
@@ -71,7 +72,13 @@ describe('sandbox runtime', () => {
 
   function expectNotification(type: string, fields = {}) {
     expect(postMessage).toHaveBeenCalledWith(
-      { type, protocol: TEXT_FRAME_PROTOCOL, channel: command.channel, ...fields },
+      {
+        type,
+        protocol: TEXT_FRAME_PROTOCOL,
+        channel: command.channel,
+        ...(type !== 'ready' && { revision: 0 }),
+        ...fields,
+      },
       parentOrigin
     );
   }
@@ -95,6 +102,65 @@ describe('sandbox runtime', () => {
     measure([], {} as ResizeObserver);
     expectNotification('resize', { height: 43, contentHeight: 0 });
     expect(postMessage.mock.calls.some(([value]) => value.type === 'blocked')).toBe(false);
+  });
+
+  test('reports only changed dimensions while preserving content-only changes and shrinking', async () => {
+    initialize();
+    message();
+    await flush();
+    postMessage.mockClear();
+    measure([], {} as ResizeObserver);
+    expect(postMessage).not.toHaveBeenCalled();
+
+    const content = document.querySelector<HTMLElement>('.markdown-html')!;
+    const bounds = jest.spyOn(content, 'getBoundingClientRect').mockReturnValue({ height: 42.5 } as DOMRect);
+    const child = content.firstElementChild!;
+    Object.defineProperty(child, 'offsetHeight', { configurable: true, value: 30 });
+    measure([], {} as ResizeObserver);
+    bounds.mockReturnValue({ height: 42.8 } as DOMRect);
+    measure([], {} as ResizeObserver);
+    Object.defineProperty(child, 'offsetHeight', { configurable: true, value: 20 });
+    measure([], {} as ResizeObserver);
+    bounds.mockReturnValue({ height: 25 } as DOMRect);
+    measure([], {} as ResizeObserver);
+    content.replaceChildren();
+    bounds.mockReturnValue({ height: 0 } as DOMRect);
+    measure([], {} as ResizeObserver);
+    measure([], {} as ResizeObserver);
+    expect(postMessage.mock.calls.map(([notification]) => notification)).toEqual([
+      {
+        protocol: TEXT_FRAME_PROTOCOL,
+        channel: command.channel,
+        revision: 0,
+        type: 'resize',
+        height: 43,
+        contentHeight: 30,
+      },
+      {
+        protocol: TEXT_FRAME_PROTOCOL,
+        channel: command.channel,
+        revision: 0,
+        type: 'resize',
+        height: 43,
+        contentHeight: 20,
+      },
+      {
+        protocol: TEXT_FRAME_PROTOCOL,
+        channel: command.channel,
+        revision: 0,
+        type: 'resize',
+        height: 25,
+        contentHeight: 20,
+      },
+      {
+        protocol: TEXT_FRAME_PROTOCOL,
+        channel: command.channel,
+        revision: 0,
+        type: 'resize',
+        height: 1,
+        contentHeight: 0,
+      },
+    ]);
   });
 
   test('waits for an enforced probe violation before accepting protected HTML', async () => {
@@ -267,6 +333,219 @@ describe('sandbox runtime', () => {
     expectNotification('rendered');
     window.dispatchEvent(new Event('pagehide'));
     expect(renderer.mock.calls[0][2]()).toBe(true);
+  });
+
+  test('replaces protected content while retaining the stylesheet and resetting measurements', async () => {
+    initialize(policy);
+    violation(CSP_CHECK_URL);
+    await flush();
+    message();
+    await flush();
+    const style = document.head.querySelector('style')!;
+    const text = style.firstChild;
+    const oldContent = document.querySelector('.markdown-html')!;
+    postMessage.mockClear();
+    message({ ...command, revision: 1, html: '<p>Updated content</p>', globalCss: undefined });
+    message({ ...command, revision: 0, html: '<p>Stale content</p>' });
+    await flush();
+    expect(document.body).toHaveTextContent('Updated content');
+    expect(oldContent.isConnected).toBe(false);
+    expect(document.head.querySelectorAll('style')).toHaveLength(1);
+    expect(style.firstChild).toBe(text);
+    expect(disconnect).toHaveBeenCalledTimes(1);
+    expectNotification('rendered', { revision: 1 });
+    expectNotification('resize', { revision: 1, height: 1, contentHeight: 0 });
+    expect(postMessage.mock.calls.every(([notification]) => notification.revision === 1)).toBe(true);
+  });
+
+  test('requires initial CSS but accepts an explicit empty stylesheet on updates', async () => {
+    initialize(policy);
+    violation(CSP_CHECK_URL);
+    await flush();
+    message({ ...command, globalCss: undefined });
+    expect(document.querySelector('.markdown-html')).toBeNull();
+    message();
+    await flush();
+    expect(document.head.querySelector('style')).toHaveTextContent('p{color:red}');
+    message({ ...command, revision: 1, globalCss: '' });
+    await flush();
+    expectNotification('rendered', { revision: 1 });
+    expect(document.head.querySelector('style')).not.toHaveTextContent('p{color:red}');
+  });
+
+  test.each([undefined, policy])(
+    'updates styles without replacing content or resetting reports (policy: %s)',
+    async (framePolicy) => {
+      initialize(framePolicy);
+      if (framePolicy) {
+        violation(CSP_CHECK_URL);
+        await flush();
+      }
+      const styles = {
+        protocol: TEXT_FRAME_PROTOCOL,
+        channel: command.channel,
+        type: 'styles',
+        revision: 0,
+        styleRevision: 1,
+        globalCss: 'p{color:blue}',
+      };
+      message(styles);
+      expect(document.head.querySelector('style')).toBeNull();
+      message({ ...command, html: '<input value="initial"><p>Content</p>' });
+      await flush();
+      const input = document.querySelector('input')!;
+      input.value = 'edited';
+      if (framePolicy) {
+        violation('https://blocked.test/first.png');
+        await flush();
+      }
+      message(styles, 'https://wrong.test');
+      message(styles, parentOrigin, null);
+      message({ ...styles, revision: 1 });
+      expect(document.head.querySelector('style')).toHaveTextContent('p{color:red}');
+      message(styles);
+      await flush();
+      expect(document.head.querySelector('style')).toHaveTextContent('p{color:blue}');
+      expect(document.querySelector('input')).toBe(input);
+      expect(input.value).toBe('edited');
+      expect(disconnect).not.toHaveBeenCalled();
+      for (const styleRevision of [1, 0, -1, 1.5, Infinity, undefined]) {
+        message({ ...styles, styleRevision, globalCss: 'p{color:green}' });
+      }
+      expect(document.head.querySelector('style')).toHaveTextContent('p{color:blue}');
+      if (framePolicy) {
+        violation('https://blocked.test/second.png');
+        await flush();
+        expectNotification('blocked', {
+          resources: [
+            {
+              directive: 'img-src',
+              origin: 'https://blocked.test',
+              urls: [
+                { url: 'https://blocked.test/first.png', count: 1 },
+                { url: 'https://blocked.test/second.png', count: 1 },
+              ],
+            },
+          ],
+        });
+      }
+    }
+  );
+
+  test('cancels pending Mermaid loads and serializes overlapping diagram renders', async () => {
+    initialize(policy);
+    violation(CSP_CHECK_URL);
+    await flush();
+    let finish!: () => void;
+    const renderer = jest
+      .fn()
+      .mockImplementationOnce(
+        () =>
+          new Promise<void>((resolve) => {
+            finish = resolve;
+          })
+      )
+      .mockResolvedValue(undefined);
+    const append = document.head.append.bind(document.head);
+    jest.spyOn(document.head, 'append').mockImplementation((...nodes) => {
+      for (const node of nodes) {
+        if (node instanceof HTMLScriptElement && 'registerMermaid' in node) {
+          (node.registerMermaid as (render: typeof renderer) => void)(renderer);
+        }
+      }
+      append(...nodes);
+    });
+    const diagram = { ...command, html: '<pre class="mermaid">graph LR; A-->B</pre>', mermaid: {} };
+    message(diagram);
+    await flush();
+    message({ ...diagram, revision: 1 });
+    await flush();
+    message({ ...command, type: 'mermaid-source', source: '/* old source */' });
+    await flush();
+    expect(renderer).not.toHaveBeenCalled();
+    message({ ...command, revision: 1, type: 'mermaid-source', source: '/* current source */' });
+    await flush();
+    expect(renderer).toHaveBeenCalledTimes(1);
+    const cancelled = renderer.mock.calls[0][2];
+    expect(cancelled()).toBe(false);
+    message({ ...command, type: 'styles', revision: 1, styleRevision: 1, globalCss: 'p{color:blue}' });
+    await flush();
+    expect(cancelled()).toBe(false);
+    expect(renderer).toHaveBeenCalledTimes(1);
+    expect(document.head.querySelector('style')).toHaveTextContent('p{color:blue}');
+
+    message({ ...command, revision: 2, html: '<p>No diagram</p>' });
+    await flush();
+    expectNotification('rendered', { revision: 2 });
+    expect(cancelled()).toBe(true);
+    message({ ...diagram, revision: 3 });
+    await flush();
+    expect(renderer).toHaveBeenCalledTimes(1);
+    postMessage.mockClear();
+    finish();
+    await flush();
+    // The document keeps the evaluated bundle, so later diagrams don't request or evaluate it again.
+    expect(postMessage.mock.calls.some(([notification]) => notification.type === 'mermaid-needed')).toBe(false);
+    const scripts = jest
+      .mocked(document.head.append)
+      .mock.calls.flat()
+      .filter((node) => node instanceof HTMLScriptElement);
+    expect(scripts).toHaveLength(1);
+    expect(renderer).toHaveBeenCalledTimes(2);
+    expectNotification('rendered', { revision: 3 });
+  });
+
+  test('ignores font completion from superseded style updates', async () => {
+    initialize();
+    message();
+    await flush();
+    const content = document.querySelector<HTMLElement>('.markdown-html')!;
+    const bounds = jest.spyOn(content, 'getBoundingClientRect').mockReturnValue({ height: 42 } as DOMRect);
+    const originalReady = document.fonts.ready;
+    let finish!: () => void;
+    Object.defineProperty(document.fonts, 'ready', {
+      configurable: true,
+      value: new Promise<void>((resolve) => {
+        finish = resolve;
+      }),
+    });
+    try {
+      message({ ...command, type: 'styles', styleRevision: 1, globalCss: 'p{color:blue}' });
+      Object.defineProperty(document.fonts, 'ready', { value: Promise.resolve(document.fonts) });
+      message({ ...command, type: 'styles', styleRevision: 2, globalCss: 'p{color:green}' });
+      await flush();
+      expectNotification('resize', { height: 42, contentHeight: 0 });
+      expect(bounds).toHaveBeenCalledTimes(1);
+      finish();
+      await flush();
+      expect(bounds).toHaveBeenCalledTimes(1);
+      expect(document.head.querySelector('style')).toHaveTextContent('p{color:green}');
+    } finally {
+      Object.defineProperty(document.fonts, 'ready', { value: originalReady });
+    }
+  });
+
+  test('supersedes a render waiting for fonts without reporting stale completion', async () => {
+    initialize(policy);
+    violation(CSP_CHECK_URL);
+    await flush();
+    let finish!: () => void;
+    const originalReady = document.fonts.ready;
+    Object.defineProperty(document.fonts, 'ready', {
+      configurable: true,
+      value: new Promise<FontFaceSet>((resolve) => {
+        finish = () => resolve(document.fonts);
+      }),
+    });
+    message();
+    message({ ...command, revision: 1, html: '<p>Latest</p>' });
+    postMessage.mockClear();
+    finish();
+    await flush();
+    expect(document.body).toHaveTextContent('Latest');
+    expectNotification('rendered', { revision: 1 });
+    expect(postMessage.mock.calls.every(([notification]) => notification.revision === 1)).toBe(true);
+    Object.defineProperty(document.fonts, 'ready', { value: originalReady });
   });
 
   test('unloading cancels pending diagrams, reports, and resize observation', async () => {

@@ -17,6 +17,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	clientrest "k8s.io/client-go/rest"
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
@@ -24,12 +25,14 @@ import (
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 
+	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/readonly"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/clientauth"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -57,6 +60,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardpreferences"
 	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
 	"github.com/grafana/grafana/pkg/services/org"
 	settingsvc "github.com/grafana/grafana/pkg/services/setting"
@@ -199,6 +203,7 @@ func RegisterAPIService(
 		ssoLoginConfig:  sso.NewLoginConfigHandler(cfgProvider, ssoService),
 		userPermissions: userpermissions.NewHandler(userPermissionsClient, cfg.IDUseExternalGroupsForGroupsClaim),
 		features:        features,
+		userPreferences: dashboardpreferences.ProvideUserCleaner(restConfig),
 	}
 	builder.userSearchHandler = user.NewSearchHandler(tracing, builder.userSearchClient, accessClient)
 	builder.teamSearchHandler = team.NewSearchHandler(tracing, builder.teamSearchClient, accessClient)
@@ -280,6 +285,7 @@ func NewAPIService(
 		teamLBACApiInstaller:             teamLBACApiInstaller,
 		settingService:                   settingService,
 		features:                         features,
+		userPreferences:                  newRemoteUserPreferencesCleaner(authorizerDialConfigs, tokenExchanger),
 		// Serve the SSOSetting kind read-only in standalone, gated by kubernetesSsoSettingsApi.
 		ssoLegacyStore: sso.NewLegacyStore(ssoReadService, tracingService),
 		authorizer: authorizer.AuthorizerFunc(
@@ -611,15 +617,13 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamLBACRulesAPIGroup(
 	}
 
 	// TeamLBAC can be enabled in ST without serving the Team Kubernetes API.
-	// Prefer the registered Team storage when present because it already
-	// reflects the configured dual-write mode; otherwise evaluate membership
-	// through the internal legacy Team store.
-	teamStorage := storage[iamv0.TeamResourceInfo.StoragePath()]
-	if teamStorage == nil && b.legacyTeamStore != nil {
-		teamStorage = b.legacyTeamStore
+	// LBAC uses the internal Team store so directory redaction cannot change
+	// which rules apply to a subject.
+	var teamLister rest.Lister = b.teamStorage
+	if teamLister == nil && b.legacyTeamStore != nil {
+		teamLister = b.legacyTeamStore
 	}
-	teamLister, ok := teamStorage.(rest.Lister)
-	if !ok {
+	if teamLister == nil {
 		return fmt.Errorf("TeamLBACRule for-subject subresource requires Team lister storage")
 	}
 	// Kubernetes requires a separate storage-map entry for each named
@@ -656,27 +660,22 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 		teamUniStore.BeginUpdate = b.BeginTeamUpdate
 	}
 
-	storage[teamResource.StoragePath()] = teamUniStore
-	b.teamGetter = teamUniStore
-	teamStorage := rest.Storage(teamUniStore)
-
+	var teamStorage grafanarest.Storage = teamUniStore
 	if b.legacyTeamStore != nil {
-		dw, err := opts.DualWriteBuilder(teamResource.GroupResource(), b.legacyTeamStore, teamUniStore)
+		teamStorage, err = opts.DualWriteBuilder(teamResource.GroupResource(), b.legacyTeamStore, teamUniStore)
 		if err != nil {
 			return err
 		}
-
-		storage[teamResource.StoragePath()] = dw
-		teamStorage = dw
-		if getter, ok := dw.(rest.Getter); ok {
-			b.teamGetter = getter
-		}
 	}
-
-	storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(b.teamGetter, b.tracing)
+	b.teamStorage = teamStorage
+	hiddenUsers := func(ctx context.Context) (map[string]struct{}, error) {
+		return user.ReadHiddenUsers(ctx, b.cfgProvider, b.settingService)
+	}
+	storage[teamResource.StoragePath()] = team.NewRosterStore(teamStorage, b.accessClient, b.store, hiddenUsers)
+	storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(b.teamStorage, b.tracing)
 
 	if b.teamSearchHandler != nil {
-		b.teamSearchHandler.SetTeamGetter(b.teamGetter)
+		b.teamSearchHandler.SetTeamGetter(b.teamStorage)
 	}
 
 	// addmember / removemember mutate a single Spec.Members entry through
@@ -685,7 +684,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 	storage[teamResource.StoragePath("removemember")] = team.NewTeamRemoveMemberREST(teamStorage, b.tracing)
 
 	if b.teamGroupsHandlerProvider != nil {
-		storage[teamResource.StoragePath("groups")] = b.teamGroupsHandlerProvider(b.teamGetter)
+		storage[teamResource.StoragePath("groups")] = b.teamGroupsHandlerProvider(b.teamStorage)
 	}
 
 	return nil
@@ -794,9 +793,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 	}
 
 	b.userGetter = userStore
-	if authInfos, ok := b.authInfoStorage.(user.AuthInfoStorage); ok && !readOnly {
-		userStore = user.NewCascadeDeleter(userStore, authInfos)
-	}
+	userStore = newUserDeleteCascade(userStore, b.authInfoStorage, b.userPreferences, readOnly)
 	var userAPIStore rest.Storage = storewrapper.New(
 		userStore,
 		iamv0.UserResourceInfo.GroupResource(),
@@ -828,12 +825,42 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 		}
 		if enableTeamsAPI {
 			backends := dualwrite.NewSelector[user.UserTeamsBackend](b.dual, iamv0.TeamResourceInfo.GroupResource(),
-				user.NewLegacyUserTeamsBackend(b.store, b.tracing), user.NewUnifiedUserTeamsBackend(b.unified, b.teamGetter))
+				user.NewLegacyUserTeamsBackend(b.store, b.tracing), user.NewUnifiedUserTeamsBackend(b.unified, b.teamStorage))
 			storage[userResource.StoragePath("teams")] = user.NewUserTeamREST(backends, b.tracing)
 		}
 	}
 
 	return nil
+}
+
+// newUserDeleteCascade wraps userStore in a CascadeDeleter when the API can delete and there is something to cascade to.
+func newUserDeleteCascade(userStore storewrapper.K8sStorage, authInfoStorage rest.Storage, preferences dashboardpreferences.UserCleaner, readOnly bool) storewrapper.K8sStorage {
+	authInfos, _ := authInfoStorage.(user.AuthInfoStorage)
+	if readOnly || (authInfos == nil && preferences == nil) {
+		return userStore
+	}
+	return user.NewCascadeDeleter(userStore, authInfos, preferences)
+}
+
+// newRemoteUserPreferencesCleaner returns nil without a dial config for {dashboard.grafana.app, dashboards}.
+func newRemoteUserPreferencesCleaner(dialConfigs map[schema.GroupResource]iamauthorizer.DialConfig, tokenExchanger authn.TokenExchanger) dashboardpreferences.UserCleaner {
+	// One API server serves the whole dashboard.grafana.app group, so the dashboards dial config
+	// also reaches dashboardpreferences.
+	cfg, ok := dialConfigs[schema.GroupResource{Group: dashboardv1.GROUP, Resource: dashboardv1.DASHBOARD_RESOURCE}]
+	if !ok {
+		return nil
+	}
+	return dashboardpreferences.NewUserCleaner(func(_ context.Context, namespace string) (*clientrest.Config, error) {
+		return &clientrest.Config{
+			Host: cfg.Host,
+			// Each delete is in one namespace, so its token is exchanged for that namespace.
+			WrapTransport: clientauth.NewStaticTokenExchangeTransportWrapper(tokenExchanger, cfg.Audience, namespace),
+			TLSClientConfig: clientrest.TLSClientConfig{
+				Insecure: cfg.Insecure,
+				CAFile:   cfg.CAFile,
+			},
+		}, nil
+	})
 }
 
 // useStatusDualWriter returns true when the user resource is in Mode 0-3 (legacy is still
@@ -1185,7 +1212,7 @@ func (b *IdentityAccessManagementAPIBuilder) validateCreate(ctx context.Context,
 	case *iamv0.Team:
 		return team.ValidateOnCreate(ctx, b.teamSearchClient, typedObj, b.externalGroupReconciler)
 	case *iamv0.TeamBinding:
-		return teambinding.ValidateOnCreate(ctx, typedObj, b.teamGetter, b.userGetter)
+		return teambinding.ValidateOnCreate(ctx, typedObj, b.teamStorage, b.userGetter)
 	case *iamv0.AuthInfo:
 		return authinfo.ValidateOnCreate(ctx, typedObj, b.userGetter)
 	case *iamv0.ResourcePermission:

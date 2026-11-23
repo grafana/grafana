@@ -101,5 +101,5 @@ func TestProvideCloudRoutesLoader_StandaloneIgnoresMiddlewareFlag(t *testing.T) 
 	loader, err := ProvideCloudRoutesLoader(cfg, RoutesLoaderClients{}, tracing.InitializeTracerForTest(), features, prometheus.NewRegistry())
 	require.NoError(t, err)
 	require.IsType(t, &cloudLoader{}, loader)
-	require.False(t, middlewareEnabled(cfg, features))
+	require.False(t, MiddlewareEnabled(cfg, features))
 }

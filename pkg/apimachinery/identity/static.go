@@ -20,7 +20,7 @@ type StaticRequester struct {
 	UserUID         string
 	OrgID           int64
 	OrgName         string
-	OrgRole         RoleType
+	OrgRole         claims.RoleType
 	Login           string
 	Name            string
 	Email           string
@@ -141,7 +141,7 @@ func (u *StaticRequester) GetName() string {
 	return u.Email
 }
 
-func (u *StaticRequester) HasRole(role RoleType) bool {
+func (u *StaticRequester) HasRole(role claims.RoleType) bool {
 	if u.IsGrafanaAdmin {
 		return true
 	}
@@ -206,7 +206,7 @@ func (u *StaticRequester) GetTeams() []int64 {
 }
 
 // GetOrgRole returns the role of the active entity in the active organization
-func (u *StaticRequester) GetOrgRole() RoleType {
+func (u *StaticRequester) GetOrgRole() claims.RoleType {
 	return u.OrgRole
 }
 

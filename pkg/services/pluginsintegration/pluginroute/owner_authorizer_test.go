@@ -51,8 +51,8 @@ func (errChecker) Compile(context.Context, authlib.AuthInfo, authlib.ListRequest
 }
 
 func TestOwnerFromNameAuthorize(t *testing.T) {
-	user := &identity.StaticRequester{UserUID: "abc", Groups: []string{"team1"}, OrgRole: identity.RoleEditor}
-	admin := &identity.StaticRequester{UserUID: "root", OrgRole: identity.RoleAdmin}
+	user := &identity.StaticRequester{UserUID: "abc", Groups: []string{"team1"}, OrgRole: authlib.RoleEditor}
+	admin := &identity.StaticRequester{UserUID: "root", OrgRole: authlib.RoleAdmin}
 	all := []resource.Owner{resource.NamespaceResourceOwner, resource.UserResourceOwner, resource.TeamResourceOwner}
 
 	tests := []struct {
@@ -66,7 +66,8 @@ func TestOwnerFromNameAuthorize(t *testing.T) {
 		err    string
 	}{
 		{name: "list without a name", policy: ownerFromName{owners: all}, user: user, verb: "list", want: authorizer.DecisionAllow},
-		{name: "create without a name", policy: ownerFromName{owners: all}, user: user, verb: "create", want: authorizer.DecisionDeny},
+		{name: "create without a name is left to the store", policy: ownerFromName{owners: all}, user: user, verb: "create", want: authorizer.DecisionAllow},
+		{name: "delete a collection without a name", policy: ownerFromName{owners: all}, user: user, verb: "deletecollection", want: authorizer.DecisionDeny},
 		{name: "fixed name", policy: ownerFromName{names: []string{"merged"}}, user: user, verb: "get", obj: "merged", want: authorizer.DecisionAllow},
 		{name: "own user", policy: ownerFromName{owners: all}, user: user, verb: "update", obj: "user-abc", want: authorizer.DecisionAllow},
 		{name: "other user", policy: ownerFromName{owners: all}, user: user, verb: "get", obj: "user-xyz", want: authorizer.DecisionDeny},
@@ -148,8 +149,8 @@ func TestGetAuthorizerOwnerFromName(t *testing.T) {
 	attr := func(verb, name string) authorizer.Attributes {
 		return authorizer.AttributesRecord{APIGroup: "collections.grafana.app", Resource: "stars", Verb: verb, Name: name}
 	}
-	user := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "abc", OrgID: 1, OrgRole: identity.RoleEditor}
-	admin := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "root", OrgID: 1, OrgRole: identity.RoleAdmin}
+	user := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "abc", OrgID: 1, OrgRole: authlib.RoleEditor}
+	admin := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "root", OrgID: 1, OrgRole: authlib.RoleAdmin}
 
 	for name, tc := range map[string]struct {
 		caller identity.Requester
@@ -157,18 +158,39 @@ func TestGetAuthorizerOwnerFromName(t *testing.T) {
 		object string
 		want   authorizer.Decision
 	}{
-		"a user writes their own":            {user, "update", "user-abc", authorizer.DecisionAllow},
-		"a user may not read another's":      {user, "get", "user-other", authorizer.DecisionDeny},
-		"a user may list":                    {user, "list", "", authorizer.DecisionAllow},
-		"a user may not create without name": {user, "create", "", authorizer.DecisionDeny},
-		"an org admin writes another's":      {admin, "update", "user-abc", authorizer.DecisionAllow},
-		"an access policy with the grant":    {accessPolicy("collections.grafana.app/stars:get"), "get", "user-other", authorizer.DecisionAllow},
-		"an access policy without the grant": {accessPolicy(), "get", "user-abc", authorizer.DecisionDeny},
-		"an access policy past its grant":    {accessPolicy("collections.grafana.app/stars:get"), "update", "user-abc", authorizer.DecisionDeny},
+		"a user writes their own":                      {user, "update", "user-abc", authorizer.DecisionAllow},
+		"a user may not read another's":                {user, "get", "user-other", authorizer.DecisionDeny},
+		"a user may list":                              {user, "list", "", authorizer.DecisionAllow},
+		"a create without a name is left to the store": {user, "create", "", authorizer.DecisionAllow},
+		"an org admin writes another's":                {admin, "update", "user-abc", authorizer.DecisionAllow},
+		"an access policy with the grant":              {accessPolicy("collections.grafana.app/stars:get"), "get", "user-other", authorizer.DecisionAllow},
+		"an access policy without the grant":           {accessPolicy(), "get", "user-abc", authorizer.DecisionDeny},
+		"an access policy past its grant":              {accessPolicy("collections.grafana.app/stars:get"), "update", "user-abc", authorizer.DecisionDeny},
 	} {
 		t.Run(name, func(t *testing.T) {
 			decision, reason := authorize(t, b, tc.caller, attr(tc.verb, tc.object))
 			require.Equal(t, tc.want, decision, reason)
+		})
+	}
+}
+
+// A search or list-keys POST reaches a kind's naming strategy restated as a
+// list, so a kind whose users may not list cannot be enumerated through them.
+func TestGetAuthorizerReadNoneDeniesCollectionReads(t *testing.T) {
+	b := &manifestBuilder{
+		pluginID:      "test-app",
+		kindPolicies:  map[string]kindPolicy{"user-storage": {ownerFromName: hardcodedOwnerFromName("userstorage.grafana.app", "user-storage")}},
+		accessChecker: pluginaccesscontrol.NewAppAccessChecker(&actest.FakeAccessControl{ExpectedEvaluate: true}),
+	}
+	user := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "abc", OrgID: 1, OrgRole: authlib.RoleAdmin}
+
+	for _, route := range []string{"list-keys", "search"} {
+		t.Run(route, func(t *testing.T) {
+			decision, reason := authorize(t, b, user, authorizer.AttributesRecord{
+				APIGroup: "userstorage.grafana.app", APIVersion: "v0alpha1", Namespace: "default",
+				Resource: "user-storage", Verb: "create", Name: route, ResourceRequest: true,
+			})
+			require.Equal(t, authorizer.DecisionDeny, decision, reason)
 		})
 	}
 }
@@ -203,4 +225,11 @@ func TestOwnerFromKindNonUserNamespaceOnly(t *testing.T) {
 	}
 	require.True(t, ownerFromKind("preferences.grafana.app", kind("preferences")).nonUserNamespaceOnly)
 	require.False(t, ownerFromKind("collections.grafana.app", kind("stars")).nonUserNamespaceOnly)
+}
+
+func TestOwnerFromKindCreatesOnUpdate(t *testing.T) {
+	// Stars have no create step of their own: a write to the name creates it.
+	stars := ownerFor(t, "collections.grafana.app", "stars")
+	require.NotNil(t, stars)
+	require.True(t, stars.createOnUpdate)
 }

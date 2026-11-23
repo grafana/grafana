@@ -17,11 +17,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/shadow"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -81,7 +83,7 @@ func TestPermissionCacheTracing(t *testing.T) {
 			}
 			ctx := t.Context()
 			if tc.shadow {
-				ctx = WithPermissionShadow(ctx)
+				ctx = shadow.WithContext(ctx)
 			}
 			var loadParent trace.SpanContext
 			failure := errors.New("private-database-error")
@@ -190,7 +192,7 @@ func TestIntegrationPermissionSQLTracing(t *testing.T) {
 				return nil
 			}))
 			recorder := recordPermissionSpans(t)
-			store := permissionStore{sql: database}
+			store := permissionStore{database: legacysql.NewDatabaseProvider(database)}
 			var got []ac.Permission
 			if team {
 				result, err := store.teams(t.Context(), ac.GetUserPermissionsQuery{OrgID: 1, TeamIDs: []int64{10}})
@@ -264,7 +266,7 @@ func TestIntegrationPermissionSQLTracingCancellation(t *testing.T) {
 	recorder := recordPermissionSpans(t)
 	ctx, cancel := context.WithCancel(t.Context())
 	cancel()
-	result, err := (permissionStore{sql: database}).permissions(ctx, ac.GetUserPermissionsQuery{OrgID: 1, UserID: 7})
+	result, err := (permissionStore{database: legacysql.NewDatabaseProvider(database)}).permissions(ctx, ac.GetUserPermissionsQuery{OrgID: 1, UserID: 7})
 	require.ErrorIs(t, err, context.Canceled)
 	require.Nil(t, result)
 	parent := permissionSpan(t, recorder, "sql.permissions")

@@ -12,6 +12,8 @@ import BrowseFolderLibraryPanelsPage from './BrowseFolderLibraryPanelsPage';
 import { getLibraryElementsResponse } from './fixtures/libraryElements.fixture';
 import * as permissions from './permissions';
 
+jest.mock('./permissions', () => makeSpyable('./permissions'));
+
 setBackendSrv(backendSrv);
 setupMockServer();
 

@@ -6,7 +6,9 @@ inputs:
     description: 'GitHub token for cloning grafana-enterprise (when provided, skips vault and token generation)'
     required: true
   ref:
-    description: 'grafana-enterprise ref to check out, for example a release tag. Empty checks out the branch with the head or base branch name of the pull request, else main.'
+    description: >-
+      grafana-enterprise ref to check out, for example a release tag. When empty, tries the PR head branch,
+      the PR base branch, the base branch without a trailing #vendor suffix, then main.
     required: false
     default: ''
   path:
@@ -78,6 +80,8 @@ runs:
             echo "checked out ${GITHUB_HEAD_REF}"
           elif git checkout ${GITHUB_BASE_REF}; then
             echo "checked out ${GITHUB_BASE_REF}"
+          elif [[ "$GITHUB_BASE_REF" == *'#vendor' ]] && git checkout "${GITHUB_BASE_REF%#vendor}"; then
+            echo "checked out ${GITHUB_BASE_REF%#vendor}"
           else
             git checkout main
           fi

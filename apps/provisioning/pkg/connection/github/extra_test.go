@@ -8,33 +8,33 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type mockSecureValues struct {
-	privateKey    common.RawSecureValue
+	privateKey    resource.RawSecureValue
 	privateKeyErr error
-	clientSecret  common.RawSecureValue
+	clientSecret  resource.RawSecureValue
 	clientSecErr  error
-	token         common.RawSecureValue
+	token         resource.RawSecureValue
 	tokenErr      error
 }
 
-func (m *mockSecureValues) PrivateKey(_ context.Context) (common.RawSecureValue, error) {
+func (m *mockSecureValues) PrivateKey(_ context.Context) (resource.RawSecureValue, error) {
 	return m.privateKey, m.privateKeyErr
 }
 
-func (m *mockSecureValues) ClientSecret(_ context.Context) (common.RawSecureValue, error) {
+func (m *mockSecureValues) ClientSecret(_ context.Context) (resource.RawSecureValue, error) {
 	return m.clientSecret, m.clientSecErr
 }
 
-func (m *mockSecureValues) Token(_ context.Context) (common.RawSecureValue, error) {
+func (m *mockSecureValues) Token(_ context.Context) (resource.RawSecureValue, error) {
 	return m.token, m.tokenErr
 }
 
@@ -76,8 +76,8 @@ func TestExtra_Build(t *testing.T) {
 			setupDecrypter: func() connection.Decrypter {
 				return func(c *provisioning.Connection) connection.SecureValues {
 					return &mockSecureValues{
-						privateKey: common.RawSecureValue("test-private-key"),
-						token:      common.RawSecureValue("test-token"),
+						privateKey: resource.RawSecureValue("test-private-key"),
+						token:      resource.RawSecureValue("test-token"),
 					}
 				}
 			},
@@ -153,7 +153,7 @@ func TestExtra_Build(t *testing.T) {
 			setupDecrypter: func() connection.Decrypter {
 				return func(c *provisioning.Connection) connection.SecureValues {
 					return &mockSecureValues{
-						privateKey: common.RawSecureValue("test-private-key"),
+						privateKey: resource.RawSecureValue("test-private-key"),
 						tokenErr:   errors.New("failed to decrypt token"),
 					}
 				}
@@ -178,8 +178,8 @@ func TestExtra_Build(t *testing.T) {
 			setupDecrypter: func() connection.Decrypter {
 				return func(c *provisioning.Connection) connection.SecureValues {
 					return &mockSecureValues{
-						privateKey: common.RawSecureValue(""),
-						token:      common.RawSecureValue(""),
+						privateKey: resource.RawSecureValue(""),
+						token:      resource.RawSecureValue(""),
 					}
 				}
 			},
@@ -202,8 +202,8 @@ func TestExtra_Build(t *testing.T) {
 			setupDecrypter: func() connection.Decrypter {
 				return func(c *provisioning.Connection) connection.SecureValues {
 					return &mockSecureValues{
-						privateKey: common.RawSecureValue("another-private-key"),
-						token:      common.RawSecureValue("another-token"),
+						privateKey: resource.RawSecureValue("another-private-key"),
+						token:      resource.RawSecureValue("another-token"),
 					}
 				}
 			},
@@ -255,8 +255,8 @@ func TestExtra_Mutate(t *testing.T) {
 					},
 				},
 				Secure: provisioning.ConnectionSecure{
-					PrivateKey: common.InlineSecureValue{
-						Create: common.NewSecretValue(privateKeyBase64),
+					PrivateKey: resource.InlineSecureValue{
+						Create: resource.NewSecretValue(privateKeyBase64),
 					},
 				},
 			},
@@ -327,11 +327,11 @@ func TestExtra_Mutate(t *testing.T) {
 					},
 				},
 				Secure: provisioning.ConnectionSecure{
-					PrivateKey: common.InlineSecureValue{
+					PrivateKey: resource.InlineSecureValue{
 						Name: "existing-key",
 					},
-					Token: common.InlineSecureValue{
-						Create: common.NewSecretValue("existing-token"),
+					Token: resource.InlineSecureValue{
+						Create: resource.NewSecretValue("existing-token"),
 					},
 				},
 			},

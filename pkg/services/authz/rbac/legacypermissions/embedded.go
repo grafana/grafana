@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/shadow"
 	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	authzv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -90,8 +91,8 @@ func NewEmbeddedClient(loader *Loader, cfg *setting.Cfg) legacyclient.LegacyUser
 		ctx := stream.Context()
 		if clientCtx := inprocgrpc.ClientContext(ctx); clientCtx != nil {
 			ctx = trace.ContextWithSpanContext(ctx, trace.SpanContextFromContext(clientCtx))
-			if isPermissionShadow(clientCtx) {
-				ctx = WithPermissionShadow(ctx)
+			if shadow.IsShadow(clientCtx) {
+				ctx = shadow.WithContext(ctx)
 			}
 			// Legacy callers can refresh before committing permission mutations.
 			// Preserve their SQL session without forwarding unrelated context values.
@@ -153,7 +154,7 @@ func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPerm
 		orgID = -1
 	}
 	requester := &legacyRequester{
-		SignedInUser: &user.SignedInUser{OrgID: orgID, OrgRole: identity.RoleType(req.Identity.OrgRole), IsGrafanaAdmin: req.Identity.IsGrafanaAdmin, TeamIDs: req.Identity.TeamIds}, //nolint:staticcheck // The compatibility contract carries numeric RBAC memberships separately from contextual groups.
+		SignedInUser: &user.SignedInUser{OrgID: orgID, OrgRole: types.RoleType(req.Identity.OrgRole), IsGrafanaAdmin: req.Identity.IsGrafanaAdmin, TeamIDs: req.Identity.TeamIds}, //nolint:staticcheck // The compatibility contract carries numeric RBAC memberships separately from contextual groups.
 		identity:     req.Identity, namespace: namespace,
 	}
 	permissions, err := s.loader.GetUserPermissions(ctx, requester, ac.Options{ReloadCache: req.ReloadCache, SkipZanzanaCache: req.SkipZanzanaCache})
@@ -217,7 +218,7 @@ func (r *legacyRequester) GetCacheKey() string {
 	if !r.HasUniqueId() {
 		id = string(r.GetOrgRole())
 		if id == "" {
-			id = string(identity.RoleNone)
+			id = string(types.RoleNone)
 		}
 	}
 	return fmt.Sprintf("%d-%s-%s", r.GetOrgID(), r.GetIdentityType(), id)

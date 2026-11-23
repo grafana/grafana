@@ -28,7 +28,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { type FlatTreeItem, type TreeItem } from '../types';
 import { getRepoFileUrl, getRepoHrefForProvider } from '../utils/git';
-import { getKindInfoByItemType, getKindInfoByResource } from '../utils/resourceKinds';
+import { getKindInfoByKind, getKindInfoByResource } from '../utils/resourceKinds';
 import {
   buildTree,
   filterByStatusAndResources,
@@ -48,7 +48,7 @@ type TreeCell<T extends keyof FlatTreeItem = keyof FlatTreeItem> = CellProps<Fla
 
 function getGrafanaLink(item: TreeItem) {
   if (item.resourceName) {
-    return getKindInfoByItemType(item.type)?.getRoute?.(item.resourceName);
+    return getKindInfoByKind(item.type)?.getRoute?.(item.resourceName);
   }
   return undefined;
 }
@@ -83,7 +83,7 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
   const resourceFilterOptions: Array<ComboboxOption<string>> = useMemo(() => {
     const resources = new Set(resourcesQuery.data?.items?.map((item) => item.resource));
     return Array.from(resources, (value) => ({
-      label: getKindInfoByResource(value)?.pluralLabel() ?? value,
+      label: getKindInfoByResource(value)?.getPluralLabel() ?? value,
       value,
     }));
   }, [resourcesQuery.data?.items]);

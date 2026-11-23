@@ -4,11 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
 
 	authlib "github.com/grafana/authlib/types"
@@ -121,13 +124,44 @@ func TestHandlerRejectsMissingIdentity(t *testing.T) {
 }
 
 func TestHandlerReturnsInternalErrorWhenAuthZFails(t *testing.T) {
-	handler := NewHandler(&fakeUserPermissionsClient{err: errors.New("boom")}, false)
+	handler := NewHandler(&fakeUserPermissionsClient{err: errors.New("private backend detail")}, false)
 	req := permissionsRequest(t, &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", Namespace: "org-1"})
 	rec := httptest.NewRecorder()
 
 	handler.handle(rec, req)
 
 	require.Equal(t, http.StatusInternalServerError, rec.Code)
+	require.Equal(t, "application/json", rec.Header().Get("Content-Type"))
+	var status metav1.Status
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &status))
+	require.Equal(t, "Status", status.Kind)
+	require.Equal(t, "v1", status.APIVersion)
+	require.Equal(t, metav1.StatusFailure, status.Status)
+	require.Equal(t, int32(http.StatusInternalServerError), status.Code)
+	require.Equal(t, metav1.StatusReasonInternalError, status.Reason)
+	require.NotContains(t, rec.Body.String(), "core.MalformedError")
+	require.NotContains(t, rec.Body.String(), "private backend detail")
+}
+
+func TestHandlerPreservesAPIStatusErrors(t *testing.T) {
+	expected := metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    http.StatusBadRequest,
+		Reason:  metav1.StatusReasonBadRequest,
+		Message: "bad request",
+		Details: &metav1.StatusDetails{Name: "u1", Causes: []metav1.StatusCause{{Message: "invalid user"}}},
+	}
+	handler := NewHandler(&fakeUserPermissionsClient{err: fmt.Errorf("wrapped: %w", &apierrors.StatusError{ErrStatus: expected})}, false)
+	req := permissionsRequest(t, &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", Namespace: "org-1"})
+	rec := httptest.NewRecorder()
+
+	handler.handle(rec, req)
+
+	require.Equal(t, http.StatusBadRequest, rec.Code)
+	expected.TypeMeta = metav1.TypeMeta{Kind: "Status", APIVersion: "v1"}
+	var status metav1.Status
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &status))
+	require.Equal(t, expected, status)
 }
 
 func permissionsRequest(t *testing.T, info authlib.AuthInfo) *http.Request {
