@@ -151,10 +151,6 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => {
                   background: theme.colors.accent.subtleBackground,
                   borderColor: theme.colors.accent.textEmphasis,
                 },
-
-                '&:hover ~ svg': {
-                  background: theme.colors.accent.textEmphasis,
-                },
               }
             : {
                 background: theme.components.switch.activeBackground,
