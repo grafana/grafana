@@ -17,4 +17,4 @@ export const DEFAULT_BRANCH_NAMES = ['main', 'master'] as const;
 
 export const FOLDER_METADATA_FILE = '_folder.json';
 
-export const COMMIT_OUTCOME_PARAM = 'provisioning_commit';
+export const COMMIT_OUTCOME_STORAGE_KEY = 'grafana.provisioning.commitOutcome';
