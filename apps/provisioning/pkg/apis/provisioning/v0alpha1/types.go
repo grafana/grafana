@@ -32,15 +32,15 @@ func (Repository) OpenAPIModelName() string {
 
 type SecureValues struct {
 	// Token used to connect the configured repository
-	Token common.InlineSecureValue `json:"token,omitzero,omitempty"`
+	Token resource.InlineSecureValue `json:"token,omitzero,omitempty"`
 
 	// Some webhooks (including github) require a secret key value
-	WebhookSecret common.InlineSecureValue `json:"webhookSecret,omitzero,omitempty"`
+	WebhookSecret resource.InlineSecureValue `json:"webhookSecret,omitzero,omitempty"`
 
 	// Private key used to sign commits the repository writes back. The format
 	// is selected by spec.commit.signingMethod. When unset, commits are
 	// unsigned.
-	CommitSigningKey common.InlineSecureValue `json:"commitSigningKey,omitzero,omitempty"`
+	CommitSigningKey resource.InlineSecureValue `json:"commitSigningKey,omitzero,omitempty"`
 }
 
 func (SecureValues) OpenAPIModelName() string {

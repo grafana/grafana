@@ -28,7 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 
-	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	githubconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
@@ -541,20 +540,13 @@ func (c *ControllerConfig) FreshnessMetrics() *informer.FreshnessMetrics {
 	return c.freshness
 }
 
-// ProvisioningKeysLister returns a keys lister for one kind when [provisioning]
-// keys_only_relist is set, and nil otherwise, which keeps the full-object
-// re-list.
-func (c *ControllerConfig) ProvisioningKeysLister(logger logging.Logger, gvr schema.GroupVersionResource) (keysapi.Lister, error) {
-	if !c.Settings.SectionWithEnvOverrides("provisioning").Key("keys_only_relist").MustBool(false) {
-		return nil, nil
-	}
-
+// ProvisioningKeysLister returns the keys lister the informer re-list reads one
+// kind through.
+func (c *ControllerConfig) ProvisioningKeysLister(gvr schema.GroupVersionResource) (keysapi.Lister, error) {
 	restClient, err := c.ProvisioningRESTClient()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create provisioning REST client: %w", err)
 	}
-
-	logger.Info("provisioning re-list will ask for keys only", "transport", "http", "resource", gvr.Resource)
 
 	return keysapi.NewHTTPLister(restClient, gvr), nil
 }
@@ -925,11 +917,9 @@ func (r *directConfigProvider) GetRestConfig(ctx context.Context) (*rest.Config,
 }
 
 func defaultConnectionTypes(extras []connection.Extra) []string {
-	types := []string{string(provisioning.GithubConnectionType)}
+	types := make([]string, 0, len(extras))
 	for _, extra := range extras {
-		if extra.Type() == provisioning.GithubEnterpriseConnectionType {
-			types = append(types, string(extra.Type()))
-		}
+		types = append(types, string(extra.Type()))
 	}
 	return types
 }

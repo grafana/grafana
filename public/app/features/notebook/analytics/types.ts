@@ -193,6 +193,8 @@ export interface NotebookNewStartedProperties extends EventProperty {
 }
 
 export interface NotebookCreatedProperties extends EventProperty, Partial<AddedPanelProperties> {
+  /** App that invoked the exposed form; absent for core entry points or unavailable caller context. */
+  originPluginId?: string;
   /** Identifier and join key for this notebook. */
   notebookUid: string;
   /** Which surface the notebook was created from. */
@@ -357,6 +359,8 @@ type NotebookAddedCellType = (typeof NOTEBOOK_ADDED_CELL_TYPE)[keyof typeof NOTE
  * The panel properties are only there for a panel. A markdown cell has nothing to say about them.
  */
 export interface NotebookCellAddedFromAddToNotebookProperties extends EventProperty, Partial<AddedPanelProperties> {
+  /** App that invoked the exposed form; absent for core entry points or unavailable caller context. */
+  originPluginId?: string;
   /** Identifier and join key for this notebook. */
   notebookUid: string;
   /** Whether the appended cell is a panel or markdown. */
@@ -431,6 +435,8 @@ export const NOTEBOOK_ADD_FAILED_REASON = {
 export type NotebookAddFailedReason = (typeof NOTEBOOK_ADD_FAILED_REASON)[keyof typeof NOTEBOOK_ADD_FAILED_REASON];
 
 export interface NotebookAddFailedProperties extends EventProperty {
+  /** App that invoked the exposed form; absent for core entry points or unavailable caller context. */
+  originPluginId?: string;
   /** Identifier and join key for the target notebook. Empty when the submit was creating one. */
   notebookUid: string;
   /** Which surface the panel was sent from. */
