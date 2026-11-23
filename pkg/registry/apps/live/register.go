@@ -3,12 +3,8 @@ package live
 import (
 	"context"
 	"net/http"
-	"strings"
 
 	"k8s.io/apiserver/pkg/authorization/authorizer"
-	"k8s.io/apiserver/pkg/registry/generic"
-	"k8s.io/apiserver/pkg/registry/rest"
-	genericapiserver "k8s.io/apiserver/pkg/server"
 	restclient "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -31,7 +27,6 @@ var (
 type AppInstaller struct {
 	appsdkapiserver.AppInstaller
 	websocket liveapp.WebsocketProvider
-	channels  ChannelLister
 }
 
 // RegisterAppInstaller installs live.grafana.app in single-tenant Grafana,
@@ -41,13 +36,13 @@ func RegisterAppInstaller(
 	_ featuremgmt.FeatureToggles,
 	live *grafanalive.GrafanaLive,
 ) (*AppInstaller, error) {
-	return NewAppInstaller(live, live)
+	return NewAppInstaller(live)
 }
 
 // NewAppInstaller returns the live.grafana.app installer for a host that
-// supplies the websocket and the channel list, such as single-tenant Grafana or
-// a multi-tenant Live server. Nothing is stored.
-func NewAppInstaller(websocket liveapp.WebsocketProvider, channels ChannelLister) (*AppInstaller, error) {
+// supplies the websocket, such as single-tenant Grafana or a multi-tenant Live
+// server. Nothing is stored.
+func NewAppInstaller(websocket liveapp.WebsocketProvider) (*AppInstaller, error) {
 	provider := simple.NewAppProvider(apis.LocalManifest(), nil, liveapp.New)
 	appConfig := app.Config{
 		KubeConfig:     restclient.Config{},
@@ -58,44 +53,7 @@ func NewAppInstaller(websocket liveapp.WebsocketProvider, channels ChannelLister
 	if err != nil {
 		return nil, err
 	}
-	return &AppInstaller{AppInstaller: i, websocket: websocket, channels: channels}, nil
-}
-
-// InstallAPIs installs the group with the generated Channel store replaced by
-// a read-only view of the Live node, so the group stores nothing.
-func (a *AppInstaller) InstallAPIs(server appsdkapiserver.GenericAPIServer, opts generic.RESTOptionsGetter) error {
-	if a.channels == nil {
-		return a.AppInstaller.InstallAPIs(server, opts)
-	}
-	return a.AppInstaller.InstallAPIs(&channelStorageServer{
-		GenericAPIServer: server,
-		storage:          newChannelStorage(a.channels),
-	}, opts)
-}
-
-// channelStorageServer swaps in the Channel storage before the group is
-// installed, so the host's storage setup never sees the generated store. The
-// generated subresource stores, such as channels/status, wrap that store, so
-// they are removed: status is returned with the channel itself.
-type channelStorageServer struct {
-	appsdkapiserver.GenericAPIServer
-	storage rest.Storage
-}
-
-func (s *channelStorageServer) InstallAPIGroup(info *genericapiserver.APIGroupInfo) error {
-	resource := livev1.ChannelKind().Plural()
-	for _, storageMap := range info.VersionedResourcesStorageMap {
-		if _, ok := storageMap[resource]; !ok {
-			continue
-		}
-		for path := range storageMap {
-			if strings.HasPrefix(path, resource+"/") {
-				delete(storageMap, path)
-			}
-		}
-		storageMap[resource] = s.storage
-	}
-	return s.GenericAPIServer.InstallAPIGroup(info)
+	return &AppInstaller{AppInstaller: i, websocket: websocket}, nil
 }
 
 // RawRoutes serves the Live websocket at

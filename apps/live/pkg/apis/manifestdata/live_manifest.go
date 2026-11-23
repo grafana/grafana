@@ -19,12 +19,6 @@ import (
 	v1alpha1 "github.com/grafana/grafana/apps/live/pkg/apis/live/v1alpha1"
 )
 
-var (
-	rawSchemaChannelv1alpha1     = []byte(`{"Channel":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"path":{"description":"The channel path, for example stream/telegraf/cpu","type":"string"}},"required":["path"],"type":"object"},"status":{"additionalProperties":false,"properties":{"data":{"additionalProperties":true,"description":"DataFrame schema of the last message","type":"object"},"minute_rate":{"description":"The message count in the last minute","type":"integer"}},"required":["minute_rate","data"],"type":"object"}}`)
-	versionSchemaChannelv1alpha1 app.VersionSchema
-	_                            = json.Unmarshal(rawSchemaChannelv1alpha1, &versionSchemaChannelv1alpha1)
-)
-
 var appManifestData = app.ManifestData{
 	AppName:          "live",
 	AppDisplayName:   "live",
@@ -34,19 +28,7 @@ var appManifestData = app.ManifestData{
 		{
 			Name:   "v1alpha1",
 			Served: true,
-			Kinds: []app.ManifestVersionKind{
-				{
-					Kind:       "Channel",
-					Plural:     "Channels",
-					Resource:   "channels",
-					Scope:      "Namespaced",
-					Conversion: false,
-					Search: &app.ManifestVersionKindSearch{
-						Endpoint: new(false),
-					},
-					Schema: &versionSchemaChannelv1alpha1,
-				},
-			},
+			Kinds:  []app.ManifestVersionKind{},
 			// nolint:staticcheck
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{
@@ -105,9 +87,7 @@ func RemoteManifest() app.Manifest {
 	return app.NewAPIServerManifest("live")
 }
 
-var kindVersionToGoType = map[string]resource.Kind{
-	"Channel/v1alpha1": v1alpha1.ChannelKind(),
-}
+var kindVersionToGoType = map[string]resource.Kind{}
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.
 // If there is no association for the provided Kind and Version, exists will return false.

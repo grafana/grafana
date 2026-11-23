@@ -7,6 +7,7 @@ service", "Datasource streams via Live Redis") where they disagree.
 | ------- | -------------------------------- | ----------------------------------------- |
 | 1       | grafana/grafana#138603           | Merged                                    |
 | 2, 3, 5 | grafana/grafana#138604           | Open                                      |
+| —       | grafana/grafana#138607           | Open; route-only versions in discovery    |
 | 6a      | grafana/grafana-enterprise#15116 | Open; needs #138604 in the pinned grafana |
 | rest    | —                                | Not started                               |
 
@@ -16,9 +17,10 @@ Serve Grafana Live (the Centrifuge protocol now on `/api/live/ws`) from the `liv
 API group:
 
 ```
-/apis/live.grafana.app/v1alpha1/namespaces/{namespace}/ws        websocket
-/apis/live.grafana.app/v1alpha1/namespaces/{namespace}/channels  read-only list/get
+/apis/live.grafana.app/v1alpha1/namespaces/{namespace}/ws
 ```
+
+The version has no kinds; `/ws` is its only route.
 
 - ST Grafana serves both from its embedded apiserver, using the same `GrafanaLive` node as
   `/api/live/ws`.
@@ -53,7 +55,7 @@ routing decision only.
 | Redis prefix           | Cloud drops the per-stack `ha_prefix` and uses bare `gf_live`, so an MT node can share the keyspace (unless `live.keepHAPrefixInCloud` is on) | `pkg/services/live/live.go`                                                           |
 | Redis enabled          | Only for stacks where `haEnabled` is true: HA plan, more than one replica, or HPA                                                             | hosted-grafana `pkg/hgapi/features/features.go`                                       |
 | Centrifuge credentials | `UserID` is `orgchannel.UserID(user)`: namespace plus authlib UID (step 1)                                                                    | `pkg/services/live/live.go` `serveWebsocket`                                          |
-| `apps/live`            | `v1alpha1`: read-only `Channel`, `/ws` route; installed behind `live.runAPIServer` (experimental, `RequiresDevMode`)                          | `apps/live/kinds/`, `pkg/registry/apps/live/register.go`, `pkg/registry/apps/apps.go` |
+| `apps/live`            | `v1alpha1`: no kinds, one `/ws` route; installed behind `live.runAPIServer` (experimental, `RequiresDevMode`)                                 | `apps/live/kinds/`, `pkg/registry/apps/live/register.go`, `pkg/registry/apps/apps.go` |
 
 ### Findings that shaped the design
 
@@ -69,8 +71,15 @@ routing decision only.
 5. **A group version needs at least one resource.** k8s skips a version without one, so it is
    missing from aggregated discovery. With router middleware on, the router builds `/apis`,
    `/openapi/v3` (what Swagger reads) and `/apis/discovery/v1alpha2/{status,manifests}` from
-   aggregated discovery, so the whole group disappears. _Resolved by the read-only `Channel`
-   resource._
+   aggregated discovery, so the whole group disappears. _Being fixed generally in
+   grafana/grafana#138607, which lists route-only versions in aggregated discovery (it also
+   fixes `search.grafana.app`, whose routes return 404 under router middleware). An earlier
+   revision of #138604 added a read-only `Channel` resource only to get the group listed; it
+   was removed._
+   **To do once #138607 merges:** remove the `t.Skip` from the `discovery` subtest in
+   `pkg/tests/apis/live/live_test.go` and confirm the group shows up in `/apis`, aggregated
+   discovery, `/openapi/v3`, and `/apis/discovery/v1alpha2/{status,manifests}` with router
+   middleware on. (Verified locally with #138607 applied: all pass.)
 6. **The toggle can't be enabled in cloud.** `live.runAPIServer` has `RequiresDevMode: true`.
    _Kept for now; removed before cloud rollout._
 7. **Centrifuge user IDs must be unique per namespace.** One MT node holds connections for many
@@ -100,26 +109,18 @@ type WebsocketProvider interface {
 }
 
 // pkg/registry/apps/live
-type ChannelLister interface {
-    ListManagedChannels(ctx context.Context, namespace string) ([]*managedstream.ManagedChannel, error)
-}
-
-func NewAppInstaller(websocket WebsocketProvider, channels ChannelLister) (*AppInstaller, error)
+func NewAppInstaller(websocket WebsocketProvider) (*AppInstaller, error)
 ```
 
-- **ST host:** `RegisterAppInstaller` (Wire) passes `GrafanaLive` for both. It is the same node,
+- **ST host:** `RegisterAppInstaller` (Wire) passes `GrafanaLive`. It is the same node,
   handlers and channels as `/api/live/ws`, so both paths can serve traffic during migration.
 - **MT host:** the grafana-enterprise standalone factory calls `NewAppInstaller` with providers
-  backed by the MT live server. Today these are stubs (step 6a).
+  backed by the MT live server. Today it is a stub (step 6a).
 
 ### Manifest `v1alpha1`
 
-- **`Channel`** is a read-only kind (get, list). `spec.path` is the channel path;
-  `status.minute_rate` and `status.data` (the frame schema) come from the Live node. Names are the
-  path with `/` replaced by `.`, e.g. `stream.telegraf.cpu`. The live installer overrides
-  `InstallAPIs` and replaces the generated `channels` store, and drops the generated
-  `channels/status` store, so unified storage is never used. Create, update and delete return 405. It exists both because it is useful (it is `/api/live/list` as an API) and because the
-  version needs a resource (finding 5).
+- **No kinds.** Nothing is stored. A read-only `Channel` view of the active channels could come
+  back later if it is useful as an API; it is not needed for discovery once #138607 lands.
 - **`GET /ws`** (`connectWebsocket`) is listed in the manifest so it is documented in OpenAPI with
   other routes, but the host serves it as a raw route. The app-sdk handler for it only answers
   `426 Upgrade Required` for requests that reach the API server anyway, for example through a
@@ -160,8 +161,8 @@ func NewHandler(next http.Handler, routes []Route) (http.Handler, error) // plai
 
 ### MT live server (grafana-enterprise)
 
-Step 6a registers the group with stubs (`installer_live.go`: websocket 501, no channels). Step 6b
-replaces them:
+Step 6a registers the group with a stub (`installer_live.go`: websocket 501). Step 6b replaces
+it:
 
 **Redis**
 
@@ -193,9 +194,6 @@ replaces them:
 | `stream/...` (managed)  | Yes | Initial data from the Redis frame cache. Data pushed to ST reaches MT subscribers through Redis.                                                                                                            |
 | `ds/`, `plugin/`        | No  | "Not available" until the datasource-streams plan lands.                                                                                                                                                    |
 | `watch/`                | No  | Later: a watch against the MT apiservers.                                                                                                                                                                   |
-
-**Channels on MT:** `ListManagedChannels` reads the frame cache and survey for the stack's Redis
-node, like ST's HA path.
 
 **Limits and metrics**
 
@@ -266,17 +264,17 @@ A frontend setting chooses the ws URL. When it is on, the frontend connects to
 
 ## Work breakdown
 
-| #     | Repo                        | Change                                                                                                                                                                                                                                                                                                               | Depends on                      | Status           |
-| ----- | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- | ---------------- |
-| 1     | grafana                     | Centrifuge `UserID` = `orgchannel.UserID(user)` (`GetNamespace() + "/" + GetUID()`)                                                                                                                                                                                                                                  | none                            | Merged (#138603) |
-| 2+3   | grafana                     | ST (on-prem, dev mode) only: `rawroutes` and the ST mount; `/ws` raw route backed by `GrafanaLive`; read-only `Channel`; manifest-documented `/ws` with 426 fallback; `NewAppInstaller(websocket, channels)` and `rawroutes.NewHandler` for MT; integration test `pkg/tests/apis/live` (runs with router middleware) | 1                               | #138604          |
-| 4     | grafana (frontend)          | Setting and toggle for the `/apis/live.grafana.app/...` ws URL                                                                                                                                                                                                                                                       | 2+3                             | Not started      |
-| 5     | grafana                     | `apps/live/pkg/liveserver` (Redis engine setup, Origin check, `Dispatcher` with per-scope handlers) and `apps/live/pkg/features` (dashboard handler behind `DashboardAccess`, namespace fix); `GrafanaLive` wires its scopes into it                                                                                 | 1                               | #138604          |
-| 6a    | grafana-enterprise          | Register `live.grafana.app` in the standalone factory with stub providers; collect, validate and mount raw routes after authn                                                                                                                                                                                        | 2+3                             | #15116           |
-| 6b    | grafana-enterprise          | MT live server: per-instance nodes, stack→node selection, origin, expiry, shutdown, limits, metrics, channel listing; remove `RequiresDevMode` from `live.runAPIServer` before cloud rollout                                                                                                                         | 5, 6a                           | Not started      |
-| 7     | deployment_tools            | mt-service for dev0, dev1 and ops; flags, Redis credentials, HPA, PDB, alerts                                                                                                                                                                                                                                        | 6b                              | Not started      |
-| 8     | deployment_tools            | Gateway direct route, GOFF routing and authn rules, auth-api audiences                                                                                                                                                                                                                                               | 7                               | Not started      |
-| Later | grafana, grafana-enterprise | Push on MT: move the push handler to `apps/live/pkg`, raw push routes with `streams`/`create` → `live:push`, a runner per Redis instance                                                                                                                                                                             | gateway service account support | Postponed        |
+| #     | Repo                        | Change                                                                                                                                                                                                                                                                                           | Depends on                      | Status           |
+| ----- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------- | ---------------- |
+| 1     | grafana                     | Centrifuge `UserID` = `orgchannel.UserID(user)` (`GetNamespace() + "/" + GetUID()`)                                                                                                                                                                                                              | none                            | Merged (#138603) |
+| 2+3   | grafana                     | ST (on-prem, dev mode) only: `rawroutes` and the ST mount; `/ws` raw route backed by `GrafanaLive`; manifest-documented `/ws` with 426 fallback (no kinds); `NewAppInstaller(websocket)` and `rawroutes.NewHandler` for MT; integration test `pkg/tests/apis/live` (runs with router middleware) | 1                               | #138604          |
+| 4     | grafana (frontend)          | Setting and toggle for the `/apis/live.grafana.app/...` ws URL                                                                                                                                                                                                                                   | 2+3                             | Not started      |
+| 5     | grafana                     | `apps/live/pkg/liveserver` (Redis engine setup, Origin check, `Dispatcher` with per-scope handlers) and `apps/live/pkg/features` (dashboard handler behind `DashboardAccess`, namespace fix); `GrafanaLive` wires its scopes into it                                                             | 1                               | #138604          |
+| 6a    | grafana-enterprise          | Register `live.grafana.app` in the standalone factory with a stub provider; collect, validate and mount raw routes after authn                                                                                                                                                                   | 2+3                             | #15116           |
+| 6b    | grafana-enterprise          | MT live server: per-instance nodes, stack→node selection, origin, expiry, shutdown, limits, metrics; remove `RequiresDevMode` from `live.runAPIServer` before cloud rollout                                                                                                                      | 5, 6a                           | Not started      |
+| 7     | deployment_tools            | mt-service for dev0, dev1 and ops; flags, Redis credentials, HPA, PDB, alerts                                                                                                                                                                                                                    | 6b                              | Not started      |
+| 8     | deployment_tools            | Gateway direct route, GOFF routing and authn rules, auth-api audiences                                                                                                                                                                                                                           | 7                               | Not started      |
+| Later | grafana, grafana-enterprise | Push on MT: move the push handler to `apps/live/pkg`, raw push routes with `streams`/`create` → `live:push`, a runner per Redis instance                                                                                                                                                         | gateway service account support | Postponed        |
 
 Possible follow-ups outside Live: raw routes as a first-class app-sdk feature, and router support
 for groups that only have routes.

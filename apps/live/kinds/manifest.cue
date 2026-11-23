@@ -9,9 +9,7 @@ manifest: {
 				ts: {enabled: false}
 				go: {enabled: true}
 			}
-			kinds: [
-				channelV1alpha1,
-			]
+			kinds: []
 			routes: {
 				namespaced: {
 					// The websocket is listed here so it is documented with the other
