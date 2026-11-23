@@ -182,4 +182,23 @@ describe('useK8sRuleWithLocation', () => {
     await waitFor(() => expect(result.current.resource?.metadata.resourceVersion).toBe('8'));
     expect(result.current.result?.rule).toMatchObject({ grafana_alert: { title: 'server title' } });
   });
+
+  it('reports a cached rule deleted since as not found', async () => {
+    const store = configureStore();
+    await store.dispatch(
+      rulesAPIv0alpha1.util.upsertQueryData(
+        'getAlertRule',
+        { name: 'rule-uid' },
+        mockK8sAlertRule({ uid: 'rule-uid', title: 'cached title' })
+      )
+    );
+    server.use(getAlertRuleHandler([]));
+
+    const { result } = renderHook(() => useK8sRuleWithLocation('rule-uid', 'alert'), {
+      wrapper: getWrapper({ store }),
+    });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current).toEqual({ loading: false, error: undefined });
+  });
 });

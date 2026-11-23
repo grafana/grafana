@@ -52,7 +52,10 @@ export function useK8sRuleWithLocation(uid: string, kind?: RuleKind): EditableRu
   const recordingRule = useGetRecordingRuleQuery(tryRecordingRule ? { name: uid } : skipToken, {
     refetchOnMountOrArgChange: true,
   });
-  const resource = alertRule.currentData ?? recordingRule.currentData;
+  // A failed fetch keeps the last cached rule in currentData, so only trust it after a successful one.
+  const resource =
+    (alertRule.isSuccess ? alertRule.currentData : undefined) ??
+    (recordingRule.isSuccess ? recordingRule.currentData : undefined);
   // The GMA list caches the same rules, so wait for the editor's own fetch instead of showing that copy.
   const alertPending = kind !== 'recording' && (alertRule.isUninitialized || alertRule.isFetching);
   const recordingPending = tryRecordingRule && (recordingRule.isUninitialized || recordingRule.isFetching);
