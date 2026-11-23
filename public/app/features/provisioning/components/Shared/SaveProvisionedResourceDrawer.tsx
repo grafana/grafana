@@ -171,7 +171,6 @@ function FormContent({
     isRefDirty: Boolean(formState.dirtyFields.ref),
     setRef: (value) => methods.setValue('ref', value, { shouldDirty: false }),
   });
-  const isDirectWrite = workflow === 'write';
 
   const showError = (err: unknown) => {
     setError(getProvisionedRequestError(err, t('provisioning.save-resource.error-saving', 'Failed to save changes')));
@@ -228,22 +227,6 @@ function FormContent({
     }
   };
 
-  const primaryLabel = () => {
-    if (request.isLoading) {
-      return isDelete
-        ? t('provisioning.save-resource.button-deleting', 'Deleting...')
-        : t('provisioning.save-resource.button-committing', 'Committing...');
-    }
-    if (isDelete) {
-      return t('provisioning.save-resource.button-delete', 'Delete');
-    }
-    return isDirectWrite && repository?.branch
-      ? t('provisioning.save-resource.button-commit-to-configured', 'Commit to {{branch}}', {
-          branch: repository.branch,
-        })
-      : t('provisioning.save-resource.button-commit', 'Commit');
-  };
-
   return (
     <FormProvider {...methods}>
       <ProvisionedDrawerLayout
@@ -255,7 +238,13 @@ function FormContent({
               variant={isDelete ? 'destructive' : 'primary'}
               disabled={request.isLoading || isResolving}
             >
-              {primaryLabel()}
+              {isDelete
+                ? request.isLoading
+                  ? t('provisioning.save-resource.button-deleting', 'Deleting...')
+                  : t('provisioning.save-resource.button-delete', 'Delete')
+                : request.isLoading
+                  ? t('provisioning.save-resource.button-committing', 'Committing...')
+                  : t('provisioning.save-resource.button-commit', 'Commit')}
             </Button>
             <Button variant="secondary" fill="outline" onClick={() => onDismiss?.()}>
               {t('provisioning.save-resource.button-cancel', 'Cancel')}
