@@ -1,13 +1,7 @@
 import { type ListAlertRuleSearchRulesV0Alpha1RequestBody } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
-import {
-  type SourcedLeaf,
-  buildHealthLeaves,
-  buildPausedLeaves,
-  buildSharedLeaves,
-  toWhere,
-} from '../rule-search/searchQueryLeaves';
+import { type SourcedLeaf, buildHealthLeaves, buildSharedLeaves, toWhere } from '../rule-search/searchQueryLeaves';
 import { type RuleSearchApiArgs } from '../rule-search/sharedRuleFilter';
 
 import { type AlertFilterKey, type AlertRuleFilter, DEFAULT_POLICY, STATE_API_VALUES } from './alertRuleFilters';
@@ -26,12 +20,7 @@ export function buildAlertRuleSearchQuery(apiArgs: RuleSearchApiArgs<AlertRuleFi
 
 /** The request's leaves in order, each with the filter it came from. */
 export function buildAlertRuleLeaves(apiArgs: RuleSearchApiArgs<AlertRuleFilter>): Array<SourcedLeaf<AlertFilterKey>> {
-  return [
-    ...buildSharedLeaves(apiArgs),
-    ...buildRoutingLeaves(apiArgs.filter),
-    ...buildPausedLeaves(apiArgs.filter),
-    ...buildStatusLeaves(apiArgs.filter),
-  ];
+  return [...buildSharedLeaves(apiArgs), ...buildRoutingLeaves(apiArgs.filter), ...buildStatusLeaves(apiArgs.filter)];
 }
 
 function buildRoutingLeaves(filter: AlertRuleFilter): Array<SourcedLeaf<AlertFilterKey>> {

@@ -108,6 +108,11 @@ export function buildSharedLeaves({
     });
   }
 
+  if (filter.paused) {
+    // NotIn is only accepted on labels, state and health, so "not paused" is paused=false.
+    leaves.push({ key: 'paused', leaf: { filter: { field: 'paused', operator: 'In', values: [filter.paused] } } });
+  }
+
   return leaves;
 }
 
@@ -121,13 +126,6 @@ export function buildHealthLeaves(
   }
   const value = filter.health === 'ok' ? okValue : HEALTH_API_VALUES[filter.health];
   return [{ key: 'health', leaf: { filter: { field: 'health', operator: 'In', values: [value] } } }];
-}
-
-export function buildPausedLeaves(filter: SharedRuleFilter): Array<SourcedLeaf<SharedFilterKey>> {
-  // NotIn is only accepted on labels, state and health, so "not paused" is paused=false.
-  return filter.paused
-    ? [{ key: 'paused', leaf: { filter: { field: 'paused', operator: 'In', values: [filter.paused] } } }]
-    : [];
 }
 
 /** One leaf as itself and several as one flat `and`, so a rejection's `where.and[i]` counts in `leaves` order. */
