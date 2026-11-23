@@ -47,7 +47,13 @@ import { ProvisionedCommitSuccess } from './ProvisionedCommitSuccess';
 import { ProvisionedDrawerLayout } from './ProvisionedDrawerLayout';
 import { RepositorySelect } from './RepositorySelect';
 import { ResourceEditFormSharedFields } from './ResourceEditFormSharedFields';
-import { type ProvisionedCommitOutcome, buildCommitOutcome } from './provisionedCommitOutcome';
+import {
+  type ProvisionedCommitOutcome,
+  buildCommitOutcome,
+  clearCommitOutcomeParam,
+  parseCommitOutcomeParam,
+  setCommitOutcomeParam,
+} from './provisionedCommitOutcome';
 
 /** Commit action handled by this drawer. */
 type ProvisionedResourceAction = 'create' | 'update' | 'delete';
@@ -276,8 +282,8 @@ function FormContent({
 }
 
 interface SuccessProps {
-  kindKey: ResourceKindKey;
-  resourceName: string;
+  kindKey?: ResourceKindKey;
+  resourceName?: string;
   outcome: ProvisionedCommitOutcome;
   onDismiss?: () => void;
 }
@@ -336,6 +342,38 @@ function SuccessContent({ kindKey, resourceName, outcome, onDismiss }: SuccessPr
     >
       <ProvisionedCommitSuccess outcome={outcome} />
     </ProvisionedDrawerLayout>
+  );
+}
+
+function getDrawerTitle(isDelete: boolean) {
+  return isDelete
+    ? t('provisioning.save-resource.drawer-title-delete', 'Delete provisioned resource')
+    : t('provisioning.save-resource.drawer-title-save', 'Save provisioned resource');
+}
+
+export function CommitOutcomeDrawer({ param, onDismiss }: { param: string; onDismiss: () => void }) {
+  const parsed = useMemo(() => parseCommitOutcomeParam(param), [param]);
+  if (!parsed) {
+    return null;
+  }
+  const dismiss = () => {
+    clearCommitOutcomeParam();
+    onDismiss();
+  };
+  return (
+    <Drawer
+      size="sm"
+      scrollableContent={false}
+      title={getDrawerTitle(parsed.outcome.action === 'delete')}
+      onClose={dismiss}
+    >
+      <SuccessContent
+        kindKey={parsed.kindKey}
+        resourceName={parsed.resourceName}
+        outcome={parsed.outcome}
+        onDismiss={dismiss}
+      />
+    </Drawer>
   );
 }
 
@@ -418,9 +456,19 @@ function ResourceDrawerContent({
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
   const sourcePath = getSourcePath(managedResource);
 
-  const drawerTitle = isDelete
-    ? t('provisioning.save-resource.drawer-title-delete', 'Delete provisioned resource')
-    : t('provisioning.save-resource.drawer-title-save', 'Save provisioned resource');
+  const drawerTitle = getDrawerTitle(isDelete);
+
+  const dismiss = () => {
+    if (outcome) {
+      clearCommitOutcomeParam();
+    }
+    onDismiss?.();
+  };
+
+  const onCommitted = (committed: ProvisionedCommitOutcome) => {
+    setOutcome(committed);
+    setCommitOutcomeParam({ outcome: committed, kindKey, resourceName });
+  };
 
   const initialValues = useMemo<BaseProvisionedFormData | undefined>(() => {
     if (!repository || isLoading) {
@@ -450,10 +498,10 @@ function ResourceDrawerContent({
           </Text>
         )
       }
-      onClose={() => onDismiss?.()}
+      onClose={dismiss}
     >
       {outcome ? (
-        <SuccessContent kindKey={kindKey} resourceName={resourceName} outcome={outcome} onDismiss={onDismiss} />
+        <SuccessContent kindKey={kindKey} resourceName={resourceName} outcome={outcome} onDismiss={dismiss} />
       ) : isNew && !selectedRepository ? (
         <RepositoryStep onSelect={setSelectedRepository} onDismiss={onDismiss} />
       ) : (
@@ -480,7 +528,7 @@ function ResourceDrawerContent({
               initialValues={initialValues}
               repository={repository}
               canPushToConfiguredBranch={canPushToConfiguredBranch}
-              onCommitted={setOutcome}
+              onCommitted={onCommitted}
               onDismiss={onDismiss}
             />
           )}
