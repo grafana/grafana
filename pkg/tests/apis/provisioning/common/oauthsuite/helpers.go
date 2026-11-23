@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
@@ -60,7 +61,7 @@ func Authorize(t *testing.T, helper *common.ProvisioningTestHelper, name, code s
 			return
 		}
 		assert.False(collect, conn.Secure[provisioning.ConnectionSecureToken].IsZero(), "secure should contain the exchanged token")
-		assert.Positive(collect, conn.Status.Token.LastUpdated, "token lastUpdated should be set")
+		assert.Positive(collect, ptr.Deref(conn.Status.Token.LastUpdated, 0), "token lastUpdated should be set")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "token should be stored after authorize")
 	return conn
 }

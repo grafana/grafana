@@ -288,7 +288,7 @@ func (a *connectionAggregate) observe(conn provisioning.Connection) {
 	if conn.Status.Health.Healthy {
 		a.healthy++
 	}
-	if conn.Spec.Webhook != nil && conn.Spec.Webhook.Disabled {
+	if conn.Spec.Webhook != nil && ptr.Deref(conn.Spec.Webhook.Disabled, false) {
 		a.webhookDisabled++
 	}
 }

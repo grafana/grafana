@@ -10,8 +10,6 @@ import (
 
 // JobStatusApplyConfiguration represents a declarative configuration of the JobStatus type for use
 // with apply.
-//
-// The job status
 type JobStatusApplyConfiguration struct {
 	State    *provisioningv0alpha1.JobState `json:"state,omitempty"`
 	Started  *int64                         `json:"started,omitempty"`
@@ -23,13 +21,12 @@ type JobStatusApplyConfiguration struct {
 	Progress *float64 `json:"progress,omitempty"`
 	// ProgressUpdates is the number of times the job's status has been written
 	// while it was processed. It is carried over to the historic job so the total
-	// number of progress updates a job went through remains observable after
-	// completion.
+	// number of progress updates a job went through remains observable after completion.
 	ProgressUpdates *int64 `json:"progressUpdates,omitempty"`
 	// Summary of processed actions
 	Summary []JobResourceSummaryApplyConfiguration `json:"summary,omitempty"`
 	// URLs contains URLs for the reference branch or commit if applicable.
-	Url *RepositoryURLsApplyConfiguration `json:"url,omitempty"`
+	Url *JobRepositoryURLsApplyConfiguration `json:"url,omitempty"`
 }
 
 // JobStatusApplyConfiguration constructs a declarative configuration of the JobStatus type for use with
@@ -122,7 +119,7 @@ func (b *JobStatusApplyConfiguration) WithSummary(values ...*JobResourceSummaryA
 // WithUrl sets the Url field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Url field is set to the value of the last call.
-func (b *JobStatusApplyConfiguration) WithUrl(value *RepositoryURLsApplyConfiguration) *JobStatusApplyConfiguration {
+func (b *JobStatusApplyConfiguration) WithUrl(value *JobRepositoryURLsApplyConfiguration) *JobStatusApplyConfiguration {
 	b.Url = value
 	return b
 }

@@ -13,7 +13,7 @@ import (
 )
 
 func TestRepositoryUsageStatusFromRepository(t *testing.T) {
-	stats := []provisioning.ResourceCount{
+	stats := []provisioning.RepositoryResourceCount{
 		{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 7},
 		{Group: "folder.grafana.app", Resource: "folders", Count: 3},
 	}
@@ -31,7 +31,7 @@ func TestRepositoryUsageStatusFromRepository(t *testing.T) {
 		Secure: resource.InlineSecureValues{provisioning.RepositorySecureToken: resource.InlineSecureValue{Name: "repo-token"}},
 		Status: provisioning.RepositoryStatus{
 			Health: provisioning.RepositoryHealthStatus{Healthy: true},
-			Sync:   provisioning.RepositorySyncStatus{State: provisioning.JobStateSuccess, Finished: new(int64(1_600_000_000_000))},
+			Sync:   provisioning.RepositorySyncStatus{State: provisioning.RepositoryJobStateSuccess, Finished: new(int64(1_600_000_000_000))},
 			Stats:  stats,
 			Conditions: provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{
 				{Type: provisioning.ConditionTypeReady, Status: metav1.ConditionTrue, Reason: provisioning.ReasonAvailable},
@@ -114,7 +114,7 @@ func TestRepositoryUsageStatusFromRepository_AuthFailure(t *testing.T) {
 	repo := &provisioning.Repository{
 		Spec: provisioning.RepositorySpec{Type: provisioning.RepositorySpecTypeGithub},
 		Status: provisioning.RepositoryStatus{
-			Health: provisioning.RepositoryHealthStatus{Healthy: false, Error: provisioning.HealthFailureHealth},
+			Health: provisioning.RepositoryHealthStatus{Healthy: false, Error: new(provisioning.HealthFailureHealth)},
 			Conditions: provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{
 				{Type: provisioning.ConditionTypeReady, Status: metav1.ConditionFalse, Reason: provisioning.ReasonAuthenticationFailed},
 			}),
@@ -183,7 +183,7 @@ func TestRepositoryUsageStatus_LogValues(t *testing.T) {
 
 func TestRepositoryUsageStatus_ManagedResourceLogValues(t *testing.T) {
 	s := RepositoryUsageStatus{
-		ManagedResources: []provisioning.ResourceCount{
+		ManagedResources: []provisioning.RepositoryResourceCount{
 			{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 7},
 			{Group: "folder.grafana.app", Resource: "folders", Count: 3},
 		},

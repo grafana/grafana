@@ -394,7 +394,7 @@ func TestAdmissionValidator_Validate_PrivateEndpoints(t *testing.T) {
 			name: "public github enterprise server",
 			spec: provisioning.ConnectionSpec{
 				Type:             provisioning.ConnectionTypeGithubEnterprise,
-				Url:              "https://ghes.example.com/settings/installations/1",
+				Url:              new("https://ghes.example.com/settings/installations/1"),
 				GithubEnterprise: &provisioning.ConnectionGitHubEnterpriseConfig{ServerUrl: "https://ghes.example.com"},
 			},
 		},
@@ -417,7 +417,7 @@ func TestAdmissionValidator_Validate_PrivateEndpoints(t *testing.T) {
 			name: "spec url resolving to a private address",
 			spec: provisioning.ConnectionSpec{
 				Type: provisioning.ConnectionTypeGitlabOAuth,
-				Url:  "https://ghes.internal.example.com",
+				Url:  new("https://ghes.internal.example.com"),
 			},
 			wantField: "spec.url",
 		},

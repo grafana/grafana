@@ -21,6 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
@@ -581,7 +582,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 			}
 			// Connection should be unhealthy with error message about API being unavailable
 			return !conn.Status.Health.Healthy &&
-				conn.Status.Health.Checked > 0 &&
+				ptr.Deref(conn.Status.Health.Checked, 0) > 0 &&
 				len(conn.Status.Health.Message) > 0
 		}, 10*time.Second, 500*time.Millisecond, "connection should be marked unhealthy")
 
@@ -679,7 +680,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 			return !conn.Secure[provisioning.ConnectionSecureToken].IsZero() &&
 				conn.Generation == conn.Status.ObservedGeneration &&
 				!conn.Status.Health.Healthy &&
-				conn.Status.Health.Checked > 0 &&
+				ptr.Deref(conn.Status.Health.Checked, 0) > 0 &&
 				len(conn.Status.Health.Message) > 0
 		}, 10*time.Second, 500*time.Millisecond, "connection should be reconciled and marked unhealthy")
 
@@ -704,7 +705,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 			// Check that fieldErrors contain relevant error details
 			hasFieldError := false
 			for _, fieldErr := range conn.Status.FieldErrors {
-				if fieldErr.Detail != "" {
+				if ptr.Deref(fieldErr.Detail, "") != "" {
 					hasFieldError = true
 					break
 				}
@@ -877,7 +878,7 @@ func TestIntegrationConnectionController_TokenCreation(t *testing.T) {
 			}
 			readyCondition := meta.FindStatusCondition(provisioning.ConditionsToMeta(updated.Status.Conditions), provisioning.ConditionTypeReady)
 			return updated.Status.ObservedGeneration == updated.Generation &&
-				updated.Status.Health.Checked > 0 &&
+				ptr.Deref(updated.Status.Health.Checked, 0) > 0 &&
 				readyCondition != nil && readyCondition.Status == metav1.ConditionTrue &&
 				updated.Status.Health.Healthy
 		}, 10*time.Second, 500*time.Millisecond, "connection should be reconciled again")
@@ -960,7 +961,7 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 		readyCondition := meta.FindStatusCondition(provisioning.ConditionsToMeta(initial.Status.Conditions), provisioning.ConditionTypeReady)
 		require.NotNil(t, readyCondition, "Ready condition should exist")
 		assert.Equal(t, metav1.ConditionTrue, readyCondition.Status, "connection should be connected")
-		assert.Greater(t, initial.Status.Health.Checked, int64(0), "health check timestamp should be set")
+		assert.Greater(t, ptr.Deref(initial.Status.Health.Checked, 0), int64(0), "health check timestamp should be set")
 		assert.Equal(t, initial.Generation, initial.Status.ObservedGeneration, "observed generation should match")
 		// When healthy, fieldErrors should be empty
 		assert.Empty(t, initial.Status.FieldErrors, "fieldErrors should be empty when connection is healthy")
@@ -1014,7 +1015,7 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 				return false
 			}
 			if updated.Status.ObservedGeneration == updated.Generation {
-				initialHealthChecked = updated.Status.Health.Checked
+				initialHealthChecked = ptr.Deref(updated.Status.Health.Checked, 0)
 				return true
 			}
 			return false
@@ -1044,14 +1045,14 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 				return false
 			}
 			return reconciled.Status.ObservedGeneration == reconciled.Generation &&
-				reconciled.Status.Health.Checked > initialHealthChecked
+				ptr.Deref(reconciled.Status.Health.Checked, 0) > initialHealthChecked
 		}, 10*time.Second, 500*time.Millisecond, "connection should be reconciled after spec change")
 
 		// Verify health check was updated
 		final, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
 		require.NoError(t, err)
 		assert.Equal(t, final.Generation, final.Status.ObservedGeneration, "observed generation should match generation")
-		assert.Greater(t, final.Status.Health.Checked, initialHealthChecked, "health check should be updated after spec change")
+		assert.Greater(t, ptr.Deref(final.Status.Health.Checked, 0), initialHealthChecked, "health check should be updated after spec change")
 		assert.True(t, final.Status.Health.Healthy, "connection should remain healthy")
 		// When healthy after spec change, fieldErrors should be empty
 		assert.Empty(t, final.Status.FieldErrors, "fieldErrors should be empty when connection is healthy after spec change")
@@ -1156,7 +1157,7 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 			}
 			// Connection should be reconciled and marked unhealthy
 			return conn.Status.ObservedGeneration == conn.Generation &&
-				conn.Status.Health.Checked > 0 &&
+				ptr.Deref(conn.Status.Health.Checked, 0) > 0 &&
 				!conn.Status.Health.Healthy
 		}, 15*time.Second, 500*time.Millisecond, "connection should be reconciled and marked unhealthy")
 
@@ -1168,7 +1169,7 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 		require.NotNil(t, readyCondition, "Ready condition should exist")
 		assert.Equal(t, metav1.ConditionFalse, readyCondition.Status, "connection should be disconnected")
 		assert.Equal(t, conn.Generation, conn.Status.ObservedGeneration, "connection should be reconciled")
-		assert.Greater(t, conn.Status.Health.Checked, int64(0), "health check timestamp should be set")
+		assert.Greater(t, ptr.Deref(conn.Status.Health.Checked, 0), int64(0), "health check timestamp should be set")
 		// Verify Ready condition reflects unhealthy state
 		assert.NotEmpty(t, conn.Status.Conditions, "conditions should be set")
 		assert.NotNil(t, readyCondition, "Ready condition should exist")
@@ -1181,14 +1182,14 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 		installationIDError := conn.Status.FieldErrors[0]
 
 		// Verify all fields explicitly
-		assert.Equal(t, metav1.CauseTypeFieldValueInvalid, installationIDError.Type, "Type must be FieldValueInvalid")
-		assert.Equal(t, "spec.github.installationID", installationIDError.Field, "Field must be spec.installationID")
-		assert.Equal(t, "installation not found", installationIDError.Detail, "Detail must match expected error message")
+		assert.Equal(t, string(metav1.CauseTypeFieldValueInvalid), installationIDError.Type, "Type must be FieldValueInvalid")
+		assert.Equal(t, "spec.github.installationID", ptr.Deref(installationIDError.Field, ""), "Field must be spec.installationID")
+		assert.Equal(t, "installation not found", ptr.Deref(installationIDError.Detail, ""), "Detail must match expected error message")
 		assert.Equal(t, "999999999", installationIDError.BadValue, "BadValue must be the spec installationID")
 		assert.Empty(t, installationIDError.Origin, "Origin should be empty")
 
 		t.Logf("Verified installationID fieldError: Type=%s, Field=%s, Detail=%s, BadValue=%s, Origin=%s",
-			installationIDError.Type, installationIDError.Field, installationIDError.Detail, installationIDError.BadValue, installationIDError.Origin)
+			installationIDError.Type, ptr.Deref(installationIDError.Field, ""), ptr.Deref(installationIDError.Detail, ""), installationIDError.BadValue, ptr.Deref(installationIDError.Origin, ""))
 	})
 
 	t.Run("connection with invalid app ID becomes unhealthy with fieldErrors", func(t *testing.T) {
@@ -1268,7 +1269,7 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 			}
 			// Connection should be reconciled and marked unhealthy
 			return conn.Status.ObservedGeneration == conn.Generation &&
-				conn.Status.Health.Checked > 0 &&
+				ptr.Deref(conn.Status.Health.Checked, 0) > 0 &&
 				!conn.Status.Health.Healthy
 		}, 15*time.Second, 500*time.Millisecond, "connection should be reconciled and marked unhealthy")
 
@@ -1280,7 +1281,7 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 		require.NotNil(t, readyCondition, "Ready condition should exist")
 		assert.Equal(t, metav1.ConditionFalse, readyCondition.Status, "connection should be disconnected")
 		assert.Equal(t, conn.Generation, conn.Status.ObservedGeneration, "connection should be reconciled")
-		assert.Greater(t, conn.Status.Health.Checked, int64(0), "health check timestamp should be set")
+		assert.Greater(t, ptr.Deref(conn.Status.Health.Checked, 0), int64(0), "health check timestamp should be set")
 		// Verify Ready condition reflects unhealthy state
 		assert.NotEmpty(t, conn.Status.Conditions, "conditions should be set")
 		assert.NotNil(t, readyCondition, "Ready condition should exist")
@@ -1293,14 +1294,14 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 		appIDError := conn.Status.FieldErrors[0]
 
 		// Verify all fields explicitly
-		assert.Equal(t, metav1.CauseTypeFieldValueInvalid, appIDError.Type, "Type must be FieldValueInvalid")
-		assert.Equal(t, "spec.github.appID", appIDError.Field, "Field must be spec.appID")
-		assert.Equal(t, "appID mismatch", appIDError.Detail, "Detail must match expected error message")
+		assert.Equal(t, string(metav1.CauseTypeFieldValueInvalid), appIDError.Type, "Type must be FieldValueInvalid")
+		assert.Equal(t, "spec.github.appID", ptr.Deref(appIDError.Field, ""), "Field must be spec.appID")
+		assert.Equal(t, "appID mismatch", ptr.Deref(appIDError.Detail, ""), "Detail must match expected error message")
 		assert.Equal(t, "123456", appIDError.BadValue, "BadValue must be the spec appID")
 		assert.Empty(t, appIDError.Origin, "Origin should be empty")
 
 		t.Logf("Verified appID fieldError: Type=%s, Field=%s, Detail=%s, BadValue=%s, Origin=%s",
-			appIDError.Type, appIDError.Field, appIDError.Detail, appIDError.BadValue, appIDError.Origin)
+			appIDError.Type, ptr.Deref(appIDError.Field, ""), ptr.Deref(appIDError.Detail, ""), appIDError.BadValue, ptr.Deref(appIDError.Origin, ""))
 	})
 }
 
@@ -1390,7 +1391,7 @@ func TestIntegrationConnectionController_FieldErrorsCleared(t *testing.T) {
 				return false
 			}
 			return conn.Status.ObservedGeneration == conn.Generation &&
-				conn.Status.Health.Checked > 0 &&
+				ptr.Deref(conn.Status.Health.Checked, 0) > 0 &&
 				!conn.Status.Health.Healthy &&
 				len(conn.Status.FieldErrors) > 0
 		}, 15*time.Second, 500*time.Millisecond, "connection should be unhealthy with fieldErrors")
@@ -1447,7 +1448,7 @@ func TestIntegrationConnectionController_FieldErrorsCleared(t *testing.T) {
 				return false
 			}
 			return conn.Status.ObservedGeneration == conn.Generation &&
-				conn.Status.Health.Checked > 0 &&
+				ptr.Deref(conn.Status.Health.Checked, 0) > 0 &&
 				conn.Status.Health.Healthy &&
 				len(conn.Status.FieldErrors) == 0
 		}, 15*time.Second, 500*time.Millisecond, "connection should be healthy with fieldErrors cleared")
@@ -1853,7 +1854,7 @@ func TestIntegrationConnectionController_GranularConditionReasons(t *testing.T) 
 				return false
 			}
 			return conn.Status.ObservedGeneration == conn.Generation &&
-				conn.Status.Health.Checked > 0 &&
+				ptr.Deref(conn.Status.Health.Checked, 0) > 0 &&
 				!conn.Status.Health.Healthy
 		}, 15*time.Second, 500*time.Millisecond, "connection should be reconciled and marked unhealthy")
 
@@ -2138,7 +2139,7 @@ func TestIntegrationProvisioning_GithubAppPermissionValidation(t *testing.T) {
 				}
 				// Health check should have run
 				return conn.Status.ObservedGeneration == conn.Generation &&
-					conn.Status.Health.Checked > 0
+					ptr.Deref(conn.Status.Health.Checked, 0) > 0
 			}, 15*time.Second, 500*time.Millisecond, "connection should be reconciled and health checked")
 
 			// Validate health status
@@ -2156,16 +2157,16 @@ func TestIntegrationProvisioning_GithubAppPermissionValidation(t *testing.T) {
 				// Validate error details
 				if tc.expectedErrorCount > 0 {
 					for _, fieldError := range conn.Status.FieldErrors {
-						assert.Equal(t, metav1.CauseTypeForbidden, fieldError.Type,
+						assert.Equal(t, string(metav1.CauseTypeForbidden), fieldError.Type,
 							"error type should be Forbidden for permission issues")
 
 						if len(tc.expectedErrorFields) > 0 {
-							assert.Contains(t, tc.expectedErrorFields, fieldError.Field,
+							assert.Contains(t, tc.expectedErrorFields, ptr.Deref(fieldError.Field, ""),
 								"error should reference expected field")
 						}
 
 						if tc.expectedErrorDetail != "" {
-							assert.Contains(t, fieldError.Detail, tc.expectedErrorDetail,
+							assert.Contains(t, ptr.Deref(fieldError.Detail, ""), tc.expectedErrorDetail,
 								"error detail should contain expected message")
 						}
 					}
@@ -2355,7 +2356,7 @@ func TestIntegrationProvisioning_GithubAppInstallationPermissionValidation(t *te
 				}
 				// Health check should have run
 				return conn.Status.ObservedGeneration == conn.Generation &&
-					conn.Status.Health.Checked > 0
+					ptr.Deref(conn.Status.Health.Checked, 0) > 0
 			}, 15*time.Second, 500*time.Millisecond, "connection should be reconciled and health checked")
 
 			// Validate health status
@@ -2373,16 +2374,16 @@ func TestIntegrationProvisioning_GithubAppInstallationPermissionValidation(t *te
 				// Validate error details
 				if tc.expectedErrorCount > 0 {
 					for _, fieldError := range conn.Status.FieldErrors {
-						assert.Equal(t, metav1.CauseTypeForbidden, fieldError.Type,
+						assert.Equal(t, string(metav1.CauseTypeForbidden), fieldError.Type,
 							"error type should be Forbidden for permission issues")
 
 						if len(tc.expectedErrorFields) > 0 {
-							assert.Contains(t, tc.expectedErrorFields, fieldError.Field,
+							assert.Contains(t, tc.expectedErrorFields, ptr.Deref(fieldError.Field, ""),
 								"error should reference expected field")
 						}
 
 						if tc.expectedErrorDetail != "" {
-							assert.Contains(t, fieldError.Detail, tc.expectedErrorDetail,
+							assert.Contains(t, ptr.Deref(fieldError.Detail, ""), tc.expectedErrorDetail,
 								"error detail should contain expected message")
 						}
 					}

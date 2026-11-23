@@ -12,6 +12,7 @@ import (
 
 	"github.com/bwmarrin/snowflake"
 	"k8s.io/apiserver/pkg/admission"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana-app-sdk/resource"
 	provisioningadmission "github.com/grafana/grafana/apps/provisioning/pkg/apis/admission"
@@ -90,7 +91,7 @@ func oauthAppChanged(new, old *provisioning.Connection) bool {
 	if new.Spec.Oauth == nil || old.Spec.Oauth == nil {
 		return true
 	}
-	if new.Spec.Type != old.Spec.Type || new.Spec.Url != old.Spec.Url || new.Spec.Oauth.ClientID != old.Spec.Oauth.ClientID {
+	if new.Spec.Type != old.Spec.Type || ptr.Deref(new.Spec.Url, "") != ptr.Deref(old.Spec.Url, "") || new.Spec.Oauth.ClientID != old.Spec.Oauth.ClientID {
 		return true
 	}
 	if githubEnterpriseServerURL(new) != githubEnterpriseServerURL(old) || gitOAuthTokenURL(new) != gitOAuthTokenURL(old) ||

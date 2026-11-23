@@ -7,7 +7,6 @@ package v0alpha1
 // RepositoryWebhookStatusApplyConfiguration represents a declarative configuration of the RepositoryWebhookStatus type for use
 // with apply.
 type RepositoryWebhookStatusApplyConfiguration struct {
-	// TODO: consolidate ID and UUID into a single string identifier in the next api version.
 	Id               *int64   `json:"id,omitempty"`
 	Uuid             *string  `json:"uuid,omitempty"`
 	Url              *string  `json:"url,omitempty"`

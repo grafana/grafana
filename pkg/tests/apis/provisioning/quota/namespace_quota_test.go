@@ -14,6 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
@@ -273,11 +274,11 @@ func TestIntegrationProvisioning_HealthAndTokenRefreshWhileOverNamespaceQuota(t 
 			"repo should still be quota-blocked after token refresh")
 
 		// Health check ran: checked timestamp advanced beyond the staled value.
-		assert.Greater(c, r.Status.Health.Checked, staledHealthChecked,
+		assert.Greater(c, ptr.Deref(r.Status.Health.Checked, 0), staledHealthChecked,
 			"health.checked should be updated even when the repo is over namespace quota")
 
 		// Token was refreshed: lastUpdated advanced beyond the staled value.
-		assert.Greater(c, r.Status.Token.LastUpdated, staledTokenLastUpdated,
+		assert.Greater(c, ptr.Deref(r.Status.Token.LastUpdated, 0), staledTokenLastUpdated,
 			"token should be refreshed even when the repo is over namespace quota")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault,
 		"health check and token refresh must run for quota-blocked repositories")
@@ -374,7 +375,7 @@ func patchHealthChecked(t *testing.T, helper *common.ProvisioningTestHelper, nam
 	require.NoError(t, err, "failed to patch health timestamp for repository %s", name)
 }
 
-func repositoryFieldErrors(t *testing.T, helper *common.ProvisioningTestHelper, name string) []provisioning.ErrorDetails {
+func repositoryFieldErrors(t *testing.T, helper *common.ProvisioningTestHelper, name string) []provisioning.RepositoryErrorDetails {
 	t.Helper()
 	obj, err := helper.Repositories.Resource.Get(t.Context(), name, metav1.GetOptions{})
 	require.NoError(t, err)

@@ -12,10 +12,6 @@ type RepositoryGitLabRepositoryConfigApplyConfiguration struct {
 	// The branch to use in the repository.
 	Branch *string `json:"branch,omitempty"`
 	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
-	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
-	// The path is relative to the root of the repository, regardless of the leading slash.
-	//
-	// When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.
 	Path *string `json:"path,omitempty"`
 	// RepoID is the GitLab project's immutable numeric ID. Resolved and set
 	// automatically whenever URL is set or changed; it survives a project

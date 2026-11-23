@@ -447,8 +447,8 @@ func TestProcessJob_AuthFailureRepo_SkipsJob(t *testing.T) {
 	repoCfg := makeRepoConfig("test-repo", nil, nil)
 	repoCfg.Status.Health = provisioning.RepositoryHealthStatus{
 		Healthy: false,
-		Error:   provisioning.HealthFailureHealth,
-		Checked: time.Now().UnixMilli(),
+		Error:   new(provisioning.HealthFailureHealth),
+		Checked: new(time.Now().UnixMilli()),
 		Message: []string{"authentication failed"},
 	}
 	repoCfg.Status.Conditions = provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{{
@@ -486,8 +486,8 @@ func TestProcessJob_AuthFailureRepo_TestActionStillRuns(t *testing.T) {
 	repoCfg := makeRepoConfig("test-repo", nil, nil)
 	repoCfg.Status.Health = provisioning.RepositoryHealthStatus{
 		Healthy: false,
-		Error:   provisioning.HealthFailureHealth,
-		Checked: time.Now().UnixMilli(),
+		Error:   new(provisioning.HealthFailureHealth),
+		Checked: new(time.Now().UnixMilli()),
 		Message: []string{"authentication failed"},
 	}
 	repoCfg.Status.Conditions = provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{{
@@ -526,8 +526,8 @@ func TestProcessJob_StaleAuthFailureCondition_CallsWorker(t *testing.T) {
 	repoCfg.Generation = 2 // spec was just edited to repair credentials
 	repoCfg.Status.Health = provisioning.RepositoryHealthStatus{
 		Healthy: false,
-		Error:   provisioning.HealthFailureHealth,
-		Checked: time.Now().UnixMilli(),
+		Error:   new(provisioning.HealthFailureHealth),
+		Checked: new(time.Now().UnixMilli()),
 		Message: []string{"authentication failed"},
 	}
 	repoCfg.Status.Conditions = provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{{
@@ -567,8 +567,8 @@ func TestProcessJob_UnhealthyButReachableRepo_CallsWorker(t *testing.T) {
 	repoCfg := makeRepoConfig("test-repo", nil, nil)
 	repoCfg.Status.Health = provisioning.RepositoryHealthStatus{
 		Healthy: false,
-		Error:   provisioning.HealthFailureHealth,
-		Checked: time.Now().UnixMilli(),
+		Error:   new(provisioning.HealthFailureHealth),
+		Checked: new(time.Now().UnixMilli()),
 		Message: []string{repository.WritePermissionDeniedDetail},
 	}
 	repoCfg.Status.Conditions = provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{{
@@ -607,8 +607,8 @@ func TestProcessJob_HookPermissionFailure_CallsWorker(t *testing.T) {
 	repoCfg := makeRepoConfig("test-repo", nil, nil)
 	repoCfg.Status.Health = provisioning.RepositoryHealthStatus{
 		Healthy: false,
-		Error:   provisioning.HealthFailureHook,
-		Checked: time.Now().UnixMilli(),
+		Error:   new(provisioning.HealthFailureHook),
+		Checked: new(time.Now().UnixMilli()),
 		Message: []string{"execute webhook create: " + repository.ErrPermissionDenied.Error()},
 	}
 	repoCfg.Status.Conditions = provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{{

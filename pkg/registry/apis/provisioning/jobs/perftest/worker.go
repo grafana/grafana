@@ -9,8 +9,9 @@ import (
 	"fmt"
 	"time"
 
-	"go.opentelemetry.io/otel/attribute"
 	"k8s.io/utils/ptr"
+
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -48,7 +49,10 @@ func (w *Worker) Process(ctx context.Context, _ repository.Repository, job provi
 	if job.Spec.Test == nil {
 		return errors.New("missing test settings")
 	}
-	duration := job.Spec.Test.Duration.Duration
+	duration, err := job.Spec.Test.ParseDuration()
+	if err != nil {
+		return fmt.Errorf("parse test duration: %w", err)
+	}
 	if duration <= 0 {
 		return errors.New("test duration must be positive")
 	}

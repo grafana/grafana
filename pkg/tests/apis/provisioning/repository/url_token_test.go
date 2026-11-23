@@ -39,7 +39,7 @@ func TestIntegrationProvisioning_GitHubAppURLChangeRemovesToken(t *testing.T) {
 		Spec: provisioning.ConnectionSpec{
 			Title: "URL change App", Type: provisioning.ConnectionTypeGithub,
 			Github:  &provisioning.ConnectionGitHubConfig{AppID: "123456", InstallationID: "454545"},
-			Webhook: &provisioning.ConnectionWebhookConfig{Disabled: true},
+			Webhook: &provisioning.ConnectionWebhookConfig{Disabled: new(true)},
 		},
 		Secure: resource.InlineSecureValues{provisioning.ConnectionSecurePrivateKey: resource.InlineSecureValue{
 			Create: resource.RawSecureValue(base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))),
@@ -308,7 +308,7 @@ func TestIntegrationProvisioning_ConnectionRepositoryURLChange(t *testing.T) {
 		stored := common.MustFromUnstructured[provisioning.Repository](t, current)
 		require.NotEmpty(collect, stored.Secure[provisioning.RepositorySecureToken].Name, "token should be minted from the connection")
 		require.NotZero(collect, stored.Status.Token.LastUpdated, "token status should be stamped")
-		mintedAt = stored.Status.Token.LastUpdated
+		mintedAt = ptr.Deref(stored.Status.Token.LastUpdated, 0)
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "connection token should be generated")
 
 	t.Run("allows url change on the same host without a new token", func(t *testing.T) {
@@ -325,7 +325,7 @@ func TestIntegrationProvisioning_ConnectionRepositoryURLChange(t *testing.T) {
 			require.NoError(collect, err)
 			reconciled := common.MustFromUnstructured[provisioning.Repository](t, current)
 			require.NotEmpty(collect, reconciled.Secure[provisioning.RepositorySecureToken].Name, "a token should be stored again")
-			require.Greater(collect, reconciled.Status.Token.LastUpdated, mintedAt,
+			require.Greater(collect, ptr.Deref(reconciled.Status.Token.LastUpdated, 0), mintedAt,
 				"token should be re-minted for the new repository")
 		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "token should be regenerated after the url change")
 	})

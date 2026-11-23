@@ -10,9 +10,6 @@ import (
 
 // JobSpecApplyConfiguration represents a declarative configuration of the JobSpec type for use
 // with apply.
-//
-// App SDK codegen emits a HistoricJob-prefixed copy of every Job type. Until then the
-// HistoricJob names point at the shared Job types.
 type JobSpecApplyConfiguration struct {
 	Action *provisioningv0alpha1.JobAction `json:"action,omitempty"`
 	// The the repository reference (for now also in labels)

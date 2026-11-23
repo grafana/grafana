@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 )
 
 //nolint:gosec // Test RSA private key (generated for testing purposes only)
@@ -81,7 +82,7 @@ func TestConnection_Mutate(t *testing.T) {
 			},
 			wantErr: false,
 			validateResult: func(t *testing.T, connection *provisioning.Connection) {
-				assert.Equal(t, "https://github.com/settings/installations/456", connection.Spec.Url)
+				assert.Equal(t, "https://github.com/settings/installations/456", ptr.Deref(connection.Spec.Url, ""))
 			},
 		},
 		{
@@ -106,7 +107,7 @@ func TestConnection_Mutate(t *testing.T) {
 			},
 			wantErr: false,
 			validateResult: func(t *testing.T, connection *provisioning.Connection) {
-				assert.Equal(t, "https://github.com/settings/installations/456", connection.Spec.Url)
+				assert.Equal(t, "https://github.com/settings/installations/456", ptr.Deref(connection.Spec.Url, ""))
 				assert.True(t, connection.Secure[provisioning.ConnectionSecureToken].Create.IsZero(), "Token should not be generated in mutator")
 			},
 		},
@@ -751,7 +752,7 @@ func TestConnection_Test(t *testing.T) {
 						AppID:          appID,
 						InstallationID: "456",
 					},
-					Webhook: &provisioning.ConnectionWebhookConfig{Disabled: true},
+					Webhook: &provisioning.ConnectionWebhookConfig{Disabled: new(true)},
 				},
 			},
 			secrets: github.ConnectionSecrets{
@@ -795,7 +796,7 @@ func TestConnection_Test(t *testing.T) {
 						AppID:          appID,
 						InstallationID: "456",
 					},
-					Webhook: &provisioning.ConnectionWebhookConfig{Disabled: true},
+					Webhook: &provisioning.ConnectionWebhookConfig{Disabled: new(true)},
 				},
 			},
 			secrets: github.ConnectionSecrets{

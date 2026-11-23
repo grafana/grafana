@@ -110,8 +110,8 @@ func indexOfConditionType(conditions []metav1.Condition, conditionType string) i
 
 // buildReadyConditionWithReason creates a Ready condition with a specific reason.
 // This allows for granular error classification (InvalidSpec, AuthenticationFailed, ServiceUnavailable, RateLimited).
-func buildReadyConditionWithReason(healthStatus provisioning.RepositoryHealthStatus, reason string) metav1.Condition {
-	if healthStatus.Healthy {
+func buildReadyConditionWithReason(healthy bool, messages []string, reason string) metav1.Condition {
+	if healthy {
 		return metav1.Condition{
 			Type:    provisioning.ConditionTypeReady,
 			Status:  metav1.ConditionTrue,
@@ -122,8 +122,8 @@ func buildReadyConditionWithReason(healthStatus provisioning.RepositoryHealthSta
 
 	// Build message from health status messages
 	message := "Resource is unavailable"
-	if len(healthStatus.Message) > 0 {
-		message = healthStatus.Message[0]
+	if len(messages) > 0 {
+		message = messages[0]
 	}
 
 	return metav1.Condition{

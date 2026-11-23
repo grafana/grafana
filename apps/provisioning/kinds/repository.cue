@@ -272,6 +272,8 @@ repository: {
 			// Conditions represent the latest available observations of the repository's state.
 			// +listType=map
 			// +listMapKey=type
+			// +patchMergeKey=type
+			// +patchStrategy=merge
 			conditions?: [...#Condition]
 			// This will get updated with the current health status (and updated periodically)
 			health: #HealthStatus

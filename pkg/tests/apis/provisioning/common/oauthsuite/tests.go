@@ -10,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
@@ -40,7 +41,7 @@ func testAuthorize(t *testing.T, helper *common.ProvisioningTestHelper, p Provid
 	CreateConnection(t, helper, p, name)
 
 	conn := Authorize(t, helper, name, p.AuthorizationCode(t, name))
-	assert.Positive(t, conn.Status.Token.Expiration, "token expiration should be set")
+	assert.Positive(t, ptr.Deref(conn.Status.Token.Expiration, 0), "token expiration should be set")
 	helper.WaitForHealthyConnection(t, name)
 }
 
@@ -132,8 +133,8 @@ func testTokenRefresh(t *testing.T, helper *common.ProvisioningTestHelper, p Pro
 		require.NoError(collect, err)
 		conn, err := common.FromUnstructured[provisioning.Connection](obj)
 		require.NoError(collect, err)
-		assert.Greater(collect, conn.Status.Token.LastUpdated, before.LastUpdated, "token lastUpdated should advance")
-		assert.Greater(collect, conn.Status.Token.Expiration, before.Expiration, "refreshed token should expire later")
+		assert.Greater(collect, ptr.Deref(conn.Status.Token.LastUpdated, 0), ptr.Deref(before.LastUpdated, 0), "token lastUpdated should advance")
+		assert.Greater(collect, ptr.Deref(conn.Status.Token.Expiration, 0), ptr.Deref(before.Expiration, 0), "refreshed token should expire later")
 	}, 45*time.Second, time.Second, "short-lived token should be refreshed")
 
 	helper.WaitForHealthyConnection(t, name)

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -263,7 +264,7 @@ func TestExtra_Mutate(t *testing.T) {
 			wantErr: false,
 			validateResult: func(t *testing.T, obj runtime.Object) {
 				conn := obj.(*provisioning.Connection)
-				assert.Equal(t, "https://github.com/settings/installations/456", conn.Spec.Url)
+				assert.Equal(t, "https://github.com/settings/installations/456", ptr.Deref(conn.Spec.Url, ""))
 				assert.True(t, conn.Secure[provisioning.ConnectionSecureToken].Create.IsZero(), "Token should not be generated in mutator")
 			},
 		},
@@ -312,7 +313,7 @@ func TestExtra_Mutate(t *testing.T) {
 			wantErr: false,
 			validateResult: func(t *testing.T, obj runtime.Object) {
 				conn := obj.(*provisioning.Connection)
-				assert.Equal(t, "https://github.com/settings/installations/012", conn.Spec.Url)
+				assert.Equal(t, "https://github.com/settings/installations/012", ptr.Deref(conn.Spec.Url, ""))
 			},
 		},
 		{
@@ -338,7 +339,7 @@ func TestExtra_Mutate(t *testing.T) {
 			wantErr: false,
 			validateResult: func(t *testing.T, obj runtime.Object) {
 				conn := obj.(*provisioning.Connection)
-				assert.Equal(t, "https://github.com/settings/installations/456", conn.Spec.Url)
+				assert.Equal(t, "https://github.com/settings/installations/456", ptr.Deref(conn.Spec.Url, ""))
 				// Token should remain unchanged
 				token := conn.Secure[provisioning.ConnectionSecureToken].Create
 				assert.Equal(t, "existing-token", token.DangerouslyExposeAndConsumeValue())

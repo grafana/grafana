@@ -96,7 +96,7 @@ func TestIntegrationProvisioning_PendingDeleteLabel_SkipsReconciliation(t *testi
 			return
 		}
 		repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
-		assert.Equal(collect, provisioning.JobStateSuccess, repo.Status.Sync.State,
+		assert.Equal(collect, provisioning.RepositoryJobStateSuccess, repo.Status.Sync.State,
 			"repository should reach success sync state after label removal")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault,
 		"repository should reconcile successfully once the pending-delete label is removed")

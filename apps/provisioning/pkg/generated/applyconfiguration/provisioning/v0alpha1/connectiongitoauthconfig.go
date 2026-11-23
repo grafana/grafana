@@ -6,9 +6,6 @@ package v0alpha1
 
 // ConnectionGitOAuthConfigApplyConfiguration represents a declarative configuration of the ConnectionGitOAuthConfig type for use
 // with apply.
-//
-// GitOAuthConnectionConfig describes a provider-agnostic OAuth 2.0 app used to
-// authenticate pure git repositories.
 type ConnectionGitOAuthConfigApplyConfiguration struct {
 	// The provider's OAuth authorization endpoint (e.g. `https://gitlab.example.com/oauth/authorize`).
 	AuthURL *string `json:"authURL,omitempty"`

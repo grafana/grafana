@@ -6,8 +6,6 @@ package v0alpha1
 
 // RepositoryQuotaStatusApplyConfiguration represents a declarative configuration of the RepositoryQuotaStatus type for use
 // with apply.
-//
-// QuotaStatus represents the quota limits configured for this repository.
 type RepositoryQuotaStatusApplyConfiguration struct {
 	// MaxRepositories is the maximum number of repositories allowed.
 	// 0 means unlimited.

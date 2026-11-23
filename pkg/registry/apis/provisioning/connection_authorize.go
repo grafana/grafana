@@ -17,6 +17,7 @@ import (
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/optional"
 )
 
 //go:generate mockery --name=ConnectionAuthorizeAccess --structname=MockConnectionAuthorizeAccess --inpackage --filename=connection_authorize_access_mock.go --with-expecter
@@ -115,9 +116,9 @@ func (c *connectionAuthorizeConnector) Connect(ctx context.Context, name string,
 		// Persist the expiration alongside the token so an OAuth token's very first
 		// lifetime is observable from status (matching the controller refresh path);
 		// a zero ExpiresAt means the provider issued a non-expiring token.
-		tokenStatus := provisioning.ConnectionTokenStatus{LastUpdated: time.Now().UnixMilli()}
+		tokenStatus := provisioning.ConnectionTokenStatus{LastUpdated: optional.NonZero(time.Now().UnixMilli())}
 		if !token.ExpiresAt.IsZero() {
-			tokenStatus.Expiration = token.ExpiresAt.UnixMilli()
+			tokenStatus.Expiration = optional.NonZero(token.ExpiresAt.UnixMilli())
 		}
 
 		patcher := appcontroller.NewConnectionStatusPatcher(c.access.GetClient())

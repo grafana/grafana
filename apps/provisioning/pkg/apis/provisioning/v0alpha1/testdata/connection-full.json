@@ -1,0 +1,67 @@
+{
+  "kind": "Connection",
+  "apiVersion": "provisioning.grafana.app/v0alpha1",
+  "metadata": {
+    "name": "github-app",
+    "namespace": "default",
+    "generation": 2
+  },
+  "spec": {
+    "title": "GitHub app",
+    "description": "Connects the org repositories",
+    "type": "github",
+    "url": "https://github.com/settings/installations/12345",
+    "github": {
+      "appID": "123",
+      "installationID": "12345"
+    },
+    "oauth": {
+      "clientID": "client"
+    },
+    "webhook": {
+      "disabled": true
+    }
+  },
+  "secure": {
+    "privateKey": {
+      "name": "private-key"
+    },
+    "token": {
+      "name": "token"
+    }
+  },
+  "status": {
+    "observedGeneration": 2,
+    "fieldErrors": [
+      {
+        "type": "FieldValueInvalid",
+        "field": "spec.github.appID",
+        "detail": "app not found",
+        "origin": "github",
+        "badValue": "123"
+      }
+    ],
+    "conditions": [
+      {
+        "type": "Ready",
+        "status": "False",
+        "observedGeneration": 2,
+        "lastTransitionTime": "2026-11-23T10:00:00Z",
+        "reason": "InvalidSpec",
+        "message": "app not found"
+      }
+    ],
+    "health": {
+      "healthy": false,
+      "error": "health",
+      "checked": 1763892000000,
+      "message": [
+        "app not found"
+      ]
+    },
+    "token": {
+      "lastUpdated": 1763892000000,
+      "expiration": 1763895600000
+    }
+  }
+}

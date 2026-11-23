@@ -7,11 +7,9 @@ package v0alpha1
 // RepositoryWebhookConfigApplyConfiguration represents a declarative configuration of the RepositoryWebhookConfig type for use
 // with apply.
 type RepositoryWebhookConfigApplyConfiguration struct {
-	// Base URL of the Grafana instance used to construct the webhook endpoint
-	// registered with the external Git provider. Only the base URL should be
-	// provided (e.g. `https://grafana.example.com`); the API path, namespace,
-	// and resource name are appended automatically. Trailing slashes are stripped.
-	// Must be a valid HTTP or HTTPS URL.
+	// Base URL of the Grafana instance used to construct the webhook endpoint registered with the external Git provider.
+	// Only the base URL should be provided (e.g. `https://grafana.example.com`); the API path, namespace, and resource name are appended automatically.
+	// Trailing slashes are stripped. Must be a valid HTTP or HTTPS URL.
 	BaseUrl *string `json:"baseUrl,omitempty"`
 	// Disabled turns off webhook integration for this repository. When true,
 	// Grafana will not register or receive webhook events from the Git provider

@@ -457,7 +457,7 @@ func TestAdmissionMutator_Mutate_StoresZeroStatusFieldsAsAbsent(t *testing.T) {
 	old := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "test"}}
 	repo := old.DeepCopy()
 	repo.Status = provisioning.RepositoryStatus{
-		Sync:        provisioning.RepositorySyncStatus{State: provisioning.JobStateSuccess, Job: new(""), Started: new(int64(0)), Finished: new(int64(10)), Incremental: new(false)},
+		Sync:        provisioning.RepositorySyncStatus{State: provisioning.RepositoryJobStateSuccess, Job: new(""), Started: new(int64(0)), Finished: new(int64(10)), Incremental: new(false)},
 		Webhook:     &provisioning.RepositoryWebhookStatus{Id: new(int64(0)), Url: new("")},
 		Quota:       provisioning.RepositoryQuotaStatus{MaxRepositories: new(int64(0)), UpdatedAt: new(int64(5))},
 		DeleteError: new(""),

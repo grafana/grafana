@@ -3,6 +3,7 @@ package usage
 import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -81,9 +82,9 @@ func ConnectionUsageStatusFromConnection(conn *provisioning.Connection) Connecti
 		UpdatedAt:          updatedAt,
 		Healthy:            conn.Status.Health.Healthy,
 		ReadyReason:        readyReason,
-		WebhookDisabled:    conn.Spec.Webhook != nil && conn.Spec.Webhook.Disabled,
-		TokenLastUpdatedAt: conn.Status.Token.LastUpdated,
-		TokenExpiresAt:     conn.Status.Token.Expiration,
+		WebhookDisabled:    conn.Spec.Webhook != nil && ptr.Deref(conn.Spec.Webhook.Disabled, false),
+		TokenLastUpdatedAt: ptr.Deref(conn.Status.Token.LastUpdated, 0),
+		TokenExpiresAt:     ptr.Deref(conn.Status.Token.Expiration, 0),
 	}
 }
 

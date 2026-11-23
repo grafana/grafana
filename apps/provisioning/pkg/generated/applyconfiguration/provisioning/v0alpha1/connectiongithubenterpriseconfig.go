@@ -6,9 +6,6 @@ package v0alpha1
 
 // ConnectionGitHubEnterpriseConfigApplyConfiguration represents a declarative configuration of the ConnectionGitHubEnterpriseConfig type for use
 // with apply.
-//
-// GitHubEnterpriseConnectionConfig describes a GitHub App installation against a
-// self-managed GitHub Enterprise Server (GHES) instance.
 type ConnectionGitHubEnterpriseConfigApplyConfiguration struct {
 	// GitHub App ID
 	AppID *string `json:"appID,omitempty"`

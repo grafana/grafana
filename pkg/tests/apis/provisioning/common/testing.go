@@ -1430,7 +1430,7 @@ func (h *ProvisioningTestHelper) WaitForHealthyConnection(t *testing.T, name str
 		conn := MustFromUnstructured[provisioning.Connection](t, obj)
 		assert.Equal(collect, conn.Generation, conn.Status.ObservedGeneration,
 			"controller should reconcile the observed generation")
-		assert.Greater(collect, conn.Status.Health.Checked, int64(0),
+		assert.Greater(collect, ptr.Deref(conn.Status.Health.Checked, 0), int64(0),
 			"connection %s health check has not run yet", name)
 		assert.True(collect, conn.Status.Health.Healthy, "connection %s is not healthy yet", name)
 		ready := FindCondition(provisioning.ConditionsToMeta(conn.Status.Conditions), provisioning.ConditionTypeReady)

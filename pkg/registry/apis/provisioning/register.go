@@ -1635,7 +1635,7 @@ spec:
 	commitSchema.AllOf = []spec.Schema{
 		{
 			SchemaProps: spec.SchemaProps{
-				Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "CommitOptions"),
+				Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "RepositoryCommitOptions"),
 			},
 		},
 	}
@@ -1646,7 +1646,7 @@ spec:
 	branchOptionsSchema.AllOf = []spec.Schema{
 		{
 			SchemaProps: spec.SchemaProps{
-				Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "BranchOptions"),
+				Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "RepositoryBranchOptions"),
 			},
 		},
 	}
@@ -1657,7 +1657,7 @@ spec:
 	pullRequestSchema.AllOf = []spec.Schema{
 		{
 			SchemaProps: spec.SchemaProps{
-				Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "PullRequestOptions"),
+				Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "RepositoryPullRequestOptions"),
 			},
 		},
 	}

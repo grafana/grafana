@@ -110,7 +110,7 @@ type RepositoryUsageStatus struct {
 	// repository as of its last sync.
 	ManagedResourceCount int64
 	// ManagedResources is the per-kind breakdown, one entry per group/resource.
-	ManagedResources []provisioning.ResourceCount
+	ManagedResources []provisioning.RepositoryResourceCount
 	// TokenLastUpdatedAt is when the repository's controller-managed token was last
 	// generated (status.token.lastUpdated), in epoch milliseconds; 0 when the
 	// repository has no managed token. now-TokenLastUpdatedAt is the token age.
@@ -184,8 +184,8 @@ func RepositoryUsageStatusFromRepository(repo *provisioning.Repository) Reposito
 		LastSyncFinishedAt:   ptr.Deref(repo.Status.Sync.Finished, 0),
 		ManagedResourceCount: total,
 		ManagedResources:     repo.Status.Stats,
-		TokenLastUpdatedAt:   repo.Status.Token.LastUpdated,
-		TokenExpiresAt:       repo.Status.Token.Expiration,
+		TokenLastUpdatedAt:   ptr.Deref(repo.Status.Token.LastUpdated, 0),
+		TokenExpiresAt:       ptr.Deref(repo.Status.Token.Expiration, 0),
 		WebhookLastRotatedAt: webhookLastRotatedAt,
 	}
 }

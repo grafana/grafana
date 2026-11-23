@@ -7,13 +7,13 @@ manifest: {
 	groupOverride:    "provisioning.grafana.app"
 	preferredVersion: "v0alpha1"
 
-	// Both versions are served from the same hand-written Go types in
-	// pkg/apis/provisioning/v0alpha1, so they share one schema.
+	// Both versions are served from the v0alpha1 Go types, so they share one schema;
+	// pkg/apis/provisioning/v1beta1 re-exports them.
 	versions: {
 		"v0alpha1": {
 			codegen: {
 				ts: {enabled: false}
-				go: {enabled: false}
+				go: {enabled: true}
 			}
 			kinds: _provisioningKinds
 		}

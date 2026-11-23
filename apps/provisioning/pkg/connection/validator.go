@@ -9,6 +9,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
+	"k8s.io/utils/ptr"
 
 	provisioningadmission "github.com/grafana/grafana/apps/provisioning/pkg/apis/admission"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -117,7 +118,7 @@ func (v *AdmissionValidator) validatePrivateEndpoints(ctx context.Context, c *pr
 		path *field.Path
 		url  string
 	}
-	endpoints := []endpoint{{field.NewPath("spec", "url"), c.Spec.Url}}
+	endpoints := []endpoint{{field.NewPath("spec", "url"), ptr.Deref(c.Spec.Url, "")}}
 	if c.Spec.GithubEnterprise != nil {
 		endpoints = append(endpoints, endpoint{field.NewPath("spec", "githubEnterprise", "serverUrl"), c.Spec.GithubEnterprise.ServerUrl})
 	}

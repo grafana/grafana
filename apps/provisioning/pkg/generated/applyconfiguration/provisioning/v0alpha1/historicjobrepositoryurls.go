@@ -4,9 +4,9 @@
 
 package v0alpha1
 
-// RepositoryURLsApplyConfiguration represents a declarative configuration of the RepositoryURLs type for use
+// HistoricJobRepositoryURLsApplyConfiguration represents a declarative configuration of the HistoricJobRepositoryURLs type for use
 // with apply.
-type RepositoryURLsApplyConfiguration struct {
+type HistoricJobRepositoryURLsApplyConfiguration struct {
 	// A URL pointing to the repository this lives in
 	RepositoryURL *string `json:"repositoryURL,omitempty"`
 	// A URL pointing to the file or ref in the repository
@@ -17,16 +17,16 @@ type RepositoryURLsApplyConfiguration struct {
 	CompareURL *string `json:"compareURL,omitempty"`
 }
 
-// RepositoryURLsApplyConfiguration constructs a declarative configuration of the RepositoryURLs type for use with
+// HistoricJobRepositoryURLsApplyConfiguration constructs a declarative configuration of the HistoricJobRepositoryURLs type for use with
 // apply.
-func RepositoryURLs() *RepositoryURLsApplyConfiguration {
-	return &RepositoryURLsApplyConfiguration{}
+func HistoricJobRepositoryURLs() *HistoricJobRepositoryURLsApplyConfiguration {
+	return &HistoricJobRepositoryURLsApplyConfiguration{}
 }
 
 // WithRepositoryURL sets the RepositoryURL field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the RepositoryURL field is set to the value of the last call.
-func (b *RepositoryURLsApplyConfiguration) WithRepositoryURL(value string) *RepositoryURLsApplyConfiguration {
+func (b *HistoricJobRepositoryURLsApplyConfiguration) WithRepositoryURL(value string) *HistoricJobRepositoryURLsApplyConfiguration {
 	b.RepositoryURL = &value
 	return b
 }
@@ -34,7 +34,7 @@ func (b *RepositoryURLsApplyConfiguration) WithRepositoryURL(value string) *Repo
 // WithSourceURL sets the SourceURL field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the SourceURL field is set to the value of the last call.
-func (b *RepositoryURLsApplyConfiguration) WithSourceURL(value string) *RepositoryURLsApplyConfiguration {
+func (b *HistoricJobRepositoryURLsApplyConfiguration) WithSourceURL(value string) *HistoricJobRepositoryURLsApplyConfiguration {
 	b.SourceURL = &value
 	return b
 }
@@ -42,7 +42,7 @@ func (b *RepositoryURLsApplyConfiguration) WithSourceURL(value string) *Reposito
 // WithNewPullRequestURL sets the NewPullRequestURL field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the NewPullRequestURL field is set to the value of the last call.
-func (b *RepositoryURLsApplyConfiguration) WithNewPullRequestURL(value string) *RepositoryURLsApplyConfiguration {
+func (b *HistoricJobRepositoryURLsApplyConfiguration) WithNewPullRequestURL(value string) *HistoricJobRepositoryURLsApplyConfiguration {
 	b.NewPullRequestURL = &value
 	return b
 }
@@ -50,7 +50,7 @@ func (b *RepositoryURLsApplyConfiguration) WithNewPullRequestURL(value string) *
 // WithCompareURL sets the CompareURL field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the CompareURL field is set to the value of the last call.
-func (b *RepositoryURLsApplyConfiguration) WithCompareURL(value string) *RepositoryURLsApplyConfiguration {
+func (b *HistoricJobRepositoryURLsApplyConfiguration) WithCompareURL(value string) *HistoricJobRepositoryURLsApplyConfiguration {
 	b.CompareURL = &value
 	return b
 }

@@ -323,12 +323,14 @@ const MinTestJobProgressInterval = 500 * time.Millisecond
 func validateTestJobOptions(opts *provisioning.JobTestJobOptions) field.ErrorList {
 	list := field.ErrorList{}
 
-	d := opts.Duration.Duration
+	d, err := opts.ParseDuration()
 	switch {
+	case err != nil:
+		list = append(list, field.Invalid(field.NewPath("spec", "test", "duration"), ptr.Deref(opts.Duration, ""), "duration must be a valid duration"))
 	case d <= 0:
-		list = append(list, field.Invalid(field.NewPath("spec", "test", "duration"), opts.Duration.Duration.String(), "duration must be positive"))
+		list = append(list, field.Invalid(field.NewPath("spec", "test", "duration"), d.String(), "duration must be positive"))
 	case d > MaxTestJobDuration:
-		list = append(list, field.Invalid(field.NewPath("spec", "test", "duration"), opts.Duration.Duration.String(), fmt.Sprintf("duration must not exceed %s", MaxTestJobDuration)))
+		list = append(list, field.Invalid(field.NewPath("spec", "test", "duration"), d.String(), fmt.Sprintf("duration must not exceed %s", MaxTestJobDuration)))
 	}
 
 	updates := int(ptr.Deref(opts.ProgressUpdates, 0))

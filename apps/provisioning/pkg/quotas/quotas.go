@@ -27,7 +27,7 @@ type Usage struct {
 	TotalResources int64
 }
 
-func NewQuotaUsageFromStats(stats []provisioning.ResourceCount) Usage {
+func NewQuotaUsageFromStats(stats []provisioning.RepositoryResourceCount) Usage {
 	return Usage{
 		TotalResources: calculateTotalResources(stats),
 	}
@@ -103,7 +103,7 @@ func WouldStayWithinQuota(quota provisioning.RepositoryQuotaStatus, usage Usage,
 }
 
 // calculateTotalResources sums up all resource counts from the stats.
-func calculateTotalResources(stats []provisioning.ResourceCount) int64 {
+func calculateTotalResources(stats []provisioning.RepositoryResourceCount) int64 {
 	var total int64
 	for _, s := range stats {
 		total += s.Count

@@ -15,9 +15,7 @@ type RepositorySyncOptionsApplyConfiguration struct {
 	Enabled *bool `json:"enabled,omitempty"`
 	// Where values should be saved
 	Target *provisioningv0alpha1.RepositorySyncOptionsTarget `json:"target,omitempty"`
-	// The interval between sync runs.
-	// The system defines a default value for this field, which will overwrite the
-	// user-defined one in case the latter is zero or lower than the system-defined one.
+	// The interval between sync runs. The system defines a default value for this field, which will overwrite the user-defined one in case the latter is zero or lower than the system-defined one.
 	IntervalSeconds *int64 `json:"intervalSeconds,omitempty"`
 }
 

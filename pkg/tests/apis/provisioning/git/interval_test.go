@@ -32,7 +32,7 @@ func TestIntegrationProvisioning_GitSyncIntervalNoop(t *testing.T) {
 	repoObj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 	require.NoError(t, err)
 	original := common.MustFromUnstructured[provisioning.Repository](t, repoObj).Status.Sync
-	require.Equal(t, provisioning.JobStateSuccess, original.State)
+	require.Equal(t, provisioning.RepositoryJobStateSuccess, original.State)
 	require.NotZero(t, ptr.Deref(original.Finished, 0))
 	require.NotZero(t, ptr.Deref(original.LastChecked, 0))
 	require.NotEmpty(t, ptr.Deref(original.LastRef, ""))
@@ -129,7 +129,7 @@ func TestIntegrationProvisioning_GitSyncIntervalChangedRef(t *testing.T) {
 		if !assert.NoError(c, err) {
 			return
 		}
-		assert.Equal(c, provisioning.JobStateSuccess, repo.Status.Sync.State)
+		assert.Equal(c, provisioning.RepositoryJobStateSuccess, repo.Status.Sync.State)
 		assert.Equal(c, latestRef, ptr.Deref(repo.Status.Sync.LastRef, ""))
 		assert.GreaterOrEqual(c, ptr.Deref(repo.Status.Sync.LastChecked, 0), before, "a changed ref must also refresh the check timestamp")
 		assert.GreaterOrEqual(c, ptr.Deref(repo.Status.Sync.Finished, 0), ptr.Deref(repo.Status.Sync.LastChecked, 0), "job completion must preserve the preceding check timestamp")

@@ -51,7 +51,7 @@ func (v *connectionWebhookValidator) Validate(ctx context.Context, cfg *provisio
 		return field.ErrorList{field.InternalError(field.NewPath("spec", "connection", "name"), err)}
 	}
 
-	if conn.Spec.Webhook != nil && conn.Spec.Webhook.Disabled {
+	if conn.Spec.Webhook != nil && ptr.Deref(conn.Spec.Webhook.Disabled, false) {
 		return field.ErrorList{field.Invalid(
 			field.NewPath("spec", "webhook", "disabled"),
 			false,

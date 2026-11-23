@@ -7,7 +7,7 @@ package v0alpha1
 // RepositoryConditionApplyConfiguration represents a declarative configuration of the RepositoryCondition type for use
 // with apply.
 //
-// Mirrors metav1.Condition with the same JSON encoding: lastTransitionTime is an RFC3339 timestamp, or null when unset.
+// Mirrors metav1.Condition, which CUE cannot reference directly.
 type RepositoryConditionApplyConfiguration struct {
 	// type of condition in CamelCase or in foo.example.com/CamelCase.
 	Type *string `json:"type,omitempty"`
@@ -16,6 +16,7 @@ type RepositoryConditionApplyConfiguration struct {
 	// observedGeneration represents the .metadata.generation that the condition was set based upon.
 	ObservedGeneration *int64 `json:"observedGeneration,omitempty"`
 	// lastTransitionTime is the last time the condition transitioned from one status to another.
+	// Null when unset, matching the encoding of the zero metav1.Time.
 	LastTransitionTime *string `json:"lastTransitionTime,omitempty"`
 	// reason contains a programmatic identifier indicating the reason for the condition's last transition.
 	Reason *string `json:"reason,omitempty"`

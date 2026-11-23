@@ -10,14 +10,9 @@ import (
 
 // RepositoryDeletionStatusApplyConfiguration represents a declarative configuration of the RepositoryDeletionStatus type for use
 // with apply.
-//
-// DeletionStatus reports the progress of an in-progress deletion and the problem
-// blocking it. It is populated while the repository is Terminating and its
-// finalizers run, so a client can explain the holdup and force-remove the
-// blocking finalizer.
 type RepositoryDeletionStatusApplyConfiguration struct {
 	// State is the phase of the deletion.
-	State *provisioningv0alpha1.DeletionState `json:"state,omitempty"`
+	State *string `json:"state,omitempty"`
 	// Finalizer names the finalizer whose teardown is blocking deletion, i.e.
 	// which deletion step failed. A client force-removing deletion removes exactly
 	// this finalizer.
@@ -38,7 +33,7 @@ func RepositoryDeletionStatus() *RepositoryDeletionStatusApplyConfiguration {
 // WithState sets the State field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the State field is set to the value of the last call.
-func (b *RepositoryDeletionStatusApplyConfiguration) WithState(value provisioningv0alpha1.DeletionState) *RepositoryDeletionStatusApplyConfiguration {
+func (b *RepositoryDeletionStatusApplyConfiguration) WithState(value string) *RepositoryDeletionStatusApplyConfiguration {
 	b.State = &value
 	return b
 }

@@ -91,12 +91,14 @@ connection: {
 			// Conditions represent the latest available observations of the connection's state.
 			// +listType=map
 			// +listMapKey=type
+			// +patchMergeKey=type
+			// +patchStrategy=merge
 			conditions?: [...#Condition]
 			// The connection health status
 			health: #HealthStatus
 			// Token holds metadata about the last generated connection token, used to avoid
 			// regenerating a token whose secret was written recently but is not yet readable.
-			token?: #TokenStatus
+			token: #TokenStatus
 		}
 	}
 }

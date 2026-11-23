@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -278,7 +279,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 
 			// If the last error was not a health check error or empty, return precondition failed
 			health := repo.Config().Status.Health
-			if health.Error != provisioning.HealthFailureHealth && health.Error != "" {
+			if ptr.Deref(health.Error, "") != provisioning.HealthFailureHealth && ptr.Deref(health.Error, "") != "" {
 				rsp = &provisioning.TestResults{
 					Success: false,
 					Code:    http.StatusPreconditionFailed,

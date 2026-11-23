@@ -3,8 +3,9 @@ package v0alpha1_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"k8s.io/utils/ptr"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
@@ -56,7 +57,7 @@ func TestJobStatus_ToSyncStatus(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			syncStatus := tt.status.ToSyncStatus("test-job")
 			assert.Equal(t, "test-job", ptr.Deref(syncStatus.Job, ""))
-			assert.Equal(t, ptr.Deref(tt.status.State, ""), syncStatus.State)
+			assert.Equal(t, v0alpha1.RepositoryJobState(ptr.Deref(tt.status.State, "")), syncStatus.State)
 			assert.Equal(t, tt.wantMessage, syncStatus.Message)
 		})
 	}

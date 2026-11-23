@@ -6,22 +6,19 @@ package v0alpha1
 
 // ConnectionStatusApplyConfiguration represents a declarative configuration of the ConnectionStatus type for use
 // with apply.
-//
-// The status of a Connection.
-// This is expected never to be created by a kubectl call or similar, and is expected to rarely (if ever) be edited manually.
 type ConnectionStatusApplyConfiguration struct {
 	// The generation of the spec last time reconciliation ran
 	ObservedGeneration *int64 `json:"observedGeneration,omitempty"`
 	// FieldErrors are errors that occurred during validation of the connection spec.
 	// These errors are intended to help users identify and fix issues in the spec.
-	FieldErrors []ErrorDetailsApplyConfiguration `json:"fieldErrors,omitempty"`
+	FieldErrors []ConnectionErrorDetailsApplyConfiguration `json:"fieldErrors,omitempty"`
 	// Conditions represent the latest available observations of the connection's state.
 	Conditions []ConnectionConditionApplyConfiguration `json:"conditions,omitempty"`
 	// The connection health status
-	Health *RepositoryHealthStatusApplyConfiguration `json:"health,omitempty"`
+	Health *ConnectionHealthStatusApplyConfiguration `json:"health,omitempty"`
 	// Token holds metadata about the last generated connection token, used to avoid
 	// regenerating a token whose secret was written recently but is not yet readable.
-	Token *RepositoryTokenStatusApplyConfiguration `json:"token,omitempty"`
+	Token *ConnectionTokenStatusApplyConfiguration `json:"token,omitempty"`
 }
 
 // ConnectionStatusApplyConfiguration constructs a declarative configuration of the ConnectionStatus type for use with
@@ -41,7 +38,7 @@ func (b *ConnectionStatusApplyConfiguration) WithObservedGeneration(value int64)
 // WithFieldErrors adds the given value to the FieldErrors field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the FieldErrors field.
-func (b *ConnectionStatusApplyConfiguration) WithFieldErrors(values ...*ErrorDetailsApplyConfiguration) *ConnectionStatusApplyConfiguration {
+func (b *ConnectionStatusApplyConfiguration) WithFieldErrors(values ...*ConnectionErrorDetailsApplyConfiguration) *ConnectionStatusApplyConfiguration {
 	for i := range values {
 		if values[i] == nil {
 			panic("nil value passed to WithFieldErrors")
@@ -67,7 +64,7 @@ func (b *ConnectionStatusApplyConfiguration) WithConditions(values ...*Connectio
 // WithHealth sets the Health field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Health field is set to the value of the last call.
-func (b *ConnectionStatusApplyConfiguration) WithHealth(value *RepositoryHealthStatusApplyConfiguration) *ConnectionStatusApplyConfiguration {
+func (b *ConnectionStatusApplyConfiguration) WithHealth(value *ConnectionHealthStatusApplyConfiguration) *ConnectionStatusApplyConfiguration {
 	b.Health = value
 	return b
 }
@@ -75,7 +72,7 @@ func (b *ConnectionStatusApplyConfiguration) WithHealth(value *RepositoryHealthS
 // WithToken sets the Token field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Token field is set to the value of the last call.
-func (b *ConnectionStatusApplyConfiguration) WithToken(value *RepositoryTokenStatusApplyConfiguration) *ConnectionStatusApplyConfiguration {
+func (b *ConnectionStatusApplyConfiguration) WithToken(value *ConnectionTokenStatusApplyConfiguration) *ConnectionStatusApplyConfiguration {
 	b.Token = value
 	return b
 }

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"slices"
 
+	"k8s.io/utils/ptr"
+
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
@@ -16,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-	"k8s.io/utils/ptr"
 )
 
 //go:generate mockery --name RepositoryPatchFn --structname MockRepositoryPatchFn --inpackage --filename repository_patch_fn_mock.go --with-expecter
@@ -117,7 +118,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 
 	// Ensure the sync state is set to 'working' if not already set or still pending.
 	// FIXME: This should not be needed as the progress recorder should have set it to 'working' by now.
-	syncStatus.State = provisioning.JobStateWorking
+	syncStatus.State = provisioning.RepositoryJobStateWorking
 
 	usage := quotas.NewQuotaUsageFromStats(cfg.Status.Stats)
 	quotaTracker := quotas.NewInMemoryQuotaTracker(usage.TotalResources, ptr.Deref(cfg.Status.Quota.MaxResourcesPerRepository, 0))
@@ -198,7 +199,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	}
 	syncSpan.End()
 
-	if syncStatus.State != provisioning.JobStateError && !isQuotaWarning {
+	if syncStatus.State != provisioning.RepositoryJobStateError && !isQuotaWarning {
 		syncStatus.LastRef = new(currentRef)
 	} else {
 		if isQuotaWarning {
@@ -238,8 +239,12 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	//    the natural place to evaluate quotas against those stats.
 	// 3. This ensures conditions reflect the actual state after reconciliation,
 	//    not just what the controller thinks should exist.
+	statusStats := make([]provisioning.RepositoryResourceCount, len(repoStats))
+	for i, s := range repoStats {
+		statusStats[i] = provisioning.RepositoryResourceCount(s)
+	}
 	quotaStatus := repo.Config().Status.Quota
-	quotaCondition := quotas.EvaluateCondition(quotaStatus, quotas.NewQuotaUsageFromStats(repoStats))
+	quotaCondition := quotas.EvaluateCondition(quotaStatus, quotas.NewQuotaUsageFromStats(statusStats))
 	syncCondition := EvaluatePullCondition(ptr.Deref(jobStatus.State, ""), resultReasons)
 	if conditionOps := controller.BuildConditionPatchOpsFromExisting(provisioning.ConditionsToMeta(cfg.Status.Conditions), cfg.GetGeneration(), quotaCondition, syncCondition); conditionOps != nil {
 		patchOperations = append(patchOperations, conditionOps...)

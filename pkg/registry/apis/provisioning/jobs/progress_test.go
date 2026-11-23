@@ -7,9 +7,10 @@ import (
 	"sync"
 	"testing"
 
+	"k8s.io/utils/ptr"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -143,7 +144,7 @@ func TestJobProgressRecorderSetRefURLs(t *testing.T) {
 
 	// Test that RefURLs are included in the final status
 	finalStatus := recorder.Complete(ctx, nil)
-	assert.Equal(t, expectedRefURLs, finalStatus.Url)
+	assert.Equal(t, expectedRefURLs.ToJob(), finalStatus.Url)
 }
 
 func TestJobProgressRecorderSetRefURLsNil(t *testing.T) {
@@ -188,7 +189,7 @@ func TestJobProgressRecorderCompleteIncludesRefURLs(t *testing.T) {
 
 	// Verify the final status includes RefURLs
 	require.NotNil(t, finalStatus.Url)
-	assert.Equal(t, refURLs.SourceURL, finalStatus.Url.SourceURL)
+	assert.Equal(t, refURLs.SourceURL, ptr.Deref(finalStatus.Url.SourceURL, ""))
 	assert.Equal(t, provisioning.JobStateSuccess, ptr.Deref(finalStatus.State, ""))
 	assert.Equal(t, "completed successfully", ptr.Deref(finalStatus.Message, ""))
 }

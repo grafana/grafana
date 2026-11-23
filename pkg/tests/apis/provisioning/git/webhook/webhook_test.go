@@ -76,7 +76,7 @@ func TestIntegrationProvisioning_WebhookFailureDoesNotRetryImmediately(t *testin
 		}
 		assert.GreaterOrEqual(collect, githubMock.State(repoName).HookCreates, 1, "webhook creation should have been attempted")
 		assert.False(collect, repo.Status.Health.Healthy, "repository should remain unhealthy after hook failure")
-		assert.Equal(collect, provisioning.HealthFailureHook, repo.Status.Health.Error, "repository should record hook failure")
+		assert.Equal(collect, provisioning.HealthFailureHook, ptr.Deref(repo.Status.Health.Error, ""), "repository should record hook failure")
 		assert.Nil(collect, repo.Status.Webhook, "webhook status should remain unset when creation fails")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "repository should record the initial webhook failure")
 

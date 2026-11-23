@@ -17,7 +17,7 @@ import (
 func TestQuotaLimits_EvaluateCondition(t *testing.T) {
 	tests := []struct {
 		name           string
-		stats          []provisioning.ResourceCount
+		stats          []provisioning.RepositoryResourceCount
 		limits         provisioning.RepositoryQuotaStatus
 		expectedStatus metav1.ConditionStatus
 		expectedReason string
@@ -25,14 +25,14 @@ func TestQuotaLimits_EvaluateCondition(t *testing.T) {
 	}{
 		{
 			name:           "no limits configured returns QuotaUnlimited",
-			stats:          []provisioning.ResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 100}},
+			stats:          []provisioning.RepositoryResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 100}},
 			limits:         provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: new(int64(0))},
 			expectedStatus: metav1.ConditionTrue,
 			expectedReason: provisioning.ReasonQuotaUnlimited,
 			expectedMsg:    "No quota limits configured"},
 		{
 			name:           "at quota limit returns ResourceQuotaReached",
-			stats:          []provisioning.ResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 100}},
+			stats:          []provisioning.RepositoryResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 100}},
 			limits:         provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: new(int64(100))},
 			expectedStatus: metav1.ConditionTrue,
 			expectedReason: provisioning.ReasonQuotaReached,
@@ -40,7 +40,7 @@ func TestQuotaLimits_EvaluateCondition(t *testing.T) {
 		},
 		{
 			name:           "over quota limit returns ResourceQuotaExceeded",
-			stats:          []provisioning.ResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 150}},
+			stats:          []provisioning.RepositoryResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 150}},
 			limits:         provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: new(int64(100))},
 			expectedStatus: metav1.ConditionFalse,
 			expectedReason: provisioning.ReasonQuotaExceeded,
@@ -48,7 +48,7 @@ func TestQuotaLimits_EvaluateCondition(t *testing.T) {
 		},
 		{
 			name: "multiple resource types sums all counts",
-			stats: []provisioning.ResourceCount{
+			stats: []provisioning.RepositoryResourceCount{
 				{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 60},
 				{Group: "folder.grafana.app", Resource: "folders", Count: 50},
 			},
@@ -59,7 +59,7 @@ func TestQuotaLimits_EvaluateCondition(t *testing.T) {
 		},
 		{
 			name:           "empty stats returns within quota",
-			stats:          []provisioning.ResourceCount{},
+			stats:          []provisioning.RepositoryResourceCount{},
 			limits:         provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: new(int64(100))},
 			expectedStatus: metav1.ConditionTrue,
 			expectedReason: provisioning.ReasonWithinQuota,
@@ -91,7 +91,7 @@ func TestQuotaLimits_EvaluateCondition(t *testing.T) {
 func TestCalculateTotalResources(t *testing.T) {
 	tests := []struct {
 		name     string
-		stats    []provisioning.ResourceCount
+		stats    []provisioning.RepositoryResourceCount
 		expected int64
 	}{
 		{
@@ -101,19 +101,19 @@ func TestCalculateTotalResources(t *testing.T) {
 		},
 		{
 			name:     "empty stats returns 0",
-			stats:    []provisioning.ResourceCount{},
+			stats:    []provisioning.RepositoryResourceCount{},
 			expected: 0,
 		},
 		{
 			name: "single resource type",
-			stats: []provisioning.ResourceCount{
+			stats: []provisioning.RepositoryResourceCount{
 				{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 42},
 			},
 			expected: 42,
 		},
 		{
 			name: "multiple resource types",
-			stats: []provisioning.ResourceCount{
+			stats: []provisioning.RepositoryResourceCount{
 				{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 30},
 				{Group: "folder.grafana.app", Resource: "folders", Count: 12},
 			},

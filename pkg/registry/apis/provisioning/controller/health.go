@@ -9,9 +9,11 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/optional"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 )
 
 const (
@@ -98,11 +100,11 @@ func (hc *RepositoryHealthChecker) inHookFailureCooldown(repo *provisioning.Repo
 
 // hasRecentHealthCheck checks if a health check was performed recently (for timing purposes)
 func (hc *RepositoryHealthChecker) hasRecentHealthCheck(healthStatus provisioning.RepositoryHealthStatus) bool {
-	if healthStatus.Checked == 0 {
+	if ptr.Deref(healthStatus.Checked, 0) == 0 {
 		return false // Never checked
 	}
 
-	age := time.Since(time.UnixMilli(healthStatus.Checked))
+	age := time.Since(time.UnixMilli(ptr.Deref(healthStatus.Checked, 0)))
 	if healthStatus.Healthy {
 		return age <= recentHealthyDuration
 	}
@@ -111,11 +113,11 @@ func (hc *RepositoryHealthChecker) hasRecentHealthCheck(healthStatus provisionin
 
 // HasRecentFailure checks if there's a recent failure of a specific type
 func (hc *RepositoryHealthChecker) HasRecentFailure(healthStatus provisioning.RepositoryHealthStatus, failureType provisioning.RepositoryHealthFailureType) bool {
-	if healthStatus.Checked == 0 || healthStatus.Healthy || healthStatus.Error != failureType {
+	if ptr.Deref(healthStatus.Checked, 0) == 0 || healthStatus.Healthy || ptr.Deref(healthStatus.Error, "") != failureType {
 		return false // No failure of this type
 	}
 
-	age := time.Since(time.UnixMilli(healthStatus.Checked))
+	age := time.Since(time.UnixMilli(ptr.Deref(healthStatus.Checked, 0)))
 	return age <= recentUnhealthyDuration
 }
 
@@ -139,8 +141,8 @@ func (hc *RepositoryHealthChecker) RecordFailure(ctx context.Context, failureTyp
 func (hc *RepositoryHealthChecker) recordFailure(failureType provisioning.RepositoryHealthFailureType, err error) provisioning.RepositoryHealthStatus {
 	return provisioning.RepositoryHealthStatus{
 		Healthy: false,
-		Error:   failureType,
-		Checked: time.Now().UnixMilli(),
+		Error:   optional.NonZero(failureType),
+		Checked: optional.NonZero(time.Now().UnixMilli()),
 		Message: []string{err.Error()},
 	}
 }
@@ -151,7 +153,7 @@ func (hc *RepositoryHealthChecker) hasHealthStatusChanged(old, new provisioning.
 		return true
 	}
 
-	if old.Error != new.Error {
+	if ptr.Deref(old.Error, "") != ptr.Deref(new.Error, "") {
 		return true
 	}
 
@@ -163,7 +165,7 @@ func (hc *RepositoryHealthChecker) hasHealthStatusChanged(old, new provisioning.
 	if new.Healthy {
 		recent = recentHealthyDuration
 	}
-	if time.UnixMilli(new.Checked).Sub(time.UnixMilli(old.Checked)) > recent {
+	if time.UnixMilli(ptr.Deref(new.Checked, 0)).Sub(time.UnixMilli(ptr.Deref(old.Checked, 0))) > recent {
 		return true
 	}
 
@@ -217,7 +219,7 @@ func (hc *RepositoryHealthChecker) RefreshHealthWithPatchOps(ctx context.Context
 		}
 		return HealthResultWithPatchOps{
 			HealthStatus:   cfg.Status.Health,
-			ReadyCondition: buildReadyConditionWithReason(cfg.Status.Health, reason),
+			ReadyCondition: buildReadyConditionWithReason(cfg.Status.Health.Healthy, cfg.Status.Health.Message, reason),
 		}, nil
 	}
 
@@ -239,7 +241,7 @@ func (hc *RepositoryHealthChecker) RefreshHealthWithPatchOps(ctx context.Context
 	return HealthResultWithPatchOps{
 		TestResults:    testResults,
 		HealthStatus:   newHealthStatus,
-		ReadyCondition: buildReadyConditionWithReason(newHealthStatus, classifyTestResultReason(testResults)),
+		ReadyCondition: buildReadyConditionWithReason(newHealthStatus.Healthy, newHealthStatus.Message, classifyTestResultReason(testResults)),
 		PatchOps:       patchOps,
 	}, nil
 }
@@ -248,7 +250,7 @@ func (hc *RepositoryHealthChecker) RefreshHealthWithPatchOps(ctx context.Context
 func (hc *RepositoryHealthChecker) RefreshTimestamp(ctx context.Context, repo *provisioning.Repository) error {
 	// Update the timestamp on the existing health status
 	healthStatus := repo.Status.Health
-	healthStatus.Checked = time.Now().UnixMilli()
+	healthStatus.Checked = optional.NonZero(time.Now().UnixMilli())
 
 	// Create patch operation
 	patchOp := map[string]interface{}{
@@ -291,8 +293,8 @@ func (hc *RepositoryHealthChecker) refreshHealth(ctx context.Context, repo repos
 
 		healthStatus := provisioning.RepositoryHealthStatus{
 			Healthy: false,
-			Error:   provisioning.HealthFailureHealth,
-			Checked: time.Now().UnixMilli(),
+			Error:   new(provisioning.HealthFailureHealth),
+			Checked: optional.NonZero(time.Now().UnixMilli()),
 			Message: errorMsgs,
 		}
 
@@ -307,14 +309,14 @@ func (hc *RepositoryHealthChecker) refreshHealth(ctx context.Context, repo repos
 	now := time.Now()
 	healthStatus := provisioning.RepositoryHealthStatus{
 		Healthy: true,
-		Checked: now.UnixMilli(),
+		Checked: optional.NonZero(now.UnixMilli()),
 	}
 
 	// If the existing status is already healthy with no error messages and
 	// the last check was recent (within 30 seconds), preserve the existing timestamp
 	// to avoid unnecessary updates
-	if existingStatus.Healthy && existingStatus.Error == "" && len(existingStatus.Message) == 0 {
-		lastCheckedTime := time.UnixMilli(existingStatus.Checked)
+	if existingStatus.Healthy && ptr.Deref(existingStatus.Error, "") == "" && len(existingStatus.Message) == 0 {
+		lastCheckedTime := time.UnixMilli(ptr.Deref(existingStatus.Checked, 0))
 		if now.Sub(lastCheckedTime) < 30*time.Second {
 			healthStatus.Checked = existingStatus.Checked
 		}

@@ -1,0 +1,20 @@
+{
+  "kind": "Connection",
+  "apiVersion": "provisioning.grafana.app/v0alpha1",
+  "metadata": {
+    "name": "github-app",
+    "namespace": "default"
+  },
+  "spec": {
+    "title": "GitHub app",
+    "type": "github",
+    "webhook": {}
+  },
+  "status": {
+    "observedGeneration": 0,
+    "health": {
+      "healthy": false
+    },
+    "token": {}
+  }
+}

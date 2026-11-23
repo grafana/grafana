@@ -8,26 +8,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
-// Mirrors metav1.Condition with the same JSON encoding: lastTransitionTime is an RFC3339 timestamp, or null when unset.
-type ConnectionCondition struct {
-	// type of condition in CamelCase or in foo.example.com/CamelCase.
-	Type string `json:"type"`
-	// status of the condition, one of True, False, Unknown.
-	Status string `json:"status"`
-	// observedGeneration represents the .metadata.generation that the condition was set based upon.
-	ObservedGeneration *int64 `json:"observedGeneration,omitempty"`
-	// lastTransitionTime is the last time the condition transitioned from one status to another.
-	LastTransitionTime *string `json:"lastTransitionTime"`
-	// reason contains a programmatic identifier indicating the reason for the condition's last transition.
-	Reason string `json:"reason"`
-	// message is a human readable message indicating details about the transition.
-	Message string `json:"message"`
-}
-
-func (ConnectionCondition) OpenAPIModelName() string {
-	return OpenAPIPrefix + "ConnectionCondition"
-}
-
 // conditionFields is the shape App SDK codegen produces for the #Condition CUE definition.
 // Each kind gets its own named condition type with this underlying struct, so the adapters
 // below are generic over it rather than written once per kind.

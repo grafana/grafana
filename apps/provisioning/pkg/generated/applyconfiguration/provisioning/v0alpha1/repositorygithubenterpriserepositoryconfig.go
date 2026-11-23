@@ -6,9 +6,6 @@ package v0alpha1
 
 // RepositoryGitHubEnterpriseRepositoryConfigApplyConfiguration represents a declarative configuration of the RepositoryGitHubEnterpriseRepositoryConfig type for use
 // with apply.
-//
-// GitHubEnterpriseRepositoryConfig describes a repository hosted on a self-managed
-// GitHub Enterprise Server (GHES) instance.
 type RepositoryGitHubEnterpriseRepositoryConfigApplyConfiguration struct {
 	// The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).
 	ServerUrl *string `json:"serverUrl,omitempty"`

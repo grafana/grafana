@@ -29,7 +29,7 @@ func connWithWebhookDisabled(disabled bool) *provisioning.Connection {
 	return &provisioning.Connection{
 		Spec: provisioning.ConnectionSpec{
 			Webhook: &provisioning.ConnectionWebhookConfig{
-				Disabled: disabled,
+				Disabled: new(disabled),
 			},
 		},
 	}

@@ -8,7 +8,6 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/util/optional"
@@ -24,7 +23,7 @@ func testJob(d time.Duration, progressUpdates int) provisioning.Job {
 		Spec: provisioning.JobSpec{
 			Action: provisioning.JobActionTest,
 			Test: &provisioning.JobTestJobOptions{
-				Duration:        metav1.Duration{Duration: d},
+				Duration:        new(d.String()),
 				ProgressUpdates: optional.NonZero(int32(progressUpdates)),
 			},
 		},

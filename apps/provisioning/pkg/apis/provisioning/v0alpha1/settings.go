@@ -6,6 +6,7 @@ import (
 
 // Summary shows a view of the configuration that is sanitized and is OK for logged in users to see
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +k8s:deepcopy-gen=true
 type RepositoryViewList struct {
 	metav1.TypeMeta `json:",inline"`
 
@@ -35,6 +36,7 @@ type RepositoryViewList struct {
 // SupportedResource describes a resource type declared for provisioning. A resource is
 // identified by its group and kind; the API version and plural resource are resolved at
 // runtime via discovery, so they are not part of this descriptor.
+// +k8s:deepcopy-gen=true
 type SupportedResource struct {
 	// Group is the API group of the resource (e.g. "dashboard.grafana.app").
 	Group string `json:"group"`
@@ -55,6 +57,7 @@ func (RepositoryViewList) OpenAPIModelName() string {
 	return OpenAPIPrefix + "RepositoryViewList"
 }
 
+// +k8s:deepcopy-gen=true
 type RepositoryView struct {
 	// The k8s name for this repository
 	Name string `json:"name"`

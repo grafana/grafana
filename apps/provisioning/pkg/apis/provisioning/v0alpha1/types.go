@@ -7,37 +7,12 @@ import (
 	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana-app-sdk/resource"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/optional"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 const OpenAPIPrefix = "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1."
-
-// When this code is changed, make sure to update the code generation.
-// As of writing, this can be done via the hack dir in the root of the repo: ./hack/update-codegen.sh provisioning
-// If you've opened the generated files in this dir at some point in VSCode, you may also have to re-open them to clear errors.
-// +genclient
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type Repository struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	Spec RepositorySpec `json:"spec,omitempty"`
-	// Secure is keyed by RepositorySecureKeys. Its OpenAPI schema is SecureValues.
-	Secure resource.InlineSecureValues `json:"secure,omitzero,omitempty"`
-	Status RepositoryStatus            `json:"status,omitempty"`
-}
-
-func (Repository) OpenAPIModelName() string {
-	return OpenAPIPrefix + "Repository"
-}
-
-func (o *Repository) GetSecureValues() resource.InlineSecureValues { return o.Secure }
-
-func (o *Repository) SetSecureValues(values resource.InlineSecureValues) error {
-	o.Secure = values
-	return nil
-}
 
 // Keys accepted in Repository.Secure. They must match the JSON names in SecureValues.
 const (
@@ -70,153 +45,9 @@ func (SecureValues) OpenAPIModelName() string {
 	return OpenAPIPrefix + "SecureValues"
 }
 
-type RepositoryLocalRepositoryConfig struct {
-	Path *string `json:"path,omitempty"`
-}
-
-func (RepositoryLocalRepositoryConfig) OpenAPIModelName() string {
-	return OpenAPIPrefix + "LocalRepositoryConfig"
-}
-
-// Workflow used for changes in the repository.
-// +enum
-type RepositorySpecWorkflows string
-
-const (
-	// RepositorySpecWorkflowsWrite allows a user to write directly to the repository
-	RepositorySpecWorkflowsWrite RepositorySpecWorkflows = "write"
-	// RepositorySpecWorkflowsBranch creates a branch for changes
-	RepositorySpecWorkflowsBranch RepositorySpecWorkflows = "branch"
-)
-
-type RepositoryGitHubRepositoryConfig struct {
-	// The repository URL (e.g. `https://github.com/example/test`).
-	Url *string `json:"url,omitempty"`
-
-	// The branch to use in the repository.
-	Branch string `json:"branch"`
-
-	// Whether we should show dashboard previews for pull requests.
-	// By default, this is false (i.e. we will not create previews).
-	// TODO: deprecate this field in favor of PullRequestOptions.GenerateDashboardPreviews once all Github repositories have been backfilled.
-	GenerateDashboardPreviews *bool `json:"generateDashboardPreviews,omitempty"`
-
-	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
-	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
-	// The path is relative to the root of the repository, regardless of the leading slash.
-	//
-	// When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.
-	Path *string `json:"path,omitempty"`
-}
-
-func (RepositoryGitHubRepositoryConfig) OpenAPIModelName() string {
-	return OpenAPIPrefix + "GitHubRepositoryConfig"
-}
-
-// GitHubEnterpriseRepositoryConfig describes a repository hosted on a self-managed
-// GitHub Enterprise Server (GHES) instance.
-type RepositoryGitHubEnterpriseRepositoryConfig struct {
-	// The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).
-	ServerUrl *string `json:"serverUrl,omitempty"`
-
-	// The repository URL on the GHES server (e.g. `https://ghes.example.com/example/test`).
-	Url *string `json:"url,omitempty"`
-
-	// The branch to use in the repository.
-	Branch string `json:"branch"`
-
-	// Path is the subdirectory for the Grafana data inside the repository.
-	Path *string `json:"path,omitempty"`
-}
-
-func (RepositoryGitHubEnterpriseRepositoryConfig) OpenAPIModelName() string {
-	return OpenAPIPrefix + "GitHubEnterpriseRepositoryConfig"
-}
-
-type RepositoryGitRepositoryConfig struct {
-	// The repository URL (e.g. `https://github.com/example/test`).
-	Url *string `json:"url,omitempty"`
-	// The branch to use in the repository.
-	Branch string `json:"branch"`
-	// TokenUser is the user that will be used to access the repository if it's a personal access token.
-	TokenUser *string `json:"tokenUser,omitempty"`
-	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
-	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
-	// The path is relative to the root of the repository, regardless of the leading slash.
-	//
-	// When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.
-	Path *string `json:"path,omitempty"`
-}
-
-func (RepositoryGitRepositoryConfig) OpenAPIModelName() string {
-	return OpenAPIPrefix + "GitRepositoryConfig"
-}
-
-type RepositoryBitbucketRepositoryConfig struct {
-	// The repository URL (e.g. `https://bitbucket.org/example/test`).
-	Url *string `json:"url,omitempty"`
-	// The branch to use in the repository.
-	Branch string `json:"branch"`
-	// TokenUser is the user that will be used to access the repository if it's a personal access token.
-	TokenUser *string `json:"tokenUser,omitempty"`
-	// Email is the Atlassian account email used to authenticate the Bitbucket REST API. Required to enable webhooks.
-	Email *string `json:"email,omitempty"`
-	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
-	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
-	// The path is relative to the root of the repository, regardless of the leading slash.
-	//
-	// When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.
-	Path *string `json:"path,omitempty"`
-}
-
-func (RepositoryBitbucketRepositoryConfig) OpenAPIModelName() string {
-	return OpenAPIPrefix + "BitbucketRepositoryConfig"
-}
-
-type RepositoryGitLabRepositoryConfig struct {
-	// The repository URL (e.g. `https://gitlab.com/example/test`).
-	Url *string `json:"url,omitempty"`
-	// The branch to use in the repository.
-	Branch string `json:"branch"`
-	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
-	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
-	// The path is relative to the root of the repository, regardless of the leading slash.
-	//
-	// When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.
-	Path *string `json:"path,omitempty"`
-
-	// RepoID is the GitLab project's immutable numeric ID. Resolved and set
-	// automatically whenever URL is set or changed; it survives a project
-	// transfer/move even if the project's path changes. Read-only: it is
-	// always system-derived and never taken from client-supplied input.
-	RepoID *string `json:"repoID,omitempty"`
-}
-
-func (RepositoryGitLabRepositoryConfig) OpenAPIModelName() string {
-	return OpenAPIPrefix + "GitLabRepositoryConfig"
-}
-
-// RepositoryType defines the types of Repository
-// +enum
-type RepositorySpecType string
-
-func (RepositorySpecType) OpenAPIModelName() string {
-	return OpenAPIPrefix + "RepositoryType"
-}
-
 func (r RepositorySpecType) String() string {
 	return string(r)
 }
-
-// RepositoryType values
-const (
-	RepositorySpecTypeLocal            RepositorySpecType = "local"
-	RepositorySpecTypeGithub           RepositorySpecType = "github"
-	RepositorySpecTypeGithubEnterprise RepositorySpecType = "githubEnterprise"
-	RepositorySpecTypeGit              RepositorySpecType = "git"
-	RepositorySpecTypeBitbucket        RepositorySpecType = "bitbucket"
-	RepositorySpecTypeGitlab           RepositorySpecType = "gitlab"
-)
 
 // IsGit returns true if the repository type is git or github
 func (r RepositorySpecType) IsGit() bool {
@@ -390,408 +221,6 @@ func (r *Repository) HasConnection() bool {
 	return r.ConnectionName() != ""
 }
 
-type RepositoryConnectionInfo struct {
-	Name string `json:"name"`
-}
-
-func (RepositoryConnectionInfo) OpenAPIModelName() string {
-	return OpenAPIPrefix + "ConnectionInfo"
-}
-
-type RepositoryCommitOptions struct {
-	// Template for commit messages produced by single-resource UI operations
-	// (dashboard save/delete/move, folder create/rename/delete).
-	// Bulk operations and sync jobs are out of scope and build their own messages.
-	// Supports variables: {{action}}, {{resourceKind}}, {{resourceID}}, {{title}},
-	// {{userName}}, {{userLogin}}, {{userEmail}}.
-	// When empty, a built-in default is used (e.g. "Save dashboard: <title>").
-	SingleResourceMessageTemplate *string `json:"singleResourceMessageTemplate,omitempty"`
-
-	// When true, the Comment field in Save drawers is pre-filled from
-	// SingleResourceMessageTemplate and rendered read-only.
-	EnforceTemplate *bool `json:"enforceTemplate,omitempty"`
-
-	// Name used as the commit author instead of the user who triggered the
-	// commit. Only valid when signingMethod is unset.
-	AuthorName *string `json:"authorName,omitempty"`
-
-	// Email used as the commit author instead of the user who triggered the
-	// commit. Only valid when signingMethod is unset.
-	AuthorEmail *string `json:"authorEmail,omitempty"`
-
-	// Name used as the commit signer. Required for the signing key's identity
-	// to match the commit, which providers need to mark commits as Verified. When
-	// empty, defaults to "Grafana".
-	SignerName *string `json:"signerName,omitempty"`
-
-	// Email used as the commit signer. Must match the signing key's identity
-	// and a verified email on the account where the matching public key is
-	// registered. When empty, defaults to "noreply@grafana.com".
-	SignerEmail *string `json:"signerEmail,omitempty"`
-
-	// Method used to sign commits with the key in secure.commitSigningKey. One of "gpg", "ssh", or "smime".
-	// When empty, commits are not signed.
-	SigningMethod *RepositoryCommitOptionsSigningMethod `json:"signingMethod,omitempty"`
-
-	// When true, commits are authored by the signer identity
-	// (signerName/signerEmail).
-	SignerIsAuthor *bool `json:"signerIsAuthor,omitempty"`
-
-	// PEM-encoded X.509 certificate paired with secure.commitSigningKey when
-	// signingMethod is "smime". This is public (not a secret) and is embedded
-	// in the commit signature. Unused for the gpg and ssh formats.
-	SmimeCertificate *string `json:"smimeCertificate,omitempty"`
-}
-
-// SigningMethod selects how commits are signed.
-// +enum
-type RepositoryCommitOptionsSigningMethod string
-
-const (
-	RepositoryCommitOptionsSigningMethodGpg   RepositoryCommitOptionsSigningMethod = "gpg"
-	RepositoryCommitOptionsSigningMethodSsh   RepositoryCommitOptionsSigningMethod = "ssh"
-	RepositoryCommitOptionsSigningMethodSmime RepositoryCommitOptionsSigningMethod = "smime"
-)
-
-func (RepositoryCommitOptions) OpenAPIModelName() string {
-	return OpenAPIPrefix + "CommitOptions"
-}
-
-type RepositoryBranchOptions struct {
-	// Template for the branch name created in branch workflow.
-	// Supports variables: {{action}}, {{resourceKind}}, {{title}},
-	// {{userLogin}}, {{random}}.
-	// {{random}} is a 6-character alphanumeric token generated at render
-	// time to avoid collisions. The result is sanitised to a valid git ref
-	// (lowercase, alphanumeric + dashes, max 100 chars).
-	// When empty, the current auto-generated name is preserved.
-	NameTemplate *string `json:"nameTemplate,omitempty"`
-
-	// When true, the branch name field in Save drawers is read-only.
-	EnforceTemplate *bool `json:"enforceTemplate,omitempty"`
-}
-
-func (RepositoryBranchOptions) OpenAPIModelName() string {
-	return OpenAPIPrefix + "BranchOptions"
-}
-
-type RepositoryPullRequestOptions struct {
-	// Template for pull request titles.
-	// Supports the same variables as BranchOptions.NameTemplate
-	// ({{random}} is available but rarely useful here).
-	// When empty, the first line of the commit message is used.
-	TitleTemplate *string `json:"titleTemplate,omitempty"`
-
-	// When true, the PR title field in Save drawers is read-only.
-	EnforceTemplate *bool `json:"enforceTemplate,omitempty"`
-
-	// Whether we should show dashboard previews for pull requests.
-	// By default, this is false (i.e. we will not create previews).
-	GenerateDashboardPreviews *bool `json:"generateDashboardPreviews,omitempty"`
-}
-
-func (RepositoryPullRequestOptions) OpenAPIModelName() string {
-	return OpenAPIPrefix + "PullRequestOptions"
-}
-
-type RepositorySpec struct {
-	// The repository display name (shown in the UI)
-	Title string `json:"title"`
-
-	// Repository description
-	Description *string `json:"description,omitempty"`
-
-	// Commit message options. Currently only contains the template used by
-	// single-resource UI operations; future siblings (bulk, sync) can live here.
-	Commit *RepositoryCommitOptions `json:"commit,omitempty"`
-
-	// Branch naming options. Only meaningful when Workflows includes "branch".
-	Branch *RepositoryBranchOptions `json:"branch,omitempty"`
-
-	// Pull request options. Only meaningful when Workflows includes "branch".
-	PullRequest *RepositoryPullRequestOptions `json:"pullRequest,omitempty"`
-
-	// UI driven Workflow that allow changes to the contends of the repository.
-	// The order is relevant for defining the precedence of the workflows.
-	// When empty, the repository does not support any edits (eg, readonly)
-	Workflows []RepositorySpecWorkflows `json:"workflows"`
-
-	// Sync settings -- how values are pulled from the repository into grafana
-	Sync RepositorySyncOptions `json:"sync"`
-
-	// The repository type.  When selected oneOf the values below should be non-nil
-	Type RepositorySpecType `json:"type"`
-
-	// Webhook settings for the repository.
-	// When specified, the base URL overrides the auto-detected Grafana public URL
-	// used to register webhooks with the external Git provider.
-	Webhook *RepositoryWebhookConfig `json:"webhook,omitempty"`
-
-	// The repository on the local file system.
-	// Mutually exclusive with local | github.
-	Local *RepositoryLocalRepositoryConfig `json:"local,omitempty"`
-
-	// The repository on GitHub.
-	// Mutually exclusive with local | github | git.
-	Github *RepositoryGitHubRepositoryConfig `json:"github,omitempty"`
-
-	// The repository on a self-managed GitHub Enterprise Server (GHES).
-	// Mutually exclusive with local | github | git.
-	GithubEnterprise *RepositoryGitHubEnterpriseRepositoryConfig `json:"githubEnterprise,omitempty"`
-
-	// The repository on Git.
-	// Mutually exclusive with local | github | git.
-	Git *RepositoryGitRepositoryConfig `json:"git,omitempty"`
-
-	// The repository on Bitbucket.
-	// Mutually exclusive with local | github | git.
-	Bitbucket *RepositoryBitbucketRepositoryConfig `json:"bitbucket,omitempty"`
-
-	// The repository on GitLab.
-	// Mutually exclusive with local | github | git.
-	Gitlab *RepositoryGitLabRepositoryConfig `json:"gitlab,omitempty"`
-
-	// The connection the repository references.
-	// This means the Repository is interacting with git via a Connection.
-	Connection *RepositoryConnectionInfo `json:"connection,omitempty"`
-}
-
-func (RepositorySpec) OpenAPIModelName() string {
-	return OpenAPIPrefix + "RepositorySpec"
-}
-
-// SyncTargetType defines where we want all values to resolve
-// +enum
-type RepositorySyncOptionsTarget string
-
-// RepositoryType values
-const (
-	// Resources are saved in the global context
-	// Only one repository may specify the `instance` target
-	// When this exists, the UI will promote writing to the instance repo
-	// rather than the grafana database (where possible)
-	RepositorySyncOptionsTargetInstance RepositorySyncOptionsTarget = "instance"
-
-	// Resources will be saved into a folder managed by this repository
-	// It will contain a copy of everything from the remote
-	// The folder k8s name will be the same as the repository k8s name
-	RepositorySyncOptionsTargetFolder RepositorySyncOptionsTarget = "folder"
-
-	// Resources are saved at the top level without a wrapper folder.
-	// Like `folder`, multiple `folderless` repositories may coexist with each
-	// other, with `folder` repositories, and with unprovisioned resources.
-	// Unlike `folder`, no repo-named container folder is created: files at the
-	// repository path root become top-level resources and subdirectories become
-	// top-level folders. Ownership is tracked per-resource via manager
-	// annotations rather than by folder containment.
-	RepositorySyncOptionsTargetFolderless RepositorySyncOptionsTarget = "folderless"
-)
-
-type RepositorySyncOptions struct {
-	// Enabled must be saved as true before any sync job will run
-	Enabled bool `json:"enabled"`
-
-	// Where values should be saved
-	Target RepositorySyncOptionsTarget `json:"target"`
-
-	// Shared folder target
-	// The value is a reference to the Kubernetes metadata name of the folder in the same namespace
-	// Folder string `json:"folder,omitempty"`
-
-	// The interval between sync runs.
-	// The system defines a default value for this field, which will overwrite the
-	// user-defined one in case the latter is zero or lower than the system-defined one.
-	IntervalSeconds *int64 `json:"intervalSeconds,omitempty"`
-}
-
-func (RepositorySyncOptions) OpenAPIModelName() string {
-	return OpenAPIPrefix + "SyncOptions"
-}
-
-type RepositoryWebhookConfig struct {
-	// Base URL of the Grafana instance used to construct the webhook endpoint
-	// registered with the external Git provider. Only the base URL should be
-	// provided (e.g. `https://grafana.example.com`); the API path, namespace,
-	// and resource name are appended automatically. Trailing slashes are stripped.
-	// Must be a valid HTTP or HTTPS URL.
-	BaseUrl *string `json:"baseUrl,omitempty"`
-
-	// Disabled turns off webhook integration for this repository. When true,
-	// Grafana will not register or receive webhook events from the Git provider
-	// and will poll the repository on an interval instead. Use this when Grafana
-	// is not reachable from the public internet.
-	Disabled *bool `json:"disabled,omitempty"`
-}
-
-func (RepositoryWebhookConfig) OpenAPIModelName() string {
-	return OpenAPIPrefix + "WebhookConfig"
-}
-
-// The status of a Repository.
-// This is expected never to be created by a kubectl call or similar, and is expected to rarely (if ever) be edited manually.
-// As such, it is also a little less well structured than the spec, such as conditional-but-ever-present fields.
-type RepositoryStatus struct {
-	// The generation of the spec last time reconciliation ran
-	ObservedGeneration int64 `json:"observedGeneration"`
-
-	// FieldErrors are errors that occurred during validation of the repository spec.
-	// These errors are intended to help users identify and fix issues in the spec.
-	// +listType=atomic
-	FieldErrors []RepositoryErrorDetails `json:"fieldErrors,omitempty"`
-
-	// Conditions represent the latest available observations of the repository's state.
-	// +listType=map
-	// +listMapKey=type
-	// +patchMergeKey=type
-	// +patchStrategy=merge
-	Conditions []RepositoryCondition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
-
-	// This will get updated with the current health status (and updated periodically)
-	Health RepositoryHealthStatus `json:"health"`
-
-	// Sync information with the last sync information
-	Sync RepositorySyncStatus `json:"sync"`
-
-	// The object count when sync last ran
-	// +listType=atomic
-	Stats []ResourceCount `json:"stats,omitempty"`
-
-	// Webhook Information (if applicable)
-	Webhook *RepositoryWebhookStatus `json:"webhook"`
-
-	// Token will get updated with current token information
-	Token RepositoryTokenStatus `json:"token"`
-
-	// Error information during repository deletion (if any).
-	// Deprecated: prefer the structured Deletion field. Retained for
-	// backwards compatibility with clients that read the concise string.
-	DeleteError *string `json:"deleteError,omitempty"`
-
-	// Deletion reports the progress of an in-progress deletion and the problem
-	// blocking it, so a client can explain the holdup and force-remove the
-	// blocking finalizer. Populated only while the repository is Terminating.
-	Deletion *RepositoryDeletionStatus `json:"deletion,omitempty"`
-
-	// Quota contains the configured quota limits for this repository
-	Quota RepositoryQuotaStatus `json:"quota"`
-}
-
-func (RepositoryStatus) OpenAPIModelName() string {
-	return OpenAPIPrefix + "RepositoryStatus"
-}
-
-// Mirrors metav1.Condition with the same JSON encoding: lastTransitionTime is an RFC3339 timestamp, or null when unset.
-type RepositoryCondition struct {
-	// type of condition in CamelCase or in foo.example.com/CamelCase.
-	Type string `json:"type"`
-	// status of the condition, one of True, False, Unknown.
-	Status string `json:"status"`
-	// observedGeneration represents the .metadata.generation that the condition was set based upon.
-	ObservedGeneration *int64 `json:"observedGeneration,omitempty"`
-	// lastTransitionTime is the last time the condition transitioned from one status to another.
-	LastTransitionTime *string `json:"lastTransitionTime"`
-	// reason contains a programmatic identifier indicating the reason for the condition's last transition.
-	Reason string `json:"reason"`
-	// message is a human readable message indicating details about the transition.
-	Message string `json:"message"`
-}
-
-func (RepositoryCondition) OpenAPIModelName() string {
-	return OpenAPIPrefix + "RepositoryCondition"
-}
-
-type RepositorySyncStatus struct {
-	// pending, running, success, error
-	State RepositoryJobState `json:"state"`
-
-	// The ID for the job that ran this sync
-	Job *string `json:"job,omitempty"`
-
-	// When the sync job started
-	Started *int64 `json:"started,omitempty"`
-
-	// When the sync job finished
-	Finished *int64 `json:"finished,omitempty"`
-
-	// When the controller last attempted a sync or an interval check (Unix milliseconds).
-	LastChecked *int64 `json:"lastChecked,omitempty"`
-
-	// When the next sync check is scheduled
-	Scheduled *int64 `json:"scheduled,omitempty"`
-
-	// Summary messages (will be shown to users)
-	// +listType=atomic
-	Message []string `json:"message"`
-
-	// The repository ref when the last successful sync ran
-	LastRef *string `json:"lastRef,omitempty"`
-
-	// Incremental synchronization for versioned repositories
-	Incremental *bool `json:"incremental,omitempty"`
-}
-
-func (RepositorySyncStatus) OpenAPIModelName() string {
-	return OpenAPIPrefix + "SyncStatus"
-}
-
-type RepositoryWebhookStatus struct {
-	// TODO: consolidate ID and UUID into a single string identifier in the next api version.
-	Id   *int64  `json:"id,omitempty"`
-	Uuid *string `json:"uuid,omitempty"`
-
-	Url              *string  `json:"url,omitempty"`
-	SubscribedEvents []string `json:"subscribedEvents,omitempty"`
-	LastEvent        *int64   `json:"lastEvent,omitempty"`
-	LastRotated      *int64   `json:"lastRotated,omitempty"`
-}
-
-func (RepositoryWebhookStatus) OpenAPIModelName() string {
-	return OpenAPIPrefix + "WebhookStatus"
-}
-
-type RepositoryTokenStatus struct {
-	LastUpdated int64 `json:"lastUpdated,omitempty"`
-	Expiration  int64 `json:"expiration,omitempty"`
-}
-
-func (RepositoryTokenStatus) OpenAPIModelName() string {
-	return OpenAPIPrefix + "TokenStatus"
-}
-
-type ConnectionTokenStatus = RepositoryTokenStatus
-
-// QuotaStatus represents the quota limits configured for this repository.
-type RepositoryQuotaStatus struct {
-	// MaxRepositories is the maximum number of repositories allowed.
-	// 0 means unlimited.
-	MaxRepositories *int64 `json:"maxRepositories,omitempty"`
-
-	// MaxResourcesPerRepository is the maximum number of resources allowed per repository.
-	// 0 means unlimited.
-	MaxResourcesPerRepository *int64 `json:"maxResourcesPerRepository,omitempty"`
-
-	// UpdatedAt is when the controller last successfully refreshed these quota limits.
-	// It is expressed as Unix milliseconds. 0 means the quota limits have not been refreshed yet.
-	UpdatedAt *int64 `json:"updatedAt,omitempty"`
-}
-
-func (RepositoryQuotaStatus) OpenAPIModelName() string {
-	return OpenAPIPrefix + "QuotaStatus"
-}
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type RepositoryList struct {
-	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
-
-	// +listType=atomic
-	Items []Repository `json:"items"`
-}
-
-func (RepositoryList) OpenAPIModelName() string {
-	return OpenAPIPrefix + "RepositoryList"
-}
-
 // The kubernetes action required when loading a given resource
 // +enum
 type ResourceAction string
@@ -810,6 +239,7 @@ const (
 
 // This is a container type for any resource type
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +k8s:deepcopy-gen=true
 type ResourceWrapper struct {
 	metav1.TypeMeta `json:",inline"`
 
@@ -843,6 +273,7 @@ func (ResourceWrapper) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ResourceWrapper"
 }
 
+// +k8s:deepcopy-gen=true
 type ResourceType struct {
 	Group    string `json:"group,omitempty"`
 	Version  string `json:"version,omitempty"`
@@ -857,6 +288,7 @@ func (ResourceType) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ResourceType"
 }
 
+// +k8s:deepcopy-gen=true
 type ResourceObjects struct {
 	// The identified type for this object
 	Type ResourceType `json:"type"`
@@ -882,6 +314,7 @@ func (ResourceObjects) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ResourceObjects"
 }
 
+// +k8s:deepcopy-gen=true
 type ResourceRepositoryInfo struct {
 	// The repository type
 	Type RepositorySpecType `json:"type"`
@@ -900,6 +333,7 @@ func (ResourceRepositoryInfo) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ResourceRepositoryInfo"
 }
 
+// +k8s:deepcopy-gen=true
 type RepositoryURLs struct {
 	// A URL pointing to the repository this lives in
 	RepositoryURL string `json:"repositoryURL,omitempty"`
@@ -918,8 +352,22 @@ func (RepositoryURLs) OpenAPIModelName() string {
 	return OpenAPIPrefix + "RepositoryURLs"
 }
 
+// ToJob converts the URLs to the type a job status stores, leaving empty URLs unset.
+func (u *RepositoryURLs) ToJob() *JobRepositoryURLs {
+	if u == nil {
+		return nil
+	}
+	return &JobRepositoryURLs{
+		RepositoryURL:     optional.NonZero(u.RepositoryURL),
+		SourceURL:         optional.NonZero(u.SourceURL),
+		NewPullRequestURL: optional.NonZero(u.NewPullRequestURL),
+		CompareURL:        optional.NonZero(u.CompareURL),
+	}
+}
+
 // Information we can get just from the file listing
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +k8s:deepcopy-gen=true
 type FileList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
@@ -932,6 +380,7 @@ func (FileList) OpenAPIModelName() string {
 	return OpenAPIPrefix + "FileList"
 }
 
+// +k8s:deepcopy-gen=true
 type FileItem struct {
 	Path     string `json:"path"`
 	Size     int64  `json:"size,omitempty"`
@@ -946,6 +395,7 @@ func (FileItem) OpenAPIModelName() string {
 
 // Information we can get just from the file listing
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +k8s:deepcopy-gen=true
 type ResourceList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
@@ -958,6 +408,7 @@ func (ResourceList) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ResourceList"
 }
 
+// +k8s:deepcopy-gen=true
 type ResourceListItem struct {
 	Path     string `json:"path"`
 	Group    string `json:"group"`
@@ -976,6 +427,7 @@ func (ResourceListItem) OpenAPIModelName() string {
 
 // Information we can get just from the file listing
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +k8s:deepcopy-gen=true
 type ResourceStats struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
@@ -999,6 +451,7 @@ func (ResourceStats) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ResourceStats"
 }
 
+// +k8s:deepcopy-gen=true
 type ManagerStats struct {
 	// Manager kind
 	Kind utils.ManagerKind `json:"kind,omitempty"`
@@ -1014,6 +467,7 @@ func (ManagerStats) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ManagerStats"
 }
 
+// +k8s:deepcopy-gen=true
 type ResourceCount struct {
 	Group    string `json:"group"`
 	Resource string `json:"resource"`
@@ -1026,6 +480,7 @@ func (ResourceCount) OpenAPIModelName() string {
 
 // What a single manager manages.
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +k8s:deepcopy-gen=true
 type ResourceCountList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
@@ -1043,6 +498,7 @@ func (ResourceCountList) OpenAPIModelName() string {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // TODO: This type is deprecated and will be removed when we deprecate the test endpoint
 // We should use fieldErrors from status instead.
+// +k8s:deepcopy-gen=true
 type TestResults struct {
 	metav1.TypeMeta `json:",inline"`
 
@@ -1090,6 +546,36 @@ type ErrorDetails struct {
 	// BadValue is the value of the field that was determined to be invalid, if applicable.
 	// This can be any type. This field is optional and may be omitted if not relevant.
 	BadValue any `json:"badValue,omitempty"`
+}
+
+// ToRepositoryErrorDetails converts field errors to the type a repository status stores,
+// leaving empty fields unset.
+func ToRepositoryErrorDetails(in []ErrorDetails) []RepositoryErrorDetails {
+	if in == nil {
+		return nil
+	}
+	out := make([]RepositoryErrorDetails, len(in))
+	for i, e := range in {
+		out[i] = RepositoryErrorDetails{
+			Type:     string(e.Type),
+			Field:    optional.NonZero(e.Field),
+			Detail:   optional.NonZero(e.Detail),
+			Origin:   optional.NonZero(e.Origin),
+			BadValue: e.BadValue,
+		}
+	}
+	return out
+}
+
+// OpenAPIDefinition reuses the ErrorDetails schema, which leaves badValue untyped; the
+// generated definition would declare it an object although it holds any JSON value.
+func (RepositoryErrorDetails) OpenAPIDefinition() openapicommon.OpenAPIDefinition {
+	return ErrorDetails{}.OpenAPIDefinition()
+}
+
+// OpenAPIDefinition reuses the ErrorDetails schema; see RepositoryErrorDetails.
+func (ConnectionErrorDetails) OpenAPIDefinition() openapicommon.OpenAPIDefinition {
+	return ErrorDetails{}.OpenAPIDefinition()
 }
 
 // OpenAPIDefinition describes the inline value, including mutually exclusive operations.
@@ -1163,76 +649,22 @@ func (ErrorDetails) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ErrorDetails"
 }
 
-type (
-	RepositoryErrorDetails = ErrorDetails
-	ConnectionErrorDetails = ErrorDetails
-)
-
-// DeletionState is the phase of an in-progress repository deletion.
-// +enum
-type DeletionState string
-
-func (DeletionState) OpenAPIModelName() string {
-	return OpenAPIPrefix + "DeletionState"
-}
-
-const (
-	// DeletionStateBlocked indicates the latest finalizer pass failed and deletion
-	// did not complete. The controller keeps retrying, so a transient failure
-	// (a brief outage, an API conflict) may still clear on its own; a persistent
-	// one (credentials expired, a webhook that cannot be removed) needs the user
-	// to force-remove the blocking finalizer. Finalizer is the finalizer that
-	// failed on that pass.
-	//
-	// This is the only state the controller emits: status.deletion is written
-	// only when a pass fails. While finalizers are still running, status.deletion
-	// is absent, which (together with a set deletionTimestamp) is itself the
-	// "in progress" signal — so no separate Working state is needed.
-	DeletionStateBlocked DeletionState = "Blocked"
-)
-
-// DeletionCause classifies the error blocking repository deletion.
-// +enum
-type RepositoryDeletionStatusCause string
-
-func (RepositoryDeletionStatusCause) OpenAPIModelName() string {
-	return OpenAPIPrefix + "DeletionCause"
-}
-
-const (
-	// RepositoryDeletionStatusCauseUser indicates a failure that requires user intervention.
-	RepositoryDeletionStatusCauseUser RepositoryDeletionStatusCause = "user"
-	// RepositoryDeletionStatusCauseSystem indicates an infrastructure or unclassified failure.
-	RepositoryDeletionStatusCauseSystem RepositoryDeletionStatusCause = "system"
-)
-
-// DeletionStatus reports the progress of an in-progress deletion and the problem
-// blocking it. It is populated while the repository is Terminating and its
-// finalizers run, so a client can explain the holdup and force-remove the
-// blocking finalizer.
-type RepositoryDeletionStatus struct {
-	// State is the phase of the deletion.
-	State *DeletionState `json:"state,omitempty"`
-
-	// Finalizer names the finalizer whose teardown is blocking deletion, i.e.
-	// which deletion step failed. A client force-removing deletion removes exactly
-	// this finalizer.
-	Finalizer *string `json:"finalizer,omitempty"`
-
-	// Message is a human-readable explanation of what went wrong, suitable for
-	// showing to users.
-	Message *string `json:"message,omitempty"`
-
-	// Cause classifies the blocking error. It may be absent on older statuses.
-	Cause *RepositoryDeletionStatusCause `json:"cause,omitempty"`
-}
-
-func (RepositoryDeletionStatus) OpenAPIModelName() string {
-	return OpenAPIPrefix + "DeletionStatus"
-}
+// DeletionStateBlocked is the RepositoryDeletionStatus.State value indicating the latest
+// finalizer pass failed and deletion did not complete. The controller keeps retrying, so a transient failure
+// (a brief outage, an API conflict) may still clear on its own; a persistent
+// one (credentials expired, a webhook that cannot be removed) needs the user
+// to force-remove the blocking finalizer. Finalizer is the finalizer that
+// failed on that pass.
+//
+// This is the only state the controller emits: status.deletion is written
+// only when a pass fails. While finalizers are still running, status.deletion
+// is absent, which (together with a set deletionTimestamp) is itself the
+// "in progress" signal — so no separate Working state is needed.
+const DeletionStateBlocked = "Blocked"
 
 // HistoryList is a list of versions of a resource
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +k8s:deepcopy-gen=true
 type HistoryList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
@@ -1245,6 +677,7 @@ func (HistoryList) OpenAPIModelName() string {
 	return OpenAPIPrefix + "HistoryList"
 }
 
+// +k8s:deepcopy-gen=true
 type Author struct {
 	Name      string `json:"name"`
 	Username  string `json:"username"`
@@ -1255,6 +688,7 @@ func (Author) OpenAPIModelName() string {
 	return OpenAPIPrefix + "Author"
 }
 
+// +k8s:deepcopy-gen=true
 type HistoryItem struct {
 	Ref     string `json:"ref"`
 	Message string `json:"message"`
@@ -1268,6 +702,7 @@ func (HistoryItem) OpenAPIModelName() string {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +k8s:deepcopy-gen=true
 type RefList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
@@ -1280,6 +715,7 @@ func (RefList) OpenAPIModelName() string {
 	return OpenAPIPrefix + "RefList"
 }
 
+// +k8s:deepcopy-gen=true
 type RefItem struct {
 	// The name of the reference (branch or tag)
 	Name string `json:"name"`

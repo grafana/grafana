@@ -620,7 +620,7 @@ func (d *jobProcessor) processJob(ctx context.Context, recorder JobProgressRecor
 //     spec edit that may already have repaired the credentials.
 func repositoryAuthenticationFailed(r *provisioning.Repository) bool {
 	health := r.Status.Health
-	if health.Checked == 0 || health.Healthy || health.Error != provisioning.HealthFailureHealth {
+	if ptr.Deref(health.Checked, 0) == 0 || health.Healthy || ptr.Deref(health.Error, "") != provisioning.HealthFailureHealth {
 		return false
 	}
 

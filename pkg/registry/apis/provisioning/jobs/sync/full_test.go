@@ -945,7 +945,7 @@ func atQuota() *provisioning.Repository {
 				{Type: provisioning.ConditionTypeResourceQuota, Status: metav1.ConditionFalse, Reason: provisioning.ReasonQuotaExceeded},
 			}),
 			Quota: provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: new(int64(100))},
-			Stats: []provisioning.ResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 99}},
+			Stats: []provisioning.RepositoryResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 99}},
 		},
 	}
 }
@@ -1041,7 +1041,7 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 					Quota: provisioning.RepositoryQuotaStatus{
 						MaxResourcesPerRepository: new(int64(100)),
 					},
-					Stats: []provisioning.ResourceCount{
+					Stats: []provisioning.RepositoryResourceCount{
 						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 50},
 						{Group: "alerting.grafana.app", Resource: "rules", Count: 40},
 					},
@@ -1064,7 +1064,7 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 					Quota: provisioning.RepositoryQuotaStatus{
 						MaxResourcesPerRepository: new(int64(100)),
 					},
-					Stats: []provisioning.ResourceCount{
+					Stats: []provisioning.RepositoryResourceCount{
 						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 90},
 					},
 				},
@@ -1086,7 +1086,7 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 					Quota: provisioning.RepositoryQuotaStatus{
 						MaxResourcesPerRepository: new(int64(100)),
 					},
-					Stats: []provisioning.ResourceCount{
+					Stats: []provisioning.RepositoryResourceCount{
 						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 90},
 					},
 				},
@@ -1108,7 +1108,7 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 					Quota: provisioning.RepositoryQuotaStatus{
 						MaxResourcesPerRepository: new(int64(100)),
 					},
-					Stats: []provisioning.ResourceCount{
+					Stats: []provisioning.RepositoryResourceCount{
 						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 110},
 					},
 				},
@@ -1130,7 +1130,7 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 					Quota: provisioning.RepositoryQuotaStatus{
 						MaxResourcesPerRepository: new(int64(100)),
 					},
-					Stats: []provisioning.ResourceCount{
+					Stats: []provisioning.RepositoryResourceCount{
 						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 120},
 					},
 				},
@@ -1152,7 +1152,7 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 					Quota: provisioning.RepositoryQuotaStatus{
 						MaxResourcesPerRepository: new(int64(100)),
 					},
-					Stats: []provisioning.ResourceCount{
+					Stats: []provisioning.RepositoryResourceCount{
 						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 110},
 					},
 				},
@@ -1174,7 +1174,7 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 					Quota: provisioning.RepositoryQuotaStatus{
 						MaxResourcesPerRepository: new(int64(100)),
 					},
-					Stats: []provisioning.ResourceCount{
+					Stats: []provisioning.RepositoryResourceCount{
 						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 40},
 						{Group: "folder.grafana.app", Resource: "folders", Count: 56},
 					},

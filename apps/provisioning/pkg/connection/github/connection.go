@@ -9,6 +9,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -464,7 +465,7 @@ func (c *Connection) validatePermissions(target permissionTarget, id string, per
 		},
 	}
 
-	if c.obj.Spec.Webhook == nil || !c.obj.Spec.Webhook.Disabled {
+	if c.obj.Spec.Webhook == nil || !ptr.Deref(c.obj.Spec.Webhook.Disabled, false) {
 		requiredPerms["webhooks"] = struct {
 			current  Permission
 			required Permission
@@ -494,7 +495,7 @@ func (c *Connection) validatePermissions(target permissionTarget, id string, per
 					name,
 					toAppPermissionString(perm.required),
 					toAppPermissionString(perm.current),
-					c.obj.Spec.Url,
+					ptr.Deref(c.obj.Spec.Url, ""),
 				)
 				fieldPath = field.NewPath("spec", string(c.obj.Spec.Type), "installationID").String()
 			}

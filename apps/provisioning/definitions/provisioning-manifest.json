@@ -763,7 +763,7 @@
                                 "additionalProperties": false,
                                 "properties": {
                                     "conditions": {
-                                        "description": "Conditions represent the latest available observations of the repository's state.\n+listType=map\n+listMapKey=type",
+                                        "description": "Conditions represent the latest available observations of the repository's state.\n+listType=map\n+listMapKey=type\n+patchMergeKey=type\n+patchStrategy=merge",
                                         "items": {
                                             "$ref": "#/components/schemas/Condition"
                                         },
@@ -1271,7 +1271,7 @@
                                 "additionalProperties": false,
                                 "properties": {
                                     "conditions": {
-                                        "description": "Conditions represent the latest available observations of the connection's state.\n+listType=map\n+listMapKey=type",
+                                        "description": "Conditions represent the latest available observations of the connection's state.\n+listType=map\n+listMapKey=type\n+patchMergeKey=type\n+patchStrategy=merge",
                                         "items": {
                                             "$ref": "#/components/schemas/Condition"
                                         },
@@ -1299,7 +1299,8 @@
                                 },
                                 "required": [
                                     "observedGeneration",
-                                    "health"
+                                    "health",
+                                    "token"
                                 ],
                                 "type": "object"
                             }
@@ -2953,7 +2954,7 @@
                                 "additionalProperties": false,
                                 "properties": {
                                     "conditions": {
-                                        "description": "Conditions represent the latest available observations of the repository's state.\n+listType=map\n+listMapKey=type",
+                                        "description": "Conditions represent the latest available observations of the repository's state.\n+listType=map\n+listMapKey=type\n+patchMergeKey=type\n+patchStrategy=merge",
                                         "items": {
                                             "$ref": "#/components/schemas/Condition"
                                         },
@@ -3461,7 +3462,7 @@
                                 "additionalProperties": false,
                                 "properties": {
                                     "conditions": {
-                                        "description": "Conditions represent the latest available observations of the connection's state.\n+listType=map\n+listMapKey=type",
+                                        "description": "Conditions represent the latest available observations of the connection's state.\n+listType=map\n+listMapKey=type\n+patchMergeKey=type\n+patchStrategy=merge",
                                         "items": {
                                             "$ref": "#/components/schemas/Condition"
                                         },
@@ -3489,7 +3490,8 @@
                                 },
                                 "required": [
                                     "observedGeneration",
-                                    "health"
+                                    "health",
+                                    "token"
                                 ],
                                 "type": "object"
                             }

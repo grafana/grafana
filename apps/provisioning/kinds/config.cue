@@ -2,8 +2,7 @@ package repository
 
 config: {
 	codegen: {
-		// The kinds are still served from hand-written Go types; only the manifest is generated.
-		goEnabled:                      false
+		goGenPath:                      "./pkg/apis"
 		enableOperatorStatusGeneration: false
 	}
 	definitions: {

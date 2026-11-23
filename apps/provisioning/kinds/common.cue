@@ -36,13 +36,13 @@ package repository
 	// Detail provides a human-readable explanation of what went wrong.
 	// This message may be shown directly to users and should be actionable.
 	detail?: string
-	// BadValue is the value of the field that was determined to be invalid, if applicable.
-	// This can be any type. This field is optional and may be omitted if not relevant.
-	badValue?: _
 	// Origin indicates where the error originated in validation, or the name of the external
 	// service that reported the error. This can be useful for tooling or debugging,
 	// and may reference a specific rule, function, or service. This field is optional and may be empty.
 	origin?: string
+	// BadValue is the value of the field that was determined to be invalid, if applicable.
+	// This can be any type. This field is optional and may be omitted if not relevant.
+	badValue?: _
 }
 
 // Mirrors metav1.Condition, which CUE cannot reference directly.

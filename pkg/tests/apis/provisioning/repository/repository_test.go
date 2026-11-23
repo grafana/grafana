@@ -1341,7 +1341,7 @@ func TestIntegrationProvisioning_WebhookRejectedForUnhealthyRepository(t *testin
 			return false
 		}
 		return repo.Status.ObservedGeneration == repo.Generation &&
-			repo.Status.Health.Checked > 0 &&
+			ptr.Deref(repo.Status.Health.Checked, 0) > 0 &&
 			!repo.Status.Health.Healthy
 	}, 15*time.Second, 500*time.Millisecond, "repository should be reconciled and marked unhealthy")
 
@@ -2124,7 +2124,7 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 		now := time.Now()
 		firstReconciledRepo.Status.ObservedGeneration = firstReconciledRepo.Generation
 		firstReconciledRepo.Status.Sync = provisioning.RepositorySyncStatus{
-			State:     provisioning.JobStateSuccess,
+			State:     provisioning.RepositoryJobStateSuccess,
 			Job:       firstReconciledRepo.Status.Sync.Job,
 			Started:   new(now.UnixMilli()),
 			Finished:  new(now.UnixMilli()),
@@ -2133,13 +2133,13 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 		}
 		firstReconciledRepo.Status.Health = provisioning.RepositoryHealthStatus{
 			Healthy: true,
-			Checked: now.UnixMilli(),
+			Checked: new(now.UnixMilli()),
 		}
 		firstReconciledRepo.Status.Token = provisioning.RepositoryTokenStatus{
-			LastUpdated: now.Add(-2 * time.Minute).UnixMilli(),
-			Expiration:  now.Add(-time.Minute).UnixMilli(),
+			LastUpdated: new(now.Add(-2 * time.Minute).UnixMilli()),
+			Expiration:  new(now.Add(-time.Minute).UnixMilli()),
 		}
-		firstReconciledRepo.Status.FieldErrors = []provisioning.ErrorDetails{}
+		firstReconciledRepo.Status.FieldErrors = []provisioning.RepositoryErrorDetails{}
 		firstReconciledRepo.Status.Conditions = provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{
 			{
 				Type:               provisioning.ConditionTypeReady,
@@ -2275,7 +2275,7 @@ func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *test
 			}
 			// Repository should be reconciled and marked unhealthy
 			return repo.Status.ObservedGeneration == repo.Generation &&
-				repo.Status.Health.Checked > 0 &&
+				ptr.Deref(repo.Status.Health.Checked, 0) > 0 &&
 				!repo.Status.Health.Healthy
 		}, 15*time.Second, 500*time.Millisecond, "repository should be reconciled and marked unhealthy")
 
@@ -2284,20 +2284,20 @@ func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *test
 		require.NoError(t, err)
 		assert.False(t, repo.Status.Health.Healthy, "repository should be unhealthy")
 		assert.Equal(t, repo.Generation, repo.Status.ObservedGeneration, "repository should be reconciled")
-		assert.Greater(t, repo.Status.Health.Checked, int64(0), "health check timestamp should be set")
+		assert.Greater(t, ptr.Deref(repo.Status.Health.Checked, 0), int64(0), "health check timestamp should be set")
 
 		// Verify fieldErrors are populated with validation errors - be strict and explicit
 		require.Len(t, repo.Status.FieldErrors, 1, "fieldErrors should contain exactly one error")
 
 		tokenError := repo.Status.FieldErrors[0]
 
-		assert.Equal(t, metav1.CauseTypeFieldValueInvalid, tokenError.Type, "Type must be FieldValueInvalid")
-		assert.Equal(t, "secure.token", tokenError.Field, "Field must be secure.token")
-		assert.Equal(t, "authentication failed: the Git server returned HTTP 401 Unauthorized", tokenError.Detail, "Detail must name the 401 the Git server returned")
+		assert.Equal(t, string(metav1.CauseTypeFieldValueInvalid), tokenError.Type, "Type must be FieldValueInvalid")
+		assert.Equal(t, "secure.token", ptr.Deref(tokenError.Field, ""), "Field must be secure.token")
+		assert.Equal(t, "authentication failed: the Git server returned HTTP 401 Unauthorized", ptr.Deref(tokenError.Detail, ""), "Detail must name the 401 the Git server returned")
 		assert.Empty(t, tokenError.Origin, "Origin must be empty")
 
 		t.Logf("Verified token fieldError: Type=%s, Field=%s, Detail=%s, Origin=%s",
-			tokenError.Type, tokenError.Field, tokenError.Detail, tokenError.Origin)
+			tokenError.Type, ptr.Deref(tokenError.Field, ""), ptr.Deref(tokenError.Detail, ""), ptr.Deref(tokenError.Origin, ""))
 	})
 
 	t.Run("repository with non-existent repository URL becomes unhealthy with fieldErrors", func(t *testing.T) {
@@ -2345,7 +2345,7 @@ func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *test
 			}
 			// Repository should be reconciled and marked unhealthy
 			return repo.Status.ObservedGeneration == repo.Generation &&
-				repo.Status.Health.Checked > 0 &&
+				ptr.Deref(repo.Status.Health.Checked, 0) > 0 &&
 				!repo.Status.Health.Healthy
 		}, 15*time.Second, 500*time.Millisecond, "repository should be reconciled and marked unhealthy")
 
@@ -2354,7 +2354,7 @@ func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *test
 		require.NoError(t, err)
 		assert.False(t, repo.Status.Health.Healthy, "repository should be unhealthy")
 		assert.Equal(t, repo.Generation, repo.Status.ObservedGeneration, "repository should be reconciled")
-		assert.Greater(t, repo.Status.Health.Checked, int64(0), "health check timestamp should be set")
+		assert.Greater(t, ptr.Deref(repo.Status.Health.Checked, 0), int64(0), "health check timestamp should be set")
 
 		// Verify fieldErrors are populated with validation errors - be strict and explicit
 		require.Len(t, repo.Status.FieldErrors, 1, "fieldErrors should contain exactly one error")
@@ -2362,13 +2362,13 @@ func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *test
 		tokenError := repo.Status.FieldErrors[0]
 
 		// Verify all fields explicitly - authorization check fails first before URL check
-		assert.Equal(t, metav1.CauseTypeFieldValueInvalid, tokenError.Type, "Type must be FieldValueInvalid")
-		assert.Equal(t, "secure.token", tokenError.Field, "Field must be secure.token")
-		assert.Equal(t, "authentication failed: the Git server returned HTTP 401 Unauthorized", tokenError.Detail, "Detail must name the 401 the Git server returned")
+		assert.Equal(t, string(metav1.CauseTypeFieldValueInvalid), tokenError.Type, "Type must be FieldValueInvalid")
+		assert.Equal(t, "secure.token", ptr.Deref(tokenError.Field, ""), "Field must be secure.token")
+		assert.Equal(t, "authentication failed: the Git server returned HTTP 401 Unauthorized", ptr.Deref(tokenError.Detail, ""), "Detail must name the 401 the Git server returned")
 		assert.Empty(t, tokenError.Origin, "Origin must be empty")
 
 		t.Logf("Verified token fieldError: Type=%s, Field=%s, Detail=%s, Origin=%s",
-			tokenError.Type, tokenError.Field, tokenError.Detail, tokenError.Origin)
+			tokenError.Type, ptr.Deref(tokenError.Field, ""), ptr.Deref(tokenError.Detail, ""), ptr.Deref(tokenError.Origin, ""))
 	})
 }
 
@@ -2429,7 +2429,7 @@ func TestIntegrationRepositoryController_FieldErrorsCleared(t *testing.T) {
 				return false
 			}
 			return repo.Status.ObservedGeneration == repo.Generation &&
-				repo.Status.Health.Checked > 0 &&
+				ptr.Deref(repo.Status.Health.Checked, 0) > 0 &&
 				repo.Status.Health.Healthy &&
 				len(repo.Status.FieldErrors) == 0
 		}, 15*time.Second, 500*time.Millisecond, "repository should be healthy")
@@ -2460,7 +2460,7 @@ func TestIntegrationRepositoryController_FieldErrorsCleared(t *testing.T) {
 				return false
 			}
 			return repo.Status.ObservedGeneration == repo.Generation &&
-				repo.Status.Health.Checked > 0 &&
+				ptr.Deref(repo.Status.Health.Checked, 0) > 0 &&
 				!repo.Status.Health.Healthy &&
 				len(repo.Status.FieldErrors) > 0
 		}, 15*time.Second, 500*time.Millisecond, "repository should be unhealthy with fieldErrors")
@@ -2494,7 +2494,7 @@ func TestIntegrationRepositoryController_FieldErrorsCleared(t *testing.T) {
 				return false
 			}
 			// Then check health
-			if repo.Status.Health.Checked == 0 || !repo.Status.Health.Healthy {
+			if ptr.Deref(repo.Status.Health.Checked, 0) == 0 || !repo.Status.Health.Healthy {
 				return false
 			}
 			// Finally check fieldErrors are cleared
@@ -2632,8 +2632,8 @@ func TestIntegrationRepositoryController_DefaultBranchUnavailable(t *testing.T) 
 				assert.Empty(collect, repo.Spec.Github.Branch)
 				assert.Less(collect, repo.Status.ObservedGeneration, repo.Generation)
 				assert.False(collect, repo.Status.Health.Healthy)
-				assert.Positive(collect, repo.Status.Health.Checked)
-				assert.Equal(collect, provisioning.HealthFailureHealth, repo.Status.Health.Error)
+				assert.Positive(collect, ptr.Deref(repo.Status.Health.Checked, 0))
+				assert.Equal(collect, provisioning.HealthFailureHealth, ptr.Deref(repo.Status.Health.Error, ""))
 				wantMessage := "failed to get repository metadata: " + repository.ErrServerUnavailable.Error()
 				assert.Equal(collect, []string{wantMessage}, repo.Status.Health.Message)
 

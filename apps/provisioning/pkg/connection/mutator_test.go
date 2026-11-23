@@ -283,7 +283,7 @@ func TestAdmissionMutator_MutateUpdateOAuthToken(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: provisioning.ConnectionSpec{
 					Type:                  cmp.Or(tt.newType, provisioning.ConnectionTypeGithub),
-					Url:                   tt.newURL,
+					Url:                   new(tt.newURL),
 					Oauth:                 tt.newOAuth,
 					GithubEnterpriseOAuth: githubEnterpriseConfig(tt.newServerURL),
 					GitOAuth:              tt.newGitOAuth,
@@ -351,7 +351,7 @@ func TestAdmissionMutator_Mutate_NormalizesConditionsOnStatusPatch(t *testing.T)
 func TestAdmissionMutator_Mutate_RunsForBundledSpecChange(t *testing.T) {
 	old := &provisioning.Connection{
 		ObjectMeta: metav1.ObjectMeta{Name: "test"},
-		Spec:       provisioning.ConnectionSpec{Type: provisioning.ConnectionTypeGithub, Url: "https://old.example.com"},
+		Spec:       provisioning.ConnectionSpec{Type: provisioning.ConnectionTypeGithub, Url: new("https://old.example.com")},
 		Secure:     resource.InlineSecureValues{provisioning.ConnectionSecureToken: resource.InlineSecureValue{Name: "old-token"}},
 	}
 	// Bundled onto a /status request: URL change without a new token must
@@ -359,7 +359,7 @@ func TestAdmissionMutator_Mutate_RunsForBundledSpecChange(t *testing.T) {
 	conn := old.DeepCopy()
 	conn.Spec.Oauth = &provisioning.ConnectionOAuthConfig{ClientID: "client"}
 	old.Spec.Oauth = &provisioning.ConnectionOAuthConfig{ClientID: "client"}
-	conn.Spec.Url = "https://new.example.com"
+	conn.Spec.Url = new("https://new.example.com")
 
 	factory := NewMockFactory(t)
 	factory.EXPECT().Mutate(mock.Anything, mock.Anything).Return(nil).Once()

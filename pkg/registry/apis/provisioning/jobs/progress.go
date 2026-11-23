@@ -7,13 +7,14 @@ import (
 	"sync"
 	"time"
 
+	"k8s.io/utils/ptr"
+
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/apps/provisioning/pkg/util/optional"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"k8s.io/utils/ptr"
 )
 
 // NotifyThrottleInterval is the minimum time between two persisted "immediate"
@@ -446,7 +447,7 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 	}
 	jobStatus.Warnings = warnings
 
-	jobStatus.Url = r.refURLs
+	jobStatus.Url = r.refURLs.ToJob()
 
 	tooManyErrors := r.maxErrors > 0 && r.errorCount >= r.maxErrors
 	finalMessage := r.finalMessage

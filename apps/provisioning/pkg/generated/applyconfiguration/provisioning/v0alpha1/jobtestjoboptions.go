@@ -4,23 +4,15 @@
 
 package v0alpha1
 
-import (
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-)
-
 // JobTestJobOptionsApplyConfiguration represents a declarative configuration of the JobTestJobOptions type for use
 // with apply.
-//
-// TestJobOptions configures a synthetic performance-testing job. The job does
-// no real work; it sleeps for Duration and then completes. It is only usable
-// when the provisioning.performance feature flag is enabled.
 type JobTestJobOptionsApplyConfiguration struct {
-	// Duration is how long the job should sleep before completing, expressed as
-	// a Go duration string (for example "10s" or "2m"). It must be positive and
-	// is capped by the server to keep a single job's runtime predictable.
-	Duration *v1.Duration `json:"duration,omitempty"`
-	// ProgressUpdates controls how many progress notifications the job emits
-	// while running. A value of 0 uses the server default.
+	// Duration is how long the job should sleep before completing, expressed as a
+	// Go duration string (for example "10s" or "2m"). It must be positive and is
+	// capped by the server to keep a single job's runtime predictable.
+	Duration *string `json:"duration,omitempty"`
+	// ProgressUpdates controls how many progress notifications the job emits while
+	// running. A value of 0 uses the server default.
 	ProgressUpdates *int32 `json:"progressUpdates,omitempty"`
 }
 
@@ -33,7 +25,7 @@ func JobTestJobOptions() *JobTestJobOptionsApplyConfiguration {
 // WithDuration sets the Duration field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Duration field is set to the value of the last call.
-func (b *JobTestJobOptionsApplyConfiguration) WithDuration(value v1.Duration) *JobTestJobOptionsApplyConfiguration {
+func (b *JobTestJobOptionsApplyConfiguration) WithDuration(value string) *JobTestJobOptionsApplyConfiguration {
 	b.Duration = &value
 	return b
 }

@@ -18,6 +18,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
@@ -201,7 +202,7 @@ func TestIntegrationHealth(t *testing.T) {
 		repoObj, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{})
 		require.NoError(t, err)
 		beforeTest := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
-		t.Logf("Before test - Healthy: %v, Checked: %d", beforeTest.Status.Health.Healthy, beforeTest.Status.Health.Checked)
+		t.Logf("Before test - Healthy: %v, Checked: %d", beforeTest.Status.Health.Healthy, ptr.Deref(beforeTest.Status.Health.Checked, 0))
 
 		// Call the test endpoint
 		result := helper.AdminREST.Post().
@@ -227,7 +228,7 @@ func TestIntegrationHealth(t *testing.T) {
 		repoObj, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{})
 		require.NoError(t, err)
 		afterTest := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
-		t.Logf("After test - Healthy: %v, Checked: %d", afterTest.Status.Health.Healthy, afterTest.Status.Health.Checked)
+		t.Logf("After test - Healthy: %v, Checked: %d", afterTest.Status.Health.Healthy, ptr.Deref(afterTest.Status.Health.Checked, 0))
 
 		// For unhealthy repositories, the timestamp should change as the health check will be triggered
 		require.NotEqual(t, beforeTest.Status.Health.Checked, afterTest.Status.Health.Checked, "should change the timestamp for unhealthy repository check")
@@ -259,7 +260,7 @@ func TestIntegrationHealth(t *testing.T) {
 		repoObj, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{})
 		require.NoError(t, err)
 		finalRepo := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
-		t.Logf("After recreating directory - Healthy: %v, Checked: %d", finalRepo.Status.Health.Healthy, finalRepo.Status.Health.Checked)
+		t.Logf("After recreating directory - Healthy: %v, Checked: %d", finalRepo.Status.Health.Healthy, ptr.Deref(finalRepo.Status.Health.Checked, 0))
 		require.True(t, finalRepo.Status.Health.Healthy, "repository should be healthy again after recreating directory")
 		require.Empty(t, finalRepo.Status.Health.Error, "should have no error after recreating directory")
 		// When healthy again, fieldErrors should be empty
@@ -337,9 +338,9 @@ func TestIntegrationProvisioning_UnhealthyRepositorySkipsJobs(t *testing.T) {
 			return
 		}
 		r := common.MustFromUnstructured[provisioning.Repository](t, obj)
-		assert.Greater(c, r.Status.Health.Checked, int64(0), "health check has not run yet")
+		assert.Greater(c, ptr.Deref(r.Status.Health.Checked, 0), int64(0), "health check has not run yet")
 		assert.False(c, r.Status.Health.Healthy, "repository should be unhealthy")
-		assert.Equal(c, provisioning.HealthFailureHealth, r.Status.Health.Error)
+		assert.Equal(c, provisioning.HealthFailureHealth, ptr.Deref(r.Status.Health.Error, ""))
 		ready := common.FindCondition(provisioning.ConditionsToMeta(r.Status.Conditions), provisioning.ConditionTypeReady)
 		if assert.NotNil(c, ready, "Ready condition should exist") {
 			assert.Equal(c, metav1.ConditionFalse, ready.Status)

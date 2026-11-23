@@ -36,7 +36,7 @@ func TestWriteJob_PreservesStatusAndLabels(t *testing.T) {
 	historic := list.Items[0]
 	assert.Equal(t, int64(7), ptr.Deref(historic.Status.ProgressUpdates, 0),
 		"historic job should preserve the number of progress updates the job went through")
-	assert.Equal(t, provisioning.JobStateSuccess, ptr.Deref(historic.Status.State, ""))
+	assert.Equal(t, provisioning.HistoricJobStateSuccess, ptr.Deref(historic.Status.State, ""))
 	assert.Empty(t, historic.ResourceVersion, "historic job gets its own resource version")
 	assert.Equal(t, "my-repo", historic.Labels[LabelRepository])
 	assert.Equal(t, "original-uid", historic.Labels[LabelJobOriginalUID])

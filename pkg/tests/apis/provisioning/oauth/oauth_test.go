@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
@@ -138,7 +139,7 @@ func TestIntegrationProvisioning_OAuthConnectionUnauthorized(t *testing.T) {
 			return
 		}
 		assert.Equal(collect, conn.Generation, conn.Status.ObservedGeneration, "controller should have reconciled the connection")
-		assert.Positive(collect, conn.Status.Health.Checked, "health check should have run")
+		assert.Positive(collect, ptr.Deref(conn.Status.Health.Checked, 0), "health check should have run")
 		assert.False(collect, conn.Status.Health.Healthy, "unauthorized connection should be unhealthy")
 		ready := meta.FindStatusCondition(provisioning.ConditionsToMeta(conn.Status.Conditions), provisioning.ConditionTypeReady)
 		if assert.NotNil(collect, ready, "connection should have a Ready condition") {

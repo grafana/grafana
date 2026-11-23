@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
@@ -741,7 +742,7 @@ func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 			repo := common.MustFromUnstructured[provisioning.Repository](t, repoStatus)
 
 			// Log the actual health status for debugging
-			t.Logf("Health status: Healthy=%v, Error=%q", repo.Status.Health.Healthy, repo.Status.Health.Error)
+			t.Logf("Health status: Healthy=%v, Error=%q", repo.Status.Health.Healthy, ptr.Deref(repo.Status.Health.Error, ""))
 			t.Logf("Field errors: %+v", repo.Status.FieldErrors)
 
 			// Repository should be marked unhealthy
@@ -753,9 +754,9 @@ func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 			// Look for branch protection error on spec.workflows
 			foundBranchProtectionError := false
 			for _, fieldErr := range repo.Status.FieldErrors {
-				if fieldErr.Field == "spec.workflows" &&
-					strings.Contains(fieldErr.Detail, "protection rules that prevent direct pushes") &&
-					strings.Contains(fieldErr.Detail, "required pull request reviews") {
+				if ptr.Deref(fieldErr.Field, "") == "spec.workflows" &&
+					strings.Contains(ptr.Deref(fieldErr.Detail, ""), "protection rules that prevent direct pushes") &&
+					strings.Contains(ptr.Deref(fieldErr.Detail, ""), "required pull request reviews") {
 					foundBranchProtectionError = true
 					break
 				}
@@ -842,7 +843,7 @@ func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 			repo := common.MustFromUnstructured[provisioning.Repository](t, repoStatus)
 
 			// Log the actual health status for debugging
-			t.Logf("Health status: Healthy=%v, Error=%q", repo.Status.Health.Healthy, repo.Status.Health.Error)
+			t.Logf("Health status: Healthy=%v, Error=%q", repo.Status.Health.Healthy, ptr.Deref(repo.Status.Health.Error, ""))
 			t.Logf("Field errors: %+v", repo.Status.FieldErrors)
 
 			// Repository should be marked unhealthy
@@ -854,9 +855,9 @@ func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 			// Look for branch lock error on spec.workflows
 			foundBranchLockError := false
 			for _, fieldErr := range repo.Status.FieldErrors {
-				if fieldErr.Field == "spec.workflows" &&
-					strings.Contains(fieldErr.Detail, "protection rules that prevent direct pushes") &&
-					strings.Contains(fieldErr.Detail, "branch is locked") {
+				if ptr.Deref(fieldErr.Field, "") == "spec.workflows" &&
+					strings.Contains(ptr.Deref(fieldErr.Detail, ""), "protection rules that prevent direct pushes") &&
+					strings.Contains(ptr.Deref(fieldErr.Detail, ""), "branch is locked") {
 					foundBranchLockError = true
 					break
 				}
@@ -942,15 +943,15 @@ func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 			repo := common.MustFromUnstructured[provisioning.Repository](t, repoStatus)
 
 			// Log the actual health status for debugging
-			t.Logf("Health status: Healthy=%v, Error=%q", repo.Status.Health.Healthy, repo.Status.Health.Error)
+			t.Logf("Health status: Healthy=%v, Error=%q", repo.Status.Health.Healthy, ptr.Deref(repo.Status.Health.Error, ""))
 			t.Logf("Field errors: %+v", repo.Status.FieldErrors)
 
 			// Verify health check has run (checked timestamp should be set)
-			assert.Greater(collect, repo.Status.Health.Checked, int64(0), "health check should have run")
+			assert.Greater(collect, ptr.Deref(repo.Status.Health.Checked, 0), int64(0), "health check should have run")
 
 			// Verify no field errors related to branch protection
 			for _, fieldErr := range repo.Status.FieldErrors {
-				assert.NotContains(collect, fieldErr.Detail, "protection rules that prevent direct pushes",
+				assert.NotContains(collect, ptr.Deref(fieldErr.Detail, ""), "protection rules that prevent direct pushes",
 					"unprotected branch should not have branch protection errors")
 			}
 		}, 15*time.Second, 500*time.Millisecond, "health check should run without branch protection errors")

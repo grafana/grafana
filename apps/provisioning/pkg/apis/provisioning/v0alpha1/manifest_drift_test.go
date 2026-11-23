@@ -32,10 +32,7 @@ var externalGoDefinitions = map[string]spec.Schema{
 // Differences that the CUE to OpenAPI conversion cannot avoid, keyed by "<Kind> <path>" and
 // matched on the exact difference, so another mismatch at the same path still fails.
 // The test fails when one of them stops occurring, so fixed entries get removed.
-var knownDifferences = map[string]string{
-	// A single-value disjunction becomes `const`, which kube-openapi has no field for.
-	"Repository status.deletion.state": "enum is [] in CUE, [Blocked] in Go",
-}
+var knownDifferences = map[string]string{}
 
 func TestManifestMatchesGoTypes(t *testing.T) {
 	knownSeen := map[string]bool{}

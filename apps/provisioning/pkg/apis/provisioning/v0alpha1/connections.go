@@ -6,32 +6,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 )
 
-// When this code is changed, make sure to update the code generation.
-// As of writing, this can be done via the hack dir in the root of the repo: ./hack/update-codegen.sh provisioning
-// If you've opened the generated files in this dir at some point in VSCode, you may also have to re-open them to clear errors.
-// +genclient
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type Connection struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	Spec ConnectionSpec `json:"spec,omitempty"`
-	// Secure is keyed by ConnectionSecureKeys. Its OpenAPI schema is ConnectionSecure.
-	Secure resource.InlineSecureValues `json:"secure,omitzero,omitempty"`
-	Status ConnectionStatus            `json:"status,omitempty"`
-}
-
-func (Connection) OpenAPIModelName() string {
-	return OpenAPIPrefix + "Connection"
-}
-
-func (o *Connection) GetSecureValues() resource.InlineSecureValues { return o.Secure }
-
-func (o *Connection) SetSecureValues(values resource.InlineSecureValues) error {
-	o.Secure = values
-	return nil
-}
-
 // Keys accepted in Connection.Secure. They must match the JSON names in ConnectionSecure.
 const (
 	ConnectionSecurePrivateKey   = "privateKey"
@@ -65,140 +39,6 @@ func (ConnectionSecure) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ConnectionSecure"
 }
 
-type ConnectionGitHubConfig struct {
-	// GitHub App ID
-	AppID string `json:"appID"`
-
-	// GitHub App installation ID
-	InstallationID string `json:"installationID"`
-}
-
-func (ConnectionGitHubConfig) OpenAPIModelName() string {
-	return OpenAPIPrefix + "GitHubConnectionConfig"
-}
-
-// GitHubEnterpriseConnectionConfig describes a GitHub App installation against a
-// self-managed GitHub Enterprise Server (GHES) instance.
-type ConnectionGitHubEnterpriseConfig struct {
-	// GitHub App ID
-	AppID string `json:"appID"`
-
-	// GitHub App installation ID
-	InstallationID string `json:"installationID"`
-
-	// The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).
-	ServerUrl string `json:"serverUrl"`
-}
-
-func (ConnectionGitHubEnterpriseConfig) OpenAPIModelName() string {
-	return OpenAPIPrefix + "GitHubEnterpriseConnectionConfig"
-}
-
-type ConnectionGitHubEnterpriseOAuthConfig struct {
-	// The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).
-	ServerUrl string `json:"serverUrl"`
-}
-
-func (ConnectionGitHubEnterpriseOAuthConfig) OpenAPIModelName() string {
-	return OpenAPIPrefix + "GitHubEnterpriseOAuthConnectionConfig"
-}
-
-// GitOAuthConnectionConfig describes a provider-agnostic OAuth 2.0 app used to
-// authenticate pure git repositories.
-type ConnectionGitOAuthConfig struct {
-	// The provider's OAuth authorization endpoint (e.g. `https://gitlab.example.com/oauth/authorize`).
-	AuthURL string `json:"authURL"`
-	// The provider's OAuth token endpoint (e.g. `https://gitlab.example.com/oauth/token`).
-	TokenURL string `json:"tokenURL"`
-	// The OAuth scopes to request, granting git read and write access.
-	Scopes []string `json:"scopes,omitempty"`
-}
-
-func (ConnectionGitOAuthConfig) OpenAPIModelName() string {
-	return OpenAPIPrefix + "GitOAuthConnectionConfig"
-}
-
-type ConnectionBitbucketConfig struct {
-	// The workspace the OAuth consumer belongs to
-	Workspace string `json:"workspace"`
-}
-
-func (ConnectionBitbucketConfig) OpenAPIModelName() string {
-	return OpenAPIPrefix + "BitbucketConnectionConfig"
-}
-
-type ConnectionOAuthConfig struct {
-	// The OAuth app client ID
-	ClientID string `json:"clientID"`
-}
-
-func (ConnectionOAuthConfig) OpenAPIModelName() string {
-	return OpenAPIPrefix + "ConnectionOAuthConfig"
-}
-
-type ConnectionWebhookConfig struct {
-	// Disabled disables webhook integration for this connection. When true, the GitHub
-	// App does not require webhooks:write permission and Grafana will not register or receive
-	// webhook events. Use this when Grafana is not reachable from the public internet.
-	Disabled bool `json:"disabled,omitempty"`
-}
-
-func (ConnectionWebhookConfig) OpenAPIModelName() string {
-	return OpenAPIPrefix + "ConnectionWebhookConfig"
-}
-
-// ConnectionType defines the types of Connection providers
-// +enum
-type ConnectionType string
-
-func (ConnectionType) OpenAPIModelName() string {
-	return OpenAPIPrefix + "ConnectionType"
-}
-
-// ConnectionType values.
-const (
-	ConnectionTypeGithub                ConnectionType = "github"
-	ConnectionTypeGithubEnterprise      ConnectionType = "githubEnterprise"
-	ConnectionTypeGithubOAuth           ConnectionType = "githubOAuth"
-	ConnectionTypeGithubEnterpriseOAuth ConnectionType = "githubEnterpriseOAuth"
-	ConnectionTypeGitlabOAuth           ConnectionType = "gitlabOAuth"
-	ConnectionTypeBitbucketOAuth        ConnectionType = "bitbucketOAuth"
-	ConnectionTypeGitOAuth              ConnectionType = "gitOAuth"
-)
-
-type ConnectionSpec struct {
-	// The connection display name (shown in the UI)
-	Title string `json:"title"`
-	// The connection description
-	Description string `json:"description,omitempty"`
-	// The connection provider type
-	Type ConnectionType `json:"type"`
-	// The connection URL
-	Url string `json:"url,omitempty"`
-
-	// GitHub connection configuration
-	// Only applicable when provider is "github"
-	Github *ConnectionGitHubConfig `json:"github,omitempty"`
-	// GitHub Enterprise Server connection configuration
-	// Only applicable when provider is "githubEnterprise"
-	GithubEnterprise *ConnectionGitHubEnterpriseConfig `json:"githubEnterprise,omitempty"`
-	// GitHub Enterprise Server OAuth app connection configuration
-	// Only applicable when provider is "githubEnterpriseOAuth"
-	GithubEnterpriseOAuth *ConnectionGitHubEnterpriseOAuthConfig `json:"githubEnterpriseOAuth,omitempty"`
-	// Bitbucket connection configuration
-	// Only applicable when provider is "bitbucketOAuth"
-	Bitbucket *ConnectionBitbucketConfig `json:"bitbucket,omitempty"`
-	// Generic git OAuth app connection configuration
-	// Only applicable when provider is "gitOAuth"
-	GitOAuth *ConnectionGitOAuthConfig `json:"gitOAuth,omitempty"`
-
-	// OAuth app configuration shared by all OAuth app providers
-	Oauth *ConnectionOAuthConfig `json:"oauth,omitempty"`
-
-	// Webhook configuration for this connection
-	Webhook *ConnectionWebhookConfig `json:"webhook,omitempty"`
-}
-
 func (c *ConnectionSpec) IsGitHub() bool {
 	return c.Github != nil || c.GithubEnterprise != nil
 }
@@ -207,6 +47,7 @@ func (c *ConnectionSpec) IsGitHub() bool {
 // by exchanging an authorization code for tokens. It is the request and
 // response body of the connection authorize subresource.
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +k8s:deepcopy-gen=true
 type ConnectionAuthorizeRequest struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -221,6 +62,7 @@ func (ConnectionAuthorizeRequest) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ConnectionAuthorizeRequest"
 }
 
+// +k8s:deepcopy-gen=true
 type ConnectionAuthorizeRequestSpec struct {
 	// The authorization code returned by the provider
 	Code string `json:"code"`
@@ -233,6 +75,7 @@ func (ConnectionAuthorizeRequestSpec) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ConnectionAuthorizeRequestSpec"
 }
 
+// +k8s:deepcopy-gen=true
 type ConnectionAuthorizeRequestStatus struct {
 	// Whether the connection has been authorized
 	Authorized bool `json:"authorized"`
@@ -242,55 +85,9 @@ func (ConnectionAuthorizeRequestStatus) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ConnectionAuthorizeRequestStatus"
 }
 
-func (ConnectionSpec) OpenAPIModelName() string {
-	return OpenAPIPrefix + "ConnectionSpec"
-}
-
-// The status of a Connection.
-// This is expected never to be created by a kubectl call or similar, and is expected to rarely (if ever) be edited manually.
-type ConnectionStatus struct {
-	// The generation of the spec last time reconciliation ran
-	ObservedGeneration int64 `json:"observedGeneration"`
-
-	// FieldErrors are errors that occurred during validation of the connection spec.
-	// These errors are intended to help users identify and fix issues in the spec.
-	// +listType=atomic
-	FieldErrors []ConnectionErrorDetails `json:"fieldErrors,omitempty"`
-
-	// Conditions represent the latest available observations of the connection's state.
-	// +listType=map
-	// +listMapKey=type
-	// +patchMergeKey=type
-	// +patchStrategy=merge
-	Conditions []ConnectionCondition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
-
-	// The connection health status
-	Health ConnectionHealthStatus `json:"health"`
-
-	// Token holds metadata about the last generated connection token, used to avoid
-	// regenerating a token whose secret was written recently but is not yet readable.
-	Token ConnectionTokenStatus `json:"token,omitempty"`
-}
-
-func (ConnectionStatus) OpenAPIModelName() string {
-	return OpenAPIPrefix + "ConnectionStatus"
-}
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type ConnectionList struct {
-	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
-
-	// +listType=atomic
-	Items []Connection `json:"items"`
-}
-
-func (ConnectionList) OpenAPIModelName() string {
-	return OpenAPIPrefix + "ConnectionList"
-}
-
 // ExternalRepositoryList lists repositories from an external git provider
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +k8s:deepcopy-gen=true
 type ExternalRepositoryList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
@@ -303,6 +100,7 @@ func (ExternalRepositoryList) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ExternalRepositoryList"
 }
 
+// +k8s:deepcopy-gen=true
 type ExternalRepository struct {
 	// Name of the repository
 	Name string `json:"name"`

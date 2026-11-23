@@ -24,7 +24,7 @@ func TestBuildReadyConditionFromHealth(t *testing.T) {
 			name: "healthy status creates Ready=True condition",
 			healthStatus: provisioning.RepositoryHealthStatus{
 				Healthy: true,
-				Checked: time.Now().UnixMilli(),
+				Checked: new(time.Now().UnixMilli()),
 			},
 			expectedStatus: metav1.ConditionTrue,
 			expectedReason: provisioning.ReasonAvailable,
@@ -34,7 +34,7 @@ func TestBuildReadyConditionFromHealth(t *testing.T) {
 			name: "unhealthy status creates Ready=False condition",
 			healthStatus: provisioning.RepositoryHealthStatus{
 				Healthy: false,
-				Checked: time.Now().UnixMilli(),
+				Checked: new(time.Now().UnixMilli()),
 				Message: []string{"connection failed"},
 			},
 			expectedStatus: metav1.ConditionFalse,
@@ -45,7 +45,7 @@ func TestBuildReadyConditionFromHealth(t *testing.T) {
 			name: "unhealthy with no message uses default message",
 			healthStatus: provisioning.RepositoryHealthStatus{
 				Healthy: false,
-				Checked: time.Now().UnixMilli(),
+				Checked: new(time.Now().UnixMilli()),
 			},
 			expectedStatus: metav1.ConditionFalse,
 			expectedReason: provisioning.ReasonInvalidSpec,
@@ -55,7 +55,7 @@ func TestBuildReadyConditionFromHealth(t *testing.T) {
 			name: "unhealthy with multiple messages uses first message",
 			healthStatus: provisioning.RepositoryHealthStatus{
 				Healthy: false,
-				Checked: time.Now().UnixMilli(),
+				Checked: new(time.Now().UnixMilli()),
 				Message: []string{"first error", "second error"},
 			},
 			expectedStatus: metav1.ConditionFalse,
@@ -66,7 +66,7 @@ func TestBuildReadyConditionFromHealth(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			condition := buildReadyConditionWithReason(tt.healthStatus, provisioning.ReasonInvalidSpec)
+			condition := buildReadyConditionWithReason(tt.healthStatus.Healthy, tt.healthStatus.Message, provisioning.ReasonInvalidSpec)
 
 			assert.Equal(t, provisioning.ConditionTypeReady, condition.Type)
 			assert.Equal(t, tt.expectedStatus, condition.Status)

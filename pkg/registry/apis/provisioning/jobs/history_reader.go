@@ -59,10 +59,18 @@ func (s *storageBackedHistory) getJobs(ctx context.Context, namespace string, la
 		ListMeta: historic.ListMeta,
 	}
 	for _, job := range historic.Items {
+		spec, err := job.Spec.ToJob()
+		if err != nil {
+			return nil, fmt.Errorf("convert spec of historic job %s: %w", job.Name, err)
+		}
+		status, err := job.Status.ToJob()
+		if err != nil {
+			return nil, fmt.Errorf("convert status of historic job %s: %w", job.Name, err)
+		}
 		jobs.Items = append(jobs.Items, provisioning.Job{
 			ObjectMeta: job.ObjectMeta,
-			Spec:       job.Spec,
-			Status:     job.Status,
+			Spec:       spec,
+			Status:     status,
 		})
 	}
 	return jobs, nil

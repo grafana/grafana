@@ -87,7 +87,7 @@ func TestIntegrationSyncWorker_EarlySetupFailure(t *testing.T) {
 	require.Equal(t, "/status/sync", final[0]["path"])
 	syncStatus, ok := final[0]["value"].(provisioning.RepositorySyncStatus)
 	require.True(t, ok)
-	require.Equal(t, provisioning.JobStateError, syncStatus.State)
+	require.Equal(t, provisioning.RepositoryJobStateError, syncStatus.State)
 	require.Equal(t, "test-job", ptr.Deref(syncStatus.Job, ""))
 	require.Equal(t, "existing-ref", ptr.Deref(syncStatus.LastRef, ""))
 	require.Equal(t, ptr.Deref(repoConfig.Status.Sync.LastChecked, 0), ptr.Deref(syncStatus.LastChecked, 0))

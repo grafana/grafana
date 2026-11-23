@@ -6,16 +6,12 @@ package v0alpha1
 
 // RepositoryStatusApplyConfiguration represents a declarative configuration of the RepositoryStatus type for use
 // with apply.
-//
-// The status of a Repository.
-// This is expected never to be created by a kubectl call or similar, and is expected to rarely (if ever) be edited manually.
-// As such, it is also a little less well structured than the spec, such as conditional-but-ever-present fields.
 type RepositoryStatusApplyConfiguration struct {
 	// The generation of the spec last time reconciliation ran
 	ObservedGeneration *int64 `json:"observedGeneration,omitempty"`
 	// FieldErrors are errors that occurred during validation of the repository spec.
 	// These errors are intended to help users identify and fix issues in the spec.
-	FieldErrors []ErrorDetailsApplyConfiguration `json:"fieldErrors,omitempty"`
+	FieldErrors []RepositoryErrorDetailsApplyConfiguration `json:"fieldErrors,omitempty"`
 	// Conditions represent the latest available observations of the repository's state.
 	Conditions []RepositoryConditionApplyConfiguration `json:"conditions,omitempty"`
 	// This will get updated with the current health status (and updated periodically)
@@ -23,7 +19,7 @@ type RepositoryStatusApplyConfiguration struct {
 	// Sync information with the last sync information
 	Sync *RepositorySyncStatusApplyConfiguration `json:"sync,omitempty"`
 	// The object count when sync last ran
-	Stats []ResourceCountApplyConfiguration `json:"stats,omitempty"`
+	Stats []RepositoryResourceCountApplyConfiguration `json:"stats,omitempty"`
 	// Webhook Information (if applicable)
 	Webhook *RepositoryWebhookStatusApplyConfiguration `json:"webhook,omitempty"`
 	// Token will get updated with current token information
@@ -57,7 +53,7 @@ func (b *RepositoryStatusApplyConfiguration) WithObservedGeneration(value int64)
 // WithFieldErrors adds the given value to the FieldErrors field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the FieldErrors field.
-func (b *RepositoryStatusApplyConfiguration) WithFieldErrors(values ...*ErrorDetailsApplyConfiguration) *RepositoryStatusApplyConfiguration {
+func (b *RepositoryStatusApplyConfiguration) WithFieldErrors(values ...*RepositoryErrorDetailsApplyConfiguration) *RepositoryStatusApplyConfiguration {
 	for i := range values {
 		if values[i] == nil {
 			panic("nil value passed to WithFieldErrors")
@@ -99,7 +95,7 @@ func (b *RepositoryStatusApplyConfiguration) WithSync(value *RepositorySyncStatu
 // WithStats adds the given value to the Stats field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the Stats field.
-func (b *RepositoryStatusApplyConfiguration) WithStats(values ...*ResourceCountApplyConfiguration) *RepositoryStatusApplyConfiguration {
+func (b *RepositoryStatusApplyConfiguration) WithStats(values ...*RepositoryResourceCountApplyConfiguration) *RepositoryStatusApplyConfiguration {
 	for i := range values {
 		if values[i] == nil {
 			panic("nil value passed to WithStats")

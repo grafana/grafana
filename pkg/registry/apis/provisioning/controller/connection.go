@@ -16,12 +16,14 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/optional"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
@@ -397,7 +399,7 @@ func (cc *ConnectionController) process(ctx context.Context, key string) (err er
 			// If we wrote a token for this connection very recently, its secret may not
 			// be readable from the store yet. Wait for it rather than regenerating, which
 			// would delete it and can loop under secret-store read-after-write lag.
-			if tokenRecentlyCreated(time.UnixMilli(conn.Status.Token.LastUpdated)) {
+			if tokenRecentlyCreated(time.UnixMilli(ptr.Deref(conn.Status.Token.LastUpdated, 0))) {
 				cc.queue.AddAfter(key, tokenWriteRetryDelay)
 				logger.Info("connection token secret not yet readable after recent write; will retry",
 					"error", err, "retry_after", tokenWriteRetryDelay, "queue_len", cc.queue.Len())
@@ -468,9 +470,9 @@ func (cc *ConnectionController) process(ctx context.Context, key string) (err er
 			// live re-validation. Use "add": status.token is a newly introduced field
 			// that may be absent on Connections created before this change, and "add"
 			// both creates and replaces.
-			tokenStatus := provisioning.ConnectionTokenStatus{LastUpdated: time.Now().UnixMilli()}
+			tokenStatus := provisioning.ConnectionTokenStatus{LastUpdated: optional.NonZero(time.Now().UnixMilli())}
 			if !tokenExpiresAt.IsZero() {
-				tokenStatus.Expiration = tokenExpiresAt.UnixMilli()
+				tokenStatus.Expiration = optional.NonZero(tokenExpiresAt.UnixMilli())
 			}
 			patchOperations = append(patchOperations, map[string]interface{}{
 				"op":    "add",
@@ -538,8 +540,8 @@ func (cc *ConnectionController) shouldGenerateToken(
 	// refresh decision below and of live validation — an expired token that fails
 	// ValidateToken (and so takes the "invalid" path) still counts as expired here.
 	// Mirrors the repository path; re-emitted each resync.
-	if exp := obj.Status.Token.Expiration; exp != 0 {
-		if expiration := time.UnixMilli(exp); !expiration.After(time.Now()) {
+	if exp := obj.Status.Token.Expiration; ptr.Deref(exp, 0) != 0 {
+		if expiration := time.UnixMilli(ptr.Deref(exp, 0)); !expiration.After(time.Now()) {
 			cc.tokenMetrics.recordExpired()
 		}
 	}
@@ -565,11 +567,11 @@ func (cc *ConnectionController) shouldGenerateToken(
 	// pre-upgrade token that lapses before its first refresh still counts as
 	// expired. Tokens with a persisted expiration are already classified above;
 	// ValidateToken returns the (possibly past) expiry without erroring on expiry.
-	if obj.Status.Token.Expiration == 0 && !expiresAt.IsZero() && !expiresAt.After(time.Now()) {
+	if ptr.Deref(obj.Status.Token.Expiration, 0) == 0 && !expiresAt.IsZero() && !expiresAt.After(time.Now()) {
 		cc.tokenMetrics.recordExpired()
 	}
 
-	if tokenRecentlyCreated(time.UnixMilli(obj.Status.Token.LastUpdated)) {
+	if tokenRecentlyCreated(time.UnixMilli(ptr.Deref(obj.Status.Token.LastUpdated, 0))) {
 		return false
 	}
 

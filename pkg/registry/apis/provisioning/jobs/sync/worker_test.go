@@ -359,7 +359,7 @@ func TestSyncWorker_Process_PullCondition(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Equal(t, ptr.Deref(tt.jobStatus.Finished, 0), ptr.Deref(capturedSyncStatus.Finished, 0), "all completed syncs, including warnings, must reset the interval")
-			require.Equal(t, ptr.Deref(tt.jobStatus.State, ""), capturedSyncStatus.State)
+			require.Equal(t, provisioning.RepositoryJobState(ptr.Deref(tt.jobStatus.State, "")), capturedSyncStatus.State)
 			require.Equal(t, ptr.Deref(repoConfig.Status.Sync.LastChecked, 0), ptr.Deref(capturedSyncStatus.LastChecked, 0), "sync jobs must preserve the controller's last sync attempt")
 			require.Equal(t, provisioning.ConditionTypePullStatus, capturedPullCondition.Type)
 			require.Equal(t, tt.expectedPullReason, capturedPullCondition.Reason)
@@ -396,7 +396,7 @@ func matchSyncStatusPatch(state provisioning.JobState, jobID, lastRef, message s
 		if message != "" && !slices.Contains(syncStatus.Message, message) {
 			return false
 		}
-		return syncStatus.State == state && ptr.Deref(syncStatus.LastRef, "") == lastRef
+		return string(syncStatus.State) == string(state) && ptr.Deref(syncStatus.LastRef, "") == lastRef
 	}
 }
 

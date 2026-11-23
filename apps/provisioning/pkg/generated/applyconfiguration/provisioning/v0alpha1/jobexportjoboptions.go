@@ -19,16 +19,16 @@ type JobExportJobOptionsApplyConfiguration struct {
 	// FIXME: we should validate this in admission hooks
 	// Prefix in target file system
 	Path *string `json:"path,omitempty"`
-	// Resources to export. When empty, every unmanaged resource in the namespace
-	// is exported (legacy behavior). When non-empty, only the listed resources
-	// are exported — the folder hierarchy is still emitted so parent paths resolve.
-	// Currently only unmanaged Dashboards are supported.
+	// Resources to export.
+	// When empty, every unmanaged resource in the namespace is exported (legacy behavior).
+	// When non-empty, only the listed resources are exported — the folder hierarchy is still
+	// emitted so parent paths resolve. Currently only unmanaged Dashboards are supported.
 	Resources []JobResourceRefApplyConfiguration `json:"resources,omitempty"`
-	// GenerateNewFolderIDs writes a freshly generated identifier into each
-	// exported folder's metadata (_folder.json) instead of preserving the
-	// existing folder UID. Use this to produce a portable export that creates
-	// new folders on a subsequent sync rather than taking over the originals.
-	// Has no effect when folder metadata is not written.
+	// GenerateNewFolderIDs writes a freshly generated identifier into each exported
+	// folder's metadata (_folder.json) instead of preserving the existing folder UID.
+	// Use this to produce a portable export that creates new folders on a subsequent
+	// sync rather than taking over the originals. Has no effect when folder metadata
+	// is not written.
 	GenerateNewFolderIDs *bool `json:"generateNewFolderIDs,omitempty"`
 }
 

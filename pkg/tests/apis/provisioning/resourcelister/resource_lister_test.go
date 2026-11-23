@@ -125,7 +125,11 @@ func TestIntegrationProvisioning_ResourceListerFromAPI(t *testing.T) {
 		require.NoError(t, err)
 		repository := &provisioning.Repository{}
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, repository))
-		require.ElementsMatch(t, repository.Status.Stats, counts,
+		want := make([]provisioning.RepositoryResourceCount, len(counts))
+		for i, c := range counts {
+			want[i] = provisioning.RepositoryResourceCount(c)
+		}
+		require.ElementsMatch(t, repository.Status.Stats, want,
 			"the counts read over HTTP must be the counts the in-process index reader wrote")
 	})
 

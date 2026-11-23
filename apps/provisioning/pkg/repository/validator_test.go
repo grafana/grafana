@@ -822,7 +822,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 					Sync:  provisioning.RepositorySyncOptions{IntervalSeconds: new(int64(60)), Target: provisioning.RepositorySyncOptionsTargetFolder},
 				},
 				Status: provisioning.RepositoryStatus{
-					Stats: []provisioning.ResourceCount{{Resource: "Dashboard", Count: 1}},
+					Stats: []provisioning.RepositoryResourceCount{{Resource: "Dashboard", Count: 1}},
 				},
 			},
 			operation:       admission.Update,

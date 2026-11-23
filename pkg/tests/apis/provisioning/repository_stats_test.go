@@ -73,7 +73,11 @@ func TestIntegrationProvisioning_RepositoryStats(t *testing.T) {
 
 		repository := &provisioning.Repository{}
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, repository))
-		require.ElementsMatch(t, stats.Items, repository.Status.Stats)
+		want := make([]provisioning.RepositoryResourceCount, len(stats.Items))
+		for i, c := range stats.Items {
+			want[i] = provisioning.RepositoryResourceCount(c)
+		}
+		require.ElementsMatch(t, want, repository.Status.Stats)
 	})
 
 	t.Run("a repository the index counts nothing for is not found", func(t *testing.T) {

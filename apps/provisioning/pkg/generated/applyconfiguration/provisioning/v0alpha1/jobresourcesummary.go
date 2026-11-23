@@ -7,16 +7,18 @@ package v0alpha1
 // JobResourceSummaryApplyConfiguration represents a declarative configuration of the JobResourceSummary type for use
 // with apply.
 type JobResourceSummaryApplyConfiguration struct {
-	Group  *string `json:"group,omitempty"`
-	Kind   *string `json:"kind,omitempty"`
-	Total  *int64  `json:"total,omitempty"`
-	Create *int64  `json:"create,omitempty"`
-	Update *int64  `json:"update,omitempty"`
-	Delete *int64  `json:"delete,omitempty"`
-	Write  *int64  `json:"write,omitempty"`
+	Group *string `json:"group,omitempty"`
+	Kind  *string `json:"kind,omitempty"`
+	// The count (if known)
+	Total  *int64 `json:"total,omitempty"`
+	Create *int64 `json:"create,omitempty"`
+	Update *int64 `json:"update,omitempty"`
+	Delete *int64 `json:"delete,omitempty"`
 	// Create or update (export)
-	Error *int64 `json:"error,omitempty"`
+	Write *int64 `json:"write,omitempty"`
 	// The error count
+	Error *int64 `json:"error,omitempty"`
+	// The warning count
 	Warning *int64 `json:"warning,omitempty"`
 	// No action required (useful for sync)
 	Noop *int64 `json:"noop,omitempty"`

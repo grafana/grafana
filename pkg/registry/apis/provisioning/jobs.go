@@ -206,7 +206,7 @@ func (c *jobsConnector) handleCreateJob(ctx context.Context, r *http.Request, na
 			map[string]interface{}{
 				"op":    "replace",
 				"path":  "/status/sync/state",
-				"value": provisioning.JobStatePending,
+				"value": provisioning.RepositoryJobStatePending,
 			},
 			map[string]interface{}{
 				"op":    "replace",

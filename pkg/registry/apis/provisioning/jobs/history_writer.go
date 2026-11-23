@@ -65,14 +65,25 @@ func (w *apiClientHistoryWriter) WriteJob(ctx context.Context, job *provisioning
 	// We aren't allowed to write with ResourceVersion set.
 	meta.ResourceVersion = ""
 
+	spec, err := job.Spec.ToHistoric()
+	if err != nil {
+		span.RecordError(err)
+		return fmt.Errorf("convert job spec: %w", err)
+	}
+	status, err := job.Status.ToHistoric()
+	if err != nil {
+		span.RecordError(err)
+		return fmt.Errorf("convert job status: %w", err)
+	}
+
 	// Create the historic job using the API client
 	historicJob := &provisioning.HistoricJob{
 		ObjectMeta: *meta,
-		Spec:       job.Spec,
-		Status:     job.Status,
+		Spec:       spec,
+		Status:     status,
 	}
 
-	_, err := w.client.HistoricJobs(job.Namespace).Create(ctx, historicJob, metav1.CreateOptions{})
+	_, err = w.client.HistoricJobs(job.Namespace).Create(ctx, historicJob, metav1.CreateOptions{})
 	if err != nil {
 		span.RecordError(err)
 	}

@@ -934,10 +934,10 @@ func TestRepositoryController_process_UnhealthyRepositoryStatusUpdate(t *testing
 					ObservedGeneration: 1,
 					Health: provisioning.RepositoryHealthStatus{
 						Healthy: true,
-						Checked: time.Now().Add(-10 * time.Minute).UnixMilli(),
+						Checked: new(time.Now().Add(-10 * time.Minute).UnixMilli()),
 					},
 					Sync: provisioning.RepositorySyncStatus{
-						State:    provisioning.JobStateSuccess,
+						State:    provisioning.RepositoryJobStateSuccess,
 						Finished: new(time.Now().Add(-1 * time.Minute).UnixMilli()),
 						Message:  []string{},
 					},
@@ -945,8 +945,8 @@ func TestRepositoryController_process_UnhealthyRepositoryStatusUpdate(t *testing
 			},
 			healthStatus: provisioning.RepositoryHealthStatus{
 				Healthy: false,
-				Error:   provisioning.HealthFailureHealth,
-				Checked: time.Now().UnixMilli(),
+				Error:   new(provisioning.HealthFailureHealth),
+				Checked: new(time.Now().UnixMilli()),
 				Message: []string{"connection failed"},
 			},
 			hasHealthStatusChanged:   true,
@@ -971,10 +971,10 @@ func TestRepositoryController_process_UnhealthyRepositoryStatusUpdate(t *testing
 					ObservedGeneration: 1,
 					Health: provisioning.RepositoryHealthStatus{
 						Healthy: false,
-						Checked: time.Now().Add(-2 * time.Minute).UnixMilli(),
+						Checked: new(time.Now().Add(-2 * time.Minute).UnixMilli()),
 					},
 					Sync: provisioning.RepositorySyncStatus{
-						State:    provisioning.JobStateError,
+						State:    provisioning.RepositoryJobStateError,
 						Finished: new(time.Now().Add(-1 * time.Minute).UnixMilli()),
 						Message:  []string{"Repository is unhealthy"},
 					},
@@ -982,8 +982,8 @@ func TestRepositoryController_process_UnhealthyRepositoryStatusUpdate(t *testing
 			},
 			healthStatus: provisioning.RepositoryHealthStatus{
 				Healthy: false,
-				Error:   provisioning.HealthFailureHealth,
-				Checked: time.Now().UnixMilli(),
+				Error:   new(provisioning.HealthFailureHealth),
+				Checked: new(time.Now().UnixMilli()),
 				Message: []string{"connection failed"},
 			},
 			hasHealthStatusChanged:   false,
@@ -1008,10 +1008,10 @@ func TestRepositoryController_process_UnhealthyRepositoryStatusUpdate(t *testing
 					ObservedGeneration: 1,
 					Health: provisioning.RepositoryHealthStatus{
 						Healthy: false,
-						Checked: time.Now().Add(-2 * time.Minute).UnixMilli(),
+						Checked: new(time.Now().Add(-2 * time.Minute).UnixMilli()),
 					},
 					Sync: provisioning.RepositorySyncStatus{
-						State:    provisioning.JobStateError,
+						State:    provisioning.RepositoryJobStateError,
 						Finished: new(time.Now().Add(-1 * time.Minute).UnixMilli()),
 						Message:  []string{"Repository is unhealthy"},
 					},
@@ -1019,7 +1019,7 @@ func TestRepositoryController_process_UnhealthyRepositoryStatusUpdate(t *testing
 			},
 			healthStatus: provisioning.RepositoryHealthStatus{
 				Healthy: true,
-				Checked: time.Now().UnixMilli(),
+				Checked: new(time.Now().UnixMilli()),
 				Message: []string{},
 			},
 			hasHealthStatusChanged:   true,
@@ -1085,7 +1085,7 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 				},
 				Status: provisioning.RepositoryStatus{
 					Sync: provisioning.RepositorySyncStatus{
-						State:    provisioning.JobStatePending,
+						State:    provisioning.RepositoryJobStatePending,
 						Job:      new("test-job-123"),
 						Started:  new(time.Now().Add(-10 * time.Minute).UnixMilli()),
 						Finished: new(time.Now().Add(-10 * time.Minute).UnixMilli()),
@@ -1111,7 +1111,7 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 				},
 				Status: provisioning.RepositoryStatus{
 					Sync: provisioning.RepositorySyncStatus{
-						State:    provisioning.JobStateWorking,
+						State:    provisioning.RepositoryJobStateWorking,
 						Job:      new("test-job-456"),
 						Started:  new(time.Now().Add(-5 * time.Minute).UnixMilli()),
 						Finished: new(time.Now().Add(-5 * time.Minute).UnixMilli()),
@@ -1137,7 +1137,7 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 				},
 				Status: provisioning.RepositoryStatus{
 					Sync: provisioning.RepositorySyncStatus{
-						State:    provisioning.JobStatePending,
+						State:    provisioning.RepositoryJobStatePending,
 						Job:      new("test-job-789"),
 						Started:  new(time.Now().Add(-2 * time.Minute).UnixMilli()),
 						Finished: new(time.Now().Add(-2 * time.Minute).UnixMilli()),
@@ -1163,7 +1163,7 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 				},
 				Status: provisioning.RepositoryStatus{
 					Sync: provisioning.RepositorySyncStatus{
-						State:    provisioning.JobStatePending,
+						State:    provisioning.RepositoryJobStatePending,
 						Job:      new(""),
 						Started:  new(time.Now().Add(-2 * time.Minute).UnixMilli()),
 						Finished: new(time.Now().Add(-2 * time.Minute).UnixMilli()),
@@ -1189,7 +1189,7 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 				},
 				Status: provisioning.RepositoryStatus{
 					Sync: provisioning.RepositorySyncStatus{
-						State:    provisioning.JobStateSuccess,
+						State:    provisioning.RepositoryJobStateSuccess,
 						Job:      new("test-job-999"),
 						Finished: new(time.Now().Add(-1 * time.Minute).UnixMilli()),
 					},
@@ -1214,7 +1214,7 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 				},
 				Status: provisioning.RepositoryStatus{
 					Sync: provisioning.RepositorySyncStatus{
-						State:    provisioning.JobStatePending,
+						State:    provisioning.RepositoryJobStatePending,
 						Job:      new("test-job-error"),
 						Started:  new(time.Now().Add(-2 * time.Minute).UnixMilli()),
 						Finished: new(time.Now().Add(-2 * time.Minute).UnixMilli()),
@@ -1238,7 +1238,7 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 			}
 
 			// Set up job Get mock
-			if ptr.Deref(tc.repo.Status.Sync.Job, "") != "" && (tc.repo.Status.Sync.State == provisioning.JobStatePending || tc.repo.Status.Sync.State == provisioning.JobStateWorking) {
+			if ptr.Deref(tc.repo.Status.Sync.Job, "") != "" && (tc.repo.Status.Sync.State == provisioning.RepositoryJobStatePending || tc.repo.Status.Sync.State == provisioning.RepositoryJobStateWorking) {
 				mockStore.On("Get", mock.Anything, tc.repo.Namespace, ptr.Deref(tc.repo.Status.Sync.Job, "")).Return(nil, tc.jobGetError).Once()
 			}
 
@@ -1264,7 +1264,7 @@ type intervalRepository struct {
 
 var _ repository.Versioned = (*intervalRepository)(nil)
 
-func newIntervalController(t *testing.T, state provisioning.JobState) (*RepositoryController, *provisioning.Repository, *intervalRepository, cache.Indexer, *capturePatcher) {
+func newIntervalController(t *testing.T, state provisioning.RepositoryJobState) (*RepositoryController, *provisioning.Repository, *intervalRepository, cache.Indexer, *capturePatcher) {
 	t.Helper()
 	obj := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "repo", Namespace: "default", Generation: 1},
@@ -1274,7 +1274,7 @@ func newIntervalController(t *testing.T, state provisioning.JobState) (*Reposito
 		},
 		Status: provisioning.RepositoryStatus{
 			ObservedGeneration: 1,
-			Health:             provisioning.RepositoryHealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
+			Health:             provisioning.RepositoryHealthStatus{Healthy: true, Checked: new(time.Now().UnixMilli())},
 			Sync: provisioning.RepositorySyncStatus{
 				State: state, Job: new("previous-job"), LastRef: new("same-ref"),
 				Started:  new(time.Now().Add(-11 * time.Minute).UnixMilli()),
@@ -1282,7 +1282,7 @@ func newIntervalController(t *testing.T, state provisioning.JobState) (*Reposito
 			},
 		},
 	}
-	if state == provisioning.JobStateWarning {
+	if state == provisioning.RepositoryJobStateWarning {
 		obj.Status.Sync.Message = []string{"dashboard is managed by another repository"}
 	}
 	indexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc})
@@ -1313,7 +1313,7 @@ func newIntervalController(t *testing.T, state provisioning.JobState) (*Reposito
 }
 
 func TestRepositoryController_process_IntervalNoop(t *testing.T) {
-	for _, state := range []provisioning.JobState{provisioning.JobStateSuccess, provisioning.JobStateWarning} {
+	for _, state := range []provisioning.RepositoryJobState{provisioning.RepositoryJobStateSuccess, provisioning.RepositoryJobStateWarning} {
 		t.Run(string(state), func(t *testing.T) {
 			rc, obj, repo, indexer, patcher := newIntervalController(t, state)
 			original := obj.DeepCopy()
@@ -1361,7 +1361,7 @@ func TestRepositoryController_process_IntervalNoop(t *testing.T) {
 }
 
 func TestRepositoryController_process_IntervalNoopPatchFailure(t *testing.T) {
-	rc, obj, repo, _, patcher := newIntervalController(t, provisioning.JobStateSuccess)
+	rc, obj, repo, _, patcher := newIntervalController(t, provisioning.RepositoryJobStateSuccess)
 	original := obj.DeepCopy()
 	repo.MockVersioned.On("LatestRef", mock.Anything).Return(ptr.Deref(obj.Status.Sync.LastRef, ""), nil).Once()
 	patcher.err = assert.AnError
@@ -1386,47 +1386,47 @@ func TestRepositoryController_shouldResync_LastChecked(t *testing.T) {
 	}{
 		{
 			name: "missing lastChecked uses finished",
-			sync: provisioning.RepositorySyncStatus{State: provisioning.JobStateSuccess, Finished: new(old)},
+			sync: provisioning.RepositorySyncStatus{State: provisioning.RepositoryJobStateSuccess, Finished: new(old)},
 			want: true,
 		},
 		{
 			name: "recent finished without lastChecked",
-			sync: provisioning.RepositorySyncStatus{State: provisioning.JobStateSuccess, Finished: new(recent)},
+			sync: provisioning.RepositorySyncStatus{State: provisioning.RepositoryJobStateSuccess, Finished: new(recent)},
 		},
 		{
 			name: "recent unchanged ref check",
-			sync: provisioning.RepositorySyncStatus{State: provisioning.JobStateSuccess, Finished: new(old), LastChecked: new(recent)},
+			sync: provisioning.RepositorySyncStatus{State: provisioning.RepositoryJobStateSuccess, Finished: new(old), LastChecked: new(recent)},
 		},
 		{
 			name: "sync completed after the last check",
-			sync: provisioning.RepositorySyncStatus{State: provisioning.JobStateSuccess, Finished: new(recent), LastChecked: new(old)},
+			sync: provisioning.RepositorySyncStatus{State: provisioning.RepositoryJobStateSuccess, Finished: new(recent), LastChecked: new(old)},
 		},
 		{
 			name: "interval expired since both timestamps",
-			sync: provisioning.RepositorySyncStatus{State: provisioning.JobStateSuccess, Finished: new(old), LastChecked: new(old)},
+			sync: provisioning.RepositorySyncStatus{State: provisioning.RepositoryJobStateSuccess, Finished: new(old), LastChecked: new(old)},
 			want: true,
 		},
 		{
 			name: "warning uses the same interval",
-			sync: provisioning.RepositorySyncStatus{State: provisioning.JobStateWarning, Finished: new(old), LastChecked: new(recent)},
+			sync: provisioning.RepositorySyncStatus{State: provisioning.RepositoryJobStateWarning, Finished: new(old), LastChecked: new(recent)},
 		},
 		{
 			name:        "system minimum interval still applies",
-			sync:        provisioning.RepositorySyncStatus{State: provisioning.JobStateSuccess, Finished: new(old), LastChecked: new(old)},
+			sync:        provisioning.RepositorySyncStatus{State: provisioning.RepositoryJobStateSuccess, Finished: new(old), LastChecked: new(old)},
 			minInterval: time.Hour,
 		},
 		{
 			name:     "disabled sync stays disabled",
-			sync:     provisioning.RepositorySyncStatus{State: provisioning.JobStateSuccess, Finished: new(old), LastChecked: new(old)},
+			sync:     provisioning.RepositorySyncStatus{State: provisioning.RepositoryJobStateSuccess, Finished: new(old), LastChecked: new(old)},
 			disabled: true,
 		},
 		{
 			name: "working job prevents resync",
-			sync: provisioning.RepositorySyncStatus{State: provisioning.JobStateWorking, Finished: new(old), LastChecked: new(old)},
+			sync: provisioning.RepositorySyncStatus{State: provisioning.RepositoryJobStateWorking, Finished: new(old), LastChecked: new(old)},
 		},
 		{
 			name: "long pending job prevents resync",
-			sync: provisioning.RepositorySyncStatus{State: provisioning.JobStatePending, Finished: new(old), LastChecked: new(old)},
+			sync: provisioning.RepositorySyncStatus{State: provisioning.RepositoryJobStatePending, Finished: new(old), LastChecked: new(old)},
 		},
 		{
 			name: "lastChecked does not replace an initial sync",
@@ -1447,7 +1447,7 @@ func TestRepositoryController_shouldResync_LastChecked(t *testing.T) {
 }
 
 func TestRepositoryController_shouldResync_MissingJobUsesFinished(t *testing.T) {
-	for _, state := range []provisioning.JobState{provisioning.JobStatePending, provisioning.JobStateWorking} {
+	for _, state := range []provisioning.RepositoryJobState{provisioning.RepositoryJobStatePending, provisioning.RepositoryJobStateWorking} {
 		t.Run(string(state), func(t *testing.T) {
 			store := jobs.NewMockStore(t)
 			store.On("Get", mock.Anything, "default", "missing-job").
@@ -1482,7 +1482,7 @@ func TestRepositoryController_process_IntervalSyncJob(t *testing.T) {
 		{name: "comparison unavailable", compareErr: assert.AnError},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			rc, obj, repo, _, patcher := newIntervalController(t, provisioning.JobStateSuccess)
+			rc, obj, repo, _, patcher := newIntervalController(t, provisioning.RepositoryJobStateSuccess)
 			repo.MockVersioned.On("LatestRef", mock.Anything).Return("new-ref", tt.latestErr).Once()
 			if tt.latestErr == nil {
 				repo.MockVersioned.On("CompareFiles", mock.Anything, ptr.Deref(obj.Status.Sync.LastRef, ""), "new-ref").
@@ -1502,13 +1502,13 @@ func TestRepositoryController_process_IntervalSyncJob(t *testing.T) {
 			assert.Greater(t, checkOp["value"].(int64), ptr.Deref(obj.Status.Sync.Finished, 0))
 			op, found := patcher.findPatchOp("/status/sync/state")
 			require.True(t, found)
-			assert.Equal(t, provisioning.JobStatePending, op["value"])
+			assert.Equal(t, provisioning.RepositoryJobStatePending, op["value"])
 		})
 	}
 }
 
 func TestRepositoryController_process_IntervalSyncJobCreationFailure(t *testing.T) {
-	rc, obj, repo, indexer, patcher := newIntervalController(t, provisioning.JobStateSuccess)
+	rc, obj, repo, indexer, patcher := newIntervalController(t, provisioning.RepositoryJobStateSuccess)
 	repo.MockVersioned.On("LatestRef", mock.Anything).Return("new-ref", nil).Twice()
 	repo.MockVersioned.On("CompareFiles", mock.Anything, ptr.Deref(obj.Status.Sync.LastRef, ""), "new-ref").
 		Return([]repository.VersionedFileChange{{Action: repository.FileActionUpdated, Path: "dashboard.json"}}, nil).Twice()
@@ -1536,7 +1536,7 @@ func TestRepositoryController_process_IntervalSyncJobCreationFailure(t *testing.
 
 	updated := obj.DeepCopy()
 	updated.Status.Sync.LastChecked = new(checkOp["value"].(int64))
-	updated.Status.Sync.State = stateOp["value"].(provisioning.JobState)
+	updated.Status.Sync.State = stateOp["value"].(provisioning.RepositoryJobState)
 	updated.Status.Sync.Started = new(startedOp["value"].(int64))
 	require.NoError(t, indexer.Update(updated))
 	patcher.ops = nil
@@ -1875,7 +1875,7 @@ func TestRepositoryController_process_RepoIDBackfillGuardsAgainstStaleURL(t *tes
 			},
 			Status: provisioning.RepositoryStatus{
 				ObservedGeneration: 0, // Generation != ObservedGeneration triggers reconciliation.
-				Health:             provisioning.RepositoryHealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
+				Health:             provisioning.RepositoryHealthStatus{Healthy: true, Checked: new(time.Now().UnixMilli())},
 			},
 		}
 	}
@@ -2034,7 +2034,7 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 					ObservedGeneration: 1,
 					Health: provisioning.RepositoryHealthStatus{
 						Healthy: true,
-						Checked: time.Now().UnixMilli(),
+						Checked: new(time.Now().UnixMilli()),
 					},
 					Quota: tc.oldQuota,
 				},
@@ -2160,7 +2160,7 @@ func TestRepositoryController_process_UnchangedQuotaIsNotRepatched(t *testing.T)
 				ObservedGeneration: 1,
 				Health: provisioning.RepositoryHealthStatus{
 					Healthy: true,
-					Checked: time.Now().UnixMilli(),
+					Checked: new(time.Now().UnixMilli()),
 				},
 				Quota: stored,
 			},
@@ -2571,7 +2571,7 @@ func TestRepositoryController_process_ServerUnavailableBuildFailure(t *testing.T
 				Spec:       provisioning.RepositorySpec{Type: provisioning.RepositorySpecTypeGitlab},
 				Status: provisioning.RepositoryStatus{
 					ObservedGeneration: 1,
-					Health:             provisioning.RepositoryHealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
+					Health:             provisioning.RepositoryHealthStatus{Healthy: true, Checked: new(time.Now().UnixMilli())},
 					Conditions: provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{{
 						Type: provisioning.ConditionTypeReady, Status: metav1.ConditionTrue,
 						Reason: provisioning.ReasonAvailable, ObservedGeneration: 1,
@@ -2629,8 +2629,8 @@ func TestRepositoryController_process_ServerUnavailableBuildFailure(t *testing.T
 			health, ok := healthOp["value"].(provisioning.RepositoryHealthStatus)
 			require.True(t, ok)
 			assert.False(t, health.Healthy)
-			assert.Equal(t, provisioning.HealthFailureHealth, health.Error)
-			assert.Positive(t, health.Checked)
+			assert.Equal(t, provisioning.HealthFailureHealth, ptr.Deref(health.Error, ""))
+			assert.Positive(t, ptr.Deref(health.Checked, 0))
 			if tt.deleting {
 				assert.Equal(t, []string{"Repository deletion error"}, health.Message)
 			} else {
@@ -2678,7 +2678,7 @@ func TestRepositoryController_process_DefaultBranchFailure(t *testing.T) {
 				},
 				Status: provisioning.RepositoryStatus{
 					ObservedGeneration: 1,
-					Health:             provisioning.RepositoryHealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
+					Health:             provisioning.RepositoryHealthStatus{Healthy: true, Checked: new(time.Now().UnixMilli())},
 					Conditions: provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{{
 						Type: provisioning.ConditionTypeReady, Status: metav1.ConditionTrue,
 						Reason: provisioning.ReasonAvailable, ObservedGeneration: 1,
@@ -2738,8 +2738,8 @@ func TestRepositoryController_process_DefaultBranchFailure(t *testing.T) {
 			health, ok := healthOp["value"].(provisioning.RepositoryHealthStatus)
 			require.True(t, ok)
 			assert.False(t, health.Healthy)
-			assert.Equal(t, provisioning.HealthFailureHealth, health.Error)
-			assert.Positive(t, health.Checked)
+			assert.Equal(t, provisioning.HealthFailureHealth, ptr.Deref(health.Error, ""))
+			assert.Positive(t, ptr.Deref(health.Checked, 0))
 			assert.Equal(t, []string{tt.branchErr.Error()}, health.Message)
 
 			var ready metav1.Condition
@@ -2982,8 +2982,8 @@ func TestRepositoryController_process_UnchangedHealthNotRewritten(t *testing.T) 
 			// Already reporting exactly what this pass would write.
 			Health: provisioning.RepositoryHealthStatus{
 				Healthy: false,
-				Error:   provisioning.HealthFailureHealth,
-				Checked: time.Now().UnixMilli(),
+				Error:   new(provisioning.HealthFailureHealth),
+				Checked: new(time.Now().UnixMilli()),
 				Message: []string{buildErr.Error()},
 			},
 		},
@@ -3055,7 +3055,7 @@ func TestRepositoryController_process_QuotaTimestampOnlyDoesNotForceStatusPatch(
 					ObservedGeneration: 1,
 					Health: provisioning.RepositoryHealthStatus{
 						Healthy: true,
-						Checked: time.Now().UnixMilli(),
+						Checked: new(time.Now().UnixMilli()),
 					},
 					Quota: provisioning.RepositoryQuotaStatus{
 						MaxRepositories:           new(int64(5)),
@@ -3211,7 +3211,7 @@ func TestRepositoryController_shouldGenerateTokenFromConnection_ExpiredCounter(t
 			}
 			obj := &provisioning.Repository{
 				Status: provisioning.RepositoryStatus{
-					Token: provisioning.RepositoryTokenStatus{LastUpdated: oldEnough.UnixMilli(), Expiration: tt.expiration},
+					Token: provisioning.RepositoryTokenStatus{LastUpdated: new(oldEnough.UnixMilli()), Expiration: new(tt.expiration)},
 				},
 				Secure: resource.InlineSecureValues{provisioning.RepositorySecureToken: resource.InlineSecureValue{Create: "existing-token"}},
 			}
@@ -3231,8 +3231,8 @@ func TestRepositoryController_shouldGenerateTokenFromConnection_RemovedToken(t *
 		}
 		repo := &provisioning.Repository{
 			Status: provisioning.RepositoryStatus{Token: provisioning.RepositoryTokenStatus{
-				LastUpdated: time.Now().UnixMilli(),
-				Expiration:  time.Now().Add(time.Hour).UnixMilli(),
+				LastUpdated: new(time.Now().UnixMilli()),
+				Expiration:  new(time.Now().Add(time.Hour).UnixMilli()),
 			}},
 		}
 		assert.True(t, rc.shouldGenerateTokenFromConnection(repo), "a removed token must refresh even if its previous expiration is far away")
@@ -3293,11 +3293,11 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 			ObservedGeneration: 1,
 			Health: provisioning.RepositoryHealthStatus{
 				Healthy: true,
-				Checked: time.Now().UnixMilli(),
+				Checked: new(time.Now().UnixMilli()),
 			},
 			Token: provisioning.RepositoryTokenStatus{
-				LastUpdated: lastUpdated.UnixMilli(),
-				Expiration:  expiration.UnixMilli(),
+				LastUpdated: new(lastUpdated.UnixMilli()),
+				Expiration:  new(expiration.UnixMilli()),
 			},
 			// Repository is CURRENTLY BLOCKED by namespace quota
 			Conditions: provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{
@@ -3416,7 +3416,7 @@ func TestRepositoryController_process_TokenGenerationAuthFailureIsUserCaused(t *
 		},
 		Status: provisioning.RepositoryStatus{
 			ObservedGeneration: 1,
-			Health:             provisioning.RepositoryHealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
+			Health:             provisioning.RepositoryHealthStatus{Healthy: true, Checked: new(time.Now().UnixMilli())},
 		},
 	}
 
@@ -3524,11 +3524,11 @@ func TestRepositoryController_process_RegeneratesTokenWhenSecretNotFound(t *test
 				Status: provisioning.RepositoryStatus{
 					// Spec change (Generation != ObservedGeneration) triggers reconcile and reaches Build.
 					ObservedGeneration: 1,
-					Health:             provisioning.RepositoryHealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
+					Health:             provisioning.RepositoryHealthStatus{Healthy: true, Checked: new(time.Now().UnixMilli())},
 					// Token exists and is far from expiry, so shouldGenerateTokenFromConnection is false.
 					Token: provisioning.RepositoryTokenStatus{
-						LastUpdated: time.Now().Add(-1 * time.Hour).UnixMilli(),
-						Expiration:  time.Now().Add(2 * time.Hour).UnixMilli(),
+						LastUpdated: new(time.Now().Add(-1 * time.Hour).UnixMilli()),
+						Expiration:  new(time.Now().Add(2 * time.Hour).UnixMilli()),
 					},
 				},
 				// Orphaned reference: name is set but the secret is gone.
@@ -3792,8 +3792,8 @@ func TestProcessHooks_RotationOverdueCause(t *testing.T) {
 				// A recent hook failure puts the repository in the cooldown window.
 				obj.Status.Health = provisioning.RepositoryHealthStatus{
 					Healthy: false,
-					Error:   provisioning.HealthFailureHook,
-					Checked: time.Now().UnixMilli(),
+					Error:   new(provisioning.HealthFailureHook),
+					Checked: new(time.Now().UnixMilli()),
 				}
 			}
 			// hookErrSet lets a nil hookErr mean "webhook client succeeds" so rotation
@@ -4012,8 +4012,8 @@ func TestRepositoryController_process_HookFailureCooldownSuppressesRetry(t *test
 			ObservedGeneration: 1,
 			Health: provisioning.RepositoryHealthStatus{
 				Healthy: false,
-				Error:   provisioning.HealthFailureHook,
-				Checked: time.Now().UnixMilli(),
+				Error:   new(provisioning.HealthFailureHook),
+				Checked: new(time.Now().UnixMilli()),
 				Message: []string{"failed to create webhook"},
 			},
 		},
@@ -4097,8 +4097,8 @@ func TestRepositoryController_process_RotationSuppressedDuringCooldown(t *testin
 			ObservedGeneration: 1,
 			Health: provisioning.RepositoryHealthStatus{
 				Healthy: false,
-				Error:   provisioning.HealthFailureHook,
-				Checked: time.Now().UnixMilli(),
+				Error:   new(provisioning.HealthFailureHook),
+				Checked: new(time.Now().UnixMilli()),
 				Message: []string{"failed to create webhook"},
 			},
 			Webhook: &provisioning.RepositoryWebhookStatus{
@@ -4285,7 +4285,7 @@ func TestRepositoryController_process_HookFailureUnauthorizedDoesNotReturnError(
 	healthStatus, ok := healthOp["value"].(provisioning.RepositoryHealthStatus)
 	require.True(t, ok, "expected /status/health value to be HealthStatus")
 	assert.False(t, healthStatus.Healthy)
-	assert.Equal(t, provisioning.HealthFailureHook, healthStatus.Error)
+	assert.Equal(t, provisioning.HealthFailureHook, ptr.Deref(healthStatus.Error, ""))
 	require.Len(t, healthStatus.Message, 1)
 	assert.Contains(t, healthStatus.Message[0], repository.ErrUnauthorized.Error())
 }
@@ -4329,7 +4329,7 @@ func TestRepositoryController_process_HookFailureNonAuthErrorStillReturnsError(t
 	healthStatus, ok := healthOp["value"].(provisioning.RepositoryHealthStatus)
 	require.True(t, ok, "expected /status/health value to be HealthStatus")
 	assert.False(t, healthStatus.Healthy)
-	assert.Equal(t, provisioning.HealthFailureHook, healthStatus.Error)
+	assert.Equal(t, provisioning.HealthFailureHook, ptr.Deref(healthStatus.Error, ""))
 }
 
 // newRecoveryController is a small helper that wires up the minimal set of
@@ -4427,7 +4427,7 @@ func TestRepositoryController_process_UnhealthyRepositorySkipsHooks(t *testing.T
 	healthStatus, ok := healthOp["value"].(provisioning.RepositoryHealthStatus)
 	require.True(t, ok, "expected /status/health value to be HealthStatus")
 	assert.False(t, healthStatus.Healthy)
-	assert.Equal(t, provisioning.HealthFailureHealth, healthStatus.Error)
+	assert.Equal(t, provisioning.HealthFailureHealth, ptr.Deref(healthStatus.Error, ""))
 
 	_, obsPatched := patcher.findPatchOp("/status/observedGeneration")
 	assert.False(t, obsPatched,
@@ -4623,12 +4623,12 @@ func blockedOverQuotaRepo(namespace, name string, checked time.Time, syncEnabled
 			Quota:              provisioning.RepositoryQuotaStatus{MaxRepositories: new(int64(1))},
 			Health: provisioning.RepositoryHealthStatus{
 				Healthy: false,
-				Error:   provisioning.HealthFailureHealth,
-				Checked: checked.UnixMilli(),
+				Error:   new(provisioning.HealthFailureHealth),
+				Checked: new(checked.UnixMilli()),
 				Message: []string{quotaMsg},
 			},
 			Sync: provisioning.RepositorySyncStatus{
-				State: provisioning.JobStateError,
+				State: provisioning.RepositoryJobStateError,
 				// A blocked repository never completes a sync, so this stays put while
 				// the interval elapses: the sync goes permanently overdue.
 				Finished: new(time.Now().Add(-time.Hour).UnixMilli()),
@@ -4899,7 +4899,7 @@ func TestRepositoryController_process_QuotaBlockedButReachableStillRunsHooks(t *
 	healthStatus, ok := healthOp["value"].(provisioning.RepositoryHealthStatus)
 	require.True(t, ok, "expected /status/health value to be HealthStatus")
 	assert.False(t, healthStatus.Healthy, "status should report unhealthy due to quota")
-	assert.Equal(t, provisioning.HealthFailureHealth, healthStatus.Error)
+	assert.Equal(t, provisioning.HealthFailureHealth, ptr.Deref(healthStatus.Error, ""))
 }
 
 // TestRepositoryController_process_UnhealthyCleanupSkipDoesNotAdvanceObservedGeneration
@@ -4984,9 +4984,9 @@ func TestRepositoryController_process_HookFailureRecoveryAfterWorkflowsRemoved(t
 			ObservedGeneration: 1,
 			Health: provisioning.RepositoryHealthStatus{
 				Healthy: false,
-				Error:   provisioning.HealthFailureHook,
+				Error:   new(provisioning.HealthFailureHook),
 				// Recent failure — cooldown is still active.
-				Checked: time.Now().UnixMilli(),
+				Checked: new(time.Now().UnixMilli()),
 				Message: []string{"failed to create webhook"},
 			},
 		},
@@ -5035,7 +5035,7 @@ func applyCapturedPatches(t *testing.T, repo *provisioning.Repository, ops []map
 		case path == "/status/health":
 			repo.Status.Health = op["value"].(provisioning.RepositoryHealthStatus)
 		case path == "/status/fieldErrors":
-			repo.Status.FieldErrors = op["value"].([]provisioning.ErrorDetails)
+			repo.Status.FieldErrors = op["value"].([]provisioning.RepositoryErrorDetails)
 		case path == "/status/observedGeneration":
 			repo.Status.ObservedGeneration = op["value"].(int64)
 		case path == "/status/quota":
@@ -5049,7 +5049,7 @@ func applyCapturedPatches(t *testing.T, repo *provisioning.Repository, ops []map
 			require.NoError(t, err, "unexpected conditions patch path %q", path)
 			repo.Status.Conditions[idx] = provisioning.ConditionFromMeta[provisioning.RepositoryCondition](op["value"].(metav1.Condition))
 		case path == "/status/sync/state":
-			repo.Status.Sync.State = op["value"].(provisioning.JobState)
+			repo.Status.Sync.State = op["value"].(provisioning.RepositoryJobState)
 		case path == "/status/sync/started":
 			repo.Status.Sync.Started = new(op["value"].(int64))
 		case path == "/status/sync/message":
@@ -5151,10 +5151,10 @@ func TestRepositoryController_process_HookFailureRecoveryAfterCooldownExpires(t 
 			},
 			Health: provisioning.RepositoryHealthStatus{
 				Healthy: false,
-				Error:   provisioning.HealthFailureHook,
+				Error:   new(provisioning.HealthFailureHook),
 				// Older than recentUnhealthyDuration (1 minute) so the cooldown
 				// is no longer active.
-				Checked: time.Now().Add(-2 * time.Minute).UnixMilli(),
+				Checked: new(time.Now().Add(-2 * time.Minute).UnixMilli()),
 				Message: []string{"failed to create webhook"},
 			},
 		},

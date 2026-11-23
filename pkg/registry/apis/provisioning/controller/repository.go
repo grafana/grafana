@@ -32,6 +32,7 @@ import (
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/optional"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
@@ -608,7 +609,7 @@ func (rc *RepositoryController) shouldResync(ctx context.Context, obj *provision
 	// Only trigger resync if sync is enabled and sync interval has elapsed (to avoid unnecessary operations)
 	if ptr.Deref(obj.Status.Sync.Finished, 0) > 0 &&
 		obj.Spec.Sync.Enabled &&
-		(obj.Status.Sync.State == provisioning.JobStatePending || obj.Status.Sync.State == provisioning.JobStateWorking) &&
+		(obj.Status.Sync.State == provisioning.RepositoryJobStatePending || obj.Status.Sync.State == provisioning.RepositoryJobStateWorking) &&
 		ptr.Deref(obj.Status.Sync.Job, "") != "" {
 		_, err := rc.jobs.Get(ctx, obj.Namespace, ptr.Deref(obj.Status.Sync.Job, ""))
 		if apierrors.IsNotFound(err) {
@@ -629,8 +630,8 @@ func (rc *RepositoryController) shouldResync(ctx context.Context, obj *provision
 
 	// HACK: how would this work in a multi-tenant world or under heavy load?
 	// It will start queueing up jobs and we will have to deal with that
-	pendingForTooLong := syncAge >= syncInterval/2 && obj.Status.Sync.State == provisioning.JobStatePending
-	isRunning := obj.Status.Sync.State == provisioning.JobStateWorking
+	pendingForTooLong := syncAge >= syncInterval/2 && obj.Status.Sync.State == provisioning.RepositoryJobStatePending
+	isRunning := obj.Status.Sync.State == provisioning.RepositoryJobStateWorking
 
 	return obj.Spec.Sync.Enabled && checkAge >= (syncInterval-tolerance) && !pendingForTooLong && !isRunning
 }
@@ -719,7 +720,7 @@ func (rc *RepositoryController) determineSyncStrategy(
 		logger.Info("skip sync as the repository is unhealthy",
 			"health_error", healthStatus.Error,
 			"health_messages", healthStatus.Message,
-			"health_checked", time.UnixMilli(healthStatus.Checked))
+			"health_checked", time.UnixMilli(ptr.Deref(healthStatus.Checked, 0)))
 		return nil
 	case healthStatus.Healthy != obj.Status.Health.Healthy:
 		logger.Info("full resync as the repository recovered from an unhealthy state")
@@ -832,7 +833,7 @@ func (rc *RepositoryController) determineSyncStatusOps(obj *provisioning.Reposit
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
 			"path":  "/status/sync/state",
-			"value": provisioning.JobStatePending,
+			"value": provisioning.RepositoryJobStatePending,
 		})
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
@@ -865,7 +866,7 @@ func (rc *RepositoryController) determineSyncStatusOps(obj *provisioning.Reposit
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
 			"path":  "/status/sync/state",
-			"value": provisioning.JobStateError,
+			"value": provisioning.RepositoryJobStateError,
 		})
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
@@ -999,15 +1000,15 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 		logger.Warn("unable to delete repository", "error", err)
 		deleteHealthStatus := provisioning.RepositoryHealthStatus{
 			Healthy: false,
-			Error:   provisioning.HealthFailureHealth,
-			Checked: time.Now().UnixMilli(),
+			Error:   new(provisioning.HealthFailureHealth),
+			Checked: optional.NonZero(time.Now().UnixMilli()),
 			Message: []string{"Repository deletion error"},
 		}
 		patchOps := rc.healthPatchIfChanged(obj, deleteHealthStatus)
 		// handleDelete builds the repository to run its finalizers, so the failure
 		// can be a secret-decrypt outage -- use the build classifier so that reads
 		// as a transient service issue, not an invalid spec.
-		readyCondition := buildReadyConditionWithReason(deleteHealthStatus, classifyBuildFailureReason(err))
+		readyCondition := buildReadyConditionWithReason(deleteHealthStatus.Healthy, deleteHealthStatus.Message, classifyBuildFailureReason(err))
 		if conditionPatchOps := BuildConditionPatchOpsFromExisting(
 			provisioning.ConditionsToMeta(obj.Status.Conditions), obj.GetGeneration(), readyCondition,
 		); conditionPatchOps != nil {
@@ -1229,7 +1230,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			// If we wrote a token for this repository very recently, its secret may not be
 			// readable from the store yet. Wait for it rather than regenerating, which would
 			// delete it and can loop under secret-store read-after-write lag.
-			if tokenRecentlyCreated(time.UnixMilli(obj.Status.Token.LastUpdated)) {
+			if tokenRecentlyCreated(time.UnixMilli(ptr.Deref(obj.Status.Token.LastUpdated, 0))) {
 				rc.queue.AddAfter(key, tokenWriteRetryDelay)
 				logger.Info("repository token secret not yet readable after recent write; will retry",
 					"error", err, "retry_after", tokenWriteRetryDelay, "queue_len", rc.queue.Len())
@@ -1351,12 +1352,12 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	if isOverQuota {
 		healthStatus = provisioning.RepositoryHealthStatus{
 			Healthy: false,
-			Error:   provisioning.HealthFailureHealth,
-			Checked: time.Now().UnixMilli(),
+			Error:   new(provisioning.HealthFailureHealth),
+			Checked: optional.NonZero(time.Now().UnixMilli()),
 			Message: []string{quotaCondition.Message},
 		}
 
-		healthResult.ReadyCondition = buildReadyConditionWithReason(healthStatus, provisioning.ReasonQuotaExceeded)
+		healthResult.ReadyCondition = buildReadyConditionWithReason(healthStatus.Healthy, healthStatus.Message, provisioning.ReasonQuotaExceeded)
 		patchOperations = append(patchOperations, rc.healthPatchIfChanged(obj, healthStatus)...)
 	} else if len(healthResult.PatchOps) > 0 {
 		patchOperations = append(patchOperations, healthResult.PatchOps...)
@@ -1369,7 +1370,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	}
 	if hookFailureStatus != nil {
 		healthStatus = *hookFailureStatus
-		healthResult.ReadyCondition = buildReadyConditionWithReason(healthStatus, classifyHookFailureReason(hookErr))
+		healthResult.ReadyCondition = buildReadyConditionWithReason(healthStatus.Healthy, healthStatus.Message, classifyHookFailureReason(hookErr))
 	}
 	if hookErr != nil {
 		if rc.isUserCaused(hookErr) {
@@ -1410,10 +1411,10 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	// informer's UpdateFunc turns straight back into a re-enqueue and we will
 	// immediately check for repoHealth
 	if testResults != nil {
-		fieldErrors := testResults.Errors
+		fieldErrors := provisioning.ToRepositoryErrorDetails(testResults.Errors)
 		if (len(fieldErrors) != 0 || len(obj.Status.FieldErrors) != 0) && !reflect.DeepEqual(obj.Status.FieldErrors, fieldErrors) {
 			if fieldErrors == nil {
-				fieldErrors = []provisioning.ErrorDetails{}
+				fieldErrors = []provisioning.RepositoryErrorDetails{}
 			}
 			patchOperations = append(patchOperations, map[string]interface{}{
 				"op":    "replace",
@@ -1563,12 +1564,12 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 func (rc *RepositoryController) repositoryFailurePatchOps(obj *provisioning.Repository, err error, reason string) []map[string]interface{} {
 	healthStatus := provisioning.RepositoryHealthStatus{
 		Healthy: false,
-		Error:   provisioning.HealthFailureHealth,
-		Checked: time.Now().UnixMilli(),
+		Error:   new(provisioning.HealthFailureHealth),
+		Checked: optional.NonZero(time.Now().UnixMilli()),
 		Message: []string{err.Error()},
 	}
 	ops := rc.healthPatchIfChanged(obj, healthStatus)
-	readyCondition := buildReadyConditionWithReason(healthStatus, reason)
+	readyCondition := buildReadyConditionWithReason(healthStatus.Healthy, healthStatus.Message, reason)
 	return append(ops, BuildConditionPatchOpsFromExisting(
 		provisioning.ConditionsToMeta(obj.Status.Conditions), obj.GetGeneration(), readyCondition,
 	)...)
@@ -1741,17 +1742,17 @@ func (rc *RepositoryController) shouldGenerateTokenFromConnection(
 	}
 
 	// The token was stored without expiration tracking; regenerate to backfill it.
-	if obj.Status.Token.LastUpdated == 0 {
+	if ptr.Deref(obj.Status.Token.LastUpdated, 0) == 0 {
 		rc.tokenMetrics.recordRefreshReason(refreshReasonMissing)
 		return true
 	}
 
 	// A zero expiration means the token does not expire.
-	if obj.Status.Token.Expiration == 0 {
+	if ptr.Deref(obj.Status.Token.Expiration, 0) == 0 {
 		return false
 	}
 
-	expiration := time.UnixMilli(obj.Status.Token.Expiration)
+	expiration := time.UnixMilli(ptr.Deref(obj.Status.Token.Expiration, 0))
 	now := time.Now()
 	rc.tokenMetrics.recordTimeToExpiry(expiration.Sub(now).Seconds())
 
@@ -1764,7 +1765,7 @@ func (rc *RepositoryController) shouldGenerateTokenFromConnection(
 		rc.tokenMetrics.recordExpired()
 	}
 
-	recentlyCreated := tokenRecentlyCreated(time.UnixMilli(obj.Status.Token.LastUpdated))
+	recentlyCreated := tokenRecentlyCreated(time.UnixMilli(ptr.Deref(obj.Status.Token.LastUpdated, 0)))
 	if !recentlyCreated && shouldRefreshBeforeExpiration(expiration, rc.resyncInterval) {
 		rc.tokenMetrics.recordRefreshReason(refreshReasonExpiring)
 		return true
@@ -1806,9 +1807,9 @@ func (rc *RepositoryController) generateRepositoryToken(
 		return "", nil, fmt.Errorf("unable to create token for repository: %w", err)
 	}
 
-	tokenStatus := provisioning.RepositoryTokenStatus{LastUpdated: time.Now().UnixMilli()}
+	tokenStatus := provisioning.RepositoryTokenStatus{LastUpdated: optional.NonZero(time.Now().UnixMilli())}
 	if !token.ExpiresAt.IsZero() {
-		tokenStatus.Expiration = token.ExpiresAt.UnixMilli()
+		tokenStatus.Expiration = optional.NonZero(token.ExpiresAt.UnixMilli())
 	}
 
 	patchOperations := []map[string]any{

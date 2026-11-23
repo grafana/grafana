@@ -8,8 +8,10 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/optional"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 )
 
 const (
@@ -71,7 +73,7 @@ func (hc *ConnectionHealthChecker) ShouldCheckHealth(conn *provisioning.Connecti
 
 	// A token written after the last health check (e.g. by the authorize endpoint)
 	// invalidates it; recheck instead of waiting out the unhealthy cooldown.
-	if conn.Status.Token.LastUpdated > conn.Status.Health.Checked {
+	if ptr.Deref(conn.Status.Token.LastUpdated, 0) > ptr.Deref(conn.Status.Health.Checked, 0) {
 		return true
 	}
 
@@ -81,11 +83,11 @@ func (hc *ConnectionHealthChecker) ShouldCheckHealth(conn *provisioning.Connecti
 
 // hasRecentHealthCheck checks if a health check was performed recently (for timing purposes)
 func (hc *ConnectionHealthChecker) hasRecentHealthCheck(healthStatus provisioning.ConnectionHealthStatus) bool {
-	if healthStatus.Checked == 0 {
+	if ptr.Deref(healthStatus.Checked, 0) == 0 {
 		return false // Never checked
 	}
 
-	age := time.Since(time.UnixMilli(healthStatus.Checked))
+	age := time.Since(time.UnixMilli(ptr.Deref(healthStatus.Checked, 0)))
 	if healthStatus.Healthy {
 		return age <= connectionRecentHealthyDuration
 	}
@@ -106,7 +108,7 @@ func (hc *ConnectionHealthChecker) hasHealthStatusChanged(old, new provisioning.
 	if new.Healthy {
 		recent = connectionRecentHealthyDuration
 	}
-	if time.UnixMilli(new.Checked).Sub(time.UnixMilli(old.Checked)) > recent {
+	if time.UnixMilli(ptr.Deref(new.Checked, 0)).Sub(time.UnixMilli(ptr.Deref(old.Checked, 0))) > recent {
 		return true
 	}
 
@@ -165,7 +167,7 @@ func (hc *ConnectionHealthChecker) RefreshHealthWithPatchOps(ctx context.Context
 	return ConnectionHealthResultWithPatchOps{
 		TestResults:    testResults,
 		HealthStatus:   newHealthStatus,
-		ReadyCondition: buildReadyConditionWithReason(newHealthStatus, classifyTestResultReason(testResults)),
+		ReadyCondition: buildReadyConditionWithReason(newHealthStatus.Healthy, newHealthStatus.Message, classifyTestResultReason(testResults)),
 		PatchOps:       patchOps,
 	}, nil
 }
@@ -200,8 +202,8 @@ func (hc *ConnectionHealthChecker) refreshHealth(ctx context.Context, conn *prov
 
 		healthStatus := provisioning.ConnectionHealthStatus{
 			Healthy: false,
-			Error:   provisioning.HealthFailureHealth,
-			Checked: time.Now().UnixMilli(),
+			Error:   new(provisioning.ConnectionHealthFailureTypeHealth),
+			Checked: optional.NonZero(time.Now().UnixMilli()),
 			Message: errorMsgs,
 		}
 
@@ -212,14 +214,14 @@ func (hc *ConnectionHealthChecker) refreshHealth(ctx context.Context, conn *prov
 	now := time.Now()
 	healthStatus := provisioning.ConnectionHealthStatus{
 		Healthy: true,
-		Checked: now.UnixMilli(),
+		Checked: optional.NonZero(now.UnixMilli()),
 	}
 
 	// If the existing status is already healthy with no error messages and
 	// the last check was recent (within 30 seconds), preserve the existing timestamp
 	// to avoid unnecessary updates
-	if existingStatus.Healthy && existingStatus.Error == "" && len(existingStatus.Message) == 0 {
-		lastCheckedTime := time.UnixMilli(existingStatus.Checked)
+	if existingStatus.Healthy && ptr.Deref(existingStatus.Error, "") == "" && len(existingStatus.Message) == 0 {
+		lastCheckedTime := time.UnixMilli(ptr.Deref(existingStatus.Checked, 0))
 		if now.Sub(lastCheckedTime) < 30*time.Second {
 			healthStatus.Checked = existingStatus.Checked
 		}

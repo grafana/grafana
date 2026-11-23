@@ -20,7 +20,7 @@ func TestConnectionUsageStatusFromConnection(t *testing.T) {
 		},
 		Spec: provisioning.ConnectionSpec{
 			Type:    provisioning.ConnectionTypeGithubOAuth,
-			Webhook: &provisioning.ConnectionWebhookConfig{Disabled: true},
+			Webhook: &provisioning.ConnectionWebhookConfig{Disabled: new(true)},
 		},
 		Status: provisioning.ConnectionStatus{
 			Health: provisioning.ConnectionHealthStatus{Healthy: true},

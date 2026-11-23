@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"testing"
 
+	"k8s.io/utils/ptr"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -119,16 +121,18 @@ func TestHealthCheckMetrics(t *testing.T) {
 				t.Run(tt.name, func(t *testing.T) {
 					reg := prometheus.NewPedanticRegistry()
 					recorder := registerHealthMetrics(reg)
-					existingStatus := provisioning.RepositoryHealthStatus{Healthy: true, Checked: 1}
 					testErr := tt.err
 					if testErr != nil {
 						testErr = fmt.Errorf("provider test: %w", testErr)
 					}
 
 					var (
-						result *provisioning.TestResults
-						status provisioning.RepositoryHealthStatus
-						err    error
+						result  *provisioning.TestResults
+						healthy bool
+						checked int64
+						failure string
+						message []string
+						err     error
 					)
 					if resource == "repository" {
 						repo := &mockRepository{
@@ -137,30 +141,38 @@ func TestHealthCheckMetrics(t *testing.T) {
 							testError:  testErr,
 						}
 						checker := NewRepositoryHealthChecker(nil, repository.NewTester(), recorder)
-						result, status, err = checker.refreshHealth(context.Background(), repo, existingStatus)
+						var status provisioning.RepositoryHealthStatus
+						result, status, err = checker.refreshHealth(context.Background(), repo, provisioning.RepositoryHealthStatus{Healthy: true, Checked: new(int64(1))})
+						healthy, checked, failure, message = status.Healthy, ptr.Deref(status.Checked, 0), string(ptr.Deref(status.Error, "")), status.Message
 					} else {
 						conn := &provisioning.Connection{}
 						tester := NewMockConnectionTester(t)
 						tester.EXPECT().TestConnection(mock.Anything, conn).Return(tt.result, testErr).Once()
 						checker := NewConnectionHealthChecker(tester, recorder)
-						result, status, err = checker.refreshHealth(context.Background(), conn, existingStatus)
+						var status provisioning.ConnectionHealthStatus
+						result, status, err = checker.refreshHealth(context.Background(), conn, provisioning.ConnectionHealthStatus{Healthy: true, Checked: new(int64(1))})
+						healthy, checked, failure, message = status.Healthy, ptr.Deref(status.Checked, 0), string(ptr.Deref(status.Error, "")), status.Message
 					}
 
 					if tt.err != nil {
 						require.ErrorIs(t, err, tt.err)
 						assert.Nil(t, result)
-						assert.Equal(t, existingStatus, status)
+						// the existing status is returned unchanged
+						assert.True(t, healthy)
+						assert.Equal(t, int64(1), checked)
+						assert.Empty(t, failure)
+						assert.Empty(t, message)
 					} else {
 						require.NoError(t, err)
 						assert.Equal(t, tt.result, result)
-						assert.Equal(t, tt.result.Success, status.Healthy)
-						assert.Greater(t, status.Checked, existingStatus.Checked)
+						assert.Equal(t, tt.result.Success, healthy)
+						assert.Greater(t, checked, int64(1))
 						if tt.result.Success {
-							assert.Empty(t, status.Error)
-							assert.Empty(t, status.Message)
+							assert.Empty(t, failure)
+							assert.Empty(t, message)
 						} else {
-							assert.Equal(t, provisioning.HealthFailureHealth, status.Error)
-							assert.Equal(t, []string{"repository unavailable"}, status.Message)
+							assert.Equal(t, string(provisioning.HealthFailureHealth), failure)
+							assert.Equal(t, []string{"repository unavailable"}, message)
 						}
 					}
 
