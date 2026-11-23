@@ -511,7 +511,6 @@ func (hs *HTTPServer) availablePlugins(ctx context.Context, orgID int64) (Availa
 	apps := make(map[string]*availablePluginDTO)
 	for _, app := range hs.pluginStore.Plugins(ctx, plugins.TypeApp) {
 		if s, exists := pluginSettingMap[app.ID]; exists {
-			app.Pinned = s.Pinned
 			apps[app.ID] = &availablePluginDTO{
 				Plugin:   app,
 				Settings: *s,
@@ -572,7 +571,6 @@ func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[stri
 			PluginID:      plugin.ID,
 			OrgID:         orgID,
 			Enabled:       plugin.AutoEnabled,
-			Pinned:        plugin.AutoEnabled,
 			AutoEnabled:   plugin.AutoEnabled,
 			PluginVersion: plugin.Info.Version,
 		}
@@ -592,7 +590,6 @@ func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[stri
 			PluginID:      plugin.ID,
 			OrgID:         orgID,
 			Enabled:       true,
-			Pinned:        false,
 			PluginVersion: plugin.Info.Version,
 		}
 

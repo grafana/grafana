@@ -160,7 +160,6 @@ func (s *settingsStorage) get(ctx context.Context) (*apppluginV0.Settings, error
 		obj.SetResourceVersion(getLegacySettingsResourceVersion(ps))
 
 		obj.Spec.Enabled = ps.Enabled
-		obj.Spec.Pinned = ps.Pinned
 		obj.Spec.JsonData = common.Unstructured{Object: ps.JSONData}
 
 		secureValues := make(common.InlineSecureValues, len(ps.SecureJSONData))
@@ -233,7 +232,6 @@ func (s *settingsStorage) save(ctx context.Context, obj runtime.Object, isDryRun
 		PluginID:       s.pluginID,
 		OrgID:          nsInfo.OrgID,
 		Enabled:        p.Spec.Enabled,
-		Pinned:         p.Spec.Pinned,
 		JSONData:       p.Spec.JsonData.Object,
 		SecureJSONData: toSecureJSONData(p.Secure),
 	}); err != nil {

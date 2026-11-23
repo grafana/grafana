@@ -86,7 +86,6 @@ func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, feature
 						"metadata":   map[string]any{"name": instanceName},
 						"spec": map[string]any{
 							"enabled":  true,
-							"pinned":   true,
 							"jsonData": map[string]any{"url": "https://api.example.com"},
 						},
 						"secure": map[string]any{
@@ -113,11 +112,9 @@ func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, feature
 				require.NotEmpty(t, current.GetResourceVersion(), "PATCH test op needs a resourceVersion")
 
 				enabledValue := true
-				pinnedValue := true
 				expectedJSONData := any(nil)
 				if mode == rest.Mode5 {
 					enabledValue = false
-					pinnedValue = true
 					expectedJSONData = map[string]any{"url": "https://api.example.com"}
 				}
 
@@ -131,11 +128,6 @@ func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, feature
 						"op":    "replace",
 						"path":  "/spec/enabled",
 						"value": enabledValue,
-					},
-					{
-						"op":    "replace",
-						"path":  "/spec/pinned",
-						"value": pinnedValue,
 					},
 				})
 				require.NoError(t, err)
@@ -152,7 +144,6 @@ func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, feature
 				spec, ok := obj.Object["spec"].(map[string]any)
 				require.True(t, ok)
 				require.Equal(t, enabledValue, spec["enabled"])
-				require.Equal(t, pinnedValue, spec["pinned"])
 				require.Equal(t, expectedJSONData, spec["jsonData"])
 			})
 
@@ -171,13 +162,11 @@ func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, feature
 
 				updateSpec := map[string]any{
 					"enabled":  true,
-					"pinned":   false,
 					"jsonData": nil,
 				}
 				if mode == rest.Mode5 {
 					updateSpec = map[string]any{
 						"enabled":  false,
-						"pinned":   false,
 						"jsonData": map[string]any{"url": "https://updated.example.com"},
 					}
 				}
@@ -200,7 +189,7 @@ func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, feature
 						return true
 					}
 
-					updateSpec["pinned"] = !(updateSpec["pinned"].(bool))
+					updateSpec["enabled"] = !(updateSpec["enabled"].(bool))
 					_, err = client.Resource.Update(ctx, &unstructured.Unstructured{
 						Object: map[string]any{
 							"apiVersion": testAppID + "/v0alpha1",
@@ -221,7 +210,7 @@ func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, feature
 					},
 					{
 						"op":    "replace",
-						"path":  "/spec/pinned",
+						"path":  "/spec/enabled",
 						"value": true,
 					},
 				})
@@ -239,7 +228,6 @@ func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, feature
 				spec, ok := obj.Object["spec"].(map[string]any)
 				require.True(t, ok)
 				require.Equal(t, true, spec["enabled"])
-				require.Equal(t, true, spec["pinned"])
 				require.Equal(t, map[string]any{"url": "https://api.example.com"}, spec["jsonData"])
 
 				// Secure values are top-level and must be returned as opaque name references, never raw values.
@@ -310,7 +298,6 @@ func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, feature
 						"metadata":   map[string]any{"name": instanceName},
 						"spec": map[string]any{
 							"enabled":  true,
-							"pinned":   true,
 							"jsonData": map[string]any{"url": "https://api.example.com"},
 						},
 						"secure": map[string]any{

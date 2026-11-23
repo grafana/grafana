@@ -20,7 +20,6 @@ type Plugin struct {
 	Children        []string
 	IncludedInAppID string
 	DefaultNavURL   string
-	Pinned          bool
 
 	// Signature fields
 	Signature     plugins.SignatureStatus
@@ -71,7 +70,6 @@ func ToGrafanaDTO(p *plugins.Plugin) Plugin {
 		JSONData:          p.JSONData,
 		IncludedInAppID:   p.IncludedInAppID,
 		DefaultNavURL:     p.DefaultNavURL,
-		Pinned:            p.Pinned,
 		Signature:         p.Signature,
 		SignatureType:     p.SignatureType,
 		SignatureOrg:      p.SignatureOrg,

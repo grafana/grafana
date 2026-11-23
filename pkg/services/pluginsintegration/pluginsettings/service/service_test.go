@@ -242,7 +242,6 @@ func TestIntegrationPluginSettings(t *testing.T) {
 					"secureKey":  "secureValue",
 					"secureKey2": "secureValue2",
 				},
-				Pinned: true,
 			}
 			err := psService.UpdatePluginSetting(context.Background(), cmd)
 
@@ -275,7 +274,6 @@ func TestIntegrationPluginSettings(t *testing.T) {
 				require.NotNil(t, ps.SecureJSONData)
 				require.Equal(t, cmd.SecureJSONData, psService.DecryptedValues(ps))
 				require.Equal(t, "1.0.2", ps.PluginVersion)
-				require.True(t, ps.Pinned)
 			})
 		})
 	})
@@ -323,7 +321,6 @@ func TestIntegrationPluginSettings(t *testing.T) {
 				require.Equal(t, cmd.JSONData, ps.JSONData)
 				require.NotNil(t, ps.SecureJSONData)
 				require.Equal(t, cmd.PluginVersion, ps.PluginVersion)
-				require.False(t, ps.Pinned)
 			})
 		})
 	})

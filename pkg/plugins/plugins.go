@@ -37,7 +37,6 @@ type Plugin struct {
 	// App fields
 	IncludedInAppID string
 	DefaultNavURL   string
-	Pinned          bool
 
 	// Signature fields
 	Signature     SignatureStatus

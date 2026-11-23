@@ -61,7 +61,6 @@ func AugmentOpenAPI(oas *spec3.OpenAPI, opts SettingsResource) (*spec3.OpenAPI, 
 				SchemaProps: spec.SchemaProps{
 					Type: []string{"object"},
 					Properties: map[string]spec.Schema{
-						"pinned":   *spec.BooleanProperty().WithDescription("shows up in the sidebar"),
 						"enabled":  *spec.BooleanProperty().WithDescription("can be executed"),
 						"jsonData": *settings.Spec,
 					},
@@ -74,7 +73,6 @@ func AugmentOpenAPI(oas *spec3.OpenAPI, opts SettingsResource) (*spec3.OpenAPI, 
 				},
 				"spec": map[string]any{
 					"enabled": true,
-					"pinned":  true,
 					// JSONData (from examples)
 				},
 			}

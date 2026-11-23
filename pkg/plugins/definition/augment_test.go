@@ -270,7 +270,6 @@ func TestAugmentOpenAPI(t *testing.T) {
 		registered := oas.Components.Schemas["SettingsSpec"]
 		require.NotNil(t, registered)
 		assert.Contains(t, registered.Properties, "enabled")
-		assert.Contains(t, registered.Properties, "pinned")
 		jsonData := registered.Properties["jsonData"]
 		assert.Contains(t, jsonData.Properties, "path", "the plugin spec becomes jsonData")
 

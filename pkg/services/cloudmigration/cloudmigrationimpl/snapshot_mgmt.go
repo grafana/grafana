@@ -504,7 +504,6 @@ func (s *Service) getPlugins(ctx context.Context, signedInUser *user.SignedInUse
 
 		pluginSettingCmd := pluginsettings.UpdatePluginSettingCmd{
 			Enabled:       plugin.AutoEnabled,
-			Pinned:        plugin.Pinned,
 			PluginVersion: plugin.Info.Version,
 			PluginId:      plugin.ID,
 		}
@@ -518,7 +517,6 @@ func (s *Service) getPlugins(ctx context.Context, signedInUser *user.SignedInUse
 			return nil, fmt.Errorf("failed to get plugin settings: %w", err)
 		} else if ps != nil {
 			pluginSettingCmd.Enabled = ps.Enabled
-			pluginSettingCmd.Pinned = ps.Pinned
 			pluginSettingCmd.JsonData = ps.JSONData
 			decryptedData, err := s.secretsService.DecryptJsonData(ctx, ps.SecureJSONData)
 			if err != nil {

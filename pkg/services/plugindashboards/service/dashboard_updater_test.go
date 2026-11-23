@@ -416,7 +416,6 @@ func (s *pluginsSettingsServiceMock) GetPluginSettings(_ context.Context, args *
 			PluginID:      ps.PluginID,
 			OrgID:         ps.OrgID,
 			Enabled:       ps.Enabled,
-			Pinned:        ps.Pinned,
 			PluginVersion: ps.PluginVersion,
 		}
 	}
