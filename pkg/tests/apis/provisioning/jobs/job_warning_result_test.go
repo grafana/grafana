@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -39,11 +40,11 @@ func TestIntegrationProvisioning_JobWarningResult(t *testing.T) {
 	require.NoError(t, err)
 
 	// The job should complete with "warning" state when there are validation errors
-	require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
+	require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State),
 		"job should complete with warning state when parsing malformed dashboard")
-	require.NotEqual(t, provisioning.JobStateSuccess, jobObj.Status.State,
+	require.NotEqual(t, provisioning.JobStateSuccess, ptr.Deref(jobObj.Status.State),
 		"job should not be in success state")
-	require.NotEqual(t, provisioning.JobStateError, jobObj.Status.State,
+	require.NotEqual(t, provisioning.JobStateError, ptr.Deref(jobObj.Status.State),
 		"job should not be in error state (validation errors are warnings)")
 
 	// Verify the job has warnings (not errors)
@@ -92,7 +93,7 @@ func TestIntegrationProvisioning_JobWarningResult_MissingName(t *testing.T) {
 	err := runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
 	require.NoError(t, err)
 
-	require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
+	require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State),
 		"job should complete with warning state for missing name validation error")
 	require.NotEmpty(t, jobObj.Status.Warnings,
 		"job should have warnings for the missing name error")
@@ -137,7 +138,7 @@ func TestIntegrationProvisioning_JobWarningResult_DashboardRefreshInterval(t *te
 	err := runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
 	require.NoError(t, err)
 
-	require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
+	require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State),
 		"job should complete with warning state for refresh interval validation error")
 	require.NotEmpty(t, jobObj.Status.Warnings,
 		"job should have warnings for the refresh interval error")
@@ -186,7 +187,7 @@ func TestIntegrationProvisioning_JobWarningResult_DashboardSchemaInvalid(t *test
 	err := runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
 	require.NoError(t, err)
 
-	t.Logf("job status: state=%s message=%s", jobObj.Status.State, jobObj.Status.Message)
+	t.Logf("job status: state=%s message=%s", ptr.Deref(jobObj.Status.State), ptr.Deref(jobObj.Status.Message))
 	for i, w := range jobObj.Status.Warnings {
 		t.Logf("  warning[%d]: %s", i, w)
 	}
@@ -194,7 +195,7 @@ func TestIntegrationProvisioning_JobWarningResult_DashboardSchemaInvalid(t *test
 		t.Logf("  error[%d]: %s", i, e)
 	}
 
-	require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
+	require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State),
 		"job should complete with warning state for dashboard schema validation (IsInvalid) error")
 	require.NotEmpty(t, jobObj.Status.Warnings,
 		"job should have warnings for the schema validation error")
@@ -246,7 +247,7 @@ func TestIntegrationProvisioning_JobWarningResult_DuplicateName(t *testing.T) {
 	err := runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
 	require.NoError(t, err)
 
-	require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
+	require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State),
 		"job should complete with warning state for duplicate resource name")
 	require.NotEmpty(t, jobObj.Status.Warnings,
 		"job should have warnings for the duplicate resource name")

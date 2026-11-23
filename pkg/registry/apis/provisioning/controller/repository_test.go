@@ -1489,7 +1489,7 @@ func TestRepositoryController_process_IntervalSyncJob(t *testing.T) {
 					Return([]repository.VersionedFileChange{{Action: repository.FileActionUpdated, Path: "dashboard.json"}}, tt.compareErr).Once()
 			}
 			rc.jobs.(*mockJobsQueueStore).MockQueue.On("Insert", mock.Anything, obj.Namespace, provisioning.JobSpec{
-				Repository: obj.Name,
+				Repository: new(obj.Name),
 				Action:     provisioning.JobActionPull,
 				Pull:       &provisioning.JobSyncJobOptions{Incremental: tt.incremental},
 			}).Return(&provisioning.Job{ObjectMeta: metav1.ObjectMeta{Name: "new-job"}}, nil).Once()
@@ -1514,7 +1514,7 @@ func TestRepositoryController_process_IntervalSyncJobCreationFailure(t *testing.
 		Return([]repository.VersionedFileChange{{Action: repository.FileActionUpdated, Path: "dashboard.json"}}, nil).Twice()
 	jobStore := rc.jobs.(*mockJobsQueueStore)
 	jobSpec := provisioning.JobSpec{
-		Repository: obj.Name,
+		Repository: new(obj.Name),
 		Action:     provisioning.JobActionPull,
 		Pull:       &provisioning.JobSyncJobOptions{Incremental: true},
 	}

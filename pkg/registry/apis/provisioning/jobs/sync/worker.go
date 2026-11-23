@@ -9,6 +9,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -192,7 +193,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	} else {
 		outcome = utils.SuccessOutcome
 		for _, summary := range jobStatus.Summary {
-			totalChangesMade += int(summary.Create + summary.Update + summary.Delete)
+			totalChangesMade += int(ptr.Deref(summary.Create) + ptr.Deref(summary.Update) + ptr.Deref(summary.Delete))
 		}
 	}
 	syncSpan.End()
@@ -239,7 +240,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	//    not just what the controller thinks should exist.
 	quotaStatus := repo.Config().Status.Quota
 	quotaCondition := quotas.EvaluateCondition(quotaStatus, quotas.NewQuotaUsageFromStats(repoStats))
-	syncCondition := EvaluatePullCondition(jobStatus.State, resultReasons)
+	syncCondition := EvaluatePullCondition(ptr.Deref(jobStatus.State), resultReasons)
 	if conditionOps := controller.BuildConditionPatchOpsFromExisting(cfg.Status.Conditions, cfg.GetGeneration(), quotaCondition, syncCondition); conditionOps != nil {
 		patchOperations = append(patchOperations, conditionOps...)
 	}
@@ -272,7 +273,7 @@ func (r *SyncWorker) completeFailedSync(ctx context.Context, cfg *provisioning.R
 		},
 	}
 
-	syncCondition := EvaluatePullCondition(jobStatus.State, progress.ResultReasons())
+	syncCondition := EvaluatePullCondition(ptr.Deref(jobStatus.State), progress.ResultReasons())
 	if conditionOps := controller.BuildConditionPatchOpsFromExisting(cfg.Status.Conditions, cfg.GetGeneration(), syncCondition); conditionOps != nil {
 		patchOperations = append(patchOperations, conditionOps...)
 	}

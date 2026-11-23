@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -156,8 +157,8 @@ func TestPullRequestJobRejected(t *testing.T) {
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionPullRequest,
 			PullRequest: &provisioning.JobPullRequestJobOptions{
-				PR:  123,
-				Ref: "test-ref",
+				PR:  new(int32(123)),
+				Ref: new("test-ref"),
 			},
 		}
 
@@ -270,7 +271,7 @@ func TestValidateWriteAccess_FixFolderMetadata(t *testing.T) {
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionFixFolderMetadata,
 			FixFolderMetadata: &provisioning.JobFixFolderMetadataJobOptions{
-				Ref: "add-folder-metadata",
+				Ref: new("add-folder-metadata"),
 			},
 		}
 		err := c.validateWriteAccess(cfg, spec)
@@ -320,7 +321,7 @@ func TestValidateWriteAccess_FixFolderMetadata(t *testing.T) {
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionFixFolderMetadata,
 			FixFolderMetadata: &provisioning.JobFixFolderMetadataJobOptions{
-				Ref: "main",
+				Ref: new("main"),
 			},
 		}
 		err := c.validateWriteAccess(cfg, spec)
@@ -357,7 +358,7 @@ func TestValidateWriteAccess_Migrate(t *testing.T) {
 	migrate := func(branch string) provisioning.JobSpec {
 		return provisioning.JobSpec{
 			Action:  provisioning.JobActionMigrate,
-			Migrate: &provisioning.JobMigrateJobOptions{Branch: branch},
+			Migrate: &provisioning.JobMigrateJobOptions{Branch: ptr.NonZero(branch)},
 		}
 	}
 
@@ -641,7 +642,7 @@ func TestAuthorizeMigrateJob(t *testing.T) {
 
 		mockReader := repository.NewMockReaderWriter(t)
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
-		spec := provisioning.JobSpec{Action: provisioning.JobActionMigrate, Migrate: &provisioning.JobMigrateJobOptions{SkipResourceDeletion: true}}
+		spec := provisioning.JobSpec{Action: provisioning.JobActionMigrate, Migrate: &provisioning.JobMigrateJobOptions{SkipResourceDeletion: new(true)}}
 
 		err := c.authorizeMigrateJob(ctx, mockReader, instanceRepo(), spec)
 		require.NoError(t, err)
@@ -695,7 +696,7 @@ func TestAuthorizeMigrateJob(t *testing.T) {
 
 		mockReader := repository.NewMockReaderWriter(t)
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
-		spec := provisioning.JobSpec{Action: provisioning.JobActionMigrate, Migrate: &provisioning.JobMigrateJobOptions{Branch: "feature-x"}}
+		spec := provisioning.JobSpec{Action: provisioning.JobActionMigrate, Migrate: &provisioning.JobMigrateJobOptions{Branch: new("feature-x")}}
 
 		err := c.authorizeMigrateJob(ctx, mockReader, folderRepo(), spec)
 		require.Error(t, err)
@@ -741,9 +742,9 @@ func TestAuthorizeMigrateJob(t *testing.T) {
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionMigrate,
 			Migrate: &provisioning.JobMigrateJobOptions{
-				Branch: "feature-x",
+				Branch: new("feature-x"),
 				Resources: []provisioning.JobResourceRef{
-					{Name: "my-dash", Kind: "Dashboard", Group: "dashboard.grafana.app"},
+					{Name: new("my-dash"), Kind: new("Dashboard"), Group: new("dashboard.grafana.app")},
 				},
 			},
 		}
@@ -835,7 +836,7 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 
 		c := &jobsConnector{access: accessMock, clients: clientsMock}
 		err := c.authorizeDeleteJob(ctx, mockReader, cfg, nil, []provisioning.JobResourceRef{
-			{Name: "my-dash", Kind: "Dashboard", Group: "dashboard.grafana.app"},
+			{Name: new("my-dash"), Kind: new("Dashboard"), Group: new("dashboard.grafana.app")},
 		})
 		require.NoError(t, err)
 	})
@@ -857,7 +858,7 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 
 		c := &jobsConnector{access: accessMock, clients: clientsMock}
 		err := c.authorizeDeleteJob(ctx, mockReader, cfg, nil, []provisioning.JobResourceRef{
-			{Name: "missing-dash", Kind: "Dashboard", Group: "dashboard.grafana.app"},
+			{Name: new("missing-dash"), Kind: new("Dashboard"), Group: new("dashboard.grafana.app")},
 		})
 		require.NoError(t, err)
 	})
@@ -897,7 +898,7 @@ func TestAuthorizeMoveJob(t *testing.T) {
 		mockReader := repository.NewMockReaderWriter(t)
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
 		err := c.authorizeMoveJob(ctx, mockReader, cfg, &provisioning.JobMoveJobOptions{
-			TargetPath: "dest/",
+			TargetPath: new("dest/"),
 		})
 		require.NoError(t, err)
 	})
@@ -918,7 +919,7 @@ func TestAuthorizeMoveJob(t *testing.T) {
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
 		err := c.authorizeMoveJob(ctx, mockReader, cfg, &provisioning.JobMoveJobOptions{
 			Paths:      []string{"src/dashboard.json"},
-			TargetPath: "dest/",
+			TargetPath: new("dest/"),
 		})
 		require.NoError(t, err)
 	})
@@ -934,7 +935,7 @@ func TestAuthorizeMoveJob(t *testing.T) {
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
 		err := c.authorizeMoveJob(ctx, mockReader, cfg, &provisioning.JobMoveJobOptions{
 			Paths:      []string{"restricted/dashboard.json"},
-			TargetPath: "dest/",
+			TargetPath: new("dest/"),
 		})
 		require.Error(t, err)
 		require.ErrorContains(t, err, "authorize move")
@@ -964,9 +965,9 @@ func TestAuthorizeMoveJob(t *testing.T) {
 		c := &jobsConnector{access: accessMock, clients: clientsMock}
 		err := c.authorizeMoveJob(ctx, mockReader, cfg, &provisioning.JobMoveJobOptions{
 			Resources: []provisioning.JobResourceRef{
-				{Name: "my-dash", Kind: "Dashboard", Group: "dashboard.grafana.app"},
+				{Name: new("my-dash"), Kind: new("Dashboard"), Group: new("dashboard.grafana.app")},
 			},
-			TargetPath: "dest/",
+			TargetPath: new("dest/"),
 		})
 		require.NoError(t, err)
 	})
@@ -977,7 +978,7 @@ func TestAuthorizeMoveJob(t *testing.T) {
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
 		err := c.authorizeMoveJob(ctx, mockRepo, cfg, &provisioning.JobMoveJobOptions{
 			Paths:      []string{"dashboard.json"},
-			TargetPath: "dest/",
+			TargetPath: new("dest/"),
 		})
 		require.Error(t, err)
 		assert.True(t, apierrors.IsBadRequest(err))
@@ -1107,7 +1108,7 @@ func TestHandleOrphanCleanupJob_RepoNotFound_AdminAllowed(t *testing.T) {
 			queueMock := &jobs.MockQueue{}
 			createdJob := &provisioning.Job{
 				ObjectMeta: metav1.ObjectMeta{Name: "job-1", Namespace: "default"},
-				Spec:       provisioning.JobSpec{Action: action, Repository: "gone-repo"},
+				Spec:       provisioning.JobSpec{Action: action, Repository: new("gone-repo")},
 			}
 			queueMock.EXPECT().Insert(mock.Anything, "default", mock.Anything).Return(createdJob, nil)
 
@@ -1121,7 +1122,7 @@ func TestHandleOrphanCleanupJob_RepoNotFound_AdminAllowed(t *testing.T) {
 			r, _ := http.NewRequest(http.MethodPost, "/", nil)
 			r = r.WithContext(ctx)
 
-			spec := provisioning.JobSpec{Action: action, Repository: "gone-repo"}
+			spec := provisioning.JobSpec{Action: action, Repository: new("gone-repo")}
 			c.handleOrphanCleanupJob(ctx, r, "gone-repo", spec, responder)
 
 			require.NoError(t, responder.err)
@@ -1154,7 +1155,7 @@ func TestHandleOrphanCleanupJob_RepoTerminating_Allowed(t *testing.T) {
 	queueMock := &jobs.MockQueue{}
 	createdJob := &provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{Name: "job-1", Namespace: "default"},
-		Spec:       provisioning.JobSpec{Action: provisioning.JobActionReleaseResources, Repository: "dying-repo"},
+		Spec:       provisioning.JobSpec{Action: provisioning.JobActionReleaseResources, Repository: new("dying-repo")},
 	}
 	queueMock.EXPECT().Insert(mock.Anything, "default", mock.Anything).Return(createdJob, nil)
 
@@ -1168,7 +1169,7 @@ func TestHandleOrphanCleanupJob_RepoTerminating_Allowed(t *testing.T) {
 	r, _ := http.NewRequest(http.MethodPost, "/", nil)
 	r = r.WithContext(ctx)
 
-	spec := provisioning.JobSpec{Action: provisioning.JobActionReleaseResources, Repository: "dying-repo"}
+	spec := provisioning.JobSpec{Action: provisioning.JobActionReleaseResources, Repository: new("dying-repo")}
 	c.handleOrphanCleanupJob(ctx, r, "dying-repo", spec, responder)
 
 	require.NoError(t, responder.err)
@@ -1194,7 +1195,7 @@ func TestHandleOrphanCleanupJob_HealthyRepo_Rejected(t *testing.T) {
 	r, _ := http.NewRequest(http.MethodPost, "/", nil)
 	r = r.WithContext(ctx)
 
-	spec := provisioning.JobSpec{Action: provisioning.JobActionReleaseResources, Repository: "healthy-repo"}
+	spec := provisioning.JobSpec{Action: provisioning.JobActionReleaseResources, Repository: new("healthy-repo")}
 	c.handleOrphanCleanupJob(ctx, r, "healthy-repo", spec, responder)
 
 	require.Error(t, responder.err)
@@ -1226,7 +1227,7 @@ func TestHandleOrphanCleanupJob_NonAdminForbidden(t *testing.T) {
 	r, _ := http.NewRequest(http.MethodPost, "/", nil)
 	r = r.WithContext(ctx)
 
-	spec := provisioning.JobSpec{Action: provisioning.JobActionReleaseResources, Repository: "gone-repo"}
+	spec := provisioning.JobSpec{Action: provisioning.JobActionReleaseResources, Repository: new("gone-repo")}
 	c.handleOrphanCleanupJob(ctx, r, "gone-repo", spec, responder)
 
 	require.Error(t, responder.err)
@@ -1296,7 +1297,7 @@ func TestHandleOrphanCleanupJob_InsertError(t *testing.T) {
 	r, _ := http.NewRequest(http.MethodPost, "/", nil)
 	r = r.WithContext(ctx)
 
-	spec := provisioning.JobSpec{Action: provisioning.JobActionReleaseResources, Repository: "gone-repo"}
+	spec := provisioning.JobSpec{Action: provisioning.JobActionReleaseResources, Repository: new("gone-repo")}
 	c.handleOrphanCleanupJob(ctx, r, "gone-repo", spec, responder)
 
 	require.Error(t, responder.err)
@@ -1399,7 +1400,7 @@ func TestJobsConnector_AuthorizeJobCreate(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "job-1", Namespace: "default"},
 		Spec: provisioning.JobSpec{
 			Action:     provisioning.JobActionPull,
-			Repository: "my-repo",
+			Repository: new("my-repo"),
 			Pull:       &provisioning.JobSyncJobOptions{},
 		},
 	}

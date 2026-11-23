@@ -6,6 +6,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
@@ -67,7 +68,7 @@ func (c *exportedResourceCollector) ExportedNonFolderResources() []provisioning.
 		if id.Group == folder.Group && id.Kind == folder.Kind {
 			continue
 		}
-		refs = append(refs, provisioning.JobResourceRef{Name: id.Name, Group: id.Group, Kind: id.Kind})
+		refs = append(refs, provisioning.JobResourceRef{Name: ptr.NonZero(id.Name), Group: ptr.NonZero(id.Group), Kind: ptr.NonZero(id.Kind)})
 	}
 	return refs
 }

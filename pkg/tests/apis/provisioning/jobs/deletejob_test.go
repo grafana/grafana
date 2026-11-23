@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
@@ -141,9 +142,9 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 				Delete: &provisioning.JobDeleteJobOptions{
 					Resources: []provisioning.JobResourceRef{
 						{
-							Name:  "resourceref1", // UID from modified all-panels.json
-							Kind:  "Dashboard",
-							Group: "dashboard.grafana.app",
+							Name:  new("resourceref1"), // UID from modified all-panels.json
+							Kind:  new("Dashboard"),
+							Group: new("dashboard.grafana.app"),
 						},
 					},
 				},
@@ -168,14 +169,14 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 				Delete: &provisioning.JobDeleteJobOptions{
 					Resources: []provisioning.JobResourceRef{
 						{
-							Name:  "resourceref2", // UID from modified text-options.json
-							Kind:  "Dashboard",
-							Group: "dashboard.grafana.app",
+							Name:  new("resourceref2"), // UID from modified text-options.json
+							Kind:  new("Dashboard"),
+							Group: new("dashboard.grafana.app"),
 						},
 						{
-							Name:  "resourceref3", // UID from modified timeline-demo.json
-							Kind:  "Dashboard",
-							Group: "dashboard.grafana.app",
+							Name:  new("resourceref3"), // UID from modified timeline-demo.json
+							Kind:  new("Dashboard"),
+							Group: new("dashboard.grafana.app"),
 						},
 					},
 				},
@@ -216,9 +217,9 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 					Paths: []string{"mixed-test-1.json"}, // Delete by path
 					Resources: []provisioning.JobResourceRef{
 						{
-							Name:  "resourceref2", // Delete by resource reference
-							Kind:  "Dashboard",
-							Group: "dashboard.grafana.app",
+							Name:  new("resourceref2"), // Delete by resource reference
+							Kind:  new("Dashboard"),
+							Group: new("dashboard.grafana.app"),
 						},
 					},
 				},
@@ -271,9 +272,9 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 				Delete: &provisioning.JobDeleteJobOptions{
 					Resources: []provisioning.JobResourceRef{
 						{
-							Name:  testFolderName, // Use the actual generated folder name
-							Kind:  "Folder",
-							Group: "folder.grafana.app",
+							Name:  ptr.NonZero(testFolderName), // Use the actual generated folder name
+							Kind:  new("Folder"),
+							Group: new("folder.grafana.app"),
 						},
 					},
 				},
@@ -294,9 +295,9 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 				Delete: &provisioning.JobDeleteJobOptions{
 					Resources: []provisioning.JobResourceRef{
 						{
-							Name:  "non-existent-uid",
-							Kind:  "Dashboard",
-							Group: "dashboard.grafana.app",
+							Name:  new("non-existent-uid"),
+							Kind:  new("Dashboard"),
+							Group: new("dashboard.grafana.app"),
 						},
 					},
 				},

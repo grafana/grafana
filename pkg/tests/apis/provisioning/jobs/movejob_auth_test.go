@@ -45,7 +45,7 @@ func TestIntegrationProvisioning_MoveJobAuthorization(t *testing.T) {
 			Action: provisioning.JobActionMove,
 			Move: &provisioning.JobMoveJobOptions{
 				Paths:      []string{"dashboard.json"},
-				TargetPath: "moved/",
+				TargetPath: new("moved/"),
 			},
 		})
 
@@ -70,7 +70,7 @@ func TestIntegrationProvisioning_MoveJobAuthorization(t *testing.T) {
 			Action: provisioning.JobActionMove,
 			Move: &provisioning.JobMoveJobOptions{
 				Paths:      []string{"moved/dashboard.json"},
-				TargetPath: "editor-moved/",
+				TargetPath: new("editor-moved/"),
 			},
 		})
 
@@ -95,7 +95,7 @@ func TestIntegrationProvisioning_MoveJobAuthorization(t *testing.T) {
 			Action: provisioning.JobActionMove,
 			Move: &provisioning.JobMoveJobOptions{
 				Paths:      []string{"editor-moved/dashboard.json"},
-				TargetPath: "other/",
+				TargetPath: new("other/"),
 			},
 		})
 
@@ -122,7 +122,7 @@ func TestIntegrationProvisioning_MoveJobAuthorization(t *testing.T) {
 			Action: provisioning.JobActionMove,
 			Move: &provisioning.JobMoveJobOptions{
 				Paths:      []string{"folder-as-file-move.json"},
-				TargetPath: "dest/",
+				TargetPath: new("dest/"),
 			},
 		})
 
@@ -148,7 +148,7 @@ func TestIntegrationProvisioning_MoveJobAuthorization(t *testing.T) {
 			Action: provisioning.JobActionMove,
 			Move: &provisioning.JobMoveJobOptions{
 				Paths:      []string{"unsupported-resource-move.json"},
-				TargetPath: "dest/",
+				TargetPath: new("dest/"),
 			},
 		})
 

@@ -1,6 +1,7 @@
 package v0alpha1
 
 import (
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -120,14 +121,14 @@ type JobSpec struct {
 
 	// The the repository reference (for now also in labels)
 	// This value is required, but will be popuplated from the job making the request
-	Repository string `json:"repository,omitempty"`
+	Repository *string `json:"repository,omitempty"`
 
 	// Commit message for this job. Applies to job actions that produce
 	// commits (delete, move, migrate, push, fixFolderMetadata).
 	// When empty, the backend falls back to the action-specific message
 	// field (ExportJobOptions.Message, MigrateJobOptions.Message) for
 	// backwards compatibility, then to a built-in default.
-	Message string `json:"message,omitempty"`
+	Message *string `json:"message,omitempty"`
 
 	// Pull request options
 	PullRequest *JobPullRequestJobOptions `json:"pr,omitempty"`
@@ -160,23 +161,23 @@ func (JobSpec) OpenAPIModelName() string {
 
 type JobPullRequestJobOptions struct {
 	// The branch of commit hash
-	Ref string `json:"ref,omitempty"`
+	Ref *string `json:"ref,omitempty"`
 
 	// Pull request number (when appropriate)
-	PR int `json:"pr,omitempty"`
+	PR *int32 `json:"pr,omitempty"`
 
 	// The specific commit hash that triggered this notice
-	Hash string `json:"hash,omitempty"`
+	Hash *string `json:"hash,omitempty"`
 
 	// URL to the originator (eg, PR URL)
-	URL string `json:"url,omitempty"`
+	URL *string `json:"url,omitempty"`
 
 	// Whether the pull request's head repository differs from its base repository.
 	// Omitted when repository identities were unavailable, including older jobs.
 	IsFork *bool `json:"isFork,omitempty"`
 
 	// URL of the head repository for a pull request from a fork, when available.
-	ForkURL string `json:"forkURL,omitempty"`
+	ForkURL *string `json:"forkURL,omitempty"`
 }
 
 func (JobPullRequestJobOptions) OpenAPIModelName() string {
@@ -196,18 +197,18 @@ type JobExportJobOptions struct {
 	// Message to use when committing the changes in a single commit.
 	// Deprecated: set JobSpec.Message instead. This field is kept for
 	// backwards compatibility and is only used when JobSpec.Message is empty.
-	Message string `json:"message,omitempty"`
+	Message *string `json:"message,omitempty"`
 
 	// The source folder (or empty) to export
-	Folder string `json:"folder,omitempty"`
+	Folder *string `json:"folder,omitempty"`
 
 	// FIXME: we should validate this in admission hooks
 	// Target branch for export (only git)
-	Branch string `json:"branch,omitempty"`
+	Branch *string `json:"branch,omitempty"`
 
 	// FIXME: we should validate this in admission hooks
 	// Prefix in target file system
-	Path string `json:"path,omitempty"`
+	Path *string `json:"path,omitempty"`
 
 	// Resources to export. When empty, every unmanaged resource in the namespace
 	// is exported (legacy behavior). When non-empty, only the listed resources
@@ -220,7 +221,7 @@ type JobExportJobOptions struct {
 	// existing folder UID. Use this to produce a portable export that creates
 	// new folders on a subsequent sync rather than taking over the originals.
 	// Has no effect when folder metadata is not written.
-	GenerateNewFolderIDs bool `json:"generateNewFolderIDs,omitempty"`
+	GenerateNewFolderIDs *bool `json:"generateNewFolderIDs,omitempty"`
 }
 
 func (JobExportJobOptions) OpenAPIModelName() string {
@@ -231,7 +232,7 @@ type JobMigrateJobOptions struct {
 	// Message to use when committing the changes in a single commit.
 	// Deprecated: set JobSpec.Message instead. This field is kept for
 	// backwards compatibility and is only used when JobSpec.Message is empty.
-	Message string `json:"message,omitempty"`
+	Message *string `json:"message,omitempty"`
 
 	// Target branch for the migration (git only). When set to a branch other
 	// than the repository's configured branch, the migration writes the exported
@@ -241,7 +242,7 @@ type JobMigrateJobOptions struct {
 	// runs on the configured branch. When empty (or equal to the configured
 	// branch), the migration writes directly to the configured branch and takes
 	// ownership of the exported resources.
-	Branch string `json:"branch,omitempty"`
+	Branch *string `json:"branch,omitempty"`
 
 	// Resources to migrate. When empty, every unmanaged resource in the namespace
 	// is migrated (legacy behavior). When non-empty, only the listed resources
@@ -255,14 +256,14 @@ type JobMigrateJobOptions struct {
 	// exported folder's metadata (_folder.json) instead of preserving the
 	// existing folder UID. The subsequent pull creates new folders rather than
 	// taking over the originals. Has no effect when folder metadata is not written.
-	GenerateNewFolderIDs bool `json:"generateNewFolderIDs,omitempty"`
+	GenerateNewFolderIDs *bool `json:"generateNewFolderIDs,omitempty"`
 
 	// SkipResourceDeletion keeps the migrated resources on the instance instead of
 	// removing them. By default a migration deletes the resources it moved (the
 	// whole namespace for an instance target, or the exported resources for a
 	// branch migration); when true, no deletion happens and the resources are
 	// left in place.
-	SkipResourceDeletion bool `json:"skipResourceDeletion,omitempty"`
+	SkipResourceDeletion *bool `json:"skipResourceDeletion,omitempty"`
 }
 
 func (JobMigrateJobOptions) OpenAPIModelName() string {
@@ -271,7 +272,7 @@ func (JobMigrateJobOptions) OpenAPIModelName() string {
 
 type JobDeleteJobOptions struct {
 	// Ref to the branch or commit hash to delete from
-	Ref string `json:"ref,omitempty"`
+	Ref *string `json:"ref,omitempty"`
 	// Paths to be deleted. Examples:
 	// - dashboard.json (for a file)
 	// - a/b/c/other-dashboard.json (for a file)
@@ -292,13 +293,13 @@ func (JobDeleteJobOptions) OpenAPIModelName() string {
 
 type JobResourceRef struct {
 	// Name is the name of the resource, such as a dashboard UID.
-	Name string `json:"name,omitempty"`
+	Name *string `json:"name,omitempty"`
 
 	// Kind is the type of resource, for example, "Dashboard".
-	Kind string `json:"kind,omitempty"`
+	Kind *string `json:"kind,omitempty"`
 
 	// Group is the group of the resource, such as "dashboard.grafana.app".
-	Group string `json:"group,omitempty"`
+	Group *string `json:"group,omitempty"`
 }
 
 func (JobResourceRef) OpenAPIModelName() string {
@@ -307,7 +308,7 @@ func (JobResourceRef) OpenAPIModelName() string {
 
 type JobMoveJobOptions struct {
 	// Ref to the branch or commit hash that should move
-	Ref string `json:"ref,omitempty"`
+	Ref *string `json:"ref,omitempty"`
 	// Paths to be deleted. Examples:
 	// - dashboard.json (for a file)
 	// - a/b/c/other-dashboard.json (for a file)
@@ -316,7 +317,7 @@ type JobMoveJobOptions struct {
 	Paths []string `json:"paths,omitempty"`
 
 	// Destination path for the move (e.g. "new-location/")
-	TargetPath string `json:"targetPath,omitempty"`
+	TargetPath *string `json:"targetPath,omitempty"`
 
 	// Resources to move
 	// This option has been created because currently the frontend does not use
@@ -331,7 +332,7 @@ func (JobMoveJobOptions) OpenAPIModelName() string {
 
 type JobFixFolderMetadataJobOptions struct {
 	// Ref to the branch to create the commit on (uses repository's default branch if not specified)
-	Ref string `json:"ref,omitempty"`
+	Ref *string `json:"ref,omitempty"`
 }
 
 func (JobFixFolderMetadataJobOptions) OpenAPIModelName() string {
@@ -349,7 +350,7 @@ type JobTestJobOptions struct {
 
 	// ProgressUpdates controls how many progress notifications the job emits
 	// while running. A value of 0 uses the server default.
-	ProgressUpdates int `json:"progressUpdates,omitempty"`
+	ProgressUpdates *int32 `json:"progressUpdates,omitempty"`
 }
 
 func (JobTestJobOptions) OpenAPIModelName() string {
@@ -358,24 +359,24 @@ func (JobTestJobOptions) OpenAPIModelName() string {
 
 // The job status
 type JobStatus struct {
-	State    JobState `json:"state,omitempty"`
-	Started  int64    `json:"started,omitempty"`
-	Finished int64    `json:"finished,omitempty"`
-	Message  string   `json:"message,omitempty"`
-	Errors   []string `json:"errors,omitempty"`
-	Warnings []string `json:"warnings,omitempty"`
+	State    *JobState `json:"state,omitempty"`
+	Started  *int64    `json:"started,omitempty"`
+	Finished *int64    `json:"finished,omitempty"`
+	Message  *string   `json:"message,omitempty"`
+	Errors   []string  `json:"errors,omitempty"`
+	Warnings []string  `json:"warnings,omitempty"`
 
 	// Optional value 0-100 that can be set while running
-	Progress float64 `json:"progress,omitempty"`
+	Progress *float64 `json:"progress,omitempty"`
 
 	// ProgressUpdates is the number of times the job's status has been written
 	// while it was processed. It is carried over to the historic job so the total
 	// number of progress updates a job went through remains observable after
 	// completion.
-	ProgressUpdates int64 `json:"progressUpdates,omitempty"`
+	ProgressUpdates *int64 `json:"progressUpdates,omitempty"`
 
 	// Summary of processed actions
-	Summary []*JobResourceSummary `json:"summary,omitempty"`
+	Summary []JobResourceSummary `json:"summary,omitempty"`
 
 	// URLs contains URLs for the reference branch or commit if applicable.
 	URLs *RepositoryURLs `json:"url,omitempty"`
@@ -389,41 +390,41 @@ func (JobStatus) OpenAPIModelName() string {
 func (in JobStatus) ToSyncStatus(jobId string) RepositorySyncStatus {
 	s := RepositorySyncStatus{
 		Job:      jobId,
-		State:    in.State,
-		Started:  in.Started,
-		Finished: in.Finished,
+		State:    ptr.Deref(in.State),
+		Started:  ptr.Deref(in.Started),
+		Finished: ptr.Deref(in.Finished),
 	}
 
 	if len(in.Errors) > 0 {
 		s.Message = in.Errors
 	} else if len(in.Warnings) > 0 {
 		s.Message = in.Warnings
-	} else if in.State == JobStateError && in.Message != "" {
-		s.Message = []string{in.Message}
+	} else if ptr.Deref(in.State) == JobStateError && ptr.Deref(in.Message) != "" {
+		s.Message = []string{ptr.Deref(in.Message)}
 	}
 
 	return s
 }
 
 type JobResourceSummary struct {
-	Group string `json:"group,omitempty"`
-	Kind  string `json:"kind,omitempty"`
-	Total int64  `json:"total,omitempty"` // the count (if known)
+	Group *string `json:"group,omitempty"`
+	Kind  *string `json:"kind,omitempty"`
+	Total *int64  `json:"total,omitempty"` // the count (if known)
 
-	Create  int64 `json:"create,omitempty"`
-	Update  int64 `json:"update,omitempty"`
-	Delete  int64 `json:"delete,omitempty"`
-	Write   int64 `json:"write,omitempty"`   // Create or update (export)
-	Error   int64 `json:"error,omitempty"`   // The error count
-	Warning int64 `json:"warning,omitempty"` // The warning count
+	Create  *int64 `json:"create,omitempty"`
+	Update  *int64 `json:"update,omitempty"`
+	Delete  *int64 `json:"delete,omitempty"`
+	Write   *int64 `json:"write,omitempty"`   // Create or update (export)
+	Error   *int64 `json:"error,omitempty"`   // The error count
+	Warning *int64 `json:"warning,omitempty"` // The warning count
 
 	// No action required (useful for sync)
-	Noop int64 `json:"noop,omitempty"`
+	Noop *int64 `json:"noop,omitempty"`
 
 	// TotalChanges is the action-aware count of resources changed for this group/kind,
 	// set by the progress recorder as results are recorded. Used for the job-duration
 	// histogram's resources_changed bucket.
-	TotalChanges int64 `json:"totalChanges,omitempty"`
+	TotalChanges *int64 `json:"totalChanges,omitempty"`
 
 	// Report errors/warnings for this resource type
 	// This may not be an exhaustive list and recommend looking at the logs for more info

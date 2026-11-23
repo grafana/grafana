@@ -17,6 +17,7 @@ import (
 	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/slugify"
@@ -336,8 +337,8 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 
 		query := url.Values{}
 		query.Set("ref", info.Parsed.Info.Ref)
-		if opts.URL != "" {
-			query.Set("pull_request_url", url.QueryEscape(opts.URL))
+		if ptr.Deref(opts.URL) != "" {
+			query.Set("pull_request_url", url.QueryEscape(ptr.Deref(opts.URL)))
 		}
 		if orgID > 0 {
 			query.Set("orgId", strconv.FormatInt(orgID, 10))

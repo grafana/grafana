@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -34,9 +35,9 @@ func TestIntegrationGit_FixFolderMetadata_Branch(t *testing.T) {
 	job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 		Action: provisioning.JobActionFixFolderMetadata,
 		FixFolderMetadata: &provisioning.JobFixFolderMetadataJobOptions{
-			Ref: featureBranch,
+			Ref: new(featureBranch),
 		},
-		Message: expectedCommitMsg,
+		Message: ptr.NonZero(expectedCommitMsg),
 	})
 
 	state, _, _ := unstructured.NestedString(job.Object, "status", "state")
@@ -84,7 +85,7 @@ func TestIntegrationGit_FixFolderMetadata_ExistingBranch(t *testing.T) {
 	job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 		Action: provisioning.JobActionFixFolderMetadata,
 		FixFolderMetadata: &provisioning.JobFixFolderMetadataJobOptions{
-			Ref: featureBranch,
+			Ref: new(featureBranch),
 		},
 	})
 
@@ -160,7 +161,7 @@ func TestIntegrationGit_FixFolderMetadata_ReadOnlyDefaultBranch_WithRef(t *testi
 	job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 		Action: provisioning.JobActionFixFolderMetadata,
 		FixFolderMetadata: &provisioning.JobFixFolderMetadataJobOptions{
-			Ref: featureBranch,
+			Ref: new(featureBranch),
 		},
 	})
 

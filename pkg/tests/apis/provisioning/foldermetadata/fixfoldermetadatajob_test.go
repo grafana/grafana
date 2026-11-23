@@ -52,7 +52,7 @@ func TestIntegrationProvisioning_FixFolderMetadataJob(t *testing.T) {
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionFixFolderMetadata,
 			FixFolderMetadata: &provisioning.JobFixFolderMetadataJobOptions{
-				Ref: "",
+				Ref: nil,
 			},
 		}
 

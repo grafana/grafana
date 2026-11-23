@@ -13,6 +13,7 @@ import (
 
 	v0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/prometheus/client_golang/prometheus"
@@ -99,7 +100,7 @@ func TestDeleteWorker_CommitMessageFromJobSpec(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action:  v0alpha1.JobActionDelete,
-			Message: "custom commit message from spec",
+			Message: new("custom commit message from spec"),
 			Delete: &v0alpha1.JobDeleteJobOptions{
 				Paths: []string{"test/path"},
 			},
@@ -185,7 +186,7 @@ func TestDeleteWorker_ProcessDeleteFilesSuccess(t *testing.T) {
 			Action: v0alpha1.JobActionDelete,
 			Delete: &v0alpha1.JobDeleteJobOptions{
 				Paths: []string{"test/path1", "test/path2"},
-				Ref:   "main",
+				Ref:   new("main"),
 			},
 		},
 	}
@@ -234,7 +235,7 @@ func TestDeleteWorker_ProcessDeleteFilesWithError(t *testing.T) {
 			Action: v0alpha1.JobActionDelete,
 			Delete: &v0alpha1.JobDeleteJobOptions{
 				Paths: []string{"test/path1", "test/path2"},
-				Ref:   "main",
+				Ref:   new("main"),
 			},
 		},
 	}
@@ -408,7 +409,7 @@ func TestDeleteWorker_deleteFiles(t *testing.T) {
 			mockProgress := jobs.NewMockJobProgressRecorder(t)
 
 			opts := v0alpha1.JobDeleteJobOptions{
-				Ref: "main",
+				Ref: new("main"),
 			}
 
 			for i, path := range tt.paths {
@@ -448,7 +449,7 @@ func TestDeleteWorker_Process_FileNotFoundIsWarning(t *testing.T) {
 			Action: v0alpha1.JobActionDelete,
 			Delete: &v0alpha1.JobDeleteJobOptions{
 				Paths: []string{"test/nonexistent.yaml"},
-				Ref:   "main",
+				Ref:   new("main"),
 			},
 		},
 	}
@@ -494,12 +495,12 @@ func TestDeleteWorker_Process_ResourceNotFoundIsWarning(t *testing.T) {
 			Delete: &v0alpha1.JobDeleteJobOptions{
 				Resources: []v0alpha1.JobResourceRef{
 					{
-						Name:  "missing-dashboard",
-						Kind:  "Dashboard",
-						Group: "dashboard.grafana.app",
+						Name:  new("missing-dashboard"),
+						Kind:  new("Dashboard"),
+						Group: new("dashboard.grafana.app"),
 					},
 				},
-				Ref: "main",
+				Ref: new("main"),
 			},
 		},
 	}
@@ -550,7 +551,7 @@ func TestDeleteWorker_deleteFilesFileNotFoundIsWarning(t *testing.T) {
 	}
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
 
-	opts := v0alpha1.JobDeleteJobOptions{Ref: "main"}
+	opts := v0alpha1.JobDeleteJobOptions{Ref: new("main")}
 	path := "test/nonexistent.yaml"
 
 	mockRepo.On("Delete", mock.Anything, path, "main", "Delete "+path).Return(repository.ErrFileNotFound)
@@ -578,7 +579,7 @@ func TestDeleteWorker_deleteFilesOtherErrorIsNotWarning(t *testing.T) {
 	}
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
 
-	opts := v0alpha1.JobDeleteJobOptions{Ref: "main"}
+	opts := v0alpha1.JobDeleteJobOptions{Ref: new("main")}
 	path := "test/file.yaml"
 	deleteError := errors.New("permission denied")
 
@@ -609,17 +610,17 @@ func TestDeleteWorker_ProcessWithResourceRefs(t *testing.T) {
 				Paths: []string{"test/path1"},
 				Resources: []v0alpha1.JobResourceRef{
 					{
-						Name:  "test-dashboard",
-						Kind:  "Dashboard",
-						Group: "dashboard.grafana.app",
+						Name:  new("test-dashboard"),
+						Kind:  new("Dashboard"),
+						Group: new("dashboard.grafana.app"),
 					},
 					{
-						Name:  "test-folder",
-						Kind:  "Folder",
-						Group: "folder.grafana.app",
+						Name:  new("test-folder"),
+						Kind:  new("Folder"),
+						Group: new("folder.grafana.app"),
 					},
 				},
-				Ref: "main",
+				Ref: new("main"),
 			},
 		},
 	}
@@ -697,12 +698,12 @@ func TestDeleteWorker_ProcessResourceRefsOnly(t *testing.T) {
 			Delete: &v0alpha1.JobDeleteJobOptions{
 				Resources: []v0alpha1.JobResourceRef{
 					{
-						Name:  "test-dashboard",
-						Kind:  "Dashboard",
-						Group: "dashboard.grafana.app",
+						Name:  new("test-dashboard"),
+						Kind:  new("Dashboard"),
+						Group: new("dashboard.grafana.app"),
 					},
 				},
-				Ref: "main",
+				Ref: new("main"),
 			},
 		},
 	}
@@ -753,9 +754,9 @@ func TestDeleteWorker_ProcessResourceResolutionError(t *testing.T) {
 			Delete: &v0alpha1.JobDeleteJobOptions{
 				Resources: []v0alpha1.JobResourceRef{
 					{
-						Name:  "nonexistent-dashboard",
-						Kind:  "Dashboard",
-						Group: "dashboard.grafana.app",
+						Name:  new("nonexistent-dashboard"),
+						Kind:  new("Dashboard"),
+						Group: new("dashboard.grafana.app"),
 					},
 				},
 			},
@@ -819,9 +820,9 @@ func TestDeleteWorker_ProcessResourcesFactoryError(t *testing.T) {
 			Delete: &v0alpha1.JobDeleteJobOptions{
 				Resources: []v0alpha1.JobResourceRef{
 					{
-						Name:  "test-dashboard",
-						Kind:  "Dashboard",
-						Group: "dashboard.grafana.app",
+						Name:  new("test-dashboard"),
+						Kind:  new("Dashboard"),
+						Group: new("dashboard.grafana.app"),
 					},
 				},
 			},
@@ -858,9 +859,9 @@ func TestDeleteWorker_ProcessResourceRefsNotReaderWriter(t *testing.T) {
 			Delete: &v0alpha1.JobDeleteJobOptions{
 				Resources: []v0alpha1.JobResourceRef{
 					{
-						Name:  "test-dashboard",
-						Kind:  "Dashboard",
-						Group: "dashboard.grafana.app",
+						Name:  new("test-dashboard"),
+						Kind:  new("Dashboard"),
+						Group: new("dashboard.grafana.app"),
 					},
 				},
 			},
@@ -894,9 +895,9 @@ func TestDeleteWorker_ProcessResourceResolutionTooManyErrors(t *testing.T) {
 			Delete: &v0alpha1.JobDeleteJobOptions{
 				Resources: []v0alpha1.JobResourceRef{
 					{
-						Name:  "nonexistent-dashboard",
-						Kind:  "Dashboard",
-						Group: "dashboard.grafana.app",
+						Name:  new("nonexistent-dashboard"),
+						Kind:  new("Dashboard"),
+						Group: new("dashboard.grafana.app"),
 					},
 				},
 			},
@@ -948,9 +949,9 @@ func TestDeleteWorker_ProcessMissingSourcePathStopsBeforeDeletion(t *testing.T) 
 			Delete: &v0alpha1.JobDeleteJobOptions{
 				Paths: []string{"dashboards/explicit.json"},
 				Resources: []v0alpha1.JobResourceRef{
-					{Name: "valid-dashboard", Kind: "Dashboard", Group: "dashboard.grafana.app"},
-					{Name: "missing-path-folder", Kind: "Folder", Group: "folder.grafana.app"},
-					{Name: "unprocessed-folder", Kind: "Folder", Group: "folder.grafana.app"},
+					{Name: new("valid-dashboard"), Kind: new("Dashboard"), Group: new("dashboard.grafana.app")},
+					{Name: new("missing-path-folder"), Kind: new("Folder"), Group: new("folder.grafana.app")},
+					{Name: new("unprocessed-folder"), Kind: new("Folder"), Group: new("folder.grafana.app")},
 				},
 			},
 		},
@@ -988,7 +989,7 @@ func TestDeleteWorker_ProcessMissingSourcePathStopsBeforeDeletion(t *testing.T) 
 	err := worker.Process(ctx, mockRepo, job, progress)
 	require.EqualError(t, err, "delete files from repository: too many errors: 1")
 	status := progress.Complete(ctx, err)
-	require.Equal(t, v0alpha1.JobStateError, status.State)
+	require.Equal(t, v0alpha1.JobStateError, ptr.Deref(status.State))
 	require.Len(t, status.Errors, 1)
 	require.Contains(t, status.Errors[0], missingPathError.Error())
 	require.Empty(t, status.Warnings)
@@ -1004,22 +1005,22 @@ func TestDeleteWorker_ProcessMixedResourcesWithPartialFailure(t *testing.T) {
 			Delete: &v0alpha1.JobDeleteJobOptions{
 				Resources: []v0alpha1.JobResourceRef{
 					{
-						Name:  "valid-dashboard",
-						Kind:  "Dashboard",
-						Group: "dashboard.grafana.app",
+						Name:  new("valid-dashboard"),
+						Kind:  new("Dashboard"),
+						Group: new("dashboard.grafana.app"),
 					},
 					{
-						Name:  "nonexistent-dashboard",
-						Kind:  "Dashboard",
-						Group: "dashboard.grafana.app",
+						Name:  new("nonexistent-dashboard"),
+						Kind:  new("Dashboard"),
+						Group: new("dashboard.grafana.app"),
 					},
 					{
-						Name:  "valid-folder",
-						Kind:  "Folder",
-						Group: "folder.grafana.app",
+						Name:  new("valid-folder"),
+						Kind:  new("Folder"),
+						Group: new("folder.grafana.app"),
 					},
 				},
-				Ref: "main",
+				Ref: new("main"),
 			},
 		},
 	}
@@ -1100,23 +1101,23 @@ func TestDeleteWorker_ProcessWithPathDeduplication(t *testing.T) {
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionDelete,
 			Delete: &v0alpha1.JobDeleteJobOptions{
-				Ref:   "main",                                                             // Add ref to avoid sync worker execution
+				Ref:   new("main"),                                                        // Add ref to avoid sync worker execution
 				Paths: []string{"dashboards/test-dashboard.json", "folders/test-folder/"}, // Explicit paths
 				Resources: []v0alpha1.JobResourceRef{
 					{
-						Name:  "test-dashboard", // This will resolve to "dashboards/test-dashboard.json" (duplicate)
-						Kind:  "Dashboard",
-						Group: "dashboard.grafana.app",
+						Name:  new("test-dashboard"), // This will resolve to "dashboards/test-dashboard.json" (duplicate)
+						Kind:  new("Dashboard"),
+						Group: new("dashboard.grafana.app"),
 					},
 					{
-						Name:  "test-folder", // This will resolve to "folders/test-folder/" (duplicate)
-						Kind:  "Folder",
-						Group: "folder.grafana.app",
+						Name:  new("test-folder"), // This will resolve to "folders/test-folder/" (duplicate)
+						Kind:  new("Folder"),
+						Group: new("folder.grafana.app"),
 					},
 					{
-						Name:  "unique-dashboard", // This will resolve to "dashboards/unique-dashboard.json" (unique)
-						Kind:  "Dashboard",
-						Group: "dashboard.grafana.app",
+						Name:  new("unique-dashboard"), // This will resolve to "dashboards/unique-dashboard.json" (unique)
+						Kind:  new("Dashboard"),
+						Group: new("dashboard.grafana.app"),
 					},
 				},
 			},
@@ -1205,7 +1206,7 @@ func TestDeleteWorker_deleteFilesFileNotFoundWarning(t *testing.T) {
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
 
 	opts := v0alpha1.JobDeleteJobOptions{
-		Ref: "main",
+		Ref: new("main"),
 	}
 
 	path := "test/nonexistent.yaml"
@@ -1243,7 +1244,7 @@ func TestDeleteWorker_deleteFilesOtherErrorNoWarning(t *testing.T) {
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
 
 	opts := v0alpha1.JobDeleteJobOptions{
-		Ref: "main",
+		Ref: new("main"),
 	}
 
 	path := "test/file.yaml"
@@ -1375,7 +1376,7 @@ func TestDeleteWorker_RefURLsSetWithRef(t *testing.T) {
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionDelete,
 			Delete: &v0alpha1.JobDeleteJobOptions{
-				Ref:   "feature-branch",
+				Ref:   new("feature-branch"),
 				Paths: []string{"test.json"},
 			},
 		},
@@ -1483,7 +1484,7 @@ func TestDeleteWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionDelete,
 			Delete: &v0alpha1.JobDeleteJobOptions{
-				Ref:   "feature-branch",
+				Ref:   new("feature-branch"),
 				Paths: []string{"test.json"},
 			},
 		},

@@ -100,7 +100,7 @@ func TestWorker_Process(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Namespace: "default"},
 		Spec: provisioning.JobSpec{
 			Action:     provisioning.JobActionDeleteResources,
-			Repository: "my-repo",
+			Repository: new("my-repo"),
 		},
 	}
 
@@ -135,7 +135,7 @@ func TestWorker_Process_EmptyResourceList(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Namespace: "default"},
 		Spec: provisioning.JobSpec{
 			Action:     provisioning.JobActionDeleteResources,
-			Repository: "my-repo",
+			Repository: new("my-repo"),
 		},
 	}
 
@@ -158,7 +158,7 @@ func TestWorker_Process_ListError(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Namespace: "default"},
 		Spec: provisioning.JobSpec{
 			Action:     provisioning.JobActionDeleteResources,
-			Repository: "gone-repo",
+			Repository: new("gone-repo"),
 		},
 	}
 
@@ -183,7 +183,7 @@ func TestWorker_Process_HealthyRepoRejected(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Namespace: "default"},
 		Spec: provisioning.JobSpec{
 			Action:     provisioning.JobActionDeleteResources,
-			Repository: "healthy-repo",
+			Repository: new("healthy-repo"),
 		},
 	}
 
@@ -209,7 +209,7 @@ func TestWorker_Process_NotFoundResourceSkipped(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Namespace: "default"},
 		Spec: provisioning.JobSpec{
 			Action:     provisioning.JobActionDeleteResources,
-			Repository: "my-repo",
+			Repository: new("my-repo"),
 		},
 	}
 

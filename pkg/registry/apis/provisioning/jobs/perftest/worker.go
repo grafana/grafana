@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 )
@@ -51,7 +52,7 @@ func (w *Worker) Process(ctx context.Context, _ repository.Repository, job provi
 	if duration <= 0 {
 		return errors.New("test duration must be positive")
 	}
-	progressUpdates := job.Spec.Test.ProgressUpdates
+	progressUpdates := int(ptr.Deref(job.Spec.Test.ProgressUpdates))
 	if progressUpdates <= 0 {
 		progressUpdates = defaultProgressUpdates
 	}

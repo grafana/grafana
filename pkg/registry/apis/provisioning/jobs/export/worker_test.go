@@ -15,6 +15,7 @@ import (
 
 	v0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -86,7 +87,7 @@ func TestExportWorker_ProcessWriteNotAllowed(t *testing.T) {
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionPush,
 			Push: &v0alpha1.JobExportJobOptions{
-				Branch: "main",
+				Branch: new("main"),
 			},
 		},
 	}
@@ -111,7 +112,7 @@ func TestExportWorker_ProcessBranchNotAllowedForLocal(t *testing.T) {
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionPush,
 			Push: &v0alpha1.JobExportJobOptions{
-				Branch: "somebranch",
+				Branch: new("somebranch"),
 			},
 		},
 	}
@@ -242,7 +243,7 @@ func TestExportWorker_ProcessStageOptions(t *testing.T) {
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionPush,
 			Push: &v0alpha1.JobExportJobOptions{
-				Branch: "feature-branch",
+				Branch: new("feature-branch"),
 			},
 		},
 	}
@@ -328,7 +329,7 @@ func TestExportWorker_ProcessStageOptionsWithBranch(t *testing.T) {
 				Spec: v0alpha1.JobSpec{
 					Action: v0alpha1.JobActionPush,
 					Push: &v0alpha1.JobExportJobOptions{
-						Branch: tt.branch,
+						Branch: ptr.NonZero(tt.branch),
 					},
 				},
 			}
@@ -457,7 +458,7 @@ func TestExportWorker_ProcessBranchNotAllowedForStageableRepositories(t *testing
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionPush,
 			Push: &v0alpha1.JobExportJobOptions{
-				Branch: "somebranch",
+				Branch: new("somebranch"),
 			},
 		},
 	}
@@ -612,10 +613,10 @@ func TestExportWorker_CommitMessagePrecedence(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
 				Spec: v0alpha1.JobSpec{
 					Action:  v0alpha1.JobActionPush,
-					Message: tt.specMessage,
+					Message: ptr.NonZero(tt.specMessage),
 					Push: &v0alpha1.JobExportJobOptions{
-						Branch:  "feature-branch",
-						Message: tt.optsMessage,
+						Branch:  new("feature-branch"),
+						Message: ptr.NonZero(tt.optsMessage),
 					},
 				},
 			}
@@ -664,8 +665,8 @@ func TestExportWorker_RefURLsSetWithBranch(t *testing.T) {
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionPush,
 			Push: &v0alpha1.JobExportJobOptions{
-				Branch:  "feature-branch",
-				Message: "test commit",
+				Branch:  new("feature-branch"),
+				Message: new("test commit"),
 			},
 		},
 	}
@@ -732,7 +733,7 @@ func TestExportWorker_RefURLsNotSetWithoutBranch(t *testing.T) {
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionPush,
 			Push: &v0alpha1.JobExportJobOptions{
-				Message: "test commit",
+				Message: new("test commit"),
 				// No branch specified
 			},
 		},
@@ -789,8 +790,8 @@ func TestExportWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionPush,
 			Push: &v0alpha1.JobExportJobOptions{
-				Branch:  "feature-branch",
-				Message: "test commit",
+				Branch:  new("feature-branch"),
+				Message: new("test commit"),
 			},
 		},
 	}
@@ -901,9 +902,9 @@ func TestExportWorker_ConfigurationDisabled(t *testing.T) {
 				},
 				Spec: v0alpha1.JobSpec{
 					Action:     v0alpha1.JobActionPush,
-					Repository: "test-repo",
+					Repository: new("test-repo"),
 					Push: &v0alpha1.JobExportJobOptions{
-						Branch: "main",
+						Branch: new("main"),
 					},
 				},
 			}

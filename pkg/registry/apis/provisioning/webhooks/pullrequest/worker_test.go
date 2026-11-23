@@ -131,8 +131,8 @@ func TestPullRequestWorker_Process_NotPullRequestRepository(t *testing.T) {
 		Spec: provisioning.JobSpec{
 			Action: provisioning.JobActionPullRequest,
 			PullRequest: &provisioning.JobPullRequestJobOptions{
-				PR:  123,
-				Ref: "test-ref",
+				PR:  new(int32(123)),
+				Ref: new("test-ref"),
 			},
 		},
 	}
@@ -158,8 +158,8 @@ func TestPullRequestWorker_Process_NotReaderRepository(t *testing.T) {
 		Spec: provisioning.JobSpec{
 			Action: provisioning.JobActionPullRequest,
 			PullRequest: &provisioning.JobPullRequestJobOptions{
-				PR:  123,
-				Ref: "test-ref",
+				PR:  new(int32(123)),
+				Ref: new("test-ref"),
 			},
 		},
 	}
@@ -189,7 +189,7 @@ func TestPullRequestWorker_Process(t *testing.T) {
 		{
 			name: "missing ref",
 			opts: &provisioning.JobPullRequestJobOptions{
-				PR: 123,
+				PR: new(int32(123)),
 			},
 			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
 			},
@@ -197,7 +197,7 @@ func TestPullRequestWorker_Process(t *testing.T) {
 		},
 		{
 			name: "fork posts unsupported notice without reading or evaluating files",
-			opts: &provisioning.JobPullRequestJobOptions{PR: 123, Ref: "contributor-branch", Hash: "unavailable-sha", IsFork: &fork},
+			opts: &provisioning.JobPullRequestJobOptions{PR: new(int32(123)), Ref: new("contributor-branch"), Hash: new("unavailable-sha"), IsFork: &fork},
 			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
 				commenter.On("Comment", mock.Anything, *repo, 123, changeInfo{UnsupportedFork: true}).Return(nil).Once()
 				progress.On("SetFinalMessage", mock.Anything, "Grafana doesn't currently support previews for pull requests from forks.").Return().Once()
@@ -205,7 +205,7 @@ func TestPullRequestWorker_Process(t *testing.T) {
 		},
 		{
 			name: "fork comment failure is surfaced",
-			opts: &provisioning.JobPullRequestJobOptions{PR: 123, Ref: "contributor-branch", IsFork: &fork},
+			opts: &provisioning.JobPullRequestJobOptions{PR: new(int32(123)), Ref: new("contributor-branch"), IsFork: &fork},
 			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
 				commenter.On("Comment", mock.Anything, *repo, 123, changeInfo{UnsupportedFork: true}).Return(errors.New("comment unavailable")).Once()
 			},
@@ -213,7 +213,7 @@ func TestPullRequestWorker_Process(t *testing.T) {
 		},
 		{
 			name: "same-repository PR keeps branch-based comparison even with a head hash",
-			opts: &provisioning.JobPullRequestJobOptions{PR: 123, Ref: "test-ref", Hash: "abcdef0123456789abcdef0123456789abcdef01", IsFork: &sameRepo},
+			opts: &provisioning.JobPullRequestJobOptions{PR: new(int32(123)), Ref: new("test-ref"), Hash: new("abcdef0123456789abcdef0123456789abcdef01"), IsFork: &sameRepo},
 			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
 				progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
 				repo.client.On("MergeBase", mock.Anything, "main", "test-ref").Return("merge-base-sha", nil)
@@ -224,8 +224,8 @@ func TestPullRequestWorker_Process(t *testing.T) {
 		{
 			name: "failed to list pull request files",
 			opts: &provisioning.JobPullRequestJobOptions{
-				PR:  123,
-				Ref: "test-ref",
+				PR:  new(int32(123)),
+				Ref: new("test-ref"),
 			},
 			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
 				progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
@@ -237,8 +237,8 @@ func TestPullRequestWorker_Process(t *testing.T) {
 		{
 			name: "falls back to the configured branch when base resolution fails",
 			opts: &provisioning.JobPullRequestJobOptions{
-				PR:  123,
-				Ref: "test-ref",
+				PR:  new(int32(123)),
+				Ref: new("test-ref"),
 			},
 			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
 				repo.MockRepository.On("Config").Return(&provisioning.Repository{
@@ -257,8 +257,8 @@ func TestPullRequestWorker_Process(t *testing.T) {
 		{
 			name: "no files to process",
 			opts: &provisioning.JobPullRequestJobOptions{
-				PR:  123,
-				Ref: "test-ref",
+				PR:  new(int32(123)),
+				Ref: new("test-ref"),
 			},
 			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
 				progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
@@ -271,8 +271,8 @@ func TestPullRequestWorker_Process(t *testing.T) {
 		{
 			name: "ignored files are filtered out",
 			opts: &provisioning.JobPullRequestJobOptions{
-				PR:  123,
-				Ref: "test-ref",
+				PR:  new(int32(123)),
+				Ref: new("test-ref"),
 			},
 			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
 				progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
@@ -301,8 +301,8 @@ func TestPullRequestWorker_Process(t *testing.T) {
 		{
 			name: "files with unsupported paths are filtered out",
 			opts: &provisioning.JobPullRequestJobOptions{
-				PR:  123,
-				Ref: "test-ref",
+				PR:  new(int32(123)),
+				Ref: new("test-ref"),
 			},
 			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
 				progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
@@ -333,8 +333,8 @@ func TestPullRequestWorker_Process(t *testing.T) {
 		{
 			name: "evaluation fails",
 			opts: &provisioning.JobPullRequestJobOptions{
-				PR:  123,
-				Ref: "test-ref",
+				PR:  new(int32(123)),
+				Ref: new("test-ref"),
 			},
 			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
 				progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
@@ -350,8 +350,8 @@ func TestPullRequestWorker_Process(t *testing.T) {
 		{
 			name: "comment fails",
 			opts: &provisioning.JobPullRequestJobOptions{
-				PR:  123,
-				Ref: "test-ref",
+				PR:  new(int32(123)),
+				Ref: new("test-ref"),
 			},
 			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
 				progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
@@ -368,8 +368,8 @@ func TestPullRequestWorker_Process(t *testing.T) {
 		{
 			name: "successful process",
 			opts: &provisioning.JobPullRequestJobOptions{
-				PR:  123,
-				Ref: "test-ref",
+				PR:  new(int32(123)),
+				Ref: new("test-ref"),
 			},
 			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
 				progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
@@ -386,8 +386,8 @@ func TestPullRequestWorker_Process(t *testing.T) {
 		{
 			name: "gitlab repository resolves base branch",
 			opts: &provisioning.JobPullRequestJobOptions{
-				PR:  123,
-				Ref: "test-ref",
+				PR:  new(int32(123)),
+				Ref: new("test-ref"),
 			},
 			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
 				progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
@@ -467,9 +467,9 @@ func TestPullRequestWorker_Process_StopsWhenHeadRefIsMissing(t *testing.T) {
 		Spec: provisioning.JobSpec{
 			Action: provisioning.JobActionPullRequest,
 			PullRequest: &provisioning.JobPullRequestJobOptions{
-				PR:   123,
-				Ref:  "test-ref",
-				Hash: "b007101f94458ad96b6cd5f6153122916de6a0cf",
+				PR:   new(int32(123)),
+				Ref:  new("test-ref"),
+				Hash: new("b007101f94458ad96b6cd5f6153122916de6a0cf"),
 			},
 		},
 	}
@@ -528,8 +528,8 @@ func TestPullRequestWorker_Process_MissingBaseRefRemainsError(t *testing.T) {
 		Spec: provisioning.JobSpec{
 			Action: provisioning.JobActionPullRequest,
 			PullRequest: &provisioning.JobPullRequestJobOptions{
-				PR:  123,
-				Ref: "test-ref",
+				PR:  new(int32(123)),
+				Ref: new("test-ref"),
 			},
 		},
 	}
@@ -574,8 +574,8 @@ func TestPullRequestWorker_Process_PostsCommentOnCanceledContext(t *testing.T) {
 		Spec: provisioning.JobSpec{
 			Action: provisioning.JobActionPullRequest,
 			PullRequest: &provisioning.JobPullRequestJobOptions{
-				PR:  123,
-				Ref: "test-ref",
+				PR:  new(int32(123)),
+				Ref: new("test-ref"),
 			},
 		},
 	}

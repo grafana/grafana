@@ -14,6 +14,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -101,18 +102,18 @@ func ExportSpecificResources(ctx context.Context, options provisioning.JobExport
 
 	for _, ref := range options.Resources {
 		// ForKind resolves the preferred version when Version is empty.
-		gvk := schema.GroupVersionKind{Group: ref.Group, Kind: ref.Kind}
+		gvk := schema.GroupVersionKind{Group: ptr.Deref(ref.Group), Kind: ptr.Deref(ref.Kind)}
 
 		// Leave the action unset on the error paths below: the recorder treats
 		// FileActionIgnored results as non-fatal, and we want the caller's
 		// bad/unresolvable reference to escalate the job state.
-		result := jobs.NewGroupKindResult(ref.Name, ref.Group, ref.Kind)
+		result := jobs.NewGroupKindResult(ptr.Deref(ref.Name), ptr.Deref(ref.Group), ptr.Deref(ref.Kind))
 
 		rk, ok := resolved[gvk]
 		if !ok {
 			client, gvr, err := clients.ForKind(ctx, gvk)
 			if err != nil {
-				result.WithError(fmt.Errorf("resolve client for kind %q: %w", kindLabel(ref.Kind), err))
+				result.WithError(fmt.Errorf("resolve client for kind %q: %w", kindLabel(ptr.Deref(ref.Kind)), err))
 				progress.Record(ctx, result.Build())
 				if err := progress.TooManyErrors(); err != nil {
 					return err
@@ -131,16 +132,16 @@ func ExportSpecificResources(ctx context.Context, options provisioning.JobExport
 		// An explicitly named folder is exported as part of the folder tree
 		// (with its ancestry) rather than as a standalone resource file.
 		if rk.gvr.GroupResource() == resources.FolderResource.GroupResource() {
-			folderUIDs = append(folderUIDs, ref.Name)
+			folderUIDs = append(folderUIDs, ptr.Deref(ref.Name))
 			continue
 		}
 
-		item, err := rk.client.Get(ctx, ref.Name, metav1.GetOptions{})
+		item, err := rk.client.Get(ctx, ptr.Deref(ref.Name), metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
-				result.WithError(fmt.Errorf("%s %q not found", kindLabel(ref.Kind), ref.Name))
+				result.WithError(fmt.Errorf("%s %q not found", kindLabel(ptr.Deref(ref.Kind)), ptr.Deref(ref.Name)))
 			} else {
-				result.WithError(fmt.Errorf("get %s %q: %w", kindLabel(ref.Kind), ref.Name, err))
+				result.WithError(fmt.Errorf("get %s %q: %w", kindLabel(ptr.Deref(ref.Kind)), ptr.Deref(ref.Name), err))
 			}
 			progress.Record(ctx, result.Build())
 			if err := progress.TooManyErrors(); err != nil {
@@ -289,8 +290,8 @@ func exportItem(ctx context.Context,
 		var path string
 		var size int
 		path, size, err = repositoryResources.WriteResourceFileFromObject(ctx, item, resources.WriteOptions{
-			Path: options.Path,
-			Ref:  options.Branch,
+			Path: ptr.Deref(options.Path),
+			Ref:  ptr.Deref(options.Branch),
 		})
 		resultBuilder.WithPath(path).WithBytes(size)
 	}

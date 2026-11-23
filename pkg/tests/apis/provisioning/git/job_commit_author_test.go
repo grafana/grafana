@@ -45,7 +45,7 @@ func TestIntegrationGit_DeleteJob_CommitAuthor(t *testing.T) {
 		SubResource("jobs").
 		Body(common.AsJSON(provisioning.JobSpec{
 			Action:  provisioning.JobActionDelete,
-			Message: "Delete dashboard via JobSpec",
+			Message: new("Delete dashboard via JobSpec"),
 			Delete: &provisioning.JobDeleteJobOptions{
 				Paths: []string{dashFn},
 			},

@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -56,8 +57,8 @@ func TestIntegrationProvisioning_ExportUnifiedToRepository(t *testing.T) {
 	spec := provisioning.JobSpec{
 		Action: provisioning.JobActionPush,
 		Push: &provisioning.JobExportJobOptions{
-			Folder: "", // export entire instance
-			Path:   "", // no prefix necessary for testing
+			Folder: nil, // export entire instance
+			Path:   nil, // no prefix necessary for testing
 		},
 	}
 	helper.TriggerJobAndWaitForSuccess(t, repo, spec)
@@ -151,7 +152,7 @@ func TestIntegrationProvisioning_ExportJob_SkipsSLOManagedResources(t *testing.T
 
 	job := triggerExport(t, helper, repo)
 	// Skipped resources are recorded as ignored (not errors/warnings), so the job succeeds.
-	require.Equal(t, provisioning.JobStateSuccess, job.Status.State,
+	require.Equal(t, provisioning.JobStateSuccess, ptr.Deref(job.Status.State),
 		"export should succeed; skipping SLO resources is not an error: %+v", job.Status)
 
 	common.PrintFileTree(t, helper.ProvisioningPath)
@@ -207,7 +208,7 @@ func TestIntegrationProvisioning_ExportJob_ExplicitSLOManagedResourceFails(t *te
 		Action: provisioning.JobActionPush,
 		Push: &provisioning.JobExportJobOptions{
 			Resources: []provisioning.JobResourceRef{
-				{Name: sloDashboard, Kind: "Dashboard", Group: "dashboard.grafana.app"},
+				{Name: new(sloDashboard), Kind: new("Dashboard"), Group: new("dashboard.grafana.app")},
 			},
 		},
 	}
@@ -217,7 +218,7 @@ func TestIntegrationProvisioning_ExportJob_ExplicitSLOManagedResourceFails(t *te
 	jobObj := &provisioning.Job{}
 	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
 
-	require.Equal(t, provisioning.JobStateError, jobObj.Status.State,
+	require.Equal(t, provisioning.JobStateError, ptr.Deref(jobObj.Status.State),
 		"explicitly requesting an SLO-app resource should fail the job: %+v", jobObj.Status)
 
 	foundError := false
@@ -325,8 +326,8 @@ func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T
 	spec := provisioning.JobSpec{
 		Action: provisioning.JobActionPush,
 		Push: &provisioning.JobExportJobOptions{
-			Folder: "",
-			Path:   "",
+			Folder: nil,
+			Path:   nil,
 		},
 	}
 	helper.TriggerJobAndWaitForSuccess(t, repo, spec)

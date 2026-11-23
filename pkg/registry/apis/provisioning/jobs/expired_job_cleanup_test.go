@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -100,20 +101,20 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 				},
 			},
 			Spec: provisioning.JobSpec{
-				Repository: "test-repo",
+				Repository: new("test-repo"),
 				Action:     provisioning.JobActionPull,
 			},
 		}
 
 		store.On("ListExpiredJobs", mock.Anything, mock.Anything, 100).Return([]*provisioning.Job{job}, nil)
 		store.On("Complete", mock.Anything, mock.MatchedBy(func(j *provisioning.Job) bool {
-			return j.Status.State == provisioning.JobStateError &&
-				j.Status.Message == "Job failed due to lease expiry - worker may have crashed or lost connection"
+			return ptr.Deref(j.Status.State) == provisioning.JobStateError &&
+				ptr.Deref(j.Status.Message) == "Job failed due to lease expiry - worker may have crashed or lost connection"
 		})).Return(nil)
 		historyWriter.On("WriteJob", mock.Anything, mock.MatchedBy(func(j *provisioning.Job) bool {
 			// Verify claim label was removed before writing to history
 			_, hasLabel := j.Labels[LabelJobClaim]
-			return !hasLabel && j.Status.State == provisioning.JobStateError
+			return !hasLabel && ptr.Deref(j.Status.State) == provisioning.JobStateError
 		})).Return(nil)
 
 		err := controller.Cleanup(ctx)
@@ -138,7 +139,7 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 				Labels:    map[string]string{LabelJobClaim: "123"},
 			},
 			Spec: provisioning.JobSpec{
-				Repository: "repo-1",
+				Repository: new("repo-1"),
 				Action:     provisioning.JobActionPull,
 			},
 		}
@@ -149,7 +150,7 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 				Labels:    map[string]string{LabelJobClaim: "456"},
 			},
 			Spec: provisioning.JobSpec{
-				Repository: "repo-2",
+				Repository: new("repo-2"),
 				Action:     provisioning.JobActionPull,
 			},
 		}
@@ -192,7 +193,7 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 				Labels:    map[string]string{LabelJobClaim: "123"},
 			},
 			Spec: provisioning.JobSpec{
-				Repository: "test-repo",
+				Repository: new("test-repo"),
 				Action:     provisioning.JobActionPull,
 			},
 		}
@@ -225,7 +226,7 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 				Labels:    map[string]string{LabelJobClaim: "123"},
 			},
 			Spec: provisioning.JobSpec{
-				Repository: "test-repo",
+				Repository: new("test-repo"),
 				Action:     provisioning.JobActionPull,
 			},
 		}
@@ -259,16 +260,16 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 				Labels:    map[string]string{LabelJobClaim: "123"},
 			},
 			Spec: provisioning.JobSpec{
-				Repository: "test-repo",
+				Repository: new("test-repo"),
 				Action:     provisioning.JobActionPull,
 			},
 		}
 
 		store.On("ListExpiredJobs", mock.Anything, mock.Anything, 100).Return([]*provisioning.Job{job}, nil)
 		store.On("Complete", mock.Anything, mock.MatchedBy(func(j *provisioning.Job) bool {
-			assert.Equal(t, provisioning.JobStateError, j.Status.State)
-			assert.Equal(t, "Job failed due to lease expiry - worker may have crashed or lost connection", j.Status.Message)
-			assert.Equal(t, fixedTime.UnixMilli(), j.Status.Finished)
+			assert.Equal(t, provisioning.JobStateError, ptr.Deref(j.Status.State))
+			assert.Equal(t, "Job failed due to lease expiry - worker may have crashed or lost connection", ptr.Deref(j.Status.Message))
+			assert.Equal(t, fixedTime.UnixMilli(), ptr.Deref(j.Status.Finished))
 			return true
 		})).Return(nil)
 		historyWriter.On("WriteJob", mock.Anything, mock.Anything).Return(nil)
@@ -297,7 +298,7 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 				},
 			},
 			Spec: provisioning.JobSpec{
-				Repository: "test-repo",
+				Repository: new("test-repo"),
 				Action:     provisioning.JobActionPull,
 			},
 		}
@@ -333,7 +334,7 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 					Namespace: "ns-1",
 					Labels:    map[string]string{LabelJobClaim: "111"},
 				},
-				Spec: provisioning.JobSpec{Repository: "repo-1", Action: provisioning.JobActionPull},
+				Spec: provisioning.JobSpec{Repository: new("repo-1"), Action: provisioning.JobActionPull},
 			},
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -341,7 +342,7 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 					Namespace: "ns-2",
 					Labels:    map[string]string{LabelJobClaim: "222"},
 				},
-				Spec: provisioning.JobSpec{Repository: "repo-2", Action: provisioning.JobActionPush},
+				Spec: provisioning.JobSpec{Repository: new("repo-2"), Action: provisioning.JobActionPush},
 			},
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -349,7 +350,7 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 					Namespace: "ns-3",
 					Labels:    map[string]string{LabelJobClaim: "333"},
 				},
-				Spec: provisioning.JobSpec{Repository: "repo-3", Action: provisioning.JobActionMigrate},
+				Spec: provisioning.JobSpec{Repository: new("repo-3"), Action: provisioning.JobActionMigrate},
 			},
 		}
 

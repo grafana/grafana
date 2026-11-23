@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -63,12 +64,12 @@ func TestIntegrationProvisioning_FullSync_FolderUIDTooLong(t *testing.T) {
 	jobObj := &provisioning.Job{}
 	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
 
-	t.Logf("Job state: %s", jobObj.Status.State)
-	t.Logf("Job message: %s", jobObj.Status.Message)
+	t.Logf("Job state: %s", ptr.Deref(jobObj.Status.State))
+	t.Logf("Job message: %s", ptr.Deref(jobObj.Status.Message))
 	t.Logf("Job warnings: %v", jobObj.Status.Warnings)
 	t.Logf("Job errors: %v", jobObj.Status.Errors)
 
-	require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
+	require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State),
 		"uid-too-long folders must be reported as warnings so the job queue does not retry the sync forever")
 	require.Empty(t, jobObj.Status.Errors,
 		"uid-too-long folders must not contribute to Status.Errors; treating them as errors triggers a retry loop")
@@ -140,7 +141,7 @@ func TestIntegrationProvisioning_FullSync_FolderUIDTooLong(t *testing.T) {
 	})
 	rerunObj := &provisioning.Job{}
 	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(rerun.Object, rerunObj))
-	require.Equal(t, provisioning.JobStateWarning, rerunObj.Status.State,
+	require.Equal(t, provisioning.JobStateWarning, ptr.Deref(rerunObj.Status.State),
 		"second pull should also surface the UID violation as a warning, not an error")
 	require.Empty(t, rerunObj.Status.Errors)
 	helper.RequireRepoDashboardCount(t, repo, 1)

@@ -66,8 +66,8 @@ func runExportTest(t *testing.T, mockItems []unstructured.Unstructured, setupPro
 	})
 
 	options := provisioningV0.JobExportJobOptions{
-		Path:   "grafana",
-		Branch: "feature/branch",
+		Path:   new("grafana"),
+		Branch: new("feature/branch"),
 	}
 
 	err := ExportResources(context.Background(), options, resourceClients, repoResources, mockProgress, false)
@@ -667,8 +667,8 @@ func TestExportResources_GenerateNewUIDs(t *testing.T) {
 	}), resources.WriteOptions{Path: "grafana", Ref: "feature/branch"}).Return("exported.json", 0, nil).Times(2)
 
 	options := provisioningV0.JobExportJobOptions{
-		Path:   "grafana",
-		Branch: "feature/branch",
+		Path:   new("grafana"),
+		Branch: new("feature/branch"),
 	}
 
 	err := ExportResources(context.Background(), options, resourceClients, repoResources, mockProgress, true)
@@ -706,8 +706,8 @@ func TestExportResources_GenerateNewUIDs_UniquePerResource(t *testing.T) {
 		}).Return("exported.json", 0, nil)
 
 	options := provisioningV0.JobExportJobOptions{
-		Path:   "grafana",
-		Branch: "feature/branch",
+		Path:   new("grafana"),
+		Branch: new("feature/branch"),
 	}
 
 	err := ExportResources(context.Background(), options, resourceClients, repoResources, mockProgress, true)

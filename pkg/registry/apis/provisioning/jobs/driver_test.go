@@ -17,6 +17,7 @@ import (
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 )
 
 func newConflictError() error {
@@ -29,39 +30,39 @@ func newConflictError() error {
 
 // TestSumTotalChanges verifies the driver totals the per-summary TotalChanges the
 // recorder set (see TestUpdateSummary_TotalChanges for the action-aware population),
-// skipping nil entries.
+// ignoring empty entries.
 func TestSumTotalChanges(t *testing.T) {
 	require.Equal(t, 0, sumTotalChanges(nil))
 
-	summaries := []*provisioning.JobResourceSummary{
-		{TotalChanges: 5},
-		nil,
-		{TotalChanges: 3},
+	summaries := []provisioning.JobResourceSummary{
+		{TotalChanges: new(int64(5))},
+		{},
+		{TotalChanges: new(int64(3))},
 	}
 	require.Equal(t, 8, sumTotalChanges(summaries))
 }
 
 // TestSumTotalDryRun verifies pull request jobs count viewed-but-not-actionable
 // (Noop) files alongside changes, while every other action falls back to
-// TotalChanges (identical to sumTotalChanges), skipping nil entries.
+// TotalChanges (identical to sumTotalChanges), ignoring empty entries.
 func TestSumTotalDryRun(t *testing.T) {
 	require.Equal(t, 0, sumTotalDryRun(provisioning.JobActionPullRequest, nil))
 
-	prSummaries := []*provisioning.JobResourceSummary{
-		{Create: 2, Update: 1, Delete: 1, Noop: 3},
-		nil,
-		{Create: 1},
+	prSummaries := []provisioning.JobResourceSummary{
+		{Create: new(int64(2)), Update: new(int64(1)), Delete: new(int64(1)), Noop: new(int64(3))},
+		{},
+		{Create: new(int64(1))},
 	}
 	require.Equal(t, 8, sumTotalDryRun(provisioning.JobActionPullRequest, prSummaries))
 
-	prSummariesLarge := []*provisioning.JobResourceSummary{
-		{Create: 8, Update: 5, Noop: 2}, // all 15 files are evaluated, uncapped
+	prSummariesLarge := []provisioning.JobResourceSummary{
+		{Create: new(int64(8)), Update: new(int64(5)), Noop: new(int64(2))}, // all 15 files are evaluated, uncapped
 	}
 	require.Equal(t, 15, sumTotalDryRun(provisioning.JobActionPullRequest, prSummariesLarge))
 
-	pullSummaries := []*provisioning.JobResourceSummary{
-		{TotalChanges: 5, Noop: 10},
-		{TotalChanges: 3},
+	pullSummaries := []provisioning.JobResourceSummary{
+		{TotalChanges: new(int64(5)), Noop: new(int64(10))},
+		{TotalChanges: new(int64(3))},
 	}
 	require.Equal(t, 8, sumTotalDryRun(provisioning.JobActionPull, pullSummaries))
 }
@@ -74,7 +75,7 @@ func makeTestJob(rv string) *provisioning.Job {
 			ResourceVersion: rv,
 		},
 		Spec: provisioning.JobSpec{
-			Repository: "test-repo",
+			Repository: new("test-repo"),
 			Action:     provisioning.JobActionPull,
 		},
 	}
@@ -95,16 +96,16 @@ func TestOnProgress_IncrementsProgressUpdates(t *testing.T) {
 		})
 
 	progressFn := driver.onProgress()
-	status := provisioning.JobStatus{State: provisioning.JobStateWorking, Message: "test"}
+	status := provisioning.JobStatus{State: new(provisioning.JobStateWorking), Message: new("test")}
 
 	require.NoError(t, progressFn(context.Background(), status))
-	assert.Equal(t, int64(1), driver.currentJob.Status.ProgressUpdates)
+	assert.Equal(t, int64(1), ptr.Deref(driver.currentJob.Status.ProgressUpdates))
 
 	require.NoError(t, progressFn(context.Background(), status))
-	assert.Equal(t, int64(2), driver.currentJob.Status.ProgressUpdates)
+	assert.Equal(t, int64(2), ptr.Deref(driver.currentJob.Status.ProgressUpdates))
 
 	require.NoError(t, progressFn(context.Background(), status))
-	assert.Equal(t, int64(3), driver.currentJob.Status.ProgressUpdates)
+	assert.Equal(t, int64(3), ptr.Deref(driver.currentJob.Status.ProgressUpdates))
 }
 
 // TestOnProgress_FailedWriteDoesNotInflateCount verifies that a failed
@@ -126,14 +127,14 @@ func TestOnProgress_FailedWriteDoesNotInflateCount(t *testing.T) {
 		}).Once()
 
 	progressFn := driver.onProgress()
-	status := provisioning.JobStatus{State: provisioning.JobStateWorking, Message: "test"}
+	status := provisioning.JobStatus{State: new(provisioning.JobStateWorking), Message: new("test")}
 
 	require.Error(t, progressFn(context.Background(), status))
-	assert.Equal(t, int64(0), driver.currentJob.Status.ProgressUpdates,
+	assert.Equal(t, int64(0), ptr.Deref(driver.currentJob.Status.ProgressUpdates),
 		"a failed write must not increment the count")
 
 	require.NoError(t, progressFn(context.Background(), status))
-	assert.Equal(t, int64(1), driver.currentJob.Status.ProgressUpdates,
+	assert.Equal(t, int64(1), ptr.Deref(driver.currentJob.Status.ProgressUpdates),
 		"the first successful write is the first counted update")
 }
 
@@ -158,7 +159,7 @@ func TestOnProgress_DeadlockOnConflict(t *testing.T) {
 	store.EXPECT().Update(mock.Anything, mock.Anything).Return(updatedJob, nil).Once()
 
 	progressFn := driver.onProgress()
-	status := provisioning.JobStatus{State: provisioning.JobStateWorking, Message: "test"}
+	status := provisioning.JobStatus{State: new(provisioning.JobStateWorking), Message: new("test")}
 
 	done := make(chan error, 1)
 	go func() {
@@ -191,7 +192,7 @@ func TestOnProgress_AllRetriesConflict(t *testing.T) {
 	store.EXPECT().Update(mock.Anything, mock.Anything).Return(nil, newConflictError()).Once() // attempt 2 (last, no continue)
 
 	progressFn := driver.onProgress()
-	status := provisioning.JobStatus{State: provisioning.JobStateWorking, Message: "test"}
+	status := provisioning.JobStatus{State: new(provisioning.JobStateWorking), Message: new("test")}
 
 	done := make(chan error, 1)
 	go func() {
@@ -233,7 +234,7 @@ func TestOnProgress_MutexNotLeakedOnConflict(t *testing.T) {
 	store.EXPECT().Update(mock.Anything, mock.Anything).Return(makeTestJob("201"), nil).Once()
 
 	progressFn := driver.onProgress()
-	status := provisioning.JobStatus{State: provisioning.JobStateWorking, Message: "test"}
+	status := provisioning.JobStatus{State: new(provisioning.JobStateWorking), Message: new("test")}
 
 	done := make(chan error, 1)
 	go func() {
@@ -274,7 +275,7 @@ func makeOrphanJob(action provisioning.JobAction) *provisioning.Job {
 			Namespace: "test-ns",
 		},
 		Spec: provisioning.JobSpec{
-			Repository: "deleted-repo",
+			Repository: new("deleted-repo"),
 			Action:     action,
 		},
 	}

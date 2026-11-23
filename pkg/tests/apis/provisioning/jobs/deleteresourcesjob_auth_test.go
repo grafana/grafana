@@ -16,7 +16,7 @@ func TestIntegrationProvisioning_DeleteResourcesJobAuthorization(t *testing.T) {
 
 	body := common.AsJSON(provisioning.JobSpec{
 		Action:     provisioning.JobActionDeleteResources,
-		Repository: "nonexistent-repo",
+		Repository: new("nonexistent-repo"),
 	})
 
 	t.Run("admin can create deleteResources job for nonexistent repo", func(t *testing.T) {
@@ -80,7 +80,7 @@ func TestIntegrationProvisioning_DeleteResourcesJobAuthorization(t *testing.T) {
 
 		existingRepoBody := common.AsJSON(provisioning.JobSpec{
 			Action:     provisioning.JobActionDeleteResources,
-			Repository: repo,
+			Repository: new(repo),
 		})
 
 		var statusCode int

@@ -14,6 +14,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
@@ -188,8 +189,8 @@ func TestJobProgressRecorderCompleteIncludesRefURLs(t *testing.T) {
 	// Verify the final status includes RefURLs
 	require.NotNil(t, finalStatus.URLs)
 	assert.Equal(t, refURLs.SourceURL, finalStatus.URLs.SourceURL)
-	assert.Equal(t, provisioning.JobStateSuccess, finalStatus.State)
-	assert.Equal(t, "completed successfully", finalStatus.Message)
+	assert.Equal(t, provisioning.JobStateSuccess, ptr.Deref(finalStatus.State))
+	assert.Equal(t, "completed successfully", ptr.Deref(finalStatus.Message))
 }
 
 func TestJobProgressRecorderWarningStatus(t *testing.T) {
@@ -242,14 +243,14 @@ func TestJobProgressRecorderWarningStatus(t *testing.T) {
 	require.Len(t, recorder.summaries, 2) // Dashboard and DataSource
 	dashboardSummary := recorder.summaries["test.grafana.app:Dashboard"]
 	require.NotNil(t, dashboardSummary)
-	assert.Equal(t, int64(2), dashboardSummary.Warning)
+	assert.Equal(t, int64(2), ptr.Deref(dashboardSummary.Warning))
 	assert.Len(t, dashboardSummary.Warnings, 2)
 	assert.Contains(t, dashboardSummary.Warnings[0], "deprecated API used")
 	assert.Contains(t, dashboardSummary.Warnings[1], "missing optional field")
 
 	datasourceSummary := recorder.summaries["test.grafana.app:DataSource"]
 	require.NotNil(t, datasourceSummary)
-	assert.Equal(t, int64(1), datasourceSummary.Warning)
+	assert.Equal(t, int64(1), ptr.Deref(datasourceSummary.Warning))
 	assert.Len(t, datasourceSummary.Warnings, 1)
 	assert.Contains(t, datasourceSummary.Warnings[0], "validation warning")
 	recorder.mu.RUnlock()
@@ -268,8 +269,8 @@ func TestJobProgressRecorderWarningStatus(t *testing.T) {
 	assert.ElementsMatch(t, finalStatus.Warnings, expectedWarnings)
 
 	// Verify the state is set to Warning
-	assert.Equal(t, provisioning.JobStateWarning, finalStatus.State)
-	assert.Equal(t, "completed with warnings", finalStatus.Message)
+	assert.Equal(t, provisioning.JobStateWarning, ptr.Deref(finalStatus.State))
+	assert.Equal(t, "completed with warnings", ptr.Deref(finalStatus.Message))
 
 	// Verify summaries are included
 	require.Len(t, finalStatus.Summary, 2)
@@ -319,8 +320,8 @@ func TestJobProgressRecorderWarningWithErrors(t *testing.T) {
 
 	// When there are errors, the state should be Error (any errors = error state)
 	// Warnings should still be included in the response
-	assert.Equal(t, provisioning.JobStateError, finalStatus.State)
-	assert.Equal(t, "completed with errors", finalStatus.Message)
+	assert.Equal(t, provisioning.JobStateError, ptr.Deref(finalStatus.State))
+	assert.Equal(t, "completed with errors", ptr.Deref(finalStatus.Message))
 	assert.Len(t, finalStatus.Errors, 1)
 	assert.Contains(t, finalStatus.Errors[0], "failed to process")
 
@@ -355,8 +356,8 @@ func TestJobProgressRecorderWarningOnlyNoErrors(t *testing.T) {
 	finalStatus := recorder.Complete(ctx, nil)
 
 	// Verify the state is Warning (not Error) when only warnings exist
-	assert.Equal(t, provisioning.JobStateWarning, finalStatus.State)
-	assert.Equal(t, "completed with warnings", finalStatus.Message)
+	assert.Equal(t, provisioning.JobStateWarning, ptr.Deref(finalStatus.State))
+	assert.Equal(t, "completed with warnings", ptr.Deref(finalStatus.Message))
 	assert.Empty(t, finalStatus.Errors)
 	require.NotNil(t, finalStatus.Warnings)
 	assert.Len(t, finalStatus.Warnings, 1)
@@ -469,7 +470,7 @@ func TestUpdateSummary_TotalChanges(t *testing.T) {
 
 			summaries := recorder.summary()
 			require.Len(t, summaries, 1)
-			require.Equal(t, tt.want, summaries[0].TotalChanges)
+			require.Equal(t, tt.want, ptr.Deref(summaries[0].TotalChanges))
 		})
 	}
 }
@@ -1052,7 +1053,7 @@ func TestJobProgressRecorderResultReasons(t *testing.T) {
 		recorder.Record(ctx, NewResourceResult().WithError(quotaErr).Build())
 
 		finalStatus := recorder.Complete(ctx, quotaErr)
-		assert.Equal(t, provisioning.JobStateWarning, finalStatus.State)
+		assert.Equal(t, provisioning.JobStateWarning, ptr.Deref(finalStatus.State))
 		assert.Contains(t, recorder.ResultReasons(), provisioning.ReasonQuotaExceeded)
 	})
 
@@ -1061,7 +1062,7 @@ func TestJobProgressRecorderResultReasons(t *testing.T) {
 		recorder := NewJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
 
 		finalStatus := recorder.Complete(ctx, errors.New("network failure"))
-		assert.Equal(t, provisioning.JobStateError, finalStatus.State)
+		assert.Equal(t, provisioning.JobStateError, ptr.Deref(finalStatus.State))
 		assert.Empty(t, recorder.ResultReasons())
 	})
 
@@ -1103,8 +1104,8 @@ func TestJobProgressRecorderCompleteWithWarningError(t *testing.T) {
 
 		finalStatus := recorder.Complete(ctx, AsWarning(errors.New("migrate functionality is disabled by configuration")))
 
-		assert.Equal(t, provisioning.JobStateWarning, finalStatus.State)
-		assert.Equal(t, "migrate functionality is disabled by configuration", finalStatus.Message)
+		assert.Equal(t, provisioning.JobStateWarning, ptr.Deref(finalStatus.State))
+		assert.Equal(t, "migrate functionality is disabled by configuration", ptr.Deref(finalStatus.Message))
 	})
 
 	t.Run("plain error still completes in error state", func(t *testing.T) {
@@ -1112,8 +1113,8 @@ func TestJobProgressRecorderCompleteWithWarningError(t *testing.T) {
 
 		finalStatus := recorder.Complete(ctx, errors.New("boom"))
 
-		assert.Equal(t, provisioning.JobStateError, finalStatus.State)
-		assert.Equal(t, "boom", finalStatus.Message)
+		assert.Equal(t, provisioning.JobStateError, ptr.Deref(finalStatus.State))
+		assert.Equal(t, "boom", ptr.Deref(finalStatus.Message))
 	})
 }
 

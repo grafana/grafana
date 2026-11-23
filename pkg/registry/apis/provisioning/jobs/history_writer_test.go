@@ -9,6 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 )
 
 func TestWriteJob_PreservesStatusAndLabels(t *testing.T) {
@@ -22,8 +23,8 @@ func TestWriteJob_PreservesStatusAndLabels(t *testing.T) {
 			UID:             "original-uid",
 			ResourceVersion: "42",
 		},
-		Spec:   provisioning.JobSpec{Repository: "my-repo"},
-		Status: provisioning.JobStatus{State: provisioning.JobStateSuccess, ProgressUpdates: 7},
+		Spec:   provisioning.JobSpec{Repository: new("my-repo")},
+		Status: provisioning.JobStatus{State: new(provisioning.JobStateSuccess), ProgressUpdates: new(int64(7))},
 	}
 
 	require.NoError(t, writer.WriteJob(context.Background(), job))
@@ -33,9 +34,9 @@ func TestWriteJob_PreservesStatusAndLabels(t *testing.T) {
 	require.Len(t, list.Items, 1)
 
 	historic := list.Items[0]
-	assert.Equal(t, int64(7), historic.Status.ProgressUpdates,
+	assert.Equal(t, int64(7), ptr.Deref(historic.Status.ProgressUpdates),
 		"historic job should preserve the number of progress updates the job went through")
-	assert.Equal(t, provisioning.JobStateSuccess, historic.Status.State)
+	assert.Equal(t, provisioning.JobStateSuccess, ptr.Deref(historic.Status.State))
 	assert.Empty(t, historic.ResourceVersion, "historic job gets its own resource version")
 	assert.Equal(t, "my-repo", historic.Labels[LabelRepository])
 	assert.Equal(t, "original-uid", historic.Labels[LabelJobOriginalUID])

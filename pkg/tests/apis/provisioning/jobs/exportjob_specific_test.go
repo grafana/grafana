@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
@@ -67,12 +68,12 @@ func TestIntegrationProvisioning_ExportSpecificResources(t *testing.T) {
 	spec := provisioning.JobSpec{
 		Action: provisioning.JobActionPush,
 		Push: &provisioning.JobExportJobOptions{
-			Path: "",
+			Path: nil,
 			Resources: []provisioning.JobResourceRef{
-				{Name: "test-v0", Kind: "Dashboard", Group: "dashboard.grafana.app"},
-				{Name: "test-v1", Kind: "Dashboard", Group: "dashboard.grafana.app"},
-				{Name: "test-v2", Kind: "Dashboard", Group: "dashboard.grafana.app"},
-				{Name: "test-v2beta1", Kind: "Dashboard", Group: "dashboard.grafana.app"},
+				{Name: new("test-v0"), Kind: new("Dashboard"), Group: new("dashboard.grafana.app")},
+				{Name: new("test-v1"), Kind: new("Dashboard"), Group: new("dashboard.grafana.app")},
+				{Name: new("test-v2"), Kind: new("Dashboard"), Group: new("dashboard.grafana.app")},
+				{Name: new("test-v2beta1"), Kind: new("Dashboard"), Group: new("dashboard.grafana.app")},
 			},
 		},
 	}
@@ -160,9 +161,9 @@ func TestIntegrationProvisioning_SelectiveMigrateDashboardInNestedFolders(t *tes
 	migrateJob := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionMigrate,
 		Migrate: &provisioning.JobMigrateJobOptions{
-			Message: "Selectively migrate one nested dashboard",
+			Message: new("Selectively migrate one nested dashboard"),
 			Resources: []provisioning.JobResourceRef{
-				{Name: dashName, Kind: "Dashboard", Group: "dashboard.grafana.app"},
+				{Name: ptr.NonZero(dashName), Kind: new("Dashboard"), Group: new("dashboard.grafana.app")},
 			},
 		},
 	})
@@ -228,8 +229,8 @@ func TestIntegrationProvisioning_ExportSpecificResources_NotFound(t *testing.T) 
 		Action: provisioning.JobActionPush,
 		Push: &provisioning.JobExportJobOptions{
 			Resources: []provisioning.JobResourceRef{
-				{Name: "test-v1", Kind: "Dashboard", Group: "dashboard.grafana.app"},
-				{Name: "does-not-exist", Kind: "Dashboard", Group: "dashboard.grafana.app"},
+				{Name: new("test-v1"), Kind: new("Dashboard"), Group: new("dashboard.grafana.app")},
+				{Name: new("does-not-exist"), Kind: new("Dashboard"), Group: new("dashboard.grafana.app")},
 			},
 		},
 	}
@@ -239,7 +240,7 @@ func TestIntegrationProvisioning_ExportSpecificResources_NotFound(t *testing.T) 
 	jobObj := &provisioning.Job{}
 	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
 
-	require.Equal(t, provisioning.JobStateError, jobObj.Status.State,
+	require.Equal(t, provisioning.JobStateError, ptr.Deref(jobObj.Status.State),
 		"missing explicitly-requested resource should fail the job")
 
 	foundError := false
@@ -293,7 +294,7 @@ func TestIntegrationProvisioning_ExportSpecificResources_GeneratesFolderAncestry
 		Action: provisioning.JobActionPush,
 		Push: &provisioning.JobExportJobOptions{
 			Resources: []provisioning.JobResourceRef{
-				{Name: selectedDash, Kind: "Dashboard", Group: "dashboard.grafana.app"},
+				{Name: ptr.NonZero(selectedDash), Kind: new("Dashboard"), Group: new("dashboard.grafana.app")},
 			},
 		},
 	}

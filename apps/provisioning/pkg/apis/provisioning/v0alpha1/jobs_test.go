@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 )
 
 func TestJobStatus_ToSyncStatus(t *testing.T) {
@@ -17,8 +18,8 @@ func TestJobStatus_ToSyncStatus(t *testing.T) {
 		{
 			name: "errors take precedence",
 			status: v0alpha1.JobStatus{
-				State:    v0alpha1.JobStateError,
-				Message:  "completed with errors",
+				State:    new(v0alpha1.JobStateError),
+				Message:  new("completed with errors"),
 				Errors:   []string{"error one", "error two"},
 				Warnings: []string{"warning"},
 			},
@@ -27,8 +28,8 @@ func TestJobStatus_ToSyncStatus(t *testing.T) {
 		{
 			name: "warnings used when no errors",
 			status: v0alpha1.JobStatus{
-				State:    v0alpha1.JobStateWarning,
-				Message:  "completed with warnings",
+				State:    new(v0alpha1.JobStateWarning),
+				Message:  new("completed with warnings"),
 				Warnings: []string{"warning"},
 			},
 			wantMessage: []string{"warning"},
@@ -36,16 +37,16 @@ func TestJobStatus_ToSyncStatus(t *testing.T) {
 		{
 			name: "error state falls back to job message",
 			status: v0alpha1.JobStatus{
-				State:   v0alpha1.JobStateError,
-				Message: "create repository resources client: boom",
+				State:   new(v0alpha1.JobStateError),
+				Message: new("create repository resources client: boom"),
 			},
 			wantMessage: []string{"create repository resources client: boom"},
 		},
 		{
 			name: "success message is not copied",
 			status: v0alpha1.JobStatus{
-				State:   v0alpha1.JobStateSuccess,
-				Message: "completed successfully",
+				State:   new(v0alpha1.JobStateSuccess),
+				Message: new("completed successfully"),
 			},
 			wantMessage: nil,
 		},
@@ -55,7 +56,7 @@ func TestJobStatus_ToSyncStatus(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			syncStatus := tt.status.ToSyncStatus("test-job")
 			assert.Equal(t, "test-job", syncStatus.Job)
-			assert.Equal(t, tt.status.State, syncStatus.State)
+			assert.Equal(t, ptr.Deref(tt.status.State), syncStatus.State)
 			assert.Equal(t, tt.wantMessage, syncStatus.Message)
 		})
 	}

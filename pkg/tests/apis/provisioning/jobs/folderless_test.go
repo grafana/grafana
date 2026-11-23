@@ -258,7 +258,7 @@ func TestIntegrationProvisioning_FolderlessMigrate(t *testing.T) {
 
 	helper.TriggerJobAndWaitForSuccess(t, repo, provisioning.JobSpec{
 		Action:  provisioning.JobActionMigrate,
-		Migrate: &provisioning.JobMigrateJobOptions{Message: "migrate to folderless"},
+		Migrate: &provisioning.JobMigrateJobOptions{Message: new("migrate to folderless")},
 	})
 
 	// Both dashboards are now managed by the repo and remain at the top level.

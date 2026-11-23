@@ -1,0 +1,123 @@
+{
+  "kind": "Job",
+  "apiVersion": "provisioning.grafana.app/v0alpha1",
+  "metadata": {
+    "name": "repo-pull",
+    "namespace": "default"
+  },
+  "spec": {
+    "action": "push",
+    "repository": "repo",
+    "message": "commit message",
+    "pr": {
+      "ref": "feature",
+      "pr": 42,
+      "hash": "abc123",
+      "url": "https://github.com/grafana/example/pull/42",
+      "isFork": false,
+      "forkURL": "https://github.com/contributor/example"
+    },
+    "push": {
+      "message": "export",
+      "folder": "folder-uid",
+      "branch": "main",
+      "path": "dashboards/",
+      "resources": [
+        {
+          "name": "dash-uid",
+          "kind": "Dashboard",
+          "group": "dashboard.grafana.app"
+        }
+      ],
+      "generateNewFolderIDs": true
+    },
+    "pull": {
+      "incremental": false
+    },
+    "migrate": {
+      "message": "migrate",
+      "branch": "migration",
+      "resources": [
+        {
+          "name": "dash-uid",
+          "kind": "Dashboard",
+          "group": "dashboard.grafana.app"
+        }
+      ],
+      "generateNewFolderIDs": true,
+      "skipResourceDeletion": true
+    },
+    "delete": {
+      "ref": "main",
+      "paths": [
+        "a.json"
+      ],
+      "resources": [
+        {
+          "name": "dash-uid",
+          "kind": "Dashboard"
+        }
+      ]
+    },
+    "move": {
+      "ref": "main",
+      "paths": [
+        "a.json"
+      ],
+      "targetPath": "moved/",
+      "resources": [
+        {
+          "name": "dash-uid"
+        }
+      ]
+    },
+    "fixFolderMetadata": {
+      "ref": "main"
+    },
+    "test": {
+      "duration": "10s",
+      "progressUpdates": 3
+    }
+  },
+  "status": {
+    "state": "warning",
+    "started": 1700000000000,
+    "finished": 1700000060000,
+    "message": "finished with warnings",
+    "errors": [
+      "error"
+    ],
+    "warnings": [
+      "warning"
+    ],
+    "progress": 99.5,
+    "progressUpdates": 7,
+    "summary": [
+      {
+        "group": "dashboard.grafana.app",
+        "kind": "Dashboard",
+        "total": 10,
+        "create": 1,
+        "update": 2,
+        "delete": 3,
+        "write": 4,
+        "error": 5,
+        "warning": 6,
+        "noop": 7,
+        "totalChanges": 8,
+        "errors": [
+          "summary error"
+        ],
+        "warnings": [
+          "summary warning"
+        ]
+      }
+    ],
+    "url": {
+      "repositoryURL": "https://github.com/grafana/example",
+      "sourceURL": "https://github.com/grafana/example/tree/main",
+      "newPullRequestURL": "https://github.com/grafana/example/pull/new/feature",
+      "compareURL": "https://github.com/grafana/example/compare/main...feature"
+    }
+  }
+}

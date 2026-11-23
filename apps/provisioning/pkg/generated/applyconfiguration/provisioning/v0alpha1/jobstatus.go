@@ -27,7 +27,7 @@ type JobStatusApplyConfiguration struct {
 	// completion.
 	ProgressUpdates *int64 `json:"progressUpdates,omitempty"`
 	// Summary of processed actions
-	Summary []*provisioningv0alpha1.JobResourceSummary `json:"summary,omitempty"`
+	Summary []JobResourceSummaryApplyConfiguration `json:"summary,omitempty"`
 	// URLs contains URLs for the reference branch or commit if applicable.
 	URLs *RepositoryURLsApplyConfiguration `json:"url,omitempty"`
 }
@@ -109,7 +109,7 @@ func (b *JobStatusApplyConfiguration) WithProgressUpdates(value int64) *JobStatu
 // WithSummary adds the given value to the Summary field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the Summary field.
-func (b *JobStatusApplyConfiguration) WithSummary(values ...**provisioningv0alpha1.JobResourceSummary) *JobStatusApplyConfiguration {
+func (b *JobStatusApplyConfiguration) WithSummary(values ...*JobResourceSummaryApplyConfiguration) *JobStatusApplyConfiguration {
 	for i := range values {
 		if values[i] == nil {
 			panic("nil value passed to WithSummary")

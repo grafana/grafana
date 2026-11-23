@@ -206,9 +206,9 @@ func TestMigrationWorker_ConfigurationDisabled(t *testing.T) {
 				},
 				Spec: provisioning.JobSpec{
 					Action:     provisioning.JobActionMigrate,
-					Repository: "test-repo",
+					Repository: new("test-repo"),
 					Migrate: &provisioning.JobMigrateJobOptions{
-						Message: "Test migration",
+						Message: new("Test migration"),
 					},
 				},
 			}

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/stretchr/testify/require"
@@ -49,7 +50,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
 
 		// The sync should finish with a Warning state because dashboard3 was skipped.
-		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
+		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State),
 			"incremental sync should warn when a create is skipped due to quota")
 		require.Empty(t, jobObj.Status.Errors,
 			"quota-skipped resources produce warnings, not errors")
@@ -113,7 +114,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
 
 		// Both operations should succeed — no quota violations expected.
-		require.Equal(t, provisioning.JobStateSuccess, jobObj.Status.State,
+		require.Equal(t, provisioning.JobStateSuccess, ptr.Deref(jobObj.Status.State),
 			"delete-then-create in the same window should succeed at quota=1")
 		require.Empty(t, jobObj.Status.Warnings, "no quota warnings expected when the delete frees room for the create")
 
@@ -205,7 +206,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
 
 		// The dashboard (and with it the new folder) must be skipped.
-		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
+		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State),
 			"incremental sync should warn when a create is skipped due to quota")
 		require.Empty(t, jobObj.Status.Errors, "quota-skipped resources produce warnings, not errors")
 		require.ElementsMatch(t, []string{
@@ -290,7 +291,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 
 		jobObj := &provisioning.Job{}
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
-		require.Equal(t, provisioning.JobStateSuccess, jobObj.Status.State,
+		require.Equal(t, provisioning.JobStateSuccess, ptr.Deref(jobObj.Status.State),
 			"unlimited quota should allow all creates")
 		require.Empty(t, jobObj.Status.Warnings, "no quota warnings expected with unlimited quota")
 

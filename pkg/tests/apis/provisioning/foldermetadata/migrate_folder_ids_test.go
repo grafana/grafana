@@ -58,8 +58,8 @@ func TestIntegrationProvisioning_MigrateJob_GenerateNewFolderIDs(t *testing.T) {
 	helper.TriggerJobAndWaitForSuccess(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionMigrate,
 		Migrate: &provisioning.JobMigrateJobOptions{
-			Message:              "Migrate with new folder IDs",
-			GenerateNewFolderIDs: true,
+			Message:              new("Migrate with new folder IDs"),
+			GenerateNewFolderIDs: new(true),
 		},
 	})
 

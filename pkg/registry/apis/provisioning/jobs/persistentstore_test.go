@@ -42,7 +42,7 @@ func TestClaim_StampsOwnerToken(t *testing.T) {
 
 	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-job", Namespace: "stacks-123"},
-		Spec:       provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
+		Spec:       provisioning.JobSpec{Repository: new("test-repo"), Action: provisioning.JobActionPull},
 	}, metav1.CreateOptions{})
 	require.NoError(t, err)
 
@@ -73,7 +73,7 @@ func TestClaim_AlreadyClaimed(t *testing.T) {
 				LabelJobClaimOwner: "owner-B",
 			},
 		},
-		Spec: provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
+		Spec: provisioning.JobSpec{Repository: new("test-repo"), Action: provisioning.JobActionPull},
 	}, metav1.CreateOptions{})
 	require.NoError(t, err)
 
@@ -106,7 +106,7 @@ func TestClaim_RecordsContendedWhenAlreadyClaimed(t *testing.T) {
 				LabelJobClaimOwner: "owner-B",
 			},
 		},
-		Spec: provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
+		Spec: provisioning.JobSpec{Repository: new("test-repo"), Action: provisioning.JobActionPull},
 	}, metav1.CreateOptions{})
 	require.NoError(t, err)
 
@@ -146,7 +146,7 @@ func TestClaim_RetriesOnConflict(t *testing.T) {
 
 	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-job", Namespace: "stacks-123"},
-		Spec:       provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
+		Spec:       provisioning.JobSpec{Repository: new("test-repo"), Action: provisioning.JobActionPull},
 	}, metav1.CreateOptions{})
 	require.NoError(t, err)
 
@@ -180,7 +180,7 @@ func TestClaim_ConflictThenClaimedByOther(t *testing.T) {
 
 	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-job", Namespace: "stacks-123"},
-		Spec:       provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
+		Spec:       provisioning.JobSpec{Repository: new("test-repo"), Action: provisioning.JobActionPull},
 	}, metav1.CreateOptions{})
 	require.NoError(t, err)
 
@@ -237,7 +237,7 @@ func TestClaim_RollbackSkipsJobOwnedByAnother(t *testing.T) {
 
 	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-job", Namespace: "stacks-123"},
-		Spec:       provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
+		Spec:       provisioning.JobSpec{Repository: new("test-repo"), Action: provisioning.JobActionPull},
 	}, metav1.CreateOptions{})
 	require.NoError(t, err)
 
@@ -283,7 +283,7 @@ func TestRenewLease_LostToAnotherOwner(t *testing.T) {
 				LabelJobClaimOwner: "owner-B",
 			},
 		},
-		Spec: provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
+		Spec: provisioning.JobSpec{Repository: new("test-repo"), Action: provisioning.JobActionPull},
 	}, metav1.CreateOptions{})
 	require.NoError(t, err)
 
@@ -316,7 +316,7 @@ func TestRenewLease_LostToReincarnatedJob(t *testing.T) {
 				LabelJobClaimOwner: "owner-A",
 			},
 		},
-		Spec: provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
+		Spec: provisioning.JobSpec{Repository: new("test-repo"), Action: provisioning.JobActionPull},
 	}, metav1.CreateOptions{})
 	require.NoError(t, err)
 
@@ -350,7 +350,7 @@ func TestComplete_RefusesJobOwnedByAnother(t *testing.T) {
 				LabelJobClaimOwner: "owner-B",
 			},
 		},
-		Spec: provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
+		Spec: provisioning.JobSpec{Repository: new("test-repo"), Action: provisioning.JobActionPull},
 	}, metav1.CreateOptions{})
 	require.NoError(t, err)
 
@@ -365,7 +365,7 @@ func TestComplete_RefusesJobOwnedByAnother(t *testing.T) {
 				LabelJobClaimOwner: "owner-A",
 			},
 		},
-		Spec: provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
+		Spec: provisioning.JobSpec{Repository: new("test-repo"), Action: provisioning.JobActionPull},
 	}
 
 	err = store.Complete(ctx, stale)
@@ -397,7 +397,7 @@ func TestComplete_SucceedsForOwner(t *testing.T) {
 				LabelJobClaimOwner: "owner-A",
 			},
 		},
-		Spec: provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
+		Spec: provisioning.JobSpec{Repository: new("test-repo"), Action: provisioning.JobActionPull},
 	}, metav1.CreateOptions{})
 	require.NoError(t, err)
 
@@ -453,7 +453,7 @@ func TestClaim_RecordsClaimMetrics(t *testing.T) {
 	// The job exists: claim succeeds -> claimed_total{driver=0} = 1.
 	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{Name: "job-1", Namespace: "stacks-123"},
-		Spec:       provisioning.JobSpec{Repository: "repo", Action: provisioning.JobActionPull},
+		Spec:       provisioning.JobSpec{Repository: new("repo"), Action: provisioning.JobActionPull},
 	}, metav1.CreateOptions{})
 	require.NoError(t, err)
 
@@ -485,7 +485,7 @@ func TestClaim_WaitRecordedOnlyOnSuccessfulClaim(t *testing.T) {
 
 	_, err = cs.ProvisioningV0alpha1().Jobs("stacks-123").Create(ctx, &provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{Name: "job-a", Namespace: "stacks-123"},
-		Spec:       provisioning.JobSpec{Repository: "repo", Action: provisioning.JobActionPull},
+		Spec:       provisioning.JobSpec{Repository: new("repo"), Action: provisioning.JobActionPull},
 	}, metav1.CreateOptions{})
 	require.NoError(t, err)
 
@@ -515,7 +515,7 @@ func TestClaim_RecordsErrorOnUpdateFailure(t *testing.T) {
 
 	_, err = cs.ProvisioningV0alpha1().Jobs("stacks-123").Create(ctx, &provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{Name: "job-1", Namespace: "stacks-123"},
-		Spec:       provisioning.JobSpec{Repository: "repo", Action: provisioning.JobActionPull},
+		Spec:       provisioning.JobSpec{Repository: new("repo"), Action: provisioning.JobActionPull},
 	}, metav1.CreateOptions{})
 	require.NoError(t, err)
 
@@ -554,7 +554,7 @@ func TestRenewLease_StaleResourceVersion(t *testing.T) {
 			},
 		},
 		Spec: provisioning.JobSpec{
-			Repository: "test-repo",
+			Repository: new("test-repo"),
 			Action:     provisioning.JobActionPull,
 		},
 	}, metav1.CreateOptions{})
@@ -604,7 +604,7 @@ func TestRenewLease_ResourceVersionProgresses(t *testing.T) {
 			},
 		},
 		Spec: provisioning.JobSpec{
-			Repository: "test-repo",
+			Repository: new("test-repo"),
 			Action:     provisioning.JobActionPull,
 		},
 	}, metav1.CreateOptions{})
@@ -655,7 +655,7 @@ func TestRenewLease_ThenUpdateDoesNotConflict(t *testing.T) {
 			},
 		},
 		Spec: provisioning.JobSpec{
-			Repository: "test-repo",
+			Repository: new("test-repo"),
 			Action:     provisioning.JobActionPull,
 		},
 	}, metav1.CreateOptions{})
@@ -669,8 +669,8 @@ func TestRenewLease_ThenUpdateDoesNotConflict(t *testing.T) {
 
 	// Simulate progress update (like onProgress) — this should NOT conflict
 	jobInMemory.Status = provisioning.JobStatus{
-		State:   provisioning.JobStateWorking,
-		Message: "progress update after lease renewal",
+		State:   new(provisioning.JobStateWorking),
+		Message: new("progress update after lease renewal"),
 	}
 	_, err = store.Update(ctx, jobInMemory)
 	assert.NoError(t, err,
@@ -680,8 +680,8 @@ func TestRenewLease_ThenUpdateDoesNotConflict(t *testing.T) {
 
 func TestGenerateJobName(t *testing.T) {
 	t.Run("pull and migrate share a deterministic sync name", func(t *testing.T) {
-		pull := &provisioning.Job{Spec: provisioning.JobSpec{Repository: "repo", Action: provisioning.JobActionPull}}
-		migrate := &provisioning.Job{Spec: provisioning.JobSpec{Repository: "repo", Action: provisioning.JobActionMigrate}}
+		pull := &provisioning.Job{Spec: provisioning.JobSpec{Repository: new("repo"), Action: provisioning.JobActionPull}}
+		migrate := &provisioning.Job{Spec: provisioning.JobSpec{Repository: new("repo"), Action: provisioning.JobActionMigrate}}
 		generateJobName(pull)
 		generateJobName(migrate)
 		assert.Equal(t, "repo-sync", pull.Name)
@@ -689,8 +689,8 @@ func TestGenerateJobName(t *testing.T) {
 	})
 
 	t.Run("test jobs get unique names so concurrent load can be queued on one repository", func(t *testing.T) {
-		first := &provisioning.Job{Spec: provisioning.JobSpec{Repository: "repo", Action: provisioning.JobActionTest}}
-		second := &provisioning.Job{Spec: provisioning.JobSpec{Repository: "repo", Action: provisioning.JobActionTest}}
+		first := &provisioning.Job{Spec: provisioning.JobSpec{Repository: new("repo"), Action: provisioning.JobActionTest}}
+		second := &provisioning.Job{Spec: provisioning.JobSpec{Repository: new("repo"), Action: provisioning.JobActionTest}}
 		generateJobName(first)
 		generateJobName(second)
 		assert.NotEqual(t, first.Name, second.Name,
@@ -735,7 +735,7 @@ func TestWebhookAttribution(t *testing.T) {
 
 		ctx := WithWebhookAttribution(t.Context(), WebhookAttribution{Sender: "grot", SenderID: "123", Origin: "GitHub"})
 		job, err := store.Insert(ctx, "default", provisioning.JobSpec{
-			Repository: "repo",
+			Repository: new("repo"),
 			Action:     provisioning.JobActionPull,
 		})
 		require.NoError(t, err)

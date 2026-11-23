@@ -10,7 +10,7 @@ type JobPullRequestJobOptionsApplyConfiguration struct {
 	// The branch of commit hash
 	Ref *string `json:"ref,omitempty"`
 	// Pull request number (when appropriate)
-	PR *int `json:"pr,omitempty"`
+	PR *int32 `json:"pr,omitempty"`
 	// The specific commit hash that triggered this notice
 	Hash *string `json:"hash,omitempty"`
 	// URL to the originator (eg, PR URL)
@@ -39,7 +39,7 @@ func (b *JobPullRequestJobOptionsApplyConfiguration) WithRef(value string) *JobP
 // WithPR sets the PR field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the PR field is set to the value of the last call.
-func (b *JobPullRequestJobOptionsApplyConfiguration) WithPR(value int) *JobPullRequestJobOptionsApplyConfiguration {
+func (b *JobPullRequestJobOptionsApplyConfiguration) WithPR(value int32) *JobPullRequestJobOptionsApplyConfiguration {
 	b.PR = &value
 	return b
 }

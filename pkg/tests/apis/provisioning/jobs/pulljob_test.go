@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
@@ -68,10 +69,10 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		require.NoError(t, err)
 
 		// The job completes with "warning" state for ownership conflicts (they are treated as warnings)
-		t.Logf("Job state: %s", jobObj.Status.State)
+		t.Logf("Job state: %s", ptr.Deref(jobObj.Status.State))
 		t.Logf("Job warnings: %v", jobObj.Status.Warnings)
 
-		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State, "job should complete with warning due to ownership conflicts")
+		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State), "job should complete with warning due to ownership conflicts")
 		require.NotEmpty(t, jobObj.Status.Warnings, "should have warning details")
 		require.Empty(t, jobObj.Status.Errors, "ownership conflicts should be warnings, not errors")
 
@@ -192,11 +193,11 @@ func TestIntegrationProvisioning_PullJobUnmanagedRootConflict(t *testing.T) {
 	jobObj := &provisioning.Job{}
 	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
 
-	t.Logf("Job state: %s", jobObj.Status.State)
+	t.Logf("Job state: %s", ptr.Deref(jobObj.Status.State))
 	t.Logf("Job warnings: %v", jobObj.Status.Warnings)
 	t.Logf("Job errors: %v", jobObj.Status.Errors)
 
-	require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
+	require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State),
 		"unmanaged-root conflict should be a warning, not a hard failure")
 	require.Empty(t, jobObj.Status.Errors, "no hard errors expected")
 	require.NotEmpty(t, jobObj.Status.Warnings, "should record a warning describing the conflict")

@@ -28,8 +28,8 @@ func TestIntegrationProvisioning_PullRequestJobRejected(t *testing.T) {
 	body := common.AsJSON(provisioning.JobSpec{
 		Action: provisioning.JobActionPullRequest,
 		PullRequest: &provisioning.JobPullRequestJobOptions{
-			PR:  123,
-			Ref: "test-ref",
+			PR:  new(int32(123)),
+			Ref: new("test-ref"),
 		},
 	})
 

@@ -21,6 +21,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -121,7 +122,7 @@ func (c *jobsConnector) Connect(
 			responder.Error(newDecodeError("provisioning.Job", err))
 			return
 		}
-		spec.Repository = name
+		spec.Repository = ptr.NonZero(name)
 
 		if jobs.IsOrphanCleanupAction(spec.Action) {
 			c.handleOrphanCleanupJob(ctx, r, name, spec, responder)
@@ -238,7 +239,7 @@ func (c *jobsConnector) AuthorizeJobCreate(ctx context.Context, job *provisionin
 
 	// Authorization only needs the repository to exist. Health is enforced by the
 	// connector and by the driver, which skips jobs for an unhealthy repository.
-	repo, err := c.repoGetter.GetRepository(ctx, spec.Repository)
+	repo, err := c.repoGetter.GetRepository(ctx, ptr.Deref(spec.Repository))
 	if apierrors.IsNotFound(err) {
 		// There is no repository to check folder permissions against, and one could
 		// be created before the job runs, so only an admin may queue this job.
@@ -251,7 +252,7 @@ func (c *jobsConnector) AuthorizeJobCreate(ctx context.Context, job *provisionin
 	if cfg.DeletionTimestamp != nil && !cfg.DeletionTimestamp.IsZero() {
 		return apierrors.NewConflict(
 			provisioning.RepositoryResourceInfo.GroupResource(),
-			spec.Repository,
+			ptr.Deref(spec.Repository),
 			fmt.Errorf("cannot create jobs for a repository marked for deletion"),
 		)
 	}
@@ -280,19 +281,19 @@ func (c *jobsConnector) validateWriteAccess(cfg *provisioning.Repository, spec p
 	switch spec.Action {
 	case provisioning.JobActionDelete:
 		if spec.Delete != nil {
-			targetRef = spec.Delete.Ref
+			targetRef = ptr.Deref(spec.Delete.Ref)
 		}
 	case provisioning.JobActionMove:
 		if spec.Move != nil {
-			targetRef = spec.Move.Ref
+			targetRef = ptr.Deref(spec.Move.Ref)
 		}
 	case provisioning.JobActionPush:
 		if spec.Push != nil {
-			targetRef = spec.Push.Branch
+			targetRef = ptr.Deref(spec.Push.Branch)
 		}
 	case provisioning.JobActionFixFolderMetadata:
 		if spec.FixFolderMetadata != nil {
-			targetRef = spec.FixFolderMetadata.Ref
+			targetRef = ptr.Deref(spec.FixFolderMetadata.Ref)
 		}
 	case provisioning.JobActionMigrate:
 		if spec.Migrate != nil {
@@ -300,7 +301,7 @@ func (c *jobsConnector) validateWriteAccess(cfg *provisioning.Repository, spec p
 			// write with takeover (not a pull request); a different branch is the
 			// branch workflow. IsWriteAllowed normalizes the equal-to-configured
 			// case, so pass the branch straight through.
-			targetRef = spec.Migrate.Branch
+			targetRef = ptr.Deref(spec.Migrate.Branch)
 		}
 	default:
 		return nil
@@ -432,23 +433,23 @@ func (c *jobsConnector) authorizeResourceRefs(ctx context.Context, authorizer re
 	}
 
 	for _, ref := range refs {
-		gvk := schema.GroupVersionKind{Group: ref.Group, Kind: ref.Kind}
+		gvk := schema.GroupVersionKind{Group: ptr.Deref(ref.Group), Kind: ptr.Deref(ref.Kind)}
 		client, gvr, err := clients.ForKind(ctx, gvk)
 		if err != nil {
-			return fmt.Errorf("get client for %s/%s: %w", ref.Group, ref.Kind, err)
+			return fmt.Errorf("get client for %s/%s: %w", ptr.Deref(ref.Group), ptr.Deref(ref.Kind), err)
 		}
 
-		obj, err := client.Get(ctx, ref.Name, metav1.GetOptions{})
+		obj, err := client.Get(ctx, ptr.Deref(ref.Name), metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				continue
 			}
-			return fmt.Errorf("authorize %s resource %s/%s/%s: %w", action, ref.Group, ref.Kind, ref.Name, err)
+			return fmt.Errorf("authorize %s resource %s/%s/%s: %w", action, ptr.Deref(ref.Group), ptr.Deref(ref.Kind), ptr.Deref(ref.Name), err)
 		}
 
 		meta, err := utils.MetaAccessor(obj)
 		if err != nil {
-			return fmt.Errorf("get metadata for %s/%s/%s: %w", ref.Group, ref.Kind, ref.Name, err)
+			return fmt.Errorf("get metadata for %s/%s/%s: %w", ptr.Deref(ref.Group), ptr.Deref(ref.Kind), ptr.Deref(ref.Name), err)
 		}
 
 		parsed := &resources.ParsedResource{
@@ -458,7 +459,7 @@ func (c *jobsConnector) authorizeResourceRefs(ctx context.Context, authorizer re
 			GVR:      gvr,
 		}
 		if err := authorizer.AuthorizeResource(ctx, parsed, verb); err != nil {
-			return fmt.Errorf("authorize %s %s/%s/%s: %w", action, ref.Group, ref.Kind, ref.Name, err)
+			return fmt.Errorf("authorize %s %s/%s/%s: %w", action, ptr.Deref(ref.Group), ptr.Deref(ref.Kind), ptr.Deref(ref.Name), err)
 		}
 	}
 	return nil
@@ -527,7 +528,7 @@ func (c *jobsConnector) authorizeMigrateJob(ctx context.Context, repo repository
 
 	// When deletion is skipped the migration removes nothing, so no delete
 	// permission is required (read + create above is enough).
-	if spec.Migrate.SkipResourceDeletion {
+	if ptr.Deref(spec.Migrate.SkipResourceDeletion) {
 		return nil
 	}
 
@@ -537,7 +538,7 @@ func (c *jobsConnector) authorizeMigrateJob(ctx context.Context, repo repository
 	//   - folder/folderless coexist with unmanaged resources and only delete on a
 	//     branch migration (the exported resources); a configured-branch migration
 	//     just exports and pulls, so it needs no delete permission.
-	branchMigration := spec.Migrate.Branch != "" && spec.Migrate.Branch != cfg.Branch()
+	branchMigration := ptr.Deref(spec.Migrate.Branch) != "" && ptr.Deref(spec.Migrate.Branch) != cfg.Branch()
 	selective := len(spec.Migrate.Resources) > 0
 
 	switch cfg.Spec.Sync.Target {
@@ -594,7 +595,7 @@ func (c *jobsConnector) authorizeMoveJob(ctx context.Context, repo repository.Re
 	}
 
 	for _, path := range opts.Paths {
-		if err := authorizer.AuthorizeMoveByPath(ctx, path, opts.TargetPath); err != nil {
+		if err := authorizer.AuthorizeMoveByPath(ctx, path, ptr.Deref(opts.TargetPath)); err != nil {
 			return fmt.Errorf("authorize move %q: %w", path, err)
 		}
 	}

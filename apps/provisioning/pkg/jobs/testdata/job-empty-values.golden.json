@@ -1,0 +1,43 @@
+{
+  "kind": "Job",
+  "apiVersion": "provisioning.grafana.app/v0alpha1",
+  "metadata": {
+    "name": "repo-pull",
+    "namespace": "default"
+  },
+  "spec": {
+    "action": "push",
+    "pr": {
+      "isFork": false
+    },
+    "push": {
+      "resources": [
+        {}
+      ]
+    },
+    "migrate": {
+      "resources": [
+        {}
+      ]
+    },
+    "delete": {
+      "resources": [
+        {}
+      ]
+    },
+    "move": {
+      "resources": [
+        {}
+      ]
+    },
+    "fixFolderMetadata": {},
+    "test": {
+      "duration": "0s"
+    }
+  },
+  "status": {
+    "summary": [
+      {}
+    ]
+  }
+}

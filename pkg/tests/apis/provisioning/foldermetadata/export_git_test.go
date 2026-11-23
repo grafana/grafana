@@ -9,6 +9,7 @@ import (
 
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 )
 
 // TestIntegrationProvisioning_ExportJob_GitRepo_FolderMetadata verifies
@@ -26,7 +27,7 @@ func TestIntegrationProvisioning_ExportJob_GitRepo_FolderMetadata(t *testing.T) 
 	helper.CreateUnmanagedFolderWithName(t, folderUID, folderTitle, "")
 
 	job := triggerExport(t, helper.ProvisioningTestHelper, repoName)
-	require.Equal(t, provisioning.JobStateSuccess, job.Status.State, "export job should succeed")
+	require.Equal(t, provisioning.JobStateSuccess, ptr.Deref(job.Status.State), "export job should succeed")
 
 	// Read directly from the git server to avoid the ownership-conflict check
 	// that the provisioning files API performs on unmanaged resources.

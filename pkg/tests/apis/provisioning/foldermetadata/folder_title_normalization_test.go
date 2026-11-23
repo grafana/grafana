@@ -16,6 +16,7 @@ import (
 
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
@@ -103,7 +104,7 @@ func TestIntegrationProvisioning_MigrateFolderTitleNormalization(t *testing.T) {
 	helper.TriggerJobAndWaitForSuccess(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionMigrate,
 		Migrate: &provisioning.JobMigrateJobOptions{
-			Message: "Migrate folders with problematic titles",
+			Message: new("Migrate folders with problematic titles"),
 		},
 	})
 
@@ -294,15 +295,15 @@ func TestIntegrationProvisioning_MigrateFolderTitleCollisionFails(t *testing.T) 
 
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 		Action:  provisioning.JobActionMigrate,
-		Migrate: &provisioning.JobMigrateJobOptions{Message: "Migrate colliding folder titles"},
+		Migrate: &provisioning.JobMigrateJobOptions{Message: new("Migrate colliding folder titles")},
 	})
 
 	jobObj := &provisioning.Job{}
 	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
-	require.Equal(t, provisioning.JobStateError, jobObj.Status.State,
+	require.Equal(t, provisioning.JobStateError, ptr.Deref(jobObj.Status.State),
 		"migrate should fail when two folder titles normalize to the same path")
 
-	combined := jobObj.Status.Message + " " + strings.Join(jobObj.Status.Errors, " ")
+	combined := ptr.Deref(jobObj.Status.Message) + " " + strings.Join(jobObj.Status.Errors, " ")
 	require.Contains(t, combined, "both export to path",
-		"failure should explain the path collision; message=%q errors=%v", jobObj.Status.Message, jobObj.Status.Errors)
+		"failure should explain the path collision; message=%q errors=%v", ptr.Deref(jobObj.Status.Message), jobObj.Status.Errors)
 }

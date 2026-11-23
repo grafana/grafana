@@ -33,7 +33,7 @@ func TestIntegrationProvisioning_JobCRUDAuthorization(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "default"},
 			Spec: provisioning.JobSpec{
 				Action:     provisioning.JobActionPull,
-				Repository: repo,
+				Repository: new(repo),
 				Pull:       &provisioning.JobSyncJobOptions{},
 			},
 		})

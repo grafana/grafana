@@ -357,8 +357,8 @@ func TestExportFolders(t *testing.T) {
 			tt.setupResources(repoResources)
 
 			err := ExportFolders(context.Background(), "test-repo", v0alpha1.JobExportJobOptions{
-				Path:   "grafana",
-				Branch: "feature/branch",
+				Path:   new("grafana"),
+				Branch: new("feature/branch"),
 			}, fakeFolderClient, repoResources, mockProgress)
 
 			if tt.expectedError != "" {
@@ -408,8 +408,8 @@ func TestFolderMetaAccessor(t *testing.T) {
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Twice()
 		// No Record calls expected since folder should be skipped
 		err = ExportFolders(context.Background(), "test-repo", v0alpha1.JobExportJobOptions{
-			Path:   "grafana",
-			Branch: "feature/branch",
+			Path:   new("grafana"),
+			Branch: new("feature/branch"),
 		}, fakeFolderClient, mockRepoResources, progress)
 
 		require.NoError(t, err)
@@ -448,8 +448,8 @@ func TestFolderMetaAccessor(t *testing.T) {
 		})).Return(nil)
 
 		err = ExportFolders(context.Background(), "test-repo", v0alpha1.JobExportJobOptions{
-			Path:   "grafana",
-			Branch: "feature/branch",
+			Path:   new("grafana"),
+			Branch: new("feature/branch"),
 		}, fakeFolderClient, mockRepoResources, progress)
 
 		require.NoError(t, err)
@@ -472,8 +472,8 @@ func TestFolderMetaAccessor(t *testing.T) {
 		progress := jobs.NewMockJobProgressRecorder(t)
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Twice()
 		err := ExportFolders(context.Background(), "test-repo", v0alpha1.JobExportJobOptions{
-			Path:   "grafana",
-			Branch: "feature/branch",
+			Path:   new("grafana"),
+			Branch: new("feature/branch"),
 		}, fakeFolderClient, mockRepoResources, progress)
 
 		require.Error(t, err)
@@ -514,8 +514,8 @@ func TestFolderMetaAccessor(t *testing.T) {
 		})).Return(nil)
 
 		err = ExportFolders(context.Background(), "test-repo", v0alpha1.JobExportJobOptions{
-			Path:   "grafana",
-			Branch: "feature/branch",
+			Path:   new("grafana"),
+			Branch: new("feature/branch"),
 		}, fakeFolderClient, mockRepoResources, progress)
 
 		require.NoError(t, err)
@@ -554,8 +554,8 @@ func TestFolderMetaAccessor(t *testing.T) {
 		})).Return(nil)
 
 		err = ExportFolders(context.Background(), "test-repo", v0alpha1.JobExportJobOptions{
-			Path:   "grafana",
-			Branch: "feature/branch",
+			Path:   new("grafana"),
+			Branch: new("feature/branch"),
 		}, fakeFolderClient, mockRepoResources, progress)
 
 		require.NoError(t, err)

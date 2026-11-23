@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/provisioning/pkg/loki"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"go.opentelemetry.io/otel/attribute"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
@@ -148,7 +149,7 @@ func (h *LokiJobHistory) jobToStream(ctx context.Context, job *provisioning.Job)
 	// Add system labels
 	labels[JobHistoryLabelKey] = JobHistoryLabelValue
 	labels[NamespaceLabel] = job.Namespace
-	labels[RepositoryLabel] = job.Spec.Repository
+	labels[RepositoryLabel] = ptr.Deref(job.Spec.Repository)
 
 	// Serialize job to JSON
 	jobJSON, err := json.Marshal(job)
@@ -159,12 +160,12 @@ func (h *LokiJobHistory) jobToStream(ctx context.Context, job *provisioning.Job)
 
 	// Create timestamp (use finished time if available, otherwise creation time)
 	timestamp := job.CreationTimestamp.Time
-	if job.Status.Finished > 0 {
+	if ptr.Deref(job.Status.Finished) > 0 {
 		// Status timestamps are in milliseconds
-		timestamp = time.Unix(0, job.Status.Finished*int64(time.Millisecond))
-	} else if job.Status.Started > 0 {
+		timestamp = time.Unix(0, ptr.Deref(job.Status.Finished)*int64(time.Millisecond))
+	} else if ptr.Deref(job.Status.Started) > 0 {
 		// Status timestamps are in milliseconds
-		timestamp = time.Unix(0, job.Status.Started*int64(time.Millisecond))
+		timestamp = time.Unix(0, ptr.Deref(job.Status.Started)*int64(time.Millisecond))
 	}
 
 	// Create sample
@@ -223,11 +224,11 @@ func (h *LokiJobHistory) resultToJobList(result loki.QueryRes) (*provisioning.Jo
 
 // getJobTimestamp returns the most relevant timestamp for sorting
 func (h *LokiJobHistory) getJobTimestamp(job *provisioning.Job) time.Time {
-	if job.Status.Finished > 0 {
-		return time.Unix(job.Status.Finished, 0)
+	if ptr.Deref(job.Status.Finished) > 0 {
+		return time.Unix(ptr.Deref(job.Status.Finished), 0)
 	}
-	if job.Status.Started > 0 {
-		return time.Unix(job.Status.Started, 0)
+	if ptr.Deref(job.Status.Started) > 0 {
+		return time.Unix(ptr.Deref(job.Status.Started), 0)
 	}
 	return job.CreationTimestamp.Time
 }

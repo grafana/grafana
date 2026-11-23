@@ -32,7 +32,7 @@ func TestIntegrationGit_DeleteJob_CommitMessage(t *testing.T) {
 	const expectedMessage = "Delete dashboard via JobSpec"
 	helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 		Action:  provisioning.JobActionDelete,
-		Message: expectedMessage,
+		Message: new(expectedMessage),
 		Delete: &provisioning.JobDeleteJobOptions{
 			Paths: []string{dashFn},
 		},
@@ -62,10 +62,10 @@ func TestIntegrationGit_MoveJob_CommitMessage(t *testing.T) {
 	const expectedMessage = "Move dashboard via JobSpec"
 	helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 		Action:  provisioning.JobActionMove,
-		Message: expectedMessage,
+		Message: new(expectedMessage),
 		Move: &provisioning.JobMoveJobOptions{
 			Paths:      []string{dashFn},
-			TargetPath: "moved/",
+			TargetPath: new("moved/"),
 		},
 	})
 
@@ -91,7 +91,7 @@ func TestIntegrationGit_ExportJob_CommitMessage(t *testing.T) {
 	const expectedMessage = "Export dashboards via JobSpec"
 	helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 		Action:  provisioning.JobActionPush,
-		Message: expectedMessage,
+		Message: new(expectedMessage),
 		Push:    &provisioning.JobExportJobOptions{},
 	})
 
@@ -119,9 +119,9 @@ func TestIntegrationGit_MigrateJob_CommitMessage(t *testing.T) {
 	const expectedMessage = "Migrate via JobSpec"
 	helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 		Action:  provisioning.JobActionMigrate,
-		Message: expectedMessage,
+		Message: new(expectedMessage),
 		Migrate: &provisioning.JobMigrateJobOptions{
-			Message: "deprecated fallback that should be ignored",
+			Message: new("deprecated fallback that should be ignored"),
 		},
 	})
 

@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/apifmt"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
@@ -276,7 +277,7 @@ func (c *ConcurrentJobDriver) enqueueRecovered(job *provisioning.Job) {
 	c.logger.Info("resync enqueued unclaimed job",
 		"work_key", key,
 		"job_age", time.Since(job.CreationTimestamp.Time).Round(time.Second),
-		"job_state", job.Status.State,
+		"job_state", ptr.Deref(job.Status.State),
 		"queue_len", c.queue.Len())
 }
 

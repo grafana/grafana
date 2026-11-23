@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -49,7 +50,7 @@ func TestIntegrationProvisioning_IncrementalSync_MissingFolderMetadata(t *testin
 
 		require.Empty(t, jobObj.Status.Errors,
 			"missing folder metadata should produce warnings, not errors")
-		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
+		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State),
 			"incremental sync should finish in warning state when folder metadata is missing")
 		require.NotEmpty(t, jobObj.Status.Warnings,
 			"incremental sync should produce at least one warning for missing folder metadata")
@@ -78,7 +79,7 @@ func TestIntegrationProvisioning_IncrementalSync_MissingFolderMetadata(t *testin
 
 		require.Empty(t, jobObj.Status.Errors,
 			"noop incremental sync should not produce errors")
-		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
+		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State),
 			"noop incremental sync should still warn about missing folder metadata")
 		require.NotEmpty(t, jobObj.Status.Warnings,
 			"noop incremental sync should still produce warnings for missing folder metadata")
@@ -257,7 +258,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 		jobObj := &provisioning.Job{}
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
 
-		require.Equal(t, provisioning.JobStateSuccess, jobObj.Status.State)
+		require.Equal(t, provisioning.JobStateSuccess, ptr.Deref(jobObj.Status.State))
 		require.Empty(t, jobObj.Status.Errors)
 		for _, w := range jobObj.Status.Warnings {
 			require.False(t, strings.Contains(w, "missing folder metadata"),
@@ -1742,7 +1743,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDConflict(t *testing.T)
 		jobObj := &provisioning.Job{}
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
 
-		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
+		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State),
 			"incremental sync should finish with warning when a folder UID conflict is detected")
 
 		foundConflict := false
@@ -1805,7 +1806,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDConflict(t *testing.T)
 		jobObj := &provisioning.Job{}
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
 
-		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
+		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State),
 			"incremental sync should warn due to the UID theft, even though the real move succeeded")
 
 		foundConflict := false

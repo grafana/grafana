@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -49,7 +50,7 @@ func TestIntegrationProvisioning_FullSync_FolderFileIsWarning(t *testing.T) {
 
 	require.Empty(t, jobObj.Status.Errors,
 		"folder file should produce a warning, not an error")
-	require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
+	require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State),
 		"full sync should finish in warning state when a folder file is present")
 	require.NotEmpty(t, jobObj.Status.Warnings,
 		"full sync should produce at least one warning for the folder file")
@@ -90,7 +91,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderFileCreateIsWarning(t *te
 
 	require.Empty(t, jobObj.Status.Errors,
 		"folder file creation should NOT produce errors")
-	require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
+	require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State),
 		"incremental sync should finish in warning state when a folder file is created")
 	require.NotEmpty(t, jobObj.Status.Warnings,
 		"incremental sync should produce at least one warning for the folder file")
@@ -139,7 +140,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderFileDeletedIsWarning(t *t
 
 	require.Empty(t, incrJobObj.Status.Errors,
 		"folder file deletion should NOT produce errors")
-	require.Equal(t, provisioning.JobStateWarning, incrJobObj.Status.State,
+	require.Equal(t, provisioning.JobStateWarning, ptr.Deref(incrJobObj.Status.State),
 		"incremental sync should finish in warning state when a folder file is deleted")
 	require.NotEmpty(t, incrJobObj.Status.Warnings,
 		"incremental sync should produce at least one warning for the deleted folder file")

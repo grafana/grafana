@@ -11,6 +11,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
@@ -96,9 +97,9 @@ func makeTestJob(ref string) provisioning.Job {
 		},
 		Spec: provisioning.JobSpec{
 			Action:     provisioning.JobActionFixFolderMetadata,
-			Repository: "test-repo",
+			Repository: new("test-repo"),
 			FixFolderMetadata: &provisioning.JobFixFolderMetadataJobOptions{
-				Ref: ref,
+				Ref: ptr.NonZero(ref),
 			},
 		},
 	}
@@ -123,7 +124,7 @@ func TestWorker_CommitMessageFromJobSpec(t *testing.T) {
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
 
 	job := makeTestJob("feature-branch")
-	job.Spec.Message = "custom folder metadata message"
+	job.Spec.Message = new("custom folder metadata message")
 
 	mockRepo.MockStageableRepository.EXPECT().Stage(mock.Anything, mock.MatchedBy(func(opts repository.StageOptions) bool {
 		return opts.CommitOnlyOnceMessage == "custom folder metadata message"
@@ -306,7 +307,7 @@ func TestWorker_Process(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{Name: "test-job", Namespace: "default"},
 			Spec: provisioning.JobSpec{
 				Action:            provisioning.JobActionFixFolderMetadata,
-				Repository:        "test-repo",
+				Repository:        new("test-repo"),
 				FixFolderMetadata: nil,
 			},
 		}

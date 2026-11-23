@@ -10,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -44,8 +45,8 @@ func TestIntegrationProvisioning_MigrateToBranch(t *testing.T) {
 	helper.TriggerJobAndWaitForSuccess(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionMigrate,
 		Migrate: &provisioning.JobMigrateJobOptions{
-			Message: "Migrate unmanaged dashboards to a branch",
-			Branch:  branch,
+			Message: new("Migrate unmanaged dashboards to a branch"),
+			Branch:  new(branch),
 		},
 	})
 
@@ -114,10 +115,10 @@ func TestIntegrationProvisioning_SelectiveMigrateToBranch(t *testing.T) {
 	helper.TriggerJobAndWaitForSuccess(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionMigrate,
 		Migrate: &provisioning.JobMigrateJobOptions{
-			Message: "Migrate a single dashboard to a branch",
-			Branch:  branch,
+			Message: new("Migrate a single dashboard to a branch"),
+			Branch:  new(branch),
 			Resources: []provisioning.JobResourceRef{
-				{Name: migratedName, Kind: "Dashboard", Group: "dashboard.grafana.app"},
+				{Name: ptr.NonZero(migratedName), Kind: new("Dashboard"), Group: new("dashboard.grafana.app")},
 			},
 		},
 	})

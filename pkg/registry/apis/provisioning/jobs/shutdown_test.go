@@ -161,7 +161,7 @@ func TestConcurrentJobDriver_Run_AllDriversExitBeforeRunReturns(t *testing.T) {
 		for i := range pending {
 			pending[i] = &provisioning.Job{
 				ObjectMeta: metav1.ObjectMeta{Namespace: "stacks-123", Name: fmt.Sprintf("job-%d", i)},
-				Spec:       provisioning.JobSpec{Repository: "repo", Action: provisioning.JobActionPull},
+				Spec:       provisioning.JobSpec{Repository: new("repo"), Action: provisioning.JobActionPull},
 			}
 		}
 

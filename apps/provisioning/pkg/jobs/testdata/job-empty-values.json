@@ -1,0 +1,95 @@
+{
+  "kind": "Job",
+  "apiVersion": "provisioning.grafana.app/v0alpha1",
+  "metadata": {
+    "name": "repo-pull",
+    "namespace": "default"
+  },
+  "spec": {
+    "action": "push",
+    "repository": "",
+    "message": "",
+    "pr": {
+      "ref": "",
+      "pr": 0,
+      "hash": "",
+      "url": "",
+      "isFork": false,
+      "forkURL": ""
+    },
+    "push": {
+      "message": "",
+      "folder": "",
+      "branch": "",
+      "path": "",
+      "resources": [
+        {
+          "name": "",
+          "kind": "",
+          "group": ""
+        }
+      ],
+      "generateNewFolderIDs": false
+    },
+    "migrate": {
+      "message": "",
+      "branch": "",
+      "resources": [
+        {
+          "name": "",
+          "kind": "",
+          "group": ""
+        }
+      ],
+      "generateNewFolderIDs": false,
+      "skipResourceDeletion": false
+    },
+    "delete": {
+      "ref": "",
+      "resources": [
+        {
+          "name": ""
+        }
+      ]
+    },
+    "move": {
+      "ref": "",
+      "targetPath": "",
+      "resources": [
+        {
+          "kind": ""
+        }
+      ]
+    },
+    "fixFolderMetadata": {
+      "ref": ""
+    },
+    "test": {
+      "duration": "0s",
+      "progressUpdates": 0
+    }
+  },
+  "status": {
+    "state": "",
+    "started": 0,
+    "finished": 0,
+    "message": "",
+    "progress": 0,
+    "progressUpdates": 0,
+    "summary": [
+      {
+        "group": "",
+        "kind": "",
+        "total": 0,
+        "create": 0,
+        "update": 0,
+        "delete": 0,
+        "write": 0,
+        "error": 0,
+        "warning": 0,
+        "noop": 0,
+        "totalChanges": 0
+      }
+    ]
+  }
+}

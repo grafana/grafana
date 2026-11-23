@@ -16,6 +16,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	fakeclientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -54,7 +55,7 @@ func createJob(ctx context.Context, t *testing.T, client *fakeclientset.Clientse
 		jobLabels[LabelJobClaim] = "123456789"
 		jobLabels[LabelJobClaimOwner] = "worker-1"
 	}
-	createJobWith(ctx, t, client, ns, name, jobLabels, provisioning.JobSpec{Repository: repo, Action: provisioning.JobActionPull})
+	createJobWith(ctx, t, client, ns, name, jobLabels, provisioning.JobSpec{Repository: ptr.NonZero(repo), Action: provisioning.JobActionPull})
 }
 
 func createJobWith(ctx context.Context, t *testing.T, client *fakeclientset.Clientset, ns, name string, jobLabels map[string]string, spec provisioning.JobSpec) {
@@ -136,7 +137,7 @@ func TestCleanupQueue_DeletesJobsMatchedBySpecRepository(t *testing.T) {
 
 	// No LabelRepository, only spec.Repository.
 	createJobWith(ctx, t, fakeClient, "stacks-123", "unlabeled", nil,
-		provisioning.JobSpec{Repository: "repo-a", Action: provisioning.JobActionPull})
+		provisioning.JobSpec{Repository: new("repo-a"), Action: provisioning.JobActionPull})
 
 	deleted, err := store.CleanupQueue(ctx, "stacks-123", "repo-a")
 	require.NoError(t, err)
@@ -173,7 +174,7 @@ func TestCleanupQueue_RetriesDeleteWhenConflictIsNotAClaim(t *testing.T) {
 				ResourceVersion: freshRV,
 				Labels:          map[string]string{LabelRepository: "repo-a"},
 			},
-			Spec: provisioning.JobSpec{Repository: "repo-a", Action: provisioning.JobActionPull},
+			Spec: provisioning.JobSpec{Repository: new("repo-a"), Action: provisioning.JobActionPull},
 		}, nil
 	})
 
@@ -235,7 +236,7 @@ func TestCleanupQueue_SkipsJobClaimedAfterList(t *testing.T) {
 					LabelJobClaimOwner: "worker-1",
 				},
 			},
-			Spec: provisioning.JobSpec{Repository: "repo-a", Action: provisioning.JobActionPull},
+			Spec: provisioning.JobSpec{Repository: new("repo-a"), Action: provisioning.JobActionPull},
 		}, nil
 	})
 
@@ -266,11 +267,11 @@ func TestCleanupQueue_SkipsRecreatedJobThatIsNotACandidate(t *testing.T) {
 	}{
 		{
 			name:      "different repository",
-			refetched: provisioning.JobSpec{Repository: "repo-b", Action: provisioning.JobActionPull},
+			refetched: provisioning.JobSpec{Repository: new("repo-b"), Action: provisioning.JobActionPull},
 		},
 		{
 			name:      "orphan-cleanup action",
-			refetched: provisioning.JobSpec{Repository: "repo-a", Action: provisioning.JobActionReleaseResources},
+			refetched: provisioning.JobSpec{Repository: new("repo-a"), Action: provisioning.JobActionReleaseResources},
 		},
 	}
 	for _, tt := range tests {
@@ -322,9 +323,9 @@ func TestCleanupQueue_PreservesOrphanCleanupJobs(t *testing.T) {
 
 	createJob(ctx, t, fakeClient, "stacks-123", "repo-a-pending", "repo-a", false)
 	createJobWith(ctx, t, fakeClient, "stacks-123", "repo-a-release", map[string]string{LabelRepository: "repo-a"},
-		provisioning.JobSpec{Repository: "repo-a", Action: provisioning.JobActionReleaseResources})
+		provisioning.JobSpec{Repository: new("repo-a"), Action: provisioning.JobActionReleaseResources})
 	createJobWith(ctx, t, fakeClient, "stacks-123", "repo-a-delete", map[string]string{LabelRepository: "repo-a"},
-		provisioning.JobSpec{Repository: "repo-a", Action: provisioning.JobActionDeleteResources})
+		provisioning.JobSpec{Repository: new("repo-a"), Action: provisioning.JobActionDeleteResources})
 
 	deleted, err := store.CleanupQueue(ctx, "stacks-123", "repo-a")
 	require.NoError(t, err)

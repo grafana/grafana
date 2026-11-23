@@ -937,8 +937,8 @@ func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
 	err = runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, job)
 	require.NoError(t, err, "should convert to Job object")
 
-	assert.Equal(t, provisioning.JobStateError, job.Status.State)
-	assert.Equal(t, job.Status.Message, "completed with errors")
+	assert.Equal(t, provisioning.JobStateError, ptr.Deref(job.Status.State, ""))
+	assert.Equal(t, ptr.Deref(job.Status.Message, ""), "completed with errors")
 	assert.Equal(t, job.Status.Errors[0], "Dashboard.dashboard.grafana.app \"invalid-schema-uid\" is invalid: [spec.panels.0.repeatDirection: Invalid value: conflicting values \"h\" and \"this is not an allowed value\", spec.panels.0.repeatDirection: Invalid value: conflicting values \"v\" and \"this is not an allowed value\"]")
 
 	helper.RequireDashboardsNotFound(t, invalidSchemaUid)

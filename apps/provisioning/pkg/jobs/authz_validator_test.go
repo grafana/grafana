@@ -34,7 +34,7 @@ func jobAttributes(job *provisioning.Job, op admission.Operation) admission.Attr
 func TestAuthzValidator(t *testing.T) {
 	job := &provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{Name: "job-1", Namespace: "default"},
-		Spec:       provisioning.JobSpec{Action: provisioning.JobActionPull, Repository: "my-repo"},
+		Spec:       provisioning.JobSpec{Action: provisioning.JobActionPull, Repository: new("my-repo")},
 	}
 	forbidden := apierrors.NewForbidden(provisioning.JobResourceInfo.GroupResource(), "job-1", nil)
 

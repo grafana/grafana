@@ -21,7 +21,7 @@ type JobTestJobOptionsApplyConfiguration struct {
 	Duration *v1.Duration `json:"duration,omitempty"`
 	// ProgressUpdates controls how many progress notifications the job emits
 	// while running. A value of 0 uses the server default.
-	ProgressUpdates *int `json:"progressUpdates,omitempty"`
+	ProgressUpdates *int32 `json:"progressUpdates,omitempty"`
 }
 
 // JobTestJobOptionsApplyConfiguration constructs a declarative configuration of the JobTestJobOptions type for use with
@@ -41,7 +41,7 @@ func (b *JobTestJobOptionsApplyConfiguration) WithDuration(value v1.Duration) *J
 // WithProgressUpdates sets the ProgressUpdates field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the ProgressUpdates field is set to the value of the last call.
-func (b *JobTestJobOptionsApplyConfiguration) WithProgressUpdates(value int) *JobTestJobOptionsApplyConfiguration {
+func (b *JobTestJobOptionsApplyConfiguration) WithProgressUpdates(value int32) *JobTestJobOptionsApplyConfiguration {
 	b.ProgressUpdates = &value
 	return b
 }

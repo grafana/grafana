@@ -1,0 +1,22 @@
+{
+  "kind": "HistoricJob",
+  "apiVersion": "provisioning.grafana.app/v0alpha1",
+  "metadata": {
+    "name": "repo-pull",
+    "namespace": "default"
+  },
+  "spec": {
+    "action": "pull",
+    "pull": {
+      "incremental": true
+    },
+    "test": {
+      "duration": "0s"
+    }
+  },
+  "status": {
+    "summary": [
+      {}
+    ]
+  }
+}

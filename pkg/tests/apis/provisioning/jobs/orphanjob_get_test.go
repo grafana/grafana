@@ -29,7 +29,7 @@ func TestIntegrationProvisioning_OrphanCleanupJobGetEndpoint(t *testing.T) {
 
 			body := common.AsJSON(provisioning.JobSpec{
 				Action:     action,
-				Repository: repo,
+				Repository: new(repo),
 			})
 
 			var statusCode int

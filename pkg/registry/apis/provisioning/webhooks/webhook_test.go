@@ -143,10 +143,10 @@ func TestWebhookConnector_webhook(t *testing.T) {
 				Job: &provisioning.JobSpec{
 					Action: provisioning.JobActionPullRequest,
 					PullRequest: &provisioning.JobPullRequestJobOptions{
-						URL:  "https://github.com/grafana/grafana/pull/123",
-						PR:   123,
-						Ref:  "feature-branch",
-						Hash: "abcdef",
+						URL:  new("https://github.com/grafana/grafana/pull/123"),
+						PR:   new(int32(123)),
+						Ref:  new("feature-branch"),
+						Hash: new("abcdef"),
 					},
 				},
 			},
@@ -316,7 +316,7 @@ func TestPullRequestResponseForkStatus(t *testing.T) {
 			SourceRef: "feature", Hash: "abc", PRNumber: 123, IsFork: status, ForkURL: "https://github.example.com/contributor/repo",
 		})
 		require.Equal(t, &provisioning.JobPullRequestJobOptions{
-			Ref: "feature", Hash: "abc", PR: 123, IsFork: status, ForkURL: "https://github.example.com/contributor/repo",
+			Ref: new("feature"), Hash: new("abc"), PR: new(int32(123)), IsFork: status, ForkURL: new("https://github.example.com/contributor/repo"),
 		}, response.Job.PullRequest)
 	}
 }

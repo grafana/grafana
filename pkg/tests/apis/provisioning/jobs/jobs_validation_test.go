@@ -49,7 +49,7 @@ func TestIntegrationProvisioning_WritePermissionValidation(t *testing.T) {
 					Action: provisioning.JobActionMove,
 					Move: &provisioning.JobMoveJobOptions{
 						Paths:      []string{"test.json"},
-						TargetPath: "new/",
+						TargetPath: new("new/"),
 					},
 				},
 			},
@@ -59,7 +59,7 @@ func TestIntegrationProvisioning_WritePermissionValidation(t *testing.T) {
 				spec: provisioning.JobSpec{
 					Action: provisioning.JobActionPush,
 					Push: &provisioning.JobExportJobOptions{
-						Message: "test commit",
+						Message: new("test commit"),
 					},
 				},
 			},
@@ -69,7 +69,7 @@ func TestIntegrationProvisioning_WritePermissionValidation(t *testing.T) {
 				spec: provisioning.JobSpec{
 					Action: provisioning.JobActionMigrate,
 					Migrate: &provisioning.JobMigrateJobOptions{
-						Message: "test migration",
+						Message: new("test migration"),
 					},
 				},
 			},

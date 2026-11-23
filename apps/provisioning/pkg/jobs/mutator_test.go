@@ -2,6 +2,9 @@ package jobs
 
 import (
 	"context"
+	"encoding/json"
+	"os"
+	"path/filepath"
 	"testing"
 
 	authlib "github.com/grafana/authlib/types"
@@ -167,6 +170,31 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			assert.Equal(t, tt.expected, got)
 		})
 	}
+}
+
+// The golden file is what the value-typed Job structs stored for this request, so clients
+// sending explicit empty values keep getting them omitted.
+func TestAdmissionMutator_Mutate_ClearsEmptyOptionalFields(t *testing.T) {
+	in, err := os.ReadFile(filepath.Join("testdata", "job-empty-values.json"))
+	require.NoError(t, err)
+	want, err := os.ReadFile(filepath.Join("testdata", "job-empty-values.golden.json"))
+	require.NoError(t, err)
+
+	job := &provisioning.Job{}
+	require.NoError(t, json.Unmarshal(in, job))
+	attrs := admission.NewAttributesRecord(
+		job, nil,
+		schema.GroupVersionKind{},
+		"default", "repo-pull",
+		provisioning.JobResourceInfo.GroupVersionResource(),
+		"", admission.Create, nil, false, nil,
+	)
+	require.NoError(t, NewAdmissionMutator().Mutate(context.Background(), attrs, nil))
+	job.Annotations = nil
+
+	got, err := json.MarshalIndent(job, "", "  ")
+	require.NoError(t, err)
+	require.Equal(t, string(want), string(got)+"\n")
 }
 
 func TestAdmissionMutator_Mutate_RejectsNonJob(t *testing.T) {

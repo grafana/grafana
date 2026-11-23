@@ -39,7 +39,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 			Action: provisioning.JobActionMove,
 			Move: &provisioning.JobMoveJobOptions{
 				Paths:      []string{"dashboard1.json"},
-				TargetPath: "moved/",
+				TargetPath: new("moved/"),
 			},
 		}
 		common.WriteFolderMetadata(t, repo, helper.ProvisioningPath, "moved")
@@ -80,7 +80,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 			Action: provisioning.JobActionMove,
 			Move: &provisioning.JobMoveJobOptions{
 				Paths:      []string{"dashboard2.json", "folder/"},
-				TargetPath: "archived/",
+				TargetPath: new("archived/"),
 			},
 		}
 		common.WriteFolderMetadata(t, repo, helper.ProvisioningPath, "archived")
@@ -118,7 +118,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 			Action: provisioning.JobActionMove,
 			Move: &provisioning.JobMoveJobOptions{
 				Paths:      []string{"non-existent.json"},
-				TargetPath: "moved/",
+				TargetPath: new("moved/"),
 			},
 		})
 
@@ -138,12 +138,12 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
 			Move: &provisioning.JobMoveJobOptions{
-				TargetPath: "moved-nonexistent/",
+				TargetPath: new("moved-nonexistent/"),
 				Resources: []provisioning.JobResourceRef{
 					{
-						Name:  "non-existent-move-uid",
-						Kind:  "Dashboard",
-						Group: "dashboard.grafana.app",
+						Name:  new("non-existent-move-uid"),
+						Kind:  new("Dashboard"),
+						Group: new("dashboard.grafana.app"),
 					},
 				},
 			},
@@ -225,12 +225,12 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 			spec := provisioning.JobSpec{
 				Action: provisioning.JobActionMove,
 				Move: &provisioning.JobMoveJobOptions{
-					TargetPath: "moved-by-ref/",
+					TargetPath: new("moved-by-ref/"),
 					Resources: []provisioning.JobResourceRef{
 						{
-							Name:  "moveref1", // UID from modified all-panels.json
-							Kind:  "Dashboard",
-							Group: "dashboard.grafana.app",
+							Name:  new("moveref1"), // UID from modified all-panels.json
+							Kind:  new("Dashboard"),
+							Group: new("dashboard.grafana.app"),
 						},
 					},
 				},
@@ -257,12 +257,12 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 			spec := provisioning.JobSpec{
 				Action: provisioning.JobActionMove,
 				Move: &provisioning.JobMoveJobOptions{
-					TargetPath: "archived-by-ref/",
+					TargetPath: new("archived-by-ref/"),
 					Resources: []provisioning.JobResourceRef{
 						{
-							Name:  "moveref2", // UID from modified text-options.json
-							Kind:  "Dashboard",
-							Group: "dashboard.grafana.app",
+							Name:  new("moveref2"), // UID from modified text-options.json
+							Kind:  new("Dashboard"),
+							Group: new("dashboard.grafana.app"),
 						},
 					},
 				},
@@ -302,12 +302,12 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 			spec := provisioning.JobSpec{
 				Action: provisioning.JobActionMove,
 				Move: &provisioning.JobMoveJobOptions{
-					TargetPath: "/",
+					TargetPath: new("/"),
 					Resources: []provisioning.JobResourceRef{
 						{
-							Name:  "movetoroot1",
-							Kind:  "Dashboard",
-							Group: "dashboard.grafana.app",
+							Name:  new("movetoroot1"),
+							Kind:  new("Dashboard"),
+							Group: new("dashboard.grafana.app"),
 						},
 					},
 				},
@@ -347,13 +347,13 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 			spec := provisioning.JobSpec{
 				Action: provisioning.JobActionMove,
 				Move: &provisioning.JobMoveJobOptions{
-					TargetPath: "mixed-target/",
+					TargetPath: new("mixed-target/"),
 					Paths:      []string{"mixed-move-1.json"}, // Move by path
 					Resources: []provisioning.JobResourceRef{
 						{
-							Name:  "mixedmove2", // Move by resource reference
-							Kind:  "Dashboard",
-							Group: "dashboard.grafana.app",
+							Name:  new("mixedmove2"), // Move by resource reference
+							Kind:  new("Dashboard"),
+							Group: new("dashboard.grafana.app"),
 						},
 					},
 				},

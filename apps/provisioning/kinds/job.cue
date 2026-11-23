@@ -110,13 +110,13 @@ _jobSchema: {
 		// - nested/deep/ (for a directory)
 		// FIXME: we should validate this in admission hooks
 		paths?: [...string]
+		// Destination path for the move (e.g. "new-location/")
+		targetPath?: string
 		// Resources to move
 		// This option has been created because currently the frontend does not use
 		// standarized app platform APIs. For performance and API consistency reasons, the preferred option
 		// is it to use the paths.
 		resources?: [...#ResourceRef]
-		// Destination path for the move (e.g. "new-location/")
-		targetPath?: string
 	}
 	#FixFolderMetadataJobOptions: {
 		// Ref to the branch to create the commit on (uses repository's default branch if not specified)
@@ -161,10 +161,10 @@ _jobSchema: {
 		repositoryURL?: string
 		// A URL pointing to the file or ref in the repository
 		sourceURL?: string
-		// Compare this version to the target branch
-		compareURL?: string
 		// A URL that will create a new pull request for this branch
 		newPullRequestURL?: string
+		// Compare this version to the target branch
+		compareURL?: string
 	}
 	spec: {
 		action: #Action

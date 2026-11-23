@@ -86,8 +86,8 @@ var JobResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 				m.Name, // may our may not be nice to read
 				m.CreationTimestamp.UTC().Format(time.RFC3339),
 				m.Spec.Action,
-				m.Status.State,
-				m.Status.Message,
+				ptr.Deref(m.Status.State, ""),
+				ptr.Deref(m.Status.Message, ""),
 			}, nil
 		},
 	})
@@ -114,8 +114,8 @@ var HistoricJobResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 				m.Name, // may our may not be nice to read
 				m.CreationTimestamp.UTC().Format(time.RFC3339),
 				m.Spec.Action,
-				m.Status.State,
-				m.Status.Message,
+				ptr.Deref(m.Status.State, ""),
+				ptr.Deref(m.Status.Message, ""),
 			}, nil
 		},
 	})

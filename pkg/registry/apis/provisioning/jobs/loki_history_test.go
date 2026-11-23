@@ -17,6 +17,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/loki"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 )
 
 func TestLokiJobHistory_WriteJob(t *testing.T) {
@@ -38,67 +39,67 @@ func TestLokiJobHistory_WriteJob(t *testing.T) {
 		},
 		Spec: provisioning.JobSpec{
 			Action:     provisioning.JobActionPull,
-			Repository: "test-repo",
+			Repository: new("test-repo"),
 			Pull: &provisioning.JobSyncJobOptions{
 				Incremental: true,
 			},
 			Push: &provisioning.JobExportJobOptions{
-				Message: "Export test",
-				Folder:  "dashboards",
-				Branch:  "main",
-				Path:    "/exported",
+				Message: new("Export test"),
+				Folder:  new("dashboards"),
+				Branch:  new("main"),
+				Path:    new("/exported"),
 				Resources: []provisioning.JobResourceRef{{
-					Name:  "selected-dashboard",
-					Kind:  "Dashboard",
-					Group: "dashboard.grafana.app",
+					Name:  new("selected-dashboard"),
+					Kind:  new("Dashboard"),
+					Group: new("dashboard.grafana.app"),
 				}},
 			},
 			Migrate: &provisioning.JobMigrateJobOptions{
-				Message: "Migration test",
+				Message: new("Migration test"),
 			},
 			Delete: &provisioning.JobDeleteJobOptions{
-				Ref:   "main",
+				Ref:   new("main"),
 				Paths: []string{"/old/dashboard.json", "/old/folder/"},
 				Resources: []provisioning.JobResourceRef{{
-					Name:  "dashboard-uid",
-					Kind:  "Dashboard",
-					Group: "dashboard.grafana.app",
+					Name:  new("dashboard-uid"),
+					Kind:  new("Dashboard"),
+					Group: new("dashboard.grafana.app"),
 				}},
 			},
 			Move: &provisioning.JobMoveJobOptions{
-				Ref:        "feature-branch",
+				Ref:        new("feature-branch"),
 				Paths:      []string{"/src/dashboard.json"},
-				TargetPath: "/dest/",
+				TargetPath: new("/dest/"),
 				Resources: []provisioning.JobResourceRef{{
-					Name:  "moved-dashboard",
-					Kind:  "Dashboard",
-					Group: "dashboard.grafana.app",
+					Name:  new("moved-dashboard"),
+					Kind:  new("Dashboard"),
+					Group: new("dashboard.grafana.app"),
 				}},
 			},
 			PullRequest: &provisioning.JobPullRequestJobOptions{
-				Ref:  "feature-123",
-				PR:   123,
-				Hash: "abc123def456",
-				URL:  "https://github.com/org/repo/pull/123",
+				Ref:  new("feature-123"),
+				PR:   new(int32(123)),
+				Hash: new("abc123def456"),
+				URL:  new("https://github.com/org/repo/pull/123"),
 			},
 		},
 		Status: provisioning.JobStatus{
-			State:    provisioning.JobStateSuccess,
-			Started:  time.Now().UnixMilli() - 100000, // 100 seconds ago in milliseconds
-			Finished: time.Now().UnixMilli(),          // Now in milliseconds
-			Message:  "Job completed successfully",
+			State:    new(provisioning.JobStateSuccess),
+			Started:  ptr.NonZero(time.Now().UnixMilli() - 100000), // 100 seconds ago in milliseconds
+			Finished: ptr.NonZero(time.Now().UnixMilli()),          // Now in milliseconds
+			Message:  new("Job completed successfully"),
 			Errors:   []string{"warning: deprecated field used"},
-			Progress: 100.0,
-			Summary: []*provisioning.JobResourceSummary{{
-				Group:  "dashboard.grafana.app",
-				Kind:   "Dashboard",
-				Total:  10,
-				Create: 3,
-				Update: 5,
-				Delete: 1,
-				Write:  8,
-				Error:  1,
-				Noop:   0,
+			Progress: new(100.0),
+			Summary: []provisioning.JobResourceSummary{{
+				Group:  new("dashboard.grafana.app"),
+				Kind:   new("Dashboard"),
+				Total:  new(int64(10)),
+				Create: new(int64(3)),
+				Update: new(int64(5)),
+				Delete: new(int64(1)),
+				Write:  new(int64(8)),
+				Error:  new(int64(1)),
+				Noop:   nil,
 				Errors: []string{"failed to process dashboard-x"},
 			}},
 		},
@@ -115,14 +116,14 @@ func TestLokiJobHistory_WriteJob(t *testing.T) {
 		// Verify labels
 		assert.Equal(t, JobHistoryLabelValue, stream.Stream[JobHistoryLabelKey])
 		assert.Equal(t, job.Namespace, stream.Stream[NamespaceLabel])
-		assert.Equal(t, job.Spec.Repository, stream.Stream[RepositoryLabel])
+		assert.Equal(t, ptr.Deref(job.Spec.Repository), stream.Stream[RepositoryLabel])
 		assert.Equal(t, "test-value", stream.Stream["test-key"]) // external label
 
 		// Verify we have a sample
 		require.Len(t, stream.Values, 1)
 
 		// Verify timestamp (should use finished time converted from milliseconds)
-		expectedTime := time.Unix(0, job.Status.Finished*int64(time.Millisecond))
+		expectedTime := time.Unix(0, ptr.Deref(job.Status.Finished)*int64(time.Millisecond))
 		assert.Equal(t, expectedTime, stream.Values[0].T)
 
 		// Verify job data is JSON and contains all fields
@@ -142,53 +143,53 @@ func TestLokiJobHistory_WriteJob(t *testing.T) {
 
 		// Verify spec fields
 		assert.Equal(t, provisioning.JobActionPull, deserializedJob.Spec.Action)
-		assert.Equal(t, "test-repo", deserializedJob.Spec.Repository)
+		assert.Equal(t, "test-repo", ptr.Deref(deserializedJob.Spec.Repository))
 		require.NotNil(t, deserializedJob.Spec.Pull)
 		assert.True(t, deserializedJob.Spec.Pull.Incremental)
 		require.NotNil(t, deserializedJob.Spec.Push)
-		assert.Equal(t, "Export test", deserializedJob.Spec.Push.Message)
-		assert.Equal(t, "dashboards", deserializedJob.Spec.Push.Folder)
-		assert.Equal(t, "main", deserializedJob.Spec.Push.Branch)
-		assert.Equal(t, "/exported", deserializedJob.Spec.Push.Path)
+		assert.Equal(t, "Export test", ptr.Deref(deserializedJob.Spec.Push.Message))
+		assert.Equal(t, "dashboards", ptr.Deref(deserializedJob.Spec.Push.Folder))
+		assert.Equal(t, "main", ptr.Deref(deserializedJob.Spec.Push.Branch))
+		assert.Equal(t, "/exported", ptr.Deref(deserializedJob.Spec.Push.Path))
 		require.NotNil(t, deserializedJob.Spec.Migrate)
-		assert.Equal(t, "Migration test", deserializedJob.Spec.Migrate.Message)
+		assert.Equal(t, "Migration test", ptr.Deref(deserializedJob.Spec.Migrate.Message))
 		require.NotNil(t, deserializedJob.Spec.Delete)
-		assert.Equal(t, "main", deserializedJob.Spec.Delete.Ref)
+		assert.Equal(t, "main", ptr.Deref(deserializedJob.Spec.Delete.Ref))
 		assert.Equal(t, []string{"/old/dashboard.json", "/old/folder/"}, deserializedJob.Spec.Delete.Paths)
 		require.Len(t, deserializedJob.Spec.Delete.Resources, 1)
-		assert.Equal(t, "dashboard-uid", deserializedJob.Spec.Delete.Resources[0].Name)
-		assert.Equal(t, "Dashboard", deserializedJob.Spec.Delete.Resources[0].Kind)
-		assert.Equal(t, "dashboard.grafana.app", deserializedJob.Spec.Delete.Resources[0].Group)
+		assert.Equal(t, "dashboard-uid", ptr.Deref(deserializedJob.Spec.Delete.Resources[0].Name))
+		assert.Equal(t, "Dashboard", ptr.Deref(deserializedJob.Spec.Delete.Resources[0].Kind))
+		assert.Equal(t, "dashboard.grafana.app", ptr.Deref(deserializedJob.Spec.Delete.Resources[0].Group))
 		require.NotNil(t, deserializedJob.Spec.Move)
-		assert.Equal(t, "feature-branch", deserializedJob.Spec.Move.Ref)
+		assert.Equal(t, "feature-branch", ptr.Deref(deserializedJob.Spec.Move.Ref))
 		assert.Equal(t, []string{"/src/dashboard.json"}, deserializedJob.Spec.Move.Paths)
-		assert.Equal(t, "/dest/", deserializedJob.Spec.Move.TargetPath)
+		assert.Equal(t, "/dest/", ptr.Deref(deserializedJob.Spec.Move.TargetPath))
 		require.Len(t, deserializedJob.Spec.Move.Resources, 1)
-		assert.Equal(t, "moved-dashboard", deserializedJob.Spec.Move.Resources[0].Name)
+		assert.Equal(t, "moved-dashboard", ptr.Deref(deserializedJob.Spec.Move.Resources[0].Name))
 		require.NotNil(t, deserializedJob.Spec.PullRequest)
-		assert.Equal(t, "feature-123", deserializedJob.Spec.PullRequest.Ref)
-		assert.Equal(t, 123, deserializedJob.Spec.PullRequest.PR)
-		assert.Equal(t, "abc123def456", deserializedJob.Spec.PullRequest.Hash)
-		assert.Equal(t, "https://github.com/org/repo/pull/123", deserializedJob.Spec.PullRequest.URL)
+		assert.Equal(t, "feature-123", ptr.Deref(deserializedJob.Spec.PullRequest.Ref))
+		assert.Equal(t, 123, int(ptr.Deref(deserializedJob.Spec.PullRequest.PR)))
+		assert.Equal(t, "abc123def456", ptr.Deref(deserializedJob.Spec.PullRequest.Hash))
+		assert.Equal(t, "https://github.com/org/repo/pull/123", ptr.Deref(deserializedJob.Spec.PullRequest.URL))
 
 		// Verify status fields
-		assert.Equal(t, provisioning.JobStateSuccess, deserializedJob.Status.State)
-		assert.Equal(t, job.Status.Started, deserializedJob.Status.Started)
-		assert.Equal(t, job.Status.Finished, deserializedJob.Status.Finished)
-		assert.Equal(t, "Job completed successfully", deserializedJob.Status.Message)
+		assert.Equal(t, provisioning.JobStateSuccess, ptr.Deref(deserializedJob.Status.State))
+		assert.Equal(t, ptr.Deref(job.Status.Started), ptr.Deref(deserializedJob.Status.Started))
+		assert.Equal(t, ptr.Deref(job.Status.Finished), ptr.Deref(deserializedJob.Status.Finished))
+		assert.Equal(t, "Job completed successfully", ptr.Deref(deserializedJob.Status.Message))
 		assert.Equal(t, []string{"warning: deprecated field used"}, deserializedJob.Status.Errors)
-		assert.Equal(t, 100.0, deserializedJob.Status.Progress)
+		assert.Equal(t, 100.0, ptr.Deref(deserializedJob.Status.Progress))
 		require.Len(t, deserializedJob.Status.Summary, 1)
 		summary := deserializedJob.Status.Summary[0]
-		assert.Equal(t, "dashboard.grafana.app", summary.Group)
-		assert.Equal(t, "Dashboard", summary.Kind)
-		assert.Equal(t, int64(10), summary.Total)
-		assert.Equal(t, int64(3), summary.Create)
-		assert.Equal(t, int64(5), summary.Update)
-		assert.Equal(t, int64(1), summary.Delete)
-		assert.Equal(t, int64(8), summary.Write)
-		assert.Equal(t, int64(1), summary.Error)
-		assert.Equal(t, int64(0), summary.Noop)
+		assert.Equal(t, "dashboard.grafana.app", ptr.Deref(summary.Group))
+		assert.Equal(t, "Dashboard", ptr.Deref(summary.Kind))
+		assert.Equal(t, int64(10), ptr.Deref(summary.Total))
+		assert.Equal(t, int64(3), ptr.Deref(summary.Create))
+		assert.Equal(t, int64(5), ptr.Deref(summary.Update))
+		assert.Equal(t, int64(1), ptr.Deref(summary.Delete))
+		assert.Equal(t, int64(8), ptr.Deref(summary.Write))
+		assert.Equal(t, int64(1), ptr.Deref(summary.Error))
+		assert.Equal(t, int64(0), ptr.Deref(summary.Noop))
 		assert.Equal(t, []string{"failed to process dashboard-x"}, summary.Errors)
 	})
 
@@ -210,8 +211,8 @@ func TestLokiJobHistory_WriteJob(t *testing.T) {
 				CreationTimestamp: metav1.NewTime(time.Unix(100, 0)),
 			},
 			Status: provisioning.JobStatus{
-				Started:  200,
-				Finished: 300,
+				Started:  new(int64(200)),
+				Finished: new(int64(300)),
 			},
 		}
 		ts := history.getJobTimestamp(jobWithFinished)
@@ -223,7 +224,7 @@ func TestLokiJobHistory_WriteJob(t *testing.T) {
 				CreationTimestamp: metav1.NewTime(time.Unix(100, 0)),
 			},
 			Status: provisioning.JobStatus{
-				Started: 200,
+				Started: new(int64(200)),
 			},
 		}
 		ts = history.getJobTimestamp(jobWithStarted)
@@ -255,13 +256,13 @@ func TestLokiJobHistory_Integration(t *testing.T) {
 		},
 		Spec: provisioning.JobSpec{
 			Action:     provisioning.JobActionPull,
-			Repository: "test-repo",
+			Repository: new("test-repo"),
 		},
 		Status: provisioning.JobStatus{
-			State:    provisioning.JobStateSuccess,
-			Started:  time.Now().UnixMilli() - 100000,
-			Finished: time.Now().UnixMilli(),
-			Message:  "Integration test completed",
+			State:    new(provisioning.JobStateSuccess),
+			Started:  ptr.NonZero(time.Now().UnixMilli() - 100000),
+			Finished: ptr.NonZero(time.Now().UnixMilli()),
+			Message:  new("Integration test completed"),
 		},
 	}
 
@@ -308,7 +309,7 @@ func TestLokiJobHistory_Integration(t *testing.T) {
 				// Check key fields are preserved
 				return deserializedJob.Name == "integration-job" &&
 					deserializedJob.Spec.Action == provisioning.JobActionPull &&
-					deserializedJob.Status.State == provisioning.JobStateSuccess
+					ptr.Deref(deserializedJob.Status.State) == provisioning.JobStateSuccess
 			}),
 		).Return(nil)
 
@@ -327,10 +328,10 @@ func TestLokiJobHistory_Integration(t *testing.T) {
 			},
 			Spec: provisioning.JobSpec{
 				Action:     provisioning.JobActionPull,
-				Repository: "test-repo",
+				Repository: new("test-repo"),
 			},
 			Status: provisioning.JobStatus{
-				State: provisioning.JobStateError,
+				State: new(provisioning.JobStateError),
 			},
 		}
 
@@ -371,13 +372,13 @@ func TestLokiJobHistory_RecentJobs(t *testing.T) {
 			},
 			Spec: provisioning.JobSpec{
 				Action:     provisioning.JobActionPull,
-				Repository: "test-repo",
+				Repository: new("test-repo"),
 			},
 			Status: provisioning.JobStatus{
-				State:    provisioning.JobStateSuccess,
-				Started:  time.Now().UnixMilli() - 50000,
-				Finished: time.Now().UnixMilli(),
-				Message:  "Success",
+				State:    new(provisioning.JobStateSuccess),
+				Started:  ptr.NonZero(time.Now().UnixMilli() - 50000),
+				Finished: ptr.NonZero(time.Now().UnixMilli()),
+				Message:  new("Success"),
 			},
 		}
 		jobJSON, _ := json.Marshal(testJob)
@@ -420,8 +421,8 @@ func TestLokiJobHistory_RecentJobs(t *testing.T) {
 		assert.Equal(t, "test-ns", returnedJob.Namespace)
 		assert.Equal(t, types.UID("recent-uid"), returnedJob.UID)
 		assert.Equal(t, provisioning.JobActionPull, returnedJob.Spec.Action)
-		assert.Equal(t, "test-repo", returnedJob.Spec.Repository)
-		assert.Equal(t, provisioning.JobStateSuccess, returnedJob.Status.State)
+		assert.Equal(t, "test-repo", ptr.Deref(returnedJob.Spec.Repository))
+		assert.Equal(t, provisioning.JobStateSuccess, ptr.Deref(returnedJob.Status.State))
 	})
 
 	t.Run("RecentJobs handles Loki query errors", func(t *testing.T) {
@@ -505,8 +506,8 @@ func TestLokiJobHistory_GetJob(t *testing.T) {
 				Namespace: "test-ns",
 				UID:       types.UID("uid-1"),
 			},
-			Spec:   provisioning.JobSpec{Action: provisioning.JobActionPull, Repository: "test-repo"},
-			Status: provisioning.JobStatus{State: provisioning.JobStateSuccess},
+			Spec:   provisioning.JobSpec{Action: provisioning.JobActionPull, Repository: new("test-repo")},
+			Status: provisioning.JobStatus{State: new(provisioning.JobStateSuccess)},
 		}
 		job2 := &provisioning.Job{
 			ObjectMeta: metav1.ObjectMeta{
@@ -514,8 +515,8 @@ func TestLokiJobHistory_GetJob(t *testing.T) {
 				Namespace: "test-ns",
 				UID:       types.UID("target-uid"),
 			},
-			Spec:   provisioning.JobSpec{Action: provisioning.JobActionPush, Repository: "test-repo"},
-			Status: provisioning.JobStatus{State: provisioning.JobStateSuccess},
+			Spec:   provisioning.JobSpec{Action: provisioning.JobActionPush, Repository: new("test-repo")},
+			Status: provisioning.JobStatus{State: new(provisioning.JobStateSuccess)},
 		}
 
 		job1JSON, _ := json.Marshal(job1)

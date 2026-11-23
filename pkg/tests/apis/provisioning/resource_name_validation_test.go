@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -72,7 +73,7 @@ func TestIntegrationProvisioning_FullSync_InvalidResourceNames(t *testing.T) {
 	})
 	jobObj := &provisioning.Job{}
 	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
-	require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State)
+	require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State))
 	require.Empty(t, jobObj.Status.Errors)
 	require.Len(t, jobObj.Status.Warnings, len(tests))
 	for _, tt := range tests {

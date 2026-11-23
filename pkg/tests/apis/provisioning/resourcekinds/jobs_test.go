@@ -98,7 +98,7 @@ func TestIntegrationProvisioning_ResourceKinds_MoveJob(t *testing.T) {
 			common.WriteFolderMetadata(t, repo, repoPath, "archived")
 			helper.TriggerJobAndWaitForSuccess(t, repo, provisioning.JobSpec{
 				Action: provisioning.JobActionMove,
-				Move:   &provisioning.JobMoveJobOptions{Paths: paths, TargetPath: "archived/"},
+				Move:   &provisioning.JobMoveJobOptions{Paths: paths, TargetPath: new("archived/")},
 			})
 
 			repoFiles := repositoryFilePaths(t, helper, repo)

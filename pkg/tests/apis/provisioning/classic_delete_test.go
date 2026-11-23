@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -131,9 +132,9 @@ func TestIntegrationProvisioning_ClassicDashboardDeletion(t *testing.T) {
 		err = runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
 		require.NoError(t, err)
 
-		require.Equal(t, provisioning.JobStateSuccess, jobObj.Status.State,
+		require.Equal(t, provisioning.JobStateSuccess, ptr.Deref(jobObj.Status.State),
 			"sync job should succeed when deleting a classic dashboard, got state=%s errors=%v",
-			jobObj.Status.State, jobObj.Status.Errors)
+			ptr.Deref(jobObj.Status.State), jobObj.Status.Errors)
 		require.Empty(t, jobObj.Status.Errors, "should have no errors when deleting classic dashboard")
 
 		helper.RequireRepoDashboardCount(t, repo, 0)

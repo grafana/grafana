@@ -13,6 +13,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/prometheus/client_golang/prometheus"
@@ -116,7 +117,7 @@ func TestMoveWorker_ProcessInvalidTargetPath(t *testing.T) {
 			Action: provisioning.JobActionMove,
 			Move: &provisioning.JobMoveJobOptions{
 				Paths:      []string{"test/path"},
-				TargetPath: "target.txt", // This is not a directory path
+				TargetPath: new("target.txt"), // This is not a directory path
 			},
 		},
 	}
@@ -131,10 +132,10 @@ func TestMoveWorker_CommitMessageFromJobSpec(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
 		Spec: provisioning.JobSpec{
 			Action:  provisioning.JobActionMove,
-			Message: "custom move message",
+			Message: new("custom move message"),
 			Move: &provisioning.JobMoveJobOptions{
 				Paths:      []string{"test/path"},
-				TargetPath: "new/location/",
+				TargetPath: new("new/location/"),
 			},
 		},
 	}
@@ -163,7 +164,7 @@ func TestMoveWorker_ProcessNotReaderWriter(t *testing.T) {
 			Action: provisioning.JobActionMove,
 			Move: &provisioning.JobMoveJobOptions{
 				Paths:      []string{"test/path"},
-				TargetPath: "new/location/",
+				TargetPath: new("new/location/"),
 			},
 		},
 	}
@@ -192,7 +193,7 @@ func TestMoveWorker_ProcessWrapFnError(t *testing.T) {
 			Action: provisioning.JobActionMove,
 			Move: &provisioning.JobMoveJobOptions{
 				Paths:      []string{"test/path"},
-				TargetPath: "new/location/",
+				TargetPath: new("new/location/"),
 			},
 		},
 	}
@@ -216,8 +217,8 @@ func TestMoveWorker_ProcessMoveFilesSuccess(t *testing.T) {
 			Action: provisioning.JobActionMove,
 			Move: &provisioning.JobMoveJobOptions{
 				Paths:      []string{"test/path1", "test/path2"},
-				TargetPath: "new/location/",
-				Ref:        "main",
+				TargetPath: new("new/location/"),
+				Ref:        new("main"),
 			},
 		},
 	}
@@ -264,8 +265,8 @@ func TestMoveWorker_ProcessMoveFilesSkipsSameSourceAndTarget(t *testing.T) {
 			Action: provisioning.JobActionMove,
 			Move: &provisioning.JobMoveJobOptions{
 				Paths:      []string{"test/dashboard.json"},
-				TargetPath: "test/",
-				Ref:        "main",
+				TargetPath: new("test/"),
+				Ref:        new("main"),
 			},
 		},
 	}
@@ -302,8 +303,8 @@ func TestMoveWorker_ProcessMoveFilesWithError(t *testing.T) {
 			Action: provisioning.JobActionMove,
 			Move: &provisioning.JobMoveJobOptions{
 				Paths:      []string{"test/path1", "test/path2"},
-				TargetPath: "new/location/",
-				Ref:        "main",
+				TargetPath: new("new/location/"),
+				Ref:        new("main"),
 			},
 		},
 	}
@@ -341,7 +342,7 @@ func TestMoveWorker_ProcessWithSyncWorker(t *testing.T) {
 			Action: provisioning.JobActionMove,
 			Move: &provisioning.JobMoveJobOptions{
 				Paths:      []string{"test/path"},
-				TargetPath: "new/location/",
+				TargetPath: new("new/location/"),
 			},
 		},
 	}
@@ -387,7 +388,7 @@ func TestMoveWorker_ProcessSyncWorkerError(t *testing.T) {
 			Action: provisioning.JobActionMove,
 			Move: &provisioning.JobMoveJobOptions{
 				Paths:      []string{"test/path"},
-				TargetPath: "new/location/",
+				TargetPath: new("new/location/"),
 			},
 		},
 	}
@@ -473,8 +474,8 @@ func TestMoveWorker_moveFiles(t *testing.T) {
 			mockProgress := jobs.NewMockJobProgressRecorder(t)
 
 			opts := provisioning.JobMoveJobOptions{
-				TargetPath: "new/location/",
-				Ref:        "main",
+				TargetPath: new("new/location/"),
+				Ref:        new("main"),
 			}
 
 			for i, path := range tt.paths {
@@ -519,8 +520,8 @@ func TestMoveWorker_moveFilesToRoot(t *testing.T) {
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
 
 	opts := provisioning.JobMoveJobOptions{
-		TargetPath: "/",
-		Ref:        "main",
+		TargetPath: new("/"),
+		Ref:        new("main"),
 	}
 
 	mockRepo.On("Move", mock.Anything, "nested/dashboard.json", "dashboard.json", "main", "Move nested/dashboard.json to dashboard.json").Return(nil)
@@ -610,12 +611,12 @@ func TestMoveWorker_ProcessWithResourceReferences(t *testing.T) {
 			Action: provisioning.JobActionMove,
 			Move: &provisioning.JobMoveJobOptions{
 				Paths:      []string{"test/path1"},
-				TargetPath: "new/location/",
+				TargetPath: new("new/location/"),
 				Resources: []provisioning.JobResourceRef{
 					{
-						Name:  "dashboard-uid",
-						Kind:  "Dashboard",
-						Group: "dashboard.grafana.app",
+						Name:  new("dashboard-uid"),
+						Kind:  new("Dashboard"),
+						Group: new("dashboard.grafana.app"),
 					},
 				},
 			},
@@ -676,12 +677,12 @@ func TestMoveWorker_ProcessResourceReferencesError(t *testing.T) {
 		Spec: provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
 			Move: &provisioning.JobMoveJobOptions{
-				TargetPath: "new/location/",
+				TargetPath: new("new/location/"),
 				Resources: []provisioning.JobResourceRef{
 					{
-						Name:  "non-existent-uid",
-						Kind:  "Dashboard",
-						Group: "dashboard.grafana.app",
+						Name:  new("non-existent-uid"),
+						Kind:  new("Dashboard"),
+						Group: new("dashboard.grafana.app"),
 					},
 				},
 			},
@@ -738,12 +739,12 @@ func TestMoveWorker_ProcessResourcesFactoryError(t *testing.T) {
 		Spec: provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
 			Move: &provisioning.JobMoveJobOptions{
-				TargetPath: "new/location/",
+				TargetPath: new("new/location/"),
 				Resources: []provisioning.JobResourceRef{
 					{
-						Name:  "dashboard-uid",
-						Kind:  "Dashboard",
-						Group: "dashboard.grafana.app",
+						Name:  new("dashboard-uid"),
+						Kind:  new("Dashboard"),
+						Group: new("dashboard.grafana.app"),
 					},
 				},
 			},
@@ -788,9 +789,9 @@ func TestMoveWorker_resolveResourcesToPaths(t *testing.T) {
 			name: "single resource success",
 			resources: []provisioning.JobResourceRef{
 				{
-					Name:  "dashboard-uid",
-					Kind:  "Dashboard",
-					Group: "dashboard.grafana.app",
+					Name:  new("dashboard-uid"),
+					Kind:  new("Dashboard"),
+					Group: new("dashboard.grafana.app"),
 				},
 			},
 			resourcePaths: map[string]string{
@@ -802,14 +803,14 @@ func TestMoveWorker_resolveResourcesToPaths(t *testing.T) {
 			name: "multiple resources success",
 			resources: []provisioning.JobResourceRef{
 				{
-					Name:  "dashboard1",
-					Kind:  "Dashboard",
-					Group: "dashboard.grafana.app",
+					Name:  new("dashboard1"),
+					Kind:  new("Dashboard"),
+					Group: new("dashboard.grafana.app"),
 				},
 				{
-					Name:  "dashboard2",
-					Kind:  "Dashboard",
-					Group: "dashboard.grafana.app",
+					Name:  new("dashboard2"),
+					Kind:  new("Dashboard"),
+					Group: new("dashboard.grafana.app"),
 				},
 			},
 			resourcePaths: map[string]string{
@@ -822,14 +823,14 @@ func TestMoveWorker_resolveResourcesToPaths(t *testing.T) {
 			name: "resource not found continues",
 			resources: []provisioning.JobResourceRef{
 				{
-					Name:  "non-existent",
-					Kind:  "Dashboard",
-					Group: "dashboard.grafana.app",
+					Name:  new("non-existent"),
+					Kind:  new("Dashboard"),
+					Group: new("dashboard.grafana.app"),
 				},
 				{
-					Name:  "existing",
-					Kind:  "Dashboard",
-					Group: "dashboard.grafana.app",
+					Name:  new("existing"),
+					Kind:  new("Dashboard"),
+					Group: new("dashboard.grafana.app"),
 				},
 			},
 			resourcePaths: map[string]string{
@@ -862,19 +863,19 @@ func TestMoveWorker_resolveResourcesToPaths(t *testing.T) {
 				mockResourcesFactory.On("Client", mock.Anything, mockRepo).Return(mockRepoResources, nil)
 
 				for _, resource := range tt.resources {
-					mockProgress.On("SetMessage", mock.Anything, fmt.Sprintf("Finding path for resource %s/%s/%s", resource.Group, resource.Kind, resource.Name)).Return()
+					mockProgress.On("SetMessage", mock.Anything, fmt.Sprintf("Finding path for resource %s/%s/%s", ptr.Deref(resource.Group), ptr.Deref(resource.Kind), ptr.Deref(resource.Name))).Return()
 
 					gvk := schema.GroupVersionKind{
-						Group: resource.Group,
-						Kind:  resource.Kind,
+						Group: ptr.Deref(resource.Group),
+						Kind:  ptr.Deref(resource.Kind),
 					}
 
-					if path, ok := tt.resourcePaths[resource.Name]; ok {
-						mockRepoResources.On("FindResourcePath", mock.Anything, resource.Name, gvk).Return(path, nil)
-					} else if err, ok := tt.resourceErrors[resource.Name]; ok {
-						mockRepoResources.On("FindResourcePath", mock.Anything, resource.Name, gvk).Return("", err)
+					if path, ok := tt.resourcePaths[ptr.Deref(resource.Name)]; ok {
+						mockRepoResources.On("FindResourcePath", mock.Anything, ptr.Deref(resource.Name), gvk).Return(path, nil)
+					} else if err, ok := tt.resourceErrors[ptr.Deref(resource.Name)]; ok {
+						mockRepoResources.On("FindResourcePath", mock.Anything, ptr.Deref(resource.Name), gvk).Return("", err)
 						mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-							return result.Name() == resource.Name && result.Group() == resource.Group &&
+							return result.Name() == ptr.Deref(resource.Name) && result.Group() == ptr.Deref(resource.Group) &&
 								result.Action() == repository.FileActionRenamed && result.Error() != nil
 						})).Return()
 						if tt.tooManyErrors != nil {
@@ -991,9 +992,9 @@ func TestMoveWorker_RefURLsSetWithRef(t *testing.T) {
 		Spec: provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
 			Move: &provisioning.JobMoveJobOptions{
-				Ref:        "feature-branch",
+				Ref:        new("feature-branch"),
 				Paths:      []string{"test.json"},
-				TargetPath: "target/",
+				TargetPath: new("target/"),
 			},
 		},
 	}
@@ -1051,7 +1052,7 @@ func TestMoveWorker_RefURLsNotSetWithoutRef(t *testing.T) {
 			Move: &provisioning.JobMoveJobOptions{
 				// No ref specified
 				Paths:      []string{"test.json"},
-				TargetPath: "target/",
+				TargetPath: new("target/"),
 			},
 		},
 	}
@@ -1101,9 +1102,9 @@ func TestMoveWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
 		Spec: provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
 			Move: &provisioning.JobMoveJobOptions{
-				Ref:        "feature-branch",
+				Ref:        new("feature-branch"),
 				Paths:      []string{"test.json"},
-				TargetPath: "target/",
+				TargetPath: new("target/"),
 			},
 		},
 	}

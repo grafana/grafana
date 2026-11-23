@@ -802,7 +802,7 @@ func (rc *RepositoryController) addSyncJob(ctx context.Context, obj *provisionin
 	)
 
 	job, err := rc.jobs.Insert(ctx, obj.Namespace, provisioning.JobSpec{
-		Repository: obj.GetName(),
+		Repository: new(obj.GetName()),
 		Action:     provisioning.JobActionPull,
 		Pull:       syncOptions,
 	})

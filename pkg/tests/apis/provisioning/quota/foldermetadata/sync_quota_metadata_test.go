@@ -7,6 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -97,9 +98,9 @@ func TestIntegrationProvisioning_QuotaWithFolderMetadata(t *testing.T) {
 		jobObj := &provisioning.Job{}
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
 
-		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
+		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State),
 			"sync should be blocked because the repo is over quota")
-		require.Contains(t, jobObj.Status.Message, "sync skipped",
+		require.Contains(t, ptr.Deref(jobObj.Status.Message), "sync skipped",
 			"job message should indicate the sync was skipped due to quota")
 
 		// The original folder should remain unchanged.
@@ -146,8 +147,8 @@ func TestIntegrationProvisioning_QuotaWithFolderMetadata(t *testing.T) {
 		jobObj := &provisioning.Job{}
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
 
-		t.Logf("Job state: %s", jobObj.Status.State)
-		t.Logf("Job message: %s", jobObj.Status.Message)
+		t.Logf("Job state: %s", ptr.Deref(jobObj.Status.State))
+		t.Logf("Job message: %s", ptr.Deref(jobObj.Status.Message))
 		t.Logf("Job warnings: %v", jobObj.Status.Warnings)
 		t.Logf("Job errors: %v", jobObj.Status.Errors)
 

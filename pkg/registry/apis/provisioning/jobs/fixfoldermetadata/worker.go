@@ -13,6 +13,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -53,9 +54,9 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 		}
 		span.End()
 	}()
-	span.SetAttributes(attribute.String("fixfoldermetadata.ref", options.Ref))
+	span.SetAttributes(attribute.String("fixfoldermetadata.ref", ptr.Deref(options.Ref)))
 
-	ref := options.Ref
+	ref := ptr.Deref(options.Ref)
 	logger.Info("starting folder metadata fix job")
 	if ref == "" {
 		progress.SetMessage(ctx, "Writing folder metadata files on default branch")
