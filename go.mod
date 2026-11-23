@@ -724,6 +724,9 @@ replace (
 	github.com/dolthub/go-mysql-server => github.com/grafana/go-mysql-server v0.20.2-grafana-4
 	github.com/dolthub/vitess => github.com/grafana/vitess v0.0.0-grafana-2
 
+	// Prototype: informer mechanism selection (grafana-app-sdk PR 1687), not yet released.
+	github.com/grafana/grafana-app-sdk => github.com/grafana/grafana-app-sdk v0.62.2-0.20261123120815-00bd8aea8935
+
 	// Use our fork of memberlist which includes some fixes that haven't been merged upstream yet.
 	github.com/hashicorp/memberlist => github.com/grafana/memberlist v0.3.1-0.20260515134459-1798cf41aca7
 

@@ -4,31 +4,33 @@ import (
 	"context"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/operator"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	versioned "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
+	apiinformers "github.com/grafana/grafana/pkg/services/apiserver/informers"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
-// NewHistoricJobDeltaSource returns the historic-job delta source. When NATS is
-// off it is an apiserver-backed SharedIndexInformer: the watch populates a cache
-// that each resync replays, so cleanup re-triggers without re-listing. When NATS
-// is on there is no watch to feed a cache, so it is a CachelessPeriodicInformer that
-// re-lists on a schedule instead. Historic cleanup is age-based and needs no live
-// events, so neither path subscribes to notifications.
-//
-// The choice is driven by the natsEnabled flag (from cfg.NATS.Enabled), not by a
-// live subscriber: the historic-cleanup operator has no NATS consumer role, so it
-// must not depend on holding a subscriber to pick the cacheless source. Cleanup
-// reads no lister, so callers need only the DeltaSource.
-func NewHistoricJobDeltaSource(natsEnabled bool, client versioned.Interface, resync time.Duration) DeltaSource {
-	if natsEnabled {
-		return NewHistoricJobPeriodicInformer(client, "", resync)
-	}
-	return informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().HistoricJobs().Informer()
+// NewHistoricJobDeltaSource returns the historic-job delta source. Historic
+// cleanup is age-based, so it needs only the resync and no live events: the
+// selector gives it the cacheless re-list when it offers one (under NATS), and
+// otherwise the apiserver watch, whose cache each resync replays. Cleanup reads
+// no lister, so callers need only the DeltaSource.
+func NewHistoricJobDeltaSource(selector *apiinformers.Selector, client versioned.Interface, resync time.Duration) (DeltaSource, error) {
+	return selector.Source(apiinformers.Sources{
+		GVR:   provisioningapis.HistoricJobResourceInfo.GroupVersionResource(),
+		Needs: operator.WatchOptions{Resync: &operator.WatchResyncOptions{}},
+		Watch: func() DeltaSource {
+			return informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().HistoricJobs().Informer()
+		},
+		ReList: func() DeltaSource {
+			return NewHistoricJobPeriodicInformer(client, "", resync)
+		},
+	})
 }
 
 // NewHistoricJobPeriodicInformer builds the NATS-mode historic-job source: a

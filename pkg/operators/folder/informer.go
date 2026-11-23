@@ -7,9 +7,12 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/dynamic/dynamicinformer"
 
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/infra/nats"
+	"github.com/grafana/grafana/pkg/services/apiserver/informers"
 	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 	"github.com/grafana/grafana/pkg/services/folder/cascadedelete"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
@@ -19,6 +22,21 @@ import (
 // queueGroup is the NATS queue group the controllers' subscriptions join, so each live notification
 // reaches one replica.
 const queueGroup = "folder-controller"
+
+// newFolderSource returns the folder delta source the selector selects: the NATS informer when it
+// offers live notifications, otherwise the apiserver watch.
+func newFolderSource(selector *informers.Selector, folders dynamic.Interface, keys keysapi.Lister) (informers.DeltaSource, error) {
+	return selector.Source(informers.Sources{
+		GVR:   folderGVR,
+		Needs: informers.KeyedNeeds,
+		Watch: func() informers.DeltaSource {
+			return dynamicinformer.NewFilteredDynamicSharedInformerFactory(folders, cascadedelete.ResyncPeriod, "", nil).ForResource(folderGVR).Informer()
+		},
+		NotifyWithReList: func(subscriber nats.Subscriber) informers.DeltaSource {
+			return newFolderInformer(subscriber, keys)
+		},
+	})
+}
 
 // newFolderInformer follows folders from a keys-only snapshot plus live notifications. It starts in
 // re-list-only mode when the subscription cannot open, rather than blocking readiness on it.

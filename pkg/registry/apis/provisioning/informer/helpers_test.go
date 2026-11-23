@@ -14,6 +14,8 @@ import (
 
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/nats"
+	apiinformers "github.com/grafana/grafana/pkg/services/apiserver/informers"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -31,6 +33,11 @@ var (
 type fakeSubscriber struct {
 	mu       sync.Mutex
 	handlers map[string]nats.MessageHandler
+}
+
+// natsSelector offers the NATS mechanisms, live ones only when sub is non-nil.
+func natsSelector(sub nats.Subscriber) *apiinformers.Selector {
+	return apiinformers.ProvideSelector(&setting.Cfg{NATS: setting.NATSSettings{Enabled: true}}, sub)
 }
 
 func newFakeSubscriber() *fakeSubscriber {

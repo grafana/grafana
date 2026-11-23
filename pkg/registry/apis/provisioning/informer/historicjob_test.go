@@ -46,7 +46,8 @@ func TestNewHistoricJobDeltaSource_SelectsSourceByNATS(t *testing.T) {
 	client := fake.NewClientset()
 
 	t.Run("NATS off uses apiserver informer", func(t *testing.T) {
-		src := NewHistoricJobDeltaSource(false, client, time.Minute)
+		src, err := NewHistoricJobDeltaSource(nil, client, time.Minute)
+		require.NoError(t, err)
 		_, isPeriodic := src.(*usinformer.CachelessPeriodicInformer)
 		assert.False(t, isPeriodic, "expected the apiserver informer, not the periodic lister")
 		_, isInformer := src.(cache.SharedIndexInformer)
@@ -54,7 +55,9 @@ func TestNewHistoricJobDeltaSource_SelectsSourceByNATS(t *testing.T) {
 	})
 
 	t.Run("NATS on uses periodic lister", func(t *testing.T) {
-		src := NewHistoricJobDeltaSource(true, client, time.Minute)
+		// Without a subscriber: the re-list needs no subscription.
+		src, err := NewHistoricJobDeltaSource(natsSelector(nil), client, time.Minute)
+		require.NoError(t, err)
 		_, isPeriodic := src.(*usinformer.CachelessPeriodicInformer)
 		assert.True(t, isPeriodic, "expected the periodic lister when NATS is enabled")
 	})

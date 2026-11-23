@@ -16,6 +16,7 @@ import (
 	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/nats"
+	apiinformers "github.com/grafana/grafana/pkg/services/apiserver/informers"
 	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
@@ -46,28 +47,40 @@ type RepositoryGetter interface {
 // that triggered them (see freshness.go); nil disables the observation. It
 // applies to the NATS path only — the apiserver path reads a cache the watch
 // keeps current, so there is no cross-replica read visibility to measure.
-func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Interface, keys keysapi.Lister, resync time.Duration, metrics *RelistProjectionMetrics, freshness *FreshnessMetrics) (DeltaSource, RepositoryGetter) {
-	if nats.Enabled(subscriber) {
-		store := usinformer.NewStore()
-		gvr := provisioningapis.RepositoryResourceInfo.GroupVersionResource()
-		recorder := metrics.Recorder(gvr)
-		source := NewRepositoryInformer(subscriber, client, "", resync, store, keys, recorder)
-		// The informer is the repository controller's only feed, and everything
-		// that creates provisioning work lives in its reconcile: scheduled syncs,
-		// health checks, webhook create/rotate, quota. Gating the initial list on
-		// the subscription would stall all of it while NATS is unavailable — and
-		// gating buys no safety here, since reconcile reads come fresh from the
-		// API and the re-list (not the live stream) is what keeps a replica
-		// reconciled under round-robin delivery. In degraded mode only the
-		// live-event latency is lost until the subscription opens.
-		source.AllowDegradedStart()
-		announced := newAnnouncements()
-		source.SetAnnouncements(announced)
-		getter := NewClientRepositoryGetter(client.ProvisioningV0alpha1(), store)
-		return source, observeRepositoryFreshness(getter, announced, freshness.Recorder(gvr.Resource))
+func NewRepositoryDeltaSource(selector *apiinformers.Selector, client versioned.Interface, keys keysapi.Lister, resync time.Duration, metrics *RelistProjectionMetrics, freshness *FreshnessMetrics) (DeltaSource, RepositoryGetter, error) {
+	gvr := provisioningapis.RepositoryResourceInfo.GroupVersionResource()
+	// Each builder sets the getter its source backs; only the selected one runs.
+	var getter RepositoryGetter
+	source, err := selector.Source(apiinformers.Sources{
+		GVR:   gvr,
+		Needs: apiinformers.KeyedNeeds,
+		Watch: func() DeltaSource {
+			inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Repositories()
+			getter = NewCachedRepositoryGetter(inf.Lister())
+			return inf.Informer()
+		},
+		NotifyWithReList: func(subscriber nats.Subscriber) DeltaSource {
+			store := usinformer.NewStore()
+			source := NewRepositoryInformer(subscriber, client, "", resync, store, keys, metrics.Recorder(gvr))
+			// The informer is the repository controller's only feed, and everything
+			// that creates provisioning work lives in its reconcile: scheduled syncs,
+			// health checks, webhook create/rotate, quota. Gating the initial list on
+			// the subscription would stall all of it while NATS is unavailable — and
+			// gating buys no safety here, since reconcile reads come fresh from the
+			// API and the re-list (not the live stream) is what keeps a replica
+			// reconciled under round-robin delivery. In degraded mode only the
+			// live-event latency is lost until the subscription opens.
+			source.AllowDegradedStart()
+			announced := newAnnouncements()
+			source.SetAnnouncements(announced)
+			getter = observeRepositoryFreshness(NewClientRepositoryGetter(client.ProvisioningV0alpha1(), store), announced, freshness.Recorder(gvr.Resource))
+			return source
+		},
+	})
+	if err != nil {
+		return nil, nil, err
 	}
-	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Repositories()
-	return inf.Informer(), NewCachedRepositoryGetter(inf.Lister())
+	return source, getter, nil
 }
 
 // NewRepositoryInformer builds an Informer for repositories. When keys is

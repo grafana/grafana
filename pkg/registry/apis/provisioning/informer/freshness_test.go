@@ -413,7 +413,8 @@ func TestNewRepositoryDeltaSource_ObservesReadFreshness(t *testing.T) {
 
 		reg := prometheus.NewRegistry()
 		sub := newFakeSubscriber()
-		source, getter := NewRepositoryDeltaSource(sub, client, nil, time.Minute, nil, NewFreshnessMetrics(reg))
+		source, getter, err := NewRepositoryDeltaSource(natsSelector(sub), client, nil, time.Minute, nil, NewFreshnessMetrics(reg))
+		require.NoError(t, err)
 
 		stop := make(chan struct{})
 		t.Cleanup(func() { close(stop) })
@@ -426,7 +427,7 @@ func TestNewRepositoryDeltaSource_ObservesReadFreshness(t *testing.T) {
 
 		ctx := context.Background()
 		// Before any notification there is nothing to compare against.
-		_, err := getter.Get(ctx, testNamespace, "r")
+		_, err = getter.Get(ctx, testNamespace, "r")
 		require.NoError(t, err)
 		assert.Zero(t, freshnessCount(t, reg, res, outcomeCurrent))
 		assert.Zero(t, freshnessCount(t, reg, res, outcomeBehind))
@@ -462,7 +463,8 @@ func TestNewRepositoryDeltaSource_DeleteLeavesNoAnnouncement(t *testing.T) {
 
 		reg := prometheus.NewRegistry()
 		sub := newFakeSubscriber()
-		source, getter := NewRepositoryDeltaSource(sub, client, nil, time.Minute, nil, NewFreshnessMetrics(reg))
+		source, getter, err := NewRepositoryDeltaSource(natsSelector(sub), client, nil, time.Minute, nil, NewFreshnessMetrics(reg))
+		require.NoError(t, err)
 
 		stop := make(chan struct{})
 		t.Cleanup(func() { close(stop) })
@@ -481,7 +483,7 @@ func TestNewRepositoryDeltaSource_DeleteLeavesNoAnnouncement(t *testing.T) {
 			sub.publish(t, subject, evt)
 		}
 
-		_, err := getter.Get(context.Background(), testNamespace, "r")
+		_, err = getter.Get(context.Background(), testNamespace, "r")
 		assert.True(t, apierrors.IsNotFound(err), "the object is gone; the read must still 404")
 		for _, outcome := range []string{outcomeCurrent, outcomeBehind, outcomeNotFound} {
 			assert.Zerof(t, freshnessCount(t, reg, res, outcome), "outcome %q", outcome)
@@ -492,7 +494,8 @@ func TestNewRepositoryDeltaSource_DeleteLeavesNoAnnouncement(t *testing.T) {
 // The getter the apiserver path returns is not wrapped: a watch-fed cache has no
 // cross-replica read visibility to measure.
 func TestNewRepositoryDeltaSource_NoFreshnessOnTheAPIServerPath(t *testing.T) {
-	_, getter := NewRepositoryDeltaSource(nil, fake.NewClientset(), nil, time.Minute, nil, NewFreshnessMetrics(prometheus.NewRegistry()))
+	_, getter, err := NewRepositoryDeltaSource(nil, fake.NewClientset(), nil, time.Minute, nil, NewFreshnessMetrics(prometheus.NewRegistry()))
+	require.NoError(t, err)
 	assert.IsType(t, cachedRepositoryGetter{}, getter)
 }
 
@@ -509,7 +512,8 @@ func TestNewConnectionDeltaSource_ObservesReadFreshness(t *testing.T) {
 
 		reg := prometheus.NewRegistry()
 		sub := newFakeSubscriber()
-		source, getter := NewConnectionDeltaSource(sub, client, nil, time.Minute, nil, NewFreshnessMetrics(reg))
+		source, getter, err := NewConnectionDeltaSource(natsSelector(sub), client, nil, time.Minute, nil, NewFreshnessMetrics(reg))
+		require.NoError(t, err)
 
 		stop := make(chan struct{})
 		t.Cleanup(func() { close(stop) })
@@ -524,7 +528,7 @@ func TestNewConnectionDeltaSource_ObservesReadFreshness(t *testing.T) {
 			Type: resourcepb.WatchNotification_MODIFIED, Namespace: testNamespace, Name: "c", ResourceVersion: announced,
 		})
 
-		_, err := getter.Get(context.Background(), testNamespace, "c")
+		_, err = getter.Get(context.Background(), testNamespace, "c")
 		require.NoError(t, err)
 		assert.Equal(t, float64(1), freshnessCount(t, reg, res, outcomeBehind))
 	})

@@ -13,6 +13,7 @@ import (
 	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/nats"
+	apiinformers "github.com/grafana/grafana/pkg/services/apiserver/informers"
 	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
@@ -34,23 +35,35 @@ type ConnectionGetter interface {
 // freshness instruments how the getter's reads compare to the notifications
 // that triggered them (see freshness.go); nil disables the observation, and it
 // applies to the NATS path only.
-func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Interface, keys keysapi.Lister, resync time.Duration, metrics *RelistProjectionMetrics, freshness *FreshnessMetrics) (DeltaSource, ConnectionGetter) {
-	if nats.Enabled(subscriber) {
-		gvr := provisioningapis.ConnectionResourceInfo.GroupVersionResource()
-		recorder := metrics.Recorder(gvr)
-		source := NewConnectionInformer(subscriber, client, "", resync, usinformer.NewStore(), keys, recorder)
-		// Same as the repository informer: the controller's only feed, with
-		// connection health checks driven by the re-list, so it must keep
-		// operating at the re-list cadence while NATS is unavailable rather
-		// than gate on the subscription.
-		source.AllowDegradedStart()
-		announced := newAnnouncements()
-		source.SetAnnouncements(announced)
-		getter := NewClientConnectionGetter(client.ProvisioningV0alpha1())
-		return source, observeConnectionFreshness(getter, announced, freshness.Recorder(gvr.Resource))
+func NewConnectionDeltaSource(selector *apiinformers.Selector, client versioned.Interface, keys keysapi.Lister, resync time.Duration, metrics *RelistProjectionMetrics, freshness *FreshnessMetrics) (DeltaSource, ConnectionGetter, error) {
+	gvr := provisioningapis.ConnectionResourceInfo.GroupVersionResource()
+	// Each builder sets the getter its source backs; only the selected one runs.
+	var getter ConnectionGetter
+	source, err := selector.Source(apiinformers.Sources{
+		GVR:   gvr,
+		Needs: apiinformers.KeyedNeeds,
+		Watch: func() DeltaSource {
+			inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Connections()
+			getter = NewCachedConnectionGetter(inf.Lister())
+			return inf.Informer()
+		},
+		NotifyWithReList: func(subscriber nats.Subscriber) DeltaSource {
+			source := NewConnectionInformer(subscriber, client, "", resync, usinformer.NewStore(), keys, metrics.Recorder(gvr))
+			// Same as the repository informer: the controller's only feed, with
+			// connection health checks driven by the re-list, so it must keep
+			// operating at the re-list cadence while NATS is unavailable rather
+			// than gate on the subscription.
+			source.AllowDegradedStart()
+			announced := newAnnouncements()
+			source.SetAnnouncements(announced)
+			getter = observeConnectionFreshness(NewClientConnectionGetter(client.ProvisioningV0alpha1()), announced, freshness.Recorder(gvr.Resource))
+			return source
+		},
+	})
+	if err != nil {
+		return nil, nil, err
 	}
-	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Connections()
-	return inf.Informer(), NewCachedConnectionGetter(inf.Lister())
+	return source, getter, nil
 }
 
 // NewConnectionInformer builds an Informer for connections. When keys is

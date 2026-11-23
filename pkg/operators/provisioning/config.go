@@ -45,6 +45,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
+	apiinformers "github.com/grafana/grafana/pkg/services/apiserver/informers"
 	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 )
 
@@ -65,6 +66,7 @@ type ControllerConfig struct {
 	provisioningClient    *client.Clientset
 	provisioningRESTCfg   *rest.Config
 	natsSubscriber        *nats.SubscriberService
+	informers             *apiinformers.Selector
 	unified               resources.ResourceStore
 	clients               resources.ClientFactory
 	manifestWatcher       services.Service
@@ -145,6 +147,7 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*Control
 		workerCount:    operatorSec.Key("worker_count").MustInt(1),
 		drainTimeout:   operatorSec.Key("drain_timeout").MustDuration(30 * time.Second),
 	}
+	controllerCfg.informers = apiinformers.ProvideSelector(cfg, controllerCfg.natsSubscriber)
 
 	for _, opt := range registeredConfigOptions {
 		if err := opt(context.Background(), controllerCfg); err != nil {

@@ -1,18 +1,12 @@
 package informer
 
 import (
-	"k8s.io/client-go/tools/cache"
+	"github.com/grafana/grafana/pkg/services/apiserver/informers"
 )
 
-// DeltaSource is the subset of cache.SharedIndexInformer the controllers use to
-// receive events: register a handler (whose registration reports HasSynced) and
-// run until stopped. Both an apiserver-backed SharedIndexInformer and the
-// NATS-backed informer.Informer satisfy it, so the wiring can pick a source
-// without the controller knowing which it is.
-type DeltaSource interface {
-	AddEventHandler(handler cache.ResourceEventHandler) (cache.ResourceEventHandlerRegistration, error)
-	Run(stopCh <-chan struct{})
-}
+// DeltaSource is what the provisioning controllers receive events from; see
+// informers.DeltaSource.
+type DeltaSource = informers.DeltaSource
 
 // queueGroup is the NATS queue group every provisioning informer joins, so each
 // notification is round-robined to a single replica rather than broadcast to all.
@@ -22,5 +16,5 @@ const queueGroup = "provisioning-informer"
 // typed client and build the minimal live-event object as the resource's concrete
 // type, so the controller's event handler keys off the right type. namespace
 // scopes the NATS subscription and the LIST; pass "" to watch every namespace.
-// Each type file also has a New<Type>DeltaSource selector that picks a
-// NATS-backed informer when nats.Enabled(subscriber), else an apiserver-backed one.
+// Each type file also has a New<Type>DeltaSource that declares what its
+// controller needs and lets the informers.Selector pick the source.

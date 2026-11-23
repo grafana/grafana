@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
-	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -57,7 +56,7 @@ func (s *HistoryJobCleanupService) Run(ctx context.Context) error {
 	if expiration <= 0 {
 		expiration = setting.ProvisioningHistoryExpirationDefault
 	}
-	source, err := controller.ProvideHistoryJobCleanup(ctx, nats.Enabled(s.builder.natsSubscriber), client, expiration)
+	source, err := controller.ProvideHistoryJobCleanup(ctx, s.builder.informers, client, expiration)
 	if err != nil {
 		return err
 	}

@@ -13,6 +13,8 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
+	"github.com/grafana/grafana/pkg/services/apiserver/informers"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestProvideHistoryJobCleanup_DeletesOnlyExpiredJobs(t *testing.T) {
@@ -39,7 +41,8 @@ func TestProvideHistoryJobCleanup_DeletesOnlyExpiredJobs(t *testing.T) {
 					historicJob("fresh", expiration/2),
 				)
 
-				source, err := ProvideHistoryJobCleanup(context.Background(), tc.natsEnabled, client, expiration)
+				cfg := &setting.Cfg{NATS: setting.NATSSettings{Enabled: tc.natsEnabled}}
+				source, err := ProvideHistoryJobCleanup(context.Background(), informers.ProvideSelector(cfg, nil), client, expiration)
 				require.NoError(t, err)
 
 				stop := make(chan struct{})
