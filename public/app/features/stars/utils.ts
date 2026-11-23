@@ -6,6 +6,16 @@ export function findStarredNames(stars: StarsList | undefined, group: string, ki
   return stars?.items?.[0]?.spec.resource.find((r) => r.group === group && r.kind === kind)?.names ?? [];
 }
 
+/** Whether the star set holds one of `names` as an object of one of `kinds`. */
+export function starsHoldName(
+  stars: StarsList | undefined,
+  kinds: ReadonlyArray<{ group: string; kind: string }>,
+  names: string[]
+): boolean {
+  const starredNames = new Set(kinds.flatMap(({ group, kind }) => findStarredNames(stars, group, kind)));
+  return names.some((name) => starredNames.has(name));
+}
+
 /** The starred names of one search kind. */
 export interface StarredNames {
   kind: string;

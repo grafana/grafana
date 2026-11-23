@@ -2,10 +2,11 @@ import { useMemo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { getStarsSrv } from '@grafana/runtime';
 import { Icon, ToolbarButton } from '@grafana/ui';
 
 import { itemStarred } from './analytics/main';
-import { useStarItem, useStarredItems } from './hooks';
+import { useStarredItems } from './hooks';
 import { canUseStars } from './utils';
 
 const getStarTooltips = (title: string) => ({
@@ -19,7 +20,7 @@ type Props = {
   title: string;
   group: string;
   kind: string;
-  id: string;
+  name: string;
 };
 
 /** Renders nothing for a user without a stars resource, such as an anonymous user, since starring would fail. */
@@ -30,21 +31,25 @@ export function StarToolbarButton(props: Props) {
   return <StarToggle {...props} />;
 }
 
-function StarToggle({ title, group, kind, id }: Props) {
+function StarToggle({ title, group, kind, name }: Props) {
   const tooltips = getStarTooltips(title);
-
-  const handleItemStar = useStarItem(group, kind);
 
   const { data: stars, isLoading } = useStarredItems(group, kind);
 
   const isStarred = useMemo(() => {
     const starredItems = stars || [];
 
-    return starredItems.includes(id);
-  }, [id, stars]);
+    return starredItems.includes(name);
+  }, [name, stars]);
 
   const handleStarToggle = async () => {
-    await handleItemStar(id, !isStarred);
+    const ref = { group, kind, name };
+    try {
+      await (isStarred ? getStarsSrv().unstar(ref) : getStarsSrv().star(ref));
+    } catch {
+      // Grafana refused the change — the button keeps showing the state that persisted
+      return;
+    }
     itemStarred({
       group,
       kind,
@@ -81,4 +86,24 @@ function StarToggle({ title, group, kind, id }: Props) {
       onClick={handleStarToggle}
     />
   );
+}
+
+/**
+ * EXPOSED COMPONENT (stable): grafana/star-toolbar-button/v1
+ *
+ * Plugins render this through the Plugin Extensions system, so its props and behavior are a
+ * contract. A breaking change goes under a new ID (v2), not in place.
+ *
+ * Props are widened because the registry types every exposed component as `ComponentType<{}>`;
+ * the contract is only checked on the consuming side, through `usePluginComponent`'s generic.
+ * A plugin that names no object has nothing to star, so this renders nothing rather than
+ * throwing out of someone else's React tree.
+ */
+export function StarToolbarButtonExposed(props: Partial<Props>) {
+  const { title, group, kind, name } = props;
+  if (!title || !group || !kind || !name) {
+    console.error('[StarToolbarButton] Pass title, group, kind and name: the object to star.');
+    return null;
+  }
+  return <StarToolbarButton {...props} title={title} group={group} kind={kind} name={name} />;
 }

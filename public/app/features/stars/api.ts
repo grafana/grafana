@@ -6,7 +6,7 @@ import { type DashboardQueryResult } from 'app/features/search/service/types';
 import { type ThunkResult } from 'app/types/store';
 
 import { STARRED_INDEX_KINDS } from './kinds';
-import { findStarredNames, type StarredNames, userStarsFieldSelector } from './utils';
+import { type StarredNames, starsHoldName, userStarsFieldSelector } from './utils';
 
 /** Tag for the starred search rows, invalidated by changes that rewrite rows without changing the star set. */
 const STARRED_SEARCH_TAG = 'StarredSearch';
@@ -78,8 +78,7 @@ export const invalidateStarredSearchFor =
     const { data } = collectionsAPIv1alpha1.endpoints.listStars.select({ fieldSelector: userStarsFieldSelector() })(
       getState()
     );
-    const starredNames = new Set(STARRED_INDEX_KINDS.flatMap(({ group, kind }) => findStarredNames(data, group, kind)));
-    if (uids.some((uid) => starredNames.has(uid))) {
+    if (starsHoldName(data, STARRED_INDEX_KINDS, uids)) {
       dispatch(invalidateStarredSearch());
     }
   };

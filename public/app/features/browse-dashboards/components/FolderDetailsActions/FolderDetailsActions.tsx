@@ -42,7 +42,7 @@ export const FolderDetailsActions = ({ folderDTO, showRecentlyDeleted = true }: 
   return (
     <Stack alignItems="center" wrap>
       {folderDTO && (
-        <StarToolbarButton group="folder.grafana.app" kind="Folder" id={folderDTO.uid} title={folderDTO.title} />
+        <StarToolbarButton group="folder.grafana.app" kind="Folder" name={folderDTO.uid} title={folderDTO.title} />
       )}
       {canReadTeams && folderDTO && 'ownerReferences' in folderDTO && (
         <FolderOwners ownerReferences={folderDTO.ownerReferences} />

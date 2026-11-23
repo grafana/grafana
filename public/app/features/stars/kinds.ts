@@ -62,6 +62,11 @@ export function getStarredKinds(): readonly StarredKind[] {
   return allKinds;
 }
 
+/** The kind with this API group and kind name, when it is one Grafana shows stars of. */
+export function findStarredKind(group: string, kind: string): StarredKind | undefined {
+  return getStarredKinds().find((candidate) => candidate.group === group && candidate.kind === kind);
+}
+
 /** The kind behind a search row's or nav leaf's kind string; undefined for kinds nobody can star, such as panels. */
 export function findStarredKindBySearchKind(searchKind: string): StarredKind | undefined {
   return getStarredKinds().find((candidate) => candidate.searchKind === searchKind);

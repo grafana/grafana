@@ -128,7 +128,7 @@ export function ToolbarActions({ dashboard }: Props) {
           group="dashboard.grafana.app"
           kind="Dashboard"
           title={title}
-          id={uid}
+          name={uid}
         />
       );
     },
