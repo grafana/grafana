@@ -3,6 +3,7 @@ import { autoUpdate, offset, useFloating } from '@floating-ui/react';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
+import { intervalToDuration } from 'date-fns/intervalToDuration';
 import { memo, useCallback, useEffect, useRef, useState, type JSX } from 'react';
 import { useMedia } from 'react-use';
 
@@ -15,7 +16,7 @@ import {
   dateMath,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t, Trans } from '@grafana/i18n';
+import { formatDuration, t, Trans } from '@grafana/i18n';
 import { type TimeZone } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
@@ -308,6 +309,7 @@ export const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRang
 
   // Get timezone info only if timeZone is provided
   const timeZoneInfo = timeZone ? getTimeZoneDisplayInfo(timeZone, now) : undefined;
+  const duration = getAbsoluteRangeDuration(timeRange);
 
   return (
     <Stack alignItems="center" direction="column" gap={0}>
@@ -318,12 +320,25 @@ export const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRang
         </div>
         {dateTimeFormat(timeRange.to, { timeZone })}
       </div>
+      {duration && <div className="text-center">{duration}</div>}
       <div className={styles.container}>
         <span className={styles.utc}>{timeZoneInfo ? getTimeZoneTitle(timeZoneInfo) : ''}</span>
         <TimeZoneDescription info={timeZoneInfo} />
       </div>
     </Stack>
   );
+};
+
+const getAbsoluteRangeDuration = ({ from, to, raw }: TimeRange) => {
+  if (dateMath.isMathString(raw.from) || dateMath.isMathString(raw.to) || to.isBefore(from)) {
+    return '';
+  }
+  try {
+    return formatDuration(intervalToDuration({ start: from.valueOf(), end: to.valueOf() }), { style: 'long' });
+  } catch {
+    // Intl.DurationFormat is missing in older browsers; the duration is optional so omit it
+    return '';
+  }
 };
 
 type LabelProps = Pick<TimeRangePickerProps, 'hideText' | 'value' | 'timeZone' | 'quickRanges'>;

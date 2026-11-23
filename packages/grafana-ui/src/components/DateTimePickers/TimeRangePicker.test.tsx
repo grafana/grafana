@@ -3,10 +3,16 @@ import userEvent from '@testing-library/user-event';
 
 import { dateTime, dateTimeFormat, guessBrowserTimeZone, makeTimeRange, type TimeRange } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import * as i18n from '@grafana/i18n';
 
 import { TimeRangeProvider } from '../../graveyard/TimeRangeContext/TimeRangeContext';
 
 import { TimePickerTooltip, TimeRangePicker } from './TimeRangePicker';
+
+jest.mock('@grafana/i18n', () => {
+  const actual = jest.requireActual('@grafana/i18n');
+  return { ...actual, formatDuration: jest.fn(actual.formatDuration) };
+});
 
 const selectors = e2eSelectors.components.TimePicker;
 
@@ -330,5 +336,48 @@ describe('TimePickerTooltip', () => {
 
     expect(screen.getByText('Accra')).toBeInTheDocument();
     expect(screen.getByText('GMT')).toBeInTheDocument();
+  });
+
+  it('renders the duration of an absolute range', () => {
+    const sixHours: TimeRange = {
+      from: dateTime('2024-01-01T00:00:00Z'),
+      to: dateTime('2024-01-01T06:00:00Z'),
+      raw: { from: dateTime('2024-01-01T00:00:00Z'), to: dateTime('2024-01-01T06:00:00Z') },
+    };
+    render(<TimePickerTooltip timeRange={sixHours} timeZone="utc" />);
+
+    expect(screen.getByText('6 hours')).toBeInTheDocument();
+  });
+
+  it('renders multi-unit durations', () => {
+    render(<TimePickerTooltip timeRange={timeRange} timeZone="utc" />);
+
+    expect(screen.getByText('1 day')).toBeInTheDocument();
+  });
+
+  it('does not render a duration for a relative range', () => {
+    const relative: TimeRange = {
+      from: dateTime('2024-01-01T00:00:00Z'),
+      to: dateTime('2024-01-01T06:00:00Z'),
+      raw: { from: 'now-6h', to: 'now' },
+    };
+    render(<TimePickerTooltip timeRange={relative} timeZone="utc" />);
+
+    expect(screen.queryByText(/hours?$/)).not.toBeInTheDocument();
+  });
+
+  it('renders without a duration when the duration formatter throws, e.g. no Intl.DurationFormat', () => {
+    jest.mocked(i18n.formatDuration).mockImplementationOnce(() => {
+      throw new TypeError('Intl.DurationFormat is not a constructor');
+    });
+    const sixHours: TimeRange = {
+      from: dateTime('2024-01-01T00:00:00Z'),
+      to: dateTime('2024-01-01T06:00:00Z'),
+      raw: { from: dateTime('2024-01-01T00:00:00Z'), to: dateTime('2024-01-01T06:00:00Z') },
+    };
+    render(<TimePickerTooltip timeRange={sixHours} timeZone="utc" />);
+
+    expect(screen.getByText(/2024-01-01 06:00:00/)).toBeInTheDocument();
+    expect(screen.queryByText('6 hours')).not.toBeInTheDocument();
   });
 });
