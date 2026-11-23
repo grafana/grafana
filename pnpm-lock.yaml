@@ -674,8 +674,8 @@ importers:
         specifier: 0.22.10
         version: 0.22.10(immutable@5.2.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(slate@0.47.9(immutable@5.2.1)(supports-color@7.2.0))(supports-color@7.2.0)
       swagger-ui-react:
-        specifier: 5.35.0
-        version: 5.35.0(@types/react@19.2.18)(debug@4.4.3(supports-color@7.2.0))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)
+        specifier: 5.35.1
+        version: 5.35.1(@types/react@19.2.18)(debug@4.4.3(supports-color@7.2.0))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)
       systemjs:
         specifier: 6.15.1
         version: 6.15.1
@@ -14387,8 +14387,8 @@ packages:
     resolution: {integrity: sha512-EDpBphskzOCzczUrucX3/FVb7k5gch1GSzB+MTBcdGY3Zew2XKs0ryPPw1J2l1hioojwwKUZXtEg31axbnQvpQ==}
     engines: {node: '>=22'}
 
-  swagger-ui-react@5.35.0:
-    resolution: {integrity: sha512-r15YewT7DTzIJFgDMseAvq6ddwCkG9DV88g6zJw+FBdfKDaSR8mXM831qEVqT54HxhHrqVjlOSpp7RpsJBd4fw==}
+  swagger-ui-react@5.35.1:
+    resolution: {integrity: sha512-9YvQTF/sRBmJ7NxBffCzEBDWNvqepSBT2LT6d/yaa2DaHIAP4AKVARrgi+9OFDOm8lo9tS8bFngf/UfDm2gaZg==}
     peerDependencies:
       react: '>=16.8.0 <20'
       react-dom: '>=16.8.0 <20'
@@ -29350,7 +29350,7 @@ snapshots:
       - debug
       - supports-color
 
-  swagger-ui-react@5.35.0(@types/react@19.2.18)(debug@4.4.3(supports-color@7.2.0))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0):
+  swagger-ui-react@5.35.1(@types/react@19.2.18)(debug@4.4.3(supports-color@7.2.0))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0):
     dependencies:
       '@babel/runtime-corejs3': 7.27.6
       '@scarf/scarf': 1.4.0
