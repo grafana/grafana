@@ -137,6 +137,20 @@ export const CORE_KINDS = {
 
 const kinds: CoreKindInfo[] = Object.values(CORE_KINDS);
 
+const pluginKinds = new Map<string, KindInfo>();
+
+export function addKinds(added: KindInfo[]) {
+  for (const kind of added) {
+    if (!kinds.some((row) => row.kind === kind.kind && coversGroup(row, kind.group))) {
+      pluginKinds.set(`${kind.group}/${kind.kind}`, kind);
+    }
+  }
+}
+
+export function getPluginKinds(): KindInfo[] {
+  return [...pluginKinds.values()];
+}
+
 /**
  * Whether `group` names this kind: its own group, or for a collection kind a group served inside the
  * collection, which is the group a single object carries.
@@ -147,7 +161,7 @@ export function coversGroup(kind: KindInfo, group: string): boolean {
 
 /** The kind an object of this API group and Kubernetes kind belongs to. */
 export function findKind(group: string, kind: string): KindInfo | undefined {
-  return kinds.find((row) => row.kind === kind && coversGroup(row, group));
+  return [...kinds, ...pluginKinds.values()].find((row) => row.kind === kind && coversGroup(row, group));
 }
 
 /** The kind behind a dashboard search row's kind string; undefined for rows such as panels. */
@@ -156,4 +170,4 @@ export function findKindBySearchKind(searchKind: string): KindInfo | undefined {
 }
 
 /** This table and its lookups as the `KindRegistry` that `@grafana/runtime` defines for plugins. */
-export const kindRegistry: KindRegistry = { coreKinds: CORE_KINDS, coversGroup, findKind };
+export const kindRegistry: KindRegistry = { coreKinds: CORE_KINDS, coversGroup, findKind, addKinds };
