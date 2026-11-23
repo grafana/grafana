@@ -36,7 +36,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -164,7 +163,6 @@ func TestBleveSearchRootFolderExpansion(t *testing.T) {
 			Limit: 100000,
 		}, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		names := make([]string, 0, len(rsp.Rows))
 		for _, row := range rsp.Rows {
 			names = append(names, row.Key.Name)
@@ -344,7 +342,6 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 			},
 		}, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		require.NotNil(t, rsp.Facet)
 
 		assertSearchResultsSnapshot(t, filepath.Join("testdata", "manual-dashboard.json"), rsp)
@@ -632,7 +629,6 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		}, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		require.Nil(t, rsp.Facet)
 
 		assertSearchResultsSnapshot(t, filepath.Join("testdata", "manual-folder.json"), rsp)
@@ -718,7 +714,6 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 			},
 		}, &resource.SearchIndexes{Federated: []resource.ResourceIndex{foldersIndex}}, nil) // << note the folder index matches the federation request
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		require.NotNil(t, rsp.Facet)
 
 		// Sorted across two indexes
@@ -911,7 +906,7 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 		searchReq, errResult := idx.toBleveSearchRequest(t.Context(), &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{},
 			Limit:   10,
-		}, nil, false, nil, nil)
+		}, false, nil)
 		require.Nil(t, errResult)
 		require.Len(t, searchReq.Sort, 2)
 
@@ -931,7 +926,7 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 			Options: &resourcepb.ListOptions{},
 			Limit:   10,
 			Query:   "grafana",
-		}, nil, false, nil, nil)
+		}, false, nil)
 		require.Nil(t, errResult)
 		require.Len(t, searchReq.Sort, 2)
 		_, ok := searchReq.Sort[0].(*blevesearch.SortScore)
@@ -950,7 +945,7 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
 				"tagValues": {Field: resource.SEARCH_FIELD_TAGS, Limit: 10},
 			},
-		}, nil, false, nil, nil)
+		}, false, nil)
 		require.Nil(t, errResult)
 		require.Contains(t, searchReq.Facets, "tagValues")
 		assert.Equal(t, resource.SEARCH_FIELD_TAGS, searchReq.Facets["tagValues"].Field)
@@ -963,7 +958,7 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
 				"region": {Field: "labels.region", Limit: 10},
 			},
-		}, nil, false, nil, nil)
+		}, false, nil)
 		require.Nil(t, searchReq)
 		require.NotNil(t, errResult)
 		assert.Contains(t, errResult.Message, `field "labels.region" does not support faceting`)
@@ -979,7 +974,7 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 				Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
 					"tagValues": {Field: resource.SEARCH_FIELD_TAGS, Limit: -1},
 				},
-			}, nil, postRankAuthz, nil, nil)
+			}, postRankAuthz, nil)
 			require.Nil(t, searchReq)
 			require.NotNil(t, errResult)
 			assert.Contains(t, errResult.Message, `facet "tagValues" has a negative limit`)
@@ -998,7 +993,7 @@ func TestBleveTrashSearchFailsWhenDeletedDocumentsAreNotIndexed(t *testing.T) {
 		Options:   &resourcepb.ListOptions{},
 		Limit:     10,
 		IsDeleted: true,
-	}, nil, false, nil, nil)
+	}, false, nil)
 
 	require.Nil(t, searchReq)
 	require.NotNil(t, errResult)
@@ -1034,13 +1029,13 @@ func TestBleveTrashResourceVersionSortRequiresIndexFeature(t *testing.T) {
 	}
 
 	t.Run("an older index still serves trash without the new sort", func(t *testing.T) {
-		searchReq, errResult := newIndex(oldFeatures).toBleveSearchRequest(t.Context(), request(false), nil, false, nil, nil)
+		searchReq, errResult := newIndex(oldFeatures).toBleveSearchRequest(t.Context(), request(false), false, nil)
 		require.NotNil(t, searchReq)
 		require.Nil(t, errResult)
 	})
 
 	t.Run("an older index refuses the new sort", func(t *testing.T) {
-		searchReq, errResult := newIndex(oldFeatures).toBleveSearchRequest(t.Context(), request(true), nil, false, nil, nil)
+		searchReq, errResult := newIndex(oldFeatures).toBleveSearchRequest(t.Context(), request(true), false, nil)
 		require.Nil(t, searchReq)
 		require.NotNil(t, errResult)
 		assert.Equal(t, int32(http.StatusServiceUnavailable), errResult.Code)
@@ -1049,7 +1044,7 @@ func TestBleveTrashResourceVersionSortRequiresIndexFeature(t *testing.T) {
 
 	t.Run("a rebuilt index accepts the new sort", func(t *testing.T) {
 		features := append(slices.Clone(oldFeatures), resource.IndexFeatureSortableTrashResourceVersion)
-		searchReq, errResult := newIndex(features).toBleveSearchRequest(t.Context(), request(true), nil, false, nil, nil)
+		searchReq, errResult := newIndex(features).toBleveSearchRequest(t.Context(), request(true), false, nil)
 		require.NotNil(t, searchReq)
 		require.Nil(t, errResult)
 	})
@@ -1114,7 +1109,7 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 	}
 	for _, tc := range accepted {
 		t.Run("accepts "+tc.name, func(t *testing.T) {
-			searchReq, errResult := newIndex().toBleveSearchRequest(t.Context(), sortBy(tc.field), nil, false, nil, nil)
+			searchReq, errResult := newIndex().toBleveSearchRequest(t.Context(), sortBy(tc.field), false, nil)
 			require.Nil(t, errResult)
 			require.NotNil(t, searchReq)
 		})
@@ -1136,7 +1131,7 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 	}
 	for _, tc := range rejected {
 		t.Run("rejects "+tc.name, func(t *testing.T) {
-			searchReq, errResult := newIndex().toBleveSearchRequest(t.Context(), sortBy(tc.field), nil, false, nil, nil)
+			searchReq, errResult := newIndex().toBleveSearchRequest(t.Context(), sortBy(tc.field), false, nil)
 			require.Nil(t, searchReq)
 			require.NotNil(t, errResult)
 			assert.Equal(t, int32(http.StatusBadRequest), errResult.Code)
@@ -1150,7 +1145,7 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 		idx.keepsDeletedDocuments = true
 		req := sortBy(resource.SEARCH_FIELD_DELETION_TIME)
 		req.IsDeleted = true
-		_, errResult := idx.toBleveSearchRequest(t.Context(), req, nil, false, nil, nil)
+		_, errResult := idx.toBleveSearchRequest(t.Context(), req, false, nil)
 		require.Nil(t, errResult)
 	})
 
@@ -1160,13 +1155,13 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 			logger:       log.NewNopLogger(),
 			indexMetrics: resource.ProvideIndexMetrics(nil),
 		}
-		_, errResult := idx.toBleveSearchRequest(t.Context(), sortBy(resource.SEARCH_FIELD_TITLE), nil, false, nil, nil)
+		_, errResult := idx.toBleveSearchRequest(t.Context(), sortBy(resource.SEARCH_FIELD_TITLE), false, nil)
 		require.Nil(t, errResult)
 
-		_, errResult = idx.toBleveSearchRequest(t.Context(), sortBy(resource.SEARCH_FIELD_CREATED), nil, false, nil, nil)
+		_, errResult = idx.toBleveSearchRequest(t.Context(), sortBy(resource.SEARCH_FIELD_CREATED), false, nil)
 		require.Nil(t, errResult)
 
-		_, errResult = idx.toBleveSearchRequest(t.Context(), sortBy(resource.SEARCH_FIELD_MANAGER_ALLOW_EDITS), nil, false, nil, nil)
+		_, errResult = idx.toBleveSearchRequest(t.Context(), sortBy(resource.SEARCH_FIELD_MANAGER_ALLOW_EDITS), false, nil)
 		require.NotNil(t, errResult)
 	})
 }
@@ -1350,6 +1345,12 @@ func withIndexCacheTTL(ttl time.Duration) setupOption {
 	}
 }
 
+func withIndexCacheTTLIdleOnly(enabled bool) setupOption {
+	return func(options *BleveOptions) {
+		options.IndexCacheTTLIdleOnly = enabled
+	}
+}
+
 func withGlobalIndexIdleTimeout(timeout time.Duration) setupOption {
 	return func(options *BleveOptions) {
 		options.GlobalIndexIdleTimeout = timeout
@@ -1386,20 +1387,9 @@ func withRequiredIndexFeatures(features ...resource.IndexFeature) setupOption {
 	}
 }
 
-func withPostRankAuthzEnabled() setupOption {
-	return func(options *BleveOptions) {
-		options.PostRankAuthzEnabled = true
-	}
-}
-
-// TestRequiredIndexFeaturesFollowPostRankAuthz covers the gate that keeps the
-// stored facet mapping from rebuilding indexes that serve facets from bleve.
-func TestRequiredIndexFeaturesFollowPostRankAuthz(t *testing.T) {
-	nativeFacets, _ := setupBleveBackend(t)
-	require.NotContains(t, nativeFacets.requiredFeatures, resource.IndexFeatureStoredFacets)
-
-	postRank, _ := setupBleveBackend(t, withPostRankAuthzEnabled())
-	require.Contains(t, postRank.requiredFeatures, resource.IndexFeatureStoredFacets)
+func TestRequiredIndexFeaturesIncludeStoredFacets(t *testing.T) {
+	backend, _ := setupBleveBackend(t)
+	require.Contains(t, backend.requiredFeatures, resource.IndexFeatureStoredFacets)
 }
 
 // TestBuildIndexReuseChecksRequiredFeatures covers an on-disk index built before
@@ -1879,6 +1869,7 @@ func TestBuildIndexExpiration(t *testing.T) {
 			builtIndex, err := backend.BuildIndex(context.Background(), ns, int64(docs), "test", indexTestDocs(ns, docs, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 			require.NoError(t, err)
 
+			require.Same(t, builtIndex, backend.GetIndex(ns))
 			// Evict indexes.
 			backend.runEvictExpiredOrUnownedIndexes(time.Now().Add(5 * time.Minute))
 
@@ -1905,6 +1896,125 @@ func TestBuildIndexExpiration(t *testing.T) {
 				} else {
 					checkOpenIndexes(t, reg, 0, 1)
 				}
+			}
+		})
+	}
+}
+
+func TestMemoryIndexIdleOnlyExpiration(t *testing.T) {
+	const ttl = 4 * time.Hour
+	backend, reg := setupBleveBackend(t, withIndexCacheTTL(ttl), withIndexCacheTTLIdleOnly(true))
+	key := resource.NamespacedResource{Namespace: "test", Group: "group", Resource: "resource"}
+	build := func(rebuild bool) resource.ResourceIndex {
+		idx, err := backend.BuildIndex(t.Context(), key, 1, "test", indexTestDocs(key, 1, 100), nil, rebuild, time.Time{}, 0, resource.BuildIndexOptions{})
+		require.NoError(t, err)
+		require.True(t, idx.(*bleveIndex).expiration.IsZero())
+		return idx
+	}
+	build(false)
+
+	searched := time.Now().Add(-2 * ttl).Truncate(time.Millisecond)
+	require.NotNil(t, backend.getIndexForSearch(key, searched))
+	backend.runEvictExpiredOrUnownedIndexes(searched.Add(ttl))
+	require.NotNil(t, backend.PeekIndex(key), "the idle timeout has not been exceeded")
+
+	searchedAgain := searched.Add(ttl / 2)
+	require.NotNil(t, backend.getIndexForSearch(key, searchedAgain))
+	backend.runEvictExpiredOrUnownedIndexes(searched.Add(ttl + time.Millisecond))
+	require.NotNil(t, backend.PeekIndex(key), "a search must extend the lifetime beyond the original TTL")
+
+	// Neither background access nor replacement should keep an unused index open.
+	require.NotNil(t, backend.getCachedIndex(key, searchedAgain.Add(ttl)))
+	rebuilt := build(true)
+	_, err := indexTestDocs(key, 1, 101)(rebuilt)
+	require.NoError(t, err)
+	require.Equal(t, searchedAgain.UnixMilli(), rebuilt.(*bleveIndex).lastSearchedAt.Load())
+	backend.runEvictExpiredOrUnownedIndexes(searchedAgain.Add(ttl))
+	require.Same(t, rebuilt, backend.PeekIndex(key))
+
+	backend.runEvictExpiredOrUnownedIndexes(searchedAgain.Add(ttl + time.Millisecond))
+	require.Nil(t, backend.PeekIndex(key))
+	_, err = rebuilt.DocCount(t.Context(), "", nil)
+	require.ErrorIs(t, err, bleve.ErrorIndexClosed)
+	checkOpenIndexes(t, reg, 0, 0)
+}
+
+func TestMemoryIndexIdleOnlyTTL(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		ttl      time.Duration
+		deadline time.Duration
+	}{
+		{name: "disabled"},
+		{name: "negative", ttl: -time.Second},
+		{name: "sub-millisecond", ttl: time.Nanosecond, deadline: time.Millisecond},
+		{name: "fractional millisecond", ttl: 1500 * time.Microsecond, deadline: 2 * time.Millisecond},
+		{name: "short", ttl: time.Second, deadline: time.Second},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend, reg := setupBleveBackend(t, withIndexCacheTTL(tc.ttl), withIndexCacheTTLIdleOnly(true))
+			key := resource.NamespacedResource{Namespace: "test", Group: "group", Resource: "resource"}
+			idx, err := backend.BuildIndex(t.Context(), key, 1, "test", indexTestDocs(key, 1, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+			require.NoError(t, err)
+			cached := idx.(*bleveIndex)
+			require.True(t, cached.expiration.IsZero())
+			built := time.UnixMilli(cached.lastSearchedAt.Load())
+
+			if tc.ttl <= 0 {
+				backend.runEvictExpiredOrUnownedIndexes(built.Add(24 * time.Hour))
+				require.Same(t, idx, backend.PeekIndex(key))
+				checkOpenIndexes(t, reg, 1, 0)
+				return
+			}
+			backend.runEvictExpiredOrUnownedIndexes(built.Add(tc.deadline))
+			require.Same(t, idx, backend.PeekIndex(key))
+			backend.runEvictExpiredOrUnownedIndexes(built.Add(tc.deadline + time.Millisecond))
+			require.Nil(t, backend.PeekIndex(key), "a never-searched index must also go idle")
+			checkOpenIndexes(t, reg, 0, 0)
+		})
+	}
+}
+
+func TestIdleOnlyExpirationPreservesOtherCleanup(t *testing.T) {
+	const ttl = 4 * time.Hour
+	for _, tc := range []struct {
+		name       string
+		memory     bool
+		global     bool
+		owned      bool
+		ownsError  error
+		elapsed    time.Duration
+		wantClosed bool
+	}{
+		{name: "owned file", owned: true, elapsed: ttl + time.Minute},
+		{name: "unowned file", elapsed: unownedIndexIdleTimeout + time.Millisecond, wantClosed: true},
+		{name: "unowned memory", memory: true, elapsed: unownedIndexIdleTimeout + time.Millisecond, wantClosed: true},
+		{name: "idle global file", global: true, owned: true, elapsed: time.Hour + time.Millisecond, wantClosed: true},
+		{name: "file ownership error", ownsError: errors.New("ownership unavailable"), elapsed: ttl + time.Minute},
+		{name: "memory ownership error", memory: true, ownsError: errors.New("ownership unavailable"), elapsed: ttl + time.Millisecond, wantClosed: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend, _ := setupBleveBackend(t, withIndexCacheTTL(ttl), withIndexCacheTTLIdleOnly(true), withGlobalIndexIdleTimeout(time.Hour),
+				withOwnsIndexFn(func(resource.NamespacedResource) (bool, error) { return tc.owned, tc.ownsError }))
+			docKey := resource.NamespacedResource{Namespace: "test", Group: "group", Resource: "resource"}
+			key := docKey
+			if tc.global {
+				key = resource.GlobalSearchKey(key.Namespace)
+			}
+			docs := defaultFileThreshold
+			if tc.memory {
+				docs = 1
+			}
+			idx, err := backend.BuildIndex(t.Context(), key, int64(docs), "test", indexTestDocs(docKey, docs, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+			require.NoError(t, err)
+			lastSearch := time.UnixMilli(idx.(*bleveIndex).lastSearchedAt.Load())
+			backend.runEvictExpiredOrUnownedIndexes(lastSearch.Add(tc.elapsed))
+			if tc.wantClosed {
+				require.Nil(t, backend.PeekIndex(key))
+				_, err := idx.DocCount(t.Context(), "", nil)
+				require.ErrorIs(t, err, bleve.ErrorIndexClosed)
+			} else {
+				require.Same(t, idx, backend.PeekIndex(key))
 			}
 		})
 	}
@@ -2037,6 +2147,113 @@ func TestRebuildDoesNotReopenAnIdleClosedGlobalIndex(t *testing.T) {
 	_, err = rebuilt.DocCount(t.Context(), "", nil)
 	require.ErrorIs(t, err, bleve.ErrorIndexClosed, "the discarded index is closed")
 	require.Equal(t, before, listDirs(), "the discarded index's directory is removed; the closed one stays for a later search")
+}
+
+func TestRebuildAfterIndexEviction(t *testing.T) {
+	const ttl = 4 * time.Hour
+	for _, tc := range []struct {
+		name        string
+		idleOnly    bool
+		memory      bool
+		grow        bool
+		owned       bool
+		wantDiscard bool
+	}{
+		{name: "idle-only memory", idleOnly: true, memory: true, owned: true, wantDiscard: true},
+		{name: "idle-only memory promoted to file", idleOnly: true, memory: true, grow: true, owned: true, wantDiscard: true},
+		{name: "age-based memory", memory: true, owned: true},
+		{name: "unowned file", idleOnly: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend, reg := setupBleveBackend(t, withIndexCacheTTL(ttl), withIndexCacheTTLIdleOnly(tc.idleOnly),
+				withOwnsIndexFn(func(resource.NamespacedResource) (bool, error) { return tc.owned, nil }))
+			key := resource.NamespacedResource{Namespace: "test", Group: "group", Resource: "resource"}
+			docs := defaultFileThreshold
+			if tc.memory {
+				docs = 1
+			}
+			original, err := backend.BuildIndex(t.Context(), key, int64(docs), "test", indexTestDocs(key, docs, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+			require.NoError(t, err)
+
+			if tc.grow {
+				docs = defaultFileThreshold
+				_, err := indexTestDocs(key, docs, 101)(original)
+				require.NoError(t, err)
+				count, err := original.DocCount(t.Context(), "", nil)
+				require.NoError(t, err)
+				require.EqualValues(t, docs, count)
+				require.Equal(t, indexStorageMemory, original.(*bleveIndex).indexStorage)
+			}
+
+			var replacement resource.ResourceIndex
+			rebuilt, err := backend.BuildIndex(t.Context(), key, int64(docs), "rebuild", func(index resource.ResourceIndex) (int64, error) {
+				cached := backend.peekCachedIndex(key)
+				require.NotNil(t, cached)
+				var deadline time.Time
+				switch {
+				case tc.memory && tc.idleOnly:
+					deadline = time.UnixMilli(cached.lastSearchedAt.Load()).Add(ttl)
+				case tc.memory:
+					deadline = cached.expiration
+				default:
+					deadline = time.UnixMilli(cached.lastFetchedFromCache.Load()).Add(unownedIndexIdleTimeout)
+				}
+				backend.runEvictExpiredOrUnownedIndexes(deadline.Add(time.Millisecond))
+				require.Nil(t, backend.PeekIndex(key))
+				replacement = index
+				rv, err := indexTestDocs(key, docs, 102)(index)
+				if tc.grow {
+					require.NoError(t, err)
+					promoted, _, _ := index.(*adaptiveBuildIndex).finalState()
+					require.Equal(t, indexStorageFile, promoted.indexStorage)
+				}
+				return rv, err
+			}, nil, true, time.Time{}, 0, resource.BuildIndexOptions{})
+
+			if tc.wantDiscard {
+				require.ErrorIs(t, err, resource.ErrIndexClosedDuringRebuild)
+				require.Nil(t, backend.PeekIndex(key))
+				_, err = replacement.DocCount(t.Context(), "", nil)
+				require.ErrorIs(t, err, bleve.ErrorIndexClosed)
+				checkOpenIndexes(t, reg, 0, 0)
+				verifyDirEntriesCount(t, backend.getResourceDir(key), 0)
+			} else {
+				require.NoError(t, err)
+				require.Same(t, rebuilt, backend.PeekIndex(key))
+				if tc.memory {
+					checkOpenIndexes(t, reg, 1, 0)
+				} else {
+					checkOpenIndexes(t, reg, 0, 1)
+				}
+			}
+			_, err = original.DocCount(t.Context(), "", nil)
+			require.ErrorIs(t, err, bleve.ErrorIndexClosed)
+		})
+	}
+}
+
+func TestRebuildSkipsMemoryIndexEvictedBeforeBackendLookup(t *testing.T) {
+	const ttl = 4 * time.Hour
+	backend, reg := setupBleveBackend(t, withIndexCacheTTL(ttl), withIndexCacheTTLIdleOnly(true))
+	key := resource.NamespacedResource{Namespace: "test", Group: "group", Resource: "resource"}
+	_, err := backend.BuildIndex(t.Context(), key, 1, "test", indexTestDocs(key, 1, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+	require.NoError(t, err)
+	original := backend.PeekIndex(key)
+	require.NotNil(t, original)
+
+	lastSearch := time.UnixMilli(original.(*bleveIndex).lastSearchedAt.Load())
+	backend.runEvictExpiredOrUnownedIndexes(lastSearch.Add(ttl + time.Millisecond))
+	require.Nil(t, backend.PeekIndex(key))
+
+	builderCalled := false
+	_, err = backend.BuildIndex(t.Context(), key, 1, "rebuild", func(index resource.ResourceIndex) (int64, error) {
+		builderCalled = true
+		return indexTestDocs(key, 1, 101)(index)
+	}, nil, true, time.Time{}, 0, resource.BuildIndexOptions{RebuildFrom: original})
+	require.ErrorIs(t, err, resource.ErrIndexClosedDuringRebuild)
+	require.False(t, builderCalled)
+	require.Nil(t, backend.PeekIndex(key))
+	checkOpenIndexes(t, reg, 0, 0)
 }
 
 func TestNewUnownedIndexIdleTimeout(t *testing.T) {
@@ -3319,7 +3536,6 @@ func TestBleveTextFieldFilterAndSort(t *testing.T) {
 		req.Options.Key = key
 		rsp, err := index.Search(ctx, NewStubAccessClient(map[string]bool{kindResource: true}), req, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		out := make([]string, 0, len(rsp.Rows))
 		for _, row := range rsp.Rows {
 			out = append(out, row.Key.Name)
@@ -3598,46 +3814,4 @@ func TestScopeQueryKeepsScores(t *testing.T) {
 		id("trashed-1"): unscoped[id("trashed-1")],
 		id("trashed-2"): unscoped[id("trashed-2")],
 	}, scores(scopeQuery(textQuery, true, 0)))
-}
-
-func TestBatchAuthzSearcherLogsWhenNothingIsAuthorized(t *testing.T) {
-	searcher := func(candidates, authorized int64) (*batchAuthzSearcher, *logtest.Fake) {
-		fake := &logtest.Fake{}
-		s := &batchAuthzSearcher{
-			namespace: "stacks-1",
-			group:     "dashboard.grafana.app",
-			resources: map[string]string{"dashboard.grafana.app/dashboards": utils.VerbGet},
-			log:       fake,
-		}
-		s.candidates.Store(candidates)
-		s.authorized.Store(authorized)
-		return s, fake
-	}
-
-	t.Run("candidates found and none authorized", func(t *testing.T) {
-		s, fake := searcher(3, 0)
-		s.logIfNothingAuthorized()
-
-		require.Equal(t, 1, fake.WarnLogs.Calls)
-		require.Equal(t, "Search matched documents but none passed the permission check", fake.WarnLogs.Message)
-		require.Equal(t, []any{
-			"namespace", "stacks-1",
-			"group", "dashboard.grafana.app",
-			"resources", "dashboard.grafana.app/dashboards",
-			"candidates", int64(3),
-			"authorized", int64(0),
-		}, fake.WarnLogs.Ctx)
-	})
-
-	t.Run("nothing matched", func(t *testing.T) {
-		s, fake := searcher(0, 0)
-		s.logIfNothingAuthorized()
-		require.Equal(t, 0, fake.WarnLogs.Calls)
-	})
-
-	t.Run("some results authorized", func(t *testing.T) {
-		s, fake := searcher(3, 1)
-		s.logIfNothingAuthorized()
-		require.Equal(t, 0, fake.WarnLogs.Calls)
-	})
 }

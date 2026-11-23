@@ -236,22 +236,22 @@ func TestClient_LegacyCheckRequest(t *testing.T) {
 			name: "global evaluation preserves requester org",
 			req: LegacyCheckRequest{
 				Namespace: "default", Subject: "user:checked-user", Evaluator: accesscontrol.EvalPermission("users:read"),
-				GlobalEvaluation: &LegacyGlobalEvaluation{RequesterOrgID: accesscontrol.GlobalOrgID},
+				RequesterOrgID: proto.Int64(accesscontrol.GlobalOrgID),
 			},
 			want: &authzextv1.LegacyCheckRequest{
 				Namespace: "default", Subject: "user:checked-user", Expression: permission("users:read"),
-				GlobalEvaluation: &authzextv1.LegacyGlobalEvaluation{RequesterOrgId: accesscontrol.GlobalOrgID},
+				RequesterOrgId: proto.Int64(accesscontrol.GlobalOrgID),
 			},
 		},
 		{
 			name: "NoOrgID remains distinct from organization evaluation",
 			req: LegacyCheckRequest{
 				Namespace: "stacks-123", Subject: "user:checked-user", Evaluator: accesscontrol.EvalPermission("users:read"),
-				GlobalEvaluation: &LegacyGlobalEvaluation{RequesterOrgID: accesscontrol.NoOrgID},
+				RequesterOrgID: proto.Int64(accesscontrol.NoOrgID),
 			},
 			want: &authzextv1.LegacyCheckRequest{
 				Namespace: "stacks-123", Subject: "user:checked-user", Expression: permission("users:read"),
-				GlobalEvaluation: &authzextv1.LegacyGlobalEvaluation{RequesterOrgId: accesscontrol.NoOrgID},
+				RequesterOrgId: proto.Int64(accesscontrol.NoOrgID),
 			},
 		},
 	} {
@@ -291,6 +291,44 @@ func TestClient_LegacyCheckRejectsInvalidEvaluator(t *testing.T) {
 	}
 }
 
+func TestClient_LegacyCheckRequesterOrgID(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		namespace string
+		orgID     *int64
+	}{
+		{name: "organization", namespace: "org-12", orgID: proto.Int64(12)},
+		{name: "cloud organization", namespace: "stacks-123", orgID: proto.Int64(1)},
+		{name: "global", namespace: "org-12", orgID: proto.Int64(accesscontrol.GlobalOrgID)},
+		{name: "no membership", namespace: "org-12", orgID: proto.Int64(accesscontrol.NoOrgID)},
+		{name: "missing org forwarded for server validation", namespace: "org-12"},
+		{name: "invalid org forwarded for server validation", namespace: "org-12", orgID: proto.Int64(accesscontrol.NoOrgID - 1)},
+		{name: "mismatched org forwarded for server validation", namespace: "org-13", orgID: proto.Int64(12)},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			server := &legacyCheckServer{}
+			client := newLegacyTransportClient(t, server)
+			request := LegacyCheckRequest{
+				Namespace: tc.namespace, Subject: "user:checked-user",
+				RequesterOrgID: tc.orgID,
+				Evaluator:      accesscontrol.EvalPermission("users:read"),
+			}
+
+			allowed, err := client.LegacyCheck(t.Context(), request)
+
+			require.NoError(t, err)
+			require.True(t, allowed)
+			expression, err := accesscontrol.ToLegacyExpression(request.Evaluator)
+			require.NoError(t, err)
+			want := &authzextv1.LegacyCheckRequest{
+				Namespace: tc.namespace, Subject: request.Subject, Expression: expression,
+				RequesterOrgId: tc.orgID,
+			}
+			require.True(t, proto.Equal(want, server.request), "want %v, got %v", want, server.request)
+		})
+	}
+}
+
 func TestClient_LegacyCheckRequiresConfiguredClient(t *testing.T) {
 	client := &LegacyClient{tracer: noop.Tracer{}}
 	allowed, err := client.LegacyCheck(t.Context(), LegacyCheckRequest{Evaluator: accesscontrol.EvalPermission("users:read")})
@@ -311,4 +349,82 @@ func (s *legacyCheckServer) LegacyCheck(_ context.Context, req *authzextv1.Legac
 
 type unsupportedLegacyCheckEvaluator struct {
 	accesscontrol.Evaluator
+}
+
+func TestPrepareLegacyCheckSnapshotsCallerData(t *testing.T) {
+	server := &legacyCheckServer{}
+	client := newLegacyTransportClient(t, server)
+	orgID := int64(12)
+	scopes := []string{"folders:uid:allowed"}
+	children := []accesscontrol.Evaluator{accesscontrol.EvalPermission("folders:read", scopes...)}
+	req := LegacyCheckRequest{
+		Namespace:      "org-12",
+		Subject:        "user:checked-user",
+		RequesterOrgID: &orgID,
+		Evaluator:      accesscontrol.EvalAll(children...),
+		Teams:          []string{"team-one"},
+		Restriction:    &LegacyActionRestriction{Actions: []string{"folders:read"}},
+	}
+
+	call, err := client.PrepareLegacyCheck(req)
+	require.NoError(t, err)
+	require.Nil(t, server.request, "preparation must not issue a request")
+
+	scopes[0] = "changed"
+	children[0] = accesscontrol.EvalPermission("changed")
+	req.Teams[0] = "changed"
+	req.Restriction.Actions[0] = "changed"
+	orgID = 99
+
+	allowed, err := call(t.Context())
+	require.NoError(t, err)
+	require.True(t, allowed)
+
+	expression, err := accesscontrol.ToLegacyExpression(accesscontrol.EvalAll(
+		accesscontrol.EvalPermission("folders:read", "folders:uid:allowed"),
+	))
+	require.NoError(t, err)
+	want := &authzextv1.LegacyCheckRequest{
+		Namespace:      "org-12",
+		Subject:        "user:checked-user",
+		RequesterOrgId: proto.Int64(12),
+		Expression:     expression,
+		Teams:          []string{"team-one"},
+		Restriction:    &authzextv1.LegacyActionRestriction{Actions: []string{"folders:read"}},
+	}
+	require.True(t, proto.Equal(want, server.request), "want %v, got %v", want, server.request)
+}
+
+func TestPrepareLegacyCheckSnapshotsBackgroundPermissions(t *testing.T) {
+	server := &legacyCheckServer{}
+	client := newLegacyTransportClient(t, server)
+	background := &LegacyBackgroundIdentity{
+		Name:        "provisioner",
+		OrgRole:     "Admin",
+		Permissions: map[string][]string{"folders:read": {"folders:uid:allowed"}},
+	}
+
+	call, err := client.PrepareLegacyCheck(LegacyCheckRequest{
+		Namespace:        "org-12",
+		InternalIdentity: &LegacyInternalIdentity{Background: background},
+		Evaluator:        accesscontrol.EvalPermission("folders:read"),
+	})
+	require.NoError(t, err)
+
+	background.Name = "changed"
+	background.Permissions["folders:read"][0] = "changed"
+	background.Permissions["users:delete"] = []string{"*"}
+
+	allowed, err := call(t.Context())
+	require.NoError(t, err)
+	require.True(t, allowed)
+
+	want := &authzextv1.LegacyBackgroundIdentity{
+		Name:    "provisioner",
+		OrgRole: "Admin",
+		Permissions: map[string]*authzextv1.LegacyPermissionScopes{
+			"folders:read": {Scopes: []string{"folders:uid:allowed"}},
+		},
+	}
+	require.True(t, proto.Equal(want, server.request.GetInternalIdentity().GetBackground()))
 }

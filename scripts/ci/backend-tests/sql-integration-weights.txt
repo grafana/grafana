@@ -1,0 +1,33 @@
+# Estimated package runtimes in whole seconds from MySQL Enterprise run 44702192169.
+# Packages absent from this file receive an 8-second weight.
+github.com/grafana/grafana-enterprise/pkg/accesscontrol/acimpl 122
+github.com/grafana/grafana-enterprise/pkg/apiserver/tests/iam 206
+github.com/grafana/grafana-enterprise/pkg/apiserver/tests/reporting 196
+github.com/grafana/grafana-enterprise/pkg/registry/provisioning/integration/oauth 42
+github.com/grafana/grafana-enterprise/pkg/registry/provisioning/integration/webhook 56
+github.com/grafana/grafana/pkg/services/accesscontrol/acimpl 57
+github.com/grafana/grafana/pkg/services/apiserver/restoptions 109
+github.com/grafana/grafana/pkg/services/authz/zanzana/server 95
+github.com/grafana/grafana/pkg/storage/unified/migrations 44
+github.com/grafana/grafana/pkg/storage/unified/resource 53
+github.com/grafana/grafana/pkg/storage/unified/sql/test 79
+github.com/grafana/grafana/pkg/storage/unified/testing 68
+github.com/grafana/grafana/pkg/tests/api/alerting 209
+github.com/grafana/grafana/pkg/tests/api/folders 53
+github.com/grafana/grafana/pkg/tests/apis/alerting/notifications/receivers 42
+github.com/grafana/grafana/pkg/tests/apis/alerting/rules/alertrule 60
+github.com/grafana/grafana/pkg/tests/apis/alerting/rules/config 41
+github.com/grafana/grafana/pkg/tests/apis/appplugin 59
+github.com/grafana/grafana/pkg/tests/apis/dashboard 106
+github.com/grafana/grafana/pkg/tests/apis/dashboard/integration 297
+github.com/grafana/grafana/pkg/tests/apis/iam/serviceaccount 47
+github.com/grafana/grafana/pkg/tests/apis/iam/team 114
+github.com/grafana/grafana/pkg/tests/apis/iam/user 180
+github.com/grafana/grafana/pkg/tests/apis/provisioning 89
+github.com/grafana/grafana/pkg/tests/apis/provisioning/foldermetadata 266
+github.com/grafana/grafana/pkg/tests/apis/provisioning/foldermetadata/incremental 218
+github.com/grafana/grafana/pkg/tests/apis/provisioning/git 225
+github.com/grafana/grafana/pkg/tests/apis/provisioning/git/webhook 57
+github.com/grafana/grafana/pkg/tests/apis/provisioning/jobs 97
+github.com/grafana/grafana/pkg/tests/apis/provisioning/quota 46
+github.com/grafana/grafana/pkg/tests/apis/provisioning/repository 65

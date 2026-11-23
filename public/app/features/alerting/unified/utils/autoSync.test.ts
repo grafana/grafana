@@ -1,6 +1,6 @@
+import { AlertManagerImplementation } from '@grafana/alerting/internal';
 import { type Config, type ConfigStatus } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { type DataSourceSettings } from '@grafana/data';
-import { AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 
 import { mimirAlertmanagerDataSourcePayload } from '../mocks/server/configure/datasources';
 

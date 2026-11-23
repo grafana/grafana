@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardpreferences"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgdelete"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -64,6 +65,8 @@ type sqlStore struct {
 	cfg             *setting.Cfg
 	// watch announces org membership changes; nil when publishing is disabled.
 	watch *legacywatch.Publisher
+	// preferences deletes the DashboardPreferences of a user removed from an org; nil when cleanup is not wired.
+	preferences dashboardpreferences.UserCleaner
 }
 
 // queueUserNotification announces, once sess commits, a change to usr's User
@@ -869,6 +872,7 @@ type searchOrgUsersQuery struct {
 	UserTable        string
 	OrgID            int64
 	FilterByUserID   bool
+	UserUID          string
 	UserID           int64
 	AccessAll        bool
 	AccessUserIDs    []any
@@ -915,6 +919,7 @@ func newSearchOrgUsersQuery(dbHelper *legacysql.LegacyDatabaseHelper, query *org
 		UserTable:        dbHelper.Table("user"),
 		OrgID:            query.OrgID,
 		FilterByUserID:   query.UserID != 0,
+		UserUID:          query.UserUID,
 		UserID:           query.UserID,
 		AccessAll:        accessAll,
 		AccessUserIDs:    accessUserIDs,
@@ -1108,7 +1113,14 @@ func (ss *sqlStore) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCom
 		return fmt.Errorf("get legacy DB: %w", err)
 	}
 
-	return dbHelper.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+	// Set once the user has left cmd.OrgID, so that their preferences are deleted only after the
+	// removal commits.
+	var leftUserUID string
+	var remainingOrgIDs []int64
+	err = dbHelper.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		// A SQLite retry runs the callback again.
+		leftUserUID, remainingOrgIDs = "", nil
+
 		// check if user exists
 		usr, exists, err := getUserByID(dbHelper, sess, cmd.UserID, true)
 		if err != nil {
@@ -1159,6 +1171,11 @@ func (ss *sqlStore) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCom
 			return err
 		}
 
+		leftUserUID = usr.UID
+		for _, userOrg := range userOrgs {
+			remainingOrgIDs = append(remainingOrgIDs, userOrg.OrgID)
+		}
+
 		if len(userOrgs) > 0 {
 			hasCurrentOrgSet := false
 			for _, userOrg := range userOrgs {
@@ -1191,6 +1208,14 @@ func (ss *sqlStore) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCom
 
 		return nil
 	})
+	if err != nil {
+		return err
+	}
+
+	if leftUserUID != "" {
+		dashboardpreferences.UserLeftOrgs(ctx, ss.preferences, ss.cfg, leftUserUID, []int64{cmd.OrgID}, remainingOrgIDs)
+	}
+	return nil
 }
 
 func (ss *sqlStore) deleteUserInTransaction(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, cmd *user.DeleteUserCommand) error {

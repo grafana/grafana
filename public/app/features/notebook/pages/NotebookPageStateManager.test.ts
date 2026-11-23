@@ -7,6 +7,7 @@ import { setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 import { type Resource } from 'app/features/apiserver/types';
 
 import { NotebookAnalytics } from '../analytics/main';
@@ -383,6 +384,202 @@ describe('NotebookPageStateManager', () => {
       } finally {
         release();
       }
+    });
+  });
+
+  describe('cell ids on load', () => {
+    const ID = '00000000-0000-4000-8000-0000000000a0';
+
+    /** The notebook as the server stores it after a write: the same content, an id on its cell, a newer revision. */
+    function withId(notebook: Resource<NotebookSpec>): Resource<NotebookSpec> {
+      return {
+        ...notebook,
+        metadata: { ...notebook.metadata, resourceVersion: '2', generation: 2 },
+        spec: {
+          ...notebook.spec,
+          layout: {
+            ...notebook.spec.layout,
+            spec: {
+              cells: notebook.spec.layout.spec.cells.map((item) => ({ ...item, spec: { ...item.spec, id: ID } })),
+            },
+          },
+        },
+      };
+    }
+
+    let written: Array<{ name: string; body: Resource<NotebookSpec> }> = [];
+
+    /** Serves the id-less notebook, and answers a PUT the way the server would. */
+    function serveIdlessNotebook(put?: () => Response) {
+      written = [];
+      server.use(
+        notebookHandler((name) => HttpResponse.json(notebookResource(name))),
+        http.put(NOTEBOOK_URL, async ({ params, request }) => {
+          const body = (await request.json()) as Resource<NotebookSpec>;
+          written.push({ name: String(params.name), body });
+          return put ? put() : HttpResponse.json(withId(body));
+        })
+      );
+    }
+
+    beforeEach(() => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('writes a notebook without ids back as fetched, and builds the scene from what the server stored', async () => {
+      serveIdlessNotebook();
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      await manager.loadNotebook('nb-1');
+
+      expect(written).toHaveLength(1);
+      expect(written[0].body.metadata.resourceVersion).toBe('1');
+      expect(written[0].body.spec.title).toBe('My notebook');
+      const scene = manager.state.scene;
+      expect(scene?.state.body.state.cells[0].state.id).toBe(ID);
+      expect(scene?.autosave.state.savedResourceVersion).toBe('2');
+      expect(scene?.autosave.state.savedGeneration).toBe(2);
+    });
+
+    /** A notebook with one cell per entry, each with the id given, or none. */
+    function notebookWithCellIds(...ids: Array<string | undefined>): Resource<NotebookSpec> {
+      const notebook = notebookResource();
+      const names = ids.map((_, index) => `md${index + 1}`);
+      return {
+        ...notebook,
+        spec: {
+          ...notebook.spec,
+          elements: Object.fromEntries(
+            names.map((name) => [name, { kind: 'Cell', spec: { content: { kind: 'Markdown', spec: { text: name } } } }])
+          ),
+          layout: {
+            kind: 'NotebookLayout',
+            spec: {
+              cells: names.map((name, index) => ({
+                kind: 'NotebookLayoutItem',
+                spec: { element: { kind: 'ElementReference', name }, source: 'user', id: ids[index] },
+              })),
+            },
+          },
+        },
+      };
+    }
+
+    function serveNotebookWithCellIds(...ids: Array<string | undefined>) {
+      written = [];
+      server.use(
+        notebookHandler(() => HttpResponse.json(notebookWithCellIds(...ids))),
+        http.put(NOTEBOOK_URL, async ({ params, request }) => {
+          const body = (await request.json()) as Resource<NotebookSpec>;
+          written.push({ name: String(params.name), body });
+          return HttpResponse.json(body);
+        })
+      );
+    }
+
+    it('does not write a notebook whose cells all have ids, and leaves each cell its own', async () => {
+      const ids = [
+        '00000000-0000-4000-8000-0000000000a1',
+        '00000000-0000-4000-8000-0000000000a2',
+        '00000000-0000-4000-8000-0000000000a3',
+      ];
+      serveNotebookWithCellIds(...ids);
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      await manager.loadNotebook('nb-1');
+
+      expect(written).toEqual([]);
+      expect(manager.state.scene?.state.body.state.cells.map((cell) => cell.state.id)).toEqual(ids);
+    });
+
+    // The reason the check is "every cell has an id" and not "some cell has one": a notebook can be left
+    // half done, for example by a cell an older client added after the ids were assigned.
+    it('writes a notebook in which only some cells have ids', async () => {
+      serveNotebookWithCellIds(
+        '00000000-0000-4000-8000-0000000000a1',
+        undefined,
+        '00000000-0000-4000-8000-0000000000a3'
+      );
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      await manager.loadNotebook('nb-1');
+
+      expect(written).toHaveLength(1);
+      expect(written[0].body.spec.layout.spec.cells.map((cell) => cell.spec.id)).toEqual([
+        '00000000-0000-4000-8000-0000000000a1',
+        undefined,
+        '00000000-0000-4000-8000-0000000000a3',
+      ]);
+    });
+
+    it('does not write for someone who cannot write', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+      serveIdlessNotebook();
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      await manager.loadNotebook('nb-1');
+
+      expect(written).toEqual([]);
+      expect(manager.state.scene?.state.body.state.cells[0].state.id).toBeUndefined();
+    });
+
+    it('does not write when the page only looks at the notebook, as the PDF render does', async () => {
+      serveIdlessNotebook();
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      await manager.loadNotebook('nb-1', undefined, { readOnly: true });
+
+      expect(written).toEqual([]);
+      expect(manager.state.scene).toBeInstanceOf(NotebookScene);
+    });
+
+    it('opens the notebook as fetched, without an error, when someone saved it first', async () => {
+      serveIdlessNotebook(() => HttpResponse.json({ message: 'the object has been modified' }, { status: 409 }));
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      await manager.loadNotebook('nb-1');
+
+      expect(manager.state.loadError).toBeUndefined();
+      expect(manager.state.scene?.state.body.state.cells[0].state.id).toBeUndefined();
+      expect(manager.state.scene?.autosave.state.savedResourceVersion).toBe('1');
+    });
+
+    // The route and an embed each have their own manager, and both can be loading the same notebook.
+    it('keeps one scene when two loads of the same notebook are in flight, however the second write ends', async () => {
+      let puts = 0;
+      written = [];
+      server.use(
+        notebookHandler((name) => HttpResponse.json(notebookResource(name))),
+        http.put(NOTEBOOK_URL, async ({ request }) => {
+          puts += 1;
+          const body = (await request.json()) as Resource<NotebookSpec>;
+          // The second write is a conflict, as it would be at the server: the first already moved the revision.
+          return puts === 1
+            ? HttpResponse.json(withId(body))
+            : HttpResponse.json({ message: 'the object has been modified' }, { status: 409 });
+        })
+      );
+      const route = new NotebookPageStateManager({ isLoading: false });
+      const embed = new NotebookPageStateManager({ isLoading: false });
+
+      await Promise.all([route.loadNotebook('nb-1'), embed.loadNotebook('nb-1')]);
+
+      expect(route.state.scene).toBe(embed.state.scene);
+      expect(route.state.scene?.state.body.state.cells[0].state.id).toBe(ID);
+    });
+
+    it('does not write again when the scene is reused from the cache', async () => {
+      serveIdlessNotebook();
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      await manager.loadNotebook('nb-1');
+      await manager.loadNotebook('nb-1');
+
+      expect(written).toHaveLength(1);
     });
   });
 

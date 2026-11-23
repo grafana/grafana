@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -37,7 +37,9 @@ export function SilencesFilter({ silences }: SilencesFilterProps) {
   const styles = useStyles2(getStyles);
 
   const silencesRef = useRef(silences);
-  silencesRef.current = silences;
+  useLayoutEffect(() => {
+    silencesRef.current = silences;
+  });
 
   const [filters, setFilters] = useState<AdHocFilterWithLabels[]>(() =>
     parsePromQLStyleMatcherLooseSafe(queryString ?? '').map((m) => ({

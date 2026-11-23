@@ -37,6 +37,7 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 		options = *job.Spec.Migrate
 	}
 	namespace := repo.Config().GetNamespace()
+	ctx = resources.WithPinnedKinds(ctx)
 
 	// A branch migration targets a branch other than the repository's configured
 	// branch, i.e. a pull request workflow. The exported resources cannot be

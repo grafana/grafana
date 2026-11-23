@@ -4,10 +4,11 @@ import testV2DashWithRowRepeats from '../dashboards/V2DashWithRowRepeats.json';
 import { expect, test } from './fixtures';
 import {
   expectDashboardChangesToContain,
+  expectNoUnsavedChanges,
   expectRepeatedPanelTitlesToBe,
   flows,
+  dragAndDrop,
   getPanelBox,
-  movePanel,
 } from './helpers';
 import { type Panels } from './page-objects';
 
@@ -18,6 +19,12 @@ const getTitleInRepeatRow = (rowIndex: number, panelIndex: number) =>
   `repeated-row-${rowIndex}-repeated-panel-${panelIndex}`;
 
 test.use({
+  // the Undo/Redo toolbar buttons are gated by an OpenFeature flag, not a feature toggle
+  openFeature: {
+    flags: {
+      dashboardUndoRedo: true,
+    },
+  },
   viewport: { width: 1920, height: 1080 },
 });
 
@@ -263,6 +270,8 @@ test.describe(
 
     test.describe('Move', () => {
       test('can move repeated panels', async ({ selectors, page, controls, panels }) => {
+        // drag, undo/redo, then save and reload
+        test.slow();
         await flows.dashboards.importTestDashboard(
           page,
           selectors,
@@ -271,17 +280,32 @@ test.describe(
         );
 
         await controls.enterEditMode();
+        const repeatedTitles = REPEAT_OPTIONS.map((option) => `${REPEAT_TITLE_BASE}${option}`);
+        const initialOrder = [...repeatedTitles, 'New panel', 'New panel'];
+        await expect(panels.getHeaders()).toHaveText(initialOrder);
 
-        await movePanel(panels, `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`, 'New panel');
+        const repeatedPanel = `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`;
+        await dragAndDrop(
+          page,
+          `panel "${repeatedPanel}"`,
+          panels.getHeader(repeatedPanel),
+          'panel "New panel"',
+          panels.getHeader('New panel')
+        );
 
         // verify move by panel title order
-        await expect(panels.getHeaders().first()).toHaveText('New panel');
-        await expect(panels.getHeaders().last()).toHaveText(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`);
+        const movedOrder = ['New panel', 'New panel', ...repeatedTitles];
+        await expect(panels.getHeaders()).toHaveText(movedOrder);
 
         // verify move by panel position
         let repeatedPanelBox = await getPanelBox(panels, `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`);
         let normalPanelBox = await getPanelBox(panels, 'New panel');
         expect(normalPanelBox.y).toBeLessThan(repeatedPanelBox.y);
+
+        await controls.undo();
+        await expect(panels.getHeaders()).toHaveText(initialOrder);
+        await controls.redo();
+        await expect(panels.getHeaders()).toHaveText(movedOrder);
 
         await flows.dashboards.saveDashboard(page, controls);
 
@@ -289,8 +313,10 @@ test.describe(
         normalPanelBox = await getPanelBox(panels, 'New panel');
 
         expect(normalPanelBox.y).toBeLessThan(repeatedPanelBox.y);
-        await expect(panels.getHeaders().first()).toHaveText('New panel');
-        await expect(panels.getHeaders().last()).toHaveText(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`);
+        await expect(panels.getHeaders()).toHaveText(movedOrder);
+
+        await controls.enterEditMode();
+        await expectNoUnsavedChanges(controls);
       });
     });
 

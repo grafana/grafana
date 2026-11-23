@@ -1673,6 +1673,39 @@
               },
               {
                 "dependsOn": "",
+                "description": "The Jira API type",
+                "element": "select",
+                "inputType": "",
+                "label": "API type",
+                "placeholder": "",
+                "propertyName": "api_type",
+                "required": false,
+                "secure": false,
+                "selectOptions": [
+                  {
+                    "description": "",
+                    "label": "Auto",
+                    "value": "auto"
+                  },
+                  {
+                    "description": "",
+                    "label": "Cloud",
+                    "value": "cloud"
+                  },
+                  {
+                    "description": "",
+                    "label": "Data Center",
+                    "value": "datacenter"
+                  }
+                ],
+                "showWhen": {
+                  "field": "",
+                  "is": ""
+                },
+                "validationRule": ""
+              },
+              {
+                "dependsOn": "",
                 "description": "The project key where issues are created",
                 "element": "input",
                 "inputType": "text",
@@ -1706,10 +1739,10 @@
               {
                 "dependsOn": "",
                 "description": "Issue summary template",
-                "element": "input",
-                "inputType": "text",
+                "element": "subform",
+                "inputType": "",
                 "label": "Summary",
-                "placeholder": "{{ template \"jira.default.summary\" . }}",
+                "placeholder": "",
                 "propertyName": "summary",
                 "required": false,
                 "secure": false,
@@ -1717,15 +1750,49 @@
                   "field": "",
                   "is": ""
                 },
+                "subformOptions": [
+                  {
+                    "dependsOn": "",
+                    "description": "Issue summary template",
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "Template",
+                    "placeholder": "{{ template \"jira.default.summary\" . }}",
+                    "propertyName": "template",
+                    "required": false,
+                    "secure": false,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "validationRule": ""
+                  },
+                  {
+                    "dependsOn": "",
+                    "description": "Update this field when an existing issue is found",
+                    "element": "checkbox",
+                    "inputType": "",
+                    "label": "Enable update",
+                    "placeholder": "",
+                    "propertyName": "enable_update",
+                    "required": false,
+                    "secure": false,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "validationRule": ""
+                  }
+                ],
                 "validationRule": ""
               },
               {
                 "dependsOn": "",
                 "description": "Issue description template",
-                "element": "textarea",
+                "element": "subform",
                 "inputType": "",
                 "label": "Description",
-                "placeholder": "{{ template \"jira.default.description\" . }}",
+                "placeholder": "",
                 "propertyName": "description",
                 "required": false,
                 "secure": false,
@@ -1733,6 +1800,40 @@
                   "field": "",
                   "is": ""
                 },
+                "subformOptions": [
+                  {
+                    "dependsOn": "",
+                    "description": "Issue description template",
+                    "element": "textarea",
+                    "inputType": "",
+                    "label": "Template",
+                    "placeholder": "{{ template \"jira.default.description\" . }}",
+                    "propertyName": "template",
+                    "required": false,
+                    "secure": false,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "validationRule": ""
+                  },
+                  {
+                    "dependsOn": "",
+                    "description": "Update this field when an existing issue is found",
+                    "element": "checkbox",
+                    "inputType": "",
+                    "label": "Enable update",
+                    "placeholder": "",
+                    "propertyName": "enable_update",
+                    "required": false,
+                    "secure": false,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "validationRule": ""
+                  }
+                ],
                 "validationRule": ""
               },
               {
@@ -10384,6 +10485,23 @@
             "options": [
               {
                 "dependsOn": "",
+                "description": "Telegram Bot API base URL. Leave empty to use the default Telegram API.",
+                "element": "input",
+                "inputType": "text",
+                "label": "API URL",
+                "placeholder": "https://api.telegram.org",
+                "propertyName": "api_url",
+                "protected": true,
+                "required": false,
+                "secure": false,
+                "showWhen": {
+                  "field": "",
+                  "is": ""
+                },
+                "validationRule": ""
+              },
+              {
+                "dependsOn": "",
                 "description": "",
                 "element": "input",
                 "inputType": "text",
@@ -10524,6 +10642,22 @@
                 "label": "Disable Notifications",
                 "placeholder": "",
                 "propertyName": "disable_notifications",
+                "required": false,
+                "secure": false,
+                "showWhen": {
+                  "field": "",
+                  "is": ""
+                },
+                "validationRule": ""
+              },
+              {
+                "dependsOn": "",
+                "description": "Sends a notification with one screenshot and a short message as a single Telegram photo with caption. Longer messages and notifications with multiple screenshots are sent separately.",
+                "element": "checkbox",
+                "inputType": "",
+                "label": "Send Message as Image Caption",
+                "placeholder": "",
+                "propertyName": "send_message_as_caption",
                 "required": false,
                 "secure": false,
                 "showWhen": {

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 /**
  * Calls `onVisible` whenever the element given the returned ref scrolls into view, for a list that
@@ -17,7 +17,9 @@ export function useLoadMoreSentinel(onVisible: () => void, rearmKey: unknown): (
   // arrival has to rerun the effect below.
   const [sentinel, setSentinel] = useState<HTMLElement | null>(null);
   const onVisibleRef = useRef(onVisible);
-  onVisibleRef.current = onVisible;
+  useLayoutEffect(() => {
+    onVisibleRef.current = onVisible;
+  });
 
   useEffect(() => {
     if (!sentinel) {

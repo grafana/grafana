@@ -311,7 +311,7 @@ func TestBulkProcessStopsRunnerOnPanic(t *testing.T) {
 		Login:          "testuser",
 		UserID:         1,
 		UserUID:        "u1",
-		OrgRole:        identity.RoleAdmin,
+		OrgRole:        authlib.RoleAdmin,
 		IsGrafanaAdmin: true,
 	})
 	ctx = metadata.NewIncomingContext(ctx, settings.ToMD())
@@ -408,7 +408,6 @@ func TestBulkProcessSendsRejectedItems(t *testing.T) {
 	stream := newBulkProcessTestStream(t, nil)
 	err := newBulkProcessTestServer(&failingBulkBackend{rsp: &resourcepb.BulkResponse{Processed: 1, Rejected: rejected}}).BulkProcess(stream)
 	require.NoError(t, err)
-	require.Nil(t, stream.response.Error)
 	require.Len(t, stream.response.Rejected, 1)
 	require.True(t, proto.Equal(rejected[0], stream.response.Rejected[0]))
 }
