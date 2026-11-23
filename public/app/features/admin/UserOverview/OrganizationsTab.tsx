@@ -16,6 +16,11 @@ export function OrganizationsTab({ user }: { user: UserDTO }) {
   const [addOrgUser, adding] = useAddOrgUserMutation();
   const [removeOrgUser, removing] = useRemoveOrgUserMutation();
   const [updateOrgRole, updating] = useUpdateOrgUserMutation();
+  const resetErrors = () => {
+    adding.reset();
+    removing.reset();
+    updating.reset();
+  };
   const { currentData: orgs, error } = useGetUserOrgListQuery({ userId: user.uid });
   if (error) {
     return <Alert severity="warning" title={t('admin.user-overview.orgs-error', 'Unable to load organizations')} />;
@@ -32,11 +37,18 @@ export function OrganizationsTab({ user }: { user: UserDTO }) {
         user={user}
         orgs={orgs}
         isExternalUser={user.isExternallySynced || user.isProvisioned}
-        onOrgAdd={(orgId, role) => addOrgUser({ orgId, addOrgUserCommand: { loginOrEmail: user.login, role } })}
-        onOrgRemove={(orgId) => removeOrgUser({ orgId, userId: user.uid })}
-        onOrgRoleChange={(orgId, role) =>
-          updateOrgRole({ orgId, userId: user.uid, updateOrgUserCommand: { role } }).unwrap()
-        }
+        onOrgAdd={(orgId, role) => {
+          resetErrors();
+          return addOrgUser({ orgId, addOrgUserCommand: { loginOrEmail: user.login, role } });
+        }}
+        onOrgRemove={(orgId) => {
+          resetErrors();
+          return removeOrgUser({ orgId, userId: user.uid });
+        }}
+        onOrgRoleChange={(orgId, role) => {
+          resetErrors();
+          return updateOrgRole({ orgId, userId: user.uid, updateOrgUserCommand: { role } }).unwrap();
+        }}
       />
     </Stack>
   );

@@ -15,6 +15,11 @@ export function AccountManagement({ user }: { user: UserDTO }) {
   const [deleteUser, deletion] = useAdminDeleteUserMutation();
   const [disableUser, disabling] = useAdminDisableUserMutation();
   const [enableUser, enabling] = useAdminEnableUserMutation();
+  const resetErrors = () => {
+    deletion.reset();
+    disabling.reset();
+    enabling.reset();
+  };
   return (
     <Stack direction="column" gap={3}>
       {(deletion.isError || disabling.isError || enabling.isError) && (
@@ -23,12 +28,19 @@ export function AccountManagement({ user }: { user: UserDTO }) {
       <UserAccountActions
         user={user}
         onUserDelete={async () => {
+          resetErrors();
           if (!('error' in (await deleteUser({ userId: user.uid })))) {
             locationService.push('/admin/users');
           }
         }}
-        onUserDisable={() => disableUser({ userId: user.uid })}
-        onUserEnable={() => enableUser({ userId: user.uid })}
+        onUserDisable={() => {
+          resetErrors();
+          return disableUser({ userId: user.uid });
+        }}
+        onUserEnable={() => {
+          resetErrors();
+          return enableUser({ userId: user.uid });
+        }}
       />
     </Stack>
   );

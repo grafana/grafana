@@ -6,6 +6,7 @@ import { RolePicker } from './RolePicker';
 
 it('restores the saved basic role after a rejected update and allows retrying', async () => {
   const onBasicRoleChange = jest.fn().mockRejectedValue(new Error('Last organization admin'));
+  const onRolesChange = jest.fn();
   const { user } = render(
     <RolePicker
       basicRole={OrgRole.Admin}
@@ -13,7 +14,7 @@ it('restores the saved basic role after a rejected update and allows retrying', 
       roleOptions={[]}
       showBasicRole
       onBasicRoleChange={onBasicRoleChange}
-      onRolesChange={jest.fn()}
+      onRolesChange={onRolesChange}
     />
   );
   for (let attempt = 1; attempt <= 2; attempt++) {
@@ -23,5 +24,6 @@ it('restores the saved basic role after a rejected update and allows retrying', 
     await waitFor(() => expect(within(screen.getByTestId('role-picker')).getByText('Admin')).toBeInTheDocument());
     expect(onBasicRoleChange).toHaveBeenCalledTimes(attempt);
     expect(onBasicRoleChange).toHaveBeenLastCalledWith(OrgRole.Editor);
+    expect(onRolesChange).not.toHaveBeenCalled();
   }
 });

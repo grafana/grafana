@@ -13,6 +13,10 @@ import { ActionError } from './ActionError';
 export function SessionsTab({ uid }: { uid: string }) {
   const [revokeSession, revoking] = useAdminRevokeUserAuthTokenMutation();
   const [revokeSessions, revokingAll] = useAdminLogoutUserMutation();
+  const resetErrors = () => {
+    revoking.reset();
+    revokingAll.reset();
+  };
   const { currentData: sessions, error } = useAdminGetUserAuthTokensQuery({ userId: uid });
   if (error) {
     return <Alert severity="warning" title={t('admin.user-overview.sessions-error', 'Unable to load sessions')} />;
@@ -25,8 +29,14 @@ export function SessionsTab({ uid }: { uid: string }) {
       {(revoking.isError || revokingAll.isError) && <ActionError error={revoking.error || revokingAll.error} />}
       <UserSessions
         sessions={sessions}
-        onSessionRevoke={(authTokenId) => revokeSession({ userId: uid, revokeAuthTokenCmd: { authTokenId } })}
-        onAllSessionsRevoke={() => revokeSessions({ userId: uid })}
+        onSessionRevoke={(authTokenId) => {
+          resetErrors();
+          return revokeSession({ userId: uid, revokeAuthTokenCmd: { authTokenId } });
+        }}
+        onAllSessionsRevoke={() => {
+          resetErrors();
+          return revokeSessions({ userId: uid });
+        }}
       />
     </Stack>
   );

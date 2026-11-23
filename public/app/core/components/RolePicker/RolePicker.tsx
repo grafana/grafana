@@ -180,9 +180,6 @@ export const RolePicker = ({
   };
 
   const onUpdate = async (newRoles: Role[], newBuiltInRole?: OrgRole) => {
-    if (canUpdateRoles) {
-      onRolesChange(newRoles);
-    }
     setQuery('');
     setOpen(false);
     if (onBasicRoleChange && newBuiltInRole && newBuiltInRole !== basicRole) {
@@ -191,7 +188,12 @@ export const RolePicker = ({
       } catch {
         // The caller reports the mutation error; discard the rejected selection here.
         setSelectedBuiltInRole(basicRole);
+        setSelectedRoles(appliedRoles);
+        return;
       }
+    }
+    if (canUpdateRoles) {
+      onRolesChange(newRoles);
     }
   };
 

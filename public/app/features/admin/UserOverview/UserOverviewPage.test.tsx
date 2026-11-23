@@ -189,6 +189,40 @@ it('closes the delete confirmation after a failed deletion and allows retrying',
   expect(screen.getByRole('dialog')).toBeInTheDocument();
 });
 
+it('replaces an earlier action error and clears it after a different action succeeds', async () => {
+  let saved = {
+    ...profile,
+    isDisabled: true,
+    accessControl: {
+      [AccessControlAction.UsersDelete]: true,
+      [AccessControlAction.UsersDisable]: true,
+      [AccessControlAction.UsersEnable]: true,
+    },
+  };
+  server.use(
+    http.get('/api/users/alice', () => HttpResponse.json(saved)),
+    http.delete('/api/admin/users/alice', () => HttpResponse.json({ message: 'Cannot delete user' }, { status: 400 })),
+    http.post('/api/admin/users/alice/enable', () =>
+      HttpResponse.json({ message: 'Cannot enable user' }, { status: 400 })
+    )
+  );
+  const { user } = setup();
+  await user.click(await screen.findByRole('button', { name: 'Enable user' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('Cannot enable user');
+  await user.click(screen.getByRole('button', { name: 'Delete user' }));
+  await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Delete user' }));
+  await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Cannot delete user'));
+  server.use(
+    http.post('/api/admin/users/alice/enable', () => {
+      saved = { ...saved, isDisabled: false };
+      return HttpResponse.json({ message: 'User enabled' });
+    })
+  );
+  await user.click(screen.getByRole('button', { name: 'Enable user' }));
+  expect(await screen.findByRole('button', { name: 'Disable user' })).toBeInTheDocument();
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+});
+
 it('cancels account deletion without sending a request and restores focus', async () => {
   const remove = jest.fn();
   server.use(
