@@ -36,6 +36,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/applyconfiguration/provisioning/v0alpha1"
@@ -45,7 +46,6 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 type mockProvisioningV0alpha1Interface struct {
@@ -3130,7 +3130,7 @@ func TestRepositoryController_shouldGenerateTokenFromConnection_ExpiredCounter(t
 				Status: provisioning.RepositoryStatus{
 					Token: provisioning.TokenStatus{LastUpdated: oldEnough.UnixMilli(), Expiration: tt.expiration},
 				},
-				Secure: provisioning.SecureValues{Token: common.InlineSecureValue{Create: "existing-token"}},
+				Secure: provisioning.SecureValues{Token: resource.InlineSecureValue{Create: "existing-token"}},
 			}
 
 			rc.shouldGenerateTokenFromConnection(obj)
@@ -3229,7 +3229,7 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 		},
 		// Existing (non-zero) token so IsZero() == false and we exercise the expiry path
 		Secure: provisioning.SecureValues{
-			Token: common.InlineSecureValue{Create: "old-expiring-token"},
+			Token: resource.InlineSecureValue{Create: "old-expiring-token"},
 		},
 	}
 
@@ -3450,7 +3450,7 @@ func TestRepositoryController_process_RegeneratesTokenWhenSecretNotFound(t *test
 				},
 				// Orphaned reference: name is set but the secret is gone.
 				Secure: provisioning.SecureValues{
-					Token: common.InlineSecureValue{Name: "orphaned-token"},
+					Token: resource.InlineSecureValue{Name: "orphaned-token"},
 				},
 			}
 

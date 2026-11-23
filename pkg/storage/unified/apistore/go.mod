@@ -6,6 +6,7 @@ require (
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/grafana/authlib/types v0.0.0-20261120113603-423cd15e9545
 	github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600
+	github.com/grafana/grafana-app-sdk v0.63.3
 	github.com/grafana/grafana-app-sdk/logging v0.63.3
 	github.com/grafana/grafana/apps/alerting/alertrulequality v0.0.0-20260930150852-c73965d1f90d
 	github.com/grafana/grafana/apps/dashboard v0.0.0-20260930150852-c73965d1f90d
@@ -72,7 +73,6 @@ require (
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grafana/authlib v0.0.0-20261120113603-423cd15e9545 // indirect
-	github.com/grafana/grafana-app-sdk v0.63.3 // indirect
 	github.com/grafana/grafana-plugin-sdk-go v0.302.0 // indirect
 	github.com/grafana/otel-profiling-go v0.7.0 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.12 // indirect

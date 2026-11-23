@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana-app-sdk/resource"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -1253,7 +1253,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			// Work on a copy so we don't mutate the shared informer-cache object, and
 			// overwrite the whole value so the stale reference name is cleared too.
 			obj = obj.DeepCopy()
-			obj.Secure.Token = common.InlineSecureValue{Create: token}
+			obj.Secure.Token = resource.InlineSecureValue{Create: token}
 
 			repo, err = rc.repoFactory.Build(ctx, obj)
 		}
@@ -1768,7 +1768,7 @@ func (rc *RepositoryController) generateRepositoryToken(
 	ctx context.Context,
 	obj *provisioning.Repository,
 	c *provisioning.Connection,
-) (_ common.RawSecureValue, _ []map[string]any, err error) {
+) (_ resource.RawSecureValue, _ []map[string]any, err error) {
 	ctx, span := rc.tracer.Start(ctx, "provisioning.controller.generate_token", repoSpanAttrs(obj))
 	defer span.End()
 	defer func() {

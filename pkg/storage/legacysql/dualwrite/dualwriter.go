@@ -19,7 +19,7 @@ import (
 	"k8s.io/apiserver/pkg/util/dryrun"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 )
@@ -557,7 +557,7 @@ type wrappedUpdateInfo struct {
 	objInfo             rest.UpdatedObjectInfo
 	legacyLabels        map[string]string
 	legacyAnnotations   map[string]string
-	updatedSecureValues common.InlineSecureValues
+	updatedSecureValues resource.InlineSecureValues
 }
 
 // Preconditions implements rest.UpdatedObjectInfo.
