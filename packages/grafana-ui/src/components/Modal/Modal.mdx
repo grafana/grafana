@@ -56,7 +56,12 @@ Use `className` to style the dialog, for example to change its width, and `conte
 
 ```tsx
 // Don't
-<Modal title="Edit query" isOpen={isOpen} onDismiss={onDismiss} className={css({ '& > div:nth-child(2)': { padding: 0 } })}>
+<Modal
+  title="Edit query"
+  isOpen={isOpen}
+  onDismiss={onDismiss}
+  className={css({ '& > div:nth-child(2)': { padding: 0 } })}
+>
   {editor}
 </Modal>
 
