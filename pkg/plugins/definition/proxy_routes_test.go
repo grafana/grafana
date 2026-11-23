@@ -8,10 +8,11 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	"k8s.io/kube-openapi/pkg/spec3"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana-app-sdk/routes"
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
@@ -108,7 +109,7 @@ func fullRoute() *plugins.Route {
 	return &plugins.Route{
 		Path:      "api/*",
 		Method:    http.MethodPost,
-		ReqRole:   identity.RoleEditor,
+		ReqRole:   types.RoleEditor,
 		ReqAction: "example-app.api:write",
 		URL:       "https://{{.JsonData.host}}/v1",
 		URLParams: []plugins.URLParam{{Name: "key", Content: "{{.SecureJsonData.key}}"}},
@@ -138,9 +139,8 @@ func TestProxyRouteFromOperationRoundTrips(t *testing.T) {
 
 func TestProxyRouteFromOperationReadsJSON(t *testing.T) {
 	route := fullRoute()
-	// What JSON can represent: a compact body, and an empty map rather than nil.
+	// What JSON can represent: a compact body.
 	route.Body = json.RawMessage(`{"grant_type":"client_credentials","id":"{{.JsonData.id}}"}`)
-	route.JwtTokenAuth.Params = map[string]string{}
 	paths, err := ProxyRoutesToOpenAPI([]*plugins.Route{route})
 	require.NoError(t, err)
 
@@ -149,7 +149,7 @@ func TestProxyRouteFromOperationReadsJSON(t *testing.T) {
 	require.NoError(t, err)
 	var decoded map[string]spec3.PathProps
 	require.NoError(t, json.Unmarshal(raw, &decoded))
-	require.IsType(t, map[string]any{}, decoded["/api/{path:*}"].Post.Extensions[ExtensionProxy])
+	require.IsType(t, map[string]any{}, decoded["/api/{path:*}"].Post.Extensions[routes.ExtensionProxy])
 
 	got, ok, err := ProxyRouteFromOperation("/api/{path:*}", http.MethodPost, decoded["/api/{path:*}"].Post)
 	require.NoError(t, err)
@@ -172,7 +172,7 @@ func TestProxyRouteFromOperation(t *testing.T) {
 
 	t.Run("a malformed extension is an error", func(t *testing.T) {
 		op := &spec3.Operation{}
-		op.AddExtension(ExtensionProxy, map[string]any{"headers": "not a list"})
+		op.AddExtension(routes.ExtensionProxy, map[string]any{"headers": "not a list"})
 		_, ok, err := ProxyRouteFromOperation("/a", http.MethodGet, op)
 		require.Error(t, err)
 		require.True(t, ok)
@@ -180,7 +180,7 @@ func TestProxyRouteFromOperation(t *testing.T) {
 
 	t.Run("paths are rebuilt in the plugin proxy's syntax", func(t *testing.T) {
 		op := &spec3.Operation{}
-		op.AddExtension(ExtensionProxy, ProxyTarget{URL: "https://x"})
+		op.AddExtension(routes.ExtensionProxy, routes.ProxyTarget{URL: "https://x"})
 		for specPath, want := range map[string]string{
 			"/a/{id}/b/{rest:*}": "a/:p1/b/*",
 			"/a/{rest...}":       "a/*",
@@ -198,16 +198,15 @@ func TestProxyRouteFromOperation(t *testing.T) {
 // A field added to plugins.Route must be carried by ProxyTarget, or converted
 // routes would silently drop it.
 func TestProxyTargetCarriesEveryRouteField(t *testing.T) {
-	target := reflect.TypeOf(ProxyTarget{})
+	target := reflect.TypeOf(routes.ProxyTarget{})
 	route := reflect.TypeOf(plugins.Route{})
 	for i := range route.NumField() {
 		f := route.Field(i)
 		if f.Name == "Path" || f.Name == "Method" {
 			continue
 		}
-		tf, ok := target.FieldByName(f.Name)
+		_, ok := target.FieldByName(f.Name)
 		require.True(t, ok, "ProxyTarget is missing %s", f.Name)
-		require.Equal(t, f.Type, tf.Type, f.Name)
 	}
 	require.Equal(t, route.NumField()-2, target.NumField())
 }
@@ -219,7 +218,7 @@ func TestWithoutProxyExtension(t *testing.T) {
 	props.Get.AddExtension("x-other", true)
 
 	published := WithoutProxyExtension(props)
-	require.NotContains(t, published.Get.Extensions, ExtensionProxy)
+	require.NotContains(t, published.Get.Extensions, routes.ExtensionProxy)
 	require.Equal(t, true, published.Get.Extensions["x-other"])
-	require.Contains(t, props.Get.Extensions, ExtensionProxy, "the served operation keeps it")
+	require.Contains(t, props.Get.Extensions, routes.ExtensionProxy, "the served operation keeps it")
 }

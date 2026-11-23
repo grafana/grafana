@@ -87,8 +87,23 @@ describe('useRulesToImport', () => {
       wrapper,
     });
 
-    // useAsync turns the failed parse into its error state; the step reports the parse error itself.
-    await waitFor(() => expect(result.current.rulesToBeImported).toEqual({}));
+    await waitFor(() => expect(result.current.rulesError).toBeDefined());
+    expect(result.current.rulesToBeImported).toEqual({});
+    expect(result.current.isLoadingRules).toBe(false);
+  });
+
+  it('clears the parse error once a readable file replaces the broken one', async () => {
+    const broken = new File(['groups: [not: valid'], 'broken.yaml');
+    const { result, rerender } = renderHook(
+      ({ file }) => useRulesToImport({ ...baseArgs, rulesSource: 'yaml', rulesYamlFile: file }),
+      { wrapper, initialProps: { file: broken } }
+    );
+    await waitFor(() => expect(result.current.rulesError).toBeDefined());
+
+    rerender({ file: rulesYaml() });
+
+    await waitFor(() => expect(Object.keys(result.current.rulesToBeImported)).not.toHaveLength(0));
+    expect(result.current.rulesError).toBeUndefined();
   });
 
   it('ignores a leftover rules file while the source is a data source', async () => {

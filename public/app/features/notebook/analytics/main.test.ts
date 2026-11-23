@@ -154,6 +154,23 @@ describe('NotebookAnalytics.cellAddedFromAddToNotebook', () => {
 
   afterEach(() => unsubscribe());
 
+  it('identifies the app for content added to an existing notebook', () => {
+    NotebookAnalytics.cellAddedFromAddToNotebook('nb-1', 'plugin', 2, undefined, false, false, 'grafana-assistant-app');
+    expect(events).toEqual([
+      {
+        notebookUid: 'nb-1',
+        source: 'plugin',
+        position: 2,
+        target: 'existing',
+        cellType: 'markdown',
+        lockTimeRange: false,
+        hasText: false,
+        originPluginId: 'grafana-assistant-app',
+        schema_version: 1,
+      },
+    ]);
+  });
+
   it('sends the shape of the added panel next to the notebook and the position', () => {
     NotebookAnalytics.cellAddedFromAddToNotebook(
       'nb-1',
@@ -250,6 +267,22 @@ describe('NotebookAnalytics.created', () => {
   });
 
   afterEach(() => unsubscribe());
+
+  it('identifies the app without changing the existing plugin source', () => {
+    NotebookAnalytics.created('nb-1', 'plugin', 1, undefined, false, false, 'grafana-lokiexplore-app');
+    expect(events).toEqual([
+      {
+        notebookUid: 'nb-1',
+        source: 'plugin',
+        cellCount: 1,
+        target: 'new',
+        lockTimeRange: false,
+        hasText: false,
+        originPluginId: 'grafana-lokiexplore-app',
+        schema_version: 1,
+      },
+    ]);
+  });
 
   it('describes the panel the notebook was created around', () => {
     NotebookAnalytics.created(
@@ -356,5 +389,40 @@ describe('NotebookAnalytics prompts, retries, blocks and incidents', () => {
     NotebookAnalytics.incidentActionCompleted('nb-1', 'attach');
 
     expect(captured.incident_action_completed).toEqual([{ notebookUid: 'nb-1', action: 'attach', schema_version: 1 }]);
+  });
+});
+
+describe('plugin add failure attribution', () => {
+  it('reports the originating app when the write fails', () => {
+    setEchoSrv(new Echo());
+    const events: Array<Record<string, unknown>> = [];
+    const unsubscribe = onInteraction('grafana_notebook_add_to_notebook_failed', (properties) =>
+      events.push(properties)
+    );
+    try {
+      NotebookAnalytics.addToNotebookFailed(
+        'nb-1',
+        'plugin',
+        'existing',
+        'write_failed',
+        false,
+        false,
+        'grafana-assistant-app'
+      );
+      expect(events).toEqual([
+        {
+          notebookUid: 'nb-1',
+          source: 'plugin',
+          target: 'existing',
+          reason: 'write_failed',
+          lockTimeRange: false,
+          hasText: false,
+          originPluginId: 'grafana-assistant-app',
+          schema_version: 1,
+        },
+      ]);
+    } finally {
+      unsubscribe();
+    }
   });
 });
