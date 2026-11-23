@@ -2132,6 +2132,87 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 	}
 }
 
+func TestRepositoryController_process_UnchangedQuotaIsNotRepatched(t *testing.T) {
+	// The bubble's clock stands still, so the refreshed quota carries the same values as the
+	// stored one, in different pointers.
+	tracer := tracing.InitializeTracerForTest()
+	synctest.Test(t, func(t *testing.T) {
+		namespace := "default"
+		repoName := "test-repo"
+		quota := provisioning.RepositoryQuotaStatus{
+			MaxRepositories:           new(int64(5)),
+			MaxResourcesPerRepository: new(int64(100)),
+		}
+		stored := quota
+		stored.UpdatedAt = new(time.Now().UnixMilli())
+
+		repo := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:       repoName,
+				Namespace:  namespace,
+				Generation: 2,
+			},
+			Spec: provisioning.RepositorySpec{
+				Type: provisioning.RepositorySpecTypeLocal,
+				Sync: provisioning.RepositorySyncOptions{Enabled: false},
+			},
+			Status: provisioning.RepositoryStatus{
+				ObservedGeneration: 1,
+				Health: provisioning.RepositoryHealthStatus{
+					Healthy: true,
+					Checked: time.Now().UnixMilli(),
+				},
+				Quota: stored,
+			},
+		}
+
+		indexer := cache.NewIndexer(
+			cache.MetaNamespaceKeyFunc,
+			cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc},
+		)
+		require.NoError(t, indexer.Add(repo))
+		repoGetter := informer.NewCachedRepositoryGetter(listers.NewRepositoryLister(indexer))
+
+		patcher := &capturePatcher{}
+		healthMetrics := NewMockHealthMetricsRecorder(t)
+		healthMetrics.EXPECT().
+			RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Maybe()
+
+		mockRepo := repository.NewMockRepository(t)
+		mockRepo.On("Config").Return(repo).Maybe()
+		mockRepo.On("Test", mock.Anything).
+			Return(&provisioning.TestResults{Success: true}, nil).Maybe()
+		repoFactory := repository.NewMockFactory(t)
+		repoFactory.On("Build", mock.Anything, mock.Anything).
+			Return(mockRepo, nil).Maybe()
+
+		rc := &RepositoryController{
+			repos:         repoGetter,
+			quotaGetter:   quotas.NewFixedQuotaGetter(quota),
+			quotaMetrics:  registerRepositoryQuotaMetrics(prometheus.NewPedanticRegistry()),
+			quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
+			healthChecker: NewRepositoryHealthChecker(patcher, repository.NewTester(), healthMetrics),
+			statusPatcher: patcher,
+			repoFactory:   repoFactory,
+			jobs: &mockJobsQueueStore{
+				MockQueue: jobs.NewMockQueue(t),
+				MockStore: jobs.NewMockStore(t),
+			},
+			logger: logging.DefaultLogger.With("logger", loggerName),
+			tracer: tracer,
+		}
+
+		_, err := rc.process(namespace + "/" + repoName)
+		require.NoError(t, err)
+
+		_, found := patcher.findPatchOp("/status/observedGeneration")
+		require.True(t, found, "the generation bump must produce a status patch")
+		_, found = patcher.findPatchOp("/status/quota")
+		assert.False(t, found, "an unchanged quota must not be patched")
+	})
+}
+
 // TestRepositoryController_process_UserCausedDeleteFailure verifies that a
 // deletion blocked by credentials the user has to fix reports itself on
 // /status/health rather than as a controller error. The repository renders a
@@ -4966,7 +5047,7 @@ func applyCapturedPatches(t *testing.T, repo *provisioning.Repository, ops []map
 		case strings.HasPrefix(path, "/status/conditions/"):
 			idx, err := strconv.Atoi(strings.TrimPrefix(path, "/status/conditions/"))
 			require.NoError(t, err, "unexpected conditions patch path %q", path)
-			provisioning.ConditionsToMeta(repo.Status.Conditions)[idx] = op["value"].(metav1.Condition)
+			repo.Status.Conditions[idx] = provisioning.ConditionFromMeta[provisioning.RepositoryCondition](op["value"].(metav1.Condition))
 		case path == "/status/sync/state":
 			repo.Status.Sync.State = op["value"].(provisioning.JobState)
 		case path == "/status/sync/started":

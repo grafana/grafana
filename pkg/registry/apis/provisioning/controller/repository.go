@@ -1428,7 +1428,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	patchOperations = append(patchOperations, rc.determineSyncStatusOps(obj, syncOptions, healthStatus, shouldResync)...)
 	// Persist a timestamp-only quota refresh with other status changes so it does not
 	// create its own informer update and reconciliation loop.
-	if !hasQuotaChanged && obj.Status.Quota != newQuota && len(patchOperations) > 0 {
+	if !hasQuotaChanged && !reflect.DeepEqual(obj.Status.Quota, newQuota) && len(patchOperations) > 0 {
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
 			"path":  "/status/quota",
