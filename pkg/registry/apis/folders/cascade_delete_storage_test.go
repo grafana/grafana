@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sort"
+	"strconv"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -453,12 +455,35 @@ type fakeFolderStorage struct {
 	// beforeDelete runs at the start of Delete, to simulate a concurrent change.
 	beforeDelete  func()
 	deleteOptions *metav1.DeleteOptions
+	// pageSize, when set, makes List page by name.
+	pageSize  int
+	listCalls []metainternalversion.ListOptions
 }
 
-func (f *fakeFolderStorage) List(context.Context, *metainternalversion.ListOptions) (runtime.Object, error) {
+func (f *fakeFolderStorage) List(_ context.Context, opts *metainternalversion.ListOptions) (runtime.Object, error) {
+	if opts != nil {
+		f.listCalls = append(f.listCalls, *opts.DeepCopy())
+	}
+	names := make([]string, 0, len(f.existing))
+	for name := range f.existing {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	size := f.pageSize
+	if opts != nil && opts.Limit > 0 && (size == 0 || int(opts.Limit) < size) {
+		size = int(opts.Limit)
+	}
+	start := 0
+	if opts != nil && opts.Continue != "" {
+		start, _ = strconv.Atoi(opts.Continue)
+	}
 	list := &foldersv1.FolderList{}
-	for _, folder := range f.existing {
-		list.Items = append(list.Items, *folder.DeepCopy())
+	for i := start; i < len(names); i++ {
+		if size > 0 && i-start == size {
+			list.Continue = strconv.Itoa(i)
+			break
+		}
+		list.Items = append(list.Items, *f.existing[names[i]].DeepCopy())
 	}
 	return list, nil
 }
@@ -720,8 +745,9 @@ func isDryRun(dryRun []string) bool {
 // watchableFolderStorage adds the optional Watcher/CollectionDeleter interfaces to the fake.
 type watchableFolderStorage struct {
 	*fakeFolderStorage
-	watched           bool
-	deletedCollection bool
+	watched              bool
+	deletedCollection    bool
+	collectionValidation rest.ValidateObjectFunc
 }
 
 func (w *watchableFolderStorage) Watch(context.Context, *metainternalversion.ListOptions) (watch.Interface, error) {
@@ -729,8 +755,9 @@ func (w *watchableFolderStorage) Watch(context.Context, *metainternalversion.Lis
 	return watch.NewEmptyWatch(), nil
 }
 
-func (w *watchableFolderStorage) DeleteCollection(context.Context, rest.ValidateObjectFunc, *metav1.DeleteOptions, *metainternalversion.ListOptions) (runtime.Object, error) {
+func (w *watchableFolderStorage) DeleteCollection(_ context.Context, validation rest.ValidateObjectFunc, _ *metav1.DeleteOptions, _ *metainternalversion.ListOptions) (runtime.Object, error) {
 	w.deletedCollection = true
+	w.collectionValidation = validation
 	return nil, nil
 }
 
@@ -1534,6 +1561,140 @@ func TestCascadeDelete_RejectsForcedCollectionDelete(t *testing.T) {
 			require.True(t, inner.deletedCollection)
 		})
 	}
+}
+
+func TestCascadeDelete_RejectsCollectionDeleteOfFinalizerFolders(t *testing.T) {
+	finalizerFolder := func(name string) *foldersv1.Folder {
+		f := newFolder(name)
+		f.Finalizers = []string{foldersv1.CascadeDeleteFinalizer}
+		return f
+	}
+	newStore := func(folders ...*foldersv1.Folder) *watchableFolderStorage {
+		store := &watchableFolderStorage{fakeFolderStorage: &fakeFolderStorage{existing: map[string]*foldersv1.Folder{}}}
+		for _, f := range folders {
+			store.existing[f.Name] = f
+		}
+		return store
+	}
+	deleter := func(store *watchableFolderStorage) rest.CollectionDeleter {
+		return newCascadeDeleteStorage(store, &fakeCascadeSearcher{}, nilDashboardClient, nilVariableClient, nil, nil).(rest.CollectionDeleter)
+	}
+
+	t.Run("a selection with a finalizer folder is rejected before anything is deleted", func(t *testing.T) {
+		store := newStore(newFolder("a"), finalizerFolder("b"))
+		_, err := deleter(store).DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, nil)
+		require.True(t, apierrors.IsBadRequest(err), "got %v", err)
+		require.Contains(t, err.Error(), `"b"`)
+		require.False(t, store.deletedCollection, "underlying collection delete must not run")
+	})
+
+	t.Run("a dry run is rejected too", func(t *testing.T) {
+		store := newStore(finalizerFolder("a"))
+		_, err := deleter(store).DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{DryRun: []string{metav1.DryRunAll}}, nil)
+		require.True(t, apierrors.IsBadRequest(err), "got %v", err)
+		require.False(t, store.deletedCollection)
+	})
+
+	t.Run("a finalizer folder on a later page is found", func(t *testing.T) {
+		store := newStore(newFolder("a"), newFolder("b"), finalizerFolder("c"))
+		store.pageSize = 1
+		_, err := deleter(store).DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, nil)
+		require.True(t, apierrors.IsBadRequest(err), "got %v", err)
+		require.False(t, store.deletedCollection)
+	})
+
+	t.Run("resource version constraints are not supported", func(t *testing.T) {
+		for name, opts := range map[string]*metainternalversion.ListOptions{
+			"resourceVersion":      {ResourceVersion: "7"},
+			"resourceVersionMatch": {ResourceVersionMatch: metav1.ResourceVersionMatchExact},
+		} {
+			t.Run(name, func(t *testing.T) {
+				store := newStore(newFolder("a"))
+				_, err := deleter(store).DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, opts)
+				require.True(t, apierrors.IsBadRequest(err), "got %v", err)
+				require.False(t, store.deletedCollection)
+				require.Empty(t, store.listCalls, "rejected before listing")
+			})
+		}
+	})
+
+	t.Run("a caller limit selects only the first page, as the registry does", func(t *testing.T) {
+		store := newStore(newFolder("a"), finalizerFolder("b"))
+		store.pageSize = 1
+		_, err := deleter(store).DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, &metainternalversion.ListOptions{Limit: 1})
+		require.NoError(t, err)
+		require.True(t, store.deletedCollection)
+	})
+
+	t.Run("folders without the finalizer are forwarded", func(t *testing.T) {
+		store := newStore(newFolder("a"), newFolder("b"))
+		store.pageSize = 1
+		_, err := deleter(store).DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, nil)
+		require.NoError(t, err)
+		require.True(t, store.deletedCollection)
+	})
+
+	t.Run("a list error is returned and nothing is deleted", func(t *testing.T) {
+		store := &watchableFolderStorage{fakeFolderStorage: &fakeFolderStorage{}}
+		c := cascadeCollectionDeleter{lister: failingLister{}, inner: store}
+		_, err := c.DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, nil)
+		require.Error(t, err)
+		require.False(t, store.deletedCollection)
+	})
+
+	t.Run("a list without list metadata fails closed", func(t *testing.T) {
+		store := &watchableFolderStorage{fakeFolderStorage: &fakeFolderStorage{}}
+		c := cascadeCollectionDeleter{lister: noListMetaLister{}, inner: store}
+		_, err := c.DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, nil)
+		require.Error(t, err)
+		require.False(t, store.deletedCollection)
+	})
+
+	t.Run("a folder created after the listing is rejected when it is about to be deleted", func(t *testing.T) {
+		store := newStore(newFolder("a"))
+		_, err := deleter(store).DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, nil)
+		require.NoError(t, err)
+		require.NotNil(t, store.collectionValidation)
+
+		err = store.collectionValidation(context.Background(), finalizerFolder("late"))
+		require.True(t, apierrors.IsBadRequest(err), "got %v", err)
+		require.NoError(t, store.collectionValidation(context.Background(), newFolder("plain")))
+	})
+
+	t.Run("the caller's own delete validation still runs", func(t *testing.T) {
+		store := newStore(newFolder("a"))
+		denied := errors.New("denied")
+		var seen runtime.Object
+		_, err := deleter(store).DeleteCollection(ctxWithNamespace(), func(_ context.Context, obj runtime.Object) error {
+			seen = obj
+			return denied
+		}, &metav1.DeleteOptions{}, nil)
+		require.NoError(t, err)
+
+		plain := newFolder("plain")
+		require.ErrorIs(t, store.collectionValidation(context.Background(), plain), denied)
+		require.Same(t, plain, seen)
+	})
+}
+
+// noListMetaLister returns a list with items but no readable list metadata.
+type noListMetaLister struct{ rest.Lister }
+
+type listWithoutMeta struct {
+	metav1.TypeMeta
+	Items []foldersv1.Folder
+}
+
+func (l *listWithoutMeta) DeepCopyObject() runtime.Object { return l }
+
+func (noListMetaLister) List(context.Context, *metainternalversion.ListOptions) (runtime.Object, error) {
+	return &listWithoutMeta{Items: []foldersv1.Folder{*newFolder("a")}}, nil
+}
+
+type failingLister struct{ rest.Lister }
+
+func (failingLister) List(context.Context, *metainternalversion.ListOptions) (runtime.Object, error) {
+	return nil, errors.New("list failed")
 }
 
 func TestCascadeDelete_OptionalInterfacesNotExposedWhenUnsupported(t *testing.T) {
