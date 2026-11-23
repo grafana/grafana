@@ -73,6 +73,8 @@ const starsAPI = collectionsAPIv1alpha1.enhanceEndpoints({ addTagTypes: [STARRED
     searchStarred: build.query<DashboardQueryResult[], StarredNames[]>({
       providesTags: [STARRED_SEARCH_TAG],
       queryFn: async (starred) => {
+        // TODO: Switch to the global search when it is enabled: one search for the names of every kind
+        // replaces the two below
         const { indexed, app } = partitionStarred(starred);
         try {
           const [indexedRows, appRows] = await Promise.all([searchDashboardIndex(indexed), searchAppKinds(app)]);

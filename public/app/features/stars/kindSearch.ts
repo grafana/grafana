@@ -16,6 +16,10 @@ import { type SearchHit } from 'app/features/search/service/unified';
 import { type KindSearchStarredKind, type StarredNamesOfKind } from './kinds';
 
 /**
+ * TODO: Switch to the global search when it is enabled, and delete this file. One search across
+ * kinds then answers for all of them, where this takes a request per kind. It is off by default
+ * on the server for now.
+ *
  * Resolves starred names of an app kind to titles and folders through the kind's own search
  * endpoint, `POST /apis/{group}/{version}/namespaces/{ns}/{plural}/search`, which the app platform
  * mounts for every served namespaced kind whose manifest enables search. No client is generated

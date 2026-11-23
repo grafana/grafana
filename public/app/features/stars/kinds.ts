@@ -63,7 +63,7 @@ const FOLDER: StarredKind = { ...CORE_KINDS.folder, source: 'dashboard-search' }
 
 // In display order: the nav lists starred dashboards before starred folders
 const GRAFANA_KINDS: readonly StarredKind[] = [DASHBOARD, FOLDER];
-// One icon for every app kind until a kind can declare its own
+// TODO: Temporary. One icon for every app kind, until a kind can declare its own
 const APP_KIND_ICON: IconName = 'cube';
 
 /** What discovery found for an app kind. Plain data, since the store caches it; the kind is derived from it. */
@@ -81,7 +81,7 @@ function appKind({ group, kind, version, resource, listPath }: DiscoveredAppKind
     kind,
     resource,
     searchKind: `${group}/${kind}`,
-    // Kind names are singular nouns, which serves as the label until a kind can declare one
+    // TODO: Temporary. The kind name stands in for a label, until a kind can declare one
     getLabel: () => kind,
     icon: APP_KIND_ICON,
     // Without the app sub path, as a core kind's route is
@@ -178,6 +178,9 @@ export function findStarredKindBySearchKind(searchKind: string): StarredKind | u
 }
 
 /**
+ * TODO: Switch to the global search when it is enabled. It finds the titles of every kind in one
+ * search, so this split goes, and with it a kind's `version`.
+ *
  * Splits a star set by where its kinds' titles come from, in display order: Grafana's kinds
  * through the dashboard search index, app kinds through their own search. Stars of kinds Grafana
  * cannot show are left out.

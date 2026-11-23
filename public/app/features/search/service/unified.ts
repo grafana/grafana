@@ -109,6 +109,9 @@ export class UnifiedSearcher implements GrafanaSearcher {
       generatedAPI.endpoints.listStars.initiate({ fieldSelector: userStarsFieldSelector() }, { subscribe: false })
     );
     await loadStarredKindsFor(stars);
+    // TODO: Switch to the global search when it is enabled. It answers for every kind as one list, where the
+    // app rows below can only trail the index's. The index keeps the queries only it can answer, such as a
+    // filter on the panel type.
     const { indexed, app } = partitionStarred(stars?.items?.[0]?.spec.resource ?? []);
     const indexNames = [...new Set(indexed.flatMap(({ names }) => names))];
     const indexQuery = { ...query, name: indexNames, query: query.query ?? '*' };
