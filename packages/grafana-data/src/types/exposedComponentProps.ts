@@ -40,5 +40,7 @@ export type SaveResourceDrawerV1AlphaProps = {
   readOnlyMessage?: string;
   branchPrefix?: string;
   directory?: string;
+  action: 'create' | 'update' | 'delete';
+  repositoryName?: string;
   onDismiss?: () => void;
-} & ({ action: 'create'; repositoryName?: string } | { action: 'update' | 'delete'; repositoryName?: never });
+};
