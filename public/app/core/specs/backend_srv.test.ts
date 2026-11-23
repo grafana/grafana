@@ -1,9 +1,10 @@
+import FingerprintJS from '@fingerprintjs/fingerprintjs';
 import { Observable, Subject, of, lastValueFrom, throwError } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 import { delay } from 'rxjs/operators';
 
 import { AppEvents, DataQueryErrorType, type EventBusExtended, PathValidationError } from '@grafana/data';
-import { type BackendSrvRequest, type FetchError, type FetchResponse } from '@grafana/runtime';
+import { type BackendSrvRequest, config, type FetchError, type FetchResponse } from '@grafana/runtime';
 
 import { TokenRevokedModal } from '../../features/users/TokenRevokedModal';
 import { ShowModalReactEvent } from '../../types/events';
@@ -144,6 +145,28 @@ describe('backendSrv', () => {
         }
       }
     );
+  });
+
+  describe('device id', () => {
+    afterEach(() => {
+      config.anonymousEnabled = false;
+      jest.restoreAllMocks();
+    });
+
+    it('does not load the fingerprint when anonymous access is disabled', () => {
+      const loadSpy = jest.spyOn(FingerprintJS, 'load');
+      config.anonymousEnabled = false;
+      getTestContext();
+      expect(loadSpy).not.toHaveBeenCalled();
+    });
+
+    it('loads the fingerprint when anonymous access is enabled', () => {
+      const loadSpy = jest.spyOn(FingerprintJS, 'load').mockRejectedValue(new Error('not available'));
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+      config.anonymousEnabled = true;
+      getTestContext();
+      expect(loadSpy).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('request', () => {
