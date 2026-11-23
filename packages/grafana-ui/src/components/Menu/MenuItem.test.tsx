@@ -1,6 +1,8 @@
+import { css } from '@emotion/css';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { createTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { MenuItem, type MenuItemProps } from './MenuItem';
@@ -120,6 +122,17 @@ describe('MenuItem', () => {
     expect(screen.getByRole('menuitem', { name: 'URL Item' })).toBeInTheDocument();
   });
 
+  it('keeps menu semantics while rendering the link variant without a background', () => {
+    render(<MenuItem label="External link" url="https://example.com" variant="link" />);
+
+    const menuTextColor = createTheme().colors.text.primary;
+    expect(screen.getByRole('menuitem', { name: 'External link' })).toHaveStyle({
+      background: 'none',
+      color: menuTextColor,
+    });
+    expect(screen.getByText('External link')).toHaveStyle({ color: menuTextColor });
+  });
+
   it('renders extra component if provided', async () => {
     render(<MenuItem label="main label" component={() => <p>extra content</p>} />);
     expect(screen.getByText('main label')).toBeInTheDocument();
@@ -153,6 +166,17 @@ describe('MenuItem', () => {
     render(<MenuItem label="Item" data-role="custom" />);
 
     expect(screen.getByRole('menuitem', { name: 'Item' })).toHaveAttribute('data-role', 'menuitem');
+  });
+
+  it('allows custom styles to override the default item styles', () => {
+    render(<MenuItem label="Item" className={css({ padding: '12px 40px 12px 12px' })} />);
+
+    expect(screen.getByRole('menuitem', { name: 'Item' })).toHaveStyle({
+      paddingTop: '12px',
+      paddingRight: '40px',
+      paddingBottom: '12px',
+      paddingLeft: '12px',
+    });
   });
 
   it('activates link MenuItem with Space key', async () => {

@@ -1,13 +1,28 @@
-import { type RefObject, useEffect, useState } from 'react';
+import { type RefObject, useEffect, useLayoutEffect, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
 const modulo = (a: number, n: number) => ((a % n) + n) % n;
 const UNFOCUSED = -1;
+const MENU_ITEM_SELECTOR = '[data-role="menuitem"]:not([data-disabled])';
+
+const getMenuItems = (container: HTMLElement | null) => {
+  const menu =
+    container?.getAttribute('role') === 'menu'
+      ? container
+      : (container?.querySelector<HTMLElement>('[role="menu"]') ?? container);
+
+  return menu
+    ? Array.from(menu.querySelectorAll<HTMLElement>(MENU_ITEM_SELECTOR)).filter(
+        (menuItem) => menu.getAttribute('role') !== 'menu' || menuItem.closest('[role="menu"]') === menu
+      )
+    : [];
+};
 
 /** @internal */
 export interface UseMenuFocusProps {
   localRef: RefObject<HTMLElement | null>;
   isMenuOpen?: boolean;
+  autoFocus?: boolean;
   close?: () => void;
   onOpen?: (focusOnItem: (itemId: number) => void) => void;
   onClose?: () => void;
@@ -21,6 +36,7 @@ export type UseMenuFocusReturn = [(event: React.KeyboardEvent) => void];
 export const useMenuFocus = ({
   localRef,
   isMenuOpen,
+  autoFocus = true,
   close,
   onOpen,
   onClose,
@@ -35,24 +51,36 @@ export const useMenuFocus = ({
   }, [isMenuOpen]);
 
   useEffect(() => {
-    const menuItems = localRef?.current?.querySelectorAll<HTMLElement | HTMLButtonElement | HTMLAnchorElement>(
-      '[data-role="menuitem"]:not([data-disabled])'
-    );
-    menuItems?.[focusedItem]?.focus();
-    menuItems?.forEach((menuItem, i) => {
-      menuItem.tabIndex = i === focusedItem ? 0 : -1;
+    const menuItems = getMenuItems(localRef.current);
+    if (autoFocus || localRef.current?.contains(document.activeElement)) {
+      menuItems[focusedItem]?.focus();
+    }
+  }, [localRef, focusedItem, autoFocus]);
+
+  // Reconcile replacement items before paint without moving focus on parent updates.
+  // DOM children can change without any hook input changing, so this must run after every commit.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useLayoutEffect(() => {
+    const menuItems = getMenuItems(localRef.current);
+    const itemCount = menuItems.length;
+    const reconciledFocusedItem = focusedItem === UNFOCUSED || focusedItem < itemCount ? focusedItem : itemCount - 1;
+
+    menuItems.forEach((menuItem, i) => {
+      menuItem.tabIndex = i === reconciledFocusedItem ? 0 : -1;
     });
-  }, [localRef, focusedItem]);
+
+    if (reconciledFocusedItem !== focusedItem) {
+      setFocusedItem(reconciledFocusedItem);
+    }
+  });
 
   useEffectOnce(() => {
     onOpen?.(setFocusedItem);
   });
 
   const handleKeys = (event: React.KeyboardEvent) => {
-    const menuItems = localRef?.current?.querySelectorAll<HTMLElement | HTMLButtonElement | HTMLAnchorElement>(
-      '[data-role="menuitem"]:not([data-disabled])'
-    );
-    const menuItemsCount = menuItems?.length ?? 0;
+    const menuItems = getMenuItems(localRef.current);
+    const menuItemsCount = menuItems.length;
 
     switch (event.key) {
       case 'ArrowUp':
@@ -66,10 +94,12 @@ export const useMenuFocus = ({
         setFocusedItem(modulo(focusedItem + 1, menuItemsCount));
         break;
       case 'ArrowLeft':
-        event.preventDefault();
-        event.stopPropagation();
-        setFocusedItem(UNFOCUSED);
-        close?.();
+        if (close) {
+          event.preventDefault();
+          event.stopPropagation();
+          setFocusedItem(UNFOCUSED);
+          close();
+        }
         break;
       case 'Home':
         event.preventDefault();
@@ -85,7 +115,7 @@ export const useMenuFocus = ({
       case ' ':
         event.preventDefault();
         event.stopPropagation();
-        const focusedElement = menuItems?.[focusedItem];
+        const focusedElement = menuItems[focusedItem];
         const hasSubMenu = Boolean(focusedElement?.querySelector('[data-role="menuitem"]'));
 
         if (!hasSubMenu) {
