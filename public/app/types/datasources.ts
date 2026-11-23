@@ -21,7 +21,16 @@ export interface DataSourceSettingsState {
   plugin?: GenericDataSourcePlugin | null;
   testingStatus?: TestingStatus;
   loadError?: string | null;
+  /** Set when the load failed because the plugin of the data source is not installed. */
+  orphanedDataSource?: OrphanedDataSource;
   loading: boolean;
+}
+
+/** A stored data source whose plugin is not installed. */
+export interface OrphanedDataSource {
+  uid: string;
+  name: string;
+  pluginType: string;
 }
 
 export interface DataSourcePluginCategory {

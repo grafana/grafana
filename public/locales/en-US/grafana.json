@@ -8669,8 +8669,11 @@
       "back": "Back",
       "check-updates": "An unknown error occurred while loading the plugin. Please check for updates.",
       "delete": "Delete",
+      "delete-plugin-not-installed": "A data source can't be deleted yet while its plugin is not installed",
+      "install-plugin": "<0>Install the plugin</0> to use or edit this data source.",
       "load-error-title": "Error loading plugin",
-      "not-found": "Data source not found"
+      "not-found": "Data source not found",
+      "plugin-not-installed-title": "The plugin of this data source is not installed"
     },
     "data-source-missing-rights-message": {
       "title-missing-rights": "Missing rights"
@@ -8697,7 +8700,8 @@
       "aria-label-learn-more": "{{dataSourcePluginName}}, learn more."
     },
     "data-sources-list-card": {
-      "explore": "Explore"
+      "explore": "Explore",
+      "plugin-not-installed": "Plugin not installed"
     },
     "default-button": {
       "active": "This data source is currently set as the default.",

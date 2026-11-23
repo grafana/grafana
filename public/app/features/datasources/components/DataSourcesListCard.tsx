@@ -3,9 +3,9 @@ import Skeleton from 'react-loading-skeleton';
 
 import { type DataSourceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Card, LinkButton, Stack, Tag, useStyles2 } from '@grafana/ui';
+import { Badge, Card, LinkButton, Stack, Tag, useStyles2 } from '@grafana/ui';
 
 import { ROUTES } from '../../connections/constants';
 import { type DatasourceFailureDetails } from '../../connections/hooks/useDatasourceAdvisorChecks';
@@ -19,9 +19,16 @@ export interface Props {
   hasWriteRights: boolean;
   hasExploreRights: boolean;
   failure?: DatasourceFailureDetails;
+  pluginNotInstalled?: boolean;
 }
 
-export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRights, failure }: Props) {
+export function DataSourcesListCard({
+  dataSource,
+  hasWriteRights,
+  hasExploreRights,
+  failure,
+  pluginNotInstalled,
+}: Props) {
   const dsLink = config.appSubUrl + ROUTES.DataSourcesEdit.replace(/:uid/gi, dataSource.uid);
   const styles = useStyles2(getStyles);
 
@@ -40,6 +47,14 @@ export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRigh
           dataSource.typeName,
           dataSource.url,
           dataSource.isDefault && <Tag key="default-tag" name={'default'} colorIndex={1} />,
+          pluginNotInstalled && (
+            <Badge
+              key="plugin-not-installed-badge"
+              color="orange"
+              icon="exclamation-triangle"
+              text={t('datasources.data-sources-list-card.plugin-not-installed', 'Plugin not installed')}
+            />
+          ),
           failure?.severity && (
             <DataSourceFailureBadge key="unhealthy-badge" severity={failure.severity} message={failure.message} />
           ),

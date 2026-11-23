@@ -1,10 +1,11 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 
-import { getMockDataSources } from '../mocks/dataSourcesMocks';
+import { getMockDataSource, getMockDataSources } from '../mocks/dataSourcesMocks';
 
 import { DataSourcesListView, type ViewProps } from './DataSourcesList';
 
@@ -77,6 +78,28 @@ describe('<DataSourcesList>', () => {
     expect(await screen.findAllByRole('link', { name: /dataSource-/i })).toHaveLength(3);
     expect(await screen.findAllByRole('link', { name: /Build a dashboard/i })).toHaveLength(3);
     expect(await screen.findAllByRole('link', { name: 'Explore' })).toHaveLength(3);
+  });
+
+  it('should mark the data sources whose plugin is not installed', async () => {
+    setup({
+      dataSources: [
+        ...getMockDataSources(1, { type: 'installed' }),
+        getMockDataSource({ uid: 'orphan', name: 'Orphan', type: 'not-installed' }),
+      ],
+      dataSourcesCount: 2,
+      isPluginInstalled: (type) => type === 'installed',
+    });
+
+    const orphanCard = await screen.findByTestId(selectors.pages.DataSources.dataSources('Orphan'));
+    expect(within(orphanCard).getByText('Plugin not installed')).toBeVisible();
+    expect(screen.getAllByText('Plugin not installed')).toHaveLength(1);
+  });
+
+  it('should not mark any data source while the installed plugins are unknown', async () => {
+    setup();
+
+    expect(await screen.findAllByRole('listitem')).toHaveLength(3);
+    expect(screen.queryByText('Plugin not installed')).not.toBeInTheDocument();
   });
 
   it('should virtualize long datasource lists', async () => {

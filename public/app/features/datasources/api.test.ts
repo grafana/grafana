@@ -1,11 +1,19 @@
 import { of, throwError } from 'rxjs';
 
-import { type DataSourceInstanceSettings, type DataSourceSettings } from '@grafana/data';
+import { type DataSourceInstanceSettings, type DataSourcePluginMeta, type DataSourceSettings } from '@grafana/data';
 import { config, type BackendSrvRequest, type FetchError, type FetchResponse } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient, setDataSourceInstanceSettings } from '@grafana/runtime/internal';
+import {
+  FlagKeys,
+  getDataSourceConnections,
+  getFeatureFlagClient,
+  isMTDataSourceFillEnabled,
+  setDataSourceInstanceSettings,
+} from '@grafana/runtime/internal';
 import { type BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
+import icnDatasourceSvg from 'img/icn-datasource.svg';
 
 import {
+  getDataSources,
   getDataSourceByUid,
   createDataSourceWithK8sAPI,
   deleteDataSource,
@@ -15,6 +23,7 @@ import {
   type K8sMetadata,
   type DatasourceInstanceK8sSpec,
 } from './api';
+import { DataSourcePluginNotInstalledError } from './errors';
 
 jest.mock('app/core/services/backend_srv');
 jest.mock('@grafana/runtime', () => ({
@@ -24,17 +33,30 @@ jest.mock('@grafana/runtime', () => ({
 jest.mock('@grafana/runtime/internal', () => ({
   ...jest.requireActual('@grafana/runtime/internal'),
   getFeatureFlagClient: jest.fn(),
+  isMTDataSourceFillEnabled: jest.fn(),
+  getDataSourceConnections: jest.fn(),
 }));
 
 const mockGetFeatureFlagClient = jest.mocked(getFeatureFlagClient);
+const mockIsMTDataSourceFillEnabled = jest.mocked(isMTDataSourceFillEnabled);
+const mockGetDataSourceConnections = jest.mocked(getDataSourceConnections);
+const orphanConnection = {
+  uid: 'orphan',
+  name: 'Orphan',
+  type: 'not-installed',
+  isDefault: false,
+};
 const getBooleanValueFn = jest.fn();
 
-// stubCRUDApisEnabled toggles only the new-CRUD-APIs flag; any other flag key
-// falls through to the default the caller supplied.
-function stubCRUDApisEnabled(enabled: boolean) {
-  getBooleanValueFn.mockImplementation((key: string, defaultValue: boolean) =>
-    key === FlagKeys.DatasourcesConfigUiUseNewDatasourceCRUDAPIs ? enabled : defaultValue
-  );
+// stubCRUDApisEnabled toggles only the new-CRUD-APIs flag, plus the MT plugin metas flag when asked;
+// any other flag key falls through to the default the caller supplied.
+function stubCRUDApisEnabled(enabled: boolean, { mtPluginMetas = false } = {}) {
+  getBooleanValueFn.mockImplementation((key: string, defaultValue: boolean) => {
+    if (key === FlagKeys.DatasourcesConfigUiUseNewDatasourceCRUDAPIs) {
+      return enabled;
+    }
+    return key === FlagKeys.PluginsUseMTPlugins ? mtPluginMetas : defaultValue;
+  });
 }
 
 const marvinSettings = {
@@ -88,16 +110,71 @@ const originalNamespace = config.namespace;
 describe('Datasources / API', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // clearAllMocks keeps queued mockReturnValueOnce values, which would leak into the next test.
+    jest.mocked(getBackendSrv).mockReset();
     mockGetFeatureFlagClient.mockReturnValue({ getBooleanValue: getBooleanValueFn } as unknown as ReturnType<
       typeof getFeatureFlagClient
     >);
     stubCRUDApisEnabled(false);
+    mockIsMTDataSourceFillEnabled.mockReturnValue(false);
+    mockGetDataSourceConnections.mockResolvedValue([]);
     setDataSourceInstanceSettings({ Marvin: marvinSettings, '-- Grafana --': grafanaSettings }, 'Marvin');
     config.namespace = 'default';
   });
 
   afterAll(() => {
     config.namespace = originalNamespace;
+  });
+
+  describe('getDataSources()', () => {
+    it('should list from the legacy API when the MT fill is disabled', async () => {
+      const legacy = [{ uid: 'abc123' }];
+      const get = jest.fn().mockResolvedValue(legacy);
+      (getBackendSrv as jest.Mock).mockReturnValueOnce({ get });
+
+      expect(await getDataSources()).toBe(legacy);
+      expect(get).toHaveBeenCalledWith('/api/datasources');
+      expect(mockGetDataSourceConnections).not.toHaveBeenCalled();
+    });
+
+    it('should list every connection, including those whose plugin is not installed, when the MT fill is enabled', async () => {
+      mockIsMTDataSourceFillEnabled.mockReturnValue(true);
+      const marvinMeta = { id: 'marvin', name: 'Marvin plugin', info: { logos: { small: 'marvin.svg' } } };
+      mockGetDataSourceConnections.mockResolvedValue([
+        {
+          uid: 'abc123',
+          name: 'Marvin',
+          type: 'marvin',
+          isDefault: true,
+          meta: marvinMeta as DataSourcePluginMeta,
+        },
+        orphanConnection,
+      ]);
+
+      const result = await getDataSources();
+
+      expect(getBackendSrv).not.toHaveBeenCalled();
+      expect(result).toEqual([
+        expect.objectContaining({
+          uid: 'abc123',
+          name: 'Marvin',
+          type: 'marvin',
+          typeName: 'Marvin plugin',
+          typeLogoUrl: 'marvin.svg',
+          url: '',
+          isDefault: true,
+        }),
+        expect.objectContaining({
+          uid: 'orphan',
+          name: 'Orphan',
+          type: 'not-installed',
+          typeName: 'not-installed',
+          typeLogoUrl: icnDatasourceSvg,
+          url: '',
+          isDefault: false,
+        }),
+      ]);
+    });
   });
 
   describe('getDataSourceByUid()', () => {
@@ -143,6 +220,32 @@ describe('Datasources / API', () => {
       stubCRUDApisEnabled(true);
 
       await expect(getDataSourceByUid('nope')).rejects.toThrow('Could not find data source group with uid: "nope"');
+    });
+
+    it('should reject with DataSourcePluginNotInstalledError when the plugin of the data source is not installed', async () => {
+      stubCRUDApisEnabled(true, { mtPluginMetas: true });
+      mockGetDataSourceConnections.mockResolvedValue([orphanConnection]);
+
+      const error = await getDataSourceByUid('orphan').catch((e) => e);
+
+      expect(error).toBeInstanceOf(DataSourcePluginNotInstalledError);
+      expect(error.dataSource).toEqual({ uid: 'orphan', name: 'Orphan', pluginType: 'not-installed' });
+    });
+
+    // Boot data metas cover only the plugins of the data sources the user can query.
+    it('should reject as unknown without the MT plugin metas', async () => {
+      stubCRUDApisEnabled(true);
+      mockGetDataSourceConnections.mockResolvedValue([orphanConnection]);
+
+      await expect(getDataSourceByUid('orphan')).rejects.toThrow('Could not find data source group with uid: "orphan"');
+      expect(mockGetDataSourceConnections).not.toHaveBeenCalled();
+    });
+
+    it('should reject as unknown when the connections cannot be listed', async () => {
+      stubCRUDApisEnabled(true, { mtPluginMetas: true });
+      mockGetDataSourceConnections.mockRejectedValue(new Error('connections disabled'));
+
+      await expect(getDataSourceByUid('orphan')).rejects.toThrow('Could not find data source group with uid: "orphan"');
     });
 
     describe('when a k8s request fails and the new CRUD APIs are enabled', () => {

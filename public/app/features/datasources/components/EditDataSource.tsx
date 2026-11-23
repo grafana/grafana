@@ -212,6 +212,7 @@ export function EditDataSourceView({
         // A failed init leaves the initial empty data source in state, so the load error has to
         // take precedence over "not found" or its message is never shown.
         notFound={!loadError && (!hasDataSource || !instanceSettings)}
+        orphanedDataSource={dataSourceSettings.orphanedDataSource}
         errorMsg={loadError}
         dataSourceRights={dataSourceRights}
         onDelete={() => {

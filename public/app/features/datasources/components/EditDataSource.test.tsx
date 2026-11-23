@@ -1,11 +1,10 @@
-import { screen, render } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { useEffect } from 'react';
-import { Provider } from 'react-redux';
+import { render, screen } from 'test/test-utils';
 
 import { type DataSourceJsonData, type PluginExtensionDataSourceConfigContext, PluginState } from '@grafana/data';
 import { setPluginComponentsHook, setPluginLinksHook, useDataSourceInstanceSettings } from '@grafana/runtime';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
-import { configureStore } from 'app/store/configureStore';
 
 import { getMockDataSource, getMockDataSourceMeta, getMockDataSourceSettingsState } from '../mocks/dataSourcesMocks';
 import { initialState } from '../state/reducers';
@@ -32,23 +31,19 @@ jest.mock('@grafana/runtime', () => ({
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
 const setup = (props?: Partial<ViewProps>) => {
-  const store = configureStore();
-
   return render(
-    <Provider store={store}>
-      <EditDataSourceView
-        dataSource={getMockDataSource()}
-        dataSourceMeta={getMockDataSourceMeta()}
-        dataSourceSettings={getMockDataSourceSettingsState()}
-        dataSourceRights={{ readOnly: false, hasWriteRights: true, hasDeleteRights: true }}
-        exploreUrl={'/explore'}
-        onDelete={jest.fn()}
-        onOptionsChange={onOptionsChange}
-        onTest={jest.fn()}
-        onUpdate={jest.fn()}
-        {...props}
-      />
-    </Provider>
+    <EditDataSourceView
+      dataSource={getMockDataSource()}
+      dataSourceMeta={getMockDataSourceMeta()}
+      dataSourceSettings={getMockDataSourceSettingsState()}
+      dataSourceRights={{ readOnly: false, hasWriteRights: true, hasDeleteRights: true }}
+      exploreUrl={'/explore'}
+      onDelete={jest.fn()}
+      onOptionsChange={onOptionsChange}
+      onTest={jest.fn()}
+      onUpdate={jest.fn()}
+      {...props}
+    />
   );
 };
 
@@ -107,6 +102,43 @@ describe('<EditDataSource>', () => {
       });
 
       expect(screen.queryByText(readOnlyMessage)).toBeVisible();
+    });
+
+    describe('when the plugin of the data source is not installed', () => {
+      const orphanedDataSource = { uid: 'orphan', name: 'Orphan', pluginType: 'not-installed' };
+      const setupOrphan = ({ onDelete = jest.fn() } = {}) =>
+        setup({
+          dataSource: initialState.dataSource,
+          dataSourceSettings: getMockDataSourceSettingsState({
+            plugin: null,
+            loadError: 'The plugin "not-installed" of data source "orphan" is not installed',
+            orphanedDataSource,
+          }),
+          dataSourceRights: { readOnly: false, hasDeleteRights: true, hasWriteRights: false },
+          onDelete,
+        });
+
+      it('should explain that the plugin is not installed and link to the plugin', () => {
+        setupOrphan();
+
+        expect(screen.getByText('The plugin of this data source is not installed')).toBeVisible();
+        expect(screen.queryByText('Data source not found')).not.toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'Install the plugin' })).toHaveAttribute(
+          'href',
+          '/plugins/not-installed'
+        );
+      });
+
+      it('should disable the Delete button', async () => {
+        const user = userEvent.setup();
+        const onDelete = jest.fn();
+        setupOrphan({ onDelete });
+
+        const deleteButton = screen.getByRole('button', { name: 'Delete' });
+        expect(deleteButton).toHaveAttribute('aria-disabled', 'true');
+        await user.click(deleteButton);
+        expect(onDelete).not.toHaveBeenCalled();
+      });
     });
 
     it('should render a message if the datasource is not found', () => {

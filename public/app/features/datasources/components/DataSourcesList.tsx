@@ -6,6 +6,7 @@ import { locationUtil, type DataSourceSettings, type GrafanaTheme2 } from '@graf
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { useFavoriteDatasources, type FavoriteDatasources } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient, useDatasourcePluginMetas } from '@grafana/runtime/internal';
 import { EmptyState, LinkButton, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -43,6 +44,7 @@ export function DataSourcesList() {
   const hasCreateRights = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
   const hasWriteRights = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
   const hasExploreRights = contextSrv.hasAccessToExplore();
+  const isPluginInstalled = useIsPluginInstalled();
 
   return (
     <DataSourcesListView
@@ -55,8 +57,26 @@ export function DataSourcesList() {
       showFavoritesOnly={showFavoritesOnly}
       handleFavoritesCheckboxChange={handleFavoritesCheckboxChange}
       favoriteDataSources={favoriteDataSources}
+      isPluginInstalled={isPluginInstalled}
     />
   );
+}
+
+/**
+ * Undefined until the installed plugins are known. Only the MT plugin metas list every installed
+ * plugin: the boot data metas cover only the plugins of the data sources the user can query.
+ */
+function useIsPluginInstalled(): ((type: string) => boolean) | undefined {
+  const usesMTPluginMetas = getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false);
+  const { value: metas } = useDatasourcePluginMetas();
+
+  return useMemo(() => {
+    if (!usesMTPluginMetas || !metas) {
+      return undefined;
+    }
+    const installed = new Set(metas.flatMap((meta) => [meta.id, ...(meta.aliasIDs ?? [])]));
+    return (type: string) => installed.has(type);
+  }, [usesMTPluginMetas, metas]);
 }
 
 export type ViewProps = {
@@ -69,6 +89,8 @@ export type ViewProps = {
   showFavoritesOnly?: boolean;
   handleFavoritesCheckboxChange?: (value: boolean) => void;
   favoriteDataSources?: FavoriteDatasources;
+  /** Undefined while the installed plugins are unknown, so no data source is marked. */
+  isPluginInstalled?: (type: string) => boolean;
 };
 
 export function DataSourcesListView({
@@ -81,6 +103,7 @@ export function DataSourcesListView({
   showFavoritesOnly,
   handleFavoritesCheckboxChange,
   favoriteDataSources,
+  isPluginInstalled,
 }: ViewProps) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
@@ -165,6 +188,7 @@ export function DataSourcesListView({
           hasWriteRights={hasWriteRights}
           hasExploreRights={hasExploreRights}
           datasourceFailureByUID={datasourceFailureByUID}
+          isPluginInstalled={isPluginInstalled}
           scrollRef={scrollRef}
           rowVirtualizer={rowVirtualizer}
         />
@@ -192,6 +216,7 @@ interface DataSourcesListVirtualizedProps {
   hasWriteRights: boolean;
   hasExploreRights: boolean;
   datasourceFailureByUID: Map<string, DatasourceFailureDetails>;
+  isPluginInstalled?: (type: string) => boolean;
   scrollRef: RefObject<HTMLDivElement | null>;
   rowVirtualizer: ReturnType<typeof useVirtualizer<HTMLDivElement, Element>>;
 }
@@ -201,6 +226,7 @@ function DataSourcesListVirtualized({
   hasWriteRights,
   hasExploreRights,
   datasourceFailureByUID,
+  isPluginInstalled,
   scrollRef,
   rowVirtualizer,
 }: DataSourcesListVirtualizedProps) {
@@ -234,6 +260,7 @@ function DataSourcesListVirtualized({
                 hasWriteRights={hasWriteRights}
                 hasExploreRights={hasExploreRights}
                 failure={datasourceFailureByUID.get(dataSource.uid)}
+                pluginNotInstalled={isPluginInstalled?.(dataSource.type) === false}
               />
             </li>
           );

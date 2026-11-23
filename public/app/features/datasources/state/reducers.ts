@@ -5,6 +5,7 @@ import { t } from '@grafana/i18n';
 import { type TestingStatus } from '@grafana/runtime';
 import { type DataSourcesState, type DataSourceSettingsState } from 'app/types/datasources';
 
+import { DataSourcePluginNotInstalledError } from '../errors';
 import { type GenericDataSourcePlugin } from '../types';
 
 import { type DataSourceTypesLoadedPayload } from './actions';
@@ -145,11 +146,18 @@ export const dataSourceSettingsReducer = (
   action: AnyAction
 ): DataSourceSettingsState => {
   if (initDataSourceSettingsSucceeded.match(action)) {
-    return { ...state, plugin: action.payload, loadError: null, loading: false };
+    return { ...state, plugin: action.payload, loadError: null, orphanedDataSource: undefined, loading: false };
   }
 
   if (initDataSourceSettingsFailed.match(action)) {
-    return { ...state, plugin: null, loadError: action.payload.message, loading: false };
+    return {
+      ...state,
+      plugin: null,
+      loadError: action.payload.message,
+      orphanedDataSource:
+        action.payload instanceof DataSourcePluginNotInstalledError ? action.payload.dataSource : undefined,
+      loading: false,
+    };
   }
 
   if (testDataSourceStarting.match(action)) {
