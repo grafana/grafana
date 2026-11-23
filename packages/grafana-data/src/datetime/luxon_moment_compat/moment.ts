@@ -464,6 +464,14 @@ function arithmeticDuration(duration: Duration): Duration {
   });
 }
 
+// Luxon cannot parse an ordinal day suffix. Moment accepts it for `Do` and, because non-strict
+// parsing ignores leftover text, for `D` and `DD` too (e.g. "Nov 20th, 2026" with "MMM D, YYYY").
+const ORDINAL_SUFFIX_PATTERN = /\b(\d{1,2})(?:st|nd|rd|th)\b/gi;
+
+function stripOrdinalSuffixes(value: string): string {
+  return value.replace(ORDINAL_SUFFIX_PATTERN, '$1');
+}
+
 const formatParserCache = new Map<string, TokenParser>();
 
 // DateTime.fromFormat recompiles its token parser (including regex construction) on every call
@@ -514,21 +522,32 @@ function parseWithFormat(value: string, format: MomentFormat, options?: MomentOp
   const momentFormat = typeof format === 'string' ? format : 'ISO_8601';
   const fmt = convertMomentToLuxonForParsing(momentFormat, options?.locale);
 
+  let parseValue = value;
   const parsed = parseFromCachedFormat(value, fmt, options);
   if (parsed.isValid || parsed.invalidReason !== 'unparsable') {
     return parsed;
   }
 
+  // Retried only after the as-is parse fails so formats with a literal suffix (e.g. "D[th]") keep working.
+  const withoutOrdinals = stripOrdinalSuffixes(value);
+  if (withoutOrdinals !== value) {
+    parseValue = withoutOrdinals;
+    const parsedWithoutOrdinals = parseFromCachedFormat(parseValue, fmt, options);
+    if (parsedWithoutOrdinals.isValid || parsedWithoutOrdinals.invalidReason !== 'unparsable') {
+      return parsedWithoutOrdinals;
+    }
+  }
+
   if (typeof format === 'string') {
     const permissiveInputs: Array<[string, string]> = [];
     const abbreviatedMonthFormat = format.replaceAll('MMMM', 'MMM');
-    const valueWithoutCommas = value.replaceAll(',', '');
+    const valueWithoutCommas = parseValue.replaceAll(',', '');
     const formatWithoutCommas = format.replaceAll(',', '');
 
     if (abbreviatedMonthFormat !== format) {
-      permissiveInputs.push([value, abbreviatedMonthFormat]);
+      permissiveInputs.push([parseValue, abbreviatedMonthFormat]);
     }
-    if (valueWithoutCommas !== value || formatWithoutCommas !== format) {
+    if (valueWithoutCommas !== parseValue || formatWithoutCommas !== format) {
       permissiveInputs.push([valueWithoutCommas, formatWithoutCommas]);
       if (abbreviatedMonthFormat !== format) {
         permissiveInputs.push([valueWithoutCommas, formatWithoutCommas.replaceAll('MMMM', 'MMM')]);

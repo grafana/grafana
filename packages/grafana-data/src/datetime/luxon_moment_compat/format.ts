@@ -180,7 +180,12 @@ function replaceMomentToken(
   }
 
   if (match === 'Do') {
-    return `d'${ORDINAL_MARKER}'`;
+    // Luxon has no ordinal token. Formatting emits the day plus a marker that is replaced with the
+    // suffix afterwards; parsing uses a bare day token because the suffix is stripped from the value.
+    if (mode === 'format') {
+      return `d'${ORDINAL_MARKER}'`;
+    }
+    return mode === 'paddedParse' ? 'dd' : 'd';
   }
 
   if (match === 'L' || match === 'llll') {
