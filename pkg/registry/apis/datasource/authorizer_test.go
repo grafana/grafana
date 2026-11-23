@@ -254,7 +254,6 @@ func TestGetAuthorizer_QueryTypesSkipDatasourceCheck(t *testing.T) {
 	}{
 		{name: "list", verb: "list"},
 		{name: "get", verb: "get", objName: "random_walk"},
-		{name: "validate", verb: "create", subresource: "validate", objName: "random_walk"},
 	}
 
 	for _, tc := range tests {
@@ -288,6 +287,7 @@ func TestGetAuthorizer_QueryTypesAreReadOnly(t *testing.T) {
 		{verb: "delete"},
 		{verb: "deletecollection"},
 		{verb: "watch"},
+		{verb: "create", subresource: "validate"},
 		{verb: "get", subresource: "validate"},
 		{verb: "update", subresource: "validate"},
 		{verb: "get", subresource: "status"},

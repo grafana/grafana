@@ -48,14 +48,10 @@ func (b *DataSourceAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 			// cluster-scoped, so the namespaced datasource check below would fail
 			// with a namespace mismatch for any caller that is not cluster-wide.
 			//
-			// validate is open only because it is a stub that reads nothing. A real
-			// validator needs its own permission decision here.
+			// Subresources are denied, validate included: it is a stub, and a real
+			// validator needs its own permission decision here before it opens.
 			if attr.GetResource() == queryTypesResource {
-				allowed := verb == utils.VerbGet || verb == utils.VerbList
-				if sub != "" {
-					allowed = sub == "validate" && verb == utils.VerbCreate
-				}
-				if allowed {
+				if sub == "" && (verb == utils.VerbGet || verb == utils.VerbList) {
 					recordAuthzDecision(group, sub, verb, caller, "allow", "")
 					return authorizer.DecisionAllow, "", nil
 				}

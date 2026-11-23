@@ -123,10 +123,6 @@ func (r *queryValidationREST) Connect(ctx context.Context, name string, opts run
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		// TODO -- validate/mutate the query
 		// should we return the DQR, or raw validation response?
-		//
-		// The datasource API group's authorizer lets any signed-in user call
-		// this, only because it reads nothing. Before this reads or evaluates
-		// anything, add a permission check for the validate subresource there.
 		qdr := &dsV0.QueryDataRequest{
 			QueryDataRequest: v0alpha1.QueryDataRequest{
 				Debug: true,
