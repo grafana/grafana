@@ -14,7 +14,6 @@ import (
 	appmanifestv1alpha2 "github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	"github.com/grafana/grafana-app-sdk/routes"
-	manifestroutes "github.com/grafana/grafana-app-sdk/routes"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/definition"
@@ -46,7 +45,7 @@ func TestPublishedSettingsManifestReplacesPluginJSONRoutes(t *testing.T) {
 	require.True(t, ok)
 	body, err := appManifestJSON(published)
 	require.NoError(t, err)
-	require.Contains(t, string(body), manifestroutes.ExtensionProxy, "the proxy routes are published with where they forward to")
+	require.Contains(t, string(body), routes.ExtensionProxy, "the proxy routes are published with where they forward to")
 
 	var decoded appmanifestv1alpha2.AppManifest
 	require.NoError(t, json.Unmarshal(body, &decoded))
@@ -69,7 +68,7 @@ func proxyRoutesOf(t *testing.T, manifest *app.ManifestData) map[string]*plugins
 		if !ok {
 			continue
 		}
-		for method, op := range manifestroutes.Operations(&props) {
+		for method, op := range routes.Operations(&props) {
 			route, ok, err := definition.ProxyRouteFromOperation(specPath, method, op)
 			require.NoError(t, err)
 			require.True(t, ok, "%s %s", method, path)
