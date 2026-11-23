@@ -100,6 +100,12 @@ func hasK6Ancestor(info *folders.FolderInfoList, self string) bool {
 	return false
 }
 
+// isReservedRootTitle reports whether the title collides with the root folder's
+// display name; nested folders may reuse it.
+func isReservedRootTitle(title, parentName string) bool {
+	return folder.IsRootFolderUID(parentName) && strings.EqualFold(title, dashboards.RootFolderName)
+}
+
 func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGetter, maxDepth int, dryRun bool) error {
 	id := f.Name
 
@@ -132,11 +138,11 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 		return folder.ErrAPITitleEmpty
 	}
 
-	if strings.EqualFold(f.Spec.Title, dashboards.RootFolderName) {
+	parentName := meta.GetFolder()
+
+	if isReservedRootTitle(f.Spec.Title, parentName) {
 		return folder.ErrNameExists.Errorf("a folder with that name already exists")
 	}
-
-	parentName := meta.GetFolder()
 
 	// checked before resolving the tree so it also rejects a k6 parent we cannot read
 	if parentName == accesscontrol.K6FolderUID && !isServiceAccount(ctx) {
@@ -204,7 +210,7 @@ func validateOnUpdate(ctx context.Context,
 		return folder.ErrAPITitleEmpty
 	}
 
-	if strings.EqualFold(obj.Spec.Title, dashboards.RootFolderName) {
+	if isReservedRootTitle(obj.Spec.Title, folderObj.GetFolder()) {
 		return folder.ErrNameExists.Errorf("a folder with that name already exists")
 	}
 
