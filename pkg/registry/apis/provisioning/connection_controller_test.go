@@ -25,6 +25,9 @@ func TestConnectionControllerService_IsDisabled(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			svc := ProvideConnectionControllerService(tt.builder)
 			require.Equal(t, tt.want, svc.IsDisabled())
+			// The background service manager looks up this name in its
+			// dependency map; any other name would start it after Core.
+			require.Equal(t, ConnectionControllerServiceName, svc.ServiceName())
 		})
 	}
 }
