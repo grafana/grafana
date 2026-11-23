@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/authlib/types"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -732,7 +731,7 @@ func TestIntegrationService_DeleteDataSource(t *testing.T) {
 		permissionSvc.AssertExpectations(t)
 	})
 
-	t.Run("with a lifecycle client, legacy creates seed locally and deletion cleans up through IAM", func(t *testing.T) {
+	t.Run("with a permissions deleter, legacy creates seed locally and deletion uses the deleter", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(legacysql.NewDatabaseProvider(sqlStore), secretsService, log.New("test.logger"))
@@ -762,10 +761,6 @@ func TestIntegrationService_DeleteDataSource(t *testing.T) {
 type deletedPermissions struct{ namespace, name string }
 
 type recordingPermissionsDeleter struct{ calls []deletedPermissions }
-
-func (*recordingPermissionsDeleter) SetDefault(context.Context, string, string, []iamv0.ResourcePermissionspecPermission) error {
-	return errors.New("unexpected IAM default grant in legacy datasource service")
-}
 
 func (r *recordingPermissionsDeleter) DeletePermissions(_ context.Context, namespace, name string) error {
 	r.calls = append(r.calls, deletedPermissions{namespace: namespace, name: name})

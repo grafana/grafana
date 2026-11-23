@@ -57,7 +57,7 @@ type Service struct {
 	db                 db.DB
 	pluginStore        pluginstore.Store
 	retriever          DataSourceRetriever
-	permissionsDeleter datasources.PermissionsLifecycle
+	permissionsDeleter datasources.PermissionsDeleter
 
 	ptc proxyTransportCache
 }
@@ -78,7 +78,7 @@ func ProvideService(
 	features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, datasourcePermissionsService accesscontrol.DatasourcePermissionsService,
 	quotaService quota.Service, pluginStore pluginstore.Store,
 	retriever DataSourceRetriever,
-	permissionsDeleter datasources.PermissionsLifecycle,
+	permissionsDeleter datasources.PermissionsDeleter,
 ) (*Service, error) {
 	dslogger := log.New("datasources")
 	store := &SqlStore{db: db, logger: dslogger, features: features}
@@ -460,11 +460,6 @@ func getAvailableName(dsType string, dataSources []*datasources.DataSource) stri
 	}
 
 	return name
-}
-
-// ProvideNilPermissionsLifecycle is the default wiring: no deleter, so the SQL permission cleanup runs.
-func ProvideNilPermissionsLifecycle() datasources.PermissionsLifecycle {
-	return nil
 }
 
 func (s *Service) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {

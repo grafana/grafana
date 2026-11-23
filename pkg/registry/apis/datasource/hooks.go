@@ -14,13 +14,14 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission/rpclient"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
 type unifiedDatasourceStorage struct {
 	*registry.Store
-	permissions datasources.PermissionsLifecycle
+	resourcePermissions *rpclient.Client
 }
 
 func (s *unifiedDatasourceStorage) Create(ctx context.Context, obj runtime.Object, validate rest.ValidateObjectFunc, opts *metav1.CreateOptions) (runtime.Object, error) {
@@ -51,13 +52,11 @@ func (s *unifiedDatasourceStorage) Update(ctx context.Context, name string, info
 	return obj, true, nil
 }
 
-// During migration the REST store grants defaults on create, even when the
-// client omits grafana.app/grant-permissions. Consume an explicit "default"
-// before UniStore processes it, including when a PUT creates the datasource.
-// Once clients that need defaults send the annotation, the IAM app serves
-// datasource permissions in every Cloud cluster, and UniStore is authoritative
-// for datasource writes, replace this logic with UniStore's permissions hook.
-// At that point only creates annotated with "default" should receive grants.
+// Some clients still omit grafana.app/grant-permissions, so the datasource store
+// grants defaults on create. Strip "default" so UniStore skips its own hook.
+//
+// Switch to UniStore's hook once clients request defaults explicitly, UniStore
+// owns datasource writes, and IAM serves datasource permissions in all Cloud clusters.
 func consumeDefaultPermissionsAnnotation(obj runtime.Object) error {
 	meta, err := utils.MetaAccessor(obj)
 	if err != nil {
@@ -89,7 +88,7 @@ func (s *unifiedDatasourceStorage) setDefaults(ctx context.Context, obj runtime.
 			permissions = append(permissions, iamv0.ResourcePermissionspecPermission{Kind: kind, Name: actor.GetIdentifier(), Verb: "admin"})
 		}
 	}
-	if err := s.permissions.SetDefault(ctx, meta.GetNamespace(), meta.GetName(), permissions); err != nil {
+	if err := s.resourcePermissions.SetDefault(ctx, meta.GetNamespace(), meta.GetName(), permissions); err != nil {
 		return fmt.Errorf("set default datasource permissions: %w", err)
 	}
 	return nil
@@ -106,7 +105,7 @@ func (b *DataSourceAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteO
 
 	ctx, cancel := context.WithTimeout(context.Background(), datasources.PermissionsDeleteTimeout)
 	defer cancel()
-	if err := b.permissionsLifecycle.DeletePermissions(ctx, meta.GetNamespace(), meta.GetName()); err != nil {
+	if err := b.resourcePermissions.DeletePermissions(ctx, meta.GetNamespace(), meta.GetName()); err != nil {
 		logging.DefaultLogger.Error("Failed to delete datasource permissions", "error", err)
 	}
 }
