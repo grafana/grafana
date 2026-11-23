@@ -6,8 +6,9 @@ import { type ReactElement, StrictMode, useLayoutEffect, useState } from 'react'
 
 import { createTheme, ThemeContext } from '@grafana/data';
 
+import * as languageLoader from '../languageLoader';
+
 import { DiffEditor } from './DiffEditor';
-import * as languageLoader from './languageLoader';
 
 function DiffWithParentInput({ lineSeparator }: { lineSeparator: string }): ReactElement {
   const [value, setValue] = useState('');

@@ -1,40 +1,20 @@
-import { insertCompletionText } from '@codemirror/autocomplete';
+import {
+  type Completion,
+  type CompletionContext,
+  type CompletionResult,
+  insertCompletionText,
+} from '@codemirror/autocomplete';
 import { type EditorState } from '@codemirror/state';
 
 import { type VariableSuggestion } from '@grafana/data';
 
-import { type CodeMirrorCompletion, type CodeMirrorCompletionContext, type CodeMirrorCompletionResult } from './types';
+import { type VariableCompletionOptions } from './types';
 
 // The rest of a braced reference the cursor sits inside: the remainder of the
 // name, an optional `:format` suffix, then the closing brace.
 const BRACED_TAIL_PATTERN = /^[\w.:]*\}/;
 
-/** How a suggestion is presented in the completion list. */
-export interface VariableCompletionDisplay {
-  label: string;
-  detail?: string;
-}
-
-export interface VariableCompletionOptions {
-  /**
-   * Characters besides `$` that open the popup. They are separators rather than
-   * part of the reference, so they are preserved: the replaced range starts
-   * after them. `['=']` for a URL query string.
-   */
-  separators?: string[];
-  /**
-   * Text inserted when an option is accepted. Defaults to `${value}`. Override
-   * to add a format suffix, for example `${value:queryparam}` inside a URL.
-   */
-  getInsertText?: (suggestion: VariableSuggestion) => string;
-  /**
-   * Label and detail shown in the list. Defaults to the suggestion's own label
-   * with its origin as the detail.
-   */
-  toDisplay?: (suggestion: VariableSuggestion) => VariableCompletionDisplay;
-}
-
-type CompletionApply = NonNullable<Exclude<CodeMirrorCompletion['apply'], string>>;
+type CompletionApply = NonNullable<Exclude<Completion['apply'], string>>;
 
 function escapeForCharClass(char: string): string {
   return char.replace(/[\\\]^-]/g, '\\$&');
@@ -84,9 +64,9 @@ export function applyVariableReference(text: string): CompletionApply {
  * suggestions are filtered here instead and the result sets `filter: false`.
  */
 export function createVariableCompletionSource(
-  suggestions: VariableSuggestion[],
+  suggestions: readonly VariableSuggestion[],
   options: VariableCompletionOptions = {}
-): (context: CodeMirrorCompletionContext) => CodeMirrorCompletionResult | null {
+): (context: CompletionContext) => CompletionResult | null {
   const {
     separators = [],
     getInsertText = (suggestion: VariableSuggestion) => `\${${suggestion.value}}`,
@@ -94,14 +74,14 @@ export function createVariableCompletionSource(
   } = options;
   const triggerPattern = buildTriggerPattern(separators);
 
-  const toCompletion = (suggestion: VariableSuggestion): CodeMirrorCompletion => ({
+  const toCompletion = (suggestion: VariableSuggestion): Completion => ({
     ...toDisplay(suggestion),
     info: suggestion.documentation,
     apply: applyVariableReference(getInsertText(suggestion)),
     type: 'variable',
   });
 
-  return (context: CodeMirrorCompletionContext): CodeMirrorCompletionResult | null => {
+  return (context: CompletionContext): CompletionResult | null => {
     if (suggestions.length === 0) {
       return null;
     }

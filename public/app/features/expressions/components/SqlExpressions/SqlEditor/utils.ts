@@ -1,10 +1,11 @@
+import {
+  type Completion as CodeMirrorCompletion,
+  type CompletionContext as CodeMirrorCompletionContext,
+  type CompletionResult as CodeMirrorCompletionResult,
+  type CompletionSource as CodeMirrorCompletionSource,
+} from '@codemirror/autocomplete';
+
 import { unquoteIdentifier } from '@grafana/sql';
-import type {
-  CodeMirrorCompletion,
-  CodeMirrorCompletionContext,
-  CodeMirrorCompletionResult,
-  CodeMirrorCompletionSource,
-} from '@grafana/ui/unstable';
 
 import { SQL_EXPRESSIONS_DIALECT } from '../../../utils/sqlIdentifier';
 

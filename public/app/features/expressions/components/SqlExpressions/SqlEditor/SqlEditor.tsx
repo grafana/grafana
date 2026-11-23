@@ -2,8 +2,9 @@ import { css } from '@emotion/css';
 import { useCallback, useMemo, type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, useTheme2 } from '@grafana/ui';
-import { CodeMirrorEditor, signatureHelp, type CodeMirrorSqlDialect } from '@grafana/ui/unstable';
+import { useStyles2 } from '@grafana/ui';
+import { InternalCodeMirrorEditor } from '@grafana/ui/internal';
+import { type CodeMirrorSqlDialect } from '@grafana/ui/unstable';
 
 import { SQL_EXPRESSIONS_DIALECT } from '../../../utils/sqlIdentifier';
 
@@ -44,7 +45,6 @@ export const SqlEditor = ({
   children,
 }: SqlEditorProps) => {
   const styles = useStyles2(getStyles);
-  const theme = useTheme2();
   const completionSources = useMemo(() => {
     if (!completionProvider) {
       return undefined;
@@ -53,13 +53,10 @@ export const SqlEditor = ({
     return [getSqlCompletionSource(completionProvider)];
   }, [completionProvider]);
 
-  const extensions = useMemo(() => {
-    if (!functionSignatures?.length) {
-      return undefined;
-    }
-
-    return [signatureHelp(getSqlSignatureHelpProvider(functionSignatures), { theme })];
-  }, [functionSignatures, theme]);
+  const signatureHelp = useMemo(
+    () => (functionSignatures?.length ? getSqlSignatureHelpProvider(functionSignatures) : undefined),
+    [functionSignatures]
+  );
 
   const formatQuery = useCallback(() => {
     if (formatter) {
@@ -70,7 +67,7 @@ export const SqlEditor = ({
   return (
     <>
       <div className={styles.editorBorder}>
-        <CodeMirrorEditor
+        <InternalCodeMirrorEditor
           language="sql"
           sqlDialect={dialect}
           value={value}
@@ -79,7 +76,7 @@ export const SqlEditor = ({
           aria-label={ariaLabel}
           completionSources={completionSources}
           completeOnSpace
-          extensions={extensions}
+          signatureHelp={signatureHelp}
         />
       </div>
       {children?.({ formatQuery })}

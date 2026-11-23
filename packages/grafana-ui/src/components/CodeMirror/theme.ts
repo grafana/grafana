@@ -8,8 +8,9 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { getPropertiesForVariant } from '../Button/StyledButton.styles';
 
-export function createCodeEditorTheme(theme: GrafanaTheme2, options?: { transparent?: boolean }): Extension {
-  const background = options?.transparent ? 'transparent' : theme.components.input.background;
+import { type CodeMirrorThemeOverrides } from './types';
+
+export function createCodeEditorTheme(theme: GrafanaTheme2, overrides?: CodeMirrorThemeOverrides): Extension {
   const button = getPropertiesForVariant(theme, 'secondary', 'solid');
   const buttonHover = button['&:hover'];
   const checkbox = theme.components.checkbox;
@@ -18,11 +19,11 @@ export function createCodeEditorTheme(theme: GrafanaTheme2, options?: { transpar
     ['selection'],
     (state): Record<string, string> => (state.selection.main.empty ? {} : { class: 'cm-hasSelection' })
   );
-  const editorTheme = EditorView.theme(
+  const editorTheme = createViewTheme(
     {
       '&': {
         color: theme.components.input.text,
-        backgroundColor: background,
+        backgroundColor: theme.components.input.background,
         fontFamily: theme.typography.fontFamilyMonospace,
         fontSize: theme.typography.code.fontSize,
       },
@@ -41,7 +42,7 @@ export function createCodeEditorTheme(theme: GrafanaTheme2, options?: { transpar
       },
       '.cm-gutters': {
         color: theme.colors.text.secondary,
-        backgroundColor: background,
+        backgroundColor: theme.components.input.background,
         borderRightColor: theme.components.input.borderColor,
       },
       '.cm-activeLine, .cm-activeLineGutter': {
@@ -233,7 +234,8 @@ export function createCodeEditorTheme(theme: GrafanaTheme2, options?: { transpar
         borderColor: theme.colors.border.medium,
       },
     },
-    { dark: theme.isDark }
+    theme.isDark,
+    overrides
   );
 
   const syntaxTheme = HighlightStyle.define([
@@ -275,4 +277,11 @@ export function createCodeEditorTheme(theme: GrafanaTheme2, options?: { transpar
   ]);
 
   return [selectionState, editorTheme, syntaxHighlighting(syntaxTheme)];
+}
+
+function createViewTheme(styles: CodeMirrorThemeOverrides, dark: boolean, overrides?: CodeMirrorThemeOverrides) {
+  for (const selector in overrides) {
+    styles[selector] = { ...styles[selector], ...overrides[selector] };
+  }
+  return EditorView.theme(styles, { dark });
 }

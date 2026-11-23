@@ -92,7 +92,10 @@ jest.mock('@grafana/ui/internal', () => {
     }) => {
       const ref = useRef(null);
       const stableExtensions = useStableExtensions(extensions);
-      const focusThreshold = ariaLabel === 'Markdown' ? 6 : 3;
+      // One more than each cell's baseline: markdown cells pass live preview, scroll margin, and the
+      // Enter and arrow-key keymaps (their placeholder is a prop); code cells pass scroll margin and
+      // the arrow-key keymap. The extra entry is the focus request.
+      const focusThreshold = ariaLabel === 'Markdown' ? 5 : 3;
 
       useEffect(() => {
         if (!stableExtensions || stableExtensions.length < focusThreshold) {

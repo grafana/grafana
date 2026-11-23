@@ -1,7 +1,7 @@
 import { memo, useMemo } from 'react';
 
 import { useTheme2 } from '../../themes/ThemeContext';
-import { CodeMirrorInlineInput } from '../CodeMirror/InlineInput';
+import { CodeMirrorInlineInput } from '../CodeMirror/InlineInput/InlineInput';
 
 import { type DataLinkInputProps } from './DataLinkInput';
 import { createDataLinkHighlighter, createDataLinkTheme, dataLinkAutocompletion } from './codemirrorUtils';

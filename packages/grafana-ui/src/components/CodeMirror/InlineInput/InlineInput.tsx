@@ -1,4 +1,4 @@
-import { autocompletion } from '@codemirror/autocomplete';
+import { autocompletion, type CompletionSource } from '@codemirror/autocomplete';
 import { EditorState, type Extension } from '@codemirror/state';
 import { EditorView, tooltips } from '@codemirror/view';
 import { css, cx } from '@emotion/css';
@@ -6,12 +6,11 @@ import { memo, useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
-import { getFocusStyles } from '../../themes/mixins';
-import { getInputStyles } from '../Input/Input';
-
-import { BaseCodeEditor } from './BaseCodeEditor';
-import { type CodeMirrorCompletionSource, type CodeMirrorExtension } from './types';
+import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
+import { getFocusStyles } from '../../../themes/mixins';
+import { getInputStyles } from '../../Input/Input';
+import { BaseCodeEditor } from '../BaseCodeEditor';
+import { type CodeMirrorExtension } from '../types';
 
 export interface CodeMirrorInlineInputProps {
   value: string;
@@ -22,7 +21,7 @@ export interface CodeMirrorInlineInputProps {
    * Completion sources, e.g. for variable suggestions.
    * Memoize this — a new array each render reconfigures the editor.
    */
-  completionSources?: readonly CodeMirrorCompletionSource[];
+  completionSources?: readonly CompletionSource[];
   /**
    * Extra extensions layered on top, e.g. syntax highlighting or token theming.
    * Memoize this — a new array each render reconfigures the editor.

@@ -85,8 +85,7 @@ describe('displayCompletion', () => {
     });
 
     it('escapes the quote the argument is written in, and no other', () => {
-      const inserted = (doc: string) =>
-        complete(doc)?.options.map((option) => (typeof option.apply === 'string' ? option.apply : option.label));
+      const inserted = (doc: string) => complete(doc)?.options.map((option) => option.insertText ?? option.label);
 
       expect(inserted('{{display "')).toEqual(['service', 'cpu', 'Memory usage', 'say \\"hi\\"', "it's"]);
       expect(inserted("{{display '")).toEqual(['service', 'cpu', 'Memory usage', 'say "hi"', "it\\'s"]);
@@ -100,7 +99,7 @@ describe('displayCompletion', () => {
       const options = complete(`{{display ${quote}`)?.options ?? [];
 
       const rendered = options.map((option) =>
-        compileTemplate(`{{display ${quote}${option.apply}${quote}}}`, (value) => value)(row)
+        compileTemplate(`{{display ${quote}${option.insertText}${quote}}}`, (value) => value)(row)
       );
 
       expect(rendered).toEqual(['value 0', 'value 1', 'value 2', 'value 3', 'value 4']);

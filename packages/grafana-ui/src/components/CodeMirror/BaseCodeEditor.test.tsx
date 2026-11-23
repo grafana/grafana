@@ -1,18 +1,26 @@
-import { acceptCompletion, autocompletion, startCompletion, type CompletionSource } from '@codemirror/autocomplete';
+import {
+  acceptCompletion,
+  autocompletion,
+  CompletionContext,
+  startCompletion,
+  type CompletionSource,
+} from '@codemirror/autocomplete';
 import { EditorState } from '@codemirror/state';
 import { keymap, type EditorView as CodeMirrorEditorView } from '@codemirror/view';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { EditorView, type ReactCodeMirrorProps } from '@uiw/react-codemirror';
 
-import { createTheme, type GrafanaTheme2 } from '@grafana/data';
+import { createTheme, type GrafanaTheme2, VariableOrigin } from '@grafana/data';
 import { faro } from '@grafana/faro-web-sdk';
 
 import { mockThemeContext } from '../../themes/ThemeContext';
 
 import { BaseCodeEditor } from './BaseCodeEditor';
+import { CodeMirrorEditor } from './CodeEditorLazy';
 import { loadLanguageExtension } from './languageLoader';
 import { createCodeEditorTheme } from './theme';
+import { type CodeMirrorEditorProps, type CodeMirrorThemeOverrides } from './types';
 
 let capturedProps: ReactCodeMirrorProps | undefined;
 
@@ -91,58 +99,69 @@ describe('BaseCodeEditor', () => {
     (faro.api.pushError as jest.Mock).mockClear();
   });
 
-  it('merge mode contributes completionSources through language data and keeps existing sources', () => {
-    const existingSource = jest.fn();
+  it('merge mode contributes completionSources through language data and keeps the language sources', async () => {
+    const languageSource = jest.fn();
     const customSourceA = jest.fn();
     const customSourceB = jest.fn();
+    loadLanguageExtensionMock.mockResolvedValue(EditorState.languageData.of(() => [{ autocomplete: languageSource }]));
 
     render(
-      <BaseCodeEditor
-        value=""
-        onChange={jest.fn()}
-        completionSources={[customSourceA, customSourceB]}
-        extensions={[EditorState.languageData.of(() => [{ autocomplete: existingSource }])]}
-      />
+      <BaseCodeEditor value="" onChange={jest.fn()} language="sql" completionSources={[customSourceA, customSourceB]} />
     );
 
-    expect(autocompletionMock).toHaveBeenCalledTimes(1);
-    expect(autocompletionMock).toHaveBeenCalledWith();
-    expect(getAutocompleteSources()).toEqual(expect.arrayContaining([existingSource, customSourceA, customSourceB]));
+    await waitFor(() => expect(getAutocompleteSources()).toContain(languageSource));
+    expect(autocompletionMock).toHaveBeenLastCalledWith();
+    expect(getAutocompleteSources()).toEqual(expect.arrayContaining([languageSource, customSourceA, customSourceB]));
   });
 
-  it('override mode configures autocompletion override without adding completionSources to language data', () => {
-    const existingSource = jest.fn();
+  it('override mode configures autocompletion override without adding completionSources to language data', async () => {
+    const languageSource = jest.fn();
     const customSourceA = jest.fn();
     const customSourceB = jest.fn();
+    loadLanguageExtensionMock.mockResolvedValue(EditorState.languageData.of(() => [{ autocomplete: languageSource }]));
 
     render(
       <BaseCodeEditor
         value=""
         onChange={jest.fn()}
+        language="sql"
         completionSources={[customSourceA, customSourceB]}
         completionMode="override"
-        extensions={[EditorState.languageData.of(() => [{ autocomplete: existingSource }])]}
       />
     );
 
-    expect(autocompletionMock).toHaveBeenCalledTimes(1);
-    expect(autocompletionMock).toHaveBeenCalledWith({ override: [customSourceA, customSourceB] });
-    expect(getAutocompleteSources()).toEqual([existingSource]);
+    await waitFor(() => expect(getAutocompleteSources()).toEqual([languageSource]));
+    expect(autocompletionMock).toHaveBeenLastCalledWith({ override: [customSourceA, customSourceB] });
   });
 
-  it('does not configure autocompletion when completionSources is missing', () => {
-    const existingSource = jest.fn();
+  it('does not configure autocompletion when completionSources is missing', async () => {
+    const languageSource = jest.fn();
+    loadLanguageExtensionMock.mockResolvedValue(EditorState.languageData.of(() => [{ autocomplete: languageSource }]));
+
+    render(<BaseCodeEditor value="" onChange={jest.fn()} language="sql" />);
+
+    await waitFor(() => expect(getAutocompleteSources()).toEqual([languageSource]));
+    expect(autocompletionMock).not.toHaveBeenCalled();
+  });
+
+  it('offers variable suggestions next to completionSources in override mode', async () => {
+    const customSource = jest.fn();
 
     render(
       <BaseCodeEditor
-        value=""
+        value="$"
         onChange={jest.fn()}
-        extensions={[EditorState.languageData.of(() => [{ autocomplete: existingSource }])]}
+        completionMode="override"
+        completionSources={[customSource]}
+        variableSuggestions={[{ value: 'region', label: 'region', origin: VariableOrigin.Template }]}
       />
     );
 
-    expect(autocompletionMock).not.toHaveBeenCalled();
-    expect(getAutocompleteSources()).toEqual([existingSource]);
+    const override = autocompletionMock.mock.calls[0]?.[0]?.override ?? [];
+    expect(override).toHaveLength(2);
+    expect(override[0]).toBe(customSource);
+    const result = await override[1](new CompletionContext(EditorState.create({ doc: '$' }), 1, false));
+    expect(result?.options.map((option) => option.label)).toEqual(['region']);
   });
 
   it('binds Tab to accept completions before the default indent behavior', () => {
@@ -251,18 +270,40 @@ describe('BaseCodeEditor', () => {
 
     rerender(<BaseCodeEditor value="" onChange={jest.fn()} />);
 
-    expect(createCodeEditorThemeMock).toHaveBeenLastCalledWith(nextTheme);
+    expect(createCodeEditorThemeMock).toHaveBeenLastCalledWith(nextTheme, undefined);
     expect(capturedProps?.theme).toBe(createCodeEditorThemeMock.mock.results.at(-1)?.value);
 
     restoreThemeContext();
   });
 
-  it('passes a provided theme through to CodeMirror, replacing the default Grafana theme', () => {
-    const customTheme = EditorView.theme({ '&': { backgroundColor: 'rgb(7, 7, 7)' } });
+  it.each([
+    { shape: 'theme extension array', makeTheme: () => EditorView.theme({ '&': { color: 'rgb(7, 7, 7)' } }) },
+    { shape: 'theme extension object', makeTheme: () => ({ extension: EditorView.theme({}) }) },
+    { shape: 'built-in keyword', makeTheme: () => 'dark' },
+  ])('CodeMirrorEditor ignores a $shape and keeps the Grafana theme', async ({ makeTheme }) => {
+    const props = { value: '', onChange: jest.fn(), theme: makeTheme() } as unknown as CodeMirrorEditorProps;
 
-    render(<BaseCodeEditor value="" onChange={jest.fn()} theme={customTheme} />);
+    render(<CodeMirrorEditor {...props} />);
 
-    expect(capturedProps?.theme).toBe(customTheme);
+    await waitFor(() => expect(capturedProps).toBeDefined());
+
+    expect(createCodeEditorThemeMock).toHaveBeenLastCalledWith(expect.anything(), undefined);
+    expect(capturedProps?.theme).toBe(createCodeEditorThemeMock.mock.results.at(-1)?.value);
+  });
+
+  it('merges declarative theme overrides and restores defaults when they are removed', () => {
+    const onChange = jest.fn();
+    const overrides: CodeMirrorThemeOverrides = {
+      '&': { backgroundColor: 'transparent' },
+      '.cm-gutters': { backgroundColor: 'transparent' },
+    };
+    const { rerender } = render(<BaseCodeEditor value="" onChange={onChange} theme={overrides} />);
+    expect(createCodeEditorThemeMock).toHaveBeenLastCalledWith(expect.anything(), overrides);
+    expect(capturedProps?.theme).toBe(createCodeEditorThemeMock.mock.results.at(-1)?.value);
+
+    rerender(<BaseCodeEditor value="" onChange={onChange} />);
+    expect(createCodeEditorThemeMock).toHaveBeenLastCalledWith(expect.anything(), undefined);
+    expect(capturedProps?.theme).toBe(createCodeEditorThemeMock.mock.results.at(-1)?.value);
   });
 
   it('forwards basicSetup to CodeMirror so consumers can disable default features', () => {

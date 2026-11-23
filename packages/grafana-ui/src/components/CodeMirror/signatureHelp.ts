@@ -3,7 +3,7 @@ import { EditorView, showTooltip, type Tooltip } from '@codemirror/view';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 
-import { type SignatureHelp, type SignatureHelpProvider, type SignatureInformation } from './types';
+import { type NativeSignatureHelpProvider, type SignatureHelp, type SignatureInformation } from './types';
 
 export interface SignatureHelpOptions {
   /**
@@ -23,7 +23,7 @@ interface SignatureHelpState {
  * cursor sits inside a function call. The provider owns language-specific
  * detection; this extension owns the state tracking and tooltip rendering.
  */
-export function signatureHelp(provider: SignatureHelpProvider, options: SignatureHelpOptions = {}): Extension {
+export function signatureHelp(provider: NativeSignatureHelpProvider, options: SignatureHelpOptions = {}): Extension {
   const field = StateField.define<SignatureHelpState | null>({
     create(state) {
       const pos = state.selection.main.head;

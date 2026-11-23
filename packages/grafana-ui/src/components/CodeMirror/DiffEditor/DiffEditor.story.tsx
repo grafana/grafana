@@ -1,7 +1,8 @@
 import { type Meta, type StoryObj } from '@storybook/react';
 
+import { CODE_MIRROR_LANGUAGES } from '../languages';
+
 import { CodeMirrorDiffEditor } from './DiffEditorLazy';
-import { CODE_MIRROR_LANGUAGES } from './languages';
 
 const meta: Meta<typeof CodeMirrorDiffEditor> = {
   title: 'Inputs/CodeMirrorDiffEditor',
