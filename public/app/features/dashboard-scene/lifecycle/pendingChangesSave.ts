@@ -234,13 +234,14 @@ export function getCommittedPendingChanges(scene: DashboardScene): CommittedPend
  * After the requester committed pending changes to a repository: the commit has them, so their
  * plugin discards them, as after a copy. With `showSaved`, the commit updated the dashboard here, so
  * the page shows it saved; otherwise the requester is on its way to the branch or the copy. A failed
- * discard leaves them to the plugin.
+ * discard leaves them to the plugin. `deferPageClose` holds that move back and returns it instead,
+ * for a caller whose report of the commit has to outlive the page it is shown over.
  */
 export async function finishCommittingPendingChanges(
   scene: DashboardScene,
   { uid, preview }: CommittedPendingChanges,
-  { showSaved }: { showSaved: boolean }
-) {
+  { showSaved, deferPageClose }: { showSaved: boolean; deferPageClose?: boolean }
+): Promise<(() => Promise<void>) | undefined> {
   // An embedded view's host shows the saved dashboard itself.
   const showSavedHere = showSaved && !scene.state.meta.isEmbedded;
   if (showSavedHere) {
@@ -255,9 +256,14 @@ export async function finishCommittingPendingChanges(
   } catch {
     // See above.
   }
-  if (showSavedHere) {
-    await closePendingChangesPage(uid);
+  if (!showSavedHere) {
+    return undefined;
   }
+  if (deferPageClose) {
+    return () => closePendingChangesPage(uid);
+  }
+  await closePendingChangesPage(uid);
+  return undefined;
 }
 
 /** Ends the edit session of pending changes that are saved or discarded: nothing is left to save. */

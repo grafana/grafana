@@ -21,8 +21,7 @@ export interface DashboardCommitOutcome {
   repoType?: RepoType;
   repoUrl?: string;
   message: string;
-  hash?: string;
-  /** Link to the committed file at `hash`. */
+  /** Link to the committed file. */
   sourceUrl?: string;
   /** Pull request the pushed branch opens, where the provider has one. */
   prUrl?: string;
@@ -32,11 +31,17 @@ export interface DashboardCommitOutcome {
 
 interface Props {
   outcome: DashboardCommitOutcome;
+  onDismiss: () => void;
 }
 
 /** What the dashboard save drawer shows once the commit has landed. */
-export function ProvisionedDashboardOutcome({ outcome }: Props) {
+export function ProvisionedDashboardOutcome({ outcome, onDismiss }: Props) {
   const navigate = useNavigate();
+  // The drawer outlives the commit it reports, so a route it is already on leaves it over the page.
+  const leaveTo = (url: string) => {
+    onDismiss();
+    navigate(url);
+  };
   // A plain git remote opens no pull request, so the way out to the server is the repository itself.
   const externalUrl = outcome.prUrl || (outcome.branch ? outcome.repoUrl : undefined);
 
@@ -49,7 +54,6 @@ export function ProvisionedDashboardOutcome({ outcome }: Props) {
         repoType={outcome.repoType}
         repoUrl={outcome.repoUrl}
         commitMessage={outcome.message}
-        commitHash={outcome.hash}
         sourceUrl={outcome.sourceUrl}
       />
       <Stack gap={2} wrap="wrap">
@@ -61,11 +65,11 @@ export function ProvisionedDashboardOutcome({ outcome }: Props) {
           </LinkButton>
         )}
         {outcome.viewUrl && (
-          <Button variant="secondary" onClick={() => navigate(outcome.viewUrl!)}>
+          <Button variant="secondary" onClick={() => leaveTo(outcome.viewUrl!)}>
             <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.view-dashboard">View dashboard</Trans>
           </Button>
         )}
-        <Button variant="secondary" onClick={() => navigate('/dashboards')}>
+        <Button variant="secondary" onClick={() => leaveTo('/dashboards')}>
           <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.back-to-dashboards">
             Back to all dashboards
           </Trans>

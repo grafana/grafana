@@ -39,32 +39,28 @@ describe('ProvisionedCommitSuccess', () => {
     expect(screen.getByRole('link', { name: /open main/i })).toHaveAttribute('href', `${repoUrl}/tree/main`);
   });
 
-  it('abbreviates the commit hash and links it to the committed file', () => {
+  it('links the commit message to the committed file', () => {
     render(
       <ProvisionedCommitSuccess
         action="create"
         configuredBranch="main"
         repoType="github"
         commitMessage="create: playlist"
-        commitHash="0f1e2d3c4b5a69788796a5b4c3d2e1f00f1e2d3c"
-        sourceUrl={`${repoUrl}/blob/0f1e2d3/stockholmwalltv2.json`}
+        sourceUrl={`${repoUrl}/blob/main/stockholmwalltv2.json`}
       />
     );
 
-    expect(screen.getByText(/0f1e2d3/)).toBeInTheDocument();
-    expect(screen.queryByText('0f1e2d3c4b5a69788796a5b4c3d2e1f00f1e2d3c')).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /open the committed file at 0f1e2d3/i })).toHaveAttribute(
+    expect(screen.getByText('create: playlist')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /open the committed file/i })).toHaveAttribute(
       'href',
-      `${repoUrl}/blob/0f1e2d3/stockholmwalltv2.json`
+      `${repoUrl}/blob/main/stockholmwalltv2.json`
     );
   });
 
-  it('shows the commit hash as plain text when the provider exposes no file link', () => {
-    render(
-      <ProvisionedCommitSuccess action="create" configuredBranch="main" repoType="git" commitHash="abcdef1234567" />
-    );
+  it('reports no commit row where the write reported only a content hash', () => {
+    render(<ProvisionedCommitSuccess action="create" configuredBranch="main" repoType="git" />);
 
-    expect(screen.getByText(/abcdef1/)).toBeInTheDocument();
+    expect(screen.queryByText(/last commit/i)).not.toBeInTheDocument();
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
   });
 

@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -20,9 +20,7 @@ interface Props {
   repoUrl?: string;
   /** The commit message, shown as the last commit. */
   commitMessage?: string;
-  /** Hash the write landed on, shown abbreviated next to the message. */
-  commitHash?: string;
-  /** Link to the committed file at `commitHash`. */
+  /** Link to the committed file. */
   sourceUrl?: string;
   /** How many resources the commit covers. Bulk actions pass their selection count. */
   count?: number;
@@ -42,15 +40,12 @@ export function ProvisionedCommitSuccess({
   repoType,
   repoUrl,
   commitMessage,
-  commitHash,
   sourceUrl,
   count = 1,
 }: Props) {
   const styles = useStyles2(getStyles);
   const isDirect = !branch || branch === configuredBranch;
-  const hasCommit = Boolean(commitMessage || commitHash);
-  // Git hashes are 40 characters; the drawer is narrow and the first 7 identify a commit.
-  const shortHash = commitHash?.slice(0, 7);
+  const hasCommit = Boolean(commitMessage);
   const provider = repoType ? RepoTypeDisplay[repoType] : t('provisioning.commit-success.repository', 'the repository');
 
   return (
@@ -112,8 +107,7 @@ export function ProvisionedCommitSuccess({
                     <Trans i18nKey="provisioning.commit-success.last-commit">Last commit</Trans>
                   </Text>
                   <span>
-                    {shortHash && <code className={cx(styles.code, styles.hash)}>{`${shortHash} `}</code>}
-                    {commitMessage && <code className={styles.code}>{commitMessage}</code>}
+                    <code className={styles.code}>{commitMessage}</code>
                   </span>
                 </div>
                 {sourceUrl && (
@@ -124,9 +118,7 @@ export function ProvisionedCommitSuccess({
                     fill="text"
                     size="sm"
                     icon="external-link-alt"
-                    aria-label={t('provisioning.commit-success.open-commit', 'Open the committed file at {{hash}}', {
-                      hash: shortHash,
-                    })}
+                    aria-label={t('provisioning.commit-success.open-commit', 'Open the committed file')}
                   />
                 )}
               </Stack>
@@ -243,10 +235,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     gap: theme.spacing(0.5),
     minWidth: 0,
-  }),
-  // The hash identifies the commit; the message is what the reader is actually scanning for.
-  hash: css({
-    color: theme.colors.text.secondary,
   }),
   code: css({
     backgroundColor: 'transparent',

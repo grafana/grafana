@@ -79,8 +79,6 @@ interface CommitOutcome {
   ref?: string;
   urls?: RepositoryUrLs;
   message: string;
-  /** Hash the write landed on, as reported by the provisioning API. */
-  hash?: string;
   /** Rendered pull-request title, which prefills the provider's "open pull request" form. */
   prTitle: string;
 }
@@ -226,7 +224,7 @@ function FormContent({
         dispatch(invalidateAction);
       }
 
-      onCommitted({ ref: data.ref, urls: data.urls, message, hash: data.hash, prTitle });
+      onCommitted({ ref: data.ref, urls: data.urls, message, prTitle });
     } catch (err) {
       showError(err);
     }
@@ -294,10 +292,16 @@ interface SuccessProps {
   redirectUrl: string;
   repository?: RepositoryView;
   outcome: CommitOutcome;
+  onDismiss?: () => void;
 }
 
-function SuccessContent({ kindKey, action, resourceName, redirectUrl, repository, outcome }: SuccessProps) {
+function SuccessContent({ kindKey, action, resourceName, redirectUrl, repository, outcome, onDismiss }: SuccessProps) {
   const navigate = useNavigate();
+  // The drawer outlives the commit it reports, so a route it is already on leaves it over the page.
+  const leaveTo = (url: string) => {
+    onDismiss?.();
+    navigate(url);
+  };
   // Widened from the literal registry entry, whose optional members the union hides.
   const kind: ResourceKindInfo = resourceKindInfos[kindKey];
   const isDirect = !outcome.ref;
@@ -323,14 +327,14 @@ function SuccessContent({ kindKey, action, resourceName, redirectUrl, repository
             </LinkButton>
           )}
           {resourceRoute && (
-            <Button variant="secondary" onClick={() => navigate(resourceRoute)}>
+            <Button variant="secondary" onClick={() => leaveTo(resourceRoute)}>
               {t('provisioning.save-resource.next-view', 'View {{resource}}', {
                 resource: kind.getLabel({ upperFirst: false }),
               })}
             </Button>
           )}
           {/* Closing the drawer is what returns to the editor, so no button repeats it. */}
-          <Button variant="secondary" onClick={() => navigate(redirectUrl)}>
+          <Button variant="secondary" onClick={() => leaveTo(redirectUrl)}>
             {t('provisioning.save-resource.next-list', 'Back to all {{resources}}', {
               resources: kind.getPluralLabel({ upperFirst: false }),
             })}
@@ -345,7 +349,6 @@ function SuccessContent({ kindKey, action, resourceName, redirectUrl, repository
         repoType={repository?.type}
         repoUrl={repoUrl}
         commitMessage={outcome.message}
-        commitHash={outcome.hash}
         sourceUrl={outcome.urls?.sourceURL}
       />
     </ProvisionedDrawerLayout>
@@ -473,6 +476,7 @@ function ResourceDrawerContent({
           redirectUrl={redirectUrl}
           repository={repository}
           outcome={outcome}
+          onDismiss={onDismiss}
         />
       ) : (
         <ProvisionedFormGate

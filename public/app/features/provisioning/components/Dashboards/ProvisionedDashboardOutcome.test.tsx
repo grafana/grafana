@@ -8,6 +8,8 @@ jest.mock('react-router-dom-v5-compat', () => ({
   useNavigate: () => mockNavigate,
 }));
 
+const onDismiss = jest.fn();
+
 const base: DashboardCommitOutcome = {
   action: 'update',
   message: 'update: dashboard "Fleet overview"',
@@ -22,6 +24,7 @@ describe('ProvisionedDashboardOutcome', () => {
   it('offers the pull request where the provider opens one', () => {
     render(
       <ProvisionedDashboardOutcome
+        onDismiss={onDismiss}
         outcome={{ ...base, branch: 'dashboard/2026-01-01-abcde', prUrl: 'https://example.com/pr/1' }}
       />
     );
@@ -36,6 +39,7 @@ describe('ProvisionedDashboardOutcome', () => {
   it('falls back to the repository on a plain git remote, which opens none', () => {
     render(
       <ProvisionedDashboardOutcome
+        onDismiss={onDismiss}
         outcome={{ ...base, repoType: 'git', branch: 'dashboard/2026-01-01-abcde', prUrl: undefined }}
       />
     );
@@ -45,24 +49,28 @@ describe('ProvisionedDashboardOutcome', () => {
   });
 
   it('offers no external link for a direct commit, which has no branch to raise a request from', () => {
-    render(<ProvisionedDashboardOutcome outcome={{ ...base, viewUrl: '/d/fleet-overview' }} />);
+    render(<ProvisionedDashboardOutcome onDismiss={onDismiss} outcome={{ ...base, viewUrl: '/d/fleet-overview' }} />);
 
     expect(screen.getByText('Committed to main.')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /open (pull request|repository)/i })).not.toBeInTheDocument();
   });
 
-  it('navigates to the dashboard and to the list', async () => {
-    const { user } = render(<ProvisionedDashboardOutcome outcome={{ ...base, viewUrl: '/d/fleet-overview' }} />);
+  it('dismisses the drawer before navigating, so it is not left over the page it lands on', async () => {
+    const { user } = render(
+      <ProvisionedDashboardOutcome onDismiss={onDismiss} outcome={{ ...base, viewUrl: '/d/fleet-overview' }} />
+    );
 
     await user.click(screen.getByRole('button', { name: /view dashboard/i }));
     expect(mockNavigate).toHaveBeenCalledWith('/d/fleet-overview');
+    expect(onDismiss).toHaveBeenCalledTimes(1);
 
     await user.click(screen.getByRole('button', { name: /back to all dashboards/i }));
     expect(mockNavigate).toHaveBeenCalledWith('/dashboards');
+    expect(onDismiss).toHaveBeenCalledTimes(2);
   });
 
   it('omits the view step when the commit produced nothing to view', () => {
-    render(<ProvisionedDashboardOutcome outcome={base} />);
+    render(<ProvisionedDashboardOutcome onDismiss={onDismiss} outcome={base} />);
 
     expect(screen.queryByRole('button', { name: /view dashboard/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /back to all dashboards/i })).toBeInTheDocument();

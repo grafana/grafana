@@ -15047,7 +15047,7 @@
       "last-commit": "Last commit",
       "merges-into": "Merges into",
       "open-branch": "Open {{branch}} in the repository",
-      "open-commit": "Open the committed file at {{hash}}",
+      "open-commit": "Open the committed file",
       "open-pull-request-yourself": "Open the repository and create a pull or merge request from the branch you saved to.",
       "repository": "the repository",
       "title-created_one": "A new resource has been created in a branch in {{provider}}.",

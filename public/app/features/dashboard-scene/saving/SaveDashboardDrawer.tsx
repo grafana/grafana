@@ -63,15 +63,26 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
    */
   public saveFormDraft: SaveFormDraft | undefined;
 
+  /**
+   * A page transition a landed commit still owes, run once the drawer reporting that commit closes.
+   * Set by the provisioned form, because the transition would otherwise drop the report.
+   */
+  public afterReportedCommit: (() => Promise<void>) | undefined;
+
   public onClose = () => {
     const dashboard = this.state.dashboardRef.resolve();
     // Save As folder picker mutates live meta; restore on cancel so the source dash isn't left dirty.
-    const shouldRestoreMeta = Boolean(this.state.saveAsCopy) || isNewDashboard(dashboard.state);
+    // A landed commit has already been adopted by the scene; the pre-save meta would undo it.
+    const shouldRestoreMeta =
+      !this.state.commitOutcome && (Boolean(this.state.saveAsCopy) || isNewDashboard(dashboard.state));
     dashboard.setState({
       meta: shouldRestoreMeta ? (dashboard.getInitialState()?.meta ?? dashboard.state.meta) : dashboard.state.meta,
     });
     dashboard.closeModal();
     this.state.onDismiss?.();
+    const afterReportedCommit = this.afterReportedCommit;
+    this.afterReportedCommit = undefined;
+    afterReportedCommit?.();
   };
 
   public onToggleSaveTimeRange = () => {
@@ -185,7 +196,7 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
     // moved the ground underneath `target`, since a created dashboard is no longer a new save and a
     // branch commit is not in Grafana at all, so the repository lookup comes back empty.
     if (commitOutcome) {
-      return <ProvisionedDashboardOutcome outcome={commitOutcome} />;
+      return <ProvisionedDashboardOutcome outcome={commitOutcome} onDismiss={model.onClose} />;
     }
 
     if (target === 'repository') {

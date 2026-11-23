@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { Controller, useForm, FormProvider } from 'react-hook-form';
 
 import { locationUtil } from '@grafana/data';
@@ -25,6 +25,7 @@ import {
 import { SaveDashboardFormCommonOptions } from 'app/features/dashboard-scene/saving/SaveDashboardForm';
 import { nextMetaAfterFolderPick } from 'app/features/dashboard-scene/saving/shared';
 import { useParkSaveFormDraft } from 'app/features/dashboard-scene/saving/useParkSaveFormDraft';
+import { type DashboardSceneState } from 'app/features/dashboard-scene/scene/types/dashboard';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
@@ -52,6 +53,7 @@ import { getProvisionedRequestError } from '../utils/errors';
 import { validateProvisionedFolderName } from '../utils/folderName';
 import { ensureFolderPathTrailingSlash, joinPath, slugifyForFilename, splitPath } from '../utils/path';
 
+import { type DashboardCommitOutcome } from './ProvisionedDashboardOutcome';
 import { type SaveProvisionedDashboardProps } from './SaveProvisionedDashboard';
 
 export interface Props extends SaveProvisionedDashboardProps {
@@ -104,6 +106,10 @@ export function SaveProvisionedDashboardForm({
   // what was written — on the update path getSaveModel() would re-include values the
   // save-option toggles omitted.
   const savedSpecRef = useRef<Dashboard | DashboardV2Spec | undefined>(undefined);
+  // The scene's own title/description/tags as the submit started. getSaveAsFields compares these
+  // against the scene's current values to spot edits made while the request was in flight, so it
+  // has to be the scene's pre-request state, not the values being committed.
+  const sceneFieldsRef = useRef<Pick<DashboardSceneState, 'title' | 'description' | 'tags'> | undefined>(undefined);
   const mountedRef = useRef(true);
   useEffect(() => {
     return () => {
@@ -228,7 +234,6 @@ export function SaveProvisionedDashboardForm({
   const commitSnapshot = useCallback(
     (wrapper: ResourceWrapper) => ({
       message,
-      hash: wrapper.hash,
       sourceUrl: wrapper.urls?.sourceURL,
       prUrl: appendPullRequestTitleParam(wrapper.urls?.newPullRequestURL, repository?.type, prTitle),
       repoUrl: wrapper.urls?.repositoryURL ?? repository?.url,
@@ -268,25 +273,41 @@ export function SaveProvisionedDashboardForm({
       const resourceData = wrapper.resource.upsert || wrapper.resource.dryRun;
       const saveResponse = createSaveResponseFromResource(resourceData);
       // A new dashboard is committed with the title and description typed into the drawer, which the
-      // scene does not have yet. Handing them over makes the scene adopt them, so the re-baselined
-      // model matches and leaving the reported commit does not read as an unsaved edit.
-      const saveAsSource = isNew
-        ? { title: getValues('title'), description: getValues('description'), tags: dashboard.state.tags }
-        : undefined;
+      // scene does not have yet. Handing over its pre-request values makes it adopt the committed
+      // ones, so the re-baselined model matches and leaving the commit is not an unsaved edit.
+      const saveAsSource = isNew ? sceneFieldsRef.current : undefined;
+      // A write moves the resource's own identity — a rename changes the source path the next save
+      // renames from — and the drawer leaves the scene in place to carry on editing, so the scene
+      // adopts the annotations the write reports. Before saveCompleted, which baselines from them.
+      // A branch commit is not in Grafana, so its dry run describes no resource to adopt.
+      const writtenAnnotations = wrapper.resource.upsert?.metadata?.annotations;
+      if (writtenAnnotations) {
+        const { meta } = dashboard.state;
+        dashboard.setState({
+          meta: { ...meta, k8s: { ...meta.k8s, annotations: { ...meta.k8s?.annotations, ...writtenAnnotations } } },
+        });
+      }
       // The drawer stays open to report the commit, so the save must not drop it as the overlay.
       await dashboard.saveCompleted(model, saveResponse, defaultValues.folder?.uid, saveAsSource, {
         keepOverlay: true,
       });
       dashboardWatcher.clearIgnoreSave();
-      // The commit is the save. A new dashboard committed to a branch is not in Grafana yet, so the
-      // re-baselined model cannot match the scene and change detection would keep reading as an
-      // unsaved edit; leaving the reported commit must not ask to save it again.
-      dashboard.setState({ isDirty: false });
       if (pendingChanges) {
-        await finishCommittingPendingChanges(dashboard, pendingChanges, { showSaved });
+        // Showing the saved dashboard reloads the page, which would drop the drawer reporting the
+        // commit, so the drawer runs it when it closes.
+        drawer.afterReportedCommit = await finishCommittingPendingChanges(dashboard, pendingChanges, {
+          showSaved,
+          deferPageClose: true,
+        });
       }
     },
-    [dashboard, defaultValues.folder?.uid, pendingChanges, isNew, getValues]
+    [dashboard, defaultValues.folder?.uid, pendingChanges, isNew, drawer]
+  );
+
+  // The outcome replaces the form, which an open diff hides, and the Changes tab is gone by then.
+  const reportCommit = useCallback(
+    (commitOutcome: DashboardCommitOutcome) => drawer.setState({ showDiff: false, commitOutcome }),
+    [drawer]
   );
 
   const onWriteSuccess = useCallback(
@@ -301,17 +322,15 @@ export function SaveProvisionedDashboardForm({
         editPanel: null,
       });
 
-      drawer.setState({
-        commitOutcome: {
-          ...commitSnapshot(wrapper),
-          action: isNew ? 'create' : 'update',
-          // Staying on the preview URL would keep showing the deleted branch (and its recovery
-          // banner) for a draft that was just saved, so point at the saved dashboard instead.
-          viewUrl: upsert?.metadata?.name ? CORE_KINDS.dashboard.getRoute(upsert.metadata.name) : undefined,
-        },
+      reportCommit({
+        ...commitSnapshot(wrapper),
+        action: isNew ? 'create' : 'update',
+        // Staying on the preview URL would keep showing the deleted branch (and its recovery
+        // banner) for a draft that was just saved, so point at the saved dashboard instead.
+        viewUrl: upsert?.metadata?.name ? CORE_KINDS.dashboard.getRoute(upsert.metadata.name) : undefined,
       });
     },
-    [isNew, recoverToNewBranch, handleDismiss, commitSnapshot, drawer]
+    [isNew, recoverToNewBranch, handleDismiss, commitSnapshot, reportCommit]
   );
 
   const onBranchSuccess = useCallback(
@@ -323,22 +342,20 @@ export function SaveProvisionedDashboardForm({
       wrapper: ResourceWrapper
     ) => {
       handleDismiss(wrapper, { showSaved: false });
-      drawer.setState({
-        commitOutcome: {
-          ...commitSnapshot(wrapper),
-          action: isNew ? 'create' : 'update',
-          branch: ref,
-          // Unlike most kinds, a dashboard on a branch is viewable. A new one is reached at its own
-          // URL; an existing one needs the preview route to be rendered from that ref rather than
-          // from what is on the configured branch.
-          viewUrl:
-            isNew && upsert?.metadata?.name
-              ? CORE_KINDS.dashboard.getRoute(upsert.metadata.name)
-              : getPreviewUrl(ref, path, info.repoType),
-        },
+      reportCommit({
+        ...commitSnapshot(wrapper),
+        action: isNew ? 'create' : 'update',
+        branch: ref,
+        // Unlike most kinds, a dashboard on a branch is viewable. A new one is reached at its own
+        // URL; an existing one needs the preview route to be rendered from that ref rather than
+        // from what is on the configured branch.
+        viewUrl:
+          isNew && upsert?.metadata?.name
+            ? CORE_KINDS.dashboard.getRoute(upsert.metadata.name)
+            : getPreviewUrl(ref, path, info.repoType),
       });
     },
-    [isNew, getPreviewUrl, handleDismiss, commitSnapshot, drawer]
+    [isNew, getPreviewUrl, handleDismiss, commitSnapshot, reportCommit]
   );
   // Meta is where the drawer resolves the repository from and where the defaults (path, folder) recompute from
   const selectFolder = useCallback(
@@ -443,6 +460,8 @@ export function SaveProvisionedDashboardForm({
   // Submit handler for saving the form data
   const handleFormSubmit = async ({ title, description, repo, path, copyTags }: ProvisionedDashboardFormData) => {
     setError(undefined);
+    const { title: sceneTitle, description: sceneDescription, tags: sceneTags } = dashboard.state;
+    sceneFieldsRef.current = { title: sceneTitle, description: sceneDescription, tags: sceneTags };
     // Validate required fields
     if (!repo || !path) {
       showError(
@@ -532,6 +551,11 @@ export function SaveProvisionedDashboardForm({
     setStep('commit');
   };
 
+  const advanceOnSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    goToCommitStep();
+  };
+
   const primaryLabel = () => {
     if (step === 'details') {
       // The title is validated before the commit step opens, which can take a round trip.
@@ -557,7 +581,11 @@ export function SaveProvisionedDashboardForm({
 
   return (
     <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(handleFormSubmit)} name="save-provisioned-form">
+      {/* Enter in a details field submits the form, which on that step is the request to advance. */}
+      <form
+        onSubmit={step === 'details' ? advanceOnSubmit : handleSubmit(handleFormSubmit)}
+        name="save-provisioned-form"
+      >
         <Stack direction="column" gap={2}>
           {readOnly && (
             <RepoInvalidStateBanner

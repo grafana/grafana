@@ -432,19 +432,21 @@ describe('SaveProvisionedDashboardForm', () => {
     // Success path completes the save and reports the commit, offering the new dashboard as a step
     await waitFor(() => {
       expect(props.dashboard.saveCompleted).toHaveBeenCalled();
-      // The drawer reports the commit in place, so the save must not drop it as the scene overlay,
-      // and the scene has to adopt the title typed into the drawer or it reads as an unsaved edit.
+      // The drawer reports the commit in place, so the save must not drop it as the scene overlay.
+      // getSaveAsFields reads the scene's own pre-request fields to spot edits made during the
+      // request, so handing it the committed title would retain the stale scene one instead.
       expect(props.dashboard.saveCompleted).toHaveBeenCalledWith(
         expect.anything(),
         expect.anything(),
         expect.anything(),
-        expect.objectContaining({ title: 'New Dashboard', description: 'New Description' }),
+        { title: 'Test Dashboard', description: 'Test Description', tags: undefined },
         { keepOverlay: true }
       );
-      expect(props.dashboard.setState).toHaveBeenCalledWith({ isDirty: false });
+      expect(props.dashboard.setState).not.toHaveBeenCalledWith({ isDirty: false });
     });
     await waitFor(() =>
       expect(props.drawer.setState).toHaveBeenCalledWith({
+        showDiff: false,
         commitOutcome: expect.objectContaining({ action: 'create', viewUrl: '/d/new-dashboard' }),
       })
     );
@@ -1321,8 +1323,12 @@ describe('SaveProvisionedDashboardForm', () => {
     } as unknown as CommittedPendingChanges;
     const fullSaveModel = { title: 'Test Dashboard', annotations: [{ spec: { query: { spec: {} } } }] };
 
+    // What the deferred page close resolves to, so the drawer can be shown to be holding it.
+    const deferredPageClose = jest.fn(async () => undefined);
+
     beforeEach(() => {
       jest.mocked(getCommittedPendingChanges).mockReturnValue(committed);
+      jest.mocked(finishCommittingPendingChanges).mockResolvedValue(deferredPageClose);
       server.use(
         http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
           capturedRequest = { url: new URL(request.url), body: await request.json() };
@@ -1333,6 +1339,7 @@ describe('SaveProvisionedDashboardForm', () => {
 
     afterEach(() => {
       jest.mocked(getCommittedPendingChanges).mockReturnValue(undefined);
+      jest.mocked(finishCommittingPendingChanges).mockResolvedValue(undefined);
     });
 
     function setupPendingChanges(ref: string) {
@@ -1364,7 +1371,13 @@ describe('SaveProvisionedDashboardForm', () => {
       // Not the diff's model, which leaves out the empty values the dashboard needs.
       expect(props.dashboard.getSaveResourceFromSpec).toHaveBeenCalledWith(fullSaveModel);
       expect(requireCapturedRequest(capturedRequest).url.searchParams.has('ref')).toBe(false);
-      expect(finishCommittingPendingChanges).toHaveBeenCalledWith(props.dashboard, committed, { showSaved: true });
+      // Showing the saved dashboard reloads the page, which would drop the drawer still reporting
+      // the commit, so the drawer runs it on close.
+      expect(finishCommittingPendingChanges).toHaveBeenCalledWith(props.dashboard, committed, {
+        showSaved: true,
+        deferPageClose: true,
+      });
+      await waitFor(() => expect(props.drawer.afterReportedCommit).toBe(deferredPageClose));
     });
 
     it('commits them to a new branch, then has their plugin discard them without showing the saved dashboard', async () => {
@@ -1374,7 +1387,10 @@ describe('SaveProvisionedDashboardForm', () => {
 
       await waitFor(() => expect(finishCommittingPendingChanges).toHaveBeenCalled());
       expect(requireCapturedRequest(capturedRequest).url.searchParams.get('ref')).toBe('dashboard/2023-01-01-abcde');
-      expect(finishCommittingPendingChanges).toHaveBeenCalledWith(props.dashboard, committed, { showSaved: false });
+      expect(finishCommittingPendingChanges).toHaveBeenCalledWith(props.dashboard, committed, {
+        showSaved: false,
+        deferPageClose: true,
+      });
     });
 
     it('asks before committing them over a version someone saved since they started', async () => {
@@ -2495,6 +2511,53 @@ describe('SaveProvisionedDashboardForm branch name template', () => {
     const branch = await screen.findByRole('textbox', { name: /branch/i });
     await waitFor(() => expect(branch).toHaveValue('grafana/create-test-dashboard'));
     expect(branch).toHaveAttribute('readonly');
+  });
+
+  it('advances to the commit step when Enter is pressed on the details step, rather than committing', async () => {
+    let requested = false;
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        requested = true;
+        return saveSuccessResponse(request, 'new-dashboard', 'New Dashboard');
+      })
+    );
+    const { user } = setup();
+
+    const titleInput = await screen.findByRole('textbox', { name: /title/i });
+    await user.clear(titleInput);
+    await user.type(titleInput, 'New Dashboard{Enter}');
+
+    expect(await screen.findByRole('button', { name: /back to details/i })).toBeInTheDocument();
+    expect(requested).toBe(false);
+  });
+
+  it('adopts the annotations the write reported, so a later rename starts from the committed path', async () => {
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const body = await saveSuccessResponse(request, 'new-dashboard', 'New Dashboard').json();
+        return HttpResponse.json({
+          ...body,
+          resource: {
+            upsert: {
+              ...body.resource.upsert,
+              metadata: { ...body.resource.upsert.metadata, annotations: { [AnnoKeySourcePath]: 'committed.json' } },
+            },
+          },
+        });
+      })
+    );
+    const { user, props } = setup();
+    props.dashboard.getSaveResource = jest.fn().mockReturnValue({ metadata: {}, spec: { title: 'New Dashboard' } });
+
+    await commitSave(user);
+
+    await waitFor(() =>
+      expect(props.dashboard.setState).toHaveBeenCalledWith({
+        meta: expect.objectContaining({
+          k8s: { annotations: expect.objectContaining({ [AnnoKeySourcePath]: 'committed.json' }) },
+        }),
+      })
+    );
   });
 
   describe('save form draft', () => {
