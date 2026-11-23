@@ -93,7 +93,7 @@ describe('RecordingRulesFilterSidebar', () => {
     renderPage('paused:true');
 
     expect(
-      within(screen.getByRole('radiogroup', { name: 'Paused' })).getByRole('radio', { name: 'Paused' })
+      within(await screen.findByRole('radiogroup', { name: 'Paused' })).getByRole('radio', { name: 'Paused' })
     ).toBeChecked();
     await waitFor(async () => expect(await listedRuleTitles()).toEqual(['disk:usage:rate5m']));
   });
