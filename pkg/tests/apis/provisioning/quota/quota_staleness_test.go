@@ -18,7 +18,7 @@ import (
 // use cached quota during lookup failures, new repositories remain rejected, and recovery refreshes quota status.
 func TestIntegrationProvisioning_RepositoryUsesCachedQuotaWhenRefreshFails(t *testing.T) {
 	helper := sharedHelper(t)
-	initialQuota := provisioning.QuotaStatus{
+	initialQuota := provisioning.RepositoryQuotaStatus{
 		MaxRepositories:           5,
 		MaxResourcesPerRepository: 100,
 	}
@@ -74,7 +74,7 @@ func TestIntegrationProvisioning_RepositoryUsesCachedQuotaWhenRefreshFails(t *te
 	_, err = helper.Repositories.Resource.Create(t.Context(), newRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 	require.ErrorContains(t, err, "failed to get quota status")
 
-	refreshedQuota := provisioning.QuotaStatus{
+	refreshedQuota := provisioning.RepositoryQuotaStatus{
 		MaxRepositories:           8,
 		MaxResourcesPerRepository: 200,
 	}

@@ -539,7 +539,7 @@ func TestHandleGetRawFile(t *testing.T) {
 			repo := &provisioningapi.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
 				Spec: provisioningapi.RepositorySpec{
-					Sync: provisioningapi.SyncOptions{Target: provisioningapi.SyncTargetTypeFolder},
+					Sync: provisioningapi.RepositorySyncOptions{Target: provisioningapi.RepositorySyncOptionsTargetFolder},
 				},
 			}
 			mockReadWriter.EXPECT().Config().Return(repo).Maybe()
@@ -587,7 +587,7 @@ func TestHandleGetRawFile_FolderScopedAuth(t *testing.T) {
 		repo := &provisioningapi.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
 			Spec: provisioningapi.RepositorySpec{
-				Sync: provisioningapi.SyncOptions{Target: provisioningapi.SyncTargetTypeFolder},
+				Sync: provisioningapi.RepositorySyncOptions{Target: provisioningapi.RepositorySyncOptionsTargetFolder},
 			},
 		}
 		mockReadWriter.EXPECT().Config().Return(repo).Maybe()

@@ -292,7 +292,7 @@ func TestRenameResourceFile(t *testing.T) {
 
 		gitRepoInfo := provisioning.ResourceRepositoryInfo{
 			Name: testRepoName,
-			Type: provisioning.GitHubRepositoryType,
+			Type: provisioning.RepositorySpecTypeGithub,
 		}
 
 		oldFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "old-path/dash.json"}

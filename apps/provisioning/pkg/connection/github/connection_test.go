@@ -1691,9 +1691,9 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 			repo: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL: "https://github.com/test-owner/test-repo",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url: "https://github.com/test-owner/test-repo",
 					},
 				},
 			},
@@ -1740,9 +1740,9 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 			repo: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL: "https://github.com/test-owner/test-repo",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url: "https://github.com/test-owner/test-repo",
 					},
 				},
 			},
@@ -1768,8 +1768,8 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 			repo: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
 				Spec: provisioning.RepositorySpec{
-					Type:   provisioning.GitLabRepositoryType,
-					GitLab: &provisioning.GitLabRepositoryConfig{},
+					Type:   provisioning.RepositorySpecTypeGitlab,
+					Gitlab: &provisioning.RepositoryGitLabRepositoryConfig{},
 				},
 			},
 			expectedError: "repository is not a GitHub-based repo",
@@ -1794,9 +1794,9 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 			repo: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL: "invalid-url",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url: "invalid-url",
 					},
 				},
 			},
@@ -1822,9 +1822,9 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 			repo: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL: "https://github.com/test-owner/test-repo",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url: "https://github.com/test-owner/test-repo",
 					},
 				},
 			},
@@ -1856,9 +1856,9 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 			repo: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL: "https://github.com/test-owner/test-repo",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url: "https://github.com/test-owner/test-repo",
 					},
 				},
 			},
@@ -1890,9 +1890,9 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 			repo: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL: "https://github.com/test-owner/test-repo",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url: "https://github.com/test-owner/test-repo",
 					},
 				},
 			},
@@ -1924,9 +1924,9 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 			repo: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL: "https://github.com/test-owner/test-repo",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url: "https://github.com/test-owner/test-repo",
 					},
 				},
 			},

@@ -18,7 +18,7 @@ import (
 const Name = "bootstrap"
 
 // SyncTarget is exported so the startup guard cannot drift from what applySpec writes.
-const SyncTarget = provisioning.SyncTargetTypeFolderless
+const SyncTarget = provisioning.RepositorySyncOptionsTargetFolderless
 
 // updateAttempts bounds the re-read when another replica writes between our read and update.
 // The hook runs once per boot, so a dropped conflict stays stale until the next restart.
@@ -195,11 +195,11 @@ func applySpec(spec *provisioning.RepositorySpec, path string) {
 	*spec = provisioning.RepositorySpec{
 		Title:       title,
 		Description: description,
-		Type:        provisioning.LocalRepositoryType,
-		Local:       &provisioning.LocalRepositoryConfig{Path: path},
+		Type:        provisioning.RepositorySpecTypeLocal,
+		Local:       &provisioning.RepositoryLocalRepositoryConfig{Path: path},
 		// Edits to provisioned resources route to the files endpoint, which needs this.
-		Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-		Sync: provisioning.SyncOptions{
+		Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
+		Sync: provisioning.RepositorySyncOptions{
 			Enabled: true,
 			// The directory is instance configuration, not a folder of dashboards.
 			Target:          SyncTarget,

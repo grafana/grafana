@@ -20,7 +20,7 @@ func Validate(_ context.Context, obj runtime.Object, allowInsecure bool) field.E
 		return nil
 	}
 
-	if repo.Spec.Type != provisioning.GitRepositoryType {
+	if repo.Spec.Type != provisioning.RepositorySpecTypeGit {
 		return nil
 	}
 
@@ -36,8 +36,8 @@ func Validate(_ context.Context, obj runtime.Object, allowInsecure bool) field.E
 
 // validateGitConfig validates the git configuration fields.
 // This is extracted to be reusable by other git-based repository types (github, gitlab, bitbucket).
-func validateGitConfig(repo *provisioning.Repository, cfg *provisioning.GitRepositoryConfig, allowInsecure bool) field.ErrorList {
-	return ValidateGitConfigFields(repo, cfg.URL, cfg.Branch, cfg.Path, allowInsecure)
+func validateGitConfig(repo *provisioning.Repository, cfg *provisioning.RepositoryGitRepositoryConfig, allowInsecure bool) field.ErrorList {
+	return ValidateGitConfigFields(repo, cfg.Url, cfg.Branch, cfg.Path, allowInsecure)
 }
 
 // IsInsecureURLWithToken reports whether url is an http:// URL that would
@@ -61,7 +61,7 @@ func ValidateGitConfigFields(repo *provisioning.Repository, url, branch, path st
 	t := string(repo.Spec.Type)
 	// Note: URL format validation is handled by provider-specific validators.
 	// We only validate URL emptiness here for the generic git repository type.
-	if repo.Spec.Type == provisioning.GitRepositoryType {
+	if repo.Spec.Type == provisioning.RepositorySpecTypeGit {
 		if url == "" {
 			list = append(list, field.Required(field.NewPath("spec", t, "url"), "a git url is required"))
 		} else {

@@ -95,7 +95,7 @@ func TestExportWorker_ProcessWriteNotAllowed(t *testing.T) {
 	mockRepo.On("Config").Return(&v0alpha1.Repository{
 		Spec: v0alpha1.RepositorySpec{
 			// no write permissions
-			Workflows: []v0alpha1.Workflow{},
+			Workflows: []v0alpha1.RepositorySpecWorkflows{},
 		},
 	})
 
@@ -119,9 +119,9 @@ func TestExportWorker_ProcessBranchNotAllowedForLocal(t *testing.T) {
 	mockRepo := repository.NewMockRepository(t)
 	mockRepo.On("Config").Return(&v0alpha1.Repository{
 		Spec: v0alpha1.RepositorySpec{
-			Type: v0alpha1.LocalRepositoryType,
+			Type: v0alpha1.RepositorySpecTypeLocal,
 			// try to override the branch workflow
-			Workflows: []v0alpha1.Workflow{v0alpha1.BranchWorkflow},
+			Workflows: []v0alpha1.RepositorySpecWorkflows{v0alpha1.RepositorySpecWorkflowsBranch},
 		},
 	})
 
@@ -147,7 +147,7 @@ func TestExportWorker_ProcessFailedToCreateClients(t *testing.T) {
 			Namespace: "test-namespace",
 		},
 		Spec: v0alpha1.RepositorySpec{
-			Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow},
+			Workflows: []v0alpha1.RepositorySpecWorkflows{v0alpha1.RepositorySpecWorkflowsWrite},
 		},
 	})
 
@@ -178,7 +178,7 @@ func TestExportWorker_ProcessNotReaderWriter(t *testing.T) {
 			Namespace: "test-namespace",
 		},
 		Spec: v0alpha1.RepositorySpec{
-			Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow},
+			Workflows: []v0alpha1.RepositorySpecWorkflows{v0alpha1.RepositorySpecWorkflowsWrite},
 		},
 	})
 
@@ -214,7 +214,7 @@ func TestExportWorker_ProcessRepositoryResourcesError(t *testing.T) {
 			Namespace: "test-namespace",
 		},
 		Spec: v0alpha1.RepositorySpec{
-			Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow},
+			Workflows: []v0alpha1.RepositorySpecWorkflows{v0alpha1.RepositorySpecWorkflowsWrite},
 		},
 	})
 
@@ -254,8 +254,8 @@ func TestExportWorker_ProcessStageOptions(t *testing.T) {
 			Namespace: "test-namespace",
 		},
 		Spec: v0alpha1.RepositorySpec{
-			Type:      v0alpha1.GitRepositoryType,
-			Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow, v0alpha1.BranchWorkflow},
+			Type:      v0alpha1.RepositorySpecTypeGit,
+			Workflows: []v0alpha1.RepositorySpecWorkflows{v0alpha1.RepositorySpecWorkflowsWrite, v0alpha1.RepositorySpecWorkflowsBranch},
 		},
 	})
 
@@ -296,29 +296,29 @@ func TestExportWorker_ProcessStageOptionsWithBranch(t *testing.T) {
 		name        string
 		branch      string
 		expectedRef string
-		workflows   []v0alpha1.Workflow
-		repoType    v0alpha1.RepositoryType
+		workflows   []v0alpha1.RepositorySpecWorkflows
+		repoType    v0alpha1.RepositorySpecType
 	}{
 		{
 			name:        "branch specified",
 			branch:      "develop",
 			expectedRef: "develop",
-			workflows:   []v0alpha1.Workflow{v0alpha1.WriteWorkflow, v0alpha1.BranchWorkflow},
-			repoType:    v0alpha1.GitRepositoryType,
+			workflows:   []v0alpha1.RepositorySpecWorkflows{v0alpha1.RepositorySpecWorkflowsWrite, v0alpha1.RepositorySpecWorkflowsBranch},
+			repoType:    v0alpha1.RepositorySpecTypeGit,
 		},
 		{
 			name:        "empty branch",
 			branch:      "",
 			expectedRef: "",
-			workflows:   []v0alpha1.Workflow{v0alpha1.WriteWorkflow},
-			repoType:    v0alpha1.LocalRepositoryType,
+			workflows:   []v0alpha1.RepositorySpecWorkflows{v0alpha1.RepositorySpecWorkflowsWrite},
+			repoType:    v0alpha1.RepositorySpecTypeLocal,
 		},
 		{
 			name:        "main branch",
 			branch:      "main",
 			expectedRef: "main",
-			workflows:   []v0alpha1.Workflow{v0alpha1.WriteWorkflow, v0alpha1.BranchWorkflow},
-			repoType:    v0alpha1.GitRepositoryType,
+			workflows:   []v0alpha1.RepositorySpecWorkflows{v0alpha1.RepositorySpecWorkflowsWrite, v0alpha1.RepositorySpecWorkflowsBranch},
+			repoType:    v0alpha1.RepositorySpecTypeGit,
 		},
 	}
 
@@ -392,7 +392,7 @@ func TestExportWorker_ProcessExportFnError(t *testing.T) {
 			Namespace: "test-namespace",
 		},
 		Spec: v0alpha1.RepositorySpec{
-			Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow},
+			Workflows: []v0alpha1.RepositorySpecWorkflows{v0alpha1.RepositorySpecWorkflowsWrite},
 		},
 	})
 
@@ -435,7 +435,7 @@ func TestExportWorker_ProcessWrapWithStageFnError(t *testing.T) {
 			Namespace: "test-namespace",
 		},
 		Spec: v0alpha1.RepositorySpec{
-			Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow},
+			Workflows: []v0alpha1.RepositorySpecWorkflows{v0alpha1.RepositorySpecWorkflowsWrite},
 		},
 	})
 
@@ -465,8 +465,8 @@ func TestExportWorker_ProcessBranchNotAllowedForStageableRepositories(t *testing
 	mockRepo := repository.NewMockRepository(t)
 	mockRepo.On("Config").Return(&v0alpha1.Repository{
 		Spec: v0alpha1.RepositorySpec{
-			Type:      v0alpha1.GitHubRepositoryType,
-			Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow}, // Only write workflow, not branch
+			Type:      v0alpha1.RepositorySpecTypeGithub,
+			Workflows: []v0alpha1.RepositorySpecWorkflows{v0alpha1.RepositorySpecWorkflowsWrite}, // Only write workflow, not branch
 		},
 	})
 
@@ -494,12 +494,12 @@ func TestExportWorker_ProcessGitRepository(t *testing.T) {
 			Namespace: "test-namespace",
 		},
 		Spec: v0alpha1.RepositorySpec{
-			Type: v0alpha1.GitRepositoryType,
-			Git: &v0alpha1.GitRepositoryConfig{
-				URL:    "https://git.example.com/repo.git",
+			Type: v0alpha1.RepositorySpecTypeGit,
+			Git: &v0alpha1.RepositoryGitRepositoryConfig{
+				Url:    "https://git.example.com/repo.git",
 				Branch: "main",
 			},
-			Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow},
+			Workflows: []v0alpha1.RepositorySpecWorkflows{v0alpha1.RepositorySpecWorkflowsWrite},
 		},
 	})
 
@@ -547,12 +547,12 @@ func TestExportWorker_ProcessGitRepositoryExportFnError(t *testing.T) {
 			Namespace: "test-namespace",
 		},
 		Spec: v0alpha1.RepositorySpec{
-			Type: v0alpha1.GitRepositoryType,
-			Git: &v0alpha1.GitRepositoryConfig{
-				URL:    "https://git.example.com/repo.git",
+			Type: v0alpha1.RepositorySpecTypeGit,
+			Git: &v0alpha1.RepositoryGitRepositoryConfig{
+				Url:    "https://git.example.com/repo.git",
 				Branch: "main",
 			},
-			Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow},
+			Workflows: []v0alpha1.RepositorySpecWorkflows{v0alpha1.RepositorySpecWorkflowsWrite},
 		},
 	})
 
@@ -624,8 +624,8 @@ func TestExportWorker_CommitMessagePrecedence(t *testing.T) {
 			mockRepo.On("Config").Return(&v0alpha1.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-namespace"},
 				Spec: v0alpha1.RepositorySpec{
-					Type:      v0alpha1.GitRepositoryType,
-					Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow, v0alpha1.BranchWorkflow},
+					Type:      v0alpha1.RepositorySpecTypeGit,
+					Workflows: []v0alpha1.RepositorySpecWorkflows{v0alpha1.RepositorySpecWorkflowsWrite, v0alpha1.RepositorySpecWorkflowsBranch},
 				},
 			})
 
@@ -679,8 +679,8 @@ func TestExportWorker_RefURLsSetWithBranch(t *testing.T) {
 			Namespace: "test-namespace",
 		},
 		Spec: v0alpha1.RepositorySpec{
-			Type:      v0alpha1.GitHubRepositoryType,
-			Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow, v0alpha1.BranchWorkflow},
+			Type:      v0alpha1.RepositorySpecTypeGithub,
+			Workflows: []v0alpha1.RepositorySpecWorkflows{v0alpha1.RepositorySpecWorkflowsWrite, v0alpha1.RepositorySpecWorkflowsBranch},
 		},
 	})
 
@@ -746,8 +746,8 @@ func TestExportWorker_RefURLsNotSetWithoutBranch(t *testing.T) {
 			Namespace: "test-namespace",
 		},
 		Spec: v0alpha1.RepositorySpec{
-			Type:      v0alpha1.GitHubRepositoryType,
-			Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow},
+			Type:      v0alpha1.RepositorySpecTypeGithub,
+			Workflows: []v0alpha1.RepositorySpecWorkflows{v0alpha1.RepositorySpecWorkflowsWrite},
 		},
 	})
 
@@ -804,8 +804,8 @@ func TestExportWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
 			Namespace: "test-namespace",
 		},
 		Spec: v0alpha1.RepositorySpec{
-			Type:      v0alpha1.GitRepositoryType, // Regular git repo, not GitHub
-			Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow, v0alpha1.BranchWorkflow},
+			Type:      v0alpha1.RepositorySpecTypeGit, // Regular git repo, not GitHub
+			Workflows: []v0alpha1.RepositorySpecWorkflows{v0alpha1.RepositorySpecWorkflowsWrite, v0alpha1.RepositorySpecWorkflowsBranch},
 		},
 	})
 
@@ -887,7 +887,7 @@ func TestExportWorker_ConfigurationDisabled(t *testing.T) {
 			// Config() is read to build the flag's evaluation context regardless of enabled state.
 			mockRepo.On("Config").Return(&v0alpha1.Repository{
 				Spec: v0alpha1.RepositorySpec{
-					Sync: v0alpha1.SyncOptions{
+					Sync: v0alpha1.RepositorySyncOptions{
 						Target: "instance",
 					},
 				},

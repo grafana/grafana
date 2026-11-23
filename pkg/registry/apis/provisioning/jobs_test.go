@@ -71,8 +71,8 @@ func newTestRepo(name, namespace string) *provisioning.Repository {
 			Namespace: namespace,
 		},
 		Spec: provisioning.RepositorySpec{
-			Sync: provisioning.SyncOptions{
-				Target: provisioning.SyncTargetTypeFolder,
+			Sync: provisioning.RepositorySyncOptions{
+				Target: provisioning.RepositorySyncOptionsTargetFolder,
 			},
 		},
 	}
@@ -248,7 +248,7 @@ func TestValidateWriteAccess_FixFolderMetadata(t *testing.T) {
 	t.Run("allowed with write workflow and no ref", func(t *testing.T) {
 		cfg := &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
-				Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+				Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 			},
 		}
 		spec := provisioning.JobSpec{
@@ -262,9 +262,9 @@ func TestValidateWriteAccess_FixFolderMetadata(t *testing.T) {
 	t.Run("allowed with branch workflow and feature branch ref", func(t *testing.T) {
 		cfg := &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
-				Type:      provisioning.GitHubRepositoryType,
-				Workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
-				GitHub:    &provisioning.GitHubRepositoryConfig{Branch: "main"},
+				Type:      provisioning.RepositorySpecTypeGithub,
+				Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsBranch},
+				Github:    &provisioning.RepositoryGitHubRepositoryConfig{Branch: "main"},
 			},
 		}
 		spec := provisioning.JobSpec{
@@ -280,9 +280,9 @@ func TestValidateWriteAccess_FixFolderMetadata(t *testing.T) {
 	t.Run("rejected with branch-only workflow and no ref", func(t *testing.T) {
 		cfg := &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
-				Type:      provisioning.GitHubRepositoryType,
-				Workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
-				GitHub:    &provisioning.GitHubRepositoryConfig{Branch: "main"},
+				Type:      provisioning.RepositorySpecTypeGithub,
+				Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsBranch},
+				Github:    &provisioning.RepositoryGitHubRepositoryConfig{Branch: "main"},
 			},
 		}
 		spec := provisioning.JobSpec{
@@ -297,7 +297,7 @@ func TestValidateWriteAccess_FixFolderMetadata(t *testing.T) {
 	t.Run("rejected with no workflows", func(t *testing.T) {
 		cfg := &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
-				Workflows: []provisioning.Workflow{},
+				Workflows: []provisioning.RepositorySpecWorkflows{},
 			},
 		}
 		spec := provisioning.JobSpec{
@@ -312,9 +312,9 @@ func TestValidateWriteAccess_FixFolderMetadata(t *testing.T) {
 	t.Run("rejected with branch-only workflow and ref matching configured branch", func(t *testing.T) {
 		cfg := &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
-				Type:      provisioning.GitHubRepositoryType,
-				Workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
-				GitHub:    &provisioning.GitHubRepositoryConfig{Branch: "main"},
+				Type:      provisioning.RepositorySpecTypeGithub,
+				Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsBranch},
+				Github:    &provisioning.RepositoryGitHubRepositoryConfig{Branch: "main"},
 			},
 		}
 		spec := provisioning.JobSpec{
@@ -331,7 +331,7 @@ func TestValidateWriteAccess_FixFolderMetadata(t *testing.T) {
 	t.Run("nil options treated as empty ref", func(t *testing.T) {
 		cfg := &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
-				Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+				Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 			},
 		}
 		spec := provisioning.JobSpec{
@@ -345,12 +345,12 @@ func TestValidateWriteAccess_FixFolderMetadata(t *testing.T) {
 func TestValidateWriteAccess_Migrate(t *testing.T) {
 	c := &jobsConnector{}
 
-	gitRepo := func(workflows ...provisioning.Workflow) *provisioning.Repository {
+	gitRepo := func(workflows ...provisioning.RepositorySpecWorkflows) *provisioning.Repository {
 		return &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
-				Type:      provisioning.GitHubRepositoryType,
+				Type:      provisioning.RepositorySpecTypeGithub,
 				Workflows: workflows,
-				GitHub:    &provisioning.GitHubRepositoryConfig{Branch: "main"},
+				Github:    &provisioning.RepositoryGitHubRepositoryConfig{Branch: "main"},
 			},
 		}
 	}
@@ -362,7 +362,7 @@ func TestValidateWriteAccess_Migrate(t *testing.T) {
 	}
 
 	t.Run("empty branch is a direct write, allowed with write workflow", func(t *testing.T) {
-		err := c.validateWriteAccess(gitRepo(provisioning.WriteWorkflow), migrate(""))
+		err := c.validateWriteAccess(gitRepo(provisioning.RepositorySpecWorkflowsWrite), migrate(""))
 		require.NoError(t, err)
 	})
 
@@ -370,23 +370,23 @@ func TestValidateWriteAccess_Migrate(t *testing.T) {
 	// it must be allowed with the write workflow — matching the migrator and the
 	// OpenAPI description rather than being rejected as a branch migration.
 	t.Run("branch equal to configured branch is a direct write, allowed with write workflow", func(t *testing.T) {
-		err := c.validateWriteAccess(gitRepo(provisioning.WriteWorkflow), migrate("main"))
+		err := c.validateWriteAccess(gitRepo(provisioning.RepositorySpecWorkflowsWrite), migrate("main"))
 		require.NoError(t, err)
 	})
 
 	t.Run("branch equal to configured branch is not a branch workflow, rejected with branch-only", func(t *testing.T) {
-		err := c.validateWriteAccess(gitRepo(provisioning.BranchWorkflow), migrate("main"))
+		err := c.validateWriteAccess(gitRepo(provisioning.RepositorySpecWorkflowsBranch), migrate("main"))
 		require.Error(t, err)
 		assert.True(t, apierrors.IsForbidden(err))
 	})
 
 	t.Run("different branch is the branch workflow, allowed with branch workflow", func(t *testing.T) {
-		err := c.validateWriteAccess(gitRepo(provisioning.BranchWorkflow), migrate("feature"))
+		err := c.validateWriteAccess(gitRepo(provisioning.RepositorySpecWorkflowsBranch), migrate("feature"))
 		require.NoError(t, err)
 	})
 
 	t.Run("different branch rejected when only write workflow is allowed", func(t *testing.T) {
-		err := c.validateWriteAccess(gitRepo(provisioning.WriteWorkflow), migrate("feature"))
+		err := c.validateWriteAccess(gitRepo(provisioning.RepositorySpecWorkflowsWrite), migrate("feature"))
 		require.Error(t, err)
 		assert.True(t, apierrors.IsForbidden(err))
 	})
@@ -503,8 +503,8 @@ func TestAuthorizeResourceJob(t *testing.T) {
 				Namespace: "default",
 			},
 			Spec: provisioning.RepositorySpec{
-				Sync: provisioning.SyncOptions{
-					Target: provisioning.SyncTargetTypeInstance,
+				Sync: provisioning.RepositorySyncOptions{
+					Target: provisioning.RepositorySyncOptionsTargetInstance,
 				},
 			},
 		}
@@ -605,16 +605,16 @@ func TestAuthorizeMigrateJob(t *testing.T) {
 	instanceRepo := func() *provisioning.Repository {
 		return &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"},
-			Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance}},
+			Spec:       provisioning.RepositorySpec{Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetInstance}},
 		}
 	}
 	folderRepo := func() *provisioning.Repository {
 		return &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"},
 			Spec: provisioning.RepositorySpec{
-				Type:   provisioning.GitHubRepositoryType,
-				GitHub: &provisioning.GitHubRepositoryConfig{Branch: "main"},
-				Sync:   provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+				Type:   provisioning.RepositorySpecTypeGithub,
+				Github: &provisioning.RepositoryGitHubRepositoryConfig{Branch: "main"},
+				Sync:   provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetFolder},
 			},
 		}
 	}

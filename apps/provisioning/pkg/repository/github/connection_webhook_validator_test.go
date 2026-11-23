@@ -42,17 +42,17 @@ func ghRepo(ns, connName string, webhookDisabled bool) *provisioning.Repository 
 			Namespace: ns,
 		},
 		Spec: provisioning.RepositorySpec{
-			Type: provisioning.GitHubRepositoryType,
-			GitHub: &provisioning.GitHubRepositoryConfig{
-				URL: "https://github.com/org/repo",
+			Type: provisioning.RepositorySpecTypeGithub,
+			Github: &provisioning.RepositoryGitHubRepositoryConfig{
+				Url: "https://github.com/org/repo",
 			},
 		},
 	}
 	if connName != "" {
-		r.Spec.Connection = &provisioning.ConnectionInfo{Name: connName}
+		r.Spec.Connection = &provisioning.RepositoryConnectionInfo{Name: connName}
 	}
 	if webhookDisabled {
-		r.Spec.Webhook = &provisioning.WebhookConfig{Disabled: true}
+		r.Spec.Webhook = &provisioning.RepositoryWebhookConfig{Disabled: true}
 	}
 	return r
 }
@@ -67,7 +67,7 @@ func TestConnectionWebhookValidator(t *testing.T) {
 		{
 			name: "non-github repo is skipped",
 			repo: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
+				Spec: provisioning.RepositorySpec{Type: provisioning.RepositorySpecTypeLocal},
 			},
 			getter: &stubConnGetter{},
 		},

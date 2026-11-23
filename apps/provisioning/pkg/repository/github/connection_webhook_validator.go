@@ -23,7 +23,7 @@ func NewConnectionWebhookValidator(getter repository.ConnectionSpecGetter) repos
 }
 
 func (v *connectionWebhookValidator) Validate(ctx context.Context, cfg *provisioning.Repository) field.ErrorList {
-	if cfg.Spec.Type != provisioning.GitHubRepositoryType {
+	if cfg.Spec.Type != provisioning.RepositorySpecTypeGithub {
 		return nil
 	}
 

@@ -34,7 +34,7 @@ func NewQuotaUsageFromStats(stats []provisioning.ResourceCount) Usage {
 
 // EvaluateCondition creates a Quota condition based on current stats and quota status.
 // Returns True if all quotas pass (or no limits configured), False if any quota is reached/exceeded.
-func EvaluateCondition(quota provisioning.QuotaStatus, quotaUsage Usage) metav1.Condition {
+func EvaluateCondition(quota provisioning.RepositoryQuotaStatus, quotaUsage Usage) metav1.Condition {
 	// Check if any limits are configured
 	if quota.MaxResourcesPerRepository == 0 {
 		return metav1.Condition{
@@ -94,7 +94,7 @@ func IsQuotaReached(conditions []metav1.Condition) bool {
 	return false
 }
 
-func WouldStayWithinQuota(quota provisioning.QuotaStatus, usage Usage, netChange int64) bool {
+func WouldStayWithinQuota(quota provisioning.RepositoryQuotaStatus, usage Usage, netChange int64) bool {
 	if quota.MaxResourcesPerRepository == 0 {
 		return true
 	}
@@ -115,7 +115,7 @@ type QuotaGetter interface {
 	// GetQuotaStatus returns the quota status to be set on repositories.
 	// It takes a context and namespace to allow for future implementations
 	// that may need to fetch quota information dynamically.
-	GetQuotaStatus(ctx context.Context, namespace string) (provisioning.QuotaStatus, error)
+	GetQuotaStatus(ctx context.Context, namespace string) (provisioning.RepositoryQuotaStatus, error)
 }
 
 // FixedQuotaGetter returns fixed quota values from static configuration.
@@ -129,7 +129,7 @@ type fixedQuotaGetterError struct {
 }
 
 // NewFixedQuotaGetter creates a new FixedQuotaGetter from QuotaStatus.
-func NewFixedQuotaGetter(quotaStatus provisioning.QuotaStatus) *FixedQuotaGetter {
+func NewFixedQuotaGetter(quotaStatus provisioning.RepositoryQuotaStatus) *FixedQuotaGetter {
 	f := &FixedQuotaGetter{}
 	f.quotaStatus.Store(quotaStatus)
 	f.forcedError.Store(fixedQuotaGetterError{})
@@ -137,15 +137,15 @@ func NewFixedQuotaGetter(quotaStatus provisioning.QuotaStatus) *FixedQuotaGetter
 }
 
 // GetQuotaStatus returns the configured quota limits as a QuotaStatus.
-func (f *FixedQuotaGetter) GetQuotaStatus(_ context.Context, _ string) (provisioning.QuotaStatus, error) {
+func (f *FixedQuotaGetter) GetQuotaStatus(_ context.Context, _ string) (provisioning.RepositoryQuotaStatus, error) {
 	if state := f.forcedError.Load().(fixedQuotaGetterError); state.err != nil {
-		return provisioning.QuotaStatus{}, state.err
+		return provisioning.RepositoryQuotaStatus{}, state.err
 	}
-	return f.quotaStatus.Load().(provisioning.QuotaStatus), nil
+	return f.quotaStatus.Load().(provisioning.RepositoryQuotaStatus), nil
 }
 
 // SetQuotaStatus updates the quota status, allowing runtime changes (primarily for testing).
-func (f *FixedQuotaGetter) SetQuotaStatus(status provisioning.QuotaStatus) {
+func (f *FixedQuotaGetter) SetQuotaStatus(status provisioning.RepositoryQuotaStatus) {
 	f.quotaStatus.Store(status)
 }
 

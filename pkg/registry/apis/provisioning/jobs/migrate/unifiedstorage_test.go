@@ -32,8 +32,8 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 						Namespace: "test-namespace",
 					},
 					Spec: provisioning.RepositorySpec{
-						Sync: provisioning.SyncOptions{
-							Target: provisioning.SyncTargetTypeInstance,
+						Sync: provisioning.RepositorySyncOptions{
+							Target: provisioning.RepositorySyncOptionsTargetInstance,
 						},
 					},
 				})
@@ -54,8 +54,8 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 						Namespace: "test-namespace",
 					},
 					Spec: provisioning.RepositorySpec{
-						Sync: provisioning.SyncOptions{
-							Target: provisioning.SyncTargetTypeInstance,
+						Sync: provisioning.RepositorySyncOptions{
+							Target: provisioning.RepositorySyncOptionsTargetInstance,
 						},
 					},
 				})
@@ -81,8 +81,8 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 						Namespace: "test-namespace",
 					},
 					Spec: provisioning.RepositorySpec{
-						Sync: provisioning.SyncOptions{
-							Target: provisioning.SyncTargetTypeInstance,
+						Sync: provisioning.RepositorySyncOptions{
+							Target: provisioning.RepositorySyncOptionsTargetInstance,
 						},
 					},
 				})
@@ -112,8 +112,8 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 						Namespace: "test-namespace",
 					},
 					Spec: provisioning.RepositorySpec{
-						Sync: provisioning.SyncOptions{
-							Target: provisioning.SyncTargetTypeInstance,
+						Sync: provisioning.RepositorySyncOptions{
+							Target: provisioning.RepositorySyncOptionsTargetInstance,
 						},
 					},
 				})
@@ -145,8 +145,8 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 						Namespace: "test-namespace",
 					},
 					Spec: provisioning.RepositorySpec{
-						Sync: provisioning.SyncOptions{
-							Target: provisioning.SyncTargetTypeFolder,
+						Sync: provisioning.RepositorySyncOptions{
+							Target: provisioning.RepositorySyncOptionsTargetFolder,
 						},
 					},
 				})
@@ -175,8 +175,8 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 						Namespace: "test-namespace",
 					},
 					Spec: provisioning.RepositorySpec{
-						Sync: provisioning.SyncOptions{
-							Target: provisioning.SyncTargetTypeFolderless,
+						Sync: provisioning.RepositorySyncOptions{
+							Target: provisioning.RepositorySyncOptionsTargetFolderless,
 						},
 					},
 				})
@@ -204,8 +204,8 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 						Namespace: "test-namespace",
 					},
 					Spec: provisioning.RepositorySpec{
-						Sync: provisioning.SyncOptions{
-							Target: provisioning.SyncTargetTypeFolder,
+						Sync: provisioning.RepositorySyncOptions{
+							Target: provisioning.RepositorySyncOptionsTargetFolder,
 						},
 					},
 				})
@@ -233,8 +233,8 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 						Namespace: "test-namespace",
 					},
 					Spec: provisioning.RepositorySpec{
-						Sync: provisioning.SyncOptions{
-							Target: provisioning.SyncTargetTypeInstance,
+						Sync: provisioning.RepositorySyncOptions{
+							Target: provisioning.RepositorySyncOptionsTargetInstance,
 						},
 					},
 				})
@@ -265,7 +265,7 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 						Namespace: "test-namespace",
 					},
 					Spec: provisioning.RepositorySpec{
-						Sync: provisioning.SyncOptions{
+						Sync: provisioning.RepositorySyncOptions{
 							Target: "", // Empty target should default to instance behavior
 						},
 					},
@@ -295,8 +295,8 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 						Namespace: "test-namespace",
 					},
 					Spec: provisioning.RepositorySpec{
-						Sync: provisioning.SyncOptions{
-							Target: provisioning.SyncTargetTypeInstance,
+						Sync: provisioning.RepositorySyncOptions{
+							Target: provisioning.RepositorySyncOptionsTargetInstance,
 						},
 					},
 				})
@@ -363,9 +363,9 @@ func TestUnifiedStorageMigrator_BranchMigration(t *testing.T) {
 		return &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-ns"},
 			Spec: provisioning.RepositorySpec{
-				Type: provisioning.GitRepositoryType,
-				Git:  &provisioning.GitRepositoryConfig{Branch: branch},
-				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance},
+				Type: provisioning.RepositorySpecTypeGit,
+				Git:  &provisioning.RepositoryGitRepositoryConfig{Branch: branch},
+				Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetInstance},
 			},
 		}
 	}
@@ -413,9 +413,9 @@ func TestUnifiedStorageMigrator_BranchMigration(t *testing.T) {
 		repo.On("Config").Return(&provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-ns"},
 			Spec: provisioning.RepositorySpec{
-				Type: provisioning.GitRepositoryType,
-				Git:  &provisioning.GitRepositoryConfig{Branch: "main"},
-				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+				Type: provisioning.RepositorySpecTypeGit,
+				Git:  &provisioning.RepositoryGitRepositoryConfig{Branch: "main"},
+				Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetFolder},
 			},
 		})
 		pr.On("SetMessage", mock.Anything, mock.Anything).Return()
@@ -475,9 +475,9 @@ func TestUnifiedStorageMigrator_BranchMigration(t *testing.T) {
 		repo.On("Config").Return(&provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-ns"},
 			Spec: provisioning.RepositorySpec{
-				Type: provisioning.GitRepositoryType,
-				Git:  &provisioning.GitRepositoryConfig{Branch: "main"},
-				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+				Type: provisioning.RepositorySpecTypeGit,
+				Git:  &provisioning.RepositoryGitRepositoryConfig{Branch: "main"},
+				Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetFolder},
 			},
 		})
 		pr.On("SetMessage", mock.Anything, mock.Anything).Return()
@@ -523,9 +523,9 @@ func TestUnifiedStorageMigrator_BranchMigration(t *testing.T) {
 		repo.On("Config").Return(&provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-ns"},
 			Spec: provisioning.RepositorySpec{
-				Type: provisioning.GitRepositoryType,
-				Git:  &provisioning.GitRepositoryConfig{Branch: "main"},
-				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolderless},
+				Type: provisioning.RepositorySpecTypeGit,
+				Git:  &provisioning.RepositoryGitRepositoryConfig{Branch: "main"},
+				Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetFolderless},
 			},
 		})
 		pr.On("SetMessage", mock.Anything, mock.Anything).Return()
@@ -593,17 +593,17 @@ func TestUnifiedStorageMigrator_SkipResourceDeletion(t *testing.T) {
 	instanceRepo := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-ns"},
 		Spec: provisioning.RepositorySpec{
-			Type: provisioning.GitRepositoryType,
-			Git:  &provisioning.GitRepositoryConfig{Branch: "main"},
-			Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance},
+			Type: provisioning.RepositorySpecTypeGit,
+			Git:  &provisioning.RepositoryGitRepositoryConfig{Branch: "main"},
+			Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetInstance},
 		},
 	}
 	folderRepo := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-ns"},
 		Spec: provisioning.RepositorySpec{
-			Type: provisioning.GitRepositoryType,
-			Git:  &provisioning.GitRepositoryConfig{Branch: "main"},
-			Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+			Type: provisioning.RepositorySpecTypeGit,
+			Git:  &provisioning.RepositoryGitRepositoryConfig{Branch: "main"},
+			Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetFolder},
 		},
 	}
 
@@ -695,7 +695,7 @@ func TestUnifiedStorageMigrator_CommitMessagePrecedence(t *testing.T) {
 
 			repo.On("Config").Return(&provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-ns"},
-				Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance}},
+				Spec:       provisioning.RepositorySpec{Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetInstance}},
 			})
 			pr.On("SetMessage", mock.Anything, mock.Anything).Return()
 			pr.On("StrictMaxErrors", 1).Return()
@@ -734,7 +734,7 @@ func TestUnifiedStorageMigrator_TakeoverAllowlist(t *testing.T) {
 
 		repo.On("Config").Return(&provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-ns"},
-			Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance}},
+			Spec:       provisioning.RepositorySpec{Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetInstance}},
 		})
 		pr.On("SetMessage", mock.Anything, mock.Anything).Return()
 		pr.On("StrictMaxErrors", 1).Return()
@@ -781,7 +781,7 @@ func TestUnifiedStorageMigrator_TakeoverAllowlist(t *testing.T) {
 
 		repo.On("Config").Return(&provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-ns"},
-			Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance}},
+			Spec:       provisioning.RepositorySpec{Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetInstance}},
 		})
 		pr.On("SetMessage", mock.Anything, mock.Anything).Return()
 		pr.On("StrictMaxErrors", 1).Return()
@@ -814,7 +814,7 @@ func TestUnifiedStorageMigrator_TakeoverAllowlist(t *testing.T) {
 
 		repo.On("Config").Return(&provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-ns"},
-			Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance}},
+			Spec:       provisioning.RepositorySpec{Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetInstance}},
 		})
 		pr.On("SetMessage", mock.Anything, mock.Anything).Return()
 		pr.On("StrictMaxErrors", 1).Return()
@@ -870,7 +870,7 @@ func TestUnifiedStorageMigrator_SelectiveResources(t *testing.T) {
 
 		repo.On("Config").Return(&provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-ns"},
-			Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder}},
+			Spec:       provisioning.RepositorySpec{Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetFolder}},
 		})
 		pr.On("SetMessage", mock.Anything, mock.Anything).Return()
 		pr.On("StrictMaxErrors", 1).Return()
@@ -909,7 +909,7 @@ func TestUnifiedStorageMigrator_SelectiveResources(t *testing.T) {
 
 		repo.On("Config").Return(&provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-ns"},
-			Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance}},
+			Spec:       provisioning.RepositorySpec{Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetInstance}},
 		})
 
 		// The migration is rejected up front, so nothing runs: no export, pull, or
@@ -949,9 +949,9 @@ func TestUnifiedStorageMigrator_CleanupSeesTheKindsOfTheExport(t *testing.T) {
 	repo.On("Config").Return(&provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-ns"},
 		Spec: provisioning.RepositorySpec{
-			Type: provisioning.GitRepositoryType,
-			Git:  &provisioning.GitRepositoryConfig{Branch: "main"},
-			Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance},
+			Type: provisioning.RepositorySpecTypeGit,
+			Git:  &provisioning.RepositoryGitRepositoryConfig{Branch: "main"},
+			Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetInstance},
 		},
 	})
 	pr.On("SetMessage", mock.Anything, mock.Anything).Return()

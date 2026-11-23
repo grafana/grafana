@@ -16,7 +16,7 @@ func Mutate(_ context.Context, obj runtime.Object) error {
 		return nil
 	}
 
-	if repo.Spec.Type != provisioning.GitRepositoryType {
+	if repo.Spec.Type != provisioning.RepositorySpecTypeGit {
 		return nil
 	}
 
@@ -24,11 +24,11 @@ func Mutate(_ context.Context, obj runtime.Object) error {
 		return fmt.Errorf("git configuration is required for git repository type")
 	}
 
-	if repo.Spec.Git.URL != "" {
-		url := strings.TrimSpace(repo.Spec.Git.URL)
+	if repo.Spec.Git.Url != "" {
+		url := strings.TrimSpace(repo.Spec.Git.Url)
 		if url != "" {
 			url = strings.TrimRight(url, "/")
-			repo.Spec.Git.URL = url
+			repo.Spec.Git.Url = url
 		}
 	}
 

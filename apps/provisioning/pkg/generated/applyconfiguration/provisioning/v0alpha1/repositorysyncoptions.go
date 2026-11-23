@@ -8,29 +8,29 @@ import (
 	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
-// SyncOptionsApplyConfiguration represents a declarative configuration of the SyncOptions type for use
+// RepositorySyncOptionsApplyConfiguration represents a declarative configuration of the RepositorySyncOptions type for use
 // with apply.
-type SyncOptionsApplyConfiguration struct {
+type RepositorySyncOptionsApplyConfiguration struct {
 	// Enabled must be saved as true before any sync job will run
 	Enabled *bool `json:"enabled,omitempty"`
 	// Where values should be saved
-	Target *provisioningv0alpha1.SyncTargetType `json:"target,omitempty"`
+	Target *provisioningv0alpha1.RepositorySyncOptionsTarget `json:"target,omitempty"`
 	// The interval between sync runs.
 	// The system defines a default value for this field, which will overwrite the
 	// user-defined one in case the latter is zero or lower than the system-defined one.
 	IntervalSeconds *int64 `json:"intervalSeconds,omitempty"`
 }
 
-// SyncOptionsApplyConfiguration constructs a declarative configuration of the SyncOptions type for use with
+// RepositorySyncOptionsApplyConfiguration constructs a declarative configuration of the RepositorySyncOptions type for use with
 // apply.
-func SyncOptions() *SyncOptionsApplyConfiguration {
-	return &SyncOptionsApplyConfiguration{}
+func RepositorySyncOptions() *RepositorySyncOptionsApplyConfiguration {
+	return &RepositorySyncOptionsApplyConfiguration{}
 }
 
 // WithEnabled sets the Enabled field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Enabled field is set to the value of the last call.
-func (b *SyncOptionsApplyConfiguration) WithEnabled(value bool) *SyncOptionsApplyConfiguration {
+func (b *RepositorySyncOptionsApplyConfiguration) WithEnabled(value bool) *RepositorySyncOptionsApplyConfiguration {
 	b.Enabled = &value
 	return b
 }
@@ -38,7 +38,7 @@ func (b *SyncOptionsApplyConfiguration) WithEnabled(value bool) *SyncOptionsAppl
 // WithTarget sets the Target field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Target field is set to the value of the last call.
-func (b *SyncOptionsApplyConfiguration) WithTarget(value provisioningv0alpha1.SyncTargetType) *SyncOptionsApplyConfiguration {
+func (b *RepositorySyncOptionsApplyConfiguration) WithTarget(value provisioningv0alpha1.RepositorySyncOptionsTarget) *RepositorySyncOptionsApplyConfiguration {
 	b.Target = &value
 	return b
 }
@@ -46,7 +46,7 @@ func (b *SyncOptionsApplyConfiguration) WithTarget(value provisioningv0alpha1.Sy
 // WithIntervalSeconds sets the IntervalSeconds field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the IntervalSeconds field is set to the value of the last call.
-func (b *SyncOptionsApplyConfiguration) WithIntervalSeconds(value int64) *SyncOptionsApplyConfiguration {
+func (b *RepositorySyncOptionsApplyConfiguration) WithIntervalSeconds(value int64) *RepositorySyncOptionsApplyConfiguration {
 	b.IntervalSeconds = &value
 	return b
 }

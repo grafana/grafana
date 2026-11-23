@@ -314,7 +314,7 @@ func (c *K8sTestHelper) SetGithubRepositoryFactory(f *githubRepository.Factory) 
 	c.env.GithubRepoFactory = f
 }
 
-func (c *K8sTestHelper) SetQuotaStatus(status provisioning.QuotaStatus) {
+func (c *K8sTestHelper) SetQuotaStatus(status provisioning.RepositoryQuotaStatus) {
 	c.env.QuotaGetter.(*quotas.FixedQuotaGetter).SetQuotaStatus(status)
 }
 

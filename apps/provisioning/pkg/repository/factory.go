@@ -21,7 +21,7 @@ type Mutator func(ctx context.Context, obj runtime.Object) error
 
 //go:generate mockery --name=Extra --structname=MockExtra --inpackage --filename=extra_mock.go --with-expecter
 type Extra interface {
-	Type() provisioning.RepositoryType
+	Type() provisioning.RepositorySpecType
 	Build(ctx context.Context, r *provisioning.Repository) (Repository, error)
 	Mutate(ctx context.Context, obj runtime.Object, oldObj runtime.Object) error
 	Validate(ctx context.Context, obj runtime.Object) field.ErrorList
@@ -29,22 +29,22 @@ type Extra interface {
 
 //go:generate mockery --name=Factory --structname=MockFactory --inpackage --filename=factory_mock.go --with-expecter
 type Factory interface {
-	Types() []provisioning.RepositoryType
+	Types() []provisioning.RepositorySpecType
 	Build(ctx context.Context, r *provisioning.Repository) (Repository, error)
 	Mutate(ctx context.Context, obj runtime.Object, oldObj runtime.Object) error
 	Validate(ctx context.Context, obj runtime.Object) field.ErrorList
 }
 
 type factory struct {
-	extras  map[provisioning.RepositoryType]Extra
-	enabled map[provisioning.RepositoryType]struct{}
+	extras  map[provisioning.RepositorySpecType]Extra
+	enabled map[provisioning.RepositorySpecType]struct{}
 	tracer  trace.Tracer
 }
 
-func ProvideFactory(enabled map[provisioning.RepositoryType]struct{}, extras []Extra, tracer trace.Tracer) (Factory, error) {
+func ProvideFactory(enabled map[provisioning.RepositorySpecType]struct{}, extras []Extra, tracer trace.Tracer) (Factory, error) {
 	f := &factory{
 		enabled: enabled,
-		extras:  make(map[provisioning.RepositoryType]Extra, len(extras)),
+		extras:  make(map[provisioning.RepositorySpecType]Extra, len(extras)),
 		tracer:  tracer,
 	}
 
@@ -58,8 +58,8 @@ func ProvideFactory(enabled map[provisioning.RepositoryType]struct{}, extras []E
 	return f, nil
 }
 
-func (f *factory) Types() []provisioning.RepositoryType {
-	var types []provisioning.RepositoryType
+func (f *factory) Types() []provisioning.RepositorySpecType {
+	var types []provisioning.RepositorySpecType
 	for t := range f.enabled {
 		if _, exists := f.extras[t]; exists {
 			types = append(types, t)

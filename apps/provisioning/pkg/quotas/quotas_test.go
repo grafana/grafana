@@ -17,7 +17,7 @@ func TestQuotaLimits_EvaluateCondition(t *testing.T) {
 	tests := []struct {
 		name           string
 		stats          []provisioning.ResourceCount
-		limits         provisioning.QuotaStatus
+		limits         provisioning.RepositoryQuotaStatus
 		expectedStatus metav1.ConditionStatus
 		expectedReason string
 		expectedMsg    string
@@ -25,14 +25,14 @@ func TestQuotaLimits_EvaluateCondition(t *testing.T) {
 		{
 			name:           "no limits configured returns QuotaUnlimited",
 			stats:          []provisioning.ResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 100}},
-			limits:         provisioning.QuotaStatus{MaxResourcesPerRepository: 0},
+			limits:         provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 0},
 			expectedStatus: metav1.ConditionTrue,
 			expectedReason: provisioning.ReasonQuotaUnlimited,
 			expectedMsg:    "No quota limits configured"},
 		{
 			name:           "at quota limit returns ResourceQuotaReached",
 			stats:          []provisioning.ResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 100}},
-			limits:         provisioning.QuotaStatus{MaxResourcesPerRepository: 100},
+			limits:         provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 100},
 			expectedStatus: metav1.ConditionTrue,
 			expectedReason: provisioning.ReasonQuotaReached,
 			expectedMsg:    "Resource quota reached: 100/100 resources",
@@ -40,7 +40,7 @@ func TestQuotaLimits_EvaluateCondition(t *testing.T) {
 		{
 			name:           "over quota limit returns ResourceQuotaExceeded",
 			stats:          []provisioning.ResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 150}},
-			limits:         provisioning.QuotaStatus{MaxResourcesPerRepository: 100},
+			limits:         provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 100},
 			expectedStatus: metav1.ConditionFalse,
 			expectedReason: provisioning.ReasonQuotaExceeded,
 			expectedMsg:    "Resource quota exceeded: 150/100 resources",
@@ -51,7 +51,7 @@ func TestQuotaLimits_EvaluateCondition(t *testing.T) {
 				{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 60},
 				{Group: "folder.grafana.app", Resource: "folders", Count: 50},
 			},
-			limits:         provisioning.QuotaStatus{MaxResourcesPerRepository: 100},
+			limits:         provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 100},
 			expectedStatus: metav1.ConditionFalse,
 			expectedReason: provisioning.ReasonQuotaExceeded,
 			expectedMsg:    "Resource quota exceeded: 110/100 resources",
@@ -59,7 +59,7 @@ func TestQuotaLimits_EvaluateCondition(t *testing.T) {
 		{
 			name:           "empty stats returns within quota",
 			stats:          []provisioning.ResourceCount{},
-			limits:         provisioning.QuotaStatus{MaxResourcesPerRepository: 100},
+			limits:         provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 100},
 			expectedStatus: metav1.ConditionTrue,
 			expectedReason: provisioning.ReasonWithinQuota,
 			expectedMsg:    "Within quota: 0/100 resources",
@@ -67,7 +67,7 @@ func TestQuotaLimits_EvaluateCondition(t *testing.T) {
 		{
 			name:           "nil stats returns within quota",
 			stats:          nil,
-			limits:         provisioning.QuotaStatus{MaxResourcesPerRepository: 100},
+			limits:         provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 100},
 			expectedStatus: metav1.ConditionTrue,
 			expectedReason: provisioning.ReasonWithinQuota,
 			expectedMsg:    "Within quota: 0/100 resources",
@@ -131,13 +131,13 @@ func TestCalculateTotalResources(t *testing.T) {
 func TestFixedQuotaGetter(t *testing.T) {
 	tests := []struct {
 		name                              string
-		limits                            provisioning.QuotaStatus
+		limits                            provisioning.RepositoryQuotaStatus
 		expectedMaxRepositories           int64
 		expectedMaxResourcesPerRepository int64
 	}{
 		{
 			name: "maps QuotaLimits to QuotaStatus correctly",
-			limits: provisioning.QuotaStatus{
+			limits: provisioning.RepositoryQuotaStatus{
 				MaxResourcesPerRepository: 100,
 				MaxRepositories:           10,
 			},
@@ -146,7 +146,7 @@ func TestFixedQuotaGetter(t *testing.T) {
 		},
 		{
 			name: "handles zero values (unlimited)",
-			limits: provisioning.QuotaStatus{
+			limits: provisioning.RepositoryQuotaStatus{
 				MaxResourcesPerRepository: 0,
 				MaxRepositories:           0,
 			},
@@ -155,7 +155,7 @@ func TestFixedQuotaGetter(t *testing.T) {
 		},
 		{
 			name: "handles mixed values",
-			limits: provisioning.QuotaStatus{
+			limits: provisioning.RepositoryQuotaStatus{
 				MaxResourcesPerRepository: 50,
 				MaxRepositories:           0,
 			},
@@ -167,7 +167,7 @@ func TestFixedQuotaGetter(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
-			getter := NewFixedQuotaGetter(provisioning.QuotaStatus{
+			getter := NewFixedQuotaGetter(provisioning.RepositoryQuotaStatus{
 				MaxResourcesPerRepository: tt.limits.MaxResourcesPerRepository,
 				MaxRepositories:           tt.limits.MaxRepositories,
 			})
@@ -398,77 +398,77 @@ func TestIsQuotaReached(t *testing.T) {
 func TestWouldStayWithinQuota(t *testing.T) {
 	tests := []struct {
 		name      string
-		quota     provisioning.QuotaStatus
+		quota     provisioning.RepositoryQuotaStatus
 		usage     Usage
 		netChange int64
 		expected  bool
 	}{
 		{
 			name:      "unlimited quota always allows",
-			quota:     provisioning.QuotaStatus{MaxResourcesPerRepository: 0},
+			quota:     provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 0},
 			usage:     Usage{TotalResources: 500},
 			netChange: 100,
 			expected:  true,
 		},
 		{
 			name:      "within quota with positive change",
-			quota:     provisioning.QuotaStatus{MaxResourcesPerRepository: 100},
+			quota:     provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 100},
 			usage:     Usage{TotalResources: 50},
 			netChange: 30,
 			expected:  true,
 		},
 		{
 			name:      "exactly at quota with positive change",
-			quota:     provisioning.QuotaStatus{MaxResourcesPerRepository: 100},
+			quota:     provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 100},
 			usage:     Usage{TotalResources: 50},
 			netChange: 50,
 			expected:  true,
 		},
 		{
 			name:      "exceeds quota with positive change",
-			quota:     provisioning.QuotaStatus{MaxResourcesPerRepository: 100},
+			quota:     provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 100},
 			usage:     Usage{TotalResources: 50},
 			netChange: 51,
 			expected:  false,
 		},
 		{
 			name:      "already at quota with zero change",
-			quota:     provisioning.QuotaStatus{MaxResourcesPerRepository: 100},
+			quota:     provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 100},
 			usage:     Usage{TotalResources: 100},
 			netChange: 0,
 			expected:  true,
 		},
 		{
 			name:      "already at quota with positive change",
-			quota:     provisioning.QuotaStatus{MaxResourcesPerRepository: 100},
+			quota:     provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 100},
 			usage:     Usage{TotalResources: 100},
 			netChange: 1,
 			expected:  false,
 		},
 		{
 			name:      "already over quota with zero change",
-			quota:     provisioning.QuotaStatus{MaxResourcesPerRepository: 100},
+			quota:     provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 100},
 			usage:     Usage{TotalResources: 150},
 			netChange: 0,
 			expected:  false,
 		},
 		{
 			name:      "negative change brings within quota",
-			quota:     provisioning.QuotaStatus{MaxResourcesPerRepository: 100},
+			quota:     provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 100},
 			usage:     Usage{TotalResources: 110},
 			netChange: -20,
 			expected:  true,
 		},
 		{
 			name:      "negative change still over quota",
-			quota:     provisioning.QuotaStatus{MaxResourcesPerRepository: 100},
+			quota:     provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 100},
 			usage:     Usage{TotalResources: 150},
 			netChange: -10,
 			expected:  false,
 		},
 		{
 			name:      "zero usage with zero change",
-			quota:     provisioning.QuotaStatus{MaxResourcesPerRepository: 100},
+			quota:     provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 100},
 			usage:     Usage{TotalResources: 0},
 			netChange: 0,
 			expected:  true,
@@ -561,7 +561,7 @@ func TestQuotaExceededError(t *testing.T) {
 
 func TestFixedQuotaGetter_SetQuotaStatus(t *testing.T) {
 	ctx := context.Background()
-	getter := NewFixedQuotaGetter(provisioning.QuotaStatus{
+	getter := NewFixedQuotaGetter(provisioning.RepositoryQuotaStatus{
 		MaxResourcesPerRepository: 100,
 		MaxRepositories:           10,
 	})
@@ -571,7 +571,7 @@ func TestFixedQuotaGetter_SetQuotaStatus(t *testing.T) {
 	assert.Equal(t, int64(100), status.MaxResourcesPerRepository)
 	assert.Equal(t, int64(10), status.MaxRepositories)
 
-	getter.SetQuotaStatus(provisioning.QuotaStatus{
+	getter.SetQuotaStatus(provisioning.RepositoryQuotaStatus{
 		MaxResourcesPerRepository: 50,
 		MaxRepositories:           2,
 	})
@@ -584,13 +584,13 @@ func TestFixedQuotaGetter_SetQuotaStatus(t *testing.T) {
 
 func TestFixedQuotaGetter_SetError(t *testing.T) {
 	ctx := context.Background()
-	getter := NewFixedQuotaGetter(provisioning.QuotaStatus{MaxRepositories: 10})
+	getter := NewFixedQuotaGetter(provisioning.RepositoryQuotaStatus{MaxRepositories: 10})
 	lookupErr := errors.New("quota service failed")
 
 	getter.SetError(lookupErr)
 	status, err := getter.GetQuotaStatus(ctx, "ns")
 	require.ErrorIs(t, err, lookupErr)
-	assert.Equal(t, provisioning.QuotaStatus{}, status)
+	assert.Equal(t, provisioning.RepositoryQuotaStatus{}, status)
 
 	getter.SetError(nil)
 	status, err = getter.GetQuotaStatus(ctx, "ns")
@@ -603,7 +603,7 @@ func TestFixedQuotaGetter_ImplementsInterface(t *testing.T) {
 	var _ QuotaGetter = (*FixedQuotaGetter)(nil)
 
 	// Also verify it works when used through the interface
-	var getter QuotaGetter = NewFixedQuotaGetter(provisioning.QuotaStatus{
+	var getter QuotaGetter = NewFixedQuotaGetter(provisioning.RepositoryQuotaStatus{
 		MaxResourcesPerRepository: 25,
 		MaxRepositories:           5,
 	})

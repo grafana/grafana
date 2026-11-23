@@ -26,7 +26,7 @@ type ValidateSpecFunc func(spec provisioning.ConnectionSpec) field.ErrorList
 func NewExtra(
 	decrypter connection.Decrypter,
 	connType provisioning.ConnectionType,
-	repoType provisioning.RepositoryType,
+	repoType provisioning.RepositorySpecType,
 	newProvider NewProviderFunc,
 	validateSpec ValidateSpecFunc,
 ) connection.Extra {
@@ -42,7 +42,7 @@ func NewExtra(
 type extra struct {
 	decrypter    connection.Decrypter
 	connType     provisioning.ConnectionType
-	repoType     provisioning.RepositoryType
+	repoType     provisioning.RepositorySpecType
 	newProvider  NewProviderFunc
 	validateSpec ValidateSpecFunc
 }

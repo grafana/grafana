@@ -8,9 +8,9 @@ import (
 	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
-// CommitOptionsApplyConfiguration represents a declarative configuration of the CommitOptions type for use
+// RepositoryCommitOptionsApplyConfiguration represents a declarative configuration of the RepositoryCommitOptions type for use
 // with apply.
-type CommitOptionsApplyConfiguration struct {
+type RepositoryCommitOptionsApplyConfiguration struct {
 	// Template for commit messages produced by single-resource UI operations
 	// (dashboard save/delete/move, folder create/rename/delete).
 	// Bulk operations and sync jobs are out of scope and build their own messages.
@@ -37,26 +37,26 @@ type CommitOptionsApplyConfiguration struct {
 	SignerEmail *string `json:"signerEmail,omitempty"`
 	// Method used to sign commits with the key in secure.commitSigningKey. One of "gpg", "ssh", or "smime".
 	// When empty, commits are not signed.
-	SigningMethod *provisioningv0alpha1.SigningMethod `json:"signingMethod,omitempty"`
+	SigningMethod *provisioningv0alpha1.RepositoryCommitOptionsSigningMethod `json:"signingMethod,omitempty"`
 	// When true, commits are authored by the signer identity
 	// (signerName/signerEmail).
 	SignerIsAuthor *bool `json:"signerIsAuthor,omitempty"`
 	// PEM-encoded X.509 certificate paired with secure.commitSigningKey when
 	// signingMethod is "smime". This is public (not a secret) and is embedded
 	// in the commit signature. Unused for the gpg and ssh formats.
-	SMIMECertificate *string `json:"smimeCertificate,omitempty"`
+	SmimeCertificate *string `json:"smimeCertificate,omitempty"`
 }
 
-// CommitOptionsApplyConfiguration constructs a declarative configuration of the CommitOptions type for use with
+// RepositoryCommitOptionsApplyConfiguration constructs a declarative configuration of the RepositoryCommitOptions type for use with
 // apply.
-func CommitOptions() *CommitOptionsApplyConfiguration {
-	return &CommitOptionsApplyConfiguration{}
+func RepositoryCommitOptions() *RepositoryCommitOptionsApplyConfiguration {
+	return &RepositoryCommitOptionsApplyConfiguration{}
 }
 
 // WithSingleResourceMessageTemplate sets the SingleResourceMessageTemplate field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the SingleResourceMessageTemplate field is set to the value of the last call.
-func (b *CommitOptionsApplyConfiguration) WithSingleResourceMessageTemplate(value string) *CommitOptionsApplyConfiguration {
+func (b *RepositoryCommitOptionsApplyConfiguration) WithSingleResourceMessageTemplate(value string) *RepositoryCommitOptionsApplyConfiguration {
 	b.SingleResourceMessageTemplate = &value
 	return b
 }
@@ -64,7 +64,7 @@ func (b *CommitOptionsApplyConfiguration) WithSingleResourceMessageTemplate(valu
 // WithEnforceTemplate sets the EnforceTemplate field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the EnforceTemplate field is set to the value of the last call.
-func (b *CommitOptionsApplyConfiguration) WithEnforceTemplate(value bool) *CommitOptionsApplyConfiguration {
+func (b *RepositoryCommitOptionsApplyConfiguration) WithEnforceTemplate(value bool) *RepositoryCommitOptionsApplyConfiguration {
 	b.EnforceTemplate = &value
 	return b
 }
@@ -72,7 +72,7 @@ func (b *CommitOptionsApplyConfiguration) WithEnforceTemplate(value bool) *Commi
 // WithAuthorName sets the AuthorName field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the AuthorName field is set to the value of the last call.
-func (b *CommitOptionsApplyConfiguration) WithAuthorName(value string) *CommitOptionsApplyConfiguration {
+func (b *RepositoryCommitOptionsApplyConfiguration) WithAuthorName(value string) *RepositoryCommitOptionsApplyConfiguration {
 	b.AuthorName = &value
 	return b
 }
@@ -80,7 +80,7 @@ func (b *CommitOptionsApplyConfiguration) WithAuthorName(value string) *CommitOp
 // WithAuthorEmail sets the AuthorEmail field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the AuthorEmail field is set to the value of the last call.
-func (b *CommitOptionsApplyConfiguration) WithAuthorEmail(value string) *CommitOptionsApplyConfiguration {
+func (b *RepositoryCommitOptionsApplyConfiguration) WithAuthorEmail(value string) *RepositoryCommitOptionsApplyConfiguration {
 	b.AuthorEmail = &value
 	return b
 }
@@ -88,7 +88,7 @@ func (b *CommitOptionsApplyConfiguration) WithAuthorEmail(value string) *CommitO
 // WithSignerName sets the SignerName field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the SignerName field is set to the value of the last call.
-func (b *CommitOptionsApplyConfiguration) WithSignerName(value string) *CommitOptionsApplyConfiguration {
+func (b *RepositoryCommitOptionsApplyConfiguration) WithSignerName(value string) *RepositoryCommitOptionsApplyConfiguration {
 	b.SignerName = &value
 	return b
 }
@@ -96,7 +96,7 @@ func (b *CommitOptionsApplyConfiguration) WithSignerName(value string) *CommitOp
 // WithSignerEmail sets the SignerEmail field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the SignerEmail field is set to the value of the last call.
-func (b *CommitOptionsApplyConfiguration) WithSignerEmail(value string) *CommitOptionsApplyConfiguration {
+func (b *RepositoryCommitOptionsApplyConfiguration) WithSignerEmail(value string) *RepositoryCommitOptionsApplyConfiguration {
 	b.SignerEmail = &value
 	return b
 }
@@ -104,7 +104,7 @@ func (b *CommitOptionsApplyConfiguration) WithSignerEmail(value string) *CommitO
 // WithSigningMethod sets the SigningMethod field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the SigningMethod field is set to the value of the last call.
-func (b *CommitOptionsApplyConfiguration) WithSigningMethod(value provisioningv0alpha1.SigningMethod) *CommitOptionsApplyConfiguration {
+func (b *RepositoryCommitOptionsApplyConfiguration) WithSigningMethod(value provisioningv0alpha1.RepositoryCommitOptionsSigningMethod) *RepositoryCommitOptionsApplyConfiguration {
 	b.SigningMethod = &value
 	return b
 }
@@ -112,15 +112,15 @@ func (b *CommitOptionsApplyConfiguration) WithSigningMethod(value provisioningv0
 // WithSignerIsAuthor sets the SignerIsAuthor field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the SignerIsAuthor field is set to the value of the last call.
-func (b *CommitOptionsApplyConfiguration) WithSignerIsAuthor(value bool) *CommitOptionsApplyConfiguration {
+func (b *RepositoryCommitOptionsApplyConfiguration) WithSignerIsAuthor(value bool) *RepositoryCommitOptionsApplyConfiguration {
 	b.SignerIsAuthor = &value
 	return b
 }
 
-// WithSMIMECertificate sets the SMIMECertificate field in the declarative configuration to the given value
+// WithSmimeCertificate sets the SmimeCertificate field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the SMIMECertificate field is set to the value of the last call.
-func (b *CommitOptionsApplyConfiguration) WithSMIMECertificate(value string) *CommitOptionsApplyConfiguration {
-	b.SMIMECertificate = &value
+// If called multiple times, the SmimeCertificate field is set to the value of the last call.
+func (b *RepositoryCommitOptionsApplyConfiguration) WithSmimeCertificate(value string) *RepositoryCommitOptionsApplyConfiguration {
+	b.SmimeCertificate = &value
 	return b
 }

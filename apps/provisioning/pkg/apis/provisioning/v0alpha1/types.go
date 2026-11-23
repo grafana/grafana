@@ -51,28 +51,28 @@ func (v SecureValues) IsZero() bool {
 	return v.Token.IsZero() && v.WebhookSecret.IsZero() && v.CommitSigningKey.IsZero()
 }
 
-type LocalRepositoryConfig struct {
+type RepositoryLocalRepositoryConfig struct {
 	Path string `json:"path,omitempty"`
 }
 
-func (LocalRepositoryConfig) OpenAPIModelName() string {
+func (RepositoryLocalRepositoryConfig) OpenAPIModelName() string {
 	return OpenAPIPrefix + "LocalRepositoryConfig"
 }
 
 // Workflow used for changes in the repository.
 // +enum
-type Workflow string
+type RepositorySpecWorkflows string
 
 const (
-	// WriteWorkflow allows a user to write directly to the repository
-	WriteWorkflow Workflow = "write"
-	// BranchWorkflow creates a branch for changes
-	BranchWorkflow Workflow = "branch"
+	// RepositorySpecWorkflowsWrite allows a user to write directly to the repository
+	RepositorySpecWorkflowsWrite RepositorySpecWorkflows = "write"
+	// RepositorySpecWorkflowsBranch creates a branch for changes
+	RepositorySpecWorkflowsBranch RepositorySpecWorkflows = "branch"
 )
 
-type GitHubRepositoryConfig struct {
+type RepositoryGitHubRepositoryConfig struct {
 	// The repository URL (e.g. `https://github.com/example/test`).
-	URL string `json:"url,omitempty"`
+	Url string `json:"url,omitempty"`
 
 	// The branch to use in the repository.
 	Branch string `json:"branch"`
@@ -90,18 +90,18 @@ type GitHubRepositoryConfig struct {
 	Path string `json:"path,omitempty"`
 }
 
-func (GitHubRepositoryConfig) OpenAPIModelName() string {
+func (RepositoryGitHubRepositoryConfig) OpenAPIModelName() string {
 	return OpenAPIPrefix + "GitHubRepositoryConfig"
 }
 
 // GitHubEnterpriseRepositoryConfig describes a repository hosted on a self-managed
 // GitHub Enterprise Server (GHES) instance.
-type GitHubEnterpriseRepositoryConfig struct {
+type RepositoryGitHubEnterpriseRepositoryConfig struct {
 	// The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).
-	ServerURL string `json:"serverUrl,omitempty"`
+	ServerUrl string `json:"serverUrl,omitempty"`
 
 	// The repository URL on the GHES server (e.g. `https://ghes.example.com/example/test`).
-	URL string `json:"url,omitempty"`
+	Url string `json:"url,omitempty"`
 
 	// The branch to use in the repository.
 	Branch string `json:"branch"`
@@ -110,13 +110,13 @@ type GitHubEnterpriseRepositoryConfig struct {
 	Path string `json:"path,omitempty"`
 }
 
-func (GitHubEnterpriseRepositoryConfig) OpenAPIModelName() string {
+func (RepositoryGitHubEnterpriseRepositoryConfig) OpenAPIModelName() string {
 	return OpenAPIPrefix + "GitHubEnterpriseRepositoryConfig"
 }
 
-type GitRepositoryConfig struct {
+type RepositoryGitRepositoryConfig struct {
 	// The repository URL (e.g. `https://github.com/example/test`).
-	URL string `json:"url,omitempty"`
+	Url string `json:"url,omitempty"`
 	// The branch to use in the repository.
 	Branch string `json:"branch"`
 	// TokenUser is the user that will be used to access the repository if it's a personal access token.
@@ -129,13 +129,13 @@ type GitRepositoryConfig struct {
 	Path string `json:"path,omitempty"`
 }
 
-func (GitRepositoryConfig) OpenAPIModelName() string {
+func (RepositoryGitRepositoryConfig) OpenAPIModelName() string {
 	return OpenAPIPrefix + "GitRepositoryConfig"
 }
 
-type BitbucketRepositoryConfig struct {
+type RepositoryBitbucketRepositoryConfig struct {
 	// The repository URL (e.g. `https://bitbucket.org/example/test`).
-	URL string `json:"url,omitempty"`
+	Url string `json:"url,omitempty"`
 	// The branch to use in the repository.
 	Branch string `json:"branch"`
 	// TokenUser is the user that will be used to access the repository if it's a personal access token.
@@ -150,13 +150,13 @@ type BitbucketRepositoryConfig struct {
 	Path string `json:"path,omitempty"`
 }
 
-func (BitbucketRepositoryConfig) OpenAPIModelName() string {
+func (RepositoryBitbucketRepositoryConfig) OpenAPIModelName() string {
 	return OpenAPIPrefix + "BitbucketRepositoryConfig"
 }
 
-type GitLabRepositoryConfig struct {
+type RepositoryGitLabRepositoryConfig struct {
 	// The repository URL (e.g. `https://gitlab.com/example/test`).
-	URL string `json:"url,omitempty"`
+	Url string `json:"url,omitempty"`
 	// The branch to use in the repository.
 	Branch string `json:"branch"`
 	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
@@ -173,47 +173,47 @@ type GitLabRepositoryConfig struct {
 	RepoID string `json:"repoID,omitempty"`
 }
 
-func (GitLabRepositoryConfig) OpenAPIModelName() string {
+func (RepositoryGitLabRepositoryConfig) OpenAPIModelName() string {
 	return OpenAPIPrefix + "GitLabRepositoryConfig"
 }
 
 // RepositoryType defines the types of Repository
 // +enum
-type RepositoryType string
+type RepositorySpecType string
 
-func (RepositoryType) OpenAPIModelName() string {
+func (RepositorySpecType) OpenAPIModelName() string {
 	return OpenAPIPrefix + "RepositoryType"
 }
 
-func (r RepositoryType) String() string {
+func (r RepositorySpecType) String() string {
 	return string(r)
 }
 
 // RepositoryType values
 const (
-	LocalRepositoryType            RepositoryType = "local"
-	GitHubRepositoryType           RepositoryType = "github"
-	GitHubEnterpriseRepositoryType RepositoryType = "githubEnterprise"
-	GitRepositoryType              RepositoryType = "git"
-	BitbucketRepositoryType        RepositoryType = "bitbucket"
-	GitLabRepositoryType           RepositoryType = "gitlab"
+	RepositorySpecTypeLocal            RepositorySpecType = "local"
+	RepositorySpecTypeGithub           RepositorySpecType = "github"
+	RepositorySpecTypeGithubEnterprise RepositorySpecType = "githubEnterprise"
+	RepositorySpecTypeGit              RepositorySpecType = "git"
+	RepositorySpecTypeBitbucket        RepositorySpecType = "bitbucket"
+	RepositorySpecTypeGitlab           RepositorySpecType = "gitlab"
 )
 
 // IsGit returns true if the repository type is git or github
-func (r RepositoryType) IsGit() bool {
-	return r == GitRepositoryType || r == GitHubRepositoryType || r == GitHubEnterpriseRepositoryType || r == BitbucketRepositoryType || r == GitLabRepositoryType
+func (r RepositorySpecType) IsGit() bool {
+	return r == RepositorySpecTypeGit || r == RepositorySpecTypeGithub || r == RepositorySpecTypeGithubEnterprise || r == RepositorySpecTypeBitbucket || r == RepositorySpecTypeGitlab
 }
 
 // AllowsSecureValues reports whether files in a repository of this type may
 // create or remove secure values. A secret committed to git stays in a history
 // we cannot redact, and a file should not delete a value it never owned.
-func (r RepositoryType) AllowsSecureValues() bool {
+func (r RepositorySpecType) AllowsSecureValues() bool {
 	return !r.IsGit()
 }
 
 // GitHub || GitHubEnterprise
-func (r RepositoryType) IsGitHub() bool {
-	return r == GitHubRepositoryType || r == GitHubEnterpriseRepositoryType
+func (r RepositorySpecType) IsGitHub() bool {
+	return r == RepositorySpecTypeGithub || r == RepositorySpecTypeGithubEnterprise
 }
 
 // Branch returns the branch for git-based repositories
@@ -224,25 +224,25 @@ func (r *Repository) Branch() string {
 	}
 
 	switch r.Spec.Type {
-	case GitHubRepositoryType:
-		if r.Spec.GitHub != nil {
-			return r.Spec.GitHub.Branch
+	case RepositorySpecTypeGithub:
+		if r.Spec.Github != nil {
+			return r.Spec.Github.Branch
 		}
-	case GitHubEnterpriseRepositoryType:
-		if r.Spec.GitHubEnterprise != nil {
-			return r.Spec.GitHubEnterprise.Branch
+	case RepositorySpecTypeGithubEnterprise:
+		if r.Spec.GithubEnterprise != nil {
+			return r.Spec.GithubEnterprise.Branch
 		}
-	case GitRepositoryType:
+	case RepositorySpecTypeGit:
 		if r.Spec.Git != nil {
 			return r.Spec.Git.Branch
 		}
-	case BitbucketRepositoryType:
+	case RepositorySpecTypeBitbucket:
 		if r.Spec.Bitbucket != nil {
 			return r.Spec.Bitbucket.Branch
 		}
-	case GitLabRepositoryType:
-		if r.Spec.GitLab != nil {
-			return r.Spec.GitLab.Branch
+	case RepositorySpecTypeGitlab:
+		if r.Spec.Gitlab != nil {
+			return r.Spec.Gitlab.Branch
 		}
 	default:
 		return ""
@@ -255,25 +255,25 @@ func (r *Repository) Branch() string {
 // mirroring Branch(). It is a no-op for non-git types or when the provider config is absent.
 func (r *Repository) SetBranch(branch string) {
 	switch r.Spec.Type {
-	case GitHubRepositoryType:
-		if r.Spec.GitHub != nil {
-			r.Spec.GitHub.Branch = branch
+	case RepositorySpecTypeGithub:
+		if r.Spec.Github != nil {
+			r.Spec.Github.Branch = branch
 		}
-	case GitHubEnterpriseRepositoryType:
-		if r.Spec.GitHubEnterprise != nil {
-			r.Spec.GitHubEnterprise.Branch = branch
+	case RepositorySpecTypeGithubEnterprise:
+		if r.Spec.GithubEnterprise != nil {
+			r.Spec.GithubEnterprise.Branch = branch
 		}
-	case GitRepositoryType:
+	case RepositorySpecTypeGit:
 		if r.Spec.Git != nil {
 			r.Spec.Git.Branch = branch
 		}
-	case BitbucketRepositoryType:
+	case RepositorySpecTypeBitbucket:
 		if r.Spec.Bitbucket != nil {
 			r.Spec.Bitbucket.Branch = branch
 		}
-	case GitLabRepositoryType:
-		if r.Spec.GitLab != nil {
-			r.Spec.GitLab.Branch = branch
+	case RepositorySpecTypeGitlab:
+		if r.Spec.Gitlab != nil {
+			r.Spec.Gitlab.Branch = branch
 		}
 	default:
 		// do nothing
@@ -288,25 +288,25 @@ func (r *Repository) URL() string {
 	}
 
 	switch r.Spec.Type {
-	case GitHubRepositoryType:
-		if r.Spec.GitHub != nil {
-			return r.Spec.GitHub.URL
+	case RepositorySpecTypeGithub:
+		if r.Spec.Github != nil {
+			return r.Spec.Github.Url
 		}
-	case GitHubEnterpriseRepositoryType:
-		if r.Spec.GitHubEnterprise != nil {
-			return r.Spec.GitHubEnterprise.URL
+	case RepositorySpecTypeGithubEnterprise:
+		if r.Spec.GithubEnterprise != nil {
+			return r.Spec.GithubEnterprise.Url
 		}
-	case GitRepositoryType:
+	case RepositorySpecTypeGit:
 		if r.Spec.Git != nil {
-			return r.Spec.Git.URL
+			return r.Spec.Git.Url
 		}
-	case BitbucketRepositoryType:
+	case RepositorySpecTypeBitbucket:
 		if r.Spec.Bitbucket != nil {
-			return r.Spec.Bitbucket.URL
+			return r.Spec.Bitbucket.Url
 		}
-	case GitLabRepositoryType:
-		if r.Spec.GitLab != nil {
-			return r.Spec.GitLab.URL
+	case RepositorySpecTypeGitlab:
+		if r.Spec.Gitlab != nil {
+			return r.Spec.Gitlab.Url
 		}
 	default:
 		return ""
@@ -317,27 +317,27 @@ func (r *Repository) URL() string {
 
 func (r *Repository) Path() string {
 	switch r.Spec.Type {
-	case GitHubRepositoryType:
-		if r.Spec.GitHub != nil {
-			return r.Spec.GitHub.Path
+	case RepositorySpecTypeGithub:
+		if r.Spec.Github != nil {
+			return r.Spec.Github.Path
 		}
-	case GitHubEnterpriseRepositoryType:
-		if r.Spec.GitHubEnterprise != nil {
-			return r.Spec.GitHubEnterprise.Path
+	case RepositorySpecTypeGithubEnterprise:
+		if r.Spec.GithubEnterprise != nil {
+			return r.Spec.GithubEnterprise.Path
 		}
-	case GitRepositoryType:
+	case RepositorySpecTypeGit:
 		if r.Spec.Git != nil {
 			return r.Spec.Git.Path
 		}
-	case BitbucketRepositoryType:
+	case RepositorySpecTypeBitbucket:
 		if r.Spec.Bitbucket != nil {
 			return r.Spec.Bitbucket.Path
 		}
-	case GitLabRepositoryType:
-		if r.Spec.GitLab != nil {
-			return r.Spec.GitLab.Path
+	case RepositorySpecTypeGitlab:
+		if r.Spec.Gitlab != nil {
+			return r.Spec.Gitlab.Path
 		}
-	case LocalRepositoryType:
+	case RepositorySpecTypeLocal:
 		if r.Spec.Local != nil {
 			return r.Spec.Local.Path
 		}
@@ -351,8 +351,8 @@ func (r *Repository) Path() string {
 func (r *Repository) ShouldGenerateDashboardPreviews() bool {
 	// GitHub keeps this on its own config until existing repositories are backfilled
 	// onto PullRequest options. Every other provider reads it from PullRequest.
-	if r.Spec.Type == GitHubRepositoryType {
-		return r.Spec.GitHub != nil && r.Spec.GitHub.GenerateDashboardPreviews
+	if r.Spec.Type == RepositorySpecTypeGithub {
+		return r.Spec.Github != nil && r.Spec.Github.GenerateDashboardPreviews
 	}
 	return r.Spec.PullRequest != nil && r.Spec.PullRequest.GenerateDashboardPreviews
 }
@@ -371,15 +371,15 @@ func (r *Repository) HasConnection() bool {
 	return r.ConnectionName() != ""
 }
 
-type ConnectionInfo struct {
+type RepositoryConnectionInfo struct {
 	Name string `json:"name"`
 }
 
-func (ConnectionInfo) OpenAPIModelName() string {
+func (RepositoryConnectionInfo) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ConnectionInfo"
 }
 
-type CommitOptions struct {
+type RepositoryCommitOptions struct {
 	// Template for commit messages produced by single-resource UI operations
 	// (dashboard save/delete/move, folder create/rename/delete).
 	// Bulk operations and sync jobs are out of scope and build their own messages.
@@ -412,7 +412,7 @@ type CommitOptions struct {
 
 	// Method used to sign commits with the key in secure.commitSigningKey. One of "gpg", "ssh", or "smime".
 	// When empty, commits are not signed.
-	SigningMethod SigningMethod `json:"signingMethod,omitempty"`
+	SigningMethod RepositoryCommitOptionsSigningMethod `json:"signingMethod,omitempty"`
 
 	// When true, commits are authored by the signer identity
 	// (signerName/signerEmail).
@@ -421,24 +421,24 @@ type CommitOptions struct {
 	// PEM-encoded X.509 certificate paired with secure.commitSigningKey when
 	// signingMethod is "smime". This is public (not a secret) and is embedded
 	// in the commit signature. Unused for the gpg and ssh formats.
-	SMIMECertificate string `json:"smimeCertificate,omitempty"`
+	SmimeCertificate string `json:"smimeCertificate,omitempty"`
 }
 
 // SigningMethod selects how commits are signed.
 // +enum
-type SigningMethod string
+type RepositoryCommitOptionsSigningMethod string
 
 const (
-	GPGSigningMethod   SigningMethod = "gpg"
-	SSHSigningMethod   SigningMethod = "ssh"
-	SMIMESigningMethod SigningMethod = "smime"
+	RepositoryCommitOptionsSigningMethodGpg   RepositoryCommitOptionsSigningMethod = "gpg"
+	RepositoryCommitOptionsSigningMethodSsh   RepositoryCommitOptionsSigningMethod = "ssh"
+	RepositoryCommitOptionsSigningMethodSmime RepositoryCommitOptionsSigningMethod = "smime"
 )
 
-func (CommitOptions) OpenAPIModelName() string {
+func (RepositoryCommitOptions) OpenAPIModelName() string {
 	return OpenAPIPrefix + "CommitOptions"
 }
 
-type BranchOptions struct {
+type RepositoryBranchOptions struct {
 	// Template for the branch name created in branch workflow.
 	// Supports variables: {{action}}, {{resourceKind}}, {{title}},
 	// {{userLogin}}, {{random}}.
@@ -452,11 +452,11 @@ type BranchOptions struct {
 	EnforceTemplate bool `json:"enforceTemplate,omitempty"`
 }
 
-func (BranchOptions) OpenAPIModelName() string {
+func (RepositoryBranchOptions) OpenAPIModelName() string {
 	return OpenAPIPrefix + "BranchOptions"
 }
 
-type PullRequestOptions struct {
+type RepositoryPullRequestOptions struct {
 	// Template for pull request titles.
 	// Supports the same variables as BranchOptions.NameTemplate
 	// ({{random}} is available but rarely useful here).
@@ -471,7 +471,7 @@ type PullRequestOptions struct {
 	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`
 }
 
-func (PullRequestOptions) OpenAPIModelName() string {
+func (RepositoryPullRequestOptions) OpenAPIModelName() string {
 	return OpenAPIPrefix + "PullRequestOptions"
 }
 
@@ -484,57 +484,57 @@ type RepositorySpec struct {
 
 	// Commit message options. Currently only contains the template used by
 	// single-resource UI operations; future siblings (bulk, sync) can live here.
-	Commit *CommitOptions `json:"commit,omitempty"`
+	Commit *RepositoryCommitOptions `json:"commit,omitempty"`
 
 	// Branch naming options. Only meaningful when Workflows includes "branch".
-	Branch *BranchOptions `json:"branch,omitempty"`
+	Branch *RepositoryBranchOptions `json:"branch,omitempty"`
 
 	// Pull request options. Only meaningful when Workflows includes "branch".
-	PullRequest *PullRequestOptions `json:"pullRequest,omitempty"`
+	PullRequest *RepositoryPullRequestOptions `json:"pullRequest,omitempty"`
 
 	// UI driven Workflow that allow changes to the contends of the repository.
 	// The order is relevant for defining the precedence of the workflows.
 	// When empty, the repository does not support any edits (eg, readonly)
-	Workflows []Workflow `json:"workflows"`
+	Workflows []RepositorySpecWorkflows `json:"workflows"`
 
 	// Sync settings -- how values are pulled from the repository into grafana
-	Sync SyncOptions `json:"sync"`
+	Sync RepositorySyncOptions `json:"sync"`
 
 	// The repository type.  When selected oneOf the values below should be non-nil
-	Type RepositoryType `json:"type"`
+	Type RepositorySpecType `json:"type"`
 
 	// Webhook settings for the repository.
 	// When specified, the base URL overrides the auto-detected Grafana public URL
 	// used to register webhooks with the external Git provider.
-	Webhook *WebhookConfig `json:"webhook,omitempty"`
+	Webhook *RepositoryWebhookConfig `json:"webhook,omitempty"`
 
 	// The repository on the local file system.
 	// Mutually exclusive with local | github.
-	Local *LocalRepositoryConfig `json:"local,omitempty"`
+	Local *RepositoryLocalRepositoryConfig `json:"local,omitempty"`
 
 	// The repository on GitHub.
 	// Mutually exclusive with local | github | git.
-	GitHub *GitHubRepositoryConfig `json:"github,omitempty"`
+	Github *RepositoryGitHubRepositoryConfig `json:"github,omitempty"`
 
 	// The repository on a self-managed GitHub Enterprise Server (GHES).
 	// Mutually exclusive with local | github | git.
-	GitHubEnterprise *GitHubEnterpriseRepositoryConfig `json:"githubEnterprise,omitempty"`
+	GithubEnterprise *RepositoryGitHubEnterpriseRepositoryConfig `json:"githubEnterprise,omitempty"`
 
 	// The repository on Git.
 	// Mutually exclusive with local | github | git.
-	Git *GitRepositoryConfig `json:"git,omitempty"`
+	Git *RepositoryGitRepositoryConfig `json:"git,omitempty"`
 
 	// The repository on Bitbucket.
 	// Mutually exclusive with local | github | git.
-	Bitbucket *BitbucketRepositoryConfig `json:"bitbucket,omitempty"`
+	Bitbucket *RepositoryBitbucketRepositoryConfig `json:"bitbucket,omitempty"`
 
 	// The repository on GitLab.
 	// Mutually exclusive with local | github | git.
-	GitLab *GitLabRepositoryConfig `json:"gitlab,omitempty"`
+	Gitlab *RepositoryGitLabRepositoryConfig `json:"gitlab,omitempty"`
 
 	// The connection the repository references.
 	// This means the Repository is interacting with git via a Connection.
-	Connection *ConnectionInfo `json:"connection,omitempty"`
+	Connection *RepositoryConnectionInfo `json:"connection,omitempty"`
 }
 
 func (RepositorySpec) OpenAPIModelName() string {
@@ -543,7 +543,7 @@ func (RepositorySpec) OpenAPIModelName() string {
 
 // SyncTargetType defines where we want all values to resolve
 // +enum
-type SyncTargetType string
+type RepositorySyncOptionsTarget string
 
 // RepositoryType values
 const (
@@ -551,12 +551,12 @@ const (
 	// Only one repository may specify the `instance` target
 	// When this exists, the UI will promote writing to the instance repo
 	// rather than the grafana database (where possible)
-	SyncTargetTypeInstance SyncTargetType = "instance"
+	RepositorySyncOptionsTargetInstance RepositorySyncOptionsTarget = "instance"
 
 	// Resources will be saved into a folder managed by this repository
 	// It will contain a copy of everything from the remote
 	// The folder k8s name will be the same as the repository k8s name
-	SyncTargetTypeFolder SyncTargetType = "folder"
+	RepositorySyncOptionsTargetFolder RepositorySyncOptionsTarget = "folder"
 
 	// Resources are saved at the top level without a wrapper folder.
 	// Like `folder`, multiple `folderless` repositories may coexist with each
@@ -565,15 +565,15 @@ const (
 	// repository path root become top-level resources and subdirectories become
 	// top-level folders. Ownership is tracked per-resource via manager
 	// annotations rather than by folder containment.
-	SyncTargetTypeFolderless SyncTargetType = "folderless"
+	RepositorySyncOptionsTargetFolderless RepositorySyncOptionsTarget = "folderless"
 )
 
-type SyncOptions struct {
+type RepositorySyncOptions struct {
 	// Enabled must be saved as true before any sync job will run
 	Enabled bool `json:"enabled"`
 
 	// Where values should be saved
-	Target SyncTargetType `json:"target"`
+	Target RepositorySyncOptionsTarget `json:"target"`
 
 	// Shared folder target
 	// The value is a reference to the Kubernetes metadata name of the folder in the same namespace
@@ -585,17 +585,17 @@ type SyncOptions struct {
 	IntervalSeconds int64 `json:"intervalSeconds,omitempty"`
 }
 
-func (SyncOptions) OpenAPIModelName() string {
+func (RepositorySyncOptions) OpenAPIModelName() string {
 	return OpenAPIPrefix + "SyncOptions"
 }
 
-type WebhookConfig struct {
+type RepositoryWebhookConfig struct {
 	// Base URL of the Grafana instance used to construct the webhook endpoint
 	// registered with the external Git provider. Only the base URL should be
 	// provided (e.g. `https://grafana.example.com`); the API path, namespace,
 	// and resource name are appended automatically. Trailing slashes are stripped.
 	// Must be a valid HTTP or HTTPS URL.
-	BaseURL string `json:"baseUrl,omitempty"`
+	BaseUrl string `json:"baseUrl,omitempty"`
 
 	// Disabled turns off webhook integration for this repository. When true,
 	// Grafana will not register or receive webhook events from the Git provider
@@ -604,7 +604,7 @@ type WebhookConfig struct {
 	Disabled bool `json:"disabled,omitempty"`
 }
 
-func (WebhookConfig) OpenAPIModelName() string {
+func (RepositoryWebhookConfig) OpenAPIModelName() string {
 	return OpenAPIPrefix + "WebhookConfig"
 }
 
@@ -631,14 +631,14 @@ type RepositoryStatus struct {
 	Health RepositoryHealthStatus `json:"health"`
 
 	// Sync information with the last sync information
-	Sync SyncStatus `json:"sync"`
+	Sync RepositorySyncStatus `json:"sync"`
 
 	// The object count when sync last ran
 	// +listType=atomic
 	Stats []ResourceCount `json:"stats,omitempty"`
 
 	// Webhook Information (if applicable)
-	Webhook *WebhookStatus `json:"webhook"`
+	Webhook *RepositoryWebhookStatus `json:"webhook"`
 
 	// Token will get updated with current token information
 	Token RepositoryTokenStatus `json:"token,omitempty"`
@@ -651,22 +651,22 @@ type RepositoryStatus struct {
 	// Deletion reports the progress of an in-progress deletion and the problem
 	// blocking it, so a client can explain the holdup and force-remove the
 	// blocking finalizer. Populated only while the repository is Terminating.
-	Deletion *DeletionStatus `json:"deletion,omitempty"`
+	Deletion *RepositoryDeletionStatus `json:"deletion,omitempty"`
 
 	// Quota contains the configured quota limits for this repository
-	Quota QuotaStatus `json:"quota,omitempty"`
+	Quota RepositoryQuotaStatus `json:"quota,omitempty"`
 }
 
 func (RepositoryStatus) OpenAPIModelName() string {
 	return OpenAPIPrefix + "RepositoryStatus"
 }
 
-type SyncStatus struct {
+type RepositorySyncStatus struct {
 	// pending, running, success, error
 	State RepositoryJobState `json:"state"`
 
 	// The ID for the job that ran this sync
-	JobID string `json:"job,omitempty"`
+	Job string `json:"job,omitempty"`
 
 	// When the sync job started
 	Started int64 `json:"started,omitempty"`
@@ -691,22 +691,22 @@ type SyncStatus struct {
 	Incremental bool `json:"incremental,omitempty"`
 }
 
-func (SyncStatus) OpenAPIModelName() string {
+func (RepositorySyncStatus) OpenAPIModelName() string {
 	return OpenAPIPrefix + "SyncStatus"
 }
 
-type WebhookStatus struct {
+type RepositoryWebhookStatus struct {
 	// TODO: consolidate ID and UUID into a single string identifier in the next api version.
-	ID   int64  `json:"id,omitempty"`
-	UUID string `json:"uuid,omitempty"`
+	Id   int64  `json:"id,omitempty"`
+	Uuid string `json:"uuid,omitempty"`
 
-	URL              string   `json:"url,omitempty"`
+	Url              string   `json:"url,omitempty"`
 	SubscribedEvents []string `json:"subscribedEvents,omitempty"`
 	LastEvent        int64    `json:"lastEvent,omitempty"`
 	LastRotated      int64    `json:"lastRotated,omitempty"`
 }
 
-func (WebhookStatus) OpenAPIModelName() string {
+func (RepositoryWebhookStatus) OpenAPIModelName() string {
 	return OpenAPIPrefix + "WebhookStatus"
 }
 
@@ -722,7 +722,7 @@ func (RepositoryTokenStatus) OpenAPIModelName() string {
 type ConnectionTokenStatus = RepositoryTokenStatus
 
 // QuotaStatus represents the quota limits configured for this repository.
-type QuotaStatus struct {
+type RepositoryQuotaStatus struct {
 	// MaxRepositories is the maximum number of repositories allowed.
 	// 0 means unlimited.
 	MaxRepositories int64 `json:"maxRepositories,omitempty"`
@@ -736,7 +736,7 @@ type QuotaStatus struct {
 	UpdatedAt int64 `json:"updatedAt,omitempty"`
 }
 
-func (QuotaStatus) OpenAPIModelName() string {
+func (RepositoryQuotaStatus) OpenAPIModelName() string {
 	return OpenAPIPrefix + "QuotaStatus"
 }
 
@@ -845,7 +845,7 @@ func (ResourceObjects) OpenAPIModelName() string {
 
 type ResourceRepositoryInfo struct {
 	// The repository type
-	Type RepositoryType `json:"type"`
+	Type RepositorySpecType `json:"type"`
 
 	// The display name for this repository
 	Title string `json:"title"`
@@ -1154,24 +1154,24 @@ const (
 
 // DeletionCause classifies the error blocking repository deletion.
 // +enum
-type DeletionCause string
+type RepositoryDeletionStatusCause string
 
-func (DeletionCause) OpenAPIModelName() string {
+func (RepositoryDeletionStatusCause) OpenAPIModelName() string {
 	return OpenAPIPrefix + "DeletionCause"
 }
 
 const (
-	// DeletionCauseUser indicates a failure that requires user intervention.
-	DeletionCauseUser DeletionCause = "user"
-	// DeletionCauseSystem indicates an infrastructure or unclassified failure.
-	DeletionCauseSystem DeletionCause = "system"
+	// RepositoryDeletionStatusCauseUser indicates a failure that requires user intervention.
+	RepositoryDeletionStatusCauseUser RepositoryDeletionStatusCause = "user"
+	// RepositoryDeletionStatusCauseSystem indicates an infrastructure or unclassified failure.
+	RepositoryDeletionStatusCauseSystem RepositoryDeletionStatusCause = "system"
 )
 
 // DeletionStatus reports the progress of an in-progress deletion and the problem
 // blocking it. It is populated while the repository is Terminating and its
 // finalizers run, so a client can explain the holdup and force-remove the
 // blocking finalizer.
-type DeletionStatus struct {
+type RepositoryDeletionStatus struct {
 	// State is the phase of the deletion.
 	State DeletionState `json:"state,omitempty"`
 
@@ -1185,10 +1185,10 @@ type DeletionStatus struct {
 	Message string `json:"message,omitempty"`
 
 	// Cause classifies the blocking error. It may be absent on older statuses.
-	Cause DeletionCause `json:"cause,omitempty"`
+	Cause RepositoryDeletionStatusCause `json:"cause,omitempty"`
 }
 
-func (DeletionStatus) OpenAPIModelName() string {
+func (RepositoryDeletionStatus) OpenAPIModelName() string {
 	return OpenAPIPrefix + "DeletionStatus"
 }
 

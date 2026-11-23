@@ -291,7 +291,7 @@ func makeRepoConfig(name string, deletionTimestamp *metav1.Time, labels map[stri
 			Labels:            labels,
 		},
 		Spec: provisioning.RepositorySpec{
-			Type: provisioning.GitHubRepositoryType,
+			Type: provisioning.RepositorySpecTypeGithub,
 		},
 	}
 }

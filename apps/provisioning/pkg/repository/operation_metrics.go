@@ -93,7 +93,7 @@ func RegisterOperationMetrics(reg prometheus.Registerer) *OperationMetrics {
 // for a repository implementation to hold for its lifetime. A nil
 // *OperationMetrics yields a nil recorder, whose methods do nothing, so
 // repositories built without metrics (tests, dev tooling) work unchanged.
-func (m *OperationMetrics) Recorder(repoType provisioning.RepositoryType) *OperationRecorder {
+func (m *OperationMetrics) Recorder(repoType provisioning.RepositorySpecType) *OperationRecorder {
 	if m == nil {
 		return nil
 	}

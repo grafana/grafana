@@ -198,7 +198,7 @@ func RepositoryUsageStatusFromRepository(repo *provisioning.Repository) Reposito
 //     a public, read-only repo, which the validator permits.
 func repositoryAuthMethod(repo *provisioning.Repository) string {
 	switch {
-	case repo.Spec.Type == provisioning.LocalRepositoryType:
+	case repo.Spec.Type == provisioning.RepositorySpecTypeLocal:
 		return "none"
 	case repo.Spec.Connection != nil && repo.Spec.Connection.Name != "":
 		return "connection"

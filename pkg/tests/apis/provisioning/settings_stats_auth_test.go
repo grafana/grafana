@@ -51,7 +51,7 @@ func TestIntegrationProvisioning_SettingsAuthorization(t *testing.T) {
 	t.Run("settings endpoint returns MaxRepositories field with default value", func(t *testing.T) {
 		// HACK: Explicitly set to 10 to test default behavior, since we can't distinguish "not set" from "set to 0"
 		helper := sharedHelper(t)
-		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxRepositories: 10}) // Explicitly set to default to test default behavior
+		helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxRepositories: 10}) // Explicitly set to default to test default behavior
 
 		settings := &provisioning.RepositoryViewList{}
 		result := helper.AdminREST.Get().
@@ -69,7 +69,7 @@ func TestIntegrationProvisioning_SettingsAuthorization(t *testing.T) {
 
 	t.Run("settings endpoint returns 0 when unlimited is configured", func(t *testing.T) {
 		helper := sharedHelper(t)
-		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxRepositories: 0}) // 0 means unlimited
+		helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxRepositories: 0}) // 0 means unlimited
 
 		settings := &provisioning.RepositoryViewList{}
 		result := helper.AdminREST.Get().
@@ -87,7 +87,7 @@ func TestIntegrationProvisioning_SettingsAuthorization(t *testing.T) {
 
 	t.Run("settings endpoint returns configured value", func(t *testing.T) {
 		helper := sharedHelper(t)
-		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxRepositories: 1000})
+		helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxRepositories: 1000})
 
 		settings := &provisioning.RepositoryViewList{}
 		result := helper.AdminREST.Get().

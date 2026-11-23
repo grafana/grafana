@@ -18,7 +18,7 @@ func sharedHelper(t *testing.T) *common.ProvisioningTestHelper {
 	t.Cleanup(func() {
 		helper.SetQuotaError(nil)
 	})
-	helper.SetQuotaStatus(provisioning.QuotaStatus{})
+	helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{})
 	helper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient()
 	return helper
 }

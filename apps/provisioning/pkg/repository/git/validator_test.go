@@ -31,7 +31,7 @@ func TestValidate(t *testing.T) {
 					Name: "test-repo",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.LocalRepositoryType,
+					Type: provisioning.RepositorySpecTypeLocal,
 				},
 			},
 		},
@@ -42,7 +42,7 @@ func TestValidate(t *testing.T) {
 					Name: "test-repo",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitRepositoryType,
+					Type: provisioning.RepositorySpecTypeGit,
 					Git:  nil,
 				},
 			},
@@ -56,8 +56,8 @@ func TestValidate(t *testing.T) {
 					Name: "test-repo",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitRepositoryType,
-					Git: &provisioning.GitRepositoryConfig{
+					Type: provisioning.RepositorySpecTypeGit,
+					Git: &provisioning.RepositoryGitRepositoryConfig{
 						Branch: "main",
 					},
 				},
@@ -72,9 +72,9 @@ func TestValidate(t *testing.T) {
 					Name: "test-repo",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitRepositoryType,
-					Git: &provisioning.GitRepositoryConfig{
-						URL:    "not-a-url",
+					Type: provisioning.RepositorySpecTypeGit,
+					Git: &provisioning.RepositoryGitRepositoryConfig{
+						Url:    "not-a-url",
 						Branch: "main",
 					},
 				},
@@ -89,9 +89,9 @@ func TestValidate(t *testing.T) {
 					Name: "test-repo",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitRepositoryType,
-					Git: &provisioning.GitRepositoryConfig{
-						URL:    "https://github.com/grafana/grafana.git",
+					Type: provisioning.RepositorySpecTypeGit,
+					Git: &provisioning.RepositoryGitRepositoryConfig{
+						Url:    "https://github.com/grafana/grafana.git",
 						Branch: "", // Empty branch should be valid for Git repositories
 					},
 				},
@@ -105,9 +105,9 @@ func TestValidate(t *testing.T) {
 					Name: "test-repo",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/grafana/grafana.git",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "https://github.com/grafana/grafana.git",
 						Branch: "", // Empty branch should be valid for GitHub repositories
 					},
 				},
@@ -121,9 +121,9 @@ func TestValidate(t *testing.T) {
 					Name: "test-repo",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitRepositoryType,
-					Git: &provisioning.GitRepositoryConfig{
-						URL:    "https://github.com/grafana/grafana.git",
+					Type: provisioning.RepositorySpecTypeGit,
+					Git: &provisioning.RepositoryGitRepositoryConfig{
+						Url:    "https://github.com/grafana/grafana.git",
 						Branch: "..invalid",
 					},
 				},
@@ -138,12 +138,12 @@ func TestValidate(t *testing.T) {
 					Name: "test-repo",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitRepositoryType,
-					Git: &provisioning.GitRepositoryConfig{
-						URL:    "https://github.com/grafana/grafana.git",
+					Type: provisioning.RepositorySpecTypeGit,
+					Git: &provisioning.RepositoryGitRepositoryConfig{
+						Url:    "https://github.com/grafana/grafana.git",
 						Branch: "main",
 					},
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 				},
 			},
 			expectedError: true,
@@ -156,13 +156,13 @@ func TestValidate(t *testing.T) {
 					Name: "test-repo",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitRepositoryType,
-					Git: &provisioning.GitRepositoryConfig{
-						URL:    "https://github.com/grafana/grafana.git",
+					Type: provisioning.RepositorySpecTypeGit,
+					Git: &provisioning.RepositoryGitRepositoryConfig{
+						Url:    "https://github.com/grafana/grafana.git",
 						Branch: "main",
 					},
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-					Connection: &provisioning.ConnectionInfo{
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
+					Connection: &provisioning.RepositoryConnectionInfo{
 						Name: "test-connection",
 					},
 				},
@@ -182,9 +182,9 @@ func TestValidate(t *testing.T) {
 					Name: "test-repo",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitRepositoryType,
-					Git: &provisioning.GitRepositoryConfig{
-						URL:    "https://github.com/grafana/grafana.git",
+					Type: provisioning.RepositorySpecTypeGit,
+					Git: &provisioning.RepositoryGitRepositoryConfig{
+						Url:    "https://github.com/grafana/grafana.git",
 						Branch: "main",
 						Path:   "../invalid",
 					},
@@ -200,9 +200,9 @@ func TestValidate(t *testing.T) {
 					Name: "test-repo",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitRepositoryType,
-					Git: &provisioning.GitRepositoryConfig{
-						URL:    "https://github.com/grafana/grafana.git",
+					Type: provisioning.RepositorySpecTypeGit,
+					Git: &provisioning.RepositoryGitRepositoryConfig{
+						Url:    "https://github.com/grafana/grafana.git",
 						Branch: "main",
 						Path:   "/absolute/path",
 					},
@@ -218,9 +218,9 @@ func TestValidate(t *testing.T) {
 					Name: "test-repo",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitRepositoryType,
-					Git: &provisioning.GitRepositoryConfig{
-						URL:    "https://github.com/grafana/grafana.git",
+					Type: provisioning.RepositorySpecTypeGit,
+					Git: &provisioning.RepositoryGitRepositoryConfig{
+						Url:    "https://github.com/grafana/grafana.git",
 						Branch: "main",
 						Path:   "grafana",
 					},
@@ -239,9 +239,9 @@ func TestValidate(t *testing.T) {
 					Name: "test-repo",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitRepositoryType,
-					Git: &provisioning.GitRepositoryConfig{
-						URL:    "http://localhost:3000/grafana/grafana.git",
+					Type: provisioning.RepositorySpecTypeGit,
+					Git: &provisioning.RepositoryGitRepositoryConfig{
+						Url:    "http://localhost:3000/grafana/grafana.git",
 						Branch: "main",
 						Path:   "grafana",
 					},
@@ -262,9 +262,9 @@ func TestValidate(t *testing.T) {
 					Name: "test-repo",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitRepositoryType,
-					Git: &provisioning.GitRepositoryConfig{
-						URL:    "http://localhost:3000/grafana/grafana.git",
+					Type: provisioning.RepositorySpecTypeGit,
+					Git: &provisioning.RepositoryGitRepositoryConfig{
+						Url:    "http://localhost:3000/grafana/grafana.git",
 						Branch: "main",
 						Path:   "grafana",
 					},
@@ -284,9 +284,9 @@ func TestValidate(t *testing.T) {
 					Name: "test-repo",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitRepositoryType,
-					Git: &provisioning.GitRepositoryConfig{
-						URL:    "HTTP://localhost:3000/grafana/grafana.git",
+					Type: provisioning.RepositorySpecTypeGit,
+					Git: &provisioning.RepositoryGitRepositoryConfig{
+						Url:    "HTTP://localhost:3000/grafana/grafana.git",
 						Branch: "main",
 						Path:   "grafana",
 					},
@@ -307,9 +307,9 @@ func TestValidate(t *testing.T) {
 					Name: "test-repo",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitRepositoryType,
-					Git: &provisioning.GitRepositoryConfig{
-						URL:    "http://localhost:3000/grafana/grafana.git",
+					Type: provisioning.RepositorySpecTypeGit,
+					Git: &provisioning.RepositoryGitRepositoryConfig{
+						Url:    "http://localhost:3000/grafana/grafana.git",
 						Branch: "main",
 						Path:   "grafana",
 					},
@@ -323,14 +323,14 @@ func TestValidate(t *testing.T) {
 					Name: "test-repo",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitRepositoryType,
-					Git: &provisioning.GitRepositoryConfig{
-						URL:    "https://github.com/grafana/grafana.git",
+					Type: provisioning.RepositorySpecTypeGit,
+					Git: &provisioning.RepositoryGitRepositoryConfig{
+						Url:    "https://github.com/grafana/grafana.git",
 						Branch: "main",
 						Path:   "grafana",
 					},
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-					Connection: &provisioning.ConnectionInfo{
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
+					Connection: &provisioning.RepositoryConnectionInfo{
 						Name: "test-connection",
 					},
 				},
@@ -346,13 +346,13 @@ func TestValidate(t *testing.T) {
 					Name: "test-repo",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitRepositoryType,
-					Git: &provisioning.GitRepositoryConfig{
-						URL:    "http://localhost:3000/grafana/grafana.git",
+					Type: provisioning.RepositorySpecTypeGit,
+					Git: &provisioning.RepositoryGitRepositoryConfig{
+						Url:    "http://localhost:3000/grafana/grafana.git",
 						Branch: "main",
 						Path:   "grafana",
 					},
-					Connection: &provisioning.ConnectionInfo{
+					Connection: &provisioning.RepositoryConnectionInfo{
 						Name: "test-connection",
 					},
 				},

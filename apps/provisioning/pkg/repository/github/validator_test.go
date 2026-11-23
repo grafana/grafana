@@ -31,7 +31,7 @@ func TestValidate(t *testing.T) {
 					Name: "test-repo",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.LocalRepositoryType,
+					Type: provisioning.RepositorySpecTypeLocal,
 				},
 			},
 		},
@@ -42,8 +42,8 @@ func TestValidate(t *testing.T) {
 					Name: "test-repo",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type:   provisioning.GitHubRepositoryType,
-					GitHub: nil,
+					Type:   provisioning.RepositorySpecTypeGithub,
+					Github: nil,
 				},
 			},
 			expectedError: true,
@@ -56,8 +56,8 @@ func TestValidate(t *testing.T) {
 					Name: "test-repo",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					GitHub: &provisioning.GitHubRepositoryConfig{
+					Type: provisioning.RepositorySpecTypeGithub,
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
 					},
 				},
@@ -72,9 +72,9 @@ func TestValidate(t *testing.T) {
 					Name: "test-repo",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "http://github.com/grafana/grafana",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "http://github.com/grafana/grafana",
 						Branch: "main",
 					},
 				},
@@ -94,9 +94,9 @@ func TestValidate(t *testing.T) {
 					Name: "test-repo",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "http://github.com/grafana/grafana",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "http://github.com/grafana/grafana",
 						Branch: "main",
 					},
 				},
@@ -115,9 +115,9 @@ func TestValidate(t *testing.T) {
 					Name: "test-repo",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "http://github.com/grafana/grafana",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "http://github.com/grafana/grafana",
 						Branch: "main",
 					},
 				},
@@ -130,9 +130,9 @@ func TestValidate(t *testing.T) {
 					Name: "test-repo",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/grafana/grafana",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "https://github.com/grafana/grafana",
 						Branch: "main",
 						Path:   "grafana",
 					},
@@ -149,12 +149,12 @@ func TestValidate(t *testing.T) {
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/grafana/grafana",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "https://github.com/grafana/grafana",
 						Branch: "main",
 					},
-					Webhook: &provisioning.WebhookConfig{Disabled: true},
+					Webhook: &provisioning.RepositoryWebhookConfig{Disabled: true},
 				},
 			},
 		},
@@ -163,14 +163,14 @@ func TestValidate(t *testing.T) {
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/grafana/grafana",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "https://github.com/grafana/grafana",
 						Branch: "main",
 					},
-					Webhook: &provisioning.WebhookConfig{
+					Webhook: &provisioning.RepositoryWebhookConfig{
 						Disabled: true,
-						BaseURL:  "https://grafana.example.com",
+						BaseUrl:  "https://grafana.example.com",
 					},
 				},
 			},

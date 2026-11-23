@@ -30,11 +30,11 @@ func TestReconcileCreatesALocalRepository(t *testing.T) {
 
 	repo, err := repositories(client).Get(context.Background(), Name, metav1.GetOptions{})
 	require.NoError(t, err)
-	assert.Equal(t, provisioning.LocalRepositoryType, repo.Spec.Type)
+	assert.Equal(t, provisioning.RepositorySpecTypeLocal, repo.Spec.Type)
 	assert.Equal(t, config.Path, repo.Spec.Local.Path)
 	assert.True(t, repo.Spec.Sync.Enabled)
-	assert.Equal(t, provisioning.SyncTargetTypeFolderless, repo.Spec.Sync.Target)
-	assert.Equal(t, []provisioning.Workflow{provisioning.WriteWorkflow}, repo.Spec.Workflows,
+	assert.Equal(t, provisioning.RepositorySyncOptionsTargetFolderless, repo.Spec.Sync.Target)
+	assert.Equal(t, []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite}, repo.Spec.Workflows,
 		"the resources it provisions are edited through this repository's files endpoint")
 }
 
@@ -103,9 +103,9 @@ func TestReconcilePreservesTheClampedSyncInterval(t *testing.T) {
 func TestReconcileRepairsADivertedRepository(t *testing.T) {
 	client := newClientset(repositoryWith(func(repo *provisioning.Repository) {
 		config.apply(repo)
-		repo.Spec.Type = provisioning.GitHubRepositoryType
-		repo.Spec.GitHub = &provisioning.GitHubRepositoryConfig{URL: "https://github.com/acme/elsewhere"}
-		repo.Spec.Workflows = []provisioning.Workflow{provisioning.BranchWorkflow}
+		repo.Spec.Type = provisioning.RepositorySpecTypeGithub
+		repo.Spec.Github = &provisioning.RepositoryGitHubRepositoryConfig{Url: "https://github.com/acme/elsewhere"}
+		repo.Spec.Workflows = []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsBranch}
 		repo.Spec.Sync.Enabled = false
 	}))
 
@@ -113,9 +113,9 @@ func TestReconcileRepairsADivertedRepository(t *testing.T) {
 
 	repo, err := repositories(client).Get(context.Background(), Name, metav1.GetOptions{})
 	require.NoError(t, err)
-	assert.Equal(t, provisioning.LocalRepositoryType, repo.Spec.Type)
-	assert.Nil(t, repo.Spec.GitHub)
-	assert.Equal(t, []provisioning.Workflow{provisioning.WriteWorkflow}, repo.Spec.Workflows)
+	assert.Equal(t, provisioning.RepositorySpecTypeLocal, repo.Spec.Type)
+	assert.Nil(t, repo.Spec.Github)
+	assert.Equal(t, []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite}, repo.Spec.Workflows)
 	assert.True(t, repo.Spec.Sync.Enabled)
 }
 
@@ -133,9 +133,9 @@ func TestReconcileToleratesAnotherReplicaWinningTheCreate(t *testing.T) {
 
 func TestReconcileLeavesAnUnrelatedRepositoryOfTheSameNameAlone(t *testing.T) {
 	unrelated := repositoryWith(func(repo *provisioning.Repository) {
-		repo.Spec.Type = provisioning.LocalRepositoryType
-		repo.Spec.Local = &provisioning.LocalRepositoryConfig{Path: "conf/provisioning/someone-elses"}
-		repo.Spec.Sync = provisioning.SyncOptions{Enabled: true, Target: provisioning.SyncTargetTypeFolderless}
+		repo.Spec.Type = provisioning.RepositorySpecTypeLocal
+		repo.Spec.Local = &provisioning.RepositoryLocalRepositoryConfig{Path: "conf/provisioning/someone-elses"}
+		repo.Spec.Sync = provisioning.RepositorySyncOptions{Enabled: true, Target: provisioning.RepositorySyncOptionsTargetFolderless}
 	})
 	client := newClientset(unrelated)
 
@@ -295,8 +295,8 @@ func TestReconcileDeletesOnlyTheObjectItVouchedFor(t *testing.T) {
 // someone else's.
 func TestReconcileLeavesAReplacementItDidNotReadAlone(t *testing.T) {
 	replacement := repositoryWith(func(repo *provisioning.Repository) {
-		repo.Spec.Type = provisioning.LocalRepositoryType
-		repo.Spec.Local = &provisioning.LocalRepositoryConfig{Path: "conf/provisioning/someone-elses"}
+		repo.Spec.Type = provisioning.RepositorySpecTypeLocal
+		repo.Spec.Local = &provisioning.RepositoryLocalRepositoryConfig{Path: "conf/provisioning/someone-elses"}
 	})
 	client := newClientset(repositoryWith(config.apply))
 	client.PrependReactor("get", "repositories", onceThen(replacement))
@@ -333,9 +333,9 @@ func TestReconcileReportsAFailedDelete(t *testing.T) {
 
 func TestReconcileDoesNotRemoveARepositoryItDoesNotOwn(t *testing.T) {
 	client := newClientset(repositoryWith(func(repo *provisioning.Repository) {
-		repo.Spec.Type = provisioning.LocalRepositoryType
-		repo.Spec.Local = &provisioning.LocalRepositoryConfig{Path: "conf/provisioning/someone-elses"}
-		repo.Spec.Sync = provisioning.SyncOptions{Enabled: true, Target: provisioning.SyncTargetTypeFolderless}
+		repo.Spec.Type = provisioning.RepositorySpecTypeLocal
+		repo.Spec.Local = &provisioning.RepositoryLocalRepositoryConfig{Path: "conf/provisioning/someone-elses"}
+		repo.Spec.Sync = provisioning.RepositorySyncOptions{Enabled: true, Target: provisioning.RepositorySyncOptionsTargetFolderless}
 	}))
 
 	require.NoError(t, Reconcile(context.Background(), repositories(client), cleared))

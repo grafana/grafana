@@ -132,7 +132,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		{
 			"op":    "replace",
 			"path":  "/status/sync/job",
-			"value": syncStatus.JobID,
+			"value": syncStatus.Job,
 		},
 		{
 			"op":    "replace",

@@ -164,7 +164,7 @@ func TestWriteResourceFromParsed_FolderAnnotation(t *testing.T) {
 
 		config := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: testRepoName, Namespace: "default"},
-			Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder}},
+			Spec:       provisioning.RepositorySpec{Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetFolder}},
 		}
 		repo.On("Config").Return(config)
 
@@ -772,7 +772,7 @@ func TestWriteResourceFromFile_SecureValueRejectionIsMatchable(t *testing.T) {
 	repo.On("Read", mock.Anything, "alerts/rule.json", "").Return(fileInfo, nil)
 
 	parsed, client := newWritableParsedResource("rule-1")
-	parsed.Repo = provisioning.ResourceRepositoryInfo{Name: testRepoName, Type: provisioning.GitHubRepositoryType}
+	parsed.Repo = provisioning.ResourceRepositoryInfo{Name: testRepoName, Type: provisioning.RepositorySpecTypeGithub}
 	parsed.Obj.Object["secure"] = map[string]any{"apiKey": map[string]any{"create": "super-secret"}}
 	mockParser.On("Parse", mock.Anything, fileInfo).Return(parsed, nil)
 

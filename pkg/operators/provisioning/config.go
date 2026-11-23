@@ -499,7 +499,7 @@ func (c *ControllerConfig) QuotaGetter() (quotas.QuotaGetter, error) {
 		return quotaGetter, nil
 	}
 
-	quotaStatus := provisioning.QuotaStatus{
+	quotaStatus := provisioning.RepositoryQuotaStatus{
 		MaxResourcesPerRepository: c.Settings.SectionWithEnvOverrides("provisioning").Key("max_resources_per_repository").MustInt64(0),
 		MaxRepositories:           c.Settings.SectionWithEnvOverrides("provisioning").Key("max_repositories").MustInt64(10),
 	}
@@ -635,7 +635,7 @@ func (c *ControllerConfig) RepositoryFactory() (repository.Factory, error) {
 	}
 
 	// Build enabled types from the extras
-	enabledTypes := make(map[provisioning.RepositoryType]struct{})
+	enabledTypes := make(map[provisioning.RepositorySpecType]struct{})
 	for _, extra := range extras {
 		enabledTypes[extra.Type()] = struct{}{}
 	}
@@ -759,10 +759,10 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 
 	extras := make([]repository.Extra, 0)
 	for _, t := range repoTypes {
-		switch provisioning.RepositoryType(t) {
-		case provisioning.GitRepositoryType:
+		switch provisioning.RepositorySpecType(t) {
+		case provisioning.RepositorySpecTypeGit:
 			extras = append(extras, gitrepo.Extra(decrypter, allowInsecure, operationMetrics, clientMetrics, userAgent))
-		case provisioning.GitHubRepositoryType:
+		case provisioning.RepositorySpecTypeGithub:
 			var webhook *webhooks.WebhookExtraBuilder
 			provisioningAppURL := operatorSec.Key("provisioning_server_public_url").String()
 			if provisioningAppURL != "" {
@@ -776,7 +776,7 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 				)
 			}
 			extras = append(extras, githubrepo.Extra(decrypter, githubrepo.ProvideFactory(), webhook, allowInsecure, operationMetrics, clientMetrics, userAgent))
-		case provisioning.LocalRepositoryType:
+		case provisioning.RepositorySpecTypeLocal:
 			homePath := operatorSec.Key("home_path").String()
 			if homePath == "" {
 				return nil, fmt.Errorf("home_path is required in [operator] section for local repository type")

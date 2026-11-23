@@ -22,12 +22,12 @@ func TestClientMetrics_Recorder(t *testing.T) {
 
 	t.Run("nil ClientMetrics yields a nil recorder", func(t *testing.T) {
 		var m *ClientMetrics
-		assert.Nil(t, m.Recorder(provisioning.GitRepositoryType))
+		assert.Nil(t, m.Recorder(provisioning.RepositorySpecTypeGit))
 	})
 
 	t.Run("HTTP requests are counted per operation and status code", func(t *testing.T) {
 		m := RegisterClientMetrics(prometheus.NewRegistry())
-		rec := m.Recorder(provisioning.GitRepositoryType)
+		rec := m.Recorder(provisioning.RepositorySpecTypeGit)
 
 		rec.HTTPRequest(ctx, metrics.HTTPRequestSample{Operation: metrics.OperationUploadPack, StatusCode: 200, Duration: 5 * time.Millisecond, Attempt: 1})
 		rec.HTTPRequest(ctx, metrics.HTTPRequestSample{Operation: metrics.OperationUploadPack, StatusCode: 200, Duration: 5 * time.Millisecond, Attempt: 1})
@@ -40,7 +40,7 @@ func TestClientMetrics_Recorder(t *testing.T) {
 
 	t.Run("only attempts past the first count as retries", func(t *testing.T) {
 		m := RegisterClientMetrics(prometheus.NewRegistry())
-		rec := m.Recorder(provisioning.GitRepositoryType)
+		rec := m.Recorder(provisioning.RepositorySpecTypeGit)
 
 		rec.HTTPRequest(ctx, metrics.HTTPRequestSample{Operation: metrics.OperationUploadPack, StatusCode: 500, Duration: time.Millisecond, Attempt: 1})
 		rec.HTTPRequest(ctx, metrics.HTTPRequestSample{Operation: metrics.OperationUploadPack, StatusCode: 500, Duration: time.Millisecond, Attempt: 2})
@@ -51,7 +51,7 @@ func TestClientMetrics_Recorder(t *testing.T) {
 
 	t.Run("fetched objects and bytes accumulate", func(t *testing.T) {
 		m := RegisterClientMetrics(prometheus.NewRegistry())
-		rec := m.Recorder(provisioning.GitRepositoryType)
+		rec := m.Recorder(provisioning.RepositorySpecTypeGit)
 
 		rec.ObjectsFetched(ctx, metrics.ObjectsFetchedSample{Count: 10, Bytes: 2048})
 		rec.ObjectsFetched(ctx, metrics.ObjectsFetchedSample{Count: 5, Bytes: 1024})
@@ -62,7 +62,7 @@ func TestClientMetrics_Recorder(t *testing.T) {
 
 	t.Run("cache access is split by hit and miss", func(t *testing.T) {
 		m := RegisterClientMetrics(prometheus.NewRegistry())
-		rec := m.Recorder(provisioning.GitRepositoryType)
+		rec := m.Recorder(provisioning.RepositorySpecTypeGit)
 
 		rec.CacheAccess(ctx, metrics.CacheAccessSample{Hit: true})
 		rec.CacheAccess(ctx, metrics.CacheAccessSample{Hit: true})
@@ -74,7 +74,7 @@ func TestClientMetrics_Recorder(t *testing.T) {
 
 	t.Run("labels follow the configured repository type", func(t *testing.T) {
 		m := RegisterClientMetrics(prometheus.NewRegistry())
-		m.Recorder(provisioning.GitHubRepositoryType).CacheAccess(ctx, metrics.CacheAccessSample{Hit: true})
+		m.Recorder(provisioning.RepositorySpecTypeGithub).CacheAccess(ctx, metrics.CacheAccessSample{Hit: true})
 
 		assert.Equal(t, 1.0, testutil.ToFloat64(m.cacheAccesses.WithLabelValues("github", "hit")))
 		assert.Equal(t, 0.0, testutil.ToFloat64(m.cacheAccesses.WithLabelValues("git", "hit")))
@@ -89,8 +89,8 @@ func TestGitRepository_InjectsClientRecorder(t *testing.T) {
 	m := RegisterClientMetrics(prometheus.NewRegistry())
 	repo := &gitRepository{
 		gitConfig:     RepositoryConfig{Branch: "main"},
-		config:        &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.GitRepositoryType}},
-		clientMetrics: m.Recorder(provisioning.GitRepositoryType),
+		config:        &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.RepositorySpecTypeGit}},
+		clientMetrics: m.Recorder(provisioning.RepositorySpecTypeGit),
 	}
 
 	ctx, _ := repo.withGitContext(context.Background(), "main")
@@ -99,7 +99,7 @@ func TestGitRepository_InjectsClientRecorder(t *testing.T) {
 	// A repository with no metrics leaves the context on nanogit's noop fallback.
 	bare := &gitRepository{
 		gitConfig: RepositoryConfig{Branch: "main"},
-		config:    &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.GitRepositoryType}},
+		config:    &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.RepositorySpecTypeGit}},
 	}
 	bareCtx, _ := bare.withGitContext(context.Background(), "main")
 	assert.IsType(t, &metrics.NoopRecorder{}, metrics.FromContext(bareCtx))
@@ -122,7 +122,7 @@ func TestRegisterClientMetrics_PerRegistry(t *testing.T) {
 
 	// The collectors are registered on their own registry: recording on A shows up
 	// when gathering A, and B stays independent.
-	a.Recorder(provisioning.GitRepositoryType).CacheAccess(context.Background(), metrics.CacheAccessSample{Hit: true})
+	a.Recorder(provisioning.RepositorySpecTypeGit).CacheAccess(context.Background(), metrics.CacheAccessSample{Hit: true})
 	assert.Equal(t, 1.0, testutil.ToFloat64(a.cacheAccesses.WithLabelValues("git", "hit")))
 	assert.Equal(t, 0.0, testutil.ToFloat64(b.cacheAccesses.WithLabelValues("git", "hit")))
 }
@@ -143,7 +143,7 @@ func TestRegisterClientMetrics_SharedRegistry(t *testing.T) {
 
 	// Both instances share the collector that is actually registered on reg, so a
 	// recording made through either shows up in the same series when gathering reg.
-	second.Recorder(provisioning.GitRepositoryType).CacheAccess(context.Background(), metrics.CacheAccessSample{Hit: true})
+	second.Recorder(provisioning.RepositorySpecTypeGit).CacheAccess(context.Background(), metrics.CacheAccessSample{Hit: true})
 	assert.Equal(t, 1.0, testutil.ToFloat64(first.cacheAccesses.WithLabelValues("git", "hit")))
 	assert.Equal(t, 1.0, testutil.ToFloat64(second.cacheAccesses.WithLabelValues("git", "hit")))
 }

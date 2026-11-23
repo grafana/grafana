@@ -63,11 +63,11 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 	}
 
 	if r.Spec.Workflows == nil {
-		r.Spec.Workflows = []provisioning.Workflow{}
+		r.Spec.Workflows = []provisioning.RepositorySpecWorkflows{}
 	}
 
-	if r.Spec.Webhook != nil && r.Spec.Webhook.BaseURL != "" {
-		r.Spec.Webhook.BaseURL = strings.TrimRight(r.Spec.Webhook.BaseURL, "/")
+	if r.Spec.Webhook != nil && r.Spec.Webhook.BaseUrl != "" {
+		r.Spec.Webhook.BaseUrl = strings.TrimRight(r.Spec.Webhook.BaseUrl, "/")
 	}
 
 	// Extra mutators from factory

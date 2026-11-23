@@ -37,20 +37,20 @@ var RepositoryResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 
 			var target string
 			switch m.Spec.Type {
-			case LocalRepositoryType:
+			case RepositorySpecTypeLocal:
 				target = m.Spec.Local.Path
-			case GitHubRepositoryType:
-				target = m.Spec.GitHub.URL
-			case GitHubEnterpriseRepositoryType:
-				if m.Spec.GitHubEnterprise != nil {
-					target = m.Spec.GitHubEnterprise.URL
+			case RepositorySpecTypeGithub:
+				target = m.Spec.Github.Url
+			case RepositorySpecTypeGithubEnterprise:
+				if m.Spec.GithubEnterprise != nil {
+					target = m.Spec.GithubEnterprise.Url
 				}
-			case GitRepositoryType:
-				target = m.Spec.Git.URL
-			case BitbucketRepositoryType:
-				target = m.Spec.Bitbucket.URL
-			case GitLabRepositoryType:
-				target = m.Spec.GitLab.URL
+			case RepositorySpecTypeGit:
+				target = m.Spec.Git.Url
+			case RepositorySpecTypeBitbucket:
+				target = m.Spec.Bitbucket.Url
+			case RepositorySpecTypeGitlab:
+				target = m.Spec.Gitlab.Url
 			}
 
 			return []interface{}{

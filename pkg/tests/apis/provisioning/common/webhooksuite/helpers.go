@@ -81,7 +81,7 @@ func CreateRemote(t *testing.T, helper *common.GitTestHelper, repoName string, f
 	return user, remote, local
 }
 
-func CreateRepository(t *testing.T, helper *common.GitTestHelper, repoName string, repoType provisioning.RepositoryType, config map[string]any, token string, opts RepoOptions) {
+func CreateRepository(t *testing.T, helper *common.GitTestHelper, repoName string, repoType provisioning.RepositorySpecType, config map[string]any, token string, opts RepoOptions) {
 	t.Helper()
 
 	webhook := map[string]any{"baseUrl": WebhookBaseURL}
@@ -139,7 +139,7 @@ func WaitForWebhook(t *testing.T, helper *common.GitTestHelper, repoName string,
 		require.NotNil(collect, repo.Status.Webhook, "webhook should be set")
 		require.NotEmpty(collect, repo.Secure.WebhookSecret.Name, "webhook secret should be created")
 		require.Equal(collect, expected, repository.GetID(repo.Status.Webhook))
-		require.Equal(collect, ExpectedWebhookURL(helper.Namespace, repoName), repo.Status.Webhook.URL)
+		require.Equal(collect, ExpectedWebhookURL(helper.Namespace, repoName), repo.Status.Webhook.Url)
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "webhook should be created")
 }
 

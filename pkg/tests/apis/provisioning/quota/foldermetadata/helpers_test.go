@@ -18,14 +18,14 @@ var env = common.NewSharedGitEnv()
 func sharedGitHelper(t *testing.T) *common.GitTestHelper {
 	t.Helper()
 	helper := env.GetCleanHelper(t)
-	helper.SetQuotaStatus(provisioning.QuotaStatus{})
+	helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{})
 	return helper
 }
 
 func sharedGitHelperWithQuota(t *testing.T, maxResources int64) *common.GitTestHelper {
 	t.Helper()
 	helper := env.GetCleanHelper(t)
-	helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: maxResources})
+	helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: maxResources})
 	return helper
 }
 

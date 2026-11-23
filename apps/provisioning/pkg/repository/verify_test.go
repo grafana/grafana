@@ -38,7 +38,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
-					Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance},
+					Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetInstance},
 				},
 			},
 			existingRepos:   []provisioning.Repository{},
@@ -50,7 +50,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
-					Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance},
+					Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetInstance},
 				},
 			},
 			existingRepos: []provisioning.Repository{
@@ -65,14 +65,14 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
-					Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+					Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetFolder},
 				},
 			},
 			existingRepos: []provisioning.Repository{
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "instance-repo"},
 					Spec: provisioning.RepositorySpec{
-						Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance},
+						Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetInstance},
 					},
 				},
 			},
@@ -85,14 +85,14 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
-					Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolderless},
+					Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetFolderless},
 				},
 			},
 			existingRepos: []provisioning.Repository{
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "instance-repo"},
 					Spec: provisioning.RepositorySpec{
-						Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance},
+						Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetInstance},
 					},
 				},
 			},
@@ -105,14 +105,14 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
-					Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance},
+					Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetInstance},
 				},
 			},
 			existingRepos: []provisioning.Repository{
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "folderless-repo"},
 					Spec: provisioning.RepositorySpec{
-						Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolderless},
+						Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetFolderless},
 					},
 				},
 			},
@@ -125,20 +125,20 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
-					Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolderless},
+					Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetFolderless},
 				},
 			},
 			existingRepos: []provisioning.Repository{
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "folder-repo"},
 					Spec: provisioning.RepositorySpec{
-						Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+						Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetFolder},
 					},
 				},
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "folderless-repo"},
 					Spec: provisioning.RepositorySpec{
-						Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolderless},
+						Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetFolderless},
 					},
 				},
 			},
@@ -150,14 +150,14 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
-					Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+					Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetFolder},
 				},
 			},
 			existingRepos: []provisioning.Repository{
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "folder-repo"},
 					Spec: provisioning.RepositorySpec{
-						Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+						Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetFolder},
 					},
 				},
 			},
@@ -169,10 +169,10 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					Sync: provisioning.SyncOptions{Enabled: false},
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/org/repo",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Sync: provisioning.RepositorySyncOptions{Enabled: false},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "https://github.com/org/repo",
 						Branch: "main",
 						Path:   "grafana/",
 					},
@@ -182,9 +182,9 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "existing-repo"},
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{
-							URL:    "https://github.com/org/repo",
+						Type: provisioning.RepositorySpecTypeGithub,
+						Github: &provisioning.RepositoryGitHubRepositoryConfig{
+							Url:    "https://github.com/org/repo",
 							Branch: "main",
 							Path:   "grafana/",
 						},
@@ -199,10 +199,10 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					Sync: provisioning.SyncOptions{Enabled: false},
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:  "https://github.com/org/repo",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Sync: provisioning.RepositorySyncOptions{Enabled: false},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:  "https://github.com/org/repo",
 						Path: "",
 					},
 				},
@@ -211,9 +211,9 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "existing-repo"},
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{
-							URL:    "https://github.com/org/repo",
+						Type: provisioning.RepositorySpecTypeGithub,
+						Github: &provisioning.RepositoryGitHubRepositoryConfig{
+							Url:    "https://github.com/org/repo",
 							Branch: "main",
 							Path:   "",
 						},
@@ -228,10 +228,10 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					Sync: provisioning.SyncOptions{Enabled: false},
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/org/repo",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Sync: provisioning.RepositorySyncOptions{Enabled: false},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "https://github.com/org/repo",
 						Branch: "main",
 						Path:   "",
 					},
@@ -241,9 +241,9 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "existing-repo"},
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{
-							URL:    "https://github.com/org/repo",
+						Type: provisioning.RepositorySpecTypeGithub,
+						Github: &provisioning.RepositoryGitHubRepositoryConfig{
+							Url:    "https://github.com/org/repo",
 							Branch: "main",
 							Path:   "",
 						},
@@ -258,10 +258,10 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					Sync: provisioning.SyncOptions{Enabled: true},
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:  "https://github.com/org/repo2",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Sync: provisioning.RepositorySyncOptions{Enabled: true},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:  "https://github.com/org/repo2",
 						Path: "",
 					},
 				},
@@ -270,9 +270,9 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "existing-repo"},
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{
-							URL:  "https://github.com/org/repo1",
+						Type: provisioning.RepositorySpecTypeGithub,
+						Github: &provisioning.RepositoryGitHubRepositoryConfig{
+							Url:  "https://github.com/org/repo1",
 							Path: "",
 						},
 					},
@@ -286,10 +286,10 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					Sync: provisioning.SyncOptions{Enabled: true},
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/org/repo",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Sync: provisioning.RepositorySyncOptions{Enabled: true},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "https://github.com/org/repo",
 						Branch: "develop",
 						Path:   "grafana/",
 					},
@@ -299,9 +299,9 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "existing-repo"},
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{
-							URL:    "https://github.com/org/repo",
+						Type: provisioning.RepositorySpecTypeGithub,
+						Github: &provisioning.RepositoryGitHubRepositoryConfig{
+							Url:    "https://github.com/org/repo",
 							Branch: "main",
 							Path:   "grafana/",
 						},
@@ -316,10 +316,10 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					Sync: provisioning.SyncOptions{Enabled: true},
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/org/repo",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Sync: provisioning.RepositorySyncOptions{Enabled: true},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "https://github.com/org/repo",
 						Branch: "develop",
 						Path:   "",
 					},
@@ -329,9 +329,9 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "existing-repo"},
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{
-							URL:    "https://github.com/org/repo",
+						Type: provisioning.RepositorySpecTypeGithub,
+						Github: &provisioning.RepositoryGitHubRepositoryConfig{
+							Url:    "https://github.com/org/repo",
 							Branch: "main",
 							Path:   "",
 						},
@@ -346,10 +346,10 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					Sync: provisioning.SyncOptions{Enabled: true},
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/org/repo",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Sync: provisioning.RepositorySyncOptions{Enabled: true},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "https://github.com/org/repo",
 						Branch: "develop",
 						Path:   "grafana/dashboards/",
 					},
@@ -359,9 +359,9 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "existing-repo"},
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{
-							URL:    "https://github.com/org/repo",
+						Type: provisioning.RepositorySpecTypeGithub,
+						Github: &provisioning.RepositoryGitHubRepositoryConfig{
+							Url:    "https://github.com/org/repo",
 							Branch: "main",
 							Path:   "grafana/",
 						},
@@ -376,10 +376,10 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "same-repo", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					Sync: provisioning.SyncOptions{Enabled: true},
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/org/repo",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Sync: provisioning.RepositorySyncOptions{Enabled: true},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "https://github.com/org/repo",
 						Branch: "main",
 						Path:   "grafana/",
 					},
@@ -389,9 +389,9 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "same-repo"},
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{
-							URL:    "https://github.com/org/repo",
+						Type: provisioning.RepositorySpecTypeGithub,
+						Github: &provisioning.RepositoryGitHubRepositoryConfig{
+							Url:    "https://github.com/org/repo",
 							Branch: "main",
 							Path:   "grafana/",
 						},
@@ -406,9 +406,9 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "new-local", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.LocalRepositoryType,
-					Sync: provisioning.SyncOptions{Enabled: true},
-					Local: &provisioning.LocalRepositoryConfig{
+					Type: provisioning.RepositorySpecTypeLocal,
+					Sync: provisioning.RepositorySyncOptions{Enabled: true},
+					Local: &provisioning.RepositoryLocalRepositoryConfig{
 						Path: "/data/grafana",
 					},
 				},
@@ -417,8 +417,8 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "existing-local"},
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.LocalRepositoryType,
-						Local: &provisioning.LocalRepositoryConfig{
+						Type: provisioning.RepositorySpecTypeLocal,
+						Local: &provisioning.RepositoryLocalRepositoryConfig{
 							Path: "/data/grafana",
 						},
 					},
@@ -432,10 +432,10 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					Sync: provisioning.SyncOptions{Enabled: false},
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:  "https://github.com/org/repo",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Sync: provisioning.RepositorySyncOptions{Enabled: false},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:  "https://github.com/org/repo",
 						Path: "grafana/dashboards/",
 					},
 				},
@@ -444,9 +444,9 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "existing-repo"},
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{
-							URL:  "https://github.com/org/repo",
+						Type: provisioning.RepositorySpecTypeGithub,
+						Github: &provisioning.RepositoryGitHubRepositoryConfig{
+							Url:  "https://github.com/org/repo",
 							Path: "grafana/",
 						},
 					},
@@ -460,10 +460,10 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					Sync: provisioning.SyncOptions{Enabled: false},
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:  "https://github.com/org/repo",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Sync: provisioning.RepositorySyncOptions{Enabled: false},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:  "https://github.com/org/repo",
 						Path: "",
 					},
 				},
@@ -472,9 +472,9 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "existing-repo"},
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{
-							URL:  "https://github.com/org/repo",
+						Type: provisioning.RepositorySpecTypeGithub,
+						Github: &provisioning.RepositoryGitHubRepositoryConfig{
+							Url:  "https://github.com/org/repo",
 							Path: "grafana/",
 						},
 					},
@@ -488,10 +488,10 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					Sync: provisioning.SyncOptions{Enabled: true},
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:  "https://github.com/org/repo",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Sync: provisioning.RepositorySyncOptions{Enabled: true},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:  "https://github.com/org/repo",
 						Path: "other/",
 					},
 				},
@@ -500,9 +500,9 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "existing-repo"},
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{
-							URL:  "https://github.com/org/repo",
+						Type: provisioning.RepositorySpecTypeGithub,
+						Github: &provisioning.RepositoryGitHubRepositoryConfig{
+							Url:  "https://github.com/org/repo",
 							Path: "grafana/",
 						},
 					},
@@ -516,10 +516,10 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					Sync: provisioning.SyncOptions{Enabled: true},
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:  "https://github.com/org/repo2",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Sync: provisioning.RepositorySyncOptions{Enabled: true},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:  "https://github.com/org/repo2",
 						Path: "grafana/",
 					},
 				},
@@ -528,9 +528,9 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "existing-repo"},
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{
-							URL:  "https://github.com/org/repo1",
+						Type: provisioning.RepositorySpecTypeGithub,
+						Github: &provisioning.RepositoryGitHubRepositoryConfig{
+							Url:  "https://github.com/org/repo1",
 							Path: "grafana/",
 						},
 					},
@@ -645,7 +645,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			store := &verifyTestStorage{repositories: tt.existingRepos}
 			lister := NewStorageLister(store)
-			quotaStatus := provisioning.QuotaStatus{MaxRepositories: tt.maxRepositories}
+			quotaStatus := provisioning.RepositoryQuotaStatus{MaxRepositories: tt.maxRepositories}
 			quotaGetter := quotas.NewFixedQuotaGetter(quotaStatus)
 			validatorRaw := NewVerifyAgainstExistingRepositoriesValidator(lister, quotaGetter)
 			errList := validatorRaw.Validate(context.Background(), tt.cfg)
@@ -684,7 +684,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_QuotaLookupError(t *testing.
 				ObjectMeta: metav1.ObjectMeta{Name: "observed-repo", Namespace: "default"},
 				Status: provisioning.RepositoryStatus{
 					ObservedGeneration: 1,
-					Quota:              provisioning.QuotaStatus{MaxRepositories: 1},
+					Quota:              provisioning.RepositoryQuotaStatus{MaxRepositories: 1},
 				},
 			},
 			existingRepos: []provisioning.Repository{
@@ -701,7 +701,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_QuotaLookupError(t *testing.
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "observed-repo"},
 					Status: provisioning.RepositoryStatus{
-						Quota: provisioning.QuotaStatus{MaxRepositories: 1},
+						Quota: provisioning.RepositoryQuotaStatus{MaxRepositories: 1},
 					},
 				},
 				{ObjectMeta: metav1.ObjectMeta{Name: "other-repo"}},
@@ -712,7 +712,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_QuotaLookupError(t *testing.
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			store := &verifyTestStorage{repositories: tt.existingRepos}
-			getter := quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{MaxRepositories: 10})
+			getter := quotas.NewFixedQuotaGetter(provisioning.RepositoryQuotaStatus{MaxRepositories: 10})
 			getter.SetError(lookupErr)
 			validator := NewVerifyAgainstExistingRepositoriesValidator(NewStorageLister(store), getter)
 

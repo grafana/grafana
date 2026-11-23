@@ -27,7 +27,7 @@ func TestMutate(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.LocalRepositoryType,
+					Type: provisioning.RepositorySpecTypeLocal,
 					Git:  nil,
 				},
 			},
@@ -40,7 +40,7 @@ func TestMutate(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitRepositoryType,
+					Type: provisioning.RepositorySpecTypeGit,
 					Git:  nil,
 				},
 			},
@@ -54,8 +54,8 @@ func TestMutate(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitRepositoryType,
-					Git:  &provisioning.GitRepositoryConfig{},
+					Type: provisioning.RepositorySpecTypeGit,
+					Git:  &provisioning.RepositoryGitRepositoryConfig{},
 				},
 			},
 		},
@@ -71,9 +71,9 @@ func TestMutate(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitRepositoryType,
-					Git: &provisioning.GitRepositoryConfig{
-						URL: "https://github.com/grafana/grafana",
+					Type: provisioning.RepositorySpecTypeGit,
+					Git: &provisioning.RepositoryGitRepositoryConfig{
+						Url: "https://github.com/grafana/grafana",
 					},
 				},
 			},
@@ -87,9 +87,9 @@ func TestMutate(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitRepositoryType,
-					Git: &provisioning.GitRepositoryConfig{
-						URL: "https://github.com/grafana/grafana.git",
+					Type: provisioning.RepositorySpecTypeGit,
+					Git: &provisioning.RepositoryGitRepositoryConfig{
+						Url: "https://github.com/grafana/grafana.git",
 					},
 				},
 			},
@@ -103,9 +103,9 @@ func TestMutate(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitRepositoryType,
-					Git: &provisioning.GitRepositoryConfig{
-						URL: "https://github.com/grafana/grafana/",
+					Type: provisioning.RepositorySpecTypeGit,
+					Git: &provisioning.RepositoryGitRepositoryConfig{
+						Url: "https://github.com/grafana/grafana/",
 					},
 				},
 			},
@@ -119,9 +119,9 @@ func TestMutate(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitRepositoryType,
-					Git: &provisioning.GitRepositoryConfig{
-						URL: "  https://github.com/grafana/grafana  ",
+					Type: provisioning.RepositorySpecTypeGit,
+					Git: &provisioning.RepositoryGitRepositoryConfig{
+						Url: "  https://github.com/grafana/grafana  ",
 					},
 				},
 			},
@@ -135,9 +135,9 @@ func TestMutate(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitRepositoryType,
-					Git: &provisioning.GitRepositoryConfig{
-						URL: "   ",
+					Type: provisioning.RepositorySpecTypeGit,
+					Git: &provisioning.RepositoryGitRepositoryConfig{
+						Url: "   ",
 					},
 				},
 			},
@@ -158,7 +158,7 @@ func TestMutate(t *testing.T) {
 				if repo, ok := tt.obj.(*provisioning.Repository); ok && repo.Spec.Git != nil {
 					// Check URL normalization
 					if tt.expectedURL != "" {
-						assert.Equal(t, tt.expectedURL, repo.Spec.Git.URL, "URL should be normalized correctly")
+						assert.Equal(t, tt.expectedURL, repo.Spec.Git.Url, "URL should be normalized correctly")
 					}
 				}
 			}

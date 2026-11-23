@@ -59,7 +59,7 @@ func TestDualReadWriter_ReadAuthorizationDispatch(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := t.Context()
 			cfg := &provisioning.Repository{Spec: provisioning.RepositorySpec{
-				Type: provisioning.GitRepositoryType, Git: &provisioning.GitRepositoryConfig{Branch: "main"},
+				Type: provisioning.RepositorySpecTypeGit, Git: &provisioning.RepositoryGitRepositoryConfig{Branch: "main"},
 			}}
 			info := &repository.FileInfo{Path: "team/dashboard.json", Ref: tt.ref}
 			gvr := DashboardResource
@@ -260,11 +260,11 @@ func TestShouldUpdateGrafanaDB(t *testing.T) {
 				Ref: "something",
 			},
 			repo: provisioning.RepositorySpec{
-				Type: provisioning.GitRepositoryType,
-				Git: &provisioning.GitRepositoryConfig{
+				Type: provisioning.RepositorySpecTypeGit,
+				Git: &provisioning.RepositoryGitRepositoryConfig{
 					Branch: "something",
 				},
-				Sync: provisioning.SyncOptions{
+				Sync: provisioning.RepositorySyncOptions{
 					Enabled: true,
 				},
 			},
@@ -278,11 +278,11 @@ func TestShouldUpdateGrafanaDB(t *testing.T) {
 				Ref: "something",
 			},
 			repo: provisioning.RepositorySpec{
-				Type: provisioning.GitRepositoryType,
-				Git: &provisioning.GitRepositoryConfig{
+				Type: provisioning.RepositorySpecTypeGit,
+				Git: &provisioning.RepositoryGitRepositoryConfig{
 					Branch: "something-else",
 				},
-				Sync: provisioning.SyncOptions{
+				Sync: provisioning.RepositorySyncOptions{
 					Enabled: true,
 				},
 			},
@@ -296,11 +296,11 @@ func TestShouldUpdateGrafanaDB(t *testing.T) {
 				Ref: "something",
 			},
 			repo: provisioning.RepositorySpec{
-				Type: provisioning.GitRepositoryType,
-				Git: &provisioning.GitRepositoryConfig{
+				Type: provisioning.RepositorySpecTypeGit,
+				Git: &provisioning.RepositoryGitRepositoryConfig{
 					Branch: "something",
 				},
-				Sync: provisioning.SyncOptions{
+				Sync: provisioning.RepositorySyncOptions{
 					Enabled: false, // <<<<<<
 				},
 			},
@@ -331,9 +331,9 @@ func newTestRepoConfig(name string) *provisioning.Repository {
 			Namespace: "default",
 		},
 		Spec: provisioning.RepositorySpec{
-			Type:      provisioning.LocalRepositoryType,
-			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-			Sync:      provisioning.SyncOptions{Enabled: false},
+			Type:      provisioning.RepositorySpecTypeLocal,
+			Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
+			Sync:      provisioning.RepositorySyncOptions{Enabled: false},
 		},
 	}
 }
@@ -342,9 +342,9 @@ func newSyncEnabledConfig(name string) *provisioning.Repository {
 	return &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "default"},
 		Spec: provisioning.RepositorySpec{
-			Type:      provisioning.LocalRepositoryType,
-			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-			Sync:      provisioning.SyncOptions{Enabled: true},
+			Type:      provisioning.RepositorySpecTypeLocal,
+			Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
+			Sync:      provisioning.RepositorySyncOptions{Enabled: true},
 		},
 	}
 }
@@ -436,8 +436,8 @@ func TestCreateFolder(t *testing.T) {
 				config := &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
 					Spec: provisioning.RepositorySpec{
-						Type:      provisioning.LocalRepositoryType,
-						Workflows: []provisioning.Workflow{}, // no WriteWorkflow
+						Type:      provisioning.RepositorySpecTypeLocal,
+						Workflows: []provisioning.RepositorySpecWorkflows{}, // no WriteWorkflow
 					},
 				}
 				rw := repository.NewMockReaderWriter(t)
@@ -515,9 +515,9 @@ func TestCreateFolder(t *testing.T) {
 				config := &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
 					Spec: provisioning.RepositorySpec{
-						Type:      provisioning.GitRepositoryType,
-						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow, provisioning.BranchWorkflow},
-						Sync:      provisioning.SyncOptions{Enabled: false},
+						Type:      provisioning.RepositorySpecTypeGit,
+						Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite, provisioning.RepositorySpecWorkflowsBranch},
+						Sync:      provisioning.RepositorySyncOptions{Enabled: false},
 					},
 				}
 				rw := repository.NewMockReaderWriter(t)
@@ -553,9 +553,9 @@ func TestCreateFolder(t *testing.T) {
 				config := &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
 					Spec: provisioning.RepositorySpec{
-						Type:      provisioning.GitRepositoryType,
-						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow, provisioning.BranchWorkflow},
-						Sync:      provisioning.SyncOptions{Enabled: false},
+						Type:      provisioning.RepositorySpecTypeGit,
+						Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite, provisioning.RepositorySpecWorkflowsBranch},
+						Sync:      provisioning.RepositorySyncOptions{Enabled: false},
 					},
 				}
 				rw := repository.NewMockReaderWriter(t)
@@ -592,9 +592,9 @@ func TestCreateFolder(t *testing.T) {
 				config := &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
 					Spec: provisioning.RepositorySpec{
-						Type:      provisioning.GitRepositoryType,
-						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow, provisioning.BranchWorkflow},
-						Sync:      provisioning.SyncOptions{Enabled: false},
+						Type:      provisioning.RepositorySpecTypeGit,
+						Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite, provisioning.RepositorySpecWorkflowsBranch},
+						Sync:      provisioning.RepositorySyncOptions{Enabled: false},
 					},
 				}
 				rw := repository.NewMockReaderWriter(t)
@@ -725,9 +725,9 @@ func TestMoveDirectory_FolderMetadata(t *testing.T) {
 				config := &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
 					Spec: provisioning.RepositorySpec{
-						Type:      provisioning.LocalRepositoryType,
-						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-						Git:       &provisioning.GitRepositoryConfig{Branch: "main"},
+						Type:      provisioning.RepositorySpecTypeLocal,
+						Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
+						Git:       &provisioning.RepositoryGitRepositoryConfig{Branch: "main"},
 					},
 				}
 				rw := repository.NewMockReaderWriter(t)
@@ -752,9 +752,9 @@ func TestMoveDirectory_FolderMetadata(t *testing.T) {
 				config := &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
 					Spec: provisioning.RepositorySpec{
-						Type:      provisioning.LocalRepositoryType,
-						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-						Git:       &provisioning.GitRepositoryConfig{Branch: "main"},
+						Type:      provisioning.RepositorySpecTypeLocal,
+						Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
+						Git:       &provisioning.RepositoryGitRepositoryConfig{Branch: "main"},
 					},
 				}
 				rw := repository.NewMockReaderWriter(t)
@@ -782,9 +782,9 @@ func TestMoveDirectory_FolderMetadata(t *testing.T) {
 				config := &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
 					Spec: provisioning.RepositorySpec{
-						Type:      provisioning.GitRepositoryType,
-						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-						Git:       &provisioning.GitRepositoryConfig{Branch: "main"},
+						Type:      provisioning.RepositorySpecTypeGit,
+						Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
+						Git:       &provisioning.RepositoryGitRepositoryConfig{Branch: "main"},
 					},
 				}
 				rw := repository.NewMockReaderWriter(t)
@@ -855,8 +855,8 @@ func TestCreateFolder_DirectoryReadErrors(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			config := newTestRepoConfig("test-repo")
-			config.Spec.Type = provisioning.GitRepositoryType
-			config.Spec.Workflows = []provisioning.Workflow{provisioning.WriteWorkflow, provisioning.BranchWorkflow}
+			config.Spec.Type = provisioning.RepositorySpecTypeGit
+			config.Spec.Workflows = []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite, provisioning.RepositorySpecWorkflowsBranch}
 			rw := repository.NewMockReaderWriter(t)
 			rw.On("Config").Return(config)
 			if tt.ref != "" {
@@ -1027,10 +1027,10 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				config := &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
 					Spec: provisioning.RepositorySpec{
-						Type:      provisioning.GitRepositoryType,
-						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow, provisioning.BranchWorkflow},
-						Git:       &provisioning.GitRepositoryConfig{Branch: "main"},
-						Sync:      provisioning.SyncOptions{Enabled: false},
+						Type:      provisioning.RepositorySpecTypeGit,
+						Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite, provisioning.RepositorySpecWorkflowsBranch},
+						Git:       &provisioning.RepositoryGitRepositoryConfig{Branch: "main"},
+						Sync:      provisioning.RepositorySyncOptions{Enabled: false},
 					},
 				}
 				rw := repository.NewMockReaderWriter(t)
@@ -1068,8 +1068,8 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				config := &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
 					Spec: provisioning.RepositorySpec{
-						Type:      provisioning.LocalRepositoryType,
-						Workflows: []provisioning.Workflow{}, // no write workflow
+						Type:      provisioning.RepositorySpecTypeLocal,
+						Workflows: []provisioning.RepositorySpecWorkflows{}, // no write workflow
 					},
 				}
 				rw := repository.NewMockReaderWriter(t)
@@ -1220,10 +1220,10 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				config := &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
 					Spec: provisioning.RepositorySpec{
-						Type:      provisioning.GitRepositoryType,
-						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow, provisioning.BranchWorkflow},
-						Git:       &provisioning.GitRepositoryConfig{Branch: "main"},
-						Sync:      provisioning.SyncOptions{Enabled: false},
+						Type:      provisioning.RepositorySpecTypeGit,
+						Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite, provisioning.RepositorySpecWorkflowsBranch},
+						Git:       &provisioning.RepositoryGitRepositoryConfig{Branch: "main"},
+						Sync:      provisioning.RepositorySyncOptions{Enabled: false},
 					},
 				}
 				rw := repository.NewMockReaderWriter(t)
@@ -1375,10 +1375,10 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				config := &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
 					Spec: provisioning.RepositorySpec{
-						Type:      provisioning.GitRepositoryType,
-						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow, provisioning.BranchWorkflow},
-						Git:       &provisioning.GitRepositoryConfig{Branch: "main"},
-						Sync:      provisioning.SyncOptions{Enabled: false},
+						Type:      provisioning.RepositorySpecTypeGit,
+						Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite, provisioning.RepositorySpecWorkflowsBranch},
+						Git:       &provisioning.RepositoryGitRepositoryConfig{Branch: "main"},
+						Sync:      provisioning.RepositorySyncOptions{Enabled: false},
 					},
 				}
 				rw := repository.NewMockReaderWriter(t)
@@ -1429,10 +1429,10 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				config := &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
 					Spec: provisioning.RepositorySpec{
-						Type:      provisioning.GitRepositoryType,
-						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow, provisioning.BranchWorkflow},
-						Git:       &provisioning.GitRepositoryConfig{Branch: "main"},
-						Sync:      provisioning.SyncOptions{Enabled: false},
+						Type:      provisioning.RepositorySpecTypeGit,
+						Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite, provisioning.RepositorySpecWorkflowsBranch},
+						Git:       &provisioning.RepositoryGitRepositoryConfig{Branch: "main"},
+						Sync:      provisioning.RepositorySyncOptions{Enabled: false},
 					},
 				}
 				rw := repository.NewMockReaderWriter(t)
@@ -1903,7 +1903,7 @@ func TestDualReadWriter_UpdateResourceKeepsCommittedSecureValues(t *testing.T) {
 		GVK:    schema.GroupVersionKind{Group: "testdata.datasource.grafana.app", Version: "v0alpha1", Kind: "DataSource"},
 		GVR:    schema.GroupVersionResource{Group: "testdata.datasource.grafana.app", Version: "v0alpha1", Resource: "datasources"},
 		Client: client,
-		Repo:   provisioning.ResourceRepositoryInfo{Name: repoName, Namespace: "default", Type: provisioning.LocalRepositoryType},
+		Repo:   provisioning.ResourceRepositoryInfo{Name: repoName, Namespace: "default", Type: provisioning.RepositorySpecTypeLocal},
 		Action: provisioning.ResourceActionUpdate,
 	}
 
@@ -2018,10 +2018,10 @@ func TestMoveFile_SecureValues(t *testing.T) {
 		config := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
 			Spec: provisioning.RepositorySpec{
-				Type:      provisioning.GitHubRepositoryType,
-				Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-				Sync:      provisioning.SyncOptions{Enabled: true},
-				GitHub:    &provisioning.GitHubRepositoryConfig{Branch: "main"},
+				Type:      provisioning.RepositorySpecTypeGithub,
+				Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
+				Sync:      provisioning.RepositorySyncOptions{Enabled: true},
+				Github:    &provisioning.RepositoryGitHubRepositoryConfig{Branch: "main"},
 			},
 		}
 		rw := repository.NewMockReaderWriter(t)
@@ -2051,7 +2051,7 @@ func TestMoveFile_SecureValues(t *testing.T) {
 			GVK:  dashboardGVK,
 			Repo: provisioning.ResourceRepositoryInfo{
 				Name: "test-repo",
-				Type: provisioning.GitHubRepositoryType,
+				Type: provisioning.RepositorySpecTypeGithub,
 			},
 		}
 		if client != nil {
@@ -2164,7 +2164,7 @@ func TestMoveFile_SecureValues(t *testing.T) {
 	t.Run("the original is read on the configured branch, not the target ref", func(t *testing.T) {
 		config, rw := newSyncedGitRepo(t)
 		// Writing to a ref other than the configured branch needs the branch workflow.
-		config.Spec.Workflows = append(config.Spec.Workflows, provisioning.BranchWorkflow)
+		config.Spec.Workflows = append(config.Spec.Workflows, provisioning.RepositorySpecWorkflowsBranch)
 		mockParser := NewMockParser(t)
 
 		originalFile := &repository.FileInfo{Data: []byte(`{}`), Path: "old/dash.json"}
@@ -2195,7 +2195,7 @@ func TestMoveFile_SecureValues(t *testing.T) {
 func TestKeepCommittedSecureValues_RepositoryTypeGate(t *testing.T) {
 	const path = "datasource.json"
 
-	parsedFor := func(repoType provisioning.RepositoryType) *ParsedResource {
+	parsedFor := func(repoType provisioning.RepositorySpecType) *ParsedResource {
 		return &ParsedResource{
 			Repo: provisioning.ResourceRepositoryInfo{Type: repoType},
 			Obj: &unstructured.Unstructured{Object: map[string]any{
@@ -2211,7 +2211,7 @@ func TestKeepCommittedSecureValues_RepositoryTypeGate(t *testing.T) {
 		rw := repository.NewMockReaderWriter(t)
 
 		dw := &DualReadWriter{repo: rw}
-		parsed := parsedFor(provisioning.GitHubRepositoryType)
+		parsed := parsedFor(provisioning.RepositorySpecTypeGithub)
 		require.NoError(t, dw.keepCommittedSecureValues(context.Background(), parsed, path, ""))
 		require.NotContains(t, parsed.Obj.Object, "secure")
 		rw.AssertNotCalled(t, "Read", mock.Anything, mock.Anything, mock.Anything)
@@ -2228,7 +2228,7 @@ func TestKeepCommittedSecureValues_RepositoryTypeGate(t *testing.T) {
 		}`)}, nil)
 
 		dw := &DualReadWriter{repo: rw}
-		parsed := parsedFor(provisioning.LocalRepositoryType)
+		parsed := parsedFor(provisioning.RepositorySpecTypeLocal)
 		require.NoError(t, dw.keepCommittedSecureValues(context.Background(), parsed, path, ""))
 		require.Equal(t,
 			map[string]any{"password": map[string]any{"create": "hunter2"}},
@@ -2268,7 +2268,7 @@ func TestDualReadWriter_FileSizeLimit(t *testing.T) {
 			Meta:   meta,
 			GVK:    schema.GroupVersionKind{Group: "testdata.datasource.grafana.app", Version: "v0alpha1", Kind: "DataSource"},
 			GVR:    schema.GroupVersionResource{Group: "testdata.datasource.grafana.app", Version: "v0alpha1", Resource: "datasources"},
-			Repo:   provisioning.ResourceRepositoryInfo{Name: repoName, Namespace: "default", Type: provisioning.LocalRepositoryType},
+			Repo:   provisioning.ResourceRepositoryInfo{Name: repoName, Namespace: "default", Type: provisioning.RepositorySpecTypeLocal},
 			Action: provisioning.ResourceActionUpdate,
 		}
 	}

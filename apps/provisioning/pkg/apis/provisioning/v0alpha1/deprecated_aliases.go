@@ -40,3 +40,102 @@ const (
 	BitbucketOAuthConnectionType        = ConnectionTypeBitbucketOAuth
 	GitOAuthConnectionType              = ConnectionTypeGitOAuth
 )
+
+// Deprecated: Use RepositoryLocalRepositoryConfig.
+type LocalRepositoryConfig = RepositoryLocalRepositoryConfig
+
+// Deprecated: Use RepositoryGitHubRepositoryConfig.
+type GitHubRepositoryConfig = RepositoryGitHubRepositoryConfig
+
+// Deprecated: Use RepositoryGitHubEnterpriseRepositoryConfig.
+type GitHubEnterpriseRepositoryConfig = RepositoryGitHubEnterpriseRepositoryConfig
+
+// Deprecated: Use RepositoryGitRepositoryConfig.
+type GitRepositoryConfig = RepositoryGitRepositoryConfig
+
+// Deprecated: Use RepositoryBitbucketRepositoryConfig.
+type BitbucketRepositoryConfig = RepositoryBitbucketRepositoryConfig
+
+// Deprecated: Use RepositoryGitLabRepositoryConfig.
+type GitLabRepositoryConfig = RepositoryGitLabRepositoryConfig
+
+// Deprecated: Use RepositorySpecWorkflows.
+type Workflow = RepositorySpecWorkflows
+
+// Deprecated: Use RepositorySpecType.
+type RepositoryType = RepositorySpecType
+
+// Deprecated: Use RepositoryConnectionInfo.
+type ConnectionInfo = RepositoryConnectionInfo
+
+// Deprecated: Use RepositoryCommitOptions.
+type CommitOptions = RepositoryCommitOptions
+
+// Deprecated: Use RepositoryCommitOptionsSigningMethod.
+type SigningMethod = RepositoryCommitOptionsSigningMethod
+
+// Deprecated: Use RepositoryBranchOptions.
+type BranchOptions = RepositoryBranchOptions
+
+// Deprecated: Use RepositoryPullRequestOptions.
+type PullRequestOptions = RepositoryPullRequestOptions
+
+// Deprecated: Use RepositorySyncOptionsTarget.
+type SyncTargetType = RepositorySyncOptionsTarget
+
+// Deprecated: Use RepositorySyncOptions.
+type SyncOptions = RepositorySyncOptions
+
+// Deprecated: Use RepositoryWebhookConfig.
+type WebhookConfig = RepositoryWebhookConfig
+
+// Deprecated: Use RepositorySyncStatus.
+type SyncStatus = RepositorySyncStatus
+
+// Deprecated: Use RepositoryWebhookStatus.
+type WebhookStatus = RepositoryWebhookStatus
+
+// Deprecated: Use RepositoryQuotaStatus.
+type QuotaStatus = RepositoryQuotaStatus
+
+// Deprecated: Use RepositoryDeletionStatus.
+type DeletionStatus = RepositoryDeletionStatus
+
+// Deprecated: Use RepositoryDeletionStatusCause.
+type DeletionCause = RepositoryDeletionStatusCause
+
+// Deprecated: Use the RepositorySpecType* constants.
+const (
+	LocalRepositoryType            = RepositorySpecTypeLocal
+	GitHubRepositoryType           = RepositorySpecTypeGithub
+	GitHubEnterpriseRepositoryType = RepositorySpecTypeGithubEnterprise
+	GitRepositoryType              = RepositorySpecTypeGit
+	BitbucketRepositoryType        = RepositorySpecTypeBitbucket
+	GitLabRepositoryType           = RepositorySpecTypeGitlab
+)
+
+// Deprecated: Use the RepositorySpecWorkflows* constants.
+const (
+	WriteWorkflow  = RepositorySpecWorkflowsWrite
+	BranchWorkflow = RepositorySpecWorkflowsBranch
+)
+
+// Deprecated: Use the RepositoryCommitOptionsSigningMethod* constants.
+const (
+	GPGSigningMethod   = RepositoryCommitOptionsSigningMethodGpg
+	SSHSigningMethod   = RepositoryCommitOptionsSigningMethodSsh
+	SMIMESigningMethod = RepositoryCommitOptionsSigningMethodSmime
+)
+
+// Deprecated: Use the RepositorySyncOptionsTarget* constants.
+const (
+	SyncTargetTypeInstance   = RepositorySyncOptionsTargetInstance
+	SyncTargetTypeFolder     = RepositorySyncOptionsTargetFolder
+	SyncTargetTypeFolderless = RepositorySyncOptionsTargetFolderless
+)
+
+// Deprecated: Use the RepositoryDeletionStatusCause* constants.
+const (
+	DeletionCauseUser   = RepositoryDeletionStatusCauseUser
+	DeletionCauseSystem = RepositoryDeletionStatusCauseSystem
+)

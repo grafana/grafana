@@ -24,14 +24,14 @@ func TestRepositoryUsageStatusFromRepository(t *testing.T) {
 			Annotations:       map[string]string{utils.AnnoKeyUpdatedTimestamp: "2021-01-01T00:00:00Z"},
 		},
 		Spec: provisioning.RepositorySpec{
-			Type:      provisioning.GitHubRepositoryType,
-			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-			Sync:      provisioning.SyncOptions{Enabled: true, Target: provisioning.SyncTargetTypeInstance},
+			Type:      provisioning.RepositorySpecTypeGithub,
+			Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
+			Sync:      provisioning.RepositorySyncOptions{Enabled: true, Target: provisioning.RepositorySyncOptionsTargetInstance},
 		},
 		Secure: provisioning.SecureValues{Token: resource.InlineSecureValue{Name: "repo-token"}},
 		Status: provisioning.RepositoryStatus{
 			Health: provisioning.RepositoryHealthStatus{Healthy: true},
-			Sync:   provisioning.SyncStatus{State: provisioning.JobStateSuccess, Finished: 1_600_000_000_000},
+			Sync:   provisioning.RepositorySyncStatus{State: provisioning.JobStateSuccess, Finished: 1_600_000_000_000},
 			Stats:  stats,
 			Conditions: []metav1.Condition{
 				{Type: provisioning.ConditionTypeReady, Status: metav1.ConditionTrue, Reason: provisioning.ReasonAvailable},
@@ -66,28 +66,28 @@ func TestRepositoryAuthMethod(t *testing.T) {
 	}{
 		{
 			name: "local is none",
-			repo: &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType}},
+			repo: &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.RepositorySpecTypeLocal}},
 			want: "none",
 		},
 		{
 			name: "connection-backed",
 			repo: &provisioning.Repository{Spec: provisioning.RepositorySpec{
-				Type:       provisioning.GitHubRepositoryType,
-				Connection: &provisioning.ConnectionInfo{Name: "my-conn"},
+				Type:       provisioning.RepositorySpecTypeGithub,
+				Connection: &provisioning.RepositoryConnectionInfo{Name: "my-conn"},
 			}},
 			want: "connection",
 		},
 		{
 			name: "direct token",
 			repo: &provisioning.Repository{
-				Spec:   provisioning.RepositorySpec{Type: provisioning.GitRepositoryType},
+				Spec:   provisioning.RepositorySpec{Type: provisioning.RepositorySpecTypeGit},
 				Secure: provisioning.SecureValues{Token: resource.InlineSecureValue{Name: "repo-token"}},
 			},
 			want: "token",
 		},
 		{
 			name: "anonymous public repo",
-			repo: &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.GitRepositoryType}},
+			repo: &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.RepositorySpecTypeGit}},
 			want: "anonymous",
 		},
 	}
@@ -100,19 +100,19 @@ func TestRepositoryAuthMethod(t *testing.T) {
 
 func TestRepositoryUsageStatus_ReadOnly(t *testing.T) {
 	readonly := RepositoryUsageStatusFromRepository(&provisioning.Repository{
-		Spec: provisioning.RepositorySpec{Type: provisioning.GitRepositoryType},
+		Spec: provisioning.RepositorySpec{Type: provisioning.RepositorySpecTypeGit},
 	})
 	assert.True(t, readonly.ReadOnly)
 
 	writable := RepositoryUsageStatusFromRepository(&provisioning.Repository{
-		Spec: provisioning.RepositorySpec{Type: provisioning.GitRepositoryType, Workflows: []provisioning.Workflow{provisioning.BranchWorkflow}},
+		Spec: provisioning.RepositorySpec{Type: provisioning.RepositorySpecTypeGit, Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsBranch}},
 	})
 	assert.False(t, writable.ReadOnly)
 }
 
 func TestRepositoryUsageStatusFromRepository_AuthFailure(t *testing.T) {
 	repo := &provisioning.Repository{
-		Spec: provisioning.RepositorySpec{Type: provisioning.GitHubRepositoryType},
+		Spec: provisioning.RepositorySpec{Type: provisioning.RepositorySpecTypeGithub},
 		Status: provisioning.RepositoryStatus{
 			Health: provisioning.RepositoryHealthStatus{Healthy: false, Error: provisioning.HealthFailureHealth},
 			Conditions: []metav1.Condition{
@@ -129,7 +129,7 @@ func TestRepositoryUsageStatusFromRepository_AuthFailure(t *testing.T) {
 
 func TestRepositoryUsageStatusFromRepository_NoStats(t *testing.T) {
 	repo := &provisioning.Repository{
-		Spec: provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
+		Spec: provisioning.RepositorySpec{Type: provisioning.RepositorySpecTypeLocal},
 	}
 
 	got := RepositoryUsageStatusFromRepository(repo)

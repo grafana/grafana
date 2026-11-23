@@ -239,9 +239,9 @@ func (a *repoAggregate) observe(repo *provisioning.Repository, syncTargetCounts,
 	var hasWrite, hasBranch bool
 	for _, w := range repo.Spec.Workflows {
 		switch w {
-		case provisioning.WriteWorkflow:
+		case provisioning.RepositorySpecWorkflowsWrite:
 			hasWrite = true
-		case provisioning.BranchWorkflow:
+		case provisioning.RepositorySpecWorkflowsBranch:
 			hasBranch = true
 		}
 	}

@@ -120,7 +120,7 @@ func TestParseFolderWithMetadata_MetadataHash(t *testing.T) {
 
 	cfg := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "repo-a", Namespace: "default"},
-		Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder}},
+		Spec:       provisioning.RepositorySpec{Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetFolder}},
 	}
 
 	t.Run("populates MetadataHash when metadata exists", func(t *testing.T) {

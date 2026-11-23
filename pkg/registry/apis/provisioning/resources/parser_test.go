@@ -32,7 +32,7 @@ func TestParser(t *testing.T) {
 
 	parser := &parser{
 		repo: provisioning.ResourceRepositoryInfo{
-			Type:      provisioning.LocalRepositoryType,
+			Type:      provisioning.RepositorySpecTypeLocal,
 			Namespace: "xxx",
 			Name:      "repo",
 		},
@@ -43,8 +43,8 @@ func TestParser(t *testing.T) {
 				Name:      "repo",
 			},
 			Spec: provisioning.RepositorySpec{
-				Type: provisioning.LocalRepositoryType,
-				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+				Type: provisioning.RepositorySpecTypeLocal,
+				Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetFolder},
 			},
 		},
 	}
@@ -296,7 +296,7 @@ func TestParser_FolderAnnotationGuard(t *testing.T) {
 
 	parser := &parser{
 		repo: provisioning.ResourceRepositoryInfo{
-			Type:      provisioning.LocalRepositoryType,
+			Type:      provisioning.RepositorySpecTypeLocal,
 			Namespace: "xxx",
 			Name:      "repo",
 		},
@@ -304,8 +304,8 @@ func TestParser_FolderAnnotationGuard(t *testing.T) {
 		config: &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Namespace: "xxx", Name: "repo"},
 			Spec: provisioning.RepositorySpec{
-				Type: provisioning.LocalRepositoryType,
-				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+				Type: provisioning.RepositorySpecTypeLocal,
+				Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetFolder},
 			},
 		},
 	}
@@ -368,8 +368,8 @@ spec:
 	repoConfig := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Namespace: "xxx", Name: "repo"},
 		Spec: provisioning.RepositorySpec{
-			Type: provisioning.GitHubRepositoryType,
-			Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+			Type: provisioning.RepositorySpecTypeGithub,
+			Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetFolder},
 		},
 	}
 
@@ -380,7 +380,7 @@ spec:
 			Return(&repository.FileInfo{Data: []byte(folderMetadataJSON), Hash: "h1"}, nil)
 
 		p := &parser{
-			repo:    provisioning.ResourceRepositoryInfo{Type: provisioning.GitHubRepositoryType, Namespace: "xxx", Name: "repo"},
+			repo:    provisioning.ResourceRepositoryInfo{Type: provisioning.RepositorySpecTypeGithub, Namespace: "xxx", Name: "repo"},
 			clients: clients,
 			config:  repoConfig,
 			reader:  reader,
@@ -404,7 +404,7 @@ spec:
 			Return(&repository.FileInfo{Data: []byte(folderMetadataJSON), Hash: "h1"}, nil)
 
 		p := &parser{
-			repo:    provisioning.ResourceRepositoryInfo{Type: provisioning.GitHubRepositoryType, Namespace: "xxx", Name: "repo"},
+			repo:    provisioning.ResourceRepositoryInfo{Type: provisioning.RepositorySpecTypeGithub, Namespace: "xxx", Name: "repo"},
 			clients: clients,
 			config:  repoConfig,
 			reader:  reader,
@@ -429,7 +429,7 @@ spec:
 			Return(nil, repository.ErrFileNotFound)
 
 		p := &parser{
-			repo:    provisioning.ResourceRepositoryInfo{Type: provisioning.GitHubRepositoryType, Namespace: "xxx", Name: "repo"},
+			repo:    provisioning.ResourceRepositoryInfo{Type: provisioning.RepositorySpecTypeGithub, Namespace: "xxx", Name: "repo"},
 			clients: clients,
 			config:  repoConfig,
 			reader:  reader,
@@ -452,7 +452,7 @@ spec:
 			Return(nil, repository.ErrFileNotFound)
 
 		p := &parser{
-			repo:    provisioning.ResourceRepositoryInfo{Type: provisioning.GitHubRepositoryType, Namespace: "xxx", Name: "repo"},
+			repo:    provisioning.ResourceRepositoryInfo{Type: provisioning.RepositorySpecTypeGithub, Namespace: "xxx", Name: "repo"},
 			clients: clients,
 			config:  repoConfig,
 			reader:  reader,
@@ -1186,14 +1186,14 @@ func TestParserAcceptsSecureValuesForIdentityReads(t *testing.T) {
 
 	p := &parser{
 		repo: provisioning.ResourceRepositoryInfo{
-			Type:      provisioning.GitHubRepositoryType,
+			Type:      provisioning.RepositorySpecTypeGithub,
 			Namespace: "xxx",
 			Name:      "repo",
 		},
 		clients: clients,
 		config: &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Namespace: "xxx", Name: "repo"},
-			Spec:       provisioning.RepositorySpec{Type: provisioning.GitHubRepositoryType},
+			Spec:       provisioning.RepositorySpec{Type: provisioning.RepositorySpecTypeGithub},
 		},
 	}
 

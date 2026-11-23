@@ -28,8 +28,8 @@ func TestLocalRepository_OperationMetrics(t *testing.T) {
 
 	repo := NewRepository(&provisioning.Repository{
 		Spec: provisioning.RepositorySpec{
-			Type:  provisioning.LocalRepositoryType,
-			Local: &provisioning.LocalRepositoryConfig{Path: tempDir},
+			Type:  provisioning.RepositorySpecTypeLocal,
+			Local: &provisioning.RepositoryLocalRepositoryConfig{Path: tempDir},
 		},
 	}, &LocalFolderResolver{PermittedPrefixes: []string{tempDir}, HomePath: tempDir}, testMetrics)
 
@@ -102,7 +102,7 @@ func snapshot(t *testing.T) metricSnapshot {
 			for _, l := range m.GetLabel() {
 				labels[l.GetName()] = l.GetValue()
 			}
-			if labels["repository_type"] != string(provisioning.LocalRepositoryType) {
+			if labels["repository_type"] != string(provisioning.RepositorySpecTypeLocal) {
 				continue
 			}
 			switch f.GetName() {

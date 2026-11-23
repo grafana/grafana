@@ -74,8 +74,8 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{
+						Type: provisioning.RepositorySpecTypeGithub,
+						Github: &provisioning.RepositoryGitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
 					},
@@ -149,8 +149,8 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "org-2",
 					},
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{
+						Type: provisioning.RepositorySpecTypeGithub,
+						Github: &provisioning.RepositoryGitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
 					},
@@ -229,8 +229,8 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{
+						Type: provisioning.RepositorySpecTypeGithub,
+						Github: &provisioning.RepositoryGitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
 					},
@@ -304,8 +304,8 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{
+						Type: provisioning.RepositorySpecTypeGithub,
+						Github: &provisioning.RepositoryGitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
 					},
@@ -382,12 +382,12 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{
+						Type: provisioning.RepositorySpecTypeGithub,
+						Github: &provisioning.RepositoryGitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
-						Webhook: &provisioning.WebhookConfig{
-							BaseURL: "https://webhook-only.example.com",
+						Webhook: &provisioning.RepositoryWebhookConfig{
+							BaseUrl: "https://webhook-only.example.com",
 						},
 					},
 				})
@@ -460,8 +460,8 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{
+						Type: provisioning.RepositorySpecTypeGithub,
+						Github: &provisioning.RepositoryGitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
 					},
@@ -533,8 +533,8 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "org-2",
 					},
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{
+						Type: provisioning.RepositorySpecTypeGithub,
+						Github: &provisioning.RepositoryGitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
 					},
@@ -606,8 +606,8 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{
+						Type: provisioning.RepositorySpecTypeGithub,
+						Github: &provisioning.RepositoryGitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
 					},
@@ -855,8 +855,8 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{
+						Type: provisioning.RepositorySpecTypeGithub,
+						Github: &provisioning.RepositoryGitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
 					},
@@ -1203,8 +1203,8 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{
+						Type: provisioning.RepositorySpecTypeGithub,
+						Github: &provisioning.RepositoryGitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
 					},
@@ -1277,8 +1277,8 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{
+						Type: provisioning.RepositorySpecTypeGithub,
+						Github: &provisioning.RepositoryGitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
 					},
@@ -1348,8 +1348,8 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{
+						Type: provisioning.RepositorySpecTypeGithub,
+						Github: &provisioning.RepositoryGitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
 					},
@@ -1482,8 +1482,8 @@ func TestEvaluate_PopulatesSourceAndRepositoryURLs(t *testing.T) {
 	reader.On("Config").Return(&provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "x"},
 		Spec: provisioning.RepositorySpec{
-			Type:   provisioning.GitHubRepositoryType,
-			GitHub: &provisioning.GitHubRepositoryConfig{URL: "https://github.com/example/repo"},
+			Type:   provisioning.RepositorySpecTypeGithub,
+			Github: &provisioning.RepositoryGitHubRepositoryConfig{Url: "https://github.com/example/repo"},
 		},
 	})
 	reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
@@ -1546,8 +1546,8 @@ func TestEvaluate_StripsCredentialsFromURLs(t *testing.T) {
 	reader.On("Config").Return(&provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "creds-repo", Namespace: "x"},
 		Spec: provisioning.RepositorySpec{
-			Type:   provisioning.GitHubRepositoryType,
-			GitHub: &provisioning.GitHubRepositoryConfig{URL: "https://user:token@github.com/example/repo"}, // trufflehog:ignore
+			Type:   provisioning.RepositorySpecTypeGithub,
+			Github: &provisioning.RepositoryGitHubRepositoryConfig{Url: "https://user:token@github.com/example/repo"}, // trufflehog:ignore
 		},
 	})
 	reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
@@ -1620,8 +1620,8 @@ func TestEvaluate_FolderGetsGrafanaAndSourceURL(t *testing.T) {
 	reader.On("Config").Return(&provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "x"},
 		Spec: provisioning.RepositorySpec{
-			Type:   provisioning.GitHubRepositoryType,
-			GitHub: &provisioning.GitHubRepositoryConfig{URL: "https://github.com/example/repo"},
+			Type:   provisioning.RepositorySpecTypeGithub,
+			Github: &provisioning.RepositoryGitHubRepositoryConfig{Url: "https://github.com/example/repo"},
 		},
 	})
 	reader.On("Read", mock.Anything, "team/_folder.json", "ref").Return(finfo, nil)
@@ -1707,8 +1707,8 @@ func TestEvaluate_DeletedFilePopulatesSourceURL(t *testing.T) {
 	reader.On("Config").Return(&provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "x"},
 		Spec: provisioning.RepositorySpec{
-			Type:   provisioning.GitHubRepositoryType,
-			GitHub: &provisioning.GitHubRepositoryConfig{URL: "https://github.com/example/repo"},
+			Type:   provisioning.RepositorySpecTypeGithub,
+			Github: &provisioning.RepositoryGitHubRepositoryConfig{Url: "https://github.com/example/repo"},
 		},
 	})
 	reader.On("Read", mock.Anything, "team/_folder.json", "base-ref").Return(finfo, nil)
@@ -1777,8 +1777,8 @@ func TestEvaluate_GitHubEnterpriseDoesNotPanic(t *testing.T) {
 	reader.On("Config").Return(&provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "ghes-repo", Namespace: "x"},
 		Spec: provisioning.RepositorySpec{
-			Type: provisioning.GitHubEnterpriseRepositoryType,
-			PullRequest: &provisioning.PullRequestOptions{
+			Type: provisioning.RepositorySpecTypeGithubEnterprise,
+			PullRequest: &provisioning.RepositoryPullRequestOptions{
 				GenerateDashboardPreviews: true,
 			},
 		},
@@ -1828,7 +1828,7 @@ func TestEvaluate_StopsWhenContextIsCanceled(t *testing.T) {
 	reader := repository.NewMockReader(t)
 	reader.On("Config").Return(&provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "x"},
-		Spec:       provisioning.RepositorySpec{Type: provisioning.GitHubRepositoryType},
+		Spec:       provisioning.RepositorySpec{Type: provisioning.RepositorySpecTypeGithub},
 	})
 
 	parserFactory := resources.NewMockParserFactory(t)
@@ -1880,7 +1880,7 @@ func TestEvaluate_TracksUnprocessedFilesWhenCanceledMidway(t *testing.T) {
 	reader := repository.NewMockReader(t)
 	reader.On("Config").Return(&provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "x"},
-		Spec:       provisioning.RepositorySpec{Type: provisioning.GitHubRepositoryType},
+		Spec:       provisioning.RepositorySpec{Type: provisioning.RepositorySpecTypeGithub},
 	})
 
 	aInfo := &repository.FileInfo{Path: "a.json", Ref: "ref", Data: []byte("xxxx")}
@@ -2297,7 +2297,7 @@ func TestEvaluate_RecordsWhatThePullRequestWouldChange(t *testing.T) {
 	reader := repository.NewMockReader(t)
 	reader.On("Config").Return(&provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "x"},
-		Spec:       provisioning.RepositorySpec{Type: provisioning.GitHubRepositoryType},
+		Spec:       provisioning.RepositorySpec{Type: provisioning.RepositorySpecTypeGithub},
 	})
 
 	parser := resources.NewMockParser(t)
@@ -2383,7 +2383,7 @@ func TestEvaluate_RecordsRealActionWhenDryRunFails(t *testing.T) {
 	reader := repository.NewMockReader(t)
 	reader.On("Config").Return(&provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "x"},
-		Spec:       provisioning.RepositorySpec{Type: provisioning.GitHubRepositoryType},
+		Spec:       provisioning.RepositorySpec{Type: provisioning.RepositorySpecTypeGithub},
 	})
 
 	finfo := &repository.FileInfo{Path: "invalid.json", Ref: "ref", Data: []byte("xxxx")}
@@ -2437,7 +2437,7 @@ func TestEvaluate_RecordsEveryFileForJobSummary(t *testing.T) {
 	reader := repository.NewMockReader(t)
 	reader.On("Config").Return(&provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "x"},
-		Spec:       provisioning.RepositorySpec{Type: provisioning.GitHubRepositoryType},
+		Spec:       provisioning.RepositorySpec{Type: provisioning.RepositorySpecTypeGithub},
 	})
 	// Deletions we cannot read still describe a resource the merge would remove.
 	reader.On("Read", mock.Anything, mock.Anything, "base").Return(nil, repository.ErrFileNotFound)

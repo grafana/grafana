@@ -17,21 +17,21 @@ func TestSigningOption(t *testing.T) {
 		{
 			name: "ssh",
 			gitConfig: RepositoryConfig{
-				SigningMethod:    provisioning.SSHSigningMethod,
+				SigningMethod:    provisioning.RepositoryCommitOptionsSigningMethodSsh,
 				CommitSigningKey: "ssh-key",
 			},
 		},
 		{
 			name: "gpg",
 			gitConfig: RepositoryConfig{
-				SigningMethod:    provisioning.GPGSigningMethod,
+				SigningMethod:    provisioning.RepositoryCommitOptionsSigningMethodGpg,
 				CommitSigningKey: "gpg-key",
 			},
 		},
 		{
 			name: "smime with certificate",
 			gitConfig: RepositoryConfig{
-				SigningMethod:    provisioning.SMIMESigningMethod,
+				SigningMethod:    provisioning.RepositoryCommitOptionsSigningMethodSmime,
 				CommitSigningKey: "smime-key",
 				SMIMECertificate: "smime-cert",
 			},
@@ -39,7 +39,7 @@ func TestSigningOption(t *testing.T) {
 		{
 			name: "smime missing certificate",
 			gitConfig: RepositoryConfig{
-				SigningMethod:    provisioning.SMIMESigningMethod,
+				SigningMethod:    provisioning.RepositoryCommitOptionsSigningMethodSmime,
 				CommitSigningKey: "smime-key",
 			},
 			expectedError: "smime signing requires spec.commit.smimeCertificate",
@@ -47,7 +47,7 @@ func TestSigningOption(t *testing.T) {
 		{
 			name: "unsupported method",
 			gitConfig: RepositoryConfig{
-				SigningMethod:    provisioning.SigningMethod("unknown"),
+				SigningMethod:    provisioning.RepositoryCommitOptionsSigningMethod("unknown"),
 				CommitSigningKey: "key",
 			},
 			expectedError: `unsupported signing method "unknown"`,

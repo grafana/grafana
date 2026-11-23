@@ -39,7 +39,7 @@ func (m *mockSecureValues) CommitSigningKey(_ context.Context) (resource.RawSecu
 
 func TestExtra_Type(t *testing.T) {
 	e := github.Extra(nil, nil, nil, false, nil, nil, "")
-	assert.Equal(t, provisioning.GitHubRepositoryType, e.Type())
+	assert.Equal(t, provisioning.RepositorySpecTypeGithub, e.Type())
 }
 
 func TestExtra_Build(t *testing.T) {
@@ -59,8 +59,8 @@ func TestExtra_Build(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type:   provisioning.GitHubRepositoryType,
-					GitHub: nil,
+					Type:   provisioning.RepositorySpecTypeGithub,
+					Github: nil,
 				},
 			},
 			setupDecrypter: func() repository.Decrypter {
@@ -90,9 +90,9 @@ func TestExtra_Build(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/test/repo",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "https://github.com/test/repo",
 						Branch: "main",
 					},
 				},
@@ -115,9 +115,9 @@ func TestExtra_Build(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/test/repo",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "https://github.com/test/repo",
 						Branch: "main",
 					},
 				},
@@ -144,9 +144,9 @@ func TestExtra_Build(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/test/repo",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "https://github.com/test/repo",
 						Branch: "main",
 					},
 				},
@@ -176,12 +176,12 @@ func TestExtra_Build(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/test/repo",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "https://github.com/test/repo",
 						Branch: "main",
 					},
-					Webhook: &provisioning.WebhookConfig{Disabled: true},
+					Webhook: &provisioning.RepositoryWebhookConfig{Disabled: true},
 				},
 			},
 			setupDecrypter: func() repository.Decrypter {
@@ -207,17 +207,17 @@ func TestExtra_Build(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/test/repo",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "https://github.com/test/repo",
 						Branch: "main",
 					},
-					Webhook: &provisioning.WebhookConfig{Disabled: true},
+					Webhook: &provisioning.RepositoryWebhookConfig{Disabled: true},
 				},
 				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{
-						ID:  456,
-						URL: "https://grafana.example.com/webhook",
+					Webhook: &provisioning.RepositoryWebhookStatus{
+						Id:  456,
+						Url: "https://grafana.example.com/webhook",
 					},
 				},
 			},
@@ -245,9 +245,9 @@ func TestExtra_Build(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/test/repo",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "https://github.com/test/repo",
 						Branch: "main",
 					},
 				},
@@ -276,9 +276,9 @@ func TestExtra_Build(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/test/repo",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "https://github.com/test/repo",
 						Branch: "main",
 					},
 				},
@@ -306,13 +306,13 @@ func TestExtra_Build(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/test/repo",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "https://github.com/test/repo",
 						Branch: "main",
 					},
-					Commit: &provisioning.CommitOptions{
-						SigningMethod: provisioning.SSHSigningMethod,
+					Commit: &provisioning.RepositoryCommitOptions{
+						SigningMethod: provisioning.RepositoryCommitOptionsSigningMethodSsh,
 					},
 				},
 			},
@@ -335,13 +335,13 @@ func TestExtra_Build(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/test/repo",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "https://github.com/test/repo",
 						Branch: "main",
 					},
-					Commit: &provisioning.CommitOptions{
-						SigningMethod: provisioning.SSHSigningMethod,
+					Commit: &provisioning.RepositoryCommitOptions{
+						SigningMethod: provisioning.RepositoryCommitOptionsSigningMethodSsh,
 					},
 				},
 			},
@@ -368,9 +368,9 @@ func TestExtra_Build(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/test/repo",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "https://github.com/test/repo",
 						Branch: "main",
 						Path:   "custom/path",
 					},
@@ -433,16 +433,16 @@ func TestExtra_Mutate(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL: "https://github.com/test/repo.git/",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url: "https://github.com/test/repo.git/",
 					},
 				},
 			},
 			expectedError: false,
 			validateObj: func(t *testing.T, obj runtime.Object) {
 				repo := obj.(*provisioning.Repository)
-				assert.Equal(t, "https://github.com/test/repo", repo.Spec.GitHub.URL)
+				assert.Equal(t, "https://github.com/test/repo", repo.Spec.Github.Url)
 			},
 		},
 		{
@@ -453,8 +453,8 @@ func TestExtra_Mutate(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type:   provisioning.GitHubRepositoryType,
-					GitHub: nil,
+					Type:   provisioning.RepositorySpecTypeGithub,
+					Github: nil,
 				},
 			},
 			expectedError: false,
@@ -472,16 +472,16 @@ func TestExtra_Mutate(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL: "https://github.com/test/repo/",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url: "https://github.com/test/repo/",
 					},
 				},
 			},
 			expectedError: false,
 			validateObj: func(t *testing.T, obj runtime.Object) {
 				repo := obj.(*provisioning.Repository)
-				assert.Equal(t, "https://github.com/test/repo", repo.Spec.GitHub.URL)
+				assert.Equal(t, "https://github.com/test/repo", repo.Spec.Github.Url)
 			},
 		},
 		{
@@ -492,16 +492,16 @@ func TestExtra_Mutate(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL: "https://github.com/test/repo.git",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url: "https://github.com/test/repo.git",
 					},
 				},
 			},
 			expectedError: false,
 			validateObj: func(t *testing.T, obj runtime.Object) {
 				repo := obj.(*provisioning.Repository)
-				assert.Equal(t, "https://github.com/test/repo", repo.Spec.GitHub.URL)
+				assert.Equal(t, "https://github.com/test/repo", repo.Spec.Github.Url)
 			},
 		},
 		{
@@ -512,16 +512,16 @@ func TestExtra_Mutate(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL: "https://github.com/test/repo",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url: "https://github.com/test/repo",
 					},
 				},
 			},
 			expectedError: false,
 			validateObj: func(t *testing.T, obj runtime.Object) {
 				repo := obj.(*provisioning.Repository)
-				assert.Equal(t, "https://github.com/test/repo", repo.Spec.GitHub.URL)
+				assert.Equal(t, "https://github.com/test/repo", repo.Spec.Github.Url)
 			},
 		},
 	}

@@ -72,7 +72,7 @@ func TestIntegrationProvisioning_QuotaWithFolderMetadata(t *testing.T) {
 		helper.RequireRepoFolderCount(t, repo, 2)
 
 		// Lower the quota below the current count to put the repo over limit.
-		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 2})
+		helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 2})
 		helper.TriggerRepositoryReconciliation(t, repo)
 		helper.WaitForResourceQuotaLimit(t, repo, 2)
 

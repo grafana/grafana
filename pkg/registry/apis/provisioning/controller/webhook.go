@@ -183,14 +183,14 @@ func deleteWebhook(ctx context.Context, repo repository.WebhookRepository) error
 	// unhealthy repository is done by removing the cleanup finalizer, not by
 	// swallowing the error here.
 	if errors.Is(err, repository.ErrFileNotFound) {
-		logger.Warn("webhook no longer exists", "url", status.URL, "id", id)
+		logger.Warn("webhook no longer exists", "url", status.Url, "id", id)
 		return nil
 	}
 	if err != nil {
 		return fmt.Errorf("delete webhook: %w", err)
 	}
 
-	logger.Info("webhook deleted", "url", status.URL, "id", id)
+	logger.Info("webhook deleted", "url", status.Url, "id", id)
 	return nil
 }
 
@@ -230,15 +230,15 @@ func rotateWebhookSecret(ctx context.Context, repo repository.WebhookRepository)
 // statusPatches returns the JSON patch operations that persist a freshly
 // created or rotated provider webhook: its status and secret.
 func statusPatches(id string, url string, events []string, secret string) []map[string]any {
-	status := &provisioning.WebhookStatus{
-		URL:              url,
+	status := &provisioning.RepositoryWebhookStatus{
+		Url:              url,
 		SubscribedEvents: events,
 		LastRotated:      time.Now().UnixMilli(),
 	}
 	if numericID, err := strconv.ParseInt(id, 10, 64); err == nil {
-		status.ID = numericID
+		status.Id = numericID
 	} else {
-		status.UUID = id
+		status.Uuid = id
 	}
 	return []map[string]any{
 		{

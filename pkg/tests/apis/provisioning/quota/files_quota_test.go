@@ -73,7 +73,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 	t.Run("within quota allows create and update via files endpoint", func(t *testing.T) {
 		// With folder target: 1 dashboard + 1 folder = 2 resources, limit 10 → within quota
 		helper := sharedHelper(t)
-		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 10})
+		helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 10})
 
 		const repo = "files-quota-within-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
@@ -130,7 +130,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 	t.Run("quota reached blocks create but allows update via files endpoint", func(t *testing.T) {
 		// With folder target: 1 dashboard + 1 folder = 2 resources, limit 2 → exactly at limit (reached)
 		helper := sharedHelper(t)
-		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 2})
+		helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 2})
 
 		const repo = "files-quota-reached-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
@@ -203,7 +203,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 		})
 		helper.SyncAndWait(t, repo, nil)
 
-		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 1})
+		helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 1})
 		helper.TriggerRepositoryReconciliation(t, repo)
 		helper.WaitForResourceQuotaLimit(t, repo, 1)
 		helper.SyncAndWait(t, repo, nil)

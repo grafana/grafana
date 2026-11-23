@@ -129,8 +129,8 @@ func TestFullSync_SuccessfulFolderCreation(t *testing.T) {
 		},
 		Spec: provisioning.RepositorySpec{
 			Title: "Test Repo",
-			Sync: provisioning.SyncOptions{
-				Target: provisioning.SyncTargetTypeFolder,
+			Sync: provisioning.RepositorySyncOptions{
+				Target: provisioning.RepositorySyncOptionsTargetFolder,
 			},
 		},
 	})
@@ -160,8 +160,8 @@ func TestFullSync_FolderCreationFailed(t *testing.T) {
 		},
 		Spec: provisioning.RepositorySpec{
 			Title: "Test Repo",
-			Sync: provisioning.SyncOptions{
-				Target: provisioning.SyncTargetTypeFolder,
+			Sync: provisioning.RepositorySyncOptions{
+				Target: provisioning.RepositorySyncOptionsTargetFolder,
 			},
 		},
 	})
@@ -195,8 +195,8 @@ func TestFullSync_FolderCreationFailed_UnmanagedConflictBecomesWarning(t *testin
 		},
 		Spec: provisioning.RepositorySpec{
 			Title: "Test Repo",
-			Sync: provisioning.SyncOptions{
-				Target: provisioning.SyncTargetTypeFolder,
+			Sync: provisioning.RepositorySyncOptions{
+				Target: provisioning.RepositorySyncOptionsTargetFolder,
 			},
 		},
 	})
@@ -239,8 +239,8 @@ func TestFullSync_FolderCreationFailedWithInstanceTarget(t *testing.T) {
 		},
 		Spec: provisioning.RepositorySpec{
 			Title: "Test Repo",
-			Sync: provisioning.SyncOptions{
-				Target: provisioning.SyncTargetTypeInstance,
+			Sync: provisioning.RepositorySyncOptions{
+				Target: provisioning.RepositorySyncOptionsTargetInstance,
 			},
 		},
 	})
@@ -944,7 +944,7 @@ func atQuota() *provisioning.Repository {
 			Conditions: []metav1.Condition{
 				{Type: provisioning.ConditionTypeResourceQuota, Status: metav1.ConditionFalse, Reason: provisioning.ReasonQuotaExceeded},
 			},
-			Quota: provisioning.QuotaStatus{MaxResourcesPerRepository: 100},
+			Quota: provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 100},
 			Stats: []provisioning.ResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 99}},
 		},
 	}
@@ -1019,7 +1019,7 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 							Reason: provisioning.ReasonQuotaExceeded,
 						},
 					},
-					Quota: provisioning.QuotaStatus{
+					Quota: provisioning.RepositoryQuotaStatus{
 						MaxResourcesPerRepository: 0,
 					},
 				},
@@ -1038,7 +1038,7 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 							Reason: provisioning.ReasonQuotaExceeded,
 						},
 					},
-					Quota: provisioning.QuotaStatus{
+					Quota: provisioning.RepositoryQuotaStatus{
 						MaxResourcesPerRepository: 100,
 					},
 					Stats: []provisioning.ResourceCount{
@@ -1061,7 +1061,7 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 							Reason: provisioning.ReasonQuotaExceeded,
 						},
 					},
-					Quota: provisioning.QuotaStatus{
+					Quota: provisioning.RepositoryQuotaStatus{
 						MaxResourcesPerRepository: 100,
 					},
 					Stats: []provisioning.ResourceCount{
@@ -1083,7 +1083,7 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 							Reason: provisioning.ReasonQuotaExceeded,
 						},
 					},
-					Quota: provisioning.QuotaStatus{
+					Quota: provisioning.RepositoryQuotaStatus{
 						MaxResourcesPerRepository: 100,
 					},
 					Stats: []provisioning.ResourceCount{
@@ -1105,7 +1105,7 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 							Reason: provisioning.ReasonQuotaExceeded,
 						},
 					},
-					Quota: provisioning.QuotaStatus{
+					Quota: provisioning.RepositoryQuotaStatus{
 						MaxResourcesPerRepository: 100,
 					},
 					Stats: []provisioning.ResourceCount{
@@ -1127,7 +1127,7 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 							Reason: provisioning.ReasonQuotaExceeded,
 						},
 					},
-					Quota: provisioning.QuotaStatus{
+					Quota: provisioning.RepositoryQuotaStatus{
 						MaxResourcesPerRepository: 100,
 					},
 					Stats: []provisioning.ResourceCount{
@@ -1149,7 +1149,7 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 							Reason: provisioning.ReasonQuotaExceeded,
 						},
 					},
-					Quota: provisioning.QuotaStatus{
+					Quota: provisioning.RepositoryQuotaStatus{
 						MaxResourcesPerRepository: 100,
 					},
 					Stats: []provisioning.ResourceCount{
@@ -1171,7 +1171,7 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 							Reason: provisioning.ReasonQuotaExceeded,
 						},
 					},
-					Quota: provisioning.QuotaStatus{
+					Quota: provisioning.RepositoryQuotaStatus{
 						MaxResourcesPerRepository: 100,
 					},
 					Stats: []provisioning.ResourceCount{

@@ -90,7 +90,7 @@ func TestNewGit(t *testing.T) {
 
 	config := &provisioning.Repository{
 		Spec: provisioning.RepositorySpec{
-			Type: provisioning.GitHubRepositoryType,
+			Type: provisioning.RepositorySpecTypeGithub,
 		},
 	}
 
@@ -132,7 +132,7 @@ func TestNewRepository_SendsUserAgent(t *testing.T) {
 			}))
 			t.Cleanup(server.Close)
 
-			config := &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.GitHubRepositoryType}}
+			config := &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.RepositorySpecTypeGithub}}
 			gitRepo, err := NewRepository(t.Context(), config, RepositoryConfig{URL: server.URL + "/owner/repo", Branch: "main", UserAgent: tt.userAgent}, nil, nil)
 			require.NoError(t, err)
 
@@ -163,8 +163,8 @@ func (emptySecureValues) CommitSigningKey(context.Context) (resource.RawSecureVa
 func TestExtra_BuildUsesUserAgent(t *testing.T) {
 	decrypter := func(*provisioning.Repository) repository.SecureValues { return emptySecureValues{} }
 	config := &provisioning.Repository{Spec: provisioning.RepositorySpec{
-		Type: provisioning.GitRepositoryType,
-		Git:  &provisioning.GitRepositoryConfig{URL: "https://git.example.com/owner/repo.git", Branch: "main"},
+		Type: provisioning.RepositorySpecTypeGit,
+		Git:  &provisioning.RepositoryGitRepositoryConfig{Url: "https://git.example.com/owner/repo.git", Branch: "main"},
 	}}
 
 	repo, err := Extra(decrypter, false, nil, nil, "custom-agent/1.0").Build(t.Context(), config)
@@ -212,7 +212,7 @@ func TestGitRepository_Test_ReportsGitServerStatus(t *testing.T) {
 			}))
 			t.Cleanup(server.Close)
 
-			config := &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.GitRepositoryType}}
+			config := &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.RepositorySpecTypeGit}}
 			gitRepo, err := NewRepository(t.Context(), config, RepositoryConfig{URL: server.URL + "/owner/repo", Branch: "main"}, nil, nil)
 			require.NoError(t, err)
 
@@ -231,7 +231,7 @@ func TestCreateSignature(t *testing.T) {
 	gitRepo := &gitRepository{
 		config: &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
-				Type: provisioning.GitHubRepositoryType,
+				Type: provisioning.RepositorySpecTypeGithub,
 			},
 		},
 		gitConfig: RepositoryConfig{
@@ -301,7 +301,7 @@ func TestEnsureBranchExists(t *testing.T) {
 	gitRepo := &gitRepository{
 		config: &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
-				Type: provisioning.GitHubRepositoryType,
+				Type: provisioning.RepositorySpecTypeGithub,
 			},
 		},
 		gitConfig: RepositoryConfig{
@@ -372,7 +372,7 @@ func TestGitRepository_Test(t *testing.T) {
 		name        string
 		setupMock   func(*mocks.FakeClient)
 		gitConfig   RepositoryConfig
-		workflows   []provisioning.Workflow
+		workflows   []provisioning.RepositorySpecWorkflows
 		wantResults *provisioning.TestResults
 		wantError   error
 	}{
@@ -837,7 +837,7 @@ func TestGitRepository_Test(t *testing.T) {
 			gitConfig: RepositoryConfig{
 				Branch: "main",
 			},
-			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 			wantResults: &provisioning.TestResults{
 				Success: true,
 				Errors:  nil,
@@ -859,7 +859,7 @@ func TestGitRepository_Test(t *testing.T) {
 			gitConfig: RepositoryConfig{
 				Branch: "main",
 			},
-			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 			wantResults: &provisioning.TestResults{
 				Success: false,
 				Errors: []provisioning.ErrorDetails{
@@ -887,7 +887,7 @@ func TestGitRepository_Test(t *testing.T) {
 			gitConfig: RepositoryConfig{
 				Branch: "main",
 			},
-			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 			wantResults: &provisioning.TestResults{
 				Success: false,
 				Errors: []provisioning.ErrorDetails{
@@ -915,7 +915,7 @@ func TestGitRepository_Test(t *testing.T) {
 			gitConfig: RepositoryConfig{
 				Branch: "main",
 			},
-			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 			wantResults: &provisioning.TestResults{
 				Success: false,
 				Errors: []provisioning.ErrorDetails{
@@ -965,7 +965,7 @@ func TestGitRepository_Test(t *testing.T) {
 			gitConfig: RepositoryConfig{
 				Branch: "main",
 			},
-			workflows: []provisioning.Workflow{}, // Empty workflows array (read-only)
+			workflows: []provisioning.RepositorySpecWorkflows{}, // Empty workflows array (read-only)
 			wantResults: &provisioning.TestResults{
 				Success: true,
 				Errors:  nil,
@@ -1045,8 +1045,8 @@ func TestGitRepository_Test_CanWriteValidation(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type:      provisioning.GitRepositoryType,
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					Type:      provisioning.RepositorySpecTypeGit,
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 				},
 			},
 		}
@@ -1077,7 +1077,7 @@ func TestGitRepository_Test_CanWriteValidation(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type:      provisioning.GitRepositoryType,
+					Type:      provisioning.RepositorySpecTypeGit,
 					Workflows: nil, // No workflows = read-only
 				},
 			},
@@ -1110,8 +1110,8 @@ func TestGitRepository_Test_CanWriteValidation(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type:      provisioning.GitRepositoryType,
-					Workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
+					Type:      provisioning.RepositorySpecTypeGit,
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsBranch},
 				},
 			},
 		}
@@ -1143,8 +1143,8 @@ func TestGitRepository_Test_CanWriteValidation(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type:      provisioning.GitRepositoryType,
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					Type:      provisioning.RepositorySpecTypeGit,
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 				},
 			},
 		}
@@ -1344,7 +1344,7 @@ func TestGitRepository_ReadTree(t *testing.T) {
 				gitConfig: tt.gitConfig,
 				config: &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
+						Type: provisioning.RepositorySpecTypeGithub,
 					},
 				},
 			}
@@ -1457,7 +1457,7 @@ func TestGitRepository_Create(t *testing.T) {
 				gitConfig: tt.gitConfig,
 				config: &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
+						Type: provisioning.RepositorySpecTypeGithub,
 					},
 				},
 			}
@@ -1560,7 +1560,7 @@ func TestGitRepository_Update(t *testing.T) {
 				gitConfig: tt.gitConfig,
 				config: &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
+						Type: provisioning.RepositorySpecTypeGithub,
 					},
 				},
 			}
@@ -1671,7 +1671,7 @@ func TestGitRepository_Delete(t *testing.T) {
 				gitConfig: tt.gitConfig,
 				config: &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
+						Type: provisioning.RepositorySpecTypeGithub,
 					},
 				},
 			}
@@ -1759,7 +1759,7 @@ func TestGitRepository_ListRefs(t *testing.T) {
 				gitConfig: tt.gitConfig,
 				config: &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
+						Type: provisioning.RepositorySpecTypeGithub,
 					},
 				},
 			}
@@ -1829,7 +1829,7 @@ func TestGitRepository_LatestRef(t *testing.T) {
 				gitConfig: tt.gitConfig,
 				config: &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
+						Type: provisioning.RepositorySpecTypeGithub,
 					},
 				},
 			}
@@ -1859,7 +1859,7 @@ func TestGitRepository_History(t *testing.T) {
 	gitRepo := &gitRepository{
 		config: &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
-				Type: provisioning.GitHubRepositoryType,
+				Type: provisioning.RepositorySpecTypeGithub,
 			},
 		},
 	}
@@ -1979,7 +1979,7 @@ func TestGitRepository_Write(t *testing.T) {
 				gitConfig: tt.gitConfig,
 				config: &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
+						Type: provisioning.RepositorySpecTypeGithub,
 					},
 				},
 			}
@@ -2112,7 +2112,7 @@ func TestGitRepository_CompareFiles(t *testing.T) {
 				gitConfig: tt.gitConfig,
 				config: &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
+						Type: provisioning.RepositorySpecTypeGithub,
 					},
 				},
 			}
@@ -2223,7 +2223,7 @@ func TestGitRepository_ensureBranchExists(t *testing.T) {
 				gitConfig: tt.gitConfig,
 				config: &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
+						Type: provisioning.RepositorySpecTypeGithub,
 					},
 				},
 			}
@@ -2249,7 +2249,7 @@ func TestGitRepository_createSignature(t *testing.T) {
 	gitRepo := &gitRepository{
 		config: &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
-				Type: provisioning.GitHubRepositoryType,
+				Type: provisioning.RepositorySpecTypeGithub,
 			},
 		},
 		gitConfig: RepositoryConfig{
@@ -2336,8 +2336,8 @@ func TestGitRepository_createSignature(t *testing.T) {
 		repo := &gitRepository{
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					Commit: &provisioning.CommitOptions{
+					Type: provisioning.RepositorySpecTypeGithub,
+					Commit: &provisioning.RepositoryCommitOptions{
 						SignerName:  "Bot Signer",
 						SignerEmail: "signer@example.com",
 					},
@@ -2357,8 +2357,8 @@ func TestGitRepository_createSignature(t *testing.T) {
 		repo := &gitRepository{
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type:   provisioning.GitHubRepositoryType,
-					Commit: &provisioning.CommitOptions{SignerName: "Bot Signer"},
+					Type:   provisioning.RepositorySpecTypeGithub,
+					Commit: &provisioning.RepositoryCommitOptions{SignerName: "Bot Signer"},
 				},
 			},
 		}
@@ -2374,8 +2374,8 @@ func TestGitRepository_createSignature(t *testing.T) {
 		repo := &gitRepository{
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					Commit: &provisioning.CommitOptions{
+					Type: provisioning.RepositorySpecTypeGithub,
+					Commit: &provisioning.RepositoryCommitOptions{
 						SignerName:  "Bot Signer",
 						SignerEmail: "signer@example.com",
 					},
@@ -2399,8 +2399,8 @@ func TestGitRepository_createSignature(t *testing.T) {
 		repo := &gitRepository{
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					Commit: &provisioning.CommitOptions{
+					Type: provisioning.RepositorySpecTypeGithub,
+					Commit: &provisioning.RepositoryCommitOptions{
 						AuthorName:  "Sync Bot",
 						AuthorEmail: "bot@example.com",
 					},
@@ -2424,8 +2424,8 @@ func TestGitRepository_createSignature(t *testing.T) {
 		repo := &gitRepository{
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type:   provisioning.GitHubRepositoryType,
-					Commit: &provisioning.CommitOptions{AuthorEmail: "bot@example.com"},
+					Type:   provisioning.RepositorySpecTypeGithub,
+					Commit: &provisioning.RepositoryCommitOptions{AuthorEmail: "bot@example.com"},
 				},
 			},
 		}
@@ -2446,8 +2446,8 @@ func TestGitRepository_createSignature(t *testing.T) {
 		repo := &gitRepository{
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					Commit: &provisioning.CommitOptions{
+					Type: provisioning.RepositorySpecTypeGithub,
+					Commit: &provisioning.RepositoryCommitOptions{
 						AuthorName:  "Sync Bot",
 						AuthorEmail: "bot@example.com",
 						SignerName:  "Bot Signer",
@@ -2491,7 +2491,7 @@ func TestNewGitRepository(t *testing.T) {
 				URL:              "https://git.example.com/owner/repo.git",
 				Branch:           "main",
 				Token:            "plain-token",
-				SigningMethod:    provisioning.SSHSigningMethod,
+				SigningMethod:    provisioning.RepositoryCommitOptionsSigningMethodSsh,
 				CommitSigningKey: "ssh-key",
 			},
 			wantError:     false,
@@ -2504,7 +2504,7 @@ func TestNewGitRepository(t *testing.T) {
 				URL:              "https://git.example.com/owner/repo.git",
 				Branch:           "main",
 				Token:            "plain-token",
-				SigningMethod:    provisioning.SMIMESigningMethod,
+				SigningMethod:    provisioning.RepositoryCommitOptionsSigningMethodSmime,
 				CommitSigningKey: "smime-key",
 			},
 			wantError: true,
@@ -2517,7 +2517,7 @@ func TestNewGitRepository(t *testing.T) {
 
 			config := &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
+					Type: provisioning.RepositorySpecTypeGithub,
 				},
 			}
 
@@ -2549,7 +2549,7 @@ func TestNewGitRepository(t *testing.T) {
 func TestGitRepository_Getters(t *testing.T) {
 	config := &provisioning.Repository{
 		Spec: provisioning.RepositorySpec{
-			Type: provisioning.GitHubRepositoryType,
+			Type: provisioning.RepositorySpecTypeGithub,
 		},
 	}
 
@@ -2660,7 +2660,7 @@ func TestGitRepository_resolveRefToHash(t *testing.T) {
 				gitConfig: tt.gitConfig,
 				config: &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
+						Type: provisioning.RepositorySpecTypeGithub,
 					},
 				},
 			}
@@ -2725,7 +2725,7 @@ func TestGitRepository_commit(t *testing.T) {
 			gitRepo := &gitRepository{
 				config: &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
+						Type: provisioning.RepositorySpecTypeGithub,
 					},
 				},
 				gitConfig: RepositoryConfig{
@@ -2822,7 +2822,7 @@ func TestGitRepository_commitAndPush(t *testing.T) {
 			gitRepo := &gitRepository{
 				config: &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
+						Type: provisioning.RepositorySpecTypeGithub,
 					},
 				},
 				gitConfig: RepositoryConfig{
@@ -2857,7 +2857,7 @@ func TestGitRepository_withGitContext(t *testing.T) {
 	gitRepo := &gitRepository{
 		config: &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
-				Type: provisioning.GitHubRepositoryType,
+				Type: provisioning.RepositorySpecTypeGithub,
 			},
 		},
 		gitConfig: RepositoryConfig{
@@ -2910,7 +2910,7 @@ func TestGitRepository_Stage(t *testing.T) {
 	gitRepo := &gitRepository{
 		config: &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
-				Type: provisioning.GitHubRepositoryType,
+				Type: provisioning.RepositorySpecTypeGithub,
 			},
 		},
 		gitConfig: RepositoryConfig{
@@ -2959,7 +2959,7 @@ func TestGitRepository_EdgeCases(t *testing.T) {
 			client:    mockClient,
 			gitConfig: RepositoryConfig{Branch: "main", Path: "configs"},
 			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{Type: provisioning.GitHubRepositoryType},
+				Spec: provisioning.RepositorySpec{Type: provisioning.RepositorySpecTypeGithub},
 			},
 		}
 
@@ -2974,7 +2974,7 @@ func TestGitRepository_EdgeCases(t *testing.T) {
 		gitRepo := &gitRepository{
 			gitConfig: RepositoryConfig{Branch: "main", Path: "configs"},
 			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{Type: provisioning.GitHubRepositoryType},
+				Spec: provisioning.RepositorySpec{Type: provisioning.RepositorySpecTypeGithub},
 			},
 		}
 
@@ -2997,7 +2997,7 @@ func TestGitRepository_EdgeCases(t *testing.T) {
 			client:    mockClient,
 			gitConfig: RepositoryConfig{Branch: "main", Path: "configs"},
 			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{Type: provisioning.GitHubRepositoryType},
+				Spec: provisioning.RepositorySpec{Type: provisioning.RepositorySpecTypeGithub},
 			},
 		}
 
@@ -3071,7 +3071,7 @@ func TestGitRepository_ResolveRefToHash_EdgeCases(t *testing.T) {
 				},
 				config: &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
+						Type: provisioning.RepositorySpecTypeGithub,
 					},
 				},
 			}
@@ -3211,7 +3211,7 @@ func TestGitRepository_CompareFiles_EdgeCases(t *testing.T) {
 				},
 				config: &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
+						Type: provisioning.RepositorySpecTypeGithub,
 					},
 				},
 			}
@@ -3306,7 +3306,7 @@ func TestGitRepository_ReadTree_EdgeCases(t *testing.T) {
 				},
 				config: &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
+						Type: provisioning.RepositorySpecTypeGithub,
 					},
 				},
 			}
@@ -3358,7 +3358,7 @@ func TestGitRepository_NewGitRepository_ClientError(t *testing.T) {
 
 	config := &provisioning.Repository{
 		Spec: provisioning.RepositorySpec{
-			Type: provisioning.GitHubRepositoryType,
+			Type: provisioning.RepositorySpecTypeGithub,
 		},
 	}
 
@@ -3422,7 +3422,7 @@ func TestGitRepository_ensureBranchExists_ErrorConditions(t *testing.T) {
 				},
 				config: &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
+						Type: provisioning.RepositorySpecTypeGithub,
 					},
 				},
 			}
@@ -3504,7 +3504,7 @@ func TestGitRepository_Read_EdgeCases(t *testing.T) {
 				},
 				config: &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
+						Type: provisioning.RepositorySpecTypeGithub,
 					},
 				},
 			}
@@ -3573,7 +3573,7 @@ func TestGitRepository_Create_ErrorConditions(t *testing.T) {
 				},
 				config: &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
+						Type: provisioning.RepositorySpecTypeGithub,
 					},
 				},
 			}
@@ -3638,7 +3638,7 @@ func TestGitRepository_Update_ErrorConditions(t *testing.T) {
 				},
 				config: &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
+						Type: provisioning.RepositorySpecTypeGithub,
 					},
 				},
 			}
@@ -3736,7 +3736,7 @@ func TestGitRepository_Delete_ErrorConditions(t *testing.T) {
 				},
 				config: &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
+						Type: provisioning.RepositorySpecTypeGithub,
 					},
 				},
 			}
@@ -3775,7 +3775,7 @@ func TestGitRepository_CompareFiles_EmptyBase(t *testing.T) {
 		},
 		config: &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
-				Type: provisioning.GitHubRepositoryType,
+				Type: provisioning.RepositorySpecTypeGithub,
 			},
 		},
 	}
@@ -3997,7 +3997,7 @@ func TestGitRepository_CompareFiles_Renamed(t *testing.T) {
 				},
 				config: &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
+						Type: provisioning.RepositorySpecTypeGithub,
 					},
 				},
 			}
@@ -4120,7 +4120,7 @@ func TestGitRepository_CompareFiles_Modified_PreviousRef(t *testing.T) {
 				},
 				config: &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
+						Type: provisioning.RepositorySpecTypeGithub,
 					},
 				},
 			}
@@ -4168,7 +4168,7 @@ func TestGitRepository_EmptyRefHandling(t *testing.T) {
 				},
 				config: &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
+						Type: provisioning.RepositorySpecTypeGithub,
 					},
 				},
 			}
@@ -4260,7 +4260,7 @@ func TestGitRepository_CompareFiles_ResolveErrors(t *testing.T) {
 				},
 				config: &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
+						Type: provisioning.RepositorySpecTypeGithub,
 					},
 				},
 			}
@@ -4302,7 +4302,7 @@ func TestGitRepository_Read_EmptyRef(t *testing.T) {
 		},
 		config: &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
-				Type: provisioning.GitHubRepositoryType,
+				Type: provisioning.RepositorySpecTypeGithub,
 			},
 		},
 	}
@@ -4339,7 +4339,7 @@ func TestGitRepository_ReadTree_EmptyRef(t *testing.T) {
 		},
 		config: &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
-				Type: provisioning.GitHubRepositoryType,
+				Type: provisioning.RepositorySpecTypeGithub,
 			},
 		},
 	}
@@ -4364,7 +4364,7 @@ func TestGitRepository_Update_EnsureBranchExistsError(t *testing.T) {
 		},
 		config: &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
-				Type: provisioning.GitHubRepositoryType,
+				Type: provisioning.RepositorySpecTypeGithub,
 			},
 		},
 	}
@@ -4387,7 +4387,7 @@ func TestGitRepository_Create_EnsureBranchExistsError(t *testing.T) {
 		},
 		config: &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
-				Type: provisioning.GitHubRepositoryType,
+				Type: provisioning.RepositorySpecTypeGithub,
 			},
 		},
 	}
@@ -4410,7 +4410,7 @@ func TestGitRepository_Delete_EnsureBranchExistsError(t *testing.T) {
 		},
 		config: &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
-				Type: provisioning.GitHubRepositoryType,
+				Type: provisioning.RepositorySpecTypeGithub,
 			},
 		},
 	}
@@ -4429,7 +4429,7 @@ func TestGitRepository_Update_DirectoryCheck(t *testing.T) {
 		},
 		config: &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
-				Type: provisioning.GitHubRepositoryType,
+				Type: provisioning.RepositorySpecTypeGithub,
 			},
 		},
 	}
@@ -4473,7 +4473,7 @@ func TestGitRepository_Write_DefaultRef(t *testing.T) {
 		},
 		config: &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
-				Type: provisioning.GitHubRepositoryType,
+				Type: provisioning.RepositorySpecTypeGithub,
 			},
 		},
 	}
@@ -4506,7 +4506,7 @@ func TestGitRepository_Read_RefInFileInfo(t *testing.T) {
 		},
 		config: &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
-				Type: provisioning.GitHubRepositoryType,
+				Type: provisioning.RepositorySpecTypeGithub,
 			},
 		},
 	}
@@ -4540,7 +4540,7 @@ func TestGitRepository_Read_GetTreeByPath_NotFound(t *testing.T) {
 		},
 		config: &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
-				Type: provisioning.GitHubRepositoryType,
+				Type: provisioning.RepositorySpecTypeGithub,
 			},
 		},
 	}
@@ -4569,7 +4569,7 @@ func TestGitRepository_ReadTree_GetFlatTree_NotFound(t *testing.T) {
 		},
 		config: &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
-				Type: provisioning.GitHubRepositoryType,
+				Type: provisioning.RepositorySpecTypeGithub,
 			},
 		},
 	}
@@ -4624,7 +4624,7 @@ func TestGitRepository_CompareFiles_FilesOutsideConfiguredPath_AllStatuses(t *te
 				},
 				config: &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
+						Type: provisioning.RepositorySpecTypeGithub,
 					},
 				},
 			}
@@ -4912,7 +4912,7 @@ func TestGitRepository_Move(t *testing.T) {
 					Name: "test-repo",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitRepositoryType,
+					Type: provisioning.RepositorySpecTypeGit,
 				},
 			}
 
@@ -5151,7 +5151,7 @@ func TestGitRepository_Move_ErrorConditions(t *testing.T) {
 					Name: "test-repo",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitRepositoryType,
+					Type: provisioning.RepositorySpecTypeGit,
 				},
 			}
 
@@ -5299,9 +5299,9 @@ func TestGitRepository_GetDefaultBranch(t *testing.T) {
 				},
 				config: &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitRepositoryType,
-						Git: &provisioning.GitRepositoryConfig{
-							URL: "https://git.example.com/owner/repo.git",
+						Type: provisioning.RepositorySpecTypeGit,
+						Git: &provisioning.RepositoryGitRepositoryConfig{
+							Url: "https://git.example.com/owner/repo.git",
 						},
 					},
 				},
@@ -5351,9 +5351,9 @@ func TestGitRepository_GetCurrentBranch(t *testing.T) {
 				},
 				config: &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitRepositoryType,
-						Git: &provisioning.GitRepositoryConfig{
-							URL:    "https://git.example.com/owner/repo.git",
+						Type: provisioning.RepositorySpecTypeGit,
+						Git: &provisioning.RepositoryGitRepositoryConfig{
+							Url:    "https://git.example.com/owner/repo.git",
 							Branch: tt.branchInConfig,
 						},
 					},
@@ -5380,7 +5380,7 @@ func TestWithGitContext_AuditFields(t *testing.T) {
 				Namespace: "test-ns",
 			},
 			Spec: provisioning.RepositorySpec{
-				Type: provisioning.GitRepositoryType,
+				Type: provisioning.RepositorySpecTypeGit,
 			},
 		},
 		gitConfig: RepositoryConfig{
@@ -5419,7 +5419,7 @@ func TestGitRepository_AuditLog(t *testing.T) {
 				Namespace: "my-ns",
 			},
 			Spec: provisioning.RepositorySpec{
-				Type: provisioning.GitRepositoryType,
+				Type: provisioning.RepositorySpecTypeGit,
 			},
 		},
 		gitConfig: RepositoryConfig{

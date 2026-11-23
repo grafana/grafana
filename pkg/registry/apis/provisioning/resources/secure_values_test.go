@@ -74,25 +74,25 @@ func TestSecureValueWrites(t *testing.T) {
 func TestCheckSecureValues(t *testing.T) {
 	tests := []struct {
 		name     string
-		repoType provisioning.RepositoryType
+		repoType provisioning.RepositorySpecType
 		secure   map[string]any
 		wantErr  string
 	}{
 		{
 			name:     "plaintext payload is rejected",
-			repoType: provisioning.GitHubRepositoryType,
+			repoType: provisioning.RepositorySpecTypeGithub,
 			secure:   map[string]any{"apiKey": map[string]any{"create": "super-secret"}},
 			wantErr:  "secure values (apiKey) cannot be created or removed from a github repository",
 		},
 		{
 			name:     "removal is rejected -- it deletes a value the file never owned",
-			repoType: provisioning.GitRepositoryType,
+			repoType: provisioning.RepositorySpecTypeGit,
 			secure:   map[string]any{"apiKey": map[string]any{"remove": true}},
 			wantErr:  "secure values (apiKey) cannot be created or removed from a git repository",
 		},
 		{
 			name:     "every offending key is listed",
-			repoType: provisioning.GitLabRepositoryType,
+			repoType: provisioning.RepositorySpecTypeGitlab,
 			secure: map[string]any{
 				"token":             map[string]any{"create": "a"},
 				"basicAuthPassword": map[string]any{"remove": true},
@@ -101,17 +101,17 @@ func TestCheckSecureValues(t *testing.T) {
 		},
 		{
 			name:     "reference is allowed -- it only reads an existing value",
-			repoType: provisioning.GitHubRepositoryType,
+			repoType: provisioning.RepositorySpecTypeGithub,
 			secure:   map[string]any{"apiKey": map[string]any{"name": "an-existing-value"}},
 		},
 		{
 			name:     "a local repository may write secure values",
-			repoType: provisioning.LocalRepositoryType,
+			repoType: provisioning.RepositorySpecTypeLocal,
 			secure:   map[string]any{"apiKey": map[string]any{"create": "super-secret"}},
 		},
 		{
 			name:     "a local repository may remove secure values",
-			repoType: provisioning.LocalRepositoryType,
+			repoType: provisioning.RepositorySpecTypeLocal,
 			secure:   map[string]any{"apiKey": map[string]any{"remove": true}},
 		},
 	}

@@ -100,11 +100,11 @@ func (id WebhookID) String() string {
 
 // GetID extracts the webhook identifier from a repository's
 // webhook status. A nil status yields an empty identifier.
-func GetID(status *provisioning.WebhookStatus) WebhookID {
+func GetID(status *provisioning.RepositoryWebhookStatus) WebhookID {
 	if status == nil {
 		return WebhookID{}
 	}
-	return WebhookID{ID: status.ID, UUID: status.UUID}
+	return WebhookID{ID: status.Id, UUID: status.Uuid}
 }
 
 // ToCtxLogger returns a context whose logger carries the event's populated fields.

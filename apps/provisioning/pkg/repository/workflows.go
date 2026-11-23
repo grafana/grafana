@@ -18,9 +18,9 @@ func IsWriteAllowed(repo *provisioning.Repository, ref string) error {
 	var supportsWrite, supportsBranch bool
 	for _, v := range repo.Spec.Workflows {
 		switch v {
-		case provisioning.WriteWorkflow:
+		case provisioning.RepositorySpecWorkflowsWrite:
 			supportsWrite = true
-		case provisioning.BranchWorkflow:
+		case provisioning.RepositorySpecWorkflowsBranch:
 			supportsBranch = repo.Spec.Type.IsGit()
 		}
 	}

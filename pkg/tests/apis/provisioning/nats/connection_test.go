@@ -32,7 +32,7 @@ func TestIntegrationProvisioningNATS_ConnectionReconciledOverNATS(t *testing.T) 
 		},
 		"spec": map[string]any{
 			"title": "NATS Test Connection",
-			"type":  provisioning.GitHubRepositoryType,
+			"type":  provisioning.RepositorySpecTypeGithub,
 			"github": map[string]any{
 				"appID":          "12345",
 				"installationID": "67890",

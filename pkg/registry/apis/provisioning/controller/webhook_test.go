@@ -48,7 +48,7 @@ func TestWebhookOnCreate(t *testing.T) {
 		setupMock     func(m *repository.MockWebhookClient)
 		config        *provisioning.Repository
 		webhookURL    string
-		expectedHook  *provisioning.WebhookStatus
+		expectedHook  *provisioning.RepositoryWebhookStatus
 		expectedError error
 		expectedErrIs error
 	}{
@@ -63,16 +63,16 @@ func TestWebhookOnCreate(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-					GitHub: &provisioning.GitHubRepositoryConfig{
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
 					},
 				},
 			},
 			webhookURL: "https://example.com/webhook",
-			expectedHook: &provisioning.WebhookStatus{
-				ID:  123,
-				URL: "https://example.com/webhook",
+			expectedHook: &provisioning.RepositoryWebhookStatus{
+				Id:  123,
+				Url: "https://example.com/webhook",
 			},
 			expectedError: nil,
 		},
@@ -81,7 +81,7 @@ func TestWebhookOnCreate(t *testing.T) {
 			setupMock: func(m *repository.MockWebhookClient) {},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
 					},
 				},
@@ -98,8 +98,8 @@ func TestWebhookOnCreate(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-					GitHub: &provisioning.GitHubRepositoryConfig{
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
 					},
 				},
@@ -116,8 +116,8 @@ func TestWebhookOnCreate(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-					GitHub: &provisioning.GitHubRepositoryConfig{
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
 					},
 				},
@@ -131,8 +131,8 @@ func TestWebhookOnCreate(t *testing.T) {
 			setupMock: func(_ *repository.MockWebhookClient) {},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Workflows: []provisioning.Workflow{},
-					GitHub: &provisioning.GitHubRepositoryConfig{
+					Workflows: []provisioning.RepositorySpecWorkflows{},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
 					},
 				},
@@ -146,11 +146,11 @@ func TestWebhookOnCreate(t *testing.T) {
 			setupMock: func(_ *repository.MockWebhookClient) {},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-					GitHub: &provisioning.GitHubRepositoryConfig{
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
 					},
-					Webhook: &provisioning.WebhookConfig{Disabled: true},
+					Webhook: &provisioning.RepositoryWebhookConfig{Disabled: true},
 				},
 			},
 			webhookURL:    "https://example.com/webhook",
@@ -193,7 +193,7 @@ func TestWebhookOnUpdate(t *testing.T) {
 		setupMock       func(m *repository.MockWebhookClient)
 		config          *provisioning.Repository
 		webhookURL      string
-		expectedHook    *provisioning.WebhookStatus
+		expectedHook    *provisioning.RepositoryWebhookStatus
 		expectedCleanup bool
 		expectedError   error
 		expectedErrIs   error
@@ -215,22 +215,22 @@ func TestWebhookOnUpdate(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-					GitHub: &provisioning.GitHubRepositoryConfig{
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
 					},
 				},
 				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{
-						ID:  123,
-						URL: "https://example.com/webhook",
+					Webhook: &provisioning.RepositoryWebhookStatus{
+						Id:  123,
+						Url: "https://example.com/webhook",
 					},
 				},
 			},
 			webhookURL: "https://example.com/webhook-updated",
-			expectedHook: &provisioning.WebhookStatus{
-				ID:               123,
-				URL:              "https://example.com/webhook-updated",
+			expectedHook: &provisioning.RepositoryWebhookStatus{
+				Id:               123,
+				Url:              "https://example.com/webhook-updated",
 				SubscribedEvents: subscribedEvents,
 			},
 			expectedError: nil,
@@ -250,22 +250,22 @@ func TestWebhookOnUpdate(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-					GitHub: &provisioning.GitHubRepositoryConfig{
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
 					},
 				},
 				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{
-						ID:  123,
-						URL: "https://example.com/old-webhook",
+					Webhook: &provisioning.RepositoryWebhookStatus{
+						Id:  123,
+						Url: "https://example.com/old-webhook",
 					},
 				},
 			},
 			webhookURL: "https://example.com/webhook",
-			expectedHook: &provisioning.WebhookStatus{
-				ID:               456,
-				URL:              "https://example.com/webhook",
+			expectedHook: &provisioning.RepositoryWebhookStatus{
+				Id:               456,
+				Url:              "https://example.com/webhook",
 				SubscribedEvents: subscribedEvents,
 			},
 			expectedError: nil,
@@ -286,15 +286,15 @@ func TestWebhookOnUpdate(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-					GitHub: &provisioning.GitHubRepositoryConfig{
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
 					},
 				},
 				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{
-						ID:  123,
-						URL: "https://example.com/webhook",
+					Webhook: &provisioning.RepositoryWebhookStatus{
+						Id:  123,
+						Url: "https://example.com/webhook",
 					},
 				},
 			},
@@ -317,15 +317,15 @@ func TestWebhookOnUpdate(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-					GitHub: &provisioning.GitHubRepositoryConfig{
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
 					},
 				},
 				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{
-						ID:  123,
-						URL: "https://example.com/webhook",
+					Webhook: &provisioning.RepositoryWebhookStatus{
+						Id:  123,
+						Url: "https://example.com/webhook",
 					},
 				},
 			},
@@ -348,15 +348,15 @@ func TestWebhookOnUpdate(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-					GitHub: &provisioning.GitHubRepositoryConfig{
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
 					},
 				},
 				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{
-						ID:  123,
-						URL: "https://example.com/webhook",
+					Webhook: &provisioning.RepositoryWebhookStatus{
+						Id:  123,
+						Url: "https://example.com/webhook",
 					},
 				},
 			},
@@ -376,8 +376,8 @@ func TestWebhookOnUpdate(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-					GitHub: &provisioning.GitHubRepositoryConfig{
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
 					},
 				},
@@ -386,9 +386,9 @@ func TestWebhookOnUpdate(t *testing.T) {
 				},
 			},
 			webhookURL: "https://example.com/webhook",
-			expectedHook: &provisioning.WebhookStatus{
-				ID:               456,
-				URL:              "https://example.com/webhook",
+			expectedHook: &provisioning.RepositoryWebhookStatus{
+				Id:               456,
+				Url:              "https://example.com/webhook",
 				SubscribedEvents: subscribedEvents,
 			},
 			expectedError: nil,
@@ -405,22 +405,22 @@ func TestWebhookOnUpdate(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-					GitHub: &provisioning.GitHubRepositoryConfig{
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
 					},
 				},
 				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{
-						ID:  0, // Webhook ID is zero
-						URL: "https://example.com/webhook",
+					Webhook: &provisioning.RepositoryWebhookStatus{
+						Id:  0, // Webhook ID is zero
+						Url: "https://example.com/webhook",
 					},
 				},
 			},
 			webhookURL: "https://example.com/webhook",
-			expectedHook: &provisioning.WebhookStatus{
-				ID:               789,
-				URL:              "https://example.com/webhook",
+			expectedHook: &provisioning.RepositoryWebhookStatus{
+				Id:               789,
+				Url:              "https://example.com/webhook",
 				SubscribedEvents: subscribedEvents,
 			},
 			expectedError: nil,
@@ -433,8 +433,8 @@ func TestWebhookOnUpdate(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-					GitHub: &provisioning.GitHubRepositoryConfig{
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
 					},
 				},
@@ -461,22 +461,22 @@ func TestWebhookOnUpdate(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-					GitHub: &provisioning.GitHubRepositoryConfig{
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
 					},
 				},
 				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{
-						ID:  123,
-						URL: "https://example.com/old-webhook",
+					Webhook: &provisioning.RepositoryWebhookStatus{
+						Id:  123,
+						Url: "https://example.com/old-webhook",
 					},
 				},
 			},
 			webhookURL: "https://example.com/webhook",
-			expectedHook: &provisioning.WebhookStatus{
-				ID:               456,
-				URL:              "https://example.com/webhook",
+			expectedHook: &provisioning.RepositoryWebhookStatus{
+				Id:               456,
+				Url:              "https://example.com/webhook",
 				SubscribedEvents: subscribedEvents,
 			},
 			expectedError: nil,
@@ -492,15 +492,15 @@ func TestWebhookOnUpdate(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-					GitHub: &provisioning.GitHubRepositoryConfig{
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
 					},
 				},
 				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{
-						ID:  123,
-						URL: "https://example.com/old-webhook",
+					Webhook: &provisioning.RepositoryWebhookStatus{
+						Id:  123,
+						Url: "https://example.com/old-webhook",
 					},
 				},
 			},
@@ -521,15 +521,15 @@ func TestWebhookOnUpdate(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-					GitHub: &provisioning.GitHubRepositoryConfig{
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
 					},
 				},
 				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{
-						ID:  123,
-						URL: "https://example.com/webhook",
+					Webhook: &provisioning.RepositoryWebhookStatus{
+						Id:  123,
+						Url: "https://example.com/webhook",
 					},
 				},
 				Secure: provisioning.SecureValues{
@@ -550,15 +550,15 @@ func TestWebhookOnUpdate(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Workflows: []provisioning.Workflow{},
-					GitHub: &provisioning.GitHubRepositoryConfig{
+					Workflows: []provisioning.RepositorySpecWorkflows{},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
 					},
 				},
 				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{
-						ID:  123,
-						URL: "https://example.com/webhook",
+					Webhook: &provisioning.RepositoryWebhookStatus{
+						Id:  123,
+						Url: "https://example.com/webhook",
 					},
 				},
 			},
@@ -572,8 +572,8 @@ func TestWebhookOnUpdate(t *testing.T) {
 			setupMock: func(_ *repository.MockWebhookClient) {},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Workflows: []provisioning.Workflow{},
-					GitHub: &provisioning.GitHubRepositoryConfig{
+					Workflows: []provisioning.RepositorySpecWorkflows{},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
 					},
 				},
@@ -593,16 +593,16 @@ func TestWebhookOnUpdate(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-					GitHub: &provisioning.GitHubRepositoryConfig{
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
 					},
-					Webhook: &provisioning.WebhookConfig{Disabled: true},
+					Webhook: &provisioning.RepositoryWebhookConfig{Disabled: true},
 				},
 				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{
-						ID:  123,
-						URL: "https://example.com/webhook",
+					Webhook: &provisioning.RepositoryWebhookStatus{
+						Id:  123,
+						Url: "https://example.com/webhook",
 					},
 				},
 			},
@@ -616,11 +616,11 @@ func TestWebhookOnUpdate(t *testing.T) {
 			setupMock: func(_ *repository.MockWebhookClient) {},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-					GitHub: &provisioning.GitHubRepositoryConfig{
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
 					},
-					Webhook: &provisioning.WebhookConfig{Disabled: true},
+					Webhook: &provisioning.RepositoryWebhookConfig{Disabled: true},
 				},
 				Status: provisioning.RepositoryStatus{
 					Webhook: nil,
@@ -681,9 +681,9 @@ func TestWebhookOnDelete(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{
-						ID:  123,
-						URL: "https://example.com/webhook",
+					Webhook: &provisioning.RepositoryWebhookStatus{
+						Id:  123,
+						Url: "https://example.com/webhook",
 					},
 				},
 			},
@@ -697,9 +697,9 @@ func TestWebhookOnDelete(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{
-						ID:  123,
-						URL: "https://example.com/webhook",
+					Webhook: &provisioning.RepositoryWebhookStatus{
+						Id:  123,
+						Url: "https://example.com/webhook",
 					},
 				},
 			},
@@ -714,9 +714,9 @@ func TestWebhookOnDelete(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{
-						ID:  123,
-						URL: "https://example.com/webhook",
+					Webhook: &provisioning.RepositoryWebhookStatus{
+						Id:  123,
+						Url: "https://example.com/webhook",
 					},
 				},
 			},
@@ -734,9 +734,9 @@ func TestWebhookOnDelete(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{
-						ID:  123,
-						URL: "https://example.com/webhook",
+					Webhook: &provisioning.RepositoryWebhookStatus{
+						Id:  123,
+						Url: "https://example.com/webhook",
 					},
 				},
 			},
@@ -764,9 +764,9 @@ func TestWebhookOnDelete(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{
-						ID:  123,
-						URL: "https://example.com/webhook",
+					Webhook: &provisioning.RepositoryWebhookStatus{
+						Id:  123,
+						Url: "https://example.com/webhook",
 					},
 				},
 			},
@@ -803,7 +803,7 @@ func TestRotateWebhookSecret(t *testing.T) {
 		})).Return(nil)
 
 		repo := newMockWebhookRepository(t, &provisioning.Repository{
-			Status: provisioning.RepositoryStatus{Webhook: &provisioning.WebhookStatus{ID: 123}},
+			Status: provisioning.RepositoryStatus{Webhook: &provisioning.RepositoryWebhookStatus{Id: 123}},
 		}, "", mockClient)
 
 		ops, err := rotateWebhookSecret(t.Context(), repo)
@@ -814,7 +814,7 @@ func TestRotateWebhookSecret(t *testing.T) {
 		require.Equal(t, "replace", ops[1]["op"])
 		require.Equal(t, "/secure/webhookSecret", ops[1]["path"])
 
-		webhookStatus := ops[0]["value"].(*provisioning.WebhookStatus)
+		webhookStatus := ops[0]["value"].(*provisioning.RepositoryWebhookStatus)
 		require.True(t, webhookStatus.LastRotated > 0)
 	})
 
@@ -824,7 +824,7 @@ func TestRotateWebhookSecret(t *testing.T) {
 			Return(nil, repository.ErrFileNotFound)
 
 		repo := newMockWebhookRepository(t, &provisioning.Repository{
-			Status: provisioning.RepositoryStatus{Webhook: &provisioning.WebhookStatus{ID: 123}},
+			Status: provisioning.RepositoryStatus{Webhook: &provisioning.RepositoryWebhookStatus{Id: 123}},
 		}, "", mockClient)
 
 		ops, err := rotateWebhookSecret(t.Context(), repo)
@@ -842,7 +842,7 @@ func TestRotateWebhookSecret(t *testing.T) {
 			Return(nil, fmt.Errorf("api error"))
 
 		repo := newMockWebhookRepository(t, &provisioning.Repository{
-			Status: provisioning.RepositoryStatus{Webhook: &provisioning.WebhookStatus{ID: 123}},
+			Status: provisioning.RepositoryStatus{Webhook: &provisioning.RepositoryWebhookStatus{Id: 123}},
 		}, "", mockClient)
 
 		ops, err := rotateWebhookSecret(t.Context(), repo)
@@ -859,7 +859,7 @@ func TestRotateWebhookSecret(t *testing.T) {
 			Return(fmt.Errorf("edit failed"))
 
 		repo := newMockWebhookRepository(t, &provisioning.Repository{
-			Status: provisioning.RepositoryStatus{Webhook: &provisioning.WebhookStatus{ID: 123}},
+			Status: provisioning.RepositoryStatus{Webhook: &provisioning.RepositoryWebhookStatus{Id: 123}},
 		}, "", mockClient)
 
 		ops, err := rotateWebhookSecret(t.Context(), repo)
@@ -879,7 +879,7 @@ func TestRotateWebhookSecret(t *testing.T) {
 	t.Run("skips when webhook ID is zero", func(t *testing.T) {
 		repo := newMockWebhookRepository(t, &provisioning.Repository{
 			Status: provisioning.RepositoryStatus{
-				Webhook: &provisioning.WebhookStatus{ID: 0},
+				Webhook: &provisioning.RepositoryWebhookStatus{Id: 0},
 			},
 		}, "", repository.NewMockWebhookClient(t))
 
@@ -891,15 +891,15 @@ func TestRotateWebhookSecret(t *testing.T) {
 
 // requireCreateStatusPatches asserts the status and secret patch operations
 // produced when a webhook is created or updated.
-func requireCreateStatusPatches(t *testing.T, hookOps []map[string]any, expected *provisioning.WebhookStatus) {
+func requireCreateStatusPatches(t *testing.T, hookOps []map[string]any, expected *provisioning.RepositoryWebhookStatus) {
 	t.Helper()
 	require.NotNil(t, hookOps)
 	require.Len(t, hookOps, 2)
 	require.Equal(t, "replace", hookOps[0]["op"])
 	require.Equal(t, "/status/webhook", hookOps[0]["path"])
-	require.Equal(t, expected.ID, hookOps[0]["value"].(*provisioning.WebhookStatus).ID)
-	require.Equal(t, expected.URL, hookOps[0]["value"].(*provisioning.WebhookStatus).URL)
-	require.ElementsMatch(t, expected.SubscribedEvents, hookOps[0]["value"].(*provisioning.WebhookStatus).SubscribedEvents)
+	require.Equal(t, expected.Id, hookOps[0]["value"].(*provisioning.RepositoryWebhookStatus).Id)
+	require.Equal(t, expected.Url, hookOps[0]["value"].(*provisioning.RepositoryWebhookStatus).Url)
+	require.ElementsMatch(t, expected.SubscribedEvents, hookOps[0]["value"].(*provisioning.RepositoryWebhookStatus).SubscribedEvents)
 
 	require.Equal(t, "replace", hookOps[1]["op"])
 	require.Equal(t, "/secure/webhookSecret", hookOps[1]["path"])

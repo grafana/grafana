@@ -246,7 +246,7 @@ func testAuthorizeResourceReadExistingAncestor(t *testing.T, gvr schema.GroupVer
 		name          string
 		path          string
 		destination   string
-		target        provisioning.SyncTargetType
+		target        provisioning.RepositorySyncOptionsTarget
 		metadata      []byte
 		metadataErr   error
 		existing      []string
@@ -346,53 +346,53 @@ func testAuthorizeResourceReadExistingAncestor(t *testing.T, gvr schema.GroupVer
 			wantProbes: []string{newID, teamID, repoName}, wantForbidden: true,
 		},
 		{
-			name: "instance repository can use a real ancestor", target: provisioning.SyncTargetTypeInstance,
+			name: "instance repository can use a real ancestor", target: provisioning.RepositorySyncOptionsTargetInstance,
 			existing: []string{teamID}, allowed: teamID, wantProbes: []string{newID, teamID}, wantChecks: []string{teamID},
 		},
 		{
-			name: "instance ancestor denial prevents root fallback", target: provisioning.SyncTargetTypeInstance,
+			name: "instance ancestor denial prevents root fallback", target: provisioning.RepositorySyncOptionsTargetInstance,
 			existing: []string{teamID}, wantProbes: []string{newID, teamID}, wantChecks: []string{teamID}, wantErr: denied,
 		},
 		{
-			name: "instance ancestor access error prevents root fallback", target: provisioning.SyncTargetTypeInstance,
+			name: "instance ancestor access error prevents root fallback", target: provisioning.RepositorySyncOptionsTargetInstance,
 			existing: []string{teamID}, accessErrorID: teamID, accessErr: accessErr,
 			wantProbes: []string{newID, teamID}, wantChecks: []string{teamID}, wantErr: accessErr,
 		},
 		{
-			name: "instance lookup error prevents root fallback", target: provisioning.SyncTargetTypeInstance,
+			name: "instance lookup error prevents root fallback", target: provisioning.RepositorySyncOptionsTargetInstance,
 			lookupErrorID: teamID, wantProbes: []string{newID, teamID}, wantErr: lookupErr,
 		},
 		{
-			name: "instance metadata error prevents root fallback", target: provisioning.SyncTargetTypeInstance,
+			name: "instance metadata error prevents root fallback", target: provisioning.RepositorySyncOptionsTargetInstance,
 			metadataErr: readErr, wantErr: readErr,
 		},
 		{
-			name: "instance malformed metadata prevents root fallback", target: provisioning.SyncTargetTypeInstance,
+			name: "instance malformed metadata prevents root fallback", target: provisioning.RepositorySyncOptionsTargetInstance,
 			metadata: []byte("{invalid"), wantErr: ErrInvalidFolderMetadata,
 		},
 		{
-			name: "folderless repository uses a real ancestor", target: provisioning.SyncTargetTypeFolderless,
+			name: "folderless repository uses a real ancestor", target: provisioning.RepositorySyncOptionsTargetFolderless,
 			existing: []string{teamID}, allowed: teamID, wantProbes: []string{newID, teamID}, wantChecks: []string{teamID},
 		},
 		{
-			name: "folderless ancestor denial prevents root fallback", target: provisioning.SyncTargetTypeFolderless,
+			name: "folderless ancestor denial prevents root fallback", target: provisioning.RepositorySyncOptionsTargetFolderless,
 			existing: []string{teamID}, wantProbes: []string{newID, teamID}, wantChecks: []string{teamID}, wantErr: denied,
 		},
 		{
-			name: "folderless ancestor access error prevents root fallback", target: provisioning.SyncTargetTypeFolderless,
+			name: "folderless ancestor access error prevents root fallback", target: provisioning.RepositorySyncOptionsTargetFolderless,
 			existing: []string{teamID}, accessErrorID: teamID, accessErr: accessErr,
 			wantProbes: []string{newID, teamID}, wantChecks: []string{teamID}, wantErr: accessErr,
 		},
 		{
-			name: "folderless lookup error prevents root fallback", target: provisioning.SyncTargetTypeFolderless,
+			name: "folderless lookup error prevents root fallback", target: provisioning.RepositorySyncOptionsTargetFolderless,
 			lookupErrorID: teamID, wantProbes: []string{newID, teamID}, wantErr: lookupErr,
 		},
 		{
-			name: "folderless metadata error prevents root fallback", target: provisioning.SyncTargetTypeFolderless,
+			name: "folderless metadata error prevents root fallback", target: provisioning.RepositorySyncOptionsTargetFolderless,
 			metadataErr: readErr, wantErr: readErr,
 		},
 		{
-			name: "folderless malformed metadata prevents root fallback", target: provisioning.SyncTargetTypeFolderless,
+			name: "folderless malformed metadata prevents root fallback", target: provisioning.RepositorySyncOptionsTargetFolderless,
 			metadata: []byte("{invalid"), wantErr: ErrInvalidFolderMetadata,
 		},
 		{
@@ -458,7 +458,7 @@ func testAuthorizeResourceReadExistingAncestor(t *testing.T, gvr schema.GroupVer
 			cfg := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: repoName, Namespace: "stacks-123"}}
 			cfg.Spec.Sync.Target = tt.target
 			if cfg.Spec.Sync.Target == "" {
-				cfg.Spec.Sync.Target = provisioning.SyncTargetTypeFolder
+				cfg.Spec.Sync.Target = provisioning.RepositorySyncOptionsTargetFolder
 			}
 			caller := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 42, Namespace: cfg.Namespace}
 			ctx := identity.WithRequester(context.Background(), caller)
@@ -564,14 +564,14 @@ func testAuthorizeResourceReadExistingAncestor(t *testing.T, gvr schema.GroupVer
 }
 
 func TestAuthorizeResourcePreview_UsesRoot(t *testing.T) {
-	for _, target := range []provisioning.SyncTargetType{provisioning.SyncTargetTypeInstance, provisioning.SyncTargetTypeFolderless} {
+	for _, target := range []provisioning.RepositorySyncOptionsTarget{provisioning.RepositorySyncOptionsTargetInstance, provisioning.RepositorySyncOptionsTargetFolderless} {
 		t.Run(string(target), func(t *testing.T) {
 			testAuthorizeResourceReadUsesRoot(t, target)
 		})
 	}
 }
 
-func testAuthorizeResourceReadUsesRoot(t *testing.T, target provisioning.SyncTargetType) {
+func testAuthorizeResourceReadUsesRoot(t *testing.T, target provisioning.RepositorySyncOptionsTarget) {
 	t.Helper()
 	for _, gvr := range []schema.GroupVersionResource{
 		DashboardResource,
@@ -664,7 +664,7 @@ func testAuthorizeResourceReadUsesRoot(t *testing.T, target provisioning.SyncTar
 
 func TestAuthorizeResourcePreview_SkipsUnrelatedAncestors(t *testing.T) {
 	cfg := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "preview-repo", Namespace: "default"}}
-	cfg.Spec.Sync.Target = provisioning.SyncTargetTypeFolder
+	cfg.Spec.Sync.Target = provisioning.RepositorySyncOptionsTargetFolder
 	manager := utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: cfg.Name}
 	otherRepo := utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "other-repo"}
 	for _, gvr := range []schema.GroupVersionResource{DashboardResource, dashboard.LibraryPanelResourceInfo.GroupVersionResource()} {
@@ -674,7 +674,7 @@ func TestAuthorizeResourcePreview_SkipsUnrelatedAncestors(t *testing.T) {
 				manager         utils.ManagerProperties
 				sourcePath      string
 				root            bool
-				target          provisioning.SyncTargetType
+				target          provisioning.RepositorySyncOptionsTarget
 				skipParent      bool
 				missingRoot     bool
 				canReadAncestor bool
@@ -693,18 +693,18 @@ func TestAuthorizeResourcePreview_SkipsUnrelatedAncestors(t *testing.T) {
 				{name: "unmanaged root", root: true},
 				{name: "different repository root", manager: otherRepo, root: true},
 				{name: "mislocated root", manager: manager, sourcePath: "team/", root: true},
-				{name: "folderless unmanaged folder", sourcePath: "team/new/", target: provisioning.SyncTargetTypeFolderless},
-				{name: "folderless different repository", manager: otherRepo, sourcePath: "team/new/", target: provisioning.SyncTargetTypeFolderless},
-				{name: "folderless different source path", manager: manager, sourcePath: "elsewhere/", target: provisioning.SyncTargetTypeFolderless},
-				{name: "instance unmanaged folder", sourcePath: "team/new/", target: provisioning.SyncTargetTypeInstance},
-				{name: "instance different repository", manager: otherRepo, sourcePath: "team/new/", target: provisioning.SyncTargetTypeInstance},
-				{name: "instance different source path", manager: manager, sourcePath: "elsewhere/", target: provisioning.SyncTargetTypeInstance},
-				{name: "folderless unmanaged folder with parent access", sourcePath: "team/new/", target: provisioning.SyncTargetTypeFolderless, canReadAncestor: true},
-				{name: "instance unmanaged folder with parent access", sourcePath: "team/new/", target: provisioning.SyncTargetTypeInstance, canReadAncestor: true},
-				{name: "folderless mismatches without root access", sourcePath: "team/new/", target: provisioning.SyncTargetTypeFolderless, skipParent: true},
-				{name: "instance mismatches without root access", sourcePath: "team/new/", target: provisioning.SyncTargetTypeInstance, skipParent: true},
-				{name: "folderless mismatches with root access", sourcePath: "team/new/", target: provisioning.SyncTargetTypeFolderless, skipParent: true, canReadAncestor: true},
-				{name: "instance mismatches with root access", sourcePath: "team/new/", target: provisioning.SyncTargetTypeInstance, skipParent: true, canReadAncestor: true},
+				{name: "folderless unmanaged folder", sourcePath: "team/new/", target: provisioning.RepositorySyncOptionsTargetFolderless},
+				{name: "folderless different repository", manager: otherRepo, sourcePath: "team/new/", target: provisioning.RepositorySyncOptionsTargetFolderless},
+				{name: "folderless different source path", manager: manager, sourcePath: "elsewhere/", target: provisioning.RepositorySyncOptionsTargetFolderless},
+				{name: "instance unmanaged folder", sourcePath: "team/new/", target: provisioning.RepositorySyncOptionsTargetInstance},
+				{name: "instance different repository", manager: otherRepo, sourcePath: "team/new/", target: provisioning.RepositorySyncOptionsTargetInstance},
+				{name: "instance different source path", manager: manager, sourcePath: "elsewhere/", target: provisioning.RepositorySyncOptionsTargetInstance},
+				{name: "folderless unmanaged folder with parent access", sourcePath: "team/new/", target: provisioning.RepositorySyncOptionsTargetFolderless, canReadAncestor: true},
+				{name: "instance unmanaged folder with parent access", sourcePath: "team/new/", target: provisioning.RepositorySyncOptionsTargetInstance, canReadAncestor: true},
+				{name: "folderless mismatches without root access", sourcePath: "team/new/", target: provisioning.RepositorySyncOptionsTargetFolderless, skipParent: true},
+				{name: "instance mismatches without root access", sourcePath: "team/new/", target: provisioning.RepositorySyncOptionsTargetInstance, skipParent: true},
+				{name: "folderless mismatches with root access", sourcePath: "team/new/", target: provisioning.RepositorySyncOptionsTargetFolderless, skipParent: true, canReadAncestor: true},
+				{name: "instance mismatches with root access", sourcePath: "team/new/", target: provisioning.RepositorySyncOptionsTargetInstance, skipParent: true, canReadAncestor: true},
 			} {
 				t.Run(tt.name, func(t *testing.T) {
 					cfg := cfg.DeepCopy()
@@ -832,7 +832,7 @@ func TestAuthorizeResource_FolderReadsUseDirectAuthorization(t *testing.T) {
 			for denyAt := -1; denyAt < len(checkedParents); denyAt++ {
 				t.Run(fmt.Sprintf("deny check %d", denyAt), func(t *testing.T) {
 					cfg := &provisioning.Repository{Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitRepositoryType, Git: &provisioning.GitRepositoryConfig{Branch: "main"},
+						Type: provisioning.RepositorySpecTypeGit, Git: &provisioning.RepositoryGitRepositoryConfig{Branch: "main"},
 					}}
 					parsed := makeAuthorizeResourceParsed(t, tt.parent, tt.existingParent, tt.existing)
 					parsed.GVR = FolderResource
@@ -961,7 +961,7 @@ func TestAuthorizeResourcePreview_MatchingPRMetadataRetainsSourceCheck(t *testin
 	} {
 		t.Run(gvr.Resource, func(t *testing.T) {
 			cfg := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "preview-repo", Namespace: "default"}}
-			cfg.Spec.Sync.Target = provisioning.SyncTargetTypeFolder
+			cfg.Spec.Sync.Target = provisioning.RepositorySyncOptionsTargetFolder
 			ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 				Type: authlib.TypeUser, UserID: 42, Namespace: cfg.Namespace,
 			})
@@ -1071,7 +1071,7 @@ func testResourceDirectAuthorization(t *testing.T, gvr schema.GroupVersionResour
 			access.On("Check", mock.Anything, req, parsed.Meta.GetFolder()).Return(tt.result).Once()
 			clients := NewMockResourceClients(t)
 			reader := repository.NewMockReaderWriter(t)
-			err = NewAuthorizer(&provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.GitRepositoryType, Git: &provisioning.GitRepositoryConfig{Branch: "main"}}}, reader, access, clients, nil).
+			err = NewAuthorizer(&provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.RepositorySpecTypeGit, Git: &provisioning.RepositoryGitRepositoryConfig{Branch: "main"}}}, reader, access, clients, nil).
 				AuthorizeResource(context.Background(), parsed, tt.verb)
 			assert.Equal(t, tt.result, err)
 		})
@@ -1112,8 +1112,8 @@ func TestAuthorizeResourcePreview_StopsOnWrappedAccessErrors(t *testing.T) {
 				t.Run(tt.name, func(t *testing.T) {
 					cfg := &provisioning.Repository{
 						ObjectMeta: metav1.ObjectMeta{Name: "preview-repo", Namespace: "default"},
-						Spec: provisioning.RepositorySpec{Sync: provisioning.SyncOptions{
-							Target: provisioning.SyncTargetTypeFolder,
+						Spec: provisioning.RepositorySpec{Sync: provisioning.RepositorySyncOptions{
+							Target: provisioning.RepositorySyncOptionsTargetFolder,
 						}},
 					}
 					caller := &identity.StaticRequester{
@@ -1711,7 +1711,7 @@ func TestAuthorizeCreateAllSupported(t *testing.T) {
 		repo := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "my-repo"},
 			Spec: provisioning.RepositorySpec{
-				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+				Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetFolder},
 			},
 		}
 		mockAccess := auth.NewMockAccessChecker(t)
@@ -1735,7 +1735,7 @@ func TestAuthorizeCreateAllSupported(t *testing.T) {
 		repo := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "my-repo"},
 			Spec: provisioning.RepositorySpec{
-				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance},
+				Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetInstance},
 			},
 		}
 		mockAccess := auth.NewMockAccessChecker(t)
@@ -1759,7 +1759,7 @@ func TestAuthorizeCreateAllSupported(t *testing.T) {
 		repo := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "my-repo"},
 			Spec: provisioning.RepositorySpec{
-				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+				Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetFolder},
 			},
 		}
 		mockAccess := auth.NewMockAccessChecker(t)
@@ -2144,9 +2144,9 @@ func testReadNewResourcePreviewWithTokenAuth(t *testing.T, kind schema.GroupVers
 			cfg := &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "synced-dashboards", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitRepositoryType,
-					Git:  &provisioning.GitRepositoryConfig{Branch: "main"},
-					Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+					Type: provisioning.RepositorySpecTypeGit,
+					Git:  &provisioning.RepositoryGitRepositoryConfig{Branch: "main"},
+					Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetFolder},
 				},
 			}
 			preview := tt.ref != "" && tt.ref != cfg.Branch()
@@ -2274,7 +2274,7 @@ func testReadNewResourcePreviewWithTokenAuth(t *testing.T, kind schema.GroupVers
 }
 
 func TestDualReadWriter_ReadPreviewAtRoot(t *testing.T) {
-	for _, target := range []provisioning.SyncTargetType{provisioning.SyncTargetTypeInstance, provisioning.SyncTargetTypeFolderless} {
+	for _, target := range []provisioning.RepositorySyncOptionsTarget{provisioning.RepositorySyncOptionsTargetInstance, provisioning.RepositorySyncOptionsTargetFolderless} {
 		t.Run(string(target), func(t *testing.T) {
 			forEachPreviewResource(t, func(t *testing.T, kind schema.GroupVersionKind, resource schema.GroupVersionResource) {
 				testReadPreviewAtRoot(t, kind, resource, target, "new/nested/resource.json")
@@ -2283,7 +2283,7 @@ func TestDualReadWriter_ReadPreviewAtRoot(t *testing.T) {
 	}
 }
 
-func testReadPreviewAtRoot(t *testing.T, kind schema.GroupVersionKind, resource schema.GroupVersionResource, target provisioning.SyncTargetType, resourcePath string) {
+func testReadPreviewAtRoot(t *testing.T, kind schema.GroupVersionKind, resource schema.GroupVersionResource, target provisioning.RepositorySyncOptionsTarget, resourcePath string) {
 	t.Helper()
 	for _, tt := range []struct {
 		name        string
@@ -2302,9 +2302,9 @@ func testReadPreviewAtRoot(t *testing.T, kind schema.GroupVersionKind, resource 
 			cfg := &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "root-preview", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitRepositoryType,
-					Git:  &provisioning.GitRepositoryConfig{Branch: "main"},
-					Sync: provisioning.SyncOptions{Target: target},
+					Type: provisioning.RepositorySpecTypeGit,
+					Git:  &provisioning.RepositoryGitRepositoryConfig{Branch: "main"},
+					Sync: provisioning.RepositorySyncOptions{Target: target},
 				},
 			}
 			resourceName := "root-" + resource.Resource
@@ -2400,9 +2400,9 @@ func TestDualReadWriter_ReadRejectsReadableUnmanagedAncestor(t *testing.T) {
 	cfg := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "decoy-preview-repo", Namespace: "default"},
 		Spec: provisioning.RepositorySpec{
-			Type: provisioning.GitRepositoryType,
-			Git:  &provisioning.GitRepositoryConfig{Branch: "main"},
-			Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+			Type: provisioning.RepositorySpecTypeGit,
+			Git:  &provisioning.RepositoryGitRepositoryConfig{Branch: "main"},
+			Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetFolder},
 		},
 	}
 	repo := repository.NewMockReaderWriter(t)
@@ -2483,7 +2483,7 @@ func testReadNewResourcePreviewValidatesConfiguredFolder(t *testing.T, kind sche
 	for _, tt := range []struct {
 		name              string
 		path              string
-		target            provisioning.SyncTargetType
+		target            provisioning.RepositorySyncOptionsTarget
 		hasFolderMetadata bool
 		unsynced          bool
 		configuredFolder  string
@@ -2497,7 +2497,7 @@ func testReadNewResourcePreviewValidatesConfiguredFolder(t *testing.T, kind sche
 		{name: "different allowed configured folder permits preview", hasFolderMetadata: true, configuredFolder: "other-allowed-folder", canReadConfigured: true, wantAllowed: true},
 		{name: "denied PR folder cannot override allowed configured folder", hasFolderMetadata: true, configuredFolder: "other-allowed-folder", denyDestination: true, canReadConfigured: true, wantAllowed: true},
 		{name: "matching allowed folder permits preview", hasFolderMetadata: true, configuredFolder: "preview-folder", wantAllowed: true},
-		{name: "missing hash folder requires instance root permission", target: provisioning.SyncTargetTypeInstance, unsynced: true, canReadConfigured: true},
+		{name: "missing hash folder requires instance root permission", target: provisioning.RepositorySyncOptionsTargetInstance, unsynced: true, canReadConfigured: true},
 		{name: "missing repository root before folder sync forbids preview", path: "dashboard.json", unsynced: true, canReadConfigured: true},
 		{name: "matching allowed metadata folder requires ancestor permission", hasFolderMetadata: true, configuredFolder: "preview-folder", unsynced: true, ancestorExists: true},
 		{name: "matching allowed metadata folder inherits from allowed ancestor", hasFolderMetadata: true, configuredFolder: "preview-folder", unsynced: true, ancestorExists: true, canReadAncestor: true, wantAllowed: true},
@@ -2510,14 +2510,14 @@ func testReadNewResourcePreviewValidatesConfiguredFolder(t *testing.T, kind sche
 			const metadataPath = "team/_folder.json"
 			target := tt.target
 			if target == "" {
-				target = provisioning.SyncTargetTypeFolder
+				target = provisioning.RepositorySyncOptionsTargetFolder
 			}
 			cfg := &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "synced-dashboards", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitRepositoryType,
-					Git:  &provisioning.GitRepositoryConfig{Branch: "main"},
-					Sync: provisioning.SyncOptions{Target: target},
+					Type: provisioning.RepositorySpecTypeGit,
+					Git:  &provisioning.RepositoryGitRepositoryConfig{Branch: "main"},
+					Sync: provisioning.RepositorySyncOptions{Target: target},
 				},
 			}
 			destination := "preview-folder"
@@ -2552,7 +2552,7 @@ func testReadNewResourcePreviewValidatesConfiguredFolder(t *testing.T, kind sche
 			folders := &MockDynamicResourceInterface{}
 			t.Cleanup(func() { folders.AssertExpectations(t) })
 			probedFolderIDs := []string{configuredFolder}
-			if tt.unsynced && safepath.Dir(resourcePath) != "" && target == provisioning.SyncTargetTypeFolder {
+			if tt.unsynced && safepath.Dir(resourcePath) != "" && target == provisioning.RepositorySyncOptionsTargetFolder {
 				probedFolderIDs = append(probedFolderIDs, cfg.Name)
 			}
 			for _, folderID := range probedFolderIDs {
@@ -2628,7 +2628,7 @@ func testReadNewResourcePreviewValidatesConfiguredFolder(t *testing.T, kind sche
 				checkedFolderIDs = append(checkedFolderIDs, configuredFolder)
 			} else if tt.ancestorExists {
 				checkedFolderIDs = append(checkedFolderIDs, cfg.Name)
-			} else if target == provisioning.SyncTargetTypeInstance {
+			} else if target == provisioning.RepositorySyncOptionsTargetInstance {
 				checkedFolderIDs = append(checkedFolderIDs, "")
 			}
 			assert.Equal(t, checkedFolderIDs, checkedFolders)
@@ -2816,9 +2816,9 @@ func testReadMovedResourcePreviewWithTokenAuth(t *testing.T, kind schema.GroupVe
 			cfg := &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "synced-resources", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitRepositoryType,
-					Git:  &provisioning.GitRepositoryConfig{Branch: "main"},
-					Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+					Type: provisioning.RepositorySpecTypeGit,
+					Git:  &provisioning.RepositoryGitRepositoryConfig{Branch: "main"},
+					Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetFolder},
 				},
 			}
 			f := newMovedResourcePreviewFixture(tt, resource, cfg.Name)
@@ -2943,7 +2943,7 @@ func (f previewTokenAccessChecker) Check(ctx context.Context, id authlib.AuthInf
 
 func TestAuthorizeResourcePreview_Eligibility(t *testing.T) {
 	cfg := &provisioning.Repository{Spec: provisioning.RepositorySpec{
-		Type: provisioning.GitRepositoryType, Git: &provisioning.GitRepositoryConfig{Branch: "main"},
+		Type: provisioning.RepositorySpecTypeGit, Git: &provisioning.RepositoryGitRepositoryConfig{Branch: "main"},
 	}}
 	for _, tt := range []struct {
 		name   string

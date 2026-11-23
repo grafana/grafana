@@ -117,7 +117,7 @@ func TestFolderManager_FindExistingAncestor(t *testing.T) {
 		name          string
 		dir           string
 		ref           string
-		target        provisioning.SyncTargetType
+		target        provisioning.RepositorySyncOptionsTarget
 		metadataReads []metadataRead
 		existing      []string
 		cachedLeaf    bool
@@ -151,11 +151,11 @@ func TestFolderManager_FindExistingAncestor(t *testing.T) {
 			wantProbes: []string{leafID, parentID, ancestorID, repoName},
 		},
 		{
-			name: "instance target has no root to probe", dir: "a/b/c/", target: provisioning.SyncTargetTypeInstance,
+			name: "instance target has no root to probe", dir: "a/b/c/", target: provisioning.RepositorySyncOptionsTargetInstance,
 			wantProbes: []string{leafID, parentID, ancestorID},
 		},
 		{
-			name: "instance target can use a real parent", dir: "a/b/c/", target: provisioning.SyncTargetTypeInstance,
+			name: "instance target can use a real parent", dir: "a/b/c/", target: provisioning.RepositorySyncOptionsTargetInstance,
 			existing: []string{parentID}, wantID: parentID,
 			wantProbes: []string{leafID, parentID},
 		},
@@ -179,21 +179,21 @@ func TestFolderManager_FindExistingAncestor(t *testing.T) {
 			name: "missing root for an empty path", wantProbes: []string{repoName},
 		},
 		{
-			name: "empty instance root does not look up a folder", target: provisioning.SyncTargetTypeInstance,
+			name: "empty instance root does not look up a folder", target: provisioning.RepositorySyncOptionsTargetInstance,
 		},
 		{
-			name: "folderless target exhausts directories without probing a wrapper root", dir: "a/b/c/", target: provisioning.SyncTargetTypeFolderless,
+			name: "folderless target exhausts directories without probing a wrapper root", dir: "a/b/c/", target: provisioning.RepositorySyncOptionsTargetFolderless,
 			wantProbes: []string{leafID, parentID, ancestorID},
 		},
 		{
-			name: "folderless target stops at a real parent", dir: "a/b/c/", target: provisioning.SyncTargetTypeFolderless,
+			name: "folderless target stops at a real parent", dir: "a/b/c/", target: provisioning.RepositorySyncOptionsTargetFolderless,
 			existing: []string{parentID}, wantID: parentID, wantProbes: []string{leafID, parentID},
 		},
 		{
-			name: "empty folderless root does not look up a folder", target: provisioning.SyncTargetTypeFolderless,
+			name: "empty folderless root does not look up a folder", target: provisioning.RepositorySyncOptionsTargetFolderless,
 		},
 		{
-			name: "target without a wrapper root has no stored ancestor", dir: "a/b/c/", target: provisioning.SyncTargetType("unknown"),
+			name: "target without a wrapper root has no stored ancestor", dir: "a/b/c/", target: provisioning.RepositorySyncOptionsTarget("unknown"),
 			wantProbes: []string{leafID, parentID, ancestorID},
 		},
 		{
@@ -293,7 +293,7 @@ func TestFolderManager_FindExistingAncestor(t *testing.T) {
 			cfg := &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: repoName, Namespace: "stacks-123"},
 				Spec: provisioning.RepositorySpec{
-					Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+					Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetFolder},
 				},
 			}
 			if tt.target != "" {
@@ -359,7 +359,7 @@ func TestFolderManager_FindExistingAncestor(t *testing.T) {
 func TestFolderManager_FindExistingAncestorValidatesOwnership(t *testing.T) {
 	cfg := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "ancestor-repo", Namespace: "stacks-123"},
-		Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder}},
+		Spec:       provisioning.RepositorySpec{Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetFolder}},
 	}
 	owner := utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: cfg.Name}
 	for _, tt := range []struct {
@@ -461,8 +461,8 @@ func TestEnsureFolderPathExistWithBeforeCreate(t *testing.T) {
 				Namespace: "default",
 			},
 			Spec: provisioning.RepositorySpec{
-				Sync: provisioning.SyncOptions{
-					Target: provisioning.SyncTargetTypeFolder,
+				Sync: provisioning.RepositorySyncOptions{
+					Target: provisioning.RepositorySyncOptionsTargetFolder,
 				},
 			},
 		}
@@ -622,8 +622,8 @@ func TestEnsureFolderExists_TitleUpdate(t *testing.T) {
 				Namespace: "default",
 			},
 			Spec: provisioning.RepositorySpec{
-				Sync: provisioning.SyncOptions{
-					Target: provisioning.SyncTargetTypeFolder,
+				Sync: provisioning.RepositorySyncOptions{
+					Target: provisioning.RepositorySyncOptionsTargetFolder,
 				},
 			},
 		}
@@ -1114,7 +1114,7 @@ func TestEnsureFolderExists_TakeoverAllowlist(t *testing.T) {
 				Namespace: "default",
 			},
 			Spec: provisioning.RepositorySpec{
-				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+				Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetFolder},
 			},
 		}
 		repo := repository.NewMockReaderWriter(t)
@@ -1987,7 +1987,7 @@ func TestEnsureFolderExists_MetadataHashUpdate(t *testing.T) {
 		return &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "default"},
 			Spec: provisioning.RepositorySpec{
-				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+				Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetFolder},
 			},
 		}
 	}
@@ -2160,7 +2160,7 @@ func TestEnsureFolderExists_ParentUpdate(t *testing.T) {
 		return &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "default"},
 			Spec: provisioning.RepositorySpec{
-				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+				Sync: provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetFolder},
 			},
 		}
 	}

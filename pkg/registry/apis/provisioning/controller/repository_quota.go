@@ -35,7 +35,7 @@ func NewRepositoryQuotaChecker(
 func (c *RepositoryQuotaChecker) RepositoryQuotaConditions(
 	ctx context.Context,
 	namespace string,
-	quotaStatus provisioning.QuotaStatus,
+	quotaStatus provisioning.RepositoryQuotaStatus,
 ) (metav1.Condition, error) {
 	return c.conditions(ctx, namespace, quotaStatus, c.repos.CountRepositories)
 }
@@ -44,7 +44,7 @@ func (c *RepositoryQuotaChecker) RepositoryQuotaConditions(
 func (c *RepositoryQuotaChecker) ConfirmRepositoryQuotaConditions(
 	ctx context.Context,
 	namespace string,
-	quotaStatus provisioning.QuotaStatus,
+	quotaStatus provisioning.RepositoryQuotaStatus,
 ) (metav1.Condition, error) {
 	return c.conditions(ctx, namespace, quotaStatus, c.repos.ConfirmRepositoryCount)
 }
@@ -52,7 +52,7 @@ func (c *RepositoryQuotaChecker) ConfirmRepositoryQuotaConditions(
 func (c *RepositoryQuotaChecker) conditions(
 	ctx context.Context,
 	namespace string,
-	quotaStatus provisioning.QuotaStatus,
+	quotaStatus provisioning.RepositoryQuotaStatus,
 	countRepositories func(ctx context.Context, namespace string) (int, error),
 ) (metav1.Condition, error) {
 	// Get quota limits for this namespace/tier

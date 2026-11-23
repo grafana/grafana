@@ -86,7 +86,7 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 		helper.SyncAndWait(t, repo, nil)
 		helper.RequireRepoDashboardCount(t, repo, 2)
 
-		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 2})
+		helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 2})
 		helper.TriggerRepositoryReconciliation(t, repo)
 		helper.WaitForResourceQuotaLimit(t, repo, 2)
 		helper.SyncAndWait(t, repo, nil)
@@ -132,7 +132,7 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 	t.Run("quota condition is WithinQuota when resources are below limit", func(t *testing.T) {
 		// Set a limit higher than resources
 		helper := sharedHelper(t)
-		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 10})
+		helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 10})
 
 		const repo = "quota-within-repo"
 		testRepo := common.TestRepo{
@@ -219,7 +219,7 @@ func TestIntegrationProvisioning_QuotaStatus(t *testing.T) {
 	t.Run("quota status shows configured limits", func(t *testing.T) {
 		// Set specific quota limits
 		helper := sharedHelper(t)
-		helper.SetQuotaStatus(provisioning.QuotaStatus{
+		helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{
 			MaxResourcesPerRepository: 50,
 			MaxRepositories:           5,
 		})

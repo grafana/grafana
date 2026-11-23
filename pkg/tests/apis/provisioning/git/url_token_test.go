@@ -49,7 +49,7 @@ func TestIntegrationProvisioning_GitRequiresNewTokenWhenRepositoryURLChanges(t *
 			require.NoError(collect, err)
 
 			repoObj := common.MustFromUnstructured[provisioning.Repository](t, repo)
-			repoObj.Spec.Git.URL = changedRemote.URL
+			repoObj.Spec.Git.Url = changedRemote.URL
 			repoObj.Spec.Git.TokenUser = changedUser.Username
 			repoObj.Secure.Token = resource.InlineSecureValue{Create: resource.RawSecureValue(changedUser.Password)}
 
@@ -57,7 +57,7 @@ func TestIntegrationProvisioning_GitRequiresNewTokenWhenRepositoryURLChanges(t *
 			require.NoError(collect, err)
 
 			updatedRepo := common.MustFromUnstructured[provisioning.Repository](t, result)
-			require.Equal(collect, changedRemote.URL, updatedRepo.Spec.Git.URL)
+			require.Equal(collect, changedRemote.URL, updatedRepo.Spec.Git.Url)
 			require.NotEmpty(collect, updatedRepo.Secure.Token.Name)
 		}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 	})

@@ -16,7 +16,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 	// ─── Skips creates when the repository is at its resource quota ──────────
 	t.Run("skips creates when at quota", func(t *testing.T) {
 		helper.CleanupAllResources(t)
-		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 2})
+		helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 2})
 
 		const repo = "incr-quota-blocks-repo"
 		_, local := helper.CreateGitRepo(t, repo, map[string][]byte{
@@ -68,7 +68,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 	// ─── Delete-and-create in the same incremental window respects priority ──
 	t.Run("delete and create in same incremental window respects deletion-first priority", func(t *testing.T) {
 		helper.CleanupAllResources(t)
-		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 1})
+		helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 1})
 
 		const repo = "incr-quota-swap-repo"
 		_, local := helper.CreateGitRepo(t, repo, map[string][]byte{
@@ -125,7 +125,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 	// ─── Delete releases a slot for the *next* incremental sync ──────────────
 	t.Run("delete in one incremental sync releases quota for a subsequent sync", func(t *testing.T) {
 		helper.CleanupAllResources(t)
-		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 2})
+		helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 2})
 
 		const repo = "incr-quota-release-repo"
 		_, local := helper.CreateGitRepo(t, repo, map[string][]byte{
@@ -172,7 +172,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		helper.CleanupAllResources(t)
 		// quota=3 accounts for exactly: 1 folder + 2 dashboards from the initial
 		// setup, so the repo starts at capacity.
-		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 3})
+		helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 3})
 
 		const repo = "incr-quota-folder-block-repo"
 		files := common.FolderMetadataFiles(t, repo, "folder1")
@@ -223,7 +223,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 	t.Run("deleting folder's only dashboard releases quota and cleans up orphaned folder", func(t *testing.T) {
 		helper.CleanupAllResources(t)
 		// quota=3: 1 folder (folder1) + 1 subfolder dashboard + 1 root dashboard = 3/3.
-		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 3})
+		helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 3})
 
 		const repo = "incr-quota-folder-cleanup-repo"
 		_, local := helper.CreateGitRepo(t, repo, map[string][]byte{
@@ -259,7 +259,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 	// ─── Unlimited quota never blocks incremental creates ─────────────────────
 	t.Run("unlimited quota does not block incremental creates", func(t *testing.T) {
 		helper.CleanupAllResources(t)
-		helper.SetQuotaStatus(provisioning.QuotaStatus{})
+		helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{})
 
 		const repo = "incr-quota-unlimited-repo"
 		_, local := helper.CreateGitRepo(t, repo, map[string][]byte{

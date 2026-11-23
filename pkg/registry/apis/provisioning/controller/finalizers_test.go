@@ -105,7 +105,7 @@ func (m mockRepo) Config() *provisioning.Repository {
 			Namespace: m.namespace,
 		},
 		Status: provisioning.RepositoryStatus{
-			Webhook: &provisioning.WebhookStatus{ID: 1},
+			Webhook: &provisioning.RepositoryWebhookStatus{Id: 1},
 		},
 	}
 }

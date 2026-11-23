@@ -24,8 +24,8 @@ func Extra(homePath string, permittedPrefixes []string, metrics *repository.Oper
 	return &extra{resolver: resolver, metrics: metrics}
 }
 
-func (e *extra) Type() provisioning.RepositoryType {
-	return provisioning.LocalRepositoryType
+func (e *extra) Type() provisioning.RepositorySpecType {
+	return provisioning.RepositorySpecTypeLocal
 }
 
 func (e *extra) Build(_ context.Context, r *provisioning.Repository) (repository.Repository, error) {

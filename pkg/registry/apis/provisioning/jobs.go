@@ -541,7 +541,7 @@ func (c *jobsConnector) authorizeMigrateJob(ctx context.Context, repo repository
 	selective := len(spec.Migrate.Resources) > 0
 
 	switch cfg.Spec.Sync.Target {
-	case provisioning.SyncTargetTypeFolder, provisioning.SyncTargetTypeFolderless:
+	case provisioning.RepositorySyncOptionsTargetFolder, provisioning.RepositorySyncOptionsTargetFolderless:
 		switch {
 		case !branchMigration:
 			// Export + pull (takeover) only; nothing is deleted from the instance.

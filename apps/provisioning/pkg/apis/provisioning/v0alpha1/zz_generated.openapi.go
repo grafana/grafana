@@ -16,87 +16,87 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		Author{}.OpenAPIModelName():                                schema_pkg_apis_provisioning_v0alpha1_Author(ref),
-		BitbucketRepositoryConfig{}.OpenAPIModelName():             schema_pkg_apis_provisioning_v0alpha1_BitbucketRepositoryConfig(ref),
-		BranchOptions{}.OpenAPIModelName():                         schema_pkg_apis_provisioning_v0alpha1_BranchOptions(ref),
-		CommitOptions{}.OpenAPIModelName():                         schema_pkg_apis_provisioning_v0alpha1_CommitOptions(ref),
-		Connection{}.OpenAPIModelName():                            schema_pkg_apis_provisioning_v0alpha1_Connection(ref),
-		ConnectionAuthorizeRequest{}.OpenAPIModelName():            schema_pkg_apis_provisioning_v0alpha1_ConnectionAuthorizeRequest(ref),
-		ConnectionAuthorizeRequestSpec{}.OpenAPIModelName():        schema_pkg_apis_provisioning_v0alpha1_ConnectionAuthorizeRequestSpec(ref),
-		ConnectionAuthorizeRequestStatus{}.OpenAPIModelName():      schema_pkg_apis_provisioning_v0alpha1_ConnectionAuthorizeRequestStatus(ref),
-		ConnectionBitbucketConfig{}.OpenAPIModelName():             schema_pkg_apis_provisioning_v0alpha1_ConnectionBitbucketConfig(ref),
-		ConnectionCondition{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_ConnectionCondition(ref),
-		ConnectionGitHubConfig{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_ConnectionGitHubConfig(ref),
-		ConnectionGitHubEnterpriseConfig{}.OpenAPIModelName():      schema_pkg_apis_provisioning_v0alpha1_ConnectionGitHubEnterpriseConfig(ref),
-		ConnectionGitHubEnterpriseOAuthConfig{}.OpenAPIModelName(): schema_pkg_apis_provisioning_v0alpha1_ConnectionGitHubEnterpriseOAuthConfig(ref),
-		ConnectionGitOAuthConfig{}.OpenAPIModelName():              schema_pkg_apis_provisioning_v0alpha1_ConnectionGitOAuthConfig(ref),
-		ConnectionInfo{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_ConnectionInfo(ref),
-		ConnectionList{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_ConnectionList(ref),
-		ConnectionOAuthConfig{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_ConnectionOAuthConfig(ref),
-		ConnectionSecure{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_ConnectionSecure(ref),
-		ConnectionSpec{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref),
-		ConnectionStatus{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_ConnectionStatus(ref),
-		ConnectionWebhookConfig{}.OpenAPIModelName():               schema_pkg_apis_provisioning_v0alpha1_ConnectionWebhookConfig(ref),
-		DeleteJobOptions{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_DeleteJobOptions(ref),
-		DeletionStatus{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_DeletionStatus(ref),
-		ErrorDetails{}.OpenAPIModelName():                          ErrorDetails{}.OpenAPIDefinition(),
-		ExportJobOptions{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref),
-		ExternalRepository{}.OpenAPIModelName():                    schema_pkg_apis_provisioning_v0alpha1_ExternalRepository(ref),
-		ExternalRepositoryList{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_ExternalRepositoryList(ref),
-		FileItem{}.OpenAPIModelName():                              schema_pkg_apis_provisioning_v0alpha1_FileItem(ref),
-		FileList{}.OpenAPIModelName():                              schema_pkg_apis_provisioning_v0alpha1_FileList(ref),
-		FixFolderMetadataJobOptions{}.OpenAPIModelName():           schema_pkg_apis_provisioning_v0alpha1_FixFolderMetadataJobOptions(ref),
-		GitHubEnterpriseRepositoryConfig{}.OpenAPIModelName():      schema_pkg_apis_provisioning_v0alpha1_GitHubEnterpriseRepositoryConfig(ref),
-		GitHubRepositoryConfig{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref),
-		GitLabRepositoryConfig{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_GitLabRepositoryConfig(ref),
-		GitRepositoryConfig{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_GitRepositoryConfig(ref),
-		HistoricJob{}.OpenAPIModelName():                           schema_pkg_apis_provisioning_v0alpha1_HistoricJob(ref),
-		HistoricJobList{}.OpenAPIModelName():                       schema_pkg_apis_provisioning_v0alpha1_HistoricJobList(ref),
-		HistoryItem{}.OpenAPIModelName():                           schema_pkg_apis_provisioning_v0alpha1_HistoryItem(ref),
-		HistoryList{}.OpenAPIModelName():                           schema_pkg_apis_provisioning_v0alpha1_HistoryList(ref),
-		Job{}.OpenAPIModelName():                                   schema_pkg_apis_provisioning_v0alpha1_Job(ref),
-		JobList{}.OpenAPIModelName():                               schema_pkg_apis_provisioning_v0alpha1_JobList(ref),
-		JobResourceSummary{}.OpenAPIModelName():                    schema_pkg_apis_provisioning_v0alpha1_JobResourceSummary(ref),
-		JobSpec{}.OpenAPIModelName():                               schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref),
-		JobStatus{}.OpenAPIModelName():                             schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref),
-		LocalRepositoryConfig{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_LocalRepositoryConfig(ref),
-		ManagerStats{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v0alpha1_ManagerStats(ref),
-		MigrateJobOptions{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref),
-		MoveJobOptions{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_MoveJobOptions(ref),
-		PullRequestJobOptions{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_PullRequestJobOptions(ref),
-		PullRequestOptions{}.OpenAPIModelName():                    schema_pkg_apis_provisioning_v0alpha1_PullRequestOptions(ref),
-		QuotaStatus{}.OpenAPIModelName():                           schema_pkg_apis_provisioning_v0alpha1_QuotaStatus(ref),
-		RefItem{}.OpenAPIModelName():                               schema_pkg_apis_provisioning_v0alpha1_RefItem(ref),
-		RefList{}.OpenAPIModelName():                               schema_pkg_apis_provisioning_v0alpha1_RefList(ref),
-		Repository{}.OpenAPIModelName():                            schema_pkg_apis_provisioning_v0alpha1_Repository(ref),
-		RepositoryHealthStatus{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_RepositoryHealthStatus(ref),
-		RepositoryList{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_RepositoryList(ref),
-		RepositorySpec{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref),
-		RepositoryStatus{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref),
-		RepositoryTokenStatus{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_RepositoryTokenStatus(ref),
-		RepositoryURLs{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_RepositoryURLs(ref),
-		RepositoryView{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_RepositoryView(ref),
-		RepositoryViewList{}.OpenAPIModelName():                    schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref),
-		ResourceCount{}.OpenAPIModelName():                         schema_pkg_apis_provisioning_v0alpha1_ResourceCount(ref),
-		ResourceCountList{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v0alpha1_ResourceCountList(ref),
-		ResourceList{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v0alpha1_ResourceList(ref),
-		ResourceListItem{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_ResourceListItem(ref),
-		ResourceObjects{}.OpenAPIModelName():                       schema_pkg_apis_provisioning_v0alpha1_ResourceObjects(ref),
-		ResourceRef{}.OpenAPIModelName():                           schema_pkg_apis_provisioning_v0alpha1_ResourceRef(ref),
-		ResourceRepositoryInfo{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_ResourceRepositoryInfo(ref),
-		ResourceStats{}.OpenAPIModelName():                         schema_pkg_apis_provisioning_v0alpha1_ResourceStats(ref),
-		ResourceType{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v0alpha1_ResourceType(ref),
-		ResourceWrapper{}.OpenAPIModelName():                       schema_pkg_apis_provisioning_v0alpha1_ResourceWrapper(ref),
-		SecureValues{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v0alpha1_SecureValues(ref),
-		SupportedResource{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v0alpha1_SupportedResource(ref),
-		SyncJobOptions{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_SyncJobOptions(ref),
-		SyncOptions{}.OpenAPIModelName():                           schema_pkg_apis_provisioning_v0alpha1_SyncOptions(ref),
-		SyncStatus{}.OpenAPIModelName():                            schema_pkg_apis_provisioning_v0alpha1_SyncStatus(ref),
-		TestJobOptions{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_TestJobOptions(ref),
-		TestResults{}.OpenAPIModelName():                           schema_pkg_apis_provisioning_v0alpha1_TestResults(ref),
-		WebhookConfig{}.OpenAPIModelName():                         schema_pkg_apis_provisioning_v0alpha1_WebhookConfig(ref),
-		WebhookResponse{}.OpenAPIModelName():                       schema_pkg_apis_provisioning_v0alpha1_WebhookResponse(ref),
-		WebhookStatus{}.OpenAPIModelName():                         schema_pkg_apis_provisioning_v0alpha1_WebhookStatus(ref),
+		Author{}.OpenAPIModelName():                                     schema_pkg_apis_provisioning_v0alpha1_Author(ref),
+		Connection{}.OpenAPIModelName():                                 schema_pkg_apis_provisioning_v0alpha1_Connection(ref),
+		ConnectionAuthorizeRequest{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_ConnectionAuthorizeRequest(ref),
+		ConnectionAuthorizeRequestSpec{}.OpenAPIModelName():             schema_pkg_apis_provisioning_v0alpha1_ConnectionAuthorizeRequestSpec(ref),
+		ConnectionAuthorizeRequestStatus{}.OpenAPIModelName():           schema_pkg_apis_provisioning_v0alpha1_ConnectionAuthorizeRequestStatus(ref),
+		ConnectionBitbucketConfig{}.OpenAPIModelName():                  schema_pkg_apis_provisioning_v0alpha1_ConnectionBitbucketConfig(ref),
+		ConnectionCondition{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_ConnectionCondition(ref),
+		ConnectionGitHubConfig{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v0alpha1_ConnectionGitHubConfig(ref),
+		ConnectionGitHubEnterpriseConfig{}.OpenAPIModelName():           schema_pkg_apis_provisioning_v0alpha1_ConnectionGitHubEnterpriseConfig(ref),
+		ConnectionGitHubEnterpriseOAuthConfig{}.OpenAPIModelName():      schema_pkg_apis_provisioning_v0alpha1_ConnectionGitHubEnterpriseOAuthConfig(ref),
+		ConnectionGitOAuthConfig{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_ConnectionGitOAuthConfig(ref),
+		ConnectionList{}.OpenAPIModelName():                             schema_pkg_apis_provisioning_v0alpha1_ConnectionList(ref),
+		ConnectionOAuthConfig{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_ConnectionOAuthConfig(ref),
+		ConnectionSecure{}.OpenAPIModelName():                           schema_pkg_apis_provisioning_v0alpha1_ConnectionSecure(ref),
+		ConnectionSpec{}.OpenAPIModelName():                             schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref),
+		ConnectionStatus{}.OpenAPIModelName():                           schema_pkg_apis_provisioning_v0alpha1_ConnectionStatus(ref),
+		ConnectionWebhookConfig{}.OpenAPIModelName():                    schema_pkg_apis_provisioning_v0alpha1_ConnectionWebhookConfig(ref),
+		DeleteJobOptions{}.OpenAPIModelName():                           schema_pkg_apis_provisioning_v0alpha1_DeleteJobOptions(ref),
+		ErrorDetails{}.OpenAPIModelName():                               ErrorDetails{}.OpenAPIDefinition(),
+		ExportJobOptions{}.OpenAPIModelName():                           schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref),
+		ExternalRepository{}.OpenAPIModelName():                         schema_pkg_apis_provisioning_v0alpha1_ExternalRepository(ref),
+		ExternalRepositoryList{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v0alpha1_ExternalRepositoryList(ref),
+		FileItem{}.OpenAPIModelName():                                   schema_pkg_apis_provisioning_v0alpha1_FileItem(ref),
+		FileList{}.OpenAPIModelName():                                   schema_pkg_apis_provisioning_v0alpha1_FileList(ref),
+		FixFolderMetadataJobOptions{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_FixFolderMetadataJobOptions(ref),
+		HistoricJob{}.OpenAPIModelName():                                schema_pkg_apis_provisioning_v0alpha1_HistoricJob(ref),
+		HistoricJobList{}.OpenAPIModelName():                            schema_pkg_apis_provisioning_v0alpha1_HistoricJobList(ref),
+		HistoryItem{}.OpenAPIModelName():                                schema_pkg_apis_provisioning_v0alpha1_HistoryItem(ref),
+		HistoryList{}.OpenAPIModelName():                                schema_pkg_apis_provisioning_v0alpha1_HistoryList(ref),
+		Job{}.OpenAPIModelName():                                        schema_pkg_apis_provisioning_v0alpha1_Job(ref),
+		JobList{}.OpenAPIModelName():                                    schema_pkg_apis_provisioning_v0alpha1_JobList(ref),
+		JobResourceSummary{}.OpenAPIModelName():                         schema_pkg_apis_provisioning_v0alpha1_JobResourceSummary(ref),
+		JobSpec{}.OpenAPIModelName():                                    schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref),
+		JobStatus{}.OpenAPIModelName():                                  schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref),
+		ManagerStats{}.OpenAPIModelName():                               schema_pkg_apis_provisioning_v0alpha1_ManagerStats(ref),
+		MigrateJobOptions{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref),
+		MoveJobOptions{}.OpenAPIModelName():                             schema_pkg_apis_provisioning_v0alpha1_MoveJobOptions(ref),
+		PullRequestJobOptions{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_PullRequestJobOptions(ref),
+		RefItem{}.OpenAPIModelName():                                    schema_pkg_apis_provisioning_v0alpha1_RefItem(ref),
+		RefList{}.OpenAPIModelName():                                    schema_pkg_apis_provisioning_v0alpha1_RefList(ref),
+		Repository{}.OpenAPIModelName():                                 schema_pkg_apis_provisioning_v0alpha1_Repository(ref),
+		RepositoryBitbucketRepositoryConfig{}.OpenAPIModelName():        schema_pkg_apis_provisioning_v0alpha1_RepositoryBitbucketRepositoryConfig(ref),
+		RepositoryBranchOptions{}.OpenAPIModelName():                    schema_pkg_apis_provisioning_v0alpha1_RepositoryBranchOptions(ref),
+		RepositoryCommitOptions{}.OpenAPIModelName():                    schema_pkg_apis_provisioning_v0alpha1_RepositoryCommitOptions(ref),
+		RepositoryConnectionInfo{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_RepositoryConnectionInfo(ref),
+		RepositoryDeletionStatus{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_RepositoryDeletionStatus(ref),
+		RepositoryGitHubEnterpriseRepositoryConfig{}.OpenAPIModelName(): schema_pkg_apis_provisioning_v0alpha1_RepositoryGitHubEnterpriseRepositoryConfig(ref),
+		RepositoryGitHubRepositoryConfig{}.OpenAPIModelName():           schema_pkg_apis_provisioning_v0alpha1_RepositoryGitHubRepositoryConfig(ref),
+		RepositoryGitLabRepositoryConfig{}.OpenAPIModelName():           schema_pkg_apis_provisioning_v0alpha1_RepositoryGitLabRepositoryConfig(ref),
+		RepositoryGitRepositoryConfig{}.OpenAPIModelName():              schema_pkg_apis_provisioning_v0alpha1_RepositoryGitRepositoryConfig(ref),
+		RepositoryHealthStatus{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v0alpha1_RepositoryHealthStatus(ref),
+		RepositoryList{}.OpenAPIModelName():                             schema_pkg_apis_provisioning_v0alpha1_RepositoryList(ref),
+		RepositoryLocalRepositoryConfig{}.OpenAPIModelName():            schema_pkg_apis_provisioning_v0alpha1_RepositoryLocalRepositoryConfig(ref),
+		RepositoryPullRequestOptions{}.OpenAPIModelName():               schema_pkg_apis_provisioning_v0alpha1_RepositoryPullRequestOptions(ref),
+		RepositoryQuotaStatus{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_RepositoryQuotaStatus(ref),
+		RepositorySpec{}.OpenAPIModelName():                             schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref),
+		RepositoryStatus{}.OpenAPIModelName():                           schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref),
+		RepositorySyncOptions{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_RepositorySyncOptions(ref),
+		RepositorySyncStatus{}.OpenAPIModelName():                       schema_pkg_apis_provisioning_v0alpha1_RepositorySyncStatus(ref),
+		RepositoryTokenStatus{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_RepositoryTokenStatus(ref),
+		RepositoryURLs{}.OpenAPIModelName():                             schema_pkg_apis_provisioning_v0alpha1_RepositoryURLs(ref),
+		RepositoryView{}.OpenAPIModelName():                             schema_pkg_apis_provisioning_v0alpha1_RepositoryView(ref),
+		RepositoryViewList{}.OpenAPIModelName():                         schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref),
+		RepositoryWebhookConfig{}.OpenAPIModelName():                    schema_pkg_apis_provisioning_v0alpha1_RepositoryWebhookConfig(ref),
+		RepositoryWebhookStatus{}.OpenAPIModelName():                    schema_pkg_apis_provisioning_v0alpha1_RepositoryWebhookStatus(ref),
+		ResourceCount{}.OpenAPIModelName():                              schema_pkg_apis_provisioning_v0alpha1_ResourceCount(ref),
+		ResourceCountList{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v0alpha1_ResourceCountList(ref),
+		ResourceList{}.OpenAPIModelName():                               schema_pkg_apis_provisioning_v0alpha1_ResourceList(ref),
+		ResourceListItem{}.OpenAPIModelName():                           schema_pkg_apis_provisioning_v0alpha1_ResourceListItem(ref),
+		ResourceObjects{}.OpenAPIModelName():                            schema_pkg_apis_provisioning_v0alpha1_ResourceObjects(ref),
+		ResourceRef{}.OpenAPIModelName():                                schema_pkg_apis_provisioning_v0alpha1_ResourceRef(ref),
+		ResourceRepositoryInfo{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v0alpha1_ResourceRepositoryInfo(ref),
+		ResourceStats{}.OpenAPIModelName():                              schema_pkg_apis_provisioning_v0alpha1_ResourceStats(ref),
+		ResourceType{}.OpenAPIModelName():                               schema_pkg_apis_provisioning_v0alpha1_ResourceType(ref),
+		ResourceWrapper{}.OpenAPIModelName():                            schema_pkg_apis_provisioning_v0alpha1_ResourceWrapper(ref),
+		SecureValues{}.OpenAPIModelName():                               schema_pkg_apis_provisioning_v0alpha1_SecureValues(ref),
+		SupportedResource{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v0alpha1_SupportedResource(ref),
+		SyncJobOptions{}.OpenAPIModelName():                             schema_pkg_apis_provisioning_v0alpha1_SyncJobOptions(ref),
+		TestJobOptions{}.OpenAPIModelName():                             schema_pkg_apis_provisioning_v0alpha1_TestJobOptions(ref),
+		TestResults{}.OpenAPIModelName():                                schema_pkg_apis_provisioning_v0alpha1_TestResults(ref),
+		WebhookResponse{}.OpenAPIModelName():                            schema_pkg_apis_provisioning_v0alpha1_WebhookResponse(ref),
 	}
 }
 
@@ -128,157 +128,6 @@ func schema_pkg_apis_provisioning_v0alpha1_Author(ref common.ReferenceCallback) 
 					},
 				},
 				Required: []string{"name", "username"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_provisioning_v0alpha1_BitbucketRepositoryConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"url": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The repository URL (e.g. `https://bitbucket.org/example/test`).",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"branch": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The branch to use in the repository.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"tokenUser": {
-						SchemaProps: spec.SchemaProps{
-							Description: "TokenUser is the user that will be used to access the repository if it's a personal access token.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"email": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Email is the Atlassian account email used to authenticate the Bitbucket REST API. Required to enable webhooks.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"path": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.\n\nWhen specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{"branch"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_provisioning_v0alpha1_BranchOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"nameTemplate": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Template for the branch name created in branch workflow. Supports variables: {{action}}, {{resourceKind}}, {{title}}, {{userLogin}}, {{random}}. {{random}} is a 6-character alphanumeric token generated at render time to avoid collisions. The result is sanitised to a valid git ref (lowercase, alphanumeric + dashes, max 100 chars). When empty, the current auto-generated name is preserved.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"enforceTemplate": {
-						SchemaProps: spec.SchemaProps{
-							Description: "When true, the branch name field in Save drawers is read-only.",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_provisioning_v0alpha1_CommitOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"singleResourceMessageTemplate": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Template for commit messages produced by single-resource UI operations (dashboard save/delete/move, folder create/rename/delete). Bulk operations and sync jobs are out of scope and build their own messages. Supports variables: {{action}}, {{resourceKind}}, {{resourceID}}, {{title}}, {{userName}}, {{userLogin}}, {{userEmail}}. When empty, a built-in default is used (e.g. \"Save dashboard: <title>\").",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"enforceTemplate": {
-						SchemaProps: spec.SchemaProps{
-							Description: "When true, the Comment field in Save drawers is pre-filled from SingleResourceMessageTemplate and rendered read-only.",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-					"authorName": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Name used as the commit author instead of the user who triggered the commit. Only valid when signingMethod is unset.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"authorEmail": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Email used as the commit author instead of the user who triggered the commit. Only valid when signingMethod is unset.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"signerName": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Name used as the commit signer. Required for the signing key's identity to match the commit, which providers need to mark commits as Verified. When empty, defaults to \"Grafana\".",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"signerEmail": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Email used as the commit signer. Must match the signing key's identity and a verified email on the account where the matching public key is registered. When empty, defaults to \"noreply@grafana.com\".",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"signingMethod": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Method used to sign commits with the key in secure.commitSigningKey. One of \"gpg\", \"ssh\", or \"smime\". When empty, commits are not signed.\n\nPossible enum values:\n - `\"gpg\"`\n - `\"smime\"`\n - `\"ssh\"`",
-							Type:        []string{"string"},
-							Format:      "",
-							Enum:        []interface{}{"gpg", "smime", "ssh"},
-						},
-					},
-					"signerIsAuthor": {
-						SchemaProps: spec.SchemaProps{
-							Description: "When true, commits are authored by the signer identity (signerName/signerEmail).",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-					"smimeCertificate": {
-						SchemaProps: spec.SchemaProps{
-							Description: "PEM-encoded X.509 certificate paired with secure.commitSigningKey when signingMethod is \"smime\". This is public (not a secret) and is embedded in the commit signature. Unused for the gpg and ssh formats.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
 			},
 		},
 	}
@@ -647,26 +496,6 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionGitOAuthConfig(ref common.R
 	}
 }
 
-func schema_pkg_apis_provisioning_v0alpha1_ConnectionInfo(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"name": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-				},
-				Required: []string{"name"},
-			},
-		},
-	}
-}
-
 func schema_pkg_apis_provisioning_v0alpha1_ConnectionList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -1009,49 +838,6 @@ func schema_pkg_apis_provisioning_v0alpha1_DeleteJobOptions(ref common.Reference
 	}
 }
 
-func schema_pkg_apis_provisioning_v0alpha1_DeletionStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "DeletionStatus reports the progress of an in-progress deletion and the problem blocking it. It is populated while the repository is Terminating and its finalizers run, so a client can explain the holdup and force-remove the blocking finalizer.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"state": {
-						SchemaProps: spec.SchemaProps{
-							Description: "State is the phase of the deletion.\n\nPossible enum values:\n - `\"Blocked\"` indicates the latest finalizer pass failed and deletion did not complete. The controller keeps retrying, so a transient failure (a brief outage, an API conflict) may still clear on its own; a persistent one (credentials expired, a webhook that cannot be removed) needs the user to force-remove the blocking finalizer. Finalizer is the finalizer that failed on that pass. This is the only state the controller emits: status.deletion is written only when a pass fails. While finalizers are still running, status.deletion is absent, which (together with a set deletionTimestamp) is itself the \"in progress\" signal — so no separate Working state is needed.",
-							Type:        []string{"string"},
-							Format:      "",
-							Enum:        []interface{}{"Blocked"},
-						},
-					},
-					"finalizer": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Finalizer names the finalizer whose teardown is blocking deletion, i.e. which deletion step failed. A client force-removing deletion removes exactly this finalizer.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"message": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Message is a human-readable explanation of what went wrong, suitable for showing to users.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"cause": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Cause classifies the blocking error. It may be absent on older statuses.\n\nPossible enum values:\n - `\"system\"` indicates an infrastructure or unclassified failure.\n - `\"user\"` indicates a failure that requires user intervention.",
-							Type:        []string{"string"},
-							Format:      "",
-							Enum:        []interface{}{"system", "user"},
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
 func schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -1314,175 +1100,6 @@ func schema_pkg_apis_provisioning_v0alpha1_FixFolderMetadataJobOptions(ref commo
 						},
 					},
 				},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_provisioning_v0alpha1_GitHubEnterpriseRepositoryConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "GitHubEnterpriseRepositoryConfig describes a repository hosted on a self-managed GitHub Enterprise Server (GHES) instance.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"serverUrl": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"url": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The repository URL on the GHES server (e.g. `https://ghes.example.com/example/test`).",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"branch": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The branch to use in the repository.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"path": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Path is the subdirectory for the Grafana data inside the repository.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{"branch"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"url": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The repository URL (e.g. `https://github.com/example/test`).",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"branch": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The branch to use in the repository.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"generateDashboardPreviews": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews).",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-					"path": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.\n\nWhen specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{"branch"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_provisioning_v0alpha1_GitLabRepositoryConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"url": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The repository URL (e.g. `https://gitlab.com/example/test`).",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"branch": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The branch to use in the repository.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"path": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.\n\nWhen specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"repoID": {
-						SchemaProps: spec.SchemaProps{
-							Description: "RepoID is the GitLab project's immutable numeric ID. Resolved and set automatically whenever URL is set or changed; it survives a project transfer/move even if the project's path changes. Read-only: it is always system-derived and never taken from client-supplied input.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{"branch"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_provisioning_v0alpha1_GitRepositoryConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"url": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The repository URL (e.g. `https://github.com/example/test`).",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"branch": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The branch to use in the repository.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"tokenUser": {
-						SchemaProps: spec.SchemaProps{
-							Description: "TokenUser is the user that will be used to access the repository if it's a personal access token.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"path": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.\n\nWhen specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{"branch"},
 			},
 		},
 	}
@@ -2076,24 +1693,6 @@ func schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref common.ReferenceCallbac
 	}
 }
 
-func schema_pkg_apis_provisioning_v0alpha1_LocalRepositoryConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"path": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
 func schema_pkg_apis_provisioning_v0alpha1_ManagerStats(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -2300,73 +1899,6 @@ func schema_pkg_apis_provisioning_v0alpha1_PullRequestJobOptions(ref common.Refe
 	}
 }
 
-func schema_pkg_apis_provisioning_v0alpha1_PullRequestOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"titleTemplate": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Template for pull request titles. Supports the same variables as BranchOptions.NameTemplate ({{random}} is available but rarely useful here). When empty, the first line of the commit message is used.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"enforceTemplate": {
-						SchemaProps: spec.SchemaProps{
-							Description: "When true, the PR title field in Save drawers is read-only.",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-					"generateDashboardPreviews": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews).",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_provisioning_v0alpha1_QuotaStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "QuotaStatus represents the quota limits configured for this repository.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"maxRepositories": {
-						SchemaProps: spec.SchemaProps{
-							Description: "MaxRepositories is the maximum number of repositories allowed. 0 means unlimited.",
-							Type:        []string{"integer"},
-							Format:      "int64",
-						},
-					},
-					"maxResourcesPerRepository": {
-						SchemaProps: spec.SchemaProps{
-							Description: "MaxResourcesPerRepository is the maximum number of resources allowed per repository. 0 means unlimited.",
-							Type:        []string{"integer"},
-							Format:      "int64",
-						},
-					},
-					"updatedAt": {
-						SchemaProps: spec.SchemaProps{
-							Description: "UpdatedAt is when the controller last successfully refreshed these quota limits. It is expressed as Unix milliseconds. 0 means the quota limits have not been refreshed yet.",
-							Type:        []string{"integer"},
-							Format:      "int64",
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
 func schema_pkg_apis_provisioning_v0alpha1_RefItem(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -2514,6 +2046,389 @@ func schema_pkg_apis_provisioning_v0alpha1_Repository(ref common.ReferenceCallba
 	}
 }
 
+func schema_pkg_apis_provisioning_v0alpha1_RepositoryBitbucketRepositoryConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The repository URL (e.g. `https://bitbucket.org/example/test`).",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"branch": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The branch to use in the repository.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"tokenUser": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TokenUser is the user that will be used to access the repository if it's a personal access token.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"email": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Email is the Atlassian account email used to authenticate the Bitbucket REST API. Required to enable webhooks.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.\n\nWhen specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"branch"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_RepositoryBranchOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"nameTemplate": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Template for the branch name created in branch workflow. Supports variables: {{action}}, {{resourceKind}}, {{title}}, {{userLogin}}, {{random}}. {{random}} is a 6-character alphanumeric token generated at render time to avoid collisions. The result is sanitised to a valid git ref (lowercase, alphanumeric + dashes, max 100 chars). When empty, the current auto-generated name is preserved.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"enforceTemplate": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When true, the branch name field in Save drawers is read-only.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_RepositoryCommitOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"singleResourceMessageTemplate": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Template for commit messages produced by single-resource UI operations (dashboard save/delete/move, folder create/rename/delete). Bulk operations and sync jobs are out of scope and build their own messages. Supports variables: {{action}}, {{resourceKind}}, {{resourceID}}, {{title}}, {{userName}}, {{userLogin}}, {{userEmail}}. When empty, a built-in default is used (e.g. \"Save dashboard: <title>\").",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"enforceTemplate": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When true, the Comment field in Save drawers is pre-filled from SingleResourceMessageTemplate and rendered read-only.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"authorName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Name used as the commit author instead of the user who triggered the commit. Only valid when signingMethod is unset.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"authorEmail": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Email used as the commit author instead of the user who triggered the commit. Only valid when signingMethod is unset.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"signerName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Name used as the commit signer. Required for the signing key's identity to match the commit, which providers need to mark commits as Verified. When empty, defaults to \"Grafana\".",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"signerEmail": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Email used as the commit signer. Must match the signing key's identity and a verified email on the account where the matching public key is registered. When empty, defaults to \"noreply@grafana.com\".",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"signingMethod": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Method used to sign commits with the key in secure.commitSigningKey. One of \"gpg\", \"ssh\", or \"smime\". When empty, commits are not signed.\n\nPossible enum values:\n - `\"gpg\"`\n - `\"smime\"`\n - `\"ssh\"`",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"gpg", "smime", "ssh"},
+						},
+					},
+					"signerIsAuthor": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When true, commits are authored by the signer identity (signerName/signerEmail).",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"smimeCertificate": {
+						SchemaProps: spec.SchemaProps{
+							Description: "PEM-encoded X.509 certificate paired with secure.commitSigningKey when signingMethod is \"smime\". This is public (not a secret) and is embedded in the commit signature. Unused for the gpg and ssh formats.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_RepositoryConnectionInfo(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"name"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_RepositoryDeletionStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "DeletionStatus reports the progress of an in-progress deletion and the problem blocking it. It is populated while the repository is Terminating and its finalizers run, so a client can explain the holdup and force-remove the blocking finalizer.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"state": {
+						SchemaProps: spec.SchemaProps{
+							Description: "State is the phase of the deletion.\n\nPossible enum values:\n - `\"Blocked\"` indicates the latest finalizer pass failed and deletion did not complete. The controller keeps retrying, so a transient failure (a brief outage, an API conflict) may still clear on its own; a persistent one (credentials expired, a webhook that cannot be removed) needs the user to force-remove the blocking finalizer. Finalizer is the finalizer that failed on that pass. This is the only state the controller emits: status.deletion is written only when a pass fails. While finalizers are still running, status.deletion is absent, which (together with a set deletionTimestamp) is itself the \"in progress\" signal — so no separate Working state is needed.",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"Blocked"},
+						},
+					},
+					"finalizer": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Finalizer names the finalizer whose teardown is blocking deletion, i.e. which deletion step failed. A client force-removing deletion removes exactly this finalizer.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"message": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Message is a human-readable explanation of what went wrong, suitable for showing to users.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"cause": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Cause classifies the blocking error. It may be absent on older statuses.\n\nPossible enum values:\n - `\"system\"` indicates an infrastructure or unclassified failure.\n - `\"user\"` indicates a failure that requires user intervention.",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"system", "user"},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_RepositoryGitHubEnterpriseRepositoryConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "GitHubEnterpriseRepositoryConfig describes a repository hosted on a self-managed GitHub Enterprise Server (GHES) instance.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"serverUrl": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The repository URL on the GHES server (e.g. `https://ghes.example.com/example/test`).",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"branch": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The branch to use in the repository.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Path is the subdirectory for the Grafana data inside the repository.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"branch"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_RepositoryGitHubRepositoryConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The repository URL (e.g. `https://github.com/example/test`).",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"branch": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The branch to use in the repository.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"generateDashboardPreviews": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews).",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.\n\nWhen specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"branch"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_RepositoryGitLabRepositoryConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The repository URL (e.g. `https://gitlab.com/example/test`).",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"branch": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The branch to use in the repository.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.\n\nWhen specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"repoID": {
+						SchemaProps: spec.SchemaProps{
+							Description: "RepoID is the GitLab project's immutable numeric ID. Resolved and set automatically whenever URL is set or changed; it survives a project transfer/move even if the project's path changes. Read-only: it is always system-derived and never taken from client-supplied input.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"branch"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_RepositoryGitRepositoryConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The repository URL (e.g. `https://github.com/example/test`).",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"branch": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The branch to use in the repository.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"tokenUser": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TokenUser is the user that will be used to access the repository if it's a personal access token.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.\n\nWhen specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"branch"},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_provisioning_v0alpha1_RepositoryHealthStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -2621,6 +2536,91 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryList(ref common.ReferenceCa
 	}
 }
 
+func schema_pkg_apis_provisioning_v0alpha1_RepositoryLocalRepositoryConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_RepositoryPullRequestOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"titleTemplate": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Template for pull request titles. Supports the same variables as BranchOptions.NameTemplate ({{random}} is available but rarely useful here). When empty, the first line of the commit message is used.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"enforceTemplate": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When true, the PR title field in Save drawers is read-only.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"generateDashboardPreviews": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews).",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_RepositoryQuotaStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "QuotaStatus represents the quota limits configured for this repository.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"maxRepositories": {
+						SchemaProps: spec.SchemaProps{
+							Description: "MaxRepositories is the maximum number of repositories allowed. 0 means unlimited.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"maxResourcesPerRepository": {
+						SchemaProps: spec.SchemaProps{
+							Description: "MaxResourcesPerRepository is the maximum number of resources allowed per repository. 0 means unlimited.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"updatedAt": {
+						SchemaProps: spec.SchemaProps{
+							Description: "UpdatedAt is when the controller last successfully refreshed these quota limits. It is expressed as Unix milliseconds. 0 means the quota limits have not been refreshed yet.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -2645,19 +2645,19 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 					"commit": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Commit message options. Currently only contains the template used by single-resource UI operations; future siblings (bulk, sync) can live here.",
-							Ref:         ref(CommitOptions{}.OpenAPIModelName()),
+							Ref:         ref(RepositoryCommitOptions{}.OpenAPIModelName()),
 						},
 					},
 					"branch": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Branch naming options. Only meaningful when Workflows includes \"branch\".",
-							Ref:         ref(BranchOptions{}.OpenAPIModelName()),
+							Ref:         ref(RepositoryBranchOptions{}.OpenAPIModelName()),
 						},
 					},
 					"pullRequest": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Pull request options. Only meaningful when Workflows includes \"branch\".",
-							Ref:         ref(PullRequestOptions{}.OpenAPIModelName()),
+							Ref:         ref(RepositoryPullRequestOptions{}.OpenAPIModelName()),
 						},
 					},
 					"workflows": {
@@ -2679,7 +2679,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 						SchemaProps: spec.SchemaProps{
 							Description: "Sync settings -- how values are pulled from the repository into grafana",
 							Default:     map[string]interface{}{},
-							Ref:         ref(SyncOptions{}.OpenAPIModelName()),
+							Ref:         ref(RepositorySyncOptions{}.OpenAPIModelName()),
 						},
 					},
 					"type": {
@@ -2694,49 +2694,49 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 					"webhook": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Webhook settings for the repository. When specified, the base URL overrides the auto-detected Grafana public URL used to register webhooks with the external Git provider.",
-							Ref:         ref(WebhookConfig{}.OpenAPIModelName()),
+							Ref:         ref(RepositoryWebhookConfig{}.OpenAPIModelName()),
 						},
 					},
 					"local": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The repository on the local file system. Mutually exclusive with local | github.",
-							Ref:         ref(LocalRepositoryConfig{}.OpenAPIModelName()),
+							Ref:         ref(RepositoryLocalRepositoryConfig{}.OpenAPIModelName()),
 						},
 					},
 					"github": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The repository on GitHub. Mutually exclusive with local | github | git.",
-							Ref:         ref(GitHubRepositoryConfig{}.OpenAPIModelName()),
+							Ref:         ref(RepositoryGitHubRepositoryConfig{}.OpenAPIModelName()),
 						},
 					},
 					"githubEnterprise": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The repository on a self-managed GitHub Enterprise Server (GHES). Mutually exclusive with local | github | git.",
-							Ref:         ref(GitHubEnterpriseRepositoryConfig{}.OpenAPIModelName()),
+							Ref:         ref(RepositoryGitHubEnterpriseRepositoryConfig{}.OpenAPIModelName()),
 						},
 					},
 					"git": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The repository on Git. Mutually exclusive with local | github | git.",
-							Ref:         ref(GitRepositoryConfig{}.OpenAPIModelName()),
+							Ref:         ref(RepositoryGitRepositoryConfig{}.OpenAPIModelName()),
 						},
 					},
 					"bitbucket": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The repository on Bitbucket. Mutually exclusive with local | github | git.",
-							Ref:         ref(BitbucketRepositoryConfig{}.OpenAPIModelName()),
+							Ref:         ref(RepositoryBitbucketRepositoryConfig{}.OpenAPIModelName()),
 						},
 					},
 					"gitlab": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The repository on GitLab. Mutually exclusive with local | github | git.",
-							Ref:         ref(GitLabRepositoryConfig{}.OpenAPIModelName()),
+							Ref:         ref(RepositoryGitLabRepositoryConfig{}.OpenAPIModelName()),
 						},
 					},
 					"connection": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The connection the repository references. This means the Repository is interacting with git via a Connection.",
-							Ref:         ref(ConnectionInfo{}.OpenAPIModelName()),
+							Ref:         ref(RepositoryConnectionInfo{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -2744,7 +2744,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			BitbucketRepositoryConfig{}.OpenAPIModelName(), BranchOptions{}.OpenAPIModelName(), CommitOptions{}.OpenAPIModelName(), ConnectionInfo{}.OpenAPIModelName(), GitHubEnterpriseRepositoryConfig{}.OpenAPIModelName(), GitHubRepositoryConfig{}.OpenAPIModelName(), GitLabRepositoryConfig{}.OpenAPIModelName(), GitRepositoryConfig{}.OpenAPIModelName(), LocalRepositoryConfig{}.OpenAPIModelName(), PullRequestOptions{}.OpenAPIModelName(), SyncOptions{}.OpenAPIModelName(), WebhookConfig{}.OpenAPIModelName()},
+			RepositoryBitbucketRepositoryConfig{}.OpenAPIModelName(), RepositoryBranchOptions{}.OpenAPIModelName(), RepositoryCommitOptions{}.OpenAPIModelName(), RepositoryConnectionInfo{}.OpenAPIModelName(), RepositoryGitHubEnterpriseRepositoryConfig{}.OpenAPIModelName(), RepositoryGitHubRepositoryConfig{}.OpenAPIModelName(), RepositoryGitLabRepositoryConfig{}.OpenAPIModelName(), RepositoryGitRepositoryConfig{}.OpenAPIModelName(), RepositoryLocalRepositoryConfig{}.OpenAPIModelName(), RepositoryPullRequestOptions{}.OpenAPIModelName(), RepositorySyncOptions{}.OpenAPIModelName(), RepositoryWebhookConfig{}.OpenAPIModelName()},
 	}
 }
 
@@ -2815,7 +2815,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 						SchemaProps: spec.SchemaProps{
 							Description: "Sync information with the last sync information",
 							Default:     map[string]interface{}{},
-							Ref:         ref(SyncStatus{}.OpenAPIModelName()),
+							Ref:         ref(RepositorySyncStatus{}.OpenAPIModelName()),
 						},
 					},
 					"stats": {
@@ -2839,7 +2839,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 					"webhook": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Webhook Information (if applicable)",
-							Ref:         ref(WebhookStatus{}.OpenAPIModelName()),
+							Ref:         ref(RepositoryWebhookStatus{}.OpenAPIModelName()),
 						},
 					},
 					"token": {
@@ -2859,14 +2859,14 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 					"deletion": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Deletion reports the progress of an in-progress deletion and the problem blocking it, so a client can explain the holdup and force-remove the blocking finalizer. Populated only while the repository is Terminating.",
-							Ref:         ref(DeletionStatus{}.OpenAPIModelName()),
+							Ref:         ref(RepositoryDeletionStatus{}.OpenAPIModelName()),
 						},
 					},
 					"quota": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Quota contains the configured quota limits for this repository",
 							Default:     map[string]interface{}{},
-							Ref:         ref(QuotaStatus{}.OpenAPIModelName()),
+							Ref:         ref(RepositoryQuotaStatus{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -2874,7 +2874,134 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 			},
 		},
 		Dependencies: []string{
-			DeletionStatus{}.OpenAPIModelName(), ErrorDetails{}.OpenAPIModelName(), QuotaStatus{}.OpenAPIModelName(), RepositoryHealthStatus{}.OpenAPIModelName(), RepositoryTokenStatus{}.OpenAPIModelName(), ResourceCount{}.OpenAPIModelName(), SyncStatus{}.OpenAPIModelName(), WebhookStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.Condition"},
+			ErrorDetails{}.OpenAPIModelName(), RepositoryDeletionStatus{}.OpenAPIModelName(), RepositoryHealthStatus{}.OpenAPIModelName(), RepositoryQuotaStatus{}.OpenAPIModelName(), RepositorySyncStatus{}.OpenAPIModelName(), RepositoryTokenStatus{}.OpenAPIModelName(), RepositoryWebhookStatus{}.OpenAPIModelName(), ResourceCount{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.Condition"},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_RepositorySyncOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"enabled": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Enabled must be saved as true before any sync job will run",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"target": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Where values should be saved\n\nPossible enum values:\n - `\"folder\"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name\n - `\"folderless\"` Resources are saved at the top level without a wrapper folder. Like `folder`, multiple `folderless` repositories may coexist with each other, with `folder` repositories, and with unprovisioned resources. Unlike `folder`, no repo-named container folder is created: files at the repository path root become top-level resources and subdirectories become top-level folders. Ownership is tracked per-resource via manager annotations rather than by folder containment.\n - `\"instance\"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible)",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"folder", "folderless", "instance"},
+						},
+					},
+					"intervalSeconds": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The interval between sync runs. The system defines a default value for this field, which will overwrite the user-defined one in case the latter is zero or lower than the system-defined one.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+				},
+				Required: []string{"enabled", "target"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_RepositorySyncStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"state": {
+						SchemaProps: spec.SchemaProps{
+							Description: "pending, running, success, error\n\nPossible enum values:\n - `\"error\"` Finished with errors\n - `\"pending\"` Job has been submitted, but not processed yet\n - `\"success\"` Finished with success\n - `\"warning\"` Finished with some non-critical errors\n - `\"working\"` The job is running",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"error", "pending", "success", "warning", "working"},
+						},
+					},
+					"job": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The ID for the job that ran this sync",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"started": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When the sync job started",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"finished": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When the sync job finished",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"lastChecked": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When the controller last attempted a sync or an interval check (Unix milliseconds).",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"scheduled": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When the next sync check is scheduled",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"message": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "Summary messages (will be shown to users)",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"lastRef": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The repository ref when the last successful sync ran",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"incremental": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Incremental synchronization for versioned repositories",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"state", "message"},
+			},
+		},
 	}
 }
 
@@ -3021,19 +3148,19 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryView(ref common.ReferenceCa
 					"commit": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Commit message options. Mirrors the same-named field on the repository spec.",
-							Ref:         ref(CommitOptions{}.OpenAPIModelName()),
+							Ref:         ref(RepositoryCommitOptions{}.OpenAPIModelName()),
 						},
 					},
 					"branchOptions": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Branch naming options. Mirrors spec.branch. Exposed under `branchOptions` rather than `branch` because the view already uses `branch` for the git target branch name.",
-							Ref:         ref(BranchOptions{}.OpenAPIModelName()),
+							Ref:         ref(RepositoryBranchOptions{}.OpenAPIModelName()),
 						},
 					},
 					"pullRequest": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Pull request options. Mirrors the same-named field on the repository spec.",
-							Ref:         ref(PullRequestOptions{}.OpenAPIModelName()),
+							Ref:         ref(RepositoryPullRequestOptions{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -3041,7 +3168,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryView(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			BranchOptions{}.OpenAPIModelName(), CommitOptions{}.OpenAPIModelName(), PullRequestOptions{}.OpenAPIModelName()},
+			RepositoryBranchOptions{}.OpenAPIModelName(), RepositoryCommitOptions{}.OpenAPIModelName(), RepositoryPullRequestOptions{}.OpenAPIModelName()},
 	}
 }
 
@@ -3163,6 +3290,87 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 		},
 		Dependencies: []string{
 			RepositoryView{}.OpenAPIModelName(), SupportedResource{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_RepositoryWebhookConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"baseUrl": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Base URL of the Grafana instance used to construct the webhook endpoint registered with the external Git provider. Only the base URL should be provided (e.g. `https://grafana.example.com`); the API path, namespace, and resource name are appended automatically. Trailing slashes are stripped. Must be a valid HTTP or HTTPS URL.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"disabled": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Disabled turns off webhook integration for this repository. When true, Grafana will not register or receive webhook events from the Git provider and will poll the repository on an interval instead. Use this when Grafana is not reachable from the public internet.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_RepositoryWebhookStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"id": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"uuid": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"subscribedEvents": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"lastEvent": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"lastRotated": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -3828,133 +4036,6 @@ func schema_pkg_apis_provisioning_v0alpha1_SyncJobOptions(ref common.ReferenceCa
 	}
 }
 
-func schema_pkg_apis_provisioning_v0alpha1_SyncOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"enabled": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Enabled must be saved as true before any sync job will run",
-							Default:     false,
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-					"target": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Where values should be saved\n\nPossible enum values:\n - `\"folder\"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name\n - `\"folderless\"` Resources are saved at the top level without a wrapper folder. Like `folder`, multiple `folderless` repositories may coexist with each other, with `folder` repositories, and with unprovisioned resources. Unlike `folder`, no repo-named container folder is created: files at the repository path root become top-level resources and subdirectories become top-level folders. Ownership is tracked per-resource via manager annotations rather than by folder containment.\n - `\"instance\"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible)",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-							Enum:        []interface{}{"folder", "folderless", "instance"},
-						},
-					},
-					"intervalSeconds": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The interval between sync runs. The system defines a default value for this field, which will overwrite the user-defined one in case the latter is zero or lower than the system-defined one.",
-							Type:        []string{"integer"},
-							Format:      "int64",
-						},
-					},
-				},
-				Required: []string{"enabled", "target"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_provisioning_v0alpha1_SyncStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"state": {
-						SchemaProps: spec.SchemaProps{
-							Description: "pending, running, success, error\n\nPossible enum values:\n - `\"error\"` Finished with errors\n - `\"pending\"` Job has been submitted, but not processed yet\n - `\"success\"` Finished with success\n - `\"warning\"` Finished with some non-critical errors\n - `\"working\"` The job is running",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-							Enum:        []interface{}{"error", "pending", "success", "warning", "working"},
-						},
-					},
-					"job": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The ID for the job that ran this sync",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"started": {
-						SchemaProps: spec.SchemaProps{
-							Description: "When the sync job started",
-							Type:        []string{"integer"},
-							Format:      "int64",
-						},
-					},
-					"finished": {
-						SchemaProps: spec.SchemaProps{
-							Description: "When the sync job finished",
-							Type:        []string{"integer"},
-							Format:      "int64",
-						},
-					},
-					"lastChecked": {
-						SchemaProps: spec.SchemaProps{
-							Description: "When the controller last attempted a sync or an interval check (Unix milliseconds).",
-							Type:        []string{"integer"},
-							Format:      "int64",
-						},
-					},
-					"scheduled": {
-						SchemaProps: spec.SchemaProps{
-							Description: "When the next sync check is scheduled",
-							Type:        []string{"integer"},
-							Format:      "int64",
-						},
-					},
-					"message": {
-						VendorExtensible: spec.VendorExtensible{
-							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "atomic",
-							},
-						},
-						SchemaProps: spec.SchemaProps{
-							Description: "Summary messages (will be shown to users)",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
-									},
-								},
-							},
-						},
-					},
-					"lastRef": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The repository ref when the last successful sync ran",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"incremental": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Incremental synchronization for versioned repositories",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{"state", "message"},
-			},
-		},
-	}
-}
-
 func schema_pkg_apis_provisioning_v0alpha1_TestJobOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -4042,32 +4123,6 @@ func schema_pkg_apis_provisioning_v0alpha1_TestResults(ref common.ReferenceCallb
 	}
 }
 
-func schema_pkg_apis_provisioning_v0alpha1_WebhookConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"baseUrl": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Base URL of the Grafana instance used to construct the webhook endpoint registered with the external Git provider. Only the base URL should be provided (e.g. `https://grafana.example.com`); the API path, namespace, and resource name are appended automatically. Trailing slashes are stripped. Must be a valid HTTP or HTTPS URL.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"disabled": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Disabled turns off webhook integration for this repository. When true, Grafana will not register or receive webhook events from the Git provider and will poll the repository on an interval instead. Use this when Grafana is not reachable from the public internet.",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
 func schema_pkg_apis_provisioning_v0alpha1_WebhookResponse(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -4113,60 +4168,5 @@ func schema_pkg_apis_provisioning_v0alpha1_WebhookResponse(ref common.ReferenceC
 		},
 		Dependencies: []string{
 			JobSpec{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_provisioning_v0alpha1_WebhookStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"id": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"integer"},
-							Format: "int64",
-						},
-					},
-					"uuid": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"url": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"subscribedEvents": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
-									},
-								},
-							},
-						},
-					},
-					"lastEvent": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"integer"},
-							Format: "int64",
-						},
-					},
-					"lastRotated": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"integer"},
-							Format: "int64",
-						},
-					},
-				},
-			},
-		},
 	}
 }

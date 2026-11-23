@@ -4,11 +4,11 @@
 
 package v0alpha1
 
-// GitHubRepositoryConfigApplyConfiguration represents a declarative configuration of the GitHubRepositoryConfig type for use
+// RepositoryGitHubRepositoryConfigApplyConfiguration represents a declarative configuration of the RepositoryGitHubRepositoryConfig type for use
 // with apply.
-type GitHubRepositoryConfigApplyConfiguration struct {
+type RepositoryGitHubRepositoryConfigApplyConfiguration struct {
 	// The repository URL (e.g. `https://github.com/example/test`).
-	URL *string `json:"url,omitempty"`
+	Url *string `json:"url,omitempty"`
 	// The branch to use in the repository.
 	Branch *string `json:"branch,omitempty"`
 	// Whether we should show dashboard previews for pull requests.
@@ -23,24 +23,24 @@ type GitHubRepositoryConfigApplyConfiguration struct {
 	Path *string `json:"path,omitempty"`
 }
 
-// GitHubRepositoryConfigApplyConfiguration constructs a declarative configuration of the GitHubRepositoryConfig type for use with
+// RepositoryGitHubRepositoryConfigApplyConfiguration constructs a declarative configuration of the RepositoryGitHubRepositoryConfig type for use with
 // apply.
-func GitHubRepositoryConfig() *GitHubRepositoryConfigApplyConfiguration {
-	return &GitHubRepositoryConfigApplyConfiguration{}
+func RepositoryGitHubRepositoryConfig() *RepositoryGitHubRepositoryConfigApplyConfiguration {
+	return &RepositoryGitHubRepositoryConfigApplyConfiguration{}
 }
 
-// WithURL sets the URL field in the declarative configuration to the given value
+// WithUrl sets the Url field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the URL field is set to the value of the last call.
-func (b *GitHubRepositoryConfigApplyConfiguration) WithURL(value string) *GitHubRepositoryConfigApplyConfiguration {
-	b.URL = &value
+// If called multiple times, the Url field is set to the value of the last call.
+func (b *RepositoryGitHubRepositoryConfigApplyConfiguration) WithUrl(value string) *RepositoryGitHubRepositoryConfigApplyConfiguration {
+	b.Url = &value
 	return b
 }
 
 // WithBranch sets the Branch field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Branch field is set to the value of the last call.
-func (b *GitHubRepositoryConfigApplyConfiguration) WithBranch(value string) *GitHubRepositoryConfigApplyConfiguration {
+func (b *RepositoryGitHubRepositoryConfigApplyConfiguration) WithBranch(value string) *RepositoryGitHubRepositoryConfigApplyConfiguration {
 	b.Branch = &value
 	return b
 }
@@ -48,7 +48,7 @@ func (b *GitHubRepositoryConfigApplyConfiguration) WithBranch(value string) *Git
 // WithGenerateDashboardPreviews sets the GenerateDashboardPreviews field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the GenerateDashboardPreviews field is set to the value of the last call.
-func (b *GitHubRepositoryConfigApplyConfiguration) WithGenerateDashboardPreviews(value bool) *GitHubRepositoryConfigApplyConfiguration {
+func (b *RepositoryGitHubRepositoryConfigApplyConfiguration) WithGenerateDashboardPreviews(value bool) *RepositoryGitHubRepositoryConfigApplyConfiguration {
 	b.GenerateDashboardPreviews = &value
 	return b
 }
@@ -56,7 +56,7 @@ func (b *GitHubRepositoryConfigApplyConfiguration) WithGenerateDashboardPreviews
 // WithPath sets the Path field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Path field is set to the value of the last call.
-func (b *GitHubRepositoryConfigApplyConfiguration) WithPath(value string) *GitHubRepositoryConfigApplyConfiguration {
+func (b *RepositoryGitHubRepositoryConfigApplyConfiguration) WithPath(value string) *RepositoryGitHubRepositoryConfigApplyConfiguration {
 	b.Path = &value
 	return b
 }

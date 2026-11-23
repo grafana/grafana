@@ -8,13 +8,13 @@ import (
 	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
-// SyncStatusApplyConfiguration represents a declarative configuration of the SyncStatus type for use
+// RepositorySyncStatusApplyConfiguration represents a declarative configuration of the RepositorySyncStatus type for use
 // with apply.
-type SyncStatusApplyConfiguration struct {
+type RepositorySyncStatusApplyConfiguration struct {
 	// pending, running, success, error
 	State *provisioningv0alpha1.JobState `json:"state,omitempty"`
 	// The ID for the job that ran this sync
-	JobID *string `json:"job,omitempty"`
+	Job *string `json:"job,omitempty"`
 	// When the sync job started
 	Started *int64 `json:"started,omitempty"`
 	// When the sync job finished
@@ -31,32 +31,32 @@ type SyncStatusApplyConfiguration struct {
 	Incremental *bool `json:"incremental,omitempty"`
 }
 
-// SyncStatusApplyConfiguration constructs a declarative configuration of the SyncStatus type for use with
+// RepositorySyncStatusApplyConfiguration constructs a declarative configuration of the RepositorySyncStatus type for use with
 // apply.
-func SyncStatus() *SyncStatusApplyConfiguration {
-	return &SyncStatusApplyConfiguration{}
+func RepositorySyncStatus() *RepositorySyncStatusApplyConfiguration {
+	return &RepositorySyncStatusApplyConfiguration{}
 }
 
 // WithState sets the State field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the State field is set to the value of the last call.
-func (b *SyncStatusApplyConfiguration) WithState(value provisioningv0alpha1.JobState) *SyncStatusApplyConfiguration {
+func (b *RepositorySyncStatusApplyConfiguration) WithState(value provisioningv0alpha1.JobState) *RepositorySyncStatusApplyConfiguration {
 	b.State = &value
 	return b
 }
 
-// WithJobID sets the JobID field in the declarative configuration to the given value
+// WithJob sets the Job field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the JobID field is set to the value of the last call.
-func (b *SyncStatusApplyConfiguration) WithJobID(value string) *SyncStatusApplyConfiguration {
-	b.JobID = &value
+// If called multiple times, the Job field is set to the value of the last call.
+func (b *RepositorySyncStatusApplyConfiguration) WithJob(value string) *RepositorySyncStatusApplyConfiguration {
+	b.Job = &value
 	return b
 }
 
 // WithStarted sets the Started field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Started field is set to the value of the last call.
-func (b *SyncStatusApplyConfiguration) WithStarted(value int64) *SyncStatusApplyConfiguration {
+func (b *RepositorySyncStatusApplyConfiguration) WithStarted(value int64) *RepositorySyncStatusApplyConfiguration {
 	b.Started = &value
 	return b
 }
@@ -64,7 +64,7 @@ func (b *SyncStatusApplyConfiguration) WithStarted(value int64) *SyncStatusApply
 // WithFinished sets the Finished field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Finished field is set to the value of the last call.
-func (b *SyncStatusApplyConfiguration) WithFinished(value int64) *SyncStatusApplyConfiguration {
+func (b *RepositorySyncStatusApplyConfiguration) WithFinished(value int64) *RepositorySyncStatusApplyConfiguration {
 	b.Finished = &value
 	return b
 }
@@ -72,7 +72,7 @@ func (b *SyncStatusApplyConfiguration) WithFinished(value int64) *SyncStatusAppl
 // WithLastChecked sets the LastChecked field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the LastChecked field is set to the value of the last call.
-func (b *SyncStatusApplyConfiguration) WithLastChecked(value int64) *SyncStatusApplyConfiguration {
+func (b *RepositorySyncStatusApplyConfiguration) WithLastChecked(value int64) *RepositorySyncStatusApplyConfiguration {
 	b.LastChecked = &value
 	return b
 }
@@ -80,7 +80,7 @@ func (b *SyncStatusApplyConfiguration) WithLastChecked(value int64) *SyncStatusA
 // WithScheduled sets the Scheduled field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Scheduled field is set to the value of the last call.
-func (b *SyncStatusApplyConfiguration) WithScheduled(value int64) *SyncStatusApplyConfiguration {
+func (b *RepositorySyncStatusApplyConfiguration) WithScheduled(value int64) *RepositorySyncStatusApplyConfiguration {
 	b.Scheduled = &value
 	return b
 }
@@ -88,7 +88,7 @@ func (b *SyncStatusApplyConfiguration) WithScheduled(value int64) *SyncStatusApp
 // WithMessage adds the given value to the Message field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the Message field.
-func (b *SyncStatusApplyConfiguration) WithMessage(values ...string) *SyncStatusApplyConfiguration {
+func (b *RepositorySyncStatusApplyConfiguration) WithMessage(values ...string) *RepositorySyncStatusApplyConfiguration {
 	for i := range values {
 		b.Message = append(b.Message, values[i])
 	}
@@ -98,7 +98,7 @@ func (b *SyncStatusApplyConfiguration) WithMessage(values ...string) *SyncStatus
 // WithLastRef sets the LastRef field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the LastRef field is set to the value of the last call.
-func (b *SyncStatusApplyConfiguration) WithLastRef(value string) *SyncStatusApplyConfiguration {
+func (b *RepositorySyncStatusApplyConfiguration) WithLastRef(value string) *RepositorySyncStatusApplyConfiguration {
 	b.LastRef = &value
 	return b
 }
@@ -106,7 +106,7 @@ func (b *SyncStatusApplyConfiguration) WithLastRef(value string) *SyncStatusAppl
 // WithIncremental sets the Incremental field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Incremental field is set to the value of the last call.
-func (b *SyncStatusApplyConfiguration) WithIncremental(value bool) *SyncStatusApplyConfiguration {
+func (b *RepositorySyncStatusApplyConfiguration) WithIncremental(value bool) *RepositorySyncStatusApplyConfiguration {
 	b.Incremental = &value
 	return b
 }

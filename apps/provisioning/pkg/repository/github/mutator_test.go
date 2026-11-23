@@ -27,8 +27,8 @@ func TestMutator(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL: "https://github.com/org/repo.git/",
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url: "https://github.com/org/repo.git/",
 					},
 				},
 			},
@@ -38,8 +38,8 @@ func TestMutator(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL: "https://github.com/org/repo",
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url: "https://github.com/org/repo",
 					},
 				},
 			},
@@ -52,8 +52,8 @@ func TestMutator(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL: "https://github.com/org/repo/",
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url: "https://github.com/org/repo/",
 					},
 				},
 			},
@@ -63,8 +63,8 @@ func TestMutator(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL: "https://github.com/org/repo",
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url: "https://github.com/org/repo",
 					},
 				},
 			},
@@ -77,8 +77,8 @@ func TestMutator(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL: "https://github.com/org/repo.git",
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url: "https://github.com/org/repo.git",
 					},
 				},
 			},
@@ -88,8 +88,8 @@ func TestMutator(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL: "https://github.com/org/repo",
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url: "https://github.com/org/repo",
 					},
 				},
 			},
@@ -102,8 +102,8 @@ func TestMutator(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL: "https://github.com/org/repo",
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url: "https://github.com/org/repo",
 					},
 				},
 			},
@@ -113,8 +113,8 @@ func TestMutator(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL: "https://github.com/org/repo",
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url: "https://github.com/org/repo",
 					},
 				},
 			},
@@ -127,7 +127,7 @@ func TestMutator(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					GitHub: nil,
+					Github: nil,
 				},
 			},
 			expectedObj: &provisioning.Repository{
@@ -136,7 +136,7 @@ func TestMutator(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					GitHub: nil,
+					Github: nil,
 				},
 			},
 		},
@@ -148,7 +148,7 @@ func TestMutator(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{},
 				},
 			},
 			expectedObj: &provisioning.Repository{
@@ -157,7 +157,7 @@ func TestMutator(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{},
 				},
 			},
 		},

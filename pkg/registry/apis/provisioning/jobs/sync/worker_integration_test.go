@@ -36,7 +36,7 @@ func TestIntegrationSyncWorker_EarlySetupFailure(t *testing.T) {
 			Generation: 3,
 		},
 		Status: provisioning.RepositoryStatus{
-			Sync: provisioning.SyncStatus{
+			Sync: provisioning.RepositorySyncStatus{
 				LastRef:     "existing-ref",
 				LastChecked: 1234567800,
 			},
@@ -84,10 +84,10 @@ func TestIntegrationSyncWorker_EarlySetupFailure(t *testing.T) {
 
 	require.Equal(t, "replace", final[0]["op"])
 	require.Equal(t, "/status/sync", final[0]["path"])
-	syncStatus, ok := final[0]["value"].(provisioning.SyncStatus)
+	syncStatus, ok := final[0]["value"].(provisioning.RepositorySyncStatus)
 	require.True(t, ok)
 	require.Equal(t, provisioning.JobStateError, syncStatus.State)
-	require.Equal(t, "test-job", syncStatus.JobID)
+	require.Equal(t, "test-job", syncStatus.Job)
 	require.Equal(t, "existing-ref", syncStatus.LastRef)
 	require.Equal(t, repoConfig.Status.Sync.LastChecked, syncStatus.LastChecked)
 	require.Equal(t, []string{"create repository resources client: boom"}, syncStatus.Message)

@@ -78,7 +78,7 @@ func (f *mockGithub) CreateRepo(t *testing.T, helper *common.GitTestHelper, repo
 	f.repos[repoName] = &githubRepo{id: f.nextID, opts: opts}
 	f.mu.Unlock()
 
-	webhooksuite.CreateRepository(t, helper, repoName, provisioning.GitHubRepositoryType, map[string]any{
+	webhooksuite.CreateRepository(t, helper, repoName, provisioning.RepositorySpecTypeGithub, map[string]any{
 		"url":    remote.URL,
 		"branch": "main",
 	}, user.Password, opts)

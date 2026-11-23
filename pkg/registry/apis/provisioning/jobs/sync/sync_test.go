@@ -88,7 +88,7 @@ func TestSyncer_Sync(t *testing.T) {
 						Name: "test-repo",
 					},
 					Status: provisioning.RepositoryStatus{
-						Sync: provisioning.SyncStatus{
+						Sync: provisioning.RepositorySyncStatus{
 							LastRef: "old-ref",
 						},
 					},
@@ -112,10 +112,10 @@ func TestSyncer_Sync(t *testing.T) {
 						Name: "test-repo",
 					},
 					Status: provisioning.RepositoryStatus{
-						Sync: provisioning.SyncStatus{
+						Sync: provisioning.RepositorySyncStatus{
 							LastRef: "old-ref",
 						},
-						Quota: provisioning.QuotaStatus{
+						Quota: provisioning.RepositoryQuotaStatus{
 							MaxResourcesPerRepository: 100,
 						},
 						Conditions: []metav1.Condition{
@@ -144,7 +144,7 @@ func TestSyncer_Sync(t *testing.T) {
 						Name: "test-repo",
 					},
 					Status: provisioning.RepositoryStatus{
-						Sync: provisioning.SyncStatus{
+						Sync: provisioning.RepositorySyncStatus{
 							LastRef: "old-ref",
 						},
 					},
@@ -165,7 +165,7 @@ func TestSyncer_Sync(t *testing.T) {
 						Name: "test-repo",
 					},
 					Status: provisioning.RepositoryStatus{
-						Sync: provisioning.SyncStatus{
+						Sync: provisioning.RepositorySyncStatus{
 							LastRef: "old-ref",
 						},
 					},

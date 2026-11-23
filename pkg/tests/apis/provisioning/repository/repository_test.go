@@ -141,7 +141,7 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 				Suffix("refs").
 				Do(context.Background())
 
-			if expectedRepo.Spec.Type == provisioning.LocalRepositoryType {
+			if expectedRepo.Spec.Type == provisioning.RepositorySpecTypeLocal {
 				require.ErrorContains(t, rsp.Error(), "does not support versioned operations")
 			} else {
 				require.NoError(t, rsp.Error())
@@ -187,9 +187,9 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 
 			for _, i := range settings.Items {
 				switch i.Type {
-				case provisioning.LocalRepositoryType:
+				case provisioning.RepositorySpecTypeLocal:
 					assert.Equal(collect, i.Path, helper.ProvisioningPath)
-				case provisioning.GitHubRepositoryType:
+				case provisioning.RepositorySpecTypeGithub:
 					assert.Equal(collect, i.URL, githubURL)
 					assert.Equal(collect, i.Path, "grafana/")
 				default:
@@ -200,19 +200,19 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 
 			// Verify default values
 			if extensions.IsEnterprise {
-				assert.ElementsMatch(collect, []provisioning.RepositoryType{
-					provisioning.LocalRepositoryType,
-					provisioning.GitRepositoryType,
-					provisioning.GitHubRepositoryType,
-					provisioning.BitbucketRepositoryType,
-					provisioning.GitLabRepositoryType,
-					provisioning.GitHubEnterpriseRepositoryType,
+				assert.ElementsMatch(collect, []provisioning.RepositorySpecType{
+					provisioning.RepositorySpecTypeLocal,
+					provisioning.RepositorySpecTypeGit,
+					provisioning.RepositorySpecTypeGithub,
+					provisioning.RepositorySpecTypeBitbucket,
+					provisioning.RepositorySpecTypeGitlab,
+					provisioning.RepositorySpecTypeGithubEnterprise,
 				}, settings.AvailableRepositoryTypes)
 			} else {
-				assert.ElementsMatch(collect, []provisioning.RepositoryType{
-					provisioning.LocalRepositoryType,
-					provisioning.GitRepositoryType,
-					provisioning.GitHubRepositoryType,
+				assert.ElementsMatch(collect, []provisioning.RepositorySpecType{
+					provisioning.RepositorySpecTypeLocal,
+					provisioning.RepositorySpecTypeGit,
+					provisioning.RepositorySpecTypeGithub,
 				}, settings.AvailableRepositoryTypes)
 			}
 		}, time.Second*10, time.Millisecond*100, "Expected settings to match")
@@ -316,17 +316,17 @@ func TestIntegrationProvisioning_ViewerSettings_CustomRepositoryTypes(t *testing
 
 		// Verify default values
 		if extensions.IsEnterprise {
-			assert.ElementsMatch(collect, []provisioning.RepositoryType{
-				provisioning.LocalRepositoryType,
-				provisioning.GitRepositoryType,
-				provisioning.GitHubRepositoryType,
-				provisioning.BitbucketRepositoryType,
-				provisioning.GitHubEnterpriseRepositoryType,
+			assert.ElementsMatch(collect, []provisioning.RepositorySpecType{
+				provisioning.RepositorySpecTypeLocal,
+				provisioning.RepositorySpecTypeGit,
+				provisioning.RepositorySpecTypeGithub,
+				provisioning.RepositorySpecTypeBitbucket,
+				provisioning.RepositorySpecTypeGithubEnterprise,
 			}, settings.AvailableRepositoryTypes)
 		} else {
-			assert.ElementsMatch(collect, []provisioning.RepositoryType{
-				provisioning.LocalRepositoryType,
-				provisioning.GitHubRepositoryType,
+			assert.ElementsMatch(collect, []provisioning.RepositorySpecType{
+				provisioning.RepositorySpecTypeLocal,
+				provisioning.RepositorySpecTypeGithub,
 			}, settings.AvailableRepositoryTypes)
 		}
 	}, time.Second*10, time.Millisecond*100, "Expected settings to match")
@@ -383,7 +383,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 				},
 				"spec": map[string]any{
 					"title": "Local Repo With Branch Options",
-					"type":  string(provisioning.LocalRepositoryType),
+					"type":  string(provisioning.RepositorySpecTypeLocal),
 					"sync": map[string]any{
 						"enabled": false,
 						"target":  "folder",
@@ -410,7 +410,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 				},
 				"spec": map[string]any{
 					"title": "Local Repo With Commit Options",
-					"type":  string(provisioning.LocalRepositoryType),
+					"type":  string(provisioning.RepositorySpecTypeLocal),
 					"sync": map[string]any{
 						"enabled": false,
 						"target":  "folder",
@@ -437,7 +437,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 				},
 				"spec": map[string]any{
 					"title": "Local Repo With Pull Request Options",
-					"type":  string(provisioning.LocalRepositoryType),
+					"type":  string(provisioning.RepositorySpecTypeLocal),
 					"sync": map[string]any{
 						"enabled": false,
 						"target":  "folder",
@@ -464,7 +464,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 				},
 				"spec": map[string]any{
 					"title": "Git Repo With Pull Request Options",
-					"type":  string(provisioning.GitRepositoryType),
+					"type":  string(provisioning.RepositorySpecTypeGit),
 					"sync": map[string]any{
 						"enabled": false,
 						"target":  "folder",
@@ -528,8 +528,8 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 					// Having workflows would normally trigger a secure.token check
 					// But we should not do that as a connection is referenced
 					"workflows": []string{
-						string(provisioning.WriteWorkflow),
-						string(provisioning.BranchWorkflow),
+						string(provisioning.RepositorySpecWorkflowsWrite),
+						string(provisioning.RepositorySpecWorkflowsBranch),
 					},
 				},
 				// Missing secure.token
@@ -1148,7 +1148,7 @@ func TestIntegrationProvisioning_WebhookConfig(t *testing.T) {
 
 		createdRepo := common.MustFromUnstructured[provisioning.Repository](t, created)
 		require.NotNil(t, createdRepo.Spec.Webhook, "webhook config should be persisted")
-		require.Equal(t, "https://grafana.example.com", createdRepo.Spec.Webhook.BaseURL, "trailing slash should be trimmed by mutator")
+		require.Equal(t, "https://grafana.example.com", createdRepo.Spec.Webhook.BaseUrl, "trailing slash should be trimmed by mutator")
 	})
 
 	t.Run("create repository with HTTP webhook base URL", func(t *testing.T) {
@@ -1185,7 +1185,7 @@ func TestIntegrationProvisioning_WebhookConfig(t *testing.T) {
 
 		createdRepo := common.MustFromUnstructured[provisioning.Repository](t, created)
 		require.NotNil(t, createdRepo.Spec.Webhook)
-		require.Equal(t, "http://internal-proxy.example.com", createdRepo.Spec.Webhook.BaseURL, "trailing slash should be trimmed by mutator")
+		require.Equal(t, "http://internal-proxy.example.com", createdRepo.Spec.Webhook.BaseUrl, "trailing slash should be trimmed by mutator")
 	})
 
 	t.Run("read back webhook config", func(t *testing.T) {
@@ -1194,7 +1194,7 @@ func TestIntegrationProvisioning_WebhookConfig(t *testing.T) {
 
 		repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
 		require.NotNil(t, repo.Spec.Webhook, "webhook config should be present on read")
-		require.Equal(t, "https://grafana.example.com", repo.Spec.Webhook.BaseURL)
+		require.Equal(t, "https://grafana.example.com", repo.Spec.Webhook.BaseUrl)
 	})
 
 	t.Run("update repository to change webhook base URL", func(t *testing.T) {
@@ -1203,7 +1203,7 @@ func TestIntegrationProvisioning_WebhookConfig(t *testing.T) {
 			require.NoError(t, err)
 
 			repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
-			repo.Spec.Webhook.BaseURL = "https://new-proxy.example.com/"
+			repo.Spec.Webhook.BaseUrl = "https://new-proxy.example.com/"
 			updated := common.MustToUnstructured(t, repo)
 
 			result, err := helper.Repositories.Resource.Update(t.Context(), updated, metav1.UpdateOptions{})
@@ -1211,7 +1211,7 @@ func TestIntegrationProvisioning_WebhookConfig(t *testing.T) {
 
 			updatedRepo := common.MustFromUnstructured[provisioning.Repository](t, result)
 			require.NotNil(collect, updatedRepo.Spec.Webhook)
-			assert.Equal(collect, "https://new-proxy.example.com", updatedRepo.Spec.Webhook.BaseURL, "trailing slash should be trimmed by mutator")
+			assert.Equal(collect, "https://new-proxy.example.com", updatedRepo.Spec.Webhook.BaseUrl, "trailing slash should be trimmed by mutator")
 		}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 	})
 
@@ -2120,9 +2120,9 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 
 		now := time.Now()
 		firstReconciledRepo.Status.ObservedGeneration = firstReconciledRepo.Generation
-		firstReconciledRepo.Status.Sync = provisioning.SyncStatus{
+		firstReconciledRepo.Status.Sync = provisioning.RepositorySyncStatus{
 			State:     provisioning.JobStateSuccess,
-			JobID:     firstReconciledRepo.Status.Sync.JobID,
+			Job:       firstReconciledRepo.Status.Sync.Job,
 			Started:   now.UnixMilli(),
 			Finished:  now.UnixMilli(),
 			Scheduled: now.UnixMilli(),
@@ -2582,7 +2582,7 @@ func TestIntegrationRepositoryController_DefaultBranch(t *testing.T) {
 			repo, err := repoClient.Get(t.Context(), repoName, metav1.GetOptions{})
 			require.NoError(collect, err, "issue getting repo")
 			require.Equal(collect, repo.Generation, repo.Status.ObservedGeneration, "repo should be reconciled")
-			require.Equal(collect, defaultBranchName, repo.Spec.GitHub.Branch, "default branch should be set")
+			require.Equal(collect, defaultBranchName, repo.Spec.Github.Branch, "default branch should be set")
 		}, 30*time.Second, 1*time.Second, "repository should have default branch")
 	})
 }
@@ -2626,7 +2626,7 @@ func TestIntegrationRepositoryController_DefaultBranchUnavailable(t *testing.T) 
 				if !assert.NoError(collect, err) {
 					return
 				}
-				assert.Empty(collect, repo.Spec.GitHub.Branch)
+				assert.Empty(collect, repo.Spec.Github.Branch)
 				assert.Less(collect, repo.Status.ObservedGeneration, repo.Generation)
 				assert.False(collect, repo.Status.Health.Healthy)
 				assert.Positive(collect, repo.Status.Health.Checked)

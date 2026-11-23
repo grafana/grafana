@@ -38,7 +38,7 @@ func TestFolderReadOutcome(t *testing.T) {
 }
 
 func TestFolderMetadataMetrics_recordRead(t *testing.T) {
-	newReader := func(repoType provisioning.RepositoryType) *repository.MockReaderWriter {
+	newReader := func(repoType provisioning.RepositorySpecType) *repository.MockReaderWriter {
 		r := repository.NewMockReaderWriter(t)
 		r.On("Config").Return(&provisioning.Repository{
 			Spec: provisioning.RepositorySpec{Type: repoType},
@@ -50,14 +50,14 @@ func TestFolderMetadataMetrics_recordRead(t *testing.T) {
 		reg := prometheus.NewRegistry()
 		m := newFolderMetadataMetrics(reg)
 
-		m.recordRead(newReader(provisioning.GitRepositoryType), time.Now(), nil)
-		m.recordRead(newReader(provisioning.GitRepositoryType), time.Now(), repository.ErrFileNotFound)
-		m.recordRead(newReader(provisioning.GitHubRepositoryType), time.Now(), errors.New("boom"))
+		m.recordRead(newReader(provisioning.RepositorySpecTypeGit), time.Now(), nil)
+		m.recordRead(newReader(provisioning.RepositorySpecTypeGit), time.Now(), repository.ErrFileNotFound)
+		m.recordRead(newReader(provisioning.RepositorySpecTypeGithub), time.Now(), errors.New("boom"))
 
-		assert.Equal(t, 1.0, counterValue(t, reg, string(provisioning.GitRepositoryType), folderReadOutcomeFound))
-		assert.Equal(t, 1.0, counterValue(t, reg, string(provisioning.GitRepositoryType), folderReadOutcomeMissing))
-		assert.Equal(t, 1.0, counterValue(t, reg, string(provisioning.GitHubRepositoryType), folderReadOutcomeError))
-		assert.Equal(t, 0.0, counterValue(t, reg, string(provisioning.GitRepositoryType), folderReadOutcomeError))
+		assert.Equal(t, 1.0, counterValue(t, reg, string(provisioning.RepositorySpecTypeGit), folderReadOutcomeFound))
+		assert.Equal(t, 1.0, counterValue(t, reg, string(provisioning.RepositorySpecTypeGit), folderReadOutcomeMissing))
+		assert.Equal(t, 1.0, counterValue(t, reg, string(provisioning.RepositorySpecTypeGithub), folderReadOutcomeError))
+		assert.Equal(t, 0.0, counterValue(t, reg, string(provisioning.RepositorySpecTypeGit), folderReadOutcomeError))
 	})
 
 	t.Run("nil metrics records nothing and never touches the repository", func(t *testing.T) {

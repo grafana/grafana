@@ -42,15 +42,15 @@ func Extra(decrypter repository.Decrypter, factory *Factory, webhookBuilder Webh
 	}
 }
 
-func (e *extra) Type() provisioning.RepositoryType {
-	return provisioning.GitHubRepositoryType
+func (e *extra) Type() provisioning.RepositorySpecType {
+	return provisioning.RepositorySpecTypeGithub
 }
 
 func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
-	if r == nil || r.Spec.GitHub == nil {
+	if r == nil || r.Spec.Github == nil {
 		return nil, fmt.Errorf("github configuration is required")
 	}
-	logger := logging.FromContext(ctx).With("url", r.Spec.GitHub.URL, "branch", r.Spec.GitHub.Branch, "path", r.Spec.GitHub.Path)
+	logger := logging.FromContext(ctx).With("url", r.Spec.Github.Url, "branch", r.Spec.Github.Branch, "path", r.Spec.Github.Path)
 	logger.Info("Instantiating Github repository")
 
 	secure := e.decrypter(r)
@@ -65,9 +65,9 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 	}
 
 	gitRepo, err := git.NewRepository(ctx, r, git.RepositoryConfig{
-		URL:              r.Spec.GitHub.URL,
-		Branch:           r.Spec.GitHub.Branch,
-		Path:             r.Spec.GitHub.Path,
+		URL:              r.Spec.Github.Url,
+		Branch:           r.Spec.Github.Branch,
+		Path:             r.Spec.Github.Path,
 		Token:            token,
 		CommitSigningKey: signingKey,
 		SigningMethod:    git.SigningMethodFromSpec(r),

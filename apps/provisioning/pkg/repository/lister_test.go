@@ -141,13 +141,13 @@ func TestStorageLister_ListByConnection(t *testing.T) {
 					{
 						ObjectMeta: metav1.ObjectMeta{Name: "repo1"},
 						Spec: provisioning.RepositorySpec{
-							Connection: &provisioning.ConnectionInfo{Name: "my-connection"},
+							Connection: &provisioning.RepositoryConnectionInfo{Name: "my-connection"},
 						},
 					},
 					{
 						ObjectMeta: metav1.ObjectMeta{Name: "repo2"},
 						Spec: provisioning.RepositorySpec{
-							Connection: &provisioning.ConnectionInfo{Name: "my-connection"},
+							Connection: &provisioning.RepositoryConnectionInfo{Name: "my-connection"},
 						},
 					},
 				},

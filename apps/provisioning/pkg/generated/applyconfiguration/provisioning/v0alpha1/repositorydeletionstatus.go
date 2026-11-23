@@ -8,14 +8,14 @@ import (
 	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
-// DeletionStatusApplyConfiguration represents a declarative configuration of the DeletionStatus type for use
+// RepositoryDeletionStatusApplyConfiguration represents a declarative configuration of the RepositoryDeletionStatus type for use
 // with apply.
 //
 // DeletionStatus reports the progress of an in-progress deletion and the problem
 // blocking it. It is populated while the repository is Terminating and its
 // finalizers run, so a client can explain the holdup and force-remove the
 // blocking finalizer.
-type DeletionStatusApplyConfiguration struct {
+type RepositoryDeletionStatusApplyConfiguration struct {
 	// State is the phase of the deletion.
 	State *provisioningv0alpha1.DeletionState `json:"state,omitempty"`
 	// Finalizer names the finalizer whose teardown is blocking deletion, i.e.
@@ -26,19 +26,19 @@ type DeletionStatusApplyConfiguration struct {
 	// showing to users.
 	Message *string `json:"message,omitempty"`
 	// Cause classifies the blocking error. It may be absent on older statuses.
-	Cause *provisioningv0alpha1.DeletionCause `json:"cause,omitempty"`
+	Cause *provisioningv0alpha1.RepositoryDeletionStatusCause `json:"cause,omitempty"`
 }
 
-// DeletionStatusApplyConfiguration constructs a declarative configuration of the DeletionStatus type for use with
+// RepositoryDeletionStatusApplyConfiguration constructs a declarative configuration of the RepositoryDeletionStatus type for use with
 // apply.
-func DeletionStatus() *DeletionStatusApplyConfiguration {
-	return &DeletionStatusApplyConfiguration{}
+func RepositoryDeletionStatus() *RepositoryDeletionStatusApplyConfiguration {
+	return &RepositoryDeletionStatusApplyConfiguration{}
 }
 
 // WithState sets the State field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the State field is set to the value of the last call.
-func (b *DeletionStatusApplyConfiguration) WithState(value provisioningv0alpha1.DeletionState) *DeletionStatusApplyConfiguration {
+func (b *RepositoryDeletionStatusApplyConfiguration) WithState(value provisioningv0alpha1.DeletionState) *RepositoryDeletionStatusApplyConfiguration {
 	b.State = &value
 	return b
 }
@@ -46,7 +46,7 @@ func (b *DeletionStatusApplyConfiguration) WithState(value provisioningv0alpha1.
 // WithFinalizer sets the Finalizer field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Finalizer field is set to the value of the last call.
-func (b *DeletionStatusApplyConfiguration) WithFinalizer(value string) *DeletionStatusApplyConfiguration {
+func (b *RepositoryDeletionStatusApplyConfiguration) WithFinalizer(value string) *RepositoryDeletionStatusApplyConfiguration {
 	b.Finalizer = &value
 	return b
 }
@@ -54,7 +54,7 @@ func (b *DeletionStatusApplyConfiguration) WithFinalizer(value string) *Deletion
 // WithMessage sets the Message field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Message field is set to the value of the last call.
-func (b *DeletionStatusApplyConfiguration) WithMessage(value string) *DeletionStatusApplyConfiguration {
+func (b *RepositoryDeletionStatusApplyConfiguration) WithMessage(value string) *RepositoryDeletionStatusApplyConfiguration {
 	b.Message = &value
 	return b
 }
@@ -62,7 +62,7 @@ func (b *DeletionStatusApplyConfiguration) WithMessage(value string) *DeletionSt
 // WithCause sets the Cause field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Cause field is set to the value of the last call.
-func (b *DeletionStatusApplyConfiguration) WithCause(value provisioningv0alpha1.DeletionCause) *DeletionStatusApplyConfiguration {
+func (b *RepositoryDeletionStatusApplyConfiguration) WithCause(value provisioningv0alpha1.RepositoryDeletionStatusCause) *RepositoryDeletionStatusApplyConfiguration {
 	b.Cause = &value
 	return b
 }

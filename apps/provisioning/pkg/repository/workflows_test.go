@@ -24,7 +24,7 @@ func TestIsWriteAllowed(t *testing.T) {
 			name: "read only repository",
 			repository: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Workflows: []provisioning.Workflow{},
+					Workflows: []provisioning.RepositorySpecWorkflows{},
 				},
 			},
 			wantErr:     true,
@@ -35,7 +35,7 @@ func TestIsWriteAllowed(t *testing.T) {
 			name: "write workflow allowed",
 			repository: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 				},
 			},
 			ref:     "",
@@ -45,9 +45,9 @@ func TestIsWriteAllowed(t *testing.T) {
 			name: "write allowed for configured branch of github repository",
 			repository: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type:      provisioning.GitHubRepositoryType,
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-					GitHub: &provisioning.GitHubRepositoryConfig{
+					Type:      provisioning.RepositorySpecTypeGithub,
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "feature-branch",
 					},
 				},
@@ -62,9 +62,9 @@ func TestIsWriteAllowed(t *testing.T) {
 			name: "write allowed for configured branch of github enterprise repository",
 			repository: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type:      provisioning.GitHubEnterpriseRepositoryType,
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-					GitHubEnterprise: &provisioning.GitHubEnterpriseRepositoryConfig{
+					Type:      provisioning.RepositorySpecTypeGithubEnterprise,
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
+					GithubEnterprise: &provisioning.RepositoryGitHubEnterpriseRepositoryConfig{
 						Branch: "feature-branch",
 					},
 				},
@@ -76,9 +76,9 @@ func TestIsWriteAllowed(t *testing.T) {
 			name: "write not allowed for configured branch of github enterprise repository",
 			repository: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type:      provisioning.GitHubEnterpriseRepositoryType,
-					Workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
-					GitHubEnterprise: &provisioning.GitHubEnterpriseRepositoryConfig{
+					Type:      provisioning.RepositorySpecTypeGithubEnterprise,
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsBranch},
+					GithubEnterprise: &provisioning.RepositoryGitHubEnterpriseRepositoryConfig{
 						Branch: "feature-branch",
 					},
 				},
@@ -92,9 +92,9 @@ func TestIsWriteAllowed(t *testing.T) {
 			name: "branch workflow allowed on github enterprise repository",
 			repository: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type:      provisioning.GitHubEnterpriseRepositoryType,
-					Workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
-					GitHubEnterprise: &provisioning.GitHubEnterpriseRepositoryConfig{
+					Type:      provisioning.RepositorySpecTypeGithubEnterprise,
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsBranch},
+					GithubEnterprise: &provisioning.RepositoryGitHubEnterpriseRepositoryConfig{
 						Branch: "main",
 					},
 				},
@@ -108,9 +108,9 @@ func TestIsWriteAllowed(t *testing.T) {
 			name: "write allowed for configured branch of bitbucket repository",
 			repository: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type:      provisioning.BitbucketRepositoryType,
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-					Bitbucket: &provisioning.BitbucketRepositoryConfig{
+					Type:      provisioning.RepositorySpecTypeBitbucket,
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
+					Bitbucket: &provisioning.RepositoryBitbucketRepositoryConfig{
 						Branch: "feature-branch",
 					},
 				},
@@ -122,9 +122,9 @@ func TestIsWriteAllowed(t *testing.T) {
 			name: "branch workflow allowed on bitbucket repository",
 			repository: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type:      provisioning.BitbucketRepositoryType,
-					Workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
-					Bitbucket: &provisioning.BitbucketRepositoryConfig{
+					Type:      provisioning.RepositorySpecTypeBitbucket,
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsBranch},
+					Bitbucket: &provisioning.RepositoryBitbucketRepositoryConfig{
 						Branch: "main",
 					},
 				},
@@ -136,9 +136,9 @@ func TestIsWriteAllowed(t *testing.T) {
 			name: "write allowed for configured branch of gitlab repository",
 			repository: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type:      provisioning.GitLabRepositoryType,
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-					GitLab: &provisioning.GitLabRepositoryConfig{
+					Type:      provisioning.RepositorySpecTypeGitlab,
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
+					Gitlab: &provisioning.RepositoryGitLabRepositoryConfig{
 						Branch: "feature-branch",
 					},
 				},
@@ -150,9 +150,9 @@ func TestIsWriteAllowed(t *testing.T) {
 			name: "branch workflow allowed on gitlab repository",
 			repository: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type:      provisioning.GitLabRepositoryType,
-					Workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
-					GitLab: &provisioning.GitLabRepositoryConfig{
+					Type:      provisioning.RepositorySpecTypeGitlab,
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsBranch},
+					Gitlab: &provisioning.RepositoryGitLabRepositoryConfig{
 						Branch: "main",
 					},
 				},
@@ -164,9 +164,9 @@ func TestIsWriteAllowed(t *testing.T) {
 			name: "write not allowed for configured branch of github repository",
 			repository: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type:      provisioning.GitHubRepositoryType,
-					Workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
-					GitHub: &provisioning.GitHubRepositoryConfig{
+					Type:      provisioning.RepositorySpecTypeGithub,
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsBranch},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "feature-branch",
 					},
 				},
@@ -180,9 +180,9 @@ func TestIsWriteAllowed(t *testing.T) {
 			name: "write workflow not allowed for github repository",
 			repository: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type:      provisioning.GitHubRepositoryType,
-					Workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
-					GitHub: &provisioning.GitHubRepositoryConfig{
+					Type:      provisioning.RepositorySpecTypeGithub,
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsBranch},
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "feature-branch",
 					},
 				},
@@ -196,7 +196,7 @@ func TestIsWriteAllowed(t *testing.T) {
 			name: "write workflow not allowed",
 			repository: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsBranch},
 				},
 			},
 			wantErr:     true,
@@ -207,8 +207,8 @@ func TestIsWriteAllowed(t *testing.T) {
 			name: "branch workflow on non-github repository",
 			repository: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type:      provisioning.LocalRepositoryType,
-					Workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
+					Type:      provisioning.RepositorySpecTypeLocal,
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsBranch},
 				},
 			},
 			ref:         "feature-branch",
@@ -220,8 +220,8 @@ func TestIsWriteAllowed(t *testing.T) {
 			name: "branch workflow allowed on github repository",
 			repository: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type:      provisioning.GitHubRepositoryType,
-					Workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
+					Type:      provisioning.RepositorySpecTypeGithub,
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsBranch},
 				},
 			},
 			ref:     "feature-branch",
@@ -231,8 +231,8 @@ func TestIsWriteAllowed(t *testing.T) {
 			name: "branch workflow not allowed on github repository",
 			repository: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type:      provisioning.GitHubRepositoryType,
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					Type:      provisioning.RepositorySpecTypeGithub,
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 				},
 			},
 			ref:         "feature-branch",
@@ -244,10 +244,10 @@ func TestIsWriteAllowed(t *testing.T) {
 			name: "write workflow allowed on git repository",
 			repository: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type:      provisioning.GitRepositoryType,
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-					Git: &provisioning.GitRepositoryConfig{
-						URL:    "https://git.example.com/repo.git",
+					Type:      provisioning.RepositorySpecTypeGit,
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
+					Git: &provisioning.RepositoryGitRepositoryConfig{
+						Url:    "https://git.example.com/repo.git",
 						Branch: "main",
 					},
 				},
@@ -259,10 +259,10 @@ func TestIsWriteAllowed(t *testing.T) {
 			name: "write allowed for configured branch of git repository",
 			repository: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type:      provisioning.GitRepositoryType,
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-					Git: &provisioning.GitRepositoryConfig{
-						URL:    "https://git.example.com/repo.git",
+					Type:      provisioning.RepositorySpecTypeGit,
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
+					Git: &provisioning.RepositoryGitRepositoryConfig{
+						Url:    "https://git.example.com/repo.git",
 						Branch: "develop",
 					},
 				},
@@ -274,10 +274,10 @@ func TestIsWriteAllowed(t *testing.T) {
 			name: "write not allowed for configured branch of git repository",
 			repository: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type:      provisioning.GitRepositoryType,
-					Workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
-					Git: &provisioning.GitRepositoryConfig{
-						URL:    "https://git.example.com/repo.git",
+					Type:      provisioning.RepositorySpecTypeGit,
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsBranch},
+					Git: &provisioning.RepositoryGitRepositoryConfig{
+						Url:    "https://git.example.com/repo.git",
 						Branch: "main",
 					},
 				},
@@ -291,10 +291,10 @@ func TestIsWriteAllowed(t *testing.T) {
 			name: "write workflow not allowed for git repository",
 			repository: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type:      provisioning.GitRepositoryType,
-					Workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
-					Git: &provisioning.GitRepositoryConfig{
-						URL:    "https://git.example.com/repo.git",
+					Type:      provisioning.RepositorySpecTypeGit,
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsBranch},
+					Git: &provisioning.RepositoryGitRepositoryConfig{
+						Url:    "https://git.example.com/repo.git",
 						Branch: "main",
 					},
 				},
@@ -308,10 +308,10 @@ func TestIsWriteAllowed(t *testing.T) {
 			name: "branch workflow allowed on git repository",
 			repository: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type:      provisioning.GitRepositoryType,
-					Workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
-					Git: &provisioning.GitRepositoryConfig{
-						URL:    "https://git.example.com/repo.git",
+					Type:      provisioning.RepositorySpecTypeGit,
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsBranch},
+					Git: &provisioning.RepositoryGitRepositoryConfig{
+						Url:    "https://git.example.com/repo.git",
 						Branch: "main",
 					},
 				},
@@ -323,10 +323,10 @@ func TestIsWriteAllowed(t *testing.T) {
 			name: "branch workflow not allowed on git repository",
 			repository: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type:      provisioning.GitRepositoryType,
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-					Git: &provisioning.GitRepositoryConfig{
-						URL:    "https://git.example.com/repo.git",
+					Type:      provisioning.RepositorySpecTypeGit,
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
+					Git: &provisioning.RepositoryGitRepositoryConfig{
+						Url:    "https://git.example.com/repo.git",
 						Branch: "main",
 					},
 				},
@@ -340,10 +340,10 @@ func TestIsWriteAllowed(t *testing.T) {
 			name: "both workflows allowed on git repository - write workflow",
 			repository: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type:      provisioning.GitRepositoryType,
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow, provisioning.BranchWorkflow},
-					Git: &provisioning.GitRepositoryConfig{
-						URL:    "https://git.example.com/repo.git",
+					Type:      provisioning.RepositorySpecTypeGit,
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite, provisioning.RepositorySpecWorkflowsBranch},
+					Git: &provisioning.RepositoryGitRepositoryConfig{
+						Url:    "https://git.example.com/repo.git",
 						Branch: "main",
 					},
 				},
@@ -355,10 +355,10 @@ func TestIsWriteAllowed(t *testing.T) {
 			name: "both workflows allowed on git repository - branch workflow",
 			repository: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type:      provisioning.GitRepositoryType,
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow, provisioning.BranchWorkflow},
-					Git: &provisioning.GitRepositoryConfig{
-						URL:    "https://git.example.com/repo.git",
+					Type:      provisioning.RepositorySpecTypeGit,
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite, provisioning.RepositorySpecWorkflowsBranch},
+					Git: &provisioning.RepositoryGitRepositoryConfig{
+						Url:    "https://git.example.com/repo.git",
 						Branch: "main",
 					},
 				},
@@ -370,10 +370,10 @@ func TestIsWriteAllowed(t *testing.T) {
 			name: "read only git repository",
 			repository: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type:      provisioning.GitRepositoryType,
-					Workflows: []provisioning.Workflow{},
-					Git: &provisioning.GitRepositoryConfig{
-						URL:    "https://git.example.com/repo.git",
+					Type:      provisioning.RepositorySpecTypeGit,
+					Workflows: []provisioning.RepositorySpecWorkflows{},
+					Git: &provisioning.RepositoryGitRepositoryConfig{
+						Url:    "https://git.example.com/repo.git",
 						Branch: "main",
 					},
 				},
@@ -387,10 +387,10 @@ func TestIsWriteAllowed(t *testing.T) {
 			name: "git repository with empty branch config - write workflow",
 			repository: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type:      provisioning.GitRepositoryType,
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-					Git: &provisioning.GitRepositoryConfig{
-						URL:    "https://git.example.com/repo.git",
+					Type:      provisioning.RepositorySpecTypeGit,
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
+					Git: &provisioning.RepositoryGitRepositoryConfig{
+						Url:    "https://git.example.com/repo.git",
 						Branch: "",
 					},
 				},
@@ -402,10 +402,10 @@ func TestIsWriteAllowed(t *testing.T) {
 			name: "git repository with empty branch config - branch workflow",
 			repository: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type:      provisioning.GitRepositoryType,
-					Workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
-					Git: &provisioning.GitRepositoryConfig{
-						URL:    "https://git.example.com/repo.git",
+					Type:      provisioning.RepositorySpecTypeGit,
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsBranch},
+					Git: &provisioning.RepositoryGitRepositoryConfig{
+						Url:    "https://git.example.com/repo.git",
 						Branch: "",
 					},
 				},
@@ -417,8 +417,8 @@ func TestIsWriteAllowed(t *testing.T) {
 			name: "git repository without git config",
 			repository: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type:      provisioning.GitRepositoryType,
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					Type:      provisioning.RepositorySpecTypeGit,
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 					Git:       nil,
 				},
 			},

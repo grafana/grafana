@@ -55,7 +55,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 		minSyncInterval time.Duration
 		wantFinalizers  []string
 		wantInterval    int64
-		wantWorkflows   []provisioning.Workflow
+		wantWorkflows   []provisioning.RepositorySpecWorkflows
 		wantWebhookURL  *string
 		wantErr         bool
 		wantErrContains string
@@ -70,7 +70,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			minSyncInterval: 60 * time.Second,
 			wantFinalizers:  []string{RemoveOrphanResourcesFinalizer, RemovePendingJobsFinalizer, CleanFinalizer},
 			wantInterval:    60,
-			wantWorkflows:   []provisioning.Workflow{},
+			wantWorkflows:   []provisioning.RepositorySpecWorkflows{},
 			wantErr:         false,
 		},
 		{
@@ -86,7 +86,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			minSyncInterval: 60 * time.Second,
 			wantFinalizers:  []string{"custom-finalizer"},
 			wantInterval:    60,
-			wantWorkflows:   []provisioning.Workflow{},
+			wantWorkflows:   []provisioning.RepositorySpecWorkflows{},
 			wantErr:         false,
 		},
 		{
@@ -99,7 +99,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			minSyncInterval: 60 * time.Second,
 			wantFinalizers:  nil,
 			wantInterval:    60,
-			wantWorkflows:   []provisioning.Workflow{},
+			wantWorkflows:   []provisioning.RepositorySpecWorkflows{},
 			wantErr:         false,
 		},
 		{
@@ -107,7 +107,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test", Finalizers: []string{"existing"}},
 				Spec: provisioning.RepositorySpec{
-					Sync: provisioning.SyncOptions{IntervalSeconds: 0},
+					Sync: provisioning.RepositorySyncOptions{IntervalSeconds: 0},
 				},
 			},
 			minSyncInterval: 60 * time.Second,
@@ -120,7 +120,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test", Finalizers: []string{"existing"}},
 				Spec: provisioning.RepositorySpec{
-					Sync: provisioning.SyncOptions{IntervalSeconds: 20},
+					Sync: provisioning.RepositorySyncOptions{IntervalSeconds: 20},
 				},
 			},
 			minSyncInterval: 60 * time.Second,
@@ -133,7 +133,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test", Finalizers: []string{"existing"}},
 				Spec: provisioning.RepositorySpec{
-					Sync: provisioning.SyncOptions{IntervalSeconds: 120},
+					Sync: provisioning.RepositorySyncOptions{IntervalSeconds: 120},
 				},
 			},
 			minSyncInterval: 60 * time.Second,
@@ -150,7 +150,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 				},
 			},
 			operation:     admission.Update,
-			wantWorkflows: []provisioning.Workflow{},
+			wantWorkflows: []provisioning.RepositorySpecWorkflows{},
 			wantErr:       false,
 		},
 		{
@@ -158,11 +158,11 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test", Finalizers: []string{"existing"}},
 				Spec: provisioning.RepositorySpec{
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 				},
 			},
 			operation:     admission.Update,
-			wantWorkflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			wantWorkflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 			wantErr:       false,
 		},
 		{
@@ -202,7 +202,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			minSyncInterval: 60 * time.Second,
 			wantFinalizers:  nil,
 			wantInterval:    60,
-			wantWorkflows:   []provisioning.Workflow{},
+			wantWorkflows:   []provisioning.RepositorySpecWorkflows{},
 			wantErr:         false,
 		},
 		{
@@ -218,7 +218,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			minSyncInterval: 60 * time.Second,
 			wantFinalizers:  nil,
 			wantInterval:    60,
-			wantWorkflows:   []provisioning.Workflow{},
+			wantWorkflows:   []provisioning.RepositorySpecWorkflows{},
 			wantErr:         false,
 		},
 		{
@@ -226,12 +226,12 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test", Finalizers: []string{"existing"}},
 				Spec: provisioning.RepositorySpec{
-					Webhook: &provisioning.WebhookConfig{BaseURL: "https://grafana.example.com/"},
+					Webhook: &provisioning.RepositoryWebhookConfig{BaseUrl: "https://grafana.example.com/"},
 				},
 			},
 			operation:      admission.Create,
 			wantWebhookURL: new("https://grafana.example.com"),
-			wantWorkflows:  []provisioning.Workflow{},
+			wantWorkflows:  []provisioning.RepositorySpecWorkflows{},
 			wantErr:        false,
 		},
 		{
@@ -239,12 +239,12 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test", Finalizers: []string{"existing"}},
 				Spec: provisioning.RepositorySpec{
-					Webhook: &provisioning.WebhookConfig{BaseURL: "https://grafana.example.com///"},
+					Webhook: &provisioning.RepositoryWebhookConfig{BaseUrl: "https://grafana.example.com///"},
 				},
 			},
 			operation:      admission.Create,
 			wantWebhookURL: new("https://grafana.example.com"),
-			wantWorkflows:  []provisioning.Workflow{},
+			wantWorkflows:  []provisioning.RepositorySpecWorkflows{},
 			wantErr:        false,
 		},
 		{
@@ -252,12 +252,12 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test", Finalizers: []string{"existing"}},
 				Spec: provisioning.RepositorySpec{
-					Webhook: &provisioning.WebhookConfig{BaseURL: "https://grafana.example.com"},
+					Webhook: &provisioning.RepositoryWebhookConfig{BaseUrl: "https://grafana.example.com"},
 				},
 			},
 			operation:      admission.Create,
 			wantWebhookURL: new("https://grafana.example.com"),
-			wantWorkflows:  []provisioning.Workflow{},
+			wantWorkflows:  []provisioning.RepositorySpecWorkflows{},
 			wantErr:        false,
 		},
 		{
@@ -267,7 +267,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 				Spec:       provisioning.RepositorySpec{},
 			},
 			operation:     admission.Create,
-			wantWorkflows: []provisioning.Workflow{},
+			wantWorkflows: []provisioning.RepositorySpecWorkflows{},
 			wantErr:       false,
 		},
 	}
@@ -318,7 +318,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			}
 			if tt.wantWebhookURL != nil {
 				require.NotNil(t, repo.Spec.Webhook)
-				assert.Equal(t, *tt.wantWebhookURL, repo.Spec.Webhook.BaseURL)
+				assert.Equal(t, *tt.wantWebhookURL, repo.Spec.Webhook.BaseUrl)
 			}
 		})
 	}
@@ -330,7 +330,7 @@ func TestAdmissionMutator_Mutate_ForwardsOldObjectToFactory(t *testing.T) {
 	oldRepo := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test"},
 		Spec: provisioning.RepositorySpec{
-			Sync: provisioning.SyncOptions{IntervalSeconds: 30},
+			Sync: provisioning.RepositorySyncOptions{IntervalSeconds: 30},
 		},
 	}
 	newRepo := &provisioning.Repository{
@@ -353,7 +353,7 @@ func TestAdmissionMutator_Mutate_SkipsSubresourcePatches(t *testing.T) {
 
 	repo := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test"},
-		Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{IntervalSeconds: 0}},
+		Spec:       provisioning.RepositorySpec{Sync: provisioning.RepositorySyncOptions{IntervalSeconds: 0}},
 	}
 	old := repo.DeepCopy()
 
@@ -372,7 +372,7 @@ func TestAdmissionMutator_Mutate_SkipsSubresourcePatches(t *testing.T) {
 func TestAdmissionMutator_Mutate_RunsForBundledSpecChange(t *testing.T) {
 	old := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test"},
-		Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{IntervalSeconds: 0}},
+		Spec:       provisioning.RepositorySpec{Sync: provisioning.RepositorySyncOptions{IntervalSeconds: 0}},
 	}
 	repo := old.DeepCopy()
 	repo.Spec.Sync.IntervalSeconds = 5 // below minSyncInterval, so defaulting must clamp it
@@ -471,9 +471,9 @@ func TestInvalidateConnectionTokenOnURLChange(t *testing.T) {
 	connectionRepo := func(url string, token resource.InlineSecureValue) *provisioning.Repository {
 		return &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
-				Type:       provisioning.GitHubRepositoryType,
-				GitHub:     &provisioning.GitHubRepositoryConfig{URL: url},
-				Connection: &provisioning.ConnectionInfo{Name: "gh-app"},
+				Type:       provisioning.RepositorySpecTypeGithub,
+				Github:     &provisioning.RepositoryGitHubRepositoryConfig{Url: url},
+				Connection: &provisioning.RepositoryConnectionInfo{Name: "gh-app"},
 			},
 			Secure: provisioning.SecureValues{Token: token},
 		}
@@ -532,14 +532,14 @@ func TestInvalidateConnectionTokenOnURLChange(t *testing.T) {
 			name: "leaves a token-authenticated repository alone",
 			new: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type:   provisioning.GitHubRepositoryType,
-					GitHub: &provisioning.GitHubRepositoryConfig{URL: "https://github.com/grafana/new"},
+					Type:   provisioning.RepositorySpecTypeGithub,
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{Url: "https://github.com/grafana/new"},
 				},
 			},
 			old: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type:   provisioning.GitHubRepositoryType,
-					GitHub: &provisioning.GitHubRepositoryConfig{URL: "https://github.com/grafana/old"},
+					Type:   provisioning.RepositorySpecTypeGithub,
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{Url: "https://github.com/grafana/old"},
 				},
 				Secure: provisioning.SecureValues{Token: resource.InlineSecureValue{Name: "old-token"}},
 			},
@@ -561,9 +561,9 @@ func TestInvalidateConnectionTokenDoesNotBypassHostCheck(t *testing.T) {
 	connectionRepo := func(url string, token resource.InlineSecureValue) *provisioning.Repository {
 		return &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
-				Type:       provisioning.GitHubRepositoryType,
-				GitHub:     &provisioning.GitHubRepositoryConfig{URL: url},
-				Connection: &provisioning.ConnectionInfo{Name: "gh-app"},
+				Type:       provisioning.RepositorySpecTypeGithub,
+				Github:     &provisioning.RepositoryGitHubRepositoryConfig{Url: url},
+				Connection: &provisioning.RepositoryConnectionInfo{Name: "gh-app"},
 			},
 			Secure: provisioning.SecureValues{Token: token},
 		}
@@ -587,10 +587,10 @@ func TestAdmissionMutator_Mutate_InvalidatesAfterURLNormalization(t *testing.T) 
 		return &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "test", Finalizers: []string{CleanFinalizer}},
 			Spec: provisioning.RepositorySpec{
-				Type:       provisioning.GitHubRepositoryType,
-				GitHub:     &provisioning.GitHubRepositoryConfig{URL: url},
-				Connection: &provisioning.ConnectionInfo{Name: "gh-app"},
-				Sync:       provisioning.SyncOptions{IntervalSeconds: 60},
+				Type:       provisioning.RepositorySpecTypeGithub,
+				Github:     &provisioning.RepositoryGitHubRepositoryConfig{Url: url},
+				Connection: &provisioning.RepositoryConnectionInfo{Name: "gh-app"},
+				Sync:       provisioning.RepositorySyncOptions{IntervalSeconds: 60},
 			},
 		}
 	}
@@ -627,7 +627,7 @@ func TestAdmissionMutator_Mutate_InvalidatesAfterURLNormalization(t *testing.T) 
 			factory.EXPECT().Mutate(mock.Anything, mock.Anything, mock.Anything).
 				RunAndReturn(func(_ context.Context, obj runtime.Object, _ runtime.Object) error {
 					r := obj.(*provisioning.Repository)
-					r.Spec.GitHub.URL = strings.TrimSuffix(strings.TrimRight(r.Spec.GitHub.URL, "/"), ".git")
+					r.Spec.Github.Url = strings.TrimSuffix(strings.TrimRight(r.Spec.Github.Url, "/"), ".git")
 					return nil
 				}).Once()
 

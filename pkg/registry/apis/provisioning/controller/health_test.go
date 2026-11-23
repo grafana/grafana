@@ -54,7 +54,7 @@ func TestShouldCheckHealth(t *testing.T) {
 			repo: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Generation: 1},
 				Spec: provisioning.RepositorySpec{
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 				},
 				Status: provisioning.RepositoryStatus{
 					ObservedGeneration: 1,
@@ -72,7 +72,7 @@ func TestShouldCheckHealth(t *testing.T) {
 			repo: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Generation: 1},
 				Spec: provisioning.RepositorySpec{
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 				},
 				Status: provisioning.RepositoryStatus{
 					ObservedGeneration: 1,
@@ -548,7 +548,7 @@ func TestRefreshHealth(t *testing.T) {
 					},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repository",
-						Type:  provisioning.LocalRepositoryType,
+						Type:  provisioning.RepositorySpecTypeLocal,
 					},
 					Status: provisioning.RepositoryStatus{
 						Health: tt.existingStatus,
@@ -699,7 +699,7 @@ func TestRefreshHealthWithPatchOps(t *testing.T) {
 					},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repository",
-						Type:  provisioning.LocalRepositoryType,
+						Type:  provisioning.RepositorySpecTypeLocal,
 					},
 					Status: provisioning.RepositoryStatus{
 						Health:     tt.existingStatus,

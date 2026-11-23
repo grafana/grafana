@@ -54,7 +54,7 @@ type RepositoryConfig struct {
 	TokenUser        string
 	Token            resource.RawSecureValue
 	CommitSigningKey resource.RawSecureValue
-	SigningMethod    provisioning.SigningMethod
+	SigningMethod    provisioning.RepositoryCommitOptionsSigningMethod
 	SMIMECertificate string
 	Path             string
 	SkipGitSuffix    bool

@@ -129,7 +129,7 @@ func TestExtra_Build_PassesAccessToken(t *testing.T) {
 			e := oauth.NewExtra(
 				func(*provisioning.Connection) connection.SecureValues { return secure },
 				provisioning.ConnectionTypeGitlabOAuth,
-				provisioning.GitLabRepositoryType,
+				provisioning.RepositorySpecTypeGitlab,
 				func(_ context.Context, _ provisioning.ConnectionSpec, accessToken string) (oauth.Provider, error) {
 					gotToken = accessToken
 					return oauth.NewMockProvider(t), nil
@@ -163,7 +163,7 @@ func TestExtra_Build_ProviderError(t *testing.T) {
 	e := oauth.NewExtra(
 		func(*provisioning.Connection) connection.SecureValues { return secure },
 		provisioning.ConnectionTypeGitlabOAuth,
-		provisioning.GitLabRepositoryType,
+		provisioning.RepositorySpecTypeGitlab,
 		func(_ context.Context, _ provisioning.ConnectionSpec, _ string) (oauth.Provider, error) {
 			return nil, errors.New("boom")
 		},
@@ -319,7 +319,7 @@ func newTestExtra(t *testing.T, secure *connection.MockSecureValues, validateSpe
 	return oauth.NewExtra(
 		func(*provisioning.Connection) connection.SecureValues { return secure },
 		provisioning.ConnectionTypeGitlabOAuth,
-		provisioning.GitLabRepositoryType,
+		provisioning.RepositorySpecTypeGitlab,
 		func(_ context.Context, _ provisioning.ConnectionSpec, _ string) (oauth.Provider, error) {
 			return oauth.NewMockProvider(t), nil
 		},

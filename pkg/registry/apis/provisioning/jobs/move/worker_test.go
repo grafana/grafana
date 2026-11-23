@@ -955,7 +955,7 @@ func TestMoveWorker_RefURLsSetWithRef(t *testing.T) {
 			Namespace: "test-namespace",
 		},
 		Spec: provisioning.RepositorySpec{
-			Type: provisioning.GitHubRepositoryType,
+			Type: provisioning.RepositorySpecTypeGithub,
 		},
 	}
 	mockRepoWithURLs.On("Config").Return(config).Maybe() // Config may be called multiple times
@@ -1015,7 +1015,7 @@ func TestMoveWorker_RefURLsNotSetWithoutRef(t *testing.T) {
 			Namespace: "test-namespace",
 		},
 		Spec: provisioning.RepositorySpec{
-			Type: provisioning.GitHubRepositoryType,
+			Type: provisioning.RepositorySpecTypeGithub,
 		},
 	}
 	mockRepoWithURLs.On("Config").Return(config).Maybe() // Config may be called multiple times
@@ -1072,7 +1072,7 @@ func TestMoveWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
 			Namespace: "test-namespace",
 		},
 		Spec: provisioning.RepositorySpec{
-			Type: provisioning.GitRepositoryType, // Regular git repo, not GitHub
+			Type: provisioning.RepositorySpecTypeGit, // Regular git repo, not GitHub
 		},
 	}
 	mockRepo.On("Config").Return(config).Maybe() // Config may be called multiple times

@@ -163,9 +163,9 @@ func TestIntegrationWebhookController_ReconcileLifecycle(t *testing.T) {
 	// A repo whose spec enables a workflow so the hooks actually register a webhook.
 	config := &provisioning.Repository{
 		Spec: provisioning.RepositorySpec{
-			Type:      provisioning.GitHubRepositoryType,
-			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-			GitHub:    &provisioning.GitHubRepositoryConfig{URL: repoURL, Branch: "main"},
+			Type:      provisioning.RepositorySpecTypeGithub,
+			Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
+			Github:    &provisioning.RepositoryGitHubRepositoryConfig{Url: repoURL, Branch: "main"},
 		},
 	}
 
@@ -189,7 +189,7 @@ func TestIntegrationWebhookController_ReconcileLifecycle(t *testing.T) {
 				config.Status.Webhook = nil
 				continue
 			}
-			status, ok := p["value"].(*provisioning.WebhookStatus)
+			status, ok := p["value"].(*provisioning.RepositoryWebhookStatus)
 			require.True(t, ok, "unexpected status patch value type")
 			config.Status.Webhook = status
 		}
@@ -216,7 +216,7 @@ func TestIntegrationWebhookController_ReconcileLifecycle(t *testing.T) {
 	require.NotEmpty(t, patches, "OnCreate should register a webhook and return status patches")
 	applyStatus(patches)
 	require.NotNil(t, config.Status.Webhook)
-	createdID := config.Status.Webhook.ID
+	createdID := config.Status.Webhook.Id
 	assert.NotZero(t, createdID)
 	createdSecret := secretFromPatches(patches)
 	assert.NotEmpty(t, createdSecret, "OnCreate should persist a webhook secret")
@@ -234,7 +234,7 @@ func TestIntegrationWebhookController_ReconcileLifecycle(t *testing.T) {
 	require.NotEmpty(t, patches, "OnUpdate should re-adopt the existing hook and return status patches")
 	applyStatus(patches)
 	require.NotNil(t, config.Status.Webhook)
-	assert.Equal(t, createdID, config.Status.Webhook.ID, "adopt must recover the same hook ID, not create a new one")
+	assert.Equal(t, createdID, config.Status.Webhook.Id, "adopt must recover the same hook ID, not create a new one")
 	adoptedSecret := secretFromPatches(patches)
 	assert.NotEmpty(t, adoptedSecret, "self-heal should persist a webhook secret")
 	assert.NotEqual(t, createdSecret, adoptedSecret, "self-heal should rotate to a fresh webhook secret")

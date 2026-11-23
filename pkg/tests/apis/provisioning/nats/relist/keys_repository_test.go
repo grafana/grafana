@@ -69,8 +69,8 @@ func TestIntegrationProvisioningKeysReList_DeletedRepositoryLeavesTheQuotaCount(
 		removed = "keys-relist-quota-removed"
 	)
 
-	helper.SetQuotaStatus(provisioning.QuotaStatus{MaxRepositories: 0})
-	t.Cleanup(func() { helper.SetQuotaStatus(provisioning.QuotaStatus{}) })
+	helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxRepositories: 0})
+	t.Cleanup(func() { helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{}) })
 
 	for _, name := range []string{kept, removed} {
 		helper.CreateLocalRepo(t, common.TestRepo{
@@ -81,7 +81,7 @@ func TestIntegrationProvisioningKeysReList_DeletedRepositoryLeavesTheQuotaCount(
 		})
 	}
 
-	helper.SetQuotaStatus(provisioning.QuotaStatus{MaxRepositories: 1})
+	helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxRepositories: 1})
 	helper.WaitForConditionReason(t, kept, provisioning.ConditionTypeNamespaceQuota, provisioning.ReasonQuotaExceeded)
 
 	require.NoError(t, helper.Repositories.Resource.Delete(t.Context(), removed, metav1.DeleteOptions{}))

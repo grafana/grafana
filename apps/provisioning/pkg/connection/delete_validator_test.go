@@ -95,7 +95,7 @@ func TestReferencedByRepositoriesValidator_Validate(t *testing.T) {
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "repo-1"},
 					Spec: provisioning.RepositorySpec{
-						Connection: &provisioning.ConnectionInfo{Name: "test-connection"},
+						Connection: &provisioning.RepositoryConnectionInfo{Name: "test-connection"},
 					},
 				},
 			},
@@ -111,13 +111,13 @@ func TestReferencedByRepositoriesValidator_Validate(t *testing.T) {
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "repo-1"},
 					Spec: provisioning.RepositorySpec{
-						Connection: &provisioning.ConnectionInfo{Name: "test-connection"},
+						Connection: &provisioning.RepositoryConnectionInfo{Name: "test-connection"},
 					},
 				},
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "repo-2"},
 					Spec: provisioning.RepositorySpec{
-						Connection: &provisioning.ConnectionInfo{Name: "test-connection"},
+						Connection: &provisioning.RepositoryConnectionInfo{Name: "test-connection"},
 					},
 				},
 			},
@@ -136,7 +136,7 @@ func TestReferencedByRepositoriesValidator_Validate(t *testing.T) {
 						DeletionTimestamp: &metav1.Time{Time: time.Unix(1, 0)},
 					},
 					Spec: provisioning.RepositorySpec{
-						Connection: &provisioning.ConnectionInfo{Name: "test-connection"},
+						Connection: &provisioning.RepositoryConnectionInfo{Name: "test-connection"},
 					},
 				},
 			},
@@ -154,13 +154,13 @@ func TestReferencedByRepositoriesValidator_Validate(t *testing.T) {
 						DeletionTimestamp: &metav1.Time{Time: time.Unix(1, 0)},
 					},
 					Spec: provisioning.RepositorySpec{
-						Connection: &provisioning.ConnectionInfo{Name: "test-connection"},
+						Connection: &provisioning.RepositoryConnectionInfo{Name: "test-connection"},
 					},
 				},
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "repo-live"},
 					Spec: provisioning.RepositorySpec{
-						Connection: &provisioning.ConnectionInfo{Name: "test-connection"},
+						Connection: &provisioning.RepositoryConnectionInfo{Name: "test-connection"},
 					},
 				},
 			},
@@ -176,7 +176,7 @@ func TestReferencedByRepositoriesValidator_Validate(t *testing.T) {
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "repo-1"},
 					Spec: provisioning.RepositorySpec{
-						Connection: &provisioning.ConnectionInfo{Name: "other-connection"},
+						Connection: &provisioning.RepositoryConnectionInfo{Name: "other-connection"},
 					},
 				},
 			},
@@ -222,7 +222,7 @@ func TestReferencedByRepositoriesValidator_Validate(t *testing.T) {
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "repo-1"},
 					Spec: provisioning.RepositorySpec{
-						Connection: &provisioning.ConnectionInfo{Name: "test-connection"},
+						Connection: &provisioning.RepositoryConnectionInfo{Name: "test-connection"},
 					},
 				},
 			},
@@ -237,7 +237,7 @@ func TestReferencedByRepositoriesValidator_Validate(t *testing.T) {
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "repo-1"},
 					Spec: provisioning.RepositorySpec{
-						Connection: &provisioning.ConnectionInfo{Name: "test-connection"},
+						Connection: &provisioning.RepositoryConnectionInfo{Name: "test-connection"},
 					},
 				},
 			},
@@ -275,7 +275,7 @@ func TestReferencedByRepositoriesValidator_Validate_ErrorDetails(t *testing.T) {
 			{
 				ObjectMeta: metav1.ObjectMeta{Name: "my-repo"},
 				Spec: provisioning.RepositorySpec{
-					Connection: &provisioning.ConnectionInfo{Name: "my-connection"},
+					Connection: &provisioning.RepositoryConnectionInfo{Name: "my-connection"},
 				},
 			},
 		},

@@ -55,13 +55,13 @@ func TestIntegrationRepository_HiddenPathContract(t *testing.T) {
 			require.NoError(t, err)
 
 			gitRepo, err := git.NewRepository(t.Context(), &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{Type: provisioning.GitRepositoryType},
+				Spec: provisioning.RepositorySpec{Type: provisioning.RepositorySpecTypeGit},
 			}, git.RepositoryConfig{
 				URL: remote.URL, Branch: "main", Path: prefix, TokenUser: user.Username, Token: resource.RawSecureValue(user.Password),
 			}, nil, nil)
 			require.NoError(t, err)
 			githubRepo, err := github.NewRepository(t.Context(), &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{Type: provisioning.GitHubRepositoryType},
+				Spec: provisioning.RepositorySpec{Type: provisioning.RepositorySpecTypeGithub},
 			}, gitRepo, github.ProvideFactory(), "")
 			require.NoError(t, err)
 			stagedRepo, err := gitRepo.Stage(t.Context(), repository.StageOptions{})
@@ -69,8 +69,8 @@ func TestIntegrationRepository_HiddenPathContract(t *testing.T) {
 			t.Cleanup(func() { require.NoError(t, stagedRepo.Remove(t.Context())) })
 			localRepo := local.NewRepository(&provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type:  provisioning.LocalRepositoryType,
-					Local: &provisioning.LocalRepositoryConfig{Path: filepath.Join(checkout.Path, prefix)},
+					Type:  provisioning.RepositorySpecTypeLocal,
+					Local: &provisioning.RepositoryLocalRepositoryConfig{Path: filepath.Join(checkout.Path, prefix)},
 				},
 			}, &local.LocalFolderResolver{PermittedPrefixes: []string{checkout.Path}}, nil)
 

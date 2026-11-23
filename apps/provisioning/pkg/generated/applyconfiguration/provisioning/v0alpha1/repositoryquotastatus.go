@@ -4,11 +4,11 @@
 
 package v0alpha1
 
-// QuotaStatusApplyConfiguration represents a declarative configuration of the QuotaStatus type for use
+// RepositoryQuotaStatusApplyConfiguration represents a declarative configuration of the RepositoryQuotaStatus type for use
 // with apply.
 //
 // QuotaStatus represents the quota limits configured for this repository.
-type QuotaStatusApplyConfiguration struct {
+type RepositoryQuotaStatusApplyConfiguration struct {
 	// MaxRepositories is the maximum number of repositories allowed.
 	// 0 means unlimited.
 	MaxRepositories *int64 `json:"maxRepositories,omitempty"`
@@ -20,16 +20,16 @@ type QuotaStatusApplyConfiguration struct {
 	UpdatedAt *int64 `json:"updatedAt,omitempty"`
 }
 
-// QuotaStatusApplyConfiguration constructs a declarative configuration of the QuotaStatus type for use with
+// RepositoryQuotaStatusApplyConfiguration constructs a declarative configuration of the RepositoryQuotaStatus type for use with
 // apply.
-func QuotaStatus() *QuotaStatusApplyConfiguration {
-	return &QuotaStatusApplyConfiguration{}
+func RepositoryQuotaStatus() *RepositoryQuotaStatusApplyConfiguration {
+	return &RepositoryQuotaStatusApplyConfiguration{}
 }
 
 // WithMaxRepositories sets the MaxRepositories field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the MaxRepositories field is set to the value of the last call.
-func (b *QuotaStatusApplyConfiguration) WithMaxRepositories(value int64) *QuotaStatusApplyConfiguration {
+func (b *RepositoryQuotaStatusApplyConfiguration) WithMaxRepositories(value int64) *RepositoryQuotaStatusApplyConfiguration {
 	b.MaxRepositories = &value
 	return b
 }
@@ -37,7 +37,7 @@ func (b *QuotaStatusApplyConfiguration) WithMaxRepositories(value int64) *QuotaS
 // WithMaxResourcesPerRepository sets the MaxResourcesPerRepository field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the MaxResourcesPerRepository field is set to the value of the last call.
-func (b *QuotaStatusApplyConfiguration) WithMaxResourcesPerRepository(value int64) *QuotaStatusApplyConfiguration {
+func (b *RepositoryQuotaStatusApplyConfiguration) WithMaxResourcesPerRepository(value int64) *RepositoryQuotaStatusApplyConfiguration {
 	b.MaxResourcesPerRepository = &value
 	return b
 }
@@ -45,7 +45,7 @@ func (b *QuotaStatusApplyConfiguration) WithMaxResourcesPerRepository(value int6
 // WithUpdatedAt sets the UpdatedAt field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the UpdatedAt field is set to the value of the last call.
-func (b *QuotaStatusApplyConfiguration) WithUpdatedAt(value int64) *QuotaStatusApplyConfiguration {
+func (b *RepositoryQuotaStatusApplyConfiguration) WithUpdatedAt(value int64) *RepositoryQuotaStatusApplyConfiguration {
 	b.UpdatedAt = &value
 	return b
 }

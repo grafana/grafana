@@ -56,7 +56,7 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 
 	// Instance repositories require the whole instance to be managed, so migrating
 	// only a subset is not supported. Reject up front, before exporting anything.
-	if selective && target != provisioning.SyncTargetTypeFolder && target != provisioning.SyncTargetTypeFolderless {
+	if selective && target != provisioning.RepositorySyncOptionsTargetFolder && target != provisioning.RepositorySyncOptionsTargetFolderless {
 		return fmt.Errorf("received a subset of resources to migrate for instance target type. Instance repositories should only migrate all resources")
 	}
 
@@ -117,7 +117,7 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 	// migration already adopted its resources during the pull, so nothing below
 	// runs for it.
 	switch target {
-	case provisioning.SyncTargetTypeFolder, provisioning.SyncTargetTypeFolderless:
+	case provisioning.RepositorySyncOptionsTargetFolder, provisioning.RepositorySyncOptionsTargetFolderless:
 		// Folder and folderless repositories coexist with unmanaged resources, so we
 		// never wipe the namespace. A branch migration still deletes the specific
 		// resources it exported (full or selective) so they return as managed on

@@ -30,8 +30,8 @@ type WebhookExtraBuilder struct {
 
 // FIXME: separate the URL provider from connector to simplify operators
 func (b *WebhookExtraBuilder) WebhookURL(ctx context.Context, r *provisioning.Repository) string {
-	if r.Spec.Webhook != nil && r.Spec.Webhook.BaseURL != "" {
-		return buildWebhookURL(r.Spec.Webhook.BaseURL, r)
+	if r.Spec.Webhook != nil && r.Spec.Webhook.BaseUrl != "" {
+		return buildWebhookURL(r.Spec.Webhook.BaseUrl, r)
 	}
 
 	if !b.isPublic {

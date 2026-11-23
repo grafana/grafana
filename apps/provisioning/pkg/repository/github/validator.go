@@ -20,11 +20,11 @@ func Validate(_ context.Context, obj runtime.Object, allowInsecure bool) field.E
 		return nil
 	}
 
-	if repo.Spec.Type != provisioning.GitHubRepositoryType {
+	if repo.Spec.Type != provisioning.RepositorySpecTypeGithub {
 		return nil
 	}
 
-	gh := repo.Spec.GitHub
+	gh := repo.Spec.Github
 	if gh == nil {
 		return field.ErrorList{
 			field.Required(field.NewPath("spec", "github"), "a github config is required"),
@@ -33,16 +33,16 @@ func Validate(_ context.Context, obj runtime.Object, allowInsecure bool) field.E
 
 	var list field.ErrorList
 
-	if gh.URL == "" {
+	if gh.Url == "" {
 		list = append(list, field.Required(field.NewPath("spec", "github", "url"), "a github url is required"))
 	} else {
-		_, _, err := ParseOwnerRepoGithub(gh.URL)
+		_, _, err := ParseOwnerRepoGithub(gh.Url)
 		if err != nil {
-			list = append(list, field.Invalid(field.NewPath("spec", "github", "url"), gh.URL, err.Error()))
+			list = append(list, field.Invalid(field.NewPath("spec", "github", "url"), gh.Url, err.Error()))
 		}
 		// Allow any HTTPS or HTTP GitHub server (github.com, GitHub Enterprise, local instances, etc.)
-		if !strings.HasPrefix(gh.URL, "https://") && !strings.HasPrefix(gh.URL, "http://") {
-			list = append(list, field.Invalid(field.NewPath("spec", "github", "url"), gh.URL, "URL must start with https:// or http://"))
+		if !strings.HasPrefix(gh.Url, "https://") && !strings.HasPrefix(gh.Url, "http://") {
+			list = append(list, field.Invalid(field.NewPath("spec", "github", "url"), gh.Url, "URL must start with https:// or http://"))
 		}
 	}
 
@@ -52,7 +52,7 @@ func Validate(_ context.Context, obj runtime.Object, allowInsecure bool) field.E
 
 	// A custom webhook URL and disabling webhooks are mutually exclusive:
 	// one says "receive webhooks at this address" while the other says "never use webhooks."
-	if repo.Spec.Webhook != nil && repo.Spec.Webhook.Disabled && repo.Spec.Webhook.BaseURL != "" {
+	if repo.Spec.Webhook != nil && repo.Spec.Webhook.Disabled && repo.Spec.Webhook.BaseUrl != "" {
 		list = append(list, field.Invalid(
 			field.NewPath("spec", "webhook", "disabled"),
 			repo.Spec.Webhook.Disabled,
@@ -61,6 +61,6 @@ func Validate(_ context.Context, obj runtime.Object, allowInsecure bool) field.E
 	}
 
 	// Validate git-related fields (branch, path, token/connection) using the shared git validator
-	list = append(list, git.ValidateGitConfigFields(repo, gh.URL, gh.Branch, gh.Path, allowInsecure)...)
+	list = append(list, git.ValidateGitConfigFields(repo, gh.Url, gh.Branch, gh.Path, allowInsecure)...)
 	return list
 }

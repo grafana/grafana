@@ -328,8 +328,8 @@ func TestBootstrapConfigFromSettings(t *testing.T) {
 func TestAllowedSyncTargets(t *testing.T) {
 	configured := []string{"folder", "instance", "folderless"}
 
-	assert.Equal(t, []provisioning.SyncTargetType{"folder", "instance", "folderless"},
+	assert.Equal(t, []provisioning.RepositorySyncOptionsTarget{"folder", "instance", "folderless"},
 		allowedSyncTargets(configured, false))
-	assert.Equal(t, []provisioning.SyncTargetType{"folder", "folderless"},
+	assert.Equal(t, []provisioning.RepositorySyncOptionsTarget{"folder", "folderless"},
 		allowedSyncTargets(configured, true))
 }

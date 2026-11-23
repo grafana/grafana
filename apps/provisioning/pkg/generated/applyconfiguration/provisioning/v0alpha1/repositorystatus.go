@@ -25,11 +25,11 @@ type RepositoryStatusApplyConfiguration struct {
 	// This will get updated with the current health status (and updated periodically)
 	Health *RepositoryHealthStatusApplyConfiguration `json:"health,omitempty"`
 	// Sync information with the last sync information
-	Sync *SyncStatusApplyConfiguration `json:"sync,omitempty"`
+	Sync *RepositorySyncStatusApplyConfiguration `json:"sync,omitempty"`
 	// The object count when sync last ran
 	Stats []ResourceCountApplyConfiguration `json:"stats,omitempty"`
 	// Webhook Information (if applicable)
-	Webhook *WebhookStatusApplyConfiguration `json:"webhook,omitempty"`
+	Webhook *RepositoryWebhookStatusApplyConfiguration `json:"webhook,omitempty"`
 	// Token will get updated with current token information
 	Token *RepositoryTokenStatusApplyConfiguration `json:"token,omitempty"`
 	// Error information during repository deletion (if any).
@@ -39,9 +39,9 @@ type RepositoryStatusApplyConfiguration struct {
 	// Deletion reports the progress of an in-progress deletion and the problem
 	// blocking it, so a client can explain the holdup and force-remove the
 	// blocking finalizer. Populated only while the repository is Terminating.
-	Deletion *DeletionStatusApplyConfiguration `json:"deletion,omitempty"`
+	Deletion *RepositoryDeletionStatusApplyConfiguration `json:"deletion,omitempty"`
 	// Quota contains the configured quota limits for this repository
-	Quota *QuotaStatusApplyConfiguration `json:"quota,omitempty"`
+	Quota *RepositoryQuotaStatusApplyConfiguration `json:"quota,omitempty"`
 }
 
 // RepositoryStatusApplyConfiguration constructs a declarative configuration of the RepositoryStatus type for use with
@@ -95,7 +95,7 @@ func (b *RepositoryStatusApplyConfiguration) WithHealth(value *RepositoryHealthS
 // WithSync sets the Sync field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Sync field is set to the value of the last call.
-func (b *RepositoryStatusApplyConfiguration) WithSync(value *SyncStatusApplyConfiguration) *RepositoryStatusApplyConfiguration {
+func (b *RepositoryStatusApplyConfiguration) WithSync(value *RepositorySyncStatusApplyConfiguration) *RepositoryStatusApplyConfiguration {
 	b.Sync = value
 	return b
 }
@@ -116,7 +116,7 @@ func (b *RepositoryStatusApplyConfiguration) WithStats(values ...*ResourceCountA
 // WithWebhook sets the Webhook field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Webhook field is set to the value of the last call.
-func (b *RepositoryStatusApplyConfiguration) WithWebhook(value *WebhookStatusApplyConfiguration) *RepositoryStatusApplyConfiguration {
+func (b *RepositoryStatusApplyConfiguration) WithWebhook(value *RepositoryWebhookStatusApplyConfiguration) *RepositoryStatusApplyConfiguration {
 	b.Webhook = value
 	return b
 }
@@ -140,7 +140,7 @@ func (b *RepositoryStatusApplyConfiguration) WithDeleteError(value string) *Repo
 // WithDeletion sets the Deletion field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Deletion field is set to the value of the last call.
-func (b *RepositoryStatusApplyConfiguration) WithDeletion(value *DeletionStatusApplyConfiguration) *RepositoryStatusApplyConfiguration {
+func (b *RepositoryStatusApplyConfiguration) WithDeletion(value *RepositoryDeletionStatusApplyConfiguration) *RepositoryStatusApplyConfiguration {
 	b.Deletion = value
 	return b
 }
@@ -148,7 +148,7 @@ func (b *RepositoryStatusApplyConfiguration) WithDeletion(value *DeletionStatusA
 // WithQuota sets the Quota field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Quota field is set to the value of the last call.
-func (b *RepositoryStatusApplyConfiguration) WithQuota(value *QuotaStatusApplyConfiguration) *RepositoryStatusApplyConfiguration {
+func (b *RepositoryStatusApplyConfiguration) WithQuota(value *RepositoryQuotaStatusApplyConfiguration) *RepositoryStatusApplyConfiguration {
 	b.Quota = value
 	return b
 }

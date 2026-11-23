@@ -10,7 +10,7 @@ type RepositoryViewList struct {
 	metav1.TypeMeta `json:",inline"`
 
 	// The valid targets (can disable instance or folder types)
-	AllowedTargets []SyncTargetType `json:"allowedTargets,omitempty"`
+	AllowedTargets []RepositorySyncOptionsTarget `json:"allowedTargets,omitempty"`
 
 	// Whether image rendering is allowed for dashboard previews
 	AllowImageRendering bool `json:"allowImageRendering"`
@@ -19,7 +19,7 @@ type RepositoryViewList struct {
 	MaxRepositories int64 `json:"maxRepositories"`
 
 	// AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc)
-	AvailableRepositoryTypes []RepositoryType `json:"availableRepositoryTypes,omitempty"`
+	AvailableRepositoryTypes []RepositorySpecType `json:"availableRepositoryTypes,omitempty"`
 
 	// AvailableConnectionTypes is the list of connection types supported in this instance
 	AvailableConnectionTypes []ConnectionType `json:"availableConnectionTypes,omitempty"`
@@ -63,10 +63,10 @@ type RepositoryView struct {
 	Title string `json:"title"`
 
 	// The repository type
-	Type RepositoryType `json:"type"`
+	Type RepositorySpecType `json:"type"`
 
 	// When syncing, where values are saved
-	Target SyncTargetType `json:"target"`
+	Target RepositorySyncOptionsTarget `json:"target"`
 
 	// For git, this is the target branch
 	Branch string `json:"branch,omitempty"`
@@ -78,18 +78,18 @@ type RepositoryView struct {
 	Path string `json:"path,omitempty"`
 
 	// The supported workflows
-	Workflows []Workflow `json:"workflows"`
+	Workflows []RepositorySpecWorkflows `json:"workflows"`
 
 	// Commit message options. Mirrors the same-named field on the repository spec.
-	Commit *CommitOptions `json:"commit,omitempty"`
+	Commit *RepositoryCommitOptions `json:"commit,omitempty"`
 
 	// Branch naming options. Mirrors spec.branch. Exposed under `branchOptions`
 	// rather than `branch` because the view already uses `branch` for the git
 	// target branch name.
-	BranchOptions *BranchOptions `json:"branchOptions,omitempty"`
+	BranchOptions *RepositoryBranchOptions `json:"branchOptions,omitempty"`
 
 	// Pull request options. Mirrors the same-named field on the repository spec.
-	PullRequest *PullRequestOptions `json:"pullRequest,omitempty"`
+	PullRequest *RepositoryPullRequestOptions `json:"pullRequest,omitempty"`
 }
 
 func (RepositoryView) OpenAPIModelName() string {

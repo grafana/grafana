@@ -50,11 +50,11 @@ func TestIntegrationProvisioning_GitHubAppURLChangeRemovesToken(t *testing.T) {
 		TypeMeta:   metav1.TypeMeta{APIVersion: provisioning.APIVERSION, Kind: "Repository"},
 		ObjectMeta: metav1.ObjectMeta{Name: "url-change-repo", Namespace: "default"},
 		Spec: provisioning.RepositorySpec{
-			Title: "URL change repository", Type: provisioning.GitHubRepositoryType,
-			GitHub:     &provisioning.GitHubRepositoryConfig{URL: "https://github.com/grafana/old", Branch: "main"},
-			Connection: &provisioning.ConnectionInfo{Name: conn.Name},
-			Webhook:    &provisioning.WebhookConfig{Disabled: true},
-			Sync:       provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+			Title: "URL change repository", Type: provisioning.RepositorySpecTypeGithub,
+			Github:     &provisioning.RepositoryGitHubRepositoryConfig{Url: "https://github.com/grafana/old", Branch: "main"},
+			Connection: &provisioning.RepositoryConnectionInfo{Name: conn.Name},
+			Webhook:    &provisioning.RepositoryWebhookConfig{Disabled: true},
+			Sync:       provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetFolder},
 		},
 		Secure: provisioning.SecureValues{
 			Token:         resource.InlineSecureValue{Create: "old-token"},
@@ -82,7 +82,7 @@ func TestIntegrationProvisioning_GitHubAppURLChangeRemovesToken(t *testing.T) {
 				}
 				updated := common.MustFromUnstructured[provisioning.Repository](t, current)
 				require.NotEmpty(t, updated.Secure.Token.Name)
-				updated.Spec.GitHub.URL += "-new"
+				updated.Spec.Github.Url += "-new"
 				if !includeTokenReference {
 					updated.Secure.Token = resource.InlineSecureValue{}
 				}
@@ -179,11 +179,11 @@ func TestIntegrationProvisioning_GitHubAppURLChangeTestEndpoint(t *testing.T) {
 		TypeMeta:   metav1.TypeMeta{APIVersion: provisioning.APIVERSION, Kind: "Repository"},
 		ObjectMeta: metav1.ObjectMeta{Name: "url-change-test-repo", Namespace: "default"},
 		Spec: provisioning.RepositorySpec{
-			Title: "URL change test repository", Type: provisioning.GitHubRepositoryType,
-			GitHub:     &provisioning.GitHubRepositoryConfig{URL: gitServer.URL + "/grafana/old", Branch: "main"},
-			Connection: &provisioning.ConnectionInfo{Name: conn.GetName()},
-			Webhook:    &provisioning.WebhookConfig{Disabled: true},
-			Sync:       provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+			Title: "URL change test repository", Type: provisioning.RepositorySpecTypeGithub,
+			Github:     &provisioning.RepositoryGitHubRepositoryConfig{Url: gitServer.URL + "/grafana/old", Branch: "main"},
+			Connection: &provisioning.RepositoryConnectionInfo{Name: conn.GetName()},
+			Webhook:    &provisioning.RepositoryWebhookConfig{Disabled: true},
+			Sync:       provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetFolder},
 		},
 	}
 	_, err := helper.Repositories.Resource.Create(t.Context(), common.MustToUnstructured(t, repo), metav1.CreateOptions{})
@@ -207,7 +207,7 @@ func TestIntegrationProvisioning_GitHubAppURLChangeTestEndpoint(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			updated := stored.DeepCopy()
-			updated.Spec.GitHub.URL = gitServer.URL + "/grafana/" + tc.repository
+			updated.Spec.Github.Url = gitServer.URL + "/grafana/" + tc.repository
 			updated.Secure.Token = tc.token
 			body, err := json.Marshal(updated)
 			require.NoError(t, err)
@@ -315,7 +315,7 @@ func TestIntegrationProvisioning_ConnectionRepositoryURLChange(t *testing.T) {
 		require.NoError(t, err)
 
 		stored := common.MustFromUnstructured[provisioning.Repository](t, result)
-		assert.Equal(t, "https://github.com/grafana/repo-b", stored.Spec.GitHub.URL)
+		assert.Equal(t, "https://github.com/grafana/repo-b", stored.Spec.Github.Url)
 
 		// A GitHub App token is scoped to the repository it was minted for, so the old one
 		// cannot reach repo-b. The controller has to replace it rather than keep it.
@@ -339,7 +339,7 @@ func TestIntegrationProvisioning_ConnectionRepositoryURLChange(t *testing.T) {
 		current, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 		require.NoError(t, err)
 		stored := common.MustFromUnstructured[provisioning.Repository](t, current)
-		assert.Equal(t, "https://github.com/grafana/repo-b", stored.Spec.GitHub.URL, "url must not have moved host")
+		assert.Equal(t, "https://github.com/grafana/repo-b", stored.Spec.Github.Url, "url must not have moved host")
 	})
 }
 

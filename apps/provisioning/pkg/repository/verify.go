@@ -43,7 +43,7 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 		return field.ErrorList{field.InternalError(field.NewPath(""), err)}
 	}
 
-	if cfg.Spec.Sync.Target == provisioning.SyncTargetTypeInstance {
+	if cfg.Spec.Sync.Target == provisioning.RepositorySyncOptionsTargetInstance {
 		// Instance sync can only be created if NO other repositories exist
 		for _, v := range all {
 			if v.Name != cfg.Name {
@@ -54,7 +54,7 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 	} else {
 		// Folder and folderless sync cannot be created if an instance repository exists
 		for _, v := range all {
-			if v.Spec.Sync.Target == provisioning.SyncTargetTypeInstance && v.Name != cfg.Name {
+			if v.Spec.Sync.Target == provisioning.RepositorySyncOptionsTargetInstance && v.Name != cfg.Name {
 				return field.ErrorList{field.Forbidden(field.NewPath("spec", "sync", "target"),
 					"Cannot create repository when instance repository exists: "+v.Name)}
 			}

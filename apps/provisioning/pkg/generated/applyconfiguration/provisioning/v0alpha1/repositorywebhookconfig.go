@@ -4,15 +4,15 @@
 
 package v0alpha1
 
-// WebhookConfigApplyConfiguration represents a declarative configuration of the WebhookConfig type for use
+// RepositoryWebhookConfigApplyConfiguration represents a declarative configuration of the RepositoryWebhookConfig type for use
 // with apply.
-type WebhookConfigApplyConfiguration struct {
+type RepositoryWebhookConfigApplyConfiguration struct {
 	// Base URL of the Grafana instance used to construct the webhook endpoint
 	// registered with the external Git provider. Only the base URL should be
 	// provided (e.g. `https://grafana.example.com`); the API path, namespace,
 	// and resource name are appended automatically. Trailing slashes are stripped.
 	// Must be a valid HTTP or HTTPS URL.
-	BaseURL *string `json:"baseUrl,omitempty"`
+	BaseUrl *string `json:"baseUrl,omitempty"`
 	// Disabled turns off webhook integration for this repository. When true,
 	// Grafana will not register or receive webhook events from the Git provider
 	// and will poll the repository on an interval instead. Use this when Grafana
@@ -20,24 +20,24 @@ type WebhookConfigApplyConfiguration struct {
 	Disabled *bool `json:"disabled,omitempty"`
 }
 
-// WebhookConfigApplyConfiguration constructs a declarative configuration of the WebhookConfig type for use with
+// RepositoryWebhookConfigApplyConfiguration constructs a declarative configuration of the RepositoryWebhookConfig type for use with
 // apply.
-func WebhookConfig() *WebhookConfigApplyConfiguration {
-	return &WebhookConfigApplyConfiguration{}
+func RepositoryWebhookConfig() *RepositoryWebhookConfigApplyConfiguration {
+	return &RepositoryWebhookConfigApplyConfiguration{}
 }
 
-// WithBaseURL sets the BaseURL field in the declarative configuration to the given value
+// WithBaseUrl sets the BaseUrl field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the BaseURL field is set to the value of the last call.
-func (b *WebhookConfigApplyConfiguration) WithBaseURL(value string) *WebhookConfigApplyConfiguration {
-	b.BaseURL = &value
+// If called multiple times, the BaseUrl field is set to the value of the last call.
+func (b *RepositoryWebhookConfigApplyConfiguration) WithBaseUrl(value string) *RepositoryWebhookConfigApplyConfiguration {
+	b.BaseUrl = &value
 	return b
 }
 
 // WithDisabled sets the Disabled field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Disabled field is set to the value of the last call.
-func (b *WebhookConfigApplyConfiguration) WithDisabled(value bool) *WebhookConfigApplyConfiguration {
+func (b *RepositoryWebhookConfigApplyConfiguration) WithDisabled(value bool) *RepositoryWebhookConfigApplyConfiguration {
 	b.Disabled = &value
 	return b
 }

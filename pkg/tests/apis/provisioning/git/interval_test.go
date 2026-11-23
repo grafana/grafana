@@ -35,7 +35,7 @@ func TestIntegrationProvisioning_GitSyncIntervalNoop(t *testing.T) {
 	require.NotZero(t, original.Finished)
 	require.NotZero(t, original.LastChecked)
 	require.NotEmpty(t, original.LastRef)
-	require.NotEmpty(t, original.JobID)
+	require.NotEmpty(t, original.Job)
 
 	history, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{}, "jobs")
 	require.NoError(t, err)
@@ -51,7 +51,7 @@ func TestIntegrationProvisioning_GitSyncIntervalNoop(t *testing.T) {
 	require.NoError(t, err)
 	helper.TriggerRepositoryReconciliation(t, repoName)
 
-	var refreshed provisioning.SyncStatus
+	var refreshed provisioning.RepositorySyncStatus
 	var stableSince time.Time
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})

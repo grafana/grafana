@@ -14,7 +14,7 @@ func Extra(decrypter connection.Decrypter, factory *github.Factory) connection.E
 	return oauth.NewExtra(
 		decrypter,
 		provisioning.ConnectionTypeGithubOAuth,
-		provisioning.GitHubRepositoryType,
+		provisioning.RepositorySpecTypeGithub,
 		func(ctx context.Context, spec provisioning.ConnectionSpec, accessToken string) (oauth.Provider, error) {
 			return newProvider(factory, spec, accessToken)
 		},

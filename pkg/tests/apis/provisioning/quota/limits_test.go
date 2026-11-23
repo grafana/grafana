@@ -16,7 +16,7 @@ import (
 
 func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
 	helper := sharedHelper(t)
-	helper.SetQuotaStatus(provisioning.QuotaStatus{MaxRepositories: 10})
+	helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxRepositories: 10})
 
 	originalName := "original-repo"
 	originalRepo := common.TestRepo{

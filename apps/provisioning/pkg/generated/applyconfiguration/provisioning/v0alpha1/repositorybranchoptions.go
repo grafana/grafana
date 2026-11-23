@@ -4,9 +4,9 @@
 
 package v0alpha1
 
-// BranchOptionsApplyConfiguration represents a declarative configuration of the BranchOptions type for use
+// RepositoryBranchOptionsApplyConfiguration represents a declarative configuration of the RepositoryBranchOptions type for use
 // with apply.
-type BranchOptionsApplyConfiguration struct {
+type RepositoryBranchOptionsApplyConfiguration struct {
 	// Template for the branch name created in branch workflow.
 	// Supports variables: {{action}}, {{resourceKind}}, {{title}},
 	// {{userLogin}}, {{random}}.
@@ -19,16 +19,16 @@ type BranchOptionsApplyConfiguration struct {
 	EnforceTemplate *bool `json:"enforceTemplate,omitempty"`
 }
 
-// BranchOptionsApplyConfiguration constructs a declarative configuration of the BranchOptions type for use with
+// RepositoryBranchOptionsApplyConfiguration constructs a declarative configuration of the RepositoryBranchOptions type for use with
 // apply.
-func BranchOptions() *BranchOptionsApplyConfiguration {
-	return &BranchOptionsApplyConfiguration{}
+func RepositoryBranchOptions() *RepositoryBranchOptionsApplyConfiguration {
+	return &RepositoryBranchOptionsApplyConfiguration{}
 }
 
 // WithNameTemplate sets the NameTemplate field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the NameTemplate field is set to the value of the last call.
-func (b *BranchOptionsApplyConfiguration) WithNameTemplate(value string) *BranchOptionsApplyConfiguration {
+func (b *RepositoryBranchOptionsApplyConfiguration) WithNameTemplate(value string) *RepositoryBranchOptionsApplyConfiguration {
 	b.NameTemplate = &value
 	return b
 }
@@ -36,7 +36,7 @@ func (b *BranchOptionsApplyConfiguration) WithNameTemplate(value string) *Branch
 // WithEnforceTemplate sets the EnforceTemplate field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the EnforceTemplate field is set to the value of the last call.
-func (b *BranchOptionsApplyConfiguration) WithEnforceTemplate(value bool) *BranchOptionsApplyConfiguration {
+func (b *RepositoryBranchOptionsApplyConfiguration) WithEnforceTemplate(value bool) *RepositoryBranchOptionsApplyConfiguration {
 	b.EnforceTemplate = &value
 	return b
 }

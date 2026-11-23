@@ -174,7 +174,7 @@ func TestIntegrationProvisioning_OAuthConnectionAuthorizeRequests(t *testing.T) 
 			"metadata":   map[string]any{"name": "github-app-connection", "namespace": "default"},
 			"spec": map[string]any{
 				"title":  "Test GitHub App Connection",
-				"type":   provisioning.GitHubRepositoryType,
+				"type":   provisioning.RepositorySpecTypeGithub,
 				"github": map[string]any{"appID": "123456", "installationID": "454545"},
 			},
 			"secure": map[string]any{

@@ -269,7 +269,7 @@ func (r *githubRepository) checkBranchProtection(ctx context.Context) *provision
 
 func (r *githubRepository) hasWriteWorkflow() bool {
 	for _, w := range r.config.Spec.Workflows {
-		if w == provisioning.WriteWorkflow {
+		if w == provisioning.RepositorySpecWorkflowsWrite {
 			return true
 		}
 	}

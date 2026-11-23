@@ -386,9 +386,9 @@ func (JobStatus) OpenAPIModelName() string {
 }
 
 // ToSyncStatus converts a job status to a sync status, which will be put in the repository status.
-func (in JobStatus) ToSyncStatus(jobId string) SyncStatus {
-	s := SyncStatus{
-		JobID:    jobId,
+func (in JobStatus) ToSyncStatus(jobId string) RepositorySyncStatus {
+	s := RepositorySyncStatus{
+		Job:      jobId,
 		State:    in.State,
 		Started:  in.Started,
 		Finished: in.Finished,

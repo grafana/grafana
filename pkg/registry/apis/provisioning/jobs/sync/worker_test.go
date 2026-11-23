@@ -132,7 +132,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 					Generation: 1,
 				},
 				Status: provisioning.RepositoryStatus{
-					Quota: provisioning.QuotaStatus{
+					Quota: provisioning.RepositoryQuotaStatus{
 						MaxResourcesPerRepository: tt.maxResourcesPerRepository,
 					},
 				},
@@ -281,7 +281,7 @@ func TestSyncWorker_Process_PullCondition(t *testing.T) {
 					Generation: 1,
 				},
 				Status: provisioning.RepositoryStatus{
-					Sync: provisioning.SyncStatus{
+					Sync: provisioning.RepositorySyncStatus{
 						LastRef:     "existing-ref",
 						LastChecked: 1234567800,
 					},
@@ -307,14 +307,14 @@ func TestSyncWorker_Process_PullCondition(t *testing.T) {
 			progressRecorder.On("SetMessage", mock.Anything, "update status and stats").Return()
 
 			var capturedPullCondition metav1.Condition
-			var capturedSyncStatus provisioning.SyncStatus
+			var capturedSyncStatus provisioning.RepositorySyncStatus
 			repositoryPatchFn.On("Execute", mock.Anything, repoConfig,
 				mock.MatchedBy(func(patch map[string]interface{}) bool {
 					if patch["path"] != "/status/sync" {
 						return false
 					}
 					var ok bool
-					capturedSyncStatus, ok = patch["value"].(provisioning.SyncStatus)
+					capturedSyncStatus, ok = patch["value"].(provisioning.RepositorySyncStatus)
 					return ok
 				}),
 				mock.MatchedBy(func(patch map[string]interface{}) bool {
@@ -385,11 +385,11 @@ func matchReplacePatch(path string) func(map[string]interface{}) bool {
 // state and lastRef; jobID and message are only checked when non-empty.
 func matchSyncStatusPatch(state provisioning.JobState, jobID, lastRef, message string) func(map[string]interface{}) bool {
 	return func(patch map[string]interface{}) bool {
-		syncStatus, ok := patch["value"].(provisioning.SyncStatus)
+		syncStatus, ok := patch["value"].(provisioning.RepositorySyncStatus)
 		if !ok || patch["op"] != "replace" || patch["path"] != "/status/sync" {
 			return false
 		}
-		if jobID != "" && syncStatus.JobID != jobID {
+		if jobID != "" && syncStatus.Job != jobID {
 			return false
 		}
 		if message != "" && !slices.Contains(syncStatus.Message, message) {
@@ -443,7 +443,7 @@ func TestSyncWorker_Process(t *testing.T) {
 		name           string
 		setupMocks     func(*resources.MockClientFactory, *resources.MockRepositoryResourcesFactory, *MockRepositoryPatchFn, *MockSyncer, *mockReaderWriter, *jobs.MockJobProgressRecorder)
 		expectedError  string
-		expectedStatus *provisioning.SyncStatus
+		expectedStatus *provisioning.RepositorySyncStatus
 	}{
 		{
 			name: "failed initial status patching",
@@ -457,7 +457,7 @@ func TestSyncWorker_Process(t *testing.T) {
 						Title: "test-repo",
 					},
 					Status: provisioning.RepositoryStatus{
-						Sync: provisioning.SyncStatus{
+						Sync: provisioning.RepositorySyncStatus{
 							LastRef: "existing-ref",
 						},
 					},
@@ -486,7 +486,7 @@ func TestSyncWorker_Process(t *testing.T) {
 						Title: "test-repo",
 					},
 					Status: provisioning.RepositoryStatus{
-						Sync: provisioning.SyncStatus{
+						Sync: provisioning.RepositorySyncStatus{
 							LastRef: "existing-ref",
 						},
 					},
@@ -532,7 +532,7 @@ func TestSyncWorker_Process(t *testing.T) {
 						Title: "test-repo",
 					},
 					Status: provisioning.RepositoryStatus{
-						Sync: provisioning.SyncStatus{
+						Sync: provisioning.RepositorySyncStatus{
 							LastRef: "existing-ref",
 						},
 					},
@@ -577,7 +577,7 @@ func TestSyncWorker_Process(t *testing.T) {
 						Namespace: "test-namespace",
 					},
 					Status: provisioning.RepositoryStatus{
-						Sync: provisioning.SyncStatus{
+						Sync: provisioning.RepositorySyncStatus{
 							LastRef: "existing-ref",
 						},
 					},
@@ -623,7 +623,7 @@ func TestSyncWorker_Process(t *testing.T) {
 						Namespace: "test-namespace",
 					},
 					Status: provisioning.RepositoryStatus{
-						Sync: provisioning.SyncStatus{
+						Sync: provisioning.RepositorySyncStatus{
 							LastRef: "existing-ref",
 						},
 					},
@@ -770,7 +770,7 @@ func TestSyncWorker_Process(t *testing.T) {
 						Namespace: "test-namespace",
 					},
 					Status: provisioning.RepositoryStatus{
-						Sync: provisioning.SyncStatus{
+						Sync: provisioning.RepositorySyncStatus{
 							LastRef: "existing-ref",
 						},
 					},

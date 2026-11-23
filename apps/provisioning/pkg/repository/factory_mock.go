@@ -132,19 +132,19 @@ func (_c *MockFactory_Mutate_Call) RunAndReturn(run func(context.Context, runtim
 }
 
 // Types provides a mock function with no fields
-func (_m *MockFactory) Types() []v0alpha1.RepositoryType {
+func (_m *MockFactory) Types() []v0alpha1.RepositorySpecType {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for Types")
 	}
 
-	var r0 []v0alpha1.RepositoryType
-	if rf, ok := ret.Get(0).(func() []v0alpha1.RepositoryType); ok {
+	var r0 []v0alpha1.RepositorySpecType
+	if rf, ok := ret.Get(0).(func() []v0alpha1.RepositorySpecType); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]v0alpha1.RepositoryType)
+			r0 = ret.Get(0).([]v0alpha1.RepositorySpecType)
 		}
 	}
 
@@ -168,12 +168,12 @@ func (_c *MockFactory_Types_Call) Run(run func()) *MockFactory_Types_Call {
 	return _c
 }
 
-func (_c *MockFactory_Types_Call) Return(_a0 []v0alpha1.RepositoryType) *MockFactory_Types_Call {
+func (_c *MockFactory_Types_Call) Return(_a0 []v0alpha1.RepositorySpecType) *MockFactory_Types_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockFactory_Types_Call) RunAndReturn(run func() []v0alpha1.RepositoryType) *MockFactory_Types_Call {
+func (_c *MockFactory_Types_Call) RunAndReturn(run func() []v0alpha1.RepositorySpecType) *MockFactory_Types_Call {
 	_c.Call.Return(run)
 	return _c
 }

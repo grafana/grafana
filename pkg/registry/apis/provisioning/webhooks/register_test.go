@@ -12,7 +12,7 @@ import (
 )
 
 func TestWebhookExtraBuilder_WebhookURL(t *testing.T) {
-	makeRepo := func(name, namespace string, webhook *provisioning.WebhookConfig) *provisioning.Repository {
+	makeRepo := func(name, namespace string, webhook *provisioning.RepositoryWebhookConfig) *provisioning.Repository {
 		return &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      name,
@@ -55,7 +55,7 @@ func TestWebhookExtraBuilder_WebhookURL(t *testing.T) {
 			urlProvider: func(_ context.Context, _ string) string {
 				return "http://localhost:3000/"
 			},
-			repo:     makeRepo("my-repo", "default", &provisioning.WebhookConfig{BaseURL: "https://public-proxy.example.com"}),
+			repo:     makeRepo("my-repo", "default", &provisioning.RepositoryWebhookConfig{BaseUrl: "https://public-proxy.example.com"}),
 			expected: "https://public-proxy.example.com/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/my-repo/webhook",
 		},
 		{
@@ -64,7 +64,7 @@ func TestWebhookExtraBuilder_WebhookURL(t *testing.T) {
 			urlProvider: func(_ context.Context, _ string) string {
 				return "https://grafana.example.com/"
 			},
-			repo:     makeRepo("my-repo", "default", &provisioning.WebhookConfig{BaseURL: "https://custom-proxy.example.com"}),
+			repo:     makeRepo("my-repo", "default", &provisioning.RepositoryWebhookConfig{BaseUrl: "https://custom-proxy.example.com"}),
 			expected: "https://custom-proxy.example.com/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/my-repo/webhook",
 		},
 		{
@@ -73,7 +73,7 @@ func TestWebhookExtraBuilder_WebhookURL(t *testing.T) {
 			urlProvider: func(_ context.Context, _ string) string {
 				return "http://localhost:3000/"
 			},
-			repo:     makeRepo("my-repo", "default", &provisioning.WebhookConfig{BaseURL: "https://custom.example.com/"}),
+			repo:     makeRepo("my-repo", "default", &provisioning.RepositoryWebhookConfig{BaseUrl: "https://custom.example.com/"}),
 			expected: "https://custom.example.com/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/my-repo/webhook",
 		},
 		{
@@ -82,7 +82,7 @@ func TestWebhookExtraBuilder_WebhookURL(t *testing.T) {
 			urlProvider: func(_ context.Context, _ string) string {
 				return "http://localhost:3000/"
 			},
-			repo:     makeRepo("test-repo", "org-1", &provisioning.WebhookConfig{BaseURL: "https://proxy.example.com/grafana"}),
+			repo:     makeRepo("test-repo", "org-1", &provisioning.RepositoryWebhookConfig{BaseUrl: "https://proxy.example.com/grafana"}),
 			expected: "https://proxy.example.com/grafana/apis/provisioning.grafana.app/v0alpha1/namespaces/org-1/repositories/test-repo/webhook",
 		},
 		{
@@ -91,7 +91,7 @@ func TestWebhookExtraBuilder_WebhookURL(t *testing.T) {
 			urlProvider: func(_ context.Context, _ string) string {
 				return "https://grafana.example.com/"
 			},
-			repo:     makeRepo("my-repo", "default", &provisioning.WebhookConfig{}),
+			repo:     makeRepo("my-repo", "default", &provisioning.RepositoryWebhookConfig{}),
 			expected: "https://grafana.example.com/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/my-repo/webhook",
 		},
 	}
@@ -117,7 +117,7 @@ func TestResolvePublicURL(t *testing.T) {
 	tests := []struct {
 		name        string
 		cfg         *setting.Cfg
-		repoWebhook *provisioning.WebhookConfig
+		repoWebhook *provisioning.RepositoryWebhookConfig
 		expected    string
 	}{
 		{
@@ -133,7 +133,7 @@ func TestResolvePublicURL(t *testing.T) {
 		{
 			name:        "spec.webhook.baseUrl still wins over ProvisioningPublicRootURL",
 			cfg:         &setting.Cfg{AppURL: "http://internal.cluster.local/", ProvisioningPublicRootURL: "https://public.example.com"},
-			repoWebhook: &provisioning.WebhookConfig{BaseURL: "https://repo-override.example.com"},
+			repoWebhook: &provisioning.RepositoryWebhookConfig{BaseUrl: "https://repo-override.example.com"},
 			expected:    "https://repo-override.example.com/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/my-repo/webhook",
 		},
 	}

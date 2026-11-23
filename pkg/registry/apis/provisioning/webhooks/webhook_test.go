@@ -168,13 +168,13 @@ func TestWebhookConnector_webhook(t *testing.T) {
 			cfg := &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
 				Spec: provisioning.RepositorySpec{
-					Type:   provisioning.GitHubRepositoryType,
-					GitHub: &provisioning.GitHubRepositoryConfig{Branch: "main"},
-					Sync:   provisioning.SyncOptions{Enabled: !tt.syncDisabled},
+					Type:   provisioning.RepositorySpecTypeGithub,
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{Branch: "main"},
+					Sync:   provisioning.RepositorySyncOptions{Enabled: !tt.syncDisabled},
 				},
 			}
 			if !tt.noStatus {
-				cfg.Status.Webhook = &provisioning.WebhookStatus{}
+				cfg.Status.Webhook = &provisioning.RepositoryWebhookStatus{}
 			}
 			hooks := stubWebhookRepo{cfg: cfg, slug: "grafana/grafana", event: tt.event, verifyErr: tt.verifyErr, err: tt.processErr}
 
@@ -207,11 +207,11 @@ func TestWebhookConnector_webhook_replay(t *testing.T) {
 	cfg := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
 		Spec: provisioning.RepositorySpec{
-			Type:   provisioning.GitHubRepositoryType,
-			GitHub: &provisioning.GitHubRepositoryConfig{Branch: "main"},
-			Sync:   provisioning.SyncOptions{Enabled: true},
+			Type:   provisioning.RepositorySpecTypeGithub,
+			Github: &provisioning.RepositoryGitHubRepositoryConfig{Branch: "main"},
+			Sync:   provisioning.RepositorySyncOptions{Enabled: true},
 		},
-		Status: provisioning.RepositoryStatus{Webhook: &provisioning.WebhookStatus{}},
+		Status: provisioning.RepositoryStatus{Webhook: &provisioning.RepositoryWebhookStatus{}},
 	}
 	event := repository.WebhookEvent{Type: repository.WebhookEventPush, RepoSlug: "grafana/grafana", Branch: "main", TotalChanges: 1}
 	hooks := stubWebhookRepo{cfg: cfg, slug: "grafana/grafana", replayKey: "sig", event: event}
@@ -266,7 +266,7 @@ func TestUpdateLastEvent(t *testing.T) {
 		patcher := &fakeStatusPatcher{}
 		cfg := &provisioning.Repository{
 			Status: provisioning.RepositoryStatus{
-				Webhook: &provisioning.WebhookStatus{
+				Webhook: &provisioning.RepositoryWebhookStatus{
 					LastEvent: time.Now().UnixMilli(),
 				},
 			},
@@ -281,7 +281,7 @@ func TestUpdateLastEvent(t *testing.T) {
 		patcher := &fakeStatusPatcher{}
 		cfg := &provisioning.Repository{
 			Status: provisioning.RepositoryStatus{
-				Webhook: &provisioning.WebhookStatus{
+				Webhook: &provisioning.RepositoryWebhookStatus{
 					LastEvent: time.Now().Add(-2 * time.Minute).UnixMilli(),
 				},
 			},
@@ -296,7 +296,7 @@ func TestUpdateLastEvent(t *testing.T) {
 		patcher := &fakeStatusPatcher{err: errors.New("boom")}
 		cfg := &provisioning.Repository{
 			Status: provisioning.RepositoryStatus{
-				Webhook: &provisioning.WebhookStatus{
+				Webhook: &provisioning.RepositoryWebhookStatus{
 					LastEvent: time.Now().Add(-2 * time.Minute).UnixMilli(),
 				},
 			},

@@ -130,11 +130,11 @@ func TestTestConnector_URLChangeWithConnection(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			old := testGitHubRepository("test", "default", "https://github.com/grafana/old")
-			old.Spec.Connection = &provisioningv0alpha1.ConnectionInfo{Name: "connection"}
+			old.Spec.Connection = &provisioningv0alpha1.RepositoryConnectionInfo{Name: "connection"}
 			old.Secure.Token = resource.InlineSecureValue{Name: "old-token"}
 			original := old.DeepCopy()
 			updated := old.DeepCopy()
-			updated.Spec.GitHub.URL = "https://github.com/grafana/new"
+			updated.Spec.Github.Url = "https://github.com/grafana/new"
 			updated.Secure.Token = tc.token
 			body, err := json.Marshal(updated)
 			require.NoError(t, err)
@@ -234,9 +234,9 @@ func testGitHubRepository(name, namespace, url string) *provisioningv0alpha1.Rep
 		},
 		Spec: provisioningv0alpha1.RepositorySpec{
 			Title: "Test Repo",
-			Type:  provisioningv0alpha1.GitHubRepositoryType,
-			GitHub: &provisioningv0alpha1.GitHubRepositoryConfig{
-				URL:    url,
+			Type:  provisioningv0alpha1.RepositorySpecTypeGithub,
+			Github: &provisioningv0alpha1.RepositoryGitHubRepositoryConfig{
+				Url:    url,
 				Branch: "main",
 			},
 		},

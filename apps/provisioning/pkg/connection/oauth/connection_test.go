@@ -114,7 +114,7 @@ func TestConnection_Test(t *testing.T) {
 			if tt.providerResults != nil {
 				provider.EXPECT().Test(mock.Anything).Return(tt.providerResults)
 			}
-			conn := newConnection(provider, provisioning.GitLabRepositoryType, testOAuthConfig, "", tt.token)
+			conn := newConnection(provider, provisioning.RepositorySpecTypeGitlab, testOAuthConfig, "", tt.token)
 
 			results, err := conn.Test(t.Context())
 			require.NoError(t, err)
@@ -188,7 +188,7 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 	}{
 		{
 			name:  "success - expiring token",
-			repo:  &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.GitLabRepositoryType}},
+			repo:  &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.RepositorySpecTypeGitlab}},
 			token: marshalTestToken(t, &oauth2.Token{AccessToken: "access", Expiry: expiry}),
 			validate: func(t *testing.T, value *connection.ExpirableSecureValue) {
 				assert.Equal(t, resource.RawSecureValue("access"), value.Token)
@@ -197,7 +197,7 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 		},
 		{
 			name:  "success - non-expiring token",
-			repo:  &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.GitLabRepositoryType}},
+			repo:  &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.RepositorySpecTypeGitlab}},
 			token: marshalTestToken(t, &oauth2.Token{AccessToken: "access"}),
 			validate: func(t *testing.T, value *connection.ExpirableSecureValue) {
 				assert.Equal(t, resource.RawSecureValue("access"), value.Token)
@@ -210,17 +210,17 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 		},
 		{
 			name:        "failure - repository type mismatch",
-			repo:        &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.GitHubRepositoryType}},
+			repo:        &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.RepositorySpecTypeGithub}},
 			expectedErr: `repository type "github" is not served by this connection (serves "gitlab")`,
 		},
 		{
 			name:        "failure - no token stored",
-			repo:        &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.GitLabRepositoryType}},
+			repo:        &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.RepositorySpecTypeGitlab}},
 			expectedErr: "connection access token not available",
 		},
 		{
 			name:        "failure - expired token",
-			repo:        &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.GitLabRepositoryType}},
+			repo:        &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.RepositorySpecTypeGitlab}},
 			token:       marshalTestToken(t, &oauth2.Token{AccessToken: "access", Expiry: time.Now().Add(-time.Hour)}),
 			expectedErr: "connection access token expired",
 		},
@@ -228,7 +228,7 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			conn := newConnection(newMockProvider(t, ""), provisioning.GitLabRepositoryType, testOAuthConfig, "", tt.token)
+			conn := newConnection(newMockProvider(t, ""), provisioning.RepositorySpecTypeGitlab, testOAuthConfig, "", tt.token)
 
 			value, err := conn.GenerateRepositoryToken(t.Context(), tt.repo)
 			if tt.expectedErr != "" {
@@ -248,7 +248,7 @@ func TestConnection_ListRepositories(t *testing.T) {
 		lister := connection.NewMockRepositoryLister(t)
 		lister.EXPECT().ListRepositories(mock.Anything).Return(repos, nil)
 		conn := &listingConnection{
-			oauthConnection: newConnection(newMockProvider(t, ""), provisioning.GitLabRepositoryType, testOAuthConfig, "",
+			oauthConnection: newConnection(newMockProvider(t, ""), provisioning.RepositorySpecTypeGitlab, testOAuthConfig, "",
 				marshalTestToken(t, &oauth2.Token{AccessToken: "access"})),
 			lister: lister,
 		}
@@ -260,7 +260,7 @@ func TestConnection_ListRepositories(t *testing.T) {
 
 	t.Run("failure - no token stored", func(t *testing.T) {
 		conn := &listingConnection{
-			oauthConnection: newConnection(newMockProvider(t, ""), provisioning.GitLabRepositoryType, testOAuthConfig, "", ""),
+			oauthConnection: newConnection(newMockProvider(t, ""), provisioning.RepositorySpecTypeGitlab, testOAuthConfig, "", ""),
 			lister:          connection.NewMockRepositoryLister(t),
 		}
 
@@ -372,7 +372,7 @@ func TestConnection_GenerateConnectionToken(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			srv := newTokenServer(t, tt.responseCode, tt.response)
-			conn := newConnection(newMockProvider(t, srv.URL), provisioning.GitLabRepositoryType, testOAuthConfig, "client-secret", tt.token)
+			conn := newConnection(newMockProvider(t, srv.URL), provisioning.RepositorySpecTypeGitlab, testOAuthConfig, "client-secret", tt.token)
 
 			raw, err := conn.GenerateConnectionToken(t.Context())
 			if tt.expectedErr != "" {
@@ -428,7 +428,7 @@ func TestConnection_ExchangeAuthorizationCode(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			srv := newTokenServer(t, tt.responseCode, tt.response)
-			conn := newConnection(newMockProvider(t, srv.URL), provisioning.GitLabRepositoryType, testOAuthConfig, "client-secret", "")
+			conn := newConnection(newMockProvider(t, srv.URL), provisioning.RepositorySpecTypeGitlab, testOAuthConfig, "client-secret", "")
 
 			raw, err := conn.ExchangeAuthorizationCode(t.Context(), tt.code, "https://grafana.example/callback")
 			if tt.expectedErr != "" {
@@ -484,7 +484,7 @@ func TestConnection_ValidateToken(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			conn := newConnection(newMockProvider(t, ""), provisioning.GitLabRepositoryType, testOAuthConfig, "", tt.token)
+			conn := newConnection(newMockProvider(t, ""), provisioning.RepositorySpecTypeGitlab, testOAuthConfig, "", tt.token)
 
 			tokenExpiry, err := conn.ValidateToken()
 			if tt.expectedErr != "" {

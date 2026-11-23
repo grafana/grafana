@@ -4,9 +4,9 @@
 
 package v0alpha1
 
-// PullRequestOptionsApplyConfiguration represents a declarative configuration of the PullRequestOptions type for use
+// RepositoryPullRequestOptionsApplyConfiguration represents a declarative configuration of the RepositoryPullRequestOptions type for use
 // with apply.
-type PullRequestOptionsApplyConfiguration struct {
+type RepositoryPullRequestOptionsApplyConfiguration struct {
 	// Template for pull request titles.
 	// Supports the same variables as BranchOptions.NameTemplate
 	// ({{random}} is available but rarely useful here).
@@ -19,16 +19,16 @@ type PullRequestOptionsApplyConfiguration struct {
 	GenerateDashboardPreviews *bool `json:"generateDashboardPreviews,omitempty"`
 }
 
-// PullRequestOptionsApplyConfiguration constructs a declarative configuration of the PullRequestOptions type for use with
+// RepositoryPullRequestOptionsApplyConfiguration constructs a declarative configuration of the RepositoryPullRequestOptions type for use with
 // apply.
-func PullRequestOptions() *PullRequestOptionsApplyConfiguration {
-	return &PullRequestOptionsApplyConfiguration{}
+func RepositoryPullRequestOptions() *RepositoryPullRequestOptionsApplyConfiguration {
+	return &RepositoryPullRequestOptionsApplyConfiguration{}
 }
 
 // WithTitleTemplate sets the TitleTemplate field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the TitleTemplate field is set to the value of the last call.
-func (b *PullRequestOptionsApplyConfiguration) WithTitleTemplate(value string) *PullRequestOptionsApplyConfiguration {
+func (b *RepositoryPullRequestOptionsApplyConfiguration) WithTitleTemplate(value string) *RepositoryPullRequestOptionsApplyConfiguration {
 	b.TitleTemplate = &value
 	return b
 }
@@ -36,7 +36,7 @@ func (b *PullRequestOptionsApplyConfiguration) WithTitleTemplate(value string) *
 // WithEnforceTemplate sets the EnforceTemplate field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the EnforceTemplate field is set to the value of the last call.
-func (b *PullRequestOptionsApplyConfiguration) WithEnforceTemplate(value bool) *PullRequestOptionsApplyConfiguration {
+func (b *RepositoryPullRequestOptionsApplyConfiguration) WithEnforceTemplate(value bool) *RepositoryPullRequestOptionsApplyConfiguration {
 	b.EnforceTemplate = &value
 	return b
 }
@@ -44,7 +44,7 @@ func (b *PullRequestOptionsApplyConfiguration) WithEnforceTemplate(value bool) *
 // WithGenerateDashboardPreviews sets the GenerateDashboardPreviews field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the GenerateDashboardPreviews field is set to the value of the last call.
-func (b *PullRequestOptionsApplyConfiguration) WithGenerateDashboardPreviews(value bool) *PullRequestOptionsApplyConfiguration {
+func (b *RepositoryPullRequestOptionsApplyConfiguration) WithGenerateDashboardPreviews(value bool) *RepositoryPullRequestOptionsApplyConfiguration {
 	b.GenerateDashboardPreviews = &value
 	return b
 }

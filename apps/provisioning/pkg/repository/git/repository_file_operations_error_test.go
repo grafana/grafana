@@ -65,7 +65,7 @@ func TestFileOperations_HTTPErrorMapping(t *testing.T) {
 					},
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
-							Type: provisioning.GitHubRepositoryType,
+							Type: provisioning.RepositorySpecTypeGithub,
 						},
 					},
 				}
@@ -90,7 +90,7 @@ func TestFileOperations_HTTPErrorMapping(t *testing.T) {
 					},
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
-							Type: provisioning.GitHubRepositoryType,
+							Type: provisioning.RepositorySpecTypeGithub,
 						},
 					},
 				}
@@ -116,7 +116,7 @@ func TestFileOperations_HTTPErrorMapping(t *testing.T) {
 					},
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
-							Type: provisioning.GitHubRepositoryType,
+							Type: provisioning.RepositorySpecTypeGithub,
 						},
 					},
 				}
@@ -146,7 +146,7 @@ func TestFileOperations_HTTPErrorMapping(t *testing.T) {
 					},
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
-							Type: provisioning.GitHubRepositoryType,
+							Type: provisioning.RepositorySpecTypeGithub,
 						},
 					},
 				}
@@ -172,7 +172,7 @@ func TestFileOperations_HTTPErrorMapping(t *testing.T) {
 					},
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
-							Type: provisioning.GitHubRepositoryType,
+							Type: provisioning.RepositorySpecTypeGithub,
 						},
 					},
 				}
@@ -202,7 +202,7 @@ func TestFileOperations_HTTPErrorMapping(t *testing.T) {
 					},
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
-							Type: provisioning.GitHubRepositoryType,
+							Type: provisioning.RepositorySpecTypeGithub,
 						},
 					},
 				}
@@ -228,7 +228,7 @@ func TestFileOperations_HTTPErrorMapping(t *testing.T) {
 					},
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
-							Type: provisioning.GitHubRepositoryType,
+							Type: provisioning.RepositorySpecTypeGithub,
 						},
 					},
 				}
@@ -258,7 +258,7 @@ func TestFileOperations_HTTPErrorMapping(t *testing.T) {
 					},
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
-							Type: provisioning.GitHubRepositoryType,
+							Type: provisioning.RepositorySpecTypeGithub,
 						},
 					},
 				}
@@ -284,7 +284,7 @@ func TestFileOperations_HTTPErrorMapping(t *testing.T) {
 					},
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
-							Type: provisioning.GitHubRepositoryType,
+							Type: provisioning.RepositorySpecTypeGithub,
 						},
 					},
 				}
@@ -314,7 +314,7 @@ func TestFileOperations_HTTPErrorMapping(t *testing.T) {
 					},
 					config: &provisioning.Repository{
 						Spec: provisioning.RepositorySpec{
-							Type: provisioning.GitHubRepositoryType,
+							Type: provisioning.RepositorySpecTypeGithub,
 						},
 					},
 				}
@@ -366,7 +366,7 @@ func TestFileOperations_PreservesSpecificErrorHandling(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
+					Type: provisioning.RepositorySpecTypeGithub,
 				},
 			},
 		}
@@ -387,7 +387,7 @@ func TestFileOperations_PreservesSpecificErrorHandling(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
+					Type: provisioning.RepositorySpecTypeGithub,
 				},
 			},
 		}
@@ -414,7 +414,7 @@ func TestFileOperations_PreservesSpecificErrorHandling(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
+					Type: provisioning.RepositorySpecTypeGithub,
 				},
 			},
 		}
@@ -441,7 +441,7 @@ func TestFileOperations_PreservesSpecificErrorHandling(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
+					Type: provisioning.RepositorySpecTypeGithub,
 				},
 			},
 		}
@@ -468,7 +468,7 @@ func TestFileOperations_PreservesSpecificErrorHandling(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
+					Type: provisioning.RepositorySpecTypeGithub,
 				},
 			},
 		}
@@ -495,7 +495,7 @@ func TestFileOperations_PreservesSpecificErrorHandling(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
+					Type: provisioning.RepositorySpecTypeGithub,
 				},
 			},
 		}
@@ -522,7 +522,7 @@ func TestFileOperations_PreservesSpecificErrorHandling(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
+					Type: provisioning.RepositorySpecTypeGithub,
 				},
 			},
 		}

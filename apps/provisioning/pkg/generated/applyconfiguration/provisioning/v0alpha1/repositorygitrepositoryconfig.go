@@ -4,17 +4,15 @@
 
 package v0alpha1
 
-// BitbucketRepositoryConfigApplyConfiguration represents a declarative configuration of the BitbucketRepositoryConfig type for use
+// RepositoryGitRepositoryConfigApplyConfiguration represents a declarative configuration of the RepositoryGitRepositoryConfig type for use
 // with apply.
-type BitbucketRepositoryConfigApplyConfiguration struct {
-	// The repository URL (e.g. `https://bitbucket.org/example/test`).
-	URL *string `json:"url,omitempty"`
+type RepositoryGitRepositoryConfigApplyConfiguration struct {
+	// The repository URL (e.g. `https://github.com/example/test`).
+	Url *string `json:"url,omitempty"`
 	// The branch to use in the repository.
 	Branch *string `json:"branch,omitempty"`
 	// TokenUser is the user that will be used to access the repository if it's a personal access token.
 	TokenUser *string `json:"tokenUser,omitempty"`
-	// Email is the Atlassian account email used to authenticate the Bitbucket REST API. Required to enable webhooks.
-	Email *string `json:"email,omitempty"`
 	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
 	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
 	// The path is relative to the root of the repository, regardless of the leading slash.
@@ -23,24 +21,24 @@ type BitbucketRepositoryConfigApplyConfiguration struct {
 	Path *string `json:"path,omitempty"`
 }
 
-// BitbucketRepositoryConfigApplyConfiguration constructs a declarative configuration of the BitbucketRepositoryConfig type for use with
+// RepositoryGitRepositoryConfigApplyConfiguration constructs a declarative configuration of the RepositoryGitRepositoryConfig type for use with
 // apply.
-func BitbucketRepositoryConfig() *BitbucketRepositoryConfigApplyConfiguration {
-	return &BitbucketRepositoryConfigApplyConfiguration{}
+func RepositoryGitRepositoryConfig() *RepositoryGitRepositoryConfigApplyConfiguration {
+	return &RepositoryGitRepositoryConfigApplyConfiguration{}
 }
 
-// WithURL sets the URL field in the declarative configuration to the given value
+// WithUrl sets the Url field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the URL field is set to the value of the last call.
-func (b *BitbucketRepositoryConfigApplyConfiguration) WithURL(value string) *BitbucketRepositoryConfigApplyConfiguration {
-	b.URL = &value
+// If called multiple times, the Url field is set to the value of the last call.
+func (b *RepositoryGitRepositoryConfigApplyConfiguration) WithUrl(value string) *RepositoryGitRepositoryConfigApplyConfiguration {
+	b.Url = &value
 	return b
 }
 
 // WithBranch sets the Branch field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Branch field is set to the value of the last call.
-func (b *BitbucketRepositoryConfigApplyConfiguration) WithBranch(value string) *BitbucketRepositoryConfigApplyConfiguration {
+func (b *RepositoryGitRepositoryConfigApplyConfiguration) WithBranch(value string) *RepositoryGitRepositoryConfigApplyConfiguration {
 	b.Branch = &value
 	return b
 }
@@ -48,23 +46,15 @@ func (b *BitbucketRepositoryConfigApplyConfiguration) WithBranch(value string) *
 // WithTokenUser sets the TokenUser field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the TokenUser field is set to the value of the last call.
-func (b *BitbucketRepositoryConfigApplyConfiguration) WithTokenUser(value string) *BitbucketRepositoryConfigApplyConfiguration {
+func (b *RepositoryGitRepositoryConfigApplyConfiguration) WithTokenUser(value string) *RepositoryGitRepositoryConfigApplyConfiguration {
 	b.TokenUser = &value
-	return b
-}
-
-// WithEmail sets the Email field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the Email field is set to the value of the last call.
-func (b *BitbucketRepositoryConfigApplyConfiguration) WithEmail(value string) *BitbucketRepositoryConfigApplyConfiguration {
-	b.Email = &value
 	return b
 }
 
 // WithPath sets the Path field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Path field is set to the value of the last call.
-func (b *BitbucketRepositoryConfigApplyConfiguration) WithPath(value string) *BitbucketRepositoryConfigApplyConfiguration {
+func (b *RepositoryGitRepositoryConfigApplyConfiguration) WithPath(value string) *RepositoryGitRepositoryConfigApplyConfiguration {
 	b.Path = &value
 	return b
 }

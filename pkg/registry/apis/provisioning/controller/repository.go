@@ -551,11 +551,11 @@ func (rc *RepositoryController) updateDeleteStatus(ctx context.Context, obj *pro
 // status.deletion the frontend consumes: the deletion state, the finalizer that
 // is blocking it (so the client can force-remove exactly that finalizer), and a
 // human-readable message.
-func buildDeletionStatus(err error) *provisioning.DeletionStatus {
-	deletion := &provisioning.DeletionStatus{
+func buildDeletionStatus(err error) *provisioning.RepositoryDeletionStatus {
+	deletion := &provisioning.RepositoryDeletionStatus{
 		State:   provisioning.DeletionStateBlocked,
 		Message: err.Error(),
-		Cause:   provisioning.DeletionCause(classifyDeletionErrorCause(err)),
+		Cause:   provisioning.RepositoryDeletionStatusCause(classifyDeletionErrorCause(err)),
 	}
 	var fe *finalizerError
 	if errors.As(err, &fe) {
@@ -575,7 +575,7 @@ func buildDeletionStatus(err error) *provisioning.DeletionStatus {
 func deletionErrorCause(obj *provisioning.Repository) string {
 	if deletion := obj.Status.Deletion; deletion != nil {
 		switch deletion.Cause {
-		case provisioning.DeletionCauseUser, provisioning.DeletionCauseSystem:
+		case provisioning.RepositoryDeletionStatusCauseUser, provisioning.RepositoryDeletionStatusCauseSystem:
 			return string(deletion.Cause)
 		default:
 			// Older statuses have no cause. Unknown values must also stay in
@@ -608,21 +608,21 @@ func (rc *RepositoryController) shouldResync(ctx context.Context, obj *provision
 	if obj.Status.Sync.Finished > 0 &&
 		obj.Spec.Sync.Enabled &&
 		(obj.Status.Sync.State == provisioning.JobStatePending || obj.Status.Sync.State == provisioning.JobStateWorking) &&
-		obj.Status.Sync.JobID != "" {
-		_, err := rc.jobs.Get(ctx, obj.Namespace, obj.Status.Sync.JobID)
+		obj.Status.Sync.Job != "" {
+		_, err := rc.jobs.Get(ctx, obj.Namespace, obj.Status.Sync.Job)
 		if apierrors.IsNotFound(err) {
 			// Job was cleaned up but sync status wasn't updated - trigger resync to reconcile
 			// Only trigger if sync interval has elapsed to avoid unnecessary operations
 			if syncAge >= (syncInterval - tolerance) {
 				logger := logging.FromContext(ctx)
-				logger.Info("detected stale sync status", "job_id", obj.Status.Sync.JobID)
+				logger.Info("detected stale sync status", "job_id", obj.Status.Sync.Job)
 				return true
 			}
 		}
 		// For other errors, log but continue with normal logic
 		if err != nil {
 			logger := logging.FromContext(ctx)
-			logger.Warn("failed to check job existence for stale sync status", "error", err, "job_id", obj.Status.Sync.JobID)
+			logger.Warn("failed to check job existence for stale sync status", "error", err, "job_id", obj.Status.Sync.Job)
 		}
 	}
 
@@ -673,7 +673,7 @@ func isQuotaExceeded(conditions []v1.Condition) bool {
 // resolveQuotaStatus retrieves current quota limits, falling back to the cached status for observed
 // repositories when the lookup fails. New repositories return the lookup error because they do not
 // have a known valid cached quota.
-func (rc *RepositoryController) resolveQuotaStatus(ctx context.Context, obj *provisioning.Repository) (provisioning.QuotaStatus, error) {
+func (rc *RepositoryController) resolveQuotaStatus(ctx context.Context, obj *provisioning.Repository) (provisioning.RepositoryQuotaStatus, error) {
 	quotaStatus, err := rc.quotaGetter.GetQuotaStatus(ctx, obj.Namespace)
 	if err == nil {
 		quotaStatus.UpdatedAt = time.Now().UnixMilli()
@@ -682,7 +682,7 @@ func (rc *RepositoryController) resolveQuotaStatus(ctx context.Context, obj *pro
 	rc.quotaMetrics.recordRefreshError()
 
 	if obj.Status.ObservedGeneration == 0 {
-		return provisioning.QuotaStatus{}, fmt.Errorf("failed to get quota status: %w", err)
+		return provisioning.RepositoryQuotaStatus{}, fmt.Errorf("failed to get quota status: %w", err)
 	}
 
 	quotaStatus = obj.Status.Quota

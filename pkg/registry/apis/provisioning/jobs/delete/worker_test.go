@@ -1339,7 +1339,7 @@ func TestDeleteWorker_RefURLsSetWithRef(t *testing.T) {
 			Namespace: "test-namespace",
 		},
 		Spec: v0alpha1.RepositorySpec{
-			Type: v0alpha1.GitHubRepositoryType,
+			Type: v0alpha1.RepositorySpecTypeGithub,
 		},
 	}
 	mockRepoWithURLs.On("Config").Return(config).Maybe() // Config may be called multiple times
@@ -1398,7 +1398,7 @@ func TestDeleteWorker_RefURLsNotSetWithoutRef(t *testing.T) {
 			Namespace: "test-namespace",
 		},
 		Spec: v0alpha1.RepositorySpec{
-			Type: v0alpha1.GitHubRepositoryType,
+			Type: v0alpha1.RepositorySpecTypeGithub,
 		},
 	}
 	mockRepoWithURLs.On("Config").Return(config).Maybe() // Config may be called multiple times
@@ -1454,7 +1454,7 @@ func TestDeleteWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
 			Namespace: "test-namespace",
 		},
 		Spec: v0alpha1.RepositorySpec{
-			Type: v0alpha1.GitRepositoryType, // Regular git repo, not GitHub
+			Type: v0alpha1.RepositorySpecTypeGit, // Regular git repo, not GitHub
 		},
 	}
 	mockRepo.On("Config").Return(config).Maybe() // Config may be called multiple times

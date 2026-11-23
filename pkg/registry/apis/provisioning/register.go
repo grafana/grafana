@@ -101,7 +101,7 @@ type APIBuilder struct {
 	isPreferredVersion                  bool
 	useExclusivelyAccessCheckerForAuthz bool
 
-	allowedTargets            []provisioning.SyncTargetType
+	allowedTargets            []provisioning.RepositorySyncOptionsTarget
 	supportedResourceProvider resources.SupportedResourceProvider
 	allowImageRendering       bool
 	minSyncInterval           time.Duration
@@ -214,7 +214,7 @@ func NewAPIBuilder(
 	extraBuilders []ExtraBuilder,
 	extraWorkers []jobs.Worker,
 	jobHistoryConfig *JobHistoryConfig,
-	allowedTargets []provisioning.SyncTargetType,
+	allowedTargets []provisioning.RepositorySyncOptionsTarget,
 	supportedResourceProvider resources.SupportedResourceProvider,
 	restConfigGetter func(context.Context) (*clientrest.Config, error),
 	allowImageRendering bool,
@@ -558,13 +558,13 @@ func RegisterAPIService(
 
 // allowedSyncTargets drops the instance target when a bootstrap repository exists, since that
 // target needs an instance with no other repository. Saying so at admission beats a conflict.
-func allowedSyncTargets(configured []string, bootstrapEnabled bool) []provisioning.SyncTargetType {
-	targets := make([]provisioning.SyncTargetType, 0, len(configured))
+func allowedSyncTargets(configured []string, bootstrapEnabled bool) []provisioning.RepositorySyncOptionsTarget {
+	targets := make([]provisioning.RepositorySyncOptionsTarget, 0, len(configured))
 	for _, target := range configured {
-		if bootstrapEnabled && provisioning.SyncTargetType(target) == provisioning.SyncTargetTypeInstance {
+		if bootstrapEnabled && provisioning.RepositorySyncOptionsTarget(target) == provisioning.RepositorySyncOptionsTargetInstance {
 			continue
 		}
-		targets = append(targets, provisioning.SyncTargetType(target))
+		targets = append(targets, provisioning.RepositorySyncOptionsTarget(target))
 	}
 	return targets
 }
@@ -584,8 +584,8 @@ func bootstrapConfigFromSettings(cfg *setting.Cfg) (bootstrap.Config, error) {
 		return bootstrap.Config{}, fmt.Errorf("[provisioning] bootstrap_path %q is not a valid local repository path: %w", cfg.ProvisioningBootstrapPath, err)
 	}
 	if len(cfg.ProvisioningRepositoryTypes) > 0 &&
-		!slices.Contains(cfg.ProvisioningRepositoryTypes, string(provisioning.LocalRepositoryType)) {
-		return bootstrap.Config{}, fmt.Errorf("[provisioning] bootstrap_path requires the %q repository type to be enabled", provisioning.LocalRepositoryType)
+		!slices.Contains(cfg.ProvisioningRepositoryTypes, string(provisioning.RepositorySpecTypeLocal)) {
+		return bootstrap.Config{}, fmt.Errorf("[provisioning] bootstrap_path requires the %q repository type to be enabled", provisioning.RepositorySpecTypeLocal)
 	}
 	// Admission rejects a sync target that is not allowed, and the bootstrap repository always
 	// uses the same one, so a target it cannot use leaves the instance unprovisioned with

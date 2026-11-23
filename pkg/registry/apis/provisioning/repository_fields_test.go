@@ -35,7 +35,7 @@ func TestGetConnectionName(t *testing.T) {
 			repo: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Title: "test-repo",
-					Connection: &provisioning.ConnectionInfo{
+					Connection: &provisioning.RepositoryConnectionInfo{
 						Name: "my-connection",
 					},
 				},
@@ -47,7 +47,7 @@ func TestGetConnectionName(t *testing.T) {
 			repo: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Title: "test-repo",
-					Connection: &provisioning.ConnectionInfo{
+					Connection: &provisioning.RepositoryConnectionInfo{
 						Name: "",
 					},
 				},
@@ -96,7 +96,7 @@ func TestRepositoryToSelectableFields(t *testing.T) {
 				},
 				Spec: provisioning.RepositorySpec{
 					Title: "Repo With Connection",
-					Connection: &provisioning.ConnectionInfo{
+					Connection: &provisioning.RepositoryConnectionInfo{
 						Name: "github-connection",
 					},
 				},
@@ -147,7 +147,7 @@ func TestRepositoryGetAttrs(t *testing.T) {
 			},
 			Spec: provisioning.RepositorySpec{
 				Title: "Test Repository",
-				Connection: &provisioning.ConnectionInfo{
+				Connection: &provisioning.RepositoryConnectionInfo{
 					Name: "my-connection",
 				},
 			},

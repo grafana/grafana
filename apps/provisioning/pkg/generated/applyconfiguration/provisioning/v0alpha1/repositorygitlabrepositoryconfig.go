@@ -4,11 +4,11 @@
 
 package v0alpha1
 
-// GitLabRepositoryConfigApplyConfiguration represents a declarative configuration of the GitLabRepositoryConfig type for use
+// RepositoryGitLabRepositoryConfigApplyConfiguration represents a declarative configuration of the RepositoryGitLabRepositoryConfig type for use
 // with apply.
-type GitLabRepositoryConfigApplyConfiguration struct {
+type RepositoryGitLabRepositoryConfigApplyConfiguration struct {
 	// The repository URL (e.g. `https://gitlab.com/example/test`).
-	URL *string `json:"url,omitempty"`
+	Url *string `json:"url,omitempty"`
 	// The branch to use in the repository.
 	Branch *string `json:"branch,omitempty"`
 	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
@@ -24,24 +24,24 @@ type GitLabRepositoryConfigApplyConfiguration struct {
 	RepoID *string `json:"repoID,omitempty"`
 }
 
-// GitLabRepositoryConfigApplyConfiguration constructs a declarative configuration of the GitLabRepositoryConfig type for use with
+// RepositoryGitLabRepositoryConfigApplyConfiguration constructs a declarative configuration of the RepositoryGitLabRepositoryConfig type for use with
 // apply.
-func GitLabRepositoryConfig() *GitLabRepositoryConfigApplyConfiguration {
-	return &GitLabRepositoryConfigApplyConfiguration{}
+func RepositoryGitLabRepositoryConfig() *RepositoryGitLabRepositoryConfigApplyConfiguration {
+	return &RepositoryGitLabRepositoryConfigApplyConfiguration{}
 }
 
-// WithURL sets the URL field in the declarative configuration to the given value
+// WithUrl sets the Url field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the URL field is set to the value of the last call.
-func (b *GitLabRepositoryConfigApplyConfiguration) WithURL(value string) *GitLabRepositoryConfigApplyConfiguration {
-	b.URL = &value
+// If called multiple times, the Url field is set to the value of the last call.
+func (b *RepositoryGitLabRepositoryConfigApplyConfiguration) WithUrl(value string) *RepositoryGitLabRepositoryConfigApplyConfiguration {
+	b.Url = &value
 	return b
 }
 
 // WithBranch sets the Branch field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Branch field is set to the value of the last call.
-func (b *GitLabRepositoryConfigApplyConfiguration) WithBranch(value string) *GitLabRepositoryConfigApplyConfiguration {
+func (b *RepositoryGitLabRepositoryConfigApplyConfiguration) WithBranch(value string) *RepositoryGitLabRepositoryConfigApplyConfiguration {
 	b.Branch = &value
 	return b
 }
@@ -49,7 +49,7 @@ func (b *GitLabRepositoryConfigApplyConfiguration) WithBranch(value string) *Git
 // WithPath sets the Path field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Path field is set to the value of the last call.
-func (b *GitLabRepositoryConfigApplyConfiguration) WithPath(value string) *GitLabRepositoryConfigApplyConfiguration {
+func (b *RepositoryGitLabRepositoryConfigApplyConfiguration) WithPath(value string) *RepositoryGitLabRepositoryConfigApplyConfiguration {
 	b.Path = &value
 	return b
 }
@@ -57,7 +57,7 @@ func (b *GitLabRepositoryConfigApplyConfiguration) WithPath(value string) *GitLa
 // WithRepoID sets the RepoID field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the RepoID field is set to the value of the last call.
-func (b *GitLabRepositoryConfigApplyConfiguration) WithRepoID(value string) *GitLabRepositoryConfigApplyConfiguration {
+func (b *RepositoryGitLabRepositoryConfigApplyConfiguration) WithRepoID(value string) *RepositoryGitLabRepositoryConfigApplyConfiguration {
 	b.RepoID = &value
 	return b
 }

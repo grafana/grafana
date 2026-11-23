@@ -2735,7 +2735,7 @@ func (h *ProvisioningTestHelper) GithubConnectionObject(name string) *unstructur
 		},
 		"spec": map[string]any{
 			"title": name,
-			"type":  provisioning.GitHubRepositoryType,
+			"type":  provisioning.RepositorySpecTypeGithub,
 			"github": map[string]any{
 				"appID":          "123456",
 				"installationID": "454545",

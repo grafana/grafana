@@ -104,16 +104,16 @@ func ProvideFactoryFromConfig(cfg *setting.Cfg, tracer tracing.Tracer, extras []
 		// Enforcing default repository values if settings are not set
 		types = []string{"git", "github", "local"}
 	}
-	enabledTypes := make(map[apisprovisioning.RepositoryType]struct{}, len(types))
+	enabledTypes := make(map[apisprovisioning.RepositorySpecType]struct{}, len(types))
 	for _, e := range types {
-		enabledTypes[apisprovisioning.RepositoryType(e)] = struct{}{}
+		enabledTypes[apisprovisioning.RepositorySpecType(e)] = struct{}{}
 	}
 
 	return repository.ProvideFactory(enabledTypes, extras, tracer)
 }
 
 func ProvideQuotaGetter(cfg *setting.Cfg) quotas.QuotaGetter {
-	return quotas.NewFixedQuotaGetter(apisprovisioning.QuotaStatus{
+	return quotas.NewFixedQuotaGetter(apisprovisioning.RepositoryQuotaStatus{
 		MaxResourcesPerRepository: cfg.ProvisioningMaxResourcesPerRepository,
 		MaxRepositories:           cfg.ProvisioningMaxRepositories,
 	})

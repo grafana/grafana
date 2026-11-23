@@ -24,7 +24,7 @@ var (
 	testMetrics     = repository.RegisterOperationMetrics(metricsRegistry)
 )
 
-func newMetricsRepo(t *testing.T, repoType provisioning.RepositoryType, client nanogit.Client) *gitRepository {
+func newMetricsRepo(t *testing.T, repoType provisioning.RepositorySpecType, client nanogit.Client) *gitRepository {
 	t.Helper()
 	return &gitRepository{
 		client:    client,
@@ -61,12 +61,12 @@ func TestGitRepository_OperationMetrics(t *testing.T) {
 		client.GetRefReturns(nanogit.Ref{Name: "refs/heads/main", Hash: hash.Hash{}}, nil)
 		client.GetCommitReturns(&nanogit.Commit{Tree: hash.Hash{}}, nil)
 		client.GetBlobByPathReturns(&nanogit.Blob{Content: []byte("0123456789")}, nil)
-		repo := newMetricsRepo(t, provisioning.GitRepositoryType, client)
+		repo := newMetricsRepo(t, provisioning.RepositorySpecTypeGit, client)
 
-		before := gitSnapshot(t, provisioning.GitRepositoryType)
+		before := gitSnapshot(t, provisioning.RepositorySpecTypeGit)
 		_, err := repo.Read(ctx, "test.yaml", "main")
 		require.NoError(t, err)
-		after := gitSnapshot(t, provisioning.GitRepositoryType)
+		after := gitSnapshot(t, provisioning.RepositorySpecTypeGit)
 
 		assert.Equal(t, 1.0, after.count(repository.OperationRead, "success")-before.count(repository.OperationRead, "success"))
 		assert.Equal(t, 10.0, after.size(repository.OperationRead)-before.size(repository.OperationRead))
@@ -77,12 +77,12 @@ func TestGitRepository_OperationMetrics(t *testing.T) {
 		client.GetRefReturns(nanogit.Ref{Name: "refs/heads/main", Hash: hash.Hash{}}, nil)
 		client.GetCommitReturns(&nanogit.Commit{Tree: hash.Hash{}}, nil)
 		client.GetBlobByPathReturns(nil, nanogit.ErrObjectNotFound)
-		repo := newMetricsRepo(t, provisioning.GitRepositoryType, client)
+		repo := newMetricsRepo(t, provisioning.RepositorySpecTypeGit, client)
 
-		before := gitSnapshot(t, provisioning.GitRepositoryType)
+		before := gitSnapshot(t, provisioning.RepositorySpecTypeGit)
 		_, err := repo.Read(ctx, "missing.yaml", "main")
 		require.ErrorIs(t, err, repository.ErrFileNotFound)
-		after := gitSnapshot(t, provisioning.GitRepositoryType)
+		after := gitSnapshot(t, provisioning.RepositorySpecTypeGit)
 
 		assert.Equal(t, 1.0, after.count(repository.OperationRead, "error")-before.count(repository.OperationRead, "error"))
 		assert.Equal(t, 0.0, after.size(repository.OperationRead)-before.size(repository.OperationRead),
@@ -95,12 +95,12 @@ func TestGitRepository_OperationMetrics(t *testing.T) {
 		client.GetFlatTreeReturns(&nanogit.FlatTree{Entries: []nanogit.FlatTreeEntry{{
 			Path: "configs/test.yaml", Hash: hash.Hash{}, Type: protocol.ObjectTypeBlob,
 		}}}, nil)
-		repo := newMetricsRepo(t, provisioning.GitRepositoryType, client)
+		repo := newMetricsRepo(t, provisioning.RepositorySpecTypeGit, client)
 
-		before := gitSnapshot(t, provisioning.GitRepositoryType)
+		before := gitSnapshot(t, provisioning.RepositorySpecTypeGit)
 		_, err := repo.ReadTree(ctx, "main")
 		require.NoError(t, err)
-		after := gitSnapshot(t, provisioning.GitRepositoryType)
+		after := gitSnapshot(t, provisioning.RepositorySpecTypeGit)
 
 		assert.Equal(t, 1.0, after.count(repository.OperationList, "success")-before.count(repository.OperationList, "success"))
 	})
@@ -111,12 +111,12 @@ func TestGitRepository_OperationMetrics(t *testing.T) {
 		client.CompareCommitsReturns([]nanogit.CommitFile{{
 			Path: "configs/test.yaml", Status: protocol.FileStatusAdded,
 		}}, nil)
-		repo := newMetricsRepo(t, provisioning.GitRepositoryType, client)
+		repo := newMetricsRepo(t, provisioning.RepositorySpecTypeGit, client)
 
-		before := gitSnapshot(t, provisioning.GitRepositoryType)
+		before := gitSnapshot(t, provisioning.RepositorySpecTypeGit)
 		_, err := repo.CompareFiles(ctx, "main", "feature")
 		require.NoError(t, err)
-		after := gitSnapshot(t, provisioning.GitRepositoryType)
+		after := gitSnapshot(t, provisioning.RepositorySpecTypeGit)
 
 		assert.Equal(t, 1.0, after.count(repository.OperationCompare, "success")-before.count(repository.OperationCompare, "success"))
 	})
@@ -125,25 +125,25 @@ func TestGitRepository_OperationMetrics(t *testing.T) {
 		client := &mocks.FakeClient{}
 		client.GetRefReturns(nanogit.Ref{Name: "refs/heads/main", Hash: hash.Hash{}}, nil)
 		client.CompareCommitsReturns(nil, errors.New("compare failed"))
-		repo := newMetricsRepo(t, provisioning.GitRepositoryType, client)
+		repo := newMetricsRepo(t, provisioning.RepositorySpecTypeGit, client)
 
-		before := gitSnapshot(t, provisioning.GitRepositoryType)
+		before := gitSnapshot(t, provisioning.RepositorySpecTypeGit)
 		_, err := repo.CompareFiles(ctx, "main", "feature")
 		require.Error(t, err)
-		after := gitSnapshot(t, provisioning.GitRepositoryType)
+		after := gitSnapshot(t, provisioning.RepositorySpecTypeGit)
 
 		assert.Equal(t, 1.0, after.count(repository.OperationCompare, "error")-before.count(repository.OperationCompare, "error"))
 	})
 
 	t.Run("create, update, delete and move", func(t *testing.T) {
-		repo := newMetricsRepo(t, provisioning.GitRepositoryType, writableClient())
+		repo := newMetricsRepo(t, provisioning.RepositorySpecTypeGit, writableClient())
 
-		before := gitSnapshot(t, provisioning.GitRepositoryType)
+		before := gitSnapshot(t, provisioning.RepositorySpecTypeGit)
 		require.NoError(t, repo.Create(ctx, "test.yaml", "main", []byte("0123456789"), "create"))
 		require.NoError(t, repo.Update(ctx, "test.yaml", "main", []byte("updated"), "update"))
 		require.NoError(t, repo.Delete(ctx, "test.yaml", "main", "delete"))
 		require.NoError(t, repo.Move(ctx, "test.yaml", "moved.yaml", "main", "move"))
-		after := gitSnapshot(t, provisioning.GitRepositoryType)
+		after := gitSnapshot(t, provisioning.RepositorySpecTypeGit)
 
 		assert.Equal(t, 2.0, after.count(repository.OperationWrite, "success")-before.count(repository.OperationWrite, "success"))
 		assert.Equal(t, 17.0, after.size(repository.OperationWrite)-before.size(repository.OperationWrite))
@@ -157,11 +157,11 @@ func TestGitRepository_OperationMetrics(t *testing.T) {
 		client := writableClient()
 		client.GetCommitReturns(&nanogit.Commit{Tree: hash.Hash{}}, nil)
 		client.GetBlobByPathReturns(nil, nanogit.ErrObjectNotFound)
-		repo := newMetricsRepo(t, provisioning.GitRepositoryType, client)
+		repo := newMetricsRepo(t, provisioning.RepositorySpecTypeGit, client)
 
-		before := gitSnapshot(t, provisioning.GitRepositoryType)
+		before := gitSnapshot(t, provisioning.RepositorySpecTypeGit)
 		require.NoError(t, repo.Write(ctx, "new.yaml", "main", []byte("written"), "write"))
-		after := gitSnapshot(t, provisioning.GitRepositoryType)
+		after := gitSnapshot(t, provisioning.RepositorySpecTypeGit)
 
 		assert.Equal(t, 1.0, after.count(repository.OperationWrite, "success")-before.count(repository.OperationWrite, "success"))
 		assert.Equal(t, 7.0, after.size(repository.OperationWrite)-before.size(repository.OperationWrite))
@@ -170,11 +170,11 @@ func TestGitRepository_OperationMetrics(t *testing.T) {
 	})
 
 	t.Run("labels follow the configured repository type", func(t *testing.T) {
-		repo := newMetricsRepo(t, provisioning.GitHubRepositoryType, writableClient())
+		repo := newMetricsRepo(t, provisioning.RepositorySpecTypeGithub, writableClient())
 
-		before := gitSnapshot(t, provisioning.GitHubRepositoryType)
+		before := gitSnapshot(t, provisioning.RepositorySpecTypeGithub)
 		require.NoError(t, repo.Delete(ctx, "test.yaml", "main", "delete"))
-		after := gitSnapshot(t, provisioning.GitHubRepositoryType)
+		after := gitSnapshot(t, provisioning.RepositorySpecTypeGithub)
 
 		assert.Equal(t, 1.0, after.count(repository.OperationDelete, "success")-before.count(repository.OperationDelete, "success"))
 	})
@@ -182,7 +182,7 @@ func TestGitRepository_OperationMetrics(t *testing.T) {
 
 func TestStagedGitRepository_OperationMetrics(t *testing.T) {
 	ctx := context.Background()
-	repo := newMetricsRepo(t, provisioning.GitRepositoryType, writableClient())
+	repo := newMetricsRepo(t, provisioning.RepositorySpecTypeGit, writableClient())
 
 	// StageModeCommitOnlyOnce defers the commit to Push, so the writes below
 	// only touch the staged writer.
@@ -192,12 +192,12 @@ func TestStagedGitRepository_OperationMetrics(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	before := gitSnapshot(t, provisioning.GitRepositoryType)
+	before := gitSnapshot(t, provisioning.RepositorySpecTypeGit)
 	require.NoError(t, staged.Create(ctx, "test.yaml", "main", []byte("0123456789"), "create"))
 	require.NoError(t, staged.Update(ctx, "test.yaml", "main", []byte("updated"), "update"))
 	require.NoError(t, staged.Delete(ctx, "test.yaml", "main", "delete"))
 	require.NoError(t, staged.Move(ctx, "test.yaml", "moved.yaml", "main", "move"))
-	after := gitSnapshot(t, provisioning.GitRepositoryType)
+	after := gitSnapshot(t, provisioning.RepositorySpecTypeGit)
 
 	assert.Equal(t, 2.0, after.count(repository.OperationWrite, "success")-before.count(repository.OperationWrite, "success"))
 	assert.Equal(t, 17.0, after.size(repository.OperationWrite)-before.size(repository.OperationWrite))
@@ -215,7 +215,7 @@ func TestStagedGitRepository_PushMetrics(t *testing.T) {
 
 	newStaged := func(t *testing.T, client *mocks.FakeClient) repository.StagedRepository {
 		t.Helper()
-		repo := newMetricsRepo(t, provisioning.GitRepositoryType, client)
+		repo := newMetricsRepo(t, provisioning.RepositorySpecTypeGit, client)
 		staged, err := NewStagedGitRepository(ctx, repo, repository.StageOptions{
 			Ref:  "main",
 			Mode: repository.StageModeCommitOnlyOnce,
@@ -227,9 +227,9 @@ func TestStagedGitRepository_PushMetrics(t *testing.T) {
 	t.Run("a successful push is recorded", func(t *testing.T) {
 		staged := newStaged(t, writableClient())
 
-		before := gitSnapshot(t, provisioning.GitRepositoryType)
+		before := gitSnapshot(t, provisioning.RepositorySpecTypeGit)
 		require.NoError(t, staged.Push(ctx))
-		after := gitSnapshot(t, provisioning.GitRepositoryType)
+		after := gitSnapshot(t, provisioning.RepositorySpecTypeGit)
 
 		assert.Equal(t, 1.0, after.count(repository.OperationPush, "success")-before.count(repository.OperationPush, "success"))
 	})
@@ -243,10 +243,10 @@ func TestStagedGitRepository_PushMetrics(t *testing.T) {
 		client.NewStagedWriterReturns(writer, nil)
 		staged := newStaged(t, client)
 
-		before := gitSnapshot(t, provisioning.GitRepositoryType)
+		before := gitSnapshot(t, provisioning.RepositorySpecTypeGit)
 		require.NoError(t, staged.Create(ctx, "test.yaml", "main", []byte("staged"), "create"))
 		require.Error(t, staged.Push(ctx))
-		after := gitSnapshot(t, provisioning.GitRepositoryType)
+		after := gitSnapshot(t, provisioning.RepositorySpecTypeGit)
 
 		assert.Equal(t, 1.0, after.count(repository.OperationWrite, "success")-before.count(repository.OperationWrite, "success"),
 			"staging the blob did succeed")
@@ -270,9 +270,9 @@ func TestStagedGitRepository_PushMetrics(t *testing.T) {
 				client.NewStagedWriterReturns(writer, nil)
 				staged := newStaged(t, client)
 
-				before := gitSnapshot(t, provisioning.GitRepositoryType)
+				before := gitSnapshot(t, provisioning.RepositorySpecTypeGit)
 				require.Error(t, staged.Push(ctx))
-				after := gitSnapshot(t, provisioning.GitRepositoryType)
+				after := gitSnapshot(t, provisioning.RepositorySpecTypeGit)
 
 				assert.Equal(t, 1.0, after.count(repository.OperationPush, "success")-before.count(repository.OperationPush, "success"))
 				assert.Equal(t, 0.0, after.count(repository.OperationPush, "error")-before.count(repository.OperationPush, "error"))
@@ -296,7 +296,7 @@ func (s metricSnapshot) size(operation string) float64 {
 	return s.sizes[operation]
 }
 
-func gitSnapshot(t *testing.T, repoType provisioning.RepositoryType) metricSnapshot {
+func gitSnapshot(t *testing.T, repoType provisioning.RepositorySpecType) metricSnapshot {
 	t.Helper()
 	families, err := metricsRegistry.Gather()
 	require.NoError(t, err)

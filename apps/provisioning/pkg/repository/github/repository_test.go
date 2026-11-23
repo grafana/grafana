@@ -32,11 +32,11 @@ func TestNewGitHub(t *testing.T) {
 			name: "successful creation",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/grafana/grafana",
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "https://github.com/grafana/grafana",
 						Branch: "main",
 					},
-					Type: provisioning.GitHubRepositoryType,
+					Type: provisioning.RepositorySpecTypeGithub,
 				},
 			},
 			token:         "token123",
@@ -48,11 +48,11 @@ func TestNewGitHub(t *testing.T) {
 			name: "invalid URL format",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "invalid-url",
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "invalid-url",
 						Branch: "main",
 					},
-					Type: provisioning.GitHubRepositoryType,
+					Type: provisioning.RepositorySpecTypeGithub,
 				},
 			},
 			token:         "token123",
@@ -62,11 +62,11 @@ func TestNewGitHub(t *testing.T) {
 			name: "URL with .git extension",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/grafana/grafana.git",
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "https://github.com/grafana/grafana.git",
 						Branch: "main",
 					},
-					Type: provisioning.GitHubRepositoryType,
+					Type: provisioning.RepositorySpecTypeGithub,
 				},
 			},
 			token:         "token123",
@@ -82,7 +82,7 @@ func TestNewGitHub(t *testing.T) {
 			factory.Client = http.DefaultClient
 
 			gitRepo := git.NewMockGitRepository(t)
-			gitRepo.EXPECT().URL().Return(tt.config.Spec.GitHub.URL).Maybe()
+			gitRepo.EXPECT().URL().Return(tt.config.Spec.Github.Url).Maybe()
 
 			// Call the function under test
 			repo, err := NewRepository(
@@ -176,11 +176,11 @@ func TestGitHubRepositoryTest(t *testing.T) {
 			name: "successful test",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/grafana/grafana",
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "https://github.com/grafana/grafana",
 						Branch: "main",
 					},
-					Type: provisioning.GitHubRepositoryType,
+					Type: provisioning.RepositorySpecTypeGithub,
 				},
 				Secure: provisioning.SecureValues{
 					Token: resource.InlineSecureValue{
@@ -203,11 +203,11 @@ func TestGitHubRepositoryTest(t *testing.T) {
 			name: "invalid URL",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "invalid-url",
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "invalid-url",
 						Branch: "main",
 					},
-					Type: provisioning.GitHubRepositoryType,
+					Type: provisioning.RepositorySpecTypeGithub,
 				},
 				Secure: provisioning.SecureValues{
 					Token: resource.InlineSecureValue{
@@ -285,11 +285,11 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 			name: "successful history retrieval",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
 						Path:   "dashboards",
 					},
-					Type: provisioning.GitHubRepositoryType,
+					Type: provisioning.RepositorySpecTypeGithub,
 				},
 			},
 			path: "dashboard.json",
@@ -334,11 +334,11 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 			name: "file not found",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
 						Path:   "dashboards",
 					},
-					Type: provisioning.GitHubRepositoryType,
+					Type: provisioning.RepositorySpecTypeGithub,
 				},
 			},
 			path: "nonexistent.json",
@@ -353,11 +353,11 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 			name: "use default branch when ref is empty",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
 						Path:   "dashboards",
 					},
-					Type: provisioning.GitHubRepositoryType,
+					Type: provisioning.RepositorySpecTypeGithub,
 				},
 			},
 			path: "dashboard.json",
@@ -397,11 +397,11 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 			name: "committer different from author",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
 						Path:   "dashboards",
 					},
-					Type: provisioning.GitHubRepositoryType,
+					Type: provisioning.RepositorySpecTypeGithub,
 				},
 			},
 			path: "dashboard.json",
@@ -451,11 +451,11 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 			name: "commit with no author",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
 						Path:   "dashboards",
 					},
-					Type: provisioning.GitHubRepositoryType,
+					Type: provisioning.RepositorySpecTypeGithub,
 				},
 			},
 			path: "dashboard.json",
@@ -486,11 +486,11 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 			name: "other API error",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
 						Path:   "dashboards",
 					},
-					Type: provisioning.GitHubRepositoryType,
+					Type: provisioning.RepositorySpecTypeGithub,
 				},
 			},
 			path: "dashboard.json",
@@ -505,11 +505,11 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 			name: "valid branch name with slashes is accepted",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
 						Path:   "dashboards",
 					},
-					Type: provisioning.GitHubRepositoryType,
+					Type: provisioning.RepositorySpecTypeGithub,
 				},
 			},
 			path: "dashboard.json",
@@ -524,11 +524,11 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 			name: "valid short commit SHA is accepted",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
 						Path:   "dashboards",
 					},
-					Type: provisioning.GitHubRepositoryType,
+					Type: provisioning.RepositorySpecTypeGithub,
 				},
 			},
 			path: "dashboard.json",
@@ -543,11 +543,11 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 			name: "valid full commit SHA is accepted",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
 						Path:   "dashboards",
 					},
-					Type: provisioning.GitHubRepositoryType,
+					Type: provisioning.RepositorySpecTypeGithub,
 				},
 			},
 			path: "dashboard.json",
@@ -562,11 +562,11 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 			name: "6-char hex ref is treated as a valid branch name and forwarded",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
 						Branch: "main",
 						Path:   "dashboards",
 					},
-					Type: provisioning.GitHubRepositoryType,
+					Type: provisioning.RepositorySpecTypeGithub,
 				},
 			},
 			path: "dashboard.json",
@@ -630,8 +630,8 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/grafana/grafana",
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "https://github.com/grafana/grafana",
 						Branch: "main",
 					},
 				},
@@ -651,8 +651,8 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/grafana/grafana",
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "https://github.com/grafana/grafana",
 						Branch: "main",
 						Path:   "grafana",
 					},
@@ -673,8 +673,8 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/grafana/grafana",
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "https://github.com/grafana/grafana",
 						Branch: "main",
 					},
 				},
@@ -694,8 +694,8 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/grafana/grafana",
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "https://github.com/grafana/grafana",
 						Branch: "main",
 					},
 				},
@@ -713,8 +713,8 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/grafana/grafana",
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "https://github.com/grafana/grafana",
 						Branch: "main",
 					},
 				},
@@ -729,7 +729,7 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					GitHub: nil,
+					Github: nil,
 				},
 			},
 			expectedURLs: nil,
@@ -738,7 +738,7 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.config.Spec.Type = provisioning.GitHubRepositoryType
+			tt.config.Spec.Type = provisioning.RepositorySpecTypeGithub
 			repo := &githubRepository{
 				config: tt.config,
 				owner:  "grafana",
@@ -771,8 +771,8 @@ func TestGitHubRepositoryRefURLs(t *testing.T) {
 			ref:  "feature-branch",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/grafana/grafana",
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "https://github.com/grafana/grafana",
 						Branch: "main",
 					},
 				},
@@ -788,8 +788,8 @@ func TestGitHubRepositoryRefURLs(t *testing.T) {
 			ref:  "main",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/grafana/grafana",
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "https://github.com/grafana/grafana",
 						Branch: "main",
 					},
 				},
@@ -803,8 +803,8 @@ func TestGitHubRepositoryRefURLs(t *testing.T) {
 			ref:  "",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/grafana/grafana",
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "https://github.com/grafana/grafana",
 						Branch: "main",
 					},
 				},
@@ -816,7 +816,7 @@ func TestGitHubRepositoryRefURLs(t *testing.T) {
 			ref:  "feature-branch",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					GitHub: nil,
+					Github: nil,
 				},
 			},
 			expectedURLs: nil,
@@ -825,7 +825,7 @@ func TestGitHubRepositoryRefURLs(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.config.Spec.Type = provisioning.GitHubRepositoryType
+			tt.config.Spec.Type = provisioning.RepositorySpecTypeGithub
 			repo := &githubRepository{
 				config: tt.config,
 				owner:  "grafana",
@@ -851,11 +851,11 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 
 	config := &provisioning.Repository{
 		Spec: provisioning.RepositorySpec{
-			GitHub: &provisioning.GitHubRepositoryConfig{
-				URL:    "https://github.com/grafana/grafana",
+			Github: &provisioning.RepositoryGitHubRepositoryConfig{
+				Url:    "https://github.com/grafana/grafana",
 				Branch: "main",
 			},
-			Type: provisioning.GitHubRepositoryType,
+			Type: provisioning.RepositorySpecTypeGithub,
 		},
 		Secure: provisioning.SecureValues{
 			Token: resource.InlineSecureValue{
@@ -1073,11 +1073,11 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 func TestGitHubRepositoryAccessors(t *testing.T) {
 	config := &provisioning.Repository{
 		Spec: provisioning.RepositorySpec{
-			GitHub: &provisioning.GitHubRepositoryConfig{
-				URL:    "https://github.com/grafana/grafana",
+			Github: &provisioning.RepositoryGitHubRepositoryConfig{
+				Url:    "https://github.com/grafana/grafana",
 				Branch: "main",
 			},
-			Type: provisioning.GitHubRepositoryType,
+			Type: provisioning.RepositorySpecTypeGithub,
 		},
 	}
 
@@ -1131,11 +1131,11 @@ func TestGitHubRepositoryAccessors(t *testing.T) {
 	t.Run("GetCurrentBranch returns empty string when branch is empty", func(t *testing.T) {
 		emptyBranchConfig := &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
-				GitHub: &provisioning.GitHubRepositoryConfig{
-					URL:    "https://github.com/grafana/grafana",
+				Github: &provisioning.RepositoryGitHubRepositoryConfig{
+					Url:    "https://github.com/grafana/grafana",
 					Branch: "",
 				},
-				Type: provisioning.GitHubRepositoryType,
+				Type: provisioning.RepositorySpecTypeGithub,
 			},
 		}
 
@@ -1162,7 +1162,7 @@ func TestGitHubRepositoryAccessors(t *testing.T) {
 
 		repo.SetBranch("develop")
 
-		assert.Equal(t, "develop", config.Spec.GitHub.Branch)
+		assert.Equal(t, "develop", config.Spec.Github.Branch)
 		mockGitRepo.AssertExpectations(t)
 	})
 }
@@ -1225,8 +1225,8 @@ func TestGitHubRepository_GetDefaultBranch(t *testing.T) {
 
 			config := &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/grafana/grafana",
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "https://github.com/grafana/grafana",
 						Branch: "",
 					},
 				},
@@ -1313,9 +1313,9 @@ func TestGithubRepository_Move(t *testing.T) {
 					Name: "test-repo",
 				},
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL: "https://github.com/example/repo",
+					Type: provisioning.RepositorySpecTypeGithub,
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url: "https://github.com/example/repo",
 					},
 				},
 			}
@@ -1344,7 +1344,7 @@ func TestGithubRepository_Move(t *testing.T) {
 func TestGitHubRepository_Test_BranchProtection(t *testing.T) {
 	tests := []struct {
 		name             string
-		workflows        []provisioning.Workflow
+		workflows        []provisioning.RepositorySpecWorkflows
 		branch           string
 		bpResult         *BranchProtection
 		bpError          error
@@ -1355,7 +1355,7 @@ func TestGitHubRepository_Test_BranchProtection(t *testing.T) {
 	}{
 		{
 			name:      "protected branch with required PR reviews and write workflow",
-			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 			branch:    "main",
 			bpResult: &BranchProtection{
 				RequiredPullRequestReviews: true,
@@ -1367,7 +1367,7 @@ func TestGitHubRepository_Test_BranchProtection(t *testing.T) {
 		},
 		{
 			name:      "protected branch with lock and write workflow",
-			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 			branch:    "main",
 			bpResult: &BranchProtection{
 				LockBranch: true,
@@ -1379,7 +1379,7 @@ func TestGitHubRepository_Test_BranchProtection(t *testing.T) {
 		},
 		{
 			name:      "both protection rules reported together",
-			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 			branch:    "main",
 			bpResult: &BranchProtection{
 				RequiredPullRequestReviews: true,
@@ -1392,7 +1392,7 @@ func TestGitHubRepository_Test_BranchProtection(t *testing.T) {
 		},
 		{
 			name:            "unprotected branch with write workflow succeeds",
-			workflows:       []provisioning.Workflow{provisioning.WriteWorkflow},
+			workflows:       []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 			branch:          "main",
 			bpResult:        nil,
 			expectBPCall:    true,
@@ -1400,7 +1400,7 @@ func TestGitHubRepository_Test_BranchProtection(t *testing.T) {
 		},
 		{
 			name:      "protected branch without write workflow succeeds",
-			workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
+			workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsBranch},
 			branch:    "main",
 			bpResult: &BranchProtection{
 				RequiredPullRequestReviews: true,
@@ -1417,7 +1417,7 @@ func TestGitHubRepository_Test_BranchProtection(t *testing.T) {
 		},
 		{
 			name:             "GetBranchProtection error returns test failure",
-			workflows:        []provisioning.Workflow{provisioning.WriteWorkflow},
+			workflows:        []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 			branch:           "main",
 			bpError:          errors.New("failed to get branch protection: API error"),
 			expectBPCall:     true,
@@ -1427,7 +1427,7 @@ func TestGitHubRepository_Test_BranchProtection(t *testing.T) {
 		},
 		{
 			name:             "GetBranchProtection unauthorized (401) returns test failure",
-			workflows:        []provisioning.Workflow{provisioning.WriteWorkflow},
+			workflows:        []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 			branch:           "main",
 			bpError:          repo.ErrUnauthorized,
 			expectBPCall:     true,
@@ -1437,7 +1437,7 @@ func TestGitHubRepository_Test_BranchProtection(t *testing.T) {
 		},
 		{
 			name:            "protection with no blocking rules does not block",
-			workflows:       []provisioning.Workflow{provisioning.WriteWorkflow},
+			workflows:       []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 			branch:          "main",
 			bpResult:        &BranchProtection{},
 			expectBPCall:    true,
@@ -1453,11 +1453,11 @@ func TestGitHubRepository_Test_BranchProtection(t *testing.T) {
 			config := &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Workflows: tt.workflows,
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/grafana/grafana",
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "https://github.com/grafana/grafana",
 						Branch: tt.branch,
 					},
-					Type: provisioning.GitHubRepositoryType,
+					Type: provisioning.RepositorySpecTypeGithub,
 				},
 			}
 
@@ -1582,7 +1582,7 @@ func TestRulesets_BlocksDirectPush(t *testing.T) {
 func TestGitHubRepository_Test_Rulesets(t *testing.T) {
 	tests := []struct {
 		name               string
-		workflows          []provisioning.Workflow
+		workflows          []provisioning.RepositorySpecWorkflows
 		branch             string
 		rulesetsResult     *Rulesets
 		rulesetsError      error
@@ -1593,7 +1593,7 @@ func TestGitHubRepository_Test_Rulesets(t *testing.T) {
 	}{
 		{
 			name:      "rulesets require pull request with write workflow",
-			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 			branch:    "main",
 			rulesetsResult: &Rulesets{
 				RequiresPullRequest: true,
@@ -1605,7 +1605,7 @@ func TestGitHubRepository_Test_Rulesets(t *testing.T) {
 		},
 		{
 			name:      "rulesets requiring pull request blocks write workflow",
-			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 			branch:    "main",
 			rulesetsResult: &Rulesets{
 				RequiresPullRequest: true,
@@ -1617,7 +1617,7 @@ func TestGitHubRepository_Test_Rulesets(t *testing.T) {
 		},
 		{
 			name:               "no blocking rulesets with write workflow succeeds",
-			workflows:          []provisioning.Workflow{provisioning.WriteWorkflow},
+			workflows:          []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 			branch:             "main",
 			rulesetsResult:     nil,
 			expectRulesetsCall: true,
@@ -1625,7 +1625,7 @@ func TestGitHubRepository_Test_Rulesets(t *testing.T) {
 		},
 		{
 			name:      "rulesets without write workflow succeeds",
-			workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
+			workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsBranch},
 			branch:    "main",
 			rulesetsResult: &Rulesets{
 				RequiresPullRequest: true,
@@ -1635,7 +1635,7 @@ func TestGitHubRepository_Test_Rulesets(t *testing.T) {
 		},
 		{
 			name:               "GetRulesets error returns test failure",
-			workflows:          []provisioning.Workflow{provisioning.WriteWorkflow},
+			workflows:          []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 			branch:             "main",
 			rulesetsError:      errors.New("failed to get rulesets: API error"),
 			expectRulesetsCall: true,
@@ -1645,7 +1645,7 @@ func TestGitHubRepository_Test_Rulesets(t *testing.T) {
 		},
 		{
 			name:               "GetRulesets unauthorized (401) returns test failure",
-			workflows:          []provisioning.Workflow{provisioning.WriteWorkflow},
+			workflows:          []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 			branch:             "main",
 			rulesetsError:      repo.ErrUnauthorized,
 			expectRulesetsCall: true,
@@ -1655,7 +1655,7 @@ func TestGitHubRepository_Test_Rulesets(t *testing.T) {
 		},
 		{
 			name:      "rulesets with no blocking rules does not block",
-			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 			branch:    "main",
 			rulesetsResult: &Rulesets{
 				RequiresPullRequest: false,
@@ -1673,11 +1673,11 @@ func TestGitHubRepository_Test_Rulesets(t *testing.T) {
 			config := &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Workflows: tt.workflows,
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/grafana/grafana",
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "https://github.com/grafana/grafana",
 						Branch: tt.branch,
 					},
-					Type: provisioning.GitHubRepositoryType,
+					Type: provisioning.RepositorySpecTypeGithub,
 				},
 			}
 
@@ -1725,7 +1725,7 @@ func TestGitHubRepository_Test_Rulesets(t *testing.T) {
 func TestGitHubRepository_Test_CombinedProtection(t *testing.T) {
 	tests := []struct {
 		name             string
-		workflows        []provisioning.Workflow
+		workflows        []provisioning.RepositorySpecWorkflows
 		branch           string
 		bpResult         *BranchProtection
 		bpError          error
@@ -1737,7 +1737,7 @@ func TestGitHubRepository_Test_CombinedProtection(t *testing.T) {
 	}{
 		{
 			name:      "both classic protection and rulesets block",
-			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 			branch:    "main",
 			bpResult: &BranchProtection{
 				RequiredPullRequestReviews: true,
@@ -1751,7 +1751,7 @@ func TestGitHubRepository_Test_CombinedProtection(t *testing.T) {
 		},
 		{
 			name:      "classic protection blocks, rulesets clean",
-			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 			branch:    "main",
 			bpResult: &BranchProtection{
 				LockBranch: true,
@@ -1763,7 +1763,7 @@ func TestGitHubRepository_Test_CombinedProtection(t *testing.T) {
 		},
 		{
 			name:      "rulesets block, classic protection clean",
-			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 			branch:    "main",
 			bpResult:  nil,
 			rulesetsResult: &Rulesets{
@@ -1775,7 +1775,7 @@ func TestGitHubRepository_Test_CombinedProtection(t *testing.T) {
 		},
 		{
 			name:            "both classic protection and rulesets clean",
-			workflows:       []provisioning.Workflow{provisioning.WriteWorkflow},
+			workflows:       []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 			branch:          "main",
 			bpResult:        nil,
 			rulesetsResult:  nil,
@@ -1783,7 +1783,7 @@ func TestGitHubRepository_Test_CombinedProtection(t *testing.T) {
 		},
 		{
 			name:      "multiple rules from both sources combined",
-			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 			branch:    "main",
 			bpResult: &BranchProtection{
 				RequiredPullRequestReviews: true,
@@ -1802,7 +1802,7 @@ func TestGitHubRepository_Test_CombinedProtection(t *testing.T) {
 		},
 		{
 			name:             "branch protection error stops check",
-			workflows:        []provisioning.Workflow{provisioning.WriteWorkflow},
+			workflows:        []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 			branch:           "main",
 			bpError:          errors.New("API error"),
 			expectedSuccess:  false,
@@ -1811,7 +1811,7 @@ func TestGitHubRepository_Test_CombinedProtection(t *testing.T) {
 		},
 		{
 			name:             "rulesets error after clean branch protection",
-			workflows:        []provisioning.Workflow{provisioning.WriteWorkflow},
+			workflows:        []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 			branch:           "main",
 			bpResult:         nil,
 			rulesetsError:    errors.New("API error"),
@@ -1829,11 +1829,11 @@ func TestGitHubRepository_Test_CombinedProtection(t *testing.T) {
 			config := &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Workflows: tt.workflows,
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/grafana/grafana",
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "https://github.com/grafana/grafana",
 						Branch: tt.branch,
 					},
-					Type: provisioning.GitHubRepositoryType,
+					Type: provisioning.RepositorySpecTypeGithub,
 				},
 			}
 
@@ -2015,12 +2015,12 @@ func TestGitHubRepository_Test_EmptyBranch(t *testing.T) {
 
 			config := &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/grafana/grafana",
+					Github: &provisioning.RepositoryGitHubRepositoryConfig{
+						Url:    "https://github.com/grafana/grafana",
 						Branch: tt.initialBranch,
 						Path:   "grafana/",
 					},
-					Type: provisioning.GitHubRepositoryType,
+					Type: provisioning.RepositorySpecTypeGithub,
 				},
 			}
 
@@ -2078,7 +2078,7 @@ func TestGitHubRepository_Test_EmptyBranch(t *testing.T) {
 
 			if tt.expectedBranch != "" {
 				// Verify branch was updated in config
-				assert.Equal(t, tt.expectedBranch, config.Spec.GitHub.Branch)
+				assert.Equal(t, tt.expectedBranch, config.Spec.Github.Branch)
 
 				if result != nil {
 					assert.Equal(t, tt.gitTestResults.Success, result.Success)

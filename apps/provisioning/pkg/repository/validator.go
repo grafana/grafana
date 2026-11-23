@@ -81,22 +81,22 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 		list = append(list, field.Invalid(field.NewPath("metadata", "name"), cfg.Name, "Name is reserved, choose a different identifier"))
 	}
 
-	if cfg.Spec.Type != provisioning.LocalRepositoryType && cfg.Spec.Local != nil {
+	if cfg.Spec.Type != provisioning.RepositorySpecTypeLocal && cfg.Spec.Local != nil {
 		list = append(list, field.Invalid(field.NewPath("spec", "local"),
-			cfg.Spec.GitHub, "Local config only valid when type is local"))
+			cfg.Spec.Github, "Local config only valid when type is local"))
 	}
 
-	if cfg.Spec.Type != provisioning.GitHubRepositoryType && cfg.Spec.GitHub != nil {
+	if cfg.Spec.Type != provisioning.RepositorySpecTypeGithub && cfg.Spec.Github != nil {
 		list = append(list, field.Invalid(field.NewPath("spec", "github"),
-			cfg.Spec.GitHub, "Github config only valid when type is github"))
+			cfg.Spec.Github, "Github config only valid when type is github"))
 	}
 
-	if cfg.Spec.Type != provisioning.GitHubEnterpriseRepositoryType && cfg.Spec.GitHubEnterprise != nil {
+	if cfg.Spec.Type != provisioning.RepositorySpecTypeGithubEnterprise && cfg.Spec.GithubEnterprise != nil {
 		list = append(list, field.Invalid(field.NewPath("spec", "githubEnterprise"),
-			cfg.Spec.GitHubEnterprise, "GitHub Enterprise config only valid when type is githubEnterprise"))
+			cfg.Spec.GithubEnterprise, "GitHub Enterprise config only valid when type is githubEnterprise"))
 	}
 
-	if cfg.Spec.Type != provisioning.GitRepositoryType && cfg.Spec.Git != nil {
+	if cfg.Spec.Type != provisioning.RepositorySpecTypeGit && cfg.Spec.Git != nil {
 		list = append(list, field.Invalid(field.NewPath("spec", "git"),
 			cfg.Spec.Git, "Git config only valid when type is git"))
 	}
@@ -106,8 +106,8 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 
 	for _, w := range cfg.Spec.Workflows {
 		switch w {
-		case provisioning.WriteWorkflow: // valid; no fall thru
-		case provisioning.BranchWorkflow:
+		case provisioning.RepositorySpecWorkflowsWrite: // valid; no fall thru
+		case provisioning.RepositorySpecWorkflowsBranch:
 			if !cfg.Spec.Type.IsGit() {
 				list = append(list, field.Invalid(field.NewPath("spec", "workflow"), w, "branch is only supported on git repositories"))
 			}
@@ -156,8 +156,8 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 
 	list = append(list, v.validateDashboardPreviews(cfg)...)
 
-	if cfg.Spec.Webhook != nil && cfg.Spec.Webhook.BaseURL != "" {
-		list = append(list, validateWebhookBaseURL(cfg.Spec.Webhook.BaseURL)...)
+	if cfg.Spec.Webhook != nil && cfg.Spec.Webhook.BaseUrl != "" {
+		list = append(list, validateWebhookBaseURL(cfg.Spec.Webhook.BaseUrl)...)
 	}
 	list = append(list, v.validatePrivateEndpoint(ctx, cfg)...)
 
@@ -205,7 +205,7 @@ func validateWorkflowOptions(cfg *provisioning.Repository) field.ErrorList {
 	var list field.ErrorList
 
 	switch cfg.Spec.Type {
-	case provisioning.LocalRepositoryType:
+	case provisioning.RepositorySpecTypeLocal:
 		// Local repositories support neither the branch workflow nor pull requests.
 		if cfg.Spec.Branch != nil {
 			list = append(list, field.Invalid(field.NewPath("spec", "branch"),
@@ -219,7 +219,7 @@ func validateWorkflowOptions(cfg *provisioning.Repository) field.ErrorList {
 			list = append(list, field.Invalid(field.NewPath("spec", "pullRequest"),
 				cfg.Spec.PullRequest, "pull request options are not supported on local repositories"))
 		}
-	case provisioning.GitRepositoryType:
+	case provisioning.RepositorySpecTypeGit:
 		// Plain git supports the branch workflow but cannot open pull requests.
 		if cfg.Spec.PullRequest != nil {
 			list = append(list, field.Invalid(field.NewPath("spec", "pullRequest"),
@@ -331,13 +331,13 @@ func FromFieldError(err *field.Error) *provisioning.TestResults {
 // the order of the validators is important, the first validator that returns an error will stop the validation process.
 type AdmissionValidator struct {
 	validators     []Validator
-	allowedTargets []provisioning.SyncTargetType
+	allowedTargets []provisioning.RepositorySyncOptionsTarget
 }
 
 // NewAdmissionValidator creates a new repository admission validator.
 // validators are called after basic validation passes.
 // the order of the validators is important, the first validator that returns an error will stop the validation process.
-func NewAdmissionValidator(allowedTargets []provisioning.SyncTargetType, validators ...Validator) *AdmissionValidator {
+func NewAdmissionValidator(allowedTargets []provisioning.RepositorySyncOptionsTarget, validators ...Validator) *AdmissionValidator {
 	return &AdmissionValidator{
 		validators:     validators,
 		allowedTargets: allowedTargets,

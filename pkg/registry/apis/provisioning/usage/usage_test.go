@@ -91,7 +91,7 @@ func TestMetricCollector_FallbackDefaultNamespace(t *testing.T) {
 		// The collector must scope the context to the namespace it is counting.
 		require.Equal(t, "default", request.NamespaceValue(ctx))
 		return []provisioning.Repository{
-			{Spec: provisioning.RepositorySpec{Type: provisioning.GitHubRepositoryType}},
+			{Spec: provisioning.RepositorySpec{Type: provisioning.RepositorySpecTypeGithub}},
 		}, nil
 	}
 
@@ -100,7 +100,7 @@ func TestMetricCollector_FallbackDefaultNamespace(t *testing.T) {
 	m, err := fn(context.Background())
 	require.NoError(t, err)
 	require.Equal(t, 2, m["stats.managed_by."+managedKind+".count"])
-	require.Equal(t, 1, m["stats.repository."+string(provisioning.GitHubRepositoryType)+".count"])
+	require.Equal(t, 1, m["stats.repository."+string(provisioning.RepositorySpecTypeGithub)+".count"])
 }
 
 // counts from every namespace are summed into the same stat keys.
@@ -120,7 +120,7 @@ func TestMetricCollector_AggregatesAcrossNamespaces(t *testing.T) {
 		Once()
 
 	repoLister := func(ctx context.Context) ([]provisioning.Repository, error) {
-		github := provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.GitHubRepositoryType}}
+		github := provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.RepositorySpecTypeGithub}}
 		switch request.NamespaceValue(ctx) {
 		case "default":
 			return []provisioning.Repository{github}, nil
@@ -138,8 +138,8 @@ func TestMetricCollector_AggregatesAcrossNamespaces(t *testing.T) {
 
 	m, err := fn(context.Background())
 	require.NoError(t, err)
-	require.Equal(t, 5, m["stats.managed_by."+managedKind+".count"])                               // 3 + 2
-	require.Equal(t, 3, m["stats.repository."+string(provisioning.GitHubRepositoryType)+".count"]) // 1 + 2
+	require.Equal(t, 5, m["stats.managed_by."+managedKind+".count"])                                   // 3 + 2
+	require.Equal(t, 3, m["stats.repository."+string(provisioning.RepositorySpecTypeGithub)+".count"]) // 1 + 2
 }
 
 // fleet-wide dimensions are aggregated from repository spec/status across namespaces.
@@ -158,15 +158,15 @@ func TestMetricCollector_RepositoryDimensions(t *testing.T) {
 				// The duplicate write workflow must still count as a single write
 				// capability (validator accepts duplicates).
 				Spec: provisioning.RepositorySpec{
-					Type:       provisioning.GitHubRepositoryType,
-					Workflows:  []provisioning.Workflow{provisioning.WriteWorkflow, provisioning.WriteWorkflow, provisioning.BranchWorkflow},
-					Sync:       provisioning.SyncOptions{Enabled: true, Target: provisioning.SyncTargetTypeInstance},
-					Webhook:    &provisioning.WebhookConfig{Disabled: true},
-					Connection: &provisioning.ConnectionInfo{Name: "my-conn"},
+					Type:       provisioning.RepositorySpecTypeGithub,
+					Workflows:  []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite, provisioning.RepositorySpecWorkflowsWrite, provisioning.RepositorySpecWorkflowsBranch},
+					Sync:       provisioning.RepositorySyncOptions{Enabled: true, Target: provisioning.RepositorySyncOptionsTargetInstance},
+					Webhook:    &provisioning.RepositoryWebhookConfig{Disabled: true},
+					Connection: &provisioning.RepositoryConnectionInfo{Name: "my-conn"},
 				},
 				Status: provisioning.RepositoryStatus{
 					Health: provisioning.RepositoryHealthStatus{Healthy: true},
-					Sync:   provisioning.SyncStatus{State: provisioning.JobStateSuccess},
+					Sync:   provisioning.RepositorySyncStatus{State: provisioning.JobStateSuccess},
 					Conditions: []metav1.Condition{
 						{Type: provisioning.ConditionTypeReady, Reason: provisioning.ReasonAvailable},
 					},
@@ -176,13 +176,13 @@ func TestMetricCollector_RepositoryDimensions(t *testing.T) {
 				// Unhealthy, read-only (no workflows), sync disabled to a folder,
 				// last sync errored, local repository (auth method "none").
 				Spec: provisioning.RepositorySpec{
-					Type:  provisioning.LocalRepositoryType,
-					Local: &provisioning.LocalRepositoryConfig{Path: "/tmp/repo"},
-					Sync:  provisioning.SyncOptions{Enabled: false, Target: provisioning.SyncTargetTypeFolder},
+					Type:  provisioning.RepositorySpecTypeLocal,
+					Local: &provisioning.RepositoryLocalRepositoryConfig{Path: "/tmp/repo"},
+					Sync:  provisioning.RepositorySyncOptions{Enabled: false, Target: provisioning.RepositorySyncOptionsTargetFolder},
 				},
 				Status: provisioning.RepositoryStatus{
 					Health: provisioning.RepositoryHealthStatus{Healthy: false},
-					Sync:   provisioning.SyncStatus{State: provisioning.JobStateError},
+					Sync:   provisioning.RepositorySyncStatus{State: provisioning.JobStateError},
 					Conditions: []metav1.Condition{
 						{Type: provisioning.ConditionTypeReady, Reason: provisioning.ReasonInvalidSpec},
 					},
@@ -205,8 +205,8 @@ func TestMetricCollector_RepositoryDimensions(t *testing.T) {
 	require.Equal(t, 1, m["stats.repository.workflow.write.count"])
 	require.Equal(t, 1, m["stats.repository.workflow.branch.count"])
 
-	require.Equal(t, 1, m["stats.repository.sync_target."+string(provisioning.SyncTargetTypeInstance)+".count"])
-	require.Equal(t, 1, m["stats.repository.sync_target."+string(provisioning.SyncTargetTypeFolder)+".count"])
+	require.Equal(t, 1, m["stats.repository.sync_target."+string(provisioning.RepositorySyncOptionsTargetInstance)+".count"])
+	require.Equal(t, 1, m["stats.repository.sync_target."+string(provisioning.RepositorySyncOptionsTargetFolder)+".count"])
 	require.Equal(t, 1, m["stats.repository.sync_state."+string(provisioning.JobStateSuccess)+".count"])
 	require.Equal(t, 1, m["stats.repository.sync_state."+string(provisioning.JobStateError)+".count"])
 

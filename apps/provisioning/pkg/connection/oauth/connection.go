@@ -28,13 +28,13 @@ type Provider interface {
 
 type oauthConnection struct {
 	provider     Provider
-	repoType     provisioning.RepositoryType
+	repoType     provisioning.RepositorySpecType
 	clientID     string
 	clientSecret resource.RawSecureValue
 	token        resource.RawSecureValue
 }
 
-func newConnection(provider Provider, repoType provisioning.RepositoryType, cfg provisioning.ConnectionOAuthConfig, clientSecret, token resource.RawSecureValue) *oauthConnection {
+func newConnection(provider Provider, repoType provisioning.RepositorySpecType, cfg provisioning.ConnectionOAuthConfig, clientSecret, token resource.RawSecureValue) *oauthConnection {
 	return &oauthConnection{
 		provider:     provider,
 		repoType:     repoType,

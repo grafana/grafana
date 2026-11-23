@@ -244,10 +244,10 @@ func testDeletionBlockedByWebhook(t *testing.T, helper *common.GitTestHelper, p 
 	for _, tc := range []struct {
 		name       string
 		statusCode int
-		cause      provisioning.DeletionCause
+		cause      provisioning.RepositoryDeletionStatusCause
 	}{
-		{name: "user", statusCode: http.StatusForbidden, cause: provisioning.DeletionCauseUser},
-		{name: "system", statusCode: http.StatusServiceUnavailable, cause: provisioning.DeletionCauseSystem},
+		{name: "user", statusCode: http.StatusForbidden, cause: provisioning.RepositoryDeletionStatusCauseUser},
+		{name: "system", statusCode: http.StatusServiceUnavailable, cause: provisioning.RepositoryDeletionStatusCauseSystem},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			repoName := p.Name() + "-webhook-deletion-blocked-" + tc.name

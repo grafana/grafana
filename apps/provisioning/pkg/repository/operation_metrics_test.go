@@ -31,7 +31,7 @@ func TestRegisterOperationMetrics(t *testing.T) {
 
 func TestOperationMetrics_NilSafety(t *testing.T) {
 	var metrics *OperationMetrics
-	recorder := metrics.Recorder(provisioning.GitRepositoryType)
+	recorder := metrics.Recorder(provisioning.RepositorySpecTypeGit)
 	require.Nil(t, recorder, "no metrics means no recorder")
 
 	// A repository built without metrics still records through the nil recorder.
@@ -46,7 +46,7 @@ func TestOperationMetrics_NilSafety(t *testing.T) {
 }
 
 func TestOperationRecorder(t *testing.T) {
-	recorder := testOperationMetrics.Recorder(provisioning.RepositoryType("recorder_test"))
+	recorder := testOperationMetrics.Recorder(provisioning.RepositorySpecType("recorder_test"))
 	require.NotNil(t, recorder)
 
 	t.Run("read records size, duration and outcome", func(t *testing.T) {
@@ -111,7 +111,7 @@ func TestOperationRecorder(t *testing.T) {
 	})
 
 	t.Run("recorders label by repository type", func(t *testing.T) {
-		other := testOperationMetrics.Recorder(provisioning.RepositoryType("other_test"))
+		other := testOperationMetrics.Recorder(provisioning.RepositorySpecType("other_test"))
 		other.Delete(time.Now(), nil)
 
 		assert.Equal(t, 1.0, operationCount(t, OperationDelete, "other_test", "success"))

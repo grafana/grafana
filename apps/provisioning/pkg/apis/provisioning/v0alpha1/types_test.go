@@ -17,7 +17,7 @@ func TestRepository_ConnectionName(t *testing.T) {
 			name: "no connection",
 			repo: v0alpha1.Repository{
 				Spec: v0alpha1.RepositorySpec{
-					Type: v0alpha1.GitHubRepositoryType,
+					Type: v0alpha1.RepositorySpecTypeGithub,
 				},
 			},
 			want: "",
@@ -26,8 +26,8 @@ func TestRepository_ConnectionName(t *testing.T) {
 			name: "with connection",
 			repo: v0alpha1.Repository{
 				Spec: v0alpha1.RepositorySpec{
-					Type: v0alpha1.GitHubRepositoryType,
-					Connection: &v0alpha1.ConnectionInfo{
+					Type: v0alpha1.RepositorySpecTypeGithub,
+					Connection: &v0alpha1.RepositoryConnectionInfo{
 						Name: "my-github-connection",
 					},
 				},
@@ -38,7 +38,7 @@ func TestRepository_ConnectionName(t *testing.T) {
 			name: "local repository without connection",
 			repo: v0alpha1.Repository{
 				Spec: v0alpha1.RepositorySpec{
-					Type: v0alpha1.LocalRepositoryType,
+					Type: v0alpha1.RepositorySpecTypeLocal,
 				},
 			},
 			want: "",
@@ -58,32 +58,32 @@ func TestRepository_ConnectionName(t *testing.T) {
 func TestRepositoryType_IsGitHub(t *testing.T) {
 	tests := []struct {
 		name     string
-		repoType v0alpha1.RepositoryType
+		repoType v0alpha1.RepositorySpecType
 		want     bool
 	}{
 		{
 			name:     "github",
-			repoType: v0alpha1.GitHubRepositoryType,
+			repoType: v0alpha1.RepositorySpecTypeGithub,
 			want:     true,
 		},
 		{
 			name:     "githubEnterprise",
-			repoType: v0alpha1.GitHubEnterpriseRepositoryType,
+			repoType: v0alpha1.RepositorySpecTypeGithubEnterprise,
 			want:     true,
 		},
 		{
 			name:     "git",
-			repoType: v0alpha1.GitRepositoryType,
+			repoType: v0alpha1.RepositorySpecTypeGit,
 			want:     false,
 		},
 		{
 			name:     "gitlab",
-			repoType: v0alpha1.GitLabRepositoryType,
+			repoType: v0alpha1.RepositorySpecTypeGitlab,
 			want:     false,
 		},
 		{
 			name:     "bitbucket",
-			repoType: v0alpha1.BitbucketRepositoryType,
+			repoType: v0alpha1.RepositorySpecTypeBitbucket,
 			want:     false,
 		},
 	}
@@ -98,32 +98,32 @@ func TestRepositoryType_IsGitHub(t *testing.T) {
 func TestRepositoryType_IsGit(t *testing.T) {
 	tests := []struct {
 		name     string
-		repoType v0alpha1.RepositoryType
+		repoType v0alpha1.RepositorySpecType
 		want     bool
 	}{
 		{
 			name:     "git",
-			repoType: v0alpha1.GitRepositoryType,
+			repoType: v0alpha1.RepositorySpecTypeGit,
 			want:     true,
 		},
 		{
 			name:     "github",
-			repoType: v0alpha1.GitHubRepositoryType,
+			repoType: v0alpha1.RepositorySpecTypeGithub,
 			want:     true,
 		},
 		{
 			name:     "bitbucket",
-			repoType: v0alpha1.BitbucketRepositoryType,
+			repoType: v0alpha1.RepositorySpecTypeBitbucket,
 			want:     true,
 		},
 		{
 			name:     "gitlab",
-			repoType: v0alpha1.GitLabRepositoryType,
+			repoType: v0alpha1.RepositorySpecTypeGitlab,
 			want:     true,
 		},
 		{
 			name:     "local",
-			repoType: v0alpha1.LocalRepositoryType,
+			repoType: v0alpha1.RepositorySpecTypeLocal,
 			want:     false,
 		},
 	}
@@ -150,40 +150,40 @@ func TestRepository_SetBranch(t *testing.T) {
 			{
 				name: "github",
 				repo: v0alpha1.Repository{Spec: v0alpha1.RepositorySpec{
-					Type:   v0alpha1.GitHubRepositoryType,
-					GitHub: &v0alpha1.GitHubRepositoryConfig{},
+					Type:   v0alpha1.RepositorySpecTypeGithub,
+					Github: &v0alpha1.RepositoryGitHubRepositoryConfig{},
 				}},
-				field: func(r *v0alpha1.Repository) string { return r.Spec.GitHub.Branch },
+				field: func(r *v0alpha1.Repository) string { return r.Spec.Github.Branch },
 			},
 			{
 				name: "githubEnterprise",
 				repo: v0alpha1.Repository{Spec: v0alpha1.RepositorySpec{
-					Type:             v0alpha1.GitHubEnterpriseRepositoryType,
-					GitHubEnterprise: &v0alpha1.GitHubEnterpriseRepositoryConfig{},
+					Type:             v0alpha1.RepositorySpecTypeGithubEnterprise,
+					GithubEnterprise: &v0alpha1.RepositoryGitHubEnterpriseRepositoryConfig{},
 				}},
-				field: func(r *v0alpha1.Repository) string { return r.Spec.GitHubEnterprise.Branch },
+				field: func(r *v0alpha1.Repository) string { return r.Spec.GithubEnterprise.Branch },
 			},
 			{
 				name: "git",
 				repo: v0alpha1.Repository{Spec: v0alpha1.RepositorySpec{
-					Type: v0alpha1.GitRepositoryType,
-					Git:  &v0alpha1.GitRepositoryConfig{},
+					Type: v0alpha1.RepositorySpecTypeGit,
+					Git:  &v0alpha1.RepositoryGitRepositoryConfig{},
 				}},
 				field: func(r *v0alpha1.Repository) string { return r.Spec.Git.Branch },
 			},
 			{
 				name: "gitlab",
 				repo: v0alpha1.Repository{Spec: v0alpha1.RepositorySpec{
-					Type:   v0alpha1.GitLabRepositoryType,
-					GitLab: &v0alpha1.GitLabRepositoryConfig{},
+					Type:   v0alpha1.RepositorySpecTypeGitlab,
+					Gitlab: &v0alpha1.RepositoryGitLabRepositoryConfig{},
 				}},
-				field: func(r *v0alpha1.Repository) string { return r.Spec.GitLab.Branch },
+				field: func(r *v0alpha1.Repository) string { return r.Spec.Gitlab.Branch },
 			},
 			{
 				name: "bitbucket",
 				repo: v0alpha1.Repository{Spec: v0alpha1.RepositorySpec{
-					Type:      v0alpha1.BitbucketRepositoryType,
-					Bitbucket: &v0alpha1.BitbucketRepositoryConfig{},
+					Type:      v0alpha1.RepositorySpecTypeBitbucket,
+					Bitbucket: &v0alpha1.RepositoryBitbucketRepositoryConfig{},
 				}},
 				field: func(r *v0alpha1.Repository) string { return r.Spec.Bitbucket.Branch },
 			},
@@ -208,15 +208,15 @@ func TestRepository_SetBranch(t *testing.T) {
 		}{
 			{
 				name: "github type with nil GitHub config",
-				repo: v0alpha1.Repository{Spec: v0alpha1.RepositorySpec{Type: v0alpha1.GitHubRepositoryType}},
+				repo: v0alpha1.Repository{Spec: v0alpha1.RepositorySpec{Type: v0alpha1.RepositorySpecTypeGithub}},
 			},
 			{
 				name: "githubEnterprise type with nil GitHubEnterprise config",
-				repo: v0alpha1.Repository{Spec: v0alpha1.RepositorySpec{Type: v0alpha1.GitHubEnterpriseRepositoryType}},
+				repo: v0alpha1.Repository{Spec: v0alpha1.RepositorySpec{Type: v0alpha1.RepositorySpecTypeGithubEnterprise}},
 			},
 			{
 				name: "local (non-git) type",
-				repo: v0alpha1.Repository{Spec: v0alpha1.RepositorySpec{Type: v0alpha1.LocalRepositoryType}},
+				repo: v0alpha1.Repository{Spec: v0alpha1.RepositorySpec{Type: v0alpha1.RepositorySpecTypeLocal}},
 			},
 		}
 
@@ -240,8 +240,8 @@ func TestRepository_ShouldGenerateDashboardPreviews(t *testing.T) {
 			name: "github with previews enabled",
 			repo: v0alpha1.Repository{
 				Spec: v0alpha1.RepositorySpec{
-					Type:   v0alpha1.GitHubRepositoryType,
-					GitHub: &v0alpha1.GitHubRepositoryConfig{GenerateDashboardPreviews: true},
+					Type:   v0alpha1.RepositorySpecTypeGithub,
+					Github: &v0alpha1.RepositoryGitHubRepositoryConfig{GenerateDashboardPreviews: true},
 				},
 			},
 			want: true,
@@ -250,8 +250,8 @@ func TestRepository_ShouldGenerateDashboardPreviews(t *testing.T) {
 			name: "github with previews disabled",
 			repo: v0alpha1.Repository{
 				Spec: v0alpha1.RepositorySpec{
-					Type:   v0alpha1.GitHubRepositoryType,
-					GitHub: &v0alpha1.GitHubRepositoryConfig{GenerateDashboardPreviews: false},
+					Type:   v0alpha1.RepositorySpecTypeGithub,
+					Github: &v0alpha1.RepositoryGitHubRepositoryConfig{GenerateDashboardPreviews: false},
 				},
 			},
 			want: false,
@@ -260,7 +260,7 @@ func TestRepository_ShouldGenerateDashboardPreviews(t *testing.T) {
 			name: "github type with nil github config",
 			repo: v0alpha1.Repository{
 				Spec: v0alpha1.RepositorySpec{
-					Type: v0alpha1.GitHubRepositoryType,
+					Type: v0alpha1.RepositorySpecTypeGithub,
 				},
 			},
 			want: false,
@@ -269,8 +269,8 @@ func TestRepository_ShouldGenerateDashboardPreviews(t *testing.T) {
 			name: "githubEnterprise with previews enabled via pull request options",
 			repo: v0alpha1.Repository{
 				Spec: v0alpha1.RepositorySpec{
-					Type:        v0alpha1.GitHubEnterpriseRepositoryType,
-					PullRequest: &v0alpha1.PullRequestOptions{GenerateDashboardPreviews: true},
+					Type:        v0alpha1.RepositorySpecTypeGithubEnterprise,
+					PullRequest: &v0alpha1.RepositoryPullRequestOptions{GenerateDashboardPreviews: true},
 				},
 			},
 			want: true,
@@ -279,8 +279,8 @@ func TestRepository_ShouldGenerateDashboardPreviews(t *testing.T) {
 			name: "githubEnterprise with previews disabled via pull request options",
 			repo: v0alpha1.Repository{
 				Spec: v0alpha1.RepositorySpec{
-					Type:        v0alpha1.GitHubEnterpriseRepositoryType,
-					PullRequest: &v0alpha1.PullRequestOptions{GenerateDashboardPreviews: false},
+					Type:        v0alpha1.RepositorySpecTypeGithubEnterprise,
+					PullRequest: &v0alpha1.RepositoryPullRequestOptions{GenerateDashboardPreviews: false},
 				},
 			},
 			want: false,
@@ -289,7 +289,7 @@ func TestRepository_ShouldGenerateDashboardPreviews(t *testing.T) {
 			name: "githubEnterprise type with nil pull request options",
 			repo: v0alpha1.Repository{
 				Spec: v0alpha1.RepositorySpec{
-					Type: v0alpha1.GitHubEnterpriseRepositoryType,
+					Type: v0alpha1.RepositorySpecTypeGithubEnterprise,
 				},
 			},
 			want: false,
@@ -298,8 +298,8 @@ func TestRepository_ShouldGenerateDashboardPreviews(t *testing.T) {
 			name: "gitlab with previews enabled via pull request options",
 			repo: v0alpha1.Repository{
 				Spec: v0alpha1.RepositorySpec{
-					Type:        v0alpha1.GitLabRepositoryType,
-					PullRequest: &v0alpha1.PullRequestOptions{GenerateDashboardPreviews: true},
+					Type:        v0alpha1.RepositorySpecTypeGitlab,
+					PullRequest: &v0alpha1.RepositoryPullRequestOptions{GenerateDashboardPreviews: true},
 				},
 			},
 			want: true,
@@ -308,7 +308,7 @@ func TestRepository_ShouldGenerateDashboardPreviews(t *testing.T) {
 			name: "non-github type with nil pull request options returns false",
 			repo: v0alpha1.Repository{
 				Spec: v0alpha1.RepositorySpec{
-					Type: v0alpha1.GitLabRepositoryType,
+					Type: v0alpha1.RepositorySpecTypeGitlab,
 				},
 			},
 			want: false,
@@ -323,12 +323,12 @@ func TestRepository_ShouldGenerateDashboardPreviews(t *testing.T) {
 }
 
 func TestRepositoryType_AllowsSecureValues(t *testing.T) {
-	gitTypes := []v0alpha1.RepositoryType{
-		v0alpha1.GitHubRepositoryType,
-		v0alpha1.GitHubEnterpriseRepositoryType,
-		v0alpha1.GitRepositoryType,
-		v0alpha1.BitbucketRepositoryType,
-		v0alpha1.GitLabRepositoryType,
+	gitTypes := []v0alpha1.RepositorySpecType{
+		v0alpha1.RepositorySpecTypeGithub,
+		v0alpha1.RepositorySpecTypeGithubEnterprise,
+		v0alpha1.RepositorySpecTypeGit,
+		v0alpha1.RepositorySpecTypeBitbucket,
+		v0alpha1.RepositorySpecTypeGitlab,
 	}
 	for _, repoType := range gitTypes {
 		t.Run(string(repoType), func(t *testing.T) {
@@ -337,6 +337,6 @@ func TestRepositoryType_AllowsSecureValues(t *testing.T) {
 	}
 
 	t.Run("local", func(t *testing.T) {
-		assert.True(t, v0alpha1.LocalRepositoryType.AllowsSecureValues())
+		assert.True(t, v0alpha1.RepositorySpecTypeLocal.AllowsSecureValues())
 	})
 }

@@ -106,7 +106,7 @@ func registerOrExisting[T prometheus.Collector](reg prometheus.Registerer, c T) 
 // repoType, for a repository to inject into the context nanogit operates on. A
 // nil *ClientMetrics yields a nil recorder, so a repository built without
 // metrics (tests, dev tooling) simply reports nothing.
-func (m *ClientMetrics) Recorder(repoType provisioning.RepositoryType) metrics.Recorder {
+func (m *ClientMetrics) Recorder(repoType provisioning.RepositorySpecType) metrics.Recorder {
 	if m == nil {
 		return nil
 	}

@@ -15,11 +15,11 @@ func Mutate(_ context.Context, obj runtime.Object) error {
 		return nil
 	}
 
-	if repo.Spec.GitHub == nil {
+	if repo.Spec.Github == nil {
 		return nil
 	}
 
-	repo.Spec.GitHub.URL = NormalizeGitHubURL(repo.Spec.GitHub.URL)
+	repo.Spec.Github.Url = NormalizeGitHubURL(repo.Spec.Github.Url)
 
 	return nil
 }

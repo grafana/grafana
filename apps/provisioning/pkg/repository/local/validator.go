@@ -18,7 +18,7 @@ func Validate(_ context.Context, obj runtime.Object, resolver *LocalFolderResolv
 		return nil
 	}
 
-	if repo.Spec.Type != provisioning.LocalRepositoryType {
+	if repo.Spec.Type != provisioning.RepositorySpecTypeLocal {
 		return nil
 	}
 

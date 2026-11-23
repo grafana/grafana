@@ -132,18 +132,18 @@ func (_c *MockExtra_Mutate_Call) RunAndReturn(run func(context.Context, runtime.
 }
 
 // Type provides a mock function with no fields
-func (_m *MockExtra) Type() v0alpha1.RepositoryType {
+func (_m *MockExtra) Type() v0alpha1.RepositorySpecType {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for Type")
 	}
 
-	var r0 v0alpha1.RepositoryType
-	if rf, ok := ret.Get(0).(func() v0alpha1.RepositoryType); ok {
+	var r0 v0alpha1.RepositorySpecType
+	if rf, ok := ret.Get(0).(func() v0alpha1.RepositorySpecType); ok {
 		r0 = rf()
 	} else {
-		r0 = ret.Get(0).(v0alpha1.RepositoryType)
+		r0 = ret.Get(0).(v0alpha1.RepositorySpecType)
 	}
 
 	return r0
@@ -166,12 +166,12 @@ func (_c *MockExtra_Type_Call) Run(run func()) *MockExtra_Type_Call {
 	return _c
 }
 
-func (_c *MockExtra_Type_Call) Return(_a0 v0alpha1.RepositoryType) *MockExtra_Type_Call {
+func (_c *MockExtra_Type_Call) Return(_a0 v0alpha1.RepositorySpecType) *MockExtra_Type_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockExtra_Type_Call) RunAndReturn(run func() v0alpha1.RepositoryType) *MockExtra_Type_Call {
+func (_c *MockExtra_Type_Call) RunAndReturn(run func() v0alpha1.RepositorySpecType) *MockExtra_Type_Call {
 	_c.Call.Return(run)
 	return _c
 }

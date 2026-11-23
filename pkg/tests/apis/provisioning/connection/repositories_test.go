@@ -30,7 +30,7 @@ func TestIntegrationProvisioning_ConnectionRepositories(t *testing.T) {
 		},
 		"spec": map[string]any{
 			"title": "Test Connection",
-			"type":  provisioning.GitHubRepositoryType,
+			"type":  provisioning.RepositorySpecTypeGithub,
 			"github": map[string]any{
 				"appID":          "123456",
 				"installationID": "454545",

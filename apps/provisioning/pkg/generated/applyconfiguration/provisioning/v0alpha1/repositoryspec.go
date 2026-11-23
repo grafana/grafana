@@ -17,44 +17,44 @@ type RepositorySpecApplyConfiguration struct {
 	Description *string `json:"description,omitempty"`
 	// Commit message options. Currently only contains the template used by
 	// single-resource UI operations; future siblings (bulk, sync) can live here.
-	Commit *CommitOptionsApplyConfiguration `json:"commit,omitempty"`
+	Commit *RepositoryCommitOptionsApplyConfiguration `json:"commit,omitempty"`
 	// Branch naming options. Only meaningful when Workflows includes "branch".
-	Branch *BranchOptionsApplyConfiguration `json:"branch,omitempty"`
+	Branch *RepositoryBranchOptionsApplyConfiguration `json:"branch,omitempty"`
 	// Pull request options. Only meaningful when Workflows includes "branch".
-	PullRequest *PullRequestOptionsApplyConfiguration `json:"pullRequest,omitempty"`
+	PullRequest *RepositoryPullRequestOptionsApplyConfiguration `json:"pullRequest,omitempty"`
 	// UI driven Workflow that allow changes to the contends of the repository.
 	// The order is relevant for defining the precedence of the workflows.
 	// When empty, the repository does not support any edits (eg, readonly)
-	Workflows []provisioningv0alpha1.Workflow `json:"workflows,omitempty"`
+	Workflows []provisioningv0alpha1.RepositorySpecWorkflows `json:"workflows,omitempty"`
 	// Sync settings -- how values are pulled from the repository into grafana
-	Sync *SyncOptionsApplyConfiguration `json:"sync,omitempty"`
+	Sync *RepositorySyncOptionsApplyConfiguration `json:"sync,omitempty"`
 	// The repository type.  When selected oneOf the values below should be non-nil
-	Type *provisioningv0alpha1.RepositoryType `json:"type,omitempty"`
+	Type *provisioningv0alpha1.RepositorySpecType `json:"type,omitempty"`
 	// Webhook settings for the repository.
 	// When specified, the base URL overrides the auto-detected Grafana public URL
 	// used to register webhooks with the external Git provider.
-	Webhook *WebhookConfigApplyConfiguration `json:"webhook,omitempty"`
+	Webhook *RepositoryWebhookConfigApplyConfiguration `json:"webhook,omitempty"`
 	// The repository on the local file system.
 	// Mutually exclusive with local | github.
-	Local *LocalRepositoryConfigApplyConfiguration `json:"local,omitempty"`
+	Local *RepositoryLocalRepositoryConfigApplyConfiguration `json:"local,omitempty"`
 	// The repository on GitHub.
 	// Mutually exclusive with local | github | git.
-	GitHub *GitHubRepositoryConfigApplyConfiguration `json:"github,omitempty"`
+	Github *RepositoryGitHubRepositoryConfigApplyConfiguration `json:"github,omitempty"`
 	// The repository on a self-managed GitHub Enterprise Server (GHES).
 	// Mutually exclusive with local | github | git.
-	GitHubEnterprise *GitHubEnterpriseRepositoryConfigApplyConfiguration `json:"githubEnterprise,omitempty"`
+	GithubEnterprise *RepositoryGitHubEnterpriseRepositoryConfigApplyConfiguration `json:"githubEnterprise,omitempty"`
 	// The repository on Git.
 	// Mutually exclusive with local | github | git.
-	Git *GitRepositoryConfigApplyConfiguration `json:"git,omitempty"`
+	Git *RepositoryGitRepositoryConfigApplyConfiguration `json:"git,omitempty"`
 	// The repository on Bitbucket.
 	// Mutually exclusive with local | github | git.
-	Bitbucket *BitbucketRepositoryConfigApplyConfiguration `json:"bitbucket,omitempty"`
+	Bitbucket *RepositoryBitbucketRepositoryConfigApplyConfiguration `json:"bitbucket,omitempty"`
 	// The repository on GitLab.
 	// Mutually exclusive with local | github | git.
-	GitLab *GitLabRepositoryConfigApplyConfiguration `json:"gitlab,omitempty"`
+	Gitlab *RepositoryGitLabRepositoryConfigApplyConfiguration `json:"gitlab,omitempty"`
 	// The connection the repository references.
 	// This means the Repository is interacting with git via a Connection.
-	Connection *ConnectionInfoApplyConfiguration `json:"connection,omitempty"`
+	Connection *RepositoryConnectionInfoApplyConfiguration `json:"connection,omitempty"`
 }
 
 // RepositorySpecApplyConfiguration constructs a declarative configuration of the RepositorySpec type for use with
@@ -82,7 +82,7 @@ func (b *RepositorySpecApplyConfiguration) WithDescription(value string) *Reposi
 // WithCommit sets the Commit field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Commit field is set to the value of the last call.
-func (b *RepositorySpecApplyConfiguration) WithCommit(value *CommitOptionsApplyConfiguration) *RepositorySpecApplyConfiguration {
+func (b *RepositorySpecApplyConfiguration) WithCommit(value *RepositoryCommitOptionsApplyConfiguration) *RepositorySpecApplyConfiguration {
 	b.Commit = value
 	return b
 }
@@ -90,7 +90,7 @@ func (b *RepositorySpecApplyConfiguration) WithCommit(value *CommitOptionsApplyC
 // WithBranch sets the Branch field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Branch field is set to the value of the last call.
-func (b *RepositorySpecApplyConfiguration) WithBranch(value *BranchOptionsApplyConfiguration) *RepositorySpecApplyConfiguration {
+func (b *RepositorySpecApplyConfiguration) WithBranch(value *RepositoryBranchOptionsApplyConfiguration) *RepositorySpecApplyConfiguration {
 	b.Branch = value
 	return b
 }
@@ -98,7 +98,7 @@ func (b *RepositorySpecApplyConfiguration) WithBranch(value *BranchOptionsApplyC
 // WithPullRequest sets the PullRequest field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the PullRequest field is set to the value of the last call.
-func (b *RepositorySpecApplyConfiguration) WithPullRequest(value *PullRequestOptionsApplyConfiguration) *RepositorySpecApplyConfiguration {
+func (b *RepositorySpecApplyConfiguration) WithPullRequest(value *RepositoryPullRequestOptionsApplyConfiguration) *RepositorySpecApplyConfiguration {
 	b.PullRequest = value
 	return b
 }
@@ -106,7 +106,7 @@ func (b *RepositorySpecApplyConfiguration) WithPullRequest(value *PullRequestOpt
 // WithWorkflows adds the given value to the Workflows field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the Workflows field.
-func (b *RepositorySpecApplyConfiguration) WithWorkflows(values ...provisioningv0alpha1.Workflow) *RepositorySpecApplyConfiguration {
+func (b *RepositorySpecApplyConfiguration) WithWorkflows(values ...provisioningv0alpha1.RepositorySpecWorkflows) *RepositorySpecApplyConfiguration {
 	for i := range values {
 		b.Workflows = append(b.Workflows, values[i])
 	}
@@ -116,7 +116,7 @@ func (b *RepositorySpecApplyConfiguration) WithWorkflows(values ...provisioningv
 // WithSync sets the Sync field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Sync field is set to the value of the last call.
-func (b *RepositorySpecApplyConfiguration) WithSync(value *SyncOptionsApplyConfiguration) *RepositorySpecApplyConfiguration {
+func (b *RepositorySpecApplyConfiguration) WithSync(value *RepositorySyncOptionsApplyConfiguration) *RepositorySpecApplyConfiguration {
 	b.Sync = value
 	return b
 }
@@ -124,7 +124,7 @@ func (b *RepositorySpecApplyConfiguration) WithSync(value *SyncOptionsApplyConfi
 // WithType sets the Type field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Type field is set to the value of the last call.
-func (b *RepositorySpecApplyConfiguration) WithType(value provisioningv0alpha1.RepositoryType) *RepositorySpecApplyConfiguration {
+func (b *RepositorySpecApplyConfiguration) WithType(value provisioningv0alpha1.RepositorySpecType) *RepositorySpecApplyConfiguration {
 	b.Type = &value
 	return b
 }
@@ -132,7 +132,7 @@ func (b *RepositorySpecApplyConfiguration) WithType(value provisioningv0alpha1.R
 // WithWebhook sets the Webhook field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Webhook field is set to the value of the last call.
-func (b *RepositorySpecApplyConfiguration) WithWebhook(value *WebhookConfigApplyConfiguration) *RepositorySpecApplyConfiguration {
+func (b *RepositorySpecApplyConfiguration) WithWebhook(value *RepositoryWebhookConfigApplyConfiguration) *RepositorySpecApplyConfiguration {
 	b.Webhook = value
 	return b
 }
@@ -140,31 +140,31 @@ func (b *RepositorySpecApplyConfiguration) WithWebhook(value *WebhookConfigApply
 // WithLocal sets the Local field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Local field is set to the value of the last call.
-func (b *RepositorySpecApplyConfiguration) WithLocal(value *LocalRepositoryConfigApplyConfiguration) *RepositorySpecApplyConfiguration {
+func (b *RepositorySpecApplyConfiguration) WithLocal(value *RepositoryLocalRepositoryConfigApplyConfiguration) *RepositorySpecApplyConfiguration {
 	b.Local = value
 	return b
 }
 
-// WithGitHub sets the GitHub field in the declarative configuration to the given value
+// WithGithub sets the Github field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the GitHub field is set to the value of the last call.
-func (b *RepositorySpecApplyConfiguration) WithGitHub(value *GitHubRepositoryConfigApplyConfiguration) *RepositorySpecApplyConfiguration {
-	b.GitHub = value
+// If called multiple times, the Github field is set to the value of the last call.
+func (b *RepositorySpecApplyConfiguration) WithGithub(value *RepositoryGitHubRepositoryConfigApplyConfiguration) *RepositorySpecApplyConfiguration {
+	b.Github = value
 	return b
 }
 
-// WithGitHubEnterprise sets the GitHubEnterprise field in the declarative configuration to the given value
+// WithGithubEnterprise sets the GithubEnterprise field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the GitHubEnterprise field is set to the value of the last call.
-func (b *RepositorySpecApplyConfiguration) WithGitHubEnterprise(value *GitHubEnterpriseRepositoryConfigApplyConfiguration) *RepositorySpecApplyConfiguration {
-	b.GitHubEnterprise = value
+// If called multiple times, the GithubEnterprise field is set to the value of the last call.
+func (b *RepositorySpecApplyConfiguration) WithGithubEnterprise(value *RepositoryGitHubEnterpriseRepositoryConfigApplyConfiguration) *RepositorySpecApplyConfiguration {
+	b.GithubEnterprise = value
 	return b
 }
 
 // WithGit sets the Git field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Git field is set to the value of the last call.
-func (b *RepositorySpecApplyConfiguration) WithGit(value *GitRepositoryConfigApplyConfiguration) *RepositorySpecApplyConfiguration {
+func (b *RepositorySpecApplyConfiguration) WithGit(value *RepositoryGitRepositoryConfigApplyConfiguration) *RepositorySpecApplyConfiguration {
 	b.Git = value
 	return b
 }
@@ -172,23 +172,23 @@ func (b *RepositorySpecApplyConfiguration) WithGit(value *GitRepositoryConfigApp
 // WithBitbucket sets the Bitbucket field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Bitbucket field is set to the value of the last call.
-func (b *RepositorySpecApplyConfiguration) WithBitbucket(value *BitbucketRepositoryConfigApplyConfiguration) *RepositorySpecApplyConfiguration {
+func (b *RepositorySpecApplyConfiguration) WithBitbucket(value *RepositoryBitbucketRepositoryConfigApplyConfiguration) *RepositorySpecApplyConfiguration {
 	b.Bitbucket = value
 	return b
 }
 
-// WithGitLab sets the GitLab field in the declarative configuration to the given value
+// WithGitlab sets the Gitlab field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the GitLab field is set to the value of the last call.
-func (b *RepositorySpecApplyConfiguration) WithGitLab(value *GitLabRepositoryConfigApplyConfiguration) *RepositorySpecApplyConfiguration {
-	b.GitLab = value
+// If called multiple times, the Gitlab field is set to the value of the last call.
+func (b *RepositorySpecApplyConfiguration) WithGitlab(value *RepositoryGitLabRepositoryConfigApplyConfiguration) *RepositorySpecApplyConfiguration {
+	b.Gitlab = value
 	return b
 }
 
 // WithConnection sets the Connection field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Connection field is set to the value of the last call.
-func (b *RepositorySpecApplyConfiguration) WithConnection(value *ConnectionInfoApplyConfiguration) *RepositorySpecApplyConfiguration {
+func (b *RepositorySpecApplyConfiguration) WithConnection(value *RepositoryConnectionInfoApplyConfiguration) *RepositorySpecApplyConfiguration {
 	b.Connection = value
 	return b
 }

@@ -29,8 +29,8 @@ func Extra(decrypter repository.Decrypter, allowInsecure bool, metrics *reposito
 	}
 }
 
-func (e *extra) Type() provisioning.RepositoryType {
-	return provisioning.GitRepositoryType
+func (e *extra) Type() provisioning.RepositorySpecType {
+	return provisioning.RepositorySpecTypeGit
 }
 
 func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
@@ -51,7 +51,7 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 	}
 
 	return NewRepository(ctx, r, RepositoryConfig{
-		URL:              cfg.URL,
+		URL:              cfg.Url,
 		Branch:           cfg.Branch,
 		Path:             cfg.Path,
 		TokenUser:        cfg.TokenUser,
