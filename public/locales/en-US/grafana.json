@@ -15314,7 +15314,6 @@
     "finish-step": {
       "description-enable-previews": "Adds an image preview of dashboard changes in pull requests. Images of your Grafana dashboards will be shared in your Git repository and visible to anyone with repository access.",
       "description-image-rendering": "Requires image rendering. <2>Set up image rendering</2>",
-      "description-read-only": "Resources can't be modified through Grafana.",
       "description-sync-interval": "How often to sync changes from the repository",
       "error-sync-interval-required": "Sync interval is required",
       "label-enable-previews": "Enable dashboard previews in pull requests",
@@ -16091,6 +16090,17 @@
       "button-submitting": "Submitting...",
       "error-instance-repository-exists": "Instance repository already exists",
       "error-save-repository-setting": "Failed to save repository setting"
+    },
+    "workflow": {
+      "direct-push": "Direct push",
+      "direct-push-description": "Changes are committed straight to {{branch}}.",
+      "direct-push-description-no-branch": "Changes are committed straight to the synchronized branch.",
+      "merge-request": "Merge request",
+      "merge-request-description": "Changes are saved to another branch, ready for you to open a merge request into {{branch}}.",
+      "merge-request-description-no-branch": "Changes are saved to another branch, ready for you to open a merge request.",
+      "pull-request": "Pull request",
+      "pull-request-description": "Changes are saved to another branch, ready for you to open a pull request into {{branch}}.",
+      "pull-request-description-no-branch": "Changes are saved to another branch, ready for you to open a pull request."
     }
   },
   "public-dashboard": {

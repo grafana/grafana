@@ -3,14 +3,15 @@ package pluginproxy
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana-app-sdk/routes"
 )
 
 func TestApplyRoute_interpolateAuthParams(t *testing.T) {
-	tokenAuth := &plugins.JWTTokenAuth{
-		Url: "https://login.server.com/{{.JsonData.tenantId}}/oauth2/token",
+	tokenAuth := &routes.ProxyTokenAuth{
+		URL: "https://login.server.com/{{.JsonData.tenantId}}/oauth2/token",
 		Scopes: []string{
 			"https://www.testapi.com/auth/Read.All",
 			"https://www.testapi.com/auth/Write.All",
@@ -43,7 +44,7 @@ func TestApplyRoute_interpolateAuthParams(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, interpolated)
 
-		assert.Equal(t, "https://login.server.com/f09c86ac/oauth2/token", interpolated.Url)
+		assert.Equal(t, "https://login.server.com/f09c86ac/oauth2/token", interpolated.URL)
 
 		assert.Equal(t, 2, len(interpolated.Scopes))
 		assert.Equal(t, "https://www.testapi.com/auth/Read.All", interpolated.Scopes[0])
@@ -66,7 +67,7 @@ func TestApplyRoute_interpolateAuthParams(t *testing.T) {
 		require.NotNil(t, interpolated)
 
 		t.Run("template expressions in url should resolve to <no value>", func(t *testing.T) {
-			assert.Equal(t, "https://login.server.com/<no value>/oauth2/token", interpolated.Url)
+			assert.Equal(t, "https://login.server.com/<no value>/oauth2/token", interpolated.URL)
 		})
 
 		t.Run("template expressions in params resolve to <no value>", func(t *testing.T) {
