@@ -46,8 +46,8 @@ An empty value matches any value, so `label:team=` is `label:team`. As in Promet
    `paused:maybe`), a label matcher with no key, or an unclosed quote anywhere in the query.
 2. **Feedback** judges the result: the rejected tokens, values the filter can hold but the rule search
    refuses (`*` or `%` in text, `*` in exact values, data source UIDs it can't index), `contactPoint:`
-   next to `policy:`, `panelId:` without `dashboard:`, and the filters the rule search can't serve
-   yet, `policy:default` and `paused:false`.
+   next to `policy:`, `panelId:` without `dashboard:`, and the filter the rule search can't serve
+   yet, `policy:default`.
 
 So `state:bogus` is a parse rejection and `datasource:__expr__` is feedback. The page sends no request while
 there are issues.
@@ -93,12 +93,12 @@ parser applies a token when one of the page's definitions accepts it.
 
 Filters the old list doesn't have:
 
-| Token                           | Page      | Search field          |
-| ------------------------------- | --------- | --------------------- |
-| `paused:true` \| `paused:false` | Alert     | `paused`              |
-| `panelId:<id>`                  | Alert     | `panelID`             |
-| `metric:<name>`                 | Recording | `metric`              |
-| `targetDatasource:<uid>`        | Recording | `targetDatasourceUID` |
+| Token                    | Page      | Search field          |
+| ------------------------ | --------- | --------------------- |
+| `paused:true`            | Both      | `paused`              |
+| `panelId:<id>`           | Alert     | `panelID`             |
+| `metric:<name>`          | Recording | `metric`              |
+| `targetDatasource:<uid>` | Recording | `targetDatasourceUID` |
 
 `panelId:` needs `dashboard:`, because panel IDs are dashboard-local.
 

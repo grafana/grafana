@@ -8,8 +8,8 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	commonapi "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -45,8 +45,8 @@ func TestIntegrationV1Beta1Connection_Create_GitHub(t *testing.T) {
 			},
 		},
 		Secure: provisioning.ConnectionSecure{
-			PrivateKey: commonapi.InlineSecureValue{
-				Create: commonapi.NewSecretValue(common.TestGithubPrivateKeyBase64()),
+			PrivateKey: resource.InlineSecureValue{
+				Create: resource.NewSecretValue(common.TestGithubPrivateKeyBase64()),
 			},
 		},
 	}
@@ -108,8 +108,8 @@ func TestIntegrationV1Beta1Connection_Create_GitLab(t *testing.T) {
 			},
 		},
 		Secure: provisioning.ConnectionSecure{
-			ClientSecret: commonapi.InlineSecureValue{
-				Create: commonapi.NewSecretValue("gitlab-client-secret"),
+			ClientSecret: resource.InlineSecureValue{
+				Create: resource.NewSecretValue("gitlab-client-secret"),
 			},
 		},
 	}
@@ -163,8 +163,8 @@ func TestIntegrationV1Beta1Connection_Create_Bitbucket(t *testing.T) {
 			},
 		},
 		Secure: provisioning.ConnectionSecure{
-			ClientSecret: commonapi.InlineSecureValue{
-				Create: commonapi.NewSecretValue("bitbucket-client-secret"),
+			ClientSecret: resource.InlineSecureValue{
+				Create: resource.NewSecretValue("bitbucket-client-secret"),
 			},
 		},
 	}
@@ -219,8 +219,8 @@ func TestIntegrationV1Beta1Connection_Get(t *testing.T) {
 			},
 		},
 		Secure: provisioning.ConnectionSecure{
-			PrivateKey: commonapi.InlineSecureValue{
-				Create: commonapi.NewSecretValue(common.TestGithubPrivateKeyBase64()),
+			PrivateKey: resource.InlineSecureValue{
+				Create: resource.NewSecretValue(common.TestGithubPrivateKeyBase64()),
 			},
 		},
 	}
@@ -280,8 +280,8 @@ func TestIntegrationV1Beta1Connection_List(t *testing.T) {
 			},
 		},
 		Secure: provisioning.ConnectionSecure{
-			PrivateKey: commonapi.InlineSecureValue{
-				Create: commonapi.NewSecretValue(common.TestGithubPrivateKeyBase64()),
+			PrivateKey: resource.InlineSecureValue{
+				Create: resource.NewSecretValue(common.TestGithubPrivateKeyBase64()),
 			},
 		},
 	}
@@ -346,8 +346,8 @@ func TestIntegrationV1Beta1Connection_Update(t *testing.T) {
 			},
 		},
 		Secure: provisioning.ConnectionSecure{
-			PrivateKey: commonapi.InlineSecureValue{
-				Create: commonapi.NewSecretValue(common.TestGithubPrivateKeyBase64()),
+			PrivateKey: resource.InlineSecureValue{
+				Create: resource.NewSecretValue(common.TestGithubPrivateKeyBase64()),
 			},
 		},
 	}
@@ -437,8 +437,8 @@ func TestIntegrationV1Beta1Connection_Delete(t *testing.T) {
 			},
 		},
 		Secure: provisioning.ConnectionSecure{
-			PrivateKey: commonapi.InlineSecureValue{
-				Create: commonapi.NewSecretValue(common.TestGithubPrivateKeyBase64()),
+			PrivateKey: resource.InlineSecureValue{
+				Create: resource.NewSecretValue(common.TestGithubPrivateKeyBase64()),
 			},
 		},
 	}

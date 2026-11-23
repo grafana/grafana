@@ -8,6 +8,7 @@
 package v0alpha1
 
 import (
+	resource "github.com/grafana/grafana-app-sdk/resource"
 	commonv0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	common "k8s.io/kube-openapi/pkg/common"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
@@ -556,28 +557,28 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSecure(ref common.Reference
 						SchemaProps: spec.SchemaProps{
 							Description: "PrivateKey is the reference to the private key used for GitHub App authentication. This value is stored securely and cannot be read back",
 							Default:     map[string]interface{}{},
-							Ref:         ref(commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()),
+							Ref:         ref(resource.InlineSecureValue{}.OpenAPIModelName()),
 						},
 					},
 					"clientSecret": {
 						SchemaProps: spec.SchemaProps{
 							Description: "ClientSecret is the reference to the secret used for other providers authentication, and Github on-behalf-of authentication. This value is stored securely and cannot be read back",
 							Default:     map[string]interface{}{},
-							Ref:         ref(commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()),
+							Ref:         ref(resource.InlineSecureValue{}.OpenAPIModelName()),
 						},
 					},
 					"token": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Token is the reference of the token used to act as the Connection. This value is stored securely and cannot be read back",
 							Default:     map[string]interface{}{},
-							Ref:         ref(commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()),
+							Ref:         ref(resource.InlineSecureValue{}.OpenAPIModelName()),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()},
+			resource.InlineSecureValue{}.OpenAPIModelName()},
 	}
 }
 
@@ -3659,28 +3660,28 @@ func schema_pkg_apis_provisioning_v0alpha1_SecureValues(ref common.ReferenceCall
 						SchemaProps: spec.SchemaProps{
 							Description: "Token used to connect the configured repository",
 							Default:     map[string]interface{}{},
-							Ref:         ref(commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()),
+							Ref:         ref(resource.InlineSecureValue{}.OpenAPIModelName()),
 						},
 					},
 					"webhookSecret": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Some webhooks (including github) require a secret key value",
 							Default:     map[string]interface{}{},
-							Ref:         ref(commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()),
+							Ref:         ref(resource.InlineSecureValue{}.OpenAPIModelName()),
 						},
 					},
 					"commitSigningKey": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Private key used to sign commits the repository writes back. The format is selected by spec.commit.signingMethod. When unset, commits are unsigned.",
 							Default:     map[string]interface{}{},
-							Ref:         ref(commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()),
+							Ref:         ref(resource.InlineSecureValue{}.OpenAPIModelName()),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()},
+			resource.InlineSecureValue{}.OpenAPIModelName()},
 	}
 }
 

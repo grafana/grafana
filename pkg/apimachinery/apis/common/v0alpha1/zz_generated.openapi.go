@@ -17,7 +17,6 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		InlineSecureValue{}.OpenAPIModelName():            InlineSecureValue{}.OpenAPIDefinition(),
 		ObjectReference{}.OpenAPIModelName():              schema_apimachinery_apis_common_v0alpha1_ObjectReference(ref),
 		Unstructured{}.OpenAPIModelName():                 Unstructured{}.OpenAPIDefinition(),
 		v1.APIGroup{}.OpenAPIModelName():                  schema_pkg_apis_meta_v1_APIGroup(ref),
