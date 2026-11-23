@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"slices"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -74,10 +75,40 @@ const (
 	ManagerKindClassicConvertedPrometheus ManagerKind = "classic-converted-prometheus"
 )
 
-// ParseManagerKindString parses a string into a ManagerKind.
-// It returns the ManagerKind and a boolean indicating whether the string was a valid ManagerKind.
-// For unknown values, it returns ManagerKindUnknown and false.
+var managerKindRegistry []ManagerKind
+
+// RegisterManagerKind adds a manager kind on top of the built-in ones.
+func RegisterManagerKind(kind ManagerKind) {
+	if kind == ManagerKindUnknown {
+		panic("RegisterManagerKind: the kind is empty")
+	}
+
+	if parseBuiltinManagerKind(string(kind)) != ManagerKindUnknown {
+		panic(fmt.Sprintf("RegisterManagerKind: %q is a built-in kind", kind))
+	}
+
+	if slices.Contains(managerKindRegistry, kind) {
+		panic(fmt.Sprintf("RegisterManagerKind: %q is already registered", kind))
+	}
+
+	managerKindRegistry = append(managerKindRegistry, kind)
+}
+
+// ParseManagerKindString parses a string into a ManagerKind: a built-in kind or one
+// added with RegisterManagerKind. For any other value it returns ManagerKindUnknown.
 func ParseManagerKindString(v string) ManagerKind {
+	if kind := parseBuiltinManagerKind(v); kind != ManagerKindUnknown {
+		return kind
+	}
+
+	if slices.Contains(managerKindRegistry, ManagerKind(v)) {
+		return ManagerKind(v)
+	}
+
+	return ManagerKindUnknown
+}
+
+func parseBuiltinManagerKind(v string) ManagerKind {
 	switch v {
 	case string(ManagerKindRepo):
 		return ManagerKindRepo

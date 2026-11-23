@@ -13,6 +13,7 @@ package identity
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	authtypes "github.com/grafana/authlib/types"
@@ -43,6 +44,39 @@ func CheckClassicFPAssignment(auth authtypes.AuthInfo, obj utils.GrafanaMetaAcce
 		Reason:  metav1.StatusReasonForbidden,
 		Message: "Can not set the classic-file-provisioning resource manager",
 	}}
+}
+
+// ManagerKindRegistration represents a manager kind that a build adds on top of the built-in ones.
+type ManagerKindRegistration struct {
+	Kind utils.ManagerKind
+
+	// CheckAssignment decides who may assign the kind.
+	CheckAssignment func(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error
+}
+
+var managerKindRegistry []ManagerKindRegistration
+
+// RegisterManagerKind registers a manager kind with the check that decides who may assign it.
+func RegisterManagerKind(registration ManagerKindRegistration) {
+	if registration.CheckAssignment == nil {
+		panic(fmt.Sprintf("RegisterManagerKind: %q has no assignment check", registration.Kind))
+	}
+
+	utils.RegisterManagerKind(registration.Kind)
+
+	managerKindRegistry = append(managerKindRegistry, registration)
+}
+
+func checkRegisteredKindAssignment(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
+	kind := utils.ParseManagerKindString(obj.GetAnnotation(utils.AnnoKeyManagerKind))
+
+	for _, registration := range managerKindRegistry {
+		if registration.Kind == kind {
+			return registration.CheckAssignment(auth, obj)
+		}
+	}
+
+	return nil
 }
 
 func CheckManagerWriteAuthz(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
@@ -97,6 +131,11 @@ func CheckManagerOnCreate(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor
 	if err := CheckClassicFPAssignment(auth, obj); err != nil {
 		return err
 	}
+
+	if err := checkRegisteredKindAssignment(auth, obj); err != nil {
+		return err
+	}
+
 	return CheckManagerWriteAuthz(auth, obj)
 }
 
@@ -139,11 +178,18 @@ func CheckManagerOnUpdate(auth authtypes.AuthInfo, obj, old utils.GrafanaMetaAcc
 	}
 
 	// Adding a manager or updating flags on the same owner. Gate only a *new* classic-FP
-	// assignment: rewriting one that already carries it must keep working (allowUiUpdates).
+	// or registered-kind assignment: rewriting one that already carries it must keep working (allowUiUpdates).
 	if !hasOld || managerOld.Kind != utils.ManagerKindClassicFP { // nolint:staticcheck
 		if err := CheckClassicFPAssignment(auth, obj); err != nil {
 			return err
 		}
 	}
+
+	if !hasOld {
+		if err := checkRegisteredKindAssignment(auth, obj); err != nil {
+			return err
+		}
+	}
+
 	return CheckManagerWriteAuthz(auth, obj)
 }
