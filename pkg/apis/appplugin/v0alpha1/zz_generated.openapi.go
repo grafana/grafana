@@ -191,20 +191,13 @@ func schema_pkg_apis_appplugin_v0alpha1_SettingsSpec(ref common.ReferenceCallbac
 							Format:  "",
 						},
 					},
-					"pinned": {
-						SchemaProps: spec.SchemaProps{
-							Default: false,
-							Type:    []string{"boolean"},
-							Format:  "",
-						},
-					},
 					"jsonData": {
 						SchemaProps: spec.SchemaProps{
 							Ref: ref(commonv0alpha1.Unstructured{}.OpenAPIModelName()),
 						},
 					},
 				},
-				Required: []string{"enabled", "pinned", "jsonData"},
+				Required: []string{"enabled", "jsonData"},
 			},
 		},
 		Dependencies: []string{
