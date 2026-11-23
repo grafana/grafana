@@ -21,9 +21,7 @@ import { type Repository, type ResourceCount } from 'app/api/clients/provisionin
 import { RecentJobs } from '../Job/RecentJobs';
 import { QuotaLimitNote } from '../Shared/QuotaLimitNote';
 import { MissingFolderMetadataBanner } from '../components/Folders/MissingFolderMetadataBanner';
-import { WorkflowBadges } from '../components/WorkflowBadges';
 import { hasMissingFolderMetadata } from '../utils/folderMetadata';
-import { getRemoteConfig } from '../utils/git';
 import { isQuotaReachedOrExceeded } from '../utils/quota';
 import { getRepositoryResourcesUrl } from '../utils/repository';
 import { isGitHubBased } from '../utils/repositoryTypes';
@@ -108,14 +106,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
               data-testid={selectors.pages.Provisioning.RepositoryOverview.resourcesCard}
             >
               <Card.Heading>
-                <Stack direction="row" gap={1} alignItems="center" wrap>
-                  <Trans i18nKey="provisioning.repository-overview.resources">Resources</Trans>
-                  <WorkflowBadges
-                    workflows={repo.spec?.workflows}
-                    type={repo.spec?.type}
-                    branch={getRemoteConfig(repo.spec)?.branch}
-                  />
-                </Stack>
+                <Trans i18nKey="provisioning.repository-overview.resources">Resources</Trans>
               </Card.Heading>
               <Card.Description>
                 {status?.stats ? (
