@@ -1,8 +1,6 @@
 package pluginroute
 
 import (
-	"bytes"
-	"encoding/json"
 	"io"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -10,14 +8,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// typeMetaDefaulting fills a request body's missing apiVersion and kind from
-// the endpoint it was sent to.
+// typeMetaDefaulting decodes JSON and YAML bodies for manifest kinds without
+// requiring apiVersion and kind, which the endpoint already names.
 //
-// The JSON decoder already defaults them for typed objects, but for an
-// unstructured one it requires both in the body, so a client could write a
-// manifest kind only by repeating what the URL says -- unlike every other
-// Grafana API. Only absent keys are filled: a body naming another version or
-// kind still reaches the handler's checks as written.
+// The stock decoder defaults them from the endpoint for typed objects but
+// insists on both in the body when decoding into an unstructured one, so a
+// client could write a manifest kind only by repeating the URL -- unlike every
+// other Grafana API. Values the body does carry are kept, so a body naming
+// another version or kind still reaches the handler's checks as written.
 type typeMetaDefaulting struct {
 	runtime.NegotiatedSerializer
 }
@@ -26,7 +24,7 @@ func (s typeMetaDefaulting) SupportedMediaTypes() []runtime.SerializerInfo {
 	infos := s.NegotiatedSerializer.SupportedMediaTypes()
 	out := make([]runtime.SerializerInfo, len(infos))
 	for i, info := range infos {
-		if info.MediaType == runtime.ContentTypeJSON {
+		if info.MediaType == runtime.ContentTypeJSON || info.MediaType == runtime.ContentTypeYAML {
 			info.Serializer = wrapTypeMetaDefaulting(info.Serializer)
 			info.StrictSerializer = wrapTypeMetaDefaulting(info.StrictSerializer)
 		}
@@ -46,11 +44,27 @@ type typeMetaDefaultingSerializer struct {
 	runtime.Serializer
 }
 
+// Decode hands the wrapped decoder an object the scheme does not know, which
+// it fills by plain unmarshalling -- YAML conversion, strict field errors and
+// integer handling included -- without the kind check it applies to
+// unstructured targets. The returned GVK is the body's, with the endpoint's
+// filling whatever it left out.
 func (s typeMetaDefaultingSerializer) Decode(data []byte, defaults *schema.GroupVersionKind, into runtime.Object) (runtime.Object, *schema.GroupVersionKind, error) {
-	if _, ok := into.(*unstructured.Unstructured); ok && defaults != nil {
-		data = withTypeMeta(data, *defaults)
+	u, ok := into.(*unstructured.Unstructured)
+	if !ok || defaults == nil {
+		return s.Serializer.Decode(data, defaults, into)
 	}
-	return s.Serializer.Decode(data, defaults, into)
+	var content objectMap
+	obj, gvk, err := s.Serializer.Decode(data, defaults, &content)
+	if obj == nil || content == nil {
+		// Not an object (or a fatal error): let the stock path report it.
+		return s.Serializer.Decode(data, defaults, into)
+	}
+	u.SetUnstructuredContent(content)
+	u.SetGroupVersionKind(*gvk)
+	// A strict decoding error comes with the decoded object, so the handler
+	// can still warn rather than fail when the request asked for that.
+	return u, gvk, err
 }
 
 // EncodeWithAllocator keeps the wrapped serializer's allocation-saving path,
@@ -62,44 +76,12 @@ func (s typeMetaDefaultingSerializer) EncodeWithAllocator(obj runtime.Object, w 
 	return s.Encode(obj, w)
 }
 
-// withTypeMeta adds whichever of apiVersion and kind the JSON object lacks.
-// The keys are spliced in rather than the object re-encoded, so the decoder
-// still sees the body as sent, duplicate fields included. Anything that is
-// not a JSON object is returned unchanged for the decoder to reject.
-func withTypeMeta(data []byte, gvk schema.GroupVersionKind) []byte {
-	var fields map[string]json.RawMessage
-	if err := json.Unmarshal(data, &fields); err != nil || fields == nil {
-		return data
-	}
-	_, hasAPIVersion := fields["apiVersion"]
-	_, hasKind := fields["kind"]
-	if hasAPIVersion && hasKind {
-		return data
-	}
+// objectMap is a JSON object as a runtime.Object the scheme does not register.
+type objectMap map[string]any
 
-	var prefix bytes.Buffer
-	prefix.WriteByte('{')
-	add := func(key, value string) {
-		if prefix.Len() > 1 {
-			prefix.WriteByte(',')
-		}
-		k, _ := json.Marshal(key)
-		v, _ := json.Marshal(value)
-		prefix.Write(k)
-		prefix.WriteByte(':')
-		prefix.Write(v)
-	}
-	if !hasAPIVersion {
-		add("apiVersion", gvk.GroupVersion().String())
-	}
-	if !hasKind {
-		add("kind", gvk.Kind)
-	}
+func (m *objectMap) GetObjectKind() schema.ObjectKind { return schema.EmptyObjectKind }
 
-	// Unmarshal succeeded on a non-nil map, so the trimmed body starts with '{'.
-	rest := bytes.TrimLeft(data, " \t\r\n")[1:]
-	if len(fields) > 0 {
-		prefix.WriteByte(',')
-	}
-	return append(prefix.Bytes(), rest...)
+func (m *objectMap) DeepCopyObject() runtime.Object {
+	out := objectMap(runtime.DeepCopyJSON(*m))
+	return &out
 }
