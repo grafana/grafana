@@ -87,9 +87,9 @@ func (s *Service) validateLegacyScopeNamespace(ns types.NamespaceInfo) error {
 	namespace := s.legacyScopeNamespace(ns.OrgID)
 	if namespace != ns.Value {
 		return fmt.Errorf(
-			"namespace %q does not belong to embedded scope resolvers: %s",
-			namespace,
+			"namespace %q does not belong to embedded scope resolvers: expected %q",
 			ns.Value,
+			namespace,
 		)
 	}
 

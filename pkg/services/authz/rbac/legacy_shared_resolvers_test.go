@@ -168,7 +168,7 @@ func TestLegacyCheckEmbeddedNamespaceIsolation(t *testing.T) {
 			namespace: "stacks-456",
 			want: &authzextv1.LegacyCheckResponse{
 				Allowed: false,
-				Error:   `namespace "stacks-123" does not belong to embedded scope resolvers: stacks-456`,
+				Error:   `namespace "stacks-456" does not belong to embedded scope resolvers: expected "stacks-123"`,
 			},
 			calls: 2,
 		},
