@@ -14941,14 +14941,12 @@
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Add a note to describe your changes (optional)",
-      "commit-target-branch": "Once it's pushed, you'll open the pull request into {{branch}} from {{provider}}.",
-      "commit-target-direct": "This commit goes straight to {{branch}}, the branch that Grafana syncs for everyone in your organization.",
       "custom-value-description": "Press Enter to create new branch",
       "description-branch": "Select an existing branch or enter a new branch name to create a branch",
       "description-branch-enforced": "The branch name is set by the repository's branch naming template and can't be changed",
       "description-branch-restricted": "This repository is restricted to the configured branch only",
       "description-file-path": "File path inside the repository (.json or .yaml)",
-      "description-filename": "File name inside the repository (.json or .yaml)",
+      "description-filename": "File name for the dashboard (.json or .yaml)",
       "description-folder": "Folder inside the repository. Leave empty for the repository root.",
       "description-folder-path": "Folder path inside the repository",
       "description-folder-with-path": "Folder inside the repository. Leave empty for the configured repository path ({{path}}).",
@@ -15884,7 +15882,6 @@
     "save-resource": {
       "button-cancel": "Cancel",
       "button-commit": "Commit",
-      "button-commit-to-configured": "Commit to {{branch}}",
       "button-committing": "Committing...",
       "button-delete": "Delete",
       "button-deleting": "Deleting...",
