@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
@@ -151,11 +152,11 @@ type GrafanaMetaAccessor interface {
 	SetSourceProperties(SourceProperties)
 
 	// GetSecureValues reads the "secure" property on a resource
-	GetSecureValues() (common.InlineSecureValues, error)
+	GetSecureValues() (resource.InlineSecureValues, error)
 
 	// SetSourceProperties sets the source properties of the resource.
 	// For write commands, this may include inline secrets; read will only have references
-	SetSecureValues(common.InlineSecureValues) error
+	SetSecureValues(resource.InlineSecureValues) error
 }
 
 var _ GrafanaMetaAccessor = (*grafanaMetaAccessor)(nil)
@@ -828,7 +829,7 @@ func (m *grafanaMetaAccessor) SetSourceProperties(v SourceProperties) {
 }
 
 // GetSecureValues implements GrafanaMetaAccessor.
-func (m *grafanaMetaAccessor) GetSecureValues() (vals common.InlineSecureValues, err error) {
+func (m *grafanaMetaAccessor) GetSecureValues() (vals resource.InlineSecureValues, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			err = fmt.Errorf("error reading secure values")
@@ -854,7 +855,7 @@ func (m *grafanaMetaAccessor) GetSecureValues() (vals common.InlineSecureValues,
 	}
 
 	// Try directly casting the property
-	vals, ok := property.(common.InlineSecureValues)
+	vals, ok := property.(resource.InlineSecureValues)
 	if ok {
 		return vals, nil
 	}
@@ -862,9 +863,9 @@ func (m *grafanaMetaAccessor) GetSecureValues() (vals common.InlineSecureValues,
 	// Generic map
 	u, ok := property.(map[string]any)
 	if ok {
-		vals = make(common.InlineSecureValues, len(u))
+		vals = make(resource.InlineSecureValues, len(u))
 		for k, v := range u {
-			inline, ok := v.(common.InlineSecureValue)
+			inline, ok := v.(resource.InlineSecureValue)
 			if !ok {
 				sv, ok := v.(map[string]any)
 				if !ok {
@@ -874,7 +875,7 @@ func (m *grafanaMetaAccessor) GetSecureValues() (vals common.InlineSecureValues,
 				inline.Remove, _, _ = unstructured.NestedBool(sv, "remove")
 				create, _, _ := unstructured.NestedString(sv, "create")
 				if create != "" {
-					inline.Create = common.NewSecretValue(create)
+					inline.Create = resource.NewSecretValue(create)
 
 					if rawDesc, _, _ := unstructured.NestedFieldNoCopy(sv, "description"); rawDesc != nil {
 						if desc, ok := rawDesc.(*string); ok && desc != nil && *desc != "" {
@@ -890,12 +891,12 @@ func (m *grafanaMetaAccessor) GetSecureValues() (vals common.InlineSecureValues,
 
 	if f.Kind() == reflect.Struct {
 		num := f.NumField()
-		vals = make(common.InlineSecureValues, num)
+		vals = make(resource.InlineSecureValues, num)
 		for i := range num {
 			val := f.Field(i)
 			if val.IsValid() && val.CanInterface() {
 				property = val.Interface()
-				inline, ok := property.(common.InlineSecureValue)
+				inline, ok := property.(resource.InlineSecureValue)
 				if !ok {
 					return nil, fmt.Errorf("secure property must be InlineSecureValue (found: %T)", property)
 				}
@@ -916,7 +917,7 @@ func (m *grafanaMetaAccessor) GetSecureValues() (vals common.InlineSecureValues,
 }
 
 // SetSecureValues implements GrafanaMetaAccessor.
-func (m *grafanaMetaAccessor) SetSecureValues(vals common.InlineSecureValues) (err error) {
+func (m *grafanaMetaAccessor) SetSecureValues(vals resource.InlineSecureValues) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Printf("ERR: %v", r)

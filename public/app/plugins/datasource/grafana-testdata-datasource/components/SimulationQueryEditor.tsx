@@ -57,7 +57,7 @@ export const SimulationQueryEditor = ({ onChange, query, ds }: EditorProps) => {
     let config = (await ds.getResource('sim/' + path))?.config;
     setCfgValue(config.value);
     return config;
-  }, [simKey.type, simKey.tick, simKey.uid]);
+  }, [ds, simKey.type, simKey.tick, simKey.uid]);
 
   const onUpdateKey = (key: typeof simQuery.key) => {
     onChange({ ...query, sim: { ...simQuery, key } });

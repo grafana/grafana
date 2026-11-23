@@ -144,7 +144,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	v := objectForStorage{}
 	info, ok := authlib.AuthInfoFrom(ctx)
 	if !ok {
-		return v, errors.New("missing auth info")
+		return v, apierrors.NewUnauthorized("prepare missing auth info")
 	}
 	s.checkGVK(newObject)
 
@@ -289,7 +289,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		return v, err
 	}
 	if obj.GetName() == "" {
-		return v, fmt.Errorf("updated object must have a name")
+		return v, apierrors.NewBadRequest("updated object must have a name")
 	}
 
 	previous, err := utils.MetaAccessor(previousObject)
@@ -297,19 +297,8 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		return v, err
 	}
 
-	if previous.GetUID() == "" {
-		logging.FromContext(ctx).Error("object is missing UID", "gvk", obj.GetGroupVersionKind().String(), "name", obj.GetName())
-	} else if obj.GetUID() != previous.GetUID() {
-		// Eventually this should be a real error or logged
-		// However the dashboard dual write behavior hits this every time, so we will ignore it
-		// if obj.GetUID() != "" {
-		// 	logging.FromContext(ctx).Error("object UID mismatch", "gvk", obj.GetGroupVersionKind().String(), "was", previous.GetUID(), "now", obj.GetUID())
-		// }
-		obj.SetUID(previous.GetUID())
-	}
-
-	if obj.GetName() != previous.GetName() {
-		return v, fmt.Errorf("name mismatch between existing and updated object")
+	if err := reconcileUpdateIdentity(ctx, obj, previous); err != nil {
+		return v, err
 	}
 
 	obj.SetCreatedBy(previous.GetCreatedBy())
@@ -353,14 +342,8 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	// If staying in the same folder but manager properties changed, re-validate
 	// consistency with the parent folder. Without this, removing or changing
 	// manager annotations would leave unmanaged resources in a repo-managed folder.
-	if obj.GetFolder() != "" && obj.GetFolder() == previous.GetFolder() {
-		newMgr, newOk := obj.GetManagerProperties()
-		oldMgr, oldOk := previous.GetManagerProperties()
-		if newOk != oldOk || newMgr != oldMgr {
-			if err := s.ensureRepoManagedByParentFolder(ctx, obj); err != nil {
-				return v, err
-			}
-		}
+	if err := s.revalidateFolderOnManagerChange(ctx, obj, previous); err != nil {
+		return v, err
 	}
 
 	if !v.hasChanged && s.opts.EnableInlineBlobs {
@@ -391,6 +374,41 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	deleting := obj.GetDeletionTimestamp() != nil || previous.GetDeletionTimestamp() != nil
 	v.raw, err = s.encode(ctx, updateObject, !deleting)
 	return v, err
+}
+
+// reconcileUpdateIdentity carries the immutable identity of previous (UID, namespace) onto obj
+// and rejects updates that try to change the name or namespace.
+func reconcileUpdateIdentity(ctx context.Context, obj, previous utils.GrafanaMetaAccessor) error {
+	if previous.GetUID() == "" {
+		logging.FromContext(ctx).Error("object is missing UID", "gvk", obj.GetGroupVersionKind().String(), "name", obj.GetName())
+	} else if obj.GetUID() != previous.GetUID() {
+		// Eventually this should be a real error or logged
+		// However the dashboard dual write behavior hits this every time, so we will ignore it
+		// if obj.GetUID() != "" {
+		// 	logging.FromContext(ctx).Error("object UID mismatch", "gvk", obj.GetGroupVersionKind().String(), "was", previous.GetUID(), "now", obj.GetUID())
+		// }
+		obj.SetUID(previous.GetUID())
+	}
+
+	if obj.GetName() != previous.GetName() {
+		return apierrors.NewBadRequest("name mismatch between existing and updated object")
+	}
+	obj.SetNamespace(previous.GetNamespace())
+	return nil
+}
+
+// revalidateFolderOnManagerChange re-checks consistency with the parent folder when the object
+// stays in the same folder but its manager properties changed.
+func (s *Storage) revalidateFolderOnManagerChange(ctx context.Context, obj, previous utils.GrafanaMetaAccessor) error {
+	if obj.GetFolder() == "" || obj.GetFolder() != previous.GetFolder() {
+		return nil
+	}
+	newMgr, newOk := obj.GetManagerProperties()
+	oldMgr, oldOk := previous.GetManagerProperties()
+	if newOk == oldOk && newMgr == oldMgr {
+		return nil
+	}
+	return s.ensureRepoManagedByParentFolder(ctx, obj)
 }
 
 func (s *Storage) ensureRepoManagedByParentFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) error {

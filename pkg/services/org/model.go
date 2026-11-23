@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	authlib "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/search/model"
@@ -44,13 +46,13 @@ type OrgUser struct {
 	Updated time.Time
 }
 
-type RoleType = identity.RoleType
+type RoleType = authlib.RoleType
 
 const (
-	RoleNone   RoleType = identity.RoleNone
-	RoleViewer RoleType = identity.RoleViewer
-	RoleEditor RoleType = identity.RoleEditor
-	RoleAdmin  RoleType = identity.RoleAdmin
+	RoleNone   RoleType = authlib.RoleNone
+	RoleViewer RoleType = authlib.RoleViewer
+	RoleEditor RoleType = authlib.RoleEditor
+	RoleAdmin  RoleType = authlib.RoleAdmin
 )
 
 type CreateOrgCommand struct {
@@ -181,6 +183,7 @@ type GetOrgUsersQuery struct {
 
 type SearchOrgUsersQuery struct {
 	UserID   int64 `xorm:"user_id"`
+	UserUID  string
 	OrgID    int64 `xorm:"org_id"`
 	Query    string
 	Page     int
