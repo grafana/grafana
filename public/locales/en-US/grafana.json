@@ -16021,9 +16021,11 @@
       "direct-push-description": "Changes are committed straight to {{branch}}.",
       "direct-push-description-no-branch": "Changes are committed straight to the synchronized branch.",
       "merge-request": "Merge request",
+      "merge-request-description": "Changes are saved to another branch, ready for you to open a merge request into {{branch}}.",
+      "merge-request-description-no-branch": "Changes are saved to another branch, ready for you to open a merge request.",
       "pull-request": "Pull request",
-      "pull-request-description": "Changes go to a new branch for review before merging into {{branch}}.",
-      "pull-request-description-no-branch": "Changes go to a new branch for review before merging."
+      "pull-request-description": "Changes are saved to another branch, ready for you to open a pull request into {{branch}}.",
+      "pull-request-description-no-branch": "Changes are saved to another branch, ready for you to open a pull request."
     }
   },
   "public-dashboard": {

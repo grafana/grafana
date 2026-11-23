@@ -32,8 +32,11 @@ export function getWorkflowLabel(workflow: WorkflowOption, type?: RepoType): str
     : t('provisioning.workflow.pull-request', 'Pull request');
 }
 
-/** Explains a save workflow on hover; names the synchronized branch when the repository has one. */
-export function getWorkflowDescription(workflow: WorkflowOption, branch?: string): string {
+/**
+ * Explains a save workflow on hover. Saving on the branch workflow only writes the branch —
+ * opening the pull request is a separate step the person takes in the provider.
+ */
+export function getWorkflowDescription(workflow: WorkflowOption, type?: RepoType, branch?: string): string {
   if (workflow === 'write') {
     return branch
       ? t('provisioning.workflow.direct-push-description', 'Changes are committed straight to {{branch}}.', { branch })
@@ -42,14 +45,28 @@ export function getWorkflowDescription(workflow: WorkflowOption, branch?: string
           'Changes are committed straight to the synchronized branch.'
         );
   }
+
+  if (type === 'gitlab') {
+    return branch
+      ? t(
+          'provisioning.workflow.merge-request-description',
+          'Changes are saved to another branch, ready for you to open a merge request into {{branch}}.',
+          { branch }
+        )
+      : t(
+          'provisioning.workflow.merge-request-description-no-branch',
+          'Changes are saved to another branch, ready for you to open a merge request.'
+        );
+  }
+
   return branch
     ? t(
         'provisioning.workflow.pull-request-description',
-        'Changes go to a new branch for review before merging into {{branch}}.',
+        'Changes are saved to another branch, ready for you to open a pull request into {{branch}}.',
         { branch }
       )
     : t(
         'provisioning.workflow.pull-request-description-no-branch',
-        'Changes go to a new branch for review before merging.'
+        'Changes are saved to another branch, ready for you to open a pull request.'
       );
 }

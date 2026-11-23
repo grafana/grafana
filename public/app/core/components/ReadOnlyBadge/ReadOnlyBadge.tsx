@@ -18,5 +18,5 @@ export function ReadOnlyBadge({ tooltip, compact = false }: ReadOnlyBadgeProps) 
     return <Badge color="darkgrey" icon="lock" tooltip={tooltip} role="img" aria-label={text} />;
   }
 
-  return <Badge color="darkgrey" text={text} tooltip={tooltip} />;
+  return <Badge color="darkgrey" icon="lock" text={text} tooltip={tooltip} />;
 }

@@ -41,4 +41,36 @@ describe('WorkflowBadges', () => {
 
     expect(await screen.findByText('Changes are committed straight to release.')).toBeInTheDocument();
   });
+
+  it('presents opening the pull request as a step the person takes', async () => {
+    const { user } = render(<WorkflowBadges workflows={['branch']} type="github" branch="main" />);
+
+    await user.hover(screen.getByText('Pull request'));
+
+    expect(
+      await screen.findByText('Changes are saved to another branch, ready for you to open a pull request into main.')
+    ).toBeInTheDocument();
+  });
+
+  it('asks for a merge request on GitLab', async () => {
+    const { user } = render(<WorkflowBadges workflows={['branch']} type="gitlab" branch="main" />);
+
+    await user.hover(screen.getByText('Merge request'));
+
+    expect(
+      await screen.findByText('Changes are saved to another branch, ready for you to open a merge request into main.')
+    ).toBeInTheDocument();
+  });
+
+  it('does not advertise a git push on a local repository', () => {
+    render(<WorkflowBadges workflows={['write']} type="local" />);
+
+    expect(screen.queryByText('Direct push')).not.toBeInTheDocument();
+  });
+
+  it('still marks a local repository read only', () => {
+    render(<WorkflowBadges workflows={[]} type="local" />);
+
+    expect(screen.getByText('Read only')).toBeInTheDocument();
+  });
 });

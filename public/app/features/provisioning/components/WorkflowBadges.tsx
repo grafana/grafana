@@ -4,6 +4,7 @@ import { ReadOnlyBadge } from 'app/core/components/ReadOnlyBadge/ReadOnlyBadge';
 import { type RepoType } from '../Wizard/types';
 import { type RepoWorkflows } from '../types';
 import { getIsReadOnlyWorkflows } from '../utils/repository';
+import { isGitProvider } from '../utils/repositoryTypes';
 import { getReadOnlyRepositoryTooltip } from '../utils/tooltip';
 import { getWorkflowDescription, getWorkflowLabel } from '../utils/workflow';
 
@@ -20,6 +21,11 @@ export function WorkflowBadges({ workflows, type, branch }: WorkflowBadgesProps)
     return <ReadOnlyBadge tooltip={getReadOnlyRepositoryTooltip()} />;
   }
 
+  // Both workflows name Git concepts, and file provisioning offers no choice between them.
+  if (type && !isGitProvider(type)) {
+    return null;
+  }
+
   return (
     <>
       {workflows?.includes('write') && (
@@ -27,7 +33,7 @@ export function WorkflowBadges({ workflows, type, branch }: WorkflowBadgesProps)
           color="blue"
           icon="pen"
           text={getWorkflowLabel('write', type)}
-          tooltip={getWorkflowDescription('write', branch)}
+          tooltip={getWorkflowDescription('write', type, branch)}
         />
       )}
       {workflows?.includes('branch') && (
@@ -35,7 +41,7 @@ export function WorkflowBadges({ workflows, type, branch }: WorkflowBadgesProps)
           color="blue"
           icon="code-branch"
           text={getWorkflowLabel('branch', type)}
-          tooltip={getWorkflowDescription('branch', branch)}
+          tooltip={getWorkflowDescription('branch', type, branch)}
         />
       )}
     </>

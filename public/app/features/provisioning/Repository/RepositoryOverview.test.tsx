@@ -72,7 +72,7 @@ describe('RepositoryOverview', () => {
     expect(screen.getByText('Direct push')).toBeInTheDocument();
     await user.hover(screen.getByText('Pull request'));
     expect(
-      await screen.findByText('Changes go to a new branch for review before merging into main.')
+      await screen.findByText('Changes are saved to another branch, ready for you to open a pull request into main.')
     ).toBeInTheDocument();
   });
 
