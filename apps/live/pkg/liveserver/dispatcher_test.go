@@ -30,6 +30,7 @@ func newTestDispatcher(t *testing.T, opts Options) (*Dispatcher, *centrifuge.Nod
 
 type recordingHandler struct {
 	subscribed []string
+	published  []string
 }
 
 func (h *recordingHandler) GetHandlerForPath(string) (model.ChannelHandler, error) { return h, nil }
@@ -39,8 +40,46 @@ func (h *recordingHandler) OnSubscribe(_ context.Context, _ identity.Requester, 
 	return model.SubscribeReply{Presence: true}, backend.SubscribeStreamStatusOK, nil
 }
 
-func (h *recordingHandler) OnPublish(context.Context, identity.Requester, model.PublishEvent) (model.PublishReply, backend.PublishStreamStatus, error) {
+func (h *recordingHandler) OnPublish(_ context.Context, _ identity.Requester, e model.PublishEvent) (model.PublishReply, backend.PublishStreamStatus, error) {
+	h.published = append(h.published, e.Channel)
 	return model.PublishReply{}, backend.PublishStreamStatusOK, nil
+}
+
+func TestDispatcherScopesHandlersByNamespace(t *testing.T) {
+	handlers := map[string]*recordingHandler{
+		"stacks-1": {},
+		"stacks-2": {},
+	}
+	factoryCalls := map[string]int{}
+	d, node := newTestDispatcher(t, Options{
+		Scopes: map[string]ScopeHandler{
+			live.ScopeDatasource: ScopeHandlerFunc(func(_ context.Context, user identity.Requester, namespace string) (model.ChannelHandlerFactory, error) {
+				require.Equal(t, "same-uid", namespace)
+				factoryCalls[user.GetNamespace()]++
+				return handlers[user.GetNamespace()], nil
+			}),
+		},
+	})
+	client, closeClient, err := centrifuge.NewClient(context.Background(), node, newDummyTransport("test"))
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = closeClient() })
+
+	const channel = "ds/same-uid/path"
+	for _, namespace := range []string{"stacks-1", "stacks-2", "stacks-1", "stacks-2"} {
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
+			Type: authlib.TypeUser, UserUID: "u1", Namespace: namespace,
+		})
+		_, err := d.OnSubscribe(ctx, client, centrifuge.SubscribeEvent{Channel: namespace + "/" + channel})
+		require.NoError(t, err)
+		_, err = d.OnPublish(ctx, client, centrifuge.PublishEvent{Channel: namespace + "/" + channel})
+		require.NoError(t, err)
+	}
+
+	for namespace, handler := range handlers {
+		require.Equal(t, []string{channel, channel}, handler.subscribed, namespace)
+		require.Equal(t, []string{channel, channel}, handler.published, namespace)
+		require.Equal(t, 1, factoryCalls[namespace], "reuse the handler within %s", namespace)
+	}
 }
 
 func TestDispatcherSubscribe(t *testing.T) {

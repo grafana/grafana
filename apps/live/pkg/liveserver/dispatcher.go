@@ -594,8 +594,11 @@ func (d *Dispatcher) GetChannelHandler(ctx context.Context, user identity.Reques
 		return nil, live.Channel{}, err
 	}
 
+	// Factories can bind handlers to tenant-specific state, such as a
+	// datasource's plugin, even when the channel name is the same.
+	key := orgchannel.PrependK8sNamespace(user.GetNamespace(), channel)
 	d.channelsMu.RLock()
-	c, ok := d.channels[channel]
+	c, ok := d.channels[key]
 	d.channelsMu.RUnlock() // defer? but then you can't lock further down
 	if ok {
 		logger.Debug("Found cached channel handler", "channel", channel)
@@ -604,7 +607,7 @@ func (d *Dispatcher) GetChannelHandler(ctx context.Context, user identity.Reques
 
 	d.channelsMu.Lock()
 	defer d.channelsMu.Unlock()
-	c, ok = d.channels[channel] // may have filled in while locked
+	c, ok = d.channels[key] // may have filled in while locked
 	if ok {
 		logger.Debug("Found cached channel handler", "channel", channel)
 		return c, addr, nil
@@ -622,7 +625,7 @@ func (d *Dispatcher) GetChannelHandler(ctx context.Context, user identity.Reques
 	}
 
 	logger.Info("Initialized channel handler", "channel", channel, "address", addr)
-	d.channels[channel] = c
+	d.channels[key] = c
 	return c, addr, nil
 }
 

@@ -86,11 +86,11 @@ func TestProvideService_RegistersScopes(t *testing.T) {
 	// The plugin and datasource scopes need the plugin store, which this setup
 	// leaves nil, so only the scopes that run without it are resolved here.
 	for _, scope := range []string{live.ScopeGrafana, live.ScopeWatch, live.ScopeStream} {
-		_, err := g.dispatcher.GetChannelHandlerFactory(context.Background(), user, scope, "x")
+		_, err := g.GetChannelHandlerFactory(context.Background(), user, scope, "x")
 		require.NotErrorIs(t, err, liveserver.ErrScopeNotAvailable, "scope %s", scope)
 	}
 
-	factory, err := g.dispatcher.GetChannelHandlerFactory(context.Background(), user, live.ScopeGrafana, "dashboard")
+	factory, err := g.GetChannelHandlerFactory(context.Background(), user, live.ScopeGrafana, "dashboard")
 	require.NoError(t, err)
 	require.Same(t, g.GrafanaScope.Dashboards, factory)
 }

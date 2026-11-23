@@ -431,6 +431,10 @@ func (g *GrafanaLive) GetChannelHandler(ctx context.Context, user identity.Reque
 	return g.dispatcher.GetChannelHandler(ctx, user, channel)
 }
 
+func (g *GrafanaLive) GetChannelHandlerFactory(ctx context.Context, user identity.Requester, scope string, namespace string) (model.ChannelHandlerFactory, error) {
+	return g.dispatcher.GetChannelHandlerFactory(ctx, user, scope, namespace)
+}
+
 func (g *GrafanaLive) handlePluginScope(ctx context.Context, _ identity.Requester, namespace string) (model.ChannelHandlerFactory, error) {
 	streamHandler, err := g.getStreamPlugin(ctx, namespace)
 	if err != nil {
