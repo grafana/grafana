@@ -467,10 +467,6 @@
           "jsonData": {
             "type": "object",
             "additionalProperties": true
-          },
-          "pinned": {
-            "description": "shows up in the sidebar",
-            "type": "boolean"
           }
         }
       },
@@ -602,8 +598,7 @@
             "name": "instance"
           },
           "spec": {
-            "enabled": true,
-            "pinned": true
+            "enabled": true
           }
         },
         "x-kubernetes-group-version-kind": [
@@ -655,7 +650,6 @@
         "type": "object",
         "required": [
           "enabled",
-          "pinned",
           "jsonData"
         ],
         "properties": {
@@ -665,10 +659,6 @@
           },
           "jsonData": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
-          },
-          "pinned": {
-            "type": "boolean",
-            "default": false
           }
         }
       },
