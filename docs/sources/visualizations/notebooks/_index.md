@@ -17,7 +17,7 @@ Notebooks combine notes, queries, and visualizations in a single document in Gra
 They provide a way to investigate a problem, explain what you found, and share the supporting data with your team.
 You can start a notebook yourself or [create one with Grafana Assistant](#create-notebooks-from-grafana-assistant-workspace).
 
-Text blocks capture notes and context, and you can add panels and queries manually or from Dashboards and Explore.
+Text blocks capture notes and context, and you can add panels and queries manually or [from Dashboards and Explore](#add-panels-from-dashboards-and-explore).
 Every block is directly editable, including the queries and visualizations, and you can reorder or remove blocks as your investigation develops.
 
 Notebooks facilitate troubleshooting, investigation handoffs, and post-incident reviews.
@@ -199,20 +199,60 @@ Click **Remove time lock** to make the panel follow the notebook's time range ag
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-notebook-panel-time-lock-v13.3.png" max-width="750px" alt="Panel time picker and the option to remove the time lock" >}}
 
-### Add panels from Dashboards or Explore
+## Add panels from Dashboards and Explore
 
 You can bring a dashboard panel or an Explore query into a notebook without recreating it.
-To add a panel from Dashboards or a query from Explore, follow these steps:
+This lets you collect evidence from different sources as you investigate, and then add your notes around it in the notebook.
 
-1. Do one of the following:
-   - In Dashboards, click the menu in the top-right corner of a panel and select **Add to notebook**.
-   - In Explore, click the **Add** menu and select **Add to notebook**.
+To add a panel to a notebook, you need permission to edit or create notebooks.
 
-1. In the dialog box that opens, choose an existing notebook or create a new one.
+### Add a panel from a dashboard
+
+To add a panel from a dashboard to a notebook, follow these steps:
+
+1. Navigate to the dashboard that contains the panel.
+1. Hover your cursor over the panel and click the panel menu icon that appears in the top-right corner.
+1. Select **Add to notebook**.
+
+   You don't need to be in edit mode or have permission to edit the dashboard.
+
+1. In the **Add panel to notebook** dialog box, configure the options described in [Add panel to notebook options](#add-panel-to-notebook-options).
 1. Click **Add to notebook**.
 
-You can then open the notebook to add notes or continue editing the visualization.
+The notebook receives a copy of the panel, including its queries, visualization, and title.
+If the panel is a library panel, the copy is a regular panel that isn't linked to the library panel, so later changes to the library panel don't update the notebook.
+
+### Add a query from Explore
+
+To add a query and its visualization from Explore to a notebook, follow these steps:
+
+1. In Explore, build and run your query.
+1. In the Explore toolbar, click **Add** and select **Add to notebook**.
+1. In the **Add panel to notebook** dialog box, configure the options described in [Add panel to notebook options](#add-panel-to-notebook-options).
+1. Click **Add to notebook**.
+
+The notebook receives a panel with the queries from the Explore pane and a visualization based on the query results.
+
+### Add panel to notebook options
+
+The **Add panel to notebook** dialog box has the following options:
+
+<!-- prettier-ignore-start -->
+| Option                                  | Description |
+| --------------------------------------- | ----------- |
+| **Target notebook**                     | Choose **New notebook** to create a notebook for the panel, or **Existing notebook** to add the panel to a notebook you already have. If you only have permission to create notebooks or only to edit them, the dialog box shows just the available option. |
+| **Notebook name**                       | Available when you create a new notebook. Enter a name for the notebook. The name must be unique. |
+| Notebook search and filters             | Available when you add the panel to an existing notebook. Search by title, sort the list, filter by tag, or select **Created by me** to find the notebook. Then select it in the list. |
+| **Text above the panel (optional)**     | Enter text to add to the notebook as a text block before the panel. Use it to explain why you added the panel. |
+| **Lock time range**                     | Select to keep the panel on the time range shown in the dashboard or Explore when you added it. Clear to have the panel follow the notebook time range. This option is selected by default when the source uses an absolute time range, such as after you zoom in on a graph. For more information, refer to the [Panel time range](#panel-time-range) section of this page. |
+| **Convert to an absolute time range**   | Available when the source uses a relative time range, such as **Last 1 hour**, and you've selected **Lock time range**. Select to lock the panel to the exact start and end times that the relative range covers when you add the panel, so it keeps showing that investigation window. |
+<!-- prettier-ignore-end -->
+
+Grafana adds the panel at the end of the notebook and displays a confirmation message with an **Open notebook** link.
+You can then open the notebook to add notes, reorder blocks, or continue editing the visualization.
+
 Updating the added panel in the notebook doesn't change the panel in the source dashboard or the query in Explore.
+Changes to the source dashboard panel also don't update the notebook.
 
 ## Create notebooks from Grafana Assistant Workspace
 
