@@ -380,7 +380,12 @@ describe('SaveProvisionedResourceDrawer', () => {
       const onDismiss = jest.fn();
 
       const { user } = render(
-        <SaveProvisionedResourceDrawer resource={mockPlaylist} title="Test Playlist" action="update" onDismiss={onDismiss} />
+        <SaveProvisionedResourceDrawer
+          resource={mockPlaylist}
+          title="Test Playlist"
+          action="update"
+          onDismiss={onDismiss}
+        />
       );
       await user.click(await screen.findByRole('button', { name: /^commit/i }));
       await screen.findByText(/committed to main/i);
