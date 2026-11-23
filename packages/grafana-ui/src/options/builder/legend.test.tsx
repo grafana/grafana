@@ -134,6 +134,11 @@ describe('legendQuickEdit', () => {
 
   it.each([
     { desc: 'a hidden legend', config: legend({ showLegend: false }), text: 'Hidden' },
+    {
+      desc: 'a legend hidden by the deprecated display mode',
+      config: legend({ displayMode: LegendDisplayMode.Hidden }),
+      text: 'Hidden',
+    },
     { desc: 'mode and placement', config: legend(), text: 'List, Bottom' },
     {
       desc: 'the number of values',

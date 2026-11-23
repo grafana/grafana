@@ -53,6 +53,18 @@ describe('thresholdsQuickEdit', () => {
     });
   });
 
+  it('marks the step values as percentages in percentage mode', () => {
+    const thresholds = {
+      mode: ThresholdsMode.Percentage,
+      steps: [
+        { value: -Infinity, color: 'green' },
+        { value: 80, color: 'red' },
+      ],
+    };
+
+    expect(summarize(thresholdsQuickEdit(), { thresholds })).toEqual({ text: '80%', swatches: ['green', 'red'] });
+  });
+
   it('summarizes thresholds with only a base step as base only', () => {
     const thresholds = { mode: ThresholdsMode.Absolute, steps: [{ value: -Infinity, color: 'green' }] };
 

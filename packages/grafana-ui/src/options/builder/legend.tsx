@@ -10,6 +10,7 @@ import { t } from '@grafana/i18n';
 import { LegendDisplayMode, type OptionsWithLegend } from '@grafana/schema';
 
 import { Input } from '../../components/Input/Input';
+import { shouldShowLegend } from '../../components/VizLegend/utils';
 
 /** @public */
 export function addLegendOptions<T extends OptionsWithLegend>(
@@ -135,7 +136,7 @@ export function legendQuickEdit(): PanelQuickEdit<OptionsWithLegend> {
     optionIds: ['legend.showLegend', 'legend.displayMode', 'legend.placement', 'legend.calcs'],
     summary: ({ options }) => {
       const { legend } = options;
-      if (!legend || legend.showLegend === false) {
+      if (!legend || !shouldShowLegend(legend)) {
         return { text: t('grafana-ui.builder.legend.quick-edit.hidden', 'Hidden') };
       }
       const mode =

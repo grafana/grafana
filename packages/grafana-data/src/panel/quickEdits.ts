@@ -2,6 +2,7 @@ import { t } from '@grafana/i18n';
 
 import { type FieldConfigSource } from '../types/fieldOverrides';
 import { type IconName } from '../types/icon';
+import { ThresholdsMode } from '../types/thresholds';
 import { getValueFormats } from '../valueFormats/valueFormats';
 
 /**
@@ -116,8 +117,9 @@ export function thresholdsQuickEdit(extraOptionIds: string[] = []): PanelQuickEd
     icon: 'sliders-v-alt',
     optionIds: ['thresholds', ...extraOptionIds],
     summary: ({ fieldConfig }) => {
-      const steps = fieldConfig.defaults.thresholds?.steps ?? [];
-      const values = steps.slice(1).map((step) => String(step.value));
+      const { steps = [], mode } = fieldConfig.defaults.thresholds ?? {};
+      const suffix = mode === ThresholdsMode.Percentage ? '%' : '';
+      const values = steps.slice(1).map((step) => `${step.value}${suffix}`);
       return {
         text: values.length ? values.join(' · ') : t('grafana-data.quick-edits.thresholds.base-only', 'Base only'),
         swatches: steps.map((step) => step.color),
