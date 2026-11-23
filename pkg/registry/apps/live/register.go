@@ -30,48 +30,46 @@ var (
 
 type AppInstaller struct {
 	appsdkapiserver.AppInstaller
-	cfg  *setting.Cfg
-	live *grafanalive.GrafanaLive
+	websocket liveapp.WebsocketProvider
+	channels  ChannelLister
 }
 
+// RegisterAppInstaller installs live.grafana.app in single-tenant Grafana,
+// served by its local Live node.
 func RegisterAppInstaller(
-	cfg *setting.Cfg,
-	features featuremgmt.FeatureToggles,
+	_ *setting.Cfg,
+	_ featuremgmt.FeatureToggles,
 	live *grafanalive.GrafanaLive,
 ) (*AppInstaller, error) {
-	installer := &AppInstaller{
-		cfg:  cfg,
-		live: live,
-	}
+	return NewAppInstaller(live, live)
+}
 
+// NewAppInstaller returns the live.grafana.app installer for a host that
+// supplies the websocket and the channel list, such as single-tenant Grafana or
+// a multi-tenant Live server. Nothing is stored.
+func NewAppInstaller(websocket liveapp.WebsocketProvider, channels ChannelLister) (*AppInstaller, error) {
 	provider := simple.NewAppProvider(apis.LocalManifest(), nil, liveapp.New)
-
 	appConfig := app.Config{
-		KubeConfig:   restclient.Config{},
-		ManifestData: *apis.LocalManifest().ManifestData,
-		SpecificConfig: &liveapp.LiveConfig{
-			Enable: true,
-			//	TagHandler: tagHandler,
-		},
+		KubeConfig:     restclient.Config{},
+		ManifestData:   *apis.LocalManifest().ManifestData,
+		SpecificConfig: &liveapp.LiveConfig{Enable: true},
 	}
 	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, apis.NewGoTypeAssociator())
 	if err != nil {
 		return nil, err
 	}
-	installer.AppInstaller = i
-
-	return installer, nil
+	return &AppInstaller{AppInstaller: i, websocket: websocket, channels: channels}, nil
 }
 
 // InstallAPIs installs the group with the generated Channel store replaced by
 // a read-only view of the Live node, so the group stores nothing.
 func (a *AppInstaller) InstallAPIs(server appsdkapiserver.GenericAPIServer, opts generic.RESTOptionsGetter) error {
-	if a.live == nil {
+	if a.channels == nil {
 		return a.AppInstaller.InstallAPIs(server, opts)
 	}
 	return a.AppInstaller.InstallAPIs(&channelStorageServer{
 		GenericAPIServer: server,
-		storage:          newChannelStorage(a.live),
+		storage:          newChannelStorage(a.channels),
 	}, opts)
 }
 
@@ -101,9 +99,9 @@ func (s *channelStorageServer) InstallAPIGroup(info *genericapiserver.APIGroupIn
 }
 
 // RawRoutes serves the Live websocket at
-// /apis/live.grafana.app/v1alpha1/namespaces/{namespace}/ws from the local Live node.
+// /apis/live.grafana.app/v1alpha1/namespaces/{namespace}/ws from the host's provider.
 func (a *AppInstaller) RawRoutes() []rawroutes.Route {
-	if a.live == nil {
+	if a.websocket == nil {
 		return nil
 	}
 	return []rawroutes.Route{{
@@ -111,7 +109,7 @@ func (a *AppInstaller) RawRoutes() []rawroutes.Route {
 		Namespaced: true,
 		Method:     http.MethodGet,
 		Path:       liveapp.WebsocketPath,
-		Handler:    liveapp.NewWebsocketHandler(a.live),
+		Handler:    liveapp.NewWebsocketHandler(a.websocket),
 	}}
 }
 

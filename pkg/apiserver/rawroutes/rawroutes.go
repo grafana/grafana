@@ -10,7 +10,9 @@
 package rawroutes
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -49,4 +51,69 @@ func Collect[T any](items []T) []Route {
 		}
 	}
 	return routes
+}
+
+// Pattern returns the http.ServeMux pattern for the route, for example
+// "GET /apis/live.grafana.app/v1alpha1/namespaces/{namespace}/ws".
+func (r Route) Pattern() string {
+	p := r.Method + " /apis/" + r.API.Group + "/" + r.API.Version + "/"
+	if r.Namespaced {
+		p += "namespaces/{namespace}/"
+	}
+	return p + r.Path
+}
+
+// NewHandler serves routes and passes every other request to next. It is for
+// hosts that mount raw routes on a plain http.Handler chain, such as a
+// standalone API server, where it goes after authentication and before the
+// k8s handler chain. Requests reach a route's handler with the namespace as the
+// "namespace" path value.
+func NewHandler(next http.Handler, routes []Route) (http.Handler, error) {
+	if len(routes) == 0 {
+		return next, nil
+	}
+	mux := http.NewServeMux()
+	for _, rt := range routes {
+		if err := rt.Validate(); err != nil {
+			return nil, err
+		}
+		if err := register(mux, rt.Pattern(), rt.Handler); err != nil {
+			return nil, err
+		}
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// mux.Handler only looks the route up; ServeHTTP also sets the path values.
+		if _, pattern := mux.Handler(r); pattern != "" {
+			mux.ServeHTTP(w, r)
+			return
+		}
+		next.ServeHTTP(w, r)
+	}), nil
+}
+
+// Validate reports a route that cannot be mounted: it needs a group and
+// version, a relative path, a handler, and the GET or POST method.
+func (r Route) Validate() error {
+	switch {
+	case r.API.Group == "" || r.API.Version == "":
+		return fmt.Errorf("raw route %s: group and version are required", r.Pattern())
+	case r.Path == "" || strings.HasPrefix(r.Path, "/"):
+		return fmt.Errorf("raw route %s: path must be relative and not empty", r.Pattern())
+	case r.Handler == nil:
+		return fmt.Errorf("raw route %s: handler is required", r.Pattern())
+	case r.Method != http.MethodGet && r.Method != http.MethodPost:
+		return fmt.Errorf("raw route %s: unsupported method", r.Pattern())
+	}
+	return nil
+}
+
+// register reports a duplicate pattern as an error; ServeMux panics on one.
+func register(mux *http.ServeMux, pattern string, h http.Handler) (err error) {
+	defer func() {
+		if p := recover(); p != nil {
+			err = fmt.Errorf("raw route %s: %v", pattern, p)
+		}
+	}()
+	mux.Handle(pattern, h)
+	return nil
 }

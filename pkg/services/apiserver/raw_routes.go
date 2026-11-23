@@ -3,7 +3,6 @@ package apiserver
 import (
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -27,14 +26,10 @@ func registerRawRoutes(apis routing.RouteRegister, routes []rawroutes.Route) err
 		}
 		pattern += rt.Path
 
-		switch {
-		case rt.API.Group == "" || rt.API.Version == "":
-			return fmt.Errorf("raw route %s %s: group and version are required", rt.Method, pattern)
-		case rt.Path == "" || strings.HasPrefix(rt.Path, "/"):
-			return fmt.Errorf("raw route %s %s: path must be relative and not empty", rt.Method, pattern)
-		case rt.Handler == nil:
-			return fmt.Errorf("raw route %s %s: handler is required", rt.Method, pattern)
-		case seen[rt.Method+" "+pattern]:
+		if err := rt.Validate(); err != nil {
+			return err
+		}
+		if seen[rt.Method+" "+pattern] {
 			return fmt.Errorf("raw route %s %s: registered more than once", rt.Method, pattern)
 		}
 		seen[rt.Method+" "+pattern] = true
@@ -45,13 +40,10 @@ func registerRawRoutes(apis routing.RouteRegister, routes []rawroutes.Route) err
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupNone),
 			rawRouteHandler(rt.Handler, rt.Namespaced),
 		}
-		switch rt.Method {
-		case http.MethodGet:
-			apis.Get(pattern, handlers...)
-		case http.MethodPost:
+		if rt.Method == http.MethodPost {
 			apis.Post(pattern, handlers...)
-		default:
-			return fmt.Errorf("raw route %s %s: unsupported method", rt.Method, pattern)
+		} else {
+			apis.Get(pattern, handlers...)
 		}
 	}
 	return nil
