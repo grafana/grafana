@@ -12,7 +12,7 @@ describe('ProvisionedCommitSuccess', () => {
       />
     );
 
-    expect(screen.getByText('Committed to main.')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Committed to main.');
     expect(screen.getByText(/already live in Grafana for everyone in your organization/i)).toBeInTheDocument();
     expect(screen.queryByText('Your branch')).not.toBeInTheDocument();
   });

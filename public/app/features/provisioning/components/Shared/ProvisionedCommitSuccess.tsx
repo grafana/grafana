@@ -24,7 +24,7 @@ export function ProvisionedCommitSuccess({ outcome }: Props) {
     <Stack direction="column" gap={3}>
       <Stack direction="row" gap={1} alignItems="flex-start">
         <Icon name="check-circle" className={styles.successIcon} />
-        <Stack direction="column" gap={0.5}>
+        <Stack direction="column" gap={0.5} role="status">
           <Text weight="medium">
             {isDirect ? getDirectHeadline(branch || configuredBranch) : getBranchHeadline(action, provider)}
           </Text>
