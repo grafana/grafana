@@ -288,7 +288,7 @@ export function QueryHeader({
             });
 
             setShowConfirm(false);
-            copyTextToClipboard(query.rawSql!).catch();
+            copyTextToClipboard(query.rawSql!).catch(() => {});
             onChange({
               ...query,
               rawSql: toRawSql(query),
