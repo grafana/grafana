@@ -19,9 +19,8 @@ permissions: {}
 jobs:
   check:
     name: Check PR is eligible
-    # Deploys are restricted to org members commenting /deploy-to-fs on
-    # non-fork PRs. Pushes to a PR that has already opted in (has the label)
-    # redeploy automatically.
+    # Fork previews require a new trusted comment for each build. Only PRs
+    # from this repository can opt in to automatic deploys with the label.
     if: |
       github.repository == 'grafana/grafana' &&
       (
@@ -30,18 +29,20 @@ jobs:
           startsWith(github.event.comment.body, '/deploy-to-fs') &&
           (github.event.comment.author_association == 'MEMBER' || github.event.comment.author_association == 'OWNER')) ||
         (github.event_name == 'pull_request' &&
-          github.event.pull_request.head.repo.fork == false &&
+          github.event.pull_request.head.repo.full_name == github.repository &&
           contains(github.event.pull_request.labels.*.name, 'deploy-frontend-preview'))
       )
     runs-on: ubuntu-arm64-small
     permissions:
       pull-requests: read
+      id-token: write # required for the employee membership check
     outputs:
-      should-deploy: ${{ steps.check.outputs.should-deploy }}
+      should-deploy: ${{ steps.check.outputs.should-deploy == 'true' && (steps.check.outputs.is-fork == 'false' || steps.staff.outputs.active == 'true') }}
       pr-number: ${{ steps.check.outputs.pr-number }}
       head-sha: ${{ steps.check.outputs.head-sha }}
+      is-fork: ${{ steps.check.outputs.is-fork }}
       has-backend-changes: ${{ steps.check.outputs.has-backend-changes }}
-      backend-only: ${{ steps.check.outputs.backend-only }}
+      backend-only: ${{ steps.check.outputs.backend-only == 'true' && (steps.check.outputs.is-fork == 'false' || steps.staff.outputs.active == 'true') }}
     steps:
       - name: Check PR is eligible for a frontend preview
         id: check
@@ -50,6 +51,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.issue.number || github.event.pull_request.number }}
           REPO: ${{ github.repository }}
+          EVENT_NAME: ${{ github.event_name }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
         run: |
           set -euo pipefail
 
@@ -86,8 +89,13 @@ jobs:
           done <<< "$files"
 
           should_deploy=false
-          if [ "$is_fork" = "false" ] && [ "$backend_only" = "false" ]; then
-            should_deploy=true
+          if [ -n "$head_repo" ] && [ "$backend_only" = "false" ]; then
+            if [ "$is_fork" = "false" ]; then
+              should_deploy=true
+            elif [ "$EVENT_NAME" = "issue_comment" ] && [ "$RUN_ATTEMPT" = "1" ]; then
+              # Fork deploys also require the staff check below.
+              should_deploy=true
+            fi
           fi
 
           {
@@ -96,14 +104,36 @@ jobs:
             echo "backend-only=${backend_only}"
             echo "pr-number=${PR_NUMBER}"
             echo "head-sha=${head_sha}"
+            echo "is-fork=${is_fork}"
           } >> "$GITHUB_OUTPUT"
 
           echo "PR #${PR_NUMBER}: should-deploy=${should_deploy} (has-backend-changes=${has_backend_changes}, backend-only=${backend_only}, is-fork=${is_fork}), head-sha=${head_sha}"
 
+      - name: Get a token to read Grafana team membership
+        if: |
+          github.event_name == 'issue_comment' && github.run_attempt == 1 &&
+          github.event.comment.user.type == 'User' && github.event.comment.body == '/deploy-to-fs' &&
+          steps.check.outputs.is-fork == 'true'
+        id: membership-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # v0.3.1
+        with:
+          github_app: grafana-pr-automation
+          permission_set: frontend-preview-membership
+
+      - name: Check that the commenter is a Grafana employee
+        id: staff
+        if: steps.membership-token.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ steps.membership-token.outputs.token }}
+          COMMENTER: ${{ github.event.comment.user.login }}
+        run: |
+          state=$(gh api "orgs/grafana/teams/all-staff/memberships/${COMMENTER}" --jq .state)
+          if [ "$state" = "active" ]; then
+            echo "active=true" >> "$GITHUB_OUTPUT"
+          fi
+
   label:
-    name: Label PR for future deploys
-    # The label records the opt-in so pushes to the PR redeploy the preview
-    # without another comment.
+    name: Acknowledge preview request
     needs: check
     if: github.event_name == 'issue_comment' && needs.check.outputs.should-deploy == 'true'
     runs-on: ubuntu-arm64-small
@@ -117,8 +147,11 @@ jobs:
           REPO: ${{ github.repository }}
           PR_NUMBER: ${{ needs.check.outputs.pr-number }}
           COMMENT_ID: ${{ github.event.comment.id }}
+          IS_FORK: ${{ needs.check.outputs.is-fork }}
         run: |
-          gh api "repos/${REPO}/issues/${PR_NUMBER}/labels" -f "labels[]=deploy-frontend-preview"
+          if [ "$IS_FORK" = "false" ]; then
+            gh api "repos/${REPO}/issues/${PR_NUMBER}/labels" -f "labels[]=deploy-frontend-preview"
+          fi
           gh api "repos/${REPO}/issues/comments/${COMMENT_ID}/reactions" -f content=rocket
 
   comment-backend-only:
@@ -164,36 +197,97 @@ jobs:
   build:
     name: Build frontend
     needs: check
-    if: needs.check.outputs.should-deploy == 'true'
-    runs-on: ubuntu-x64-large
-    # Only runs that passed the check gate reach this job, so unrelated
-    # comments never join the group. A newer push cancels a stale in-flight
-    # build, which has no external side effects.
+    if: needs.check.outputs.should-deploy == 'true' && (needs.check.outputs.is-fork == 'false' || github.run_attempt == 1)
+    runs-on: ${{ needs.check.outputs.is-fork == 'true' && 'ubuntu-24.04' || 'ubuntu-x64-large' }}
+    # A newer eligible request cancels a stale build without interrupting an upload.
     concurrency:
       group: ${{ github.workflow }}-build-${{ needs.check.outputs.pr-number }}
       cancel-in-progress: true
     permissions:
       contents: read
     steps:
+      - name: Checkout trusted Node.js version
+        if: needs.check.outputs.is-fork == 'true'
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          sparse-checkout: .nvmrc
+          sparse-checkout-cone-mode: false
+          path: preview-config
+          persist-credentials: false
       - name: Checkout PR code
         uses: actions/checkout@v6
         with:
           ref: ${{ needs.check.outputs.head-sha }}
+          path: ${{ needs.check.outputs.is-fork == 'true' && 'preview-source' || '.' }}
           persist-credentials: false
       - name: Set up Node.js
+        if: needs.check.outputs.is-fork == 'false'
+        # Only the internal build uses local actions from the checkout.
         uses: ./.github/actions/setup-node
-
-
       - name: Restore or build frontend
+        if: needs.check.outputs.is-fork == 'false'
         uses: ./.github/actions/build-frontend
         with:
           sourcemaps: 'false'
+
+      # issue_comment runs in the default branch's cache scope. Do not expose
+      # runner credentials, cache APIs, or workflow command files to fork code.
+      - name: Build fork frontend in a container
+        if: needs.check.outputs.is-fork == 'true'
+        timeout-minutes: 60
+        shell: bash
+        run: |
+          node_version=$(<preview-config/.nvmrc)
+          [[ "$node_version" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          image="node:${node_version#v}-bookworm"
+          mkdir preview-output
+
+          # Treat output from the container as logs, not workflow commands.
+          marker=$(openssl rand -hex 16)
+          echo "::stop-commands::$marker"
+          trap 'echo "::$marker::"' EXIT
+          docker run --rm \
+            --user "$(id -u):$(id -g)" --cap-drop ALL --security-opt no-new-privileges \
+            --mount "type=bind,src=$GITHUB_WORKSPACE/preview-source,dst=/checkout,readonly" \
+            --mount "type=bind,src=$GITHUB_WORKSPACE/preview-output,dst=/out" \
+            --env HOME=/tmp --env CI=true --env NO_SOURCEMAP=1 \
+            --env PUPPETEER_SKIP_DOWNLOAD=true --env CYPRESS_INSTALL_BINARY=0 \
+            --entrypoint bash "$image" -ec '
+              # Keep the host checkout intact for the post-build cleanup.
+              cp -RP /checkout /tmp/src
+              cd /tmp/src
+              manager=$(node -p "require(\"./package.json\").packageManager")
+              npm exec --yes --package="$manager" -- bash -ec "
+                pnpm install --frozen-lockfile
+                make build-js
+              "
+              cp -a dist/frontend /out/
+            '
+
+      - name: Check fork artifact contains only regular files
+        if: needs.check.outputs.is-fork == 'true'
+        shell: bash
+        run: |
+          # Artifact upload follows links. Check ancestors before traversing.
+          for dir in preview-output preview-output/frontend; do
+            if [[ -L "$dir" || ! -d "$dir" ]]; then
+              echo "Invalid fork artifact directory"
+              exit 1
+            fi
+          done
+          invalid=$(find preview-output/frontend ! -type f ! -type d -print -quit)
+          if [[ -n "$invalid" ]]; then
+            echo "Fork artifact contains a link or a special file"
+            exit 1
+          fi
 
       - name: Upload build artifact
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: frontend-preview-build
-          path: dist/frontend/
+          path: ${{ needs.check.outputs.is-fork == 'true' && 'preview-output/frontend/' || 'dist/frontend/' }}
+          if-no-files-found: error
           retention-days: 1
 
   deploy:
@@ -201,10 +295,10 @@ jobs:
     # Uploads from a separate job so the OIDC-enabled step never runs
     # alongside code built from the PR.
     needs: [check, build]
+    if: needs.check.outputs.is-fork == 'false' || github.run_attempt == 1
     runs-on: ubuntu-arm64-small
     # Never cancel an in-flight upload. Newer deploys queue behind it; GitHub
-    # keeps only the newest pending job in the group, so the last push always
-    # deploys last.
+    # keeps only the newest pending job in the group.
     concurrency:
       group: ${{ github.workflow }}-deploy-${{ needs.check.outputs.pr-number }}
       cancel-in-progress: false
@@ -238,8 +332,17 @@ jobs:
 
       # Upload the assets manifest last to help make uploads more atomic.
       - name: Stage manifests to upload last
+        env:
+          IS_FORK: ${{ needs.check.outputs.is-fork }}
         run: |
           mkdir -p preview-manifest
+          if [ "$IS_FORK" = "true" ]; then
+            manifest=dist/frontend/build/assets-manifest.json
+            test -f "$manifest"
+            test ! -L "$manifest"
+            test "$(wc -c < "$manifest")" -le 10485760
+            jq -es 'length == 1 and (.[0] | type == "object")' "$manifest" > /dev/null
+          fi
           mv dist/frontend/build/assets-manifest*.json preview-manifest/
 
       - name: Upload assets (manifests excluded)
@@ -278,12 +381,16 @@ jobs:
           DEPLOY_NAME: ${{ steps.deploy-name.outputs.deploy-name }}
           HEAD_SHA: ${{ needs.check.outputs.head-sha }}
           PREVIEW_URL: ${{ steps.preview-url.outputs.url }}
+          IS_FORK: ${{ needs.check.outputs.is-fork }}
         run: |
           {
             echo "## Frontend preview deployed 🚀"
             echo ""
             echo "- Deploy name: \`${DEPLOY_NAME}\` (commit ${HEAD_SHA})"
             echo "- Load it at: ${PREVIEW_URL}"
+            if [ "$IS_FORK" = "true" ]; then
+              echo "- This preview runs fork code in your session on the preview stack."
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Update comment to say the preview is live
@@ -297,8 +404,8 @@ jobs:
 
             ✅ The preview for commit ${{ needs.check.outputs.head-sha }} is live: **[open the preview](${{ steps.preview-url.outputs.url }})**.
 
-            - Each new push to this PR builds and deploys the preview again automatically.
-            - Share the above link for others to preview it in their browsers too.
+            ${{ needs.check.outputs.is-fork == 'true' && '- This preview runs fork code in your session on the preview stack. Open it only if you trust the commit listed above.' || '- Each new push to this PR builds and deploys the preview again automatically.' }}
+            ${{ needs.check.outputs.is-fork == 'true' && '- A Grafana employee must comment `/deploy-to-fs` again to build and deploy a newer commit.' || '- Share the above link for others to preview it in their browsers too.' }}
 
             ${{ needs.check.outputs.has-backend-changes == 'true' && '⚠️ **Warning:** this PR contains backend changes. The preview only swaps the frontend assets of an existing instance, so it may not work correctly.' || '' }}
 
@@ -343,4 +450,4 @@ jobs:
           message: |
             ### Frontend preview
 
-            ⚠️ The preview deploy for commit ${{ needs.check.outputs.head-sha }} was cancelled ([workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})). If a newer push superseded it, that run will update this comment when it finishes. Any previously deployed preview is still live.
+            ⚠️ The preview deploy for commit ${{ needs.check.outputs.head-sha }} was cancelled ([workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})). If a newer request superseded it, that run will update this comment when it finishes. Any previously deployed preview is still live.
