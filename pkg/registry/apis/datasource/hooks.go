@@ -51,8 +51,13 @@ func (s *unifiedDatasourceStorage) Update(ctx context.Context, name string, info
 	return obj, true, nil
 }
 
-// Defaults are written once by the REST store. Consume the explicit default
-// before unified storage's annotation hook can run on a create or upsert.
+// During migration the REST store grants defaults on create, even when the
+// client omits grafana.app/grant-permissions. Consume an explicit "default"
+// before UniStore processes it, including when a PUT creates the datasource.
+// Once clients that need defaults send the annotation, the IAM app serves
+// datasource permissions in every Cloud cluster, and UniStore is authoritative
+// for datasource writes, replace this logic with UniStore's permissions hook.
+// At that point only creates annotated with "default" should receive grants.
 func consumeDefaultPermissionsAnnotation(obj runtime.Object) error {
 	meta, err := utils.MetaAccessor(obj)
 	if err != nil {
