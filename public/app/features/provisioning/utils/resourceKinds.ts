@@ -216,7 +216,7 @@ export function getKindInfoByStatGroup(group?: string): ResourceKindInfo | undef
   return allKindInfos.find((info) => (group !== undefined && coversGroup(info, group)) || info.resource === group);
 }
 
-export function isResourceKindKey(key: string): key is ResourceKindKey {
+function isResourceKindKey(key: string): key is ResourceKindKey {
   return key in resourceKindInfos;
 }
 
