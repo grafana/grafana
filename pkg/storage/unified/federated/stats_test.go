@@ -285,26 +285,20 @@ func TestIntegrationLegacyTableIsStale(t *testing.T) {
 		}))
 	}
 
-	t.Run("no config means the legacy table is still the source of truth", func(t *testing.T) {
+	t.Run("no config means the legacy table is still the source of truth, even with a leftover kv_store marker", func(t *testing.T) {
 		s := &LegacyStatsGetter{}
 		withSession(t, func(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper) {
 			for _, resource := range LegacyCountedResources {
 				stale, err := s.legacyTableIsStale(sess, helper, resource)
 				require.NoError(t, err)
 				require.False(t, stale, resource)
-			}
-		})
-	})
 
-	t.Run("legacy kv_store marker no longer marks the table stale", func(t *testing.T) {
-		s := &LegacyStatsGetter{}
-		withSession(t, func(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper) {
-			for _, resource := range LegacyCountedResources {
-				_, err := sess.Exec("INSERT INTO "+helper.Table("kv_store")+" (org_id, namespace, "+helper.DB.Quote("key")+", value, created, updated) VALUES (0, ?, ?, ?, ?, ?)",
+				// Rows left by the removed kv_store lookup must not make the table stale.
+				_, err = sess.Exec("INSERT INTO "+helper.Table("kv_store")+" (org_id, namespace, "+helper.DB.Quote("key")+", value, created, updated) VALUES (0, ?, ?, ?, ?, ?)",
 					"unified_storage.is_migrated", resource, "true", time.Now(), time.Now())
 				require.NoError(t, err)
 
-				stale, err := s.legacyTableIsStale(sess, helper, resource)
+				stale, err = s.legacyTableIsStale(sess, helper, resource)
 				require.NoError(t, err)
 				require.False(t, stale, resource)
 			}
