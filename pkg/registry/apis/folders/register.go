@@ -345,7 +345,8 @@ func (b *FolderAPIBuilder) storageForVersion(
 	b.storage = newCascadeDeleteStorage(b.storage, b.searcher, b.dashboardClient, b.variableClient, b.contentsDeleter, b.accessClient)
 
 	storage := map[string]rest.Storage{}
-	storage[folders.StoragePath()] = b.storage
+	// Filter API list responses here so internal storage consumers keep full visibility.
+	storage[folders.StoragePath()] = newFolderListStorage(b.storage)
 	// Status writes go straight to the unified store: the ST and cascade wrappers only override
 	// Create/Delete, and the status strategy keeps spec and metadata intact.
 	storage[folders.StoragePath("status")] = grafanaregistry.NewStatusREST(unified, newFolderStatusStrategy(opts.Scheme, folders.GroupVersion()))

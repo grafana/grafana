@@ -24,6 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	"k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/client-go/kubernetes/scheme"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -64,7 +65,7 @@ func TestFolderListFilterStorage(t *testing.T) {
 
 	store := grafanarest.NewMockStorage(t)
 	store.On("List", ctx, (*internalversion.ListOptions)(nil)).Return(list, nil).Once()
-	result, err := (&cascadeDeleteStorage{Storage: store}).List(ctx, nil)
+	result, err := newFolderListStorage(store).List(ctx, nil)
 	require.NoError(t, err)
 	filtered := result.(*folders.FolderList)
 	require.Len(t, filtered.Items, 3)
@@ -89,13 +90,34 @@ func TestFolderListFilterStorage(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			store := grafanarest.NewMockStorage(t)
 			store.On("List", tc.ctx, (*internalversion.ListOptions)(nil)).Return(sourceList.DeepCopy(), nil).Once()
-			result, err := (&cascadeDeleteStorage{Storage: store}).List(tc.ctx, nil)
+			result, err := newFolderListStorage(store).List(tc.ctx, nil)
 			require.NoError(t, err)
 			serviceFiltered := result.(*folders.FolderList)
 			require.Len(t, serviceFiltered.Items, 5)
 			require.NotNil(t, serviceFiltered.RemainingItemCount)
 		})
 	}
+}
+
+func TestFolderListStoragePreservesOptionalInterfaces(t *testing.T) {
+	plain := newFolderListStorage(&fakeFolderStorage{})
+	_, hasWatch := plain.(rest.Watcher)
+	_, hasCollectionDelete := plain.(rest.CollectionDeleter)
+	require.False(t, hasWatch)
+	require.False(t, hasCollectionDelete)
+
+	inner := &watchableFolderStorage{fakeFolderStorage: &fakeFolderStorage{existing: map[string]*folders.Folder{}}}
+	wrapped := newFolderListStorage(inner)
+	watcher, hasWatch := wrapped.(rest.Watcher)
+	deleter, hasCollectionDelete := wrapped.(rest.CollectionDeleter)
+	require.True(t, hasWatch)
+	require.True(t, hasCollectionDelete)
+	_, err := watcher.Watch(context.Background(), nil)
+	require.NoError(t, err)
+	_, err = deleter.DeleteCollection(context.Background(), nil, nil, nil)
+	require.NoError(t, err)
+	require.True(t, inner.watched)
+	require.True(t, inner.deletedCollection)
 }
 
 func TestFolderStorageCreateLogsOriginalError(t *testing.T) {
