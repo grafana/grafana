@@ -1017,3 +1017,68 @@ func TestSendWithRecover(t *testing.T) {
 		require.NoError(t, sc.sendWithRecover(fakeSender{send: func() error { return nil }}, newMsg()))
 	})
 }
+
+// startQuitRecordingSmtpServer accepts one connection, speaks just enough SMTP
+// to reach DATA, and signals on the returned channel when the client sends QUIT.
+func startQuitRecordingSmtpServer(t *testing.T) (port int, quit <-chan struct{}) {
+	t.Helper()
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = ln.Close() })
+
+	quitCh := make(chan struct{})
+	go func() {
+		conn, err := ln.Accept()
+		if err != nil {
+			return
+		}
+		defer func() { _ = conn.Close() }()
+
+		reply := func(s string) { _, _ = conn.Write([]byte(s + "\r\n")) }
+		reply("220 test ESMTP")
+		r := bufio.NewReader(conn)
+		for {
+			line, err := r.ReadString('\n')
+			if err != nil {
+				return
+			}
+			switch cmd := strings.ToUpper(strings.TrimSpace(line)); {
+			case strings.HasPrefix(cmd, "EHLO"), strings.HasPrefix(cmd, "HELO"), strings.HasPrefix(cmd, "MAIL"), strings.HasPrefix(cmd, "RCPT"):
+				reply("250 OK")
+			case cmd == "DATA":
+				reply("354 go ahead")
+			case cmd == "QUIT":
+				reply("221 bye")
+				close(quitCh)
+				return
+			}
+		}
+	}()
+
+	return ln.Addr().(*net.TCPAddr).Port, quitCh
+}
+
+func TestDialAndSendClosesConnectionAfterSendPanic(t *testing.T) {
+	port, quit := startQuitRecordingSmtpServer(t)
+	dialer := gomail.NewDialer("127.0.0.1", port, "", "")
+	dialer.StartTLSPolicy = gomail.NoStartTLS
+
+	msg := gomail.NewMessage()
+	msg.SetHeader("From", "from@example.com")
+	msg.SetHeader("To", "rcpt@example.com")
+	msg.SetBody("text/plain", "hello world")
+	msg.Attach("report.pdf", gomail.SetCopyFunc(func(io.Writer) error {
+		panic("boom")
+	}))
+	client := newTestSmtpClient(t, setting.NewCfg())
+
+	var err error
+	require.NotPanics(t, func() { err = client.dialAndSend([]*gomail.Dialer{dialer}, msg) })
+
+	require.ErrorContains(t, err, "panic while sending email")
+	select {
+	case <-quit:
+	case <-time.After(5 * time.Second):
+		t.Fatal("the connection was not closed after the send panicked")
+	}
+}
