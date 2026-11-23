@@ -10,7 +10,8 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
 
 import { edit } from '../../actions/utils/edit';
-import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
+import { getConditionalRenderingEditor } from '../../conditional-rendering/utils/getConditionalRenderingEditor';
+import { trackPanelSettingChange } from '../../utils/trackPanelSettingChange';
 
 import { type DashboardGridItem } from './DashboardGridItem';
 
@@ -55,7 +56,7 @@ export function getDashboardGridItemOptions(gridItem: DashboardGridItem): Option
       })
     );
 
-  const conditionalRenderingCategory = useConditionalRenderingEditor(
+  const conditionalRenderingCategory = getConditionalRenderingEditor(
     undefined,
     <div>
       <Trans i18nKey="dashboard.conditional-rendering.editor.not-supported-for-custom-grid">
@@ -106,6 +107,9 @@ function RepeatDirectionOption({ gridItem }: OptionComponentProps) {
           perform: () => gridItem.setRepeatDirection(value),
           undo: () => gridItem.setRepeatDirection(repeatDirection ?? 'h'),
         });
+        if (value !== (repeatDirection ?? 'h')) {
+          trackPanelSettingChange(gridItem.state.body, 'change_panel_repeat_direction');
+        }
       }}
     />
   );
@@ -131,6 +135,9 @@ function MaxPerRowOption({ gridItem, id }: OptionComponentProps & { id?: string 
           perform: () => gridItem.setMaxPerRow(value.value),
           undo: () => gridItem.setMaxPerRow(maxPerRow ?? 4),
         });
+        if (value.value !== (maxPerRow ?? 4)) {
+          trackPanelSettingChange(gridItem.state.body, 'change_panel_max_per_row');
+        }
       }}
     />
   );
@@ -162,6 +169,7 @@ function RepeatByOption({ gridItem, id }: OptionComponentProps & { id?: string }
           perform: () => handleStateChange(value),
           undo: () => handleStateChange(variableName),
         });
+        trackPanelSettingChange(gridItem.state.body, 'change_panel_repeat');
       }
     },
     [gridItem, handleStateChange, variableName]

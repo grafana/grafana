@@ -210,7 +210,13 @@ type RecordingRuleSettings struct {
 	// MaxWriteConcurrency bounds how many split requests run in parallel.
 	// Ignored if MaxWriteBatchSize is 0. 0 defaults to 1 (sequential).
 	MaxWriteConcurrency int
+	// MaxTrackedSeries caps the series remembered for stale markers across all recording rules.
+	// 0 means no limit.
+	MaxTrackedSeries int64
 }
+
+// DefaultMaxTrackedSeries is about 1.2 to 1.5 GiB of memory, estimated from profiles of the stale marker series set.
+const DefaultMaxTrackedSeries = 1_000_000
 
 // RemoteAlertmanagerSettings contains the configuration needed
 // to disable the internal Alertmanager and use an external one instead.
@@ -637,6 +643,11 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		DefaultDatasourceUID: rr.Key("default_datasource_uid").MustString(""),
 		MaxWriteBatchSize:    rr.Key("max_write_batch_size").MustInt(0),
 		MaxWriteConcurrency:  rr.Key("max_write_concurrency").MustInt(0),
+
+		MaxTrackedSeries: rr.Key("max_tracked_series").MustInt64(DefaultMaxTrackedSeries),
+	}
+	if uaCfgRecordingRules.MaxTrackedSeries < 0 {
+		return fmt.Errorf("setting 'max_tracked_series' is invalid, only 0 or a positive integer are allowed")
 	}
 	if bs := uaCfgRecordingRules.MaxWriteBatchSize; bs != 0 && bs < recordingRulesMinWriteBatchSize {
 		return fmt.Errorf("setting 'max_write_batch_size' is invalid, only 0 or a value of at least %d bytes is allowed", recordingRulesMinWriteBatchSize)

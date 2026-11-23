@@ -96,7 +96,7 @@ func (tc *starsTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) bool {
 		}, 5*time.Second, 100*time.Millisecond)
 	}
 
-	return true // will exist in mode0
+	return false // always mode5: legacy rows are not served over k8s until migrated
 }
 
 func (tc *starsTestCase) Verify(t *testing.T, helper *apis.K8sTestHelper, shouldExist bool) {

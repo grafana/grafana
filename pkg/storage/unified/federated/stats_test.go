@@ -270,8 +270,7 @@ func TestIntegrationLegacyTableIsStale(t *testing.T) {
 		}}
 	}
 
-	// legacyTableIsStale queries kv_store when Cfg is nil, so every case needs a real
-	// session/helper, even the ones exercising the config-based fast path.
+	// Every case needs a real session/helper, even the ones exercising the config-based fast path.
 	// The check itself must run inside the WithDbSession callback -- the session isn't
 	// valid once that callback returns.
 	withSession := func(t *testing.T, check func(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper)) {
@@ -289,9 +288,11 @@ func TestIntegrationLegacyTableIsStale(t *testing.T) {
 	t.Run("no config means the legacy table is still the source of truth", func(t *testing.T) {
 		s := &LegacyStatsGetter{}
 		withSession(t, func(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper) {
-			stale, err := s.legacyTableIsStale(sess, helper, alertRuleResource)
-			require.NoError(t, err)
-			require.False(t, stale)
+			for _, resource := range LegacyCountedResources {
+				stale, err := s.legacyTableIsStale(sess, helper, resource)
+				require.NoError(t, err)
+				require.False(t, stale, resource)
+			}
 		})
 	})
 
@@ -358,22 +359,28 @@ func TestIntegrationLegacyTableIsStale(t *testing.T) {
 		}))
 	})
 
-	t.Run("nil Cfg falls back to the per-stack kv_store marker", func(t *testing.T) {
+	t.Run("library panels migration makes legacy counts stale without config", func(t *testing.T) {
+		ctx := context.Background()
+		testDB, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		require.NoError(t, migrations.EnsureMigrationLogTable(ctx, testDB, cfg))
+		helper, err := legacysql.NewDatabaseProvider(testDB)(ctx)
+		require.NoError(t, err)
 		s := &LegacyStatsGetter{}
-		withSession(t, func(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper) {
-			_, err := sess.Exec("INSERT INTO "+helper.Table("kv_store")+" (org_id, namespace, "+helper.DB.Quote("key")+", value, created, updated) VALUES (0, ?, ?, ?, ?, ?)",
-				migratedKVNamespace, alertRuleResource, migratedKVValue, time.Now(), time.Now())
-			require.NoError(t, err)
-
-			stale, err := s.legacyTableIsStale(sess, helper, alertRuleResource)
-			require.NoError(t, err)
-			require.True(t, stale)
-
-			// A different resource's key must not be affected.
-			stale, err = s.legacyTableIsStale(sess, helper, recordingRuleResource)
+		require.NoError(t, testDB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			stale, err := s.legacyTableIsStale(sess, helper, libraryPanelResource)
 			require.NoError(t, err)
 			require.False(t, stale)
-		})
+
+			_, err = sess.Exec("INSERT INTO "+helper.Table(migrationLogTable)+" ("+helper.DB.Quote("migration_id")+", "+
+				helper.DB.Quote("sql")+", "+helper.DB.Quote("success")+", "+helper.DB.Quote("error")+", "+
+				helper.DB.Quote("timestamp")+") VALUES (?, ?, ?, ?, ?)",
+				libraryPanelMigration, "test", true, "", time.Now())
+			require.NoError(t, err)
+			stale, err = s.legacyTableIsStale(sess, helper, libraryPanelResource)
+			require.NoError(t, err)
+			require.True(t, stale)
+			return nil
+		}))
 	})
 }
 
@@ -446,12 +453,12 @@ func TestIntegrationLegacyStatsRecordsFailedStalenessCheck(t *testing.T) {
 
 	testDB, _ := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	ctx := request.WithNamespace(context.Background(), "default")
-	// With no Cfg the staleness check reads kv_store. Pointing it at a table that doesn't exist
-	// makes the check fail without touching the shared test database.
+	// Pointing the alert rule table at a name that doesn't exist makes the count fail
+	// without touching the shared test database.
 	provider := func(context.Context) (*legacysql.LegacyDatabaseHelper, error) {
 		return &legacysql.LegacyDatabaseHelper{DB: testDB, Table: func(n string) string {
-			if n == "kv_store" {
-				return "kv_store_missing"
+			if n == "alert_rule" {
+				return "alert_rule_missing"
 			}
 			return n
 		}}, nil

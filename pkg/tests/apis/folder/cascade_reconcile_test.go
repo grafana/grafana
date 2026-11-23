@@ -208,7 +208,14 @@ func TestFolderCascadeReconcile(t *testing.T) {
 			dashes:  dyn.Resource(dashv1.DashboardResourceInfo.GroupVersionResource()).Namespace(ns),
 			lister:  lister,
 			ns:      ns,
-			r:       &cascadedelete.Reconciler{Children: lister, Deleter: clients, Folders: clients, BatchSize: batchSize},
+			r: &cascadedelete.Reconciler{
+				Handlers: []cascadedelete.KindHandler{
+					{Kind: cascadedelete.ChildFolder, Lister: lister, Deleter: clients},
+					{Kind: cascadedelete.ChildDashboard, Lister: lister, Deleter: clients},
+				},
+				Folders:   clients,
+				BatchSize: batchSize,
+			},
 		}
 	}
 

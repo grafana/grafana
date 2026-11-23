@@ -4,7 +4,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Box, Combobox, type ComboboxOption, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
-import { CodeMirrorEditor } from '@grafana/ui/unstable';
+import { InternalCodeMirrorEditor } from '@grafana/ui/internal';
 import { type CellContentKind } from 'app/features/notebook/types';
 
 import {
@@ -111,13 +111,13 @@ export function CodeCell({
   // render, but whether this cell has the behavior at all doesn't.
   const onNavigateRef = useRef(onNavigate);
   onNavigateRef.current = onNavigate;
+  const hasOnNavigate = Boolean(onNavigate);
   const navigateExt = useMemo(() => {
-    if (!onNavigate) {
+    if (!hasOnNavigate) {
       return [];
     }
     return navigationKeymap((direction) => onNavigateRef.current?.(direction));
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- the ref is always current; only whether onNavigate exists at all should rebuild this
-  }, [Boolean(onNavigate)]);
+  }, [hasOnNavigate]);
 
   if (content.kind !== 'Code') {
     return null;
@@ -165,7 +165,7 @@ export function CodeCell({
       </Stack>
 
       <Box borderStyle="solid" borderColor="weak" borderRadius="default" padding={1}>
-        <CodeMirrorEditor
+        <InternalCodeMirrorEditor
           value={code}
           language={toCodeMirrorLanguage(language)}
           // Grows with its content: a notebook is a document, so a cell that scrolls internally

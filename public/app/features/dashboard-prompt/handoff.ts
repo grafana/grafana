@@ -1,4 +1,5 @@
 import { createAssistantContextItem, type ChatContextItem, openAssistant } from '@grafana/assistant';
+import { locationService } from '@grafana/runtime';
 
 import { PROMPT_ORIGIN, MAX_LISTED_DATASOURCES, formatDashboardRefs, formatDatasources } from './prompts';
 import { type PromptDashboardRef, type PromptDatasource } from './types';
@@ -46,6 +47,33 @@ export function startPlanningInAssistant(args: StartPlanningArgs): void {
     autoSend: true,
     prompt: args.displayPrompt,
     context: [planningItem, ...(args.context ?? [])],
+  });
+}
+
+interface OpenTemplateArgs {
+  /** The template's page (`TemplateSelection.url`), where it opens as a new, unsaved dashboard. */
+  templateUrl: string;
+  /** The user's request, shown as their message in the conversation. */
+  prompt: string;
+  /** Context items from the landing prompt, the template's among them. */
+  context: ChatContextItem[];
+}
+
+/**
+ * Starts from a picked template the way the template modal does: opens it as Use template does (a Grafana template
+ * on TestData, a custom template on its own data sources), then has the Assistant adapt the open dashboard, as
+ * Customize with Assistant does. There is no plan card: an accepted plan builds a new dashboard with
+ * create_dashboard, which would replace the open template.
+ */
+export function openTemplateInAssistant({ templateUrl, prompt, context }: OpenTemplateArgs): void {
+  // Navigate before opening, so the Assistant is less likely to note the blank dashboard as the current page.
+  locationService.push(templateUrl);
+  openAssistant({
+    origin: PROMPT_ORIGIN,
+    mode: 'dashboarding',
+    autoSend: true,
+    prompt,
+    context,
   });
 }
 

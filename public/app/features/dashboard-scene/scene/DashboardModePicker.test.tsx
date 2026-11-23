@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
@@ -69,9 +70,15 @@ function sidebarContext(assistant: 'available' | 'missing', docked = false): Ext
         : new Map(),
     extensionSidebarWidth: 300,
     setExtensionSidebarWidth: jest.fn(),
+    extensionSidebarHeight: 320,
+    setExtensionSidebarHeight: jest.fn(),
     floatingExtensionSidebarWidth: 480,
     setFloatingExtensionSidebarWidth: jest.fn(),
+    floatingHeightOptions: null,
+    floatingExtensionSidebarHeight: undefined,
+    setFloatingExtensionSidebarHeight: jest.fn(),
     presentation: 'docked',
+    dockSide: 'right',
     floatingHidden: false,
   };
 }
@@ -196,6 +203,20 @@ it('offers Composer while Assistant listens for dashboards, and drops it once no
 });
 
 describe('the mode menu', () => {
+  it('exposes e2e selectors for the picker button and the mode options', async () => {
+    await openPicker();
+
+    expect(screen.getByTestId(selectors.components.NavToolbar.editDashboard.modePickerButton)).toBe(
+      screen.getByRole('button', { name: /^Dashboard mode:/, hidden: true })
+    );
+    expect(screen.getByTestId(selectors.components.NavToolbar.editDashboard.modeViewingOption)).toBe(
+      screen.getByRole('menuitemradio', { name: /Viewing/ })
+    );
+    expect(screen.getByTestId(selectors.components.NavToolbar.editDashboard.modeEditingOption)).toBe(
+      screen.getByRole('menuitemradio', { name: /Editing/ })
+    );
+  });
+
   it('switches Viewing to Editing while Composer is available, without asking Assistant', async () => {
     const { user, scene } = await openPicker();
 

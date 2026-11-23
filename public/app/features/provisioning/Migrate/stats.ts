@@ -1,11 +1,6 @@
-import { API_GROUP as FOLDER_BUCKET } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { type ResourceStats } from 'app/api/clients/provisioning/v0alpha1';
 
-import { type ResourceKindInfo, resourceKindInfos } from '../utils/resourceKinds';
-
-// `folders` is the legacy storage group; the app-platform group is FOLDER_BUCKET.
-// Folders are the only kind the stats endpoint reports under two group names.
-const FOLDER_GROUPS: string[] = [FOLDER_BUCKET, 'folders'];
+import { type ResourceKindInfo, getKindInfoByStatGroup, resourceKindInfos } from '../utils/resourceKinds';
 
 /** Total and managed counts for a single resource type, shown in a KPI card. */
 interface MigrationTotals {
@@ -66,8 +61,9 @@ export function computeKindTotals(data: ResourceStats | undefined, kinds: Resour
  * `folders` group into the app-platform one.
  */
 export function computeFolderCounts(data: ResourceStats | undefined): FolderCounts {
+  const { folder } = resourceKindInfos;
   const isFolder = (group: string, resource: string) =>
-    FOLDER_GROUPS.includes(group) && resource === resourceKindInfos.folder.resource;
+    resource === folder.resource && getKindInfoByStatGroup(group) === folder;
 
   let total = 0;
   let managed = 0;

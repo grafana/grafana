@@ -176,7 +176,8 @@ describe('NotificationDetailPage', () => {
     expect(screen.getByLabelText('severity: critical')).toBeInTheDocument();
   });
 
-  it('renders more details section collapsed by default', async () => {
+  it('renders more details collapsed by default, then shows UUID when expanded', async () => {
+    const user = userEvent.setup();
     const notification = makeNotification();
     setHistorianNotifications([notification]);
 
@@ -186,16 +187,6 @@ describe('NotificationDetailPage', () => {
 
     expect(screen.getByText(/more details/i)).toBeInTheDocument();
     expect(screen.queryByText(notification.uuid)).not.toBeInTheDocument();
-  });
-
-  it('expands more details on click and shows UUID', async () => {
-    const user = userEvent.setup();
-    const notification = makeNotification();
-    setHistorianNotifications([notification]);
-
-    renderPage(notification.uuid, notification.timestamp);
-
-    await screen.findByText('Delivered successfully');
 
     await user.click(screen.getByText(/more details/i));
 

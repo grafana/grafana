@@ -30,7 +30,7 @@ func (b *Builder) SubresourceHandler(next http.Handler) http.Handler {
 		}},
 	}
 	if b.registersProxy() {
-		b.proxy = newProxy(b)
+		b.proxy = newProxy(b, b.proxyRoutes())
 		handlers["proxy"] = subresource{methods: forwardedMethods, handler: b.proxy}
 	}
 
@@ -90,6 +90,8 @@ func (b *Builder) Destroy() {
 	}
 }
 
+// registersProxy is whether the proxy subresource is served: only for the
+// routes the settings manifest declares.
 func (b *Builder) registersProxy() bool {
-	return len(b.pluginJSON.Routes) > 0 && b.opts.RegisterProxy
+	return b.opts.RegisterProxy && b.proxyRoutes() != nil
 }

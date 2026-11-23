@@ -84,6 +84,8 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		DashboardPanelQuerySpec{}.OpenAPIModelName():                                                                                        schema_pkg_apis_dashboard_v2_DashboardPanelQuerySpec(ref),
 		DashboardPanelSpec{}.OpenAPIModelName():                                                                                             schema_pkg_apis_dashboard_v2_DashboardPanelSpec(ref),
 		DashboardPreferences{}.OpenAPIModelName():                                                                                           schema_pkg_apis_dashboard_v2_DashboardPreferences(ref),
+		DashboardPrompt{}.OpenAPIModelName():                                                                                                schema_pkg_apis_dashboard_v2_DashboardPrompt(ref),
+		DashboardPromptSource{}.OpenAPIModelName():                                                                                          schema_pkg_apis_dashboard_v2_DashboardPromptSource(ref),
 		DashboardQueryGroupKind{}.OpenAPIModelName():                                                                                        schema_pkg_apis_dashboard_v2_DashboardQueryGroupKind(ref),
 		DashboardQueryGroupSpec{}.OpenAPIModelName():                                                                                        schema_pkg_apis_dashboard_v2_DashboardQueryGroupSpec(ref),
 		DashboardQueryOptionsSpec{}.OpenAPIModelName():                                                                                      schema_pkg_apis_dashboard_v2_DashboardQueryOptionsSpec(ref),
@@ -2385,6 +2387,21 @@ func schema_pkg_apis_dashboard_v2_DashboardFieldConfig(ref common.ReferenceCallb
 							Format:      "",
 						},
 					},
+					"varMappings": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Maps field-config property ids (e.g. `min`, `unit` or `custom.lineWidth`) to a dashboard-variable expression resolved at render time. The property's own value is the fallback when the expression doesn't resolve to a valid value for that property.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
@@ -3430,6 +3447,73 @@ func schema_pkg_apis_dashboard_v2_DashboardPreferences(ref common.ReferenceCallb
 	}
 }
 
+func schema_pkg_apis_dashboard_v2_DashboardPrompt(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "A prompt viewers can run on a dashboard, row, or tab, offered by plugins in its controls.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"text": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The prompt that is run. Viewers see it on the dashboard unless it has a title.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Description: "A short title viewers see on the dashboard instead of the prompt. Unset to show the prompt.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"sources": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The panels to answer it from. Unset for every panel in the dashboard, row, or tab the prompt is saved on.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(DashboardPromptSource{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"text"},
+			},
+		},
+		Dependencies: []string{
+			DashboardPromptSource{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2_DashboardPromptSource(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "A panel that a prompt is answered from.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"element": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The panel, by its name in dashboard.spec.elements.",
+							Default:     map[string]interface{}{},
+							Ref:         ref(DashboardElementReference{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"element"},
+			},
+		},
+		Dependencies: []string{
+			DashboardElementReference{}.OpenAPIModelName()},
+	}
+}
+
 func schema_pkg_apis_dashboard_v2_DashboardQueryGroupKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -4070,12 +4154,25 @@ func schema_pkg_apis_dashboard_v2_DashboardRowsLayoutRowSpec(ref common.Referenc
 							},
 						},
 					},
+					"prompts": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Prompts viewers can run on the panels in this row, offered by plugins in the row's controls.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(DashboardPrompt{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"layout"},
 			},
 		},
 		Dependencies: []string{
-			DashboardAnnotationQueryKind{}.OpenAPIModelName(), DashboardConditionalRenderingGroupKind{}.OpenAPIModelName(), DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind{}.OpenAPIModelName(), DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(), DashboardRowRepeatOptions{}.OpenAPIModelName()},
+			DashboardAnnotationQueryKind{}.OpenAPIModelName(), DashboardConditionalRenderingGroupKind{}.OpenAPIModelName(), DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind{}.OpenAPIModelName(), DashboardPrompt{}.OpenAPIModelName(), DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(), DashboardRowRepeatOptions{}.OpenAPIModelName()},
 	}
 }
 
@@ -4240,6 +4337,19 @@ func schema_pkg_apis_dashboard_v2_DashboardSpec(ref common.ReferenceCallback) co
 							},
 						},
 					},
+					"prompts": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Prompts viewers can run on the dashboard, offered by plugins in the dashboard controls.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(DashboardPrompt{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
 					"preferences": {
 						SchemaProps: spec.SchemaProps{
 							Ref: ref(DashboardPreferences{}.OpenAPIModelName()),
@@ -4250,7 +4360,7 @@ func schema_pkg_apis_dashboard_v2_DashboardSpec(ref common.ReferenceCallback) co
 			},
 		},
 		Dependencies: []string{
-			DashboardAnnotationQueryKind{}.OpenAPIModelName(), DashboardDashboardLink{}.OpenAPIModelName(), DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{}.OpenAPIModelName(), DashboardPanelKindOrLibraryPanelKind{}.OpenAPIModelName(), DashboardPreferences{}.OpenAPIModelName(), DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(), DashboardTimeSettingsSpec{}.OpenAPIModelName()},
+			DashboardAnnotationQueryKind{}.OpenAPIModelName(), DashboardDashboardLink{}.OpenAPIModelName(), DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{}.OpenAPIModelName(), DashboardPanelKindOrLibraryPanelKind{}.OpenAPIModelName(), DashboardPreferences{}.OpenAPIModelName(), DashboardPrompt{}.OpenAPIModelName(), DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(), DashboardTimeSettingsSpec{}.OpenAPIModelName()},
 	}
 }
 
@@ -4621,12 +4731,25 @@ func schema_pkg_apis_dashboard_v2_DashboardTabsLayoutTabSpec(ref common.Referenc
 							},
 						},
 					},
+					"prompts": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Prompts viewers can run on the panels in this tab, offered by plugins in the tab's controls.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(DashboardPrompt{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"layout"},
 			},
 		},
 		Dependencies: []string{
-			DashboardAnnotationQueryKind{}.OpenAPIModelName(), DashboardConditionalRenderingGroupKind{}.OpenAPIModelName(), DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{}.OpenAPIModelName(), DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(), DashboardTabRepeatOptions{}.OpenAPIModelName()},
+			DashboardAnnotationQueryKind{}.OpenAPIModelName(), DashboardConditionalRenderingGroupKind{}.OpenAPIModelName(), DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{}.OpenAPIModelName(), DashboardPrompt{}.OpenAPIModelName(), DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(), DashboardTabRepeatOptions{}.OpenAPIModelName()},
 	}
 }
 

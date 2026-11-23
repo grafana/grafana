@@ -223,8 +223,12 @@ const RouterStatusView = ({ status }: { status: RouterStatus }) => {
     }
     return counts;
   }, [status.groups]);
+  const hasSources = Boolean(status.sources?.length);
   const hasLookups = Boolean(status.stackLookups && Object.keys(status.stackLookups).length > 0);
-  const tab = requestedTab === 'lookups' && !hasLookups ? 'groups' : requestedTab;
+  const tab =
+    (requestedTab === 'lookups' && !hasLookups) || (requestedTab === 'sources' && !hasSources)
+      ? 'groups'
+      : requestedTab;
 
   const sources = useMemo(
     () => [...new Set(status.groups.map((g) => g.source))].sort().map((s) => ({ label: s, value: s })),
@@ -283,13 +287,15 @@ const RouterStatusView = ({ status }: { status: RouterStatus }) => {
             href={viewHref('groups', source)}
             onChangeTab={(e) => onPlainClick(e, () => switchTab('groups'))}
           />
-          <Tab
-            label={t('swagger.router-status.tab-sources', 'Sources')}
-            counter={status.sources?.length}
-            active={tab === 'sources'}
-            href={viewHref('sources', source)}
-            onChangeTab={(e) => onPlainClick(e, () => switchTab('sources'))}
-          />
+          {hasSources && (
+            <Tab
+              label={t('swagger.router-status.tab-sources', 'Sources')}
+              counter={status.sources?.length}
+              active={tab === 'sources'}
+              href={viewHref('sources', source)}
+              onChangeTab={(e) => onPlainClick(e, () => switchTab('sources'))}
+            />
+          )}
           {hasLookups && (
             <Tab
               label={t('swagger.router-status.tab-lookups', 'Stack lookups')}
@@ -502,9 +508,12 @@ function sourceColor(source: string): BadgeColor {
     case 'core':
       return 'brand';
     case 'plugins':
+    case 'local-plugin':
       return 'green';
     case 'bridge':
       return 'orange';
+    case 'embedded':
+      return 'blue';
   }
   return 'darkgrey';
 }
