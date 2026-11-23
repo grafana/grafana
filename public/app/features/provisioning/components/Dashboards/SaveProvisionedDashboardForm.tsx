@@ -53,7 +53,7 @@ import { getProvisionedRequestError } from '../utils/errors';
 import { validateProvisionedFolderName } from '../utils/folderName';
 import { ensureFolderPathTrailingSlash, joinPath, slugifyForFilename, splitPath } from '../utils/path';
 
-import { type DashboardCommitOutcome } from './ProvisionedDashboardOutcome';
+import { type DashboardCommitOutcome, ProvisionedDashboardOutcome } from './ProvisionedDashboardOutcome';
 import { type SaveProvisionedDashboardProps } from './SaveProvisionedDashboard';
 
 export interface Props extends SaveProvisionedDashboardProps {
@@ -106,6 +106,8 @@ export function SaveProvisionedDashboardForm({
   // what was written — on the update path getSaveModel() would re-include values the
   // save-option toggles omitted.
   const savedSpecRef = useRef<Dashboard | DashboardV2Spec | undefined>(undefined);
+  // Set while the commit lands, read when the report is published: the page move the drawer owes.
+  const deferredPageCloseRef = useRef<(() => Promise<void>) | undefined>(undefined);
   // The scene's own title/description/tags as the submit started. getSaveAsFields compares these
   // against the scene's current values to spot edits made while the request was in flight, so it
   // has to be the scene's pre-request state, not the values being committed.
@@ -293,21 +295,29 @@ export function SaveProvisionedDashboardForm({
       });
       dashboardWatcher.clearIgnoreSave();
       if (pendingChanges) {
-        // Showing the saved dashboard reloads the page, which would drop the drawer reporting the
-        // commit, so the drawer runs it when it closes.
-        drawer.afterReportedCommit = await finishCommittingPendingChanges(dashboard, pendingChanges, {
+        deferredPageCloseRef.current = await finishCommittingPendingChanges(dashboard, pendingChanges, {
           showSaved,
           deferPageClose: true,
         });
       }
     },
-    [dashboard, defaultValues.folder?.uid, pendingChanges, isNew, drawer]
+    [dashboard, defaultValues.folder?.uid, pendingChanges, isNew]
   );
 
-  // The outcome replaces the form, which an open diff hides, and the Changes tab is gone by then.
+  // The report replaces the form, which an open diff hides, and the Changes tab is gone by then.
   const reportCommit = useCallback(
-    (commitOutcome: DashboardCommitOutcome) => drawer.setState({ showDiff: false, commitOutcome }),
-    [drawer]
+    (outcome: DashboardCommitOutcome) =>
+      drawer.setState({
+        showDiff: false,
+        saveReport: {
+          content: <ProvisionedDashboardOutcome outcome={outcome} onDismiss={() => drawer.onClose()} />,
+          // Showing the saved dashboard reloads the page, which would drop the report, so the
+          // pending-changes transition waits for the drawer to close. Read then, not here: the
+          // commit that sets it is still settling when the report goes up.
+          afterClose: pendingChanges ? () => deferredPageCloseRef.current?.() ?? Promise.resolve() : undefined,
+        },
+      }),
+    [drawer, pendingChanges]
   );
 
   const onWriteSuccess = useCallback(

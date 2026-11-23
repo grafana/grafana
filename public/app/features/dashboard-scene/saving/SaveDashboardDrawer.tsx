@@ -1,17 +1,12 @@
+import { type ReactNode } from 'react';
+
 import { t } from '@grafana/i18n';
 import { type SceneComponentProps, SceneObjectBase, type SceneObjectState, type SceneObjectRef } from '@grafana/scenes';
-import { Box, Drawer, EmptyState, ScrollContainer, Spinner, Stack, Tab, TabsBar } from '@grafana/ui';
+import { Box, Drawer, EmptyState, ScrollContainer, Stack, Tab, TabsBar } from '@grafana/ui';
 import { AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
-import { FolderDeadEndAlert } from 'app/features/provisioning/components/Dashboards/FolderDeadEndAlert';
-import {
-  type DashboardCommitOutcome,
-  ProvisionedDashboardOutcome,
-} from 'app/features/provisioning/components/Dashboards/ProvisionedDashboardOutcome';
-import { SaveProvisionedDashboard } from 'app/features/provisioning/components/Dashboards/SaveProvisionedDashboard';
-import { useDashboardRepositoryView } from 'app/features/provisioning/hooks/useDashboardRepositoryView';
-import { RepoViewStatus } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
-import { getSaveTarget, type SaveTarget } from 'app/features/provisioning/hooks/useSaveRepositoryView';
+import { useDashboardSaveSlot } from 'app/features/provisioning/components/Dashboards/useDashboardSaveSlot';
+import { type SaveTarget } from 'app/features/provisioning/hooks/useSaveRepositoryView';
 import { type RecoverToNewBranch } from 'app/features/provisioning/types';
 
 import { SavePendingChangesForm } from '../lifecycle/SavePendingChangesForm';
@@ -24,7 +19,6 @@ import {
 
 import { SaveDashboardAsForm } from './SaveDashboardAsForm';
 import { SaveDashboardForm } from './SaveDashboardForm';
-import { SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
 import { getSaveAsTemplateForm } from './enterprise-components/SaveAsTemplateFormExtension';
 import { getSaveDashboardTemplateForm } from './enterprise-components/SaveDashboardTemplateFormExtension';
 import { isNewDashboard } from './shared';
@@ -45,8 +39,22 @@ interface SaveDashboardDrawerState extends SceneObjectState {
   recoverToNewBranch?: RecoverToNewBranch;
   /** Where a new save at the root of a folderless repository goes; unset means wherever the lookup says */
   saveTarget?: SaveTarget;
-  /** Set once a provisioned save lands; the drawer then reports it instead of offering a form. */
-  commitOutcome?: DashboardCommitOutcome;
+  /** Set once a save lands and reports itself in place; the drawer shows it instead of a form. */
+  saveReport?: SaveReport;
+}
+
+/**
+ * A completed save, reported inside the drawer by whichever form made it rather than by navigating
+ * away. The form owns the content, so the drawer needs to know nothing about what was saved or where
+ * it went — only that a report is showing, which is what retires its form and its diff.
+ */
+export interface SaveReport {
+  content: ReactNode;
+  /**
+   * A page transition the save still owes, run once the drawer closes. A transition made any earlier
+   * would reload the page and take the report with it.
+   */
+  afterClose?: () => Promise<void>;
 }
 
 /** Title and description a save form shows, so a form swap can hand them to the next one */
@@ -63,26 +71,20 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
    */
   public saveFormDraft: SaveFormDraft | undefined;
 
-  /**
-   * A page transition a landed commit still owes, run once the drawer reporting that commit closes.
-   * Set by the provisioned form, because the transition would otherwise drop the report.
-   */
-  public afterReportedCommit: (() => Promise<void>) | undefined;
-
   public onClose = () => {
     const dashboard = this.state.dashboardRef.resolve();
     // Save As folder picker mutates live meta; restore on cancel so the source dash isn't left dirty.
-    // A landed commit has already been adopted by the scene; the pre-save meta would undo it.
+    // A reported save has already been adopted by the scene; the pre-save meta would undo it.
     const shouldRestoreMeta =
-      !this.state.commitOutcome && (Boolean(this.state.saveAsCopy) || isNewDashboard(dashboard.state));
+      !this.state.saveReport && (Boolean(this.state.saveAsCopy) || isNewDashboard(dashboard.state));
     dashboard.setState({
       meta: shouldRestoreMeta ? (dashboard.getInitialState()?.meta ?? dashboard.state.meta) : dashboard.state.meta,
     });
     dashboard.closeModal();
     this.state.onDismiss?.();
-    const afterReportedCommit = this.afterReportedCommit;
-    this.afterReportedCommit = undefined;
-    afterReportedCommit?.();
+    const { afterClose } = this.state.saveReport ?? {};
+    this.setState({ saveReport: undefined });
+    afterClose?.();
   };
 
   public onToggleSaveTimeRange = () => {
@@ -111,7 +113,7 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
     saveRefresh,
     recoverToNewBranch,
     saveTarget,
-    commitOutcome,
+    saveReport,
   } = model.useState();
 
   const changeInfo = useDashboardSaveChanges(
@@ -132,12 +134,16 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
   } = changeInfo;
   const changesCount = diffCount + (hasFolderChanges ? 1 : 0) + (hasPredefinedVariablesChanges ? 1 : 0);
   const dashboard = model.state.dashboardRef.resolve();
-  const { meta } = dashboard.useState();
-  const { provisioned: isProvisioned, folderTitle } = meta;
-  const managedResourceCannotBeEdited = dashboard.managedResourceCannotBeEdited();
-  const view = useDashboardRepositoryView(dashboard, saveAsCopy);
-  const { isNewSave } = view;
-  const target = getSaveTarget(view, saveTarget);
+  const { folderTitle } = dashboard.useState().meta;
+  // Everything a repository decides about this save, resolved in one place.
+  const slot = useDashboardSaveSlot({
+    dashboard,
+    drawer: model,
+    changeInfo,
+    saveAsCopy,
+    recoverToNewBranch,
+    saveTarget,
+  });
 
   const tabs = (
     <TabsBar>
@@ -146,7 +152,7 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
         active={!showDiff}
         onChangeTab={() => model.setState({ showDiff: false })}
       />
-      {(changesCount > 0 || showDiff) && !managedResourceCannotBeEdited && !commitOutcome && (
+      {(changesCount > 0 || showDiff) && !slot.hidesDiff && !saveReport && (
         <Tab
           label={t('dashboard-scene.save-dashboard-drawer.tabs.label-changes', 'Changes')}
           active={showDiff}
@@ -164,8 +170,8 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
     title = t('dashboard-scene.save-dashboard-drawer.tabs.title-update-template', 'Save template');
   } else if (saveAsCopy) {
     title = t('dashboard-scene.save-dashboard-drawer.tabs.title-copy', 'Save dashboard copy');
-  } else if (!isNewSave && (isProvisioned || view.isProvisioned)) {
-    title = t('dashboard-scene.save-dashboard-drawer.tabs.title-provisioned', 'Provisioned dashboard');
+  } else if (slot.title) {
+    title = slot.title;
   }
 
   const initialAnnotation = dashboard.getInitialState()?.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables];
@@ -188,44 +194,26 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
 
     // Pending changes are saved through the plugin that keeps them, unless a repository keeps the
     // dashboard: they are committed to it then, as any other change is. A copy of them is a new dashboard.
-    if (!saveAsCopy && target !== 'repository' && savesPendingChanges(dashboard)) {
+    if (!saveAsCopy && !slot.takesSave && savesPendingChanges(dashboard)) {
       return <SavePendingChangesForm dashboard={dashboard} changeInfo={changeInfo} drawer={model} />;
     }
 
-    // A landed commit is reported from its own snapshot. Nothing may re-resolve here: the save
-    // moved the ground underneath `target`, since a created dashboard is no longer a new save and a
-    // branch commit is not in Grafana at all, so the repository lookup comes back empty.
-    if (commitOutcome) {
-      return <ProvisionedDashboardOutcome outcome={commitOutcome} onDismiss={model.onClose} />;
+    // A reported save is rendered from what the form captured as it landed. Nothing may re-resolve
+    // here: the save moved the ground underneath `target`, since a created dashboard is no longer a
+    // new save and a branch commit is not in Grafana at all, so the lookup comes back empty.
+    if (saveReport) {
+      return saveReport.content;
     }
 
-    if (target === 'repository') {
-      return (
-        <SaveProvisionedDashboard
-          dashboard={dashboard}
-          changeInfo={changeInfo}
-          drawer={model}
-          saveAsCopy={saveAsCopy}
-          recoverToNewBranch={recoverToNewBranch}
-          view={view}
-        />
-      );
+    if (slot.form) {
+      return slot.form;
     }
 
-    // First lookup of a new save: nothing settled to hold, so the form waits
-    if (view.status === RepoViewStatus.Loading) {
-      return <Spinner />;
+    if (slot.isNewSave) {
+      return <SaveDashboardAsForm dashboard={dashboard} changeInfo={changeInfo} drawer={model} isHeld={slot.isHeld} />;
     }
 
-    if (isNewSave) {
-      return <SaveDashboardAsForm dashboard={dashboard} changeInfo={changeInfo} drawer={model} isHeld={view.isHeld} />;
-    }
-
-    if (isProvisioned || managedResourceCannotBeEdited) {
-      return <SaveProvisionedDashboardForm dashboard={dashboard} changeInfo={changeInfo} drawer={model} />;
-    }
-
-    return <SaveDashboardForm dashboard={dashboard} changeInfo={changeInfo} drawer={model} />;
+    return slot.readOnlyNotice ?? <SaveDashboardForm dashboard={dashboard} changeInfo={changeInfo} drawer={model} />;
   };
 
   return (
@@ -241,7 +229,7 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
         <ScrollContainer showScrollIndicators>
           <Box padding={0.5}>
             <Stack direction="column" gap={2}>
-              {isNewSave && <FolderDeadEndAlert {...view.lookup} />}
+              {slot.alert}
               {renderForm()}
             </Stack>
           </Box>

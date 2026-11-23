@@ -1,4 +1,5 @@
 import { HttpResponse, http } from 'msw';
+import { isValidElement } from 'react';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { type GrafanaConfig, locationUtil } from '@grafana/data';
@@ -25,6 +26,7 @@ import { validationSrv } from 'app/features/manage-dashboards/services/Validatio
 
 import { setupProvisioningMswServer } from '../../mocks/server';
 
+import { type DashboardCommitOutcome } from './ProvisionedDashboardOutcome';
 import { type Props, SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
 
 setupProvisioningMswServer();
@@ -61,6 +63,13 @@ async function goBackToDetails(user: User) {
 }
 
 /** Saving means reaching the commit step, from wherever the test already is, and committing. */
+/** The outcome the form captured, read off the report it published to the drawer. */
+function reportedOutcome(drawer: SaveDashboardDrawer) {
+  const { saveReport } = jest.mocked(drawer.setState).mock.calls.at(-1)![0];
+  const content = saveReport?.content;
+  return isValidElement<{ outcome: DashboardCommitOutcome }>(content) ? content.props.outcome : undefined;
+}
+
 async function commitSave(user: User) {
   await goToCommitStep(user);
   await user.click(primaryButton());
@@ -444,16 +453,10 @@ describe('SaveProvisionedDashboardForm', () => {
       );
       expect(props.dashboard.setState).not.toHaveBeenCalledWith({ isDirty: false });
     });
-    await waitFor(() =>
-      expect(props.drawer.setState).toHaveBeenCalledWith({
-        showDiff: false,
-        // Committed to a branch, where a new dashboard is still reachable at its own URL.
-        commitOutcome: expect.objectContaining({
-          action: 'create',
-          resourceName: 'new-dashboard',
-          branchViewUrl: '/d/new-dashboard',
-        }),
-      })
+    // Committed to a branch, where a new dashboard is still reachable at its own URL.
+    await waitFor(() => expect(props.drawer.setState).toHaveBeenCalled());
+    expect(reportedOutcome(props.drawer)).toEqual(
+      expect.objectContaining({ action: 'create', resourceName: 'new-dashboard', branchViewUrl: '/d/new-dashboard' })
     );
     expect(mockNavigate).not.toHaveBeenCalled();
     expect(dashboardWatcher.clearIgnoreSave).toHaveBeenCalled();
@@ -1316,7 +1319,7 @@ describe('SaveProvisionedDashboardForm', () => {
     await waitFor(() => expect(dashboard.saveCompleted).toHaveBeenCalled());
     // A direct write names no branch, and points at the saved dashboard.
     await waitFor(() => expect(props.drawer.setState).toHaveBeenCalled());
-    const outcome = jest.mocked(props.drawer.setState).mock.calls.at(-1)![0].commitOutcome;
+    const outcome = reportedOutcome(props.drawer);
     expect(outcome?.branch).toBeUndefined();
     // The step onto the dashboard is built from the kind's registry route, so only the name travels.
     expect(outcome?.resourceName).toBe('test-dashboard');
@@ -1384,7 +1387,11 @@ describe('SaveProvisionedDashboardForm', () => {
         showSaved: true,
         deferPageClose: true,
       });
-      await waitFor(() => expect(props.drawer.afterReportedCommit).toBe(deferredPageClose));
+      await waitFor(() => expect(props.drawer.setState).toHaveBeenCalled());
+      const { saveReport } = jest.mocked(props.drawer.setState).mock.calls.at(-1)![0];
+      expect(deferredPageClose).not.toHaveBeenCalled();
+      await saveReport!.afterClose!();
+      expect(deferredPageClose).toHaveBeenCalled();
     });
 
     it('commits them to a new branch, then has their plugin discard them without showing the saved dashboard', async () => {
@@ -1484,7 +1491,7 @@ describe('SaveProvisionedDashboardForm', () => {
 
     // A dashboard on a branch is viewable, so the preview is offered as a step rather than forced.
     await waitFor(() => expect(props.drawer.setState).toHaveBeenCalled());
-    const outcome = jest.mocked(props.drawer.setState).mock.calls.at(-1)![0].commitOutcome;
+    const outcome = reportedOutcome(props.drawer);
     expect(outcome).toEqual(expect.objectContaining({ action: 'update', branch: 'develop' }));
     expect(outcome?.branchViewUrl).toContain('/preview/');
     expect(outcome?.branchViewUrl).toContain('ref=develop');
