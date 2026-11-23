@@ -601,7 +601,7 @@ func (ng *AlertNG) init() error {
 		ng.Cfg.UnifiedAlerting.RulesPerRuleGroupLimit, ng.Log, notifier.NewNotificationSettingsValidationService(ng.store),
 		ac.NewRuleService(ng.accesscontrol), ng.ruleMutationValidator)
 
-	legacyRules := legacy.New(ng.ruleStore, ng.provenanceStore, ng.folderService, ng.QuotaService, ng.store,
+	legacyRuleService := legacy.New(ng.ruleStore, ng.provenanceStore, ng.folderService, ng.QuotaService, ng.store,
 		int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()), ng.Log, notifier.NewNotificationSettingsValidationService(ng.store),
 		ac.NewRuleService(ng.accesscontrol), ng.ruleMutationValidator, request.GetNamespaceMapper(ng.Cfg))
 
@@ -650,7 +650,7 @@ func (ng *AlertNG) init() error {
 		MuteTimings:           muteTimingService,
 		InhibitionRules:       inhibitionRuleService,
 		AlertRules:            alertRuleService,
-		LegacyRules:           legacyRules,
+		LegacyRuleService:     legacyRuleService,
 		AlertsRouter:          alertsRouter,
 		ExternalRulerSync:     ng.externalRulerSyncer,
 		EvaluatorFactory:      evalFactory,

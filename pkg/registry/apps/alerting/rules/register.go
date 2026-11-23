@@ -95,7 +95,7 @@ func RegisterAppInstaller(
 
 	// Search routes through a dual-writer-aware client per kind: the legacy
 	// backend (provisioning service) serves modes 0-3, the unified client 4+.
-	legacySearch := search.NewLegacyClient(ng.Api.LegacyRules.Searcher())
+	legacySearch := search.NewLegacyClient(ng.Api.LegacyRuleService.Searcher())
 	unifiedSearch := search.NewUnifiedClient(unifiedClient)
 	searchHandler := search.NewHandler(
 		dualwrite.NewSelector[search.Backend](dual, alertrule.ResourceInfo.GroupResource(), legacySearch, unifiedSearch),
@@ -437,9 +437,9 @@ func (a *AppInstaller) GetStorageOptions(gr schema.GroupResource) *apistore.Stor
 func (a *AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafanarest.Storage {
 	switch gvr.GroupResource() {
 	case recordingrule.ResourceInfo.GroupResource():
-		return recordingrule.NewStorage(a.ng.Api.LegacyRules.RecordingRules())
+		return recordingrule.NewStorage(a.ng.Api.LegacyRuleService.RecordingRules())
 	case alertrule.ResourceInfo.GroupResource():
-		return alertrule.NewStorage(a.ng.Api.LegacyRules.AlertRules())
+		return alertrule.NewStorage(a.ng.Api.LegacyRuleService.AlertRules())
 	case rulesequence.ResourceInfo.GroupResource():
 		return nil
 	case config.ResourceInfo.GroupResource():
@@ -472,9 +472,9 @@ func (a *AppInstaller) GetLegacyStatus(gvr schema.GroupVersionResource, unified 
 	writesUnified := newWritesUnifiedChecker(a.dual, gvr.GroupResource())
 	switch gvr.GroupResource() {
 	case recordingrule.ResourceInfo.GroupResource():
-		return recordingrule.NewStatusStorage(a.ng.Api.LegacyRules.RecordingRules(), unified, writesUnified)
+		return recordingrule.NewStatusStorage(a.ng.Api.LegacyRuleService.RecordingRules(), unified, writesUnified)
 	case alertrule.ResourceInfo.GroupResource():
-		return alertrule.NewStatusStorage(a.ng.Api.LegacyRules.AlertRules(), unified, writesUnified)
+		return alertrule.NewStatusStorage(a.ng.Api.LegacyRuleService.AlertRules(), unified, writesUnified)
 	default:
 		return nil
 	}
