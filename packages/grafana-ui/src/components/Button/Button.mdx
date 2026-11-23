@@ -25,6 +25,7 @@ When using a button please always follow a11y rules (e.g. W3C Recommendation [3.
 - Do not use buttons with icons and buttons without icons in a button group.
 - Do not have more than one primary action.
 - Do not pair a solid primary and solid destructive button -- one must take precedence over the other.
+- Do not use the warning variant for a risky action. Use destructive for that.
 - Do not use buttons with icons only (in case this is impossible please always add text for a tooltip and an aria label as they are needed to meet accessible requirements).
 
 ## Emphasis
@@ -177,6 +178,7 @@ When using a button please always follow a11y rules (e.g. W3C Recommendation [3.
 - Use ARIA tags when using buttons to ensure they are accessible.
   - For example buttons represented by icons, the accessible name may be provided from the aria-label or aria-labelledby attributes.
   - Using role="button" instead of the semantic `<button>` or `<input type="button">` (iOS "clickable elements" fix for role="button").
+- Do not rely on color alone to carry the meaning. For the warning and info variants, the label (or the tooltip and aria-label for an icon-only button) has to say what the button does.
 
 ## Primary
 
