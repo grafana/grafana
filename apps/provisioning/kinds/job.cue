@@ -2,7 +2,7 @@ package repository
 
 // Job and HistoricJob share one schema: a HistoricJob is the persisted record of a finished Job.
 _jobSchema: {
-	#JobState: "pending" | "working" | "success" | "warning" | "error"
+	#State: "pending" | "working" | "success" | "warning" | "error"
 	#ResourceRef: {
 		// Name is the name of the resource, such as a dashboard UID.
 		name?: string
@@ -194,7 +194,7 @@ _jobSchema: {
 		test?: #TestJobOptions
 	}
 	status: {
-		state?:    #JobState
+		state?:    #State
 		started?:  int64
 		finished?: int64
 		message?:  string
