@@ -1550,12 +1550,13 @@
           "contact-point": "Point de contact direct (mutuellement exclusif avec policy:).",
           "dashboard": "Tableau de bord auquel la règle est liée (la valeur canonique est l’UID du tableau de bord).",
           "datasource": "Source de données de la requête référencée par la règle (la valeur canonique est l’UID).",
-          "folder": "Dossier (la valeur canonique est l’UID du dossier).",
+          "folder": "",
+          "folder-uid": "",
           "health": "État de la règle : ok, nodata, error ou unknown.",
           "label": "Sélecteur d’étiquette : label:key (présent), label:!key (absent), label:key=value (égal), label:key!=value (différent), label:key=~re (regex), label:key!~re (non regex). Entourez de guillemets une valeur contenant des espaces : label:team=\"a b\".",
           "metric": "Nom de la métrique enregistrée (correspondance exacte).",
           "panel-id": "Panneau auquel la règle est liée. Les identifiants de panneau sont spécifiques au tableau de bord ; à associer avec dashboard:.",
-          "paused": "Indique si la règle est en pause (true/false).",
+          "paused": "",
           "plugins": "plugins:hide exclut les règles créées par des plugins.",
           "policy": "Politique de notification nommée (mutuellement exclusif avec contactPoint:).",
           "rule": "Recherche textuelle dans le titre de la règle (équivalent à du texte libre).",
@@ -1571,13 +1572,14 @@
         "invalid-tokens": "Certains filtres n’ont pas pu être appliqués : {{tokens}}",
         "invalid-value": "Utilisez l’une de ces valeurs pour {{key}} : {{values}}",
         "label": "Rechercher",
-        "not-paused-unavailable": "Le filtrage des règles qui ne sont pas en pause n’est pas encore disponible.",
+        "missing-value": "",
         "placeholder": "Rechercher par nom ou saisir une requête de filtrage…",
         "property": {
           "contact-point": "Point de contact",
           "dashboard": "Tableau de bord",
           "datasource": "Source de données de la requête",
           "folder": "Dossier",
+          "folder-uid": "",
           "health": "État",
           "labels": "Étiquettes",
           "metric": "Métrique enregistrée",
@@ -1613,11 +1615,72 @@
         "tooltip-with-interval": ""
       },
       "shared": {
+        "folder-search-limit": "",
+        "folder-search-limit-description": "",
         "load-more": "Charger plus",
         "load-more-error": "Échec du chargement de résultats supplémentaires",
         "loading-rules": "Chargement des règles",
         "refresh-error": "Échec de l’actualisation des résultats",
         "retry": "Réessayer"
+      },
+      "sidebar": {
+        "all": "",
+        "contact-point": "",
+        "contact-point-description": "",
+        "contact-point-help": "",
+        "contact-point-placeholder": "",
+        "dashboard": "",
+        "datasource": "",
+        "datasource-placeholder": "",
+        "filters": "",
+        "folder": "",
+        "folder-description": "",
+        "folder-help": "",
+        "folder-placeholder": "",
+        "health": "",
+        "health-error": "",
+        "health-nodata": "",
+        "health-ok": "",
+        "health-unknown": "",
+        "label-add": "",
+        "label-key": "",
+        "label-key-placeholder": "",
+        "label-operator": "",
+        "label-remove": "",
+        "label-value": "",
+        "label-value-any": "",
+        "label-value-placeholder": "",
+        "label-value-unset": "",
+        "labels": "",
+        "metric": "",
+        "metric-placeholder": "",
+        "operator-absent": "",
+        "operator-absent-description": "",
+        "operator-equal": "",
+        "operator-exists": "",
+        "operator-exists-description": "",
+        "operator-not-equal": "",
+        "operator-not-regex": "",
+        "operator-regex": "",
+        "panel-id": "",
+        "paused": "",
+        "paused-true": "",
+        "plugin-rules": "",
+        "plugin-rules-hide": "",
+        "plugin-rules-show": "",
+        "policy": "",
+        "policy-description": "",
+        "policy-help": "",
+        "policy-placeholder": "",
+        "rule-name": "",
+        "rule-name-placeholder": "",
+        "state": "",
+        "state-firing": "",
+        "state-normal": "",
+        "state-pending": "",
+        "state-recovering": "",
+        "target-datasource": "",
+        "target-datasource-placeholder": ""
       },
       "status": {
         "error": "Échec de l’évaluation de la règle",
@@ -1932,6 +1995,7 @@
         "routing": "Routage des notifications",
         "routing-none": "Aucune arborescence de politique sélectionnée",
         "routing-tree": "Arborescence de la politique : {{name}}",
+        "rules-error": "",
         "rules-skipped": "Les règles d’alerte ne seront pas importées.",
         "rules-title": "",
         "skipped": "Ignorée",
@@ -1944,6 +2008,7 @@
         "validation-warning": "Certaines ressources seront renommées afin d’éviter les conflits.",
         "will-import-config": "Importera cette configuration",
         "will-import-rules": "Importera les règles",
+        "yaml-datasource": "",
         "will-import-rules-count_one": "Importera {{count}} règle",
         "will-import-rules-count_other": "Importera {{count}} règles"
       },
@@ -2050,9 +2115,14 @@
         "target-datasource-required": "Veuillez sélectionner une source de données cible",
         "target-folder": "Dossier cible",
         "target-folder-desc": "Dossier dans lequel les règles importées seront enregistrées",
+        "yaml-empty-group": "",
         "yaml-error": "Échec de l’analyse du fichier YAML : {{error}}",
         "yaml-file": "Fichier YAML de règles",
-        "yaml-required": "Veuillez sélectionner un fichier"
+        "yaml-no-rules": "",
+        "yaml-required": "Veuillez sélectionner un fichier",
+        "yaml-target-datasource": "",
+        "yaml-target-datasource-desc": "",
+        "yaml-target-datasource-required": ""
       },
       "success": "Les règles d’alerte ont bien été importées dans les règles gérées par Grafana.",
       "target-folder": {
@@ -4857,6 +4927,12 @@
     "folder-owners": {
       "owned-by": "Propriétaire :"
     },
+    "folder-permissions": {
+      "no-access": ""
+    },
+    "folder-permissions-exposed": {
+      "not-found": ""
+    },
     "folder-picker": {
       "accessible-label": "Sélectionnez un dossier : {{ label }} est sélectionné actuellement",
       "button-label": "Sélectionner un dossier",
@@ -5656,6 +5732,40 @@
       "view-json-diff": "Afficher JSON diff pour voir toutes les modifications"
     }
   },
+  "core-kinds": {
+    "connection": {
+      "label": "",
+      "label-plural": ""
+    },
+    "dashboard": {
+      "label": "",
+      "label-plural": ""
+    },
+    "datasource": {
+      "label": "",
+      "label-plural": ""
+    },
+    "folder": {
+      "label": "",
+      "label-plural": ""
+    },
+    "librarypanel": {
+      "label": "",
+      "label-plural": ""
+    },
+    "notebook": {
+      "label": "",
+      "label-plural": ""
+    },
+    "playlist": {
+      "label": "",
+      "label-plural": ""
+    },
+    "repository": {
+      "label": "",
+      "label-plural": ""
+    }
+  },
   "correlations": {
     "add-new": "Ajouter un nouveau",
     "alert": {
@@ -6160,7 +6270,10 @@
       "add-visualization-body": "Sélectionnez une source de données, puis examinez et visualisez vos données avec des graphiques, des statistiques et des tableaux ou créez des listes, des markdowns et d'autres widgets.",
       "add-visualization-button": "Ajouter une visualisation",
       "add-visualization-header": "Commencez votre nouveau tableau de bord en ajoutant une visualisation",
+      "assistant-limit-reached": "",
       "assistant-placeholder": "Décrivez votre tableau de bord. Cela ouvrira le chat de l’assistant pour démarrer une conversation.",
+      "assistant-placeholder-template": "",
+      "assistant-sign-in": "",
       "auto-grid": "Grille automatique",
       "auto-grid-description": "Les panneaux se redimensionnent pour s’adapter et former des grilles uniformes",
       "build-assistant": "Créez votre tableau de bord avec l’assistant",
@@ -6174,6 +6287,8 @@
       "mobile-not-available": "",
       "or-start-blank": "Ou créez-le vous-même",
       "select-layout-header": "Sélectionner la mise en page",
+      "templates-empty": "",
+      "templates-title": "",
       "title": "Nouveau tableau de bord"
     },
     "errors": {
@@ -7144,6 +7259,7 @@
   },
   "dashboard-library": {
     "card": {
+      "attach-template-button-label": "",
       "community-badge": "Communauté",
       "customize-with-assistant-button": "Personnaliser avec l’assistant",
       "customize-with-assistant-button-label": "Personnaliser avec Assistant : {{title}}",
@@ -7160,6 +7276,9 @@
       "edit-template-menu-item": "Modifier",
       "more-actions-label": "Plus d’actions pour {{title}}",
       "no-preview": "Aucun aperçu disponible ",
+      "preview-template-button": "",
+      "preview-template-button-label": "",
+      "provisioned-by-grafana": "",
       "use-template-button": "Utiliser le modèle",
       "use-template-button-label": "Utilisez le modèle : {{title}}",
       "view-dashboard-button": "Afficher le tableau de bord",
@@ -7195,6 +7314,10 @@
     "custom-dashboard-template-filters": {
       "creator-placeholder": "Filtrer par créateur",
       "search-placeholder": "Rechercher",
+      "sort": {
+        "asc": "",
+        "desc": ""
+      },
       "sort-placeholder": "Trier"
     },
     "dashboard-card": {
@@ -7976,16 +8099,6 @@
     },
     "query-editor": {
       "query": "Requête"
-    },
-    "query-editor-banner": {
-      "description-classic": "Essayez l’expérience d’édition des requêtes améliorée.",
-      "description-new": "Bienvenue dans l’expérience d’édition des requêtes améliorée.",
-      "dismiss": "Ignorer",
-      "downgrade-title": "Nouvel éditeur de requêtes",
-      "give-feedback": "Donner un avis",
-      "go-back": "Retour à la version classique",
-      "try-it": "Essayer",
-      "upgrade-title": "Nouvel éditeur disponible"
     },
     "query-variable-editor": {
       "modal": {
@@ -11411,6 +11524,9 @@
       },
       "wrapping-disabled-warning": "Le retour à la ligne automatique est désactivé pour cette colonne, car une valeur est trop longue. Utilisez l’option « Inspecter la valeur » pour afficher l’intégralité du contenu."
     },
+    "tag": {
+      "remove": ""
+    },
     "tags": {
       "list-label": "Balises"
     },
@@ -11895,13 +12011,19 @@
       "filter-apps": "Applications",
       "filter-dashboards": "Tableaux de bord",
       "filter-explore": "Explore",
+      "filter-folders": "",
       "filter-label": "Afficher uniquement",
+      "filter-notebooks": "",
       "filter-pages": "Pages",
+      "filter-playlists": "",
       "kind-alerting": "Alerting",
       "kind-app": "Application",
       "kind-dashboard": "Tableau de bord",
       "kind-explore": "Explore",
+      "kind-folder": "",
+      "kind-notebook": "",
       "kind-page": "Page",
+      "kind-playlist": "",
       "loading": "Chargement de votre activité récente…"
     },
     "recommendations": {
@@ -13541,7 +13663,7 @@
       "page-assistant-below": "",
       "page-floating-assistant": "",
       "page-only": "",
-      "pop-up": "",
+      "pop-out": "",
       "right": ""
     },
     "assistant-workspace": {
@@ -13564,7 +13686,8 @@
         "open": "Ouvrir {{title}}",
         "open-all": "Ouvrir les assistants IA et les applications de la barre latérale"
       },
-      "floating-resize": "Ajuster la largeur de la barre latérale"
+      "floating-resize": "Ajuster la largeur de la barre latérale",
+      "floating-resize-height": ""
     },
     "help": {
       "aria-label": "Aide",
@@ -13828,6 +13951,8 @@
       "cancel": "Annuler",
       "card-author": "De {{author}}",
       "card-updated": "Mis à jour {{when}}",
+      "convert-to-absolute": "",
+      "convert-to-absolute-description": "",
       "create-name": "Nom du notebook",
       "create-name-required": "Le nom du notebook est obligatoire",
       "create-name-taken": "Un notebook portant ce nom existe déjà",
@@ -13842,10 +13967,12 @@
       "list-none": "Vous n’avez pas encore de notebooks. Créez-en un.",
       "list-none-read-only": "Vous n’avez pas encore de notebooks et vous n’avez pas l’autorisation d’en créer un.",
       "list-truncated": "Les notebooks ne sont pas tous affichés. Affinez la recherche pour trouver les autres.",
-      "lock-time-range": "Verrouiller sur {{range}}",
       "lock-time-range-description": "Conserver cette visualisation sur la fenêtre où elle a été capturée. Si elle est déverrouillée, elle suit la plage horaire du notebook.",
+      "lock-time-range-short": "",
       "lock-time-ranges": "Verrouiller les panneaux sur les plages horaires qu’ils affichaient",
       "lock-time-ranges-description": "Conserver chaque visualisation sur la fenêtre où elle a été capturée. Si elles sont déverrouillées, elles suivent la plage horaire du notebook.",
+      "note-description": "",
+      "note-label": "",
       "search-placeholder": "Rechercher par titre",
       "sort-alphabetical": "Par ordre alphabétique (A-Z)",
       "sort-label": "Trier les notebooks",
@@ -15131,9 +15258,6 @@
       "success-title": "Métadonnées du dossier corrigées avec succès",
       "title": "Corriger les métadonnées du dossier"
     },
-    "folder-permissions": {
-      "loading": "Chargement en cours…"
-    },
     "folder-repository-list": {
       "no-results-matching-your-query": "Aucun résultat ne correspond à votre requête",
       "partial-managed": "{{managedCount}} ressources sur {{resourceCount}} sont gérées par la synchronisation Git.",
@@ -15288,13 +15412,16 @@
       "path-required": "Le chemin du dépôt est requis"
     },
     "managed-badge": {
+      "actions": "",
       "classic-file-provisioning": "Géré par : Provisionnement de fichiers",
       "file-provisioning": "",
       "kubectl": "Géré par : Kubectl",
       "manage-repository": "Gérez le référentiel",
       "plugin": "Géré par : Plugin {{id}}",
       "provisioned": "Provisionné",
+      "read-only": "",
       "terraform": "Géré par : Terraform",
+      "view-source": "",
       "view-source-file": "Voir le fichier source"
     },
     "managed-by-repository-tooltip": "Géré par : Référentiel",
@@ -15477,8 +15604,6 @@
         }
       }
     },
-    "pull-only-local-tooltip": "",
-    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "Préremplissez le titre de la pull request dans les fenêtres d’enregistrement à partir du modèle ci-dessus et passez-le en lecture seule.",
       "description-title-template": "Modèle pour le titre de la pull request ouverte par le workflow de branche. Espaces réservés disponibles : {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Laissez vide pour utiliser la première ligne du message de commit.",
@@ -15508,9 +15633,6 @@
       "message-resource_other": "Votre compte est limité à {{count}} ressources synchronisées par référentiel.",
       "message-resource-onprem_one": "Votre instance est limitée à {{count}} ressource synchronisée par référentiel.",
       "message-resource-onprem_other": "Votre instance est limitée à {{count}} ressources synchronisées par référentiel."
-    },
-    "read-only-badge": {
-      "pull-only": ""
     },
     "read-only-local-tooltip": "Cette ressource est en lecture seule et provisionnée via le provisionnement par fichiers. Pour effectuer des modifications, mettez à jour le référentiel connecté. Pour modifier les paramètres, accédez à Administration > Provisionnement > Référentiels.",
     "read-only-remote-tooltip": "Cette ressource est en lecture seule et provisionnée via Git. Pour effectuer des modifications, mettez à jour le référentiel connecté. Pour modifier les paramètres, accédez à Administration > Provisionnement > Référentiels.",
@@ -15639,22 +15761,6 @@
       "pure-git": "Pure Git",
       "pure-git-description": "Se connecter à un quelconque dépôt Git",
       "pure-git-tooltip": "Se connecte à un référentiel Git à l’aide du protocole Smart HTTP v2. Flux de travail de synchronisation de base sans fonctionnalités spécifiques au fournisseur (webhooks, commentaires sur les PR, liens profonds)."
-    },
-    "resource-kind": {
-      "connection": "",
-      "connections": "",
-      "dashboard": "tableau de bord",
-      "dashboards": "Tableaux de bord",
-      "datasource": "",
-      "datasources": "",
-      "folder": "dossier",
-      "folders": "Dossiers",
-      "library-panel": "library panel",
-      "library-panels": "Library panels",
-      "playlist": "playlist",
-      "playlists": "Playlists",
-      "repositories": "",
-      "repository": ""
     },
     "resource-tree": {
       "header-hash": "Empreinte",
@@ -16222,12 +16328,6 @@
       "width-of-panel": "Largeur du panneau"
     },
     "edit-query-name": "Modifier le nom de la requête",
-    "experimental-button": {
-      "aria-label": "Options de la fonctionnalité expérimentale",
-      "back-to-classic": "Revenir à l’éditeur classique",
-      "give-feedback": "Donner un avis",
-      "tooltip": "Options de la fonctionnalité expérimentale"
-    },
     "header": {
       "alert": "Alerte",
       "enter-stacked-view": "",
@@ -16597,8 +16697,6 @@
       "location-header": "Emplacement",
       "name-header": "Nom",
       "tags-header": "Balises",
-      "type-dashboard": "Tableau de bord",
-      "type-folder": "Dossier",
       "type-header": "Type"
     },
     "search-input": {
@@ -17579,6 +17677,16 @@
       "text_one": "",
       "text_other": ""
     },
+    "display-completion": {
+      "color": "",
+      "helper": "",
+      "icon": "",
+      "numeric": "",
+      "percent": "",
+      "prefix": "",
+      "suffix": "",
+      "text": ""
+    },
     "editor": {
       "aria-label-content": "Contenu textuel",
       "aria-label-mode": "Mode texte : {{mode}}",
@@ -17722,7 +17830,6 @@
     },
     "time-range": {
       "apply": "Appliquer la plage temporelle",
-      "aria-role": "Sélection de la plage de temps",
       "default-title": "Plages de temps",
       "dialog-label": "Sélecteur de plage horaire relative",
       "example-title": "Exemple de plages de temps",

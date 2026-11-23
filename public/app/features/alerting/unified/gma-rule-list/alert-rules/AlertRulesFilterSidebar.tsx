@@ -14,6 +14,7 @@ import {
   DataSourceFilter,
   FolderFilter,
   HealthFilter,
+  PausedFilter,
   PluginRulesFilter,
   PolicyFilter,
   TextFilter,
@@ -89,7 +90,7 @@ export function AlertRulesFilterSidebar({ query, filter, onApply }: AlertRulesFi
       </SidebarSection>
       <Divider spacing={0} />
       <SidebarSection>
-        <FolderFilter folderUids={filter.folders} onChange={(uids) => apply({ folder: uids })} />
+        <FolderFilter folderUids={filter.folderUids} onChange={(uids) => apply({ folderUid: uids })} />
         <DataSourceFilter dataSourceUids={filter.dataSourceUids} onChange={(uids) => apply({ datasource: uids })} />
       </SidebarSection>
       <Divider spacing={0} />
@@ -145,12 +146,7 @@ export function AlertRulesFilterSidebar({ query, filter, onApply }: AlertRulesFi
       <Divider spacing={0} />
       <SidebarSection>
         <HealthFilter health={filter.health} onChange={(health) => apply({ health: [health] })} />
-        <ChoiceFilter
-          label={t('alerting.gma-rule-list.sidebar.paused', 'Paused')}
-          value={filter.paused}
-          onChange={(paused) => apply({ paused: [paused] })}
-          options={[{ label: t('alerting.gma-rule-list.sidebar.paused-true', 'Paused'), value: 'true' }]}
-        />
+        <PausedFilter paused={filter.paused} onChange={(paused) => apply({ paused: [paused] })} />
       </SidebarSection>
       <Divider spacing={0} />
       <PluginRulesFilter

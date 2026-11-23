@@ -30,6 +30,8 @@ import type { Options } from './panelcfg.gen';
 import { applyBarChartFieldDefaults } from './test-helpers';
 import { prepConfig, type PrepConfigOpts, prepSeries } from './utils';
 
+jest.mock('./bars', () => makeSpyable('./bars'));
+
 jest.mock('@grafana/data', () => ({
   ...jest.requireActual('@grafana/data'),
   DefaultTimeZone: 'utc',

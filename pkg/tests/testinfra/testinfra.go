@@ -946,12 +946,6 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = provisioningSect.NewKey("max_resources_per_repository", fmt.Sprintf("%d", opts.ProvisioningMaxResourcesPerRepository))
 		require.NoError(t, err)
 	}
-	if opts.ProvisioningKeysOnlyReList {
-		provisioningSect, err := getOrCreateSection("provisioning")
-		require.NoError(t, err)
-		_, err = provisioningSect.NewKey("keys_only_relist", "true")
-		require.NoError(t, err)
-	}
 	if opts.ProvisioningResourceLister != "" {
 		provisioningSect, err := getOrCreateSection("provisioning")
 		require.NoError(t, err)
@@ -1268,10 +1262,6 @@ type GrafanaOpts struct {
 
 	PendingDeletionResourceEnabled bool
 
-	// ProvisioningKeysOnlyReList sets [provisioning] keys_only_relist, making the
-	// connection informer's periodic re-list ask storage for keys instead of whole
-	// objects. Off by default, matching the shipped default.
-	ProvisioningKeysOnlyReList bool
 	// ProvisioningResourceLister sets [provisioning] resource_lister ("search" or "apis").
 	// Empty leaves the shipped default.
 	ProvisioningResourceLister string

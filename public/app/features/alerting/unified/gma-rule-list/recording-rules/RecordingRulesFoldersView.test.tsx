@@ -33,7 +33,7 @@ describe('RecordingRulesFoldersView', () => {
     setup();
     const { user } = render(
       <RuleSequenceDrawerProvider>
-        <RecordingRulesFoldersView folderUids={[]} />
+        <RecordingRulesFoldersView scope={{ folderUids: [] }} />
       </RuleSequenceDrawerProvider>
     );
 
@@ -55,7 +55,7 @@ describe('RecordingRulesFoldersView', () => {
 
     render(
       <RuleSequenceDrawerProvider>
-        <RecordingRulesFoldersView folderUids={[]} />
+        <RecordingRulesFoldersView scope={{ folderUids: [] }} />
       </RuleSequenceDrawerProvider>
     );
 
@@ -70,7 +70,7 @@ describe('RecordingRulesFoldersView', () => {
 
     render(
       <RuleSequenceDrawerProvider>
-        <RecordingRulesFoldersView folderUids={[]} />
+        <RecordingRulesFoldersView scope={{ folderUids: [] }} />
       </RuleSequenceDrawerProvider>
     );
 
@@ -81,16 +81,16 @@ describe('RecordingRulesFoldersView', () => {
   it.each([
     {
       name: 'a folder filter returns no folders',
-      folderUids: ['platform'],
+      folderName: 'Platform',
       text: 'No recording rules match this folder',
     },
-    { name: 'no folder filter is active', folderUids: [], text: 'No recording rules found' },
-  ])('says "$text" when $name', async ({ folderUids, text }) => {
-    setup({ recordingRules: folderUids.length > 0 ? RECORDING_RULES : [] });
+    { name: 'no folder filter is active', folderName: undefined, text: 'No recording rules found' },
+  ])('says "$text" when $name', async ({ folderName, text }) => {
+    setup({ recordingRules: folderName ? RECORDING_RULES : [] });
 
     render(
       <RuleSequenceDrawerProvider>
-        <RecordingRulesFoldersView folderUids={folderUids} />
+        <RecordingRulesFoldersView scope={{ folder: folderName, folderUids: [] }} />
       </RuleSequenceDrawerProvider>
     );
 
@@ -102,7 +102,7 @@ describe('RecordingRulesFoldersView', () => {
 
     const { user } = render(
       <RuleSequenceDrawerProvider>
-        <RecordingRulesFoldersView folderUids={[]} />
+        <RecordingRulesFoldersView scope={{ folderUids: [] }} />
       </RuleSequenceDrawerProvider>
     );
 

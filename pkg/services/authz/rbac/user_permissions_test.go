@@ -102,7 +102,7 @@ func TestService_GetUserPermissionsUsesLocalEvaluator(t *testing.T) {
 	require.Equal(t, int64(42), userID)
 	require.Equal(t, "user:test-uid", evaluator.user.GetUID())
 	require.Equal(t, int64(12), evaluator.user.GetOrgID())
-	require.Equal(t, identity.RoleEditor, evaluator.user.GetOrgRole())
+	require.Equal(t, types.RoleEditor, evaluator.user.GetOrgRole())
 	require.True(t, evaluator.user.GetIsGrafanaAdmin())
 	require.Equal(t, "org-12", evaluator.user.GetNamespace())
 	require.Equal(t, []int64{7, 9}, evaluator.teams)
