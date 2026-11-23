@@ -1550,7 +1550,8 @@
           "contact-point": "Punto de contacto directo (mutuamente excluyente con la política:).",
           "dashboard": "Dashboard al que está vinculada la regla (el valor canónico es el UID del dashboard).",
           "datasource": "Fuente de datos de la consulta a la que hace referencia la regla (el valor canónico es el UID).",
-          "folder": "Carpeta (el valor canónico es el UID de la carpeta).",
+          "folder": "",
+          "folder-uid": "",
           "health": "Estado de la regla: ok, sin datos, error o desconocido.",
           "label": "Coincidencia de etiquetas: label:key (existe), label:!key (ausente), label:key=value (igual), label:key!=value (no igual), label:key=~re (expresión regular), label:key!~re (no es una expresión regular). Poner entre comillas un valor con espacios: label:team=\"a b\".",
           "metric": "Nombre de la métrica registrada (coincidencia exacta).",
@@ -1571,12 +1572,14 @@
         "invalid-tokens": "No se han podido aplicar algunos filtros: {{tokens}}",
         "invalid-value": "Utiliza uno de estos valores para {{key}}: {{values}}",
         "label": "Búsqueda",
+        "missing-value": "",
         "placeholder": "Buscar por nombre o introducir consulta de filtro...",
         "property": {
           "contact-point": "Punto de contacto",
           "dashboard": "Dashboard",
           "datasource": "Fuente de datos de la consulta",
           "folder": "Carpeta",
+          "folder-uid": "",
           "health": "Salud",
           "labels": "Etiquetas",
           "metric": "Métrica registrada",
@@ -1612,6 +1615,8 @@
         "tooltip-with-interval": ""
       },
       "shared": {
+        "folder-search-limit": "",
+        "folder-search-limit-description": "",
         "load-more": "Cargar más",
         "load-more-error": "Error al cargar más resultados",
         "loading-rules": "Cargando reglas",
@@ -1990,6 +1995,7 @@
         "routing": "Enrutamiento de notificaciones",
         "routing-none": "No se ha seleccionado ningún árbol de políticas.",
         "routing-tree": "Árbol de políticas: {{name}}",
+        "rules-error": "",
         "rules-skipped": "Las reglas de alerta no se importarán.",
         "rules-title": "",
         "skipped": "Omitidas",
@@ -2002,6 +2008,7 @@
         "validation-warning": "Se cambiará el nombre de algunos recursos para evitar conflictos.",
         "will-import-config": "Se importará esta configuración.",
         "will-import-rules": "Se importarán reglas",
+        "yaml-datasource": "",
         "will-import-rules-count_one": "Se importará {{count}} regla",
         "will-import-rules-count_other": "Se importarán {{count}} reglas"
       },
@@ -2108,9 +2115,14 @@
         "target-datasource-required": "Selecciona una fuente de datos de destino",
         "target-folder": "Carpeta de destino",
         "target-folder-desc": "Carpeta donde se almacenarán las reglas importadas.",
+        "yaml-empty-group": "",
         "yaml-error": "Error al analizar el archivo YAML: {{error}}",
         "yaml-file": "Archivo YAML de reglas",
-        "yaml-required": "Selecciona un archivo"
+        "yaml-no-rules": "",
+        "yaml-required": "Selecciona un archivo",
+        "yaml-target-datasource": "",
+        "yaml-target-datasource-desc": "",
+        "yaml-target-datasource-required": ""
       },
       "success": "Reglas de alerta importadas correctamente a las reglas gestionadas por Grafana.",
       "target-folder": {
@@ -5741,6 +5753,10 @@
       "label": "",
       "label-plural": ""
     },
+    "notebook": {
+      "label": "",
+      "label-plural": ""
+    },
     "playlist": {
       "label": "",
       "label-plural": ""
@@ -6254,7 +6270,10 @@
       "add-visualization-body": "Selecciona una fuente de datos y luego consulta y visualiza tus datos con gráficos, estadísticas y tablas o cree listas, anotaciones y otros widgets.",
       "add-visualization-button": "Añadir visualización",
       "add-visualization-header": "Comienza tu nuevo panel de control añadiendo una visualización",
+      "assistant-limit-reached": "",
       "assistant-placeholder": "Describe tu dashboard. Esto abrirá el chat del asistente e iniciará una conversación.",
+      "assistant-placeholder-template": "",
+      "assistant-sign-in": "",
       "auto-grid": "Cuadrícula automática",
       "auto-grid-description": "Los paneles se redimensionan para ajustarse y formar cuadrículas uniformes",
       "build-assistant": "Crea tu dashboard con el asistente",
@@ -6268,6 +6287,8 @@
       "mobile-not-available": "",
       "or-start-blank": "O créalo por tu cuenta",
       "select-layout-header": "Seleccionar diseño",
+      "templates-empty": "",
+      "templates-title": "",
       "title": "Nuevo dashboard"
     },
     "errors": {
@@ -7238,6 +7259,7 @@
   },
   "dashboard-library": {
     "card": {
+      "attach-template-button-label": "",
       "community-badge": "Comunidad",
       "customize-with-assistant-button": "Personalizar con el asistente",
       "customize-with-assistant-button-label": "Personalizar con el asistente: {{title}}",
@@ -7254,6 +7276,9 @@
       "edit-template-menu-item": "Editar",
       "more-actions-label": "Más acciones para {{title}}",
       "no-preview": "Vista previa no disponible ",
+      "preview-template-button": "",
+      "preview-template-button-label": "",
+      "provisioned-by-grafana": "",
       "use-template-button": "Utilizar plantilla",
       "use-template-button-label": "Utilizar plantilla: {{title}}",
       "view-dashboard-button": "Ver dashboard",
@@ -7289,6 +7314,10 @@
     "custom-dashboard-template-filters": {
       "creator-placeholder": "Filtrar por «creado por»",
       "search-placeholder": "Búsqueda",
+      "sort": {
+        "asc": "",
+        "desc": ""
+      },
       "sort-placeholder": "Ordenar"
     },
     "dashboard-card": {
@@ -11982,13 +12011,19 @@
       "filter-apps": "Aplicaciones",
       "filter-dashboards": "Dashboards",
       "filter-explore": "Explorar",
+      "filter-folders": "",
       "filter-label": "Mostrar solo",
+      "filter-notebooks": "",
       "filter-pages": "Páginas",
+      "filter-playlists": "",
       "kind-alerting": "Alertas",
       "kind-app": "Aplicación",
       "kind-dashboard": "Dashboard",
       "kind-explore": "Explorar",
+      "kind-folder": "",
+      "kind-notebook": "",
       "kind-page": "Página",
+      "kind-playlist": "",
       "loading": "Cargando tu actividad reciente..."
     },
     "recommendations": {
@@ -13628,7 +13663,7 @@
       "page-assistant-below": "",
       "page-floating-assistant": "",
       "page-only": "",
-      "pop-up": "",
+      "pop-out": "",
       "right": ""
     },
     "assistant-workspace": {
@@ -13932,8 +13967,8 @@
       "list-none": "Aún no tienes ningún cuaderno. Crea uno.",
       "list-none-read-only": "Todavía no tienes ningún cuaderno y no tienes permiso para crear uno.",
       "list-truncated": "No se muestran todos los cuadernos. Acota la búsqueda para encontrar otros.",
-      "lock-time-range": "Bloquear en {{range}}",
       "lock-time-range-description": "Mantener esta visualización en la ventana en la que se capturó. Si está desbloqueada, sigue el intervalo de tiempo del cuaderno.",
+      "lock-time-range-short": "",
       "lock-time-ranges": "Bloquear los paneles en los intervalos de tiempo que mostraban",
       "lock-time-ranges-description": "Mantener cada visualización en la ventana en la que se capturó. Si no están bloqueados, siguen el intervalo de tiempo del cuaderno.",
       "note-description": "",
@@ -17642,6 +17677,16 @@
       "text_one": "",
       "text_other": ""
     },
+    "display-completion": {
+      "color": "",
+      "helper": "",
+      "icon": "",
+      "numeric": "",
+      "percent": "",
+      "prefix": "",
+      "suffix": "",
+      "text": ""
+    },
     "editor": {
       "aria-label-content": "Contenido de texto",
       "aria-label-mode": "Modo texto: {{mode}}",
@@ -17785,7 +17830,6 @@
     },
     "time-range": {
       "apply": "Aplicar intervalo de tiempo",
-      "aria-role": "Selección de intervalo de tiempo",
       "default-title": "Intervalos de tiempo",
       "dialog-label": "Selector de intervalo de tiempo relativo",
       "example-title": "Ejemplos de intervalos de tiempo",

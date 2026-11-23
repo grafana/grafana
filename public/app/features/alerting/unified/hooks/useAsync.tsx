@@ -1,7 +1,7 @@
 /**
  * Copied from https://github.com/react-hookz/web/blob/579a445fcc9f4f4bb5b9d5e670b2e57448b4ee50/src/useAsync/index.ts
  */
-import { useMemo, useRef, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { stringifyErrorLike } from '../utils/misc';
 
@@ -148,7 +148,9 @@ export function useAsync<Result, Args extends unknown[] = unknown[]>(
 function useSyncedRef<T>(value: T): { readonly current: T } {
   const ref = useRef(value);
 
-  ref.current = value;
+  useLayoutEffect(() => {
+    ref.current = value;
+  });
 
   return useMemo(
     () =>

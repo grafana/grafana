@@ -181,12 +181,6 @@ type APIBuilder struct {
 	// bootstrapConfig is the read-only local repository registered from
 	// [provisioning] bootstrap_path, empty when none is configured.
 	bootstrapConfig bootstrap.Config
-
-	// keysOnlyReList makes the connection informer's periodic re-list ask storage
-	// for keys instead of whole objects. Off by default: it changes what the
-	// informer feeds its Store, so it is validated per deployment before the
-	// default flips.
-	keysOnlyReList bool
 }
 
 // NewAPIBuilder creates an API builder for the provisioning API.
@@ -271,9 +265,9 @@ func NewAPIBuilder(
 		parsers:                             parsers,
 		unified:                             unified,
 		access:                              accessChecker,
-		accessWithAdmin:                     accessChecker.WithFallbackRole(identity.RoleAdmin),
-		accessWithEditor:                    accessChecker.WithFallbackRole(identity.RoleEditor),
-		accessWithViewer:                    accessChecker.WithFallbackRole(identity.RoleViewer),
+		accessWithAdmin:                     accessChecker.WithFallbackRole(authlib.RoleAdmin),
+		accessWithEditor:                    accessChecker.WithFallbackRole(authlib.RoleEditor),
+		accessWithViewer:                    accessChecker.WithFallbackRole(authlib.RoleViewer),
 		jobHistoryConfig:                    jobHistoryConfig,
 		extraWorkers:                        extraWorkers,
 		restConfigGetter:                    restConfigGetter,
@@ -425,7 +419,6 @@ func RegisterAPIService(
 		return nil, fmt.Errorf("invalid allowed_git_urls configuration: %w", err)
 	}
 	urlValidator := repository.NewURLValidator(allowlist, net.DefaultResolver.LookupIPAddr)
-	keysOnlyReList := provisioningSec.Key("keys_only_relist").MustBool(false)
 	repoValidatorOpts := []repository.ValidatorOption{repository.WithURLValidator(urlValidator)}
 
 	// Register v0alpha1 (preferred version)
@@ -476,7 +469,6 @@ func RegisterAPIService(
 	builder.jobPollInterval = cfg.ProvisioningJobPollInterval
 	builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
 	builder.natsSubscriber = natsSubscriber
-	builder.keysOnlyReList = keysOnlyReList
 	// Only the preferred version registers the bootstrap repository: it is the one that runs
 	// the post-start hook's controllers, and two of them would race on the same object.
 	builder.bootstrapConfig = bootstrapConfig
@@ -530,7 +522,6 @@ func RegisterAPIService(
 	}
 	v1beta1Builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
 	v1beta1Builder.natsSubscriber = natsSubscriber
-	v1beta1Builder.keysOnlyReList = keysOnlyReList
 	apiregistration.RegisterAPI(v1beta1Builder)
 
 	// Return the preferred (v0alpha1) builder since it runs controllers/workers
@@ -1323,11 +1314,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			freshnessMetrics := informer.NewFreshnessMetrics(b.registry)
 
 			// The repository delta source and the getter it backs.
-			var repoKeys keysapi.Lister
-			if b.keysOnlyReList {
-				repoKeys = keysapi.NewGRPCLister(b.unified, provisioning.RepositoryResourceInfo.GroupVersionResource())
-				logging.FromContext(postStartHookCtx.Context).Info("provisioning re-list will ask for keys only", "transport", "storage", "resource", provisioning.RepositoryResourceInfo.GroupVersionResource().Resource)
-			}
+			repoKeys := keysapi.NewGRPCLister(b.unified, provisioning.RepositoryResourceInfo.GroupVersionResource())
 			repoSource, reconcileRepoGetter := informer.NewRepositoryDeltaSource(b.natsSubscriber, c, repoKeys, informerFactoryResyncInterval, relistProjectionMetrics, freshnessMetrics)
 			repoController := controller.NewRepositoryController(
 				b.GetClient(),
@@ -1371,12 +1358,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			connStatusPatcher := appcontroller.NewConnectionStatusPatcher(b.GetClient())
 			connTester := connection.NewSimpleConnectionTester(b.connectionFactory)
 			connHealthChecker := controller.NewConnectionHealthChecker(connTester, healthMetricsRecorder)
-			// nil keeps the full-object re-list; see NewConnectionDeltaSource.
-			var connKeys keysapi.Lister
-			if b.keysOnlyReList {
-				connKeys = keysapi.NewGRPCLister(b.unified, provisioning.ConnectionResourceInfo.GroupVersionResource())
-				logging.FromContext(postStartHookCtx.Context).Info("provisioning re-list will ask for keys only", "transport", "storage", "resource", provisioning.ConnectionResourceInfo.GroupVersionResource().Resource)
-			}
+			connKeys := keysapi.NewGRPCLister(b.unified, provisioning.ConnectionResourceInfo.GroupVersionResource())
 			connSource, connGetter := informer.NewConnectionDeltaSource(b.natsSubscriber, c, connKeys, informerFactoryResyncInterval, relistProjectionMetrics, freshnessMetrics)
 			connController := controller.NewConnectionController(
 				connGetter,
@@ -1403,28 +1385,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				}
 				connController.Run(postStartHookCtx.Context, repoControllerWorkers, func() {}, func() {})
 			}()
-
-			// If Loki not used, initialize the API client-based history writer and start the controller for history jobs
-			if b.jobHistoryLoki == nil {
-				// Periodically clean up expired historic jobs. Cleanup is age-based and
-				// needs no live events: with NATS off the source is an apiserver
-				// informer (watch-fed cache replayed on resync), with NATS on it is a
-				// cron-style periodic re-list. Configurable via [provisioning]
-				// history_expiration; <=0 falls back to the default.
-				historyJobExpiration := b.historyExpiration
-				if historyJobExpiration <= 0 {
-					historyJobExpiration = setting.ProvisioningHistoryExpirationDefault
-				}
-				historyJobController := appcontroller.NewHistoryJobController(
-					b.GetClient(),
-					historyJobExpiration,
-				)
-				historySource := informer.NewHistoricJobDeltaSource(nats.Enabled(b.natsSubscriber), c, historyJobExpiration)
-				if _, err := historySource.AddEventHandler(historyJobController.EventHandler()); err != nil {
-					return fmt.Errorf("add history job controller event handler: %w", err)
-				}
-				go historySource.Run(postStartHookCtx.Done())
-			}
 
 			return nil
 		},

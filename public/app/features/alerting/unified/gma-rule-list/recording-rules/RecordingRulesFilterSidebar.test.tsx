@@ -27,7 +27,10 @@ beforeEach(() => {
   setWideScreen(true);
   setupRuleListBackend({
     folders: [folderFactory.build({ metadata: { name: 'folder-1' }, spec: { title: 'Team Metrics' } })],
-    recordingRules: [recordingRuleFactory.inFolder('folder-1').build({ spec: { title: 'cpu:usage:rate5m' } })],
+    recordingRules: [
+      recordingRuleFactory.inFolder('folder-1').build({ spec: { title: 'cpu:usage:rate5m' } }),
+      recordingRuleFactory.inFolder('folder-1').build({ spec: { title: 'disk:usage:rate5m', paused: true } }),
+    ],
   });
 });
 
@@ -35,6 +38,11 @@ function renderPage(search: string) {
   return render(<RecordingRulesPage />, {
     historyOptions: { initialEntries: [`/?${new URLSearchParams({ search })}`] },
   });
+}
+
+async function listedRuleTitles() {
+  const rows = await screen.findAllByRole('listitem');
+  return rows.map((row) => within(row).getAllByRole('link')[0].textContent);
 }
 
 function searchParam() {
@@ -79,5 +87,24 @@ describe('RecordingRulesFilterSidebar', () => {
     renderPage('targetDatasource:gone-uid');
 
     await waitFor(() => expect(screen.getByRole('combobox', { name: 'Target data source' })).toHaveValue('gone-uid'));
+  });
+
+  it('lists only the paused rules for paused:true', async () => {
+    renderPage('paused:true');
+
+    expect(
+      within(await screen.findByRole('radiogroup', { name: 'Paused' })).getByRole('radio', { name: 'Paused' })
+    ).toBeChecked();
+    await waitFor(async () => expect(await listedRuleTitles()).toEqual(['disk:usage:rate5m']));
+  });
+
+  it('lists only the paused rules once the Paused toggle is picked', async () => {
+    const { user } = renderPage('usage');
+    await waitFor(async () => expect(await listedRuleTitles()).toEqual(['cpu:usage:rate5m', 'disk:usage:rate5m']));
+
+    await user.click(within(screen.getByRole('radiogroup', { name: 'Paused' })).getByRole('radio', { name: 'Paused' }));
+
+    expect(searchParam()).toBe('usage paused:true');
+    await waitFor(async () => expect(await listedRuleTitles()).toEqual(['disk:usage:rate5m']));
   });
 });

@@ -263,11 +263,11 @@ importers:
         specifier: workspace:*
         version: link:packages/grafana-api-clients
       '@grafana/assistant':
-        specifier: 0.1.34
-        version: 0.1.34(@emotion/css@11.13.5(supports-color@7.2.0))(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(react@19.2.8)(rxjs@7.8.2)
+        specifier: 0.1.35
+        version: 0.1.35(@emotion/css@11.13.5(supports-color@7.2.0))(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(react@19.2.8)(rxjs@7.8.2)
       '@grafana/aws-sdk':
-        specifier: ^0.12.0
-        version: 0.12.5(@grafana/plugin-ui@0.18.0(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0))
+        specifier: ^0.13.0
+        version: 0.13.1(@grafana/plugin-ui@0.18.0(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0))(@openfeature/core@1.12.0)(react@19.2.8)
       '@grafana/data':
         specifier: workspace:*
         version: link:packages/grafana-data
@@ -305,8 +305,8 @@ importers:
         specifier: ^0.18.0
         version: 0.18.0(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)
       '@grafana/prometheus':
-        specifier: 13.2.3
-        version: 13.2.3(b0e6f1e1be0dfb3ea5cf0aa9b6616919)
+        specifier: 13.2.4
+        version: 13.2.4(1748a23a2a87810d418bd023656497a3)
       '@grafana/runtime':
         specifier: workspace:*
         version: link:packages/grafana-runtime
@@ -335,8 +335,8 @@ importers:
         specifier: 1.0.19
         version: 1.0.19
       '@lezer/common':
-        specifier: 1.5.5
-        version: 1.5.5
+        specifier: 1.5.6
+        version: 1.5.6
       '@lezer/highlight':
         specifier: 1.2.5
         version: 1.2.5
@@ -354,10 +354,10 @@ importers:
         version: 0.19.1
       '@msagl/core':
         specifier: ^1.1.19
-        version: 1.1.24
+        version: 1.1.25
       '@msagl/parser':
         specifier: ^1.1.19
-        version: 1.1.24
+        version: 1.1.25
       '@openfeature/react-sdk':
         specifier: ^1.3.0
         version: 1.4.1(@openfeature/web-sdk@1.10.0(@openfeature/core@1.12.0))(react@19.2.8)
@@ -426,7 +426,7 @@ importers:
         version: 2.1.1
       codemirror-json-schema:
         specifier: ^0.8.1
-        version: 0.8.1(@codemirror/language@6.13.1)(@codemirror/lint@6.9.8)(@codemirror/state@6.7.6)(@codemirror/view@6.43.15)(@lezer/common@1.5.5)
+        version: 0.8.1(@codemirror/language@6.13.1)(@codemirror/lint@6.9.8)(@codemirror/state@6.7.6)(@codemirror/view@6.43.15)(@lezer/common@1.5.6)
       combokeys:
         specifier: ^3.0.0
         version: 3.0.1
@@ -482,8 +482,8 @@ importers:
         specifier: 1.11.13
         version: 1.11.13
       i18next:
-        specifier: ^26.3.6
-        version: 26.4.2(@typescript/typescript6@6.0.2)
+        specifier: ^27.0.0
+        version: 27.2.2(@typescript/typescript6@6.0.2)
       idb:
         specifier: ^8.0.3
         version: 8.0.4
@@ -522,7 +522,7 @@ importers:
         version: 1.4.0
       lossless-json:
         specifier: ^4.1.1
-        version: 4.3.3
+        version: 4.3.4
       marked:
         specifier: 18.2.1
         version: 18.2.1
@@ -587,8 +587,8 @@ importers:
         specifier: 4.7.2
         version: 4.7.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       react-highlight-words:
-        specifier: 0.21.0
-        version: 0.21.0(react@19.2.8)
+        specifier: 1.0.0
+        version: 1.0.0(react@19.2.8)
       react-hook-form:
         specifier: ^7.49.2
         version: 7.62.0(react@19.2.8)
@@ -857,9 +857,6 @@ importers:
       '@types/react-dom':
         specifier: 19.2.4
         version: 19.2.4(@types/react@19.2.18)
-      '@types/react-highlight-words':
-        specifier: ^0.20.1
-        version: 0.20.1
       '@types/react-refresh':
         specifier: ^0
         version: 0.14.7
@@ -1015,7 +1012,7 @@ importers:
         version: 0.2.1
       i18next-cli:
         specifier: ^1.48.0
-        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(@typescript/typescript6@6.0.2)(i18next@26.4.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))
+        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(@typescript/typescript6@6.0.2)(i18next@27.2.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))
       ignore:
         specifier: 7.0.12
         version: 7.0.12
@@ -1101,8 +1098,8 @@ importers:
         specifier: ^0.3.12
         version: 0.3.12
       react-i18next:
-        specifier: ^17.0.9
-        version: 17.0.15(@typescript/typescript6@6.0.2)(i18next@26.4.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        specifier: ^18.0.0
+        version: 18.0.3(@types/react@19.2.18)(@typescript/typescript6@6.0.2)(i18next@27.2.2(@typescript/typescript6@6.0.2))(react@19.2.8)
       react-refresh:
         specifier: ^0.18.0
         version: 0.18.0
@@ -1214,7 +1211,7 @@ importers:
         version: 19.2.4(@types/react@19.2.18)
       i18next-cli:
         specifier: ^1.48.0
-        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(i18next@26.4.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(typescript@6.0.2)
+        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(i18next@27.2.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(typescript@6.0.2)
       typescript:
         specifier: 6.0.2
         version: 6.0.2
@@ -1300,7 +1297,7 @@ importers:
         version: 19.2.4(@types/react@19.2.18)
       i18next-cli:
         specifier: ^1.48.0
-        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(i18next@26.4.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(typescript@6.0.2)
+        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(i18next@27.2.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(typescript@6.0.2)
       typescript:
         specifier: 6.0.2
         version: 6.0.2
@@ -1349,7 +1346,7 @@ importers:
         version: 19.2.4(@types/react@19.2.18)
       i18next-cli:
         specifier: ^1.48.0
-        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(i18next@26.4.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(typescript@6.0.2)
+        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(i18next@27.2.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(typescript@6.0.2)
       typescript:
         specifier: 6.0.2
         version: 6.0.2
@@ -1442,7 +1439,7 @@ importers:
         version: typescript@7.0.2
       i18next-cli:
         specifier: ^1.48.0
-        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(@typescript/typescript6@6.0.2)(i18next@26.4.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))
+        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(@typescript/typescript6@6.0.2)(i18next@27.2.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))
       react:
         specifier: 19.2.8
         version: 19.2.8
@@ -1692,7 +1689,7 @@ importers:
         version: 11.13.5(supports-color@7.2.0)
       '@grafana/assistant':
         specifier: ^0.1.1
-        version: 0.1.34(@emotion/css@11.13.5(supports-color@7.2.0))(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(react@19.2.8)(rxjs@7.8.2)
+        version: 0.1.35(@emotion/css@11.13.5(supports-color@7.2.0))(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(react@19.2.8)(rxjs@7.8.2)
       '@grafana/data':
         specifier: workspace:*
         version: link:../grafana-data
@@ -1812,8 +1809,8 @@ importers:
         specifier: ^3.1.3
         version: 3.1.3
       i18next:
-        specifier: ^26.3.6
-        version: 26.4.2(@typescript/typescript6@6.0.2)
+        specifier: ^27.0.0
+        version: 27.2.2(@typescript/typescript6@6.0.2)
       i18next-browser-languagedetector:
         specifier: ^8.0.0
         version: 8.3.1
@@ -1827,8 +1824,8 @@ importers:
         specifier: '>=19'
         version: 19.2.8
       react-i18next:
-        specifier: ^17.0.9
-        version: 17.0.15(@typescript/typescript6@6.0.2)(i18next@26.4.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        specifier: ^18.0.0
+        version: 18.0.3(@types/react@19.2.18)(@typescript/typescript6@6.0.2)(i18next@27.2.2(@typescript/typescript6@6.0.2))(react@19.2.8)
     devDependencies:
       '@types/react':
         specifier: 19.2.18
@@ -2168,7 +2165,7 @@ importers:
         version: 11.13.5(supports-color@7.2.0)
       '@grafana/assistant':
         specifier: ^0.1.24
-        version: 0.1.34(@emotion/css@11.13.5(supports-color@7.2.0))(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(react@19.2.8)(rxjs@7.8.2)
+        version: 0.1.35(@emotion/css@11.13.5(supports-color@7.2.0))(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(react@19.2.8)(rxjs@7.8.2)
       '@grafana/data':
         specifier: workspace:*
         version: link:../grafana-data
@@ -2247,7 +2244,7 @@ importers:
         version: typescript@7.0.2
       i18next-cli:
         specifier: ^1.48.0
-        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(@typescript/typescript6@6.0.2)(i18next@26.4.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))
+        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(@typescript/typescript6@6.0.2)(i18next@27.2.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))
       jest:
         specifier: ^29.6.4
         version: 29.7.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.5)(@typescript/typescript6@6.0.2))
@@ -2496,11 +2493,11 @@ importers:
         specifier: ^4.5.0
         version: 4.5.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       react-dropzone:
-        specifier: ^14.3.8
-        version: 14.3.8(react@19.2.8)
+        specifier: ^20.0.0
+        version: 20.2.1(@types/react@19.2.18)(react@19.2.8)
       react-highlight-words:
-        specifier: ^0.21.0
-        version: 0.21.0(react@19.2.8)
+        specifier: ^1.0.0
+        version: 1.0.0(react@19.2.8)
       react-hook-form:
         specifier: ^7.49.2
         version: 7.62.0(react@19.2.8)
@@ -2616,9 +2613,6 @@ importers:
       '@types/react-dom':
         specifier: 19.2.4
         version: 19.2.4(@types/react@19.2.18)
-      '@types/react-highlight-words':
-        specifier: ^0.20.1
-        version: 0.20.1
       '@types/react-transition-group':
         specifier: 4.4.12
         version: 4.4.12(@types/react@19.2.18)
@@ -3771,8 +3765,8 @@ packages:
   '@formatjs/intl-localematcher@0.10.1':
     resolution: {integrity: sha512-gBqglQK9rXuHsLmM8wzTMBy4Xo4d0jamirIVKuEL8F1rwbskWdpMA1kZarSkny+uvr5q/K6GSzE0Rcq1wZLl3g==}
 
-  '@grafana/assistant@0.1.34':
-    resolution: {integrity: sha512-f5C5beq/G+W0cNQloBRrMskR415PRg+bv0X/L2/p0DIML4yft4Mg/kYJWBBMo0QD2Q2m9Nj+xXtdKjEvlWvPxA==}
+  '@grafana/assistant@0.1.35':
+    resolution: {integrity: sha512-CUN036hs5L8zgZVU4d9SRl/Qr81dHzlMcE0OBRULFW+BBqquXws3SARVg3NgmK4HapPLQvQn6iVL9HpowR+/xw==}
     peerDependencies:
       '@emotion/css': '>=11.0.0'
       '@grafana/data': '>=12.1.0'
@@ -3782,11 +3776,11 @@ packages:
       react: '>=18.0.0'
       rxjs: '>=7.0.0'
 
-  '@grafana/aws-sdk@0.12.5':
-    resolution: {integrity: sha512-NdIhzAdmhxNoWERHFNq/siM4ZdIXz77+A/N8rBJ7u3daQnMbQdXpAJ/LrZDr7Guk8n/SP4nYQnIx2Rjq7rWveA==}
+  '@grafana/aws-sdk@0.13.1':
+    resolution: {integrity: sha512-L0d9fKCvZeEK+snB2DiN4Ws70I9r3Cyi+wrZ1JuPmn7o/amrl2xevOC3HND2KzDKM6FOjjY9M9eclDxqJg+8Wg==}
     engines: {node: '>=24'}
     peerDependencies:
-      '@grafana/plugin-ui': 0.18.0
+      '@grafana/plugin-ui': '>=0.14.0'
 
   '@grafana/eslint-config@10.0.0':
     resolution: {integrity: sha512-KdPghPTEkpT1bfph/HLRe0rWJuAEeQMy3wF8xXOHkwhqf/o9IS4d0GT3K/tW0TxXHD0AKZB/OQBo7mZwvvaq7Q==}
@@ -3885,8 +3879,8 @@ packages:
       monaco-editor:
         optional: true
 
-  '@grafana/prometheus@13.2.3':
-    resolution: {integrity: sha512-T/zVYpVKXhMbqCyCaJa/afqkmZ8459i5Jvo5GMsjldLO5zKZTvNZft2b1GLEDxXPt6Lq1FTV/JVA5QT/dzmrlw==}
+  '@grafana/prometheus@13.2.4':
+    resolution: {integrity: sha512-vdP8h1B6MefT3pvZxEE/0HFO6K20gGujn9e7stX8JNshZohy/xenJ6tnUlaMpVGmpUvBr5Z65mD2dFIqZOl/Qw==}
     engines: {node: '>=24', npm: '>=11.16.0'}
     peerDependencies:
       '@grafana/assistant': 0.1.34
@@ -4684,8 +4678,8 @@ packages:
   '@lezer/common@1.5.3':
     resolution: {integrity: sha512-H0iErY4e43LpXbYDyBci5W4v/RwTgGV3YzYOlJPiGZ8RY8w51kVE+xLn1tg3Z6UmSfyETvtsUK3r7YsgDQEI7Q==}
 
-  '@lezer/common@1.5.5':
-    resolution: {integrity: sha512-Pw7PVCndruF1pb3ebCxpSVpkMHSDjwRCLcTRw+RizUKco5QbWylwq2g4lnG/RYN7yTTQDXE9F77MwtkAyphrjg==}
+  '@lezer/common@1.5.6':
+    resolution: {integrity: sha512-NZxu3q49ck+YYbEJPuIPIyFP37XneBvzPIarBHEXBLBVfkZqQieZ/Y2boYnGNYtmjpOZLnAKs/lwqtmDpi365w==}
 
   '@lezer/css@1.3.4':
     resolution: {integrity: sha512-N+tn9tej2hPvyKgHEApMOQfHczDJCwxrRFS3SPn9QjYN+uwHvEDnCgKRrb3mxDYxRS8sKMM8fhC3+lc04Abz5Q==}
@@ -4792,14 +4786,14 @@ packages:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
-  '@msagl/core@1.1.24':
-    resolution: {integrity: sha512-yBk+EpL93CdZyVEaaPLj44zZX3ovLHttjW10lsM4PFYZYJUz+S2XI3QdyKyKJNSWc/hHVqwd1VWAkMr3UGK/Cg==}
+  '@msagl/core@1.1.25':
+    resolution: {integrity: sha512-tGu1cr8oL2L/NFRZ2Es3OJTvPD0eKO3LGRr1ps2MciVKzyyzlYG4s8H0z1ifvzSPiknP3+G+b1OW+/MQo8FFFA==}
 
-  '@msagl/drawing@1.1.24':
-    resolution: {integrity: sha512-CqI2k7P33DxGksAjGY8975mL0lGTIgG9JQDsSKEQbR8ibDRTDzFW8XVh/Pv+NtOx9dnWBWn6hH23RugjBFb6mA==}
+  '@msagl/drawing@1.1.25':
+    resolution: {integrity: sha512-t/SgdJUkD/BZIdS34lBZrU0mmK8O3/bm/nVyuHXNtU66ZRHWgytWWb9HBx24rMEnVgOnauy+aS5mh+FmpQPYhw==}
 
-  '@msagl/parser@1.1.24':
-    resolution: {integrity: sha512-dfdoSLn0qA63t49Ds+Nl6iFOCH1jTZYwB+Pcx6vFDbWbpKfeo3l8crLpU/GI953p/3JXQMZlBiVPHfsPWLVVAA==}
+  '@msagl/parser@1.1.25':
+    resolution: {integrity: sha512-z+zU46BKNfezNvvkpUedpELro76mRwjhTp2f4h0vxZEdMYVhU1XdYX4QRWeThm6M0k9R3Gv3YR5Q9ATLXwdjbg==}
 
   '@mswjs/interceptors@0.39.2':
     resolution: {integrity: sha512-RuzCup9Ct91Y7V79xwCb146RaBRHZ7NBbrIUySumd1rpKqHL5OonaqrGIbug5hNwP/fRyxFMA6ISgw4FTtYFYg==}
@@ -7330,9 +7324,6 @@ packages:
     peerDependencies:
       '@types/react': ^19.2.0
 
-  '@types/react-highlight-words@0.20.1':
-    resolution: {integrity: sha512-EgF6RaoibBurIhxk3X3d5xL0uMqjD7KtShvZ8S+d7/o6xZ+mQ4rct1a2E49vWA9r63OzrHCIyghqvQHASb/ERw==}
-
   '@types/react-refresh@0.14.7':
     resolution: {integrity: sha512-XIdFxBMm9VdO49M+Nn4Ud3eVwRub6vhJjCzd7g09kUF5NKsITGoCEwCXE1YupIRPo7A6JGc5fUV2Y5l31OYxcA==}
 
@@ -8452,9 +8443,9 @@ packages:
   asynckit@0.4.0:
     resolution: {integrity: sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==}
 
-  attr-accept@2.2.5:
-    resolution: {integrity: sha512-0bDNnY/u6pPwHDMoF0FieU354oBi0a8rD9FcsLwzcGWbc8KS8KPIi7y+s13OlVY+gMWc/9xEMUgNE6Qm8ZllYQ==}
-    engines: {node: '>=4'}
+  attr-accept@4.0.1:
+    resolution: {integrity: sha512-rOKAGOwbnTUvwTL8rNA0hWnU3uX9tOI20di4KjR5I1ez/RJmnA37W3zz4EMxGC2YnI289yPjRy63CdAZeQFZ4Q==}
+    engines: {node: '>= 22'}
 
   autolinker@3.16.2:
     resolution: {integrity: sha512-JiYl7j2Z19F9NdTmirENSUUIIL/9MytEWtmzhfmsKPCp9E+G35Y0UNCMoM9tFigxT59qSc8Ml2dlZXOCVTYwuA==}
@@ -10263,9 +10254,9 @@ packages:
   file-saver@2.0.5:
     resolution: {integrity: sha512-P9bmyZ3h/PRG+Nzga+rbdI4OEpNDzAVyy74uVO9ATgzLK6VtAsYybF/+TOCvrc0MO793d6+42lLyZTw7/ArVzA==}
 
-  file-selector@2.1.0:
-    resolution: {integrity: sha512-ZuXAqGePcSPz4JuerOY06Dzzq0hrmQ6VGoXVzGyFI1npeOfBgqGIKKpznfYWRkSLJlXutkqVC5WvGZtkFVhu9Q==}
-    engines: {node: '>= 12'}
+  file-selector@5.0.3:
+    resolution: {integrity: sha512-d15nlW+KKq82TlItRvCHtJ8NXCX0nwz2SEUR1MOT8W50c5q2se551ZFdhITFrWohl/5wbRPfMMF9jq4Oj1xRGQ==}
+    engines: {node: '>= 22'}
 
   file-type@16.5.4:
     resolution: {integrity: sha512-/yFHK0aGjFEgDJjEKP0pWCplsPFPhwyfwevf/pVxiN0tmE4L9LmwWxWukdJSHdoCli4VgQLehjJtwQBnqmsKcw==}
@@ -10677,6 +10668,9 @@ packages:
   highlight-words-core@1.2.2:
     resolution: {integrity: sha512-BXUKIkUuh6cmmxzi5OIbUJxrG8OAk2MqoL1DtO3Wo9D2faJg2ph5ntyuQeLqaHJmzER6H5tllCDA9ZnNe9BVGg==}
 
+  highlight-words-core@2.0.0:
+    resolution: {integrity: sha512-dKFj8EZQ8yvU9b/88WGZGwsFC0wmKk5wEVOL4D4POzASma8Gct9LvWax6gPpIzBIF+z8N0si3t1mxyYxOHmjhw==}
+
   highlight.js@10.7.3:
     resolution: {integrity: sha512-tzcUFauisWKNHaRkN4Wjl/ZA07gENAjFl3J/c480dprkGTg5EQstgaNFqBfUqCq54kZRIEcreTsAgF/m2quD7A==}
 
@@ -10785,8 +10779,9 @@ packages:
   i18next@23.16.8:
     resolution: {integrity: sha512-06r/TitrM88Mg5FdUXAKL96dJMzgqLE5dv3ryBAra4KCwD9mJ4ndOTS95ZuymIGoE+2hzfdaMak2X11/es7ZWg==}
 
-  i18next@26.4.2:
-    resolution: {integrity: sha512-RX+R0VLg13IbvRuJSxnqykUFS9vQZTl8wYpWPCIUDWVrSGjsQywB5Y+pjzrkboxGAuYfJZVH1InFTdgBdxq6ug==}
+  i18next@27.2.2:
+    resolution: {integrity: sha512-1/AJgz/bpE/YL6tqekQlZAzDhkmrUBbgU8+Xon/Lwv6c5WdYuyFZ9mb86OVfR2C2XujUDT7Rz23Ydaq4l981lA==}
+    engines: {node: '>=22'}
     peerDependencies:
       typescript: ^5 || ^6 || ^7
     peerDependenciesMeta:
@@ -11954,8 +11949,8 @@ packages:
     resolution: {integrity: sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==}
     hasBin: true
 
-  lossless-json@4.3.3:
-    resolution: {integrity: sha512-FGFrGArHsv7BRiYOf37ZRieT9HlKw+Kpu9HvtpYjcoOEo8lqNkjny8A2YAfWNWWQC+9pcLIrLZ+IviKJhaHwGQ==}
+  lossless-json@4.3.4:
+    resolution: {integrity: sha512-zfmBtt+IgL7aiem9qNhAmW8/kZOVzA0Y219UNj/FN7p21hQ4ZOghT4y9FzxQAm/64e4wi4jR7lBXUXy2IrjaMA==}
 
   loupe@3.2.1:
     resolution: {integrity: sha512-CdzqowRJCeLU72bHvWqwRBBlLcMEtIvGrlvef74kMnV2AolS9Y8xUv1I0U/MNAWMhBlKIoyuEgoJ0t/bbwHbLQ==}
@@ -13158,11 +13153,15 @@ packages:
       react: '>= 16.3.0'
       react-dom: '>= 16.3.0'
 
-  react-dropzone@14.3.8:
-    resolution: {integrity: sha512-sBgODnq+lcA4P296DY4wacOZz3JFpD99fp+hb//iBO2HHnyeZU3FwWyXJ6salNpqQdsZrgMrotuko/BdJMV8Ug==}
-    engines: {node: '>= 10.13'}
+  react-dropzone@20.2.1:
+    resolution: {integrity: sha512-8ldzI42a+iz6jlC5t0HoOO5ce65dU8ZGo8ZpesL2E57JByC8LBUieMrkGj97YYfgMaYKwkhpkfYxKOCKAekywA==}
+    engines: {node: '>= 22'}
     peerDependencies:
-      react: '>= 16.8 || 18.0.0'
+      '@types/react': '*'
+      react: '>= 18'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
 
   react-element-to-jsx-string@17.0.1:
     resolution: {integrity: sha512-GMX16Yo+nuqDq4GlrHGaK/coQKEuiXaKEg8tCfKnOC34F2LiUYE6JeQKyirh0YgjhTXUxxONcj1gZa86OW1R6A==}
@@ -13190,6 +13189,11 @@ packages:
     peerDependencies:
       react: ^0.14.0 || ^15.0.0 || ^16.0.0-0 || ^17.0.0-0 || ^18.0.0-0 || ^19.0.0-0
 
+  react-highlight-words@1.0.0:
+    resolution: {integrity: sha512-783Dim5Q6X51x4yGlU2+XDr5L3r9P+3iI1zuRx4khbjqNOZObUoGOtZ5V7UdN8zrpz/IUo+cAdSoYJu4Y0Vo1w==}
+    peerDependencies:
+      react: ^16.3.0 || ^17.0.0-0 || ^18.0.0-0 || ^19.0.0-0
+
   react-hook-form@7.62.0:
     resolution: {integrity: sha512-7KWFejc98xqG/F4bAxpL41NB3o1nnvQO1RWZT3TqRZYL8RryQETGfEdVnJN2fy1crCiBLLjkRBVK05j24FxJGA==}
     engines: {node: '>=18.0.0'}
@@ -13208,6 +13212,20 @@ packages:
       react-dom:
         optional: true
       react-native:
+        optional: true
+      typescript:
+        optional: true
+
+  react-i18next@18.0.3:
+    resolution: {integrity: sha512-S84rtVuaKuiRtoCOspbGEaDlFjka+KvK/A5YCOr4LQ41XF3iJOrJ5rqQTD/jJHFVUf6X1i4ZMN5PGGgpz8NN6g==}
+    engines: {node: '>=22'}
+    peerDependencies:
+      '@types/react': '*'
+      i18next: '>= 27.0.1'
+      react: '>= 18.0.0'
+      typescript: ^5 || ^6 || ^7
+    peerDependenciesMeta:
+      '@types/react':
         optional: true
       typescript:
         optional: true
@@ -15438,12 +15456,15 @@ packages:
 
   yuku-ast@0.10.2:
     resolution: {integrity: sha512-UnG9mA6giglCvSErft2/40TVFX750Sj1xgwddPLpG7J7rlr/P1wPADg9G2RK+d/1tNLtRVoLdMMOMVBB9561TQ==}
+    deprecated: 'Yuku is now one package with one core. Use "yuku" instead: https://yuku.fyi/javascript/. Existing installs keep working but get no more fixes.'
 
   yuku-codegen@0.10.2:
     resolution: {integrity: sha512-hentl2dtrF6cPjiAirtkfxfFZBA6Hdm61UqRJ7cA0qrlDNMk9PZGOjw5w1mx3E0hu/6pHcJF4dJW+D0SXHPZOA==}
+    deprecated: 'Yuku is now one package with one core. Use "yuku" instead: https://yuku.fyi/javascript/. Existing installs keep working but get no more fixes.'
 
   yuku-parser@0.10.2:
     resolution: {integrity: sha512-CgaU0/PPjCAIEZ3WQroosOxTY3eeKldAN3h+vk8pMNz4+jl1CZzBR4pW+K/rRPF112VooCL5FdjJoiMNjDrL2A==}
+    deprecated: 'Yuku is now one package with one core. Use "yuku" instead: https://yuku.fyi/javascript/. Existing installs keep working but get no more fixes.'
 
   zarrita@0.7.5:
     resolution: {integrity: sha512-ZriOSEne+Wf2iuM0yjDZvUKpHNlug3dO7qJ6mAxXoOgsYV18DPOkAkwB9e0rf21bHcKcOffFuwoZwn5g6pvUeA==}
@@ -15841,21 +15862,21 @@ snapshots:
       '@codemirror/language': 6.13.1
       '@codemirror/state': 6.7.6
       '@codemirror/view': 6.43.15
-      '@lezer/common': 1.5.5
+      '@lezer/common': 1.5.6
 
   '@codemirror/commands@6.11.1':
     dependencies:
       '@codemirror/language': 6.13.1
       '@codemirror/state': 6.7.6
       '@codemirror/view': 6.43.15
-      '@lezer/common': 1.5.5
+      '@lezer/common': 1.5.6
 
   '@codemirror/lang-css@6.3.1':
     dependencies:
       '@codemirror/autocomplete': 6.20.4
       '@codemirror/language': 6.13.1
       '@codemirror/state': 6.7.6
-      '@lezer/common': 1.5.5
+      '@lezer/common': 1.5.6
       '@lezer/css': 1.3.4
 
   '@codemirror/lang-go@6.0.1':
@@ -15863,7 +15884,7 @@ snapshots:
       '@codemirror/autocomplete': 6.20.4
       '@codemirror/language': 6.13.1
       '@codemirror/state': 6.7.6
-      '@lezer/common': 1.5.5
+      '@lezer/common': 1.5.6
       '@lezer/go': 1.0.1
 
   '@codemirror/lang-html@6.4.12':
@@ -15874,7 +15895,7 @@ snapshots:
       '@codemirror/language': 6.13.1
       '@codemirror/state': 6.7.6
       '@codemirror/view': 6.43.15
-      '@lezer/common': 1.5.5
+      '@lezer/common': 1.5.6
       '@lezer/css': 1.3.4
       '@lezer/html': 1.3.13
 
@@ -15885,7 +15906,7 @@ snapshots:
       '@codemirror/lint': 6.9.8
       '@codemirror/state': 6.7.6
       '@codemirror/view': 6.43.15
-      '@lezer/common': 1.5.5
+      '@lezer/common': 1.5.6
       '@lezer/javascript': 1.5.4
 
   '@codemirror/lang-json@6.0.2':
@@ -15900,7 +15921,7 @@ snapshots:
       '@codemirror/language': 6.13.1
       '@codemirror/state': 6.7.6
       '@codemirror/view': 6.43.15
-      '@lezer/common': 1.5.5
+      '@lezer/common': 1.5.6
       '@lezer/markdown': 1.8.1
 
   '@codemirror/lang-sql@6.10.0':
@@ -15908,7 +15929,7 @@ snapshots:
       '@codemirror/autocomplete': 6.20.4
       '@codemirror/language': 6.13.1
       '@codemirror/state': 6.7.6
-      '@lezer/common': 1.5.5
+      '@lezer/common': 1.5.6
       '@lezer/highlight': 1.2.5
       '@lezer/lr': 1.4.12
 
@@ -15918,7 +15939,7 @@ snapshots:
       '@codemirror/language': 6.13.1
       '@codemirror/state': 6.7.6
       '@codemirror/view': 6.43.15
-      '@lezer/common': 1.5.5
+      '@lezer/common': 1.5.6
       '@lezer/xml': 1.0.6
 
   '@codemirror/lang-yaml@6.1.3':
@@ -15926,7 +15947,7 @@ snapshots:
       '@codemirror/autocomplete': 6.20.4
       '@codemirror/language': 6.13.1
       '@codemirror/state': 6.7.6
-      '@lezer/common': 1.5.5
+      '@lezer/common': 1.5.6
       '@lezer/highlight': 1.2.5
       '@lezer/lr': 1.4.12
       '@lezer/yaml': 1.0.4
@@ -15936,7 +15957,7 @@ snapshots:
       '@codemirror/state': 6.7.6
       '@codemirror/streamparser': 6.0.0
       '@codemirror/view': 6.43.15
-      '@lezer/common': 1.5.5
+      '@lezer/common': 1.5.6
       '@lezer/highlight': 1.2.5
       '@lezer/lr': 1.4.12
       style-mod: 4.1.3
@@ -16455,7 +16476,7 @@ snapshots:
     dependencies:
       '@formatjs/fast-memoize': 3.1.7
 
-  '@grafana/assistant@0.1.34(@emotion/css@11.13.5(supports-color@7.2.0))(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(react@19.2.8)(rxjs@7.8.2)':
+  '@grafana/assistant@0.1.35(@emotion/css@11.13.5(supports-color@7.2.0))(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(react@19.2.8)(rxjs@7.8.2)':
     dependencies:
       '@emotion/css': 11.13.5(supports-color@7.2.0)
       '@grafana/data': link:packages/grafana-data
@@ -16465,10 +16486,16 @@ snapshots:
       json-schema-to-ts: 3.1.1
       react: 19.2.8
       rxjs: 7.8.2
+      zod: 4.6.7
 
-  '@grafana/aws-sdk@0.12.5(@grafana/plugin-ui@0.18.0(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0))':
+  '@grafana/aws-sdk@0.13.1(@grafana/plugin-ui@0.18.0(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0))(@openfeature/core@1.12.0)(react@19.2.8)':
     dependencies:
       '@grafana/plugin-ui': 0.18.0(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)
+      '@openfeature/react-sdk': 1.4.1(@openfeature/web-sdk@1.10.0(@openfeature/core@1.12.0))(react@19.2.8)
+      '@openfeature/web-sdk': 1.10.0(@openfeature/core@1.12.0)
+    transitivePeerDependencies:
+      - '@openfeature/core'
+      - react
 
   '@grafana/eslint-config@10.0.0(@stylistic/eslint-plugin@5.10.0(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0)))(@typescript-eslint/eslint-plugin@8.56.0(@typescript-eslint/parser@8.56.0(@typescript/typescript6@6.0.2)(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0))(@typescript/typescript6@6.0.2)(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0))(@typescript-eslint/parser@8.56.0(@typescript/typescript6@6.0.2)(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0))(@typescript/typescript6@6.0.2)(eslint-config-prettier@10.1.8(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0)))(eslint-plugin-jsdoc@52.0.2(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0))(eslint-plugin-react-hooks@7.1.1(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0))(eslint-plugin-react@7.37.5(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0)))(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0))':
     dependencies:
@@ -16642,7 +16669,7 @@ snapshots:
       - react-native
       - supports-color
 
-  '@grafana/prometheus@13.2.3(b0e6f1e1be0dfb3ea5cf0aa9b6616919)':
+  '@grafana/prometheus@13.2.4(1748a23a2a87810d418bd023656497a3)':
     dependencies:
       '@emotion/css': 11.13.5(supports-color@7.2.0)
       '@floating-ui/react': 0.27.20(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -16674,7 +16701,7 @@ snapshots:
       semver: 7.8.5
       uuid: 14.0.2
     optionalDependencies:
-      '@grafana/assistant': 0.1.34(@emotion/css@11.13.5(supports-color@7.2.0))(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(react@19.2.8)(rxjs@7.8.2)
+      '@grafana/assistant': 0.1.35(@emotion/css@11.13.5(supports-color@7.2.0))(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(react@19.2.8)(rxjs@7.8.2)
     transitivePeerDependencies:
       - '@codemirror/autocomplete'
       - '@codemirror/language'
@@ -17811,64 +17838,64 @@ snapshots:
 
   '@lezer/common@1.5.3': {}
 
-  '@lezer/common@1.5.5': {}
+  '@lezer/common@1.5.6': {}
 
   '@lezer/css@1.3.4':
     dependencies:
-      '@lezer/common': 1.5.5
+      '@lezer/common': 1.5.6
       '@lezer/highlight': 1.2.5
       '@lezer/lr': 1.4.12
 
   '@lezer/go@1.0.1':
     dependencies:
-      '@lezer/common': 1.5.5
+      '@lezer/common': 1.5.6
       '@lezer/highlight': 1.2.5
       '@lezer/lr': 1.4.12
 
   '@lezer/highlight@1.2.5':
     dependencies:
-      '@lezer/common': 1.5.5
+      '@lezer/common': 1.5.6
 
   '@lezer/html@1.3.13':
     dependencies:
-      '@lezer/common': 1.5.5
+      '@lezer/common': 1.5.6
       '@lezer/highlight': 1.2.5
       '@lezer/lr': 1.4.12
 
   '@lezer/javascript@1.5.4':
     dependencies:
-      '@lezer/common': 1.5.5
+      '@lezer/common': 1.5.6
       '@lezer/highlight': 1.2.5
       '@lezer/lr': 1.4.12
 
   '@lezer/json@1.0.3':
     dependencies:
-      '@lezer/common': 1.5.5
+      '@lezer/common': 1.5.6
       '@lezer/highlight': 1.2.5
       '@lezer/lr': 1.4.12
 
   '@lezer/lr@1.4.10':
     dependencies:
-      '@lezer/common': 1.5.5
+      '@lezer/common': 1.5.6
 
   '@lezer/lr@1.4.12':
     dependencies:
-      '@lezer/common': 1.5.5
+      '@lezer/common': 1.5.6
 
   '@lezer/markdown@1.8.1':
     dependencies:
-      '@lezer/common': 1.5.5
+      '@lezer/common': 1.5.6
       '@lezer/highlight': 1.2.5
 
   '@lezer/xml@1.0.6':
     dependencies:
-      '@lezer/common': 1.5.5
+      '@lezer/common': 1.5.6
       '@lezer/highlight': 1.2.5
       '@lezer/lr': 1.4.12
 
   '@lezer/yaml@1.0.4':
     dependencies:
-      '@lezer/common': 1.5.5
+      '@lezer/common': 1.5.6
       '@lezer/highlight': 1.2.5
       '@lezer/lr': 1.4.12
 
@@ -17965,21 +17992,21 @@ snapshots:
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
 
-  '@msagl/core@1.1.24':
+  '@msagl/core@1.1.25':
     dependencies:
       queue-typescript: 1.0.1
       reliable-random: 0.0.1
       stack-typescript: 1.0.4
       typescript-string-operations: 1.5.1
 
-  '@msagl/drawing@1.1.24':
+  '@msagl/drawing@1.1.25':
     dependencies:
-      '@msagl/core': 1.1.24
+      '@msagl/core': 1.1.25
 
-  '@msagl/parser@1.1.24':
+  '@msagl/parser@1.1.25':
     dependencies:
-      '@msagl/core': 1.1.24
-      '@msagl/drawing': 1.1.24
+      '@msagl/core': 1.1.25
+      '@msagl/drawing': 1.1.25
       '@types/parse-color': 1.0.3
       dotparser: 1.1.1
       parse-color: 1.0.0
@@ -20656,10 +20683,6 @@ snapshots:
     dependencies:
       '@types/react': 19.2.18
 
-  '@types/react-highlight-words@0.20.1':
-    dependencies:
-      '@types/react': 19.2.18
-
   '@types/react-refresh@0.14.7':
     dependencies:
       '@types/babel__core': 7.20.5
@@ -21812,7 +21835,7 @@ snapshots:
 
   asynckit@0.4.0: {}
 
-  attr-accept@2.2.5: {}
+  attr-accept@4.0.1: {}
 
   autolinker@3.16.2:
     dependencies:
@@ -22255,13 +22278,13 @@ snapshots:
 
   code-block-writer@13.0.3: {}
 
-  codemirror-json-schema@0.8.1(@codemirror/language@6.13.1)(@codemirror/lint@6.9.8)(@codemirror/state@6.7.6)(@codemirror/view@6.43.15)(@lezer/common@1.5.5):
+  codemirror-json-schema@0.8.1(@codemirror/language@6.13.1)(@codemirror/lint@6.9.8)(@codemirror/state@6.7.6)(@codemirror/view@6.43.15)(@lezer/common@1.5.6):
     dependencies:
       '@codemirror/language': 6.13.1
       '@codemirror/lint': 6.9.8
       '@codemirror/state': 6.7.6
       '@codemirror/view': 6.43.15
-      '@lezer/common': 1.5.5
+      '@lezer/common': 1.5.6
       '@sagold/json-pointer': 5.1.2
       '@shikijs/markdown-it': 1.29.2
       best-effort-json-parser: 1.5.1
@@ -22283,7 +22306,7 @@ snapshots:
       '@codemirror/language': 6.13.1
       '@codemirror/state': 6.7.6
       '@codemirror/view': 6.43.15
-      '@lezer/common': 1.5.5
+      '@lezer/common': 1.5.6
       '@lezer/highlight': 1.2.5
       json5: 2.2.3
       lezer-json5: 2.0.2
@@ -23904,9 +23927,7 @@ snapshots:
 
   file-saver@2.0.5: {}
 
-  file-selector@2.1.0:
-    dependencies:
-      tslib: 2.9.1
+  file-selector@5.0.3: {}
 
   file-type@16.5.4:
     dependencies:
@@ -24388,6 +24409,8 @@ snapshots:
 
   highlight-words-core@1.2.2: {}
 
+  highlight-words-core@2.0.0: {}
+
   highlight.js@10.7.3: {}
 
   highlightjs-vue@1.0.0: {}
@@ -24494,7 +24517,7 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.29.7
 
-  i18next-cli@1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(@typescript/typescript6@6.0.2)(i18next@26.4.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8)):
+  i18next-cli@1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(@typescript/typescript6@6.0.2)(i18next@27.2.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8)):
     dependencies:
       '@croct/json5-parser': 0.2.2
       '@swc/core': 1.15.40(@swc/helpers@0.5.17)
@@ -24510,7 +24533,7 @@ snapshots:
       minimatch: 10.2.6
       ora: 9.4.0
       react: 19.2.8
-      react-i18next: 17.0.15(@typescript/typescript6@6.0.2)(i18next@26.4.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      react-i18next: 17.0.15(@typescript/typescript6@6.0.2)(i18next@27.2.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       yaml: 2.9.0
     transitivePeerDependencies:
       - '@swc/helpers'
@@ -24520,7 +24543,7 @@ snapshots:
       - react-native
       - typescript
 
-  i18next-cli@1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(i18next@26.4.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(typescript@6.0.2):
+  i18next-cli@1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(i18next@27.2.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(typescript@6.0.2):
     dependencies:
       '@croct/json5-parser': 0.2.2
       '@swc/core': 1.15.40(@swc/helpers@0.5.17)
@@ -24536,7 +24559,7 @@ snapshots:
       minimatch: 10.2.6
       ora: 9.4.0
       react: 19.2.8
-      react-i18next: 17.0.15(i18next@26.4.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.2)
+      react-i18next: 17.0.15(i18next@27.2.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.2)
       yaml: 2.9.0
     transitivePeerDependencies:
       - '@swc/helpers'
@@ -24567,7 +24590,7 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.29.7
 
-  i18next@26.4.2(@typescript/typescript6@6.0.2):
+  i18next@27.2.2(@typescript/typescript6@6.0.2):
     optionalDependencies:
       typescript: '@typescript/typescript6@6.0.2'
 
@@ -26210,7 +26233,7 @@ snapshots:
     dependencies:
       js-tokens: 4.0.0
 
-  lossless-json@4.3.3: {}
+  lossless-json@4.3.4: {}
 
   loupe@3.2.1: {}
 
@@ -27729,12 +27752,13 @@ snapshots:
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
 
-  react-dropzone@14.3.8(react@19.2.8):
+  react-dropzone@20.2.1(@types/react@19.2.18)(react@19.2.8):
     dependencies:
-      attr-accept: 2.2.5
-      file-selector: 2.1.0
-      prop-types: 15.8.1
+      attr-accept: 4.0.1
+      file-selector: 5.0.3
       react: 19.2.8
+    optionalDependencies:
+      '@types/react': 19.2.18
 
   react-element-to-jsx-string@17.0.1(react-dom@19.2.8(react@19.2.8))(react-is@19.2.8)(react@19.2.8):
     dependencies:
@@ -27767,31 +27791,45 @@ snapshots:
       memoize-one: 4.0.3
       react: 19.2.8
 
+  react-highlight-words@1.0.0(react@19.2.8):
+    dependencies:
+      highlight-words-core: 2.0.0
+      react: 19.2.8
+
   react-hook-form@7.62.0(react@19.2.8):
     dependencies:
       react: 19.2.8
 
-  react-i18next@17.0.15(@typescript/typescript6@6.0.2)(i18next@26.4.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+  react-i18next@17.0.15(@typescript/typescript6@6.0.2)(i18next@27.2.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
     dependencies:
       '@babel/runtime': 7.29.7
       html-parse-stringify: 4.0.1
-      i18next: 26.4.2(@typescript/typescript6@6.0.2)
+      i18next: 27.2.2(@typescript/typescript6@6.0.2)
       react: 19.2.8
       use-sync-external-store: 1.6.0(react@19.2.8)
     optionalDependencies:
       react-dom: 19.2.8(react@19.2.8)
       typescript: '@typescript/typescript6@6.0.2'
 
-  react-i18next@17.0.15(i18next@26.4.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.2):
+  react-i18next@17.0.15(i18next@27.2.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.2):
     dependencies:
       '@babel/runtime': 7.29.7
       html-parse-stringify: 4.0.1
-      i18next: 26.4.2(@typescript/typescript6@6.0.2)
+      i18next: 27.2.2(@typescript/typescript6@6.0.2)
       react: 19.2.8
       use-sync-external-store: 1.6.0(react@19.2.8)
     optionalDependencies:
       react-dom: 19.2.8(react@19.2.8)
       typescript: 6.0.2
+
+  react-i18next@18.0.3(@types/react@19.2.18)(@typescript/typescript6@6.0.2)(i18next@27.2.2(@typescript/typescript6@6.0.2))(react@19.2.8):
+    dependencies:
+      html-parse-stringify: 4.0.1
+      i18next: 27.2.2(@typescript/typescript6@6.0.2)
+      react: 19.2.8
+    optionalDependencies:
+      '@types/react': 19.2.18
+      typescript: '@typescript/typescript6@6.0.2'
 
   react-immutable-proptypes@2.2.0(immutable@5.2.1):
     dependencies:

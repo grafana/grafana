@@ -25,14 +25,12 @@ export class AlertRuleEditPage {
   }
 
   async useExistingGroup(groupName: string): Promise<void> {
-    await this.ensureEvaluationMode('group-based');
     await expect(this.groupSelect).toBeEnabled();
     await this.groupSelect.click();
     await this.page.getByRole('option', { name: groupName }).click();
   }
 
   async createNewEvaluationGroup(name: string, interval: string): Promise<void> {
-    await this.ensureEvaluationMode('group-based');
     await this.page.getByRole('button', { name: /new evaluation group/i }).click();
 
     const dialog = this.page.getByRole('dialog');
@@ -47,12 +45,7 @@ export class AlertRuleEditPage {
   }
 
   async setEvaluationInterval(interval: string): Promise<void> {
-    await this.ensureEvaluationMode('rule-based');
     await this.ungroupedIntervalInput.fill(interval);
-  }
-
-  async setEvaluationMode(mode: 'rule-based' | 'group-based'): Promise<void> {
-    await this.ensureEvaluationMode(mode);
   }
 
   async setPendingPeriod(value: string): Promise<void> {
@@ -167,31 +160,7 @@ export class AlertRuleEditPage {
     return this.page.getByText(new RegExp(`evaluated every ${every}\\.`, 'i'));
   }
 
-  selectedGroupText(name: string): Locator {
-    return this.page.getByTestId(selectors.components.AlertRules.groupPicker).getByText(name, { exact: true });
-  }
-
   protected get saveButton(): Locator {
     return this.page.getByTestId(selectors.components.AlertRules.saveRuleButton);
-  }
-
-  evaluationModeRadio(mode: 'rule-based' | 'group-based'): Locator {
-    const name = mode === 'rule-based' ? /set interval/i : /use groups/i;
-    return this.page.getByRole('radio', { name });
-  }
-
-  private async ensureEvaluationMode(mode: 'rule-based' | 'group-based'): Promise<void> {
-    // The radio only renders when v2 API is on (shouldUseRulesAPIV2()). When hidden,
-    // the form is implicitly group-based; 'rule-based' requires v2 and fails loudly.
-    const radio = this.evaluationModeRadio(mode);
-    if (await radio.isVisible()) {
-      await radio.check();
-      return;
-    }
-    if (mode === 'rule-based') {
-      throw new Error(
-        'Ungrouped (rule-based) evaluation requires v2 rules API. Enable the relevant feature toggle in test.use().'
-      );
-    }
   }
 }
