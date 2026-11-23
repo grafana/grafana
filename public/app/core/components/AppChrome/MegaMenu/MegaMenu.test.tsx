@@ -148,11 +148,18 @@ describe('MegaMenu', () => {
 
   describe('profile', () => {
     const PROFILE_FLAG = 'grafana.megaMenuProfile';
-    const renderWithProfile = () =>
-      render(<MegaMenu onClose={() => {}} />, {
+    const renderWithProfile = (onClose = () => {}) =>
+      render(<MegaMenu onClose={onClose} />, {
         preloadedState: {
           navBarTree: nestedNavTree,
-          navIndex: { profile: { id: 'profile', text: 'Test User', url: '/profile', children: [] } },
+          navIndex: {
+            profile: {
+              id: 'profile',
+              text: 'Test User',
+              url: '/profile',
+              children: [{ id: 'profile/settings', text: 'Profile', url: '/profile' }],
+            },
+          },
         },
       });
 
@@ -163,6 +170,20 @@ describe('MegaMenu', () => {
       await user.click(await screen.findByRole('button', { name: /profile/i }));
 
       expect(await screen.findByRole('menuitem', { name: /sign out/i })).toBeInTheDocument();
+    });
+
+    it('closes the menu, when it is not docked, once the user follows a link to a profile page', async () => {
+      setTestFlags({ [PROFILE_FLAG]: true });
+      const onClose = jest.fn();
+      const { user } = renderWithProfile(onClose);
+
+      await user.click(await screen.findByRole('button', { name: /profile/i }));
+      const link = await screen.findByRole('menuitem', { name: 'Profile' });
+      // jsdom does not navigate.
+      link.addEventListener('click', (event) => event.preventDefault());
+      await user.click(link);
+
+      expect(onClose).toHaveBeenCalledTimes(1);
     });
 
     it('offers Customise navigation as a button below the profile, with a line between them', async () => {

@@ -11,10 +11,12 @@ import { useProfileMenu } from '../TopBar/useProfileMenu';
 
 interface Props {
   profileNode: NavModelItem;
+  /** Called when the user follows a link to one of their profile pages, so a menu that is not docked can close. */
+  onNavigate?: () => void;
 }
 
 /** The signed-in user at the bottom of the menu, opening their profile menu. */
-export function MegaMenuProfile({ profileNode }: Props) {
+export function MegaMenuProfile({ profileNode, onNavigate }: Props) {
   const styles = useStyles2(getStyles);
   const { chrome } = useGrafana();
   // The row already names the user, so the menu has no header.
@@ -22,6 +24,7 @@ export function MegaMenuProfile({ profileNode }: Props) {
     profileNode,
     onToggleKioskMode: chrome.onToggleKioskMode,
     hideHeader: true,
+    onNavigate,
   });
   const { name, login, orgName, gravatarUrl } = contextSrv.user;
 

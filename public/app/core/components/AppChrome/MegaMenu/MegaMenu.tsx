@@ -318,7 +318,7 @@ export const MegaMenu = memo(
             <>
               <hr className={styles.sectionDivider} />
               <div className={styles.profile}>
-                <MegaMenuProfile profileNode={profileNode} />
+                <MegaMenuProfile profileNode={profileNode} onNavigate={state.megaMenuDocked ? undefined : onClose} />
               </div>
             </>
           )}

@@ -91,6 +91,39 @@ describe('MegaMenuProfile', () => {
     }
   });
 
+  describe('following a link', () => {
+    const props = {
+      profileNode: {
+        ...defaultProps.profileNode,
+        children: [{ id: 'profile/settings', text: 'Profile', url: '/profile' }],
+      },
+    };
+
+    it('tells the menu around it, so a menu that is not docked can close', async () => {
+      const onNavigate = jest.fn();
+      render(<MegaMenuProfile {...props} onNavigate={onNavigate} />);
+
+      await user.click(screen.getByRole('button', { name: /profile/i }));
+      const link = await screen.findByRole('menuitem', { name: 'Profile' });
+      // jsdom does not navigate.
+      link.addEventListener('click', (event) => event.preventDefault());
+      await user.click(link);
+
+      expect(onNavigate).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not tell it for an item that opens a drawer, which closing the menu would close too', async () => {
+      const onNavigate = jest.fn();
+      render(<MegaMenuProfile {...props} onNavigate={onNavigate} />);
+
+      await user.click(screen.getByRole('button', { name: /profile/i }));
+      await user.click(await screen.findByRole('menuitem', { name: /change theme/i }));
+
+      expect(await screen.findByRole('dialog')).toBeInTheDocument();
+      expect(onNavigate).not.toHaveBeenCalled();
+    });
+  });
+
   it('should not render the sign out divider when the sign out menu is disabled', async () => {
     config.auth.disableSignoutMenu = true;
 
