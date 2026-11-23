@@ -41,10 +41,10 @@ export const GroupByTransformerEditorBase = ({ options, onChange, fieldNames }: 
     hasAggregation = false;
 
   for (const field of Object.values(options.fields)) {
-    if (field.aggregations.length > 0 && field.operation !== null) {
+    if ((field?.aggregations?.length ?? 0) > 0 && field?.operation != null) {
       hasAggregation = true;
     }
-    if (field.operation === GroupByOperationID.groupBy) {
+    if (field?.operation === GroupByOperationID.groupBy) {
       hasGrouping = true;
     }
   }
@@ -121,7 +121,7 @@ const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }: FieldP
           <StatsPicker
             placeholder={t('transformers.group-by-field-configuration.placeholder-select-stats', 'Select stats')}
             allowMultiple
-            stats={config.aggregations}
+            stats={config.aggregations ?? []}
             onChange={(stats: string[]) => {
               onConfigChange({ ...config, aggregations: stats.filter((stat): stat is ReducerID => stat in ReducerID) });
             }}

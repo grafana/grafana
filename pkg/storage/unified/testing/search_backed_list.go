@@ -9,6 +9,7 @@ import (
 	"time"
 	"uuid"
 
+	"github.com/bwmarrin/snowflake"
 	"github.com/prometheus/client_golang/prometheus"
 	promtestutil "github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
@@ -346,11 +347,12 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 		var token string
 		var listRV int64
 		pages := 0
+		dataPages := 0
+		pageSizes := []int{}
 		assertNoKeyScans(t, opts, func() {
 			for {
 				resp, err := server.List(ctx, newReq(pageSize, token))
 				require.NoError(t, err)
-				require.Nil(t, resp.Error)
 				require.Greater(t, resp.ResourceVersion, int64(0))
 				if listRV == 0 {
 					listRV = resp.ResourceVersion
@@ -368,6 +370,10 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 				}
 
 				pages++
+				pageSizes = append(pageSizes, len(resp.Items))
+				if len(resp.Items) > 0 {
+					dataPages++
+				}
 				require.LessOrEqual(t, pages, authorized, "pagination did not terminate")
 				token = resp.NextPageToken
 				if token == "" {
@@ -376,11 +382,13 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 			}
 		})
 
-		require.Equal(t, 2, pages, "expected two pages")
+		// A continuation search has an inexact authorized total, so the last
+		// nonempty page can carry a token for one final empty page.
+		require.Equal(t, []int{pageSize, authorized - pageSize, 0}, pageSizes)
 		require.Equal(t, wantByName, got, "exact names, bodies, and updated resource versions")
-		assertListAuthorization(t, opts, access, pages, authorized)
+		assertListAuthorization(t, opts, access, dataPages, authorized)
 		if opts.ExpectBatchReads {
-			require.Equal(t, int64(6), counting.batchReads.Load(), "the two pages should use 10-row lazy batched reads")
+			require.Equal(t, int64(6), counting.batchReads.Load(), "the two nonempty pages should use 10-row lazy batched reads")
 			require.Equal(t, int64(0), counting.reads.Load())
 		}
 	})
@@ -394,7 +402,6 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 		access.reset()
 		assertNoKeyScans(t, opts, func() { resp, err = server.List(ctx, newReq(1000, "")) })
 		require.NoError(t, err)
-		require.Nil(t, resp.Error)
 		require.Empty(t, resp.NextPageToken, "the whole set fits on one page")
 		require.Len(t, resp.Items, authorized)
 		assertListAuthorization(t, opts, access, 1, authorized)
@@ -428,7 +435,6 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 
 		resp, err := server.List(coldCtx, req)
 		require.NoError(t, err)
-		require.Nil(t, resp.Error)
 		require.Len(t, resp.Items, 1)
 		require.Equal(t, float64(1), promtestutil.ToFloat64(requested)-before, "only the returned row's body counts")
 	})
@@ -498,8 +504,13 @@ func RunTestSearchBackedTrashList(t *testing.T, ctx context.Context, backend res
 		return deleteRV
 	}
 
+	beforeRV := writeObject("before", adminFolder, "user:other", false, true)
+	beforeMillis := snowflake.ID(beforeRV).Time()
+	require.Eventually(t, func() bool {
+		return time.Now().UnixMilli() > beforeMillis
+	}, time.Second, time.Millisecond, "clock did not advance past %d ms", beforeMillis)
 	wantRV := map[string]int64{
-		"before": writeObject("before", adminFolder, "user:other", false, true),
+		"before": beforeRV,
 		"own":    writeObject("own", deniedFolder, user.GetUID(), false, true),
 		"admin":  writeObject("admin", adminFolder, "user:other", false, true),
 	}
@@ -553,7 +564,6 @@ func RunTestSearchBackedTrashList(t *testing.T, ctx context.Context, backend res
 			require.Less(t, pages, 10, "pagination must terminate")
 			resp, err := server.List(ctx, newReq(token))
 			require.NoError(t, err)
-			require.Nil(t, resp.Error)
 			if listRV == 0 {
 				listRV = resp.ResourceVersion
 			}
@@ -587,6 +597,11 @@ func RunTestSearchBackedTrashList(t *testing.T, ctx context.Context, backend res
 	t.Run("not older than converts a legacy SQL checkpoint", func(t *testing.T) {
 		before := counting.trashBatchReads.Load()
 		checkpointRV := rvmanager.RVFromSnowflake(wantRV["own"])
+		checkpointSnowflake := resource.ToSnowflakeRV(checkpointRV)
+		require.Less(t, beforeMillis, snowflake.ID(wantRV["own"]).Time(),
+			"before and own must be in different milliseconds: a legacy microsecond checkpoint cannot carry the native generator's node bits")
+		require.Less(t, wantRV["before"], checkpointSnowflake)
+		require.LessOrEqual(t, checkpointSnowflake, wantRV["own"])
 		collectNotOlderThan := func(t *testing.T, server resource.ResourceServer) ([]string, int) {
 			t.Helper()
 			names := []string{}
@@ -601,7 +616,6 @@ func RunTestSearchBackedTrashList(t *testing.T, ctx context.Context, backend res
 
 				resp, err := server.List(ctx, req)
 				require.NoError(t, err)
-				require.Nil(t, resp.Error)
 				for _, item := range resp.Items {
 					obj := &unstructured.Unstructured{}
 					require.NoError(t, obj.UnmarshalJSON(item.Value))

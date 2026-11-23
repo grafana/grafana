@@ -122,7 +122,8 @@ func getRecord(keyvals ...interface{}) *record {
 		}
 
 		if keyvals[i] == "msg" {
-			r.msg = v.(string)
+			// Callers may pass a fmt.Stringer to defer formatting until a record is written.
+			r.msg = fmt.Sprint(v)
 			continue
 		}
 

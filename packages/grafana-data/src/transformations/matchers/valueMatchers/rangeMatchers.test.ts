@@ -80,6 +80,10 @@ describe('extended between', () => {
       expected:
         'Matches all rows where field value is between -∞ and 2. Includes missing, non-numeric and non-finite values.',
     },
+    {
+      options: { allowOpenBounds: true, includeMissing: true },
+      expected: 'Matches missing, non-numeric and non-finite values.',
+    },
   ])('describes extended options: $options', ({ options, expected }) => {
     expect(valueMatchers.get(ValueMatcherID.between).getOptionsDisplayText?.(options)).toBe(expected);
   });
@@ -132,6 +136,23 @@ describe('extended between', () => {
     expect(frame.fields[0].values.filter((_, index) => matcher(index, frame.fields[0], frame, [frame]))).toEqual(
       expected
     );
+  });
+
+  it('matches only missing values when both bounds are open and missing values are included', () => {
+    const frame = toDataFrame({
+      fields: [{ name: 'Value', type: FieldType.number, values: [null, undefined, NaN, Infinity, -Infinity, 0, 1] }],
+    });
+    const matcher = getValueMatcher({
+      id: ValueMatcherID.between,
+      options: { allowOpenBounds: true, includeMissing: true },
+    });
+    expect(frame.fields[0].values.filter((_, index) => matcher(index, frame.fields[0], frame, [frame]))).toEqual([
+      null,
+      undefined,
+      NaN,
+      Infinity,
+      -Infinity,
+    ]);
   });
 });
 

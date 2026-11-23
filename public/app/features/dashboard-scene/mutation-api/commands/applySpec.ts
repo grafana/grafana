@@ -11,7 +11,7 @@
  * url-synced part of that state is re-initialized from the URL after the swap.
  */
 
-import type * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { t } from '@grafana/i18n';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
@@ -20,8 +20,9 @@ import { applyDashboardSpec } from '../../actions/dashboard/applyDashboardSpec';
 import { transformSceneToSaveModelSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
 import { dashboardV2SpecSchema } from '../../v2schema/dashboardV2Schema';
 
+import { findGroupByVariablePaths, GROUP_BY_VARIABLE_UNSUPPORTED } from './deprecatedGroupByVariable';
 import { payloads } from './schemas';
-import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
+import { enterEditModeIfNeeded, MUTATION_API_ACTOR, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
 const applySpecPayloadSchema = payloads.applySpec;
 
@@ -29,7 +30,7 @@ export type ApplySpecPayload = z.infer<typeof applySpecPayloadSchema>;
 
 export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
   name: 'APPLY_SPEC',
-  description: payloads.applySpec.description ?? '',
+  description: z.globalRegistry.get(payloads.applySpec)?.description ?? '',
 
   payloadSchema: applySpecPayloadSchema,
   // Rebuilds the layout tree, so gate on the same toggle as the layout commands.
@@ -39,6 +40,17 @@ export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
   handler: async (payload, context) => {
     const { scene } = context;
     try {
+      // Checked even without `validate`: an unvalidated spec would have each GroupByVariable silently
+      // merged or dropped on load, leaving the caller unaware it was not applied as sent.
+      const groupByPaths = findGroupByVariablePaths(payload.spec);
+      if (groupByPaths.length > 0) {
+        return {
+          success: false,
+          error: `Validation failed: ${groupByPaths.join(', ')}: ${GROUP_BY_VARIABLE_UNSUPPORTED}`,
+          changes: [],
+        };
+      }
+
       // Opt-in structural validation (default off to avoid breaking existing
       // callers). When enabled, reject an invalid spec before mutating anything.
       // On success we apply the *parsed* spec: the schema normalizes Go's
@@ -68,6 +80,7 @@ export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
         spec,
         description: t('dashboard.mutation-api.apply-spec.undo-title', 'Assistant schema edit'),
         scope: 'mutation-api',
+        actor: MUTATION_API_ACTOR,
       });
 
       // Return the re-serialized spec so the caller gets the rekeyed element

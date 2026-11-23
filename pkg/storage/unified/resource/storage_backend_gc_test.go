@@ -21,7 +21,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
@@ -276,7 +275,6 @@ func TestGarbageCollectionGroupResource(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		require.Nil(t, historyResp.Error)
 		require.Len(t, historyResp.Items, 0)
 
 		historyResp, err = server.List(ctx, &resourcepb.ListRequest{
@@ -291,7 +289,6 @@ func TestGarbageCollectionGroupResource(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		require.Nil(t, historyResp.Error)
 		require.Len(t, historyResp.Items, 1)
 	})
 
@@ -349,7 +346,6 @@ func TestGarbageCollectionGroupResource(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		require.Nil(t, historyResp.Error)
 		require.Len(t, historyResp.Items, 0)
 
 		trashResp, err := server.List(ctx, &resourcepb.ListRequest{
@@ -364,7 +360,6 @@ func TestGarbageCollectionGroupResource(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		require.Nil(t, trashResp.Error)
 		require.Len(t, trashResp.Items, 1)
 	})
 
@@ -413,7 +408,6 @@ func TestGarbageCollectionGroupResource(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		require.Nil(t, trashResp.Error)
 		require.Len(t, trashResp.Items, 2)
 
 		cutoffTimestamp := b.garbageCollectionCutoffTimestamp("group", "resource", time.Now().Add(time.Hour).UnixMicro()) // everything eligible for deletion
@@ -432,7 +426,6 @@ func TestGarbageCollectionGroupResource(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		require.Nil(t, trashResp.Error)
 		require.Empty(t, trashResp.Items)
 	})
 
@@ -482,7 +475,6 @@ func TestGarbageCollectionGroupResource(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		require.Nil(t, historyResp.Error)
 		require.Len(t, historyResp.Items, 1)
 	})
 
@@ -551,7 +543,7 @@ func TestGarbageCollectionGroupResource(t *testing.T) {
 		b := storageBackend
 
 		// replicates an object being deleted then recreated with the same name
-		revisions := []kv.DataAction{
+		revisions := []DataAction{
 			DataActionCreated,
 			DataActionUpdated,
 			DataActionDeleted,
@@ -798,7 +790,6 @@ func TestGarbageCollectionLoop(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		require.Nil(t, trashResp.Error)
 		require.Len(t, trashResp.Items, 1)
 	})
 }
@@ -869,7 +860,7 @@ func TestGarbageCollectionLoopGroupFailure(t *testing.T) {
 	// writes a created and a deleted revision, both old enough to be collected
 	writeDeletedResource := func(t *testing.T, ctx context.Context, b *kvStorageBackend, group string) {
 		t.Helper()
-		for _, action := range []kv.DataAction{DataActionCreated, DataActionDeleted} {
+		for _, action := range []DataAction{DataActionCreated, DataActionDeleted} {
 			err := b.dataStore.Save(ctx, DataKey{
 				Namespace:       "namespace",
 				Group:           group,
@@ -1060,4 +1051,53 @@ func TestGarbageCollectionCycleMetrics(t *testing.T) {
 			})
 		})
 	}
+}
+
+func TestGarbageCollectionKeepsRecentlyDeletedBulkImports(t *testing.T) {
+	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+	backend := setupTestStorageBackend(t, withKV(setupSqlKV(t)), func(opts *KVBackendOptions) {
+		opts.GarbageCollection = GarbageCollectionConfig{Enabled: true, Interval: time.Minute, BatchSize: 100, DashboardsMaxAge: 365 * 24 * time.Hour}
+	})
+	const namespace = "default"
+	now := time.Now()
+	lastEdit := now.Add(-2 * 365 * 24 * time.Hour)
+	dashboard := func(name string, action resourcepb.BulkRequest_Action, deletedAt time.Time) *resourcepb.BulkRequest {
+		deletion := ""
+		if !deletedAt.IsZero() {
+			deletion = fmt.Sprintf(`,"deletionTimestamp":%q`, deletedAt.UTC().Format(time.RFC3339))
+		}
+		return &resourcepb.BulkRequest{
+			Key:    &resourcepb.ResourceKey{Namespace: namespace, Group: "dashboard.grafana.app", Resource: "dashboards", Name: name},
+			Action: action,
+			Value: fmt.Appendf(nil, `{"apiVersion":"dashboard.grafana.app/v1","kind":"Dashboard","metadata":{"name":%q,"namespace":%q,"annotations":{%q:%q}%s},"spec":{}}`,
+				name, namespace, utils.AnnoKeyUpdatedTimestamp, lastEdit.UTC().Format(time.RFC3339), deletion),
+		}
+	}
+
+	// Both dashboards were last edited two years ago; one was deleted yesterday, the other 400 days ago
+	resp, err := backend.ProcessBulk(ctx, BulkSettings{
+		Collection: []*resourcepb.ResourceKey{{Namespace: namespace, Group: "dashboard.grafana.app", Resource: "dashboards"}},
+	}, newBatchOnlyBulkIterator([]*resourcepb.BulkRequest{
+		dashboard("deleted-yesterday", resourcepb.BulkRequest_ADDED, time.Time{}),
+		dashboard("deleted-yesterday", resourcepb.BulkRequest_DELETED, now.Add(-24*time.Hour)),
+		dashboard("deleted-long-ago", resourcepb.BulkRequest_ADDED, time.Time{}),
+		dashboard("deleted-long-ago", resourcepb.BulkRequest_DELETED, now.Add(-400*24*time.Hour)),
+	}))
+	require.NoError(t, err)
+	require.Empty(t, resp.Rejected)
+
+	cutoff := backend.garbageCollectionCutoffTimestamp("dashboard.grafana.app", "dashboards", now.UnixMicro())
+	_, err = backend.garbageCollectGroupResource(ctx, "dashboard.grafana.app", "dashboards", cutoff)
+	require.NoError(t, err)
+
+	remaining := map[string]int{}
+	for k, err := range backend.kv.Keys(ctx, dataSection, ListOptions{
+		StartKey: "dashboard.grafana.app/dashboards/" + namespace + "/",
+		EndKey:   "dashboard.grafana.app/dashboards/" + namespace + "0",
+	}) {
+		require.NoError(t, err)
+		remaining[strings.Split(strings.TrimPrefix(k, "dashboard.grafana.app/dashboards/"+namespace+"/"), "/")[0]]++
+	}
+	require.Equal(t, 2, remaining["deleted-yesterday"], "a dashboard deleted yesterday must stay restorable")
+	require.Zero(t, remaining["deleted-long-ago"], "a deletion past retention is collected")
 }

@@ -26,8 +26,8 @@ export {
   /** @deprecated Import from `@grafana/runtime` instead. */
   usePluginSettings,
 } from './services/pluginSettings/hooks';
-// The async data source APIs are stable and exported from `@grafana/runtime`. They stay here until
-// @grafana/plugin-compat no longer supports hosts that only expose them on this entrypoint.
+// The async data source APIs are stable and exported from `@grafana/runtime`. They stay here for plugins
+// bundling @grafana/plugin-compat <= 0.7.0, which read them from this entrypoint.
 export {
   /** @deprecated Import from `@grafana/runtime` instead. */
   type GetDataSourceInstanceListFilters,

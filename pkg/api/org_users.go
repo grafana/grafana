@@ -500,7 +500,7 @@ func (hs *HTTPServer) getOrgUserUsingK8s(c *contextmodel.ReqContext, query *org.
 	if err != nil {
 		return nil, err
 	}
-	if u.IsServiceAccount || u.OrgID != query.OrgID {
+	if u.IsServiceAccount || u.OrgID != query.OrgID || dtos.IsHiddenUser(u.Login, c.SignedInUser, hs.Cfg) {
 		return &org.SearchOrgUsersQueryResult{OrgUsers: []*org.OrgUserDTO{}}, nil
 	}
 	member := &org.OrgUserDTO{

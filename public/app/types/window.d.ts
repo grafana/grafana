@@ -57,9 +57,6 @@ export declare global {
      */
     __grafanaRenderBindingSupported?: boolean;
 
-    /** Selects the Luxon-backed implementation before the application bundle loads. */
-    __grafanaUseLuxon?: boolean;
-
     /**
      * Set by the frontend service to the preview folder name when this page is
      * serving frontend assets from a PR preview build instead of the release assets.

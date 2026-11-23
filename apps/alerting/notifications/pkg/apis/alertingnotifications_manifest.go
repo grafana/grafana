@@ -21,7 +21,7 @@ import (
 )
 
 var (
-	rawSchemaConfigv0alpha1             = []byte(`{"Condition":{"additionalProperties":false,"description":"Condition mirrors metav1.Condition. Inlined because the app-sdk codegen\nhere can't reference metav1.Condition from CUE. Field semantics are\nk8s-standard; reason values are produced by SyncReason in the syncer.","properties":{"lastTransitionTime":{"description":"RFC3339","type":"string"},"message":{"type":"string"},"observedGeneration":{"type":"integer"},"reason":{"type":"string"},"status":{"enum":["True","False","Unknown"],"type":"string"},"type":{"type":"string"}},"required":["type","status","lastTransitionTime","reason"],"type":"object"},"Config":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"externalAlertmanagerSync":{"additionalProperties":false,"properties":{"datasourceUid":{"description":"datasourceUid is the UID of the Mimir/Cortex Alertmanager datasource to\nsync from. Empty means no sync is configured for the current org. The\noperator ini setting ` + "`" + `unified_alerting.external_alertmanager_uid` + "`" + `\noverrides this when set; see status.externalAlertmanagerSync.origin.","type":"string"}},"type":"object"}},"type":"object"},"status":{"additionalProperties":false,"properties":{"conditions":{"description":"Standard k8s-style condition list. Each binary-state feature owns one\ncondition type. Current types:\n  - ExternalAlertmanagerSynced: True after a successful sync, False\n    after a failed attempt, Unknown until the first attempt.","items":{"$ref":"#/components/schemas/Condition"},"type":"array"},"externalAlertmanagerSync":{"additionalProperties":false,"properties":{"datasourceUid":{"description":"datasourceUid is the UID actually used on the last sync attempt; may lag\nspec until the next tick. When origin=ini, this is the ini override value.","type":"string"},"origin":{"description":"origin records which source supplied datasourceUid on the last run. \"ini\"\n(grafana.ini's unified_alerting.external_alertmanager_uid) wins over \"api\"\n(spec.externalAlertmanagerSync.datasourceUid).","enum":["api","ini"],"type":"string"}},"type":"object"},"observedGeneration":{"description":"observedGeneration is the spec.generation last evaluated by the\ncontrollers writing this status.","type":"integer"}},"type":"object"}}`)
+	rawSchemaConfigv0alpha1             = []byte(`{"Condition":{"additionalProperties":false,"description":"Condition mirrors metav1.Condition. Inlined because the app-sdk codegen\nhere can't reference metav1.Condition from CUE. Field semantics are\nk8s-standard; reason values are produced by SyncReason in the syncer.","properties":{"lastTransitionTime":{"description":"RFC3339","type":"string"},"message":{"type":"string"},"observedGeneration":{"type":"integer"},"reason":{"type":"string"},"status":{"enum":["True","False","Unknown"],"type":"string"},"type":{"type":"string"}},"required":["type","status","lastTransitionTime","reason"],"type":"object"},"Config":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"externalAlertmanagerSync":{"additionalProperties":false,"properties":{"datasourceUid":{"description":"datasourceUid is the UID of the Mimir/Cortex Alertmanager datasource to\nsync from. Empty means no sync is configured for the current org. The\noperator ini setting ` + "`" + `unified_alerting.external_alertmanager_uid` + "`" + `\noverrides this when set; see status.externalAlertmanagerSync.origin.","type":"string"}},"type":"object"}},"type":"object"},"status":{"additionalProperties":false,"properties":{"conditions":{"description":"Standard k8s-style condition list. Each binary-state feature owns one\ncondition type. Current types:\n  - ExternalAlertmanagerSynced: True after a successful sync, False\n    after a failed attempt, Unknown until the first attempt.","items":{"$ref":"#/components/schemas/Condition"},"type":"array"},"externalAlertmanagerSync":{"additionalProperties":false,"properties":{"datasourceUid":{"description":"datasourceUid is the UID actually used on the last sync attempt; may lag\nspec until the next tick. When origin=ini, this is the ini override value.","type":"string"},"identifier":{"description":"identifier is the name the synced configuration is imported under, and so\nthe name of the policy tree it becomes. Chosen once from the datasource\nname on the first sync for datasourceUid and kept from then on, so\nrenaming the datasource does not rename the tree. Empty for syncs that\nstarted before this field existed; those use datasourceUid instead.","type":"string"},"origin":{"description":"origin records which source supplied datasourceUid on the last run. \"ini\"\n(grafana.ini's unified_alerting.external_alertmanager_uid) wins over \"api\"\n(spec.externalAlertmanagerSync.datasourceUid).","enum":["api","ini"],"type":"string"}},"type":"object"},"observedGeneration":{"description":"observedGeneration is the spec.generation last evaluated by the\ncontrollers writing this status.","type":"integer"}},"type":"object"}}`)
 	versionSchemaConfigv0alpha1         app.VersionSchema
 	_                                   = json.Unmarshal(rawSchemaConfigv0alpha1, &versionSchemaConfigv0alpha1)
 	rawSchemaInhibitionRulev0alpha1     = []byte(`{"InhibitionRule":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"Matcher":{"additionalProperties":false,"properties":{"label":{"type":"string"},"type":{"enum":["=","!=","=~","!~"],"type":"string"},"value":{"type":"string"}},"required":["type","label","value"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"equal":{"description":"equal specifies which labels must have equal values between source and target alerts\nfor the inhibition to take effect","items":{"type":"string"},"type":"array"},"source_matchers":{"description":"source_matchers define the alerts that act as inhibitors (silencing other alerts)","items":{"$ref":"#/components/schemas/Matcher"},"type":"array"},"target_matchers":{"description":"target_matchers define the alerts that can be inhibited (silenced)","items":{"$ref":"#/components/schemas/Matcher"},"type":"array"}},"type":"object"}}`)
@@ -39,7 +39,7 @@ var (
 	rawSchemaTimeIntervalv0alpha1       = []byte(`{"Interval":{"additionalProperties":false,"properties":{"days_of_month":{"items":{"type":"string"},"type":"array"},"location":{"type":"string"},"months":{"items":{"type":"string"},"type":"array"},"times":{"items":{"$ref":"#/components/schemas/TimeRange"},"type":"array"},"weekdays":{"items":{"type":"string"},"type":"array"},"years":{"items":{"type":"string"},"type":"array"}},"type":"object"},"TimeInterval":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"TimeRange":{"additionalProperties":false,"properties":{"end_time":{"type":"string"},"start_time":{"type":"string"}},"required":["start_time","end_time"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"name":{"type":"string"},"time_intervals":{"items":{"$ref":"#/components/schemas/Interval"},"type":"array"}},"required":["name","time_intervals"],"type":"object"}}`)
 	versionSchemaTimeIntervalv0alpha1   app.VersionSchema
 	_                                   = json.Unmarshal(rawSchemaTimeIntervalv0alpha1, &versionSchemaTimeIntervalv0alpha1)
-	rawSchemaConfigv1beta1              = []byte(`{"Condition":{"additionalProperties":false,"description":"Condition mirrors metav1.Condition. Inlined because the app-sdk codegen\nhere can't reference metav1.Condition from CUE. Field semantics are\nk8s-standard; reason values are produced by SyncReason in the syncer.","properties":{"lastTransitionTime":{"description":"RFC3339","type":"string"},"message":{"type":"string"},"observedGeneration":{"type":"integer"},"reason":{"type":"string"},"status":{"enum":["True","False","Unknown"],"type":"string"},"type":{"type":"string"}},"required":["type","status","lastTransitionTime","reason"],"type":"object"},"Config":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"externalAlertmanagerSync":{"additionalProperties":false,"properties":{"datasourceUid":{"description":"datasourceUid is the UID of the Mimir/Cortex Alertmanager datasource to\nsync from. Empty means no sync is configured for the current org. The\noperator ini setting ` + "`" + `unified_alerting.external_alertmanager_uid` + "`" + `\noverrides this when set; see status.externalAlertmanagerSync.origin.","type":"string"}},"type":"object"}},"type":"object"},"status":{"additionalProperties":false,"properties":{"conditions":{"description":"Standard k8s-style condition list. Each binary-state feature owns one\ncondition type. Current types:\n  - ExternalAlertmanagerSynced: True after a successful sync, False\n    after a failed attempt, Unknown until the first attempt.","items":{"$ref":"#/components/schemas/Condition"},"type":"array"},"externalAlertmanagerSync":{"additionalProperties":false,"properties":{"datasourceUid":{"description":"datasourceUid is the UID actually used on the last sync attempt; may lag\nspec until the next tick. When origin=ini, this is the ini override value.","type":"string"},"origin":{"description":"origin records which source supplied datasourceUid on the last run. \"ini\"\n(grafana.ini's unified_alerting.external_alertmanager_uid) wins over \"api\"\n(spec.externalAlertmanagerSync.datasourceUid).","enum":["api","ini"],"type":"string"}},"type":"object"},"observedGeneration":{"description":"observedGeneration is the spec.generation last evaluated by the\ncontrollers writing this status.","type":"integer"}},"type":"object"}}`)
+	rawSchemaConfigv1beta1              = []byte(`{"Condition":{"additionalProperties":false,"description":"Condition mirrors metav1.Condition. Inlined because the app-sdk codegen\nhere can't reference metav1.Condition from CUE. Field semantics are\nk8s-standard; reason values are produced by SyncReason in the syncer.","properties":{"lastTransitionTime":{"description":"RFC3339","type":"string"},"message":{"type":"string"},"observedGeneration":{"type":"integer"},"reason":{"type":"string"},"status":{"enum":["True","False","Unknown"],"type":"string"},"type":{"type":"string"}},"required":["type","status","lastTransitionTime","reason"],"type":"object"},"Config":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"externalAlertmanagerSync":{"additionalProperties":false,"properties":{"datasourceUid":{"description":"datasourceUid is the UID of the Mimir/Cortex Alertmanager datasource to\nsync from. Empty means no sync is configured for the current org. The\noperator ini setting ` + "`" + `unified_alerting.external_alertmanager_uid` + "`" + `\noverrides this when set; see status.externalAlertmanagerSync.origin.","type":"string"}},"type":"object"}},"type":"object"},"status":{"additionalProperties":false,"properties":{"conditions":{"description":"Standard k8s-style condition list. Each binary-state feature owns one\ncondition type. Current types:\n  - ExternalAlertmanagerSynced: True after a successful sync, False\n    after a failed attempt, Unknown until the first attempt.","items":{"$ref":"#/components/schemas/Condition"},"type":"array"},"externalAlertmanagerSync":{"additionalProperties":false,"properties":{"datasourceUid":{"description":"datasourceUid is the UID actually used on the last sync attempt; may lag\nspec until the next tick. When origin=ini, this is the ini override value.","type":"string"},"identifier":{"description":"identifier is the name the synced configuration is imported under, and so\nthe name of the policy tree it becomes. Chosen once from the datasource\nname on the first sync for datasourceUid and kept from then on, so\nrenaming the datasource does not rename the tree. Empty for syncs that\nstarted before this field existed; those use datasourceUid instead.","type":"string"},"origin":{"description":"origin records which source supplied datasourceUid on the last run. \"ini\"\n(grafana.ini's unified_alerting.external_alertmanager_uid) wins over \"api\"\n(spec.externalAlertmanagerSync.datasourceUid).","enum":["api","ini"],"type":"string"}},"type":"object"},"observedGeneration":{"description":"observedGeneration is the spec.generation last evaluated by the\ncontrollers writing this status.","type":"integer"}},"type":"object"}}`)
 	versionSchemaConfigv1beta1          app.VersionSchema
 	_                                   = json.Unmarshal(rawSchemaConfigv1beta1, &versionSchemaConfigv1beta1)
 	rawSchemaInhibitionRulev1beta1      = []byte(`{"InhibitionRule":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"Matcher":{"additionalProperties":false,"properties":{"label":{"type":"string"},"type":{"enum":["=","!=","=~","!~"],"type":"string"},"value":{"type":"string"}},"required":["type","label","value"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"equal":{"description":"equal specifies which labels must have equal values between source and target alerts\nfor the inhibition to take effect","items":{"type":"string"},"type":"array"},"source_matchers":{"description":"source_matchers define the alerts that act as inhibitors (silencing other alerts)","items":{"$ref":"#/components/schemas/Matcher"},"type":"array"},"target_matchers":{"description":"target_matchers define the alerts that can be inhibited (silenced)","items":{"$ref":"#/components/schemas/Matcher"},"type":"array"}},"type":"object"}}`)
@@ -72,6 +72,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Config",
 					Plural:     "Configs",
+					Resource:   "configs",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Admission: &app.AdmissionCapabilities{
@@ -88,6 +89,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "InhibitionRule",
 					Plural:     "InhibitionRules",
+					Resource:   "inhibitionrules",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaInhibitionRulev0alpha1,
@@ -96,6 +98,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Receiver",
 					Plural:     "Receivers",
+					Resource:   "receivers",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaReceiverv0alpha1,
@@ -206,6 +209,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "RoutingTree",
 					Plural:     "RoutingTrees",
+					Resource:   "routingtrees",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaRoutingTreev0alpha1,
@@ -214,6 +218,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "TemplateGroup",
 					Plural:     "TemplateGroups",
+					Resource:   "templategroups",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaTemplateGroupv0alpha1,
@@ -222,6 +227,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "TimeInterval",
 					Plural:     "TimeIntervals",
+					Resource:   "timeintervals",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaTimeIntervalv0alpha1,
@@ -594,6 +600,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Config",
 					Plural:     "Configs",
+					Resource:   "configs",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Admission: &app.AdmissionCapabilities{
@@ -610,6 +617,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "InhibitionRule",
 					Plural:     "InhibitionRules",
+					Resource:   "inhibitionrules",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaInhibitionRulev1beta1,
@@ -618,6 +626,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Receiver",
 					Plural:     "Receivers",
+					Resource:   "receivers",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaReceiverv1beta1,
@@ -728,6 +737,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "RoutingTree",
 					Plural:     "RoutingTrees",
+					Resource:   "routingtrees",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaRoutingTreev1beta1,
@@ -736,6 +746,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "TemplateGroup",
 					Plural:     "TemplateGroups",
+					Resource:   "templategroups",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaTemplateGroupv1beta1,
@@ -744,6 +755,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "TimeInterval",
 					Plural:     "TimeIntervals",
+					Resource:   "timeintervals",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaTimeIntervalv1beta1,

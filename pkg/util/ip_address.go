@@ -1,8 +1,10 @@
 package util
 
 import (
+	"errors"
 	"fmt"
 	"net"
+	"net/netip"
 	"strings"
 )
 
@@ -52,4 +54,37 @@ func SplitHostPortDefault(input, defaultHost, defaultPort string) (NetworkAddres
 	}
 
 	return addr, nil
+}
+
+var ErrZonedAddress = errors.New("zoned addresses are not supported")
+
+// ParseIPOrCIDR parses an IP address or CIDR, optionally in one pair of square brackets, into a masked prefix.
+func ParseIPOrCIDR(entry string) (netip.Prefix, error) {
+	if len(entry) > 1 && strings.HasPrefix(entry, "[") && strings.HasSuffix(entry, "]") {
+		entry = entry[1 : len(entry)-1]
+	}
+
+	if strings.Contains(entry, "/") {
+		prefix, err := netip.ParsePrefix(entry)
+		if err != nil {
+			return netip.Prefix{}, err
+		}
+		if prefix.Addr().Is4In6() {
+			if prefix.Bits() < 96 {
+				return netip.Prefix{}, errors.New("IPv4-mapped prefix must be at least /96")
+			}
+			prefix = netip.PrefixFrom(prefix.Addr().Unmap(), prefix.Bits()-96)
+		}
+		return prefix.Masked(), nil
+	}
+
+	addr, err := netip.ParseAddr(entry)
+	if err != nil {
+		return netip.Prefix{}, err
+	}
+	if addr.Zone() != "" {
+		return netip.Prefix{}, ErrZonedAddress
+	}
+	addr = addr.Unmap()
+	return netip.PrefixFrom(addr, addr.BitLen()), nil
 }

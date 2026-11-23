@@ -9,7 +9,7 @@ import { DataGrid, type DataGridHandle, type DataGridProps, type SortColumn } fr
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { Pagination } from '../../Pagination/Pagination';
 import { DataLinksActionsTooltip } from '../DataLinksActionsTooltip';
-import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
+import { TableCellInspectorDrawer, TableCellInspectorMode } from '../TableCellInspector';
 import { type DataLinksActionsTooltipState } from '../cellUtils';
 
 import { EmptyTablePlaceholder } from './components/EmptyTablePlaceholder';
@@ -218,7 +218,7 @@ export function TableDataGrid({
   return (
     <>
       <div className={styles.gridFrame}>
-        <div className={clsx(styles.gridWrapper, scrollShadows.className)}>
+        <div className={clsx(styles.gridWrapper, scrollShadows.className)} style={scrollShadows.style}>
           <DataGrid<TableRow, TableSummaryRow, string>
             {...dataGridOverrides}
             {...commonDataGridProps}
@@ -286,14 +286,16 @@ export function TableDataGrid({
           actions={tooltipState.actions}
           coords={tooltipState.coords}
           onTooltipClose={onTooltipClose}
+          tableRefreshEnabled={tableRefreshEnabled}
         />
       )}
 
       {inspectCell && (
-        <TableCellInspector
+        <TableCellInspectorDrawer
           mode={inspectCell.mode ?? TableCellInspectorMode.text}
           value={inspectCell.value}
           onDismiss={onInspectCellDismiss}
+          codeMirrorEnabled={tableRefreshEnabled}
         />
       )}
     </>

@@ -18,7 +18,12 @@ import (
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/folder"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -35,7 +40,7 @@ func TestIntegrationV1beta1(t *testing.T) {
 
 	// Legacy storage serves modes 0-3 and unified storage mode 4. The dual writer
 	// in between can hand either one the object in the version of the request.
-	for _, mode := range []grafanarest.DualWriterMode{grafanarest.Mode0, grafanarest.Mode2, grafanarest.Mode4} {
+	for _, mode := range []grafanarest.DualWriterMode{grafanarest.Mode0, grafanarest.Mode2, grafanarest.Mode3, grafanarest.Mode4, grafanarest.Mode5} {
 		t.Run(fmt.Sprintf("dualWriterMode=%d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -46,6 +51,192 @@ func TestIntegrationV1beta1(t *testing.T) {
 			})
 			common.CreateTestFolder(t, helper, "test-folder")
 			runV1beta1Tests(t, helper, mode)
+		})
+	}
+}
+
+func TestIntegrationRuleUpdatePreconditions(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	for _, mode := range []grafanarest.DualWriterMode{grafanarest.Mode0, grafanarest.Mode2, grafanarest.Mode4} {
+		t.Run(fmt.Sprintf("dualWriterMode=%d", mode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"alertrules.rules.alerting.grafana.app":     {DualWriterMode: mode},
+					"recordingrules.rules.alerting.grafana.app": {DualWriterMode: mode},
+				},
+				UnifiedAlertingDisableExecuteAlerts: true,
+			})
+			common.CreateTestFolder(t, helper, "test-folder")
+			scopedWriter := helper.CreateUser("scoped-rule-writer", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+				{
+					Actions:  []string{accesscontrol.ActionAlertingRuleRead, accesscontrol.ActionAlertingRuleUpdate, folder.ActionFoldersRead},
+					Resource: folder.ScopeFoldersRoot, ResourceAttribute: "uid", ResourceID: "test-folder",
+				},
+				{
+					Actions:  []string{accesscontrol.ActionAlertingReceiversRead},
+					Resource: ngmodels.ScopeReceiversRoot, ResourceAttribute: "uid", ResourceID: "*",
+				},
+			})
+
+			for _, tc := range []struct {
+				resource string
+				body     func(*testing.T) map[string]any
+				field    string
+				initial  string
+				changed  string
+			}{
+				{"alertrules", alertRuleBody, "for", "1m", "5m"},
+				{"recordingrules", recordingRuleBody, "metric", "initial_metric", "changed_metric"},
+			} {
+				t.Run(tc.resource, func(t *testing.T) {
+					for _, gv := range []schema.GroupVersion{v0alpha1.GroupVersion, v1beta1.GroupVersion} {
+						t.Run(gv.Version, func(t *testing.T) {
+							ctx := context.Background()
+							client := versionClient{rc: helper.Org1.Admin.RESTClient(t, &gv), gv: gv}
+							otherWriter := versionClient{rc: helper.Org1.Admin.RESTClient(t, &gv), gv: gv}
+							resource := tc.resource
+							body := tc.body(t)
+							body["spec"].(map[string]any)[tc.field] = tc.initial
+							created, err := client.create(ctx, resource, body)
+							require.NoError(t, err)
+							name := field(t, created, "metadata", "name").(string)
+							t.Cleanup(func() { _ = client.delete(ctx, resource, name) })
+							if mode == grafanarest.Mode2 {
+								readUnified(t, helper, resource, name)
+							}
+
+							baseline, err := client.get(ctx, resource, name)
+							require.NoError(t, err)
+							finalRead, err := client.get(ctx, resource, name)
+							require.NoError(t, err)
+							v1 := field(t, baseline, "metadata", "resourceVersion")
+							require.NotEmpty(t, v1)
+							require.Equal(t, v1, field(t, created, "metadata", "resourceVersion"), "create must return the persisted initial version")
+							require.Equal(t, v1, field(t, finalRead, "metadata", "resourceVersion"))
+
+							competingEdit, err := otherWriter.get(ctx, resource, name)
+							require.NoError(t, err)
+							v2Title := field(t, competingEdit, "spec", "title").(string) + " edited by another writer"
+							competingEdit["spec"].(map[string]any)["title"] = v2Title
+							v2, err := otherWriter.update(ctx, resource, competingEdit)
+							require.NoError(t, err)
+							require.NotEqual(t, v1, field(t, v2, "metadata", "resourceVersion"))
+
+							readAuthoritative := func() (int64, map[string]any) {
+								if mode == grafanarest.Mode4 {
+									storageCtx, _ := identity.WithServiceIdentity(ctx, helper.Org1.OrgID)
+									rsp, err := helper.GetEnv().ResourceClient.Read(storageCtx, &resourcepb.ReadRequest{
+										Key: &resourcepb.ResourceKey{Namespace: "default", Group: gv.Group, Resource: resource, Name: name},
+									})
+									require.NoError(t, err)
+									var stored map[string]any
+									require.NoError(t, json.Unmarshal(rsp.Value, &stored))
+									t.Logf("authoritative unified: version=%d title=%q %s=%v", rsp.ResourceVersion, field(t, stored, "spec", "title"), tc.field, field(t, stored, "spec", tc.field))
+									return rsp.ResourceVersion, stored
+								}
+								store := rulestore.RuleStore{SQLStore: helper.GetEnv().SQLStore}
+								stored, err := store.GetAlertRuleByUID(ctx, &ngmodels.GetAlertRuleByUIDQuery{OrgID: helper.Org1.OrgID, UID: name})
+								require.NoError(t, err)
+								t.Logf("authoritative legacy: version=%d title=%q for=%s", stored.Version, stored.Title, stored.For)
+								return stored.Version, toMap(t, stored)
+							}
+							versionBefore, before := readAuthoritative()
+							if mode == grafanarest.Mode4 {
+								require.Equal(t, v2Title, field(t, before, "spec", "title"))
+							} else {
+								require.Equal(t, v2Title, before["Title"])
+							}
+
+							finalRead["spec"].(map[string]any)[tc.field] = tc.changed
+							staleBody, err := json.Marshal(finalRead)
+							require.NoError(t, err)
+							var httpStatus int
+							response, updateErr := client.rc.Put().AbsPath(client.path(resource, name)...).
+								Body(staleBody).Do(ctx).StatusCode(&httpStatus).Raw()
+							t.Logf("stale PUT: submittedVersion=%v currentVersion=%v HTTP=%d error=%v body=%s", v1, field(t, v2, "metadata", "resourceVersion"), httpStatus, updateErr, response)
+							versionAfter, after := readAuthoritative()
+							assert.True(t, apierrors.IsConflict(updateErr), "expected conflict, got HTTP %d: %v", httpStatus, updateErr)
+							assert.Equal(t, versionBefore, versionAfter, "a rejected stale write must not advance the authoritative version")
+							assert.Equal(t, before, after, "a rejected stale write must leave the full authoritative V2 rule untouched")
+
+							if mode == grafanarest.Mode4 {
+								return
+							}
+
+							assertUnchanged := func(t *testing.T) {
+								t.Helper()
+								versionAfter, after := readAuthoritative()
+								require.Equal(t, versionBefore, versionAfter)
+								require.Equal(t, before, after)
+							}
+
+							t.Run("malformed supplied version", func(t *testing.T) {
+								for _, invalid := range []string{"invalid", "0", "-1", "9223372036854775808"} {
+									t.Run(invalid, func(t *testing.T) {
+										body, err := client.get(ctx, resource, name)
+										require.NoError(t, err)
+										body["metadata"].(map[string]any)["resourceVersion"] = invalid
+										body["spec"].(map[string]any)[tc.field] = tc.changed
+										_, err = client.update(ctx, resource, body)
+										require.True(t, apierrors.IsBadRequest(err), "%v", err)
+										assertUnchanged(t)
+									})
+								}
+							})
+
+							t.Run("scoped writer stale no-op", func(t *testing.T) {
+								writer := versionClient{rc: scopedWriter.RESTClient(t, &gv), gv: gv}
+								body, err := writer.get(ctx, resource, name)
+								require.NoError(t, err)
+								body["metadata"].(map[string]any)["resourceVersion"] = v1
+								_, err = writer.update(ctx, resource, body)
+								require.True(t, apierrors.IsConflict(err), "%v", err)
+								assertUnchanged(t)
+
+								body["metadata"].(map[string]any)["resourceVersion"] = field(t, v2, "metadata", "resourceVersion")
+								_, err = writer.update(ctx, resource, body)
+								require.NoError(t, err)
+								assertUnchanged(t)
+
+								body["spec"].(map[string]any)[tc.field] = tc.changed
+								_, err = writer.update(ctx, resource, body)
+								require.NoError(t, err)
+								versionAfter, after := readAuthoritative()
+								require.Greater(t, versionAfter, versionBefore)
+								require.NotEqual(t, before, after)
+							})
+
+							t.Run("omitted version", func(t *testing.T) {
+								body, err := client.get(ctx, resource, name)
+								require.NoError(t, err)
+								delete(body["metadata"].(map[string]any), "resourceVersion")
+								body["spec"].(map[string]any)[tc.field] = tc.initial
+								_, err = client.update(ctx, resource, body)
+								require.NoError(t, err)
+								stored, err := client.get(ctx, resource, name)
+								require.NoError(t, err)
+								require.Equal(t, field(t, v2, "spec", tc.field), field(t, stored, "spec", tc.field))
+							})
+
+							t.Run("same-name replacement with same version", func(t *testing.T) {
+								require.NoError(t, client.delete(ctx, resource, name))
+								body := tc.body(t)
+								body["metadata"].(map[string]any)["name"] = name
+								_, err := client.create(ctx, resource, body)
+								require.NoError(t, err)
+								versionBefore, before = readAuthoritative()
+								require.Equal(t, int64(1), versionBefore)
+								require.Equal(t, "1", v1)
+								require.NotEqual(t, field(t, finalRead, "metadata", "uid"), before["GUID"])
+								_, err = client.update(ctx, resource, finalRead)
+								assert.True(t, apierrors.IsConflict(err), "%v", err)
+								assertUnchanged(t)
+							})
+						})
+					}
+				})
+			}
 		})
 	}
 }
@@ -122,10 +313,33 @@ func readUnified(t *testing.T, helper *apis.K8sTestHelper, resource, name string
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		rsp, err := helper.GetEnv().ResourceClient.Read(ctx, &resourcepb.ReadRequest{Key: key})
 		require.NoError(c, err)
-		require.Nil(c, rsp.Error)
 		require.NoError(c, json.Unmarshal(rsp.Value, &out))
 	}, 5*time.Second, 50*time.Millisecond)
 	return out
+}
+
+// seedUnified writes a copy of a rule straight into unified storage, bypassing the dual
+// writer, so a test can observe whether a later write touches it.
+func seedUnified(t *testing.T, helper *apis.K8sTestHelper, resource string, rule map[string]any) {
+	t.Helper()
+	ctx, _ := identity.WithServiceIdentity(context.Background(), helper.Org1.OrgID)
+	name := field(t, rule, "metadata", "name").(string)
+	value, err := json.Marshal(map[string]any{
+		"apiVersion": rule["apiVersion"],
+		"kind":       rule["kind"],
+		"metadata": map[string]any{
+			"name":        name,
+			"namespace":   "default",
+			"annotations": field(t, rule, "metadata", "annotations"),
+		},
+		"spec": rule["spec"],
+	})
+	require.NoError(t, err)
+	_, err = helper.GetEnv().ResourceClient.Create(ctx, &resourcepb.CreateRequest{
+		Key:   &resourcepb.ResourceKey{Namespace: "default", Group: v1beta1.GroupVersion.Group, Resource: resource, Name: name},
+		Value: value,
+	})
+	require.NoError(t, err)
 }
 
 func field(t *testing.T, obj map[string]any, path ...string) any {
@@ -284,7 +498,8 @@ func runV1beta1Tests(t *testing.T, helper *apis.K8sTestHelper, mode grafanarest.
 		require.True(t, apierrors.IsNotFound(err), "expected not found, got %v", err)
 	})
 
-	// Modes 1-3 keep status in legacy storage and mirror it to unified storage.
+	// Modes 1-3 keep status in legacy storage and mirror it to unified storage. Modes 4-5
+	// write status to unified storage directly.
 	t.Run("status written as either version is stored and mirrored", func(t *testing.T) {
 		for _, tc := range []struct {
 			resource string
@@ -301,8 +516,8 @@ func runV1beta1Tests(t *testing.T, helper *apis.K8sTestHelper, mode grafanarest.
 					name := field(t, created, "metadata", "name").(string)
 					t.Cleanup(func() { _ = beta.delete(ctx, tc.resource, name) })
 
-					if mode >= grafanarest.Mode1 && mode <= grafanarest.Mode3 {
-						// Wait for the dual writer's unified copy, which is what gets mirrored to.
+					if mode >= grafanarest.Mode1 {
+						// Wait for the unified copy, which is what gets mirrored to (or served from in modes 4-5).
 						readUnified(t, helper, tc.resource, name)
 					}
 
@@ -316,11 +531,49 @@ func runV1beta1Tests(t *testing.T, helper *apis.K8sTestHelper, mode grafanarest.
 					require.NoError(t, err)
 					require.Equal(t, tc.status, got["status"])
 
-					if mode >= grafanarest.Mode1 && mode <= grafanarest.Mode3 {
+					if mode >= grafanarest.Mode1 {
 						require.Equal(t, tc.status, readUnified(t, helper, tc.resource, name)["status"])
 					}
 				})
 			}
+		}
+	})
+
+	// Mode 0 serves from legacy only, so status must not be mirrored even if a unified
+	// copy exists. The copy is seeded directly because in mode 0 the dual writer never
+	// creates one.
+	t.Run("status is not mirrored to unified in mode 0", func(t *testing.T) {
+		if mode != grafanarest.Mode0 {
+			t.Skip("only mode 0 skips the mirror")
+		}
+		for _, tc := range []struct {
+			resource string
+			body     func(*testing.T) map[string]any
+			status   map[string]any
+		}{
+			{alertRules, alertRuleBody, map[string]any{"state": "Firing", "health": "OK"}},
+			{recordingRules, recordingRuleBody, map[string]any{"health": "Error", "lastError": "boom"}},
+		} {
+			t.Run(tc.resource, func(t *testing.T) {
+				created, err := beta.create(ctx, tc.resource, tc.body(t))
+				require.NoError(t, err)
+				name := field(t, created, "metadata", "name").(string)
+				t.Cleanup(func() { _ = beta.delete(ctx, tc.resource, name) })
+
+				seedUnified(t, helper, tc.resource, created)
+
+				obj, err := beta.get(ctx, tc.resource, name)
+				require.NoError(t, err)
+				obj["status"] = tc.status
+				_, err = beta.updateStatus(ctx, tc.resource, obj)
+				require.NoError(t, err)
+
+				got, err := beta.get(ctx, tc.resource, name)
+				require.NoError(t, err)
+				require.Equal(t, tc.status, got["status"], "legacy stays the source of truth")
+
+				require.Empty(t, readUnified(t, helper, tc.resource, name)["status"])
+			})
 		}
 	})
 

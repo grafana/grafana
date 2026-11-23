@@ -27,7 +27,7 @@ import { NotebookAnalytics } from '../analytics/main';
 import { NOTEBOOK_ADD_TARGET, type NotebookEntryPoint } from '../analytics/types';
 import { canCreateNotebooks, canEditNotebooks } from '../permissions';
 import { type PanelElement } from '../types';
-import { loadSourceForEntryPoint, notebookViewHref, notebookViewUrl } from '../urls';
+import { loadSourceForEntryPoint, notebookEditHref, notebookViewUrl } from '../urls';
 
 import { CreateNotebookFields } from './CreateNotebookFields';
 import { LockTimeRangeField } from './LockTimeRangeField';
@@ -216,8 +216,8 @@ export function AddPanelToNotebookModalBody(props: Props) {
                   }),
               '',
               undefined,
-              <TextLink href={notebookViewHref(added.uid, loadSourceForEntryPoint(entryPoint))}>
-                <Trans i18nKey="notebooks.add-panel.success-link">View notebook</Trans>
+              <TextLink href={notebookEditHref(added.uid, loadSourceForEntryPoint(entryPoint))}>
+                <Trans i18nKey="notebooks.add-panel.success-open-link">Open notebook</Trans>
               </TextLink>
             )
           )

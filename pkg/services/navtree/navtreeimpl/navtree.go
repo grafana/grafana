@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -333,7 +334,7 @@ func (s *ServiceImpl) buildNotebooksNavLink(c *contextmodel.ReqContext) *navtree
 		Text:       "Notebooks",
 		Id:         navtree.NavIDNotebooks,
 		SubTitle:   "Create and manage notebooks to tell a story with your data",
-		Icon:       "book",
+		Icon:       "gf-notebook",
 		SortWeight: navtree.WeightNotebooks,
 		Url:        s.cfg.AppSubURL + "/notebooks",
 	}
@@ -396,7 +397,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			})
 		}
 
-		if s.cfg.PublicDashboardsEnabled {
+		if publicdashboards.Enabled(c.Req.Context(), s.cfg) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text: "Public dashboards",
 				Id:   "dashboards/public",

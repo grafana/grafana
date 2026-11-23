@@ -8,7 +8,7 @@ type ProjectGraph = Parameters<VersionActions['updateProjectDependencies']>[1];
 const UPDATABLE_COLLECTIONS = ['dependencies', 'devDependencies', 'optionalDependencies'] as const;
 type DependencyCollection = (typeof UPDATABLE_COLLECTIONS)[number];
 
-// yarn pack replaces these with the sibling's version at pack time, so the published manifest is still exact.
+// Local dependency protocols are left unchanged by versioning rather than pinned to a sibling version.
 const LOCAL_PROTOCOLS = ['workspace:', 'link:', 'file:', 'portal:'];
 
 type PackageJson = {

@@ -153,7 +153,7 @@ func (s *Service) GetByEmail(ctx context.Context, cmd *user.GetUserByEmailQuery)
 
 func (s *Service) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
 	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
-		return s.k8sService.Update(s.k8sCtxWithIdentity(ctx), cmd)
+		return s.k8sService.Update(s.k8sCtxForSelfRead(ctx, cmd.UserID, cmd.UID), cmd)
 	}
 
 	return s.legacyService.Update(ctx, cmd)

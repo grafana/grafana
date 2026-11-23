@@ -1,8 +1,10 @@
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation } from 'react-router-dom-v5-compat';
 
 import { locationService } from '@grafana/runtime';
+import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
 
 import { ScopesNavigationTreeLink } from './ScopesNavigationTreeLink';
 
@@ -44,7 +46,11 @@ jest.mock('../ScopesContextProvider', () => ({
 }));
 
 const renderWithRouter = (ui: React.ReactElement) => {
-  return render(<MemoryRouter>{ui}</MemoryRouter>);
+  return render(
+    <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+      <MemoryRouter>{ui}</MemoryRouter>
+    </OpenFeatureProvider>
+  );
 };
 
 describe('ScopesNavigationTreeLink', () => {

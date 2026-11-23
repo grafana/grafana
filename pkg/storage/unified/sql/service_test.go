@@ -55,7 +55,6 @@ var _ resource.SearchServer = (*mockSearchServer)(nil)
 type mockResourceServer struct {
 	mockSearchServer
 	resourcepb.UnimplementedResourceStoreServer
-	resourcepb.UnimplementedResourceStatsServer
 	resourcepb.UnimplementedBulkStoreServer
 	resourcepb.UnimplementedBlobStoreServer
 	resourcepb.UnimplementedBlobStoreStreamingServer
@@ -64,28 +63,28 @@ type mockResourceServer struct {
 
 var _ resource.ResourceServer = (*mockResourceServer)(nil)
 
-type embeddedErrorServer struct {
+type nativeErrorServer struct {
 	mockResourceServer
 	failure *resourcepb.ErrorResult
 }
 
-func (s *embeddedErrorServer) Read(context.Context, *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
-	return &resourcepb.ReadResponse{Error: s.failure}, nil
+func (s *nativeErrorServer) Read(context.Context, *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
+	return nil, resource.GRPCStatusError(s.failure)
 }
 
-func (s *embeddedErrorServer) Search(context.Context, *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
-	return &resourcepb.ResourceSearchResponse{Error: s.failure}, nil
+func (s *nativeErrorServer) Search(context.Context, *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+	return nil, resource.GRPCStatusError(s.failure)
 }
 
-func (s *embeddedErrorServer) PutBlobStream(stream resourcepb.BlobStoreStreaming_PutBlobStreamServer) error {
+func (s *nativeErrorServer) PutBlobStream(stream resourcepb.BlobStoreStreaming_PutBlobStreamServer) error {
 	if _, err := stream.Recv(); err != nil {
 		return err
 	}
-	return stream.SendAndClose(&resourcepb.PutBlobResponse{Error: s.failure})
+	return resource.GRPCStatusError(s.failure)
 }
 
-func (s *embeddedErrorServer) GetBlobStream(_ *resourcepb.GetBlobRequest, stream resourcepb.BlobStoreStreaming_GetBlobStreamServer) error {
-	return stream.Send(&resourcepb.GetBlobResponse{Error: s.failure})
+func (s *nativeErrorServer) GetBlobStream(_ *resourcepb.GetBlobRequest, _ resourcepb.BlobStoreStreaming_GetBlobStreamServer) error {
+	return resource.GRPCStatusError(s.failure)
 }
 
 type blockingSearchServer struct {
@@ -210,7 +209,6 @@ func TestSearchServerDrainsBeforeStopping(t *testing.T) {
 			}
 			require.NoError(t, searchErr)
 			require.NotNil(t, response)
-			require.Nil(t, response.Error)
 			if failSubservice {
 				require.ErrorContains(t, s.AwaitTerminated(ctx), "test subservice failure")
 			} else {
@@ -222,54 +220,54 @@ func TestSearchServerDrainsBeforeStopping(t *testing.T) {
 	}
 }
 
-func TestEmbeddedErrorConversionOnRemoteServers(t *testing.T) {
-	failure := &resourcepb.ErrorResult{Code: http.StatusNotFound, Reason: string(metav1.StatusReasonNotFound), Message: "missing", Details: &resourcepb.ErrorDetails{Name: "item"}}
-	for _, enabled := range []bool{false, true} {
-		for _, standalone := range []bool{false, true} {
-			t.Run(fmt.Sprintf("enabled=%t/standalone=%t", enabled, standalone), func(t *testing.T) {
-				s := &service{
-					cfg:           &setting.Cfg{UnifiedStorageGRPCErrorResultToStatus: enabled},
-					authenticator: func(ctx context.Context) (context.Context, error) { return ctx, nil },
-				}
-				provider := newDenyAllProvider(t)
-				server := &embeddedErrorServer{failure: failure}
-				if standalone {
-					require.NoError(t, s.registerSearchServer(provider, server))
-				} else {
-					s.registerUnifiedResourceServer(provider, server, nil)
-				}
-				conn := startAndConnect(t, provider.GetServer())
-				check := func(respError *resourcepb.ErrorResult, err error) {
-					if !enabled {
-						require.NoError(t, err)
-						require.True(t, proto.Equal(failure, respError))
-						return
-					}
-					require.Equal(t, codes.NotFound, status.Code(err))
-					details := status.Convert(err).Details()
-					require.Len(t, details, 1)
-					require.True(t, proto.Equal(failure, details[0].(*resourcepb.ErrorResult)))
-				}
-				searchResp, err := resourcepb.NewResourceIndexClient(conn).Search(t.Context(), &resourcepb.ResourceSearchRequest{})
-				check(searchResp.GetError(), err)
-				if !standalone {
-					readResp, err := resourcepb.NewResourceStoreClient(conn).Read(t.Context(), &resourcepb.ReadRequest{})
-					check(readResp.GetError(), err)
+func TestNativeErrorsOnRemoteServers(t *testing.T) {
+	failure := &resourcepb.ErrorResult{
+		Code: http.StatusNotFound, Reason: string(metav1.StatusReasonNotFound), Message: "missing",
+		Details: &resourcepb.ErrorDetails{Name: "item", Causes: []*resourcepb.ErrorCause{{Field: "metadata.name", Message: "not found"}}},
+	}
+	for _, standalone := range []bool{false, true} {
+		t.Run(fmt.Sprintf("standalone=%t", standalone), func(t *testing.T) {
+			s := &service{
+				cfg:           &setting.Cfg{},
+				authenticator: func(ctx context.Context) (context.Context, error) { return ctx, nil },
+			}
+			provider := newDenyAllProvider(t)
+			server := &nativeErrorServer{failure: failure}
+			if standalone {
+				require.NoError(t, s.registerSearchServer(provider, server))
+			} else {
+				s.registerUnifiedResourceServer(provider, server, nil)
+			}
+			conn := startAndConnect(t, provider.GetServer())
+			check := func(err error) {
+				require.Equal(t, codes.NotFound, status.Code(err))
+				details := status.Convert(err).Details()
+				require.Len(t, details, 1)
+				require.True(t, proto.Equal(failure, details[0].(*resourcepb.ErrorResult)))
+			}
+			searchResponse, err := resourcepb.NewResourceIndexClient(conn).Search(t.Context(), &resourcepb.ResourceSearchRequest{})
+			check(err)
+			require.Nil(t, searchResponse)
+			if !standalone {
+				readResponse, err := resourcepb.NewResourceStoreClient(conn).Read(t.Context(), &resourcepb.ReadRequest{})
+				check(err)
+				require.Nil(t, readResponse)
 
-					blobs := resourcepb.NewBlobStoreStreamingClient(conn)
-					put, err := blobs.PutBlobStream(t.Context())
-					require.NoError(t, err)
-					require.NoError(t, put.Send(&resourcepb.PutBlobRequest{}))
-					putResp, err := put.CloseAndRecv()
-					check(putResp.GetError(), err)
+				blobs := resourcepb.NewBlobStoreStreamingClient(conn)
+				put, err := blobs.PutBlobStream(t.Context())
+				require.NoError(t, err)
+				require.NoError(t, put.Send(&resourcepb.PutBlobRequest{}))
+				putResponse, err := put.CloseAndRecv()
+				check(err)
+				require.Nil(t, putResponse)
 
-					get, err := blobs.GetBlobStream(t.Context(), &resourcepb.GetBlobRequest{})
-					require.NoError(t, err)
-					getResp, err := get.Recv()
-					check(getResp.GetError(), err)
-				}
-			})
-		}
+				get, err := blobs.GetBlobStream(t.Context(), &resourcepb.GetBlobRequest{})
+				require.NoError(t, err)
+				getResponse, err := get.Recv()
+				check(err)
+				require.Nil(t, getResponse)
+			}
+		})
 	}
 }
 
@@ -369,7 +367,7 @@ func TestRegisterSearchServerWithAuth(t *testing.T) {
 }
 
 // TestRegisterUnifiedResourceServerWithAuth verifies that registerUnifiedResourceServer
-// wraps all registered services (ResourceStore, ResourceStats, BulkStore, BlobStore,
+// wraps all registered services (ResourceStore, BulkStore, BlobStore,
 // Quotas, ResourceIndex, ManagedObjectIndex, Diagnostics, VectorStore) with per-service auth.
 func TestRegisterUnifiedResourceServerWithAuth(t *testing.T) {
 	var authCalled atomic.Int32
@@ -381,7 +379,7 @@ func TestRegisterUnifiedResourceServerWithAuth(t *testing.T) {
 	s := &service{authenticator: testAuth}
 	provider := newDenyAllProvider(t)
 
-	vs := resource.NewVectorStoreServer(nil, nil, nil, nil, nil)
+	vs := resource.NewVectorStoreServer(nil, nil, nil, nil, nil, nil)
 	s.registerUnifiedResourceServer(provider, &mockResourceServer{}, vs)
 
 	conn := startAndConnect(t, provider.GetServer())
@@ -392,14 +390,6 @@ func TestRegisterUnifiedResourceServerWithAuth(t *testing.T) {
 		client := resourcepb.NewResourceStoreClient(conn)
 		_, err := client.Read(ctx, &resourcepb.ReadRequest{})
 		requireAuthPassed(t, err, "Read should pass per-service auth")
-		require.Greater(t, authCalled.Load(), int32(0))
-	})
-
-	t.Run("ResourceStats/RecordEvent", func(t *testing.T) {
-		authCalled.Store(0)
-		client := resourcepb.NewResourceStatsClient(conn)
-		_, err := client.RecordEvent(ctx, &resourcepb.RecordEventRequest{})
-		requireAuthPassed(t, err, "RecordEvent should pass per-service auth")
 		require.Greater(t, authCalled.Load(), int32(0))
 	})
 

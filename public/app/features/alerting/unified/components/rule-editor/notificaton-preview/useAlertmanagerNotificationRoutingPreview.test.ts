@@ -12,7 +12,7 @@ import { ROOT_ROUTE_NAME } from 'app/features/alerting/unified/utils/k8s/constan
 
 import { setupMswServer } from '../../../mockApi';
 import { routeGroupsMatcher } from '../../../routeGroupsMatcher';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/constants';
 
 import { useAlertmanagerNotificationRoutingPreview } from './useAlertmanagerNotificationRoutingPreview';
 

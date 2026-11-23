@@ -8,11 +8,12 @@ import {
   clearPendingChangePreview,
   finishSavingNewDashboard,
   getPendingChangePreview,
-  isHighlightingChanges,
+  getPendingChangesHistory,
+  type PendingChangesHistory,
   loadPendingChangePreview,
   previewedDashboardUid,
-  setHighlightingChanges,
   showOriginal,
+  stopPreviewingPendingChanges,
   withoutPendingChangesPreview,
 } from './pendingChangePreview';
 
@@ -93,45 +94,53 @@ describe('loadPendingChangePreview', () => {
   });
 });
 
-// The page keeps the choice in its URL, so a plugin linking to it can tell what it shows.
 describe('showing the saved dashboard instead of the pending changes', () => {
   afterEach(() => locationService.push('/'));
 
-  it('is the dashboard page URL', async () => {
+  it('is never the page, even from a URL that asked for it before', async () => {
     registerLoaders(async () => pending);
-    locationService.push('/d/abc?pendingChanges=chat-1');
-    const reload = jest.fn(async () => undefined);
+    locationService.push('/d/abc?pendingChanges=chat-1&pendingChangesView=original');
 
-    await showOriginal('page', 'abc', 'chat-1', true, reload);
-    expect(locationService.getSearchObject()).toMatchObject({
-      pendingChanges: 'chat-1',
-      pendingChangesView: 'original',
-    });
-    await expect(loadPendingChangePreview('page', 'abc', 'chat-1')).resolves.toMatchObject({ previewing: false });
-    // The embedded view keeps its own choice.
-    await expect(loadPendingChangePreview('embedded', 'abc', 'chat-1')).resolves.toMatchObject({ previewing: true });
-
-    await showOriginal('page', 'abc', 'chat-1', false, reload);
-    expect(locationService.getSearchObject().pendingChangesView).toBeUndefined();
-    // The page reloads itself when its URL changes.
-    expect(reload).not.toHaveBeenCalled();
+    await expect(loadPendingChangePreview('page', 'abc', 'chat-1')).resolves.toMatchObject({ previewing: true });
   });
 
   it('is remembered for the tab by the embedded view, which reloads itself', async () => {
     registerLoaders(async () => pending);
     const reload = jest.fn(async () => undefined);
 
-    await showOriginal('embedded', 'abc', 'chat-1', true, reload);
+    await showOriginal('abc', 'chat-1', true, reload);
     await expect(loadPendingChangePreview('embedded', 'abc', 'chat-1')).resolves.toMatchObject({ previewing: false });
     await expect(loadPendingChangePreview('page', 'abc', 'chat-1')).resolves.toMatchObject({ previewing: true });
 
-    await showOriginal('embedded', 'abc', 'chat-1', false, reload);
+    await showOriginal('abc', 'chat-1', false, reload);
     expect(reload).toHaveBeenCalledTimes(2);
   });
 });
 
 describe('a new dashboard proposed as pending changes', () => {
   const proposal = () => ({ ...pending, baseGeneration: 0, discard: jest.fn(async () => undefined) });
+
+  it("uses each scene's own view for history when different chats preview the same dashboard", async () => {
+    const history = (label: string): PendingChangesHistory => ({
+      record: jest.fn(async () => ({ recorded: true })),
+      undo: jest.fn(async () => undefined),
+      redo: jest.fn(async () => undefined),
+      getState: () => ({ undo: label }),
+      subscribe: () => () => {},
+    });
+    registerLoaders(async () => ({ ...proposal(), history: history('Page edit') }));
+    await loadPendingChangePreview('page', 'history-dash', 'chat-page');
+    registerLoaders(async () => ({ ...proposal(), history: history('Embedded edit') }));
+    await loadPendingChangePreview('embedded', 'history-dash', 'chat-embedded');
+
+    expect(
+      getPendingChangesHistory({ uid: '', meta: { isEmbedded: true, newDashboardUid: 'history-dash' } })?.getState()
+        .undo
+    ).toBe('Embedded edit');
+    expect(getPendingChangesHistory({ uid: 'history-dash', meta: {} })?.getState().undo).toBe('Page edit');
+    clearPendingChangePreview('history-dash', 'chat-page');
+    clearPendingChangePreview('history-dash', 'chat-embedded');
+  });
 
   it('is always previewed: there is no saved dashboard to show instead', async () => {
     registerLoaders(async () => proposal());
@@ -158,6 +167,23 @@ describe('a new dashboard proposed as pending changes', () => {
     expect(getPendingChangePreview('page', 'new-dash')).toBeUndefined();
   });
 
+  it('finishes only the draft saved by the embedded view when the page previews another chat', async () => {
+    const page = proposal();
+    registerLoaders(async () => page);
+    await loadPendingChangePreview('page', 'new-dash', 'chat-page');
+    const embedded = proposal();
+    registerLoaders(async () => embedded);
+    await loadPendingChangePreview('embedded', 'new-dash', 'chat-embedded');
+
+    await finishSavingNewDashboard('new-dash', 'embedded');
+
+    expect(embedded.discard).toHaveBeenCalledTimes(1);
+    expect(page.discard).not.toHaveBeenCalled();
+    expect(getPendingChangePreview('page', 'new-dash')?.id).toBe('chat-page');
+    expect(getPendingChangePreview('embedded', 'new-dash')).toBeUndefined();
+    clearPendingChangePreview('new-dash', 'chat-page');
+  });
+
   it('leaves the page URL without its preview', () => {
     expect(withoutPendingChangesPreview('?pendingChanges=chat-1&orgId=1')).toBe('?orgId=1');
     expect(withoutPendingChangesPreview('?pendingChanges=chat-1&pendingChangesView=original')).toBe('');
@@ -165,17 +191,24 @@ describe('a new dashboard proposed as pending changes', () => {
   });
 });
 
-describe('highlighting the pending changes', () => {
-  beforeEach(() => window.sessionStorage.clear());
+describe('closing pending changes that were applied or discarded', () => {
+  afterEach(() => locationService.push('/'));
 
-  it('is on by default, keeps being turned off for the tab per dashboard and pending changes, and resets once they are cleared', () => {
-    expect(isHighlightingChanges('dash', 'chat-1')).toBe(true);
+  // Else the page would still name them, and another conversation's pending changes wouldn't open on it.
+  it('takes them out of the page URL', () => {
+    locationService.push('/d/abc?orgId=1&pendingChanges=chat-1&pendingChangesView=original');
 
-    setHighlightingChanges('dash', 'chat-1', false);
-    expect(isHighlightingChanges('dash', 'chat-1')).toBe(false);
-    expect(isHighlightingChanges('dash', 'chat-2')).toBe(true);
+    expect(stopPreviewingPendingChanges()).toBe(true);
 
-    clearPendingChangePreview('dash', 'chat-1');
-    expect(isHighlightingChanges('dash', 'chat-1')).toBe(true);
+    expect(locationService.getLocation().pathname).toBe('/d/abc');
+    expect(locationService.getSearchObject()).toEqual({ orgId: '1' });
+  });
+
+  it('leaves a URL that names none as it is', () => {
+    locationService.push('/d/abc?orgId=1');
+
+    expect(stopPreviewingPendingChanges()).toBe(false);
+
+    expect(locationService.getSearchObject()).toEqual({ orgId: '1' });
   });
 });

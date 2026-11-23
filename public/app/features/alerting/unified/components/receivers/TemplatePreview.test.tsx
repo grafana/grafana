@@ -1,3 +1,5 @@
+import { language } from '@codemirror/language';
+import { EditorView } from '@codemirror/view';
 import { HttpResponse, http } from 'msw';
 import { type SetupServer } from 'msw/node';
 import { type JSX, default as React } from 'react';
@@ -19,13 +21,6 @@ import {
 
 import { type TemplateFormValues, defaults } from './TemplateForm';
 import { TemplatePreview } from './TemplatePreview';
-
-jest.mock('@grafana/ui', () => ({
-  ...jest.requireActual('@grafana/ui'),
-  CodeEditor: function CodeEditor({ value, onBlur }: { value: string; onBlur: (newValue: string) => void }) {
-    return <input data-testid="mockeditor" value={value} onChange={(e) => onBlur(e.currentTarget.value)} />;
-  },
-}));
 
 jest.mock(
   'react-virtualized-auto-sizer',
@@ -144,7 +139,7 @@ describe('TemplatePreview component', () => {
       ],
     };
     mockPreviewTemplateResponse(server, response);
-    render(
+    const { user } = render(
       <TemplatePreview
         payload={'[{"a":"b"}]'}
         templateName="potato"
@@ -161,9 +156,21 @@ describe('TemplatePreview component', () => {
     });
     const previewItems = previews();
     expect(within(previewItems[0]).getByRole('banner')).toHaveTextContent('template1');
-    expect(within(previewItems[0]).getByTestId('mockeditor')).toHaveValue('This is the template result bla bla bla');
+    expect(await within(previewItems[0]).findByRole('textbox', { name: 'template1' })).toHaveTextContent(
+      'This is the template result bla bla bla'
+    );
     expect(within(previewItems[1]).getByRole('banner')).toHaveTextContent('template2');
-    expect(within(previewItems[1]).getByTestId('mockeditor')).toHaveValue('This is the template2 result bla bla bla');
+    expect(await within(previewItems[1]).findByRole('textbox', { name: 'template2' })).toHaveTextContent(
+      'This is the template2 result bla bla bla'
+    );
+
+    mockPreviewTemplateResponse(server, {
+      results: [{ name: 'template1', text: 'Updated template result' }],
+    });
+    await user.click(screen.getByRole('button', { name: 'Refresh preview' }));
+    await waitFor(() =>
+      expect(screen.getByRole('textbox', { name: 'template1' })).toHaveTextContent('Updated template result')
+    );
   });
 
   it('Should send the template kind in the preview request', async () => {
@@ -237,20 +244,22 @@ describe('TemplatePreview component', () => {
     expect(alerts()[1]).toHaveTextContent(/Unexpected "{" in operand/i);
 
     const previewContent = screen.getByRole('listitem');
-    expect(within(previewContent).getByTestId('mockeditor')).toHaveValue('This is the template result bla bla bla');
+    expect(await within(previewContent).findByRole('textbox', { name: 'template1' })).toHaveTextContent(
+      'This is the template result bla bla bla'
+    );
   });
 });
 
-it('Should render preview type , if response contains valid json ', async () => {
-  const response: TemplatePreviewResponse = {
+it('renders read-only results with JSON highlighting only for valid JSON', async () => {
+  const response = {
     results: [
       { name: 'template_text', text: 'This is the template result bla bla bla' },
       { name: 'template_valid', text: '{"test":"value","test2":"value2"}' },
       { name: 'template_invalid', text: '{"test":"value","test2":"value2",}' },
     ],
-  };
+  } satisfies TemplatePreviewResponse;
   mockPreviewTemplateResponse(server, response);
-  render(
+  const { user } = render(
     <TemplatePreview
       payload={'[{"a":"b"}]'}
       templateName="potato"
@@ -272,4 +281,20 @@ it('Should render preview type , if response contains valid json ', async () => 
   expect(within(previewItems[1]).getByRole('banner')).toHaveTextContent('json');
   expect(within(previewItems[2]).getByRole('banner')).toHaveTextContent('template_invalid');
   expect(within(previewItems[2]).getByRole('banner')).toHaveTextContent('plaintext');
+
+  for (const [index, result] of response.results.entries()) {
+    const editor = await within(previewItems[index]).findByRole('textbox', { name: result.name });
+    const view = EditorView.findFromDOM(editor)!;
+    expect(editor).toHaveTextContent(result.text);
+    expect(previewItems[index]).toHaveStyle({ flexShrink: 0 });
+    expect(view.dom).toHaveStyle({ height: '100%' });
+    expect(within(previewItems[index]).queryByText('1', { selector: '.cm-lineNumbers *' })).not.toBeInTheDocument();
+
+    await user.click(editor);
+    await user.paste('replacement');
+    expect(editor).toHaveTextContent(result.text);
+
+    expect(view.state.readOnly).toBe(true);
+    await waitFor(() => expect(view.state.facet(language)?.name).toBe(index === 1 ? 'json' : undefined));
+  }
 });

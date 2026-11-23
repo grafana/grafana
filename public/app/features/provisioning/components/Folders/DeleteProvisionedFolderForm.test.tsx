@@ -9,6 +9,11 @@ import { type Job, type RepositoryView } from 'app/api/clients/provisioning/v0al
 import { type FolderDTO } from 'app/types/folders';
 
 import {
+  RepoViewStatus,
+  type RepositoryViewData,
+  useGetResourceRepositoryView,
+} from '../../hooks/useGetResourceRepositoryView';
+import {
   type ProvisionedFolderFormDataResult,
   useProvisionedFolderFormData,
 } from '../../hooks/useProvisionedFolderFormData';
@@ -44,6 +49,9 @@ jest.mock('../Shared/ResourceEditFormSharedFields', () => ({
 
 const mockUseProvisionedFolderFormData = useProvisionedFolderFormData as jest.MockedFunction<
   typeof useProvisionedFolderFormData
+>;
+const mockUseGetResourceRepositoryView = useGetResourceRepositoryView as jest.MockedFunction<
+  typeof useGetResourceRepositoryView
 >;
 
 type DeleteJobBody = {
@@ -130,9 +138,29 @@ const defaultHookData: ProvisionedFolderFormDataResult = {
   isLoading: false,
 };
 
-function setup(hookData = defaultHookData, job: Job = successJob()) {
+// Builds the view the real hook would return for the same repository state. The form reads the status
+// from the view and isMissingRepo from the form data hook, so the two must agree: a repository that
+// resolved cannot be orphaned, and an orphaned view never has one.
+function viewFor(formData: ProvisionedFolderFormDataResult, status: RepoViewStatus): RepositoryViewData {
+  if (status === RepoViewStatus.Orphaned && (formData.repository || !formData.isMissingRepo)) {
+    throw new Error('an orphaned view has no repository and is a missing repository');
+  }
+  return {
+    status,
+    repository: formData.repository,
+    folder: formData.folder,
+    isInstanceManaged: false,
+    isReadOnlyRepo: formData.isReadOnlyRepo,
+    isLoading: formData.isLoading,
+    isMissingRepo: formData.isMissingRepo,
+    orphanedRepoName: status === RepoViewStatus.Orphaned ? 'deleted-repo' : undefined,
+  };
+}
+
+function setup(hookData = defaultHookData, job: Job = successJob(), viewStatus: RepoViewStatus = RepoViewStatus.Ready) {
   const posted = mockDeleteJob(job);
   mockUseProvisionedFolderFormData.mockReturnValue(hookData as ReturnType<typeof useProvisionedFolderFormData>);
+  mockUseGetResourceRepositoryView.mockReturnValue(viewFor(hookData, viewStatus));
 
   const onDismiss = jest.fn();
   const renderResult = render(
@@ -172,6 +200,17 @@ describe('DeleteProvisionedFolderForm', () => {
 
     it('should not render the form when the repository is missing', () => {
       setup({ ...defaultHookData, repository: undefined, initialValues: undefined, isMissingRepo: true });
+      expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+    });
+
+    it('should show the orphaned notice, not the form, when the repository was deleted', () => {
+      setup(
+        { ...defaultHookData, repository: undefined, initialValues: undefined, isMissingRepo: true },
+        successJob(),
+        RepoViewStatus.Orphaned
+      );
+      expect(screen.getByText('Provisioning repository no longer exists')).toBeInTheDocument();
+      expect(screen.queryByText('Repository not found')).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     });
   });

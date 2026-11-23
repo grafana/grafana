@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
 )
@@ -123,7 +122,7 @@ func TestNatsNotifierWatch_ConvertsNotifications(t *testing.T) {
 	cases := []struct {
 		name   string
 		typ    resourcepb.WatchNotification_Type
-		action kv.DataAction
+		action DataAction
 	}{
 		{"added", resourcepb.WatchNotification_ADDED, DataActionCreated},
 		{"modified", resourcepb.WatchNotification_MODIFIED, DataActionUpdated},
@@ -136,7 +135,7 @@ func TestNatsNotifierWatch_ConvertsNotifications(t *testing.T) {
 			n := newNatsNotifier(sub, expiry, nil, &logging.NoOpLogger{})
 
 			ctx := t.Context()
-			out := n.Watch(ctx, WatchOptions{})
+			out := n.Watch(ctx, WatchOptions{SettleDelay: time.Millisecond})
 			require.NotNil(t, sub.handler)
 			assert.Equal(t, resourcewatch.SubjectAllResources, sub.subject)
 
@@ -170,7 +169,7 @@ func TestNatsNotifierDecode_PreviousMetadata(t *testing.T) {
 		name           string
 		previousType   resourcepb.WatchNotification_Type
 		previousFolder string
-		previousAction kv.DataAction
+		previousAction DataAction
 	}{
 		{name: "older publisher omits metadata"},
 		{name: "created in root", previousType: resourcepb.WatchNotification_ADDED, previousAction: DataActionCreated},
@@ -219,7 +218,7 @@ func TestNatsNotifierWatch_EmitsInResourceVersionOrder(t *testing.T) {
 	n := newNatsNotifier(sub, expiry, nil, &logging.NoOpLogger{})
 
 	ctx := t.Context()
-	out := n.Watch(ctx, WatchOptions{})
+	out := n.Watch(ctx, WatchOptions{SettleDelay: 100 * time.Millisecond})
 	require.NotNil(t, sub.handler)
 
 	// Deliver notifications for the same object out of RV order, all within one
@@ -298,15 +297,11 @@ func TestNatsNotifierWatch_BufferFullInvalidatesWatches(t *testing.T) {
 		gen := expiry.WatchInvalidation()
 		n := newNatsNotifier(sub, expiry, dropped, &logging.NoOpLogger{})
 
-		// Resource versions must be old enough to settle, so advance past their epoch before starting the watch.
-		synctest.Sleep(time.Until(time.UnixMilli(resourceVersionEpoch).Add(time.Hour)))
-
-		out := n.Watch(t.Context(), WatchOptions{BufferSize: 1})
+		out := n.Watch(t.Context(), WatchOptions{BufferSize: 1, SettleDelay: time.Second})
 		data := mustMarshalNotification(t, &resourcepb.WatchNotification{
 			Type: resourcepb.WatchNotification_ADDED, Group: "g", Resource: "r", Name: "n", ResourceVersion: 1,
 		})
 
-		// Start the settle loop's ticker before advancing time to flush notifications.
 		synctest.Wait()
 
 		handler := sub.currentHandler()
@@ -432,9 +427,6 @@ func TestNatsNotifierWatch_ClosesAndUnsubscribesOnContextCancel(t *testing.T) {
 
 func TestNatsNotifierWatch_RetriesUntilSubscribeSucceeds(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		// Place fake time after the resource-version epoch so the delivered write can settle.
-		synctest.Sleep(time.Until(time.UnixMilli(resourceVersionEpoch).Add(time.Hour)))
-
 		// Bus unreachable at first, then available: Watch must keep the channel open
 		// and re-subscribe rather than closing it and losing the watch.
 		sub := &fakeEventSubscriber{enabled: true, subErr: errors.New("boom")}
@@ -443,7 +435,7 @@ func TestNatsNotifierWatch_RetriesUntilSubscribeSucceeds(t *testing.T) {
 
 		ctx := t.Context()
 		// Small backoff bounds keep the subscription retry loop fast for the test.
-		out := n.Watch(ctx, WatchOptions{MinBackoff: 10 * time.Millisecond, MaxBackoff: 20 * time.Millisecond})
+		out := n.Watch(ctx, WatchOptions{MinBackoff: 10 * time.Millisecond, MaxBackoff: 20 * time.Millisecond, SettleDelay: time.Millisecond})
 
 		// The channel must stay open across the failed subscribe.
 		select {
@@ -469,6 +461,52 @@ func TestNatsNotifierWatch_RetriesUntilSubscribeSucceeds(t *testing.T) {
 			ResourceVersion: 1,
 		}))
 		assert.Equal(t, "abc", recvEvent(t, out).Name)
+	})
+}
+
+// startingEventSubscriber fails to subscribe until started is closed, like
+// the NATS subscriber service before it starts.
+type startingEventSubscriber struct {
+	*fakeEventSubscriber
+	started chan struct{}
+	calls   atomic.Int32
+}
+
+func (s *startingEventSubscriber) Started() <-chan struct{} { return s.started }
+
+func (s *startingEventSubscriber) Subscribe(ctx context.Context, subject string, handler func(subject string, data []byte), onReconnect func()) (Subscription, error) {
+	s.calls.Add(1)
+	select {
+	case <-s.started:
+		return s.fakeEventSubscriber.Subscribe(ctx, subject, handler, onReconnect)
+	default:
+		return nil, errors.New("nats subscriber connection is not established")
+	}
+}
+
+func TestNatsNotifierWatch_WaitsForTheSubscriberToStart(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sub := &startingEventSubscriber{fakeEventSubscriber: &fakeEventSubscriber{enabled: true}, started: make(chan struct{})}
+		expiry := NewWatchExpiry()
+		invalidated := expiry.WatchInvalidation()
+		n := newNatsNotifier(sub, expiry, nil, &logging.NoOpLogger{})
+
+		ready := make(chan error, 1)
+		n.Watch(t.Context(), WatchOptions{CaptureReady: ready})
+		time.Sleep(time.Minute)
+		synctest.Wait()
+		require.Zero(t, sub.calls.Load(), "subscribing before the subscriber started would fail and log an error")
+		require.Empty(t, ready)
+
+		close(sub.started)
+		require.NoError(t, <-ready)
+		require.EqualValues(t, 1, sub.calls.Load())
+		require.Equal(t, resourcewatch.SubjectAllResources, sub.subject)
+		select {
+		case <-invalidated:
+		default:
+			t.Fatal("watches opened before capture must expire")
+		}
 	})
 }
 
@@ -515,7 +553,7 @@ func TestNATSWatchRecovery(t *testing.T) {
 	watch, done := startNatsRecoveryWatch(t, ctx, srv, req)
 	requireNatsRecoveryEvent(t, watch, resourcepb.WatchEvent_BOOKMARK)
 	require.NoError(t, createTestPlaylist(ctx, srv))
-	requireNatsRecoveryEvent(t, watch, resourcepb.WatchEvent_ADDED)
+	beforeOutage := requireNatsRecoveryEvent(t, watch, resourcepb.WatchEvent_ADDED)
 	broker.Shutdown()
 	broker.WaitForShutdown()
 	// The broker stays stopped until startBroker below, so clients cannot
@@ -550,7 +588,10 @@ func TestNATSWatchRecovery(t *testing.T) {
 	replacement, _ := startNatsRecoveryWatch(t, ctx, srv, req)
 	requireNatsRecoveryEvent(t, replacement, resourcepb.WatchEvent_BOOKMARK)
 	require.Eventually(t, func() bool { return pubConn.IsConnected() }, 5*time.Second, time.Millisecond)
-	require.NoError(t, createTestPlaylist(ctx, srv))
+	// A client that was not watching during the outage must list again too.
+	requireResumeExpires(t, ctx, srv, req.Options, beforeOutage.Resource.Version, func() {
+		require.NoError(t, createTestPlaylist(ctx, srv))
+	})
 	requireNatsRecoveryEvent(t, replacement, resourcepb.WatchEvent_ADDED)
 }
 
@@ -575,7 +616,7 @@ func startNatsRecoveryWatch(t *testing.T, ctx context.Context, srv *server, req 
 	return stream, result
 }
 
-func requireNatsRecoveryEvent(t *testing.T, stream *mockWatchServer, kind resourcepb.WatchEvent_Type) {
+func requireNatsRecoveryEvent(t *testing.T, stream *mockWatchServer, kind resourcepb.WatchEvent_Type) *resourcepb.WatchEvent {
 	t.Helper()
 	timer := time.NewTimer(5 * time.Second)
 	defer timer.Stop()
@@ -583,11 +624,30 @@ func requireNatsRecoveryEvent(t *testing.T, stream *mockWatchServer, kind resour
 		select {
 		case event := <-stream.events:
 			if event.Type == kind {
-				return
+				return event
 			}
 		case <-timer.C:
 			t.Fatalf("timed out waiting for %s", kind)
 		}
+	}
+}
+
+// requireResumeExpires resumes a watch from since, before a write the watch
+// stream lost, and requires a 410. Accepted, the resume would deliver the later
+// write but never the lost one.
+func requireResumeExpires(t *testing.T, ctx context.Context, srv *server, opts *resourcepb.ListOptions, since int64, write func()) {
+	t.Helper()
+	stream, done := startNatsRecoveryWatch(t, ctx, srv, &resourcepb.WatchRequest{Options: opts, Since: since})
+	write()
+	timer := time.NewTimer(5 * time.Second)
+	defer timer.Stop()
+	select {
+	case err := <-done:
+		require.True(t, IsResourceVersionExpired(err), "expected ResourceExpired, got %v", err)
+	case event := <-stream.events:
+		t.Fatalf("resume from %d, before the lost write, was accepted and skipped it: got %s at %d", since, event.Type, event.Resource.Version)
+	case <-timer.C:
+		t.Fatal("resume from before the lost write neither expired nor delivered the later write")
 	}
 }
 
@@ -709,7 +769,10 @@ func TestWatchShutdownPreservesInvalidation(t *testing.T) {
 				defer close(done)
 				done <- srv.Watch(req, stream)
 			}()
-			t.Cleanup(func() { cancel(); <-done })
+			t.Cleanup(func() {
+				cancel()
+				<-done //nolint:errcheck // The watch result is checked below; cleanup only waits for it to exit.
+			})
 			requireNatsRecoveryEvent(t, stream.mockWatchServer, resourcepb.WatchEvent_BOOKMARK)
 			require.NoError(t, createTestPlaylist(ctx, srv))
 			select {
@@ -815,6 +878,24 @@ func TestWatchWrittenKeys(t *testing.T) {
 	})
 }
 
+func TestWatchWrittenKeysWaitsForTheSubscriberToStart(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sub := &startingEventSubscriber{fakeEventSubscriber: &fakeEventSubscriber{enabled: true}, started: make(chan struct{})}
+		backend := &kvStorageBackend{keysSubscriber: sub, log: logging.DefaultLogger}
+		done := make(chan error, 1)
+		go func() {
+			_, err := backend.WatchWrittenKeys(t.Context(), []schema.GroupResource{{Group: "dashboard.grafana.app", Resource: "dashboards"}}, func(string) {})
+			done <- err
+		}()
+		synctest.Wait()
+		require.Zero(t, sub.calls.Load())
+
+		close(sub.started)
+		require.NoError(t, <-done)
+		require.EqualValues(t, 1, sub.calls.Load())
+	})
+}
+
 // Without the NATS subscriber there are no written keys to watch.
 func TestWatchWrittenKeysNeedsTheSubscriber(t *testing.T) {
 	backend := &kvStorageBackend{log: logging.DefaultLogger}
@@ -905,4 +986,62 @@ func TestWatchWrittenKeysNeedsTheNatsNotifier(t *testing.T) {
 	sub := &subjectsSubscriber{}
 	assert.Nil(t, keysSubscriber(KVBackendOptions{EventSubscriber: sub, EnableNatsNotifierShadow: true}))
 	assert.Equal(t, EventSubscriber(sub), keysSubscriber(KVBackendOptions{EventSubscriber: sub, EnableNatsNotifier: true}))
+}
+
+func TestNewNatsNotifier(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sub := &fakeEventSubscriber{enabled: true}
+		reg := prometheus.NewRegistry()
+		expiry := NewWatchExpiry()
+		generation := expiry.WatchInvalidation()
+		n := NewNatsNotifier(sub, expiry, NewNatsNotifierDroppedMetric(reg), &logging.NoOpLogger{})
+
+		ready := make(chan error, 1)
+		out := n.Watch(t.Context(), WatchOptions{BufferSize: 1, CaptureReady: ready, SettleDelay: time.Second})
+		require.NoError(t, <-ready)
+		require.Equal(t, resourcewatch.SubjectAllResources, sub.subject)
+
+		notification := mustMarshalNotification(t, &resourcepb.WatchNotification{
+			Type: resourcepb.WatchNotification_ADDED, Group: "g", Resource: "r", Namespace: "ns", Name: "n", ResourceVersion: 10,
+		})
+		sub.currentHandler()("some.subject", notification)
+		time.Sleep(time.Second)
+		synctest.Wait()
+		select {
+		case evt := <-out:
+			require.Equal(t, Event{Namespace: "ns", Group: "g", Resource: "r", Name: "n", ResourceVersion: 10, Action: DataActionCreated}, evt)
+		default:
+			t.Fatal("expected a settled event")
+		}
+
+		// Fill the output, then block the settle loop on it, then the input:
+		// the next drop is reported to this notifier's invalidator.
+		for range 2 {
+			sub.currentHandler()("some.subject", notification)
+			time.Sleep(time.Second)
+			synctest.Wait()
+		}
+		sub.currentHandler()("some.subject", notification)
+		require.Equal(t, generation, expiry.WatchInvalidation())
+		sub.currentHandler()("some.subject", notification)
+		require.NotEqual(t, generation, expiry.WatchInvalidation())
+
+		count, err := testutil.GatherAndCount(reg, "grafana_storage_server_nats_notifier_dropped_events_total")
+		require.NoError(t, err)
+		require.Equal(t, len(dropReasons), count)
+	})
+}
+
+// KV RVs are taken before the write, so a slow write arrives late. Until its
+// rate is known, a late notification is counted and emitted, not a gap.
+func TestKVWatchOptionsCountLateNotifications(t *testing.T) {
+	late := prometheus.NewCounter(prometheus.CounterOpts{Name: "late_total"})
+	opts := kvWatchOptions(WatchOptions{}, late, &logging.NoOpLogger{})
+	require.Equal(t, defaultSettleDelay, opts.SettleDelay)
+	require.False(t, opts.OnLate(Event{Group: "g", Resource: "r", ResourceVersion: 1}), "late notifications are emitted")
+	require.Equal(t, float64(1), testutil.ToFloat64(late))
+
+	opts = kvWatchOptions(WatchOptions{OnLate: func(Event) bool { return true }}, late, &logging.NoOpLogger{})
+	require.True(t, opts.OnLate(Event{}), "a caller's OnLate is kept")
+	require.Equal(t, float64(1), testutil.ToFloat64(late))
 }

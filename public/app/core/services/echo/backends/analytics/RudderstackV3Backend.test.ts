@@ -48,10 +48,13 @@ describe('RudderstackBackend', () => {
       'write-key',
       'https://data-plane.example.com',
       expect.objectContaining({
-        useBeacon: enabled,
-        beaconQueueOptions: expect.objectContaining({
-          flushQueueInterval: batchInterval ?? 0,
-        }),
+        queueOptions: {
+          maxAttempts: 3,
+          batch: {
+            enabled,
+            flushInterval: batchInterval ?? 0,
+          },
+        },
       }),
     ]);
   });

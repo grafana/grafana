@@ -1,16 +1,17 @@
 import { act, cleanup } from '@testing-library/react';
+import { type DataSourceFallbackWatcher, watchDataSourceFallbacks } from 'test/helpers/seedDataSources';
 
-import { config, setBackendSrv } from '@grafana/runtime';
+import { setBackendSrv } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { setupMockServer } from '@grafana/test-utils/server';
+import { testWithFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
-import { type ScopesService } from '../ScopesService';
 import { type ScopesSelectorService } from '../selector/ScopesSelectorService';
 
 import { enterEditMode, openSelector, toggleDashboards } from './utils/actions';
 import { expectDashboardsClosed, expectDashboardsOpen } from './utils/assertions';
-import { getDatasource, getInstanceSettings } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
 import { getDashboardsExpand, getSelectorInput, querySelectorApply } from './utils/selectors';
 
@@ -18,34 +19,34 @@ jest.mock('@grafana/runtime', () => ({
   __esModule: true,
   ...jest.requireActual('@grafana/runtime'),
   useChromeHeaderHeight: jest.fn(),
-  getDataSourceSrv: () => ({ get: getDatasource, getInstanceSettings }),
   usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
 
 setBackendSrv(backendSrv);
 setupMockServer();
 
+let dataSourceFallbacks: DataSourceFallbackWatcher;
+
+beforeEach(() => {
+  dataSourceFallbacks = watchDataSourceFallbacks();
+});
+
+afterEach(() => {
+  dataSourceFallbacks.expectNoFallbacks(['instance', 'settings', 'list']);
+});
+
 describe('Scope selector in edit mode', () => {
   let dashboardScene: DashboardScene;
-  let scopesService: ScopesService;
 
-  beforeAll(() => {
-    config.featureToggles.scopeFilters = true;
-  });
+  testWithFlags({ [FlagKeys.ScopeFilters]: true });
 
   beforeEach(async () => {
     const renderResult = await renderDashboard();
     dashboardScene = renderResult.scene;
-    scopesService = renderResult.scopesService;
   });
 
   afterEach(async () => {
     await resetScenes();
-  });
-
-  it('Does not set scopes to read only when entering edit mode', async () => {
-    await enterEditMode(dashboardScene);
-    expect(scopesService.state.readOnly).toEqual(false);
   });
 
   it('Does not close selector when entering edit mode', async () => {
@@ -81,54 +82,11 @@ describe('Scope selector in edit mode', () => {
   });
 });
 
-describe('setReadOnly', () => {
-  let scopesService: ScopesService;
-
-  beforeAll(() => {
-    config.featureToggles.scopeFilters = true;
-  });
-
-  beforeEach(async () => {
-    const renderResult = await renderDashboard();
-    scopesService = renderResult.scopesService;
-  });
-
-  afterEach(async () => {
-    await resetScenes();
-  });
-
-  it('Sets readOnly state and closes selector when called with true', async () => {
-    await openSelector();
-    expect(querySelectorApply()).toBeInTheDocument();
-
-    act(() => {
-      scopesService.setReadOnly(true);
-    });
-
-    expect(scopesService.state.readOnly).toEqual(true);
-    expect(querySelectorApply()).not.toBeInTheDocument();
-  });
-
-  it('Sets readOnly state without closing selector when called with false', async () => {
-    await openSelector();
-    expect(querySelectorApply()).toBeInTheDocument();
-
-    act(() => {
-      scopesService.setReadOnly(false);
-    });
-
-    expect(scopesService.state.readOnly).toEqual(false);
-    expect(querySelectorApply()).toBeInTheDocument();
-  });
-});
-
 describe('setRedirectEnabled', () => {
   let dashboardScene: DashboardScene;
   let scopesSelectorService: ScopesSelectorService;
 
-  beforeAll(() => {
-    config.featureToggles.scopeFilters = true;
-  });
+  testWithFlags({ [FlagKeys.ScopeFilters]: true });
 
   beforeEach(async () => {
     const renderResult = await renderDashboard();

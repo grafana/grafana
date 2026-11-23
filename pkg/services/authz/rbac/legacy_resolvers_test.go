@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -16,11 +17,22 @@ import (
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	"github.com/grafana/grafana/pkg/services/search/sort"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func TestLegacyCheckResolverParity(t *testing.T) {
@@ -34,10 +46,10 @@ func TestLegacyCheckResolverParity(t *testing.T) {
 		calls       []string
 	}{
 		{
-			name:       "empty all denies an empty identity",
+			name:       "empty all allows an identity with only shared with me",
 			expression: legacyAllExpression(),
 			skip:       false,
-			allowed:    false,
+			allowed:    true,
 			wantError:  false,
 		},
 		{
@@ -165,11 +177,12 @@ func TestLegacyCheckResolverParity(t *testing.T) {
 			calls:     []string{"dashboards:uid:missing"},
 		},
 		{
-			name:       "no permissions denies before resolution",
+			name:       "shared with me still enables resolution without stored grants",
 			expression: legacyPermissionExpression("dashboards:read", "dashboards:uid:missing"),
 			skip:       false,
 			allowed:    false,
-			wantError:  false,
+			wantError:  true,
+			calls:      []string{"dashboards:uid:missing"},
 		},
 		{
 			name:       "unrelated permissions still expose a resolver failure",
@@ -265,7 +278,9 @@ func TestLegacyCheckResolverParity(t *testing.T) {
 			}
 			evaluator, _, err := convertLegacyExpression(tc.expression)
 			require.NoError(t, err)
-			permissions := make(map[string][]string)
+			permissions := map[string][]string{
+				acimpl.SharedWithMeFolderPermission.Action: {acimpl.SharedWithMeFolderPermission.Scope},
+			}
 			for _, p := range tc.permissions {
 				permissions[p.Action] = append(permissions[p.Action], p.Scope)
 			}
@@ -308,6 +323,7 @@ func TestLegacyCheckResolverParity(t *testing.T) {
 			calls = nil
 			got, err := s.LegacyCheck(legacyCheckContext(t), &authzextv1.LegacyCheckRequest{
 				Namespace:           "org-12",
+				RequesterOrgId:      proto.Int64(12),
 				Subject:             "user:u-1",
 				Expression:          tc.expression,
 				SkipScopeResolution: tc.skip,
@@ -323,19 +339,15 @@ func TestLegacyCheckResolverParity(t *testing.T) {
 	}
 }
 
-func TestLegacyCheckResolverPresenceQuery(t *testing.T) {
+func TestLegacyCheckSharedWithMeEnablesResolversWithoutStoredGrants(t *testing.T) {
 	ac := acimpl.ProvideAccessControlTest()
 	ac.RegisterScopeAttributeResolver("dashboards:uid:", accesscontrol.ScopeAttributeResolverFunc(
 		func(context.Context, int64, string) ([]string, error) {
 			return nil, errors.New("resource lookup failed")
 		},
 	))
-	s := NewTestService("u-1", []accesscontrol.Permission{
-		{
-			Action: "users:create",
-			Scope:  "",
-		},
-	}, nil).WithLegacyScopeResolvers(acimpl.ProvideScopeResolverRegistry(ac), types.OrgNamespaceFormatter)
+	s := NewTestService("u-1", nil, nil).
+		WithLegacyScopeResolvers(acimpl.ProvideScopeResolverRegistry(ac), types.OrgNamespaceFormatter)
 	s.store.(*fakeStore).basicRole = &store.BasicRole{Role: "Viewer"}
 	s.identityStore.(*fakeIdentityStore).userTeams = []int64{10}
 	s.actionResolver = legacyActionResolver{}
@@ -356,21 +368,44 @@ func TestLegacyCheckResolverPresenceQuery(t *testing.T) {
 			Action:     "dashboards:read",
 			ActionSets: []string{"dashboards:view", "dashboards:edit"},
 		},
-		{
-			UserID:  1,
-			Role:    "Viewer",
-			TeamIDs: []int64{10},
-			Action:  "folders:read",
-		},
 	}, permissions.queries)
-	require.Equal(t, []store.PermissionsQuery{
-		{
-			UserID:        1,
-			Role:          "Viewer",
-			TeamIDs:       []int64{10},
-			IsServerAdmin: false,
-		},
-	}, permissions.presenceQueries)
+	require.Empty(t, permissions.presenceQueries)
+}
+
+func TestLegacyCheckMissingFolderIsScopeNotFound(t *testing.T) {
+	ac := acimpl.ProvideAccessControlTest()
+	folderSvc := &foldertest.FakeService{ExpectedError: folder.ErrFolderNotFound.Errorf("folder not found")}
+	ac.RegisterScopeAttributeResolver(folder.NewFolderUIDScopeResolver(folderSvc))
+	s := NewTestService("u-1", []accesscontrol.Permission{
+		{Action: folder.ActionFoldersRead, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID("other")},
+	}, nil).WithLegacyScopeResolvers(acimpl.ProvideScopeResolverRegistry(ac), types.OrgNamespaceFormatter)
+
+	got, err := s.LegacyCheck(legacyCheckContext(t), legacyPermissionRequest(
+		"user:u-1", folder.ActionFoldersRead, folder.ScopeFoldersProvider.GetResourceScopeUID("missing"),
+	))
+	require.NoError(t, err)
+	require.False(t, got.Allowed)
+	require.Equal(t, authzextv1.LegacyCheckErrorCode_LEGACY_CHECK_ERROR_CODE_SCOPE_RESOURCE_NOT_FOUND, got.ErrorCode)
+}
+
+func TestLegacyCheckMissingFolderIDIsScopeNotFound(t *testing.T) {
+	// An empty search drives the real ID lookup behind the registered folders:id: resolver.
+	searchMock := resource.NewMockResourceClient(t)
+	searchMock.On("Search", mock.Anything, mock.Anything, mock.Anything).
+		Return(&resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES}, nil)
+	ac := acimpl.ProvideAccessControlTest()
+	folderimpl.ProvideService(ac, nil, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(),
+		nil, setting.NewCfg(), nil, tracing.InitializeTracerForTest(), searchMock, sort.ProvideService(), apiserver.WithoutRestConfig)
+	s := NewTestService("u-1", []accesscontrol.Permission{
+		{Action: folder.ActionFoldersRead, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID("other")},
+	}, nil).WithLegacyScopeResolvers(acimpl.ProvideScopeResolverRegistry(ac), types.OrgNamespaceFormatter)
+
+	got, err := s.LegacyCheck(legacyCheckContext(t), legacyPermissionRequest(
+		"user:u-1", folder.ActionFoldersRead, folder.ScopeFoldersProvider.GetResourceScope("123"),
+	))
+	require.NoError(t, err)
+	require.False(t, got.Allowed)
+	require.Equal(t, authzextv1.LegacyCheckErrorCode_LEGACY_CHECK_ERROR_CODE_SCOPE_RESOURCE_NOT_FOUND, got.ErrorCode)
 }
 
 func TestLegacyCheckResolversOverGRPC(t *testing.T) {
@@ -391,11 +426,16 @@ func TestLegacyCheckResolversOverGRPC(t *testing.T) {
 				IsGrafanaAdmin: false,
 				CacheKey:       "org-12:user:u-1",
 				Permissions: map[int64]map[string][]string{
-					12: {"dashboards:read": {"folders:uid:parent"}},
+					12: {
+						"dashboards:read": {"folders:uid:parent"},
+					},
 				},
 			}, requester)
 			if scope == "dashboards:uid:missing" {
 				return nil, errors.New("missing dashboard")
+			}
+			if scope == "dashboards:uid:absent" {
+				return nil, accesscontrol.ErrScopeResourceNotFound.Errorf("dashboard not found")
 			}
 			return []string{"folders:uid:parent"}, nil
 		},
@@ -458,11 +498,21 @@ func TestLegacyCheckResolversOverGRPC(t *testing.T) {
 				Error:   "could not evaluate legacy expression: could not resolve dashboards:uid:missing: missing dashboard",
 			},
 		},
+		{
+			name:  "typed absence survives transport",
+			scope: "dashboards:uid:absent",
+			want: &authzextv1.LegacyCheckResponse{
+				Allowed:   false,
+				Error:     "could not evaluate legacy expression: could not resolve dashboards:uid:absent: [accesscontrol.scopeResourceNotFound] dashboard not found",
+				ErrorCode: authzextv1.LegacyCheckErrorCode_LEGACY_CHECK_ERROR_CODE_SCOPE_RESOURCE_NOT_FOUND,
+			},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			//nolint:staticcheck // Exercise the transitional compatibility RPC.
 			got, err := client.LegacyCheck(t.Context(), &authzextv1.LegacyCheckRequest{
 				Namespace:           "org-12",
+				RequesterOrgId:      proto.Int64(12),
 				Subject:             "user:u-1",
 				SkipScopeResolution: tc.skip,
 				Expression:          legacyPermissionExpression("dashboards:read", tc.scope),

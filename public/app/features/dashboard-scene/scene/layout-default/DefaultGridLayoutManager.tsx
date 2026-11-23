@@ -23,6 +23,7 @@ import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmpty';
 import {
+  canArrangeLayout,
   isDashboardReviewing,
   isDashboardSceneLike,
   isFullDashboardEditing,
@@ -55,6 +56,7 @@ import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { canGroupSelection } from '../layouts-shared/groupLayout';
 import { clearClipboard, getDashboardGridItemFromClipboard } from '../layouts-shared/paste';
 import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
+import { findAdjacentVizPanel, focusVizPanel } from '../layouts-shared/utils';
 import { type DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 import { type DashboardLayoutManager, type GroupTarget, type GroupingResult } from '../types/DashboardLayoutManager';
 import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
@@ -136,7 +138,7 @@ export class DefaultGridLayoutManager
   private _activationHandler() {
     const root = this.getRoot();
     if (isDashboardSceneLike(root) && isDashboardReviewing(root.state)) {
-      this.editModeChanged(false);
+      this.editModeChanged(canArrangeLayout(root.state));
     }
     if (isDashboardNewLayoutsEnabled()) {
       this._subs.add(
@@ -244,6 +246,21 @@ export class DefaultGridLayoutManager
     }
 
     const layout = this.state.grid;
+    // A row owns every panel below it, so the next panel after the last top-level one sits
+    // inside the first expanded row. Collapsed rows don't render their panels.
+    const getPanelFromGridChild = (child: SceneGridItemLike): VizPanel | undefined => {
+      if (child instanceof DashboardGridItem) {
+        return child.state.body;
+      }
+      if (child instanceof SceneGridRow && !child.state.isCollapsed) {
+        for (const rowChild of child.state.children) {
+          if (rowChild instanceof DashboardGridItem) {
+            return rowChild.state.body;
+          }
+        }
+      }
+      return undefined;
+    };
 
     let row: SceneGridRow | undefined;
 
@@ -254,14 +271,19 @@ export class DefaultGridLayoutManager
     }
 
     if (row) {
+      const adjacentPanel = findAdjacentVizPanel(gridItem, row.state.children, getPanelFromGridChild);
       row.setState({ children: row.state.children.filter((child) => child !== gridItem) });
       layout.forceRender();
+      focusVizPanel(adjacentPanel);
       return;
     }
+
+    const adjacentPanel = findAdjacentVizPanel(gridItem, layout.state.children, getPanelFromGridChild);
 
     if (!isDashboardNewLayoutsEnabled()) {
       // No undo/redo support in legacy edit mode
       layout.setState({ children: layout.state.children.filter((child) => child !== gridItem) });
+      focusVizPanel(adjacentPanel);
       return;
     }
 
@@ -269,7 +291,10 @@ export class DefaultGridLayoutManager
       meta: { actionId: 'panel.remove', scope: 'custom-grid' },
       removedObject: gridItem.state.body,
       source: this,
-      perform: () => layout.setState({ children: layout.state.children.filter((child) => child !== gridItem) }),
+      perform: () => {
+        layout.setState({ children: layout.state.children.filter((child) => child !== gridItem) });
+        focusVizPanel(adjacentPanel);
+      },
       undo: () => layout.setState({ children: [...layout.state.children, gridItem] }),
     });
   }

@@ -2,6 +2,7 @@ import { HttpResponse, http } from 'msw';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { configureStore } from 'app/store/configureStore';
 
@@ -14,6 +15,11 @@ const hybridSearchRoute = '/apis/dashboard.grafana.app/v0alpha1/namespaces/:name
 describe('searchDashboardsHybrid', () => {
   beforeEach(() => {
     configureStore();
+    setTestFlags({});
+  });
+
+  afterAll(() => {
+    setTestFlags({});
   });
 
   it('posts the hybrid query envelope and returns resource items in server order', async () => {
@@ -49,6 +55,7 @@ describe('searchDashboardsHybrid', () => {
       apiVersion: 'search.grafana.app/v0alpha1',
       kind: 'HybridSearchQuery',
       query: 'latency overview',
+      skipRerank: false,
       limit: 20,
     });
     expect(results).toEqual(items);
@@ -68,6 +75,28 @@ describe('searchDashboardsHybrid', () => {
       apiVersion: 'search.grafana.app/v0alpha1',
       kind: 'HybridSearchQuery',
       query: 'latency',
+      skipRerank: false,
+    });
+  });
+
+  it.each([true, false])('sends skipRerank=%s from the command palette feature flag', async (skipRerank) => {
+    setTestFlags({ 'grafana.cmdkHybridSearchSkipRerank': skipRerank });
+    let requestBody: unknown;
+    server.use(
+      http.post(hybridSearchRoute, async ({ request }) => {
+        requestBody = await request.json();
+        return HttpResponse.json({ items: [] });
+      })
+    );
+
+    await searchDashboardsHybrid('latency', { limit: 20 });
+
+    expect(requestBody).toEqual({
+      apiVersion: 'search.grafana.app/v0alpha1',
+      kind: 'HybridSearchQuery',
+      query: 'latency',
+      limit: 20,
+      skipRerank,
     });
   });
 

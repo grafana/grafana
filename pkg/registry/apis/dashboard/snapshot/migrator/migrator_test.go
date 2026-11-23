@@ -1,6 +1,7 @@
 package migrator
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -10,8 +11,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 
 	dashV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -29,16 +32,21 @@ func TestMain(m *testing.M) {
 
 type fakeBulkStream struct {
 	grpc.ClientStream
-	sent    []*resourcepb.BulkRequest
-	sendErr error
+	sent      []*resourcepb.BulkRequest
+	sendErr   error
+	failAfter int
 }
 
 func (f *fakeBulkStream) Send(req *resourcepb.BulkRequest) error {
-	if f.sendErr != nil {
+	if f.sendErr != nil && len(f.sent) == f.failAfter {
 		return f.sendErr
 	}
 	f.sent = append(f.sent, req)
 	return nil
+}
+
+func (f *fakeBulkStream) Header() (metadata.MD, error) {
+	return metadata.Pairs(resourcepb.InlineBlobMetadataKey, "1"), nil
 }
 
 func (f *fakeBulkStream) CloseAndRecv() (*resourcepb.BulkResponse, error) {
@@ -74,6 +82,50 @@ func newTestMigrator(sec secrets.Service, store db.DB) *snapshotMigrator { //nol
 	return &snapshotMigrator{sql: legacysql.NewDatabaseProvider(store), decrypt: sec.Decrypt}
 }
 
+type unsupportedBulkStream struct{ fakeBulkStream }
+
+func (*unsupportedBulkStream) Header() (metadata.MD, error) { return nil, nil }
+
+func TestSnapshotMigrationRequiresAcknowledgement(t *testing.T) {
+	stream := &unsupportedBulkStream{}
+	m := &snapshotMigrator{}
+	err := m.MigrateSnapshots(t.Context(), 1, migrations.MigrateOptions{}, stream)
+	require.Error(t, err)
+	require.Empty(t, stream.sent)
+}
+
+func TestSnapshotUpload(t *testing.T) {
+	for _, size := range []int{1, resourcepb.BulkBlobChunkSize, resourcepb.BulkBlobChunkSize + 1, 3 * resourcepb.BulkBlobChunkSize} {
+		t.Run(fmt.Sprint(size), func(t *testing.T) {
+			body := bytes.Repeat([]byte("x"), size)
+			upload := snapshotUpload{request: &resourcepb.BulkRequest{Value: []byte(`{}`)}, dashboard: body}
+			stream := &fakeBulkStream{}
+			require.NoError(t, upload.send(stream))
+			require.Same(t, upload.request, stream.sent[0])
+			var received []byte
+			for _, frame := range stream.sent[1 : len(stream.sent)-1] {
+				require.NoError(t, resourcepb.ValidateBulkBlobFrame(frame))
+				require.False(t, frame.BlobChunk.Last)
+				received = append(received, frame.BlobChunk.Value...)
+			}
+			require.Equal(t, body, received)
+			require.Equal(t, &resourcepb.BulkBlobChunk{Name: "dashboard", Last: true}, stream.sent[len(stream.sent)-1].BlobChunk)
+		})
+	}
+}
+
+func TestSnapshotUploadStopsOnSendFailure(t *testing.T) {
+	upload := snapshotUpload{
+		request:   &resourcepb.BulkRequest{Value: []byte(`{}`)},
+		dashboard: bytes.Repeat([]byte("x"), resourcepb.BulkBlobChunkSize+1),
+	}
+	for failAfter := range 4 {
+		stream := &fakeBulkStream{sendErr: errors.New("send failed"), failAfter: failAfter}
+		require.ErrorIs(t, upload.send(stream), stream.sendErr)
+		require.Len(t, stream.sent, failAfter)
+	}
+}
+
 func TestIntegrationMigrateSnapshots(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -106,30 +158,45 @@ func TestIntegrationMigrateSnapshots(t *testing.T) {
 		require.NotNil(t, snap.Spec.ExternalUrl)
 		require.Equal(t, "https://example.com/share/ext-key", *snap.Spec.ExternalUrl)
 		require.Equal(t, "https://delete.example.com/private/ext-del?token=original", snap.GetExternalDeleteURL())
-		require.Nil(t, snap.Spec.Dashboard)
+		require.Nil(t, snap.Blobs.Dashboard)
 		require.NotNil(t, snap.Spec.DeleteKey)
 		require.Equal(t, "ext-del", *snap.Spec.DeleteKey)
 	})
 
-	t.Run("internal snapshot decrypts the body into Spec.Dashboard", func(t *testing.T) {
+	t.Run("internal snapshot sends the decrypted body as raw blob frames", func(t *testing.T) {
 		store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		m := newTestMigrator(secretsfakes.NewFakeSecretsService(), store)
-		body, err := json.Marshal(map[string]any{"title": "internal"})
-		require.NoError(t, err)
+		body := []byte(" {\"title\":\"internal\",\"largeNumber\":9007199254740993}\n")
 		insertSnapshot(t, store, &dashboardsnapshots.DashboardSnapshot{
-			OrgID: 1, Name: "int", Key: "int-key",
+			OrgID: 1, Name: "int", Key: "int-key", DeleteKey: "private-delete", UserID: 42,
 			DashboardEncrypted: body, // FakeSecretsService.Decrypt is a pass-through
-			Expires:            future, Created: now, Updated: now,
+			Expires:            future, Created: now, Updated: now.Add(time.Second),
 		})
 
 		stream := &fakeBulkStream{}
 		require.NoError(t, m.MigrateSnapshots(ctx, 1, opts, stream))
-		require.Len(t, stream.sent, 1)
+		require.Len(t, stream.sent, 3)
 
 		var snap dashV0.Snapshot
 		require.NoError(t, json.Unmarshal(stream.sent[0].Value, &snap))
-		require.NotNil(t, snap.Spec.Dashboard)
-		require.Equal(t, "internal", snap.Spec.Dashboard["title"])
+		require.Nil(t, snap.Blobs.Dashboard)
+		require.Equal(t, "private-delete", *snap.Spec.DeleteKey)
+		require.Equal(t, "int-key", snap.Name)
+		require.Equal(t, "default", snap.Namespace)
+		require.Equal(t, future.UnixMilli(), *snap.Spec.Expires)
+		require.Equal(t, "user:42", snap.GetCreatedBy())
+		meta, err := utils.MetaAccessor(&snap)
+		require.NoError(t, err)
+		updated, err := meta.GetUpdatedTimestamp()
+		require.NoError(t, err)
+		require.NotNil(t, updated)
+		require.Equal(t, now.Add(time.Second).UnixMilli(), updated.UnixMilli())
+		require.Equal(t, []*resourcepb.BulkBlobUpload{{Name: "dashboard", ContentType: "application/json", Size: int64(len(body))}}, stream.sent[0].BlobUploads)
+		require.Equal(t, body, stream.sent[1].BlobChunk.Value)
+		require.True(t, stream.sent[2].BlobChunk.Last)
+		for _, frame := range stream.sent {
+			require.NoError(t, resourcepb.ValidateBulkBlobFrame(frame))
+		}
 	})
 
 	t.Run("decrypt failure halts the migration", func(t *testing.T) {
@@ -159,6 +226,20 @@ func TestIntegrationMigrateSnapshots(t *testing.T) {
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "bad-json-key")
 	})
+
+	for _, plain := range []string{"", "null", "[]", `"string"`, "42"} {
+		t.Run("reject invalid local dashboard "+plain, func(t *testing.T) {
+			store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup
+			m := newTestMigrator(secretsfakes.NewFakeSecretsService(), store)
+			insertSnapshot(t, store, &dashboardsnapshots.DashboardSnapshot{
+				OrgID: 1, Key: "invalid-local", DashboardEncrypted: []byte(plain), Expires: future, Created: now, Updated: now,
+			})
+			stream := &fakeBulkStream{}
+			err := m.MigrateSnapshots(ctx, 1, opts, stream)
+			require.ErrorContains(t, err, "invalid-local")
+			require.Empty(t, stream.sent)
+		})
+	}
 
 	t.Run("expiry dates before 2070 are preserved; 2070+ are dropped", func(t *testing.T) {
 		store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore

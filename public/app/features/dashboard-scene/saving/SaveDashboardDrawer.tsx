@@ -11,6 +11,8 @@ import { RepoViewStatus } from 'app/features/provisioning/hooks/useGetResourceRe
 import { getSaveTarget, type SaveTarget } from 'app/features/provisioning/hooks/useSaveRepositoryView';
 import { type RecoverToNewBranch } from 'app/features/provisioning/types';
 
+import { SavePendingChangesForm } from '../lifecycle/SavePendingChangesForm';
+import { savesPendingChanges } from '../lifecycle/pendingChangesSave';
 import { type DashboardScene } from '../scene/DashboardScene';
 import {
   formatPredefinedVariablesAnnotationLabel,
@@ -36,6 +38,7 @@ interface SaveDashboardDrawerState extends SceneObjectState {
   saveDashboardTemplate?: boolean;
   showVariablesWarning?: boolean;
   onSaveSuccess?: () => void;
+  onDismiss?: () => void;
   recoverToNewBranch?: RecoverToNewBranch;
   /** Where a new save at the root of a folderless repository goes; unset means wherever the lookup says */
   saveTarget?: SaveTarget;
@@ -63,6 +66,7 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
       meta: shouldRestoreMeta ? (dashboard.getInitialState()?.meta ?? dashboard.state.meta) : dashboard.state.meta,
     });
     dashboard.closeModal();
+    this.state.onDismiss?.();
   };
 
   public onToggleSaveTimeRange = () => {
@@ -165,6 +169,11 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
       }
     }
 
+    // Pending changes are saved through the plugin that keeps them; a copy of them is a new dashboard.
+    if (!saveAsCopy && savesPendingChanges(dashboard)) {
+      return <SavePendingChangesForm dashboard={dashboard} changeInfo={changeInfo} drawer={model} />;
+    }
+
     if (target === 'repository') {
       return (
         <SaveProvisionedDashboard
@@ -205,17 +214,19 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
       {/* The form stays mounted (hidden) while the Changes tab is open so its field state survives tab switches */}
       <Box display={showDiff ? 'none' : 'flex'} direction="column" height="100%">
         <ScrollContainer showScrollIndicators>
-          <Stack direction="column" gap={2}>
-            {isNewSave && <FolderDeadEndAlert {...view.lookup} />}
-            {renderForm()}
-            {view.canChooseTarget && (
-              <SaveTargetSwitch
-                resource="dashboard"
-                target={target}
-                onChange={(saveTarget) => model.setState({ saveTarget })}
-              />
-            )}
-          </Stack>
+          <Box padding={0.5}>
+            <Stack direction="column" gap={2}>
+              {isNewSave && <FolderDeadEndAlert {...view.lookup} />}
+              {renderForm()}
+              {view.canChooseTarget && (
+                <SaveTargetSwitch
+                  resource="dashboard"
+                  target={target}
+                  onChange={(saveTarget) => model.setState({ saveTarget })}
+                />
+              )}
+            </Stack>
+          </Box>
         </ScrollContainer>
       </Box>
       {showDiff && changesCount === 0 && (

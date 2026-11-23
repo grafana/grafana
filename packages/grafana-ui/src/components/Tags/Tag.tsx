@@ -1,5 +1,5 @@
 import { cx, css } from '@emotion/css';
-import { forwardRef, type HTMLAttributes } from 'react';
+import { type CSSProperties, forwardRef, type HTMLAttributes } from 'react';
 import * as React from 'react';
 import Skeleton from 'react-loading-skeleton';
 
@@ -8,7 +8,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { type IconName } from '../../types/icon';
 import { type SkeletonComponent, attachSkeleton } from '../../utils/skeleton';
-import { getTagColor, getTagColorsFromName } from '../../utils/tags';
+import { getTagColorIndexFromName, getTagColorVariables } from '../../utils/tags';
 import { Icon } from '../Icon/Icon';
 
 /**
@@ -23,34 +23,49 @@ export interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
   /** Use constant color from TAG_COLORS. Using index instead of color directly so we can match other styling.
    * The index wraps around, so a value beyond the number of colors is fine. */
   colorIndex?: number;
+  /** Base CSS color for a tonal background and foreground pair. Takes precedence over colorIndex. */
+  baseColor?: string;
   onClick?: OnTagClick;
 }
 
-const TagComponent = forwardRef<HTMLElement, Props>(({ name, onClick, icon, className, colorIndex, ...rest }, ref) => {
-  const theme = useTheme2();
-  const styles = getTagStyles(theme, name, colorIndex);
+const TagComponent = forwardRef<HTMLElement, Props>(
+  ({ name, onClick, icon, className, colorIndex, baseColor, style, ...rest }, ref) => {
+    const theme = useTheme2();
+    const styles = useStyles2(getTagStyles);
+    // Colors are inline custom properties so the class stays the same for every tag color.
+    const colorStyle: CSSProperties = {
+      ...getTagColorVariables(baseColor ?? colorIndex ?? getTagColorIndexFromName(name, theme), theme),
+      ...style,
+    };
 
-  const onTagClick = (event: React.MouseEvent<HTMLElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
+    const onTagClick = (event: React.MouseEvent<HTMLElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
 
-    onClick?.(name, event);
-  };
+      onClick?.(name, event);
+    };
 
-  const classes = cx(styles.wrapper, className, { [styles.hover]: onClick !== undefined });
+    const classes = cx(styles.wrapper, className, { [styles.hover]: onClick !== undefined });
 
-  return onClick ? (
-    <button {...rest} className={classes} onClick={onTagClick} ref={ref as React.ForwardedRef<HTMLButtonElement>}>
-      {icon && <Icon name={icon} />}
-      {name}
-    </button>
-  ) : (
-    <span {...rest} className={classes} ref={ref}>
-      {icon && <Icon name={icon} />}
-      {name}
-    </span>
-  );
-});
+    return onClick ? (
+      <button
+        {...rest}
+        className={classes}
+        style={colorStyle}
+        onClick={onTagClick}
+        ref={ref as React.ForwardedRef<HTMLButtonElement>}
+      >
+        {icon && <Icon name={icon} />}
+        {name}
+      </button>
+    ) : (
+      <span {...rest} className={classes} style={colorStyle} ref={ref}>
+        {icon && <Icon name={icon} />}
+        {name}
+      </span>
+    );
+  }
+);
 TagComponent.displayName = 'Tag';
 
 const TagSkeleton: SkeletonComponent = ({ rootProps }) => {
@@ -71,10 +86,8 @@ const getSkeletonStyles = () => ({
   }),
 });
 
-const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number) => {
+const getTagStyles = (theme: GrafanaTheme2) => {
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
-  const { background, text } =
-    colorIndex === undefined ? getTagColorsFromName(name, theme) : getTagColor(colorIndex, theme);
   return {
     wrapper: css(
       {
@@ -84,8 +97,8 @@ const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number) =
         fontSize: theme.typography.size.sm,
         lineHeight: theme.typography.bodySmall.lineHeight,
         verticalAlign: 'baseline',
-        backgroundColor: background,
-        color: text,
+        backgroundColor: 'var(--tag-background)',
+        color: 'var(--tag-text)',
         whiteSpace: 'pre',
         textShadow: 'none',
         padding: '3px 6px',

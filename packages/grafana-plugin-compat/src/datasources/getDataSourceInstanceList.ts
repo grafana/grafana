@@ -5,20 +5,14 @@ import {
   getDataSourceSrv,
   getDataSourceInstanceList as stableGetDataSourceInstanceList,
 } from '@grafana/runtime';
-import {
-  type GetDataSourceInstanceListFilters,
-  getDataSourceInstanceList as unstableGetDataSourceInstanceList,
-} from '@grafana/runtime/unstable';
+
+import { type GetDataSourceInstanceListFilters } from './types';
 
 export async function getDataSourceInstanceList(
   filters?: GetDataSourceInstanceListFilters
 ): Promise<DataSourceInstanceListItem[]> {
   if (typeof stableGetDataSourceInstanceList === 'function') {
     return stableGetDataSourceInstanceList(filters);
-  }
-
-  if (typeof unstableGetDataSourceInstanceList === 'function') {
-    return unstableGetDataSourceInstanceList(filters);
   }
 
   return backwardsCompatibleGetDataSourceInstanceList(filters);
@@ -35,7 +29,7 @@ async function backwardsCompatibleGetDataSourceInstanceList(
   return getDataSourceSrv().getList(legacyFilters).map(toDataSourceInstanceListItem);
 }
 
-function toDataSourceInstanceListItem(item: DataSourceInstanceSettings): DataSourceInstanceListItem {
+export function toDataSourceInstanceListItem(item: DataSourceInstanceSettings): DataSourceInstanceListItem {
   return {
     meta: { ...item.meta },
     name: item.name,

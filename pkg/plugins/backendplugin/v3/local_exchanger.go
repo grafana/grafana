@@ -16,18 +16,12 @@ import (
 	"github.com/go-jose/go-jose/v4"
 	"github.com/go-jose/go-jose/v4/jwt"
 	authnlib "github.com/grafana/authlib/authn"
+
+	"github.com/grafana/grafana-app-sdk/plugin"
 )
 
 // localTokenTTL bounds how long a locally minted token is valid.
 const localTokenTTL = 5 * time.Minute
-
-// EnvVarSigningKeys and EnvVarSigningKeysURL name the environment variables
-// from which app-sdk plugins read the keys that verify their access tokens.
-// A plugin accepts only one of them.
-const (
-	EnvVarSigningKeys    = "GRAFANA_JWKS"
-	EnvVarSigningKeysURL = "GRAFANA_JWKS_URL"
-)
 
 // LocalKeyID identifies the local signing key in tokens and in LocalSigningKeys.
 const LocalKeyID = "grafana-local"
@@ -37,7 +31,7 @@ const LocalKeyID = "grafana-local"
 // signing keys in Grafana's environment, which go-plugin forwards to plugins.
 // Plugins then trust that signer, so Grafana must not sign tokens locally.
 func RealSigningKeysConfigured(jwksURL string) bool {
-	return jwksURL != "" || os.Getenv(EnvVarSigningKeys) != "" || os.Getenv(EnvVarSigningKeysURL) != ""
+	return jwksURL != "" || os.Getenv(plugin.EnvVarGrafanaJWKS) != "" || os.Getenv(plugin.EnvVarGrafanaJWKSURL) != ""
 }
 
 // LocalTokenExchanger returns a process-wide exchanger, for when neither a
