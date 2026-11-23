@@ -238,6 +238,54 @@ describe('formatted string parsing', () => {
     expect(parsed.isValid()).toBe(true);
     expect(parsed.toISOString()).toBe('2020-08-20T10:30:20.000Z');
   });
+
+  describe('ordinal day suffixes', () => {
+    it.each([
+      { input: 'Nov 1st, 2026', format: 'MMM Do, YYYY', expected: '2026-11-01T00:00:00.000Z' },
+      { input: 'Nov 2nd, 2026', format: 'MMM Do, YYYY', expected: '2026-11-02T00:00:00.000Z' },
+      { input: 'Nov 3rd, 2026', format: 'MMM Do, YYYY', expected: '2026-11-03T00:00:00.000Z' },
+      { input: 'Nov 11th, 2026', format: 'MMM Do, YYYY', expected: '2026-11-11T00:00:00.000Z' },
+      { input: 'Nov 20th, 2026', format: 'MMM Do, YYYY', expected: '2026-11-20T00:00:00.000Z' },
+      { input: 'Nov 22nd, 2026', format: 'MMM Do, YYYY', expected: '2026-11-22T00:00:00.000Z' },
+      { input: 'November 20th, 2026', format: 'MMMM Do, YYYY', expected: '2026-11-20T00:00:00.000Z' },
+      { input: 'November 20th 2026', format: 'MMMM Do, YYYY', expected: '2026-11-20T00:00:00.000Z' },
+      { input: '20th Nov 2026 10:30', format: 'Do MMM YYYY HH:mm', expected: '2026-11-20T10:30:00.000Z' },
+    ])('parses "$input" with "$format"', ({ input, format, expected }) => {
+      const parsed = moment.utc(input, format);
+
+      expect(parsed.isValid()).toBe(true);
+      expect(parsed.toISOString()).toBe(expected);
+    });
+
+    it('parses input that has no ordinal suffix', () => {
+      expect(moment.utc('Nov 20, 2026', 'MMM Do, YYYY').toISOString()).toBe('2026-11-20T00:00:00.000Z');
+    });
+
+    it('round-trips formatted output', () => {
+      const original = moment.utc('2026-11-22T00:00:00Z');
+      const formatted = original.format('MMM Do, YYYY');
+
+      expect(formatted).toBe('Nov 22nd, 2026');
+      expect(moment.utc(formatted, 'MMM Do, YYYY').toISOString()).toBe(original.toISOString());
+    });
+
+    it.each([
+      { input: 'Nov 20th, 2026 @ 00:00:00', format: 'MMM D, YYYY @ HH:mm:ss' },
+      { input: 'Nov 20th, 2026 @ 00:00:00', format: 'MMM DD, YYYY @ HH:mm:ss' },
+      { input: 'Nov 20, 2026 @ 00:00:00', format: 'MMM D, YYYY @ HH:mm:ss' },
+    ])('accepts an ordinal suffix for the day token like moment: "$input" with "$format"', ({ input, format }) => {
+      expect(moment.utc(input, format).toISOString()).toBe('2026-11-20T00:00:00.000Z');
+    });
+
+    it('keeps literal suffixes in the format working', () => {
+      expect(moment.utc('20th Nov 2026', 'D[th] MMM YYYY').toISOString()).toBe('2026-11-20T00:00:00.000Z');
+      expect(moment.utc('Nov 20 1st 2026', 'MMM D [1st] YYYY').toISOString()).toBe('2026-11-20T00:00:00.000Z');
+    });
+
+    it('does not treat a suffix on a longer number as an ordinal', () => {
+      expect(moment.utc('Nov 2020th, 2026', 'MMM D, YYYY').isValid()).toBe(false);
+    });
+  });
 });
 
 describe('relative time', () => {
