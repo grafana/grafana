@@ -92,11 +92,9 @@ It is important to always use simple and concise language when crafting messagin
 
 ### Calls to Action
 
-Use the `action` prop on `Alert` for a separate control, such as a **Learn more** button that opens details about a warning. Give the button its own handler. If users can also dismiss the alert, pass a separate `onRemove` handler and leave `buttonContent` unset to show the default close button.
+Use `Alert.action` for a button separate from the message, such as **Learn more**. To also show the default close button, pass `onRemove` and leave `buttonContent` unset.
 
-Let `Alert` place the action so it can wrap below the message when space is tight. An absolutely positioned action doesn't reserve space in the layout and can cover the message at narrow widths.
-
-Keep the action label short and clear. See Grafana's [UX writing guidelines](https://grafana.com/docs/writers-toolkit/write/style-guide/ux-writing/).
+Let `Alert` position the action so it can wrap below the message. An absolutely positioned button can cover the text at narrow widths.
 
 ## <a name="main-elements"/>Main elements
 
