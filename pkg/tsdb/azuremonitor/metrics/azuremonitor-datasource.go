@@ -94,6 +94,70 @@ func (e *AzureMonitorDatasource) ResourceRequest(rw http.ResponseWriter, req *ht
 	return e.Proxy.Do(rw, req, cli)
 }
 
+// multiResourceCompatibleTypes lists the resource types the subscription-level
+// ARM metrics API can query for several resources in one request. It mirrors
+// azureMetadata/multiResourceCompatibleTypes.json in the frontend plugin
+// directory; TestMultiResourceCompatibleTypesMatchFrontend fails if the two
+// drift apart.
+var multiResourceCompatibleTypes = map[string]bool{
+	"microsoft.cache/redis":                                 true,
+	"microsoft.documentdb/mongoclusters":                    true,
+	"microsoft.dbforpostgresql/flexibleservers":             true,
+	"microsoft.storagecache/amlfilesystems":                 true,
+	"microsoft.monitor/accounts":                            true,
+	"microsoft.databoxedge/databoxedgedevices":              true,
+	"microsoft.azurestackhci/clusters":                      true,
+	"microsoft.dataprotection/backupvaults":                 true,
+	"microsoft.networkcloud/baremetalmachines":              true,
+	"microsoft.netapp/netappaccounts/capacitypools":         true,
+	"microsoft.netapp/netappaccounts/capacitypools/volumes": true,
+	"microsoft.network/networkwatchers/connectionmonitors":  true,
+	"microsoft.keyvault/vaults":                             true,
+	"microsoft.recoveryservices/vaults":                     true,
+	"microsoft.sql/servers/databases":                       true,
+	"microsoft.sql/servers/elasticpools":                    true,
+	"microsoft.compute/virtualmachinescalesets":             true,
+	"microsoft.compute/virtualmachines":                     true,
+	"microsoft.signalrservice/webpubsub":                    true,
+}
+
+// needsResourceFanOut reports whether a multi-resource query must be split into
+// one resource-level request per resource on the legacy ARM path. buildQuery
+// sends multi-resource queries as a single subscription-level request using the
+// query-level subscription and region, which only works for multi-resource
+// compatible types and when no resource overrides that subscription or region.
+// The batch-enabled editor allows selections that break both rules.
+func needsResourceFanOut(model dataquery.AzureMonitorQuery) bool {
+	az := model.AzureMonitor
+	if az == nil || len(az.Resources) <= 1 {
+		return false
+	}
+	ns := ""
+	if az.MetricNamespace != nil {
+		ns = strings.ToLower(strings.TrimSpace(*az.MetricNamespace))
+	}
+	if !multiResourceCompatibleTypes[ns] {
+		return true
+	}
+	sub := ""
+	if model.Subscription != nil {
+		sub = *model.Subscription
+	}
+	region := ""
+	if az.Region != nil {
+		region = *az.Region
+	}
+	for _, r := range az.Resources {
+		if r.Subscription != nil && *r.Subscription != "" && !strings.EqualFold(*r.Subscription, sub) {
+			return true
+		}
+		if r.Region != nil && *r.Region != "" && !strings.EqualFold(*r.Region, region) {
+			return true
+		}
+	}
+	return false
+}
+
 // Registered in pkg/services/featuremgmt; referenced by name because the
 // coreplugins depguard rule forbids importing Grafana core packages.
 const batchAPIFlag = "datasources.azureMonitorBatchAPI"
@@ -131,6 +195,14 @@ func (e *AzureMonitorDatasource) ExecuteTimeSeriesQuery(ctx context.Context, ori
 
 	result := backend.NewQueryDataResponse()
 	for _, query := range originalQueries {
+		// Queries saved while the batch API was enabled can select resources
+		// that a single subscription-level request cannot serve. Fetch those
+		// per resource instead. A decode error is left for buildQuery to report.
+		var model dataquery.AzureMonitorQuery
+		if err := json.Unmarshal(query.JSON, &model); err == nil && needsResourceFanOut(model) {
+			e.executeFannedOutQuery(ctx, query, model, dsInfo, client, url, result)
+			continue
+		}
 		azureQuery, err := e.buildQuery(query, dsInfo)
 		if err != nil {
 			result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(err)

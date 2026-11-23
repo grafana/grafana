@@ -1,0 +1,21 @@
+[
+  "microsoft.cache/redis",
+  "microsoft.documentdb/mongoclusters",
+  "microsoft.dbforpostgresql/flexibleservers",
+  "microsoft.storagecache/amlfilesystems",
+  "microsoft.monitor/accounts",
+  "microsoft.databoxedge/databoxedgedevices",
+  "microsoft.azurestackhci/clusters",
+  "microsoft.dataprotection/backupvaults",
+  "microsoft.networkcloud/baremetalmachines",
+  "microsoft.netapp/netappaccounts/capacitypools",
+  "microsoft.netapp/netappaccounts/capacitypools/volumes",
+  "microsoft.network/networkwatchers/connectionmonitors",
+  "microsoft.keyvault/vaults",
+  "microsoft.recoveryservices/vaults",
+  "microsoft.sql/servers/databases",
+  "microsoft.sql/servers/elasticpools",
+  "microsoft.compute/virtualmachinescalesets",
+  "microsoft.compute/virtualmachines",
+  "microsoft.signalrservice/webpubsub"
+]
