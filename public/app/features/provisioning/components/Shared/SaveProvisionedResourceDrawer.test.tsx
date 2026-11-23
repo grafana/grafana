@@ -289,6 +289,8 @@ describe('SaveProvisionedResourceDrawer', () => {
       expect(requireCapturedRequest(capturedRequest).url.pathname).toContain(
         '/repositories/test-repo/files/custom/folder/my-file.json'
       );
+      await screen.findByText(/committed to main/i);
+      expect(screen.getByText('custom/folder/my-file.json')).toBeInTheDocument();
     });
   });
 
@@ -316,6 +318,21 @@ describe('SaveProvisionedResourceDrawer', () => {
       expect(req.method).toBe('DELETE');
       expect(req.url.pathname).toContain('/repositories/test-repo/files/playlists/test-playlist.json');
       expect(req.url.searchParams.get('message')).toBe('Delete playlist: Test Playlist');
+    });
+
+    it('offers no link to the deleted file', async () => {
+      server.use(
+        http.delete(`${BASE}/repositories/:name/files/*`, () =>
+          HttpResponse.json({
+            resource: {},
+            urls: { sourceURL: 'https://github.com/o/r/blob/main/playlists/test-playlist.json' },
+          })
+        )
+      );
+      const { user } = setup({ action: 'delete' });
+      await user.click(await screen.findByRole('button', { name: /^delete$/i }));
+      await screen.findByText(/committed to main/i);
+      expect(screen.queryByRole('link', { name: 'Open the committed file' })).not.toBeInTheDocument();
     });
 
     it('shows the read-only banner when the repository cannot be edited', () => {
