@@ -11,6 +11,7 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -302,7 +303,7 @@ func TestIntegration_InlineSecureValue_CreateInline(t *testing.T) {
 		tu := testutils.Setup(t)
 
 		rawSecret := "test-value"
-		secret := common.NewSecretValue(rawSecret)
+		secret := resource.NewSecretValue(rawSecret)
 
 		desc := "custom desc"
 

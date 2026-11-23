@@ -14,15 +14,15 @@ import (
 	"golang.org/x/oauth2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 func TestConnection_Test(t *testing.T) {
 	tests := []struct {
 		name            string
-		token           common.RawSecureValue
+		token           resource.RawSecureValue
 		providerResults *provisioning.TestResults
 		expectedCode    int
 		expectedErrors  []provisioning.ErrorDetails
@@ -182,7 +182,7 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 	tests := []struct {
 		name        string
 		repo        *provisioning.Repository
-		token       common.RawSecureValue
+		token       resource.RawSecureValue
 		expectedErr string
 		validate    func(t *testing.T, value *connection.ExpirableSecureValue)
 	}{
@@ -191,7 +191,7 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 			repo:  &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.GitLabRepositoryType}},
 			token: marshalTestToken(t, &oauth2.Token{AccessToken: "access", Expiry: expiry}),
 			validate: func(t *testing.T, value *connection.ExpirableSecureValue) {
-				assert.Equal(t, common.RawSecureValue("access"), value.Token)
+				assert.Equal(t, resource.RawSecureValue("access"), value.Token)
 				assert.True(t, value.ExpiresAt.Equal(expiry))
 			},
 		},
@@ -200,7 +200,7 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 			repo:  &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.GitLabRepositoryType}},
 			token: marshalTestToken(t, &oauth2.Token{AccessToken: "access"}),
 			validate: func(t *testing.T, value *connection.ExpirableSecureValue) {
-				assert.Equal(t, common.RawSecureValue("access"), value.Token)
+				assert.Equal(t, resource.RawSecureValue("access"), value.Token)
 				assert.True(t, value.ExpiresAt.IsZero())
 			},
 		},
@@ -272,7 +272,7 @@ func TestConnection_ListRepositories(t *testing.T) {
 func TestConnection_GenerateConnectionToken(t *testing.T) {
 	tests := []struct {
 		name         string
-		token        common.RawSecureValue
+		token        resource.RawSecureValue
 		response     map[string]any
 		responseCode int
 		expectedErr  string
@@ -453,7 +453,7 @@ func TestConnection_ValidateToken(t *testing.T) {
 
 	tests := []struct {
 		name         string
-		token        common.RawSecureValue
+		token        resource.RawSecureValue
 		expectedErr  string
 		expectExpiry time.Time
 	}{
@@ -505,11 +505,11 @@ func newMockProvider(t *testing.T, tokenURL string) *MockProvider {
 	return provider
 }
 
-func marshalTestToken(t *testing.T, token *oauth2.Token) common.RawSecureValue {
+func marshalTestToken(t *testing.T, token *oauth2.Token) resource.RawSecureValue {
 	t.Helper()
 	b, err := json.Marshal(token) // #nosec G117 -- test fixture for the stored token payload
 	require.NoError(t, err)
-	return common.RawSecureValue(b)
+	return resource.RawSecureValue(b)
 }
 
 func newTokenServer(t *testing.T, code int, response map[string]any) *httptest.Server {

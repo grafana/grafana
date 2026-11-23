@@ -16,7 +16,7 @@ import {
   GROUP_STRIP_MARGIN_LEFT,
   GROUP_TEXT_OFFSET,
 } from '../constants';
-import { type ClickedItemData, ColorScheme, ColorSchemeDiff, type TextAlign } from '../types';
+import { type ClickedItemData, ColorScheme, ColorSchemeDiff, type SymbolLabel, type TextAlign } from '../types';
 
 import {
   BAR_GROUP_STRIP_COLOR,
@@ -43,6 +43,7 @@ type RenderOptions = {
 
   matchedLabels: Set<string> | undefined;
   textAlign: TextAlign;
+  symbolLabel: SymbolLabel;
 
   // Total ticks that will be used for sizing
   totalViewTicks: number;
@@ -68,6 +69,7 @@ export function useFlameRender(options: RenderOptions) {
     rangeMax,
     matchedLabels,
     textAlign,
+    symbolLabel,
     totalViewTicks,
     totalColorTicks,
     totalTicksRight,
@@ -98,7 +100,7 @@ export function useFlameRender(options: RenderOptions) {
     focusedItemData ? focusedItemData.item.level : 0
   );
 
-  const renderFunc = useRenderFunc(ctx, data, getBarColor, textAlign, collapsedMap, devicePixelRatio);
+  const renderFunc = useRenderFunc(ctx, data, getBarColor, textAlign, symbolLabel, collapsedMap, devicePixelRatio);
 
   useEffect(() => {
     if (!ctx) {
@@ -170,6 +172,7 @@ type RenderFuncWrap = (
  * @param data
  * @param getBarColor
  * @param textAlign
+ * @param symbolLabel
  * @param collapsedMap
  */
 function useRenderFunc(
@@ -177,6 +180,7 @@ function useRenderFunc(
   data: FlameGraphDataContainer,
   getBarColor: (item: LevelItem, label: string, muted: boolean) => string,
   textAlign: TextAlign,
+  symbolLabel: SymbolLabel,
   collapsedMap: CollapsedMap,
   devicePixelRatio: number
 ) {
@@ -208,21 +212,22 @@ function useRenderFunc(
             finalLabel,
             item,
             width,
-            textAlign === 'left' ? x + (GROUP_STRIP_MARGIN_LEFT + GROUP_TEXT_OFFSET) * dpr : x,
+            textAlign === 'right' ? x : x + (GROUP_STRIP_MARGIN_LEFT + GROUP_TEXT_OFFSET) * dpr,
             y,
             textAlign,
+            symbolLabel,
             dpr
           );
 
           renderGroupingStrip(ctx, x, y, height, item, collapsedItemConfig, dpr);
         } else {
-          renderLabel(ctx, data, finalLabel, item, width, x, y, textAlign, dpr);
+          renderLabel(ctx, data, finalLabel, item, width, x, y, textAlign, symbolLabel, dpr);
         }
       }
     };
 
     return renderFunc;
-  }, [ctx, getBarColor, textAlign, data, collapsedMap, devicePixelRatio]);
+  }, [ctx, getBarColor, textAlign, symbolLabel, data, collapsedMap, devicePixelRatio]);
 }
 
 /**
@@ -446,8 +451,8 @@ function useSetupCanvas(
   return { ctx, devicePixelRatio };
 }
 
-// Renders a text inside the node rectangle. It allows setting alignment of the text left or right which takes effect
-// when text is too long to fit in the rectangle.
+// Renders a label inside the node. Alignment applies only when the text does not fit; right alignment then drops
+// the unit so the name stays visible. The import path is removed first, so alignment still applies to a name-only label.
 function renderLabel(
   ctx: CanvasRenderingContext2D,
   data: FlameGraphDataContainer,
@@ -457,6 +462,7 @@ function renderLabel(
   x: number,
   y: number,
   textAlign: TextAlign,
+  symbolLabel: SymbolLabel,
   dpr: number
 ) {
   ctx.save();
@@ -465,12 +471,13 @@ function renderLabel(
 
   const displayValue = data.valueDisplayProcessor(item.value);
   const unit = displayValue.suffix ? displayValue.text + displayValue.suffix : displayValue.text;
+  const displayLabel = symbolLabel === 'name' ? functionName(label) : label;
 
-  // We only measure name here instead of full label because of how we deal with the units and aligning later.
-  const measure = ctx.measureText(label);
+  // Measure the label without the unit so right alignment can drop the unit when the text does not fit.
+  const measure = ctx.measureText(displayLabel);
   const spaceForTextInRect = width - BAR_TEXT_PADDING_LEFT * dpr;
 
-  let fullLabel = `${label} (${unit})`;
+  let fullLabel = `${displayLabel} (${unit})`;
   let labelX = Math.max(x, 0) + BAR_TEXT_PADDING_LEFT * dpr;
 
   // We use the desired alignment only if there is not enough space for the text, otherwise we keep left alignment as
@@ -480,7 +487,7 @@ function renderLabel(
     // If aligned to the right we don't want to take the space with the unit label as the assumption is user wants to
     // mainly see the name. This also reflects how pyro/flamegraph works.
     if (textAlign === 'right') {
-      fullLabel = label;
+      fullLabel = displayLabel;
       labelX = x + width - BAR_TEXT_PADDING_LEFT * dpr;
     }
   }
@@ -499,4 +506,13 @@ function renderLabel(
  */
 export function getBarX(offset: number, totalTicks: number, rangeMin: number, pixelsPerTick: number) {
   return (offset - totalTicks * rangeMin) * pixelsPerTick;
+}
+
+const collapsedPrefix = /^\(\d+\) /;
+const importPath = /^(?:[\w.-]+\/)+/;
+
+// Drops the import path. A collapsed-frame count stays in front.
+export function functionName(label: string): string {
+  const prefix = label.match(collapsedPrefix)?.[0] ?? '';
+  return prefix + label.slice(prefix.length).replace(importPath, '');
 }

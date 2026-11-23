@@ -368,10 +368,9 @@ func ProvideService(cfg *setting.Cfg, routeRegister routing.RouteRegister, plugC
 
 	g.websocketHandler = func(ctx *contextmodel.ReqContext) {
 		user := ctx.SignedInUser
-		id, _ := user.GetInternalID()
 		// Centrifuge expects Credentials in context with a current user ID.
 		cred := &centrifuge.Credentials{
-			UserID: strconv.FormatInt(id, 10),
+			UserID: orgchannel.UserID(user),
 		}
 		newCtx := centrifuge.SetCredentials(ctx.Req.Context(), cred)
 		newCtx = identity.WithRequester(newCtx, user)
