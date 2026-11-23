@@ -23,6 +23,8 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 
 import { ShareExportTab } from './ShareExportTab';
 
+jest.mock('../scene/export/exporters', () => makeSpyable('../scene/export/exporters'));
+
 jest.mock('file-saver', () => jest.fn());
 jest.mock('app/features/dashboard/api/dashboard_api');
 
