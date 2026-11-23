@@ -11,12 +11,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gopkg.in/ini.v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -27,6 +29,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -37,6 +40,63 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
+
+func TestFolderListFilterStorage(t *testing.T) {
+	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1})
+	remaining := int64(5)
+	list := &folders.FolderList{ListMeta: metav1.ListMeta{
+		ResourceVersion: "42", Continue: "next", RemainingItemCount: &remaining,
+	}}
+	for _, item := range []struct{ name, parent string }{
+		{"ordinary", "general"},
+		{accesscontrol.K6FolderUID, "general"},
+		{"direct-child", accesscontrol.K6FolderUID},
+		{"grandchild", "direct-child"},
+		{"unrelated", "other"},
+	} {
+		obj := &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: item.name}}
+		meta, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+		meta.SetFolder(item.parent)
+		list.Items = append(list.Items, *obj)
+	}
+	sourceList := list.DeepCopy()
+
+	store := grafanarest.NewMockStorage(t)
+	store.On("List", ctx, (*internalversion.ListOptions)(nil)).Return(list, nil).Once()
+	result, err := (&cascadeDeleteStorage{Storage: store}).List(ctx, nil)
+	require.NoError(t, err)
+	filtered := result.(*folders.FolderList)
+	require.Len(t, filtered.Items, 3)
+	require.Equal(t, []string{"ordinary", "grandchild", "unrelated"}, []string{
+		filtered.Items[0].Name, filtered.Items[1].Name, filtered.Items[2].Name,
+	})
+	require.Equal(t, "42", filtered.ResourceVersion)
+	require.Equal(t, "next", filtered.Continue)
+	require.Nil(t, filtered.RemainingItemCount)
+
+	serviceAccount := &identity.StaticRequester{Type: claims.TypeServiceAccount}
+	internalService := &identity.StaticRequester{Type: claims.TypeAccessPolicy, UserUID: "service"}
+	internalCtx := claims.WithAuthInfo(context.Background(), internalService)
+	internalCtx = identity.WithRequester(internalCtx, internalService)
+	for _, tc := range []struct {
+		name string
+		ctx  context.Context
+	}{
+		{name: "service accounts retain k6 folders", ctx: identity.WithRequester(context.Background(), serviceAccount)},
+		{name: "internal services retain k6 folders", ctx: internalCtx},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			store := grafanarest.NewMockStorage(t)
+			store.On("List", tc.ctx, (*internalversion.ListOptions)(nil)).Return(sourceList.DeepCopy(), nil).Once()
+			result, err := (&cascadeDeleteStorage{Storage: store}).List(tc.ctx, nil)
+			require.NoError(t, err)
+			serviceFiltered := result.(*folders.FolderList)
+			require.Len(t, serviceFiltered.Items, 5)
+			require.NotNil(t, serviceFiltered.RemainingItemCount)
+		})
+	}
+}
 
 func TestFolderStorageCreateLogsOriginalError(t *testing.T) {
 	storageErr := status.Error(codes.Aborted, "private storage details")

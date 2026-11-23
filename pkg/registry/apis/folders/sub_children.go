@@ -12,9 +12,12 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -86,6 +89,18 @@ func (r *subChildrenREST) Connect(ctx context.Context, name string, _ runtime.Ob
 		}
 
 		gvr := folders.FolderResourceInfo.GroupVersionResource()
+		fields := []*resourcepb.Requirement{{
+			Key:      resource.SEARCH_FIELD_FOLDER,
+			Operator: string(selection.Equals),
+			Values:   []string{name},
+		}}
+		requester, _ := identity.GetRequester(ctx)
+		if !identity.IsServiceIdentity(ctx) && (requester == nil || !requester.IsIdentityType(claims.TypeServiceAccount)) {
+			fields = append(fields,
+				&resourcepb.Requirement{Key: resource.SEARCH_FIELD_NAME, Operator: string(selection.NotIn), Values: []string{accesscontrol.K6FolderUID}},
+				&resourcepb.Requirement{Key: resource.SEARCH_FIELD_FOLDER, Operator: string(selection.NotIn), Values: []string{accesscontrol.K6FolderUID}},
+			)
+		}
 		searchCtx, searchSpan := tracer.Start(ctx, "folders.subChildrenREST.Connect.Search")
 		resp, err := r.searcher.Search(searchCtx, &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
@@ -94,11 +109,7 @@ func (r *subChildrenREST) Connect(ctx context.Context, name string, _ runtime.Ob
 					Group:     gvr.Group,
 					Resource:  gvr.Resource,
 				},
-				Fields: []*resourcepb.Requirement{{
-					Key:      resource.SEARCH_FIELD_FOLDER,
-					Operator: string(selection.Equals),
-					Values:   []string{name},
-				}},
+				Fields: fields,
 			},
 			Fields: []string{
 				resource.SEARCH_FIELD_TITLE,

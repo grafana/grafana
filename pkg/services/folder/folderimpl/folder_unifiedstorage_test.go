@@ -609,6 +609,16 @@ func TestSearchFolders(t *testing.T) {
 				Fields: []*resourcepb.Requirement{
 					{
 						Key:      resource.SEARCH_FIELD_NAME,
+						Operator: string(selection.NotIn),
+						Values:   []string{accesscontrol.K6FolderUID},
+					},
+					{
+						Key:      resource.SEARCH_FIELD_FOLDER,
+						Operator: string(selection.NotIn),
+						Values:   []string{accesscontrol.K6FolderUID},
+					},
+					{
+						Key:      resource.SEARCH_FIELD_NAME,
 						Operator: string(selection.In),
 						Values:   []string{"uid1", "uid2"}, // should only search by uid since it is provided
 					},

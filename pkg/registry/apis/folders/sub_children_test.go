@@ -18,6 +18,7 @@ import (
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -127,11 +128,15 @@ func TestSubChildren_GeneralFolderSkipsGetterAndFiltersOnEmptyParent(t *testing.
 
 	require.NoError(t, resp.err)
 	require.NotNil(t, search.lastReq)
-	require.Len(t, search.lastReq.Options.Fields, 1)
+	require.Len(t, search.lastReq.Options.Fields, 3)
 	require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, search.lastReq.ResultFormat)
 	require.Equal(t, []string{resource.SEARCH_FIELD_TITLE, resource.SEARCH_FIELD_RV}, search.lastReq.Fields)
 	require.Equal(t, resource.SEARCH_FIELD_FOLDER, search.lastReq.Options.Fields[0].Key)
 	require.Equal(t, []string{""}, search.lastReq.Options.Fields[0].Values)
+	require.Equal(t, resource.SEARCH_FIELD_NAME, search.lastReq.Options.Fields[1].Key)
+	require.Equal(t, []string{accesscontrol.K6FolderUID}, search.lastReq.Options.Fields[1].Values)
+	require.Equal(t, resource.SEARCH_FIELD_FOLDER, search.lastReq.Options.Fields[2].Key)
+	require.Equal(t, []string{accesscontrol.K6FolderUID}, search.lastReq.Options.Fields[2].Values)
 
 	list, ok := resp.obj.(*folders.FolderList)
 	require.True(t, ok)

@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	claims "github.com/grafana/authlib/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/selection"
@@ -158,13 +159,13 @@ func (s *Service) SearchFolders(ctx context.Context, query folder.SearchFoldersQ
 	ctx, span := s.tracer.Start(ctx, "folder.SearchFolders")
 	defer span.End()
 	// TODO:
-	// - implement filtering by alerting folders and k6 folders (see the dashboards store `FindDashboards` method for reference)
+	// - implement filtering by alerting folders (see the dashboards store `FindDashboards` method for reference)
 	// - implement fallback on search client in unistore to go to legacy store (will need to read from dashboard store)
 
+	requester, requesterErr := identity.GetRequester(ctx)
 	if query.OrgID == 0 {
-		requester, err := identity.GetRequester(ctx)
-		if err != nil {
-			return nil, err
+		if requesterErr != nil {
+			return nil, requesterErr
 		}
 		query.OrgID = requester.GetOrgID()
 	}
@@ -182,13 +183,19 @@ func (s *Service) SearchFolders(ctx context.Context, query folder.SearchFoldersQ
 		Limit:        folderSearchLimit,
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}
+	if !identity.IsServiceIdentity(ctx) && (requester == nil || !requester.IsIdentityType(claims.TypeServiceAccount)) {
+		request.Options.Fields = append(request.Options.Fields,
+			&resourcepb.Requirement{Key: resource.SEARCH_FIELD_NAME, Operator: string(selection.NotIn), Values: []string{accesscontrol.K6FolderUID}},
+			&resourcepb.Requirement{Key: resource.SEARCH_FIELD_FOLDER, Operator: string(selection.NotIn), Values: []string{accesscontrol.K6FolderUID}},
+		)
+	}
 
 	if len(query.UIDs) > 0 {
-		request.Options.Fields = []*resourcepb.Requirement{{
+		request.Options.Fields = append(request.Options.Fields, &resourcepb.Requirement{
 			Key:      resource.SEARCH_FIELD_NAME,
 			Operator: string(selection.In),
 			Values:   query.UIDs,
-		}}
+		})
 	} else if len(query.IDs) > 0 {
 		values := make([]string, len(query.IDs))
 		for i, id := range query.IDs {

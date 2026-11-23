@@ -2399,9 +2399,12 @@ func TestGetFoldersMetadata(t *testing.T) {
 		mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
 			Fields:       folderReferenceFields,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
-			Options:      &resourcepb.ListOptions{},
-			Limit:        searchPageSize,
-			Offset:       0,
+			Options: &resourcepb.ListOptions{Fields: []*resourcepb.Requirement{
+				{Key: resource.SEARCH_FIELD_NAME, Operator: string(selection.NotIn), Values: []string{accesscontrol.K6FolderUID}},
+				{Key: resource.SEARCH_FIELD_FOLDER, Operator: string(selection.NotIn), Values: []string{accesscontrol.K6FolderUID}},
+			}},
+			Limit:  searchPageSize,
+			Offset: 0,
 		}).Return(searchResponse, nil).Once()
 	}
 
@@ -2442,9 +2445,11 @@ func TestGetFoldersMetadata(t *testing.T) {
 			row := searchResponse.Rows[2-i]
 			mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
 				Fields: folderReferenceFields,
-				Options: &resourcepb.ListOptions{Fields: []*resourcepb.Requirement{{
-					Key: resource.SEARCH_FIELD_NAME, Operator: string(selection.In), Values: []string{row.Key.Name},
-				}}},
+				Options: &resourcepb.ListOptions{Fields: []*resourcepb.Requirement{
+					{Key: resource.SEARCH_FIELD_NAME, Operator: string(selection.NotIn), Values: []string{accesscontrol.K6FolderUID}},
+					{Key: resource.SEARCH_FIELD_FOLDER, Operator: string(selection.NotIn), Values: []string{accesscontrol.K6FolderUID}},
+					{Key: resource.SEARCH_FIELD_NAME, Operator: string(selection.In), Values: []string{row.Key.Name}},
+				}},
 				Limit: 2, ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			}).Return(&resourcepb.ResourceSearchResponse{
 				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,

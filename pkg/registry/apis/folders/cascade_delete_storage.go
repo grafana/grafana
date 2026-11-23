@@ -45,8 +45,8 @@ type FolderContentsDeleter interface {
 	DeleteInFolder(ctx context.Context, namespace, folderUID string, user identity.Requester) error
 }
 
-// cascadeDeleteStorage wraps the folder storage and overrides Delete to recursively remove a
-// folder's subtree; all other REST methods are promoted from the embedded storage.
+// cascadeDeleteStorage filters folder lists and overrides Delete to recursively remove a folder's
+// subtree; other REST methods are promoted from the embedded storage.
 type cascadeDeleteStorage struct {
 	grafanarest.Storage
 	searcher resourcepb.ResourceIndexClient
@@ -171,6 +171,14 @@ func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteVa
 	// otherwise enumerate (and thus delete) only the visible subset, orphaning the rest.
 	cascadeCtx := identity.WithServiceIdentityContext(ctx, ns.OrgID)
 	return s.cascadeDelete(cascadeCtx, user, ns.OrgID, ns.Value, rootParent, name, options, true)
+}
+
+func (s *cascadeDeleteStorage) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
+	obj, err := s.Storage.List(ctx, options)
+	if err != nil {
+		return nil, err
+	}
+	return filterK6FoldersFromList(ctx, obj), nil
 }
 
 // cascadeDeleteOptions returns the options reused for descendant deletes, carrying only the
