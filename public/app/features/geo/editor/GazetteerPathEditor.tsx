@@ -22,7 +22,7 @@ export const GazetteerPathEditor = ({
 }: StandardEditorProps<string, GazetteerPathEditorConfigSettings>) => {
   const styles = useStyles2(getStyles);
   const [gaz, setGaz] = useState<Gazetteer>();
-  const settings = item.settings;
+  const settingsOptions = item.settings?.options;
 
   useEffect(() => {
     async function fetchData() {
@@ -33,7 +33,7 @@ export const GazetteerPathEditor = ({
   }, [value, setGaz]);
 
   const { current, options } = useMemo(() => {
-    let options = settings?.options ? [...settings.options] : [...defaultPaths];
+    let options = settingsOptions ? [...settingsOptions] : [...defaultPaths];
     let current = options?.find((f) => f.value === gaz?.path);
     if (!current && gaz) {
       current = {
@@ -43,7 +43,7 @@ export const GazetteerPathEditor = ({
       options.push(current);
     }
     return { options, current };
-  }, [gaz, settings?.options]);
+  }, [gaz, settingsOptions]);
 
   return (
     <>

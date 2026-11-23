@@ -11,7 +11,7 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constan
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { edit } from '../../actions/utils/edit';
-import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
+import { getConditionalRenderingEditor } from '../../conditional-rendering/utils/getConditionalRenderingEditor';
 import { AddSectionAnnotationButton, useSectionAnnotationLayers } from '../../sidebar/SectionAnnotationActions';
 import {
   getSectionFiltersCount,
@@ -185,7 +185,7 @@ export function useSidebarOptions(this: RowItem, isNewElement: boolean): Options
   ];
 
   const conditionalRenderingCategory = useMemo(
-    () => useConditionalRenderingEditor(model.state.conditionalRendering),
+    () => getConditionalRenderingEditor(model.state.conditionalRendering),
     [model]
   );
 

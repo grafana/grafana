@@ -15,7 +15,7 @@ function getPlaceholderConditionalRendering(): ConditionalRenderingGroup {
   return placeholderConditionalRendering;
 }
 
-export function useConditionalRenderingEditor(
+export function getConditionalRenderingEditor(
   conditionalRendering?: ConditionalRenderingGroup,
   disabledText?: string | React.ReactElement
 ): OptionsPaneCategoryDescriptor {
