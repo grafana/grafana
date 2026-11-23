@@ -83,7 +83,7 @@ export const sharedDependenciesMap = {
   i18next: () =>
     import('@grafana/i18n/internal').then(({ getI18nInstance }) => {
       const instance = getI18nInstance();
-      return { ...instance, default: instance };
+      return Object.assign(instance, { default: instance });
     }),
   jquery: () => loadJqueryWithFlot().then((module) => ({ default: module.default, __useDefault: true })),
   ...jQueryFlotDeps,
