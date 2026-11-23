@@ -96,8 +96,6 @@ function requireCapturedRequest(req: CapturedRequest | null): CapturedRequest {
   return req as CapturedRequest;
 }
 
-// Overrides for the common (non-create) cases. `create` requires `repositoryName` (discriminated
-// union), so those tests render the drawer directly rather than via this update/delete-shaped helper.
 type DrawerOverrides = {
   resource?: SaveProvisionedResourceDrawerProps['resource'];
   title?: string;

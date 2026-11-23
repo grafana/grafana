@@ -205,8 +205,6 @@ describe('PlaylistPage', () => {
       locationService.push('/playlists');
     });
 
-    // The save drawer reports where the commit went and links the pull request from there, so the
-    // list page no longer repeats it even when the old redirect params are still in the URL.
     it('does not show a pull request banner, with or without the pull-request params', async () => {
       locationService.push(
         '/playlists?new_pull_request_url=https%3A%2F%2Fgithub.com%2Forg%2Frepo%2Fpull%2F1' +
