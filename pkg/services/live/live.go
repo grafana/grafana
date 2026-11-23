@@ -366,17 +366,9 @@ func ProvideService(cfg *setting.Cfg, routeRegister routing.RouteRegister, plugC
 		CheckOrigin:     checkOrigin,
 	})
 
+	g.wsHandler = wsHandler
 	g.websocketHandler = func(ctx *contextmodel.ReqContext) {
-		user := ctx.SignedInUser
-		id, _ := user.GetInternalID()
-		// Centrifuge expects Credentials in context with a current user ID.
-		cred := &centrifuge.Credentials{
-			UserID: strconv.FormatInt(id, 10),
-		}
-		newCtx := centrifuge.SetCredentials(ctx.Req.Context(), cred)
-		newCtx = identity.WithRequester(newCtx, user)
-		r := ctx.Req.WithContext(newCtx)
-		wsHandler.ServeHTTP(ctx.Resp, r)
+		g.serveWebsocket(ctx.Resp, ctx.Req, ctx.SignedInUser)
 	}
 
 	g.pushWebsocketHandler = func(ctx *contextmodel.ReqContext) {
@@ -506,6 +498,7 @@ type GrafanaLive struct {
 	surveyCaller *survey.Caller
 
 	// Websocket handlers
+	wsHandler                    http.Handler
 	websocketHandler             interface{}
 	pushWebsocketHandler         interface{}
 	pushPipelineWebsocketHandler interface{}
@@ -663,6 +656,29 @@ func runConcurrentlyIfNeeded(ctx context.Context, semaphore chan struct{}, fn fu
 		fn()
 	}
 	return nil
+}
+
+// ServeWS serves the Live websocket for the requester on the request context.
+// It backs the live.grafana.app websocket route; the namespace has already been
+// checked against the requester.
+func (g *GrafanaLive) ServeWS(w http.ResponseWriter, r *http.Request, _ string) {
+	user, err := identity.GetRequester(r.Context())
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	g.serveWebsocket(w, r, user)
+}
+
+func (g *GrafanaLive) serveWebsocket(w http.ResponseWriter, r *http.Request, user identity.Requester) {
+	id, _ := user.GetInternalID()
+	// Centrifuge expects Credentials in context with a current user ID.
+	cred := &centrifuge.Credentials{
+		UserID: strconv.FormatInt(id, 10),
+	}
+	newCtx := centrifuge.SetCredentials(r.Context(), cred)
+	newCtx = identity.WithRequester(newCtx, user)
+	g.wsHandler.ServeHTTP(w, r.WithContext(newCtx))
 }
 
 func (g *GrafanaLive) checkIDTokenExpirationAndRefresh(user identity.Requester, client *centrifuge.Client) bool {
