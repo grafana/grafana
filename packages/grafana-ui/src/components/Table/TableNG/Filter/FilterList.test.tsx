@@ -10,6 +10,8 @@ import { FilterOperator } from '../types';
 import { FilterList } from './FilterList';
 import { operatorSelectableValues } from './utils';
 
+jest.mock('../../../../utils/measureText', () => makeSpyable('../../../../utils/measureText'));
+
 const ops = operatorSelectableValues();
 
 function containsOp(): SelectableValue<FilterOperator> {

@@ -10,8 +10,6 @@ import { getPreviewToggle } from './previewToggles';
 
 export const shouldUsePrometheusRulesPrimary = () => config.featureToggles.alertingPrometheusRulesPrimary ?? false;
 
-export const shouldUseRulesAPIV2 = () => config.featureToggles['alerting.rulesAPIV2'] ?? false;
-
 export const shouldUseGmaOnlyListView = () =>
   getFeatureFlagClient().getBooleanValue(FlagKeys.AlertingGmaOnlyListView, false);
 

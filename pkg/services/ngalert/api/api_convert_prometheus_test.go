@@ -17,6 +17,7 @@ import (
 	"go.yaml.in/yaml/v3"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -34,7 +35,7 @@ import (
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
-	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
+	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -351,7 +352,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		acFake := &acfakes.FakeRuleService{}
 		srv, _, _ := createConvertPrometheusSrv(t, withFakeAccessControlRuleService(acFake))
 
-		acFake.AuthorizeRuleChangesFunc = func(context.Context, identity.Requester, *rulestore.GroupDelta) error {
+		acFake.AuthorizeRuleChangesFunc = func(context.Context, identity.Requester, *ngrulesvc.GroupDelta) error {
 			return datasources.ErrDataSourceAccessDenied
 		}
 
@@ -2255,6 +2256,38 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 		})
 	}
 
+	t.Run("returns bad request when the identifier already exists", func(t *testing.T) {
+		const reservedIdentifier = "default"
+
+		mockAM := &mockAlertmanager{}
+		mockAM.On("IsExternalAMSyncConfiguredForOrg", mock.Anything, int64(1)).Return(false, nil).Once()
+		identifierExists := notifier.ErrIdentifierAlreadyExists.Build(errutil.TemplateData{
+			Public: map[string]interface{}{"Identifier": reservedIdentifier},
+		})
+		mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.Anything, mock.Anything,
+			mock.MatchedBy(func(extraConfig v1.ExtraConfiguration) bool { return extraConfig.Identifier == reservedIdentifier }),
+			false, false, false).Return(merge.MergeResult{}, identifierExists).Once()
+
+		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
+		rc := createRequestCtx()
+		rc.Req = rc.Req.WithContext(t.Context())
+		rc.Req.Header.Set(configIdentifierHeader, reservedIdentifier)
+
+		response := srv.RouteConvertPrometheusPostAlertmanagerConfig(rc, apimodels.AlertmanagerUserConfig{
+			AlertmanagerConfig: `{"route":{"receiver":"default"},"receivers":[{"name":"default"}]}`,
+		})
+
+		require.Equal(t, http.StatusBadRequest, response.Status())
+		var body struct {
+			Message   string `json:"message"`
+			MessageID string `json:"messageId"`
+		}
+		require.NoError(t, json.Unmarshal(response.Body(), &body))
+		require.Equal(t, "Identifier [default] is already used by existing managed routes. Use another identifier or delete the existing route.", body.Message)
+		require.Equal(t, "alerting.notifications.alertmanager.identifierAlreadyExists", body.MessageID)
+		mockAM.AssertExpectations(t)
+	})
+
 	t.Run("should parse headers and call SaveAndApplyExtraConfiguration", func(t *testing.T) {
 		mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.Anything, mock.Anything, mock.MatchedBy(func(extraConfig v1.ExtraConfiguration) bool {
 			return extraConfig.Identifier == identifier &&
@@ -2873,6 +2906,30 @@ func TestRouteConvertPrometheusPromoteAlertmanagerConfig(t *testing.T) {
 		response := srv.RouteConvertPrometheusPromoteAlertmanagerConfig(rc, identifier)
 
 		require.Equal(t, http.StatusInternalServerError, response.Status())
+		mockAM.AssertExpectations(t)
+	})
+
+	t.Run("should return bad request when the identifier already exists", func(t *testing.T) {
+		mockAM := &mockAlertmanager{}
+		identifierExists := notifier.ErrIdentifierAlreadyExists.Build(errutil.TemplateData{
+			Public: map[string]interface{}{"Identifier": identifier},
+		})
+		mockAM.On("PromoteExtraConfiguration", mock.Anything, orgID, mock.Anything, mock.Anything, identifier).
+			Return(merge.MergeResult{}, identifierExists).Once()
+		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
+
+		rc := createRequestCtx()
+		rc.Req = rc.Req.WithContext(t.Context())
+		response := srv.RouteConvertPrometheusPromoteAlertmanagerConfig(rc, identifier)
+
+		require.Equal(t, http.StatusBadRequest, response.Status())
+		var body struct {
+			Message   string `json:"message"`
+			MessageID string `json:"messageId"`
+		}
+		require.NoError(t, json.Unmarshal(response.Body(), &body))
+		require.Equal(t, "Identifier [test-config] is already used by existing managed routes. Use another identifier or delete the existing route.", body.Message)
+		require.Equal(t, "alerting.notifications.alertmanager.identifierAlreadyExists", body.MessageID)
 		mockAM.AssertExpectations(t)
 	})
 

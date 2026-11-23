@@ -88,6 +88,9 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		DashboardPreferencesDashboardDefaults{}.OpenAPIModelName():                                                                          schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesDashboardDefaults(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardPreferencesJSONCodec":                                schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesJSONCodec(ref),
 		DashboardPreferencesList{}.OpenAPIModelName():                                                                                       schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesList(ref),
+		DashboardPreferencesMerged{}.OpenAPIModelName():                                                                                     schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesMerged(ref),
+		DashboardPreferencesMergedSource{}.OpenAPIModelName():                                                                               schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesMergedSource(ref),
+		DashboardPreferencesMergedSpec{}.OpenAPIModelName():                                                                                 schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesMergedSpec(ref),
 		DashboardPreferencesPanelDefaults{}.OpenAPIModelName():                                                                              schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesPanelDefaults(ref),
 		DashboardPreferencesSpec{}.OpenAPIModelName():                                                                                       schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesSpec(ref),
 		DashboardPreferencesV2beta1DashboardDefaultsAutoGrid{}.OpenAPIModelName():                                                           schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesV2beta1DashboardDefaultsAutoGrid(ref),
@@ -98,6 +101,8 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		DashboardPreferencesV2beta1PanelDefaultsGraph{}.OpenAPIModelName():                                                                  schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesV2beta1PanelDefaultsGraph(ref),
 		DashboardPreferencesV2beta1PanelDefaultsLegend{}.OpenAPIModelName():                                                                 schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesV2beta1PanelDefaultsLegend(ref),
 		DashboardPreferencesV2beta1PanelDefaultsTooltip{}.OpenAPIModelName():                                                                schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesV2beta1PanelDefaultsTooltip(ref),
+		DashboardPrompt{}.OpenAPIModelName():                                                                                                schema_pkg_apis_dashboard_v2beta1_DashboardPrompt(ref),
+		DashboardPromptSource{}.OpenAPIModelName():                                                                                          schema_pkg_apis_dashboard_v2beta1_DashboardPromptSource(ref),
 		DashboardQueryGroupKind{}.OpenAPIModelName():                                                                                        schema_pkg_apis_dashboard_v2beta1_DashboardQueryGroupKind(ref),
 		DashboardQueryGroupSpec{}.OpenAPIModelName():                                                                                        schema_pkg_apis_dashboard_v2beta1_DashboardQueryGroupSpec(ref),
 		DashboardQueryOptionsSpec{}.OpenAPIModelName():                                                                                      schema_pkg_apis_dashboard_v2beta1_DashboardQueryOptionsSpec(ref),
@@ -3696,6 +3701,118 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesList(ref common.Refer
 	}
 }
 
+func schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesMerged(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "DashboardPreferencesMerged is what a new dashboard in a folder starts from. It is computed on request and never stored.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Only the fields some tier set. A field that is absent uses Grafana's built-in default.",
+							Default:     map[string]interface{}{},
+							Ref:         ref(DashboardPreferencesMergedSpec{}.OpenAPIModelName()),
+						},
+					},
+					"sources": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Where each field came from, keyed by its path as in spec.reset, such as \"dashboard.autoGrid.columnWidth\". A field with no entry uses Grafana's built-in default.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(DashboardPreferencesMergedSource{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"spec", "sources"},
+			},
+		},
+		Dependencies: []string{
+			DashboardPreferencesMergedSource{}.OpenAPIModelName(), DashboardPreferencesMergedSpec{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesMergedSource(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"tier": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Possible enum values:\n - `\"folder\"`\n - `\"org\"`\n - `\"user\"`",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"folder", "org", "user"},
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The tier object's name. Left out for a parent folder the caller can't read.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"reset": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The tier reset the field to Grafana's built-in default, so it is absent from spec.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"tier"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesMergedSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "The stored spec without reset: a merged spec is resolved, so nothing in it is reset.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"dashboard": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(DashboardPreferencesDashboardDefaults{}.OpenAPIModelName()),
+						},
+					},
+					"panels": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(DashboardPreferencesPanelDefaults{}.OpenAPIModelName()),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			DashboardPreferencesDashboardDefaults{}.OpenAPIModelName(), DashboardPreferencesPanelDefaults{}.OpenAPIModelName()},
+	}
+}
+
 func schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesPanelDefaults(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -4041,6 +4158,73 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesV2beta1PanelDefaultsT
 				},
 			},
 		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_DashboardPrompt(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "A prompt viewers can run on a dashboard, row, or tab, offered by plugins in its controls.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"text": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The prompt that is run. Viewers see it on the dashboard unless it has a title.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Description: "A short title viewers see on the dashboard instead of the prompt. Unset to show the prompt.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"sources": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The panels to answer it from. Unset for every panel in the dashboard, row, or tab the prompt is saved on.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(DashboardPromptSource{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"text"},
+			},
+		},
+		Dependencies: []string{
+			DashboardPromptSource{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_DashboardPromptSource(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "A panel that a prompt is answered from.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"element": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The panel, by its name in dashboard.spec.elements.",
+							Default:     map[string]interface{}{},
+							Ref:         ref(DashboardElementReference{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"element"},
+			},
+		},
+		Dependencies: []string{
+			DashboardElementReference{}.OpenAPIModelName()},
 	}
 }
 
@@ -4684,12 +4868,25 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardRowsLayoutRowSpec(ref common.Ref
 							},
 						},
 					},
+					"prompts": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Prompts viewers can run on the panels in this row, offered by plugins in the row's controls.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(DashboardPrompt{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"layout"},
 			},
 		},
 		Dependencies: []string{
-			DashboardAnnotationQueryKind{}.OpenAPIModelName(), DashboardConditionalRenderingGroupKind{}.OpenAPIModelName(), DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind{}.OpenAPIModelName(), DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(), DashboardRowRepeatOptions{}.OpenAPIModelName()},
+			DashboardAnnotationQueryKind{}.OpenAPIModelName(), DashboardConditionalRenderingGroupKind{}.OpenAPIModelName(), DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind{}.OpenAPIModelName(), DashboardPrompt{}.OpenAPIModelName(), DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(), DashboardRowRepeatOptions{}.OpenAPIModelName()},
 	}
 }
 
@@ -4854,12 +5051,25 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardSpec(ref common.ReferenceCallbac
 							},
 						},
 					},
+					"prompts": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Prompts viewers can run on the dashboard, offered by plugins in the dashboard controls.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(DashboardPrompt{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"annotations", "cursorSync", "elements", "layout", "links", "preload", "tags", "timeSettings", "title", "variables"},
 			},
 		},
 		Dependencies: []string{
-			DashboardAnnotationQueryKind{}.OpenAPIModelName(), DashboardDashboardLink{}.OpenAPIModelName(), DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{}.OpenAPIModelName(), DashboardPanelKindOrLibraryPanelKind{}.OpenAPIModelName(), DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(), DashboardTimeSettingsSpec{}.OpenAPIModelName()},
+			DashboardAnnotationQueryKind{}.OpenAPIModelName(), DashboardDashboardLink{}.OpenAPIModelName(), DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{}.OpenAPIModelName(), DashboardPanelKindOrLibraryPanelKind{}.OpenAPIModelName(), DashboardPrompt{}.OpenAPIModelName(), DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(), DashboardTimeSettingsSpec{}.OpenAPIModelName()},
 	}
 }
 
@@ -5230,12 +5440,25 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardTabsLayoutTabSpec(ref common.Ref
 							},
 						},
 					},
+					"prompts": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Prompts viewers can run on the panels in this tab, offered by plugins in the tab's controls.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(DashboardPrompt{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"layout"},
 			},
 		},
 		Dependencies: []string{
-			DashboardAnnotationQueryKind{}.OpenAPIModelName(), DashboardConditionalRenderingGroupKind{}.OpenAPIModelName(), DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{}.OpenAPIModelName(), DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(), DashboardTabRepeatOptions{}.OpenAPIModelName()},
+			DashboardAnnotationQueryKind{}.OpenAPIModelName(), DashboardConditionalRenderingGroupKind{}.OpenAPIModelName(), DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{}.OpenAPIModelName(), DashboardPrompt{}.OpenAPIModelName(), DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(), DashboardTabRepeatOptions{}.OpenAPIModelName()},
 	}
 }
 

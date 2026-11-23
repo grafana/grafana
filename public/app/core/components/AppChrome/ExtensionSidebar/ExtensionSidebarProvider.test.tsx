@@ -1,6 +1,6 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { render as rtlRender, screen, act, waitFor } from '@testing-library/react';
-import { type ReactElement, type ReactNode } from 'react';
+import { type ReactElement, type ReactNode, useEffect } from 'react';
 import { useAsync } from 'react-use';
 
 import { store, EventBusSrv, type EventBus, type ExtensionInfo } from '@grafana/data';
@@ -10,12 +10,14 @@ import { OpenExtensionSidebarEvent, CloseExtensionSidebarEvent, ToggleExtensionS
 
 import { ExtensionSidebarContextProvider, useExtensionSidebarContext } from './ExtensionSidebarProvider';
 import {
+  type FloatingExtensionSidebarHeightOptions,
   holdFloatingExtensionSidebar,
   onExtensionSidebarClosed,
   resetExtensionSidebarPresentationForTests,
   setExtensionSidebarFloatingOverride,
   setExtensionSidebarDockSide,
   setExtensionSidebarPresentation,
+  setFloatingExtensionSidebarHeightOptions,
 } from './extensionSidebarLayout';
 import {
   EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY,
@@ -545,6 +547,118 @@ describe('ExtensionSidebarProvider', () => {
     });
   });
 
+  describe('floating height', () => {
+    const FLOATING_HEIGHT_KEY = 'grafana.navigation.extensionSidebarFloatingHeight';
+    const FloatingHeightComponent = () => {
+      const { floatingExtensionSidebarHeight, setFloatingExtensionSidebarHeight } = useExtensionSidebarContext();
+      return (
+        <>
+          <div data-testid="floating-height">{String(floatingExtensionSidebarHeight)}</div>
+          <button onClick={() => setFloatingExtensionSidebarHeight(undefined)}>Reset</button>
+        </>
+      );
+    };
+    const renderFloatingHeight = () =>
+      render(
+        <ExtensionSidebarContextProvider>
+          <FloatingHeightComponent />
+        </ExtensionSidebarContextProvider>
+      );
+
+    afterEach(() => {
+      window.localStorage.removeItem(FLOATING_HEIGHT_KEY);
+      resetExtensionSidebarPresentationForTests();
+    });
+
+    it('applies the remembered height only while the extension lets core resize it, within its minimum', () => {
+      window.localStorage.setItem(FLOATING_HEIGHT_KEY, '300');
+      renderFloatingHeight();
+      expect(screen.getByTestId('floating-height')).toHaveTextContent('undefined');
+
+      act(() => setFloatingExtensionSidebarHeightOptions({ minHeight: 400 }));
+      expect(screen.getByTestId('floating-height')).toHaveTextContent('400');
+
+      act(() => setFloatingExtensionSidebarHeightOptions({ minHeight: 200 }));
+      expect(screen.getByTestId('floating-height')).toHaveTextContent('300');
+
+      act(() => setFloatingExtensionSidebarHeightOptions(null));
+      expect(screen.getByTestId('floating-height')).toHaveTextContent('undefined');
+    });
+
+    it('keeps the remembered height inside the window', () => {
+      // jsdom's window is 768px tall.
+      window.localStorage.setItem(FLOATING_HEIGHT_KEY, '900');
+      renderFloatingHeight();
+      act(() => setFloatingExtensionSidebarHeightOptions({ minHeight: 400 }));
+      expect(screen.getByTestId('floating-height')).toHaveTextContent('720');
+    });
+
+    it("forgets the remembered height to go back to the extension's own", () => {
+      window.localStorage.setItem(FLOATING_HEIGHT_KEY, '500');
+      renderFloatingHeight();
+      act(() => setFloatingExtensionSidebarHeightOptions({ minHeight: 400 }));
+      expect(screen.getByTestId('floating-height')).toHaveTextContent('500');
+
+      act(() => screen.getByRole('button', { name: 'Reset' }).click());
+      expect(screen.getByTestId('floating-height')).toHaveTextContent('undefined');
+      expect(window.localStorage.getItem(FLOATING_HEIGHT_KEY)).toBeNull();
+    });
+
+    it('forgets the sizes when the sidebar closes or shows another extension, keeping the ones the next declares', () => {
+      const declared: Record<string, FloatingExtensionSidebarHeightOptions | undefined> = {
+        [mockComponent.title]: { minHeight: 400 },
+        [mockDifferentComponent.title]: { minHeight: 300 },
+      };
+      // Declares as it mounts, as an extension calling setSizing from an effect does.
+      const Extension = ({ title }: { title: string }) => {
+        useEffect(() => {
+          const options = declared[title];
+          if (options) {
+            setFloatingExtensionSidebarHeightOptions(options);
+          }
+        }, [title]);
+        return null;
+      };
+      const Sidebar = () => {
+        const { dockedComponentId, floatingHeightOptions } = useExtensionSidebarContext();
+        const title = getComponentMetaFromComponentId(dockedComponentId ?? '')?.componentTitle;
+        return (
+          <>
+            {title && <Extension key={title} title={title} />}
+            <div data-testid="height-options">{JSON.stringify(floatingHeightOptions)}</div>
+          </>
+        );
+      };
+      render(
+        <ExtensionSidebarContextProvider>
+          <Sidebar />
+        </ExtensionSidebarContextProvider>
+      );
+      const options = () => screen.getByTestId('height-options');
+      const open = (title: string) =>
+        act(() =>
+          getAppEvents().publish(
+            new OpenExtensionSidebarEvent({ pluginId: mockPluginMeta.pluginId, componentTitle: title })
+          )
+        );
+
+      open(mockComponent.title);
+      expect(options()).toHaveTextContent('{"minHeight":400}');
+
+      open(mockDifferentComponent.title);
+      expect(options()).toHaveTextContent('{"minHeight":300}');
+
+      act(() => getAppEvents().publish(new CloseExtensionSidebarEvent()));
+      expect(options()).toHaveTextContent('null');
+
+      declared[mockDifferentComponent.title] = undefined;
+      open(mockComponent.title);
+      expect(options()).toHaveTextContent('{"minHeight":400}');
+      open(mockDifferentComponent.title);
+      expect(options()).toHaveTextContent('null');
+    });
+  });
+
   describe('presentation', () => {
     const FLOATING_FLAG = 'grafana.extensionSidebarFloating';
     const PLACEMENTS_FLAG = 'grafana.extensionSidebarPlacements';
@@ -688,7 +802,12 @@ describe('ExtensionSidebarProvider', () => {
       expect(screen.getByTestId('presentation')).toHaveTextContent('docked');
       expect(reportInteraction).toHaveBeenCalledWith(
         'grafana_extension_sidebar_changed',
-        expect.objectContaining({ opened: true, pluginId: mockPathfinderMeta.pluginId, presentation: 'docked' })
+        expect.objectContaining({
+          opened: true,
+          pluginId: mockPathfinderMeta.pluginId,
+          presentation: 'docked',
+          placement: 'right',
+        })
       );
     });
 

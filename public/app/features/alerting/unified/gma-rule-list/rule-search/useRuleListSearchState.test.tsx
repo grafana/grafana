@@ -24,8 +24,8 @@ describe('useRuleListSearchState', () => {
     const { result } = renderAt(`?${new URLSearchParams({ search: 'plugins:hide label:  folder:f1' })}`);
 
     expect(result.current.query).toBe('plugins:hide label:  folder:f1');
-    expect(result.current.filter).toEqual(createRulesApiFilter({ folders: ['f1'], text: ['plugins:hide'] }));
-    expect(result.current.parseIssues).toEqual([{ key: 'label', reason: 'invalid' }]);
+    expect(result.current.filter).toEqual(createRulesApiFilter({ folder: 'f1', text: ['plugins:hide'] }));
+    expect(result.current.parseIssues).toEqual([{ key: 'label', reason: 'missingValue' }]);
     expect(result.current.filterHelp).toBe(schema.filters);
   });
 

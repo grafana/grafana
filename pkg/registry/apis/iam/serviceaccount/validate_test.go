@@ -5,10 +5,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -32,7 +32,7 @@ func TestValidateOnCreate(t *testing.T) {
 			},
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			expectError: false,
 		},
@@ -46,7 +46,7 @@ func TestValidateOnCreate(t *testing.T) {
 			},
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			expectError:   true,
 			errorContains: "service account must have a title",
@@ -61,7 +61,7 @@ func TestValidateOnCreate(t *testing.T) {
 			},
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			expectError:   true,
 			errorContains: "invalid role",
@@ -76,7 +76,7 @@ func TestValidateOnCreate(t *testing.T) {
 			},
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			expectError:   true,
 			errorContains: "protected prefix",
@@ -91,7 +91,7 @@ func TestValidateOnCreate(t *testing.T) {
 			},
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			expectError:   true,
 			errorContains: "protected prefix",
@@ -106,7 +106,7 @@ func TestValidateOnCreate(t *testing.T) {
 			},
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleViewer,
+				OrgRole: types.RoleViewer,
 			},
 			expectError:   true,
 			errorContains: "cannot assign a role higher than user's role",
@@ -122,7 +122,7 @@ func TestValidateOnCreate(t *testing.T) {
 			},
 			requester: &identity.StaticRequester{
 				Type:    types.TypeAccessPolicy,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			expectError: false,
 		},
@@ -137,7 +137,7 @@ func TestValidateOnCreate(t *testing.T) {
 			},
 			requester: &identity.StaticRequester{
 				Type:    types.TypeAccessPolicy,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			expectError:   true,
 			errorContains: "title of external service accounts must start with " + serviceaccounts.ExtSvcPrefix,
@@ -153,7 +153,7 @@ func TestValidateOnCreate(t *testing.T) {
 			},
 			requester: &identity.StaticRequester{
 				Type:    types.TypeAccessPolicy,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			expectError:   true,
 			errorContains: "title of external service accounts must end with test",
@@ -169,7 +169,7 @@ func TestValidateOnCreate(t *testing.T) {
 			},
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			expectError:   true,
 			errorContains: "only service identities can create external service accounts",
@@ -185,7 +185,7 @@ func TestValidateOnCreate(t *testing.T) {
 			},
 			requester: &identity.StaticRequester{
 				Type:    types.TypeAccessPolicy,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			expectError:   true,
 			errorContains: "external service accounts must have role None",
@@ -201,7 +201,7 @@ func TestValidateOnCreate(t *testing.T) {
 			},
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			expectError:   true,
 			errorContains: "name must not be a number",
@@ -217,7 +217,7 @@ func TestValidateOnCreate(t *testing.T) {
 			},
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			expectError:   true,
 			errorContains: "name must not be a number",
@@ -233,7 +233,7 @@ func TestValidateOnCreate(t *testing.T) {
 			},
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			expectError: false,
 		},
@@ -285,7 +285,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			updated: sa("Renamed Service Account", iamv0alpha1.ServiceAccountOrgRoleEditor, ""),
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			expectError: false,
 		},
@@ -295,7 +295,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			updated: sa("", iamv0alpha1.ServiceAccountOrgRoleViewer, ""),
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			expectError:   true,
 			errorContains: "service account must have a title",
@@ -306,7 +306,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			updated: sa("Test Service Account", "InvalidRole", ""),
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			expectError:   true,
 			errorContains: "invalid role",
@@ -317,7 +317,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			updated: sa(strings.TrimSuffix(serviceaccounts.ExtSvcPrefix, "-")+"test", iamv0alpha1.ServiceAccountOrgRoleViewer, ""),
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			expectError:   true,
 			errorContains: "protected prefix",
@@ -328,7 +328,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			updated: sa("ExtSvc-test", iamv0alpha1.ServiceAccountOrgRoleViewer, ""),
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			expectError:   true,
 			errorContains: "protected prefix",
@@ -339,7 +339,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			updated: sa("Test Service Account", iamv0alpha1.ServiceAccountOrgRoleAdmin, ""),
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleEditor,
+				OrgRole: types.RoleEditor,
 			},
 			expectError:   true,
 			errorContains: "cannot assign a role higher than user's role",
@@ -350,7 +350,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			updated: sa("Renamed Service Account", iamv0alpha1.ServiceAccountOrgRoleAdmin, ""),
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleEditor,
+				OrgRole: types.RoleEditor,
 			},
 			expectError: false,
 		},
@@ -360,7 +360,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			updated: sa(serviceaccounts.ExtSvcPrefix+"test", iamv0alpha1.ServiceAccountOrgRoleNone, "test"),
 			requester: &identity.StaticRequester{
 				Type:    types.TypeAccessPolicy,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			expectError:   true,
 			errorContains: "plugin of a service account cannot be changed",
@@ -371,7 +371,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			updated: sa("Test Service Account", iamv0alpha1.ServiceAccountOrgRoleViewer, ""),
 			requester: &identity.StaticRequester{
 				Type:    types.TypeAccessPolicy,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			expectError:   true,
 			errorContains: "plugin of a service account cannot be changed",
@@ -382,7 +382,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			updated: sa(serviceaccounts.ExtSvcPrefix+"test", iamv0alpha1.ServiceAccountOrgRoleNone, "test"),
 			requester: &identity.StaticRequester{
 				Type:    types.TypeAccessPolicy,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			expectError: false,
 		},
@@ -392,7 +392,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			updated: sa(serviceaccounts.ExtSvcPrefix+"test", iamv0alpha1.ServiceAccountOrgRoleNone, ""),
 			requester: &identity.StaticRequester{
 				Type:    types.TypeAccessPolicy,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			expectError: false,
 		},
@@ -402,7 +402,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			updated: sa("invalid-prefix-test", iamv0alpha1.ServiceAccountOrgRoleNone, "test"),
 			requester: &identity.StaticRequester{
 				Type:    types.TypeAccessPolicy,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			expectError:   true,
 			errorContains: "title of an external service account cannot be changed",
@@ -413,7 +413,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			updated: sa(serviceaccounts.ExtSvcPrefix+"wrong-suffix", iamv0alpha1.ServiceAccountOrgRoleNone, "test"),
 			requester: &identity.StaticRequester{
 				Type:    types.TypeAccessPolicy,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			expectError:   true,
 			errorContains: "title of an external service account cannot be changed",
@@ -424,7 +424,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			updated: sa(serviceaccounts.ExtSvcPrefix+"test", iamv0alpha1.ServiceAccountOrgRoleNone, "test"),
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			expectError:   true,
 			errorContains: "only service identities can update external service accounts",
@@ -435,7 +435,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			updated: sa(serviceaccounts.ExtSvcPrefix+"test", iamv0alpha1.ServiceAccountOrgRoleViewer, "test"),
 			requester: &identity.StaticRequester{
 				Type:    types.TypeAccessPolicy,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			expectError:   true,
 			errorContains: "external service accounts must have role None",
