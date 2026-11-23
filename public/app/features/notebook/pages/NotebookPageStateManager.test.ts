@@ -555,10 +555,11 @@ describe('NotebookPageStateManager', () => {
       server.use(
         notebookHandler((name) => HttpResponse.json(notebookResource(name))),
         http.put(NOTEBOOK_URL, async ({ request }) => {
-          puts += 1;
+          // Read the count before awaiting: both PUTs can be in flight at once, so `puts` may move during the await.
+          const put = ++puts;
           const body = (await request.json()) as Resource<NotebookSpec>;
           // The second write is a conflict, as it would be at the server: the first already moved the revision.
-          return puts === 1
+          return put === 1
             ? HttpResponse.json(withId(body))
             : HttpResponse.json({ message: 'the object has been modified' }, { status: 409 });
         })
