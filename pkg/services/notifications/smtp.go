@@ -76,7 +76,7 @@ func (sc *SmtpClient) sendMessage(ctx context.Context, dialer *gomail.Dialer, ms
 
 	m := sc.buildEmail(ctx, msg)
 
-	err := dialer.DialAndSend(m)
+	err := sc.dialAndSend(dialer, m)
 	emailsSentTotal.Inc()
 	if err != nil {
 		// As gomail does not returned typed errors we have to parse the error
@@ -90,6 +90,34 @@ func (sc *SmtpClient) sendMessage(ctx context.Context, dialer *gomail.Dialer, ms
 	}
 
 	return nil
+}
+
+// dialAndSend sends the message and always closes the connection afterwards,
+// including when the send panics.
+func (sc *SmtpClient) dialAndSend(dialer *gomail.Dialer, m *gomail.Message) error {
+	sender, err := dialer.Dial()
+	if err != nil {
+		return err
+	}
+	err = sc.sendWithRecover(sender, m)
+	_ = sender.Close()
+	return err
+}
+
+// sendWithRecover sends the message and converts a panic from the mail library
+// into an error. gopkg.in/mail.v2 v2.3.1 can panic with a nil pointer
+// dereference in base64LineWriter.Write when the SMTP connection drops while
+// an attachment is written: the failed write leaves the multipart part writer
+// nil, but the next attachment is still encoded into it. Recover here so that
+// one email fails instead of crashing the process, and the caller can still
+// close the connection.
+func (sc *SmtpClient) sendWithRecover(sender gomail.Sender, m ...*gomail.Message) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("panic while sending email: %v", r)
+		}
+	}()
+	return gomail.Send(sender, m...)
 }
 
 // buildEmail converts the Message DTO to a gomail message.
