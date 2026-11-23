@@ -1626,6 +1626,19 @@ func TestCascadeDelete_RejectsCollectionDeleteOfFinalizerFolders(t *testing.T) {
 		require.True(t, store.deletedCollection)
 	})
 
+	t.Run("the preflight pages with the registry's page size unless the caller sets a limit", func(t *testing.T) {
+		store := newStore(newFolder("a"))
+		_, err := deleter(store).DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, nil)
+		require.NoError(t, err)
+		require.NotEmpty(t, store.listCalls)
+		require.EqualValues(t, deleteCollectionPageSize, store.listCalls[0].Limit)
+
+		store = newStore(newFolder("a"), newFolder("b"))
+		_, err = deleter(store).DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, &metainternalversion.ListOptions{Limit: 1})
+		require.NoError(t, err)
+		require.EqualValues(t, 1, store.listCalls[0].Limit)
+	})
+
 	t.Run("folders without the finalizer are forwarded", func(t *testing.T) {
 		store := newStore(newFolder("a"), newFolder("b"))
 		store.pageSize = 1
