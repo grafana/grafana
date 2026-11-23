@@ -30,9 +30,9 @@ Users can transpose their [now-deprecated recorded queries](/docs/grafana/latest
 
    {{< figure alt="Example of relevant recorded query information"  src="/media/docs/alerting/rec-query-example.png" max-width="800px" >}}
 
-1. Now navigate to **Alerting** -> **Alert rules.**
+1. Now navigate to **Alerting** -> **Recording rules**.
 
-1. At the top of the Alert rules page, click **More** -> **New Grafana recording rule**.
+1. At the top of the **Recording rules** page, click **New recording rule**.
 
    Add a name for your Recording Rule and a name for the new metric that the recording rule generates.
 

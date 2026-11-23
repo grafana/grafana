@@ -49,3 +49,18 @@ The following topics describe how to work with data source-managed resources in 
 - [Manage notification resources in other Alertmanagers](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/manage-alertmanager-resources/): Manage contact points, notification policies, mute timings, and silences in an Alertmanager other than the Grafana Alertmanager.
 
 To add an Alertmanager to Grafana, or to send Grafana-managed alerts to it, refer to [Configure Alertmanagers](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/).
+
+## Limitations
+
+The legacy workflows in Grafana Alerting have the following limitations:
+
+- **Supported data sources**: Grafana Alerting can retrieve alert rules and recording rules that are stored in most Prometheus, Loki, Mimir, and Alertmanager compatible data sources. It can't read or write alert rules that are stored in any other data source.
+- **Supported versions**: The latest two minor versions of both Prometheus and Alertmanager are supported. Older versions might not work. For example, if the current Prometheus version is `2.31.1`, version `2.29.0` and later are supported.
+
+## Meta monitor data source-managed alerts
+
+To meta monitor alert rules that Mimir evaluates, you need a Prometheus or Mimir server, or another metrics database, to collect and store the metrics that the Mimir ruler exports.
+
+The `rule_evaluation_failures_total` metric is a counter that shows the total number of rule evaluation failures.
+
+To meta monitor Grafana-managed alerts, refer to [Meta monitoring](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/meta-monitoring/).

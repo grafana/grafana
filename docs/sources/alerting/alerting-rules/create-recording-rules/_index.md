@@ -95,9 +95,8 @@ If you previously configured recording rules using the `url` and `basic_auth_*` 
 
 To create a new Grafana-managed recording rule:
 
-1. Click **Alerts & IRM** -> **Alerting** ->
-   **Alert rules**.
-1. At the top of the Alert rules page, click **More** -> **New Grafana recording rule**.
+1. Click **Alerts & IRM** -> **Alerting** -> **Recording rules**.
+1. At the top of the **Recording rules** page, click **New recording rule**.
 
 1. Enter the names to identify your recording rule and metric.
 

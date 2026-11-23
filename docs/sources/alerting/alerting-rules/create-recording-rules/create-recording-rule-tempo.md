@@ -29,9 +29,9 @@ For additional information, refer to [Grafana-managed recording rules](https://g
 
 ## Create a new Tempo recording rule
 
-1. In Grafana, go to **Alerts & IRM** > **Alerting** > **Alert rules**.
+1. In Grafana, go to **Alerts & IRM** > **Alerting** > **Recording rules**.
 
-1. From the **More+** menu, select **New Grafana recording rule**.
+1. Click **New recording rule**.
 
 1. Enter recording rule and metric name.
 

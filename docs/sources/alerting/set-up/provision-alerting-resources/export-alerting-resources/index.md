@@ -40,31 +40,40 @@ The export options listed below enable you to download resources in YAML, JSON, 
 
 ### Export alert rules
 
-To export alert rules from the Grafana UI, complete the following steps.
+From the Grafana UI, you can export a single alert rule or the alert rules in an evaluation group. To export all alert rules, or all the alert rules in a folder, use the [export API endpoints](#export-api-endpoints).
+
+To export an alert rule from the Grafana UI, complete the following steps.
 
 1. Click **Alerts & IRM** -> **Alert rules**.
-1. To export all Grafana-managed rules, click **Export rules**.
-1. To export a folder, change the **View as** to **List**.
-1. Select the folder you want to export and click the **Export rules folder** icon.
-1. To export a group, change the **View as** to **Grouped**.
-1. Find the group you want to export and click the **Export rule group** icon.
+1. Click the name of the alert rule you want to export to open the rule details page.
+1. Click **More** -> **Export** -> **With modifications** to open the alert rule form.
+1. Click **Export**.
 1. Choose the format to export in.
 
    The exported alert rule data appears in different formats - YAML, JSON, Terraform.
 
 1. Click **Copy Code** or **Download**.
 
+If the alert rule belongs to an evaluation group, you can also export the group. To export an evaluation group, complete the following steps.
+
+1. Click **Alerts & IRM** -> **Alert rules**.
+1. Click the name of an alert rule in the group to open the rule details page.
+1. In the breadcrumb navigation, click the name of the evaluation group to open the group details page.
+1. Click **Export**.
+1. Choose the format to export in, and then click **Copy Code** or **Download**.
+
 ### Modify alert rule and export rule group without saving changes
 
-{{< admonition type="note" >}} This feature is for Grafana-managed alert rules only. It is available to Admin, Viewer, and Editor roles. {{< /admonition >}}
+{{< admonition type="note" >}} This feature is available to Admin, Viewer, and Editor roles. {{< /admonition >}}
 
-Use the **Modify export** mode to edit and export an alert rule without updating it. The exported data includes all alert rules within the same alert group.
+Use the **Modify export** mode to edit and export an alert rule without updating it. If the alert rule belongs to an evaluation group, the exported data includes all alert rules within the same group.
 
 To export a modified alert rule without saving the modifications, complete the following steps from the Grafana UI.
 
 1. Click **Alerts & IRM** -> **Alert rules**.
-1. Locate the alert rule you want to edit and click **More** -> **Modify Export** to open the Alert Rule form.
-1. From the Alert Rule form, edit the fields you want to change. Changes made are not applied to the alert rule.
+1. Click the name of the alert rule you want to edit to open the rule details page.
+1. Click **More** -> **Export** -> **With modifications** to open the alert rule form.
+1. From the alert rule form, edit the fields you want to change. Changes made are not applied to the alert rule.
 1. Click **Export**.
 1. Choose the format to export in.
 
@@ -83,7 +92,7 @@ An alert rule definition differs from an alert rule in the sense that you define
 To export your alert rule definition into Terraform (HCL) format, complete the following steps.
 
 1. Click **Alerts & IRM** -> **Alert rules**.
-2. Click **Export rule definition**.
+2. Click **More** -> **Design rule for provisioning**.
 3. Fill out the alert rule details.
 4. Choose a provisioned folder and group to add your alert rule definition to.
 5. Click **Export**.
@@ -176,6 +185,8 @@ The **Alerting HTTP API** provides specific endpoints for exporting alerting res
 | Mute timings             | GET /api/v1/provisioning/mute-timings/:name/export                   | [Export a mute timing in provisioning file format](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning/#span-idroute-get-mute-timing-exportspan-export-a-mute-timing-in-provisioning-file-format-_routegetmutetimingexport_).                               |
 
 These endpoints accept a `download` parameter to download a file containing the exported resources.
+
+To export only the alert rules in specific folders, add one or more `folderUid` query parameters to the `GET /api/v1/provisioning/alert-rules/export` endpoint.
 
 ## Export with gcx
 

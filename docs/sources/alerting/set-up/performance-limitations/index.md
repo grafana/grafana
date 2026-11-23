@@ -36,17 +36,11 @@ Grafana Alerting exposes a metric, `grafana_alerting_rule_evaluations_total` tha
 
 These factors all affect the load on the Grafana instance, but you should also be aware of the performance impact that evaluating these rules has on your data sources. Alerting queries are often the vast majority of queries handled by monitoring databases, so the same load factors that affect the Grafana instance affect them as well.
 
-## Limited rule sources support
+## Alertmanager version support
 
-Grafana Alerting can retrieve alerting and recording rules **stored** in most available Prometheus, Loki, Mimir, and Alertmanager compatible data sources.
+When you [send Grafana-managed alerts to another Alertmanager](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/), the latest two minor versions of Alertmanager are supported. Older versions might not work.
 
-It does not support reading or writing alerting rules from any other data sources but the ones previously mentioned at this time.
-
-## Prometheus version support
-
-The latest two minor versions of both Prometheus and Alertmanager are supported. We cannot guarantee that older versions work.
-
-As an example, if the current Prometheus version is `2.31.1`, >= `2.29.0` is supported.
+For the limitations that apply to alert rules stored in a data source, refer to [Legacy data source-managed alerts](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/#limitations).
 
 ## The Grafana Alertmanager can only receive Grafana-managed alerts
 

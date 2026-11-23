@@ -42,21 +42,22 @@ To view the details of your alert rules and the status of alert instances:
 
    {{< figure src="/media/docs/alerting/view-alert-rule-list-with-actions2.png" max-width="750px" alt="View alert rule state and alert rule health in Grafana Alerting" >}}
 
-   Each alert rule shows its state, summary, and available actions such as **Pause evaluation**, **Silence notifications**, **Export**, **Delete**, and more.
+   Each alert rule shows its state, its summary, the number of alert instances in each state, and available actions such as **Edit**, **Pause**, **Silence notifications**, and **Delete**.
 
-1. Click on an alert rule to view additional details and its resulting alert instances.
+1. Click the name of an alert rule to view additional details and its resulting alert instances.
+
+For more information about the **Alert rules** page, refer to [View alert rules](/docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-alert-rules/).
 
 ### View from the alert rule details page
 
 To view more alert rule details, complete the following steps.
 
 1. Click **Alerts & IRM** -> **Alerting** -> **Alert rules**.
-1. Click to expand an alert rule.
-1. Click the alert name to go to the alert details view.
+1. Click the name of the alert rule to open the rule details page.
 
    {{< figure src="/media/docs/alerting/alert-rule-view-page-with-breadcrumb.png" max-width="750px" alt="Alert rule view page in Grafana Alerting" >}}
 
-   The namespace and group are shown in the breadcrumb navigation. They are interactive and can be used to filter rules by namespace or group.
+   The breadcrumb navigation at the top of the page shows the folder that contains the alert rule. If the alert rule belongs to an evaluation group, the breadcrumb also shows the group. Click the folder to view the alert rules in that folder, or click the group to view the details of the group.
 
    The rest of the alert detail content is split up into tabs:
 
@@ -74,9 +75,15 @@ To view more alert rule details, complete the following steps.
 
    Explore the recorded history for an alert rule. You can also filter by alert state.
 
-   **Details**
+   **Notifications**
 
-   Debug or audit using the alert rule metadata and view the alert rule annotations.
+   Review the notifications sent for the alert rule. This tab is only available when [notification history](/docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-notification-history/) is enabled.
+
+   **Versions**
+
+   [View, compare, and restore previous versions](/docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-alert-rules/#view-compare-and-restore-alert-rules-versions) of the alert rule.
+
+   The sidebar next to the tabs shows the alert rule metadata, such as the rule identifier, evaluation settings, annotations, and notification configuration. Use it to debug or audit the alert rule.
 
 ## View alert state on panels
 

@@ -22,12 +22,10 @@ Each evaluation group contains an **evaluation interval** that determines how fr
 
 Rules in different evaluation groups can be evaluated simultaneously.
 
-Rules within the same evaluation group can be evaluated simultaneously or sequentially, depending on the rule type:
+Rules within the same evaluation group can be evaluated simultaneously or sequentially, depending on how the rules were created:
 
 - **Grafana-managed** rules within the same group are evaluated concurrently—they are evaluated at different times over the same evaluation interval but display the same evaluation timestamp.
 
-- **[Data source-managed](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/)** rules within the same group are evaluated sequentially, one after the other—this is useful to ensure that recording rules are evaluated before alert rules.
-
-- **Grafana-managed rules [imported from data source-managed rules](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/alerting-migration/)** are also evaluated sequentially, in the order they appear in the original rule group. Grafana runs them as an evaluation sequence: each rule starts after the previous one finishes. This preserves the evaluation order when a rule depends on a preceding recording rule.
+- **Grafana-managed rules [imported from data source-managed rules](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/alerting-migration/)** are evaluated sequentially, in the order they appear in the original rule group. This mirrors how Prometheus evaluates the rules in a group. Grafana runs them as an evaluation sequence: each rule starts after the previous one finishes. This preserves the evaluation order when a rule depends on a preceding recording rule.
 
 For Grafana-managed rules that depend on recording rule results, you can define an explicit evaluation order with a rule sequence. The sequence evaluates recording rules first, followed by alert rules, at a shared interval. For instructions, refer to [Configure rule sequences](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/rule-sequences/).
