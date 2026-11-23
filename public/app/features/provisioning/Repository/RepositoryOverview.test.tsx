@@ -1,5 +1,6 @@
-import { render, screen } from 'test/test-utils';
+import { render, screen, within } from 'test/test-utils';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { type Repository, type RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepositoryOverview } from './RepositoryOverview';
@@ -35,6 +36,8 @@ const createMockRepository = (spec: Partial<RepositorySpec>, status: Partial<Rep
     ...status,
   },
 });
+
+const resourcesCard = () => within(screen.getByTestId(selectors.pages.Provisioning.RepositoryOverview.resourcesCard));
 
 describe('RepositoryOverview', () => {
   it('shows the missing folder metadata warning when the repository reports it', () => {
@@ -82,7 +85,63 @@ describe('RepositoryOverview', () => {
     expect(screen.getByText('Read only')).toBeInTheDocument();
   });
 
-  it('links each resource kind to the resources tab filtered by that kind', async () => {
+  it('tells the user when the repository manages nothing yet', () => {
+    render(<RepositoryOverview repo={createMockRepository({}, { stats: [] })} />);
+
+    expect(screen.getByText('No resources are managed by this repository yet.')).toBeInTheDocument();
+  });
+
+  it('summarises the totals and keeps every kind in the list, largest first', () => {
+    const stats = Array.from({ length: 12 }, (_, index) => ({
+      group: `kind-${index}.grafana.app`,
+      resource: `kind-${index}`,
+      count: index + 1,
+    }));
+
+    render(<RepositoryOverview repo={createMockRepository({}, { stats })} />);
+
+    expect(screen.getByText('78 resources across 12 kinds')).toBeInTheDocument();
+
+    // The list scrolls rather than paginating, so every kind stays in the document.
+    const kinds = resourcesCard().getAllByRole('link');
+    expect(kinds).toHaveLength(12);
+    expect(kinds.map((kind) => kind.textContent)).toEqual([
+      'kind-11',
+      'kind-10',
+      'kind-9',
+      'kind-8',
+      'kind-7',
+      'kind-6',
+      'kind-5',
+      'kind-4',
+      'kind-3',
+      'kind-2',
+      'kind-1',
+      'kind-0',
+    ]);
+  });
+
+  it('sorts equal counts alphabetically by kind label', () => {
+    const repo = createMockRepository(
+      {},
+      {
+        stats: [
+          { group: 'example.grafana.app', resource: 'widgets', count: 5 },
+          { group: 'dashboard.grafana.app', resource: 'dashboards', count: 5 },
+        ],
+      }
+    );
+
+    render(<RepositoryOverview repo={repo} />);
+
+    expect(
+      resourcesCard()
+        .getAllByRole('link')
+        .map((kind) => kind.textContent)
+    ).toEqual(['Dashboard', 'widgets']);
+  });
+
+  it('links each kind label to the resources tab filtered by that kind', () => {
     const repo = createMockRepository(
       {},
       {
@@ -95,11 +154,14 @@ describe('RepositoryOverview', () => {
 
     render(<RepositoryOverview repo={repo} />);
 
-    const links = await screen.findAllByRole('link', { name: 'View' });
-    expect(links.map((link) => link.getAttribute('href'))).toEqual([
-      '/admin/provisioning/test-repo?tab=resources&resource=dashboards',
-      '/admin/provisioning/test-repo?tab=resources&resource=widgets',
-    ]);
+    expect(resourcesCard().getByRole('link', { name: 'Dashboard' })).toHaveAttribute(
+      'href',
+      '/admin/provisioning/test-repo?tab=resources&resource=dashboards'
+    );
+    expect(resourcesCard().getByRole('link', { name: 'widgets' })).toHaveAttribute(
+      'href',
+      '/admin/provisioning/test-repo?tab=resources&resource=widgets'
+    );
   });
 
   describe('webhook link', () => {

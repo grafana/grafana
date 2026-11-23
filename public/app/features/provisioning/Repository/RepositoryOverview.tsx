@@ -3,20 +3,9 @@ import { useMemo } from 'react';
 
 import { textUtil, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans } from '@grafana/i18n';
-import {
-  Box,
-  Card,
-  type CellProps,
-  Grid,
-  Icon,
-  InteractiveTable,
-  LinkButton,
-  Stack,
-  Text,
-  useStyles2,
-} from '@grafana/ui';
-import { type Repository, type ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
+import { t, Trans } from '@grafana/i18n';
+import { Box, Card, Grid, Icon, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RecentJobs } from '../Job/RecentJobs';
 import { QuotaLimitNote } from '../Shared/QuotaLimitNote';
@@ -34,14 +23,18 @@ import { RepositoryHealthCard } from './RepositoryHealthCard';
 import { RepositoryPullStatusCard } from './RepositoryPullStatusCard';
 import { RepositoryStatusAlert } from './RepositoryStatusAlert';
 
-type StatCell<T extends keyof ResourceCount = keyof ResourceCount> = CellProps<ResourceCount, ResourceCount[T]>;
-
 function getColumnCount(hasWebhook: boolean): { xxlColumn: 5 | 4; lgColumn: 3 | 2 } {
   return {
     xxlColumn: hasWebhook ? 5 : 4,
     lgColumn: hasWebhook ? 3 : 2,
   };
 }
+
+// The list scrolls past this, so the card keeps the same height whatever the repository manages.
+const ROW_HEIGHT_SPACING = 4;
+const VISIBLE_ROWS = 5.5;
+
+const collator = new Intl.Collator();
 
 export function RepositoryOverview({ repo }: { repo: Repository }) {
   const styles = useStyles2(getStyles);
@@ -52,47 +45,36 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
   const webhookURL = getWebhookURL(repo);
   const { lgColumn, xxlColumn } = getColumnCount(Boolean(status?.webhook));
 
-  const resourceColumns = useMemo(
-    () => [
-      {
-        id: 'Resource',
-        header: 'Resource Type',
-        cell: ({ row: { original } }: StatCell<'resource'>) => {
-          const info = getKindInfoByStat(original);
-          return (
-            <Stack direction="row" gap={1} alignItems="center">
-              <Icon name={info?.icon ?? 'file-alt'} />
-              <span>{info?.kind ?? original.resource}</span>
-            </Stack>
-          );
-        },
-        size: 'auto',
-      },
-      {
-        id: 'count',
-        header: 'Count',
-        cell: ({ row: { original } }: StatCell<'count'>) => {
-          return <span>{original.count}</span>;
-        },
-        size: 100,
-      },
-      {
-        id: 'actions',
-        header: '',
-        cell: ({ row: { original } }: StatCell) => {
-          return (
-            <Stack justifyContent="flex-end">
-              <LinkButton href={getRepositoryResourcesUrl(repoName, original.resource)} size="sm" variant="secondary">
-                <Trans i18nKey="provisioning.repository-overview.view-resource">View</Trans>
-              </LinkButton>
-            </Stack>
-          );
-        },
-        size: 100,
-      },
-    ],
-    [repoName]
+  const rows = useMemo(
+    () =>
+      (status?.stats ?? [])
+        .map((stat) => {
+          const info = getKindInfoByStat(stat);
+          return {
+            key: `${stat.group}-${stat.resource}`,
+            icon: info?.icon ?? 'file-alt',
+            label: info?.kind ?? stat.resource,
+            count: stat.count,
+            href: getRepositoryResourcesUrl(repoName, stat.resource),
+          };
+        })
+        .sort((a, b) => b.count - a.count || collator.compare(a.label, b.label)),
+    [status?.stats, repoName]
   );
+
+  const resourceSummary = t('provisioning.repository-overview.resources-summary', '{{resources}} across {{kinds}}', {
+    resources: t('provisioning.repository-overview.resources-summary-resources', '', {
+      count: rows.reduce((total, row) => total + row.count, 0),
+      defaultValue_one: '{{count}} resource',
+      defaultValue_other: '{{count}} resources',
+    }),
+    kinds: t('provisioning.repository-overview.resources-summary-kinds', '', {
+      count: rows.length,
+      defaultValue_one: '{{count}} kind',
+      defaultValue_other: '{{count}} kinds',
+    }),
+  });
+
   return (
     <Box padding={2}>
       <Stack direction="column" gap={2}>
@@ -101,7 +83,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
           <MissingFolderMetadataBanner repositoryName={repoName} variant="repo" />
         )}
         <Grid columns={{ xs: 1, sm: 2, lg: lgColumn, xxl: xxlColumn }} gap={2} alignItems={'flex-start'}>
-          <div className={styles.cardContainer}>
+          <div className={cx(styles.cardContainer, styles.shrinkable)}>
             <Card
               noMargin
               className={styles.card}
@@ -118,13 +100,32 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                 </Stack>
               </Card.Heading>
               <Card.Description>
-                {status?.stats ? (
-                  <InteractiveTable
-                    columns={resourceColumns}
-                    data={status.stats}
-                    getRowId={(r: ResourceCount) => `${r.group}-${r.resource}`}
-                  />
-                ) : null}
+                {rows.length ? (
+                  <Stack direction="column" gap={1}>
+                    <Text color="secondary">{resourceSummary}</Text>
+                    <div className={styles.resourceList}>
+                      {rows.map((row) => (
+                        <div key={row.key} className={styles.resourceRow}>
+                          <Icon name={row.icon} />
+                          <div className={styles.resourceLabel}>
+                            <TextLink href={row.href} color="primary" inline={false} title={row.label}>
+                              {row.label}
+                            </TextLink>
+                          </div>
+                          <Text color="secondary" tabular>
+                            {row.count}
+                          </Text>
+                        </div>
+                      ))}
+                    </div>
+                  </Stack>
+                ) : (
+                  <Text color="secondary">
+                    <Trans i18nKey="provisioning.repository-overview.no-resources">
+                      No resources are managed by this repository yet.
+                    </Trans>
+                  </Text>
+                )}
                 {isQuotaReachedOrExceeded(conditions, 'ResourceQuota') && (
                   <Box paddingTop={2}>
                     <QuotaLimitNote maxResourcesPerRepository={quota?.maxResourcesPerRepository} />
@@ -224,6 +225,28 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     actions: css({
       marginTop: 'auto',
+    }),
+    // A 1fr grid track takes its minimum from its content, so without this a long kind name widens
+    // the card instead of letting the row truncate.
+    shrinkable: css({
+      minWidth: 0,
+    }),
+    resourceList: css({
+      maxHeight: theme.spacing(ROW_HEIGHT_SPACING * VISIBLE_ROWS),
+      overflowY: 'auto',
+    }),
+    resourceRow: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      height: theme.spacing(ROW_HEIGHT_SPACING),
+    }),
+    resourceLabel: css({
+      flex: 1,
+      minWidth: 0,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
     }),
     labelColumn: css({
       minWidth: theme.spacing(10),
