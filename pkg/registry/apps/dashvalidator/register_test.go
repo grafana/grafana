@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -43,7 +44,7 @@ func TestGetAuthorizer(t *testing.T) {
 			ctx: identity.WithRequester(
 				context.TODO(),
 				&identity.StaticRequester{
-					OrgRole: identity.RoleAdmin,
+					OrgRole: authlib.RoleAdmin,
 					UserID:  1,
 					OrgID:   1,
 					Permissions: map[int64]map[string][]string{
@@ -65,7 +66,7 @@ func TestGetAuthorizer(t *testing.T) {
 			ctx: identity.WithRequester(
 				context.TODO(),
 				&identity.StaticRequester{
-					OrgRole: identity.RoleEditor,
+					OrgRole: authlib.RoleEditor,
 					UserID:  1,
 					OrgID:   1,
 					Permissions: map[int64]map[string][]string{
@@ -86,7 +87,7 @@ func TestGetAuthorizer(t *testing.T) {
 			ctx: identity.WithRequester(
 				context.TODO(),
 				&identity.StaticRequester{
-					OrgRole: identity.RoleViewer,
+					OrgRole: authlib.RoleViewer,
 					UserID:  1,
 					OrgID:   1,
 					Permissions: map[int64]map[string][]string{
@@ -107,7 +108,7 @@ func TestGetAuthorizer(t *testing.T) {
 			ctx: identity.WithRequester(
 				context.TODO(),
 				&identity.StaticRequester{
-					OrgRole: identity.RoleNone,
+					OrgRole: authlib.RoleNone,
 					UserID:  1,
 					OrgID:   1,
 					Permissions: map[int64]map[string][]string{
@@ -128,7 +129,7 @@ func TestGetAuthorizer(t *testing.T) {
 			ctx: identity.WithRequester(
 				context.TODO(),
 				&identity.StaticRequester{
-					OrgRole: identity.RoleNone,
+					OrgRole: authlib.RoleNone,
 					UserID:  1,
 					OrgID:   1,
 					Permissions: map[int64]map[string][]string{
@@ -148,7 +149,7 @@ func TestGetAuthorizer(t *testing.T) {
 			ctx: identity.WithRequester(
 				context.TODO(),
 				&identity.StaticRequester{
-					OrgRole: identity.RoleEditor,
+					OrgRole: authlib.RoleEditor,
 					UserID:  1,
 					OrgID:   1,
 					Permissions: map[int64]map[string][]string{

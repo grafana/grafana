@@ -16,10 +16,10 @@ import (
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authentication/user"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 func newValidatorTestAttributes(obj, old runtime.Object, op admission.Operation) admission.Attributes {
@@ -181,7 +181,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 					Type:  provisioning.GithubConnectionType,
 				},
 				Secure: provisioning.ConnectionSecure{
-					Token: common.InlineSecureValue{Name: "old-token"},
+					Token: resource.InlineSecureValue{Name: "old-token"},
 				},
 			},
 			operation:     admission.Update,
@@ -475,9 +475,9 @@ func TestAdmissionValidator_CopiesSecureValuesOnUpdate(t *testing.T) {
 			Type:  provisioning.GithubConnectionType,
 		},
 		Secure: provisioning.ConnectionSecure{
-			Token:        common.InlineSecureValue{Name: "old-token"},
-			PrivateKey:   common.InlineSecureValue{Name: "old-key"},
-			ClientSecret: common.InlineSecureValue{Name: "old-secret"},
+			Token:        resource.InlineSecureValue{Name: "old-token"},
+			PrivateKey:   resource.InlineSecureValue{Name: "old-key"},
+			ClientSecret: resource.InlineSecureValue{Name: "old-secret"},
 		},
 	}
 
@@ -527,8 +527,8 @@ func TestAdmissionValidator_Validate_DryRun(t *testing.T) {
 					},
 				},
 				Secure: provisioning.ConnectionSecure{
-					Token: common.InlineSecureValue{
-						Create: common.NewSecretValue("test-token"),
+					Token: resource.InlineSecureValue{
+						Create: resource.NewSecretValue("test-token"),
 					},
 				},
 			},
@@ -551,8 +551,8 @@ func TestAdmissionValidator_Validate_DryRun(t *testing.T) {
 					},
 				},
 				Secure: provisioning.ConnectionSecure{
-					Token: common.InlineSecureValue{
-						Create: common.NewSecretValue("test-token"),
+					Token: resource.InlineSecureValue{
+						Create: resource.NewSecretValue("test-token"),
 					},
 				},
 			},
@@ -579,8 +579,8 @@ func TestAdmissionValidator_Validate_DryRun(t *testing.T) {
 					},
 				},
 				Secure: provisioning.ConnectionSecure{
-					Token: common.InlineSecureValue{
-						Create: common.NewSecretValue("test-token"),
+					Token: resource.InlineSecureValue{
+						Create: resource.NewSecretValue("test-token"),
 					},
 				},
 			},
@@ -614,8 +614,8 @@ func TestAdmissionValidator_Validate_DryRun(t *testing.T) {
 					},
 				},
 				Secure: provisioning.ConnectionSecure{
-					Token: common.InlineSecureValue{
-						Create: common.NewSecretValue("test-token"),
+					Token: resource.InlineSecureValue{
+						Create: resource.NewSecretValue("test-token"),
 					},
 				},
 			},
