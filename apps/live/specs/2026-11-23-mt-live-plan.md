@@ -3,15 +3,14 @@
 Status: in progress, updated 2026-11-23. Supersedes the October explorations ("Multi-tenant Live
 service", "Datasource streams via Live Redis") where they disagree.
 
-| Step    | PR                               | State                                     |
-| ------- | -------------------------------- | ----------------------------------------- |
-| 1       | grafana/grafana#138603           | Merged                                    |
-| 2, 3, 5 | grafana/grafana#138604           | Merged                                    |
-| —       | grafana/grafana#138607           | Merged; route-only versions in discovery  |
-| —       | grafana/grafana#138624           | Draft; enables the Live discovery test    |
-| 4       | grafana/grafana#138625           | Draft; frontend toggle                    |
-| 6a      | grafana/grafana-enterprise#15116 | Open; needs #138604 in the pinned grafana |
-| rest    | —                                | Not started                               |
+| Step    | PR                               | State                                             |
+| ------- | -------------------------------- | ------------------------------------------------- |
+| 1       | grafana/grafana#138603           | Merged                                            |
+| 2, 3, 5 | grafana/grafana#138604           | Merged                                            |
+| —       | grafana/grafana#138607           | Merged; route-only versions in discovery          |
+| 4       | grafana/grafana#138625           | Draft; frontend toggle and enabled discovery test |
+| 6a      | grafana/grafana-enterprise#15116 | Open; needs #138604 in the pinned grafana         |
+| rest    | —                                | Not started                                       |
 
 ## Goal
 
@@ -79,7 +78,7 @@ routing decision only.
    revision of #138604 added a read-only `Channel` resource only to get the group listed; it
    was removed._
    #138607 is merged. The `t.Skip` on the `discovery` subtest in
-   `pkg/tests/apis/live/live_test.go` is removed in #138624, and the group shows up in `/apis`,
+   `pkg/tests/apis/live/live_test.go` is removed in #138625, and the group shows up in `/apis`,
    aggregated discovery, `/openapi/v3`, and `/apis/discovery/v1alpha2/{status,manifests}` with
    router middleware on.
 6. **The toggle can't be enabled in cloud.** `live.runAPIServer` has `RequiresDevMode: true`.
