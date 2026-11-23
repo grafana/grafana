@@ -724,6 +724,7 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 	// Make this cancelable
 	ctx, cancel := context.WithCancel(context.Background())
 	s := &server{
+		previousReads:                  newPreviousReads(),
 		log:                            logger,
 		backend:                        opts.Backend,
 		vectorBackend:                  opts.VectorBackend,
@@ -828,6 +829,7 @@ type server struct {
 	writeHooks       WriteAccessHooks
 	now              func() int64
 	mostRecentRV     atomic.Int64 // The most recent resource version seen by the server
+	previousReads    *previousReads
 	storageMetrics   *StorageMetrics
 	overridesService *OverridesService
 	quotasConfig     QuotasConfig
@@ -1567,13 +1569,17 @@ func (s *server) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resour
 }
 
 func (s *server) read(ctx context.Context, user claims.AuthInfo, req *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
-	rsp := s.backend.ReadResource(ctx, req)
-	if errRes := s.authorizeRead(ctx, user, req.Key, rsp); errRes != nil {
-		return nil, s.rpcFailure(ctx, "server.read", req.Key, errRes)
+	return s.readResponse(ctx, user, req.Key, s.backend.ReadResource(ctx, req))
+}
+
+// readResponse authorizes a backend read for user and converts it.
+func (s *server) readResponse(ctx context.Context, user claims.AuthInfo, key *resourcepb.ResourceKey, rsp *BackendReadResponse) (*resourcepb.ReadResponse, error) {
+	if errRes := s.authorizeRead(ctx, user, key, rsp); errRes != nil {
+		return nil, s.rpcFailure(ctx, "server.read", key, errRes)
 	}
 	// This is an internal backend error, not the legacy gRPC response field.
 	if rsp.Error != nil {
-		return nil, s.rpcFailure(ctx, "server.read", req.Key, rsp.Error)
+		return nil, s.rpcFailure(ctx, "server.read", key, rsp.Error)
 	}
 	return &resourcepb.ReadResponse{
 		ResourceVersion: rsp.ResourceVersion,
@@ -2553,7 +2559,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 					},
 				}
 				if event.PreviousRV > 0 {
-					prevObj, err := s.Read(ctx, &resourcepb.ReadRequest{Key: event.Key, ResourceVersion: event.PreviousRV})
+					prevObj, err := s.readPrevious(ctx, user, event.Key, event.PreviousRV)
 					if err != nil && AsErrorResult(err).Code == http.StatusNotFound {
 						// History pruning can remove the previous revision while the event is still replayable.
 						s.log.Debug("previous object no longer available", "key", event.Key, "resource_version", event.PreviousRV)

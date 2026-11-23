@@ -2,12 +2,20 @@ package resource
 
 import (
 	"context"
+	"net/http"
+	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/backoff"
+	lru "github.com/hashicorp/golang-lru/v2"
+	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // Only KV opts into seeded startup. SQL's independently polled collections do
@@ -272,4 +280,113 @@ func (s *server) initSeededWatcher(backend seededWatchBackend) {
 		capture.Wait()
 		close(startup.stopped)
 	}()
+}
+
+const (
+	// previousReadsMaxBytes bounds the previous versions kept for watches
+	// that deliver an event later than others.
+	previousReadsMaxBytes = 32 << 20
+	previousReadsMaxItems = 4096
+	previousReadsTTL      = 30 * time.Second
+)
+
+// previousReads shares the backend reads of an event's previous version
+// between the watches that deliver it. A revision does not change once
+// written, so the read can be reused; each watch still authorizes it.
+type previousReads struct {
+	group singleflight.Group
+	cache *lru.Cache[string, previousRead]
+	bytes atomic.Int64
+}
+
+type previousRead struct {
+	rsp   *BackendReadResponse
+	added time.Time
+}
+
+func newPreviousReads() *previousReads {
+	p := &previousReads{}
+	// Only fails for a non-positive size.
+	p.cache, _ = lru.NewWithEvict(previousReadsMaxItems, func(_ string, read previousRead) {
+		p.bytes.Add(-int64(cap(read.rsp.Value)))
+	})
+	return p
+}
+
+func (p *previousReads) get(id string) (*BackendReadResponse, bool) {
+	read, ok := p.cache.Get(id)
+	if !ok {
+		return nil, false
+	}
+	if time.Since(read.added) > previousReadsTTL {
+		p.cache.Remove(id)
+		return nil, false
+	}
+	return read.rsp, true
+}
+
+// add keeps rsp, dropping the least recently used reads past the byte limit.
+func (p *previousReads) add(id string, rsp *BackendReadResponse) {
+	if present, _ := p.cache.ContainsOrAdd(id, previousRead{rsp: rsp, added: time.Now()}); present {
+		return
+	}
+	p.bytes.Add(int64(cap(rsp.Value)))
+	for p.bytes.Load() > previousReadsMaxBytes && p.cache.Len() > 1 {
+		if _, _, ok := p.cache.RemoveOldest(); !ok {
+			break
+		}
+	}
+}
+
+// read returns the shared backend read of key at rv, loading it once for all
+// callers that ask concurrently or within the TTL.
+func (p *previousReads) read(ctx context.Context, key *resourcepb.ResourceKey, rv int64, load func(context.Context) (*BackendReadResponse, error)) (*BackendReadResponse, error) {
+	id := key.Namespace + "/" + key.Group + "/" + key.Resource + "/" + key.Name + "/" + strconv.FormatInt(rv, 10)
+	if rsp, ok := p.get(id); ok {
+		return rsp, nil
+	}
+	ch := p.group.DoChan(id, func() (any, error) {
+		// A read that finished between the lookup above and this flight is cached.
+		if rsp, ok := p.get(id); ok {
+			return rsp, nil
+		}
+		// Shared by every waiting watch, so one leaving must not cancel it.
+		// The read queue's timeout still bounds it.
+		rsp, err := load(context.WithoutCancel(ctx))
+		// Missing revisions stay missing; other errors may be transient.
+		if err == nil && (rsp.Error == nil || rsp.Error.Code == http.StatusNotFound) {
+			p.add(id, rsp)
+		}
+		return rsp, err
+	})
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case res := <-ch:
+		if res.Err != nil {
+			return nil, res.Err
+		}
+		return res.Val.(*BackendReadResponse), nil
+	}
+}
+
+// readPrevious reads an event's previous version for a watch, sharing the
+// backend read with other watches of the event.
+func (s *server) readPrevious(ctx context.Context, user claims.AuthInfo, key *resourcepb.ResourceKey, rv int64) (*resourcepb.ReadResponse, error) {
+	ctx, span := tracer.Start(ctx, "resource.server.readPrevious")
+	defer span.End()
+	req := &resourcepb.ReadRequest{Key: key, ResourceVersion: rv}
+	rsp, err := s.previousReads.read(ctx, key, rv, func(ctx context.Context) (*BackendReadResponse, error) {
+		var rsp *BackendReadResponse
+		if err := s.runInQueue(ctx, key.Namespace, "read", func(ctx context.Context) {
+			rsp = s.backend.ReadResource(ctx, req)
+		}); err != nil {
+			return nil, queueRPCError(err)
+		}
+		return rsp, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return s.readResponse(ctx, user, key, rsp)
 }

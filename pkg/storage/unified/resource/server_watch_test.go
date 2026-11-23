@@ -3,7 +3,10 @@ package resource
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
+	"slices"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -17,6 +20,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 )
@@ -1163,5 +1167,115 @@ func TestKVWatchBookmarksIgnoreProgressBeforeSubscribing(t *testing.T) {
 		require.Equal(t, base+300, bookmark.Resource.Version)
 		cancel()
 		require.NoError(t, <-done)
+	})
+}
+
+type previousReadBackend struct {
+	legacyWatchBackend
+	reads atomic.Int64
+}
+
+func (b *previousReadBackend) ReadResource(_ context.Context, req *resourcepb.ReadRequest) *BackendReadResponse {
+	b.reads.Add(1)
+	return &BackendReadResponse{Key: req.Key, ResourceVersion: req.ResourceVersion, Folder: "a", Value: []byte(`{"previous":true}`)}
+}
+
+// folderAccessClient allows each user to get objects in its folders only.
+type folderAccessClient struct {
+	folders map[string][]string
+}
+
+func (c *folderAccessClient) Check(_ context.Context, user authlib.AuthInfo, _ authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+	return authlib.CheckResponse{Allowed: slices.Contains(c.folders[user.GetUID()], folder)}, nil
+}
+
+func (c *folderAccessClient) Compile(_ context.Context, user authlib.AuthInfo, _ authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
+	return func(_, folder string) bool { return slices.Contains(c.folders[user.GetUID()], folder) }, authlib.NoopZookie{}, nil
+}
+
+func (c *folderAccessClient) BatchCheck(context.Context, authlib.AuthInfo, authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	return authlib.BatchCheckResponse{}, errors.New("not implemented")
+}
+
+// Watches that deliver the same event share the read of its previous version,
+// but each is authorized for it on its own.
+func TestWatchSharesPreviousVersionReads(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		backend := &previousReadBackend{legacyWatchBackend: legacyWatchBackend{events: make(chan *WrittenEvent)}}
+		defer close(backend.events)
+		srv := initWatchServerWithSeededWatches(t, backend, false)
+		both, onlyB := newWatchTestUser(), newWatchTestUser()
+		onlyB.UserUID = "u456"
+		srv.access = &folderAccessClient{folders: map[string][]string{both.GetUID(): {"a", "b"}, onlyB.GetUID(): {"b"}}}
+
+		streams := map[string]*mockWatchServer{}
+		for _, user := range []*identity.StaticRequester{both, both, onlyB, onlyB} {
+			ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), user))
+			defer cancel()
+			req := bookmarkWatchRequest()
+			req.AllowWatchBookmarks = false
+			stream := newMockWatchServer(ctx)
+			streams[fmt.Sprintf("%s-%d", user.UserUID, len(streams))] = stream
+			go func() { _ = srv.Watch(req, stream) }()
+		}
+		synctest.Wait()
+
+		// The update moved the object from folder a to folder b.
+		event := bookmarkWrittenEvent(200)
+		event.Type, event.Folder, event.PreviousRV = resourcepb.WatchEvent_MODIFIED, "b", 150
+		backend.events <- event
+		synctest.Wait()
+		require.Equal(t, int64(1), backend.reads.Load(), "watches must share the previous version read")
+		for name, stream := range streams {
+			require.NotEmpty(t, stream.events, name)
+			delivered := <-stream.events
+			require.Equal(t, int64(200), delivered.Resource.Version, name)
+			if strings.HasPrefix(name, both.UserUID) {
+				require.NotNil(t, delivered.Previous, "%s may read folder a", name)
+				require.Equal(t, int64(150), delivered.Previous.Version)
+			} else {
+				require.Nil(t, delivered.Previous, "%s may not read folder a", name)
+			}
+		}
+	})
+}
+
+func TestPreviousReadsCache(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		p := newPreviousReads()
+		key := &resourcepb.ResourceKey{Namespace: "ns", Group: "g", Resource: "r", Name: "n"}
+		loads := 0
+		next := &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError}}
+		load := func(context.Context) (*BackendReadResponse, error) {
+			loads++
+			return next, nil
+		}
+		read := func(rv int64) *BackendReadResponse {
+			rsp, err := p.read(t.Context(), key, rv, load)
+			require.NoError(t, err)
+			return rsp
+		}
+
+		read(1)
+		read(1)
+		require.Equal(t, 2, loads, "transient errors must be retried")
+
+		next = &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusNotFound}}
+		read(1)
+		read(1)
+		require.Equal(t, 3, loads, "missing revisions stay missing")
+
+		time.Sleep(previousReadsTTL + time.Second)
+		read(1)
+		require.Equal(t, 4, loads, "expired reads are loaded again")
+
+		next = &BackendReadResponse{Value: make([]byte, previousReadsMaxBytes/2+1)}
+		read(2)
+		read(3)
+		require.Equal(t, 6, loads)
+		read(3)
+		require.Equal(t, 6, loads, "the newest read stays")
+		read(2)
+		require.Equal(t, 7, loads, "the byte limit drops the oldest reads")
 	})
 }
