@@ -22,7 +22,9 @@ interface EventBusPluginProps {
 
 export const EventBusPlugin = ({ config, eventBus, frame }: EventBusPluginProps) => {
   const frameRef = useRef<DataFrame | undefined>(frame);
-  frameRef.current = frame;
+  useLayoutEffect(() => {
+    frameRef.current = frame;
+  });
 
   useLayoutEffect(() => {
     let u: uPlot | null = null;

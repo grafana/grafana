@@ -2,10 +2,11 @@ import userEvent from '@testing-library/user-event';
 import { KBarProvider } from 'kbar';
 import { type ReactNode } from 'react';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
-import { render, screen, waitFor, act, getWrapper } from 'test/test-utils';
+import { render, screen, waitFor, act, getWrapper, within } from 'test/test-utils';
 
+import { type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, setBackendSrv, useScopes } from '@grafana/runtime';
+import { config, locationService, setBackendSrv, useScopes } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
@@ -19,16 +20,26 @@ import { backendSrv } from '../../services/backend_srv';
 import { Page } from '../Page/Page';
 
 import { AppChrome, EXTENSION_SIDEBAR_FLOATING_TESTID } from './AppChrome';
+import { DOCKED_LOCAL_STORAGE_KEY, MEGA_MENU_PEEK_CLOSE_DELAY, MEGA_MENU_PEEK_OPEN_DELAY } from './AppChromeService';
 import {
   type ExtensionSidebarContextType,
   useExtensionSidebarContext,
 } from './ExtensionSidebar/ExtensionSidebarProvider';
+import { DOCK_MENU_BUTTON_ID } from './MegaMenu/MegaMenuHeader';
+import { SectionSidePanel } from './SectionNav/SectionSidePanel';
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
-  useScopes: jest.fn(),
-}));
+jest.mock('@grafana/runtime', () => {
+  const actual = jest.requireActual('@grafana/runtime');
+  return {
+    ...actual,
+    // A getter, because the test wrapper swaps the location service and a spread would keep the first one
+    get locationService() {
+      return actual.locationService;
+    },
+    usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
+    useScopes: jest.fn(),
+  };
+});
 
 jest.mock('app/features/scopes/ScopesContextProvider', () => ({
   ...jest.requireActual('app/features/scopes/ScopesContextProvider'),
@@ -102,6 +113,9 @@ const closedSidebarContext: ExtensionSidebarContextType = {
   setExtensionSidebarHeight: jest.fn(),
   floatingExtensionSidebarWidth: 480,
   setFloatingExtensionSidebarWidth: jest.fn(),
+  floatingHeightOptions: null,
+  floatingExtensionSidebarHeight: undefined,
+  setFloatingExtensionSidebarHeight: jest.fn(),
   presentation: 'docked',
   dockSide: 'right',
   floatingHidden: false,
@@ -126,7 +140,7 @@ const stylesFor = (element: Element) => {
 setBackendSrv(backendSrv);
 setupMockServer();
 
-const setup = (children: ReactNode, { path }: { path?: string } = {}) => {
+const setup = (children: ReactNode, { path, extraNav = [] }: { path?: string; extraNav?: NavModelItem[] } = {}) => {
   config.bootData.navTree = [
     {
       id: HOME_NAV_ID,
@@ -142,6 +156,7 @@ const setup = (children: ReactNode, { path }: { path?: string } = {}) => {
         { text: 'Child2', id: 'child2', url: 'section/child2' },
       ],
     },
+    ...extraNav,
     {
       text: 'Help',
       id: 'help',
@@ -158,6 +173,7 @@ const setup = (children: ReactNode, { path }: { path?: string } = {}) => {
   const tree = (
     <KBarProvider>
       <AppChrome>
+        <SectionSidePanel />
         <div data-testid="page-children">{children}</div>
       </AppChrome>
     </KBarProvider>
@@ -166,6 +182,32 @@ const setup = (children: ReactNode, { path }: { path?: string } = {}) => {
 
   return { renderResult, context, rerender: () => renderResult.rerender(tree) };
 };
+
+const administrationNav: NavModelItem[] = [
+  {
+    id: 'cfg',
+    text: 'Administration',
+    url: '/admin',
+    children: [
+      {
+        id: 'cfg/general',
+        text: 'General',
+        url: '/admin/general',
+        children: [
+          { id: 'org-settings', text: 'Default preferences', url: '/org' },
+          { id: 'plugin-page-grafana-advisor-app', text: 'Advisor', url: '/a/grafana-advisor-app/home' },
+        ],
+      },
+      { id: 'cfg/plugins', text: 'Plugins and data', url: '/admin/plugins', children: [] },
+      {
+        id: 'cfg/access',
+        text: 'Users and access',
+        url: '/admin/access',
+        children: [{ id: 'global-users', text: 'Users', url: '/admin/users' }],
+      },
+    ],
+  },
+];
 
 describe('AppChrome', () => {
   beforeEach(() => {
@@ -196,6 +238,361 @@ describe('AppChrome', () => {
     expect(skipLink).toHaveFocus();
     await userEvent.keyboard('{tab}');
     expect(await screen.findByTestId(selectors.components.Breadcrumbs.breadcrumb('Home'))).toHaveFocus();
+  });
+
+  describe('mega menu toggle', () => {
+    const PEEK_AND_DOCK_FLAG = 'grafana.megaMenuPeekAndDock';
+    const homeLogoTestId = selectors.components.Breadcrumbs.breadcrumb('Home');
+
+    // jsdom has no PointerEvent. Browsers do, and with it the menu's outside-press handling also swallows the click.
+    class TestPointerEvent extends MouseEvent {
+      readonly pointerType: string;
+      readonly pointerId: number;
+      constructor(type: string, init: PointerEventInit = {}) {
+        super(type, init);
+        this.pointerType = init.pointerType ?? 'mouse';
+        this.pointerId = init.pointerId ?? 1;
+      }
+    }
+    const enablePointerEvents = () => {
+      if (typeof window.PointerEvent === 'undefined') {
+        Object.defineProperty(window, 'PointerEvent', { value: TestPointerEvent, configurable: true, writable: true });
+      }
+    };
+
+    const setupWithFakeTimers = (children: ReactNode = 'Children') => {
+      jest.useFakeTimers();
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+      return { user, ...setup(<Page navId="child1">{children}</Page>) };
+    };
+
+    // Long enough for react-aria's focus restore, which waits a frame, and for the dialog's 500ms refocus.
+    const AFTER_FOCUS_TIMERS = 1000;
+
+    beforeEach(() => {
+      window.localStorage.clear();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+      window.localStorage.clear();
+      if (window.PointerEvent === TestPointerEvent) {
+        Reflect.deleteProperty(window, 'PointerEvent');
+      }
+    });
+
+    describe('with grafana.megaMenuPeekAndDock off', () => {
+      it('sits after the home logo and opens the menu only when clicked', async () => {
+        const { user } = setupWithFakeTimers();
+        const toggle = await screen.findByRole('button', { name: 'Main menu' });
+        expect(screen.getByTestId(homeLogoTestId).compareDocumentPosition(toggle)).toBe(
+          Node.DOCUMENT_POSITION_FOLLOWING
+        );
+
+        await user.hover(toggle);
+        act(() => jest.advanceTimersByTime(MEGA_MENU_PEEK_OPEN_DELAY));
+        expect(screen.queryByRole('dialog', { name: 'Navigation' })).not.toBeInTheDocument();
+
+        await user.click(toggle);
+        expect(screen.getByRole('dialog', { name: 'Navigation' })).toBeInTheDocument();
+      });
+
+      it('closes the menu on a press outside it, which the page does not get', async () => {
+        enablePointerEvents();
+        const onPageClick = jest.fn();
+        const { user } = setupWithFakeTimers(<button onClick={onPageClick}>Page button</button>);
+        await user.click(await screen.findByRole('button', { name: 'Main menu' }));
+        expect(screen.getByRole('dialog', { name: 'Navigation' })).toBeInTheDocument();
+
+        await user.click(screen.getByRole('button', { name: 'Page button' }));
+
+        expect(screen.queryByRole('dialog', { name: 'Navigation' })).not.toBeInTheDocument();
+        expect(onPageClick).not.toHaveBeenCalled();
+      });
+
+      it('keeps the footer dock button and the header close button', async () => {
+        mockUseMediaQueryMinWidth.mockReturnValue(true);
+        setup(<Page navId="child1">Children</Page>);
+
+        // The docked menu is shown with CSS only on wide screens, which jsdom does not apply.
+        expect(await screen.findByRole('button', { name: 'Close menu', hidden: true })).toBeInTheDocument();
+        // Below the xl breakpoint the dock button is display: none, which leaves it no accessible name in jsdom.
+        expect(document.getElementById(DOCK_MENU_BUTTON_ID)).toHaveAttribute('aria-label', 'Undock menu');
+        // The docked header names Grafana beside the logo.
+        expect(screen.getByText('Grafana')).toBeInTheDocument();
+      });
+    });
+
+    describe('with grafana.megaMenuPeekAndDock on', () => {
+      beforeEach(async () => {
+        await act(async () => {
+          setTestFlags({ [PEEK_AND_DOCK_FLAG]: true });
+        });
+      });
+
+      it('opens the menu over the page while the pointer rests on the toggle, without moving focus', async () => {
+        const { user } = setupWithFakeTimers();
+        const pageContent = document.getElementById('pageContent')!;
+        act(() => pageContent.focus());
+
+        await user.hover(await screen.findByRole('button', { name: 'Main menu' }));
+        expect(screen.queryByRole('dialog', { name: 'Navigation' })).not.toBeInTheDocument();
+        act(() => jest.advanceTimersByTime(MEGA_MENU_PEEK_OPEN_DELAY));
+
+        expect(screen.getByRole('dialog', { name: 'Navigation' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Main menu' })).toHaveAttribute('aria-expanded', 'true');
+        expect(pageContent).toHaveFocus();
+      });
+
+      it('closes the peeking menu once the pointer leaves the toggle and the menu, and keeps focus in place', async () => {
+        const { user } = setupWithFakeTimers();
+        const pageContent = document.getElementById('pageContent')!;
+        act(() => pageContent.focus());
+        const toggle = await screen.findByRole('button', { name: 'Main menu' });
+        await user.hover(toggle);
+        act(() => jest.advanceTimersByTime(MEGA_MENU_PEEK_OPEN_DELAY));
+        const menu = screen.getByRole('dialog', { name: 'Navigation' });
+
+        // Crossing from the toggle to the menu keeps it open.
+        await user.unhover(toggle);
+        await user.hover(menu);
+        act(() => jest.advanceTimersByTime(MEGA_MENU_PEEK_CLOSE_DELAY));
+        expect(menu).toBeInTheDocument();
+
+        await user.unhover(menu);
+        act(() => jest.advanceTimersByTime(MEGA_MENU_PEEK_CLOSE_DELAY));
+        expect(screen.queryByRole('dialog', { name: 'Navigation' })).not.toBeInTheDocument();
+        act(() => jest.advanceTimersByTime(AFTER_FOCUS_TIMERS));
+        expect(pageContent).toHaveFocus();
+      });
+
+      it('lets a press outside a peeking menu through to the page, and closes the menu', async () => {
+        enablePointerEvents();
+        const onPageClick = jest.fn();
+        const { user } = setupWithFakeTimers(<button onClick={onPageClick}>Page button</button>);
+        await user.hover(await screen.findByRole('button', { name: 'Main menu' }));
+        act(() => jest.advanceTimersByTime(MEGA_MENU_PEEK_OPEN_DELAY));
+        expect(screen.getByRole('dialog', { name: 'Navigation' })).toBeInTheDocument();
+
+        // Before the pointer has been away long enough to close the menu.
+        await user.click(screen.getByRole('button', { name: 'Page button' }));
+
+        expect(onPageClick).toHaveBeenCalledTimes(1);
+        expect(screen.queryByRole('dialog', { name: 'Navigation' })).not.toBeInTheDocument();
+      });
+
+      describe('from a docked menu that is closed', () => {
+        const originalInnerWidth = window.innerWidth;
+        const setInnerWidth = (value: number) =>
+          Object.defineProperty(window, 'innerWidth', { configurable: true, writable: true, value });
+
+        beforeEach(() => {
+          mockUseMediaQueryMinWidth.mockReturnValue(true);
+          // The service docks the menu again only where the window is wide enough, as it does at startup.
+          setInnerWidth(1920);
+        });
+
+        afterEach(() => {
+          setInnerWidth(originalInnerWidth);
+        });
+
+        const setupDockedAndClosed = async () => {
+          const result = setupWithFakeTimers();
+          await screen.findByRole('button', { name: 'Close menu', hidden: true });
+          // As the Assistant workspace does: it closes the docked menu without storing that, to open it on exit.
+          act(() => result.context.chrome.setMegaMenuOpen(false, false));
+          return result;
+        };
+
+        const peek = async (user: ReturnType<typeof userEvent.setup>) => {
+          const toggle = screen.getByRole('button', { name: 'Main menu' });
+          await user.hover(toggle);
+          act(() => jest.advanceTimersByTime(MEGA_MENU_PEEK_OPEN_DELAY));
+          return { toggle, menu: screen.getByRole('dialog', { name: 'Navigation' }) };
+        };
+
+        it('docks the menu again once the peek ends', async () => {
+          const { user, context } = await setupDockedAndClosed();
+          const { toggle } = await peek(user);
+          expect(context.chrome.state.getValue()).toMatchObject({ megaMenuDocked: false, megaMenuOpen: true });
+
+          await user.unhover(toggle);
+          act(() => jest.advanceTimersByTime(MEGA_MENU_PEEK_CLOSE_DELAY));
+
+          expect(context.chrome.state.getValue()).toMatchObject({ megaMenuDocked: true, megaMenuOpen: false });
+        });
+
+        it('docks the menu again once the menu a press kept open closes', async () => {
+          const { user, context } = await setupDockedAndClosed();
+          const { menu } = await peek(user);
+
+          await user.pointer({ keys: '[MouseLeft]', target: menu });
+          await user.keyboard('{Escape}');
+
+          expect(screen.queryByRole('dialog', { name: 'Navigation' })).not.toBeInTheDocument();
+          expect(context.chrome.state.getValue()).toMatchObject({ megaMenuDocked: true, megaMenuOpen: false });
+        });
+
+        it('leaves focus where it was', async () => {
+          const { user } = await setupDockedAndClosed();
+          const pageContent = document.getElementById('pageContent')!;
+          act(() => pageContent.focus());
+
+          await peek(user);
+          act(() => jest.advanceTimersByTime(AFTER_FOCUS_TIMERS));
+
+          expect(pageContent).toHaveFocus();
+        });
+      });
+
+      it('keeps a peeking menu open once something in it is pressed', async () => {
+        const { user } = setupWithFakeTimers();
+        await user.hover(await screen.findByRole('button', { name: 'Main menu' }));
+        act(() => jest.advanceTimersByTime(MEGA_MENU_PEEK_OPEN_DELAY));
+        const menu = screen.getByRole('dialog', { name: 'Navigation' });
+
+        await user.pointer({ keys: '[MouseLeft>]', target: menu });
+        await user.unhover(menu);
+        act(() => jest.advanceTimersByTime(MEGA_MENU_PEEK_CLOSE_DELAY));
+
+        expect(menu).toBeInTheDocument();
+      });
+
+      it('opens the menu over the page on narrower screens, and keeps a peeking menu open when clicked', async () => {
+        const { user } = setupWithFakeTimers();
+        const toggle = await screen.findByRole('button', { name: 'Main menu' });
+        await user.hover(toggle);
+        act(() => jest.advanceTimersByTime(MEGA_MENU_PEEK_OPEN_DELAY));
+
+        await user.click(toggle);
+        await user.unhover(toggle);
+        act(() => jest.advanceTimersByTime(MEGA_MENU_PEEK_CLOSE_DELAY));
+
+        expect(screen.getByRole('dialog', { name: 'Navigation' })).toBeInTheDocument();
+      });
+
+      it('moves focus into a peeking menu a click keeps open, as a click that opens the menu does', async () => {
+        const { user } = setupWithFakeTimers();
+        const toggle = await screen.findByRole('button', { name: 'Main menu' });
+        const focusedInMenu = () => {
+          const menu = screen.getByRole('dialog', { name: 'Navigation' });
+          const focused = document.activeElement;
+          return focused && focused !== menu && menu.contains(focused) ? focused.outerHTML : undefined;
+        };
+        await user.click(toggle);
+        const focusedByClickOpen = focusedInMenu();
+        expect(focusedByClickOpen).toBeDefined();
+        await user.keyboard('{Escape}');
+        await user.unhover(toggle);
+        await user.hover(toggle);
+        act(() => jest.advanceTimersByTime(MEGA_MENU_PEEK_OPEN_DELAY));
+        expect(toggle).toHaveFocus();
+
+        await user.click(toggle);
+
+        expect(focusedInMenu()).toBe(focusedByClickOpen);
+      });
+
+      it('docks the menu when the toggle is clicked on wide screens, and the same spot closes it again', async () => {
+        mockUseMediaQueryMinWidth.mockReturnValue(true);
+        window.localStorage.setItem(DOCKED_LOCAL_STORAGE_KEY, 'false');
+        const user = userEvent.setup();
+        const { context } = setup(<Page navId="child1">Children</Page>);
+
+        await user.click(await screen.findByRole('button', { name: 'Main menu' }));
+
+        expect(context.chrome.state.getValue()).toMatchObject({ megaMenuDocked: true, megaMenuOpen: true });
+        expect(screen.queryByRole('dialog', { name: 'Navigation' })).not.toBeInTheDocument();
+        // The docked menu is shown with CSS only on wide screens, which jsdom does not apply.
+        const close = screen.getByRole('button', { name: 'Close menu', hidden: true });
+        expect(close).toHaveFocus();
+        // It sits after the logo, where the top bar toggle was.
+        expect(screen.getAllByTestId(homeLogoTestId)[0].compareDocumentPosition(close)).toBe(
+          Node.DOCUMENT_POSITION_FOLLOWING
+        );
+        // The header toggle docks and closes the menu, so the footer has no dock button.
+        expect(document.getElementById(DOCK_MENU_BUTTON_ID)).not.toBeInTheDocument();
+        // The logo is enough beside the toggle, so the header has no Grafana title.
+        expect(screen.queryByText('Grafana')).not.toBeInTheDocument();
+
+        await user.click(close);
+
+        expect(context.chrome.state.getValue()).toMatchObject({ megaMenuDocked: false, megaMenuOpen: false });
+        expect(screen.getByRole('button', { name: 'Main menu' })).toHaveFocus();
+      });
+
+      it('docks a peeking menu when the toggle is clicked on wide screens', async () => {
+        mockUseMediaQueryMinWidth.mockReturnValue(true);
+        window.localStorage.setItem(DOCKED_LOCAL_STORAGE_KEY, 'false');
+        enablePointerEvents();
+        const { user, context } = setupWithFakeTimers();
+        const toggle = await screen.findByRole('button', { name: 'Main menu' });
+        await user.hover(toggle);
+        act(() => jest.advanceTimersByTime(MEGA_MENU_PEEK_OPEN_DELAY));
+        expect(screen.getByRole('dialog', { name: 'Navigation' })).toBeInTheDocument();
+
+        await user.click(toggle);
+
+        expect(context.chrome.state.getValue()).toMatchObject({ megaMenuDocked: true, megaMenuOpen: true });
+        expect(screen.queryByRole('dialog', { name: 'Navigation' })).not.toBeInTheDocument();
+        act(() => jest.advanceTimersByTime(AFTER_FOCUS_TIMERS));
+        expect(screen.getByRole('button', { name: 'Close menu', hidden: true })).toHaveFocus();
+      });
+
+      it('says a click docks the menu while the pointer is on the toggle, only where it can dock', async () => {
+        mockUseMediaQueryMinWidth.mockReturnValue(true);
+        window.localStorage.setItem(DOCKED_LOCAL_STORAGE_KEY, 'false');
+        const { user } = setupWithFakeTimers();
+        const toggle = await screen.findByRole('button', { name: 'Main menu' });
+        expect(screen.queryByRole('tooltip', { name: 'Click to dock' })).not.toBeInTheDocument();
+
+        await user.hover(toggle);
+
+        expect(screen.getByRole('tooltip', { name: 'Click to dock' })).toBeInTheDocument();
+
+        // The tooltip follows the pointer as any other does, so it goes once the pointer moves into the menu.
+        act(() => jest.advanceTimersByTime(MEGA_MENU_PEEK_OPEN_DELAY));
+        await user.unhover(toggle);
+        await user.hover(screen.getByRole('dialog', { name: 'Navigation' }));
+
+        expect(screen.queryByRole('tooltip', { name: 'Click to dock' })).not.toBeInTheDocument();
+      });
+
+      it('offers no docking on narrower screens', async () => {
+        const { user } = setupWithFakeTimers();
+        await user.hover(await screen.findByRole('button', { name: 'Main menu' }));
+        act(() => jest.advanceTimersByTime(MEGA_MENU_PEEK_OPEN_DELAY));
+
+        expect(screen.getByRole('dialog', { name: 'Navigation' })).toBeInTheDocument();
+        expect(screen.queryByRole('tooltip', { name: 'Click to dock' })).not.toBeInTheDocument();
+      });
+
+      it('does not open the menu again under the pointer that closed it, until the pointer leaves the toggle', async () => {
+        mockUseMediaQueryMinWidth.mockReturnValue(true);
+        const { user } = setupWithFakeTimers();
+        await user.click(await screen.findByRole('button', { name: 'Close menu', hidden: true }));
+
+        // The top bar toggle appears where the pointer already rests.
+        const toggle = screen.getByRole('button', { name: 'Main menu' });
+        await user.hover(toggle);
+        act(() => jest.advanceTimersByTime(MEGA_MENU_PEEK_OPEN_DELAY));
+        expect(screen.queryByRole('dialog', { name: 'Navigation' })).not.toBeInTheDocument();
+
+        await user.unhover(toggle);
+        await user.hover(toggle);
+        act(() => jest.advanceTimersByTime(MEGA_MENU_PEEK_OPEN_DELAY));
+        expect(screen.getByRole('dialog', { name: 'Navigation' })).toBeInTheDocument();
+      });
+
+      it('sits after the home logo, as with the toggle off', async () => {
+        setup(<Page navId="child1">Children</Page>);
+        const toggle = await screen.findByRole('button', { name: 'Main menu' });
+
+        expect(screen.getByTestId(homeLogoTestId).compareDocumentPosition(toggle)).toBe(
+          Node.DOCUMENT_POSITION_FOLLOWING
+        );
+      });
+    });
   });
 
   it('should move focus to main content on every skip link activation', async () => {
@@ -868,6 +1265,130 @@ describe('AppChrome', () => {
 
       await screen.findByTestId('ext-sidebar-stub');
       expect(screen.queryByTestId(EXTENSION_SIDEBAR_FLOATING_TESTID)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('administration section nav', () => {
+    const sectionNav = () => screen.findByRole('navigation', { name: 'Administration' });
+
+    beforeEach(() => {
+      mockUseMediaQueryMinWidth.mockReturnValue(true);
+      setTestFlags({ 'grafana.navigationAdminSubNav': true });
+    });
+
+    afterEach(async () => {
+      await act(async () => {
+        setTestFlags({});
+      });
+    });
+
+    it('lists the groups as plain headings over their destinations on an administration page', async () => {
+      setup(<Page navId="org-settings">Children</Page>, { extraNav: administrationNav });
+
+      const nav = within(await sectionNav());
+
+      expect(nav.getByRole('heading', { name: 'General' })).toBeInTheDocument();
+      expect(nav.getByRole('heading', { name: 'Users and access' })).toBeInTheDocument();
+      expect(nav.queryByRole('link', { name: 'General' })).not.toBeInTheDocument();
+      expect(nav.getByRole('link', { name: 'Advisor' })).toHaveAttribute('href', '/a/grafana-advisor-app/home');
+      expect(nav.getByRole('link', { name: 'Users' })).toHaveAttribute('href', '/admin/users');
+    });
+
+    it('marks the current page and no other', async () => {
+      setup(<Page navId="org-settings">Children</Page>, { extraNav: administrationNav });
+
+      const nav = within(await sectionNav());
+
+      expect(nav.getByRole('link', { name: 'Default preferences' })).toHaveAttribute('aria-current', 'page');
+      expect(nav.getByRole('link', { name: 'Advisor' })).not.toHaveAttribute('aria-current');
+    });
+
+    it('leaves out a group with no destinations', async () => {
+      setup(<Page navId="org-settings">Children</Page>, { extraNav: administrationNav });
+
+      const nav = within(await sectionNav());
+
+      expect(nav.queryByRole('heading', { name: 'Plugins and data' })).not.toBeInTheDocument();
+    });
+
+    it('shows on the Administration landing page with nothing marked current', async () => {
+      setup(<Page navId="cfg">Children</Page>, { extraNav: administrationNav });
+
+      const nav = within(await sectionNav());
+
+      expect(nav.getByRole('link', { name: 'Users' })).toBeInTheDocument();
+      expect(nav.queryByRole('link', { current: 'page' })).not.toBeInTheDocument();
+    });
+
+    it('shows from the URL before the page has told the chrome where it is, marking the destination at that URL', async () => {
+      setup(<div>Not yet a Page</div>, { extraNav: administrationNav, path: '/admin/users' });
+
+      const nav = within(await sectionNav());
+
+      expect(nav.getByRole('link', { name: 'Users', current: 'page' })).toBeInTheDocument();
+    });
+
+    it('follows the URL when navigating into Administration', async () => {
+      setup(<div>Not yet a Page</div>, { extraNav: administrationNav, path: '/' });
+      expect(screen.queryByRole('navigation', { name: 'Administration' })).not.toBeInTheDocument();
+
+      act(() => locationService.push('/admin/users'));
+
+      expect(await sectionNav()).toBeInTheDocument();
+    });
+
+    it('shows on a group landing page', async () => {
+      setup(<Page navId="cfg/general">Children</Page>, { extraNav: administrationNav });
+
+      expect(await sectionNav()).toBeInTheDocument();
+    });
+
+    it('does not show on a page outside Administration', async () => {
+      setup(<Page navId="child1">Children</Page>, { extraNav: administrationNav });
+
+      expect(await screen.findByTestId('page-children')).toBeInTheDocument();
+      expect(screen.queryByRole('navigation', { name: 'Administration' })).not.toBeInTheDocument();
+    });
+
+    it('does not show when the flag is off', async () => {
+      setTestFlags({ 'grafana.navigationAdminSubNav': false });
+      setup(<Page navId="org-settings">Children</Page>, { extraNav: administrationNav });
+
+      expect(await screen.findByTestId('page-children')).toBeInTheDocument();
+      expect(screen.queryByRole('navigation', { name: 'Administration' })).not.toBeInTheDocument();
+    });
+
+    describe('below the tablet width', () => {
+      beforeEach(() => {
+        mockUseMediaQueryMinWidth.mockReturnValue(false);
+      });
+
+      it('shows a menu above the page in place of the side panel', async () => {
+        setup(<Page navId="org-settings">Children</Page>, { extraNav: administrationNav });
+
+        expect(await screen.findByRole('button', { name: /^Menu/ })).toBeInTheDocument();
+        expect(screen.queryByRole('navigation', { name: 'Administration' })).not.toBeInTheDocument();
+      });
+
+      it('lists the groups and destinations when it is opened', async () => {
+        const user = userEvent.setup();
+        setup(<Page navId="org-settings">Children</Page>, { extraNav: administrationNav });
+
+        await user.click(await screen.findByRole('button', { name: /^Menu/ }));
+        const menu = within(await screen.findByRole('menu', { name: 'Administration' }));
+
+        expect(menu.getByText('General')).toBeInTheDocument();
+        expect(menu.getByText('Users and access')).toBeInTheDocument();
+        expect(menu.getByRole('menuitem', { name: 'Users' })).toHaveAttribute('href', '/admin/users');
+        expect(menu.getByRole('menuitem', { name: 'Default preferences' })).toHaveAttribute('href', '/org');
+      });
+
+      it('shows no menu outside Administration', async () => {
+        setup(<Page navId="child1">Children</Page>, { extraNav: administrationNav });
+
+        expect(await screen.findByTestId('page-children')).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /^Menu/ })).not.toBeInTheDocument();
+      });
     });
   });
 });

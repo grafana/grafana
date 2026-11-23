@@ -12,12 +12,13 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
+import { canArrangeLayout } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { addElement } from '../../actions/element/addElement';
 import { moveElement } from '../../actions/element/moveElement';
 import { removeElement } from '../../actions/element/removeElement';
 import { edit } from '../../actions/utils/edit';
+import { remapQuestionSources } from '../../questions/questionSources';
 import { serializeTabsLayout } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { ObjectsReorderedOnCanvasEvent } from '../../sidebar/events';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
@@ -121,6 +122,7 @@ export class TabsLayoutManager
 
   public duplicateTab(tab: TabItem) {
     const newTab = tab.duplicate();
+    remapQuestionSources(tab, newTab, { keepOutside: true });
     this.addNewTab(newTab);
   }
 
@@ -250,7 +252,7 @@ export class TabsLayoutManager
       perform: () => {
         this.setState({ tabs: [...this.state.tabs, newTab], currentTabSlug: newTab.getSlug() });
         const dashboard = getDashboardSceneFor(this);
-        newTab.getLayout().editModeChanged?.(isFullDashboardEditing(dashboard.state));
+        newTab.getLayout().editModeChanged?.(canArrangeLayout(dashboard.state));
       },
       undo: () => {
         this.setState({

@@ -1086,7 +1086,7 @@ func TestAuthorizeResourcePreview_StopsOnWrappedAccessErrors(t *testing.T) {
 		{name: "token", new: auth.NewTokenAccessChecker},
 		{name: "session", new: auth.NewSessionAccessChecker},
 		{name: "session with unmet role fallback", new: func(inner authlib.AccessChecker) auth.AccessChecker {
-			return auth.NewSessionAccessChecker(inner).WithFallbackRole(identity.RoleAdmin)
+			return auth.NewSessionAccessChecker(inner).WithFallbackRole(authlib.RoleAdmin)
 		}},
 	} {
 		t.Run(checker.name, func(t *testing.T) {
@@ -1117,7 +1117,7 @@ func TestAuthorizeResourcePreview_StopsOnWrappedAccessErrors(t *testing.T) {
 						}},
 					}
 					caller := &identity.StaticRequester{
-						Type: authlib.TypeUser, UserID: 42, Namespace: cfg.Namespace, OrgRole: identity.RoleViewer,
+						Type: authlib.TypeUser, UserID: 42, Namespace: cfg.Namespace, OrgRole: authlib.RoleViewer,
 					}
 					ctx := identity.WithRequester(context.Background(), caller)
 					destination := ParseFolder("team/new/", cfg.Name).ID
@@ -2158,7 +2158,7 @@ func testReadNewResourcePreviewWithTokenAuth(t *testing.T, kind schema.GroupVers
 				Data: []byte(fmt.Sprintf(`{"apiVersion":%q,"kind":%q,"metadata":{"name":%q},"spec":{"title":"Preview resource"}}`, kind.GroupVersion().String(), kind.Kind, resourceName)),
 			}, nil).Once()
 
-			caller := &identity.StaticRequester{Type: authlib.TypeUser, Namespace: cfg.Namespace, OrgRole: identity.RoleEditor}
+			caller := &identity.StaticRequester{Type: authlib.TypeUser, Namespace: cfg.Namespace, OrgRole: authlib.RoleEditor}
 			ctx := authlib.WithAuthInfo(context.Background(), caller)
 			_, provisioningID, err := identity.WithProvisioningIdentity(ctx, cfg.Namespace)
 			require.NoError(t, err)
@@ -2238,7 +2238,7 @@ func testReadNewResourcePreviewWithTokenAuth(t *testing.T, kind schema.GroupVers
 				}, req)
 				checkedFolders = append(checkedFolders, folder)
 				return authlib.CheckResponse{Allowed: tt.canRead && folder == checkedFolder}, nil
-			})).WithFallbackRole(identity.RoleViewer)
+			})).WithFallbackRole(authlib.RoleViewer)
 			expectMissingFolderMetadata(&repo.Mock)
 			fm := NewFolderManager(repo, folders, NewEmptyFolderTree(), FolderKind)
 			authorizer := NewAuthorizer(cfg, repo, access, clients, fm)
@@ -2288,15 +2288,15 @@ func testReadPreviewAtRoot(t *testing.T, kind schema.GroupVersionKind, resource 
 	for _, tt := range []struct {
 		name        string
 		newChecker  func(authlib.AccessChecker) auth.AccessChecker
-		role        identity.RoleType
+		role        authlib.RoleType
 		rootAllowed bool
 		wantAllowed bool
 	}{
-		{name: "token permits root", newChecker: auth.NewTokenAccessChecker, role: identity.RoleNone, rootAllowed: true, wantAllowed: true},
-		{name: "token denies root without role fallback", newChecker: auth.NewTokenAccessChecker, role: identity.RoleViewer},
-		{name: "session permits root", newChecker: auth.NewSessionAccessChecker, role: identity.RoleNone, rootAllowed: true, wantAllowed: true},
-		{name: "session denies root without matching role", newChecker: auth.NewSessionAccessChecker, role: identity.RoleNone},
-		{name: "session viewer fallback permits root", newChecker: auth.NewSessionAccessChecker, role: identity.RoleViewer, wantAllowed: true},
+		{name: "token permits root", newChecker: auth.NewTokenAccessChecker, role: authlib.RoleNone, rootAllowed: true, wantAllowed: true},
+		{name: "token denies root without role fallback", newChecker: auth.NewTokenAccessChecker, role: authlib.RoleViewer},
+		{name: "session permits root", newChecker: auth.NewSessionAccessChecker, role: authlib.RoleNone, rootAllowed: true, wantAllowed: true},
+		{name: "session denies root without matching role", newChecker: auth.NewSessionAccessChecker, role: authlib.RoleNone},
+		{name: "session viewer fallback permits root", newChecker: auth.NewSessionAccessChecker, role: authlib.RoleViewer, wantAllowed: true},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := &provisioning.Repository{
@@ -2363,7 +2363,7 @@ func testReadPreviewAtRoot(t *testing.T, kind schema.GroupVersionKind, resource 
 				require.Equal(t, expectedProbes, probedFolders)
 				checkedFolders = append(checkedFolders, folder)
 				return authlib.CheckResponse{Allowed: tt.rootAllowed}, nil
-			})).WithFallbackRole(identity.RoleViewer)
+			})).WithFallbackRole(authlib.RoleViewer)
 			expectMissingFolderMetadata(&repo.Mock)
 			fm := NewFolderManager(repo, folders, NewEmptyFolderTree(), FolderKind)
 			authorizer := NewAuthorizer(cfg, repo, access, clients, fm)
@@ -2411,7 +2411,7 @@ func TestDualReadWriter_ReadRejectsReadableUnmanagedAncestor(t *testing.T) {
 		Path: resourcePath, Ref: "feature",
 		Data: []byte(fmt.Sprintf(`{"apiVersion":%q,"kind":%q,"metadata":{"name":%q},"spec":{"title":"Decoy preview"}}`, DashboardKind.GroupVersion().String(), DashboardKind.Kind, resourceName)),
 	}, nil).Once()
-	caller := &identity.StaticRequester{Type: authlib.TypeUser, Namespace: cfg.Namespace, OrgRole: identity.RoleEditor}
+	caller := &identity.StaticRequester{Type: authlib.TypeUser, Namespace: cfg.Namespace, OrgRole: authlib.RoleEditor}
 	ctx := authlib.WithAuthInfo(context.Background(), caller)
 	_, provisioningID, err := identity.WithProvisioningIdentity(ctx, cfg.Namespace)
 	require.NoError(t, err)
@@ -2453,7 +2453,7 @@ func TestDualReadWriter_ReadRejectsReadableUnmanagedAncestor(t *testing.T) {
 		require.Same(t, caller, id)
 		checkedFolders = append(checkedFolders, folder)
 		return authlib.CheckResponse{Allowed: folder == decoyUID}, nil
-	})).WithFallbackRole(identity.RoleViewer)
+	})).WithFallbackRole(authlib.RoleViewer)
 	expectMissingFolderMetadata(&repo.Mock)
 	fm := NewFolderManager(repo, folders, NewEmptyFolderTree(), FolderKind)
 	authorizer := NewAuthorizer(cfg, repo, access, clients, fm)
@@ -2541,7 +2541,7 @@ func testReadNewResourcePreviewValidatesConfiguredFolder(t *testing.T, kind sche
 				}, nil).Once()
 			}
 
-			caller := &identity.StaticRequester{Type: authlib.TypeUser, Namespace: cfg.Namespace, OrgRole: identity.RoleEditor}
+			caller := &identity.StaticRequester{Type: authlib.TypeUser, Namespace: cfg.Namespace, OrgRole: authlib.RoleEditor}
 			ctx := authlib.WithAuthInfo(context.Background(), caller)
 			_, provisioningID, err := identity.WithProvisioningIdentity(ctx, cfg.Namespace)
 			require.NoError(t, err)
@@ -2605,7 +2605,7 @@ func testReadNewResourcePreviewValidatesConfiguredFolder(t *testing.T, kind sche
 					(tt.canReadConfigured && folder == configuredFolder) ||
 					(tt.canReadAncestor && folder == cfg.Name)
 				return authlib.CheckResponse{Allowed: allowed}, nil
-			})).WithFallbackRole(identity.RoleViewer)
+			})).WithFallbackRole(authlib.RoleViewer)
 			expectMissingFolderMetadata(&repo.Mock)
 			fm := NewFolderManager(repo, folders, NewEmptyFolderTree(), FolderKind)
 			authorizer := NewAuthorizer(cfg, repo, access, clients, fm)
@@ -2824,7 +2824,7 @@ func testReadMovedResourcePreviewWithTokenAuth(t *testing.T, kind schema.GroupVe
 			f := newMovedResourcePreviewFixture(tt, resource, cfg.Name)
 			repo := f.expectRepositoryReads(t, tt, cfg, kind)
 
-			caller := &identity.StaticRequester{Type: authlib.TypeUser, Namespace: cfg.Namespace, OrgRole: identity.RoleEditor}
+			caller := &identity.StaticRequester{Type: authlib.TypeUser, Namespace: cfg.Namespace, OrgRole: authlib.RoleEditor}
 			ctx := authlib.WithAuthInfo(context.Background(), caller)
 			_, provisioningID, err := identity.WithProvisioningIdentity(ctx, cfg.Namespace)
 			require.NoError(t, err)
@@ -2874,7 +2874,7 @@ func testReadMovedResourcePreviewWithTokenAuth(t *testing.T, kind schema.GroupVe
 				checkedFolders = append(checkedFolders, folder)
 				allowed := (folder == f.sourceFolder && tt.canReadSource) || (folder == f.resolvedFolder && tt.canReadAncestor)
 				return authlib.CheckResponse{Allowed: allowed}, nil
-			})).WithFallbackRole(identity.RoleViewer)
+			})).WithFallbackRole(authlib.RoleViewer)
 			expectMissingFolderMetadata(&repo.Mock)
 			fm := NewFolderManager(repo, folders, NewEmptyFolderTree(), FolderKind)
 			authorizer := NewAuthorizer(cfg, repo, access, clients, fm)

@@ -5,7 +5,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Button, Card, LinkButton, ModalsController, Stack, useStyles2 } from '@grafana/ui';
 import { attachSkeleton, type SkeletonComponent } from '@grafana/ui/unstable';
-import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
+import { ManagedResourceBadge } from 'app/features/provisioning/components/ManagedResourceBadge';
 import {
   getManagerIdentity,
   getManagerKind,
@@ -32,7 +32,7 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
         <Stack direction="row" gap={1} alignItems="center" wrap>
           {playlist.spec?.title}
           {isManaged(playlist) && (
-            <ManagedBadge
+            <ManagedResourceBadge
               managerKind={getManagerKind(playlist)}
               name={getManagerIdentity(playlist)}
               repositoryName={getManagerIdentity(playlist)}
