@@ -85,7 +85,7 @@ func TestKVWatchSeedFallback(t *testing.T) {
 					require.Equal(t, oldRV+1, floor)
 				}
 				require.Equal(t, floor, srv.mostRecentRV.Load())
-				require.Zero(t, b.cache.events.len, "a failed read must not install a partial seed")
+				require.Empty(t, b.cache.rings, "a failed read must not install a partial seed")
 				require.Equal(t, 1, logger.WarnLogs.Calls)
 				require.Contains(t, logger.WarnLogs.Message, "empty watch cache")
 				require.Contains(t, logger.WarnLogs.Args, floor)
