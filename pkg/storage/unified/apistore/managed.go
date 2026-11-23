@@ -39,6 +39,23 @@ func managedResourceCommitMessage(obj utils.GrafanaMetaAccessor, action resource
 	}
 }
 
+// forbiddenManagedInRepository refuses a write to a repo-managed resource that cannot be forwarded to
+// the provisioning API, because a storage built without a configProvider has no client for it.
+func forbiddenManagedInRepository(orig runtime.Object) error {
+	message := errResourceIsManagedInRepository.Error()
+	if obj, err := utils.MetaAccessor(orig); err == nil {
+		if manager, ok := obj.GetManagerProperties(); ok {
+			message += fmt.Sprintf(" (%s)", manager.Identity)
+		}
+	}
+	return &apierrors.StatusError{ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    http.StatusForbidden,
+		Reason:  metav1.StatusReasonForbidden,
+		Message: message + "; change it through Git Sync",
+	}}
+}
+
 // handleManagedResourceRouting re-routes a write for a repo-managed resource to the provisioning
 // files endpoint. cleanupSafe reports whether the write definitely did not persist (so a caller may
 // safely delete secrets it created for it): true only when the provisioning request was never sent,
@@ -50,8 +67,11 @@ func (s *Storage) handleManagedResourceRouting(ctx context.Context,
 	orig runtime.Object,
 	rsp runtime.Object,
 ) (cleanupSafe bool, _ error) {
-	if !errors.Is(err, errResourceIsManagedInRepository) || s.configProvider == nil {
+	if !errors.Is(err, errResourceIsManagedInRepository) {
 		return true, err // not routed: the write was never attempted
+	}
+	if s.configProvider == nil {
+		return true, forbiddenManagedInRepository(orig)
 	}
 	obj, err := utils.MetaAccessor(orig)
 	if err != nil {
