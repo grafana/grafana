@@ -75,6 +75,11 @@ export interface Props<TQuery extends DataQuery> {
   onReplace?: (query: DataQuery) => void;
   onReplaceQueries?: (queries: DataQuery[]) => void;
   onRunQuery: () => void;
+  /**
+   * When provided and the query errored with a guardrail soft-block, the error alert offers a prompt
+   * to continue past the guardrail with a reason. Only Explore wires this up.
+   */
+  onSoftBlockContinue?: (reason: string) => void;
   visualization?: ReactNode;
   hideHideQueryButton?: boolean;
   app?: CoreApp;
@@ -662,6 +667,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       editSavedQueryRef,
       addingSavedQuery,
       onCancelAddSavedQuery,
+      onSoftBlockContinue,
     } = this.props;
     const { datasource, showingHelp, data } = this.state;
     const isHidden = query.hide;
@@ -713,7 +719,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
             )}
             {editor}
           </ErrorBoundaryAlert>
-          {error && <QueryErrorAlert error={error} query={query} />}
+          {error && <QueryErrorAlert error={error} query={query} onSoftBlockContinue={onSoftBlockContinue} />}
           {visualization}
         </div>
       </QueryOperationRow>

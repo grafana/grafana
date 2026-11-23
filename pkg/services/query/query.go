@@ -43,6 +43,9 @@ const (
 	HeaderQueryGroupID   = "X-Query-Group-Id"        // mainly useful for finding related queries with query chunking
 	HeaderFromExpression = expr.HeaderFromExpression // used by datasources to identify expression queries
 	HeaderCallerID       = "X-Grafana-Caller-Id"     // identifies the caller that initiated this query (e.g. an app plugin id or external tool name)
+
+	HeaderGuardrailOverride       = "X-Grafana-Guardrail-Override"        // carries the soft-block override token(s) when a user chooses to continue past a guardrail
+	HeaderGuardrailOverrideReason = "X-Grafana-Guardrail-Override-Reason" // carries the user-provided reason for overriding a guardrail soft-block
 )
 
 func ProvideService(

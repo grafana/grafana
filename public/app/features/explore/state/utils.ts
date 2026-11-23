@@ -63,6 +63,7 @@ export const makeExplorePaneState = (overrides?: Partial<ExploreItemState>): Exp
   queryKeys: [],
   isLive: false,
   isPaused: false,
+  lastRunWasUserInitiated: false,
   queryResponse: createEmptyQueryResponse(),
   tableResult: null,
   graphResult: null,

@@ -25,30 +25,35 @@ import (
 //
 // the Cookie header is used by the CookiesMiddleware at
 // https://github.com/grafana/grafana/blob/326d374266077fbacc28c740f276748c636774f5/pkg/services/pluginsintegration/clientmiddleware/cookies_middleware.go#L60
+//
+// the X-Grafana-Guardrail-Override and X-Grafana-Guardrail-Override-Reason headers are forwarded so a
+// user can continue past a guardrail soft-block, carrying the override token(s) and the recorded reason.
 var expectedHeaders = map[string]string{
-	strings.ToLower(models.FromAlertHeaderName):        models.FromAlertHeaderName,
-	strings.ToLower(models.CacheSkipHeaderName):        models.CacheSkipHeaderName,
-	strings.ToLower("X-Rule-Name"):                     "X-Rule-Name",
-	strings.ToLower("X-Rule-Uid"):                      "X-Rule-Uid",
-	strings.ToLower("X-Rule-Folder"):                   "X-Rule-Folder",
-	strings.ToLower("X-Rule-Source"):                   "X-Rule-Source",
-	strings.ToLower("X-Rule-Type"):                     "X-Rule-Type",
-	strings.ToLower("X-Rule-Version"):                  "X-Rule-Version",
-	strings.ToLower("X-Rule-Origin"):                   "X-Rule-Origin",
-	strings.ToLower("X-Grafana-Org-Id"):                "X-Grafana-Org-Id",
-	strings.ToLower(queryService.HeaderQueryGroupID):   queryService.HeaderQueryGroupID,
-	strings.ToLower(queryService.HeaderPanelID):        queryService.HeaderPanelID,
-	strings.ToLower(queryService.HeaderDashboardUID):   queryService.HeaderDashboardUID,
-	strings.ToLower(queryService.HeaderDatasourceUID):  queryService.HeaderDatasourceUID,
-	strings.ToLower(queryService.HeaderFromExpression): queryService.HeaderFromExpression,
-	strings.ToLower(queryService.HeaderPanelPluginId):  queryService.HeaderPanelPluginId,
-	strings.ToLower(queryService.HeaderDashboardTitle): queryService.HeaderDashboardTitle,
-	strings.ToLower(queryService.HeaderPanelTitle):     queryService.HeaderPanelTitle,
-	strings.ToLower(queryService.HeaderCallerID):       queryService.HeaderCallerID,
-	strings.ToLower("User-Agent"):                      "User-Agent",
-	strings.ToLower("X-Real-IP"):                       "X-Real-IP",
-	strings.ToLower("X-Forwarded-For"):                 "X-Forwarded-For",
-	strings.ToLower("Cookie"):                          "Cookie",
+	strings.ToLower(models.FromAlertHeaderName):                 models.FromAlertHeaderName,
+	strings.ToLower(models.CacheSkipHeaderName):                 models.CacheSkipHeaderName,
+	strings.ToLower("X-Rule-Name"):                              "X-Rule-Name",
+	strings.ToLower("X-Rule-Uid"):                               "X-Rule-Uid",
+	strings.ToLower("X-Rule-Folder"):                            "X-Rule-Folder",
+	strings.ToLower("X-Rule-Source"):                            "X-Rule-Source",
+	strings.ToLower("X-Rule-Type"):                              "X-Rule-Type",
+	strings.ToLower("X-Rule-Version"):                           "X-Rule-Version",
+	strings.ToLower("X-Rule-Origin"):                            "X-Rule-Origin",
+	strings.ToLower("X-Grafana-Org-Id"):                         "X-Grafana-Org-Id",
+	strings.ToLower(queryService.HeaderQueryGroupID):            queryService.HeaderQueryGroupID,
+	strings.ToLower(queryService.HeaderPanelID):                 queryService.HeaderPanelID,
+	strings.ToLower(queryService.HeaderDashboardUID):            queryService.HeaderDashboardUID,
+	strings.ToLower(queryService.HeaderDatasourceUID):           queryService.HeaderDatasourceUID,
+	strings.ToLower(queryService.HeaderFromExpression):          queryService.HeaderFromExpression,
+	strings.ToLower(queryService.HeaderPanelPluginId):           queryService.HeaderPanelPluginId,
+	strings.ToLower(queryService.HeaderDashboardTitle):          queryService.HeaderDashboardTitle,
+	strings.ToLower(queryService.HeaderPanelTitle):              queryService.HeaderPanelTitle,
+	strings.ToLower(queryService.HeaderCallerID):                queryService.HeaderCallerID,
+	strings.ToLower(queryService.HeaderGuardrailOverride):       queryService.HeaderGuardrailOverride,
+	strings.ToLower(queryService.HeaderGuardrailOverrideReason): queryService.HeaderGuardrailOverrideReason,
+	strings.ToLower("User-Agent"):                               "User-Agent",
+	strings.ToLower("X-Real-IP"):                                "X-Real-IP",
+	strings.ToLower("X-Forwarded-For"):                          "X-Forwarded-For",
+	strings.ToLower("Cookie"):                                   "Cookie",
 }
 
 func ExtractKnownHeaders(header http.Header) map[string]string {

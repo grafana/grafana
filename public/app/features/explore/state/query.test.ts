@@ -41,6 +41,7 @@ import {
   queryReducer,
   runLoadMoreLogsQueries,
   runQueries,
+  scanStart,
   scanStartAction,
   scanStopAction,
   setSupplementaryQueryEnabled,
@@ -50,6 +51,7 @@ import {
   queryStreamUpdatedAction,
   type QueryEndedPayload,
   changeQueries,
+  stripRequestHeaders,
 } from './query';
 import * as actions from './query';
 import { createDefaultInitialState } from './testHelpers';
@@ -313,6 +315,247 @@ describe('runQueries', () => {
     const calls = (richHistory.addToRichHistory as jest.Mock).mock.calls;
     expect(calls).toHaveLength(1);
     expect(calls[0][0].queries).toHaveLength(2);
+  });
+});
+
+describe('runQueries soft-block override headers and userInitiated', () => {
+  const setupTests = () => {
+    setTimeSrv({ init() {} } as unknown as TimeSrv);
+    return configureStore({
+      ...defaultInitialState,
+    } as unknown as Partial<StoreState>);
+  };
+
+  beforeEach(() => {
+    config.queryHistoryEnabled = false;
+    jest.clearAllMocks();
+    jest.useRealTimers();
+  });
+
+  it('sets lastRunWasUserInitiated to true when userInitiated is passed', async () => {
+    const { dispatch, getState } = setupTests();
+    setupQueryResponse(getState());
+
+    await dispatch(runQueries({ exploreId: 'left', userInitiated: true }));
+
+    expect(getState().explore.panes.left!.lastRunWasUserInitiated).toBe(true);
+  });
+
+  it('sets lastRunWasUserInitiated to true when userInitiated is omitted (user-initiated by default)', async () => {
+    const { dispatch, getState } = setupTests();
+    setupQueryResponse(getState());
+
+    await dispatch(runQueries({ exploreId: 'left' }));
+
+    expect(getState().explore.panes.left!.lastRunWasUserInitiated).toBe(true);
+  });
+
+  it('sets lastRunWasUserInitiated to false only when userInitiated is explicitly false', async () => {
+    const { dispatch, getState } = setupTests();
+    setupQueryResponse(getState());
+
+    await dispatch(runQueries({ exploreId: 'left', userInitiated: false }));
+
+    expect(getState().explore.panes.left!.lastRunWasUserInitiated).toBe(false);
+  });
+
+  it('merges overrideHeaders into the request handed to the datasource query', async () => {
+    const { dispatch, getState } = setupTests();
+    const leftDatasourceInstance = assertIsDefined(getState().explore.panes.left!.datasourceInstance);
+    setupQueryResponse(getState());
+
+    await dispatch(
+      runQueries({
+        exploreId: 'left',
+        userInitiated: true,
+        overrideHeaders: {
+          'X-Grafana-Guardrail-Override': 'abc.def',
+          'X-Grafana-Guardrail-Override-Reason': 'investigating an incident',
+        },
+      })
+    );
+
+    expect(leftDatasourceInstance.query).toHaveBeenCalledWith(
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          'X-Grafana-Guardrail-Override': 'abc.def',
+          'X-Grafana-Guardrail-Override-Reason': 'investigating an incident',
+        }),
+      })
+    );
+  });
+
+  it('does not leak the override headers into a subsequent plain run', async () => {
+    const { dispatch, getState } = setupTests();
+    const leftDatasourceInstance = assertIsDefined(getState().explore.panes.left!.datasourceInstance);
+
+    setupQueryResponse(getState());
+    await dispatch(
+      runQueries({
+        exploreId: 'left',
+        userInitiated: true,
+        overrideHeaders: {
+          'X-Grafana-Guardrail-Override': 'abc.def',
+          'X-Grafana-Guardrail-Override-Reason': 'investigating an incident',
+        },
+      })
+    );
+
+    setupQueryResponse(getState());
+    await dispatch(runQueries({ exploreId: 'left', userInitiated: true }));
+
+    const lastCallRequest = jest.mocked(leftDatasourceInstance.query).mock.calls.at(-1)![0];
+    expect(lastCallRequest.headers?.['X-Grafana-Guardrail-Override']).toBeUndefined();
+    expect(lastCallRequest.headers?.['X-Grafana-Guardrail-Override-Reason']).toBeUndefined();
+  });
+
+  it('does not add the override headers to the pane queries', async () => {
+    const { dispatch, getState } = setupTests();
+    setupQueryResponse(getState());
+
+    const queriesBefore = getState().explore.panes.left!.queries;
+
+    await dispatch(
+      runQueries({
+        exploreId: 'left',
+        userInitiated: true,
+        overrideHeaders: {
+          'X-Grafana-Guardrail-Override': 'abc.def',
+          'X-Grafana-Guardrail-Override-Reason': 'investigating an incident',
+        },
+      })
+    );
+
+    const queriesAfter = getState().explore.panes.left!.queries;
+    expect(queriesAfter).toEqual(queriesBefore);
+    for (const query of queriesAfter) {
+      expect(JSON.stringify(query)).not.toContain('X-Grafana-Guardrail-Override');
+    }
+  });
+
+  it('does not persist the override headers in the stored queryResponse request', async () => {
+    const { dispatch, getState } = setupTests();
+    const leftDatasourceInstance = assertIsDefined(getState().explore.panes.left!.datasourceInstance);
+    setupQueryResponse(getState());
+
+    // correlations$ must emit for the decorated response (carrying request) to reach the store.
+    await dispatch(saveCorrelationsAction({ exploreId: 'left', correlations: [] }));
+    await dispatch(
+      runQueries({
+        exploreId: 'left',
+        userInitiated: true,
+        overrideHeaders: {
+          'X-Grafana-Guardrail-Override': 'abc.def',
+          'X-Grafana-Guardrail-Override-Reason': 'investigating an incident',
+        },
+      })
+    );
+
+    // The datasource still receives the headers for the actual request...
+    expect(leftDatasourceInstance.query).toHaveBeenCalledWith(
+      expect.objectContaining({
+        headers: expect.objectContaining({ 'X-Grafana-Guardrail-Override': 'abc.def' }),
+      })
+    );
+
+    // ...but the request retained in Redux state (visible in the Query Inspector) must not.
+    const stored = getState().explore.panes.left!.queryResponse.request;
+    expect(stored).toBeDefined();
+    expect(stored!.headers?.['X-Grafana-Guardrail-Override']).toBeUndefined();
+    expect(stored!.headers?.['X-Grafana-Guardrail-Override-Reason']).toBeUndefined();
+  });
+
+  it('does not persist the override headers in the results cache', async () => {
+    const { dispatch, getState } = setupTests();
+    const leftDatasourceInstance = assertIsDefined(getState().explore.panes.left!.datasourceInstance);
+    jest.mocked(leftDatasourceInstance.query).mockReturnValueOnce(
+      of({
+        data: [
+          new MutableDataFrame({
+            fields: [{ name: 'test', values: [] }],
+            meta: { preferredVisualisationType: 'graph' },
+          }),
+        ],
+        state: LoadingState.Done,
+      } as DataQueryResponse)
+    );
+
+    await dispatch(saveCorrelationsAction({ exploreId: 'left', correlations: [] }));
+    await dispatch(
+      runQueries({
+        exploreId: 'left',
+        userInitiated: true,
+        overrideHeaders: {
+          'X-Grafana-Guardrail-Override': 'abc.def',
+          'X-Grafana-Guardrail-Override-Reason': 'investigating an incident',
+        },
+      })
+    );
+    await dispatch(addResultsToCache('left'));
+
+    const cached = getState().explore.panes.left!.cache;
+    expect(cached).toHaveLength(1);
+    const cachedHeaders = cached[0].value.request?.headers;
+    expect(cachedHeaders?.['X-Grafana-Guardrail-Override']).toBeUndefined();
+    expect(cachedHeaders?.['X-Grafana-Guardrail-Override-Reason']).toBeUndefined();
+  });
+});
+
+describe('scanStart userInitiated semantics', () => {
+  beforeEach(() => {
+    setTimeSrv({ init() {} } as unknown as TimeSrv);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('dispatches runQueries with userInitiated: false for scan reruns (automatic)', async () => {
+    const runQueriesSpy = jest
+      .spyOn(actions, 'runQueries')
+      .mockImplementation(createAsyncThunk('@explore/runQueries', () => {}));
+
+    const { dispatch } = configureStore({
+      ...defaultInitialState,
+    } as unknown as Partial<StoreState>);
+
+    await dispatch(scanStart('left'));
+
+    expect(runQueriesSpy).toHaveBeenCalledWith(expect.objectContaining({ exploreId: 'left', userInitiated: false }));
+  });
+});
+
+describe('stripRequestHeaders', () => {
+  const makeRequest = (headers?: Record<string, string>) =>
+    ({ requestId: 'r', headers }) as unknown as DataQueryRequest;
+
+  it('removes the named headers case-insensitively and keeps every other header', () => {
+    const request = makeRequest({
+      'x-grafana-guardrail-override': 'abc.def',
+      'X-Grafana-Guardrail-Override-Reason': 'a reason',
+      'X-Keep-Me': 'yes',
+    });
+
+    const stripped = stripRequestHeaders(request, [
+      'X-Grafana-Guardrail-Override',
+      'X-Grafana-Guardrail-Override-Reason',
+    ]);
+
+    expect(stripped.headers).toEqual({ 'X-Keep-Me': 'yes' });
+  });
+
+  it('does not mutate the original request', () => {
+    const request = makeRequest({ 'X-Grafana-Guardrail-Override': 'abc.def' });
+
+    stripRequestHeaders(request, ['X-Grafana-Guardrail-Override']);
+
+    expect(request.headers).toEqual({ 'X-Grafana-Guardrail-Override': 'abc.def' });
+  });
+
+  it('returns the request unchanged when it carries no headers', () => {
+    const request = makeRequest(undefined);
+
+    expect(stripRequestHeaders(request, ['X-Anything'])).toBe(request);
   });
 });
 

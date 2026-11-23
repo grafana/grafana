@@ -43,7 +43,7 @@ export function useKeyboardShortcuts() {
         // Read panes at event time to avoid re-subscribing when panes change
         const panes = selectPanesEntries(getState());
         panes.forEach(([exploreId]) => {
-          dispatch(runQueries({ exploreId }));
+          dispatch(runQueries({ exploreId, userInitiated: true }));
         });
       })
     );

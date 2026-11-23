@@ -30,7 +30,8 @@ function useLiveTailControls(exploreId: string) {
     // TODO referencing this from perspective of refresh picker when there is designated button for it now is not
     //  great. Needs a bit of refactoring.
     dispatch(changeRefreshInterval({ exploreId, refreshInterval: RefreshPicker.offOption.value }));
-    dispatch(runQueries({ exploreId }));
+    // The rerun when leaving live-tailing is an automatic mode transition, not a user-initiated run.
+    dispatch(runQueries({ exploreId, userInitiated: false }));
   }, [exploreId, dispatch, pause]);
 
   const start = useCallback(() => {

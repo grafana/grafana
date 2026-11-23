@@ -4,9 +4,18 @@ import { dateTime, LoadingState } from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';
 import { configureStore } from 'app/store/configureStore';
 import { type ExploreItemState } from 'app/types/explore';
+import { type StoreState } from 'app/types/store';
 
 import { createDefaultInitialState } from './testHelpers';
-import { changeRangeAction, changeRefreshInterval, timeReducer, updateTime } from './time';
+import { changeRangeAction, changeRefreshInterval, timeReducer, updateTime, updateTimeRange } from './time';
+
+// Keep the real query module (its reducer backs the store) but turn runQueries into a spy so we can
+// inspect the userInitiated flag the auto/time-sync reruns pass.
+const runQueriesMock = jest.fn((payload: unknown) => ({ type: 'explore/runQueries/mock', payload }));
+jest.mock('./query', () => ({
+  ...jest.requireActual('./query'),
+  runQueries: (payload: unknown) => runQueriesMock(payload),
+}));
 
 const mockTimeSrv = {
   init: jest.fn(),
@@ -32,6 +41,36 @@ describe('Explore item reducer', () => {
       expect(mockTemplateSrv.updateTimeRange).toBeCalledWith(state.explore.panes.left.range);
       expect(mockTimeSrv.init).toBeCalled();
       expect(mockTemplateSrv.updateTimeRange).toBeCalledWith(state.explore.panes.left.range);
+    });
+  });
+
+  describe('updateTimeRange userInitiated semantics', () => {
+    beforeEach(() => {
+      runQueriesMock.mockClear();
+    });
+
+    it('marks synced-times auto reruns as not user-initiated (userInitiated: false)', () => {
+      const { defaultInitialState } = createDefaultInitialState();
+      const state = { ...defaultInitialState, explore: { ...defaultInitialState.explore, syncedTimes: true } };
+      const { dispatch } = configureStore(state as unknown as Partial<StoreState>);
+
+      dispatch(updateTimeRange({ exploreId: 'left' }));
+
+      expect(runQueriesMock).toHaveBeenCalledWith(
+        expect.objectContaining({ exploreId: 'left', preserveCache: true, userInitiated: false })
+      );
+    });
+
+    it('keeps a direct (non-synced) time-range change user-initiated (does not pass userInitiated: false)', () => {
+      const { defaultInitialState } = createDefaultInitialState();
+      const state = { ...defaultInitialState, explore: { ...defaultInitialState.explore, syncedTimes: false } };
+      const { dispatch } = configureStore(state as unknown as Partial<StoreState>);
+
+      dispatch(updateTimeRange({ exploreId: 'left' }));
+
+      expect(runQueriesMock).toHaveBeenCalled();
+      const payload = runQueriesMock.mock.calls.at(-1)![0] as { userInitiated?: boolean };
+      expect(payload.userInitiated).not.toBe(false);
     });
   });
 

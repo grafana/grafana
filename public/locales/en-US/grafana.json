@@ -9499,6 +9499,12 @@
       "title-datasource-explorer": "Datasource explorer",
       "unknown-datasource": "Unknown datasource"
     },
+    "soft-block-prompt": {
+      "continue": "Continue",
+      "reason-description": "At least 10 characters. The reason is recorded.",
+      "reason-label": "Reason for continuing",
+      "title": "Query paused by a guardrail"
+    },
     "span-bar": {
       "tooltip-critical-path": "A segment on the <1>critical path</1> of the overall trace / request / workflow."
     },

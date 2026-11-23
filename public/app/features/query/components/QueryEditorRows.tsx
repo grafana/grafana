@@ -34,6 +34,8 @@ export interface Props {
   onQueriesChange: (queries: DataQuery[], options?: { skipAutoImport?: boolean }) => void;
   onAddQuery: (query: DataQuery) => void;
   onRunQueries: () => void;
+  /** Explore-only: offers a prompt to continue past a guardrail soft-block on the errored row. */
+  onSoftBlockContinue?: (reason: string) => void;
 
   // Query Response Data
   data: PanelData;
@@ -73,6 +75,7 @@ export function QueryEditorRows({
   onAddQuery,
   onQueriesChange,
   onRunQueries,
+  onSoftBlockContinue,
   onQueryCopied,
   onQueryRemoved,
   onQueryToggled,
@@ -271,6 +274,7 @@ export function QueryEditorRows({
                     onRemoveQuery={onRemoveQuery}
                     onAddQuery={onAddQuery}
                     onRunQuery={onRunQueries}
+                    onSoftBlockContinue={onSoftBlockContinue}
                     onQueryCopied={onQueryCopied}
                     onQueryRemoved={onQueryRemoved}
                     onQueryToggled={onQueryToggled}

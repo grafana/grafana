@@ -11,20 +11,33 @@ import { type DataQueryError, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
 import { Icon, useStyles2 } from '@grafana/ui';
+import { SoftBlockPrompt } from 'app/features/explore/SoftBlockPrompt';
+import { parseSoftBlockError } from 'app/features/explore/utils/softBlock';
 
 export interface Props {
   error: DataQueryError;
   query?: DataQuery;
+  /**
+   * When provided and the error is a guardrail soft-block, a prompt to continue (with a reason) is
+   * shown instead of the plain alert. Omitting it keeps the plain alert, with the machine-readable
+   * trailer stripped from the message either way.
+   */
+  onSoftBlockContinue?: (reason: string) => void;
 }
 
-export function QueryErrorAlert({ error, query }: Props) {
+export function QueryErrorAlert({ error, query, onSoftBlockContinue }: Props) {
   const styles = useStyles2(getStyles);
   const { isAvailable } = useAssistant();
 
-  const message = error?.message ?? error?.data?.message ?? 'Query error';
+  const softBlock = parseSoftBlockError(error?.message);
+  const message = softBlock ? softBlock.text : (error?.message ?? error?.data?.message ?? 'Query error');
 
   const context = useMemo(() => buildAssistantContext(error, message, query), [error, message, query]);
   useProvidePageContext(/\/explore.*/, context);
+
+  if (softBlock && onSoftBlockContinue) {
+    return <SoftBlockPrompt text={softBlock.text} onContinue={onSoftBlockContinue} />;
+  }
 
   return (
     <div className={styles.wrapper}>

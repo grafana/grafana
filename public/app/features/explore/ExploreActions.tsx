@@ -36,7 +36,7 @@ export const ExploreActions = () => {
         name: t('explore.explore-actions.run-query-left', 'Run query (left)'),
         keywords: 'query left',
         perform: () => {
-          dispatch(runQueries({ exploreId: keys[0] }));
+          dispatch(runQueries({ exploreId: keys[0], userInitiated: true }));
         },
         section: exploreSection,
       });
@@ -47,7 +47,7 @@ export const ExploreActions = () => {
           name: t('explore.explore-actions.run-query-right', 'Run query (right)'),
           keywords: 'query right',
           perform: () => {
-            dispatch(runQueries({ exploreId: keys[1] }));
+            dispatch(runQueries({ exploreId: keys[1], userInitiated: true }));
           },
           section: exploreSection,
         });
@@ -93,7 +93,7 @@ export const ExploreActions = () => {
         name: t('explore.explore-actions.run-query', 'Run query'),
         keywords: 'query',
         perform: () => {
-          dispatch(runQueries({ exploreId: keys[0] }));
+          dispatch(runQueries({ exploreId: keys[0], userInitiated: true }));
         },
         section: exploreSection,
       });
