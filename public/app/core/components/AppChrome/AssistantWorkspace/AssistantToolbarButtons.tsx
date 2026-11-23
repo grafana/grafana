@@ -5,7 +5,11 @@ import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 import { useObservable } from '@grafana/data/unstable';
 import { t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { useFlagAssistantFullscreenWorkspace, useFlagGrafanaMegaMenuProfile } from '@grafana/runtime/internal';
+import {
+  useFlagAssistantFullscreenWorkspace,
+  useFlagGrafanaAssistantPageCanvas,
+  useFlagGrafanaMegaMenuProfile,
+} from '@grafana/runtime/internal';
 import { Icon, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { getAssistantChatIdToContinue } from 'app/core/assistant/assistantSidebarState';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -67,13 +71,16 @@ function AssistantIconGradientDefs() {
 /**
  * The Grafana Assistant's top-bar buttons. Elsewhere they are a "Chat" pill (the sidebar toggle, with a menu that
  * moves the Assistant and arranges the window) and a "Workspace" button that opens the Assistant Workspace page; on
- * that page they are a single "Exit Workspace" button back to the page the user came from. Self-contained like
+ * that page they are a single "Exit Workspace" button back to the page the user came from. With the page canvas on,
+ * the Assistant shows a conversation's canvas above the page instead of in the Workspace, so there is no Workspace
+ * button; Exit Workspace stays for links that still lead there. Self-contained like
  * `NavRightButton`/`InviteUserButton`: it decides for itself whether it should render (workspace flag on, not a small
  * screen, and the assistant available).
  */
 export function AssistantToolbarButtons() {
   const styles = useStyles2(getStyles);
   const workspaceEnabled = useFlagAssistantFullscreenWorkspace();
+  const pageCanvasEnabled = useFlagGrafanaAssistantPageCanvas();
   // The trailing separator sets these buttons apart from the profile button, or the sign-in link for a signed-out user.
   // It goes only when there is a profile and it sits in the mega menu instead.
   const hasProfile = useSelector((store) => store.navIndex['profile']) !== undefined;
@@ -137,24 +144,28 @@ export function AssistantToolbarButtons() {
         }
         className={cx(styles.button, isOpen && styles.chatButtonActive)}
       />
-      <NavToolbarSeparator />
-      <ToolbarButton
-        icon={
-          <span className={styles.workspaceIcon}>
-            <Icon name="message-sparkles" size="lg" />
-          </span>
-        }
-        className={styles.button}
-        onClick={() => {
-          reportInteraction('grafana_assistant_workspace', { action: 'open' });
-          // Continues the chat open in the sidebar, if any; the workspace closes the sidebar itself.
-          locationService.push(workspaceUrlFor(getAssistantChatIdToContinue()));
-        }}
-        aria-label={t('navigation.assistant-workspace.open', 'Workspace')}
-        tooltip={t('navigation.assistant-workspace.open-tooltip', 'Open Assistant Workspace')}
-      >
-        {t('navigation.assistant-workspace.open', 'Workspace')}
-      </ToolbarButton>
+      {!pageCanvasEnabled && (
+        <>
+          <NavToolbarSeparator />
+          <ToolbarButton
+            icon={
+              <span className={styles.workspaceIcon}>
+                <Icon name="message-sparkles" size="lg" />
+              </span>
+            }
+            className={styles.button}
+            onClick={() => {
+              reportInteraction('grafana_assistant_workspace', { action: 'open' });
+              // Continues the chat open in the sidebar, if any; the workspace closes the sidebar itself.
+              locationService.push(workspaceUrlFor(getAssistantChatIdToContinue()));
+            }}
+            aria-label={t('navigation.assistant-workspace.open', 'Workspace')}
+            tooltip={t('navigation.assistant-workspace.open-tooltip', 'Open Assistant Workspace')}
+          >
+            {t('navigation.assistant-workspace.open', 'Workspace')}
+          </ToolbarButton>
+        </>
+      )}
       {!profileInMegaMenu && <NavToolbarSeparator className={styles.separator} />}
     </>
   );
