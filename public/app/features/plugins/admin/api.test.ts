@@ -49,7 +49,7 @@ describe('api', () => {
 
         await installPlugin('myorg-test-panel', '1.5.0');
 
-        expect(installPluginMetaMock).toHaveBeenCalledWith('myorg-test-panel', '1.5.0');
+        expect(installPluginMetaMock).toHaveBeenCalledWith('myorg-test-panel', '1.5.0', { updateExisting: true });
         expect(getBackendSrv().post).not.toHaveBeenCalled();
       });
 

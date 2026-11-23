@@ -237,7 +237,7 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
         .mockResolvedValueOnce({ ok: false, status: 404, statusText: 'Not Found' })
         .mockResolvedValueOnce({ ok: true, status: 201 });
 
-      await installPluginMeta('myorg-test-panel', '1.5.0');
+      await installPluginMeta('myorg-test-panel', '1.5.0', { updateExisting: true });
 
       expect(global.fetch).toHaveBeenCalledTimes(2);
       expect(global.fetch).toHaveBeenNthCalledWith(1, pluginUrl);
@@ -266,7 +266,7 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
         .mockResolvedValueOnce({ ok: true, status: 200, json: async () => existing })
         .mockResolvedValueOnce({ ok: true, status: 200 });
 
-      await installPluginMeta('myorg-test-panel', '1.5.0');
+      await installPluginMeta('myorg-test-panel', '1.5.0', { updateExisting: true });
 
       expect(global.fetch).toHaveBeenCalledTimes(2);
       expect(global.fetch).toHaveBeenNthCalledWith(2, pluginUrl, {
@@ -279,7 +279,7 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
     it('should not write when the plugin already has the requested version', async () => {
       global.fetch = jest.fn().mockResolvedValueOnce({ ok: true, status: 200, json: async () => existing });
 
-      await installPluginMeta('myorg-test-panel', '1.0.0');
+      await installPluginMeta('myorg-test-panel', '1.0.0', { updateExisting: true });
 
       expect(global.fetch).toHaveBeenCalledTimes(1);
     });
@@ -290,7 +290,7 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
         .mockResolvedValueOnce({ ok: false, status: 404, statusText: 'Not Found' })
         .mockResolvedValueOnce({ ok: false, status: 500, statusText: 'Internal Server Error' });
 
-      await expect(installPluginMeta('myorg-test-panel', '1.5.0')).rejects.toThrow(
+      await expect(installPluginMeta('myorg-test-panel', '1.5.0', { updateExisting: true })).rejects.toThrow(
         'Failed to install plugin myorg-test-panel 500:Internal Server Error'
       );
     });
@@ -301,7 +301,7 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
         .mockResolvedValueOnce({ ok: true, status: 200, json: async () => existing })
         .mockResolvedValueOnce({ ok: false, status: 500, statusText: 'Internal Server Error' });
 
-      await expect(installPluginMeta('myorg-test-panel', '1.5.0')).rejects.toThrow(
+      await expect(installPluginMeta('myorg-test-panel', '1.5.0', { updateExisting: true })).rejects.toThrow(
         'Failed to install plugin myorg-test-panel 500:Internal Server Error'
       );
     });
@@ -309,8 +309,42 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
     it('should throw an error if looking up the plugin fails with an unexpected status', async () => {
       global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 500, statusText: 'Internal Server Error' });
 
-      await expect(installPluginMeta('myorg-test-panel', '1.5.0')).rejects.toThrow(
+      await expect(installPluginMeta('myorg-test-panel', '1.5.0', { updateExisting: true })).rejects.toThrow(
         'Failed to install plugin myorg-test-panel 500:Internal Server Error'
+      );
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('should only create the plugin by default', async () => {
+      global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 201 });
+
+      await installPluginMeta('myorg-test-panel', '1.5.0');
+
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(global.fetch).toHaveBeenCalledWith('apis/plugins.grafana.app/v0alpha1/namespaces/default/plugins', {
+        body: JSON.stringify({
+          apiVersion: 'plugins.grafana.app/v0alpha1',
+          kind: 'Plugin',
+          metadata: {
+            name: 'myorg-test-panel',
+            namespace: 'default',
+          },
+          spec: {
+            id: 'myorg-test-panel',
+            version: '1.5.0',
+          },
+          status: {},
+        }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
+      });
+    });
+
+    it('should throw by default when the plugin already exists', async () => {
+      global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 409, statusText: 'Conflict' });
+
+      await expect(installPluginMeta('myorg-test-panel', '1.5.0')).rejects.toThrow(
+        'Failed to install plugin myorg-test-panel 409:Conflict'
       );
       expect(global.fetch).toHaveBeenCalledTimes(1);
     });
@@ -318,7 +352,9 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
     it('should throw an error if fetch throws', async () => {
       global.fetch = jest.fn().mockRejectedValueOnce(new Error('Network Error'));
 
-      await expect(installPluginMeta('myorg-test-panel', '1.5.0')).rejects.toThrow('Network Error');
+      await expect(installPluginMeta('myorg-test-panel', '1.5.0', { updateExisting: true })).rejects.toThrow(
+        'Network Error'
+      );
     });
 
     it('should reject invalid plugin IDs without making a request', async () => {

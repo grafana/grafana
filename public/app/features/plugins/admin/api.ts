@@ -236,7 +236,7 @@ export async function installPlugin(id: string, version?: string) {
 
   if (isMTPluginInstallEnabled()) {
     try {
-      return await installPluginMeta(id, version ?? '');
+      return await installPluginMeta(id, version ?? '', { updateExisting: true });
     } catch (error: unknown) {
       logPluginMetaError(`installPluginMeta: Failed to install plugin, falling back to the legacy API`, error, {
         pluginId: id,

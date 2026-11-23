@@ -36,29 +36,24 @@ async function loadPluginMetas(): Promise<PluginMetasResponse> {
   return result;
 }
 
-export async function installPluginMeta(pluginId: string, version: string): Promise<void> {
+export async function installPluginMeta(
+  pluginId: string,
+  version: string,
+  { updateExisting = false }: { updateExisting?: boolean } = {}
+): Promise<void> {
   assertPluginIdFormat(pluginId);
 
   const apiVersion = await getApiVersion();
   const pluginsUrl = `apis/plugins.grafana.app/${apiVersion}/namespaces/${config.namespace}/plugins`;
-  const pluginUrl = `${pluginsUrl}/${pluginId}`;
 
+  if (!updateExisting) {
+    return createPluginMeta(pluginsUrl, apiVersion, pluginId, version);
+  }
+
+  const pluginUrl = `${pluginsUrl}/${pluginId}`;
   const existingResult = await fetch(pluginUrl);
   if (existingResult.status === 404) {
-    const data: Plugin = {
-      apiVersion: `plugins.grafana.app/${apiVersion}`,
-      kind: 'Plugin',
-      metadata: { name: pluginId, namespace: config.namespace },
-      spec: { ...defaultSpec(), id: pluginId, version },
-      status: {},
-    };
-    const created = await fetch(pluginsUrl, {
-      method: 'POST',
-      body: JSON.stringify(data),
-      headers: { 'content-type': 'application/json' },
-    });
-    throwIfNotOk(created, 'install', pluginId);
-    return;
+    return createPluginMeta(pluginsUrl, apiVersion, pluginId, version);
   }
 
   throwIfNotOk(existingResult, 'install', pluginId);
@@ -73,6 +68,27 @@ export async function installPluginMeta(pluginId: string, version: string): Prom
     headers: { 'content-type': 'application/json' },
   });
   throwIfNotOk(updated, 'install', pluginId);
+}
+
+async function createPluginMeta(
+  pluginsUrl: string,
+  apiVersion: string,
+  pluginId: string,
+  version: string
+): Promise<void> {
+  const data: Plugin = {
+    apiVersion: `plugins.grafana.app/${apiVersion}`,
+    kind: 'Plugin',
+    metadata: { name: pluginId, namespace: config.namespace },
+    spec: { ...defaultSpec(), id: pluginId, version },
+    status: {},
+  };
+  const created = await fetch(pluginsUrl, {
+    method: 'POST',
+    body: JSON.stringify(data),
+    headers: { 'content-type': 'application/json' },
+  });
+  throwIfNotOk(created, 'install', pluginId);
 }
 
 function throwIfNotOk(result: Response, action: 'install' | 'uninstall', pluginId: string): void {
