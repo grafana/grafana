@@ -25,7 +25,7 @@ import { type GrafanaRuleIdentifier } from 'app/types/unified-alerting';
 
 import { grafanaRulesNav } from '../../utils/navigation';
 
-import { useRuleAbilities } from './useRuleAbilities';
+import { useAlertRuleAbilities } from './useAlertRuleAbilities';
 
 interface AlertRuleActionsProps {
   rule: AlertRule;
@@ -34,7 +34,7 @@ interface AlertRuleActionsProps {
 export function AlertRuleActions({ rule }: AlertRuleActionsProps) {
   const uid = rule.metadata.name ?? '';
   const title = rule.spec.title ?? '';
-  const abilities = useRuleAbilities(rule);
+  const abilities = useAlertRuleAbilities(rule);
 
   const [showSilenceDrawer, setShowSilenceDrawer] = useState(false);
   const [showEnrichmentDrawer, setShowEnrichmentDrawer] = useState(false);

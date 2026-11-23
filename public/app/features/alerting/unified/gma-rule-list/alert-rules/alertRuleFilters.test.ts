@@ -72,14 +72,12 @@ describe('the Alert rules search', () => {
     ['panelId:4', 'panelId'],
     ['dashboard:d panelId:0', 'panelId'],
     ['policy:p contactPoint:c', 'contactPoint'],
+    ['paused:false', 'paused'],
   ])('reports %j as an invalid %s filter', (query, key) => {
     expect(alertIssues(query)).toEqual([{ key, reason: 'invalid' }]);
   });
 
-  it.each([
-    ['policy:default', 'policy'],
-    ['paused:false', 'paused'],
-  ])('reports %j as an unavailable %s filter', (query, key) => {
+  it.each([['policy:default', 'policy']])('reports %j as an unavailable %s filter', (query, key) => {
     expect(alertIssues(query)).toEqual([{ key, reason: 'unavailable' }]);
   });
 });

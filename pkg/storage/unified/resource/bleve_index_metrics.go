@@ -13,6 +13,8 @@ type BleveIndexMetrics struct {
 	SearchAuthChecks     *prometheus.HistogramVec
 	SearchAuthEvents     *prometheus.CounterVec
 	IndexSize            prometheus.Gauge
+	MemoryIndexSize      prometheus.Gauge
+	MemoryIndexMaxSize   prometheus.Gauge
 	IndexedKinds         *prometheus.GaugeVec
 	IndexCreationTime    *prometheus.HistogramVec
 	OpenIndexes          *prometheus.GaugeVec
@@ -103,6 +105,14 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 		IndexSize: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
 			Name: "grafana_index_server_index_size_bytes",
 			Help: "Size of the index in bytes - only for file-based indices",
+		}),
+		MemoryIndexSize: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
+			Name: "grafana_index_server_memory_index_size_bytes",
+			Help: "Estimated memory used by all open in-memory Bleve indexes, including partially obsolete segments.",
+		}),
+		MemoryIndexMaxSize: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
+			Name: "grafana_index_server_memory_index_max_size_bytes",
+			Help: "Largest estimated memory used by a single open in-memory Bleve index, including partially obsolete segments.",
 		}),
 		IndexedKinds: promauto.With(reg).NewGaugeVec(prometheus.GaugeOpts{
 			Name: "grafana_index_server_indexed_kinds",

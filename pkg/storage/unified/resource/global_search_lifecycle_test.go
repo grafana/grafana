@@ -779,7 +779,7 @@ func TestReconcileMatchesNamesStorageListsInAnotherOrder(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = writer.Stop(context.Background()) })
 	ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{
-		Type: authlib.TypeUser, Login: "testuser", UserID: 1, UserUID: "u1", OrgRole: identity.RoleAdmin, IsGrafanaAdmin: true,
+		Type: authlib.TypeUser, Login: "testuser", UserID: 1, UserUID: "u1", OrgRole: authlib.RoleAdmin, IsGrafanaAdmin: true,
 	})
 
 	const ns = "default" // storage refuses names as short as "ns"

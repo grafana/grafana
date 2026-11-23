@@ -730,13 +730,15 @@ func runTestKVUnixTimestamp(t *testing.T, kv kvpkg.KV, nsPrefix string) {
 	ctx, cancel := context.WithTimeout(t.Context(), 30*time.Second)
 	t.Cleanup(cancel)
 
-	t.Run("unix timestamp returns reasonable value", func(t *testing.T) {
+	t.Run("unix timestamp returns milliseconds close to now", func(t *testing.T) {
+		before := time.Now().UnixMilli()
 		timestamp, err := kv.UnixTimestamp(ctx)
 		require.NoError(t, err)
+		after := time.Now().UnixMilli()
 
-		now := time.Now().Unix()
-		// Allow for some time difference (up to 5 seconds)
-		assert.InDelta(t, now, timestamp, 5)
+		// Allow for the store's clock to differ from the test's (up to 5 seconds).
+		assert.GreaterOrEqual(t, timestamp, before-5000)
+		assert.LessOrEqual(t, timestamp, after+5000)
 	})
 
 	t.Run("unix timestamp is consistent", func(t *testing.T) {
@@ -746,8 +748,8 @@ func runTestKVUnixTimestamp(t *testing.T, kv kvpkg.KV, nsPrefix string) {
 		timestamp2, err := kv.UnixTimestamp(ctx)
 		require.NoError(t, err)
 
-		// Should be very close (within 1 second)
-		require.InDelta(t, timestamp1, timestamp2, 1)
+		require.GreaterOrEqual(t, timestamp2, timestamp1)
+		require.Less(t, timestamp2-timestamp1, int64(1000))
 	})
 }
 

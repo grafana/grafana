@@ -35,7 +35,7 @@ type openIndexListEntry struct {
 	Group     string `json:"group"`
 	Resource  string `json:"resource"`
 	DocCount  int64  `json:"docCount"`
-	// LastSearchedAt is in Unix milliseconds, set for global indexes only.
+	// LastSearchedAt is in Unix milliseconds; omitted when unknown.
 	LastSearchedAt int64 `json:"lastSearchedAt,omitempty"`
 }
 
@@ -161,14 +161,11 @@ func (b *bleveBackend) WriteOpenIndexStats(now time.Time) error {
 		}
 
 		entry := openIndexListEntry{
-			Namespace: key.Namespace,
-			Group:     key.Group,
-			Resource:  key.Resource,
-			DocCount:  int64(docCount),
-		}
-		// Only a global index is closed for not being searched.
-		if key.IsGlobal() {
-			entry.LastSearchedAt = idx.lastSearchedAt.Load()
+			Namespace:      key.Namespace,
+			Group:          key.Group,
+			Resource:       key.Resource,
+			DocCount:       int64(docCount),
+			LastSearchedAt: idx.lastSearchedAt.Load(),
 		}
 		indexes = append(indexes, entry)
 	}

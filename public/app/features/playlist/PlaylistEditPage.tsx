@@ -6,7 +6,7 @@ import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
+import { ManagedResourceBadge } from 'app/features/provisioning/components/ManagedResourceBadge';
 import { SaveProvisionedResourceDrawer } from 'app/features/provisioning/components/Shared/SaveProvisionedResourceDrawer';
 import { useResourceRepositorySelection } from 'app/features/provisioning/hooks/useResourceRepositorySelection';
 import {
@@ -21,6 +21,7 @@ import { resourceKindInfos } from 'app/features/provisioning/utils/resourceKinds
 import { type Playlist, useGetPlaylistQuery, useReplacePlaylistMutation } from '../../api/clients/playlist/v1';
 
 import { PlaylistForm } from './PlaylistForm';
+import { PLAYLISTS_URL } from './utils';
 
 export interface RouteParams {
   uid: string;
@@ -46,7 +47,7 @@ export const PlaylistEditPage = () => {
       name: playlist.metadata?.name ?? '',
       playlist,
     });
-    locationService.push('/playlists');
+    locationService.push(PLAYLISTS_URL);
   };
 
   const pageNav: NavModelItem = {
@@ -61,7 +62,7 @@ export const PlaylistEditPage = () => {
     <Stack direction="row" gap={1} alignItems="center" wrap>
       <h1>{title}</h1>
       {data && isManaged(data) && (
-        <ManagedBadge
+        <ManagedResourceBadge
           managerKind={getManagerKind(data)}
           name={getManagerIdentity(data)}
           repositoryName={getManagerIdentity(data)}
@@ -98,6 +99,7 @@ export const PlaylistEditPage = () => {
           resource={provisionedPlaylist}
           title={provisionedPlaylist.spec?.title ?? ''}
           action="update"
+          redirectUrl={PLAYLISTS_URL}
           onDismiss={() => setProvisionedPlaylist(undefined)}
         />
       )}
