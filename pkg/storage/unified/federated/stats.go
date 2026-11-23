@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 )
 
 // folderBatchSize caps how many folder UIDs are bound into a single IN (...)
@@ -75,7 +76,7 @@ var migrationLogIDs = map[string]string{
 // other way to know a resource lives only in unified storage.
 func (s *LegacyStatsGetter) legacyTableIsStale(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper, resource string) (bool, error) {
 	if id, ok := migrationLogIDs[resource]; ok {
-		exists, err := sess.IsTableExist(helper.Table(migrationLogTable))
+		exists, err := tableExists(sess, helper, helper.Table(migrationLogTable))
 		if err != nil {
 			return false, err
 		}
@@ -95,6 +96,27 @@ func (s *LegacyStatsGetter) legacyTableIsStale(sess *sqlstore.DBSession, helper 
 		return s.Cfg.UnifiedStorage[resource].DualWriterMode >= grafanarest.Mode4, nil
 	}
 	return false, nil
+}
+
+// tableExists reports whether table exists. A helper can name its tables with a schema, as
+// when one connection serves several databases, and IsTableExist would then look for a table
+// literally named "schema.table" in the connection's default schema, which never exists.
+func tableExists(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper, table string) (bool, error) {
+	schema, name, qualified := strings.Cut(table, ".")
+	if !qualified {
+		return sess.IsTableExist(table)
+	}
+	query := "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = ? AND table_name = ?"
+	args := []any{schema, name}
+	if helper.DB.GetDBType() == core.SQLITE {
+		query = "SELECT COUNT(*) FROM " + helper.DB.Quote(schema) + ".sqlite_master WHERE type = 'table' AND name = ?"
+		args = []any{name}
+	}
+	var count int64
+	if _, err := sess.SQL(query, args...).Get(&count); err != nil {
+		return false, err
+	}
+	return count > 0, nil
 }
 
 func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {

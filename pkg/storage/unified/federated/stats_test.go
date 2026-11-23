@@ -19,6 +19,7 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngalertstore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -353,6 +354,43 @@ func TestIntegrationLegacyTableIsStale(t *testing.T) {
 				libraryPanelMigration, "test", true, "", time.Now())
 			require.NoError(t, err)
 			stale, err = s.legacyTableIsStale(sess, helper, libraryPanelResource)
+			require.NoError(t, err)
+			require.True(t, stale)
+			return nil
+		}))
+	})
+
+	// A provider serving several databases over one connection names each table with its schema.
+	t.Run("library panels migration is found when tables are named with a schema", func(t *testing.T) {
+		ctx := context.Background()
+		testDB, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		require.NoError(t, migrations.EnsureMigrationLogTable(ctx, testDB, cfg))
+		base, err := legacysql.NewDatabaseProvider(testDB)(ctx)
+		require.NoError(t, err)
+		s := &LegacyStatsGetter{}
+		require.NoError(t, testDB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			schema := "main"
+			switch testDB.GetDBType() {
+			case migrator.MySQL:
+				_, err := sess.SQL("SELECT DATABASE()").Get(&schema)
+				require.NoError(t, err)
+			case migrator.Postgres:
+				_, err := sess.SQL("SELECT current_schema()").Get(&schema)
+				require.NoError(t, err)
+			}
+			helper := *base
+			helper.Table = func(n string) string { return schema + "." + n }
+
+			stale, err := s.legacyTableIsStale(sess, &helper, libraryPanelResource)
+			require.NoError(t, err)
+			require.False(t, stale)
+
+			_, err = sess.Exec("INSERT INTO "+helper.Table(migrationLogTable)+" ("+helper.DB.Quote("migration_id")+", "+
+				helper.DB.Quote("sql")+", "+helper.DB.Quote("success")+", "+helper.DB.Quote("error")+", "+
+				helper.DB.Quote("timestamp")+") VALUES (?, ?, ?, ?, ?)",
+				libraryPanelMigration, "test", true, "", time.Now())
+			require.NoError(t, err)
+			stale, err = s.legacyTableIsStale(sess, &helper, libraryPanelResource)
 			require.NoError(t, err)
 			require.True(t, stale)
 			return nil
