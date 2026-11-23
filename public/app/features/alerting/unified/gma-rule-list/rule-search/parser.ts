@@ -5,6 +5,8 @@ import { tokenize } from './tokenizer';
 /** A reason the page can't search the query as typed; the page shows each one and sends no request. */
 export type FilterIssue =
   | { key: string; reason: 'invalid' | 'unavailable' }
+  /** `key:` with no value, usually from a space after the colon: `folder: Alerts`. */
+  | { key: string; reason: 'missingValue' }
   | { key: string; reason: 'renamed'; from: string; to: string }
   | { key: null; reason: 'wildcardInText' | 'unclosedQuote' }
   /** The rule search refused the request; `key` is null when the refusal names no filter, or the search text. */
@@ -18,7 +20,7 @@ export interface ParsedSearch<Filter extends SharedRuleFilter> {
 /**
  * Parses the query into a filter, then gives feedback on the result. Parsing rejects only a value the
  * filter can't hold; feedback judges what parsing accepted, so `state:bogus` is a parse rejection and
- * `folder:f*` is feedback.
+ * `folderUid:f*` is feedback.
  */
 export function parse<Filter extends SharedRuleFilter>(
   query: string,
@@ -35,6 +37,7 @@ interface RejectedToken {
   key: string | null;
   /** A renamed value as typed, and the value that replaces it. */
   renamed?: { from: string; to: string };
+  missingValue?: boolean;
 }
 
 function parseFilter<Filter extends SharedRuleFilter>(
@@ -60,7 +63,12 @@ function parseFilter<Filter extends SharedRuleFilter>(
       continue;
     }
 
-    const accepted = raw.value.length > 0 && raw.closed && definition.apply(filter, raw.value);
+    if (raw.closed && raw.value.length === 0) {
+      rejected.push({ key: definition.key, missingValue: true });
+      continue;
+    }
+
+    const accepted = raw.closed && definition.apply(filter, raw.value);
     if (!accepted) {
       const to = definition.renamedValues?.[raw.value.toLowerCase()];
       rejected.push(to ? { key: definition.key, renamed: { from: raw.value, to } } : { key: definition.key });
@@ -77,9 +85,12 @@ function getFeedback<Filter extends SharedRuleFilter>(
   rejected: RejectedToken[],
   filters: Array<FilterDefinition<Filter>>
 ): FilterIssue[] {
-  const issues: FilterIssue[] = rejected.map(({ key, renamed }) => {
+  const issues: FilterIssue[] = rejected.map(({ key, renamed, missingValue }) => {
     if (key === null) {
       return { key, reason: 'unclosedQuote' };
+    }
+    if (missingValue) {
+      return { key, reason: 'missingValue' };
     }
     return renamed ? { key, reason: 'renamed', ...renamed } : { key, reason: 'invalid' };
   });

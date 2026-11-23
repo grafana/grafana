@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useChromeHeaderHeight } from '@grafana/runtime';
-import { Box, Dropdown, EmptyState, LinkButton, Menu, Stack, useStyles2 } from '@grafana/ui';
+import { Dropdown, EmptyState, LinkButton, Menu, Stack, useStyles2 } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../../components/AlertingPageWrapper';
 import MoreButton from '../../components/MoreButton';
@@ -11,49 +11,71 @@ import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
 import { useAlertRulesNav } from '../../navigation/useAlertRulesNav';
 import { grafanaRulesNav } from '../../utils/navigation';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
+import { FilterSidebarLayout } from '../rule-search/FilterSidebar';
 import { RuleListModeToggle } from '../rule-search/RuleListModeToggle';
 import { RuleSearchInput } from '../rule-search/RuleSearchInput';
 import { type RuleListMode, useRuleListSearchState } from '../rule-search/useRuleListSearchState';
+import { RuleSequenceDrawerProvider } from '../rule-sequences/RuleSequenceDrawer';
+import { RuleListSavedSearchIndicator, RuleListSavedSearches } from '../saved-searches/RuleListSavedSearches';
+import { useRuleListSavedSearches } from '../saved-searches/useRuleListSavedSearches';
+import { withSavedSearchesSetup } from '../saved-searches/withSavedSearchesSetup';
 import { useTrackRuleListPageView } from '../shared/analytics';
 
+import { AlertRulesFilterSidebar } from './AlertRulesFilterSidebar';
 import { AlertRulesFoldersView } from './AlertRulesFoldersView';
 import { AlertRulesListView } from './AlertRulesListView';
 import { type AlertRuleFilter, alertRuleSearchSchema } from './alertRuleFilters';
 import { useAlertRuleSearchRejection } from './alertRuleSearch';
 
 function AlertRulesPage() {
+  const { navId, pageNav } = useAlertRulesNav();
   const { query, filter, parseIssues, filterHelp, mode, hasNonFolderFilters, applyQuery, setMode } =
     useRuleListSearchState(alertRuleSearchSchema);
   const rejectionIssues = useAlertRuleSearchRejection(filter, { parseIssues, mode });
   const issues = parseIssues.length > 0 ? parseIssues : rejectionIssues;
 
+  const savedSearches = useRuleListSavedSearches('alert');
+
   useTrackRuleListPageView('alert', mode);
 
-  const { navId, pageNav } = useAlertRulesNav();
   const headerHeight = useChromeHeaderHeight() ?? 0;
   const styles = useStyles2(getStyles, headerHeight);
 
   return (
     <AlertingPageWrapper navId={navId} pageNav={pageNav} actions={<AlertRulesPageHeader />}>
-      <Box paddingTop={2}>
-        <Stack direction="column" gap={2}>
-          <div className={styles.searchRow}>
-            <RuleSearchInput
-              query={query}
-              onApply={applyQuery}
-              filterHelp={filterHelp}
-              issues={issues}
-              trailing={<RuleListModeToggle mode={mode} onChange={setMode} foldersDisabled={hasNonFolderFilters} />}
-            />
-          </div>
-          <AlertRulesBody hasIssues={issues.length > 0} mode={mode} filter={filter} />
-        </Stack>
-      </Box>
+      <Stack direction="column" gap={1}>
+        <div className={styles.searchRow}>
+          <RuleSearchInput
+            query={query}
+            onApply={applyQuery}
+            filterHelp={filterHelp}
+            issues={issues}
+            appliedSavedSearch={
+              <RuleListSavedSearchIndicator
+                query={query}
+                schema={alertRuleSearchSchema}
+                savedSearches={savedSearches.savedSearches}
+              />
+            }
+            trailing={
+              <Stack direction="row" gap={1} alignItems="center">
+                <RuleListSavedSearches kind="alert" savedSearches={savedSearches} />
+                <RuleListModeToggle mode={mode} onChange={setMode} foldersDisabled={hasNonFolderFilters} />
+              </Stack>
+            }
+          />
+        </div>
+        <FilterSidebarLayout sidebar={<AlertRulesFilterSidebar query={query} filter={filter} onApply={applyQuery} />}>
+          <RuleSequenceDrawerProvider>
+            <AlertRulesBody hasIssues={issues.length > 0} mode={mode} filter={filter} />
+          </RuleSequenceDrawerProvider>
+        </FilterSidebarLayout>
+      </Stack>
     </AlertingPageWrapper>
   );
 }
 
-export default withPageErrorBoundary(AlertRulesPage);
+export default withPageErrorBoundary(withSavedSearchesSetup('alert', AlertRulesPage));
 
 function AlertRulesPageHeader() {
   const [createSupported, createAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
@@ -99,7 +121,12 @@ function AlertRulesBody({ hasIssues, mode, filter }: AlertRulesBodyProps) {
     );
   }
   if (mode === 'folders') {
-    return <AlertRulesFoldersView key={filter.folders.join()} folderUids={filter.folders} />;
+    return (
+      <AlertRulesFoldersView
+        key={JSON.stringify([filter.folder, filter.folderUids])}
+        scope={{ folder: filter.folder, folderUids: filter.folderUids }}
+      />
+    );
   }
   return <AlertRulesListView filter={filter} />;
 }
@@ -111,6 +138,6 @@ const getStyles = (theme: GrafanaTheme2, headerHeight: number) => ({
     top: headerHeight,
     zIndex: theme.zIndex.navbarFixed,
     background: theme.colors.background.page,
-    padding: theme.spacing(1, 0),
+    paddingBottom: theme.spacing(1),
   }),
 });

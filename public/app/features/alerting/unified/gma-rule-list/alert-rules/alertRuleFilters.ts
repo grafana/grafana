@@ -12,11 +12,10 @@ export interface AlertRuleFilter extends SharedRuleFilter {
   contactPoint?: string;
   /** Named routing tree, or `DEFAULT_POLICY` for the default-policy filter (not searchable yet). */
   policy?: string;
-  paused?: 'true' | 'false';
   state?: StateValue;
 }
 
-export type AlertFilterKey = SharedFilterKey | 'state' | 'dashboard' | 'panelId' | 'contactPoint' | 'policy' | 'paused';
+export type AlertFilterKey = SharedFilterKey | 'state' | 'dashboard' | 'panelId' | 'contactPoint' | 'policy';
 
 /** Reserved `policy` value that stands for "rules using the default notification policy". */
 export const DEFAULT_POLICY = 'default';
@@ -38,6 +37,7 @@ export const alertRuleSearchSchema: RuleSearchSchema<AlertRuleFilter, AlertFilte
     sharedFilters.rule,
     sharedFilters.label,
     sharedFilters.folder,
+    sharedFilters.folderUid,
     sharedFilters.datasource,
     sharedFilters.plugins,
     {
@@ -119,30 +119,7 @@ export const alertRuleSearchSchema: RuleSearchSchema<AlertRuleFilter, AlertFilte
         },
       ],
     },
-    {
-      key: 'paused',
-      label: () => t('alerting.gma-rule-list.search.property.paused', 'Paused'),
-      description: () => t('alerting.gma-rule-list.search.help.paused', 'Whether the rule is paused (true/false).'),
-      example: 'paused:true',
-      values: ['true', 'false'],
-      apply: (filter, value) => {
-        const paused = value.toLowerCase();
-        if (paused !== 'true' && paused !== 'false') {
-          return false;
-        }
-        filter.paused = paused;
-        return true;
-      },
-      // `paused In [false]` misses rules stored without a `paused` value until the backend indexes it as false.
-      feedback: (filter) => (filter.paused === 'false' ? 'unavailable' : undefined),
-      unavailableValues: [
-        {
-          value: 'false',
-          reason: () =>
-            t('alerting.gma-rule-list.search.not-paused-unavailable', "Filtering by not paused isn't available yet."),
-        },
-      ],
-    },
+    sharedFilters.paused,
     {
       key: 'state',
       label: () => t('alerting.gma-rule-list.search.property.state', 'Alert state'),

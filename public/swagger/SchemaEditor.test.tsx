@@ -1,9 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
-import type { CodeMirrorEditorProps } from '@grafana/ui/unstable';
+import type { InternalCodeMirrorEditorProps } from '@grafana/ui/internal';
 
 import SchemaEditor from './SchemaEditor';
 import * as annotations from './schemaAnnotations';
+
+jest.mock('./schemaAnnotations', () => makeSpyable('./schemaAnnotations'));
 
 // The schema package pulls ESM-only syntax highlighting into Jest; schema validation
 // is outside the draft/commit contract exercised here.
@@ -14,8 +16,8 @@ jest.mock('codemirror-json-schema', () => ({
 }));
 
 // Keep the editor boundary interactive without depending on CodeMirror's DOM in jsdom.
-jest.mock('@grafana/ui/unstable', () => ({
-  CodeMirrorEditor: ({ value, readOnly, onChange, onBlur, onSave }: CodeMirrorEditorProps) => (
+jest.mock('@grafana/ui/internal', () => ({
+  InternalCodeMirrorEditor: ({ value, readOnly, onChange, onBlur, onSave }: InternalCodeMirrorEditorProps) => (
     <textarea
       aria-label="Request body"
       value={value}

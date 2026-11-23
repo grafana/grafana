@@ -70,9 +70,15 @@ function sidebarContext(assistant: 'available' | 'missing', docked = false): Ext
         : new Map(),
     extensionSidebarWidth: 300,
     setExtensionSidebarWidth: jest.fn(),
+    extensionSidebarHeight: 320,
+    setExtensionSidebarHeight: jest.fn(),
     floatingExtensionSidebarWidth: 480,
     setFloatingExtensionSidebarWidth: jest.fn(),
+    floatingHeightOptions: null,
+    floatingExtensionSidebarHeight: undefined,
+    setFloatingExtensionSidebarHeight: jest.fn(),
     presentation: 'docked',
+    dockSide: 'right',
     floatingHidden: false,
   };
 }

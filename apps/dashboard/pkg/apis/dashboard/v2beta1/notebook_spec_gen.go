@@ -1231,12 +1231,11 @@ func (NotebookNotebookLayoutItemKind) OpenAPIModelName() string {
 
 // One ordered item in a notebook layout. `element` references either a CellKind
 // (markdown/code content) or a V2PanelKind in the notebook's elements map. `source`
-// records who authored the cell; `collapsed` hides the body in the UI. `id` identifies the cell
-// itself, as opposed to the element name, which clients choose and can reuse.
+// records who authored the cell; `collapsed` hides the body in the UI.
 // +k8s:openapi-gen=true
 type NotebookNotebookLayoutItemSpec struct {
-	// Assigned by the server on create or update and never changed by clients (a UUID v4).
-	// Comments anchor to this rather than to the element name.
+	// Optional. The server assigns one on create or update when the item has none, and keeps one
+	// the client sends, which must be a UUID v4 that no other item in the notebook has.
 	Id        *string                              `json:"id,omitempty"`
 	Element   NotebookElementReference             `json:"element"`
 	Source    NotebookNotebookLayoutItemSpecSource `json:"source"`
@@ -1275,12 +1274,13 @@ func (NotebookElementReference) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type NotebookSpec struct {
-	Title        string                             `json:"title"`
-	Description  *string                            `json:"description,omitempty"`
-	Tags         []string                           `json:"tags"`
-	TimeSettings NotebookTimeSettingsSpec           `json:"timeSettings"`
-	Elements     map[string]NotebookNotebookElement `json:"elements"`
-	Layout       NotebookNotebookLayoutKind         `json:"layout"`
+	Title        string                   `json:"title"`
+	Description  *string                  `json:"description,omitempty"`
+	Tags         []string                 `json:"tags"`
+	TimeSettings NotebookTimeSettingsSpec `json:"timeSettings"`
+	// The key is the element ID. It identifies the cell: comments and other references anchor to it
+	Elements map[string]NotebookNotebookElement `json:"elements"`
+	Layout   NotebookNotebookLayoutKind         `json:"layout"`
 }
 
 // NewNotebookSpec creates a new NotebookSpec object.

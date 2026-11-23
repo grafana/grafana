@@ -67,6 +67,7 @@ func TestIntegrationUserSearch(t *testing.T) {
 				res := searchUsers(t, helper, "charlie@example.com")
 				require.Len(t, res.Hits, 1)
 				require.Equal(t, "charlie@example.com", res.Hits[0].Email)
+				require.True(t, res.Hits[0].Provisioned)
 			})
 		})
 	}
@@ -452,10 +453,11 @@ func setupUsers(t *testing.T, helper *apis.K8sTestHelper) {
 				Name: "charlie",
 			},
 			Spec: iamv0.UserSpec{
-				Title: "TestUser Charlie",
-				Login: "charlie",
-				Email: "charlie@example.com",
-				Role:  "Viewer",
+				Title:       "TestUser Charlie",
+				Login:       "charlie",
+				Email:       "charlie@example.com",
+				Role:        "Viewer",
+				Provisioned: true,
 			},
 		},
 	}

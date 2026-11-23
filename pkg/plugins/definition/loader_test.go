@@ -169,11 +169,26 @@ func TestLoadInfo(t *testing.T) {
 
 	t.Run("loads the manifest when requested", func(t *testing.T) {
 		info, err := loadInfo(manifestFS(`{"apiVersion": "apps.grafana.app/v1alpha2",
-			"spec": {"appName": "test", "group": "test-app", "versions": []}}`), jsonData,
+			"spec": {"appName": "test", "group": "test.ext.grafana.app", "versions": []}}`), jsonData,
 			Options{AppManifest: true})
 		require.NoError(t, err)
 		require.Len(t, info.Manifests, 1)
-		assert.Equal(t, "test-app", info.Manifests[0].Group)
+		assert.Equal(t, "test.ext.grafana.app", info.Manifests[0].Group)
+		assert.Nil(t, info.Settings)
+	})
+
+	t.Run("a manifest whose group is the plugin ID is the settings manifest", func(t *testing.T) {
+		info, err := loadInfo(manifestFS(`{"apiVersion": "apps.grafana.app/v1alpha2",
+			"spec": {"appName": "test", "group": "test-app", "versions": [{"name": "v0alpha1",
+				"routes": {"namespaced": {"/app/instance/resources/things": {"get": {}}}}}]}}`), jsonData,
+			Options{AppManifest: true})
+		require.NoError(t, err)
+		assert.Empty(t, info.Manifests, "it describes the settings API, not an API of its own")
+		require.NotNil(t, info.Settings)
+		assert.Equal(t, "test-app", info.Settings.Group)
+		require.Len(t, info.Settings.Versions, 1)
+		assert.Contains(t, info.Settings.Versions[0].OpenAPI.Paths, "/namespaces/{namespace}/app/instance/resources/things",
+			"its deprecated routes are migrated")
 	})
 
 	t.Run("loads the v0alpha1 schema when requested", func(t *testing.T) {
@@ -320,7 +335,7 @@ func TestLoadPluginDefinition(t *testing.T) {
 		files := map[string][]byte{
 			"schema/v0alpha1.json": []byte(validSchema),
 			appSDKManifestFile: []byte(`{"apiVersion": "apps.grafana.app/v1alpha2",
-				"spec": {"appName": "one", "group": "app-one", "versions": []}}`),
+				"spec": {"appName": "one", "group": "one.ext.grafana.app", "versions": []}}`),
 		}
 		defs, err := LoadPluginDefinition(ctx,
 			sourceRegistry(discovers(bundle(files, "app-one"))),
@@ -328,7 +343,7 @@ func TestLoadPluginDefinition(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, defs, 1)
 		require.Len(t, defs[0].Manifests, 1)
-		assert.Equal(t, "app-one", defs[0].Manifests[0].Group)
+		assert.Equal(t, "one.ext.grafana.app", defs[0].Manifests[0].Group)
 		assert.Contains(t, defs[0].Schemas, "v0alpha1")
 	})
 

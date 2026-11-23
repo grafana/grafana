@@ -89,7 +89,7 @@ export function UnconfiguredPanelComp(props: PanelProps) {
 
   const onConfigure = () => {
     locationService.partial({ editPanel: props.id });
-    DashboardInteractions.panelActionClicked('configure', props.id, 'panel');
+    DashboardInteractions.panelActionClicked('configure', props.id, 'panel', UNCONFIGURED_PANEL_PLUGIN_ID);
   };
 
   const onUseSavedQuery = () => {
@@ -143,7 +143,7 @@ export function UnconfiguredPanelComp(props: PanelProps) {
     }
 
     dashboard.onShowAddLibraryPanelDrawer(panel.getRef());
-    DashboardInteractions.panelActionClicked('use_library_panel', props.id, 'panel');
+    DashboardInteractions.panelActionClicked('use_library_panel', props.id, 'panel', UNCONFIGURED_PANEL_PLUGIN_ID);
   };
 
   if (panelContext.app === CoreApp.PanelEditor) {
