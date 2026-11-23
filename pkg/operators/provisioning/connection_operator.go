@@ -60,8 +60,7 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 		return fmt.Errorf("failed to get tracer: %w", err)
 	}
 
-	// nil unless keys_only_relist is on, which keeps the full-object re-list.
-	connKeys, err := controllerCfg.ProvisioningKeysLister(logger, apisprovisioning.ConnectionResourceInfo.GroupVersionResource())
+	connKeys, err := controllerCfg.ProvisioningKeysLister(apisprovisioning.ConnectionResourceInfo.GroupVersionResource())
 	if err != nil {
 		return err
 	}

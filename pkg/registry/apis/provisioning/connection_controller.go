@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/grafana/dskit/services"
-	"github.com/grafana/grafana-app-sdk/logging"
 	clientrest "k8s.io/client-go/rest"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -74,19 +73,12 @@ func (s *ConnectionControllerService) runController(ctx context.Context, restCon
 	}
 
 	b := s.builder
-	// nil keeps the full-object re-list; see NewConnectionDeltaSource.
-	var keys keysapi.Lister
-	if b.keysOnlyReList {
-		gvr := provisioning.ConnectionResourceInfo.GroupVersionResource()
-		keys = keysapi.NewGRPCLister(b.unified, gvr)
-		logging.FromContext(ctx).Info("provisioning re-list will ask for keys only", "transport", "storage", "resource", gvr.Resource)
-	}
 	relistMetrics, freshnessMetrics := b.informerMetrics()
 
 	connController, err := controller.ProvideConnectionController(controller.ConnectionControllerDeps{
 		Subscriber:        b.natsSubscriber,
 		Client:            client,
-		Keys:              keys,
+		Keys:              keysapi.NewGRPCLister(b.unified, provisioning.ConnectionResourceInfo.GroupVersionResource()),
 		ConnectionFactory: b.connectionFactory,
 		HealthMetrics:     controller.NewHealthMetricsRecorder(b.registry),
 		RelistMetrics:     relistMetrics,
