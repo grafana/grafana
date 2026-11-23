@@ -2404,6 +2404,10 @@ Set the maximum size, in bytes (estimated from label names and values), of a sin
 
 Set the maximum number of requests of a split recording rule write that may be in flight at once. This setting has no effect unless `max_write_batch_size` is set. The default value of `0` uses the client default. The value must be between `0` and `32`.
 
+#### `max_tracked_series`
+
+Set the maximum number of series that Grafana remembers for stale markers across all recording rules. After the limit is reached, Grafana still evaluates and writes every series, but new series get no stale marker, and Grafana logs a warning. One million series take roughly 1.2 to 1.5 GiB of memory, which is an estimate. The limit is shared by all organizations and is first come, first served. Set it to `0` for no limit. The default value is `1000000`.
+
 <hr>
 
 ### `[annotations]`
@@ -3216,7 +3220,7 @@ Supported types: `local`, `git`, `github`. Grafana Enterprise additionally suppo
 
 #### `connection_types`
 
-List of enabled connection types, separated by `|`. When empty, defaults are applied by each subsystem.
+List of enabled connection types, separated by `|`. When empty, Grafana enables all supported connection types.
 
 Supported types: `github`, `githubOAuth`, and `gitOAuth`. Grafana Enterprise additionally supports `githubEnterprise`, `githubEnterpriseOAuth`, `bitbucketOAuth`, and `gitlabOAuth`.
 

@@ -5,12 +5,9 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/prometheus/client_golang/prometheus"
-
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/satokengen"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -23,6 +20,8 @@ import (
 	sa "github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type ExtSvcAccountsService struct {
@@ -36,7 +35,7 @@ type ExtSvcAccountsService struct {
 	enabled      bool
 }
 
-func ProvideExtSvcAccountsService(acSvc ac.Service, cfg *setting.Cfg, bus bus.Bus, db db.DB, features featuremgmt.FeatureToggles, reg prometheus.Registerer, saSvc *manager.ServiceAccountsService,
+func ProvideExtSvcAccountsService(acSvc ac.Service, cfg *setting.Cfg, bus bus.Bus, dbProvider legacysql.LegacyDatabaseProvider, features featuremgmt.FeatureToggles, reg prometheus.Registerer, saSvc *manager.ServiceAccountsService,
 	secretsSvc secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	tracer tracing.Tracer,
 ) *ExtSvcAccountsService {
@@ -46,7 +45,7 @@ func ProvideExtSvcAccountsService(acSvc ac.Service, cfg *setting.Cfg, bus bus.Bu
 		defaultOrgID: cfg.DefaultOrgID(),
 		logger:       logger,
 		saSvc:        saSvc,
-		skvStore:     kvstore.NewSQLSecretsKVStore(db, secretsSvc, logger), // Using SQL store to avoid a cyclic dependency
+		skvStore:     kvstore.NewSQLSecretsKVStore(dbProvider, secretsSvc, logger), // Using SQL store to avoid a cyclic dependency
 		tracer:       tracer,
 		//nolint:staticcheck // not yet migrated to OpenFeature
 		enabled: cfg.ManagedServiceAccountsEnabled && features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts),
@@ -108,7 +107,7 @@ func (esa *ExtSvcAccountsService) RetrieveExtSvcAccount(ctx context.Context, org
 		Name:       svcAcc.Name,
 		OrgID:      svcAcc.OrgId,
 		IsDisabled: svcAcc.IsDisabled,
-		Role:       identity.RoleType(svcAcc.Role),
+		Role:       authlib.RoleType(svcAcc.Role),
 	}, nil
 }
 
@@ -292,7 +291,7 @@ func (esa *ExtSvcAccountsService) saveExtSvcAccount(ctx context.Context, cmd *sa
 		ctxLogger.Info("Create service account", "service", cmd.ExtSvcSlug, "orgID", cmd.OrgID)
 		sa, err := esa.saSvc.CreateServiceAccount(ctx, cmd.OrgID, &sa.CreateServiceAccountForm{
 			Name:       sa.ExtSvcPrefix + cmd.ExtSvcSlug,
-			Role:       new(identity.RoleNone),
+			Role:       new(authlib.RoleNone),
 			IsDisabled: new(false),
 		})
 		if err != nil {

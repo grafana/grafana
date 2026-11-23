@@ -289,11 +289,6 @@
       "count": 1
     }
   },
-  "packages/grafana-flamegraph/src/FlameGraph/FlameGraph.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
   "packages/grafana-flamegraph/src/FlameGraph/rendering.ts": {
     "react-hooks/immutability": {
       "count": 2
@@ -440,11 +435,6 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/Carousel/Carousel.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/ClipboardButton/ClipboardButton.tsx": {
     "react-hooks/refs": {
       "count": 1
@@ -473,11 +463,6 @@
   "packages/grafana-ui/src/components/Combobox/useComboboxFloat.ts": {
     "react-hooks/refs": {
       "count": 8
-    }
-  },
-  "packages/grafana-ui/src/components/Combobox/useMeasureMulti.ts": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
     }
   },
   "packages/grafana-ui/src/components/Combobox/useOptions.ts": {
@@ -810,11 +795,6 @@
       "count": 4
     }
   },
-  "packages/grafana-ui/src/components/Tags/Tag.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/Tooltip/Popover.tsx": {
     "react-hooks/refs": {
       "count": 1
@@ -1046,9 +1026,6 @@
   },
   "public/app/core/components/RolePicker/RolePickerMenu.tsx": {
     "react-hooks/refs": {
-      "count": 1
-    },
-    "react-hooks/set-state-in-effect": {
       "count": 1
     }
   },
@@ -1433,11 +1410,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/rule-editor/RecordingRuleEditor.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/rule-editor/RuleInspector.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -1574,11 +1546,6 @@
   "public/app/features/alerting/unified/featureToggles.ts": {
     "@grafana/no-config-feature-toggles": {
       "count": 6
-    }
-  },
-  "public/app/features/alerting/unified/group-details/GroupEditPage.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 5
     }
   },
   "public/app/features/alerting/unified/group-details/components/DraggableRulesTable.tsx": {
@@ -1917,11 +1884,6 @@
   "public/app/features/dashboard-scene/composer/ComposerOverlay.tsx": {
     "react-hooks/set-state-in-effect": {
       "count": 2
-    }
-  },
-  "public/app/features/dashboard-scene/conditional-rendering/conditions/ConditionalRenderingTimeRangeSize.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
     }
   },
   "public/app/features/dashboard-scene/embedding/DashboardView.tsx": {
@@ -2267,11 +2229,6 @@
   },
   "public/app/features/dashboard-scene/settings/variables/components/VariableTextField.tsx": {
     "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/settings/variables/components/VariableValuesPreview.tsx": {
-    "react-hooks/set-state-in-effect": {
       "count": 1
     }
   },
@@ -2655,11 +2612,6 @@
       "count": 1
     }
   },
-  "public/app/features/explore/ExploreActions.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
   "public/app/features/explore/ExplorePaneContainer.tsx": {
     "react-hooks/refs": {
       "count": 1
@@ -2724,11 +2676,6 @@
   },
   "public/app/features/explore/RichHistory/RichHistoryQueriesTab.tsx": {
     "react-hooks/exhaustive-deps": {
-      "count": 1
-    }
-  },
-  "public/app/features/explore/RichHistory/RichHistorySettingsTab.tsx": {
-    "@grafana/require-no-margin": {
       "count": 1
     }
   },
@@ -3345,11 +3292,6 @@
   "public/app/features/search/page/components/columns.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
-    }
-  },
-  "public/app/features/search/utils.ts": {
-    "@grafana/no-direct-local-storage-access": {
-      "count": 3
     }
   },
   "public/app/features/serviceaccounts/ServiceAccountCreatePage.tsx": {

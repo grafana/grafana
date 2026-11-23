@@ -7,7 +7,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	ngalertac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
+	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 )
 
 type Calls []Call
@@ -34,7 +34,7 @@ type FakeRuleService struct {
 	AuthorizeAccessToRuleGroupFunc            func(context.Context, identity.Requester, models.RulesGroup) error
 	HasAccessInFolderFunc                     func(context.Context, identity.Requester, models.Namespaced) (bool, error)
 	AuthorizeAccessInFolderFunc               func(context.Context, identity.Requester, models.Namespaced) error
-	AuthorizeRuleChangesFunc                  func(context.Context, identity.Requester, *rulestore.GroupDelta) error
+	AuthorizeRuleChangesFunc                  func(context.Context, identity.Requester, *ngrulesvc.GroupDelta) error
 	AuthorizeNotificationSettingsFunc         func(context.Context, identity.Requester, []ngalertac.ReceiverRef) error
 	CanReadAllRulesFunc                       func(context.Context, identity.Requester) (bool, error)
 
@@ -105,7 +105,7 @@ func (s *FakeRuleService) AuthorizeAccessInFolder(ctx context.Context, user iden
 	return nil
 }
 
-func (s *FakeRuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error {
+func (s *FakeRuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *ngrulesvc.GroupDelta) error {
 	s.Calls = append(s.Calls, Call{"AuthorizeRuleGroupWrite", []interface{}{ctx, user, change}})
 	if s.AuthorizeRuleChangesFunc != nil {
 		return s.AuthorizeRuleChangesFunc(ctx, user, change)

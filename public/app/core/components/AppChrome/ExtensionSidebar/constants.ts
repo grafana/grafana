@@ -16,3 +16,11 @@ export const MIN_FLOATING_EXTENSION_SIDEBAR_WIDTH = 360;
 // Past the Assistant chat's max content width, a wider floating sidebar only adds empty margins.
 export const MAX_FLOATING_EXTENSION_SIDEBAR_WIDTH = Math.min(MAX_EXTENSION_SIDEBAR_WIDTH, 768);
 export const DEFAULT_FLOATING_EXTENSION_SIDEBAR_WIDTH = 480;
+
+// The floating sidebar's extension keeps its surface this far inside the window at the top and at the bottom.
+const FLOATING_EXTENSION_SIDEBAR_WINDOW_GUTTER = 24;
+
+/** The floating sidebar's maximum height in a window `windowHeight` tall, read again as the window resizes. */
+export function getMaxFloatingExtensionSidebarHeight(windowHeight: number): number {
+  return Math.max(0, windowHeight - 2 * FLOATING_EXTENSION_SIDEBAR_WINDOW_GUTTER);
+}
