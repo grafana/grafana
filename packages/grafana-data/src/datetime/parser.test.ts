@@ -84,4 +84,36 @@ describe('dateTimeParse', () => {
       expect(result.toISOString()).toBe('2024-10-08T00:00:00.000Z');
     });
   });
+
+  describe('millisecond fraction after the seconds of the system format', () => {
+    const setFullDate = (fullDate: string) =>
+      systemDateFormats.update({
+        fullDate,
+        interval: {} as SystemDateFormatsState['interval'],
+        useBrowserLocale: false,
+      });
+
+    beforeEach(() => setFullDate('YYYY-MM-DD HH:mm:ss'));
+    afterAll(() => setFullDate('YYYY-MM-DD HH:mm:ss'));
+
+    it.each([
+      ['2020-03-02 15:00:22.123', '2020-03-02T15:00:22.123Z'],
+      ['2020-03-02 15:00:22.12', '2020-03-02T15:00:22.120Z'],
+      ['2020-03-02 15:00:22.5', '2020-03-02T15:00:22.500Z'],
+      ['2020-03-02 15:00:22', '2020-03-02T15:00:22.000Z'],
+    ])('parses %s in utc', (input, expected) => {
+      expect(dateTimeParse(input, { timeZone: 'utc' }).toISOString()).toBe(expected);
+    });
+
+    it('keeps the fraction when parsing in a named time zone', () => {
+      const date = dateTimeParse('2020-03-02 15:00:22.123', { timeZone: 'Europe/Stockholm' });
+      expect(date.toISOString()).toBe('2020-03-02T14:00:22.123Z');
+    });
+
+    it('adds the fraction after the seconds of a custom system format', () => {
+      setFullDate('DD.MM.YYYY HH:mm:ss');
+      const date = dateTimeParse('02.03.2020 15:00:22.123', { timeZone: 'utc' });
+      expect(date.toISOString()).toBe('2020-03-02T15:00:22.123Z');
+    });
+  });
 });

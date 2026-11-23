@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"testing"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -30,7 +31,6 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 
-	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	storagetesting "github.com/grafana/grafana/pkg/apiserver/storage/testing"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -50,7 +50,7 @@ func init() {
 			Login:          "testuser",
 			UserID:         123,
 			UserUID:        "u123",
-			OrgRole:        identity.RoleAdmin,
+			OrgRole:        claims.RoleAdmin,
 			IsGrafanaAdmin: true, // can do anything
 		}
 		return identity.WithRequester(context.Background(), testUserA)

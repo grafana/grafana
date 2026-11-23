@@ -1,12 +1,14 @@
 package builder
 
 import (
+	"maps"
 	"slices"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	openapi "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 )
@@ -140,4 +142,51 @@ func TestOpenAPIPostProcessor_DescribesRoutesOfAGroupWithoutBuilders(t *testing.
 	require.NotNil(t, got.Paths.Paths[path])
 	require.Equal(t, "Search widgets.", got.Paths.Paths[path].Post.Description)
 	require.Contains(t, got.Components.Schemas, "com.example.SearchQuery")
+}
+
+// A route publishes only what its roots reach, under the names its $refs use, and
+// a name OpenAPIModelName already converted is not converted again.
+func TestRouteSchemas(t *testing.T) {
+	const (
+		widget  = "github.com/example/pkg/apis/widget/v1.Widget"
+		part    = "github.com/example/pkg/apis/widget/v1.Part"
+		meta    = "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta" // already converted by OpenAPIModelName
+		missing = "github.com/example/pkg/apis/widget/v1.Missing"
+		other   = "github.com/example/pkg/apis/widget/v1.Other"
+	)
+	definitions := func(ref openapi.ReferenceCallback) map[string]openapi.OpenAPIDefinition {
+		object := func(props map[string]string) spec.Schema {
+			s := spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"object"}, Properties: map[string]spec.Schema{}}}
+			for prop, name := range props {
+				s.Properties[prop] = spec.Schema{SchemaProps: spec.SchemaProps{Ref: ref(name)}}
+			}
+			return s
+		}
+		return map[string]openapi.OpenAPIDefinition{
+			widget: {Schema: object(map[string]string{"metadata": meta, "part": part}), Dependencies: []string{meta, part}},
+			part:   {Schema: object(map[string]string{"owner": widget}), Dependencies: []string{widget, missing}},
+			meta:   {Schema: object(nil)},
+			other:  {Schema: object(nil)},
+		}
+	}
+
+	got := RouteSchemas(definitions, widget)
+
+	require.ElementsMatch(t, []string{
+		"com.github.example.pkg.apis.widget.v1.Widget",
+		"com.github.example.pkg.apis.widget.v1.Part",
+		meta,
+	}, slices.Collect(maps.Keys(got)))
+
+	refs := map[string]string{}
+	for _, name := range []string{"com.github.example.pkg.apis.widget.v1.Widget", "com.github.example.pkg.apis.widget.v1.Part"} {
+		for prop, s := range got[name].Properties {
+			refs[prop] = s.Ref.String()
+		}
+	}
+	require.Equal(t, map[string]string{
+		"metadata": "#/components/schemas/" + meta,
+		"part":     "#/components/schemas/com.github.example.pkg.apis.widget.v1.Part",
+		"owner":    "#/components/schemas/com.github.example.pkg.apis.widget.v1.Widget",
+	}, refs)
 }

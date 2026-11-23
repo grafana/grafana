@@ -12,6 +12,11 @@ import { AnnotationsQueryRunner } from './AnnotationsQueryRunner';
 import { toAsyncOfResult } from './testHelpers';
 import { type AnnotationQueryRunnerOptions } from './types';
 
+jest.mock('../../../../store/store', () => makeSpyable('../../../../store/store'));
+jest.mock('../../../annotations/executeAnnotationQuery', () =>
+  makeSpyable('../../../annotations/executeAnnotationQuery')
+);
+
 function getDefaultOptions(): AnnotationQueryRunnerOptions {
   const annotation = {} as AnnotationQuery;
   const dashboard = createDashboardModelFixture();

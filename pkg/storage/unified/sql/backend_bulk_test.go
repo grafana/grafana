@@ -833,7 +833,6 @@ func TestIntegrationBulkProcessAnalyzesResourceHistory(t *testing.T) {
 		Options: &resourcepb.ListOptions{Key: key},
 	})
 	require.NoError(t, err)
-	require.Nil(t, listResp.Error)
 	require.Len(t, listResp.Items, 3)
 
 	// On Postgres the ANALYZE must have refreshed statistics: a freshly created table

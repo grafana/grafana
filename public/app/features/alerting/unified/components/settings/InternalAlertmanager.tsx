@@ -1,7 +1,7 @@
 import grafanaIconSvg from 'img/grafana_icon.svg';
 
 import { type ConnectionStatus } from '../../hooks/useExternalAmSelector';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
 import { isInternalAlertmanagerInterestedInAlerts } from '../../utils/settings';
 
 import { AlertmanagerCard } from './AlertmanagerCard';

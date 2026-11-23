@@ -85,12 +85,12 @@ export const DataLinkSuggestions = ({ suggestions, ...otherProps }: DataLinkSugg
 
         return (
           <DataLinkSuggestionsList
+            key={key}
             {...otherProps}
             suggestions={groupedSuggestions[key]}
             label={capitalize(key)}
             activeIndex={otherProps.activeIndex}
             activeIndexOffset={indexOffset}
-            key={key}
           />
         );
       })}

@@ -6,10 +6,10 @@ Import the generated API as `dbproxyv1` from `github.com/grafana/grafana/pkg/sto
 
 ## Open a shared connection and SQL pool
 
-Supply the proxy target, service-authenticated gRPC transport credentials, and an `authn.TokenExchanger` to `client.NewConn`.
+Supply the proxy target, gRPC transport credentials matching the endpoint, and an `authn.TokenExchanger` to `client.NewConn`.
 The authlib stream interceptor exchanges a service token for audience `single-tenant-db-proxy` and namespace `*`.
 Each query still names one concrete stack.
-Use insecure transport only for an explicit local fixture.
+CAP token authentication applies with either TLS or plaintext transport.
 
 ```go
 conn, err := client.NewConn(target, transportCredentials, tokenExchanger)
@@ -81,7 +81,6 @@ It preserves empty `[]byte` values separately from SQL `NULL` and returns unsign
 The current client uses gRPC's standard 4 MiB receive limit; align the server's message limit with it.
 The streaming batch size is a target for each message, not a total row limit.
 
-The current proxy endpoint returns `UNIMPLEMENTED` for Query until query execution is available.
-Before connecting a live consumer, verify its queries against a proxy with execution and streaming enabled.
+Before connecting a live consumer, verify its queries against the proxy.
 
 Next, read the [V1 gRPC contract](grpc-contract.md) for stream completion and error details.

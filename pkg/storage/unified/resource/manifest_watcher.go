@@ -88,6 +88,10 @@ type ManifestWatcherConfig struct {
 	CAFile string
 	// AllowInsecure skips TLS verification (local dev only).
 	AllowInsecure bool
+	// Exchanger replaces Token and TokenExchangeURL, for a caller that already has one.
+	Exchanger authnlib.TokenExchanger
+	// TLS replaces CAFile and AllowInsecure, for a caller that already has one.
+	TLS *rest.TLSClientConfig
 	// PollInterval is the delay between poll cycles. Defaults to 1 hour if zero.
 	PollInterval time.Duration
 	Log          log.Logger
@@ -255,6 +259,9 @@ func newManifestWatcherMetrics(reg prometheus.Registerer) *manifestWatcherMetric
 // newManifestTokenExchanger builds the token exchange client shared by every
 // manifest source.
 func newManifestTokenExchanger(cfg ManifestWatcherConfig) (authnlib.TokenExchanger, error) {
+	if cfg.Exchanger != nil {
+		return cfg.Exchanger, nil
+	}
 	var exchangeOpts []authnlib.ExchangeClientOpts
 	if cfg.AllowInsecure {
 		exchangeOpts = append(exchangeOpts, authnlib.WithHTTPClient(
@@ -276,7 +283,7 @@ func newManifestTokenExchanger(cfg ManifestWatcherConfig) (authnlib.TokenExchang
 
 // newManifestRESTConfig builds a rest.Config for one manifest source.
 func newManifestRESTConfig(cfg ManifestWatcherConfig, host string, wrap transport.WrapperFunc) *rest.Config {
-	return &rest.Config{
+	config := &rest.Config{
 		APIPath:       "/apis",
 		Host:          host,
 		WrapTransport: wrap,
@@ -285,6 +292,10 @@ func newManifestRESTConfig(cfg ManifestWatcherConfig, host string, wrap transpor
 			Insecure: cfg.AllowInsecure && cfg.CAFile == "",
 		},
 	}
+	if cfg.TLS != nil {
+		config.TLSClientConfig = *cfg.TLS
+	}
+	return config
 }
 
 // manifestAuthWrapper builds the transport wrapper used to reach the app-platform

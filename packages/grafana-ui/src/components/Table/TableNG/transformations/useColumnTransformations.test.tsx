@@ -1,6 +1,12 @@
 import { act, renderHook } from '@testing-library/react';
 
-import { createDataFrame, FieldType, type DataFrame, type DataTransformerConfig } from '@grafana/data';
+import {
+  cacheFieldDisplayNames,
+  createDataFrame,
+  FieldType,
+  type DataFrame,
+  type DataTransformerConfig,
+} from '@grafana/data';
 
 import { type PanelRuntimeTransformations } from '../../../PanelChrome/PanelContext';
 
@@ -18,7 +24,21 @@ function sourceFrame(names: string[], refId = 'A', overrideHidden: string[] = []
   });
 }
 
-function renderColumnState(initialSource: DataFrame[], initialConfigs: DataTransformerConfig[]) {
+function asTableShows(frames: DataFrame[]): DataFrame[] {
+  const shown = frames.map((frame) => ({
+    ...frame,
+    fields: frame.fields.map((field) => ({ ...field, state: undefined })),
+  }));
+  cacheFieldDisplayNames(shown);
+  return shown;
+}
+
+function renderColumnState(
+  initialSource: DataFrame[],
+  initialConfigs: DataTransformerConfig[],
+  onInteraction?: (action: 'visibility' | 'reorder') => void,
+  initialDisplay?: DataFrame[]
+) {
   let configs: readonly DataTransformerConfig[] = initialConfigs;
   const listeners = new Set<() => void>();
   const api: PanelRuntimeTransformations = {
@@ -33,9 +53,15 @@ function renderColumnState(initialSource: DataFrame[], initialConfigs: DataTrans
       return () => listeners.delete(listener);
     },
   };
-  const view = renderHook(({ source, index }) => useColumnTransformations(index, api, 'table', true, source), {
-    initialProps: { source: initialSource, index: 0 },
-  });
+  const initialProps: { source: DataFrame[]; index: number; display?: DataFrame[] } = {
+    source: initialSource,
+    index: 0,
+    display: initialDisplay,
+  };
+  const view = renderHook(
+    ({ source, index, display }) => useColumnTransformations(index, api, 'table', true, source, onInteraction, display),
+    { initialProps }
+  );
   return { ...view, api, getConfigs: () => configs };
 }
 
@@ -260,4 +286,108 @@ it.each([false, true])('recovers a missing output frame only when enabled=%s', (
   } else {
     expect(api.set).not.toHaveBeenCalled();
   }
+});
+
+it('keeps hidden columns and viewer order when another named query appears', () => {
+  const alpha = { ...sourceFrame(['customer_id', 'region_name', 'request_count']), name: 'Alpha' };
+  const beta = { ...sourceFrame(['host_name'], 'B'), name: 'Beta' };
+  const { result, rerender, api } = renderColumnState(
+    [alpha],
+    [
+      {
+        id: 'organize',
+        filter: { id: 'byRefId', options: 'A' },
+        options: {
+          indexByName: { request_count: 0, customer_id: 1, region_name: 2 },
+          excludeByName: { region_name: true },
+        },
+      },
+    ],
+    undefined,
+    asTableShows([alpha])
+  );
+  expect(result.current?.columnOrder).toEqual(['request_count', 'customer_id', 'region_name']);
+
+  rerender({ source: [alpha, beta], index: 0, display: asTableShows([alpha, beta]) });
+
+  expect(result.current?.columnOrder).toEqual(['Alpha request_count', 'Alpha customer_id', 'Alpha region_name']);
+  expect(result.current?.hiddenColumns).toEqual(new Set(['Alpha region_name']));
+  expect(api.set).not.toHaveBeenCalled();
+});
+
+it('reports accepted column changes but not hydration or repeated actions', () => {
+  const onInteraction = jest.fn();
+  const { result, api } = renderColumnState([sourceFrame(['A', 'B', 'C'])], [], onInteraction);
+  expect(result.current?.columnCatalog).toEqual(['A', 'B', 'C']);
+  expect(onInteraction).not.toHaveBeenCalled();
+  act(() => result.current?.onHiddenColumnsChange(new Set(['B'])));
+  act(() => result.current?.onHiddenColumnsChange(new Set(['B'])));
+  act(() => result.current?.onHiddenColumnsChange(new Set()));
+  act(() => result.current?.onColumnOrderChange(['C', 'A', 'B']));
+  act(() => result.current?.onColumnOrderChange(['C', 'A', 'B']));
+  expect(onInteraction.mock.calls).toEqual([['visibility'], ['visibility'], ['reorder']]);
+  expect(api.set).toHaveBeenCalledTimes(3);
+});
+
+describe('with display name overrides', () => {
+  const source = [sourceFrame(['customer_id', 'region_name', 'request_count'])];
+  const shownAs = (displayNames: string[]): DataFrame[] =>
+    asTableShows([
+      {
+        ...source[0],
+        fields: source[0].fields.map((field, index) => ({
+          ...field,
+          config: { ...field.config, displayName: displayNames[index] },
+        })),
+      },
+    ]);
+  const renamed = shownAs(['Customer', 'Region', 'Requests']);
+
+  it('gives the table display names and stores source names', () => {
+    const { result, getConfigs } = renderColumnState(source, [], undefined, renamed);
+    expect(result.current?.columnCatalog).toEqual(['Customer', 'Region', 'Requests']);
+
+    act(() => result.current?.onHiddenColumnsChange(new Set(['Region'])));
+    act(() => result.current?.onColumnOrderChange(['Requests', 'Customer', 'Region']));
+
+    expect(getConfigs()).toEqual([
+      {
+        id: 'organize',
+        filter: { id: 'byRefId', options: 'A' },
+        options: {
+          indexByName: { request_count: 0, customer_id: 1, region_name: 2 },
+          excludeByName: { region_name: true },
+          renameByName: {},
+        },
+      },
+    ]);
+    expect(result.current?.hiddenColumns).toEqual(new Set(['Region']));
+    expect(result.current?.columnOrder).toEqual(['Requests', 'Customer', 'Region']);
+  });
+
+  it('keeps viewer order when every display name changes', () => {
+    const ordered: DataTransformerConfig = {
+      id: 'organize',
+      filter: { id: 'byRefId', options: 'A' },
+      options: { indexByName: { request_count: 0, customer_id: 1, region_name: 2 } },
+    };
+    const { result, rerender, api } = renderColumnState(source, [ordered], undefined, renamed);
+    expect(result.current?.columnOrder).toEqual(['Requests', 'Customer', 'Region']);
+
+    rerender({ source, index: 0, display: shownAs(['Client', 'Area', 'Hits']) });
+
+    expect(result.current?.columnOrder).toEqual(['Hits', 'Client', 'Area']);
+    expect(api.set).not.toHaveBeenCalled();
+  });
+
+  it('does not record a reorder that keeps the source order', () => {
+    const onInteraction = jest.fn();
+    const { result, api } = renderColumnState(source, [], onInteraction, renamed);
+
+    act(() => result.current?.onColumnOrderChange(['Customer', 'Region', 'Requests']));
+
+    expect(result.current?.columnCatalog).toEqual(['Customer', 'Region', 'Requests']);
+    expect(api.set).not.toHaveBeenCalled();
+    expect(onInteraction).not.toHaveBeenCalled();
+  });
 });

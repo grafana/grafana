@@ -15,6 +15,8 @@ import { setupPluginsExtensionsHook } from '../../testSetup/plugins';
 
 import RulesFilter from './RulesFilter.v2';
 
+jest.mock('../../Analytics', () => makeSpyable('../../Analytics'));
+
 // Mock config for UserStorage (namespace and user must be set before UserStorage module loads)
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

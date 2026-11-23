@@ -1,5 +1,7 @@
 import { t } from '@grafana/i18n';
 
+import { type ImportFormValues } from '../types';
+
 import { type NotificationsSourceOption, type RulesSourceOption, StepKey, type WizardStep } from './types';
 
 /**
@@ -46,6 +48,35 @@ export function isAutoSyncCommitted(
   return isAutoSyncSelected(autoSyncNotificationsEnabled, notificationsSource) && !step1Skipped;
 }
 
+export interface ImportPlan {
+  willEnableAutoSync: boolean;
+  willImportNotifications: boolean;
+  willImportRules: boolean;
+}
+
+/** What confirming the import will do, from the steps the user completed or skipped. */
+export function getImportPlan(
+  values: Pick<
+    ImportFormValues,
+    | 'autoSyncNotificationsEnabled'
+    | 'notificationsSource'
+    | 'step1Completed'
+    | 'step1Skipped'
+    | 'step2Completed'
+    | 'step2Skipped'
+  >
+): ImportPlan {
+  return {
+    willEnableAutoSync: isAutoSyncCommitted(
+      values.autoSyncNotificationsEnabled ?? false,
+      values.notificationsSource,
+      values.step1Skipped
+    ),
+    willImportNotifications: values.step1Completed && !values.step1Skipped,
+    willImportRules: values.step2Completed && !values.step2Skipped,
+  };
+}
+
 export const getNextStep = (currentStep: StepKey): WizardStep | undefined => {
   const steps = getWizardSteps();
   const currentIndex = steps.findIndex((s) => s.id === currentStep);
@@ -90,30 +121,23 @@ export const getNotificationsSourceOptions = (): NotificationsSourceOption[] => 
 
 /**
  * Returns the source options for importing alert rules (Step 2).
- * @param includeYaml - Whether to include the YAML option (based on feature flag)
+ * Uses a function to ensure translations are evaluated at runtime.
  */
-export const getRulesSourceOptions = (includeYaml: boolean): RulesSourceOption[] => {
-  const options: RulesSourceOption[] = [
-    {
-      label: t('alerting.import-to-gma.step2.source.datasource', 'Data source'),
-      description: t(
-        'alerting.import-to-gma.step2.source.datasource-desc',
-        'Import from a Prometheus, Mimir, or Loki data source'
-      ),
-      value: 'datasource',
-    },
-  ];
-
-  if (includeYaml) {
-    options.push({
-      label: t('alerting.import-to-gma.step2.source.yaml', 'YAML file'),
-      description: t('alerting.import-to-gma.step2.source.yaml-desc', 'Import from a Prometheus rules YAML file'),
-      value: 'yaml',
-    });
-  }
-
-  return options;
-};
+export const getRulesSourceOptions = (): RulesSourceOption[] => [
+  {
+    label: t('alerting.import-to-gma.step2.source.datasource', 'Data source'),
+    description: t(
+      'alerting.import-to-gma.step2.source.datasource-desc',
+      'Import from a Prometheus, Mimir, or Loki data source'
+    ),
+    value: 'datasource',
+  },
+  {
+    label: t('alerting.import-to-gma.step2.source.yaml', 'YAML file'),
+    description: t('alerting.import-to-gma.step2.source.yaml-desc', 'Import from a Prometheus rules YAML file'),
+    value: 'yaml',
+  },
+];
 
 /**
  * Returns a label describing which rules will be paused after import.
