@@ -26,6 +26,10 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 	if err != nil {
 		return err
 	}
+	// The accessor returns the object's own map when Secure is a map field, and obj and
+	// previousObject can be the same object (graceful deletion updates the existing object
+	// in place). Work on copies so that pruning previous never drops values from obj.
+	secure = resource.CopySecureValues(secure)
 
 	v.ref = owner
 
@@ -44,6 +48,7 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 		if err != nil {
 			return err
 		}
+		previous = resource.CopySecureValues(previous)
 		for _, p := range previous {
 			if p.Name == "" || p.Remove || !p.Create.IsZero() {
 				return fmt.Errorf("invalid state, saved values must only have a name")
