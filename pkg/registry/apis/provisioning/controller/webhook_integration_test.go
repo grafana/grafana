@@ -14,6 +14,7 @@ import (
 	mockhub "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -216,7 +217,7 @@ func TestIntegrationWebhookController_ReconcileLifecycle(t *testing.T) {
 	require.NotEmpty(t, patches, "OnCreate should register a webhook and return status patches")
 	applyStatus(patches)
 	require.NotNil(t, config.Status.Webhook)
-	createdID := config.Status.Webhook.Id
+	createdID := ptr.Deref(config.Status.Webhook.Id, 0)
 	assert.NotZero(t, createdID)
 	createdSecret := secretFromPatches(patches)
 	assert.NotEmpty(t, createdSecret, "OnCreate should persist a webhook secret")
@@ -234,7 +235,7 @@ func TestIntegrationWebhookController_ReconcileLifecycle(t *testing.T) {
 	require.NotEmpty(t, patches, "OnUpdate should re-adopt the existing hook and return status patches")
 	applyStatus(patches)
 	require.NotNil(t, config.Status.Webhook)
-	assert.Equal(t, createdID, config.Status.Webhook.Id, "adopt must recover the same hook ID, not create a new one")
+	assert.Equal(t, createdID, ptr.Deref(config.Status.Webhook.Id, 0), "adopt must recover the same hook ID, not create a new one")
 	adoptedSecret := secretFromPatches(patches)
 	assert.NotEmpty(t, adoptedSecret, "self-heal should persist a webhook secret")
 	assert.NotEqual(t, createdSecret, adoptedSecret, "self-heal should rotate to a fresh webhook secret")

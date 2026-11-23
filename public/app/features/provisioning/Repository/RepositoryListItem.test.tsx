@@ -34,6 +34,8 @@ const createMockRepository = (overrides: Partial<Repository> = {}): Repository =
     sync: { state: 'success', message: [] },
     observedGeneration: 1,
     webhook: {},
+    token: {},
+    quota: {},
   },
   ...overrides,
 });
@@ -121,6 +123,8 @@ describe('RepositoryListItem', () => {
           sync: { state: 'success', message: [] },
           observedGeneration: 1,
           webhook: {},
+          token: {},
+          quota: {},
           stats: [
             { group: 'dashboard.grafana.app', resource: 'dashboards', count: 2 },
             { group: 'example.grafana.app', resource: 'widgets', count: 3 },

@@ -18,7 +18,9 @@ import (
 
 // repositoryConditions and connectionConditions adapt Repository/Connection to the
 // generic condition helpers below.
-func repositoryConditions(r *provisioning.Repository) []metav1.Condition { return r.Status.Conditions }
+func repositoryConditions(r *provisioning.Repository) []metav1.Condition {
+	return provisioning.ConditionsToMeta(r.Status.Conditions)
+}
 func connectionConditions(c *provisioning.Connection) []metav1.Condition {
 	return provisioning.ConditionsToMeta(c.Status.Conditions)
 }
@@ -115,7 +117,7 @@ func TestIntegrationProvisioning_RepositoryStatusPatch_ValidatesBundledSpecChang
 	updated, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 	require.NoError(t, err, "failed to get repository after the pure status patch")
 	repo := common.MustFromUnstructured[provisioning.Repository](t, updated)
-	found := common.FindCondition(repo.Status.Conditions, pureStatusCondition.Type)
+	found := common.FindCondition(provisioning.ConditionsToMeta(repo.Status.Conditions), pureStatusCondition.Type)
 	require.NotNil(t, found, "status condition should have been written by the pure status patch")
 	require.Equal(t, metav1.ConditionTrue, found.Status)
 
@@ -156,7 +158,7 @@ func TestIntegrationProvisioning_RepositoryStatusPatch_ValidatesBundledSpecChang
 	repo = common.MustFromUnstructured[provisioning.Repository](t, updated)
 
 	require.Equal(t, "main", repo.Spec.Git.Branch, "the invalid branch must not have been persisted")
-	require.Nil(t, common.FindCondition(repo.Status.Conditions, bundledCondition.Type),
+	require.Nil(t, common.FindCondition(provisioning.ConditionsToMeta(repo.Status.Conditions), bundledCondition.Type),
 		"the bundled status write must not land either: the whole patch was rejected atomically")
 }
 

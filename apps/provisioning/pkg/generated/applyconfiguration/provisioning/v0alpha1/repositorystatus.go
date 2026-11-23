@@ -4,10 +4,6 @@
 
 package v0alpha1
 
-import (
-	v1 "k8s.io/client-go/applyconfigurations/meta/v1"
-)
-
 // RepositoryStatusApplyConfiguration represents a declarative configuration of the RepositoryStatus type for use
 // with apply.
 //
@@ -21,7 +17,7 @@ type RepositoryStatusApplyConfiguration struct {
 	// These errors are intended to help users identify and fix issues in the spec.
 	FieldErrors []ErrorDetailsApplyConfiguration `json:"fieldErrors,omitempty"`
 	// Conditions represent the latest available observations of the repository's state.
-	Conditions []v1.ConditionApplyConfiguration `json:"conditions,omitempty"`
+	Conditions []RepositoryConditionApplyConfiguration `json:"conditions,omitempty"`
 	// This will get updated with the current health status (and updated periodically)
 	Health *RepositoryHealthStatusApplyConfiguration `json:"health,omitempty"`
 	// Sync information with the last sync information
@@ -74,7 +70,7 @@ func (b *RepositoryStatusApplyConfiguration) WithFieldErrors(values ...*ErrorDet
 // WithConditions adds the given value to the Conditions field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the Conditions field.
-func (b *RepositoryStatusApplyConfiguration) WithConditions(values ...*v1.ConditionApplyConfiguration) *RepositoryStatusApplyConfiguration {
+func (b *RepositoryStatusApplyConfiguration) WithConditions(values ...*RepositoryConditionApplyConfiguration) *RepositoryStatusApplyConfiguration {
 	for i := range values {
 		if values[i] == nil {
 			panic("nil value passed to WithConditions")

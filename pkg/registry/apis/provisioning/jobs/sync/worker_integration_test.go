@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -37,8 +38,8 @@ func TestIntegrationSyncWorker_EarlySetupFailure(t *testing.T) {
 		},
 		Status: provisioning.RepositoryStatus{
 			Sync: provisioning.RepositorySyncStatus{
-				LastRef:     "existing-ref",
-				LastChecked: 1234567800,
+				LastRef:     new("existing-ref"),
+				LastChecked: new(int64(1234567800)),
 			},
 		},
 	}
@@ -87,12 +88,12 @@ func TestIntegrationSyncWorker_EarlySetupFailure(t *testing.T) {
 	syncStatus, ok := final[0]["value"].(provisioning.RepositorySyncStatus)
 	require.True(t, ok)
 	require.Equal(t, provisioning.JobStateError, syncStatus.State)
-	require.Equal(t, "test-job", syncStatus.Job)
-	require.Equal(t, "existing-ref", syncStatus.LastRef)
-	require.Equal(t, repoConfig.Status.Sync.LastChecked, syncStatus.LastChecked)
+	require.Equal(t, "test-job", ptr.Deref(syncStatus.Job, ""))
+	require.Equal(t, "existing-ref", ptr.Deref(syncStatus.LastRef, ""))
+	require.Equal(t, ptr.Deref(repoConfig.Status.Sync.LastChecked, 0), ptr.Deref(syncStatus.LastChecked, 0))
 	require.Equal(t, []string{"create repository resources client: boom"}, syncStatus.Message)
-	require.NotZero(t, syncStatus.Started)
-	require.NotZero(t, syncStatus.Finished)
+	require.NotZero(t, ptr.Deref(syncStatus.Started, 0))
+	require.NotZero(t, ptr.Deref(syncStatus.Finished, 0))
 
 	require.Equal(t, "replace", final[1]["op"])
 	require.Equal(t, "/status/conditions", final[1]["path"])

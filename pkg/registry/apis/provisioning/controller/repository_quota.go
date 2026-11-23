@@ -6,6 +6,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 )
@@ -56,7 +57,7 @@ func (c *RepositoryQuotaChecker) conditions(
 	countRepositories func(ctx context.Context, namespace string) (int, error),
 ) (metav1.Condition, error) {
 	// Get quota limits for this namespace/tier
-	maxRepos := quotaStatus.MaxRepositories
+	maxRepos := ptr.Deref(quotaStatus.MaxRepositories, 0)
 
 	// If maxRepos is 0, it means unlimited quota
 	if maxRepos == 0 {

@@ -46,8 +46,8 @@ func TestIntegrationHealth(t *testing.T) {
 	// When healthy, fieldErrors should be empty
 	require.Empty(t, originalRepo.Status.FieldErrors, "fieldErrors should be empty when repository is healthy")
 	// Verify Ready condition is set
-	require.NotEmpty(t, originalRepo.Status.Conditions, "conditions should be set")
-	readyCondition := common.FindCondition(originalRepo.Status.Conditions, provisioning.ConditionTypeReady)
+	require.NotEmpty(t, provisioning.ConditionsToMeta(originalRepo.Status.Conditions), "conditions should be set")
+	readyCondition := common.FindCondition(provisioning.ConditionsToMeta(originalRepo.Status.Conditions), provisioning.ConditionTypeReady)
 	require.NotNil(t, readyCondition, "Ready condition should exist")
 	require.Equal(t, metav1.ConditionTrue, readyCondition.Status, "Ready condition should be True")
 	require.Equal(t, provisioning.ReasonAvailable, readyCondition.Reason, "Ready condition should have Available reason")
@@ -180,8 +180,8 @@ func TestIntegrationHealth(t *testing.T) {
 		// When healthy, fieldErrors should be empty
 		require.Empty(t, afterTest.Status.FieldErrors, "fieldErrors should be empty when repository is healthy")
 		// Verify Ready condition is set
-		require.NotEmpty(t, afterTest.Status.Conditions, "conditions should be set")
-		readyCondition := common.FindCondition(afterTest.Status.Conditions, provisioning.ConditionTypeReady)
+		require.NotEmpty(t, provisioning.ConditionsToMeta(afterTest.Status.Conditions), "conditions should be set")
+		readyCondition := common.FindCondition(provisioning.ConditionsToMeta(afterTest.Status.Conditions), provisioning.ConditionTypeReady)
 		require.NotNil(t, readyCondition, "Ready condition should exist")
 		require.Equal(t, metav1.ConditionTrue, readyCondition.Status, "Ready condition should be True")
 		require.Equal(t, provisioning.ReasonAvailable, readyCondition.Reason, "Ready condition should have Available reason")
@@ -265,8 +265,8 @@ func TestIntegrationHealth(t *testing.T) {
 		// When healthy again, fieldErrors should be empty
 		require.Empty(t, finalRepo.Status.FieldErrors, "fieldErrors should be empty when repository is healthy again")
 		// Verify Ready condition is set
-		require.NotEmpty(t, finalRepo.Status.Conditions, "conditions should be set")
-		readyCondition := common.FindCondition(finalRepo.Status.Conditions, provisioning.ConditionTypeReady)
+		require.NotEmpty(t, provisioning.ConditionsToMeta(finalRepo.Status.Conditions), "conditions should be set")
+		readyCondition := common.FindCondition(provisioning.ConditionsToMeta(finalRepo.Status.Conditions), provisioning.ConditionTypeReady)
 		require.NotNil(t, readyCondition, "Ready condition should exist")
 		require.Equal(t, metav1.ConditionTrue, readyCondition.Status, "Ready condition should be True")
 		require.Equal(t, provisioning.ReasonAvailable, readyCondition.Reason, "Ready condition should have Available reason")
@@ -340,7 +340,7 @@ func TestIntegrationProvisioning_UnhealthyRepositorySkipsJobs(t *testing.T) {
 		assert.Greater(c, r.Status.Health.Checked, int64(0), "health check has not run yet")
 		assert.False(c, r.Status.Health.Healthy, "repository should be unhealthy")
 		assert.Equal(c, provisioning.HealthFailureHealth, r.Status.Health.Error)
-		ready := common.FindCondition(r.Status.Conditions, provisioning.ConditionTypeReady)
+		ready := common.FindCondition(provisioning.ConditionsToMeta(r.Status.Conditions), provisioning.ConditionTypeReady)
 		if assert.NotNil(c, ready, "Ready condition should exist") {
 			assert.Equal(c, metav1.ConditionFalse, ready.Status)
 			assert.Equal(c, provisioning.ReasonAuthenticationFailed, ready.Reason)

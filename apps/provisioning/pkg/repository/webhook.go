@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"k8s.io/utils/ptr"
 )
 
 // VerifiedWebhookRequest is an inbound webhook request whose signature has been
@@ -104,7 +105,7 @@ func GetID(status *provisioning.RepositoryWebhookStatus) WebhookID {
 	if status == nil {
 		return WebhookID{}
 	}
-	return WebhookID{ID: status.Id, UUID: status.Uuid}
+	return WebhookID{ID: ptr.Deref(status.Id, 0), UUID: ptr.Deref(status.Uuid, "")}
 }
 
 // ToCtxLogger returns a context whose logger carries the event's populated fields.

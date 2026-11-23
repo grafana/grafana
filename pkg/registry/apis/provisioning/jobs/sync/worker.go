@@ -112,15 +112,15 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 
 	syncStatus := job.Status.ToSyncStatus(job.Name)
 	// Preserve last ref
-	lastRef := repo.Config().Status.Sync.LastRef
-	syncStatus.LastRef = lastRef
+	lastRef := ptr.Deref(repo.Config().Status.Sync.LastRef, "")
+	syncStatus.LastRef = new(lastRef)
 
 	// Ensure the sync state is set to 'working' if not already set or still pending.
 	// FIXME: This should not be needed as the progress recorder should have set it to 'working' by now.
 	syncStatus.State = provisioning.JobStateWorking
 
 	usage := quotas.NewQuotaUsageFromStats(cfg.Status.Stats)
-	quotaTracker := quotas.NewInMemoryQuotaTracker(usage.TotalResources, cfg.Status.Quota.MaxResourcesPerRepository)
+	quotaTracker := quotas.NewInMemoryQuotaTracker(usage.TotalResources, ptr.Deref(cfg.Status.Quota.MaxResourcesPerRepository, 0))
 
 	// Update sync status at start using granular JSON patch operations
 	// Only patch fields that are actually being set to avoid overwriting with zero values
@@ -133,12 +133,12 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		{
 			"op":    "replace",
 			"path":  "/status/sync/job",
-			"value": syncStatus.Job,
+			"value": ptr.Deref(syncStatus.Job, ""),
 		},
 		{
 			"op":    "replace",
 			"path":  "/status/sync/started",
-			"value": syncStatus.Started,
+			"value": ptr.Deref(syncStatus.Started, 0),
 		},
 	}
 
@@ -199,12 +199,12 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	syncSpan.End()
 
 	if syncStatus.State != provisioning.JobStateError && !isQuotaWarning {
-		syncStatus.LastRef = currentRef
+		syncStatus.LastRef = new(currentRef)
 	} else {
 		if isQuotaWarning {
 			logger.Info("repository is over quota, preserving lastRef")
 		}
-		syncStatus.LastRef = lastRef
+		syncStatus.LastRef = new(lastRef)
 	}
 
 	progress.SetMessage(ctx, "update status and stats")
@@ -241,7 +241,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	quotaStatus := repo.Config().Status.Quota
 	quotaCondition := quotas.EvaluateCondition(quotaStatus, quotas.NewQuotaUsageFromStats(repoStats))
 	syncCondition := EvaluatePullCondition(ptr.Deref(jobStatus.State, ""), resultReasons)
-	if conditionOps := controller.BuildConditionPatchOpsFromExisting(cfg.Status.Conditions, cfg.GetGeneration(), quotaCondition, syncCondition); conditionOps != nil {
+	if conditionOps := controller.BuildConditionPatchOpsFromExisting(provisioning.ConditionsToMeta(cfg.Status.Conditions), cfg.GetGeneration(), quotaCondition, syncCondition); conditionOps != nil {
 		patchOperations = append(patchOperations, conditionOps...)
 	}
 
@@ -263,7 +263,7 @@ func (r *SyncWorker) completeFailedSync(ctx context.Context, cfg *provisioning.R
 	jobStatus := progress.Complete(ctx, syncErr)
 	syncStatus := jobStatus.ToSyncStatus(job.Name)
 	syncStatus.LastChecked = cfg.Status.Sync.LastChecked
-	syncStatus.LastRef = lastRef
+	syncStatus.LastRef = new(lastRef)
 
 	patchOperations := []map[string]interface{}{
 		{
@@ -274,7 +274,7 @@ func (r *SyncWorker) completeFailedSync(ctx context.Context, cfg *provisioning.R
 	}
 
 	syncCondition := EvaluatePullCondition(ptr.Deref(jobStatus.State, ""), progress.ResultReasons())
-	if conditionOps := controller.BuildConditionPatchOpsFromExisting(cfg.Status.Conditions, cfg.GetGeneration(), syncCondition); conditionOps != nil {
+	if conditionOps := controller.BuildConditionPatchOpsFromExisting(provisioning.ConditionsToMeta(cfg.Status.Conditions), cfg.GetGeneration(), syncCondition); conditionOps != nil {
 		patchOperations = append(patchOperations, conditionOps...)
 	}
 

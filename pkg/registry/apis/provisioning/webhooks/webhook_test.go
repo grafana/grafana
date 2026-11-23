@@ -267,7 +267,7 @@ func TestUpdateLastEvent(t *testing.T) {
 		cfg := &provisioning.Repository{
 			Status: provisioning.RepositoryStatus{
 				Webhook: &provisioning.RepositoryWebhookStatus{
-					LastEvent: time.Now().UnixMilli(),
+					LastEvent: new(time.Now().UnixMilli()),
 				},
 			},
 		}
@@ -282,7 +282,7 @@ func TestUpdateLastEvent(t *testing.T) {
 		cfg := &provisioning.Repository{
 			Status: provisioning.RepositoryStatus{
 				Webhook: &provisioning.RepositoryWebhookStatus{
-					LastEvent: time.Now().Add(-2 * time.Minute).UnixMilli(),
+					LastEvent: new(time.Now().Add(-2 * time.Minute).UnixMilli()),
 				},
 			},
 		}
@@ -297,7 +297,7 @@ func TestUpdateLastEvent(t *testing.T) {
 		cfg := &provisioning.Repository{
 			Status: provisioning.RepositoryStatus{
 				Webhook: &provisioning.RepositoryWebhookStatus{
-					LastEvent: time.Now().Add(-2 * time.Minute).UnixMilli(),
+					LastEvent: new(time.Now().Add(-2 * time.Minute).UnixMilli()),
 				},
 			},
 		}

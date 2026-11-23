@@ -167,9 +167,9 @@ func TestMetricCollector_RepositoryDimensions(t *testing.T) {
 				Status: provisioning.RepositoryStatus{
 					Health: provisioning.RepositoryHealthStatus{Healthy: true},
 					Sync:   provisioning.RepositorySyncStatus{State: provisioning.JobStateSuccess},
-					Conditions: []metav1.Condition{
+					Conditions: provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{
 						{Type: provisioning.ConditionTypeReady, Reason: provisioning.ReasonAvailable},
-					},
+					}),
 				},
 			},
 			{
@@ -183,9 +183,9 @@ func TestMetricCollector_RepositoryDimensions(t *testing.T) {
 				Status: provisioning.RepositoryStatus{
 					Health: provisioning.RepositoryHealthStatus{Healthy: false},
 					Sync:   provisioning.RepositorySyncStatus{State: provisioning.JobStateError},
-					Conditions: []metav1.Condition{
+					Conditions: provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{
 						{Type: provisioning.ConditionTypeReady, Reason: provisioning.ReasonInvalidSpec},
-					},
+					}),
 				},
 			},
 		}, nil

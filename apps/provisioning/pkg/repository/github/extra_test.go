@@ -217,8 +217,8 @@ func TestExtra_Build(t *testing.T) {
 				},
 				Status: provisioning.RepositoryStatus{
 					Webhook: &provisioning.RepositoryWebhookStatus{
-						Id:  456,
-						Url: "https://grafana.example.com/webhook",
+						Id:  new(int64(456)),
+						Url: new("https://grafana.example.com/webhook"),
 					},
 				},
 			},

@@ -31,11 +31,11 @@ func TestRepositoryUsageStatusFromRepository(t *testing.T) {
 		Secure: resource.InlineSecureValues{provisioning.RepositorySecureToken: resource.InlineSecureValue{Name: "repo-token"}},
 		Status: provisioning.RepositoryStatus{
 			Health: provisioning.RepositoryHealthStatus{Healthy: true},
-			Sync:   provisioning.RepositorySyncStatus{State: provisioning.JobStateSuccess, Finished: 1_600_000_000_000},
+			Sync:   provisioning.RepositorySyncStatus{State: provisioning.JobStateSuccess, Finished: new(int64(1_600_000_000_000))},
 			Stats:  stats,
-			Conditions: []metav1.Condition{
+			Conditions: provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{
 				{Type: provisioning.ConditionTypeReady, Status: metav1.ConditionTrue, Reason: provisioning.ReasonAvailable},
-			},
+			}),
 		},
 	}
 
@@ -115,9 +115,9 @@ func TestRepositoryUsageStatusFromRepository_AuthFailure(t *testing.T) {
 		Spec: provisioning.RepositorySpec{Type: provisioning.RepositorySpecTypeGithub},
 		Status: provisioning.RepositoryStatus{
 			Health: provisioning.RepositoryHealthStatus{Healthy: false, Error: provisioning.HealthFailureHealth},
-			Conditions: []metav1.Condition{
+			Conditions: provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{
 				{Type: provisioning.ConditionTypeReady, Status: metav1.ConditionFalse, Reason: provisioning.ReasonAuthenticationFailed},
-			},
+			}),
 		},
 	}
 

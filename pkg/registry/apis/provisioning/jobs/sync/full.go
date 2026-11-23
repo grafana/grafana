@@ -11,8 +11,10 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
@@ -787,7 +789,7 @@ func wrapWithTimeout(ctx context.Context, timeout time.Duration, fn func(context
 // checkQuotaBeforeSync checks if the repository is over quota and if the sync would exceed the quota limit.
 // Returns a QuotaExceededError if the sync should be blocked, nil otherwise.
 func checkQuotaBeforeSync(ctx context.Context, repo repository.Repository, changes []ResourceFileChange, tracer tracing.Tracer) error {
-	if !quotas.IsQuotaExceeded(repo.Config().Status.Conditions) {
+	if !quotas.IsQuotaExceeded(provisioning.ConditionsToMeta(repo.Config().Status.Conditions)) {
 		return nil
 	}
 
@@ -822,7 +824,7 @@ func checkQuotaBeforeSync(ctx context.Context, repo repository.Repository, chang
 	if !quotas.WouldStayWithinQuota(cfg.Status.Quota, quotaUsage, netChange) {
 		return quotas.NewQuotaExceededError(fmt.Errorf(
 			"usage %d/%d, incoming changes do not free enough resources",
-			quotaUsage.TotalResources, cfg.Status.Quota.MaxResourcesPerRepository,
+			quotaUsage.TotalResources, ptr.Deref(cfg.Status.Quota.MaxResourcesPerRepository, 0),
 		))
 	}
 

@@ -812,15 +812,22 @@
                                         "description": "Token will get updated with current token information"
                                     },
                                     "webhook": {
-                                        "$ref": "#/components/schemas/WebhookStatus",
-                                        "description": "Webhook Information (if applicable)"
+                                        "allOf": [
+                                            {
+                                                "$ref": "#/components/schemas/WebhookStatus"
+                                            }
+                                        ],
+                                        "description": "Webhook Information (if applicable)",
+                                        "nullable": true
                                     }
                                 },
                                 "required": [
                                     "observedGeneration",
                                     "health",
                                     "sync",
-                                    "webhook"
+                                    "webhook",
+                                    "token",
+                                    "quota"
                                 ],
                                 "type": "object"
                             }
@@ -2995,15 +3002,22 @@
                                         "description": "Token will get updated with current token information"
                                     },
                                     "webhook": {
-                                        "$ref": "#/components/schemas/WebhookStatus",
-                                        "description": "Webhook Information (if applicable)"
+                                        "allOf": [
+                                            {
+                                                "$ref": "#/components/schemas/WebhookStatus"
+                                            }
+                                        ],
+                                        "description": "Webhook Information (if applicable)",
+                                        "nullable": true
                                     }
                                 },
                                 "required": [
                                     "observedGeneration",
                                     "health",
                                     "sync",
-                                    "webhook"
+                                    "webhook",
+                                    "token",
+                                    "quota"
                                 ],
                                 "type": "object"
                             }

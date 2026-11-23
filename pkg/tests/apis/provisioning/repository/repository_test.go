@@ -2126,9 +2126,9 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 		firstReconciledRepo.Status.Sync = provisioning.RepositorySyncStatus{
 			State:     provisioning.JobStateSuccess,
 			Job:       firstReconciledRepo.Status.Sync.Job,
-			Started:   now.UnixMilli(),
-			Finished:  now.UnixMilli(),
-			Scheduled: now.UnixMilli(),
+			Started:   new(now.UnixMilli()),
+			Finished:  new(now.UnixMilli()),
+			Scheduled: new(now.UnixMilli()),
 			LastRef:   firstReconciledRepo.Status.Sync.LastRef,
 		}
 		firstReconciledRepo.Status.Health = provisioning.RepositoryHealthStatus{
@@ -2140,7 +2140,7 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 			Expiration:  now.Add(-time.Minute).UnixMilli(),
 		}
 		firstReconciledRepo.Status.FieldErrors = []provisioning.ErrorDetails{}
-		firstReconciledRepo.Status.Conditions = []metav1.Condition{
+		firstReconciledRepo.Status.Conditions = provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{
 			{
 				Type:               provisioning.ConditionTypeReady,
 				Status:             metav1.ConditionTrue,
@@ -2148,7 +2148,7 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 				LastTransitionTime: metav1.Time{Time: now},
 				Reason:             provisioning.ReasonAvailable,
 			},
-		}
+		})
 		updatedRepo := common.MustToUnstructured(t, firstReconciledRepo)
 		// This should also trigger a reconciliation loop
 		_, err = helper.Repositories.Resource.UpdateStatus(t.Context(), updatedRepo, metav1.UpdateOptions{})
@@ -2637,7 +2637,7 @@ func TestIntegrationRepositoryController_DefaultBranchUnavailable(t *testing.T) 
 				wantMessage := "failed to get repository metadata: " + repository.ErrServerUnavailable.Error()
 				assert.Equal(collect, []string{wantMessage}, repo.Status.Health.Message)
 
-				ready := common.FindCondition(repo.Status.Conditions, provisioning.ConditionTypeReady)
+				ready := common.FindCondition(provisioning.ConditionsToMeta(repo.Status.Conditions), provisioning.ConditionTypeReady)
 				if !assert.NotNil(collect, ready) {
 					return
 				}

@@ -32,6 +32,8 @@ const createMockRepository = (spec: Partial<RepositorySpec>, status: Partial<Rep
     sync: { state: 'success', message: [] },
     observedGeneration: 1,
     webhook: { id: 42, url: 'https://grafana.example/webhook' },
+    token: {},
+    quota: {},
     ...status,
   },
 });

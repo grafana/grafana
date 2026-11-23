@@ -13,6 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -271,10 +272,10 @@ func testDeletionBlockedByWebhook(t *testing.T, helper *common.GitTestHelper, p 
 				if !assert.NotNil(collect, repo.Status.Deletion, "deletion status should be populated") {
 					return
 				}
-				assert.Equal(collect, provisioning.DeletionStateBlocked, repo.Status.Deletion.State)
-				assert.Equal(collect, tc.cause, repo.Status.Deletion.Cause)
-				assert.Equal(collect, repository.CleanFinalizer, repo.Status.Deletion.Finalizer, "the cleanup finalizer is the one blocking deletion")
-				assert.Contains(collect, repo.Status.Deletion.Message, "delete webhook", "the message should explain the webhook removal failure")
+				assert.Equal(collect, provisioning.DeletionStateBlocked, ptr.Deref(repo.Status.Deletion.State, ""))
+				assert.Equal(collect, tc.cause, ptr.Deref(repo.Status.Deletion.Cause, ""))
+				assert.Equal(collect, repository.CleanFinalizer, ptr.Deref(repo.Status.Deletion.Finalizer, ""), "the cleanup finalizer is the one blocking deletion")
+				assert.Contains(collect, ptr.Deref(repo.Status.Deletion.Message, ""), "delete webhook", "the message should explain the webhook removal failure")
 			}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "deletion status should surface the blocking finalizer")
 			require.Positive(t, p.State(repoName).HookDeletes, "the webhook delete must have been attempted")
 
@@ -330,11 +331,11 @@ func testWebhookSecretRotatedWhenExpired(t *testing.T, helper *common.GitTestHel
 	WaitForWebhook(t, helper, repoName, p.HookID(repoName))
 
 	status := GetRepository(t, helper, repoName).Status.Webhook
-	require.Positive(t, status.LastRotated, "LastRotated should be set on creation")
+	require.Positive(t, ptr.Deref(status.LastRotated, 0), "LastRotated should be set on creation")
 	previousSecret := requireProviderSecret(t, helper, p, repoName)
 
 	expiredTimestamp := int64(1)
-	status.LastRotated = expiredTimestamp
+	status.LastRotated = new(expiredTimestamp)
 	patch := common.AsJSON(map[string]any{"status": map[string]any{"webhook": status}})
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		_, err := helper.Repositories.Resource.Patch(t.Context(), repoName, types.MergePatchType, patch, metav1.PatchOptions{}, "status")
@@ -352,7 +353,7 @@ func testWebhookSecretRotatedWhenExpired(t *testing.T, helper *common.GitTestHel
 			return
 		}
 		if assert.NotNil(collect, repo.Status.Webhook) {
-			assert.Greater(collect, repo.Status.Webhook.LastRotated, expiredTimestamp, "LastRotated should be updated after rotation")
+			assert.Greater(collect, ptr.Deref(repo.Status.Webhook.LastRotated, 0), expiredTimestamp, "LastRotated should be updated after rotation")
 		}
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "webhook secret should be rotated when expired")
 	require.NotEqual(t, previousSecret, requireProviderSecret(t, helper, p, repoName), "webhook secret should change on rotation")

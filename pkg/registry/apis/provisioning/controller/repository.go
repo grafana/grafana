@@ -461,8 +461,8 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 		"pendingSeconds", pendingSeconds,
 		"finalizerCount", len(obj.Finalizers),
 		"finalizers", strings.Join(obj.Finalizers, ","),
-		"hasDeleteError", obj.Status.DeleteError != "",
-		"deleteError", obj.Status.DeleteError,
+		"hasDeleteError", ptr.Deref(obj.Status.DeleteError, "") != "",
+		"deleteError", ptr.Deref(obj.Status.DeleteError, ""),
 	)
 
 	// Process any finalizers
@@ -526,11 +526,11 @@ func (rc *RepositoryController) updateDeleteStatus(ctx context.Context, obj *pro
 	// enough: a repository wedged before status.deletion existed has the string
 	// set but no structured status (it must be backfilled), and two finalizers
 	// can fail with the same message while blaming different finalizers.
-	if obj.Status.DeleteError == deletion.Message && reflect.DeepEqual(obj.Status.Deletion, deletion) {
+	if ptr.Deref(obj.Status.DeleteError, "") == ptr.Deref(deletion.Message, "") && reflect.DeepEqual(obj.Status.Deletion, deletion) {
 		return nil
 	}
 	logger := logging.FromContext(ctx)
-	logger.Info("updating repository status with deletion error", "error", deletion.Message)
+	logger.Info("updating repository status with deletion error", "error", ptr.Deref(deletion.Message, ""))
 	// "add" rather than "replace": these fields are omitempty and therefore
 	// absent before the first failure, where a "replace" on the missing path
 	// would fail. "add" creates them, and replaces them when already present.
@@ -538,7 +538,7 @@ func (rc *RepositoryController) updateDeleteStatus(ctx context.Context, obj *pro
 		map[string]interface{}{
 			"op":    "add",
 			"path":  "/status/deleteError",
-			"value": deletion.Message,
+			"value": ptr.Deref(deletion.Message, ""),
 		},
 		map[string]interface{}{
 			"op":    "add",
@@ -554,18 +554,18 @@ func (rc *RepositoryController) updateDeleteStatus(ctx context.Context, obj *pro
 // human-readable message.
 func buildDeletionStatus(err error) *provisioning.RepositoryDeletionStatus {
 	deletion := &provisioning.RepositoryDeletionStatus{
-		State:   provisioning.DeletionStateBlocked,
-		Message: err.Error(),
-		Cause:   provisioning.RepositoryDeletionStatusCause(classifyDeletionErrorCause(err)),
+		State:   new(provisioning.DeletionStateBlocked),
+		Message: new(err.Error()),
+		Cause:   new(provisioning.RepositoryDeletionStatusCause(classifyDeletionErrorCause(err))),
 	}
 	var fe *finalizerError
 	if errors.As(err, &fe) {
-		deletion.Finalizer = fe.finalizer
+		deletion.Finalizer = new(fe.finalizer)
 	}
 	var folderErr *nonEmptyFolderError
 	if errors.As(err, &folderErr) {
 		// nonEmptyFolderError is ready for users; omit internal operation prefixes.
-		deletion.Message = folderErr.Error()
+		deletion.Message = new(folderErr.Error())
 	}
 	return deletion
 }
@@ -575,16 +575,16 @@ func buildDeletionStatus(err error) *provisioning.RepositoryDeletionStatus {
 // "system" until a failed reconcile persists their cause.
 func deletionErrorCause(obj *provisioning.Repository) string {
 	if deletion := obj.Status.Deletion; deletion != nil {
-		switch deletion.Cause {
+		switch ptr.Deref(deletion.Cause, "") {
 		case provisioning.RepositoryDeletionStatusCauseUser, provisioning.RepositoryDeletionStatusCauseSystem:
-			return string(deletion.Cause)
+			return string(ptr.Deref(deletion.Cause, ""))
 		default:
 			// Older statuses have no cause. Unknown values must also stay in
 			// the alert population without introducing unbounded metric labels.
 			return reconcileCauseSystem
 		}
 	}
-	if obj.Status.DeleteError != "" {
+	if ptr.Deref(obj.Status.DeleteError, "") != "" {
 		return reconcileCauseSystem
 	}
 	return ""
@@ -592,12 +592,12 @@ func deletionErrorCause(obj *provisioning.Repository) string {
 
 func (rc *RepositoryController) shouldResync(ctx context.Context, obj *provisioning.Repository) bool {
 	// don't trigger resync if a sync was never started
-	if obj.Status.Sync.Finished == 0 && obj.Status.Sync.State == "" {
+	if ptr.Deref(obj.Status.Sync.Finished, 0) == 0 && obj.Status.Sync.State == "" {
 		return false
 	}
 
-	syncAge := time.Since(time.UnixMilli(obj.Status.Sync.Finished))
-	checkAge := time.Since(time.UnixMilli(max(obj.Status.Sync.Finished, obj.Status.Sync.LastChecked)))
+	syncAge := time.Since(time.UnixMilli(ptr.Deref(obj.Status.Sync.Finished, 0)))
+	checkAge := time.Since(time.UnixMilli(max(ptr.Deref(obj.Status.Sync.Finished, 0), ptr.Deref(obj.Status.Sync.LastChecked, 0))))
 	// In case the sync interval is lower than the minimum sync interval set by the system
 	// we should default to the latter
 	syncInterval := max(time.Duration(ptr.Deref(obj.Spec.Sync.IntervalSeconds, 0))*time.Second, rc.minSyncInterval)
@@ -606,24 +606,24 @@ func (rc *RepositoryController) shouldResync(ctx context.Context, obj *provision
 	// Check for stale sync status - if sync status indicates a job is running but the job no longer exists
 	// Only check if Finished is set (meaning a sync has completed before) to avoid interfering with initial syncs
 	// Only trigger resync if sync is enabled and sync interval has elapsed (to avoid unnecessary operations)
-	if obj.Status.Sync.Finished > 0 &&
+	if ptr.Deref(obj.Status.Sync.Finished, 0) > 0 &&
 		obj.Spec.Sync.Enabled &&
 		(obj.Status.Sync.State == provisioning.JobStatePending || obj.Status.Sync.State == provisioning.JobStateWorking) &&
-		obj.Status.Sync.Job != "" {
-		_, err := rc.jobs.Get(ctx, obj.Namespace, obj.Status.Sync.Job)
+		ptr.Deref(obj.Status.Sync.Job, "") != "" {
+		_, err := rc.jobs.Get(ctx, obj.Namespace, ptr.Deref(obj.Status.Sync.Job, ""))
 		if apierrors.IsNotFound(err) {
 			// Job was cleaned up but sync status wasn't updated - trigger resync to reconcile
 			// Only trigger if sync interval has elapsed to avoid unnecessary operations
 			if syncAge >= (syncInterval - tolerance) {
 				logger := logging.FromContext(ctx)
-				logger.Info("detected stale sync status", "job_id", obj.Status.Sync.Job)
+				logger.Info("detected stale sync status", "job_id", ptr.Deref(obj.Status.Sync.Job, ""))
 				return true
 			}
 		}
 		// For other errors, log but continue with normal logic
 		if err != nil {
 			logger := logging.FromContext(ctx)
-			logger.Warn("failed to check job existence for stale sync status", "error", err, "job_id", obj.Status.Sync.Job)
+			logger.Warn("failed to check job existence for stale sync status", "error", err, "job_id", ptr.Deref(obj.Status.Sync.Job, ""))
 		}
 	}
 
@@ -677,7 +677,7 @@ func isQuotaExceeded(conditions []v1.Condition) bool {
 func (rc *RepositoryController) resolveQuotaStatus(ctx context.Context, obj *provisioning.Repository) (provisioning.RepositoryQuotaStatus, error) {
 	quotaStatus, err := rc.quotaGetter.GetQuotaStatus(ctx, obj.Namespace)
 	if err == nil {
-		quotaStatus.UpdatedAt = time.Now().UnixMilli()
+		quotaStatus.UpdatedAt = new(time.Now().UnixMilli())
 		return quotaStatus, nil
 	}
 	rc.quotaMetrics.recordRefreshError()
@@ -687,8 +687,8 @@ func (rc *RepositoryController) resolveQuotaStatus(ctx context.Context, obj *pro
 	}
 
 	quotaStatus = obj.Status.Quota
-	logging.FromContext(ctx).Warn("failed to refresh quota status; using cached limits", "error", err, "quota_updated_at", quotaStatus.UpdatedAt)
-	rc.quotaMetrics.observeAge(time.Since(time.UnixMilli(quotaStatus.UpdatedAt)))
+	logging.FromContext(ctx).Warn("failed to refresh quota status; using cached limits", "error", err, "quota_updated_at", ptr.Deref(quotaStatus.UpdatedAt, 0))
+	rc.quotaMetrics.observeAge(time.Since(time.UnixMilli(ptr.Deref(quotaStatus.UpdatedAt, 0))))
 	return quotaStatus, nil
 }
 
@@ -746,7 +746,7 @@ func (rc *RepositoryController) determineSyncStrategy(
 		}
 
 		// Only resync if the latest ref is different from the last synced ref
-		if latestRef == obj.Status.Sync.LastRef {
+		if latestRef == ptr.Deref(obj.Status.Sync.LastRef, "") {
 			logger.Info("skip sync on interval as the latest ref matches the last synced ref",
 				"ref", latestRef)
 			return nil
@@ -759,12 +759,12 @@ func (rc *RepositoryController) determineSyncStrategy(
 		incremental, err := shouldUseIncrementalSync(ctx, versioned, obj, latestRef, rc.incrementalPolicy)
 		if err != nil {
 			logger.Warn("falling back to full sync on interval as files could not be compared for an incremental sync",
-				"error", err, "from_ref", obj.Status.Sync.LastRef, "to_ref", latestRef)
+				"error", err, "from_ref", ptr.Deref(obj.Status.Sync.LastRef, ""), "to_ref", latestRef)
 			return &provisioning.JobSyncJobOptions{}
 		}
 
 		logger.Info("sync on interval as the latest ref changed",
-			"incremental", incremental, "from_ref", obj.Status.Sync.LastRef, "to_ref", latestRef)
+			"incremental", incremental, "from_ref", ptr.Deref(obj.Status.Sync.LastRef, ""), "to_ref", latestRef)
 		return &provisioning.JobSyncJobOptions{Incremental: incremental}
 	default:
 		return nil
@@ -778,7 +778,7 @@ func shouldUseIncrementalSync(
 	latestRef string,
 	policy repository.IncrementalSyncPolicy,
 ) (bool, error) {
-	changes, err := versioned.CompareFiles(ctx, obj.Status.Sync.LastRef, latestRef)
+	changes, err := versioned.CompareFiles(ctx, ptr.Deref(obj.Status.Sync.LastRef, ""), latestRef)
 	if err != nil {
 		return false, err
 	}
@@ -1009,7 +1009,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 		// as a transient service issue, not an invalid spec.
 		readyCondition := buildReadyConditionWithReason(deleteHealthStatus, classifyBuildFailureReason(err))
 		if conditionPatchOps := BuildConditionPatchOpsFromExisting(
-			obj.Status.Conditions, obj.GetGeneration(), readyCondition,
+			provisioning.ConditionsToMeta(obj.Status.Conditions), obj.GetGeneration(), readyCondition,
 		); conditionPatchOps != nil {
 			patchOps = append(patchOps, conditionPatchOps...)
 		}
@@ -1065,7 +1065,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	if err != nil {
 		return repoType, err
 	}
-	isCurrentlyBlocked := isQuotaExceeded(obj.Status.Conditions)
+	isCurrentlyBlocked := isQuotaExceeded(provisioning.ConditionsToMeta(obj.Status.Conditions))
 	quotaCtx, quotaSpan := rc.tracer.Start(ctx, "provisioning.controller.check_quota", repoSpanAttrs(obj))
 	quotaCondition, err := rc.quotaChecker.RepositoryQuotaConditions(quotaCtx, namespace, newQuota)
 	if err == nil && isCurrentlyBlocked && !isQuotaExceeded([]v1.Condition{quotaCondition}) {
@@ -1115,14 +1115,14 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 		}
 	}()
 
-	hasQuotaChanged := obj.Status.Quota.MaxRepositories != newQuota.MaxRepositories ||
-		obj.Status.Quota.MaxResourcesPerRepository != newQuota.MaxResourcesPerRepository
+	hasQuotaChanged := ptr.Deref(obj.Status.Quota.MaxRepositories, 0) != ptr.Deref(newQuota.MaxRepositories, 0) ||
+		ptr.Deref(obj.Status.Quota.MaxResourcesPerRepository, 0) != ptr.Deref(newQuota.MaxResourcesPerRepository, 0)
 	if hasQuotaChanged {
 		logger.Info("quota refreshed",
-			"previous_max_repositories", obj.Status.Quota.MaxRepositories,
-			"max_repositories", newQuota.MaxRepositories,
-			"previous_max_resources_per_repository", obj.Status.Quota.MaxResourcesPerRepository,
-			"max_resources_per_repository", newQuota.MaxResourcesPerRepository,
+			"previous_max_repositories", ptr.Deref(obj.Status.Quota.MaxRepositories, 0),
+			"max_repositories", ptr.Deref(newQuota.MaxRepositories, 0),
+			"previous_max_resources_per_repository", ptr.Deref(obj.Status.Quota.MaxResourcesPerRepository, 0),
+			"max_resources_per_repository", ptr.Deref(newQuota.MaxResourcesPerRepository, 0),
 		)
 		rc.quotaMetrics.recordRefresh()
 	}
@@ -1142,7 +1142,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	// patch requeues it, so it fed itself. Recovery triggers on forceProcessForUnblock.
 	case !isCurrentlyBlocked && isOverQuota:
 		reason = "over_quota"
-		logger.Info("namespace over quota, blocking repository", "max_repositories", newQuota.MaxRepositories)
+		logger.Info("namespace over quota, blocking repository", "max_repositories", ptr.Deref(newQuota.MaxRepositories, 0))
 	case hasSpecChanged:
 		reason = "spec_changed"
 		logger.Info("spec changed", "Generation", obj.Generation, "ObservedGeneration", obj.Status.ObservedGeneration)
@@ -1400,7 +1400,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 
 	// Build ALL condition patches together to avoid one overwriting another.
 	if conditionPatchOps := BuildConditionPatchOpsFromExisting(
-		obj.Status.Conditions, obj.GetGeneration(), quotaCondition, healthResult.ReadyCondition,
+		provisioning.ConditionsToMeta(obj.Status.Conditions), obj.GetGeneration(), quotaCondition, healthResult.ReadyCondition,
 	); conditionPatchOps != nil {
 		patchOperations = append(patchOperations, conditionPatchOps...)
 	}
@@ -1570,7 +1570,7 @@ func (rc *RepositoryController) repositoryFailurePatchOps(obj *provisioning.Repo
 	ops := rc.healthPatchIfChanged(obj, healthStatus)
 	readyCondition := buildReadyConditionWithReason(healthStatus, reason)
 	return append(ops, BuildConditionPatchOpsFromExisting(
-		obj.Status.Conditions, obj.GetGeneration(), readyCondition,
+		provisioning.ConditionsToMeta(obj.Status.Conditions), obj.GetGeneration(), readyCondition,
 	)...)
 }
 
@@ -1718,10 +1718,10 @@ func (rc *RepositoryController) shouldRotateWebhookSecret(obj *provisioning.Repo
 	}
 	// A never-rotated secret (legacy webhooks predating rotation tracking; new
 	// webhooks stamp LastRotated on create) is due for its first rotation.
-	if obj.Status.Webhook.LastRotated == 0 {
+	if ptr.Deref(obj.Status.Webhook.LastRotated, 0) == 0 {
 		return true
 	}
-	age := time.Since(time.UnixMilli(obj.Status.Webhook.LastRotated))
+	age := time.Since(time.UnixMilli(ptr.Deref(obj.Status.Webhook.LastRotated, 0)))
 	return age >= rc.webhookSecretRotationInterval
 }
 

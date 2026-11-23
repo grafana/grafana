@@ -9,6 +9,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
@@ -19,8 +20,8 @@ import (
 func TestIntegrationProvisioning_RepositoryUsesCachedQuotaWhenRefreshFails(t *testing.T) {
 	helper := sharedHelper(t)
 	initialQuota := provisioning.RepositoryQuotaStatus{
-		MaxRepositories:           5,
-		MaxResourcesPerRepository: 100,
+		MaxRepositories:           new(int64(5)),
+		MaxResourcesPerRepository: new(int64(100)),
 	}
 	helper.SetQuotaStatus(initialQuota)
 
@@ -35,15 +36,15 @@ func TestIntegrationProvisioning_RepositoryUsesCachedQuotaWhenRefreshFails(t *te
 		obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 		assert.NoError(collect, err)
 		repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
-		assert.Equal(collect, initialQuota.MaxRepositories, repo.Status.Quota.MaxRepositories)
-		assert.Equal(collect, initialQuota.MaxResourcesPerRepository, repo.Status.Quota.MaxResourcesPerRepository)
+		assert.Equal(collect, ptr.Deref(initialQuota.MaxRepositories, 0), ptr.Deref(repo.Status.Quota.MaxRepositories, 0))
+		assert.Equal(collect, ptr.Deref(initialQuota.MaxResourcesPerRepository, 0), ptr.Deref(repo.Status.Quota.MaxResourcesPerRepository, 0))
 		assert.Equal(collect, repo.Generation, repo.Status.ObservedGeneration)
-		assert.NotZero(collect, repo.Status.Quota.UpdatedAt)
+		assert.NotZero(collect, ptr.Deref(repo.Status.Quota.UpdatedAt, 0))
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 
 	repoObj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 	require.NoError(t, err)
-	initialUpdatedAt := common.MustFromUnstructured[provisioning.Repository](t, repoObj).Status.Quota.UpdatedAt
+	initialUpdatedAt := ptr.Deref(common.MustFromUnstructured[provisioning.Repository](t, repoObj).Status.Quota.UpdatedAt, 0)
 	require.NotZero(t, initialUpdatedAt)
 	lookupErr := apierrors.NewInternalError(errors.New("quota service returned 500"))
 	helper.SetQuotaError(lookupErr)
@@ -58,10 +59,10 @@ func TestIntegrationProvisioning_RepositoryUsesCachedQuotaWhenRefreshFails(t *te
 		assert.NoError(collect, err)
 		repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
 		assert.Equal(collect, updatedTitle, repo.Spec.Title)
-		assert.Equal(collect, initialQuota.MaxRepositories, repo.Status.Quota.MaxRepositories)
-		assert.Equal(collect, initialQuota.MaxResourcesPerRepository, repo.Status.Quota.MaxResourcesPerRepository)
+		assert.Equal(collect, ptr.Deref(initialQuota.MaxRepositories, 0), ptr.Deref(repo.Status.Quota.MaxRepositories, 0))
+		assert.Equal(collect, ptr.Deref(initialQuota.MaxResourcesPerRepository, 0), ptr.Deref(repo.Status.Quota.MaxResourcesPerRepository, 0))
 		assert.Equal(collect, updatedObj.GetGeneration(), repo.Status.ObservedGeneration)
-		assert.Equal(collect, initialUpdatedAt, repo.Status.Quota.UpdatedAt)
+		assert.Equal(collect, initialUpdatedAt, ptr.Deref(repo.Status.Quota.UpdatedAt, 0))
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 
 	newRepo := helper.RenderObject(t, common.TestdataPath("local.json.tmpl"), map[string]any{
@@ -75,8 +76,8 @@ func TestIntegrationProvisioning_RepositoryUsesCachedQuotaWhenRefreshFails(t *te
 	require.ErrorContains(t, err, "failed to get quota status")
 
 	refreshedQuota := provisioning.RepositoryQuotaStatus{
-		MaxRepositories:           8,
-		MaxResourcesPerRepository: 200,
+		MaxRepositories:           new(int64(8)),
+		MaxResourcesPerRepository: new(int64(200)),
 	}
 	helper.SetQuotaStatus(refreshedQuota)
 	helper.SetQuotaError(nil)
@@ -88,13 +89,13 @@ func TestIntegrationProvisioning_RepositoryUsesCachedQuotaWhenRefreshFails(t *te
 			return
 		}
 		repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
-		assert.Equal(collect, refreshedQuota.MaxRepositories, repo.Status.Quota.MaxRepositories)
-		assert.Equal(collect, refreshedQuota.MaxResourcesPerRepository, repo.Status.Quota.MaxResourcesPerRepository)
-		assert.Greater(collect, repo.Status.Quota.UpdatedAt, initialUpdatedAt)
+		assert.Equal(collect, ptr.Deref(refreshedQuota.MaxRepositories, 0), ptr.Deref(repo.Status.Quota.MaxRepositories, 0))
+		assert.Equal(collect, ptr.Deref(refreshedQuota.MaxResourcesPerRepository, 0), ptr.Deref(repo.Status.Quota.MaxResourcesPerRepository, 0))
+		assert.Greater(collect, ptr.Deref(repo.Status.Quota.UpdatedAt, 0), initialUpdatedAt)
 
 		updatedAt, found, nestedErr := unstructured.NestedInt64(obj.Object, "status", "quota", "updatedAt")
 		assert.NoError(collect, nestedErr)
 		assert.True(collect, found, "updatedAt should be persisted after quota refresh recovers")
-		assert.Equal(collect, repo.Status.Quota.UpdatedAt, updatedAt)
+		assert.Equal(collect, ptr.Deref(repo.Status.Quota.UpdatedAt, 0), updatedAt)
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 }

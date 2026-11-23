@@ -114,8 +114,8 @@ func ProvideFactoryFromConfig(cfg *setting.Cfg, tracer tracing.Tracer, extras []
 
 func ProvideQuotaGetter(cfg *setting.Cfg) quotas.QuotaGetter {
 	return quotas.NewFixedQuotaGetter(apisprovisioning.RepositoryQuotaStatus{
-		MaxResourcesPerRepository: cfg.ProvisioningMaxResourcesPerRepository,
-		MaxRepositories:           cfg.ProvisioningMaxRepositories,
+		MaxResourcesPerRepository: new(cfg.ProvisioningMaxResourcesPerRepository),
+		MaxRepositories:           new(cfg.ProvisioningMaxRepositories),
 	})
 }
 

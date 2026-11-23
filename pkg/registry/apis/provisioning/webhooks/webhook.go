@@ -383,7 +383,7 @@ func updateLastEvent(ctx context.Context, cfg *provisioning.Repository, patcher 
 		return nil
 	}
 
-	lastEvent := time.UnixMilli(cfg.Status.Webhook.LastEvent)
+	lastEvent := time.UnixMilli(ptr.Deref(cfg.Status.Webhook.LastEvent, 0))
 	if time.Since(lastEvent) <= time.Minute {
 		return nil
 	}

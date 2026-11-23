@@ -451,11 +451,11 @@ func TestProcessJob_AuthFailureRepo_SkipsJob(t *testing.T) {
 		Checked: time.Now().UnixMilli(),
 		Message: []string{"authentication failed"},
 	}
-	repoCfg.Status.Conditions = []metav1.Condition{{
+	repoCfg.Status.Conditions = provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{{
 		Type:   provisioning.ConditionTypeReady,
 		Status: metav1.ConditionFalse,
 		Reason: provisioning.ReasonAuthenticationFailed,
-	}}
+	}})
 	mockRepo := &repository.MockRepository{}
 	mockRepo.On("Config").Return(repoCfg)
 
@@ -490,11 +490,11 @@ func TestProcessJob_AuthFailureRepo_TestActionStillRuns(t *testing.T) {
 		Checked: time.Now().UnixMilli(),
 		Message: []string{"authentication failed"},
 	}
-	repoCfg.Status.Conditions = []metav1.Condition{{
+	repoCfg.Status.Conditions = provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{{
 		Type:   provisioning.ConditionTypeReady,
 		Status: metav1.ConditionFalse,
 		Reason: provisioning.ReasonAuthenticationFailed,
-	}}
+	}})
 	mockRepo := &repository.MockRepository{}
 	mockRepo.On("Config").Return(repoCfg)
 
@@ -530,12 +530,12 @@ func TestProcessJob_StaleAuthFailureCondition_CallsWorker(t *testing.T) {
 		Checked: time.Now().UnixMilli(),
 		Message: []string{"authentication failed"},
 	}
-	repoCfg.Status.Conditions = []metav1.Condition{{
+	repoCfg.Status.Conditions = provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{{
 		Type:               provisioning.ConditionTypeReady,
 		Status:             metav1.ConditionFalse,
 		Reason:             provisioning.ReasonAuthenticationFailed,
 		ObservedGeneration: 1, // stale -- controller hasn't reconciled generation 2 yet
-	}}
+	}})
 	mockRepo := &repository.MockRepository{}
 	mockRepo.On("Config").Return(repoCfg)
 
@@ -571,11 +571,11 @@ func TestProcessJob_UnhealthyButReachableRepo_CallsWorker(t *testing.T) {
 		Checked: time.Now().UnixMilli(),
 		Message: []string{repository.WritePermissionDeniedDetail},
 	}
-	repoCfg.Status.Conditions = []metav1.Condition{{
+	repoCfg.Status.Conditions = provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{{
 		Type:   provisioning.ConditionTypeReady,
 		Status: metav1.ConditionFalse,
 		Reason: provisioning.ReasonInvalidSpec,
-	}}
+	}})
 	mockRepo := &repository.MockRepository{}
 	mockRepo.On("Config").Return(repoCfg)
 
@@ -611,11 +611,11 @@ func TestProcessJob_HookPermissionFailure_CallsWorker(t *testing.T) {
 		Checked: time.Now().UnixMilli(),
 		Message: []string{"execute webhook create: " + repository.ErrPermissionDenied.Error()},
 	}
-	repoCfg.Status.Conditions = []metav1.Condition{{
+	repoCfg.Status.Conditions = provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{{
 		Type:   provisioning.ConditionTypeReady,
 		Status: metav1.ConditionFalse,
 		Reason: provisioning.ReasonAuthenticationFailed,
-	}}
+	}})
 	mockRepo := &repository.MockRepository{}
 	mockRepo.On("Config").Return(repoCfg)
 

@@ -500,8 +500,8 @@ func (c *ControllerConfig) QuotaGetter() (quotas.QuotaGetter, error) {
 	}
 
 	quotaStatus := provisioning.RepositoryQuotaStatus{
-		MaxResourcesPerRepository: c.Settings.SectionWithEnvOverrides("provisioning").Key("max_resources_per_repository").MustInt64(0),
-		MaxRepositories:           c.Settings.SectionWithEnvOverrides("provisioning").Key("max_repositories").MustInt64(10),
+		MaxResourcesPerRepository: new(c.Settings.SectionWithEnvOverrides("provisioning").Key("max_resources_per_repository").MustInt64(0)),
+		MaxRepositories:           new(c.Settings.SectionWithEnvOverrides("provisioning").Key("max_repositories").MustInt64(10)),
 	}
 
 	c.quotaGetter = quotas.NewFixedQuotaGetter(quotaStatus)

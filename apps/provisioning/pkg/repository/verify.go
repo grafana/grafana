@@ -6,6 +6,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
@@ -83,7 +84,7 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 	// Check repository limit (0 = unlimited, > 0 = use value).
 	// Only enforce on creation — updating an existing repo should never be
 	// blocked by a quota that was lowered after the repo was created.
-	maxRepos := quotaStatus.MaxRepositories
+	maxRepos := ptr.Deref(quotaStatus.MaxRepositories, 0)
 	if maxRepos == 0 {
 		return nil
 	}

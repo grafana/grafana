@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
@@ -32,10 +33,10 @@ func TestIntegrationProvisioning_GitSyncIntervalNoop(t *testing.T) {
 	require.NoError(t, err)
 	original := common.MustFromUnstructured[provisioning.Repository](t, repoObj).Status.Sync
 	require.Equal(t, provisioning.JobStateSuccess, original.State)
-	require.NotZero(t, original.Finished)
-	require.NotZero(t, original.LastChecked)
-	require.NotEmpty(t, original.LastRef)
-	require.NotEmpty(t, original.Job)
+	require.NotZero(t, ptr.Deref(original.Finished, 0))
+	require.NotZero(t, ptr.Deref(original.LastChecked, 0))
+	require.NotEmpty(t, ptr.Deref(original.LastRef, ""))
+	require.NotEmpty(t, ptr.Deref(original.Job, ""))
 
 	history, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{}, "jobs")
 	require.NoError(t, err)
@@ -63,7 +64,7 @@ func TestIntegrationProvisioning_GitSyncIntervalNoop(t *testing.T) {
 			return
 		}
 		current := repo.Status.Sync
-		if !assert.GreaterOrEqual(c, current.LastChecked, before, "an unchanged ref must reset the sync interval") {
+		if !assert.GreaterOrEqual(c, ptr.Deref(current.LastChecked, 0), before, "an unchanged ref must reset the sync interval") {
 			return
 		}
 		// Queued reconciliations may still see the old informer snapshot until the status update arrives.
@@ -75,7 +76,7 @@ func TestIntegrationProvisioning_GitSyncIntervalNoop(t *testing.T) {
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 
 	expected := original
-	expected.Finished = staleFinished
+	expected.Finished = new(staleFinished)
 	expected.LastChecked = refreshed.LastChecked
 	require.Equal(t, expected, refreshed, "a no-op check must preserve the previous sync job's status")
 
@@ -129,9 +130,9 @@ func TestIntegrationProvisioning_GitSyncIntervalChangedRef(t *testing.T) {
 			return
 		}
 		assert.Equal(c, provisioning.JobStateSuccess, repo.Status.Sync.State)
-		assert.Equal(c, latestRef, repo.Status.Sync.LastRef)
-		assert.GreaterOrEqual(c, repo.Status.Sync.LastChecked, before, "a changed ref must also refresh the check timestamp")
-		assert.GreaterOrEqual(c, repo.Status.Sync.Finished, repo.Status.Sync.LastChecked, "job completion must preserve the preceding check timestamp")
+		assert.Equal(c, latestRef, ptr.Deref(repo.Status.Sync.LastRef, ""))
+		assert.GreaterOrEqual(c, ptr.Deref(repo.Status.Sync.LastChecked, 0), before, "a changed ref must also refresh the check timestamp")
+		assert.GreaterOrEqual(c, ptr.Deref(repo.Status.Sync.Finished, 0), ptr.Deref(repo.Status.Sync.LastChecked, 0), "job completion must preserve the preceding check timestamp")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 	helper.RequireRepoDashboardCount(t, repoName, 2)
 }

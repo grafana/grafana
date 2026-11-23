@@ -156,8 +156,8 @@ func TestRepositoryQuotaConditions(t *testing.T) {
 			checker := NewRepositoryQuotaChecker(informer.NewCachedRepositoryGetter(mockRepoLister))
 
 			quotaStatus := provisioning.RepositoryQuotaStatus{
-				MaxRepositories:           tt.maxRepos,
-				MaxResourcesPerRepository: 100,
+				MaxRepositories:           new(tt.maxRepos),
+				MaxResourcesPerRepository: new(int64(100)),
 			}
 
 			// Execute
@@ -285,8 +285,8 @@ func TestRepositoryQuotaConditions_CountsDeletingRepos(t *testing.T) {
 			checker := NewRepositoryQuotaChecker(informer.NewCachedRepositoryGetter(mockRepoLister))
 
 			quotaStatus := provisioning.RepositoryQuotaStatus{
-				MaxRepositories:           tt.maxRepos,
-				MaxResourcesPerRepository: 100,
+				MaxRepositories:           new(tt.maxRepos),
+				MaxResourcesPerRepository: new(int64(100)),
 			}
 
 			// Execute
@@ -325,7 +325,7 @@ func TestRepositoryQuotaConditions_CountsTheRepositoryUnderReconciliation(t *tes
 	_, err := getter.Get(ctx, "ns", added.Name)
 	require.NoError(t, err)
 
-	condition, err := NewRepositoryQuotaChecker(getter).RepositoryQuotaConditions(ctx, "ns", provisioning.RepositoryQuotaStatus{MaxRepositories: 1})
+	condition, err := NewRepositoryQuotaChecker(getter).RepositoryQuotaConditions(ctx, "ns", provisioning.RepositoryQuotaStatus{MaxRepositories: new(int64(1))})
 	require.NoError(t, err)
 	assert.Equal(t, provisioning.ReasonQuotaExceeded, condition.Reason)
 	assert.Equal(t, "namespace quota exceeded: 2/1 repositories", condition.Message)

@@ -35,7 +35,7 @@ func TestIntegrationProvisioning_GitSync_ManagerKindConflict(t *testing.T) {
 	} {
 		t.Run(tt.syncType+"/"+tt.order, func(t *testing.T) {
 			helper := sharedGitHelper(t)
-			helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: tt.quotaLimit})
+			helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: new(tt.quotaLimit)})
 			t.Cleanup(func() { helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{}) })
 			repoName := "git-manager-kind-" + tt.syncType + "-" + tt.order
 			_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{

@@ -1,4 +1,4 @@
-import { type Condition } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositoryCondition } from 'app/api/clients/provisioning/v0alpha1';
 
 import {
   getFolderMetadataPath,
@@ -58,7 +58,9 @@ describe('getParentFolderResourceHash', () => {
   });
 });
 
-function makeCondition(overrides: Partial<Condition> & { type: string; reason: string }): Condition {
+function makeCondition(
+  overrides: Partial<RepositoryCondition> & { type: string; reason: string }
+): RepositoryCondition {
   return {
     lastTransitionTime: '2024-01-01T00:00:00Z',
     message: '',
@@ -78,22 +80,22 @@ describe('hasMissingFolderMetadata', () => {
   });
 
   it('returns false when PullStatus reason is Success', () => {
-    const conditions: Condition[] = [makeCondition({ type: 'PullStatus', reason: 'Success' })];
+    const conditions: RepositoryCondition[] = [makeCondition({ type: 'PullStatus', reason: 'Success' })];
     expect(hasMissingFolderMetadata(conditions)).toBe(false);
   });
 
   it('returns true when PullStatus reason is MissingFolderMetadata', () => {
-    const conditions: Condition[] = [makeCondition({ type: 'PullStatus', reason: 'MissingFolderMetadata' })];
+    const conditions: RepositoryCondition[] = [makeCondition({ type: 'PullStatus', reason: 'MissingFolderMetadata' })];
     expect(hasMissingFolderMetadata(conditions)).toBe(true);
   });
 
   it('returns false when a non-PullStatus condition has MissingFolderMetadata reason', () => {
-    const conditions: Condition[] = [makeCondition({ type: 'Ready', reason: 'MissingFolderMetadata' })];
+    const conditions: RepositoryCondition[] = [makeCondition({ type: 'Ready', reason: 'MissingFolderMetadata' })];
     expect(hasMissingFolderMetadata(conditions)).toBe(false);
   });
 
   it('finds PullStatus among multiple conditions', () => {
-    const conditions: Condition[] = [
+    const conditions: RepositoryCondition[] = [
       makeCondition({ type: 'Ready', reason: 'Available' }),
       makeCondition({ type: 'ResourceQuota', reason: 'WithinQuota' }),
       makeCondition({ type: 'PullStatus', reason: 'MissingFolderMetadata' }),

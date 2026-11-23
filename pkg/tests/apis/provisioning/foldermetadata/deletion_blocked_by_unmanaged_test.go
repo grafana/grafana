@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -76,12 +77,12 @@ func TestIntegrationProvisioning_RepositoryDeletionBlockedByUnmanagedResources(t
 		if !assert.NotNil(collect, status.Deletion, "deletion status should be populated") {
 			return
 		}
-		assert.Equal(collect, provisioning.DeletionStateBlocked, status.Deletion.State)
-		assert.Equal(collect, provisioning.RepositoryDeletionStatusCauseUser, status.Deletion.Cause)
-		assert.Equal(collect, repository.RemoveOrphanResourcesFinalizer, status.Deletion.Finalizer)
-		assert.Contains(collect, status.Deletion.Message, `"`+folderTitle+`" (UID: `+folderUID+`)`)
-		assert.Contains(collect, status.Deletion.Message, "blocked by unmanaged resources")
-		assert.Equal(collect, status.Deletion.Message, status.DeleteError)
+		assert.Equal(collect, provisioning.DeletionStateBlocked, ptr.Deref(status.Deletion.State, ""))
+		assert.Equal(collect, provisioning.RepositoryDeletionStatusCauseUser, ptr.Deref(status.Deletion.Cause, ""))
+		assert.Equal(collect, repository.RemoveOrphanResourcesFinalizer, ptr.Deref(status.Deletion.Finalizer, ""))
+		assert.Contains(collect, ptr.Deref(status.Deletion.Message, ""), `"`+folderTitle+`" (UID: `+folderUID+`)`)
+		assert.Contains(collect, ptr.Deref(status.Deletion.Message, ""), "blocked by unmanaged resources")
+		assert.Equal(collect, ptr.Deref(status.Deletion.Message, ""), ptr.Deref(status.DeleteError, ""))
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "deletion status should name the blocked folder")
 
 	_, err = helper.DashboardsV1.Resource.Get(t.Context(), selected, metav1.GetOptions{})

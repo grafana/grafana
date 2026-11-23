@@ -453,6 +453,31 @@ func TestAdmissionMutator_Mutate_StoresZeroOptionalFieldsAsAbsent(t *testing.T) 
 	}`, string(got))
 }
 
+func TestAdmissionMutator_Mutate_StoresZeroStatusFieldsAsAbsent(t *testing.T) {
+	old := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "test"}}
+	repo := old.DeepCopy()
+	repo.Status = provisioning.RepositoryStatus{
+		Sync:        provisioning.RepositorySyncStatus{State: provisioning.JobStateSuccess, Job: new(""), Started: new(int64(0)), Finished: new(int64(10)), Incremental: new(false)},
+		Webhook:     &provisioning.RepositoryWebhookStatus{Id: new(int64(0)), Url: new("")},
+		Quota:       provisioning.RepositoryQuotaStatus{MaxRepositories: new(int64(0)), UpdatedAt: new(int64(5))},
+		DeleteError: new(""),
+	}
+
+	m := NewAdmissionMutator(NewMockFactory(t), 0)
+	require.NoError(t, m.Mutate(context.Background(), newMutatorTestAttributesWithSubresource(repo, old, admission.Update, "status"), nil))
+
+	got, err := json.Marshal(repo.Status)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{
+		"observedGeneration": 0,
+		"health": {"healthy": false},
+		"sync": {"state": "success", "message": null, "finished": 10},
+		"webhook": {},
+		"token": {},
+		"quota": {"updatedAt": 5}
+	}`, string(got))
+}
+
 func TestCopySecureValues(t *testing.T) {
 	tests := []struct {
 		name           string

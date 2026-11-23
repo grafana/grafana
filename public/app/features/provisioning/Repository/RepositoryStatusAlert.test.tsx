@@ -29,6 +29,8 @@ const repository = {
     sync: { state: 'success', message: [] },
     observedGeneration: 1,
     webhook: {},
+    token: {},
+    quota: {},
   },
 } as Repository;
 

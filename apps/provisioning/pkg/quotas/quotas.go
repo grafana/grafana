@@ -6,6 +6,7 @@ import (
 	"sync/atomic"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
@@ -36,7 +37,7 @@ func NewQuotaUsageFromStats(stats []provisioning.ResourceCount) Usage {
 // Returns True if all quotas pass (or no limits configured), False if any quota is reached/exceeded.
 func EvaluateCondition(quota provisioning.RepositoryQuotaStatus, quotaUsage Usage) metav1.Condition {
 	// Check if any limits are configured
-	if quota.MaxResourcesPerRepository == 0 {
+	if ptr.Deref(quota.MaxResourcesPerRepository, 0) == 0 {
 		return metav1.Condition{
 			Type:    provisioning.ConditionTypeResourceQuota,
 			Status:  metav1.ConditionTrue,
@@ -48,26 +49,26 @@ func EvaluateCondition(quota provisioning.RepositoryQuotaStatus, quotaUsage Usag
 	total := quotaUsage.TotalResources
 
 	switch {
-	case total > quota.MaxResourcesPerRepository:
+	case total > ptr.Deref(quota.MaxResourcesPerRepository, 0):
 		return metav1.Condition{
 			Type:    provisioning.ConditionTypeResourceQuota,
 			Status:  metav1.ConditionFalse,
 			Reason:  provisioning.ReasonQuotaExceeded,
-			Message: fmt.Sprintf("Resource quota exceeded: %d/%d resources", total, quota.MaxResourcesPerRepository),
+			Message: fmt.Sprintf("Resource quota exceeded: %d/%d resources", total, ptr.Deref(quota.MaxResourcesPerRepository, 0)),
 		}
-	case total == quota.MaxResourcesPerRepository:
+	case total == ptr.Deref(quota.MaxResourcesPerRepository, 0):
 		return metav1.Condition{
 			Type:    provisioning.ConditionTypeResourceQuota,
 			Status:  metav1.ConditionTrue,
 			Reason:  provisioning.ReasonQuotaReached,
-			Message: fmt.Sprintf("Resource quota reached: %d/%d resources", total, quota.MaxResourcesPerRepository),
+			Message: fmt.Sprintf("Resource quota reached: %d/%d resources", total, ptr.Deref(quota.MaxResourcesPerRepository, 0)),
 		}
 	default:
 		return metav1.Condition{
 			Type:    provisioning.ConditionTypeResourceQuota,
 			Status:  metav1.ConditionTrue,
 			Reason:  provisioning.ReasonWithinQuota,
-			Message: fmt.Sprintf("Within quota: %d/%d resources", total, quota.MaxResourcesPerRepository),
+			Message: fmt.Sprintf("Within quota: %d/%d resources", total, ptr.Deref(quota.MaxResourcesPerRepository, 0)),
 		}
 	}
 }
@@ -95,10 +96,10 @@ func IsQuotaReached(conditions []metav1.Condition) bool {
 }
 
 func WouldStayWithinQuota(quota provisioning.RepositoryQuotaStatus, usage Usage, netChange int64) bool {
-	if quota.MaxResourcesPerRepository == 0 {
+	if ptr.Deref(quota.MaxResourcesPerRepository, 0) == 0 {
 		return true
 	}
-	return usage.TotalResources+netChange <= quota.MaxResourcesPerRepository
+	return usage.TotalResources+netChange <= ptr.Deref(quota.MaxResourcesPerRepository, 0)
 }
 
 // calculateTotalResources sums up all resource counts from the stats.

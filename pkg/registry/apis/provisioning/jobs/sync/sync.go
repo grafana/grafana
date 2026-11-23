@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"k8s.io/utils/ptr"
 )
 
 //go:generate mockery --name FullSyncFn --structname MockFullSyncFn --inpackage --filename full_sync_fn_mock.go --with-expecter
@@ -63,7 +64,7 @@ func (r *syncer) Sync(ctx context.Context, repo repository.ReaderWriter, options
 			return "", fmt.Errorf("get latest ref: %w", err)
 		}
 
-		if cfg.Status.Sync.LastRef != "" && options.Incremental && !quotas.IsQuotaExceeded(cfg.Status.Conditions) {
+		if ptr.Deref(cfg.Status.Sync.LastRef, "") != "" && options.Incremental && !quotas.IsQuotaExceeded(provisioning.ConditionsToMeta(cfg.Status.Conditions)) {
 			progress.SetMessage(ctx, "incremental sync")
 			// Tag the job so the driver's throughput metric can split pull jobs by
 			// the sync variance that actually ran.
@@ -72,10 +73,10 @@ func (r *syncer) Sync(ctx context.Context, repo repository.ReaderWriter, options
 			// per-resource timeout today (applies are bounded only by the overall job
 			// timeout). Imposing the default here would newly cap large incremental
 			// writes and regress repositories that currently sync them successfully.
-			return currentRef, r.incrementalSync(ctx, versionedRepo, cfg.Status.Sync.LastRef, currentRef, repositoryResources, progress, r.tracer, r.metrics, quotaTracker)
+			return currentRef, r.incrementalSync(ctx, versionedRepo, ptr.Deref(cfg.Status.Sync.LastRef, ""), currentRef, repositoryResources, progress, r.tracer, r.metrics, quotaTracker)
 		}
 
-		if quotas.IsQuotaExceeded(cfg.Status.Conditions) {
+		if quotas.IsQuotaExceeded(provisioning.ConditionsToMeta(cfg.Status.Conditions)) {
 			logger.Info("repository is over quota, running full sync")
 		}
 	}

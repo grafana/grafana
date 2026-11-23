@@ -78,6 +78,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &provisioningv0alpha1.RepositoryBranchOptionsApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("RepositoryCommitOptions"):
 		return &provisioningv0alpha1.RepositoryCommitOptionsApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("RepositoryCondition"):
+		return &provisioningv0alpha1.RepositoryConditionApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("RepositoryConnectionInfo"):
 		return &provisioningv0alpha1.RepositoryConnectionInfoApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("RepositoryDeletionStatus"):

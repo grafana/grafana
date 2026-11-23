@@ -31,7 +31,7 @@ func TestIntegrationProvisioning_NamespaceRepositoryQuota(t *testing.T) {
 	repo2Path := filepath.Join(helper.ProvisioningPath, "repo2")
 
 	// --- Step 1: create 2 repos with unlimited quota  ---------
-	helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxRepositories: 0})
+	helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxRepositories: new(int64(0))})
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:       repo1Name,
 		LocalPath:  repo1Path,
@@ -49,7 +49,7 @@ func TestIntegrationProvisioning_NamespaceRepositoryQuota(t *testing.T) {
 	waitForHealthyWithNamespaceQuota(t, helper, repo2Name, provisioning.ReasonQuotaUnlimited)
 
 	// --- Step 2: lower quota to 1 — both repos exceed the limit --------
-	helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxRepositories: 1})
+	helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxRepositories: new(int64(1))})
 	helper.TriggerRepositoryReconciliation(t, repo1Name)
 	helper.TriggerRepositoryReconciliation(t, repo2Name)
 
@@ -67,7 +67,7 @@ func TestIntegrationProvisioning_NamespaceRepositoryQuota(t *testing.T) {
 	waitForHealthyWithNamespaceQuota(t, helper, repo1Name, provisioning.ReasonQuotaReached)
 
 	// --- Step 4: set quota back to unlimited — repo fully recovers -----
-	helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxRepositories: 0})
+	helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxRepositories: new(int64(0))})
 
 	helper.TriggerRepositoryReconciliation(t, repo1Name)
 	waitForHealthyWithNamespaceQuota(t, helper, repo1Name, provisioning.ReasonQuotaUnlimited)
@@ -85,7 +85,7 @@ func waitForUnhealthyWithNamespaceQuota(t *testing.T, helper *common.Provisionin
 		}
 		repo := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
 		assert.False(collect, repo.Status.Health.Healthy, "repo %s should be unhealthy", repoName)
-		cond := common.FindCondition(repo.Status.Conditions, provisioning.ConditionTypeNamespaceQuota)
+		cond := common.FindCondition(provisioning.ConditionsToMeta(repo.Status.Conditions), provisioning.ConditionTypeNamespaceQuota)
 		if !assert.NotNil(collect, cond, "NamespaceQuota condition not found on %s", repoName) {
 			return
 		}
@@ -105,7 +105,7 @@ func waitForHealthyWithNamespaceQuota(t *testing.T, helper *common.ProvisioningT
 		}
 		repo := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
 		assert.True(collect, repo.Status.Health.Healthy, "repo %s should be healthy", repoName)
-		cond := common.FindCondition(repo.Status.Conditions, provisioning.ConditionTypeNamespaceQuota)
+		cond := common.FindCondition(provisioning.ConditionsToMeta(repo.Status.Conditions), provisioning.ConditionTypeNamespaceQuota)
 		if !assert.NotNil(collect, cond, "NamespaceQuota condition not found on %s", repoName) {
 			return
 		}
@@ -216,7 +216,7 @@ func TestIntegrationProvisioning_HealthAndTokenRefreshWhileOverNamespaceQuota(t 
 	}
 
 	// --- Step 3: lower quota to 1 — both repos exceed the limit ---------------
-	helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxRepositories: 1})
+	helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxRepositories: new(int64(1))})
 	helper.TriggerRepositoryReconciliation(t, repoName1)
 	helper.TriggerRepositoryReconciliation(t, repoName2)
 
@@ -265,7 +265,7 @@ func TestIntegrationProvisioning_HealthAndTokenRefreshWhileOverNamespaceQuota(t 
 		r := common.MustFromUnstructured[provisioning.Repository](t, obj)
 
 		// Repository must still be blocked by the namespace quota.
-		cond := common.FindCondition(r.Status.Conditions, provisioning.ConditionTypeNamespaceQuota)
+		cond := common.FindCondition(provisioning.ConditionsToMeta(r.Status.Conditions), provisioning.ConditionTypeNamespaceQuota)
 		if !assert.NotNil(c, cond, "NamespaceQuota condition should exist") {
 			return
 		}
@@ -307,7 +307,7 @@ func TestIntegrationProvisioning_BlockedOverQuotaRequeuesDoNotTestRepository(t *
 	subjectPath := filepath.Join(helper.ProvisioningPath, "steady-subject")
 	controlPath := filepath.Join(helper.ProvisioningPath, "steady-control")
 
-	helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxRepositories: 0})
+	helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxRepositories: new(int64(0))})
 	for name, path := range map[string]string{subject: subjectPath, control: controlPath} {
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:       name,
@@ -319,7 +319,7 @@ func TestIntegrationProvisioning_BlockedOverQuotaRequeuesDoNotTestRepository(t *
 
 	// Two repositories against a limit of one: both are over quota and settle into the
 	// blocked steady state, which leaves their health timestamps fresh.
-	helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxRepositories: 1})
+	helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxRepositories: new(int64(1))})
 	helper.TriggerRepositoryReconciliation(t, subject)
 	helper.TriggerRepositoryReconciliation(t, control)
 	waitForUnhealthyWithNamespaceQuota(t, helper, subject, provisioning.ReasonQuotaExceeded)

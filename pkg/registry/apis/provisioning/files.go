@@ -431,7 +431,7 @@ func (c *filesConnector) listFolderFiles(ctx context.Context, filePath string, r
 // checkQuota verifies that the repository resource quota allows the operation.
 func checkQuota(repo repository.Repository, isCreate bool) error {
 	cfg := repo.Config()
-	conditions := cfg.Status.Conditions
+	conditions := provisioning.ConditionsToMeta(cfg.Status.Conditions)
 
 	if quotas.IsQuotaExceeded(conditions) {
 		return apierrors.NewForbidden(

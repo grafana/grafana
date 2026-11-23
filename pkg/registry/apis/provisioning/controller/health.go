@@ -212,7 +212,7 @@ func (hc *RepositoryHealthChecker) RefreshHealthWithPatchOps(ctx context.Context
 		// No fresh test result to classify here, so keep whatever reason the
 		// Ready condition already carries rather than overwriting it.
 		reason := provisioning.ReasonInvalidSpec
-		if existing := meta.FindStatusCondition(cfg.Status.Conditions, provisioning.ConditionTypeReady); existing != nil {
+		if existing := meta.FindStatusCondition(provisioning.ConditionsToMeta(cfg.Status.Conditions), provisioning.ConditionTypeReady); existing != nil {
 			reason = existing.Reason
 		}
 		return HealthResultWithPatchOps{

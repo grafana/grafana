@@ -40,13 +40,14 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 		return nil
 	}
 
-	if a.GetSubresource() != "" && !provisioningadmission.SpecAndSecureChanged(a) {
-		return nil // pure status patch: spec/secure untouched, nothing to (re)mutate
-	}
-
 	r, ok := obj.(*provisioning.Repository)
 	if !ok {
 		return fmt.Errorf("expected repository configuration, got %T", obj)
+	}
+	clearZeroPointers(reflect.ValueOf(&r.Status).Elem())
+
+	if a.GetSubresource() != "" && !provisioningadmission.SpecAndSecureChanged(a) {
+		return nil // pure status patch: spec/secure untouched, nothing to (re)mutate
 	}
 	r.NormalizeSecureValues()
 
@@ -97,8 +98,8 @@ func ClearZeroOptionalFields(spec *provisioning.RepositorySpec) {
 }
 
 // clearZeroPointers sets every pointer to a zero scalar in the struct v to nil, recursing into
-// nested structs. Optional spec fields are pointers, so without this a client sending "" or
-// false would get it stored and echoed back, where omitempty on the old value fields dropped it.
+// nested structs. Optional spec and status fields are pointers, so without this a "", 0 or false would
+// be stored and echoed back, where omitempty on the old value fields dropped it.
 func clearZeroPointers(v reflect.Value) {
 	for i := 0; i < v.NumField(); i++ {
 		f := v.Field(i)

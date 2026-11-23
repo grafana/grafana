@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -71,8 +72,8 @@ func TestWebhookOnCreate(t *testing.T) {
 			},
 			webhookURL: "https://example.com/webhook",
 			expectedHook: &provisioning.RepositoryWebhookStatus{
-				Id:  123,
-				Url: "https://example.com/webhook",
+				Id:  new(int64(123)),
+				Url: new("https://example.com/webhook"),
 			},
 			expectedError: nil,
 		},
@@ -222,15 +223,15 @@ func TestWebhookOnUpdate(t *testing.T) {
 				},
 				Status: provisioning.RepositoryStatus{
 					Webhook: &provisioning.RepositoryWebhookStatus{
-						Id:  123,
-						Url: "https://example.com/webhook",
+						Id:  new(int64(123)),
+						Url: new("https://example.com/webhook"),
 					},
 				},
 			},
 			webhookURL: "https://example.com/webhook-updated",
 			expectedHook: &provisioning.RepositoryWebhookStatus{
-				Id:               123,
-				Url:              "https://example.com/webhook-updated",
+				Id:               new(int64(123)),
+				Url:              new("https://example.com/webhook-updated"),
 				SubscribedEvents: subscribedEvents,
 			},
 			expectedError: nil,
@@ -257,15 +258,15 @@ func TestWebhookOnUpdate(t *testing.T) {
 				},
 				Status: provisioning.RepositoryStatus{
 					Webhook: &provisioning.RepositoryWebhookStatus{
-						Id:  123,
-						Url: "https://example.com/old-webhook",
+						Id:  new(int64(123)),
+						Url: new("https://example.com/old-webhook"),
 					},
 				},
 			},
 			webhookURL: "https://example.com/webhook",
 			expectedHook: &provisioning.RepositoryWebhookStatus{
-				Id:               456,
-				Url:              "https://example.com/webhook",
+				Id:               new(int64(456)),
+				Url:              new("https://example.com/webhook"),
 				SubscribedEvents: subscribedEvents,
 			},
 			expectedError: nil,
@@ -293,8 +294,8 @@ func TestWebhookOnUpdate(t *testing.T) {
 				},
 				Status: provisioning.RepositoryStatus{
 					Webhook: &provisioning.RepositoryWebhookStatus{
-						Id:  123,
-						Url: "https://example.com/webhook",
+						Id:  new(int64(123)),
+						Url: new("https://example.com/webhook"),
 					},
 				},
 			},
@@ -324,8 +325,8 @@ func TestWebhookOnUpdate(t *testing.T) {
 				},
 				Status: provisioning.RepositoryStatus{
 					Webhook: &provisioning.RepositoryWebhookStatus{
-						Id:  123,
-						Url: "https://example.com/webhook",
+						Id:  new(int64(123)),
+						Url: new("https://example.com/webhook"),
 					},
 				},
 			},
@@ -355,8 +356,8 @@ func TestWebhookOnUpdate(t *testing.T) {
 				},
 				Status: provisioning.RepositoryStatus{
 					Webhook: &provisioning.RepositoryWebhookStatus{
-						Id:  123,
-						Url: "https://example.com/webhook",
+						Id:  new(int64(123)),
+						Url: new("https://example.com/webhook"),
 					},
 				},
 			},
@@ -387,8 +388,8 @@ func TestWebhookOnUpdate(t *testing.T) {
 			},
 			webhookURL: "https://example.com/webhook",
 			expectedHook: &provisioning.RepositoryWebhookStatus{
-				Id:               456,
-				Url:              "https://example.com/webhook",
+				Id:               new(int64(456)),
+				Url:              new("https://example.com/webhook"),
 				SubscribedEvents: subscribedEvents,
 			},
 			expectedError: nil,
@@ -412,15 +413,15 @@ func TestWebhookOnUpdate(t *testing.T) {
 				},
 				Status: provisioning.RepositoryStatus{
 					Webhook: &provisioning.RepositoryWebhookStatus{
-						Id:  0, // Webhook ID is zero
-						Url: "https://example.com/webhook",
+						Id:  new(int64(0)), // Webhook ID is zero
+						Url: new("https://example.com/webhook"),
 					},
 				},
 			},
 			webhookURL: "https://example.com/webhook",
 			expectedHook: &provisioning.RepositoryWebhookStatus{
-				Id:               789,
-				Url:              "https://example.com/webhook",
+				Id:               new(int64(789)),
+				Url:              new("https://example.com/webhook"),
 				SubscribedEvents: subscribedEvents,
 			},
 			expectedError: nil,
@@ -468,15 +469,15 @@ func TestWebhookOnUpdate(t *testing.T) {
 				},
 				Status: provisioning.RepositoryStatus{
 					Webhook: &provisioning.RepositoryWebhookStatus{
-						Id:  123,
-						Url: "https://example.com/old-webhook",
+						Id:  new(int64(123)),
+						Url: new("https://example.com/old-webhook"),
 					},
 				},
 			},
 			webhookURL: "https://example.com/webhook",
 			expectedHook: &provisioning.RepositoryWebhookStatus{
-				Id:               456,
-				Url:              "https://example.com/webhook",
+				Id:               new(int64(456)),
+				Url:              new("https://example.com/webhook"),
 				SubscribedEvents: subscribedEvents,
 			},
 			expectedError: nil,
@@ -499,8 +500,8 @@ func TestWebhookOnUpdate(t *testing.T) {
 				},
 				Status: provisioning.RepositoryStatus{
 					Webhook: &provisioning.RepositoryWebhookStatus{
-						Id:  123,
-						Url: "https://example.com/old-webhook",
+						Id:  new(int64(123)),
+						Url: new("https://example.com/old-webhook"),
 					},
 				},
 			},
@@ -528,8 +529,8 @@ func TestWebhookOnUpdate(t *testing.T) {
 				},
 				Status: provisioning.RepositoryStatus{
 					Webhook: &provisioning.RepositoryWebhookStatus{
-						Id:  123,
-						Url: "https://example.com/webhook",
+						Id:  new(int64(123)),
+						Url: new("https://example.com/webhook"),
 					},
 				},
 				Secure: resource.InlineSecureValues{
@@ -557,8 +558,8 @@ func TestWebhookOnUpdate(t *testing.T) {
 				},
 				Status: provisioning.RepositoryStatus{
 					Webhook: &provisioning.RepositoryWebhookStatus{
-						Id:  123,
-						Url: "https://example.com/webhook",
+						Id:  new(int64(123)),
+						Url: new("https://example.com/webhook"),
 					},
 				},
 			},
@@ -601,8 +602,8 @@ func TestWebhookOnUpdate(t *testing.T) {
 				},
 				Status: provisioning.RepositoryStatus{
 					Webhook: &provisioning.RepositoryWebhookStatus{
-						Id:  123,
-						Url: "https://example.com/webhook",
+						Id:  new(int64(123)),
+						Url: new("https://example.com/webhook"),
 					},
 				},
 			},
@@ -682,8 +683,8 @@ func TestWebhookOnDelete(t *testing.T) {
 			config: &provisioning.Repository{
 				Status: provisioning.RepositoryStatus{
 					Webhook: &provisioning.RepositoryWebhookStatus{
-						Id:  123,
-						Url: "https://example.com/webhook",
+						Id:  new(int64(123)),
+						Url: new("https://example.com/webhook"),
 					},
 				},
 			},
@@ -698,8 +699,8 @@ func TestWebhookOnDelete(t *testing.T) {
 			config: &provisioning.Repository{
 				Status: provisioning.RepositoryStatus{
 					Webhook: &provisioning.RepositoryWebhookStatus{
-						Id:  123,
-						Url: "https://example.com/webhook",
+						Id:  new(int64(123)),
+						Url: new("https://example.com/webhook"),
 					},
 				},
 			},
@@ -715,8 +716,8 @@ func TestWebhookOnDelete(t *testing.T) {
 			config: &provisioning.Repository{
 				Status: provisioning.RepositoryStatus{
 					Webhook: &provisioning.RepositoryWebhookStatus{
-						Id:  123,
-						Url: "https://example.com/webhook",
+						Id:  new(int64(123)),
+						Url: new("https://example.com/webhook"),
 					},
 				},
 			},
@@ -735,8 +736,8 @@ func TestWebhookOnDelete(t *testing.T) {
 			config: &provisioning.Repository{
 				Status: provisioning.RepositoryStatus{
 					Webhook: &provisioning.RepositoryWebhookStatus{
-						Id:  123,
-						Url: "https://example.com/webhook",
+						Id:  new(int64(123)),
+						Url: new("https://example.com/webhook"),
 					},
 				},
 			},
@@ -765,8 +766,8 @@ func TestWebhookOnDelete(t *testing.T) {
 			config: &provisioning.Repository{
 				Status: provisioning.RepositoryStatus{
 					Webhook: &provisioning.RepositoryWebhookStatus{
-						Id:  123,
-						Url: "https://example.com/webhook",
+						Id:  new(int64(123)),
+						Url: new("https://example.com/webhook"),
 					},
 				},
 			},
@@ -803,7 +804,7 @@ func TestRotateWebhookSecret(t *testing.T) {
 		})).Return(nil)
 
 		repo := newMockWebhookRepository(t, &provisioning.Repository{
-			Status: provisioning.RepositoryStatus{Webhook: &provisioning.RepositoryWebhookStatus{Id: 123}},
+			Status: provisioning.RepositoryStatus{Webhook: &provisioning.RepositoryWebhookStatus{Id: new(int64(123))}},
 		}, "", mockClient)
 
 		ops, err := rotateWebhookSecret(t.Context(), repo)
@@ -815,7 +816,7 @@ func TestRotateWebhookSecret(t *testing.T) {
 		require.Equal(t, "/secure/webhookSecret", ops[1]["path"])
 
 		webhookStatus := ops[0]["value"].(*provisioning.RepositoryWebhookStatus)
-		require.True(t, webhookStatus.LastRotated > 0)
+		require.True(t, ptr.Deref(webhookStatus.LastRotated, 0) > 0)
 	})
 
 	t.Run("webhook not found on remote clears status and returns error", func(t *testing.T) {
@@ -824,7 +825,7 @@ func TestRotateWebhookSecret(t *testing.T) {
 			Return(nil, repository.ErrFileNotFound)
 
 		repo := newMockWebhookRepository(t, &provisioning.Repository{
-			Status: provisioning.RepositoryStatus{Webhook: &provisioning.RepositoryWebhookStatus{Id: 123}},
+			Status: provisioning.RepositoryStatus{Webhook: &provisioning.RepositoryWebhookStatus{Id: new(int64(123))}},
 		}, "", mockClient)
 
 		ops, err := rotateWebhookSecret(t.Context(), repo)
@@ -842,7 +843,7 @@ func TestRotateWebhookSecret(t *testing.T) {
 			Return(nil, fmt.Errorf("api error"))
 
 		repo := newMockWebhookRepository(t, &provisioning.Repository{
-			Status: provisioning.RepositoryStatus{Webhook: &provisioning.RepositoryWebhookStatus{Id: 123}},
+			Status: provisioning.RepositoryStatus{Webhook: &provisioning.RepositoryWebhookStatus{Id: new(int64(123))}},
 		}, "", mockClient)
 
 		ops, err := rotateWebhookSecret(t.Context(), repo)
@@ -859,7 +860,7 @@ func TestRotateWebhookSecret(t *testing.T) {
 			Return(fmt.Errorf("edit failed"))
 
 		repo := newMockWebhookRepository(t, &provisioning.Repository{
-			Status: provisioning.RepositoryStatus{Webhook: &provisioning.RepositoryWebhookStatus{Id: 123}},
+			Status: provisioning.RepositoryStatus{Webhook: &provisioning.RepositoryWebhookStatus{Id: new(int64(123))}},
 		}, "", mockClient)
 
 		ops, err := rotateWebhookSecret(t.Context(), repo)
@@ -879,7 +880,7 @@ func TestRotateWebhookSecret(t *testing.T) {
 	t.Run("skips when webhook ID is zero", func(t *testing.T) {
 		repo := newMockWebhookRepository(t, &provisioning.Repository{
 			Status: provisioning.RepositoryStatus{
-				Webhook: &provisioning.RepositoryWebhookStatus{Id: 0},
+				Webhook: &provisioning.RepositoryWebhookStatus{Id: new(int64(0))},
 			},
 		}, "", repository.NewMockWebhookClient(t))
 
@@ -897,8 +898,8 @@ func requireCreateStatusPatches(t *testing.T, hookOps []map[string]any, expected
 	require.Len(t, hookOps, 2)
 	require.Equal(t, "replace", hookOps[0]["op"])
 	require.Equal(t, "/status/webhook", hookOps[0]["path"])
-	require.Equal(t, expected.Id, hookOps[0]["value"].(*provisioning.RepositoryWebhookStatus).Id)
-	require.Equal(t, expected.Url, hookOps[0]["value"].(*provisioning.RepositoryWebhookStatus).Url)
+	require.Equal(t, ptr.Deref(expected.Id, 0), ptr.Deref(hookOps[0]["value"].(*provisioning.RepositoryWebhookStatus).Id, 0))
+	require.Equal(t, ptr.Deref(expected.Url, ""), ptr.Deref(hookOps[0]["value"].(*provisioning.RepositoryWebhookStatus).Url, ""))
 	require.ElementsMatch(t, expected.SubscribedEvents, hookOps[0]["value"].(*provisioning.RepositoryWebhookStatus).SubscribedEvents)
 
 	require.Equal(t, "replace", hookOps[1]["op"])

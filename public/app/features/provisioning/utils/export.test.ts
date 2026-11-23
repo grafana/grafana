@@ -43,6 +43,8 @@ describe('exportResourceAsJson', () => {
         sync: { state: 'success', message: [] },
         observedGeneration: 3,
         webhook: {},
+        token: {},
+        quota: {},
       },
     };
 

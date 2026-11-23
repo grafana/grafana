@@ -26,18 +26,6 @@ const manifestPath = "../../../../definitions/provisioning-manifest.json"
 // External definitions referenced by the Go types but not part of GetOpenAPIDefinitions.
 // They are spelled out here so the CUE mirrors in kinds/common.cue are checked too.
 var externalGoDefinitions = map[string]spec.Schema{
-	"io.k8s.apimachinery.pkg.apis.meta.v1.Condition": {SchemaProps: spec.SchemaProps{
-		Type:     []string{"object"},
-		Required: []string{"type", "status", "lastTransitionTime", "reason", "message"},
-		Properties: map[string]spec.Schema{
-			"type":               *spec.StringProperty(),
-			"status":             *spec.StringProperty(),
-			"observedGeneration": *spec.Int64Property(),
-			"lastTransitionTime": *spec.DateTimeProperty(),
-			"reason":             *spec.StringProperty(),
-			"message":            *spec.StringProperty(),
-		},
-	}},
 	"io.k8s.apimachinery.pkg.apis.meta.v1.Duration": *spec.StringProperty(),
 }
 

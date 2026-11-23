@@ -27,6 +27,8 @@ const createMockRepository = (overrides: Partial<Repository> = {}): Repository =
     sync: { state: 'success', message: [] },
     observedGeneration: 1,
     webhook: {},
+    token: {},
+    quota: {},
   },
   ...overrides,
 });
@@ -96,6 +98,8 @@ describe('RepositoryHealthCard', () => {
           sync: { state: 'success', message: [] },
           observedGeneration: 1,
           webhook: {},
+          token: {},
+          quota: {},
         },
       });
 
@@ -111,6 +115,8 @@ describe('RepositoryHealthCard', () => {
           sync: { state: 'error', message: [] },
           observedGeneration: 1,
           webhook: {},
+          token: {},
+          quota: {},
         },
       });
 

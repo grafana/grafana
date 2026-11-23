@@ -19,7 +19,7 @@ import (
 func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 	t.Run("export succeeds when resources are within quota", func(t *testing.T) {
 		helper := sharedHelper(t)
-		helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 10})
+		helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: new(int64(10))})
 
 		// Create 2 unmanaged dashboards directly in Grafana
 		dashboard1 := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v1.yaml")
@@ -66,7 +66,7 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 	// takes ownership, so going over it skips resources there rather than refusing the export.
 	t.Run("export over quota writes the files and the pull takes over what fits", func(t *testing.T) {
 		helper := sharedHelper(t)
-		helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 1})
+		helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: new(int64(1))})
 
 		// Create 2 unmanaged dashboards — these alone will exceed the quota of 1
 		dashboard1 := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v1.yaml")
@@ -123,7 +123,7 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 
 	t.Run("export is not refused when folders push the total over quota", func(t *testing.T) {
 		helper := sharedHelper(t)
-		helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 2})
+		helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: new(int64(2))})
 
 		// Create 1 unmanaged dashboard (alone would fit in quota of 2)
 		dashboard := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v1.yaml")

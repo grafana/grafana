@@ -703,7 +703,7 @@ func TestRefreshHealthWithPatchOps(t *testing.T) {
 					},
 					Status: provisioning.RepositoryStatus{
 						Health:     tt.existingStatus,
-						Conditions: tt.existingConditions,
+						Conditions: provisioning.ConditionsFromMeta[provisioning.RepositoryCondition](tt.existingConditions),
 					},
 				},
 				testResult: tt.testResult,

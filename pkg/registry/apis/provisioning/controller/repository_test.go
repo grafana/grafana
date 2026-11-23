@@ -415,7 +415,7 @@ func TestRepositoryController_handleDelete_ReturnsErrorWhenConflictPersists(t *t
 			mock.AnythingOfType("map[string]interface {}"),
 			mock.MatchedBy(func(op map[string]interface{}) bool {
 				deletion, ok := op["value"].(*provisioning.RepositoryDeletionStatus)
-				return ok && deletion.Cause == provisioning.RepositoryDeletionStatusCauseSystem
+				return ok && ptr.Deref(deletion.Cause, "") == provisioning.RepositoryDeletionStatusCauseSystem
 			})).
 		Once().
 		Return(nil)
@@ -493,35 +493,35 @@ func TestRepositoryController_handleDelete_ObservesPendingCauseBeforeFinalizers(
 		{
 			name: "user cause takes precedence over legacy error",
 			status: provisioning.RepositoryStatus{
-				DeleteError: "connection refused",
-				Deletion:    &provisioning.RepositoryDeletionStatus{Cause: provisioning.RepositoryDeletionStatusCauseUser, Message: "provider rejected deletion"},
+				DeleteError: new("connection refused"),
+				Deletion:    &provisioning.RepositoryDeletionStatus{Cause: new(provisioning.RepositoryDeletionStatusCauseUser), Message: new("provider rejected deletion")},
 			},
 			cause: reconcileCauseUser,
 		},
 		{
 			name: "message does not override system cause",
 			status: provisioning.RepositoryStatus{
-				Deletion: &provisioning.RepositoryDeletionStatus{Cause: provisioning.RepositoryDeletionStatusCauseSystem, Message: "permission denied"},
+				Deletion: &provisioning.RepositoryDeletionStatus{Cause: new(provisioning.RepositoryDeletionStatusCauseSystem), Message: new("permission denied")},
 			},
 			cause: reconcileCauseSystem,
 		},
 		{
 			name: "structured failure without cause",
 			status: provisioning.RepositoryStatus{
-				Deletion: &provisioning.RepositoryDeletionStatus{State: provisioning.DeletionStateBlocked, Message: "permission denied"},
+				Deletion: &provisioning.RepositoryDeletionStatus{State: new(provisioning.DeletionStateBlocked), Message: new("permission denied")},
 			},
 			cause: reconcileCauseSystem,
 		},
 		{
 			name: "unknown cause stays bounded",
 			status: provisioning.RepositoryStatus{
-				Deletion: &provisioning.RepositoryDeletionStatus{Cause: "unexpected-cause"},
+				Deletion: &provisioning.RepositoryDeletionStatus{Cause: new(provisioning.RepositoryDeletionStatusCause("unexpected-cause"))},
 			},
 			cause: reconcileCauseSystem,
 		},
 		{
 			name:   "legacy failure without structured status",
-			status: provisioning.RepositoryStatus{DeleteError: "permission denied"},
+			status: provisioning.RepositoryStatus{DeleteError: new("permission denied")},
 			cause:  reconcileCauseSystem,
 		},
 	}
@@ -609,8 +609,8 @@ func TestRepositoryController_handleDelete_RecordsCauseForNextReconcile(t *testi
 			require.ErrorIs(t, c.handleDelete(context.Background(), repo), tc.err)
 			require.Len(t, patcher.ops, 2)
 			recorded := patcher.ops[1]["value"].(*provisioning.RepositoryDeletionStatus)
-			assert.Equal(t, tc.cause, recorded.Cause)
-			assert.Equal(t, repository.CleanFinalizer, recorded.Finalizer)
+			assert.Equal(t, tc.cause, ptr.Deref(recorded.Cause, ""))
+			assert.Equal(t, repository.CleanFinalizer, ptr.Deref(recorded.Finalizer, ""))
 			assert.Equal(t, uint64(1), histogramCountWithLabel(t, reg, repositoryDeletionPendingMetric, "cause", ""))
 
 			data, err := json.Marshal(recorded)
@@ -659,11 +659,11 @@ func TestRepositoryController_updateDeleteStatus_SkipsWhenUnchanged(t *testing.T
 	c := &RepositoryController{statusPatcher: mocks.NewStatusPatcher(t)}
 	repo := &provisioning.Repository{
 		Status: provisioning.RepositoryStatus{
-			DeleteError: "boom",
+			DeleteError: new("boom"),
 			Deletion: &provisioning.RepositoryDeletionStatus{
-				State:   provisioning.DeletionStateBlocked,
-				Message: "boom",
-				Cause:   provisioning.RepositoryDeletionStatusCauseSystem,
+				State:   new(provisioning.DeletionStateBlocked),
+				Message: new("boom"),
+				Cause:   new(provisioning.RepositoryDeletionStatusCauseSystem),
 			},
 		},
 	}
@@ -679,18 +679,18 @@ func TestRepositoryController_updateDeleteStatus_BackfillsCause(t *testing.T) {
 			err := fmt.Errorf("remove finalizers: %w", repository.ErrPermissionDenied)
 			repo := &provisioning.Repository{
 				Status: provisioning.RepositoryStatus{
-					DeleteError: err.Error(),
+					DeleteError: new(err.Error()),
 					Deletion: &provisioning.RepositoryDeletionStatus{
-						State:   provisioning.DeletionStateBlocked,
-						Message: err.Error(),
-						Cause:   previousCause,
+						State:   new(provisioning.DeletionStateBlocked),
+						Message: new(err.Error()),
+						Cause:   new(previousCause),
 					},
 				},
 			}
 			require.NoError(t, c.updateDeleteStatus(context.Background(), repo, err))
 			require.Len(t, patcher.ops, 2)
 			deletion := patcher.ops[1]["value"].(*provisioning.RepositoryDeletionStatus)
-			assert.Equal(t, provisioning.RepositoryDeletionStatusCauseUser, deletion.Cause)
+			assert.Equal(t, provisioning.RepositoryDeletionStatusCauseUser, ptr.Deref(deletion.Cause, ""))
 		})
 	}
 }
@@ -708,7 +708,7 @@ func TestRepositoryController_updateDeleteStatus_BackfillsMissingStructuredStatu
 			}),
 			mock.MatchedBy(func(op map[string]interface{}) bool {
 				ds, ok := op["value"].(*provisioning.RepositoryDeletionStatus)
-				return ok && ds.Finalizer == repository.CleanFinalizer
+				return ok && ptr.Deref(ds.Finalizer, "") == repository.CleanFinalizer
 			}),
 		).
 		Once().
@@ -720,7 +720,7 @@ func TestRepositoryController_updateDeleteStatus_BackfillsMissingStructuredStatu
 	})
 	// deleteError already equals the error, but status.deletion is nil (pre-upgrade).
 	repo := &provisioning.Repository{
-		Status: provisioning.RepositoryStatus{DeleteError: wrapped.Error()},
+		Status: provisioning.RepositoryStatus{DeleteError: new(wrapped.Error())},
 	}
 	err := c.updateDeleteStatus(context.Background(), repo, wrapped)
 	require.NoError(t, err)
@@ -742,14 +742,14 @@ func TestRepositoryController_updateDeleteStatus_UsesAddOp(t *testing.T) {
 					return false
 				}
 				ds, ok := op["value"].(*provisioning.RepositoryDeletionStatus)
-				return ok && ds.State == provisioning.DeletionStateBlocked && ds.Message == "new"
+				return ok && ptr.Deref(ds.State, "") == provisioning.DeletionStateBlocked && ptr.Deref(ds.Message, "") == "new"
 			}),
 		).
 		Once().
 		Return(nil)
 	c := &RepositoryController{statusPatcher: patcher}
 	repo := &provisioning.Repository{
-		Status: provisioning.RepositoryStatus{DeleteError: "old"},
+		Status: provisioning.RepositoryStatus{DeleteError: new("old")},
 	}
 	err := c.updateDeleteStatus(context.Background(), repo, errors.New("new"))
 	require.NoError(t, err)
@@ -767,8 +767,8 @@ func TestRepositoryController_updateDeleteStatus_NamesBlockingFinalizer(t *testi
 			}),
 			mock.MatchedBy(func(op map[string]interface{}) bool {
 				ds, ok := op["value"].(*provisioning.RepositoryDeletionStatus)
-				return ok && ds.State == provisioning.DeletionStateBlocked &&
-					ds.Finalizer == repository.CleanFinalizer
+				return ok && ptr.Deref(ds.State, "") == provisioning.DeletionStateBlocked &&
+					ptr.Deref(ds.Finalizer, "") == repository.CleanFinalizer
 			}),
 		).
 		Once().
@@ -795,8 +795,8 @@ func TestRepositoryController_updateDeleteStatus_UsesNonEmptyFolderError(t *test
 			}),
 			mock.MatchedBy(func(op map[string]interface{}) bool {
 				ds, ok := op["value"].(*provisioning.RepositoryDeletionStatus)
-				return ok && ds.Finalizer == repository.RemoveOrphanResourcesFinalizer &&
-					ds.Message == folderErr.Error() && ds.Cause == provisioning.RepositoryDeletionStatusCauseUser
+				return ok && ptr.Deref(ds.Finalizer, "") == repository.RemoveOrphanResourcesFinalizer &&
+					ptr.Deref(ds.Message, "") == folderErr.Error() && ptr.Deref(ds.Cause, "") == provisioning.RepositoryDeletionStatusCauseUser
 			}),
 		).
 		Once().
@@ -813,7 +813,7 @@ func TestShouldUseIncrementalSync(t *testing.T) {
 	obj := &provisioning.Repository{
 		Status: provisioning.RepositoryStatus{
 			Sync: provisioning.RepositorySyncStatus{
-				LastRef: "123",
+				LastRef: new("123"),
 			},
 		},
 	}
@@ -822,7 +822,7 @@ func TestShouldUseIncrementalSync(t *testing.T) {
 	largePolicy := repository.NewIncrementalSyncPolicy(1000)
 
 	t.Run("should use incremental sync", func(t *testing.T) {
-		versioned.On("CompareFiles", context.Background(), obj.Status.Sync.LastRef, latestRef).Return([]repository.VersionedFileChange{
+		versioned.On("CompareFiles", context.Background(), ptr.Deref(obj.Status.Sync.LastRef, ""), latestRef).Return([]repository.VersionedFileChange{
 			{
 				Action: repository.FileActionDeleted,
 				Path:   "test.json",
@@ -834,7 +834,7 @@ func TestShouldUseIncrementalSync(t *testing.T) {
 	})
 
 	t.Run("should not use incremental sync when folder-only metadata is deleted", func(t *testing.T) {
-		versioned.On("CompareFiles", context.Background(), obj.Status.Sync.LastRef, latestRef).Return([]repository.VersionedFileChange{
+		versioned.On("CompareFiles", context.Background(), ptr.Deref(obj.Status.Sync.LastRef, ""), latestRef).Return([]repository.VersionedFileChange{
 			{
 				Action: repository.FileActionDeleted,
 				Path:   "test/.keep",
@@ -851,7 +851,7 @@ func TestShouldUseIncrementalSync(t *testing.T) {
 		for i := range changes {
 			changes[i] = repository.VersionedFileChange{Action: repository.FileActionCreated, Path: "dashboards/d.json"}
 		}
-		versioned.On("CompareFiles", context.Background(), obj.Status.Sync.LastRef, latestRef).Return(changes, nil).Once()
+		versioned.On("CompareFiles", context.Background(), ptr.Deref(obj.Status.Sync.LastRef, ""), latestRef).Return(changes, nil).Once()
 		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef, policy)
 		assert.NoError(t, err)
 		assert.True(t, got, "diff one under threshold must stay incremental")
@@ -863,7 +863,7 @@ func TestShouldUseIncrementalSync(t *testing.T) {
 		for i := range changes {
 			changes[i] = repository.VersionedFileChange{Action: repository.FileActionCreated, Path: "dashboards/d.json"}
 		}
-		versioned.On("CompareFiles", context.Background(), obj.Status.Sync.LastRef, latestRef).Return(changes, nil).Once()
+		versioned.On("CompareFiles", context.Background(), ptr.Deref(obj.Status.Sync.LastRef, ""), latestRef).Return(changes, nil).Once()
 		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef, policy)
 		assert.NoError(t, err)
 		assert.True(t, got, "diff at threshold must stay incremental (strict >)")
@@ -875,7 +875,7 @@ func TestShouldUseIncrementalSync(t *testing.T) {
 		for i := range changes {
 			changes[i] = repository.VersionedFileChange{Action: repository.FileActionCreated, Path: "dashboards/d.json"}
 		}
-		versioned.On("CompareFiles", context.Background(), obj.Status.Sync.LastRef, latestRef).Return(changes, nil).Once()
+		versioned.On("CompareFiles", context.Background(), ptr.Deref(obj.Status.Sync.LastRef, ""), latestRef).Return(changes, nil).Once()
 		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef, policy)
 		assert.NoError(t, err)
 		assert.False(t, got, "diff above threshold must force a full sync")
@@ -887,14 +887,14 @@ func TestShouldUseIncrementalSync(t *testing.T) {
 		for i := range changes {
 			changes[i] = repository.VersionedFileChange{Action: repository.FileActionCreated, Path: "dashboards/d.json"}
 		}
-		versioned.On("CompareFiles", context.Background(), obj.Status.Sync.LastRef, latestRef).Return(changes, nil).Once()
+		versioned.On("CompareFiles", context.Background(), ptr.Deref(obj.Status.Sync.LastRef, ""), latestRef).Return(changes, nil).Once()
 		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef, policy)
 		assert.NoError(t, err)
 		assert.True(t, got, "max_incremental_changes=0 disables the size check (unlimited)")
 	})
 
 	t.Run("propagates CompareFiles error without deciding", func(t *testing.T) {
-		versioned.On("CompareFiles", context.Background(), obj.Status.Sync.LastRef, latestRef).Return(nil, assert.AnError).Once()
+		versioned.On("CompareFiles", context.Background(), ptr.Deref(obj.Status.Sync.LastRef, ""), latestRef).Return(nil, assert.AnError).Once()
 		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef, largePolicy)
 		assert.Error(t, err)
 		assert.False(t, got, "on CompareFiles error the decision defaults to full sync (returned as false)")
@@ -938,7 +938,7 @@ func TestRepositoryController_process_UnhealthyRepositoryStatusUpdate(t *testing
 					},
 					Sync: provisioning.RepositorySyncStatus{
 						State:    provisioning.JobStateSuccess,
-						Finished: time.Now().Add(-1 * time.Minute).UnixMilli(),
+						Finished: new(time.Now().Add(-1 * time.Minute).UnixMilli()),
 						Message:  []string{},
 					},
 				},
@@ -975,7 +975,7 @@ func TestRepositoryController_process_UnhealthyRepositoryStatusUpdate(t *testing
 					},
 					Sync: provisioning.RepositorySyncStatus{
 						State:    provisioning.JobStateError,
-						Finished: time.Now().Add(-1 * time.Minute).UnixMilli(),
+						Finished: new(time.Now().Add(-1 * time.Minute).UnixMilli()),
 						Message:  []string{"Repository is unhealthy"},
 					},
 				},
@@ -1012,7 +1012,7 @@ func TestRepositoryController_process_UnhealthyRepositoryStatusUpdate(t *testing
 					},
 					Sync: provisioning.RepositorySyncStatus{
 						State:    provisioning.JobStateError,
-						Finished: time.Now().Add(-1 * time.Minute).UnixMilli(),
+						Finished: new(time.Now().Add(-1 * time.Minute).UnixMilli()),
 						Message:  []string{"Repository is unhealthy"},
 					},
 				},
@@ -1086,9 +1086,9 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 				Status: provisioning.RepositoryStatus{
 					Sync: provisioning.RepositorySyncStatus{
 						State:    provisioning.JobStatePending,
-						Job:      "test-job-123",
-						Started:  time.Now().Add(-10 * time.Minute).UnixMilli(),
-						Finished: time.Now().Add(-10 * time.Minute).UnixMilli(),
+						Job:      new("test-job-123"),
+						Started:  new(time.Now().Add(-10 * time.Minute).UnixMilli()),
+						Finished: new(time.Now().Add(-10 * time.Minute).UnixMilli()),
 					},
 				},
 			},
@@ -1112,9 +1112,9 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 				Status: provisioning.RepositoryStatus{
 					Sync: provisioning.RepositorySyncStatus{
 						State:    provisioning.JobStateWorking,
-						Job:      "test-job-456",
-						Started:  time.Now().Add(-5 * time.Minute).UnixMilli(),
-						Finished: time.Now().Add(-5 * time.Minute).UnixMilli(),
+						Job:      new("test-job-456"),
+						Started:  new(time.Now().Add(-5 * time.Minute).UnixMilli()),
+						Finished: new(time.Now().Add(-5 * time.Minute).UnixMilli()),
 					},
 				},
 			},
@@ -1138,9 +1138,9 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 				Status: provisioning.RepositoryStatus{
 					Sync: provisioning.RepositorySyncStatus{
 						State:    provisioning.JobStatePending,
-						Job:      "test-job-789",
-						Started:  time.Now().Add(-2 * time.Minute).UnixMilli(),
-						Finished: time.Now().Add(-2 * time.Minute).UnixMilli(),
+						Job:      new("test-job-789"),
+						Started:  new(time.Now().Add(-2 * time.Minute).UnixMilli()),
+						Finished: new(time.Now().Add(-2 * time.Minute).UnixMilli()),
 					},
 				},
 			},
@@ -1164,9 +1164,9 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 				Status: provisioning.RepositoryStatus{
 					Sync: provisioning.RepositorySyncStatus{
 						State:    provisioning.JobStatePending,
-						Job:      "",
-						Started:  time.Now().Add(-2 * time.Minute).UnixMilli(),
-						Finished: time.Now().Add(-2 * time.Minute).UnixMilli(),
+						Job:      new(""),
+						Started:  new(time.Now().Add(-2 * time.Minute).UnixMilli()),
+						Finished: new(time.Now().Add(-2 * time.Minute).UnixMilli()),
 					},
 				},
 			},
@@ -1190,8 +1190,8 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 				Status: provisioning.RepositoryStatus{
 					Sync: provisioning.RepositorySyncStatus{
 						State:    provisioning.JobStateSuccess,
-						Job:      "test-job-999",
-						Finished: time.Now().Add(-1 * time.Minute).UnixMilli(),
+						Job:      new("test-job-999"),
+						Finished: new(time.Now().Add(-1 * time.Minute).UnixMilli()),
 					},
 				},
 			},
@@ -1215,9 +1215,9 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 				Status: provisioning.RepositoryStatus{
 					Sync: provisioning.RepositorySyncStatus{
 						State:    provisioning.JobStatePending,
-						Job:      "test-job-error",
-						Started:  time.Now().Add(-2 * time.Minute).UnixMilli(),
-						Finished: time.Now().Add(-2 * time.Minute).UnixMilli(),
+						Job:      new("test-job-error"),
+						Started:  new(time.Now().Add(-2 * time.Minute).UnixMilli()),
+						Finished: new(time.Now().Add(-2 * time.Minute).UnixMilli()),
 					},
 				},
 			},
@@ -1238,8 +1238,8 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 			}
 
 			// Set up job Get mock
-			if tc.repo.Status.Sync.Job != "" && (tc.repo.Status.Sync.State == provisioning.JobStatePending || tc.repo.Status.Sync.State == provisioning.JobStateWorking) {
-				mockStore.On("Get", mock.Anything, tc.repo.Namespace, tc.repo.Status.Sync.Job).Return(nil, tc.jobGetError).Once()
+			if ptr.Deref(tc.repo.Status.Sync.Job, "") != "" && (tc.repo.Status.Sync.State == provisioning.JobStatePending || tc.repo.Status.Sync.State == provisioning.JobStateWorking) {
+				mockStore.On("Get", mock.Anything, tc.repo.Namespace, ptr.Deref(tc.repo.Status.Sync.Job, "")).Return(nil, tc.jobGetError).Once()
 			}
 
 			// Create controller
@@ -1276,9 +1276,9 @@ func newIntervalController(t *testing.T, state provisioning.JobState) (*Reposito
 			ObservedGeneration: 1,
 			Health:             provisioning.RepositoryHealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
 			Sync: provisioning.RepositorySyncStatus{
-				State: state, Job: "previous-job", LastRef: "same-ref",
-				Started:  time.Now().Add(-11 * time.Minute).UnixMilli(),
-				Finished: time.Now().Add(-10 * time.Minute).UnixMilli(),
+				State: state, Job: new("previous-job"), LastRef: new("same-ref"),
+				Started:  new(time.Now().Add(-11 * time.Minute).UnixMilli()),
+				Finished: new(time.Now().Add(-10 * time.Minute).UnixMilli()),
 			},
 		},
 	}
@@ -1317,7 +1317,7 @@ func TestRepositoryController_process_IntervalNoop(t *testing.T) {
 		t.Run(string(state), func(t *testing.T) {
 			rc, obj, repo, indexer, patcher := newIntervalController(t, state)
 			original := obj.DeepCopy()
-			repo.MockVersioned.On("LatestRef", mock.Anything).Return(obj.Status.Sync.LastRef, nil).Once()
+			repo.MockVersioned.On("LatestRef", mock.Anything).Return(ptr.Deref(obj.Status.Sync.LastRef, ""), nil).Once()
 			before := time.Now().UnixMilli()
 
 			_, err := rc.process("default/repo")
@@ -1337,7 +1337,7 @@ func TestRepositoryController_process_IntervalNoop(t *testing.T) {
 			assert.Equal(t, original, obj, "the cached repository must not be mutated")
 
 			updated := obj.DeepCopy()
-			updated.Status.Sync.LastChecked = lastChecked
+			updated.Status.Sync.LastChecked = new(lastChecked)
 			require.NoError(t, indexer.Update(updated))
 			assert.False(t, rc.shouldResync(context.Background(), updated))
 			patcher.ops = nil
@@ -1347,10 +1347,10 @@ func TestRepositoryController_process_IntervalNoop(t *testing.T) {
 			repo.AssertNumberOfCalls(t, "LatestRef", 1)
 
 			updated = updated.DeepCopy()
-			updated.Status.Sync.LastChecked = time.Now().Add(-10 * time.Minute).UnixMilli()
+			updated.Status.Sync.LastChecked = new(time.Now().Add(-10 * time.Minute).UnixMilli())
 			require.NoError(t, indexer.Update(updated))
 			assert.True(t, rc.shouldResync(context.Background(), updated))
-			repo.MockVersioned.On("LatestRef", mock.Anything).Return(obj.Status.Sync.LastRef, nil).Once()
+			repo.MockVersioned.On("LatestRef", mock.Anything).Return(ptr.Deref(obj.Status.Sync.LastRef, ""), nil).Once()
 			_, err = rc.process("default/repo")
 			require.NoError(t, err)
 			repo.AssertNumberOfCalls(t, "LatestRef", 2)
@@ -1363,7 +1363,7 @@ func TestRepositoryController_process_IntervalNoop(t *testing.T) {
 func TestRepositoryController_process_IntervalNoopPatchFailure(t *testing.T) {
 	rc, obj, repo, _, patcher := newIntervalController(t, provisioning.JobStateSuccess)
 	original := obj.DeepCopy()
-	repo.MockVersioned.On("LatestRef", mock.Anything).Return(obj.Status.Sync.LastRef, nil).Once()
+	repo.MockVersioned.On("LatestRef", mock.Anything).Return(ptr.Deref(obj.Status.Sync.LastRef, ""), nil).Once()
 	patcher.err = assert.AnError
 
 	_, err := rc.process("default/repo")
@@ -1386,51 +1386,51 @@ func TestRepositoryController_shouldResync_LastChecked(t *testing.T) {
 	}{
 		{
 			name: "missing lastChecked uses finished",
-			sync: provisioning.RepositorySyncStatus{State: provisioning.JobStateSuccess, Finished: old},
+			sync: provisioning.RepositorySyncStatus{State: provisioning.JobStateSuccess, Finished: new(old)},
 			want: true,
 		},
 		{
 			name: "recent finished without lastChecked",
-			sync: provisioning.RepositorySyncStatus{State: provisioning.JobStateSuccess, Finished: recent},
+			sync: provisioning.RepositorySyncStatus{State: provisioning.JobStateSuccess, Finished: new(recent)},
 		},
 		{
 			name: "recent unchanged ref check",
-			sync: provisioning.RepositorySyncStatus{State: provisioning.JobStateSuccess, Finished: old, LastChecked: recent},
+			sync: provisioning.RepositorySyncStatus{State: provisioning.JobStateSuccess, Finished: new(old), LastChecked: new(recent)},
 		},
 		{
 			name: "sync completed after the last check",
-			sync: provisioning.RepositorySyncStatus{State: provisioning.JobStateSuccess, Finished: recent, LastChecked: old},
+			sync: provisioning.RepositorySyncStatus{State: provisioning.JobStateSuccess, Finished: new(recent), LastChecked: new(old)},
 		},
 		{
 			name: "interval expired since both timestamps",
-			sync: provisioning.RepositorySyncStatus{State: provisioning.JobStateSuccess, Finished: old, LastChecked: old},
+			sync: provisioning.RepositorySyncStatus{State: provisioning.JobStateSuccess, Finished: new(old), LastChecked: new(old)},
 			want: true,
 		},
 		{
 			name: "warning uses the same interval",
-			sync: provisioning.RepositorySyncStatus{State: provisioning.JobStateWarning, Finished: old, LastChecked: recent},
+			sync: provisioning.RepositorySyncStatus{State: provisioning.JobStateWarning, Finished: new(old), LastChecked: new(recent)},
 		},
 		{
 			name:        "system minimum interval still applies",
-			sync:        provisioning.RepositorySyncStatus{State: provisioning.JobStateSuccess, Finished: old, LastChecked: old},
+			sync:        provisioning.RepositorySyncStatus{State: provisioning.JobStateSuccess, Finished: new(old), LastChecked: new(old)},
 			minInterval: time.Hour,
 		},
 		{
 			name:     "disabled sync stays disabled",
-			sync:     provisioning.RepositorySyncStatus{State: provisioning.JobStateSuccess, Finished: old, LastChecked: old},
+			sync:     provisioning.RepositorySyncStatus{State: provisioning.JobStateSuccess, Finished: new(old), LastChecked: new(old)},
 			disabled: true,
 		},
 		{
 			name: "working job prevents resync",
-			sync: provisioning.RepositorySyncStatus{State: provisioning.JobStateWorking, Finished: old, LastChecked: old},
+			sync: provisioning.RepositorySyncStatus{State: provisioning.JobStateWorking, Finished: new(old), LastChecked: new(old)},
 		},
 		{
 			name: "long pending job prevents resync",
-			sync: provisioning.RepositorySyncStatus{State: provisioning.JobStatePending, Finished: old, LastChecked: old},
+			sync: provisioning.RepositorySyncStatus{State: provisioning.JobStatePending, Finished: new(old), LastChecked: new(old)},
 		},
 		{
 			name: "lastChecked does not replace an initial sync",
-			sync: provisioning.RepositorySyncStatus{LastChecked: old},
+			sync: provisioning.RepositorySyncStatus{LastChecked: new(old)},
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1457,14 +1457,14 @@ func TestRepositoryController_shouldResync_MissingJobUsesFinished(t *testing.T) 
 				ObjectMeta: metav1.ObjectMeta{Namespace: "default"},
 				Spec:       provisioning.RepositorySpec{Sync: provisioning.RepositorySyncOptions{Enabled: true, IntervalSeconds: new(int64(300))}},
 				Status: provisioning.RepositoryStatus{Sync: provisioning.RepositorySyncStatus{
-					State: state, Job: "missing-job",
-					Finished:    time.Now().Add(-time.Hour).UnixMilli(),
-					LastChecked: time.Now().UnixMilli(),
+					State: state, Job: new("missing-job"),
+					Finished:    new(time.Now().Add(-time.Hour).UnixMilli()),
+					LastChecked: new(time.Now().UnixMilli()),
 				}},
 			}
 
 			assert.True(t, rc.shouldResync(context.Background(), obj), "a recent interval check must not delay missing-job recovery")
-			obj.Status.Sync.Finished = time.Now().UnixMilli()
+			obj.Status.Sync.Finished = new(time.Now().UnixMilli())
 			assert.False(t, rc.shouldResync(context.Background(), obj), "missing-job recovery must respect the interval since the last completed sync")
 		})
 	}
@@ -1485,7 +1485,7 @@ func TestRepositoryController_process_IntervalSyncJob(t *testing.T) {
 			rc, obj, repo, _, patcher := newIntervalController(t, provisioning.JobStateSuccess)
 			repo.MockVersioned.On("LatestRef", mock.Anything).Return("new-ref", tt.latestErr).Once()
 			if tt.latestErr == nil {
-				repo.MockVersioned.On("CompareFiles", mock.Anything, obj.Status.Sync.LastRef, "new-ref").
+				repo.MockVersioned.On("CompareFiles", mock.Anything, ptr.Deref(obj.Status.Sync.LastRef, ""), "new-ref").
 					Return([]repository.VersionedFileChange{{Action: repository.FileActionUpdated, Path: "dashboard.json"}}, tt.compareErr).Once()
 			}
 			rc.jobs.(*mockJobsQueueStore).MockQueue.On("Insert", mock.Anything, obj.Namespace, provisioning.JobSpec{
@@ -1499,7 +1499,7 @@ func TestRepositoryController_process_IntervalSyncJob(t *testing.T) {
 			checkOp, found := patcher.findPatchOp("/status/sync/lastChecked")
 			require.True(t, found, "every eligible interval check must refresh the timestamp, including failed ref lookups")
 			assert.Equal(t, "add", checkOp["op"])
-			assert.Greater(t, checkOp["value"].(int64), obj.Status.Sync.Finished)
+			assert.Greater(t, checkOp["value"].(int64), ptr.Deref(obj.Status.Sync.Finished, 0))
 			op, found := patcher.findPatchOp("/status/sync/state")
 			require.True(t, found)
 			assert.Equal(t, provisioning.JobStatePending, op["value"])
@@ -1510,7 +1510,7 @@ func TestRepositoryController_process_IntervalSyncJob(t *testing.T) {
 func TestRepositoryController_process_IntervalSyncJobCreationFailure(t *testing.T) {
 	rc, obj, repo, indexer, patcher := newIntervalController(t, provisioning.JobStateSuccess)
 	repo.MockVersioned.On("LatestRef", mock.Anything).Return("new-ref", nil).Twice()
-	repo.MockVersioned.On("CompareFiles", mock.Anything, obj.Status.Sync.LastRef, "new-ref").
+	repo.MockVersioned.On("CompareFiles", mock.Anything, ptr.Deref(obj.Status.Sync.LastRef, ""), "new-ref").
 		Return([]repository.VersionedFileChange{{Action: repository.FileActionUpdated, Path: "dashboard.json"}}, nil).Twice()
 	jobStore := rc.jobs.(*mockJobsQueueStore)
 	jobSpec := provisioning.JobSpec{
@@ -1522,8 +1522,8 @@ func TestRepositoryController_process_IntervalSyncJobCreationFailure(t *testing.
 		Return(nil, assert.AnError).Once()
 	jobStore.MockQueue.On("Insert", mock.Anything, obj.Namespace, jobSpec).
 		Return(&provisioning.Job{ObjectMeta: metav1.ObjectMeta{Name: "new-job"}}, nil).Once()
-	jobStore.MockStore.On("Get", mock.Anything, obj.Namespace, obj.Status.Sync.Job).
-		Return(nil, apierrors.NewNotFound(schema.GroupResource{Resource: "jobs"}, obj.Status.Sync.Job)).Once()
+	jobStore.MockStore.On("Get", mock.Anything, obj.Namespace, ptr.Deref(obj.Status.Sync.Job, "")).
+		Return(nil, apierrors.NewNotFound(schema.GroupResource{Resource: "jobs"}, ptr.Deref(obj.Status.Sync.Job, ""))).Once()
 
 	_, err := rc.process("default/repo")
 	require.ErrorIs(t, err, assert.AnError)
@@ -1535,9 +1535,9 @@ func TestRepositoryController_process_IntervalSyncJobCreationFailure(t *testing.
 	require.True(t, found)
 
 	updated := obj.DeepCopy()
-	updated.Status.Sync.LastChecked = checkOp["value"].(int64)
+	updated.Status.Sync.LastChecked = new(checkOp["value"].(int64))
 	updated.Status.Sync.State = stateOp["value"].(provisioning.JobState)
-	updated.Status.Sync.Started = startedOp["value"].(int64)
+	updated.Status.Sync.Started = new(startedOp["value"].(int64))
 	require.NoError(t, indexer.Update(updated))
 	patcher.ops = nil
 
@@ -1664,7 +1664,7 @@ func TestRepositoryController_resolveQuotaStatus(t *testing.T) {
 
 	t.Run("new repository returns lookup error", func(t *testing.T) {
 		reg := prometheus.NewPedanticRegistry()
-		getter := quotas.NewFixedQuotaGetter(provisioning.RepositoryQuotaStatus{MaxRepositories: 10})
+		getter := quotas.NewFixedQuotaGetter(provisioning.RepositoryQuotaStatus{MaxRepositories: new(int64(10))})
 		getter.SetError(lookupErr)
 		rc := &RepositoryController{
 			quotaGetter:  getter,
@@ -1698,18 +1698,18 @@ func TestRepositoryController_resolveQuotaStatus(t *testing.T) {
 			Status: provisioning.RepositoryStatus{
 				ObservedGeneration: 1,
 				Quota: provisioning.RepositoryQuotaStatus{
-					MaxRepositories:           5,
-					MaxResourcesPerRepository: 100,
-					UpdatedAt:                 updatedAt,
+					MaxRepositories:           new(int64(5)),
+					MaxResourcesPerRepository: new(int64(100)),
+					UpdatedAt:                 new(updatedAt),
 				},
 			},
 		}
 
 		status, err := rc.resolveQuotaStatus(context.Background(), repo)
 		require.NoError(t, err)
-		assert.Equal(t, int64(5), status.MaxRepositories)
-		assert.Equal(t, int64(100), status.MaxResourcesPerRepository)
-		assert.Equal(t, updatedAt, status.UpdatedAt)
+		assert.Equal(t, int64(5), ptr.Deref(status.MaxRepositories, 0))
+		assert.Equal(t, int64(100), ptr.Deref(status.MaxResourcesPerRepository, 0))
+		assert.Equal(t, updatedAt, ptr.Deref(status.UpdatedAt, 0))
 		assert.Equal(t, uint64(1), histogramCount(t, reg, repositoryQuotaAgeMetric))
 		assert.Equal(t, 0.0, counterValue(t, reg, repositoryQuotaRefreshMetric))
 		assert.Equal(t, 1.0, counterValue(t, reg, repositoryQuotaRefreshErrorsMetric))
@@ -1729,15 +1729,15 @@ func TestRepositoryController_resolveQuotaStatus(t *testing.T) {
 			Status: provisioning.RepositoryStatus{
 				ObservedGeneration: 1,
 				Quota: provisioning.RepositoryQuotaStatus{
-					MaxRepositories: 5,
-					UpdatedAt:       updatedAt,
+					MaxRepositories: new(int64(5)),
+					UpdatedAt:       new(updatedAt),
 				},
 			},
 		}
 
 		status, err := rc.resolveQuotaStatus(context.Background(), repo)
 		require.NoError(t, err)
-		assert.Equal(t, updatedAt, status.UpdatedAt)
+		assert.Equal(t, updatedAt, ptr.Deref(status.UpdatedAt, 0))
 		family := gatherMetrics(t, reg)[repositoryQuotaAgeMetric]
 		histogram := family.GetMetric()[0].GetHistogram()
 		assert.Equal(t, uint64(1), histogram.GetSampleCount())
@@ -1747,7 +1747,7 @@ func TestRepositoryController_resolveQuotaStatus(t *testing.T) {
 		repo.Status.Quota = status
 		status, err = rc.resolveQuotaStatus(context.Background(), repo)
 		require.NoError(t, err)
-		assert.Equal(t, updatedAt, status.UpdatedAt)
+		assert.Equal(t, updatedAt, ptr.Deref(status.UpdatedAt, 0))
 		histogram = gatherMetrics(t, reg)[repositoryQuotaAgeMetric].GetMetric()[0].GetHistogram()
 		assert.Equal(t, uint64(2), histogram.GetSampleCount())
 		assert.GreaterOrEqual(t, histogram.GetSampleSum()-firstAge, firstAge)
@@ -1758,9 +1758,9 @@ func TestRepositoryController_resolveQuotaStatus(t *testing.T) {
 	t.Run("successful refresh updates timestamp", func(t *testing.T) {
 		reg := prometheus.NewPedanticRegistry()
 		getter := quotas.NewFixedQuotaGetter(provisioning.RepositoryQuotaStatus{
-			MaxRepositories:           8,
-			MaxResourcesPerRepository: 200,
-			UpdatedAt:                 time.Now().Add(-time.Hour).UnixMilli(),
+			MaxRepositories:           new(int64(8)),
+			MaxResourcesPerRepository: new(int64(200)),
+			UpdatedAt:                 new(time.Now().Add(-time.Hour).UnixMilli()),
 		})
 		rc := &RepositoryController{
 			quotaGetter:  getter,
@@ -1771,8 +1771,8 @@ func TestRepositoryController_resolveQuotaStatus(t *testing.T) {
 			Status: provisioning.RepositoryStatus{
 				ObservedGeneration: 1,
 				Quota: provisioning.RepositoryQuotaStatus{
-					MaxRepositories: 5,
-					UpdatedAt:       time.Now().Add(-5 * time.Minute).UnixMilli(),
+					MaxRepositories: new(int64(5)),
+					UpdatedAt:       new(time.Now().Add(-5 * time.Minute).UnixMilli()),
 				},
 			},
 		}
@@ -1780,10 +1780,10 @@ func TestRepositoryController_resolveQuotaStatus(t *testing.T) {
 
 		status, err := rc.resolveQuotaStatus(context.Background(), repo)
 		require.NoError(t, err)
-		assert.Equal(t, int64(8), status.MaxRepositories)
-		assert.Equal(t, int64(200), status.MaxResourcesPerRepository)
-		assert.GreaterOrEqual(t, status.UpdatedAt, before)
-		assert.LessOrEqual(t, status.UpdatedAt, time.Now().UnixMilli())
+		assert.Equal(t, int64(8), ptr.Deref(status.MaxRepositories, 0))
+		assert.Equal(t, int64(200), ptr.Deref(status.MaxResourcesPerRepository, 0))
+		assert.GreaterOrEqual(t, ptr.Deref(status.UpdatedAt, 0), before)
+		assert.LessOrEqual(t, ptr.Deref(status.UpdatedAt, 0), time.Now().UnixMilli())
 		assert.Equal(t, 0.0, counterValue(t, reg, repositoryQuotaRefreshMetric))
 		assert.Equal(t, 0.0, counterValue(t, reg, repositoryQuotaRefreshErrorsMetric))
 	})
@@ -1984,12 +1984,12 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 		{
 			name: "quota change triggers reconciliation and patches status",
 			oldQuota: provisioning.RepositoryQuotaStatus{
-				MaxRepositories:           5,
-				MaxResourcesPerRepository: 100,
+				MaxRepositories:           new(int64(5)),
+				MaxResourcesPerRepository: new(int64(100)),
 			},
 			newQuota: provisioning.RepositoryQuotaStatus{
-				MaxRepositories:           10,
-				MaxResourcesPerRepository: 200,
+				MaxRepositories:           new(int64(10)),
+				MaxResourcesPerRepository: new(int64(200)),
 			},
 			expectReconcile:  true,
 			expectQuotaPatch: true,
@@ -1998,12 +1998,12 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 		{
 			name: "unchanged quota skips reconciliation",
 			oldQuota: provisioning.RepositoryQuotaStatus{
-				MaxRepositories:           5,
-				MaxResourcesPerRepository: 100,
+				MaxRepositories:           new(int64(5)),
+				MaxResourcesPerRepository: new(int64(100)),
 			},
 			newQuota: provisioning.RepositoryQuotaStatus{
-				MaxRepositories:           5,
-				MaxResourcesPerRepository: 100,
+				MaxRepositories:           new(int64(5)),
+				MaxResourcesPerRepository: new(int64(100)),
 			},
 			expectReconcile:  false,
 			expectQuotaPatch: false,
@@ -2104,9 +2104,9 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 				if found {
 					assert.Equal(t, "replace", quotaOp["op"])
 					patchedQuota := quotaOp["value"].(provisioning.RepositoryQuotaStatus)
-					assert.Equal(t, tc.newQuota.MaxRepositories, patchedQuota.MaxRepositories)
-					assert.Equal(t, tc.newQuota.MaxResourcesPerRepository, patchedQuota.MaxResourcesPerRepository)
-					assert.NotZero(t, patchedQuota.UpdatedAt)
+					assert.Equal(t, ptr.Deref(tc.newQuota.MaxRepositories, 0), ptr.Deref(patchedQuota.MaxRepositories, 0))
+					assert.Equal(t, ptr.Deref(tc.newQuota.MaxResourcesPerRepository, 0), ptr.Deref(patchedQuota.MaxResourcesPerRepository, 0))
+					assert.NotZero(t, ptr.Deref(patchedQuota.UpdatedAt, 0))
 				}
 
 				condOp, found := patcher.findPatchOp("/status/conditions")
@@ -2491,10 +2491,10 @@ func TestRepositoryController_process_ServerUnavailableBuildFailure(t *testing.T
 				Status: provisioning.RepositoryStatus{
 					ObservedGeneration: 1,
 					Health:             provisioning.RepositoryHealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
-					Conditions: []metav1.Condition{{
+					Conditions: provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{{
 						Type: provisioning.ConditionTypeReady, Status: metav1.ConditionTrue,
 						Reason: provisioning.ReasonAvailable, ObservedGeneration: 1,
-					}},
+					}}),
 				},
 			}
 			if tt.deleting {
@@ -2598,10 +2598,10 @@ func TestRepositoryController_process_DefaultBranchFailure(t *testing.T) {
 				Status: provisioning.RepositoryStatus{
 					ObservedGeneration: 1,
 					Health:             provisioning.RepositoryHealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
-					Conditions: []metav1.Condition{{
+					Conditions: provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{{
 						Type: provisioning.ConditionTypeReady, Status: metav1.ConditionTrue,
 						Reason: provisioning.ReasonAvailable, ObservedGeneration: 1,
-					}},
+					}}),
 				},
 			}
 			if tt.initial {
@@ -2952,8 +2952,8 @@ func TestRepositoryController_process_QuotaTimestampOnlyDoesNotForceStatusPatch(
 		{
 			name: "successful refresh waits for an existing reconciliation patch",
 			getter: quotas.NewFixedQuotaGetter(provisioning.RepositoryQuotaStatus{
-				MaxRepositories:           5,
-				MaxResourcesPerRepository: 100,
+				MaxRepositories:           new(int64(5)),
+				MaxResourcesPerRepository: new(int64(100)),
 			}),
 		},
 	}
@@ -2977,9 +2977,9 @@ func TestRepositoryController_process_QuotaTimestampOnlyDoesNotForceStatusPatch(
 						Checked: time.Now().UnixMilli(),
 					},
 					Quota: provisioning.RepositoryQuotaStatus{
-						MaxRepositories:           5,
-						MaxResourcesPerRepository: 100,
-						UpdatedAt:                 updatedAt,
+						MaxRepositories:           new(int64(5)),
+						MaxResourcesPerRepository: new(int64(100)),
+						UpdatedAt:                 new(updatedAt),
 					},
 				},
 			}
@@ -3219,7 +3219,7 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 				Expiration:  expiration.UnixMilli(),
 			},
 			// Repository is CURRENTLY BLOCKED by namespace quota
-			Conditions: []metav1.Condition{
+			Conditions: provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{
 				{
 					Type:               provisioning.ConditionTypeNamespaceQuota,
 					Status:             metav1.ConditionFalse,
@@ -3227,7 +3227,7 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 					Message:            "namespace quota exceeded: 2/1 repositories",
 					LastTransitionTime: metav1.Now(),
 				},
-			},
+			}),
 		},
 		// Existing (non-zero) token so IsZero() == false and we exercise the expiry path
 		Secure: resource.InlineSecureValues{
@@ -3248,7 +3248,7 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 	repoLister := listers.NewRepositoryLister(indexer)
 
 	// quotaGetter: maxRepositories=1 with 2 repos → still over quota (isOverQuota=true)
-	quotaStatus := provisioning.RepositoryQuotaStatus{MaxRepositories: 1}
+	quotaStatus := provisioning.RepositoryQuotaStatus{MaxRepositories: new(int64(1))}
 
 	// Connection mock: GenerateRepositoryToken returns a fresh long-lived token
 	freshToken := &connection.ExpirableSecureValue{
@@ -3370,7 +3370,7 @@ func TestRepositoryController_process_TokenGenerationAuthFailureIsUserCaused(t *
 	repoGetter := informer.NewCachedRepositoryGetter(repoLister)
 	rc := &RepositoryController{
 		repos:             repoGetter,
-		quotaGetter:       quotas.NewFixedQuotaGetter(provisioning.RepositoryQuotaStatus{MaxRepositories: 100}),
+		quotaGetter:       quotas.NewFixedQuotaGetter(provisioning.RepositoryQuotaStatus{MaxRepositories: new(int64(100))}),
 		quotaChecker:      NewRepositoryQuotaChecker(repoGetter),
 		statusPatcher:     patcher,
 		connectionFactory: mockConnFactory,
@@ -3464,7 +3464,7 @@ func TestRepositoryController_process_RegeneratesTokenWhenSecretNotFound(t *test
 			repoLister := listers.NewRepositoryLister(indexer)
 
 			// Plenty of quota so the repository is not blocked.
-			quotaStatus := provisioning.RepositoryQuotaStatus{MaxRepositories: 100}
+			quotaStatus := provisioning.RepositoryQuotaStatus{MaxRepositories: new(int64(100))}
 
 			freshToken := &connection.ExpirableSecureValue{
 				Token:     "fresh-token",
@@ -3575,7 +3575,7 @@ func TestShouldRotateWebhookSecret(t *testing.T) {
 				Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 			},
 			Status: provisioning.RepositoryStatus{
-				Webhook: &provisioning.RepositoryWebhookStatus{Id: 123, LastRotated: 1},
+				Webhook: &provisioning.RepositoryWebhookStatus{Id: new(int64(123)), LastRotated: new(int64(1))},
 			},
 		}
 		require.False(t, rc.shouldRotateWebhookSecret(obj))
@@ -3588,7 +3588,7 @@ func TestShouldRotateWebhookSecret(t *testing.T) {
 				Workflows: []provisioning.RepositorySpecWorkflows{},
 			},
 			Status: provisioning.RepositoryStatus{
-				Webhook: &provisioning.RepositoryWebhookStatus{Id: 123, LastRotated: 1},
+				Webhook: &provisioning.RepositoryWebhookStatus{Id: new(int64(123)), LastRotated: new(int64(1))},
 			},
 		}
 		require.False(t, rc.shouldRotateWebhookSecret(obj))
@@ -3611,7 +3611,7 @@ func TestShouldRotateWebhookSecret(t *testing.T) {
 				Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 			},
 			Status: provisioning.RepositoryStatus{
-				Webhook: &provisioning.RepositoryWebhookStatus{Id: 0},
+				Webhook: &provisioning.RepositoryWebhookStatus{Id: new(int64(0))},
 			},
 		}
 		require.False(t, rc.shouldRotateWebhookSecret(obj))
@@ -3624,7 +3624,7 @@ func TestShouldRotateWebhookSecret(t *testing.T) {
 				Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 			},
 			Status: provisioning.RepositoryStatus{
-				Webhook: &provisioning.RepositoryWebhookStatus{Id: 123, LastRotated: 0},
+				Webhook: &provisioning.RepositoryWebhookStatus{Id: new(int64(123)), LastRotated: new(int64(0))},
 			},
 		}
 		require.True(t, rc.shouldRotateWebhookSecret(obj))
@@ -3638,7 +3638,7 @@ func TestShouldRotateWebhookSecret(t *testing.T) {
 				Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 			},
 			Status: provisioning.RepositoryStatus{
-				Webhook: &provisioning.RepositoryWebhookStatus{Id: 123, LastRotated: expired},
+				Webhook: &provisioning.RepositoryWebhookStatus{Id: new(int64(123)), LastRotated: new(expired)},
 			},
 		}
 		require.True(t, rc.shouldRotateWebhookSecret(obj))
@@ -3652,7 +3652,7 @@ func TestShouldRotateWebhookSecret(t *testing.T) {
 				Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 			},
 			Status: provisioning.RepositoryStatus{
-				Webhook: &provisioning.RepositoryWebhookStatus{Id: 123, LastRotated: recent},
+				Webhook: &provisioning.RepositoryWebhookStatus{Id: new(int64(123)), LastRotated: new(recent)},
 			},
 		}
 		require.False(t, rc.shouldRotateWebhookSecret(obj))
@@ -3674,8 +3674,8 @@ func callProcessHooks(rc *RepositoryController, repo repository.Repository, obj 
 // recorded when the secret is not due, rotation succeeds, or the repository is in
 // the hook-failure cooldown.
 func TestProcessHooks_RotationOverdueCause(t *testing.T) {
-	overdue := &provisioning.RepositoryWebhookStatus{Id: 123, LastRotated: time.Now().Add(-31 * 24 * time.Hour).UnixMilli()}
-	notDue := &provisioning.RepositoryWebhookStatus{Id: 123, LastRotated: time.Now().Add(-1 * 24 * time.Hour).UnixMilli()}
+	overdue := &provisioning.RepositoryWebhookStatus{Id: new(int64(123)), LastRotated: new(time.Now().Add(-31 * 24 * time.Hour).UnixMilli())}
+	notDue := &provisioning.RepositoryWebhookStatus{Id: new(int64(123)), LastRotated: new(time.Now().Add(-1 * 24 * time.Hour).UnixMilli())}
 
 	tests := []struct {
 		name        string
@@ -3756,7 +3756,7 @@ func TestProcessHooks_SkipsRedundantRotationAfterHookUpdate(t *testing.T) {
 		},
 		Status: provisioning.RepositoryStatus{
 			ObservedGeneration: 1, // generation change => runHooks runs the update
-			Webhook:            &provisioning.RepositoryWebhookStatus{Id: 123, LastRotated: time.Now().Add(-31 * 24 * time.Hour).UnixMilli()},
+			Webhook:            &provisioning.RepositoryWebhookStatus{Id: new(int64(123)), LastRotated: new(time.Now().Add(-31 * 24 * time.Hour).UnixMilli())},
 		},
 	}
 	stub := &hookRepoStub{cfg: obj, hookErrSet: true} // nil hookErr => webhook client succeeds
@@ -3792,7 +3792,7 @@ func TestProcessHooks_RecordsOverdueOnHookFailure(t *testing.T) {
 		},
 		Status: provisioning.RepositoryStatus{
 			ObservedGeneration: 1, // generation change => runHooks runs and fails
-			Webhook:            &provisioning.RepositoryWebhookStatus{Id: 123, LastRotated: time.Now().Add(-31 * 24 * time.Hour).UnixMilli()},
+			Webhook:            &provisioning.RepositoryWebhookStatus{Id: new(int64(123)), LastRotated: new(time.Now().Add(-31 * 24 * time.Hour).UnixMilli())},
 		},
 	}
 	stub := &hookRepoStub{cfg: obj} // hookErrSet false => hookResult returns assert.AnError
@@ -4021,8 +4021,8 @@ func TestRepositoryController_process_RotationSuppressedDuringCooldown(t *testin
 				Message: []string{"failed to create webhook"},
 			},
 			Webhook: &provisioning.RepositoryWebhookStatus{
-				Id:          123,
-				LastRotated: time.Now().Add(-31 * 24 * time.Hour).UnixMilli(),
+				Id:          new(int64(123)),
+				LastRotated: new(time.Now().Add(-31 * 24 * time.Hour).UnixMilli()),
 			},
 		},
 	}
@@ -4102,8 +4102,8 @@ func TestRepositoryController_process_RotationErrorRecordsMetric(t *testing.T) {
 			// there are no hook changes to run — only the overdue rotation fires.
 			ObservedGeneration: 1,
 			Webhook: &provisioning.RepositoryWebhookStatus{
-				Id:          123,
-				LastRotated: time.Now().Add(-31 * 24 * time.Hour).UnixMilli(),
+				Id:          new(int64(123)),
+				LastRotated: new(time.Now().Add(-31 * 24 * time.Hour).UnixMilli()),
 			},
 		},
 	}
@@ -4539,7 +4539,7 @@ func blockedOverQuotaRepo(namespace, name string, checked time.Time, syncEnabled
 		},
 		Status: provisioning.RepositoryStatus{
 			ObservedGeneration: 1,
-			Quota:              provisioning.RepositoryQuotaStatus{MaxRepositories: 1},
+			Quota:              provisioning.RepositoryQuotaStatus{MaxRepositories: new(int64(1))},
 			Health: provisioning.RepositoryHealthStatus{
 				Healthy: false,
 				Error:   provisioning.HealthFailureHealth,
@@ -4550,13 +4550,13 @@ func blockedOverQuotaRepo(namespace, name string, checked time.Time, syncEnabled
 				State: provisioning.JobStateError,
 				// A blocked repository never completes a sync, so this stays put while
 				// the interval elapses: the sync goes permanently overdue.
-				Finished: time.Now().Add(-time.Hour).UnixMilli(),
+				Finished: new(time.Now().Add(-time.Hour).UnixMilli()),
 				Message:  []string{"Repository is unhealthy"},
 			},
-			Conditions: []metav1.Condition{
+			Conditions: provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{
 				condition(provisioning.ConditionTypeNamespaceQuota, provisioning.ReasonQuotaExceeded),
 				condition(provisioning.ConditionTypeReady, provisioning.ReasonQuotaExceeded),
-			},
+			}),
 		},
 	}
 }
@@ -4585,7 +4585,7 @@ func newQuotaController(t *testing.T, maxRepositories int64, repos ...*provision
 	repoGetter := informer.NewCachedRepositoryGetter(listers.NewRepositoryLister(indexer))
 	rc := &RepositoryController{
 		repos:         repoGetter,
-		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.RepositoryQuotaStatus{MaxRepositories: maxRepositories}),
+		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.RepositoryQuotaStatus{MaxRepositories: new(maxRepositories)}),
 		quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
 		healthChecker: NewRepositoryHealthChecker(patcher, repository.NewTester(), healthMetrics),
 		statusPatcher: patcher,
@@ -4660,7 +4660,7 @@ func TestRepositoryController_process_BlockedOverQuotaSteadyStateIsNotATrigger(t
 			}
 
 			// The user must still be told why their repository is not syncing.
-			assert.True(t, isQuotaExceeded(repo.Status.Conditions))
+			assert.True(t, isQuotaExceeded(provisioning.ConditionsToMeta(repo.Status.Conditions)))
 		})
 	}
 }
@@ -4682,7 +4682,7 @@ func TestRepositoryController_process_BlockedRepositoryStaysBlockedWhenTheCacheL
 
 	assert.Empty(t, patcher.ops, "the block must not be released on a count the API contradicts")
 	assert.Zero(t, stub.testCalls.Load(), "a steady-state blocked repository is not reconciled")
-	assert.True(t, isQuotaExceeded(repo.Status.Conditions))
+	assert.True(t, isQuotaExceeded(provisioning.ConditionsToMeta(repo.Status.Conditions)))
 }
 
 // The confirmation LIST runs only when unblocking.
@@ -4797,7 +4797,7 @@ func TestRepositoryController_process_QuotaBlockedButReachableStillRunsHooks(t *
 	rc := &RepositoryController{
 		repos: repoGetter,
 		// maxRepositories=1 with 2 repos in the namespace -> isOverQuota is true.
-		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.RepositoryQuotaStatus{MaxRepositories: 1}),
+		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.RepositoryQuotaStatus{MaxRepositories: new(int64(1))}),
 		quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
 		healthChecker: healthChecker,
 		statusPatcher: patcher,
@@ -4846,7 +4846,7 @@ func TestRepositoryController_process_UnhealthyCleanupSkipDoesNotAdvanceObserved
 		},
 		Status: provisioning.RepositoryStatus{
 			ObservedGeneration: 1,
-			Webhook:            &provisioning.RepositoryWebhookStatus{Id: 42},
+			Webhook:            &provisioning.RepositoryWebhookStatus{Id: new(int64(42))},
 		},
 	}
 
@@ -4960,17 +4960,17 @@ func applyCapturedPatches(t *testing.T, repo *provisioning.Repository, ops []map
 		case path == "/status/quota":
 			repo.Status.Quota = op["value"].(provisioning.RepositoryQuotaStatus)
 		case path == "/status/conditions":
-			repo.Status.Conditions = op["value"].([]metav1.Condition)
+			repo.Status.Conditions = provisioning.ConditionsFromMeta[provisioning.RepositoryCondition](op["value"].([]metav1.Condition))
 		case path == "/status/conditions/-":
-			repo.Status.Conditions = append(repo.Status.Conditions, op["value"].(metav1.Condition))
+			repo.Status.Conditions = provisioning.ConditionsFromMeta[provisioning.RepositoryCondition](append(provisioning.ConditionsToMeta(repo.Status.Conditions), op["value"].(metav1.Condition)))
 		case strings.HasPrefix(path, "/status/conditions/"):
 			idx, err := strconv.Atoi(strings.TrimPrefix(path, "/status/conditions/"))
 			require.NoError(t, err, "unexpected conditions patch path %q", path)
-			repo.Status.Conditions[idx] = op["value"].(metav1.Condition)
+			provisioning.ConditionsToMeta(repo.Status.Conditions)[idx] = op["value"].(metav1.Condition)
 		case path == "/status/sync/state":
 			repo.Status.Sync.State = op["value"].(provisioning.JobState)
 		case path == "/status/sync/started":
-			repo.Status.Sync.Started = op["value"].(int64)
+			repo.Status.Sync.Started = new(op["value"].(int64))
 		case path == "/status/sync/message":
 			repo.Status.Sync.Message = op["value"].([]string)
 		default:
@@ -5066,7 +5066,7 @@ func TestRepositoryController_process_HookFailureRecoveryAfterCooldownExpires(t 
 		Status: provisioning.RepositoryStatus{
 			ObservedGeneration: 1,
 			Webhook: &provisioning.RepositoryWebhookStatus{
-				Id: 42, // Webhook already exists — webhookMissing is false.
+				Id: new(int64(42)), // Webhook already exists — webhookMissing is false.
 			},
 			Health: provisioning.RepositoryHealthStatus{
 				Healthy: false,
@@ -5131,14 +5131,14 @@ func TestRepositoryController_process_FailedFlushDoesNotDuplicatePatches(t *test
 			// takes the per-condition "add /status/conditions/-" path for the new Ready
 			// condition, instead of the whole-array replace it uses when Conditions is
 			// still empty -- "add" is exactly the non-idempotent op a replay would duplicate.
-			Conditions: []metav1.Condition{
+			Conditions: provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{
 				{
 					Type:               "PlaceholderExisting",
 					Status:             metav1.ConditionTrue,
 					Reason:             "Placeholder",
 					ObservedGeneration: 0,
 				},
-			},
+			}),
 		},
 	}
 

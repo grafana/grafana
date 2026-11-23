@@ -55,7 +55,7 @@ func TestJobStatus_ToSyncStatus(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			syncStatus := tt.status.ToSyncStatus("test-job")
-			assert.Equal(t, "test-job", syncStatus.Job)
+			assert.Equal(t, "test-job", ptr.Deref(syncStatus.Job, ""))
 			assert.Equal(t, ptr.Deref(tt.status.State, ""), syncStatus.State)
 			assert.Equal(t, tt.wantMessage, syncStatus.Message)
 		})

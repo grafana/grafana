@@ -41,6 +41,8 @@ const createMockRepository = (overrides: Partial<Repository> = {}): Repository =
     sync: { state: 'success', message: [] },
     observedGeneration: 1,
     webhook: {},
+    token: {},
+    quota: {},
   },
   ...overrides,
 });
@@ -69,6 +71,8 @@ describe('SyncRepository', () => {
         sync: { state: 'success', message: [] },
         observedGeneration: 1,
         webhook: {},
+        token: {},
+        quota: {},
       },
     });
     render(<SyncRepository repository={repo} />);

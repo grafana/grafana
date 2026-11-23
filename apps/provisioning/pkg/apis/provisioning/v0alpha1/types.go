@@ -644,7 +644,7 @@ type RepositoryStatus struct {
 	// +listMapKey=type
 	// +patchMergeKey=type
 	// +patchStrategy=merge
-	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
+	Conditions []RepositoryCondition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
 
 	// This will get updated with the current health status (and updated periodically)
 	Health RepositoryHealthStatus `json:"health"`
@@ -660,12 +660,12 @@ type RepositoryStatus struct {
 	Webhook *RepositoryWebhookStatus `json:"webhook"`
 
 	// Token will get updated with current token information
-	Token RepositoryTokenStatus `json:"token,omitempty"`
+	Token RepositoryTokenStatus `json:"token"`
 
 	// Error information during repository deletion (if any).
 	// Deprecated: prefer the structured Deletion field. Retained for
 	// backwards compatibility with clients that read the concise string.
-	DeleteError string `json:"deleteError,omitempty"`
+	DeleteError *string `json:"deleteError,omitempty"`
 
 	// Deletion reports the progress of an in-progress deletion and the problem
 	// blocking it, so a client can explain the holdup and force-remove the
@@ -673,11 +673,31 @@ type RepositoryStatus struct {
 	Deletion *RepositoryDeletionStatus `json:"deletion,omitempty"`
 
 	// Quota contains the configured quota limits for this repository
-	Quota RepositoryQuotaStatus `json:"quota,omitempty"`
+	Quota RepositoryQuotaStatus `json:"quota"`
 }
 
 func (RepositoryStatus) OpenAPIModelName() string {
 	return OpenAPIPrefix + "RepositoryStatus"
+}
+
+// Mirrors metav1.Condition with the same JSON encoding: lastTransitionTime is an RFC3339 timestamp, or null when unset.
+type RepositoryCondition struct {
+	// type of condition in CamelCase or in foo.example.com/CamelCase.
+	Type string `json:"type"`
+	// status of the condition, one of True, False, Unknown.
+	Status string `json:"status"`
+	// observedGeneration represents the .metadata.generation that the condition was set based upon.
+	ObservedGeneration *int64 `json:"observedGeneration,omitempty"`
+	// lastTransitionTime is the last time the condition transitioned from one status to another.
+	LastTransitionTime *string `json:"lastTransitionTime"`
+	// reason contains a programmatic identifier indicating the reason for the condition's last transition.
+	Reason string `json:"reason"`
+	// message is a human readable message indicating details about the transition.
+	Message string `json:"message"`
+}
+
+func (RepositoryCondition) OpenAPIModelName() string {
+	return OpenAPIPrefix + "RepositoryCondition"
 }
 
 type RepositorySyncStatus struct {
@@ -685,29 +705,29 @@ type RepositorySyncStatus struct {
 	State RepositoryJobState `json:"state"`
 
 	// The ID for the job that ran this sync
-	Job string `json:"job,omitempty"`
+	Job *string `json:"job,omitempty"`
 
 	// When the sync job started
-	Started int64 `json:"started,omitempty"`
+	Started *int64 `json:"started,omitempty"`
 
 	// When the sync job finished
-	Finished int64 `json:"finished,omitempty"`
+	Finished *int64 `json:"finished,omitempty"`
 
 	// When the controller last attempted a sync or an interval check (Unix milliseconds).
-	LastChecked int64 `json:"lastChecked,omitempty"`
+	LastChecked *int64 `json:"lastChecked,omitempty"`
 
 	// When the next sync check is scheduled
-	Scheduled int64 `json:"scheduled,omitempty"`
+	Scheduled *int64 `json:"scheduled,omitempty"`
 
 	// Summary messages (will be shown to users)
 	// +listType=atomic
 	Message []string `json:"message"`
 
 	// The repository ref when the last successful sync ran
-	LastRef string `json:"lastRef,omitempty"`
+	LastRef *string `json:"lastRef,omitempty"`
 
 	// Incremental synchronization for versioned repositories
-	Incremental bool `json:"incremental,omitempty"`
+	Incremental *bool `json:"incremental,omitempty"`
 }
 
 func (RepositorySyncStatus) OpenAPIModelName() string {
@@ -716,13 +736,13 @@ func (RepositorySyncStatus) OpenAPIModelName() string {
 
 type RepositoryWebhookStatus struct {
 	// TODO: consolidate ID and UUID into a single string identifier in the next api version.
-	Id   int64  `json:"id,omitempty"`
-	Uuid string `json:"uuid,omitempty"`
+	Id   *int64  `json:"id,omitempty"`
+	Uuid *string `json:"uuid,omitempty"`
 
-	Url              string   `json:"url,omitempty"`
+	Url              *string  `json:"url,omitempty"`
 	SubscribedEvents []string `json:"subscribedEvents,omitempty"`
-	LastEvent        int64    `json:"lastEvent,omitempty"`
-	LastRotated      int64    `json:"lastRotated,omitempty"`
+	LastEvent        *int64   `json:"lastEvent,omitempty"`
+	LastRotated      *int64   `json:"lastRotated,omitempty"`
 }
 
 func (RepositoryWebhookStatus) OpenAPIModelName() string {
@@ -744,15 +764,15 @@ type ConnectionTokenStatus = RepositoryTokenStatus
 type RepositoryQuotaStatus struct {
 	// MaxRepositories is the maximum number of repositories allowed.
 	// 0 means unlimited.
-	MaxRepositories int64 `json:"maxRepositories,omitempty"`
+	MaxRepositories *int64 `json:"maxRepositories,omitempty"`
 
 	// MaxResourcesPerRepository is the maximum number of resources allowed per repository.
 	// 0 means unlimited.
-	MaxResourcesPerRepository int64 `json:"maxResourcesPerRepository,omitempty"`
+	MaxResourcesPerRepository *int64 `json:"maxResourcesPerRepository,omitempty"`
 
 	// UpdatedAt is when the controller last successfully refreshed these quota limits.
 	// It is expressed as Unix milliseconds. 0 means the quota limits have not been refreshed yet.
-	UpdatedAt int64 `json:"updatedAt,omitempty"`
+	UpdatedAt *int64 `json:"updatedAt,omitempty"`
 }
 
 func (RepositoryQuotaStatus) OpenAPIModelName() string {
@@ -1192,19 +1212,19 @@ const (
 // blocking finalizer.
 type RepositoryDeletionStatus struct {
 	// State is the phase of the deletion.
-	State DeletionState `json:"state,omitempty"`
+	State *DeletionState `json:"state,omitempty"`
 
 	// Finalizer names the finalizer whose teardown is blocking deletion, i.e.
 	// which deletion step failed. A client force-removing deletion removes exactly
 	// this finalizer.
-	Finalizer string `json:"finalizer,omitempty"`
+	Finalizer *string `json:"finalizer,omitempty"`
 
 	// Message is a human-readable explanation of what went wrong, suitable for
 	// showing to users.
-	Message string `json:"message,omitempty"`
+	Message *string `json:"message,omitempty"`
 
 	// Cause classifies the blocking error. It may be absent on older statuses.
-	Cause RepositoryDeletionStatusCause `json:"cause,omitempty"`
+	Cause *RepositoryDeletionStatusCause `json:"cause,omitempty"`
 }
 
 func (RepositoryDeletionStatus) OpenAPIModelName() string {

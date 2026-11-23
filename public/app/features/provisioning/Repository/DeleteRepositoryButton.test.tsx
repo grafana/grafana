@@ -38,6 +38,8 @@ const createMockRepository = (): Repository => ({
     sync: { state: 'success', message: [] },
     observedGeneration: 1,
     webhook: {},
+    token: {},
+    quota: {},
   },
 });
 

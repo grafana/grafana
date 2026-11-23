@@ -89,7 +89,7 @@ func TestSyncer_Sync(t *testing.T) {
 					},
 					Status: provisioning.RepositoryStatus{
 						Sync: provisioning.RepositorySyncStatus{
-							LastRef: "old-ref",
+							LastRef: new("old-ref"),
 						},
 					},
 				})
@@ -113,18 +113,18 @@ func TestSyncer_Sync(t *testing.T) {
 					},
 					Status: provisioning.RepositoryStatus{
 						Sync: provisioning.RepositorySyncStatus{
-							LastRef: "old-ref",
+							LastRef: new("old-ref"),
 						},
 						Quota: provisioning.RepositoryQuotaStatus{
-							MaxResourcesPerRepository: 100,
+							MaxResourcesPerRepository: new(int64(100)),
 						},
-						Conditions: []metav1.Condition{
+						Conditions: provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{
 							{
 								Type:   provisioning.ConditionTypeResourceQuota,
 								Status: metav1.ConditionFalse,
 								Reason: provisioning.ReasonQuotaExceeded,
 							},
-						},
+						}),
 					},
 				})
 				repo.MockVersioned.On("LatestRef", mock.Anything).Return("new-ref", nil)
@@ -145,7 +145,7 @@ func TestSyncer_Sync(t *testing.T) {
 					},
 					Status: provisioning.RepositoryStatus{
 						Sync: provisioning.RepositorySyncStatus{
-							LastRef: "old-ref",
+							LastRef: new("old-ref"),
 						},
 					},
 				})
@@ -166,7 +166,7 @@ func TestSyncer_Sync(t *testing.T) {
 					},
 					Status: provisioning.RepositoryStatus{
 						Sync: provisioning.RepositorySyncStatus{
-							LastRef: "old-ref",
+							LastRef: new("old-ref"),
 						},
 					},
 				})

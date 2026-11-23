@@ -1,8 +1,12 @@
-import { type Condition, type ConnectionStatus } from 'app/api/clients/provisioning/v0alpha1';
+import { type ConnectionCondition, type ConnectionStatus } from 'app/api/clients/provisioning/v0alpha1';
 
 import { isConnectionPending } from './connectionStatus';
 
-function buildStatus(ready: Condition['status'] | undefined, tokenLastUpdated: number, healthChecked: number) {
+function buildStatus(
+  ready: ConnectionCondition['status'] | undefined,
+  tokenLastUpdated: number,
+  healthChecked: number
+) {
   const status: ConnectionStatus = {
     observedGeneration: 1,
     health: { healthy: true, checked: healthChecked },

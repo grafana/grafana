@@ -2085,14 +2085,14 @@ export type RepositorySpec = {
   /** UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly) */
   workflows: ('branch' | 'write')[];
 };
-export type Condition = {
-  /** lastTransitionTime is the last time the condition transitioned from one status to another. This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable. */
-  lastTransitionTime: Time;
-  /** message is a human readable message indicating details about the transition. This may be an empty string. */
+export type RepositoryCondition = {
+  /** lastTransitionTime is the last time the condition transitioned from one status to another. */
+  lastTransitionTime: string;
+  /** message is a human readable message indicating details about the transition. */
   message: string;
-  /** observedGeneration represents the .metadata.generation that the condition was set based upon. For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date with respect to the current state of the instance. */
+  /** observedGeneration represents the .metadata.generation that the condition was set based upon. */
   observedGeneration?: number;
-  /** reason contains a programmatic identifier indicating the reason for the condition's last transition. Producers of specific condition types may define expected values and meanings for this field, and whether the values are considered a guaranteed API. The value should be a CamelCase string. This field may not be empty. */
+  /** reason contains a programmatic identifier indicating the reason for the condition's last transition. */
   reason: string;
   /** status of the condition, one of True, False, Unknown. */
   status: string;
@@ -2166,7 +2166,7 @@ export type WebhookStatus = {
 };
 export type RepositoryStatus = {
   /** Conditions represent the latest available observations of the repository's state. */
-  conditions?: Condition[];
+  conditions?: RepositoryCondition[];
   /** Error information during repository deletion (if any). Deprecated: prefer the structured Deletion field. Retained for backwards compatibility with clients that read the concise string. */
   deleteError?: string;
   /** Deletion reports the progress of an in-progress deletion and the problem blocking it, so a client can explain the holdup and force-remove the blocking finalizer. Populated only while the repository is Terminating. */
@@ -2178,13 +2178,13 @@ export type RepositoryStatus = {
   /** The generation of the spec last time reconciliation ran */
   observedGeneration: number;
   /** Quota contains the configured quota limits for this repository */
-  quota?: QuotaStatus;
+  quota: QuotaStatus;
   /** The object count when sync last ran */
   stats?: ResourceCount[];
   /** Sync information with the last sync information */
   sync: SyncStatus;
   /** Token will get updated with current token information */
-  token?: TokenStatus;
+  token: TokenStatus;
   /** Webhook Information (if applicable) */
   webhook: WebhookStatus;
 };

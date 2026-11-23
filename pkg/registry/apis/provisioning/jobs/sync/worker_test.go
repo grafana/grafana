@@ -134,7 +134,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 				},
 				Status: provisioning.RepositoryStatus{
 					Quota: provisioning.RepositoryQuotaStatus{
-						MaxResourcesPerRepository: tt.maxResourcesPerRepository,
+						MaxResourcesPerRepository: new(tt.maxResourcesPerRepository),
 					},
 				},
 			}
@@ -283,8 +283,8 @@ func TestSyncWorker_Process_PullCondition(t *testing.T) {
 				},
 				Status: provisioning.RepositoryStatus{
 					Sync: provisioning.RepositorySyncStatus{
-						LastRef:     "existing-ref",
-						LastChecked: 1234567800,
+						LastRef:     new("existing-ref"),
+						LastChecked: new(int64(1234567800)),
 					},
 				},
 			}
@@ -358,9 +358,9 @@ func TestSyncWorker_Process_PullCondition(t *testing.T) {
 			err := worker.Process(context.Background(), readerWriter, job, progressRecorder)
 			require.NoError(t, err)
 
-			require.Equal(t, ptr.Deref(tt.jobStatus.Finished, 0), capturedSyncStatus.Finished, "all completed syncs, including warnings, must reset the interval")
+			require.Equal(t, ptr.Deref(tt.jobStatus.Finished, 0), ptr.Deref(capturedSyncStatus.Finished, 0), "all completed syncs, including warnings, must reset the interval")
 			require.Equal(t, ptr.Deref(tt.jobStatus.State, ""), capturedSyncStatus.State)
-			require.Equal(t, repoConfig.Status.Sync.LastChecked, capturedSyncStatus.LastChecked, "sync jobs must preserve the controller's last sync attempt")
+			require.Equal(t, ptr.Deref(repoConfig.Status.Sync.LastChecked, 0), ptr.Deref(capturedSyncStatus.LastChecked, 0), "sync jobs must preserve the controller's last sync attempt")
 			require.Equal(t, provisioning.ConditionTypePullStatus, capturedPullCondition.Type)
 			require.Equal(t, tt.expectedPullReason, capturedPullCondition.Reason)
 			require.Equal(t, tt.expectedPullStatus, capturedPullCondition.Status)
@@ -390,13 +390,13 @@ func matchSyncStatusPatch(state provisioning.JobState, jobID, lastRef, message s
 		if !ok || patch["op"] != "replace" || patch["path"] != "/status/sync" {
 			return false
 		}
-		if jobID != "" && syncStatus.Job != jobID {
+		if jobID != "" && ptr.Deref(syncStatus.Job, "") != jobID {
 			return false
 		}
 		if message != "" && !slices.Contains(syncStatus.Message, message) {
 			return false
 		}
-		return syncStatus.State == state && syncStatus.LastRef == lastRef
+		return syncStatus.State == state && ptr.Deref(syncStatus.LastRef, "") == lastRef
 	}
 }
 
@@ -459,7 +459,7 @@ func TestSyncWorker_Process(t *testing.T) {
 					},
 					Status: provisioning.RepositoryStatus{
 						Sync: provisioning.RepositorySyncStatus{
-							LastRef: "existing-ref",
+							LastRef: new("existing-ref"),
 						},
 					},
 				}
@@ -488,7 +488,7 @@ func TestSyncWorker_Process(t *testing.T) {
 					},
 					Status: provisioning.RepositoryStatus{
 						Sync: provisioning.RepositorySyncStatus{
-							LastRef: "existing-ref",
+							LastRef: new("existing-ref"),
 						},
 					},
 				}
@@ -534,7 +534,7 @@ func TestSyncWorker_Process(t *testing.T) {
 					},
 					Status: provisioning.RepositoryStatus{
 						Sync: provisioning.RepositorySyncStatus{
-							LastRef: "existing-ref",
+							LastRef: new("existing-ref"),
 						},
 					},
 				}
@@ -579,7 +579,7 @@ func TestSyncWorker_Process(t *testing.T) {
 					},
 					Status: provisioning.RepositoryStatus{
 						Sync: provisioning.RepositorySyncStatus{
-							LastRef: "existing-ref",
+							LastRef: new("existing-ref"),
 						},
 					},
 				}
@@ -625,7 +625,7 @@ func TestSyncWorker_Process(t *testing.T) {
 					},
 					Status: provisioning.RepositoryStatus{
 						Sync: provisioning.RepositorySyncStatus{
-							LastRef: "existing-ref",
+							LastRef: new("existing-ref"),
 						},
 					},
 				}
@@ -772,7 +772,7 @@ func TestSyncWorker_Process(t *testing.T) {
 					},
 					Status: provisioning.RepositoryStatus{
 						Sync: provisioning.RepositorySyncStatus{
-							LastRef: "existing-ref",
+							LastRef: new("existing-ref"),
 						},
 					},
 				}

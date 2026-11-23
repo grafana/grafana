@@ -40,6 +40,7 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
+	"k8s.io/utils/ptr"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
@@ -1184,7 +1185,7 @@ func (h *ProvisioningTestHelper) WaitForResourceQuotaLimit(t *testing.T, repoNam
 		}
 
 		repo := MustFromUnstructured[provisioning.Repository](t, repoObj)
-		assert.Equal(collect, expectedLimit, repo.Status.Quota.MaxResourcesPerRepository,
+		assert.Equal(collect, expectedLimit, ptr.Deref(repo.Status.Quota.MaxResourcesPerRepository, 0),
 			"repository quota limit not yet updated by controller")
 	}, WaitTimeoutDefault, WaitIntervalDefault, "Status.Quota.MaxResourcesPerRepository should be %d", expectedLimit)
 }
@@ -1200,7 +1201,7 @@ func (h *ProvisioningTestHelper) WaitForQuotaReconciliation(t *testing.T, repoNa
 		}
 
 		repo := MustFromUnstructured[provisioning.Repository](t, repoObj)
-		condition := FindCondition(repo.Status.Conditions, provisioning.ConditionTypeResourceQuota)
+		condition := FindCondition(provisioning.ConditionsToMeta(repo.Status.Conditions), provisioning.ConditionTypeResourceQuota)
 		if !assert.NotNil(collect, condition, "Quota condition not found") {
 			return
 		}
@@ -1219,7 +1220,7 @@ func (h *ProvisioningTestHelper) WaitForConditionReason(t *testing.T, repoName s
 		}
 
 		repo := MustFromUnstructured[provisioning.Repository](t, repoObj)
-		condition := FindCondition(repo.Status.Conditions, conditionType)
+		condition := FindCondition(provisioning.ConditionsToMeta(repo.Status.Conditions), conditionType)
 		if !assert.NotNil(collect, condition, "%s condition not found", conditionType) {
 			return
 		}

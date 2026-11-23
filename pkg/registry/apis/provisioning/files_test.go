@@ -142,7 +142,7 @@ func TestCheckQuota(t *testing.T) {
 			repo := repository.NewMockRepository(t)
 			repo.On("Config").Return(&provisioningapi.Repository{
 				Status: provisioningapi.RepositoryStatus{
-					Conditions: tt.conditions,
+					Conditions: provisioningapi.ConditionsFromMeta[provisioningapi.RepositoryCondition](tt.conditions),
 				},
 			})
 

@@ -13,6 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -139,7 +140,7 @@ func WaitForWebhook(t *testing.T, helper *common.GitTestHelper, repoName string,
 		require.NotNil(collect, repo.Status.Webhook, "webhook should be set")
 		require.NotEmpty(collect, repo.Secure[provisioning.RepositorySecureWebhookSecret].Name, "webhook secret should be created")
 		require.Equal(collect, expected, repository.GetID(repo.Status.Webhook))
-		require.Equal(collect, ExpectedWebhookURL(helper.Namespace, repoName), repo.Status.Webhook.Url)
+		require.Equal(collect, ExpectedWebhookURL(helper.Namespace, repoName), ptr.Deref(repo.Status.Webhook.Url, ""))
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "webhook should be created")
 }
 

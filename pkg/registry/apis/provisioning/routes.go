@@ -10,6 +10,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
+	"k8s.io/utils/ptr"
 
 	authlib "github.com/grafana/authlib/types"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -192,7 +193,7 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 		AvailableConnectionTypes: b.connectionFactory.Types(),
 		AvailableResources:       availableResources,
 		AllowImageRendering:      b.allowImageRendering,
-		MaxRepositories:          quotaStatus.MaxRepositories,
+		MaxRepositories:          ptr.Deref(quotaStatus.MaxRepositories, 0),
 	}
 
 	for i, val := range all {

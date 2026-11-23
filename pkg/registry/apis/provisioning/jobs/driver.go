@@ -624,7 +624,7 @@ func repositoryAuthenticationFailed(r *provisioning.Repository) bool {
 		return false
 	}
 
-	ready := meta.FindStatusCondition(r.Status.Conditions, provisioning.ConditionTypeReady)
+	ready := meta.FindStatusCondition(provisioning.ConditionsToMeta(r.Status.Conditions), provisioning.ConditionTypeReady)
 	return ready != nil &&
 		ready.Status == metav1.ConditionFalse &&
 		ready.Reason == provisioning.ReasonAuthenticationFailed &&

@@ -22,6 +22,8 @@ const createMockRepository = (overrides: Partial<Repository> = {}): Repository =
     sync: { state: 'success', message: [] },
     observedGeneration: 1,
     webhook: {},
+    token: {},
+    quota: {},
   },
   ...overrides,
 });
@@ -45,6 +47,8 @@ describe('RepositoryPullStatusCard', () => {
         health: { healthy: true },
         observedGeneration: 1,
         webhook: {},
+        token: {},
+        quota: {},
         sync: {
           state: 'warning',
           message: ['Some resources could not be synced'],
@@ -87,6 +91,8 @@ describe('RepositoryPullStatusCard', () => {
           health: { healthy: true },
           observedGeneration: 1,
           webhook: {},
+          token: {},
+          quota: {},
           sync: { state: 'success', message: [], finished: Date.UTC(2026, 9, 8, 10), lastChecked },
         },
       });
@@ -108,6 +114,8 @@ describe('RepositoryPullStatusCard', () => {
         health: { healthy: true },
         observedGeneration: 1,
         webhook: {},
+        token: {},
+        quota: {},
         sync: { state: 'success', message: [] },
       };
       const { rerender } = render(<RepositoryPullStatusCard repo={createMockRepository({ status })} />);
@@ -134,6 +142,8 @@ describe('RepositoryPullStatusCard', () => {
             health: { healthy: true },
             observedGeneration: 1,
             webhook: {},
+            token: {},
+            quota: {},
             sync: { state, message: [], lastChecked: Date.UTC(2026, 9, 8, 11) },
           },
         });

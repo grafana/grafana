@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
@@ -141,7 +142,7 @@ func TestIntegrationProvisioning_WebhookIgnoredEvents(t *testing.T) {
 		})
 	}
 
-	require.Positive(t, webhooksuite.GetRepository(t, helper, repoName).Status.Webhook.LastEvent, "deliveries should record the last event time")
+	require.Positive(t, ptr.Deref(webhooksuite.GetRepository(t, helper, repoName).Status.Webhook.LastEvent, 0), "deliveries should record the last event time")
 }
 
 func TestIntegrationProvisioning_WebhookPushWithSyncDisabledIgnored(t *testing.T) {

@@ -173,7 +173,7 @@ func waitForInitialSyncCompleted(t *testing.T, h *common.GitTestHelper, repoName
 
 		assert.Equal(c, string(v0alpha1.JobStateSuccess), string(repo.Status.Sync.State),
 			"initial sync state should be success (got %q)", repo.Status.Sync.State)
-		assert.NotEmpty(c, repo.Status.Sync.LastRef,
+		assert.NotEmpty(c, ptr.Deref(repo.Status.Sync.LastRef, ""),
 			"initial sync should populate LastRef")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault,
 		"initial sync should complete and populate LastRef")
@@ -316,14 +316,14 @@ func shouldNudgeRepo(t *testing.T, h *common.GitTestHelper, repoName string) boo
 		return false
 	}
 	repo := common.MustFromUnstructured[v0alpha1.Repository](t, repoObj)
-	if repo.Status.Sync.Finished == 0 {
+	if ptr.Deref(repo.Status.Sync.Finished, 0) == 0 {
 		return false
 	}
 	syncInterval := time.Duration(ptr.Deref(repo.Spec.Sync.IntervalSeconds, 0)) * time.Second
 	// shouldResync() uses a 1s tolerance on the controller side; match it here
 	// so we don't race the controller with a nudge that's a few ms too early.
 	tolerance := time.Second
-	syncAge := time.Since(time.UnixMilli(repo.Status.Sync.Finished))
+	syncAge := time.Since(time.UnixMilli(ptr.Deref(repo.Status.Sync.Finished, 0)))
 	return syncAge >= (syncInterval - tolerance)
 }
 

@@ -117,7 +117,7 @@ func MetricCollector(tracer tracing.Tracer, namespaces NamespaceLister, reposito
 				repo := &repos[i]
 				repoCounts[string(repo.Spec.Type)]++
 				authMethodCounts[repositoryAuthMethod(repo)]++
-				if r := readyReason(repo.Status.Conditions); r != "" {
+				if r := readyReason(provisioning.ConditionsToMeta(repo.Status.Conditions)); r != "" {
 					readyReasonCounts[strings.ToLower(r)]++
 				}
 				agg.observe(repo, syncTargetCounts, syncStateCounts)

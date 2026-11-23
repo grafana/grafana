@@ -3,6 +3,7 @@ package usage
 import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -146,7 +147,7 @@ func RepositoryUsageStatusFromRepository(repo *provisioning.Repository) Reposito
 	}
 
 	var readyReason string
-	if ready := meta.FindStatusCondition(repo.Status.Conditions, provisioning.ConditionTypeReady); ready != nil {
+	if ready := meta.FindStatusCondition(provisioning.ConditionsToMeta(repo.Status.Conditions), provisioning.ConditionTypeReady); ready != nil {
 		readyReason = ready.Reason
 	}
 
@@ -166,7 +167,7 @@ func RepositoryUsageStatusFromRepository(repo *provisioning.Repository) Reposito
 
 	var webhookLastRotatedAt int64
 	if repo.Status.Webhook != nil {
-		webhookLastRotatedAt = repo.Status.Webhook.LastRotated
+		webhookLastRotatedAt = ptr.Deref(repo.Status.Webhook.LastRotated, 0)
 	}
 
 	return RepositoryUsageStatus{
@@ -180,7 +181,7 @@ func RepositoryUsageStatusFromRepository(repo *provisioning.Repository) Reposito
 		Healthy:              repo.Status.Health.Healthy,
 		ReadyReason:          readyReason,
 		SyncState:            string(repo.Status.Sync.State),
-		LastSyncFinishedAt:   repo.Status.Sync.Finished,
+		LastSyncFinishedAt:   ptr.Deref(repo.Status.Sync.Finished, 0),
 		ManagedResourceCount: total,
 		ManagedResources:     repo.Status.Stats,
 		TokenLastUpdatedAt:   repo.Status.Token.LastUpdated,

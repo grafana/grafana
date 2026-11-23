@@ -281,9 +281,9 @@ repository: {
 			// +listType=atomic
 			stats?: [...#ResourceCount]
 			// Webhook Information (if applicable)
-			webhook: #WebhookStatus
+			webhook: #WebhookStatus | null
 			// Token will get updated with current token information
-			token?: #TokenStatus
+			token: #TokenStatus
 			// Error information during repository deletion (if any).
 			// Deprecated: prefer the structured Deletion field. Retained for
 			// backwards compatibility with clients that read the concise string.
@@ -293,7 +293,7 @@ repository: {
 			// blocking finalizer. Populated only while the repository is Terminating.
 			deletion?: #DeletionStatus
 			// Quota contains the configured quota limits for this repository
-			quota?: #QuotaStatus
+			quota: #QuotaStatus
 		}
 	}
 }

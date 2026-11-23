@@ -941,10 +941,10 @@ func unsupportedFiles(n int) []ResourceFileChange {
 func atQuota() *provisioning.Repository {
 	return &provisioning.Repository{
 		Status: provisioning.RepositoryStatus{
-			Conditions: []metav1.Condition{
+			Conditions: provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{
 				{Type: provisioning.ConditionTypeResourceQuota, Status: metav1.ConditionFalse, Reason: provisioning.ReasonQuotaExceeded},
-			},
-			Quota: provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 100},
+			}),
+			Quota: provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: new(int64(100))},
 			Stats: []provisioning.ResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 99}},
 		},
 	}
@@ -986,7 +986,7 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 			changes: createdChanges(10),
 			config: &provisioning.Repository{
 				Status: provisioning.RepositoryStatus{
-					Conditions: []metav1.Condition{},
+					Conditions: provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{}),
 				},
 			},
 			expectErr: false,
@@ -996,13 +996,13 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 			changes: createdChanges(10),
 			config: &provisioning.Repository{
 				Status: provisioning.RepositoryStatus{
-					Conditions: []metav1.Condition{
+					Conditions: provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{
 						{
 							Type:   provisioning.ConditionTypeResourceQuota,
 							Status: metav1.ConditionTrue,
 							Reason: "WithinLimit",
 						},
-					},
+					}),
 				},
 			},
 			expectErr: false,
@@ -1012,15 +1012,15 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 			changes: createdChanges(10),
 			config: &provisioning.Repository{
 				Status: provisioning.RepositoryStatus{
-					Conditions: []metav1.Condition{
+					Conditions: provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{
 						{
 							Type:   provisioning.ConditionTypeResourceQuota,
 							Status: metav1.ConditionFalse,
 							Reason: provisioning.ReasonQuotaExceeded,
 						},
-					},
+					}),
 					Quota: provisioning.RepositoryQuotaStatus{
-						MaxResourcesPerRepository: 0,
+						MaxResourcesPerRepository: new(int64(0)),
 					},
 				},
 			},
@@ -1031,15 +1031,15 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 			changes: createdChanges(5),
 			config: &provisioning.Repository{
 				Status: provisioning.RepositoryStatus{
-					Conditions: []metav1.Condition{
+					Conditions: provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{
 						{
 							Type:   provisioning.ConditionTypeResourceQuota,
 							Status: metav1.ConditionFalse,
 							Reason: provisioning.ReasonQuotaExceeded,
 						},
-					},
+					}),
 					Quota: provisioning.RepositoryQuotaStatus{
-						MaxResourcesPerRepository: 100,
+						MaxResourcesPerRepository: new(int64(100)),
 					},
 					Stats: []provisioning.ResourceCount{
 						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 50},
@@ -1054,15 +1054,15 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 			changes: createdChanges(10),
 			config: &provisioning.Repository{
 				Status: provisioning.RepositoryStatus{
-					Conditions: []metav1.Condition{
+					Conditions: provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{
 						{
 							Type:   provisioning.ConditionTypeResourceQuota,
 							Status: metav1.ConditionFalse,
 							Reason: provisioning.ReasonQuotaExceeded,
 						},
-					},
+					}),
 					Quota: provisioning.RepositoryQuotaStatus{
-						MaxResourcesPerRepository: 100,
+						MaxResourcesPerRepository: new(int64(100)),
 					},
 					Stats: []provisioning.ResourceCount{
 						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 90},
@@ -1076,15 +1076,15 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 			changes: createdChanges(20),
 			config: &provisioning.Repository{
 				Status: provisioning.RepositoryStatus{
-					Conditions: []metav1.Condition{
+					Conditions: provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{
 						{
 							Type:   provisioning.ConditionTypeResourceQuota,
 							Status: metav1.ConditionFalse,
 							Reason: provisioning.ReasonQuotaExceeded,
 						},
-					},
+					}),
 					Quota: provisioning.RepositoryQuotaStatus{
-						MaxResourcesPerRepository: 100,
+						MaxResourcesPerRepository: new(int64(100)),
 					},
 					Stats: []provisioning.ResourceCount{
 						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 90},
@@ -1098,15 +1098,15 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 			changes: deletedChanges(10),
 			config: &provisioning.Repository{
 				Status: provisioning.RepositoryStatus{
-					Conditions: []metav1.Condition{
+					Conditions: provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{
 						{
 							Type:   provisioning.ConditionTypeResourceQuota,
 							Status: metav1.ConditionFalse,
 							Reason: provisioning.ReasonQuotaExceeded,
 						},
-					},
+					}),
 					Quota: provisioning.RepositoryQuotaStatus{
-						MaxResourcesPerRepository: 100,
+						MaxResourcesPerRepository: new(int64(100)),
 					},
 					Stats: []provisioning.ResourceCount{
 						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 110},
@@ -1120,15 +1120,15 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 			changes: deletedChanges(5),
 			config: &provisioning.Repository{
 				Status: provisioning.RepositoryStatus{
-					Conditions: []metav1.Condition{
+					Conditions: provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{
 						{
 							Type:   provisioning.ConditionTypeResourceQuota,
 							Status: metav1.ConditionFalse,
 							Reason: provisioning.ReasonQuotaExceeded,
 						},
-					},
+					}),
 					Quota: provisioning.RepositoryQuotaStatus{
-						MaxResourcesPerRepository: 100,
+						MaxResourcesPerRepository: new(int64(100)),
 					},
 					Stats: []provisioning.ResourceCount{
 						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 120},
@@ -1142,15 +1142,15 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 			changes: append(deletedChanges(10), createdChanges(3)...),
 			config: &provisioning.Repository{
 				Status: provisioning.RepositoryStatus{
-					Conditions: []metav1.Condition{
+					Conditions: provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{
 						{
 							Type:   provisioning.ConditionTypeResourceQuota,
 							Status: metav1.ConditionFalse,
 							Reason: provisioning.ReasonQuotaExceeded,
 						},
-					},
+					}),
 					Quota: provisioning.RepositoryQuotaStatus{
-						MaxResourcesPerRepository: 100,
+						MaxResourcesPerRepository: new(int64(100)),
 					},
 					Stats: []provisioning.ResourceCount{
 						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 110},
@@ -1164,15 +1164,15 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 			changes: createdChanges(5),
 			config: &provisioning.Repository{
 				Status: provisioning.RepositoryStatus{
-					Conditions: []metav1.Condition{
+					Conditions: provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{
 						{
 							Type:   provisioning.ConditionTypeResourceQuota,
 							Status: metav1.ConditionFalse,
 							Reason: provisioning.ReasonQuotaExceeded,
 						},
-					},
+					}),
 					Quota: provisioning.RepositoryQuotaStatus{
-						MaxResourcesPerRepository: 100,
+						MaxResourcesPerRepository: new(int64(100)),
 					},
 					Stats: []provisioning.ResourceCount{
 						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 40},
@@ -1198,13 +1198,13 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 			changes: createdChanges(1000),
 			config: &provisioning.Repository{
 				Status: provisioning.RepositoryStatus{
-					Conditions: []metav1.Condition{
+					Conditions: provisioning.ConditionsFromMeta[provisioning.RepositoryCondition]([]metav1.Condition{
 						{
 							Type:   provisioning.ConditionTypeResourceQuota,
 							Status: metav1.ConditionFalse,
 							Reason: "SomeOtherReason",
 						},
-					},
+					}),
 				},
 			},
 			expectErr: false,

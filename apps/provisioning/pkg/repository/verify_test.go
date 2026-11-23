@@ -645,7 +645,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			store := &verifyTestStorage{repositories: tt.existingRepos}
 			lister := NewStorageLister(store)
-			quotaStatus := provisioning.RepositoryQuotaStatus{MaxRepositories: tt.maxRepositories}
+			quotaStatus := provisioning.RepositoryQuotaStatus{MaxRepositories: new(tt.maxRepositories)}
 			quotaGetter := quotas.NewFixedQuotaGetter(quotaStatus)
 			validatorRaw := NewVerifyAgainstExistingRepositoriesValidator(lister, quotaGetter)
 			errList := validatorRaw.Validate(context.Background(), tt.cfg)
@@ -684,7 +684,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_QuotaLookupError(t *testing.
 				ObjectMeta: metav1.ObjectMeta{Name: "observed-repo", Namespace: "default"},
 				Status: provisioning.RepositoryStatus{
 					ObservedGeneration: 1,
-					Quota:              provisioning.RepositoryQuotaStatus{MaxRepositories: 1},
+					Quota:              provisioning.RepositoryQuotaStatus{MaxRepositories: new(int64(1))},
 				},
 			},
 			existingRepos: []provisioning.Repository{
@@ -701,7 +701,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_QuotaLookupError(t *testing.
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "observed-repo"},
 					Status: provisioning.RepositoryStatus{
-						Quota: provisioning.RepositoryQuotaStatus{MaxRepositories: 1},
+						Quota: provisioning.RepositoryQuotaStatus{MaxRepositories: new(int64(1))},
 					},
 				},
 				{ObjectMeta: metav1.ObjectMeta{Name: "other-repo"}},
@@ -712,7 +712,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_QuotaLookupError(t *testing.
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			store := &verifyTestStorage{repositories: tt.existingRepos}
-			getter := quotas.NewFixedQuotaGetter(provisioning.RepositoryQuotaStatus{MaxRepositories: 10})
+			getter := quotas.NewFixedQuotaGetter(provisioning.RepositoryQuotaStatus{MaxRepositories: new(int64(10))})
 			getter.SetError(lookupErr)
 			validator := NewVerifyAgainstExistingRepositoriesValidator(NewStorageLister(store), getter)
 

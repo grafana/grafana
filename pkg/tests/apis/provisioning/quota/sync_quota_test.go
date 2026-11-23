@@ -40,7 +40,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 
 		// Lower the quota to put the repo over the limit:
 		// 1 folder + 2 dashboards = 3 resources, new limit 2 → exceeded
-		helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 2})
+		helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: new(int64(2))})
 		helper.TriggerRepositoryReconciliation(t, repo)
 		helper.WaitForResourceQuotaLimit(t, repo, 2)
 		helper.SyncAndWait(t, repo, nil)
@@ -62,7 +62,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 
 	t.Run("within limit repo syncs successfully and allows adding more resources", func(t *testing.T) {
 		helper := sharedHelper(t)
-		helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 5})
+		helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: new(int64(5))})
 
 		const repo = "quota-within-limit-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
@@ -128,7 +128,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 
 		// Lower the quota to put the repo over the limit:
 		// 1 folder + 2 dashboards = 3 resources, new limit 2 → exceeded
-		helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 2})
+		helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: new(int64(2))})
 		helper.TriggerRepositoryReconciliation(t, testRepo.Name)
 		helper.WaitForResourceQuotaLimit(t, repo, 2)
 		helper.SyncAndWait(t, repo, nil)
@@ -138,7 +138,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		repoObj, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{})
 		require.NoError(t, err)
 		typedRepo := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
-		require.True(t, quotas.IsQuotaExceeded(typedRepo.Status.Conditions), "quota should be exceeded")
+		require.True(t, quotas.IsQuotaExceeded(provisioning.ConditionsToMeta(typedRepo.Status.Conditions)), "quota should be exceeded")
 
 		// Now add a 3rd dashboard - this should be blocked by quota on the next full sync
 		dashboard3Content := helper.LoadFile("../testdata/timeline-demo.json")
@@ -168,7 +168,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 	t.Run("full sync that exceeds quota creates some resources and skips others with warnings", func(t *testing.T) {
 		// Allow 3 total resources: 1 folder + 2 dashboards
 		helper := sharedHelper(t)
-		helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 3})
+		helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: new(int64(3))})
 
 		const repo = "quota-partial-sync-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
@@ -245,7 +245,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 	t.Run("full sync with nested folders counts folders toward quota and skips resources", func(t *testing.T) {
 		// Allow 6 total resources: 1 root folder + 2 nested folders + 2 dashboards + 1 new folder = 6
 		helper := sharedHelper(t)
-		helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 6})
+		helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: new(int64(6))})
 
 		const repo = "quota-nested-folders-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
@@ -357,7 +357,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 
 		// Lower the quota to put the repo over the limit:
 		// 1 folder + 3 dashboards = 4 resources, new limit 3 → exceeded
-		helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 3})
+		helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: new(int64(3))})
 		helper.TriggerRepositoryReconciliation(t, repo)
 		helper.WaitForResourceQuotaLimit(t, repo, 3)
 		helper.SyncAndWait(t, repo, nil)
@@ -404,7 +404,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 
 		// Lower the quota to put the repo over the limit:
 		// 1 folder + 3 dashboards = 4 resources, new limit 1 → exceeded
-		helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: 1})
+		helper.SetQuotaStatus(provisioning.RepositoryQuotaStatus{MaxResourcesPerRepository: new(int64(1))})
 		helper.TriggerRepositoryReconciliation(t, repo)
 		helper.WaitForResourceQuotaLimit(t, repo, 1)
 		helper.SyncAndWait(t, repo, nil)

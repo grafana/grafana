@@ -63,6 +63,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		RepositoryBitbucketRepositoryConfig{}.OpenAPIModelName():        schema_pkg_apis_provisioning_v0alpha1_RepositoryBitbucketRepositoryConfig(ref),
 		RepositoryBranchOptions{}.OpenAPIModelName():                    schema_pkg_apis_provisioning_v0alpha1_RepositoryBranchOptions(ref),
 		RepositoryCommitOptions{}.OpenAPIModelName():                    schema_pkg_apis_provisioning_v0alpha1_RepositoryCommitOptions(ref),
+		RepositoryCondition{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_RepositoryCondition(ref),
 		RepositoryConnectionInfo{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_RepositoryConnectionInfo(ref),
 		RepositoryDeletionStatus{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_RepositoryDeletionStatus(ref),
 		RepositoryGitHubEnterpriseRepositoryConfig{}.OpenAPIModelName(): schema_pkg_apis_provisioning_v0alpha1_RepositoryGitHubEnterpriseRepositoryConfig(ref),
@@ -2295,6 +2296,66 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryCommitOptions(ref common.Re
 	}
 }
 
+func schema_pkg_apis_provisioning_v0alpha1_RepositoryCondition(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Mirrors metav1.Condition with the same JSON encoding: lastTransitionTime is an RFC3339 timestamp, or null when unset.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Description: "type of condition in CamelCase or in foo.example.com/CamelCase.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Description: "status of the condition, one of True, False, Unknown.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"observedGeneration": {
+						SchemaProps: spec.SchemaProps{
+							Description: "observedGeneration represents the .metadata.generation that the condition was set based upon.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"lastTransitionTime": {
+						SchemaProps: spec.SchemaProps{
+							Description: "lastTransitionTime is the last time the condition transitioned from one status to another.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"reason": {
+						SchemaProps: spec.SchemaProps{
+							Description: "reason contains a programmatic identifier indicating the reason for the condition's last transition.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"message": {
+						SchemaProps: spec.SchemaProps{
+							Description: "message is a human readable message indicating details about the transition.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"type", "status", "lastTransitionTime", "reason", "message"},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_provisioning_v0alpha1_RepositoryConnectionInfo(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -2896,7 +2957,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref("io.k8s.apimachinery.pkg.apis.meta.v1.Condition"),
+										Ref: ref(RepositoryCondition{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -2968,11 +3029,11 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 						},
 					},
 				},
-				Required: []string{"observedGeneration", "health", "sync", "webhook"},
+				Required: []string{"observedGeneration", "health", "sync", "webhook", "token", "quota"},
 			},
 		},
 		Dependencies: []string{
-			ErrorDetails{}.OpenAPIModelName(), RepositoryDeletionStatus{}.OpenAPIModelName(), RepositoryHealthStatus{}.OpenAPIModelName(), RepositoryQuotaStatus{}.OpenAPIModelName(), RepositorySyncStatus{}.OpenAPIModelName(), RepositoryTokenStatus{}.OpenAPIModelName(), RepositoryWebhookStatus{}.OpenAPIModelName(), ResourceCount{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.Condition"},
+			ErrorDetails{}.OpenAPIModelName(), RepositoryCondition{}.OpenAPIModelName(), RepositoryDeletionStatus{}.OpenAPIModelName(), RepositoryHealthStatus{}.OpenAPIModelName(), RepositoryQuotaStatus{}.OpenAPIModelName(), RepositorySyncStatus{}.OpenAPIModelName(), RepositoryTokenStatus{}.OpenAPIModelName(), RepositoryWebhookStatus{}.OpenAPIModelName(), ResourceCount{}.OpenAPIModelName()},
 	}
 }
 
