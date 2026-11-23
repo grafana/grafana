@@ -47,6 +47,22 @@ describe('__url_tab_state', () => {
     );
   });
 
+  it('preserves the URL selection before repeated tabs are available', () => {
+    const tabs = new TabsLayoutManager({ tabs: [new TabItem({ title: 'Server', repeatByVariable: 'server' })] });
+    const dashboard = new DashboardScene({ body: tabs });
+    tabs.updateFromUrl({ dtab: 'Server-eu' });
+
+    expect(sceneGraph.interpolate(dashboard, '${__url_tab_state}')).toBe('dtab=Server-eu');
+  });
+
+  it('uses the visible fallback tab when the stored slug no longer matches', () => {
+    const tabs = new TabsLayoutManager({ tabs: [new TabItem({ title: 'Overview' })] });
+    const dashboard = new DashboardScene({ body: tabs });
+    tabs.updateFromUrl({ dtab: 'Removed-tab' });
+
+    expect(sceneGraph.interpolate(dashboard, '${__url_tab_state}')).toBe('dtab=Overview');
+  });
+
   it('preserves the default tab before URL sync sets its slug', () => {
     const tabs = new TabsLayoutManager({ tabs: [new TabItem({ title: 'Overview${__url_tab_state}' })] });
     const dashboard = new DashboardScene({ body: tabs });

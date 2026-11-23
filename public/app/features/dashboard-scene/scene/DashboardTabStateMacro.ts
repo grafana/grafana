@@ -38,8 +38,12 @@ export class DashboardTabStateMacro implements FormatVariable {
 function collectTabState(layout: AnyDashboardLayoutManager, params: URLSearchParams) {
   if (layout instanceof TabsLayoutManager) {
     const tab = layout.getCurrentTab();
+    // URL sync can set the slug before repeated tabs have been built.
+    const slug = tab?.getSlug() ?? layout.state.currentTabSlug;
+    if (slug) {
+      params.set(layout.getUrlKey(), slug);
+    }
     if (tab) {
-      params.set(layout.getUrlKey(), tab.getSlug());
       collectTabState(tab.getLayout(), params);
     }
   } else if (layout instanceof RowsLayoutManager) {
