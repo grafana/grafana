@@ -22,8 +22,12 @@ component's MDX only if there is component-specific detail worth linking from th
 MDX. Follow linked guides when they match your task. The MDX is enough for
 ordinary usage.
 
-Shared patterns live in [`src/guidance/patterns/`](src/guidance/patterns/), such as
-[inline actions](src/guidance/patterns/inline-actions.md).
+Shared patterns live in [`src/guidance/patterns/`](src/guidance/patterns/):
+
+- [Inline actions](src/guidance/patterns/inline-actions.md)
+- [Icon and link actions](src/guidance/patterns/icon-and-link-actions.md): don't strip `Button` styling to fake a link or icon control
+- [Interactive states](src/guidance/patterns/interactive-states.md): don't force hover, focus, disabled or selected looks with CSS
+- [Styling a component's internal elements](src/guidance/patterns/styling-internals.md): don't restyle internals with `:nth-child` or `> div`
 
 When you add or change a component, update its MDX using the
 [component docs template](../../contribute/style-guides/component-docs-template.mdx).
