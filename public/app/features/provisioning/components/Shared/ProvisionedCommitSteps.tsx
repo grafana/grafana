@@ -30,8 +30,8 @@ interface Props {
 
 /**
  * Where to go once a commit has landed, derived from the kind's registry entry: the pull request it
- * opens, the resource's own page and the kind's list. A new kind gets all three from its entry,
- * without a step of its own here.
+ * opens and the resource's own page. A new kind gets both from its entry, without a step of its own
+ * here.
  */
 export function ProvisionedCommitSteps({ kindKey, outcome, resourceName, branchViewUrl, onDismiss }: Props) {
   const navigate = useNavigate();
@@ -46,8 +46,6 @@ export function ProvisionedCommitSteps({ kindKey, outcome, resourceName, branchV
   // and an action over many resources has no single page to offer.
   const canView = outcome.action !== 'delete' && (outcome.count ?? 1) === 1;
   const viewUrl = !canView ? undefined : isDirect ? resourceName && kind?.getRoute?.(resourceName) : branchViewUrl;
-
-  const listUrl = kind?.getListRoute?.();
 
   // The drawer outlives the commit it reports, so a route it is already on leaves it over the page.
   const leaveTo = (url: string) => {
@@ -72,15 +70,8 @@ export function ProvisionedCommitSteps({ kindKey, outcome, resourceName, branchV
           })}
         </Button>
       )}
-      {listUrl && kind && (
-        <Button variant="secondary" onClick={() => leaveTo(listUrl)}>
-          {t('provisioning.commit-steps.back-to-list', 'Back to all {{resources}}', {
-            resources: kind.getPluralLabel({ upperFirst: false }),
-          })}
-        </Button>
-      )}
       {/* Nothing above leads anywhere, so closing is the only step out. */}
-      {!externalUrl && !viewUrl && !listUrl && (
+      {!externalUrl && !viewUrl && (
         <Button variant="secondary" onClick={onDismiss}>
           {t('provisioning.commit-steps.close', 'Close')}
         </Button>

@@ -23,28 +23,24 @@ const onBranch: ProvisionedCommitOutcome = { ...direct, branch: 'grafana-sync/up
 describe('ProvisionedCommitSteps', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('builds the resource and list steps from the kind registry, naming the kind', () => {
+  it('builds the resource step from the kind registry, naming the kind', () => {
     render(<ProvisionedCommitSteps kindKey="playlist" outcome={direct} resourceName="wall-tv" onDismiss={onDismiss} />);
 
     expect(screen.getByRole('button', { name: 'View playlist' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Back to all playlists' })).toBeInTheDocument();
   });
 
   it.each([
-    ['playlist', '/playlists/edit/wall-tv', '/playlists'],
-    ['dashboard', '/d/wall-tv', '/dashboards'],
-  ] as const)('routes the %s steps to the pages its entry declares', async (kindKey, resourceRoute, listRoute) => {
+    ['playlist', '/playlists/edit/wall-tv'],
+    ['dashboard', '/d/wall-tv'],
+  ] as const)('routes the %s step to the page its entry declares', async (kindKey, resourceRoute) => {
     const { user } = render(
       <ProvisionedCommitSteps kindKey={kindKey} outcome={direct} resourceName="wall-tv" onDismiss={onDismiss} />
     );
 
     await user.click(screen.getByRole('button', { name: /^view/i }));
     expect(mockNavigate).toHaveBeenCalledWith(resourceRoute);
-
-    await user.click(screen.getByRole('button', { name: /^back to all/i }));
-    expect(mockNavigate).toHaveBeenCalledWith(listRoute);
     // The drawer outlives the commit, so a step onto a route it is already on must still close it.
-    expect(onDismiss).toHaveBeenCalledTimes(2);
+    expect(onDismiss).toHaveBeenCalledTimes(1);
   });
 
   it('offers no way to view a branch commit for a kind with no preview page', () => {
@@ -81,7 +77,7 @@ describe('ProvisionedCommitSteps', () => {
     );
 
     expect(screen.queryByRole('button', { name: /^view/i })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Back to all playlists' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument();
   });
 
   it('offers no resource step for a selection, which has no single page to go to', () => {
@@ -93,7 +89,6 @@ describe('ProvisionedCommitSteps', () => {
   it('falls back to closing when no kind is named and the commit opened nothing', async () => {
     const { user } = render(<ProvisionedCommitSteps outcome={{ ...direct, count: 4 }} onDismiss={onDismiss} />);
 
-    expect(screen.queryByRole('button', { name: /^back to all/i })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Close' }));
     expect(onDismiss).toHaveBeenCalledTimes(1);
   });

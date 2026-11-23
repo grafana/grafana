@@ -15079,7 +15079,6 @@
       "description": "To enable verified commits, <2>set up commit signing</2> for your account."
     },
     "commit-steps": {
-      "back-to-list": "Back to all {{resources}}",
       "close": "Close",
       "open-pull-request": "Open pull request",
       "open-repository": "Open repository",
