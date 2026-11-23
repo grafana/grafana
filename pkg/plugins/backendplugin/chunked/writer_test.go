@@ -3,6 +3,7 @@ package chunked
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -122,12 +123,39 @@ func TestRawChunkWriter_OnChunk(t *testing.T) {
 	})
 }
 
+// TestRawChunkWriter_WriteError writes the error of one blocked query and then the frame of another query, in
+// the order of a guardrail that rejects one query of a chunked request.
 func TestRawChunkWriter_WriteError(t *testing.T) {
-	w := httptest.NewRecorder()
-	writer := NewChunkedHTTPWriter(w)
-	err := writer.WriteError(context.Background(), "ref", backend.StatusOK, nil)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "rawChunkWriter does not support: WriteError")
+	for _, tc := range []struct {
+		name       string
+		err        error
+		wantSource backend.ErrorSource
+	}{
+		{name: "downstream error", err: backend.DownstreamError(errors.New("blocked by a rule")), wantSource: backend.ErrorSourceDownstream},
+		{name: "error without a source", err: errors.New("blocked by a rule")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			recorder := httptest.NewRecorder()
+			writer := NewChunkedHTTPWriter(recorder)
+			require.NoError(t, writer.WriteError(context.Background(), "B", backend.StatusForbidden, tc.err))
+			frame, err := data.NewFrame("result", data.NewField("value", nil, []int64{42})).MarshalJSON()
+			require.NoError(t, err)
+			require.NoError(t, writer.OnChunk(&pluginv2.QueryChunkedDataResponse{
+				RefId: "A", FrameId: "1", Frame: frame, Format: pluginv2.DataFrameFormat_JSON, Status: http.StatusOK,
+			}))
+			require.True(t, recorder.Flushed)
+
+			rsp, err := AccumulateJSONLines(recorder.Body)
+			require.NoError(t, err)
+			require.Equal(t, backend.StatusForbidden, rsp.Responses["B"].Status)
+			require.EqualError(t, rsp.Responses["B"].Error, "blocked by a rule")
+			require.Equal(t, tc.wantSource, rsp.Responses["B"].ErrorSource)
+			require.Empty(t, rsp.Responses["B"].Frames)
+			require.Equal(t, backend.StatusOK, rsp.Responses["A"].Status)
+			require.NoError(t, rsp.Responses["A"].Error)
+			require.Len(t, rsp.Responses["A"].Frames, 1)
+		})
+	}
 }
 
 func TestRawChunkWriter_WriteFrame(t *testing.T) {
@@ -330,4 +358,115 @@ func TestRawChunkWriter_JSONChunksPassThrough(t *testing.T) {
 		require.NoError(t, json.Unmarshal([]byte(lines[i]), &record))
 		require.Equal(t, string(want), string(record.Frame), "line %d", i)
 	}
+}
+
+func TestRawChunkWriterPreservesStatus(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		status  int32
+		message string
+		source  string
+	}{
+		{name: "unset status"},
+		{name: "successful frame", status: http.StatusOK},
+		{name: "downstream bad request", status: http.StatusBadRequest, message: "invalid query", source: "downstream"},
+		{name: "unauthorized", status: http.StatusUnauthorized, message: "unauthorized", source: "plugin"},
+		{name: "plugin failure", status: http.StatusInternalServerError, message: "plugin failed", source: "plugin"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			recorder := httptest.NewRecorder()
+			writer := NewChunkedHTTPWriter(recorder)
+			chunk := &pluginv2.QueryChunkedDataResponse{RefId: "A", Status: tc.status, Error: tc.message, ErrorSource: tc.source}
+			if tc.status == http.StatusOK {
+				frame, err := data.NewFrame("result", data.NewField("value", nil, []int64{42})).MarshalJSON()
+				require.NoError(t, err)
+				chunk.Frame = frame
+				chunk.Format = pluginv2.DataFrameFormat_JSON
+			}
+			require.NoError(t, writer.OnChunk(chunk))
+			require.Equal(t, http.StatusOK, recorder.Code, "the JSONL transport remains HTTP 200")
+			var record map[string]json.RawMessage
+			require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &record))
+			status, present := record["status"]
+			if tc.status == 0 {
+				require.False(t, present)
+			} else {
+				require.True(t, present)
+				var actual int32
+				require.NoError(t, json.Unmarshal(status, &actual), "status must be a JSON number")
+				require.Equal(t, tc.status, actual)
+			}
+			if tc.message != "" {
+				require.JSONEq(t, `"`+tc.message+`"`, string(record["error"]))
+				require.JSONEq(t, `"`+tc.source+`"`, string(record["errorSource"]))
+			}
+			require.True(t, recorder.Flushed)
+		})
+	}
+}
+
+type typedResponseErrorWriter struct {
+	refID  string
+	status backend.Status
+	err    error
+}
+
+func (*typedResponseErrorWriter) WriteFrame(context.Context, string, string, *data.Frame) error {
+	return nil
+}
+
+func (w *typedResponseErrorWriter) WriteError(_ context.Context, refID string, status backend.Status, err error) error {
+	w.refID, w.status, w.err = refID, status, err
+	return nil
+}
+
+func TestProcessTypedResponsePreservesErrorSource(t *testing.T) {
+	for _, tc := range []struct {
+		name                                   string
+		source, embeddedSource, expectedSource backend.ErrorSource
+		status                                 backend.Status
+	}{
+		{name: "explicit downstream", source: backend.ErrorSourceDownstream, expectedSource: backend.ErrorSourceDownstream, status: backend.StatusBadRequest},
+		{name: "explicit plugin", source: backend.ErrorSourcePlugin, expectedSource: backend.ErrorSourcePlugin, status: backend.StatusInternal},
+		{name: "unset source", status: backend.StatusUnauthorized},
+		{name: "existing error source", embeddedSource: backend.ErrorSourceDownstream, expectedSource: backend.ErrorSourceDownstream, status: backend.StatusBadRequest},
+		{name: "explicit source takes precedence", source: backend.ErrorSourcePlugin, embeddedSource: backend.ErrorSourceDownstream, expectedSource: backend.ErrorSourcePlugin, status: backend.StatusInternal},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cause := errors.New("query failed")
+			queryErr := cause
+			if tc.embeddedSource != "" {
+				queryErr = backend.NewErrorWithSource(queryErr, tc.embeddedSource)
+			}
+			response := &backend.QueryDataResponse{Responses: backend.Responses{
+				"A": {Status: tc.status, Error: queryErr, ErrorSource: tc.source},
+			}}
+			writer := &typedResponseErrorWriter{}
+			require.NoError(t, ProcessTypedResponse(context.Background(), response, writer))
+			require.Equal(t, "A", writer.refID)
+			require.Equal(t, tc.status, writer.status)
+			require.ErrorIs(t, writer.err, cause)
+			require.EqualError(t, writer.err, cause.Error())
+			require.Equal(t, tc.expectedSource, backend.ErrorResponseWithErrorSource(writer.err).ErrorSource)
+		})
+	}
+}
+
+// TestProcessTypedResponseErrorSourceOverHTTP sends a typed response through the
+// SDK chunked writer and the HTTP writer, then reads the JSONL output back.
+func TestProcessTypedResponseErrorSourceOverHTTP(t *testing.T) {
+	response := &backend.QueryDataResponse{Responses: backend.Responses{
+		"A": {Status: backend.StatusUnauthorized, Error: errors.New("unauthorized"), ErrorSource: backend.ErrorSourceDownstream},
+	}}
+
+	recorder := httptest.NewRecorder()
+	httpWriter := NewChunkedHTTPWriter(recorder)
+	sdkWriter := backend.NewChunkedDataWriter(backend.DataFrameFormat_JSON, httpWriter.OnChunk)
+	require.NoError(t, ProcessTypedResponse(context.Background(), response, sdkWriter))
+
+	rsp, err := AccumulateJSONLines(recorder.Body)
+	require.NoError(t, err)
+	require.Equal(t, backend.StatusUnauthorized, rsp.Responses["A"].Status)
+	require.EqualError(t, rsp.Responses["A"].Error, "unauthorized")
+	require.Equal(t, backend.ErrorSourceDownstream, rsp.Responses["A"].ErrorSource)
 }

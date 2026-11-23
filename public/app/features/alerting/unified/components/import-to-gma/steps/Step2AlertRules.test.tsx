@@ -1,8 +1,8 @@
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import React, { useEffect } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
-import { render, screen, waitFor } from 'test/test-utils';
+import { FormProvider, type UseFormReturn, useForm, useFormContext } from 'react-hook-form';
+import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
@@ -361,6 +361,70 @@ describe('Step2AlertRules', () => {
     });
   });
 
+  describe('data source for a YAML file', () => {
+    const prometheus = mockDataSource(
+      { name: 'Prometheus', uid: 'prometheus-uid', type: 'prometheus' },
+      { alerting: true }
+    );
+    const prometheus2 = mockDataSource(
+      { name: 'Prometheus 2', uid: 'prometheus-2-uid', type: 'prometheus' },
+      { alerting: true }
+    );
+    const description = /will be queried by the imported rules/i;
+
+    beforeEach(() => {
+      setupDataSources(prometheus, prometheus2);
+    });
+
+    function renderYamlStep2(defaultValues: Partial<ImportFormValues> = {}) {
+      const view = render(
+        <TestWrapper defaultValues={{ rulesSource: 'yaml', ...defaultValues }}>
+          <Step2Content step1Completed={false} canImport={true} />
+        </TestWrapper>
+      );
+      const [yamlTargetPicker, recordingTargetPicker] = screen.getAllByTestId(
+        selectors.components.DataSourcePicker.inputV2
+      );
+      return { ...view, yamlTargetPicker, recordingTargetPicker };
+    }
+
+    it('is asked for with a YAML file, and not with a data source', () => {
+      const { unmount } = renderYamlStep2();
+      expect(screen.getByText(description)).toBeInTheDocument();
+      unmount();
+
+      render(
+        <TestWrapper defaultValues={{ rulesSource: 'datasource' }}>
+          <Step2Content step1Completed={false} canImport={true} />
+        </TestWrapper>
+      );
+      expect(screen.queryByText(description)).not.toBeInTheDocument();
+    });
+
+    it('fills the recording rules target from it while that is still empty', async () => {
+      const { user, yamlTargetPicker, recordingTargetPicker } = renderYamlStep2();
+      await waitFor(() => expect(yamlTargetPicker).toBeEnabled());
+
+      await user.click(yamlTargetPicker);
+      await user.click(await screen.findByRole('option', { name: /^Prometheus$/ }));
+
+      await waitFor(() => expect(recordingTargetPicker).toHaveAttribute('placeholder', 'Prometheus'));
+    });
+
+    it('keeps a recording rules target that was already picked', async () => {
+      const { user, yamlTargetPicker, recordingTargetPicker } = renderYamlStep2({
+        targetDatasourceUID: 'prometheus-2-uid',
+      });
+      await waitFor(() => expect(yamlTargetPicker).toBeEnabled());
+
+      await user.click(yamlTargetPicker);
+      await user.click(await screen.findByRole('option', { name: /^Prometheus$/ }));
+
+      await waitFor(() => expect(yamlTargetPicker).toHaveAttribute('placeholder', 'Prometheus'));
+      expect(recordingTargetPicker).toHaveAttribute('placeholder', 'Prometheus 2');
+    });
+  });
+
   describe('Step2Content rendering', () => {
     it('should render permission warning when canImport=false', () => {
       render(
@@ -540,6 +604,7 @@ describe('Step2AlertRules', () => {
           defaultValues={{
             rulesSource: 'yaml',
             rulesYamlFile: mockFile,
+            yamlImportTargetDatasourceUID: 'prometheus-uid',
             selectedRoutingTree: 'my-routing-tree',
             targetDatasourceUID: 'prometheus-uid',
           }}
@@ -549,6 +614,24 @@ describe('Step2AlertRules', () => {
       );
 
       expect(onResult).toHaveBeenCalledWith(true);
+    });
+
+    it('should return false for a YAML file without a data source to run its rules against', () => {
+      const onResult = jest.fn();
+      render(
+        <TestWrapper
+          defaultValues={{
+            rulesSource: 'yaml',
+            rulesYamlFile: new File(['test'], 'test.yaml', { type: 'text/yaml' }),
+            selectedRoutingTree: 'my-routing-tree',
+            targetDatasourceUID: 'prometheus-uid',
+          }}
+        >
+          <ValidationHookWrapper canImport={true} onResult={onResult} />
+        </TestWrapper>
+      );
+
+      expect(onResult).not.toHaveBeenCalledWith(true);
     });
 
     it('should return true when all required fields are filled (with policyTreeName from Step 1)', () => {
@@ -605,14 +688,99 @@ describe('Step2AlertRules', () => {
 
       await user.upload(
         await screen.findByLabelText(/^rules yaml file/i),
-        new File(['groups: []'], 'valid.yaml', { type: 'text/yaml' })
+        new File(['groups:\n  - name: g\n    rules:\n      - alert: A\n        expr: up == 0\n'], 'valid.yaml', {
+          type: 'text/yaml',
+        })
       );
       expect(await screen.findByText('valid.yaml')).toBeInTheDocument();
       expect(screen.queryByText(/failed to parse yaml file/i)).not.toBeInTheDocument();
     });
 
+    it.each([
+      ['has no groups', 'groups: []', /no rules found in this file/i],
+      ['has groups without rules', 'groups:\n  - name: empty\n    rules: []\n', /no rules found in this file/i],
+      [
+        'has an empty group next to one with rules',
+        'groups:\n  - name: empty\n    rules: []\n  - name: full\n    rules:\n      - alert: A\n        expr: up == 0\n',
+        /the group "empty" has no rules/i,
+      ],
+    ])('rejects a file that %s, since importing it would do nothing', async (_, content, message) => {
+      const { user } = render(
+        <TestWrapper defaultValues={{ rulesSource: 'yaml' }}>
+          <Step2Content step1Completed={false} canImport={true} />
+        </TestWrapper>
+      );
+
+      await user.upload(
+        await screen.findByLabelText(/^rules yaml file/i),
+        new File([content], 'empty.yaml', { type: 'text/yaml' })
+      );
+
+      expect(await screen.findByText(message)).toBeInTheDocument();
+    });
+
+    it.each([
+      ['cannot be parsed', 'groups: [not: valid', /failed to parse yaml file/i],
+      ['has no rules', 'groups: []', /no rules found in this file/i],
+    ])('does not let the step continue while a file that %s is chosen', async (_, content, message) => {
+      const onResult = jest.fn();
+      const { user } = render(
+        <TestWrapper
+          defaultValues={{
+            rulesSource: 'yaml',
+            yamlImportTargetDatasourceUID: 'prometheus-uid',
+            selectedRoutingTree: 'my-routing-tree',
+            targetDatasourceUID: 'prometheus-uid',
+          }}
+        >
+          <Step2Content step1Completed={false} canImport={true} />
+          <ValidationHookWrapper canImport={true} onResult={onResult} />
+        </TestWrapper>
+      );
+
+      await user.upload(
+        await screen.findByLabelText(/^rules yaml file/i),
+        new File([content], 'rules.yaml', { type: 'text/yaml' })
+      );
+
+      expect(await screen.findByText(message)).toBeInTheDocument();
+      await waitFor(() => expect(onResult).toHaveBeenLastCalledWith(false));
+    });
+
+    it('drops the namespace and group filters when switching to a YAML file', async () => {
+      const formRef: { current?: UseFormReturn<ImportFormValues> } = {};
+      function Spy() {
+        const form = useFormContext<ImportFormValues>();
+        useEffect(() => {
+          formRef.current = form;
+        }, [form]);
+        return null;
+      }
+      render(
+        <TestWrapper defaultValues={{ rulesSource: 'datasource' }}>
+          <Step2Content step1Completed={false} canImport={true} />
+          <Spy />
+        </TestWrapper>
+      );
+      // Set after mount: the datasource effect clears the filters on the first render.
+      act(() => {
+        formRef.current?.setValue('namespace', 'ns');
+        formRef.current?.setValue('ruleGroup', 'grp');
+      });
+
+      await userEvent.click(screen.getByRole('radio', { name: /yaml file/i }));
+
+      await waitFor(() => expect(formRef.current?.getValues('rulesSource')).toBe('yaml'));
+      expect(formRef.current?.getValues('namespace')).toBeUndefined();
+      expect(formRef.current?.getValues('ruleGroup')).toBeUndefined();
+    });
+
     it('should clear YAML file when switching from yaml to datasource source', async () => {
-      const yamlFile = new File(['groups: []'], 'rules.yaml', { type: 'text/yaml' });
+      const yamlFile = new File(
+        ['groups:\n  - name: g\n    rules:\n      - alert: A\n        expr: up == 0\n'],
+        'rules.yaml',
+        { type: 'text/yaml' }
+      );
 
       render(
         <TestWrapper defaultValues={{ rulesSource: 'yaml', rulesYamlFile: yamlFile }}>

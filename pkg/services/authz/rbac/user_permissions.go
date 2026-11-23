@@ -134,7 +134,7 @@ func (s *Service) getAllIdentityPermissions(ctx context.Context, ns types.Namesp
 			UserID:           identifiers.ID,
 			UserUID:          identifiers.UID,
 			OrgID:            ns.OrgID,
-			OrgRole:          identity.RoleType(basicRole.Role),
+			OrgRole:          types.RoleType(basicRole.Role),
 			Namespace:        ns.Value,
 			IsGrafanaAdmin:   basicRole.IsAdmin,
 			IsServiceAccount: identityType == types.TypeServiceAccount,
@@ -163,7 +163,7 @@ func (s *Service) getAllIdentityPermissions(ctx context.Context, ns types.Namesp
 	case types.TypeAnonymous:
 		requester := &user.SignedInUser{
 			OrgID:          ns.OrgID,
-			OrgRole:        identity.RoleType(s.settings.AnonOrgRole),
+			OrgRole:        types.RoleType(s.settings.AnonOrgRole),
 			Namespace:      ns.Value,
 			IsAnonymous:    true,
 			TeamUIDs:       contextualTeams,
