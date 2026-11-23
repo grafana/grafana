@@ -13,7 +13,8 @@ export const configApi = generatedAPI;
  */
 export const CONFIG_SINGLETON_NAME = 'default';
 
-type GetConfigQueryOptions = Parameters<typeof configApi.useGetConfigQuery>[1];
+// selectFromResult is omitted because its generic return type makes the hook result `any`.
+type GetConfigQueryOptions = Omit<NonNullable<Parameters<typeof configApi.useGetConfigQuery>[1]>, 'selectFromResult'>;
 
 /** Auto-sync specific: the flag gate would be wrong for a consumer of some other Config field. */
 export function useAutoSyncConfigQuery(options?: GetConfigQueryOptions) {
