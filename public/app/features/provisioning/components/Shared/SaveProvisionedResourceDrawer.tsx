@@ -30,7 +30,12 @@ import { type BaseProvisionedFormData } from '../../types/form';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { getManagerIdentity, getSourcePath, type ManagedResource } from '../../utils/managedResource';
-import { getKindKeyByGroupKind, resourceKindInfos, type ResourceKindKey } from '../../utils/resourceKinds';
+import {
+  getKindKeyByGroupKind,
+  resourceKindInfos,
+  type ResourceKindInfo,
+  type ResourceKindKey,
+} from '../../utils/resourceKinds';
 import { getRequestRef } from '../../utils/workflow';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { getCanPushToConfiguredBranch, getDefaultRef } from '../defaults';
@@ -210,7 +215,8 @@ function FormContent({
         setLastBranch(repoName, landedOn);
       }
       // The committed change has to show up on the list the drawer's "Next" steps lead back to.
-      const invalidateAction = kindKey && resourceKindInfos[kindKey].invalidateListTags?.();
+      const kind: ResourceKindInfo | undefined = kindKey && resourceKindInfos[kindKey];
+      const invalidateAction = kind?.invalidateListTags?.();
       if (invalidateAction) {
         dispatch(invalidateAction);
       }
