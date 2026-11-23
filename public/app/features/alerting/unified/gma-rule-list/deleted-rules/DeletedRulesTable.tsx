@@ -1,8 +1,10 @@
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, type Column, EmptyState, InteractiveTable, Spinner, Stack } from '@grafana/ui';
+import { Button, type Column, EmptyState, InteractiveTable, Stack } from '@grafana/ui';
 
 import { FolderByUid } from '../folder-browsing/FolderByUid';
+import { LoadMoreFooter } from '../shared/LoadMoreFooter';
+import { type PagedFailure } from '../shared/PagedFailureAlert';
 
 import { type DeletedRule } from './deletedRulesPage';
 
@@ -16,7 +18,9 @@ interface DeletedRulesTableProps<Rule extends DeletedRule> {
   onRestore: (rule: Rule) => void;
   hasMore: boolean;
   isLoadingMore: boolean;
+  failure?: PagedFailure;
   onLoadMore: () => void;
+  onRetry: () => void;
 }
 
 export function DeletedRulesTable<Rule extends DeletedRule>({
@@ -27,7 +31,9 @@ export function DeletedRulesTable<Rule extends DeletedRule>({
   onRestore,
   hasMore,
   isLoadingMore,
+  failure,
   onLoadMore,
+  onRetry,
 }: DeletedRulesTableProps<Rule>) {
   if (rules.length === 0) {
     return (
@@ -104,11 +110,13 @@ export function DeletedRulesTable<Rule extends DeletedRule>({
   return (
     <Stack direction="column" gap={2}>
       <InteractiveTable<Rule> columns={columns} data={rules} getRowId={(rule) => rule.metadata?.name ?? ''} />
-      {hasMore && (
-        <Button variant="secondary" onClick={onLoadMore} disabled={isLoadingMore}>
-          {isLoadingMore ? <Spinner /> : <Trans i18nKey="alerting.recently-deleted.load-more">Load more</Trans>}
-        </Button>
-      )}
+      <LoadMoreFooter
+        hasMore={hasMore}
+        isLoadingMore={isLoadingMore}
+        failure={failure}
+        onLoadMore={onLoadMore}
+        onRetry={onRetry}
+      />
     </Stack>
   );
 }

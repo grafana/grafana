@@ -59,7 +59,7 @@ export function DeletedRulesView<Rule extends DeletedRule>({
   restorer,
   restoreTitle,
 }: DeletedRulesViewProps<Rule>) {
-  const { items, hasMore, isLoading, isFetchingMore, error, loadMore, refetch, totalFromApi } = list;
+  const { items, hasMore, isLoading, isFetchingMore, error, failure, loadMore, retry, refetch, totalFromApi } = list;
   const [reviewing, setReviewing] = useState<Rule | null>(null);
   const [restoring, setRestoring] = useState<Rule | null>(null);
   const userNames = useDeletedByNames(items);
@@ -70,7 +70,7 @@ export function DeletedRulesView<Rule extends DeletedRule>({
     return <RuleListSkeleton />;
   }
 
-  if (error && items.length === 0) {
+  if ((error || failure) && items.length === 0) {
     return (
       <Alert title={t('alerting.recently-deleted.error', 'Failed to load deleted rules')} severity="error">
         <Button variant="secondary" onClick={refetch}>
@@ -93,7 +93,9 @@ export function DeletedRulesView<Rule extends DeletedRule>({
         onRestore={setRestoring}
         hasMore={hasMore}
         isLoadingMore={isFetchingMore}
+        failure={failure}
         onLoadMore={loadMore}
+        onRetry={retry}
       />
       {reviewing && (
         <ReviewDrawer
@@ -110,7 +112,7 @@ export function DeletedRulesView<Rule extends DeletedRule>({
           restorer={restorer}
           title={restoreTitle}
           onDismiss={() => setRestoring(null)}
-          onRefetch={refetch}
+          onRefetch={retry}
         />
       )}
     </>

@@ -92,6 +92,20 @@ describe('AlertRulesDeletedView', () => {
     expect(await screen.findByText(/already exists/i)).toBeInTheDocument();
   });
 
+  it('keeps the loaded rules and shows the error when Load more fails', async () => {
+    server.use(
+      http.get(TRASH_RULES_URL, ({ request }) =>
+        new URL(request.url).searchParams.has('continue')
+          ? HttpResponse.json({ message: 'boom' }, { status: 500 })
+          : HttpResponse.json({ metadata: { continue: 'page-2' }, items: [makeDeletedRule()] })
+      )
+    );
+    render(<AlertRulesDeletedView />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Load more' }));
+    expect(await screen.findByText('Failed to load more results')).toBeInTheDocument();
+    expect(screen.getByText('Deleted rule')).toBeInTheDocument();
+  });
+
   it('shows error state with retry on fetch failure', async () => {
     server.use(http.get(TRASH_RULES_URL, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
     render(<AlertRulesDeletedView />);

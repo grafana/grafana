@@ -3027,7 +3027,6 @@
       },
       "empty": "No recently deleted rules found",
       "error": "Failed to load deleted rules",
-      "load-more": "Load more",
       "restore": {
         "body": "Restore \"{{title}}\"?",
         "confirm": "Restore",

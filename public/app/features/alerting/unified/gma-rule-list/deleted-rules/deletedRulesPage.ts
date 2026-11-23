@@ -7,6 +7,8 @@ import { type AlertRule, type RecordingRule } from '@grafana/api-clients/rtkq/ru
 import { isFetchError } from '@grafana/runtime';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
+import { type PagedFailure } from '../shared/PagedFailureAlert';
+
 export type DeletedRule = AlertRule | RecordingRule;
 
 export interface RestoreResult {
@@ -84,9 +86,12 @@ export interface UseDeletedRulesResult<Rule> {
   isLoading: boolean;
   isFetchingMore: boolean;
   error: unknown;
+  /** Set when a later page failed; the loaded rows stay and the failure shows below them. */
+  failure: PagedFailure | undefined;
   /** Total items returned by the API (all pages combined) — use for analytics, not display. */
   totalFromApi: number | undefined;
   loadMore: () => void;
+  retry: () => void;
   refetch: () => void;
 }
 
@@ -97,26 +102,22 @@ export interface UseDeletedRulesResult<Rule> {
 export function useDeletedRulesResult<Rule>(query: TrashInfiniteQuery<Rule>): UseDeletedRulesResult<Rule> {
   const [revealed, setRevealed] = useState(PAGE_SIZE);
 
-  const { data, isLoading, isFetching, error, fetchNextPage, hasNextPage, refetch } = query;
+  const { data, isLoading, isError, error, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } = query;
+  // Missing from the result type of a query that has not started.
+  const isFetchNextPageError = 'isFetchNextPageError' in query && query.isFetchNextPageError;
 
   const allItems = data?.pages.flatMap((page) => page.items) ?? [];
   const items = allItems.slice(0, revealed);
-  const isFetchingMore = isFetching && !isLoading;
-  // Keep hasMore true while fetching more or when a next-page fetch failed so
-  // the Load more button stays visible (showing spinner or allowing retry).
-  const hasMore =
-    revealed < allItems.length || Boolean(hasNextPage) || isFetchingMore || Boolean(error && allItems.length > 0);
+  const hasMore = revealed < allItems.length || hasNextPage;
+  const failure: PagedFailure | undefined =
+    data && isError ? { kind: isFetchNextPageError ? 'load-more' : 'refresh', error } : undefined;
 
   const loadMore = useCallback(() => {
-    if (revealed < allItems.length) {
-      setRevealed((r) => r + PAGE_SIZE);
-    } else if (!isFetching && (hasNextPage || error)) {
-      // Allow retry when a previous next-page fetch failed (error is set but
-      // hasNextPage may be false since the error response had no continueToken).
+    if (revealed >= allItems.length) {
       void fetchNextPage();
-      setRevealed((r) => r + PAGE_SIZE);
     }
-  }, [revealed, allItems.length, hasNextPage, error, isFetching, fetchNextPage]);
+    setRevealed((r) => r + PAGE_SIZE);
+  }, [revealed, allItems.length, fetchNextPage]);
 
   const handleRefetch = useCallback(() => {
     setRevealed(PAGE_SIZE);
@@ -127,10 +128,16 @@ export function useDeletedRulesResult<Rule>(query: TrashInfiniteQuery<Rule>): Us
     items,
     hasMore,
     isLoading,
-    isFetchingMore,
-    error,
+    isFetchingMore: isFetchingNextPage,
+    // A failed first page replaces the list; a later failure keeps the loaded rows and shows `failure` below them.
+    error: !data && isError ? error : undefined,
+    failure,
     totalFromApi: data ? allItems.length : undefined,
     loadMore,
+    // Refetching reloads every loaded page with fresh continue tokens, so it also recovers from an expired one.
+    retry: () => {
+      void refetch();
+    },
     refetch: handleRefetch,
   };
 }
