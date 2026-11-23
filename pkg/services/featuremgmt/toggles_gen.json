@@ -2337,10 +2337,10 @@
     {
       "metadata": {
         "name": "dataviz.tabularNums",
-        "resourceVersion": "1790951488017",
+        "resourceVersion": "1795464316088",
         "creationTimestamp": "2026-10-02T15:19:46Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-10-02 14:31:28.017202 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-11-23 20:05:16.088512707 +0000 UTC"
         }
       },
       "spec": {
@@ -2348,7 +2348,7 @@
         "stage": "preview",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
