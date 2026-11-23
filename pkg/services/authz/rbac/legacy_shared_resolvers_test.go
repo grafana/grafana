@@ -157,13 +157,19 @@ func TestLegacyCheckEmbeddedNamespaceIsolation(t *testing.T) {
 			calls:     1,
 		},
 		{
+			name:      "wildcard targets local stack",
+			namespace: "*",
+			want:      &authzextv1.LegacyCheckResponse{Allowed: true},
+			calls:     2,
+		},
+		{
 			name:      "different stack with the same org ID",
 			namespace: "stacks-456",
 			want: &authzextv1.LegacyCheckResponse{
 				Allowed: false,
 				Error:   "namespace does not belong to embedded scope resolvers",
 			},
-			calls: 1,
+			calls: 2,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
