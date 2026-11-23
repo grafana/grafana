@@ -94,6 +94,17 @@ async function openDraftOnPage(pending: DashboardPendingChanges, newDashboard: D
   return scene;
 }
 
+/** The saved dashboard, as the page loads it with no pending changes. */
+function savedDashboardScene(): DashboardScene {
+  return transformSaveModelSchemaV2ToScene({
+    kind: 'DashboardWithAccessInfo',
+    apiVersion: 'dashboard.grafana.app/v2beta1',
+    metadata: { name: 'dash-1', generation: 3, resourceVersion: '3', creationTimestamp: '', annotations: {} },
+    access: { canEdit: true, canSave: true, canShare: true, canStar: true, canDelete: false, canAdmin: true },
+    spec: structuredClone(saved),
+  } as unknown as DashboardWithAccessInfo<DashboardV2Spec>);
+}
+
 /** The dashboard page showing `pending` to a dashboard saved at generation 3, as the page loads it. */
 async function openOnPage(pending: DashboardPendingChanges, savedSpec = saved): Promise<DashboardScene> {
   const preview = await loadOnPage(pending);
@@ -152,6 +163,17 @@ describe('opening pending changes on the page', () => {
     it('asks nothing for pending changes that stay read-only', async () => {
       setTestFlags(composerFlags);
       await openOnPage(pendingChanges({ history: undefined }));
+
+      expect(takeComposerRequestOverAssistantEdit('dash-1')).toBe(false);
+    });
+
+    // The page left before the Assistant could take the request; the next visit shows no pending changes.
+    it('drops a request left untaken once the page loads the dashboard without them', async () => {
+      setTestFlags(composerFlags);
+      await openOnPage(pendingChanges());
+      clearPendingChangePreview('dash-1', 'chat-1');
+
+      openPendingChangesForEditing(savedDashboardScene());
 
       expect(takeComposerRequestOverAssistantEdit('dash-1')).toBe(false);
     });

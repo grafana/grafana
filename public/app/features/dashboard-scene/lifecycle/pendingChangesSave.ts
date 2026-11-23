@@ -40,6 +40,8 @@ import { withoutEmptyValues } from './specDiff';
  */
 export function openPendingChangesForEditing(scene: DashboardScene) {
   const keepEditing = takeEditingOnNextLoad(previewedDashboardUid(scene.state));
+  // A request an earlier load left untaken is not for what this load shows.
+  takeComposerRequestOverAssistantEdit(scene.state.uid);
   if (scene.state.isEditing || !scene.canEditDashboard() || isMobileEditDeprecated()) {
     return;
   }
