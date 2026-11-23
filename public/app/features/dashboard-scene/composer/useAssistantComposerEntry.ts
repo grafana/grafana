@@ -17,11 +17,12 @@ import { type ComposerResource, type ComposerTarget } from './types';
  * How Grafana's own UI (the dashboard mode picker, the notebook mode switch) asks Assistant to enter Composer
  * on a `resource`. Undefined while Assistant has registered no sidebar to show, or no listener of its enters
  * Composer on that document type; re-renders when that changes. The request opens the sidebar if needed and
- * hands Assistant the target; core never enters Composer itself.
+ * hands Assistant the target; core never enters Composer itself. With `assistantEdit`, the request is for the
+ * Assistant's own edit, which Grafana opened in Editing.
  */
 export function useAssistantComposerEntry(
   resource: ComposerResource
-): { request: (target: ComposerTarget) => void } | undefined {
+): { request: (target: ComposerTarget, options?: { assistantEdit?: boolean }) => void } | undefined {
   const { availableComponents, dockedComponentId } = useExtensionSidebarContext();
   const supported = useSyncExternalStore(subscribeToComposerEnterRequests, getSupportedComposerResources);
   const componentTitle = availableComponents.get(ASSISTANT_PLUGIN_ID)?.addedComponents[0]?.title;
@@ -29,13 +30,13 @@ export function useAssistantComposerEntry(
     return undefined;
   }
   return {
-    request: (target) => {
+    request: (target, { assistantEdit = false } = {}) => {
       if (dockedComponentId === getComponentIdFromComponentMeta(ASSISTANT_PLUGIN_ID, componentTitle)) {
-        requestComposerEnter(target);
+        requestComposerEnter(target, { assistantEdit });
         return;
       }
       // The request floats the closed sidebar before it opens, so its first paint is never the docked column.
-      if (requestComposerEnter(target, { float: true })) {
+      if (requestComposerEnter(target, { float: true, assistantEdit })) {
         appEvents.publish(new OpenExtensionSidebarEvent({ pluginId: ASSISTANT_PLUGIN_ID, componentTitle }));
       }
     },

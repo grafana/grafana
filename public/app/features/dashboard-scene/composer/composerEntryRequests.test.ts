@@ -334,6 +334,14 @@ describe('before Assistant first registers', () => {
     expect(sidebarPresentation()).toBe('floating');
   });
 
+  it("tells the first listener that a held request is for the Assistant's own edit", () => {
+    requestComposerEnter(TARGET, { float: true, assistantEdit: true });
+
+    const { listener } = listen();
+
+    expect(listener).toHaveBeenCalledWith(TARGET, { assistantEdit: true });
+  });
+
   it('releases a held request after 10 seconds, and delivers nothing later', () => {
     jest.useFakeTimers();
     requestComposerEnter(TARGET, { float: true });

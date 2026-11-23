@@ -5,7 +5,6 @@ import { appEvents } from 'app/core/app_events';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 
-import { requestComposerEnter } from '../composer/composerEntryRequests';
 import { type DashboardChangeInfo } from '../saving/shared';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { dashboardComposerEnabled } from '../scene/dashboardModes';
@@ -58,22 +57,24 @@ export function openPendingChangesForEditing(scene: DashboardScene) {
   }
 }
 
+/** Dashboards whose Assistant edit the page asks the Assistant to enter Composer over, once it can. */
+const composerOverAssistantEdit = new Set<string>();
+
 /**
- * With Composer on, the Assistant's edit opens in Editing for Composer to run over: once the scene is active,
- * Grafana asks the Assistant to enter Composer on it, once.
+ * With Composer on, the Assistant's edit opens in Editing for Composer to run over. The page makes the request
+ * (see `useComposerOverAssistantEdit`): it has to open the Assistant sidebar, which it can only do once the
+ * sidebar knows the Assistant's component.
  */
 function requestComposerOverAssistantEdit(scene: DashboardScene) {
   const uid = scene.state.uid;
-  if (!uid || !dashboardComposerEnabled()) {
-    return;
+  if (uid && dashboardComposerEnabled()) {
+    composerOverAssistantEdit.add(uid);
   }
-  let requested = false;
-  scene.addActivationHandler(() => {
-    if (!requested) {
-      requested = true;
-      requestComposerEnter({ resource: 'dashboard', uid }, { assistantEdit: true });
-    }
-  });
+}
+
+/** Whether the page should ask the Assistant to enter Composer over this dashboard's edit; asking forgets it. */
+export function takeComposerRequestOverAssistantEdit(uid: string | undefined): boolean {
+  return uid !== undefined && composerOverAssistantEdit.delete(uid);
 }
 
 /**

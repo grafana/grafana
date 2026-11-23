@@ -13,8 +13,8 @@ import { getPluginExtensionRegistries } from 'app/features/plugins/extensions/re
 import { getAppPluginConfigs, getExtensionPointPluginDependencies } from 'app/features/plugins/extensions/utils';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { addComposerEnterRequestListener, resetComposerEnterRequestsForTests } from '../composer/composerEntryRequests';
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
+import { getDashboardMode } from '../scene/dashboardModes';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 
 import {
@@ -32,6 +32,7 @@ import {
   getPendingChangesDiff,
   openPendingChangesForEditing,
   savePendingChanges,
+  takeComposerRequestOverAssistantEdit,
   withNewDashboardBaseline,
 } from './pendingChangesSave';
 
@@ -122,59 +123,37 @@ afterEach(() => {
 describe('opening pending changes on the page', () => {
   // The Assistant's edit opens in Editing for Composer to run over, as Assistant edits in the browser did.
   describe('with Composer', () => {
-    let activationHandlers: Array<() => void> = [];
-    let stopListening = () => {};
-    const listener = jest.fn();
-
-    beforeEach(() => {
-      activationHandlers = [];
-      listener.mockClear();
-      stopListening = addComposerEnterRequestListener(listener);
-      // Records the scene's activation handlers instead of activating the whole scene.
-      jest.spyOn(DashboardScene.prototype, 'addActivationHandler').mockImplementation((handler) => {
-        activationHandlers.push(() => handler());
-      });
-    });
+    const composerFlags = {
+      'assistant.dashboard.artifacts': true,
+      dashboardNewLayouts: true,
+      'grafana.dashboardPreviewMode': true,
+      'grafana.dashboardComposer': true,
+    };
 
     afterEach(() => {
-      stopListening();
-      resetComposerEnterRequestsForTests();
-      jest.restoreAllMocks();
+      takeComposerRequestOverAssistantEdit('dash-1');
     });
 
-    it('asks the Assistant to enter Composer once the scene is active, once', async () => {
-      setTestFlags({
-        'assistant.dashboard.artifacts': true,
-        dashboardNewLayouts: true,
-        'grafana.dashboardPreviewMode': true,
-        'grafana.dashboardComposer': true,
-      });
-      await openOnPage(pendingChanges());
-      expect(listener).not.toHaveBeenCalled();
+    it('has the page ask the Assistant to enter Composer over them, once', async () => {
+      setTestFlags(composerFlags);
+      const scene = await openOnPage(pendingChanges());
 
-      // The last handler is the one opening the pending changes added; activating again asks nothing more.
-      const activate = activationHandlers[activationHandlers.length - 1];
-      activate();
-      activate();
-
-      expect(listener).toHaveBeenCalledTimes(1);
-      expect(listener).toHaveBeenCalledWith({ resource: 'dashboard', uid: 'dash-1' }, { assistantEdit: true });
+      expect(getDashboardMode(scene.state)).toBe('edit');
+      expect(takeComposerRequestOverAssistantEdit('dash-1')).toBe(true);
+      expect(takeComposerRequestOverAssistantEdit('dash-1')).toBe(false);
     });
 
-    it('adds no activation handler with Composer off', async () => {
-      await openOnPage(pendingChanges());
-      const withoutComposer = activationHandlers.length;
-      activationHandlers = [];
-      setTestFlags({
-        'assistant.dashboard.artifacts': true,
-        dashboardNewLayouts: true,
-        'grafana.dashboardPreviewMode': true,
-        'grafana.dashboardComposer': true,
-      });
-      clearPendingChangePreview('dash-1', 'chat-1');
+    it('asks nothing with Composer off', async () => {
       await openOnPage(pendingChanges());
 
-      expect(activationHandlers).toHaveLength(withoutComposer + 1);
+      expect(takeComposerRequestOverAssistantEdit('dash-1')).toBe(false);
+    });
+
+    it('asks nothing for pending changes that stay read-only', async () => {
+      setTestFlags(composerFlags);
+      await openOnPage(pendingChanges({ history: undefined }));
+
+      expect(takeComposerRequestOverAssistantEdit('dash-1')).toBe(false);
     });
   });
 

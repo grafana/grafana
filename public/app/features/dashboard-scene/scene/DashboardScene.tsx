@@ -1022,17 +1022,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   /**
    * Enters Composer for `session`, over the mode it is entered from; every manual edit surface is hidden.
-   * From Editing it writes inside the edit session, as unsaved changes with native undo. From Agent editing
-   * (a chat's pending changes opened for the Assistant) it does the same, since that edit session is already
-   * the Assistant's. From Viewing it starts no edit session until the user (`setComposerEditing`) or an
-   * Assistant edit switches it to Editing.
+   * From Editing it writes inside the edit session, as unsaved changes with native undo. From Viewing it
+   * starts no edit session until the user (`setComposerEditing`) or an Assistant edit switches it to Editing.
    */
   public enterComposerMode(session: ComposerSession): boolean {
     if (this._composer || !dashboardComposerEnabled()) {
       return false;
     }
     const modeBefore = getDashboardMode(this.state);
-    this.setState({ composerEditing: modeBefore === 'edit' || modeBefore === 'agent' });
+    this.setState({ composerEditing: modeBefore === 'edit' });
     if (!this.setDashboardMode('composer', 'composer')) {
       this.setState({ composerEditing: undefined });
       return false;

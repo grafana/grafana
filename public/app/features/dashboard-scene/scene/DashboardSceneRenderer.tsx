@@ -19,6 +19,7 @@ import { useScopeActions } from 'app/features/scopes/selector/useScopeActions';
 import { useSelector } from 'app/types/store';
 
 import { ComposerOverlay } from '../composer/ComposerOverlay';
+import { useComposerOverAssistantEdit } from '../lifecycle/useComposerOverAssistantEdit';
 import { DashboardSidebarSplitter } from '../sidebar/DashboardSidebarSplitter';
 import { SoloPanelContextProvider, useDefineSoloPanelContext } from '../solo/SoloPanelContext';
 
@@ -47,6 +48,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     title,
   } = model.useState();
   const composerSession = mode === 'composer' ? model.getComposerSession() : undefined;
+  useComposerOverAssistantEdit(uid);
 
   const scopesServices = useScopesServices();
   const { setRedirectEnabled } = useScopeActions();
