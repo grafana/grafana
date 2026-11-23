@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -73,7 +74,7 @@ func testIntegrationGetFolders(t *testing.T) {
 	viewerClient := tests.GetClient(grafanaListedAddr, "viewer", "viewer")
 
 	// access control permissions store
-	permissionsStore := resourcepermissions.NewStore(cfg, store, featuremgmt.WithFeatures())
+	permissionsStore := resourcepermissions.NewStore(cfg, legacysql.NewDatabaseProvider(store), featuremgmt.WithFeatures())
 
 	numberOfFolders := 5
 	indexWithoutPermission := 3

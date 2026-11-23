@@ -57,6 +57,12 @@ func (h *LegacyDatabaseHelper) TenantKey() string {
 	return fmt.Sprintf("%d/%s", h.StackID, h.Slug)
 }
 
+// QuotedTable returns the tenant's name for table n, quoted for raw SQL. A schema-qualified name is
+// quoted part by part, which the dialect's Quote does not do.
+func (h *LegacyDatabaseHelper) QuotedTable(n string) string {
+	return h.DB.Quote(h.Table(n))
+}
+
 // Helper to pick the correct dialect
 func (h *LegacyDatabaseHelper) DialectForDriver() sqltemplate.Dialect {
 	if h.DB == nil {

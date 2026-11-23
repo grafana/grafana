@@ -2636,12 +2636,12 @@ func TestGetRoleIDFromK8sObject(t *testing.T) {
 	}
 
 	t.Run("retrieves permission ID from database", func(t *testing.T) {
-		permissionID := testApi.getRoleIDFromK8sObject("managed:users:1:permissions", 1)
+		permissionID := testApi.getRoleIDFromK8sObject(context.Background(), "managed:users:1:permissions", 1)
 		assert.Equal(t, int64(100), permissionID)
 	})
 
 	t.Run("returns 0 when permission not found in database", func(t *testing.T) {
-		permissionID := testApi.getRoleIDFromK8sObject("managed:users:999:permissions", 1)
+		permissionID := testApi.getRoleIDFromK8sObject(context.Background(), "managed:users:999:permissions", 1)
 		assert.Equal(t, int64(0), permissionID)
 	})
 
@@ -2653,7 +2653,7 @@ func TestGetRoleIDFromK8sObject(t *testing.T) {
 			logger: log.New("test"),
 		}
 
-		permissionID := apiNoStore.getRoleIDFromK8sObject("managed:users:1:permissions", 1)
+		permissionID := apiNoStore.getRoleIDFromK8sObject(context.Background(), "managed:users:1:permissions", 1)
 		assert.Equal(t, int64(0), permissionID)
 	})
 }
