@@ -1,11 +1,9 @@
 import { DataLinkBuiltInVars } from '@grafana/data';
-import { type FormatVariable, registerVariableMacro, type SceneObject, sceneUtils } from '@grafana/scenes';
+import { type FormatVariable, type SceneObject, sceneUtils } from '@grafana/scenes';
 
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardTabStateMacro } from './DashboardTabStateMacro';
-
-let tabStateMacroRegistered = false;
 
 /**
  * Handles expressions like ${__dashboard.uid}
@@ -40,14 +38,13 @@ class DashboardMacro implements FormatVariable {
 
 export function registerDashboardMacro() {
   try {
-    if (!tabStateMacroRegistered) {
-      registerVariableMacro(DataLinkBuiltInVars.keepTabs, DashboardTabStateMacro);
-      tabStateMacroRegistered = true;
-    }
+    const unregisterDashboard = sceneUtils.registerVariableMacro('__dashboard', DashboardMacro);
+    const unregisterTabState = sceneUtils.registerVariableMacro(DataLinkBuiltInVars.keepTabs, DashboardTabStateMacro);
 
-    const unregister = sceneUtils.registerVariableMacro('__dashboard', DashboardMacro);
-
-    return () => unregister();
+    return () => {
+      unregisterDashboard();
+      unregisterTabState();
+    };
   } catch (e) {
     console.error('Error registering dashboard macro', e);
     return () => {};
