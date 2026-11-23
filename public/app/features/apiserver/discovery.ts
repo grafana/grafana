@@ -53,6 +53,8 @@ export async function getAPIGroupDiscoveryList(): Promise<APIGroupDiscoveryList>
           // Fill in the group+version before returning
           for (let api of response.data.items) {
             for (let version of api.versions) {
+              // The apiserver lists a version that serves routes only without `resources`
+              version.resources ??= [];
               for (let resource of version.resources) {
                 resource.responseKind.group = api.metadata.name;
                 resource.responseKind.version = version.version;

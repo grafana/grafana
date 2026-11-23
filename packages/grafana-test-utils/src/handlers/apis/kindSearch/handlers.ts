@@ -26,30 +26,40 @@ const MAX_PAGE_SIZE = 500;
 export const kindSearchRoute = (served: MockServedKind) =>
   `/apis/${served.group}/${served.version}/namespaces/:namespace/${served.plural}/search`;
 
+/** A group version that serves routes but no resources, as discovery lists `live.grafana.app/v1alpha1`. */
+type MockRouteOnlyVersion = Pick<MockServedKind, 'group' | 'version'>;
+
 /**
  * Answers aggregated API discovery (`GET /apis`) for the served kinds the way the apiserver does:
- * each group with its versions and their resources. Core resolves the version and plural of a
- * registered kind through this.
+ * each group with its versions and their resources. A version given without a kind serves routes
+ * only. Core resolves the version and plural of a registered kind through this.
  */
-export function getKindDiscoveryHandler(...served: MockServedKind[]) {
+export function getKindDiscoveryHandler(...served: Array<MockServedKind | MockRouteOnlyVersion>) {
   return http.get('/apis', () =>
     HttpResponse.json({
       kind: 'APIGroupDiscoveryList',
       apiVersion: 'apidiscovery.k8s.io/v2',
       metadata: {},
-      items: Object.entries(groupBy(served, (kind) => kind.group)).map(([group, kinds]) => ({
+      items: Object.entries(groupBy(served, (entry) => entry.group)).map(([group, entries]) => ({
         metadata: { name: group },
-        versions: Object.entries(groupBy(kinds, (kind) => kind.version)).map(([version, versionKinds]) => ({
-          version,
-          freshness: 'Current',
-          resources: versionKinds.map((kind) => ({
-            resource: kind.plural,
-            responseKind: { group: '', version: '', kind: kind.kind },
-            scope: 'Namespaced',
-            singularResource: kind.plural.replace(/s$/, ''),
-            verbs: ['create', 'delete', 'get', 'list', 'patch', 'update', 'watch'],
-          })),
-        })),
+        versions: Object.entries(groupBy(entries, (entry) => entry.version)).map(([version, versionEntries]) => {
+          const versionKinds = versionEntries.filter((entry): entry is MockServedKind => 'kind' in entry);
+          return {
+            version,
+            freshness: 'Current',
+            // Left out of the JSON when undefined: the apiserver lists a route-only version without `resources`
+            resources:
+              versionKinds.length === 0
+                ? undefined
+                : versionKinds.map((kind) => ({
+                    resource: kind.plural,
+                    responseKind: { group: '', version: '', kind: kind.kind },
+                    scope: 'Namespaced',
+                    singularResource: kind.plural.replace(/s$/, ''),
+                    verbs: ['create', 'delete', 'get', 'list', 'patch', 'update', 'watch'],
+                  })),
+          };
+        }),
       })),
     })
   );

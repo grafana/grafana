@@ -330,6 +330,19 @@ describe('useNavTree', () => {
       }
     });
 
+    it('lists it when the instance also serves a version with routes only', async () => {
+      server.use(
+        getKindDiscoveryHandler({ group: 'live.grafana.app', version: 'v1alpha1' }, MOCK_STARRED_KIND_SERVED),
+        getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [{ name: THING_UUID, title: 'My Thing' }])
+      );
+
+      render(<TestHarness />);
+
+      await waitFor(() => {
+        expect(starredRowIds()).toEqual([DASHBOARD_ROW, THING_ROW]);
+      });
+    });
+
     it.each([
       { desc: 'is not served by the instance', served: [], pages: [MOCK_STARRED_KIND_PAGE] },
       {
