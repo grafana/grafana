@@ -145,10 +145,11 @@ func TestLegacyCheckEmbeddedNamespaceIsolation(t *testing.T) {
 		return "stacks-123"
 	})
 	for _, tc := range []struct {
-		name      string
-		namespace string
-		want      *authzextv1.LegacyCheckResponse
-		calls     int
+		name          string
+		namespace     string
+		withoutMapper bool
+		want          *authzextv1.LegacyCheckResponse
+		calls         int
 	}{
 		{
 			name:      "local stack",
@@ -167,7 +168,17 @@ func TestLegacyCheckEmbeddedNamespaceIsolation(t *testing.T) {
 			namespace: "stacks-456",
 			want: &authzextv1.LegacyCheckResponse{
 				Allowed: false,
-				Error:   "namespace does not belong to embedded scope resolvers",
+				Error:   `namespace "stacks-123" does not belong to embedded scope resolvers: stacks-456`,
+			},
+			calls: 2,
+		},
+		{
+			name:          "missing namespace mapper",
+			namespace:     "stacks-123",
+			withoutMapper: true,
+			want: &authzextv1.LegacyCheckResponse{
+				Allowed: false,
+				Error:   "legacy scope namespace is not set",
 			},
 			calls: 2,
 		},
@@ -180,7 +191,11 @@ func TestLegacyCheckEmbeddedNamespaceIsolation(t *testing.T) {
 			req := legacyPermissionRequest("user:u-1", "folders:write", "folders:uid:child")
 			req.Namespace = tc.namespace
 			req.RequesterOrgId = proto.Int64(1)
-			got, err := s.LegacyCheck(ctx, req)
+			service := s
+			if tc.withoutMapper {
+				service = s.WithLegacyScopeResolvers(acimpl.ProvideScopeResolverRegistry(ac), nil)
+			}
+			got, err := service.LegacyCheck(ctx, req)
 			require.NoError(t, err)
 			require.True(t, proto.Equal(tc.want, got), "want %v, got %v", tc.want, got)
 			require.Equal(t, tc.calls, calls)
