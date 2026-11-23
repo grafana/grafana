@@ -6,8 +6,16 @@ const CommitOutcomeDrawer = lazy(() =>
   import('./SaveProvisionedResourceDrawer').then((module) => ({ default: module.CommitOutcomeDrawer }))
 );
 
+function readStored() {
+  try {
+    return window.sessionStorage.getItem(COMMIT_OUTCOME_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
 export function StoredCommitOutcome() {
-  const [stored, setStored] = useState(() => window.sessionStorage.getItem(COMMIT_OUTCOME_STORAGE_KEY));
+  const [stored, setStored] = useState(readStored);
   if (!stored) {
     return null;
   }

@@ -59,14 +59,18 @@ export interface StoredCommitOutcome {
 
 export function storeCommitOutcome({ outcome, kindKey, resourceName }: StoredCommitOutcome) {
   const path = locationService.getLocation().pathname;
-  window.sessionStorage.setItem(
-    COMMIT_OUTCOME_STORAGE_KEY,
-    JSON.stringify({ ...outcome, kindKey, resourceName, path })
-  );
+  try {
+    window.sessionStorage.setItem(
+      COMMIT_OUTCOME_STORAGE_KEY,
+      JSON.stringify({ ...outcome, kindKey, resourceName, path })
+    );
+  } catch {}
 }
 
 export function clearStoredCommitOutcome() {
-  window.sessionStorage.removeItem(COMMIT_OUTCOME_STORAGE_KEY);
+  try {
+    window.sessionStorage.removeItem(COMMIT_OUTCOME_STORAGE_KEY);
+  } catch {}
 }
 
 export function parseStoredCommitOutcome(raw: string, pathname: string): StoredCommitOutcome | undefined {
