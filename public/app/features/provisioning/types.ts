@@ -127,7 +127,7 @@ export interface StatusInfo {
 // ...) are derived from the kind registry via `ResourceKindName`, so a new kind needs no edit here.
 // `File` is the fallback for plain files/directories that don't map to a known kind; `getTreeItemKind`
 // also infers `Folder` from plain directory paths that have no backing resource.
-export type TreeItemKind = ResourceKindName | 'File' | (string & {});
+export type TreeItemKind = ResourceKindName | 'File';
 export type SyncStatus = 'synced' | 'pending';
 
 export interface TreeItem {

@@ -6,7 +6,6 @@ import { playlistAPIv1 } from 'app/api/clients/playlist/v1';
 import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
 import { CORE_KINDS, coversGroup } from 'app/core/kinds/coreKinds';
-import { getKinds } from 'app/core/kinds/dynamicKinds';
 import { getAPIGroupDiscoveryList } from 'app/features/apiserver/discovery';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
@@ -153,7 +152,7 @@ export type ResourceKindName = (typeof resourceKindInfos)[ResourceKindKey]['kind
  */
 export interface ResourceKindInfo extends KindInfo {
   /** Kubernetes Kind, e.g. `Dashboard`. Also the label shown for this kind in the files/resources tree. */
-  kind: ResourceKindName | (string & {});
+  kind: ResourceKindName;
   /**
    * Enumerates every resource of this kind on the instance. Each kind owns how it
    * lists itself — dashboards/folders through the unified search index, playlists
@@ -182,13 +181,6 @@ export interface ResourceKindInfo extends KindInfo {
 // each call site. The registry keys and literal `kind` values stay the source of truth for the unions above.
 const allKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
 
-function knownKindInfos(): ResourceKindInfo[] {
-  const added = getKinds()
-    .filter((kind) => !allKindInfos.some((info) => info.group === kind.group && info.kind === kind.kind))
-    .map((kind) => ({ ...kind, list: async () => [], alwaysAvailable: false }));
-  return [...allKindInfos, ...added];
-}
-
 /**
  * The group a kind is named by: the collection rather than the member group that served a given
  * resource, so every member of a collection is reported as one kind.
@@ -200,7 +192,7 @@ export function getReportedGroup(group?: string, kind?: string): string | undefi
 
 /** Look up a kind by its plural resource name (`ResourceListItem.resource`). */
 export function getKindInfoByResource(resource?: string): ResourceKindInfo | undefined {
-  return knownKindInfos().find((info) => info.resource === resource);
+  return allKindInfos.find((info) => info.resource === resource);
 }
 
 /**
@@ -209,7 +201,7 @@ export function getKindInfoByResource(resource?: string): ResourceKindInfo | und
  * callers don't depend on the `TreeItemKind` union and create an import cycle with `../types`.
  */
 export function getKindInfoByKind(kind: string): ResourceKindInfo | undefined {
-  return knownKindInfos().find((info) => info.kind === kind);
+  return allKindInfos.find((info) => info.kind === kind);
 }
 
 /**
@@ -221,7 +213,7 @@ export function getKindInfoByKind(kind: string): ResourceKindInfo | undefined {
  * share an API group, so the group alone does not always identify the kind.
  */
 export function getKindInfoByStatGroup(group?: string): ResourceKindInfo | undefined {
-  return knownKindInfos().find((info) => (group !== undefined && coversGroup(info, group)) || info.resource === group);
+  return allKindInfos.find((info) => (group !== undefined && coversGroup(info, group)) || info.resource === group);
 }
 
 function isResourceKindKey(key: string): key is ResourceKindKey {
@@ -247,10 +239,8 @@ export function getKindKeyByGroupKind(group?: string, kind?: string): ResourceKi
 
 /** Look up a kind from a resource or a job summary row; see {@link getKindKeyByGroupKind}. */
 export function getKindInfoByGroupKind(group?: string, kind?: string): ResourceKindInfo | undefined {
-  if (!group && !kind) {
-    return undefined;
-  }
-  return knownKindInfos().find((info) => (!group || coversGroup(info, group)) && (!kind || info.kind === kind));
+  const key = getKindKeyByGroupKind(group, kind);
+  return key && resourceKindInfos[key];
 }
 
 /**
@@ -260,7 +250,7 @@ export function getKindInfoByGroupKind(group?: string, kind?: string): ResourceK
  * fall back to a group-only match for stats that omit the resource.
  */
 export function getKindInfoByStat(stat: { group?: string; resource?: string }): ResourceKindInfo | undefined {
-  const byResource = knownKindInfos().find((info) => info.resource === stat.resource);
+  const byResource = allKindInfos.find((info) => info.resource === stat.resource);
   if (byResource) {
     return byResource;
   }
