@@ -1,5 +1,6 @@
-import { Meta, ArgTypes } from '@storybook/addon-docs/blocks';
+import { Meta, ArgTypes, Canvas } from '@storybook/addon-docs/blocks';
 import { Alert } from './Alert';
+import * as AlertStories from './Alert.story';
 
 <Meta title="MDX|Alert" component={Alert} />
 
@@ -7,151 +8,144 @@ import { Alert } from './Alert';
 
 Alert is a fundamental element used for displaying important messages or notifications to users.
 
----
-
-About Alert component:
-
-1. [When to use](#when-to-use)
-2. [Behaviors](#behaviors)
-3. [Types](#types)
-4. [Message type](#message-type)
-5. [Content](#content)
-6. [Main elements](#main-elements)
-7. [Usage:](#usage)\
-   7.1. [Inline banner](#alert-inline)\
-   7.2. [Toast](#alert-toast)
-8. [Further Reading](#further-reading)
-
-<br />
-<br />
-<br />
-
-## <a name="when-to-use" /> When to use
+## When to use
 
 Use Alerts to inform users of updates, changes, or issues. Providing users feedback, keeping them informed, and keeping disruptions to a minimum is important. There are two different use-cases for Alerts: task-generated and system-generated Alerts.
 
-### Task-Generated
+- **Task-generated** Alerts are triggered based on the behaviors of the user and provide quick, direct feedback. This type of Alert should be placed closely to the area the user is actively working in.
+- **System-generated** Alerts are triggered by the system, unconnected to the actions of a user. Use these Alerts to provide explanation of system status or other events that have occurred elsewhere.
 
-Task-generated Alerts are triggered based on the behaviours of the user and provide quick, direct feedback. This type of Alert should be placed closely to the area the user is actively working in.
+### Inline banner
 
-### System-Generated
+- To inform at that time how to continue a task in which users must perform an action.
+- To provide some options for users to take action.
+- To explain in detail the reasons why something can't be done by users.
 
-System-generated Alerts are triggered by the system, unconnected to the actions of a user. Use these Alerts to provide explanation of system status or other events that have occurred elsewhere.
+### Toast
 
-## <a name="behaviors" /> Behaviors
+- To convey general confirmation or non-critical actions.
+- Immediately after an event is taken, such as a permission is updated or some Dashboards are imported or deleted.
+- Status according to use cases:
+  - _Success_: When any action is successful, it is confirmed when a task is completed as expected.
+  - _Warning_: It is used to report a current status that users should be aware of or that could have serious consequences.
+  - _Error_: Inform users of an error, and sometimes provide more information about how to fix the error.
 
-1. **Persistent**: They are usually urgent and intrusive, require immediate attention and require action to be dismissed.
-2. **Passive**: Are informational, report a system issue that does not require any action by users.
-   <br />
+## Never use for
 
-## <a name="types"/>Types
+- **Showing a toast by rendering `Alert` yourself.** Publish an `appEvent` with `getAppEvents()` instead, and Grafana shows the toast. See the toast example under Usage.
+- **A validation error on a single form field.** Use the `invalid` and `error` props on `Field`. `Field` shows the message below the input and links it to the input with `aria-describedby`.
 
-Within Grafana, we have two different types of alerts and they can be used depending on the context and content.
+## Do's and don'ts
 
-1. **[Inline banner](#alert-inline)**:
-   - To notify users of the status of an action. They appear at the top or bottom of the main content area
-   - Passive or Persistent
-1. **[Toast](#alert-toast)**:
-   - These temporary window elements are used to display short messages; they appear at the top-right corner of the screen and can be dismissed by clicking the [x] or it will disappear after a few seconds
-   - Passive
-     <br />
+### Content
 
-## <a name="message-type"/>Message Type
+- Do use the appropriate status for the message (info/success/warning/error).
+- Do use plain, simple language for the messages to ensure users understand them and know how to address them.
+- Do focus on notifications if they are relevant to the users' current workflow and should be addressed immediately.
+- Don't use Primary calls to actions.
+- Don't hide other content with inline notifications.
+- Don't repeat the alert copy/title on the details message.
 
-1. **Informational**
-   - To provide information to users, and don’t interrupt any current actions
-   - Does not require immediate action and can be dismissed by a user clicking the [X] or passively display until the display timer expires
-   - Shows blue color on the background and uses the `info-circle` icon
-2. **Success**
-   - To confirm a task is completed as expected or an action is successful.
-   - Typically does not require further action and can be dismissed automatically or persist in a nonintrusive manner
-   - Shows green color on the background and uses the `check` icon
-3. **Warning**
-   - To inform users that an action is undesirable
-   - Often persists until users have taken action to dismiss the notification or taken steps to resolve the issue
-   - Shows yellow color on background and uses the `exclamation-triangle` icon
-4. **Error**
-   - To inform that an action hasn't happened as expected, usually something has failed and the user is expected to take action
-   - Always persists until the user has taken steps to remedy the issue that triggered the notification
-   - Shows red color on background and uses the `exclamation-triangle` icon
-     <br />
+### Actions
 
-## <a name="content"/>Content
+Pass a separate action in `action`, and dismissal in `onRemove`. `Alert` lays them out together and wraps them below the message when space is narrow. Don't position your own button over the alert.
 
-### Title
+```tsx
+// Don't
+<Alert title="Quota limit reached" severity="warning" className={css({ position: 'relative' })}>
+  You have reached your quota limit.
+  <Button className={css({ position: 'absolute', top: 8, right: 8 })}>Request increase</Button>
+</Alert>
 
-Titles in Alerts are required, always. They should be concise, human-focused and jargon free so users can easily understand them.
-
-### Description
-
-Description copy is optional and should be used sparingly. Keep the description copy short and focused on the reason for the Alert and include possible solutions or paths forward to prevent users from being blocked.
-
-### Content guidelines (how to write)
-
-It is important to always use simple and concise language when crafting messaging for Alerts. Avoid using jargon or system errors in the content of the Alerts. Provide users with a path forward or possible solution. For more recommendations on writing, view the [UX writing guidelines](https://grafana.com/docs/writers-toolkit/write/style-guide/ux-writing/).
-
-### Calls to Action
-
-Alerts (Inline Alerts specifically) can contain calls to action (CTAs), especially if there is an action a user can take to remedy or correct the reason the Alert is being shown. When providing a CTA within an Alert be sure to keep the label concise and ensure the action the user can take is clear, and try to keep the labels short (a few words at most). See Grafana's [UX Writing guidelines](https://grafana.com/docs/writers-toolkit/write/style-guide/ux-writing/).
-
-## <a name="main-elements"/>Main elements
-
-- Icon status: represents the importance of the message through the color and icon for each status.
-
-- Alert title: should be explicit, clear and short, conveying the most important part of the information.
-
-- Details: precise description for the notification, telling users what they need to do.
-
-- Button and text links: only persistent notifications should contain text links or buttons.
-
-- Close icon: appears when the notification can be dismissed by the user.
-  <br />
-
-## <a name="usage"/>Usage
-
-<br />
-### <a name="alert-inline" /> Inline Banner
-
-Inline Banners are task-oriented alerts that notify users of the status of an action or system. These alerts are contextual — appearing above or below main content areas — allowing users to address issues or to read messages quickly.
-
-#### Do's
-
-    - Use the appropriate status for the message (info/success/warning/error).
-    - Use plain, simple language for the messages to ensure users understand them and know how to address them.
-    - Focus on notifications if they are relevant to the users' current workflow and should be addressed immediately.
-
-#### Don'ts
-
-    - Do not use Primary calls to actions.
-    - Do not hide other content with inline notifications.
-    - Do not repeat the alert copy/title on the details message.
-
-#### When to use
-
-    - To inform at that time how to continue a task in which users must perform an action.
-    - To provide some options for users to take action.
-    - To explain in detail the reasons why something can’t be done by users.
-
-#### Placement
-
-    - Should be placed immediately above or below the related element.
-
-```jsx
-<Alert title={title} severity={severity} buttonContent={buttonContent} onRemove={onRemove}>
-  Child content that includes some alert details, like maybe what actually happened.
+// Do
+<Alert
+  title="Quota limit reached"
+  severity="warning"
+  action={<Button variant="secondary">Request increase</Button>}
+  onRemove={onDismiss}
+>
+  You have reached your quota limit.
 </Alert>
 ```
 
-### <a name="alert-toast"/>Toast
+<Canvas of={AlertStories.WithActionAndDismiss} />
 
-Toast notifications are short messages that appear in the top-right corner of the page and are automatically hidden after a certain amount of time – they provide live notifications, without interrupting the user experience or requiring an action to be taken.
+With `onRemove` alone, `Alert` shows a close icon button. Add `buttonContent` to replace the close icon with a secondary button that shows that content.
 
-#### Do's
+### Spacing and styling
 
-    - Use this component using `AppEvents` and `getAppEvents()`.
-    - Show the `Toast` publishing the `appEvent` with the proper type and payload needed.
+Use `bottomSpacing` and `topSpacing` to change the space around an alert. They take theme spacing units: the defaults are `2` below and `0` above.
 
-```jsx
+Don't select the alert's inner elements with `className`, for example to change its padding. Its markup isn't part of its API. See [styling a component's internal elements](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/guidance/patterns/styling-internals.md).
+
+```tsx
+// Don't
+<Alert title="Saved" severity="success" className={css({ '& > div': { padding: 0 } })} />
+
+// Do
+<Alert title="Saved" severity="success" bottomSpacing={0} />
+```
+
+## Usage
+
+```tsx
+import { Alert } from '@grafana/ui';
+
+<Alert title={title} severity={severity} buttonContent={buttonContent} onRemove={onRemove}>
+  Child content that includes some alert details, like maybe what actually happened.
+</Alert>;
+```
+
+`severity` defaults to `error`.
+
+### Types
+
+Within Grafana, we have two different types of alerts and they can be used depending on the context and content.
+
+1. **Inline banner**:
+   - To notify users of the status of an action. They appear at the top or bottom of the main content area
+   - Passive or Persistent
+2. **Toast**:
+   - These temporary window elements are used to display short messages; they appear at the top-right corner of the screen and can be dismissed by clicking the [x] or it will disappear after a few seconds
+   - Passive
+
+### Behaviors
+
+1. **Persistent**: They are usually urgent and intrusive, require immediate attention and require action to be dismissed.
+2. **Passive**: Are informational, report a system issue that does not require any action by users.
+
+### Message type
+
+1. **Informational** (`info`)
+   - To provide information to users, and don't interrupt any current actions
+   - Does not require immediate action and can be dismissed by a user clicking the [X] or passively display until the display timer expires
+   - Shows blue color on the background and uses the `info-circle` icon
+2. **Success** (`success`)
+   - To confirm a task is completed as expected or an action is successful.
+   - Typically does not require further action and can be dismissed automatically or persist in a nonintrusive manner
+   - Shows green color on the background and uses the `check` icon
+3. **Warning** (`warning`)
+   - To inform users that an action is undesirable
+   - Often persists until users have taken action to dismiss the notification or taken steps to resolve the issue
+   - Shows yellow color on background and uses the `exclamation-triangle` icon
+4. **Error** (`error`)
+   - To inform that an action hasn't happened as expected, usually something has failed and the user is expected to take action
+   - Always persists until the user has taken steps to remedy the issue that triggered the notification
+   - Shows red color on background and uses the `exclamation-circle` icon
+
+### Inline banner
+
+Inline Banners are task-oriented alerts that notify users of the status of an action or system. These alerts are contextual — appearing above or below main content areas — allowing users to address issues or to read messages quickly.
+
+Place an inline banner immediately above or below the related element.
+
+### Toast
+
+Toast notifications are short messages that appear in the top-right corner of the page and are automatically hidden after a certain amount of time – they provide live notifications, without interrupting the user experience or requiring an action to be taken. They slide in and out from the top right corner of the page.
+
+Don't use this component directly for a toast. Instead, emit the `appEvent` to trigger its appearance. Publish the `appEvent` with the proper type and payload needed, using `AppEvents` and `getAppEvents()`.
+
+```tsx
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 
@@ -162,34 +156,52 @@ appEvents.publish({
 });
 ```
 
-#### Don'ts
+The toast itself is an elevated, dismissible `Alert`:
 
-    - Do not use this component directly. Instead, emit the `appEvent` to trigger it's appearance.
-
-#### When to use
-
-    - To convey general confirmation or non-critical actions.
-    - Immediately after an event is taken, such as a permission is updated or some Dashboards are imported or deleted.
-    - Status according to use cases:
-        - *Success*: When any action is successful, it is confirmed when a task is completed as expected.
-        - *Warning*: It is used to report a current status that users should be aware of or that could have serious consequences.
-        - *Error*: Inform users of an error, and sometimes provide more information about how to fix the error.
-
-#### Placement
-
-    - Slide in and out from the top right corner of the page.
-
-```jsx
+```tsx
 <Alert title={title} severity={severity} onRemove={onRemove} elevated>
   Child content that includes some alert details, like maybe what actually happened.
 </Alert>
 ```
 
-## Further Reading
+### Main elements
+
+- Icon status: represents the importance of the message through the color and icon for each status.
+- Alert title: should be explicit, clear and short, conveying the most important part of the information.
+- Details: precise description for the notification, telling users what they need to do.
+- Button and text links: only persistent notifications should contain text links or buttons.
+- Close icon: appears when the notification can be dismissed by the user.
+
+### Content
+
+**Title:** Titles in Alerts are required, always. They should be concise, human-focused and jargon free so users can easily understand them.
+
+**Description:** Description copy is optional and should be used sparingly. Keep the description copy short and focused on the reason for the Alert and include possible solutions or paths forward to prevent users from being blocked.
+
+**Content guidelines (how to write):** It is important to always use simple and concise language when crafting messaging for Alerts. Avoid using jargon or system errors in the content of the Alerts. Provide users with a path forward or possible solution. For more recommendations on writing, view the [UX writing guidelines](https://grafana.com/docs/writers-toolkit/write/style-guide/ux-writing/).
+
+**Calls to action:** Alerts (Inline Alerts specifically) can contain calls to action (CTAs), especially if there is an action a user can take to remedy or correct the reason the Alert is being shown. When providing a CTA within an Alert be sure to keep the label concise and ensure the action the user can take is clear, and try to keep the labels short (a few words at most). See Grafana's [UX Writing guidelines](https://grafana.com/docs/writers-toolkit/write/style-guide/ux-writing/).
+
+### Further reading
 
 - [NNG -- Indicators, Validations, and Notifications: Pick the Correct Communication Option](https://www.nngroup.com/articles/indicators-validations-notifications/)
 - [NNG -- How to Report Errors in Forms: 10 Design Guidelines](https://www.nngroup.com/articles/errors-forms-design-guidelines/)
 - [NNG -- 10 Usability Heuristics for Users](https://www.nngroup.com/articles/ten-usability-heuristics/)
 - [NNG -- Plain Language is for Everyone](https://www.nngroup.com/articles/plain-language-experts/)
+
+## Accessibility
+
+`Alert` handles:
+
+- **Role:** `error` and `warning` alerts get `role="alert"`, and `info` and `success` alerts get `role="status"`. Pass `role` to override it.
+- **Name:** the alert's accessible name is its `title`. Pass `aria-label` to override it.
+- **Close button:** the close icon button has the label "Close alert".
+
+You provide:
+
+- A `title` that makes sense on its own, because screen readers use it to name the alert.
+- The right `severity`. `role="alert"` is announced as soon as the alert appears, so keep `error` and `warning` for messages that need that attention.
+
+## Props
 
 <ArgTypes of={Alert} />
