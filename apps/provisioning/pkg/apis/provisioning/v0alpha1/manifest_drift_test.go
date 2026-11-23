@@ -40,14 +40,15 @@ var externalGoDefinitions = map[string]spec.Schema{
 	"io.k8s.apimachinery.pkg.apis.meta.v1.Duration": *spec.StringProperty(),
 }
 
-// Differences that the CUE to OpenAPI conversion cannot avoid, keyed by "<Kind> <path>".
+// Differences that the CUE to OpenAPI conversion cannot avoid, keyed by "<Kind> <path>" and
+// matched on the exact difference, so another mismatch at the same path still fails.
 // The test fails when one of them stops occurring, so fixed entries get removed.
 var knownDifferences = map[string]string{
 	// CUE `_` becomes an object with arbitrary values; Go accepts any JSON value.
-	"Repository status.fieldErrors[].badValue": "CUE cannot express an untyped value",
-	"Connection status.fieldErrors[].badValue": "CUE cannot express an untyped value",
+	"Repository status.fieldErrors[].badValue": `type is "object" in CUE, "" in Go`,
+	"Connection status.fieldErrors[].badValue": `type is "object" in CUE, "" in Go`,
 	// A single-value disjunction becomes `const`, which kube-openapi has no field for.
-	"Repository status.deletion.state": "single-value enum is dropped",
+	"Repository status.deletion.state": "enum is [] in CUE, [Blocked] in Go",
 }
 
 func TestManifestMatchesGoTypes(t *testing.T) {
@@ -93,6 +94,7 @@ func TestManifestMatchesGoTypes(t *testing.T) {
 				kind, ok := manifestKinds[info.kind]
 				require.True(t, ok, "kind %s is missing from the manifest", info.kind)
 				require.True(t, strings.EqualFold(kind.Plural, info.resource), "plural %q does not match resource %q", kind.Plural, info.resource)
+				require.Equal(t, info.resource, kind.Resource, "resource of kind %s", info.kind)
 				require.NotNil(t, kind.Schema, "kind %s has no schema", info.kind)
 
 				gvk := schema.GroupVersionKind{Group: manifest.Group, Version: version.Name, Kind: kind.Kind}
@@ -118,7 +120,7 @@ func TestManifestMatchesGoTypes(t *testing.T) {
 				var diffs []string
 				for _, d := range c.diffs {
 					key := info.kind + " " + d.path
-					if _, known := knownDifferences[key]; known {
+					if knownDifferences[key] == d.message {
 						knownSeen[key] = true
 						continue
 					}
@@ -210,20 +212,44 @@ func (c *schemaComparer) compare(path string, goSchema, cueSchema spec.Schema) {
 		}
 	}
 
-	if goSchema.Items != nil && goSchema.Items.Schema != nil {
-		if cueSchema.Items == nil || cueSchema.Items.Schema == nil {
-			c.differf(path, "array items missing in CUE")
-		} else {
-			c.compare(path+"[]", *goSchema.Items.Schema, *cueSchema.Items.Schema)
-		}
+	if got, want := allowsAnyProperty(cueSchema), allowsAnyProperty(goSchema); got != want {
+		c.differf(path, "additionalProperties: true is %v in CUE, %v in Go", got, want)
 	}
-	if goSchema.AdditionalProperties != nil && goSchema.AdditionalProperties.Schema != nil {
-		if cueSchema.AdditionalProperties == nil || cueSchema.AdditionalProperties.Schema == nil {
-			c.differf(path, "map values missing in CUE")
-		} else {
-			c.compare(path+"{}", *goSchema.AdditionalProperties.Schema, *cueSchema.AdditionalProperties.Schema)
-		}
+	c.compareNested(path+"[]", "array items", itemsSchema(goSchema), itemsSchema(cueSchema))
+	c.compareNested(path+"{}", "map values", mapValueSchema(goSchema), mapValueSchema(cueSchema))
+}
+
+func (c *schemaComparer) compareNested(path, what string, goSchema, cueSchema *spec.Schema) {
+	switch {
+	case goSchema == nil && cueSchema == nil:
+	case cueSchema == nil:
+		c.differf(path, "%s missing in CUE", what)
+	case goSchema == nil:
+		c.differf(path, "%s missing in Go", what)
+	default:
+		c.compare(path, *goSchema, *cueSchema)
 	}
+}
+
+func itemsSchema(s spec.Schema) *spec.Schema {
+	if s.Items == nil {
+		return nil
+	}
+	return s.Items.Schema
+}
+
+func mapValueSchema(s spec.Schema) *spec.Schema {
+	if s.AdditionalProperties == nil {
+		return nil
+	}
+	return s.AdditionalProperties.Schema
+}
+
+// allowsAnyProperty reports additionalProperties: true. CUE closes its structs with false where
+// Go leaves it unset; both drop unknown fields, so only true is compared. Map value schemas are
+// compared separately.
+func allowsAnyProperty(s spec.Schema) bool {
+	return s.AdditionalProperties != nil && s.AdditionalProperties.Schema == nil && s.AdditionalProperties.Allows
 }
 
 func (c *schemaComparer) compareSecure(goRoot spec.Schema, cueSecure []app.ManifestVersionKindSecureValue) {

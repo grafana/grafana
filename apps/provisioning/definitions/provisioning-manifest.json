@@ -550,7 +550,7 @@
                                     },
                                     "state": {
                                         "$ref": "#/components/schemas/JobState",
-                                        "description": "pending, running, success, error"
+                                        "description": "pending, working, success, warning, error"
                                     }
                                 },
                                 "required": [
@@ -2714,7 +2714,7 @@
                                     },
                                     "state": {
                                         "$ref": "#/components/schemas/JobState",
-                                        "description": "pending, running, success, error"
+                                        "description": "pending, working, success, warning, error"
                                     }
                                 },
                                 "required": [

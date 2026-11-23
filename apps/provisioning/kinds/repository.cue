@@ -158,7 +158,7 @@ repository: {
 			generateDashboardPreviews?: bool
 		}
 		#SyncStatus: {
-			// pending, running, success, error
+			// pending, working, success, warning, error
 			state: #JobState
 			// The ID for the job that ran this sync
 			job?: string
