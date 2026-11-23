@@ -12,7 +12,7 @@ labels:
 menuTitle: Manage a self-managed Grafana instance
 title: Manage a self-managed Grafana instance using Terraform
 weight: 100
-canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/get-started/terraform-self-managed/
+canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/terraform-self-managed/
 ---
 
 # Manage a self-managed Grafana instance using Terraform
@@ -156,6 +156,6 @@ After Terraform applies the configuration, check the following in Grafana:
 
 You created a data source, a folder, and a dashboard in a self-managed Grafana instance using Terraform. To continue:
 
-- Manage dashboards from a Git repository with CI/CD. Refer to [Create and manage dashboards using Terraform and GitHub Actions](../../grafana-resources/dashboards-github-action/).
+- Manage dashboards from a Git repository with CI/CD. Refer to [Create and manage dashboards using Terraform and GitHub Actions](../grafana-resources/dashboards-github-action/).
 - Provision alerting resources. Refer to [Use Terraform to provision alerting resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/terraform-provisioning/).
 - Explore all available resources in the [Grafana provider documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs).

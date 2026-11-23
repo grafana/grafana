@@ -57,7 +57,7 @@ To connect your Slack workspace to Grafana IRM, refer to the [Slack integration 
 
 This Terraform configuration sets up the [Grafana provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs) to provide necessary authentication when managing resources for Grafana IRM.
 
-You can reuse a similar setup to the one described in [Creating and managing a Grafana Cloud stack using Terraform](../../get-started/terraform-cloud-stack/) to set up a service account and a token.
+You can reuse a similar setup to the one described in [Creating and managing a Grafana Cloud stack using Terraform](../../terraform-cloud-stack/) to set up a service account and a token.
 
 1. Create a Service account and token in Grafana. To create a new one, refer to [Service account tokens](https://grafana.com/docs/grafana/latest/administration/service-accounts/#service-account-tokens).
 

@@ -39,7 +39,7 @@ Save all of the following Terraform configuration files in the same directory.
 
 Use this Terraform configuration to set up the [Grafana provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs) to provide the authentication required to manage plugin resources.
 
-1. Create a service account and token in Grafana. For more information on creating a service account and token, refer to [Service account tokens](https://grafana.com/docs/grafana/latest/administration/service-accounts/#service-account-tokens). You can also refer to [Creating and managing a Grafana Cloud stack using Terraform](../../get-started/terraform-cloud-stack/) to set up a service account and a token.
+1. Create a service account and token in Grafana. For more information on creating a service account and token, refer to [Service account tokens](https://grafana.com/docs/grafana/latest/administration/service-accounts/#service-account-tokens). You can also refer to [Creating and managing a Grafana Cloud stack using Terraform](../../terraform-cloud-stack/) to set up a service account and a token.
 
 1. Make sure that the token has the following permissions:
 

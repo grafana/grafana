@@ -52,7 +52,7 @@ You need the three files described in this document to set up Git Sync with Terr
 
 Configure the [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs) with the authentication required to set up Git Sync.
 
-1. Create a service account and token in Grafana. For more information refer to [Service account tokens](https://grafana.com/docs/grafana/latest/administration/service-accounts/#service-account-tokens) or [Create and manage a Grafana Cloud stack using Terraform](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/terraform/get-started/terraform-cloud-stack/).
+1. Create a service account and token in Grafana. For more information refer to [Service account tokens](https://grafana.com/docs/grafana/latest/administration/service-accounts/#service-account-tokens) or [Create and manage a Grafana Cloud stack using Terraform](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/terraform/terraform-cloud-stack/).
 
 1. Make sure that the token has the Admin or the `Provisioning:Repositories` writer permission.
 
