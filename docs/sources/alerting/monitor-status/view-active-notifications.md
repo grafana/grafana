@@ -72,6 +72,8 @@ You can filter by label, state, or Alertmanager:
 
 - **By Alertmanager**: If you use [other Alertmanagers](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/manage-alertmanager-resources/), select one in the **Alertmanager** dropdown to view only the alert groups for that Alertmanager. By default, the `Grafana` Alertmanager is selected.
 
+  When the [Prometheus Alerting](/docs/plugins/grafana-prometheusalerting-app/latest/) app plugin is installed and enabled, selecting another Alertmanager opens its alerts in the plugin. For details, refer to [When the Prometheus Alerting plugin is installed](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/#when-the-prometheus-alerting-plugin-is-installed).
+
 ### Custom group
 
 From **Custom group by** dropdown, select a combination of labels to view a grouping other than the default. This helps validate the [grouping settings of your notification policies](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/group-alert-notifications/).

@@ -35,7 +35,8 @@ The topics in this section include step-by-step instructions for:
 - [Templating notifications](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/) to customize notification messages.
 - [Configuring silences](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-silence/) or [mute timings](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/mute-timings/) to stop notifications.
 - [Configuring inhibition rules](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/inhibition-rules/) to suppress notifications for dependent alerts when a root-cause alert is already firing.
-- [Importing an Alertmanager configuration](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/import-alertmanager-configuration/) to convert an existing Prometheus or Mimir notification setup into Grafana-managed resources.
+
+To convert an existing Prometheus or Mimir notification setup into Grafana-managed resources, refer to [Import Alertmanager configuration to Grafana-managed notifications](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/import-alertmanager-configuration/).
 
 After you configure notifications, you can refer to [View notification history](/docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-notification-history/) to confirm delivery and troubleshoot failed notifications.
 

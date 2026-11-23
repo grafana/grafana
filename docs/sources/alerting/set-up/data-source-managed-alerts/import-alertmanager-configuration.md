@@ -1,5 +1,7 @@
 ---
-canonical: https://grafana.com/docs/grafana/latest/alerting/configure-notifications/import-alertmanager-configuration/
+aliases:
+  - ../../configure-notifications/import-alertmanager-configuration/ # /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/import-alertmanager-configuration/
+canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/data-source-managed-alerts/import-alertmanager-configuration/
 description: Import an existing Prometheus or Mimir Alertmanager configuration as Grafana-managed notification resources, then manage them directly in Grafana Alerting.
 keywords:
   - grafana
@@ -14,7 +16,7 @@ labels:
     - oss
 menuTitle: Import Alertmanager configuration
 title: Import Alertmanager configuration to Grafana-managed notifications
-weight: 460
+weight: 60
 ---
 
 # Import Alertmanager configuration to Grafana-managed notifications

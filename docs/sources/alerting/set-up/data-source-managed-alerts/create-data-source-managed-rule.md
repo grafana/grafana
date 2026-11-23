@@ -32,6 +32,10 @@ Data source-managed alert rules are alert rules that are stored in the data sour
 Support for data source-managed alert rules in the Grafana Alerting UI is legacy functionality, and data source-managed alerts for the default Grafana Cloud data sources are deprecated. For details and alternatives, including the [Prometheus Alerting](/docs/plugins/grafana-prometheusalerting-app/latest/) app plugin, refer to [Legacy data source-managed alerts](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/).
 {{< /admonition >}}
 
+{{< admonition type="note" >}}
+The steps on this page don't apply when the [Prometheus Alerting](/docs/plugins/grafana-prometheusalerting-app/latest/) app plugin is installed and enabled. In that case, you create and manage data source-managed alert rules in the plugin. Refer to [Create an alert rule](/docs/plugins/grafana-prometheusalerting-app/latest/alerting-rules/create-alert-rule/) in the plugin documentation, and to [When the Prometheus Alerting plugin is installed](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/#when-the-prometheus-alerting-plugin-is-installed).
+{{< /admonition >}}
+
 In Grafana Alerting, you can:
 
 1. Create and edit data source-managed rules for Grafana Mimir and Grafana Loki data sources.

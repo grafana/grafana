@@ -75,6 +75,8 @@ For provisioning instructions, refer to the [Alertmanager data source documentat
 
 After adding an Alertmanager, you can manage its notification policies, contact points, silences, and other alerting resources from within Grafana. For instructions and limitations, refer to [Manage notification resources in other Alertmanagers](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/manage-alertmanager-resources/).
 
+When the [Prometheus Alerting](/docs/plugins/grafana-prometheusalerting-app/latest/) app plugin is installed and enabled, you manage these resources in the plugin instead. For details, refer to [When the Prometheus Alerting plugin is installed](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/#when-the-prometheus-alerting-plugin-is-installed).
+
 ## Enable an Alertmanager to receive Grafana-managed alerts
 
 After enabling **Receive Grafana Alerts** in the Data Source Settings, you must also configure the Alertmanager in the Alerting Settings page. Grafana supports enabling one or multiple Alertmanagers to receive all generated Grafana-managed alerts.
@@ -86,6 +88,8 @@ After enabling **Receive Grafana Alerts** in the Data Source Settings, you must 
 {{< figure src="/media/docs/alerting/grafana-alerting-settings.png" max-width="750px" alt="Grafana Alerting Settings page" >}}
 
 All Grafana-managed alerts are forwarded to Alertmanagers marked as `Receiving Grafana-managed alerts`.
+
+When the [Prometheus Alerting](/docs/plugins/grafana-prometheusalerting-app/latest/) app plugin is installed and enabled, you can still enable or disable an Alertmanager from the **Settings** page, but the page doesn't let you edit the configuration of other Alertmanagers. Edit their configuration in the plugin.
 
 {{< admonition type="note" >}}
 Grafana Alerting does not support forwarding Grafana-managed alerts to the AlertManager in Amazon Managed Service for Prometheus. For more details, refer to [this GitHub issue](https://github.com/grafana/grafana/issues/64064).

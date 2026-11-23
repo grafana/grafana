@@ -26,7 +26,7 @@ Data source-managed alert rules send their alerts to an Alertmanager other than 
 The [Configure notifications](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/) documentation describes the Grafana Alertmanager only. This page describes what's different when you work with another Alertmanager.
 
 {{< admonition type="note" >}}
-The [Prometheus Alerting](/docs/plugins/grafana-prometheusalerting-app/latest/) app plugin provides a dedicated UI for Alertmanager configuration. To manage routes, receivers, templates, silences, time intervals, and inhibition rules with the plugin, refer to [Configure notifications](/docs/plugins/grafana-prometheusalerting-app/latest/configure-notifications/) in the plugin documentation.
+The steps on this page don't apply when the [Prometheus Alerting](/docs/plugins/grafana-prometheusalerting-app/latest/) app plugin is installed and enabled. In that case, selecting another Alertmanager opens its routes, receivers, templates, silences, and time intervals in the plugin. Refer to [Configure notifications](/docs/plugins/grafana-prometheusalerting-app/latest/configure-notifications/) in the plugin documentation, and to [When the Prometheus Alerting plugin is installed](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/#when-the-prometheus-alerting-plugin-is-installed).
 {{< /admonition >}}
 
 ## How Alertmanagers separate notification resources

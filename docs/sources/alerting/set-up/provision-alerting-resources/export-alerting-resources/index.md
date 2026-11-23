@@ -40,14 +40,12 @@ The export options listed below enable you to download resources in YAML, JSON, 
 
 ### Export alert rules
 
-From the Grafana UI, you can export a single alert rule or the alert rules in an evaluation group. To export all alert rules, or all the alert rules in a folder, use the [export API endpoints](#export-api-endpoints).
-
-To export an alert rule from the Grafana UI, complete the following steps.
+To export alert rules from the Grafana UI, complete the following steps.
 
 1. Click **Alerts & IRM** -> **Alert rules**.
-1. Click the name of the alert rule you want to export to open the rule details page.
-1. Click **More** -> **Export** -> **With modifications** to open the alert rule form.
-1. Click **Export**.
+1. To export all Grafana-managed rules, click **Export rules**.
+1. To export a folder, change the **View as** to **List**.
+1. Select the folder you want to export and click the **Export rules folder** icon.
 1. Choose the format to export in.
 
    The exported alert rule data appears in different formats - YAML, JSON, Terraform.

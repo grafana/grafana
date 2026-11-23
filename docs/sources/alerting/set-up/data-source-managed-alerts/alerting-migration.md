@@ -32,7 +32,7 @@ Choose the method that best fits your workflow. As a best practice, test and val
 
 Rules only tell you about a problem if the notification reaches someone. Grafana-managed rules route through the Grafana Alertmanager, not through the Alertmanager your data source-managed rules used, so imported rules notify through whatever contact points and notification policies already exist in Grafana.
 
-Consider [importing your Alertmanager configuration](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/import-alertmanager-configuration/) before you import rules. Grafana imports the configuration as it is and runs it the way your Prometheus or Mimir Alertmanager does. You can then route the rules you import through the imported policy tree.
+Consider [importing your Alertmanager configuration](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/import-alertmanager-configuration/) before you import rules. Grafana imports the configuration as it is and runs it the way your Prometheus or Mimir Alertmanager does. You can then route the rules you import through the imported policy tree.
 
 ## How it works
 
@@ -101,11 +101,12 @@ You can import rules with the import wizard or with the **Import alert rules** p
 
 #### Import rules with the import wizard
 
-The import wizard requires the `alertingMigrationWizardUI` [feature toggle](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/) and the Organization administrator role. The wizard imports your notification configuration and your rules in one flow. For the notification configuration step, refer to [Import with the Grafana Alerting user interface](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/import-alertmanager-configuration/#import-with-the-grafana-alerting-user-interface).
+The import wizard requires the `alertingMigrationWizardUI` [feature toggle](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/) and the Organization administrator role. The wizard imports your notification configuration and your rules in one flow. For the notification configuration step, refer to [Import with the Grafana Alerting user interface](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/import-alertmanager-configuration/#import-with-the-grafana-alerting-user-interface).
 
-1. Go to **Alerting** > **Settings**.
-1. Click the **Import** tab.
-1. Complete the **Import notification configuration** step and click **Continue**, or click **Skip** to import rules only.
+1. Go to **Alerting** > **Alert rules** and click **More** > **Import alert rules**.
+
+   This opens the **Rules** step of the wizard on the **Import** tab of the Grafana Alerting settings. You can also go to **Alerting** > **Settings**, click the **Import** tab, and complete or skip the **Import notification configuration** step.
+
 1. On the **Rules** step, choose the **Import source** and configure the import options.
 
    The **Rules** step has the same import source, filter, target folder, target data source, and pause options as the **Import alert rules** page, which are described in the next section. In **Notification routing**, you can also select the notification policy tree that routes the imported rules.
@@ -116,35 +117,37 @@ The import wizard requires the `alertingMigrationWizardUI` [feature toggle](/doc
 
 When the import wizard isn't enabled, use the **Import alert rules** page to convert data source-managed alert rules to Grafana-managed alert rules:
 
-1. Open the **Import alert rules** page at `<GRAFANA_BASE_URL>/alerting/import-datasource-managed-rules`.
+1. Go to **Alerting > Alert rules**.
 
-2. Choose the **Import source** from which you want to import rules:
+2. Navigate to the Data source-managed alert rules section and click **Import to Grafana-managed rules**.
+
+3. Choose the **Import source** from which you want to import rules:
    - Select **Existing data source-managed rules** to import rules from connected Mimir or Loki data sources with the ruler API enabled.
    - Select **Prometheus YAML file** to import rules by uploading a Prometheus YAML rule file.
 
-3. In the **Data source** dropdown, select the data source that the imported alert rules will query.
+4. In the **Data source** dropdown, select the data source that the imported alert rules will query.
 
-4. (Optional) In Additional settings, select a target folder or designate a new folder to import the rules into.
+5. (Optional) In Additional settings, select a target folder or designate a new folder to import the rules into.
 
    If you import the rules into an existing folder, don't choose a folder with existing alert rules, as they could get overwritten.
 
-5. (Optional) Select a Namespace and/or Group to determine which rules are imported.
+6. (Optional) Select a Namespace and/or Group to determine which rules are imported.
 
-6. (Optional) Turn on **Pause imported alerting rules**.
+7. (Optional) Turn on **Pause imported alerting rules**.
 
    Pausing stops alert rule evaluation and doesn’t create any alert instances for the newly created Grafana-managed alert rules.
 
-7. (Optional) Turn on **Pause imported recording rules**.
+8. (Optional) Turn on **Pause imported recording rules**.
 
    Pausing stops alert rule evaluation behavior for the newly created Grafana-managed alert rules.
 
-8. (Optional) In the **Target data source** of the **Recording rules** section, you can select the data source to which the imported recording rules will write metrics. By default, it is the data source selected in the **Data source** dropdown.
+9. (Optional) In the **Target data source** of the **Recording rules** section, you can select the data source to which the imported recording rules will write metrics. By default, it is the data source selected in the **Data source** dropdown.
 
-9. Click **Import**.
+10. Click **Import**.
 
-   A preview shows the rules that will be imported. If your target folder contains folders with the same name of the imported folders, a warning displays to inform you. You can explore the warning to see a list of folders that might be overwritten.
+    A preview shows the rules that will be imported. If your target folder contains folders with the same name of the imported folders, a warning displays to inform you. You can explore the warning to see a list of folders that might be overwritten.
 
-   Click **Import** to confirm and import the rules.
+    Click **Import** to confirm and import the rules.
 
 ## Import rules with command-line tools
 

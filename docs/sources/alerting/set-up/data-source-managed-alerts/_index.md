@@ -36,13 +36,31 @@ If you add your own Mimir, Loki, or Alertmanager data sources, you can continue 
 
 If you have alert rules or an Alertmanager configuration stored outside of Grafana, you have the following options:
 
-- **Import them into Grafana Alerting**: This is the recommended option. Convert your rules with [Import data source-managed rules to Grafana-managed rules](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/alerting-migration/), and convert your notification setup with [Import an Alertmanager configuration](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/import-alertmanager-configuration/). Grafana-managed alert rules provide a [richer feature set](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/create-data-source-managed-rule/#comparison-with-grafana-managed-rules) than data source-managed alert rules.
+- **Import them into Grafana Alerting**: This is the recommended option. Convert your rules with [Import data source-managed rules to Grafana-managed rules](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/alerting-migration/), and convert your notification setup with [Import an Alertmanager configuration](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/import-alertmanager-configuration/). Grafana-managed alert rules provide a [richer feature set](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/create-data-source-managed-rule/#comparison-with-grafana-managed-rules) than data source-managed alert rules.
 - **Use the Prometheus Alerting plugin**: Keep your rules and Alertmanager configuration in your data sources, and manage them in Grafana with the [Prometheus Alerting](/docs/plugins/grafana-prometheusalerting-app/latest/) app plugin. The plugin manages data source-managed alert rules and Alertmanager configuration for Prometheus, Mimir, Cortex, and Loki data sources. It requires Grafana 13.1.0 or later.
-- **Use the legacy workflows in Grafana Alerting**: Follow the topics in this section to manage data source-managed resources in the Grafana Alerting UI.
+- **Use the legacy workflows in Grafana Alerting**: Follow the topics in this section to manage data source-managed resources in the Grafana Alerting UI. These workflows are only available when the Prometheus Alerting plugin isn't installed.
+
+## When the Prometheus Alerting plugin is installed
+
+When the [Prometheus Alerting](/docs/plugins/grafana-prometheusalerting-app/latest/) app plugin is installed and enabled, Grafana Alerting hands data source-managed alerts over to the plugin. The Grafana Alerting UI changes in the following ways:
+
+- **Rule list**: The rule list doesn't show data source-managed alert rules and recording rules. A notice at the top of the list shows how many data sources the plugin manages. Click **View rules in Prometheus Alerting** to open the rules in the plugin.
+- **Rule pages**: Links to view or edit a data source-managed rule or rule group open the rule or group in the plugin.
+- **Rule creation**: The alert rule form doesn't offer the **Data source-managed** rule type, and the form for data source-managed recording rules opens in the plugin.
+- **Other Alertmanagers**: The **Choose Alertmanager** dropdown lists other Alertmanagers under **External Alertmanagers (opens in Prometheus Alerting)**. Selecting one opens the matching page in the plugin, for example its receivers, routes, time intervals, or silences.
+- **Settings**: The **Settings** page still lets you [enable or disable an Alertmanager to receive Grafana-managed alerts](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/#enable-an-alertmanager-to-receive-grafana-managed-alerts). To edit the configuration of another Alertmanager, use the plugin.
+
+The legacy workflows in this section don't apply in this case. To manage your data source-managed resources, refer to the plugin documentation:
+
+- [Configure alert rules](/docs/plugins/grafana-prometheusalerting-app/latest/alerting-rules/)
+- [Configure notifications](/docs/plugins/grafana-prometheusalerting-app/latest/configure-notifications/)
+- [Monitor status](/docs/plugins/grafana-prometheusalerting-app/latest/monitor-status/)
+
+The plugin uses Alertmanager terminology. For example, a contact point is a receiver, and a notification policy is a route.
 
 ## Legacy workflows in Grafana Alerting
 
-The following topics describe how to work with data source-managed resources in the Grafana Alerting UI:
+The following topics describe how to work with data source-managed resources in the Grafana Alerting UI when the Prometheus Alerting plugin isn't installed:
 
 - [Configure data source-managed alert rules](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/create-data-source-managed-rule/): Compare the two types of alert rules, and create alert rules that Mimir or Loki stores and evaluates.
 - [Create data source-managed recording rules](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/create-data-source-managed-recording-rules/): Create recording rules that Mimir or Loki stores and evaluates.

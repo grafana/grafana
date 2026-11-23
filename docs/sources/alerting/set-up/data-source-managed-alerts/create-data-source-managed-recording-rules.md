@@ -32,6 +32,10 @@ weight: 200
 Support for data source-managed recording rules in the Grafana Alerting UI is legacy functionality. We recommend using [Grafana-managed recording rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/) whenever possible. For details and alternatives, including the [Prometheus Alerting](/docs/plugins/grafana-prometheusalerting-app/latest/) app plugin, refer to [Legacy data source-managed alerts](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/).
 {{< /admonition >}}
 
+{{< admonition type="note" >}}
+The steps on this page don't apply when the [Prometheus Alerting](/docs/plugins/grafana-prometheusalerting-app/latest/) app plugin is installed and enabled. In that case, you create and manage data source-managed recording rules in the plugin. Refer to [Create a recording rule](/docs/plugins/grafana-prometheusalerting-app/latest/alerting-rules/create-recording-rule/) in the plugin documentation, and to [When the Prometheus Alerting plugin is installed](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/#when-the-prometheus-alerting-plugin-is-installed).
+{{< /admonition >}}
+
 Alert rules and dashboards can then query the new metric resulting from the recording rule. This is faster than querying real-time data and can help to reduce system load.
 
 Data source-managed recording rules can query Prometheus-based data sources like Mimir or Loki. For more information on recording rules in Prometheus, refer to [Defining recording rules in Prometheus](https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/).
