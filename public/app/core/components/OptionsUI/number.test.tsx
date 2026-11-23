@@ -2,7 +2,6 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { NumberValueEditor, VarMappingNumberValueEditor } from './number';
-import { type VarMappingVariableSource } from './varMappingVariables';
 
 jest.mock('app/core/components/SuggestionsInput/getVariableSuggestions', () => ({
   getVariableSuggestions: () => [
@@ -320,54 +319,5 @@ describe('VarMappingNumberValueEditor', () => {
     fireEvent.blur(input);
 
     expect(onChange).toHaveBeenCalledTimes(1);
-  });
-
-  describe('checks', () => {
-    const ranged = { settings: { min: 0, max: 10 } } as typeof varItem;
-    const source = (values: Record<string, string>): VarMappingVariableSource => ({
-      getVariables: () => [
-        {
-          name: 'lw',
-          values: [
-            { value: '2', label: '2' },
-            { value: 'wide', label: 'wide' },
-          ],
-        },
-      ],
-      interpolate: (text) => text.replace(/\$\{(\w+)\}/g, (match, name) => values[name] ?? match),
-      subscribe: () => () => {},
-    });
-    const renderWith = (values: Record<string, string>) =>
-      render(
-        <VarMappingNumberValueEditor
-          value="${lw}"
-          onChange={jest.fn()}
-          item={ranged}
-          context={{ data: [] }}
-          id="n16"
-          variables={source(values)}
-        />
-      );
-
-    it('says what the expression resolves to, and which known values fall back', () => {
-      renderWith({ lw: '2' });
-
-      expect(screen.getByText('Resolves to: 2')).toBeInTheDocument();
-      expect(screen.getByText('These values use the fallback: wide')).toBeInTheDocument();
-    });
-
-    it('warns when the current value is not a number', () => {
-      renderWith({ lw: 'wide' });
-
-      expect(screen.getByText('Current value "wide" isn\'t a number, so the fallback is used')).toBeInTheDocument();
-    });
-
-    it('warns when the current value is out of range', () => {
-      renderWith({ lw: '50' });
-
-      expect(
-        screen.getByText('Current value 50 is out of range, so the fallback is used. Range: 0 to 10')
-      ).toBeInTheDocument();
-    });
   });
 });

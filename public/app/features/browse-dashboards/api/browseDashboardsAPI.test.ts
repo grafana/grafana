@@ -27,6 +27,9 @@ import { refetchChildren } from '../state/actions';
 import { browseDashboardsAPI } from './browseDashboardsAPI';
 import { PAGE_SIZE } from './constants';
 
+jest.mock('@grafana/api-clients/rtkq/quotas/v0alpha1', () => makeSpyable('@grafana/api-clients/rtkq/quotas/v0alpha1'));
+jest.mock('app/features/variables-management/cache', () => makeSpyable('app/features/variables-management/cache'));
+
 setBackendSrv(backendSrv);
 setupMockServer();
 

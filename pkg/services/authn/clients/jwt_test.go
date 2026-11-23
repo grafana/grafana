@@ -7,10 +7,10 @@ import (
 	"net/url"
 	"testing"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login/social/connectors"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
@@ -38,7 +38,7 @@ func TestAuthenticateJWT(t *testing.T) {
 			wantID: &authn.Identity{
 				OrgID:           1,
 				OrgName:         "",
-				OrgRoles:        map[int64]identity.RoleType{1: identity.RoleAdmin},
+				OrgRoles:        map[int64]authlib.RoleType{1: authlib.RoleAdmin},
 				ExternalGroups:  []string{"foo", "bar"},
 				Login:           "eai-doe",
 				Name:            "Eai Doe",
@@ -89,7 +89,7 @@ func TestAuthenticateJWT(t *testing.T) {
 			wantID: &authn.Identity{
 				OrgID:           1,
 				OrgName:         "",
-				OrgRoles:        map[int64]identity.RoleType{1: identity.RoleAdmin},
+				OrgRoles:        map[int64]authlib.RoleType{1: authlib.RoleAdmin},
 				Login:           "eai-doe",
 				ExternalGroups:  []string{},
 				Name:            "Eai Doe",
@@ -139,7 +139,7 @@ func TestAuthenticateJWT(t *testing.T) {
 			wantID: &authn.Identity{
 				OrgID:           1,
 				OrgName:         "",
-				OrgRoles:        map[int64]identity.RoleType{4: identity.RoleEditor, 5: identity.RoleViewer},
+				OrgRoles:        map[int64]authlib.RoleType{4: authlib.RoleEditor, 5: authlib.RoleViewer},
 				Login:           "eai-doe",
 				ExternalGroups:  []string{"foo", "bar"},
 				Name:            "Eai Doe",
@@ -193,7 +193,7 @@ func TestAuthenticateJWT(t *testing.T) {
 			wantID: &authn.Identity{
 				OrgID:           1,
 				OrgName:         "",
-				OrgRoles:        map[int64]identity.RoleType{4: identity.RoleEditor, 5: identity.RoleViewer},
+				OrgRoles:        map[int64]authlib.RoleType{4: authlib.RoleEditor, 5: authlib.RoleViewer},
 				Login:           "eai-doe",
 				ExternalGroups:  []string{"foo", "bar"},
 				Name:            "Eai Doe",

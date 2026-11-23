@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	authlib "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -63,7 +62,7 @@ func TestVerbAwareAccessChecker_WithFallbackRoleIsNoOp(t *testing.T) {
 		&recordingChecker{},
 		&recordingChecker{},
 	)
-	withFallback := original.WithFallbackRole(identity.RoleAdmin)
+	withFallback := original.WithFallbackRole(authlib.RoleAdmin)
 
 	assert.Same(t, original, withFallback,
 		"WithFallbackRole on verb-aware checker must not produce a new instance — fallbacks are configured on the inner checkers")
@@ -79,6 +78,6 @@ func (r *recordingChecker) Check(_ context.Context, _ authlib.CheckRequest, _ st
 	return r.returnErr
 }
 
-func (r *recordingChecker) WithFallbackRole(_ identity.RoleType) AccessChecker {
+func (r *recordingChecker) WithFallbackRole(_ authlib.RoleType) AccessChecker {
 	return r
 }
