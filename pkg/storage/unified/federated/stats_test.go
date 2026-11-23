@@ -296,6 +296,21 @@ func TestIntegrationLegacyTableIsStale(t *testing.T) {
 		})
 	})
 
+	t.Run("legacy kv_store marker no longer marks the table stale", func(t *testing.T) {
+		s := &LegacyStatsGetter{}
+		withSession(t, func(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper) {
+			for _, resource := range LegacyCountedResources {
+				_, err := sess.Exec("INSERT INTO "+helper.Table("kv_store")+" (org_id, namespace, "+helper.DB.Quote("key")+", value, created, updated) VALUES (0, ?, ?, ?, ?, ?)",
+					"unified_storage.is_migrated", resource, "true", time.Now(), time.Now())
+				require.NoError(t, err)
+
+				stale, err := s.legacyTableIsStale(sess, helper, resource)
+				require.NoError(t, err)
+				require.False(t, stale, resource)
+			}
+		})
+	})
+
 	t.Run("unconfigured resource is still the source of truth", func(t *testing.T) {
 		s := &LegacyStatsGetter{Cfg: cfgWithMode(libraryPanelResource, grafanarest.Mode5)}
 		withSession(t, func(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper) {
@@ -453,12 +468,12 @@ func TestIntegrationLegacyStatsRecordsFailedStalenessCheck(t *testing.T) {
 
 	testDB, _ := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	ctx := request.WithNamespace(context.Background(), "default")
-	// Pointing the alert rule table at a name that doesn't exist makes the count fail
-	// without touching the shared test database.
+	// Pointing the migration log at a table that exists but has no migration_id column makes the
+	// library panel staleness query fail without touching the shared test database.
 	provider := func(context.Context) (*legacysql.LegacyDatabaseHelper, error) {
 		return &legacysql.LegacyDatabaseHelper{DB: testDB, Table: func(n string) string {
-			if n == "alert_rule" {
-				return "alert_rule_missing"
+			if n == migrationLogTable {
+				return "kv_store"
 			}
 			return n
 		}}, nil
@@ -471,14 +486,15 @@ func TestIntegrationLegacyStatsRecordsFailedStalenessCheck(t *testing.T) {
 
 	var countErr *CountError
 	require.ErrorAs(t, err, &countErr)
-	require.Equal(t, []string{legacyAlertRules}, countErr.Resources)
-	require.Equal(t, uint64(1), observations(t, reg, legacyAlertRules, legacyOutcomeError))
-	require.Equal(t, uint64(0), observations(t, reg, legacyRecordingRules, legacyOutcomeError), "the first failure ends the request")
+	require.Equal(t, []string{legacyLibraryElements}, countErr.Resources)
+	require.Equal(t, uint64(1), observations(t, reg, legacyLibraryElements, legacyOutcomeError))
+	require.Equal(t, uint64(0), observations(t, reg, legacyAlertRules, legacyOutcomeError))
+	require.Equal(t, uint64(0), observations(t, reg, legacyRecordingRules, legacyOutcomeError))
 
 	failed := logger.withMsg("Legacy count failed")
 	require.Len(t, failed, 1)
 	require.Equal(t, "error", failed[0].level)
-	require.Equal(t, legacyAlertRules, failed[0].fields["resource"])
+	require.Equal(t, legacyLibraryElements, failed[0].fields["resource"])
 	require.Equal(t, "db-1", failed[0].fields["dbServer"])
 	require.Equal(t, legacyOutcomeError, failed[0].fields["outcome"])
 	require.NotNil(t, failed[0].fields["error"])
