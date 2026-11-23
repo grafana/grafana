@@ -58,6 +58,15 @@ async function expectUnlockedOnceLoaded(user: UserEvent) {
   expect(screen.queryByTestId(LOCK)).not.toBeInTheDocument();
 }
 
+/**
+ * A lock the manager annotation alone decides is on screen before the settings arrive, so waiting
+ * for the fetched title is what proves the repository's workflow did not take it away. The locked
+ * badge carries the tooltip as its accessible name, so this needs no hover.
+ */
+async function expectLockedOnceLoaded() {
+  expect(await screen.findByLabelText('Read only, Managed by: Repository My Repo')).toBeInTheDocument();
+}
+
 describe('ManagedResourceBreadcrumbBadge', () => {
   let originalProvisioning: boolean;
 
@@ -115,7 +124,7 @@ describe('ManagedResourceBreadcrumbBadge', () => {
   it('ignores the repository workflow for a resource with no write-back flow', async () => {
     render(<ManagedResourceBreadcrumbBadge resource={managedBy(ManagerKind.Repo)} canEdit />);
 
-    expect(await screen.findByTestId(LOCK)).toBeInTheDocument();
+    await expectLockedOnceLoaded();
   });
 
   it('leaves the badge unlocked for a user who could not edit anyway', async () => {
