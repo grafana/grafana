@@ -60,6 +60,15 @@ func newAdmissionOps(ops []app.AdmissionOperation) admissionOps {
 // and the allow/deny decision together, so a kind that declares both capabilities
 // is reviewed here and ValidateAdmission has nothing left to ask.
 func (s *Store) MutateAdmission(ctx context.Context, a admission.Attributes) error {
+	// Mutating admission is the first request-scoped step after decoding, so a
+	// body written in another version is converted here, before any hook sees it.
+	if op := a.GetOperation(); op == admission.Create || op == admission.Update {
+		if obj := a.GetObject(); obj != nil {
+			if err := s.ConvertIncoming(ctx, obj); err != nil {
+				return err
+			}
+		}
+	}
 	if !s.mutation[a.GetOperation()] {
 		return nil
 	}

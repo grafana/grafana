@@ -148,9 +148,14 @@ func (b *manifestBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 					if kind.Conversion {
 						conversion = b.clientV3
 					}
+					var convertFrom []string
+					if kind.Conversion {
+						convertFrom = b.convertibleVersions(kind.Kind, gv.Version)
+					}
 					store, err := kindstore.New(gv.WithKind(kind.Kind), kind, admission, conversion, kindstore.Options{
 						StorageOptsGetter: opts.StorageOptsGetter,
 						NamespaceReadable: hardcodedNamespaceReadable(b.group, kind.Resource),
+						ConvertFrom:       convertFrom,
 					}, defs)
 					if err != nil {
 						return err
@@ -193,6 +198,24 @@ func (b *manifestBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 
 func (b *manifestBuilder) AllowedV0Alpha1Resources() []string {
 	return []string{builder.AllResourcesAllowed}
+}
+
+// convertibleVersions lists the other served versions that declare kind with
+// conversion, whose bodies the plugin can convert to target on write.
+func (b *manifestBuilder) convertibleVersions(kind, target string) []string {
+	var out []string
+	for _, v := range b.manifest.Versions {
+		if !v.Served || v.Name == target {
+			continue
+		}
+		for _, k := range v.Kinds {
+			if k.Kind == kind && k.Conversion {
+				out = append(out, v.Name)
+				break
+			}
+		}
+	}
+	return out
 }
 
 // withListScope applies the kind's list scope to its served storage. Direct

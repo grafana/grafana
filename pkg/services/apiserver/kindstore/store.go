@@ -9,6 +9,7 @@ import (
 	structuralschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
 	"k8s.io/apiextensions-apiserver/pkg/apiserver/validation"
 	"k8s.io/apiextensions-apiserver/pkg/registry/customresource/tableconvertor"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -56,6 +57,12 @@ type Options struct {
 	// and access policies keep the caller's identity, so storage still
 	// authorizes them. Ignored for cluster-scoped kinds.
 	NamespaceReadable bool
+
+	// ConvertFrom lists the other served versions of this kind whose bodies may
+	// be written to this version's endpoint. They are converted through the
+	// plugin before admission, so every later step sees this version. Requires
+	// a conversion client.
+	ConvertFrom []string
 }
 
 func IsFolderScoped(kind app.ManifestVersionKind) bool {
@@ -104,13 +111,21 @@ type Store struct {
 	// fieldManager tracks managedFields on create, which the generic create
 	// handler cannot do for an unstructured kind. See newFieldManager.
 	fieldManager *managedfields.FieldManager
+
+	// converter moves objects between versions through the plugin. Nil when
+	// the kind does not declare conversion.
+	converter *conversionSerializer
+
+	// convertFrom is the set of versions accepted on writes (Options.ConvertFrom).
+	convertFrom map[string]bool
 }
 
 var (
-	_ rest.RESTCreateStrategy  = (*Store)(nil)
-	_ rest.RESTUpdateStrategy  = (*Store)(nil)
-	_ rest.RESTDeleteStrategy  = (*Store)(nil)
-	_ rest.ResetFieldsStrategy = (*Store)(nil)
+	_ rest.RESTCreateStrategy   = (*Store)(nil)
+	_ rest.RESTUpdateStrategy   = (*Store)(nil)
+	_ rest.RESTDeleteStrategy   = (*Store)(nil)
+	_ rest.ResetFieldsStrategy  = (*Store)(nil)
+	_ rest.GroupVersionAcceptor = (*Store)(nil)
 )
 
 // New builds unified storage for one manifest kind.
@@ -132,6 +147,9 @@ func New(
 	}
 	if kind.Conversion && conversion == nil {
 		return nil, fmt.Errorf("kind %s declares conversion but has no plugin client", gvk.Kind)
+	}
+	if len(opts.ConvertFrom) > 0 && conversion == nil {
+		return nil, fmt.Errorf("kind %s accepts writes in other versions but has no conversion client", gvk.Kind)
 	}
 
 	gr := schema.GroupResource{Group: gvk.Group, Resource: kind.Resource}
@@ -203,10 +221,20 @@ func New(
 		DeprecatedInternalID: apistore.DeprecatedID_None,
 	}
 	if conversion != nil {
-		storageOpts.Serializer = &conversionSerializer{
+		wrap.converter = &conversionSerializer{
 			client: conversion,
 			gvk:    gvk,
 		}
+		storageOpts.Serializer = wrap.converter
+	}
+	for _, v := range opts.ConvertFrom {
+		if v == gvk.Version {
+			continue
+		}
+		if wrap.convertFrom == nil {
+			wrap.convertFrom = map[string]bool{}
+		}
+		wrap.convertFrom[v] = true
 	}
 	optsGetter := opts.StorageOptsGetter(storageOpts)
 
@@ -365,7 +393,74 @@ func (s *Store) Recognizes(gvk schema.GroupVersionKind) bool {
 // fails and it strips managedFields off the object it hands us. Redo the diff
 // here, against a live object that has its GVK. See newFieldManager.
 func (s *Store) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	// Admission normally converted already; this covers a chain without it.
+	if err := s.ConvertIncoming(ctx, obj); err != nil {
+		return nil, err
+	}
 	return s.Store.Create(ctx, s.trackManagedFields(obj, options), createValidation, options)
+}
+
+// Update converts a body written in another version once the handler's
+// transformers have produced it. See Create.
+func (s *Store) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	if s.convertFrom != nil {
+		objInfo = convertingObjectInfo{UpdatedObjectInfo: objInfo, store: s}
+	}
+	return s.Store.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+}
+
+type convertingObjectInfo struct {
+	rest.UpdatedObjectInfo
+	store *Store
+}
+
+func (i convertingObjectInfo) UpdatedObject(ctx context.Context, old runtime.Object) (runtime.Object, error) {
+	obj, err := i.UpdatedObjectInfo.UpdatedObject(ctx, old)
+	if err != nil {
+		return nil, err
+	}
+	if err := i.store.ConvertIncoming(ctx, obj); err != nil {
+		return nil, err
+	}
+	return obj, nil
+}
+
+// AcceptsGroupVersion implements [rest.GroupVersionAcceptor]: the handler then
+// lets a body in a ConvertFrom version through to be converted, rather than
+// rejecting it for not matching the endpoint's version.
+func (s *Store) AcceptsGroupVersion(gv schema.GroupVersion) bool {
+	if gv == s.gvk.GroupVersion() {
+		return true
+	}
+	return gv.Group == s.gvk.Group && s.convertFrom[gv.Version]
+}
+
+// ConvertIncoming converts, in place, a body written in another accepted
+// version of this kind to the store's version. Admission hooks, pruning,
+// defaulting and schema validation all assume the store's version, so this
+// has to run before the first of them. A no-op for a body already in it.
+func (s *Store) ConvertIncoming(ctx context.Context, obj runtime.Object) error {
+	u, ok := obj.(*unstructured.Unstructured)
+	if !ok {
+		return nil
+	}
+	source := u.GroupVersionKind()
+	if source.Empty() || source == s.gvk {
+		return nil
+	}
+	if source.Kind != s.gvk.Kind || !s.AcceptsGroupVersion(source.GroupVersion()) {
+		return apierrors.NewBadRequest(fmt.Sprintf("cannot write a %s to the %s endpoint", source, s.gvk))
+	}
+	raw, err := u.MarshalJSON()
+	if err != nil {
+		return apierrors.NewInternalError(err)
+	}
+	converted, err := s.converter.Decode(ctx, raw, nil)
+	if err != nil {
+		return apierrors.NewInternalError(err)
+	}
+	u.Object = converted.(*unstructured.Unstructured).Object
+	return nil
 }
 
 func (s *Store) trackManagedFields(obj runtime.Object, options *metav1.CreateOptions) runtime.Object {

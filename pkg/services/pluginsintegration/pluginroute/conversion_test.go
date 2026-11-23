@@ -142,3 +142,89 @@ func TestHandlerConversionNeedsAPluginClient(t *testing.T) {
 	_, err := NewHandler(plugin.JSONData.ID, plugin.Manifests[0], opts)
 	require.ErrorContains(t, err, "declares conversion but has no plugin client")
 }
+
+// A body in another served version is converted to the endpoint's version
+// before it is stored, rather than rejected for not matching it.
+func TestHandlerConvertsWritesFromAnotherVersion(t *testing.T) {
+	storage := &resourceClient{}
+	converter := &stubConverter{}
+	opts := allowAll(testOptions())
+	opts.Storage = UnifiedStorage(storage, nil, nil)
+	opts.ClientV3 = converter
+	handler := withRequester(loadHandler(t, conversionPlugin(), opts))
+
+	req := httptest.NewRequest(http.MethodPost, "/apis/example.ext.grafana.app/v2alpha1/namespaces/default/testkinds",
+		strings.NewReader(testObjectJSON))
+	req.Header.Set("Content-Type", "application/json")
+	res := httptest.NewRecorder()
+	handler.ServeHTTP(res, req)
+	require.Equal(t, http.StatusCreated, res.Code, res.Body.String())
+
+	require.Len(t, converter.requests, 1, "the write is converted once, before it is stored")
+	require.Equal(t, "v2alpha1", converter.requests[0].GetTarget().GetVersion())
+
+	var stored map[string]any
+	require.NoError(t, json.Unmarshal(storage.created.Value, &stored))
+	require.Equal(t, "example.ext.grafana.app/v2alpha1", stored["apiVersion"], "storage holds the endpoint's version")
+	require.Equal(t, "converted:hello", stored["spec"].(map[string]any)["testField"])
+	require.Equal(t, "example", stored["metadata"].(map[string]any)["name"])
+}
+
+// Mutating admission is the first hook to see the body, so it is handed the
+// converted object rather than the version the client wrote.
+func TestHandlerConvertsBeforeAdmission(t *testing.T) {
+	plugin := conversionPlugin()
+	plugin.Manifests[0].Versions[1].Kinds[0].Admission = &app.AdmissionCapabilities{
+		Mutation: &app.MutationCapability{Operations: []app.AdmissionOperation{app.AdmissionOperationCreate}},
+	}
+	client := &convertingAdmissionClient{}
+	opts := allowAll(testOptions())
+	opts.Storage = UnifiedStorage(&resourceClient{}, nil, nil)
+	opts.ClientV3 = client
+	handler := withRequester(loadHandler(t, plugin, opts))
+
+	req := httptest.NewRequest(http.MethodPost, "/apis/example.ext.grafana.app/v2alpha1/namespaces/default/testkinds",
+		strings.NewReader(testObjectJSON))
+	req.Header.Set("Content-Type", "application/json")
+	res := httptest.NewRecorder()
+	handler.ServeHTTP(res, req)
+	require.Equal(t, http.StatusForbidden, res.Code, res.Body.String())
+	require.NotNil(t, client.review)
+
+	var reviewed map[string]any
+	require.NoError(t, json.Unmarshal(client.review.GetObjectBytes(), &reviewed))
+	require.Equal(t, "example.ext.grafana.app/v2alpha1", reviewed["apiVersion"])
+	require.Equal(t, "converted:hello", reviewed["spec"].(map[string]any)["testField"])
+}
+
+type convertingAdmissionClient struct {
+	stubConverter
+	review *pluginv3.AdmissionReviewRequest
+}
+
+func (c *convertingAdmissionClient) AdmissionReview(_ context.Context, req *pluginv3.AdmissionReviewRequest) (*pluginv3.AdmissionReviewResponse, error) {
+	c.review = req
+	return &pluginv3.AdmissionReviewResponse{}, nil
+}
+
+// Without conversion declared in both versions there is nothing to convert
+// with, so a body in the other version is still rejected.
+func TestHandlerRejectsWritesFromAVersionWithoutConversion(t *testing.T) {
+	plugin := conversionPlugin()
+	plugin.Manifests[0].Versions[1].Kinds[0].Conversion = false
+	converter := &stubConverter{}
+	opts := allowAll(testOptions())
+	opts.Storage = UnifiedStorage(&resourceClient{}, nil, nil)
+	opts.ClientV3 = converter
+	handler := withRequester(loadHandler(t, plugin, opts))
+
+	body := strings.Replace(testObjectJSON, "/v1alpha1", "/v2alpha1", 1)
+	req := httptest.NewRequest(http.MethodPost, "/apis/example.ext.grafana.app/v1alpha1/namespaces/default/testkinds",
+		strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	res := httptest.NewRecorder()
+	handler.ServeHTTP(res, req)
+	require.Equal(t, http.StatusBadRequest, res.Code, res.Body.String())
+	require.Contains(t, res.Body.String(), "does not match the expected API version")
+	require.Empty(t, converter.requests)
+}
