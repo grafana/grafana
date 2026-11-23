@@ -174,6 +174,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/apiserver/auditing"
 	_ "github.com/grafana/grafana/pkg/apiserver/endpoints/filters"
 	_ "github.com/grafana/grafana/pkg/apiserver/endpoints/responsewriter"
+	_ "github.com/grafana/grafana/pkg/apiserver/rawroutes"
 	_ "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	_ "github.com/grafana/grafana/pkg/apiserver/rest"
 	_ "github.com/grafana/grafana/pkg/bus"
