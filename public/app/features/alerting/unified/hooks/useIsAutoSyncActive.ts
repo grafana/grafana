@@ -6,10 +6,10 @@ interface AutoSyncActiveState {
   isLoading: boolean;
 }
 
-// Fail-open: no data — loading, 404, 403, or a skipped query — derives no UID, so sync reads as
+// Fail-open: no data — loading, 404, 403, a skipped query, or a retry after one of those — derives no UID, so sync reads as
 // inactive. The convert endpoint's IsExternalAMSyncConfiguredForOrg check is the real safety net.
 export function useIsAutoSyncActive(): AutoSyncActiveState {
-  const { data, error, isLoading } = useAutoSyncConfigQuery();
+  const { data, isLoading } = useAutoSyncConfigQuery();
 
-  return { isActive: Boolean(deriveSyncSource(data).uid), isLoading: isLoading && !error };
+  return { isActive: Boolean(deriveSyncSource(data).uid), isLoading };
 }

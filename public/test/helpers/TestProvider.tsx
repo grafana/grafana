@@ -29,8 +29,8 @@ export interface Props {
  */
 export function TestProvider(props: Props) {
   const { children } = props;
-  // Created once so rerenders keep the same store; RTK Query hooks warn when the store changes under them.
-  const [defaultStore] = useState(() => props.store ?? configureStore(props.storeState));
+  // Created once so rerenders keep the same store (RTK Query hooks warn when it changes); storeState is read at mount only.
+  const [defaultStore] = useState(() => configureStore(props.storeState));
   const store = props.store ?? defaultStore;
 
   const context = {

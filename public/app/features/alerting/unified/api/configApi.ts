@@ -20,5 +20,9 @@ export function useAutoSyncConfigQuery(options?: GetConfigQueryOptions) {
   const flagOn = config.featureToggles['alerting.syncExternalAlertmanager'] === true;
   const canReadConfig = contextSrv.hasPermission(AccessControlAction.ActionAlertingNotificationsConfigRead);
 
-  return configApi.useGetConfigQuery(flagOn && canReadConfig ? { name: CONFIG_SINGLETON_NAME } : skipToken, options);
+  const result = configApi.useGetConfigQuery(
+    flagOn && canReadConfig ? { name: CONFIG_SINGLETON_NAME } : skipToken,
+    options
+  );
+  return { ...result, isLoading: result.isLoading && !result.error };
 }
