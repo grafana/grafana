@@ -29,12 +29,12 @@ export function RepositoryActions({ repository }: RepositoryActionsProps) {
 
   return (
     <Stack wrap="wrap" alignItems="center">
+      <StatusBadge repo={repository} displayOnly />
       <WorkflowBadges
         workflows={repository.spec?.workflows}
         type={repository.spec?.type}
         branch={getRemoteConfig(repository.spec)?.branch}
       />
-      <StatusBadge repo={repository} displayOnly />
       {isFolderContained && (
         <LinkButton variant="secondary" icon="folder-open" href={CORE_KINDS.folder.getRoute(name)}>
           <Trans i18nKey="provisioning.repository-actions.view-folder">View folder</Trans>
