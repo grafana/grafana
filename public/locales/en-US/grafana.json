@@ -3030,12 +3030,12 @@
       },
       "empty": "No recently deleted rules found",
       "error": "Failed to load deleted rules",
-      "load-more": "Load more",
       "restore": {
         "body": "Restore \"{{title}}\"?",
         "confirm": "Restore",
         "conflict": "A rule with this name already exists.",
         "error": "Failed to restore rule. Please try again.",
+        "recording-title": "Restore recording rule",
         "restoring": "Restoring…",
         "title": "Restore alert rule"
       },
@@ -3190,10 +3190,6 @@
         "group-name": "Evaluation group name",
         "group-text": "All rules in the selected group are evaluated every {{evaluateEvery}}.",
         "interval-label": "Evaluation interval",
-        "mode": {
-          "legacy": "Use groups (Legacy)",
-          "new": "Set interval"
-        },
         "new-group": "New evaluation group",
         "pause": {
           "alerting": "Turn on to pause evaluation for this alert rule.",

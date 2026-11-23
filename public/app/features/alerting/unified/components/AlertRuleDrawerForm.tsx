@@ -18,7 +18,7 @@ import {
 } from '../Analytics';
 import { isCloudGroupUpdatedResponse, isGrafanaGroupUpdatedResponse } from '../api/alertRuleModel';
 import { alertingApi } from '../api/alertingApi';
-import { shouldUseRulesAPIV2 } from '../featureToggles';
+import { shouldUseGmaOnlyListView } from '../featureToggles';
 import { useAddRuleToRuleGroup } from '../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
 import { useUpsertUngroupedGrafanaRule } from '../hooks/useUpsertUngroupedGrafanaRule';
 import { getDefaultFormValues } from '../rule-editor/formDefaults';
@@ -61,9 +61,7 @@ export function AlertRuleDrawerForm({
   const upsertUngroupedGrafanaRule = useUpsertUngroupedGrafanaRule();
   const notifyApp = useAppNotification();
   const ruleCreatedRef = useRef(false);
-  // When rule API v2 is on, the drawer creates rules through the App Platform groupless
-  // endpoint and we can drop the "derive group from rule name" fallback below.
-  const useRuleAPIV2 = shouldUseRulesAPIV2();
+  const gmaOnlyListView = shouldUseGmaOnlyListView();
 
   // Reset form and ref when drawer opens
   useEffect(() => {
@@ -86,12 +84,8 @@ export function AlertRuleDrawerForm({
 
   const submit = async (values: RuleFormValues) => {
     try {
-      if (useRuleAPIV2) {
-        // Force ungrouped so this can't be misrouted by a stale prefill.
-        const savedUid = await upsertUngroupedGrafanaRule({
-          values: { ...values, isUngroupedRuleGroup: true },
-          existingUid: undefined,
-        });
+      if (gmaOnlyListView) {
+        const savedUid = await upsertUngroupedGrafanaRule({ values, existingUid: undefined });
 
         // The app-platform mutations live on a separate cache slice, so invalidate the legacy tags
         // the panel alerts list relies on; otherwise it stays stale until the next poll.
@@ -165,7 +159,7 @@ export function AlertRuleDrawerForm({
         <FormProvider {...methods}>
           <RuleDefinitionSection />
           <div className={styles.divider} aria-hidden="true" />
-          <RuleConditionSection hideEvaluationGroup={useRuleAPIV2} />
+          <RuleConditionSection hideEvaluationGroup={gmaOnlyListView} />
           <div className={styles.divider} aria-hidden="true" />
           <RuleNotificationSection />
           <div className={styles.footer}>

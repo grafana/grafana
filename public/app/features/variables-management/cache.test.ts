@@ -14,6 +14,8 @@ import { setStore } from 'app/store/store';
 import { variablesManagementAPI } from './api';
 import { invalidateVariablesAfterFolderDelete } from './cache';
 
+jest.mock('app/features/dashboard-scene/utils/cache', () => makeSpyable('app/features/dashboard-scene/utils/cache'));
+
 setBackendSrv(backendSrv);
 setupMockServer();
 
