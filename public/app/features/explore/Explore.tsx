@@ -12,7 +12,6 @@ import {
   type GrafanaTheme2,
   hasToggleableQueryFiltersSupport,
   LoadingState,
-  matchPluginId,
   type QueryFixAction,
   type RawTimeRange,
   type SplitOpenOptions,
@@ -54,6 +53,7 @@ import { QueryRows } from './QueryRows';
 import RawPrometheusContainer from './RawPrometheus/RawPrometheusContainer';
 import { ResponseErrorContainer } from './ResponseErrorContainer';
 import { SecondaryActions } from './SecondaryActions';
+import { createQueryEditorInsertionRegistry } from './SignalExplorer/queryEditorInsertion';
 import TableContainer from './Table/TableContainer';
 import { TraceViewContainer } from './TraceView/TraceViewContainer';
 import { changeDatasource } from './state/datasource';
@@ -71,7 +71,7 @@ import {
 } from './state/query';
 import { isSplit, selectExploreDSMaps } from './state/selectors';
 import { updateTimeRange } from './state/time';
-import { appendToQueryExpr, type ExprTextKind, isPrometheusType } from './utils/prometheus';
+import { appendToQueryExpr, type ExprTextKind, isPrometheusPane } from './utils/prometheus';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -148,6 +148,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
   scrollElement: HTMLDivElement | undefined;
   graphEventBus: EventBus;
   logsEventBus: EventBus;
+  queryEditorInsertion = createQueryEditorInsertionRegistry();
 
   constructor(props: Props) {
     super(props);
@@ -169,6 +170,9 @@ export class Explore extends PureComponent<Props, ExploreState> {
   };
 
   onAddToQuery = (refId: string, text: string, kind: ExprTextKind) => {
+    if (this.queryEditorInsertion.insert(refId, text, kind)) {
+      return;
+    }
     const { changeQueries, exploreId, queries } = this.props;
     changeQueries({ exploreId, queries: appendToQueryExpr(queries, refId, text, kind) });
   };
@@ -610,9 +614,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
     // Prometheus is the only datasource with an explorer to offer, so the whole sidebar
     // waits for one instead of showing cards that cannot be opened. Mixed panes count if
     // any query uses it.
-    const isPrometheusSelected = datasourceInstance?.meta.mixed
-      ? this.props.queries.some((q) => isPrometheusType(q.datasource?.type))
-      : !!datasourceInstance && matchPluginId('prometheus', datasourceInstance.meta);
+    const isPrometheusSelected = isPrometheusPane(datasourceInstance, this.props.queries);
     const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
     const showNoData =
       queryResponse.state === LoadingState.Done &&
@@ -701,6 +703,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
             {contentOutlineVisible && !compact && (
               <ContentOutline
                 scroller={this.scrollElement}
+                exploreId={exploreId}
                 panelId={`content-outline-container-${exploreId}`}
                 showSignalExplorer={isPrometheusSelected}
                 queries={this.props.queries}
@@ -736,6 +739,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
                           changeCompactMode={(compact: boolean) =>
                             this.props.changeCompactMode(this.props.exploreId, false)
                           }
+                          getQueryEditorInsertion={this.queryEditorInsertion.registrarFor}
                         />
                         <SecondaryActions
                           // do not allow people to add queries with potentially different datasources in correlations editor mode

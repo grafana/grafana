@@ -13,6 +13,7 @@ import (
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
@@ -143,7 +144,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	v := objectForStorage{}
 	info, ok := authlib.AuthInfoFrom(ctx)
 	if !ok {
-		return v, errors.New("missing auth info")
+		return v, apierrors.NewUnauthorized("prepare missing auth info")
 	}
 	s.checkGVK(newObject)
 
@@ -171,7 +172,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	if v.grantPermissions != "" {
 		obj.SetAnnotation(utils.AnnoKeyGrantPermissions, "") // remove the annotation
 	}
-	if err := checkManagerPropertiesOnCreate(info, obj); err != nil {
+	if err := identity.CheckManagerOnCreate(info, obj); err != nil {
 		return v, err
 	}
 	if err := s.ensureRepoManagedByParentFolder(ctx, obj); err != nil {
@@ -250,7 +251,7 @@ func (s *Storage) ensureSingleDeprecatedInternalID(ctx context.Context, id int64
 		},
 	})
 	// A failed search returns no rows, which would otherwise pass as "the ID is free".
-	if err := resourceutil.StatusErrorFromResponse(rsp.GetError(), err); err != nil {
+	if err := resourceutil.StatusErrorFromGRPC(err); err != nil {
 		return err
 	}
 	hasResults, err := searchResponseHasRows(rsp)
@@ -268,14 +269,10 @@ func searchResponseHasRows(rsp *resourcepb.ResourceSearchResponse) (bool, error)
 	if rsp == nil {
 		return false, errors.New("nil search response")
 	}
-	switch rsp.GetResultFormat() {
-	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
-		return len(rsp.GetResults().GetRows()) > 0, nil
-	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
-		return len(rsp.GetRows()) > 0, nil
-	default:
+	if rsp.GetResultFormat() != resourcepb.ResourceSearchRequest_FIELD_VALUES {
 		return false, fmt.Errorf("unsupported search result format %d", rsp.GetResultFormat())
 	}
+	return len(rsp.GetRows()) > 0, nil
 }
 
 // Called on update
@@ -292,7 +289,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		return v, err
 	}
 	if obj.GetName() == "" {
-		return v, fmt.Errorf("updated object must have a name")
+		return v, apierrors.NewBadRequest("updated object must have a name")
 	}
 
 	previous, err := utils.MetaAccessor(previousObject)
@@ -300,19 +297,8 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		return v, err
 	}
 
-	if previous.GetUID() == "" {
-		logging.FromContext(ctx).Error("object is missing UID", "gvk", obj.GetGroupVersionKind().String(), "name", obj.GetName())
-	} else if obj.GetUID() != previous.GetUID() {
-		// Eventually this should be a real error or logged
-		// However the dashboard dual write behavior hits this every time, so we will ignore it
-		// if obj.GetUID() != "" {
-		// 	logging.FromContext(ctx).Error("object UID mismatch", "gvk", obj.GetGroupVersionKind().String(), "was", previous.GetUID(), "now", obj.GetUID())
-		// }
-		obj.SetUID(previous.GetUID())
-	}
-
-	if obj.GetName() != previous.GetName() {
-		return v, fmt.Errorf("name mismatch between existing and updated object")
+	if err := reconcileUpdateIdentity(ctx, obj, previous); err != nil {
+		return v, err
 	}
 
 	obj.SetCreatedBy(previous.GetCreatedBy())
@@ -349,20 +335,21 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		}
 	}
 
-	if err := checkManagerPropertiesOnUpdateSpec(info, obj, previous); err != nil {
+	if err := identity.CheckManagerOnUpdate(info, obj, previous); err != nil {
 		return v, err
 	}
 
 	// If staying in the same folder but manager properties changed, re-validate
 	// consistency with the parent folder. Without this, removing or changing
 	// manager annotations would leave unmanaged resources in a repo-managed folder.
-	if obj.GetFolder() != "" && obj.GetFolder() == previous.GetFolder() {
-		newMgr, newOk := obj.GetManagerProperties()
-		oldMgr, oldOk := previous.GetManagerProperties()
-		if newOk != oldOk || newMgr != oldMgr {
-			if err := s.ensureRepoManagedByParentFolder(ctx, obj); err != nil {
-				return v, err
-			}
+	if err := s.revalidateFolderOnManagerChange(ctx, obj, previous); err != nil {
+		return v, err
+	}
+
+	if !v.hasChanged && s.opts.EnableInlineBlobs {
+		v.hasChanged, err = s.blobsChanged(ctx, updateObject, previousObject)
+		if err != nil {
+			return v, err
 		}
 	}
 
@@ -389,6 +376,41 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	return v, err
 }
 
+// reconcileUpdateIdentity carries the immutable identity of previous (UID, namespace) onto obj
+// and rejects updates that try to change the name or namespace.
+func reconcileUpdateIdentity(ctx context.Context, obj, previous utils.GrafanaMetaAccessor) error {
+	if previous.GetUID() == "" {
+		logging.FromContext(ctx).Error("object is missing UID", "gvk", obj.GetGroupVersionKind().String(), "name", obj.GetName())
+	} else if obj.GetUID() != previous.GetUID() {
+		// Eventually this should be a real error or logged
+		// However the dashboard dual write behavior hits this every time, so we will ignore it
+		// if obj.GetUID() != "" {
+		// 	logging.FromContext(ctx).Error("object UID mismatch", "gvk", obj.GetGroupVersionKind().String(), "was", previous.GetUID(), "now", obj.GetUID())
+		// }
+		obj.SetUID(previous.GetUID())
+	}
+
+	if obj.GetName() != previous.GetName() {
+		return apierrors.NewBadRequest("name mismatch between existing and updated object")
+	}
+	obj.SetNamespace(previous.GetNamespace())
+	return nil
+}
+
+// revalidateFolderOnManagerChange re-checks consistency with the parent folder when the object
+// stays in the same folder but its manager properties changed.
+func (s *Storage) revalidateFolderOnManagerChange(ctx context.Context, obj, previous utils.GrafanaMetaAccessor) error {
+	if obj.GetFolder() == "" || obj.GetFolder() != previous.GetFolder() {
+		return nil
+	}
+	newMgr, newOk := obj.GetManagerProperties()
+	oldMgr, oldOk := previous.GetManagerProperties()
+	if newOk == oldOk && newMgr == oldMgr {
+		return nil
+	}
+	return s.ensureRepoManagedByParentFolder(ctx, obj)
+}
+
 func (s *Storage) ensureRepoManagedByParentFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) error {
 	if !s.opts.EnableFolderSupport || isRootFolderUID(obj.GetFolder()) {
 		return nil
@@ -397,33 +419,40 @@ func (s *Storage) ensureRepoManagedByParentFolder(ctx context.Context, obj utils
 	if err != nil {
 		return err
 	}
-	if folder == nil {
-		return nil
-	}
-	return ensureSameRepoManager(folder, obj)
+	return utils.CheckSameRepoManager(folder, obj)
 }
 
-// getParentFolder fetches the folder that contains obj. Returns (nil, nil)
-// when the dynamic client is not available, signalling the caller to skip
-// the consistency check.
+// getParentFolder reads the folder that contains obj from storage as the caller, so the
+// consistency check fails when the caller cannot read that folder.
 func (s *Storage) getParentFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) (utils.GrafanaMetaAccessor, error) {
-	if s.getDynClient == nil {
-		logging.FromContext(ctx).Warn("skipping repo-manager consistency check: dynamic client not configured", "resource", s.gr.String())
-		return nil, nil
-	}
-	dynClient, err := s.getDynClient(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	name := obj.GetFolder()
-	gvr := folders.FolderResourceInfo.GroupVersionResource()
-	raw, err := dynClient.Resource(gvr).Namespace(obj.GetNamespace()).Get(ctx, name, metav1.GetOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to read folder %s: %w", name, err)
+	gr := folders.FolderResourceInfo.GroupResource()
+	rsp, err := s.store.Read(ctx, &resourcepb.ReadRequest{
+		Key: &resourcepb.ResourceKey{
+			Group:     gr.Group,
+			Resource:  gr.Resource,
+			Namespace: obj.GetNamespace(),
+			Name:      name,
+		},
+	})
+	if err := resourceutil.StatusErrorFromGRPC(err); err != nil {
+		var status *apierrors.StatusError
+		if !errors.As(err, &status) {
+			return nil, fmt.Errorf("failed to read folder %s: %w", name, err)
+		}
+		msg := "failed to read folder " + name
+		if status.ErrStatus.Message != "" {
+			msg += ": " + status.ErrStatus.Message
+		}
+		status.ErrStatus.Message = msg
+		return nil, status
 	}
 
-	return utils.MetaAccessor(raw)
+	folder := &unstructured.Unstructured{}
+	if err := folder.UnmarshalJSON(rsp.GetValue()); err != nil {
+		return nil, fmt.Errorf("failed to decode folder %s: %w", name, err)
+	}
+	return utils.MetaAccessor(folder)
 }
 
 // checkGVK completes obj's group+version+kind from [StorageOptions.GVK] when the

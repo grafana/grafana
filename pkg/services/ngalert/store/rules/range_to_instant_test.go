@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 const (
@@ -146,9 +145,7 @@ func TestCanBeInstant(t *testing.T) {
 	}
 }
 
-func TestIntegrationMigrateLokiQueryToInstant(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestMigrateLokiQueryToInstant(t *testing.T) {
 	original := createMigrateableLokiRule(t)
 	migrated := createMigrateableLokiRule(t, func(r *models.AlertRule) {
 		r.Data[0] = lokiQuery(t, "A", "instant", "grafanacloud-logs")
@@ -171,9 +168,7 @@ func TestIntegrationMigrateLokiQueryToInstant(t *testing.T) {
 	require.False(t, canBeOptimized)
 }
 
-func TestIntegrationMigrateMultiLokiQueryToInstant(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestMigrateMultiLokiQueryToInstant(t *testing.T) {
 	original := createMultiQueryMigratableLokiRule(t)
 	migrated := createMultiQueryMigratableLokiRule(t, func(r *models.AlertRule) {
 		r.Data[0] = lokiQuery(t, "TotalRequests", "instant", "grafanacloud-logs")
@@ -210,9 +205,7 @@ func TestIntegrationMigrateMultiLokiQueryToInstant(t *testing.T) {
 	require.False(t, canBeOptimized)
 }
 
-func TestIntegrationMigratePromQueryToInstant(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestMigratePromQueryToInstant(t *testing.T) {
 	original := createMigratablePromRule(t)
 	migrated := createMigratablePromRule(t, func(r *models.AlertRule) {
 		r.Data[0] = prometheusQuery(t, "A", promExternalDS, promIsInstant)
@@ -233,9 +226,7 @@ func TestIntegrationMigratePromQueryToInstant(t *testing.T) {
 	require.False(t, canBeOptimized)
 }
 
-func TestIntegrationMigrateMultiPromQueryToInstant(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestMigrateMultiPromQueryToInstant(t *testing.T) {
 	original := createMultiQueryMigratablePromRule(t)
 	migrated := createMultiQueryMigratablePromRule(t, func(r *models.AlertRule) {
 		r.Data[0] = prometheusQuery(t, "TotalRequests", promExternalDS, promIsInstant)

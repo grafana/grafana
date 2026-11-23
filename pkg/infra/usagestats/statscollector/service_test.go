@@ -30,10 +30,21 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+type systemStatsQueryRecorder struct {
+	stats.Service
+	query *stats.GetSystemStatsQuery
+}
+
+func (s *systemStatsQueryRecorder) GetSystemStats(ctx context.Context, query *stats.GetSystemStatsQuery) (*stats.SystemStats, error) {
+	s.query = query
+	return s.Service.GetSystemStats(ctx, query)
+}
+
 func TestTotalStatsUpdate(t *testing.T) {
 	sqlStore := dbtest.NewFakeDB()
 	statsService := statstest.NewFakeService()
-	s := createService(t, setting.NewCfg(), sqlStore, statsService)
+	recorder := &systemStatsQueryRecorder{Service: statsService}
+	s := createService(t, setting.NewCfg(), sqlStore, recorder)
 	s.cfg.MetricsEndpointEnabled = true
 	s.cfg.MetricsEndpointDisableTotalStats = false
 
@@ -76,7 +87,14 @@ func TestTotalStatsUpdate(t *testing.T) {
 			s.cfg.MetricsEndpointEnabled = tc.MetricsEndpointEnabled
 			s.cfg.MetricsEndpointDisableTotalStats = tc.MetricsEndpointDisableTotalStats
 
-			assert.Equal(t, tc.ExpectedUpdate, s.updateTotalStats(context.Background()))
+			recorder.query = nil
+			assert.Equal(t, tc.ExpectedUpdate, s.updateTotalStats(t.Context()))
+			if tc.ExpectedUpdate {
+				require.NotNil(t, recorder.query)
+				assert.True(t, recorder.query.SkipProvisionedDashboardCount)
+			} else {
+				assert.Nil(t, recorder.query)
+			}
 		})
 	}
 }
@@ -123,6 +141,7 @@ func TestFeatureUsageStats(t *testing.T) {
 func TestCollectingUsageStats(t *testing.T) {
 	sqlStore := dbtest.NewFakeDB()
 	statsService := statstest.NewFakeService()
+	recorder := &systemStatsQueryRecorder{Service: statsService}
 	expectedDataSources := []*datasources.DataSource{
 		{
 			JsonData: simplejson.NewFromAny(map[string]any{}),
@@ -148,7 +167,7 @@ func TestCollectingUsageStats(t *testing.T) {
 			Name: "database",
 		},
 		EnableFrontendSandboxForPlugins: []string{"grafana-worldmap-panel"},
-	}, sqlStore, statsService,
+	}, sqlStore, recorder,
 		withDatasources(mockDatasourceService{datasources: expectedDataSources}))
 
 	s.startTime = time.Now().Add(-1 * time.Minute)
@@ -160,6 +179,9 @@ func TestCollectingUsageStats(t *testing.T) {
 	metrics, err := s.collectSystemStats(context.Background())
 	require.NoError(t, err)
 
+	require.NotNil(t, recorder.query)
+	assert.False(t, recorder.query.SkipProvisionedDashboardCount)
+	assert.EqualValues(t, 12, metrics["stats.provisioned_dashboards.count"])
 	assert.EqualValues(t, 15, metrics["stats.total_auth_token.count"])
 	assert.EqualValues(t, 2, metrics["stats.api_keys.count"])
 	assert.EqualValues(t, 5, metrics["stats.avg_auth_token_per_user.count"])

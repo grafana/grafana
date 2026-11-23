@@ -122,6 +122,7 @@ inhibit_rules:
 					]
 				},
 				{
+					"uid": "warning-receiver-uid",
 					"name": "warning-receiver",
 					"grafana_managed_receiver_configs": [
 						{
@@ -160,6 +161,7 @@ inhibit_rules:
 			],
 			"time_intervals": [
 				{
+					"uid": "biz-hours-static-uid",
 					"name": "business-hours",
 					"time_intervals": [
 						{
@@ -254,12 +256,14 @@ inhibit_rules:
 	assert.Equal(t, "uid-default-1", recv.GrafanaManagedReceivers[0].UID)
 	assert.Equal(t, "email", recv.GrafanaManagedReceivers[0].Type)
 
-	// Deprecated mute_time_intervals and time_intervals are folded into one map.
+	// Deprecated mute_time_intervals and time_intervals are folded into one map. "weekends" has no
+	// persisted UID (legacy row), so it falls back to the name-derived UID; "business-hours" has an
+	// explicit persisted UID that doesn't match its name-derived one, confirming it's honored as-is.
 	weekends, ok := model.TimeIntervals[TimeIntervalUID("weekends")]
 	require.True(t, ok, "expected time interval weekends (folded from mute_time_intervals)")
 	assert.Equal(t, "weekends", weekends.Title)
-	businessHours, ok := model.TimeIntervals[TimeIntervalUID("business-hours")]
-	require.True(t, ok, "expected time interval business-hours")
+	businessHours, ok := model.TimeIntervals[ResourceUID("biz-hours-static-uid")]
+	require.True(t, ok, "expected time interval business-hours under its persisted UID")
 	assert.Equal(t, "business-hours", businessHours.Title)
 
 	// Inhibition rules are keyed by their stored name verbatim (not hashed).
@@ -290,11 +294,26 @@ inhibit_rules:
 	slices.SortFunc(originalDB.AlertmanagerConfig.TimeIntervals, func(a, b store.TimeIntervalDB) int {
 		return strings.Compare(a.Name, b.Name)
 	})
+	// "weekends" has no persisted UID in the input, so loading/saving it assigns and persists the
+	// name-derived UID as a side effect - unlike "business-hours", whose explicit UID round-trips
+	// unchanged.
+	for i, ti := range originalDB.AlertmanagerConfig.TimeIntervals {
+		if ti.UID == "" {
+			originalDB.AlertmanagerConfig.TimeIntervals[i].UID = string(TimeIntervalUID(ti.Name))
+		}
+	}
 
 	// Receivers are now a top-level map keyed by name, so they serialize sorted by name too.
 	slices.SortFunc(originalDB.AlertmanagerConfig.Receivers, func(a, b *store.ReceiverDB) int {
 		return strings.Compare(a.Name, b.Name)
 	})
+	// Some of the input receivers have no persisted UID, so loading/saving assigns and persists the
+	// name-derived UID as a side effect, same as "weekends" above.
+	for _, r := range originalDB.AlertmanagerConfig.Receivers {
+		if r.UID == "" {
+			r.UID = string(ReceiverUID(r.Name))
+		}
+	}
 
 	diff := cmp.Diff(originalDB, convertedDB, cmpopts.IgnoreUnexported(store.AMConfigDB{}, definition.Route{}, labels.Matcher{}))
 	if diff != "" {
@@ -331,13 +350,14 @@ func TestToDBModel_ToStaticJSON(t *testing.T) {
 		},
 		TimeIntervals: map[ResourceUID]TimeInterval{
 			TimeIntervalUID("business-hours"): NewTimeInterval(
+				TimeIntervalUID("business-hours"),
 				"business-hours",
 				[]timeinterval.TimeInterval{{Weekdays: []timeinterval.WeekdayRange{{InclusiveRange: timeinterval.InclusiveRange{Begin: 1, End: 5}}}}},
 				models.ProvenanceNone,
 			),
 		},
 		Receivers: map[ResourceUID]PostableApiReceiver{
-			ReceiverUID("email-receiver"): NewReceiver("email-receiver", []*PostableGrafanaReceiver{
+			"some-custom-uid": NewReceiver("some-custom-uid", "email-receiver", []*PostableGrafanaReceiver{
 				{UID: "int-1", Name: "email-receiver", Type: "email"},
 			}, models.ProvenanceNone),
 		},
@@ -368,6 +388,7 @@ func TestToDBModel_ToStaticJSON(t *testing.T) {
 			"route": {"receiver": "email-receiver", "group_by": ["alertname"]},
 			"receivers": [
 				{
+					"uid": "some-custom-uid",
 					"name": "email-receiver",
 					"grafana_managed_receiver_configs": [
 						{"uid": "int-1", "name": "email-receiver", "type": "email", "disableResolveMessage": false}
@@ -375,7 +396,7 @@ func TestToDBModel_ToStaticJSON(t *testing.T) {
 				}
 			],
 			"time_intervals": [
-				{"name": "business-hours", "time_intervals": [{"weekdays": ["monday:friday"]}]}
+				{"uid": "ef8zkhedc25v8sme7l2fbhtzd", "name": "business-hours", "time_intervals": [{"weekdays": ["monday:friday"]}]}
 			]
 		},
 		"managed_routes": {
@@ -458,6 +479,45 @@ func TestToModel_TemplateConflicts(t *testing.T) {
 		require.Len(t, model.Templates, 2)
 		assert.Contains(t, model.Templates, TemplateUID(TemplateKindGrafana, "a.tmpl"))
 		assert.Contains(t, model.Templates, TemplateUID(TemplateKindGrafana, "b.tmpl"))
+	})
+}
+
+func TestToModel_TemplateUIDs(t *testing.T) {
+	minimalAMConfig := `{"route":{"receiver":"recv"},"receivers":[{"name":"recv"}]}`
+	load := func(t *testing.T, templateFiles, managedTemplates string) *AMConfigV1 {
+		input := &store.AMConfigDB{}
+		require.NoError(t, json.Unmarshal([]byte(`{
+			"template_files": `+templateFiles+`,
+			"managed_templates": `+managedTemplates+`,
+			"alertmanager_config": `+minimalAMConfig+`
+		}`), input))
+		return ToModel(input)
+	}
+
+	t.Run("replaces a stored UID that is not valid, also in the template that is in both fields", func(t *testing.T) {
+		oldUID := models.NameToUid("grafana|tmpl.tmpl")
+		model := load(t,
+			`{"tmpl.tmpl": "{{ define \"alert\" }}old{{ end }}"}`,
+			`{"`+oldUID+`": {"name":"tmpl.tmpl","content":"{{ define \"alert\" }}new{{ end }}","kind":"grafana"}}`)
+
+		expected := TemplateUID(TemplateKindGrafana, "tmpl.tmpl")
+		require.Len(t, model.Templates, 1)
+		assert.Equal(t, `{{ define "alert" }}new{{ end }}`, model.Templates[expected].Content)
+
+		output, err := ToDBModel(model)
+		require.NoError(t, err)
+		require.Len(t, output.ManagedTemplates, 1)
+		assert.Contains(t, output.ManagedTemplates, string(expected), "the next save writes the valid UID")
+	})
+
+	t.Run("a legacy template that is not managed gets the derived UID", func(t *testing.T) {
+		model := load(t,
+			`{"a.tmpl": "{{ define \"a\" }}A{{ end }}"}`,
+			`{"stored-uid": {"name":"b.tmpl","content":"{{ define \"b\" }}B{{ end }}","kind":"grafana"}}`)
+
+		require.Len(t, model.Templates, 2)
+		assert.Contains(t, model.Templates, TemplateUID(TemplateKindGrafana, "a.tmpl"))
+		assert.Contains(t, model.Templates, ResourceUID("stored-uid"))
 	})
 }
 
@@ -548,5 +608,32 @@ func TestPostableMimirReceiverToPostableGrafanaReceiver(t *testing.T) {
 		result, err := PostableMimirReceiverToPostableGrafanaReceiver(recv)
 		require.NoError(t, err)
 		require.Len(t, result.GrafanaManagedReceivers, len(notifytest.AllValidMimirConfigs))
+	})
+}
+
+func TestTimeIntervalsToModel_UID(t *testing.T) {
+	intervals := []store.TimeIntervalDB{
+		{UID: "persisted-uid", Name: "Persisted"},
+		{Name: "Legacy Title"},
+	}
+
+	t.Run("persisted UID wins, missing UID falls back to the legacy UID", func(t *testing.T) {
+		model := TimeIntervalsToModel(nil, intervals)
+		require.Len(t, model, 2)
+		require.Equal(t, "Persisted", model["persisted-uid"].Title)
+		require.NotContains(t, model, TimeIntervalUID("Persisted"))
+		require.Equal(t, "Legacy Title", model[TimeIntervalUID("Legacy Title")].Title)
+	})
+
+	t.Run("saving persists the effective UID", func(t *testing.T) {
+		db := TimeIntervalsToDB((&AMConfigV1{TimeIntervals: TimeIntervalsToModel(nil, intervals)}).SortedTimeIntervals())
+		uids := map[string]string{}
+		for _, ti := range db {
+			uids[ti.Name] = ti.UID
+		}
+		require.Equal(t, map[string]string{
+			"Persisted":    "persisted-uid",
+			"Legacy Title": string(TimeIntervalUID("Legacy Title")),
+		}, uids)
 	})
 }

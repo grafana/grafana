@@ -5,12 +5,11 @@ import { type DataSourceRef, type GrafanaTheme2, type TimeRange } from '@grafana
 import { t } from '@grafana/i18n';
 import { Button, IconButton, Input, Text, useStyles2 } from '@grafana/ui';
 
-import { type ExprTextKind } from '../utils/prometheus';
-
 import { AddToQueryButton, getAddToQueryReveal } from './AddToQueryButton';
 import { dsKey, rangeKey } from './data/metricResourceClient';
 import { useLabelValues } from './data/useLabelValues';
 import { useVisibleBatch } from './hooks/useVisibleBatch';
+import { type AddToQueryItemType } from './types';
 
 // One reused collator rather than per-comparison `localeCompare`: a high-cardinality label can hold
 // thousands of values, and this comparator runs across all of them on every reorder.
@@ -24,7 +23,7 @@ interface Props {
   metric: string;
   labelKey: string;
   /** Left out where the card's query has nowhere to put a value. */
-  onAddToQuery?: (text: string, kind: ExprTextKind) => void;
+  onAddToQuery?: (text: string, itemType: AddToQueryItemType) => void;
 }
 
 /**
@@ -101,7 +100,7 @@ export function LabelValues({ id, dsRef, timeRange, metric, labelKey, onAddToQue
               {onAddToQuery && (
                 <AddToQueryButton
                   text={value}
-                  kind="value"
+                  itemType="value"
                   ariaLabel={t('explore.metrics-list.add-value-to-query', 'Add value {{value}} to query', { value })}
                   onAdd={onAddToQuery}
                 />

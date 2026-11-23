@@ -8,9 +8,21 @@ import (
 )
 
 var (
-	ErrPluginSettingNotFound         = errors.New("plugin setting not found")
-	ErrPluginSettingJSONDataTooLarge = errutil.ValidationFailed("pluginsettings.jsonDataTooLarge", errutil.WithPublicMessage("Plugin jsonData is too large to store."))
+	ErrPluginSettingNotFound     = errors.New("plugin setting not found")
+	ErrPluginSettingDataTooLarge = errutil.ValidationFailed("pluginsettings.dataTooLarge", errutil.WithPublicMessage("Plugin settings data is too large to store."))
+	errDataTooLargeTemplate      = ErrPluginSettingDataTooLarge.MustTemplate(
+		"plugin {{ .Private.field }} is {{ .Private.size }} bytes, the limit is {{ .Private.limit }} bytes",
+		errutil.WithPublic("Plugin {{ .Public.field }} is too large to store."),
+	)
 )
+
+// NewDataTooLargeError builds an ErrPluginSettingDataTooLarge that names the oversized field.
+func NewDataTooLargeError(field string, size, limit int) error {
+	return errDataTooLargeTemplate.Build(errutil.TemplateData{
+		Private: map[string]any{"field": field, "size": size, "limit": limit},
+		Public:  map[string]any{"field": field},
+	})
+}
 
 type DTO struct {
 	ID             int64

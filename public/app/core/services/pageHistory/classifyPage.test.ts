@@ -33,9 +33,23 @@ describe('classifyPage', () => {
       '/a/grafana-assistant-app/pages/grafana-org-tenure-cb1e1e23764b',
       { kind: 'page', pathname: '/a/grafana-assistant-app/pages/grafana-org-tenure-cb1e1e23764b' },
     ],
+    // A page whose id merely starts with "new" is still a Page; only the `new` segment is the create flow.
+    [
+      '/a/grafana-assistant-app/pages/newsletter-metrics-1a2b3c',
+      { kind: 'page', pathname: '/a/grafana-assistant-app/pages/newsletter-metrics-1a2b3c' },
+    ],
     // Another plugin's `/pages/<id>` is an ordinary app page.
     ['/a/other-app/pages/abc', { kind: 'app', pathname: '/a/other-app/pages/abc' }],
     ['/a/grafana-k8s-app/navigation/cluster', { kind: 'app', pathname: '/a/grafana-k8s-app/navigation/cluster' }],
+    ['/dashboards/f/abc', { kind: 'folder', uid: 'abc', pathname: '/dashboards/f/abc' }],
+    ['/dashboards/f/abc/my-folder', { kind: 'folder', uid: 'abc', pathname: '/dashboards/f/abc/my-folder' }],
+    ['/notebooks/abc', { kind: 'notebook', uid: 'abc', pathname: '/notebooks/abc' }],
+    // The route takes an optional slug after the uid, like dashboards do.
+    ['/notebooks/abc/my-notebook', { kind: 'notebook', uid: 'abc', pathname: '/notebooks/abc/my-notebook' }],
+    ['/notebooks/abc?edit=true', { kind: 'notebook', uid: 'abc', pathname: '/notebooks/abc' }],
+    ['/playlists/edit/abc', { kind: 'playlist', uid: 'abc', pathname: '/playlists/edit/abc' }],
+    ['/playlists/play/abc', { kind: 'playlist', uid: 'abc', pathname: '/playlists/play/abc' }],
+    ['/a/grafana-workflows-app/workflows/abc', { kind: 'app', pathname: '/a/grafana-workflows-app/workflows/abc' }],
     ['/alerting', { kind: 'alerting', pathname: '/alerting' }],
     ['/alerting/list', { kind: 'alerting', pathname: '/alerting/list' }],
     ['/alerting/grafana/abc/view', { kind: 'alerting', pathname: '/alerting/grafana/abc/view' }],
@@ -53,7 +67,18 @@ describe('classifyPage', () => {
     '/dashboard/new',
     '/dashboard/import',
     '/dashboards',
-    '/dashboards/f/abc',
+    // Folder sub-pages, the create flows and the lists are not pages to come back to.
+    '/dashboards/f/abc/my-folder/library-panels',
+    '/dashboards/f/abc/my-folder/alerting',
+    '/dashboards/f/abc/variables',
+    '/dashboards/f',
+    '/notebooks',
+    '/notebooks/new',
+    '/notebooks/abc/render',
+    '/notebooks/abc/my-notebook/extra',
+    '/playlists',
+    '/playlists/new',
+    '/playlists/edit',
     '/public-dashboards/abc',
     // Explore before it has written its state, in an older URL format, or with nothing to resume.
     '/explore',
@@ -65,6 +90,13 @@ describe('classifyPage', () => {
     '/explore/metrics/trail',
     '/a',
     '/a/',
+    // The Pages list and the create flow under `new` are not pages to come back to; only existing Pages are.
+    '/a/grafana-assistant-app/pages',
+    '/a/grafana-assistant-app/pages/',
+    '/a/grafana-assistant-app/pages?orgId=1',
+    '/a/grafana-assistant-app/pages/new',
+    '/a/grafana-assistant-app/pages/new/da8d0a5c-4e58-4fd4-ad0c-9bd84aad94a1',
+    '/a/grafana-assistant-app/pages/new/da8d0a5c-4e58-4fd4-ad0c-9bd84aad94a1?orgId=1',
     '/connections/datasources',
     '/profile',
     '/admin/users',
@@ -76,6 +108,10 @@ describe('classifyPage', () => {
 describe('pageKey', () => {
   it('folds variants of one page onto the same key', () => {
     expect(pageKey(classify('/d/abc/slug')!)).toBe(pageKey(classify('/d/abc')!));
+    expect(pageKey(classify('/notebooks/abc/slug')!)).toBe(pageKey(classify('/notebooks/abc')!));
+    expect(pageKey(classify('/dashboards/f/abc/slug')!)).toBe(pageKey(classify('/dashboards/f/abc')!));
+    // Editing and playing a playlist are one page.
+    expect(pageKey(classify('/playlists/edit/abc')!)).toBe(pageKey(classify('/playlists/play/abc')!));
     expect(pageKey(classify('/alerting/list/')!)).toBe(pageKey(classify('/alerting/list')!));
     // Query edits and a split keep the Explore session.
     expect(pageKey(classify(`/explore${exploreSearch({ abc: { queries: ['up'] } })}`)!)).toBe(
@@ -92,6 +128,10 @@ describe('pageKey', () => {
       '/alerting/list',
       '/alerting/silences',
       '/a/x/y',
+      // The same uid in different kinds is different pages.
+      '/dashboards/f/abc',
+      '/notebooks/abc',
+      '/playlists/edit/abc',
     ].map((url) => pageKey(classify(url)!));
     expect(new Set(keys).size).toBe(keys.length);
   });

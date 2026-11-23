@@ -12,12 +12,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	repo "github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 func TestParseWebhooks(t *testing.T) {
@@ -100,7 +99,7 @@ func TestParseWebhooks(t *testing.T) {
 	}
 
 	gh := &githubWebhookRepository{
-		secret: common.RawSecureValue("webhook-secret"),
+		secret: resource.RawSecureValue("webhook-secret"),
 	}
 
 	for _, tt := range tests {
@@ -134,7 +133,7 @@ func TestPullRequestWebhookForkStatus(t *testing.T) {
 		{name: "missing base identity", headRepo: `{"id":2}`, baseRepo: `{}`},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			gh := &githubWebhookRepository{secret: common.RawSecureValue("webhook-secret")}
+			gh := &githubWebhookRepository{secret: resource.RawSecureValue("webhook-secret")}
 			payload := fmt.Sprintf(`{"action":"opened","repository":{"full_name":"org/repo"},"pull_request":{"number":123,"head":{"ref":"feature","sha":"abc","repo":%s},"base":{"ref":"main","repo":%s}}}`, tt.headRepo, tt.baseRepo)
 			event, err := verifyAndProcess(t, gh, signedWebhookRequest(t, "pull_request", "webhook-secret", "", payload))
 			require.NoError(t, err)
@@ -163,7 +162,7 @@ func TestGitHubRepository_ProcessRequest_ReplayKey(t *testing.T) {
 
 	newRepo := func(secret string) *githubWebhookRepository {
 		return &githubWebhookRepository{
-			secret: common.RawSecureValue(secret),
+			secret: resource.RawSecureValue(secret),
 		}
 	}
 
@@ -491,7 +490,7 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 			// Create a GitHub repository with the test config. A fresh cache
 			// per subtest keeps replay state from leaking across cases.
 			r := &githubWebhookRepository{
-				secret: common.RawSecureValue("webhook-secret"),
+				secret: resource.RawSecureValue("webhook-secret"),
 			}
 
 			event, err := verifyAndProcess(t, r, tt.setupRequest())
@@ -511,67 +510,6 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, tt.expected, event)
 			}
-		})
-	}
-}
-
-func TestGitHubRepository_CommentPullRequest(t *testing.T) {
-	tests := []struct {
-		name          string
-		setupMock     func(m *MockClient)
-		prNumber      int
-		comment       string
-		expectedError error
-	}{
-		{
-			name: "successfully comment on pull request",
-			setupMock: func(m *MockClient) {
-				m.On("CreatePullRequestComment", mock.Anything, 123, "Test comment").
-					Return(nil)
-			},
-			prNumber:      123,
-			comment:       "Test comment",
-			expectedError: nil,
-		},
-		{
-			name: "error commenting on pull request",
-			setupMock: func(m *MockClient) {
-				m.On("CreatePullRequestComment", mock.Anything, 456, "Error comment").
-					Return(fmt.Errorf("failed to create comment"))
-			},
-			prNumber:      456,
-			comment:       "Error comment",
-			expectedError: fmt.Errorf("failed to create comment"),
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Setup mock GitHub client
-			mockGH := NewMockClient(t)
-			tt.setupMock(mockGH)
-
-			mockRepo := NewMockGithubRepository(t)
-			mockRepo.EXPECT().Client().Return(mockGH)
-
-			// Create repository with mock
-			repo := &githubWebhookRepository{
-				GithubRepository: mockRepo,
-			}
-
-			// Call the CommentPullRequest method
-			err := repo.CommentPullRequest(t.Context(), tt.prNumber, tt.comment)
-
-			// Check results
-			if tt.expectedError != nil {
-				require.Error(t, err)
-				require.Equal(t, tt.expectedError.Error(), err.Error())
-			} else {
-				require.NoError(t, err)
-			}
-
-			// Verify all mock expectations were met
-			mockGH.AssertExpectations(t)
 		})
 	}
 }

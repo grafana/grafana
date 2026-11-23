@@ -33,6 +33,10 @@ cards:
       href: ./whatsnew/
       description: Browse release highlights, deprecations, and breaking changes in Grafana releases.
       height: 24
+    - title: Upgrade
+      href: ./upgrade-guide/
+      description: Upgrade Grafana to stay current with the latest fixes and enhancements.
+      height: 24
     - title: Introduction
       href: ./fundamentals/
       description: Learn about observability topics in general and some of the products included in Grafana.
@@ -40,6 +44,10 @@ cards:
     - title: Set up
       href: ./setup-grafana/
       description: Get up and running with Grafana.
+      height: 24
+    - title: Administration
+      href: ./administration/
+      description: Perform administrative tasks such as configuring user management and roles and permissions.
       height: 24
     - title: Data sources
       href: ./datasources/
@@ -61,17 +69,21 @@ cards:
       href: ./alerting/
       description: Learn about problems in your systems moments after they occur.
       height: 24
-    - title: Administration
-      href: ./administration/
-      description: Perform administrative tasks such as configuring user management and roles and permissions.
+    - title: As code and provisioning
+      href: ./as-code/
+      description: Deploy, configure and provision Grafana with as code workflows.
+      height: 24
+    - title: AI tools
+      href: ./ai-tools/
+      description: AI tools available in Grafana - Assistant, MCP servers, and `gcx`.
       height: 24
     - title: Troubleshooting
       href: ./troubleshooting/
       description: Troubleshoot common Grafana issues.
       height: 24
-    - title: Upgrade
-      href: ./upgrade-guide/
-      description: Upgrade Grafana to stay current with the latest fixes and enhancements.
+    - title: Developer resources
+      href: ./developer-resources/
+      description: Content for developers - API reference guides, contributing guides, and contact options.
       height: 24
 ---
 

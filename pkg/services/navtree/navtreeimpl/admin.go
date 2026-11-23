@@ -1,7 +1,8 @@
 package navtreeimpl
 
 import (
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	authlib "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/login/social"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ssoutils"
@@ -49,14 +50,16 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Text:     "Migrate to Grafana Cloud",
 			Id:       "migrate-to-cloud",
 			SubTitle: "Copy resources from your self-managed installation to a cloud stack",
+			Icon:     "cloud-upload",
 			Url:      s.cfg.AppSubURL + "/admin/migrate-to-cloud",
 		})
 	}
-	if c.HasRole(identity.RoleAdmin) && s.cfg.ProvisioningEnabled {
+	if c.HasRole(authlib.RoleAdmin) && s.cfg.ProvisioningEnabled {
 		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
 			Text:     "Provisioning",
 			Id:       "provisioning",
 			SubTitle: "View and manage your provisioning connections",
+			Icon:     "code-branch",
 			Url:      s.cfg.AppSubURL + "/admin/provisioning",
 			Keywords: []string{"git sync", "git-sync", "repository", "version control", "as code"},
 		})
@@ -98,7 +101,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 	}
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if (s.cfg.Env == setting.Dev) || s.features.IsEnabled(ctx, featuremgmt.FlagEnableExtensionsAdminPage) && hasAccess(pluginaccesscontrol.AdminAccessEvaluator) {
+	if (s.cfg.Env == setting.Dev || s.features.IsEnabled(ctx, featuremgmt.FlagEnableExtensionsAdminPage)) && hasAccess(pluginaccesscontrol.AdminAccessEvaluator) {
 		pluginsNodeLinks = append(pluginsNodeLinks, &navtree.NavLink{
 			Text:     "Extensions",
 			Icon:     "plug",
@@ -164,7 +167,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Text:      "Authentication",
 			Id:        "authentication",
 			SubTitle:  "Manage your auth settings and configure single sign-on",
-			Icon:      "signin",
+			Icon:      "key-skeleton-alt",
 			IsSection: true,
 			Url:       s.cfg.AppSubURL + "/admin/authentication",
 		})

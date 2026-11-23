@@ -12,7 +12,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "13.3.0-pre";
+export const pluginVersion = "13.4.0-pre";
 
 export interface Options {
   allowDownload?: boolean;
@@ -22,6 +22,8 @@ export interface Options {
   fieldSelectorWidth?: number;
   isLabelFilterActive?: unknown;
   logDetailsWidth?: number;
+  onClickFilterOutString?: unknown;
+  onClickFilterString?: unknown;
   permalinkedLogId?: string;
   showControls?: boolean;
   showCopyLogLink?: boolean;

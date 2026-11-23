@@ -18,7 +18,8 @@ import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/r
 import { SafeSerializableSceneObject, type SceneObjectRef, type VizPanel } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { trackReorder } from 'app/features/dashboard-scene/panel-edit/PanelEditNext/tracking';
+import { isPanelEditorApp, trackReorder } from 'app/features/dashboard-scene/panel-edit/PanelEditNext/tracking';
+import { type QueryEditorInsertionRegistrationV1 } from 'app/features/explore/SignalExplorer/internalInsertionContract';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { QueryEditorRow } from './QueryEditorRow';
@@ -45,6 +46,7 @@ export interface Props {
   onQueryRemoved?: () => void;
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
   onQueryOpenChanged?: (status?: boolean | undefined) => void;
+  onQueryEdited?: () => void;
   onUpdateDatasources?: (datasource: DataSourceRef) => void;
   onQueryReplacedFromLibrary?: () => void;
   queryRowWrapper?: (children: ReactNode, refId: string) => ReactNode;
@@ -58,6 +60,8 @@ export interface Props {
   scrollToRefId?: string;
   /** Called after the row identified by scrollToRefId has been scrolled into view. */
   onScrollIntoView?: () => void;
+  /** Lets the row's query editor tell the host where its cursor is, so text can be inserted there. */
+  getQueryEditorInsertion?: (refId: string) => QueryEditorInsertionRegistrationV1;
 }
 
 export function QueryEditorRows({
@@ -74,6 +78,7 @@ export function QueryEditorRows({
   onQueryRemoved,
   onQueryToggled,
   onQueryOpenChanged,
+  onQueryEdited,
   onUpdateDatasources,
   onQueryReplacedFromLibrary,
   queryRowWrapper,
@@ -85,6 +90,7 @@ export function QueryEditorRows({
   panelRef,
   scrollToRefId,
   onScrollIntoView,
+  getQueryEditorInsertion,
 }: Props) {
   /**
    * Switch the group over to the datasource implied by `newQueries`, if it differs from the
@@ -231,7 +237,7 @@ export function QueryEditorRows({
     update.splice(endIndex, 0, removed);
     onQueriesChange(update);
 
-    trackReorder('query', { silent: true });
+    trackReorder('query', { editor: 'classic', silent: !isPanelEditorApp(app) });
   };
 
   // Scene scope for resolving section-scoped (row/tab) datasource variables, which live on a
@@ -271,6 +277,7 @@ export function QueryEditorRows({
                     onQueryRemoved={onQueryRemoved}
                     onQueryToggled={onQueryToggled}
                     onQueryOpenChanged={onQueryOpenChanged}
+                    onQueryEdited={onQueryEdited}
                     onQueryReplacedFromLibrary={onQueryReplacedFromLibrary}
                     queries={queries}
                     app={app}
@@ -284,6 +291,7 @@ export function QueryEditorRows({
                     isOpen={isOpen}
                     scrollIntoView={scrollToRefId !== undefined && query.refId === scrollToRefId}
                     onScrollIntoView={onScrollIntoView}
+                    queryEditorInsertion={getQueryEditorInsertion?.(query.refId)}
                   />
                 );
 

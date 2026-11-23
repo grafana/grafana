@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
-import { Fragment, useCallback, useRef } from 'react';
+import { Fragment, type RefObject, useCallback } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -13,11 +13,13 @@ import { Menu } from '../../../Menu/Menu';
 import { type ColumnOption } from '../menuOptions';
 
 interface HeaderCellMenuProps {
+  buttonRef: RefObject<HTMLButtonElement | null>;
   groups: ColumnOption[][];
   onAddToAssistant?: () => void;
   displayName: string;
   /** Whether this column currently has an active filter — swaps the menu item's label to reflect it. */
   hasActiveFilter?: boolean;
+  isFilterOpen?: boolean;
   /** Opens the column's filter popup, anchored to the passed element. */
   onOpenFilter: (anchor: HTMLButtonElement | null) => void;
   onHideColumn?: () => void;
@@ -33,21 +35,23 @@ interface HeaderCellMenuProps {
  * by `HeaderCell`, which also opens it from the persistent filter icon.
  */
 export function HeaderCellMenu({
+  buttonRef,
   displayName,
   groups,
   hasActiveFilter,
+  isFilterOpen,
   onOpenFilter,
   onHideColumn,
   canHideColumn,
   onOpenColumnPanel,
   onAddToAssistant,
 }: HeaderCellMenuProps) {
-  // `Dropdown` overwrites its child's ref with its own floating-ui reference, so we can't hold a ref
-  // on the button directly. We reach it through the wrapper instead, so the popup can anchor to it.
-  const wrapperRef = useRef<HTMLDivElement>(null);
   const styles = useStyles2(getStyles);
 
-  const menuLabel = t('grafana-ui.table.column-menu-label', 'Column options for {{name}}', { name: displayName });
+  const menuLabel = t('grafana-ui.table.column-menu-label', 'Column options for {{name}}', {
+    name: displayName,
+    interpolation: { escapeValue: false },
+  });
 
   const overlay = useCallback(
     () => (
@@ -68,7 +72,7 @@ export function HeaderCellMenu({
                       }
                       icon="filter"
                       testId={selectors.components.Panels.Visualization.TableNG.headerColumnMenu.filterItem}
-                      onClick={() => onOpenFilter(wrapperRef.current?.querySelector('button') ?? null)}
+                      onClick={() => onOpenFilter(buttonRef.current)}
                     />
                   );
                 case 'hide':
@@ -107,22 +111,29 @@ export function HeaderCellMenu({
         ))}
       </Menu>
     ),
-    [groups, hasActiveFilter, menuLabel, onOpenFilter, onHideColumn, canHideColumn, onOpenColumnPanel, onAddToAssistant]
+    [
+      groups,
+      hasActiveFilter,
+      menuLabel,
+      buttonRef,
+      onOpenFilter,
+      onHideColumn,
+      canHideColumn,
+      onOpenColumnPanel,
+      onAddToAssistant,
+    ]
   );
 
   return (
     // The IconButton owns keyboard interaction. This wrapper only keeps its pointer events from
     // reaching react-data-grid's header sort handler.
     // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-    <div
-      ref={wrapperRef}
-      className={styles.wrapper}
-      onClick={(ev) => ev.stopPropagation()}
-      onMouseDown={(ev) => ev.stopPropagation()}
-    >
+    <div className={styles.wrapper} onClick={(ev) => ev.stopPropagation()} onMouseDown={(ev) => ev.stopPropagation()}>
       <Dropdown overlay={overlay} placement="bottom-end">
         <IconButton
+          ref={buttonRef}
           className={styles.button}
+          data-filter-open={isFilterOpen || undefined}
           name="ellipsis-v"
           size="sm"
           aria-label={menuLabel}
@@ -156,7 +167,11 @@ const getStyles = memoize((theme: GrafanaTheme2) => ({
     // Scoped to `.table-ng-header-cell` (HeaderCell's own root), not bare `.rdg-cell`: in a nested
     // table, a column's header cell also sits inside the outer grid's `.rdg-cell`, so `:hover` on
     // bare `.rdg-cell` would reveal every column's menu in the nested table at once.
-    '.table-ng-header-cell:hover &, &:focus-visible, &[aria-expanded="true"]': {
+    '.table-ng-header-cell:hover &, &:focus-visible, &[aria-expanded="true"], &[data-filter-open="true"]': {
+      opacity: 1,
+    },
+    '&[data-filter-open="true"]:before': {
+      backgroundColor: theme.colors.action.hover,
       opacity: 1,
     },
   }),

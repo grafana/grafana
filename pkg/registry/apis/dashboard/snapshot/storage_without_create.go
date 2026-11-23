@@ -252,7 +252,7 @@ func deleteSnapshotFromExternalHost(ctx context.Context, snap *dashv0.Snapshot, 
 	return deleteURL, deleteExternalSnapshotLegacy(deleteURL)
 }
 
-// stripSensitiveFields returns a copy of the Snapshot with deleteKey and dashboard removed from the spec.
+// stripSensitiveFields returns a copy without delete credentials or write-only dashboard input.
 // It fails closed: a non-Snapshot object (e.g. served by a future default version) returns an error
 // rather than leaking the original object with its sensitive fields intact.
 func stripSensitiveFields(obj runtime.Object) (*dashv0.Snapshot, error) {
@@ -263,12 +263,12 @@ func stripSensitiveFields(obj runtime.Object) (*dashv0.Snapshot, error) {
 	out := snap.DeepCopy()
 	out.Spec.DeleteKey = nil
 	out.Spec.ExternalDeleteUrl = nil
-	out.Spec.Dashboard = nil
+	redactDashboardInput(out)
 	return out, nil
 }
 
-// stripSensitiveFieldsFromList returns a copy of the SnapshotList with deleteKey and dashboard
-// removed from each item's spec. The dashboard payload can be large and is not needed when listing.
+// stripSensitiveFieldsFromList removes delete credentials and write-only dashboard input.
+// The dashboard payload can be large and is not needed when listing.
 // It fails closed: a non-SnapshotList object (e.g. served by a future default version) returns an
 // error rather than leaking the original list with its sensitive fields intact.
 func stripSensitiveFieldsFromList(obj runtime.Object) (*dashv0.SnapshotList, error) {
@@ -280,7 +280,7 @@ func stripSensitiveFieldsFromList(obj runtime.Object) (*dashv0.SnapshotList, err
 	for i := range out.Items {
 		out.Items[i].Spec.DeleteKey = nil
 		out.Items[i].Spec.ExternalDeleteUrl = nil
-		out.Items[i].Spec.Dashboard = nil
+		redactDashboardInput(&out.Items[i])
 	}
 	return out, nil
 }

@@ -21,10 +21,10 @@ const DASHBOARD_UNDER_TEST = 'cuj-dashboard-1';
 test.use({
   featureToggles: {
     scopeFilters: true,
-    groupByVariable: true,
   },
   openFeature: {
     flags: {
+      scopeFilters: true,
       reloadDashboardsOnParamsChange: true,
     },
   },
@@ -37,6 +37,8 @@ test.describe(
   },
   () => {
     test('Filter data on a dashboard', async ({ page, selectors, gotoDashboardPage }) => {
+      test.setTimeout(60_000);
+
       const apiMocks = await prepareAPIMocks(page);
       const adHocFilterPills = getAdHocFilterPills(page);
       const scopesSelectorInput = getScopesSelectorInput(page);

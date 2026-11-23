@@ -10,7 +10,7 @@ import { type PageIdentity } from './types';
  */
 export function classifyPage(pathname: string, search: string): PageIdentity | null {
   const normalized = pathname.length > 1 && pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
-  const [, first, second] = normalized.split('/');
+  const [, first, second, third, fourth, fifth] = normalized.split('/');
 
   if (first === 'd' && second) {
     return { kind: 'dashboard', uid: second, pathname: normalized };
@@ -21,9 +21,27 @@ export function classifyPage(pathname: string, search: string): PageIdentity | n
     return session ? { kind: 'explore', session, pathname: normalized } : null;
   }
 
-  // A Page before the generic app rule; the list at ASSISTANT_PAGES_PATH itself stays an app page.
-  if (normalized.startsWith(`${ASSISTANT_PAGES_PATH}/`)) {
-    return { kind: 'page', pathname: normalized };
+  // Individual Pages are their own kind. The list at ASSISTANT_PAGES_PATH is a browse page (an "App" row for it
+  // would sit oddly above the "Page" rows for what it lists), and `new/…` is the create flow: the Page gets its
+  // row once it exists at its own id.
+  if (normalized === ASSISTANT_PAGES_PATH || normalized.startsWith(`${ASSISTANT_PAGES_PATH}/`)) {
+    const [pageId] = normalized.slice(ASSISTANT_PAGES_PATH.length + 1).split('/');
+    return pageId && pageId !== 'new' ? { kind: 'page', pathname: normalized } : null;
+  }
+
+  // Only the folder page itself: its sub-pages (library panels, variables, ...) are not folders to come back to.
+  if (first === 'dashboards' && second === 'f' && third && !fifth && !FOLDER_SUBPAGES.includes(fourth)) {
+    return { kind: 'folder', uid: third, pathname: normalized };
+  }
+
+  // `/notebooks/<uid>[/<slug>]`: `new` is the create flow (it becomes `/notebooks/<uid>` once saved), and
+  // `/notebooks/<uid>/render` is the chromeless export route.
+  if (first === 'notebooks' && second && second !== 'new' && !fourth && third !== 'render') {
+    return { kind: 'notebook', uid: second, pathname: normalized };
+  }
+
+  if (first === 'playlists' && (second === 'edit' || second === 'play') && third && !fourth) {
+    return { kind: 'playlist', uid: third, pathname: normalized };
   }
 
   if (first === 'a' && second) {
@@ -36,6 +54,9 @@ export function classifyPage(pathname: string, search: string): PageIdentity | n
 
   return null;
 }
+
+/** `/dashboards/f/<uid>/variables` has the shape of `/dashboards/f/<uid>/<slug>`. */
+const FOLDER_SUBPAGES = ['variables'];
 
 /**
  * Id of the left pane in Explore's v1 URL (`panes` is a JSON object keyed by pane id, left pane first).
@@ -83,6 +104,10 @@ export function pageKey(page: PageIdentity): string {
       return `dashboard:${page.uid}`;
     case 'explore':
       return `explore:${page.session}`;
+    case 'folder':
+    case 'notebook':
+    case 'playlist':
+      return `${page.kind}:${page.uid}`;
     case 'page':
     case 'alerting':
     case 'app':

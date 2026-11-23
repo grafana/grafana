@@ -95,7 +95,18 @@ function panel(): PanelKind {
 
 /** The heading button is the card's only control, and is what actually selects a notebook. */
 function selectNotebook(title: string) {
-  return screen.getByRole('button', { name: title });
+  return screen.getByRole('radio', { name: title });
+}
+
+function isNotebookRadio(el: Element | null) {
+  return el?.getAttribute('name') === 'notebook-picker';
+}
+
+/** Tabs forward until focus lands in the notebook list, so the test does not depend on what precedes it. */
+async function tabIntoNotebooks(user: ReturnType<typeof render>['user']) {
+  for (let i = 0; i < 30 && !isNotebookRadio(document.activeElement); i++) {
+    await user.tab();
+  }
 }
 
 /**
@@ -138,8 +149,8 @@ function renderModal(
  * Named by its own label plus its description, which grafana-ui's Checkbox puts inside the same
  * label element — so the name is matched from the start rather than in full.
  */
-function lockCheckbox(range = '') {
-  return screen.getByRole('checkbox', { name: new RegExp(`^Lock to ${range}`) });
+function lockCheckbox() {
+  return screen.getByRole('checkbox', { name: /^Lock time range/ });
 }
 
 describe('AddPanelToNotebookModalBody', () => {
@@ -195,14 +206,14 @@ describe('AddPanelToNotebookModalBody', () => {
   });
 
   describe('the notebook cards', () => {
-    // Card offers a radio alongside the heading button, but it is inert and cannot be grouped with the
-    // others - hiding it left every card with a second tab stop and nothing to see at it.
-    it('offer one control each, not a heading button and a radio', async () => {
+    // Card's own heading button would make every card a tab stop of its own.
+    it('offer one control each, a radio in a single group', async () => {
       const { user } = renderModal();
       await chooseExisting(user);
 
-      expect(await screen.findByRole('button', { name: 'Q2 latency regression' })).toBeInTheDocument();
-      expect(screen.queryAllByRole('radio', { name: /latency|checkout/i })).toHaveLength(0);
+      const group = await screen.findByRole('radiogroup', { name: 'Notebooks' });
+      expect(within(group).getAllByRole('radio')).toHaveLength(2);
+      expect(within(group).queryAllByRole('button')).toHaveLength(0);
     });
 
     // The outline says which card is chosen to anyone who can see it; this is what says so to anyone
@@ -210,10 +221,79 @@ describe('AddPanelToNotebookModalBody', () => {
     it('say which one is chosen', async () => {
       const { user } = renderModal();
       await chooseExisting(user);
-      await user.click(await screen.findByRole('button', { name: 'Q2 latency regression' }));
+      await user.click(await screen.findByRole('radio', { name: 'Q2 latency regression' }));
 
-      expect(screen.getByRole('button', { name: 'Q2 latency regression (selected)' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Checkout error spike' })).toBeInTheDocument();
+      expect(selectNotebook('Q2 latency regression')).toBeChecked();
+      expect(selectNotebook('Checkout error spike')).not.toBeChecked();
+    });
+
+    describe('from the keyboard', () => {
+      it('enter the list on the first notebook when none is chosen', async () => {
+        const { user } = renderModal();
+        await chooseExisting(user);
+
+        await tabIntoNotebooks(user);
+
+        expect(selectNotebook('Q2 latency regression')).toHaveFocus();
+      });
+
+      it('enter the list on the chosen notebook', async () => {
+        const { user } = renderModal();
+        await chooseExisting(user);
+        await user.click(selectNotebook('Checkout error spike'));
+        await user.tab({ shift: true });
+
+        await tabIntoNotebooks(user);
+
+        expect(selectNotebook('Checkout error spike')).toHaveFocus();
+      });
+
+      it('choose with the arrow keys', async () => {
+        const { user } = renderModal();
+        await chooseExisting(user);
+        await user.click(selectNotebook('Q2 latency regression'));
+
+        await user.keyboard('{ArrowDown}');
+
+        expect(selectNotebook('Checkout error spike')).toHaveFocus();
+        expect(selectNotebook('Checkout error spike')).toBeChecked();
+        expect(selectNotebook('Q2 latency regression')).not.toBeChecked();
+      });
+
+      // The whole point: picking a notebook near the top must not mean tabbing past the rest.
+      it('leave the list with a single tab', async () => {
+        const { user } = renderModal();
+        await chooseExisting(user);
+        await user.click(selectNotebook('Q2 latency regression'));
+
+        await user.tab();
+
+        expect(isNotebookRadio(document.activeElement)).toBe(false);
+      });
+
+      // Arrows choose, so Enter is free to do what it does for any radio in a form: press the form's
+      // submit button. Asserted through the form owner rather than by pressing Enter, because
+      // user-event only finds a submit button inside the <form>, and this one is in the modal footer.
+      it('submit with Enter on the chosen notebook', async () => {
+        const { user } = renderModal();
+        await chooseExisting(user);
+        await user.click(selectNotebook('Checkout error spike'));
+
+        const radio = screen.getByRole<HTMLInputElement>('radio', { name: 'Checkout error spike' });
+        const submit = screen.getByRole<HTMLButtonElement>('button', { name: 'Add to notebook' });
+        expect(submit).toHaveAttribute('type', 'submit');
+        expect(submit).toBeEnabled();
+        expect(radio.form).not.toBeNull();
+        expect(radio.form).toBe(submit.form);
+      });
+    });
+
+    // The name is the title alone, so the rest of the card has to arrive as the description.
+    it('describe each notebook by its author and age', async () => {
+      const { user } = renderModal();
+      await chooseExisting(user);
+
+      expect(selectNotebook('Q2 latency regression')).toHaveAccessibleDescription(/Updated .* By Marcus Chen/);
     });
   });
 
@@ -243,7 +323,9 @@ describe('AddPanelToNotebookModalBody', () => {
           [{ kind: 'panel', panel: panel(), isLibraryPanel: false }],
           'dashboard_panel',
           'user',
-          false
+          false,
+          false,
+          undefined
         )
       );
       // Built on submit, so a panel edited while the modal was open is the one that lands.
@@ -266,7 +348,9 @@ describe('AddPanelToNotebookModalBody', () => {
           [{ kind: 'panel', panel: panel(), isLibraryPanel: true }],
           'dashboard_panel',
           'user',
-          false
+          false,
+          false,
+          undefined
         )
       );
     });
@@ -465,7 +549,9 @@ describe('AddPanelToNotebookModalBody', () => {
           [{ kind: 'panel', panel: panel(), isLibraryPanel: true }],
           'dashboard_panel',
           'user',
-          false
+          false,
+          false,
+          undefined
         )
       );
     });
@@ -483,7 +569,9 @@ describe('AddPanelToNotebookModalBody', () => {
           [{ kind: 'panel', panel: panel(), isLibraryPanel: false }],
           'dashboard_panel',
           'user',
-          false
+          false,
+          false,
+          undefined
         )
       );
       expect(onDismiss).toHaveBeenCalled();
@@ -529,13 +617,13 @@ describe('AddPanelToNotebookModalBody', () => {
     it('starts locked for an absolute capture, naming the window it will keep', () => {
       renderModal(undefined, false, ABSOLUTE_CAPTURE);
 
-      expect(lockCheckbox('2026-10-05 08:00:00 to 2026-10-05 09:30:00')).toBeChecked();
+      expect(lockCheckbox()).toBeChecked();
     });
 
     it('starts unlocked for a relative capture, so the panel follows the notebook range', () => {
       renderModal(undefined, false, RELATIVE_CAPTURE);
 
-      expect(lockCheckbox('Last 6 hours')).not.toBeChecked();
+      expect(lockCheckbox()).not.toBeChecked();
     });
 
     it('locks the added panel to the captured window', async () => {
@@ -551,7 +639,9 @@ describe('AddPanelToNotebookModalBody', () => {
           [{ kind: 'panel', panel: lockedPanel(), isLibraryPanel: false }],
           'dashboard_panel',
           'user',
-          true
+          true,
+          false,
+          undefined
         )
       );
     });
@@ -570,7 +660,9 @@ describe('AddPanelToNotebookModalBody', () => {
           [{ kind: 'panel', panel: panel(), isLibraryPanel: false }],
           'dashboard_panel',
           'user',
-          false
+          false,
+          false,
+          undefined
         )
       );
     });
@@ -600,6 +692,102 @@ describe('AddPanelToNotebookModalBody', () => {
       await chooseExisting(user);
 
       expect(lockCheckbox()).not.toBeChecked();
+    });
+
+    describe('converting a relative range to an absolute one', () => {
+      const convertCheckbox = () => screen.getByRole('checkbox', { name: /^Convert to an absolute time range/ });
+      const queryConvertCheckbox = () => screen.queryByRole('checkbox', { name: /^Convert to an absolute/ });
+
+      it('is offered below the lock, and usable once the lock is on', async () => {
+        const { user } = renderModal(undefined, false, RELATIVE_CAPTURE);
+
+        expect(convertCheckbox()).not.toBeChecked();
+        expect(convertCheckbox()).toBeDisabled();
+        expect(
+          lockCheckbox().compareDocumentPosition(convertCheckbox()) & Node.DOCUMENT_POSITION_FOLLOWING
+        ).toBeTruthy();
+
+        await user.click(lockCheckbox());
+
+        expect(convertCheckbox()).toBeEnabled();
+      });
+
+      it('is not offered for an absolute capture', () => {
+        renderModal(undefined, false, ABSOLUTE_CAPTURE);
+
+        expect(queryConvertCheckbox()).not.toBeInTheDocument();
+      });
+
+      it('is disabled again when the lock is turned off', async () => {
+        const { user } = renderModal(undefined, false, RELATIVE_CAPTURE);
+        await user.click(lockCheckbox());
+        await user.click(lockCheckbox());
+
+        expect(convertCheckbox()).toBeDisabled();
+      });
+
+      it('locks to the instants the range covers, not to the relative window', async () => {
+        const { user } = renderModal(undefined, false, RELATIVE_CAPTURE);
+        await user.click(lockCheckbox());
+        await user.click(convertCheckbox());
+
+        await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+        await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+        await waitFor(() => expect(createWithContent).toHaveBeenCalled());
+        const [, [created]] = createWithContent.mock.calls[0];
+        if (created.kind !== 'panel' || created.panel.kind !== 'Panel') {
+          throw new Error('expected a panel cell');
+        }
+        const { timeFrom, timeTo } = created.panel.spec.data.spec.queryOptions;
+        const iso = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
+        expect(timeFrom).toMatch(iso);
+        expect(timeTo).toMatch(iso);
+        // Six hours, give or take the milliseconds between resolving the two ends.
+        expect(Math.abs(Date.parse(timeTo!) - Date.parse(timeFrom!) - 6 * 3600 * 1000)).toBeLessThan(1000);
+      });
+
+      it('does not carry the choice into an add that ends up unlocked', async () => {
+        const { user } = renderModal(undefined, false, RELATIVE_CAPTURE);
+        await user.click(lockCheckbox());
+        await user.click(convertCheckbox());
+        await user.click(lockCheckbox());
+
+        await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+        await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+        await waitFor(() => expect(createWithContent).toHaveBeenCalled());
+        expect(createWithContent.mock.calls[0][1]).toEqual([{ kind: 'panel', panel: panel(), isLibraryPanel: false }]);
+      });
+    });
+  });
+
+  describe('the text block', () => {
+    const noteBox = () => screen.getByRole('textbox', { name: /^Text above the panel/ });
+
+    it('is added as a markdown cell before the panel', async () => {
+      const { user } = renderModal();
+      await user.type(noteBox(), '  Latency spiked after the deploy  ');
+      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+      await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+      await waitFor(() => expect(createWithContent).toHaveBeenCalled());
+      expect(createWithContent.mock.calls[0][1]).toEqual([
+        { kind: 'markdown', text: 'Latency spiked after the deploy' },
+        { kind: 'panel', panel: panel(), isLibraryPanel: false },
+      ]);
+      expect(createWithContent.mock.calls[0][4]).toBe(false);
+      expect(createWithContent.mock.calls[0][5]).toBe(true);
+    });
+
+    it('adds nothing when left blank', async () => {
+      const { user } = renderModal();
+      await user.type(noteBox(), '   ');
+      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+      await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+      await waitFor(() => expect(createWithContent).toHaveBeenCalled());
+      expect(createWithContent.mock.calls[0][1]).toEqual([{ kind: 'panel', panel: panel(), isLibraryPanel: false }]);
     });
   });
 
@@ -653,7 +841,7 @@ describe('AddPanelToNotebookModalBody', () => {
       const { user } = renderModal();
       await chooseExisting(user);
 
-      const card = screen.getByRole('button', { name: 'Q2 latency regression' });
+      const card = selectNotebook('Q2 latency regression');
       const scroller = card.closest('[tabindex="0"]');
       expect(scroller).not.toBeNull();
 
@@ -769,7 +957,7 @@ describe('AddPanelToNotebookModalBody', () => {
 
       expect(screen.queryByRole('radio', { name: 'New notebook' })).not.toBeInTheDocument();
       expect(screen.queryByRole('radio', { name: 'Existing notebook' })).not.toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Q2 latency regression' })).toBeInTheDocument();
+      expect(selectNotebook('Q2 latency regression')).toBeInTheDocument();
     });
 
     it('drops it the other way for a user who can only create', () => {
@@ -824,6 +1012,7 @@ describe('AddPanelToNotebookModalBody', () => {
             target: 'existing',
             reason: 'conflict',
             lockTimeRange: false,
+            hasText: false,
             schema_version: 1,
           },
         ])
@@ -831,6 +1020,17 @@ describe('AddPanelToNotebookModalBody', () => {
     });
 
     // Nothing was created, so there is no uid to send.
+    it('reports that text was typed when the add fails', async () => {
+      createWithContent.mockRejectedValue(new Error('notebook is too large'));
+      const { user } = renderModal();
+
+      await user.type(screen.getByRole('textbox', { name: /^Text above the panel/ }), 'Latency spiked');
+      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+      await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+      await waitFor(() => expect(failures).toEqual([expect.objectContaining({ hasText: true })]));
+    });
+
     it('reports a failed create with no notebook uid', async () => {
       createWithContent.mockRejectedValue(new Error('notebook is too large'));
       const { user } = renderModal();
@@ -846,6 +1046,7 @@ describe('AddPanelToNotebookModalBody', () => {
             target: 'new',
             reason: 'write_failed',
             lockTimeRange: false,
+            hasText: false,
             schema_version: 1,
           },
         ])
@@ -870,6 +1071,7 @@ describe('AddPanelToNotebookModalBody', () => {
             target: 'new',
             reason: 'build_failed',
             lockTimeRange: false,
+            hasText: false,
             schema_version: 1,
           },
         ])
@@ -930,7 +1132,9 @@ describe('AddPanelToNotebookModalBody', () => {
           ],
           'plugin',
           'assistant',
-          false
+          false,
+          false,
+          undefined
         )
       );
       expect(mockCreateSuccessNotification).toHaveBeenCalledWith(
@@ -971,7 +1175,7 @@ describe('AddPanelToNotebookModalBody', () => {
       const { user } = renderCells([panelCell('pinned', ABSOLUTE_CAPTURE), panelCell('live', RELATIVE_CAPTURE)]);
 
       // One lockable panel, so the checkbox names its window.
-      const lock = screen.getByRole('checkbox', { name: /^Lock to / });
+      const lock = screen.getByRole('checkbox', { name: /^Lock time range/ });
       expect(lock).toBeChecked();
       await chooseExisting(user);
       await user.click(selectNotebook('Checkout error spike'));

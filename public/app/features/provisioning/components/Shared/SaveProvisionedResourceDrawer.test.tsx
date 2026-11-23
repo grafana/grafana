@@ -100,8 +100,6 @@ type DrawerOverrides = {
   resource?: SaveProvisionedResourceDrawerProps['resource'];
   title?: string;
   action?: 'update' | 'delete';
-  onWriteSuccess?: () => void;
-  onBranchSuccess?: SaveProvisionedResourceDrawerProps['onBranchSuccess'];
 };
 
 function setup(props: DrawerOverrides = {}) {
@@ -110,6 +108,7 @@ function setup(props: DrawerOverrides = {}) {
       resource={mockPlaylist}
       title={mockPlaylist.spec?.title ?? ''}
       action="update"
+      redirectUrl="/redirect-target"
       onDismiss={jest.fn()}
       {...props}
     />
@@ -136,11 +135,11 @@ describe('SaveProvisionedResourceDrawer', () => {
       expect(screen.getByRole('textbox', { name: /comment/i })).toBeInTheDocument();
     });
 
-    it('commits the resource body for the write workflow and navigates to the list', async () => {
+    it('commits the resource body for the write workflow and navigates to the redirect URL', async () => {
       server.use(
         http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
           capturedRequest = { url: new URL(request.url), body: await request.json() };
-          return HttpResponse.json({ ref: 'main', path: 'playlists/test-playlist.json', resource: { upsert: {} } });
+          return HttpResponse.json({ path: 'playlists/test-playlist.json', resource: { upsert: {} } });
         })
       );
 
@@ -160,26 +159,10 @@ describe('SaveProvisionedResourceDrawer', () => {
         metadata: { name: 'playlist-uid' },
         spec: { title: 'Test Playlist', interval: '5m', items: [{ type: 'dashboard_by_uid', value: 'abc' }] },
       });
-      // Default post-commit navigation goes to the kind's list route.
-      await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/playlists'));
+      await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/redirect-target'));
     });
 
-    it('runs a caller-supplied onWriteSuccess instead of the default navigation', async () => {
-      const onWriteSuccess = jest.fn();
-      server.use(
-        http.put(`${BASE}/repositories/:name/files/*`, () =>
-          HttpResponse.json({ ref: 'main', path: 'playlists/test-playlist.json', resource: { upsert: {} } })
-        )
-      );
-
-      const { user } = setup({ onWriteSuccess });
-      await user.click(await screen.findByRole('button', { name: /^save$/i }));
-
-      await waitFor(() => expect(onWriteSuccess).toHaveBeenCalled());
-    });
-
-    it('sends the ref and runs onBranchSuccess for the branch workflow', async () => {
-      const onBranchSuccess = jest.fn();
+    it('sends the ref and navigates to the redirect URL with the pull request params for the branch workflow', async () => {
       // workflows[0] === 'branch' makes the branch (PR) workflow the default.
       mockRepoView({ repository: { ...mockRepository, workflows: ['branch'] } });
       server.use(
@@ -194,12 +177,18 @@ describe('SaveProvisionedResourceDrawer', () => {
         })
       );
 
-      const { user } = setup({ onBranchSuccess });
+      const { user } = setup();
       await user.click(await screen.findByRole('button', { name: /^save$/i }));
 
       await waitFor(() => expect(capturedRequest).not.toBeNull());
       expect(requireCapturedRequest(capturedRequest).url.searchParams.get('ref')).toBeTruthy();
-      await waitFor(() => expect(onBranchSuccess).toHaveBeenCalled());
+      await waitFor(() =>
+        expect(mockNavigate).toHaveBeenCalledWith(
+          expect.stringMatching(
+            /^\/redirect-target\?new_pull_request_url=https%3A%2F%2Fexample\.com%2Fpr%2F1&repo_type=git&action=update/
+          )
+        )
+      );
     });
 
     it('shows an error alert when the commit fails', async () => {
@@ -256,6 +245,7 @@ describe('SaveProvisionedResourceDrawer', () => {
           title={newPlaylist.spec?.title ?? ''}
           action="create"
           repositoryName="test-repo"
+          redirectUrl="/redirect-target"
           onDismiss={jest.fn()}
         />
       );
@@ -286,6 +276,7 @@ describe('SaveProvisionedResourceDrawer', () => {
           title={newPlaylist.spec?.title ?? ''}
           action="create"
           repositoryName="test-repo"
+          redirectUrl="/redirect-target"
           onDismiss={jest.fn()}
         />
       );

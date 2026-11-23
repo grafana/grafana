@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -158,7 +159,10 @@ func (s *Service) getPrivateKey(ctx context.Context, keyID string) (crypto.Signe
 
 	signer, err := s.decodePrivateKey(ctx, key.PrivateKey)
 	if err != nil {
-		return nil, err
+		// Usually this means the key was encrypted with a different secret_key (for example, the
+		// secret changed or the database was copied from another instance). Restore the original
+		// secret_key, or delete the row from the signing_key table so the key is regenerated.
+		return nil, fmt.Errorf("failed to decode signing key %q (was it encrypted with a different secret_key?): %w", keyID, err)
 	}
 
 	s.localCache.Set(keyID, signer, privateKeyTTL)

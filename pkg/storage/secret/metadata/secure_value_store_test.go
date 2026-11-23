@@ -81,7 +81,7 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 		require.Equal(t, "test description", createdSecureValue.Spec.Description)
 		require.Equal(t, keeperName, createdSecureValue.Status.Keeper)
 
-		require.NoError(t, secureValueStorage.SetVersionToActive(ctx, xkube.Namespace(createdSecureValue.Namespace), createdSecureValue.Name, createdSecureValue.Status.Version))
+		require.NoError(t, secureValueStorage.SetVersionToActive(ctx, xkube.Namespace(createdSecureValue.Namespace), createdSecureValue.Name, createdSecureValue.Status.Version, 0))
 
 		// Read the secure value back
 		readSecureValue, err := secureValueStorage.Read(ctx, xkube.Namespace("default"), "sv-test", contracts.ReadOpts{})
@@ -131,7 +131,7 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, createdSecureValue)
 
-		require.NoError(t, secureValueStorage.SetVersionToActive(ctx, xkube.Namespace(createdSecureValue.Namespace), createdSecureValue.Name, createdSecureValue.Status.Version))
+		require.NoError(t, secureValueStorage.SetVersionToActive(ctx, xkube.Namespace(createdSecureValue.Namespace), createdSecureValue.Name, createdSecureValue.Status.Version, 0))
 
 		// Read the secure value to verify it exists
 		readSecureValue, err := secureValueStorage.Read(ctx, xkube.Namespace("default"), "sv-test-2", contracts.ReadOpts{})
@@ -148,6 +148,52 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 		require.Error(t, err)
 		require.Equal(t, contracts.ErrSecureValueNotFound, err)
 	})
+}
+
+func Test_KVSecureValueMetadataStorage_CreateVersionOrdering(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name string
+		opts []func(*testutils.SetupConfig)
+	}{
+		{name: "sql", opts: nil},
+		{name: "kv", opts: []func(*testutils.SetupConfig){testutils.WithKVStorage()}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			sut := testutils.Setup(t, tc.opts...)
+
+			const namespace = "default"
+			const name = "sv-versions"
+
+			const numVersions = 11
+			gotVersions := make([]int64, 0, numVersions)
+			seen := make(map[int64]struct{}, numVersions)
+
+			for range numVersions {
+				sv := &secretv1beta1.SecureValue{
+					Spec: secretv1beta1.SecureValueSpec{Description: "test description"},
+				}
+				sv.Name = name
+				sv.Namespace = namespace
+
+				created, err := sut.SecureValueMetadataStorage.Create(t.Context(), contracts.SystemKeeperName, sv, "actor-uid")
+				require.NoError(t, err)
+
+				v := created.Status.Version
+				if _, dup := seen[v]; dup {
+					t.Fatalf("Create returned version %d twice: an existing version was overwritten (data loss). versions so far: %v", v, gotVersions)
+				}
+				seen[v] = struct{}{}
+				gotVersions = append(gotVersions, v)
+			}
+
+			// Versions are unique (checked above) so sorted means strictly increasing
+			require.True(t, slices.IsSorted(gotVersions), "expected monotonically increasing versions: %v", gotVersions)
+		})
+	}
 }
 
 func TestLeaseInactiveSecureValues(t *testing.T) {
@@ -222,7 +268,8 @@ func TestLeaseInactiveSecureValues(t *testing.T) {
 			require.Len(t, values, 1)
 
 			// Pretend something went wrong and increment attempt count
-			_, err = sut.SecureValueMetadataStorage.AddGCAttemptCount(t.Context(), []string{string(values[0].UID)})
+			_, err = sut.SecureValueMetadataStorage.IncGCAttemptCount(t.Context(), []contracts.SecureValueIdentifier{
+				{Namespace: xkube.Namespace(values[0].Namespace), Name: values[0].Name, Version: values[0].Status.Version}})
 			require.NoError(t, err)
 
 			rows, err := sut.Database.QueryContext(t.Context(), "SELECT lease_duration FROM secret_secure_value WHERE guid = ?", values[0].UID)
@@ -310,7 +357,7 @@ func TestLeaseInactiveSecureValues(t *testing.T) {
 		// Reactivate the selected candidate before UPDATE. The claim must use the
 		// current active flag rather than trust the state observed by SELECT.
 		db := &beforeExecDatabase{Database: sut.Database, beforeExec: func(ctx context.Context) {
-			require.NoError(t, sut.SecureValueMetadataStorage.SetVersionToActive(ctx, xkube.Namespace(sv.Namespace), sv.Name, sv.Status.Version))
+			require.NoError(t, sut.SecureValueMetadataStorage.SetVersionToActive(ctx, xkube.Namespace(sv.Namespace), sv.Name, sv.Status.Version, 0))
 		}}
 		storage, err := metadata.ProvideSecureValueMetadataStorage(sut.Clock, db, noop.NewTracerProvider().Tracer("test"), nil)
 		require.NoError(t, err)
@@ -458,13 +505,21 @@ func TestPropertyDelete(t *testing.T) {
 				"create": func(t *rapid.T) {
 					sv := testutils.AnySecureValueGen.Draw(t, "sv")
 					createdSv, err := sut.SecureValueMetadataStorage.Create(t.Context(), contracts.SystemKeeperName, sv.DeepCopy(), "actor-uid")
-					require.NoError(t, err)
+					if err != nil {
+						require.ErrorIs(t, err, contracts.ErrTooManyOwnerReferences)
+						return
+					}
 					i := slices.IndexFunc(secureValues, func(v *secretv1beta1.SecureValue) bool {
 						return v.Namespace == createdSv.Namespace && v.Name == createdSv.Name
 					})
 
+					var observedVersion int64
+					if i != -1 {
+						observedVersion = secureValues[i].Status.Version
+					}
+
 					// Set new version to active since it'll be read later on
-					require.NoError(t, sut.SecureValueMetadataStorage.SetVersionToActive(t.Context(), xkube.Namespace(createdSv.Namespace), createdSv.Name, createdSv.Status.Version))
+					require.NoError(t, sut.SecureValueMetadataStorage.SetVersionToActive(t.Context(), xkube.Namespace(createdSv.Namespace), createdSv.Name, createdSv.Status.Version, observedVersion))
 
 					// Secure value is not in the slice, add it
 					if i == -1 {
@@ -486,9 +541,9 @@ func TestPropertyDelete(t *testing.T) {
 					delete := secureValues[i:]
 
 					// Delete some of the secure values
-					deleteInput := make([]contracts.DeleteInput, 0, len(delete))
+					deleteInput := make([]contracts.SecureValueIdentifier, 0, len(delete))
 					for _, sv := range delete {
-						deleteInput = append(deleteInput, contracts.DeleteInput{
+						deleteInput = append(deleteInput, contracts.SecureValueIdentifier{
 							Namespace: xkube.Namespace(sv.Namespace),
 							Name:      sv.Name,
 							Version:   sv.Status.Version,

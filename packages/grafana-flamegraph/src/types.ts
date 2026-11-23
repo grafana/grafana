@@ -1,3 +1,5 @@
+import { type DisplayValue } from '@grafana/data';
+
 import { type LevelItem } from './FlameGraph/dataTransform';
 
 export type ClickedItemData = {
@@ -42,3 +44,33 @@ export enum ColorSchemeDiff {
 }
 
 export type TextAlign = 'left' | 'right';
+
+// 'name' shows the function without the import path. Independent of TextAlign,
+// so a name-only label can still be left or right aligned.
+export type SymbolLabel = 'full' | 'name';
+
+export interface ProfileTooltipData {
+  percentValue: number;
+  percentSelf: number;
+  unitTitle: string;
+  unitValue: string;
+  unitSelf: string;
+  samples: string;
+}
+
+export interface ProfileTooltipDataOptions {
+  displayValue: DisplayValue;
+  displaySelf: DisplayValue;
+  unitTitle: string;
+  totalTicks: number;
+}
+
+export interface ProfileValueDataOptions {
+  displayValue: DisplayValue;
+  totalTicks: number;
+}
+
+export interface ProfileValueData {
+  unitValue: string;
+  percentage: number;
+}

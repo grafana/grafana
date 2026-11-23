@@ -32,7 +32,6 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
-import { getRulesSourceName } from './datasource';
 import * as environment from './environment';
 import {
   type KnownErrorCodes,
@@ -43,6 +42,7 @@ import {
 import { getMatcherQueryParams } from './matchers';
 import { rulesNav } from './navigation';
 import * as ruleId from './rule-id';
+import { getRulesSourceName } from './rulesSource';
 import { createAbsoluteUrl, createRelativeUrl } from './url';
 
 export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, returnTo?: string): string {
@@ -206,6 +206,24 @@ export function makeEditContactPointLink(name: string, options?: Record<string, 
   return createRelativeUrl(`/alerting/notifications/receivers/${encodeURIComponent(name)}/edit`, options);
 }
 
+/**
+ * Link to edit/view a time interval we have the resource for. k8s resources are addressed by
+ * their `metadata.name` in the path; others (Alertmanager config) by name in the `muteName` query param.
+ */
+export function makeTimeIntervalResourceLink(
+  timeInterval: { name: string; metadata?: { name?: string } },
+  alertmanager: string
+) {
+  const resourceName = timeInterval.metadata?.name;
+  if (!resourceName) {
+    return makeEditTimeIntervalLink(timeInterval.name, { alertmanager });
+  }
+  return createRelativeUrl(`/alerting/routes/mute-timing/${encodeURIComponent(resourceName)}/edit`, { alertmanager });
+}
+
+/**
+ * Link to edit a time interval when only its display name is known. The edit page resolves it by name.
+ */
 export function makeEditTimeIntervalLink(name: string, options?: Record<string, string>) {
   return createRelativeUrl('/alerting/routes/mute-timing/edit', {
     ...options,

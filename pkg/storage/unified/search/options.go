@@ -99,7 +99,9 @@ func NewSearchOptions(
 		bleve, err := NewBleveBackend(BleveOptions{
 			Root:                           root,
 			FileThreshold:                  int64(cfg.IndexFileThreshold), // fewer than X items will use a memory index
-			IndexCacheTTL:                  cfg.IndexCacheTTL,             // How long to keep the index cache in memory
+			IndexCacheTTL:                  cfg.IndexCacheTTL,
+			IndexCacheTTLIdleOnly:          cfg.IndexCacheTTLIdleOnly,
+			GlobalIndexIdleTimeout:         cfg.GlobalSearchIndexIdleTimeout,
 			BuildVersion:                   cfg.BuildVersion,
 			OwnsIndex:                      ownsIndexFn,
 			IndexMinUpdateInterval:         cfg.IndexMinUpdateInterval,
@@ -108,13 +110,12 @@ func NewSearchOptions(
 			DiskCleanupInterval:            cfg.DiskIndexCleanupInterval,
 			DiskCleanupGracePeriod:         cfg.DiskIndexCleanupGracePeriod,
 			DiskCleanupUnopenedGracePeriod: cfg.DiskIndexCleanupUnopenedGracePeriod,
-			PostRankAuthzEnabled:           cfg.SearchPostRankAuthz,
-			EnforceSortCapability:          cfg.SearchEnforceSortCapability,
 			PostRankAuthz: PostRankAuthzConfig{
-				OverFetchFactor: cfg.SearchPostRankAuthzOverFetchFactor,
-				MaxWindow:       cfg.SearchPostRankAuthzMaxWindow,
-				MaxCandidates:   cfg.SearchPostRankAuthzMaxCandidates,
-				FacetSampleSize: cfg.SearchPostRankAuthzFacetSampleSize,
+				OverFetchFactor:     cfg.SearchPostRankAuthzOverFetchFactor,
+				MaxWindow:           cfg.SearchPostRankAuthzMaxWindow,
+				MaxCandidates:       cfg.SearchPostRankAuthzMaxCandidates,
+				FacetSampleSize:     cfg.SearchPostRankAuthzFacetSampleSize,
+				ExactCountThreshold: cfg.SearchPostRankAuthzExactCountThreshold,
 			},
 			// From the garbage collection settings, so trash and storage cannot
 			// disagree about what is expired.
@@ -144,9 +145,9 @@ func NewSearchOptions(
 			IndexMinUpdateInterval:    cfg.IndexMinUpdateInterval,
 			IndexModificationCacheTTL: cfg.IndexModificationCacheTTL,
 			InjectFailuresPercent:     cfg.SearchInjectFailuresPercent,
-			PostRankAuthzEnabled:      cfg.SearchPostRankAuthz,
 			GlobalIndexEnabled:        cfg.GlobalSearchIndexEnabled,
 			GlobalIndexStartupBuild:   cfg.GlobalSearchIndexStartupBuild,
+			GlobalIndexIdleTimeout:    cfg.GlobalSearchIndexIdleTimeout,
 
 			IndexSnapshotEnabled:            cfg.IndexSnapshotEnabled,
 			IndexSnapshotThreshold:          cfg.IndexSnapshotThreshold,
@@ -160,12 +161,14 @@ func NewSearchOptions(
 			EmbeddingConfig:                 embeddingConfig,
 			HybridSearchConfig:              hybridSearchConfig,
 			GlobalSearchCoverage:            resource.NewGlobalSearchCoverageRegistry(resource.AppManifests()),
+			AllowedReadServices:             cfg.VectorAllowedReadServices,
 		}, nil
 	}
 	return resource.SearchOptions{
-		EmbeddingConfig:    embeddingConfig,
-		SearchFields:       searchFields,
-		HybridSearchConfig: hybridSearchConfig,
+		EmbeddingConfig:     embeddingConfig,
+		SearchFields:        searchFields,
+		HybridSearchConfig:  hybridSearchConfig,
+		AllowedReadServices: cfg.VectorAllowedReadServices,
 		// it is used for search after write and throttles index updates
 		IndexMinUpdateInterval:    cfg.IndexMinUpdateInterval,
 		IndexModificationCacheTTL: cfg.IndexModificationCacheTTL,

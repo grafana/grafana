@@ -107,14 +107,16 @@ func newInternalIdentity(name string, namespace string, orgID int64, opts ...Ide
 		UserUID:        name,
 		AuthID:         name,
 		Login:          name,
-		OrgRole:        RoleAdmin,
+		OrgRole:        types.RoleAdmin,
 		Namespace:      namespace,
 		IsGrafanaAdmin: true,
 		OrgID:          orgID,
 		Permissions: map[int64]map[string][]string{
-			orgID: serviceIdentityPermissions,
+			orgID: cloneServiceIdentityPermissions(),
 		},
 		AccessTokenClaims: &claimsCopy,
+
+		internalIdentityProfile: InternalIdentityProfile(name),
 	}
 
 	for _, opt := range opts {
@@ -198,19 +200,25 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"variables:read",        // ActionVariablesRead
 	"variables:write",       // ActionVariablesWrite
 	"variables:delete",      // ActionVariablesDelete
+	"alert.rules:read",      // ActionAlertingRuleRead — rules API deletion requires read and delete.
 	"alert.rules:delete",    // ActionAlertingRuleDelete — folder cascade delete removes contained alert rules.
 	"playlists:read",        // playlist.ActionPlaylistsRead
 	"playlists:write",       // playlist.ActionPlaylistsWrite
 	"alert.provisioning:write",
 	"alert.provisioning.secrets:read",
-	"notifications.alerting.grafana.app/configs:get",           // accesscontrol.ActionAlertingConfigRead — ExternalAMSyncer reads spec.externalAlertmanagerSync.datasourceUid.
-	"notifications.alerting.grafana.app/configs:update",        // accesscontrol.ActionAlertingConfigUpdate — ExternalAMSyncer creates the Config singleton on first sync.
+	"rules.alerting.grafana.app/configs:delete",         // Config cleanup on org deletion; not granted to human roles.
+	"notifications.alerting.grafana.app/configs:get",    // accesscontrol.ActionAlertingConfigRead — ExternalAMSyncer reads spec.externalAlertmanagerSync.datasourceUid.
+	"notifications.alerting.grafana.app/configs:update", // accesscontrol.ActionAlertingConfigUpdate — ExternalAMSyncer creates the Config singleton on first sync.
 	"notifications.alerting.grafana.app/configs/status:update", // accesscontrol.ActionAlertingConfigStatusUpdate — service-only; humans never write status directly.
 	"alert.notifications.external:read",                        // accesscontrol.ActionAlertingNotificationsExternalRead — the Alertmanager datasource plugin's GET api/v1/alerts route requires this; ExternalAMSyncer fetches the upstream config through it.
-	"users:read",                                               // accesscontrol.ActionUsersRead,
-	"org.users:read",                                           // accesscontrol.ActionOrgUsersRead,
-	"teams:read",                                               // accesscontrol.ActionTeamsRead,
-	"serviceaccounts:read",                                     // serviceaccounts.ActionRead,
+	"rules.alerting.grafana.app/configs:get",                   // accesscontrol.ActionAlertingRulesConfigRead — ExternalRulerSyncer reads spec.externalRulerSync.datasourceUid.
+	"rules.alerting.grafana.app/configs:update",                // accesscontrol.ActionAlertingRulesConfigUpdate — ExternalRulerSyncer creates the Config singleton on first sync.
+	"rules.alerting.grafana.app/configs/status:update",         // accesscontrol.ActionAlertingRulesConfigStatusUpdate — service-only; humans never write status directly.
+	"users:read",           // accesscontrol.ActionUsersRead,
+	"org.users:read",       // accesscontrol.ActionOrgUsersRead,
+	"teams:read",           // accesscontrol.ActionTeamsRead,
+	"serviceaccounts:read", // serviceaccounts.ActionRead,
+	"plugins.app:access",   // pluginaccesscontrol.ActionAppAccess
 )
 
 // Note: Any wildcard-prefixed permissions here must be whitelisted in authlib: https://github.com/grafana/authlib/blob/main/authz/service_permissions.go
@@ -218,6 +226,9 @@ var serviceIdentityTokenPermissions = []string{
 	"folder.grafana.app:*",
 	"dashboard.grafana.app:*",
 	"playlist.grafana.app:*",
+	"dashboardtemplates.grafana.app:*",
+	"reporting.grafana.app/reports:*",
+	"reporting.grafana.app/reportsettings:*",
 	"secret.grafana.app:*",
 	"query.grafana.app:*",
 	"queries.grafana.app:*", // saved queries
@@ -230,8 +241,12 @@ var serviceIdentityTokenPermissions = []string{
 	"historian.alerting.grafana.app:*",
 	"notifications.alerting.grafana.app:*",
 	"rules.alerting.grafana.app:*",
+	"alertingassistant.grafana.app/alert-rule-reviews:get",
+	"alertingassistant.grafana.app/alert-rule-reviews:create",
+	"alertingassistant.grafana.app/alert-rule-reviews:update",
 	"advisor.grafana.app:*",
 	"annotation.grafana.app:*",
+	"banners.grafana.app:*",
 	"setting.grafana.app:*",
 
 	// allow access to all datasource types
@@ -265,7 +280,15 @@ func IsServiceIdentity(ctx context.Context) bool {
 	if !ok {
 		return false
 	}
-	t, uid, err := types.ParseTypeID(ident.GetUID())
+	return IsServiceIdentityAuth(ident)
+}
+
+// IsServiceIdentityAuth is the AuthInfo-based form of IsServiceIdentity.
+func IsServiceIdentityAuth(auth types.AuthInfo) bool {
+	if auth == nil {
+		return false
+	}
+	t, uid, err := types.ParseTypeID(auth.GetUID())
 	if err != nil {
 		return false
 	}

@@ -11,8 +11,9 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 type HybridSearchQuery struct {
 	metav1.TypeMeta `json:",inline"`
 
-	// Resources is required for global hybrid search and rejected by per-resource
-	// routes. It must be nonempty and contain unique group/resource pairs.
+	// Resources selects unique group/resource pairs for global hybrid search.
+	// On Grafana's HTTP route, omitted or empty uses configured defaults, if any.
+	// Per-resource routes reject it.
 	// +listType=atomic
 	Resources []HybridSearchResource `json:"resources,omitempty"`
 
@@ -100,6 +101,9 @@ type HybridSearchResultItem struct {
 	FolderTitle string `json:"folderTitle,omitempty"`
 	// ManagedBy is absent for unmanaged resources or when lookup fails.
 	ManagedBy *HybridSearchManagedBy `json:"managedBy,omitempty"`
+	// Tags from the lexical index. Omitted when unavailable.
+	// +listType=atomic
+	Tags []string `json:"tags,omitempty"`
 
 	// Chunks contains matching text, best first. A lexical-only hit has a
 	// synthesized chunk containing the resource's title.

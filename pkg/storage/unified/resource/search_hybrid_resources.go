@@ -80,8 +80,14 @@ func (s *searchServer) enrichHybridResults(ctx context.Context, namespace string
 	}
 	g, gctx := errgroup.WithContext(ctx)
 	g.SetLimit(4)
+	folderResults := make([]*resourcepb.HybridSearchResult, 0, len(results))
+	for _, candidate := range candidates {
+		if !candidate.shared {
+			folderResults = append(folderResults, byResource[GroupResource{Group: candidate.key.Group, Resource: candidate.key.Resource}]...)
+		}
+	}
 	g.Go(func() error {
-		s.resolveFolderTitles(gctx, namespace, results)
+		s.resolveFolderTitles(gctx, namespace, folderResults)
 		return nil
 	})
 	for _, candidate := range candidates {

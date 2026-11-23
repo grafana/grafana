@@ -13,12 +13,14 @@ const esModules = [
   'delaunator',
   'get-user-locale',
   'internmap',
+  'is-any-array',
   'robust-predicates',
   'leven',
   'nanoid',
   'marked',
   'memoize',
   'mimic-function',
+  'ml-regression-polynomial',
   'monaco-promql',
   'react-calendar',
   '@kusto/monaco-kusto',
@@ -55,13 +57,15 @@ module.exports = {
     customExportConditions: ['@grafana-app/source', 'browser'],
   },
   transform: {
-    '^.+\\.(ts|tsx|js|jsx)$': [require.resolve('ts-jest')],
+    '^.+\\.(ts|tsx|js|jsx|mjs)$': [require.resolve('ts-jest')],
   },
   transformIgnorePatterns: [
     // Transform listed ESM packages at the top level or nested under another package
     // (e.g. @grafana/plugin-ui → uuid). Top-level still uses prefix matching so
     // entries like `d3` continue to cover related packages (d3-force, etc.).
-    `/node_modules/(?!(?:${esModules})|(?:.*/(?:${esModules})/))`,
+    // pnpm stores packages in node_modules/.pnpm/<name>@<version>/node_modules/<name>, so the
+    // `.pnpm` segment is skipped and the inner node_modules segment decides.
+    `/node_modules/(?!\\.pnpm/|(?:${esModules})|(?:.*/(?:${esModules})/))`,
   ],
   moduleDirectories: ['public', 'node_modules'],
   roots: [
@@ -83,7 +87,7 @@ module.exports = {
   moduleNameMapper: {
     '\\.(svg|png|jpg)': '<rootDir>/public/test/mocks/images.ts',
     '\\.css': '<rootDir>/public/test/mocks/style.ts',
-    'react-inlinesvg': '<rootDir>/public/test/mocks/react-inlinesvg.tsx',
+    '^react-inlinesvg$': '<rootDir>/public/test/mocks/react-inlinesvg.tsx',
     // resolve directly as monaco and kusto don't have main property in package.json which jest needs
     '^monaco-editor$': 'monaco-editor/esm/vs/editor/editor.api.js',
     '@kusto/monaco-kusto': '@kusto/monaco-kusto/release/esm/monaco.contribution.js',
@@ -103,7 +107,6 @@ module.exports = {
   testPathIgnorePatterns: [
     '/node_modules/',
     // Decoupled plugins run their own tests so ignoring them here.
-    '<rootDir>/public/app/plugins/datasource/azuremonitor',
     '<rootDir>/public/app/plugins/datasource/grafana-testdata-datasource',
     '<rootDir>/public/app/plugins/datasource/graphite',
   ],

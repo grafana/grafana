@@ -36,7 +36,7 @@ function toArray(filter: AdHocVariableFilter): string[] {
   return [filter.key, filter.operator, filter.value];
 }
 
-export function toFilter(value: string | number | boolean | undefined | null): AdHocVariableFilter | null {
+function toFilter(value: string | number | boolean | undefined | null): AdHocVariableFilter | null {
   if (!isString(value) || value.length === 0) {
     return null;
   }

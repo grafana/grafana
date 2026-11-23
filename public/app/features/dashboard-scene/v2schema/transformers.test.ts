@@ -1,4 +1,3 @@
-import { config } from '@grafana/runtime';
 import { CustomVariable } from '@grafana/scenes';
 import { type LibraryPanel } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
@@ -8,6 +7,8 @@ import * as libpanels from 'app/features/library-panels/state/api';
 
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
+
+jest.mock('app/features/library-panels/state/api', () => makeSpyable('app/features/library-panels/state/api'));
 
 const defaultDashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
   kind: 'DashboardWithAccessInfo',
@@ -63,13 +64,6 @@ const libraryPanel: LibraryPanel = {
 jest.spyOn(libpanels, 'getLibraryPanel').mockResolvedValue(libraryPanel);
 
 describe('V2 Transformers', () => {
-  beforeAll(() => {
-    config.featureToggles.groupByVariable = true;
-  });
-
-  afterAll(() => {
-    config.featureToggles.groupByVariable = false;
-  });
   it('should match original V2 Schema when transforming to scene and back to V2 Schema', async () => {
     const dashV2Scene = transformSaveModelSchemaV2ToScene(defaultDashboard);
     // Find and manually set options for CustomVariable

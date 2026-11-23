@@ -36,6 +36,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Correlation",
 					Plural:     "Correlations",
+					Resource:   "correlations",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Admission: &app.AdmissionCapabilities{

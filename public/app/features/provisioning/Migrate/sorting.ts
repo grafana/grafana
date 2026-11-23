@@ -2,7 +2,9 @@ import { type FolderRow } from './hooks/useMigrationData';
 
 export type SortKey = 'count-desc' | 'count-asc' | 'title-asc' | 'title-desc';
 
-export function compareFolders(a: FolderRow, b: FolderRow, key: SortKey): number {
+type Sortable = Pick<FolderRow, 'title' | 'resourceCount'>;
+
+export function compareFolders(a: Sortable, b: Sortable, key: SortKey): number {
   switch (key) {
     case 'count-desc':
       if (b.resourceCount !== a.resourceCount) {

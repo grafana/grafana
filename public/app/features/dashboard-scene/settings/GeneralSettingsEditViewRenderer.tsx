@@ -138,6 +138,7 @@ export function GeneralSettingsEditViewRenderer({ model }: SceneComponentProps<G
                 onChange={dashboard.isManagedRepository() ? model.onProvisionedFolderChange : model.onFolderChange}
                 repositoryName={dashboard.getManagerIdentity()}
                 excludeUIDs={meta?.folderUid ? [meta.folderUid] : undefined}
+                permission="create"
               />
             </Field>
           )}
@@ -147,9 +148,7 @@ export function GeneralSettingsEditViewRenderer({ model }: SceneComponentProps<G
             <MoveProvisionedDashboardDrawer
               dashboard={dashboard}
               targetFolderUID={moveModalProps.targetFolderUID}
-              targetFolderTitle={moveModalProps.targetFolderTitle}
               onDismiss={model.onMoveModalDismiss}
-              onSuccess={model.onMoveSuccess}
             />
           )}
 

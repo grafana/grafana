@@ -5,16 +5,12 @@ import (
 	"io"
 	"log/slog"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
-
-type Broadcaster[T any] interface {
-	Subscribe(ctx context.Context, name, resource string) (<-chan T, error)
-	Unsubscribe(<-chan T)
-}
 
 type BroadcasterMetrics struct {
 	Subscribers          *prometheus.GaugeVec
@@ -49,14 +45,14 @@ func newBroadcasterMetrics(reg prometheus.Registerer) *BroadcasterMetrics {
 	}
 }
 
-// NewBroadcaster creates a broadcaster that fans out items received on input to
-// all active subscribers. The caller owns the input channel and is responsible
-// for closing it when no more data will be sent. The broadcaster terminates
-// when either ctx is cancelled or input is closed.
+// newBroadcaster creates a broadcaster that fans out items received on input to
+// watchers of each item's collection. The caller owns the input channel and is
+// responsible for closing it when no more data will be sent. The broadcaster
+// terminates when either ctx is cancelled or input is closed.
 //
-// eventResourceFn extracts a resource label for an event entering the broadcaster.
-func NewBroadcaster[T any](ctx context.Context, input <-chan T, metrics *BroadcasterMetrics, eventResourceFn func(T) string) Broadcaster[T] {
-	return newBroadcasterWithSizes[T](ctx, input, watchChanSize, defaultOverflowCap, metrics, eventResourceFn, nil)
+// identity routes items to watchers of their collection and labels metrics.
+func newBroadcaster[T any](ctx context.Context, input <-chan T, metrics *BroadcasterMetrics, identity eventIdentity[T]) *broadcaster[T] {
+	return newBroadcasterWithSizes(ctx, input, watchChanSize, defaultOverflowCap, metrics, identity, nil)
 }
 
 // Initialization runs asynchronously before the event loop. It must establish
@@ -64,36 +60,37 @@ func NewBroadcaster[T any](ctx context.Context, input <-chan T, metrics *Broadca
 type cacheInitializer[T any] func(context.Context) (cacheSeed[T], error)
 
 type seededCacheConfig[T any] struct {
-	identity   eventIdentity[T]
 	initialize cacheInitializer[T]
+	raised     *raisedFloors
 }
 
 // newBroadcasterWithSizes creates a broadcaster with configurable buffer sizes for testing.
-func newBroadcasterWithSizes[T any](ctx context.Context, input <-chan T, subBufSize, ovfCap int, metrics *BroadcasterMetrics, eventResourceFn func(T) string, seeded *seededCacheConfig[T]) *broadcaster[T] {
+func newBroadcasterWithSizes[T any](ctx context.Context, input <-chan T, subBufSize, ovfCap int, metrics *BroadcasterMetrics, identity eventIdentity[T], seeded *seededCacheConfig[T]) *broadcaster[T] {
 	if metrics == nil {
 		metrics = newBroadcasterMetrics(nil)
 	}
-	var identity eventIdentity[T]
 	var initialize cacheInitializer[T]
+	var raised *raisedFloors
 	if seeded != nil {
-		identity = seeded.identity
 		initialize = seeded.initialize
+		raised = seeded.raised
 	}
 	b := &broadcaster[T]{
-		ctx:             ctx,
-		initialize:      initialize,
-		initializeNext:  make(chan *initializationAttempt, 1),
-		initAttempt:     &initializationAttempt{done: make(chan struct{})},
-		cache:           newWatchCache(defaultCacheSize, identity),
-		subscribe:       make(chan *subscribeRequest[T], internalChanSize),
-		unsubscribe:     make(chan (<-chan T), internalChanSize),
-		subs:            make(map[<-chan T]*subscription[T]),
-		terminated:      make(chan struct{}),
-		metrics:         metrics,
-		eventResourceFn: eventResourceFn,
-		watchBufSize:    subBufSize,
-		overflowCap:     ovfCap,
+		ctx:            ctx,
+		initialize:     initialize,
+		initializeNext: make(chan *initializationAttempt, 1),
+		initAttempt:    &initializationAttempt{done: make(chan struct{})},
+		cache:          newWatchCache(defaultCacheSize, identity),
+		subscribe:      make(chan *subscribeRequest[T], internalChanSize),
+		unsubscribe:    make(chan (<-chan T), internalChanSize),
+		subs:           make(map[<-chan T]*subscription[T]),
+		scoped:         make(map[GroupResource]map[<-chan T]*subscription[T]),
+		terminated:     make(chan struct{}),
+		metrics:        metrics,
+		watchBufSize:   subBufSize,
+		overflowCap:    ovfCap,
 	}
+	b.cache.raised = raised
 	if initialize == nil {
 		close(b.initAttempt.done)
 	}
@@ -105,9 +102,17 @@ func newBroadcasterWithSizes[T any](ctx context.Context, input <-chan T, subBufS
 
 type subscription[T any] struct {
 	name     string
-	resource string // metric label for subscriber-attributed metrics
+	gr       GroupResource // also the metric label for subscriber-attributed metrics
 	ch       chan T
 	overflow []T // pending items when channel is full, nil when not overflowing
+	// delivered counts events handed to the subscriber, through ch or overflow.
+	// Its watch reads it to tell whether it has consumed them all.
+	delivered atomic.Int64
+	removed   atomic.Bool
+	// startRV is the broadcaster's received watermark when the subscriber was
+	// registered. Events up to it were not all replayed to the subscriber, so
+	// they cannot establish its progress.
+	startRV int64
 }
 
 type subscribeRequest[T any] struct {
@@ -135,13 +140,14 @@ type broadcaster[T any] struct {
 
 	// subscription management
 
-	cache           watchCache[T]
-	subscribe       chan *subscribeRequest[T]
-	unsubscribe     chan (<-chan T)
-	subs            map[<-chan T]*subscription[T]
-	metrics         *BroadcasterMetrics
-	eventResourceFn func(T) string
-	submissionMu    sync.RWMutex // serializes enqueueing with shutdown's pending-subscription cleanup
+	cache        watchCache[T]
+	subscribe    chan *subscribeRequest[T]
+	unsubscribe  chan (<-chan T)
+	received     atomic.Int64 // cache.maxRV, published once delivered
+	subs         map[<-chan T]*subscription[T]
+	scoped       map[GroupResource]map[<-chan T]*subscription[T]
+	metrics      *BroadcasterMetrics
+	submissionMu sync.RWMutex // serializes enqueueing with shutdown's pending-subscription cleanup
 
 	// configuration
 
@@ -149,13 +155,6 @@ type broadcaster[T any] struct {
 	overflowCap     int
 	lastOverflowLog time.Time
 	overflowCount   int64 // overflow events since last log
-}
-
-func (b *broadcaster[T]) eventResource(item T) string {
-	if b.eventResourceFn == nil {
-		return "unknown"
-	}
-	return b.eventResourceFn(item)
 }
 
 const (
@@ -174,12 +173,18 @@ const (
 	// internalChanSize is the buffer for internal subscribe/unsubscribe coordination channels.
 	internalChanSize = 100
 
-	// defaultCacheSize is the ring buffer size for replaying recent events to new subscribers.
+	// defaultCacheSize limits the replay history retained per collection.
 	defaultCacheSize = 500
 
+	// defaultCacheMaxBytes bounds retained event memory independently of event count.
+	defaultCacheMaxBytes = 100 * 1024 * 1024
+
+	// defaultCacheMaxEvents bounds the events cached across all collections,
+	// each of which keeps up to defaultCacheSize.
+	defaultCacheMaxEvents = 10 * defaultCacheSize
+
 	// watchChanSize is the per-subscriber event delivery channel buffer.
-	// Must be larger than defaultCacheSize so that readInto never fills the
-	// channel completely, leaving headroom for new events.
+	// Must be larger than defaultCacheSize so replay leaves room for live events.
 	watchChanSize = 1000
 
 	// defaultOverflowCap is the maximum number of items in a subscriber's overflow
@@ -194,32 +199,23 @@ const (
 	overflowLogInterval = 10 * time.Second
 )
 
-func (b *broadcaster[T]) Subscribe(ctx context.Context, name, resource string) (<-chan T, error) {
-	sub := &subscription[T]{name: name, resource: resource, ch: make(chan T, b.watchBufSize)}
-	// Generic subscriptions remain asynchronous; ctx only bounds enqueueing.
-	if err := b.submit(ctx, &subscribeRequest[T]{sub: sub}); err != nil {
-		return nil, err
-	}
-	return sub.ch, nil
-}
-
-func (b *broadcaster[T]) submit(ctx context.Context, req *subscribeRequest[T]) error {
+func (b *broadcaster[T]) submit(req *subscribeRequest[T]) error {
 	sub := req.sub
 	b.submissionMu.RLock()
 	defer b.submissionMu.RUnlock()
 	// A select alone could enqueue after shutdown has drained the queue.
 	select {
 	case <-b.terminated:
-		b.metrics.SubscriptionsTotal.WithLabelValues(sub.resource, subscriptionResultTerminated).Inc()
+		b.metrics.SubscriptionsTotal.WithLabelValues(sub.gr.Resource, subscriptionResultTerminated).Inc()
 		return io.EOF
 	default:
 	}
 	select {
-	case <-ctx.Done():
-		b.metrics.SubscriptionsTotal.WithLabelValues(sub.resource, subscriptionResultCtxCanceled).Inc()
-		return ctx.Err()
+	case <-req.ctx.Done():
+		b.metrics.SubscriptionsTotal.WithLabelValues(sub.gr.Resource, subscriptionResultCtxCanceled).Inc()
+		return req.ctx.Err()
 	case <-b.terminated:
-		b.metrics.SubscriptionsTotal.WithLabelValues(sub.resource, subscriptionResultTerminated).Inc()
+		b.metrics.SubscriptionsTotal.WithLabelValues(sub.gr.Resource, subscriptionResultTerminated).Inc()
 		return io.EOF
 	case b.subscribe <- req:
 		return nil
@@ -227,34 +223,33 @@ func (b *broadcaster[T]) submit(ctx context.Context, req *subscribeRequest[T]) e
 }
 
 // subscribeWatch acknowledges replay capture and live registration in the same
-// operation as floor validation. Generic subscribers retain their existing API.
-func (b *broadcaster[T]) subscribeWatch(ctx context.Context, name, resource string, resume *watchResume) (<-chan T, error) {
+// operation as floor validation. The subscriber only receives gr's events.
+// A nil resume registers for live delivery only.
+func (b *broadcaster[T]) subscribeWatch(ctx context.Context, name string, gr GroupResource, resume *watchResume) (*watchSubscription[T], error) {
 	if err := b.ensureReady(ctx); err != nil {
 		return nil, err
 	}
-	sub := &subscription[T]{name: name, resource: resource, ch: make(chan T, b.watchBufSize)}
+	sub := &subscription[T]{name: name, gr: gr, ch: make(chan T, b.watchBufSize)}
 	req := &subscribeRequest[T]{sub: sub, ctx: ctx, resume: resume, ack: make(chan error, 1)}
-	if err := b.submit(ctx, req); err != nil {
+	if err := b.submit(req); err != nil {
 		return nil, err
 	}
 	select {
 	case <-ctx.Done():
-		// Unsubscribe drains queued admissions before removing the subscriber,
-		// including when cancellation wins the race with the acknowledgment.
-		b.Unsubscribe(sub.ch)
-		return nil, ctx.Err()
 	case <-b.terminated:
 		return nil, io.EOF
 	case err := <-req.ack:
 		if err != nil {
 			return nil, err
 		}
-		if err := ctx.Err(); err != nil {
-			b.Unsubscribe(sub.ch)
-			return nil, err
-		}
-		return sub.ch, nil
 	}
+	// Cancellation can race with acknowledgment. Unsubscribe drains queued
+	// admissions before removing the subscriber.
+	if err := ctx.Err(); err != nil {
+		b.Unsubscribe(sub.ch)
+		return nil, err
+	}
+	return &watchSubscription[T]{b: b, sub: sub}, nil
 }
 
 // ensureReady starts a new initialization attempt after a retryable failure.
@@ -294,6 +289,18 @@ func (b *broadcaster[T]) ensureReady(ctx context.Context) error {
 	return b.waitForInitialization(ctx, attempt)
 }
 
+// starting reports whether the cache has not been initialized yet.
+func (b *broadcaster[T]) starting() bool {
+	b.initMu.Lock()
+	defer b.initMu.Unlock()
+	select {
+	case <-b.initAttempt.done:
+		return b.initAttempt.err != nil
+	default:
+		return true
+	}
+}
+
 func (b *broadcaster[T]) waitForInitialization(ctx context.Context, attempt *initializationAttempt) error {
 	select {
 	case <-ctx.Done():
@@ -312,6 +319,31 @@ func (b *broadcaster[T]) finishInitialization(attempt *initializationAttempt, er
 	attempt.err = err
 	attempt.fatal = fatal
 	close(attempt.done)
+}
+
+type watchSubscription[T any] struct {
+	b   *broadcaster[T]
+	sub *subscription[T]
+}
+
+func (s *watchSubscription[T]) events() <-chan T {
+	return s.sub.ch
+}
+
+// rv returns the highest RV the broadcaster has received once the watch has
+// consumed every event delivered to it, or 0 while some are pending, before
+// anything newer than the watch's start arrived, or after the subscription was
+// removed. This stands in for the progress other collections' events used to
+// carry; replayed and live events of its own collection still advance the
+// watch directly.
+func (s *watchSubscription[T]) rv(consumed int64) int64 {
+	// received is published after delivery, so every event it covers is
+	// already counted in delivered.
+	received := s.b.received.Load()
+	if received <= s.sub.startRV || s.sub.removed.Load() || s.sub.delivered.Load() != consumed {
+		return 0
+	}
+	return received
 }
 
 func (b *broadcaster[T]) Unsubscribe(sub <-chan T) {
@@ -356,13 +388,12 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 	defer func() {
 		// prevent new subscriptions and make sure to discard unsubscriptions
 		close(b.terminated)
-		// Generic subscribers may have received their channels while startup
-		// was still pending. Close those too, including on initialization failure.
+		// Close requests queued at shutdown; their callers return on termination.
 		b.submissionMu.Lock()
 		for len(b.subscribe) > 0 {
 			req := <-b.subscribe
 			close(req.sub.ch)
-			b.metrics.SubscriptionsTotal.WithLabelValues(req.sub.resource, subscriptionResultTerminated).Inc()
+			b.metrics.SubscriptionsTotal.WithLabelValues(req.sub.gr.Resource, subscriptionResultTerminated).Inc()
 		}
 		b.submissionMu.Unlock()
 		// terminate all subscriptions
@@ -381,6 +412,7 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 			if err == nil {
 				err = b.cache.seed(seed)
 				fatal = err != nil
+				b.received.Store(b.cache.maxRV)
 			}
 			b.finishInitialization(attempt, err, fatal)
 			if err == nil {
@@ -427,42 +459,13 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 			if !ok {
 				return
 			}
-			b.metrics.EventsReceivedTotal.WithLabelValues(b.eventResource(item)).Inc()
-			b.cache.add(item)
+			gr := b.cache.add(item)
+			b.metrics.EventsReceivedTotal.WithLabelValues(gr.Resource).Inc()
 
 			var slow []<-chan T
-			for _, sub := range b.subs {
-				b.drainOverflow(sub)
-
-				if len(sub.overflow) > 0 {
-					// Still overflowing — append to overflow
-					sub.overflow = append(sub.overflow, item)
-					b.metrics.OverflowEventsTotal.WithLabelValues(sub.resource).Inc()
-					b.overflowCount++
-					if len(sub.overflow) > b.overflowCap {
-						slog.Warn("disconnecting subscriber: overflow cap exceeded",
-							"subscriber", sub.name,
-							"overflowSize", len(sub.overflow))
-						slow = append(slow, sub.ch)
-					}
-				} else {
-					// Try direct send
-					select {
-					case sub.ch <- item:
-					default:
-						sub.overflow = append(sub.overflow, item)
-						b.metrics.OverflowEventsTotal.WithLabelValues(sub.resource).Inc()
-						b.overflowCount++
-						now := time.Now()
-						if now.Sub(b.lastOverflowLog) > overflowLogInterval {
-							slog.Warn("subscriber overflow",
-								"subscriber", sub.name,
-								"overflowSize", len(sub.overflow),
-								"overflowsSinceLastLog", b.overflowCount)
-							b.lastOverflowLog = now
-							b.overflowCount = 0
-						}
-					}
+			for _, sub := range b.scoped[gr] {
+				if !b.deliver(sub, item) {
+					slow = append(slow, sub.ch)
 				}
 			}
 			// Instead of sending subscribers to b.unsubscribe channel, we unsubscribe directly.
@@ -471,6 +474,7 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 			for _, recv := range slow {
 				b.removeSubscriber(recv, unsubscriptionReasonOverflowCap)
 			}
+			b.received.Store(b.cache.maxRV)
 
 		case <-drainTicker.C: // periodically drain overflow for idle periods
 			for _, sub := range b.subs {
@@ -480,42 +484,85 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 	}
 }
 
+// deliver sends item to sub, spooling to its overflow buffer when the channel is
+// full. It returns false when the overflow cap is exceeded.
+func (b *broadcaster[T]) deliver(sub *subscription[T], item T) bool {
+	sub.delivered.Add(1)
+	b.drainOverflow(sub)
+
+	if len(sub.overflow) > 0 {
+		// Still overflowing — append to overflow
+		sub.overflow = append(sub.overflow, item)
+		b.metrics.OverflowEventsTotal.WithLabelValues(sub.gr.Resource).Inc()
+		b.overflowCount++
+		if len(sub.overflow) > b.overflowCap {
+			slog.Warn("disconnecting subscriber: overflow cap exceeded",
+				"subscriber", sub.name,
+				"overflowSize", len(sub.overflow))
+			return false
+		}
+		return true
+	}
+	// Try direct send
+	select {
+	case sub.ch <- item:
+	default:
+		sub.overflow = append(sub.overflow, item)
+		b.metrics.OverflowEventsTotal.WithLabelValues(sub.gr.Resource).Inc()
+		b.overflowCount++
+		now := time.Now()
+		if now.Sub(b.lastOverflowLog) > overflowLogInterval {
+			slog.Warn("subscriber overflow",
+				"subscriber", sub.name,
+				"overflowSize", len(sub.overflow),
+				"overflowsSinceLastLog", b.overflowCount)
+			b.lastOverflowLog = now
+			b.overflowCount = 0
+		}
+	}
+	return true
+}
+
 // addSubscriber runs only on the stream goroutine so floor validation, replay,
 // and registration remain atomic with respect to cache eviction.
 func (b *broadcaster[T]) addSubscriber(req *subscribeRequest[T]) {
 	sub := req.sub
 	reject := func(err error, result string) {
-		b.metrics.SubscriptionsTotal.WithLabelValues(sub.resource, result).Inc()
+		b.metrics.SubscriptionsTotal.WithLabelValues(sub.gr.Resource, result).Inc()
 		close(sub.ch)
-		if req.ack != nil {
-			req.ack <- err
-		}
+		req.ack <- err
 	}
-	if req.ctx != nil && req.ctx.Err() != nil {
+	if req.ctx.Err() != nil {
 		reject(req.ctx.Err(), subscriptionResultCtxCanceled)
 		return
 	}
 	if req.resume != nil {
-		if err := b.cache.validateResume(*req.resume); err != nil {
-			result := subscriptionResultReplayFailed
-			if IsResourceVersionExpired(err) {
-				result = subscriptionResultExpired
+		// Negative cursors predate resume floors and replay all retained events.
+		if req.resume.requestedRV >= 0 {
+			if err := b.cache.validateResume(sub.gr, *req.resume); err != nil {
+				result := subscriptionResultReplayFailed
+				if IsResourceVersionExpired(err) {
+					result = subscriptionResultExpired
+				}
+				reject(err, result)
+				return
 			}
-			reject(err, result)
+		}
+		if err := b.cache.replay(sub.ch, sub.gr, req.resume.since); err != nil {
+			reject(err, subscriptionResultReplayFailed)
 			return
 		}
+		sub.delivered.Store(int64(len(sub.ch)))
 	}
-	// send initial batch of cached items
-	if err := b.cache.replay(sub.ch); err != nil {
-		reject(err, subscriptionResultReplayFailed)
-		return
-	}
+	sub.startRV = b.cache.maxRV
 	b.subs[sub.ch] = sub
-	b.metrics.SubscriptionsTotal.WithLabelValues(sub.resource, subscriptionResultOK).Inc()
-	b.metrics.Subscribers.WithLabelValues(sub.resource).Inc()
-	if req.ack != nil {
-		req.ack <- nil
+	if b.scoped[sub.gr] == nil {
+		b.scoped[sub.gr] = make(map[<-chan T]*subscription[T])
 	}
+	b.scoped[sub.gr][sub.ch] = sub
+	b.metrics.SubscriptionsTotal.WithLabelValues(sub.gr.Resource, subscriptionResultOK).Inc()
+	b.metrics.Subscribers.WithLabelValues(sub.gr.Resource).Inc()
+	req.ack <- nil
 }
 
 func (b *broadcaster[T]) removeSubscriber(recv <-chan T, reason string) {
@@ -525,7 +572,12 @@ func (b *broadcaster[T]) removeSubscriber(recv <-chan T, reason string) {
 	}
 	sub.overflow = nil
 	delete(b.subs, recv)
-	b.metrics.Subscribers.WithLabelValues(sub.resource).Dec()
-	b.metrics.UnsubscriptionsTotal.WithLabelValues(sub.resource, reason).Inc()
+	sub.removed.Store(true)
+	delete(b.scoped[sub.gr], recv)
+	if len(b.scoped[sub.gr]) == 0 {
+		delete(b.scoped, sub.gr)
+	}
+	b.metrics.Subscribers.WithLabelValues(sub.gr.Resource).Dec()
+	b.metrics.UnsubscriptionsTotal.WithLabelValues(sub.gr.Resource, reason).Inc()
 	close(sub.ch)
 }

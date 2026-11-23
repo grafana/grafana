@@ -5,9 +5,10 @@ import { AppEvents } from '@grafana/data';
 import { appEvents } from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
 import { type SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
-import { grantUserPermissions, mockDataSource } from '../../mocks';
+import { grantUserPermissions, mockAlertmanagerAlert, mockDataSource } from '../../mocks';
 import { getAlertRuleHandler, mockK8sAlertRule } from '../../mocks/server/handlers/k8s/alertRules.k8s';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { setupDataSources } from '../../testSetup/datasources';
@@ -70,6 +71,71 @@ beforeEach(() => {
   grantUserPermissions([]);
   contextSrv.user.isSignedIn = true;
   contextSrv.user.name = 'admin';
+});
+
+describe('SilencesEditor preview label matchers', () => {
+  beforeEach(() => {
+    grantUserPermissions([AccessControlAction.AlertingInstanceRead]);
+    server.use(
+      getAlertRuleHandler([mockK8sAlertRule({ uid: RULE_UID, title: RULE_TITLE })]),
+      http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', () =>
+        HttpResponse.json([mockAlertmanagerAlert({ labels: { severity: 'warning', region: 'US-Central' } })])
+      )
+    );
+  });
+
+  it('adds a clicked label once, refreshes the preview and submits an exact matcher', async () => {
+    const previewFilters: string[][] = [];
+    server.use(
+      http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', ({ request }) => {
+        previewFilters.push(new URL(request.url).searchParams.getAll('filter'));
+        return HttpResponse.json([mockAlertmanagerAlert({ labels: { severity: 'warning' } })]);
+      })
+    );
+    const captured = captureCreateSilence();
+    const { user, onSilenceCreated } = renderEditor();
+
+    await user.click(await screen.findByRole('button', { name: 'severity warning' }));
+
+    expect(screen.getByRole('textbox', { name: /^label$/i })).toHaveValue('severity');
+    expect(screen.getByRole('textbox', { name: /^value$/i })).toHaveValue('warning');
+    expect(captured.attempts).toBe(0);
+    await waitFor(() =>
+      expect(previewFilters).toContainEqual(['__alert_rule_uid__="rule-uid-1"', 'severity="warning"'])
+    );
+
+    await user.click(await screen.findByRole('button', { name: 'severity warning' }));
+    await user.click(saveButton());
+
+    await waitFor(() => expect(onSilenceCreated).toHaveBeenCalledTimes(1));
+    expect(captured.bodies[0].matchers).toEqual([
+      { isEqual: true, isRegex: false, name: 'severity', value: 'warning' },
+      { isEqual: true, isRegex: false, name: '__alert_rule_uid__', value: RULE_UID },
+    ]);
+  });
+
+  it.each([
+    { description: 'complete', name: 'region', value: 'US-Central' },
+    { description: 'name-only', name: 'region', value: '' },
+    { description: 'value-only', name: '', value: 'US-Central' },
+  ])('appends a matcher without overwriting a $description row', async ({ name, value }) => {
+    const { user } = renderEditor();
+    if (name) {
+      await user.type(screen.getByRole('textbox', { name: /^label$/i }), name);
+    }
+    if (value) {
+      await user.type(screen.getByRole('textbox', { name: /^value$/i }), value);
+    }
+    await user.click(await screen.findByRole('button', { name: 'severity warning' }));
+
+    const matcherLabels = screen.getAllByRole('textbox', { name: /^label$/i });
+    const matcherValues = screen.getAllByRole('textbox', { name: /^value$/i });
+    expect(matcherLabels).toHaveLength(2);
+    expect(matcherLabels[0]).toHaveValue(name);
+    expect(matcherValues[0]).toHaveValue(value);
+    expect(matcherLabels[1]).toHaveValue('severity');
+    expect(matcherValues[1]).toHaveValue('warning');
+  });
 });
 
 describe('SilencesEditor', () => {

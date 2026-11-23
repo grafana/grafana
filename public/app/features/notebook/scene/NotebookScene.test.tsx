@@ -5,7 +5,6 @@ import { act, render, screen } from 'test/test-utils';
 import { CoreApp, type Scope, dateTime } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import {
-  config,
   HistoryWrapper,
   locationService,
   onInteraction,
@@ -15,6 +14,7 @@ import {
   setLocationService,
   setPluginImportUtils,
 } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import {
   sceneGraph,
   SceneRefreshPicker,
@@ -24,6 +24,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
@@ -46,9 +47,9 @@ setPluginImportUtils({
 
 // See CodeCell.test.tsx — the real editor does not run in jsdom, and is a lazily loaded chunk that
 // would otherwise resolve outside of this file's act() calls.
-jest.mock('@grafana/ui/unstable', () => ({
-  ...jest.requireActual('@grafana/ui/unstable'),
-  CodeMirrorEditor: ({
+jest.mock('@grafana/ui/internal', () => ({
+  ...jest.requireActual('@grafana/ui/internal'),
+  InternalCodeMirrorEditor: ({
     value,
     readOnly,
     onChange,
@@ -648,6 +649,14 @@ describe('NotebookScene', () => {
     });
   });
 
+  describe('getDashboardPanels', () => {
+    it('returns the panels of the panel cells', () => {
+      const { scene, panel } = buildSceneWithPanel();
+
+      expect(scene.getDashboardPanels()).toEqual([panel]);
+    });
+  });
+
   describe('enrichDataRequest', () => {
     // Notebook queries have to be attributable. CoreApp.Unknown cannot be told apart from a
     // genuinely unattributed query, and CoreApp.Dashboard is a behavioural branch (SqlDatasource
@@ -687,11 +696,13 @@ describe('NotebookScene', () => {
     };
 
     afterEach(() => {
-      config.featureToggles.scopeFilters = false;
+      act(() => {
+        setTestFlags({});
+      });
     });
 
     function buildScopesContext(value: Scope[]): ScopesContextValue {
-      const state = { drawerOpened: false, enabled: false, loading: false, readOnly: false, value };
+      const state = { drawerOpened: false, enabled: false, loading: false, value };
       const stateObservable = new BehaviorSubject(state);
 
       return {
@@ -700,19 +711,18 @@ describe('NotebookScene', () => {
         },
         stateObservable,
         changeScopes: jest.fn(),
-        setReadOnly: jest.fn(),
         setEnabled: jest.fn((enabled: boolean) => stateObservable.next({ ...stateObservable.getValue(), enabled })),
       };
     }
 
     it('has no scopes variable when scopeFilters is off', () => {
-      config.featureToggles.scopeFilters = false;
+      setTestFlags({ [FlagKeys.ScopeFilters]: false });
 
       expect(buildScene().state.$variables).toBeUndefined();
     });
 
     it('adds the scopes variable when scopeFilters is on', () => {
-      config.featureToggles.scopeFilters = true;
+      setTestFlags({ [FlagKeys.ScopeFilters]: true });
 
       const variables = buildScene().state.$variables?.state.variables;
 
@@ -723,7 +733,7 @@ describe('NotebookScene', () => {
     // The whole point: SceneQueryRunner reads scopes off the graph via lookupVariable('__scopes'),
     // so this resolving is what makes a notebook cell's query carry the selected scopes.
     it('resolves the selected scopes for a panel in a cell', async () => {
-      config.featureToggles.scopeFilters = true;
+      setTestFlags({ [FlagKeys.ScopeFilters]: true });
       const { scene, panel } = buildSceneWithPanel();
 
       activate(scene);
@@ -744,7 +754,7 @@ describe('NotebookScene', () => {
     // on it (SceneQueryRunner sets dependsOnScopes) waits forever and no cell ever loads. This
     // asserts the variable is settled, which is the condition query runners actually wait on.
     it('settles the scopes variable so query runners are not blocked', () => {
-      config.featureToggles.scopeFilters = true;
+      setTestFlags({ [FlagKeys.ScopeFilters]: true });
       const scene = buildScene();
       const variable = scene.state.$variables!.state.variables[0];
 
@@ -764,7 +774,7 @@ describe('NotebookScene', () => {
     // The variable is also what turns the selector on, so a notebook page has to enable scopes the
     // same way a dashboard does rather than inheriting whatever the previous route left behind.
     it('enables scopes while the notebook is mounted', () => {
-      config.featureToggles.scopeFilters = true;
+      setTestFlags({ [FlagKeys.ScopeFilters]: true });
       const scene = buildScene();
       const context = buildScopesContext([scope]);
 

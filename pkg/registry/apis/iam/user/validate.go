@@ -4,16 +4,21 @@ import (
 	"context"
 	"fmt"
 	"reflect"
-
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"strconv"
 
 	"github.com/grafana/authlib/types"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
 func ValidateOnCreate(ctx context.Context, search *dualwrite.Selector[SearchBackend], obj *iamv0alpha1.User) error {
+	if err := validateNameNotNumeric(obj.Name); err != nil {
+		return err
+	}
+
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
 		return apierrors.NewUnauthorized("no identity found")
@@ -44,6 +49,16 @@ func ValidateOnCreate(ctx context.Context, search *dualwrite.Selector[SearchBack
 
 	if err := validateLogin(ctx, userSearchClient, obj.GetNamespace(), obj.Name, obj.Spec.Login); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// metadata.name is stored as user.uid. Reject numeric names to avoid confusing
+// them with internal user IDs, including values with leading zeros such as "01".
+func validateNameNotNumeric(name string) error {
+	if _, err := strconv.ParseInt(name, 10, 64); err == nil {
+		return apierrors.NewBadRequest("name must not be a number")
 	}
 
 	return nil
@@ -109,7 +124,7 @@ func ValidateOnUpdate(ctx context.Context, search *dualwrite.Selector[SearchBack
 		}
 	} else if newObj.Spec.Role == "" {
 		return apierrors.NewBadRequest("role is required")
-	} else if !identity.RoleType(newObj.Spec.Role).IsValid() {
+	} else if !types.RoleType(newObj.Spec.Role).IsValid() {
 		return apierrors.NewBadRequest(fmt.Sprintf("invalid role '%s'", newObj.Spec.Role))
 	}
 
@@ -166,7 +181,7 @@ func validateRole(requester identity.Requester, obj *iamv0alpha1.User) error {
 		return apierrors.NewBadRequest("role is required")
 	}
 
-	requestedRole := identity.RoleType(obj.Spec.Role)
+	requestedRole := types.RoleType(obj.Spec.Role)
 	if !requestedRole.IsValid() {
 		return apierrors.NewBadRequest(fmt.Sprintf("invalid role '%s'", obj.Spec.Role))
 	}

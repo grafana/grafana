@@ -43,12 +43,15 @@ var WireSetExts = wire.NewSet(
 
 	wire.InterfaceValue(new(legacy.ExternalGroupReconciler), legacy.NoopExternalGroupReconciler{}),
 
+	dashboardinternal.ProvideNoopDashboardLifecycleExtras,
+
 	// Auditing Options
 	auditing.ProvideNoopBackend,
 	auditing.ProvideNoopPolicyRuleProvider,
 )
 
 var provisioningExtras = wire.NewSet(
+	provisioning.ProvideSupportedResourceProvider,
 	pullrequest.ProvidePullRequestWorker,
 	webhooks.ProvideWebhooksWithImages,
 	extras.ProvideProvisioningExtraAPIs,
@@ -67,6 +70,7 @@ var WireSet = wire.NewSet(
 	datasource.ProvideProxyDependencies,
 
 	// Secrets
+	secret.ProvideDatabaseMigrated,
 	secret.RegisterDependencies,
 	// Provisioning
 	provisioning.RegisterDependencies,
@@ -83,6 +87,7 @@ var WireSet = wire.NewSet(
 	folders.RegisterAPIService,
 	iam.RegisterAPIService,
 	provisioning.RegisterAPIService,
+	provisioning.ProvideHistoryJobCleanupService,
 	service.RegisterAPIService,
 	query.RegisterAPIService,
 	preferences.RegisterAPIService,

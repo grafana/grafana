@@ -10,8 +10,8 @@ import (
 	"github.com/google/go-github/v82/github"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 var subscribedEvents = []string{"pull_request", "push"} // same order as slices.Sort()
@@ -28,13 +28,13 @@ var _ repository.PullRequestRepo = (*githubWebhookRepository)(nil)
 type githubWebhookRepository struct {
 	GithubRepository
 	webhookURL string
-	secret     common.RawSecureValue
+	secret     resource.RawSecureValue
 }
 
 func NewGithubWebhookRepository(
 	basic GithubRepository,
 	webhookURL string,
-	secret common.RawSecureValue,
+	secret resource.RawSecureValue,
 ) GithubWebhookRepository {
 	return &githubWebhookRepository{
 		GithubRepository: basic,
@@ -154,13 +154,8 @@ func (r *githubWebhookRepository) SubscribedEvents() []string {
 	return subscribedEvents
 }
 
-// CommentPullRequest adds a comment to a pull request.
-func (r *githubWebhookRepository) CommentPullRequest(ctx context.Context, prNumber int, comment string) error {
-	return r.Client().CreatePullRequestComment(ctx, prNumber, comment)
-}
-
-func (r *githubWebhookRepository) MergeBase(ctx context.Context, headRef string) (string, error) {
-	return r.Client().MergeBase(ctx, r.Config().Branch(), headRef)
+func (r *githubWebhookRepository) PullRequestClient() repository.PullRequestClient {
+	return r.Client()
 }
 
 // senderID formats the sender's numeric ID, or returns an empty string when

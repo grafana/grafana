@@ -32,6 +32,7 @@ import (
 	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	grafanaresponsewriter "github.com/grafana/grafana/pkg/apiserver/endpoints/responsewriter"
+	"github.com/grafana/grafana/pkg/apiserver/rawroutes"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -78,6 +79,10 @@ type Service interface {
 // RequestRouter routes API groups before the embedded API server.
 type RequestRouter interface {
 	HandleFunc(http.ResponseWriter, *http.Request, http.Handler)
+
+	// SetUpstream gives the router the started server's handler, so it can
+	// serve the server's groups.
+	SetUpstream(http.Handler)
 }
 
 type service struct {
@@ -235,6 +240,17 @@ func ProvideService(
 		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
 	}
 
+	// Raw routes are registered before the /apis proxy so they are matched
+	// ahead of its catch-all and never enter the k8s handler chain.
+	if rawRoutes := rawroutes.Collect(appInstallers); len(rawRoutes) > 0 {
+		var rawErr error
+		s.rr.Group("/apis", func(apis routing.RouteRegister) {
+			rawErr = registerRawRoutes(apis, rawRoutes)
+		})
+		if rawErr != nil {
+			return nil, rawErr
+		}
+	}
 	s.rr.Group("/apis", proxyHandler)
 	s.rr.Group("/livez", proxyHandler)
 	s.rr.Group("/readyz", proxyHandler)
@@ -392,7 +408,7 @@ func (s *service) start(ctx context.Context) error {
 	// groupPriority reads the live scheme (discovery follows preferred); the cap ranks against the natural snapshot instead.
 	s.groupPriority = s.scheme.PrioritizedVersionsForGroup
 
-	serverConfig.Authorization.Authorizer = s.authorizer
+	serverConfig.Authorization.Authorizer = authorizer.WithWatchRestriction(s.authorizer)
 	serverConfig.Authentication.Authenticator = authenticator.NewAuthenticator(serverConfig.Authentication.Authenticator)
 	serverConfig.TracerProvider = s.tracing.GetTracerProvider()
 
@@ -452,7 +468,7 @@ func (s *service) start(ctx context.Context) error {
 	}
 	if globalHybridAPIEnabled {
 		searchAndStorageRoutes = append(searchAndStorageRoutes,
-			searchroutes.BuildGlobalHybridSearch(s.tracing, s.unified, builders, s.appInstallers, s.authorizer)...)
+			searchroutes.BuildGlobalHybridSearch(s.tracing, s.unified, builders, s.appInstallers, s.authorizer, s.cfg.HybridSearchDefaultResources...)...)
 	}
 	if globalSearchAPIEnabled || globalHybridAPIEnabled {
 		// Global search has no resource of its own to hold a permission on. The
@@ -537,6 +553,10 @@ func (s *service) start(ctx context.Context) error {
 	// Capture the discovery seam so preferred can re-prioritize without a scheme mutation; group priorities mirror startup.
 	s.groupDiscoveryPriority = builder.BuilderGroupPriorities(builders)
 	s.discoveryManager = server.AggregatedDiscoveryGroupManager
+	if globalSearchAPIEnabled || globalHybridAPIEnabled {
+		// Global search has routes but no resources.
+		appsdkapiserver.AdvertiseRouteOnlyVersion(server.AggregatedDiscoveryGroupManager, globalSearchGV)
+	}
 
 	// Install the API group+version for existing builders
 	err = builder.InstallAPIs(s.scheme,
@@ -648,8 +668,17 @@ func (s *service) start(ctx context.Context) error {
 
 	// used by the proxy wrapper registered in ProvideService
 	s.handler = runningServer.Handler
-	// used by local clients to make requests to the server
-	s.restConfig = runningServer.LoopbackClientConfig
+	if s.requestRouter != nil {
+		s.requestRouter.SetUpstream(s.handler)
+	}
+	// used by local clients to make requests to the server. Kubernetes' own
+	// loopback clients keep the server's config; Grafana's go through the
+	// router, as requests over HTTP do.
+	s.restConfig = clientrest.CopyConfig(runningServer.LoopbackClientConfig)
+	s.restConfig.Transport = &grafanaapiserveroptions.RoundTripperFunc{
+		// nolint:bodyclose
+		Fn: grafanaresponsewriter.WrapHandler(http.HandlerFunc(s.serveRouted)),
+	}
 
 	for _, installer := range s.appInstallers {
 		err := installer.InitializeApp(*s.restConfig)
@@ -694,7 +723,8 @@ func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Co
 				if _, err := identity.GetRequester(ctx); err != nil {
 					ctx = identity.WithRequester(ctx, c.SignedInUser)
 				}
-				wrapped := grafanaresponsewriter.WrapHandler(s.handler)
+				// nolint:bodyclose
+				wrapped := grafanaresponsewriter.WrapHandler(http.HandlerFunc(s.serveRouted))
 				return wrapped(req.WithContext(ctx))
 			},
 		},
@@ -704,6 +734,21 @@ func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Co
 func (s *service) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err := s.AwaitRunning(r.Context()); err != nil {
 		return
+	}
+	s.serveRouted(w, r)
+}
+
+// serveRouted serves an in-process request as a request over HTTP is served:
+// through the router, so a group the router serves is the router's here too.
+// A request without a Grafana requester, such as one from Kubernetes' own
+// loopback clients, which authenticate with the loopback token instead, goes
+// straight to the server: the router would refuse it.
+func (s *service) serveRouted(w http.ResponseWriter, r *http.Request) {
+	if s.requestRouter != nil {
+		if requester, err := identity.GetRequester(r.Context()); err == nil && requester != nil {
+			s.requestRouter.HandleFunc(w, r, s.handler)
+			return
+		}
 	}
 	s.handler.ServeHTTP(w, r)
 }

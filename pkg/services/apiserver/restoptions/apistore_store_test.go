@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"testing"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -30,7 +31,6 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 
-	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	storagetesting "github.com/grafana/grafana/pkg/apiserver/storage/testing"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -50,7 +50,7 @@ func init() {
 			Login:          "testuser",
 			UserID:         123,
 			UserUID:        "u123",
-			OrgRole:        identity.RoleAdmin,
+			OrgRole:        claims.RoleAdmin,
 			IsGrafanaAdmin: true, // can do anything
 		}
 		return identity.WithRequester(context.Background(), testUserA)
@@ -175,13 +175,17 @@ func TestGuaranteedUpdateUnconditionalUpsertOnMissingCreates(t *testing.T) {
 	unconditionalUpsertOnMissingCreates(ctx, t, store)
 }
 
-// TestIntegrationGuaranteedUpdateCreateOnUpdate exercises the create-on-update behavior
-// against every storage backend (including the real SQL-backed unified store), so the
-// Conflict-on-deleted semantics are verified end-to-end and not just against the in-memory
-// file backend.
+func TestGuaranteedUpdateCreateOnUpdate(t *testing.T) {
+	runGuaranteedUpdateCreateOnUpdate(t, StorageTypeFile)
+}
+
 func TestIntegrationGuaranteedUpdateCreateOnUpdate(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	runGuaranteedUpdateCreateOnUpdate(t, StorageTypeSQL, StorageTypeKV)
+}
 
+func runGuaranteedUpdateCreateOnUpdate(t *testing.T, storageTypes ...StorageType) {
+	t.Helper()
 	for _, s := range storageTypes {
 		t.Run(string(s), func(t *testing.T) {
 			t.Run("conditional update on deleted returns conflict", func(t *testing.T) {
@@ -366,7 +370,6 @@ func TestDeleteWithConflict(t *testing.T) {
 
 type resourceClientMock struct {
 	resourcepb.ResourceStoreClient
-	resourcepb.ResourceStatsClient
 	resourcepb.ResourceIndexClient
 	resourcepb.ManagedObjectIndexClient
 	resourcepb.BulkStoreClient

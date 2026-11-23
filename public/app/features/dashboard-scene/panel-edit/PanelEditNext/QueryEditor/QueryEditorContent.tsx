@@ -6,9 +6,9 @@ import { useStyles2 } from '@grafana/ui';
 import { QueryEditorType } from '../constants';
 
 import { QueryEditorBody } from './Body/QueryEditorBody';
-import { QueryEditorFooter } from './Footer/QueryEditorFooter';
+import { CardEditorRenderer } from './CardEditorRenderer';
 import { ContentHeaderSceneWrapper } from './Header/ContentHeader';
-import { DatasourceHelpPanel } from './Header/DatasourceHelpPanel';
+import { QueryEditorMainHeader } from './Header/QueryEditorMainHeader';
 import { QueriesEmptyState } from './QueriesEmptyState';
 import {
   useAlertingContext,
@@ -16,12 +16,13 @@ import {
   useQueryEditorUIContext,
   useQueryRunnerContext,
 } from './QueryEditorContext';
+import { SingleItemRenderer } from './StackedEditor/SingleItemRenderer';
 import { StackedEditorRenderer } from './StackedEditor/StackedEditorRenderer';
 
 export function QueryEditorContent() {
   const styles = useStyles2(getStyles);
 
-  const { cardType, showingDatasourceHelp, pendingExpression, pendingTransformation, pendingSavedQuery, stackedMode } =
+  const { cardType, pendingExpression, pendingTransformation, pendingSavedQuery, stackedMode } =
     useQueryEditorUIContext();
   const { alertRules } = useAlertingContext();
   const { queries } = useQueryRunnerContext();
@@ -36,27 +37,31 @@ export function QueryEditorContent() {
   // edit, so guide them back to adding a card instead of showing an empty editor surface.
   const isQueriesEmptyState = !isAlertView && !hasPendingCard && queries.length === 0 && transformations.length === 0;
 
-  const shouldShowStackedEditor = stackedMode.enabled && !hasPendingPicker && !isAlertView;
-  const shouldShowHeader = !isAlertEmptyState;
-  const shouldShowFooter = !hasPendingPicker && !isAlertView;
-  const shouldShowDatasourceHelp = !hasPendingPicker && showingDatasourceHelp;
+  const renderContent = () => {
+    if (isQueriesEmptyState) {
+      return <QueriesEmptyState />;
+    }
 
-  return (
-    <div className={styles.container}>
-      {isQueriesEmptyState ? (
-        <QueriesEmptyState />
-      ) : shouldShowStackedEditor ? (
-        <StackedEditorRenderer />
-      ) : (
+    if (isAlertView || hasPendingPicker) {
+      return (
         <>
-          {shouldShowHeader && <ContentHeaderSceneWrapper />}
-          {shouldShowDatasourceHelp && <DatasourceHelpPanel />}
-          <QueryEditorBody />
-          {shouldShowFooter && <QueryEditorFooter />}
+          {!isAlertEmptyState && <ContentHeaderSceneWrapper />}
+          <QueryEditorBody>
+            <CardEditorRenderer />
+          </QueryEditorBody>
         </>
-      )}
-    </div>
-  );
+      );
+    }
+
+    return (
+      <>
+        <QueryEditorMainHeader />
+        {stackedMode.enabled ? <StackedEditorRenderer /> : <SingleItemRenderer />}
+      </>
+    );
+  };
+
+  return <div className={styles.container}>{renderContent()}</div>;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

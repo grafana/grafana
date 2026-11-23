@@ -18,58 +18,34 @@ var testKind = kindRef{
 	kind:     "Dashboard",
 }
 
-func col(name string, t resourcepb.ResourceTableColumnDefinition_ColumnType) *resourcepb.ResourceTableColumnDefinition {
-	return &resourcepb.ResourceTableColumnDefinition{Name: name, Type: t}
-}
-
-// buildTable mirrors what the backend returns: public column names, one cell
-// per column, sort fields for cursor paging.
-func buildTable(t *testing.T, cols []*resourcepb.ResourceTableColumnDefinition, rows []map[string]any, sortFields [][]string) *resourcepb.ResourceTable {
-	t.Helper()
-	b, err := resource.NewTableBuilder(cols)
-	require.NoError(t, err)
-	for i, row := range rows {
-		// Copy so the caller's fixtures can be reused across tables.
-		vals := map[string]any{}
-		var name string
-		for k, v := range row {
-			if k == "__name" {
-				name = v.(string)
-				continue
-			}
-			vals[k] = v
-		}
-		key := &resourcepb.ResourceKey{
-			Namespace: "default",
-			Group:     testKind.group,
-			Resource:  testKind.resource,
-			Name:      name,
-		}
-		require.NoError(t, b.AddRow(key, 1, vals))
-		if i < len(sortFields) && i < len(b.Rows) {
-			b.Rows[i].SortFields = sortFields[i]
-		}
+func titleResults(names ...string) *resourcepb.ResourceSearchResponse {
+	response := &resourcepb.ResourceSearchResponse{
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: "title", Type: resourcepb.ResourceSearchField_STRING},
+		},
+		TotalHits: int64(len(names)), TotalHitsExact: true,
 	}
-	return &b.ResourceTable
+	for _, name := range names {
+		response.Rows = append(response.Rows, &resourcepb.ResourceSearchRow{
+			Key:        &resourcepb.ResourceKey{Namespace: "default", Group: testKind.group, Resource: testKind.resource, Name: name},
+			Values:     []*resourcepb.ResourceSearchValue{{StringValues: []string{name}}},
+			SortFields: []string{name},
+		})
+	}
+	return response
 }
 
 func TestSearchResults_MapsItemsAndFields(t *testing.T) {
-	cols := []*resourcepb.ResourceTableColumnDefinition{
-		col("title", resourcepb.ResourceTableColumnDefinition_STRING),
-		col("panel_types", resourcepb.ResourceTableColumnDefinition_STRING),
+	response := titleResults("dash-a", "dash-b")
+	response.Fields = append(response.Fields, &resourcepb.ResourceSearchField{Name: "panel_types", Type: resourcepb.ResourceSearchField_STRING})
+	response.Rows[0].Values = []*resourcepb.ResourceSearchValue{
+		{StringValues: []string{"A dashboard"}},
+		{FieldIndex: 1, StringValues: []string{"timeseries"}},
 	}
-	table := buildTable(t, cols, []map[string]any{
-		{"__name": "dash-a", "title": "A dashboard", "panel_types": "timeseries"},
-		// panel_types absent for this row: it must be omitted, not zero-valued.
-		{"__name": "dash-b", "title": "B dashboard"},
-	}, nil)
+	response.Rows[1].Values = []*resourcepb.ResourceSearchValue{{StringValues: []string{"B dashboard"}}}
 
-	out, err := ToSearchResults(&resourcepb.ResourceSearchResponse{
-		ResultFormat:   resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
-		Results:        table,
-		TotalHits:      2,
-		TotalHitsExact: true,
-	}, testKind.gvr(), testKind.kind, 10)
+	out, err := ToSearchResults(response, testKind.gvr(), testKind.kind, 10)
 	require.NoError(t, err)
 
 	require.Len(t, out.Items, 2)
@@ -91,17 +67,11 @@ func TestSearchResults_MapsItemsAndFields(t *testing.T) {
 }
 
 func TestSearchResults_ScoreIsSeparateFromFields(t *testing.T) {
-	cols := []*resourcepb.ResourceTableColumnDefinition{
-		col("title", resourcepb.ResourceTableColumnDefinition_STRING),
-		col(resource.SEARCH_FIELD_SCORE, resourcepb.ResourceTableColumnDefinition_DOUBLE),
-	}
-	table := buildTable(t, cols, []map[string]any{
-		{"__name": "dash-a", "title": "A", resource.SEARCH_FIELD_SCORE: float64(1.5)},
-		// A real score of zero must still be reported, not treated as absent.
-		{"__name": "dash-b", "title": "B", resource.SEARCH_FIELD_SCORE: float64(0)},
-	}, nil)
+	response := titleResults("dash-a", "dash-b")
+	response.Rows[0].Score = new(1.5)
+	response.Rows[1].Score = new(0.0)
 
-	out, err := searchResults(&resourcepb.ResourceSearchResponse{Results: table}, testKind, 10)
+	out, err := searchResults(response, testKind, 10)
 	require.NoError(t, err)
 
 	require.NotNil(t, out.Items[0].Score)
@@ -176,27 +146,20 @@ func TestSearchResults_MapsFieldValueResults(t *testing.T) {
 }
 
 func TestSearchResults_TotalHitsRelation(t *testing.T) {
-	table := buildTable(t, []*resourcepb.ResourceTableColumnDefinition{
-		col("title", resourcepb.ResourceTableColumnDefinition_STRING),
-	}, []map[string]any{{"__name": "a", "title": "A"}}, nil)
-
-	exact, err := searchResults(&resourcepb.ResourceSearchResponse{
-		Results: table, TotalHits: 1, TotalHitsExact: true,
-	}, testKind, 10)
+	response := titleResults("a")
+	exact, err := searchResults(response, testKind, 10)
 	require.NoError(t, err)
 	assert.Equal(t, int64(1), exact.Metadata.TotalHits)
 	assert.Equal(t, searchv0.TotalHitsEqual, exact.Metadata.TotalHitsRelation)
 
-	approx, err := searchResults(&resourcepb.ResourceSearchResponse{
-		Results: table, TotalHits: 700, TotalHitsExact: false,
-	}, testKind, 10)
+	response.TotalHits, response.TotalHitsExact = 700, false
+	approx, err := searchResults(response, testKind, 10)
 	require.NoError(t, err)
 	assert.Equal(t, int64(700), approx.Metadata.TotalHits)
 	assert.Equal(t, searchv0.TotalHitsAtMost, approx.Metadata.TotalHitsRelation)
 
-	zero, err := ToSearchResults(&resourcepb.ResourceSearchResponse{
-		Results: table, TotalHits: 0, TotalHitsExact: false,
-	}, testKind.gvr(), testKind.kind, 10)
+	response.TotalHits = 0
+	zero, err := ToSearchResults(response, testKind.gvr(), testKind.kind, 10)
 	require.NoError(t, err)
 	assert.Equal(t, int64(0), zero.Metadata.TotalHits)
 	assert.Equal(t, searchv0.TotalHitsAtMost, zero.Metadata.TotalHitsRelation, "the shared converter must not apply a custom endpoint's unknown-count policy")
@@ -204,17 +167,9 @@ func TestSearchResults_TotalHitsRelation(t *testing.T) {
 }
 
 func TestSearchResults_ContinueToken(t *testing.T) {
-	cols := []*resourcepb.ResourceTableColumnDefinition{
-		col("title", resourcepb.ResourceTableColumnDefinition_STRING),
-	}
-	rows := []map[string]any{
-		{"__name": "a", "title": "A"},
-		{"__name": "b", "title": "B"},
-	}
-
 	// A full page offers a cursor built from the last row's sort fields.
-	full := buildTable(t, cols, []map[string]any{rows[0], rows[1]}, [][]string{{"a"}, {"b"}})
-	out, err := searchResults(&resourcepb.ResourceSearchResponse{Results: full}, testKind, 2)
+	full := titleResults("a", "b")
+	out, err := searchResults(full, testKind, 2)
 	require.NoError(t, err)
 	require.NotEmpty(t, out.Metadata.Continue)
 	decoded, err := decodeContinue(out.Metadata.Continue)
@@ -222,55 +177,49 @@ func TestSearchResults_ContinueToken(t *testing.T) {
 	assert.Equal(t, []string{"b"}, decoded)
 
 	// A short page with an exact total means everything has been seen.
-	short := buildTable(t, cols, []map[string]any{{"__name": "a", "title": "A"}}, [][]string{{"a"}})
-	out, err = searchResults(&resourcepb.ResourceSearchResponse{
-		Results: short, TotalHitsExact: true,
-	}, testKind, 2)
+	short := titleResults("a")
+	out, err = searchResults(short, testKind, 2)
 	require.NoError(t, err)
 	assert.Empty(t, out.Metadata.Continue)
 
 	// A short page with an inexact total means the backend stopped scanning
 	// early, so more rows may exist and must stay reachable.
-	out, err = searchResults(&resourcepb.ResourceSearchResponse{
-		Results: short, TotalHitsExact: false,
-	}, testKind, 2)
+	short.TotalHitsExact = false
+	out, err = searchResults(short, testKind, 2)
 	require.NoError(t, err)
 	require.NotEmpty(t, out.Metadata.Continue, "an early-stopped scan must remain pageable")
 
 	// An empty page always ends the walk, so a client cannot loop forever.
-	empty := buildTable(t, cols, nil, nil)
-	out, err = searchResults(&resourcepb.ResourceSearchResponse{
-		Results: empty, TotalHitsExact: false,
-	}, testKind, 2)
+	empty := titleResults()
+	empty.TotalHitsExact = false
+	out, err = searchResults(empty, testKind, 2)
 	require.NoError(t, err)
 	assert.Empty(t, out.Metadata.Continue)
 
 	// Without sort fields no cursor can be built.
-	noSort := buildTable(t, cols, []map[string]any{rows[0], rows[1]}, nil)
-	out, err = searchResults(&resourcepb.ResourceSearchResponse{Results: noSort}, testKind, 2)
+	noSort := titleResults("a", "b")
+	for _, row := range noSort.Rows {
+		row.SortFields = nil
+	}
+	out, err = searchResults(noSort, testKind, 2)
 	require.NoError(t, err)
 	assert.Empty(t, out.Metadata.Continue)
 }
 
 func TestSearchResults_Facets(t *testing.T) {
-	table := buildTable(t, []*resourcepb.ResourceTableColumnDefinition{
-		col("title", resourcepb.ResourceTableColumnDefinition_STRING),
-	}, []map[string]any{{"__name": "a", "title": "A"}}, nil)
-
-	out, err := searchResults(&resourcepb.ResourceSearchResponse{
-		Results: table,
-		Facet: map[string]*resourcepb.ResourceSearchResponse_Facet{
-			// The backend reports the requested public name in Field even when
-			// it aggregated on the physical field.
-			"fields.panel_types": {
-				Field: "panel_types",
-				Terms: []*resourcepb.ResourceSearchResponse_TermFacet{
-					{Term: "timeseries", Count: 5},
-					{Term: "table", Count: 2},
-				},
+	response := titleResults("a")
+	response.Facet = map[string]*resourcepb.ResourceSearchResponse_Facet{
+		// The backend reports the requested public name in Field even when
+		// it aggregated on the physical field.
+		"fields.panel_types": {
+			Field: "panel_types",
+			Terms: []*resourcepb.ResourceSearchResponse_TermFacet{
+				{Term: "timeseries", Count: 5},
+				{Term: "table", Count: 2},
 			},
 		},
-	}, testKind, 10)
+	}
+	out, err := searchResults(response, testKind, 10)
 	require.NoError(t, err)
 
 	require.Contains(t, out.Facets, "panel_types")
@@ -281,37 +230,55 @@ func TestSearchResults_Facets(t *testing.T) {
 }
 
 func TestSearchResults_RejectsUnsupportedResultFormat(t *testing.T) {
-	_, err := searchResults(&resourcepb.ResourceSearchResponse{
-		ResultFormat: resourcepb.ResourceSearchRequest_ResultFormat(99),
-	}, testKind, 10)
-	require.ErrorContains(t, err, "unsupported search result format 99")
+	for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
+		resourcepb.ResourceSearchRequest_UNSPECIFIED,
+		resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
+		99,
+	} {
+		t.Run(format.String(), func(t *testing.T) {
+			response := titleResults("a")
+			response.ResultFormat = format
+			_, err := searchResults(response, testKind, 10)
+			require.ErrorContains(t, err, "unsupported search result format")
+		})
+	}
 }
 
 func TestSearchResults_RejectsMalformedFieldValueResults(t *testing.T) {
-	_, err := searchResults(&resourcepb.ResourceSearchResponse{
-		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
-		Fields: []*resourcepb.ResourceSearchField{
-			{Name: "title", Type: resourcepb.ResourceSearchField_STRING},
-		},
-		Rows: []*resourcepb.ResourceSearchRow{
-			{Key: &resourcepb.ResourceKey{Name: "a"}, Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 1, StringValues: []string{"A"}}}},
-		},
-	}, testKind, 10)
-	require.ErrorContains(t, err, "field index 1 is out of range")
+	for _, tc := range []struct {
+		name string
+		row  *resourcepb.ResourceSearchRow
+		want string
+	}{
+		{name: "nil row", want: "has no resource key"},
+		{name: "missing key", row: &resourcepb.ResourceSearchRow{}, want: "has no resource key"},
+		{name: "invalid field index", row: &resourcepb.ResourceSearchRow{
+			Key: &resourcepb.ResourceKey{Name: "a"}, Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 1, StringValues: []string{"A"}}},
+		}, want: "field index 1 is out of range"},
+		{name: "missing scalar", row: &resourcepb.ResourceSearchRow{
+			Key: &resourcepb.ResourceKey{Name: "a"}, Values: []*resourcepb.ResourceSearchValue{{}},
+		}, want: "scalar has 0 values"},
+		{name: "nil value", row: &resourcepb.ResourceSearchRow{
+			Key: &resourcepb.ResourceKey{Name: "a"}, Values: []*resourcepb.ResourceSearchValue{nil},
+		}, want: "nil field value"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := searchResults(&resourcepb.ResourceSearchResponse{
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Fields:       []*resourcepb.ResourceSearchField{{Name: "title", Type: resourcepb.ResourceSearchField_STRING}},
+				Rows:         []*resourcepb.ResourceSearchRow{tc.row},
+			}, testKind, 10)
+			require.ErrorContains(t, err, tc.want)
+		})
+	}
 }
 
-func TestSearchResults_RejectsMalformedTable(t *testing.T) {
-	// Cells and columns must line up; a mismatch means the backend and the
-	// mapper disagree, which would silently misattribute values.
-	table := &resourcepb.ResourceTable{
-		Columns: []*resourcepb.ResourceTableColumnDefinition{
-			col("title", resourcepb.ResourceTableColumnDefinition_STRING),
-			col("folder", resourcepb.ResourceTableColumnDefinition_STRING),
-		},
-		Rows: []*resourcepb.ResourceTableRow{
-			{Key: &resourcepb.ResourceKey{Name: "a"}, Cells: [][]byte{[]byte("A")}},
-		},
+func TestSearchResults_EmptyResponses(t *testing.T) {
+	for _, response := range []*resourcepb.ResourceSearchResponse{nil, titleResults()} {
+		out, err := searchResults(response, testKind, 10)
+		require.NoError(t, err)
+		require.NotNil(t, out.Items)
+		require.Empty(t, out.Items)
+		require.Empty(t, out.Metadata.Continue)
 	}
-	_, err := searchResults(&resourcepb.ResourceSearchResponse{Results: table}, testKind, 10)
-	require.Error(t, err)
 }

@@ -13,6 +13,7 @@ type SearchBackend interface {
 type SearchQuery struct {
 	Namespace string
 	Query     string
+	Member    string
 	Title     string
 	UIDs      []string
 	TeamIDs   []string
@@ -20,4 +21,6 @@ type SearchQuery struct {
 	Page      int64
 	Offset    int64
 	Sort      []string
+	// MemberCount asks the backend to set MemberCount on hits when it can compute it cheaply.
+	MemberCount bool
 }

@@ -95,6 +95,7 @@ function buildTestScene(
     state,
     canEditDashboard: jest.fn(() => true),
     isPlanning: jest.fn(() => false),
+    recordEditMutation: jest.fn(),
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),

@@ -406,6 +406,16 @@ export const routeProxies: RouteProxy[] = [
     }),
   },
   {
+    // Grafana's `:name` here is a resource name (`metadata.name`), whereas the plugin keys time intervals by
+    // spec name. External Alertmanagers have no metadata.name and are never linked to this route, so this serves
+    // only to keeps the route proxy table complete.
+    path: '/alerting/routes/mute-timing/:name/edit',
+    matches: (context) => matchesExternalAlertmanager(context) && Boolean(context.params.name),
+    handler: alertmanagerPage(
+      (_params, { params }) => `${PLUGIN_ROUTES.timeIntervals}/${reencodePathParam(params.name)}`
+    ),
+  },
+  {
     path: '/alerting/silences',
     matches: matchesExternalAlertmanager,
     handler: alertmanagerPageHandler(PLUGIN_ROUTES.silences),

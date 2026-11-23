@@ -3,8 +3,7 @@ package sql
 import (
 	"context"
 	"fmt"
-	"os"
-	"strings"
+	"slices"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
@@ -89,7 +88,6 @@ func NewUninitializedResourceServer(opts ServerOptions) (resource.ResourceServer
 		withSearchClient,
 		withQuotaConfig,
 		withStorageMetrics,
-		withUsageStats,
 		withSeededWatches,
 		withNatsWatchMaxAge,
 	)
@@ -135,14 +133,16 @@ type buildResourceServerOpts func(*ServerOptions, *resource.ResourceServerOption
 
 // buildResourceServerOptions builds the resource.ResourceServerOptions from sql.ServerOptions.
 func buildResourceServerOptions(opts *ServerOptions, withOpts ...buildResourceServerOpts) (*resource.ResourceServerOptions, error) {
+	if err := opts.Cfg.ValidateSharedVectorConfig(); err != nil {
+		return nil, fmt.Errorf("vector collection configuration: %w", err)
+	}
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
 	serverOptions := &resource.ResourceServerOptions{
 		Blob: resource.BlobConfig{
 			URL: apiserverCfg.Key("blob_url").MustString(""),
 		},
-		Reg:                     opts.Reg,
-		SecureValues:            opts.SecureValues,
-		GRPCErrorResultToStatus: opts.Cfg != nil && opts.Cfg.UnifiedStorageGRPCErrorResultToStatus,
+		Reg:          opts.Reg,
+		SecureValues: opts.SecureValues,
 	}
 	for _, optFn := range withOpts {
 		if err := optFn(opts, serverOptions); err != nil {
@@ -189,23 +189,11 @@ func withBlobConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerOp
 	resourceOpts.Blob = resource.BlobConfig{
 		URL: apiserverCfg.Key("blob_url").MustString(""),
 	}
-	if resourceOpts.Blob.URL == "" {
-		resourceOpts.Blob.Backend = opts.BlobBackend
+	if err := resource.ValidateBlobURL(resourceOpts.Blob.URL); err != nil {
+		return err
 	}
-	var err error
-	resourceOpts.Blob.URL, err = resolvedBlobURL(resourceOpts.Blob.URL, opts.Cfg.DataPath)
-	return err
-}
-
-func resolvedBlobURL(url, dataPath string) (string, error) {
-	if strings.HasPrefix(url, "./data/") {
-		dir := strings.Replace(url, "./data", dataPath, 1)
-		if err := os.MkdirAll(dir, 0700); err != nil {
-			return "", err
-		}
-		return "file:///" + dir, nil
-	}
-	return url, nil
+	resourceOpts.Blob.Backend = opts.BlobBackend
+	return nil
 }
 
 func withMaxPageSizeBytes(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
@@ -220,19 +208,14 @@ func withAuthorizeBeforeFetch(opts *ServerOptions, resourceOpts *resource.Resour
 	return nil
 }
 
-func withUsageStats(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
-	unifiedStorageCfg := opts.Cfg.SectionWithEnvOverrides("unified_storage")
-	resourceOpts.UsageStatsEnabled = unifiedStorageCfg.Key("usage_stats_enabled").MustBool(false)
-	return nil
-}
-
 func withSeededWatches(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	resourceOpts.SeededWatchesEnabled = opts.Cfg.SeededWatchesEnabled
 	return nil
 }
 
 func withNatsWatchMaxAge(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
-	if opts.Cfg == nil || !opts.Cfg.NATS.Enabled || !opts.Cfg.NATS.Notifier {
+	// Watches fed by polling miss nothing, so expiring them only forces re-lists.
+	if opts.Cfg == nil || !opts.Cfg.NATSNotifierActive() {
 		return nil
 	}
 	resourceOpts.NatsWatchMaxAge = opts.Cfg.NATS.NotifierWatchMaxAge
@@ -327,6 +310,11 @@ func withSearch(opts *ServerOptions, resourceOpts *resource.ResourceServerOption
 	resourceOpts.IndexMetrics = opts.IndexMetrics
 	resourceOpts.OwnsIndexFn = opts.OwnsIndexFn
 
+	resourceOpts.Search.SharedExternalCollections = make([]string, 0, len(opts.Cfg.VectorSharedExternalCollections))
+	for collection := range opts.Cfg.VectorSharedExternalCollections {
+		resourceOpts.Search.SharedExternalCollections = append(resourceOpts.Search.SharedExternalCollections, collection)
+	}
+	slices.Sort(resourceOpts.Search.SharedExternalCollections)
 	if opts.VectorBackend != nil {
 		resourceOpts.Search.AllowedInternalCollections = opts.Cfg.VectorAllowedInternalCollections
 		resourceOpts.Search.AllowedExternalCollections = opts.Cfg.VectorAllowedExternalCollections

@@ -3,6 +3,8 @@ import { render, screen, userEvent } from 'test/test-utils';
 import { setupMswServer } from '../../mockApi';
 import { ruleItem } from '../mocks/factories';
 import { mockFolderParents, mockRuleSearch } from '../mocks/handlers';
+import { createRulesApiFilter } from '../rule-search/sharedRuleFilter';
+import { RuleSequenceDrawerProvider } from '../rule-sequences/RuleSequenceDrawer';
 
 import { AlertRulesListView } from './AlertRulesListView';
 
@@ -19,7 +21,11 @@ describe('AlertRulesListView', () => {
       metadata: { totalHits: 1000, totalHitsRelation: 'lte' },
     }));
 
-    render(<AlertRulesListView />);
+    render(
+      <RuleSequenceDrawerProvider>
+        <AlertRulesListView filter={createRulesApiFilter()} />
+      </RuleSequenceDrawerProvider>
+    );
 
     expect(await screen.findByText('1,000+ alert rules')).toBeInTheDocument();
   });
@@ -33,7 +39,11 @@ describe('AlertRulesListView', () => {
             metadata: { totalHits: 2, totalHitsRelation: 'eq', continue: 'tok' },
           }
     );
-    render(<AlertRulesListView />);
+    render(
+      <RuleSequenceDrawerProvider>
+        <AlertRulesListView filter={createRulesApiFilter()} />
+      </RuleSequenceDrawerProvider>
+    );
 
     await userEvent.click(await screen.findByRole('button', { name: 'Load more' }));
 
@@ -44,7 +54,11 @@ describe('AlertRulesListView', () => {
   it('shows a retryable error when the response is not a search result', async () => {
     mockRuleSearch('alert', () => ({ items: [{ fields: { title: 'CPU high' } }], metadata: {} }));
 
-    render(<AlertRulesListView />);
+    render(
+      <RuleSequenceDrawerProvider>
+        <AlertRulesListView filter={createRulesApiFilter()} />
+      </RuleSequenceDrawerProvider>
+    );
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Failed to load rules');
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
@@ -57,7 +71,11 @@ describe('AlertRulesListView', () => {
       metadata: { totalHits: '1000', totalHitsRelation: 'eq' },
     }));
 
-    render(<AlertRulesListView />);
+    render(
+      <RuleSequenceDrawerProvider>
+        <AlertRulesListView filter={createRulesApiFilter()} />
+      </RuleSequenceDrawerProvider>
+    );
 
     expect(await screen.findByText('CPU high')).toBeInTheDocument();
     expect(screen.queryByText(/alert rules?$/)).not.toBeInTheDocument();

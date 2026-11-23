@@ -164,6 +164,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]k8scommon.OpenAPIDefinition
 								},
 								{
 									ParameterProps: spec3.ParameterProps{
+										Name:        "member",
+										In:          "query",
+										Description: "filter by member user UID",
+										Required:    false,
+										Schema:      spec.StringProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
 										Name:        "membercount",
 										In:          "query",
 										Description: "when true, includes member count for each team in the response",
@@ -339,8 +348,15 @@ func (s *SearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	if len(queryParams["member"]) > 1 {
+		http.Error(w, "member parameter accepts a single value", http.StatusBadRequest)
+		return
+	}
+
+	searchRequest.Member = queryParams.Get("member")
 	searchRequest.UIDs = uids
 	searchRequest.TeamIDs = teamIds
+	searchRequest.MemberCount = queryParams.Get("membercount") == "true"
 
 	backend, err := s.client.Resolve(ctx)
 	if err != nil {
@@ -354,7 +370,7 @@ func (s *SearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if queryParams.Get("membercount") == "true" && s.teamGetter != nil {
+	if searchRequest.MemberCount && s.teamGetter != nil {
 		if err := s.enrichWithMemberCounts(ctx, requester.GetNamespace(), searchResults.Hits); err != nil {
 			errhttp.Write(ctx, err, w)
 			return
@@ -419,6 +435,7 @@ func (s *SearchHandler) stampAccessControl(ctx context.Context, requester identi
 
 // enrichWithMemberCounts fetches each team concurrently and sets MemberCount
 // from len(team.Spec.Members) — the team is the source of truth for membership.
+// Hits that already have a MemberCount from the search backend are skipped.
 // errgroup is used as a bounded concurrency pool (SetLimit); the first error
 // from any goroutine is propagated to the caller.
 func (s *SearchHandler) enrichWithMemberCounts(ctx context.Context, namespace string, hits []iamv0alpha1.GetSearchTeamsTeamHit) error {
@@ -430,6 +447,9 @@ func (s *SearchHandler) enrichWithMemberCounts(ctx context.Context, namespace st
 	g.SetLimit(10)
 
 	for i := range hits {
+		if hits[i].MemberCount != nil {
+			continue
+		}
 		g.Go(func() error {
 			outgoingCtx := request.WithNamespace(ctx, namespace)
 			obj, err := s.teamGetter.Get(outgoingCtx, hits[i].Name, &metav1.GetOptions{})

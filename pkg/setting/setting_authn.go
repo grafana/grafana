@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"gopkg.in/ini.v1"
 )
 
@@ -33,6 +33,7 @@ func (cfg *Cfg) ApplyAuthnSettings(iniFile *ini.File) error {
 	}
 
 	cfg.Raw = iniFile
+	cfg.readQuotaSettings()
 	readSecretKey(iniFile, cfg)
 	readAdminSettings(iniFile, cfg)
 	if err := readSessionAuthSettings(iniFile, cfg); err != nil {
@@ -67,11 +68,11 @@ func readAdminSettings(iniFile *ini.File, cfg *Cfg) {
 	cfg.AutoAssignOrg = users.Key("auto_assign_org").MustBool(true)
 	cfg.AutoAssignOrgId = users.Key("auto_assign_org_id").MustInt(1)
 	cfg.AutoAssignOrgRole = users.Key("auto_assign_org_role").In(
-		string(identity.RoleViewer), []string{
-			string(identity.RoleNone),
-			string(identity.RoleViewer),
-			string(identity.RoleEditor),
-			string(identity.RoleAdmin),
+		string(authlib.RoleViewer), []string{
+			string(authlib.RoleNone),
+			string(authlib.RoleViewer),
+			string(authlib.RoleEditor),
+			string(authlib.RoleAdmin),
 		})
 }
 
@@ -176,4 +177,25 @@ func readUserLastSeenUpdateInterval(iniFile *ini.File, cfg *Cfg) error {
 		cfg.UserLastSeenUpdateInterval = time.Hour
 	}
 	return nil
+}
+
+// ApplyLoginSettings applies the settings the multi-tenant IAM app needs to list
+// login mechanisms: LDAPAuthEnabled, DisableLoginForm, AllowUserSignUp, LoginHint
+// and PasswordHint. The caller transfers ownership of iniFile to cfg and must not
+// reuse it concurrently.
+func (cfg *Cfg) ApplyLoginSettings(iniFile *ini.File) error {
+	if iniFile == nil {
+		return errors.New("login settings cannot be nil")
+	}
+
+	// readLDAPConfig() requires cfg.Raw to be set
+	cfg.Raw = iniFile
+	cfg.readLDAPConfig()
+	readDisableLoginForm(iniFile, cfg)
+
+	return readUserSettings(iniFile, cfg)
+}
+
+func readDisableLoginForm(iniFile *ini.File, cfg *Cfg) {
+	cfg.DisableLoginForm = iniFile.Section("auth").Key("disable_login_form").MustBool(false)
 }

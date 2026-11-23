@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -15,7 +16,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 
-	"github.com/grafana/authlib/types"
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -35,7 +35,7 @@ func TestValidateOnCreate(t *testing.T) {
 			name: "valid team - not provisioned",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			obj: &iamv0alpha1.Team{
 				Spec: iamv0alpha1.TeamSpec{
@@ -49,7 +49,7 @@ func TestValidateOnCreate(t *testing.T) {
 			name: "valid team - provisioned",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeServiceAccount,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			obj: &iamv0alpha1.Team{
 				Spec: iamv0alpha1.TeamSpec{
@@ -65,7 +65,7 @@ func TestValidateOnCreate(t *testing.T) {
 			name: "invalid team - no title",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			obj: &iamv0alpha1.Team{
 				Spec: iamv0alpha1.TeamSpec{
@@ -79,7 +79,7 @@ func TestValidateOnCreate(t *testing.T) {
 			name: "invalid team - it's provisioned but the requester is not a service account",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			obj: &iamv0alpha1.Team{
 				Spec: iamv0alpha1.TeamSpec{
@@ -95,7 +95,7 @@ func TestValidateOnCreate(t *testing.T) {
 			name: "invalid team - has externalUID but it's not provisioned",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			obj: &iamv0alpha1.Team{
 				Spec: iamv0alpha1.TeamSpec{
@@ -140,7 +140,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			name: "valid update - no changes to provisioned status",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			obj: &iamv0alpha1.Team{
 				Spec: iamv0alpha1.TeamSpec{
@@ -160,7 +160,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			name: "valid update - service account changing to provisioned",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeServiceAccount,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			obj: &iamv0alpha1.Team{
 				Spec: iamv0alpha1.TeamSpec{
@@ -182,7 +182,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			name: "valid update - already provisioned team",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeServiceAccount,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			obj: &iamv0alpha1.Team{
 				Spec: iamv0alpha1.TeamSpec{
@@ -206,7 +206,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			name: "invalid update - no title",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			obj: &iamv0alpha1.Team{
 				Spec: iamv0alpha1.TeamSpec{
@@ -226,7 +226,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			name: "invalid update - user trying to change to provisioned",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			obj: &iamv0alpha1.Team{
 				Spec: iamv0alpha1.TeamSpec{
@@ -248,7 +248,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			name: "invalid update - changing from provisioned to non-provisioned",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeServiceAccount,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			obj: &iamv0alpha1.Team{
 				Spec: iamv0alpha1.TeamSpec{
@@ -270,7 +270,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			name: "invalid update - has externalUID but not provisioned",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			obj: &iamv0alpha1.Team{
 				Spec: iamv0alpha1.TeamSpec{
@@ -308,7 +308,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			name: "valid update - adding externalUID to provisioned team",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeServiceAccount,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			obj: &iamv0alpha1.Team{
 				Spec: iamv0alpha1.TeamSpec{
@@ -342,7 +342,7 @@ func TestValidateOnDelete(t *testing.T) {
 	team := &iamv0alpha1.Team{ObjectMeta: metav1.ObjectMeta{Name: "team-a", Namespace: "org-1"}}
 
 	t.Run("allows deleting a team that does not own folders", func(t *testing.T) {
-		searcher := &deleteValidationSearchClient{response: &resourcepb.ResourceSearchResponse{}}
+		searcher := &deleteValidationSearchClient{response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES}}
 
 		require.NoError(t, ValidateOnDelete(t.Context(), searcher, team))
 		require.NotNil(t, searcher.request)
@@ -368,7 +368,7 @@ func TestValidateOnDelete(t *testing.T) {
 	})
 
 	t.Run("blocks deleting a team that owns a folder", func(t *testing.T) {
-		searcher := &deleteValidationSearchClient{response: &resourcepb.ResourceSearchResponse{TotalHits: 1}}
+		searcher := &deleteValidationSearchClient{response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES, TotalHits: 1}}
 
 		err := ValidateOnDelete(t.Context(), searcher, team)
 
@@ -377,15 +377,18 @@ func TestValidateOnDelete(t *testing.T) {
 		assert.ErrorContains(t, err, "remove folder ownership before deleting the team")
 	})
 
-	t.Run("blocks when the search backend returns a table row without total hits", func(t *testing.T) {
-		searcher := &deleteValidationSearchClient{response: &resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{Rows: []*resourcepb.ResourceTableRow{{}}},
-		}}
-
-		err := ValidateOnDelete(t.Context(), searcher, team)
-
-		require.Error(t, err)
-		assert.True(t, apierrors.IsConflict(err))
+	t.Run("rejects unsupported result formats", func(t *testing.T) {
+		for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
+			resourcepb.ResourceSearchRequest_UNSPECIFIED,
+			resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
+			99,
+		} {
+			t.Run(format.String(), func(t *testing.T) {
+				searcher := &deleteValidationSearchClient{response: &resourcepb.ResourceSearchResponse{ResultFormat: format}}
+				err := ValidateOnDelete(t.Context(), searcher, team)
+				require.ErrorContains(t, err, "unsupported search result format")
+			})
+		}
 	})
 
 	t.Run("blocks when the search backend returns a field-value row without total hits", func(t *testing.T) {
@@ -407,14 +410,16 @@ func TestValidateOnDelete(t *testing.T) {
 		assert.ErrorIs(t, ValidateOnDelete(t.Context(), searcher, team), searchErr)
 	})
 
-	t.Run("returns errors embedded in the search response", func(t *testing.T) {
-		searcher := &deleteValidationSearchClient{response: &resourcepb.ResourceSearchResponse{
-			Error: &resourcepb.ErrorResult{Message: "search unavailable", Code: http.StatusServiceUnavailable},
-		}}
+	t.Run("preserves status details of search failures", func(t *testing.T) {
+		searcher := &deleteValidationSearchClient{err: resource.GRPCStatusError(&resourcepb.ErrorResult{
+			Message: "search unavailable", Code: http.StatusServiceUnavailable,
+		})}
 
 		err := ValidateOnDelete(t.Context(), searcher, team)
 
 		require.Error(t, err)
+		assert.False(t, apierrors.IsConflict(err))
+		assert.True(t, apierrors.IsServiceUnavailable(err), "got %v", err)
 		assert.ErrorContains(t, err, "search unavailable")
 	})
 
@@ -508,9 +513,9 @@ func (s *stubReconciler) Validate(groups []string) error {
 func TestValidateTitleUniqueSearchErrors(t *testing.T) {
 	plainErr := errors.New("index down")
 	for name, client := range map[string]*deleteValidationSearchClient{
-		"embedded": {response: &resourcepb.ResourceSearchResponse{Error: &resourcepb.ErrorResult{
+		"detailed": {err: resource.GRPCStatusError(&resourcepb.ErrorResult{
 			Code: http.StatusServiceUnavailable, Message: "index unavailable",
-		}}},
+		})},
 		"transport": {err: status.Error(codes.Unavailable, "index unavailable")},
 		"plain":     {err: plainErr},
 	} {
@@ -526,7 +531,7 @@ func TestValidateTitleUniqueSearchErrors(t *testing.T) {
 }
 
 func TestValidateOnCreate_TitleUniqueness(t *testing.T) {
-	requester := &identity.StaticRequester{Type: types.TypeServiceAccount, OrgRole: identity.RoleAdmin, Namespace: "stacks-1"}
+	requester := &identity.StaticRequester{Type: types.TypeServiceAccount, OrgRole: types.RoleAdmin, Namespace: "stacks-1"}
 	newTeam := &iamv0alpha1.Team{
 		ObjectMeta: metav1.ObjectMeta{Name: "new-uid"},
 		Spec:       iamv0alpha1.TeamSpec{Title: "Engineering"},
@@ -568,7 +573,7 @@ func TestValidateOnCreate_TitleUniqueness(t *testing.T) {
 	})
 
 	t.Run("unparseable requester namespace is an internal error", func(t *testing.T) {
-		badNs := &identity.StaticRequester{Type: types.TypeServiceAccount, OrgRole: identity.RoleAdmin, Namespace: "stacks-abc"}
+		badNs := &identity.StaticRequester{Type: types.TypeServiceAccount, OrgRole: types.RoleAdmin, Namespace: "stacks-abc"}
 		ctx := identity.WithRequester(t.Context(), badNs)
 		backend := &fakeSearchBackend{}
 		err := ValidateOnCreate(ctx, selectorForBackend(backend), newTeam, legacy.NoopExternalGroupReconciler{})
@@ -578,7 +583,7 @@ func TestValidateOnCreate_TitleUniqueness(t *testing.T) {
 }
 
 func TestValidateOnUpdate_TitleUniqueness(t *testing.T) {
-	requester := &identity.StaticRequester{Type: types.TypeServiceAccount, OrgRole: identity.RoleAdmin, Namespace: "stacks-1"}
+	requester := &identity.StaticRequester{Type: types.TypeServiceAccount, OrgRole: types.RoleAdmin, Namespace: "stacks-1"}
 	for _, tt := range []struct {
 		name     string
 		oldTitle string

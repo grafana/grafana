@@ -95,9 +95,9 @@ class AlertRulesFixture {
   async seedRule({ title, interval }: { title: string; interval: string }): Promise<string> {
     const response = await postWithRetry(
       this.request,
-      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${this.api.namespace}/alertrules`,
+      `/apis/rules.alerting.grafana.app/v1beta1/namespaces/${this.api.namespace}/alertrules`,
       {
-        apiVersion: 'rules.alerting.grafana.app/v0alpha1',
+        apiVersion: 'rules.alerting.grafana.app/v1beta1',
         kind: 'AlertRule',
         metadata: { annotations: { 'grafana.app/folder': this.folder.uid } },
         spec: {
@@ -127,7 +127,7 @@ class AlertRulesFixture {
   trackRule(uid: string): void {
     this.disposers.push(async () => {
       await this.request.delete(
-        `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${this.api.namespace}/alertrules/${encodeURIComponent(uid)}`
+        `/apis/rules.alerting.grafana.app/v1beta1/namespaces/${this.api.namespace}/alertrules/${encodeURIComponent(uid)}`
       );
     });
   }

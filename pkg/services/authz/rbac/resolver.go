@@ -189,15 +189,16 @@ func permissionsTypeResolverFunc(scope string) (string, error) {
 	}
 }
 
-// isRoleManagementAction reports whether the action manages roles or role
-// bindings. Role management is the only family where a permissions:type:delegate
+// isRoleManagementAction reports whether the action mutates roles or role
+// bindings. These are the only actions where a `permissions:type:delegate“
 // grant also implies the wildcard scope: holding the delegate scope must allow
 // operating on any role or role binding. Expanding it for other actions would
 // turn a delegation-only grant into global access to the resource itself.
 func isRoleManagementAction(action string) bool {
 	switch action {
-	case "roles:read", "roles:write", "roles:delete",
-		"users.roles:read", "users.roles:add", "users.roles:remove":
+	case "roles:write", "roles:delete",
+		"users.roles:add", "users.roles:remove",
+		"teams.roles:add", "teams.roles:remove":
 		return true
 	}
 	return false
@@ -212,8 +213,8 @@ func (s *Service) nameResolver(ctx context.Context, ns types.NamespaceInfo, acti
 		if isRoleManagementAction(action) {
 			return permissionsTypeResolverFunc, nil
 		}
-		// The literal alone gates delegation checks; deriving a wildcard here
-		// would grant the action itself on every resource.
+		// Only role-management actions interpret delegate as wildcard access.
+		// Expanding other actions would grant access on every resource.
 		return nil, nil
 	}
 	if scopePrefix == "serviceaccounts:id:" {
@@ -267,9 +268,7 @@ func (s *Service) resolveScopeMap(ctx context.Context, ns types.NamespaceInfo, a
 		}
 		if resolved != "" {
 			scopeMap[resolved] = true
-			// Keep permissions:type:* literals alongside their resolved value.
-			// delegate resolves to "*" for the roles resource, but the permissions resource
-			// skips wildcards (SkipWildcard) to block privilege escalation
+			// Preserve the public permission-type scope alongside its resolved value.
 			if !strings.HasPrefix(scope, "permissions:type:") {
 				delete(scopeMap, scope)
 			}

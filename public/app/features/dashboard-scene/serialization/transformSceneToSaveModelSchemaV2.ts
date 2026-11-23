@@ -9,6 +9,7 @@ import {
   LocalValueVariable,
   type QueryVariable,
   sceneGraph,
+  type SceneDataLayerProvider,
   type SceneDataQuery,
   SceneDataTransformer,
   type SceneObject,
@@ -69,7 +70,9 @@ import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { type DSReferencesMapping } from './DashboardSceneSerializer';
 import { transformV1ToV2AnnotationQuery } from './annotations';
-import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
+import { normalizeDataSourceRef } from './normalizeDataSourceRef';
+import { serializeQuestions } from './questionsSerializer';
+import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToSchemaV2Variables';
 import { buildTimeSettingsSpec } from './shared/timeSettings';
 import { colorIdEnumToColorIdV2, transformCursorSynctoEnum } from './transformToV2TypesUtils';
 // FIXME: This is temporary to avoid creating partial types for all the new schema, it has some performance implications, but it's fine for now
@@ -110,6 +113,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     cursorSync: getCursorSync(sceneDash),
     liveNow: getLiveNow(sceneDash),
     preload: sceneDash.preload ?? defaultDashboardV2Spec().preload,
+    prompts: serializeQuestions(scene, sceneDash.questions),
     editable: sceneDash.editable ?? defaultDashboardV2Spec().editable,
     links: (sceneDash.links || [])
       // Links with a `origin` property didn't come from the persisted JSON schema, so we also skip them
@@ -698,8 +702,15 @@ function getAnnotations(state: DashboardSceneState, dsReferencesMapping?: DSRefe
   if (!(data instanceof DashboardDataLayerSet)) {
     return [];
   }
+  return annotationLayersToSchemaV2(data.state.annotationLayers, dsReferencesMapping);
+}
+
+export function annotationLayersToSchemaV2(
+  layers: SceneDataLayerProvider[],
+  dsReferencesMapping?: DSReferencesMapping
+): AnnotationQueryKind[] {
   const annotations: AnnotationQueryKind[] = [];
-  for (const layer of data.state.annotationLayers) {
+  for (const layer of layers) {
     if (!(layer instanceof dataLayers.AnnotationsDataLayer)) {
       continue;
     }
@@ -1041,20 +1052,6 @@ export function getAutoAssignedDSRef(
 
   // if type is not panels, annotations, or variables, throw error
   throw new Error(`Invalid type ${type} for getAutoAssignedDSRef`);
-}
-
-export function normalizeDataSourceRef(ds: DataSourceRef | string | null | undefined): DataSourceRef | undefined {
-  if (!ds) {
-    return undefined;
-  }
-
-  // Known datasource names are resolved to refs when a v1 dashboard is loaded (see resolveLegacyDatasourceNames),
-  // so a string that is left is a template variable or an unknown datasource.
-  if (typeof ds === 'string') {
-    return { uid: ds };
-  }
-
-  return Object.keys(ds).length === 0 ? undefined : ds;
 }
 
 /**

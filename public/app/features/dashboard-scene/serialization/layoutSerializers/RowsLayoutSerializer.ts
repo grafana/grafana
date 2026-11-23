@@ -4,8 +4,10 @@ import { type Spec as DashboardV2Spec, type RowsLayoutRowKind } from '@grafana/s
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
+import { deserializeQuestions, serializeQuestions } from '../questionsSerializer';
 
 import { layoutDeserializerRegistry } from './layoutSerializerRegistry';
+import { deserializeSectionAnnotations, serializeSectionAnnotations } from './sectionAnnotations';
 import { deserializeSectionVariables, serializeSectionVariables } from './sectionVariables';
 import { getConditionalRendering } from './utils';
 
@@ -84,6 +86,16 @@ export function serializeRow(row: RowItem, isSnapshot?: boolean): RowsLayoutRowK
     rowKind.spec.variables = sectionVariables;
   }
 
+  const sectionAnnotations = serializeSectionAnnotations(row.state.$data);
+  if (sectionAnnotations) {
+    rowKind.spec.annotations = sectionAnnotations;
+  }
+
+  const saved = serializeQuestions(row, row.state.questions);
+  if (saved) {
+    rowKind.spec.prompts = saved;
+  }
+
   const conditionalRenderingRootGroup = row.state.conditionalRendering?.serialize();
   // Only serialize the conditional rendering if it has items
   if (conditionalRenderingRootGroup?.spec.items.length) {
@@ -97,12 +109,13 @@ export function deserializeRowsLayout(
   layout: DashboardV2Spec['layout'],
   elements: DashboardV2Spec['elements'],
   preload: boolean,
-  panelIdGenerator?: PanelIdGenerator
+  panelIdGenerator?: PanelIdGenerator,
+  isSnapshot?: boolean
 ): RowsLayoutManager {
   if (layout.kind !== 'RowsLayout') {
     throw new Error('Invalid layout kind');
   }
-  const rows = layout.spec.rows.map((row) => deserializeRow(row, elements, preload, panelIdGenerator));
+  const rows = layout.spec.rows.map((row) => deserializeRow(row, elements, preload, panelIdGenerator, isSnapshot));
   return new RowsLayoutManager({ rows });
 }
 
@@ -110,7 +123,8 @@ export function deserializeRow(
   row: RowsLayoutRowKind,
   elements: DashboardV2Spec['elements'],
   preload: boolean,
-  panelIdGenerator?: PanelIdGenerator
+  panelIdGenerator?: PanelIdGenerator,
+  isSnapshot?: boolean
 ): RowItem {
   const layout = row.spec.layout;
 
@@ -120,8 +134,12 @@ export function deserializeRow(
     hideHeader: row.spec.hideHeader,
     fillScreen: row.spec.fillScreen,
     repeatByVariable: row.spec.repeat?.value,
+    questions: deserializeQuestions(row.spec.prompts, elements),
     $variables: deserializeSectionVariables(row.spec.variables),
-    layout: layoutDeserializerRegistry.get(layout.kind).deserialize(layout, elements, preload, panelIdGenerator),
+    $data: deserializeSectionAnnotations(row.spec.annotations, isSnapshot),
+    layout: layoutDeserializerRegistry
+      .get(layout.kind)
+      .deserialize(layout, elements, preload, panelIdGenerator, isSnapshot),
     conditionalRendering: getConditionalRendering(row),
   });
 }

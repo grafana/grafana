@@ -5,10 +5,10 @@ import { getConfigDashboards, trackDashboardReloadRequests, checkDashboardReload
 test.use({
   featureToggles: {
     scopeFilters: true,
-    groupByVariable: true,
   },
   openFeature: {
     flags: {
+      scopeFilters: true,
       reloadDashboardsOnParamsChange: true,
     },
   },

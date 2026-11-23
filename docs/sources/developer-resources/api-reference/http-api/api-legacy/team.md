@@ -454,6 +454,10 @@ Status Codes:
 
 ## Get Team Preferences
 
+{{< admonition type="note" >}}
+This endpoint is deprecated. Use the [Preferences HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/preferences/) with the `team-<TEAM_UID>` name instead. To learn how the legacy endpoints map to the new ones, refer to [Migrate from the legacy Preferences API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/preferences/#migrate-from-the-legacy-preferences-api).
+{{< /admonition >}}
+
 `GET /api/teams/:teamId/preferences`
 
 **Required permissions**
@@ -489,6 +493,10 @@ Content-Type: application/json
 
 ## Update Team Preferences
 
+{{< admonition type="note" >}}
+This endpoint is deprecated. Use the [Preferences HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/preferences/) with the `team-<TEAM_UID>` name instead. To learn how the legacy endpoints map to the new ones, refer to [Migrate from the legacy Preferences API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/preferences/#migrate-from-the-legacy-preferences-api).
+{{< /admonition >}}
+
 `PUT /api/teams/:teamId/preferences`
 
 **Required permissions**
@@ -519,7 +527,7 @@ JSON Body Schema:
 
 - **theme** - One of: `light`, `dark`, or an empty string for the default theme
 - **homeDashboardId** - Deprecated. Use `homeDashboardUID` instead.
-- **homeDashboardUID** - The `:uid` of a dashboard
+- **homeDashboardUID** - The `:uid` of a dashboard, or the reserved value `global-home` to show the instance default home instead of the organization's dashboard. An empty string clears the preference so the organization's dashboard applies.
 - **timezone** - One of: `utc`, `browser`, or an empty string for the default
 
 Omitting a key will cause the current value to be replaced with the system default value.

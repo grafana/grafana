@@ -800,12 +800,12 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Conte
 	if err := l.RequireEditPermissionsOnFolder(c, signedInUser, folderUID); err != nil {
 		return err
 	}
-	return l.DeleteLibraryElementsInFolderUnchecked(c, signedInUser.GetOrgID(), signedInUser, folderUID)
+	// Reaching here means the edit-permission check above passed.
+	orgID := signedInUser.GetOrgID()
+	return l.DeleteLibraryElementsInFolderUnchecked(folder.WithUncheckedDeleteAuthorized(c, orgID, signedInUser, []string{folderUID}, true), orgID, signedInUser, folderUID)
 }
 
-// deleteLibraryElementsInFolderUIDUnchecked deletes all Library Elements in a folder without
-// checking folder permissions; callers must have already confirmed the folder is gone. Elements
-// still connected to a dashboard are kept and block the delete (as in the permission-checked path).
+// deleteLibraryElementsInFolderUIDUnchecked deletes all Library Elements in a folder without checking folder permissions; elements still connected to a dashboard are kept and block the delete.
 func (l *LibraryElementService) deleteLibraryElementsInFolderUIDUnchecked(c context.Context, orgID int64, folderUID string) error {
 	if l.ConnectedDashboardsFinder == nil {
 		return model.ErrConnectedDashboardsFinderNotConfigured

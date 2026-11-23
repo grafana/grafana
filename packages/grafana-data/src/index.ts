@@ -137,6 +137,7 @@ export {
 export {
   getFieldColorModeForField,
   getFieldColorMode,
+  isReversibleFieldColorMode,
   fieldColorModeRegistry,
   type FieldColorMode,
   /** @internal */
@@ -276,7 +277,7 @@ export { UnaryOperationID, type UnaryOperation, unaryOperators } from './utils/u
 export { NodeGraphDataFrameFieldNames } from './utils/nodeGraph';
 export { toOption } from './utils/selectUtils';
 export * as arrayUtils from './utils/arrayUtils';
-export { store, Store } from './utils/store';
+export { store, Store, type StoreSetOptions } from './utils/store';
 export { LocalStorageValueProvider } from './utils/LocalStorageValueProvider';
 export { throwIfAngular } from './utils/throwIfAngular';
 export { fuzzySearch } from './utils/fuzzySearch';
@@ -446,6 +447,19 @@ export {
   type RangeValueMatcherOptions,
 } from './transformations/matchers/valueMatchers/types';
 export { LayoutModes, type LayoutMode } from './types/layout';
+export type {
+  PanelStatusAction,
+  PanelStatusActions,
+  PanelNotice,
+  PanelStatusItem,
+  PanelStatusActionContext,
+  PanelStatusActionResolver,
+  PanelNoticeSource,
+  PanelStatusActionState,
+  PanelStatusSnapshot,
+  PanelNotices,
+} from './panel/PanelNotices';
+
 export {
   PanelPlugin,
   type PanelOptionsSupplier,
@@ -453,6 +467,9 @@ export {
   type StandardOptionConfig,
   type PanelScreenshotContext,
   type PanelScreenshotHandler,
+  type PanelInteraction,
+  type PanelInteractions,
+  type PanelInteractionPromotionContext,
 } from './panel/PanelPlugin';
 export {
   getPanelOptionsWithDefaults,
@@ -506,6 +523,8 @@ export type {
   GrafanaJavascriptAgentConfig,
   BuildInfo,
   LicenseInfo,
+  NavigationConfig,
+  NavigationPlacement,
   PreinstalledPlugin,
   UnifiedAlertingConfig,
 } from './types/config';
@@ -617,6 +636,8 @@ export {
   type PluginExtensionEventHelpers,
   type DataSourceConfigErrorStatusContext,
   type PluginExtensionPanelContext,
+  type PluginExtensionDashboardControlsContext,
+  type PluginExtensionDashboardControlsPanel,
   type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
   type PluginExtensionQueryEditorRowActionsV1Context,
   type PluginExtensionDataSourceConfigContext,

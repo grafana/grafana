@@ -430,7 +430,8 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 	// its initial poll completes before the index is built.
 	if searchOptions.SearchFields != nil || searchOptions.EmbeddingConfig != nil {
 		if mwCfg := resource.NewManifestWatcherConfig(s.cfg); mwCfg != nil {
-			watcher, err := resource.NewManifestWatcher(*mwCfg, s.reg, searchOptions.ManifestReloader(s.log))
+			watcherReg := prometheus.WrapRegistererWith(prometheus.Labels{"component": "search"}, s.reg)
+			watcher, err := resource.NewManifestWatcher(*mwCfg, watcherReg, searchOptions.ManifestReloader(s.log))
 			if err != nil {
 				return err
 			}
@@ -594,7 +595,7 @@ func (s *service) createAndRegisterServer(provider grpcserver.Provider, opts Ser
 
 	var vs *resource.VectorStoreServer
 	if opts.Cfg.EnableVectorStore && opts.VectorBackend != nil && opts.Embedder != nil {
-		vs = resource.NewVectorStoreServer(opts.VectorBackend, opts.Embedder, opts.Cfg.VectorAllowedExternalCollections, opts.Cfg.VectorAllowedWriteServices, opts.VectorMetrics)
+		vs = resource.NewVectorStoreServer(opts.VectorBackend, opts.Embedder, opts.Cfg.VectorAllowedExternalCollections, opts.Cfg.VectorAllowedWriteServices, opts.Cfg.VectorSharedExternalCollections, opts.VectorMetrics)
 	}
 	s.registerUnifiedResourceServer(provider, server, vs)
 	return nil
@@ -619,7 +620,7 @@ func (s *service) registerSearchServer(provider grpcserver.Provider, server reso
 		&resourcepb.ManagedObjectIndex_ServiceDesc,
 		&resourcepb.Diagnostics_ServiceDesc,
 	} {
-		srv.RegisterService(s.withErrorResultConversion(desc), handler)
+		srv.RegisterService(desc, handler)
 	}
 	_, _ = grpcserver.ProvideReflectionService(s.cfg, provider)
 	return nil
@@ -653,7 +654,6 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 	metricsInt := resource.UnaryRequestDurationInterceptor(s.storageMetrics)
 	for _, desc := range []*grpc.ServiceDesc{
 		&resourcepb.ResourceStore_ServiceDesc,
-		&resourcepb.ResourceStats_ServiceDesc,
 		&resourcepb.BulkStore_ServiceDesc,
 		&resourcepb.BlobStore_ServiceDesc,
 		&resourcepb.BlobStoreStreaming_ServiceDesc,
@@ -662,14 +662,13 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 		&resourcepb.ResourceIndex_ServiceDesc,
 		&resourcepb.ManagedObjectIndex_ServiceDesc,
 	} {
-		wrapped := s.withErrorResultConversion(desc)
 		if desc == &resourcepb.ResourceStore_ServiceDesc {
-			wrapped = grpchan.InterceptServer(wrapped, metricsInt, nil)
+			desc = grpchan.InterceptServer(desc, metricsInt, nil)
 		}
 		if desc == &resourcepb.BlobStoreStreaming_ServiceDesc {
-			wrapped = grpchan.InterceptServer(wrapped, nil, resource.BlobStreamServerInterceptor(server))
+			desc = grpchan.InterceptServer(desc, nil, resource.BlobStreamServerInterceptor(server))
 		}
-		srv.RegisterService(wrapped, handler)
+		srv.RegisterService(desc, handler)
 	}
 	_, _ = grpcserver.ProvideReflectionService(s.cfg, provider)
 
@@ -682,17 +681,6 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 		}
 		resourcepb.RegisterVectorStoreServer(srv, vsHandler)
 	}
-}
-
-func (s *service) withErrorResultConversion(desc *grpc.ServiceDesc) *grpc.ServiceDesc {
-	if s.cfg != nil && s.cfg.UnifiedStorageGRPCErrorResultToStatus {
-		var streamInterceptor grpc.StreamServerInterceptor
-		if desc == &resourcepb.BlobStoreStreaming_ServiceDesc {
-			streamInterceptor = resource.BlobStreamErrorResultInterceptor()
-		}
-		return grpchan.InterceptServer(desc, resource.UnaryErrorResultInterceptor(), streamInterceptor)
-	}
-	return desc
 }
 
 // BuildKVSnapshotStore wires a KVRemoteIndexStore that shares the KV

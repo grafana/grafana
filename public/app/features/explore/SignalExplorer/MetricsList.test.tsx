@@ -773,16 +773,29 @@ describe('<MetricsList />', () => {
     });
 
     it.each([
-      ['metric name', 'Add up to query', 'up', 'name'],
-      ['label key', 'Add label job to query', 'job', 'name'],
-      ['label value', 'Add value web-1 to query', 'web-1', 'value'],
-    ])('adds the %s to the card’s query', async (_, buttonName, text, kind) => {
-      await openJob({ refId: 'B', editorMode: 'code' });
+      ['metric name', 'Add up to query', 'up', 'name', 'metric'],
+      ['label key', 'Add label job to query', 'job', 'name', 'label'],
+      ['label value', 'Add value web-1 to query', 'web-1', 'value', 'value'],
+    ])('adds the %s to the card’s query and reports it', async (_, buttonName, text, kind, itemType) => {
+      await openJob({
+        refId: 'B',
+        editorMode: 'code',
+        dsType: 'grafana-amazonprometheus-datasource',
+        stackedQueriesCount: 2,
+      });
+      reportInteractionMock.mockClear();
 
       await userEvent.click(screen.getByRole('button', { name: buttonName }));
 
       expect(onAddToQuery).toHaveBeenCalledTimes(1);
       expect(onAddToQuery).toHaveBeenCalledWith('B', text, kind);
+      expect(reportInteractionMock).toHaveBeenCalledTimes(1);
+      // The exact object, so the added text can never ride along as an extra property.
+      expect(reportInteractionMock).toHaveBeenCalledWith('signal_explorer_add_to_query_clicked', {
+        data_source_type: 'grafana-amazonprometheus-datasource',
+        stacked_queries_count: 2,
+        item_type: itemType,
+      });
     });
 
     it('offers nothing to add in Builder mode', async () => {

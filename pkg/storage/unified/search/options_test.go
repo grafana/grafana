@@ -16,6 +16,38 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
+func TestNewSearchOptionsExactCountThreshold(t *testing.T) {
+	for _, threshold := range []int{0, 100} {
+		t.Run(fmt.Sprint(threshold), func(t *testing.T) {
+			cfg := snapshotOptionsTestCfg(t)
+			cfg.EnableSearch = true
+			cfg.SearchPostRankAuthzExactCountThreshold = threshold
+			opts, err := NewSearchOptions(cfg, nil, resource.ProvideIndexMetrics(prometheus.NewRegistry()), nil, nil)
+			require.NoError(t, err)
+			t.Cleanup(opts.Backend.Stop)
+			backend := opts.Backend.(*bleveBackend)
+			require.Equal(t, threshold, backend.opts.PostRankAuthz.effective().ExactCountThreshold)
+		})
+	}
+}
+
+func TestNewSearchOptionsIndexCacheTTLIdleOnly(t *testing.T) {
+	for _, idleOnly := range []bool{false, true} {
+		t.Run(fmt.Sprint(idleOnly), func(t *testing.T) {
+			cfg := snapshotOptionsTestCfg(t)
+			cfg.EnableSearch = true
+			cfg.IndexCacheTTL = 4 * time.Hour
+			cfg.IndexCacheTTLIdleOnly = idleOnly
+			opts, err := NewSearchOptions(cfg, nil, resource.ProvideIndexMetrics(prometheus.NewRegistry()), nil, nil)
+			require.NoError(t, err)
+			t.Cleanup(opts.Backend.Stop)
+			backend := opts.Backend.(*bleveBackend)
+			require.Equal(t, idleOnly, backend.opts.IndexCacheTTLIdleOnly)
+			require.Equal(t, 4*time.Hour, backend.opts.IndexCacheTTL)
+		})
+	}
+}
+
 func TestNewSearchOptionsGlobalIndexStartupBuild(t *testing.T) {
 	for _, startupBuild := range []bool{false, true} {
 		t.Run(fmt.Sprint(startupBuild), func(t *testing.T) {
@@ -28,6 +60,22 @@ func TestNewSearchOptionsGlobalIndexStartupBuild(t *testing.T) {
 			t.Cleanup(opts.Backend.Stop)
 			require.True(t, opts.GlobalIndexEnabled)
 			require.Equal(t, startupBuild, opts.GlobalIndexStartupBuild)
+		})
+	}
+}
+
+func TestNewSearchOptionsCarriesAllowedReadServices(t *testing.T) {
+	for _, enabled := range []bool{false, true} {
+		t.Run(fmt.Sprint(enabled), func(t *testing.T) {
+			cfg := snapshotOptionsTestCfg(t)
+			cfg.EnableSearch = enabled
+			cfg.VectorAllowedReadServices = map[string][]string{"g/r": {"assistant"}}
+			opts, err := NewSearchOptions(cfg, nil, resource.ProvideIndexMetrics(prometheus.NewRegistry()), nil, nil)
+			require.NoError(t, err)
+			if opts.Backend != nil {
+				t.Cleanup(opts.Backend.Stop)
+			}
+			require.Equal(t, []string{"assistant"}, opts.AllowedReadServices["g/r"])
 		})
 	}
 }
@@ -59,7 +107,7 @@ func TestNewSearchOptionsEmbeddingConfig(t *testing.T) {
 			for _, manifest := range resource.AppManifests() {
 				for _, version := range manifest.Versions {
 					for _, kind := range version.Kinds {
-						gvr := schema.GroupVersionResource{Group: manifest.Group, Version: version.Name, Resource: resource.ManifestResourceName(kind)}
+						gvr := schema.GroupVersionResource{Group: manifest.Group, Version: version.Name, Resource: kind.Resource}
 						config, ok := opts.EmbeddingConfig.For(gvr)
 						require.Equal(t, kind.Embed != nil, ok, "%s", gvr)
 						if kind.Embed != nil {

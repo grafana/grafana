@@ -1,6 +1,7 @@
 import { HttpResponse, http } from 'msw';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
+import { type GrafanaConfig, locationUtil } from '@grafana/data';
 import { type Dashboard } from '@grafana/schema';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
@@ -11,6 +12,11 @@ import {
   AnnoKeySourcePath,
   ManagerKind,
 } from 'app/features/apiserver/types';
+import {
+  type CommittedPendingChanges,
+  finishCommittingPendingChanges,
+  getCommittedPendingChanges,
+} from 'app/features/dashboard-scene/lifecycle/pendingChangesSave';
 import { type SaveDashboardDrawer } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
@@ -81,6 +87,11 @@ jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => {
     },
   };
 });
+
+jest.mock('app/features/dashboard-scene/lifecycle/pendingChangesSave', () => ({
+  getCommittedPendingChanges: jest.fn(() => undefined),
+  finishCommittingPendingChanges: jest.fn(async () => undefined),
+}));
 
 const mockNavigate = jest.fn();
 jest.mock('react-router-dom-v5-compat', () => {
@@ -159,6 +170,7 @@ function setup(props: Partial<Props> = {}) {
       name: 'test-repo',
       title: 'Test Repo',
       workflows: ['branch', 'write'],
+      branch: 'main',
       target: 'folder',
     },
     defaultValues: {
@@ -169,7 +181,6 @@ function setup(props: Partial<Props> = {}) {
       folder: { uid: 'folder-uid', title: '' },
       title: 'Test Dashboard',
       description: 'Test Description',
-      workflow: 'write',
     },
     readOnly: false,
     canPushToConfiguredBranch: true,
@@ -188,15 +199,18 @@ function setupFolderless(
     repository?: Partial<NonNullable<Props['repository']>>;
     defaultValues?: Partial<Props['defaultValues']>;
     isHeld?: boolean;
+    canPushToConfiguredBranch?: boolean;
   } = {}
 ) {
   return setup({
     isHeld: overrides.isHeld ?? false,
+    canPushToConfiguredBranch: overrides.canPushToConfiguredBranch ?? true,
     repository: {
       type: 'github',
       name: 'test-repo',
       title: 'Test Repo',
       workflows: ['write'],
+      branch: 'main',
       target: 'folderless',
       ...overrides.repository,
     },
@@ -208,7 +222,6 @@ function setupFolderless(
       folder: { uid: '', title: '' },
       title: 'Test Dashboard',
       description: '',
-      workflow: 'write',
       ...overrides.defaultValues,
     },
   });
@@ -241,9 +254,12 @@ function requireCapturedRequest(capturedRequest: { url: URL; body: unknown } | n
   return capturedRequest as { url: URL; body: unknown };
 }
 
-// Minimal ResourceWrapper body the real useProvisionedRequestHandler can consume
-function saveSuccessResponse(name: string, title: string) {
+// Minimal ResourceWrapper body the real useProvisionedRequestHandler can consume. Echoes the request's
+// ref the way the backend does: present for a branch commit, absent for a direct write.
+function saveSuccessResponse(request: Request, name: string, title: string) {
   return HttpResponse.json({
+    ref: new URL(request.url).searchParams.get('ref') ?? undefined,
+    path: 'test-dashboard.json',
     resource: {
       upsert: {
         apiVersion: 'v1',
@@ -263,6 +279,12 @@ describe('SaveProvisionedDashboardForm', () => {
     capturedRequest = null;
     jest.clearAllMocks();
     (validationSrv.validateNewDashboardName as jest.Mock).mockResolvedValue(true);
+    // Serve from a sub path: the router basename carries it, so navigate() must get bare paths
+    locationUtil.initialize({
+      config: { appSubUrl: '/grafana' } as GrafanaConfig,
+      getTimeRangeForUrl: jest.fn(),
+      getVariablesUrlParams: jest.fn(),
+    });
   });
 
   afterEach(() => {
@@ -303,7 +325,7 @@ describe('SaveProvisionedDashboardForm', () => {
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const url = new URL(request.url);
         capturedRequest = { url, body: await request.json() };
-        return saveSuccessResponse('new-dashboard', 'New Dashboard');
+        return saveSuccessResponse(request, 'new-dashboard', 'New Dashboard');
       })
     );
 
@@ -358,7 +380,7 @@ describe('SaveProvisionedDashboardForm', () => {
     await waitFor(() => {
       expect(props.dashboard.saveCompleted).toHaveBeenCalled();
     });
-    expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining('/d/new-dashboard'));
+    expect(mockNavigate).toHaveBeenCalledWith('/d/new-dashboard/new-dashboard');
     expect(dashboardWatcher.clearIgnoreSave).toHaveBeenCalled();
   });
 
@@ -367,7 +389,7 @@ describe('SaveProvisionedDashboardForm', () => {
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const url = new URL(request.url);
         capturedRequest = { url, body: await request.json() };
-        return saveSuccessResponse('new-dashboard', 'Test Dashboard');
+        return saveSuccessResponse(request, 'new-dashboard', 'Test Dashboard');
       })
     );
 
@@ -405,7 +427,7 @@ describe('SaveProvisionedDashboardForm', () => {
       http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const url = new URL(request.url);
         capturedRequest = { url, body: await request.json() };
-        return saveSuccessResponse('test-dashboard', 'Test Dashboard');
+        return saveSuccessResponse(request, 'test-dashboard', 'Test Dashboard');
       })
     );
 
@@ -484,7 +506,7 @@ describe('SaveProvisionedDashboardForm', () => {
       http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const url = new URL(request.url);
         capturedRequest = { url, body: await request.json() };
-        return saveSuccessResponse('test-dashboard', 'Test Dashboard');
+        return saveSuccessResponse(request, 'test-dashboard', 'Test Dashboard');
       })
     );
 
@@ -742,7 +764,7 @@ describe('SaveProvisionedDashboardForm', () => {
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const url = new URL(request.url);
         capturedRequest = { url, body: await request.json() };
-        return saveSuccessResponse('test-dashboard', 'Test Dashboard');
+        return saveSuccessResponse(request, 'test-dashboard', 'Test Dashboard');
       })
     );
 
@@ -768,7 +790,6 @@ describe('SaveProvisionedDashboardForm', () => {
         folder: { uid: 'folder-uid', title: '' },
         title: 'Test Dashboard',
         description: 'Test Description',
-        workflow: 'write',
       },
       dashboard: {
         state: {
@@ -831,7 +852,7 @@ describe('SaveProvisionedDashboardForm', () => {
       http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const url = new URL(request.url);
         capturedRequest = { url, body: await request.json() };
-        return saveSuccessResponse('test-dashboard', 'Test Dashboard');
+        return saveSuccessResponse(request, 'test-dashboard', 'Test Dashboard');
       })
     );
 
@@ -857,7 +878,6 @@ describe('SaveProvisionedDashboardForm', () => {
         folder: { uid: 'folder-uid', title: '' },
         title: 'Test Dashboard',
         description: 'Test Description',
-        workflow: 'write',
       },
       dashboard: {
         state: {
@@ -921,7 +941,6 @@ describe('SaveProvisionedDashboardForm', () => {
         folder: { uid: 'folder-uid', title: '' },
         title: 'Test Dashboard',
         description: 'Test Description',
-        workflow: 'write',
       },
       dashboard: {
         state: {
@@ -1075,16 +1094,17 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(await screen.findByRole('button', { name: /save/i })).toBeEnabled();
   });
 
-  it('should enable save in the deleted-branch recovery with no other changes', () => {
+  it('should enable save in the deleted-branch recovery with no other changes', async () => {
     // Recovery installs the generated branch as a default (never marks ref dirty) on an
-    // otherwise-unchanged preview, so Save must be enabled on the recovery flag alone.
+    // otherwise-unchanged preview, so Save must be enabled on the recovery flag alone once the
+    // refs have classified that branch.
     setup({
       dashboard: makeNotDirtyDashboard(),
       isNew: false,
       recoverToNewBranch: { fileExistsOnConfiguredBranch: true },
     });
 
-    expect(screen.getByRole('button', { name: /save/i })).toBeEnabled();
+    await waitFor(() => expect(screen.getByRole('button', { name: /save/i })).toBeEnabled());
   });
 
   it('creates (not updates) in the deleted-branch recovery when the dashboard only existed on that branch', async () => {
@@ -1100,7 +1120,7 @@ describe('SaveProvisionedDashboardForm', () => {
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const url = new URL(request.url);
         capturedRequest = { url, body: await request.json() };
-        return saveSuccessResponse('test-dashboard', 'Test Dashboard');
+        return saveSuccessResponse(request, 'test-dashboard', 'Test Dashboard');
       })
     );
 
@@ -1134,7 +1154,6 @@ describe('SaveProvisionedDashboardForm', () => {
         folder: { uid: 'folder-uid', title: '' },
         title: 'Test Dashboard',
         description: 'Test Description',
-        workflow: 'branch',
       },
     });
 
@@ -1158,7 +1177,7 @@ describe('SaveProvisionedDashboardForm', () => {
       http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const url = new URL(request.url);
         capturedRequest = { url, body: await request.json() };
-        return saveSuccessResponse('test-dashboard', 'Test Dashboard');
+        return saveSuccessResponse(request, 'test-dashboard', 'Test Dashboard');
       })
     );
 
@@ -1189,7 +1208,6 @@ describe('SaveProvisionedDashboardForm', () => {
         folder: { uid: 'folder-uid', title: '' },
         title: 'Test Dashboard',
         description: 'Test Description',
-        workflow: 'write',
       },
     });
 
@@ -1203,6 +1221,154 @@ describe('SaveProvisionedDashboardForm', () => {
 
     await waitFor(() => expect(dashboard.saveCompleted).toHaveBeenCalled());
     expect(mockNavigate).toHaveBeenCalledWith('/d/test-dashboard');
+  });
+
+  describe('pending changes', () => {
+    const committed = {
+      uid: 'test-dashboard',
+      preview: { id: 'chat-1', pending: { baseGeneration: 3 }, saved: { generation: 3 } },
+    } as unknown as CommittedPendingChanges;
+    const fullSaveModel = { title: 'Test Dashboard', annotations: [{ spec: { query: { spec: {} } } }] };
+
+    beforeEach(() => {
+      jest.mocked(getCommittedPendingChanges).mockReturnValue(committed);
+      server.use(
+        http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+          capturedRequest = { url: new URL(request.url), body: await request.json() };
+          return saveSuccessResponse(request, 'test-dashboard', 'Test Dashboard');
+        })
+      );
+    });
+
+    afterEach(() => {
+      jest.mocked(getCommittedPendingChanges).mockReturnValue(undefined);
+    });
+
+    function setupPendingChanges(ref: string) {
+      // Loaded as the dashboard, pending changes leave the scene clean.
+      const dashboard = makeNotDirtyDashboard();
+      dashboard.getSaveModel = jest.fn().mockReturnValue(fullSaveModel);
+      dashboard.getSaveResourceFromSpec = jest.fn((spec) => ({ metadata: { name: 'test-dashboard' }, spec }));
+      return setup({
+        dashboard,
+        isNew: false,
+        defaultValues: {
+          ref,
+          path: 'test-dashboard.json',
+          repo: 'test-repo',
+          comment: '',
+          folder: { uid: 'folder-uid', title: '' },
+          title: 'Test Dashboard',
+          description: 'Test Description',
+        },
+      });
+    }
+
+    it('commits them whole to the configured branch, then has their plugin discard them', async () => {
+      const { user, props } = setupPendingChanges('main');
+
+      await user.click(screen.getByRole('button', { name: /save/i }));
+
+      await waitFor(() => expect(finishCommittingPendingChanges).toHaveBeenCalled());
+      // Not the diff's model, which leaves out the empty values the dashboard needs.
+      expect(props.dashboard.getSaveResourceFromSpec).toHaveBeenCalledWith(fullSaveModel);
+      expect(requireCapturedRequest(capturedRequest).url.searchParams.has('ref')).toBe(false);
+      expect(finishCommittingPendingChanges).toHaveBeenCalledWith(props.dashboard, committed, { showSaved: true });
+    });
+
+    it('commits them to a new branch, then has their plugin discard them without showing the saved dashboard', async () => {
+      const { user, props } = setupPendingChanges('dashboard/2023-01-01-abcde');
+
+      await user.click(screen.getByRole('button', { name: /save/i }));
+
+      await waitFor(() => expect(finishCommittingPendingChanges).toHaveBeenCalled());
+      expect(requireCapturedRequest(capturedRequest).url.searchParams.get('ref')).toBe('dashboard/2023-01-01-abcde');
+      expect(finishCommittingPendingChanges).toHaveBeenCalledWith(props.dashboard, committed, { showSaved: false });
+    });
+
+    it('asks before committing them over a version someone saved since they started', async () => {
+      const update = jest.fn();
+      jest.mocked(getCommittedPendingChanges).mockReturnValue({
+        uid: 'test-dashboard',
+        preview: { id: 'chat-1', pending: { baseGeneration: 3, update }, saved: { generation: 5 } },
+      } as unknown as CommittedPendingChanges);
+      const { user, props } = setupPendingChanges('main');
+
+      expect(screen.getByText('Someone else has updated this dashboard')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Save and overwrite' })).toBeEnabled();
+
+      await user.click(screen.getByRole('button', { name: 'Ask Assistant to update' }));
+
+      expect(update).toHaveBeenCalledTimes(1);
+      expect(props.drawer.onClose).toHaveBeenCalled();
+      expect(capturedRequest).toBeNull();
+    });
+  });
+
+  it('sends the ref and lands on the preview when saving to an existing non-configured branch', async () => {
+    let savedUrl: URL | null = null;
+    const handler = async ({ request }: { request: Request }) => {
+      savedUrl = new URL(request.url);
+      return HttpResponse.json({
+        ref: 'develop',
+        path: 'test-dashboard.json',
+        resource: {
+          upsert: {
+            apiVersion: 'v1',
+            kind: 'Dashboard',
+            metadata: { name: 'test-dashboard', uid: 'test-dashboard' },
+            spec: { title: 'Test Dashboard' },
+          },
+        },
+      });
+    };
+    server.use(
+      http.put(`${BASE}/repositories/:name/files/*`, handler),
+      http.post(`${BASE}/repositories/:name/files/*`, handler)
+    );
+
+    const dashboard = makeNotDirtyDashboard();
+    dashboard.getSaveResourceFromSpec = jest.fn().mockReturnValue({
+      apiVersion: 'dashboard.grafana.app/vXyz',
+      metadata: { name: 'test-dashboard' },
+      spec: { title: 'Test Dashboard' },
+    });
+
+    const { user } = setup({
+      dashboard,
+      isNew: false,
+      repository: {
+        type: 'github',
+        name: 'test-repo',
+        title: 'Test Repo',
+        workflows: ['branch', 'write'],
+        branch: 'main',
+        target: 'folder',
+      },
+      defaultValues: {
+        ref: 'develop',
+        path: 'test-dashboard.json',
+        repo: 'test-repo',
+        comment: '',
+        folder: { uid: 'folder-uid', title: '' },
+        title: 'Test Dashboard',
+        description: 'Test Description',
+      },
+    });
+
+    // The scene is not dirty, so a comment change is what enables Save.
+    const commentInput = screen.getByRole('textbox', { name: /comment/i });
+    await user.type(commentInput, 'Save to develop');
+
+    await user.click(screen.getByRole('button', { name: /save/i }));
+
+    await waitFor(() => expect(savedUrl).not.toBeNull());
+    expect(savedUrl!.searchParams.get('ref')).toBe('develop');
+
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalled());
+    const target = mockNavigate.mock.calls.at(-1)![0] as string;
+    expect(target).toContain('/preview/');
+    expect(target).toContain('ref=develop');
   });
 
   it('should properly handle read-only state for a repository without workflows', () => {
@@ -1291,7 +1457,6 @@ describe('SaveProvisionedDashboardForm', () => {
       folder: { uid: 'folder-uid', title: '' },
       title: 'Test Dashboard',
       description: 'Test Description',
-      workflow: 'branch',
     };
 
     it('sends the enforced template branch as ref to the /files endpoint on save', async () => {
@@ -1300,7 +1465,7 @@ describe('SaveProvisionedDashboardForm', () => {
       server.use(
         http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
           capturedRequest = { url: new URL(request.url), body: await request.json() };
-          return saveSuccessResponse('new-dashboard', 'Test Dashboard');
+          return saveSuccessResponse(request, 'new-dashboard', 'Test Dashboard');
         })
       );
 
@@ -1337,7 +1502,6 @@ describe('SaveProvisionedDashboardForm', () => {
           folder: { uid: 'folder-uid', title: '' },
           title: '',
           description: '',
-          workflow: 'write',
         },
       });
 
@@ -1360,7 +1524,6 @@ describe('SaveProvisionedDashboardForm', () => {
           folder: { uid: 'folder-uid', title: '' },
           title: '',
           description: '',
-          workflow: 'write',
         },
       });
 
@@ -1385,7 +1548,6 @@ describe('SaveProvisionedDashboardForm', () => {
           folder: { uid: 'folder-uid', title: '' },
           title: '',
           description: '',
-          workflow: 'write',
         },
       });
 
@@ -1421,7 +1583,6 @@ describe('SaveProvisionedDashboardForm', () => {
           folder: { uid: 'folder-uid', title: '' },
           title: '',
           description: '',
-          workflow: 'write',
         },
       });
 
@@ -1443,7 +1604,6 @@ describe('SaveProvisionedDashboardForm', () => {
           folder: { uid: 'folder-uid', title: '' },
           title: 'Existing Dashboard',
           description: '',
-          workflow: 'write',
         },
       });
 
@@ -1457,7 +1617,7 @@ describe('SaveProvisionedDashboardForm', () => {
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const url = new URL(request.url);
         capturedRequest = { url, body: await request.json() };
-        return saveSuccessResponse('test-dashboard', 'Raw JSON Dashboard');
+        return saveSuccessResponse(request, 'test-dashboard', 'Raw JSON Dashboard');
       })
     );
 
@@ -1514,7 +1674,7 @@ describe('SaveProvisionedDashboardForm', () => {
     });
 
     const saveButton = screen.getByRole('button', { name: /save/i });
-    expect(saveButton).toBeEnabled();
+    await waitFor(() => expect(saveButton).toBeEnabled());
 
     const commentInput = screen.getByRole('textbox', { name: /comment/i });
     await user.clear(commentInput);
@@ -1548,15 +1708,15 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(screen.queryByRole('button', { name: /new folder/i })).not.toBeInTheDocument();
   });
 
-  it('does not show New folder button when workflow is branch', async () => {
-    setupFolderless({ repository: { workflows: ['branch'] }, defaultValues: { workflow: 'branch' } });
+  it('does not show New folder button when the save targets a branch', async () => {
+    setupFolderless({ repository: { workflows: ['branch'] }, defaultValues: { ref: 'dashboard/new-branch' } });
 
     await screen.findByRole('form');
     expect(screen.queryByRole('button', { name: /new folder/i })).not.toBeInTheDocument();
   });
 
   it('does not show New folder button for read-only repos (no workflow)', async () => {
-    setupFolderless({ repository: { workflows: [] }, defaultValues: { workflow: undefined } });
+    setupFolderless({ repository: { workflows: [] }, canPushToConfiguredBranch: false });
 
     await screen.findByRole('form');
     expect(screen.queryByRole('button', { name: /new folder/i })).not.toBeInTheDocument();
@@ -1601,7 +1761,7 @@ describe('SaveProvisionedDashboardForm', () => {
     server.use(
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         dashboardRequest = { url: new URL(request.url), body: await request.json() };
-        return saveSuccessResponse('new-dashboard', 'Test Dashboard');
+        return saveSuccessResponse(request, 'new-dashboard', 'Test Dashboard');
       })
     );
 
@@ -1653,7 +1813,7 @@ describe('SaveProvisionedDashboardForm', () => {
     server.use(
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         dashboardRequest = { url: new URL(request.url), body: await request.json() };
-        return saveSuccessResponse('new-dashboard', 'Test Dashboard');
+        return saveSuccessResponse(request, 'new-dashboard', 'Test Dashboard');
       })
     );
 
@@ -1767,7 +1927,6 @@ describe('SaveProvisionedDashboardForm', () => {
         folder: { uid: 'my-team-uid', title: 'My Team' },
         title: 'Test Dashboard',
         description: '',
-        workflow: 'write',
       },
     });
 
@@ -1804,7 +1963,7 @@ describe('SaveProvisionedDashboardForm', () => {
           });
         }
         dashboardRequest = { url, body };
-        return saveSuccessResponse('new-dashboard', 'Test Dashboard');
+        return saveSuccessResponse(request, 'new-dashboard', 'Test Dashboard');
       })
     );
 
@@ -1850,7 +2009,7 @@ describe('SaveProvisionedDashboardForm', () => {
           });
         }
         dashboardRequest = { url: new URL(request.url), body };
-        return saveSuccessResponse('new-dashboard', 'Test Dashboard');
+        return saveSuccessResponse(request, 'new-dashboard', 'Test Dashboard');
       })
     );
 
@@ -1906,7 +2065,7 @@ describe('SaveProvisionedDashboardForm', () => {
           });
         }
         dashboardRequest = { url, body };
-        return saveSuccessResponse('new-dashboard', 'Test Dashboard');
+        return saveSuccessResponse(request, 'new-dashboard', 'Test Dashboard');
       })
     );
 
@@ -1949,7 +2108,7 @@ describe('SaveProvisionedDashboardForm', () => {
           });
         }
         dashboardRequest = { url, body };
-        return saveSuccessResponse('new-dashboard', 'Test Dashboard');
+        return saveSuccessResponse(request, 'new-dashboard', 'Test Dashboard');
       })
     );
 
@@ -2011,7 +2170,7 @@ describe('SaveProvisionedDashboardForm', () => {
           return HttpResponse.json({ resource: { upsert: null } });
         }
         dashboardRequest = { url, body };
-        return saveSuccessResponse('new-dashboard', 'Test Dashboard');
+        return saveSuccessResponse(request, 'new-dashboard', 'Test Dashboard');
       })
     );
 
@@ -2184,10 +2343,9 @@ describe('SaveProvisionedDashboardForm branch name template', () => {
     folder: { uid: 'folder-uid', title: '' },
     title: 'Test Dashboard',
     description: 'Test Description',
-    workflow: 'branch' as const,
   };
 
-  it('pre-fills the branch name from the repository template on the branch workflow', async () => {
+  it('pre-fills the branch name from the repository template for a new branch', async () => {
     setup({
       repository: {
         type: 'github',

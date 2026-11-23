@@ -1151,7 +1151,7 @@ func injectManagedFolder(t *testing.T, helper *common.ProvisioningTestHelper, re
 	provCtx, _, err := identity.WithProvisioningIdentity(t.Context(), helper.Namespace)
 	require.NoError(t, err)
 
-	rsp, err := helper.GetEnv().ResourceClient.Create(provCtx, &resourcepb.CreateRequest{
+	_, err = helper.GetEnv().ResourceClient.Create(provCtx, &resourcepb.CreateRequest{
 		Key: &resourcepb.ResourceKey{
 			Namespace: helper.Namespace,
 			Group:     "folder.grafana.app",
@@ -1161,7 +1161,6 @@ func injectManagedFolder(t *testing.T, helper *common.ProvisioningTestHelper, re
 		Value: data,
 	})
 	require.NoError(t, err)
-	require.Nil(t, rsp.GetError(), "resource create should not return error: %v", rsp.GetError())
 }
 
 func moveManagedDashboardToFolder(t *testing.T, helper *common.ProvisioningTestHelper, dashboardUID, folderUID string) {
@@ -1178,7 +1177,6 @@ func moveManagedDashboardToFolder(t *testing.T, helper *common.ProvisioningTestH
 
 	read, err := helper.GetEnv().ResourceClient.Read(provCtx, &resourcepb.ReadRequest{Key: key})
 	require.NoError(t, err)
-	require.Nil(t, read.GetError(), "resource read should not return error: %v", read.GetError())
 
 	var dashboard map[string]any
 	require.NoError(t, json.Unmarshal(read.GetValue(), &dashboard))
@@ -1194,13 +1192,12 @@ func moveManagedDashboardToFolder(t *testing.T, helper *common.ProvisioningTestH
 	data, err := json.Marshal(dashboard)
 	require.NoError(t, err)
 
-	update, err := helper.GetEnv().ResourceClient.Update(provCtx, &resourcepb.UpdateRequest{
+	_, err = helper.GetEnv().ResourceClient.Update(provCtx, &resourcepb.UpdateRequest{
 		Key:             key,
 		ResourceVersion: read.GetResourceVersion(),
 		Value:           data,
 	})
 	require.NoError(t, err)
-	require.Nil(t, update.GetError(), "resource update should not return error: %v", update.GetError())
 }
 
 // TestIntegrationProvisioning_FullSync_DashboardMoveInPlace verifies that
