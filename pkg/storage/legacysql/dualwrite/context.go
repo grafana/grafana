@@ -8,6 +8,7 @@ import (
 
 type ctxKey struct{}
 type mirroredUpdateKey struct{}
+type mirroredCreateKey struct{}
 
 type dualWriteContext struct {
 	updatedSecureValues resource.InlineSecureValues
@@ -33,6 +34,16 @@ func getUpdatedSecureValues(ctx context.Context) resource.InlineSecureValues {
 		return nil
 	}
 	return u.updatedSecureValues
+}
+
+func withMirroredCreate(ctx context.Context) context.Context {
+	return context.WithValue(ctx, mirroredCreateKey{}, true)
+}
+
+// IsMirroredCreate reports whether dualWriter is copying an accepted legacy create to Unified Storage.
+func IsMirroredCreate(ctx context.Context) bool {
+	mirrored, _ := ctx.Value(mirroredCreateKey{}).(bool)
+	return mirrored
 }
 
 func withMirroredUpdate(ctx context.Context) context.Context {

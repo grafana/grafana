@@ -138,7 +138,7 @@ var BasicSet = wire.NewSet(
 	wire.Bind(new(registry.UsageStatsProvidersRegistry), new(*usagestatssvcs.UsageStatsProvidersRegistry)),
 	ossaccesscontrol.ProvideDatasourcePermissionsService,
 	wire.Bind(new(accesscontrol.DatasourcePermissionsService), new(*ossaccesscontrol.DatasourcePermissionsService)),
-	datasourceservice.ProvideNilPermissionsDeleter,
+	datasourceservice.ProvideNilPermissionsLifecycle,
 	pluginsintegration.WireExtensionSet,
 	publicdashboards.ProvideMiddleware,
 	publicdashboards.ProvideServiceWrapper,

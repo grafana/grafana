@@ -77,7 +77,7 @@ type DataSourceAPIBuilder struct {
 	// health), matching the legacy HTTP API behavior.
 	dataSourceRequestValidator validations.DataSourceRequestValidator
 
-	permissionsDeleter datasources.PermissionsDeleter
+	permissionsLifecycle datasources.PermissionsLifecycle
 
 	// Legacy or Unified -- depending on config
 	store grafanarest.Storage
@@ -95,7 +95,7 @@ func RegisterAPIService(
 	pluginSources sources.Registry,
 	dataSourceRequestValidator validations.DataSourceRequestValidator,
 	proxyDependencies ProxyDependenciesProvider,
-	permissionsDeleter datasources.PermissionsDeleter,
+	permissionsLifecycle datasources.PermissionsLifecycle,
 ) (*DataSourceAPIBuilder, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagDatasourceUseNewCRUDAPIs) {
@@ -157,7 +157,7 @@ func RegisterAPIService(
 			flags,
 			dataSourceRequestValidator,
 			proxyDependencies,
-			permissionsDeleter,
+			permissionsLifecycle,
 		)
 		if err != nil {
 			return nil, err
@@ -196,7 +196,7 @@ func NewDataSourceAPIBuilder(
 	cfg DataSourceAPIBuilderConfig,
 	dataSourceRequestValidator validations.DataSourceRequestValidator,
 	proxyDependencies ProxyDependenciesProvider,
-	permissionsDeleter datasources.PermissionsDeleter,
+	permissionsLifecycle datasources.PermissionsLifecycle,
 ) (*DataSourceAPIBuilder, error) {
 	registerSubresourceMetrics(prometheus.DefaultRegisterer)
 
@@ -211,7 +211,7 @@ func NewDataSourceAPIBuilder(
 		cfg:                        cfg,
 		dataSourceRequestValidator: dataSourceRequestValidator,
 		proxyDependencies:          proxyDependencies,
-		permissionsDeleter:         permissionsDeleter,
+		permissionsLifecycle:       permissionsLifecycle,
 	}
 	return builder, nil
 }
@@ -315,10 +315,12 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		if err != nil {
 			return err
 		}
-		if b.permissionsDeleter != nil {
+		var unifiedStore grafanarest.Storage = unified
+		if b.permissionsLifecycle != nil {
 			unified.AfterDelete = b.afterDelete
+			unifiedStore = &unifiedDatasourceStorage{Store: unified, permissions: b.permissionsLifecycle}
 		}
-		b.store, err = opts.DualWriteBuilder(ds.GroupResource(), legacyStore, unified)
+		b.store, err = opts.DualWriteBuilder(ds.GroupResource(), legacyStore, unifiedStore)
 		if err != nil {
 			return err
 		}

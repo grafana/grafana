@@ -275,6 +275,7 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 		}
 	}
 
+	ctx = withMirroredCreate(ctx)
 	if errorIsOK {
 		// If we don't use unified as the primary store and errors are okay, let's create it in the background.
 		go func(ctxBg context.Context, cancel context.CancelFunc) {

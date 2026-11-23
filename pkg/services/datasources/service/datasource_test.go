@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/authlib/types"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -731,15 +732,20 @@ func TestIntegrationService_DeleteDataSource(t *testing.T) {
 		permissionSvc.AssertExpectations(t)
 	})
 
-	t.Run("with a permissions deleter it replaces the SQL permission cleanup", func(t *testing.T) {
+	t.Run("with a lifecycle client, legacy creates seed locally and deletion cleans up through IAM", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(legacysql.NewDatabaseProvider(sqlStore), secretsService, log.New("test.logger"))
 		permissionSvc := acmock.NewMockedPermissionsService()
-		permissionSvc.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil).Maybe()
+		permissionSvc.On("SetPermissions", mock.Anything, int64(2), "ds-uid", []accesscontrol.SetResourcePermissionCommand{
+			{BuiltinRole: "Viewer", Permission: "Query"},
+			{BuiltinRole: "Editor", Permission: "Query"},
+		}).Return([]accesscontrol.ResourcePermission{}, nil).Once()
 		deleter := &recordingPermissionsDeleter{}
 		features := featuremgmt.WithFeatures()
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, &setting.Cfg{}, features, acmock.New(), permissionSvc, quotatest.New(false, nil), &pluginstore.FakePluginStore{}, ProvideDataSourceRetriever(sqlStore, features), deleter)
+		cfg := &setting.Cfg{}
+		enableRBACManagedPermissions(t, cfg)
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(), permissionSvc, quotatest.New(false, nil), &pluginstore.FakePluginStore{}, ProvideDataSourceRetriever(sqlStore, features), deleter)
 		require.NoError(t, err)
 		ds, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{OrgID: 2, Name: "test", Type: "test", UID: "ds-uid"})
 		require.NoError(t, err)
@@ -749,12 +755,17 @@ func TestIntegrationService_DeleteDataSource(t *testing.T) {
 
 		require.Equal(t, []deletedPermissions{{namespace: "org-2", name: "ds-uid"}}, deleter.calls)
 		permissionSvc.AssertNotCalled(t, "DeleteResourcePermissions", mock.Anything, mock.Anything, mock.Anything)
+		permissionSvc.AssertExpectations(t)
 	})
 }
 
 type deletedPermissions struct{ namespace, name string }
 
 type recordingPermissionsDeleter struct{ calls []deletedPermissions }
+
+func (*recordingPermissionsDeleter) SetDefault(context.Context, string, string, []iamv0.ResourcePermissionspecPermission) error {
+	return errors.New("unexpected IAM default grant in legacy datasource service")
+}
 
 func (r *recordingPermissionsDeleter) DeletePermissions(_ context.Context, namespace, name string) error {
 	r.calls = append(r.calls, deletedPermissions{namespace: namespace, name: name})
