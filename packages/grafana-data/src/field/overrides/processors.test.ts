@@ -360,15 +360,6 @@ describe('isVarMappingExpressionInput', () => {
   });
 });
 
-describe('isInVarMappingRange', () => {
-  it('checks the min and max that are set', () => {
-    expect(isInVarMappingRange(10, { min: 0, max: 10 })).toBe(true);
-    expect(isInVarMappingRange(11, { min: 0, max: 10 })).toBe(false);
-    expect(isInVarMappingRange(-1, { min: 0 })).toBe(false);
-    expect(isInVarMappingRange(-1, undefined)).toBe(true);
-  });
-});
-
 describe('hasVarMappingVariableReference', () => {
   it('finds $var, ${var} and [[var]] references, but not a lone or literal $', () => {
     expect(hasVarMappingVariableReference('$b')).toBe(true);

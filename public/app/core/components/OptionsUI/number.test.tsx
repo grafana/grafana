@@ -281,4 +281,43 @@ describe('VarMappingNumberValueEditor', () => {
     );
     expect(screen.getByRole('textbox')).toHaveValue('7');
   });
+
+  it('keeps a lone $ as typed without storing it', () => {
+    const onChange = jest.fn();
+    render(
+      <VarMappingNumberValueEditor value={5} onChange={onChange} item={varItem} context={{ data: [] }} id="n13" />
+    );
+
+    fireEvent.blur(screen.getByRole('textbox'), { target: { value: '$' } });
+
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('rejects typed numbers out of the settings range, like the number input', () => {
+    const onChange = jest.fn();
+    const ranged = { settings: { min: 0, max: 10 } } as typeof varItem;
+    render(<VarMappingNumberValueEditor value={5} onChange={onChange} item={ranged} context={{ data: [] }} id="n14" />);
+
+    fireEvent.blur(screen.getByRole('textbox'), { target: { value: '50' } });
+    expect(onChange).not.toHaveBeenCalled();
+    expect(screen.getByText('Out of range. Range: 0 to 10')).toBeInTheDocument();
+
+    fireEvent.blur(screen.getByRole('textbox'), { target: { value: '8' } });
+    expect(onChange).toHaveBeenCalledWith(8);
+    expect(screen.queryByText('Out of range. Range: 0 to 10')).not.toBeInTheDocument();
+  });
+
+  it('commits once for Enter followed by blur', () => {
+    const onChange = jest.fn();
+    render(
+      <VarMappingNumberValueEditor value={5} onChange={onChange} item={varItem} context={{ data: [] }} id="n15" />
+    );
+
+    const input = screen.getByRole('textbox');
+    fireEvent.change(input, { target: { value: '6' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    fireEvent.blur(input);
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
 });
