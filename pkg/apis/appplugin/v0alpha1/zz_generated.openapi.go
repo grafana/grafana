@@ -8,6 +8,7 @@
 package v0alpha1
 
 import (
+	resource "github.com/grafana/grafana-app-sdk/resource"
 	commonv0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	common "k8s.io/kube-openapi/pkg/common"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
@@ -117,7 +118,7 @@ func schema_pkg_apis_appplugin_v0alpha1_Settings(ref common.ReferenceCallback) c
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref(commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()),
+										Ref: ref(resource.InlineSecureValue{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -127,7 +128,7 @@ func schema_pkg_apis_appplugin_v0alpha1_Settings(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
-			commonv0alpha1.InlineSecureValue{}.OpenAPIModelName(), SettingsSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			resource.InlineSecureValue{}.OpenAPIModelName(), SettingsSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
