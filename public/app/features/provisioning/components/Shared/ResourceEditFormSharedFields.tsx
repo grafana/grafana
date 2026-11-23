@@ -22,14 +22,13 @@ import { useGetRepositoryFolders } from '../../hooks/useGetRepositoryFolders';
 import { useLastBranch } from '../../hooks/useLastBranch';
 import { usePRBranch } from '../../hooks/usePRBranch';
 import { type BaseProvisionedFormData } from '../../types/form';
-import { type ResourceKindKey } from '../../utils/resourceKinds';
 import { getWorkflowForRef, isKnownRef } from '../../utils/workflow';
 import { joinPath, splitPath } from '../utils/path';
 
 type SharedFieldName = 'path' | 'folder' | 'comment';
 
 interface DashboardEditFormSharedFieldsProps {
-  resourceType: ResourceKindKey;
+  resourceType: string;
   canPushToConfiguredBranch: boolean;
   isNew?: boolean;
   readOnly?: boolean;

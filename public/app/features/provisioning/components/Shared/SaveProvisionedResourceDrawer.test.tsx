@@ -360,14 +360,12 @@ describe('SaveProvisionedResourceDrawer', () => {
     });
   });
 
-  it('renders nothing and warns in dev when the resource is not a registered provisioning kind', () => {
+  it('renders nothing and warns in dev when the resource has no kind', () => {
     const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-    // The resource's apiVersion/kind don't resolve to a registry entry, so the resolver bails out.
     setup({
       title: 'X',
       resource: {
         apiVersion: 'unknown.example.com/v1',
-        kind: 'Unknown',
         metadata: { name: 'x' },
         spec: { title: 'X' },
       },
