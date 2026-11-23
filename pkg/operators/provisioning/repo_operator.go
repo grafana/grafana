@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"k8s.io/client-go/tools/cache"
 
-	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/operators/internal/supervision"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
@@ -103,13 +102,13 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (r
 		return fmt.Errorf("failed to get quota getter: %w", err)
 	}
 
-	repoKeys, err := controllerCfg.ProvisioningKeysLister(apisprovisioning.RepositoryResourceInfo.GroupVersionResource())
+	informerClients, err := controllerCfg.InformerClients()
 	if err != nil {
 		return err
 	}
 
 	// The repository delta source and the getter it backs.
-	repoSource, repoGetter, err := informer.NewRepositoryDeltaSource(controllerCfg.informers, provisioningClient, repoKeys, controllerCfg.ResyncInterval(), controllerCfg.RelistProjectionMetrics(), controllerCfg.FreshnessMetrics())
+	repoSource, repoGetter, err := informer.NewRepositoryDeltaSource(controllerCfg.informers, informerClients, provisioningClient, controllerCfg.ResyncInterval())
 	if err != nil {
 		return fmt.Errorf("failed to build repository source: %w", err)
 	}

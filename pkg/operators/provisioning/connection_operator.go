@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"k8s.io/client-go/tools/cache"
 
-	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/pkg/infra/nats"
@@ -68,13 +67,13 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 		return fmt.Errorf("failed to get tracer: %w", err)
 	}
 
-	connKeys, err := controllerCfg.ProvisioningKeysLister(apisprovisioning.ConnectionResourceInfo.GroupVersionResource())
+	informerClients, err := controllerCfg.InformerClients()
 	if err != nil {
 		return err
 	}
 
 	// The connection delta source and the getter it backs.
-	connSource, connGetter, err := informer.NewConnectionDeltaSource(controllerCfg.informers, provisioningClient, connKeys, controllerCfg.ResyncInterval(), controllerCfg.RelistProjectionMetrics(), controllerCfg.FreshnessMetrics())
+	connSource, connGetter, err := informer.NewConnectionDeltaSource(controllerCfg.informers, informerClients, provisioningClient, controllerCfg.ResyncInterval())
 	if err != nil {
 		return fmt.Errorf("failed to build connection source: %w", err)
 	}

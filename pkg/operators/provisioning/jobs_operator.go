@@ -42,7 +42,11 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 	// starts its subscriber.
 	var historySource informer.DeltaSource
 	if controllerCfg.historyExpiration > 0 {
-		historySource, err = controller.ProvideHistoryJobCleanup(ctx, controllerCfg.informers, provisioningClient, controllerCfg.historyExpiration)
+		informerClients, err := controllerCfg.InformerClients()
+		if err != nil {
+			return err
+		}
+		historySource, err = controller.ProvideHistoryJobCleanup(ctx, controllerCfg.informers, informerClients, provisioningClient, controllerCfg.historyExpiration)
 		if err != nil {
 			return err
 		}

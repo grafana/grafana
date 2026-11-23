@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/services/apiserver"
+	apiinformers "github.com/grafana/grafana/pkg/services/apiserver/informers"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -56,7 +57,7 @@ func (s *HistoryJobCleanupService) Run(ctx context.Context) error {
 	if expiration <= 0 {
 		expiration = setting.ProvisioningHistoryExpirationDefault
 	}
-	source, err := controller.ProvideHistoryJobCleanup(ctx, s.builder.informers, client, expiration)
+	source, err := controller.ProvideHistoryJobCleanup(ctx, s.builder.informers, apiinformers.Clients(restConfig), client, expiration)
 	if err != nil {
 		return err
 	}

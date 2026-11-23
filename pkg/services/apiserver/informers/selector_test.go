@@ -2,7 +2,6 @@ package informers
 
 import (
 	"context"
-	"errors"
 	"sync"
 	"testing"
 	"testing/synctest"
@@ -14,7 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/tools/cache"
 
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/setting"
@@ -22,100 +20,46 @@ import (
 
 var testGVR = schema.GroupVersionResource{Group: "test.grafana.app", Version: "v1", Resource: "things"}
 
-var testKind = resource.Kind{
-	Schema: resource.NewSimpleSchema(testGVR.Group, testGVR.Version, &resource.UntypedObject{}, &resource.UntypedList{},
-		resource.WithKind("Thing"), resource.WithPlural(testGVR.Resource)),
-	Codecs: map[resource.KindEncoding]resource.Codec{resource.KindEncodingJSON: resource.NewJSONCodec()},
-}
+var testKind = UntypedKind(testGVR, "Thing")
+
+var resyncOnly = operator.WatchOptions{Resync: &operator.WatchResyncOptions{}}
 
 func natsCfg(enabled bool) *setting.Cfg {
 	return &setting.Cfg{NATS: setting.NATSSettings{Enabled: enabled}}
 }
 
-// namedSource is a DeltaSource that only says which mechanism built it.
-type namedSource string
-
-func (namedSource) AddEventHandler(cache.ResourceEventHandler) (cache.ResourceEventHandlerRegistration, error) {
-	return nil, nil
-}
-func (namedSource) Run(<-chan struct{}) {}
-
-func allSources(needs operator.WatchOptions) Sources {
-	return Sources{
-		GVR:              testGVR,
-		Needs:            needs,
-		Watch:            func() DeltaSource { return namedSource("watch") },
-		ReList:           func() DeltaSource { return namedSource("relist") },
-		NotifyWithReList: func(nats.Subscriber) DeltaSource { return namedSource("notify") },
-	}
-}
-
-var resyncOnly = operator.WatchOptions{Resync: &operator.WatchResyncOptions{}}
-
-func TestSelector_Source(t *testing.T) {
+func TestProvideSupplier(t *testing.T) {
 	for _, tc := range []struct {
-		name     string
-		selector *Selector
-		sources  Sources
-		want     namedSource
+		name       string
+		cfg        *setting.Cfg
+		subscriber nats.Subscriber
+		needs      operator.WatchOptions
+		want       string
 	}{
-		{name: "nil selector gives the watch", selector: nil, sources: allSources(KeyedNeeds), want: "watch"},
-		{name: "NATS off gives the watch", selector: ProvideSelector(natsCfg(false), nil), sources: allSources(KeyedNeeds), want: "watch"},
-		{name: "keyed controller takes NATS notifications", selector: ProvideSelector(natsCfg(true), enabledSubscriber{}), sources: allSources(KeyedNeeds), want: "notify"},
-		{name: "keyed controller skips the re-list, which has no live channel", selector: ProvideSelector(natsCfg(true), nil), sources: allSources(KeyedNeeds), want: "watch"},
-		{name: "resync-only controller takes the cheaper re-list", selector: ProvideSelector(natsCfg(true), enabledSubscriber{}), sources: allSources(resyncOnly), want: "relist"},
-		{name: "default needs (whole objects to every replica) take the watch", selector: ProvideSelector(natsCfg(true), enabledSubscriber{}), sources: allSources(operator.WatchOptions{}), want: "watch"},
-		{
-			name:     "a mechanism the controller has no source for is not offered",
-			selector: ProvideSelector(natsCfg(true), enabledSubscriber{}),
-			sources:  Sources{GVR: testGVR, Needs: resyncOnly, Watch: func() DeltaSource { return namedSource("watch") }},
-			want:     "watch",
-		},
+		{name: "without NATS a keyed kind takes the API watch", cfg: natsCfg(false), needs: KeyedNeeds, want: "watch"},
+		{name: "without NATS a resync-only kind takes the API watch", cfg: natsCfg(false), needs: resyncOnly, want: "watch"},
+		{name: "under NATS a resync-only kind takes the cheaper re-list", cfg: natsCfg(true), subscriber: enabledSubscriber{}, needs: resyncOnly, want: "relist"},
+		{name: "under NATS a keyed kind takes the NATS notifications, not implemented yet", cfg: natsCfg(true), subscriber: enabledSubscriber{}, needs: KeyedNeeds, want: "unimplemented"},
+		{name: "a keyed kind skips the re-list, which has no live channel", cfg: natsCfg(true), needs: KeyedNeeds, want: "watch"},
+		{name: "default needs (whole objects to every replica) take the API watch", cfg: natsCfg(true), subscriber: enabledSubscriber{}, needs: operator.WatchOptions{}, want: "watch"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := tc.selector.Source(tc.sources)
-			require.NoError(t, err)
-			assert.Equal(t, tc.want, got)
+			inf, err := ProvideSupplier(tc.cfg, tc.subscriber)(testKind, fakeClients{client: &pagedClient{}},
+				operator.InformerOptions{WatchNeeds: tc.needs, CacheResyncInterval: time.Minute})
+			switch tc.want {
+			case "unimplemented":
+				assert.ErrorIs(t, err, errNotImplemented)
+			case "relist":
+				require.NoError(t, err)
+				provides, _ := operator.InformerWatchOptions(inf)
+				assert.Equal(t, ReList, provides)
+			case "watch":
+				require.NoError(t, err)
+				provides, _ := operator.InformerWatchOptions(inf)
+				assert.NotEqual(t, ReList, provides)
+			}
 		})
 	}
-}
-
-func TestSelector_Source_Errors(t *testing.T) {
-	t.Run("requires the watch to fall back to", func(t *testing.T) {
-		_, err := (*Selector)(nil).Source(Sources{GVR: testGVR})
-		assert.Error(t, err)
-	})
-
-	t.Run("fails when even the watch provides less than needed", func(t *testing.T) {
-		sharded := operator.WatchOptions{Live: &operator.WatchLiveOptions{Distribution: operator.WatchDistributionSharded}}
-		_, err := ProvideSelector(natsCfg(true), enabledSubscriber{}).Source(allSources(sharded))
-		assert.Error(t, err)
-	})
-}
-
-func TestSelector_Supplier(t *testing.T) {
-	needing := func(needs operator.WatchOptions) operator.InformerOptions {
-		return operator.InformerOptions{WatchNeeds: needs, CacheResyncInterval: time.Minute}
-	}
-
-	t.Run("resync-only kind gets the re-list informer", func(t *testing.T) {
-		inf, err := ProvideSelector(natsCfg(true), enabledSubscriber{}).Supplier()(testKind, fakeClients{client: &pagedClient{}}, needing(resyncOnly))
-		require.NoError(t, err)
-		provides, ok := operator.InformerWatchOptions(inf)
-		require.True(t, ok)
-		assert.Equal(t, ReList, provides)
-	})
-
-	t.Run("keyed kind selects the NATS mechanism, which has no SDK informer yet", func(t *testing.T) {
-		_, err := ProvideSelector(natsCfg(true), enabledSubscriber{}).Supplier()(testKind, fakeClients{}, needing(KeyedNeeds))
-		assert.ErrorIs(t, err, errNotImplemented)
-	})
-
-	t.Run("without NATS every kind falls back to the API watch", func(t *testing.T) {
-		errNoClient := errors.New("no client")
-		_, err := ProvideSelector(natsCfg(false), nil).Supplier()(testKind, fakeClients{err: errNoClient}, needing(KeyedNeeds))
-		assert.ErrorIs(t, err, errNoClient, "expected the fallback, which asks for a client, to be reached")
-	})
 }
 
 func TestReListInformer_DeliversEveryPageOnEachPass(t *testing.T) {

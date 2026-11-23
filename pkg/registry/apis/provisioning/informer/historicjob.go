@@ -5,32 +5,24 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/operator"
+	"github.com/grafana/grafana-app-sdk/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	versioned "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
-	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
-	apiinformers "github.com/grafana/grafana/pkg/services/apiserver/informers"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
 // NewHistoricJobDeltaSource returns the historic-job delta source. Historic
 // cleanup is age-based, so it needs only the resync and no live events: the
-// selector gives it the cacheless re-list when it offers one (under NATS), and
+// supplier gives it the cacheless re-list when it offers one (under NATS), and
 // otherwise the apiserver watch, whose cache each resync replays. Cleanup reads
 // no lister, so callers need only the DeltaSource.
-func NewHistoricJobDeltaSource(selector *apiinformers.Selector, client versioned.Interface, resync time.Duration) (DeltaSource, error) {
-	return selector.Source(apiinformers.Sources{
-		GVR:   provisioningapis.HistoricJobResourceInfo.GroupVersionResource(),
-		Needs: operator.WatchOptions{Resync: &operator.WatchResyncOptions{}},
-		Watch: func() DeltaSource {
-			return informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().HistoricJobs().Informer()
-		},
-		ReList: func() DeltaSource {
-			return NewHistoricJobPeriodicInformer(client, "", resync)
-		},
-	})
+func NewHistoricJobDeltaSource(supplier operator.InformerSupplier, clients resource.ClientGenerator, resync time.Duration) (DeltaSource, error) {
+	return newDeltaSource(supplier, clients, provisioningapis.HistoricJobResourceInfo,
+		operator.WatchOptions{Resync: &operator.WatchResyncOptions{}}, resync,
+		func() runtime.Object { return &provisioningapis.HistoricJob{} })
 }
 
 // NewHistoricJobPeriodicInformer builds the NATS-mode historic-job source: a

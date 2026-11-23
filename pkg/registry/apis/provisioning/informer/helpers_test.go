@@ -6,6 +6,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
@@ -35,9 +36,9 @@ type fakeSubscriber struct {
 	handlers map[string]nats.MessageHandler
 }
 
-// natsSelector offers the NATS mechanisms, live ones only when sub is non-nil.
-func natsSelector(sub nats.Subscriber) *apiinformers.Selector {
-	return apiinformers.ProvideSelector(&setting.Cfg{NATS: setting.NATSSettings{Enabled: true}}, sub)
+// natsSupplier offers the NATS mechanisms, live ones only when sub is non-nil.
+func natsSupplier(sub nats.Subscriber) operator.InformerSupplier {
+	return apiinformers.ProvideSupplier(&setting.Cfg{NATS: setting.NATSSettings{Enabled: true}}, sub)
 }
 
 func newFakeSubscriber() *fakeSubscriber {

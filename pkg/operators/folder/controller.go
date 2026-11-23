@@ -11,13 +11,13 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/operators/internal/supervision"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/apiserver/informers"
-	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 	"github.com/grafana/grafana/pkg/services/folder/cascadedelete"
 )
 
@@ -37,19 +37,21 @@ var dashboardGVR = schema.GroupVersionResource{
 // RunFolderController runs the folder cascade-delete controller: it watches Folder objects and, for
 // each terminating folder carrying the cascade finalizer, deletes its contents and releases it.
 //
-// The delta source is NATS-backed when [nats] is enabled — falling back to
-// re-list-only if the live subscription can't open, rather than blocking
-// readiness on it — otherwise a plain apiserver watch, as selected by the
-// informers.Selector shared with the provisioning controllers.
+// The folder informer is built with the informer supplier shared with the
+// provisioning controllers, which selects its watch mechanism.
 func RunFolderController(ctx context.Context, deps server.OperatorDependencies) (runErr error) {
 	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	})).With("logger", "folder-controller")
 	logger.Info("starting folder controller")
 
-	restClient, err := buildRESTClient(deps.Config, "folders_server_url", folderGVR.Group)
+	folderConfig, err := buildRESTConfig(deps.Config, "folders_server_url", folderGVR.Group)
 	if err != nil {
 		return err
+	}
+	restClient, err := rest.UnversionedRESTClientFor(dynamic.ConfigFor(folderConfig))
+	if err != nil {
+		return fmt.Errorf("failed to create %s REST client: %w", folderGVR.Group, err)
 	}
 	dashboardClient, err := buildRESTClient(deps.Config, "dashboards_server_url", dashboardGVR.Group)
 	if err != nil {
@@ -94,7 +96,7 @@ func RunFolderController(ctx context.Context, deps server.OperatorDependencies) 
 		}
 	}
 
-	source, err := newFolderSource(informers.ProvideSelector(deps.Config, subscriber), folders, keysapi.NewHTTPLister(restClient, folderGVR))
+	source, err := newFolderSource(informers.ProvideSupplier(deps.Config, subscriber), informers.Clients(folderConfig))
 	if err != nil {
 		return err
 	}

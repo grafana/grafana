@@ -4,11 +4,12 @@ import (
 	"context"
 	"strconv"
 
+	"github.com/grafana/grafana-app-sdk/operator"
+	"github.com/grafana/grafana-app-sdk/resource"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/dynamic/dynamicinformer"
 
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/infra/nats"
@@ -23,19 +24,15 @@ import (
 // reaches one replica.
 const queueGroup = "folder-controller"
 
-// newFolderSource returns the folder delta source the selector selects: the NATS informer when it
-// offers live notifications, otherwise the apiserver watch.
-func newFolderSource(selector *informers.Selector, folders dynamic.Interface, keys keysapi.Lister) (informers.DeltaSource, error) {
-	return selector.Source(informers.Sources{
-		GVR:   folderGVR,
-		Needs: informers.KeyedNeeds,
-		Watch: func() informers.DeltaSource {
-			return dynamicinformer.NewFilteredDynamicSharedInformerFactory(folders, cascadedelete.ResyncPeriod, "", nil).ForResource(folderGVR).Informer()
-		},
-		NotifyWithReList: func(subscriber nats.Subscriber) informers.DeltaSource {
-			return newFolderInformer(subscriber, keys)
-		},
-	})
+// newFolderSource returns the folder delta source the supplier selects. The cascade-delete handler
+// reads folders as unstructured objects, as the dynamic informer delivered them.
+func newFolderSource(supplier operator.InformerSupplier, clients resource.ClientGenerator) (informers.DeltaSource, error) {
+	return informers.NewDeltaSource(operator.InformerRequest{
+		Kind:     informers.UntypedKind(folderGVR, "Folder"),
+		Clients:  clients,
+		Supplier: supplier,
+		Options:  operator.InformerOptions{WatchNeeds: informers.KeyedNeeds, CacheResyncInterval: cascadedelete.ResyncPeriod},
+	}, func() runtime.Object { return &unstructured.Unstructured{} })
 }
 
 // newFolderInformer follows folders from a keys-only snapshot plus live notifications. It starts in

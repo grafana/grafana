@@ -16,6 +16,7 @@ import (
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/apiserver/informers/informerstest"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
@@ -164,25 +165,24 @@ func TestClientRepositoryGetter_CountFiltersNamespace(t *testing.T) {
 	assert.Equal(t, 3, count)
 }
 
-// The delta source's getter is client-backed under NATS (reads fresh from the
-// API) and cache-backed otherwise (reads the informer's lister, not the API).
+// The delta source's getter reads fresh from the API: the watch-fed informer
+// keeps no lister to read instead.
 func TestNewRepositoryDeltaSource(t *testing.T) {
 	client := fake.NewClientset(repo(testNamespace, "r"))
 
-	t.Run("nats enabled reads fresh from the API", func(t *testing.T) {
-		_, getter, err := NewRepositoryDeltaSource(natsSelector(newFakeSubscriber()), client, nil, time.Minute, nil, nil)
-		require.NoError(t, err)
-		got, err := getter.Get(context.Background(), testNamespace, "r")
-		require.NoError(t, err)
-		assert.Equal(t, "r", got.Name)
-	})
+	_, getter, err := NewRepositoryDeltaSource(nil, informerstest.NewClients(), client, time.Minute)
+	require.NoError(t, err)
+	got, err := getter.Get(context.Background(), testNamespace, "r")
+	require.NoError(t, err)
+	assert.Equal(t, "r", got.Name)
+	count, err := getter.CountRepositories(context.Background(), testNamespace)
+	require.NoError(t, err)
+	assert.Equal(t, 1, count)
+}
 
-	t.Run("nats disabled reads the informer cache", func(t *testing.T) {
-		_, getter, err := NewRepositoryDeltaSource(nil, client, nil, time.Minute, nil, nil)
-		require.NoError(t, err)
-		// The cache getter reads the (empty, unsynced) informer lister, so the
-		// object present in the API is not found — proving it does not hit the API.
-		_, err = getter.Get(context.Background(), testNamespace, "r")
-		assert.True(t, apierrors.IsNotFound(err))
-	})
+// Under NATS a repository needs the live notifications, which have no SDK
+// informer yet, so building the source fails rather than silently watching.
+func TestNewRepositoryDeltaSource_FailsUnderNATS(t *testing.T) {
+	_, _, err := NewRepositoryDeltaSource(natsSupplier(newFakeSubscriber()), informerstest.NewClients(), fake.NewClientset(), time.Minute)
+	assert.Error(t, err)
 }

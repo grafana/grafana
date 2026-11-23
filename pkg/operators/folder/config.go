@@ -33,6 +33,19 @@ import (
 // token =
 // token_exchange_url =
 func buildRESTClient(cfg *setting.Cfg, serverURLKey, group string) (rest.Interface, error) {
+	restConfig, err := buildRESTConfig(cfg, serverURLKey, group)
+	if err != nil {
+		return nil, err
+	}
+	client, err := rest.UnversionedRESTClientFor(dynamic.ConfigFor(restConfig))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create %s REST client: %w", group, err)
+	}
+
+	return client, nil
+}
+
+func buildRESTConfig(cfg *setting.Cfg, serverURLKey, group string) (*rest.Config, error) {
 	operatorSec := cfg.SectionWithEnvOverrides("operator")
 
 	serverURL := operatorSec.Key(serverURLKey).String()
@@ -55,7 +68,7 @@ func buildRESTClient(cfg *setting.Cfg, serverURLKey, group string) (rest.Interfa
 		return nil, fmt.Errorf("failed to create token exchange client: %w", err)
 	}
 
-	restConfig := &rest.Config{
+	return &rest.Config{
 		APIPath: "/apis",
 		Host:    serverURL,
 		WrapTransport: clientauth.NewStaticTokenExchangeTransportWrapper(
@@ -65,14 +78,7 @@ func buildRESTClient(cfg *setting.Cfg, serverURLKey, group string) (rest.Interfa
 		),
 		TLSClientConfig: tlsConfig,
 		RateLimiter:     flowcontrol.NewFakeAlwaysRateLimiter(),
-	}
-
-	client, err := rest.UnversionedRESTClientFor(dynamic.ConfigFor(restConfig))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create %s REST client: %w", group, err)
-	}
-
-	return client, nil
+	}, nil
 }
 
 func buildTLSConfig(insecure bool, certFile, keyFile, caFile string) (rest.TLSClientConfig, error) {

@@ -1,6 +1,13 @@
 package informer
 
 import (
+	"time"
+
+	"github.com/grafana/grafana-app-sdk/operator"
+	"github.com/grafana/grafana-app-sdk/resource"
+	"k8s.io/apimachinery/pkg/runtime"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/informers"
 )
 
@@ -17,4 +24,15 @@ const queueGroup = "provisioning-informer"
 // type, so the controller's event handler keys off the right type. namespace
 // scopes the NATS subscription and the LIST; pass "" to watch every namespace.
 // Each type file also has a New<Type>DeltaSource that declares what its
-// controller needs and lets the informers.Selector pick the source.
+// controller needs and builds the informer the supplier selects for it.
+
+// newDeltaSource builds the informer supplier selects for info's resource given
+// needs, delivering each object to the controller as a newObject().
+func newDeltaSource(supplier operator.InformerSupplier, clients resource.ClientGenerator, info utils.ResourceInfo, needs operator.WatchOptions, resync time.Duration, newObject func() runtime.Object) (DeltaSource, error) {
+	return informers.NewDeltaSource(operator.InformerRequest{
+		Kind:     informers.UntypedKind(info.GroupVersionResource(), info.GroupVersionKind().Kind),
+		Clients:  clients,
+		Supplier: supplier,
+		Options:  operator.InformerOptions{WatchNeeds: needs, CacheResyncInterval: resync},
+	}, newObject)
+}

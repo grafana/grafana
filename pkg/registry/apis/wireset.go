@@ -87,7 +87,7 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(folders.FolderContentsDeleter), new(*cleaner.ContentsCleaner)),
 	folders.RegisterAPIService,
 	iam.RegisterAPIService,
-	informers.ProvideSelector,
+	informers.ProvideSupplier,
 	provisioning.RegisterAPIService,
 	provisioning.ProvideHistoryJobCleanupService,
 	service.RegisterAPIService,

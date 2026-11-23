@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/operator"
+	"github.com/grafana/grafana-app-sdk/resource"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -13,7 +15,6 @@ import (
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	versioned "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	typedclient "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
-	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	apiinformers "github.com/grafana/grafana/pkg/services/apiserver/informers"
@@ -35,52 +36,74 @@ type RepositoryGetter interface {
 	ConfirmRepositoryCount(ctx context.Context, namespace string) (int, error)
 }
 
-// NewRepositoryDeltaSource returns the repository delta source and the getter it
-// backs. Under NATS the getter reads reconcile state fresh from the API and the
-// quota count from the informer's store; otherwise the getter reads the
-// informer's cache lister.
-//
-// A non-nil keys makes the NATS re-list keys-only; nil keeps the full-object
-// list.
-//
-// freshness instruments how the getter's reads compare to the notifications
-// that triggered them (see freshness.go); nil disables the observation. It
-// applies to the NATS path only — the apiserver path reads a cache the watch
-// keeps current, so there is no cross-replica read visibility to measure.
-func NewRepositoryDeltaSource(selector *apiinformers.Selector, client versioned.Interface, keys keysapi.Lister, resync time.Duration, metrics *RelistProjectionMetrics, freshness *FreshnessMetrics) (DeltaSource, RepositoryGetter, error) {
-	gvr := provisioningapis.RepositoryResourceInfo.GroupVersionResource()
-	// Each builder sets the getter its source backs; only the selected one runs.
-	var getter RepositoryGetter
-	source, err := selector.Source(apiinformers.Sources{
-		GVR:   gvr,
-		Needs: apiinformers.KeyedNeeds,
-		Watch: func() DeltaSource {
-			inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Repositories()
-			getter = NewCachedRepositoryGetter(inf.Lister())
-			return inf.Informer()
-		},
-		NotifyWithReList: func(subscriber nats.Subscriber) DeltaSource {
-			store := usinformer.NewStore()
-			source := NewRepositoryInformer(subscriber, client, "", resync, store, keys, metrics.Recorder(gvr))
-			// The informer is the repository controller's only feed, and everything
-			// that creates provisioning work lives in its reconcile: scheduled syncs,
-			// health checks, webhook create/rotate, quota. Gating the initial list on
-			// the subscription would stall all of it while NATS is unavailable — and
-			// gating buys no safety here, since reconcile reads come fresh from the
-			// API and the re-list (not the live stream) is what keeps a replica
-			// reconciled under round-robin delivery. In degraded mode only the
-			// live-event latency is lost until the subscription opens.
-			source.AllowDegradedStart()
-			announced := newAnnouncements()
-			source.SetAnnouncements(announced)
-			getter = observeRepositoryFreshness(NewClientRepositoryGetter(client.ProvisioningV0alpha1(), store), announced, freshness.Recorder(gvr.Resource))
-			return source
-		},
-	})
+// NewRepositoryDeltaSource returns the repository delta source the supplier
+// selects and the getter the controller reconciles against. The informer's cache
+// is not exposed whichever mechanism serves it, so the getter reads the API.
+func NewRepositoryDeltaSource(supplier operator.InformerSupplier, clients resource.ClientGenerator, client versioned.Interface, resync time.Duration) (DeltaSource, RepositoryGetter, error) {
+	source, err := newDeltaSource(supplier, clients, provisioningapis.RepositoryResourceInfo, apiinformers.KeyedNeeds, resync,
+		func() runtime.Object { return &provisioningapis.Repository{} })
 	if err != nil {
 		return nil, nil, err
 	}
-	return source, getter, nil
+	return source, NewAPIRepositoryGetter(client.ProvisioningV0alpha1()), nil
+}
+
+// natsRepositorySource is the NATS-fed repository source with the getter it
+// backs: reconcile reads fresh from the API, the quota count from the informer's
+// store. No supplier builds it until the NATS mechanisms have SDK
+// implementations, which have to reproduce this coupling.
+//
+// A non-nil keys makes the re-list keys-only; nil keeps the full-object list.
+// freshness instruments how the getter's reads compare to the notifications that
+// triggered them (see freshness.go); nil disables the observation.
+func natsRepositorySource(subscriber nats.Subscriber, client versioned.Interface, keys keysapi.Lister, resync time.Duration, metrics *RelistProjectionMetrics, freshness *FreshnessMetrics) (DeltaSource, RepositoryGetter) {
+	gvr := provisioningapis.RepositoryResourceInfo.GroupVersionResource()
+	store := usinformer.NewStore()
+	source := NewRepositoryInformer(subscriber, client, "", resync, store, keys, metrics.Recorder(gvr))
+	// The informer is the repository controller's only feed, and everything
+	// that creates provisioning work lives in its reconcile: scheduled syncs,
+	// health checks, webhook create/rotate, quota. Gating the initial list on
+	// the subscription would stall all of it while NATS is unavailable — and
+	// gating buys no safety here, since reconcile reads come fresh from the
+	// API and the re-list (not the live stream) is what keeps a replica
+	// reconciled under round-robin delivery. In degraded mode only the
+	// live-event latency is lost until the subscription opens.
+	source.AllowDegradedStart()
+	announced := newAnnouncements()
+	source.SetAnnouncements(announced)
+	return source, observeRepositoryFreshness(NewClientRepositoryGetter(client.ProvisioningV0alpha1(), store), announced, freshness.Recorder(gvr.Resource))
+}
+
+// NewAPIRepositoryGetter backs a RepositoryGetter with the API client alone: each
+// Get is fresh and each count is a LIST.
+func NewAPIRepositoryGetter(c typedclient.ProvisioningV0alpha1Interface) RepositoryGetter {
+	return apiRepositoryGetter{client: c}
+}
+
+type apiRepositoryGetter struct {
+	client typedclient.ProvisioningV0alpha1Interface
+}
+
+func (g apiRepositoryGetter) Get(ctx context.Context, namespace, name string) (*provisioningapis.Repository, error) {
+	return g.client.Repositories(namespace).Get(ctx, name, metav1.GetOptions{})
+}
+
+func (g apiRepositoryGetter) CountRepositories(ctx context.Context, namespace string) (int, error) {
+	return countRepositories(ctx, g.client, namespace)
+}
+
+func (g apiRepositoryGetter) ConfirmRepositoryCount(ctx context.Context, namespace string) (int, error) {
+	return countRepositories(ctx, g.client, namespace)
+}
+
+func countRepositories(ctx context.Context, c typedclient.ProvisioningV0alpha1Interface, namespace string) (int, error) {
+	objs, _, err := listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
+		return c.Repositories(namespace).List(ctx, opts)
+	})
+	if err != nil {
+		return 0, err
+	}
+	return len(objs), nil
 }
 
 // NewRepositoryInformer builds an Informer for repositories. When keys is
@@ -167,11 +190,5 @@ func (g clientRepositoryGetter) CountRepositories(ctx context.Context, namespace
 
 // ConfirmRepositoryCount lists the namespace from the API, which the store can lag.
 func (g clientRepositoryGetter) ConfirmRepositoryCount(ctx context.Context, namespace string) (int, error) {
-	objs, _, err := listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
-		return g.client.Repositories(namespace).List(ctx, opts)
-	})
-	if err != nil {
-		return 0, err
-	}
-	return len(objs), nil
+	return countRepositories(ctx, g.client, namespace)
 }
