@@ -451,12 +451,6 @@ func TestPrepareObjectForUpdateNamespace(t *testing.T) {
 			updated := previous.DeepCopy()
 			updated.Namespace = namespace
 			result, err := s.prepareObjectForUpdate(ctx, updated, previous)
-			if namespace == "other" {
-				require.Error(t, err)
-				require.True(t, apierrors.IsBadRequest(err))
-				require.ErrorContains(t, err, "namespace mismatch")
-				return
-			}
 			require.NoError(t, err)
 			require.False(t, result.hasChanged)
 			stored := &dashv1.Dashboard{}

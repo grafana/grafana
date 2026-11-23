@@ -393,11 +393,7 @@ func reconcileUpdateIdentity(ctx context.Context, obj, previous utils.GrafanaMet
 	if obj.GetName() != previous.GetName() {
 		return apierrors.NewBadRequest("name mismatch between existing and updated object")
 	}
-	if obj.GetNamespace() == "" {
-		obj.SetNamespace(previous.GetNamespace()) // set a missing namespace
-	} else if obj.GetNamespace() != previous.GetNamespace() {
-		return apierrors.NewBadRequest("namespace mismatch")
-	}
+	obj.SetNamespace(previous.GetNamespace())
 	return nil
 }
 
