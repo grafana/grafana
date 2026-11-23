@@ -112,7 +112,7 @@ export function useSQLSchemas({ queries, enabled, timeRange, scopedVars, filters
       }
 
       const response = await getBackendSrv().post<SQLSchemasResponse>(
-        `/apis/${apiGroup}/v0alpha1/namespaces/${namespace}/sqlschemas`,
+        `/apis/${apiGroup}/v0alpha1/namespaces/${namespace}/query/sqlschemas`,
         {
           queries: interpolatedQueries,
           from: currentTimeRange.from.toISOString(),
