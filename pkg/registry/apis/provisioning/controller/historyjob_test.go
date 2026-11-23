@@ -39,7 +39,7 @@ func TestProvideHistoryJobCleanup_DeletesOnlyExpiredJobs(t *testing.T) {
 					historicJob("fresh", expiration/2),
 				)
 
-				source, err := ProvideHistoryJobCleanup(tc.natsEnabled, client, expiration)
+				source, err := ProvideHistoryJobCleanup(context.Background(), tc.natsEnabled, client, expiration)
 				require.NoError(t, err)
 
 				stop := make(chan struct{})

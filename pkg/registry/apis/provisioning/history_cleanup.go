@@ -57,7 +57,7 @@ func (s *HistoryJobCleanupService) Run(ctx context.Context) error {
 	if expiration <= 0 {
 		expiration = setting.ProvisioningHistoryExpirationDefault
 	}
-	source, err := controller.ProvideHistoryJobCleanup(nats.Enabled(s.builder.natsSubscriber), client, expiration)
+	source, err := controller.ProvideHistoryJobCleanup(ctx, nats.Enabled(s.builder.natsSubscriber), client, expiration)
 	if err != nil {
 		return err
 	}

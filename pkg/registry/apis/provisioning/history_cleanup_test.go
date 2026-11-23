@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -18,6 +19,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+// testTimeout bounds every wait so a broken Run fails the test instead of hanging the suite.
+const testTimeout = 10 * time.Second
 
 func TestHistoryJobCleanupService_IsDisabled(t *testing.T) {
 	tests := []struct {
@@ -42,30 +46,52 @@ func TestHistoryJobCleanupService_IsDisabled(t *testing.T) {
 func TestHistoryJobCleanupService_Run(t *testing.T) {
 	t.Run("deletes expired jobs once the API server is ready", func(t *testing.T) {
 		deleted := make(chan string, 1)
-		server := httptest.NewServer(fakeHistoricJobsAPI(t, deleted))
-		defer server.Close()
+		server := startFakeHistoricJobsAPI(t, func(w http.ResponseWriter, r *http.Request) {
+			deleted <- r.PathValue("name")
+			w.Header().Set("Content-Type", "application/json")
+			assert.NoError(t, json.NewEncoder(w).Encode(metav1.Status{Status: metav1.StatusSuccess}))
+		})
 
 		ready := make(chan struct{})
-		configProvider := apiserver.RestConfigProviderFunc(func(ctx context.Context) (*clientrest.Config, error) {
+		done, cancel := runCleanupService(t, apiserver.RestConfigProviderFunc(func(ctx context.Context) (*clientrest.Config, error) {
 			select {
 			case <-ready:
 				return &clientrest.Config{Host: server.URL}, nil
 			case <-ctx.Done():
 				return nil, ctx.Err()
 			}
-		})
-
-		ctx, cancel := context.WithCancel(context.Background())
-		done := make(chan error, 1)
-		go func() {
-			done <- ProvideHistoryJobCleanupService(&setting.Cfg{}, &APIBuilder{historyExpiration: time.Hour}, configProvider).Run(ctx)
-		}()
+		}))
 
 		close(ready)
-		assert.Equal(t, "expired", <-deleted)
+		assert.Equal(t, "expired", receive(t, deleted, done))
 
 		cancel()
-		require.NoError(t, <-done)
+		require.NoError(t, waitForRun(t, done))
+	})
+
+	t.Run("shutdown cancels an in-flight delete", func(t *testing.T) {
+		inFlight := make(chan struct{})
+		aborted := make(chan struct{})
+		server := startFakeHistoricJobsAPI(t, func(w http.ResponseWriter, r *http.Request) {
+			// The server only notices the client going away once the body is consumed.
+			_, err := io.Copy(io.Discard, r.Body)
+			assert.NoError(t, err)
+			close(inFlight)
+			select {
+			case <-r.Context().Done():
+				close(aborted)
+			case <-t.Context().Done():
+			}
+		})
+
+		done, cancel := runCleanupService(t, apiserver.RestConfigProviderFunc(func(context.Context) (*clientrest.Config, error) {
+			return &clientrest.Config{Host: server.URL}, nil
+		}))
+
+		receive(t, inFlight, done)
+		cancel()
+		require.NoError(t, waitForRun(t, done))
+		receive(t, aborted, nil)
 	})
 
 	t.Run("returns nil when shut down before the API server is ready", func(t *testing.T) {
@@ -84,9 +110,50 @@ func TestHistoryJobCleanupService_Run(t *testing.T) {
 	})
 }
 
-// fakeHistoricJobsAPI serves one expired and one fresh HistoricJob, holds watches
-// open, and reports the name of each deleted job.
-func fakeHistoricJobsAPI(t *testing.T, deleted chan<- string) http.Handler {
+// runCleanupService starts Run in the background and returns its result channel
+// and a cancel func. Cancel is also registered as a cleanup, so a failing test
+// still stops the service before the fake API server is closed.
+func runCleanupService(t *testing.T, configProvider apiserver.RestConfigProvider) (<-chan error, context.CancelFunc) {
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	done := make(chan error, 1)
+	go func() {
+		done <- ProvideHistoryJobCleanupService(&setting.Cfg{}, &APIBuilder{historyExpiration: time.Hour}, configProvider).Run(ctx)
+	}()
+	return done, cancel
+}
+
+// receive waits for a value on ch. It fails if Run returns first (when done is
+// non-nil) or the deadline passes.
+func receive[T any](t *testing.T, ch <-chan T, done <-chan error) T {
+	t.Helper()
+	select {
+	case v := <-ch:
+		return v
+	case err := <-done:
+		t.Fatalf("Run returned before the expected event: %v", err)
+	case <-time.After(testTimeout):
+		t.Fatal("timed out waiting for the expected event")
+	}
+	var zero T
+	return zero
+}
+
+func waitForRun(t *testing.T, done <-chan error) error {
+	t.Helper()
+	select {
+	case err := <-done:
+		return err
+	case <-time.After(testTimeout):
+		t.Fatal("timed out waiting for Run to return")
+		return nil
+	}
+}
+
+// startFakeHistoricJobsAPI serves one expired and one fresh HistoricJob, holds
+// watches open, and hands deletes to onDelete. The server is closed on cleanup;
+// blocking handlers must also return on t.Context() so that close cannot hang.
+func startFakeHistoricJobsAPI(t *testing.T, onDelete http.HandlerFunc) *httptest.Server {
 	historicJob := func(name string, age time.Duration) provisioning.HistoricJob {
 		return provisioning.HistoricJob{ObjectMeta: metav1.ObjectMeta{
 			Namespace:         "ns",
@@ -111,19 +178,21 @@ func fakeHistoricJobsAPI(t *testing.T, deleted chan<- string) http.Handler {
 			assert.NoError(t, json.NewEncoder(w).Encode(metav1.Status{Status: metav1.StatusFailure, Reason: metav1.StatusReasonBadRequest, Code: http.StatusBadRequest}))
 		case query.Get("watch") == "true":
 			w.WriteHeader(http.StatusOK)
-			<-r.Context().Done()
+			select {
+			case <-r.Context().Done():
+			case <-t.Context().Done():
+			}
 		default:
 			assert.NoError(t, json.NewEncoder(w).Encode(list))
 		}
 	})
-	mux.HandleFunc("DELETE /apis/provisioning.grafana.app/v0alpha1/namespaces/ns/historicjobs/{name}", func(w http.ResponseWriter, r *http.Request) {
-		deleted <- r.PathValue("name")
-		w.Header().Set("Content-Type", "application/json")
-		assert.NoError(t, json.NewEncoder(w).Encode(metav1.Status{Status: metav1.StatusSuccess}))
-	})
+	mux.HandleFunc("DELETE /apis/provisioning.grafana.app/v0alpha1/namespaces/ns/historicjobs/{name}", onDelete)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		t.Errorf("unexpected request: %s %s", r.Method, r.URL)
 		w.WriteHeader(http.StatusNotFound)
 	})
-	return mux
+
+	server := httptest.NewServer(mux)
+	t.Cleanup(server.Close)
+	return server
 }
