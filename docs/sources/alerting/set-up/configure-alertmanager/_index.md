@@ -92,7 +92,7 @@ All Grafana-managed alerts are forwarded to Alertmanagers marked as `Receiving G
 When the [Prometheus Alerting](/docs/plugins/grafana-prometheusalerting-app/latest/) app plugin is installed and enabled, you can still enable or disable an Alertmanager from the **Settings** page, but the page doesn't let you edit the configuration of other Alertmanagers. Edit their configuration in the plugin.
 
 {{< admonition type="note" >}}
-Grafana Alerting does not support forwarding Grafana-managed alerts to the AlertManager in Amazon Managed Service for Prometheus. For more details, refer to [this GitHub issue](https://github.com/grafana/grafana/issues/64064).
+Grafana Alerting does not support forwarding Grafana-managed alerts to the Alertmanager in Amazon Managed Service for Prometheus. For more details, refer to [this GitHub issue](https://github.com/grafana/grafana/issues/64064).
 {{< /admonition >}}
 
 ## Use an Alertmanager as a contact point to receive specific alerts
