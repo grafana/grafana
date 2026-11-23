@@ -1,25 +1,31 @@
+import { css } from '@emotion/css';
 import { customAlphabet } from 'nanoid';
 import { useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, Drawer, Stack, Text } from '@grafana/ui';
-import { type RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { Button, Drawer, Stack, Text, useStyles2 } from '@grafana/ui';
+import {
+  type RepositoryView,
+  useDeleteRepositoryFilesWithPathMutation,
+  useGetFrontendSettingsQuery,
+} from 'app/api/clients/provisioning/v0alpha1';
 import {
   AnnoKeyManagerIdentity,
   AnnoKeyManagerKind,
   AnnoKeySourcePath,
   ManagerKind,
 } from 'app/features/apiserver/types';
+import { useDispatch } from 'app/types/store';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { useCommitTarget } from '../../hooks/useCommitTarget';
 import { useCreateOrUpdateRepositoryFile } from '../../hooks/useCreateOrUpdateRepositoryFile';
 import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
-import { useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
-import { useProvisionedResourceDrawerHandlers } from '../../hooks/useProvisionedResourceDrawerHandlers';
+import { useLastBranch } from '../../hooks/useLastBranch';
 import { type BaseProvisionedFormData } from '../../types/form';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
@@ -36,7 +42,12 @@ import { getCanPushToConfiguredBranch, getDefaultRef } from '../defaults';
 import { getProvisionedRequestError } from '../utils/errors';
 import { slugifyForFilename } from '../utils/path';
 
+import { ProvisionedCommitSteps } from './ProvisionedCommitSteps';
+import { ProvisionedCommitSuccess } from './ProvisionedCommitSuccess';
+import { ProvisionedDrawerLayout } from './ProvisionedDrawerLayout';
+import { RepositorySelect } from './RepositorySelect';
 import { ResourceEditFormSharedFields } from './ResourceEditFormSharedFields';
+import { type ProvisionedCommitOutcome, buildCommitOutcome } from './provisionedCommitOutcome';
 
 /** Commit action handled by this drawer. */
 type ProvisionedResourceAction = 'create' | 'update' | 'delete';
@@ -72,65 +83,60 @@ interface BaseDrawerProps {
    */
   resource: ProvisionedResource;
   /**
-   * Human-readable title for the drawer subtitle, the commit message and a new resource's file slug.
-   * Passed explicitly rather than read from `spec.title` because the title field isn't consistent
-   * across kinds (e.g. correlations and teams carry it on `spec.name`); the committed file body still
-   * comes from `resource.spec`.
+   * Human-readable title for the commit message and a new resource's file slug. Passed explicitly
+   * rather than read from `spec.title` because the title field isn't consistent across kinds (e.g.
+   * correlations and teams carry it on `spec.name`); the committed file body still comes from
+   * `resource.spec`.
    */
   title: string;
-  /** Notification shown on a successful write to the configured branch. */
-  successMessage?: string;
   /** Message shown when the repository can't be edited from the UI. */
   readOnlyMessage?: string;
   /** Prefix for generated branch names. Defaults to the kind's key. */
   branchPrefix?: string;
-  /**
-   * In-app page to redirect to once the commit succeeds, and where the PR workflow shows the
-   * pull-request banner. The caller owns its own routes.
-   */
-  redirectUrl: string;
   onDismiss?: () => void;
 }
 
 /**
- * `action` + `repositoryName` are a discriminated union: `create` requires a `repositoryName` (a new
- * resource has no manager annotations yet, so they're synthesised for the chosen repository), while
- * `update`/`delete` resolve the repository from the existing resource's annotations and take none.
+ * `action` + `repositoryName` are a discriminated union: `create` takes an optional `repositoryName` (a
+ * new resource has no manager annotations yet, so they're synthesised for the chosen repository, and
+ * the drawer asks for one first when none is given), while `update`/`delete` resolve the repository
+ * from the existing resource's annotations and take none.
  */
 export type SaveProvisionedResourceDrawerProps = BaseDrawerProps &
-  ({ action: 'create'; repositoryName: string } | { action: 'update' | 'delete'; repositoryName?: never });
+  ({ action: 'create'; repositoryName?: string } | { action: 'update' | 'delete'; repositoryName?: never });
 
 interface FormProps {
   kindKey: ResourceKindKey;
-  redirectUrl: string;
   resourceName: string;
   title: string;
   body?: Record<string, unknown>;
   action: ProvisionedResourceAction;
   isNew: boolean;
-  successMessage?: string;
   initialValues: BaseProvisionedFormData;
   repository?: RepositoryView;
   canPushToConfiguredBranch: boolean;
+  onCommitted: (outcome: ProvisionedCommitOutcome) => void;
   onDismiss?: () => void;
 }
 
 function FormContent({
   kindKey,
-  redirectUrl,
   resourceName,
   title,
   body,
   action,
   isNew,
-  successMessage,
   initialValues,
   repository,
   canPushToConfiguredBranch,
+  onCommitted,
   onDismiss,
 }: FormProps) {
+  const dispatch = useDispatch();
+  const { setLastBranch } = useLastBranch();
   const [error, setError] = useState<string | undefined>(undefined);
-  const kind: ResourceKindInfo = resourceKindInfos[kindKey];
+  // The kind's stable key is the UI-facing resource type for the commit message, telemetry and fields.
+  const resourceType = kindKey;
   const isDelete = action === 'delete';
   // New resources are POSTed (create), existing ones PUT (replace). The wrapper keys off the
   // original path: passing it selects update, omitting it selects create.
@@ -142,11 +148,9 @@ function FormContent({
   const { handleSubmit, watch, formState } = methods;
   const ref = watch('ref') ?? '';
 
-  const { onWriteSuccess, onBranchSuccess } = useProvisionedResourceDrawerHandlers(kind, redirectUrl, action);
-
   const templateVars: CommitTemplateVars = {
     action,
-    resourceKind: kindKey,
+    resourceKind: resourceType,
     resourceID: resourceName,
     title,
     ...getCurrentCommitUser(),
@@ -159,39 +163,20 @@ function FormContent({
     setComment: (value) => methods.setValue('comment', value, { shouldDirty: false }),
   });
 
-  // Branch-name template fill/lock and the PR title for the banner follow from the target branch.
-  const { workflow, isNewBranch, isResolving, lockBranch, prTitle } = useCommitTarget({
+  // Branch-name template fill/lock follows from the target branch, as does whether this commit
+  // lands directly on the configured branch or opens a pull request.
+  const { workflow, isResolving, lockBranch, prTitle } = useCommitTarget({
     repository,
     vars: templateVars,
     ref,
     isRefDirty: Boolean(formState.dirtyFields.ref),
     setRef: (value) => methods.setValue('ref', value, { shouldDirty: false }),
   });
+  const isDirectWrite = workflow === 'write';
 
   const showError = (err: unknown) => {
     setError(getProvisionedRequestError(err, t('provisioning.save-resource.error-saving', 'Failed to save changes')));
   };
-
-  const { handleSuccess } = useProvisionedRequestHandler({
-    isNewBranch,
-    resourceType: kindKey,
-    repository,
-    successMessage,
-    handlers: {
-      onDismiss,
-      onWriteSuccess,
-      // Pushed to a branch: pass the repo info so the destination page can render the PR banner.
-      onBranchSuccess: ({ ref, urls }) =>
-        onBranchSuccess({
-          ref,
-          urls,
-          repoType: repository?.type,
-          configuredBranch: repository?.branch,
-          repoUrl: repository?.url,
-          prTitle,
-        }),
-    },
-  });
 
   const doSave = async ({ ref, path }: BaseProvisionedFormData) => {
     setError(undefined);
@@ -207,7 +192,7 @@ function FormContent({
     const branchRef = getRequestRef(repository, ref);
 
     reportInteraction('grafana_provisioning_resource_save_submitted', {
-      resourceType: kindKey,
+      resourceType,
       workflow,
       repositoryName: repoName,
       repositoryType: repository?.type ?? 'unknown',
@@ -217,18 +202,64 @@ function FormContent({
       const data = isDelete
         ? await deleteFile({ name: repoName, path, ref: branchRef, message }).unwrap()
         : await saveFile({ name: repoName, path, ref: branchRef, message, body: body ?? {} }).unwrap();
-      handleSuccess(data);
+
+      const landedOn = data.ref || repository?.branch;
+      if (landedOn) {
+        setLastBranch(repoName, landedOn);
+      }
+      // The committed change has to show up on the list the drawer's "Next" steps lead back to.
+      const kind: ResourceKindInfo = resourceKindInfos[kindKey];
+      const invalidateAction = kind.invalidateListTags?.();
+      if (invalidateAction) {
+        dispatch(invalidateAction);
+      }
+
+      onCommitted(buildCommitOutcome({ action, ref: data.ref, urls: data.urls, message, prTitle, repository }));
     } catch (err) {
       showError(err);
     }
   };
 
+  const primaryLabel = () => {
+    if (request.isLoading) {
+      return isDelete
+        ? t('provisioning.save-resource.button-deleting', 'Deleting...')
+        : t('provisioning.save-resource.button-committing', 'Committing...');
+    }
+    if (isDelete) {
+      return t('provisioning.save-resource.button-delete', 'Delete');
+    }
+    // Naming the branch makes the consequence of a direct commit explicit: it is dual-written, so
+    // it is live for everyone immediately, where a branch commit is not.
+    return isDirectWrite && repository?.branch
+      ? t('provisioning.save-resource.button-commit-to-configured', 'Commit to {{branch}}', {
+          branch: repository.branch,
+        })
+      : t('provisioning.save-resource.button-commit', 'Commit');
+  };
+
   return (
     <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(doSave)}>
+      <ProvisionedDrawerLayout
+        onSubmit={handleSubmit(doSave)}
+        footer={
+          <>
+            <Button
+              type="submit"
+              variant={isDelete ? 'destructive' : 'primary'}
+              disabled={request.isLoading || isResolving}
+            >
+              {primaryLabel()}
+            </Button>
+            <Button variant="secondary" fill="outline" onClick={onDismiss}>
+              {t('provisioning.save-resource.button-cancel', 'Cancel')}
+            </Button>
+          </>
+        }
+      >
         <Stack direction="column" gap={2}>
           <ResourceEditFormSharedFields
-            resourceType={kindKey}
+            resourceType={resourceType}
             isNew={isNew}
             canPushToConfiguredBranch={canPushToConfiguredBranch}
             repository={repository}
@@ -238,28 +269,73 @@ function FormContent({
           />
 
           {error && <ProvisioningAlert error={error} />}
-
-          <Stack gap={2}>
-            <Button
-              type="submit"
-              variant={isDelete ? 'destructive' : 'primary'}
-              disabled={request.isLoading || isResolving}
-            >
-              {isDelete
-                ? request.isLoading
-                  ? t('provisioning.save-resource.button-deleting', 'Deleting...')
-                  : t('provisioning.save-resource.button-delete', 'Delete')
-                : request.isLoading
-                  ? t('provisioning.save-resource.button-saving', 'Saving...')
-                  : t('provisioning.save-resource.button-save', 'Save')}
-            </Button>
-            <Button variant="secondary" fill="outline" onClick={onDismiss}>
-              {t('provisioning.save-resource.button-cancel', 'Cancel')}
-            </Button>
-          </Stack>
         </Stack>
-      </form>
+      </ProvisionedDrawerLayout>
     </FormProvider>
+  );
+}
+
+interface SuccessProps {
+  kindKey: ResourceKindKey;
+  resourceName: string;
+  outcome: ProvisionedCommitOutcome;
+  onDismiss?: () => void;
+}
+
+interface RepositoryStepProps {
+  onSelect: (repositoryName: string) => void;
+  onDismiss?: () => void;
+}
+
+function RepositoryStep({ onSelect, onDismiss }: RepositoryStepProps) {
+  const { data } = useGetFrontendSettingsQuery();
+  const [selected, setSelected] = useState('');
+
+  return (
+    <ProvisionedDrawerLayout
+      onSubmit={(event) => {
+        event.preventDefault();
+        onSelect(selected);
+      }}
+      footer={
+        <>
+          <Button type="submit" disabled={!selected}>
+            {t('provisioning.save-resource.button-next', 'Next')}
+          </Button>
+          <Button variant="secondary" fill="outline" onClick={onDismiss}>
+            {t('provisioning.save-resource.button-cancel', 'Cancel')}
+          </Button>
+        </>
+      }
+    >
+      <RepositorySelect
+        repositories={data?.items ?? []}
+        value={selected}
+        onChange={setSelected}
+        description={t(
+          'provisioning.save-resource.repository-description',
+          "The repository to commit this resource to. This can't be changed after the resource is created."
+        )}
+      />
+    </ProvisionedDrawerLayout>
+  );
+}
+
+function SuccessContent({ kindKey, resourceName, outcome, onDismiss }: SuccessProps) {
+  return (
+    <ProvisionedDrawerLayout
+      footer={
+        /* Closing the drawer is what returns to the editor, so no step repeats it. */
+        <ProvisionedCommitSteps
+          kindKey={kindKey}
+          outcome={outcome}
+          resourceName={resourceName}
+          onDismiss={() => onDismiss?.()}
+        />
+      }
+    >
+      <ProvisionedCommitSuccess outcome={outcome} />
+    </ProvisionedDrawerLayout>
   );
 }
 
@@ -267,13 +343,14 @@ function FormContent({
  * Drawer for committing a repository-managed resource to git — usable directly from a resource's
  * pages with no per-kind wrapper. Pass the resource, its title and the action: the drawer resolves
  * the kind from the resource's `apiVersion`+`kind` and derives the rest — the committed file body, a
- * new resource's name/path/annotations and the commit message. After the commit it redirects to
- * `redirectUrl`. `delete` commits no body. Renders nothing if the resource isn't a registered provisioning kind (pages only
- * open it for known managed resources).
+ * new resource's name/path/annotations and the commit message. Once the commit lands the drawer
+ * stays open and reports where the change went, so the caller needs no pull-request banner.
+ * Renders nothing if the resource isn't a registered provisioning kind (pages only open it for
+ * known managed resources).
  */
 export function SaveProvisionedResourceDrawer(props: SaveProvisionedResourceDrawerProps) {
   // The resource carries its own identity: its API group (from apiVersion) + Kubernetes kind resolve
-  // the registry key, so callers don't pass the kind separately.
+  // the registry descriptor, so callers don't pass the kind separately.
   const kindKey = getKindKeyByGroupKind(props.resource.apiVersion?.split('/')[0], props.resource.kind);
   if (!kindKey) {
     // Pages only open this for known managed resources, so an unresolved kind means a bad fixture or a
@@ -293,18 +370,19 @@ type ResourceDrawerContentProps = SaveProvisionedResourceDrawerProps & { kindKey
 
 function ResourceDrawerContent({
   kindKey,
-  redirectUrl,
   resource,
   action,
   title,
   repositoryName,
-  successMessage,
   readOnlyMessage,
   branchPrefix,
   onDismiss,
 }: ResourceDrawerContentProps) {
+  const styles = useStyles2(getStyles);
   const isNew = action === 'create';
   const isDelete = action === 'delete';
+  const [outcome, setOutcome] = useState<ProvisionedCommitOutcome | undefined>(undefined);
+  const [selectedRepository, setSelectedRepository] = useState(repositoryName);
 
   // A new resource needs a name; generate one once for the lifetime of the drawer as a fallback.
   const generatedName = useMemo(() => generateResourceName(), []);
@@ -320,7 +398,7 @@ function ResourceDrawerContent({
         metadata: {
           annotations: {
             [AnnoKeyManagerKind]: ManagerKind.Repo,
-            [AnnoKeyManagerIdentity]: repositoryName ?? '',
+            [AnnoKeyManagerIdentity]: selectedRepository ?? '',
             [AnnoKeySourcePath]: getNewResourcePath(title, kindKey),
           },
         },
@@ -332,7 +410,7 @@ function ResourceDrawerContent({
     ? undefined
     : { apiVersion: resource.apiVersion, kind: resource.kind, metadata: { name: resourceName }, spec: resource.spec };
 
-  // Branch names can't contain spaces, so prefix from the stable kind key, not the display noun.
+  // Branch names can't contain spaces, so prefix from the stable `key`, not the display noun.
   const prefix = branchPrefix ?? kindKey;
   const { repository, isLoading, isReadOnlyRepo, isMissingRepo } = useGetResourceRepositoryView({
     name: getManagerIdentity(managedResource),
@@ -340,14 +418,9 @@ function ResourceDrawerContent({
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
   const sourcePath = getSourcePath(managedResource);
 
-  // Title combines a shared translated template with the kind's translated noun (interpolated, so
-  // translators control word order), instead of a per-kind "Save/Delete provisioned <kind>" string.
-  const resourceLabel = resourceKindInfos[kindKey].getLabel({ upperFirst: false });
   const drawerTitle = isDelete
-    ? t('provisioning.save-resource.drawer-title-delete', 'Delete provisioned {{resource}}', {
-        resource: resourceLabel,
-      })
-    : t('provisioning.save-resource.drawer-title-save', 'Save provisioned {{resource}}', { resource: resourceLabel });
+    ? t('provisioning.save-resource.drawer-title-delete', 'Delete provisioned resource')
+    : t('provisioning.save-resource.drawer-title-save', 'Save provisioned resource');
 
   const initialValues = useMemo<BaseProvisionedFormData | undefined>(() => {
     if (!repository || isLoading) {
@@ -364,43 +437,64 @@ function ResourceDrawerContent({
 
   return (
     <Drawer
-      title={
-        <Text variant="h3" element="h2">
-          {drawerTitle}
-        </Text>
+      size="sm"
+      // The pinned footer keeps the commit action in view, so the drawer manages its own scrolling.
+      scrollableContent={false}
+      title={drawerTitle}
+      subtitle={
+        sourcePath ? (
+          <span className={styles.path}>{sourcePath}</span>
+        ) : (
+          <Text variant="bodySmall" color="secondary">
+            {title}
+          </Text>
+        )
       }
-      subtitle={title}
       onClose={() => onDismiss?.()}
     >
-      <ProvisionedFormGate
-        isLoading={isLoading}
-        isMissingRepo={isMissingRepo}
-        isReadOnly={isReadOnlyRepo}
-        readOnlyMessage={
-          readOnlyMessage ??
-          t(
-            'provisioning.save-resource.read-only-message',
-            'To edit this resource, please update it in your repository directly.'
-          )
-        }
-      >
-        {initialValues && (
-          <FormContent
-            kindKey={kindKey}
-            redirectUrl={redirectUrl}
-            resourceName={resourceName}
-            title={title}
-            body={body}
-            action={action}
-            isNew={isNew}
-            successMessage={successMessage}
-            initialValues={initialValues}
-            repository={repository}
-            canPushToConfiguredBranch={canPushToConfiguredBranch}
-            onDismiss={onDismiss}
-          />
-        )}
-      </ProvisionedFormGate>
+      {outcome ? (
+        <SuccessContent kindKey={kindKey} resourceName={resourceName} outcome={outcome} onDismiss={onDismiss} />
+      ) : isNew && !selectedRepository ? (
+        <RepositoryStep onSelect={setSelectedRepository} onDismiss={onDismiss} />
+      ) : (
+        <ProvisionedFormGate
+          isLoading={isLoading}
+          isMissingRepo={isMissingRepo}
+          isReadOnly={isReadOnlyRepo}
+          readOnlyMessage={
+            readOnlyMessage ??
+            t(
+              'provisioning.save-resource.read-only-message',
+              'To edit this resource, please update it in your repository directly.'
+            )
+          }
+        >
+          {initialValues && (
+            <FormContent
+              kindKey={kindKey}
+              resourceName={resourceName}
+              title={title}
+              body={body}
+              action={action}
+              isNew={isNew}
+              initialValues={initialValues}
+              repository={repository}
+              canPushToConfiguredBranch={canPushToConfiguredBranch}
+              onCommitted={setOutcome}
+              onDismiss={onDismiss}
+            />
+          )}
+        </ProvisionedFormGate>
+      )}
     </Drawer>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  path: css({
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fontFamilyMonospace,
+    fontSize: theme.typography.bodySmall.fontSize,
+    wordBreak: 'break-all',
+  }),
+});

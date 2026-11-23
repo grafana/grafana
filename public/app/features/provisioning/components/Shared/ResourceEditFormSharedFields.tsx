@@ -1,16 +1,19 @@
+import { css } from '@emotion/css';
 import { skipToken } from '@reduxjs/toolkit/query/react';
 import { memo, useCallback } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { Combobox, Field, Input, TextArea } from '@grafana/ui';
+import { Combobox, Field, Input, Stack, Text, TextArea, useStyles2 } from '@grafana/ui';
 import {
   type RepositoryView,
   useGetRepositoryRefsQuery,
   useLazyGetRepositoryFilesWithPathQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { BranchValidationError } from 'app/features/provisioning/Shared/BranchValidationError';
+import { RepoTypeDisplay } from 'app/features/provisioning/Wizard/types';
 import { stripSlashes, validateBranchName } from 'app/features/provisioning/utils/git';
 import { isGitProvider } from 'app/features/provisioning/utils/repositoryTypes';
 
@@ -20,10 +23,10 @@ import { useLastBranch } from '../../hooks/useLastBranch';
 import { usePRBranch } from '../../hooks/usePRBranch';
 import { type BaseProvisionedFormData } from '../../types/form';
 import { type ResourceKindKey } from '../../utils/resourceKinds';
-import { isKnownRef } from '../../utils/workflow';
+import { getWorkflowForRef, isKnownRef } from '../../utils/workflow';
 import { joinPath, splitPath } from '../utils/path';
 
-type SharedFieldName = 'path' | 'comment';
+type SharedFieldName = 'path' | 'folder' | 'comment';
 
 interface DashboardEditFormSharedFieldsProps {
   resourceType: ResourceKindKey;
@@ -54,6 +57,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
     commitMessage,
     lockBranch = false,
   }) => {
+    const styles = useStyles2(getStyles);
     const {
       control,
       register,
@@ -113,7 +117,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
       canPushToNonConfiguredBranch,
     });
 
-    const showFolderFilename = (isNew || allowPathEdit) && resourceType === 'dashboard';
+    const showFolderFilename = isNew || allowPathEdit;
     const configuredRepoPath = isGitProvider(repository?.type) ? stripSlashes(repository?.path ?? '') : undefined;
 
     // A new branch only exists after the save creates it; until the selected branch is a known
@@ -141,7 +145,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
       <>
         {/* Workflow */}
         {repository?.type && isGitProvider(repository.type) && !readOnly && (
-          <>
+          <Stack direction="column" gap={1}>
             <Field
               // Do not disable for lockBranch: `Field` clones `disabled` onto the input, and
               // react-hook-form drops disabled fields from the submitted values, which would strip
@@ -225,7 +229,22 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
                 )}
               />
             </Field>
-          </>
+            {/* What happens on commit is the consequence the branch choice decides, so it is said
+                next to the choice rather than left to the success state. */}
+            <Text variant="bodySmall" color="secondary">
+              {getWorkflowForRef(repository, selectedBranch) === 'write'
+                ? t(
+                    'provisioned-resource-form.save-or-delete-resource-shared-fields.commit-target-direct',
+                    'This commit goes straight to {{branch}} and applies in Grafana right away, for everyone in your organization.',
+                    { branch: repository.branch }
+                  )
+                : t(
+                    'provisioned-resource-form.save-or-delete-resource-shared-fields.commit-target-branch',
+                    "Once it's pushed, you'll open the pull request into {{branch}} from {{provider}}.",
+                    { branch: repository.branch, provider: RepoTypeDisplay[repository.type] }
+                  )}
+            </Text>
+          </Stack>
         )}
 
         {/* Path — split into folder + filename for new dashboards */}
@@ -238,45 +257,47 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
               const { directory: dir, filename: file } = splitPath(value || '');
               return (
                 <>
-                  <Field
-                    noMargin
-                    htmlFor="folder-path"
-                    label={t(
-                      'provisioned-resource-form.save-or-delete-resource-shared-fields.label-repository-folder',
-                      'Repository folder'
-                    )}
-                    description={
-                      configuredRepoPath
-                        ? t(
-                            'provisioned-resource-form.save-or-delete-resource-shared-fields.description-folder-with-path',
-                            'Folder inside the repository. Leave empty for the configured repository path ({{path}}).',
-                            { path: configuredRepoPath, interpolation: { escapeValue: false } }
-                          )
-                        : t(
-                            'provisioned-resource-form.save-or-delete-resource-shared-fields.description-folder',
-                            'Folder inside the repository. Leave empty for the repository root.'
-                          )
-                    }
-                  >
-                    <Combobox
-                      id="folder-path"
-                      value={dir}
-                      onChange={(option) => {
-                        setValue('path', joinPath(option?.value ?? '', file), {
-                          shouldDirty: !isNew,
-                          shouldValidate: true,
-                        });
-                      }}
-                      options={folderOptions}
-                      loading={isFoldersLoading}
-                      createCustomValue
-                      isClearable
-                      placeholder={t(
-                        'provisioned-resource-form.save-or-delete-resource-shared-fields.placeholder-folder',
-                        'Select or enter folder path'
+                  {!hiddenFields?.includes('folder') && (
+                    <Field
+                      noMargin
+                      htmlFor="folder-path"
+                      label={t(
+                        'provisioned-resource-form.save-or-delete-resource-shared-fields.label-repository-folder',
+                        'Repository folder'
                       )}
-                    />
-                  </Field>
+                      description={
+                        configuredRepoPath
+                          ? t(
+                              'provisioned-resource-form.save-or-delete-resource-shared-fields.description-folder-with-path',
+                              'Folder inside the repository. Leave empty for the configured repository path ({{path}}).',
+                              { path: configuredRepoPath, interpolation: { escapeValue: false } }
+                            )
+                          : t(
+                              'provisioned-resource-form.save-or-delete-resource-shared-fields.description-folder',
+                              'Folder inside the repository. Leave empty for the repository root.'
+                            )
+                      }
+                    >
+                      <Combobox
+                        id="folder-path"
+                        value={dir}
+                        onChange={(option) => {
+                          setValue('path', joinPath(option?.value ?? '', file), {
+                            shouldDirty: !isNew,
+                            shouldValidate: true,
+                          });
+                        }}
+                        options={folderOptions}
+                        loading={isFoldersLoading}
+                        createCustomValue
+                        isClearable
+                        placeholder={t(
+                          'provisioned-resource-form.save-or-delete-resource-shared-fields.placeholder-folder',
+                          'Select or enter folder path'
+                        )}
+                      />
+                    </Field>
+                  )}
                   <Field
                     noMargin
                     htmlFor="dashboard-filename"
@@ -286,13 +307,14 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
                     )}
                     description={t(
                       'provisioned-resource-form.save-or-delete-resource-shared-fields.description-filename',
-                      'File name for the dashboard (.json or .yaml)'
+                      'File name inside the repository (.json or .yaml)'
                     )}
                     invalid={!!errors.path}
                     error={errors?.path?.message}
                   >
                     <Input
                       id="dashboard-filename"
+                      className={styles.mono}
                       type="text"
                       value={file}
                       onChange={(e) => {
@@ -362,3 +384,11 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
   }
 );
 ResourceEditFormSharedFields.displayName = 'ResourceEditFormSharedFields';
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  mono: css({
+    input: {
+      fontFamily: theme.typography.fontFamilyMonospace,
+    },
+  }),
+});
