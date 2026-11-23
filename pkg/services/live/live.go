@@ -186,6 +186,8 @@ func ProvideService(cfg *setting.Cfg, routeRegister routing.RouteRegister, plugC
 		return nil, err
 	}
 
+	// Existing behavior: nothing assigns g.Pipeline, so channel rule pipelines
+	// are not used on the websocket path and this stays nil.
 	var channelPipeline liveserver.Pipeline
 	if g.Pipeline != nil {
 		channelPipeline = g.Pipeline

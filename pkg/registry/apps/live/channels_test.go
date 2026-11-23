@@ -110,3 +110,31 @@ func TestChannelStorageServerReplacesGeneratedStores(t *testing.T) {
 		"others":   other,
 	}, inner.info.VersionedResourcesStorageMap["v1alpha1"])
 }
+
+func TestChannelNames(t *testing.T) {
+	ctx := k8srequest.WithNamespace(context.Background(), "default")
+	s := newChannelStorage(&fakeLister{channels: []*managedstream.ManagedChannel{
+		{Channel: "stream/telegraf/cpu/load"},
+		{Channel: "stream/telegraf/cpu.load"},
+		// Not a valid Live channel ("~" and spaces are outside the grammar), so
+		// it can't be subscribed to and is left out.
+		{Channel: "stream/telegraf/cpu~load now"},
+	}})
+
+	obj, err := s.List(ctx, nil)
+	require.NoError(t, err)
+	items := obj.(*livev1.ChannelList).Items
+	require.Len(t, items, 2)
+
+	// Paths that differ only by "/" versus "." get different names.
+	require.Equal(t, "stream.telegraf.cpu.load", items[0].Name)
+	require.Equal(t, "stream/telegraf/cpu/load", items[0].Spec.Path)
+	require.Equal(t, "stream.telegraf.cpu~load", items[1].Name)
+	require.Equal(t, "stream/telegraf/cpu.load", items[1].Spec.Path)
+
+	for _, item := range items {
+		got, err := s.Get(ctx, item.Name, nil)
+		require.NoError(t, err)
+		require.Equal(t, item.Spec.Path, got.(*livev1.Channel).Spec.Path)
+	}
+}

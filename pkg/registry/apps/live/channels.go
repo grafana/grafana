@@ -12,6 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana-plugin-sdk-go/live"
+
 	livev1 "github.com/grafana/grafana/apps/live/pkg/apis/live/v1alpha1"
 	"github.com/grafana/grafana/apps/live/pkg/managedstream"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -86,6 +88,11 @@ func (s *channelStorage) List(ctx context.Context, _ *internalversion.ListOption
 	}
 	list := &livev1.ChannelList{Items: make([]livev1.Channel, 0, len(managed))}
 	for _, m := range managed {
+		// A channel outside the Live grammar cannot be subscribed to, and its
+		// name might not map back to a single path.
+		if _, err := live.ParseChannel(m.Channel); err != nil {
+			continue
+		}
 		c, err := toChannel(ns.Value, m)
 		if err != nil {
 			return nil, err
@@ -108,11 +115,14 @@ func (s *channelStorage) Get(ctx context.Context, name string, _ *metav1.GetOpti
 	return nil, apierrors.NewNotFound(livev1.ChannelKind().GroupVersionResource().GroupResource(), name)
 }
 
-// channelName turns a channel path into an object name. Paths contain
-// slashes, which names cannot.
+// channelName turns a channel path into an object name, which cannot contain
+// slashes: "/" becomes "." and a literal "." becomes "~". A valid Live channel
+// never contains "~", so different paths always get different names.
 func channelName(path string) string {
-	return strings.ReplaceAll(path, "/", ".")
+	return channelNameReplacer.Replace(path)
 }
+
+var channelNameReplacer = strings.NewReplacer(".", "~", "/", ".")
 
 func toChannel(namespace string, m *managedstream.ManagedChannel) (*livev1.Channel, error) {
 	c := livev1.NewChannel()
