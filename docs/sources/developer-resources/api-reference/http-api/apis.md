@@ -213,10 +213,9 @@ Common annotations include:
 
 #### Manager and source annotations
 
-Resources that an external tool manages, such as Git Sync, Terraform, or `kubectl`, carry additional annotations.
-Grafana uses them to record which tool owns a resource, where the resource definition comes from, and whether you can edit the resource outside of that tool.
-
-The managing tool sets these annotations for you. Don't set them by hand on resources you create through the API.
+Resources that an external tool manages, such as Git Sync, Terraform, or `kubectl`, carry additional annotations that record which tool owns the resource, where its definition comes from, and whether you can edit it outside that tool.
+Grafana derives most of them, so don't set them by hand.
+For what each tool records and allows, refer to [Managed resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/managed-resources/).
 
 Use the following annotations to identify the manager:
 
@@ -232,8 +231,6 @@ A `grafana.app/managedBy` annotation on its own doesn't mark a resource as manag
 
 Grafana writes `grafana.app/managerAllowsEdits` only when the value is `true`, so an absent annotation and `false` mean the same thing.
 In API responses that expose manager properties, such as search results, the same value appears as the `allowEdits` field.
-Each tool sets it differently: Grafana derives it from the `allowUiUpdates` option for classic file provisioning, Terraform and `kubectl` callers set it themselves, and repository-backed resources don't use it, because Grafana sends an edit of one to its repository instead of rejecting it.
-Refer to [Managed resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/managed-resources/) for what each tool records and allows.
 
 Use the following annotations to identify the source of a provisioned resource.
 Managers that reconcile from a source, such as Git Sync, set them. Managers without a concept of a source, such as Terraform, don't.
@@ -248,25 +245,28 @@ Managers that reconcile from a source, such as Git Sync, set them. Managers with
 
 The `grafana.app/managedBy` annotation accepts the following values:
 
-| Value       | Description                                                                                                                             |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `repo`      | A repository manages the resource, either Git Sync or on-prem file provisioning, and `grafana.app/managerId` holds the repository name. |
-| `terraform` | A Terraform provider manages the resource.                                                                                              |
-| `kubectl`   | A Kubernetes manifest applied with `kubectl` manages the resource.                                                                      |
-| `plugin`    | A plugin manages the resource.                                                                                                          |
-| `grafana`   | Grafana manages the resource itself.                                                                                                    |
+| Value               | Description                                                                                                                             |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `repo`              | A repository manages the resource, either Git Sync or on-prem file provisioning, and `grafana.app/managerId` holds the repository name. |
+| `terraform`         | A Terraform provider manages the resource.                                                                                              |
+| `kubectl`           | A Kubernetes manifest applied with `kubectl` manages the resource.                                                                      |
+| `plugin`            | A plugin manages the resource.                                                                                                          |
+| `grafana`           | Grafana manages the resource itself.                                                                                                    |
+| `file-provisioning` | A file the instance was started with configures the resource, such as the repository that `bootstrap_path` registers.                   |
 
-Grafana also sets `classic-file-provisioning`, `classic-api-provisioning`, and `classic-converted-prometheus` on resources that come from legacy provisioning: classic file provisioning, the legacy Alerting provisioning HTTP API, and the Alerting Convert Prometheus API.
-These values are deprecated and exist for migration only. New resources use one of the values in the preceding table.
+Only `terraform` and `kubectl` are yours to set. Grafana derives the rest, and rejects a write that sets `classic-file-provisioning` from any caller but the file provisioner.
+
+Grafana also sets the deprecated `classic-file-provisioning`, `classic-api-provisioning`, and `classic-converted-prometheus` values on resources from legacy provisioning: classic file provisioning, the legacy Alerting provisioning HTTP API, and the Alerting Convert Prometheus API.
+They exist for migration only, and new resources use one of the values in the preceding table.
 
 ##### Change the manager of a resource
 
 You can't change the manager of a resource in place.
-Grafana rejects a write that changes `grafana.app/managedBy` with a `403 Forbidden` response that carries a `ResourceManagerKindConflict` cause, and rejects a write that changes `grafana.app/managerId` with a `403 Forbidden` response.
-A Terraform provider is the one exception: it can migrate a resource from a deprecated User-Agent identity to a stable one.
+Grafana rejects a write that changes `grafana.app/managedBy` with a `403 Forbidden` response carrying a `ResourceManagerKindConflict` cause, and rejects a write that changes `grafana.app/managerId` with a `403 Forbidden` response.
+The one exception is a Terraform provider migrating from a deprecated User-Agent identity to a stable one.
 
-To hand a resource over to a different tool, remove the manager annotations first, then write them again with the new values.
-Removing the manager from a resource that Git Sync manages requires an administrator role.
+To hand a resource to a different tool, remove the manager annotations first, then write them again with the new values.
+Removing the manager from a repository-managed resource requires an administrator role.
 
 ##### Deprecated repository annotations
 
