@@ -138,7 +138,7 @@ function createPillColorResolver(field: Field, theme: GrafanaTheme2): PillColorR
 
   const resolveBaseColor = (rawValue: unknown, display: DisplayValue, value: string) => {
     if (schemeScale && mode?.useValueHash) {
-      return onBackground(schemeScale(NaN, value).color);
+      return onBackground(schemeScale(NaN, rawValue).color);
     }
 
     if (schemeScale && isNumeric(rawValue)) {
