@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/router/routertest"
 	"github.com/grafana/grafana/pkg/server"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -199,6 +200,27 @@ func TestClientsServeManifestKindsFromTheAggregatedServer(t *testing.T) {
 	token := "Bearer token-for-" + apisprovisioning.GROUP
 	require.Equal(t, token, router.AccessToken("/apis/discovery/v1alpha2/manifests"))
 	require.Equal(t, token, router.AccessToken("/apis/"+stubRouterGroup+"/v1/namespaces/default/widgets"))
+}
+
+func TestClientsUseTheRouterForDashboardsWithTheRouterClientFlag(t *testing.T) {
+	dashboards := "/apis/dashboard.grafana.app/v1/namespaces/default/dashboards"
+	router := routertest.NewServer(t, map[string]string{
+		"/apis/dashboard.grafana.app/v1": `{"kind":"APIResourceList","apiVersion":"v1","groupVersion":"dashboard.grafana.app/v1","resources":[{"name":"dashboards","namespaced":true,"kind":"Dashboard","verbs":["list"]}]}`,
+		dashboards:                       `{"apiVersion":"dashboard.grafana.app/v1","kind":"DashboardList","items":[]}`,
+	})
+	cfg := newClientsConfig(t, newStubSigner(t).URL, map[string]string{"aggregated_server_url": router.URL})
+	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagProvisioningRouterClient)
+
+	factory, err := cfg.Clients()
+	require.NoError(t, err)
+	clients, err := factory.Clients(t.Context(), "default")
+	require.NoError(t, err)
+	client, _, err := clients.ForKind(t.Context(), resources.DashboardResource.GroupVersion().WithKind("Dashboard"))
+	require.NoError(t, err)
+	_, err = client.List(t.Context(), metav1.ListOptions{})
+	require.NoError(t, err)
+
+	require.Equal(t, "Bearer token-for-"+apisprovisioning.GROUP+",dashboard.grafana.app,folder.grafana.app", router.AccessToken(dashboards))
 }
 
 // Production has no aggregated server yet, so the operators must run with the configured

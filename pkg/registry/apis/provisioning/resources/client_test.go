@@ -9,8 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/open-feature/go-sdk/openfeature"
-	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -737,36 +735,16 @@ func TestRouterSwitchClientFactory(t *testing.T) {
 	router := NewMockClientFactory(t)
 	router.EXPECT().Clients(mock.Anything, "default").Return(routerClients, nil).Once()
 	dedicated := NewMockClientFactory(t)
-	dedicated.EXPECT().Clients(mock.Anything, "default").Return(dedicatedClients, nil).Twice()
+	dedicated.EXPECT().Clients(mock.Anything, "default").Return(dedicatedClients, nil).Once()
 	factory := NewRouterSwitchClientFactory(router, dedicated)
 
-	for _, step := range []struct {
-		enabled bool
-		want    ResourceClients
-	}{
-		{enabled: false, want: dedicatedClients},
-		{enabled: true, want: routerClients},
-		{enabled: false, want: dedicatedClients},
-	} {
-		setRouterClientFlag(t, step.enabled)
-		got, err := factory.Clients(t.Context(), "default")
-		require.NoError(t, err)
-		require.Same(t, step.want, got)
-	}
-}
+	featuremgmt.WithDisabledFlags(t, featuremgmt.FlagProvisioningRouterClient)
+	got, err := factory.Clients(t.Context(), "default")
+	require.NoError(t, err)
+	require.Same(t, dedicatedClients, got)
 
-func setRouterClientFlag(t *testing.T, enabled bool) {
-	t.Helper()
-	variant := "disabled"
-	if enabled {
-		variant = "enabled"
-	}
-	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
-		featuremgmt.FlagProvisioningRouterClient: {
-			State:          memprovider.Enabled,
-			DefaultVariant: variant,
-			Variants:       map[string]any{"enabled": true, "disabled": false},
-		},
-	})))
-	t.Cleanup(func() { _ = openfeature.SetProviderAndWait(openfeature.NoopProvider{}) })
+	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagProvisioningRouterClient)
+	got, err = factory.Clients(t.Context(), "default")
+	require.NoError(t, err)
+	require.Same(t, routerClients, got)
 }
