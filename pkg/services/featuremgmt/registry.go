@@ -2788,6 +2788,15 @@ var (
 			Generate:     Generate{Go: true, React: true},
 		},
 		{
+			Name:         "alerting.legacyGroupsMigration",
+			Description:  "Adds a Legacy groups tab to the Grafana-managed rule list pages, for converting evaluation groups into subfolders. Needs alerting.gmaOnlyListView",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true, React: true},
+		},
+		{
 			Name:        "alerting.notificationsAPIV1Beta1",
 			Description: "Switch the Grafana Alerting UI from notifications.alerting.grafana.app/v0alpha1 to v1beta1",
 			Stage:       FeatureStageExperimental,

@@ -922,6 +922,10 @@ const (
 	// Enables the separate Grafana-managed Alert rules and Recording rules list pages, replacing the combined rule list
 	FlagAlertingGmaOnlyListView = "alerting.gmaOnlyListView"
 
+	// FlagAlertingLegacyGroupsMigration
+	// Adds a Legacy groups tab to the Grafana-managed rule list pages, for converting evaluation groups into subfolders. Needs alerting.gmaOnlyListView
+	FlagAlertingLegacyGroupsMigration = "alerting.legacyGroupsMigration"
+
 	// FlagGrafanaCorrelationsSkipLegacy
 	// Route any calls to legacy correlations endpoints to call through to app platform
 	FlagGrafanaCorrelationsSkipLegacy = "grafana.correlationsSkipLegacy"

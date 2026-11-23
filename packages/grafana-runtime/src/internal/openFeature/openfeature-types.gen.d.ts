@@ -149,6 +149,7 @@ declare module "@openfeature/core" {
     | "datasources.config.ui.useNewDatasourceCRUDAPIs"
     | "reporting.anyPageReporting"
     | "alerting.gmaOnlyListView"
+    | "alerting.legacyGroupsMigration"
     | "assistant.frontend.tools.dashboardTemplates"
     | "alerting.syncExternalAlertmanager"
     | "grafana.enableScopesFirstMode"
