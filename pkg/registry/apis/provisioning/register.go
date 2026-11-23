@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"slices"
 	"strings"
+	gosync "sync"
 	"time"
 
 	"github.com/open-feature/go-sdk/openfeature"
@@ -187,6 +188,31 @@ type APIBuilder struct {
 	// informer feeds its Store, so it is validated per deployment before the
 	// default flips.
 	keysOnlyReList bool
+
+	// The informer metrics are registered once and shared by every delta source
+	// of this builder: the post-start hook's and the repository controller service's.
+	informerMetricsOnce     gosync.Once
+	relistProjectionMetrics *informer.RelistProjectionMetrics
+	freshnessMetrics        *informer.FreshnessMetrics
+}
+
+func (b *APIBuilder) informerMetrics() (*informer.RelistProjectionMetrics, *informer.FreshnessMetrics) {
+	b.informerMetricsOnce.Do(func() {
+		b.relistProjectionMetrics = informer.NewRelistProjectionMetrics(b.registry)
+		b.freshnessMetrics = informer.NewFreshnessMetrics(b.registry)
+	})
+	return b.relistProjectionMetrics, b.freshnessMetrics
+}
+
+// informerResyncInterval is the re-list interval used for health checks and
+// reconciliation by the repository and connection controllers (the jobs
+// informer uses job_poll_interval). Configurable via [provisioning]
+// resync_interval; <=0 falls back to the default.
+func (b *APIBuilder) informerResyncInterval() time.Duration {
+	if b.controllerResyncInterval <= 0 {
+		return setting.ProvisioningControllerResyncIntervalDefault
+	}
+	return b.controllerResyncInterval
 }
 
 // NewAPIBuilder creates an API builder for the provisioning API.
@@ -1151,14 +1177,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				return nil
 			}
 
-			// Informer resync interval used for health check and reconciliation of
-			// the repository and connection controllers (the jobs informer uses
-			// job_poll_interval, below). Configurable via [provisioning]
-			// resync_interval; <=0 falls back to the default.
-			informerFactoryResyncInterval := b.controllerResyncInterval
-			if informerFactoryResyncInterval <= 0 {
-				informerFactoryResyncInterval = setting.ProvisioningControllerResyncIntervalDefault
-			}
+			informerFactoryResyncInterval := b.informerResyncInterval()
 			if nats.Enabled(b.natsSubscriber) {
 				logging.DefaultLogger.Info("provisioning controllers using NATS-backed informer")
 			}
@@ -1311,61 +1330,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				}
 			}()
 
-			webhookSecretRotationInterval := b.webhookSecretRotationInterval
-			if webhookSecretRotationInterval <= 0 {
-				// If webhookSecretRotationInterval is not set, use the default value
-				webhookSecretRotationInterval = 30 * 24 * time.Hour
-			}
-
-			// One per process; see RelistProjectionMetrics.
-			relistProjectionMetrics := informer.NewRelistProjectionMetrics(b.registry)
-			// Likewise one per process; see FreshnessMetrics.
-			freshnessMetrics := informer.NewFreshnessMetrics(b.registry)
-
-			// The repository delta source and the getter it backs.
-			var repoKeys keysapi.Lister
-			if b.keysOnlyReList {
-				repoKeys = keysapi.NewGRPCLister(b.unified, provisioning.RepositoryResourceInfo.GroupVersionResource())
-				logging.FromContext(postStartHookCtx.Context).Info("provisioning re-list will ask for keys only", "transport", "storage", "resource", provisioning.RepositoryResourceInfo.GroupVersionResource().Resource)
-			}
-			repoSource, reconcileRepoGetter := informer.NewRepositoryDeltaSource(b.natsSubscriber, c, repoKeys, informerFactoryResyncInterval, relistProjectionMetrics, freshnessMetrics)
-			repoController := controller.NewRepositoryController(
-				b.GetClient(),
-				reconcileRepoGetter,
-				b.repoFactory,
-				b.connectionFactory,
-				b.resourceLister,
-				b.clients,
-				b.jobs,
-				b.GetHealthChecker(),
-				b.statusPatcher,
-				b.registry,
-				b.tracer,
-				10,
-				informerFactoryResyncInterval,
-				b.minSyncInterval,
-				30*time.Second,
-				b.quotaGetter,
-				controller.NewRepositoryQuotaChecker(reconcileRepoGetter),
-				b.incrementalPolicy,
-				webhookSecretRotationInterval,
-				nats.Enabled(b.natsSubscriber),
-			)
-			repoReg, err := repoSource.AddEventHandler(repoController.EventHandler())
-			if err != nil {
-				return fmt.Errorf("add repository controller event handler: %w", err)
-			}
-			go repoSource.Run(postStartHookCtx.Done())
-
-			// Wait for the cache to sync off the hot path so we don't block
-			// apiserver startup; the controller only starts its workers once
-			// its handler has processed the initial list.
-			go func() {
-				if !cache.WaitForCacheSync(postStartHookCtx.Done(), repoReg.HasSynced) {
-					return
-				}
-				repoController.Run(postStartHookCtx.Context, repoControllerWorkers, func() {}, func() {})
-			}()
+			relistProjectionMetrics, freshnessMetrics := b.informerMetrics()
 
 			// Create and run connection controller
 			connStatusPatcher := appcontroller.NewConnectionStatusPatcher(b.GetClient())
