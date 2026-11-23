@@ -61,6 +61,8 @@ Effective June 22, 2026, all Grafana Labs repositories [require signed commits](
 
 **NOTE** Unsigned commits and pull requests will be rejected and closed. This includes pull requests that have been authored by Agents.
 
+Grafana's [AI policy](AI_POLICY.md#respect-maintainers-and-the-community) asks contributors to aim for no more than 3 open pull requests at a time. When you prepare a pull request, check with `gh pr list --repo grafana/grafana --author @me --state open`. If there are already 3 or more, finish the task as usual and add a short note in your summary to the user that they are over that guideline and may want to close or finish some first.
+
 ### Develop a Plugin
 
 Grafana plugins let you extend the platform with new data sources, panels, and more. This is a great way to share your ideas and make a real impact on the Grafana ecosystem.

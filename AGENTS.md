@@ -1,6 +1,6 @@
 # AGENTS.md
 
-<!-- version: 2.3.0 -->
+<!-- version: 2.4.0 -->
 
 This file provides guidance to AI agents when working with code in the Grafana repository.
 
@@ -44,9 +44,7 @@ Grafana is a monitoring and observability platform. Go backend, TypeScript/React
 
 Before running `git push`, stop and get explicit human approval. When changes are ready, show a summary of changes and wait for instruction. "Open a PR" in a task description is intent, not permission to push without review.
 
-## Open Pull Request Limit
-
-Grafana's [AI policy](AI_POLICY.md) asks contributors to aim for no more than 3 open PRs at a time. When you prepare a PR, check with `gh pr list --repo grafana/grafana --author @me --state open`. If there are already 3 or more, finish the task as usual and add a short note in your summary to the user that they are over that guideline and may want to close or finish some first.
+For guidance on opening issues and submitting pull requests, read [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Commands
 
