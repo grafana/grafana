@@ -47,6 +47,10 @@ type ConnectionControllerRunner struct {
 // source, and registers the controller's event handler with the source.
 func ProvideConnectionController(deps ConnectionControllerDeps) (*ConnectionControllerRunner, error) {
 	source, getter := informer.NewConnectionDeltaSource(deps.Subscriber, deps.Client, deps.Keys, deps.ResyncInterval, deps.RelistMetrics, deps.FreshnessMetrics)
+	return newConnectionControllerRunner(source, getter, deps)
+}
+
+func newConnectionControllerRunner(source informer.DeltaSource, getter informer.ConnectionGetter, deps ConnectionControllerDeps) (*ConnectionControllerRunner, error) {
 	controller := NewConnectionController(
 		getter,
 		appcontroller.NewConnectionStatusPatcher(deps.Client.ProvisioningV0alpha1()),
@@ -80,7 +84,11 @@ func (r *ConnectionControllerRunner) Run(ctx context.Context, workers int, onSta
 	go r.source.Run(ctx.Done())
 
 	if !cache.WaitForCacheSync(ctx.Done(), r.registration.HasSynced) {
-		return fmt.Errorf("connection controller informer cache sync failed: %w", ctx.Err())
+		r.controller.queue.ShutDown()
+		// The cause tells a dependency failure, such as the NATS subscriber
+		// stopping, apart from a shutdown: callers treat context.Canceled as
+		// a clean stop.
+		return fmt.Errorf("connection controller informer cache sync failed: %w", context.Cause(ctx))
 	}
 
 	r.controller.Run(ctx, workers, onStarted, func() {})
