@@ -401,7 +401,7 @@ var Basic = wire.NewSet(
 	grpcserver.ProvideHealthService,
 	grpcserver.ProvideReflectionService,
 	teamdelete.ProvideDeletedRegistry,
-	teamimpl.ProvideServiceWithWatch,
+	teamimpl.ProvideServiceWithDeleted,
 	wire.Bind(new(team.Service), new(*teamimpl.Service)),
 	teamapi.ProvideTeamAPI,
 	tempuserimpl.ProvideService,

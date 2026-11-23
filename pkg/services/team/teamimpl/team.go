@@ -40,13 +40,18 @@ func (s *Service) LegacySearchService() team.Service {
 }
 
 func ProvideService(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, tracer tracing.Tracer, configProvider apiserver.DirectRestConfigProvider, iamFeatures iamapi.Features) (*Service, error) {
-	return ProvideServiceWithWatch(sql, cfg, tracer, configProvider, iamFeatures, nil, nil)
+	return ProvideServiceWithWatch(sql, cfg, tracer, configProvider, iamFeatures, nil)
 }
 
 // ProvideServiceWithWatch is ProvideService that also announces legacy team
 // writes on the legacy watch subjects. It is separate so wire sets without the
 // NATS bus, such as the CLI's, can keep using ProvideService.
-func ProvideServiceWithWatch(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, tracer tracing.Tracer, configProvider apiserver.DirectRestConfigProvider, iamFeatures iamapi.Features, legacyWatch *legacywatch.Publisher, deleted *teamdelete.DeletedRegistry) (*Service, error) {
+func ProvideServiceWithWatch(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, tracer tracing.Tracer, configProvider apiserver.DirectRestConfigProvider, iamFeatures iamapi.Features, legacyWatch *legacywatch.Publisher) (*Service, error) {
+	return ProvideServiceWithDeleted(sql, cfg, tracer, configProvider, iamFeatures, legacyWatch, nil)
+}
+
+// ProvideServiceWithDeleted is ProvideServiceWithWatch that also runs the registered handlers after a team is deleted.
+func ProvideServiceWithDeleted(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, tracer tracing.Tracer, configProvider apiserver.DirectRestConfigProvider, iamFeatures iamapi.Features, legacyWatch *legacywatch.Publisher, deleted *teamdelete.DeletedRegistry) (*Service, error) {
 	legacyService, err := NewLegacyService(sql, tracer, legacyWatch)
 	if err != nil {
 		return nil, err
@@ -87,7 +92,7 @@ func (s *Service) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCommand) e
 
 func (s *Service) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCommand) error {
 	if s.isK8sRedirectEnabled(ctx) {
-		// The Team API storage runs the deleted handlers.
+		// The in-process Team API storage runs the deleted handlers.
 		return s.k8sService.DeleteTeam(ctx, cmd)
 	}
 

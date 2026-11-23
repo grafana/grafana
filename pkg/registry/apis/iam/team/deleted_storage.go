@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/team/teamdelete"
 )
@@ -51,8 +52,11 @@ func (s *deletedStorage) Delete(ctx context.Context, name string, deleteValidati
 		return obj, deleted, err
 	}
 
-	if ns, nsErr := request.NamespaceInfoFrom(ctx, true); nsErr == nil {
-		s.registry.Run(ctx, teamdelete.Deleted{OrgID: ns.OrgID, TeamID: teamID, TeamUID: name})
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		log.New("team.deleted").FromContext(ctx).Error("team deleted handlers skipped, no namespace", "teamUID", name, "error", err)
+		return obj, deleted, nil
 	}
+	s.registry.Run(ctx, teamdelete.Deleted{OrgID: ns.OrgID, TeamID: teamID, TeamUID: name})
 	return obj, deleted, nil
 }

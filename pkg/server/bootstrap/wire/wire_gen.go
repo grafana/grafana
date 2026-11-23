@@ -418,7 +418,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		return nil, err
 	}
 	deletedRegistry := teamdelete.ProvideDeletedRegistry()
-	teamimplService, err := teamimpl.ProvideServiceWithWatch(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider, features, publisher, deletedRegistry)
+	teamimplService, err := teamimpl.ProvideServiceWithDeleted(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider, features, publisher, deletedRegistry)
 	if err != nil {
 		return nil, err
 	}
@@ -1222,7 +1222,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	deletedRegistry := teamdelete.ProvideDeletedRegistry()
-	teamimplService, err := teamimpl.ProvideServiceWithWatch(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider, features, publisher, deletedRegistry)
+	teamimplService, err := teamimpl.ProvideServiceWithDeleted(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider, features, publisher, deletedRegistry)
 	if err != nil {
 		return nil, err
 	}
@@ -1936,7 +1936,7 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (server.Runner, err
 		return server.Runner{}, err
 	}
 	deletedRegistry := teamdelete.ProvideDeletedRegistry()
-	teamimplService, err := teamimpl.ProvideServiceWithWatch(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider, features, publisher, deletedRegistry)
+	teamimplService, err := teamimpl.ProvideServiceWithDeleted(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider, features, publisher, deletedRegistry)
 	if err != nil {
 		return server.Runner{}, err
 	}
@@ -2163,7 +2163,7 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 		return nil, err
 	}
 	deletedRegistry := teamdelete.ProvideDeletedRegistry()
-	teamimplService, err := teamimpl.ProvideServiceWithWatch(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider, features, publisher, deletedRegistry)
+	teamimplService, err := teamimpl.ProvideServiceWithDeleted(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider, features, publisher, deletedRegistry)
 	if err != nil {
 		return nil, err
 	}
