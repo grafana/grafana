@@ -1,4 +1,5 @@
 import { createSelector } from '@reduxjs/toolkit';
+import { uniqBy } from 'lodash';
 
 import { type IconName } from '@grafana/data';
 import { type KindInfo } from '@grafana/runtime/unstable';
@@ -91,30 +92,36 @@ function appKind({ group, kind, version, resource, listPath }: DiscoveredAppKind
   };
 }
 
+/** What discovery found for the app kinds. Plain data, like each of them. */
+interface AppKindDiscovery {
+  kinds: DiscoveredAppKind[];
+  /** False when a group is listed stale: its backend could not be read, so its kinds may be missing */
+  complete: boolean;
+}
+
 /**
  * The app kinds Grafana can show as starred: every namespaced kind API discovery lists that is not a core
  * kind, with a plugin page to link to.
  */
-async function discoverAppKinds(): Promise<DiscoveredAppKind[]> {
-  const resources = discoveryResources(await getAPIGroupDiscoveryList());
-  const listPathFor = appKindListPathResolver();
-  const seen = new Set<string>();
-  const discovered: DiscoveredAppKind[] = [];
-  for (const { responseKind, scope, resource } of resources) {
-    const { group, kind, version } = responseKind;
-    const key = `${group}/${kind}`;
-    // Discovery lists a group's versions by preference, so a kind's first entry is its preferred version. A core
-    // kind is described by the kind table, whatever a plugin names its pages
-    if (scope !== 'Namespaced' || findKind(group, kind) || seen.has(key)) {
-      continue;
-    }
-    seen.add(key);
-    const listPath = listPathFor(resource);
-    if (listPath) {
-      discovered.push({ group, kind, version, resource, listPath });
-    }
-  }
-  return discovered;
+async function discoverAppKinds(): Promise<AppKindDiscovery> {
+  const apis = await getAPIGroupDiscoveryList();
+  // Discovery lists a group's versions by preference, so a kind's first entry is its preferred version. A core
+  // kind is described by the kind table, whatever a plugin names its pages
+  const served = uniqBy(
+    discoveryResources(apis).filter(
+      ({ responseKind: { group, kind }, scope }) => scope === 'Namespaced' && !findKind(group, kind)
+    ),
+    ({ responseKind: { group, kind } }) => `${group}/${kind}`
+  );
+  const listPathFor = appKindListPathResolver(served.map(({ resource }) => resource));
+  return {
+    kinds: served.flatMap(({ responseKind: { group, kind, version }, resource }) => {
+      const listPath = listPathFor(resource);
+      return listPath ? [{ group, kind, version, resource, listPath }] : [];
+    }),
+    // A group whose backend could not be read is listed stale, with its kinds missing or out of date
+    complete: apis.items.every(({ versions }) => versions.every(({ freshness }) => freshness !== 'Stale')),
+  };
 }
 
 const appKindsAPI = collectionsAPIv1alpha1.injectEndpoints({
@@ -122,8 +129,9 @@ const appKindsAPI = collectionsAPIv1alpha1.injectEndpoints({
     /**
      * Discovered once per page load and kept for its whole life: what an instance serves only changes
      * with a deploy. A failed discovery is retried by the next caller, since RTK re-runs a rejected query.
+     * An incomplete one carries the tag of the star set, so it is run again whenever the stars are read again.
      */
-    discoverAppKinds: build.query<DiscoveredAppKind[], void>({
+    discoverAppKinds: build.query<AppKindDiscovery, void>({
       queryFn: async () => {
         try {
           return { data: await discoverAppKinds() };
@@ -132,6 +140,7 @@ const appKindsAPI = collectionsAPIv1alpha1.injectEndpoints({
           return { error };
         }
       },
+      providesTags: (discovery) => (discovery?.complete === false ? ['Stars'] : []),
       keepUnusedDataFor: Infinity,
     }),
   }),
@@ -145,7 +154,7 @@ export const { useDiscoverAppKindsQuery } = appKindsAPI;
  */
 export const selectStarredKinds = createSelector(
   appKindsAPI.endpoints.discoverAppKinds.select(),
-  ({ data }): readonly StarredKind[] => (data ? [...GRAFANA_KINDS, ...data.map(appKind)] : GRAFANA_KINDS)
+  ({ data }): readonly StarredKind[] => (data ? [...GRAFANA_KINDS, ...data.kinds.map(appKind)] : GRAFANA_KINDS)
 );
 
 /** Grafana's own kinds, then the app kinds discovered so far; only Grafana's before the store exists. */

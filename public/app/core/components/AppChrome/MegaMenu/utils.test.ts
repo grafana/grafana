@@ -157,7 +157,6 @@ describe('enrichWithInteractionTracking', () => {
       id: 'starred/t1',
       url: '/a/test-things-app/things/t1',
       starredKind: 'things.ext.grafana.app/Thing',
-      parentItem: { text: 'Starred', id: 'starred' },
     };
 
     enrichWithInteractionTracking(item, false).onClick?.();

@@ -75,15 +75,7 @@ const folderViewSort = 'name_sort';
  * match. App kinds never live at the root folder either, and the trash holds dashboards alone.
  */
 function isDashboardOnlyQuery(query: SearchQuery): boolean {
-  return Boolean(
-    query.panel_type ||
-      query.ds_type ||
-      query.ds_uid ||
-      query.createdBy ||
-      query.ownerReference?.length ||
-      query.deleted ||
-      query.location === 'general'
-  );
+  return Boolean(query.panel_type || query.ds_type || query.ds_uid || query.deleted || query.location === 'general');
 }
 
 export class UnifiedSearcher implements GrafanaSearcher {
@@ -126,7 +118,13 @@ export class UnifiedSearcher implements GrafanaSearcher {
       indexNames.length > 0 ? this.fetchResponse(uri) : Promise.resolve<SearchAPIResponse>({ hits: [], totalHits: 0 }),
       searchAppKindHits(
         app,
-        { text: query.query, tags: query.tags, folder: query.location || undefined },
+        {
+          text: query.query,
+          tags: query.tags,
+          folder: query.location || undefined,
+          createdBy: query.createdBy,
+          ownerReferences: query.ownerReference,
+        },
         // The app rows trail the server-sorted index rows, so a title sort can only order them among themselves
         toSortParam(sort) === '-title' ? 'desc' : 'asc'
       ),
@@ -136,14 +134,21 @@ export class UnifiedSearcher implements GrafanaSearcher {
       return noDataResponse();
     }
 
-    // One row sequence: the index's server pages, then the app rows, which the index does not hold
+    // One row sequence: the index's server pages, then the app rows, which the index does not hold. The app rows
+    // start where the index ends: at its first count, or sooner once it answers a page empty, as it does when a
+    // starred item is deleted between two pages
     const limit = query.limit ?? pageSize;
-    const page = (offset: number): Promise<SearchAPIResponse> => {
-      if (offset < index.totalHits) {
-        return this.fetchResponse(`${uri}&offset=${offset}`);
+    let indexEnd = index.totalHits;
+    const page = async (offset: number): Promise<SearchAPIResponse> => {
+      if (offset < indexEnd) {
+        const rsp = await this.fetchResponse(`${uri}&offset=${offset}`);
+        if (rsp.hits.length > 0) {
+          return rsp;
+        }
+        indexEnd = offset;
       }
-      const start = offset - index.totalHits;
-      return Promise.resolve({ hits: appHits.slice(start, start + limit), totalHits: total });
+      const start = offset - indexEnd;
+      return { hits: appHits.slice(start, start + limit), totalHits: total };
     };
     // The first page is filled up to the limit with app rows once the index has none left: a response takes
     // its columns and row count from its first page, so an empty one would hide the app rows behind it
@@ -258,8 +263,9 @@ export class UnifiedSearcher implements GrafanaSearcher {
         }
         const resp = await fetchPage(offset);
         const frame = toDashboardResults(resp, sort);
-        if (!frame) {
-          console.log('no results', frame);
+        // Fewer rows are left than the first page counted, as when one is deleted since: asking for this page
+        // again would never end
+        if (frame.length === 0) {
           return;
         }
 

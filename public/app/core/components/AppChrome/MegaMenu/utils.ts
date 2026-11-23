@@ -62,13 +62,13 @@ export const enrichWithInteractionTracking = (
   }
 
   newItem.onClick = () => {
-    const itemIsStarred = newItem?.parentItem?.id === 'starred';
-    const itemKind = itemIsStarred ? newItem.starredKind : undefined;
+    // Only the leaves of the Starred section carry a kind, and they have no parentItem to tell them by
+    const itemKind = newItem.starredKind;
     reportInteraction('grafana_navigation_item_clicked', {
       path: newItem.url ?? newItem.id,
       menuIsDocked: megaMenuDockedState,
       itemIsBookmarked: newItem?.parentItem?.id === 'bookmarks',
-      itemIsStarred,
+      itemIsStarred: itemKind !== undefined,
       itemKind,
       isNew,
       ...getNavExperimentPayload(),

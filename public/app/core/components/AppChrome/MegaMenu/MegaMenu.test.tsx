@@ -848,4 +848,19 @@ describe('MegaMenu', () => {
     // The kind icon doubles as the row's accessible kind, like the dashboard/folder icons do.
     expect(starredSection.getByTitle('Thing')).toBe(starredSection.getByTestId('icon-cube'));
   });
+
+  it('reports a click on a starred row as a click on a starred item of its kind', async () => {
+    const { user } = renderMegaMenu();
+
+    await user.click(await screen.findByRole('button', { name: 'Expand section: Starred' }));
+    // Waits on the row's text: a role query polled over the whole menu is slow
+    await screen.findByText(STARRED_DASHBOARD.name);
+    const starredSection = within(screen.getByRole('link', { name: 'Starred' }).closest('li')!);
+    await user.click(starredSection.getByRole('link', { name: STARRED_DASHBOARD.name }));
+
+    expect(reportInteraction).toHaveBeenCalledWith(
+      'grafana_navigation_item_clicked',
+      expect.objectContaining({ path: STARRED_DASHBOARD.url, itemIsStarred: true, itemKind: 'dashboard' })
+    );
+  });
 });

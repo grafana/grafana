@@ -283,6 +283,35 @@ describe('useNavTree', () => {
     });
   });
 
+  it('lists a starred plugin object whose API could not be read at first, once the stars are read again', async () => {
+    const folderUid = folderA.item.uid;
+    setMockStarredDashboards([]);
+    setMockStarredPluginKind(THING_GROUP, THING_KIND, [THING_UUID]);
+    // What the instance answers for a group whose backend it cannot read: its versions, stale and without resources
+    const unreadable = jest.fn(() =>
+      HttpResponse.json({
+        items: [{ metadata: { name: THING_GROUP }, versions: [{ version: 'v1alpha1', freshness: 'Stale' }] }],
+      })
+    );
+    server.use(
+      http.get('/apis', unreadable),
+      getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [{ name: THING_UUID, title: 'My Thing' }])
+    );
+    setupSearchMock([{ uid: folderUid, name: 'My Folder', url: `/dashboards/f/${folderUid}`, kind: 'folder' }]);
+
+    const { user } = render(<StarFolderHarness uid={folderUid} />);
+    await waitFor(() => {
+      expect(unreadable).toHaveBeenCalledTimes(1);
+    });
+
+    // The plugin is back, and starring a folder reads the stars again
+    installThingsApp();
+    await user.click(screen.getByRole('button', { name: 'star folder' }));
+
+    expect(await screen.findByTestId(`synced-starred/folder/${folderUid}`)).toHaveTextContent('My Folder');
+    expect(await screen.findByTestId(THING_ROW)).toHaveTextContent('My Thing');
+  });
+
   it('keeps dashboards in the nav and reports no error when a plugin kind API is unavailable', async () => {
     const dashUid = dashbdD.item.uid;
     setMockStarredDashboards([dashUid]);

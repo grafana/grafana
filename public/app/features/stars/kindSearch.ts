@@ -37,6 +37,9 @@ export interface StarredResourceFilter {
   text?: string;
   tags?: string[];
   folder?: string;
+  createdBy?: string;
+  /** Any of these owners */
+  ownerReferences?: string[];
 }
 
 /**
@@ -62,6 +65,12 @@ async function searchStarredHits(
   }
   if (filter.folder) {
     filterLeaves.push({ filter: { field: 'folder', operator: 'In', values: [filter.folder] } });
+  }
+  if (filter.createdBy) {
+    filterLeaves.push({ filter: { field: 'createdBy', operator: 'In', values: [filter.createdBy] } });
+  }
+  if (filter.ownerReferences?.length) {
+    filterLeaves.push({ filter: { field: 'ownerReferences', operator: 'In', values: filter.ownerReferences } });
   }
 
   const url = `${getAPIBaseURL(kind.group, kind.version)}/${kind.resource}/search`;
