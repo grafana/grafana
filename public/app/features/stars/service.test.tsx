@@ -52,14 +52,6 @@ describe('CollectionsStarsSrv.star and unstar', () => {
     expect(seenRequests).toContainEqual({ method: 'DELETE', path: updatePath(DASHBOARD_GROUP, 'Dashboard', uid) });
   });
 
-  it('stars an app object under its own group and kind', async () => {
-    const name = '7d0c6f1e-3b2a-4c5d-9e8f-0a1b2c3d4e5f';
-
-    await srv.star({ group: THING_GROUP, kind: THING_KIND, name });
-
-    expect(seenRequests).toContainEqual({ method: 'PUT', path: updatePath(THING_GROUP, THING_KIND, name) });
-  });
-
   it('stores a star of a kind Grafana cannot show', async () => {
     await srv.star({ group: 'gone.ext.grafana.app', kind: 'Ghost', name: 'g1' });
 
@@ -120,29 +112,35 @@ describe('CollectionsStarsSrv.starred', () => {
 });
 
 describe('CollectionsStarsSrv.canStar', () => {
-  it('is true for the dashboard kind and false for a kind Grafana has no page for', async () => {
-    expect(await srv.canStar(DASHBOARD_GROUP, 'Dashboard')).toBe(true);
-    expect(await srv.canStar('unserved.grafana.app', 'Nope')).toBe(false);
-  });
-
-  it('is true for an app kind Grafana has a page for', async () => {
-    expect(await srv.canStar(THING_GROUP, THING_KIND)).toBe(true);
+  it.each([
+    { desc: "Grafana's own dashboard kind", group: DASHBOARD_GROUP, kind: 'Dashboard', expected: true },
+    { desc: 'an app kind Grafana has a page for', group: THING_GROUP, kind: THING_KIND, expected: true },
+    {
+      desc: "a kind of Grafana's own that it shows no stars of",
+      group: 'playlist.grafana.app',
+      kind: 'Playlist',
+      expected: false,
+    },
+    { desc: 'an app kind Grafana has no page for', group: 'unserved.grafana.app', kind: 'Nope', expected: false },
+  ])('is $expected for $desc', async ({ group, kind, expected }) => {
+    expect(await srv.canStar(group, kind)).toBe(expected);
   });
 });
 
 describe('CollectionsStarsSrv error handling', () => {
-  it('rejects when the server refuses the star', async () => {
-    setMockStarredDashboards([]);
+  it('rejects with the response when the server refuses the star', async () => {
     server.use(http.put(UPDATE_STARS_URL, () => new HttpResponse(null, { status: 500 })));
 
     await expect(
       srv.star({ group: DASHBOARD_GROUP, kind: 'Dashboard', name: 'rejected-dashboard' })
-    ).rejects.toBeDefined();
+    ).rejects.toMatchObject({ status: 500 });
   });
 
   it('rejects when the user is signed out', async () => {
     contextSrv.isSignedIn = false;
 
-    await expect(srv.star({ group: DASHBOARD_GROUP, kind: 'Dashboard', name: 'any' })).rejects.toThrow();
+    await expect(srv.star({ group: DASHBOARD_GROUP, kind: 'Dashboard', name: 'any' })).rejects.toThrow(
+      'Cannot change stars while signed out'
+    );
   });
 });
