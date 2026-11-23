@@ -9,6 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -20,7 +21,13 @@ import (
 
 const folderLabelSelectorKey = utils.AnnoKeyFolder
 
-func TestIntegrationVariablesV2Beta1(t *testing.T) {
+// variableResourceInfos lists every version the Variable kind is served at.
+var variableResourceInfos = []utils.ResourceInfo{
+	dashv2beta1.VariableResourceInfo,
+	dashv2.VariableResourceInfo,
+}
+
+func TestIntegrationVariables(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -29,6 +36,18 @@ func TestIntegrationVariablesV2Beta1(t *testing.T) {
 	})
 	t.Cleanup(helper.Shutdown)
 
+	for _, info := range variableResourceInfos {
+		t.Run(info.GroupVersion().Version, func(t *testing.T) {
+			testVariablesAtVersion(t, helper, info)
+		})
+	}
+
+	t.Run("across versions", func(t *testing.T) {
+		testVariablesAcrossVersions(t, helper)
+	})
+}
+
+func testVariablesAtVersion(t *testing.T, helper *apis.K8sTestHelper, info utils.ResourceInfo) {
 	ctx := context.Background()
 	admin := helper.Org1.Admin
 	editor := helper.Org1.Editor
@@ -36,15 +55,15 @@ func TestIntegrationVariablesV2Beta1(t *testing.T) {
 
 	variableClient := helper.GetResourceClient(apis.ResourceClientArgs{
 		User: admin,
-		GVR:  dashv2beta1.VariableResourceInfo.GroupVersionResource(),
+		GVR:  info.GroupVersionResource(),
 	})
 	editorVariableClient := helper.GetResourceClient(apis.ResourceClientArgs{
 		User: editor,
-		GVR:  dashv2beta1.VariableResourceInfo.GroupVersionResource(),
+		GVR:  info.GroupVersionResource(),
 	})
 	viewerVariableClient := helper.GetResourceClient(apis.ResourceClientArgs{
 		User: viewer,
-		GVR:  dashv2beta1.VariableResourceInfo.GroupVersionResource(),
+		GVR:  info.GroupVersionResource(),
 	})
 	folderClient := helper.GetResourceClient(apis.ResourceClientArgs{
 		User: admin,
@@ -56,22 +75,23 @@ func TestIntegrationVariablesV2Beta1(t *testing.T) {
 	require.Empty(t, listRsp.Items)
 
 	t.Run("editor cannot mutate root variables", func(t *testing.T) {
-		editorVariable := buildVariableObject("", "editorRegion", "")
+		editorVariable := buildVariableObject(info, "", "editorRegion", "")
 		_, err := editorVariableClient.Resource.Create(ctx, editorVariable, metav1.CreateOptions{})
 		require.Error(t, err)
 		require.True(t, k8serrors.IsForbidden(err), "expected forbidden error, got: %v", err)
 	})
 
 	t.Run("viewer cannot mutate variables", func(t *testing.T) {
-		viewerVariable := buildVariableObject("viewer-region", "viewerRegion", "")
+		viewerVariable := buildVariableObject(info, "viewer-region", "viewerRegion", "")
 		_, err := viewerVariableClient.Resource.Create(ctx, viewerVariable, metav1.CreateOptions{})
 		require.Error(t, err)
 	})
 
-	rootVariable := buildVariableObject("", "region", "")
+	rootVariable := buildVariableObject(info, "", "region", "")
 	createdRootVariable, err := variableClient.Resource.Create(ctx, rootVariable, metav1.CreateOptions{})
 	require.NoError(t, err)
 	require.Equal(t, "region", createdRootVariable.GetName())
+	require.Equal(t, info.GroupVersion().String(), createdRootVariable.GetAPIVersion())
 
 	createdRootVariable.Object["spec"].(map[string]any)["spec"].(map[string]any)["query"] = "us-east-1,us-west-2,eu-west-1"
 	updatedRootVariable, err := variableClient.Resource.Update(ctx, createdRootVariable, metav1.UpdateOptions{})
@@ -108,7 +128,7 @@ func TestIntegrationVariablesV2Beta1(t *testing.T) {
 
 	// Default folder ACLs grant Editors Edit, which includes variables:* via FolderEditActions.
 	t.Run("editor can mutate variables in folder with edit access", func(t *testing.T) {
-		editorFolderVariable := buildVariableObject("", "editorFolderVar", createdFolder1.GetName())
+		editorFolderVariable := buildVariableObject(info, "", "editorFolderVar", createdFolder1.GetName())
 		created, err := editorVariableClient.Resource.Create(ctx, editorFolderVariable, metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.Equal(t, "editorFolderVar--"+createdFolder1.GetName(), created.GetName())
@@ -128,40 +148,40 @@ func TestIntegrationVariablesV2Beta1(t *testing.T) {
 			{UserID: &editorID, Level: ResourcePermissionLevelView},
 		})
 
-		restrictedFolderVariable := buildVariableObject("", "editorDenied", createdFolder2.GetName())
+		restrictedFolderVariable := buildVariableObject(info, "", "editorDenied", createdFolder2.GetName())
 		_, err = editorVariableClient.Resource.Create(ctx, restrictedFolderVariable, metav1.CreateOptions{})
 		require.Error(t, err)
 		require.True(t, k8serrors.IsForbidden(err), "expected forbidden error, got: %v", err)
 	})
 
-	folderVariable := buildVariableObject("", "region", createdFolder1.GetName())
+	folderVariable := buildVariableObject(info, "", "region", createdFolder1.GetName())
 	createdFolderVariable, err := variableClient.Resource.Create(ctx, folderVariable, metav1.CreateOptions{})
 	require.NoError(t, err)
 	require.Equal(t, "region--"+createdFolder1.GetName(), createdFolderVariable.GetName())
 	require.Equal(t, createdFolder1.GetName(), createdFolderVariable.GetAnnotations()[utils.AnnoKeyFolder])
 
-	duplicateVariable := buildVariableObject("", "region", "")
+	duplicateVariable := buildVariableObject(info, "", "region", "")
 	_, err = variableClient.Resource.Create(ctx, duplicateVariable, metav1.CreateOptions{})
 	require.Error(t, err)
 	require.True(t, k8serrors.IsAlreadyExists(err), "expected already exists error, got: %v", err)
 
-	duplicateFolderVariable := buildVariableObject("", "region", createdFolder1.GetName())
+	duplicateFolderVariable := buildVariableObject(info, "", "region", createdFolder1.GetName())
 	_, err = variableClient.Resource.Create(ctx, duplicateFolderVariable, metav1.CreateOptions{})
 	require.Error(t, err)
 	require.True(t, k8serrors.IsAlreadyExists(err), "expected already exists error, got: %v", err)
 
-	folderVariableInDifferentFolder := buildVariableObject("", "region", createdFolder2.GetName())
+	folderVariableInDifferentFolder := buildVariableObject(info, "", "region", createdFolder2.GetName())
 	createdFolderVariableInDifferentFolder, err := variableClient.Resource.Create(ctx, folderVariableInDifferentFolder, metav1.CreateOptions{})
 	require.NoError(t, err)
 	require.Equal(t, "region--"+createdFolder2.GetName(), createdFolderVariableInDifferentFolder.GetName())
 
-	serviceVariable := buildVariableObject("", "service", "")
+	serviceVariable := buildVariableObject(info, "", "service", "")
 	createdServiceVariable, err := variableClient.Resource.Create(ctx, serviceVariable, metav1.CreateOptions{})
 	require.NoError(t, err)
 	require.Equal(t, "service", createdServiceVariable.GetName())
 
 	t.Run("should allow explicit metadata.name when it matches derived contract", func(t *testing.T) {
-		explicit := buildVariableObject("latency--"+createdFolder1.GetName(), "latency", createdFolder1.GetName())
+		explicit := buildVariableObject(info, "latency--"+createdFolder1.GetName(), "latency", createdFolder1.GetName())
 		created, err := variableClient.Resource.Create(ctx, explicit, metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.Equal(t, "latency--"+createdFolder1.GetName(), created.GetName())
@@ -169,7 +189,7 @@ func TestIntegrationVariablesV2Beta1(t *testing.T) {
 	})
 
 	t.Run("should reject explicit metadata.name when it does not match derived contract", func(t *testing.T) {
-		mismatch := buildVariableObject("status5", "status", createdFolder1.GetName())
+		mismatch := buildVariableObject(info, "status5", "status", createdFolder1.GetName())
 		_, err := variableClient.Resource.Create(ctx, mismatch, metav1.CreateOptions{})
 		require.Error(t, err)
 		require.True(t, k8serrors.IsBadRequest(err), "expected bad request, got: %v", err)
@@ -231,7 +251,7 @@ func TestIntegrationVariablesV2Beta1(t *testing.T) {
 	require.Error(t, err)
 	require.True(t, k8serrors.IsBadRequest(err), "expected bad request, got: %v", err)
 
-	invalidFolderVariable := buildVariableObject("", "service", "missing-folder")
+	invalidFolderVariable := buildVariableObject(info, "", "service", "missing-folder")
 	_, err = variableClient.Resource.Create(ctx, invalidFolderVariable, metav1.CreateOptions{})
 	require.Error(t, err)
 
@@ -250,6 +270,96 @@ func TestIntegrationVariablesV2Beta1(t *testing.T) {
 	require.NoError(t, err)
 }
 
+// testVariablesAcrossVersions checks that a variable written through one version
+// is read, listed, filtered, updated and deleted through the other with the same spec.
+func testVariablesAcrossVersions(t *testing.T, helper *apis.K8sTestHelper) {
+	ctx := context.Background()
+	admin := helper.Org1.Admin
+	betaClient := helper.GetResourceClient(apis.ResourceClientArgs{User: admin, GVR: dashv2beta1.VariableResourceInfo.GroupVersionResource()})
+	stableClient := helper.GetResourceClient(apis.ResourceClientArgs{User: admin, GVR: dashv2.VariableResourceInfo.GroupVersionResource()})
+	folderClient := helper.GetResourceClient(apis.ResourceClientArgs{User: admin, GVR: foldersV1.FolderResourceInfo.GroupVersionResource()})
+
+	folder, err := folderClient.Resource.Create(ctx, buildFolderObject(helper.Namespacer(admin.Identity.GetOrgID()), "Cross-version folder"), metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	writtenAsBeta, err := betaClient.Resource.Create(ctx, buildVariableObject(dashv2beta1.VariableResourceInfo, "", "betaWritten", ""), metav1.CreateOptions{})
+	require.NoError(t, err)
+	writtenAsStable, err := stableClient.Resource.Create(ctx, buildVariableObject(dashv2.VariableResourceInfo, "", "stableWritten", folder.GetName()), metav1.CreateOptions{})
+	require.NoError(t, err)
+	require.Equal(t, "stableWritten--"+folder.GetName(), writtenAsStable.GetName())
+
+	t.Run("get converts to the requested version", func(t *testing.T) {
+		got, err := stableClient.Resource.Get(ctx, writtenAsBeta.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, dashv2.APIVERSION, got.GetAPIVersion())
+		require.Equal(t, writtenAsBeta.Object["spec"], got.Object["spec"])
+
+		got, err = betaClient.Resource.Get(ctx, writtenAsStable.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, dashv2beta1.APIVERSION, got.GetAPIVersion())
+		require.Equal(t, writtenAsStable.Object["spec"], got.Object["spec"])
+		require.Equal(t, folder.GetName(), got.GetAnnotations()[utils.AnnoKeyFolder])
+	})
+
+	t.Run("list returns every item in the requested version", func(t *testing.T) {
+		for _, c := range []struct {
+			client  *apis.K8sResourceClient
+			version string
+		}{{betaClient, dashv2beta1.APIVERSION}, {stableClient, dashv2.APIVERSION}} {
+			list, err := c.client.Resource.List(ctx, metav1.ListOptions{})
+			require.NoError(t, err)
+			require.True(t, containsVariableName(list.Items, writtenAsBeta.GetName()))
+			require.True(t, containsVariableName(list.Items, writtenAsStable.GetName()))
+			for _, item := range list.Items {
+				require.Equal(t, c.version, item.GetAPIVersion(), "item %s has the wrong apiVersion", item.GetName())
+			}
+		}
+	})
+
+	t.Run("selectors match items written in the other version", func(t *testing.T) {
+		list, err := stableClient.Resource.List(ctx, metav1.ListOptions{FieldSelector: "spec.spec.name=betaWritten"})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		require.Equal(t, writtenAsBeta.GetName(), list.Items[0].GetName())
+
+		list, err = betaClient.Resource.List(ctx, metav1.ListOptions{
+			FieldSelector: "spec.spec.name=stableWritten",
+			LabelSelector: folderLabelSelectorKey + "=" + folder.GetName(),
+		})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		require.Equal(t, writtenAsStable.GetName(), list.Items[0].GetName())
+	})
+
+	t.Run("update through the other version", func(t *testing.T) {
+		got, err := stableClient.Resource.Get(ctx, writtenAsBeta.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+		got.Object["spec"].(map[string]any)["spec"].(map[string]any)["query"] = "dev,qa"
+		_, err = stableClient.Resource.Update(ctx, got, metav1.UpdateOptions{})
+		require.NoError(t, err)
+
+		reread, err := betaClient.Resource.Get(ctx, writtenAsBeta.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, "dev,qa", reread.Object["spec"].(map[string]any)["spec"].(map[string]any)["query"])
+
+		renamed := reread.DeepCopy()
+		renamed.Object["spec"].(map[string]any)["spec"].(map[string]any)["name"] = "betaRenamed"
+		renamed.SetAPIVersion(dashv2.APIVERSION)
+		_, err = stableClient.Resource.Update(ctx, renamed, metav1.UpdateOptions{})
+		require.True(t, k8serrors.IsBadRequest(err), "expected bad request, got: %v", err)
+	})
+
+	t.Run("delete through the other version", func(t *testing.T) {
+		require.NoError(t, stableClient.Resource.Delete(ctx, writtenAsBeta.GetName(), metav1.DeleteOptions{}))
+		require.NoError(t, betaClient.Resource.Delete(ctx, writtenAsStable.GetName(), metav1.DeleteOptions{}))
+
+		_, err := betaClient.Resource.Get(ctx, writtenAsBeta.GetName(), metav1.GetOptions{})
+		require.True(t, k8serrors.IsNotFound(err), "expected not found, got: %v", err)
+		_, err = stableClient.Resource.Get(ctx, writtenAsStable.GetName(), metav1.GetOptions{})
+		require.True(t, k8serrors.IsNotFound(err), "expected not found, got: %v", err)
+	})
+}
+
 func containsVariableName(items []unstructured.Unstructured, name string) bool {
 	for _, item := range items {
 		if item.GetName() == name {
@@ -259,10 +369,10 @@ func containsVariableName(items []unstructured.Unstructured, name string) bool {
 	return false
 }
 
-// TestIntegrationVariablesV2Beta1FlagDisabled asserts the flag-off path after
+// TestIntegrationVariablesFlagDisabled asserts the flag-off path after
 // Variable storage is always registered: enablement is enforced solely by the
 // authorizer, so disabled means 403 (not 404).
-func TestIntegrationVariablesV2Beta1FlagDisabled(t *testing.T) {
+func TestIntegrationVariablesFlagDisabled(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -271,22 +381,26 @@ func TestIntegrationVariablesV2Beta1FlagDisabled(t *testing.T) {
 	t.Cleanup(helper.Shutdown)
 
 	ctx := context.Background()
-	variableClient := helper.GetResourceClient(apis.ResourceClientArgs{
-		User: helper.Org1.Admin,
-		GVR:  dashv2beta1.VariableResourceInfo.GroupVersionResource(),
-	})
-
 	const denyReason = "global dashboard variables feature is not enabled"
 
-	_, err := variableClient.Resource.List(ctx, metav1.ListOptions{})
-	require.Error(t, err)
-	require.True(t, k8serrors.IsForbidden(err), "expected forbidden error, got: %v", err)
-	require.Contains(t, err.Error(), denyReason)
+	for _, info := range variableResourceInfos {
+		t.Run(info.GroupVersion().Version, func(t *testing.T) {
+			variableClient := helper.GetResourceClient(apis.ResourceClientArgs{
+				User: helper.Org1.Admin,
+				GVR:  info.GroupVersionResource(),
+			})
 
-	_, err = variableClient.Resource.Create(ctx, buildVariableObject("", "region", ""), metav1.CreateOptions{})
-	require.Error(t, err)
-	require.True(t, k8serrors.IsForbidden(err), "expected forbidden error, got: %v", err)
-	require.Contains(t, err.Error(), denyReason)
+			_, err := variableClient.Resource.List(ctx, metav1.ListOptions{})
+			require.Error(t, err)
+			require.True(t, k8serrors.IsForbidden(err), "expected forbidden error, got: %v", err)
+			require.Contains(t, err.Error(), denyReason)
+
+			_, err = variableClient.Resource.Create(ctx, buildVariableObject(info, "", "region", ""), metav1.CreateOptions{})
+			require.Error(t, err)
+			require.True(t, k8serrors.IsForbidden(err), "expected forbidden error, got: %v", err)
+			require.Contains(t, err.Error(), denyReason)
+		})
+	}
 }
 
 func buildFolderObject(namespace string, title string) *unstructured.Unstructured {
@@ -305,7 +419,7 @@ func buildFolderObject(namespace string, title string) *unstructured.Unstructure
 	}
 }
 
-func buildVariableObject(metadataName string, variableName string, folderUID string) *unstructured.Unstructured {
+func buildVariableObject(info utils.ResourceInfo, metadataName string, variableName string, folderUID string) *unstructured.Unstructured {
 	annotations := map[string]any{}
 	if folderUID != "" {
 		annotations[utils.AnnoKeyFolder] = folderUID
@@ -320,8 +434,8 @@ func buildVariableObject(metadataName string, variableName string, folderUID str
 
 	return &unstructured.Unstructured{
 		Object: map[string]any{
-			"apiVersion": dashv2beta1.VariableResourceInfo.GroupVersion().String(),
-			"kind":       dashv2beta1.VariableResourceInfo.GroupVersionKind().Kind,
+			"apiVersion": info.GroupVersion().String(),
+			"kind":       info.GroupVersionKind().Kind,
 			"metadata":   metadata,
 			"spec": map[string]any{
 				"kind": "CustomVariable",

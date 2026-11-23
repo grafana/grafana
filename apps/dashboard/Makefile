@@ -18,6 +18,7 @@ post-generate-cleanup: ## Clean up the generated code
 	@rm -f ./pkg/apis/dashboard/v0alpha1/dashboard_spec_gen.go
 	@rm -f ./pkg/apis/dashboard/v1/dashboard_spec_gen.go
 	@rm -f ./pkg/apis/dashboard/v2beta1/variable_spec_gen.go
+	@rm -f ./pkg/apis/dashboard/v2/variable_spec_gen.go
 
 	# This is a workaround for SDK codegen not producing correct output for v0alpha1
 	@rm ../../packages/grafana-schema/src/schema/dashboard/v0alpha1/types.spec.gen.ts
@@ -30,6 +31,8 @@ post-generate-cleanup: ## Clean up the generated code
 	# Variable spec currently requires a TS shim to expose Spec/defaultSpec.
 	@rm -f ../../packages/grafana-schema/src/schema/variable/v2beta1/types.spec.gen.ts
 	@cp ./tshack/variable_v2beta1_spec_gen.ts ../../packages/grafana-schema/src/schema/variable/v2beta1/types.spec.gen.ts
+	@rm -f ../../packages/grafana-schema/src/schema/variable/v2/types.spec.gen.ts
+	@cp ./tshack/variable_v2_spec_gen.ts ../../packages/grafana-schema/src/schema/variable/v2/types.spec.gen.ts
 
 	# Remove auto-generated DeepCopy and DeepCopyInto methods for Spec for v0alpha1.
 	@sed -e '/\/\/ DeepCopy creates a full deep copy of Spec/,+5d' ./pkg/apis/dashboard/v0alpha1/dashboard_object_gen.go > ./pkg/apis/dashboard/v0alpha1/dashboard_object_gen.go.tmp

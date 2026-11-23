@@ -1044,6 +1044,7 @@ func TestOtherDashboardGroupResourcesDeclareGVK(t *testing.T) {
 		folder bool
 	}{
 		{"variables", dashv2beta1.VariableResourceInfo, variableStorageOpts(), true},
+		{"variables v2", dashv2.VariableResourceInfo, variableStorageOpts(), true},
 		{"notebooks", dashv2beta1.NotebookResourceInfo, notebookStorageOpts(), false},
 		{"snapshots", dashv0.SnapshotResourceInfo, snapshotStorageOpts(), false},
 		{"dashboardpreferences", dashv2beta1.DashboardPreferencesResourceInfo, dashboardPreferencesStorageOpts(), false},
