@@ -102,6 +102,8 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 
 			// Marshal as real objects to ",omitempty" values are tested properly
 			expectedRepo := common.MustFromUnstructured[provisioning.Repository](t, input)
+			// The templates send some optional fields as false or "", which are stored as absent.
+			repository.ClearZeroOptionalFields(&expectedRepo.Spec)
 			returnedRepo := common.MustFromUnstructured[provisioning.Repository](t, output)
 			require.Equal(t, expectedRepo.Spec, returnedRepo.Spec)
 

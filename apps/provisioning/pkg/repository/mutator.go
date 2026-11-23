@@ -84,9 +84,15 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 		}
 	}
 
-	clearZeroPointers(reflect.ValueOf(&r.Spec).Elem())
+	ClearZeroOptionalFields(&r.Spec)
 
 	return nil
+}
+
+// ClearZeroOptionalFields drops the optional fields of spec that are set to a zero value, as the
+// admission mutator does before a repository is stored.
+func ClearZeroOptionalFields(spec *provisioning.RepositorySpec) {
+	clearZeroPointers(reflect.ValueOf(spec).Elem())
 }
 
 // clearZeroPointers sets every pointer to a zero scalar in the struct v to nil, recursing into
