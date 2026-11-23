@@ -310,8 +310,6 @@ You can set an absolute time range in the following ways:
 
 For precise ranges, include milliseconds after the seconds, for example `2020-05-14 00:00:00.123`. The **From** and **To** fields and the time picker tooltip show non-zero milliseconds. The toolbar and recently used range labels show them only for ranges shorter than one minute.
 
-Selecting a recently used absolute range restores its exact endpoints, even when the label doesn't show milliseconds.
-
 #### Semi-relative time range
 
 {{< admonition type="note" >}}
