@@ -2216,6 +2216,15 @@ var (
 			Expression:   "false",
 			HideFromDocs: true,
 		},
+		{
+			Name:         "plugins.useMTPluginInstall",
+			Description:  "Installs, updates and uninstalls plugins through the plugins API only, and falls back to the legacy API if that call fails",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaCatalogSquad,
+			Generate:     Generate{Go: true, React: true},
+			Expression:   "false",
+			HideFromDocs: true,
+		},
 		// Deprecated: prefer grafana.dashboardGlobalVariables. Kept registered so
 		// cloud enablement via the legacy wave remains valid until that flag is
 		// removed in a follow-up after all consumers read the new key.
