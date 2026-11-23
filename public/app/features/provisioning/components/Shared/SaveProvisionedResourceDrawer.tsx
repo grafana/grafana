@@ -397,11 +397,7 @@ export function SaveProvisionedResourceDrawer(props: SaveProvisionedResourceDraw
     return null;
   }
   return (
-    <ResourceDrawerContent
-      {...props}
-      kindKey={getKindKeyByGroupKind(group, kind)}
-      resourceType={kind.toLowerCase()}
-    />
+    <ResourceDrawerContent {...props} kindKey={getKindKeyByGroupKind(group, kind)} resourceType={kind.toLowerCase()} />
   );
 }
 
