@@ -40,7 +40,7 @@ func TestConnectionFactoryUsesConfiguredTypes(t *testing.T) {
 	configuredType := apisprovisioning.ConnectionType("configured")
 	extras := make([]connection.Extra, 0, 2)
 	for _, connectionType := range []apisprovisioning.ConnectionType{
-		apisprovisioning.GithubConnectionType,
+		apisprovisioning.ConnectionTypeGithub,
 		configuredType,
 	} {
 		extra := connection.NewMockExtra(t)
@@ -60,13 +60,13 @@ func TestConnectionFactoryUsesConfiguredTypes(t *testing.T) {
 
 func TestConnectionFactoryEnablesAllRegisteredTypesByDefault(t *testing.T) {
 	registeredTypes := []apisprovisioning.ConnectionType{
-		apisprovisioning.GithubConnectionType,
-		apisprovisioning.GithubEnterpriseConnectionType,
-		apisprovisioning.GithubOAuthConnectionType,
-		apisprovisioning.GithubEnterpriseOAuthConnectionType,
-		apisprovisioning.BitbucketOAuthConnectionType,
-		apisprovisioning.GitlabOAuthConnectionType,
-		apisprovisioning.GitOAuthConnectionType,
+		apisprovisioning.ConnectionTypeGithub,
+		apisprovisioning.ConnectionTypeGithubEnterprise,
+		apisprovisioning.ConnectionTypeGithubOAuth,
+		apisprovisioning.ConnectionTypeGithubEnterpriseOAuth,
+		apisprovisioning.ConnectionTypeBitbucketOAuth,
+		apisprovisioning.ConnectionTypeGitlabOAuth,
+		apisprovisioning.ConnectionTypeGitOAuth,
 	}
 	extras := make([]connection.Extra, 0, len(registeredTypes))
 	for _, connectionType := range registeredTypes {

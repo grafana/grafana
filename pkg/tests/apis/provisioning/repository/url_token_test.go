@@ -36,8 +36,8 @@ func TestIntegrationProvisioning_GitHubAppURLChangeRemovesToken(t *testing.T) {
 		TypeMeta:   metav1.TypeMeta{APIVersion: provisioning.APIVERSION, Kind: "Connection"},
 		ObjectMeta: metav1.ObjectMeta{Name: "url-change-app", Namespace: "default"},
 		Spec: provisioning.ConnectionSpec{
-			Title: "URL change App", Type: provisioning.GithubConnectionType,
-			GitHub:  &provisioning.GitHubConnectionConfig{AppID: "123456", InstallationID: "454545"},
+			Title: "URL change App", Type: provisioning.ConnectionTypeGithub,
+			Github:  &provisioning.ConnectionGitHubConfig{AppID: "123456", InstallationID: "454545"},
 			Webhook: &provisioning.ConnectionWebhookConfig{Disabled: true},
 		},
 		Secure: provisioning.ConnectionSecure{PrivateKey: resource.InlineSecureValue{

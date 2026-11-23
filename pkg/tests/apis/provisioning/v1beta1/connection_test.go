@@ -38,8 +38,8 @@ func TestIntegrationV1Beta1Connection_Create_GitHub(t *testing.T) {
 		},
 		Spec: provisioning.ConnectionSpec{
 			Title: "Test GitHub Connection",
-			Type:  provisioning.GithubConnectionType,
-			GitHub: &provisioning.GitHubConnectionConfig{
+			Type:  provisioning.ConnectionTypeGithub,
+			Github: &provisioning.ConnectionGitHubConfig{
 				AppID:          "123456",
 				InstallationID: "789012",
 			},
@@ -65,8 +65,8 @@ func TestIntegrationV1Beta1Connection_Create_GitHub(t *testing.T) {
 	require.Equal(t, connection.Name, createdConn.Name)
 	require.Equal(t, connection.Namespace, createdConn.Namespace)
 	require.Equal(t, connection.Spec.Type, createdConn.Spec.Type)
-	require.Equal(t, connection.Spec.GitHub.AppID, createdConn.Spec.GitHub.AppID)
-	require.Equal(t, connection.Spec.GitHub.InstallationID, createdConn.Spec.GitHub.InstallationID)
+	require.Equal(t, connection.Spec.Github.AppID, createdConn.Spec.Github.AppID)
+	require.Equal(t, connection.Spec.Github.InstallationID, createdConn.Spec.Github.InstallationID)
 
 	// Secure values should not be returned (Create should be empty)
 	require.Empty(t, createdConn.Secure.PrivateKey.Create)
@@ -102,8 +102,8 @@ func TestIntegrationV1Beta1Connection_Create_GitLab(t *testing.T) {
 		},
 		Spec: provisioning.ConnectionSpec{
 			Title: "Test GitLab Connection",
-			Type:  provisioning.GitlabOAuthConnectionType,
-			OAuth: &provisioning.ConnectionOAuthConfig{
+			Type:  provisioning.ConnectionTypeGitlabOAuth,
+			Oauth: &provisioning.ConnectionOAuthConfig{
 				ClientID: "gitlab-client-123",
 			},
 		},
@@ -123,8 +123,8 @@ func TestIntegrationV1Beta1Connection_Create_GitLab(t *testing.T) {
 
 	createdConn, err := common.FromUnstructured[provisioning.Connection](created)
 	require.NoError(t, err)
-	require.Equal(t, provisioning.GitlabOAuthConnectionType, createdConn.Spec.Type)
-	require.Equal(t, "gitlab-client-123", createdConn.Spec.OAuth.ClientID)
+	require.Equal(t, provisioning.ConnectionTypeGitlabOAuth, createdConn.Spec.Type)
+	require.Equal(t, "gitlab-client-123", createdConn.Spec.Oauth.ClientID)
 
 	// Clean up. Retry on transient 409 conflicts: unified storage guards the delete with the object's
 	// current RV, which the ConnectionController's async /status patches keep bumping.
@@ -157,8 +157,8 @@ func TestIntegrationV1Beta1Connection_Create_Bitbucket(t *testing.T) {
 		},
 		Spec: provisioning.ConnectionSpec{
 			Title: "Test Bitbucket Connection",
-			Type:  provisioning.BitbucketOAuthConnectionType,
-			OAuth: &provisioning.ConnectionOAuthConfig{
+			Type:  provisioning.ConnectionTypeBitbucketOAuth,
+			Oauth: &provisioning.ConnectionOAuthConfig{
 				ClientID: "bitbucket-client-456",
 			},
 		},
@@ -178,8 +178,8 @@ func TestIntegrationV1Beta1Connection_Create_Bitbucket(t *testing.T) {
 
 	createdConn, err := common.FromUnstructured[provisioning.Connection](created)
 	require.NoError(t, err)
-	require.Equal(t, provisioning.BitbucketOAuthConnectionType, createdConn.Spec.Type)
-	require.Equal(t, "bitbucket-client-456", createdConn.Spec.OAuth.ClientID)
+	require.Equal(t, provisioning.ConnectionTypeBitbucketOAuth, createdConn.Spec.Type)
+	require.Equal(t, "bitbucket-client-456", createdConn.Spec.Oauth.ClientID)
 
 	// Clean up. Retry on transient 409 conflicts: unified storage guards the delete with the object's
 	// current RV, which the ConnectionController's async /status patches keep bumping.
@@ -212,8 +212,8 @@ func TestIntegrationV1Beta1Connection_Get(t *testing.T) {
 		},
 		Spec: provisioning.ConnectionSpec{
 			Title: "Test Get Connection",
-			Type:  provisioning.GithubConnectionType,
-			GitHub: &provisioning.GitHubConnectionConfig{
+			Type:  provisioning.ConnectionTypeGithub,
+			Github: &provisioning.ConnectionGitHubConfig{
 				AppID:          "123456",
 				InstallationID: "789012",
 			},
@@ -240,7 +240,7 @@ func TestIntegrationV1Beta1Connection_Get(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "test-get-connection", retrievedConn.Name)
 	require.Equal(t, namespace, retrievedConn.Namespace)
-	require.Equal(t, provisioning.GithubConnectionType, retrievedConn.Spec.Type)
+	require.Equal(t, provisioning.ConnectionTypeGithub, retrievedConn.Spec.Type)
 
 	// Clean up. Retry on transient 409 conflicts: unified storage guards the delete with the object's
 	// current RV, which the ConnectionController's async /status patches keep bumping.
@@ -273,8 +273,8 @@ func TestIntegrationV1Beta1Connection_List(t *testing.T) {
 		},
 		Spec: provisioning.ConnectionSpec{
 			Title: "Test List Connection",
-			Type:  provisioning.GithubConnectionType,
-			GitHub: &provisioning.GitHubConnectionConfig{
+			Type:  provisioning.ConnectionTypeGithub,
+			Github: &provisioning.ConnectionGitHubConfig{
 				AppID:          "123456",
 				InstallationID: "789012",
 			},
@@ -339,8 +339,8 @@ func TestIntegrationV1Beta1Connection_Update(t *testing.T) {
 		},
 		Spec: provisioning.ConnectionSpec{
 			Title: "Test Update Connection",
-			Type:  provisioning.GithubConnectionType,
-			GitHub: &provisioning.GitHubConnectionConfig{
+			Type:  provisioning.ConnectionTypeGithub,
+			Github: &provisioning.ConnectionGitHubConfig{
 				AppID:          "123456",
 				InstallationID: "789012",
 			},
@@ -373,7 +373,7 @@ func TestIntegrationV1Beta1Connection_Update(t *testing.T) {
 		}
 
 		// Update the AppID
-		currentConn.Spec.GitHub.AppID = "999999"
+		currentConn.Spec.Github.AppID = "999999"
 
 		unstructuredObj, err := common.ToUnstructured(currentConn)
 		if !assert.NoError(collect, err) {
@@ -389,7 +389,7 @@ func TestIntegrationV1Beta1Connection_Update(t *testing.T) {
 		if !assert.NoError(collect, err) {
 			return
 		}
-		assert.Equal(collect, "999999", updatedConn.Spec.GitHub.AppID)
+		assert.Equal(collect, "999999", updatedConn.Spec.Github.AppID)
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 
 	// Verify the update persisted
@@ -397,7 +397,7 @@ func TestIntegrationV1Beta1Connection_Update(t *testing.T) {
 	require.NoError(t, err)
 	retrievedConn, err := common.FromUnstructured[provisioning.Connection](retrieved)
 	require.NoError(t, err)
-	require.Equal(t, "999999", retrievedConn.Spec.GitHub.AppID)
+	require.Equal(t, "999999", retrievedConn.Spec.Github.AppID)
 
 	// Clean up. Retry on transient 409 conflicts: unified storage guards the delete with the object's
 	// current RV, which the ConnectionController's async /status patches keep bumping.
@@ -430,8 +430,8 @@ func TestIntegrationV1Beta1Connection_Delete(t *testing.T) {
 		},
 		Spec: provisioning.ConnectionSpec{
 			Title: "Test Delete Connection",
-			Type:  provisioning.GithubConnectionType,
-			GitHub: &provisioning.GitHubConnectionConfig{
+			Type:  provisioning.ConnectionTypeGithub,
+			Github: &provisioning.ConnectionGitHubConfig{
 				AppID:          "123456",
 				InstallationID: "789012",
 			},

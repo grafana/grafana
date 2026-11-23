@@ -20,7 +20,7 @@ import (
 
 func TestExtra_Type(t *testing.T) {
 	e := newTestExtra(t, connection.NewMockSecureValues(t), nil)
-	assert.Equal(t, provisioning.GitlabOAuthConnectionType, e.Type())
+	assert.Equal(t, provisioning.ConnectionTypeGitlabOAuth, e.Type())
 }
 
 func TestExtra_Build(t *testing.T) {
@@ -35,8 +35,8 @@ func TestExtra_Build(t *testing.T) {
 			conn: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type:  provisioning.GitlabOAuthConnectionType,
-					OAuth: &provisioning.ConnectionOAuthConfig{ClientID: "client-id"},
+					Type:  provisioning.ConnectionTypeGitlabOAuth,
+					Oauth: &provisioning.ConnectionOAuthConfig{ClientID: "client-id"},
 				},
 			},
 			setup: func(m *connection.MockSecureValues) {
@@ -53,7 +53,7 @@ func TestExtra_Build(t *testing.T) {
 			conn: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GitlabOAuthConnectionType,
+					Type: provisioning.ConnectionTypeGitlabOAuth,
 				},
 			},
 			expectedErr: "oauth configuration is required",
@@ -63,8 +63,8 @@ func TestExtra_Build(t *testing.T) {
 			conn: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type:  provisioning.GitlabOAuthConnectionType,
-					OAuth: &provisioning.ConnectionOAuthConfig{ClientID: "client-id"},
+					Type:  provisioning.ConnectionTypeGitlabOAuth,
+					Oauth: &provisioning.ConnectionOAuthConfig{ClientID: "client-id"},
 				},
 			},
 			setup: func(m *connection.MockSecureValues) {
@@ -77,8 +77,8 @@ func TestExtra_Build(t *testing.T) {
 			conn: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type:  provisioning.GitlabOAuthConnectionType,
-					OAuth: &provisioning.ConnectionOAuthConfig{ClientID: "client-id"},
+					Type:  provisioning.ConnectionTypeGitlabOAuth,
+					Oauth: &provisioning.ConnectionOAuthConfig{ClientID: "client-id"},
 				},
 			},
 			setup: func(m *connection.MockSecureValues) {
@@ -128,7 +128,7 @@ func TestExtra_Build_PassesAccessToken(t *testing.T) {
 			var gotToken string
 			e := oauth.NewExtra(
 				func(*provisioning.Connection) connection.SecureValues { return secure },
-				provisioning.GitlabOAuthConnectionType,
+				provisioning.ConnectionTypeGitlabOAuth,
 				provisioning.GitLabRepositoryType,
 				func(_ context.Context, _ provisioning.ConnectionSpec, accessToken string) (oauth.Provider, error) {
 					gotToken = accessToken
@@ -162,7 +162,7 @@ func TestExtra_Build_ProviderError(t *testing.T) {
 
 	e := oauth.NewExtra(
 		func(*provisioning.Connection) connection.SecureValues { return secure },
-		provisioning.GitlabOAuthConnectionType,
+		provisioning.ConnectionTypeGitlabOAuth,
 		provisioning.GitLabRepositoryType,
 		func(_ context.Context, _ provisioning.ConnectionSpec, _ string) (oauth.Provider, error) {
 			return nil, errors.New("boom")
@@ -178,8 +178,8 @@ func newBuildTestConnection() *provisioning.Connection {
 	return &provisioning.Connection{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 		Spec: provisioning.ConnectionSpec{
-			Type:  provisioning.GitlabOAuthConnectionType,
-			OAuth: &provisioning.ConnectionOAuthConfig{ClientID: "client-id"},
+			Type:  provisioning.ConnectionTypeGitlabOAuth,
+			Oauth: &provisioning.ConnectionOAuthConfig{ClientID: "client-id"},
 		},
 	}
 }
@@ -204,7 +204,7 @@ func TestExtra_Validate(t *testing.T) {
 			name: "connection of another type",
 			obj: &provisioning.Connection{
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
+					Type: provisioning.ConnectionTypeGithub,
 				},
 			},
 		},
@@ -212,7 +212,7 @@ func TestExtra_Validate(t *testing.T) {
 			name: "missing oauth config",
 			obj: &provisioning.Connection{
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GitlabOAuthConnectionType,
+					Type: provisioning.ConnectionTypeGitlabOAuth,
 				},
 			},
 			errorContains: []string{"oauth info must be specified", "clientSecret"},
@@ -221,8 +221,8 @@ func TestExtra_Validate(t *testing.T) {
 			name: "missing client ID",
 			obj: &provisioning.Connection{
 				Spec: provisioning.ConnectionSpec{
-					Type:  provisioning.GitlabOAuthConnectionType,
-					OAuth: &provisioning.ConnectionOAuthConfig{},
+					Type:  provisioning.ConnectionTypeGitlabOAuth,
+					Oauth: &provisioning.ConnectionOAuthConfig{},
 				},
 				Secure: provisioning.ConnectionSecure{
 					ClientSecret: resource.InlineSecureValue{Create: resource.NewSecretValue("client-secret")},
@@ -234,8 +234,8 @@ func TestExtra_Validate(t *testing.T) {
 			name: "missing client secret",
 			obj: &provisioning.Connection{
 				Spec: provisioning.ConnectionSpec{
-					Type:  provisioning.GitlabOAuthConnectionType,
-					OAuth: &provisioning.ConnectionOAuthConfig{ClientID: "client-id"},
+					Type:  provisioning.ConnectionTypeGitlabOAuth,
+					Oauth: &provisioning.ConnectionOAuthConfig{ClientID: "client-id"},
 				},
 			},
 			errorContains: []string{"clientSecret must be specified"},
@@ -244,8 +244,8 @@ func TestExtra_Validate(t *testing.T) {
 			name: "removed client secret",
 			obj: &provisioning.Connection{
 				Spec: provisioning.ConnectionSpec{
-					Type:  provisioning.GitlabOAuthConnectionType,
-					OAuth: &provisioning.ConnectionOAuthConfig{ClientID: "client-id"},
+					Type:  provisioning.ConnectionTypeGitlabOAuth,
+					Oauth: &provisioning.ConnectionOAuthConfig{ClientID: "client-id"},
 				},
 				Secure: provisioning.ConnectionSecure{
 					ClientSecret: resource.InlineSecureValue{Remove: true},
@@ -257,8 +257,8 @@ func TestExtra_Validate(t *testing.T) {
 			name: "forbidden private key",
 			obj: &provisioning.Connection{
 				Spec: provisioning.ConnectionSpec{
-					Type:  provisioning.GitlabOAuthConnectionType,
-					OAuth: &provisioning.ConnectionOAuthConfig{ClientID: "client-id"},
+					Type:  provisioning.ConnectionTypeGitlabOAuth,
+					Oauth: &provisioning.ConnectionOAuthConfig{ClientID: "client-id"},
 				},
 				Secure: provisioning.ConnectionSecure{
 					ClientSecret: resource.InlineSecureValue{Create: resource.NewSecretValue("client-secret")},
@@ -271,8 +271,8 @@ func TestExtra_Validate(t *testing.T) {
 			name: "provider-specific spec errors are appended",
 			obj: &provisioning.Connection{
 				Spec: provisioning.ConnectionSpec{
-					Type:  provisioning.GitlabOAuthConnectionType,
-					OAuth: &provisioning.ConnectionOAuthConfig{ClientID: "client-id"},
+					Type:  provisioning.ConnectionTypeGitlabOAuth,
+					Oauth: &provisioning.ConnectionOAuthConfig{ClientID: "client-id"},
 				},
 				Secure: provisioning.ConnectionSecure{
 					ClientSecret: resource.InlineSecureValue{Create: resource.NewSecretValue("client-secret")},
@@ -287,8 +287,8 @@ func TestExtra_Validate(t *testing.T) {
 			name: "valid",
 			obj: &provisioning.Connection{
 				Spec: provisioning.ConnectionSpec{
-					Type:  provisioning.GitlabOAuthConnectionType,
-					OAuth: &provisioning.ConnectionOAuthConfig{ClientID: "client-id"},
+					Type:  provisioning.ConnectionTypeGitlabOAuth,
+					Oauth: &provisioning.ConnectionOAuthConfig{ClientID: "client-id"},
 				},
 				Secure: provisioning.ConnectionSecure{
 					ClientSecret: resource.InlineSecureValue{Create: resource.NewSecretValue("client-secret")},
@@ -318,7 +318,7 @@ func TestExtra_Validate(t *testing.T) {
 func newTestExtra(t *testing.T, secure *connection.MockSecureValues, validateSpec oauth.ValidateSpecFunc) connection.Extra {
 	return oauth.NewExtra(
 		func(*provisioning.Connection) connection.SecureValues { return secure },
-		provisioning.GitlabOAuthConnectionType,
+		provisioning.ConnectionTypeGitlabOAuth,
 		provisioning.GitLabRepositoryType,
 		func(_ context.Context, _ provisioning.ConnectionSpec, _ string) (oauth.Provider, error) {
 			return oauth.NewMockProvider(t), nil

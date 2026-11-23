@@ -112,7 +112,7 @@ func TestIntegrationProvisioning_SettingsAuthorization(t *testing.T) {
 
 		require.NoError(t, result.Error(), "should be able to GET settings")
 		require.NoError(t, result.Into(settings), "should be able to unmarshal settings response")
-		require.Contains(t, settings.AvailableConnectionTypes, provisioning.GithubConnectionType)
+		require.Contains(t, settings.AvailableConnectionTypes, provisioning.ConnectionTypeGithub)
 	})
 
 	t.Run("settings endpoint surfaces the default supported resources, enabled and disabled", func(t *testing.T) {

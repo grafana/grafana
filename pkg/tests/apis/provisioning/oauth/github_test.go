@@ -27,7 +27,7 @@ func TestIntegrationProvisioning_GithubOAuthNonExpiringToken(t *testing.T) {
 }
 
 var githubProvider = func() oauthsuite.Provider {
-	p := oauthsuite.NewMockProvider("github", provisioning.GithubOAuthConnectionType, nil)
+	p := oauthsuite.NewMockProvider("github", provisioning.ConnectionTypeGithubOAuth, nil)
 	p.Repositories = []provisioning.ExternalRepository{
 		{Name: "oauth-repo-1", Owner: "oauth-owner-1", URL: "https://github.com/oauth-owner-1/oauth-repo-1"},
 		{Name: "oauth-repo-2", Owner: "oauth-owner-2", URL: "https://github.com/oauth-owner-2/oauth-repo-2"},

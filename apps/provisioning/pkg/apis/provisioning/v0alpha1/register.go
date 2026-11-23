@@ -140,18 +140,18 @@ var ConnectionResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 
 			var appID, installationID, clientID string
 			switch m.Spec.Type {
-			case GithubConnectionType:
-				appID = m.Spec.GitHub.AppID
-				installationID = m.Spec.GitHub.InstallationID
-			case GithubEnterpriseConnectionType:
-				if m.Spec.GitHubEnterprise != nil {
-					appID = m.Spec.GitHubEnterprise.AppID
-					installationID = m.Spec.GitHubEnterprise.InstallationID
+			case ConnectionTypeGithub:
+				appID = m.Spec.Github.AppID
+				installationID = m.Spec.Github.InstallationID
+			case ConnectionTypeGithubEnterprise:
+				if m.Spec.GithubEnterprise != nil {
+					appID = m.Spec.GithubEnterprise.AppID
+					installationID = m.Spec.GithubEnterprise.InstallationID
 				}
 			default:
 			}
-			if m.Spec.OAuth != nil {
-				clientID = m.Spec.OAuth.ClientID
+			if m.Spec.Oauth != nil {
+				clientID = m.Spec.Oauth.ClientID
 			}
 
 			return []interface{}{

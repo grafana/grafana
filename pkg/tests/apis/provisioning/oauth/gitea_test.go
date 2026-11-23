@@ -80,7 +80,7 @@ func (p *giteaProvider) NewConnection(t *testing.T, name string) *unstructured.U
 		"metadata":   map[string]any{"name": name, "namespace": "default"},
 		"spec": map[string]any{
 			"title": name,
-			"type":  string(provisioning.GitOAuthConnectionType),
+			"type":  string(provisioning.ConnectionTypeGitOAuth),
 			"gitOAuth": map[string]any{
 				"authURL":  server.URL() + "/login/oauth/authorize",
 				"tokenURL": server.URL() + "/login/oauth/access_token",
@@ -143,7 +143,7 @@ func TestIntegrationProvisioning_GitOAuthConnectionRejectsPrivateEndpoints(t *te
 		},
 		"spec": map[string]any{
 			"title": "git-oauth-private-endpoint",
-			"type":  string(provisioning.GitOAuthConnectionType),
+			"type":  string(provisioning.ConnectionTypeGitOAuth),
 			"gitOAuth": map[string]any{
 				"authURL":  "https://169.254.169.254/login/oauth/authorize",
 				"tokenURL": "https://10.0.0.1/login/oauth/access_token",

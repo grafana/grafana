@@ -35,7 +35,7 @@ func TestValidate(t *testing.T) {
 					Name: "test-conn",
 				},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GitlabOAuthConnectionType,
+					Type: provisioning.ConnectionTypeGitlabOAuth,
 				},
 			},
 		},
@@ -46,8 +46,8 @@ func TestValidate(t *testing.T) {
 					Name: "test-conn",
 				},
 				Spec: provisioning.ConnectionSpec{
-					Type:   provisioning.GithubConnectionType,
-					GitHub: nil,
+					Type:   provisioning.ConnectionTypeGithub,
+					Github: nil,
 				},
 			},
 			expectedError: true,
@@ -60,8 +60,8 @@ func TestValidate(t *testing.T) {
 					Name: "test-conn",
 				},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123",
 						InstallationID: "456",
 					},
@@ -77,8 +77,8 @@ func TestValidate(t *testing.T) {
 					Name: "test-conn",
 				},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123",
 						InstallationID: "456",
 					},
@@ -99,8 +99,8 @@ func TestValidate(t *testing.T) {
 					Name: "test-conn",
 				},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123",
 						InstallationID: "456",
 					},
@@ -121,8 +121,8 @@ func TestValidate(t *testing.T) {
 					Name: "test-conn",
 				},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123",
 						InstallationID: "456",
 					},
@@ -142,8 +142,8 @@ func TestValidate(t *testing.T) {
 					Name: "test-conn",
 				},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123",
 						InstallationID: "456",
 					},
@@ -170,8 +170,8 @@ func TestValidate(t *testing.T) {
 					Name: "test-conn",
 				},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						InstallationID: "456",
 					},
 				},
@@ -194,8 +194,8 @@ func TestValidate(t *testing.T) {
 					Name: "test-conn",
 				},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID: "123",
 					},
 				},
@@ -218,8 +218,8 @@ func TestValidate(t *testing.T) {
 					Name: "test-conn",
 				},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "abc123",
 						InstallationID: "456",
 					},
@@ -240,8 +240,8 @@ func TestValidate(t *testing.T) {
 					Name: "test-conn",
 				},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123",
 						InstallationID: "xyz789",
 					},
@@ -262,8 +262,8 @@ func TestValidate(t *testing.T) {
 					Name: "test-conn",
 				},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "app-id",
 						InstallationID: "install-id",
 					},
@@ -284,8 +284,8 @@ func TestValidate(t *testing.T) {
 					Name: "test-conn",
 				},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123",
 						InstallationID: "456",
 					},

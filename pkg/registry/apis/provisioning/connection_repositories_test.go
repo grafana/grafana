@@ -208,8 +208,8 @@ func TestConnectionRepositoriesConnector_WithGitHubConnection(t *testing.T) {
 				Namespace: "default",
 			},
 			Spec: provisioning.ConnectionSpec{
-				Type: provisioning.GithubConnectionType,
-				GitHub: &provisioning.GitHubConnectionConfig{
+				Type: provisioning.ConnectionTypeGithub,
+				Github: &provisioning.ConnectionGitHubConfig{
 					AppID:          "123456",
 					InstallationID: "789012",
 				},
@@ -298,8 +298,8 @@ func TestConnectionRepositoriesConnector_WithGitHubConnection(t *testing.T) {
 				Namespace: "default",
 			},
 			Spec: provisioning.ConnectionSpec{
-				Type: provisioning.GithubConnectionType,
-				GitHub: &provisioning.GitHubConnectionConfig{
+				Type: provisioning.ConnectionTypeGithub,
+				Github: &provisioning.ConnectionGitHubConfig{
 					AppID:          "123456",
 					InstallationID: "789012",
 				},

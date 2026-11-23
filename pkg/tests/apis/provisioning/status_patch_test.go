@@ -184,7 +184,7 @@ func TestIntegrationProvisioning_ConnectionStatusPatch_ValidatesBundledSpecChang
 		},
 		"spec": map[string]any{
 			"title": "Status patch validates bundled spec",
-			"type":  string(provisioning.GithubConnectionType),
+			"type":  string(provisioning.ConnectionTypeGithub),
 			"github": map[string]any{
 				"appID":          "123456",
 				"installationID": "454545",
@@ -262,7 +262,7 @@ func TestIntegrationProvisioning_ConnectionStatusPatch_ValidatesBundledSpecChang
 	require.NoError(t, err, "failed to get connection after the rejected combined patch")
 	conn = common.MustFromUnstructured[provisioning.Connection](t, updated)
 
-	require.Equal(t, "123456", conn.Spec.GitHub.AppID, "the cleared appID must not have been persisted")
+	require.Equal(t, "123456", conn.Spec.Github.AppID, "the cleared appID must not have been persisted")
 	require.Nil(t, common.FindCondition(conn.Status.Conditions, bundledCondition.Type),
 		"the bundled status write must not land either: the whole patch was rejected atomically")
 }

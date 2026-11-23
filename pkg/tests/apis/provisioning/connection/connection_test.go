@@ -189,7 +189,7 @@ func TestIntegrationProvisioning_ConnectionMutation(t *testing.T) {
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	t.Run("should update connection name with type prefix", func(t *testing.T) {
-		connectionType := provisioning.GithubConnectionType
+		connectionType := provisioning.ConnectionTypeGithub
 		namePrefix := fmt.Sprintf("%s-", connectionType)
 
 		connection := &unstructured.Unstructured{Object: map[string]any{
@@ -238,7 +238,7 @@ func TestIntegrationProvisioning_ConnectionMutation(t *testing.T) {
 			},
 			"spec": map[string]any{
 				"title": "Test Connection",
-				"type":  provisioning.GithubConnectionType,
+				"type":  provisioning.ConnectionTypeGithub,
 				"github": map[string]any{
 					"appID":          "123456",
 					"installationID": "454545",
@@ -276,7 +276,7 @@ func TestIntegrationProvisioning_ConnectionMutation(t *testing.T) {
 			},
 			"spec": map[string]any{
 				"title": "Test Connection",
-				"type":  provisioning.GithubConnectionType,
+				"type":  provisioning.ConnectionTypeGithub,
 				"github": map[string]any{
 					"appID":          "123456",
 					"installationID": "454545",

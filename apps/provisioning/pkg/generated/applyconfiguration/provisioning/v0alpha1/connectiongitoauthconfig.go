@@ -4,12 +4,12 @@
 
 package v0alpha1
 
-// GitOAuthConnectionConfigApplyConfiguration represents a declarative configuration of the GitOAuthConnectionConfig type for use
+// ConnectionGitOAuthConfigApplyConfiguration represents a declarative configuration of the ConnectionGitOAuthConfig type for use
 // with apply.
 //
 // GitOAuthConnectionConfig describes a provider-agnostic OAuth 2.0 app used to
 // authenticate pure git repositories.
-type GitOAuthConnectionConfigApplyConfiguration struct {
+type ConnectionGitOAuthConfigApplyConfiguration struct {
 	// The provider's OAuth authorization endpoint (e.g. `https://gitlab.example.com/oauth/authorize`).
 	AuthURL *string `json:"authURL,omitempty"`
 	// The provider's OAuth token endpoint (e.g. `https://gitlab.example.com/oauth/token`).
@@ -18,16 +18,16 @@ type GitOAuthConnectionConfigApplyConfiguration struct {
 	Scopes []string `json:"scopes,omitempty"`
 }
 
-// GitOAuthConnectionConfigApplyConfiguration constructs a declarative configuration of the GitOAuthConnectionConfig type for use with
+// ConnectionGitOAuthConfigApplyConfiguration constructs a declarative configuration of the ConnectionGitOAuthConfig type for use with
 // apply.
-func GitOAuthConnectionConfig() *GitOAuthConnectionConfigApplyConfiguration {
-	return &GitOAuthConnectionConfigApplyConfiguration{}
+func ConnectionGitOAuthConfig() *ConnectionGitOAuthConfigApplyConfiguration {
+	return &ConnectionGitOAuthConfigApplyConfiguration{}
 }
 
 // WithAuthURL sets the AuthURL field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the AuthURL field is set to the value of the last call.
-func (b *GitOAuthConnectionConfigApplyConfiguration) WithAuthURL(value string) *GitOAuthConnectionConfigApplyConfiguration {
+func (b *ConnectionGitOAuthConfigApplyConfiguration) WithAuthURL(value string) *ConnectionGitOAuthConfigApplyConfiguration {
 	b.AuthURL = &value
 	return b
 }
@@ -35,7 +35,7 @@ func (b *GitOAuthConnectionConfigApplyConfiguration) WithAuthURL(value string) *
 // WithTokenURL sets the TokenURL field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the TokenURL field is set to the value of the last call.
-func (b *GitOAuthConnectionConfigApplyConfiguration) WithTokenURL(value string) *GitOAuthConnectionConfigApplyConfiguration {
+func (b *ConnectionGitOAuthConfigApplyConfiguration) WithTokenURL(value string) *ConnectionGitOAuthConfigApplyConfiguration {
 	b.TokenURL = &value
 	return b
 }
@@ -43,7 +43,7 @@ func (b *GitOAuthConnectionConfigApplyConfiguration) WithTokenURL(value string) 
 // WithScopes adds the given value to the Scopes field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the Scopes field.
-func (b *GitOAuthConnectionConfigApplyConfiguration) WithScopes(values ...string) *GitOAuthConnectionConfigApplyConfiguration {
+func (b *ConnectionGitOAuthConfigApplyConfiguration) WithScopes(values ...string) *ConnectionGitOAuthConfigApplyConfiguration {
 	for i := range values {
 		b.Scopes = append(b.Scopes, values[i])
 	}

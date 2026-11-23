@@ -47,7 +47,7 @@ func (v ConnectionSecure) IsZero() bool {
 	return v.PrivateKey.IsZero() && v.Token.IsZero() && v.ClientSecret.IsZero()
 }
 
-type GitHubConnectionConfig struct {
+type ConnectionGitHubConfig struct {
 	// GitHub App ID
 	AppID string `json:"appID"`
 
@@ -55,13 +55,13 @@ type GitHubConnectionConfig struct {
 	InstallationID string `json:"installationID"`
 }
 
-func (GitHubConnectionConfig) OpenAPIModelName() string {
+func (ConnectionGitHubConfig) OpenAPIModelName() string {
 	return OpenAPIPrefix + "GitHubConnectionConfig"
 }
 
 // GitHubEnterpriseConnectionConfig describes a GitHub App installation against a
 // self-managed GitHub Enterprise Server (GHES) instance.
-type GitHubEnterpriseConnectionConfig struct {
+type ConnectionGitHubEnterpriseConfig struct {
 	// GitHub App ID
 	AppID string `json:"appID"`
 
@@ -69,25 +69,25 @@ type GitHubEnterpriseConnectionConfig struct {
 	InstallationID string `json:"installationID"`
 
 	// The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).
-	ServerURL string `json:"serverUrl"`
+	ServerUrl string `json:"serverUrl"`
 }
 
-func (GitHubEnterpriseConnectionConfig) OpenAPIModelName() string {
+func (ConnectionGitHubEnterpriseConfig) OpenAPIModelName() string {
 	return OpenAPIPrefix + "GitHubEnterpriseConnectionConfig"
 }
 
-type GitHubEnterpriseOAuthConnectionConfig struct {
+type ConnectionGitHubEnterpriseOAuthConfig struct {
 	// The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).
-	ServerURL string `json:"serverUrl"`
+	ServerUrl string `json:"serverUrl"`
 }
 
-func (GitHubEnterpriseOAuthConnectionConfig) OpenAPIModelName() string {
+func (ConnectionGitHubEnterpriseOAuthConfig) OpenAPIModelName() string {
 	return OpenAPIPrefix + "GitHubEnterpriseOAuthConnectionConfig"
 }
 
 // GitOAuthConnectionConfig describes a provider-agnostic OAuth 2.0 app used to
 // authenticate pure git repositories.
-type GitOAuthConnectionConfig struct {
+type ConnectionGitOAuthConfig struct {
 	// The provider's OAuth authorization endpoint (e.g. `https://gitlab.example.com/oauth/authorize`).
 	AuthURL string `json:"authURL"`
 	// The provider's OAuth token endpoint (e.g. `https://gitlab.example.com/oauth/token`).
@@ -96,16 +96,16 @@ type GitOAuthConnectionConfig struct {
 	Scopes []string `json:"scopes,omitempty"`
 }
 
-func (GitOAuthConnectionConfig) OpenAPIModelName() string {
+func (ConnectionGitOAuthConfig) OpenAPIModelName() string {
 	return OpenAPIPrefix + "GitOAuthConnectionConfig"
 }
 
-type BitbucketConnectionConfig struct {
+type ConnectionBitbucketConfig struct {
 	// The workspace the OAuth consumer belongs to
 	Workspace string `json:"workspace"`
 }
 
-func (BitbucketConnectionConfig) OpenAPIModelName() string {
+func (ConnectionBitbucketConfig) OpenAPIModelName() string {
 	return OpenAPIPrefix + "BitbucketConnectionConfig"
 }
 
@@ -139,13 +139,13 @@ func (ConnectionType) OpenAPIModelName() string {
 
 // ConnectionType values.
 const (
-	GithubConnectionType                ConnectionType = "github"
-	GithubEnterpriseConnectionType      ConnectionType = "githubEnterprise"
-	GithubOAuthConnectionType           ConnectionType = "githubOAuth"
-	GithubEnterpriseOAuthConnectionType ConnectionType = "githubEnterpriseOAuth"
-	GitlabOAuthConnectionType           ConnectionType = "gitlabOAuth"
-	BitbucketOAuthConnectionType        ConnectionType = "bitbucketOAuth"
-	GitOAuthConnectionType              ConnectionType = "gitOAuth"
+	ConnectionTypeGithub                ConnectionType = "github"
+	ConnectionTypeGithubEnterprise      ConnectionType = "githubEnterprise"
+	ConnectionTypeGithubOAuth           ConnectionType = "githubOAuth"
+	ConnectionTypeGithubEnterpriseOAuth ConnectionType = "githubEnterpriseOAuth"
+	ConnectionTypeGitlabOAuth           ConnectionType = "gitlabOAuth"
+	ConnectionTypeBitbucketOAuth        ConnectionType = "bitbucketOAuth"
+	ConnectionTypeGitOAuth              ConnectionType = "gitOAuth"
 )
 
 type ConnectionSpec struct {
@@ -156,33 +156,33 @@ type ConnectionSpec struct {
 	// The connection provider type
 	Type ConnectionType `json:"type"`
 	// The connection URL
-	URL string `json:"url,omitempty"`
+	Url string `json:"url,omitempty"`
 
 	// GitHub connection configuration
 	// Only applicable when provider is "github"
-	GitHub *GitHubConnectionConfig `json:"github,omitempty"`
+	Github *ConnectionGitHubConfig `json:"github,omitempty"`
 	// GitHub Enterprise Server connection configuration
 	// Only applicable when provider is "githubEnterprise"
-	GitHubEnterprise *GitHubEnterpriseConnectionConfig `json:"githubEnterprise,omitempty"`
+	GithubEnterprise *ConnectionGitHubEnterpriseConfig `json:"githubEnterprise,omitempty"`
 	// GitHub Enterprise Server OAuth app connection configuration
 	// Only applicable when provider is "githubEnterpriseOAuth"
-	GitHubEnterpriseOAuth *GitHubEnterpriseOAuthConnectionConfig `json:"githubEnterpriseOAuth,omitempty"`
+	GithubEnterpriseOAuth *ConnectionGitHubEnterpriseOAuthConfig `json:"githubEnterpriseOAuth,omitempty"`
 	// Bitbucket connection configuration
 	// Only applicable when provider is "bitbucketOAuth"
-	Bitbucket *BitbucketConnectionConfig `json:"bitbucket,omitempty"`
+	Bitbucket *ConnectionBitbucketConfig `json:"bitbucket,omitempty"`
 	// Generic git OAuth app connection configuration
 	// Only applicable when provider is "gitOAuth"
-	GitOAuth *GitOAuthConnectionConfig `json:"gitOAuth,omitempty"`
+	GitOAuth *ConnectionGitOAuthConfig `json:"gitOAuth,omitempty"`
 
 	// OAuth app configuration shared by all OAuth app providers
-	OAuth *ConnectionOAuthConfig `json:"oauth,omitempty"`
+	Oauth *ConnectionOAuthConfig `json:"oauth,omitempty"`
 
 	// Webhook configuration for this connection
 	Webhook *ConnectionWebhookConfig `json:"webhook,omitempty"`
 }
 
 func (c *ConnectionSpec) IsGitHub() bool {
-	return c.GitHub != nil || c.GitHubEnterprise != nil
+	return c.Github != nil || c.GithubEnterprise != nil
 }
 
 // ConnectionAuthorizeRequest completes the OAuth authorization of a connection

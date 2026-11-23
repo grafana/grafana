@@ -17,7 +17,7 @@ import (
 func Extra(decrypter connection.Decrypter, allowInsecure bool) connection.Extra {
 	return oauth.NewExtra(
 		decrypter,
-		provisioning.GitOAuthConnectionType,
+		provisioning.ConnectionTypeGitOAuth,
 		provisioning.GitRepositoryType,
 		newProvider,
 		func(spec provisioning.ConnectionSpec) field.ErrorList {

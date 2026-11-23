@@ -14,3 +14,29 @@ type HealthStatus = RepositoryHealthStatus
 
 // Deprecated: Use RepositoryTokenStatus or ConnectionTokenStatus.
 type TokenStatus = RepositoryTokenStatus
+
+// Deprecated: Use ConnectionGitHubConfig.
+type GitHubConnectionConfig = ConnectionGitHubConfig
+
+// Deprecated: Use ConnectionGitHubEnterpriseConfig.
+type GitHubEnterpriseConnectionConfig = ConnectionGitHubEnterpriseConfig
+
+// Deprecated: Use ConnectionGitHubEnterpriseOAuthConfig.
+type GitHubEnterpriseOAuthConnectionConfig = ConnectionGitHubEnterpriseOAuthConfig
+
+// Deprecated: Use ConnectionGitOAuthConfig.
+type GitOAuthConnectionConfig = ConnectionGitOAuthConfig
+
+// Deprecated: Use ConnectionBitbucketConfig.
+type BitbucketConnectionConfig = ConnectionBitbucketConfig
+
+// Deprecated: Use the ConnectionType* constants.
+const (
+	GithubConnectionType                = ConnectionTypeGithub
+	GithubEnterpriseConnectionType      = ConnectionTypeGithubEnterprise
+	GithubOAuthConnectionType           = ConnectionTypeGithubOAuth
+	GithubEnterpriseOAuthConnectionType = ConnectionTypeGithubEnterpriseOAuth
+	GitlabOAuthConnectionType           = ConnectionTypeGitlabOAuth
+	BitbucketOAuthConnectionType        = ConnectionTypeBitbucketOAuth
+	GitOAuthConnectionType              = ConnectionTypeGitOAuth
+)

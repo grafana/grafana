@@ -35,16 +35,16 @@ func TestProvideFactory(t *testing.T) {
 			name: "should create factory with valid extras",
 			setupExtras: func(t *testing.T) []connection.Extra {
 				extra1 := connection.NewMockExtra(t)
-				extra1.EXPECT().Type().Return(provisioning.GithubConnectionType)
+				extra1.EXPECT().Type().Return(provisioning.ConnectionTypeGithub)
 
 				extra2 := connection.NewMockExtra(t)
-				extra2.EXPECT().Type().Return(provisioning.GitlabOAuthConnectionType)
+				extra2.EXPECT().Type().Return(provisioning.ConnectionTypeGitlabOAuth)
 
 				return []connection.Extra{extra1, extra2}
 			},
 			enabled: map[provisioning.ConnectionType]struct{}{
-				provisioning.GithubConnectionType:      {},
-				provisioning.GitlabOAuthConnectionType: {},
+				provisioning.ConnectionTypeGithub:      {},
+				provisioning.ConnectionTypeGitlabOAuth: {},
 			},
 			wantErr: false,
 		},
@@ -52,15 +52,15 @@ func TestProvideFactory(t *testing.T) {
 			name: "should return error when duplicate connection types",
 			setupExtras: func(t *testing.T) []connection.Extra {
 				extra1 := connection.NewMockExtra(t)
-				extra1.EXPECT().Type().Return(provisioning.GithubConnectionType)
+				extra1.EXPECT().Type().Return(provisioning.ConnectionTypeGithub)
 
 				extra2 := connection.NewMockExtra(t)
-				extra2.EXPECT().Type().Return(provisioning.GithubConnectionType)
+				extra2.EXPECT().Type().Return(provisioning.ConnectionTypeGithub)
 
 				return []connection.Extra{extra1, extra2}
 			},
 			enabled: map[provisioning.ConnectionType]struct{}{
-				provisioning.GithubConnectionType: {},
+				provisioning.ConnectionTypeGithub: {},
 			},
 			wantErr: true,
 			validateError: func(t *testing.T, err error) {
@@ -100,56 +100,56 @@ func TestFactory_Types(t *testing.T) {
 	}{
 		{
 			name:       "should return only enabled types that have extras",
-			extraTypes: []provisioning.ConnectionType{provisioning.GithubConnectionType, provisioning.GitlabOAuthConnectionType},
+			extraTypes: []provisioning.ConnectionType{provisioning.ConnectionTypeGithub, provisioning.ConnectionTypeGitlabOAuth},
 			enabled: map[provisioning.ConnectionType]struct{}{
-				provisioning.GithubConnectionType:      {},
-				provisioning.GitlabOAuthConnectionType: {},
+				provisioning.ConnectionTypeGithub:      {},
+				provisioning.ConnectionTypeGitlabOAuth: {},
 			},
 			expectedLen:  2,
-			expectedList: []provisioning.ConnectionType{provisioning.GithubConnectionType, provisioning.GitlabOAuthConnectionType},
+			expectedList: []provisioning.ConnectionType{provisioning.ConnectionTypeGithub, provisioning.ConnectionTypeGitlabOAuth},
 		},
 		{
 			name:       "should return sorted list of types",
-			extraTypes: []provisioning.ConnectionType{provisioning.GitlabOAuthConnectionType, provisioning.GithubConnectionType},
+			extraTypes: []provisioning.ConnectionType{provisioning.ConnectionTypeGitlabOAuth, provisioning.ConnectionTypeGithub},
 			enabled: map[provisioning.ConnectionType]struct{}{
-				provisioning.GithubConnectionType:      {},
-				provisioning.GitlabOAuthConnectionType: {},
+				provisioning.ConnectionTypeGithub:      {},
+				provisioning.ConnectionTypeGitlabOAuth: {},
 			},
 			expectedLen:  2,
-			expectedList: []provisioning.ConnectionType{provisioning.GithubConnectionType, provisioning.GitlabOAuthConnectionType},
+			expectedList: []provisioning.ConnectionType{provisioning.ConnectionTypeGithub, provisioning.ConnectionTypeGitlabOAuth},
 			checkSorted:  true,
 		},
 		{
 			name:         "should return empty list when no types are enabled",
-			extraTypes:   []provisioning.ConnectionType{provisioning.GithubConnectionType},
+			extraTypes:   []provisioning.ConnectionType{provisioning.ConnectionTypeGithub},
 			enabled:      map[provisioning.ConnectionType]struct{}{},
 			expectedLen:  0,
 			expectedList: []provisioning.ConnectionType{},
 		},
 		{
 			name:       "should not return types that are enabled but have no extras",
-			extraTypes: []provisioning.ConnectionType{provisioning.GithubConnectionType},
+			extraTypes: []provisioning.ConnectionType{provisioning.ConnectionTypeGithub},
 			enabled: map[provisioning.ConnectionType]struct{}{
-				provisioning.GithubConnectionType:      {},
-				provisioning.GitlabOAuthConnectionType: {},
+				provisioning.ConnectionTypeGithub:      {},
+				provisioning.ConnectionTypeGitlabOAuth: {},
 			},
 			expectedLen:  1,
-			expectedList: []provisioning.ConnectionType{provisioning.GithubConnectionType},
+			expectedList: []provisioning.ConnectionType{provisioning.ConnectionTypeGithub},
 		},
 		{
 			name:       "should not return types that have extras but are not enabled",
-			extraTypes: []provisioning.ConnectionType{provisioning.GithubConnectionType, provisioning.GitlabOAuthConnectionType},
+			extraTypes: []provisioning.ConnectionType{provisioning.ConnectionTypeGithub, provisioning.ConnectionTypeGitlabOAuth},
 			enabled: map[provisioning.ConnectionType]struct{}{
-				provisioning.GithubConnectionType: {},
+				provisioning.ConnectionTypeGithub: {},
 			},
 			expectedLen:  1,
-			expectedList: []provisioning.ConnectionType{provisioning.GithubConnectionType},
+			expectedList: []provisioning.ConnectionType{provisioning.ConnectionTypeGithub},
 		},
 		{
 			name:       "should return empty list when no extras are provided",
 			extraTypes: []provisioning.ConnectionType{},
 			enabled: map[provisioning.ConnectionType]struct{}{
-				provisioning.GithubConnectionType: {},
+				provisioning.ConnectionTypeGithub: {},
 			},
 			expectedLen:  0,
 			expectedList: []provisioning.ConnectionType{},
@@ -197,37 +197,37 @@ func TestFactory_Build(t *testing.T) {
 	}{
 		{
 			name:           "should successfully build connection when type is enabled and has extra",
-			connectionType: provisioning.GithubConnectionType,
+			connectionType: provisioning.ConnectionTypeGithub,
 			setupExtras: func(t *testing.T, ctx context.Context) ([]connection.Extra, connection.Connection, error) {
 				mockConnection := connection.NewMockConnection(t)
 				mockConnection.EXPECT().Test(mock.Anything).Return(&provisioning.TestResults{Success: true}, nil).Maybe()
 				extra := connection.NewMockExtra(t)
-				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
+				extra.EXPECT().Type().Return(provisioning.ConnectionTypeGithub)
 				extra.EXPECT().Build(mock.Anything, &provisioning.Connection{
 					ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 					Spec: provisioning.ConnectionSpec{
-						Type: provisioning.GithubConnectionType,
+						Type: provisioning.ConnectionTypeGithub,
 					},
 				}).Return(mockConnection, nil)
 
 				return []connection.Extra{extra}, mockConnection, nil
 			},
 			enabled: map[provisioning.ConnectionType]struct{}{
-				provisioning.GithubConnectionType: {},
+				provisioning.ConnectionTypeGithub: {},
 			},
 			wantErr: false,
 		},
 		{
 			name:           "should return error when type is not enabled",
-			connectionType: provisioning.GitlabOAuthConnectionType,
+			connectionType: provisioning.ConnectionTypeGitlabOAuth,
 			setupExtras: func(t *testing.T, ctx context.Context) ([]connection.Extra, connection.Connection, error) {
 				extra := connection.NewMockExtra(t)
-				extra.EXPECT().Type().Return(provisioning.GitlabOAuthConnectionType)
+				extra.EXPECT().Type().Return(provisioning.ConnectionTypeGitlabOAuth)
 
 				return []connection.Extra{extra}, nil, nil
 			},
 			enabled: map[provisioning.ConnectionType]struct{}{
-				provisioning.GithubConnectionType: {},
+				provisioning.ConnectionTypeGithub: {},
 			},
 			wantErr: true,
 			validateError: func(t *testing.T, err error) {
@@ -236,15 +236,15 @@ func TestFactory_Build(t *testing.T) {
 		},
 		{
 			name:           "should return error when type is not supported",
-			connectionType: provisioning.GitlabOAuthConnectionType,
+			connectionType: provisioning.ConnectionTypeGitlabOAuth,
 			setupExtras: func(t *testing.T, ctx context.Context) ([]connection.Extra, connection.Connection, error) {
 				extra := connection.NewMockExtra(t)
-				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
+				extra.EXPECT().Type().Return(provisioning.ConnectionTypeGithub)
 
 				return []connection.Extra{extra}, nil, nil
 			},
 			enabled: map[provisioning.ConnectionType]struct{}{
-				provisioning.GithubConnectionType: {},
+				provisioning.ConnectionTypeGithub: {},
 			},
 			wantErr: true,
 			validateError: func(t *testing.T, err error) {
@@ -253,22 +253,22 @@ func TestFactory_Build(t *testing.T) {
 		},
 		{
 			name:           "should pass through errors from extra.Build()",
-			connectionType: provisioning.GithubConnectionType,
+			connectionType: provisioning.ConnectionTypeGithub,
 			setupExtras: func(t *testing.T, ctx context.Context) ([]connection.Extra, connection.Connection, error) {
 				buildErr := errors.New("build error")
 				extra := connection.NewMockExtra(t)
-				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
+				extra.EXPECT().Type().Return(provisioning.ConnectionTypeGithub)
 				extra.EXPECT().Build(mock.Anything, &provisioning.Connection{
 					ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 					Spec: provisioning.ConnectionSpec{
-						Type: provisioning.GithubConnectionType,
+						Type: provisioning.ConnectionTypeGithub,
 					},
 				}).Return(nil, buildErr)
 
 				return []connection.Extra{extra}, nil, buildErr
 			},
 			enabled: map[provisioning.ConnectionType]struct{}{
-				provisioning.GithubConnectionType: {},
+				provisioning.ConnectionTypeGithub: {},
 			},
 			wantErr: true,
 			validateError: func(t *testing.T, err error) {
@@ -277,28 +277,28 @@ func TestFactory_Build(t *testing.T) {
 		},
 		{
 			name:           "should build with multiple extras registered",
-			connectionType: provisioning.GitlabOAuthConnectionType,
+			connectionType: provisioning.ConnectionTypeGitlabOAuth,
 			setupExtras: func(t *testing.T, ctx context.Context) ([]connection.Extra, connection.Connection, error) {
 				mockConnection := connection.NewMockConnection(t)
 				mockConnection.EXPECT().Test(mock.Anything).Return(&provisioning.TestResults{Success: true}, nil).Maybe()
 
 				extra1 := connection.NewMockExtra(t)
-				extra1.EXPECT().Type().Return(provisioning.GithubConnectionType)
+				extra1.EXPECT().Type().Return(provisioning.ConnectionTypeGithub)
 
 				extra2 := connection.NewMockExtra(t)
-				extra2.EXPECT().Type().Return(provisioning.GitlabOAuthConnectionType)
+				extra2.EXPECT().Type().Return(provisioning.ConnectionTypeGitlabOAuth)
 				extra2.EXPECT().Build(mock.Anything, &provisioning.Connection{
 					ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 					Spec: provisioning.ConnectionSpec{
-						Type: provisioning.GitlabOAuthConnectionType,
+						Type: provisioning.ConnectionTypeGitlabOAuth,
 					},
 				}).Return(mockConnection, nil)
 
 				return []connection.Extra{extra1, extra2}, mockConnection, nil
 			},
 			enabled: map[provisioning.ConnectionType]struct{}{
-				provisioning.GithubConnectionType:      {},
-				provisioning.GitlabOAuthConnectionType: {},
+				provisioning.ConnectionTypeGithub:      {},
+				provisioning.ConnectionTypeGitlabOAuth: {},
 			},
 			wantErr: false,
 		},
@@ -346,11 +346,11 @@ func TestFactory_Build_EmitsSpan(t *testing.T) {
 
 	mockConnection := connection.NewMockConnection(t)
 	extra := connection.NewMockExtra(t)
-	extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
+	extra.EXPECT().Type().Return(provisioning.ConnectionTypeGithub)
 	extra.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConnection, nil)
 
 	factory, err := connection.ProvideFactory(
-		map[provisioning.ConnectionType]struct{}{provisioning.GithubConnectionType: {}},
+		map[provisioning.ConnectionType]struct{}{provisioning.ConnectionTypeGithub: {}},
 		[]connection.Extra{extra},
 		tp.Tracer("test"),
 	)
@@ -358,7 +358,7 @@ func TestFactory_Build_EmitsSpan(t *testing.T) {
 
 	conn := &provisioning.Connection{
 		ObjectMeta: metav1.ObjectMeta{Name: "my-conn", Namespace: "my-ns"},
-		Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
+		Spec:       provisioning.ConnectionSpec{Type: provisioning.ConnectionTypeGithub},
 	}
 
 	_, err = factory.Build(context.Background(), conn)
@@ -376,7 +376,7 @@ func TestFactory_Build_EmitsSpan(t *testing.T) {
 	attrs := buildSpan.Attributes()
 	assert.Contains(t, attrs, attribute.String("connection.name", "my-conn"))
 	assert.Contains(t, attrs, attribute.String("connection.namespace", "my-ns"))
-	assert.Contains(t, attrs, attribute.String("connection.type", string(provisioning.GithubConnectionType)))
+	assert.Contains(t, attrs, attribute.String("connection.type", string(provisioning.ConnectionTypeGithub)))
 }
 
 func TestFactory_Mutate(t *testing.T) {
@@ -391,18 +391,18 @@ func TestFactory_Mutate(t *testing.T) {
 			name: "should successfully mutate with single extra",
 			setupExtras: func(t *testing.T, ctx context.Context, obj runtime.Object) []connection.Extra {
 				extra := connection.NewMockExtra(t)
-				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
+				extra.EXPECT().Type().Return(provisioning.ConnectionTypeGithub)
 				extra.EXPECT().Mutate(ctx, obj).Return(nil)
 
 				return []connection.Extra{extra}
 			},
 			enabled: map[provisioning.ConnectionType]struct{}{
-				provisioning.GithubConnectionType: {},
+				provisioning.ConnectionTypeGithub: {},
 			},
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
+					Type: provisioning.ConnectionTypeGithub,
 				},
 			},
 			wantErr: false,
@@ -411,18 +411,18 @@ func TestFactory_Mutate(t *testing.T) {
 			name: "should return error if extra returns error",
 			setupExtras: func(t *testing.T, ctx context.Context, obj runtime.Object) []connection.Extra {
 				extra := connection.NewMockExtra(t)
-				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
+				extra.EXPECT().Type().Return(provisioning.ConnectionTypeGithub)
 				extra.EXPECT().Mutate(ctx, obj).Return(assert.AnError)
 
 				return []connection.Extra{extra}
 			},
 			enabled: map[provisioning.ConnectionType]struct{}{
-				provisioning.GithubConnectionType: {},
+				provisioning.ConnectionTypeGithub: {},
 			},
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
+					Type: provisioning.ConnectionTypeGithub,
 				},
 			},
 			wantErr: true,
@@ -431,23 +431,23 @@ func TestFactory_Mutate(t *testing.T) {
 			name: "should successfully mutate with multiple extras (all get called)",
 			setupExtras: func(t *testing.T, ctx context.Context, obj runtime.Object) []connection.Extra {
 				extra1 := connection.NewMockExtra(t)
-				extra1.EXPECT().Type().Return(provisioning.GithubConnectionType)
+				extra1.EXPECT().Type().Return(provisioning.ConnectionTypeGithub)
 				extra1.EXPECT().Mutate(ctx, obj).Return(nil)
 
 				extra2 := connection.NewMockExtra(t)
-				extra2.EXPECT().Type().Return(provisioning.GitlabOAuthConnectionType)
+				extra2.EXPECT().Type().Return(provisioning.ConnectionTypeGitlabOAuth)
 				extra2.EXPECT().Mutate(ctx, obj).Return(nil)
 
 				return []connection.Extra{extra1, extra2}
 			},
 			enabled: map[provisioning.ConnectionType]struct{}{
-				provisioning.GithubConnectionType:      {},
-				provisioning.GitlabOAuthConnectionType: {},
+				provisioning.ConnectionTypeGithub:      {},
+				provisioning.ConnectionTypeGitlabOAuth: {},
 			},
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
+					Type: provisioning.ConnectionTypeGithub,
 				},
 			},
 			wantErr: false,
@@ -458,12 +458,12 @@ func TestFactory_Mutate(t *testing.T) {
 				return []connection.Extra{}
 			},
 			enabled: map[provisioning.ConnectionType]struct{}{
-				provisioning.GithubConnectionType: {},
+				provisioning.ConnectionTypeGithub: {},
 			},
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
+					Type: provisioning.ConnectionTypeGithub,
 				},
 			},
 			wantErr: false,
@@ -472,14 +472,14 @@ func TestFactory_Mutate(t *testing.T) {
 			name: "should handle wrong object type (non-Connection)",
 			setupExtras: func(t *testing.T, ctx context.Context, obj runtime.Object) []connection.Extra {
 				extra := connection.NewMockExtra(t)
-				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
+				extra.EXPECT().Type().Return(provisioning.ConnectionTypeGithub)
 				// Mutate should be called but handle non-Connection object gracefully
 				extra.EXPECT().Mutate(ctx, obj).Return(nil)
 
 				return []connection.Extra{extra}
 			},
 			enabled: map[provisioning.ConnectionType]struct{}{
-				provisioning.GithubConnectionType: {},
+				provisioning.ConnectionTypeGithub: {},
 			},
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
@@ -524,8 +524,8 @@ func TestFactory_Validate(t *testing.T) {
 			connection: &provisioning.Connection{
 				Spec: provisioning.ConnectionSpec{
 					Title: "Test Connection",
-					Type:  provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type:  provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123456",
 						InstallationID: "454545",
 					},
@@ -533,12 +533,12 @@ func TestFactory_Validate(t *testing.T) {
 			},
 			setupExtras: func(t *testing.T, ctx context.Context) []connection.Extra {
 				extra := connection.NewMockExtra(t)
-				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
+				extra.EXPECT().Type().Return(provisioning.ConnectionTypeGithub)
 				extra.EXPECT().Validate(ctx, mock.Anything).Return(field.ErrorList{})
 				return []connection.Extra{extra}
 			},
 			enabled: map[provisioning.ConnectionType]struct{}{
-				provisioning.GithubConnectionType: {},
+				provisioning.ConnectionTypeGithub: {},
 			},
 			expectedErrs: 0,
 		},
@@ -546,16 +546,16 @@ func TestFactory_Validate(t *testing.T) {
 			name: "should return error when connection type is not supported",
 			connection: &provisioning.Connection{
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GitlabOAuthConnectionType,
+					Type: provisioning.ConnectionTypeGitlabOAuth,
 				},
 			},
 			setupExtras: func(t *testing.T, ctx context.Context) []connection.Extra {
 				extra := connection.NewMockExtra(t)
-				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
+				extra.EXPECT().Type().Return(provisioning.ConnectionTypeGithub)
 				return []connection.Extra{extra}
 			},
 			enabled: map[provisioning.ConnectionType]struct{}{
-				provisioning.GithubConnectionType: {},
+				provisioning.ConnectionTypeGithub: {},
 			},
 			expectedErrs: 2,
 			validateError: func(t *testing.T, errs []*field.Error) {
@@ -575,11 +575,11 @@ func TestFactory_Validate(t *testing.T) {
 			},
 			setupExtras: func(t *testing.T, ctx context.Context) []connection.Extra {
 				extra := connection.NewMockExtra(t)
-				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
+				extra.EXPECT().Type().Return(provisioning.ConnectionTypeGithub)
 				return []connection.Extra{extra}
 			},
 			enabled: map[provisioning.ConnectionType]struct{}{
-				provisioning.GithubConnectionType: {},
+				provisioning.ConnectionTypeGithub: {},
 			},
 			expectedErrs: 2,
 			validateError: func(t *testing.T, errs []*field.Error) {
@@ -594,16 +594,16 @@ func TestFactory_Validate(t *testing.T) {
 			name: "should return error when connection type is not enabled",
 			connection: &provisioning.Connection{
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GitlabOAuthConnectionType,
+					Type: provisioning.ConnectionTypeGitlabOAuth,
 				},
 			},
 			setupExtras: func(t *testing.T, ctx context.Context) []connection.Extra {
 				extra := connection.NewMockExtra(t)
-				extra.EXPECT().Type().Return(provisioning.GitlabOAuthConnectionType)
+				extra.EXPECT().Type().Return(provisioning.ConnectionTypeGitlabOAuth)
 				return []connection.Extra{extra}
 			},
 			enabled: map[provisioning.ConnectionType]struct{}{
-				provisioning.GithubConnectionType: {},
+				provisioning.ConnectionTypeGithub: {},
 			},
 			expectedErrs: 2,
 			validateError: func(t *testing.T, errs []*field.Error) {
@@ -618,15 +618,15 @@ func TestFactory_Validate(t *testing.T) {
 			name: "should return errors from Extra.Validate when type is valid and enabled",
 			connection: &provisioning.Connection{
 				Spec: provisioning.ConnectionSpec{
-					Type:   provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type:   provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						// Missing AppID and InstallationID
 					},
 				},
 			},
 			setupExtras: func(t *testing.T, ctx context.Context) []connection.Extra {
 				extra := connection.NewMockExtra(t)
-				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
+				extra.EXPECT().Type().Return(provisioning.ConnectionTypeGithub)
 				extra.EXPECT().Validate(ctx, mock.Anything).Return(field.ErrorList{
 					field.Required(field.NewPath("spec", "github", "appID"), "appID must be specified for GitHub connection"),
 					field.Required(field.NewPath("spec", "github", "installationID"), "installationID must be specified for GitHub connection"),
@@ -634,7 +634,7 @@ func TestFactory_Validate(t *testing.T) {
 				return []connection.Extra{extra}
 			},
 			enabled: map[provisioning.ConnectionType]struct{}{
-				provisioning.GithubConnectionType: {},
+				provisioning.ConnectionTypeGithub: {},
 			},
 			expectedErrs: 3,
 			validateError: func(t *testing.T, errs []*field.Error) {
@@ -650,11 +650,11 @@ func TestFactory_Validate(t *testing.T) {
 			connection: nil, // Will pass a Repository instead
 			setupExtras: func(t *testing.T, ctx context.Context) []connection.Extra {
 				extra := connection.NewMockExtra(t)
-				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
+				extra.EXPECT().Type().Return(provisioning.ConnectionTypeGithub)
 				return []connection.Extra{extra}
 			},
 			enabled: map[provisioning.ConnectionType]struct{}{
-				provisioning.GithubConnectionType: {},
+				provisioning.ConnectionTypeGithub: {},
 			},
 			expectedErrs: 0,
 		},
@@ -663,8 +663,8 @@ func TestFactory_Validate(t *testing.T) {
 			connection: &provisioning.Connection{
 				Spec: provisioning.ConnectionSpec{
 					Title: "Test Connection",
-					Type:  provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type:  provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123456",
 						InstallationID: "454545",
 					},
@@ -672,18 +672,18 @@ func TestFactory_Validate(t *testing.T) {
 			},
 			setupExtras: func(t *testing.T, ctx context.Context) []connection.Extra {
 				extra1 := connection.NewMockExtra(t)
-				extra1.EXPECT().Type().Return(provisioning.GithubConnectionType)
+				extra1.EXPECT().Type().Return(provisioning.ConnectionTypeGithub)
 				extra1.EXPECT().Validate(ctx, mock.Anything).Return(field.ErrorList{})
 
 				extra2 := connection.NewMockExtra(t)
-				extra2.EXPECT().Type().Return(provisioning.GitlabOAuthConnectionType)
+				extra2.EXPECT().Type().Return(provisioning.ConnectionTypeGitlabOAuth)
 				extra2.EXPECT().Validate(ctx, mock.Anything).Return(field.ErrorList{})
 
 				return []connection.Extra{extra1, extra2}
 			},
 			enabled: map[provisioning.ConnectionType]struct{}{
-				provisioning.GithubConnectionType:      {},
-				provisioning.GitlabOAuthConnectionType: {},
+				provisioning.ConnectionTypeGithub:      {},
+				provisioning.ConnectionTypeGitlabOAuth: {},
 			},
 			expectedErrs: 0,
 		},
@@ -691,17 +691,17 @@ func TestFactory_Validate(t *testing.T) {
 			name: "should return error for unsupported type before checking enabled",
 			connection: &provisioning.Connection{
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.BitbucketOAuthConnectionType,
+					Type: provisioning.ConnectionTypeBitbucketOAuth,
 				},
 			},
 			setupExtras: func(t *testing.T, ctx context.Context) []connection.Extra {
 				extra := connection.NewMockExtra(t)
-				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
+				extra.EXPECT().Type().Return(provisioning.ConnectionTypeGithub)
 				return []connection.Extra{extra}
 			},
 			enabled: map[provisioning.ConnectionType]struct{}{
-				provisioning.GithubConnectionType:         {},
-				provisioning.BitbucketOAuthConnectionType: {}, // Even if enabled, not supported
+				provisioning.ConnectionTypeGithub:         {},
+				provisioning.ConnectionTypeBitbucketOAuth: {}, // Even if enabled, not supported
 			},
 			expectedErrs: 2,
 			validateError: func(t *testing.T, errs []*field.Error) {

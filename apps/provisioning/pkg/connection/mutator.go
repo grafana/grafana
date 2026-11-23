@@ -82,13 +82,13 @@ func CopySecureValues(new, old *provisioning.Connection) {
 // (type and, for self-hosted providers, URL). The token is removed in that
 // case: it belongs to the previous app and the user must authorize again.
 func oauthAppChanged(new, old *provisioning.Connection) bool {
-	if new.Spec.OAuth == nil && old.Spec.OAuth == nil {
+	if new.Spec.Oauth == nil && old.Spec.Oauth == nil {
 		return false
 	}
-	if new.Spec.OAuth == nil || old.Spec.OAuth == nil {
+	if new.Spec.Oauth == nil || old.Spec.Oauth == nil {
 		return true
 	}
-	if new.Spec.Type != old.Spec.Type || new.Spec.URL != old.Spec.URL || new.Spec.OAuth.ClientID != old.Spec.OAuth.ClientID {
+	if new.Spec.Type != old.Spec.Type || new.Spec.Url != old.Spec.Url || new.Spec.Oauth.ClientID != old.Spec.Oauth.ClientID {
 		return true
 	}
 	if githubEnterpriseServerURL(new) != githubEnterpriseServerURL(old) || gitOAuthTokenURL(new) != gitOAuthTokenURL(old) ||
@@ -100,10 +100,10 @@ func oauthAppChanged(new, old *provisioning.Connection) bool {
 }
 
 func githubEnterpriseServerURL(c *provisioning.Connection) string {
-	if c.Spec.GitHubEnterpriseOAuth == nil {
+	if c.Spec.GithubEnterpriseOAuth == nil {
 		return ""
 	}
-	return c.Spec.GitHubEnterpriseOAuth.ServerURL
+	return c.Spec.GithubEnterpriseOAuth.ServerUrl
 }
 
 func gitOAuthTokenURL(c *provisioning.Connection) string {

@@ -4,30 +4,30 @@
 
 package v0alpha1
 
-// GitHubEnterpriseConnectionConfigApplyConfiguration represents a declarative configuration of the GitHubEnterpriseConnectionConfig type for use
+// ConnectionGitHubEnterpriseConfigApplyConfiguration represents a declarative configuration of the ConnectionGitHubEnterpriseConfig type for use
 // with apply.
 //
 // GitHubEnterpriseConnectionConfig describes a GitHub App installation against a
 // self-managed GitHub Enterprise Server (GHES) instance.
-type GitHubEnterpriseConnectionConfigApplyConfiguration struct {
+type ConnectionGitHubEnterpriseConfigApplyConfiguration struct {
 	// GitHub App ID
 	AppID *string `json:"appID,omitempty"`
 	// GitHub App installation ID
 	InstallationID *string `json:"installationID,omitempty"`
 	// The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).
-	ServerURL *string `json:"serverUrl,omitempty"`
+	ServerUrl *string `json:"serverUrl,omitempty"`
 }
 
-// GitHubEnterpriseConnectionConfigApplyConfiguration constructs a declarative configuration of the GitHubEnterpriseConnectionConfig type for use with
+// ConnectionGitHubEnterpriseConfigApplyConfiguration constructs a declarative configuration of the ConnectionGitHubEnterpriseConfig type for use with
 // apply.
-func GitHubEnterpriseConnectionConfig() *GitHubEnterpriseConnectionConfigApplyConfiguration {
-	return &GitHubEnterpriseConnectionConfigApplyConfiguration{}
+func ConnectionGitHubEnterpriseConfig() *ConnectionGitHubEnterpriseConfigApplyConfiguration {
+	return &ConnectionGitHubEnterpriseConfigApplyConfiguration{}
 }
 
 // WithAppID sets the AppID field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the AppID field is set to the value of the last call.
-func (b *GitHubEnterpriseConnectionConfigApplyConfiguration) WithAppID(value string) *GitHubEnterpriseConnectionConfigApplyConfiguration {
+func (b *ConnectionGitHubEnterpriseConfigApplyConfiguration) WithAppID(value string) *ConnectionGitHubEnterpriseConfigApplyConfiguration {
 	b.AppID = &value
 	return b
 }
@@ -35,15 +35,15 @@ func (b *GitHubEnterpriseConnectionConfigApplyConfiguration) WithAppID(value str
 // WithInstallationID sets the InstallationID field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the InstallationID field is set to the value of the last call.
-func (b *GitHubEnterpriseConnectionConfigApplyConfiguration) WithInstallationID(value string) *GitHubEnterpriseConnectionConfigApplyConfiguration {
+func (b *ConnectionGitHubEnterpriseConfigApplyConfiguration) WithInstallationID(value string) *ConnectionGitHubEnterpriseConfigApplyConfiguration {
 	b.InstallationID = &value
 	return b
 }
 
-// WithServerURL sets the ServerURL field in the declarative configuration to the given value
+// WithServerUrl sets the ServerUrl field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the ServerURL field is set to the value of the last call.
-func (b *GitHubEnterpriseConnectionConfigApplyConfiguration) WithServerURL(value string) *GitHubEnterpriseConnectionConfigApplyConfiguration {
-	b.ServerURL = &value
+// If called multiple times, the ServerUrl field is set to the value of the last call.
+func (b *ConnectionGitHubEnterpriseConfigApplyConfiguration) WithServerUrl(value string) *ConnectionGitHubEnterpriseConfigApplyConfiguration {
+	b.ServerUrl = &value
 	return b
 }

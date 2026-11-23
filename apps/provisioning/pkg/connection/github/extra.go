@@ -18,12 +18,12 @@ type extra struct {
 }
 
 func (e *extra) Type() provisioning.ConnectionType {
-	return provisioning.GithubConnectionType
+	return provisioning.ConnectionTypeGithub
 }
 
 func (e *extra) Build(ctx context.Context, conn *provisioning.Connection) (connection.Connection, error) {
 	logger := logging.FromContext(ctx)
-	if conn == nil || conn.Spec.GitHub == nil {
+	if conn == nil || conn.Spec.Github == nil {
 		logger.Error("connection is nil or github info is nil")
 
 		return nil, fmt.Errorf("invalid github connection")

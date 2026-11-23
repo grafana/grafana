@@ -29,8 +29,8 @@ func TestMutate(t *testing.T) {
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123456",
 						InstallationID: "789012",
 					},
@@ -39,7 +39,7 @@ func TestMutate(t *testing.T) {
 			wantErr: false,
 			validateResult: func(t *testing.T, obj runtime.Object) {
 				conn := obj.(*provisioning.Connection)
-				assert.Equal(t, "https://github.com/settings/installations/789012", conn.Spec.URL)
+				assert.Equal(t, "https://github.com/settings/installations/789012", conn.Spec.Url)
 				assert.True(t, conn.Secure.Token.Create.IsZero(), "Token should not be generated without private key")
 			},
 		},
@@ -48,8 +48,8 @@ func TestMutate(t *testing.T) {
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123456",
 						InstallationID: "789012",
 					},
@@ -63,7 +63,7 @@ func TestMutate(t *testing.T) {
 			wantErr: false,
 			validateResult: func(t *testing.T, obj runtime.Object) {
 				conn := obj.(*provisioning.Connection)
-				assert.Equal(t, "https://github.com/settings/installations/789012", conn.Spec.URL)
+				assert.Equal(t, "https://github.com/settings/installations/789012", conn.Spec.Url)
 				assert.True(t, conn.Secure.Token.Create.IsZero(), "Token should not be generated in mutator")
 			},
 		},
@@ -72,8 +72,8 @@ func TestMutate(t *testing.T) {
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123456",
 						InstallationID: "789012",
 					},
@@ -90,7 +90,7 @@ func TestMutate(t *testing.T) {
 			wantErr: false,
 			validateResult: func(t *testing.T, obj runtime.Object) {
 				conn := obj.(*provisioning.Connection)
-				assert.Equal(t, "https://github.com/settings/installations/789012", conn.Spec.URL)
+				assert.Equal(t, "https://github.com/settings/installations/789012", conn.Spec.Url)
 				// Token should remain unchanged
 				assert.Equal(t, "existing-token", conn.Secure.Token.Create.DangerouslyExposeAndConsumeValue())
 			},
@@ -111,8 +111,8 @@ func TestMutate(t *testing.T) {
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GitlabOAuthConnectionType,
-					OAuth: &provisioning.ConnectionOAuthConfig{
+					Type: provisioning.ConnectionTypeGitlabOAuth,
+					Oauth: &provisioning.ConnectionOAuthConfig{
 						ClientID: "client-id",
 					},
 				},
@@ -120,7 +120,7 @@ func TestMutate(t *testing.T) {
 			wantErr: false,
 			validateResult: func(t *testing.T, obj runtime.Object) {
 				conn := obj.(*provisioning.Connection)
-				assert.Empty(t, conn.Spec.URL, "URL should not be set for non-GitHub connection")
+				assert.Empty(t, conn.Spec.Url, "URL should not be set for non-GitHub connection")
 			},
 		},
 		{
@@ -128,14 +128,14 @@ func TestMutate(t *testing.T) {
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type:   provisioning.GithubConnectionType,
-					GitHub: nil,
+					Type:   provisioning.ConnectionTypeGithub,
+					Github: nil,
 				},
 			},
 			wantErr: false,
 			validateResult: func(t *testing.T, obj runtime.Object) {
 				conn := obj.(*provisioning.Connection)
-				assert.Empty(t, conn.Spec.URL, "URL should not be set when GitHub config is nil")
+				assert.Empty(t, conn.Spec.Url, "URL should not be set when GitHub config is nil")
 			},
 		},
 		{
@@ -143,8 +143,8 @@ func TestMutate(t *testing.T) {
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "999888",
 						InstallationID: "777666",
 					},
@@ -153,7 +153,7 @@ func TestMutate(t *testing.T) {
 			wantErr: false,
 			validateResult: func(t *testing.T, obj runtime.Object) {
 				conn := obj.(*provisioning.Connection)
-				assert.Equal(t, "https://github.com/settings/installations/777666", conn.Spec.URL)
+				assert.Equal(t, "https://github.com/settings/installations/777666", conn.Spec.Url)
 			},
 		},
 		{
@@ -161,9 +161,9 @@ func TestMutate(t *testing.T) {
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					URL:  "https://github.com/settings/installations/000000",
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Url:  "https://github.com/settings/installations/000000",
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123456",
 						InstallationID: "789012",
 					},
@@ -173,7 +173,7 @@ func TestMutate(t *testing.T) {
 			validateResult: func(t *testing.T, obj runtime.Object) {
 				conn := obj.(*provisioning.Connection)
 				// URL should be overwritten with the correct installation ID
-				assert.Equal(t, "https://github.com/settings/installations/789012", conn.Spec.URL)
+				assert.Equal(t, "https://github.com/settings/installations/789012", conn.Spec.Url)
 			},
 		},
 		{
@@ -181,8 +181,8 @@ func TestMutate(t *testing.T) {
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123456",
 						InstallationID: "",
 					},
@@ -191,7 +191,7 @@ func TestMutate(t *testing.T) {
 			wantErr: false,
 			validateResult: func(t *testing.T, obj runtime.Object) {
 				conn := obj.(*provisioning.Connection)
-				assert.Equal(t, "https://github.com/settings/installations/", conn.Spec.URL)
+				assert.Equal(t, "https://github.com/settings/installations/", conn.Spec.Url)
 			},
 		},
 	}
@@ -224,8 +224,8 @@ func TestMutate_MultipleCallsIdempotent(t *testing.T) {
 	conn := &provisioning.Connection{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 		Spec: provisioning.ConnectionSpec{
-			Type: provisioning.GithubConnectionType,
-			GitHub: &provisioning.GitHubConnectionConfig{
+			Type: provisioning.ConnectionTypeGithub,
+			Github: &provisioning.ConnectionGitHubConfig{
 				AppID:          "123456",
 				InstallationID: "789012",
 			},
@@ -241,7 +241,7 @@ func TestMutate_MultipleCallsIdempotent(t *testing.T) {
 	err := github.Mutate(ctx, conn)
 	require.NoError(t, err)
 
-	firstURL := conn.Spec.URL
+	firstURL := conn.Spec.Url
 	assert.Equal(t, "https://github.com/settings/installations/789012", firstURL)
 	assert.True(t, conn.Secure.Token.Create.IsZero(), "Token should not be generated by mutator")
 
@@ -252,7 +252,7 @@ func TestMutate_MultipleCallsIdempotent(t *testing.T) {
 	err = github.Mutate(ctx, conn)
 	require.NoError(t, err)
 
-	secondURL := conn.Spec.URL
+	secondURL := conn.Spec.Url
 	secondToken := conn.Secure.Token.Create.DangerouslyExposeAndConsumeValue()
 
 	assert.Equal(t, firstURL, secondURL, "URL should remain the same")

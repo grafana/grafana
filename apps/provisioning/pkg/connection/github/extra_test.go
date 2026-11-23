@@ -48,7 +48,7 @@ func TestExtra_Type(t *testing.T) {
 
 	result := e.Type()
 
-	assert.Equal(t, provisioning.GithubConnectionType, result)
+	assert.Equal(t, provisioning.ConnectionTypeGithub, result)
 }
 
 func TestExtra_Build(t *testing.T) {
@@ -66,8 +66,8 @@ func TestExtra_Build(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123456",
 						InstallationID: "789012",
 					},
@@ -100,8 +100,8 @@ func TestExtra_Build(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.ConnectionSpec{
-					Type:   provisioning.GithubConnectionType,
-					GitHub: nil,
+					Type:   provisioning.ConnectionTypeGithub,
+					Github: nil,
 				},
 			},
 			setupDecrypter: func() connection.Decrypter {
@@ -119,8 +119,8 @@ func TestExtra_Build(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123456",
 						InstallationID: "789012",
 					},
@@ -143,8 +143,8 @@ func TestExtra_Build(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123456",
 						InstallationID: "789012",
 					},
@@ -168,8 +168,8 @@ func TestExtra_Build(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123456",
 						InstallationID: "789012",
 					},
@@ -192,8 +192,8 @@ func TestExtra_Build(t *testing.T) {
 					Namespace: "prod",
 				},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "999888",
 						InstallationID: "777666",
 					},
@@ -248,8 +248,8 @@ func TestExtra_Mutate(t *testing.T) {
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123",
 						InstallationID: "456",
 					},
@@ -263,7 +263,7 @@ func TestExtra_Mutate(t *testing.T) {
 			wantErr: false,
 			validateResult: func(t *testing.T, obj runtime.Object) {
 				conn := obj.(*provisioning.Connection)
-				assert.Equal(t, "https://github.com/settings/installations/456", conn.Spec.URL)
+				assert.Equal(t, "https://github.com/settings/installations/456", conn.Spec.Url)
 				assert.True(t, conn.Secure.Token.Create.IsZero(), "Token should not be generated in mutator")
 			},
 		},
@@ -284,8 +284,8 @@ func TestExtra_Mutate(t *testing.T) {
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GitlabOAuthConnectionType,
-					OAuth: &provisioning.ConnectionOAuthConfig{
+					Type: provisioning.ConnectionTypeGitlabOAuth,
+					Oauth: &provisioning.ConnectionOAuthConfig{
 						ClientID: "clientID",
 					},
 				},
@@ -293,7 +293,7 @@ func TestExtra_Mutate(t *testing.T) {
 			wantErr: false,
 			validateResult: func(t *testing.T, obj runtime.Object) {
 				conn := obj.(*provisioning.Connection)
-				assert.Empty(t, conn.Spec.URL, "URL should not be set")
+				assert.Empty(t, conn.Spec.Url, "URL should not be set")
 				assert.True(t, conn.Secure.Token.Create.IsZero(), "Token should not be generated")
 			},
 		},
@@ -302,8 +302,8 @@ func TestExtra_Mutate(t *testing.T) {
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "789",
 						InstallationID: "012",
 					},
@@ -312,7 +312,7 @@ func TestExtra_Mutate(t *testing.T) {
 			wantErr: false,
 			validateResult: func(t *testing.T, obj runtime.Object) {
 				conn := obj.(*provisioning.Connection)
-				assert.Equal(t, "https://github.com/settings/installations/012", conn.Spec.URL)
+				assert.Equal(t, "https://github.com/settings/installations/012", conn.Spec.Url)
 			},
 		},
 		{
@@ -320,8 +320,8 @@ func TestExtra_Mutate(t *testing.T) {
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123",
 						InstallationID: "456",
 					},
@@ -338,7 +338,7 @@ func TestExtra_Mutate(t *testing.T) {
 			wantErr: false,
 			validateResult: func(t *testing.T, obj runtime.Object) {
 				conn := obj.(*provisioning.Connection)
-				assert.Equal(t, "https://github.com/settings/installations/456", conn.Spec.URL)
+				assert.Equal(t, "https://github.com/settings/installations/456", conn.Spec.Url)
 				// Token should remain unchanged
 				assert.Equal(t, "existing-token", conn.Secure.Token.Create.DangerouslyExposeAndConsumeValue())
 			},

@@ -113,7 +113,7 @@ func TestIntegrationProvisioning_MultiOrgConnectionUsageStats(t *testing.T) {
 
 		// One GitHub connection per org => 2 total, aggregated across namespaces.
 		assert.Equal(collect, 2.0, m["stats.connection.count"], "connections summed across orgs")
-		assert.Equal(collect, 2.0, m["stats.connection."+string(provisioning.GithubConnectionType)+".count"], "github connections summed across orgs")
+		assert.Equal(collect, 2.0, m["stats.connection."+string(provisioning.ConnectionTypeGithub)+".count"], "github connections summed across orgs")
 		assert.Equal(collect, 2.0, m["stats.connection.healthy.count"], "healthy connections summed across orgs")
 		assert.Equal(collect, 2.0, m["stats.connection.ready_reason.available.count"], "available connections summed across orgs")
 	}, time.Second*30, time.Millisecond*250, "expected multi-org provisioning connection usage stats")
@@ -132,7 +132,7 @@ func githubConnection(name, namespace string) *unstructured.Unstructured {
 		},
 		"spec": map[string]any{
 			"title": name,
-			"type":  string(provisioning.GithubConnectionType),
+			"type":  string(provisioning.ConnectionTypeGithub),
 			"github": map[string]any{
 				"appID":          "123456",
 				"installationID": "454545",

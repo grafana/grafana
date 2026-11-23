@@ -14,7 +14,7 @@ import (
 func TestExtra_Validate(t *testing.T) {
 	tests := []struct {
 		name          string
-		gitOAuth      *provisioning.GitOAuthConnectionConfig
+		gitOAuth      *provisioning.ConnectionGitOAuthConfig
 		allowInsecure bool
 		errorContains []string
 	}{
@@ -24,12 +24,12 @@ func TestExtra_Validate(t *testing.T) {
 		},
 		{
 			name:          "missing endpoints",
-			gitOAuth:      &provisioning.GitOAuthConnectionConfig{},
+			gitOAuth:      &provisioning.ConnectionGitOAuthConfig{},
 			errorContains: []string{"spec.gitOAuth.authURL", "spec.gitOAuth.tokenURL", "an OAuth endpoint URL is required"},
 		},
 		{
 			name: "unsupported scheme",
-			gitOAuth: &provisioning.GitOAuthConnectionConfig{
+			gitOAuth: &provisioning.ConnectionGitOAuthConfig{
 				AuthURL:  "ftp://git.example.com/oauth/authorize",
 				TokenURL: "https://git.example.com/oauth/token",
 			},
@@ -37,7 +37,7 @@ func TestExtra_Validate(t *testing.T) {
 		},
 		{
 			name: "missing host",
-			gitOAuth: &provisioning.GitOAuthConnectionConfig{
+			gitOAuth: &provisioning.ConnectionGitOAuthConfig{
 				AuthURL:  "https://git.example.com/oauth/authorize",
 				TokenURL: "https:///oauth/token",
 			},
@@ -45,7 +45,7 @@ func TestExtra_Validate(t *testing.T) {
 		},
 		{
 			name: "http endpoints rejected when insecure is not allowed",
-			gitOAuth: &provisioning.GitOAuthConnectionConfig{
+			gitOAuth: &provisioning.ConnectionGitOAuthConfig{
 				AuthURL:  "http://git.example.com/oauth/authorize",
 				TokenURL: "HTTP://git.example.com/oauth/token",
 			},
@@ -53,7 +53,7 @@ func TestExtra_Validate(t *testing.T) {
 		},
 		{
 			name: "http endpoints allowed when insecure is allowed",
-			gitOAuth: &provisioning.GitOAuthConnectionConfig{
+			gitOAuth: &provisioning.ConnectionGitOAuthConfig{
 				AuthURL:  "http://git.example.com/oauth/authorize",
 				TokenURL: "http://git.example.com/oauth/token",
 			},
@@ -61,7 +61,7 @@ func TestExtra_Validate(t *testing.T) {
 		},
 		{
 			name: "https endpoints",
-			gitOAuth: &provisioning.GitOAuthConnectionConfig{
+			gitOAuth: &provisioning.ConnectionGitOAuthConfig{
 				AuthURL:  "https://git.example.com/oauth/authorize",
 				TokenURL: "https://git.example.com/oauth/token",
 			},
@@ -72,8 +72,8 @@ func TestExtra_Validate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			conn := &provisioning.Connection{
 				Spec: provisioning.ConnectionSpec{
-					Type:     provisioning.GitOAuthConnectionType,
-					OAuth:    &provisioning.ConnectionOAuthConfig{ClientID: "client-id"},
+					Type:     provisioning.ConnectionTypeGitOAuth,
+					Oauth:    &provisioning.ConnectionOAuthConfig{ClientID: "client-id"},
 					GitOAuth: tt.gitOAuth,
 				},
 				Secure: provisioning.ConnectionSecure{

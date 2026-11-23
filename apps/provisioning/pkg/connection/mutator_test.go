@@ -50,7 +50,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			name: "doesn't generate name calls factory mutate for connection",
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "existing-name"},
-				Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
+				Spec:       provisioning.ConnectionSpec{Type: provisioning.ConnectionTypeGithub},
 			},
 			expectObjectNameContains: "existing-name",
 			wantErr:                  false,
@@ -59,7 +59,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			name: "generates name with given prefix and calls factory mutate for connection",
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{GenerateName: "test-"},
-				Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
+				Spec:       provisioning.ConnectionSpec{Type: provisioning.ConnectionTypeGithub},
 			},
 			expectObjectNameContains: "test-",
 			wantErr:                  false,
@@ -68,7 +68,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			name: "generates name with type prefix and calls factory mutate for connection",
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{},
-				Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
+				Spec:       provisioning.ConnectionSpec{Type: provisioning.ConnectionTypeGithub},
 			},
 			expectObjectNameContains: "github-",
 			wantErr:                  false,
@@ -88,7 +88,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			name: "propagates factory mutate error",
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
-				Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
+				Spec:       provisioning.ConnectionSpec{Type: provisioning.ConnectionTypeGithub},
 			},
 			factoryErr:      errors.New("factory error"),
 			wantErr:         true,
@@ -135,8 +135,8 @@ func TestAdmissionMutator_MutateUpdateOAuthToken(t *testing.T) {
 		newURL       string
 		newServerURL string
 		oldServerURL string
-		newGitOAuth  *provisioning.GitOAuthConnectionConfig
-		oldGitOAuth  *provisioning.GitOAuthConnectionConfig
+		newGitOAuth  *provisioning.ConnectionGitOAuthConfig
+		oldGitOAuth  *provisioning.ConnectionGitOAuthConfig
 		newOAuth     *provisioning.ConnectionOAuthConfig
 		newSecure    provisioning.ConnectionSecure
 		oldOAuth     *provisioning.ConnectionOAuthConfig
@@ -144,7 +144,7 @@ func TestAdmissionMutator_MutateUpdateOAuthToken(t *testing.T) {
 	}{
 		{
 			name:      "removes token when connection type is changed",
-			newType:   provisioning.GitlabOAuthConnectionType,
+			newType:   provisioning.ConnectionTypeGitlabOAuth,
 			newOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
 			oldOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
 			wantToken: resource.InlineSecureValue{Remove: true},
@@ -174,24 +174,24 @@ func TestAdmissionMutator_MutateUpdateOAuthToken(t *testing.T) {
 		},
 		{
 			name:        "removes token when git oauth token URL is changed",
-			newGitOAuth: &provisioning.GitOAuthConnectionConfig{TokenURL: "https://new.example.com/oauth/token"},
-			oldGitOAuth: &provisioning.GitOAuthConnectionConfig{TokenURL: "https://old.example.com/oauth/token"},
+			newGitOAuth: &provisioning.ConnectionGitOAuthConfig{TokenURL: "https://new.example.com/oauth/token"},
+			oldGitOAuth: &provisioning.ConnectionGitOAuthConfig{TokenURL: "https://old.example.com/oauth/token"},
 			newOAuth:    &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
 			oldOAuth:    &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
 			wantToken:   resource.InlineSecureValue{Remove: true},
 		},
 		{
 			name:        "removes token when git oauth scopes are changed",
-			newGitOAuth: &provisioning.GitOAuthConnectionConfig{Scopes: []string{"read_repository", "write_repository"}},
-			oldGitOAuth: &provisioning.GitOAuthConnectionConfig{Scopes: []string{"read_repository"}},
+			newGitOAuth: &provisioning.ConnectionGitOAuthConfig{Scopes: []string{"read_repository", "write_repository"}},
+			oldGitOAuth: &provisioning.ConnectionGitOAuthConfig{Scopes: []string{"read_repository"}},
 			newOAuth:    &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
 			oldOAuth:    &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
 			wantToken:   resource.InlineSecureValue{Remove: true},
 		},
 		{
 			name:        "keeps token when git oauth settings are unchanged",
-			newGitOAuth: &provisioning.GitOAuthConnectionConfig{TokenURL: "https://git.example.com/oauth/token", Scopes: []string{"read_repository"}},
-			oldGitOAuth: &provisioning.GitOAuthConnectionConfig{TokenURL: "https://git.example.com/oauth/token", Scopes: []string{"read_repository"}},
+			newGitOAuth: &provisioning.ConnectionGitOAuthConfig{TokenURL: "https://git.example.com/oauth/token", Scopes: []string{"read_repository"}},
+			oldGitOAuth: &provisioning.ConnectionGitOAuthConfig{TokenURL: "https://git.example.com/oauth/token", Scopes: []string{"read_repository"}},
 			newOAuth:    &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
 			oldOAuth:    &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
 			wantToken:   resource.InlineSecureValue{},
@@ -259,10 +259,10 @@ func TestAdmissionMutator_MutateUpdateOAuthToken(t *testing.T) {
 			obj := &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: provisioning.ConnectionSpec{
-					Type:                  cmp.Or(tt.newType, provisioning.GithubConnectionType),
-					URL:                   tt.newURL,
-					OAuth:                 tt.newOAuth,
-					GitHubEnterpriseOAuth: githubEnterpriseConfig(tt.newServerURL),
+					Type:                  cmp.Or(tt.newType, provisioning.ConnectionTypeGithub),
+					Url:                   tt.newURL,
+					Oauth:                 tt.newOAuth,
+					GithubEnterpriseOAuth: githubEnterpriseConfig(tt.newServerURL),
 					GitOAuth:              tt.newGitOAuth,
 				},
 				Secure: tt.newSecure,
@@ -270,9 +270,9 @@ func TestAdmissionMutator_MutateUpdateOAuthToken(t *testing.T) {
 			old := &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: provisioning.ConnectionSpec{
-					Type:                  provisioning.GithubConnectionType,
-					OAuth:                 tt.oldOAuth,
-					GitHubEnterpriseOAuth: githubEnterpriseConfig(tt.oldServerURL),
+					Type:                  provisioning.ConnectionTypeGithub,
+					Oauth:                 tt.oldOAuth,
+					GithubEnterpriseOAuth: githubEnterpriseConfig(tt.oldServerURL),
 					GitOAuth:              tt.oldGitOAuth,
 				},
 				Secure: provisioning.ConnectionSecure{
@@ -295,7 +295,7 @@ func TestAdmissionMutator_Mutate_SkipsSubresourcePatches(t *testing.T) {
 
 	conn := &provisioning.Connection{
 		ObjectMeta: metav1.ObjectMeta{Name: "test"},
-		Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
+		Spec:       provisioning.ConnectionSpec{Type: provisioning.ConnectionTypeGithub},
 	}
 	old := conn.DeepCopy()
 
@@ -308,15 +308,15 @@ func TestAdmissionMutator_Mutate_SkipsSubresourcePatches(t *testing.T) {
 func TestAdmissionMutator_Mutate_RunsForBundledSpecChange(t *testing.T) {
 	old := &provisioning.Connection{
 		ObjectMeta: metav1.ObjectMeta{Name: "test"},
-		Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType, URL: "https://old.example.com"},
+		Spec:       provisioning.ConnectionSpec{Type: provisioning.ConnectionTypeGithub, Url: "https://old.example.com"},
 		Secure:     provisioning.ConnectionSecure{Token: resource.InlineSecureValue{Name: "old-token"}},
 	}
 	// Bundled onto a /status request: URL change without a new token must
 	// still trigger the OAuth token removal in Mutate.
 	conn := old.DeepCopy()
-	conn.Spec.OAuth = &provisioning.ConnectionOAuthConfig{ClientID: "client"}
-	old.Spec.OAuth = &provisioning.ConnectionOAuthConfig{ClientID: "client"}
-	conn.Spec.URL = "https://new.example.com"
+	conn.Spec.Oauth = &provisioning.ConnectionOAuthConfig{ClientID: "client"}
+	old.Spec.Oauth = &provisioning.ConnectionOAuthConfig{ClientID: "client"}
+	conn.Spec.Url = "https://new.example.com"
 
 	factory := NewMockFactory(t)
 	factory.EXPECT().Mutate(mock.Anything, mock.Anything).Return(nil).Once()
@@ -328,11 +328,11 @@ func TestAdmissionMutator_Mutate_RunsForBundledSpecChange(t *testing.T) {
 	assert.True(t, conn.Secure.Token.Remove, "URL change should invalidate the stored OAuth token even on a bundled status request")
 }
 
-func githubEnterpriseConfig(serverURL string) *provisioning.GitHubEnterpriseOAuthConnectionConfig {
+func githubEnterpriseConfig(serverURL string) *provisioning.ConnectionGitHubEnterpriseOAuthConfig {
 	if serverURL == "" {
 		return nil
 	}
-	return &provisioning.GitHubEnterpriseOAuthConnectionConfig{ServerURL: serverURL}
+	return &provisioning.ConnectionGitHubEnterpriseOAuthConfig{ServerUrl: serverURL}
 }
 
 func TestCopySecureValues(t *testing.T) {

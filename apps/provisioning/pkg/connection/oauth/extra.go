@@ -52,7 +52,7 @@ func (e *extra) Type() provisioning.ConnectionType {
 }
 
 func (e *extra) Build(ctx context.Context, conn *provisioning.Connection) (connection.Connection, error) {
-	if conn == nil || conn.Spec.OAuth == nil {
+	if conn == nil || conn.Spec.Oauth == nil {
 		return nil, fmt.Errorf("oauth configuration is required")
 	}
 
@@ -84,7 +84,7 @@ func (e *extra) Build(ctx context.Context, conn *provisioning.Connection) (conne
 		return nil, fmt.Errorf("build provider: %w", err)
 	}
 
-	c := newConnection(provider, e.repoType, *conn.Spec.OAuth, clientSecret, token)
+	c := newConnection(provider, e.repoType, *conn.Spec.Oauth, clientSecret, token)
 	if lister, ok := provider.(connection.RepositoryLister); ok {
 		return &listingConnection{oauthConnection: c, lister: lister}, nil
 	}
@@ -102,9 +102,9 @@ func (e *extra) Validate(_ context.Context, obj runtime.Object) field.ErrorList 
 	}
 
 	var errs field.ErrorList
-	if conn.Spec.OAuth == nil {
+	if conn.Spec.Oauth == nil {
 		errs = append(errs, field.Required(field.NewPath("spec", "oauth"), "oauth info must be specified for OAuth app connections"))
-	} else if conn.Spec.OAuth.ClientID == "" {
+	} else if conn.Spec.Oauth.ClientID == "" {
 		errs = append(errs, field.Required(field.NewPath("spec", "oauth", "clientID"), "clientID must be specified for OAuth app connections"))
 	}
 

@@ -11,13 +11,13 @@ connection: {
 		{key: "token", description: "Token is the reference of the token used to act as the Connection. This value is stored securely and cannot be read back"},
 	]
 	schema: {
-		#GitHubConnectionConfig: {
+		#GitHubConfig: {
 			// GitHub App ID
 			appID: string
 			// GitHub App installation ID
 			installationID: string
 		}
-		#GitHubEnterpriseConnectionConfig: {
+		#GitHubEnterpriseConfig: {
 			// GitHub App ID
 			appID: string
 			// GitHub App installation ID
@@ -25,11 +25,11 @@ connection: {
 			// The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).
 			serverUrl: string
 		}
-		#GitHubEnterpriseOAuthConnectionConfig: {
+		#GitHubEnterpriseOAuthConfig: {
 			// The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).
 			serverUrl: string
 		}
-		#GitOAuthConnectionConfig: {
+		#GitOAuthConfig: {
 			// The provider's OAuth authorization endpoint (e.g. `https://gitlab.example.com/oauth/authorize`).
 			authURL: string
 			// The provider's OAuth token endpoint (e.g. `https://gitlab.example.com/oauth/token`).
@@ -37,48 +37,49 @@ connection: {
 			// The OAuth scopes to request, granting git read and write access.
 			scopes?: [...string]
 		}
-		#BitbucketConnectionConfig: {
+		#BitbucketConfig: {
 			// The workspace the OAuth consumer belongs to
 			workspace: string
 		}
-		#ConnectionOAuthConfig: {
+		#OAuthConfig: {
 			// The OAuth app client ID
 			clientID: string
 		}
-		#ConnectionWebhookConfig: {
+		#WebhookConfig: {
 			// Disabled disables webhook integration for this connection. When true, the GitHub
 			// App does not require webhooks:write permission and Grafana will not register or receive
 			// webhook events. Use this when Grafana is not reachable from the public internet.
 			disabled?: bool
 		}
+		#Type: "github" | "githubEnterprise" | "githubOAuth" | "githubEnterpriseOAuth" | "gitlabOAuth" | "bitbucketOAuth" | "gitOAuth"
 		spec: {
 			// The connection display name (shown in the UI)
 			title: string
 			// The connection description
 			description?: string
 			// The connection provider type
-			type: "github" | "githubEnterprise" | "githubOAuth" | "githubEnterpriseOAuth" | "bitbucketOAuth" | "gitlabOAuth" | "gitOAuth"
+			type: #Type
 			// The connection URL
 			url?: string
 			// GitHub connection configuration
 			// Only applicable when provider is "github"
-			github?: #GitHubConnectionConfig
+			github?: #GitHubConfig
 			// GitHub Enterprise Server connection configuration
 			// Only applicable when provider is "githubEnterprise"
-			githubEnterprise?: #GitHubEnterpriseConnectionConfig
+			githubEnterprise?: #GitHubEnterpriseConfig
 			// GitHub Enterprise Server OAuth app connection configuration
 			// Only applicable when provider is "githubEnterpriseOAuth"
-			githubEnterpriseOAuth?: #GitHubEnterpriseOAuthConnectionConfig
+			githubEnterpriseOAuth?: #GitHubEnterpriseOAuthConfig
 			// Bitbucket connection configuration
 			// Only applicable when provider is "bitbucketOAuth"
-			bitbucket?: #BitbucketConnectionConfig
+			bitbucket?: #BitbucketConfig
 			// Generic git OAuth app connection configuration
 			// Only applicable when provider is "gitOAuth"
-			gitOAuth?: #GitOAuthConnectionConfig
+			gitOAuth?: #GitOAuthConfig
 			// OAuth app configuration shared by all OAuth app providers
-			oauth?: #ConnectionOAuthConfig
+			oauth?: #OAuthConfig
 			// Webhook configuration for this connection
-			webhook?: #ConnectionWebhookConfig
+			webhook?: #WebhookConfig
 		}
 		status: {
 			// The generation of the spec last time reconciliation ran

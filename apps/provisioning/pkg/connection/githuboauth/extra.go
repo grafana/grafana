@@ -13,7 +13,7 @@ import (
 func Extra(decrypter connection.Decrypter, factory *github.Factory) connection.Extra {
 	return oauth.NewExtra(
 		decrypter,
-		provisioning.GithubOAuthConnectionType,
+		provisioning.ConnectionTypeGithubOAuth,
 		provisioning.GitHubRepositoryType,
 		func(ctx context.Context, spec provisioning.ConnectionSpec, accessToken string) (oauth.Provider, error) {
 			return newProvider(factory, spec, accessToken)

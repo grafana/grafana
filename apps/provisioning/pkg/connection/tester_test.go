@@ -28,7 +28,7 @@ func TestTestConnection(t *testing.T) {
 			name: "validation fails - missing github config",
 			connection: &provisioning.Connection{
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
+					Type: provisioning.ConnectionTypeGithub,
 					// Missing GitHub config
 				},
 			},
@@ -51,8 +51,8 @@ func TestTestConnection(t *testing.T) {
 			name: "validation fails - missing private key",
 			connection: &provisioning.Connection{
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123456",
 						InstallationID: "454545",
 					},
@@ -77,8 +77,8 @@ func TestTestConnection(t *testing.T) {
 			name: "build fails - invalid secrets",
 			connection: &provisioning.Connection{
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123456",
 						InstallationID: "454545",
 					},
@@ -101,8 +101,8 @@ func TestTestConnection(t *testing.T) {
 			name: "test passes",
 			connection: &provisioning.Connection{
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123456",
 						InstallationID: "454545",
 					},
@@ -126,8 +126,8 @@ func TestTestConnection(t *testing.T) {
 			name: "test fails with error",
 			connection: &provisioning.Connection{
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123456",
 						InstallationID: "454545",
 					},
@@ -147,8 +147,8 @@ func TestTestConnection(t *testing.T) {
 			name: "test fails with results - app ID mismatch",
 			connection: &provisioning.Connection{
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123456",
 						InstallationID: "454545",
 					},
@@ -181,8 +181,8 @@ func TestTestConnection(t *testing.T) {
 			name: "test fails with results - API unavailable",
 			connection: &provisioning.Connection{
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123456",
 						InstallationID: "454545",
 					},
@@ -215,8 +215,8 @@ func TestTestConnection(t *testing.T) {
 			name: "validation fails with multiple errors",
 			connection: &provisioning.Connection{
 				Spec: provisioning.ConnectionSpec{
-					Type:   provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type:   provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						// Missing AppID and InstallationID
 					},
 				},
@@ -277,8 +277,8 @@ func TestTestConnection(t *testing.T) {
 func TestTester_TestConnection(t *testing.T) {
 	connection := &provisioning.Connection{
 		Spec: provisioning.ConnectionSpec{
-			Type: provisioning.GithubConnectionType,
-			GitHub: &provisioning.GitHubConnectionConfig{
+			Type: provisioning.ConnectionTypeGithub,
+			Github: &provisioning.ConnectionGitHubConfig{
 				AppID:          "123456",
 				InstallationID: "454545",
 			},

@@ -61,7 +61,7 @@ func TestIntegrationProvisioning_OAuthConnectionMutation(t *testing.T) {
 
 		c, err := createConnection(t, helper, connection)
 		require.NoError(t, err, "failed to create connection")
-		require.True(t, strings.HasPrefix(c.GetName(), string(provisioning.GithubOAuthConnectionType)+"-"), "generated name %q should have the type prefix", c.GetName())
+		require.True(t, strings.HasPrefix(c.GetName(), string(provisioning.ConnectionTypeGithubOAuth)+"-"), "generated name %q should have the type prefix", c.GetName())
 	})
 
 	t.Run("generateName prefix is kept", func(t *testing.T) {

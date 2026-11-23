@@ -4,25 +4,25 @@
 
 package v0alpha1
 
-// GitHubConnectionConfigApplyConfiguration represents a declarative configuration of the GitHubConnectionConfig type for use
+// ConnectionGitHubConfigApplyConfiguration represents a declarative configuration of the ConnectionGitHubConfig type for use
 // with apply.
-type GitHubConnectionConfigApplyConfiguration struct {
+type ConnectionGitHubConfigApplyConfiguration struct {
 	// GitHub App ID
 	AppID *string `json:"appID,omitempty"`
 	// GitHub App installation ID
 	InstallationID *string `json:"installationID,omitempty"`
 }
 
-// GitHubConnectionConfigApplyConfiguration constructs a declarative configuration of the GitHubConnectionConfig type for use with
+// ConnectionGitHubConfigApplyConfiguration constructs a declarative configuration of the ConnectionGitHubConfig type for use with
 // apply.
-func GitHubConnectionConfig() *GitHubConnectionConfigApplyConfiguration {
-	return &GitHubConnectionConfigApplyConfiguration{}
+func ConnectionGitHubConfig() *ConnectionGitHubConfigApplyConfiguration {
+	return &ConnectionGitHubConfigApplyConfiguration{}
 }
 
 // WithAppID sets the AppID field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the AppID field is set to the value of the last call.
-func (b *GitHubConnectionConfigApplyConfiguration) WithAppID(value string) *GitHubConnectionConfigApplyConfiguration {
+func (b *ConnectionGitHubConfigApplyConfiguration) WithAppID(value string) *ConnectionGitHubConfigApplyConfiguration {
 	b.AppID = &value
 	return b
 }
@@ -30,7 +30,7 @@ func (b *GitHubConnectionConfigApplyConfiguration) WithAppID(value string) *GitH
 // WithInstallationID sets the InstallationID field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the InstallationID field is set to the value of the last call.
-func (b *GitHubConnectionConfigApplyConfiguration) WithInstallationID(value string) *GitHubConnectionConfigApplyConfiguration {
+func (b *ConnectionGitHubConfigApplyConfiguration) WithInstallationID(value string) *ConnectionGitHubConfigApplyConfiguration {
 	b.InstallationID = &value
 	return b
 }

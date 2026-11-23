@@ -75,7 +75,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: provisioning.ConnectionSpec{
 					Title: "Test Connection",
-					Type:  provisioning.GithubConnectionType,
+					Type:  provisioning.ConnectionTypeGithub,
 				},
 			},
 			operation:     admission.Create,
@@ -86,7 +86,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 			name: "connection without title fails validation",
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
-				Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
+				Spec:       provisioning.ConnectionSpec{Type: provisioning.ConnectionTypeGithub},
 			},
 			operation: admission.Create,
 			factoryErrors: field.ErrorList{
@@ -100,7 +100,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: provisioning.ConnectionSpec{
 					Title: "",
-					Type:  provisioning.GithubConnectionType,
+					Type:  provisioning.ConnectionTypeGithub,
 				},
 			},
 			operation: admission.Create,
@@ -115,7 +115,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: provisioning.ConnectionSpec{
 					Title: "Test Connection",
-					Type:  provisioning.GithubConnectionType,
+					Type:  provisioning.ConnectionTypeGithub,
 				},
 			},
 			operation: admission.Create,
@@ -144,7 +144,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: provisioning.ConnectionSpec{
 					Title: "Test Connection",
-					Type:  provisioning.GithubConnectionType,
+					Type:  provisioning.ConnectionTypeGithub,
 				},
 			},
 			operation: admission.Delete,
@@ -159,7 +159,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 				},
 				Spec: provisioning.ConnectionSpec{
 					Title: "Test Connection",
-					Type:  provisioning.GithubConnectionType,
+					Type:  provisioning.ConnectionTypeGithub,
 				},
 			},
 			operation: admission.Update,
@@ -171,14 +171,14 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: provisioning.ConnectionSpec{
 					Title: "Test Connection",
-					Type:  provisioning.GithubConnectionType,
+					Type:  provisioning.ConnectionTypeGithub,
 				},
 			},
 			old: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: provisioning.ConnectionSpec{
 					Title: "Test Connection",
-					Type:  provisioning.GithubConnectionType,
+					Type:  provisioning.ConnectionTypeGithub,
 				},
 				Secure: provisioning.ConnectionSecure{
 					Token: resource.InlineSecureValue{Name: "old-token"},
@@ -197,7 +197,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 				},
 				Spec: provisioning.ConnectionSpec{
 					Title: "Test Connection (modified)",
-					Type:  provisioning.GithubConnectionType,
+					Type:  provisioning.ConnectionTypeGithub,
 				},
 			},
 			old: &provisioning.Connection{
@@ -207,7 +207,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 				},
 				Spec: provisioning.ConnectionSpec{
 					Title: "Test Connection",
-					Type:  provisioning.GithubConnectionType,
+					Type:  provisioning.ConnectionTypeGithub,
 				},
 			},
 			operation:       admission.Update,
@@ -220,7 +220,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: provisioning.ConnectionSpec{
 					Title: "Test Connection",
-					Type:  provisioning.GithubConnectionType,
+					Type:  provisioning.ConnectionTypeGithub,
 				},
 			},
 			old: &provisioning.Connection{
@@ -230,7 +230,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 				},
 				Spec: provisioning.ConnectionSpec{
 					Title: "Test Connection",
-					Type:  provisioning.GithubConnectionType,
+					Type:  provisioning.ConnectionTypeGithub,
 				},
 			},
 			operation:     admission.Update,
@@ -246,7 +246,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 				},
 				Spec: provisioning.ConnectionSpec{
 					Title: "Test Connection",
-					Type:  provisioning.GithubConnectionType,
+					Type:  provisioning.ConnectionTypeGithub,
 				},
 			},
 			old: &provisioning.Connection{
@@ -265,7 +265,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 				},
 				Spec: provisioning.ConnectionSpec{
 					Title: "Test Connection",
-					Type:  provisioning.GithubConnectionType,
+					Type:  provisioning.ConnectionTypeGithub,
 				},
 			},
 			operation:       admission.Create,
@@ -326,7 +326,7 @@ func TestAdmissionValidator_Validate_SkipsSubresourcePatches(t *testing.T) {
 	// but since old carries the exact same spec/secure, this is a pure status patch.
 	conn := &provisioning.Connection{
 		ObjectMeta: metav1.ObjectMeta{Name: "test"},
-		Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
+		Spec:       provisioning.ConnectionSpec{Type: provisioning.ConnectionTypeGithub},
 	}
 	old := conn.DeepCopy()
 
@@ -339,7 +339,7 @@ func TestAdmissionValidator_Validate_SkipsSubresourcePatches(t *testing.T) {
 func TestAdmissionValidator_Validate_RunsForBundledSpecChange(t *testing.T) {
 	old := &provisioning.Connection{
 		ObjectMeta: metav1.ObjectMeta{Name: "test"},
-		Spec:       provisioning.ConnectionSpec{Title: "Test Connection", Type: provisioning.GithubConnectionType},
+		Spec:       provisioning.ConnectionSpec{Title: "Test Connection", Type: provisioning.ConnectionTypeGithub},
 	}
 	// Bundled onto a /status request: spec.title is cleared, which
 	// factory-backed structural validation rejects.
@@ -377,47 +377,47 @@ func TestAdmissionValidator_Validate_PrivateEndpoints(t *testing.T) {
 		{
 			name: "public github enterprise server",
 			spec: provisioning.ConnectionSpec{
-				Type:             provisioning.GithubEnterpriseConnectionType,
-				URL:              "https://ghes.example.com/settings/installations/1",
-				GitHubEnterprise: &provisioning.GitHubEnterpriseConnectionConfig{ServerURL: "https://ghes.example.com"},
+				Type:             provisioning.ConnectionTypeGithubEnterprise,
+				Url:              "https://ghes.example.com/settings/installations/1",
+				GithubEnterprise: &provisioning.ConnectionGitHubEnterpriseConfig{ServerUrl: "https://ghes.example.com"},
 			},
 		},
 		{
 			name: "allowlisted private github enterprise server",
 			spec: provisioning.ConnectionSpec{
-				Type:             provisioning.GithubEnterpriseConnectionType,
-				GitHubEnterprise: &provisioning.GitHubEnterpriseConnectionConfig{ServerURL: "https://ghes.allowed.example.com"},
+				Type:             provisioning.ConnectionTypeGithubEnterprise,
+				GithubEnterprise: &provisioning.ConnectionGitHubEnterpriseConfig{ServerUrl: "https://ghes.allowed.example.com"},
 			},
 		},
 		{
 			name: "loopback github enterprise server",
 			spec: provisioning.ConnectionSpec{
-				Type:             provisioning.GithubEnterpriseConnectionType,
-				GitHubEnterprise: &provisioning.GitHubEnterpriseConnectionConfig{ServerURL: "http://127.0.0.1:3000"},
+				Type:             provisioning.ConnectionTypeGithubEnterprise,
+				GithubEnterprise: &provisioning.ConnectionGitHubEnterpriseConfig{ServerUrl: "http://127.0.0.1:3000"},
 			},
 			wantField: "spec.githubEnterprise.serverUrl",
 		},
 		{
 			name: "spec url resolving to a private address",
 			spec: provisioning.ConnectionSpec{
-				Type: provisioning.GitlabOAuthConnectionType,
-				URL:  "https://ghes.internal.example.com",
+				Type: provisioning.ConnectionTypeGitlabOAuth,
+				Url:  "https://ghes.internal.example.com",
 			},
 			wantField: "spec.url",
 		},
 		{
 			name: "link-local github enterprise oauth server",
 			spec: provisioning.ConnectionSpec{
-				Type:                  provisioning.GithubEnterpriseOAuthConnectionType,
-				GitHubEnterpriseOAuth: &provisioning.GitHubEnterpriseOAuthConnectionConfig{ServerURL: "http://169.254.169.254"},
+				Type:                  provisioning.ConnectionTypeGithubEnterpriseOAuth,
+				GithubEnterpriseOAuth: &provisioning.ConnectionGitHubEnterpriseOAuthConfig{ServerUrl: "http://169.254.169.254"},
 			},
 			wantField: "spec.githubEnterpriseOAuth.serverUrl",
 		},
 		{
 			name: "private git oauth token url",
 			spec: provisioning.ConnectionSpec{
-				Type: provisioning.GitOAuthConnectionType,
-				GitOAuth: &provisioning.GitOAuthConnectionConfig{
+				Type: provisioning.ConnectionTypeGitOAuth,
+				GitOAuth: &provisioning.ConnectionGitOAuthConfig{
 					AuthURL:  "https://git.example.com/oauth/authorize",
 					TokenURL: "https://10.0.0.5/oauth/token",
 				},
@@ -453,8 +453,8 @@ func TestAdmissionValidator_Validate_PrivateEndpoints(t *testing.T) {
 		conn := &provisioning.Connection{
 			ObjectMeta: metav1.ObjectMeta{Name: "test"},
 			Spec: provisioning.ConnectionSpec{
-				Type:             provisioning.GithubEnterpriseConnectionType,
-				GitHubEnterprise: &provisioning.GitHubEnterpriseConnectionConfig{ServerURL: "http://127.0.0.1:3000"},
+				Type:             provisioning.ConnectionTypeGithubEnterprise,
+				GithubEnterprise: &provisioning.ConnectionGitHubEnterpriseConfig{ServerUrl: "http://127.0.0.1:3000"},
 			},
 		}
 		err := NewAdmissionValidator(factory, nil).Validate(context.Background(), newValidatorTestAttributes(conn, nil, admission.Create), nil)
@@ -472,7 +472,7 @@ func TestAdmissionValidator_CopiesSecureValuesOnUpdate(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "test"},
 		Spec: provisioning.ConnectionSpec{
 			Title: "Test Connection",
-			Type:  provisioning.GithubConnectionType,
+			Type:  provisioning.ConnectionTypeGithub,
 		},
 		Secure: provisioning.ConnectionSecure{
 			Token:        resource.InlineSecureValue{Name: "old-token"},
@@ -485,7 +485,7 @@ func TestAdmissionValidator_CopiesSecureValuesOnUpdate(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "test"},
 		Spec: provisioning.ConnectionSpec{
 			Title: "Test Connection",
-			Type:  provisioning.GithubConnectionType,
+			Type:  provisioning.ConnectionTypeGithub,
 		},
 		// No secure values set
 	}
@@ -521,8 +521,8 @@ func TestAdmissionValidator_Validate_DryRun(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: provisioning.ConnectionSpec{
 					Title: "Test Connection",
-					Type:  provisioning.GitlabOAuthConnectionType,
-					OAuth: &provisioning.ConnectionOAuthConfig{
+					Type:  provisioning.ConnectionTypeGitlabOAuth,
+					Oauth: &provisioning.ConnectionOAuthConfig{
 						ClientID: "client-123",
 					},
 				},
@@ -544,8 +544,8 @@ func TestAdmissionValidator_Validate_DryRun(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: provisioning.ConnectionSpec{
 					Title: "Test Connection",
-					Type:  provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type:  provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123",
 						InstallationID: "456",
 					},
@@ -572,8 +572,8 @@ func TestAdmissionValidator_Validate_DryRun(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: provisioning.ConnectionSpec{
 					Title: "Test Connection",
-					Type:  provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type:  provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123",
 						InstallationID: "999",
 					},
@@ -607,8 +607,8 @@ func TestAdmissionValidator_Validate_DryRun(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: provisioning.ConnectionSpec{
 					Title: "Test Connection",
-					Type:  provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type:  provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "999",
 						InstallationID: "456",
 					},
@@ -642,8 +642,8 @@ func TestAdmissionValidator_Validate_DryRun(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: provisioning.ConnectionSpec{
 					Title: "Test Connection",
-					Type:  provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type:  provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123",
 						InstallationID: "456",
 					},
@@ -662,7 +662,7 @@ func TestAdmissionValidator_Validate_DryRun(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: provisioning.ConnectionSpec{
 					Title: "Test Connection",
-					Type:  provisioning.GithubConnectionType,
+					Type:  provisioning.ConnectionTypeGithub,
 				},
 			},
 			operation: admission.Create,
@@ -678,8 +678,8 @@ func TestAdmissionValidator_Validate_DryRun(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: provisioning.ConnectionSpec{
 					Title: "Test Connection",
-					Type:  provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type:  provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123",
 						InstallationID: "456",
 					},
@@ -709,8 +709,8 @@ func TestAdmissionValidator_Validate_DryRun(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: provisioning.ConnectionSpec{
 					Title: "Test Connection",
-					Type:  provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type:  provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123",
 						InstallationID: "456",
 					},

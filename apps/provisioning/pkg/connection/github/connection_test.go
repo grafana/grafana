@@ -64,8 +64,8 @@ func TestConnection_Mutate(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123",
 						InstallationID: "456",
 					},
@@ -81,7 +81,7 @@ func TestConnection_Mutate(t *testing.T) {
 			},
 			wantErr: false,
 			validateResult: func(t *testing.T, connection *provisioning.Connection) {
-				assert.Equal(t, "https://github.com/settings/installations/456", connection.Spec.URL)
+				assert.Equal(t, "https://github.com/settings/installations/456", connection.Spec.Url)
 			},
 		},
 		{
@@ -89,8 +89,8 @@ func TestConnection_Mutate(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123",
 						InstallationID: "456",
 					},
@@ -106,7 +106,7 @@ func TestConnection_Mutate(t *testing.T) {
 			},
 			wantErr: false,
 			validateResult: func(t *testing.T, connection *provisioning.Connection) {
-				assert.Equal(t, "https://github.com/settings/installations/456", connection.Spec.URL)
+				assert.Equal(t, "https://github.com/settings/installations/456", connection.Spec.Url)
 				assert.True(t, connection.Secure.Token.Create.IsZero(), "Token should not be generated in mutator")
 			},
 		},
@@ -115,8 +115,8 @@ func TestConnection_Mutate(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GitlabOAuthConnectionType,
-					OAuth: &provisioning.ConnectionOAuthConfig{
+					Type: provisioning.ConnectionTypeGitlabOAuth,
+					Oauth: &provisioning.ConnectionOAuthConfig{
 						ClientID: "clientID",
 					},
 				},
@@ -165,8 +165,8 @@ func TestConnection_Test(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          appID,
 						InstallationID: "456",
 					},
@@ -210,8 +210,8 @@ func TestConnection_Test(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          appID,
 						InstallationID: "456",
 					},
@@ -246,8 +246,8 @@ func TestConnection_Test(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          appID,
 						InstallationID: "456",
 					},
@@ -275,8 +275,8 @@ func TestConnection_Test(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          appID,
 						InstallationID: "456",
 					},
@@ -307,8 +307,8 @@ func TestConnection_Test(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "678",
 						InstallationID: "456",
 					},
@@ -337,8 +337,8 @@ func TestConnection_Test(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          appID,
 						InstallationID: "456",
 					},
@@ -387,8 +387,8 @@ func TestConnection_Test(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          appID,
 						InstallationID: "456",
 					},
@@ -416,8 +416,8 @@ func TestConnection_Test(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          appID,
 						InstallationID: "456",
 					},
@@ -445,8 +445,8 @@ func TestConnection_Test(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          appID,
 						InstallationID: "456",
 					},
@@ -476,8 +476,8 @@ func TestConnection_Test(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          appID,
 						InstallationID: "456",
 					},
@@ -513,8 +513,8 @@ func TestConnection_Test(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          appID,
 						InstallationID: "456",
 					},
@@ -544,8 +544,8 @@ func TestConnection_Test(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          appID,
 						InstallationID: "456",
 					},
@@ -584,8 +584,8 @@ func TestConnection_Test(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          appID,
 						InstallationID: "456",
 					},
@@ -624,8 +624,8 @@ func TestConnection_Test(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          appID,
 						InstallationID: "456",
 					},
@@ -664,8 +664,8 @@ func TestConnection_Test(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          appID,
 						InstallationID: "456",
 					},
@@ -704,8 +704,8 @@ func TestConnection_Test(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          appID,
 						InstallationID: "456",
 					},
@@ -746,8 +746,8 @@ func TestConnection_Test(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          appID,
 						InstallationID: "456",
 					},
@@ -790,8 +790,8 @@ func TestConnection_Test(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          appID,
 						InstallationID: "456",
 					},
@@ -831,8 +831,8 @@ func TestConnection_Test(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          appID,
 						InstallationID: "456",
 					},
@@ -863,8 +863,8 @@ func TestConnection_Test(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          appID,
 						InstallationID: "456",
 					},
@@ -904,8 +904,8 @@ func TestConnection_Test(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          appID,
 						InstallationID: "456",
 					},
@@ -945,8 +945,8 @@ func TestConnection_Test(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          appID,
 						InstallationID: "456",
 					},
@@ -986,8 +986,8 @@ func TestConnection_Test(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          appID,
 						InstallationID: "456",
 					},
@@ -1025,8 +1025,8 @@ func TestConnection_Test(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          appID,
 						InstallationID: "456",
 					},
@@ -1075,8 +1075,8 @@ func TestConnection_Test(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          appID,
 						InstallationID: "456",
 					},
@@ -1125,8 +1125,8 @@ func TestConnection_Test(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          appID,
 						InstallationID: "456",
 					},
@@ -1175,8 +1175,8 @@ func TestConnection_Test(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          appID,
 						InstallationID: "456",
 					},
@@ -1225,8 +1225,8 @@ func TestConnection_Test(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          appID,
 						InstallationID: "456",
 					},
@@ -1275,8 +1275,8 @@ func TestConnection_Test(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          appID,
 						InstallationID: "456",
 					},
@@ -1317,8 +1317,8 @@ func TestConnection_Test(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          appID,
 						InstallationID: "456",
 					},
@@ -1453,8 +1453,8 @@ func TestConnection_ValidateToken(t *testing.T) {
 			obj := &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          tt.appID,
 						InstallationID: "456",
 					},
@@ -1489,8 +1489,8 @@ func TestConnection_GenerateConnectionToken(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123",
 						InstallationID: "456",
 					},
@@ -1526,8 +1526,8 @@ func TestConnection_GenerateConnectionToken(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "789",
 						InstallationID: "456",
 					},
@@ -1549,8 +1549,8 @@ func TestConnection_GenerateConnectionToken(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GitlabOAuthConnectionType,
-					OAuth: &provisioning.ConnectionOAuthConfig{
+					Type: provisioning.ConnectionTypeGitlabOAuth,
+					Oauth: &provisioning.ConnectionOAuthConfig{
 						ClientID: "clientID",
 					},
 				},
@@ -1565,8 +1565,8 @@ func TestConnection_GenerateConnectionToken(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type:   provisioning.GithubConnectionType,
-					GitHub: nil,
+					Type:   provisioning.ConnectionTypeGithub,
+					Github: nil,
 				},
 			},
 			secrets: github.ConnectionSecrets{
@@ -1579,8 +1579,8 @@ func TestConnection_GenerateConnectionToken(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123",
 						InstallationID: "456",
 					},
@@ -1597,8 +1597,8 @@ func TestConnection_GenerateConnectionToken(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123",
 						InstallationID: "456",
 					},
@@ -1615,8 +1615,8 @@ func TestConnection_GenerateConnectionToken(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123",
 						InstallationID: "456",
 					},
@@ -1676,8 +1676,8 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123",
 						InstallationID: "456",
 					},
@@ -1716,8 +1716,8 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123",
 						InstallationID: "456",
 					},
@@ -1731,8 +1731,8 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GitlabOAuthConnectionType,
-					OAuth: &provisioning.ConnectionOAuthConfig{
+					Type: provisioning.ConnectionTypeGitlabOAuth,
+					Oauth: &provisioning.ConnectionOAuthConfig{
 						ClientID: "clientID",
 					},
 				},
@@ -1753,8 +1753,8 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123",
 						InstallationID: "456",
 					},
@@ -1779,8 +1779,8 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123",
 						InstallationID: "456",
 					},
@@ -1807,8 +1807,8 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123",
 						InstallationID: "456",
 					},
@@ -1841,8 +1841,8 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123",
 						InstallationID: "456",
 					},
@@ -1875,8 +1875,8 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123",
 						InstallationID: "456",
 					},
@@ -1909,8 +1909,8 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123",
 						InstallationID: "456",
 					},
@@ -1969,8 +1969,8 @@ func TestConnection_ListRepositories(t *testing.T) {
 		c := &provisioning.Connection{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 			Spec: provisioning.ConnectionSpec{
-				Type: provisioning.GithubConnectionType,
-				GitHub: &provisioning.GitHubConnectionConfig{
+				Type: provisioning.ConnectionTypeGithub,
+				Github: &provisioning.ConnectionGitHubConfig{
 					AppID:          "123",
 					InstallationID: "456",
 				},
@@ -2017,7 +2017,7 @@ func TestConnection_ListRepositories(t *testing.T) {
 		c := &provisioning.Connection{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 			Spec: provisioning.ConnectionSpec{
-				Type: provisioning.GitlabOAuthConnectionType,
+				Type: provisioning.ConnectionTypeGitlabOAuth,
 			},
 		}
 
@@ -2033,8 +2033,8 @@ func TestConnection_ListRepositories(t *testing.T) {
 		c := &provisioning.Connection{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 			Spec: provisioning.ConnectionSpec{
-				Type: provisioning.GithubConnectionType,
-				GitHub: &provisioning.GitHubConnectionConfig{
+				Type: provisioning.ConnectionTypeGithub,
+				Github: &provisioning.ConnectionGitHubConfig{
 					AppID:          "123",
 					InstallationID: "456",
 				},
@@ -2072,8 +2072,8 @@ func TestConnection_ListRepositories(t *testing.T) {
 		c := &provisioning.Connection{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 			Spec: provisioning.ConnectionSpec{
-				Type: provisioning.GithubConnectionType,
-				GitHub: &provisioning.GitHubConnectionConfig{
+				Type: provisioning.ConnectionTypeGithub,
+				Github: &provisioning.ConnectionGitHubConfig{
 					AppID:          "123",
 					InstallationID: "456",
 				},
@@ -2104,8 +2104,8 @@ func TestConnection_ListRepositories(t *testing.T) {
 		c := &provisioning.Connection{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 			Spec: provisioning.ConnectionSpec{
-				Type: provisioning.GithubConnectionType,
-				GitHub: &provisioning.GitHubConnectionConfig{
+				Type: provisioning.ConnectionTypeGithub,
+				Github: &provisioning.ConnectionGitHubConfig{
 					AppID:          "123",
 					InstallationID: "456",
 				},
@@ -2136,8 +2136,8 @@ func TestConnection_ListRepositories(t *testing.T) {
 		c := &provisioning.Connection{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 			Spec: provisioning.ConnectionSpec{
-				Type: provisioning.GithubConnectionType,
-				GitHub: &provisioning.GitHubConnectionConfig{
+				Type: provisioning.ConnectionTypeGithub,
+				Github: &provisioning.ConnectionGitHubConfig{
 					AppID:          "123",
 					InstallationID: "456",
 				},
@@ -2184,8 +2184,8 @@ func TestNewConnectionWithCustomConfig(t *testing.T) {
 	obj := &provisioning.Connection{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 		Spec: provisioning.ConnectionSpec{
-			Type:   provisioning.GithubConnectionType,
-			GitHub: &provisioning.GitHubConnectionConfig{AppID: "spec-app-id"},
+			Type:   provisioning.ConnectionTypeGithub,
+			Github: &provisioning.ConnectionGitHubConfig{AppID: "spec-app-id"},
 		},
 	}
 

@@ -81,17 +81,17 @@ type config struct {
 }
 
 func (c config) AppID() string {
-	if c.obj.Spec.GitHub == nil {
+	if c.obj.Spec.Github == nil {
 		return ""
 	}
-	return c.obj.Spec.GitHub.AppID
+	return c.obj.Spec.Github.AppID
 }
 
 func (c config) InstallationID() string {
-	if c.obj.Spec.GitHub == nil {
+	if c.obj.Spec.Github == nil {
 		return ""
 	}
-	return c.obj.Spec.GitHub.InstallationID
+	return c.obj.Spec.Github.InstallationID
 }
 
 func (c config) CustomServerURL() string {
@@ -492,7 +492,7 @@ func (c *Connection) validatePermissions(target permissionTarget, id string, per
 					name,
 					toAppPermissionString(perm.required),
 					toAppPermissionString(perm.current),
-					c.obj.Spec.URL,
+					c.obj.Spec.Url,
 				)
 				fieldPath = field.NewPath("spec", string(c.obj.Spec.Type), "installationID").String()
 			}

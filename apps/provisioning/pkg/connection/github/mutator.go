@@ -17,12 +17,12 @@ func Mutate(_ context.Context, obj runtime.Object) error {
 	}
 
 	// Do nothing if connection is not github.
-	if conn.Spec.Type != provisioning.GithubConnectionType || conn.Spec.GitHub == nil {
+	if conn.Spec.Type != provisioning.ConnectionTypeGithub || conn.Spec.Github == nil {
 		return nil
 	}
 
 	// Set URL from GitHub installation
-	conn.Spec.URL = fmt.Sprintf("https://github.com/settings/installations/%s", conn.Spec.GitHub.InstallationID)
+	conn.Spec.Url = fmt.Sprintf("https://github.com/settings/installations/%s", conn.Spec.Github.InstallationID)
 
 	return nil
 }

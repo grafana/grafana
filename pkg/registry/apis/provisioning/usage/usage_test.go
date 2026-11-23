@@ -240,12 +240,12 @@ func TestMetricCollector_ConnectionStats(t *testing.T) {
 	connLister := func(ctx context.Context) ([]provisioning.Connection, error) {
 		return []provisioning.Connection{
 			{
-				Spec:   provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
+				Spec:   provisioning.ConnectionSpec{Type: provisioning.ConnectionTypeGithub},
 				Status: provisioning.ConnectionStatus{Health: provisioning.ConnectionHealthStatus{Healthy: true}},
 			},
 			{
 				Spec: provisioning.ConnectionSpec{
-					Type:    provisioning.GithubOAuthConnectionType,
+					Type:    provisioning.ConnectionTypeGithubOAuth,
 					Webhook: &provisioning.ConnectionWebhookConfig{Disabled: true},
 				},
 				Status: provisioning.ConnectionStatus{
@@ -267,8 +267,8 @@ func TestMetricCollector_ConnectionStats(t *testing.T) {
 	require.Equal(t, 1, m["stats.connection.healthy.count"])
 	require.Equal(t, 1, m["stats.connection.unhealthy.count"])
 	require.Equal(t, 1, m["stats.connection.webhook_disabled.count"])
-	require.Equal(t, 1, m["stats.connection."+string(provisioning.GithubConnectionType)+".count"])
-	require.Equal(t, 1, m["stats.connection."+string(provisioning.GithubOAuthConnectionType)+".count"])
+	require.Equal(t, 1, m["stats.connection."+string(provisioning.ConnectionTypeGithub)+".count"])
+	require.Equal(t, 1, m["stats.connection."+string(provisioning.ConnectionTypeGithubOAuth)+".count"])
 	require.Equal(t, 1, m["stats.connection.ready_reason."+strings.ToLower(provisioning.ReasonAuthenticationFailed)+".count"])
 }
 

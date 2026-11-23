@@ -19,7 +19,7 @@ func TestConnectionUsageStatusFromConnection(t *testing.T) {
 			Annotations:       map[string]string{utils.AnnoKeyUpdatedTimestamp: "2021-01-01T00:00:00Z"},
 		},
 		Spec: provisioning.ConnectionSpec{
-			Type:    provisioning.GithubOAuthConnectionType,
+			Type:    provisioning.ConnectionTypeGithubOAuth,
 			Webhook: &provisioning.ConnectionWebhookConfig{Disabled: true},
 		},
 		Status: provisioning.ConnectionStatus{
@@ -33,7 +33,7 @@ func TestConnectionUsageStatusFromConnection(t *testing.T) {
 	got := ConnectionUsageStatusFromConnection(conn)
 
 	assert.Equal(t, ConnectionUsageStatus{
-		Type:            string(provisioning.GithubOAuthConnectionType),
+		Type:            string(provisioning.ConnectionTypeGithubOAuth),
 		CreatedAt:       1_500_000_000_000,
 		UpdatedAt:       time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC).UnixMilli(),
 		Healthy:         true,
@@ -44,7 +44,7 @@ func TestConnectionUsageStatusFromConnection(t *testing.T) {
 
 func TestConnectionUsageStatusFromConnection_AuthFailure(t *testing.T) {
 	conn := &provisioning.Connection{
-		Spec: provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
+		Spec: provisioning.ConnectionSpec{Type: provisioning.ConnectionTypeGithub},
 		Status: provisioning.ConnectionStatus{
 			Health: provisioning.ConnectionHealthStatus{Healthy: false},
 			Conditions: []metav1.Condition{
@@ -58,12 +58,12 @@ func TestConnectionUsageStatusFromConnection_AuthFailure(t *testing.T) {
 	assert.False(t, got.Healthy)
 	assert.Equal(t, provisioning.ReasonAuthenticationFailed, got.ReadyReason)
 	// The type doubles as the auth method: "github" is a GitHub App installation.
-	assert.Equal(t, string(provisioning.GithubConnectionType), got.Type)
+	assert.Equal(t, string(provisioning.ConnectionTypeGithub), got.Type)
 }
 
 func TestConnectionUsageStatus_LogValues(t *testing.T) {
 	s := ConnectionUsageStatus{
-		Type:               string(provisioning.GitlabOAuthConnectionType),
+		Type:               string(provisioning.ConnectionTypeGitlabOAuth),
 		CreatedAt:          1_500_000_000_000,
 		UpdatedAt:          1_550_000_000_000,
 		Healthy:            false,
@@ -74,7 +74,7 @@ func TestConnectionUsageStatus_LogValues(t *testing.T) {
 	}
 
 	assert.Equal(t, []any{
-		"connectionType", string(provisioning.GitlabOAuthConnectionType),
+		"connectionType", string(provisioning.ConnectionTypeGitlabOAuth),
 		"createdAt", int64(1_500_000_000_000),
 		"updatedAt", int64(1_550_000_000_000),
 		"healthy", 0,

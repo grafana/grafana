@@ -131,8 +131,8 @@ func TestConnectionController_process(t *testing.T) {
 							},
 						},
 						Spec: provisioning.ConnectionSpec{
-							Type: provisioning.GithubConnectionType,
-							GitHub: &provisioning.GitHubConnectionConfig{
+							Type: provisioning.ConnectionTypeGithub,
+							Github: &provisioning.ConnectionGitHubConfig{
 								AppID:          "123",
 								InstallationID: "456",
 							},
@@ -183,8 +183,8 @@ func TestConnectionController_process(t *testing.T) {
 					},
 				},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123",
 						InstallationID: "456",
 					},
@@ -211,8 +211,8 @@ func TestConnectionController_process(t *testing.T) {
 							},
 						},
 						Spec: provisioning.ConnectionSpec{
-							Type: provisioning.GithubConnectionType,
-							GitHub: &provisioning.GitHubConnectionConfig{
+							Type: provisioning.ConnectionTypeGithub,
+							Github: &provisioning.ConnectionGitHubConfig{
 								AppID:          "123",
 								InstallationID: "456",
 							},
@@ -280,8 +280,8 @@ func TestConnectionController_process(t *testing.T) {
 					},
 				},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
+					Type: provisioning.ConnectionTypeGithub,
+					Github: &provisioning.ConnectionGitHubConfig{
 						AppID:          "123",
 						InstallationID: "456",
 					},
@@ -312,7 +312,7 @@ func TestConnectionController_process(t *testing.T) {
 							},
 						},
 						Spec: provisioning.ConnectionSpec{
-							Type: provisioning.GithubConnectionType,
+							Type: provisioning.ConnectionTypeGithub,
 						},
 						Secure: provisioning.ConnectionSecure{
 							Token: resource.InlineSecureValue{
@@ -388,7 +388,7 @@ func TestConnectionController_process(t *testing.T) {
 					},
 				},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
+					Type: provisioning.ConnectionTypeGithub,
 				},
 				Secure: provisioning.ConnectionSecure{
 					Token: resource.InlineSecureValue{
@@ -416,7 +416,7 @@ func TestConnectionController_process(t *testing.T) {
 							},
 						},
 						Spec: provisioning.ConnectionSpec{
-							Type: provisioning.GithubConnectionType,
+							Type: provisioning.ConnectionTypeGithub,
 						},
 						Secure: provisioning.ConnectionSecure{
 							Token: resource.InlineSecureValue{
@@ -488,7 +488,7 @@ func TestConnectionController_process(t *testing.T) {
 					},
 				},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
+					Type: provisioning.ConnectionTypeGithub,
 				},
 				Secure: provisioning.ConnectionSecure{
 					Token: resource.InlineSecureValue{
@@ -516,7 +516,7 @@ func TestConnectionController_process(t *testing.T) {
 							},
 						},
 						Spec: provisioning.ConnectionSpec{
-							Type: provisioning.GithubConnectionType,
+							Type: provisioning.ConnectionTypeGithub,
 						},
 						Secure: provisioning.ConnectionSecure{
 							Token: resource.InlineSecureValue{
@@ -589,7 +589,7 @@ func TestConnectionController_process(t *testing.T) {
 					},
 				},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
+					Type: provisioning.ConnectionTypeGithub,
 				},
 				Secure: provisioning.ConnectionSecure{
 					Token: resource.InlineSecureValue{
@@ -617,7 +617,7 @@ func TestConnectionController_process(t *testing.T) {
 							},
 						},
 						Spec: provisioning.ConnectionSpec{
-							Type: provisioning.GithubConnectionType,
+							Type: provisioning.ConnectionTypeGithub,
 						},
 						Secure: provisioning.ConnectionSecure{
 							Token: resource.InlineSecureValue{
@@ -695,7 +695,7 @@ func TestConnectionController_process(t *testing.T) {
 					},
 				},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
+					Type: provisioning.ConnectionTypeGithub,
 				},
 				Secure: provisioning.ConnectionSecure{
 					Token: resource.InlineSecureValue{
@@ -723,7 +723,7 @@ func TestConnectionController_process(t *testing.T) {
 							},
 						},
 						Spec: provisioning.ConnectionSpec{
-							Type: provisioning.GithubConnectionType,
+							Type: provisioning.ConnectionTypeGithub,
 						},
 					},
 				}
@@ -752,7 +752,7 @@ func TestConnectionController_process(t *testing.T) {
 					},
 				},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
+					Type: provisioning.ConnectionTypeGithub,
 				},
 			},
 			expectError:   true,
@@ -772,7 +772,7 @@ func TestConnectionController_process(t *testing.T) {
 							ObservedGeneration: 1,
 						},
 						Spec: provisioning.ConnectionSpec{
-							Type: provisioning.GithubConnectionType,
+							Type: provisioning.ConnectionTypeGithub,
 						},
 					},
 				}
@@ -816,7 +816,7 @@ func TestConnectionController_process(t *testing.T) {
 					ObservedGeneration: 1,
 				},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
+					Type: provisioning.ConnectionTypeGithub,
 				},
 			},
 			expectError:   true,
@@ -853,7 +853,7 @@ func TestConnectionController_process(t *testing.T) {
 							ObservedGeneration: 1,
 						},
 						Spec: provisioning.ConnectionSpec{
-							Type: provisioning.GithubConnectionType,
+							Type: provisioning.ConnectionTypeGithub,
 						},
 					},
 				}
@@ -876,7 +876,7 @@ func TestConnectionController_process(t *testing.T) {
 					ObservedGeneration: 1,
 				},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
+					Type: provisioning.ConnectionTypeGithub,
 				},
 			},
 			expectError:   true,
@@ -900,7 +900,7 @@ func TestConnectionController_process(t *testing.T) {
 							},
 						},
 						Spec: provisioning.ConnectionSpec{
-							Type: provisioning.GithubConnectionType,
+							Type: provisioning.ConnectionTypeGithub,
 						},
 						Secure: provisioning.ConnectionSecure{
 							// No token - IsZero() will return true
@@ -949,7 +949,7 @@ func TestConnectionController_process(t *testing.T) {
 					},
 				},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
+					Type: provisioning.ConnectionTypeGithub,
 				},
 				Secure: provisioning.ConnectionSecure{
 					// No token
@@ -975,7 +975,7 @@ func TestConnectionController_process(t *testing.T) {
 							},
 						},
 						Spec: provisioning.ConnectionSpec{
-							Type: provisioning.GithubConnectionType,
+							Type: provisioning.ConnectionTypeGithub,
 						},
 						Secure: provisioning.ConnectionSecure{
 							Token: resource.InlineSecureValue{
@@ -1048,7 +1048,7 @@ func TestConnectionController_process(t *testing.T) {
 					},
 				},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
+					Type: provisioning.ConnectionTypeGithub,
 				},
 				Secure: provisioning.ConnectionSecure{
 					Token: resource.InlineSecureValue{
@@ -1076,7 +1076,7 @@ func TestConnectionController_process(t *testing.T) {
 							},
 						},
 						Spec: provisioning.ConnectionSpec{
-							Type: provisioning.GithubConnectionType,
+							Type: provisioning.ConnectionTypeGithub,
 						},
 						Secure: provisioning.ConnectionSecure{
 							Token: resource.InlineSecureValue{
@@ -1138,7 +1138,7 @@ func TestConnectionController_process(t *testing.T) {
 					},
 				},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
+					Type: provisioning.ConnectionTypeGithub,
 				},
 				Secure: provisioning.ConnectionSecure{
 					Token: resource.InlineSecureValue{
@@ -1166,8 +1166,8 @@ func TestConnectionController_process(t *testing.T) {
 							},
 						},
 						Spec: provisioning.ConnectionSpec{
-							Type: provisioning.GithubConnectionType,
-							GitHub: &provisioning.GitHubConnectionConfig{
+							Type: provisioning.ConnectionTypeGithub,
+							Github: &provisioning.ConnectionGitHubConfig{
 								AppID:          "123",
 								InstallationID: "456",
 							},

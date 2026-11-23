@@ -17,7 +17,6 @@ import (
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
 		Author{}.OpenAPIModelName():                                schema_pkg_apis_provisioning_v0alpha1_Author(ref),
-		BitbucketConnectionConfig{}.OpenAPIModelName():             schema_pkg_apis_provisioning_v0alpha1_BitbucketConnectionConfig(ref),
 		BitbucketRepositoryConfig{}.OpenAPIModelName():             schema_pkg_apis_provisioning_v0alpha1_BitbucketRepositoryConfig(ref),
 		BranchOptions{}.OpenAPIModelName():                         schema_pkg_apis_provisioning_v0alpha1_BranchOptions(ref),
 		CommitOptions{}.OpenAPIModelName():                         schema_pkg_apis_provisioning_v0alpha1_CommitOptions(ref),
@@ -25,6 +24,11 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		ConnectionAuthorizeRequest{}.OpenAPIModelName():            schema_pkg_apis_provisioning_v0alpha1_ConnectionAuthorizeRequest(ref),
 		ConnectionAuthorizeRequestSpec{}.OpenAPIModelName():        schema_pkg_apis_provisioning_v0alpha1_ConnectionAuthorizeRequestSpec(ref),
 		ConnectionAuthorizeRequestStatus{}.OpenAPIModelName():      schema_pkg_apis_provisioning_v0alpha1_ConnectionAuthorizeRequestStatus(ref),
+		ConnectionBitbucketConfig{}.OpenAPIModelName():             schema_pkg_apis_provisioning_v0alpha1_ConnectionBitbucketConfig(ref),
+		ConnectionGitHubConfig{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_ConnectionGitHubConfig(ref),
+		ConnectionGitHubEnterpriseConfig{}.OpenAPIModelName():      schema_pkg_apis_provisioning_v0alpha1_ConnectionGitHubEnterpriseConfig(ref),
+		ConnectionGitHubEnterpriseOAuthConfig{}.OpenAPIModelName(): schema_pkg_apis_provisioning_v0alpha1_ConnectionGitHubEnterpriseOAuthConfig(ref),
+		ConnectionGitOAuthConfig{}.OpenAPIModelName():              schema_pkg_apis_provisioning_v0alpha1_ConnectionGitOAuthConfig(ref),
 		ConnectionInfo{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_ConnectionInfo(ref),
 		ConnectionList{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_ConnectionList(ref),
 		ConnectionOAuthConfig{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_ConnectionOAuthConfig(ref),
@@ -41,13 +45,9 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		FileItem{}.OpenAPIModelName():                              schema_pkg_apis_provisioning_v0alpha1_FileItem(ref),
 		FileList{}.OpenAPIModelName():                              schema_pkg_apis_provisioning_v0alpha1_FileList(ref),
 		FixFolderMetadataJobOptions{}.OpenAPIModelName():           schema_pkg_apis_provisioning_v0alpha1_FixFolderMetadataJobOptions(ref),
-		GitHubConnectionConfig{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_GitHubConnectionConfig(ref),
-		GitHubEnterpriseConnectionConfig{}.OpenAPIModelName():      schema_pkg_apis_provisioning_v0alpha1_GitHubEnterpriseConnectionConfig(ref),
-		GitHubEnterpriseOAuthConnectionConfig{}.OpenAPIModelName(): schema_pkg_apis_provisioning_v0alpha1_GitHubEnterpriseOAuthConnectionConfig(ref),
 		GitHubEnterpriseRepositoryConfig{}.OpenAPIModelName():      schema_pkg_apis_provisioning_v0alpha1_GitHubEnterpriseRepositoryConfig(ref),
 		GitHubRepositoryConfig{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref),
 		GitLabRepositoryConfig{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_GitLabRepositoryConfig(ref),
-		GitOAuthConnectionConfig{}.OpenAPIModelName():              schema_pkg_apis_provisioning_v0alpha1_GitOAuthConnectionConfig(ref),
 		GitRepositoryConfig{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_GitRepositoryConfig(ref),
 		HistoricJob{}.OpenAPIModelName():                           schema_pkg_apis_provisioning_v0alpha1_HistoricJob(ref),
 		HistoricJobList{}.OpenAPIModelName():                       schema_pkg_apis_provisioning_v0alpha1_HistoricJobList(ref),
@@ -127,27 +127,6 @@ func schema_pkg_apis_provisioning_v0alpha1_Author(ref common.ReferenceCallback) 
 					},
 				},
 				Required: []string{"name", "username"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_provisioning_v0alpha1_BitbucketConnectionConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"workspace": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The workspace the OAuth consumer belongs to",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{"workspace"},
 			},
 		},
 	}
@@ -454,6 +433,159 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionAuthorizeRequestStatus(ref 
 	}
 }
 
+func schema_pkg_apis_provisioning_v0alpha1_ConnectionBitbucketConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"workspace": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The workspace the OAuth consumer belongs to",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"workspace"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_ConnectionGitHubConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"appID": {
+						SchemaProps: spec.SchemaProps{
+							Description: "GitHub App ID",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"installationID": {
+						SchemaProps: spec.SchemaProps{
+							Description: "GitHub App installation ID",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"appID", "installationID"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_ConnectionGitHubEnterpriseConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "GitHubEnterpriseConnectionConfig describes a GitHub App installation against a self-managed GitHub Enterprise Server (GHES) instance.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"appID": {
+						SchemaProps: spec.SchemaProps{
+							Description: "GitHub App ID",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"installationID": {
+						SchemaProps: spec.SchemaProps{
+							Description: "GitHub App installation ID",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"serverUrl": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"appID", "installationID", "serverUrl"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_ConnectionGitHubEnterpriseOAuthConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"serverUrl": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"serverUrl"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_ConnectionGitOAuthConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "GitOAuthConnectionConfig describes a provider-agnostic OAuth 2.0 app used to authenticate pure git repositories.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"authURL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The provider's OAuth authorization endpoint (e.g. `https://gitlab.example.com/oauth/authorize`).",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"tokenURL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The provider's OAuth token endpoint (e.g. `https://gitlab.example.com/oauth/token`).",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"scopes": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The OAuth scopes to request, granting git read and write access.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"authURL", "tokenURL"},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_provisioning_v0alpha1_ConnectionInfo(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -622,31 +754,31 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref common.ReferenceCa
 					"github": {
 						SchemaProps: spec.SchemaProps{
 							Description: "GitHub connection configuration Only applicable when provider is \"github\"",
-							Ref:         ref(GitHubConnectionConfig{}.OpenAPIModelName()),
+							Ref:         ref(ConnectionGitHubConfig{}.OpenAPIModelName()),
 						},
 					},
 					"githubEnterprise": {
 						SchemaProps: spec.SchemaProps{
 							Description: "GitHub Enterprise Server connection configuration Only applicable when provider is \"githubEnterprise\"",
-							Ref:         ref(GitHubEnterpriseConnectionConfig{}.OpenAPIModelName()),
+							Ref:         ref(ConnectionGitHubEnterpriseConfig{}.OpenAPIModelName()),
 						},
 					},
 					"githubEnterpriseOAuth": {
 						SchemaProps: spec.SchemaProps{
 							Description: "GitHub Enterprise Server OAuth app connection configuration Only applicable when provider is \"githubEnterpriseOAuth\"",
-							Ref:         ref(GitHubEnterpriseOAuthConnectionConfig{}.OpenAPIModelName()),
+							Ref:         ref(ConnectionGitHubEnterpriseOAuthConfig{}.OpenAPIModelName()),
 						},
 					},
 					"bitbucket": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Bitbucket connection configuration Only applicable when provider is \"bitbucketOAuth\"",
-							Ref:         ref(BitbucketConnectionConfig{}.OpenAPIModelName()),
+							Ref:         ref(ConnectionBitbucketConfig{}.OpenAPIModelName()),
 						},
 					},
 					"gitOAuth": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Generic git OAuth app connection configuration Only applicable when provider is \"gitOAuth\"",
-							Ref:         ref(GitOAuthConnectionConfig{}.OpenAPIModelName()),
+							Ref:         ref(ConnectionGitOAuthConfig{}.OpenAPIModelName()),
 						},
 					},
 					"oauth": {
@@ -666,7 +798,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			BitbucketConnectionConfig{}.OpenAPIModelName(), ConnectionOAuthConfig{}.OpenAPIModelName(), ConnectionWebhookConfig{}.OpenAPIModelName(), GitHubConnectionConfig{}.OpenAPIModelName(), GitHubEnterpriseConnectionConfig{}.OpenAPIModelName(), GitHubEnterpriseOAuthConnectionConfig{}.OpenAPIModelName(), GitOAuthConnectionConfig{}.OpenAPIModelName()},
+			ConnectionBitbucketConfig{}.OpenAPIModelName(), ConnectionGitHubConfig{}.OpenAPIModelName(), ConnectionGitHubEnterpriseConfig{}.OpenAPIModelName(), ConnectionGitHubEnterpriseOAuthConfig{}.OpenAPIModelName(), ConnectionGitOAuthConfig{}.OpenAPIModelName(), ConnectionOAuthConfig{}.OpenAPIModelName(), ConnectionWebhookConfig{}.OpenAPIModelName()},
 	}
 }
 
@@ -1126,94 +1258,6 @@ func schema_pkg_apis_provisioning_v0alpha1_FixFolderMetadataJobOptions(ref commo
 	}
 }
 
-func schema_pkg_apis_provisioning_v0alpha1_GitHubConnectionConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"appID": {
-						SchemaProps: spec.SchemaProps{
-							Description: "GitHub App ID",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"installationID": {
-						SchemaProps: spec.SchemaProps{
-							Description: "GitHub App installation ID",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{"appID", "installationID"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_provisioning_v0alpha1_GitHubEnterpriseConnectionConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "GitHubEnterpriseConnectionConfig describes a GitHub App installation against a self-managed GitHub Enterprise Server (GHES) instance.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"appID": {
-						SchemaProps: spec.SchemaProps{
-							Description: "GitHub App ID",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"installationID": {
-						SchemaProps: spec.SchemaProps{
-							Description: "GitHub App installation ID",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"serverUrl": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{"appID", "installationID", "serverUrl"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_provisioning_v0alpha1_GitHubEnterpriseOAuthConnectionConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"serverUrl": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{"serverUrl"},
-			},
-		},
-	}
-}
-
 func schema_pkg_apis_provisioning_v0alpha1_GitHubEnterpriseRepositoryConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -1336,50 +1380,6 @@ func schema_pkg_apis_provisioning_v0alpha1_GitLabRepositoryConfig(ref common.Ref
 					},
 				},
 				Required: []string{"branch"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_provisioning_v0alpha1_GitOAuthConnectionConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "GitOAuthConnectionConfig describes a provider-agnostic OAuth 2.0 app used to authenticate pure git repositories.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"authURL": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The provider's OAuth authorization endpoint (e.g. `https://gitlab.example.com/oauth/authorize`).",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"tokenURL": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The provider's OAuth token endpoint (e.g. `https://gitlab.example.com/oauth/token`).",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"scopes": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The OAuth scopes to request, granting git read and write access.",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
-									},
-								},
-							},
-						},
-					},
-				},
-				Required: []string{"authURL", "tokenURL"},
 			},
 		},
 	}

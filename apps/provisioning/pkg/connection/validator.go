@@ -109,12 +109,12 @@ func (v *AdmissionValidator) validatePrivateEndpoints(ctx context.Context, c *pr
 		path *field.Path
 		url  string
 	}
-	endpoints := []endpoint{{field.NewPath("spec", "url"), c.Spec.URL}}
-	if c.Spec.GitHubEnterprise != nil {
-		endpoints = append(endpoints, endpoint{field.NewPath("spec", "githubEnterprise", "serverUrl"), c.Spec.GitHubEnterprise.ServerURL})
+	endpoints := []endpoint{{field.NewPath("spec", "url"), c.Spec.Url}}
+	if c.Spec.GithubEnterprise != nil {
+		endpoints = append(endpoints, endpoint{field.NewPath("spec", "githubEnterprise", "serverUrl"), c.Spec.GithubEnterprise.ServerUrl})
 	}
-	if c.Spec.GitHubEnterpriseOAuth != nil {
-		endpoints = append(endpoints, endpoint{field.NewPath("spec", "githubEnterpriseOAuth", "serverUrl"), c.Spec.GitHubEnterpriseOAuth.ServerURL})
+	if c.Spec.GithubEnterpriseOAuth != nil {
+		endpoints = append(endpoints, endpoint{field.NewPath("spec", "githubEnterpriseOAuth", "serverUrl"), c.Spec.GithubEnterpriseOAuth.ServerUrl})
 	}
 	if c.Spec.GitOAuth != nil {
 		endpoints = append(endpoints,

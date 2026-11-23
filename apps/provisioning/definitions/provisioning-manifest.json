@@ -866,7 +866,7 @@
                             }
                         },
                         "schemas": {
-                            "BitbucketConnectionConfig": {
+                            "BitbucketConfig": {
                                 "additionalProperties": false,
                                 "properties": {
                                     "workspace": {
@@ -961,29 +961,6 @@
                                     "spec"
                                 ]
                             },
-                            "ConnectionOAuthConfig": {
-                                "additionalProperties": false,
-                                "properties": {
-                                    "clientID": {
-                                        "description": "The OAuth app client ID",
-                                        "type": "string"
-                                    }
-                                },
-                                "required": [
-                                    "clientID"
-                                ],
-                                "type": "object"
-                            },
-                            "ConnectionWebhookConfig": {
-                                "additionalProperties": false,
-                                "properties": {
-                                    "disabled": {
-                                        "description": "Disabled disables webhook integration for this connection. When true, the GitHub\nApp does not require webhooks:write permission and Grafana will not register or receive\nwebhook events. Use this when Grafana is not reachable from the public internet.",
-                                        "type": "boolean"
-                                    }
-                                },
-                                "type": "object"
-                            },
                             "ErrorDetails": {
                                 "additionalProperties": false,
                                 "description": "Mirrors metav1.StatusCause, with an additional origin field.",
@@ -1015,7 +992,7 @@
                                 ],
                                 "type": "object"
                             },
-                            "GitHubConnectionConfig": {
+                            "GitHubConfig": {
                                 "additionalProperties": false,
                                 "properties": {
                                     "appID": {
@@ -1033,7 +1010,7 @@
                                 ],
                                 "type": "object"
                             },
-                            "GitHubEnterpriseConnectionConfig": {
+                            "GitHubEnterpriseConfig": {
                                 "additionalProperties": false,
                                 "properties": {
                                     "appID": {
@@ -1056,7 +1033,7 @@
                                 ],
                                 "type": "object"
                             },
-                            "GitHubEnterpriseOAuthConnectionConfig": {
+                            "GitHubEnterpriseOAuthConfig": {
                                 "additionalProperties": false,
                                 "properties": {
                                     "serverUrl": {
@@ -1069,7 +1046,7 @@
                                 ],
                                 "type": "object"
                             },
-                            "GitOAuthConnectionConfig": {
+                            "GitOAuthConfig": {
                                 "additionalProperties": false,
                                 "properties": {
                                     "authURL": {
@@ -1129,6 +1106,19 @@
                                 ],
                                 "type": "object"
                             },
+                            "OAuthConfig": {
+                                "additionalProperties": false,
+                                "properties": {
+                                    "clientID": {
+                                        "description": "The OAuth app client ID",
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "clientID"
+                                ],
+                                "type": "object"
+                            },
                             "TokenStatus": {
                                 "additionalProperties": false,
                                 "properties": {
@@ -1137,6 +1127,28 @@
                                     },
                                     "lastUpdated": {
                                         "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "Type": {
+                                "enum": [
+                                    "github",
+                                    "githubEnterprise",
+                                    "githubOAuth",
+                                    "githubEnterpriseOAuth",
+                                    "gitlabOAuth",
+                                    "bitbucketOAuth",
+                                    "gitOAuth"
+                                ],
+                                "type": "string"
+                            },
+                            "WebhookConfig": {
+                                "additionalProperties": false,
+                                "properties": {
+                                    "disabled": {
+                                        "description": "Disabled disables webhook integration for this connection. When true, the GitHub\nApp does not require webhooks:write permission and Grafana will not register or receive\nwebhook events. Use this when Grafana is not reachable from the public internet.",
+                                        "type": "boolean"
                                     }
                                 },
                                 "type": "object"
@@ -1198,7 +1210,7 @@
                                 "additionalProperties": false,
                                 "properties": {
                                     "bitbucket": {
-                                        "$ref": "#/components/schemas/BitbucketConnectionConfig",
+                                        "$ref": "#/components/schemas/BitbucketConfig",
                                         "description": "Bitbucket connection configuration\nOnly applicable when provider is \"bitbucketOAuth\""
                                     },
                                     "description": {
@@ -1206,23 +1218,23 @@
                                         "type": "string"
                                     },
                                     "gitOAuth": {
-                                        "$ref": "#/components/schemas/GitOAuthConnectionConfig",
+                                        "$ref": "#/components/schemas/GitOAuthConfig",
                                         "description": "Generic git OAuth app connection configuration\nOnly applicable when provider is \"gitOAuth\""
                                     },
                                     "github": {
-                                        "$ref": "#/components/schemas/GitHubConnectionConfig",
+                                        "$ref": "#/components/schemas/GitHubConfig",
                                         "description": "GitHub connection configuration\nOnly applicable when provider is \"github\""
                                     },
                                     "githubEnterprise": {
-                                        "$ref": "#/components/schemas/GitHubEnterpriseConnectionConfig",
+                                        "$ref": "#/components/schemas/GitHubEnterpriseConfig",
                                         "description": "GitHub Enterprise Server connection configuration\nOnly applicable when provider is \"githubEnterprise\""
                                     },
                                     "githubEnterpriseOAuth": {
-                                        "$ref": "#/components/schemas/GitHubEnterpriseOAuthConnectionConfig",
+                                        "$ref": "#/components/schemas/GitHubEnterpriseOAuthConfig",
                                         "description": "GitHub Enterprise Server OAuth app connection configuration\nOnly applicable when provider is \"githubEnterpriseOAuth\""
                                     },
                                     "oauth": {
-                                        "$ref": "#/components/schemas/ConnectionOAuthConfig",
+                                        "$ref": "#/components/schemas/OAuthConfig",
                                         "description": "OAuth app configuration shared by all OAuth app providers"
                                     },
                                     "title": {
@@ -1230,24 +1242,15 @@
                                         "type": "string"
                                     },
                                     "type": {
-                                        "description": "The connection provider type",
-                                        "enum": [
-                                            "github",
-                                            "githubEnterprise",
-                                            "githubOAuth",
-                                            "githubEnterpriseOAuth",
-                                            "bitbucketOAuth",
-                                            "gitlabOAuth",
-                                            "gitOAuth"
-                                        ],
-                                        "type": "string"
+                                        "$ref": "#/components/schemas/Type",
+                                        "description": "The connection provider type"
                                     },
                                     "url": {
                                         "description": "The connection URL",
                                         "type": "string"
                                     },
                                     "webhook": {
-                                        "$ref": "#/components/schemas/ConnectionWebhookConfig",
+                                        "$ref": "#/components/schemas/WebhookConfig",
                                         "description": "Webhook configuration for this connection"
                                     }
                                 },
@@ -3040,7 +3043,7 @@
                             }
                         },
                         "schemas": {
-                            "BitbucketConnectionConfig": {
+                            "BitbucketConfig": {
                                 "additionalProperties": false,
                                 "properties": {
                                     "workspace": {
@@ -3135,29 +3138,6 @@
                                     "spec"
                                 ]
                             },
-                            "ConnectionOAuthConfig": {
-                                "additionalProperties": false,
-                                "properties": {
-                                    "clientID": {
-                                        "description": "The OAuth app client ID",
-                                        "type": "string"
-                                    }
-                                },
-                                "required": [
-                                    "clientID"
-                                ],
-                                "type": "object"
-                            },
-                            "ConnectionWebhookConfig": {
-                                "additionalProperties": false,
-                                "properties": {
-                                    "disabled": {
-                                        "description": "Disabled disables webhook integration for this connection. When true, the GitHub\nApp does not require webhooks:write permission and Grafana will not register or receive\nwebhook events. Use this when Grafana is not reachable from the public internet.",
-                                        "type": "boolean"
-                                    }
-                                },
-                                "type": "object"
-                            },
                             "ErrorDetails": {
                                 "additionalProperties": false,
                                 "description": "Mirrors metav1.StatusCause, with an additional origin field.",
@@ -3189,7 +3169,7 @@
                                 ],
                                 "type": "object"
                             },
-                            "GitHubConnectionConfig": {
+                            "GitHubConfig": {
                                 "additionalProperties": false,
                                 "properties": {
                                     "appID": {
@@ -3207,7 +3187,7 @@
                                 ],
                                 "type": "object"
                             },
-                            "GitHubEnterpriseConnectionConfig": {
+                            "GitHubEnterpriseConfig": {
                                 "additionalProperties": false,
                                 "properties": {
                                     "appID": {
@@ -3230,7 +3210,7 @@
                                 ],
                                 "type": "object"
                             },
-                            "GitHubEnterpriseOAuthConnectionConfig": {
+                            "GitHubEnterpriseOAuthConfig": {
                                 "additionalProperties": false,
                                 "properties": {
                                     "serverUrl": {
@@ -3243,7 +3223,7 @@
                                 ],
                                 "type": "object"
                             },
-                            "GitOAuthConnectionConfig": {
+                            "GitOAuthConfig": {
                                 "additionalProperties": false,
                                 "properties": {
                                     "authURL": {
@@ -3303,6 +3283,19 @@
                                 ],
                                 "type": "object"
                             },
+                            "OAuthConfig": {
+                                "additionalProperties": false,
+                                "properties": {
+                                    "clientID": {
+                                        "description": "The OAuth app client ID",
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "clientID"
+                                ],
+                                "type": "object"
+                            },
                             "TokenStatus": {
                                 "additionalProperties": false,
                                 "properties": {
@@ -3311,6 +3304,28 @@
                                     },
                                     "lastUpdated": {
                                         "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "Type": {
+                                "enum": [
+                                    "github",
+                                    "githubEnterprise",
+                                    "githubOAuth",
+                                    "githubEnterpriseOAuth",
+                                    "gitlabOAuth",
+                                    "bitbucketOAuth",
+                                    "gitOAuth"
+                                ],
+                                "type": "string"
+                            },
+                            "WebhookConfig": {
+                                "additionalProperties": false,
+                                "properties": {
+                                    "disabled": {
+                                        "description": "Disabled disables webhook integration for this connection. When true, the GitHub\nApp does not require webhooks:write permission and Grafana will not register or receive\nwebhook events. Use this when Grafana is not reachable from the public internet.",
+                                        "type": "boolean"
                                     }
                                 },
                                 "type": "object"
@@ -3372,7 +3387,7 @@
                                 "additionalProperties": false,
                                 "properties": {
                                     "bitbucket": {
-                                        "$ref": "#/components/schemas/BitbucketConnectionConfig",
+                                        "$ref": "#/components/schemas/BitbucketConfig",
                                         "description": "Bitbucket connection configuration\nOnly applicable when provider is \"bitbucketOAuth\""
                                     },
                                     "description": {
@@ -3380,23 +3395,23 @@
                                         "type": "string"
                                     },
                                     "gitOAuth": {
-                                        "$ref": "#/components/schemas/GitOAuthConnectionConfig",
+                                        "$ref": "#/components/schemas/GitOAuthConfig",
                                         "description": "Generic git OAuth app connection configuration\nOnly applicable when provider is \"gitOAuth\""
                                     },
                                     "github": {
-                                        "$ref": "#/components/schemas/GitHubConnectionConfig",
+                                        "$ref": "#/components/schemas/GitHubConfig",
                                         "description": "GitHub connection configuration\nOnly applicable when provider is \"github\""
                                     },
                                     "githubEnterprise": {
-                                        "$ref": "#/components/schemas/GitHubEnterpriseConnectionConfig",
+                                        "$ref": "#/components/schemas/GitHubEnterpriseConfig",
                                         "description": "GitHub Enterprise Server connection configuration\nOnly applicable when provider is \"githubEnterprise\""
                                     },
                                     "githubEnterpriseOAuth": {
-                                        "$ref": "#/components/schemas/GitHubEnterpriseOAuthConnectionConfig",
+                                        "$ref": "#/components/schemas/GitHubEnterpriseOAuthConfig",
                                         "description": "GitHub Enterprise Server OAuth app connection configuration\nOnly applicable when provider is \"githubEnterpriseOAuth\""
                                     },
                                     "oauth": {
-                                        "$ref": "#/components/schemas/ConnectionOAuthConfig",
+                                        "$ref": "#/components/schemas/OAuthConfig",
                                         "description": "OAuth app configuration shared by all OAuth app providers"
                                     },
                                     "title": {
@@ -3404,24 +3419,15 @@
                                         "type": "string"
                                     },
                                     "type": {
-                                        "description": "The connection provider type",
-                                        "enum": [
-                                            "github",
-                                            "githubEnterprise",
-                                            "githubOAuth",
-                                            "githubEnterpriseOAuth",
-                                            "bitbucketOAuth",
-                                            "gitlabOAuth",
-                                            "gitOAuth"
-                                        ],
-                                        "type": "string"
+                                        "$ref": "#/components/schemas/Type",
+                                        "description": "The connection provider type"
                                     },
                                     "url": {
                                         "description": "The connection URL",
                                         "type": "string"
                                     },
                                     "webhook": {
-                                        "$ref": "#/components/schemas/ConnectionWebhookConfig",
+                                        "$ref": "#/components/schemas/WebhookConfig",
                                         "description": "Webhook configuration for this connection"
                                     }
                                 },

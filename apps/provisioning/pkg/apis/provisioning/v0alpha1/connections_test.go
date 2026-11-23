@@ -16,26 +16,26 @@ func TestConnections_IsGitHub(t *testing.T) {
 			name: "github spec returns true",
 			want: true,
 			connectionInput: ConnectionSpec{
-				GitHub: &GitHubConnectionConfig{},
+				Github: &ConnectionGitHubConfig{},
 			},
 		},
 		{
 			name: "githubEnterprise spec returns true",
 			want: true,
 			connectionInput: ConnectionSpec{
-				GitHubEnterprise: &GitHubEnterpriseConnectionConfig{},
+				GithubEnterprise: &ConnectionGitHubEnterpriseConfig{},
 			},
 		},
 		{
 			name: "oauth spec returns false",
 			connectionInput: ConnectionSpec{
-				OAuth: &ConnectionOAuthConfig{},
+				Oauth: &ConnectionOAuthConfig{},
 			},
 		},
 		{
 			name: "bitbucket spec returns false",
 			connectionInput: ConnectionSpec{
-				Bitbucket: &BitbucketConnectionConfig{},
+				Bitbucket: &ConnectionBitbucketConfig{},
 			},
 		},
 	}

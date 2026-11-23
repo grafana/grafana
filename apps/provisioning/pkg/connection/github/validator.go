@@ -22,13 +22,13 @@ func Validate(_ context.Context, obj runtime.Object) field.ErrorList {
 	}
 
 	// Do nothing if connection is not github.
-	if conn.Spec.Type != provisioning.GithubConnectionType {
+	if conn.Spec.Type != provisioning.ConnectionTypeGithub {
 		return nil
 	}
 
 	var list field.ErrorList
 
-	if conn.Spec.GitHub == nil {
+	if conn.Spec.Github == nil {
 		list = append(
 			list, field.Required(field.NewPath("spec", "github"), "github info must be specified for GitHub connection"),
 		)
@@ -37,7 +37,7 @@ func Validate(_ context.Context, obj runtime.Object) field.ErrorList {
 		return list
 	}
 
-	list = append(list, ValidateGitHubAppCredentials(conn, "GitHub", conn.Spec.GitHub.AppID, conn.Spec.GitHub.InstallationID, field.NewPath("spec", "github"))...)
+	list = append(list, ValidateGitHubAppCredentials(conn, "GitHub", conn.Spec.Github.AppID, conn.Spec.Github.InstallationID, field.NewPath("spec", "github"))...)
 	return list
 }
 

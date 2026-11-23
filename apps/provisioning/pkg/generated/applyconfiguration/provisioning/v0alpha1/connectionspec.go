@@ -18,24 +18,24 @@ type ConnectionSpecApplyConfiguration struct {
 	// The connection provider type
 	Type *provisioningv0alpha1.ConnectionType `json:"type,omitempty"`
 	// The connection URL
-	URL *string `json:"url,omitempty"`
+	Url *string `json:"url,omitempty"`
 	// GitHub connection configuration
 	// Only applicable when provider is "github"
-	GitHub *GitHubConnectionConfigApplyConfiguration `json:"github,omitempty"`
+	Github *ConnectionGitHubConfigApplyConfiguration `json:"github,omitempty"`
 	// GitHub Enterprise Server connection configuration
 	// Only applicable when provider is "githubEnterprise"
-	GitHubEnterprise *GitHubEnterpriseConnectionConfigApplyConfiguration `json:"githubEnterprise,omitempty"`
+	GithubEnterprise *ConnectionGitHubEnterpriseConfigApplyConfiguration `json:"githubEnterprise,omitempty"`
 	// GitHub Enterprise Server OAuth app connection configuration
 	// Only applicable when provider is "githubEnterpriseOAuth"
-	GitHubEnterpriseOAuth *GitHubEnterpriseOAuthConnectionConfigApplyConfiguration `json:"githubEnterpriseOAuth,omitempty"`
+	GithubEnterpriseOAuth *ConnectionGitHubEnterpriseOAuthConfigApplyConfiguration `json:"githubEnterpriseOAuth,omitempty"`
 	// Bitbucket connection configuration
 	// Only applicable when provider is "bitbucketOAuth"
-	Bitbucket *BitbucketConnectionConfigApplyConfiguration `json:"bitbucket,omitempty"`
+	Bitbucket *ConnectionBitbucketConfigApplyConfiguration `json:"bitbucket,omitempty"`
 	// Generic git OAuth app connection configuration
 	// Only applicable when provider is "gitOAuth"
-	GitOAuth *GitOAuthConnectionConfigApplyConfiguration `json:"gitOAuth,omitempty"`
+	GitOAuth *ConnectionGitOAuthConfigApplyConfiguration `json:"gitOAuth,omitempty"`
 	// OAuth app configuration shared by all OAuth app providers
-	OAuth *ConnectionOAuthConfigApplyConfiguration `json:"oauth,omitempty"`
+	Oauth *ConnectionOAuthConfigApplyConfiguration `json:"oauth,omitempty"`
 	// Webhook configuration for this connection
 	Webhook *ConnectionWebhookConfigApplyConfiguration `json:"webhook,omitempty"`
 }
@@ -70,42 +70,42 @@ func (b *ConnectionSpecApplyConfiguration) WithType(value provisioningv0alpha1.C
 	return b
 }
 
-// WithURL sets the URL field in the declarative configuration to the given value
+// WithUrl sets the Url field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the URL field is set to the value of the last call.
-func (b *ConnectionSpecApplyConfiguration) WithURL(value string) *ConnectionSpecApplyConfiguration {
-	b.URL = &value
+// If called multiple times, the Url field is set to the value of the last call.
+func (b *ConnectionSpecApplyConfiguration) WithUrl(value string) *ConnectionSpecApplyConfiguration {
+	b.Url = &value
 	return b
 }
 
-// WithGitHub sets the GitHub field in the declarative configuration to the given value
+// WithGithub sets the Github field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the GitHub field is set to the value of the last call.
-func (b *ConnectionSpecApplyConfiguration) WithGitHub(value *GitHubConnectionConfigApplyConfiguration) *ConnectionSpecApplyConfiguration {
-	b.GitHub = value
+// If called multiple times, the Github field is set to the value of the last call.
+func (b *ConnectionSpecApplyConfiguration) WithGithub(value *ConnectionGitHubConfigApplyConfiguration) *ConnectionSpecApplyConfiguration {
+	b.Github = value
 	return b
 }
 
-// WithGitHubEnterprise sets the GitHubEnterprise field in the declarative configuration to the given value
+// WithGithubEnterprise sets the GithubEnterprise field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the GitHubEnterprise field is set to the value of the last call.
-func (b *ConnectionSpecApplyConfiguration) WithGitHubEnterprise(value *GitHubEnterpriseConnectionConfigApplyConfiguration) *ConnectionSpecApplyConfiguration {
-	b.GitHubEnterprise = value
+// If called multiple times, the GithubEnterprise field is set to the value of the last call.
+func (b *ConnectionSpecApplyConfiguration) WithGithubEnterprise(value *ConnectionGitHubEnterpriseConfigApplyConfiguration) *ConnectionSpecApplyConfiguration {
+	b.GithubEnterprise = value
 	return b
 }
 
-// WithGitHubEnterpriseOAuth sets the GitHubEnterpriseOAuth field in the declarative configuration to the given value
+// WithGithubEnterpriseOAuth sets the GithubEnterpriseOAuth field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the GitHubEnterpriseOAuth field is set to the value of the last call.
-func (b *ConnectionSpecApplyConfiguration) WithGitHubEnterpriseOAuth(value *GitHubEnterpriseOAuthConnectionConfigApplyConfiguration) *ConnectionSpecApplyConfiguration {
-	b.GitHubEnterpriseOAuth = value
+// If called multiple times, the GithubEnterpriseOAuth field is set to the value of the last call.
+func (b *ConnectionSpecApplyConfiguration) WithGithubEnterpriseOAuth(value *ConnectionGitHubEnterpriseOAuthConfigApplyConfiguration) *ConnectionSpecApplyConfiguration {
+	b.GithubEnterpriseOAuth = value
 	return b
 }
 
 // WithBitbucket sets the Bitbucket field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Bitbucket field is set to the value of the last call.
-func (b *ConnectionSpecApplyConfiguration) WithBitbucket(value *BitbucketConnectionConfigApplyConfiguration) *ConnectionSpecApplyConfiguration {
+func (b *ConnectionSpecApplyConfiguration) WithBitbucket(value *ConnectionBitbucketConfigApplyConfiguration) *ConnectionSpecApplyConfiguration {
 	b.Bitbucket = value
 	return b
 }
@@ -113,16 +113,16 @@ func (b *ConnectionSpecApplyConfiguration) WithBitbucket(value *BitbucketConnect
 // WithGitOAuth sets the GitOAuth field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the GitOAuth field is set to the value of the last call.
-func (b *ConnectionSpecApplyConfiguration) WithGitOAuth(value *GitOAuthConnectionConfigApplyConfiguration) *ConnectionSpecApplyConfiguration {
+func (b *ConnectionSpecApplyConfiguration) WithGitOAuth(value *ConnectionGitOAuthConfigApplyConfiguration) *ConnectionSpecApplyConfiguration {
 	b.GitOAuth = value
 	return b
 }
 
-// WithOAuth sets the OAuth field in the declarative configuration to the given value
+// WithOauth sets the Oauth field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the OAuth field is set to the value of the last call.
-func (b *ConnectionSpecApplyConfiguration) WithOAuth(value *ConnectionOAuthConfigApplyConfiguration) *ConnectionSpecApplyConfiguration {
-	b.OAuth = value
+// If called multiple times, the Oauth field is set to the value of the last call.
+func (b *ConnectionSpecApplyConfiguration) WithOauth(value *ConnectionOAuthConfigApplyConfiguration) *ConnectionSpecApplyConfiguration {
+	b.Oauth = value
 	return b
 }
 
