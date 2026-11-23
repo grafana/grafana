@@ -82,10 +82,8 @@ func newCascadeDeleteStorage(store grafanarest.Storage, searcher resourcepb.Reso
 	return base
 }
 
-// cascadeCollectionDeleter rejects collection deletes the registry would run item by item without
-// going through cascadeDeleteStorage.Delete: forced ones, which skip the cascade and the contents
-// check, and any that select a folder with the cascade finalizer, whose delete the cascade
-// controller finishes and must therefore be requested individually.
+// cascadeCollectionDeleter rejects collection deletes, which the registry runs item by item without
+// cascadeDeleteStorage.Delete: forced ones, and any selecting a folder the cascade controller finishes.
 type cascadeCollectionDeleter struct {
 	lister rest.Lister
 	inner  rest.CollectionDeleter
@@ -95,20 +93,17 @@ func (c cascadeCollectionDeleter) DeleteCollection(ctx context.Context, deleteVa
 	if forceDeleteFromDeleteOptions(options) {
 		return nil, apierrors.NewBadRequest("forced collection delete is not supported for folders; delete folders individually")
 	}
-	// The registry stops applying these after the first page, at a page boundary that differs by
-	// deleter, so the folders it selects can't be reproduced reliably here.
+	// The registry drops these after the first page, so its selection can't be reproduced here.
 	if listOptions != nil && (listOptions.ResourceVersion != "" || listOptions.ResourceVersionMatch != "") {
 		return nil, apierrors.NewBadRequest("resourceVersion and resourceVersionMatch are not supported for folder collection deletes")
 	}
-	// Rejecting up front means a refused request deletes nothing, apart from the folder created after
-	// this listing that the check below can still refuse.
+	// Reject up front so a refused request deletes nothing.
 	if name, err := c.firstFinalizerFolder(ctx, listOptions); err != nil {
 		return nil, err
 	} else if name != "" {
 		return nil, errCollectionDeleteFinalizerFolder(name)
 	}
-	// Best-effort backstop for a folder created after the listing, checked on the object about to be
-	// deleted; the registry may already have deleted others by then.
+	// Best-effort backstop for a folder created after the listing; others may already be deleted.
 	return c.inner.DeleteCollection(ctx, func(ctx context.Context, obj runtime.Object) error {
 		if f, ok := obj.(*foldersv1.Folder); ok && hasCascadeDeleteFinalizer(f) {
 			return errCollectionDeleteFinalizerFolder(f.Name)
@@ -124,9 +119,8 @@ func errCollectionDeleteFinalizerFolder(name string) error {
 	return apierrors.NewBadRequest(fmt.Sprintf("folder %q has the cascade-delete finalizer; delete it individually, not as part of a collection", name))
 }
 
-// firstFinalizerFolder returns the name of the first folder the collection delete selects that has
-// the cascade finalizer. It lists like the registry: it follows continue tokens unless the caller
-// asked for a single page.
+// firstFinalizerFolder returns the first selected folder with the cascade finalizer, paging like the
+// registry (one page when the caller sets a limit).
 func (c cascadeCollectionDeleter) firstFinalizerFolder(ctx context.Context, listOptions *metainternalversion.ListOptions) (string, error) {
 	listOpts := &metainternalversion.ListOptions{}
 	if listOptions != nil {

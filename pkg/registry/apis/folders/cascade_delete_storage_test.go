@@ -455,9 +455,8 @@ type fakeFolderStorage struct {
 	// beforeDelete runs at the start of Delete, to simulate a concurrent change.
 	beforeDelete  func()
 	deleteOptions *metav1.DeleteOptions
-	// pageSize, when set, makes List return that many folders by name with a continue token.
-	pageSize int
-	// listCalls records the options of each List call.
+	// pageSize, when set, makes List page by name.
+	pageSize  int
 	listCalls []metainternalversion.ListOptions
 }
 
@@ -746,9 +745,8 @@ func isDryRun(dryRun []string) bool {
 // watchableFolderStorage adds the optional Watcher/CollectionDeleter interfaces to the fake.
 type watchableFolderStorage struct {
 	*fakeFolderStorage
-	watched           bool
-	deletedCollection bool
-	// collectionValidation is the delete validation the last DeleteCollection received.
+	watched              bool
+	deletedCollection    bool
 	collectionValidation rest.ValidateObjectFunc
 }
 
@@ -1679,7 +1677,7 @@ func TestCascadeDelete_RejectsCollectionDeleteOfFinalizerFolders(t *testing.T) {
 	})
 }
 
-// noListMetaLister returns a list whose items can be extracted but whose continue token cannot be read.
+// noListMetaLister returns a list with items but no readable list metadata.
 type noListMetaLister struct{ rest.Lister }
 
 type listWithoutMeta struct {
