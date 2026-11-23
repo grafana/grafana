@@ -8,7 +8,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
-	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/jobqueue"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -16,14 +15,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
-// buildDriver resolves the job queue dependencies from the operator config and
-// hands them to jobqueue.ProvideDriver, which the API server uses as well.
-func buildDriver(
+// buildJobQueue resolves the job queue dependencies from the operator config and
+// hands them to jobqueue.ProvideJobQueue, which the API server uses as well.
+func buildJobQueue(
 	controllerCfg *jobQueueControllerConfig,
 	registry prometheus.Registerer,
 	jobStore jobs.Store,
 	jobHistoryWriter jobs.HistoryWriter,
-) (*jobs.ConcurrentJobDriver, error) {
+) (*jobqueue.Queue, error) {
 	tracer, err := controllerCfg.Tracer()
 	if err != nil {
 		return nil, fmt.Errorf("failed to provide tracing service: %w", err)
@@ -55,7 +54,7 @@ func buildDriver(
 		return nil, err
 	}
 
-	return jobqueue.ProvideDriver(
+	return jobqueue.ProvideJobQueue(
 		jobqueue.Config{
 			ConcurrentDrivers:    controllerCfg.concurrentDrivers,
 			MaxJobTimeout:        controllerCfg.maxJobTimeout,
@@ -66,6 +65,8 @@ func buildDriver(
 			SyncResourceTimeout:  controllerCfg.Settings.ProvisioningSyncResourceTimeout,
 		},
 		jobqueue.Dependencies{
+			Client:              provisioningClient,
+			Subscriber:          controllerCfg.natsSubscriber,
 			Clients:             clients,
 			RepositoryResources: resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister),
 			ResourceLister:      resourceLister,
@@ -76,7 +77,6 @@ func buildDriver(
 			Tracer:              tracer,
 			Registry:            registry,
 			PerformanceEnabled:  performanceEnabled,
-			NATSBacked:          nats.Enabled(controllerCfg.natsSubscriber),
 			ExtraWorkers:        []jobs.Worker{prWorker},
 		},
 	)

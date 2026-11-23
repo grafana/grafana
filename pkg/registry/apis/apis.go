@@ -27,7 +27,6 @@ func ProvideRegistryServiceSink(
 	_ *preferences.APIBuilder,
 	_ *collections.APIBuilder,
 	_ *provisioning.APIBuilder,
-	_ *provisioning.JobQueue,
 	_ *secret.DependencyRegisterer,
 	_ *provisioning.DependencyRegisterer,
 ) *Service {

@@ -97,6 +97,7 @@ func ProvideBackgroundServiceRegistry(
 	folderUIDRepair *libraryelements.FolderUIDRepairService,
 	ssoSettingsBackfill *iamsso.SSOSettingsBackfill,
 	provisioningHistoryJobCleanup *provisioningapis.HistoryJobCleanupService,
+	provisioningJobQueue *provisioningapis.JobQueueService,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service,
 	_ serviceaccounts.Service,
@@ -157,6 +158,7 @@ func ProvideBackgroundServiceRegistry(
 		folderUIDRepair,
 		ssoSettingsBackfill,
 		provisioningHistoryJobCleanup,
+		provisioningJobQueue,
 	)
 }
 

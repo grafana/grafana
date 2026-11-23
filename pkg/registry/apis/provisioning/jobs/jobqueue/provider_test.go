@@ -3,13 +3,19 @@ package jobqueue
 import (
 	"context"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 )
@@ -60,31 +66,57 @@ func TestNewWorkers_PerformanceDisabledSkipsTestJobs(t *testing.T) {
 	}
 }
 
-func TestProvideDriver(t *testing.T) {
-	deps := Dependencies{
-		Store:              jobs.NewMockStore(t),
-		RepoGetter:         jobs.NewMockRepoGetter(t),
-		HistoryWriter:      jobs.NewMockHistoryWriter(t),
-		Tracer:             tracing.NewNoopTracerService(),
-		Registry:           prometheus.NewPedanticRegistry(),
-		PerformanceEnabled: func(context.Context) bool { return false },
+func TestProvideJobQueue(t *testing.T) {
+	cfg := Config{
+		ConcurrentDrivers:    1,
+		MaxJobTimeout:        time.Minute,
+		JobInterval:          30 * time.Second,
+		LeaseRenewalInterval: 20 * time.Second,
+		MaxSyncWorkers:       1,
+	}
+	newDeps := func(t *testing.T, store jobs.Store, objects ...runtime.Object) Dependencies {
+		return Dependencies{
+			Client:             fake.NewClientset(objects...),
+			Store:              store,
+			RepoGetter:         jobs.NewMockRepoGetter(t),
+			HistoryWriter:      jobs.NewMockHistoryWriter(t),
+			Tracer:             tracing.NewNoopTracerService(),
+			Registry:           prometheus.NewPedanticRegistry(),
+			PerformanceEnabled: func(context.Context) bool { return false },
+		}
 	}
 
-	t.Run("builds a driver", func(t *testing.T) {
-		driver, err := ProvideDriver(Config{
-			ConcurrentDrivers:    3,
-			MaxJobTimeout:        time.Minute,
-			JobInterval:          30 * time.Second,
-			LeaseRenewalInterval: 20 * time.Second,
-			MaxSyncWorkers:       1,
-		}, deps)
-		require.NoError(t, err)
-		require.NotNil(t, driver)
+	t.Run("feeds pending jobs from the informer to the driver", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			pending := &provisioning.Job{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "pending"}}
+			claimed := &provisioning.Job{ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns",
+				Name:      "claimed",
+				Labels:    map[string]string{jobs.LabelJobClaim: "123"},
+			}}
+
+			store := jobs.NewMockStore(t)
+			// The job is gone by the time it is claimed, so the driver drops it.
+			store.EXPECT().Claim(mock.Anything, "ns", "pending", mock.Anything).
+				Return(nil, nil, apierrors.NewNotFound(provisioning.JobResourceInfo.GroupResource(), "pending")).Once()
+
+			queue, err := ProvideJobQueue(cfg, newDeps(t, store, pending, claimed))
+			require.NoError(t, err)
+
+			ctx, cancel := context.WithCancel(context.Background())
+			done := make(chan error, 1)
+			go func() { done <- queue.Run(ctx) }()
+
+			synctest.Wait()
+			assert.True(t, queue.HasSynced())
+
+			cancel()
+			require.NoError(t, <-done)
+		})
 	})
 
 	t.Run("rejects an invalid config", func(t *testing.T) {
-		deps.Registry = prometheus.NewPedanticRegistry()
-		_, err := ProvideDriver(Config{ConcurrentDrivers: 0, MaxSyncWorkers: 1}, deps)
+		_, err := ProvideJobQueue(Config{ConcurrentDrivers: 0, MaxSyncWorkers: 1}, newDeps(t, jobs.NewMockStore(t)))
 		require.ErrorContains(t, err, "numDrivers must be greater than 0")
 	})
 }

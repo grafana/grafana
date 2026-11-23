@@ -6,9 +6,13 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"k8s.io/client-go/tools/cache"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
 	deleteresourcespkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/deleteresources"
@@ -43,8 +47,12 @@ type Config struct {
 
 // Dependencies are the services the job queue is built from. They differ
 // between the in-process API server and the standalone operator, which is why
-// callers resolve them and ProvideDriver only wires them together.
+// callers resolve them and ProvideJobQueue only wires them together.
 type Dependencies struct {
+	// Client and Subscriber feed the jobs informer: a NATS-backed one when
+	// nats.Enabled(Subscriber), else an apiserver-backed one.
+	Client              versioned.Interface
+	Subscriber          nats.Subscriber
 	Clients             resources.ClientFactory
 	RepositoryResources resources.RepositoryResourcesFactory
 	ResourceLister      resources.ResourceLister
@@ -56,16 +64,27 @@ type Dependencies struct {
 	Registry            prometheus.Registerer
 	// PerformanceEnabled is evaluated per job to gate the synthetic load-testing worker.
 	PerformanceEnabled func(ctx context.Context) bool
-	NATSBacked         bool
 	// ExtraWorkers are appended to the built-in workers, e.g. the pull request worker.
 	ExtraWorkers []jobs.Worker
 }
 
-// ProvideDriver builds the ConcurrentJobDriver with every built-in job worker.
-func ProvideDriver(cfg Config, deps Dependencies) (*jobs.ConcurrentJobDriver, error) {
-	metrics := jobs.RegisterJobMetrics(deps.Registry)
-	workers := newWorkers(cfg, deps, metrics)
+// Queue is a ConcurrentJobDriver fed by the jobs informer.
+type Queue struct {
+	driver       *jobs.ConcurrentJobDriver
+	source       informer.DeltaSource
+	registration cache.ResourceEventHandlerRegistration
+}
 
+// ProvideJobQueue builds the job queue shared by the provisioning API server and
+// the standalone job queue operator: a ConcurrentJobDriver with every built-in
+// worker, registered on the jobs informer. The informer's periodic resync is the
+// driver's only recovery path for unclaimed jobs, and the NATS-backed source has
+// no cache to replay for late handlers, so the handler is registered here before
+// anything runs.
+//
+// The queue is not started; the caller owns its lifecycle and must call Run.
+func ProvideJobQueue(cfg Config, deps Dependencies) (*Queue, error) {
+	metrics := jobs.RegisterJobMetrics(deps.Registry)
 	driver, err := jobs.NewConcurrentJobDriver(
 		cfg.ConcurrentDrivers,
 		cfg.MaxJobTimeout,
@@ -76,15 +95,32 @@ func ProvideDriver(cfg Config, deps Dependencies) (*jobs.ConcurrentJobDriver, er
 		deps.HistoryWriter,
 		deps.Registry,
 		&metrics,
-		deps.NATSBacked,
-		workers...,
+		nats.Enabled(deps.Subscriber),
+		newWorkers(cfg, deps, metrics)...,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("create concurrent job driver: %w", err)
 	}
 	driver.SetTracer(deps.Tracer)
 
-	return driver, nil
+	source := informer.NewJobDeltaSource(deps.Subscriber, deps.Client, cfg.JobInterval, deps.Registry)
+	registration, err := source.AddEventHandler(driver.EventHandler())
+	if err != nil {
+		return nil, fmt.Errorf("add job event handler: %w", err)
+	}
+
+	return &Queue{driver: driver, source: source, registration: registration}, nil
+}
+
+// HasSynced reports whether the jobs informer has delivered its initial list to the driver.
+func (q *Queue) HasSynced() bool {
+	return q.registration.HasSynced()
+}
+
+// Run starts the jobs informer and processes jobs until ctx is done.
+func (q *Queue) Run(ctx context.Context) error {
+	go q.source.Run(ctx.Done())
+	return q.driver.Run(ctx)
 }
 
 func newWorkers(cfg Config, deps Dependencies, metrics jobs.JobMetrics) []jobs.Worker {

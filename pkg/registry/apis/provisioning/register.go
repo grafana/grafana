@@ -143,7 +143,6 @@ type APIBuilder struct {
 	// Extras provides additional functionality to the API.
 	extras       []Extra
 	extraWorkers []jobs.Worker
-	jobQueue     *JobQueue
 
 	restConfigGetter              func(context.Context) (*clientrest.Config, error)
 	registry                      prometheus.Registerer
@@ -1162,15 +1161,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				jobHistoryWriter,
 				jobClaimExpiry,
 			)
-
-			// The job queue is attached by Wire but can only start here, once the
-			// client, job store and status patcher it depends on exist.
-			if b.jobQueue == nil {
-				return fmt.Errorf("provisioning job queue is not registered")
-			}
-			if err := b.jobQueue.start(postStartHookCtx.Context, b, c, jobHistoryWriter); err != nil {
-				return fmt.Errorf("start job queue: %w", err)
-			}
 
 			go func() {
 				if err := jobCleanupController.Run(postStartHookCtx.Context); err != nil {
