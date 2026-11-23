@@ -1,27 +1,25 @@
 import { t } from '@grafana/i18n';
-import { Badge } from '@grafana/ui';
+import { Button } from '@grafana/ui';
 
 interface RuleSequencePillProps {
-  interval?: string;
+  interval: string;
+  onClick: () => void;
 }
 
-export function RuleSequencePill({ interval }: RuleSequencePillProps) {
-  const text = interval
-    ? t('alerting.gma-rule-list.sequence-pill.label-with-interval', 'Rule sequence · {{interval}}', {
-        interpolation: { escapeValue: false },
-        interval,
-      })
-    : t('alerting.gma-rule-list.sequence-pill.label', 'Rule sequence');
-  const tooltip = interval
-    ? t(
-        'alerting.gma-rule-list.sequence-pill.tooltip-with-interval',
-        'Evaluated every {{interval}} by its rule sequence',
-        {
-          interpolation: { escapeValue: false },
-          interval,
-        }
-      )
-    : t('alerting.gma-rule-list.sequence-pill.tooltip', 'Evaluated as part of a rule sequence');
+export function RuleSequencePill({ interval, onClick }: RuleSequencePillProps) {
+  const text = t('alerting.gma-rule-list.sequence-pill.label-with-interval', 'Rule sequence · {{interval}}', {
+    interpolation: { escapeValue: false },
+    interval,
+  });
+  const tooltip = t(
+    'alerting.gma-rule-list.sequence-pill.tooltip-with-interval',
+    'Evaluated every {{interval}} by its rule sequence',
+    { interpolation: { escapeValue: false }, interval }
+  );
 
-  return <Badge color="darkgrey" icon="multi-step" text={text} tooltip={tooltip} />;
+  return (
+    <Button size="sm" variant="secondary" fill="outline" icon="multi-step" tooltip={tooltip} onClick={onClick}>
+      {text}
+    </Button>
+  );
 }

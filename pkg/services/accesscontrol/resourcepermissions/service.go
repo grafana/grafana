@@ -918,7 +918,8 @@ func (a *ActionSetSvc) RegisterActionSets(ctx context.Context, pluginID string, 
 }
 
 func isActionSetEnabledResource(action string) bool {
-	return strings.HasPrefix(action, dashboards.ScopeDashboardsRoot) ||
+	return strings.HasPrefix(action, "secret.securevalues:") ||
+		strings.HasPrefix(action, dashboards.ScopeDashboardsRoot) ||
 		strings.HasPrefix(action, notebooks.ScopeNotebooksRoot) ||
 		strings.HasPrefix(action, folder.ScopeFoldersRoot) ||
 		strings.HasPrefix(action, accesscontrol.AlertingRoutesKind) ||

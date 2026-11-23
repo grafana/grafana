@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { useState } from 'react';
+import { testWithStarsUser } from 'test/helpers/testWithStarsUser';
 import { render, screen, waitFor } from 'test/test-utils';
 
 import { config, setBackendSrv } from '@grafana/runtime';
@@ -102,6 +103,8 @@ function setupSearchMock(items: SearchRow[]) {
   mockedGetGrafanaSearcher.mockReturnValue(mockSearcher as unknown as GrafanaSearcher);
   return mockSearcher;
 }
+
+testWithStarsUser();
 
 describe('useNavTree', () => {
   beforeEach(() => {

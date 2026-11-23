@@ -1,0 +1,55 @@
+# Resources the smoke test does not create, as "<resource>.<group>": "<reason>".
+# Prefer adding a fixture in testdata/<group>/<resource>.yaml over skipping.
+# Each version skips what its own skip.yaml lists, in every phase.
+# "feature_flags" lists resources that need a feature flag, as "<resource>.<group>": "<flag>".
+# They are skipped while the flag is off in the running build; once it is on, the setup
+# phase fails until the entry is removed, so the resource gets tested.
+# Entries under "all" apply to every build, "oss" and "enterprise" only to that build.
+# "legacy_storage" lists resources served from legacy storage that does not keep labels
+# and annotations, check resourceVersions, or support every patch: they are only read,
+# updated, and deleted. Every other resource must keep its metadata, and a listed
+# resource that starts keeping labels fails the test until it is removed from the list.
+# "api_version_mismatch" lists resources the server returns in another apiVersion than
+# requested, with the version and the kind of read ("get", "list", or "list item"); only
+# that exact read is waived, and it fails once the server returns the requested version,
+# until the entry is removed.
+# Entries for a resource this build does not serve fail too: the Enterprise build checks
+# every section but oss, the OSS build checks all and oss.
+# "stale_writes_accepted" lists resources that are tested, except that their storage
+# does not reject writes with a stale resourceVersion; once it does, the test fails
+# until the entry is removed.
+feature_flags:
+  notebooks.dashboard.grafana.app: dashboard.notebooks
+  variables.dashboard.grafana.app: grafana.dashboardGlobalVariables
+  dashboardpreferences.dashboard.grafana.app: grafana.dashboardPreferences
+  dashboardtemplates.dashboardtemplates.grafana.app: grafana.customDashboardTemplates
+  comments.comments.grafana.app: dashboard.notebookComments
+all:
+  configs.notifications.alerting.grafana.app: singleton seeded by the server, cannot be created through the API
+  configs.rules.alerting.grafana.app: singleton seeded by the server, cannot be created through the API
+  plugins.plugins.grafana.app: written by the plugin installer only, users are not allowed to create plugins
+  connections.provisioning.grafana.app: needs a reachable external git provider
+  repositories.provisioning.grafana.app: needs a reachable external git repository
+  jobs.provisioning.grafana.app: needs a repository, and is processed and removed by the job controller
+  historicjobs.provisioning.grafana.app: written by the job controller from finished jobs
+  user-storage.userstorage.grafana.app: name must embed the calling user's UID, which is not known before the server starts
+  checktypes.advisor.grafana.app: registered by the advisor app, which removes unknown check types when it starts
+  stars.collections.grafana.app: name must be user-<uid> of the caller, and the admin UID is not known before the server starts
+  preferences.preferences.grafana.app: only created by PUT to a well-known name (namespace, user-<uid>, team-<uid>), not by POST
+  rulesequences.rules.alerting.grafana.app: delete finishes asynchronously through a finalizer, and until then the rules in the sequence cannot be deleted
+oss:
+  teamlbacrules.iam.grafana.app: served but not implemented in OSS builds
+enterprise:
+  teamlbacrules.iam.grafana.app: needs an existing datasource and team, which the smoke test does not create
+  keepers.secret.grafana.app: needs an external secret manager
+legacy_storage:
+  librarypanels.dashboard.grafana.app: served from legacy SQL by default
+  inhibitionrules.notifications.alerting.grafana.app: stored in the alertmanager configuration
+  receivers.notifications.alerting.grafana.app: stored in the alertmanager configuration
+  routingtrees.notifications.alerting.grafana.app: stored in the alertmanager configuration
+  templategroups.notifications.alerting.grafana.app: stored in the alertmanager configuration
+  timeintervals.notifications.alerting.grafana.app: stored in the alertmanager configuration
+  alertrules.rules.alerting.grafana.app: stored in the legacy alert rule tables
+  recordingrules.rules.alerting.grafana.app: stored in the legacy alert rule tables
+stale_writes_accepted:
+  securevalues.secret.grafana.app: the secret store does not check the resourceVersion on update

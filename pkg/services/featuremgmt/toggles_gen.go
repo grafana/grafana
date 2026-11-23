@@ -147,6 +147,10 @@ const (
 	// Enable folder.grafana.app cascade deletion: opt-in non-empty delete via gracePeriodSeconds=0. Until cascade reconciliation exists, deleting a non-empty folder removes only the folder and leaves child dashboards, nested folders, and other contained resources orphaned
 	FlagKubernetesFolderCascadeDelete = "kubernetesFolderCascadeDelete"
 
+	// FlagFolderPendingDeletionWrites
+	// Record durable pending folder deletions before sending folder deletes to storage
+	FlagFolderPendingDeletionWrites = "folder.pendingDeletionWrites"
+
 	// FlagFolderAsyncCascadeDeleteThroughController
 	// Enable finalizer-driven asynchronous cascade deletion of folder.grafana.app folders: deleting a folder marks it terminating and a controller removes its descendants, reporting progress in status.cascadeDelete
 	FlagFolderAsyncCascadeDeleteThroughController = "folder.asyncCascadeDeleteThroughController"
@@ -1065,4 +1069,8 @@ const (
 	// FlagDatasourcesGatewayRateLimits
 	// Enable support for query gateway rate limits
 	FlagDatasourcesGatewayRateLimits = "datasources.gatewayRateLimits"
+
+	// FlagDatasourcesGatewayQueryUsage
+	// Record billed query usage (Mimir samples read, Loki bytes processed) in query gateway audit events
+	FlagDatasourcesGatewayQueryUsage = "datasources.gatewayQueryUsage"
 )
