@@ -1,185 +1,190 @@
-import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
+import { type GrafanaConfig, locationUtil } from '@grafana/data';
+import { type ResourceListItem, type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
-import { createGrafanaLinkResolver } from './markdownResourceLinks';
+import { rewriteRelativeMarkdownLinks } from './markdownLinks';
+import { resolveMarkdownResourceLinks } from './markdownResourceLinks';
 
-function resource(overrides: Partial<ResourceListItem>): ResourceListItem {
-  return { group: '', hash: '', name: '', path: '', resource: '', ...overrides };
+const repository: RepositoryView = {
+  name: 'repo',
+  type: 'github',
+  url: 'https://github.com/owner/repo',
+  branch: 'main',
+  title: 'Repo',
+  target: 'folder',
+  workflows: [],
+};
+
+function item(
+  path: string,
+  name: string,
+  resource = 'dashboards',
+  group = resource === 'folders' ? 'folder.grafana.app' : 'dashboard.grafana.app'
+): ResourceListItem {
+  return { path, name, resource, group, hash: '' };
 }
 
-describe('createGrafanaLinkResolver', () => {
-  it('resolves a dashboard file to its in-app dashboard route', () => {
-    const resolve = createGrafanaLinkResolver(
-      [resource({ resource: 'dashboards', name: 'abc', path: 'team-a/cpu.json' })],
-      undefined
-    );
-
-    expect(resolve('team-a/cpu.json')).toBe('/d/abc');
+function rewrite(links: string[], root = '', type: RepositoryView['type'] = 'github') {
+  return rewriteRelativeMarkdownLinks(links.map((href, i) => `<a href="${href}">link ${i}</a>`).join(''), {
+    repository: { ...repository, type, path: root },
+    baseDirInRepo: [root, 'team'].filter(Boolean).join('/'),
   });
+}
 
-  it('resolves a folder directory link to its in-app folder route', () => {
-    const resolve = createGrafanaLinkResolver(
-      [resource({ resource: 'folders', name: 'fold1', path: 'team-a' })],
-      undefined
-    );
+function anchors(html: string) {
+  return [...new DOMParser().parseFromString(html, 'text/html').querySelectorAll('a')];
+}
 
-    // Directory links carry a trailing slash from the markdown resolver.
-    expect(resolve('team-a/')).toBe('/dashboards/f/fold1');
-    expect(resolve('team-a')).toBe('/dashboards/f/fold1');
-  });
-
-  it('resolves a link to a folder _folder.json to the folder it describes', () => {
-    const resolve = createGrafanaLinkResolver(
-      [resource({ resource: 'folders', name: 'fold1', path: 'team-a' })],
-      undefined
-    );
-
-    expect(resolve('team-a/_folder.json')).toBe('/dashboards/f/fold1');
-  });
-
-  it('normalizes a trailing slash on the resource path', () => {
-    const resolve = createGrafanaLinkResolver(
-      [resource({ resource: 'folders', name: 'fold1', path: 'team-a/' })],
-      undefined
-    );
-
-    expect(resolve('team-a')).toBe('/dashboards/f/fold1');
-  });
-
-  it('resolves a playlist to its edit route', () => {
-    const resolve = createGrafanaLinkResolver(
-      [resource({ resource: 'playlists', name: 'pl1', path: 'playlists/weekly.json' })],
-      undefined
-    );
-
-    expect(resolve('playlists/weekly.json')).toBe('/playlists/edit/pl1');
-  });
-
-  it('returns undefined for kinds without a per-item route (library panels)', () => {
-    const resolve = createGrafanaLinkResolver(
-      [resource({ resource: 'librarypanels', name: 'lp1', path: 'panels/graph.json' })],
-      undefined
-    );
-
-    expect(resolve('panels/graph.json')).toBeUndefined();
-  });
-
-  it('returns undefined for a path with no synced resource', () => {
-    const resolve = createGrafanaLinkResolver(
-      [resource({ resource: 'dashboards', name: 'abc', path: 'team-a/cpu.json' })],
-      undefined
-    );
-
-    expect(resolve('team-a/notes.md')).toBeUndefined();
-    expect(resolve('')).toBeUndefined();
-  });
-
-  it('resolves a root _folder.json link to the repository root folder', () => {
-    // The root folder has an empty path; joined with the configured root it keys
-    // at the configured root, which a root `_folder.json` link resolves to.
-    const resolve = createGrafanaLinkResolver(
-      [resource({ resource: 'folders', name: 'root-folder', path: '' })],
-      'dev/resources'
-    );
-
-    expect(resolve('dev/resources/_folder.json')).toBe('/dashboards/f/root-folder');
-  });
-
-  it('resolves a root _folder.json link when the repository has no configured path', () => {
-    const resolve = createGrafanaLinkResolver(
-      [resource({ resource: 'folders', name: 'root-folder', path: '' })],
-      undefined
-    );
-
-    expect(resolve('_folder.json')).toBe('/dashboards/f/root-folder');
-  });
-
-  it('matches an absolute (local repo) configured path against the leading-slash-stripped link', () => {
-    // A `local` repo's configured root is an absolute filesystem path; the
-    // rewriter strips the leading slash, so the resolver must too.
-    const resolve = createGrafanaLinkResolver(
-      [resource({ resource: 'dashboards', name: 'abc', path: 'team-a/cpu.json' })],
-      '/data/repo'
-    );
-
-    expect(resolve('data/repo/team-a/cpu.json')).toBe('/d/abc');
-  });
-
-  it('returns undefined when the matched resource has no name', () => {
-    // A nameless entry would otherwise build a broken route like `/d/`.
-    const resolve = createGrafanaLinkResolver(
-      [resource({ resource: 'dashboards', name: '', path: 'team-a/cpu.json' })],
-      undefined
-    );
-
-    expect(resolve('team-a/cpu.json')).toBeUndefined();
-  });
-
-  it('does not match a non-metadata file against a root-keyed entry', () => {
-    // A resource keyed at the repo root ("/") must not be returned for an
-    // unrelated file whose folder-metadata fallback resolves to an empty dir.
-    const resolve = createGrafanaLinkResolver([resource({ resource: 'folders', name: 'root', path: '/' })], undefined);
-
-    expect(resolve('team-a/cpu.json')).toBeUndefined();
-  });
-
-  it('joins the repository configured path when matching resource paths', () => {
-    // Resource paths from the API are relative to the configured root; the paths
-    // passed to the resolver are full repo-root paths that include that prefix.
-    const resolve = createGrafanaLinkResolver(
-      [resource({ resource: 'dashboards', name: 'abc', path: 'team-a/cpu.json' })],
-      'grafana'
-    );
-
-    expect(resolve('grafana/team-a/cpu.json')).toBe('/d/abc');
-    expect(resolve('team-a/cpu.json')).toBeUndefined();
-  });
-
-  describe('markdown docs', () => {
-    it('resolves a markdown doc to its containing folder page with a docTab param', () => {
-      const resolve = createGrafanaLinkResolver(
-        [resource({ resource: 'folders', name: 'fold1', path: 'team-a' })],
-        undefined
-      );
-
-      expect(resolve('team-a/CONTRIBUTING.md')).toBe('/dashboards/f/fold1?docTab=CONTRIBUTING.md');
+describe('resolveMarkdownResourceLinks', () => {
+  beforeEach(() => {
+    locationUtil.initialize({
+      config: { appSubUrl: '' } as GrafanaConfig,
+      getTimeRangeForUrl: jest.fn(),
+      getVariablesUrlParams: jest.fn(),
     });
+  });
 
-    it('resolves a README in the repository root to the root folder page', () => {
-      const resolve = createGrafanaLinkResolver(
-        [resource({ resource: 'folders', name: 'root-folder', path: '' })],
-        undefined
-      );
-
-      expect(resolve('README.md')).toBe('/dashboards/f/root-folder?docTab=README.md');
+  it('deduplicates exact paths across files, folders, metadata, and Markdown docs', async () => {
+    const lookup = jest.fn().mockResolvedValue({
+      items: [item('team/cpu.json', 'cpu'), item('team/', 'folder', 'folders'), item('/', 'repo', 'folders')],
     });
+    const result = await resolveMarkdownResourceLinks(
+      rewrite([
+        './cpu.json',
+        'cpu.json?var-env=prod#panel-1',
+        './',
+        './_folder.json',
+        './CONTRIBUTING.md#rules',
+        '../README.md',
+        '/',
+      ]),
+      lookup
+    );
 
-    it('encodes a doc file name with spaces in the docTab param', () => {
-      const resolve = createGrafanaLinkResolver(
-        [resource({ resource: 'folders', name: 'fold1', path: 'team-a' })],
-        undefined
-      );
+    expect(lookup.mock.calls).toEqual([[['team/cpu.json', 'team/', '/']]]);
+    expect(anchors(result).map((a) => a.getAttribute('href'))).toEqual([
+      '/d/cpu',
+      '/d/cpu?var-env=prod#panel-1',
+      '/dashboards/f/folder',
+      '/dashboards/f/folder',
+      '/dashboards/f/folder?docTab=CONTRIBUTING.md#rules',
+      '/dashboards/f/repo?docTab=README.md',
+      '/dashboards/f/repo',
+    ]);
+    for (const anchor of anchors(result)) {
+      expect(anchor.getAttribute('target')).toBeNull();
+      expect(anchor.getAttribute('rel')).toBeNull();
+    }
+  });
 
-      expect(resolve('team-a/Release Notes.md')).toBe('/dashboards/f/fold1?docTab=Release%20Notes.md');
+  it('strips the configured root and leaves paths outside it on the host', async () => {
+    const lookup = jest.fn().mockResolvedValue({ items: [item('team/cpu.yaml', 'cpu'), item('/', 'root', 'folders')] });
+    const result = await resolveMarkdownResourceLinks(
+      rewrite(['./cpu.yaml', '../', '../../outside.json', '/ops/resources-other/cpu.json'], 'ops/resources'),
+      lookup,
+      '/ops/resources/'
+    );
+
+    expect(lookup.mock.calls).toEqual([[['team/cpu.yaml', '/']]]);
+    expect(anchors(result).map((a) => a.getAttribute('href'))).toEqual([
+      '/d/cpu',
+      '/dashboards/f/root',
+      'https://github.com/owner/repo/blob/main/ops/outside.json',
+      'https://github.com/owner/repo/blob/main/ops/resources-other/cpu.json',
+    ]);
+  });
+
+  it('batches more than 50 unique paths and resolves every batch', async () => {
+    const paths = Array.from({ length: 103 }, (_, i) => `team/${i}.json`);
+    const lookup = jest.fn(async (paths: string[]) => ({ items: paths.map((path) => item(path, path.split('/')[1])) }));
+    const result = await resolveMarkdownResourceLinks(rewrite(paths.map((path) => '/' + path)), lookup);
+
+    expect(lookup.mock.calls).toEqual([[paths.slice(0, 50)], [paths.slice(50, 100)], [paths.slice(100)]]);
+    expect(anchors(result).map((a) => a.getAttribute('href'))).toEqual(paths.map((_, i) => `/d/${i}.json`));
+  });
+
+  it('keeps denied, missing, ambiguous, unsupported, and wrong-group results on the host', async () => {
+    const links = [
+      './allowed.json',
+      './denied.json',
+      './missing.json',
+      './duplicate.json',
+      './unsupported.json',
+      './foreign.json',
+    ];
+    const lookup = jest.fn().mockResolvedValue({
+      items: [
+        item('team/allowed.json', 'allowed'),
+        item('team/duplicate.json', 'a'),
+        item('team/duplicate.json', 'b'),
+        item('team/unsupported.json', 'panel', 'librarypanels'),
+        item('team/foreign.json', 'foreign', 'dashboards', 'other.group'),
+        item('not-requested.json', 'not-requested'),
+      ],
     });
+    const result = anchors(await resolveMarkdownResourceLinks(rewrite(links), lookup));
 
-    it('joins the configured repository path when resolving a doc folder', () => {
-      const resolve = createGrafanaLinkResolver(
-        [resource({ resource: 'folders', name: 'fold1', path: 'team-a' })],
-        'grafana'
-      );
+    expect(result.map((a) => a.getAttribute('href'))).toEqual([
+      '/d/allowed',
+      ...links.slice(1).map((path) => 'https://github.com/owner/repo/blob/main/team/' + path.slice(2)),
+    ]);
+    expect(result[1].getAttribute('target')).toBe('_blank');
+  });
 
-      expect(resolve('grafana/team-a/SECURITY.md')).toBe('/dashboards/f/fold1?docTab=SECURITY.md');
+  it('does not send external URLs, images, anchors, or unsupported paths', async () => {
+    const lookup = jest.fn();
+    const original = rewrite([
+      'https://example.com/cpu.json',
+      '#heading',
+      'image.png',
+      'LICENSE',
+      './.hidden/a.json',
+      './bad%25name.json',
+    ]);
+    expect(await resolveMarkdownResourceLinks(original, lookup)).toBe(original);
+    expect(lookup).not.toHaveBeenCalled();
+  });
+
+  it('resolves local repository links without needing a host URL', async () => {
+    const lookup = jest.fn().mockResolvedValue({ items: [item('team/cpu.json', 'cpu')] });
+    const result = await resolveMarkdownResourceLinks(rewrite(['./cpu.json'], '', 'local'), lookup);
+    expect(anchors(result)[0].getAttribute('href')).toBe('/d/cpu');
+  });
+
+  it('honors the Grafana subpath and preserves document query and fragment', async () => {
+    locationUtil.initialize({
+      config: { appSubUrl: '/grafana' } as GrafanaConfig,
+      getTimeRangeForUrl: jest.fn(),
+      getVariablesUrlParams: jest.fn(),
     });
+    const lookup = jest.fn().mockResolvedValue({ items: [item('team/', 'folder', 'folders')] });
+    const result = await resolveMarkdownResourceLinks(
+      rewrite(['./Release%20Notes.md?orgId=1&docTab=old#changes']),
+      lookup
+    );
+    expect(anchors(result)[0].getAttribute('href')).toBe(
+      '/grafana/dashboards/f/folder?orgId=1&docTab=Release+Notes.md#changes'
+    );
+  });
 
-    it('returns undefined when the doc folder is not a synced folder', () => {
-      // Only a dashboard is synced here; the doc's directory has no folder resource,
-      // so the caller falls back to the host link.
-      const resolve = createGrafanaLinkResolver(
-        [resource({ resource: 'dashboards', name: 'abc', path: 'team-a/cpu.json' })],
-        undefined
-      );
+  it('does not accept resolver attributes supplied by Markdown authors', async () => {
+    const lookup = jest.fn();
+    const html = rewriteRelativeMarkdownLinks(
+      '<a href="https://example.com" data-provisioning-repo-path="secret.json" data-provisioning-repo-suffix="?secret" data-provisioning-route="/d/secret">external</a>',
+      { repository, baseDirInRepo: '' }
+    );
+    const result = await resolveMarkdownResourceLinks(html, lookup);
+    expect(lookup).not.toHaveBeenCalled();
+    expect(result).toBe('<a href="https://example.com">external</a>');
+  });
 
-      expect(resolve('team-a/NOTES.md')).toBeUndefined();
-    });
+  it('rejects failed lookups without returning a partially resolved document', async () => {
+    const lookup = jest
+      .fn()
+      .mockResolvedValueOnce({ items: [item('team/0.json', 'first')] })
+      .mockRejectedValueOnce(new Error('unavailable'));
+    await expect(
+      resolveMarkdownResourceLinks(rewrite(Array.from({ length: 51 }, (_, i) => `./${i}.json`)), lookup)
+    ).rejects.toThrow('unavailable');
+    expect(lookup).toHaveBeenCalledTimes(2);
   });
 });

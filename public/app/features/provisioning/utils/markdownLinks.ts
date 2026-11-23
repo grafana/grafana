@@ -15,10 +15,12 @@ const SCHEME_RE = /^[a-z][a-z0-9+\-.]*:/i;
  * Attribute stamped on links whose target could be viewed in-app: a Grafana
  * resource (JSON/YAML files or folder directories) or a `.md` doc (which opens
  * as a tab on its containing folder's page). It carries the resolved repo path;
- * the README click handler reads it to lazily resolve the link to the in-app page
- * — untagged links (images, other files, external) always open the host URL.
+ * the batch resolver uses it to resolve the link to the in-app page. Untagged
+ * links (images, other files, external) retain their original destinations.
  */
 export const RESOURCE_PATH_ATTR = 'data-provisioning-repo-path';
+export const RESOURCE_SUFFIX_ATTR = 'data-provisioning-repo-suffix';
+export const RESOURCE_ROUTE_ATTR = 'data-provisioning-route';
 
 /**
  * Walk the rendered Markdown HTML and rewrite relative URLs (`<a href>` and
@@ -39,6 +41,13 @@ export function rewriteRelativeMarkdownLinks(html: string, options: RewriteOptio
   }
 
   const doc = new DOMParser().parseFromString(html, 'text/html');
+
+  // These attributes belong to the resolver, not to author-supplied HTML.
+  doc.querySelectorAll('a').forEach((anchor) => {
+    anchor.removeAttribute(RESOURCE_PATH_ATTR);
+    anchor.removeAttribute(RESOURCE_SUFFIX_ATTR);
+    anchor.removeAttribute(RESOURCE_ROUTE_ATTR);
+  });
 
   doc.querySelectorAll('a[href]').forEach((anchor) => {
     const href = anchor.getAttribute('href');
@@ -68,11 +77,13 @@ export function rewriteRelativeMarkdownLinks(html: string, options: RewriteOptio
       anchor.removeAttribute('href');
     }
 
-    // Tag JSON/YAML/folder/markdown links so the README click handler can resolve
-    // them to the in-app Grafana page. Done regardless of the host URL so links in
-    // repos without one (local/git) still resolve via the resource listing.
+    // Tag JSON/YAML/folder/markdown links so the README can resolve
+    // them in a batch, including in repositories with no host URL (local/git).
     if (isResourceLinkCandidate(result.path)) {
       anchor.setAttribute(RESOURCE_PATH_ATTR, result.path);
+      if (result.suffix) {
+        anchor.setAttribute(RESOURCE_SUFFIX_ATTR, result.suffix);
+      }
     }
   });
 
@@ -136,7 +147,7 @@ function resolveRepoRelativePath(baseDir: string, relPath: string): { path: stri
   const trailingSlash = decoded.endsWith('/') ? '/' : '';
 
   if (decoded.startsWith('/')) {
-    return { path: stripLeadingSlashes(decoded), suffix };
+    return { path: stripLeadingSlashes(decoded) || '/', suffix };
   }
 
   const baseParts = baseDir.split('/').filter(Boolean);
