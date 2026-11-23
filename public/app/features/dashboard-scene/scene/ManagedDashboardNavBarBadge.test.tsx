@@ -126,9 +126,13 @@ describe('ManagedDashboardNavBarBadge', () => {
     mockRepositories([readOnlyRepo]);
 
     const dashboard = buildDashboard({ kind: ManagerKind.Repo, id: 'repo-main' });
-    render(<ManagedDashboardNavBarBadge dashboard={dashboard} />);
+    const { user } = render(<ManagedDashboardNavBarBadge dashboard={dashboard} />);
 
-    expect(await screen.findByTestId('icon-exchange-alt')).toBeInTheDocument();
+    // The unlocked badge renders while the repository settings are in flight, so wait for the
+    // fetched title before reading anything into the missing lock.
+    await user.hover(await screen.findByTestId('icon-exchange-alt'));
+
+    expect(await screen.findByText('Managed by: Repository Main Repo')).toBeInTheDocument();
     expect(screen.queryByTestId('icon-exchange-alt-lock')).not.toBeInTheDocument();
   });
 

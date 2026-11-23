@@ -15,7 +15,7 @@ import { resourceKindInfos } from 'app/features/provisioning/utils/resourceKinds
 import { type Playlist, useGetPlaylistQuery, useReplacePlaylistMutation } from '../../api/clients/playlist/v1';
 
 import { PlaylistForm } from './PlaylistForm';
-import { PLAYLISTS_URL } from './utils';
+import { PLAYLISTS_URL, useCanWritePlaylists } from './utils';
 
 export interface RouteParams {
   uid: string;
@@ -26,6 +26,9 @@ export const PlaylistEditPage = () => {
   const { data, isLoading, isError, error } = useGetPlaylistQuery({ name: uid });
   const [replacePlaylist] = useReplacePlaylistMutation();
   const { isAvailable, repositories } = useResourceRepositorySelection(resourceKindInfos.playlist);
+  // The edit route has no write guard, so a viewer can open it; only a user who could otherwise
+  // save needs to be told why they can't.
+  const canWrite = useCanWritePlaylists();
   // Holds the edited playlist while the provisioning save drawer is open.
   const [provisionedPlaylist, setProvisionedPlaylist] = useState<Playlist | undefined>();
 
@@ -57,8 +60,7 @@ export const PlaylistEditPage = () => {
       {data && isManaged(data) && (
         <AppChromeUpdate
           breadcrumbActions={
-            // Reaching the edit page already means the playlist is this user's to change.
-            <ManagedResourceBreadcrumbBadge resource={data} canEdit writesBackToRepository />
+            <ManagedResourceBreadcrumbBadge resource={data} canEdit={canWrite} writesBackToRepository />
           }
         />
       )}

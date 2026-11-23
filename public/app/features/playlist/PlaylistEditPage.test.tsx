@@ -6,6 +6,7 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { locationService } from '@grafana/runtime';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 import { useResourceRepositorySelection } from 'app/features/provisioning/hooks/useResourceRepositorySelection';
 
 import { createFetchResponse } from '../../../test/helpers/createFetchResponse';
@@ -69,6 +70,16 @@ function BreadcrumbActions() {
 }
 
 describe('PlaylistEditPage', () => {
+  let originalIsEditor: boolean;
+
+  beforeEach(() => {
+    originalIsEditor = contextSrv.isEditor;
+  });
+
+  afterEach(() => {
+    contextSrv.isEditor = originalIsEditor;
+  });
+
   describe('when mounted', () => {
     it('then it should load playlist and header should be correct', async () => {
       await getTestContext();
@@ -97,10 +108,21 @@ describe('PlaylistEditPage', () => {
     });
 
     it('then it should lock the badge for a manager that does not allow edits', async () => {
+      contextSrv.isEditor = true;
       await getTestContext({ 'grafana.app/managedBy': 'terraform' });
 
       expect(await screen.findByRole('heading', { name: /edit playlist/i })).toBeInTheDocument();
       expect(await screen.findByTestId('icon-exchange-alt-lock')).toBeInTheDocument();
+    });
+
+    // The edit route has no write guard, so a viewer reaching it directly must not be told the
+    // playlist is read-only for them — nothing here was theirs to save in the first place.
+    it('then it should not lock the badge for a user who cannot write playlists', async () => {
+      contextSrv.isEditor = false;
+      await getTestContext({ 'grafana.app/managedBy': 'terraform' });
+
+      expect(await screen.findByTestId('icon-exchange-alt')).toBeInTheDocument();
+      expect(screen.queryByTestId('icon-exchange-alt-lock')).not.toBeInTheDocument();
     });
   });
 

@@ -1,3 +1,4 @@
+import { type UserEvent } from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { render, screen } from 'test/test-utils';
 
@@ -46,6 +47,17 @@ function managedBy(kind: ManagerKind, { allowsEdits = false } = {}): ManagedReso
 const LOCK = 'icon-exchange-alt-lock';
 const NO_LOCK = 'icon-exchange-alt';
 
+/**
+ * The unlocked badge is already on screen while the repository settings are in flight, so an
+ * absent lock only means something once the fetched title has replaced the manager id.
+ */
+async function expectUnlockedOnceLoaded(user: UserEvent) {
+  await user.hover(await screen.findByTestId(NO_LOCK));
+
+  expect(await screen.findByText('Managed by: Repository My Repo')).toBeInTheDocument();
+  expect(screen.queryByTestId(LOCK)).not.toBeInTheDocument();
+}
+
 describe('ManagedResourceBreadcrumbBadge', () => {
   let originalProvisioning: boolean;
 
@@ -68,9 +80,11 @@ describe('ManagedResourceBreadcrumbBadge', () => {
     });
 
     it('is editable when the repository accepts writes', async () => {
-      render(<ManagedResourceBreadcrumbBadge resource={managedBy(ManagerKind.Repo)} canEdit writesBackToRepository />);
+      const { user } = render(
+        <ManagedResourceBreadcrumbBadge resource={managedBy(ManagerKind.Repo)} canEdit writesBackToRepository />
+      );
 
-      expect(await screen.findByTestId(NO_LOCK)).toBeInTheDocument();
+      await expectUnlockedOnceLoaded(user);
     });
 
     it('falls back to the manager annotation when provisioning is disabled', async () => {
@@ -106,10 +120,10 @@ describe('ManagedResourceBreadcrumbBadge', () => {
 
   it('leaves the badge unlocked for a user who could not edit anyway', async () => {
     mockRepository([]);
-    render(
+    const { user } = render(
       <ManagedResourceBreadcrumbBadge resource={managedBy(ManagerKind.Repo)} canEdit={false} writesBackToRepository />
     );
 
-    expect(await screen.findByTestId(NO_LOCK)).toBeInTheDocument();
+    await expectUnlockedOnceLoaded(user);
   });
 });

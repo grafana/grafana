@@ -84,7 +84,9 @@ describe('DashboardSidebarSplitter', () => {
 
   it('shows the managed badge beside the breadcrumbs and not in the sidebar', () => {
     const scene = buildTestScene();
-    scene.setState({ meta: { k8s: { annotations: { [AnnoKeyManagerKind]: ManagerKind.Terraform } } } });
+    // canEdit is what the sidebar badge used to be gated on, so without it this test could not
+    // tell a breadcrumb badge from a sidebar one.
+    scene.setState({ meta: { canEdit: true, k8s: { annotations: { [AnnoKeyManagerKind]: ManagerKind.Terraform } } } });
 
     render(
       <>
@@ -93,8 +95,9 @@ describe('DashboardSidebarSplitter', () => {
       </>
     );
 
-    expect(within(screen.getByTestId('breadcrumb-actions')).getByTestId('icon-exchange-alt')).toBeInTheDocument();
-    expect(screen.getAllByTestId('icon-exchange-alt')).toHaveLength(1);
+    const badge = within(screen.getByTestId('breadcrumb-actions')).getByTestId('icon-exchange-alt-lock');
+    expect(badge).toBeInTheDocument();
+    expect(screen.getAllByTestId('icon-exchange-alt-lock')).toHaveLength(1);
   });
 });
 
