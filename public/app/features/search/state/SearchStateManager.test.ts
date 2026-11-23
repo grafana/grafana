@@ -19,6 +19,8 @@ import * as utils from '../utils';
 
 import { initialState, SearchStateManager } from './SearchStateManager';
 
+jest.mock('../utils', () => makeSpyable('../utils'));
+
 jest.mock('lodash', () => {
   const orig = jest.requireActual('lodash');
 

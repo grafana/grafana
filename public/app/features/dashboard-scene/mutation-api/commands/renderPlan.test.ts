@@ -35,6 +35,8 @@ import { DashboardMutationClient } from '../DashboardMutationClient';
 
 import { renderPlanContractFixture, renderPlanNestedTabsContractFixture } from './renderPlanContractFixture';
 
+jest.mock('../../scene/planningSampleData', () => makeSpyable('../../scene/planningSampleData'));
+
 // A dashboard built from a spec carries the built-in annotation layer, which resolves its
 // datasource on activation.
 beforeEach(() => {

@@ -6,6 +6,8 @@ import { createTheme, dateTime, type FieldSparkline, FieldType, makeTimeRange } 
 import { Sparkline } from './Sparkline';
 import * as sparklineUtils from './utils';
 
+jest.mock('./utils', () => makeSpyable('./utils'));
+
 const WIDTH = 800;
 const HEIGHT = 600;
 

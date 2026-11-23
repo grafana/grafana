@@ -9,6 +9,9 @@ import { type CatalogPlugin, PluginStatus, type ReducerState, type Version } fro
 
 import { getInstallControlsDisabled, getPluginStatus, PluginActions } from './PluginActions';
 
+jest.mock('../helpers', () => makeSpyable('../helpers'));
+jest.mock('../state/hooks', () => makeSpyable('../state/hooks'));
+
 describe('PluginActions', () => {
   let plugins: ReducerState;
 
