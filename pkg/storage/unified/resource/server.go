@@ -2336,7 +2336,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		resume = &watchResume{since: requestedSince, requestedRV: req.Since}
 	}
 	gr := GroupResource{Group: key.Group, Resource: key.Resource}
-	sub, err := b.subscribeWatch(ctx, name, gr, resume)
+	sub, err := b.subscribeWatch(ctx, name, gr, key.Namespace, resume)
 	if err != nil {
 		return err
 	}
@@ -2510,11 +2510,15 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 			return expired()
 
 		case <-bookmarkC:
-			// KV notifiers settle and order events across collections, but other
-			// collections are not routed to this stream, so take their progress
-			// from the broadcaster. Legacy SQL polls collections separately.
+			// Events of other collections and namespaces are not routed to this
+			// stream, so take their progress from the broadcaster. KV notifiers
+			// order events across collections, though a late write can still
+			// trail another collection's higher RV; legacy SQL polls each
+			// collection separately, so only its own collection establishes progress.
 			if isKVBackend {
-				processedRV = max(processedRV, sub.rv(consumed))
+				processedRV = max(processedRV, sub.rv(consumed), sub.collectionRV(consumed))
+			} else {
+				processedRV = max(processedRV, sub.collectionRV(consumed))
 			}
 			cutoff := time.Now().Add(-filteredBookmarkDelay)
 			cutoffRV := cutoff.UnixMicro()

@@ -1165,3 +1165,41 @@ func TestKVWatchBookmarksIgnoreProgressBeforeSubscribing(t *testing.T) {
 		require.NoError(t, <-done)
 	})
 }
+
+// A late KV write in another namespace of the watched collection still
+// advances the bookmark, as it did when the watch received and filtered it.
+func TestKVWatchBookmarksFollowLateSameCollectionWrites(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		base := snowflakeFromTime(advanceBookmarkClock().Add(-time.Hour))
+		events := make(chan *WrittenEvent)
+		defer close(events)
+		srv := initWatchServerWithSeededWatches(t, &unseededKVWatchBackend{events: events}, false)
+		dashboard := bookmarkWrittenEvent(base + 300)
+		dashboard.Key = &resourcepb.ResourceKey{Group: "dashboard.grafana.app", Resource: "dashboards", Namespace: watchTestNamespace, Name: "d"}
+		events <- dashboard
+		synctest.Wait()
+
+		ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), newWatchTestUser()))
+		defer cancel()
+		req := bookmarkWatchRequest()
+		req.Options.Key.Name = ""
+		req.Since = base + 100
+		stream := newMockWatchServer(ctx)
+		done := make(chan error, 1)
+		go func() { done <- srv.Watch(req, stream) }()
+		synctest.Wait()
+
+		late := bookmarkWrittenEvent(base + 200)
+		late.Key.Namespace = "other"
+		events <- late
+		synctest.Wait()
+		time.Sleep(time.Second)
+		synctest.Wait()
+		require.NotEmpty(t, stream.events, "the late write must advance the bookmark")
+		bookmark := <-stream.events
+		require.Equal(t, resourcepb.WatchEvent_BOOKMARK, bookmark.Type)
+		require.Equal(t, base+200, bookmark.Resource.Version)
+		cancel()
+		require.NoError(t, <-done)
+	})
+}
