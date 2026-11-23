@@ -4884,6 +4884,21 @@
     },
     {
       "metadata": {
+        "name": "live.useAPIServerWebsocket",
+        "resourceVersion": "1795433615927",
+        "creationTimestamp": "2026-11-23T11:33:35Z"
+      },
+      "spec": {
+        "description": "Connects Grafana Live to the live.grafana.app websocket instead of /api/live/ws",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresDevMode": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "logQLScope",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2024-11-11T11:53:24Z"

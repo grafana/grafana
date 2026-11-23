@@ -3,13 +3,15 @@
 Status: in progress, updated 2026-11-23. Supersedes the October explorations ("Multi-tenant Live
 service", "Datasource streams via Live Redis") where they disagree.
 
-| Step    | PR                               | State                                     |
-| ------- | -------------------------------- | ----------------------------------------- |
-| 1       | grafana/grafana#138603           | Merged                                    |
-| 2, 3, 5 | grafana/grafana#138604           | Open                                      |
-| —       | grafana/grafana#138607           | Open; route-only versions in discovery    |
-| 6a      | grafana/grafana-enterprise#15116 | Open; needs #138604 in the pinned grafana |
-| rest    | —                                | Not started                               |
+| Step    | PR                               | State                                       |
+| ------- | -------------------------------- | ------------------------------------------- |
+| 1       | grafana/grafana#138603           | Merged                                      |
+| 2, 3, 5 | grafana/grafana#138604           | Merged                                      |
+| —       | grafana/grafana#138607           | Merged; route-only versions in discovery    |
+| —       | live-enable-discovery-test       | Enables the Live discovery test (no PR yet) |
+| 4       | live-frontend-ws-toggle          | Frontend toggle (no PR yet)                 |
+| 6a      | grafana/grafana-enterprise#15116 | Open; needs #138604 in the pinned grafana   |
+| rest    | —                                | Not started                                 |
 
 ## Goal
 
@@ -76,10 +78,10 @@ routing decision only.
    fixes `search.grafana.app`, whose routes return 404 under router middleware). An earlier
    revision of #138604 added a read-only `Channel` resource only to get the group listed; it
    was removed._
-   **To do once #138607 merges:** remove the `t.Skip` from the `discovery` subtest in
-   `pkg/tests/apis/live/live_test.go` and confirm the group shows up in `/apis`, aggregated
-   discovery, `/openapi/v3`, and `/apis/discovery/v1alpha2/{status,manifests}` with router
-   middleware on. (Verified locally with #138607 applied: all pass.)
+   #138607 is merged. The `t.Skip` on the `discovery` subtest in
+   `pkg/tests/apis/live/live_test.go` is removed in a follow-up, and the group shows up in `/apis`,
+   aggregated discovery, `/openapi/v3`, and `/apis/discovery/v1alpha2/{status,manifests}` with
+   router middleware on.
 6. **The toggle can't be enabled in cloud.** `live.runAPIServer` has `RequiresDevMode: true`.
    _Kept for now; removed before cloud rollout._
 7. **Centrifuge user IDs must be unique per namespace.** One MT node holds connections for many
@@ -238,9 +240,12 @@ Later, raw routes in ST and MT under `/apis/live.grafana.app/v1alpha1/namespaces
 
 ### Frontend
 
-A frontend setting chooses the ws URL. When it is on, the frontend connects to
+The `live.useAPIServerWebsocket` feature toggle (experimental, dev mode only, off by default)
+chooses the ws URL. When it is on, the frontend connects to
 `${appUrl}/apis/live.grafana.app/v1alpha1/namespaces/${config.namespace}/ws`; otherwise it keeps
-`/api/live/ws`. It is controlled by a feature toggle and ships as a separate frontend PR.
+`/api/live/ws`. `initGrafanaLive` reads the flag through OpenFeature and passes `websocketPath` to
+`CentrifugeService`. The toggle needs `live.runAPIServer` on the backend. It ships as a separate
+frontend PR.
 
 ### Deployment (deployment_tools)
 
@@ -267,9 +272,9 @@ A frontend setting chooses the ws URL. When it is on, the frontend connects to
 | #     | Repo                        | Change                                                                                                                                                                                                                                                                                           | Depends on                      | Status           |
 | ----- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------- | ---------------- |
 | 1     | grafana                     | Centrifuge `UserID` = `orgchannel.UserID(user)` (`GetNamespace() + "/" + GetUID()`)                                                                                                                                                                                                              | none                            | Merged (#138603) |
-| 2+3   | grafana                     | ST (on-prem, dev mode) only: `rawroutes` and the ST mount; `/ws` raw route backed by `GrafanaLive`; manifest-documented `/ws` with 426 fallback (no kinds); `NewAppInstaller(websocket)` and `rawroutes.NewHandler` for MT; integration test `pkg/tests/apis/live` (runs with router middleware) | 1                               | #138604          |
-| 4     | grafana (frontend)          | Setting and toggle for the `/apis/live.grafana.app/...` ws URL                                                                                                                                                                                                                                   | 2+3                             | Not started      |
-| 5     | grafana                     | `apps/live/pkg/liveserver` (Redis engine setup, Origin check, `Dispatcher` with per-scope handlers) and `apps/live/pkg/features` (dashboard handler behind `DashboardAccess`, namespace fix); `GrafanaLive` wires its scopes into it                                                             | 1                               | #138604          |
+| 2+3   | grafana                     | ST (on-prem, dev mode) only: `rawroutes` and the ST mount; `/ws` raw route backed by `GrafanaLive`; manifest-documented `/ws` with 426 fallback (no kinds); `NewAppInstaller(websocket)` and `rawroutes.NewHandler` for MT; integration test `pkg/tests/apis/live` (runs with router middleware) | 1                               | Merged (#138604) |
+| 4     | grafana (frontend)          | `live.useAPIServerWebsocket` toggle for the `/apis/live.grafana.app/...` ws URL                                                                                                                                                                                                                  | 2+3                             | Branch ready     |
+| 5     | grafana                     | `apps/live/pkg/liveserver` (Redis engine setup, Origin check, `Dispatcher` with per-scope handlers) and `apps/live/pkg/features` (dashboard handler behind `DashboardAccess`, namespace fix); `GrafanaLive` wires its scopes into it                                                             | 1                               | Merged (#138604) |
 | 6a    | grafana-enterprise          | Register `live.grafana.app` in the standalone factory with a stub provider; collect, validate and mount raw routes after authn                                                                                                                                                                   | 2+3                             | #15116           |
 | 6b    | grafana-enterprise          | MT live server: per-instance nodes, stack→node selection, origin, expiry, shutdown, limits, metrics; remove `RequiresDevMode` from `live.runAPIServer` before cloud rollout                                                                                                                      | 5, 6a                           | Not started      |
 | 7     | deployment_tools            | mt-service for dev0, dev1 and ops; flags, Redis credentials, HPA, PDB, alerts                                                                                                                                                                                                                    | 6b                              | Not started      |

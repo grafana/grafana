@@ -35,6 +35,10 @@ const (
 	// Registers a live apiserver
 	FlagLiveRunAPIServer = "live.runAPIServer"
 
+	// FlagLiveUseAPIServerWebsocket
+	// Connects Grafana Live to the live.grafana.app websocket instead of /api/live/ws
+	FlagLiveUseAPIServerWebsocket = "live.useAPIServerWebsocket"
+
 	// FlagLiveKeepHAPrefixInCloud
 	// keep the prefix (just in case)
 	FlagLiveKeepHAPrefixInCloud = "live.keepHAPrefixInCloud"

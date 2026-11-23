@@ -102,6 +102,16 @@ var (
 			Generate:        Generate{Go: true},
 		},
 		{
+			Name:            "live.useAPIServerWebsocket",
+			Description:     "Connects Grafana Live to the live.grafana.app websocket instead of /api/live/ws",
+			Stage:           FeatureStageExperimental,
+			RequiresDevMode: true,
+			HideFromDocs:    true,
+			Owner:           grafanaAppPlatformSquad,
+			Expression:      "false",
+			Generate:        Generate{Go: true, React: true},
+		},
+		{
 			Name:            "live.keepHAPrefixInCloud",
 			Description:     "keep the prefix (just in case)",
 			Stage:           FeatureStageExperimental,
