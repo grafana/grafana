@@ -54,6 +54,7 @@ With Alert Advisor, you can:
 - Define which labels and annotations your Grafana-managed alert rules must have.
 - Find rules that are missing required labels or annotations and update them.
 - Optionally block supported provisioning writes that don't meet selected requirements.
+- Give a team its own policy for the folders it owns, so teams can hold their rules to different standards.
 
 ## Before you begin
 
@@ -61,6 +62,7 @@ Before you begin, check that you have the following permissions in your Grafana 
 
 - **Rule access:** Have permission to view the Grafana-managed alert rules you want to assess.
 - **Policy permissions:** To configure the quality policy, have the Admin role in your organization or a role with `alert.rules.quality:write` and `alert.rules:read`.
+  This applies to Team policies too: only organization admins create, edit, and delete them.
 - **Rule updates:** To fix findings, have permission to update the affected rules.
   For provisioned rules, you also need access to their source configuration and permission to reapply it.
 
@@ -68,7 +70,8 @@ For more information about alerting permissions and folder access, refer to [Con
 
 ## Understand policy scope
 
-A single quality policy applies to Grafana-managed alert rules across folders in your organization.
+By default, a single quality policy, the _Org policy_, applies to Grafana-managed alert rules across all folders in your organization.
+You can also give a team its own policy, called a _Team policy_, which applies to the folders that team owns. Refer to [Team policies](#team-policies).
 Data source-managed alert rules, recording rules, and alert rules provided by plugins are excluded.
 
 Alert Advisor reports a finding when a required label or annotation is missing, empty, or contains only whitespace.
@@ -95,6 +98,77 @@ Enforcement applies to provisioned rules created or updated through Terraform an
 - `kubectl` writes are enforced only when the manifest sets `grafana.app/managedBy` to `kubectl` or `terraform` together with a non-empty `grafana.app/managerId`, or sets `grafana.com/provenance` to `api`.
 
 Writes from the Grafana rule editor aren't enforced, but the resulting rules can still have quality findings.
+
+## Team policies
+
+A Team policy lets a team define what the alert rules in its own folders must carry, without changing the requirements for the rest of the organization.
+Team policies are behind the `alerting.ruleQualityTeamPolicies` feature toggle.
+While the toggle is off, nothing changes: Grafana evaluates only the Org policy, and the policy drawer shows only the Org policy.
+
+### When a policy applies
+
+A policy follows the folder, not the person writing the rule.
+Grafana evaluates policies when an as-code write reaches a folder, whoever makes the write and whichever teams they belong to.
+
+- **Team policy:** Applies to every as-code write into a folder that the team owns.
+- **Org policy:** Applies when no owning team of the folder has a Team policy, so folders without an owning team are always covered.
+
+A team has at most one Team policy.
+
+### Folder ownership
+
+A team owns a folder when the team is set as the folder's team owner.
+Grafana doesn't infer ownership from folder permissions or basic roles. Granting a team access to a folder, or having the Editor or Admin role, doesn't make that team an owner.
+
+Ownership is inherited by subfolders.
+A rule in a subfolder is covered by the policies of the teams that own the subfolder and of the teams that own any of its ancestor folders.
+
+A folder can have several owning teams.
+A write into such a folder must pass the policies of all of them, so the most restrictive result wins.
+One team's lenient policy can't relax another owning team's requirements.
+
+### Team policies and the Org policy
+
+The Org policy is a default, not a minimum.
+A team that has a Team policy is held only to the Team policies that apply, and not to the Org policy, for its folders.
+A lenient or empty Team policy therefore opts that team's folders out of the Org requirements.
+
+If a team owns a folder but has no Team policy, it doesn't affect which policy applies.
+
+### Rejected writes
+
+A rejected write lists every policy the rule failed, and the missing fields for each rule under each policy.
+It shows every missing requirement, including requirements set by other teams that you aren't a member of, so you can fix the source configuration in one pass.
+Each failing policy is named: either the Org policy or the policy of a team.
+The message also says that org admins can change the policy.
+
+Team policies change only which requirements are enforced. Enforcement scope stays the same as described in [Supported enforcement paths](#supported-enforcement-paths):
+
+- Writes from the Grafana rule editor remain exempt.
+- Only as-code writers (Terraform, `kubectl`, and the provisioning HTTP API) are enforced.
+- Each requirement keeps its own **Enforce** setting inside its policy.
+
+Grafana evaluates policies when a write happens, using the folder's current owners.
+Changing a policy or a folder's owners doesn't re-check existing rules.
+
+If Grafana can't resolve a folder's owners or read a policy, the write isn't blocked on that account. Grafana applies the Org policy instead.
+
+### Manage Team policies
+
+In this version, only organization admins create, edit, and delete policies, Team policies included.
+Team admins can't manage their team's policy.
+
+To create a Team policy, follow these steps:
+
+1. Go to **Alerting** > **Alert rules**, select **Alert quality**, and click **Quality policy settings** (the cog icon).
+2. Under **Team policies**, click **New team policy**.
+3. Select the **Team** the policy is for.
+4. Add the required annotations and labels, as described in [Configure a quality policy](#configure-a-quality-policy), and click **Save**.
+
+To edit or delete a Team policy, select it in the policy list. To delete it, click **Delete policy** and confirm.
+
+Deleting a team also deletes its Team policy.
+The policy of a deleted team never applies.
 
 ## Configure a quality policy
 
@@ -127,6 +201,9 @@ The saved policy identifies rules with missing or empty `runbook_url` annotation
 
 A policy with no required annotations or labels checks nothing.
 
+The steps in this section configure the Org policy.
+You configure a Team policy the same way, after you select its team. Refer to [Manage Team policies](#manage-team-policies).
+
 ## Review alert quality
 
 In Alert Advisor, the **Alert quality** tab lists rules that don't meet your policy and shows an overall quality score.
@@ -138,6 +215,15 @@ To review the findings, follow these steps:
 3. Inspect the missing annotations and labels in the **Findings** list.
 
 Each missing field appears as a badge. To check whether a requirement is enforced or detect-only, hover over its badge.
+
+### Policies in the quality check and score
+
+When Team policies are on, the **Alert quality** tab checks each rule against the same policies that apply to writes into its folder.
+That is the policy of every team that owns the rule's folder or one of its ancestors, or the Org policy when none of those teams has a policy.
+The findings and the score use those policies, so a rule in a team's folder isn't reported for requirements that only the Org policy sets.
+The tab shows the policies for the rules you can view and doesn't change what Grafana enforces on a write.
+
+An empty Team policy leaves its rules with nothing to miss, so they count as meeting the policy.
 
 ### Understand the score
 
@@ -220,6 +306,8 @@ Use the following guidance when you can't access the feature, resolve a finding,
 | No findings match your search, but the score is below 10.0.                | Clear **Search** to view all findings. Search filters don't change the score.                                                                                                             |
 | A finding remains after enforcement is disabled.                           | Detect-only requirements still produce findings. Fill in the missing value or remove the requirement from the policy.                                                                     |
 | A provisioning write is rejected by the quality policy.                    | Use the rule and field details in the error to update the source configuration, then reapply it.                                                                                          |
+| A rejection names a team policy that you didn't expect.                    | The write goes to a folder, or a subfolder of a folder, owned by that team. Add the fields every named policy lists, or ask an org admin to change the policy.                            |
+| A rule in a team's folder isn't checked against the Org policy.            | The team has its own policy, which replaces the Org policy for its folders. Check that `alerting.ruleQualityTeamPolicies` is on and review the team's policy.                             |
 | A write succeeds despite a quality finding.                                | Check that the requirement is enforced and the policy is saved. Confirm that the write uses a [supported enforcement path](#supported-enforcement-paths) and isn't one of its exceptions. |
 
 ## Next steps
