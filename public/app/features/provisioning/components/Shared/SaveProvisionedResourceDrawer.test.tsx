@@ -1,11 +1,13 @@
 import { HttpResponse, http } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { type Playlist } from 'app/api/clients/playlist/v1';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
+import { COMMIT_OUTCOME_STORAGE_KEY } from '../../constants';
 import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
 import { setupProvisioningMswServer } from '../../mocks/server';
 
@@ -120,6 +122,7 @@ describe('SaveProvisionedResourceDrawer', () => {
   beforeEach(() => {
     capturedRequest = null;
     jest.clearAllMocks();
+    window.sessionStorage.clear();
     jest.spyOn(console, 'error').mockImplementation(() => {});
     mockRepoView();
   });
@@ -357,6 +360,71 @@ describe('SaveProvisionedResourceDrawer', () => {
 
       await waitFor(() => expect(capturedRequest).not.toBeNull());
       expect(requireCapturedRequest(capturedRequest).url.searchParams.get('ref')).toBe('grafana/enforced-branch');
+    });
+  });
+
+  describe('commit outcome', () => {
+    const respondWith = (body: object) =>
+      server.use(http.put(`${BASE}/repositories/:name/files/*`, () => HttpResponse.json(body)));
+
+    it('does not report a direct commit as live when Grafana has not applied it', async () => {
+      respondWith({ path: 'playlists/test-playlist.json', resource: {} });
+
+      const { user } = setup();
+      await user.click(await screen.findByRole('button', { name: /^commit/i }));
+
+      expect(await screen.findByText(/next time it syncs the repository/i)).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'View playlist' })).not.toBeInTheDocument();
+    });
+
+    it('passes the outcome to onDismiss when the drawer closes after a commit', async () => {
+      respondWith({ path: 'playlists/test-playlist.json', resource: { upsert: {} } });
+      const onDismiss = jest.fn();
+
+      const { user } = render(
+        <SaveProvisionedResourceDrawer resource={mockPlaylist} title="Test Playlist" action="update" onDismiss={onDismiss} />
+      );
+      await user.click(await screen.findByRole('button', { name: /^commit/i }));
+      await screen.findByText(/committed to main/i);
+      await user.click(screen.getByTestId(selectors.components.Drawer.General.close));
+
+      expect(onDismiss).toHaveBeenCalledWith(expect.objectContaining({ action: 'update' }));
+    });
+
+    it('stores the outcome for a reload until the drawer goes away', async () => {
+      respondWith({ path: 'playlists/test-playlist.json', resource: { upsert: {} } });
+
+      const { user, unmount } = setup();
+      await user.click(await screen.findByRole('button', { name: /^commit/i }));
+      await screen.findByText(/committed to main/i);
+
+      expect(window.sessionStorage.getItem(COMMIT_OUTCOME_STORAGE_KEY)).not.toBeNull();
+      unmount();
+      expect(window.sessionStorage.getItem(COMMIT_OUTCOME_STORAGE_KEY)).toBeNull();
+    });
+
+    it('stores nothing when the drawer goes away before the commit lands', async () => {
+      let respond = () => {};
+      const responded = new Promise<void>((resolve) => {
+        respond = resolve;
+      });
+      let requested = false;
+      server.use(
+        http.put(`${BASE}/repositories/:name/files/*`, async () => {
+          requested = true;
+          await responded;
+          return HttpResponse.json({ path: 'playlists/test-playlist.json', resource: { upsert: {} } });
+        })
+      );
+
+      const { user, unmount } = setup();
+      await user.click(await screen.findByRole('button', { name: /^commit/i }));
+      await waitFor(() => expect(requested).toBe(true));
+      unmount();
+      respond();
+
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(window.sessionStorage.getItem(COMMIT_OUTCOME_STORAGE_KEY)).toBeNull();
     });
   });
 
