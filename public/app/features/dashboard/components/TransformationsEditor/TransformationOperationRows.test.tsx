@@ -120,12 +120,12 @@ describe('TransformationOperationRows', () => {
   it('names each row expander after its transformation', async () => {
     setup([
       { id: 'a', transformation: { id: DataTransformerID.reduce, options: {} } },
-      { id: 'b', transformation: { id: DataTransformerID.calculateField, options: {} } },
+      { id: 'b', transformation: { id: DataTransformerID.merge, options: {} } },
     ]);
 
     expect(await screen.findByRole('button', { name: 'Collapse transformation row 1 - Reduce' })).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: 'Collapse transformation row 2 - Add field from calculation' })
+      screen.getByRole('button', { name: 'Collapse transformation row 2 - Merge series/tables' })
     ).toBeInTheDocument();
   });
 
