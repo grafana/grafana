@@ -110,7 +110,7 @@ export function RepositoryListItem({ repository }: Props) {
                   icon={getKindInfoByStat(stat)?.icon ?? 'file-alt'}
                   href={getRepositoryResourcesUrl(name, stat.resource)}
                 >
-                  {`${stat.count} ${stat.resource}`}
+                  {`${stat.count} ${getKindInfoByStat(stat)?.getPluralLabel({ upperFirst: false }) ?? stat.resource}`}
                 </LinkButton>
               ))}
             </Stack>

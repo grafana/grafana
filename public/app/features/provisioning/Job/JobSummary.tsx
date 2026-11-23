@@ -46,7 +46,7 @@ const getSummaryColumns = () => [
     header: t('provisioning.job-summary.column-resource', 'Resource'),
     cell: ({ row: { original: item } }: SummaryCell) => {
       const info = getKindInfoByGroupKind(item.group, item.kind);
-      const kind = item.kind || t('provisioning.job-summary.unknown-kind', 'Unknown');
+      const kind = info?.getLabel() || item.kind || t('provisioning.job-summary.unknown-kind', 'Unknown');
       return (
         <Stack direction="row" alignItems="center" gap={1}>
           <Icon name={info?.icon ?? 'question-circle'} />

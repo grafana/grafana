@@ -62,7 +62,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
           return (
             <Stack direction="row" gap={1} alignItems="center">
               <Icon name={info?.icon ?? 'file-alt'} />
-              <span>{info?.kind ?? original.resource}</span>
+              <span>{info?.getLabel() ?? original.resource}</span>
             </Stack>
           );
         },
