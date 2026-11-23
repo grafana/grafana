@@ -2,6 +2,7 @@ package live
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -9,12 +10,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/websocket"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	livev1 "github.com/grafana/grafana/apps/live/pkg/apis/live/v1alpha1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -26,15 +29,13 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-const appPlatformWSPath = "/apis/live.grafana.app/v1alpha1/namespaces/%s/ws"
-
 func TestIntegrationLiveWebsocket(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction:    false, // live.runAPIServer requires dev mode
 		DisableAnonymous:     true,
-		EnableFeatureToggles: []string{featuremgmt.FlagLiveRunAPIServer},
+		EnableFeatureToggles: []string{featuremgmt.FlagLiveRunAPIServer, featuremgmt.FlagGrafanaUseRouterMiddleware},
 	})
 	t.Cleanup(helper.Shutdown)
 
@@ -58,6 +59,61 @@ func TestIntegrationLiveWebsocket(t *testing.T) {
 				}
 			}
 			require.True(t, found, "live.grafana.app should be in the API group list")
+		})
+
+		t.Run("group is in aggregated discovery", func(t *testing.T) {
+			info, err := helper.GetGroupVersionInfoJSON("live.grafana.app")
+			require.NoError(t, err)
+			require.Contains(t, info, "v1alpha1")
+		})
+
+		t.Run("router serves the group and its manifest", func(t *testing.T) {
+			require.EventuallyWithT(t, func(c *assert.CollectT) {
+				status := apis.DoRequest(helper, apis.RequestParams{
+					User: helper.Org1.Admin,
+					Path: "/apis/discovery/v1alpha2/status",
+				}, &struct {
+					Ready  bool `json:"ready"`
+					Groups []struct {
+						Group string `json:"group"`
+					} `json:"groups"`
+				}{})
+				if !assert.Equal(c, http.StatusOK, status.Response.StatusCode) || !assert.True(c, status.Result.Ready) {
+					return
+				}
+				groups := make([]string, 0, len(status.Result.Groups))
+				for _, g := range status.Result.Groups {
+					groups = append(groups, g.Group)
+				}
+				assert.Contains(c, groups, "live.grafana.app", "router status groups")
+			}, 30*time.Second, 100*time.Millisecond)
+
+			manifests := apis.DoRequest(helper, apis.RequestParams{
+				User: helper.Org1.Admin,
+				Path: "/apis/discovery/v1alpha2/manifests",
+			}, &struct {
+				Items []struct {
+					Metadata metav1.ObjectMeta `json:"metadata"`
+				} `json:"items"`
+			}{})
+			require.Equal(t, http.StatusOK, manifests.Response.StatusCode)
+			names := make([]string, 0, len(manifests.Result.Items))
+			for _, m := range manifests.Result.Items {
+				names = append(names, m.Metadata.Name)
+			}
+			require.Contains(t, names, "live.grafana.app")
+		})
+
+		t.Run("openapi index lists the version", func(t *testing.T) {
+			// The swagger UI builds its spec picker from this index.
+			rsp := apis.DoRequest(helper, apis.RequestParams{
+				User: helper.Org1.Viewer,
+				Path: "/openapi/v3",
+			}, &struct {
+				Paths map[string]any `json:"paths"`
+			}{})
+			require.Equal(t, http.StatusOK, rsp.Response.StatusCode)
+			require.Contains(t, rsp.Result.Paths, "apis/live.grafana.app/v1alpha1")
 		})
 
 		t.Run("route is documented in openapi", func(t *testing.T) {
@@ -84,7 +140,7 @@ func TestIntegrationLiveWebsocket(t *testing.T) {
 		}
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				req, err := http.NewRequest(http.MethodGet, "http://"+addr+sprintfPath(tt.namespace), nil)
+				req, err := http.NewRequest(http.MethodGet, "http://"+addr+wsPath(tt.namespace), nil)
 				require.NoError(t, err)
 				if tt.upgrade {
 					req.Header.Set("Connection", "Upgrade")
@@ -93,7 +149,7 @@ func TestIntegrationLiveWebsocket(t *testing.T) {
 					req.Header.Set("Sec-WebSocket-Key", "dGhlIHNhbXBsZSBub25jZQ==")
 				}
 				if tt.user != nil {
-					setBasicAuth(req, *tt.user)
+					req.Header.Set("Authorization", basicAuth(*tt.user))
 				}
 				rsp, err := http.DefaultClient.Do(req)
 				require.NoError(t, err)
@@ -103,7 +159,7 @@ func TestIntegrationLiveWebsocket(t *testing.T) {
 		}
 
 		t.Run("centrifuge connect", func(t *testing.T) {
-			c := dial(t, addr, sprintfPath(defaultNS), helper.Org1.Viewer)
+			c := dial(t, addr, wsPath(defaultNS), helper.Org1.Viewer)
 			reply := c.connect(t)
 			require.NotEmpty(t, reply.Connect.Client)
 		})
@@ -128,7 +184,7 @@ func TestIntegrationLiveWebsocket(t *testing.T) {
 		// One subscriber on the new path and one on /api/live/ws: both are served by
 		// the same Live node, so a save must reach both. The admin subscribes because
 		// the dashboard channel requires read access to the dashboard.
-		newPath := dial(t, addr, sprintfPath(defaultNS), helper.Org1.Admin)
+		newPath := dial(t, addr, wsPath(defaultNS), helper.Org1.Admin)
 		newPath.connect(t)
 		newPath.subscribe(t, channel)
 
@@ -141,9 +197,12 @@ func TestIntegrationLiveWebsocket(t *testing.T) {
 		updated, err := dashboards.Resource.Update(ctx, created, metav1.UpdateOptions{})
 		require.NoError(t, err)
 
-		for name, c := range map[string]*centrifugeConn{"new path": newPath, "legacy path": legacyPath} {
-			t.Run(name, func(t *testing.T) {
-				push := c.waitForPush(t, channel)
+		for _, sub := range []struct {
+			name string
+			conn *centrifugeConn
+		}{{"new path", newPath}, {"legacy path", legacyPath}} {
+			t.Run(sub.name, func(t *testing.T) {
+				push := sub.conn.waitForPush(t, channel)
 				var event struct {
 					UID             string `json:"uid"`
 					Action          string `json:"action"`
@@ -156,15 +215,82 @@ func TestIntegrationLiveWebsocket(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("channels", func(t *testing.T) {
+		ctx := context.Background()
+		channels := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.Viewer,
+			GVR:  livev1.ChannelKind().GroupVersionResource(),
+		})
+		const path = "stream/integration-test/cpu"
+
+		// Subscribe before pushing, so the push is delivered as an event.
+		sub := dial(t, addr, wsPath(defaultNS), helper.Org1.Admin)
+		sub.connect(t)
+		sub.subscribe(t, defaultNS+"/"+path)
+
+		// Managed streams are created by pushing to them.
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User:        helper.Org1.Editor,
+			Method:      http.MethodPost,
+			Path:        "/api/live/push/integration-test",
+			Body:        []byte("cpu value=1.5"),
+			ContentType: "text/plain",
+		}, &map[string]any{})
+		require.Equal(t, http.StatusOK, rsp.Response.StatusCode, string(rsp.Body))
+
+		t.Run("push reaches the subscriber", func(t *testing.T) {
+			push := sub.waitForPush(t, defaultNS+"/"+path)
+			require.Contains(t, string(push.Pub.Data), "1.5")
+		})
+
+		t.Run("list and get", func(t *testing.T) {
+			list, err := channels.Resource.List(ctx, metav1.ListOptions{})
+			require.NoError(t, err)
+			var found *unstructured.Unstructured
+			for i := range list.Items {
+				if list.Items[i].GetName() == "stream.integration-test.cpu" {
+					found = &list.Items[i]
+				}
+			}
+			require.NotNil(t, found, "pushed channel should be listed")
+			gotPath, _, _ := unstructured.NestedString(found.Object, "spec", "path")
+			require.Equal(t, path, gotPath)
+			_, hasRate, _ := unstructured.NestedFieldNoCopy(found.Object, "status", "minute_rate")
+			require.True(t, hasRate, "status.minute_rate should be set")
+			_, hasData, _ := unstructured.NestedMap(found.Object, "status", "data")
+			require.True(t, hasData, "status.data should hold the frame schema")
+
+			got, err := channels.Resource.Get(ctx, "stream.integration-test.cpu", metav1.GetOptions{})
+			require.NoError(t, err)
+			require.Equal(t, "stream.integration-test.cpu", got.GetName())
+
+			_, err = channels.Resource.Get(ctx, "stream.integration-test.missing", metav1.GetOptions{})
+			require.Error(t, err)
+			require.Equal(t, int32(http.StatusNotFound), helper.AsStatusError(err).Status().Code)
+		})
+
+		t.Run("read-only", func(t *testing.T) {
+			_, err := channels.Resource.Create(ctx, &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": livev1.GroupVersion.String(),
+				"kind":       "Channel",
+				"metadata":   map[string]any{"name": "stream.integration-test.new"},
+				"spec":       map[string]any{"path": "stream/integration-test/new"},
+			}}, metav1.CreateOptions{})
+			require.Error(t, err)
+			require.Equal(t, int32(http.StatusMethodNotAllowed), helper.AsStatusError(err).Status().Code)
+		})
+	})
 }
 
-func sprintfPath(namespace string) string {
-	return fmt.Sprintf(appPlatformWSPath, namespace)
+// wsPath is the live.grafana.app websocket path for a namespace.
+func wsPath(namespace string) string {
+	return fmt.Sprintf("/apis/live.grafana.app/v1alpha1/namespaces/%s/ws", namespace)
 }
 
-func setBasicAuth(req *http.Request, user apis.User) {
+func basicAuth(user apis.User) string {
 	cfg := user.NewRestConfig()
-	req.SetBasicAuth(cfg.Username, cfg.Password)
+	return "Basic " + base64.StdEncoding.EncodeToString([]byte(cfg.Username+":"+cfg.Password))
 }
 
 // centrifugeConn speaks the Centrifuge v2 JSON protocol, which is what the
@@ -202,10 +328,7 @@ func dial(t *testing.T, addr, path string, user apis.User) *centrifugeConn {
 	t.Helper()
 	cfg, err := websocket.NewConfig("ws://"+addr+path, "http://"+addr)
 	require.NoError(t, err)
-	req, err := http.NewRequest(http.MethodGet, "/", nil)
-	require.NoError(t, err)
-	setBasicAuth(req, user)
-	cfg.Header.Set("Authorization", req.Header.Get("Authorization"))
+	cfg.Header.Set("Authorization", basicAuth(user))
 
 	ws, err := websocket.DialConfig(cfg)
 	require.NoError(t, err)

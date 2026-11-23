@@ -1189,14 +1189,17 @@ type streamChannelListResponse struct {
 }
 
 // HandleListHTTP returns metadata so the UI can build a nice form
-func (g *GrafanaLive) HandleListHTTP(c *contextmodel.ReqContext) response.Response {
-	var channels []*managedstream.ManagedChannel
-	var err error
+// ListManagedChannels returns the managed stream channels that are active in
+// namespace. In HA mode it asks every Live node, since each keeps its own rates.
+func (g *GrafanaLive) ListManagedChannels(_ context.Context, namespace string) ([]*managedstream.ManagedChannel, error) {
 	if g.IsHA() {
-		channels, err = g.surveyCaller.CallManagedStreams(c.GetNamespace())
-	} else {
-		channels, err = g.ManagedStreamRunner.GetManagedChannels(c.GetNamespace())
+		return g.surveyCaller.CallManagedStreams(namespace)
 	}
+	return g.ManagedStreamRunner.GetManagedChannels(namespace)
+}
+
+func (g *GrafanaLive) HandleListHTTP(c *contextmodel.ReqContext) response.Response {
+	channels, err := g.ListManagedChannels(c.Req.Context(), c.GetNamespace())
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), err)
 	}

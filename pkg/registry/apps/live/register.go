@@ -3,8 +3,12 @@ package live
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apiserver/pkg/registry/generic"
+	"k8s.io/apiserver/pkg/registry/rest"
+	genericapiserver "k8s.io/apiserver/pkg/server"
 	restclient "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -59,6 +63,43 @@ func RegisterAppInstaller(
 	return installer, nil
 }
 
+// InstallAPIs installs the group with the generated Channel store replaced by
+// a read-only view of the Live node, so the group stores nothing.
+func (a *AppInstaller) InstallAPIs(server appsdkapiserver.GenericAPIServer, opts generic.RESTOptionsGetter) error {
+	if a.live == nil {
+		return a.AppInstaller.InstallAPIs(server, opts)
+	}
+	return a.AppInstaller.InstallAPIs(&channelStorageServer{
+		GenericAPIServer: server,
+		storage:          newChannelStorage(a.live),
+	}, opts)
+}
+
+// channelStorageServer swaps in the Channel storage before the group is
+// installed, so the host's storage setup never sees the generated store. The
+// generated subresource stores, such as channels/status, wrap that store, so
+// they are removed: status is returned with the channel itself.
+type channelStorageServer struct {
+	appsdkapiserver.GenericAPIServer
+	storage rest.Storage
+}
+
+func (s *channelStorageServer) InstallAPIGroup(info *genericapiserver.APIGroupInfo) error {
+	resource := livev1.ChannelKind().Plural()
+	for _, storageMap := range info.VersionedResourcesStorageMap {
+		if _, ok := storageMap[resource]; !ok {
+			continue
+		}
+		for path := range storageMap {
+			if strings.HasPrefix(path, resource+"/") {
+				delete(storageMap, path)
+			}
+		}
+		storageMap[resource] = s.storage
+	}
+	return s.GenericAPIServer.InstallAPIGroup(info)
+}
+
 // RawRoutes serves the Live websocket at
 // /apis/live.grafana.app/v1alpha1/namespaces/{namespace}/ws from the local Live node.
 func (a *AppInstaller) RawRoutes() []rawroutes.Route {
@@ -66,11 +107,11 @@ func (a *AppInstaller) RawRoutes() []rawroutes.Route {
 		return nil
 	}
 	return []rawroutes.Route{{
-		Group:   livev1.APIGroup,
-		Version: livev1.APIVersion,
-		Method:  http.MethodGet,
-		Path:    liveapp.WebsocketPath,
-		Handler: liveapp.NewWebsocketHandler(a.live),
+		API:        livev1.GroupVersion,
+		Namespaced: true,
+		Method:     http.MethodGet,
+		Path:       liveapp.WebsocketPath,
+		Handler:    liveapp.NewWebsocketHandler(a.live),
 	}}
 }
 

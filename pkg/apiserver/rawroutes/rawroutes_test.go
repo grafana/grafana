@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type provider struct{ routes []Route }
@@ -12,8 +13,9 @@ type provider struct{ routes []Route }
 func (p provider) RawRoutes() []Route { return p.routes }
 
 func TestCollect(t *testing.T) {
-	ws := Route{Group: "live.grafana.app", Version: "v1alpha1", Method: http.MethodGet, Path: "ws"}
-	push := Route{Group: "live.grafana.app", Version: "v1alpha1", Method: http.MethodPost, Path: "push"}
+	gv := schema.GroupVersion{Group: "live.grafana.app", Version: "v1alpha1"}
+	ws := Route{API: gv, Namespaced: true, Method: http.MethodGet, Path: "ws"}
+	push := Route{API: gv, Namespaced: true, Method: http.MethodPost, Path: "push"}
 
 	items := []any{
 		provider{routes: []Route{ws}},

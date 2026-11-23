@@ -1,5 +1,5 @@
-// Package rawroutes describes namespaced HTTP routes that an API group serves
-// outside the k8s handler chain.
+// Package rawroutes describes HTTP routes, namespaced or cluster-scoped, that an
+// API group serves outside the k8s handler chain.
 //
 // A raw route is for traffic that does not fit an API request, such as a
 // websocket that hijacks the connection and stays open for hours. The host
@@ -9,23 +9,33 @@
 // authorization.
 package rawroutes
 
-import "net/http"
+import (
+	"net/http"
 
-// Route is served at /apis/{Group}/{Version}/namespaces/{namespace}/{Path}.
+	"k8s.io/apimachinery/pkg/runtime/schema"
+)
+
+// Route is served at /apis/{group}/{version}/namespaces/{namespace}/{Path} when
+// Namespaced, and at /apis/{group}/{version}/{Path} otherwise.
 type Route struct {
-	Group   string
-	Version string
+	// API is the group and version that serve the route.
+	API schema.GroupVersion
 	// Method is the HTTP method, for example http.MethodGet.
 	Method string
-	// Path is relative to namespaces/{namespace}/, for example "ws".
+	// Namespaced puts the route under namespaces/{namespace}/.
+	Namespaced bool
+	// Path is relative to the version, or to namespaces/{namespace}/ when
+	// Namespaced, for example "ws".
 	Path string
-	// Handler receives the request with the requester on its context and the
-	// namespace as the "namespace" path value (r.PathValue("namespace")).
+	// Handler receives the request with the requester on its context. For a
+	// namespaced route, the namespace is the "namespace" path value
+	// (r.PathValue("namespace")).
 	Handler http.Handler
 }
 
 // Provider is implemented by app installers or API group builders that serve
-// raw routes.
+// raw routes. Hosts collect raw routes once, before the HTTP server starts, so
+// an installer registered after that does not get its raw routes mounted.
 type Provider interface {
 	RawRoutes() []Route
 }
