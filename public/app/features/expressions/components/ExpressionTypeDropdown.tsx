@@ -49,7 +49,7 @@ const ExpressionMenuItem = memo<ExpressionMenuItemProps>(({ item, onSelect, disa
             {value === ExpressionQueryType.sql && <FeatureBadge featureState={FeatureState.preview} />}
           </div>
           <Tooltip placement="right" content={tooltipContent!}>
-            <Icon className={styles.infoIcon} name="info-circle" />
+            <Icon className={styles.infoIcon} name="info-circle" tabIndex={0} />
           </Tooltip>
         </div>
       )}
