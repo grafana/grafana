@@ -103,7 +103,7 @@ describe('createAndCopyShortLink', () => {
         write: undefined,
       },
     });
-    document.execCommand = jest.fn();
+    document.execCommand = jest.fn().mockReturnValue(true);
     await createAndCopyShortLink('www.test.grafana.com');
     expect(document.execCommand).toHaveBeenCalledWith('copy');
   });
