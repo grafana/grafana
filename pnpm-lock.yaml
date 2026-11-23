@@ -2494,7 +2494,7 @@ importers:
         version: 4.5.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       react-dropzone:
         specifier: ^20.0.0
-        version: 20.2.0(@types/react@19.2.18)(react@19.2.8)
+        version: 20.2.1(@types/react@19.2.18)(react@19.2.8)
       react-highlight-words:
         specifier: ^1.0.0
         version: 1.0.0(react@19.2.8)
@@ -13153,8 +13153,8 @@ packages:
       react: '>= 16.3.0'
       react-dom: '>= 16.3.0'
 
-  react-dropzone@20.2.0:
-    resolution: {integrity: sha512-FRlcSp6UFT9Etg57U4+g6O6qF/jH7sUh2Hz67lQlrZJa/3FjfAFvw7DwDSItiG2vBUXTdh2wroEwXPPg7o/jkg==}
+  react-dropzone@20.2.1:
+    resolution: {integrity: sha512-8ldzI42a+iz6jlC5t0HoOO5ce65dU8ZGo8ZpesL2E57JByC8LBUieMrkGj97YYfgMaYKwkhpkfYxKOCKAekywA==}
     engines: {node: '>= 22'}
     peerDependencies:
       '@types/react': '*'
@@ -27752,7 +27752,7 @@ snapshots:
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
 
-  react-dropzone@20.2.0(@types/react@19.2.18)(react@19.2.8):
+  react-dropzone@20.2.1(@types/react@19.2.18)(react@19.2.8):
     dependencies:
       attr-accept: 4.0.1
       file-selector: 5.0.3
