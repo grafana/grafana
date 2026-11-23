@@ -68,7 +68,10 @@ export const FieldValues = ({ field, id, logs }: Props) => {
 
 function getFieldValue(log: LogListModel, field: string): string | undefined {
   const value = log.labels[field] ?? log.dataFrame.fields.find(({ name }) => name === field)?.values[log.rowIndex];
-  return value == null || value === '' || typeof value === 'object' ? undefined : String(value);
+  if (value == null || value === '') {
+    return undefined;
+  }
+  return typeof value === 'object' ? JSON.stringify(value) : String(value);
 }
 
 const ROW_HEIGHT = 24;

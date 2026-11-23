@@ -307,6 +307,22 @@ describe('LogListFieldSelector field values', () => {
       expect(screen.getByText('No values in the loaded lines')).toBeInTheDocument();
     });
 
+    test('shows structured values as JSON', async () => {
+      const line = createLogLine({ uid: '1', labels: {} });
+      line.dataFrame = {
+        ...line.dataFrame,
+        fields: [
+          ...line.dataFrame.fields,
+          { name: 'service', type: FieldType.other, config: {}, values: [['a', 'b']] },
+        ],
+      };
+      render(<Selector lines={[line]} />);
+
+      await expandField(/service/);
+
+      expect(screen.getByRole('listitem')).toHaveTextContent('["a","b"]1100%');
+    });
+
     test('shows the ten most frequent values of a frame field', async () => {
       const lines = Array.from({ length: 12 }, (_, i) => {
         const line = createLogLine({ uid: String(i), labels: {} });
