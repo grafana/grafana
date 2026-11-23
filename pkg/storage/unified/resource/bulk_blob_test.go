@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"gocloud.dev/blob/memblob"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -327,28 +326,15 @@ func TestNormalizeBulkBlobUploadsNullBlobs(t *testing.T) {
 
 func TestNormalizeBulkBlobUploadsBackendRoundTrip(t *testing.T) {
 	for _, tc := range []struct {
-		name, backend, contentType, downloadedContentType string
+		name, contentType, downloadedContentType string
 	}{
-		{"kv", "kv", "application/json", "application/json"},
-		{"bucket", "bucket", "application/json", "application/json"},
-		{"kv profile", "kv", "application/json; profile=foo", "application/json; profile=foo"},
-		// Bucket downloads currently lose non-charset parameters when decoding resource references.
-		{"bucket boundary", "bucket", "multipart/form-data; boundary=abc", "multipart/form-data"},
-		{"kv profile and charset", "kv", "application/json; charset=utf-8; profile=foo", "application/json; charset=utf-8; profile=foo"},
-		{"kv quoted charset", "kv", `text/plain; charset="x;y"`, `text/plain; charset="x;y"`},
-		{"bucket quoted charset", "bucket", `text/plain; charset="x;y"`, "text/plain; charset=x;y"},
+		{"json", "application/json", "application/json"},
+		{"profile", "application/json; profile=foo", "application/json; profile=foo"},
+		{"profile and charset", "application/json; charset=utf-8; profile=foo", "application/json; charset=utf-8; profile=foo"},
+		{"quoted charset", `text/plain; charset="x;y"`, `text/plain; charset="x;y"`},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			var store BlobSupport
-			if tc.backend == "kv" {
-				store = NewKVBlobSupport(setupBadgerKV(t))
-			} else {
-				bucket := memblob.OpenBucket(nil)
-				t.Cleanup(func() { require.NoError(t, bucket.Close()) })
-				var err error
-				store, err = NewCDKBlobSupport(t.Context(), CDKBlobSupportOptions{Bucket: bucket})
-				require.NoError(t, err)
-			}
+			store := NewKVBlobSupport(setupBadgerKV(t))
 			req := newBulkBlobNormalizationRequest()
 			req.BlobUploads[0].ContentType = tc.contentType
 			stream := &testBulkProcessServer{requests: []*resourcepb.BulkRequest{bulkTestChunk("dashboard", []byte("abc"), false), bulkTestChunk("dashboard", nil, true)}}

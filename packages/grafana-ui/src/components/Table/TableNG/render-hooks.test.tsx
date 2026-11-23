@@ -587,6 +587,7 @@ describe('useColumnBuilderFromFields', () => {
           type: FieldType.string,
           values: ['ok'],
           config: {
+            color: { mode: FieldColorModeId.Shades, fixedColor: 'green' },
             custom: { cellOptions: { type: TableCellDisplayMode.Pill } },
             mappings: withMappings ? [{ type: 'value', options: { ok: { text: 'OK' } } } as never] : undefined,
           },
@@ -595,19 +596,14 @@ describe('useColumnBuilderFromFields', () => {
     });
   }
 
-  it('patches Pill cell fields to FixedColor mode with the fallback color when mappings exist', () => {
+  it('preserves the selected Pill color scheme when mappings exist', () => {
     const mappingFrame = makePillFrame({ withMappings: true });
     const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
 
     const result = callFromFields(hook, mappingFrame.fields, [100], mappingFrame, [], []);
 
-    expect(result.columns[0].field.config.color).toEqual({ mode: FieldColorModeId.Fixed, fixedColor: '#808080' });
-    // The patched display processor applies the mapped text but takes its color from Fixed mode.
-    const display = result.columns[0].field.display!('ok');
-    expect(display.text).toBe('OK');
-    expect(display.color).toBe('#808080');
-    // The frame's own field must not be mutated — only the column's copy is patched.
-    expect(mappingFrame.fields[0].config.color).toBeUndefined();
+    expect(result.columns[0].field.config.color).toEqual({ mode: FieldColorModeId.Shades, fixedColor: 'green' });
+    expect(result.columns[0].field).toBe(mappingFrame.fields[0]);
   });
 
   it('leaves Pill cell fields untouched when there are no mappings', () => {
@@ -616,7 +612,7 @@ describe('useColumnBuilderFromFields', () => {
 
     const result = callFromFields(hook, pillFrame.fields, [100], pillFrame, [], []);
 
-    expect(result.columns[0].field.config.color).toBeUndefined();
+    expect(result.columns[0].field.config.color).toEqual({ mode: FieldColorModeId.Shades, fixedColor: 'green' });
   });
 
   it('builds no columns and no cell renderers for an empty fields array', () => {

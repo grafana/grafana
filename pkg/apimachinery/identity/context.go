@@ -107,7 +107,7 @@ func newInternalIdentity(name string, namespace string, orgID int64, opts ...Ide
 		UserUID:        name,
 		AuthID:         name,
 		Login:          name,
-		OrgRole:        RoleAdmin,
+		OrgRole:        types.RoleAdmin,
 		Namespace:      namespace,
 		IsGrafanaAdmin: true,
 		OrgID:          orgID,
@@ -226,6 +226,7 @@ var serviceIdentityTokenPermissions = []string{
 	"folder.grafana.app:*",
 	"dashboard.grafana.app:*",
 	"playlist.grafana.app:*",
+	"dashboardtemplates.grafana.app:*",
 	"reporting.grafana.app/reports:*",
 	"reporting.grafana.app/reportsettings:*",
 	"secret.grafana.app:*",
@@ -245,6 +246,7 @@ var serviceIdentityTokenPermissions = []string{
 	"alertingassistant.grafana.app/alert-rule-reviews:update",
 	"advisor.grafana.app:*",
 	"annotation.grafana.app:*",
+	"banners.grafana.app:*",
 	"setting.grafana.app:*",
 
 	// allow access to all datasource types

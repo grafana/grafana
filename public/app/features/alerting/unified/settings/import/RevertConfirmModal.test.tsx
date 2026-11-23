@@ -42,9 +42,11 @@ function renderModal(onDismiss: () => void) {
 describe('RevertConfirmModal', () => {
   it('shows reassuring copy and reverts the staged config on confirm', async () => {
     let deletedIdentifier: string | null = null;
+    let importSource: string | null = null;
     server.use(
       http.delete(DELETE_URL, ({ request }) => {
         deletedIdentifier = request.headers.get('X-Grafana-Alerting-Config-Identifier');
+        importSource = request.headers.get('X-Grafana-Alerting-Import-Source');
         return HttpResponse.json(convertResponse(), { status: 202 });
       })
     );
@@ -61,6 +63,7 @@ describe('RevertConfirmModal', () => {
 
     await waitFor(() => expect(onDismiss).toHaveBeenCalled());
     expect(deletedIdentifier).toBe('config-min');
+    expect(importSource).toBe('import_settings');
   });
 
   // A user scoped to a different import passes the client-side permission check and is rejected here,

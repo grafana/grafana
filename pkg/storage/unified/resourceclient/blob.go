@@ -17,37 +17,29 @@ const (
 	blobMaxSize   = 64 << 20
 )
 
-// blobStoreClient preserves the unary API while using bounded streaming messages
-// for inline bytes. Older servers and backends may only implement unary RPCs.
+// blobStoreClient preserves the caller interface while using streaming RPCs.
 type blobStoreClient struct {
-	resourcepb.BlobStoreClient
 	streaming resourcepb.BlobStoreStreamingClient
 }
 
 func newBlobStoreClient(cc grpc.ClientConnInterface) resourcepb.BlobStoreClient {
-	return &blobStoreClient{
-		BlobStoreClient: resourcepb.NewBlobStoreClient(cc),
-		streaming:       resourcepb.NewBlobStoreStreamingClient(cc),
-	}
+	return &blobStoreClient{streaming: resourcepb.NewBlobStoreStreamingClient(cc)}
 }
 
 func (c *blobStoreClient) PutBlob(ctx context.Context, req *resourcepb.PutBlobRequest, opts ...grpc.CallOption) (*resourcepb.PutBlobResponse, error) {
-	if req == nil || req.Method != resourcepb.PutBlobRequest_GRPC || len(req.Value) == 0 {
-		return c.BlobStoreClient.PutBlob(ctx, req, opts...)
-	}
-	if len(req.Value) > blobMaxSize {
+	if req != nil && len(req.Value) > blobMaxSize {
 		return nil, status.Error(codes.ResourceExhausted, "blob too large")
 	}
-	rsp, err := c.putBlobStream(ctx, req, opts...)
-	// Only an unsupported RPC/backend is safe to replay. Other failures may have
-	// occurred after committing the upload.
-	if status.Code(err) == codes.Unimplemented {
-		return c.BlobStoreClient.PutBlob(ctx, req, opts...)
-	}
-	return rsp, err
+	return c.putBlobStream(ctx, req, opts...)
 }
 
 func (c *blobStoreClient) putBlobStream(ctx context.Context, req *resourcepb.PutBlobRequest, opts ...grpc.CallOption) (*resourcepb.PutBlobResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "missing blob request")
+	}
+	if req.Method != resourcepb.PutBlobRequest_GRPC {
+		return nil, status.Error(codes.InvalidArgument, "only inline blob uploads are supported")
+	}
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	stream, err := c.streaming.PutBlobStream(ctx, opts...)
@@ -79,15 +71,9 @@ func (c *blobStoreClient) putBlobStream(ctx context.Context, req *resourcepb.Put
 }
 
 func (c *blobStoreClient) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest, opts ...grpc.CallOption) (*resourcepb.GetBlobResponse, error) {
-	if req == nil || !req.MustProxyBytes {
-		return c.BlobStoreClient.GetBlob(ctx, req, opts...)
-	}
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	stream, err := c.streaming.GetBlobStream(ctx, req, opts...)
-	if status.Code(err) == codes.Unimplemented {
-		return c.BlobStoreClient.GetBlob(ctx, req, opts...)
-	}
 	if err != nil {
 		return nil, err
 	}
@@ -101,10 +87,6 @@ func (c *blobStoreClient) GetBlob(ctx context.Context, req *resourcepb.GetBlobRe
 			return result, nil
 		}
 		if err != nil {
-			// Never replace a partially received stream with another download.
-			if result == nil && status.Code(err) == codes.Unimplemented {
-				return c.BlobStoreClient.GetBlob(ctx, req, opts...)
-			}
 			return nil, err
 		}
 		if result == nil {

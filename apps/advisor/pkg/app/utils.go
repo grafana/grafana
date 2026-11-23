@@ -186,19 +186,36 @@ func processCheckRetry(ctx context.Context, log logging.Logger, client resource.
 			return fmt.Errorf("error running steps: %w", err)
 		}
 	}
-	// Pull this item's failures and replace them with the retry result
-	currentFailures := slices.DeleteFunc(slices.Clone(c.Status.Report.Failures), func(f advisorv0alpha1.CheckReportFailure) bool {
-		return f.ItemID == itemToRetry
+	// Other items of this check may have been retried concurrently, so merge into the
+	// latest stored report instead of the one from the admission request.
+	latestObj, err := client.Get(ctx, resource.Identifier{
+		Namespace: obj.GetNamespace(),
+		Name:      obj.GetName(),
 	})
-	c.Status.Report.Failures = append(currentFailures, failures...)
-	// Set the status
-	err = checks.SetStatus(ctx, client, obj, c.Status)
-	log.Debug("Status set", "check", obj.GetName(), "status.count", c.Status.Report.Count)
 	if err != nil {
 		return err
 	}
-	// Delete the retry annotation to mark the check as processed
-	annotations := checks.DeleteAnnotations(ctx, obj, []string{checks.RetryAnnotation})
+	latest, ok := latestObj.(*advisorv0alpha1.Check)
+	if !ok {
+		return fmt.Errorf("invalid object type")
+	}
+	// Pull this item's failures and replace them with the retry result
+	currentFailures := slices.DeleteFunc(slices.Clone(latest.Status.Report.Failures), func(f advisorv0alpha1.CheckReportFailure) bool {
+		return f.ItemID == itemToRetry
+	})
+	latest.Status.Report.Failures = append(currentFailures, failures...)
+	// Set the status
+	err = checks.SetStatus(ctx, client, obj, latest.Status)
+	log.Debug("Status set", "check", obj.GetName(), "status.count", latest.Status.Report.Count)
+	if err != nil {
+		return err
+	}
+	// Only delete the retry annotation if it was not overwritten by a newer retry
+	if checks.GetRetryAnnotation(latest) != itemToRetry {
+		log.Debug("Retry annotation belongs to another retry, keeping it", "check", obj.GetName(), "item", itemToRetry, "currentRetryAnnotation", checks.GetRetryAnnotation(latest))
+		return nil
+	}
+	annotations := checks.DeleteAnnotations(ctx, latest, []string{checks.RetryAnnotation})
 	err = checks.SetAnnotations(ctx, client, obj, annotations)
 	log.Debug("Annotations set", "check", obj.GetName(), "annotations", annotations)
 
@@ -307,12 +324,22 @@ func waitForRetryAnnotation(ctx context.Context, log logging.Logger, client reso
 		return err
 	}
 	retries := 0
+	superseded := false
 	currentRetryAnnotation := checks.GetRetryAnnotation(currentObj)
 	for currentRetryAnnotation != itemToRetry {
+		if currentRetryAnnotation != "" {
+			superseded = true
+		}
 		log.Debug("Waiting for retry annotation to be persisted", "check", obj.GetName(), "item", itemToRetry, "currentRetryAnnotation", currentRetryAnnotation)
 		time.Sleep(retryAnnotationPollingInterval)
 		retries++
 		if retries > 5 {
+			// The single retry annotation is overwritten when several items of the same
+			// check are retried close together, so this retry may never see its own value.
+			if superseded {
+				log.Debug("Retry annotation superseded by another retry, proceeding", "check", obj.GetName(), "item", itemToRetry)
+				return nil
+			}
 			return fmt.Errorf("timeout waiting for retry annotation to be persisted")
 		}
 		currentObj, err = client.Get(ctx, resource.Identifier{

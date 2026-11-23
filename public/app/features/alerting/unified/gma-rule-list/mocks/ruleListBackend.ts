@@ -3,7 +3,9 @@ import { HttpResponse, http } from 'msw';
 import { type Folder } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { type AlertRule, type RecordingRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import server from '@grafana/test-utils/server';
+import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
+import { SEARCH_MAX_LIMIT } from '../rule-search/useRuleSearchApiArgs';
 import { type RuleKind } from '../shared/ruleKind';
 
 import { FOLDER_ANNOTATION, folderItem } from './factories';
@@ -87,7 +89,7 @@ export function setupRuleListBackend({
     return interceptor.respond();
   }
 
-  function page<T>(items: T[], body: SearchBody, size = body.limit ?? items.length) {
+  function page<T>(items: T[], body: SearchBody, size = Math.min(body.limit ?? items.length, SEARCH_MAX_LIMIT)) {
     const start = body.continue ? Number(body.continue) : 0;
     const end = start + size;
     return { items: items.slice(start, end), metadata: end < items.length ? { continue: String(end) } : {} };
@@ -103,12 +105,18 @@ export function setupRuleListBackend({
       }
 
       const scope = nameFilterValues(body.where);
+      const text = leaves(body.where).find((leaf) => leaf.text)?.text?.value;
+      const words = text === undefined ? undefined : searchWords(text);
       const listed = folders
         .filter((folder) => allRules.some((rule) => parentOf(rule) === nameOf(folder)))
         .filter((folder) => !scope || scope.includes(nameOf(folder)))
+        // Like the index: every word in the title, ignoring case.
+        .filter((folder) => !words || words.every((word) => folder.spec.title.toLowerCase().includes(word)))
         .sort(byTitle)
         .map((folder) => folderItem(nameOf(folder), folder.spec.title));
-      return HttpResponse.json(page(listed, body, pageSize?.folders));
+      // `pageSize` resizes the Folders list only, not the List mode lookup.
+      const size = body.limit === DEFAULT_PER_PAGE_PAGINATION ? pageSize?.folders : undefined;
+      return HttpResponse.json(page(listed, body, size));
     }),
 
     ...(['alert', 'recording'] as const).map((kind) =>
@@ -210,6 +218,13 @@ function leaves(where?: SearchWhere): SearchWhere[] {
     return [];
   }
   return where.and ?? [where];
+}
+
+/** Like the index, drops words shorter than 3 characters, unless every word is that short. */
+function searchWords(text: string) {
+  const words = text.toLowerCase().split(/\s+/).filter(Boolean);
+  const longWords = words.filter((word) => word.length >= 3);
+  return longWords.length > 0 ? longWords : words;
 }
 
 function nameFilterValues(where?: SearchWhere) {
