@@ -31,6 +31,7 @@ import {
 } from 'app/features/expressions/types';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { shouldUseGmaOnlyListView } from '../../../featureToggles';
 import { useDataSourcesForRules } from '../../../hooks/useDataSourcesForRules';
 import { useRouteProxyActive } from '../../../plugin-proxy/withRouteProxy';
 import {
@@ -422,6 +423,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
   // The Prometheus Alerting plugin has its own form for data source managed rules, so core only
   // authors Grafana managed ones once it's installed.
   const canSelectDataSourceManaged = onlyOneDSInQueries(queries) && hasAlertEnabledDataSources && !routeProxyActive;
+  const showRuleTypeSelector = mode === 'edit' && !shouldUseGmaOnlyListView();
   if (!type) {
     return null;
   }
@@ -509,7 +511,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
                 }}
               />
             </Field>
-            {mode === 'edit' && hasAlertEnabledDataSources && (
+            {showRuleTypeSelector && hasAlertEnabledDataSources && (
               <>
                 <Divider />
                 <SmartAlertTypeDetector
@@ -559,7 +561,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
               </Tooltip>
             )}
             {/* We only show Switch for Grafana managed alerts */}
-            {canSelectDataSourceManaged && isGrafanaAlertingType && !simplifiedQueryStep && mode === 'edit' && (
+            {canSelectDataSourceManaged && isGrafanaAlertingType && !simplifiedQueryStep && showRuleTypeSelector && (
               <>
                 <Divider />
                 <SmartAlertTypeDetector

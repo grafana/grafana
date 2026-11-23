@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useIntersection } from 'react-use';
 
@@ -256,7 +256,9 @@ function RenderedMarkdown({
   // Latest listing, read synchronously in the click handler so we only take over
   // navigation when there is an in-app route.
   const itemsRef = useRef<ResourceListItem[] | undefined>(undefined);
-  itemsRef.current = resourcesData?.items;
+  useLayoutEffect(() => {
+    itemsRef.current = resourcesData?.items;
+  });
 
   // Refresh the cached listing when a sync completes: it may add or rename
   // resources without changing the README, which would otherwise leave stale

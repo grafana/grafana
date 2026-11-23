@@ -112,15 +112,15 @@ func fullRoute() *plugins.Route {
 		ReqRole:   types.RoleEditor,
 		ReqAction: "example-app.api:write",
 		URL:       "https://{{.JsonData.host}}/v1",
-		URLParams: []plugins.URLParam{{Name: "key", Content: "{{.SecureJsonData.key}}"}},
-		Headers:   []plugins.Header{{Name: "X-Token", Content: "{{.SecureJsonData.token}}"}},
-		AuthType:  "azure",
-		TokenAuth: &plugins.JWTTokenAuth{
-			Url:    "https://login.example.com/{{.JsonData.tenant}}",
+		URLParams: []routes.ProxyURLParam{{Name: "key", Content: "{{.SecureJsonData.key}}"}},
+		Headers:   []routes.ProxyHeader{{Name: "X-Token", Content: "{{.SecureJsonData.token}}"}},
+		AuthType:  routes.ProxyAuthTypeAzure,
+		TokenAuth: &routes.ProxyTokenAuth{
+			URL:    "https://login.example.com/{{.JsonData.tenant}}",
 			Scopes: []string{"a", "b"},
 			Params: map[string]string{"client_secret": "{{.SecureJsonData.secret}}"},
 		},
-		JwtTokenAuth: &plugins.JWTTokenAuth{Url: "https://oauth2.example.com", Scopes: []string{"c"}},
+		JwtTokenAuth: &routes.ProxyTokenAuth{URL: "https://oauth2.example.com", Scopes: []string{"c"}},
 		Body:         json.RawMessage(`{ "grant_type": "client_credentials",  "id": "{{.JsonData.id}}" }`),
 	}
 }

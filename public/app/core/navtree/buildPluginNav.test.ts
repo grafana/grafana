@@ -19,6 +19,8 @@ import {
 } from './test-utils';
 import { findNavById as findById, pruneEmptyNavSections } from './utils';
 
+jest.mock('./appNavConfig', () => makeSpyable('./appNavConfig'));
+
 setupMockServer();
 
 const setup = ({ permissions = [], openFeatureFlags = {}, ...rest }: NavTestState = {}) =>
