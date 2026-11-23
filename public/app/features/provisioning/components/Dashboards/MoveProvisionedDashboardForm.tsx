@@ -8,7 +8,7 @@ import { Alert, Button, Drawer, Field, Input, Stack } from '@grafana/ui';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
-import { dynamicKindRegistry } from 'app/core/kinds/dynamicKinds';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
@@ -127,10 +127,7 @@ export function MoveProvisionedDashboardForm({
         ref: getRequestRef(repository, ref),
         targetPath: targetFolderPath,
         resources: [
-          toResourceRef(
-            dynamicKindRegistry.coreKinds.dashboard,
-            dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? ''
-          ),
+          toResourceRef(CORE_KINDS.dashboard, dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? ''),
         ],
       },
     };

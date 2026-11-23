@@ -2,7 +2,7 @@ import { textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Card, LinkButton, Stack, Text, TextLink } from '@grafana/ui';
 import { type Connection } from 'app/api/clients/provisioning/v0alpha1';
-import { dynamicKindRegistry } from 'app/core/kinds/dynamicKinds';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 
 import { RepoIcon } from '../Shared/RepoIcon';
 import { type RepoType } from '../Wizard/types';
@@ -73,19 +73,14 @@ export function ConnectionListItem({ connection, isSelected, onClick }: Props) {
 
       {!onClick && (
         <Card.Actions>
-          <LinkButton
-            icon="eye"
-            href={dynamicKindRegistry.coreKinds.connection.getRoute(name)}
-            variant="primary"
-            size="md"
-          >
+          <LinkButton icon="eye" href={CORE_KINDS.connection.getRoute(name)} variant="primary" size="md">
             <Trans i18nKey="provisioning.connections.view">View</Trans>
           </LinkButton>
           <Button
             variant="secondary"
             icon="download-alt"
             size="md"
-            onClick={() => exportResourceAsJson(connection, dynamicKindRegistry.coreKinds.connection.kind)}
+            onClick={() => exportResourceAsJson(connection, CORE_KINDS.connection.kind)}
           >
             <Trans i18nKey="provisioning.connections.export">Export</Trans>
           </Button>

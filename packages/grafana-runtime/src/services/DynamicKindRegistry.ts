@@ -1,7 +1,8 @@
-import { type KindInfo, type KindRegistry } from './KindRegistry';
+import { type KindInfo } from './KindRegistry';
 
-export interface DynamicKindRegistry extends KindRegistry {
+export interface DynamicKindRegistry {
   readonly getKinds: () => KindInfo[];
+  readonly findKind: (group: string, kind: string) => KindInfo | undefined;
   readonly addKinds: (kinds: KindInfo[]) => void;
 }
 

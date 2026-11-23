@@ -5,7 +5,7 @@ import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Stack } from '@grafana/ui';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
-import { dynamicKindRegistry } from 'app/core/kinds/dynamicKinds';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
@@ -118,10 +118,7 @@ export function DeleteProvisionedDashboardForm({
       delete: {
         ref: getRequestRef(repository, ref),
         resources: [
-          toResourceRef(
-            dynamicKindRegistry.coreKinds.dashboard,
-            dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? ''
-          ),
+          toResourceRef(CORE_KINDS.dashboard, dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? ''),
         ],
       },
     };

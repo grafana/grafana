@@ -5,7 +5,8 @@ import { type KindInfo } from '@grafana/runtime/unstable';
 import { playlistAPIv1 } from 'app/api/clients/playlist/v1';
 import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
-import { dynamicKindRegistry } from 'app/core/kinds/dynamicKinds';
+import { CORE_KINDS, coversGroup } from 'app/core/kinds/coreKinds';
+import { getKinds } from 'app/core/kinds/dynamicKinds';
 import { getAPIGroupDiscoveryList } from 'app/features/apiserver/discovery';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
@@ -15,8 +16,6 @@ import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { type AppDispatch } from 'app/store/configureStore';
 
 import { isManaged } from './managedResource';
-
-const { coreKinds, coversGroup } = dynamicKindRegistry;
 
 /**
  * A resource of some kind enumerated from the instance, in the minimal shape the
@@ -54,7 +53,7 @@ interface ResourceListDeps {
  * another kind's row. `Record<string, unknown>` admits the fields only provisioning adds.
  */
 type OnCoreKinds = {
-  [K in keyof typeof coreKinds]?: (typeof coreKinds)[K] & Record<string, unknown>;
+  [K in keyof typeof CORE_KINDS]?: (typeof CORE_KINDS)[K] & Record<string, unknown>;
 };
 
 /**
@@ -74,17 +73,17 @@ type OnCoreKinds = {
  */
 export const resourceKindInfos = {
   folder: {
-    ...coreKinds.folder,
-    list: () => listViaSearch(coreKinds.folder.searchKind),
+    ...CORE_KINDS.folder,
+    list: () => listViaSearch(CORE_KINDS.folder.searchKind),
     alwaysAvailable: true,
   },
   dashboard: {
-    ...coreKinds.dashboard,
-    list: () => listViaSearch(coreKinds.dashboard.searchKind),
+    ...CORE_KINDS.dashboard,
+    list: () => listViaSearch(CORE_KINDS.dashboard.searchKind),
     alwaysAvailable: true,
   },
   playlist: {
-    ...coreKinds.playlist,
+    ...CORE_KINDS.playlist,
     // Playlists aren't in the unified search index; list them through their
     // generated apiserver client (which carries the v1→v0alpha1 fallback).
     list: ({ dispatch }: ResourceListDeps) => listPlaylists(dispatch),
@@ -94,31 +93,31 @@ export const resourceKindInfos = {
     invalidateListTags: () => playlistAPIv1.util.invalidateTags(['Playlist']),
   },
   librarypanel: {
-    ...coreKinds.librarypanel,
+    ...CORE_KINDS.librarypanel,
     // Library panels aren't in the unified search index; list them through their
     // apiserver (same group as dashboards, v0alpha1). Gated out of migration by
     // default — they ship disabled and aren't in the static base — so this only
     // runs once the backend reports the kind as available.
-    list: () => listViaApiserver(coreKinds.librarypanel.group, 'v0alpha1', coreKinds.librarypanel.resource),
+    list: () => listViaApiserver(CORE_KINDS.librarypanel.group, 'v0alpha1', CORE_KINDS.librarypanel.resource),
     alwaysAvailable: false,
   },
   repository: {
-    ...coreKinds.repository,
+    ...CORE_KINDS.repository,
     // Provisioning's own configuration is never a migration target: it is the mechanism that
     // moves resources into a repository, so it is not one of the resources moved.
     list: async () => [],
     alwaysAvailable: false,
   },
   connection: {
-    ...coreKinds.connection,
+    ...CORE_KINDS.connection,
     // Not a migration target, for the same reason as repositories.
     list: async () => [],
     alwaysAvailable: false,
   },
   datasource: {
-    ...coreKinds.datasource,
+    ...CORE_KINDS.datasource,
     list: ({ availableResources }: ResourceListDeps) => {
-      const { group, resource, kind } = coreKinds.datasource;
+      const { group, resource, kind } = CORE_KINDS.datasource;
       return listCollectionMembers(group, resource, kind, availableResources);
     },
     alwaysAvailable: false,
@@ -184,8 +183,7 @@ export interface ResourceKindInfo extends KindInfo {
 const allKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
 
 function knownKindInfos(): ResourceKindInfo[] {
-  const added = dynamicKindRegistry
-    .getKinds()
+  const added = getKinds()
     .filter((kind) => !allKindInfos.some((info) => info.group === kind.group && info.kind === kind.kind))
     .map((kind) => ({ ...kind, list: async () => [], alwaysAvailable: false }));
   return [...allKindInfos, ...added];
