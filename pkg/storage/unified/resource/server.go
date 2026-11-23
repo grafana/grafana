@@ -59,8 +59,8 @@ func watchSendError(err error) error {
 	return err
 }
 
-// queueRPCError is the error-only equivalent of HandleQueueError: a full
-// tenant queue is reported as 429/ResourceExhausted.
+// queueRPCError reports a full tenant queue as 429/ResourceExhausted;
+// other failures retain rpcErrorFrom's status and cancellation semantics.
 func queueRPCError(err error) error {
 	if errors.Is(err, scheduler.ErrTenantQueueFull) {
 		return GRPCStatusError(NewTooManyRequestsError("tenant queue is full, please try again later"))
@@ -350,8 +350,7 @@ type ResourceStats struct {
 	Count           int64
 	ResourceVersion int64
 
-	// LastSearchedAt is when a global index was last searched before a restart,
-	// so its idle time carries on. Zero when unknown.
+	// LastSearchedAt carries idle time across restarts. Zero when unknown.
 	LastSearchedAt time.Time
 }
 
@@ -385,7 +384,7 @@ type QueueConfig struct {
 }
 
 type BlobConfig struct {
-	// The CDK configuration URL
+	// Retained to reject configured external storage instead of silently losing access to its blobs.
 	URL string
 
 	// Directly implemented blob support
@@ -430,11 +429,6 @@ type SearchOptions struct {
 
 	// Percentage of search requests that should fail immediately (0-100). 0 = disabled, 100 = all requests fail.
 	InjectFailuresPercent int
-
-	// PostRankAuthzEnabled mirrors the index backend's post-rank authorization
-	// setting. It selects the index features this server requires, so an index
-	// that predates them is rebuilt before that path serves a query.
-	PostRankAuthzEnabled bool
 
 	// GlobalIndexEnabled builds one index per namespace covering several resource
 	// types, alongside the per-resource indexes.
@@ -726,14 +720,6 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		return nil, err
 	}
 
-	if b, ok := opts.Backend.(*kvStorageBackend); ok {
-		if external, ok := blobstore.(*cdkBlobSupport); ok {
-			b.blobGCMu.Lock()
-			b.blobGC = NewBlobGarbageCollector(NewCDKBlobGCStore(external.bucket, external.root), b.garbageCollection.BatchSize, b.garbageCollection.BatchWait)
-			b.blobGCMu.Unlock()
-		}
-	}
-
 	logger := log.New("resource-server")
 	// Make this cancelable
 	ctx, cancel := context.WithCancel(context.Background())
@@ -804,22 +790,20 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 	return s, nil
 }
 
+func ValidateBlobURL(url string) error {
+	if url != "" {
+		return fmt.Errorf("blob_url is no longer supported by unified storage")
+	}
+	return nil
+}
+
 // initializeBlobStorage initializes blob storage from the provided options.
 func initializeBlobStorage(opts ResourceServerOptions) (BlobSupport, error) {
+	if err := ValidateBlobURL(opts.Blob.URL); err != nil {
+		return nil, err
+	}
 	if opts.Blob.Backend != nil {
 		return opts.Blob.Backend, nil
-	}
-
-	if opts.Blob.URL != "" {
-		ctx := context.Background()
-		bucket, err := OpenBlobBucket(ctx, opts.Blob.URL)
-		if err != nil {
-			return nil, err
-		}
-
-		return NewCDKBlobSupport(ctx, CDKBlobSupportOptions{
-			Bucket: NewInstrumentedBucket(bucket, opts.Reg),
-		})
 	}
 
 	// Check if the backend supports blob storage
@@ -855,7 +839,8 @@ type server struct {
 	// Background watch task -- this has permissions for everything
 	ctx          context.Context
 	cancel       context.CancelFunc
-	broadcaster  Broadcaster[*WrittenEvent]
+	watchMu      sync.Mutex // publishes broadcaster and watchStartup together
+	broadcaster  *broadcaster[*WrittenEvent]
 	watchStartup *watchStartup
 
 	// Graceful shutdown: tracks in-flight write operations so Stop can wait
@@ -968,9 +953,9 @@ func (s *server) Stop(ctx context.Context) error {
 
 	// Stops streaming (broadcaster, watch events).
 	s.cancel()
-	if s.watchStartup != nil {
+	if _, startup := s.watchState(); startup != nil {
 		select {
-		case <-s.watchStartup.stopped:
+		case <-startup.stopped:
 		case <-ctx.Done():
 			s.log.Warn("timed out waiting for watch startup and capture to stop")
 		}
@@ -1518,7 +1503,19 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 	obj.SetUpdatedTimestamp(&now.Time)
 	obj.SetManagedFields(nil)
 	obj.SetFinalizers(nil)
-	obj.SetUpdatedBy(user.GetUID())
+	// An access-policy caller (a service, authenticated from its token) may delete on a user's
+	// behalf; record that user rather than the service. Any other caller cannot choose the
+	// recorded deleter. The in-context service identity is not matched here: the server derives
+	// the caller from the token, whose subject is the service's own access policy.
+	deletedBy := user.GetUID()
+	if req.ActingUserUid != "" {
+		if user.GetIdentityType() == claims.TypeAccessPolicy {
+			deletedBy = req.ActingUserUid
+		} else {
+			s.log.Debug("ignoring acting user on delete from a non-service caller", "caller", user.GetUID())
+		}
+	}
+	obj.SetUpdatedBy(deletedBy)
 	obj.SetGeneration(utils.DeletedGeneration)
 	obj.SetAnnotation(utils.AnnoKeyKubectlLastAppliedConfig, "") // clears it
 	event.ObjectOld = oldObj
@@ -2251,12 +2248,7 @@ func (s *server) initWatcher() error {
 		}
 	}()
 
-	s.broadcaster = newBroadcasterWithSizes(s.ctx, out, watchChanSize, defaultOverflowCap, s.storageMetrics.Broadcaster, func(e *WrittenEvent) string {
-		if e == nil || e.Key == nil {
-			return ""
-		}
-		return e.Key.Resource
-	}, &seededCacheConfig[*WrittenEvent]{identity: writtenEventIdentity})
+	s.setWatchState(newBroadcaster(s.ctx, out, s.storageMetrics.Broadcaster, writtenEventIdentity), nil)
 	return nil
 }
 
@@ -2269,8 +2261,8 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 
 	// Capture before setup: invalidations during subscription or snapshot reads must
 	// expire this watch too, even if it has not entered the live loop yet.
-	cached, _ := s.broadcaster.(*broadcaster[*WrittenEvent])
-	waitsForStartup := cached != nil && cached.cache.identity != nil && cached.starting()
+	b, startup := s.watchState()
+	waitsForStartup := startup != nil && b.starting()
 	watchExpiryC := s.watchExpiry.WatchInvalidation()
 
 	// Treat a closed client transport and cancellation of this watch's context
@@ -2324,31 +2316,32 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		requestedSince = ToSnowflakeRV(requestedSince)
 	}
 	name := fmt.Sprintf("%s/%s/%s", key.Group, key.Resource, key.Namespace)
-	var stream <-chan *WrittenEvent
-	if b := cached; b != nil && b.cache.identity != nil {
-		// Invalidations before capture starts, such as the one when it first
-		// starts, predate the stream a waiting watch subscribes to. Later ones,
-		// even before the cache is ready, still expire it.
-		if waitsForStartup {
-			if err := b.ensureReady(ctx); err != nil {
-				return err
-			}
-			if expiry := s.watchStartup.expiryAtCapture(); expiry != nil {
-				watchExpiryC = expiry
-			}
-		}
-		var resume *watchResume
-		if req.Since > 0 && !req.SendInitialEvents {
-			resume = &watchResume{groupResource: GroupResource{Group: key.Group, Resource: key.Resource}, since: requestedSince, requestedRV: req.Since}
-		}
-		stream, err = b.subscribeWatch(ctx, name, key.Resource, resume)
-	} else {
-		stream, err = s.broadcaster.Subscribe(ctx, name, key.Resource)
+	// The gRPC service can take watches before storage initialization installs it.
+	if b == nil {
+		return status.Error(codes.Unavailable, "watch is not ready yet")
 	}
+	// Invalidations before capture starts, such as the one when it first
+	// starts, predate the stream a waiting watch subscribes to. Later ones,
+	// even before the cache is ready, still expire it.
+	if waitsForStartup {
+		if err := b.ensureReady(ctx); err != nil {
+			return err
+		}
+		if expiry := startup.expiryAtCapture(); expiry != nil {
+			watchExpiryC = expiry
+		}
+	}
+	var resume *watchResume
+	if req.Since != 0 && !req.SendInitialEvents {
+		resume = &watchResume{since: requestedSince, requestedRV: req.Since}
+	}
+	gr := GroupResource{Group: key.Group, Resource: key.Resource}
+	sub, err := b.subscribeWatch(ctx, name, gr, resume)
 	if err != nil {
 		return err
 	}
-	defer s.broadcaster.Unsubscribe(stream)
+	stream := sub.events()
+	defer b.Unsubscribe(stream)
 
 	since := requestedSince
 	expired := func() error {
@@ -2402,14 +2395,20 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 
 		rv, err := s.backend.ListIterator(ctx, listReq, func(ListIterator) error { return nil })
 		if err != nil {
-			// Fallback to the broadcasterʼs view if the backend lookup fails.
-			// This preserves previous behaviour while still eliminating the
-			// common race in the majority of cases.
-			s.log.Warn("watch: failed to fetch current RV from backend, falling back to broadcaster", "err", err)
-			mostRecentRV = s.mostRecentRV.Load()
-		} else {
-			mostRecentRV = rv
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
+			if isKVBackend {
+				// KV notifications can be ahead of writes that commit after the watch starts.
+				s.log.Warn("watch: failed to fetch current RV from backend", "err", err)
+				return status.Error(codes.Unavailable, "watch: current resource version is unavailable")
+			}
+			// Some legacy backends cannot list this scope. We subscribed without
+			// replay, so use live delivery from registration as the start.
+			s.log.Debug("watch: starting live stream without current RV", "err", err)
+			rv = 0
 		}
+		mostRecentRV = rv
 	} else {
 		// For all other code-paths we either already have an explicit RV or we
 		// will derive it from the initial list below.
@@ -2492,6 +2491,8 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		defer ticker.Stop()
 		bookmarkC = ticker.C
 	}
+	// consumed counts the events this watch has taken from the stream.
+	var consumed int64
 
 	for {
 		// Prioritize known delivery gaps over buffered live events.
@@ -2509,6 +2510,12 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 			return expired()
 
 		case <-bookmarkC:
+			// KV notifiers settle and order events across collections, but other
+			// collections are not routed to this stream, so take their progress
+			// from the broadcaster. Legacy SQL polls collections separately.
+			if isKVBackend {
+				processedRV = max(processedRV, sub.rv(consumed))
+			}
 			cutoff := time.Now().Add(-filteredBookmarkDelay)
 			cutoffRV := cutoff.UnixMicro()
 			if IsSnowflake(processedRV) {
@@ -2527,12 +2534,8 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 				s.log.Debug("watch events closed")
 				return nil
 			}
+			consumed++
 			if event.ResourceVersion <= since {
-				continue
-			}
-			// KV notifiers settle and order events across collections. Legacy SQL polls
-			// group/resources separately, so other collections cannot establish progress.
-			if !isKVBackend && (event.Key.Group != key.Group || event.Key.Resource != key.Resource) {
 				continue
 			}
 			if matchesQueryKey(key, event.Key) && checker(event.Key.Name, event.Folder) {

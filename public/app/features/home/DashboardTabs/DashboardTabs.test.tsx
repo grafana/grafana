@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
+import { testWithStarsUser } from 'test/helpers/testWithStarsUser';
 import { render, screen, waitFor, within } from 'test/test-utils';
 
 import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
@@ -87,6 +88,8 @@ function seedHistory(entries: PageHistoryEntry[]) {
 function seedRecent(uids: string[]) {
   seedHistory(uids.map((uid) => dashboardEntry(uid)));
 }
+
+testWithStarsUser();
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -280,6 +283,25 @@ describe('DashboardTabs', () => {
       expect(screen.queryByText('Starred Folder')).not.toBeInTheDocument();
       expect(screen.getByRole('tab', { name: /starred.*2/i })).toBeInTheDocument();
     });
+
+    // A dashboard and a folder may share a uid; each is its own row, keyed by kind, or React warns about duplicate
+    // keys and the console guard fails the test
+    it('lists a dashboard and a folder that share a uid as two rows', async () => {
+      setMockStarredFolders(['shared']);
+      setMockStarredDashboards(['shared']);
+      server.use(
+        getCustomSearchHandler([
+          makeDashboardHit({ name: 'shared', title: 'Shared Dashboard' }),
+          makeDashboardHit({ name: 'shared', title: 'Shared Folder', resource: 'folders' }),
+        ])
+      );
+
+      render(<DashboardTabs />);
+
+      expect(await screen.findByText('Shared Dashboard')).toBeInTheDocument();
+      expect(screen.getByText('Shared Folder')).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /starred.*2/i })).toBeInTheDocument();
+    });
   });
 
   it('keeps the rows up while a star toggle re-searches instead of flashing a loader', async () => {
@@ -455,6 +477,9 @@ describe('DashboardTabs', () => {
       expect(jest.mocked(recentActivityShown)).toHaveBeenCalledTimes(1);
       expect(jest.mocked(recentActivityShown)).toHaveBeenCalledWith({
         total_count: 4,
+        folder_count: 0,
+        notebook_count: 0,
+        playlist_count: 0,
         page_count: 0,
         dashboard_count: 1,
         explore_count: 1,
@@ -644,6 +669,53 @@ describe('DashboardTabs', () => {
 
       expect(await screen.findByRole('link', { name: /Recent Dashboard 1/ })).toBeInTheDocument();
       expect(screen.getByRole('tab', { name: /recent/i })).toHaveAttribute('aria-selected', 'true');
+    });
+
+    describe('playlists', () => {
+      const playlistEntry: PageHistoryEntry = {
+        kind: 'playlist',
+        uid: 'pl-1',
+        pathname: '/playlists/edit/pl-1',
+        search: '',
+        lastVisited: Date.now() - 30_000,
+      };
+      const playlistsRoute = '*/apis/playlist.grafana.app/*/namespaces/*/playlists';
+
+      it('titles a playlist row with the playlist name', async () => {
+        seedHistory([playlistEntry]);
+        server.use(
+          http.get(playlistsRoute, () =>
+            HttpResponse.json({ items: [{ metadata: { name: 'pl-1' }, spec: { title: 'NOC wall', interval: '5m' } }] })
+          )
+        );
+
+        render(<DashboardTabs />);
+
+        expect(await screen.findByRole('link', { name: /NOC wall/ })).toBeInTheDocument();
+        expect(jest.mocked(recentActivityShown)).toHaveBeenCalledWith(
+          expect.objectContaining({ total_count: 1, playlist_count: 1, folder_count: 0, notebook_count: 0 })
+        );
+      });
+
+      it('drops playlist rows but keeps the rest when playlist access is denied', async () => {
+        seedHistory([recentDashboardEntry, playlistEntry]);
+        server.use(http.get(playlistsRoute, () => HttpResponse.json({}, { status: 403 })));
+
+        render(<DashboardTabs />);
+
+        expect(await screen.findByRole('link', { name: /Recent Dashboard 1/ })).toBeInTheDocument();
+        expect(screen.queryByText('Could not load your recent activity')).not.toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: /playlist/i })).not.toBeInTheDocument();
+      });
+
+      it('still shows the retryable error when the playlist lookup fails for another reason', async () => {
+        seedHistory([recentDashboardEntry, playlistEntry]);
+        server.use(http.get(playlistsRoute, () => HttpResponse.json({}, { status: 500 })));
+
+        render(<DashboardTabs />);
+
+        expect(await screen.findByText('Could not load your recent activity')).toBeInTheDocument();
+      });
     });
   });
 });

@@ -95,7 +95,7 @@ Each repository resource creates bidirectional synchronization between a Grafana
 Git Sync is bidirectional, and syncs a repository resource with your Grafana instance. You can modify provisioned resources both from the Grafana UI or from the synced GitHub repository, and changes will be reflected in both places:
 
 1. Grafana monitors the specified Git location (repository, branch, and path).
-2. Grafana creates a folder in Dashboards (typically named after the repository).
+2. Grafana creates a folder in Dashboards, titled with the Repository resource's display name.
 3. Grafana creates dashboards from dashboard JSON files in Git within this folder.
 4. Grafana commits dashboard changes made in the UI back to Git.
 5. Grafana pulls dashboard changes made in Git and updates dashboards in the UI.
@@ -107,7 +107,7 @@ You can find the provisioned dashboards organized in folders under **Dashboards*
 
 With Git Sync you can place synced resources in Grafana in two ways:
 
-- **Folder sync**: Grafana creates a folder named after the repository and places all synced resources inside it. Subdirectories in the repository become subfolders within that folder. **This is the default behavior**.
+- **Folder sync**: Grafana creates a folder titled with the Repository resource's display name and places all synced resources inside it. Subdirectories in the repository become subfolders within that folder. **This is the default behavior**. You set the display name during setup, or with `spec.title` if you configure Git Sync as code. In the setup wizard, it defaults to the repository path, for example `your-org/grafana-manifests`.
 - **Folderless sync**: Grafana places synced resources at the top level, without creating a wrapper folder. Files at the repository path root become top-level resources, and subdirectories become top-level folders.
 
 Use folder sync to keep each repository's resources grouped together under a dedicated folder. Use folderless sync when you want provisioned resources to appear at the top of your Dashboards view instead of nested inside a repository folder.
@@ -222,5 +222,5 @@ Dashboards
 
 - Grafana only synchronizes files within the specified path (`team-platform/grafana/`).
 - Grafana ignores files in other paths or at the repository root.
-- The folder name in Grafana comes from the repository name.
+- The folder title in Grafana comes from the Repository resource's display name.
 - Dashboard titles come from the JSON file content, not the filename.

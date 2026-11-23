@@ -204,6 +204,7 @@ func AddKnownTypes(gv schema.GroupVersion, scheme *runtime.Scheme) error {
 		&ConnectionAuthorizeRequest{},
 		&ResourceList{},
 		&ResourceStats{},
+		&ResourceCountList{},
 		&Job{},
 		&JobList{},
 		&RefList{},

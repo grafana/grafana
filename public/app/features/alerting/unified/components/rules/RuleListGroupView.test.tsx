@@ -11,7 +11,7 @@ import * as analytics from '../../Analytics';
 import { setupMswServer } from '../../mockApi';
 import { mockCombinedRule } from '../../mocks';
 import { mimirDataSource } from '../../mocks/server/configure';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
 
 import { RuleListGroupView } from './RuleListGroupView';
 

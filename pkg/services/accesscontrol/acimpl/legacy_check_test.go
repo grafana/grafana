@@ -6,6 +6,7 @@ import (
 	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
@@ -48,8 +49,9 @@ func TestLegacyCheck_AccessControlEvaluate(t *testing.T) {
 			response, err := service.LegacyCheck(
 				types.WithAuthInfo(t.Context(), caller),
 				&authzextv1.LegacyCheckRequest{
-					Namespace: namespace,
-					Subject:   tc.user.GetUID(),
+					Namespace:      namespace,
+					RequesterOrgId: proto.Int64(tc.user.GetOrgID()),
+					Subject:        tc.user.GetUID(),
 					Expression: &authzextv1.LegacyExpression{
 						Node: &authzextv1.LegacyExpression_Permission{
 							Permission: &authzextv1.LegacyPermission{Action: tc.action, Scopes: []string{tc.scope}},

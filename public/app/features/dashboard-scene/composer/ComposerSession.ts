@@ -18,6 +18,7 @@ import {
   type ComposerApplyOptions,
   type ComposerDashboardSpec,
   type ComposerElement,
+  type ComposerExitReason,
   type ComposerExitResult,
   type ComposerSessionAPI,
   type ComposerTarget,
@@ -26,13 +27,15 @@ import {
   type ElementPoint,
   type ElementRect,
   type ElementRef,
+  type ElementsPick,
   type PickedText,
+  type PickElementOptions,
   type RegionCapture,
   type RegionPick,
 } from './types';
 
 /** Every tool, in the order the plugin shows them. */
-const TOOLS: readonly ComposerTool[] = ['select', 'text', 'remove'];
+const TOOLS: readonly ComposerTool[] = ['select', 'screenshot', 'text', 'remove'];
 
 /** Line boxes kept per text highlight; the quote, not the drawing, is what the plugin sends. */
 const MAX_TEXT_RECTS = 20;
@@ -68,7 +71,7 @@ interface StoredRegion {
   onControls: boolean;
 }
 
-type PickResult = ElementPick | RegionPick | null;
+type PickResult = ElementPick | ElementsPick | RegionPick | null;
 
 /** An annotation as the overlay draws it. */
 export interface OverlayAnnotation extends ComposerAnnotation {
@@ -86,6 +89,8 @@ export interface ComposerOverlayState {
   pickMode: 'element' | 'region' | null;
   /** What a press does during an element pick. */
   tool: ComposerTool;
+  /** What a Select drag picks during the pending element pick: see `PickElementOptions.drag`. */
+  drag: NonNullable<PickElementOptions['drag']>;
   /** A region capture is running: picking and tab switching wait for it. */
   capturing: boolean;
   paused: boolean;
@@ -101,6 +106,7 @@ const INITIAL_OVERLAY_STATE: ComposerOverlayState = {
   picking: false,
   pickMode: null,
   tool: 'select',
+  drag: 'region',
   capturing: false,
   paused: false,
   working: false,
@@ -123,6 +129,7 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
   public readonly retrySave?: () => Promise<ComposerExitResult>;
 
   private readonly controller = new AbortController();
+  private exitReason?: ComposerExitReason;
   private resolveClosed!: (result: ComposerExitResult) => void;
   private ended = false;
   private pendingPick?: (pick: PickResult) => void;
@@ -182,9 +189,9 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
     return this.document.elementKeyAttribute;
   }
 
-  /** @internal The pick hint over a pickable element. */
-  public elementHint(): string {
-    return this.document.elementHint();
+  /** @internal The pick hint over a pickable element, for what a drag does. */
+  public elementHint(drag: NonNullable<PickElementOptions['drag']>): string {
+    return this.document.elementHint(drag);
   }
 
   public get signal(): AbortSignal {
@@ -193,6 +200,14 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
 
   public get tools(): readonly ComposerTool[] {
     return TOOLS;
+  }
+
+  /**
+   * Presses reach the dashboard while no pick is pending, so a consumer can offer a pointer mode (Select off)
+   * that drags panels, rows and tabs. A core without it blocks them for the whole session.
+   */
+  public get passthrough(): true {
+    return true;
   }
 
   public get tool(): ComposerTool {
@@ -257,22 +272,29 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
     const client = getFeatureFlagClient();
     const onFlagsChanged = () => {
       if (!this.document.isEnabled()) {
-        this.exit();
+        this.exit('flag_off');
       }
     };
     client.addHandler(ClientProviderEvents.ConfigurationChanged, onFlagsChanged);
     this.cleanups.push(() => client.removeHandler(ClientProviderEvents.ConfigurationChanged, onFlagsChanged));
   }
 
-  public pickElement(signal: AbortSignal): Promise<ElementPick | RegionPick | null> {
-    return this.startPick('element', signal);
+  public pickElement(
+    signal: AbortSignal,
+    options?: PickElementOptions
+  ): Promise<ElementPick | ElementsPick | RegionPick | null> {
+    return this.startPick('element', signal, options?.drag === 'elements' ? 'elements' : 'region');
   }
 
   public pickRegion(signal: AbortSignal): Promise<RegionPick | null> {
-    return this.startPick('region', signal).then((pick) => (pick && 'rect' in pick ? pick : null));
+    return this.startPick('region', signal, 'region').then((pick) => (pick && 'rect' in pick ? pick : null));
   }
 
-  private startPick(mode: 'element' | 'region', signal: AbortSignal): Promise<PickResult> {
+  private startPick(
+    mode: 'element' | 'region',
+    signal: AbortSignal,
+    drag: ComposerOverlayState['drag']
+  ): Promise<PickResult> {
     this.cancelPick();
     if (this.ended || this.overlayState.paused || signal.aborted) {
       return Promise.resolve(null);
@@ -284,7 +306,7 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
         signal.removeEventListener('abort', onAbort);
         resolve(pick);
       };
-      this.setOverlayState({ picking: true, pickMode: mode });
+      this.setOverlayState({ picking: true, pickMode: mode, drag });
     });
   }
 
@@ -530,13 +552,20 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
     return stop;
   }
 
-  public exit(): void | Promise<ComposerExitResult> {
+  /** Without a reason, the caller is the plugin: core's own paths name theirs. */
+  public exit(reason: ComposerExitReason = 'plugin_exit'): void | Promise<ComposerExitResult> {
     if (!this.ended) {
+      this.noteExitReason(reason);
       this.document.detach();
       // The scene closes the session when it leaves Composer; this covers a scene already out of it.
       this.close();
     }
     return this.document.reportsSave ? this.closed : undefined;
+  }
+
+  /** @internal The first reason noted wins, so the path that started the exit is the one reported. */
+  public noteExitReason(reason: ComposerExitReason): void {
+    this.exitReason ??= reason;
   }
 
   /** @internal Called by the scene when it leaves Composer, and by `exit`. */
@@ -546,7 +575,7 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
     }
     this.ended = true;
     this.cancelPick();
-    this.controller.abort();
+    this.controller.abort(this.exitReason);
     this.cleanups.splice(0).forEach((cleanup) => cleanup());
     this.anchors.forEach((anchor) => anchor.remove());
     this.anchors.clear();

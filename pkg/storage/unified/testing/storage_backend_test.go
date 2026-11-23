@@ -92,7 +92,7 @@ func TestPerResourceFolderTreeSearchAndStorage(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, server.Stop(context.WithoutCancel(t.Context()))) })
 	ctx := types.WithAuthInfo(t.Context(), &identity.StaticRequester{
-		Type: types.TypeUser, Namespace: "recursive-search", OrgRole: identity.RoleAdmin,
+		Type: types.TypeUser, Namespace: "recursive-search", OrgRole: types.RoleAdmin,
 	})
 	folderKey := resource.NamespacedResource{Namespace: "recursive-search", Group: "folder.grafana.app", Resource: "folders"}
 	dashKey := resource.NamespacedResource{Namespace: "recursive-search", Group: "dashboard.grafana.app", Resource: "dashboards"}
@@ -280,7 +280,7 @@ func TestIntegrationSQLKVCreateGRPCConflictAndAlreadyExists(t *testing.T) {
 
 	// A lease can be held before anything has been persisted. This must
 	// produce a conflict, not a claim that the object already exists.
-	leaseName := key.Group + "/" + key.Resource + "/" + key.Namespace + "/" + key.Name
+	leaseName := "write/" + key.Group + "/" + key.Resource + "/" + key.Namespace + "/" + key.Name
 	manager := backend.LeaseManager()
 	held, err := manager.Acquire(ctx, leaseName)
 	require.NoError(t, err)

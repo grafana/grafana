@@ -10,14 +10,19 @@ import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepoIcon } from '../Shared/RepoIcon';
 import { StatusBadge } from '../Shared/StatusBadge';
-import { ManagedBadge } from '../components/ManagedBadge';
-import { ReadOnlyBadge } from '../components/ReadOnlyBadge';
-import { PROVISIONING_URL } from '../constants';
+import { ManagedResourceBadge } from '../components/ManagedResourceBadge';
+import { WorkflowBadges } from '../components/WorkflowBadges';
 import { exportResourceAsJson } from '../utils/export';
-import { formatRepoUrl, getRepoHrefForProvider } from '../utils/git';
-import { getManagerIdentity, getManagerKind, isManagedResourceReadOnly } from '../utils/managedResource';
-import { getIsReadOnlyWorkflows } from '../utils/repository';
-import { getKindInfoByStat, getRepositoryRoute } from '../utils/resourceKinds';
+import { formatRepoUrl, getRemoteConfig, getRepoHrefForProvider } from '../utils/git';
+import {
+  getManagerIdentity,
+  getManagerKind,
+  getSourcePath,
+  isManaged,
+  isProvisioningResourceReadOnly,
+} from '../utils/managedResource';
+import { getRepositoryEditUrl, getRepositoryResourcesUrl } from '../utils/repository';
+import { getKindInfoByStat, resourceKindInfos } from '../utils/resourceKinds';
 import { getManagedReadOnlyTooltip } from '../utils/tooltip';
 
 import { SyncRepository } from './SyncRepository';
@@ -27,12 +32,14 @@ interface Props {
 }
 
 export function RepositoryListItem({ repository }: Props) {
-  const isReadOnlyRepo = getIsReadOnlyWorkflows(repository.spec?.workflows, repository.spec?.type);
   const { metadata, spec, status } = repository;
   const name = metadata?.name ?? '';
   const styles = useStyles2(getStyles);
-  // Externally managed repositories (terraform, kubectl, ...) are read-only in the UI.
-  const isReadOnly = isManagedResourceReadOnly(repository);
+  // A provisioned repository is configured wherever it was provisioned from, so it is read-only
+  // here. Being managed is the broader condition: a manager that allows edits still gets the
+  // badge, without the read-only treatment.
+  const isConfigReadOnly = isProvisioningResourceReadOnly(repository);
+  const isManagedRepo = isManaged(repository);
 
   const getRepositoryMeta = (): ReactNode[] => {
     const meta: ReactNode[] = [];
@@ -82,9 +89,15 @@ export function RepositoryListItem({ repository }: Props) {
         <Stack gap={2} direction="row" alignItems="center" wrap>
           {spec?.title && <Text variant="h3">{spec.title}</Text>}
           <StatusBadge repo={repository} />
-          {isReadOnlyRepo && <ReadOnlyBadge repoType={spec?.type} />}
-          {isReadOnly && (
-            <ManagedBadge managerKind={getManagerKind(repository)} name={getManagerIdentity(repository)} />
+          <WorkflowBadges workflows={spec?.workflows} type={spec?.type} branch={getRemoteConfig(spec)?.branch} />
+          {isManagedRepo && (
+            <ManagedResourceBadge
+              isReadOnly={isConfigReadOnly}
+              managerKind={getManagerKind(repository)}
+              name={getManagerIdentity(repository)}
+              repositoryName={getManagerIdentity(repository)}
+              sourcePath={getSourcePath(repository)}
+            />
           )}
         </Stack>
       </Card.Heading>
@@ -94,24 +107,18 @@ export function RepositoryListItem({ repository }: Props) {
           {spec?.description && <Text>{spec.description}</Text>}
           {status?.stats?.length && (
             <Stack gap={1} direction="row" wrap>
-              {status.stats.map((stat, index) => {
-                const info = getKindInfoByStat(stat);
-                const icon = info?.icon ?? 'file-alt';
-                const label = `${stat.count} ${stat.resource}`;
-                // Known kinds link to where the repository's resources live; unknown
-                // kinds have no destination, so render a non-interactive badge.
-                const href = info ? getRepositoryRoute(info, repository) : undefined;
-
-                return href ? (
-                  <LinkButton key={index} fill="outline" size="md" variant="secondary" icon={icon} href={href}>
-                    {label}
-                  </LinkButton>
-                ) : (
-                  <Button key={index} fill="outline" size="md" variant="secondary" icon={icon} disabled>
-                    {label}
-                  </Button>
-                );
-              })}
+              {status.stats.map((stat, index) => (
+                <LinkButton
+                  key={index}
+                  fill="outline"
+                  size="md"
+                  variant="secondary"
+                  icon={getKindInfoByStat(stat)?.icon ?? 'file-alt'}
+                  href={getRepositoryResourcesUrl(name, stat.resource)}
+                >
+                  {`${stat.count} ${stat.resource}`}
+                </LinkButton>
+              ))}
             </Stack>
           )}
         </Stack>
@@ -123,7 +130,7 @@ export function RepositoryListItem({ repository }: Props) {
         <Stack gap={1} direction="row">
           <LinkButton
             icon="eye"
-            href={`${PROVISIONING_URL}/${name}`}
+            href={resourceKindInfos.repository.getRoute(name)}
             variant="primary"
             size="md"
             data-testid={selectors.pages.Provisioning.RepositoryList.viewLink(name)}
@@ -135,11 +142,11 @@ export function RepositoryListItem({ repository }: Props) {
             variant="secondary"
             icon="download-alt"
             size="md"
-            onClick={() => exportResourceAsJson(repository, 'Repository')}
+            onClick={() => exportResourceAsJson(repository, resourceKindInfos.repository.kind)}
           >
             <Trans i18nKey="provisioning.repository-card.export">Export</Trans>
           </Button>
-          {isReadOnly ? (
+          {isConfigReadOnly ? (
             // Not a disabled LinkButton: that keeps its href and Tooltip restores tabIndex, so the
             // link stays reachable by keyboard, while pointerEvents:none hides the explanation.
             <Button variant="secondary" icon="cog" size="md" disabled tooltip={getManagedReadOnlyTooltip()}>
@@ -149,7 +156,7 @@ export function RepositoryListItem({ repository }: Props) {
             <LinkButton
               variant="secondary"
               icon="cog"
-              href={`${PROVISIONING_URL}/${name}/edit`}
+              href={getRepositoryEditUrl(name)}
               size="md"
               onClick={() => {
                 reportInteraction('grafana_provisioning_repository_settings_opened', {

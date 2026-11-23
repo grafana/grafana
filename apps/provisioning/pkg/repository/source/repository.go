@@ -16,11 +16,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	sourcev1 "github.com/grafana/grafana/apps/provisioning/pkg/source/v1"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 const (
@@ -41,7 +41,7 @@ type sourceRepository struct {
 	desc    *sourcev1.Descriptor
 	metrics *repository.OperationRecorder
 	// webhookSecret authenticates change hints; empty means hints are off.
-	webhookSecret common.RawSecureValue
+	webhookSecret resource.RawSecureValue
 
 	maxBytes atomic.Int64
 }
@@ -54,7 +54,7 @@ type versionedSourceRepository struct {
 }
 
 // NewRepository builds the repository for a source, picking the shape from its capabilities.
-func NewRepository(config *provisioning.Repository, client *Client, desc *sourcev1.Descriptor, metrics *repository.OperationMetrics, webhookSecret common.RawSecureValue) repository.Repository {
+func NewRepository(config *provisioning.Repository, client *Client, desc *sourcev1.Descriptor, metrics *repository.OperationMetrics, webhookSecret resource.RawSecureValue) repository.Repository {
 	r := &sourceRepository{
 		config:        config,
 		client:        client,

@@ -6,9 +6,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/source"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 func TestValidate(t *testing.T) {
@@ -110,14 +110,14 @@ func TestValidate(t *testing.T) {
 			repo: valid(func(r *provisioning.Repository) {
 				r.Spec.Source.Auth = &provisioning.SourceAuth{Type: provisioning.SourceAuthClientCredentials}
 				r.Spec.Connection = &provisioning.ConnectionInfo{Name: "c"}
-				r.Secure.Token = common.InlineSecureValue{Create: "t"}
+				r.Secure.Token = resource.InlineSecureValue{Create: "t"}
 			}),
 		},
 		{
 			name: "tokenExchange takes nothing",
 			repo: valid(func(r *provisioning.Repository) {
 				r.Spec.Source.Auth = &provisioning.SourceAuth{Type: provisioning.SourceAuthTokenExchange}
-				r.Secure.Token = common.InlineSecureValue{Create: "t"}
+				r.Secure.Token = resource.InlineSecureValue{Create: "t"}
 			}),
 			wantFields: []string{"spec.source.auth.type"},
 		},

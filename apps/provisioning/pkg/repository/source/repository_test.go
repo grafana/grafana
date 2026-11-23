@@ -12,12 +12,12 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/source"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/source/sourceserver"
 	sourcev1 "github.com/grafana/grafana/apps/provisioning/pkg/source/v1"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 const (
@@ -25,13 +25,13 @@ const (
 	token    = "s3cret"
 )
 
-type fakeSecure struct{ token common.RawSecureValue }
+type fakeSecure struct{ token resource.RawSecureValue }
 
-func (f fakeSecure) Token(context.Context) (common.RawSecureValue, error) { return f.token, nil }
-func (fakeSecure) WebhookSecret(context.Context) (common.RawSecureValue, error) {
+func (f fakeSecure) Token(context.Context) (resource.RawSecureValue, error) { return f.token, nil }
+func (fakeSecure) WebhookSecret(context.Context) (resource.RawSecureValue, error) {
 	return "", nil
 }
-func (fakeSecure) CommitSigningKey(context.Context) (common.RawSecureValue, error) {
+func (fakeSecure) CommitSigningKey(context.Context) (resource.RawSecureValue, error) {
 	return "", nil
 }
 
@@ -115,7 +115,7 @@ func buildErr(e repository.Extra, url, tok string) (repository.Repository, error
 			Type:   provisioning.SourceRepositoryType,
 			Source: &provisioning.SourceRepositoryConfig{URL: url},
 		},
-		Secure: provisioning.SecureValues{Token: common.InlineSecureValue{Create: common.RawSecureValue(tok)}},
+		Secure: provisioning.SecureValues{Token: resource.InlineSecureValue{Create: resource.RawSecureValue(tok)}},
 	})
 }
 

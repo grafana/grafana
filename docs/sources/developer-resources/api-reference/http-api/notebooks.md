@@ -20,14 +20,17 @@ weight: 100
 # Notebooks HTTP API
 
 {{< admonition type="note" >}}
+Available in Grafana 13.2 and later.
+
 This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 **This document may not contain the latest version of the API. For the most up-to-date list of available endpoints, refer to [dashboard.grafana.app/v2beta1](https://play.grafana.org/swagger?api=dashboard.grafana.app-v2beta1) in Swagger.**
+
+This API is in `beta`, so it might change in future releases.
+
 {{< /admonition >}}
 
 Use this API to manage [notebooks](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/notebooks/). A notebook combines text, code, and visualization panels in a single document, so you can investigate a problem, explain what you found, and share the supporting data with your team.
-
-All paths use the `dashboard.grafana.app` group and the `v2beta1` version. Replace `:namespace` with your namespace. To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 ## Before you begin
 
@@ -39,28 +42,23 @@ Notebooks can't be stored in folders. Requests that set the `grafana.app/folder`
 
 ## Requirements
 
-You need the following permissions. For more information, refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/).
-
-| Operation        | Action             |
-| ---------------- | ------------------ |
-| Get and list     | `notebooks:read`   |
-| Create           | `notebooks:create` |
-| Update and patch | `notebooks:write`  |
-| Delete           | `notebooks:delete` |
-
-By default, Viewers can read all notebooks in the organization, and Editors can also create, update, and delete them.
+By default, users with the Viewer role can read all notebooks in the organization, and users with the Editor role can also create, update, and delete them. To customize access, use the `notebooks:read`, `notebooks:create`, `notebooks:write`, and `notebooks:delete` actions. For more information, refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/).
 
 ## Endpoints
 
 The following table lists the main endpoints. The Swagger documentation also includes endpoints to apply partial updates with `PATCH`, delete a collection of notebooks, search notebooks, and list notebook keys.
 
-| Method | URI                                                                       | Summary                                 |
-| ------ | ------------------------------------------------------------------------- | --------------------------------------- |
-| GET    | /apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/notebooks       | [List notebooks](#list-notebooks)       |
-| GET    | /apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/notebooks/:name | [Get a notebook](#get-a-notebook)       |
-| POST   | /apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/notebooks       | [Create a notebook](#create-a-notebook) |
-| PUT    | /apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/notebooks/:name | [Update a notebook](#update-a-notebook) |
-| DELETE | /apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/notebooks/:name | [Delete a notebook](#delete-a-notebook) |
+**Base path:** `/apis/dashboard.grafana.app/v2beta1/namespaces/{namespace}/`
+
+Replace `{namespace}` with your namespace. To learn which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+| Method | Summary                                 | Path               |
+| ------ | --------------------------------------- | ------------------ |
+| GET    | [List notebooks](#list-notebooks)       | `notebooks`        |
+| GET    | [Get a notebook](#get-a-notebook)       | `notebooks/{name}` |
+| POST   | [Create a notebook](#create-a-notebook) | `notebooks`        |
+| PUT    | [Update a notebook](#update-a-notebook) | `notebooks/{name}` |
+| DELETE | [Delete a notebook](#delete-a-notebook) | `notebooks/{name}` |
 
 ## Notebook structure
 
@@ -81,11 +79,13 @@ A notebook spec is similar to a [dashboard v2 spec](https://grafana.com/docs/gra
 
 ## List notebooks
 
-`GET /apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/notebooks`
+`GET /apis/dashboard.grafana.app/v2beta1/namespaces/{namespace}/notebooks`
 
 Returns the notebooks in the organization. Use the `limit` query parameter to control the maximum number of notebooks returned. To retrieve more notebooks, use the `continue` token from the response to fetch the next page.
 
-- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 **Query parameters**:
 
@@ -94,7 +94,9 @@ Returns the notebooks in the organization. Use the `limit` query parameter to co
 
 **Required permissions**: `notebooks:read`
 
-**Example request**:
+### Example request
+
+The following example shows a request to list notebooks:
 
 ```http
 GET /apis/dashboard.grafana.app/v2beta1/namespaces/default/notebooks?limit=1 HTTP/1.1
@@ -102,7 +104,9 @@ Accept: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example response**:
+### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200
@@ -135,24 +139,22 @@ Content-Type: application/json
 }
 ```
 
-Status codes:
-
-- **200** – OK
-- **401** – Unauthorized
-- **403** – Access denied, or notebooks aren't enabled
-
 ## Get a notebook
 
-`GET /apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/notebooks/:name`
+`GET /apis/dashboard.grafana.app/v2beta1/namespaces/{namespace}/notebooks/{name}`
 
 Returns the notebook with the given name.
 
-- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
-- `name`: The name of the notebook, from `metadata.name`.
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The name of the notebook, from `metadata.name`.
 
 **Required permissions**: `notebooks:read`
 
-**Example request**:
+### Example request
+
+The following example shows a request to get a notebook:
 
 ```http
 GET /apis/dashboard.grafana.app/v2beta1/namespaces/default/notebooks/high-latency-investigation HTTP/1.1
@@ -160,26 +162,23 @@ Accept: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
+### Example response
+
 The response contains the full notebook. For an example, refer to the response in [Create a notebook](#create-a-notebook).
-
-Status codes:
-
-- **200** – Found
-- **401** – Unauthorized
-- **403** – Access denied, or notebooks aren't enabled
-- **404** – Not found
 
 ## Create a notebook
 
-`POST /apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/notebooks`
+`POST /apis/dashboard.grafana.app/v2beta1/namespaces/{namespace}/notebooks`
 
 Creates a notebook.
 
-- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 **Required permissions**: `notebooks:create`
 
-**Example request**:
+### Example request
 
 The following notebook has a Markdown cell followed by a time series panel:
 
@@ -301,7 +300,9 @@ JSON body schema:
 - **metadata.name** – Optional. The unique identifier of the notebook. To let Grafana generate one, use `metadata.generateName` instead.
 - **spec** – The notebook content. For details, refer to [Notebook structure](#notebook-structure).
 
-**Example response**:
+### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 201
@@ -329,27 +330,22 @@ Content-Type: application/json
 }
 ```
 
-Status codes:
-
-- **201** – Created
-- **400** – Errors (invalid JSON)
-- **401** – Unauthorized
-- **403** – Access denied, or notebooks aren't enabled
-- **409** – A notebook with the same name already exists
-- **422** – Invalid notebook, for example because it sets the `grafana.app/folder` annotation
-
 ## Update a notebook
 
-`PUT /apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/notebooks/:name`
+`PUT /apis/dashboard.grafana.app/v2beta1/namespaces/{namespace}/notebooks/{name}`
 
-Replaces the notebook with the given name. Send the full notebook, including `metadata.resourceVersion` from the latest version you read, to prevent overwriting someone else's changes.
+Replaces the notebook with the given name. Send the full notebook, including `metadata.resourceVersion` from the latest version you read, to prevent overwriting changes made by other users.
 
-- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
-- `name`: The name of the notebook.
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The name of the notebook.
 
 **Required permissions**: `notebooks:write`
 
-**Example request**:
+### Example request
+
+The following example shows a request to update a notebook:
 
 ```http
 PUT /apis/dashboard.grafana.app/v2beta1/namespaces/default/notebooks/high-latency-investigation HTTP/1.1
@@ -378,28 +374,26 @@ JSON body schema:
 
 The response contains the updated notebook.
 
-Status codes:
+### Example response
 
-- **200** – Updated
-- **400** – Errors (invalid JSON)
-- **401** – Unauthorized
-- **403** – Access denied, or notebooks aren't enabled
-- **404** – Not found
-- **409** – Conflict, the notebook changed since you read it
-- **422** – Invalid notebook, for example because it sets the `grafana.app/folder` annotation
+The response contains the updated notebook. For an example, refer to the response in [Create a notebook](#create-a-notebook).
 
 ## Delete a notebook
 
-`DELETE /apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/notebooks/:name`
+`DELETE /apis/dashboard.grafana.app/v2beta1/namespaces/{namespace}/notebooks/{name}`
 
 Deletes the notebook with the given name.
 
-- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
-- `name`: The name of the notebook.
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The name of the notebook.
 
 **Required permissions**: `notebooks:delete`
 
-**Example request**:
+### Example request
+
+The following example shows a request to delete a notebook:
 
 ```http
 DELETE /apis/dashboard.grafana.app/v2beta1/namespaces/default/notebooks/high-latency-investigation HTTP/1.1
@@ -407,7 +401,9 @@ Accept: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example response**:
+### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200
@@ -427,9 +423,19 @@ Content-Type: application/json
 }
 ```
 
-Status codes:
+## Status codes
 
-- **200** – Deleted
-- **401** – Unauthorized
-- **403** – Access denied, or notebooks aren't enabled
-- **404** – Not found
+The endpoints on this page return the following status codes:
+
+| Code  | Meaning                                                                                                    | Returned by                                                                                                 |
+| ----- | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `200` | OK.                                                                                                        | [List](#list-notebooks), [Get](#get-a-notebook), [Update](#update-a-notebook), [Delete](#delete-a-notebook) |
+| `201` | Created.                                                                                                   | [Create](#create-a-notebook)                                                                                |
+| `201` | Created, if the notebook doesn't exist.                                                                    | [Update](#update-a-notebook)                                                                                |
+| `400` | Bad request (invalid JSON).                                                                                | [Create](#create-a-notebook), [Update](#update-a-notebook)                                                  |
+| `401` | Unauthorized.                                                                                              | All endpoints                                                                                               |
+| `403` | Access denied, or notebooks aren't enabled.                                                                | All endpoints                                                                                               |
+| `404` | Not found.                                                                                                 | [Get](#get-a-notebook), [Delete](#delete-a-notebook)                                                        |
+| `409` | Conflict (a notebook with the same `metadata.name` already exists).                                        | [Create](#create-a-notebook)                                                                                |
+| `409` | Conflict (the notebook changed since you read it).                                                         | [Update](#update-a-notebook)                                                                                |
+| `422` | Invalid notebook, for example because it sets the `grafana.app/folder` annotation or has invalid cell IDs. | [Create](#create-a-notebook), [Update](#update-a-notebook)                                                  |

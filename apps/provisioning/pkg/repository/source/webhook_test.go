@@ -13,10 +13,10 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	sourcev1 "github.com/grafana/grafana/apps/provisioning/pkg/source/v1"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 const hintSecret = "hint-secret"
@@ -25,7 +25,7 @@ func hintRepo(secret string) *sourceRepository {
 	return &sourceRepository{
 		config:        &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.SourceRepositoryType}},
 		desc:          &sourcev1.Descriptor{Id: "stacks-1"},
-		webhookSecret: common.RawSecureValue(secret),
+		webhookSecret: resource.RawSecureValue(secret),
 	}
 }
 

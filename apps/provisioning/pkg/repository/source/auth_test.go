@@ -9,12 +9,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/source"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/source/sourceserver"
 	sourcev1 "github.com/grafana/grafana/apps/provisioning/pkg/source/v1"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 type fakeExchanger struct {
@@ -38,7 +38,7 @@ func buildWith(e repository.Extra, url string, mutate func(*provisioning.Reposit
 		Source: &provisioning.SourceRepositoryConfig{URL: url},
 	}}
 	repo.Name, repo.Namespace = "src", "stacks-1"
-	repo.Secure.Token = common.InlineSecureValue{Create: token}
+	repo.Secure.Token = resource.InlineSecureValue{Create: token}
 	mutate(repo)
 	return e.Build(context.Background(), repo)
 }
@@ -88,7 +88,7 @@ func TestAuthModes(t *testing.T) {
 		repo, err := buildWith(newExtra(), url, func(r *provisioning.Repository) {
 			r.Spec.Source.Auth = &provisioning.SourceAuth{Type: provisioning.SourceAuthClientCredentials}
 			r.Spec.Connection = &provisioning.ConnectionInfo{Name: "remote"}
-			r.Secure.Token = common.InlineSecureValue{Create: "minted"}
+			r.Secure.Token = resource.InlineSecureValue{Create: "minted"}
 		})
 		require.NoError(t, err)
 

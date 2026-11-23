@@ -496,7 +496,17 @@ const injectedRtkApi = api
         providesTags: ['Repository'],
       }),
       getRepositoryResources: build.query<GetRepositoryResourcesApiResponse, GetRepositoryResourcesApiArg>({
-        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/resources` }),
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}/resources`,
+          params: {
+            limit: queryArg.limit,
+            continue: queryArg['continue'],
+          },
+        }),
+        providesTags: ['Repository'],
+      }),
+      getRepositoryStats: build.query<GetRepositoryStatsApiResponse, GetRepositoryStatsApiArg>({
+        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/stats` }),
         providesTags: ['Repository'],
       }),
       getRepositoryStatus: build.query<GetRepositoryStatusApiResponse, GetRepositoryStatusApiArg>({
@@ -1257,6 +1267,15 @@ export type GetRepositoryResourcesApiResponse = /** status 200 OK */ ResourceLis
 export type GetRepositoryResourcesApiArg = {
   /** name of the ResourceList */
   name: string;
+  /** maximum number of items to return; omit for all of them */
+  limit?: number;
+  /** continue token from the metadata of the previous page */
+  continue?: string;
+};
+export type GetRepositoryStatsApiResponse = /** status 200 OK */ ResourceCountList;
+export type GetRepositoryStatsApiArg = {
+  /** name of the ResourceCountList */
+  name: string;
 };
 export type GetRepositoryStatusApiResponse = /** status 200 OK */ Repository;
 export type GetRepositoryStatusApiArg = {
@@ -1433,44 +1452,44 @@ export type ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
-export type InlineSecureValue =
+export type ComGithubGrafanaGrafanaAppSdkResourceInlineSecureValue =
   | {
-      /** Create a secure value -- this is only used for POST/PUT */
-      create?: string;
-      /** Optionally when creating a secure value, you can pass a custom description. */
-      description?: string;
-      /** Name in the secret service (reference) */
-      name: string;
-      /** Remove this value from the secure value map Values owned by this resource will be deleted if necessary */
-      remove?: boolean;
-    }
-  | {
-      /** Create a secure value -- this is only used for POST/PUT */
+      /** Plaintext value to create in the secret service. Used only in create or update requests. */
       create: string;
-      /** Optionally when creating a secure value, you can pass a custom description. */
+      /** Optional description for a newly created secret. Only valid when create is set. */
       description?: string;
-      /** Name in the secret service (reference) */
+      /** Reference to an existing value in the secret service. */
       name?: string;
-      /** Remove this value from the secure value map Values owned by this resource will be deleted if necessary */
+      /** Remove this entry from the secure value map, deleting the secret if it is owned by this resource. */
       remove?: boolean;
     }
   | {
-      /** Create a secure value -- this is only used for POST/PUT */
+      /** Plaintext value to create in the secret service. Used only in create or update requests. */
       create?: string;
-      /** Optionally when creating a secure value, you can pass a custom description. */
+      /** Optional description for a newly created secret. Only valid when create is set. */
       description?: string;
-      /** Name in the secret service (reference) */
+      /** Reference to an existing value in the secret service. */
+      name: string;
+      /** Remove this entry from the secure value map, deleting the secret if it is owned by this resource. */
+      remove?: boolean;
+    }
+  | {
+      /** Plaintext value to create in the secret service. Used only in create or update requests. */
+      create?: string;
+      /** Optional description for a newly created secret. Only valid when create is set. */
+      description?: string;
+      /** Reference to an existing value in the secret service. */
       name?: string;
-      /** Remove this value from the secure value map Values owned by this resource will be deleted if necessary */
+      /** Remove this entry from the secure value map, deleting the secret if it is owned by this resource. */
       remove: boolean;
     };
 export type ConnectionSecure = {
   /** ClientSecret is the reference to the secret used for other providers authentication, and Github on-behalf-of authentication. This value is stored securely and cannot be read back */
-  clientSecret?: InlineSecureValue;
+  clientSecret?: ComGithubGrafanaGrafanaAppSdkResourceInlineSecureValue;
   /** PrivateKey is the reference to the private key used for GitHub App authentication. This value is stored securely and cannot be read back */
-  privateKey?: InlineSecureValue;
+  privateKey?: ComGithubGrafanaGrafanaAppSdkResourceInlineSecureValue;
   /** Token is the reference of the token used to act as the Connection. This value is stored securely and cannot be read back */
-  token?: InlineSecureValue;
+  token?: ComGithubGrafanaGrafanaAppSdkResourceInlineSecureValue;
 };
 export type BitbucketConnectionConfig = {
   /** The workspace the OAuth consumer belongs to */
@@ -1906,11 +1925,11 @@ export type JobList = {
 };
 export type SecureValues = {
   /** Private key used to sign commits the repository writes back. The format is selected by spec.commit.signingMethod. When unset, commits are unsigned. */
-  commitSigningKey?: InlineSecureValue;
+  commitSigningKey?: ComGithubGrafanaGrafanaAppSdkResourceInlineSecureValue;
   /** Token used to connect the configured repository */
-  token?: InlineSecureValue;
+  token?: ComGithubGrafanaGrafanaAppSdkResourceInlineSecureValue;
   /** Some webhooks (including github) require a secret key value */
-  webhookSecret?: InlineSecureValue;
+  webhookSecret?: ComGithubGrafanaGrafanaAppSdkResourceInlineSecureValue;
 };
 export type BitbucketRepositoryConfig = {
   /** The branch to use in the repository. */
@@ -2320,6 +2339,14 @@ export type ResourceList = {
   kind?: string;
   metadata?: ListMeta;
 };
+export type ResourceCountList = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  items: ResourceCount[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata?: ListMeta;
+};
 export type TestResults = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
@@ -2498,6 +2525,8 @@ export const {
   useLazyGetRepositoryRenderWithPathQuery,
   useGetRepositoryResourcesQuery,
   useLazyGetRepositoryResourcesQuery,
+  useGetRepositoryStatsQuery,
+  useLazyGetRepositoryStatsQuery,
   useGetRepositoryStatusQuery,
   useLazyGetRepositoryStatusQuery,
   useReplaceRepositoryStatusMutation,

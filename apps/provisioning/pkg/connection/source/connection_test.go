@@ -13,20 +13,20 @@ import (
 	"golang.org/x/oauth2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
-type fakeSecure struct{ secret, token common.RawSecureValue }
+type fakeSecure struct{ secret, token resource.RawSecureValue }
 
-func (f fakeSecure) PrivateKey(context.Context) (common.RawSecureValue, error) { return "", nil }
-func (f fakeSecure) ClientSecret(context.Context) (common.RawSecureValue, error) {
+func (f fakeSecure) PrivateKey(context.Context) (resource.RawSecureValue, error) { return "", nil }
+func (f fakeSecure) ClientSecret(context.Context) (resource.RawSecureValue, error) {
 	return f.secret, nil
 }
-func (f fakeSecure) Token(context.Context) (common.RawSecureValue, error) { return f.token, nil }
+func (f fakeSecure) Token(context.Context) (resource.RawSecureValue, error) { return f.token, nil }
 
-func newConn(t *testing.T, tokenURL string, token common.RawSecureValue) connection.Connection {
+func newConn(t *testing.T, tokenURL string, token resource.RawSecureValue) connection.Connection {
 	t.Helper()
 	extra := Extra(func(*provisioning.Connection) connection.SecureValues {
 		return fakeSecure{secret: "client-secret", token: token}
@@ -43,11 +43,11 @@ func newConn(t *testing.T, tokenURL string, token common.RawSecureValue) connect
 	return conn
 }
 
-func storedToken(t *testing.T, access string, expiry time.Time) common.RawSecureValue {
+func storedToken(t *testing.T, access string, expiry time.Time) resource.RawSecureValue {
 	t.Helper()
 	raw, err := json.Marshal(&oauth2.Token{AccessToken: access, Expiry: expiry}) //nolint:gosec // synthetic test token
 	require.NoError(t, err)
-	return common.RawSecureValue(raw)
+	return resource.RawSecureValue(raw)
 }
 
 func TestGenerateConnectionToken(t *testing.T) {
@@ -138,7 +138,7 @@ func TestGenerateRepositoryToken(t *testing.T) {
 	t.Run("hands a source repository the access token", func(t *testing.T) {
 		got, err := newConn(t, "https://idp", storedToken(t, "minted-1", expiry)).GenerateRepositoryToken(context.Background(), repo)
 		require.NoError(t, err)
-		assert.Equal(t, common.RawSecureValue("minted-1"), got.Token, "the repository gets the bare access token, not the stored payload")
+		assert.Equal(t, resource.RawSecureValue("minted-1"), got.Token, "the repository gets the bare access token, not the stored payload")
 		assert.WithinDuration(t, expiry, got.ExpiresAt, time.Second)
 	})
 	t.Run("not for git repositories", func(t *testing.T) {
@@ -161,7 +161,7 @@ func TestTest(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, ok.Success)
 
-	for name, token := range map[string]common.RawSecureValue{
+	for name, token := range map[string]resource.RawSecureValue{
 		"no token yet": "",
 		"expired":      storedToken(t, "a", time.Now().Add(-time.Minute)),
 	} {
@@ -183,7 +183,7 @@ func TestValidate(t *testing.T) {
 				OAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "id"},
 				Source: &provisioning.SourceConnectionConfig{TokenURL: "https://idp.example.com/oauth/token"},
 			},
-			Secure: provisioning.ConnectionSecure{ClientSecret: common.InlineSecureValue{Create: "secret"}},
+			Secure: provisioning.ConnectionSecure{ClientSecret: resource.InlineSecureValue{Create: "secret"}},
 		}
 		if mutate != nil {
 			mutate(conn)
@@ -204,8 +204,8 @@ func TestValidate(t *testing.T) {
 		{name: "http token url in dev", conn: valid(func(c *provisioning.Connection) { c.Spec.Source.TokenURL = "http://127.0.0.1/t" }), allowInsecure: true},
 		{name: "credentials in the url", conn: valid(func(c *provisioning.Connection) { c.Spec.Source.TokenURL = "https://u:p@idp.example.com/t" }), wantFields: []string{"spec.source.tokenURL"}},
 		{name: "no client id", conn: valid(func(c *provisioning.Connection) { c.Spec.OAuth = nil }), wantFields: []string{"spec.oauth.clientID"}},
-		{name: "no client secret", conn: valid(func(c *provisioning.Connection) { c.Secure.ClientSecret = common.InlineSecureValue{} }), wantFields: []string{"secure.clientSecret"}},
-		{name: "a private key", conn: valid(func(c *provisioning.Connection) { c.Secure.PrivateKey = common.InlineSecureValue{Create: "k"} }), wantFields: []string{"secure.privateKey"}},
+		{name: "no client secret", conn: valid(func(c *provisioning.Connection) { c.Secure.ClientSecret = resource.InlineSecureValue{} }), wantFields: []string{"secure.clientSecret"}},
+		{name: "a private key", conn: valid(func(c *provisioning.Connection) { c.Secure.PrivateKey = resource.InlineSecureValue{Create: "k"} }), wantFields: []string{"secure.privateKey"}},
 		{name: "other connection types are not this extra's business", conn: valid(func(c *provisioning.Connection) { c.Spec.Type = provisioning.GithubConnectionType; c.Spec.Source = nil })},
 	}
 	for _, tt := range tests {

@@ -235,9 +235,7 @@ func TestIntegrationLegacyCheckGlobalParity(t *testing.T) {
 									got, err := s.LegacyCheck(legacyCheckContext(t), &authzextv1.LegacyCheckRequest{
 										Restriction: restriction,
 										Namespace:   "org-12", Subject: requester.GetUID(), Expression: expression,
-										GlobalEvaluation: &authzextv1.LegacyGlobalEvaluation{
-											RequesterOrgId: requesterOrgID,
-										},
+										RequesterOrgId: proto.Int64(requesterOrgID),
 									})
 
 									require.NoError(t, err)

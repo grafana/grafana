@@ -73,6 +73,9 @@ export const HOISTED_PAGE_WEIGHT_OFFSET = -100;
 export const NavID = {
   root: 'root',
   dashboards: 'dashboards/browse',
+  dashboardsLibraryPanels: 'dashboards/library-panels',
+  dashboardsVariables: 'dashboards/variables',
+  dashboardsRecentlyDeleted: 'dashboards/recently-deleted',
   explore: 'explore',
   drilldown: 'drilldown',
   notebooks: 'notebooks',
@@ -95,8 +98,23 @@ export const NavID = {
   profile: 'profile',
 } as const;
 
+/**
+ * The Dashboards pages shown as tabs on the browse view rather than as menu
+ * items, in tab order. Read by the tab bar and by the mega menu's hidden list,
+ * so the two cannot disagree: an id in one and not the other leaves a page
+ * hidden with no tab, or a tab still in the menu.
+ */
+export const DASHBOARDS_TAB_NAV_IDS = [
+  NavID.dashboardsLibraryPanels,
+  NavID.dashboardsVariables,
+  NavID.dashboardsRecentlyDeleted,
+];
+
 /** The set of known nav ids (the literal values of NavID). */
 export type NavId = (typeof NavID)[keyof typeof NavID];
+
+/** Id prefix of the Starred section's children, `starred/<kind>/<uid>`; the menu derives them from the stars query. */
+export const STARRED_ID_PREFIX = `${NavID.starred}/`;
 
 /**
  * A nav section that exists only to group app plugins, built on demand by the

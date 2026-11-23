@@ -2,14 +2,20 @@ import { textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Card, LinkButton, Stack, Text, TextLink } from '@grafana/ui';
 import { type Connection } from 'app/api/clients/provisioning/v0alpha1';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 
 import { RepoIcon } from '../Shared/RepoIcon';
 import { type RepoType } from '../Wizard/types';
-import { ManagedBadge } from '../components/ManagedBadge';
-import { CONNECTIONS_URL } from '../constants';
+import { ManagedResourceBadge } from '../components/ManagedResourceBadge';
 import { connectionProviderType, isOAuthConnectionType } from '../utils/connectionOAuth';
 import { exportResourceAsJson } from '../utils/export';
-import { getManagerIdentity, getManagerKind, isManagedResourceReadOnly } from '../utils/managedResource';
+import {
+  getManagerIdentity,
+  getManagerKind,
+  getSourcePath,
+  isManaged,
+  isProvisioningResourceReadOnly,
+} from '../utils/managedResource';
 
 import { ConnectionStatusBadge } from './ConnectionStatusBadge';
 
@@ -31,8 +37,9 @@ export function ConnectionListItem({ connection, isSelected, onClick }: Props) {
     : spec?.type === 'source'
       ? t('provisioning.connections.kind-source', 'Source API client credentials')
       : t('provisioning.connections.kind-github-app', 'GitHub App');
-  // Externally managed connections (terraform, kubectl, ...) are read-only in the UI.
-  const isReadOnly = isManagedResourceReadOnly(connection);
+  const isManagedConnection = isManaged(connection);
+  // A provisioned connection is configured wherever it was provisioned from, not here.
+  const isReadOnly = isProvisioningResourceReadOnly(connection);
   return (
     <Card noMargin key={name} isSelected={isSelected} onClick={onClick}>
       <Card.Figure>
@@ -42,8 +49,14 @@ export function ConnectionListItem({ connection, isSelected, onClick }: Props) {
         <Stack gap={2} direction="row" alignItems="center">
           <Text variant="h3">{title}</Text>
           <ConnectionStatusBadge status={status} />
-          {isReadOnly && (
-            <ManagedBadge managerKind={getManagerKind(connection)} name={getManagerIdentity(connection)} />
+          {isManagedConnection && (
+            <ManagedResourceBadge
+              isReadOnly={isReadOnly}
+              managerKind={getManagerKind(connection)}
+              name={getManagerIdentity(connection)}
+              repositoryName={getManagerIdentity(connection)}
+              sourcePath={getSourcePath(connection)}
+            />
           )}
         </Stack>
       </Card.Heading>
@@ -62,14 +75,14 @@ export function ConnectionListItem({ connection, isSelected, onClick }: Props) {
 
       {!onClick && (
         <Card.Actions>
-          <LinkButton icon="eye" href={`${CONNECTIONS_URL}/${name}/edit`} variant="primary" size="md">
+          <LinkButton icon="eye" href={CORE_KINDS.connection.getRoute(name)} variant="primary" size="md">
             <Trans i18nKey="provisioning.connections.view">View</Trans>
           </LinkButton>
           <Button
             variant="secondary"
             icon="download-alt"
             size="md"
-            onClick={() => exportResourceAsJson(connection, 'Connection')}
+            onClick={() => exportResourceAsJson(connection, CORE_KINDS.connection.kind)}
           >
             <Trans i18nKey="provisioning.connections.export">Export</Trans>
           </Button>

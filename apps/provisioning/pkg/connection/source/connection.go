@@ -16,16 +16,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 type sourceConnection struct {
 	cfg          provisioning.SourceConnectionConfig
 	clientID     string
-	clientSecret common.RawSecureValue
-	token        common.RawSecureValue
+	clientSecret resource.RawSecureValue
+	token        resource.RawSecureValue
 	httpClient   *http.Client
 }
 
@@ -72,7 +72,7 @@ func (c *sourceConnection) GenerateRepositoryToken(_ context.Context, repo *prov
 	if !token.Expiry.IsZero() && time.Now().After(token.Expiry) {
 		return nil, fmt.Errorf("connection access token expired: %w", connection.ErrAuthentication)
 	}
-	return &connection.ExpirableSecureValue{Token: common.RawSecureValue(token.AccessToken), ExpiresAt: token.Expiry}, nil
+	return &connection.ExpirableSecureValue{Token: resource.RawSecureValue(token.AccessToken), ExpiresAt: token.Expiry}, nil
 }
 
 func (c *sourceConnection) ValidateToken() (time.Time, error) {
@@ -115,7 +115,7 @@ func (c *sourceConnection) GenerateConnectionToken(ctx context.Context) (*connec
 		return nil, err
 	}
 	// A zero expiry means the endpoint issued a non-expiring token.
-	return &connection.ExpirableSecureValue{Token: common.RawSecureValue(raw), ExpiresAt: token.Expiry}, nil
+	return &connection.ExpirableSecureValue{Token: resource.RawSecureValue(raw), ExpiresAt: token.Expiry}, nil
 }
 
 // rejected reports whether the endpoint refused the client credentials, which the
@@ -135,7 +135,7 @@ func rejected(err error) bool {
 }
 
 // parseToken decodes the stored token, which keeps its expiry next to the access token.
-func parseToken(raw common.RawSecureValue) (*oauth2.Token, error) {
+func parseToken(raw resource.RawSecureValue) (*oauth2.Token, error) {
 	if raw.IsZero() {
 		return nil, errors.New("no token available")
 	}

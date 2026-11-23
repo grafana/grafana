@@ -2,7 +2,13 @@ package folder
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"encoding/json"
 	"errors"
+	"net/http"
+	"net/http/httptest"
 	"slices"
 	"strings"
 	"sync"
@@ -10,7 +16,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
+	authnlib "github.com/grafana/authlib/authn"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
@@ -18,13 +30,131 @@ import (
 
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	pending "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/cascadedelete"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
+
+func TestIntegrationPendingFolderDeleteResourceDisabled(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction: true, DisableAnonymous: true, APIServerStorageType: "unified",
+		EnableFeatureToggles:           []string{featuremgmt.FlagKubernetesFolderCascadeDelete, featuremgmt.FlagFolderPendingDeletionWrites},
+		PendingDeletionResourceEnabled: false,
+	})
+	dyn, err := dynamic.NewForConfig(helper.NewAdminRestConfig())
+	require.NoError(t, err)
+	ctx := t.Context()
+	ns := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
+	for _, version := range []string{"v1", "v1beta1"} {
+		t.Run(version, func(t *testing.T) {
+			gvr := folders.FolderResourceInfo.GroupVersionResource()
+			gvr.Version = version
+			client := dyn.Resource(gvr).Namespace(ns)
+			root, err := client.Create(ctx, newFolderObject(gvr.GroupVersion().String(), "unavailable-"+version), metav1.CreateOptions{})
+			require.NoError(t, err)
+			child := newFolderObject(gvr.GroupVersion().String(), "child-"+version)
+			child.SetAnnotations(map[string]string{utils.AnnoKeyFolder: root.GetName()})
+			child, err = client.Create(ctx, child, metav1.CreateOptions{})
+			require.NoError(t, err)
+			zero := int64(0)
+			for _, options := range []metav1.DeleteOptions{{}, {GracePeriodSeconds: &zero}} {
+				name := child.GetName()
+				if options.GracePeriodSeconds != nil {
+					name = root.GetName()
+				}
+				err = client.Delete(ctx, name, options)
+				require.True(t, apierrors.IsServiceUnavailable(err), "expected fail-closed 503: %v", err)
+				for _, original := range []*unstructured.Unstructured{root, child} {
+					remaining, err := client.Get(ctx, original.GetName(), metav1.GetOptions{})
+					require.NoError(t, err)
+					require.Equal(t, original.GetUID(), remaining.GetUID())
+					require.Equal(t, original.GetResourceVersion(), remaining.GetResourceVersion())
+					require.Nil(t, remaining.GetDeletionTimestamp())
+				}
+			}
+		})
+	}
+}
+
+func TestIntegrationPendingFolderDeleteRecording(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction: true, DisableAnonymous: true, APIServerStorageType: "unified",
+		EnableFeatureToggles:           []string{featuremgmt.FlagFolderAsyncCascadeDeleteThroughController, featuremgmt.FlagFolderPendingDeletionWrites},
+		PendingDeletionResourceEnabled: true,
+	})
+	dyn, err := dynamic.NewForConfig(helper.NewAdminRestConfig())
+	require.NoError(t, err)
+	ns := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
+	ctx := context.Background()
+	viewer, err := dynamic.NewForConfig(helper.Org1.Viewer.NewRestConfig())
+	require.NoError(t, err)
+	serviceCtx := identity.WithServiceIdentityContext(ctx, helper.Org1.Admin.Identity.GetOrgID())
+	storage := helper.GetEnv().ResourceClient
+	for _, version := range []string{"v1", "v1beta1"} {
+		t.Run(version, func(t *testing.T) {
+			gvr := folders.FolderResourceInfo.GroupVersionResource()
+			gvr.Version = version
+			client := dyn.Resource(gvr).Namespace(ns)
+			obj, err := client.Create(ctx, newFolderObject("folder.grafana.app/"+version, "pending-"+version), metav1.CreateOptions{})
+			require.NoError(t, err)
+			key := &resourcepb.ResourceKey{Namespace: ns, Group: "folder.grafana.app", Resource: "pendingfolderdeletions", Name: pending.PendingDeletionName(obj.GetName(), string(obj.GetUID()))}
+			_, err = viewer.Resource(gvr).Namespace(ns).Get(ctx, obj.GetName(), metav1.GetOptions{})
+			require.NoError(t, err, "viewer must be able to read the folder")
+			err = viewer.Resource(gvr).Namespace(ns).Delete(ctx, obj.GetName(), metav1.DeleteOptions{})
+			require.True(t, apierrors.IsForbidden(err), "viewer cannot delete: %v", err)
+			_, err = storage.Read(serviceCtx, &resourcepb.ReadRequest{Key: key})
+			require.Equal(t, codes.NotFound, status.Code(err), "rejected delete must not create privileged intent")
+			start := make(chan struct{})
+			results := make(chan error, 2)
+			for range 2 {
+				go func() { <-start; results <- client.Delete(ctx, obj.GetName(), metav1.DeleteOptions{}) }()
+			}
+			close(start)
+			for range 2 {
+				err := <-results
+				require.True(t, err == nil || apierrors.IsConflict(err), "unexpected concurrent delete failure: %v", err)
+			}
+			marked, err := client.Get(ctx, obj.GetName(), metav1.GetOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, marked.GetDeletionTimestamp())
+			read, err := storage.Read(serviceCtx, &resourcepb.ReadRequest{Key: key})
+			require.NoError(t, err)
+			entry := &pending.PendingFolderDeletion{}
+			require.NoError(t, json.Unmarshal(read.Value, entry))
+			require.Equal(t, obj.GetName()+"-"+string(obj.GetUID()), entry.Name)
+			require.Equal(t, obj.GetName(), entry.Spec.FolderName)
+			require.Equal(t, string(obj.GetUID()), entry.Spec.FolderUID)
+			require.Nil(t, entry.Spec.DeletionTimestamp)
+			stamp := marked.GetDeletionTimestamp().UTC().Format(time.RFC3339Nano)
+			entry.Spec.DeletionTimestamp = &stamp
+			value, err := json.Marshal(entry)
+			require.NoError(t, err)
+			updated, err := storage.Update(serviceCtx, &resourcepb.UpdateRequest{Key: key, ResourceVersion: read.ResourceVersion, Value: value})
+			require.NoError(t, err)
+			require.NoError(t, client.Delete(ctx, obj.GetName(), metav1.DeleteOptions{}), "retry must reuse recorded intent")
+			again, err := storage.Read(serviceCtx, &resourcepb.ReadRequest{Key: key})
+			require.NoError(t, err)
+			require.Equal(t, updated.ResourceVersion, again.ResourceVersion)
+			require.NoError(t, json.Unmarshal(again.Value, entry))
+			require.Equal(t, &stamp, entry.Spec.DeletionTimestamp)
+			_, err = dyn.Resource(pending.PendingFolderDeletionResourceInfo.GroupVersionResource()).Namespace(ns).Get(ctx, entry.Name, metav1.GetOptions{})
+			require.True(t, apierrors.IsForbidden(err), "even an admin user cannot access internal pending entries: %v", err)
+		})
+	}
+}
 
 // faultyDeleter fails the delete of the child named by fail, to inject a failure into a running cascade.
 type faultyDeleter struct {
@@ -110,16 +240,53 @@ func feedEvents(ctx context.Context, client dynamic.ResourceInterface, h cache.R
 func TestIntegrationFolderCascadeControllerEndToEnd(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
+	// The controller runs as an access policy authenticated with its own token, as the operator does,
+	// so it only has the permissions that token carries rather than the admin's.
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+	jwks := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(jose.JSONWebKeySet{Keys: []jose.JSONWebKey{{
+			Key: &key.PublicKey, KeyID: "cascade-test-key", Algorithm: string(jose.ES256), Use: "sig",
+		}}})
+	}))
+	t.Cleanup(jwks.Close)
+
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction:    true,
 		DisableAnonymous:     true,
 		APIServerStorageType: "unified",
 		EnableFeatureToggles: []string{featuremgmt.FlagFolderAsyncCascadeDeleteThroughController},
+		ExtJWTJWKSURL:        jwks.URL,
 	})
 	dyn, err := dynamic.NewForConfig(helper.NewAdminRestConfig())
 	require.NoError(t, err)
 	orgID := helper.Org1.Admin.Identity.GetOrgID()
 	ns := helper.Namespacer(orgID)
+
+	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.ES256, Key: key},
+		(&jose.SignerOptions{}).WithType(jose.ContentType(authnlib.TokenTypeAccess)).WithHeader("kid", "cascade-test-key"))
+	require.NoError(t, err)
+	token, err := jwt.Signed(signer).Claims(authnlib.Claims[authnlib.AccessTokenClaims]{
+		Claims: jwt.Claims{
+			Subject: "access-policy:folder-controller", Audience: jwt.Audience{"grafana"},
+			IssuedAt: jwt.NewNumericDate(time.Now()), Expiry: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+		},
+		Rest: authnlib.AccessTokenClaims{
+			Namespace: ns,
+			Permissions: []string{
+				"folder.grafana.app/folders:*", "dashboard.grafana.app/dashboards:*",
+			},
+		},
+	}).Serialize()
+	require.NoError(t, err)
+	svcCfg := helper.NewAdminRestConfig()
+	svcCfg.Username, svcCfg.Password = "", ""
+	svcCfg.Wrap(func(next http.RoundTripper) http.RoundTripper {
+		return accessTokenTransport{next: next, token: token}
+	})
+	svc, err := dynamic.NewForConfig(svcCfg)
+	require.NoError(t, err)
 	folderGVR := folders.FolderResourceInfo.GroupVersionResource()
 
 	newEnv := func(t *testing.T) *cascadeEnv {
@@ -137,14 +304,17 @@ func TestIntegrationFolderCascadeControllerEndToEnd(t *testing.T) {
 	// that records the statuses it writes.
 	startController := func(t *testing.T, deleter cascadedelete.ChildDeleter) *recordingWriter {
 		t.Helper()
-		clients := cascadedelete.NewDynamicClients(dyn)
+		clients := cascadedelete.NewDynamicClients(svc)
 		if deleter == nil {
 			deleter = clients
 		}
 		writer := &recordingWriter{FolderWriter: clients, states: map[string][]folders.FolderCascadeDeleteStatusState{}}
+		children := cascadedelete.NewSearchChildLister(helper.GetEnv().ResourceClient)
 		r := &cascadedelete.Reconciler{
-			Children:  cascadedelete.NewSearchChildLister(helper.GetEnv().ResourceClient),
-			Deleter:   deleter,
+			Handlers: []cascadedelete.KindHandler{
+				{Kind: cascadedelete.ChildFolder, Lister: children, Deleter: deleter},
+				{Kind: cascadedelete.ChildDashboard, Lister: children, Deleter: deleter},
+			},
 			Folders:   writer,
 			BatchSize: 2,
 		}
@@ -160,7 +330,7 @@ func TestIntegrationFolderCascadeControllerEndToEnd(t *testing.T) {
 		synced := make(chan struct{})
 		go func() {
 			defer close(feedDone)
-			feedEvents(ctx, dyn.Resource(folderGVR).Namespace(ns), ctrl.Handler(), synced)
+			feedEvents(ctx, svc.Resource(folderGVR).Namespace(ns), ctrl.Handler(), synced)
 		}()
 		t.Cleanup(func() {
 			cancel()
@@ -246,7 +416,7 @@ func TestIntegrationFolderCascadeControllerEndToEnd(t *testing.T) {
 		e.createDashboards("e2e-fail", "e2e-fail-ok1", "e2e-fail-bad", "e2e-fail-ok2")
 		e.waitIndexed("e2e-fail", 3)
 
-		deleter := &faultyDeleter{ChildDeleter: cascadedelete.NewDynamicClients(dyn)}
+		deleter := &faultyDeleter{ChildDeleter: cascadedelete.NewDynamicClients(svc)}
 		bad := "e2e-fail-bad"
 		deleter.fail.Store(&bad)
 		startController(t, deleter)
@@ -272,4 +442,85 @@ func TestIntegrationFolderCascadeControllerEndToEnd(t *testing.T) {
 		poll(t, func() bool { return e.getFolder("e2e-fail") == nil })
 		require.False(t, e.dashboardExists(bad))
 	})
+	// The controller deletes the contents as its own identity, so the requester's access to them is
+	// checked when the delete is requested: alert.rules:delete and dashboards:delete on the folder, and
+	// folders:write on its parent.
+	userWith := func(t *testing.T, name string, extra ...string) *dynamic.DynamicClient {
+		t.Helper()
+		actions := append([]string{folder.ActionFoldersRead, folder.ActionFoldersWrite, folder.ActionFoldersDelete,
+			dashboards.ActionDashboardsRead}, extra...)
+		u := helper.CreateUser(name, apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{{
+			Actions: actions, Resource: "folders", ResourceAttribute: "uid", ResourceID: "e2e-" + name + "-top",
+		}})
+		c, err := dynamic.NewForConfig(u.NewRestConfig())
+		require.NoError(t, err)
+		return c
+	}
+
+	for _, tc := range []struct {
+		name    string
+		granted []string
+	}{
+		{"alert rules", []string{dashboards.ActionDashboardsDelete}},
+		{"dashboards", []string{accesscontrol.ActionAlertingRuleDelete}},
+	} {
+		t.Run("a delete without delete access to "+tc.name+" is rejected and leaves the folder untouched", func(t *testing.T) {
+			name := "denied-" + strings.ReplaceAll(tc.name, " ", "")
+			e := newEnv(t)
+			e.createFolder("e2e-"+name+"-top", "")
+			e.createFolder("e2e-"+name+"-a", "e2e-"+name+"-top")
+			e.createFolder("e2e-"+name+"-b", "e2e-"+name+"-a")
+			e.createDashboards("e2e-"+name+"-b", "e2e-"+name+"-b1")
+			e.waitIndexed("e2e-"+name+"-a", 1)
+			user := userWith(t, name, tc.granted...)
+
+			startController(t, nil)
+			zero := int64(0)
+			err := user.Resource(folderGVR).Namespace(ns).Delete(context.Background(), "e2e-"+name+"-a", metav1.DeleteOptions{GracePeriodSeconds: &zero})
+			require.True(t, apierrors.IsForbidden(err), "expected 403: %v", err)
+
+			require.Never(t, func() bool {
+				a := e.getFolder("e2e-" + name + "-a")
+				return a == nil || a.DeletionTimestamp != nil || e.getFolder("e2e-"+name+"-b") == nil || !e.dashboardExists("e2e-"+name+"-b1")
+			}, 3*time.Second, 100*time.Millisecond, "a rejected delete must not mark the folder or touch its contents")
+		})
+	}
+
+	t.Run("an authorized delete completes a nested cascade", func(t *testing.T) {
+		e := newEnv(t)
+		e.createFolder("e2e-allowed-top", "")
+		e.createFolder("e2e-allowed-a", "e2e-allowed-top")
+		e.createFolder("e2e-allowed-b", "e2e-allowed-a")
+		e.createFolder("e2e-allowed-c", "e2e-allowed-b")
+		e.createDashboards("e2e-allowed-a", "e2e-allowed-a1")
+		e.createDashboards("e2e-allowed-c", "e2e-allowed-c1")
+		e.waitIndexed("e2e-allowed-a", 2)
+		e.waitIndexed("e2e-allowed-b", 1)
+		e.waitIndexed("e2e-allowed-c", 1)
+		user := userWith(t, "allowed", accesscontrol.ActionAlertingRuleDelete, dashboards.ActionDashboardsDelete)
+
+		startController(t, nil)
+		zero := int64(0)
+		require.NoError(t, user.Resource(folderGVR).Namespace(ns).Delete(context.Background(), "e2e-allowed-a", metav1.DeleteOptions{GracePeriodSeconds: &zero}))
+
+		poll(t, func() bool { return e.getFolder("e2e-allowed-a") == nil })
+		for _, name := range []string{"e2e-allowed-b", "e2e-allowed-c"} {
+			require.Nil(t, e.getFolder(name), "folder %s should be gone", name)
+		}
+		for _, d := range []string{"e2e-allowed-a1", "e2e-allowed-c1"} {
+			require.False(t, e.dashboardExists(d), "dashboard %s should be gone", d)
+		}
+		require.NotNil(t, e.getFolder("e2e-allowed-top"), "the parent must be left alone")
+	})
+}
+
+type accessTokenTransport struct {
+	next  http.RoundTripper
+	token string
+}
+
+func (t accessTokenTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req = req.Clone(req.Context())
+	req.Header.Set("X-Access-Token", t.token)
+	return t.next.RoundTrip(req)
 }

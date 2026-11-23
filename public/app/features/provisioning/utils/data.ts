@@ -1,6 +1,6 @@
 import {
   type CommitOptions,
-  type InlineSecureValue,
+  type ComGithubGrafanaGrafanaAppSdkResourceInlineSecureValue as InlineSecureValue,
   type RepositorySpec,
   type SourceRepositoryConfig,
 } from 'app/api/clients/provisioning/v0alpha1';
