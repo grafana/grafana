@@ -10,10 +10,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/utils/ptr"
 
 	v0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/prometheus/client_golang/prometheus"
@@ -989,7 +989,7 @@ func TestDeleteWorker_ProcessMissingSourcePathStopsBeforeDeletion(t *testing.T) 
 	err := worker.Process(ctx, mockRepo, job, progress)
 	require.EqualError(t, err, "delete files from repository: too many errors: 1")
 	status := progress.Complete(ctx, err)
-	require.Equal(t, v0alpha1.JobStateError, ptr.Deref(status.State))
+	require.Equal(t, v0alpha1.JobStateError, ptr.Deref(status.State, ""))
 	require.Len(t, status.Errors, 1)
 	require.Contains(t, status.Errors[0], missingPathError.Error())
 	require.Empty(t, status.Warnings)

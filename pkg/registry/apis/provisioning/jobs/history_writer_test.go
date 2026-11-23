@@ -7,9 +7,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 )
 
 func TestWriteJob_PreservesStatusAndLabels(t *testing.T) {
@@ -34,9 +34,9 @@ func TestWriteJob_PreservesStatusAndLabels(t *testing.T) {
 	require.Len(t, list.Items, 1)
 
 	historic := list.Items[0]
-	assert.Equal(t, int64(7), ptr.Deref(historic.Status.ProgressUpdates),
+	assert.Equal(t, int64(7), ptr.Deref(historic.Status.ProgressUpdates, 0),
 		"historic job should preserve the number of progress updates the job went through")
-	assert.Equal(t, provisioning.JobStateSuccess, ptr.Deref(historic.Status.State))
+	assert.Equal(t, provisioning.JobStateSuccess, ptr.Deref(historic.Status.State, ""))
 	assert.Empty(t, historic.ResourceVersion, "historic job gets its own resource version")
 	assert.Equal(t, "my-repo", historic.Labels[LabelRepository])
 	assert.Equal(t, "original-uid", historic.Labels[LabelJobOriginalUID])

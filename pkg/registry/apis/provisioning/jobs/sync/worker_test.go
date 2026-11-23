@@ -12,10 +12,10 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -358,8 +358,8 @@ func TestSyncWorker_Process_PullCondition(t *testing.T) {
 			err := worker.Process(context.Background(), readerWriter, job, progressRecorder)
 			require.NoError(t, err)
 
-			require.Equal(t, ptr.Deref(tt.jobStatus.Finished), capturedSyncStatus.Finished, "all completed syncs, including warnings, must reset the interval")
-			require.Equal(t, ptr.Deref(tt.jobStatus.State), capturedSyncStatus.State)
+			require.Equal(t, ptr.Deref(tt.jobStatus.Finished, 0), capturedSyncStatus.Finished, "all completed syncs, including warnings, must reset the interval")
+			require.Equal(t, ptr.Deref(tt.jobStatus.State, ""), capturedSyncStatus.State)
 			require.Equal(t, repoConfig.Status.Sync.LastChecked, capturedSyncStatus.LastChecked, "sync jobs must preserve the controller's last sync attempt")
 			require.Equal(t, provisioning.ConditionTypePullStatus, capturedPullCondition.Type)
 			require.Equal(t, tt.expectedPullReason, capturedPullCondition.Reason)

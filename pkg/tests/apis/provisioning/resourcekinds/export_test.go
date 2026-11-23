@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/optional"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -94,8 +94,8 @@ func TestIntegrationProvisioning_ResourceKinds_SelectiveExport(t *testing.T) {
 				Action: provisioning.JobActionPush,
 				Push: &provisioning.JobExportJobOptions{
 					Resources: []provisioning.JobResourceRef{
-						{Name: ptr.NonZero(name0), Kind: ptr.NonZero(rk.kind), Group: ptr.NonZero(rk.group)},
-						{Name: ptr.NonZero(name2), Kind: ptr.NonZero(rk.kind), Group: ptr.NonZero(rk.group)},
+						{Name: optional.NonZero(name0), Kind: optional.NonZero(rk.kind), Group: optional.NonZero(rk.group)},
+						{Name: optional.NonZero(name2), Kind: optional.NonZero(rk.kind), Group: optional.NonZero(rk.group)},
 					},
 				},
 			})

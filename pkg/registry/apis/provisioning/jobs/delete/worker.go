@@ -8,11 +8,11 @@ import (
 
 	"go.opentelemetry.io/otel/attribute"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -53,7 +53,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 		span.End()
 	}()
 	span.SetAttributes(
-		attribute.String("delete.ref", ptr.Deref(job.Spec.Delete.Ref)),
+		attribute.String("delete.ref", ptr.Deref(job.Spec.Delete.Ref, "")),
 		attribute.Int("delete.paths_count", len(job.Spec.Delete.Paths)),
 		attribute.Int("delete.resources_count", len(job.Spec.Delete.Resources)),
 	)
@@ -93,7 +93,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 		CommitOnlyOnceMessage: jobs.CommitMessage(job, msg),
 		PushOnWrites:          false,
 		Timeout:               10 * time.Minute,
-		Ref:                   ptr.Deref(opts.Ref),
+		Ref:                   ptr.Deref(opts.Ref, ""),
 	}
 
 	err := w.wrapFn(ctx, repo, stageOptions, fn)
@@ -103,15 +103,15 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 	}
 
 	// Set RefURLs if the repository supports it and we have a target ref
-	if ptr.Deref(opts.Ref) != "" {
+	if ptr.Deref(opts.Ref, "") != "" {
 		if repoWithURLs, ok := repo.(repository.RepositoryWithURLs); ok {
-			if refURLs, urlErr := repoWithURLs.RefURLs(ctx, ptr.Deref(opts.Ref)); urlErr == nil && refURLs != nil {
+			if refURLs, urlErr := repoWithURLs.RefURLs(ctx, ptr.Deref(opts.Ref, "")); urlErr == nil && refURLs != nil {
 				progress.SetRefURLs(ctx, refURLs)
 			}
 		}
 	}
 
-	if ptr.Deref(opts.Ref) == "" {
+	if ptr.Deref(opts.Ref, "") == "" {
 		progress.ResetResults(true)
 		progress.SetMessage(ctx, "pull resources")
 
@@ -142,7 +142,7 @@ func (w *Worker) deleteFiles(ctx context.Context, rw repository.ReaderWriter, pr
 		resultBuilder := jobs.NewPathOnlyResult(path).WithAction(repository.FileActionDeleted)
 
 		progress.SetMessage(ctx, "Deleting "+path)
-		if err := rw.Delete(ctx, path, ptr.Deref(opts.Ref), "Delete "+path); err != nil {
+		if err := rw.Delete(ctx, path, ptr.Deref(opts.Ref, ""), "Delete "+path); err != nil {
 			if errors.Is(err, repository.ErrFileNotFound) {
 				resultBuilder.WithWarning(fmt.Errorf("deleting file %s: %w", path, err))
 			} else {
@@ -173,22 +173,22 @@ func (w *Worker) resolveResourcesToPaths(ctx context.Context, rw repository.Read
 	resolvedPaths := make([]string, 0, len(resourceRefs))
 	for _, resource := range resourceRefs {
 		gvk := schema.GroupVersionKind{
-			Group: ptr.Deref(resource.Group),
-			Kind:  ptr.Deref(resource.Kind),
+			Group: ptr.Deref(resource.Group, ""),
+			Kind:  ptr.Deref(resource.Kind, ""),
 			// Version is left empty so ForKind will use the preferred version
 		}
-		resultBuilder := jobs.NewGVKResult(ptr.Deref(resource.Name), gvk).WithAction(repository.FileActionDeleted)
+		resultBuilder := jobs.NewGVKResult(ptr.Deref(resource.Name, ""), gvk).WithAction(repository.FileActionDeleted)
 
-		progress.SetMessage(ctx, fmt.Sprintf("Finding path for resource %s/%s/%s", ptr.Deref(resource.Group), ptr.Deref(resource.Kind), ptr.Deref(resource.Name)))
-		resourcePath, err := repositoryResources.FindResourcePath(ctx, ptr.Deref(resource.Name), gvk)
+		progress.SetMessage(ctx, fmt.Sprintf("Finding path for resource %s/%s/%s", ptr.Deref(resource.Group, ""), ptr.Deref(resource.Kind, ""), ptr.Deref(resource.Name, "")))
+		resourcePath, err := repositoryResources.FindResourcePath(ctx, ptr.Deref(resource.Name, ""), gvk)
 		if err != nil {
 			if errors.Is(err, resources.ErrResourceNotFound) {
-				resultBuilder.WithWarning(fmt.Errorf("resource %s/%s/%s not found", ptr.Deref(resource.Group), ptr.Deref(resource.Kind), ptr.Deref(resource.Name)))
+				resultBuilder.WithWarning(fmt.Errorf("resource %s/%s/%s not found", ptr.Deref(resource.Group, ""), ptr.Deref(resource.Kind, ""), ptr.Deref(resource.Name, "")))
 				progress.Record(ctx, resultBuilder.Build())
 				continue
 			}
 
-			resultBuilder.WithError(fmt.Errorf("find path for resource %s/%s/%s: %w", ptr.Deref(resource.Group), ptr.Deref(resource.Kind), ptr.Deref(resource.Name), err))
+			resultBuilder.WithError(fmt.Errorf("find path for resource %s/%s/%s: %w", ptr.Deref(resource.Group, ""), ptr.Deref(resource.Kind, ""), ptr.Deref(resource.Name, ""), err))
 			progress.Record(ctx, resultBuilder.Build())
 			// Continue with next resource instead of failing fast
 			if err := progress.TooManyErrors(); err != nil {

@@ -11,10 +11,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/utils/ptr"
 )
 
 func TestNewJobCleanupController(t *testing.T) {
@@ -108,13 +108,13 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 
 		store.On("ListExpiredJobs", mock.Anything, mock.Anything, 100).Return([]*provisioning.Job{job}, nil)
 		store.On("Complete", mock.Anything, mock.MatchedBy(func(j *provisioning.Job) bool {
-			return ptr.Deref(j.Status.State) == provisioning.JobStateError &&
-				ptr.Deref(j.Status.Message) == "Job failed due to lease expiry - worker may have crashed or lost connection"
+			return ptr.Deref(j.Status.State, "") == provisioning.JobStateError &&
+				ptr.Deref(j.Status.Message, "") == "Job failed due to lease expiry - worker may have crashed or lost connection"
 		})).Return(nil)
 		historyWriter.On("WriteJob", mock.Anything, mock.MatchedBy(func(j *provisioning.Job) bool {
 			// Verify claim label was removed before writing to history
 			_, hasLabel := j.Labels[LabelJobClaim]
-			return !hasLabel && ptr.Deref(j.Status.State) == provisioning.JobStateError
+			return !hasLabel && ptr.Deref(j.Status.State, "") == provisioning.JobStateError
 		})).Return(nil)
 
 		err := controller.Cleanup(ctx)
@@ -267,9 +267,9 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 
 		store.On("ListExpiredJobs", mock.Anything, mock.Anything, 100).Return([]*provisioning.Job{job}, nil)
 		store.On("Complete", mock.Anything, mock.MatchedBy(func(j *provisioning.Job) bool {
-			assert.Equal(t, provisioning.JobStateError, ptr.Deref(j.Status.State))
-			assert.Equal(t, "Job failed due to lease expiry - worker may have crashed or lost connection", ptr.Deref(j.Status.Message))
-			assert.Equal(t, fixedTime.UnixMilli(), ptr.Deref(j.Status.Finished))
+			assert.Equal(t, provisioning.JobStateError, ptr.Deref(j.Status.State, ""))
+			assert.Equal(t, "Job failed due to lease expiry - worker may have crashed or lost connection", ptr.Deref(j.Status.Message, ""))
+			assert.Equal(t, fixedTime.UnixMilli(), ptr.Deref(j.Status.Finished, 0))
 			return true
 		})).Return(nil)
 		historyWriter.On("WriteJob", mock.Anything, mock.Anything).Return(nil)

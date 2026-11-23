@@ -8,10 +8,11 @@ import (
 
 	"github.com/stretchr/testify/require"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/ptr"
 
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/optional"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -48,7 +49,7 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadata(t *testing.T) {
 		helper.CreateUnmanagedFolderWithName(t, folderUID, folderTitle, "")
 
 		job := triggerExport(t, helper, repo)
-		require.Equal(t, provisioning.JobStateSuccess, ptr.Deref(job.Status.State), "export job should succeed")
+		require.Equal(t, provisioning.JobStateSuccess, ptr.Deref(job.Status.State, ""), "export job should succeed")
 
 		require.DirExists(t, filepath.Join(helper.ProvisioningPath, folderTitle), "folder directory must be created by export")
 
@@ -83,7 +84,7 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadata(t *testing.T) {
 		helper.CreateUnmanagedFolderWithName(t, "existing-folder-uid", folderTitle, "")
 
 		job := triggerExport(t, helper, repo)
-		require.Equal(t, provisioning.JobStateSuccess, ptr.Deref(job.Status.State), "export job should succeed")
+		require.Equal(t, provisioning.JobStateSuccess, ptr.Deref(job.Status.State, ""), "export job should succeed")
 
 		require.DirExists(t, filepath.Join(helper.ProvisioningPath, folderTitle), "folder directory must still exist after export")
 
@@ -137,7 +138,7 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 		helper.CreateUnmanagedFolderWithName(t, childUID, childTitle, middleUID)
 
 		job := triggerExport(t, helper, repo)
-		require.Equal(t, provisioning.JobStateSuccess, ptr.Deref(job.Status.State), "export job should succeed")
+		require.Equal(t, provisioning.JobStateSuccess, ptr.Deref(job.Status.State, ""), "export job should succeed")
 
 		require.DirExists(t, filepath.Join(helper.ProvisioningPath, grandparentTitle), "grandparent folder directory must exist after export")
 		require.DirExists(t, filepath.Join(helper.ProvisioningPath, grandparentTitle, middleTitle), "middle folder directory must exist after export")
@@ -179,7 +180,7 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 		helper.CreateUnmanagedFolderWithName(t, childUID, childTitle, parentUID)
 
 		job := triggerExport(t, helper, repo)
-		require.Equal(t, provisioning.JobStateSuccess, ptr.Deref(job.Status.State), "export job should succeed")
+		require.Equal(t, provisioning.JobStateSuccess, ptr.Deref(job.Status.State, ""), "export job should succeed")
 
 		require.DirExists(t, filepath.Join(helper.ProvisioningPath, parentTitle), "parent folder directory must be created by export")
 		require.DirExists(t, filepath.Join(helper.ProvisioningPath, parentTitle, childTitle), "child folder directory must be created by export")
@@ -219,7 +220,7 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 		helper.CreateUnmanagedFolderWithName(t, childUID, childTitle, parentUID)
 
 		job := triggerExport(t, helper, repo)
-		require.Equal(t, provisioning.JobStateSuccess, ptr.Deref(job.Status.State), "export job should succeed")
+		require.Equal(t, provisioning.JobStateSuccess, ptr.Deref(job.Status.State, ""), "export job should succeed")
 
 		require.DirExists(t, filepath.Join(helper.ProvisioningPath, grandparentTitle), "grandparent folder directory must be created by export")
 		require.DirExists(t, filepath.Join(helper.ProvisioningPath, grandparentTitle, parentTitle), "parent folder directory must be created by export")
@@ -265,7 +266,7 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 		helper.CreateUnmanagedFolderWithName(t, siblingBUID, siblingBTitle, parentUID)
 
 		job := triggerExport(t, helper, repo)
-		require.Equal(t, provisioning.JobStateSuccess, ptr.Deref(job.Status.State), "export job should succeed")
+		require.Equal(t, provisioning.JobStateSuccess, ptr.Deref(job.Status.State, ""), "export job should succeed")
 
 		require.DirExists(t, filepath.Join(helper.ProvisioningPath, parentTitle), "parent folder directory must be created by export")
 		require.DirExists(t, filepath.Join(helper.ProvisioningPath, parentTitle, siblingATitle), "sibling A folder directory must be created by export")
@@ -334,7 +335,7 @@ func TestIntegrationProvisioning_ExportJob_GenerateNewFolderIDs(t *testing.T) {
 		})
 		job := &provisioning.Job{}
 		require.NoError(t, k8sruntime.DefaultUnstructuredConverter.FromUnstructured(result.Object, job))
-		require.Equal(t, provisioning.JobStateSuccess, ptr.Deref(job.Status.State), "export job should succeed")
+		require.Equal(t, provisioning.JobStateSuccess, ptr.Deref(job.Status.State, ""), "export job should succeed")
 
 		// Directory structure derives from titles, so it is unaffected by the option.
 		require.DirExists(t, filepath.Join(helper.ProvisioningPath, parentTitle))
@@ -365,7 +366,7 @@ func TestIntegrationProvisioning_ExportJob_GenerateNewFolderIDs(t *testing.T) {
 		})
 		job := &provisioning.Job{}
 		require.NoError(t, k8sruntime.DefaultUnstructuredConverter.FromUnstructured(result.Object, job))
-		require.Equal(t, provisioning.JobStateSuccess, ptr.Deref(job.Status.State), "export job should succeed")
+		require.Equal(t, provisioning.JobStateSuccess, ptr.Deref(job.Status.State, ""), "export job should succeed")
 
 		parentManifest := readFolderManifest(t, filepath.Join(helper.ProvisioningPath, parentTitle, "_folder.json"))
 		childManifest := readFolderManifest(t, filepath.Join(helper.ProvisioningPath, parentTitle, childTitle, "_folder.json"))
@@ -421,13 +422,13 @@ func TestIntegrationProvisioning_ExportJob_SelectiveGeneratesFolderMetadata(t *t
 		Action: provisioning.JobActionPush,
 		Push: &provisioning.JobExportJobOptions{
 			Resources: []provisioning.JobResourceRef{
-				{Name: ptr.NonZero(selectedDash), Kind: new("Dashboard"), Group: new("dashboard.grafana.app")},
+				{Name: optional.NonZero(selectedDash), Kind: new("Dashboard"), Group: new("dashboard.grafana.app")},
 			},
 		},
 	})
 	job := &provisioning.Job{}
 	require.NoError(t, k8sruntime.DefaultUnstructuredConverter.FromUnstructured(result.Object, job))
-	require.Equal(t, provisioning.JobStateSuccess, ptr.Deref(job.Status.State), "selective export job should succeed")
+	require.Equal(t, provisioning.JobStateSuccess, ptr.Deref(job.Status.State, ""), "selective export job should succeed")
 
 	// The parent ancestry is generated with metadata even though it was not
 	// named: the dashboard's nested path must resolve to managed folders.

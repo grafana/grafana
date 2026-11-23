@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/optional"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -37,7 +37,7 @@ func TestIntegrationGit_FixFolderMetadata_Branch(t *testing.T) {
 		FixFolderMetadata: &provisioning.JobFixFolderMetadataJobOptions{
 			Ref: new(featureBranch),
 		},
-		Message: ptr.NonZero(expectedCommitMsg),
+		Message: optional.NonZero(expectedCommitMsg),
 	})
 
 	state, _, _ := unstructured.NestedString(job.Object, "status", "state")

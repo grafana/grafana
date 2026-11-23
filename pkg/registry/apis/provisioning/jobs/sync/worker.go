@@ -9,7 +9,6 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -17,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"k8s.io/utils/ptr"
 )
 
 //go:generate mockery --name RepositoryPatchFn --structname MockRepositoryPatchFn --inpackage --filename repository_patch_fn_mock.go --with-expecter
@@ -193,7 +193,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	} else {
 		outcome = utils.SuccessOutcome
 		for _, summary := range jobStatus.Summary {
-			totalChangesMade += int(ptr.Deref(summary.Create) + ptr.Deref(summary.Update) + ptr.Deref(summary.Delete))
+			totalChangesMade += int(ptr.Deref(summary.Create, 0) + ptr.Deref(summary.Update, 0) + ptr.Deref(summary.Delete, 0))
 		}
 	}
 	syncSpan.End()
@@ -240,7 +240,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	//    not just what the controller thinks should exist.
 	quotaStatus := repo.Config().Status.Quota
 	quotaCondition := quotas.EvaluateCondition(quotaStatus, quotas.NewQuotaUsageFromStats(repoStats))
-	syncCondition := EvaluatePullCondition(ptr.Deref(jobStatus.State), resultReasons)
+	syncCondition := EvaluatePullCondition(ptr.Deref(jobStatus.State, ""), resultReasons)
 	if conditionOps := controller.BuildConditionPatchOpsFromExisting(cfg.Status.Conditions, cfg.GetGeneration(), quotaCondition, syncCondition); conditionOps != nil {
 		patchOperations = append(patchOperations, conditionOps...)
 	}
@@ -273,7 +273,7 @@ func (r *SyncWorker) completeFailedSync(ctx context.Context, cfg *provisioning.R
 		},
 	}
 
-	syncCondition := EvaluatePullCondition(ptr.Deref(jobStatus.State), progress.ResultReasons())
+	syncCondition := EvaluatePullCondition(ptr.Deref(jobStatus.State, ""), progress.ResultReasons())
 	if conditionOps := controller.BuildConditionPatchOpsFromExisting(cfg.Status.Conditions, cfg.GetGeneration(), syncCondition); conditionOps != nil {
 		patchOperations = append(patchOperations, conditionOps...)
 	}

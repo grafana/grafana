@@ -9,10 +9,10 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -156,9 +156,9 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		err = runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
 		require.NoError(t, err)
 
-		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State), "Sync job should fail due to quota when adding resources over limit")
-		require.NotEmpty(t, ptr.Deref(jobObj.Status.Message), "Sync job should have a message when failing due to quota")
-		require.Contains(t, ptr.Deref(jobObj.Status.Message), "sync skipped: repository is already over quota and incoming changes do not free enough resources", "Sync job should fail due to quota when adding resources over limit")
+		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State, ""), "Sync job should fail due to quota when adding resources over limit")
+		require.NotEmpty(t, ptr.Deref(jobObj.Status.Message, ""), "Sync job should have a message when failing due to quota")
+		require.Contains(t, ptr.Deref(jobObj.Status.Message, ""), "sync skipped: repository is already over quota and incoming changes do not free enough resources", "Sync job should fail due to quota when adding resources over limit")
 		// Verify only 2 dashboards exist (3rd was not created)
 		helper.RequireRepoDashboardCount(t, repo, 2)
 
@@ -211,17 +211,17 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		err := runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
 		require.NoError(t, err)
 
-		t.Logf("Job state: %s", ptr.Deref(jobObj.Status.State))
-		t.Logf("Job message: %s", ptr.Deref(jobObj.Status.Message))
+		t.Logf("Job state: %s", ptr.Deref(jobObj.Status.State, ""))
+		t.Logf("Job message: %s", ptr.Deref(jobObj.Status.Message, ""))
 		t.Logf("Job warnings: %v", jobObj.Status.Warnings)
 		t.Logf("Job errors: %v", jobObj.Status.Errors)
 		for _, s := range jobObj.Status.Summary {
 			t.Logf("Summary: group=%s kind=%s create=%d warning=%d error=%d warnings=%v",
-				ptr.Deref(s.Group), ptr.Deref(s.Kind), ptr.Deref(s.Create), ptr.Deref(s.Warning), ptr.Deref(s.Error), s.Warnings)
+				ptr.Deref(s.Group, ""), ptr.Deref(s.Kind, ""), ptr.Deref(s.Create, 0), ptr.Deref(s.Warning, 0), ptr.Deref(s.Error, 0), s.Warnings)
 		}
 
 		// Step 4: Verify job completed with warning state (some resources were skipped)
-		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State),
+		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State, ""),
 			"job should finish with warning when some resources are skipped due to quota")
 		require.Empty(t, jobObj.Status.Errors, "quota-skipped resources should produce warnings, not errors")
 		require.NotEmpty(t, jobObj.Status.Warnings, "should have warnings for skipped resources")
@@ -293,17 +293,17 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		err = runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
 		require.NoError(t, err)
 
-		t.Logf("Job state: %s", ptr.Deref(jobObj.Status.State))
-		t.Logf("Job message: %s", ptr.Deref(jobObj.Status.Message))
+		t.Logf("Job state: %s", ptr.Deref(jobObj.Status.State, ""))
+		t.Logf("Job message: %s", ptr.Deref(jobObj.Status.Message, ""))
 		t.Logf("Job warnings: %v", jobObj.Status.Warnings)
 		t.Logf("Job errors: %v", jobObj.Status.Errors)
 		for _, s := range jobObj.Status.Summary {
 			t.Logf("Summary: group=%s kind=%s create=%d warning=%d error=%d warnings=%v",
-				ptr.Deref(s.Group), ptr.Deref(s.Kind), ptr.Deref(s.Create), ptr.Deref(s.Warning), ptr.Deref(s.Error), s.Warnings)
+				ptr.Deref(s.Group, ""), ptr.Deref(s.Kind, ""), ptr.Deref(s.Create, 0), ptr.Deref(s.Warning, 0), ptr.Deref(s.Error, 0), s.Warnings)
 		}
 
 		// Step 4: Verify job completed with warning (resources skipped due to quota)
-		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State),
+		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State, ""),
 			"job should finish with warning when some resources are skipped due to quota")
 		require.Empty(t, jobObj.Status.Errors, "quota-skipped resources should produce warnings, not errors")
 		require.NotEmpty(t, jobObj.Status.Warnings, "should have warnings for skipped resources")

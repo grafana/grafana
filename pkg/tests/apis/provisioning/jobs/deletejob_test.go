@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/optional"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
@@ -272,7 +272,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 				Delete: &provisioning.JobDeleteJobOptions{
 					Resources: []provisioning.JobResourceRef{
 						{
-							Name:  ptr.NonZero(testFolderName), // Use the actual generated folder name
+							Name:  optional.NonZero(testFolderName), // Use the actual generated folder name
 							Kind:  new("Folder"),
 							Group: new("folder.grafana.app"),
 						},

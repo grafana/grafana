@@ -6,10 +6,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/ptr"
 
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -38,7 +38,7 @@ func TestIntegrationProvisioning_ExportJob_GitRepo_FolderMetadata(t *testing.T) 
 	helper.CreateUnmanagedFolderWithName(t, folderUID, folderTitle, "")
 
 	job := triggerExport(t, helper, repoName)
-	require.Equal(t, provisioning.JobStateSuccess, ptr.Deref(job.Status.State), "export job should succeed")
+	require.Equal(t, provisioning.JobStateSuccess, ptr.Deref(job.Status.State, ""), "export job should succeed")
 
 	// Read directly from Git because the files API checks ownership of unmanaged resources.
 	data := helper.GitReadFile(t, repoName, folderTitle+"/_folder.json")

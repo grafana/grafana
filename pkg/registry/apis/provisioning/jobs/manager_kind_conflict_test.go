@@ -14,10 +14,10 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -120,11 +120,11 @@ func TestJobProcessor_ManagerKindConflict(t *testing.T) {
 			processor := newJobProcessor(time.Minute, time.Minute, store, repoGetter, history, "0", metrics, nil, worker)
 			require.NoError(t, processor.processKey(ctx, job.Namespace, job.Name, triggerLive, time.Time{}))
 			require.NotNil(t, completed)
-			require.Equal(t, tt.wantState, ptr.Deref(completed.Status.State))
+			require.Equal(t, tt.wantState, ptr.Deref(completed.Status.State, ""))
 			require.Len(t, completed.Status.Warnings, 1)
 			require.Contains(t, completed.Status.Warnings[0], conflict.Error())
 			if tt.workerError != nil && tt.wantState == provisioning.JobStateError {
-				require.Equal(t, tt.workerError.Error(), ptr.Deref(completed.Status.Message))
+				require.Equal(t, tt.workerError.Error(), ptr.Deref(completed.Status.Message, ""))
 			}
 			if tt.resourceError == nil {
 				require.Empty(t, completed.Status.Errors)

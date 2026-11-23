@@ -16,9 +16,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
@@ -55,7 +55,7 @@ func TestIntegrationProvisioning_FullSync_MissingFolderMetadata(t *testing.T) {
 		err := runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
 		require.NoError(t, err)
 
-		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State),
+		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State, ""),
 			"job should complete with warning state when a folder is missing _folder.json")
 		require.NotEmpty(t, jobObj.Status.Warnings, "job should have at least one warning")
 		require.Empty(t, jobObj.Status.Errors, "missing _folder.json should be a warning, not an error")
@@ -95,7 +95,7 @@ func TestIntegrationProvisioning_FullSync_MissingFolderMetadata(t *testing.T) {
 		err := runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
 		require.NoError(t, err)
 
-		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State),
+		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State, ""),
 			"job should complete with warning state when folders are missing _folder.json")
 		require.Empty(t, jobObj.Status.Errors, "missing _folder.json should be warnings, not errors")
 
@@ -141,7 +141,7 @@ func TestIntegrationProvisioning_FullSync_MissingFolderMetadata(t *testing.T) {
 		err := runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
 		require.NoError(t, err)
 
-		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State))
+		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State, ""))
 		require.Empty(t, jobObj.Status.Errors)
 
 		// Should have warnings from both missing metadata and invalid resource
@@ -739,7 +739,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataDeletedReverts(t *testin
 		})
 		jobObj := &provisioning.Job{}
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
-		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State))
+		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State, ""))
 		require.NotEmpty(t, jobObj.Status.Warnings)
 
 		found := false
@@ -794,7 +794,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataDeletedReverts(t *testin
 		})
 		jobObj := &provisioning.Job{}
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
-		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State))
+		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State, ""))
 		require.NotEmpty(t, jobObj.Status.Warnings)
 
 		hasParentWarning := false
@@ -854,7 +854,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataDeletedReverts(t *testin
 		})
 		jobObj := &provisioning.Job{}
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
-		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State))
+		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State, ""))
 		require.NotEmpty(t, jobObj.Status.Warnings)
 
 		hasParentWarning := false

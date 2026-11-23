@@ -12,7 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/optional"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
@@ -78,7 +78,7 @@ func TestIntegrationProvisioning_DeleteJob_RejectsSourcePathEscapingRepositoryPa
 		Action: provisioning.JobActionDelete,
 		Delete: &provisioning.JobDeleteJobOptions{
 			Resources: []provisioning.JobResourceRef{
-				{Group: new("folder.grafana.app"), Kind: new("Folder"), Name: ptr.NonZero(updated.GetName())},
+				{Group: new("folder.grafana.app"), Kind: new("Folder"), Name: optional.NonZero(updated.GetName())},
 			},
 		},
 	})
@@ -178,7 +178,7 @@ func TestIntegrationProvisioning_MoveJob_RejectsSourcePathEscapingRepositoryPath
 		Move: &provisioning.JobMoveJobOptions{
 			TargetPath: new("moved/"),
 			Resources: []provisioning.JobResourceRef{
-				{Group: new("folder.grafana.app"), Kind: new("Folder"), Name: ptr.NonZero(updated.GetName())},
+				{Group: new("folder.grafana.app"), Kind: new("Folder"), Name: optional.NonZero(updated.GetName())},
 			},
 		},
 	})

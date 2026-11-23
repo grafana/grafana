@@ -25,7 +25,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/optional"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -358,7 +358,7 @@ func TestValidateWriteAccess_Migrate(t *testing.T) {
 	migrate := func(branch string) provisioning.JobSpec {
 		return provisioning.JobSpec{
 			Action:  provisioning.JobActionMigrate,
-			Migrate: &provisioning.JobMigrateJobOptions{Branch: ptr.NonZero(branch)},
+			Migrate: &provisioning.JobMigrateJobOptions{Branch: optional.NonZero(branch)},
 		}
 	}
 

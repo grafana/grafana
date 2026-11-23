@@ -6,11 +6,12 @@ import (
 
 	"go.opentelemetry.io/otel/attribute"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/apifmt"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/optional"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
@@ -138,12 +139,12 @@ func (c *JobCleanupController) cleanUpExpiredJob(ctx context.Context, job *provi
 	jobCopy := job.DeepCopy()
 	jobCopy.Status.State = new(provisioning.JobStateError)
 	jobCopy.Status.Message = new("Job failed due to lease expiry - worker may have crashed or lost connection")
-	jobCopy.Status.Finished = ptr.NonZero(c.clock().UnixMilli())
+	jobCopy.Status.Finished = optional.NonZero(c.clock().UnixMilli())
 
 	span.SetAttributes(
 		attribute.String("job.name", jobCopy.GetName()),
 		attribute.String("job.namespace", jobCopy.GetNamespace()),
-		attribute.String("job.repository", ptr.Deref(jobCopy.Spec.Repository)),
+		attribute.String("job.repository", ptr.Deref(jobCopy.Spec.Repository, "")),
 		attribute.String("job.action", string(jobCopy.Spec.Action)),
 	)
 

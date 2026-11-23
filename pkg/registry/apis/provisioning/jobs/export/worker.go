@@ -7,13 +7,13 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/open-feature/go-sdk/openfeature"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/infra/features"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -81,14 +81,14 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		span.End()
 	}()
 	span.SetAttributes(
-		attribute.String("export.branch", ptr.Deref(options.Branch)),
-		attribute.String("export.folder", ptr.Deref(options.Folder)),
-		attribute.String("export.path", ptr.Deref(options.Path)),
+		attribute.String("export.branch", ptr.Deref(options.Branch, "")),
+		attribute.String("export.folder", ptr.Deref(options.Folder, "")),
+		attribute.String("export.path", ptr.Deref(options.Path, "")),
 		attribute.Int("export.resources_count", len(options.Resources)),
 	)
 
 	// Can write to external branch
-	if err := repository.IsWriteAllowed(cfg, ptr.Deref(options.Branch)); err != nil {
+	if err := repository.IsWriteAllowed(cfg, ptr.Deref(options.Branch, "")); err != nil {
 		return err
 	}
 
@@ -97,14 +97,14 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		return fmt.Errorf("create clients: %w", err)
 	}
 
-	defaultMsg := ptr.Deref(options.Message)
+	defaultMsg := ptr.Deref(options.Message, "")
 	if defaultMsg == "" {
 		defaultMsg = fmt.Sprintf("Export from Grafana %s", job.Name)
 	}
 	msg := jobs.CommitMessage(job, defaultMsg)
 
 	cloneOptions := repository.StageOptions{
-		Ref:                   ptr.Deref(options.Branch),
+		Ref:                   ptr.Deref(options.Branch, ""),
 		Timeout:               10 * time.Minute,
 		PushOnWrites:          false,
 		Mode:                  repository.StageModeCommitOnlyOnce,
@@ -130,9 +130,9 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	err = r.wrapWithStageFn(ctx, repo, cloneOptions, fn)
 
 	// Set RefURLs if the repository supports it and we have a target branch
-	if ptr.Deref(options.Branch) != "" {
+	if ptr.Deref(options.Branch, "") != "" {
 		if repoWithURLs, ok := repo.(repository.RepositoryWithURLs); ok {
-			if refURLs, urlErr := repoWithURLs.RefURLs(ctx, ptr.Deref(options.Branch)); urlErr == nil && refURLs != nil {
+			if refURLs, urlErr := repoWithURLs.RefURLs(ctx, ptr.Deref(options.Branch, "")); urlErr == nil && refURLs != nil {
 				progress.SetRefURLs(ctx, refURLs)
 			}
 		}

@@ -13,13 +13,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/apifmt"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/util"
@@ -178,14 +178,14 @@ func (s *persistentStore) Claim(ctx context.Context, namespace, name string, dri
 		}
 
 		logger.Info("job claim complete",
-			"repository", ptr.Deref(updatedJob.Spec.Repository),
+			"repository", ptr.Deref(updatedJob.Spec.Repository, ""),
 			"action", updatedJob.Spec.Action,
 		)
 
 		span.SetAttributes(
 			attribute.String("job.name", updatedJob.GetName()),
 			attribute.String("job.namespace", updatedJob.GetNamespace()),
-			attribute.String("job.repository", ptr.Deref(updatedJob.Spec.Repository)),
+			attribute.String("job.repository", ptr.Deref(updatedJob.Spec.Repository, "")),
 			attribute.String("job.action", string(updatedJob.Spec.Action)),
 		)
 
@@ -527,17 +527,17 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 	logger := logging.FromContext(ctx).With(
 		"operation", "insert",
 		"namespace", namespace,
-		"repository", ptr.Deref(spec.Repository),
+		"repository", ptr.Deref(spec.Repository, ""),
 		"action", spec.Action,
 	)
 
 	span.SetAttributes(
 		attribute.String("job.namespace", namespace),
-		attribute.String("job.repository", ptr.Deref(spec.Repository)),
+		attribute.String("job.repository", ptr.Deref(spec.Repository, "")),
 		attribute.String("job.action", string(spec.Action)),
 	)
 
-	if ptr.Deref(spec.Repository) == "" {
+	if ptr.Deref(spec.Repository, "") == "" {
 		err := errors.New("missing repository in job")
 		span.RecordError(err)
 		return nil, err
@@ -553,7 +553,7 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: namespace,
 			Labels: map[string]string{
-				LabelRepository: ptr.Deref(spec.Repository),
+				LabelRepository: ptr.Deref(spec.Repository, ""),
 			},
 			Annotations: webhookAttributionFromContext(ctx),
 		},
@@ -677,7 +677,7 @@ const cleanupConflictRetries = 3
 // orphan-cleanup action (those are a recovery path that has to survive
 // termination, see CleanupQueue).
 func isCleanupCandidate(job *provisioning.Job, repository string) bool {
-	return ptr.Deref(job.Spec.Repository) == repository && !IsOrphanCleanupAction(job.Spec.Action)
+	return ptr.Deref(job.Spec.Repository, "") == repository && !IsOrphanCleanupAction(job.Spec.Action)
 }
 
 // deleteUnclaimedJob deletes a single pending job under a ResourceVersion
@@ -730,7 +730,7 @@ func (s *persistentStore) deleteUnclaimedJob(ctx context.Context, logger logging
 		}
 		if !isCleanupCandidate(current, repository) {
 			logger.Info("skipping recreated job that is no longer a cleanup candidate",
-				"job", name, "job_repository", ptr.Deref(current.Spec.Repository), "job_action", current.Spec.Action)
+				"job", name, "job_repository", ptr.Deref(current.Spec.Repository, ""), "job_action", current.Spec.Action)
 			return false, nil
 		}
 		// Still an unclaimed candidate: retry the delete against the current RV.
@@ -746,21 +746,21 @@ func generateJobName(job *provisioning.Job) {
 	switch job.Spec.Action {
 	case provisioning.JobActionMigrate, provisioning.JobActionPull:
 		// Pull and migrate jobs should never run at the same time. Hence, the name encapsulates them both (and the spec differentiates them).
-		job.Name = ptr.Deref(job.Spec.Repository) + "-sync"
+		job.Name = ptr.Deref(job.Spec.Repository, "") + "-sync"
 	case provisioning.JobActionPullRequest:
 		var pr int
 		if job.Spec.Pr != nil {
-			pr = int(ptr.Deref(job.Spec.Pr.Pr))
+			pr = int(ptr.Deref(job.Spec.Pr.Pr, 0))
 		}
 		// There may be multiple pull requests at the same time. They need different names.
-		job.Name = fmt.Sprintf("%s-pr-%d", ptr.Deref(job.Spec.Repository), pr)
+		job.Name = fmt.Sprintf("%s-pr-%d", ptr.Deref(job.Spec.Repository, ""), pr)
 	case provisioning.JobActionTest:
 		// Test jobs exist to generate concurrent load, so many must be queued
 		// against the same repository at once. A unique suffix avoids the
 		// already-exists collision a deterministic name would cause.
-		job.Name = fmt.Sprintf("%s-test-%s", ptr.Deref(job.Spec.Repository), util.GenerateShortUID())
+		job.Name = fmt.Sprintf("%s-test-%s", ptr.Deref(job.Spec.Repository, ""), util.GenerateShortUID())
 	default:
-		job.Name = fmt.Sprintf("%s-%s", ptr.Deref(job.Spec.Repository), job.Spec.Action)
+		job.Name = fmt.Sprintf("%s-%s", ptr.Deref(job.Spec.Repository, ""), job.Spec.Action)
 	}
 }
 

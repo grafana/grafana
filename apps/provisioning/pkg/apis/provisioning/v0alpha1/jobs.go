@@ -1,8 +1,8 @@
 package v0alpha1
 
 import (
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 )
 
 // When this code is changed, make sure to update the code generation.
@@ -390,17 +390,17 @@ func (JobStatus) OpenAPIModelName() string {
 func (in JobStatus) ToSyncStatus(jobId string) RepositorySyncStatus {
 	s := RepositorySyncStatus{
 		Job:      jobId,
-		State:    ptr.Deref(in.State),
-		Started:  ptr.Deref(in.Started),
-		Finished: ptr.Deref(in.Finished),
+		State:    ptr.Deref(in.State, ""),
+		Started:  ptr.Deref(in.Started, 0),
+		Finished: ptr.Deref(in.Finished, 0),
 	}
 
 	if len(in.Errors) > 0 {
 		s.Message = in.Errors
 	} else if len(in.Warnings) > 0 {
 		s.Message = in.Warnings
-	} else if ptr.Deref(in.State) == JobStateError && ptr.Deref(in.Message) != "" {
-		s.Message = []string{ptr.Deref(in.Message)}
+	} else if ptr.Deref(in.State, "") == JobStateError && ptr.Deref(in.Message, "") != "" {
+		s.Message = []string{ptr.Deref(in.Message, "")}
 	}
 
 	return s

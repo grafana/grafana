@@ -8,11 +8,11 @@ import (
 
 	"go.opentelemetry.io/otel/attribute"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -92,12 +92,12 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 		span.End()
 	}()
 	span.SetAttributes(
-		attribute.Int("pr.number", int(ptr.Deref(opts.Pr))),
-		attribute.String("pr.ref", ptr.Deref(opts.Ref)),
-		attribute.String("pr.hash", ptr.Deref(opts.Hash)),
+		attribute.Int("pr.number", int(ptr.Deref(opts.Pr, 0))),
+		attribute.String("pr.ref", ptr.Deref(opts.Ref, "")),
+		attribute.String("pr.hash", ptr.Deref(opts.Hash, "")),
 	)
 
-	if ptr.Deref(opts.Ref) == "" {
+	if ptr.Deref(opts.Ref, "") == "" {
 		logger.Debug("missing spec.ref")
 		return apierrors.NewBadRequest("missing spec.ref")
 	}
@@ -119,7 +119,7 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 
 	if opts.IsFork != nil && *opts.IsFork {
 		logger.Info("skipping fork pull request preview")
-		if err := c.commenter.Comment(ctx, prRepo, int(ptr.Deref(opts.Pr)), changeInfo{UnsupportedFork: true}); err != nil {
+		if err := c.commenter.Comment(ctx, prRepo, int(ptr.Deref(opts.Pr, 0)), changeInfo{UnsupportedFork: true}); err != nil {
 			c.metrics.recordCommentPosted(utils.ErrorOutcome)
 			return fmt.Errorf("comment pull request: %w", err)
 		}
@@ -130,19 +130,19 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	}
 
 	progress.SetMessage(ctx, "listing pull request files")
-	base, err := prRepo.PullRequestClient().MergeBase(ctx, prRepo.Config().Branch(), ptr.Deref(opts.Ref))
+	base, err := prRepo.PullRequestClient().MergeBase(ctx, prRepo.Config().Branch(), ptr.Deref(opts.Ref, ""))
 	if err != nil {
 		base = prRepo.Config().Branch()
 		logger.Warn("failed to resolve pull request base, falling back to the configured branch", "error", err, "branch", base)
 	}
 
-	files, err := prRepo.CompareFiles(ctx, base, ptr.Deref(opts.Ref))
+	files, err := prRepo.CompareFiles(ctx, base, ptr.Deref(opts.Ref, ""))
 	if err != nil {
 		var missingRef *repository.CompareRefNotFoundError
-		if errors.As(err, &missingRef) && missingRef.Ref == ptr.Deref(opts.Ref) {
+		if errors.As(err, &missingRef) && missingRef.Ref == ptr.Deref(opts.Ref, "") {
 			outcome = string(provisioning.JobStateWarning)
-			logger.Info("pull request ref no longer exists, skipping preview", "ref", ptr.Deref(opts.Ref))
-			return jobs.AsWarning(fmt.Errorf("pull request ref %q no longer exists; preview skipped", ptr.Deref(opts.Ref)))
+			logger.Info("pull request ref no longer exists, skipping preview", "ref", ptr.Deref(opts.Ref, ""))
+			return jobs.AsWarning(fmt.Errorf("pull request ref %q no longer exists; preview skipped", ptr.Deref(opts.Ref, "")))
 		}
 		logger.Error("failed to list pull request files", "error", err)
 		return fmt.Errorf("failed to list pull request files: %w", err)
@@ -169,7 +169,7 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 		defer cancel()
 	}
 
-	if err := c.commenter.Comment(commentCtx, prRepo, int(ptr.Deref(opts.Pr)), changeInfo); err != nil {
+	if err := c.commenter.Comment(commentCtx, prRepo, int(ptr.Deref(opts.Pr, 0)), changeInfo); err != nil {
 		c.metrics.recordCommentPosted(utils.ErrorOutcome)
 		return fmt.Errorf("comment pull request: %w", err)
 	}

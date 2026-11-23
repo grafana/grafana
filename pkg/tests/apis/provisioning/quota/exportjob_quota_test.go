@@ -9,10 +9,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/ptr"
 
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -111,7 +111,7 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 		jobObj := &provisioning.Job{}
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
 
-		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State),
+		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State, ""),
 			"the pull should warn for what it could not take over, not fail")
 		require.Empty(t, jobObj.Status.Errors, "quota-skipped resources are warnings, not errors")
 		require.Equal(t, 1, quotaWarnings(jobObj.Status.Warnings),
@@ -184,7 +184,7 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 		jobObj := &provisioning.Job{}
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
 
-		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State),
+		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State, ""),
 			"the pull should warn for what it could not take over, not fail")
 		require.Empty(t, jobObj.Status.Errors, "skipped resources are warnings, not errors")
 		// The quota is not what limits this one: an unmanaged folder cannot be taken over by a

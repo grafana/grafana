@@ -6,10 +6,10 @@ import (
 
 	"go.opentelemetry.io/otel/attribute"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
@@ -54,7 +54,7 @@ func (w *apiClientHistoryWriter) WriteJob(ctx context.Context, job *provisioning
 	}
 
 	// Add required labels for history tracking
-	meta.Labels[LabelRepository] = ptr.Deref(job.Spec.Repository)
+	meta.Labels[LabelRepository] = ptr.Deref(job.Spec.Repository, "")
 	meta.Labels[LabelJobOriginalUID] = string(job.UID)
 
 	// Generate a new name based on the input job

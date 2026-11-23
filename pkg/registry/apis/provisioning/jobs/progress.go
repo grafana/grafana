@@ -11,8 +11,9 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/optional"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"k8s.io/utils/ptr"
 )
 
 // NotifyThrottleInterval is the minimum time between two persisted "immediate"
@@ -29,7 +30,7 @@ func maybeNotifyProgress(threshold time.Duration, fn ProgressFn) ProgressFn {
 
 	return func(ctx context.Context, status provisioning.JobStatus) error {
 		mu.Lock()
-		shouldNotify := ptr.Deref(status.Finished) != 0 || last.IsZero() || time.Since(last) > threshold
+		shouldNotify := ptr.Deref(status.Finished, 0) != 0 || last.IsZero() || time.Since(last) > threshold
 		if shouldNotify {
 			last = time.Now()
 		}
@@ -321,8 +322,8 @@ func (r *jobProgressRecorder) updateSummary(result JobResourceResult) {
 	summary, exists := r.summaries[key]
 	if !exists {
 		summary = &provisioning.JobResourceSummary{
-			Group: ptr.NonZero(result.Group()),
-			Kind:  ptr.NonZero(result.Kind()),
+			Group: optional.NonZero(result.Group()),
+			Kind:  optional.NonZero(result.Kind()),
 		}
 		r.summaries[key] = summary
 	}
@@ -336,26 +337,26 @@ func (r *jobProgressRecorder) updateSummary(result JobResourceResult) {
 	if result.Error() != nil {
 		errorMsg := fmt.Sprintf("%s %s", result.Error().Error(), fileInfo)
 		summary.Errors = append(summary.Errors, errorMsg)
-		summary.Error = ptr.NonZero(ptr.Deref(summary.Error) + 1)
+		summary.Error = optional.NonZero(ptr.Deref(summary.Error, 0) + 1)
 	} else if result.Warning() != nil {
 		warningMsg := fmt.Sprintf("%s %s", result.Warning().Error(), fileInfo)
 		summary.Warnings = append(summary.Warnings, warningMsg)
-		summary.Warning = ptr.NonZero(ptr.Deref(summary.Warning) + 1)
+		summary.Warning = optional.NonZero(ptr.Deref(summary.Warning, 0) + 1)
 	} else {
 		switch result.Action() {
 		case repository.FileActionDeleted:
-			summary.Delete = ptr.NonZero(ptr.Deref(summary.Delete) + 1)
+			summary.Delete = optional.NonZero(ptr.Deref(summary.Delete, 0) + 1)
 		case repository.FileActionUpdated:
-			summary.Update = ptr.NonZero(ptr.Deref(summary.Update) + 1)
+			summary.Update = optional.NonZero(ptr.Deref(summary.Update, 0) + 1)
 		case repository.FileActionCreated:
-			summary.Create = ptr.NonZero(ptr.Deref(summary.Create) + 1)
+			summary.Create = optional.NonZero(ptr.Deref(summary.Create, 0) + 1)
 		case repository.FileActionIgnored:
-			summary.Noop = ptr.NonZero(ptr.Deref(summary.Noop) + 1)
+			summary.Noop = optional.NonZero(ptr.Deref(summary.Noop, 0) + 1)
 		case repository.FileActionRenamed:
-			summary.Delete = ptr.NonZero(ptr.Deref(summary.Delete) + 1)
-			summary.Create = ptr.NonZero(ptr.Deref(summary.Create) + 1)
+			summary.Delete = optional.NonZero(ptr.Deref(summary.Delete, 0) + 1)
+			summary.Create = optional.NonZero(ptr.Deref(summary.Create, 0) + 1)
 		}
-		summary.Write = ptr.NonZero(ptr.Deref(summary.Create) + ptr.Deref(summary.Update))
+		summary.Write = optional.NonZero(ptr.Deref(summary.Create, 0) + ptr.Deref(summary.Update, 0))
 
 		// Action-aware total, kept in sync with the counters above so the driver can
 		// sum it without re-deriving per action. Each single-purpose worker records
@@ -364,13 +365,13 @@ func (r *jobProgressRecorder) updateSummary(result JobResourceResult) {
 		// else (pull, migrate) sums create+update+delete.
 		switch r.action {
 		case provisioning.JobActionPush:
-			summary.TotalChanges = ptr.NonZero(ptr.Deref(summary.Write))
+			summary.TotalChanges = optional.NonZero(ptr.Deref(summary.Write, 0))
 		case provisioning.JobActionDelete:
-			summary.TotalChanges = ptr.NonZero(ptr.Deref(summary.Delete))
+			summary.TotalChanges = optional.NonZero(ptr.Deref(summary.Delete, 0))
 		case provisioning.JobActionMove:
-			summary.TotalChanges = ptr.NonZero(ptr.Deref(summary.Create))
+			summary.TotalChanges = optional.NonZero(ptr.Deref(summary.Create, 0))
 		default:
-			summary.TotalChanges = ptr.NonZero(ptr.Deref(summary.Create) + ptr.Deref(summary.Update) + ptr.Deref(summary.Delete))
+			summary.TotalChanges = optional.NonZero(ptr.Deref(summary.Create, 0) + ptr.Deref(summary.Update, 0) + ptr.Deref(summary.Delete, 0))
 		}
 	}
 }
@@ -389,11 +390,11 @@ func (r *jobProgressRecorder) currentStatus() provisioning.JobStatus {
 	defer r.mu.RUnlock()
 
 	return provisioning.JobStatus{
-		Started:  ptr.NonZero(r.started.UnixMilli()),
+		Started:  optional.NonZero(r.started.UnixMilli()),
 		State:    new(provisioning.JobStateWorking),
-		Message:  ptr.NonZero(r.message),
+		Message:  optional.NonZero(r.message),
 		Errors:   r.errors,
-		Progress: ptr.NonZero(r.progress()),
+		Progress: optional.NonZero(r.progress()),
 		Summary:  r.summary(),
 	}
 }
@@ -419,8 +420,8 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 	r.mu.RLock()
 
 	jobStatus := provisioning.JobStatus{
-		Started:  ptr.NonZero(r.started.UnixMilli()),
-		Finished: ptr.NonZero(time.Now().UnixMilli()),
+		Started:  optional.NonZero(r.started.UnixMilli()),
+		Finished: optional.NonZero(time.Now().UnixMilli()),
 		State:    new(provisioning.JobStateSuccess),
 		Message:  new("completed successfully"),
 	}
@@ -431,7 +432,7 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 		} else {
 			jobStatus.State = new(provisioning.JobStateError)
 		}
-		jobStatus.Message = ptr.NonZero(err.Error())
+		jobStatus.Message = optional.NonZero(err.Error())
 	}
 
 	summaries := r.summary()
@@ -452,7 +453,7 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 
 	r.mu.RUnlock()
 
-	if len(jobStatus.Errors) > 0 && ptr.Deref(jobStatus.State) != provisioning.JobStateError {
+	if len(jobStatus.Errors) > 0 && ptr.Deref(jobStatus.State, "") != provisioning.JobStateError {
 		if tooManyErrors {
 			jobStatus.Message = new("completed with too many errors")
 		} else {
@@ -460,14 +461,14 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 		}
 		jobStatus.State = new(provisioning.JobStateError)
 	} else if len(jobStatus.Warnings) > 0 && len(jobStatus.Errors) == 0 &&
-		(ptr.Deref(jobStatus.State) != provisioning.JobStateError || isWarningError(err)) {
+		(ptr.Deref(jobStatus.State, "") != provisioning.JobStateError || isWarningError(err)) {
 		jobStatus.State = new(provisioning.JobStateWarning)
 		jobStatus.Message = new("completed with warnings")
 	}
 
 	// Override message if progress have a more explicit message
-	if finalMessage != "" && ptr.Deref(jobStatus.State) != provisioning.JobStateError {
-		jobStatus.Message = ptr.NonZero(finalMessage)
+	if finalMessage != "" && ptr.Deref(jobStatus.State, "") != provisioning.JobStateError {
+		jobStatus.Message = optional.NonZero(finalMessage)
 	}
 
 	return jobStatus

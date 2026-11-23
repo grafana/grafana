@@ -9,11 +9,11 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/prometheus/client_golang/prometheus"
@@ -863,19 +863,19 @@ func TestMoveWorker_resolveResourcesToPaths(t *testing.T) {
 				mockResourcesFactory.On("Client", mock.Anything, mockRepo).Return(mockRepoResources, nil)
 
 				for _, resource := range tt.resources {
-					mockProgress.On("SetMessage", mock.Anything, fmt.Sprintf("Finding path for resource %s/%s/%s", ptr.Deref(resource.Group), ptr.Deref(resource.Kind), ptr.Deref(resource.Name))).Return()
+					mockProgress.On("SetMessage", mock.Anything, fmt.Sprintf("Finding path for resource %s/%s/%s", ptr.Deref(resource.Group, ""), ptr.Deref(resource.Kind, ""), ptr.Deref(resource.Name, ""))).Return()
 
 					gvk := schema.GroupVersionKind{
-						Group: ptr.Deref(resource.Group),
-						Kind:  ptr.Deref(resource.Kind),
+						Group: ptr.Deref(resource.Group, ""),
+						Kind:  ptr.Deref(resource.Kind, ""),
 					}
 
-					if path, ok := tt.resourcePaths[ptr.Deref(resource.Name)]; ok {
-						mockRepoResources.On("FindResourcePath", mock.Anything, ptr.Deref(resource.Name), gvk).Return(path, nil)
-					} else if err, ok := tt.resourceErrors[ptr.Deref(resource.Name)]; ok {
-						mockRepoResources.On("FindResourcePath", mock.Anything, ptr.Deref(resource.Name), gvk).Return("", err)
+					if path, ok := tt.resourcePaths[ptr.Deref(resource.Name, "")]; ok {
+						mockRepoResources.On("FindResourcePath", mock.Anything, ptr.Deref(resource.Name, ""), gvk).Return(path, nil)
+					} else if err, ok := tt.resourceErrors[ptr.Deref(resource.Name, "")]; ok {
+						mockRepoResources.On("FindResourcePath", mock.Anything, ptr.Deref(resource.Name, ""), gvk).Return("", err)
 						mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-							return result.Name() == ptr.Deref(resource.Name) && result.Group() == ptr.Deref(resource.Group) &&
+							return result.Name() == ptr.Deref(resource.Name, "") && result.Group() == ptr.Deref(resource.Group, "") &&
 								result.Action() == repository.FileActionRenamed && result.Error() != nil
 						})).Return()
 						if tt.tooManyErrors != nil {

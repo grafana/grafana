@@ -11,9 +11,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -53,16 +53,16 @@ func TestIntegrationProvisioning_PullJobFolderDepthExceeded(t *testing.T) {
 	err := runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
 	require.NoError(t, err)
 
-	t.Logf("Job state: %s", ptr.Deref(jobObj.Status.State))
-	t.Logf("Job message: %s", ptr.Deref(jobObj.Status.Message))
+	t.Logf("Job state: %s", ptr.Deref(jobObj.Status.State, ""))
+	t.Logf("Job message: %s", ptr.Deref(jobObj.Status.Message, ""))
 	t.Logf("Job warnings: %v", jobObj.Status.Warnings)
 	t.Logf("Job errors: %v", jobObj.Status.Errors)
 	for _, s := range jobObj.Status.Summary {
 		t.Logf("Summary: group=%s kind=%s create=%d warning=%d error=%d warnings=%v",
-			ptr.Deref(s.Group), ptr.Deref(s.Kind), ptr.Deref(s.Create), ptr.Deref(s.Warning), ptr.Deref(s.Error), s.Warnings)
+			ptr.Deref(s.Group, ""), ptr.Deref(s.Kind, ""), ptr.Deref(s.Create, 0), ptr.Deref(s.Warning, 0), ptr.Deref(s.Error, 0), s.Warnings)
 	}
 
-	require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State),
+	require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State, ""),
 		"depth-exceeded folders must be reported as warnings so the job queue does not retry the sync forever")
 	require.Empty(t, jobObj.Status.Errors,
 		"depth-exceeded folders must not contribute to Status.Errors; treating them as errors triggers a 5-minute retry loop")
@@ -145,7 +145,7 @@ func TestIntegrationProvisioning_PullJobFolderDepthExceeded(t *testing.T) {
 	})
 	rerunObj := &provisioning.Job{}
 	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(rerun.Object, rerunObj))
-	require.Equal(t, provisioning.JobStateWarning, ptr.Deref(rerunObj.Status.State),
+	require.Equal(t, provisioning.JobStateWarning, ptr.Deref(rerunObj.Status.State, ""),
 		"second pull should also surface the depth violation as a warning, not an error")
 	require.Empty(t, rerunObj.Status.Errors)
 	helper.RequireRepoDashboardCount(t, repo, 1)
@@ -182,7 +182,7 @@ func TestIntegrationProvisioning_PullJobFolderDepthExceeded_RecoversAfterFix(t *
 	})
 	jobObj := &provisioning.Job{}
 	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
-	require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State))
+	require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State, ""))
 	require.Empty(t, jobObj.Status.Errors)
 
 	// Remove the offending dashboard (and its now-empty parent directory tree)

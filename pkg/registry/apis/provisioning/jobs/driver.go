@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/apifmt"
@@ -21,7 +22,7 @@ import (
 	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	gitrepo "github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/optional"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
@@ -196,14 +197,14 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 		d.processed.ObserveDeliveryLatency(trigger, enqueuedAt.Sub(claimedJob.CreationTimestamp.Time).Seconds())
 	}
 
-	logger = logger.With("job", claimedJob.GetName(), "namespace", namespace, "repository", ptr.Deref(claimedJob.Spec.Repository), "action", claimedJob.Spec.Action)
+	logger = logger.With("job", claimedJob.GetName(), "namespace", namespace, "repository", ptr.Deref(claimedJob.Spec.Repository, ""), "action", claimedJob.Spec.Action)
 	ctx = logging.Context(ctx, logger)
 	d.currentJob = claimedJob
 
 	span.SetAttributes(
 		attribute.String("job.name", claimedJob.GetName()),
 		attribute.String("job.namespace", namespace),
-		attribute.String("job.repository", ptr.Deref(claimedJob.Spec.Repository)),
+		attribute.String("job.repository", ptr.Deref(claimedJob.Spec.Repository, "")),
 		attribute.String("job.action", string(claimedJob.Spec.Action)),
 	)
 
@@ -263,9 +264,9 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 	// recorder.Complete builds a fresh status, so carry the running progress-update
 	// count forward and bump it for this final write -- otherwise the count
 	// accumulated during processing would be lost on the historic job.
-	progressUpdates := ptr.Deref(d.currentJob.Status.ProgressUpdates)
+	progressUpdates := ptr.Deref(d.currentJob.Status.ProgressUpdates, 0)
 	d.currentJob.Status = recorder.Complete(ctx, err)
-	d.currentJob.Status.ProgressUpdates = ptr.NonZero(progressUpdates + 1)
+	d.currentJob.Status.ProgressUpdates = optional.NonZero(progressUpdates + 1)
 
 	// variance further breaks an action down (full vs incremental) and only applies
 	// to pull jobs. The sync worker is reused internally by delete/move/migrate to
@@ -312,7 +313,7 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 		d.metrics.RecordJob(
 			string(d.currentJob.Spec.Action),
 			variance,
-			string(ptr.Deref(d.currentJob.Status.State)),
+			string(ptr.Deref(d.currentJob.Status.State, "")),
 			resourcesChanged,
 			resourcesDryRun,
 			duration.Seconds(),
@@ -330,10 +331,10 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 	status := d.currentJob.Status
 	logFields := []any{
 		"duration", duration,
-		"state", ptr.Deref(status.State),
+		"state", ptr.Deref(status.State, ""),
 		"errorCount", len(status.Errors),
 		"warningCount", len(status.Warnings),
-		"message", ptr.Deref(status.Message),
+		"message", ptr.Deref(status.Message, ""),
 		"variance", variance,
 		"resourcesProcessed", resourcesProcessed,
 		"opsPerSecond", opsPerSecond,
@@ -350,7 +351,7 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 	// Key the log level off the final job state, not off err: a worker can return
 	// an error that maps to a warning state (e.g. a feature disabled by
 	// configuration), which should not be logged or alerted as a failure.
-	switch ptr.Deref(status.State) {
+	switch ptr.Deref(status.State, "") {
 	case provisioning.JobStateError:
 		if err != nil {
 			logger.Error("job failed", logFields...)
@@ -518,7 +519,7 @@ func (d *jobProcessor) processJob(ctx context.Context, recorder JobProgressRecor
 
 	// Here it's safe to copy as only job spec is used for processing
 	job := d.currentJob.DeepCopy()
-	repoName := ptr.Deref(d.currentJob.Spec.Repository)
+	repoName := ptr.Deref(d.currentJob.Spec.Repository, "")
 	namespace := d.currentJob.Namespace
 	d.mu.Unlock()
 
@@ -637,7 +638,7 @@ func repositoryAuthenticationFailed(r *provisioning.Repository) bool {
 func sumTotalChanges(summaries []provisioning.JobResourceSummary) int {
 	total := 0
 	for _, s := range summaries {
-		total += int(ptr.Deref(s.TotalChanges))
+		total += int(ptr.Deref(s.TotalChanges, 0))
 	}
 	return total
 }
@@ -647,9 +648,9 @@ func sumTotalDryRun(action provisioning.JobAction, summaries []provisioning.JobR
 	total := 0
 	for _, s := range summaries {
 		if action == provisioning.JobActionPullRequest {
-			total += int(ptr.Deref(s.Create) + ptr.Deref(s.Update) + ptr.Deref(s.Delete) + ptr.Deref(s.Noop))
+			total += int(ptr.Deref(s.Create, 0) + ptr.Deref(s.Update, 0) + ptr.Deref(s.Delete, 0) + ptr.Deref(s.Noop, 0))
 		} else {
-			total += int(ptr.Deref(s.TotalChanges))
+			total += int(ptr.Deref(s.TotalChanges, 0))
 		}
 	}
 	return total
@@ -693,7 +694,7 @@ func (d *jobProcessor) onProgress() ProgressFn {
 			// progress-update count forward and bump it for this write.
 			candidate := d.currentJob.DeepCopy()
 			candidate.Status = status
-			candidate.Status.ProgressUpdates = ptr.NonZero(ptr.Deref(d.currentJob.Status.ProgressUpdates) + 1)
+			candidate.Status.ProgressUpdates = optional.NonZero(ptr.Deref(d.currentJob.Status.ProgressUpdates, 0) + 1)
 			updated, err := d.store.Update(ctx, candidate)
 			if err != nil {
 				if apierrors.IsConflict(err) && attempt < maxRetries-1 {
@@ -710,7 +711,7 @@ func (d *jobProcessor) onProgress() ProgressFn {
 			d.mu.Unlock()
 
 			span.SetAttributes(
-				attribute.String("job.state", string(ptr.Deref(status.State))),
+				attribute.String("job.state", string(ptr.Deref(status.State, ""))),
 				attribute.Int("attempt", attempt+1),
 			)
 			return nil

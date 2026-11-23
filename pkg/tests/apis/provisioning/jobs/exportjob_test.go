@@ -11,9 +11,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -152,7 +152,7 @@ func TestIntegrationProvisioning_ExportJob_SkipsSLOManagedResources(t *testing.T
 
 	job := triggerExport(t, helper, repo)
 	// Skipped resources are recorded as ignored (not errors/warnings), so the job succeeds.
-	require.Equal(t, provisioning.JobStateSuccess, ptr.Deref(job.Status.State),
+	require.Equal(t, provisioning.JobStateSuccess, ptr.Deref(job.Status.State, ""),
 		"export should succeed; skipping SLO resources is not an error: %+v", job.Status)
 
 	common.PrintFileTree(t, helper.ProvisioningPath)
@@ -218,7 +218,7 @@ func TestIntegrationProvisioning_ExportJob_ExplicitSLOManagedResourceFails(t *te
 	jobObj := &provisioning.Job{}
 	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
 
-	require.Equal(t, provisioning.JobStateError, ptr.Deref(jobObj.Status.State),
+	require.Equal(t, provisioning.JobStateError, ptr.Deref(jobObj.Status.State, ""),
 		"explicitly requesting an SLO-app resource should fail the job: %+v", jobObj.Status)
 
 	foundError := false

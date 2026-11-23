@@ -8,10 +8,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -98,27 +98,27 @@ func (c *namespaceCleaner) CleanResources(ctx context.Context, namespace string,
 	}
 
 	for _, ref := range refs {
-		client, _, err := clients.ForKind(ctx, schema.GroupVersionKind{Group: ptr.Deref(ref.Group), Kind: ptr.Deref(ref.Kind)})
+		client, _, err := clients.ForKind(ctx, schema.GroupVersionKind{Group: ptr.Deref(ref.Group, ""), Kind: ptr.Deref(ref.Kind, "")})
 		if err != nil {
-			return fmt.Errorf("get resource client for %s/%s: %w", ptr.Deref(ref.Group), ptr.Deref(ref.Kind), err)
+			return fmt.Errorf("get resource client for %s/%s: %w", ptr.Deref(ref.Group, ""), ptr.Deref(ref.Kind, ""), err)
 		}
 
-		item, err := client.Get(ctx, ptr.Deref(ref.Name), metav1.GetOptions{})
+		item, err := client.Get(ctx, ptr.Deref(ref.Name, ""), metav1.GetOptions{})
 		if err != nil {
 			// Already gone (e.g. deleted concurrently) is not an error.
 			if apierrors.IsNotFound(err) {
 				continue
 			}
-			return fmt.Errorf("get resource %s/%s %s: %w", ptr.Deref(ref.Group), ptr.Deref(ref.Kind), ptr.Deref(ref.Name), err)
+			return fmt.Errorf("get resource %s/%s %s: %w", ptr.Deref(ref.Group, ""), ptr.Deref(ref.Kind, ""), ptr.Deref(ref.Name, ""), err)
 		}
 
-		resultBuilder := jobs.NewGVKResult(ptr.Deref(ref.Name), item.GroupVersionKind()).WithAction(repository.FileActionDeleted)
+		resultBuilder := jobs.NewGVKResult(ptr.Deref(ref.Name, ""), item.GroupVersionKind()).WithAction(repository.FileActionDeleted)
 
 		// Only delete unmanaged resources - one taken over by any provisioning
 		// system must not be removed.
 		meta, err := utils.MetaAccessor(item)
 		if err != nil {
-			resultBuilder.WithError(fmt.Errorf("extracting meta accessor for resource %s: %w", ptr.Deref(ref.Name), err))
+			resultBuilder.WithError(fmt.Errorf("extracting meta accessor for resource %s: %w", ptr.Deref(ref.Name, ""), err))
 			progress.Record(ctx, resultBuilder.Build())
 			continue
 		}
@@ -129,8 +129,8 @@ func (c *namespaceCleaner) CleanResources(ctx context.Context, namespace string,
 		}
 
 		// Deletion works by name, so we can use any client regardless of version
-		if err := client.Delete(ctx, ptr.Deref(ref.Name), metav1.DeleteOptions{}); err != nil {
-			resultBuilder.WithError(fmt.Errorf("deleting resource %s/%s %s: %w", ptr.Deref(ref.Group), ptr.Deref(ref.Kind), ptr.Deref(ref.Name), err))
+		if err := client.Delete(ctx, ptr.Deref(ref.Name, ""), metav1.DeleteOptions{}); err != nil {
+			resultBuilder.WithError(fmt.Errorf("deleting resource %s/%s %s: %w", ptr.Deref(ref.Group, ""), ptr.Deref(ref.Kind, ""), ptr.Deref(ref.Name, ""), err))
 			progress.Record(ctx, resultBuilder.Build())
 			return fmt.Errorf("delete resource: %w", err)
 		}

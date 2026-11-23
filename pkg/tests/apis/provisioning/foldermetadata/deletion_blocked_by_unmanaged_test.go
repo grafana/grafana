@@ -9,7 +9,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/optional"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
@@ -43,7 +43,7 @@ func TestIntegrationProvisioning_RepositoryDeletionBlockedByUnmanagedResources(t
 		Action: provisioning.JobActionMigrate,
 		Migrate: &provisioning.JobMigrateJobOptions{
 			Resources: []provisioning.JobResourceRef{{
-				Name:  ptr.NonZero(selected),
+				Name:  optional.NonZero(selected),
 				Kind:  new("Dashboard"),
 				Group: new("dashboard.grafana.app"),
 			}},

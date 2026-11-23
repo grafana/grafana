@@ -12,9 +12,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
@@ -75,11 +75,11 @@ func TestIntegrationProvisioning_PullJobUnmanagedConflict(t *testing.T) {
 	err = runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
 	require.NoError(t, err)
 
-	t.Logf("Job state: %s", ptr.Deref(jobObj.Status.State))
+	t.Logf("Job state: %s", ptr.Deref(jobObj.Status.State, ""))
 	t.Logf("Job warnings: %v", jobObj.Status.Warnings)
 	t.Logf("Job errors: %v", jobObj.Status.Errors)
 
-	require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State),
+	require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State, ""),
 		"job should complete with warning for unmanaged conflict")
 	require.NotEmpty(t, jobObj.Status.Warnings, "should have warning details")
 	require.Empty(t, jobObj.Status.Errors, "unmanaged conflicts should be warnings, not errors")
@@ -180,7 +180,7 @@ func TestIntegrationProvisioning_MigrateTakeover(t *testing.T) {
 	err = runtime.DefaultUnstructuredConverter.FromUnstructured(migrateJob.Object, migrateJobObj)
 	require.NoError(t, err)
 
-	require.Equal(t, provisioning.JobStateSuccess, ptr.Deref(migrateJobObj.Status.State),
+	require.Equal(t, provisioning.JobStateSuccess, ptr.Deref(migrateJobObj.Status.State, ""),
 		"migration job should complete successfully")
 	require.Empty(t, migrateJobObj.Status.Errors, "migration job should have no errors")
 	require.Empty(t, migrateJobObj.Status.Warnings,

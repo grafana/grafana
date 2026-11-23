@@ -5,11 +5,11 @@ import (
 	"testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/ptr"
 )
 
 // plaintextSecret is the payload the guard must keep out of git -- and out of
@@ -180,7 +180,7 @@ func TestIntegrationProvisioning_FullSync_SecureValueIsWarning(t *testing.T) {
 	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
 
 	require.Empty(t, jobObj.Status.Errors, "a rejected secure value should warn, not fail the sync")
-	require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State))
+	require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State, ""))
 	common.RequireJobWarningContains(t, jobObj, "secure values (apiKey) cannot be created or removed from a git repository")
 
 	helper.RequireRepoDashboardCount(t, repoName, 1)

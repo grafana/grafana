@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/optional"
 )
 
 func TestCommitMessage(t *testing.T) {
@@ -46,7 +46,7 @@ func TestCommitMessage(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			job := provisioning.Job{
 				Spec: provisioning.JobSpec{
-					Message: ptr.NonZero(tt.specMessage),
+					Message: optional.NonZero(tt.specMessage),
 				},
 			}
 			got := CommitMessage(job, tt.defaultMessage)

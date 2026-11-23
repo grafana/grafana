@@ -1,4 +1,4 @@
-package ptr
+package optional
 
 import (
 	"testing"
@@ -13,11 +13,4 @@ func TestNonZero(t *testing.T) {
 	require.Equal(t, "a", *NonZero("a"))
 	require.Equal(t, int64(-1), *NonZero(int64(-1)))
 	require.True(t, *NonZero(true))
-}
-
-func TestDeref(t *testing.T) {
-	require.Equal(t, "", Deref[string](nil))
-	require.Equal(t, 0.0, Deref[float64](nil))
-	v := "a"
-	require.Equal(t, "a", Deref(&v))
 }

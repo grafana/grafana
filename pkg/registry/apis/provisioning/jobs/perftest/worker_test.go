@@ -11,7 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/optional"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 )
 
@@ -25,7 +25,7 @@ func testJob(d time.Duration, progressUpdates int) provisioning.Job {
 			Action: provisioning.JobActionTest,
 			Test: &provisioning.JobTestJobOptions{
 				Duration:        metav1.Duration{Duration: d},
-				ProgressUpdates: ptr.NonZero(int32(progressUpdates)),
+				ProgressUpdates: optional.NonZero(int32(progressUpdates)),
 			},
 		},
 	}

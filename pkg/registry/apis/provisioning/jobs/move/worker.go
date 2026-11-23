@@ -8,12 +8,12 @@ import (
 
 	"go.opentelemetry.io/otel/attribute"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -54,18 +54,18 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 		span.End()
 	}()
 	span.SetAttributes(
-		attribute.String("move.ref", ptr.Deref(opts.Ref)),
-		attribute.String("move.target_path", ptr.Deref(opts.TargetPath)),
+		attribute.String("move.ref", ptr.Deref(opts.Ref, "")),
+		attribute.String("move.target_path", ptr.Deref(opts.TargetPath, "")),
 		attribute.Int("move.paths_count", len(opts.Paths)),
 		attribute.Int("move.resources_count", len(opts.Resources)),
 	)
 
-	if ptr.Deref(opts.TargetPath) == "" {
+	if ptr.Deref(opts.TargetPath, "") == "" {
 		return errors.New("target path is required for move operation")
 	}
 
 	// Validate that target path is a directory (ends with slash)
-	if !safepath.IsDir(ptr.Deref(opts.TargetPath)) {
+	if !safepath.IsDir(ptr.Deref(opts.TargetPath, "")) {
 		return errors.New("target path must be a directory (should end with '/')")
 	}
 
@@ -102,7 +102,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 		CommitOnlyOnceMessage: jobs.CommitMessage(job, msg),
 		PushOnWrites:          false,
 		Timeout:               10 * time.Minute,
-		Ref:                   ptr.Deref(opts.Ref),
+		Ref:                   ptr.Deref(opts.Ref, ""),
 	}
 
 	err := w.wrapFn(ctx, repo, stageOptions, fn)
@@ -112,15 +112,15 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 	}
 
 	// Set RefURLs if the repository supports it and we have a target ref
-	if ptr.Deref(opts.Ref) != "" {
+	if ptr.Deref(opts.Ref, "") != "" {
 		if repoWithURLs, ok := repo.(repository.RepositoryWithURLs); ok {
-			if refURLs, urlErr := repoWithURLs.RefURLs(ctx, ptr.Deref(opts.Ref)); urlErr == nil && refURLs != nil {
+			if refURLs, urlErr := repoWithURLs.RefURLs(ctx, ptr.Deref(opts.Ref, "")); urlErr == nil && refURLs != nil {
 				progress.SetRefURLs(ctx, refURLs)
 			}
 		}
 	}
 
-	if ptr.Deref(opts.Ref) == "" {
+	if ptr.Deref(opts.Ref, "") == "" {
 		progress.ResetResults(false)
 		progress.SetMessage(ctx, "pull resources")
 
@@ -150,10 +150,10 @@ func (w *Worker) moveFiles(ctx context.Context, rw repository.ReaderWriter, prog
 	for _, path := range paths {
 		resultBuilder := jobs.NewPathOnlyResult(path).WithAction(repository.FileActionRenamed)
 		// Construct the target path by combining the job's target path with the file/folder name
-		targetPath := w.constructTargetPath(ptr.Deref(opts.TargetPath), path)
+		targetPath := w.constructTargetPath(ptr.Deref(opts.TargetPath, ""), path)
 
 		if path == targetPath {
-			progress.SetMessage(ctx, "Skipping "+path+" because it is already in "+ptr.Deref(opts.TargetPath))
+			progress.SetMessage(ctx, "Skipping "+path+" because it is already in "+ptr.Deref(opts.TargetPath, ""))
 			progress.Record(ctx, jobs.NewPathOnlyResult(path).WithAction(repository.FileActionIgnored).Build())
 			if err := progress.TooManyErrors(); err != nil {
 				return err
@@ -162,7 +162,7 @@ func (w *Worker) moveFiles(ctx context.Context, rw repository.ReaderWriter, prog
 		}
 
 		progress.SetMessage(ctx, "Moving "+path+" to "+targetPath)
-		if err := rw.Move(ctx, path, targetPath, ptr.Deref(opts.Ref), "Move "+path+" to "+targetPath); err != nil {
+		if err := rw.Move(ctx, path, targetPath, ptr.Deref(opts.Ref, ""), "Move "+path+" to "+targetPath); err != nil {
 			resultBuilder.WithError(fmt.Errorf("moving file %s to %s: %w", path, targetPath, err))
 		}
 
@@ -204,16 +204,16 @@ func (w *Worker) resolveResourcesToPaths(ctx context.Context, rw repository.Read
 	resolvedPaths := make([]string, 0, len(resources))
 	for _, resource := range resources {
 		gvk := schema.GroupVersionKind{
-			Group: ptr.Deref(resource.Group),
-			Kind:  ptr.Deref(resource.Kind),
+			Group: ptr.Deref(resource.Group, ""),
+			Kind:  ptr.Deref(resource.Kind, ""),
 			// Version is left empty so ForKind will use the preferred version
 		}
-		resultBuilder := jobs.NewGVKResult(ptr.Deref(resource.Name), gvk).WithAction(repository.FileActionRenamed)
+		resultBuilder := jobs.NewGVKResult(ptr.Deref(resource.Name, ""), gvk).WithAction(repository.FileActionRenamed)
 
-		progress.SetMessage(ctx, fmt.Sprintf("Finding path for resource %s/%s/%s", ptr.Deref(resource.Group), ptr.Deref(resource.Kind), ptr.Deref(resource.Name)))
-		resourcePath, err := repositoryResources.FindResourcePath(ctx, ptr.Deref(resource.Name), gvk)
+		progress.SetMessage(ctx, fmt.Sprintf("Finding path for resource %s/%s/%s", ptr.Deref(resource.Group, ""), ptr.Deref(resource.Kind, ""), ptr.Deref(resource.Name, "")))
+		resourcePath, err := repositoryResources.FindResourcePath(ctx, ptr.Deref(resource.Name, ""), gvk)
 		if err != nil {
-			resultBuilder.WithError(fmt.Errorf("find path for resource %s/%s/%s: %w", ptr.Deref(resource.Group), ptr.Deref(resource.Kind), ptr.Deref(resource.Name), err))
+			resultBuilder.WithError(fmt.Errorf("find path for resource %s/%s/%s: %w", ptr.Deref(resource.Group, ""), ptr.Deref(resource.Kind, ""), ptr.Deref(resource.Name, ""), err))
 			progress.Record(ctx, resultBuilder.Build())
 			// Continue with next resource instead of failing fast
 			if err := progress.TooManyErrors(); err != nil {

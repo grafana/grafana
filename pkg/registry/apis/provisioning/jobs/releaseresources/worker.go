@@ -11,11 +11,11 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -51,7 +51,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 	defer span.End()
 	span.SetAttributes(
 		attribute.String("cleanup.action", string(job.Spec.Action)),
-		attribute.String("cleanup.repository", ptr.Deref(job.Spec.Repository)),
+		attribute.String("cleanup.repository", ptr.Deref(job.Spec.Repository, "")),
 	)
 
 	if err := jobs.ValidateRepoForCleanup(repo); err != nil {
@@ -59,7 +59,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 	}
 
 	namespace := job.GetNamespace()
-	repoName := ptr.Deref(job.Spec.Repository)
+	repoName := ptr.Deref(job.Spec.Repository, "")
 
 	// Phase 1: List managed resources
 	progress.SetMessage(ctx, "listing managed resources")

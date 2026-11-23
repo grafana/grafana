@@ -9,6 +9,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/authlib/types"
 
@@ -16,7 +17,6 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/resources"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -41,7 +41,7 @@ func ValidateJob(job *provisioning.Job, supportedResources []provisioning.Suppor
 	}
 
 	// Validate repository is specified
-	if ptr.Deref(job.Spec.Repository) == "" {
+	if ptr.Deref(job.Spec.Repository, "") == "" {
 		list = append(list, field.Required(field.NewPath("spec", "repository"), "repository must be specified"))
 	}
 
@@ -124,16 +124,16 @@ func validateExportJobOptions(opts *provisioning.JobExportJobOptions, supportedR
 	list := field.ErrorList{}
 
 	// Validate branch name if specified
-	if ptr.Deref(opts.Branch) != "" {
-		if !git.IsValidGitBranchName(ptr.Deref(opts.Branch)) {
-			list = append(list, field.Invalid(field.NewPath("spec", "push", "branch"), ptr.Deref(opts.Branch), "invalid git branch name"))
+	if ptr.Deref(opts.Branch, "") != "" {
+		if !git.IsValidGitBranchName(ptr.Deref(opts.Branch, "")) {
+			list = append(list, field.Invalid(field.NewPath("spec", "push", "branch"), ptr.Deref(opts.Branch, ""), "invalid git branch name"))
 		}
 	}
 
 	// Validate path if specified
-	if ptr.Deref(opts.Path) != "" {
-		if err := safepath.IsSafe(ptr.Deref(opts.Path)); err != nil {
-			list = append(list, field.Invalid(field.NewPath("spec", "push", "path"), ptr.Deref(opts.Path), err.Error()))
+	if ptr.Deref(opts.Path, "") != "" {
+		if err := safepath.IsSafe(ptr.Deref(opts.Path, "")); err != nil {
+			list = append(list, field.Invalid(field.NewPath("spec", "push", "path"), ptr.Deref(opts.Path, ""), err.Error()))
 		}
 	}
 
@@ -150,9 +150,9 @@ func validateMigrateJobOptions(opts *provisioning.JobMigrateJobOptions, supporte
 
 	// Validate branch name if specified. An empty branch means migrate directly
 	// to the configured branch, which is always valid.
-	if ptr.Deref(opts.Branch) != "" {
-		if !git.IsValidGitBranchName(ptr.Deref(opts.Branch)) {
-			list = append(list, field.Invalid(field.NewPath("spec", "migrate", "branch"), ptr.Deref(opts.Branch), "invalid git branch name"))
+	if ptr.Deref(opts.Branch, "") != "" {
+		if !git.IsValidGitBranchName(ptr.Deref(opts.Branch, "")) {
+			list = append(list, field.Invalid(field.NewPath("spec", "migrate", "branch"), ptr.Deref(opts.Branch, ""), "invalid git branch name"))
 		}
 	}
 
@@ -183,50 +183,50 @@ func validateExportResourceRefs(base *field.Path, refs []provisioning.JobResourc
 	supported := activeExportResources(supportedResources)
 	for i, r := range refs {
 		path := base.Index(i)
-		if ptr.Deref(r.Name) == "" {
+		if ptr.Deref(r.Name, "") == "" {
 			list = append(list, field.Required(path.Child("name"), "resource name is required"))
 		}
-		if ptr.Deref(r.Kind) == "" {
+		if ptr.Deref(r.Kind, "") == "" {
 			list = append(list, field.Required(path.Child("kind"), "resource kind is required"))
 			continue
 		}
 
 		// A member declared on its own and disabled stays excluded, even though the collection
 		// covering it is active.
-		excluded := ptr.Deref(r.Group) != "" && declaredDisabled(supportedResources, ptr.Deref(r.Group), ptr.Deref(r.Kind))
+		excluded := ptr.Deref(r.Group, "") != "" && declaredDisabled(supportedResources, ptr.Deref(r.Group, ""), ptr.Deref(r.Kind, ""))
 
 		// A non-empty group must match the group registered for that kind. Every declaration of
 		// the kind is scanned: one collection among them decides whether a group is required,
 		// whatever else declares it.
 		var kindOK, groupOK, servedByCollection bool
 		for _, s := range supported {
-			if s.Kind != ptr.Deref(r.Kind) {
+			if s.Kind != ptr.Deref(r.Kind, "") {
 				continue
 			}
 			kindOK = true
 			if resources.IsCollection(s.Group) {
 				servedByCollection = true
 			}
-			if !excluded && ptr.Deref(r.Group) != "" && resources.CoversGroup(s.Group, ptr.Deref(r.Group)) {
+			if !excluded && ptr.Deref(r.Group, "") != "" && resources.CoversGroup(s.Group, ptr.Deref(r.Group, "")) {
 				groupOK = true
 			}
 		}
 		// An omitted group is resolved from the kind alone, which a collection cannot do: its
 		// members each serve their own, and reading through the wrong one finds nothing.
-		groupRequired := ptr.Deref(r.Group) == "" && servedByCollection
-		if ptr.Deref(r.Group) == "" && !servedByCollection {
+		groupRequired := ptr.Deref(r.Group, "") == "" && servedByCollection
+		if ptr.Deref(r.Group, "") == "" && !servedByCollection {
 			groupOK = kindOK
 		}
 		switch {
 		case !kindOK:
-			list = append(list, field.Invalid(path.Child("kind"), ptr.Deref(r.Kind),
+			list = append(list, field.Invalid(path.Child("kind"), ptr.Deref(r.Kind, ""),
 				fmt.Sprintf("kind is not supported for export; supported kinds: %s", strings.Join(supportedKinds(supported), ", "))))
 		case groupRequired && !groupOK:
 			list = append(list, field.Required(path.Child("group"),
-				fmt.Sprintf("group is required for kind %s: it is served by several groups", ptr.Deref(r.Kind))))
+				fmt.Sprintf("group is required for kind %s: it is served by several groups", ptr.Deref(r.Kind, ""))))
 		case !groupOK:
-			list = append(list, field.Invalid(path.Child("group"), ptr.Deref(r.Group),
-				fmt.Sprintf("group %q is not supported for kind %s", ptr.Deref(r.Group), ptr.Deref(r.Kind))))
+			list = append(list, field.Invalid(path.Child("group"), ptr.Deref(r.Group, ""),
+				fmt.Sprintf("group %q is not supported for kind %s", ptr.Deref(r.Group, ""), ptr.Deref(r.Kind, ""))))
 		}
 	}
 	return list
@@ -290,10 +290,10 @@ func validateDeleteJobOptions(opts *provisioning.JobDeleteJobOptions) field.Erro
 
 	// Validate resources
 	for i, r := range opts.Resources {
-		if ptr.Deref(r.Name) == "" {
+		if ptr.Deref(r.Name, "") == "" {
 			list = append(list, field.Required(field.NewPath("spec", "delete", "resources").Index(i).Child("name"), "resource name is required"))
 		}
-		if ptr.Deref(r.Kind) == "" {
+		if ptr.Deref(r.Kind, "") == "" {
 			list = append(list, field.Required(field.NewPath("spec", "delete", "resources").Index(i).Child("kind"), "resource kind is required"))
 		}
 	}
@@ -331,7 +331,7 @@ func validateTestJobOptions(opts *provisioning.JobTestJobOptions) field.ErrorLis
 		list = append(list, field.Invalid(field.NewPath("spec", "test", "duration"), opts.Duration.Duration.String(), fmt.Sprintf("duration must not exceed %s", MaxTestJobDuration)))
 	}
 
-	updates := int(ptr.Deref(opts.ProgressUpdates))
+	updates := int(ptr.Deref(opts.ProgressUpdates, 0))
 	switch {
 	case updates < 0:
 		list = append(list, field.Invalid(field.NewPath("spec", "test", "progressUpdates"), updates, "progressUpdates must be non-negative"))
@@ -356,11 +356,11 @@ func validateMoveJobOptions(opts *provisioning.JobMoveJobOptions) field.ErrorLis
 	}
 
 	// Target path is required
-	if ptr.Deref(opts.TargetPath) == "" {
+	if ptr.Deref(opts.TargetPath, "") == "" {
 		list = append(list, field.Required(field.NewPath("spec", "move", "targetPath"), "target path is required"))
 	} else {
-		if err := safepath.IsSafe(ptr.Deref(opts.TargetPath)); err != nil {
-			list = append(list, field.Invalid(field.NewPath("spec", "move", "targetPath"), ptr.Deref(opts.TargetPath), err.Error()))
+		if err := safepath.IsSafe(ptr.Deref(opts.TargetPath, "")); err != nil {
+			list = append(list, field.Invalid(field.NewPath("spec", "move", "targetPath"), ptr.Deref(opts.TargetPath, ""), err.Error()))
 		}
 	}
 
@@ -373,10 +373,10 @@ func validateMoveJobOptions(opts *provisioning.JobMoveJobOptions) field.ErrorLis
 
 	// Validate resources
 	for i, r := range opts.Resources {
-		if ptr.Deref(r.Name) == "" {
+		if ptr.Deref(r.Name, "") == "" {
 			list = append(list, field.Required(field.NewPath("spec", "move", "resources").Index(i).Child("name"), "resource name is required"))
 		}
-		if ptr.Deref(r.Kind) == "" {
+		if ptr.Deref(r.Kind, "") == "" {
 			list = append(list, field.Required(field.NewPath("spec", "move", "resources").Index(i).Child("kind"), "resource kind is required"))
 		}
 	}
@@ -539,7 +539,7 @@ func validateHistoricJob(job *provisioning.HistoricJob) error {
 		list = append(list, field.Required(field.NewPath("spec", "action"), "action must be specified"))
 	}
 
-	if ptr.Deref(job.Spec.Repository) == "" {
+	if ptr.Deref(job.Spec.Repository, "") == "" {
 		list = append(list, field.Required(field.NewPath("spec", "repository"), "repository must be specified"))
 	}
 

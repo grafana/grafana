@@ -20,7 +20,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	jobptr "github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/optional"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
@@ -207,7 +207,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 
 		rsp := result.response
 		if rsp.Job != nil {
-			rsp.Job.Repository = jobptr.NonZero(name)
+			rsp.Job.Repository = optional.NonZero(name)
 			actionTaken = string(rsp.Job.Action)
 			span.SetAttributes(attribute.String("job.action", actionTaken))
 
@@ -332,12 +332,12 @@ func pullRequestResponse(event repository.WebhookEvent) *provisioning.WebhookRes
 		Job: &provisioning.JobSpec{
 			Action: provisioning.JobActionPullRequest,
 			Pr: &provisioning.JobPullRequestJobOptions{
-				Url:     jobptr.NonZero(event.PRURL),
-				Pr:      jobptr.NonZero(int32(event.PRNumber)),
-				Ref:     jobptr.NonZero(event.SourceRef),
-				Hash:    jobptr.NonZero(event.Hash),
+				Url:     optional.NonZero(event.PRURL),
+				Pr:      optional.NonZero(int32(event.PRNumber)),
+				Ref:     optional.NonZero(event.SourceRef),
+				Hash:    optional.NonZero(event.Hash),
 				IsFork:  event.IsFork,
-				ForkURL: jobptr.NonZero(event.ForkURL),
+				ForkURL: optional.NonZero(event.ForkURL),
 			},
 		},
 	}

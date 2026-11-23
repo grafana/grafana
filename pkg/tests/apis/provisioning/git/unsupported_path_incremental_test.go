@@ -6,11 +6,11 @@ import (
 	"testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/ptr"
 )
 
 // TestIntegrationProvisioning_IncrementalSync_UnsupportedPath verifies that an
@@ -48,11 +48,11 @@ func TestIntegrationProvisioning_IncrementalSync_UnsupportedPath(t *testing.T) {
 	jobObj := &provisioning.Job{}
 	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
 
-	t.Logf("job state: %s message: %s", ptr.Deref(jobObj.Status.State), ptr.Deref(jobObj.Status.Message))
+	t.Logf("job state: %s message: %s", ptr.Deref(jobObj.Status.State, ""), ptr.Deref(jobObj.Status.Message, ""))
 	t.Logf("job warnings: %v", jobObj.Status.Warnings)
 	t.Logf("job errors: %v", jobObj.Status.Errors)
 
-	require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State),
+	require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State, ""),
 		"an unsafe path must complete the incremental sync as a warning, not an error")
 	require.Empty(t, jobObj.Status.Errors,
 		"an unsafe path is user-fixable content, not a system failure")
@@ -99,9 +99,9 @@ func TestIntegrationProvisioning_IncrementalSync_RenameOntoUnsupportedPath(t *te
 	})
 	jobObj := &provisioning.Job{}
 	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
-	t.Logf("job state: %s warnings: %v errors: %v", ptr.Deref(jobObj.Status.State), jobObj.Status.Warnings, jobObj.Status.Errors)
+	t.Logf("job state: %s warnings: %v errors: %v", ptr.Deref(jobObj.Status.State, ""), jobObj.Status.Warnings, jobObj.Status.Errors)
 
-	require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State))
+	require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State, ""))
 	require.Empty(t, jobObj.Status.Errors)
 	found := false
 	for _, w := range jobObj.Status.Warnings {
@@ -134,9 +134,9 @@ func incrementalPullAndRequireWarning(t *testing.T, helper *common.GitTestHelper
 	})
 	jobObj := &provisioning.Job{}
 	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
-	t.Logf("job state: %s warnings: %v errors: %v", ptr.Deref(jobObj.Status.State), jobObj.Status.Warnings, jobObj.Status.Errors)
+	t.Logf("job state: %s warnings: %v errors: %v", ptr.Deref(jobObj.Status.State, ""), jobObj.Status.Warnings, jobObj.Status.Errors)
 
-	require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State))
+	require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State, ""))
 	require.Empty(t, jobObj.Status.Errors)
 	found := false
 	for _, w := range jobObj.Status.Warnings {
@@ -262,7 +262,7 @@ func requireRenameOntoNonResourceRemovesDashboard(t *testing.T, name, target str
 	jobObj := &provisioning.Job{}
 	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
 	require.Empty(t, jobObj.Status.Errors)
-	require.Equal(t, provisioning.JobStateSuccess, ptr.Deref(jobObj.Status.State))
+	require.Equal(t, provisioning.JobStateSuccess, ptr.Deref(jobObj.Status.State, ""))
 	require.Empty(t, jobObj.Status.Warnings, "a path that is not a resource is not reported")
 
 	helper.RequireRepoDashboardCount(t, repoName, 1)

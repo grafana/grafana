@@ -12,12 +12,12 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/utils/ptr"
 
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/slugify"
@@ -337,8 +337,8 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 
 		query := url.Values{}
 		query.Set("ref", info.Parsed.Info.Ref)
-		if ptr.Deref(opts.Url) != "" {
-			query.Set("pull_request_url", url.QueryEscape(ptr.Deref(opts.Url)))
+		if ptr.Deref(opts.Url, "") != "" {
+			query.Set("pull_request_url", url.QueryEscape(ptr.Deref(opts.Url, "")))
 		}
 		if orgID > 0 {
 			query.Set("orgId", strconv.FormatInt(orgID, 10))

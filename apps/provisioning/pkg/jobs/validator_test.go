@@ -16,7 +16,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/optional"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -1517,7 +1517,7 @@ func TestHistoricJobAdmissionValidator_Validate(t *testing.T) {
 func makeDashboardRefs(n int) []provisioning.JobResourceRef {
 	refs := make([]provisioning.JobResourceRef, n)
 	for i := range refs {
-		refs[i] = provisioning.JobResourceRef{Name: ptr.NonZero(fmt.Sprintf("dash-%d", i)), Kind: new("Dashboard")}
+		refs[i] = provisioning.JobResourceRef{Name: optional.NonZero(fmt.Sprintf("dash-%d", i)), Kind: new("Dashboard")}
 	}
 	return refs
 }

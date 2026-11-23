@@ -12,12 +12,12 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 )
 
 func newConflictError() error {
@@ -99,13 +99,13 @@ func TestOnProgress_IncrementsProgressUpdates(t *testing.T) {
 	status := provisioning.JobStatus{State: new(provisioning.JobStateWorking), Message: new("test")}
 
 	require.NoError(t, progressFn(context.Background(), status))
-	assert.Equal(t, int64(1), ptr.Deref(driver.currentJob.Status.ProgressUpdates))
+	assert.Equal(t, int64(1), ptr.Deref(driver.currentJob.Status.ProgressUpdates, 0))
 
 	require.NoError(t, progressFn(context.Background(), status))
-	assert.Equal(t, int64(2), ptr.Deref(driver.currentJob.Status.ProgressUpdates))
+	assert.Equal(t, int64(2), ptr.Deref(driver.currentJob.Status.ProgressUpdates, 0))
 
 	require.NoError(t, progressFn(context.Background(), status))
-	assert.Equal(t, int64(3), ptr.Deref(driver.currentJob.Status.ProgressUpdates))
+	assert.Equal(t, int64(3), ptr.Deref(driver.currentJob.Status.ProgressUpdates, 0))
 }
 
 // TestOnProgress_FailedWriteDoesNotInflateCount verifies that a failed
@@ -130,11 +130,11 @@ func TestOnProgress_FailedWriteDoesNotInflateCount(t *testing.T) {
 	status := provisioning.JobStatus{State: new(provisioning.JobStateWorking), Message: new("test")}
 
 	require.Error(t, progressFn(context.Background(), status))
-	assert.Equal(t, int64(0), ptr.Deref(driver.currentJob.Status.ProgressUpdates),
+	assert.Equal(t, int64(0), ptr.Deref(driver.currentJob.Status.ProgressUpdates, 0),
 		"a failed write must not increment the count")
 
 	require.NoError(t, progressFn(context.Background(), status))
-	assert.Equal(t, int64(1), ptr.Deref(driver.currentJob.Status.ProgressUpdates),
+	assert.Equal(t, int64(1), ptr.Deref(driver.currentJob.Status.ProgressUpdates, 0),
 		"the first successful write is the first counted update")
 }
 

@@ -6,9 +6,10 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/optional"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"k8s.io/utils/ptr"
 )
 
 //go:generate mockery --name WrapWithStageFn --structname MockWrapWithStageFn --inpackage --filename mock_wrap_with_stage_fn.go --with-expecter
@@ -47,7 +48,7 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 	// taking ownership we remove the migrated resources from the instance; they
 	// return as managed resources when the branch is merged and a regular sync
 	// runs on the configured branch.
-	branchMigration := ptr.Deref(options.Branch) != "" && ptr.Deref(options.Branch) != repo.Config().Branch()
+	branchMigration := ptr.Deref(options.Branch, "") != "" && ptr.Deref(options.Branch, "") != repo.Config().Branch()
 
 	// selective is true when the caller scoped the migration to an explicit
 	// resource list rather than migrating everything unmanaged.
@@ -70,12 +71,12 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 
 	exportJob := provisioning.Job{
 		Spec: provisioning.JobSpec{
-			Message: ptr.NonZero(ptr.Deref(job.Spec.Message)),
+			Message: optional.NonZero(ptr.Deref(job.Spec.Message, "")),
 			Push: &provisioning.JobExportJobOptions{
-				Message:              ptr.NonZero(ptr.Deref(options.Message)),
-				Branch:               ptr.NonZero(ptr.Deref(options.Branch)),
+				Message:              optional.NonZero(ptr.Deref(options.Message, "")),
+				Branch:               optional.NonZero(ptr.Deref(options.Branch, "")),
 				Resources:            options.Resources,
-				GenerateNewFolderIDs: ptr.NonZero(ptr.Deref(options.GenerateNewFolderIDs)),
+				GenerateNewFolderIDs: optional.NonZero(ptr.Deref(options.GenerateNewFolderIDs, false)),
 			},
 		},
 	}
@@ -110,7 +111,7 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 
 	// SkipResourceDeletion keeps the migrated resources on the instance; when set
 	// we do no cleanup at all.
-	if ptr.Deref(options.SkipResourceDeletion) {
+	if ptr.Deref(options.SkipResourceDeletion, false) {
 		return nil
 	}
 

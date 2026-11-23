@@ -2,7 +2,6 @@ package jobs
 
 import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 )
 
 // clearEmptyOptionalFields drops explicitly empty optional values from a Job. These fields used
@@ -76,5 +75,8 @@ func clearResourceRefs(refs []provisioning.JobResourceRef) {
 }
 
 func clearIfEmpty[T comparable](field **T) {
-	*field = ptr.NonZero(ptr.Deref(*field))
+	var zero T
+	if *field != nil && **field == zero {
+		*field = nil
+	}
 }

@@ -11,7 +11,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/optional"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
@@ -99,7 +99,7 @@ func makeTestJob(ref string) provisioning.Job {
 			Action:     provisioning.JobActionFixFolderMetadata,
 			Repository: new("test-repo"),
 			FixFolderMetadata: &provisioning.JobFixFolderMetadataJobOptions{
-				Ref: ptr.NonZero(ref),
+				Ref: optional.NonZero(ref),
 			},
 		},
 	}

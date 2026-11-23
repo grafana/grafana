@@ -9,7 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/optional"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -44,7 +44,7 @@ func TestIntegrationProvisioning_ExportSpecificResources_FolderExported(t *testi
 		Push: &provisioning.JobExportJobOptions{
 			Resources: []provisioning.JobResourceRef{
 				{Name: new("test-v1"), Kind: new("Dashboard"), Group: new("dashboard.grafana.app")},
-				{Name: ptr.NonZero(folderUID), Kind: new("Folder"), Group: new("folder.grafana.app")},
+				{Name: optional.NonZero(folderUID), Kind: new("Folder"), Group: new("folder.grafana.app")},
 			},
 		},
 	}

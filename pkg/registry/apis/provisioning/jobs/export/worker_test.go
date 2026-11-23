@@ -15,7 +15,7 @@ import (
 
 	v0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/optional"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -329,7 +329,7 @@ func TestExportWorker_ProcessStageOptionsWithBranch(t *testing.T) {
 				Spec: v0alpha1.JobSpec{
 					Action: v0alpha1.JobActionPush,
 					Push: &v0alpha1.JobExportJobOptions{
-						Branch: ptr.NonZero(tt.branch),
+						Branch: optional.NonZero(tt.branch),
 					},
 				},
 			}
@@ -613,10 +613,10 @@ func TestExportWorker_CommitMessagePrecedence(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
 				Spec: v0alpha1.JobSpec{
 					Action:  v0alpha1.JobActionPush,
-					Message: ptr.NonZero(tt.specMessage),
+					Message: optional.NonZero(tt.specMessage),
 					Push: &v0alpha1.JobExportJobOptions{
 						Branch:  new("feature-branch"),
-						Message: ptr.NonZero(tt.optsMessage),
+						Message: optional.NonZero(tt.optsMessage),
 					},
 				},
 			}

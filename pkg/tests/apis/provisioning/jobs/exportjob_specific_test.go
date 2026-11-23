@@ -12,9 +12,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/optional"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
@@ -163,7 +164,7 @@ func TestIntegrationProvisioning_SelectiveMigrateDashboardInNestedFolders(t *tes
 		Migrate: &provisioning.JobMigrateJobOptions{
 			Message: new("Selectively migrate one nested dashboard"),
 			Resources: []provisioning.JobResourceRef{
-				{Name: ptr.NonZero(dashName), Kind: new("Dashboard"), Group: new("dashboard.grafana.app")},
+				{Name: optional.NonZero(dashName), Kind: new("Dashboard"), Group: new("dashboard.grafana.app")},
 			},
 		},
 	})
@@ -240,7 +241,7 @@ func TestIntegrationProvisioning_ExportSpecificResources_NotFound(t *testing.T) 
 	jobObj := &provisioning.Job{}
 	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
 
-	require.Equal(t, provisioning.JobStateError, ptr.Deref(jobObj.Status.State),
+	require.Equal(t, provisioning.JobStateError, ptr.Deref(jobObj.Status.State, ""),
 		"missing explicitly-requested resource should fail the job")
 
 	foundError := false
@@ -294,7 +295,7 @@ func TestIntegrationProvisioning_ExportSpecificResources_GeneratesFolderAncestry
 		Action: provisioning.JobActionPush,
 		Push: &provisioning.JobExportJobOptions{
 			Resources: []provisioning.JobResourceRef{
-				{Name: ptr.NonZero(selectedDash), Kind: new("Dashboard"), Group: new("dashboard.grafana.app")},
+				{Name: optional.NonZero(selectedDash), Kind: new("Dashboard"), Group: new("dashboard.grafana.app")},
 			},
 		},
 	}

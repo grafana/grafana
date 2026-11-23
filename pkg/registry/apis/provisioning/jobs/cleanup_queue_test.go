@@ -16,7 +16,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	fakeclientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/optional"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -55,7 +55,7 @@ func createJob(ctx context.Context, t *testing.T, client *fakeclientset.Clientse
 		jobLabels[LabelJobClaim] = "123456789"
 		jobLabels[LabelJobClaimOwner] = "worker-1"
 	}
-	createJobWith(ctx, t, client, ns, name, jobLabels, provisioning.JobSpec{Repository: ptr.NonZero(repo), Action: provisioning.JobActionPull})
+	createJobWith(ctx, t, client, ns, name, jobLabels, provisioning.JobSpec{Repository: optional.NonZero(repo), Action: provisioning.JobActionPull})
 }
 
 func createJobWith(ctx context.Context, t *testing.T, client *fakeclientset.Clientset, ns, name string, jobLabels map[string]string, spec provisioning.JobSpec) {

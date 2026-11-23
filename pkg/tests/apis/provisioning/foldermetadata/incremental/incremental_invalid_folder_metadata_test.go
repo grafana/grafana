@@ -10,10 +10,10 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/apps/provisioning/pkg/util/ptr"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -57,7 +57,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
 
 		require.Empty(t, jobObj.Status.Errors)
-		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State))
+		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State, ""))
 		requireInvalidFolderMetadataWarning(t, jobObj, "team/", repository.FileActionCreated)
 
 		common.RequireRepoFolderUID(t, helper.Folders, repoName, oldUID)
@@ -100,7 +100,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
 
 		require.Empty(t, jobObj.Status.Errors)
-		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State))
+		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State, ""))
 		requireInvalidFolderMetadataWarning(t, jobObj, "team/", repository.FileActionCreated)
 
 		folderUID := common.RequireRepoFolderTitle(t, helper.Folders, repoName, "team")
@@ -146,7 +146,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
 
 		require.Empty(t, jobObj.Status.Errors)
-		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State))
+		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State, ""))
 		requireInvalidFolderMetadataWarning(t, jobObj, "team/", repository.FileActionUpdated)
 
 		common.RequireRepoFolderUID(t, helper.Folders, repoName, stableUID)
@@ -189,7 +189,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 		jobObj := &provisioning.Job{}
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
 		require.Empty(t, jobObj.Status.Errors)
-		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State))
+		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State, ""))
 		requireInvalidFolderMetadataWarning(t, jobObj, "team/", repository.FileActionUpdated)
 
 		require.NoError(t, local.CreateFile("team/dashboard.json", string(common.DashboardJSON("team-dash", "Team Dashboard Follow-up", 2))))
@@ -207,7 +207,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 		jobObj = &provisioning.Job{}
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
 		require.Empty(t, jobObj.Status.Errors)
-		require.Equal(t, provisioning.JobStateSuccess, ptr.Deref(jobObj.Status.State))
+		require.Equal(t, provisioning.JobStateSuccess, ptr.Deref(jobObj.Status.State, ""))
 
 		common.RequireRepoFolderUID(t, helper.Folders, repoName, stableUID)
 		common.RequireRepoDashboardParent(t, helper.DashboardsV1, repoName, "team/dashboard.json", stableUID)
@@ -260,7 +260,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
 
 		require.Empty(t, jobObj.Status.Errors)
-		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State))
+		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State, ""))
 		requireInvalidFolderMetadataWarning(t, jobObj, "broken/", repository.FileActionCreated)
 
 		common.RequireRepoFolderUID(t, helper.Folders, repoName, parentStableUID)
@@ -309,7 +309,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
 
 		require.Empty(t, jobObj.Status.Errors)
-		require.Equal(t, provisioning.JobStateSuccess, ptr.Deref(jobObj.Status.State))
+		require.Equal(t, provisioning.JobStateSuccess, ptr.Deref(jobObj.Status.State, ""))
 		common.RequireRepoDashboardParent(t, helper.DashboardsV1, repoName, "team/root.json", folderUID)
 		common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 			"root-dash": {Title: "Root Dashboard", SourcePath: "team/root.json", Folder: folderUID},
@@ -350,7 +350,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
 
 		require.Empty(t, jobObj.Status.Errors)
-		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State))
+		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State, ""))
 		requireInvalidFolderMetadataWarning(t, jobObj, "team/", repository.FileActionCreated)
 
 		folderUID := common.RequireRepoFolderTitle(t, helper.Folders, repoName, "team")
@@ -396,7 +396,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
 
 		require.Empty(t, jobObj.Status.Errors)
-		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State))
+		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State, ""))
 		requireInvalidFolderMetadataWarning(t, jobObj, "moved/", repository.FileActionCreated)
 
 		helper.RequireFoldersNotFound(t, stableUID)
@@ -452,7 +452,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
 
 		require.Empty(t, jobObj.Status.Errors)
-		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State))
+		require.Equal(t, provisioning.JobStateWarning, ptr.Deref(jobObj.Status.State, ""))
 		requireInvalidFolderMetadataWarning(t, jobObj, "broken/", repository.FileActionCreated)
 
 		common.RequireFolderState(t, helper.Folders, parentStableUID, "Parent", "new-parent", "")
