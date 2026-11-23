@@ -12,10 +12,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
 	authlib "github.com/grafana/authlib/types"
+
 	v3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
+	"github.com/grafana/grafana-app-sdk/routes"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -217,39 +218,17 @@ func (d JSONData) DashboardIncludes() []*Includes {
 // Route describes a plugin route that is defined in
 // the plugin.json file for a plugin.
 type Route struct {
-	Path         string           `json:"path"`
-	Method       string           `json:"method"`
-	ReqRole      authlib.RoleType `json:"reqRole"`
-	ReqAction    string           `json:"reqAction"`
-	URL          string           `json:"url"`
-	URLParams    []URLParam       `json:"urlParams"`
-	Headers      []Header         `json:"headers"`
-	AuthType     string           `json:"authType"`
-	TokenAuth    *JWTTokenAuth    `json:"tokenAuth"`
-	JwtTokenAuth *JWTTokenAuth    `json:"jwtTokenAuth"`
-	Body         json.RawMessage  `json:"body"`
-}
-
-// Header describes an HTTP header that is forwarded with
-// the proxied request for a plugin route
-type Header struct {
-	Name    string `json:"name"`
-	Content string `json:"content"`
-}
-
-// URLParam describes query string parameters for
-// a url in a plugin route
-type URLParam struct {
-	Name    string `json:"name"`
-	Content string `json:"content"`
-}
-
-// JWTTokenAuth struct is both for normal Token Auth and JWT Token Auth with
-// an uploaded JWT file.
-type JWTTokenAuth struct {
-	Url    string            `json:"url"`
-	Scopes []string          `json:"scopes"`
-	Params map[string]string `json:"params"`
+	Path         string                 `json:"path"`
+	Method       string                 `json:"method"`
+	ReqRole      authlib.RoleType       `json:"reqRole"`
+	ReqAction    string                 `json:"reqAction"`
+	URL          string                 `json:"url"`
+	URLParams    []routes.ProxyURLParam `json:"urlParams"`
+	Headers      []routes.ProxyHeader   `json:"headers"`
+	AuthType     string                 `json:"authType"`
+	TokenAuth    *routes.ProxyTokenAuth `json:"tokenAuth"`
+	JwtTokenAuth *routes.ProxyTokenAuth `json:"jwtTokenAuth"`
+	Body         json.RawMessage        `json:"body"`
 }
 
 func (p *Plugin) PluginID() string {
