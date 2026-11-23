@@ -145,6 +145,38 @@ func TestIntegrationProvisioning_Bootstrap(t *testing.T) {
 			"a repeated sync must not report the resources it already provisioned")
 	})
 
+	// A manifest names the org it belongs to. Every org reads this same directory, so a file
+	// the default org does not own is simply not its own -- not an error, and not a warning.
+	t.Run("a manifest for another namespace is not provisioned", func(t *testing.T) {
+		foreign := dashboard("foreign-org-dashboard")
+		foreign["metadata"].(map[string]any)["namespace"] = "org-99"
+		writeManifest(t, bootstrapPath, "foreign.json", foreign)
+		defer func() { require.NoError(t, os.Remove(filepath.Join(bootstrapPath, "foreign.json"))) }()
+
+		helper.SyncAndWait(t, "bootstrap", nil)
+
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			repo, err := helper.Repositories.Resource.Get(t.Context(), "bootstrap", metav1.GetOptions{})
+			require.NoError(c, err)
+			assert.Equal(c, "success", mustString(t, repo, "status", "sync", "state"))
+		}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
+
+		_, err := helper.DashboardsV1.Resource.Get(t.Context(), "foreign-org-dashboard", metav1.GetOptions{})
+		assert.True(t, apierrors.IsNotFound(err), "the default org must not claim another org's file, got %v", err)
+	})
+
+	// The namespace of the default org names the same org as no namespace at all.
+	t.Run("a manifest for the default namespace is provisioned", func(t *testing.T) {
+		explicit := dashboard("default-namespace-dashboard")
+		explicit["metadata"].(map[string]any)["namespace"] = "default"
+		writeManifest(t, bootstrapPath, "explicit-default.json", explicit)
+		defer func() { require.NoError(t, os.Remove(filepath.Join(bootstrapPath, "explicit-default.json"))) }()
+
+		helper.SyncAndWait(t, "bootstrap", nil)
+
+		helper.RequireDashboards(t, "default-namespace-dashboard")
+	})
+
 	t.Run("forbids instance-target repositories", func(t *testing.T) {
 		// The instance target needs an instance with no other repository, so it is dropped from
 		// the allowed set the caller and the UI see.
