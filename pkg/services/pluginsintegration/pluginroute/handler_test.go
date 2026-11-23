@@ -451,7 +451,42 @@ func TestHandlerResourceStorage(t *testing.T) {
 	require.Contains(t, res.Body.String(), errStubRoute.Error())
 }
 
+func TestHandlerResourceListKind(t *testing.T) {
+	client := &resourceClient{}
+	opts := allowAll(testOptions())
+	opts.Storage = UnifiedStorage(client, nil, nil)
+	plugin := testPlugin()
+	version := &plugin.Manifests[0].Versions[0]
+	version.Kinds = append(version.Kinds, app.ManifestVersionKind{Kind: "Second", Plural: "Seconds", Resource: "seconds", Scope: "Namespaced"})
+	handler := withRequester(loadHandler(t, plugin, opts))
+	for _, k := range version.Kinds {
+		root := "/apis/example.ext.grafana.app/v1alpha1/namespaces/default/" + k.Resource
+		value := []byte(strings.Replace(testObjectJSON, "TestKind", k.Kind, 1))
+		for _, items := range [][]*resourcepb.ResourceWrapper{nil, {{Value: value, ResourceVersion: 1}}} {
+			client.listItems = items
+			var got struct {
+				metav1.TypeMeta
+				Metadata metav1.ListMeta
+				Items    []metav1.TypeMeta
+			}
+			getJSON(t, handler, root, &got)
+			require.Equal(t, k.Kind+"List", got.Kind)
+			require.Equal(t, "example.ext.grafana.app/v1alpha1", got.APIVersion)
+			require.Equal(t, "1", got.Metadata.ResourceVersion)
+			require.Len(t, got.Items, len(items))
+			if len(items) > 0 {
+				require.Equal(t, k.Kind, got.Items[0].Kind)
+			}
+		}
+	}
+}
+
+func (c *resourceClient) List(context.Context, *resourcepb.ListRequest, ...grpc.CallOption) (*resourcepb.ListResponse, error) {
+	return &resourcepb.ListResponse{Items: c.listItems, ResourceVersion: 1}, nil
+}
+
 type resourceClient struct {
+	listItems []*resourcepb.ResourceWrapper
 	resource.ResourceClient
 	created *resourcepb.CreateRequest
 	read    *resourcepb.ReadRequest
