@@ -38,6 +38,7 @@ import (
 	githubRepository "github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
@@ -61,6 +62,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
@@ -1204,24 +1206,29 @@ func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h 
 	})
 }
 
-// dropAddedGlobalSearchTypes removes the paragraph of the global search
-// description that names the types a distribution adds, and reports whether
-// there was one.
+// globalSearchPath is the global search route as the search group's OpenAPI
+// spec names it.
+const globalSearchPath = "/apis/" + searchv0.APIVERSION + "/namespaces/{namespace}/" + resource.GlobalSearchResource + "/" + searchv0.SearchPathSegment
+
+// dropAddedGlobalSearchTypes removes the final paragraph of the global search
+// description when it names the types a distribution adds, and reports whether
+// it did. Nothing else is touched, so the snapshot still catches any other
+// change to that description or to another route.
 func dropAddedGlobalSearchTypes(api *spec3.OpenAPI) bool {
 	if api == nil || api.Paths == nil {
 		return false
 	}
-	dropped := false
-	for _, path := range api.Paths.Paths {
-		if path == nil || path.Post == nil {
-			continue
-		}
-		if before, _, found := strings.Cut(path.Post.Description, "\n\n"+search.GlobalSearchDeploymentTypesPrefix); found {
-			path.Post.Description = before
-			dropped = true
-		}
+	path := api.Paths.Paths[globalSearchPath]
+	if path == nil || path.Post == nil {
+		return false
 	}
-	return dropped
+	description := path.Post.Description
+	last := strings.LastIndex(description, "\n\n")
+	if last < 0 || !strings.HasPrefix(description[last+len("\n\n"):], search.GlobalSearchDeploymentTypesPrefix) {
+		return false
+	}
+	path.Post.Description = description[:last]
+	return true
 }
 
 // CreateServiceAccount creates a service account with the specified name, organization, and role using the HTTP API
