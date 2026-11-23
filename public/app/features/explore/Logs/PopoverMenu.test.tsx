@@ -8,7 +8,17 @@ import { PopoverMenu } from './PopoverMenu';
 const row = createLogRow();
 
 test('Does not render if the filter functions are not defined', () => {
-  render(<PopoverMenu selection="test" x={0} y={0} row={row} close={() => {}} onDisable={() => {}} />);
+  render(
+    <PopoverMenu
+      selection="test"
+      x={0}
+      y={0}
+      refId={row.dataFrame.refId}
+      datasourceType={row.datasourceType}
+      close={() => {}}
+      onDisable={() => {}}
+    />
+  );
 
   expect(screen.queryByText('Copy selection')).not.toBeInTheDocument();
 });
@@ -20,7 +30,8 @@ test('Renders copy and line contains filter', async () => {
       selection="test"
       x={0}
       y={0}
-      row={row}
+      refId={row.dataFrame.refId}
+      datasourceType={row.datasourceType}
       close={() => {}}
       onDisable={() => {}}
       onClickFilterString={onClickFilterString}
@@ -43,7 +54,8 @@ test('Renders copy and line does not contain filter', async () => {
       selection="test"
       x={0}
       y={0}
-      row={row}
+      refId={row.dataFrame.refId}
+      datasourceType={row.datasourceType}
       close={() => {}}
       onDisable={() => {}}
       onClickFilterOutString={onClickFilterOutString}
@@ -65,7 +77,8 @@ test('Renders copy, line contains filter, and line does not contain filter', () 
       selection="test"
       x={0}
       y={0}
-      row={row}
+      refId={row.dataFrame.refId}
+      datasourceType={row.datasourceType}
       close={() => {}}
       onDisable={() => {}}
       onClickFilterString={() => {}}
@@ -85,7 +98,8 @@ test('Can be dismissed with escape', async () => {
       selection="test"
       x={0}
       y={0}
-      row={row}
+      refId={row.dataFrame.refId}
+      datasourceType={row.datasourceType}
       close={close}
       onDisable={() => {}}
       onClickFilterString={() => {}}
@@ -106,7 +120,8 @@ test('Can be disabled', async () => {
       selection="test"
       x={0}
       y={0}
-      row={row}
+      refId={row.dataFrame.refId}
+      datasourceType={row.datasourceType}
       close={() => {}}
       onDisable={onDisable}
       onClickFilterString={() => {}}

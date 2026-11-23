@@ -1541,12 +1541,13 @@
           "contact-point": "直接指定するコンタクトポイント（policy:とは併用できません）。",
           "dashboard": "ルールが関連付けられているダッシュボード（正式な値はダッシュボードのUID）。",
           "datasource": "ルールで参照されているクエリのデータソース（正式な値はUID）。",
-          "folder": "フォルダー（正式な値はフォルダーのUID）。",
+          "folder": "",
+          "folder-uid": "",
           "health": "ルールの状態：ok、nodata（データなし）、error（エラー）、unknown（不明）。",
           "label": "ラベルマッチャー：label:key（存在する）、label:!key（存在しない）、label:key=value（一致する）、label:key!=value（一致しない）、label:key=~re（正規表現に一致する）、label:key!~re（正規表現に一致しない）。値にスペースが含まれる場合は、引用符で囲みます：label:team=\"a b\"。",
           "metric": "記録されたメトリクス名（完全一致）。",
           "panel-id": "ルールが関連付けられているパネル。パネルIDはダッシュボード内でのみ有効です。dashboard:と組み合わせて指定してください。",
-          "paused": "ルールが一時停止中かどうか（true/false）。",
+          "paused": "",
           "plugins": "plugins:hideを指定すると、プラグインによって作成されたルールが除外されます。",
           "policy": "名前を指定した通知ポリシー（contactPoint:とは併用できません）。",
           "rule": "ルール名によるテキスト検索（フリーテキスト検索と同じ）。",
@@ -1562,13 +1563,14 @@
         "invalid-tokens": "一部のフィルターを適用できませんでした：{{tokens}}",
         "invalid-value": "{{key}}には、次のいずれかの値を指定してください：{{values}}",
         "label": "検索",
-        "not-paused-unavailable": "一時停止されていないルールによるフィルタリングは、まだ利用できません。",
+        "missing-value": "",
         "placeholder": "名前で検索するか、フィルター条件を入力してください...",
         "property": {
           "contact-point": "コンタクトポイント",
           "dashboard": "ダッシュボード",
           "datasource": "クエリのデータソース",
           "folder": "フォルダ",
+          "folder-uid": "",
           "health": "状態",
           "labels": "ラベル",
           "metric": "記録されたメトリクス",
@@ -1604,11 +1606,72 @@
         "tooltip-with-interval": ""
       },
       "shared": {
+        "folder-search-limit": "",
+        "folder-search-limit-description": "",
         "load-more": "さらに読み込む",
         "load-more-error": "追加の検索結果の読み込みに失敗しました",
         "loading-rules": "ルールを読み込んでいます...",
         "refresh-error": "検索結果の更新に失敗しました",
         "retry": "再試行"
+      },
+      "sidebar": {
+        "all": "",
+        "contact-point": "",
+        "contact-point-description": "",
+        "contact-point-help": "",
+        "contact-point-placeholder": "",
+        "dashboard": "",
+        "datasource": "",
+        "datasource-placeholder": "",
+        "filters": "",
+        "folder": "",
+        "folder-description": "",
+        "folder-help": "",
+        "folder-placeholder": "",
+        "health": "",
+        "health-error": "",
+        "health-nodata": "",
+        "health-ok": "",
+        "health-unknown": "",
+        "label-add": "",
+        "label-key": "",
+        "label-key-placeholder": "",
+        "label-operator": "",
+        "label-remove": "",
+        "label-value": "",
+        "label-value-any": "",
+        "label-value-placeholder": "",
+        "label-value-unset": "",
+        "labels": "",
+        "metric": "",
+        "metric-placeholder": "",
+        "operator-absent": "",
+        "operator-absent-description": "",
+        "operator-equal": "",
+        "operator-exists": "",
+        "operator-exists-description": "",
+        "operator-not-equal": "",
+        "operator-not-regex": "",
+        "operator-regex": "",
+        "panel-id": "",
+        "paused": "",
+        "paused-true": "",
+        "plugin-rules": "",
+        "plugin-rules-hide": "",
+        "plugin-rules-show": "",
+        "policy": "",
+        "policy-description": "",
+        "policy-help": "",
+        "policy-placeholder": "",
+        "rule-name": "",
+        "rule-name-placeholder": "",
+        "state": "",
+        "state-firing": "",
+        "state-normal": "",
+        "state-pending": "",
+        "state-recovering": "",
+        "target-datasource": "",
+        "target-datasource-placeholder": ""
       },
       "status": {
         "error": "ルールの評価に失敗しました",
@@ -1922,6 +1985,7 @@
         "routing": "通知ルーティング",
         "routing-none": "ポリシーツリーが選択されていません",
         "routing-tree": "ポリシーツリー：{{name}}",
+        "rules-error": "",
         "rules-skipped": "アラートルールはインポートされません。",
         "rules-title": "",
         "skipped": "スキップ済み",
@@ -1934,6 +1998,7 @@
         "validation-warning": "競合を回避するため、一部のリソースの名前が変更されます。",
         "will-import-config": "この設定をインポートします",
         "will-import-rules": "ルールをインポートします",
+        "yaml-datasource": "",
         "will-import-rules-count_other": "{{count}}件のルールをインポートします"
       },
       "rules-preview": "アラートルールのプレビュー",
@@ -2038,9 +2103,14 @@
         "target-datasource-required": "ターゲットデータソースを選択してください",
         "target-folder": "ターゲットフォルダ",
         "target-folder-desc": "インポートされたルールが保存されるフォルダ",
+        "yaml-empty-group": "",
         "yaml-error": "YAMLファイルの解析に失敗しました：{{error}}",
         "yaml-file": "ルールYAMLファイル",
-        "yaml-required": "ファイルを選択してください"
+        "yaml-no-rules": "",
+        "yaml-required": "ファイルを選択してください",
+        "yaml-target-datasource": "",
+        "yaml-target-datasource-desc": "",
+        "yaml-target-datasource-required": ""
       },
       "success": "アラートルールをGrafana管理ルールに正常にインポートしました。",
       "target-folder": {
@@ -4811,6 +4881,12 @@
     "folder-owners": {
       "owned-by": "所有者："
     },
+    "folder-permissions": {
+      "no-access": ""
+    },
+    "folder-permissions-exposed": {
+      "not-found": ""
+    },
     "folder-picker": {
       "accessible-label": "フォルダを選択：{{ label }}が現在選択されています",
       "button-label": "フォルダを選択",
@@ -5607,6 +5683,40 @@
       "view-json-diff": "JSON diffを表示してすべての変更を確認する"
     }
   },
+  "core-kinds": {
+    "connection": {
+      "label": "",
+      "label-plural": ""
+    },
+    "dashboard": {
+      "label": "",
+      "label-plural": ""
+    },
+    "datasource": {
+      "label": "",
+      "label-plural": ""
+    },
+    "folder": {
+      "label": "",
+      "label-plural": ""
+    },
+    "librarypanel": {
+      "label": "",
+      "label-plural": ""
+    },
+    "notebook": {
+      "label": "",
+      "label-plural": ""
+    },
+    "playlist": {
+      "label": "",
+      "label-plural": ""
+    },
+    "repository": {
+      "label": "",
+      "label-plural": ""
+    }
+  },
   "correlations": {
     "add-new": "新規追加",
     "alert": {
@@ -6111,7 +6221,10 @@
       "add-visualization-body": "データソースを選択し、グラフ、統計、テーブルを使用してデータをクエリおよび視覚化するか、リスト、マークダウン、その他のウィジェットを作成します。",
       "add-visualization-button": "視覚化を追加",
       "add-visualization-header": "視覚化を追加して新しいダッシュボードを開始します",
+      "assistant-limit-reached": "",
       "assistant-placeholder": "ダッシュボードの内容を説明してください。Assistantのチャットが開き、会話が始まります。",
+      "assistant-placeholder-template": "",
+      "assistant-sign-in": "",
       "auto-grid": "自動グリッド",
       "auto-grid-description": "パネルはサイズ変更され、均一なグリッドになります",
       "build-assistant": "Assistantでダッシュボードを作成",
@@ -6125,6 +6238,8 @@
       "mobile-not-available": "",
       "or-start-blank": "または、自分で作成する",
       "select-layout-header": "レイアウトを選択",
+      "templates-empty": "",
+      "templates-title": "",
       "title": "新しいダッシュボード"
     },
     "errors": {
@@ -7092,6 +7207,7 @@
   },
   "dashboard-library": {
     "card": {
+      "attach-template-button-label": "",
       "community-badge": "コミュニティ",
       "customize-with-assistant-button": "アシスタントでカスタマイズ",
       "customize-with-assistant-button-label": "アシスタントでカスタマイズ：{{title}}",
@@ -7108,6 +7224,9 @@
       "edit-template-menu-item": "編集",
       "more-actions-label": "{{title}}のその他の操作",
       "no-preview": "プレビューは利用できません",
+      "preview-template-button": "",
+      "preview-template-button-label": "",
+      "provisioned-by-grafana": "",
       "use-template-button": "テンプレートを使用",
       "use-template-button-label": "テンプレートを使用：{{title}}",
       "view-dashboard-button": "ダッシュボードを表示",
@@ -7142,6 +7261,10 @@
     "custom-dashboard-template-filters": {
       "creator-placeholder": "作成者で絞り込む",
       "search-placeholder": "検索",
+      "sort": {
+        "asc": "",
+        "desc": ""
+      },
       "sort-placeholder": "並べ替え"
     },
     "dashboard-card": {
@@ -7920,16 +8043,6 @@
     },
     "query-editor": {
       "query": "クエリ"
-    },
-    "query-editor-banner": {
-      "description-classic": "改良されたクエリ編集体験をお試しください。",
-      "description-new": "改良されたクエリ編集体験へようこそ。",
-      "dismiss": "閉じる",
-      "downgrade-title": "新しいクエリエディター",
-      "give-feedback": "フィードバックを送信",
-      "go-back": "クラシック版に戻る",
-      "try-it": "試してみる",
-      "upgrade-title": "新しいエディターが利用可能です"
     },
     "query-variable-editor": {
       "modal": {
@@ -11328,6 +11441,9 @@
       },
       "wrapping-disabled-warning": "値が長すぎるため、この列ではテキストの折り返しが無効になっています。「値を検査」を使用すると、内容全体を表示できます。"
     },
+    "tag": {
+      "remove": ""
+    },
     "tags": {
       "list-label": "タグ"
     },
@@ -11812,13 +11928,19 @@
       "filter-apps": "アプリ",
       "filter-dashboards": "ダッシュボード",
       "filter-explore": "Explore",
+      "filter-folders": "",
       "filter-label": "次の項目のみ表示",
+      "filter-notebooks": "",
       "filter-pages": "ページ",
+      "filter-playlists": "",
       "kind-alerting": "アラート",
       "kind-app": "アプリ",
       "kind-dashboard": "ダッシュボード",
       "kind-explore": "Explore",
+      "kind-folder": "",
+      "kind-notebook": "",
       "kind-page": "ページ",
+      "kind-playlist": "",
       "loading": "最近のアクティビティを読み込んでいます..."
     },
     "recommendations": {
@@ -13436,7 +13558,7 @@
       "page-assistant-below": "",
       "page-floating-assistant": "",
       "page-only": "",
-      "pop-up": "",
+      "pop-out": "",
       "right": ""
     },
     "assistant-workspace": {
@@ -13459,7 +13581,8 @@
         "open": "{{title}}を開く",
         "open-all": "AIアシスタントとサイドバーアプリを開く"
       },
-      "floating-resize": "サイドバーの幅を変更"
+      "floating-resize": "サイドバーの幅を変更",
+      "floating-resize-height": ""
     },
     "help": {
       "aria-label": "ヘルプ",
@@ -13718,6 +13841,8 @@
       "cancel": "キャンセル",
       "card-author": "{{author}}による",
       "card-updated": "{{when}}に更新",
+      "convert-to-absolute": "",
+      "convert-to-absolute-description": "",
       "create-name": "ノートブック名",
       "create-name-required": "ノートブック名は必須です",
       "create-name-taken": "この名前のノートブックはすでに存在します",
@@ -13732,10 +13857,12 @@
       "list-none": "まだノートブックがありません。代わりにノートブックを作成してください。",
       "list-none-read-only": "まだノートブックがなく、作成する権限もありません。",
       "list-truncated": "すべてのノートブックが表示されているわけではありません。検索を絞り込んで他のノートブックを見つけてください。",
-      "lock-time-range": "{{range}}に固定",
       "lock-time-range-description": "この可視化を、キャプチャ時の時間範囲に固定します。固定を解除すると、ノートブックの時間範囲に従います。",
+      "lock-time-range-short": "",
       "lock-time-ranges": "パネルを表示時の時間範囲に固定",
       "lock-time-ranges-description": "各可視化を、キャプチャ時の時間範囲に固定します。ロックを解除すると、ノートブックの時間範囲に従います。",
+      "note-description": "",
+      "note-label": "",
       "search-placeholder": "タイトルで検索",
       "sort-alphabetical": "アルファベット順（A-Z）",
       "sort-label": "ノートブックを並べ替え",
@@ -15017,9 +15144,6 @@
       "success-title": "フォルダのメタデータが正常に修正されました",
       "title": "フォルダのメタデータを修正"
     },
-    "folder-permissions": {
-      "loading": "読み込み中..."
-    },
     "folder-repository-list": {
       "no-results-matching-your-query": "クエリに一致する結果なし",
       "partial-managed": "{{managedCount}}/{{resourceCount}}件のリソースがGit同期によって管理されています。",
@@ -15172,13 +15296,16 @@
       "path-required": "リポジトリパスが必要です"
     },
     "managed-badge": {
+      "actions": "",
       "classic-file-provisioning": "管理元：ファイルプロビジョニング",
       "file-provisioning": "",
       "kubectl": "管理元：Kubectl",
       "manage-repository": "リポジトリを管理",
       "plugin": "管理元：プラグイン{{id}}",
       "provisioned": "プロビジョニング済み",
+      "read-only": "",
       "terraform": "管理元：Terraform",
+      "view-source": "",
       "view-source-file": "ソースファイルを表示"
     },
     "managed-by-repository-tooltip": "管理者：リポジトリ",
@@ -15356,8 +15483,6 @@
         }
       }
     },
-    "pull-only-local-tooltip": "",
-    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "上記のテンプレートから保存ダイアログのプルリクエストのタイトルを事前入力し、読み取り専用にします。",
       "description-title-template": "ブランチワークフローによって開かれたプルリクエストのタイトルのテンプレート。利用可能なプレースホルダ：{{actionVar}}、{{kindVar}}、{{titleVar}}、{{userLoginVar}}。コミットメッセージの最初の行を使用するには、空のままにしてください。",
@@ -15379,9 +15504,6 @@
       "message-repository-onprem_other": "インスタンスは、接続可能なリポジトリ数が{{count}}件までに制限されています。",
       "message-resource_other": "アカウントのリポジトリあたりの同期リソース数は{{count}}件までに制限されています。",
       "message-resource-onprem_other": "インスタンスのリポジトリあたりの同期リソース数は{{count}}件までに制限されています。"
-    },
-    "read-only-badge": {
-      "pull-only": ""
     },
     "read-only-local-tooltip": "このリソースは読み取り専用であり、ファイルプロビジョニングを通じてプロビジョニングされます。変更を加えるには、接続されているリポジトリを更新します。設定を変更するには、「管理」>「プロビジョニング」>「リポジトリ」の順で移動します。",
     "read-only-remote-tooltip": "このリソースは読み取り専用で、Gitを介してプロビジョニングされます。変更を加えるには、接続されているリポジトリを更新します。設定を変更するには、「管理」>「プロビジョニング」>「リポジトリ」の順で移動します。",
@@ -15510,22 +15632,6 @@
       "pure-git": "Pure Git",
       "pure-git-description": "任意のGitリポジトリに接続",
       "pure-git-tooltip": "Smart HTTPプロトコル v2 を使用して、任意のGitリポジトリに接続します。プロバイダー固有の機能（Webhook、PRコメント、ディープリンク）を除く、基本的な同期ワークフローです。"
-    },
-    "resource-kind": {
-      "connection": "",
-      "connections": "",
-      "dashboard": "ダッシュボード",
-      "dashboards": "ダッシュボード",
-      "datasource": "",
-      "datasources": "",
-      "folder": "フォルダ",
-      "folders": "フォルダ",
-      "library-panel": "ライブラリパネル",
-      "library-panels": "ライブラリパネル",
-      "playlist": "プレイリスト",
-      "playlists": "プレイリスト",
-      "repositories": "",
-      "repository": ""
     },
     "resource-tree": {
       "header-hash": "ハッシュ",
@@ -16090,12 +16196,6 @@
       "width-of-panel": "パネルの幅"
     },
     "edit-query-name": "クエリ名を編集",
-    "experimental-button": {
-      "aria-label": "試験運用機能のオプション",
-      "back-to-classic": "クラシック版エディターに戻る",
-      "give-feedback": "フィードバックを送信",
-      "tooltip": "試験運用機能のオプション"
-    },
     "header": {
       "alert": "アラート",
       "enter-stacked-view": "",
@@ -16458,8 +16558,6 @@
       "location-header": "場所",
       "name-header": "名前",
       "tags-header": "タグ",
-      "type-dashboard": "ダッシュボード",
-      "type-folder": "フォルダ",
       "type-header": "タイプ"
     },
     "search-input": {
@@ -17437,6 +17535,16 @@
       "review": "",
       "text_other": ""
     },
+    "display-completion": {
+      "color": "",
+      "helper": "",
+      "icon": "",
+      "numeric": "",
+      "percent": "",
+      "prefix": "",
+      "suffix": "",
+      "text": ""
+    },
     "editor": {
       "aria-label-content": "テキストの内容",
       "aria-label-mode": "テキストモード：{{mode}}",
@@ -17580,7 +17688,6 @@
     },
     "time-range": {
       "apply": "時間範囲を適用",
-      "aria-role": "時間範囲の選択",
       "default-title": "時間範囲",
       "dialog-label": "相対時間範囲ピッカー",
       "example-title": "時間範囲の例",

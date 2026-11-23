@@ -19,6 +19,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/handlers/negotiation"
 	endpointmetrics "k8s.io/apiserver/pkg/endpoints/metrics"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	clientrest "k8s.io/client-go/rest"
@@ -337,6 +338,38 @@ func TestDefaultInstaller_SubresourceRouteNotFound(t *testing.T) {
 	assert.Equal(t, metav1.StatusReasonNotFound, status.Reason)
 	assert.Contains(t, status.Message, "subresource 'foo' not found")
 	assert.Equal(t, &metav1.StatusDetails{Group: TestKind.Group(), Kind: TestKind.Kind(), Name: "example"}, status.Details)
+}
+
+func TestDefaultInstaller_NoProtobuf(t *testing.T) {
+	md := app.ManifestData{
+		Group: TestKind.Group(),
+		Versions: []app.ManifestVersion{{
+			Name: TestKind.Version(), Served: true,
+			Kinds: []app.ManifestVersionKind{{Kind: TestKind.Kind(), Plural: TestKind.Plural()}},
+		}},
+	}
+	installer, err := NewDefaultAppInstaller(simple.NewAppProvider(app.NewEmbeddedManifest(md), nil, nil), app.Config{}, &mockGoTypeResolver{
+		KindToGoTypeFunc: func(string, string) (resource.Kind, bool) { return TestKind, true },
+	})
+	require.NoError(t, err)
+	var ns runtime.NegotiatedSerializer
+	server := &MockGenericAPIServer{InstallAPIGroupFunc: func(info *genericapiserver.APIGroupInfo) error {
+		ns = info.NegotiatedSerializer
+		return nil
+	}}
+	require.NoError(t, installer.InstallAPIs(server, &plainOptsGetter{}))
+	require.NotNil(t, ns)
+
+	for _, info := range ns.SupportedMediaTypes() {
+		assert.NotEqual(t, runtime.ContentTypeProtobuf, info.MediaType)
+	}
+
+	// The namespace controller lists with this Accept header on deletecollection.
+	req := httptest.NewRequest(http.MethodDelete, "/", nil)
+	req.Header.Set("Accept", "application/vnd.kubernetes.protobuf,application/json")
+	mediaType, _, err := negotiation.NegotiateOutputMediaType(req, ns, negotiation.DefaultEndpointRestrictions)
+	require.NoError(t, err)
+	assert.Equal(t, runtime.ContentTypeJSON, mediaType.Accepted.MediaType)
 }
 
 func TestCopySpecSchema_PatternProperties(t *testing.T) {

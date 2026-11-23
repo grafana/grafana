@@ -41,7 +41,7 @@ func TestDeleteActingUser(t *testing.T) {
 		Rest:   authn.IDTokenClaims{Type: authlib.TypeUser, Identifier: "u123", Namespace: namespace},
 	})
 	userCtx := authlib.WithAuthInfo(context.Background(), userInfo)
-	staticUser := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 123, UserUID: "u123", OrgRole: identity.RoleAdmin, Namespace: namespace}
+	staticUser := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 123, UserUID: "u123", OrgRole: authlib.RoleAdmin, Namespace: namespace}
 	staticUserCtx := authlib.WithAuthInfo(context.Background(), staticUser)
 
 	// deleteAs creates the object, deletes it as the caller in ctx with the given acting user, and

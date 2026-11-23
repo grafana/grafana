@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
@@ -320,7 +321,7 @@ func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 			})
 			req := server.NewRequest(http.MethodPatch, fmt.Sprintf("/api/orgs/%d/users/%d", userRequesting.OrgID, userRequesting.ID), strings.NewReader(reqBody))
 			req.Header.Set("Content-Type", "application/json")
-			userWithPermissions.OrgRole = identity.RoleAdmin
+			userWithPermissions.OrgRole = authlib.RoleAdmin
 			res, err := server.Send(webtest.RequestWithSignedInUser(req, userWithPermissions))
 			require.NoError(t, err)
 			assert.Equal(t, tt.expectedCode, res.StatusCode)
@@ -1450,8 +1451,8 @@ func TestUpdateOrgUserForCurrentOrg_KubernetesUsersRedirect(t *testing.T) {
 	orgUsersWithTwoAdmins := user.SearchUserQueryResult{
 		TotalCount: 2,
 		Users: []*user.UserSearchHitDTO{
-			{ID: 1, Login: "target", Role: string(identity.RoleAdmin)},
-			{ID: 2, Login: "other", Role: string(identity.RoleAdmin)},
+			{ID: 1, Login: "target", Role: string(authlib.RoleAdmin)},
+			{ID: 2, Login: "other", Role: string(authlib.RoleAdmin)},
 		},
 	}
 
@@ -1482,7 +1483,7 @@ func TestUpdateOrgUserForCurrentOrg_KubernetesUsersRedirect(t *testing.T) {
 
 	sendPatch := func(t *testing.T, server *webtest.Server, role string) int {
 		signedInUser := userWithPermissions(1, permissions)
-		signedInUser.OrgRole = identity.RoleAdmin
+		signedInUser.OrgRole = authlib.RoleAdmin
 		body := fmt.Sprintf(`{"role": %q}`, role)
 		req := server.NewRequest(http.MethodPatch, "/api/org/users/1", strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
@@ -1503,7 +1504,7 @@ func TestUpdateOrgUserForCurrentOrg_KubernetesUsersRedirect(t *testing.T) {
 		require.NotNil(t, d.updateCmd)
 		assert.Equal(t, int64(1), d.updateCmd.UserID)
 		require.NotNil(t, d.updateCmd.OrgRole)
-		assert.Equal(t, string(identity.RoleEditor), *d.updateCmd.OrgRole)
+		assert.Equal(t, string(authlib.RoleEditor), *d.updateCmd.OrgRole)
 	})
 
 	t.Run("returns 500 when the user service update fails", func(t *testing.T) {
@@ -1521,8 +1522,8 @@ func TestUpdateOrgUserForCurrentOrg_KubernetesUsersRedirect(t *testing.T) {
 		d := &deps{searchUsers: user.SearchUserQueryResult{
 			TotalCount: 2,
 			Users: []*user.UserSearchHitDTO{
-				{ID: 1, Login: "target", Role: string(identity.RoleAdmin)},
-				{ID: 2, Login: "other", Role: string(identity.RoleViewer)},
+				{ID: 1, Login: "target", Role: string(authlib.RoleAdmin)},
+				{ID: 2, Login: "other", Role: string(authlib.RoleViewer)},
 			},
 		}}
 		statusCode := sendPatch(t, setup(t, d), "Editor")
@@ -1539,7 +1540,7 @@ func TestUpdateOrgUserForCurrentOrg_KubernetesUsersRedirect(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, statusCode)
 		require.NotNil(t, d.updateCmd)
-		assert.Equal(t, string(identity.RoleAdmin), *d.updateCmd.OrgRole)
+		assert.Equal(t, string(authlib.RoleAdmin), *d.updateCmd.OrgRole)
 	})
 
 	t.Run("keeps using the legacy org service when the flag is disabled", func(t *testing.T) {
@@ -1562,8 +1563,8 @@ func TestRemoveOrgUserForCurrentOrg_KubernetesUsersRedirect(t *testing.T) {
 	orgUsersWithTwoAdmins := user.SearchUserQueryResult{
 		TotalCount: 2,
 		Users: []*user.UserSearchHitDTO{
-			{ID: 1, Login: "target", Role: string(identity.RoleAdmin)},
-			{ID: 2, Login: "other", Role: string(identity.RoleAdmin)},
+			{ID: 1, Login: "target", Role: string(authlib.RoleAdmin)},
+			{ID: 2, Login: "other", Role: string(authlib.RoleAdmin)},
 		},
 	}
 
@@ -1599,7 +1600,7 @@ func TestRemoveOrgUserForCurrentOrg_KubernetesUsersRedirect(t *testing.T) {
 
 	sendDelete := func(t *testing.T, server *webtest.Server) int {
 		signedInUser := userWithPermissions(1, permissions)
-		signedInUser.OrgRole = identity.RoleAdmin
+		signedInUser.OrgRole = authlib.RoleAdmin
 		req := server.NewRequest(http.MethodDelete, "/api/org/users/1", nil)
 		res, err := server.Send(webtest.RequestWithSignedInUser(req, signedInUser))
 		require.NoError(t, err)
@@ -1633,8 +1634,8 @@ func TestRemoveOrgUserForCurrentOrg_KubernetesUsersRedirect(t *testing.T) {
 		d := &deps{singleOrg: true, searchUsers: user.SearchUserQueryResult{
 			TotalCount: 2,
 			Users: []*user.UserSearchHitDTO{
-				{ID: 1, Login: "target", Role: string(identity.RoleAdmin)},
-				{ID: 2, Login: "other", Role: string(identity.RoleViewer)},
+				{ID: 1, Login: "target", Role: string(authlib.RoleAdmin)},
+				{ID: 2, Login: "other", Role: string(authlib.RoleViewer)},
 			},
 		}}
 		statusCode := sendDelete(t, setup(t, d))

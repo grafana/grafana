@@ -17,6 +17,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	inlinev1beta1 "github.com/grafana/grafana/apps/secret/inline/v1beta1"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -139,7 +140,7 @@ func (g *GRPCInlineClient) CanReference(ctx context.Context, owner v0alpha1.Obje
 	return err
 }
 
-func (g *GRPCInlineClient) CreateInline(ctx context.Context, owner v0alpha1.ObjectReference, value v0alpha1.RawSecureValue, desc *string) (string, error) {
+func (g *GRPCInlineClient) CreateInline(ctx context.Context, owner v0alpha1.ObjectReference, value resource.RawSecureValue, desc *string) (string, error) {
 	client, err := g.getClient(owner.Namespace, noForwardSubjectToken)
 	if err != nil {
 		return "", err
