@@ -279,6 +279,69 @@ describe('RENDER_PLAN', () => {
     });
   });
 
+  it('puts a section variable on that tab or row, and leaves dashboard variables on the dashboard', async () => {
+    const { scene, client } = setup();
+
+    await client.execute({
+      type: 'RENDER_PLAN',
+      payload: {
+        ...plan,
+        layout: 'tabs',
+        variables: ['environment'],
+        sections: [
+          {
+            title: 'Demo dashboard 1',
+            variables: ['pod'],
+            panels: [{ title: 'Pod Count', vizType: 'stat' }],
+          },
+          {
+            title: 'Demo dashboard 2',
+            variables: ['rate_interval'],
+            panels: [{ title: 'CPU', vizType: 'timeseries' }],
+          },
+        ],
+      },
+    });
+
+    expect(scene.state.$variables?.state.variables.map((variable) => variable.state.name)).toEqual(['environment']);
+    const [first, second] = (scene.state.body as TabsLayoutManager).state.tabs;
+    expect(first.state.$variables?.state.variables.map((variable) => variable.state.name)).toEqual(['pod']);
+    expect(second.state.$variables?.state.variables.map((variable) => variable.state.name)).toEqual(['rate_interval']);
+    expect((first.state.$variables?.state.variables[0] as CustomVariable).state.query.length).toBeGreaterThan(0);
+  });
+
+  it('puts a nested row variable on that row', async () => {
+    const { scene, client } = setup();
+
+    await client.execute({
+      type: 'RENDER_PLAN',
+      payload: {
+        ...plan,
+        layout: 'tabs',
+        variables: ['environment'],
+        sections: [
+          {
+            title: 'Overview',
+            panels: [],
+            sections: [
+              {
+                title: 'Rates',
+                variables: ['rate_interval'],
+                panels: [{ title: 'CPU', vizType: 'timeseries' }],
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    const overview = (scene.state.body as TabsLayoutManager).state.tabs[0];
+    expect(overview.state.$variables).toBeUndefined();
+    const rates = (overview.getLayout() as RowsLayoutManager).state.rows[0];
+    expect(rates.state.$variables?.state.variables.map((variable) => variable.state.name)).toEqual(['rate_interval']);
+    expect(scene.state.$variables?.state.variables.map((variable) => variable.state.name)).toEqual(['environment']);
+  });
+
   it('renders stand-in variables alongside the plan, with generated sample values', async () => {
     // The plan names only the variable, not what its values should look like -- sample values
     // are generated here rather than by the caller.
