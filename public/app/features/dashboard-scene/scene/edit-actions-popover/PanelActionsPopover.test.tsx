@@ -791,6 +791,18 @@ describe('<PanelActionsWrapper />', () => {
         expect(panel.state.options).toEqual({ legend: { showLegend: false } });
         expect(within(getToolbar()).getByRole('button', { name: 'Legend: Hidden' })).toBeInTheDocument();
       });
+
+      test('the panel is outlined while its quick edit card is open', async () => {
+        const { user } = await renderWithQuickEdits({ isEditing: true });
+        await user.click(within(getToolbar()).getByRole('button', { name: 'Quick edits' }));
+        await user.click(within(getToolbar()).getByRole('button', { name: 'Legend: Shown' }));
+
+        expect(screen.getByTestId('quick-edit-panel-outline')).toBeInTheDocument();
+
+        await user.click(within(screen.getByRole('dialog', { name: 'Legend' })).getByRole('button', { name: 'Close' }));
+
+        expect(screen.queryByTestId('quick-edit-panel-outline')).not.toBeInTheDocument();
+      });
     });
   });
 });

@@ -1,8 +1,8 @@
-import { css } from '@emotion/css';
+import { css, keyframes } from '@emotion/css';
 import { autoUpdate, flip, offset, shift, size, useFloating } from '@floating-ui/react';
 import { type KeyboardEvent, type ReactNode, useEffect, useLayoutEffect, useRef } from 'react';
 
-import { type GrafanaTheme2, type IconName } from '@grafana/data';
+import { colorManipulator, type GrafanaTheme2, type IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getPortalContainer, Icon, IconButton, Portal, useStyles2 } from '@grafana/ui';
 
@@ -21,6 +21,7 @@ interface Props {
 
 /**
  * A card with one quick edit's controls, placed beside the panel: right of it, else left, else above or below.
+ * It pulses once as it opens and outlines the panel while open, so both the card and what it changes stand out.
  * It stays open while menus it opens are used (they portal elsewhere) and closes on Escape or a press anywhere
  * else. Escape returns focus to the button that opened it.
  */
@@ -89,6 +90,7 @@ export function QuickEditCard({ title, icon, panel, bar, onClose, children }: Pr
 
   return (
     <Portal>
+      {panel && <PanelOutline panel={panel} />}
       {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- Escape closes the dialog */}
       <div
         ref={setFloating}
@@ -112,34 +114,83 @@ export function QuickEditCard({ title, icon, panel, bar, onClose, children }: Pr
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  card: css({
-    zIndex: theme.zIndex.portal,
-    width: 340,
-    display: 'flex',
-    flexDirection: 'column',
-    background: theme.colors.background.primary,
-    border: `1px solid ${theme.colors.border.weak}`,
-    borderRadius: theme.shape.radius.lg,
-    boxShadow: theme.shadows.z3,
-    overflow: 'hidden',
-  }),
-  header: css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(1),
-    padding: theme.spacing(1, 1, 1, 2),
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
-    color: theme.colors.text.primary,
-  }),
-  title: css({
-    flex: 1,
-    fontWeight: theme.typography.fontWeightMedium,
-  }),
-  body: css({
-    padding: theme.spacing(2),
-    overflowY: 'auto',
-    // The full editor's fields, minus their trailing margin on the last one.
-    '& > div > :last-child': { marginBottom: 0 },
-  }),
-});
+/**
+ * The panel's outline, drawn over it rather than styled onto it, as the panel's own classes change while the card is
+ * open, e.g. as it is selected.
+ */
+function PanelOutline({ panel }: { panel: Element }) {
+  const styles = useStyles2(getStyles);
+  const outline = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const element = outline.current;
+    if (!element) {
+      return;
+    }
+    return autoUpdate(panel, element, () => {
+      const { top, left, width, height } = panel.getBoundingClientRect();
+      Object.assign(element.style, { top: `${top}px`, left: `${left}px`, width: `${width}px`, height: `${height}px` });
+    });
+  }, [panel]);
+
+  return <div ref={outline} className={styles.panelOutline} data-testid="quick-edit-panel-outline" aria-hidden />;
+}
+
+const getStyles = (theme: GrafanaTheme2) => {
+  const accent = theme.colors.accent.main;
+  const clear = colorManipulator.alpha(accent, 0);
+  // The ring keeps its two shadows when hidden, so the pulse can animate between the two lists.
+  const restingShadow = `0 0 0 0 ${clear}, 0 0 0 0 ${clear}, ${theme.shadows.z3}`;
+  const pulse = keyframes({
+    from: {
+      boxShadow: `0 0 0 2px ${accent}, 0 0 24px 6px ${colorManipulator.alpha(accent, 0.55)}, ${theme.shadows.z3}`,
+    },
+    to: { boxShadow: restingShadow },
+  });
+
+  return {
+    card: css({
+      zIndex: theme.zIndex.portal,
+      width: 340,
+      display: 'flex',
+      flexDirection: 'column',
+      // Above the panels, which share the primary background. In the light theme the elevated background is the same
+      // white, so a stronger border keeps the card apart from them.
+      background: theme.colors.background.elevated,
+      border: `1px solid ${theme.isDark ? theme.colors.border.medium : theme.colors.border.strong}`,
+      borderRadius: theme.shape.radius.lg,
+      boxShadow: restingShadow,
+      overflow: 'hidden',
+      [theme.transitions.handleMotion('no-preference')]: {
+        animation: `${pulse} 700ms ease-out`,
+      },
+    }),
+    // Solid, unlike the dashed outline of a selected element, in the accent of the open quick edit's button.
+    panelOutline: css({
+      position: 'fixed',
+      zIndex: theme.zIndex.portal,
+      pointerEvents: 'none',
+      outline: `2px solid ${accent}`,
+      outlineOffset: 2,
+      borderRadius: theme.shape.radius.default,
+    }),
+    header: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      padding: theme.spacing(1, 1, 1, 2),
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      color: theme.colors.text.primary,
+    }),
+    title: css({
+      flex: 1,
+      fontWeight: theme.typography.fontWeightMedium,
+    }),
+    body: css({
+      padding: theme.spacing(2),
+      overflowY: 'auto',
+      // The full editor's fields, minus their trailing margin on the last one.
+      '& > div > :last-child': { marginBottom: 0 },
+    }),
+  };
+};
