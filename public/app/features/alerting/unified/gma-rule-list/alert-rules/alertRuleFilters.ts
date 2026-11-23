@@ -12,11 +12,10 @@ export interface AlertRuleFilter extends SharedRuleFilter {
   contactPoint?: string;
   /** Named routing tree, or `DEFAULT_POLICY` for the default-policy filter (not searchable yet). */
   policy?: string;
-  paused?: 'true';
   state?: StateValue;
 }
 
-export type AlertFilterKey = SharedFilterKey | 'state' | 'dashboard' | 'panelId' | 'contactPoint' | 'policy' | 'paused';
+export type AlertFilterKey = SharedFilterKey | 'state' | 'dashboard' | 'panelId' | 'contactPoint' | 'policy';
 
 /** Reserved `policy` value that stands for "rules using the default notification policy". */
 export const DEFAULT_POLICY = 'default';
@@ -120,20 +119,7 @@ export const alertRuleSearchSchema: RuleSearchSchema<AlertRuleFilter, AlertFilte
         },
       ],
     },
-    {
-      key: 'paused',
-      label: () => t('alerting.gma-rule-list.search.property.paused', 'Paused'),
-      description: () => t('alerting.gma-rule-list.search.help.paused', 'paused:true shows only paused rules.'),
-      example: 'paused:true',
-      values: ['true'],
-      apply: (filter, value) => {
-        if (value.toLowerCase() !== 'true') {
-          return false;
-        }
-        filter.paused = 'true';
-        return true;
-      },
-    },
+    sharedFilters.paused,
     {
       key: 'state',
       label: () => t('alerting.gma-rule-list.search.property.state', 'Alert state'),
