@@ -23,7 +23,8 @@ import {
 import { addKinds } from 'app/core/kinds/coreKinds';
 import { backendSrv } from 'app/core/services/backend_srv';
 
-import { useStarItem, useStarredSearch } from './hooks';
+import { useStarredSearch } from './hooks';
+import { CollectionsStarsSrv } from './service';
 
 const { group: GROUP, kind: KIND, version: VERSION, resource: RESOURCE } = MOCK_APP_KIND;
 const DASHBOARD: DashboardHit = { resource: 'dashboards', name: 'dash-1', title: 'Bravo dashboard', field: {} };
@@ -34,17 +35,13 @@ setupMockServer();
 testWithStarsUser();
 testWithAppKind();
 
-/** The starred search, with the star toggles of a folder and of the test app kind. */
+// The star button stars through this service
+const stars = new CollectionsStarsSrv();
+
+/** The starred search, and the names of its rows. */
 function renderStarredSearch() {
-  const { result, rerender } = renderHook(
-    () => ({
-      starred: useStarredSearch(),
-      starFolder: useStarItem('folder.grafana.app', 'Folder'),
-      starThing: useStarItem(GROUP, KIND),
-    }),
-    { wrapper: getWrapper({}) }
-  );
-  return { result, rerender, rowNames: () => result.current.starred.rows?.map((row) => row.name) };
+  const { result, rerender } = renderHook(() => useStarredSearch(), { wrapper: getWrapper({}) });
+  return { result, rerender, rowNames: () => result.current.rows?.map((row) => row.name) };
 }
 
 /** Serves the test app kind: its API group, and its search over these objects. */
@@ -106,8 +103,8 @@ describe('useStarredSearch', () => {
     await waitFor(() => {
       expect(starred.rowNames()).toEqual(['Bravo dashboard', 'Charlie thing', 'Delta folder', 'Echo thing']);
     });
-    expect(starred.result.current.starred.loading).toBe(false);
-    expect(starred.result.current.starred.error).toBe(false);
+    expect(starred.result.current.loading).toBe(false);
+    expect(starred.result.current.error).toBe(false);
   });
 
   it('leaves out the stars of a kind that is not in the kind registry', async () => {
@@ -160,7 +157,7 @@ describe('useStarredSearch', () => {
     );
     const starred = renderStarredSearch();
     await waitFor(() => {
-      expect(starred.result.current.starred.loading).toBe(false);
+      expect(starred.result.current.loading).toBe(false);
     });
     expect(starred.rowNames()).toEqual([]);
 
@@ -195,7 +192,7 @@ describe('useStarredSearch', () => {
       expect(starred.rowNames()).toEqual(['Bravo dashboard']);
     });
     // There are rows to show, so the API of a plugin does not hold the list up
-    expect(starred.result.current.starred.loading).toBe(false);
+    expect(starred.result.current.loading).toBe(false);
 
     thingSearch.answer();
     await waitFor(() => {
@@ -213,13 +210,13 @@ describe('useStarredSearch', () => {
       expect(thingSearch.asked).toHaveBeenCalledTimes(1);
     });
     // Not an empty list yet: the only starred objects are still on their way
-    expect(starred.result.current.starred.loading).toBe(true);
+    expect(starred.result.current.loading).toBe(true);
 
     thingSearch.answer();
     await waitFor(() => {
       expect(starred.rowNames()).toEqual(['Alpha thing']);
     });
-    expect(starred.result.current.starred.loading).toBe(false);
+    expect(starred.result.current.loading).toBe(false);
   });
 
   it('lists a folder starred while the search of an app kind is still out', async () => {
@@ -231,7 +228,7 @@ describe('useStarredSearch', () => {
     });
 
     await act(async () => {
-      await starred.result.current.starFolder(FOLDER.name, true);
+      await stars.star({ group: 'folder.grafana.app', kind: 'Folder', name: FOLDER.name });
     });
 
     // The API of a plugin that has yet to answer does not hold up a star made meanwhile
@@ -255,12 +252,12 @@ describe('useStarredSearch', () => {
 
     // The rows that loaded show, and the error tells a view that they are not all of them
     await waitFor(() => {
-      expect(starred.result.current.starred.error).toBe(true);
+      expect(starred.result.current.error).toBe(true);
     });
     await waitFor(() => {
       expect(starred.rowNames()).toEqual(['Alpha thing']);
     });
-    expect(starred.result.current.starred.loading).toBe(false);
+    expect(starred.result.current.loading).toBe(false);
   });
 
   it('searches the app kinds again on refetch', async () => {
@@ -273,7 +270,7 @@ describe('useStarredSearch', () => {
 
     serveThings([{ name: 't1', title: 'New title' }]);
     act(() => {
-      starred.result.current.starred.refetch();
+      starred.result.current.refetch();
     });
 
     await waitFor(() => {
@@ -290,7 +287,7 @@ describe('useStarredSearch', () => {
     });
 
     await act(async () => {
-      await starred.result.current.starThing('t1', false);
+      await stars.unstar({ group: GROUP, kind: KIND, name: 't1' });
     });
     await waitFor(() => {
       expect(starred.rowNames()).toEqual([]);
@@ -298,7 +295,7 @@ describe('useStarredSearch', () => {
 
     const thingSearch = holdThingSearch([{ name: 't2', title: 'Second thing' }]);
     await act(async () => {
-      await starred.result.current.starThing('t2', true);
+      await stars.star({ group: GROUP, kind: KIND, name: 't2' });
     });
     await waitFor(() => {
       expect(thingSearch.asked).toHaveBeenCalledTimes(1);

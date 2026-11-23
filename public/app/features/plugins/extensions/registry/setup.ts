@@ -10,6 +10,7 @@ import { OpenQueryLibraryExposedComponent } from 'app/features/explore/QueryLibr
 import { PrometheusQueryResultsContainer } from 'app/features/explore/RawPrometheus/PrometheusQueryResultsContainer';
 import { NotebookViewLazy } from 'app/features/notebook/embed/NotebookViewLazy';
 import { AddToNotebookFormExposedComponent } from 'app/features/notebook/extensions/AddToNotebookFormExposedComponent';
+import { StarToolbarButtonExposed } from 'app/features/stars/StarToolbarButton';
 
 import { getCoreExtensionConfigurations } from '../getCoreExtensionConfigurations';
 
@@ -79,6 +80,12 @@ function registerCoreExtensions({ addedLinksRegistry, exposedComponentsRegistry 
         title: 'Folder permissions',
         description: 'Folder permissions editor, as in the folder page "Manage permissions" drawer',
         component: FolderPermissionsExposedComponentLazy,
+      },
+      {
+        id: PluginExtensionExposedComponents.StarToolbarButtonV1,
+        title: 'Star toolbar button',
+        description: 'Stars or unstars one object of a kind an app plugin registered through getStarsSrv()',
+        component: StarToolbarButtonExposed,
       },
       // Only with notebooks on: plugins treat the form's absence as notebooks being unavailable.
       ...(getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNotebooks, false)

@@ -1,4 +1,5 @@
 export * from './backendSrv';
+export * from './StarsSrv';
 export * from './dataSourceSrv';
 export * from './LocationSrv';
 export * from './EchoSrv';

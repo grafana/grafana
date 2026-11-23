@@ -8,12 +8,14 @@ import {
 } from '@grafana/api-clients/rtkq/search/v0alpha1';
 import { locationUtil } from '@grafana/data';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
+import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
 import { getAPIGroupVersions } from 'app/features/apiserver/discovery';
 import { type DashboardQueryResult } from 'app/features/search/service/types';
+import { type ThunkResult } from 'app/types/store';
 
 import { getStarredAppKinds, type StarredAppKind } from './kinds';
-import { type StarredNames } from './utils';
+import { type StarredNames, starsHoldName, userStarsFieldSelector } from './utils';
 
 /**
  * TODO: Switch to the global search when it is enabled, and delete this file. One search across
@@ -144,5 +146,20 @@ const kindSearchAPI = searchAPI.enhanceEndpoints({ addTagTypes: [STARRED_APP_SEA
 
 /** Re-searches the starred rows of app kinds, for a view that refreshes on its own schedule. */
 export const refetchStarredAppKinds = () => kindSearchAPI.util.invalidateTags([STARRED_APP_SEARCH_TAG]);
+
+/**
+ * Re-searches the starred rows of app kinds when one of `names` is starred as an object of one. A write to an
+ * unstarred object changes no row, so the search is spared.
+ */
+export const refetchStarredAppKindsFor =
+  (names: string[]): ThunkResult<void> =>
+  (dispatch, getState) => {
+    const { data } = collectionsAPIv1alpha1.endpoints.listStars.select({ fieldSelector: userStarsFieldSelector() })(
+      getState()
+    );
+    if (starsHoldName(data, getStarredAppKinds(), names)) {
+      dispatch(refetchStarredAppKinds());
+    }
+  };
 
 export const { useSearchStarredAppKindsQuery } = kindSearchAPI;
