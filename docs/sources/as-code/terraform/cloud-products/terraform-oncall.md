@@ -7,6 +7,7 @@ keywords:
   - Terraform
   - Grafana Cloud IRM
   - OnCall
+menuTitle: Manage Grafana IRM in Grafana Cloud
 title: Manage Grafana IRM in Grafana Cloud using Terraform
 weight: 400
 canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/cloud-products/terraform-oncall/

@@ -55,7 +55,7 @@ hero:
   description: Use Terraform to manage Grafana Cloud Knowledge Graph resources as code. Configure the Knowledge Graph stack, notification alerts, suppressed assertions, custom model rules, log configurations, and threshold configurations using infrastructure as code best practices.
   level: 1
   title: Manage Knowledge Graph using Terraform
-menuTitle: Manage Knowledge Graph in Grafana Cloud using Terraform
+menuTitle: Manage Knowledge Graph in Grafana Cloud
 title: Manage Knowledge Graph in Grafana Cloud using Terraform
 weight: 500
 keywords:

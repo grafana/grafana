@@ -5,6 +5,7 @@ keywords:
   - Quickstart
   - Grafana Cloud
   - Terraform
+menuTitle: Create and manage a Grafana Cloud stack
 title: Create and manage a Grafana Cloud stack using Terraform
 weight: 200
 canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/terraform-cloud-stack/

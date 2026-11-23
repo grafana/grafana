@@ -1,5 +1,5 @@
 ---
-description: Manage dashboards, saved queries, secrets, and plugins with the Grafana Terraform provider.
+description: Manage dashboards, saved queries, and plugins with the Grafana Terraform provider.
 keywords:
   - Infrastructure as Code
   - Terraform

@@ -10,10 +10,11 @@ labels:
   products:
     - cloud
   stage: general-availability
+menuTitle: Manage secrets in Grafana Cloud
 title: Manage secrets in Grafana Cloud using Terraform
-weight: 300
+weight: 600
 review_date: '2026-09-14'
-canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/grafana-resources/terraform-secrets-management/
+canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/cloud-products/terraform-secrets-management/
 aliases:
   - ../infrastructure-as-code/terraform/terraform-secrets-management/
   - ../terraform-secrets-management/
