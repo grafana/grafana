@@ -97,3 +97,61 @@ To add cross-dashboard variables to a dashboard, follow these steps:
 
 After you've added cross-dashboard variables to a dashboard, you can view its settings or remove it by way of the dashboard sidebar.
 To edit the variable, go to **Dashboards > Variables**.
+
+## Find and promote shared variables
+
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](https://grafana.com/docs/grafana-cloud/).
+
+If you already have many dashboards, the same variable is often defined separately in each one.
+The shared variables tool scans your dashboards, finds variables that are defined identically in more than one dashboard, and recommends promoting them to cross-dashboard variables.
+When you promote a variable, the tool creates a cross-dashboard variable and updates the selected dashboards to reference it instead of their own copies.
+
+The tool remains useful after your initial migration.
+As people create new dashboards or copy variables between them, run the tool again to find new duplicates.
+
+Before you begin, ensure you have the following:
+
+- The Admin role.
+- Cross-dashboard variables enabled with the `grafana.dashboardGlobalVariables` feature flag.
+
+### How the tool groups variables
+
+The tool groups dashboard variables only when they match exactly, not when they're similar.
+For variables to be grouped, they must have the same name and the same definition.
+For query variables, the query must be identical, including any static options defined with it.
+
+The tool lists the 50 groups with the most impact, such as variables used in the largest number of dashboards.
+
+### Promote shared variables
+
+<!-- prettier-ignore-start -->
+
+To find and promote shared variables, follow these steps:
+
+1. Navigate to **Dashboards > Variables**.
+1. Click **Find shared variables**.
+
+   The tool scans every dashboard in your organization. On instances with many dashboards, the scan can take a few minutes.
+
+1. Review the recommended groups.
+1. For the group you want to promote, choose where to create the cross-dashboard variable:
+   - **Globally**: Available to all dashboards in the organization.
+   - **In a folder**: Available only to the dashboards in that folder.
+1. Select the dashboards that you want to update.
+1. Promote the variable.
+
+<!-- prettier-ignore-end -->
+
+If a matching cross-dashboard variable already exists, the tool doesn't create a duplicate.
+Instead, it updates the remaining dashboards to reference the existing variable, and the group shows as partly promoted until all of its dashboards reference it.
+
+By default, the tool skips the following dashboards:
+
+- **Read-only dashboards:** Dashboards with the **Editable** setting set to **Read-only** in the dashboard settings.
+- **Provisioned dashboards:** Dashboards managed by provisioning.
+
+### Revert a promotion
+
+Promoting a variable saves a new version of each updated dashboard.
+If a dashboard doesn't behave as expected after a promotion, restore its previous version from the dashboard version history.
+For more information, refer to [Manage dashboard version history](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/manage-version-history/).
