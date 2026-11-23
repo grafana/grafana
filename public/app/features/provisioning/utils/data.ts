@@ -1,6 +1,6 @@
 import {
   type ComGithubGrafanaGrafanaAppSdkResourceInlineSecureValue as InlineSecureValue,
-  type RepositoryCommitOptions as CommitOptions,
+  type RepositoryCommitOptions,
   type RepositorySpec,
 } from 'app/api/clients/provisioning/v0alpha1';
 
@@ -19,7 +19,7 @@ type TemplateOptions<TemplateKey extends TemplateFieldKey> = Partial<Record<Temp
 };
 
 // Commit options extend the shared template shape with signing fields.
-const buildCommitOptions = (data: RepositoryFormData): CommitOptions | undefined => {
+const buildCommitOptions = (data: RepositoryFormData): RepositoryCommitOptions | undefined => {
   const base = buildTemplateOptions(
     'singleResourceMessageTemplate',
     data.commit?.singleResourceMessageTemplate,
@@ -36,7 +36,7 @@ const buildCommitOptions = (data: RepositoryFormData): CommitOptions | undefined
     return undefined;
   }
 
-  const commit: CommitOptions = { ...base };
+  const commit: RepositoryCommitOptions = { ...base };
   if (authorName) {
     commit.authorName = authorName;
   }

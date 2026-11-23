@@ -1,4 +1,4 @@
-import { type JobResourceRef as ResourceRef } from 'app/api/clients/provisioning/v0alpha1';
+import { type JobResourceRef } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type FolderRow, type MigratableResource, resourceKey } from './hooks/useMigrationData';
 
@@ -14,7 +14,7 @@ export interface MigrationSelection {
   /** Folders + independently-ticked resources, for the "Migrate selected (N)" label. */
   items: number;
   /** The resource refs to send to the migrate job, each tagged with its kind. */
-  resources: ResourceRef[];
+  resources: JobResourceRef[];
 }
 
 /**
@@ -46,7 +46,7 @@ export function resolveSelection(
     }
   }
 
-  const resources: ResourceRef[] = [];
+  const resources: JobResourceRef[] = [];
   const seen = new Set<string>();
   const addResource = (key: string) => {
     if (seen.has(key)) {

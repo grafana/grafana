@@ -17,7 +17,7 @@ import {
   Text,
   useStyles2,
 } from '@grafana/ui';
-import { type JobResourceRef as ResourceRef, type Repository } from 'app/api/clients/provisioning/v0alpha1';
+import { type JobResourceRef, type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { JobStatus } from '../Job/JobStatus';
 import { BranchValidationError } from '../Shared/BranchValidationError';
@@ -66,7 +66,7 @@ interface MigrateDrawerProps {
    */
   selective: boolean;
   /** Resource refs to migrate in selective mode. The folders that contain them come along. */
-  resources?: ResourceRef[];
+  resources?: JobResourceRef[];
   /** Counts behind `resources`, used for the selective-mode summary copy. */
   selection?: { folders: number; resources: number };
 }

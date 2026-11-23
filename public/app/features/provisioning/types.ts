@@ -1,13 +1,13 @@
 import {
-  type ConnectionGitHubConfig as GitHubConnectionConfig,
-  type ConnectionGitHubEnterpriseConfig as GitHubEnterpriseConnectionConfig,
-  type RepositoryBitbucketRepositoryConfig as BitbucketRepositoryConfig,
-  type RepositoryBranchOptions as BranchOptions,
-  type RepositoryCommitOptions as CommitOptions,
-  type RepositoryGitHubRepositoryConfig as GitHubRepositoryConfig,
-  type RepositoryGitLabRepositoryConfig as GitLabRepositoryConfig,
-  type RepositoryGitRepositoryConfig as GitRepositoryConfig,
-  type RepositoryLocalRepositoryConfig as LocalRepositoryConfig,
+  type ConnectionGitHubConfig,
+  type ConnectionGitHubEnterpriseConfig,
+  type RepositoryBitbucketRepositoryConfig,
+  type RepositoryBranchOptions,
+  type RepositoryCommitOptions,
+  type RepositoryGitHubRepositoryConfig,
+  type RepositoryGitLabRepositoryConfig,
+  type RepositoryGitRepositoryConfig,
+  type RepositoryLocalRepositoryConfig,
   type RepositorySpec,
 } from '../../api/clients/provisioning/v0alpha1';
 
@@ -18,28 +18,28 @@ export type JobType = 'sync' | 'delete' | 'move' | 'fix' | 'releaseResources' | 
 // Repository type definition - extracted from API client
 export type RepoWorkflows = RepositorySpec['workflows'];
 
-// `branch` is omitted because the spec-level `branch` (BranchOptions: naming
-// template / enforcement) collides with the git config `branch` (the branch
-// name string). The branch name keeps the flat `branch` field below; the
-// BranchOptions live under `branchOptions`.
+// `branch` is omitted because the spec-level `branch` (RepositoryBranchOptions:
+// naming template / enforcement) collides with the git config `branch` (the
+// branch name string). The branch name keeps the flat `branch` field below; the
+// RepositoryBranchOptions live under `branchOptions`.
 export type RepositoryFormData = Omit<RepositorySpec, 'workflows' | 'branch' | RepositorySpec['type']> &
-  BitbucketRepositoryConfig &
-  GitRepositoryConfig &
-  GitHubRepositoryConfig &
-  GitLabRepositoryConfig &
-  LocalRepositoryConfig & {
+  RepositoryBitbucketRepositoryConfig &
+  RepositoryGitRepositoryConfig &
+  RepositoryGitHubRepositoryConfig &
+  RepositoryGitLabRepositoryConfig &
+  RepositoryLocalRepositoryConfig & {
     readOnly: boolean;
     prWorkflow: boolean;
     enablePushToConfiguredBranch: boolean;
     // top-level inline secure value
     token?: string;
-    signingMethod?: CommitOptions['signingMethod'] | '';
+    signingMethod?: RepositoryCommitOptions['signingMethod'] | '';
     commitSigningKey?: string;
     smimeCertificate?: string;
     // GitHub App connection name (when using app-based auth instead of PAT)
     connectionName?: string;
     // Spec-level branch naming options (maps to RepositorySpec.branch)
-    branchOptions?: BranchOptions;
+    branchOptions?: RepositoryBranchOptions;
   };
 
 // Base fields shared by all connection providers (excludes the `type` discriminant).
@@ -57,13 +57,13 @@ type ConnectionFormDataBase = {
 };
 
 type GitHubConnectionFormData = ConnectionFormDataBase &
-  GitHubConnectionConfig & { type: 'github'; serverUrl?: string };
+  ConnectionGitHubConfig & { type: 'github'; serverUrl?: string };
 
 type GitHubEnterpriseConnectionFormData = ConnectionFormDataBase &
-  GitHubEnterpriseConnectionConfig & { type: 'githubEnterprise' };
+  ConnectionGitHubEnterpriseConfig & { type: 'githubEnterprise' };
 
 type OAuthConnectionFormData = ConnectionFormDataBase &
-  Partial<GitHubConnectionConfig> & { type: OAuthConnectionType; serverUrl?: string };
+  Partial<ConnectionGitHubConfig> & { type: OAuthConnectionType; serverUrl?: string };
 
 export type OAuthConnectionType =
   | 'githubOAuth'

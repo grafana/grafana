@@ -1,9 +1,9 @@
 import { type KindInfo } from '@grafana/runtime/unstable';
-import { type JobResourceRef as GeneratedResourceRef } from 'app/api/clients/provisioning/v0alpha1';
+import { type JobResourceRef } from 'app/api/clients/provisioning/v0alpha1';
 
 // Reuse the generated ResourceRef but require every field: a delete/move job needs a
 // fully-specified ref, whereas the generated fields are all optional.
-export type ResourceRef = Required<GeneratedResourceRef>;
+export type ResourceRef = Required<JobResourceRef>;
 
 // Pass the group that serves the resource. No API serves a collection kind's registry group.
 export function toResourceRef(kind: Pick<KindInfo, 'group' | 'kind'>, name: string): ResourceRef {

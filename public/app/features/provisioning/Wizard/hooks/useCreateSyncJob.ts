@@ -1,10 +1,7 @@
 import { useCallback } from 'react';
 
 import { t } from '@grafana/i18n';
-import {
-  type JobResourceRef as ResourceRef,
-  useCreateRepositoryJobsMutation,
-} from 'app/api/clients/provisioning/v0alpha1';
+import { type JobResourceRef, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 
 import { type StepStatusInfo, type Target } from '../types';
@@ -17,7 +14,7 @@ export interface UseCreateSyncJobParams {
 /** Options shared by the sync/migrate job hooks. */
 export interface SyncJobOptions {
   /** Dashboard refs to scope a selective migration to; empty means migrate every unmanaged resource. */
-  resources?: ResourceRef[];
+  resources?: JobResourceRef[];
   /** The repository's sync target, used to decide whether folder UIDs are regenerated on migrate. */
   syncTarget?: Target;
   /**
