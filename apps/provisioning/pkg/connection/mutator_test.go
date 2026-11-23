@@ -348,6 +348,46 @@ func TestAdmissionMutator_Mutate_NormalizesConditionsOnStatusPatch(t *testing.T)
 	}}, conn.Status.Conditions)
 }
 
+func TestAdmissionMutator_Mutate_ClearsZeroPointers(t *testing.T) {
+	t.Run("spec and status on create", func(t *testing.T) {
+		factory := NewMockFactory(t)
+		factory.EXPECT().Mutate(mock.Anything, mock.Anything).Return(nil)
+		conn := &provisioning.Connection{
+			ObjectMeta: metav1.ObjectMeta{Name: "test"},
+			Spec: provisioning.ConnectionSpec{
+				Type:        provisioning.ConnectionTypeGithub,
+				Description: new(""),
+				Url:         new(""),
+				Webhook:     &provisioning.ConnectionWebhookConfig{Disabled: new(false)},
+			},
+			Status: provisioning.ConnectionStatus{
+				Health: provisioning.ConnectionHealthStatus{Checked: new(int64(0))},
+			},
+		}
+
+		require.NoError(t, NewAdmissionMutator(factory).Mutate(t.Context(), newMutatorTestAttributes(conn, nil, admission.Create), nil))
+		assert.Nil(t, conn.Spec.Description)
+		assert.Nil(t, conn.Spec.Url)
+		assert.Equal(t, &provisioning.ConnectionWebhookConfig{}, conn.Spec.Webhook)
+		assert.Nil(t, conn.Status.Health.Checked)
+	})
+
+	t.Run("status on a pure status patch", func(t *testing.T) {
+		conn := &provisioning.Connection{
+			ObjectMeta: metav1.ObjectMeta{Name: "test"},
+			Spec:       provisioning.ConnectionSpec{Type: provisioning.ConnectionTypeGithub},
+			Status: provisioning.ConnectionStatus{
+				Token: provisioning.ConnectionTokenStatus{LastUpdated: new(int64(0)), Expiration: new(int64(5))},
+			},
+		}
+		old := conn.DeepCopy()
+
+		attr := newMutatorTestAttributesWithSubresource(conn, old, admission.Update, "status")
+		require.NoError(t, NewAdmissionMutator(NewMockFactory(t)).Mutate(t.Context(), attr, nil))
+		assert.Equal(t, provisioning.ConnectionTokenStatus{Expiration: new(int64(5))}, conn.Status.Token)
+	})
+}
+
 func TestAdmissionMutator_Mutate_RunsForBundledSpecChange(t *testing.T) {
 	old := &provisioning.Connection{
 		ObjectMeta: metav1.ObjectMeta{Name: "test"},

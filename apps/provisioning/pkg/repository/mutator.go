@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"reflect"
 	"strings"
 	"time"
 
@@ -14,6 +13,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	provisioningadmission "github.com/grafana/grafana/apps/provisioning/pkg/apis/admission"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/optional"
 )
 
 // AdmissionMutator handles mutation for Repository resources
@@ -44,7 +44,7 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 	if !ok {
 		return fmt.Errorf("expected repository configuration, got %T", obj)
 	}
-	clearZeroPointers(reflect.ValueOf(&r.Status).Elem())
+	optional.ClearZero(&r.Status)
 	r.Status.Conditions = provisioning.NormalizeConditions(r.Status.Conditions)
 
 	if a.GetSubresource() != "" && !provisioningadmission.SpecAndSecureChanged(a) {
@@ -87,34 +87,9 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 		}
 	}
 
-	ClearZeroOptionalFields(&r.Spec)
+	optional.ClearZero(&r.Spec)
 
 	return nil
-}
-
-// ClearZeroOptionalFields drops the optional fields of spec that are set to a zero value, as the
-// admission mutator does before a repository is stored.
-func ClearZeroOptionalFields(spec *provisioning.RepositorySpec) {
-	clearZeroPointers(reflect.ValueOf(spec).Elem())
-}
-
-// clearZeroPointers sets every pointer to a zero scalar in the struct v to nil, recursing into
-// nested structs. Optional spec and status fields are pointers, so without this a "", 0 or false would
-// be stored and echoed back, where omitempty on the old value fields dropped it.
-func clearZeroPointers(v reflect.Value) {
-	for i := 0; i < v.NumField(); i++ {
-		f := v.Field(i)
-		switch {
-		case !f.CanSet():
-		case f.Kind() == reflect.Struct:
-			clearZeroPointers(f)
-		case f.Kind() != reflect.Pointer || f.IsNil():
-		case f.Elem().Kind() == reflect.Struct:
-			clearZeroPointers(f.Elem())
-		case f.Elem().IsZero():
-			f.SetZero()
-		}
-	}
 }
 
 // CopySecureValues copies secure values from old to new repository if they are zero in the new one.

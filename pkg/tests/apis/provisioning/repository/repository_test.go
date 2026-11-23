@@ -26,6 +26,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/optional"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -103,7 +104,7 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 			// Marshal as real objects to ",omitempty" values are tested properly
 			expectedRepo := common.MustFromUnstructured[provisioning.Repository](t, input)
 			// The templates send some optional fields as false or "", which are stored as absent.
-			repository.ClearZeroOptionalFields(&expectedRepo.Spec)
+			optional.ClearZero(&expectedRepo.Spec)
 			returnedRepo := common.MustFromUnstructured[provisioning.Repository](t, output)
 			require.Equal(t, expectedRepo.Spec, returnedRepo.Spec)
 
