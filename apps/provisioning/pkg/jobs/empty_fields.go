@@ -12,11 +12,11 @@ func clearEmptyOptionalFields(job *provisioning.Job) {
 	spec := &job.Spec
 	clearIfEmpty(&spec.Repository)
 	clearIfEmpty(&spec.Message)
-	if o := spec.PullRequest; o != nil {
+	if o := spec.Pr; o != nil {
 		clearIfEmpty(&o.Ref)
-		clearIfEmpty(&o.PR)
+		clearIfEmpty(&o.Pr)
 		clearIfEmpty(&o.Hash)
-		clearIfEmpty(&o.URL)
+		clearIfEmpty(&o.Url)
 		clearIfEmpty(&o.ForkURL)
 	}
 	if o := spec.Push; o != nil {

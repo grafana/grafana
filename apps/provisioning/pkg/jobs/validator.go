@@ -61,7 +61,7 @@ func ValidateJob(job *provisioning.Job, supportedResources []provisioning.Suppor
 		}
 
 	case provisioning.JobActionPullRequest:
-		if job.Spec.PullRequest == nil {
+		if job.Spec.Pr == nil {
 			list = append(list, field.Required(field.NewPath("spec", "pr"), "pull request options required for pr action"))
 		}
 		// PullRequest options are mostly informational - no strict validation needed

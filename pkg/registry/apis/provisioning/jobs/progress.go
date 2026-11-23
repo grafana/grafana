@@ -445,7 +445,7 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 	}
 	jobStatus.Warnings = warnings
 
-	jobStatus.URLs = r.refURLs
+	jobStatus.Url = r.refURLs
 
 	tooManyErrors := r.maxErrors > 0 && r.errorCount >= r.maxErrors
 	finalMessage := r.finalMessage

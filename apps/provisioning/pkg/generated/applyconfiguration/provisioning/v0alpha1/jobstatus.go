@@ -29,7 +29,7 @@ type JobStatusApplyConfiguration struct {
 	// Summary of processed actions
 	Summary []JobResourceSummaryApplyConfiguration `json:"summary,omitempty"`
 	// URLs contains URLs for the reference branch or commit if applicable.
-	URLs *RepositoryURLsApplyConfiguration `json:"url,omitempty"`
+	Url *RepositoryURLsApplyConfiguration `json:"url,omitempty"`
 }
 
 // JobStatusApplyConfiguration constructs a declarative configuration of the JobStatus type for use with
@@ -119,10 +119,10 @@ func (b *JobStatusApplyConfiguration) WithSummary(values ...*JobResourceSummaryA
 	return b
 }
 
-// WithURLs sets the URLs field in the declarative configuration to the given value
+// WithUrl sets the Url field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the URLs field is set to the value of the last call.
-func (b *JobStatusApplyConfiguration) WithURLs(value *RepositoryURLsApplyConfiguration) *JobStatusApplyConfiguration {
-	b.URLs = value
+// If called multiple times, the Url field is set to the value of the last call.
+func (b *JobStatusApplyConfiguration) WithUrl(value *RepositoryURLsApplyConfiguration) *JobStatusApplyConfiguration {
+	b.Url = value
 	return b
 }

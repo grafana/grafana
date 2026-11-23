@@ -76,11 +76,11 @@ func TestLokiJobHistory_WriteJob(t *testing.T) {
 					Group: new("dashboard.grafana.app"),
 				}},
 			},
-			PullRequest: &provisioning.JobPullRequestJobOptions{
+			Pr: &provisioning.JobPullRequestJobOptions{
 				Ref:  new("feature-123"),
-				PR:   new(int32(123)),
+				Pr:   new(int32(123)),
 				Hash: new("abc123def456"),
-				URL:  new("https://github.com/org/repo/pull/123"),
+				Url:  new("https://github.com/org/repo/pull/123"),
 			},
 		},
 		Status: provisioning.JobStatus{
@@ -166,11 +166,11 @@ func TestLokiJobHistory_WriteJob(t *testing.T) {
 		assert.Equal(t, "/dest/", ptr.Deref(deserializedJob.Spec.Move.TargetPath))
 		require.Len(t, deserializedJob.Spec.Move.Resources, 1)
 		assert.Equal(t, "moved-dashboard", ptr.Deref(deserializedJob.Spec.Move.Resources[0].Name))
-		require.NotNil(t, deserializedJob.Spec.PullRequest)
-		assert.Equal(t, "feature-123", ptr.Deref(deserializedJob.Spec.PullRequest.Ref))
-		assert.Equal(t, 123, int(ptr.Deref(deserializedJob.Spec.PullRequest.PR)))
-		assert.Equal(t, "abc123def456", ptr.Deref(deserializedJob.Spec.PullRequest.Hash))
-		assert.Equal(t, "https://github.com/org/repo/pull/123", ptr.Deref(deserializedJob.Spec.PullRequest.URL))
+		require.NotNil(t, deserializedJob.Spec.Pr)
+		assert.Equal(t, "feature-123", ptr.Deref(deserializedJob.Spec.Pr.Ref))
+		assert.Equal(t, 123, int(ptr.Deref(deserializedJob.Spec.Pr.Pr)))
+		assert.Equal(t, "abc123def456", ptr.Deref(deserializedJob.Spec.Pr.Hash))
+		assert.Equal(t, "https://github.com/org/repo/pull/123", ptr.Deref(deserializedJob.Spec.Pr.Url))
 
 		// Verify status fields
 		assert.Equal(t, provisioning.JobStateSuccess, ptr.Deref(deserializedJob.Status.State))

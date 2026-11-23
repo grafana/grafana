@@ -1418,8 +1418,8 @@ func TestCalculateChanges(t *testing.T) {
 
 			pullRequest := provisioning.JobPullRequestJobOptions{
 				Ref: new("ref"),
-				PR:  new(int32(123)),
-				URL: new("http://github.com/pr/"),
+				Pr:  new(int32(123)),
+				Url: new("http://github.com/pr/"),
 			}
 
 			info, err := evaluator.Evaluate(context.Background(), reader, pullRequest, tt.changes, progress)

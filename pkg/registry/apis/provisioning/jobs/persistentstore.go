@@ -749,8 +749,8 @@ func generateJobName(job *provisioning.Job) {
 		job.Name = ptr.Deref(job.Spec.Repository) + "-sync"
 	case provisioning.JobActionPullRequest:
 		var pr int
-		if job.Spec.PullRequest != nil {
-			pr = int(ptr.Deref(job.Spec.PullRequest.PR))
+		if job.Spec.Pr != nil {
+			pr = int(ptr.Deref(job.Spec.Pr.Pr))
 		}
 		// There may be multiple pull requests at the same time. They need different names.
 		job.Name = fmt.Sprintf("%s-pr-%d", ptr.Deref(job.Spec.Repository), pr)
@@ -779,9 +779,9 @@ func mutateJobAction(job *provisioning.Job) error {
 		job.Spec.Action = provisioning.JobActionPush
 		kinds[provisioning.JobActionPush] = spec.Push
 	}
-	if spec.PullRequest != nil {
+	if spec.Pr != nil {
 		job.Spec.Action = provisioning.JobActionPullRequest
-		kinds[provisioning.JobActionPullRequest] = spec.PullRequest
+		kinds[provisioning.JobActionPullRequest] = spec.Pr
 	}
 	if len(kinds) > 1 {
 		return apierrors.NewBadRequest("multiple job types found")

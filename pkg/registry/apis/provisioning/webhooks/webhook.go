@@ -331,9 +331,9 @@ func pullRequestResponse(event repository.WebhookEvent) *provisioning.WebhookRes
 		Message: fmt.Sprintf("pull request: %s", event.Action),
 		Job: &provisioning.JobSpec{
 			Action: provisioning.JobActionPullRequest,
-			PullRequest: &provisioning.JobPullRequestJobOptions{
-				URL:     jobptr.NonZero(event.PRURL),
-				PR:      jobptr.NonZero(int32(event.PRNumber)),
+			Pr: &provisioning.JobPullRequestJobOptions{
+				Url:     jobptr.NonZero(event.PRURL),
+				Pr:      jobptr.NonZero(int32(event.PRNumber)),
 				Ref:     jobptr.NonZero(event.SourceRef),
 				Hash:    jobptr.NonZero(event.Hash),
 				IsFork:  event.IsFork,

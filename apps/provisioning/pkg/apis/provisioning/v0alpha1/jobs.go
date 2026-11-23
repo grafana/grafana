@@ -131,7 +131,7 @@ type JobSpec struct {
 	Message *string `json:"message,omitempty"`
 
 	// Pull request options
-	PullRequest *JobPullRequestJobOptions `json:"pr,omitempty"`
+	Pr *JobPullRequestJobOptions `json:"pr,omitempty"`
 
 	// Required when the action is `push`
 	Push *JobExportJobOptions `json:"push,omitempty"`
@@ -164,13 +164,13 @@ type JobPullRequestJobOptions struct {
 	Ref *string `json:"ref,omitempty"`
 
 	// Pull request number (when appropriate)
-	PR *int32 `json:"pr,omitempty"`
+	Pr *int32 `json:"pr,omitempty"`
 
 	// The specific commit hash that triggered this notice
 	Hash *string `json:"hash,omitempty"`
 
 	// URL to the originator (eg, PR URL)
-	URL *string `json:"url,omitempty"`
+	Url *string `json:"url,omitempty"`
 
 	// Whether the pull request's head repository differs from its base repository.
 	// Omitted when repository identities were unavailable, including older jobs.
@@ -379,7 +379,7 @@ type JobStatus struct {
 	Summary []JobResourceSummary `json:"summary,omitempty"`
 
 	// URLs contains URLs for the reference branch or commit if applicable.
-	URLs *RepositoryURLs `json:"url,omitempty"`
+	Url *RepositoryURLs `json:"url,omitempty"`
 }
 
 func (JobStatus) OpenAPIModelName() string {

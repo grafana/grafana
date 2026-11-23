@@ -25,7 +25,7 @@ type JobSpecApplyConfiguration struct {
 	// backwards compatibility, then to a built-in default.
 	Message *string `json:"message,omitempty"`
 	// Pull request options
-	PullRequest *JobPullRequestJobOptionsApplyConfiguration `json:"pr,omitempty"`
+	Pr *JobPullRequestJobOptionsApplyConfiguration `json:"pr,omitempty"`
 	// Required when the action is `push`
 	Push *JobExportJobOptionsApplyConfiguration `json:"push,omitempty"`
 	// Required when the action is `pull`
@@ -72,11 +72,11 @@ func (b *JobSpecApplyConfiguration) WithMessage(value string) *JobSpecApplyConfi
 	return b
 }
 
-// WithPullRequest sets the PullRequest field in the declarative configuration to the given value
+// WithPr sets the Pr field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the PullRequest field is set to the value of the last call.
-func (b *JobSpecApplyConfiguration) WithPullRequest(value *JobPullRequestJobOptionsApplyConfiguration) *JobSpecApplyConfiguration {
-	b.PullRequest = value
+// If called multiple times, the Pr field is set to the value of the last call.
+func (b *JobSpecApplyConfiguration) WithPr(value *JobPullRequestJobOptionsApplyConfiguration) *JobSpecApplyConfiguration {
+	b.Pr = value
 	return b
 }
 

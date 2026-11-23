@@ -143,7 +143,7 @@ func TestJobProgressRecorderSetRefURLs(t *testing.T) {
 
 	// Test that RefURLs are included in the final status
 	finalStatus := recorder.Complete(ctx, nil)
-	assert.Equal(t, expectedRefURLs, finalStatus.URLs)
+	assert.Equal(t, expectedRefURLs, finalStatus.Url)
 }
 
 func TestJobProgressRecorderSetRefURLsNil(t *testing.T) {
@@ -165,7 +165,7 @@ func TestJobProgressRecorderSetRefURLsNil(t *testing.T) {
 
 	// Test that nil RefURLs are included in the final status
 	finalStatus := recorder.Complete(ctx, nil)
-	assert.Nil(t, finalStatus.URLs)
+	assert.Nil(t, finalStatus.Url)
 }
 
 func TestJobProgressRecorderCompleteIncludesRefURLs(t *testing.T) {
@@ -187,8 +187,8 @@ func TestJobProgressRecorderCompleteIncludesRefURLs(t *testing.T) {
 	finalStatus := recorder.Complete(ctx, nil)
 
 	// Verify the final status includes RefURLs
-	require.NotNil(t, finalStatus.URLs)
-	assert.Equal(t, refURLs.SourceURL, finalStatus.URLs.SourceURL)
+	require.NotNil(t, finalStatus.Url)
+	assert.Equal(t, refURLs.SourceURL, finalStatus.Url.SourceURL)
 	assert.Equal(t, provisioning.JobStateSuccess, ptr.Deref(finalStatus.State))
 	assert.Equal(t, "completed successfully", ptr.Deref(finalStatus.Message))
 }

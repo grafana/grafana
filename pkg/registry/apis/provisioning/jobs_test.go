@@ -156,8 +156,8 @@ func TestPullRequestJobRejected(t *testing.T) {
 	t.Run("PullRequest action returns bad request", func(t *testing.T) {
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionPullRequest,
-			PullRequest: &provisioning.JobPullRequestJobOptions{
-				PR:  new(int32(123)),
+			Pr: &provisioning.JobPullRequestJobOptions{
+				Pr:  new(int32(123)),
 				Ref: new("test-ref"),
 			},
 		}

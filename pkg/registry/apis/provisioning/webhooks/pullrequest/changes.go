@@ -337,8 +337,8 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 
 		query := url.Values{}
 		query.Set("ref", info.Parsed.Info.Ref)
-		if ptr.Deref(opts.URL) != "" {
-			query.Set("pull_request_url", url.QueryEscape(ptr.Deref(opts.URL)))
+		if ptr.Deref(opts.Url) != "" {
+			query.Set("pull_request_url", url.QueryEscape(ptr.Deref(opts.Url)))
 		}
 		if orgID > 0 {
 			query.Set("orgId", strconv.FormatInt(orgID, 10))

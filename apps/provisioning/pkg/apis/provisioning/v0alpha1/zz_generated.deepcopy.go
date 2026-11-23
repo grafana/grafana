@@ -844,8 +844,8 @@ func (in *JobPullRequestJobOptions) DeepCopyInto(out *JobPullRequestJobOptions) 
 		*out = new(string)
 		**out = **in
 	}
-	if in.PR != nil {
-		in, out := &in.PR, &out.PR
+	if in.Pr != nil {
+		in, out := &in.Pr, &out.Pr
 		*out = new(int32)
 		**out = **in
 	}
@@ -854,8 +854,8 @@ func (in *JobPullRequestJobOptions) DeepCopyInto(out *JobPullRequestJobOptions) 
 		*out = new(string)
 		**out = **in
 	}
-	if in.URL != nil {
-		in, out := &in.URL, &out.URL
+	if in.Url != nil {
+		in, out := &in.Url, &out.Url
 		*out = new(string)
 		**out = **in
 	}
@@ -1007,8 +1007,8 @@ func (in *JobSpec) DeepCopyInto(out *JobSpec) {
 		*out = new(string)
 		**out = **in
 	}
-	if in.PullRequest != nil {
-		in, out := &in.PullRequest, &out.PullRequest
+	if in.Pr != nil {
+		in, out := &in.Pr, &out.Pr
 		*out = new(JobPullRequestJobOptions)
 		(*in).DeepCopyInto(*out)
 	}
@@ -1110,8 +1110,8 @@ func (in *JobStatus) DeepCopyInto(out *JobStatus) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
-	if in.URLs != nil {
-		in, out := &in.URLs, &out.URLs
+	if in.Url != nil {
+		in, out := &in.Url, &out.Url
 		*out = new(RepositoryURLs)
 		**out = **in
 	}

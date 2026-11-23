@@ -70,7 +70,7 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	job provisioning.Job,
 	progress jobs.JobProgressRecorder,
 ) (processErr error) {
-	opts := job.Spec.PullRequest
+	opts := job.Spec.Pr
 	startTime := time.Now()
 	outcome := utils.ErrorOutcome
 	defer func() {
@@ -92,7 +92,7 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 		span.End()
 	}()
 	span.SetAttributes(
-		attribute.Int("pr.number", int(ptr.Deref(opts.PR))),
+		attribute.Int("pr.number", int(ptr.Deref(opts.Pr))),
 		attribute.String("pr.ref", ptr.Deref(opts.Ref)),
 		attribute.String("pr.hash", ptr.Deref(opts.Hash)),
 	)
@@ -119,7 +119,7 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 
 	if opts.IsFork != nil && *opts.IsFork {
 		logger.Info("skipping fork pull request preview")
-		if err := c.commenter.Comment(ctx, prRepo, int(ptr.Deref(opts.PR)), changeInfo{UnsupportedFork: true}); err != nil {
+		if err := c.commenter.Comment(ctx, prRepo, int(ptr.Deref(opts.Pr)), changeInfo{UnsupportedFork: true}); err != nil {
 			c.metrics.recordCommentPosted(utils.ErrorOutcome)
 			return fmt.Errorf("comment pull request: %w", err)
 		}
@@ -169,7 +169,7 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 		defer cancel()
 	}
 
-	if err := c.commenter.Comment(commentCtx, prRepo, int(ptr.Deref(opts.PR)), changeInfo); err != nil {
+	if err := c.commenter.Comment(commentCtx, prRepo, int(ptr.Deref(opts.Pr)), changeInfo); err != nil {
 		c.metrics.recordCommentPosted(utils.ErrorOutcome)
 		return fmt.Errorf("comment pull request: %w", err)
 	}

@@ -541,8 +541,8 @@ func TestValidateJob(t *testing.T) {
 				Spec: provisioning.JobSpec{
 					Action:     provisioning.JobActionPullRequest,
 					Repository: new("test-repo"),
-					PullRequest: &provisioning.JobPullRequestJobOptions{
-						PR:  new(int32(123)),
+					Pr: &provisioning.JobPullRequestJobOptions{
+						Pr:  new(int32(123)),
 						Ref: new("refs/pull/123/head"),
 					},
 				},

@@ -10,11 +10,11 @@ type JobPullRequestJobOptionsApplyConfiguration struct {
 	// The branch of commit hash
 	Ref *string `json:"ref,omitempty"`
 	// Pull request number (when appropriate)
-	PR *int32 `json:"pr,omitempty"`
+	Pr *int32 `json:"pr,omitempty"`
 	// The specific commit hash that triggered this notice
 	Hash *string `json:"hash,omitempty"`
 	// URL to the originator (eg, PR URL)
-	URL *string `json:"url,omitempty"`
+	Url *string `json:"url,omitempty"`
 	// Whether the pull request's head repository differs from its base repository.
 	// Omitted when repository identities were unavailable, including older jobs.
 	IsFork *bool `json:"isFork,omitempty"`
@@ -36,11 +36,11 @@ func (b *JobPullRequestJobOptionsApplyConfiguration) WithRef(value string) *JobP
 	return b
 }
 
-// WithPR sets the PR field in the declarative configuration to the given value
+// WithPr sets the Pr field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the PR field is set to the value of the last call.
-func (b *JobPullRequestJobOptionsApplyConfiguration) WithPR(value int32) *JobPullRequestJobOptionsApplyConfiguration {
-	b.PR = &value
+// If called multiple times, the Pr field is set to the value of the last call.
+func (b *JobPullRequestJobOptionsApplyConfiguration) WithPr(value int32) *JobPullRequestJobOptionsApplyConfiguration {
+	b.Pr = &value
 	return b
 }
 
@@ -52,11 +52,11 @@ func (b *JobPullRequestJobOptionsApplyConfiguration) WithHash(value string) *Job
 	return b
 }
 
-// WithURL sets the URL field in the declarative configuration to the given value
+// WithUrl sets the Url field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the URL field is set to the value of the last call.
-func (b *JobPullRequestJobOptionsApplyConfiguration) WithURL(value string) *JobPullRequestJobOptionsApplyConfiguration {
-	b.URL = &value
+// If called multiple times, the Url field is set to the value of the last call.
+func (b *JobPullRequestJobOptionsApplyConfiguration) WithUrl(value string) *JobPullRequestJobOptionsApplyConfiguration {
+	b.Url = &value
 	return b
 }
 
