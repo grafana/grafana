@@ -99,6 +99,7 @@ export const PlaylistEditPage = () => {
           resource={provisionedPlaylist}
           title={provisionedPlaylist.spec?.title ?? ''}
           action="update"
+          redirectUrl={PLAYLISTS_URL}
           onDismiss={() => setProvisionedPlaylist(undefined)}
         />
       )}

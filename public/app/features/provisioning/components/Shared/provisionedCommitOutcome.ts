@@ -6,7 +6,6 @@ import { type RepoType } from 'app/features/provisioning/Wizard/types';
 import { COMMIT_OUTCOME_STORAGE_KEY } from '../../constants';
 import { isValidRepoType } from '../../guards';
 import { appendPullRequestTitleParam } from '../../utils/pullRequestTitle';
-import { isResourceKindKey, type ResourceKindKey } from '../../utils/resourceKinds';
 
 const COMMIT_ACTIONS = ['create', 'update', 'delete'] as const;
 
@@ -21,7 +20,6 @@ export interface ProvisionedCommitOutcome {
   message?: string;
   sourceUrl?: string;
   prUrl?: string;
-  filePath?: string;
   pendingSync?: boolean;
 }
 
@@ -32,10 +30,9 @@ export function buildCommitOutcome(args: {
   message?: string;
   prTitle?: string;
   repository?: RepositoryView;
-  filePath?: string;
   pendingSync?: boolean;
 }): ProvisionedCommitOutcome {
-  const { action, ref, urls, message, prTitle, repository, filePath, pendingSync } = args;
+  const { action, ref, urls, message, prTitle, repository, pendingSync } = args;
   return {
     action,
     branch: ref,
@@ -45,7 +42,6 @@ export function buildCommitOutcome(args: {
     message,
     sourceUrl: action === 'delete' ? undefined : urls?.sourceURL,
     prUrl: appendPullRequestTitleParam(urls?.newPullRequestURL, repository?.type, prTitle),
-    filePath,
     pendingSync,
   };
 }
@@ -56,16 +52,16 @@ export function isDirectCommit({ branch, configuredBranch }: ProvisionedCommitOu
 
 export interface StoredCommitOutcome {
   outcome: ProvisionedCommitOutcome;
-  kindKey?: ResourceKindKey;
-  resourceName?: string;
+  kindLabel: string;
+  redirectUrl?: string;
 }
 
-export function storeCommitOutcome({ outcome, kindKey, resourceName }: StoredCommitOutcome) {
+export function storeCommitOutcome({ outcome, kindLabel, redirectUrl }: StoredCommitOutcome) {
   const path = locationService.getLocation().pathname;
   try {
     window.sessionStorage.setItem(
       COMMIT_OUTCOME_STORAGE_KEY,
-      JSON.stringify({ ...outcome, kindKey, resourceName, path })
+      JSON.stringify({ ...outcome, kindLabel, redirectUrl, path })
     );
   } catch {}
 }
@@ -100,10 +96,14 @@ export function parseStoredCommitOutcome(raw: string, pathname: string): StoredC
     return undefined;
   }
   const repoType = text('repoType');
-  const kindKey = text('kindKey');
+  const kindLabel = text('kindLabel');
+  if (!kindLabel) {
+    return undefined;
+  }
+  const redirectUrl = text('redirectUrl');
   return {
-    kindKey: kindKey && isResourceKindKey(kindKey) ? kindKey : undefined,
-    resourceName: text('resourceName'),
+    kindLabel,
+    redirectUrl: redirectUrl?.startsWith('/') ? redirectUrl : undefined,
     outcome: {
       action,
       branch: text('branch'),
@@ -113,7 +113,6 @@ export function parseStoredCommitOutcome(raw: string, pathname: string): StoredC
       message: text('message'),
       sourceUrl: url('sourceUrl'),
       prUrl: url('prUrl'),
-      filePath: text('filePath'),
       pendingSync: Reflect.get(record, 'pendingSync') === true,
     },
   };
