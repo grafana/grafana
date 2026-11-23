@@ -1,7 +1,12 @@
+import { textUtil } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { type RepositoryUrLs, type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { type RepoType } from 'app/features/provisioning/Wizard/types';
 
+import { COMMIT_OUTCOME_PARAM } from '../../constants';
+import { isValidRepoType } from '../../guards';
 import { appendPullRequestTitleParam } from '../../utils/pullRequestTitle';
+import { isResourceKindKey, type ResourceKindKey } from '../../utils/resourceKinds';
 
 import { type CommitAction } from './ProvisionedCommitSuccess';
 
@@ -71,4 +76,63 @@ export function buildCommitOutcome({
 /** Whether the commit went straight to the configured branch, so it is live in Grafana already. */
 export function isDirectCommit({ branch, configuredBranch }: ProvisionedCommitOutcome): boolean {
   return !branch || branch === configuredBranch;
+}
+
+export interface CommitOutcomeParam {
+  outcome: ProvisionedCommitOutcome;
+  kindKey?: ResourceKindKey;
+  resourceName?: string;
+}
+
+const COMMIT_ACTIONS: CommitAction[] = ['create', 'update', 'delete', 'move'];
+
+export function setCommitOutcomeParam({ outcome, kindKey, resourceName }: CommitOutcomeParam) {
+  locationService.partial({ [COMMIT_OUTCOME_PARAM]: JSON.stringify({ ...outcome, kindKey, resourceName }) }, true);
+}
+
+export function clearCommitOutcomeParam() {
+  locationService.partial({ [COMMIT_OUTCOME_PARAM]: null }, true);
+}
+
+export function parseCommitOutcomeParam(raw: string): CommitOutcomeParam | undefined {
+  let value: unknown;
+  try {
+    value = JSON.parse(raw);
+  } catch {
+    return undefined;
+  }
+  if (typeof value !== 'object' || value === null) {
+    return undefined;
+  }
+  const record: object = value;
+  const text = (key: string) => {
+    const field = Reflect.get(record, key);
+    return typeof field === 'string' ? field : undefined;
+  };
+  const url = (key: string) => {
+    const field = text(key);
+    return field ? textUtil.sanitizeUrl(field) : undefined;
+  };
+  const action = COMMIT_ACTIONS.find((a) => a === text('action'));
+  if (!action) {
+    return undefined;
+  }
+  const repoType = text('repoType');
+  const kindKey = text('kindKey');
+  const count = Reflect.get(record, 'count');
+  return {
+    kindKey: kindKey && isResourceKindKey(kindKey) ? kindKey : undefined,
+    resourceName: text('resourceName'),
+    outcome: {
+      action,
+      branch: text('branch'),
+      configuredBranch: text('configuredBranch'),
+      repoType: isValidRepoType(repoType) ? repoType : undefined,
+      repoUrl: url('repoUrl'),
+      message: text('message'),
+      sourceUrl: url('sourceUrl'),
+      prUrl: url('prUrl'),
+      count: typeof count === 'number' ? count : undefined,
+    },
+  };
 }
