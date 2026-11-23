@@ -176,6 +176,23 @@ export function HealthFilter({
   );
 }
 
+export function PausedFilter({
+  paused,
+  onChange,
+}: {
+  paused: 'true' | undefined;
+  onChange: (paused: 'true' | undefined) => void;
+}) {
+  return (
+    <ChoiceFilter
+      label={t('alerting.gma-rule-list.sidebar.paused', 'Paused')}
+      value={paused}
+      onChange={onChange}
+      options={[{ label: t('alerting.gma-rule-list.sidebar.paused-true', 'Paused'), value: 'true' }]}
+    />
+  );
+}
+
 export function PluginRulesFilter({ hide, onChange }: { hide: boolean; onChange: (hide: boolean) => void }) {
   const labelId = useId();
   return (

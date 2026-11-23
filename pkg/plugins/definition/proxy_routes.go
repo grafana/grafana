@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -16,36 +17,25 @@ import (
 )
 
 func proxyTargetOf(route *plugins.Route) routes.ProxyTarget {
-	target := routes.ProxyTarget{
+	return routes.ProxyTarget{
 		ReqRole:      route.ReqRole,
 		ReqAction:    route.ReqAction,
 		URL:          route.URL,
+		URLParams:    slices.Clone(route.URLParams),
+		Headers:      slices.Clone(route.Headers),
 		AuthType:     route.AuthType,
-		TokenAuth:    proxyTokenAuthOf(route.TokenAuth),
-		JwtTokenAuth: proxyTokenAuthOf(route.JwtTokenAuth),
+		TokenAuth:    cloneTokenAuth(route.TokenAuth),
+		JwtTokenAuth: cloneTokenAuth(route.JwtTokenAuth),
 		Body:         route.Body,
 	}
-	for _, p := range route.URLParams {
-		target.URLParams = append(target.URLParams, routes.ProxyURLParam{Name: p.Name, Content: p.Content})
-	}
-	for _, h := range route.Headers {
-		target.Headers = append(target.Headers, routes.ProxyHeader{Name: h.Name, Content: h.Content})
-	}
-	return target
 }
 
-func proxyTokenAuthOf(auth *plugins.JWTTokenAuth) *routes.ProxyTokenAuth {
+func cloneTokenAuth(auth *routes.ProxyTokenAuth) *routes.ProxyTokenAuth {
 	if auth == nil {
 		return nil
 	}
-	return &routes.ProxyTokenAuth{URL: auth.Url, Scopes: auth.Scopes, Params: auth.Params}
-}
-
-func routeTokenAuthOf(auth *routes.ProxyTokenAuth) *plugins.JWTTokenAuth {
-	if auth == nil {
-		return nil
-	}
-	return &plugins.JWTTokenAuth{Url: auth.URL, Scopes: auth.Scopes, Params: auth.Params}
+	clone := *auth
+	return &clone
 }
 
 // proxyMethods are the methods a route can name.
@@ -230,16 +220,12 @@ func ProxyRouteFromOperation(specPath, method string, op *spec3.Operation) (*plu
 		ReqRole:      target.ReqRole,
 		ReqAction:    target.ReqAction,
 		URL:          target.URL,
+		URLParams:    slices.Clone(target.URLParams),
+		Headers:      slices.Clone(target.Headers),
 		AuthType:     target.AuthType,
-		TokenAuth:    routeTokenAuthOf(target.TokenAuth),
-		JwtTokenAuth: routeTokenAuthOf(target.JwtTokenAuth),
+		TokenAuth:    cloneTokenAuth(target.TokenAuth),
+		JwtTokenAuth: cloneTokenAuth(target.JwtTokenAuth),
 		Body:         target.Body,
-	}
-	for _, p := range target.URLParams {
-		route.URLParams = append(route.URLParams, plugins.URLParam{Name: p.Name, Content: p.Content})
-	}
-	for _, h := range target.Headers {
-		route.Headers = append(route.Headers, plugins.Header{Name: h.Name, Content: h.Content})
 	}
 	return route, true, nil
 }

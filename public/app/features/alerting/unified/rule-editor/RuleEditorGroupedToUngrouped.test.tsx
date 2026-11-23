@@ -1,7 +1,9 @@
 import { HttpResponse } from 'msw';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
-import { screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
+import { screen, waitFor } from 'test/test-utils';
 
+import { FlagKeys } from '@grafana/runtime/internal';
+import { testWithFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import {
   echoBodyResolver,
@@ -30,7 +32,7 @@ const FOLDER_UID = grafanaRulerRule.grafana_alert.namespace_uid; // 'uuid020c61e
 const ORIGINAL_GROUP = grafanaRulerRule.grafana_alert.rule_group; // 'grafana-group-1'
 
 describe('RuleEditor - editing a grouped Grafana rule to ungrouped', () => {
-  testWithFeatureToggles({ enable: ['alerting.rulesAPIV2'] });
+  testWithFlags({ [FlagKeys.AlertingGmaOnlyListView]: true });
 
   const folder = {
     title: 'Folder A',
@@ -97,9 +99,6 @@ describe('RuleEditor - editing a grouped Grafana rule to ungrouped', () => {
 
     // wait for the existing rule to load into the form
     expect(await ui.inputs.name.find()).toHaveValue(grafanaRulerRule.grafana_alert.title);
-
-    // switch from group-based to ungrouped ("Set interval") mode
-    await user.click(await ui.inputs.evaluationMode.setInterval.find());
 
     // save the rule
     await user.click(ui.buttons.save.get());
