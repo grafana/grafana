@@ -21,6 +21,7 @@ export interface ProvisionedCommitOutcome {
   message?: string;
   sourceUrl?: string;
   prUrl?: string;
+  filePath?: string;
   pendingSync?: boolean;
 }
 
@@ -31,9 +32,10 @@ export function buildCommitOutcome(args: {
   message?: string;
   prTitle?: string;
   repository?: RepositoryView;
+  filePath?: string;
   pendingSync?: boolean;
 }): ProvisionedCommitOutcome {
-  const { action, ref, urls, message, prTitle, repository, pendingSync } = args;
+  const { action, ref, urls, message, prTitle, repository, filePath, pendingSync } = args;
   return {
     action,
     branch: ref,
@@ -41,8 +43,9 @@ export function buildCommitOutcome(args: {
     repoType: repository?.type,
     repoUrl: urls?.repositoryURL ?? repository?.url,
     message,
-    sourceUrl: urls?.sourceURL,
+    sourceUrl: action === 'delete' ? undefined : urls?.sourceURL,
     prUrl: appendPullRequestTitleParam(urls?.newPullRequestURL, repository?.type, prTitle),
+    filePath,
     pendingSync,
   };
 }
@@ -110,6 +113,7 @@ export function parseStoredCommitOutcome(raw: string, pathname: string): StoredC
       message: text('message'),
       sourceUrl: url('sourceUrl'),
       prUrl: url('prUrl'),
+      filePath: text('filePath'),
       pendingSync: Reflect.get(record, 'pendingSync') === true,
     },
   };
