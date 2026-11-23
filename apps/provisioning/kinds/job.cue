@@ -2,7 +2,8 @@ package repository
 
 // Job and HistoricJob share one schema: a HistoricJob is the persisted record of a finished Job.
 _jobSchema: {
-	#State: "pending" | "working" | "success" | "warning" | "error"
+	#Action: "pull" | "push" | "pr" | "migrate" | "delete" | "deleteResources" | "releaseResources" | "move" | "fixFolderMetadata" | "test" @cuetsy(kind="enum",memberNames="Pull|Push|PullRequest|Migrate|Delete|DeleteResources|ReleaseResources|Move|FixFolderMetadata|Test")
+	#State:  "pending" | "working" | "success" | "warning" | "error"
 	#ResourceRef: {
 		// Name is the name of the resource, such as a dashboard UID.
 		name?: string
@@ -130,7 +131,7 @@ _jobSchema: {
 		// running. A value of 0 uses the server default.
 		progressUpdates?: int32
 	}
-	#JobResourceSummary: {
+	#ResourceSummary: {
 		group?: string
 		kind?:  string
 		// The count (if known)
@@ -166,7 +167,7 @@ _jobSchema: {
 		newPullRequestURL?: string
 	}
 	spec: {
-		action: "pull" | "push" | "pr" | "migrate" | "delete" | "deleteResources" | "releaseResources" | "move" | "fixFolderMetadata" | "test"
+		action: #Action
 		// The the repository reference (for now also in labels)
 		// This value is required, but will be popuplated from the job making the request
 		repository?: string
@@ -207,7 +208,7 @@ _jobSchema: {
 		// number of progress updates a job went through remains observable after completion.
 		progressUpdates?: int64
 		// Summary of processed actions
-		summary?: [...#JobResourceSummary]
+		summary?: [...#ResourceSummary]
 		// URLs contains URLs for the reference branch or commit if applicable.
 		url?: #RepositoryURLs
 	}

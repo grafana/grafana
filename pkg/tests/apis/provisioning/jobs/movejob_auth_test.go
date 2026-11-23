@@ -43,7 +43,7 @@ func TestIntegrationProvisioning_MoveJobAuthorization(t *testing.T) {
 	t.Run("admin can create move job", func(t *testing.T) {
 		body := common.AsJSON(provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
-			Move: &provisioning.MoveJobOptions{
+			Move: &provisioning.JobMoveJobOptions{
 				Paths:      []string{"dashboard.json"},
 				TargetPath: "moved/",
 			},
@@ -68,7 +68,7 @@ func TestIntegrationProvisioning_MoveJobAuthorization(t *testing.T) {
 	t.Run("editor can create move job", func(t *testing.T) {
 		body := common.AsJSON(provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
-			Move: &provisioning.MoveJobOptions{
+			Move: &provisioning.JobMoveJobOptions{
 				Paths:      []string{"moved/dashboard.json"},
 				TargetPath: "editor-moved/",
 			},
@@ -93,7 +93,7 @@ func TestIntegrationProvisioning_MoveJobAuthorization(t *testing.T) {
 	t.Run("viewer cannot create move job", func(t *testing.T) {
 		body := common.AsJSON(provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
-			Move: &provisioning.MoveJobOptions{
+			Move: &provisioning.JobMoveJobOptions{
 				Paths:      []string{"editor-moved/dashboard.json"},
 				TargetPath: "other/",
 			},
@@ -120,7 +120,7 @@ func TestIntegrationProvisioning_MoveJobAuthorization(t *testing.T) {
 
 		body := common.AsJSON(provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
-			Move: &provisioning.MoveJobOptions{
+			Move: &provisioning.JobMoveJobOptions{
 				Paths:      []string{"folder-as-file-move.json"},
 				TargetPath: "dest/",
 			},
@@ -146,7 +146,7 @@ func TestIntegrationProvisioning_MoveJobAuthorization(t *testing.T) {
 
 		body := common.AsJSON(provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
-			Move: &provisioning.MoveJobOptions{
+			Move: &provisioning.JobMoveJobOptions{
 				Paths:      []string{"unsupported-resource-move.json"},
 				TargetPath: "dest/",
 			},

@@ -40,7 +40,7 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 
 		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{},
+			Pull:   &provisioning.JobSyncJobOptions{},
 		})
 		common.RequireJobWarning(t, job)
 		requireInvalidFolderMetadataWarning(t, job.Object, "myfolder", repository.FileActionUpdated)
@@ -70,7 +70,7 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 
 		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{},
+			Pull:   &provisioning.JobSyncJobOptions{},
 		})
 		common.RequireJobWarning(t, job)
 		requireInvalidFolderMetadataWarning(t, job.Object, "myfolder", repository.FileActionCreated)
@@ -108,7 +108,7 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 
 		initialWarningJob := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{},
+			Pull:   &provisioning.JobSyncJobOptions{},
 		})
 		common.RequireJobWarning(t, initialWarningJob)
 		requireInvalidFolderMetadataWarning(t, initialWarningJob.Object, "broken", repository.FileActionUpdated)
@@ -118,7 +118,7 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 
 		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{},
+			Pull:   &provisioning.JobSyncJobOptions{},
 		})
 		common.RequireJobWarning(t, job)
 		requireInvalidFolderMetadataWarning(t, job.Object, "broken", repository.FileActionUpdated)
@@ -148,7 +148,7 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 
 		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{},
+			Pull:   &provisioning.JobSyncJobOptions{},
 		})
 		common.RequireJobWarning(t, job)
 		requireInvalidFolderMetadataWarning(t, job.Object, "broken", repository.FileActionCreated)
@@ -174,7 +174,7 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 
 		initialJob := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{},
+			Pull:   &provisioning.JobSyncJobOptions{},
 		})
 		common.RequireJobWarning(t, initialJob)
 		requireInvalidFolderMetadataWarning(t, initialJob.Object, "broken", repository.FileActionCreated)
@@ -186,7 +186,7 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 
 		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{},
+			Pull:   &provisioning.JobSyncJobOptions{},
 		})
 		common.RequireJobWarning(t, job)
 		requireInvalidFolderMetadataWarning(t, job.Object, "moved", repository.FileActionCreated)

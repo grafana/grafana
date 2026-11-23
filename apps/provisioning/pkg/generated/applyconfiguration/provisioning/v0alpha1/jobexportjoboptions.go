@@ -4,9 +4,9 @@
 
 package v0alpha1
 
-// ExportJobOptionsApplyConfiguration represents a declarative configuration of the ExportJobOptions type for use
+// JobExportJobOptionsApplyConfiguration represents a declarative configuration of the JobExportJobOptions type for use
 // with apply.
-type ExportJobOptionsApplyConfiguration struct {
+type JobExportJobOptionsApplyConfiguration struct {
 	// Message to use when committing the changes in a single commit.
 	// Deprecated: set JobSpec.Message instead. This field is kept for
 	// backwards compatibility and is only used when JobSpec.Message is empty.
@@ -23,7 +23,7 @@ type ExportJobOptionsApplyConfiguration struct {
 	// is exported (legacy behavior). When non-empty, only the listed resources
 	// are exported — the folder hierarchy is still emitted so parent paths resolve.
 	// Currently only unmanaged Dashboards are supported.
-	Resources []ResourceRefApplyConfiguration `json:"resources,omitempty"`
+	Resources []JobResourceRefApplyConfiguration `json:"resources,omitempty"`
 	// GenerateNewFolderIDs writes a freshly generated identifier into each
 	// exported folder's metadata (_folder.json) instead of preserving the
 	// existing folder UID. Use this to produce a portable export that creates
@@ -32,16 +32,16 @@ type ExportJobOptionsApplyConfiguration struct {
 	GenerateNewFolderIDs *bool `json:"generateNewFolderIDs,omitempty"`
 }
 
-// ExportJobOptionsApplyConfiguration constructs a declarative configuration of the ExportJobOptions type for use with
+// JobExportJobOptionsApplyConfiguration constructs a declarative configuration of the JobExportJobOptions type for use with
 // apply.
-func ExportJobOptions() *ExportJobOptionsApplyConfiguration {
-	return &ExportJobOptionsApplyConfiguration{}
+func JobExportJobOptions() *JobExportJobOptionsApplyConfiguration {
+	return &JobExportJobOptionsApplyConfiguration{}
 }
 
 // WithMessage sets the Message field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Message field is set to the value of the last call.
-func (b *ExportJobOptionsApplyConfiguration) WithMessage(value string) *ExportJobOptionsApplyConfiguration {
+func (b *JobExportJobOptionsApplyConfiguration) WithMessage(value string) *JobExportJobOptionsApplyConfiguration {
 	b.Message = &value
 	return b
 }
@@ -49,7 +49,7 @@ func (b *ExportJobOptionsApplyConfiguration) WithMessage(value string) *ExportJo
 // WithFolder sets the Folder field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Folder field is set to the value of the last call.
-func (b *ExportJobOptionsApplyConfiguration) WithFolder(value string) *ExportJobOptionsApplyConfiguration {
+func (b *JobExportJobOptionsApplyConfiguration) WithFolder(value string) *JobExportJobOptionsApplyConfiguration {
 	b.Folder = &value
 	return b
 }
@@ -57,7 +57,7 @@ func (b *ExportJobOptionsApplyConfiguration) WithFolder(value string) *ExportJob
 // WithBranch sets the Branch field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Branch field is set to the value of the last call.
-func (b *ExportJobOptionsApplyConfiguration) WithBranch(value string) *ExportJobOptionsApplyConfiguration {
+func (b *JobExportJobOptionsApplyConfiguration) WithBranch(value string) *JobExportJobOptionsApplyConfiguration {
 	b.Branch = &value
 	return b
 }
@@ -65,7 +65,7 @@ func (b *ExportJobOptionsApplyConfiguration) WithBranch(value string) *ExportJob
 // WithPath sets the Path field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Path field is set to the value of the last call.
-func (b *ExportJobOptionsApplyConfiguration) WithPath(value string) *ExportJobOptionsApplyConfiguration {
+func (b *JobExportJobOptionsApplyConfiguration) WithPath(value string) *JobExportJobOptionsApplyConfiguration {
 	b.Path = &value
 	return b
 }
@@ -73,7 +73,7 @@ func (b *ExportJobOptionsApplyConfiguration) WithPath(value string) *ExportJobOp
 // WithResources adds the given value to the Resources field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the Resources field.
-func (b *ExportJobOptionsApplyConfiguration) WithResources(values ...*ResourceRefApplyConfiguration) *ExportJobOptionsApplyConfiguration {
+func (b *JobExportJobOptionsApplyConfiguration) WithResources(values ...*JobResourceRefApplyConfiguration) *JobExportJobOptionsApplyConfiguration {
 	for i := range values {
 		if values[i] == nil {
 			panic("nil value passed to WithResources")
@@ -86,7 +86,7 @@ func (b *ExportJobOptionsApplyConfiguration) WithResources(values ...*ResourceRe
 // WithGenerateNewFolderIDs sets the GenerateNewFolderIDs field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the GenerateNewFolderIDs field is set to the value of the last call.
-func (b *ExportJobOptionsApplyConfiguration) WithGenerateNewFolderIDs(value bool) *ExportJobOptionsApplyConfiguration {
+func (b *JobExportJobOptionsApplyConfiguration) WithGenerateNewFolderIDs(value bool) *JobExportJobOptionsApplyConfiguration {
 	b.GenerateNewFolderIDs = &value
 	return b
 }

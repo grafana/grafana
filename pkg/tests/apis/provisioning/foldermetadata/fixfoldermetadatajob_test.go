@@ -51,7 +51,7 @@ func TestIntegrationProvisioning_FixFolderMetadataJob(t *testing.T) {
 	t.Run("job with explicit empty ref completes successfully", func(t *testing.T) {
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionFixFolderMetadata,
-			FixFolderMetadata: &provisioning.FixFolderMetadataJobOptions{
+			FixFolderMetadata: &provisioning.JobFixFolderMetadataJobOptions{
 				Ref: "",
 			},
 		}
@@ -64,7 +64,7 @@ func TestIntegrationProvisioning_FixFolderMetadataJob(t *testing.T) {
 	t.Run("job with empty options uses default ref", func(t *testing.T) {
 		spec := provisioning.JobSpec{
 			Action:            provisioning.JobActionFixFolderMetadata,
-			FixFolderMetadata: &provisioning.FixFolderMetadataJobOptions{},
+			FixFolderMetadata: &provisioning.JobFixFolderMetadataJobOptions{},
 		}
 
 		job := helper.TriggerJobAndWaitForComplete(t, repo, spec)

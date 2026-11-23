@@ -421,7 +421,7 @@ func (c *jobsConnector) newJobAuthorizer(ctx context.Context, repo repository.Re
 
 // authorizeResourceRefs fetches each referenced resource and checks that the user
 // has the given verb permission on it. Resources that no longer exist are skipped.
-func (c *jobsConnector) authorizeResourceRefs(ctx context.Context, authorizer resources.Authorizer, namespace string, refs []provisioning.ResourceRef, verb, action string) error {
+func (c *jobsConnector) authorizeResourceRefs(ctx context.Context, authorizer resources.Authorizer, namespace string, refs []provisioning.JobResourceRef, verb, action string) error {
 	if len(refs) == 0 {
 		return nil
 	}
@@ -571,7 +571,7 @@ func (c *jobsConnector) authorizeDeleteAllSupported(ctx context.Context, repo re
 }
 
 // authorizeDeleteJob checks delete permissions on targeted paths and resources.
-func (c *jobsConnector) authorizeDeleteJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, paths []string, resources []provisioning.ResourceRef) error {
+func (c *jobsConnector) authorizeDeleteJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, paths []string, resources []provisioning.JobResourceRef) error {
 	authorizer, err := c.newJobAuthorizer(ctx, repo, cfg)
 	if err != nil {
 		return err
@@ -587,7 +587,7 @@ func (c *jobsConnector) authorizeDeleteJob(ctx context.Context, repo repository.
 }
 
 // authorizeMoveJob checks update permission on sources and create permission on targets.
-func (c *jobsConnector) authorizeMoveJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, opts *provisioning.MoveJobOptions) error {
+func (c *jobsConnector) authorizeMoveJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, opts *provisioning.JobMoveJobOptions) error {
 	authorizer, err := c.newJobAuthorizer(ctx, repo, cfg)
 	if err != nil {
 		return err

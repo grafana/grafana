@@ -68,7 +68,7 @@ func TestIntegrationProvisioning_FullSync_InvalidResourceNames(t *testing.T) {
 
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{},
+		Pull:   &provisioning.JobSyncJobOptions{},
 	})
 	jobObj := &provisioning.Job{}
 	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))

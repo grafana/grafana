@@ -40,8 +40,8 @@ func TestIntegrationProvisioning_RepositoryDeletionBlockedByUnmanagedResources(t
 
 	helper.TriggerJobAndWaitForSuccess(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionMigrate,
-		Migrate: &provisioning.MigrateJobOptions{
-			Resources: []provisioning.ResourceRef{{
+		Migrate: &provisioning.JobMigrateJobOptions{
+			Resources: []provisioning.JobResourceRef{{
 				Name:  selected,
 				Kind:  "Dashboard",
 				Group: "dashboard.grafana.app",

@@ -29,7 +29,7 @@ func TestIntegrationProvisioning_JobConnectAuthorization(t *testing.T) {
 
 	body := common.AsJSON(provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{},
+		Pull:   &provisioning.JobSyncJobOptions{},
 	})
 
 	t.Run("editor and viewer are rejected and no job is queued", func(t *testing.T) {

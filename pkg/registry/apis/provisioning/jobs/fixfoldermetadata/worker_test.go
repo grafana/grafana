@@ -97,7 +97,7 @@ func makeTestJob(ref string) provisioning.Job {
 		Spec: provisioning.JobSpec{
 			Action:     provisioning.JobActionFixFolderMetadata,
 			Repository: "test-repo",
-			FixFolderMetadata: &provisioning.FixFolderMetadataJobOptions{
+			FixFolderMetadata: &provisioning.JobFixFolderMetadataJobOptions{
 				Ref: ref,
 			},
 		},

@@ -10,6 +10,9 @@ import (
 
 // JobSpecApplyConfiguration represents a declarative configuration of the JobSpec type for use
 // with apply.
+//
+// App SDK codegen emits a HistoricJob-prefixed copy of every Job type. Until then the
+// HistoricJob names point at the shared Job types.
 type JobSpecApplyConfiguration struct {
 	Action *provisioningv0alpha1.JobAction `json:"action,omitempty"`
 	// The the repository reference (for now also in labels)
@@ -22,21 +25,21 @@ type JobSpecApplyConfiguration struct {
 	// backwards compatibility, then to a built-in default.
 	Message *string `json:"message,omitempty"`
 	// Pull request options
-	PullRequest *PullRequestJobOptionsApplyConfiguration `json:"pr,omitempty"`
+	PullRequest *JobPullRequestJobOptionsApplyConfiguration `json:"pr,omitempty"`
 	// Required when the action is `push`
-	Push *ExportJobOptionsApplyConfiguration `json:"push,omitempty"`
+	Push *JobExportJobOptionsApplyConfiguration `json:"push,omitempty"`
 	// Required when the action is `pull`
-	Pull *SyncJobOptionsApplyConfiguration `json:"pull,omitempty"`
+	Pull *JobSyncJobOptionsApplyConfiguration `json:"pull,omitempty"`
 	// Required when the action is `migrate`
-	Migrate *MigrateJobOptionsApplyConfiguration `json:"migrate,omitempty"`
+	Migrate *JobMigrateJobOptionsApplyConfiguration `json:"migrate,omitempty"`
 	// Delete when the action is `delete`
-	Delete *DeleteJobOptionsApplyConfiguration `json:"delete,omitempty"`
+	Delete *JobDeleteJobOptionsApplyConfiguration `json:"delete,omitempty"`
 	// Move when the action is `move`
-	Move *MoveJobOptionsApplyConfiguration `json:"move,omitempty"`
+	Move *JobMoveJobOptionsApplyConfiguration `json:"move,omitempty"`
 	// Options when the action is `fix-folder-metadata`
-	FixFolderMetadata *FixFolderMetadataJobOptionsApplyConfiguration `json:"fixFolderMetadata,omitempty"`
+	FixFolderMetadata *JobFixFolderMetadataJobOptionsApplyConfiguration `json:"fixFolderMetadata,omitempty"`
 	// Required when the action is `test`
-	Test *TestJobOptionsApplyConfiguration `json:"test,omitempty"`
+	Test *JobTestJobOptionsApplyConfiguration `json:"test,omitempty"`
 }
 
 // JobSpecApplyConfiguration constructs a declarative configuration of the JobSpec type for use with
@@ -72,7 +75,7 @@ func (b *JobSpecApplyConfiguration) WithMessage(value string) *JobSpecApplyConfi
 // WithPullRequest sets the PullRequest field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the PullRequest field is set to the value of the last call.
-func (b *JobSpecApplyConfiguration) WithPullRequest(value *PullRequestJobOptionsApplyConfiguration) *JobSpecApplyConfiguration {
+func (b *JobSpecApplyConfiguration) WithPullRequest(value *JobPullRequestJobOptionsApplyConfiguration) *JobSpecApplyConfiguration {
 	b.PullRequest = value
 	return b
 }
@@ -80,7 +83,7 @@ func (b *JobSpecApplyConfiguration) WithPullRequest(value *PullRequestJobOptions
 // WithPush sets the Push field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Push field is set to the value of the last call.
-func (b *JobSpecApplyConfiguration) WithPush(value *ExportJobOptionsApplyConfiguration) *JobSpecApplyConfiguration {
+func (b *JobSpecApplyConfiguration) WithPush(value *JobExportJobOptionsApplyConfiguration) *JobSpecApplyConfiguration {
 	b.Push = value
 	return b
 }
@@ -88,7 +91,7 @@ func (b *JobSpecApplyConfiguration) WithPush(value *ExportJobOptionsApplyConfigu
 // WithPull sets the Pull field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Pull field is set to the value of the last call.
-func (b *JobSpecApplyConfiguration) WithPull(value *SyncJobOptionsApplyConfiguration) *JobSpecApplyConfiguration {
+func (b *JobSpecApplyConfiguration) WithPull(value *JobSyncJobOptionsApplyConfiguration) *JobSpecApplyConfiguration {
 	b.Pull = value
 	return b
 }
@@ -96,7 +99,7 @@ func (b *JobSpecApplyConfiguration) WithPull(value *SyncJobOptionsApplyConfigura
 // WithMigrate sets the Migrate field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Migrate field is set to the value of the last call.
-func (b *JobSpecApplyConfiguration) WithMigrate(value *MigrateJobOptionsApplyConfiguration) *JobSpecApplyConfiguration {
+func (b *JobSpecApplyConfiguration) WithMigrate(value *JobMigrateJobOptionsApplyConfiguration) *JobSpecApplyConfiguration {
 	b.Migrate = value
 	return b
 }
@@ -104,7 +107,7 @@ func (b *JobSpecApplyConfiguration) WithMigrate(value *MigrateJobOptionsApplyCon
 // WithDelete sets the Delete field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Delete field is set to the value of the last call.
-func (b *JobSpecApplyConfiguration) WithDelete(value *DeleteJobOptionsApplyConfiguration) *JobSpecApplyConfiguration {
+func (b *JobSpecApplyConfiguration) WithDelete(value *JobDeleteJobOptionsApplyConfiguration) *JobSpecApplyConfiguration {
 	b.Delete = value
 	return b
 }
@@ -112,7 +115,7 @@ func (b *JobSpecApplyConfiguration) WithDelete(value *DeleteJobOptionsApplyConfi
 // WithMove sets the Move field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Move field is set to the value of the last call.
-func (b *JobSpecApplyConfiguration) WithMove(value *MoveJobOptionsApplyConfiguration) *JobSpecApplyConfiguration {
+func (b *JobSpecApplyConfiguration) WithMove(value *JobMoveJobOptionsApplyConfiguration) *JobSpecApplyConfiguration {
 	b.Move = value
 	return b
 }
@@ -120,7 +123,7 @@ func (b *JobSpecApplyConfiguration) WithMove(value *MoveJobOptionsApplyConfigura
 // WithFixFolderMetadata sets the FixFolderMetadata field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the FixFolderMetadata field is set to the value of the last call.
-func (b *JobSpecApplyConfiguration) WithFixFolderMetadata(value *FixFolderMetadataJobOptionsApplyConfiguration) *JobSpecApplyConfiguration {
+func (b *JobSpecApplyConfiguration) WithFixFolderMetadata(value *JobFixFolderMetadataJobOptionsApplyConfiguration) *JobSpecApplyConfiguration {
 	b.FixFolderMetadata = value
 	return b
 }
@@ -128,7 +131,7 @@ func (b *JobSpecApplyConfiguration) WithFixFolderMetadata(value *FixFolderMetada
 // WithTest sets the Test field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Test field is set to the value of the last call.
-func (b *JobSpecApplyConfiguration) WithTest(value *TestJobOptionsApplyConfiguration) *JobSpecApplyConfiguration {
+func (b *JobSpecApplyConfiguration) WithTest(value *JobTestJobOptionsApplyConfiguration) *JobSpecApplyConfiguration {
 	b.Test = value
 	return b
 }

@@ -42,7 +42,7 @@ func TestIntegrationProvisioning_IncrementalSync_MissingFolderMetadata(t *testin
 		// Trigger incremental sync.
 		job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+			Pull:   &provisioning.JobSyncJobOptions{Incremental: true},
 		})
 		jobObj := &provisioning.Job{}
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
@@ -71,7 +71,7 @@ func TestIntegrationProvisioning_IncrementalSync_MissingFolderMetadata(t *testin
 		// Trigger incremental sync with no new commits — same ref.
 		job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+			Pull:   &provisioning.JobSyncJobOptions{Incremental: true},
 		})
 		jobObj := &provisioning.Job{}
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
@@ -252,7 +252,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 
 		job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+			Pull:   &provisioning.JobSyncJobOptions{Incremental: true},
 		})
 		jobObj := &provisioning.Job{}
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
@@ -930,7 +930,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 
 		helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+			Pull:   &provisioning.JobSyncJobOptions{Incremental: true},
 		})
 
 		folderAfter, err := helper.Folders.Resource.Get(t.Context(), newUID, metav1.GetOptions{})
@@ -979,7 +979,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 
 		helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+			Pull:   &provisioning.JobSyncJobOptions{Incremental: true},
 		})
 
 		_, err = helper.Folders.Resource.Get(t.Context(), parentNewUID, metav1.GetOptions{})
@@ -1023,7 +1023,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 
 		helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+			Pull:   &provisioning.JobSyncJobOptions{Incremental: true},
 		})
 
 		folderAfter, err := helper.Folders.Resource.Get(t.Context(), newUID, metav1.GetOptions{})
@@ -1165,7 +1165,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testi
 
 		helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+			Pull:   &provisioning.JobSyncJobOptions{Incremental: true},
 		})
 
 		// Old stable UID folder should be deleted
@@ -1212,7 +1212,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testi
 
 		helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+			Pull:   &provisioning.JobSyncJobOptions{Incremental: true},
 		})
 
 		// Old parent folder should be gone
@@ -1278,7 +1278,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testi
 
 		helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+			Pull:   &provisioning.JobSyncJobOptions{Incremental: true},
 		})
 
 		// Old stable UID folder should be deleted
@@ -1329,7 +1329,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testi
 
 		helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+			Pull:   &provisioning.JobSyncJobOptions{Incremental: true},
 		})
 
 		// Old folder should be gone
@@ -1737,7 +1737,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDConflict(t *testing.T)
 		// must not be silently bypassed.
 		job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+			Pull:   &provisioning.JobSyncJobOptions{Incremental: true},
 		})
 		jobObj := &provisioning.Job{}
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
@@ -1800,7 +1800,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDConflict(t *testing.T)
 		// produce a UID conflict warning.
 		job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+			Pull:   &provisioning.JobSyncJobOptions{Incremental: true},
 		})
 		jobObj := &provisioning.Job{}
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
@@ -2011,7 +2011,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataRenamedAway(t *te
 
 	helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{Incremental: true},
+		Pull:   &provisioning.JobSyncJobOptions{Incremental: true},
 	})
 
 	helper.RequireFoldersNotFound(t, stableUID)
@@ -2045,7 +2045,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataRenamedOntoUnsupp
 
 	helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{Incremental: true},
+		Pull:   &provisioning.JobSyncJobOptions{Incremental: true},
 	})
 
 	helper.RequireFoldersNotFound(t, stableUID)

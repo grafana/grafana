@@ -27,7 +27,7 @@ func (_m *MockEvaluator) EXPECT() *MockEvaluator_Expecter {
 }
 
 // Evaluate provides a mock function with given fields: ctx, repo, opts, changes, progress
-func (_m *MockEvaluator) Evaluate(ctx context.Context, repo repository.Reader, opts v0alpha1.PullRequestJobOptions, changes []repository.VersionedFileChange, progress jobs.JobProgressRecorder) (changeInfo, error) {
+func (_m *MockEvaluator) Evaluate(ctx context.Context, repo repository.Reader, opts v0alpha1.JobPullRequestJobOptions, changes []repository.VersionedFileChange, progress jobs.JobProgressRecorder) (changeInfo, error) {
 	ret := _m.Called(ctx, repo, opts, changes, progress)
 
 	if len(ret) == 0 {
@@ -36,16 +36,16 @@ func (_m *MockEvaluator) Evaluate(ctx context.Context, repo repository.Reader, o
 
 	var r0 changeInfo
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, repository.Reader, v0alpha1.PullRequestJobOptions, []repository.VersionedFileChange, jobs.JobProgressRecorder) (changeInfo, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, repository.Reader, v0alpha1.JobPullRequestJobOptions, []repository.VersionedFileChange, jobs.JobProgressRecorder) (changeInfo, error)); ok {
 		return rf(ctx, repo, opts, changes, progress)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, repository.Reader, v0alpha1.PullRequestJobOptions, []repository.VersionedFileChange, jobs.JobProgressRecorder) changeInfo); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, repository.Reader, v0alpha1.JobPullRequestJobOptions, []repository.VersionedFileChange, jobs.JobProgressRecorder) changeInfo); ok {
 		r0 = rf(ctx, repo, opts, changes, progress)
 	} else {
 		r0 = ret.Get(0).(changeInfo)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, repository.Reader, v0alpha1.PullRequestJobOptions, []repository.VersionedFileChange, jobs.JobProgressRecorder) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, repository.Reader, v0alpha1.JobPullRequestJobOptions, []repository.VersionedFileChange, jobs.JobProgressRecorder) error); ok {
 		r1 = rf(ctx, repo, opts, changes, progress)
 	} else {
 		r1 = ret.Error(1)
@@ -62,16 +62,16 @@ type MockEvaluator_Evaluate_Call struct {
 // Evaluate is a helper method to define mock.On call
 //   - ctx context.Context
 //   - repo repository.Reader
-//   - opts v0alpha1.PullRequestJobOptions
+//   - opts v0alpha1.JobPullRequestJobOptions
 //   - changes []repository.VersionedFileChange
 //   - progress jobs.JobProgressRecorder
 func (_e *MockEvaluator_Expecter) Evaluate(ctx interface{}, repo interface{}, opts interface{}, changes interface{}, progress interface{}) *MockEvaluator_Evaluate_Call {
 	return &MockEvaluator_Evaluate_Call{Call: _e.mock.On("Evaluate", ctx, repo, opts, changes, progress)}
 }
 
-func (_c *MockEvaluator_Evaluate_Call) Run(run func(ctx context.Context, repo repository.Reader, opts v0alpha1.PullRequestJobOptions, changes []repository.VersionedFileChange, progress jobs.JobProgressRecorder)) *MockEvaluator_Evaluate_Call {
+func (_c *MockEvaluator_Evaluate_Call) Run(run func(ctx context.Context, repo repository.Reader, opts v0alpha1.JobPullRequestJobOptions, changes []repository.VersionedFileChange, progress jobs.JobProgressRecorder)) *MockEvaluator_Evaluate_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(repository.Reader), args[2].(v0alpha1.PullRequestJobOptions), args[3].([]repository.VersionedFileChange), args[4].(jobs.JobProgressRecorder))
+		run(args[0].(context.Context), args[1].(repository.Reader), args[2].(v0alpha1.JobPullRequestJobOptions), args[3].([]repository.VersionedFileChange), args[4].(jobs.JobProgressRecorder))
 	})
 	return _c
 }
@@ -81,7 +81,7 @@ func (_c *MockEvaluator_Evaluate_Call) Return(_a0 changeInfo, _a1 error) *MockEv
 	return _c
 }
 
-func (_c *MockEvaluator_Evaluate_Call) RunAndReturn(run func(context.Context, repository.Reader, v0alpha1.PullRequestJobOptions, []repository.VersionedFileChange, jobs.JobProgressRecorder) (changeInfo, error)) *MockEvaluator_Evaluate_Call {
+func (_c *MockEvaluator_Evaluate_Call) RunAndReturn(run func(context.Context, repository.Reader, v0alpha1.JobPullRequestJobOptions, []repository.VersionedFileChange, jobs.JobProgressRecorder) (changeInfo, error)) *MockEvaluator_Evaluate_Call {
 	_c.Call.Return(run)
 	return _c
 }

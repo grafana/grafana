@@ -4,9 +4,9 @@
 
 package v0alpha1
 
-// ResourceRefApplyConfiguration represents a declarative configuration of the ResourceRef type for use
+// JobResourceRefApplyConfiguration represents a declarative configuration of the JobResourceRef type for use
 // with apply.
-type ResourceRefApplyConfiguration struct {
+type JobResourceRefApplyConfiguration struct {
 	// Name is the name of the resource, such as a dashboard UID.
 	Name *string `json:"name,omitempty"`
 	// Kind is the type of resource, for example, "Dashboard".
@@ -15,16 +15,16 @@ type ResourceRefApplyConfiguration struct {
 	Group *string `json:"group,omitempty"`
 }
 
-// ResourceRefApplyConfiguration constructs a declarative configuration of the ResourceRef type for use with
+// JobResourceRefApplyConfiguration constructs a declarative configuration of the JobResourceRef type for use with
 // apply.
-func ResourceRef() *ResourceRefApplyConfiguration {
-	return &ResourceRefApplyConfiguration{}
+func JobResourceRef() *JobResourceRefApplyConfiguration {
+	return &JobResourceRefApplyConfiguration{}
 }
 
 // WithName sets the Name field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Name field is set to the value of the last call.
-func (b *ResourceRefApplyConfiguration) WithName(value string) *ResourceRefApplyConfiguration {
+func (b *JobResourceRefApplyConfiguration) WithName(value string) *JobResourceRefApplyConfiguration {
 	b.Name = &value
 	return b
 }
@@ -32,7 +32,7 @@ func (b *ResourceRefApplyConfiguration) WithName(value string) *ResourceRefApply
 // WithKind sets the Kind field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Kind field is set to the value of the last call.
-func (b *ResourceRefApplyConfiguration) WithKind(value string) *ResourceRefApplyConfiguration {
+func (b *JobResourceRefApplyConfiguration) WithKind(value string) *JobResourceRefApplyConfiguration {
 	b.Kind = &value
 	return b
 }
@@ -40,7 +40,7 @@ func (b *ResourceRefApplyConfiguration) WithKind(value string) *ResourceRefApply
 // WithGroup sets the Group field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Group field is set to the value of the last call.
-func (b *ResourceRefApplyConfiguration) WithGroup(value string) *ResourceRefApplyConfiguration {
+func (b *JobResourceRefApplyConfiguration) WithGroup(value string) *JobResourceRefApplyConfiguration {
 	b.Group = &value
 	return b
 }

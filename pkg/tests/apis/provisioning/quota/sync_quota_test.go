@@ -147,7 +147,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		// Should fail due to quota (net change +1, final count 3 > limit 2)
 		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{},
+			Pull:   &provisioning.JobSyncJobOptions{},
 		})
 
 		// Verify job has warning state
@@ -203,7 +203,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		// Step 3: Trigger a full sync — the QuotaTracker starts at 2/3 so only 1 more creation is allowed
 		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{},
+			Pull:   &provisioning.JobSyncJobOptions{},
 		})
 
 		jobObj := &provisioning.Job{}
@@ -285,7 +285,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 
 		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{},
+			Pull:   &provisioning.JobSyncJobOptions{},
 		})
 
 		jobObj := &provisioning.Job{}

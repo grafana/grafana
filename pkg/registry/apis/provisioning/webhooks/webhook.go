@@ -317,7 +317,7 @@ func (s *webhookConnector) pushSyncResponse(event repository.WebhookEvent) *prov
 		Code: http.StatusAccepted,
 		Job: &provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull: &provisioning.SyncJobOptions{
+			Pull: &provisioning.JobSyncJobOptions{
 				Incremental: s.core.GetIncrementalPolicy().CanUseIncrementalSync(event.DeletedPaths, event.TotalChanges),
 			},
 		},
@@ -330,7 +330,7 @@ func pullRequestResponse(event repository.WebhookEvent) *provisioning.WebhookRes
 		Message: fmt.Sprintf("pull request: %s", event.Action),
 		Job: &provisioning.JobSpec{
 			Action: provisioning.JobActionPullRequest,
-			PullRequest: &provisioning.PullRequestJobOptions{
+			PullRequest: &provisioning.JobPullRequestJobOptions{
 				URL:     event.PRURL,
 				PR:      event.PRNumber,
 				Ref:     event.SourceRef,

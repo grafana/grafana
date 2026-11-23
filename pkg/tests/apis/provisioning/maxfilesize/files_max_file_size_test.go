@@ -165,7 +165,7 @@ func TestIntegrationProvisioning_MaxFileSize_Pull(t *testing.T) {
 
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{},
+		Pull:   &provisioning.JobSyncJobOptions{},
 	})
 
 	jobObj := &provisioning.Job{}

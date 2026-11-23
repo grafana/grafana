@@ -119,7 +119,7 @@ func toError(name string, list field.ErrorList) error {
 }
 
 // validateExportJobOptions validates export (push) job options
-func validateExportJobOptions(opts *provisioning.ExportJobOptions, supportedResources []provisioning.SupportedResource) field.ErrorList {
+func validateExportJobOptions(opts *provisioning.JobExportJobOptions, supportedResources []provisioning.SupportedResource) field.ErrorList {
 	list := field.ErrorList{}
 
 	// Validate branch name if specified
@@ -144,7 +144,7 @@ func validateExportJobOptions(opts *provisioning.ExportJobOptions, supportedReso
 }
 
 // validateMigrateJobOptions validates migrate job options
-func validateMigrateJobOptions(opts *provisioning.MigrateJobOptions, supportedResources []provisioning.SupportedResource) field.ErrorList {
+func validateMigrateJobOptions(opts *provisioning.JobMigrateJobOptions, supportedResources []provisioning.SupportedResource) field.ErrorList {
 	list := field.ErrorList{} //nolint:prealloc
 
 	// Validate branch name if specified. An empty branch means migrate directly
@@ -171,7 +171,7 @@ const MaxSelectiveExportResources = 100
 // validateExportResourceRefs enforces the rules shared by export-style resource
 // lists (push and migrate): name + kind are required, and each kind/group must
 // match an active entry in the configured supported-resource set.
-func validateExportResourceRefs(base *field.Path, refs []provisioning.ResourceRef, supportedResources []provisioning.SupportedResource) field.ErrorList {
+func validateExportResourceRefs(base *field.Path, refs []provisioning.JobResourceRef, supportedResources []provisioning.SupportedResource) field.ErrorList {
 	list := field.ErrorList{}
 
 	if len(refs) > MaxSelectiveExportResources {
@@ -271,7 +271,7 @@ func supportedKinds(supported []provisioning.SupportedResource) []string {
 }
 
 // validateDeleteJobOptions validates delete job options
-func validateDeleteJobOptions(opts *provisioning.DeleteJobOptions) field.ErrorList {
+func validateDeleteJobOptions(opts *provisioning.JobDeleteJobOptions) field.ErrorList {
 	list := field.ErrorList{}
 
 	// At least one of paths or resources must be specified
@@ -319,7 +319,7 @@ const MaxTestJobProgressUpdates = 1000
 const MinTestJobProgressInterval = 500 * time.Millisecond
 
 // validateTestJobOptions validates performance-testing job options
-func validateTestJobOptions(opts *provisioning.TestJobOptions) field.ErrorList {
+func validateTestJobOptions(opts *provisioning.JobTestJobOptions) field.ErrorList {
 	list := field.ErrorList{}
 
 	d := opts.Duration.Duration
@@ -345,7 +345,7 @@ func validateTestJobOptions(opts *provisioning.TestJobOptions) field.ErrorList {
 }
 
 // validateMoveJobOptions validates move job options
-func validateMoveJobOptions(opts *provisioning.MoveJobOptions) field.ErrorList {
+func validateMoveJobOptions(opts *provisioning.JobMoveJobOptions) field.ErrorList {
 	list := field.ErrorList{}
 
 	// At least one of paths or resources must be specified

@@ -25,7 +25,7 @@ type IncrementalSyncFn func(ctx context.Context, repo repository.Versioned, prev
 
 //go:generate mockery --name Syncer --structname MockSyncer --inpackage --filename syncer_mock.go --with-expecter
 type Syncer interface {
-	Sync(ctx context.Context, repo repository.ReaderWriter, options provisioning.SyncJobOptions, repositoryResources resources.RepositoryResources, clients resources.ResourceClients, progress jobs.JobProgressRecorder, quotaTracker quotas.QuotaTracker) (string, error)
+	Sync(ctx context.Context, repo repository.ReaderWriter, options provisioning.JobSyncJobOptions, repositoryResources resources.RepositoryResources, clients resources.ResourceClients, progress jobs.JobProgressRecorder, quotaTracker quotas.QuotaTracker) (string, error)
 }
 
 type syncer struct {
@@ -50,7 +50,7 @@ func NewSyncer(compare CompareFn, fullSync FullSyncFn, incrementalSync Increment
 	}
 }
 
-func (r *syncer) Sync(ctx context.Context, repo repository.ReaderWriter, options provisioning.SyncJobOptions, repositoryResources resources.RepositoryResources, clients resources.ResourceClients, progress jobs.JobProgressRecorder, quotaTracker quotas.QuotaTracker) (string, error) {
+func (r *syncer) Sync(ctx context.Context, repo repository.ReaderWriter, options provisioning.JobSyncJobOptions, repositoryResources resources.RepositoryResources, clients resources.ResourceClients, progress jobs.JobProgressRecorder, quotaTracker quotas.QuotaTracker) (string, error) {
 	cfg := repo.Config()
 	logger := logging.FromContext(ctx)
 

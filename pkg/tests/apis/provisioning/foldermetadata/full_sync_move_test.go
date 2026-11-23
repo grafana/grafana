@@ -958,7 +958,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_DuplicateUID(t 
 	// UID conflicts are ResourceValidationErrors and are treated as warnings, not hard errors.
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{},
+		Pull:   &provisioning.JobSyncJobOptions{},
 	})
 	require.Equal(t, string(provisioning.JobStateWarning), common.MustNestedString(job.Object, "status", "state"),
 		"sync must warn when a folder metadata file claims a UID already owned by another folder")

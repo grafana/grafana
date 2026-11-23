@@ -27,7 +27,7 @@ func TestIntegrationProvisioning_PullJobAuthorization(t *testing.T) {
 
 	body := common.AsJSON(provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{},
+		Pull:   &provisioning.JobSyncJobOptions{},
 	})
 
 	t.Run("admin can create pull job", func(t *testing.T) {

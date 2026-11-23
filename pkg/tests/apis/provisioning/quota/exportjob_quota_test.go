@@ -48,7 +48,7 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 		// Export should succeed: 2 dashboards + 0 folders = 2 resources <= quota of 10
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionPush,
-			Push: &provisioning.ExportJobOptions{
+			Push: &provisioning.JobExportJobOptions{
 				Folder: "",
 				Path:   "",
 			},
@@ -92,7 +92,7 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 
 		helper.TriggerJobAndWaitForSuccess(t, repo, provisioning.JobSpec{
 			Action: provisioning.JobActionPush,
-			Push: &provisioning.ExportJobOptions{
+			Push: &provisioning.JobExportJobOptions{
 				Folder: "",
 				Path:   "",
 			},
@@ -104,7 +104,7 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 
 		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{},
+			Pull:   &provisioning.JobSyncJobOptions{},
 		})
 
 		jobObj := &provisioning.Job{}
@@ -165,7 +165,7 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 
 		helper.TriggerJobAndWaitForSuccess(t, repo, provisioning.JobSpec{
 			Action: provisioning.JobActionPush,
-			Push: &provisioning.ExportJobOptions{
+			Push: &provisioning.JobExportJobOptions{
 				Folder: "",
 				Path:   "",
 			},
@@ -177,7 +177,7 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 
 		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{},
+			Pull:   &provisioning.JobSyncJobOptions{},
 		})
 
 		jobObj := &provisioning.Job{}

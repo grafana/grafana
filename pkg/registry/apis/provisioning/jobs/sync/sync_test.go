@@ -44,7 +44,7 @@ func (m *mockReaderWriter) Move(ctx context.Context, oldPath, newPath, ref, mess
 func TestSyncer_Sync(t *testing.T) {
 	tests := []struct {
 		name             string
-		options          provisioning.SyncJobOptions
+		options          provisioning.JobSyncJobOptions
 		setupMocks       func(*mockReaderWriter, *resources.MockRepositoryResources, *resources.MockResourceClients, *jobs.MockJobProgressRecorder, *MockCompareFn, *MockFullSyncFn, *MockIncrementalSyncFn)
 		expectedRef      string
 		expectedError    string
@@ -56,7 +56,7 @@ func TestSyncer_Sync(t *testing.T) {
 	}{
 		{
 			name: "successful full sync",
-			options: provisioning.SyncJobOptions{
+			options: provisioning.JobSyncJobOptions{
 				Incremental: false,
 			},
 			expectedVariance: "full",
@@ -78,7 +78,7 @@ func TestSyncer_Sync(t *testing.T) {
 		},
 		{
 			name: "successful incremental sync",
-			options: provisioning.SyncJobOptions{
+			options: provisioning.JobSyncJobOptions{
 				Incremental: true,
 			},
 			expectedVariance: "incremental",
@@ -102,7 +102,7 @@ func TestSyncer_Sync(t *testing.T) {
 		},
 		{
 			name: "quota exceeded defaults to full sync",
-			options: provisioning.SyncJobOptions{
+			options: provisioning.JobSyncJobOptions{
 				Incremental: true,
 			},
 			expectedVariance: "full",
@@ -135,7 +135,7 @@ func TestSyncer_Sync(t *testing.T) {
 		},
 		{
 			name: "latest ref error",
-			options: provisioning.SyncJobOptions{
+			options: provisioning.JobSyncJobOptions{
 				Incremental: true,
 			},
 			setupMocks: func(repo *mockReaderWriter, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn, fullSyncFn *MockFullSyncFn, incrementalSyncFn *MockIncrementalSyncFn) {
@@ -155,7 +155,7 @@ func TestSyncer_Sync(t *testing.T) {
 		},
 		{
 			name: "incremental sync error",
-			options: provisioning.SyncJobOptions{
+			options: provisioning.JobSyncJobOptions{
 				Incremental: true,
 			},
 			expectedVariance: "incremental",

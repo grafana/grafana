@@ -66,7 +66,7 @@ func TestIntegrationProvisioning_PullJobUnmanagedConflict(t *testing.T) {
 	// Step 3: Trigger a pull job — it should hit the unmanaged conflict.
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{},
+		Pull:   &provisioning.JobSyncJobOptions{},
 	})
 
 	// Step 4: Verify the job completed with a warning (not error, not success).
@@ -135,7 +135,7 @@ func TestIntegrationProvisioning_MigrateTakeover(t *testing.T) {
 	// Step 3: Trigger a migration job (export + sync).
 	spec := provisioning.JobSpec{
 		Action: provisioning.JobActionMigrate,
-		Migrate: &provisioning.MigrateJobOptions{
+		Migrate: &provisioning.JobMigrateJobOptions{
 			Message: "Migrate unmanaged dashboards",
 		},
 	}
@@ -218,7 +218,7 @@ func TestIntegrationProvisioning_SecondMigrateOnlyExportsNewDashboards(t *testin
 
 	helper.TriggerJobAndWaitForSuccess(t, repo1, provisioning.JobSpec{
 		Action:  provisioning.JobActionMigrate,
-		Migrate: &provisioning.MigrateJobOptions{Message: "initial migration"},
+		Migrate: &provisioning.JobMigrateJobOptions{Message: "initial migration"},
 	})
 
 	repo1FilesAfterMigrate, err := common.CountFilesInDir(repo1Path)
@@ -245,7 +245,7 @@ func TestIntegrationProvisioning_SecondMigrateOnlyExportsNewDashboards(t *testin
 	// Migrate repo2 — should only export dashboard3 (the unmanaged one).
 	helper.TriggerJobAndWaitForSuccess(t, repo2, provisioning.JobSpec{
 		Action:  provisioning.JobActionMigrate,
-		Migrate: &provisioning.MigrateJobOptions{Message: "second migration"},
+		Migrate: &provisioning.JobMigrateJobOptions{Message: "second migration"},
 	})
 
 	// Verify repo1 still has the same number of files (no new exports).

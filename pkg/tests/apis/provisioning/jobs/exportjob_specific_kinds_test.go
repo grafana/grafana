@@ -40,8 +40,8 @@ func TestIntegrationProvisioning_ExportSpecificResources_FolderExported(t *testi
 
 	spec := provisioning.JobSpec{
 		Action: provisioning.JobActionPush,
-		Push: &provisioning.ExportJobOptions{
-			Resources: []provisioning.ResourceRef{
+		Push: &provisioning.JobExportJobOptions{
+			Resources: []provisioning.JobResourceRef{
 				{Name: "test-v1", Kind: "Dashboard", Group: "dashboard.grafana.app"},
 				{Name: folderUID, Kind: "Folder", Group: "folder.grafana.app"},
 			},

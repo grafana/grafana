@@ -41,7 +41,7 @@ func (w *Worker) IsSupported(_ context.Context, job provisioning.Job) bool {
 func (w *Worker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) (processErr error) {
 	options := job.Spec.FixFolderMetadata
 	if options == nil {
-		options = &provisioning.FixFolderMetadataJobOptions{}
+		options = &provisioning.JobFixFolderMetadataJobOptions{}
 	}
 
 	logger := logging.FromContext(ctx).With("options", options)

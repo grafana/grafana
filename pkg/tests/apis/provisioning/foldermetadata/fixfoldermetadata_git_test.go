@@ -33,7 +33,7 @@ func TestIntegrationGit_FixFolderMetadata_Branch(t *testing.T) {
 	expectedCommitMsg := "fix folder metadata"
 	job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 		Action: provisioning.JobActionFixFolderMetadata,
-		FixFolderMetadata: &provisioning.FixFolderMetadataJobOptions{
+		FixFolderMetadata: &provisioning.JobFixFolderMetadataJobOptions{
 			Ref: featureBranch,
 		},
 		Message: expectedCommitMsg,
@@ -83,7 +83,7 @@ func TestIntegrationGit_FixFolderMetadata_ExistingBranch(t *testing.T) {
 	// Run the fix-folder-metadata job targeting the already-existing branch.
 	job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 		Action: provisioning.JobActionFixFolderMetadata,
-		FixFolderMetadata: &provisioning.FixFolderMetadataJobOptions{
+		FixFolderMetadata: &provisioning.JobFixFolderMetadataJobOptions{
 			Ref: featureBranch,
 		},
 	})
@@ -159,7 +159,7 @@ func TestIntegrationGit_FixFolderMetadata_ReadOnlyDefaultBranch_WithRef(t *testi
 
 	job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 		Action: provisioning.JobActionFixFolderMetadata,
-		FixFolderMetadata: &provisioning.FixFolderMetadataJobOptions{
+		FixFolderMetadata: &provisioning.JobFixFolderMetadataJobOptions{
 			Ref: featureBranch,
 		},
 	})

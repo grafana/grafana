@@ -30,7 +30,7 @@ func TestIntegrationProvisioning_JobWarningResult(t *testing.T) {
 	// Execute a pull job - this should process the malformed dashboard and result in warnings
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{},
+		Pull:   &provisioning.JobSyncJobOptions{},
 	})
 
 	// Verify the job completed with warning state (not error, not success)
@@ -84,7 +84,7 @@ func TestIntegrationProvisioning_JobWarningResult_MissingName(t *testing.T) {
 	// Execute a pull job - this should process the dashboard and result in a warning
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{},
+		Pull:   &provisioning.JobSyncJobOptions{},
 	})
 
 	// Verify the job completed with warning state
@@ -129,7 +129,7 @@ func TestIntegrationProvisioning_JobWarningResult_DashboardRefreshInterval(t *te
 	// Execute a pull job - this should process the dashboard and result in a warning
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{},
+		Pull:   &provisioning.JobSyncJobOptions{},
 	})
 
 	// Verify the job completed with warning state
@@ -179,7 +179,7 @@ func TestIntegrationProvisioning_JobWarningResult_DashboardSchemaInvalid(t *test
 	// error as a warning rather than a hard error.
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{},
+		Pull:   &provisioning.JobSyncJobOptions{},
 	})
 
 	jobObj := &provisioning.Job{}
@@ -238,7 +238,7 @@ func TestIntegrationProvisioning_JobWarningResult_DuplicateName(t *testing.T) {
 	// Execute a pull job - this should detect the duplicate name and produce a warning
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{},
+		Pull:   &provisioning.JobSyncJobOptions{},
 	})
 
 	// Verify the job completed with warning state

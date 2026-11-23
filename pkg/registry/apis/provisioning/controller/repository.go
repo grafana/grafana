@@ -699,7 +699,7 @@ func (rc *RepositoryController) determineSyncStrategy(
 	shouldResync bool,
 	isBlocked bool,
 	healthStatus provisioning.RepositoryHealthStatus,
-) *provisioning.SyncJobOptions {
+) *provisioning.JobSyncJobOptions {
 	ctx, span := rc.tracer.Start(ctx, "provisioning.controller.determine_sync_strategy", repoSpanAttrs(obj))
 	defer span.End()
 
@@ -723,26 +723,26 @@ func (rc *RepositoryController) determineSyncStrategy(
 		return nil
 	case healthStatus.Healthy != obj.Status.Health.Healthy:
 		logger.Info("full resync as the repository recovered from an unhealthy state")
-		return &provisioning.SyncJobOptions{}
+		return &provisioning.JobSyncJobOptions{}
 	case obj.Status.ObservedGeneration < 1:
 		logger.Info("full sync as this is the first sync for a new repository")
-		return &provisioning.SyncJobOptions{}
+		return &provisioning.JobSyncJobOptions{}
 	case obj.Generation != obj.Status.ObservedGeneration:
 		logger.Info("full sync as the repository spec changed",
 			"generation", obj.Generation, "observed_generation", obj.Status.ObservedGeneration)
-		return &provisioning.SyncJobOptions{}
+		return &provisioning.JobSyncJobOptions{}
 	case shouldResync:
 		// Continue to see if we could skip for other reasons
 		versioned, ok := repo.(repository.Versioned)
 		// If the repository is not versioned, we don't have a way to check for incremental updates
 		if !ok {
 			logger.Info("full sync on interval as the repository is not versioned and cannot be diffed incrementally")
-			return &provisioning.SyncJobOptions{}
+			return &provisioning.JobSyncJobOptions{}
 		}
 		latestRef, err := versioned.LatestRef(ctx)
 		if err != nil {
 			logger.Warn("falling back to incremental sync on interval as the latest ref could not be resolved to detect changes", "error", err)
-			return &provisioning.SyncJobOptions{Incremental: true}
+			return &provisioning.JobSyncJobOptions{Incremental: true}
 		}
 
 		// Only resync if the latest ref is different from the last synced ref
@@ -760,12 +760,12 @@ func (rc *RepositoryController) determineSyncStrategy(
 		if err != nil {
 			logger.Warn("falling back to full sync on interval as files could not be compared for an incremental sync",
 				"error", err, "from_ref", obj.Status.Sync.LastRef, "to_ref", latestRef)
-			return &provisioning.SyncJobOptions{}
+			return &provisioning.JobSyncJobOptions{}
 		}
 
 		logger.Info("sync on interval as the latest ref changed",
 			"incremental", incremental, "from_ref", obj.Status.Sync.LastRef, "to_ref", latestRef)
-		return &provisioning.SyncJobOptions{Incremental: incremental}
+		return &provisioning.JobSyncJobOptions{Incremental: incremental}
 	default:
 		return nil
 	}
@@ -793,7 +793,7 @@ func shouldUseIncrementalSync(
 	return policy.CanUseIncrementalSync(deletedPaths, len(changes)), nil
 }
 
-func (rc *RepositoryController) addSyncJob(ctx context.Context, obj *provisioning.Repository, syncOptions *provisioning.SyncJobOptions) error {
+func (rc *RepositoryController) addSyncJob(ctx context.Context, obj *provisioning.Repository, syncOptions *provisioning.JobSyncJobOptions) error {
 	ctx, span := rc.tracer.Start(ctx, "provisioning.controller.add_sync_job", repoSpanAttrs(obj))
 	defer span.End()
 
@@ -820,7 +820,7 @@ func (rc *RepositoryController) addSyncJob(ctx context.Context, obj *provisionin
 	return nil
 }
 
-func (rc *RepositoryController) determineSyncStatusOps(obj *provisioning.Repository, syncOptions *provisioning.SyncJobOptions, healthStatus provisioning.RepositoryHealthStatus, shouldResync bool) []map[string]interface{} {
+func (rc *RepositoryController) determineSyncStatusOps(obj *provisioning.Repository, syncOptions *provisioning.JobSyncJobOptions, healthStatus provisioning.RepositoryHealthStatus, shouldResync bool) []map[string]interface{} {
 	const unhealthyMessage = "Repository is unhealthy"
 
 	hasUnhealthyMessage := len(obj.Status.Sync.Message) > 0 && obj.Status.Sync.Message[0] == unhealthyMessage

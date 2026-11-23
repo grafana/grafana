@@ -4,9 +4,9 @@
 
 package v0alpha1
 
-// PullRequestJobOptionsApplyConfiguration represents a declarative configuration of the PullRequestJobOptions type for use
+// JobPullRequestJobOptionsApplyConfiguration represents a declarative configuration of the JobPullRequestJobOptions type for use
 // with apply.
-type PullRequestJobOptionsApplyConfiguration struct {
+type JobPullRequestJobOptionsApplyConfiguration struct {
 	// The branch of commit hash
 	Ref *string `json:"ref,omitempty"`
 	// Pull request number (when appropriate)
@@ -22,16 +22,16 @@ type PullRequestJobOptionsApplyConfiguration struct {
 	ForkURL *string `json:"forkURL,omitempty"`
 }
 
-// PullRequestJobOptionsApplyConfiguration constructs a declarative configuration of the PullRequestJobOptions type for use with
+// JobPullRequestJobOptionsApplyConfiguration constructs a declarative configuration of the JobPullRequestJobOptions type for use with
 // apply.
-func PullRequestJobOptions() *PullRequestJobOptionsApplyConfiguration {
-	return &PullRequestJobOptionsApplyConfiguration{}
+func JobPullRequestJobOptions() *JobPullRequestJobOptionsApplyConfiguration {
+	return &JobPullRequestJobOptionsApplyConfiguration{}
 }
 
 // WithRef sets the Ref field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Ref field is set to the value of the last call.
-func (b *PullRequestJobOptionsApplyConfiguration) WithRef(value string) *PullRequestJobOptionsApplyConfiguration {
+func (b *JobPullRequestJobOptionsApplyConfiguration) WithRef(value string) *JobPullRequestJobOptionsApplyConfiguration {
 	b.Ref = &value
 	return b
 }
@@ -39,7 +39,7 @@ func (b *PullRequestJobOptionsApplyConfiguration) WithRef(value string) *PullReq
 // WithPR sets the PR field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the PR field is set to the value of the last call.
-func (b *PullRequestJobOptionsApplyConfiguration) WithPR(value int) *PullRequestJobOptionsApplyConfiguration {
+func (b *JobPullRequestJobOptionsApplyConfiguration) WithPR(value int) *JobPullRequestJobOptionsApplyConfiguration {
 	b.PR = &value
 	return b
 }
@@ -47,7 +47,7 @@ func (b *PullRequestJobOptionsApplyConfiguration) WithPR(value int) *PullRequest
 // WithHash sets the Hash field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Hash field is set to the value of the last call.
-func (b *PullRequestJobOptionsApplyConfiguration) WithHash(value string) *PullRequestJobOptionsApplyConfiguration {
+func (b *JobPullRequestJobOptionsApplyConfiguration) WithHash(value string) *JobPullRequestJobOptionsApplyConfiguration {
 	b.Hash = &value
 	return b
 }
@@ -55,7 +55,7 @@ func (b *PullRequestJobOptionsApplyConfiguration) WithHash(value string) *PullRe
 // WithURL sets the URL field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the URL field is set to the value of the last call.
-func (b *PullRequestJobOptionsApplyConfiguration) WithURL(value string) *PullRequestJobOptionsApplyConfiguration {
+func (b *JobPullRequestJobOptionsApplyConfiguration) WithURL(value string) *JobPullRequestJobOptionsApplyConfiguration {
 	b.URL = &value
 	return b
 }
@@ -63,7 +63,7 @@ func (b *PullRequestJobOptionsApplyConfiguration) WithURL(value string) *PullReq
 // WithIsFork sets the IsFork field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the IsFork field is set to the value of the last call.
-func (b *PullRequestJobOptionsApplyConfiguration) WithIsFork(value bool) *PullRequestJobOptionsApplyConfiguration {
+func (b *JobPullRequestJobOptionsApplyConfiguration) WithIsFork(value bool) *JobPullRequestJobOptionsApplyConfiguration {
 	b.IsFork = &value
 	return b
 }
@@ -71,7 +71,7 @@ func (b *PullRequestJobOptionsApplyConfiguration) WithIsFork(value bool) *PullRe
 // WithForkURL sets the ForkURL field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the ForkURL field is set to the value of the last call.
-func (b *PullRequestJobOptionsApplyConfiguration) WithForkURL(value string) *PullRequestJobOptionsApplyConfiguration {
+func (b *JobPullRequestJobOptionsApplyConfiguration) WithForkURL(value string) *JobPullRequestJobOptionsApplyConfiguration {
 	b.ForkURL = &value
 	return b
 }

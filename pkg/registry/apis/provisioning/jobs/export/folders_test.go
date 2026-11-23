@@ -356,7 +356,7 @@ func TestExportFolders(t *testing.T) {
 			repoResources := resources.NewMockRepositoryResources(t)
 			tt.setupResources(repoResources)
 
-			err := ExportFolders(context.Background(), "test-repo", v0alpha1.ExportJobOptions{
+			err := ExportFolders(context.Background(), "test-repo", v0alpha1.JobExportJobOptions{
 				Path:   "grafana",
 				Branch: "feature/branch",
 			}, fakeFolderClient, repoResources, mockProgress)
@@ -407,7 +407,7 @@ func TestFolderMetaAccessor(t *testing.T) {
 		progress := jobs.NewMockJobProgressRecorder(t)
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Twice()
 		// No Record calls expected since folder should be skipped
-		err = ExportFolders(context.Background(), "test-repo", v0alpha1.ExportJobOptions{
+		err = ExportFolders(context.Background(), "test-repo", v0alpha1.JobExportJobOptions{
 			Path:   "grafana",
 			Branch: "feature/branch",
 		}, fakeFolderClient, mockRepoResources, progress)
@@ -447,7 +447,7 @@ func TestFolderMetaAccessor(t *testing.T) {
 			return opts.Ref == "feature/branch" && opts.Path == "grafana"
 		})).Return(nil)
 
-		err = ExportFolders(context.Background(), "test-repo", v0alpha1.ExportJobOptions{
+		err = ExportFolders(context.Background(), "test-repo", v0alpha1.JobExportJobOptions{
 			Path:   "grafana",
 			Branch: "feature/branch",
 		}, fakeFolderClient, mockRepoResources, progress)
@@ -471,7 +471,7 @@ func TestFolderMetaAccessor(t *testing.T) {
 		mockRepoResources := resources.NewMockRepositoryResources(t)
 		progress := jobs.NewMockJobProgressRecorder(t)
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Twice()
-		err := ExportFolders(context.Background(), "test-repo", v0alpha1.ExportJobOptions{
+		err := ExportFolders(context.Background(), "test-repo", v0alpha1.JobExportJobOptions{
 			Path:   "grafana",
 			Branch: "feature/branch",
 		}, fakeFolderClient, mockRepoResources, progress)
@@ -513,7 +513,7 @@ func TestFolderMetaAccessor(t *testing.T) {
 			return opts.Ref == "feature/branch" && opts.Path == "grafana"
 		})).Return(nil)
 
-		err = ExportFolders(context.Background(), "test-repo", v0alpha1.ExportJobOptions{
+		err = ExportFolders(context.Background(), "test-repo", v0alpha1.JobExportJobOptions{
 			Path:   "grafana",
 			Branch: "feature/branch",
 		}, fakeFolderClient, mockRepoResources, progress)
@@ -553,7 +553,7 @@ func TestFolderMetaAccessor(t *testing.T) {
 			return opts.Ref == "feature/branch" && opts.Path == "grafana"
 		})).Return(nil)
 
-		err = ExportFolders(context.Background(), "test-repo", v0alpha1.ExportJobOptions{
+		err = ExportFolders(context.Background(), "test-repo", v0alpha1.JobExportJobOptions{
 			Path:   "grafana",
 			Branch: "feature/branch",
 		}, fakeFolderClient, mockRepoResources, progress)
@@ -602,7 +602,7 @@ func TestWriteFolderTree_PathCollisionFails(t *testing.T) {
 	repoResources := resources.NewMockRepositoryResources(t)
 	progress := jobs.NewMockJobProgressRecorder(t)
 
-	err := writeFolderTree(context.Background(), v0alpha1.ExportJobOptions{}, repoResources, tree, progress)
+	err := writeFolderTree(context.Background(), v0alpha1.JobExportJobOptions{}, repoResources, tree, progress)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "both export to path")
 }
@@ -618,6 +618,6 @@ func TestWriteFolderTree_NoCollisionProceeds(t *testing.T) {
 	repoResources.On("EnsureFolderTreeExists", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	progress := jobs.NewMockJobProgressRecorder(t)
 
-	err := writeFolderTree(context.Background(), v0alpha1.ExportJobOptions{}, repoResources, tree, progress)
+	err := writeFolderTree(context.Background(), v0alpha1.JobExportJobOptions{}, repoResources, tree, progress)
 	require.NoError(t, err)
 }

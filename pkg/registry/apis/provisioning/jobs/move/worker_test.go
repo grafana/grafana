@@ -99,7 +99,7 @@ func TestMoveWorker_ProcessMissingTargetPath(t *testing.T) {
 	job := provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
-			Move: &provisioning.MoveJobOptions{
+			Move: &provisioning.JobMoveJobOptions{
 				Paths: []string{"test/path"},
 			},
 		},
@@ -114,7 +114,7 @@ func TestMoveWorker_ProcessInvalidTargetPath(t *testing.T) {
 	job := provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
-			Move: &provisioning.MoveJobOptions{
+			Move: &provisioning.JobMoveJobOptions{
 				Paths:      []string{"test/path"},
 				TargetPath: "target.txt", // This is not a directory path
 			},
@@ -132,7 +132,7 @@ func TestMoveWorker_CommitMessageFromJobSpec(t *testing.T) {
 		Spec: provisioning.JobSpec{
 			Action:  provisioning.JobActionMove,
 			Message: "custom move message",
-			Move: &provisioning.MoveJobOptions{
+			Move: &provisioning.JobMoveJobOptions{
 				Paths:      []string{"test/path"},
 				TargetPath: "new/location/",
 			},
@@ -161,7 +161,7 @@ func TestMoveWorker_ProcessNotReaderWriter(t *testing.T) {
 		},
 		Spec: provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
-			Move: &provisioning.MoveJobOptions{
+			Move: &provisioning.JobMoveJobOptions{
 				Paths:      []string{"test/path"},
 				TargetPath: "new/location/",
 			},
@@ -190,7 +190,7 @@ func TestMoveWorker_ProcessWrapFnError(t *testing.T) {
 	job := provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
-			Move: &provisioning.MoveJobOptions{
+			Move: &provisioning.JobMoveJobOptions{
 				Paths:      []string{"test/path"},
 				TargetPath: "new/location/",
 			},
@@ -214,7 +214,7 @@ func TestMoveWorker_ProcessMoveFilesSuccess(t *testing.T) {
 	job := provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
-			Move: &provisioning.MoveJobOptions{
+			Move: &provisioning.JobMoveJobOptions{
 				Paths:      []string{"test/path1", "test/path2"},
 				TargetPath: "new/location/",
 				Ref:        "main",
@@ -262,7 +262,7 @@ func TestMoveWorker_ProcessMoveFilesSkipsSameSourceAndTarget(t *testing.T) {
 	job := provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
-			Move: &provisioning.MoveJobOptions{
+			Move: &provisioning.JobMoveJobOptions{
 				Paths:      []string{"test/dashboard.json"},
 				TargetPath: "test/",
 				Ref:        "main",
@@ -300,7 +300,7 @@ func TestMoveWorker_ProcessMoveFilesWithError(t *testing.T) {
 	job := provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
-			Move: &provisioning.MoveJobOptions{
+			Move: &provisioning.JobMoveJobOptions{
 				Paths:      []string{"test/path1", "test/path2"},
 				TargetPath: "new/location/",
 				Ref:        "main",
@@ -339,7 +339,7 @@ func TestMoveWorker_ProcessWithSyncWorker(t *testing.T) {
 	job := provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
-			Move: &provisioning.MoveJobOptions{
+			Move: &provisioning.JobMoveJobOptions{
 				Paths:      []string{"test/path"},
 				TargetPath: "new/location/",
 			},
@@ -385,7 +385,7 @@ func TestMoveWorker_ProcessSyncWorkerError(t *testing.T) {
 	job := provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
-			Move: &provisioning.MoveJobOptions{
+			Move: &provisioning.JobMoveJobOptions{
 				Paths:      []string{"test/path"},
 				TargetPath: "new/location/",
 			},
@@ -472,7 +472,7 @@ func TestMoveWorker_moveFiles(t *testing.T) {
 			}
 			mockProgress := jobs.NewMockJobProgressRecorder(t)
 
-			opts := provisioning.MoveJobOptions{
+			opts := provisioning.JobMoveJobOptions{
 				TargetPath: "new/location/",
 				Ref:        "main",
 			}
@@ -518,7 +518,7 @@ func TestMoveWorker_moveFilesToRoot(t *testing.T) {
 	}
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
 
-	opts := provisioning.MoveJobOptions{
+	opts := provisioning.JobMoveJobOptions{
 		TargetPath: "/",
 		Ref:        "main",
 	}
@@ -608,10 +608,10 @@ func TestMoveWorker_ProcessWithResourceReferences(t *testing.T) {
 	job := provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
-			Move: &provisioning.MoveJobOptions{
+			Move: &provisioning.JobMoveJobOptions{
 				Paths:      []string{"test/path1"},
 				TargetPath: "new/location/",
-				Resources: []provisioning.ResourceRef{
+				Resources: []provisioning.JobResourceRef{
 					{
 						Name:  "dashboard-uid",
 						Kind:  "Dashboard",
@@ -675,9 +675,9 @@ func TestMoveWorker_ProcessResourceReferencesError(t *testing.T) {
 	job := provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
-			Move: &provisioning.MoveJobOptions{
+			Move: &provisioning.JobMoveJobOptions{
 				TargetPath: "new/location/",
-				Resources: []provisioning.ResourceRef{
+				Resources: []provisioning.JobResourceRef{
 					{
 						Name:  "non-existent-uid",
 						Kind:  "Dashboard",
@@ -737,9 +737,9 @@ func TestMoveWorker_ProcessResourcesFactoryError(t *testing.T) {
 	job := provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
-			Move: &provisioning.MoveJobOptions{
+			Move: &provisioning.JobMoveJobOptions{
 				TargetPath: "new/location/",
-				Resources: []provisioning.ResourceRef{
+				Resources: []provisioning.JobResourceRef{
 					{
 						Name:  "dashboard-uid",
 						Kind:  "Dashboard",
@@ -776,7 +776,7 @@ func TestMoveWorker_ProcessResourcesFactoryError(t *testing.T) {
 func TestMoveWorker_resolveResourcesToPaths(t *testing.T) {
 	tests := []struct {
 		name           string
-		resources      []provisioning.ResourceRef
+		resources      []provisioning.JobResourceRef
 		resourcePaths  map[string]string
 		resourceErrors map[string]error
 		tooManyErrors  error
@@ -786,7 +786,7 @@ func TestMoveWorker_resolveResourcesToPaths(t *testing.T) {
 	}{
 		{
 			name: "single resource success",
-			resources: []provisioning.ResourceRef{
+			resources: []provisioning.JobResourceRef{
 				{
 					Name:  "dashboard-uid",
 					Kind:  "Dashboard",
@@ -800,7 +800,7 @@ func TestMoveWorker_resolveResourcesToPaths(t *testing.T) {
 		},
 		{
 			name: "multiple resources success",
-			resources: []provisioning.ResourceRef{
+			resources: []provisioning.JobResourceRef{
 				{
 					Name:  "dashboard1",
 					Kind:  "Dashboard",
@@ -820,7 +820,7 @@ func TestMoveWorker_resolveResourcesToPaths(t *testing.T) {
 		},
 		{
 			name: "resource not found continues",
-			resources: []provisioning.ResourceRef{
+			resources: []provisioning.JobResourceRef{
 				{
 					Name:  "non-existent",
 					Kind:  "Dashboard",
@@ -843,7 +843,7 @@ func TestMoveWorker_resolveResourcesToPaths(t *testing.T) {
 		},
 		{
 			name:          "empty resources list",
-			resources:     []provisioning.ResourceRef{},
+			resources:     []provisioning.JobResourceRef{},
 			expectedPaths: nil,
 		},
 	}
@@ -990,7 +990,7 @@ func TestMoveWorker_RefURLsSetWithRef(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
 		Spec: provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
-			Move: &provisioning.MoveJobOptions{
+			Move: &provisioning.JobMoveJobOptions{
 				Ref:        "feature-branch",
 				Paths:      []string{"test.json"},
 				TargetPath: "target/",
@@ -1048,7 +1048,7 @@ func TestMoveWorker_RefURLsNotSetWithoutRef(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
 		Spec: provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
-			Move: &provisioning.MoveJobOptions{
+			Move: &provisioning.JobMoveJobOptions{
 				// No ref specified
 				Paths:      []string{"test.json"},
 				TargetPath: "target/",
@@ -1100,7 +1100,7 @@ func TestMoveWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
 		Spec: provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
-			Move: &provisioning.MoveJobOptions{
+			Move: &provisioning.JobMoveJobOptions{
 				Ref:        "feature-branch",
 				Paths:      []string{"test.json"},
 				TargetPath: "target/",

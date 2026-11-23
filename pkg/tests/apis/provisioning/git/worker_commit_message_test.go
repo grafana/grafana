@@ -33,7 +33,7 @@ func TestIntegrationGit_DeleteJob_CommitMessage(t *testing.T) {
 	helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 		Action:  provisioning.JobActionDelete,
 		Message: expectedMessage,
-		Delete: &provisioning.DeleteJobOptions{
+		Delete: &provisioning.JobDeleteJobOptions{
 			Paths: []string{dashFn},
 		},
 	})
@@ -63,7 +63,7 @@ func TestIntegrationGit_MoveJob_CommitMessage(t *testing.T) {
 	helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 		Action:  provisioning.JobActionMove,
 		Message: expectedMessage,
-		Move: &provisioning.MoveJobOptions{
+		Move: &provisioning.JobMoveJobOptions{
 			Paths:      []string{dashFn},
 			TargetPath: "moved/",
 		},
@@ -92,7 +92,7 @@ func TestIntegrationGit_ExportJob_CommitMessage(t *testing.T) {
 	helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 		Action:  provisioning.JobActionPush,
 		Message: expectedMessage,
-		Push:    &provisioning.ExportJobOptions{},
+		Push:    &provisioning.JobExportJobOptions{},
 	})
 
 	require.Equal(t, expectedMessage, common.LatestCommitSubject(t, local, "main"))
@@ -120,7 +120,7 @@ func TestIntegrationGit_MigrateJob_CommitMessage(t *testing.T) {
 	helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 		Action:  provisioning.JobActionMigrate,
 		Message: expectedMessage,
-		Migrate: &provisioning.MigrateJobOptions{
+		Migrate: &provisioning.JobMigrateJobOptions{
 			Message: "deprecated fallback that should be ignored",
 		},
 	})

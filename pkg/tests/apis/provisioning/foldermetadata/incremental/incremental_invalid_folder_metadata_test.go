@@ -50,7 +50,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 
 		job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+			Pull:   &provisioning.JobSyncJobOptions{Incremental: true},
 		})
 		jobObj := &provisioning.Job{}
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
@@ -93,7 +93,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 
 		job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+			Pull:   &provisioning.JobSyncJobOptions{Incremental: true},
 		})
 		jobObj := &provisioning.Job{}
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
@@ -139,7 +139,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 
 		job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+			Pull:   &provisioning.JobSyncJobOptions{Incremental: true},
 		})
 		jobObj := &provisioning.Job{}
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
@@ -183,7 +183,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 
 		job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+			Pull:   &provisioning.JobSyncJobOptions{Incremental: true},
 		})
 		jobObj := &provisioning.Job{}
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
@@ -201,7 +201,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 
 		job = helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+			Pull:   &provisioning.JobSyncJobOptions{Incremental: true},
 		})
 		jobObj = &provisioning.Job{}
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
@@ -253,7 +253,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 
 		job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+			Pull:   &provisioning.JobSyncJobOptions{Incremental: true},
 		})
 		jobObj := &provisioning.Job{}
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
@@ -289,7 +289,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 
 		helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+			Pull:   &provisioning.JobSyncJobOptions{Incremental: true},
 		})
 		folderUID := common.RequireRepoFolderTitle(t, helper.Folders, repoName, "team")
 
@@ -302,7 +302,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 
 		job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+			Pull:   &provisioning.JobSyncJobOptions{Incremental: true},
 		})
 		jobObj := &provisioning.Job{}
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
@@ -343,7 +343,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 
 		job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+			Pull:   &provisioning.JobSyncJobOptions{Incremental: true},
 		})
 		jobObj := &provisioning.Job{}
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
@@ -389,7 +389,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 
 		job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+			Pull:   &provisioning.JobSyncJobOptions{Incremental: true},
 		})
 		jobObj := &provisioning.Job{}
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
@@ -445,7 +445,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 
 		job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+			Pull:   &provisioning.JobSyncJobOptions{Incremental: true},
 		})
 		jobObj := &provisioning.Job{}
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))

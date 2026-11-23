@@ -32,7 +32,7 @@ func NewUnifiedStorageMigrator(
 }
 
 func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.ReaderWriter, job provisioning.Job, progress jobs.JobProgressRecorder) error {
-	options := provisioning.MigrateJobOptions{}
+	options := provisioning.JobMigrateJobOptions{}
 	if job.Spec.Migrate != nil {
 		options = *job.Spec.Migrate
 	}
@@ -70,7 +70,7 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 	exportJob := provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Message: job.Spec.Message,
-			Push: &provisioning.ExportJobOptions{
+			Push: &provisioning.JobExportJobOptions{
 				Message:              options.Message,
 				Branch:               options.Branch,
 				Resources:            options.Resources,
@@ -97,7 +97,7 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 		progress.SetMessage(ctx, "pull resources")
 		syncJob := provisioning.Job{
 			Spec: provisioning.JobSpec{
-				Pull: &provisioning.SyncJobOptions{
+				Pull: &provisioning.JobSyncJobOptions{
 					Incremental: false,
 				},
 			},

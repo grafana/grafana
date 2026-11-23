@@ -37,7 +37,7 @@ func URLsFromConfig(cfg *setting.Cfg) URLProvider {
 
 //go:generate mockery --name=Evaluator --structname=MockEvaluator --inpackage --filename=mock_evaluator.go --with-expecter
 type Evaluator interface {
-	Evaluate(ctx context.Context, repo repository.Reader, opts provisioning.PullRequestJobOptions, changes []repository.VersionedFileChange, progress jobs.JobProgressRecorder) (changeInfo, error)
+	Evaluate(ctx context.Context, repo repository.Reader, opts provisioning.JobPullRequestJobOptions, changes []repository.VersionedFileChange, progress jobs.JobProgressRecorder) (changeInfo, error)
 }
 
 //go:generate mockery --name=Commenter --structname=MockCommenter --inpackage --filename=mock_commenter.go --with-expecter

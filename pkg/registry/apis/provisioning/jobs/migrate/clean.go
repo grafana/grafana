@@ -23,7 +23,7 @@ type NamespaceCleaner interface {
 	// CleanResources deletes the named resources, skipping any that are managed by
 	// a provisioning system. It is used by a selective branch migration to remove
 	// only the resources that were migrated.
-	CleanResources(ctx context.Context, namespace string, refs []provisioning.ResourceRef, progress jobs.JobProgressRecorder) error
+	CleanResources(ctx context.Context, namespace string, refs []provisioning.JobResourceRef, progress jobs.JobProgressRecorder) error
 }
 
 type namespaceCleaner struct {
@@ -86,7 +86,7 @@ func (c *namespaceCleaner) Clean(ctx context.Context, namespace string, progress
 	return nil
 }
 
-func (c *namespaceCleaner) CleanResources(ctx context.Context, namespace string, refs []provisioning.ResourceRef, progress jobs.JobProgressRecorder) error {
+func (c *namespaceCleaner) CleanResources(ctx context.Context, namespace string, refs []provisioning.JobResourceRef, progress jobs.JobProgressRecorder) error {
 	if len(refs) == 0 {
 		return nil
 	}

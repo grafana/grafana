@@ -59,7 +59,7 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		// Step 2: Try to pull repo2 - should fail due to ownership conflict
 		job := helper.TriggerJobAndWaitForComplete(t, repo2, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{},
+			Pull:   &provisioning.JobSyncJobOptions{},
 		})
 
 		// Step 3: Verify the job completed with warning due to ownership conflict
@@ -126,7 +126,7 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		// Step 4: Pull repo2 and verify repo1's resource is still intact
 		helper.TriggerJobAndWaitForSuccess(t, repo2, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{},
+			Pull:   &provisioning.JobSyncJobOptions{},
 		})
 
 		persistentRepo1Dashboard, err := helper.DashboardsV1.Resource.Get(t.Context(), allPanelsUID, metav1.GetOptions{})
@@ -186,7 +186,7 @@ func TestIntegrationProvisioning_PullJobUnmanagedRootConflict(t *testing.T) {
 
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{},
+		Pull:   &provisioning.JobSyncJobOptions{},
 	})
 
 	jobObj := &provisioning.Job{}

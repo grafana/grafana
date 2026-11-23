@@ -29,7 +29,7 @@ func TestIntegrationProvisioning_ExportJobAuthorization(t *testing.T) {
 	t.Run("admin can create export job", func(t *testing.T) {
 		body := common.AsJSON(provisioning.JobSpec{
 			Action: provisioning.JobActionPush,
-			Push:   &provisioning.ExportJobOptions{},
+			Push:   &provisioning.JobExportJobOptions{},
 		})
 
 		var statusCode int
@@ -51,7 +51,7 @@ func TestIntegrationProvisioning_ExportJobAuthorization(t *testing.T) {
 	t.Run("editor cannot create export job on instance-scoped repo", func(t *testing.T) {
 		body := common.AsJSON(provisioning.JobSpec{
 			Action: provisioning.JobActionPush,
-			Push:   &provisioning.ExportJobOptions{},
+			Push:   &provisioning.JobExportJobOptions{},
 		})
 
 		var statusCode int
@@ -72,7 +72,7 @@ func TestIntegrationProvisioning_ExportJobAuthorization(t *testing.T) {
 	t.Run("viewer cannot create export job", func(t *testing.T) {
 		body := common.AsJSON(provisioning.JobSpec{
 			Action: provisioning.JobActionPush,
-			Push:   &provisioning.ExportJobOptions{},
+			Push:   &provisioning.JobExportJobOptions{},
 		})
 
 		var statusCode int

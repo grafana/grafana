@@ -61,7 +61,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionDelete,
-			Delete: &provisioning.DeleteJobOptions{
+			Delete: &provisioning.JobDeleteJobOptions{
 				Paths: []string{"dashboard1.json"},
 			},
 		}
@@ -85,7 +85,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 	t.Run("delete multiple files", func(t *testing.T) {
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionDelete,
-			Delete: &provisioning.DeleteJobOptions{
+			Delete: &provisioning.JobDeleteJobOptions{
 				Paths: []string{"dashboard2.json", "folder/dashboard3.json"},
 			},
 		}
@@ -138,8 +138,8 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 		t.Run("delete single dashboard by resource reference", func(t *testing.T) {
 			spec := provisioning.JobSpec{
 				Action: provisioning.JobActionDelete,
-				Delete: &provisioning.DeleteJobOptions{
-					Resources: []provisioning.ResourceRef{
+				Delete: &provisioning.JobDeleteJobOptions{
+					Resources: []provisioning.JobResourceRef{
 						{
 							Name:  "resourceref1", // UID from modified all-panels.json
 							Kind:  "Dashboard",
@@ -165,8 +165,8 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 		t.Run("delete multiple resources by reference", func(t *testing.T) {
 			spec := provisioning.JobSpec{
 				Action: provisioning.JobActionDelete,
-				Delete: &provisioning.DeleteJobOptions{
-					Resources: []provisioning.ResourceRef{
+				Delete: &provisioning.JobDeleteJobOptions{
+					Resources: []provisioning.JobResourceRef{
 						{
 							Name:  "resourceref2", // UID from modified text-options.json
 							Kind:  "Dashboard",
@@ -212,9 +212,9 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 
 			spec := provisioning.JobSpec{
 				Action: provisioning.JobActionDelete,
-				Delete: &provisioning.DeleteJobOptions{
+				Delete: &provisioning.JobDeleteJobOptions{
 					Paths: []string{"mixed-test-1.json"}, // Delete by path
-					Resources: []provisioning.ResourceRef{
+					Resources: []provisioning.JobResourceRef{
 						{
 							Name:  "resourceref2", // Delete by resource reference
 							Kind:  "Dashboard",
@@ -268,8 +268,8 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 
 			spec := provisioning.JobSpec{
 				Action: provisioning.JobActionDelete,
-				Delete: &provisioning.DeleteJobOptions{
-					Resources: []provisioning.ResourceRef{
+				Delete: &provisioning.JobDeleteJobOptions{
+					Resources: []provisioning.JobResourceRef{
 						{
 							Name:  testFolderName, // Use the actual generated folder name
 							Kind:  "Folder",
@@ -291,8 +291,8 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 			// Create delete job for non-existent resource
 			spec := provisioning.JobSpec{
 				Action: provisioning.JobActionDelete,
-				Delete: &provisioning.DeleteJobOptions{
-					Resources: []provisioning.ResourceRef{
+				Delete: &provisioning.JobDeleteJobOptions{
+					Resources: []provisioning.JobResourceRef{
 						{
 							Name:  "non-existent-uid",
 							Kind:  "Dashboard",
@@ -311,7 +311,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 	t.Run("delete non-existent file is rejected", func(t *testing.T) {
 		body := common.AsJSON(provisioning.JobSpec{
 			Action: provisioning.JobActionDelete,
-			Delete: &provisioning.DeleteJobOptions{
+			Delete: &provisioning.JobDeleteJobOptions{
 				Paths: []string{"non-existent.json"},
 			},
 		})
@@ -334,7 +334,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 
 		body := common.AsJSON(provisioning.JobSpec{
 			Action: provisioning.JobActionDelete,
-			Delete: &provisioning.DeleteJobOptions{
+			Delete: &provisioning.JobDeleteJobOptions{
 				Paths: []string{
 					"test-delete-mixed.json", // This exists
 					"non-existent-file.json", // This doesn't exist
@@ -357,7 +357,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 	t.Run("delete multiple non-existent files is rejected", func(t *testing.T) {
 		body := common.AsJSON(provisioning.JobSpec{
 			Action: provisioning.JobActionDelete,
-			Delete: &provisioning.DeleteJobOptions{
+			Delete: &provisioning.JobDeleteJobOptions{
 				Paths: []string{
 					"does-not-exist-1.json",
 					"does-not-exist-2.json",

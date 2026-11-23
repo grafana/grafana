@@ -107,7 +107,7 @@ func TestIntegrationProvisioning_JobFieldSelector(t *testing.T) {
 	// Trigger multiple jobs to have multiple job resources
 	job1Spec := provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{},
+		Pull:   &provisioning.JobSyncJobOptions{},
 	}
 
 	// Trigger first job

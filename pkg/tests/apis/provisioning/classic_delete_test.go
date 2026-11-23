@@ -124,7 +124,7 @@ func TestIntegrationProvisioning_ClassicDashboardDeletion(t *testing.T) {
 		// Trigger sync and verify the job succeeds (not warning/error state)
 		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{},
+			Pull:   &provisioning.JobSyncJobOptions{},
 		})
 
 		jobObj := &provisioning.Job{}

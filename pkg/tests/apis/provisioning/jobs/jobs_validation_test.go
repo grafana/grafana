@@ -37,7 +37,7 @@ func TestIntegrationProvisioning_WritePermissionValidation(t *testing.T) {
 				action: provisioning.JobActionDelete,
 				spec: provisioning.JobSpec{
 					Action: provisioning.JobActionDelete,
-					Delete: &provisioning.DeleteJobOptions{
+					Delete: &provisioning.JobDeleteJobOptions{
 						Paths: []string{"test.json"},
 					},
 				},
@@ -47,7 +47,7 @@ func TestIntegrationProvisioning_WritePermissionValidation(t *testing.T) {
 				action: provisioning.JobActionMove,
 				spec: provisioning.JobSpec{
 					Action: provisioning.JobActionMove,
-					Move: &provisioning.MoveJobOptions{
+					Move: &provisioning.JobMoveJobOptions{
 						Paths:      []string{"test.json"},
 						TargetPath: "new/",
 					},
@@ -58,7 +58,7 @@ func TestIntegrationProvisioning_WritePermissionValidation(t *testing.T) {
 				action: provisioning.JobActionPush,
 				spec: provisioning.JobSpec{
 					Action: provisioning.JobActionPush,
-					Push: &provisioning.ExportJobOptions{
+					Push: &provisioning.JobExportJobOptions{
 						Message: "test commit",
 					},
 				},
@@ -68,7 +68,7 @@ func TestIntegrationProvisioning_WritePermissionValidation(t *testing.T) {
 				action: provisioning.JobActionMigrate,
 				spec: provisioning.JobSpec{
 					Action: provisioning.JobActionMigrate,
-					Migrate: &provisioning.MigrateJobOptions{
+					Migrate: &provisioning.JobMigrateJobOptions{
 						Message: "test migration",
 					},
 				},
@@ -100,7 +100,7 @@ func TestIntegrationProvisioning_WritePermissionValidation(t *testing.T) {
 	t.Run("pull job should be allowed for read-only repositories", func(t *testing.T) {
 		body := common.AsJSON(provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{},
+			Pull:   &provisioning.JobSyncJobOptions{},
 		})
 
 		var statusCode int

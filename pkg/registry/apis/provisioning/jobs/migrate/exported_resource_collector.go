@@ -57,17 +57,17 @@ func (c *exportedResourceCollector) ExportedResources() *resources.TakeoverAllow
 // only the resources it migrated: folders are emitted purely to resolve paths and
 // may be shared with resources that were not migrated, so they are left in place.
 // Safe to call after the export phase completes.
-func (c *exportedResourceCollector) ExportedNonFolderResources() []provisioning.ResourceRef {
+func (c *exportedResourceCollector) ExportedNonFolderResources() []provisioning.JobResourceRef {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	folder := resources.FolderKind.GroupKind()
-	refs := make([]provisioning.ResourceRef, 0, len(c.exported))
+	refs := make([]provisioning.JobResourceRef, 0, len(c.exported))
 	for id := range c.exported {
 		if id.Group == folder.Group && id.Kind == folder.Kind {
 			continue
 		}
-		refs = append(refs, provisioning.ResourceRef{Name: id.Name, Group: id.Group, Kind: id.Kind})
+		refs = append(refs, provisioning.JobResourceRef{Name: id.Name, Group: id.Group, Kind: id.Kind})
 	}
 	return refs
 }

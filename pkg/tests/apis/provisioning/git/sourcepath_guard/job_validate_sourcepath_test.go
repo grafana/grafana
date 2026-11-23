@@ -75,8 +75,8 @@ func TestIntegrationProvisioning_DeleteJob_RejectsSourcePathEscapingRepositoryPa
 	// ResourceRef. The job must be accepted and the worker must reject the path.
 	body := common.AsJSON(provisioning.JobSpec{
 		Action: provisioning.JobActionDelete,
-		Delete: &provisioning.DeleteJobOptions{
-			Resources: []provisioning.ResourceRef{
+		Delete: &provisioning.JobDeleteJobOptions{
+			Resources: []provisioning.JobResourceRef{
 				{Group: "folder.grafana.app", Kind: "Folder", Name: updated.GetName()},
 			},
 		},
@@ -174,9 +174,9 @@ func TestIntegrationProvisioning_MoveJob_RejectsSourcePathEscapingRepositoryPath
 	// "scope/" path. The job must be accepted and the worker must reject the path.
 	body := common.AsJSON(provisioning.JobSpec{
 		Action: provisioning.JobActionMove,
-		Move: &provisioning.MoveJobOptions{
+		Move: &provisioning.JobMoveJobOptions{
 			TargetPath: "moved/",
-			Resources: []provisioning.ResourceRef{
+			Resources: []provisioning.JobResourceRef{
 				{Group: "folder.grafana.app", Kind: "Folder", Name: updated.GetName()},
 			},
 		},

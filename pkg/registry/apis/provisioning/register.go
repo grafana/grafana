@@ -1495,7 +1495,7 @@ spec:
 										Summary:     "Pull (incremental)",
 										Description: "look for changes since the last sync",
 										Value: provisioning.JobSpec{
-											Pull: &provisioning.SyncJobOptions{
+											Pull: &provisioning.JobSyncJobOptions{
 												Incremental: true,
 											},
 										},
@@ -1506,7 +1506,7 @@ spec:
 										Summary:     "Pull from repository",
 										Description: "pull all files",
 										Value: provisioning.JobSpec{
-											Pull: &provisioning.SyncJobOptions{
+											Pull: &provisioning.JobSyncJobOptions{
 												Incremental: false,
 											},
 										},

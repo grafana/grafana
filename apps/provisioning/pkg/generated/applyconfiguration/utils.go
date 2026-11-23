@@ -40,30 +40,36 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &provisioningv0alpha1.ConnectionStatusApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("ConnectionWebhookConfig"):
 		return &provisioningv0alpha1.ConnectionWebhookConfigApplyConfiguration{}
-	case v0alpha1.SchemeGroupVersion.WithKind("DeleteJobOptions"):
-		return &provisioningv0alpha1.DeleteJobOptionsApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("ErrorDetails"):
 		return &provisioningv0alpha1.ErrorDetailsApplyConfiguration{}
-	case v0alpha1.SchemeGroupVersion.WithKind("ExportJobOptions"):
-		return &provisioningv0alpha1.ExportJobOptionsApplyConfiguration{}
-	case v0alpha1.SchemeGroupVersion.WithKind("FixFolderMetadataJobOptions"):
-		return &provisioningv0alpha1.FixFolderMetadataJobOptionsApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("HistoricJob"):
 		return &provisioningv0alpha1.HistoricJobApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("Job"):
 		return &provisioningv0alpha1.JobApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("JobDeleteJobOptions"):
+		return &provisioningv0alpha1.JobDeleteJobOptionsApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("JobExportJobOptions"):
+		return &provisioningv0alpha1.JobExportJobOptionsApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("JobFixFolderMetadataJobOptions"):
+		return &provisioningv0alpha1.JobFixFolderMetadataJobOptionsApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("JobMigrateJobOptions"):
+		return &provisioningv0alpha1.JobMigrateJobOptionsApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("JobMoveJobOptions"):
+		return &provisioningv0alpha1.JobMoveJobOptionsApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("JobPullRequestJobOptions"):
+		return &provisioningv0alpha1.JobPullRequestJobOptionsApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("JobResourceRef"):
+		return &provisioningv0alpha1.JobResourceRefApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("JobResourceSummary"):
 		return &provisioningv0alpha1.JobResourceSummaryApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("JobSpec"):
 		return &provisioningv0alpha1.JobSpecApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("JobStatus"):
 		return &provisioningv0alpha1.JobStatusApplyConfiguration{}
-	case v0alpha1.SchemeGroupVersion.WithKind("MigrateJobOptions"):
-		return &provisioningv0alpha1.MigrateJobOptionsApplyConfiguration{}
-	case v0alpha1.SchemeGroupVersion.WithKind("MoveJobOptions"):
-		return &provisioningv0alpha1.MoveJobOptionsApplyConfiguration{}
-	case v0alpha1.SchemeGroupVersion.WithKind("PullRequestJobOptions"):
-		return &provisioningv0alpha1.PullRequestJobOptionsApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("JobSyncJobOptions"):
+		return &provisioningv0alpha1.JobSyncJobOptionsApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("JobTestJobOptions"):
+		return &provisioningv0alpha1.JobTestJobOptionsApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("Repository"):
 		return &provisioningv0alpha1.RepositoryApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("RepositoryBitbucketRepositoryConfig"):
@@ -110,12 +116,6 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &provisioningv0alpha1.RepositoryWebhookStatusApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("ResourceCount"):
 		return &provisioningv0alpha1.ResourceCountApplyConfiguration{}
-	case v0alpha1.SchemeGroupVersion.WithKind("ResourceRef"):
-		return &provisioningv0alpha1.ResourceRefApplyConfiguration{}
-	case v0alpha1.SchemeGroupVersion.WithKind("SyncJobOptions"):
-		return &provisioningv0alpha1.SyncJobOptionsApplyConfiguration{}
-	case v0alpha1.SchemeGroupVersion.WithKind("TestJobOptions"):
-		return &provisioningv0alpha1.TestJobOptionsApplyConfiguration{}
 
 	}
 	return nil

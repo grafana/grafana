@@ -204,7 +204,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
 				Spec: provisioning.JobSpec{
 					Action: provisioning.JobActionPull,
-					Pull:   &provisioning.SyncJobOptions{},
+					Pull:   &provisioning.JobSyncJobOptions{},
 				},
 			}
 
@@ -350,7 +350,7 @@ func TestSyncWorker_Process_PullCondition(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
 				Spec: provisioning.JobSpec{
 					Action: provisioning.JobActionPull,
-					Pull:   &provisioning.SyncJobOptions{},
+					Pull:   &provisioning.JobSyncJobOptions{},
 				},
 			}
 
@@ -877,7 +877,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				},
 				Spec: provisioning.JobSpec{
 					Action: provisioning.JobActionPull,
-					Pull:   &provisioning.SyncJobOptions{},
+					Pull:   &provisioning.JobSyncJobOptions{},
 				},
 			}
 

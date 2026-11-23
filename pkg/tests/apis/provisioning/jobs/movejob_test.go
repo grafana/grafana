@@ -37,7 +37,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
-			Move: &provisioning.MoveJobOptions{
+			Move: &provisioning.JobMoveJobOptions{
 				Paths:      []string{"dashboard1.json"},
 				TargetPath: "moved/",
 			},
@@ -78,7 +78,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		// Create move job for multiple files including a folder
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
-			Move: &provisioning.MoveJobOptions{
+			Move: &provisioning.JobMoveJobOptions{
 				Paths:      []string{"dashboard2.json", "folder/"},
 				TargetPath: "archived/",
 			},
@@ -116,7 +116,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 	t.Run("move non-existent file is rejected", func(t *testing.T) {
 		body := common.AsJSON(provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
-			Move: &provisioning.MoveJobOptions{
+			Move: &provisioning.JobMoveJobOptions{
 				Paths:      []string{"non-existent.json"},
 				TargetPath: "moved/",
 			},
@@ -137,9 +137,9 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 	t.Run("move non-existent uid", func(t *testing.T) {
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
-			Move: &provisioning.MoveJobOptions{
+			Move: &provisioning.JobMoveJobOptions{
 				TargetPath: "moved-nonexistent/",
-				Resources: []provisioning.ResourceRef{
+				Resources: []provisioning.JobResourceRef{
 					{
 						Name:  "non-existent-move-uid",
 						Kind:  "Dashboard",
@@ -158,7 +158,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		// Create move job without target path (should fail validation at creation time)
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
-			Move: &provisioning.MoveJobOptions{
+			Move: &provisioning.JobMoveJobOptions{
 				Paths: []string{"moved/dashboard1.json"},
 				// TargetPath intentionally omitted
 			},
@@ -224,9 +224,9 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		t.Run("move single dashboard by resource reference", func(t *testing.T) {
 			spec := provisioning.JobSpec{
 				Action: provisioning.JobActionMove,
-				Move: &provisioning.MoveJobOptions{
+				Move: &provisioning.JobMoveJobOptions{
 					TargetPath: "moved-by-ref/",
-					Resources: []provisioning.ResourceRef{
+					Resources: []provisioning.JobResourceRef{
 						{
 							Name:  "moveref1", // UID from modified all-panels.json
 							Kind:  "Dashboard",
@@ -256,9 +256,9 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		t.Run("move multiple resources by reference", func(t *testing.T) {
 			spec := provisioning.JobSpec{
 				Action: provisioning.JobActionMove,
-				Move: &provisioning.MoveJobOptions{
+				Move: &provisioning.JobMoveJobOptions{
 					TargetPath: "archived-by-ref/",
-					Resources: []provisioning.ResourceRef{
+					Resources: []provisioning.JobResourceRef{
 						{
 							Name:  "moveref2", // UID from modified text-options.json
 							Kind:  "Dashboard",
@@ -301,9 +301,9 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 
 			spec := provisioning.JobSpec{
 				Action: provisioning.JobActionMove,
-				Move: &provisioning.MoveJobOptions{
+				Move: &provisioning.JobMoveJobOptions{
 					TargetPath: "/",
-					Resources: []provisioning.ResourceRef{
+					Resources: []provisioning.JobResourceRef{
 						{
 							Name:  "movetoroot1",
 							Kind:  "Dashboard",
@@ -346,10 +346,10 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 			// Create move job that combines both paths and resource references
 			spec := provisioning.JobSpec{
 				Action: provisioning.JobActionMove,
-				Move: &provisioning.MoveJobOptions{
+				Move: &provisioning.JobMoveJobOptions{
 					TargetPath: "mixed-target/",
 					Paths:      []string{"mixed-move-1.json"}, // Move by path
-					Resources: []provisioning.ResourceRef{
+					Resources: []provisioning.JobResourceRef{
 						{
 							Name:  "mixedmove2", // Move by resource reference
 							Kind:  "Dashboard",

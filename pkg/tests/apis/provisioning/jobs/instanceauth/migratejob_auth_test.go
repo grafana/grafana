@@ -29,7 +29,7 @@ func TestIntegrationProvisioning_MigrateJobAuthorization(t *testing.T) {
 	t.Run("admin can create migrate job", func(t *testing.T) {
 		body := common.AsJSON(provisioning.JobSpec{
 			Action:  provisioning.JobActionMigrate,
-			Migrate: &provisioning.MigrateJobOptions{},
+			Migrate: &provisioning.JobMigrateJobOptions{},
 		})
 
 		var statusCode int
@@ -51,7 +51,7 @@ func TestIntegrationProvisioning_MigrateJobAuthorization(t *testing.T) {
 	t.Run("editor cannot create migrate job on instance-scoped repo", func(t *testing.T) {
 		body := common.AsJSON(provisioning.JobSpec{
 			Action:  provisioning.JobActionMigrate,
-			Migrate: &provisioning.MigrateJobOptions{},
+			Migrate: &provisioning.JobMigrateJobOptions{},
 		})
 
 		var statusCode int
@@ -72,7 +72,7 @@ func TestIntegrationProvisioning_MigrateJobAuthorization(t *testing.T) {
 	t.Run("viewer cannot create migrate job", func(t *testing.T) {
 		body := common.AsJSON(provisioning.JobSpec{
 			Action:  provisioning.JobActionMigrate,
-			Migrate: &provisioning.MigrateJobOptions{},
+			Migrate: &provisioning.JobMigrateJobOptions{},
 		})
 
 		var statusCode int

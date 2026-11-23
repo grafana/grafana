@@ -59,7 +59,7 @@ func TestMigrationWorker_ProcessNotReaderWriter(t *testing.T) {
 	job := provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Action:  provisioning.JobActionMigrate,
-			Migrate: &provisioning.MigrateJobOptions{},
+			Migrate: &provisioning.JobMigrateJobOptions{},
 		},
 	}
 	progressRecorder := jobs.NewMockJobProgressRecorder(t)
@@ -99,7 +99,7 @@ func TestMigrationWorker_Process(t *testing.T) {
 			job: provisioning.Job{
 				Spec: provisioning.JobSpec{
 					Action:  provisioning.JobActionMigrate,
-					Migrate: &provisioning.MigrateJobOptions{},
+					Migrate: &provisioning.JobMigrateJobOptions{},
 				},
 			},
 			setupMocks: func(um *MockMigrator, pr *jobs.MockJobProgressRecorder) {
@@ -115,7 +115,7 @@ func TestMigrationWorker_Process(t *testing.T) {
 			job: provisioning.Job{
 				Spec: provisioning.JobSpec{
 					Action:  provisioning.JobActionMigrate,
-					Migrate: &provisioning.MigrateJobOptions{},
+					Migrate: &provisioning.JobMigrateJobOptions{},
 				},
 			},
 			setupMocks: func(um *MockMigrator, pr *jobs.MockJobProgressRecorder) {
@@ -207,7 +207,7 @@ func TestMigrationWorker_ConfigurationDisabled(t *testing.T) {
 				Spec: provisioning.JobSpec{
 					Action:     provisioning.JobActionMigrate,
 					Repository: "test-repo",
-					Migrate: &provisioning.MigrateJobOptions{
+					Migrate: &provisioning.JobMigrateJobOptions{
 						Message: "Test migration",
 					},
 				},

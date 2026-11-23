@@ -4,9 +4,9 @@
 
 package v0alpha1
 
-// MigrateJobOptionsApplyConfiguration represents a declarative configuration of the MigrateJobOptions type for use
+// JobMigrateJobOptionsApplyConfiguration represents a declarative configuration of the JobMigrateJobOptions type for use
 // with apply.
-type MigrateJobOptionsApplyConfiguration struct {
+type JobMigrateJobOptionsApplyConfiguration struct {
 	// Message to use when committing the changes in a single commit.
 	// Deprecated: set JobSpec.Message instead. This field is kept for
 	// backwards compatibility and is only used when JobSpec.Message is empty.
@@ -26,7 +26,7 @@ type MigrateJobOptionsApplyConfiguration struct {
 	// parent paths resolve, and the subsequent pull phase only takes ownership
 	// of those resources.
 	// Currently only unmanaged Dashboards are supported.
-	Resources []ResourceRefApplyConfiguration `json:"resources,omitempty"`
+	Resources []JobResourceRefApplyConfiguration `json:"resources,omitempty"`
 	// GenerateNewFolderIDs writes a freshly generated identifier into each
 	// exported folder's metadata (_folder.json) instead of preserving the
 	// existing folder UID. The subsequent pull creates new folders rather than
@@ -40,16 +40,16 @@ type MigrateJobOptionsApplyConfiguration struct {
 	SkipResourceDeletion *bool `json:"skipResourceDeletion,omitempty"`
 }
 
-// MigrateJobOptionsApplyConfiguration constructs a declarative configuration of the MigrateJobOptions type for use with
+// JobMigrateJobOptionsApplyConfiguration constructs a declarative configuration of the JobMigrateJobOptions type for use with
 // apply.
-func MigrateJobOptions() *MigrateJobOptionsApplyConfiguration {
-	return &MigrateJobOptionsApplyConfiguration{}
+func JobMigrateJobOptions() *JobMigrateJobOptionsApplyConfiguration {
+	return &JobMigrateJobOptionsApplyConfiguration{}
 }
 
 // WithMessage sets the Message field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Message field is set to the value of the last call.
-func (b *MigrateJobOptionsApplyConfiguration) WithMessage(value string) *MigrateJobOptionsApplyConfiguration {
+func (b *JobMigrateJobOptionsApplyConfiguration) WithMessage(value string) *JobMigrateJobOptionsApplyConfiguration {
 	b.Message = &value
 	return b
 }
@@ -57,7 +57,7 @@ func (b *MigrateJobOptionsApplyConfiguration) WithMessage(value string) *Migrate
 // WithBranch sets the Branch field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Branch field is set to the value of the last call.
-func (b *MigrateJobOptionsApplyConfiguration) WithBranch(value string) *MigrateJobOptionsApplyConfiguration {
+func (b *JobMigrateJobOptionsApplyConfiguration) WithBranch(value string) *JobMigrateJobOptionsApplyConfiguration {
 	b.Branch = &value
 	return b
 }
@@ -65,7 +65,7 @@ func (b *MigrateJobOptionsApplyConfiguration) WithBranch(value string) *MigrateJ
 // WithResources adds the given value to the Resources field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the Resources field.
-func (b *MigrateJobOptionsApplyConfiguration) WithResources(values ...*ResourceRefApplyConfiguration) *MigrateJobOptionsApplyConfiguration {
+func (b *JobMigrateJobOptionsApplyConfiguration) WithResources(values ...*JobResourceRefApplyConfiguration) *JobMigrateJobOptionsApplyConfiguration {
 	for i := range values {
 		if values[i] == nil {
 			panic("nil value passed to WithResources")
@@ -78,7 +78,7 @@ func (b *MigrateJobOptionsApplyConfiguration) WithResources(values ...*ResourceR
 // WithGenerateNewFolderIDs sets the GenerateNewFolderIDs field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the GenerateNewFolderIDs field is set to the value of the last call.
-func (b *MigrateJobOptionsApplyConfiguration) WithGenerateNewFolderIDs(value bool) *MigrateJobOptionsApplyConfiguration {
+func (b *JobMigrateJobOptionsApplyConfiguration) WithGenerateNewFolderIDs(value bool) *JobMigrateJobOptionsApplyConfiguration {
 	b.GenerateNewFolderIDs = &value
 	return b
 }
@@ -86,7 +86,7 @@ func (b *MigrateJobOptionsApplyConfiguration) WithGenerateNewFolderIDs(value boo
 // WithSkipResourceDeletion sets the SkipResourceDeletion field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the SkipResourceDeletion field is set to the value of the last call.
-func (b *MigrateJobOptionsApplyConfiguration) WithSkipResourceDeletion(value bool) *MigrateJobOptionsApplyConfiguration {
+func (b *JobMigrateJobOptionsApplyConfiguration) WithSkipResourceDeletion(value bool) *JobMigrateJobOptionsApplyConfiguration {
 	b.SkipResourceDeletion = &value
 	return b
 }

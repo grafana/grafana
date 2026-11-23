@@ -42,7 +42,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		// Trigger incremental sync and collect the completed job object.
 		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+			Pull:   &provisioning.JobSyncJobOptions{Incremental: true},
 		})
 
 		jobObj := &provisioning.Job{}
@@ -106,7 +106,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		// quota slot before the create is attempted.
 		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+			Pull:   &provisioning.JobSyncJobOptions{Incremental: true},
 		})
 
 		jobObj := &provisioning.Job{}
@@ -198,7 +198,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 
 		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+			Pull:   &provisioning.JobSyncJobOptions{Incremental: true},
 		})
 
 		jobObj := &provisioning.Job{}
@@ -285,7 +285,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		// A single incremental sync covers all three commits.
 		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+			Pull:   &provisioning.JobSyncJobOptions{Incremental: true},
 		})
 
 		jobObj := &provisioning.Job{}

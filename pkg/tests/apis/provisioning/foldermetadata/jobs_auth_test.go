@@ -63,7 +63,7 @@ func TestIntegrationProvisioning_JobsAuthorization(t *testing.T) {
 	t.Run("admin can create job", func(t *testing.T) {
 		body := common.AsJSON(provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{},
+			Pull:   &provisioning.JobSyncJobOptions{},
 		})
 
 		var statusCode int

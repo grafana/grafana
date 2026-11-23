@@ -139,3 +139,24 @@ const (
 	DeletionCauseUser   = RepositoryDeletionStatusCauseUser
 	DeletionCauseSystem = RepositoryDeletionStatusCauseSystem
 )
+
+type (
+	// Deprecated: Use JobPullRequestJobOptions.
+	PullRequestJobOptions = JobPullRequestJobOptions
+	// Deprecated: Use JobSyncJobOptions.
+	SyncJobOptions = JobSyncJobOptions
+	// Deprecated: Use JobExportJobOptions.
+	ExportJobOptions = JobExportJobOptions
+	// Deprecated: Use JobMigrateJobOptions.
+	MigrateJobOptions = JobMigrateJobOptions
+	// Deprecated: Use JobDeleteJobOptions.
+	DeleteJobOptions = JobDeleteJobOptions
+	// Deprecated: Use JobMoveJobOptions.
+	MoveJobOptions = JobMoveJobOptions
+	// Deprecated: Use JobFixFolderMetadataJobOptions.
+	FixFolderMetadataJobOptions = JobFixFolderMetadataJobOptions
+	// Deprecated: Use JobTestJobOptions.
+	TestJobOptions = JobTestJobOptions
+	// Deprecated: Use JobResourceRef.
+	ResourceRef = JobResourceRef
+)

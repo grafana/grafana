@@ -42,7 +42,7 @@ func TestIntegrationProvisioning_IncrementalSync_UnsupportedPath(t *testing.T) {
 	// Trigger incremental sync.
 	job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{Incremental: true},
+		Pull:   &provisioning.JobSyncJobOptions{Incremental: true},
 	})
 	jobObj := &provisioning.Job{}
 	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
@@ -94,7 +94,7 @@ func TestIntegrationProvisioning_IncrementalSync_RenameOntoUnsupportedPath(t *te
 
 	job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{Incremental: true},
+		Pull:   &provisioning.JobSyncJobOptions{Incremental: true},
 	})
 	jobObj := &provisioning.Job{}
 	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
@@ -129,7 +129,7 @@ func incrementalPullAndRequireWarning(t *testing.T, helper *common.GitTestHelper
 	t.Helper()
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{Incremental: true},
+		Pull:   &provisioning.JobSyncJobOptions{Incremental: true},
 	})
 	jobObj := &provisioning.Job{}
 	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
@@ -256,7 +256,7 @@ func requireRenameOntoNonResourceRemovesDashboard(t *testing.T, name, target str
 
 	job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{Incremental: true},
+		Pull:   &provisioning.JobSyncJobOptions{Incremental: true},
 	})
 	jobObj := &provisioning.Job{}
 	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))

@@ -85,7 +85,7 @@ func TestExportWorker_ProcessWriteNotAllowed(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionPush,
-			Push: &v0alpha1.ExportJobOptions{
+			Push: &v0alpha1.JobExportJobOptions{
 				Branch: "main",
 			},
 		},
@@ -110,7 +110,7 @@ func TestExportWorker_ProcessBranchNotAllowedForLocal(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionPush,
-			Push: &v0alpha1.ExportJobOptions{
+			Push: &v0alpha1.JobExportJobOptions{
 				Branch: "somebranch",
 			},
 		},
@@ -136,7 +136,7 @@ func TestExportWorker_ProcessFailedToCreateClients(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionPush,
-			Push:   &v0alpha1.ExportJobOptions{},
+			Push:   &v0alpha1.JobExportJobOptions{},
 		},
 	}
 
@@ -167,7 +167,7 @@ func TestExportWorker_ProcessNotReaderWriter(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionPush,
-			Push:   &v0alpha1.ExportJobOptions{},
+			Push:   &v0alpha1.JobExportJobOptions{},
 		},
 	}
 
@@ -203,7 +203,7 @@ func TestExportWorker_ProcessRepositoryResourcesError(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionPush,
-			Push:   &v0alpha1.ExportJobOptions{},
+			Push:   &v0alpha1.JobExportJobOptions{},
 		},
 	}
 
@@ -241,7 +241,7 @@ func TestExportWorker_ProcessStageOptions(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionPush,
-			Push: &v0alpha1.ExportJobOptions{
+			Push: &v0alpha1.JobExportJobOptions{
 				Branch: "feature-branch",
 			},
 		},
@@ -327,7 +327,7 @@ func TestExportWorker_ProcessStageOptionsWithBranch(t *testing.T) {
 			job := v0alpha1.Job{
 				Spec: v0alpha1.JobSpec{
 					Action: v0alpha1.JobActionPush,
-					Push: &v0alpha1.ExportJobOptions{
+					Push: &v0alpha1.JobExportJobOptions{
 						Branch: tt.branch,
 					},
 				},
@@ -381,7 +381,7 @@ func TestExportWorker_ProcessExportFnError(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionPush,
-			Push:   &v0alpha1.ExportJobOptions{},
+			Push:   &v0alpha1.JobExportJobOptions{},
 		},
 	}
 
@@ -424,7 +424,7 @@ func TestExportWorker_ProcessWrapWithStageFnError(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionPush,
-			Push:   &v0alpha1.ExportJobOptions{},
+			Push:   &v0alpha1.JobExportJobOptions{},
 		},
 	}
 
@@ -456,7 +456,7 @@ func TestExportWorker_ProcessBranchNotAllowedForStageableRepositories(t *testing
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionPush,
-			Push: &v0alpha1.ExportJobOptions{
+			Push: &v0alpha1.JobExportJobOptions{
 				Branch: "somebranch",
 			},
 		},
@@ -483,7 +483,7 @@ func TestExportWorker_ProcessGitRepository(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionPush,
-			Push:   &v0alpha1.ExportJobOptions{},
+			Push:   &v0alpha1.JobExportJobOptions{},
 		},
 	}
 
@@ -536,7 +536,7 @@ func TestExportWorker_ProcessGitRepositoryExportFnError(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionPush,
-			Push:   &v0alpha1.ExportJobOptions{},
+			Push:   &v0alpha1.JobExportJobOptions{},
 		},
 	}
 
@@ -613,7 +613,7 @@ func TestExportWorker_CommitMessagePrecedence(t *testing.T) {
 				Spec: v0alpha1.JobSpec{
 					Action:  v0alpha1.JobActionPush,
 					Message: tt.specMessage,
-					Push: &v0alpha1.ExportJobOptions{
+					Push: &v0alpha1.JobExportJobOptions{
 						Branch:  "feature-branch",
 						Message: tt.optsMessage,
 					},
@@ -663,7 +663,7 @@ func TestExportWorker_RefURLsSetWithBranch(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionPush,
-			Push: &v0alpha1.ExportJobOptions{
+			Push: &v0alpha1.JobExportJobOptions{
 				Branch:  "feature-branch",
 				Message: "test commit",
 			},
@@ -731,7 +731,7 @@ func TestExportWorker_RefURLsNotSetWithoutBranch(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionPush,
-			Push: &v0alpha1.ExportJobOptions{
+			Push: &v0alpha1.JobExportJobOptions{
 				Message: "test commit",
 				// No branch specified
 			},
@@ -788,7 +788,7 @@ func TestExportWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionPush,
-			Push: &v0alpha1.ExportJobOptions{
+			Push: &v0alpha1.JobExportJobOptions{
 				Branch:  "feature-branch",
 				Message: "test commit",
 			},
@@ -902,7 +902,7 @@ func TestExportWorker_ConfigurationDisabled(t *testing.T) {
 				Spec: v0alpha1.JobSpec{
 					Action:     v0alpha1.JobActionPush,
 					Repository: "test-repo",
-					Push: &v0alpha1.ExportJobOptions{
+					Push: &v0alpha1.JobExportJobOptions{
 						Branch: "main",
 					},
 				},

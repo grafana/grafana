@@ -57,7 +57,7 @@ func TestIntegrationProvisioning_FullSync_FolderUIDTooLong(t *testing.T) {
 
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{},
+		Pull:   &provisioning.JobSyncJobOptions{},
 	})
 
 	jobObj := &provisioning.Job{}
@@ -136,7 +136,7 @@ func TestIntegrationProvisioning_FullSync_FolderUIDTooLong(t *testing.T) {
 	// result poisons the repository state on the second pull.
 	rerun := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{},
+		Pull:   &provisioning.JobSyncJobOptions{},
 	})
 	rerunObj := &provisioning.Job{}
 	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(rerun.Object, rerunObj))

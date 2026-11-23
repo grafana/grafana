@@ -155,7 +155,7 @@ func TestPullRequestJobRejected(t *testing.T) {
 	t.Run("PullRequest action returns bad request", func(t *testing.T) {
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionPullRequest,
-			PullRequest: &provisioning.PullRequestJobOptions{
+			PullRequest: &provisioning.JobPullRequestJobOptions{
 				PR:  123,
 				Ref: "test-ref",
 			},
@@ -170,7 +170,7 @@ func TestPullRequestJobRejected(t *testing.T) {
 	t.Run("Pull action is not rejected", func(t *testing.T) {
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{},
+			Pull:   &provisioning.JobSyncJobOptions{},
 		}
 
 		err := c.authorizeJob(context.Background(), nil, cfg, spec)
@@ -199,7 +199,7 @@ func TestExportFeatureGate(t *testing.T) {
 	t.Run("push rejected when disabled", func(t *testing.T) {
 		featuremgmt.WithDisabledFlags(t, featuremgmt.FlagProvisioningExport)
 		c := &jobsConnector{}
-		spec := provisioning.JobSpec{Action: provisioning.JobActionPush, Push: &provisioning.ExportJobOptions{}}
+		spec := provisioning.JobSpec{Action: provisioning.JobActionPush, Push: &provisioning.JobExportJobOptions{}}
 
 		err := c.authorizeJob(ctx, nil, cfg, spec)
 		require.Error(t, err)
@@ -210,7 +210,7 @@ func TestExportFeatureGate(t *testing.T) {
 	t.Run("migrate rejected when disabled", func(t *testing.T) {
 		featuremgmt.WithDisabledFlags(t, featuremgmt.FlagProvisioningExport)
 		c := &jobsConnector{}
-		spec := provisioning.JobSpec{Action: provisioning.JobActionMigrate, Migrate: &provisioning.MigrateJobOptions{}}
+		spec := provisioning.JobSpec{Action: provisioning.JobActionMigrate, Migrate: &provisioning.JobMigrateJobOptions{}}
 
 		err := c.authorizeJob(ctx, nil, cfg, spec)
 		require.Error(t, err)
@@ -232,7 +232,7 @@ func TestExportFeatureGate(t *testing.T) {
 	t.Run("push passes the gate when enabled", func(t *testing.T) {
 		featuremgmt.WithEnabledFlags(t, featuremgmt.FlagProvisioningExport)
 		c := &jobsConnector{}
-		spec := provisioning.JobSpec{Action: provisioning.JobActionPush, Push: &provisioning.ExportJobOptions{}}
+		spec := provisioning.JobSpec{Action: provisioning.JobActionPush, Push: &provisioning.JobExportJobOptions{}}
 
 		// Past the gate the push authorizer runs; with a nil repo it fails on the
 		// reader check, which proves the feature gate let the request through.
@@ -253,7 +253,7 @@ func TestValidateWriteAccess_FixFolderMetadata(t *testing.T) {
 		}
 		spec := provisioning.JobSpec{
 			Action:            provisioning.JobActionFixFolderMetadata,
-			FixFolderMetadata: &provisioning.FixFolderMetadataJobOptions{},
+			FixFolderMetadata: &provisioning.JobFixFolderMetadataJobOptions{},
 		}
 		err := c.validateWriteAccess(cfg, spec)
 		require.NoError(t, err)
@@ -269,7 +269,7 @@ func TestValidateWriteAccess_FixFolderMetadata(t *testing.T) {
 		}
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionFixFolderMetadata,
-			FixFolderMetadata: &provisioning.FixFolderMetadataJobOptions{
+			FixFolderMetadata: &provisioning.JobFixFolderMetadataJobOptions{
 				Ref: "add-folder-metadata",
 			},
 		}
@@ -287,7 +287,7 @@ func TestValidateWriteAccess_FixFolderMetadata(t *testing.T) {
 		}
 		spec := provisioning.JobSpec{
 			Action:            provisioning.JobActionFixFolderMetadata,
-			FixFolderMetadata: &provisioning.FixFolderMetadataJobOptions{},
+			FixFolderMetadata: &provisioning.JobFixFolderMetadataJobOptions{},
 		}
 		err := c.validateWriteAccess(cfg, spec)
 		require.Error(t, err)
@@ -302,7 +302,7 @@ func TestValidateWriteAccess_FixFolderMetadata(t *testing.T) {
 		}
 		spec := provisioning.JobSpec{
 			Action:            provisioning.JobActionFixFolderMetadata,
-			FixFolderMetadata: &provisioning.FixFolderMetadataJobOptions{},
+			FixFolderMetadata: &provisioning.JobFixFolderMetadataJobOptions{},
 		}
 		err := c.validateWriteAccess(cfg, spec)
 		require.Error(t, err)
@@ -319,7 +319,7 @@ func TestValidateWriteAccess_FixFolderMetadata(t *testing.T) {
 		}
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionFixFolderMetadata,
-			FixFolderMetadata: &provisioning.FixFolderMetadataJobOptions{
+			FixFolderMetadata: &provisioning.JobFixFolderMetadataJobOptions{
 				Ref: "main",
 			},
 		}
@@ -357,7 +357,7 @@ func TestValidateWriteAccess_Migrate(t *testing.T) {
 	migrate := func(branch string) provisioning.JobSpec {
 		return provisioning.JobSpec{
 			Action:  provisioning.JobActionMigrate,
-			Migrate: &provisioning.MigrateJobOptions{Branch: branch},
+			Migrate: &provisioning.JobMigrateJobOptions{Branch: branch},
 		}
 	}
 
@@ -411,7 +411,7 @@ func TestAuthorizeResourceJob(t *testing.T) {
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
 		spec := provisioning.JobSpec{
 			Action:  provisioning.JobActionMigrate,
-			Migrate: &provisioning.MigrateJobOptions{},
+			Migrate: &provisioning.JobMigrateJobOptions{},
 		}
 
 		err := c.authorizeResourceJob(ctx, mockReader, cfg, spec)
@@ -432,7 +432,7 @@ func TestAuthorizeResourceJob(t *testing.T) {
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
 		spec := provisioning.JobSpec{
 			Action:  provisioning.JobActionMigrate,
-			Migrate: &provisioning.MigrateJobOptions{},
+			Migrate: &provisioning.JobMigrateJobOptions{},
 		}
 
 		err := c.authorizeResourceJob(ctx, mockReader, cfg, spec)
@@ -456,7 +456,7 @@ func TestAuthorizeResourceJob(t *testing.T) {
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
 		spec := provisioning.JobSpec{
 			Action:  provisioning.JobActionMigrate,
-			Migrate: &provisioning.MigrateJobOptions{},
+			Migrate: &provisioning.JobMigrateJobOptions{},
 		}
 
 		err := c.authorizeResourceJob(ctx, mockReader, cfg, spec)
@@ -488,7 +488,7 @@ func TestAuthorizeResourceJob(t *testing.T) {
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
 		spec := provisioning.JobSpec{
 			Action:  provisioning.JobActionMigrate,
-			Migrate: &provisioning.MigrateJobOptions{},
+			Migrate: &provisioning.JobMigrateJobOptions{},
 		}
 
 		err := c.authorizeResourceJob(ctx, mockReader, cfg, spec)
@@ -525,7 +525,7 @@ func TestAuthorizeResourceJob(t *testing.T) {
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
 		spec := provisioning.JobSpec{
 			Action:  provisioning.JobActionMigrate,
-			Migrate: &provisioning.MigrateJobOptions{},
+			Migrate: &provisioning.JobMigrateJobOptions{},
 		}
 
 		err := c.authorizeResourceJob(ctx, mockReader, instanceCfg, spec)
@@ -540,7 +540,7 @@ func TestAuthorizeResourceJob(t *testing.T) {
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
 		spec := provisioning.JobSpec{
 			Action:  provisioning.JobActionMigrate,
-			Migrate: &provisioning.MigrateJobOptions{},
+			Migrate: &provisioning.JobMigrateJobOptions{},
 		}
 
 		err := c.authorizeResourceJob(ctx, mockRepo, cfg, spec)
@@ -627,7 +627,7 @@ func TestAuthorizeMigrateJob(t *testing.T) {
 
 		mockReader := repository.NewMockReaderWriter(t)
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
-		spec := provisioning.JobSpec{Action: provisioning.JobActionMigrate, Migrate: &provisioning.MigrateJobOptions{}}
+		spec := provisioning.JobSpec{Action: provisioning.JobActionMigrate, Migrate: &provisioning.JobMigrateJobOptions{}}
 
 		err := c.authorizeMigrateJob(ctx, mockReader, instanceRepo(), spec)
 		require.NoError(t, err)
@@ -641,7 +641,7 @@ func TestAuthorizeMigrateJob(t *testing.T) {
 
 		mockReader := repository.NewMockReaderWriter(t)
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
-		spec := provisioning.JobSpec{Action: provisioning.JobActionMigrate, Migrate: &provisioning.MigrateJobOptions{SkipResourceDeletion: true}}
+		spec := provisioning.JobSpec{Action: provisioning.JobActionMigrate, Migrate: &provisioning.JobMigrateJobOptions{SkipResourceDeletion: true}}
 
 		err := c.authorizeMigrateJob(ctx, mockReader, instanceRepo(), spec)
 		require.NoError(t, err)
@@ -658,7 +658,7 @@ func TestAuthorizeMigrateJob(t *testing.T) {
 
 		mockReader := repository.NewMockReaderWriter(t)
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
-		spec := provisioning.JobSpec{Action: provisioning.JobActionMigrate, Migrate: &provisioning.MigrateJobOptions{}}
+		spec := provisioning.JobSpec{Action: provisioning.JobActionMigrate, Migrate: &provisioning.JobMigrateJobOptions{}}
 
 		err := c.authorizeMigrateJob(ctx, mockReader, instanceRepo(), spec)
 		require.Error(t, err)
@@ -676,7 +676,7 @@ func TestAuthorizeMigrateJob(t *testing.T) {
 
 		mockReader := repository.NewMockReaderWriter(t)
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
-		spec := provisioning.JobSpec{Action: provisioning.JobActionMigrate, Migrate: &provisioning.MigrateJobOptions{}}
+		spec := provisioning.JobSpec{Action: provisioning.JobActionMigrate, Migrate: &provisioning.JobMigrateJobOptions{}}
 
 		err := c.authorizeMigrateJob(ctx, mockReader, folderRepo(), spec)
 		require.NoError(t, err)
@@ -695,7 +695,7 @@ func TestAuthorizeMigrateJob(t *testing.T) {
 
 		mockReader := repository.NewMockReaderWriter(t)
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
-		spec := provisioning.JobSpec{Action: provisioning.JobActionMigrate, Migrate: &provisioning.MigrateJobOptions{Branch: "feature-x"}}
+		spec := provisioning.JobSpec{Action: provisioning.JobActionMigrate, Migrate: &provisioning.JobMigrateJobOptions{Branch: "feature-x"}}
 
 		err := c.authorizeMigrateJob(ctx, mockReader, folderRepo(), spec)
 		require.Error(t, err)
@@ -740,9 +740,9 @@ func TestAuthorizeMigrateJob(t *testing.T) {
 		c := &jobsConnector{access: accessMock, clients: clientsMock}
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionMigrate,
-			Migrate: &provisioning.MigrateJobOptions{
+			Migrate: &provisioning.JobMigrateJobOptions{
 				Branch: "feature-x",
-				Resources: []provisioning.ResourceRef{
+				Resources: []provisioning.JobResourceRef{
 					{Name: "my-dash", Kind: "Dashboard", Group: "dashboard.grafana.app"},
 				},
 			},
@@ -834,7 +834,7 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 		clientsMock.EXPECT().Clients(mock.Anything, "default").Return(clients, nil)
 
 		c := &jobsConnector{access: accessMock, clients: clientsMock}
-		err := c.authorizeDeleteJob(ctx, mockReader, cfg, nil, []provisioning.ResourceRef{
+		err := c.authorizeDeleteJob(ctx, mockReader, cfg, nil, []provisioning.JobResourceRef{
 			{Name: "my-dash", Kind: "Dashboard", Group: "dashboard.grafana.app"},
 		})
 		require.NoError(t, err)
@@ -856,7 +856,7 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 		clientsMock.EXPECT().Clients(mock.Anything, "default").Return(clients, nil)
 
 		c := &jobsConnector{access: accessMock, clients: clientsMock}
-		err := c.authorizeDeleteJob(ctx, mockReader, cfg, nil, []provisioning.ResourceRef{
+		err := c.authorizeDeleteJob(ctx, mockReader, cfg, nil, []provisioning.JobResourceRef{
 			{Name: "missing-dash", Kind: "Dashboard", Group: "dashboard.grafana.app"},
 		})
 		require.NoError(t, err)
@@ -896,7 +896,7 @@ func TestAuthorizeMoveJob(t *testing.T) {
 		accessMock := auth.NewMockAccessChecker(t)
 		mockReader := repository.NewMockReaderWriter(t)
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
-		err := c.authorizeMoveJob(ctx, mockReader, cfg, &provisioning.MoveJobOptions{
+		err := c.authorizeMoveJob(ctx, mockReader, cfg, &provisioning.JobMoveJobOptions{
 			TargetPath: "dest/",
 		})
 		require.NoError(t, err)
@@ -916,7 +916,7 @@ func TestAuthorizeMoveJob(t *testing.T) {
 		mockReader.On("Read", mock.Anything, "src/dashboard.json", "").Return(testDashboardFileInfo(), nil)
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).Return(nil, repository.ErrFileNotFound).Maybe()
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
-		err := c.authorizeMoveJob(ctx, mockReader, cfg, &provisioning.MoveJobOptions{
+		err := c.authorizeMoveJob(ctx, mockReader, cfg, &provisioning.JobMoveJobOptions{
 			Paths:      []string{"src/dashboard.json"},
 			TargetPath: "dest/",
 		})
@@ -932,7 +932,7 @@ func TestAuthorizeMoveJob(t *testing.T) {
 		mockReader.On("Read", mock.Anything, "restricted/dashboard.json", "").Return(testDashboardFileInfo(), nil)
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).Return(nil, repository.ErrFileNotFound).Maybe()
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
-		err := c.authorizeMoveJob(ctx, mockReader, cfg, &provisioning.MoveJobOptions{
+		err := c.authorizeMoveJob(ctx, mockReader, cfg, &provisioning.JobMoveJobOptions{
 			Paths:      []string{"restricted/dashboard.json"},
 			TargetPath: "dest/",
 		})
@@ -962,8 +962,8 @@ func TestAuthorizeMoveJob(t *testing.T) {
 		clientsMock.EXPECT().Clients(mock.Anything, "default").Return(clients, nil)
 
 		c := &jobsConnector{access: accessMock, clients: clientsMock}
-		err := c.authorizeMoveJob(ctx, mockReader, cfg, &provisioning.MoveJobOptions{
-			Resources: []provisioning.ResourceRef{
+		err := c.authorizeMoveJob(ctx, mockReader, cfg, &provisioning.JobMoveJobOptions{
+			Resources: []provisioning.JobResourceRef{
 				{Name: "my-dash", Kind: "Dashboard", Group: "dashboard.grafana.app"},
 			},
 			TargetPath: "dest/",
@@ -975,7 +975,7 @@ func TestAuthorizeMoveJob(t *testing.T) {
 		accessMock := auth.NewMockAccessChecker(t)
 		mockRepo := repository.NewMockConfigRepository(t)
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
-		err := c.authorizeMoveJob(ctx, mockRepo, cfg, &provisioning.MoveJobOptions{
+		err := c.authorizeMoveJob(ctx, mockRepo, cfg, &provisioning.JobMoveJobOptions{
 			Paths:      []string{"dashboard.json"},
 			TargetPath: "dest/",
 		})
@@ -1400,7 +1400,7 @@ func TestJobsConnector_AuthorizeJobCreate(t *testing.T) {
 		Spec: provisioning.JobSpec{
 			Action:     provisioning.JobActionPull,
 			Repository: "my-repo",
-			Pull:       &provisioning.SyncJobOptions{},
+			Pull:       &provisioning.JobSyncJobOptions{},
 		},
 	}
 	forbidden := apierrors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), "my-repo", nil)

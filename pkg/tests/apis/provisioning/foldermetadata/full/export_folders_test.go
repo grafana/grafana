@@ -16,7 +16,7 @@ func triggerExport(t *testing.T, helper *common.GitTestHelper, repo string) *pro
 	t.Helper()
 	result := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionPush,
-		Push:   &provisioning.ExportJobOptions{},
+		Push:   &provisioning.JobExportJobOptions{},
 	})
 	jobObj := &provisioning.Job{}
 	err := k8sruntime.DefaultUnstructuredConverter.FromUnstructured(result.Object, jobObj)

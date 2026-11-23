@@ -42,7 +42,7 @@ func TestIntegrationProvisioning_DeleteJobAuthorization(t *testing.T) {
 	t.Run("admin can create delete job", func(t *testing.T) {
 		body := common.AsJSON(provisioning.JobSpec{
 			Action: provisioning.JobActionDelete,
-			Delete: &provisioning.DeleteJobOptions{
+			Delete: &provisioning.JobDeleteJobOptions{
 				Paths: []string{"dashboard.json"},
 			},
 		})
@@ -69,7 +69,7 @@ func TestIntegrationProvisioning_DeleteJobAuthorization(t *testing.T) {
 
 		body := common.AsJSON(provisioning.JobSpec{
 			Action: provisioning.JobActionDelete,
-			Delete: &provisioning.DeleteJobOptions{
+			Delete: &provisioning.JobDeleteJobOptions{
 				Paths: []string{"editor-dash.json"},
 			},
 		})
@@ -93,7 +93,7 @@ func TestIntegrationProvisioning_DeleteJobAuthorization(t *testing.T) {
 	t.Run("viewer cannot create delete job", func(t *testing.T) {
 		body := common.AsJSON(provisioning.JobSpec{
 			Action: provisioning.JobActionDelete,
-			Delete: &provisioning.DeleteJobOptions{
+			Delete: &provisioning.JobDeleteJobOptions{
 				Paths: []string{"dashboard.json"},
 			},
 		})
@@ -119,7 +119,7 @@ func TestIntegrationProvisioning_DeleteJobAuthorization(t *testing.T) {
 
 		body := common.AsJSON(provisioning.JobSpec{
 			Action: provisioning.JobActionDelete,
-			Delete: &provisioning.DeleteJobOptions{
+			Delete: &provisioning.JobDeleteJobOptions{
 				Paths: []string{"folder-as-file.json"},
 			},
 		})
@@ -144,7 +144,7 @@ func TestIntegrationProvisioning_DeleteJobAuthorization(t *testing.T) {
 
 		body := common.AsJSON(provisioning.JobSpec{
 			Action: provisioning.JobActionDelete,
-			Delete: &provisioning.DeleteJobOptions{
+			Delete: &provisioning.JobDeleteJobOptions{
 				Paths: []string{"unsupported-resource.json"},
 			},
 		})

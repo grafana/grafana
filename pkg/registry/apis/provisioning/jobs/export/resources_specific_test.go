@@ -140,10 +140,10 @@ func TestExportSpecificResources_Success(t *testing.T) {
 	})).Return()
 	progress.On("TooManyErrors").Return(nil).Times(2)
 
-	options := provisioningV0.ExportJobOptions{
+	options := provisioningV0.JobExportJobOptions{
 		Path:   "grafana",
 		Branch: "feature/branch",
-		Resources: []provisioningV0.ResourceRef{
+		Resources: []provisioningV0.JobResourceRef{
 			{Name: "dash-1", Kind: "Dashboard", Group: resources.DashboardResource.Group},
 			{Name: "dash-2", Kind: "Dashboard", Group: resources.DashboardResource.Group},
 		},
@@ -178,8 +178,8 @@ func TestExportSpecificResources_ManagedDashboardError(t *testing.T) {
 	})).Return()
 	progress.On("TooManyErrors").Return(nil).Once()
 
-	options := provisioningV0.ExportJobOptions{
-		Resources: []provisioningV0.ResourceRef{{Name: "managed-dash", Kind: "Dashboard", Group: resources.DashboardResource.Group}},
+	options := provisioningV0.JobExportJobOptions{
+		Resources: []provisioningV0.JobResourceRef{{Name: "managed-dash", Kind: "Dashboard", Group: resources.DashboardResource.Group}},
 	}
 
 	err := ExportSpecificResources(context.Background(), options, emptyFolderClient(), resourceClients, repoResources, progress, false)
@@ -208,8 +208,8 @@ func TestExportSpecificResources_NotFoundRecordsError(t *testing.T) {
 	})).Return()
 	progress.On("TooManyErrors").Return(nil).Once()
 
-	options := provisioningV0.ExportJobOptions{
-		Resources: []provisioningV0.ResourceRef{{Name: "missing", Kind: "Dashboard", Group: resources.DashboardResource.Group}},
+	options := provisioningV0.JobExportJobOptions{
+		Resources: []provisioningV0.JobResourceRef{{Name: "missing", Kind: "Dashboard", Group: resources.DashboardResource.Group}},
 	}
 
 	err := ExportSpecificResources(context.Background(), options, emptyFolderClient(), resourceClients, repoResources, progress, false)
@@ -236,8 +236,8 @@ func TestExportSpecificResources_GetErrorRecordsError(t *testing.T) {
 	})).Return()
 	progress.On("TooManyErrors").Return(nil).Once()
 
-	options := provisioningV0.ExportJobOptions{
-		Resources: []provisioningV0.ResourceRef{{Name: "boom", Kind: "Dashboard", Group: resources.DashboardResource.Group}},
+	options := provisioningV0.JobExportJobOptions{
+		Resources: []provisioningV0.JobResourceRef{{Name: "boom", Kind: "Dashboard", Group: resources.DashboardResource.Group}},
 	}
 
 	err := ExportSpecificResources(context.Background(), options, emptyFolderClient(), resourceClients, repoResources, progress, false)
@@ -265,8 +265,8 @@ func TestExportSpecificResources_NewUIDsSetsRandomName(t *testing.T) {
 	progress.On("Record", mock.Anything, mock.Anything).Return()
 	progress.On("TooManyErrors").Return(nil).Once()
 
-	options := provisioningV0.ExportJobOptions{
-		Resources: []provisioningV0.ResourceRef{{Name: "original-uid", Kind: "Dashboard", Group: resources.DashboardResource.Group}},
+	options := provisioningV0.JobExportJobOptions{
+		Resources: []provisioningV0.JobResourceRef{{Name: "original-uid", Kind: "Dashboard", Group: resources.DashboardResource.Group}},
 	}
 
 	err := ExportSpecificResources(context.Background(), options, emptyFolderClient(), resourceClients, repoResources, progress, true)
@@ -312,9 +312,9 @@ func TestExportSpecificResources_FolderKindIsExported(t *testing.T) {
 	})).Return()
 	progress.On("TooManyErrors").Return(nil)
 
-	options := provisioningV0.ExportJobOptions{
+	options := provisioningV0.JobExportJobOptions{
 		Branch:    "feature/branch",
-		Resources: []provisioningV0.ResourceRef{{Name: "child", Kind: resources.FolderKind.Kind, Group: resources.FolderResource.Group}},
+		Resources: []provisioningV0.JobResourceRef{{Name: "child", Kind: resources.FolderKind.Kind, Group: resources.FolderResource.Group}},
 	}
 
 	err := ExportSpecificResources(context.Background(), options, folderClient, resourceClients, repoResources, progress, false)
@@ -362,9 +362,9 @@ func TestExportSpecificResources_GeneratesFolderForDashboard(t *testing.T) {
 	progress.On("Record", mock.Anything, mock.Anything).Return()
 	progress.On("TooManyErrors").Return(nil)
 
-	options := provisioningV0.ExportJobOptions{
+	options := provisioningV0.JobExportJobOptions{
 		Branch:    "feature/branch",
-		Resources: []provisioningV0.ResourceRef{{Name: "dash-1", Kind: "Dashboard", Group: resources.DashboardResource.Group}},
+		Resources: []provisioningV0.JobResourceRef{{Name: "dash-1", Kind: "Dashboard", Group: resources.DashboardResource.Group}},
 	}
 
 	err := ExportSpecificResources(context.Background(), options, folderClient, resourceClients, repoResources, progress, false)
@@ -411,9 +411,9 @@ func TestExportSpecificResources_ManagedFolderAncestryIsSkipped(t *testing.T) {
 	progress.On("Record", mock.Anything, mock.Anything).Return()
 	progress.On("TooManyErrors").Return(nil)
 
-	options := provisioningV0.ExportJobOptions{
+	options := provisioningV0.JobExportJobOptions{
 		Branch:    "feature/branch",
-		Resources: []provisioningV0.ResourceRef{{Name: "dash-1", Kind: "Dashboard", Group: resources.DashboardResource.Group}},
+		Resources: []provisioningV0.JobResourceRef{{Name: "dash-1", Kind: "Dashboard", Group: resources.DashboardResource.Group}},
 	}
 
 	err := ExportSpecificResources(context.Background(), options, folderClient, resourceClients, repoResources, progress, false)
@@ -452,8 +452,8 @@ func TestExportSpecificResources_NonDashboardKindIsExported(t *testing.T) {
 	})).Return()
 	progress.On("TooManyErrors").Return(nil).Once()
 
-	options := provisioningV0.ExportJobOptions{
-		Resources: []provisioningV0.ResourceRef{{Name: "playlist-1", Kind: "Playlist", Group: "playlist.grafana.app"}},
+	options := provisioningV0.JobExportJobOptions{
+		Resources: []provisioningV0.JobResourceRef{{Name: "playlist-1", Kind: "Playlist", Group: "playlist.grafana.app"}},
 	}
 
 	err := ExportSpecificResources(context.Background(), options, emptyFolderClient(), resourceClients, repoResources, progress, false)
@@ -479,8 +479,8 @@ func TestExportSpecificResources_UnresolvableKindRecordsError(t *testing.T) {
 	})).Return()
 	progress.On("TooManyErrors").Return(nil).Once()
 
-	options := provisioningV0.ExportJobOptions{
-		Resources: []provisioningV0.ResourceRef{{Name: "mystery-1", Kind: "Mystery", Group: "unknown.grafana.app"}},
+	options := provisioningV0.JobExportJobOptions{
+		Resources: []provisioningV0.JobResourceRef{{Name: "mystery-1", Kind: "Mystery", Group: "unknown.grafana.app"}},
 	}
 
 	err := ExportSpecificResources(context.Background(), options, emptyFolderClient(), resourceClients, repoResources, progress, false)

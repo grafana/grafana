@@ -8,13 +8,13 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// TestJobOptionsApplyConfiguration represents a declarative configuration of the TestJobOptions type for use
+// JobTestJobOptionsApplyConfiguration represents a declarative configuration of the JobTestJobOptions type for use
 // with apply.
 //
 // TestJobOptions configures a synthetic performance-testing job. The job does
 // no real work; it sleeps for Duration and then completes. It is only usable
 // when the provisioning.performance feature flag is enabled.
-type TestJobOptionsApplyConfiguration struct {
+type JobTestJobOptionsApplyConfiguration struct {
 	// Duration is how long the job should sleep before completing, expressed as
 	// a Go duration string (for example "10s" or "2m"). It must be positive and
 	// is capped by the server to keep a single job's runtime predictable.
@@ -24,16 +24,16 @@ type TestJobOptionsApplyConfiguration struct {
 	ProgressUpdates *int `json:"progressUpdates,omitempty"`
 }
 
-// TestJobOptionsApplyConfiguration constructs a declarative configuration of the TestJobOptions type for use with
+// JobTestJobOptionsApplyConfiguration constructs a declarative configuration of the JobTestJobOptions type for use with
 // apply.
-func TestJobOptions() *TestJobOptionsApplyConfiguration {
-	return &TestJobOptionsApplyConfiguration{}
+func JobTestJobOptions() *JobTestJobOptionsApplyConfiguration {
+	return &JobTestJobOptionsApplyConfiguration{}
 }
 
 // WithDuration sets the Duration field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Duration field is set to the value of the last call.
-func (b *TestJobOptionsApplyConfiguration) WithDuration(value v1.Duration) *TestJobOptionsApplyConfiguration {
+func (b *JobTestJobOptionsApplyConfiguration) WithDuration(value v1.Duration) *JobTestJobOptionsApplyConfiguration {
 	b.Duration = &value
 	return b
 }
@@ -41,7 +41,7 @@ func (b *TestJobOptionsApplyConfiguration) WithDuration(value v1.Duration) *Test
 // WithProgressUpdates sets the ProgressUpdates field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the ProgressUpdates field is set to the value of the last call.
-func (b *TestJobOptionsApplyConfiguration) WithProgressUpdates(value int) *TestJobOptionsApplyConfiguration {
+func (b *JobTestJobOptionsApplyConfiguration) WithProgressUpdates(value int) *JobTestJobOptionsApplyConfiguration {
 	b.ProgressUpdates = &value
 	return b
 }

@@ -4,10 +4,10 @@
 
 package v0alpha1
 
-// MoveJobOptionsApplyConfiguration represents a declarative configuration of the MoveJobOptions type for use
+// JobDeleteJobOptionsApplyConfiguration represents a declarative configuration of the JobDeleteJobOptions type for use
 // with apply.
-type MoveJobOptionsApplyConfiguration struct {
-	// Ref to the branch or commit hash that should move
+type JobDeleteJobOptionsApplyConfiguration struct {
+	// Ref to the branch or commit hash to delete from
 	Ref *string `json:"ref,omitempty"`
 	// Paths to be deleted. Examples:
 	// - dashboard.json (for a file)
@@ -15,25 +15,23 @@ type MoveJobOptionsApplyConfiguration struct {
 	// - nested/deep/ (for a directory)
 	// FIXME: we should validate this in admission hooks
 	Paths []string `json:"paths,omitempty"`
-	// Destination path for the move (e.g. "new-location/")
-	TargetPath *string `json:"targetPath,omitempty"`
-	// Resources to move
+	// Resources to delete
 	// This option has been created because currently the frontend does not use
 	// standarized app platform APIs. For performance and API consistency reasons, the preferred option
 	// is it to use the paths.
-	Resources []ResourceRefApplyConfiguration `json:"resources,omitempty"`
+	Resources []JobResourceRefApplyConfiguration `json:"resources,omitempty"`
 }
 
-// MoveJobOptionsApplyConfiguration constructs a declarative configuration of the MoveJobOptions type for use with
+// JobDeleteJobOptionsApplyConfiguration constructs a declarative configuration of the JobDeleteJobOptions type for use with
 // apply.
-func MoveJobOptions() *MoveJobOptionsApplyConfiguration {
-	return &MoveJobOptionsApplyConfiguration{}
+func JobDeleteJobOptions() *JobDeleteJobOptionsApplyConfiguration {
+	return &JobDeleteJobOptionsApplyConfiguration{}
 }
 
 // WithRef sets the Ref field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Ref field is set to the value of the last call.
-func (b *MoveJobOptionsApplyConfiguration) WithRef(value string) *MoveJobOptionsApplyConfiguration {
+func (b *JobDeleteJobOptionsApplyConfiguration) WithRef(value string) *JobDeleteJobOptionsApplyConfiguration {
 	b.Ref = &value
 	return b
 }
@@ -41,25 +39,17 @@ func (b *MoveJobOptionsApplyConfiguration) WithRef(value string) *MoveJobOptions
 // WithPaths adds the given value to the Paths field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the Paths field.
-func (b *MoveJobOptionsApplyConfiguration) WithPaths(values ...string) *MoveJobOptionsApplyConfiguration {
+func (b *JobDeleteJobOptionsApplyConfiguration) WithPaths(values ...string) *JobDeleteJobOptionsApplyConfiguration {
 	for i := range values {
 		b.Paths = append(b.Paths, values[i])
 	}
 	return b
 }
 
-// WithTargetPath sets the TargetPath field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the TargetPath field is set to the value of the last call.
-func (b *MoveJobOptionsApplyConfiguration) WithTargetPath(value string) *MoveJobOptionsApplyConfiguration {
-	b.TargetPath = &value
-	return b
-}
-
 // WithResources adds the given value to the Resources field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the Resources field.
-func (b *MoveJobOptionsApplyConfiguration) WithResources(values ...*ResourceRefApplyConfiguration) *MoveJobOptionsApplyConfiguration {
+func (b *JobDeleteJobOptionsApplyConfiguration) WithResources(values ...*JobResourceRefApplyConfiguration) *JobDeleteJobOptionsApplyConfiguration {
 	for i := range values {
 		if values[i] == nil {
 			panic("nil value passed to WithResources")

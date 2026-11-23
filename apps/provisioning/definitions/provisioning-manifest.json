@@ -1333,6 +1333,21 @@
                             }
                         },
                         "schemas": {
+                            "Action": {
+                                "enum": [
+                                    "pull",
+                                    "push",
+                                    "pr",
+                                    "migrate",
+                                    "delete",
+                                    "deleteResources",
+                                    "releaseResources",
+                                    "move",
+                                    "fixFolderMetadata",
+                                    "test"
+                                ],
+                                "type": "string"
+                            },
                             "DeleteJobOptions": {
                                 "additionalProperties": false,
                                 "properties": {
@@ -1413,64 +1428,6 @@
                                     "spec"
                                 ]
                             },
-                            "JobResourceSummary": {
-                                "additionalProperties": false,
-                                "properties": {
-                                    "create": {
-                                        "type": "integer"
-                                    },
-                                    "delete": {
-                                        "type": "integer"
-                                    },
-                                    "error": {
-                                        "description": "The error count",
-                                        "type": "integer"
-                                    },
-                                    "errors": {
-                                        "description": "Report errors/warnings for this resource type\nThis may not be an exhaustive list and recommend looking at the logs for more info",
-                                        "items": {
-                                            "type": "string"
-                                        },
-                                        "type": "array"
-                                    },
-                                    "group": {
-                                        "type": "string"
-                                    },
-                                    "kind": {
-                                        "type": "string"
-                                    },
-                                    "noop": {
-                                        "description": "No action required (useful for sync)",
-                                        "type": "integer"
-                                    },
-                                    "total": {
-                                        "description": "The count (if known)",
-                                        "type": "integer"
-                                    },
-                                    "totalChanges": {
-                                        "description": "TotalChanges is the action-aware count of resources changed for this group/kind,\nset by the progress recorder as results are recorded. Used for the job-duration\nhistogram's resources_changed bucket.",
-                                        "type": "integer"
-                                    },
-                                    "update": {
-                                        "type": "integer"
-                                    },
-                                    "warning": {
-                                        "description": "The warning count",
-                                        "type": "integer"
-                                    },
-                                    "warnings": {
-                                        "items": {
-                                            "type": "string"
-                                        },
-                                        "type": "array"
-                                    },
-                                    "write": {
-                                        "description": "Create or update (export)",
-                                        "type": "integer"
-                                    }
-                                },
-                                "type": "object"
-                            },
                             "MigrateJobOptions": {
                                 "additionalProperties": false,
                                 "properties": {
@@ -1598,6 +1555,64 @@
                                 },
                                 "type": "object"
                             },
+                            "ResourceSummary": {
+                                "additionalProperties": false,
+                                "properties": {
+                                    "create": {
+                                        "type": "integer"
+                                    },
+                                    "delete": {
+                                        "type": "integer"
+                                    },
+                                    "error": {
+                                        "description": "The error count",
+                                        "type": "integer"
+                                    },
+                                    "errors": {
+                                        "description": "Report errors/warnings for this resource type\nThis may not be an exhaustive list and recommend looking at the logs for more info",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "type": "array"
+                                    },
+                                    "group": {
+                                        "type": "string"
+                                    },
+                                    "kind": {
+                                        "type": "string"
+                                    },
+                                    "noop": {
+                                        "description": "No action required (useful for sync)",
+                                        "type": "integer"
+                                    },
+                                    "total": {
+                                        "description": "The count (if known)",
+                                        "type": "integer"
+                                    },
+                                    "totalChanges": {
+                                        "description": "TotalChanges is the action-aware count of resources changed for this group/kind,\nset by the progress recorder as results are recorded. Used for the job-duration\nhistogram's resources_changed bucket.",
+                                        "type": "integer"
+                                    },
+                                    "update": {
+                                        "type": "integer"
+                                    },
+                                    "warning": {
+                                        "description": "The warning count",
+                                        "type": "integer"
+                                    },
+                                    "warnings": {
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "type": "array"
+                                    },
+                                    "write": {
+                                        "description": "Create or update (export)",
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            },
                             "State": {
                                 "enum": [
                                     "pending",
@@ -1639,19 +1654,7 @@
                                 "additionalProperties": false,
                                 "properties": {
                                     "action": {
-                                        "enum": [
-                                            "pull",
-                                            "push",
-                                            "pr",
-                                            "migrate",
-                                            "delete",
-                                            "deleteResources",
-                                            "releaseResources",
-                                            "move",
-                                            "fixFolderMetadata",
-                                            "test"
-                                        ],
-                                        "type": "string"
+                                        "$ref": "#/components/schemas/Action"
                                     },
                                     "delete": {
                                         "$ref": "#/components/schemas/DeleteJobOptions",
@@ -1731,7 +1734,7 @@
                                     "summary": {
                                         "description": "Summary of processed actions",
                                         "items": {
-                                            "$ref": "#/components/schemas/JobResourceSummary"
+                                            "$ref": "#/components/schemas/ResourceSummary"
                                         },
                                         "type": "array"
                                     },
@@ -1766,6 +1769,21 @@
                             }
                         },
                         "schemas": {
+                            "Action": {
+                                "enum": [
+                                    "pull",
+                                    "push",
+                                    "pr",
+                                    "migrate",
+                                    "delete",
+                                    "deleteResources",
+                                    "releaseResources",
+                                    "move",
+                                    "fixFolderMetadata",
+                                    "test"
+                                ],
+                                "type": "string"
+                            },
                             "DeleteJobOptions": {
                                 "additionalProperties": false,
                                 "properties": {
@@ -1846,64 +1864,6 @@
                                     "spec"
                                 ]
                             },
-                            "JobResourceSummary": {
-                                "additionalProperties": false,
-                                "properties": {
-                                    "create": {
-                                        "type": "integer"
-                                    },
-                                    "delete": {
-                                        "type": "integer"
-                                    },
-                                    "error": {
-                                        "description": "The error count",
-                                        "type": "integer"
-                                    },
-                                    "errors": {
-                                        "description": "Report errors/warnings for this resource type\nThis may not be an exhaustive list and recommend looking at the logs for more info",
-                                        "items": {
-                                            "type": "string"
-                                        },
-                                        "type": "array"
-                                    },
-                                    "group": {
-                                        "type": "string"
-                                    },
-                                    "kind": {
-                                        "type": "string"
-                                    },
-                                    "noop": {
-                                        "description": "No action required (useful for sync)",
-                                        "type": "integer"
-                                    },
-                                    "total": {
-                                        "description": "The count (if known)",
-                                        "type": "integer"
-                                    },
-                                    "totalChanges": {
-                                        "description": "TotalChanges is the action-aware count of resources changed for this group/kind,\nset by the progress recorder as results are recorded. Used for the job-duration\nhistogram's resources_changed bucket.",
-                                        "type": "integer"
-                                    },
-                                    "update": {
-                                        "type": "integer"
-                                    },
-                                    "warning": {
-                                        "description": "The warning count",
-                                        "type": "integer"
-                                    },
-                                    "warnings": {
-                                        "items": {
-                                            "type": "string"
-                                        },
-                                        "type": "array"
-                                    },
-                                    "write": {
-                                        "description": "Create or update (export)",
-                                        "type": "integer"
-                                    }
-                                },
-                                "type": "object"
-                            },
                             "MigrateJobOptions": {
                                 "additionalProperties": false,
                                 "properties": {
@@ -2031,6 +1991,64 @@
                                 },
                                 "type": "object"
                             },
+                            "ResourceSummary": {
+                                "additionalProperties": false,
+                                "properties": {
+                                    "create": {
+                                        "type": "integer"
+                                    },
+                                    "delete": {
+                                        "type": "integer"
+                                    },
+                                    "error": {
+                                        "description": "The error count",
+                                        "type": "integer"
+                                    },
+                                    "errors": {
+                                        "description": "Report errors/warnings for this resource type\nThis may not be an exhaustive list and recommend looking at the logs for more info",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "type": "array"
+                                    },
+                                    "group": {
+                                        "type": "string"
+                                    },
+                                    "kind": {
+                                        "type": "string"
+                                    },
+                                    "noop": {
+                                        "description": "No action required (useful for sync)",
+                                        "type": "integer"
+                                    },
+                                    "total": {
+                                        "description": "The count (if known)",
+                                        "type": "integer"
+                                    },
+                                    "totalChanges": {
+                                        "description": "TotalChanges is the action-aware count of resources changed for this group/kind,\nset by the progress recorder as results are recorded. Used for the job-duration\nhistogram's resources_changed bucket.",
+                                        "type": "integer"
+                                    },
+                                    "update": {
+                                        "type": "integer"
+                                    },
+                                    "warning": {
+                                        "description": "The warning count",
+                                        "type": "integer"
+                                    },
+                                    "warnings": {
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "type": "array"
+                                    },
+                                    "write": {
+                                        "description": "Create or update (export)",
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            },
                             "State": {
                                 "enum": [
                                     "pending",
@@ -2072,19 +2090,7 @@
                                 "additionalProperties": false,
                                 "properties": {
                                     "action": {
-                                        "enum": [
-                                            "pull",
-                                            "push",
-                                            "pr",
-                                            "migrate",
-                                            "delete",
-                                            "deleteResources",
-                                            "releaseResources",
-                                            "move",
-                                            "fixFolderMetadata",
-                                            "test"
-                                        ],
-                                        "type": "string"
+                                        "$ref": "#/components/schemas/Action"
                                     },
                                     "delete": {
                                         "$ref": "#/components/schemas/DeleteJobOptions",
@@ -2164,7 +2170,7 @@
                                     "summary": {
                                         "description": "Summary of processed actions",
                                         "items": {
-                                            "$ref": "#/components/schemas/JobResourceSummary"
+                                            "$ref": "#/components/schemas/ResourceSummary"
                                         },
                                         "type": "array"
                                     },
@@ -3510,6 +3516,21 @@
                             }
                         },
                         "schemas": {
+                            "Action": {
+                                "enum": [
+                                    "pull",
+                                    "push",
+                                    "pr",
+                                    "migrate",
+                                    "delete",
+                                    "deleteResources",
+                                    "releaseResources",
+                                    "move",
+                                    "fixFolderMetadata",
+                                    "test"
+                                ],
+                                "type": "string"
+                            },
                             "DeleteJobOptions": {
                                 "additionalProperties": false,
                                 "properties": {
@@ -3590,64 +3611,6 @@
                                     "spec"
                                 ]
                             },
-                            "JobResourceSummary": {
-                                "additionalProperties": false,
-                                "properties": {
-                                    "create": {
-                                        "type": "integer"
-                                    },
-                                    "delete": {
-                                        "type": "integer"
-                                    },
-                                    "error": {
-                                        "description": "The error count",
-                                        "type": "integer"
-                                    },
-                                    "errors": {
-                                        "description": "Report errors/warnings for this resource type\nThis may not be an exhaustive list and recommend looking at the logs for more info",
-                                        "items": {
-                                            "type": "string"
-                                        },
-                                        "type": "array"
-                                    },
-                                    "group": {
-                                        "type": "string"
-                                    },
-                                    "kind": {
-                                        "type": "string"
-                                    },
-                                    "noop": {
-                                        "description": "No action required (useful for sync)",
-                                        "type": "integer"
-                                    },
-                                    "total": {
-                                        "description": "The count (if known)",
-                                        "type": "integer"
-                                    },
-                                    "totalChanges": {
-                                        "description": "TotalChanges is the action-aware count of resources changed for this group/kind,\nset by the progress recorder as results are recorded. Used for the job-duration\nhistogram's resources_changed bucket.",
-                                        "type": "integer"
-                                    },
-                                    "update": {
-                                        "type": "integer"
-                                    },
-                                    "warning": {
-                                        "description": "The warning count",
-                                        "type": "integer"
-                                    },
-                                    "warnings": {
-                                        "items": {
-                                            "type": "string"
-                                        },
-                                        "type": "array"
-                                    },
-                                    "write": {
-                                        "description": "Create or update (export)",
-                                        "type": "integer"
-                                    }
-                                },
-                                "type": "object"
-                            },
                             "MigrateJobOptions": {
                                 "additionalProperties": false,
                                 "properties": {
@@ -3775,6 +3738,64 @@
                                 },
                                 "type": "object"
                             },
+                            "ResourceSummary": {
+                                "additionalProperties": false,
+                                "properties": {
+                                    "create": {
+                                        "type": "integer"
+                                    },
+                                    "delete": {
+                                        "type": "integer"
+                                    },
+                                    "error": {
+                                        "description": "The error count",
+                                        "type": "integer"
+                                    },
+                                    "errors": {
+                                        "description": "Report errors/warnings for this resource type\nThis may not be an exhaustive list and recommend looking at the logs for more info",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "type": "array"
+                                    },
+                                    "group": {
+                                        "type": "string"
+                                    },
+                                    "kind": {
+                                        "type": "string"
+                                    },
+                                    "noop": {
+                                        "description": "No action required (useful for sync)",
+                                        "type": "integer"
+                                    },
+                                    "total": {
+                                        "description": "The count (if known)",
+                                        "type": "integer"
+                                    },
+                                    "totalChanges": {
+                                        "description": "TotalChanges is the action-aware count of resources changed for this group/kind,\nset by the progress recorder as results are recorded. Used for the job-duration\nhistogram's resources_changed bucket.",
+                                        "type": "integer"
+                                    },
+                                    "update": {
+                                        "type": "integer"
+                                    },
+                                    "warning": {
+                                        "description": "The warning count",
+                                        "type": "integer"
+                                    },
+                                    "warnings": {
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "type": "array"
+                                    },
+                                    "write": {
+                                        "description": "Create or update (export)",
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            },
                             "State": {
                                 "enum": [
                                     "pending",
@@ -3816,19 +3837,7 @@
                                 "additionalProperties": false,
                                 "properties": {
                                     "action": {
-                                        "enum": [
-                                            "pull",
-                                            "push",
-                                            "pr",
-                                            "migrate",
-                                            "delete",
-                                            "deleteResources",
-                                            "releaseResources",
-                                            "move",
-                                            "fixFolderMetadata",
-                                            "test"
-                                        ],
-                                        "type": "string"
+                                        "$ref": "#/components/schemas/Action"
                                     },
                                     "delete": {
                                         "$ref": "#/components/schemas/DeleteJobOptions",
@@ -3908,7 +3917,7 @@
                                     "summary": {
                                         "description": "Summary of processed actions",
                                         "items": {
-                                            "$ref": "#/components/schemas/JobResourceSummary"
+                                            "$ref": "#/components/schemas/ResourceSummary"
                                         },
                                         "type": "array"
                                     },
@@ -3943,6 +3952,21 @@
                             }
                         },
                         "schemas": {
+                            "Action": {
+                                "enum": [
+                                    "pull",
+                                    "push",
+                                    "pr",
+                                    "migrate",
+                                    "delete",
+                                    "deleteResources",
+                                    "releaseResources",
+                                    "move",
+                                    "fixFolderMetadata",
+                                    "test"
+                                ],
+                                "type": "string"
+                            },
                             "DeleteJobOptions": {
                                 "additionalProperties": false,
                                 "properties": {
@@ -4023,64 +4047,6 @@
                                     "spec"
                                 ]
                             },
-                            "JobResourceSummary": {
-                                "additionalProperties": false,
-                                "properties": {
-                                    "create": {
-                                        "type": "integer"
-                                    },
-                                    "delete": {
-                                        "type": "integer"
-                                    },
-                                    "error": {
-                                        "description": "The error count",
-                                        "type": "integer"
-                                    },
-                                    "errors": {
-                                        "description": "Report errors/warnings for this resource type\nThis may not be an exhaustive list and recommend looking at the logs for more info",
-                                        "items": {
-                                            "type": "string"
-                                        },
-                                        "type": "array"
-                                    },
-                                    "group": {
-                                        "type": "string"
-                                    },
-                                    "kind": {
-                                        "type": "string"
-                                    },
-                                    "noop": {
-                                        "description": "No action required (useful for sync)",
-                                        "type": "integer"
-                                    },
-                                    "total": {
-                                        "description": "The count (if known)",
-                                        "type": "integer"
-                                    },
-                                    "totalChanges": {
-                                        "description": "TotalChanges is the action-aware count of resources changed for this group/kind,\nset by the progress recorder as results are recorded. Used for the job-duration\nhistogram's resources_changed bucket.",
-                                        "type": "integer"
-                                    },
-                                    "update": {
-                                        "type": "integer"
-                                    },
-                                    "warning": {
-                                        "description": "The warning count",
-                                        "type": "integer"
-                                    },
-                                    "warnings": {
-                                        "items": {
-                                            "type": "string"
-                                        },
-                                        "type": "array"
-                                    },
-                                    "write": {
-                                        "description": "Create or update (export)",
-                                        "type": "integer"
-                                    }
-                                },
-                                "type": "object"
-                            },
                             "MigrateJobOptions": {
                                 "additionalProperties": false,
                                 "properties": {
@@ -4208,6 +4174,64 @@
                                 },
                                 "type": "object"
                             },
+                            "ResourceSummary": {
+                                "additionalProperties": false,
+                                "properties": {
+                                    "create": {
+                                        "type": "integer"
+                                    },
+                                    "delete": {
+                                        "type": "integer"
+                                    },
+                                    "error": {
+                                        "description": "The error count",
+                                        "type": "integer"
+                                    },
+                                    "errors": {
+                                        "description": "Report errors/warnings for this resource type\nThis may not be an exhaustive list and recommend looking at the logs for more info",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "type": "array"
+                                    },
+                                    "group": {
+                                        "type": "string"
+                                    },
+                                    "kind": {
+                                        "type": "string"
+                                    },
+                                    "noop": {
+                                        "description": "No action required (useful for sync)",
+                                        "type": "integer"
+                                    },
+                                    "total": {
+                                        "description": "The count (if known)",
+                                        "type": "integer"
+                                    },
+                                    "totalChanges": {
+                                        "description": "TotalChanges is the action-aware count of resources changed for this group/kind,\nset by the progress recorder as results are recorded. Used for the job-duration\nhistogram's resources_changed bucket.",
+                                        "type": "integer"
+                                    },
+                                    "update": {
+                                        "type": "integer"
+                                    },
+                                    "warning": {
+                                        "description": "The warning count",
+                                        "type": "integer"
+                                    },
+                                    "warnings": {
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "type": "array"
+                                    },
+                                    "write": {
+                                        "description": "Create or update (export)",
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            },
                             "State": {
                                 "enum": [
                                     "pending",
@@ -4249,19 +4273,7 @@
                                 "additionalProperties": false,
                                 "properties": {
                                     "action": {
-                                        "enum": [
-                                            "pull",
-                                            "push",
-                                            "pr",
-                                            "migrate",
-                                            "delete",
-                                            "deleteResources",
-                                            "releaseResources",
-                                            "move",
-                                            "fixFolderMetadata",
-                                            "test"
-                                        ],
-                                        "type": "string"
+                                        "$ref": "#/components/schemas/Action"
                                     },
                                     "delete": {
                                         "$ref": "#/components/schemas/DeleteJobOptions",
@@ -4341,7 +4353,7 @@
                                     "summary": {
                                         "description": "Summary of processed actions",
                                         "items": {
-                                            "$ref": "#/components/schemas/JobResourceSummary"
+                                            "$ref": "#/components/schemas/ResourceSummary"
                                         },
                                         "type": "array"
                                     },

@@ -43,7 +43,7 @@ func TestIntegrationProvisioning_MigrateToBranch(t *testing.T) {
 	// Migrate to the feature branch.
 	helper.TriggerJobAndWaitForSuccess(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionMigrate,
-		Migrate: &provisioning.MigrateJobOptions{
+		Migrate: &provisioning.JobMigrateJobOptions{
 			Message: "Migrate unmanaged dashboards to a branch",
 			Branch:  branch,
 		},
@@ -113,10 +113,10 @@ func TestIntegrationProvisioning_SelectiveMigrateToBranch(t *testing.T) {
 
 	helper.TriggerJobAndWaitForSuccess(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionMigrate,
-		Migrate: &provisioning.MigrateJobOptions{
+		Migrate: &provisioning.JobMigrateJobOptions{
 			Message: "Migrate a single dashboard to a branch",
 			Branch:  branch,
-			Resources: []provisioning.ResourceRef{
+			Resources: []provisioning.JobResourceRef{
 				{Name: migratedName, Kind: "Dashboard", Group: "dashboard.grafana.app"},
 			},
 		},

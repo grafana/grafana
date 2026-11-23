@@ -227,11 +227,11 @@ func (h *ProvisioningTestHelper) Cleanup(t *testing.T) {
 	}
 }
 
-func (h *ProvisioningTestHelper) SyncAndWait(t *testing.T, repo string, options *provisioning.SyncJobOptions) {
+func (h *ProvisioningTestHelper) SyncAndWait(t *testing.T, repo string, options *provisioning.JobSyncJobOptions) {
 	t.Helper()
 
 	if options == nil {
-		options = &provisioning.SyncJobOptions{}
+		options = &provisioning.JobSyncJobOptions{}
 	}
 	body := AsJSON(&provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
@@ -533,7 +533,7 @@ func (h *ProvisioningTestHelper) AwaitJobs(t *testing.T, repoName string) {
 		if len(waitUntilComplete) == 0 {
 			body := AsJSON(&provisioning.JobSpec{
 				Action: provisioning.JobActionPull,
-				Pull:   &provisioning.SyncJobOptions{},
+				Pull:   &provisioning.JobSyncJobOptions{},
 			})
 
 			h.AdminREST.Post().
@@ -3265,7 +3265,7 @@ func SyncAndWait(t *testing.T, h SyncHelper, opts ...SyncOption) {
 
 	job := h.TriggerJobAndWaitForComplete(t, o.repoName, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{Incremental: o.incremental},
+		Pull:   &provisioning.JobSyncJobOptions{Incremental: o.incremental},
 	})
 
 	for _, m := range o.matchers {
@@ -4024,7 +4024,7 @@ func (h *GitTestHelper) SyncAndWaitIncremental(t *testing.T, repoName string) {
 	t.Helper()
 	h.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{Incremental: true},
+		Pull:   &provisioning.JobSyncJobOptions{Incremental: true},
 	})
 }
 

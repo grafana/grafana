@@ -31,7 +31,7 @@ func (_m *MockSyncer) EXPECT() *MockSyncer_Expecter {
 }
 
 // Sync provides a mock function with given fields: ctx, repo, options, repositoryResources, clients, progress, quotaTracker
-func (_m *MockSyncer) Sync(ctx context.Context, repo repository.ReaderWriter, options v0alpha1.SyncJobOptions, repositoryResources resources.RepositoryResources, clients resources.ResourceClients, progress jobs.JobProgressRecorder, quotaTracker quotas.QuotaTracker) (string, error) {
+func (_m *MockSyncer) Sync(ctx context.Context, repo repository.ReaderWriter, options v0alpha1.JobSyncJobOptions, repositoryResources resources.RepositoryResources, clients resources.ResourceClients, progress jobs.JobProgressRecorder, quotaTracker quotas.QuotaTracker) (string, error) {
 	ret := _m.Called(ctx, repo, options, repositoryResources, clients, progress, quotaTracker)
 
 	if len(ret) == 0 {
@@ -40,16 +40,16 @@ func (_m *MockSyncer) Sync(ctx context.Context, repo repository.ReaderWriter, op
 
 	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, repository.ReaderWriter, v0alpha1.SyncJobOptions, resources.RepositoryResources, resources.ResourceClients, jobs.JobProgressRecorder, quotas.QuotaTracker) (string, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, repository.ReaderWriter, v0alpha1.JobSyncJobOptions, resources.RepositoryResources, resources.ResourceClients, jobs.JobProgressRecorder, quotas.QuotaTracker) (string, error)); ok {
 		return rf(ctx, repo, options, repositoryResources, clients, progress, quotaTracker)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, repository.ReaderWriter, v0alpha1.SyncJobOptions, resources.RepositoryResources, resources.ResourceClients, jobs.JobProgressRecorder, quotas.QuotaTracker) string); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, repository.ReaderWriter, v0alpha1.JobSyncJobOptions, resources.RepositoryResources, resources.ResourceClients, jobs.JobProgressRecorder, quotas.QuotaTracker) string); ok {
 		r0 = rf(ctx, repo, options, repositoryResources, clients, progress, quotaTracker)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, repository.ReaderWriter, v0alpha1.SyncJobOptions, resources.RepositoryResources, resources.ResourceClients, jobs.JobProgressRecorder, quotas.QuotaTracker) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, repository.ReaderWriter, v0alpha1.JobSyncJobOptions, resources.RepositoryResources, resources.ResourceClients, jobs.JobProgressRecorder, quotas.QuotaTracker) error); ok {
 		r1 = rf(ctx, repo, options, repositoryResources, clients, progress, quotaTracker)
 	} else {
 		r1 = ret.Error(1)
@@ -66,7 +66,7 @@ type MockSyncer_Sync_Call struct {
 // Sync is a helper method to define mock.On call
 //   - ctx context.Context
 //   - repo repository.ReaderWriter
-//   - options v0alpha1.SyncJobOptions
+//   - options v0alpha1.JobSyncJobOptions
 //   - repositoryResources resources.RepositoryResources
 //   - clients resources.ResourceClients
 //   - progress jobs.JobProgressRecorder
@@ -75,9 +75,9 @@ func (_e *MockSyncer_Expecter) Sync(ctx interface{}, repo interface{}, options i
 	return &MockSyncer_Sync_Call{Call: _e.mock.On("Sync", ctx, repo, options, repositoryResources, clients, progress, quotaTracker)}
 }
 
-func (_c *MockSyncer_Sync_Call) Run(run func(ctx context.Context, repo repository.ReaderWriter, options v0alpha1.SyncJobOptions, repositoryResources resources.RepositoryResources, clients resources.ResourceClients, progress jobs.JobProgressRecorder, quotaTracker quotas.QuotaTracker)) *MockSyncer_Sync_Call {
+func (_c *MockSyncer_Sync_Call) Run(run func(ctx context.Context, repo repository.ReaderWriter, options v0alpha1.JobSyncJobOptions, repositoryResources resources.RepositoryResources, clients resources.ResourceClients, progress jobs.JobProgressRecorder, quotaTracker quotas.QuotaTracker)) *MockSyncer_Sync_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(repository.ReaderWriter), args[2].(v0alpha1.SyncJobOptions), args[3].(resources.RepositoryResources), args[4].(resources.ResourceClients), args[5].(jobs.JobProgressRecorder), args[6].(quotas.QuotaTracker))
+		run(args[0].(context.Context), args[1].(repository.ReaderWriter), args[2].(v0alpha1.JobSyncJobOptions), args[3].(resources.RepositoryResources), args[4].(resources.ResourceClients), args[5].(jobs.JobProgressRecorder), args[6].(quotas.QuotaTracker))
 	})
 	return _c
 }
@@ -87,7 +87,7 @@ func (_c *MockSyncer_Sync_Call) Return(_a0 string, _a1 error) *MockSyncer_Sync_C
 	return _c
 }
 
-func (_c *MockSyncer_Sync_Call) RunAndReturn(run func(context.Context, repository.ReaderWriter, v0alpha1.SyncJobOptions, resources.RepositoryResources, resources.ResourceClients, jobs.JobProgressRecorder, quotas.QuotaTracker) (string, error)) *MockSyncer_Sync_Call {
+func (_c *MockSyncer_Sync_Call) RunAndReturn(run func(context.Context, repository.ReaderWriter, v0alpha1.JobSyncJobOptions, resources.RepositoryResources, resources.ResourceClients, jobs.JobProgressRecorder, quotas.QuotaTracker) (string, error)) *MockSyncer_Sync_Call {
 	_c.Call.Return(run)
 	return _c
 }

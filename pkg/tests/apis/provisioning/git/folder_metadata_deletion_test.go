@@ -42,7 +42,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataOnlyDeletion(t *t
 
 	job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{Incremental: true},
+		Pull:   &provisioning.JobSyncJobOptions{Incremental: true},
 	})
 	common.HasOnlyMissingFolderMetadataWarnings("team")(t, job)
 

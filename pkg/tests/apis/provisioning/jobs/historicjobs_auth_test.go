@@ -28,7 +28,7 @@ func TestIntegrationProvisioning_HistoricJobsAuthorization(t *testing.T) {
 	// Trigger a job to create a historic job entry
 	jobSpec := provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{},
+		Pull:   &provisioning.JobSyncJobOptions{},
 	}
 	body := common.AsJSON(jobSpec)
 

@@ -100,7 +100,7 @@ func TestDeleteWorker_CommitMessageFromJobSpec(t *testing.T) {
 		Spec: v0alpha1.JobSpec{
 			Action:  v0alpha1.JobActionDelete,
 			Message: "custom commit message from spec",
-			Delete: &v0alpha1.DeleteJobOptions{
+			Delete: &v0alpha1.JobDeleteJobOptions{
 				Paths: []string{"test/path"},
 			},
 		},
@@ -131,7 +131,7 @@ func TestDeleteWorker_ProcessNotReaderWriter(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionDelete,
-			Delete: &v0alpha1.DeleteJobOptions{
+			Delete: &v0alpha1.JobDeleteJobOptions{
 				Paths: []string{"test/path"},
 			},
 		},
@@ -160,7 +160,7 @@ func TestDeleteWorker_ProcessWrapFnError(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionDelete,
-			Delete: &v0alpha1.DeleteJobOptions{
+			Delete: &v0alpha1.JobDeleteJobOptions{
 				Paths: []string{"test/path"},
 			},
 		},
@@ -183,7 +183,7 @@ func TestDeleteWorker_ProcessDeleteFilesSuccess(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionDelete,
-			Delete: &v0alpha1.DeleteJobOptions{
+			Delete: &v0alpha1.JobDeleteJobOptions{
 				Paths: []string{"test/path1", "test/path2"},
 				Ref:   "main",
 			},
@@ -232,7 +232,7 @@ func TestDeleteWorker_ProcessDeleteFilesWithError(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionDelete,
-			Delete: &v0alpha1.DeleteJobOptions{
+			Delete: &v0alpha1.JobDeleteJobOptions{
 				Paths: []string{"test/path1", "test/path2"},
 				Ref:   "main",
 			},
@@ -270,7 +270,7 @@ func TestDeleteWorker_ProcessWithSyncWorker(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionDelete,
-			Delete: &v0alpha1.DeleteJobOptions{
+			Delete: &v0alpha1.JobDeleteJobOptions{
 				Paths: []string{"test/path"},
 			},
 		},
@@ -315,7 +315,7 @@ func TestDeleteWorker_ProcessSyncWorkerError(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionDelete,
-			Delete: &v0alpha1.DeleteJobOptions{
+			Delete: &v0alpha1.JobDeleteJobOptions{
 				Paths: []string{"test/path"},
 			},
 		},
@@ -407,7 +407,7 @@ func TestDeleteWorker_deleteFiles(t *testing.T) {
 			}
 			mockProgress := jobs.NewMockJobProgressRecorder(t)
 
-			opts := v0alpha1.DeleteJobOptions{
+			opts := v0alpha1.JobDeleteJobOptions{
 				Ref: "main",
 			}
 
@@ -446,7 +446,7 @@ func TestDeleteWorker_Process_FileNotFoundIsWarning(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionDelete,
-			Delete: &v0alpha1.DeleteJobOptions{
+			Delete: &v0alpha1.JobDeleteJobOptions{
 				Paths: []string{"test/nonexistent.yaml"},
 				Ref:   "main",
 			},
@@ -491,8 +491,8 @@ func TestDeleteWorker_Process_ResourceNotFoundIsWarning(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionDelete,
-			Delete: &v0alpha1.DeleteJobOptions{
-				Resources: []v0alpha1.ResourceRef{
+			Delete: &v0alpha1.JobDeleteJobOptions{
+				Resources: []v0alpha1.JobResourceRef{
 					{
 						Name:  "missing-dashboard",
 						Kind:  "Dashboard",
@@ -550,7 +550,7 @@ func TestDeleteWorker_deleteFilesFileNotFoundIsWarning(t *testing.T) {
 	}
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
 
-	opts := v0alpha1.DeleteJobOptions{Ref: "main"}
+	opts := v0alpha1.JobDeleteJobOptions{Ref: "main"}
 	path := "test/nonexistent.yaml"
 
 	mockRepo.On("Delete", mock.Anything, path, "main", "Delete "+path).Return(repository.ErrFileNotFound)
@@ -578,7 +578,7 @@ func TestDeleteWorker_deleteFilesOtherErrorIsNotWarning(t *testing.T) {
 	}
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
 
-	opts := v0alpha1.DeleteJobOptions{Ref: "main"}
+	opts := v0alpha1.JobDeleteJobOptions{Ref: "main"}
 	path := "test/file.yaml"
 	deleteError := errors.New("permission denied")
 
@@ -605,9 +605,9 @@ func TestDeleteWorker_ProcessWithResourceRefs(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionDelete,
-			Delete: &v0alpha1.DeleteJobOptions{
+			Delete: &v0alpha1.JobDeleteJobOptions{
 				Paths: []string{"test/path1"},
-				Resources: []v0alpha1.ResourceRef{
+				Resources: []v0alpha1.JobResourceRef{
 					{
 						Name:  "test-dashboard",
 						Kind:  "Dashboard",
@@ -694,8 +694,8 @@ func TestDeleteWorker_ProcessResourceRefsOnly(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionDelete,
-			Delete: &v0alpha1.DeleteJobOptions{
-				Resources: []v0alpha1.ResourceRef{
+			Delete: &v0alpha1.JobDeleteJobOptions{
+				Resources: []v0alpha1.JobResourceRef{
 					{
 						Name:  "test-dashboard",
 						Kind:  "Dashboard",
@@ -750,8 +750,8 @@ func TestDeleteWorker_ProcessResourceResolutionError(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionDelete,
-			Delete: &v0alpha1.DeleteJobOptions{
-				Resources: []v0alpha1.ResourceRef{
+			Delete: &v0alpha1.JobDeleteJobOptions{
+				Resources: []v0alpha1.JobResourceRef{
 					{
 						Name:  "nonexistent-dashboard",
 						Kind:  "Dashboard",
@@ -816,8 +816,8 @@ func TestDeleteWorker_ProcessResourcesFactoryError(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionDelete,
-			Delete: &v0alpha1.DeleteJobOptions{
-				Resources: []v0alpha1.ResourceRef{
+			Delete: &v0alpha1.JobDeleteJobOptions{
+				Resources: []v0alpha1.JobResourceRef{
 					{
 						Name:  "test-dashboard",
 						Kind:  "Dashboard",
@@ -855,8 +855,8 @@ func TestDeleteWorker_ProcessResourceRefsNotReaderWriter(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionDelete,
-			Delete: &v0alpha1.DeleteJobOptions{
-				Resources: []v0alpha1.ResourceRef{
+			Delete: &v0alpha1.JobDeleteJobOptions{
+				Resources: []v0alpha1.JobResourceRef{
 					{
 						Name:  "test-dashboard",
 						Kind:  "Dashboard",
@@ -891,8 +891,8 @@ func TestDeleteWorker_ProcessResourceResolutionTooManyErrors(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionDelete,
-			Delete: &v0alpha1.DeleteJobOptions{
-				Resources: []v0alpha1.ResourceRef{
+			Delete: &v0alpha1.JobDeleteJobOptions{
+				Resources: []v0alpha1.JobResourceRef{
 					{
 						Name:  "nonexistent-dashboard",
 						Kind:  "Dashboard",
@@ -945,9 +945,9 @@ func TestDeleteWorker_ProcessMissingSourcePathStopsBeforeDeletion(t *testing.T) 
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionDelete,
-			Delete: &v0alpha1.DeleteJobOptions{
+			Delete: &v0alpha1.JobDeleteJobOptions{
 				Paths: []string{"dashboards/explicit.json"},
-				Resources: []v0alpha1.ResourceRef{
+				Resources: []v0alpha1.JobResourceRef{
 					{Name: "valid-dashboard", Kind: "Dashboard", Group: "dashboard.grafana.app"},
 					{Name: "missing-path-folder", Kind: "Folder", Group: "folder.grafana.app"},
 					{Name: "unprocessed-folder", Kind: "Folder", Group: "folder.grafana.app"},
@@ -1001,8 +1001,8 @@ func TestDeleteWorker_ProcessMixedResourcesWithPartialFailure(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionDelete,
-			Delete: &v0alpha1.DeleteJobOptions{
-				Resources: []v0alpha1.ResourceRef{
+			Delete: &v0alpha1.JobDeleteJobOptions{
+				Resources: []v0alpha1.JobResourceRef{
 					{
 						Name:  "valid-dashboard",
 						Kind:  "Dashboard",
@@ -1099,10 +1099,10 @@ func TestDeleteWorker_ProcessWithPathDeduplication(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionDelete,
-			Delete: &v0alpha1.DeleteJobOptions{
+			Delete: &v0alpha1.JobDeleteJobOptions{
 				Ref:   "main",                                                             // Add ref to avoid sync worker execution
 				Paths: []string{"dashboards/test-dashboard.json", "folders/test-folder/"}, // Explicit paths
-				Resources: []v0alpha1.ResourceRef{
+				Resources: []v0alpha1.JobResourceRef{
 					{
 						Name:  "test-dashboard", // This will resolve to "dashboards/test-dashboard.json" (duplicate)
 						Kind:  "Dashboard",
@@ -1204,7 +1204,7 @@ func TestDeleteWorker_deleteFilesFileNotFoundWarning(t *testing.T) {
 	}
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
 
-	opts := v0alpha1.DeleteJobOptions{
+	opts := v0alpha1.JobDeleteJobOptions{
 		Ref: "main",
 	}
 
@@ -1242,7 +1242,7 @@ func TestDeleteWorker_deleteFilesOtherErrorNoWarning(t *testing.T) {
 	}
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
 
-	opts := v0alpha1.DeleteJobOptions{
+	opts := v0alpha1.JobDeleteJobOptions{
 		Ref: "main",
 	}
 
@@ -1374,7 +1374,7 @@ func TestDeleteWorker_RefURLsSetWithRef(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionDelete,
-			Delete: &v0alpha1.DeleteJobOptions{
+			Delete: &v0alpha1.JobDeleteJobOptions{
 				Ref:   "feature-branch",
 				Paths: []string{"test.json"},
 			},
@@ -1431,7 +1431,7 @@ func TestDeleteWorker_RefURLsNotSetWithoutRef(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionDelete,
-			Delete: &v0alpha1.DeleteJobOptions{
+			Delete: &v0alpha1.JobDeleteJobOptions{
 				// No ref specified
 				Paths: []string{"test.json"},
 			},
@@ -1482,7 +1482,7 @@ func TestDeleteWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionDelete,
-			Delete: &v0alpha1.DeleteJobOptions{
+			Delete: &v0alpha1.JobDeleteJobOptions{
 				Ref:   "feature-branch",
 				Paths: []string{"test.json"},
 			},

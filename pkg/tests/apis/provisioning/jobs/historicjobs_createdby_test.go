@@ -26,7 +26,7 @@ func TestIntegrationProvisioning_HistoricJobsPreserveCreatedBy(t *testing.T) {
 
 	jobSpec := provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{},
+		Pull:   &provisioning.JobSyncJobOptions{},
 	}
 	body := common.AsJSON(jobSpec)
 

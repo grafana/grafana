@@ -44,7 +44,7 @@ func TestIntegrationProvisioning_MigrateDisabledByConfiguration(t *testing.T) {
 
 	spec := provisioning.JobSpec{
 		Action: provisioning.JobActionMigrate,
-		Migrate: &provisioning.MigrateJobOptions{
+		Migrate: &provisioning.JobMigrateJobOptions{
 			Message: "Test migration",
 		},
 	}
@@ -67,7 +67,7 @@ func TestIntegrationProvisioning_ExportDisabledByConfiguration(t *testing.T) {
 
 	spec := provisioning.JobSpec{
 		Action: provisioning.JobActionPush,
-		Push: &provisioning.ExportJobOptions{
+		Push: &provisioning.JobExportJobOptions{
 			Folder: "",
 			Path:   "",
 		},

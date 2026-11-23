@@ -25,7 +25,7 @@ import (
 // The response status indicates the original stored version, so we can then request it in an un-converted form
 type conversionShim = func(ctx context.Context, item *unstructured.Unstructured) (*unstructured.Unstructured, error)
 
-func ExportResources(ctx context.Context, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, generateNewUIDs bool) error {
+func ExportResources(ctx context.Context, options provisioning.JobExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, generateNewUIDs bool) error {
 	progress.SetMessage(ctx, "start resource export")
 	for _, supported := range clients.SupportedResources() {
 		// skip folders as we do them first... so only non-folder kinds here
@@ -72,7 +72,7 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 // named folder, and the parent-folder ancestry of every requested resource.
 // A resource whose folder was not named still lands at its nested path because
 // that folder (and its ancestors) is generated on demand from the folder API.
-func ExportSpecificResources(ctx context.Context, options provisioning.ExportJobOptions, folderClient dynamic.ResourceInterface, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, generateNewUIDs bool) error {
+func ExportSpecificResources(ctx context.Context, options provisioning.JobExportJobOptions, folderClient dynamic.ResourceInterface, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, generateNewUIDs bool) error {
 	progress.SetMessage(ctx, "start selective resource export")
 
 	// resolvedKind caches the per-kind client and (for dashboards only) the
@@ -199,7 +199,7 @@ func isAppGeneratedResource(name string) bool {
 }
 
 func exportResource(ctx context.Context,
-	options provisioning.ExportJobOptions,
+	options provisioning.JobExportJobOptions,
 	client dynamic.ResourceInterface,
 	shim conversionShim,
 	repositoryResources resources.RepositoryResources,
@@ -221,7 +221,7 @@ func exportResource(ctx context.Context,
 // managed resources is expected when iterating the whole namespace.
 func exportItem(ctx context.Context,
 	item *unstructured.Unstructured,
-	options provisioning.ExportJobOptions,
+	options provisioning.JobExportJobOptions,
 	shim conversionShim,
 	repositoryResources resources.RepositoryResources,
 	progress jobs.JobProgressRecorder,

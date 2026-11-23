@@ -34,7 +34,7 @@ func TestIntegrationProvisioning_JobCRUDAuthorization(t *testing.T) {
 			Spec: provisioning.JobSpec{
 				Action:     provisioning.JobActionPull,
 				Repository: repo,
-				Pull:       &provisioning.SyncJobOptions{},
+				Pull:       &provisioning.JobSyncJobOptions{},
 			},
 		})
 	}

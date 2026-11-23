@@ -63,7 +63,7 @@ func TestIntegrationProvisioning_JobPendingDeleteLabel_SkipsExecution(t *testing
 	// repository and delete the dashboard that no longer exists on disk.
 	job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{},
+		Pull:   &provisioning.JobSyncJobOptions{},
 	})
 
 	// The job must still complete (not hang or error), but it was skipped so
@@ -89,7 +89,7 @@ func TestIntegrationProvisioning_JobPendingDeleteLabel_SkipsExecution(t *testing
 
 	helper.TriggerJobAndWaitForSuccess(t, repoName, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{},
+		Pull:   &provisioning.JobSyncJobOptions{},
 	})
 
 	helper.RequireRepoDashboardCount(t, repoName, 0)

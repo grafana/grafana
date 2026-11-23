@@ -122,7 +122,7 @@ func NewEvaluator(render ScreenshotRenderer, parsers resources.ParserFactory, ur
 }
 
 // This will process the list of versioned file changes into changeInfo
-func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts provisioning.PullRequestJobOptions, changes []repository.VersionedFileChange, progress jobs.JobProgressRecorder) (changeInfo, error) {
+func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts provisioning.JobPullRequestJobOptions, changes []repository.VersionedFileChange, progress jobs.JobProgressRecorder) (changeInfo, error) {
 	cfg := repo.Config()
 	parser, err := e.parsers.GetParser(ctx, repo)
 	if err != nil {
@@ -258,7 +258,7 @@ func orgIDForLinks(namespace string) int64 {
 	return ns.OrgID
 }
 
-func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, baseURL string, screenshotBaseURL string, orgID int64, change repository.VersionedFileChange, opts provisioning.PullRequestJobOptions, parser resources.Parser, shouldRender bool) fileChangeInfo {
+func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, baseURL string, screenshotBaseURL string, orgID int64, change repository.VersionedFileChange, opts provisioning.JobPullRequestJobOptions, parser resources.Parser, shouldRender bool) fileChangeInfo {
 	if change.Action == repository.FileActionDeleted {
 		return e.evaluateDeletedFile(ctx, repo, baseURL, orgID, change, parser)
 	}

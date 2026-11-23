@@ -1491,7 +1491,7 @@ func TestRepositoryController_process_IntervalSyncJob(t *testing.T) {
 			rc.jobs.(*mockJobsQueueStore).MockQueue.On("Insert", mock.Anything, obj.Namespace, provisioning.JobSpec{
 				Repository: obj.Name,
 				Action:     provisioning.JobActionPull,
-				Pull:       &provisioning.SyncJobOptions{Incremental: tt.incremental},
+				Pull:       &provisioning.JobSyncJobOptions{Incremental: tt.incremental},
 			}).Return(&provisioning.Job{ObjectMeta: metav1.ObjectMeta{Name: "new-job"}}, nil).Once()
 
 			_, err := rc.process("default/repo")
@@ -1516,7 +1516,7 @@ func TestRepositoryController_process_IntervalSyncJobCreationFailure(t *testing.
 	jobSpec := provisioning.JobSpec{
 		Repository: obj.Name,
 		Action:     provisioning.JobActionPull,
-		Pull:       &provisioning.SyncJobOptions{Incremental: true},
+		Pull:       &provisioning.JobSyncJobOptions{Incremental: true},
 	}
 	jobStore.MockQueue.On("Insert", mock.Anything, obj.Namespace, jobSpec).
 		Return(nil, assert.AnError).Once()
@@ -1587,7 +1587,7 @@ func TestRepositoryController_FullSyncLastChecked(t *testing.T) {
 			before := time.Now().UnixMilli()
 
 			opts := rc.determineSyncStrategy(context.Background(), obj, repo, tt.interval, false, health)
-			require.Equal(t, &provisioning.SyncJobOptions{}, opts)
+			require.Equal(t, &provisioning.JobSyncJobOptions{}, opts)
 			patcher := &capturePatcher{ops: rc.determineSyncStatusOps(obj, opts, health, tt.interval)}
 			op, found := patcher.findPatchOp("/status/sync/lastChecked")
 			require.True(t, found, "every controller sync-job attempt should advance the timestamp")

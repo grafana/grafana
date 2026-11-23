@@ -66,9 +66,9 @@ func TestIntegrationProvisioning_ExportSpecificResources(t *testing.T) {
 
 	spec := provisioning.JobSpec{
 		Action: provisioning.JobActionPush,
-		Push: &provisioning.ExportJobOptions{
+		Push: &provisioning.JobExportJobOptions{
 			Path: "",
-			Resources: []provisioning.ResourceRef{
+			Resources: []provisioning.JobResourceRef{
 				{Name: "test-v0", Kind: "Dashboard", Group: "dashboard.grafana.app"},
 				{Name: "test-v1", Kind: "Dashboard", Group: "dashboard.grafana.app"},
 				{Name: "test-v2", Kind: "Dashboard", Group: "dashboard.grafana.app"},
@@ -159,9 +159,9 @@ func TestIntegrationProvisioning_SelectiveMigrateDashboardInNestedFolders(t *tes
 	// the export emits the folder tree so the dashboard's nested path resolves.
 	migrateJob := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionMigrate,
-		Migrate: &provisioning.MigrateJobOptions{
+		Migrate: &provisioning.JobMigrateJobOptions{
 			Message: "Selectively migrate one nested dashboard",
-			Resources: []provisioning.ResourceRef{
+			Resources: []provisioning.JobResourceRef{
 				{Name: dashName, Kind: "Dashboard", Group: "dashboard.grafana.app"},
 			},
 		},
@@ -226,8 +226,8 @@ func TestIntegrationProvisioning_ExportSpecificResources_NotFound(t *testing.T) 
 
 	spec := provisioning.JobSpec{
 		Action: provisioning.JobActionPush,
-		Push: &provisioning.ExportJobOptions{
-			Resources: []provisioning.ResourceRef{
+		Push: &provisioning.JobExportJobOptions{
+			Resources: []provisioning.JobResourceRef{
 				{Name: "test-v1", Kind: "Dashboard", Group: "dashboard.grafana.app"},
 				{Name: "does-not-exist", Kind: "Dashboard", Group: "dashboard.grafana.app"},
 			},
@@ -291,8 +291,8 @@ func TestIntegrationProvisioning_ExportSpecificResources_GeneratesFolderAncestry
 
 	spec := provisioning.JobSpec{
 		Action: provisioning.JobActionPush,
-		Push: &provisioning.ExportJobOptions{
-			Resources: []provisioning.ResourceRef{
+		Push: &provisioning.JobExportJobOptions{
+			Resources: []provisioning.JobResourceRef{
 				{Name: selectedDash, Kind: "Dashboard", Group: "dashboard.grafana.app"},
 			},
 		},

@@ -125,7 +125,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 
 		syncJob := provisioning.Job{
 			Spec: provisioning.JobSpec{
-				Pull: &provisioning.SyncJobOptions{
+				Pull: &provisioning.JobSyncJobOptions{
 					// Full sync because it's the only one that supports empty folder deletion
 					Incremental: false,
 				},
@@ -145,7 +145,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 	return nil
 }
 
-func (w *Worker) moveFiles(ctx context.Context, rw repository.ReaderWriter, progress jobs.JobProgressRecorder, opts provisioning.MoveJobOptions, paths ...string) error {
+func (w *Worker) moveFiles(ctx context.Context, rw repository.ReaderWriter, progress jobs.JobProgressRecorder, opts provisioning.JobMoveJobOptions, paths ...string) error {
 	for _, path := range paths {
 		resultBuilder := jobs.NewPathOnlyResult(path).WithAction(repository.FileActionRenamed)
 		// Construct the target path by combining the job's target path with the file/folder name
@@ -189,7 +189,7 @@ func (w *Worker) constructTargetPath(jobTargetPath, sourcePath string) string {
 }
 
 // resolveResourcesToPaths converts ResourceRef entries to file paths, recording errors for individual resources
-func (w *Worker) resolveResourcesToPaths(ctx context.Context, rw repository.ReaderWriter, progress jobs.JobProgressRecorder, resources []provisioning.ResourceRef) ([]string, error) {
+func (w *Worker) resolveResourcesToPaths(ctx context.Context, rw repository.ReaderWriter, progress jobs.JobProgressRecorder, resources []provisioning.JobResourceRef) ([]string, error) {
 	if len(resources) == 0 {
 		return nil, nil
 	}

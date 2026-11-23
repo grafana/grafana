@@ -69,7 +69,7 @@ func TestIntegrationSyncWorker_EarlySetupFailure(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
 		Spec: provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{},
+			Pull:   &provisioning.JobSyncJobOptions{},
 		},
 	}
 

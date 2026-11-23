@@ -32,7 +32,7 @@ func TestIntegrationProvisioning_IncrementalSync_MissingFolderMetadata(t *testin
 	// Trigger incremental sync.
 	job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{Incremental: true},
+		Pull:   &provisioning.JobSyncJobOptions{Incremental: true},
 	})
 	common.HasOnlyMissingFolderMetadataWarnings("myfolder")(t, job)
 

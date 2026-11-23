@@ -19,7 +19,7 @@ import (
 )
 
 // ExportFolders will load the full folder tree into memory and update the repositoryResources tree
-func ExportFolders(ctx context.Context, repoName string, options provisioning.ExportJobOptions, folderClient dynamic.ResourceInterface, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
+func ExportFolders(ctx context.Context, repoName string, options provisioning.JobExportJobOptions, folderClient dynamic.ResourceInterface, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
 	// Load and write all folders
 	// FIXME: we load the entire tree in memory
 	progress.SetMessage(ctx, "read folder tree from API server")
@@ -60,7 +60,7 @@ func ExportFolders(ctx context.Context, repoName string, options provisioning.Ex
 // each folder as a job result. It is shared by the full-tree export and by the
 // selective export, which only assembles the folders that the requested
 // resources actually need.
-func writeFolderTree(ctx context.Context, options provisioning.ExportJobOptions, repositoryResources resources.RepositoryResources, tree resources.FolderTree, progress jobs.JobProgressRecorder) error {
+func writeFolderTree(ctx context.Context, options provisioning.JobExportJobOptions, repositoryResources resources.RepositoryResources, tree resources.FolderTree, progress jobs.JobProgressRecorder) error {
 	if err := checkFolderPathCollisions(ctx, tree); err != nil {
 		return err
 	}
@@ -116,7 +116,7 @@ func checkFolderPathCollisions(ctx context.Context, tree resources.FolderTree) e
 // API, collecting each ancestor so the full nested path can be reconstructed,
 // then writes that limited tree. A folder that was not explicitly requested is
 // generated here purely so its child resources resolve to a valid path.
-func exportFolderAncestry(ctx context.Context, options provisioning.ExportJobOptions, folderClient dynamic.ResourceInterface, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, folderUIDs []string) error {
+func exportFolderAncestry(ctx context.Context, options provisioning.JobExportJobOptions, folderClient dynamic.ResourceInterface, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, folderUIDs []string) error {
 	if len(folderUIDs) == 0 {
 		return nil
 	}

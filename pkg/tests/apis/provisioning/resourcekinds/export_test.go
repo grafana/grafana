@@ -43,7 +43,7 @@ func TestIntegrationProvisioning_ResourceKinds_Export(t *testing.T) {
 
 			helper.TriggerJobAndWaitForSuccess(t, repo, provisioning.JobSpec{
 				Action: provisioning.JobActionPush,
-				Push:   &provisioning.ExportJobOptions{},
+				Push:   &provisioning.JobExportJobOptions{},
 			})
 
 			files := helper.ExportedResourceFiles(t, rk.groupPrefix())
@@ -91,8 +91,8 @@ func TestIntegrationProvisioning_ResourceKinds_SelectiveExport(t *testing.T) {
 			name2, title2 := rk.instance(2)
 			helper.TriggerJobAndWaitForSuccess(t, repo, provisioning.JobSpec{
 				Action: provisioning.JobActionPush,
-				Push: &provisioning.ExportJobOptions{
-					Resources: []provisioning.ResourceRef{
+				Push: &provisioning.JobExportJobOptions{
+					Resources: []provisioning.JobResourceRef{
 						{Name: name0, Kind: rk.kind, Group: rk.group},
 						{Name: name2, Kind: rk.kind, Group: rk.group},
 					},

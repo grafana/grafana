@@ -22,7 +22,7 @@ func testJob(d time.Duration, progressUpdates int) provisioning.Job {
 	return provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Action: provisioning.JobActionTest,
-			Test: &provisioning.TestJobOptions{
+			Test: &provisioning.JobTestJobOptions{
 				Duration:        metav1.Duration{Duration: d},
 				ProgressUpdates: progressUpdates,
 			},

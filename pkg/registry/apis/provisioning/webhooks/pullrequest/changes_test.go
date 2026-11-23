@@ -1416,7 +1416,7 @@ func TestCalculateChanges(t *testing.T) {
 				Public:   func(_ context.Context, _ string) string { return screenshotBaseURL },
 			}, prometheus.NewPedanticRegistry())
 
-			pullRequest := provisioning.PullRequestJobOptions{
+			pullRequest := provisioning.JobPullRequestJobOptions{
 				Ref: "ref",
 				PR:  123,
 				URL: "http://github.com/pr/",
@@ -1518,7 +1518,7 @@ func TestEvaluate_PopulatesSourceAndRepositoryURLs(t *testing.T) {
 		sourceURL:  "https://github.com/example/repo/blob/ref/path/to/file.json",
 	}
 
-	info, err := evaluator.Evaluate(context.Background(), repo, provisioning.PullRequestJobOptions{Ref: "ref"}, []repository.VersionedFileChange{{
+	info, err := evaluator.Evaluate(context.Background(), repo, provisioning.JobPullRequestJobOptions{Ref: "ref"}, []repository.VersionedFileChange{{
 		Action: repository.FileActionCreated,
 		Path:   "path/to/file.json",
 		Ref:    "ref",
@@ -1582,7 +1582,7 @@ func TestEvaluate_StripsCredentialsFromURLs(t *testing.T) {
 		sourceURL:  "https://user:token@github.com/example/repo/blob/ref/path/to/file.json", // trufflehog:ignore
 	}
 
-	info, err := evaluator.Evaluate(context.Background(), repo, provisioning.PullRequestJobOptions{Ref: "ref"}, []repository.VersionedFileChange{{
+	info, err := evaluator.Evaluate(context.Background(), repo, provisioning.JobPullRequestJobOptions{Ref: "ref"}, []repository.VersionedFileChange{{
 		Action: repository.FileActionCreated,
 		Path:   "path/to/file.json",
 		Ref:    "ref",
@@ -1659,7 +1659,7 @@ func TestEvaluate_FolderGetsGrafanaAndSourceURL(t *testing.T) {
 		sourceURL:  "https://github.com/example/repo/blob/ref/team/_folder.json",
 	}
 
-	info, err := evaluator.Evaluate(context.Background(), repo, provisioning.PullRequestJobOptions{Ref: "ref"}, []repository.VersionedFileChange{{
+	info, err := evaluator.Evaluate(context.Background(), repo, provisioning.JobPullRequestJobOptions{Ref: "ref"}, []repository.VersionedFileChange{{
 		Action: repository.FileActionUpdated,
 		Path:   "team/_folder.json",
 		Ref:    "ref",
@@ -1745,7 +1745,7 @@ func TestEvaluate_DeletedFilePopulatesSourceURL(t *testing.T) {
 		sourceURL:  "https://github.com/example/repo/blob/base-ref/team/_folder.json",
 	}
 
-	info, err := evaluator.Evaluate(context.Background(), repo, provisioning.PullRequestJobOptions{}, []repository.VersionedFileChange{{
+	info, err := evaluator.Evaluate(context.Background(), repo, provisioning.JobPullRequestJobOptions{}, []repository.VersionedFileChange{{
 		Action:      repository.FileActionDeleted,
 		Path:        "team/_folder.json",
 		Ref:         "ref",
@@ -1810,7 +1810,7 @@ func TestEvaluate_GitHubEnterpriseDoesNotPanic(t *testing.T) {
 		Public:   func(_ context.Context, _ string) string { return "http://host/" },
 	}, prometheus.NewPedanticRegistry())
 
-	info, err := evaluator.Evaluate(context.Background(), reader, provisioning.PullRequestJobOptions{Ref: "ref"}, []repository.VersionedFileChange{{
+	info, err := evaluator.Evaluate(context.Background(), reader, provisioning.JobPullRequestJobOptions{Ref: "ref"}, []repository.VersionedFileChange{{
 		Action: repository.FileActionCreated,
 		Path:   "playlist.json",
 		Ref:    "ref",
@@ -1848,7 +1848,7 @@ func TestEvaluate_StopsWhenContextIsCanceled(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	info, err := evaluator.Evaluate(ctx, reader, provisioning.PullRequestJobOptions{Ref: "ref"}, []repository.VersionedFileChange{
+	info, err := evaluator.Evaluate(ctx, reader, provisioning.JobPullRequestJobOptions{Ref: "ref"}, []repository.VersionedFileChange{
 		{Action: repository.FileActionCreated, Path: "a.json", Ref: "ref"},
 		{Action: repository.FileActionCreated, Path: "b.json", Ref: "ref"},
 		{Action: repository.FileActionCreated, Path: "c.json", Ref: "ref"},
@@ -1916,7 +1916,7 @@ func TestEvaluate_TracksUnprocessedFilesWhenCanceledMidway(t *testing.T) {
 		Public:   func(_ context.Context, _ string) string { return "http://host/" },
 	}, prometheus.NewPedanticRegistry())
 
-	info, err := evaluator.Evaluate(ctx, reader, provisioning.PullRequestJobOptions{Ref: "ref"}, []repository.VersionedFileChange{
+	info, err := evaluator.Evaluate(ctx, reader, provisioning.JobPullRequestJobOptions{Ref: "ref"}, []repository.VersionedFileChange{
 		{Action: repository.FileActionCreated, Path: "a.json", Ref: "ref"},
 		{Action: repository.FileActionCreated, Path: "b.json", Ref: "ref"},
 		{Action: repository.FileActionCreated, Path: "c.json", Ref: "ref"},
@@ -2344,7 +2344,7 @@ func TestEvaluate_RecordsWhatThePullRequestWouldChange(t *testing.T) {
 		Public:   func(_ context.Context, _ string) string { return "http://host/" },
 	}, prometheus.NewPedanticRegistry())
 
-	_, err := evaluator.Evaluate(context.Background(), reader, provisioning.PullRequestJobOptions{Ref: "ref"}, []repository.VersionedFileChange{
+	_, err := evaluator.Evaluate(context.Background(), reader, provisioning.JobPullRequestJobOptions{Ref: "ref"}, []repository.VersionedFileChange{
 		{Action: repository.FileActionCreated, Path: "created.json", Ref: "ref"},
 		{Action: repository.FileActionUpdated, Path: "updated.json", Ref: "ref"},
 		{Action: repository.FileActionDeleted, Path: "deleted.json", PreviousRef: "base"},
@@ -2417,7 +2417,7 @@ func TestEvaluate_RecordsRealActionWhenDryRunFails(t *testing.T) {
 		Public:   func(_ context.Context, _ string) string { return "http://host/" },
 	}, prometheus.NewPedanticRegistry())
 
-	info, err := evaluator.Evaluate(context.Background(), reader, provisioning.PullRequestJobOptions{Ref: "ref"}, []repository.VersionedFileChange{
+	info, err := evaluator.Evaluate(context.Background(), reader, provisioning.JobPullRequestJobOptions{Ref: "ref"}, []repository.VersionedFileChange{
 		{Action: repository.FileActionCreated, Path: "invalid.json", Ref: "ref"},
 	}, progress)
 	require.NoError(t, err)
@@ -2466,7 +2466,7 @@ func TestEvaluate_RecordsEveryFileForJobSummary(t *testing.T) {
 		Public:   func(_ context.Context, _ string) string { return "http://host/" },
 	}, prometheus.NewPedanticRegistry())
 
-	info, err := evaluator.Evaluate(context.Background(), reader, provisioning.PullRequestJobOptions{Ref: "ref"}, changes, progress)
+	info, err := evaluator.Evaluate(context.Background(), reader, provisioning.JobPullRequestJobOptions{Ref: "ref"}, changes, progress)
 	require.NoError(t, err)
 
 	require.Len(t, info.Changes, 12, "every file is evaluated")

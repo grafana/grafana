@@ -4,23 +4,23 @@
 
 package v0alpha1
 
-// SyncJobOptionsApplyConfiguration represents a declarative configuration of the SyncJobOptions type for use
+// JobSyncJobOptionsApplyConfiguration represents a declarative configuration of the JobSyncJobOptions type for use
 // with apply.
-type SyncJobOptionsApplyConfiguration struct {
+type JobSyncJobOptionsApplyConfiguration struct {
 	// Incremental synchronization for versioned repositories
 	Incremental *bool `json:"incremental,omitempty"`
 }
 
-// SyncJobOptionsApplyConfiguration constructs a declarative configuration of the SyncJobOptions type for use with
+// JobSyncJobOptionsApplyConfiguration constructs a declarative configuration of the JobSyncJobOptions type for use with
 // apply.
-func SyncJobOptions() *SyncJobOptionsApplyConfiguration {
-	return &SyncJobOptionsApplyConfiguration{}
+func JobSyncJobOptions() *JobSyncJobOptionsApplyConfiguration {
+	return &JobSyncJobOptionsApplyConfiguration{}
 }
 
 // WithIncremental sets the Incremental field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Incremental field is set to the value of the last call.
-func (b *SyncJobOptionsApplyConfiguration) WithIncremental(value bool) *SyncJobOptionsApplyConfiguration {
+func (b *JobSyncJobOptionsApplyConfiguration) WithIncremental(value bool) *JobSyncJobOptionsApplyConfiguration {
 	b.Incremental = &value
 	return b
 }

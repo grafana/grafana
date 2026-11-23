@@ -39,43 +39,43 @@ func TestLokiJobHistory_WriteJob(t *testing.T) {
 		Spec: provisioning.JobSpec{
 			Action:     provisioning.JobActionPull,
 			Repository: "test-repo",
-			Pull: &provisioning.SyncJobOptions{
+			Pull: &provisioning.JobSyncJobOptions{
 				Incremental: true,
 			},
-			Push: &provisioning.ExportJobOptions{
+			Push: &provisioning.JobExportJobOptions{
 				Message: "Export test",
 				Folder:  "dashboards",
 				Branch:  "main",
 				Path:    "/exported",
-				Resources: []provisioning.ResourceRef{{
+				Resources: []provisioning.JobResourceRef{{
 					Name:  "selected-dashboard",
 					Kind:  "Dashboard",
 					Group: "dashboard.grafana.app",
 				}},
 			},
-			Migrate: &provisioning.MigrateJobOptions{
+			Migrate: &provisioning.JobMigrateJobOptions{
 				Message: "Migration test",
 			},
-			Delete: &provisioning.DeleteJobOptions{
+			Delete: &provisioning.JobDeleteJobOptions{
 				Ref:   "main",
 				Paths: []string{"/old/dashboard.json", "/old/folder/"},
-				Resources: []provisioning.ResourceRef{{
+				Resources: []provisioning.JobResourceRef{{
 					Name:  "dashboard-uid",
 					Kind:  "Dashboard",
 					Group: "dashboard.grafana.app",
 				}},
 			},
-			Move: &provisioning.MoveJobOptions{
+			Move: &provisioning.JobMoveJobOptions{
 				Ref:        "feature-branch",
 				Paths:      []string{"/src/dashboard.json"},
 				TargetPath: "/dest/",
-				Resources: []provisioning.ResourceRef{{
+				Resources: []provisioning.JobResourceRef{{
 					Name:  "moved-dashboard",
 					Kind:  "Dashboard",
 					Group: "dashboard.grafana.app",
 				}},
 			},
-			PullRequest: &provisioning.PullRequestJobOptions{
+			PullRequest: &provisioning.JobPullRequestJobOptions{
 				Ref:  "feature-123",
 				PR:   123,
 				Hash: "abc123def456",

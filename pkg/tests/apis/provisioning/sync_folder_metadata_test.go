@@ -21,7 +21,7 @@ func TestIntegrationProvisioning_FullSync_MissingFolderMetadata(t *testing.T) {
 
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{},
+		Pull:   &provisioning.JobSyncJobOptions{},
 	})
 
 	common.HasOnlyMissingFolderMetadataWarnings("myfolder")(t, job)

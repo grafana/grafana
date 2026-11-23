@@ -102,7 +102,7 @@ func TestIntegrationProvisioning_MigrateFolderTitleNormalization(t *testing.T) {
 
 	helper.TriggerJobAndWaitForSuccess(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionMigrate,
-		Migrate: &provisioning.MigrateJobOptions{
+		Migrate: &provisioning.JobMigrateJobOptions{
 			Message: "Migrate folders with problematic titles",
 		},
 	})
@@ -239,7 +239,7 @@ func TestIntegrationProvisioning_PullFoldersWithSpaces(t *testing.T) {
 
 	helper.TriggerJobAndWaitForSuccess(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{},
+		Pull:   &provisioning.JobSyncJobOptions{},
 	})
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
@@ -294,7 +294,7 @@ func TestIntegrationProvisioning_MigrateFolderTitleCollisionFails(t *testing.T) 
 
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 		Action:  provisioning.JobActionMigrate,
-		Migrate: &provisioning.MigrateJobOptions{Message: "Migrate colliding folder titles"},
+		Migrate: &provisioning.JobMigrateJobOptions{Message: "Migrate colliding folder titles"},
 	})
 
 	jobObj := &provisioning.Job{}

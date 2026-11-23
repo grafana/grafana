@@ -46,7 +46,7 @@ func TestIntegrationGit_DeleteJob_CommitAuthor(t *testing.T) {
 		Body(common.AsJSON(provisioning.JobSpec{
 			Action:  provisioning.JobActionDelete,
 			Message: "Delete dashboard via JobSpec",
-			Delete: &provisioning.DeleteJobOptions{
+			Delete: &provisioning.JobDeleteJobOptions{
 				Paths: []string{dashFn},
 			},
 		})).

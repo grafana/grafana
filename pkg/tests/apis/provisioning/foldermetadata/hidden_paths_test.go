@@ -248,7 +248,7 @@ func TestIntegrationProvisioning_HiddenPaths_LocalFolderRepair(t *testing.T) {
 
 	job = helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{},
+		Pull:   &provisioning.JobSyncJobOptions{},
 	})
 	common.HasState(provisioning.JobStateSuccess)(t, job)
 	common.HasNoErrors()(t, job)

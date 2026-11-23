@@ -33,27 +33,30 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		ConnectionSpec{}.OpenAPIModelName():                             schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref),
 		ConnectionStatus{}.OpenAPIModelName():                           schema_pkg_apis_provisioning_v0alpha1_ConnectionStatus(ref),
 		ConnectionWebhookConfig{}.OpenAPIModelName():                    schema_pkg_apis_provisioning_v0alpha1_ConnectionWebhookConfig(ref),
-		DeleteJobOptions{}.OpenAPIModelName():                           schema_pkg_apis_provisioning_v0alpha1_DeleteJobOptions(ref),
 		ErrorDetails{}.OpenAPIModelName():                               ErrorDetails{}.OpenAPIDefinition(),
-		ExportJobOptions{}.OpenAPIModelName():                           schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref),
 		ExternalRepository{}.OpenAPIModelName():                         schema_pkg_apis_provisioning_v0alpha1_ExternalRepository(ref),
 		ExternalRepositoryList{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v0alpha1_ExternalRepositoryList(ref),
 		FileItem{}.OpenAPIModelName():                                   schema_pkg_apis_provisioning_v0alpha1_FileItem(ref),
 		FileList{}.OpenAPIModelName():                                   schema_pkg_apis_provisioning_v0alpha1_FileList(ref),
-		FixFolderMetadataJobOptions{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_FixFolderMetadataJobOptions(ref),
 		HistoricJob{}.OpenAPIModelName():                                schema_pkg_apis_provisioning_v0alpha1_HistoricJob(ref),
 		HistoricJobList{}.OpenAPIModelName():                            schema_pkg_apis_provisioning_v0alpha1_HistoricJobList(ref),
 		HistoryItem{}.OpenAPIModelName():                                schema_pkg_apis_provisioning_v0alpha1_HistoryItem(ref),
 		HistoryList{}.OpenAPIModelName():                                schema_pkg_apis_provisioning_v0alpha1_HistoryList(ref),
 		Job{}.OpenAPIModelName():                                        schema_pkg_apis_provisioning_v0alpha1_Job(ref),
+		JobDeleteJobOptions{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_JobDeleteJobOptions(ref),
+		JobExportJobOptions{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_JobExportJobOptions(ref),
+		JobFixFolderMetadataJobOptions{}.OpenAPIModelName():             schema_pkg_apis_provisioning_v0alpha1_JobFixFolderMetadataJobOptions(ref),
 		JobList{}.OpenAPIModelName():                                    schema_pkg_apis_provisioning_v0alpha1_JobList(ref),
+		JobMigrateJobOptions{}.OpenAPIModelName():                       schema_pkg_apis_provisioning_v0alpha1_JobMigrateJobOptions(ref),
+		JobMoveJobOptions{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v0alpha1_JobMoveJobOptions(ref),
+		JobPullRequestJobOptions{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_JobPullRequestJobOptions(ref),
+		JobResourceRef{}.OpenAPIModelName():                             schema_pkg_apis_provisioning_v0alpha1_JobResourceRef(ref),
 		JobResourceSummary{}.OpenAPIModelName():                         schema_pkg_apis_provisioning_v0alpha1_JobResourceSummary(ref),
 		JobSpec{}.OpenAPIModelName():                                    schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref),
 		JobStatus{}.OpenAPIModelName():                                  schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref),
+		JobSyncJobOptions{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v0alpha1_JobSyncJobOptions(ref),
+		JobTestJobOptions{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v0alpha1_JobTestJobOptions(ref),
 		ManagerStats{}.OpenAPIModelName():                               schema_pkg_apis_provisioning_v0alpha1_ManagerStats(ref),
-		MigrateJobOptions{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref),
-		MoveJobOptions{}.OpenAPIModelName():                             schema_pkg_apis_provisioning_v0alpha1_MoveJobOptions(ref),
-		PullRequestJobOptions{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_PullRequestJobOptions(ref),
 		RefItem{}.OpenAPIModelName():                                    schema_pkg_apis_provisioning_v0alpha1_RefItem(ref),
 		RefList{}.OpenAPIModelName():                                    schema_pkg_apis_provisioning_v0alpha1_RefList(ref),
 		Repository{}.OpenAPIModelName():                                 schema_pkg_apis_provisioning_v0alpha1_Repository(ref),
@@ -86,15 +89,12 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		ResourceList{}.OpenAPIModelName():                               schema_pkg_apis_provisioning_v0alpha1_ResourceList(ref),
 		ResourceListItem{}.OpenAPIModelName():                           schema_pkg_apis_provisioning_v0alpha1_ResourceListItem(ref),
 		ResourceObjects{}.OpenAPIModelName():                            schema_pkg_apis_provisioning_v0alpha1_ResourceObjects(ref),
-		ResourceRef{}.OpenAPIModelName():                                schema_pkg_apis_provisioning_v0alpha1_ResourceRef(ref),
 		ResourceRepositoryInfo{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v0alpha1_ResourceRepositoryInfo(ref),
 		ResourceStats{}.OpenAPIModelName():                              schema_pkg_apis_provisioning_v0alpha1_ResourceStats(ref),
 		ResourceType{}.OpenAPIModelName():                               schema_pkg_apis_provisioning_v0alpha1_ResourceType(ref),
 		ResourceWrapper{}.OpenAPIModelName():                            schema_pkg_apis_provisioning_v0alpha1_ResourceWrapper(ref),
 		SecureValues{}.OpenAPIModelName():                               schema_pkg_apis_provisioning_v0alpha1_SecureValues(ref),
 		SupportedResource{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v0alpha1_SupportedResource(ref),
-		SyncJobOptions{}.OpenAPIModelName():                             schema_pkg_apis_provisioning_v0alpha1_SyncJobOptions(ref),
-		TestJobOptions{}.OpenAPIModelName():                             schema_pkg_apis_provisioning_v0alpha1_TestJobOptions(ref),
 		TestResults{}.OpenAPIModelName():                                schema_pkg_apis_provisioning_v0alpha1_TestResults(ref),
 		WebhookResponse{}.OpenAPIModelName():                            schema_pkg_apis_provisioning_v0alpha1_WebhookResponse(ref),
 	}
@@ -798,116 +798,6 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionWebhookConfig(ref common.Re
 	}
 }
 
-func schema_pkg_apis_provisioning_v0alpha1_DeleteJobOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"ref": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Ref to the branch or commit hash to delete from",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"paths": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
-									},
-								},
-							},
-						},
-					},
-					"resources": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Resources to delete This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths.",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Ref: ref(ResourceRef{}.OpenAPIModelName()),
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			ResourceRef{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"message": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Message to use when committing the changes in a single commit. Deprecated: set JobSpec.Message instead. This field is kept for backwards compatibility and is only used when JobSpec.Message is empty.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"folder": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The source folder (or empty) to export",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"branch": {
-						SchemaProps: spec.SchemaProps{
-							Description: "FIXME: we should validate this in admission hooks Target branch for export (only git)",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"path": {
-						SchemaProps: spec.SchemaProps{
-							Description: "FIXME: we should validate this in admission hooks Prefix in target file system",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"resources": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Resources to export. When empty, every unmanaged resource in the namespace is exported (legacy behavior). When non-empty, only the listed resources are exported — the folder hierarchy is still emitted so parent paths resolve. Currently only unmanaged Dashboards are supported.",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Ref: ref(ResourceRef{}.OpenAPIModelName()),
-									},
-								},
-							},
-						},
-					},
-					"generateNewFolderIDs": {
-						SchemaProps: spec.SchemaProps{
-							Description: "GenerateNewFolderIDs writes a freshly generated identifier into each exported folder's metadata (_folder.json) instead of preserving the existing folder UID. Use this to produce a portable export that creates new folders on a subsequent sync rather than taking over the originals. Has no effect when folder metadata is not written.",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			ResourceRef{}.OpenAPIModelName()},
-	}
-}
-
 func schema_pkg_apis_provisioning_v0alpha1_ExternalRepository(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -1091,25 +981,6 @@ func schema_pkg_apis_provisioning_v0alpha1_FileList(ref common.ReferenceCallback
 		},
 		Dependencies: []string{
 			FileItem{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
-	}
-}
-
-func schema_pkg_apis_provisioning_v0alpha1_FixFolderMetadataJobOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"ref": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Ref to the branch to create the commit on (uses repository's default branch if not specified)",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-			},
-		},
 	}
 }
 
@@ -1359,6 +1230,135 @@ func schema_pkg_apis_provisioning_v0alpha1_Job(ref common.ReferenceCallback) com
 	}
 }
 
+func schema_pkg_apis_provisioning_v0alpha1_JobDeleteJobOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"ref": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Ref to the branch or commit hash to delete from",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"paths": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"resources": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Resources to delete This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(JobResourceRef{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			JobResourceRef{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_JobExportJobOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"message": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Message to use when committing the changes in a single commit. Deprecated: set JobSpec.Message instead. This field is kept for backwards compatibility and is only used when JobSpec.Message is empty.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"folder": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The source folder (or empty) to export",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"branch": {
+						SchemaProps: spec.SchemaProps{
+							Description: "FIXME: we should validate this in admission hooks Target branch for export (only git)",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Description: "FIXME: we should validate this in admission hooks Prefix in target file system",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"resources": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Resources to export. When empty, every unmanaged resource in the namespace is exported (legacy behavior). When non-empty, only the listed resources are exported — the folder hierarchy is still emitted so parent paths resolve. Currently only unmanaged Dashboards are supported.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(JobResourceRef{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"generateNewFolderIDs": {
+						SchemaProps: spec.SchemaProps{
+							Description: "GenerateNewFolderIDs writes a freshly generated identifier into each exported folder's metadata (_folder.json) instead of preserving the existing folder UID. Use this to produce a portable export that creates new folders on a subsequent sync rather than taking over the originals. Has no effect when folder metadata is not written.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			JobResourceRef{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_JobFixFolderMetadataJobOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"ref": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Ref to the branch to create the commit on (uses repository's default branch if not specified)",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_provisioning_v0alpha1_JobList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -1403,6 +1403,203 @@ func schema_pkg_apis_provisioning_v0alpha1_JobList(ref common.ReferenceCallback)
 		},
 		Dependencies: []string{
 			Job{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_JobMigrateJobOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"message": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Message to use when committing the changes in a single commit. Deprecated: set JobSpec.Message instead. This field is kept for backwards compatibility and is only used when JobSpec.Message is empty.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"branch": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Target branch for the migration (git only). When set to a branch other than the repository's configured branch, the migration writes the exported resources to that branch (a pull request workflow) and removes the migrated resources from the instance instead of taking ownership of them — they return as managed resources once the branch is merged and a regular sync runs on the configured branch. When empty (or equal to the configured branch), the migration writes directly to the configured branch and takes ownership of the exported resources.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"resources": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Resources to migrate. When empty, every unmanaged resource in the namespace is migrated (legacy behavior). When non-empty, only the listed resources are exported to the repository — the folder hierarchy is still emitted so parent paths resolve, and the subsequent pull phase only takes ownership of those resources. Currently only unmanaged Dashboards are supported.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(JobResourceRef{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"generateNewFolderIDs": {
+						SchemaProps: spec.SchemaProps{
+							Description: "GenerateNewFolderIDs writes a freshly generated identifier into each exported folder's metadata (_folder.json) instead of preserving the existing folder UID. The subsequent pull creates new folders rather than taking over the originals. Has no effect when folder metadata is not written.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"skipResourceDeletion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "SkipResourceDeletion keeps the migrated resources on the instance instead of removing them. By default a migration deletes the resources it moved (the whole namespace for an instance target, or the exported resources for a branch migration); when true, no deletion happens and the resources are left in place.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			JobResourceRef{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_JobMoveJobOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"ref": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Ref to the branch or commit hash that should move",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"paths": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"targetPath": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Destination path for the move (e.g. \"new-location/\")",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"resources": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Resources to move This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(JobResourceRef{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			JobResourceRef{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_JobPullRequestJobOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"ref": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The branch of commit hash",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"pr": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Pull request number (when appropriate)",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"hash": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The specific commit hash that triggered this notice",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Description: "URL to the originator (eg, PR URL)",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"isFork": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether the pull request's head repository differs from its base repository. Omitted when repository identities were unavailable, including older jobs.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"forkURL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "URL of the head repository for a pull request from a fork, when available.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_JobResourceRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Name is the name of the resource, such as a dashboard UID.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is the type of resource, for example, \"Dashboard\".",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"group": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Group is the group of the resource, such as \"dashboard.grafana.app\".",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -1547,49 +1744,49 @@ func schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref common.ReferenceCallback)
 					"pr": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Pull request options",
-							Ref:         ref(PullRequestJobOptions{}.OpenAPIModelName()),
+							Ref:         ref(JobPullRequestJobOptions{}.OpenAPIModelName()),
 						},
 					},
 					"push": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Required when the action is `push`",
-							Ref:         ref(ExportJobOptions{}.OpenAPIModelName()),
+							Ref:         ref(JobExportJobOptions{}.OpenAPIModelName()),
 						},
 					},
 					"pull": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Required when the action is `pull`",
-							Ref:         ref(SyncJobOptions{}.OpenAPIModelName()),
+							Ref:         ref(JobSyncJobOptions{}.OpenAPIModelName()),
 						},
 					},
 					"migrate": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Required when the action is `migrate`",
-							Ref:         ref(MigrateJobOptions{}.OpenAPIModelName()),
+							Ref:         ref(JobMigrateJobOptions{}.OpenAPIModelName()),
 						},
 					},
 					"delete": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Delete when the action is `delete`",
-							Ref:         ref(DeleteJobOptions{}.OpenAPIModelName()),
+							Ref:         ref(JobDeleteJobOptions{}.OpenAPIModelName()),
 						},
 					},
 					"move": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Move when the action is `move`",
-							Ref:         ref(MoveJobOptions{}.OpenAPIModelName()),
+							Ref:         ref(JobMoveJobOptions{}.OpenAPIModelName()),
 						},
 					},
 					"fixFolderMetadata": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Options when the action is `fix-folder-metadata`",
-							Ref:         ref(FixFolderMetadataJobOptions{}.OpenAPIModelName()),
+							Ref:         ref(JobFixFolderMetadataJobOptions{}.OpenAPIModelName()),
 						},
 					},
 					"test": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Required when the action is `test`",
-							Ref:         ref(TestJobOptions{}.OpenAPIModelName()),
+							Ref:         ref(JobTestJobOptions{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -1597,7 +1794,7 @@ func schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref common.ReferenceCallback)
 			},
 		},
 		Dependencies: []string{
-			DeleteJobOptions{}.OpenAPIModelName(), ExportJobOptions{}.OpenAPIModelName(), FixFolderMetadataJobOptions{}.OpenAPIModelName(), MigrateJobOptions{}.OpenAPIModelName(), MoveJobOptions{}.OpenAPIModelName(), PullRequestJobOptions{}.OpenAPIModelName(), SyncJobOptions{}.OpenAPIModelName(), TestJobOptions{}.OpenAPIModelName()},
+			JobDeleteJobOptions{}.OpenAPIModelName(), JobExportJobOptions{}.OpenAPIModelName(), JobFixFolderMetadataJobOptions{}.OpenAPIModelName(), JobMigrateJobOptions{}.OpenAPIModelName(), JobMoveJobOptions{}.OpenAPIModelName(), JobPullRequestJobOptions{}.OpenAPIModelName(), JobSyncJobOptions{}.OpenAPIModelName(), JobTestJobOptions{}.OpenAPIModelName()},
 	}
 }
 
@@ -1701,6 +1898,55 @@ func schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref common.ReferenceCallbac
 	}
 }
 
+func schema_pkg_apis_provisioning_v0alpha1_JobSyncJobOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"incremental": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Incremental synchronization for versioned repositories",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"incremental"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_JobTestJobOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "TestJobOptions configures a synthetic performance-testing job. The job does no real work; it sleeps for Duration and then completes. It is only usable when the provisioning.performance feature flag is enabled.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"duration": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Duration is how long the job should sleep before completing, expressed as a Go duration string (for example \"10s\" or \"2m\"). It must be positive and is capped by the server to keep a single job's runtime predictable.",
+							Ref:         ref("io.k8s.apimachinery.pkg.apis.meta.v1.Duration"),
+						},
+					},
+					"progressUpdates": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ProgressUpdates controls how many progress notifications the job emits while running. A value of 0 uses the server default.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"io.k8s.apimachinery.pkg.apis.meta.v1.Duration"},
+	}
+}
+
 func schema_pkg_apis_provisioning_v0alpha1_ManagerStats(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -1740,170 +1986,6 @@ func schema_pkg_apis_provisioning_v0alpha1_ManagerStats(ref common.ReferenceCall
 		},
 		Dependencies: []string{
 			ResourceCount{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"message": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Message to use when committing the changes in a single commit. Deprecated: set JobSpec.Message instead. This field is kept for backwards compatibility and is only used when JobSpec.Message is empty.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"branch": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Target branch for the migration (git only). When set to a branch other than the repository's configured branch, the migration writes the exported resources to that branch (a pull request workflow) and removes the migrated resources from the instance instead of taking ownership of them — they return as managed resources once the branch is merged and a regular sync runs on the configured branch. When empty (or equal to the configured branch), the migration writes directly to the configured branch and takes ownership of the exported resources.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"resources": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Resources to migrate. When empty, every unmanaged resource in the namespace is migrated (legacy behavior). When non-empty, only the listed resources are exported to the repository — the folder hierarchy is still emitted so parent paths resolve, and the subsequent pull phase only takes ownership of those resources. Currently only unmanaged Dashboards are supported.",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Ref: ref(ResourceRef{}.OpenAPIModelName()),
-									},
-								},
-							},
-						},
-					},
-					"generateNewFolderIDs": {
-						SchemaProps: spec.SchemaProps{
-							Description: "GenerateNewFolderIDs writes a freshly generated identifier into each exported folder's metadata (_folder.json) instead of preserving the existing folder UID. The subsequent pull creates new folders rather than taking over the originals. Has no effect when folder metadata is not written.",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-					"skipResourceDeletion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "SkipResourceDeletion keeps the migrated resources on the instance instead of removing them. By default a migration deletes the resources it moved (the whole namespace for an instance target, or the exported resources for a branch migration); when true, no deletion happens and the resources are left in place.",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			ResourceRef{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_provisioning_v0alpha1_MoveJobOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"ref": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Ref to the branch or commit hash that should move",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"paths": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
-									},
-								},
-							},
-						},
-					},
-					"targetPath": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Destination path for the move (e.g. \"new-location/\")",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"resources": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Resources to move This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths.",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Ref: ref(ResourceRef{}.OpenAPIModelName()),
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			ResourceRef{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_provisioning_v0alpha1_PullRequestJobOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"ref": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The branch of commit hash",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"pr": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Pull request number (when appropriate)",
-							Type:        []string{"integer"},
-							Format:      "int32",
-						},
-					},
-					"hash": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The specific commit hash that triggered this notice",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"url": {
-						SchemaProps: spec.SchemaProps{
-							Description: "URL to the originator (eg, PR URL)",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"isFork": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Whether the pull request's head repository differs from its base repository. Omitted when repository identities were unavailable, including older jobs.",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-					"forkURL": {
-						SchemaProps: spec.SchemaProps{
-							Description: "URL of the head repository for a pull request from a fork, when available.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-			},
-		},
 	}
 }
 
@@ -3651,39 +3733,6 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceObjects(ref common.ReferenceC
 	}
 }
 
-func schema_pkg_apis_provisioning_v0alpha1_ResourceRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"name": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Name is the name of the resource, such as a dashboard UID.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind is the type of resource, for example, \"Dashboard\".",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"group": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Group is the group of the resource, such as \"dashboard.grafana.app\".",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
 func schema_pkg_apis_provisioning_v0alpha1_ResourceRepositoryInfo(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -4028,55 +4077,6 @@ func schema_pkg_apis_provisioning_v0alpha1_SupportedResource(ref common.Referenc
 				Required: []string{"group", "kind"},
 			},
 		},
-	}
-}
-
-func schema_pkg_apis_provisioning_v0alpha1_SyncJobOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"incremental": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Incremental synchronization for versioned repositories",
-							Default:     false,
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{"incremental"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_provisioning_v0alpha1_TestJobOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "TestJobOptions configures a synthetic performance-testing job. The job does no real work; it sleeps for Duration and then completes. It is only usable when the provisioning.performance feature flag is enabled.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"duration": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Duration is how long the job should sleep before completing, expressed as a Go duration string (for example \"10s\" or \"2m\"). It must be positive and is capped by the server to keep a single job's runtime predictable.",
-							Ref:         ref("io.k8s.apimachinery.pkg.apis.meta.v1.Duration"),
-						},
-					},
-					"progressUpdates": {
-						SchemaProps: spec.SchemaProps{
-							Description: "ProgressUpdates controls how many progress notifications the job emits while running. A value of 0 uses the server default.",
-							Type:        []string{"integer"},
-							Format:      "int32",
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			"io.k8s.apimachinery.pkg.apis.meta.v1.Duration"},
 	}
 }
 

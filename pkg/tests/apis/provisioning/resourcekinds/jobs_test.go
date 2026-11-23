@@ -48,7 +48,7 @@ func TestIntegrationProvisioning_ResourceKinds_DeleteJob(t *testing.T) {
 			// Bulk delete both files in a single job.
 			helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 				Action: provisioning.JobActionDelete,
-				Delete: &provisioning.DeleteJobOptions{Paths: paths},
+				Delete: &provisioning.JobDeleteJobOptions{Paths: paths},
 			})
 
 			repoFiles := repositoryFilePaths(t, helper, repo)
@@ -98,7 +98,7 @@ func TestIntegrationProvisioning_ResourceKinds_MoveJob(t *testing.T) {
 			common.WriteFolderMetadata(t, repo, repoPath, "archived")
 			helper.TriggerJobAndWaitForSuccess(t, repo, provisioning.JobSpec{
 				Action: provisioning.JobActionMove,
-				Move:   &provisioning.MoveJobOptions{Paths: paths, TargetPath: "archived/"},
+				Move:   &provisioning.JobMoveJobOptions{Paths: paths, TargetPath: "archived/"},
 			})
 
 			repoFiles := repositoryFilePaths(t, helper, repo)

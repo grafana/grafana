@@ -18,7 +18,7 @@ func triggerExport(t *testing.T, helper *common.ProvisioningTestHelper, repo str
 	t.Helper()
 	result := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionPush,
-		Push:   &provisioning.ExportJobOptions{},
+		Push:   &provisioning.JobExportJobOptions{},
 	})
 	jobObj := &provisioning.Job{}
 	err := k8sruntime.DefaultUnstructuredConverter.FromUnstructured(result.Object, jobObj)
@@ -329,7 +329,7 @@ func TestIntegrationProvisioning_ExportJob_GenerateNewFolderIDs(t *testing.T) {
 
 		result := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 			Action: provisioning.JobActionPush,
-			Push:   &provisioning.ExportJobOptions{GenerateNewFolderIDs: true},
+			Push:   &provisioning.JobExportJobOptions{GenerateNewFolderIDs: true},
 		})
 		job := &provisioning.Job{}
 		require.NoError(t, k8sruntime.DefaultUnstructuredConverter.FromUnstructured(result.Object, job))
@@ -360,7 +360,7 @@ func TestIntegrationProvisioning_ExportJob_GenerateNewFolderIDs(t *testing.T) {
 
 		result := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 			Action: provisioning.JobActionPush,
-			Push:   &provisioning.ExportJobOptions{},
+			Push:   &provisioning.JobExportJobOptions{},
 		})
 		job := &provisioning.Job{}
 		require.NoError(t, k8sruntime.DefaultUnstructuredConverter.FromUnstructured(result.Object, job))
@@ -418,8 +418,8 @@ func TestIntegrationProvisioning_ExportJob_SelectiveGeneratesFolderMetadata(t *t
 
 	result := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionPush,
-		Push: &provisioning.ExportJobOptions{
-			Resources: []provisioning.ResourceRef{
+		Push: &provisioning.JobExportJobOptions{
+			Resources: []provisioning.JobResourceRef{
 				{Name: selectedDash, Kind: "Dashboard", Group: "dashboard.grafana.app"},
 			},
 		},

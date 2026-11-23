@@ -55,7 +55,7 @@ func TestIntegrationProvisioning_ExportUnifiedToRepository(t *testing.T) {
 
 	spec := provisioning.JobSpec{
 		Action: provisioning.JobActionPush,
-		Push: &provisioning.ExportJobOptions{
+		Push: &provisioning.JobExportJobOptions{
 			Folder: "", // export entire instance
 			Path:   "", // no prefix necessary for testing
 		},
@@ -205,8 +205,8 @@ func TestIntegrationProvisioning_ExportJob_ExplicitSLOManagedResourceFails(t *te
 	// Explicitly name the SLO dashboard in the export.
 	spec := provisioning.JobSpec{
 		Action: provisioning.JobActionPush,
-		Push: &provisioning.ExportJobOptions{
-			Resources: []provisioning.ResourceRef{
+		Push: &provisioning.JobExportJobOptions{
+			Resources: []provisioning.JobResourceRef{
 				{Name: sloDashboard, Kind: "Dashboard", Group: "dashboard.grafana.app"},
 			},
 		},
@@ -324,7 +324,7 @@ func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T
 	// Export dashboards
 	spec := provisioning.JobSpec{
 		Action: provisioning.JobActionPush,
-		Push: &provisioning.ExportJobOptions{
+		Push: &provisioning.JobExportJobOptions{
 			Folder: "",
 			Path:   "",
 		},

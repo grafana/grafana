@@ -130,35 +130,35 @@ type JobSpec struct {
 	Message string `json:"message,omitempty"`
 
 	// Pull request options
-	PullRequest *PullRequestJobOptions `json:"pr,omitempty"`
+	PullRequest *JobPullRequestJobOptions `json:"pr,omitempty"`
 
 	// Required when the action is `push`
-	Push *ExportJobOptions `json:"push,omitempty"`
+	Push *JobExportJobOptions `json:"push,omitempty"`
 
 	// Required when the action is `pull`
-	Pull *SyncJobOptions `json:"pull,omitempty"`
+	Pull *JobSyncJobOptions `json:"pull,omitempty"`
 
 	// Required when the action is `migrate`
-	Migrate *MigrateJobOptions `json:"migrate,omitempty"`
+	Migrate *JobMigrateJobOptions `json:"migrate,omitempty"`
 
 	// Delete when the action is `delete`
-	Delete *DeleteJobOptions `json:"delete,omitempty"`
+	Delete *JobDeleteJobOptions `json:"delete,omitempty"`
 
 	// Move when the action is `move`
-	Move *MoveJobOptions `json:"move,omitempty"`
+	Move *JobMoveJobOptions `json:"move,omitempty"`
 
 	// Options when the action is `fix-folder-metadata`
-	FixFolderMetadata *FixFolderMetadataJobOptions `json:"fixFolderMetadata,omitempty"`
+	FixFolderMetadata *JobFixFolderMetadataJobOptions `json:"fixFolderMetadata,omitempty"`
 
 	// Required when the action is `test`
-	Test *TestJobOptions `json:"test,omitempty"`
+	Test *JobTestJobOptions `json:"test,omitempty"`
 }
 
 func (JobSpec) OpenAPIModelName() string {
 	return OpenAPIPrefix + "JobSpec"
 }
 
-type PullRequestJobOptions struct {
+type JobPullRequestJobOptions struct {
 	// The branch of commit hash
 	Ref string `json:"ref,omitempty"`
 
@@ -179,20 +179,20 @@ type PullRequestJobOptions struct {
 	ForkURL string `json:"forkURL,omitempty"`
 }
 
-func (PullRequestJobOptions) OpenAPIModelName() string {
+func (JobPullRequestJobOptions) OpenAPIModelName() string {
 	return OpenAPIPrefix + "PullRequestJobOptions"
 }
 
-type SyncJobOptions struct {
+type JobSyncJobOptions struct {
 	// Incremental synchronization for versioned repositories
 	Incremental bool `json:"incremental"`
 }
 
-func (SyncJobOptions) OpenAPIModelName() string {
+func (JobSyncJobOptions) OpenAPIModelName() string {
 	return OpenAPIPrefix + "SyncJobOptions"
 }
 
-type ExportJobOptions struct {
+type JobExportJobOptions struct {
 	// Message to use when committing the changes in a single commit.
 	// Deprecated: set JobSpec.Message instead. This field is kept for
 	// backwards compatibility and is only used when JobSpec.Message is empty.
@@ -213,7 +213,7 @@ type ExportJobOptions struct {
 	// is exported (legacy behavior). When non-empty, only the listed resources
 	// are exported — the folder hierarchy is still emitted so parent paths resolve.
 	// Currently only unmanaged Dashboards are supported.
-	Resources []ResourceRef `json:"resources,omitempty"`
+	Resources []JobResourceRef `json:"resources,omitempty"`
 
 	// GenerateNewFolderIDs writes a freshly generated identifier into each
 	// exported folder's metadata (_folder.json) instead of preserving the
@@ -223,11 +223,11 @@ type ExportJobOptions struct {
 	GenerateNewFolderIDs bool `json:"generateNewFolderIDs,omitempty"`
 }
 
-func (ExportJobOptions) OpenAPIModelName() string {
+func (JobExportJobOptions) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ExportJobOptions"
 }
 
-type MigrateJobOptions struct {
+type JobMigrateJobOptions struct {
 	// Message to use when committing the changes in a single commit.
 	// Deprecated: set JobSpec.Message instead. This field is kept for
 	// backwards compatibility and is only used when JobSpec.Message is empty.
@@ -249,7 +249,7 @@ type MigrateJobOptions struct {
 	// parent paths resolve, and the subsequent pull phase only takes ownership
 	// of those resources.
 	// Currently only unmanaged Dashboards are supported.
-	Resources []ResourceRef `json:"resources,omitempty"`
+	Resources []JobResourceRef `json:"resources,omitempty"`
 
 	// GenerateNewFolderIDs writes a freshly generated identifier into each
 	// exported folder's metadata (_folder.json) instead of preserving the
@@ -265,11 +265,11 @@ type MigrateJobOptions struct {
 	SkipResourceDeletion bool `json:"skipResourceDeletion,omitempty"`
 }
 
-func (MigrateJobOptions) OpenAPIModelName() string {
+func (JobMigrateJobOptions) OpenAPIModelName() string {
 	return OpenAPIPrefix + "MigrateJobOptions"
 }
 
-type DeleteJobOptions struct {
+type JobDeleteJobOptions struct {
 	// Ref to the branch or commit hash to delete from
 	Ref string `json:"ref,omitempty"`
 	// Paths to be deleted. Examples:
@@ -283,14 +283,14 @@ type DeleteJobOptions struct {
 	// This option has been created because currently the frontend does not use
 	// standarized app platform APIs. For performance and API consistency reasons, the preferred option
 	// is it to use the paths.
-	Resources []ResourceRef `json:"resources,omitempty"`
+	Resources []JobResourceRef `json:"resources,omitempty"`
 }
 
-func (DeleteJobOptions) OpenAPIModelName() string {
+func (JobDeleteJobOptions) OpenAPIModelName() string {
 	return OpenAPIPrefix + "DeleteJobOptions"
 }
 
-type ResourceRef struct {
+type JobResourceRef struct {
 	// Name is the name of the resource, such as a dashboard UID.
 	Name string `json:"name,omitempty"`
 
@@ -301,11 +301,11 @@ type ResourceRef struct {
 	Group string `json:"group,omitempty"`
 }
 
-func (ResourceRef) OpenAPIModelName() string {
+func (JobResourceRef) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ResourceRef"
 }
 
-type MoveJobOptions struct {
+type JobMoveJobOptions struct {
 	// Ref to the branch or commit hash that should move
 	Ref string `json:"ref,omitempty"`
 	// Paths to be deleted. Examples:
@@ -322,26 +322,26 @@ type MoveJobOptions struct {
 	// This option has been created because currently the frontend does not use
 	// standarized app platform APIs. For performance and API consistency reasons, the preferred option
 	// is it to use the paths.
-	Resources []ResourceRef `json:"resources,omitempty"`
+	Resources []JobResourceRef `json:"resources,omitempty"`
 }
 
-func (MoveJobOptions) OpenAPIModelName() string {
+func (JobMoveJobOptions) OpenAPIModelName() string {
 	return OpenAPIPrefix + "MoveJobOptions"
 }
 
-type FixFolderMetadataJobOptions struct {
+type JobFixFolderMetadataJobOptions struct {
 	// Ref to the branch to create the commit on (uses repository's default branch if not specified)
 	Ref string `json:"ref,omitempty"`
 }
 
-func (FixFolderMetadataJobOptions) OpenAPIModelName() string {
+func (JobFixFolderMetadataJobOptions) OpenAPIModelName() string {
 	return OpenAPIPrefix + "FixFolderMetadataJobOptions"
 }
 
 // TestJobOptions configures a synthetic performance-testing job. The job does
 // no real work; it sleeps for Duration and then completes. It is only usable
 // when the provisioning.performance feature flag is enabled.
-type TestJobOptions struct {
+type JobTestJobOptions struct {
 	// Duration is how long the job should sleep before completing, expressed as
 	// a Go duration string (for example "10s" or "2m"). It must be positive and
 	// is capped by the server to keep a single job's runtime predictable.
@@ -352,7 +352,7 @@ type TestJobOptions struct {
 	ProgressUpdates int `json:"progressUpdates,omitempty"`
 }
 
-func (TestJobOptions) OpenAPIModelName() string {
+func (JobTestJobOptions) OpenAPIModelName() string {
 	return OpenAPIPrefix + "TestJobOptions"
 }
 
@@ -451,6 +451,24 @@ type HistoricJob struct {
 	Spec   JobSpec   `json:"spec,omitempty"`
 	Status JobStatus `json:"status,omitempty"`
 }
+
+// App SDK codegen emits a HistoricJob-prefixed copy of every Job type. Until then the
+// HistoricJob names point at the shared Job types.
+type (
+	HistoricJobSpec                        = JobSpec
+	HistoricJobStatus                      = JobStatus
+	HistoricJobAction                      = JobAction
+	HistoricJobPullRequestJobOptions       = JobPullRequestJobOptions
+	HistoricJobSyncJobOptions              = JobSyncJobOptions
+	HistoricJobExportJobOptions            = JobExportJobOptions
+	HistoricJobMigrateJobOptions           = JobMigrateJobOptions
+	HistoricJobDeleteJobOptions            = JobDeleteJobOptions
+	HistoricJobMoveJobOptions              = JobMoveJobOptions
+	HistoricJobFixFolderMetadataJobOptions = JobFixFolderMetadataJobOptions
+	HistoricJobTestJobOptions              = JobTestJobOptions
+	HistoricJobResourceRef                 = JobResourceRef
+	HistoricJobResourceSummary             = JobResourceSummary
+)
 
 func (HistoricJob) OpenAPIModelName() string {
 	return OpenAPIPrefix + "HistoricJob"

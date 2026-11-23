@@ -929,7 +929,7 @@ func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
 
 	spec := provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{},
+		Pull:   &provisioning.JobSyncJobOptions{},
 	}
 
 	result := helper.TriggerJobAndWaitForComplete(t, repo, spec)
@@ -1806,7 +1806,7 @@ func TestIntegrationProvisioning_JobPermissions(t *testing.T) {
 
 	adminJobBody := common.AsJSON(provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{},
+		Pull:   &provisioning.JobSyncJobOptions{},
 	})
 
 	editorJobBody := common.AsJSON(provisioning.JobSpec{
