@@ -13,7 +13,7 @@ import { StatusBadge } from '../Shared/StatusBadge';
 import { ManagedResourceBadge } from '../components/ManagedResourceBadge';
 import { WorkflowBadges } from '../components/WorkflowBadges';
 import { exportResourceAsJson } from '../utils/export';
-import { formatRepoUrl, getRepoHrefForProvider } from '../utils/git';
+import { formatRepoUrl, getRemoteConfig, getRepoHrefForProvider } from '../utils/git';
 import {
   getManagerIdentity,
   getManagerKind,
@@ -83,7 +83,7 @@ export function RepositoryListItem({ repository }: Props) {
         <Stack gap={2} direction="row" alignItems="center" wrap>
           {spec?.title && <Text variant="h3">{spec.title}</Text>}
           <StatusBadge repo={repository} />
-          <WorkflowBadges workflows={spec?.workflows} />
+          <WorkflowBadges workflows={spec?.workflows} type={spec?.type} branch={getRemoteConfig(spec)?.branch} />
           {isManagedRepo && (
             <ManagedResourceBadge
               isReadOnly={isConfigReadOnly}

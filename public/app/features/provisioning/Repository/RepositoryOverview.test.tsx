@@ -59,6 +59,29 @@ describe('RepositoryOverview', () => {
     expect(screen.getByText('Some folders are missing metadata in this repository.')).toBeInTheDocument();
   });
 
+  it('badges the save workflows next to the Resources heading', async () => {
+    const { user } = render(
+      <RepositoryOverview
+        repo={createMockRepository({
+          workflows: ['write', 'branch'],
+          github: { url: 'https://github.com/o/r', branch: 'main' },
+        })}
+      />
+    );
+
+    expect(screen.getByText('Direct push')).toBeInTheDocument();
+    await user.hover(screen.getByText('Pull request'));
+    expect(
+      await screen.findByText('Changes go to a new branch for review before merging into main.')
+    ).toBeInTheDocument();
+  });
+
+  it('badges a repository with no workflows as read only', () => {
+    render(<RepositoryOverview repo={createMockRepository({ workflows: [] })} />);
+
+    expect(screen.getByText('Read only')).toBeInTheDocument();
+  });
+
   it('links each resource kind to the resources tab filtered by that kind', async () => {
     const repo = createMockRepository(
       {},

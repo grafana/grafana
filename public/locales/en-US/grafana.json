@@ -15239,7 +15239,6 @@
     "finish-step": {
       "description-enable-previews": "Adds an image preview of dashboard changes in pull requests. Images of your Grafana dashboards will be shared in your Git repository and visible to anyone with repository access.",
       "description-image-rendering": "Requires image rendering. <2>Set up image rendering</2>",
-      "description-read-only": "Resources can't be modified through Grafana.",
       "description-sync-interval": "How often to sync changes from the repository",
       "error-sync-interval-required": "Sync interval is required",
       "label-enable-previews": "Enable dashboard previews in pull requests",
@@ -15764,19 +15763,6 @@
       "pure-git-description": "Connect to any Git repository",
       "pure-git-tooltip": "Connects to any Git repository using Smart HTTP protocol v2. Core sync workflow without provider-specific features (webhooks, PR comments, deep links)."
     },
-    "repository-workflows": {
-      "branch-description": "Changes go to a new branch and are proposed as a pull request to {{branch}}.",
-      "branch-description-no-branch": "Changes go to a new branch and are proposed as a pull request.",
-      "branch-title": "Save as a pull request",
-      "enabled": "Enabled",
-      "not-enabled": "Not enabled",
-      "read-only": "People can view these resources in Grafana but can't save changes here. Make changes in Git, then pull them in.",
-      "read-only-title": "Read-only",
-      "title": "Edit workflows",
-      "write-description": "Changes are pushed directly to {{branch}}.",
-      "write-description-no-branch": "Changes are pushed directly.",
-      "write-title": "Push to the configured branch"
-    },
     "resource-tree": {
       "header-hash": "Hash",
       "header-status": "Status",
@@ -16030,9 +16016,14 @@
       "error-instance-repository-exists": "Instance repository already exists",
       "error-save-repository-setting": "Failed to save repository setting"
     },
-    "workflow-badges": {
+    "workflow": {
       "direct-push": "Direct push",
-      "pull-request": "Pull request"
+      "direct-push-description": "Changes are committed straight to {{branch}}.",
+      "direct-push-description-no-branch": "Changes are committed straight to the synchronized branch.",
+      "merge-request": "Merge request",
+      "pull-request": "Pull request",
+      "pull-request-description": "Changes go to a new branch for review before merging into {{branch}}.",
+      "pull-request-description-no-branch": "Changes go to a new branch for review before merging."
     }
   },
   "public-dashboard": {

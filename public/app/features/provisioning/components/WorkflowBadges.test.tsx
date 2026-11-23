@@ -26,4 +26,19 @@ describe('WorkflowBadges', () => {
     shown.forEach((text) => expect(screen.getByText(text)).toBeInTheDocument());
     hidden.forEach((text) => expect(screen.queryByText(text)).not.toBeInTheDocument());
   });
+
+  it('calls the branch workflow a merge request on GitLab', () => {
+    render(<WorkflowBadges workflows={['branch']} type="gitlab" />);
+
+    expect(screen.getByText('Merge request')).toBeInTheDocument();
+    expect(screen.queryByText('Pull request')).not.toBeInTheDocument();
+  });
+
+  it('names the synchronized branch in the hover text', async () => {
+    const { user } = render(<WorkflowBadges workflows={['write']} branch="release" />);
+
+    await user.hover(screen.getByText('Direct push'));
+
+    expect(await screen.findByText('Changes are committed straight to release.')).toBeInTheDocument();
+  });
 });

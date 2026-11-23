@@ -3,13 +3,14 @@ import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, LinkButton, Stack } from '@grafana/ui';
 import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
+import { ReadOnlyBadge } from 'app/core/components/ReadOnlyBadge/ReadOnlyBadge';
 import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 
 import { StatusBadge } from '../Shared/StatusBadge';
-import { WorkflowBadges } from '../components/WorkflowBadges';
 import { getRepoHrefForProvider } from '../utils/git';
-import { getRepositoryEditUrl } from '../utils/repository';
+import { getIsReadOnlyWorkflows, getRepositoryEditUrl } from '../utils/repository';
 import { getRepositoryTypeIcon } from '../utils/repositoryTypes';
+import { getReadOnlyRepositoryTooltip } from '../utils/tooltip';
 
 import { SyncRepository } from './SyncRepository';
 
@@ -24,13 +25,14 @@ export function RepositoryActions({ repository }: RepositoryActionsProps) {
   const connectionName = repository.spec?.connection?.name;
 
   const providerIcon = getRepositoryTypeIcon(repository.spec?.type);
+  const isReadOnlyRepo = getIsReadOnlyWorkflows(repository.spec?.workflows);
   // The repository's resources are contained in a folder named after it.
   const isFolderContained = repository.spec?.sync.target === 'folder';
 
   return (
     <Stack wrap="wrap" alignItems="center">
+      {isReadOnlyRepo && <ReadOnlyBadge tooltip={getReadOnlyRepositoryTooltip()} />}
       <StatusBadge repo={repository} displayOnly />
-      <WorkflowBadges workflows={repository.spec?.workflows} />
       {isFolderContained && (
         <LinkButton variant="secondary" icon="folder-open" href={CORE_KINDS.folder.getRoute(name)}>
           <Trans i18nKey="provisioning.repository-actions.view-folder">View folder</Trans>
