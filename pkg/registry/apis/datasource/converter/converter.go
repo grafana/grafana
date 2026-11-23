@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/authlib/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -113,10 +113,10 @@ func (r *Converter) AsDataSource(ds *datasources.DataSource) (*datasourceV0.Data
 
 // ToInlineSecureValues converts secure json into InlineSecureValues with reference names
 // The names are predictable and can be used while we implement dual writing for secrets
-func ToInlineSecureValues(dsUID string, keys iter.Seq[string]) common.InlineSecureValues {
-	values := make(common.InlineSecureValues)
+func ToInlineSecureValues(dsUID string, keys iter.Seq[string]) resource.InlineSecureValues {
+	values := make(resource.InlineSecureValues)
 	for k := range keys {
-		values[k] = common.InlineSecureValue{
+		values[k] = resource.InlineSecureValue{
 			Name: GetLegacySecureValueName(dsUID, k),
 		}
 	}

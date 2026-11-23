@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/authlib/types"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
@@ -22,7 +23,7 @@ type LegacyAccessClient interface {
 // In contrast, legacypermissions.ProvideClient only needs the loader and config,
 // allowing constructor injection for LegacyGetUserPermissions.
 type LegacyCheckClientSetter interface {
-	SetLegacyCheckClient(client *LegacyClient, useExternalGroups bool, namespace types.NamespaceFormatter)
+	SetLegacyCheckClient(client LegacyAccessClient, useExternalGroups bool, namespace types.NamespaceFormatter, reg prometheus.Registerer) error
 }
 
 type LegacyCheckRequest struct {

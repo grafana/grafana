@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
+import { useExposedComponentOriginPluginId } from 'app/features/plugins/extensions/ExposedComponentOriginContext';
 
 import { canAddPanelToNotebook } from '../permissions';
 
@@ -58,6 +59,7 @@ const AddToNotebookFormLazy = lazy(() => import(/* webpackChunkName: "AddToNoteb
  */
 export const AddToNotebookFormExposedComponent = (props: LooseProps) => {
   const enabled = useFlagDashboardNotebooks();
+  const originPluginId = useExposedComponentOriginPluginId();
   if (!enabled) {
     console.error(`[AddToNotebookFormExposedComponent] The required feature flag dashboard.notebooks is not enabled.`);
     return null;
@@ -82,7 +84,7 @@ export const AddToNotebookFormExposedComponent = (props: LooseProps) => {
 
   return (
     <Suspense fallback={null}>
-      <AddToNotebookFormLazy {...formProps} />
+      <AddToNotebookFormLazy {...formProps} originPluginId={originPluginId} />
     </Suspense>
   );
 };

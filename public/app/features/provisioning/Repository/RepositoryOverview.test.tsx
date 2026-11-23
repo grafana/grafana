@@ -59,6 +59,49 @@ describe('RepositoryOverview', () => {
     expect(screen.getByText('Some folders are missing metadata in this repository.')).toBeInTheDocument();
   });
 
+  it('badges the save workflows next to the Resources heading', async () => {
+    const { user } = render(
+      <RepositoryOverview
+        repo={createMockRepository({
+          workflows: ['write', 'branch'],
+          github: { url: 'https://github.com/o/r', branch: 'main' },
+        })}
+      />
+    );
+
+    expect(screen.getByText('Direct push')).toBeInTheDocument();
+    await user.hover(screen.getByText('Pull request'));
+    expect(
+      await screen.findByText('Changes are saved to another branch, ready for you to open a pull request into main.')
+    ).toBeInTheDocument();
+  });
+
+  it('badges a repository with no workflows as read only', () => {
+    render(<RepositoryOverview repo={createMockRepository({ workflows: [] })} />);
+
+    expect(screen.getByText('Read only')).toBeInTheDocument();
+  });
+
+  it('links each resource kind to the resources tab filtered by that kind', async () => {
+    const repo = createMockRepository(
+      {},
+      {
+        stats: [
+          { group: 'dashboard.grafana.app', resource: 'dashboards', count: 2 },
+          { group: 'example.grafana.app', resource: 'widgets', count: 3 },
+        ],
+      }
+    );
+
+    render(<RepositoryOverview repo={repo} />);
+
+    const links = await screen.findAllByRole('link', { name: 'View' });
+    expect(links.map((link) => link.getAttribute('href'))).toEqual([
+      '/admin/provisioning/test-repo?tab=resources&resource=dashboards',
+      '/admin/provisioning/test-repo?tab=resources&resource=widgets',
+    ]);
+  });
+
   describe('webhook link', () => {
     it('should link to GitHub webhook settings for github repositories', () => {
       const repo = createMockRepository({

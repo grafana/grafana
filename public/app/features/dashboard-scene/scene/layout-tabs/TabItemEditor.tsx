@@ -11,7 +11,7 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constan
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { edit } from '../../actions/utils/edit';
-import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
+import { getConditionalRenderingEditor } from '../../conditional-rendering/utils/getConditionalRenderingEditor';
 import { AddSectionAnnotationButton, useSectionAnnotationLayers } from '../../sidebar/SectionAnnotationActions';
 import {
   getSectionFiltersCount,
@@ -25,6 +25,7 @@ import {
   SectionVariablesCategoryTitle,
   SectionVariablesList,
 } from '../../sidebar/SectionVariablesList';
+import { useQuestionsCategory } from '../../sidebar/questions/QuestionsList';
 import { SidebarCategoryType } from '../../sidebar/types';
 import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
@@ -43,6 +44,7 @@ export function useSidebarOptions(this: TabItem, isNewElement: boolean): Options
   const model = this;
   // The canvas can remount during DnD loading while this editor remains mounted.
   const { layout } = useSceneObjectState(model, { shouldActivateOrKeepAlive: true });
+  const questionsCategory = useQuestionsCategory(model, 'tab');
 
   const tabCategory = useMemo(
     () =>
@@ -161,12 +163,13 @@ export function useSidebarOptions(this: TabItem, isNewElement: boolean): Options
     sectionFiltersCategory,
     sectionVariablesCategory,
     sectionAnnotationsCategory,
+    ...questionsCategory,
     ...layoutCategory,
     repeatCategory,
   ];
 
   const conditionalRenderingCategory = useMemo(
-    () => useConditionalRenderingEditor(model.state.conditionalRendering),
+    () => getConditionalRenderingEditor(model.state.conditionalRendering),
     [model]
   );
 

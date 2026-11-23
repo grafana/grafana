@@ -193,6 +193,8 @@ export interface NotebookNewStartedProperties extends EventProperty {
 }
 
 export interface NotebookCreatedProperties extends EventProperty, Partial<AddedPanelProperties> {
+  /** App that invoked the exposed form; absent for core entry points or unavailable caller context. */
+  originPluginId?: string;
   /** Identifier and join key for this notebook. */
   notebookUid: string;
   /** Which surface the notebook was created from. */
@@ -203,6 +205,8 @@ export interface NotebookCreatedProperties extends EventProperty, Partial<AddedP
   target?: NotebookAddTarget;
   /** Whether the add-panel modal pinned the panel to the time range it was sent with. Left off with `target`. */
   lockTimeRange?: boolean;
+  /** Whether the person typed text in the add-panel modal, added as a text block above the panel. Left off with `target`. */
+  hasText?: boolean;
 }
 
 /**
@@ -355,6 +359,8 @@ type NotebookAddedCellType = (typeof NOTEBOOK_ADDED_CELL_TYPE)[keyof typeof NOTE
  * The panel properties are only there for a panel. A markdown cell has nothing to say about them.
  */
 export interface NotebookCellAddedFromAddToNotebookProperties extends EventProperty, Partial<AddedPanelProperties> {
+  /** App that invoked the exposed form; absent for core entry points or unavailable caller context. */
+  originPluginId?: string;
   /** Identifier and join key for this notebook. */
   notebookUid: string;
   /** Whether the appended cell is a panel or markdown. */
@@ -367,6 +373,11 @@ export interface NotebookCellAddedFromAddToNotebookProperties extends EventPrope
   target: NotebookAddTarget;
   /** Whether the add-panel modal pinned the panel to the time range it was sent with. */
   lockTimeRange: boolean;
+  /**
+   * Whether the person typed text in the add-panel modal. That text is not reported as a cell of its own
+   * (it is added as a text block above the panel), so this is how its use is counted.
+   */
+  hasText: boolean;
 }
 
 export interface NotebookAutosaveFailedProperties extends EventProperty {
@@ -424,6 +435,8 @@ export const NOTEBOOK_ADD_FAILED_REASON = {
 export type NotebookAddFailedReason = (typeof NOTEBOOK_ADD_FAILED_REASON)[keyof typeof NOTEBOOK_ADD_FAILED_REASON];
 
 export interface NotebookAddFailedProperties extends EventProperty {
+  /** App that invoked the exposed form; absent for core entry points or unavailable caller context. */
+  originPluginId?: string;
   /** Identifier and join key for the target notebook. Empty when the submit was creating one. */
   notebookUid: string;
   /** Which surface the panel was sent from. */
@@ -434,6 +447,8 @@ export interface NotebookAddFailedProperties extends EventProperty {
   reason: NotebookAddFailedReason;
   /** Whether the add-panel modal pinned the panel to the time range it was sent with. */
   lockTimeRange: boolean;
+  /** Whether the person had typed text in the add-panel modal. */
+  hasText: boolean;
 }
 
 export const NOTEBOOK_INCIDENT_ACTION = {

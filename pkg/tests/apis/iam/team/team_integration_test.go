@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
@@ -638,6 +639,34 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 			"external":   external,
 		}
 	}
+
+	t.Run("writer with a redacted roster cannot replace or patch the team", func(t *testing.T) {
+		ctx := t.Context()
+		obj := newTeamWithMembers("team-roster-write-", []map[string]interface{}{memberSpec(editorUID, "member", false)})
+		created, err := teamClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
+		require.NoError(t, err)
+		name := created.GetName()
+		t.Cleanup(func() { _ = teamClient.Resource.Delete(context.Background(), name, metav1.DeleteOptions{}) })
+		actions := []string{accesscontrol.ActionTeamsRead, accesscontrol.ActionTeamsWrite}
+		writer := helper.CreateUser("team-roster-writer", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+			{Actions: actions, Resource: "teams", ResourceAttribute: "id", ResourceID: created.GetLabels()[utils.LabelKeyDeprecatedInternalID]},
+			{Actions: actions, Resource: "teams", ResourceAttribute: "uid", ResourceID: name},
+		})
+		client := helper.GetResourceClient(apis.ResourceClientArgs{User: writer, Namespace: created.GetNamespace(), GVR: gvrTeams})
+		visible, err := client.Resource.Get(ctx, name, metav1.GetOptions{})
+		require.NoError(t, err)
+		members, _, err := unstructured.NestedSlice(visible.Object, "spec", "members")
+		require.NoError(t, err)
+		require.Empty(t, members)
+		require.NoError(t, unstructured.SetNestedField(visible.Object, "Renamed", "spec", "title"))
+		_, err = client.Resource.Update(ctx, visible, metav1.UpdateOptions{})
+		require.True(t, errors.IsForbidden(err), "%v", err)
+		_, err = client.Resource.Patch(ctx, name, types.MergePatchType, []byte(`{"spec":{"title":"Renamed"}}`), metav1.PatchOptions{})
+		require.True(t, errors.IsForbidden(err), "%v", err)
+		stored, err := teamClient.Resource.Get(ctx, name, metav1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, created.Object["spec"], stored.Object["spec"])
+	})
 
 	t.Run("should create team with members and hydrate on Get", func(t *testing.T) {
 		ctx := context.Background()

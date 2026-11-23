@@ -137,6 +137,7 @@ export {
 export {
   getFieldColorModeForField,
   getFieldColorMode,
+  isReversibleFieldColorMode,
   fieldColorModeRegistry,
   type FieldColorMode,
   /** @internal */
@@ -276,7 +277,7 @@ export { UnaryOperationID, type UnaryOperation, unaryOperators } from './utils/u
 export { NodeGraphDataFrameFieldNames } from './utils/nodeGraph';
 export { toOption } from './utils/selectUtils';
 export * as arrayUtils from './utils/arrayUtils';
-export { store, Store } from './utils/store';
+export { store, Store, type StoreSetOptions } from './utils/store';
 export { LocalStorageValueProvider } from './utils/LocalStorageValueProvider';
 export { throwIfAngular } from './utils/throwIfAngular';
 export { fuzzySearch } from './utils/fuzzySearch';
@@ -635,6 +636,8 @@ export {
   type PluginExtensionEventHelpers,
   type DataSourceConfigErrorStatusContext,
   type PluginExtensionPanelContext,
+  type PluginExtensionDashboardControlsContext,
+  type PluginExtensionDashboardControlsPanel,
   type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
   type PluginExtensionQueryEditorRowActionsV1Context,
   type PluginExtensionDataSourceConfigContext,

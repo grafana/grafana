@@ -311,7 +311,7 @@ func TestBulkProcessStopsRunnerOnPanic(t *testing.T) {
 		Login:          "testuser",
 		UserID:         1,
 		UserUID:        "u1",
-		OrgRole:        identity.RoleAdmin,
+		OrgRole:        authlib.RoleAdmin,
 		IsGrafanaAdmin: true,
 	})
 	ctx = metadata.NewIncomingContext(ctx, settings.ToMD())
