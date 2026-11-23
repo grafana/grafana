@@ -1432,6 +1432,8 @@ github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kafkareceiver
 github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kafkareceiver v0.150.0/go.mod h1:qgrUOaakzU722wtoxgUnVRzcwDgUIkEszFPZFn9gOTY=
 github.com/open-telemetry/opentelemetry-collector-contrib/receiver/zipkinreceiver v0.150.0 h1:ubF2YOhn+rj73MsbV/xXwuVEPTKpGCsEvR1ZO2auNqY=
 github.com/open-telemetry/opentelemetry-collector-contrib/receiver/zipkinreceiver v0.150.0/go.mod h1:DgwEwwqD8U5OVY+XWM4h4PJz1nvkv/Arz7iKKupRsOk=
+github.com/openfga/openfga v1.19.0 h1:YUyc1txav3vcur3mh1lb1/FuFsL9pw9nbUoiHd68Mrk=
+github.com/openfga/openfga v1.19.0/go.mod h1:59Vii6i/OU9UENj1mQnXHL6ex/pPk/HFmKeH4ZJ0JnQ=
 github.com/openzipkin/zipkin-go v0.4.3 h1:9EGwpqkgnwdEIJ+Od7QVSEIH+ocmm5nPat0G7sjsSdg=
 github.com/openzipkin/zipkin-go v0.4.3/go.mod h1:M9wCJZFWCo2RiY+o1eBCEMe0Dp2S5LDHcMZmk3RmK7c=
 github.com/oracle/oci-go-sdk/v65 v65.41.1 h1:+lbosOyNiib3TGJDvLq1HwEAuFqkOjPJDIkyxM15WdQ=
