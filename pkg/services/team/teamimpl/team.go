@@ -69,17 +69,6 @@ func ProvideDeleteRegistrar(service *Service) teamdelete.Registrar {
 	return service
 }
 
-func ProvideDeletedRegistrar(service *Service) teamdelete.DeletedRegistrar {
-	return service
-}
-
-var _ teamdelete.DeletedRegistrar = (*Service)(nil)
-
-// RegisterDeleted adds a handler that runs after a team is deleted.
-func (s *Service) RegisterDeleted(handler teamdelete.DeletedHandler) {
-	s.deleted.RegisterDeleted(handler)
-}
-
 // DeletedRegistry is the registry that holds the handlers shared by every team deletion path.
 func (s *Service) DeletedRegistry() *teamdelete.DeletedRegistry {
 	return s.deleted

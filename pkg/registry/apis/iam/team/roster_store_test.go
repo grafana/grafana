@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/team/teamdelete"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -116,7 +117,7 @@ func TestTeamMembershipScope(t *testing.T) {
 			})
 			access := &rosterAccess{}
 			d := &rosterDirectory{}
-			s := NewRosterStore(f, access, d, hiddenLogins)
+			s := NewRosterStore(f, access, d, hiddenLogins, nil)
 			obj, err := s.List(ctx, nil)
 			require.NoError(t, err)
 			list := obj.(*iam.TeamList)
@@ -163,7 +164,7 @@ func TestRosterLookupFailure(t *testing.T) {
 		{"authz", failure, nil, hiddenLogins}, {"users", nil, failure, hiddenLogins}, {"settings", nil, nil, func(context.Context) (map[string]struct{}, error) { return nil, failure }},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewRosterStore(f, &rosterAccess{compileErr: tc.access}, &rosterDirectory{err: tc.directory}, tc.settings)
+			s := NewRosterStore(f, &rosterAccess{compileErr: tc.access}, &rosterDirectory{err: tc.directory}, tc.settings, nil)
 			obj, err := s.List(ctx, nil)
 			require.Nil(t, obj)
 			require.ErrorIs(t, err, failure)
@@ -181,7 +182,7 @@ func TestRosterListChecksEachNamespace(t *testing.T) {
 	other.Namespace = "stacks-2"
 	f := &teamReadFixture{teams: &iam.TeamList{Items: []iam.Team{item, other}}}
 	access := &rosterAccess{}
-	store := NewRosterStore(f, access, &rosterDirectory{}, hiddenLogins)
+	store := NewRosterStore(f, access, &rosterDirectory{}, hiddenLogins, nil)
 	obj, err := store.List(ctx, nil)
 	require.NoError(t, err)
 	items := obj.(*iam.TeamList).Items
@@ -199,7 +200,7 @@ func TestRosterUserLookupBatches(t *testing.T) {
 		item.Spec.Members = append(item.Spec.Members, iam.TeamTeamMember{Kind: "User", Name: fmt.Sprint(i)})
 	}
 	d := &rosterDirectory{}
-	s := NewRosterStore(&teamReadFixture{teams: &iam.TeamList{Items: []iam.Team{item, item}}}, &rosterAccess{}, d, hiddenLogins)
+	s := NewRosterStore(&teamReadFixture{teams: &iam.TeamList{Items: []iam.Team{item, item}}}, &rosterAccess{}, d, hiddenLogins, nil)
 	obj, err := s.List(identity.WithRequester(t.Context(), &identity.StaticRequester{Type: authlib.TypeAccessPolicy, Namespace: "stacks-1"}), nil)
 	require.NoError(t, err)
 	require.Equal(t, []int{500, 1}, d.batches)
@@ -226,14 +227,14 @@ func TestRosterGetAndWatch(t *testing.T) {
 	item := iam.Team{ObjectMeta: metav1.ObjectMeta{Name: "oncall", Namespace: "stacks-1", ResourceVersion: "5"}, Spec: iam.TeamSpec{Members: []iam.TeamTeamMember{{Kind: "User", Name: "sam"}, {Kind: "User", Name: "hidden"}}}}
 	inner := &teamReadFixture{teams: &iam.TeamList{Items: []iam.Team{item}}}
 	access := &rosterAccess{}
-	store := NewRosterStore(inner, access, &rosterDirectory{}, hiddenLogins)
+	store := NewRosterStore(inner, access, &rosterDirectory{}, hiddenLogins, nil)
 	_, watches := store.(rest.Watcher)
 	require.False(t, watches)
 	got, err := store.Get(ctx, item.Name, nil)
 	require.NoError(t, err)
 	require.Equal(t, item.Spec.Members[:1], got.(*iam.Team).Spec.Members)
 	stream := watch.NewRaceFreeFake()
-	store = NewRosterStore(&watchFixture{inner, stream}, access, &rosterDirectory{}, hiddenLogins)
+	store = NewRosterStore(&watchFixture{inner, stream}, access, &rosterDirectory{}, hiddenLogins, nil)
 	w, err := store.(rest.Watcher).Watch(ctx, nil)
 	require.NoError(t, err)
 	defer w.Stop()
@@ -270,7 +271,7 @@ func TestRosterUpdateRejectsDirectoryScopedPolicy(t *testing.T) {
 		Members: []iam.TeamTeamMember{{Kind: "User", Name: "sam"}, {Kind: "User", Name: "hidden"}}, ExternalGroups: []string{"synced"},
 	}}
 	inner := &teamReadFixture{teams: &iam.TeamList{Items: []iam.Team{item}}}
-	store := NewRosterStore(inner, &rosterAccess{}, &rosterDirectory{}, hiddenLogins)
+	store := NewRosterStore(inner, &rosterAccess{}, &rosterDirectory{}, hiddenLogins, nil)
 	obj, err := store.Get(ctx, item.Name, nil)
 	require.NoError(t, err)
 	projected := obj.(*iam.Team)
@@ -280,4 +281,53 @@ func TestRosterUpdateRejectsDirectoryScopedPolicy(t *testing.T) {
 	_, _, err = store.Update(ctx, item.Name, rest.DefaultUpdatedObjectInfo(projected), nil, nil, false, &metav1.UpdateOptions{})
 	require.True(t, apierrors.IsForbidden(err), "%v", err)
 	require.Equal(t, item, inner.teams.Items[0])
+}
+
+type teamDeleteFixture struct {
+	*teamReadFixture
+	notDone bool
+}
+
+func (f *teamDeleteFixture) Delete(context.Context, string, rest.ValidateObjectFunc, *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	return &iam.Team{}, !f.notDone, nil
+}
+
+func (f *teamDeleteFixture) DeleteCollection(context.Context, rest.ValidateObjectFunc, *metav1.DeleteOptions, *internalversion.ListOptions) (runtime.Object, error) {
+	return &iam.TeamList{}, nil
+}
+
+func TestRosterDeleteRunsDeletedHandlers(t *testing.T) {
+	ctx := request.WithNamespace(t.Context(), "default")
+	item := iam.Team{ObjectMeta: metav1.ObjectMeta{Name: "oncall", Namespace: "default"}}
+	meta, err := utils.MetaAccessor(&item)
+	require.NoError(t, err)
+	meta.SetDeprecatedInternalID(7) // nolint:staticcheck
+	inner := &teamDeleteFixture{teamReadFixture: &teamReadFixture{teams: &iam.TeamList{Items: []iam.Team{item}}}}
+	registry := teamdelete.ProvideDeletedRegistry()
+	store := NewRosterStore(inner, &rosterAccess{}, &rosterDirectory{}, hiddenLogins, registry)
+
+	// Collection deletes are open until a handler is registered.
+	_, err = store.(rest.CollectionDeleter).DeleteCollection(ctx, nil, nil, nil)
+	require.NoError(t, err)
+
+	var got []teamdelete.Deleted
+	registry.RegisterDeleted(func(_ context.Context, d teamdelete.Deleted) error {
+		got = append(got, d)
+		return errors.New("handler failed")
+	})
+	_, err = store.(rest.CollectionDeleter).DeleteCollection(ctx, nil, nil, nil)
+	require.True(t, apierrors.IsMethodNotSupported(err), "%v", err)
+
+	// Failing handlers never fail the delete, and dry runs and incomplete deletes run none.
+	_, _, err = store.Delete(ctx, item.Name, nil, &metav1.DeleteOptions{DryRun: []string{metav1.DryRunAll}})
+	require.NoError(t, err)
+	inner.notDone = true
+	_, _, err = store.Delete(ctx, item.Name, nil, &metav1.DeleteOptions{})
+	require.NoError(t, err)
+	require.Empty(t, got)
+	inner.notDone = false
+	_, deleted, err := store.Delete(ctx, item.Name, nil, &metav1.DeleteOptions{})
+	require.NoError(t, err)
+	require.True(t, deleted)
+	require.Equal(t, []teamdelete.Deleted{{OrgID: 1, TeamID: 7, TeamUID: item.Name}}, got)
 }

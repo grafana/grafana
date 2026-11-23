@@ -8,7 +8,6 @@ import (
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -29,13 +28,12 @@ func (s *deleteStore) Delete(context.Context, *team.DeleteTeamCommand) (string, 
 // deleteK8sService records deletes.
 type deleteK8sService struct {
 	teamtest.FakeService
-	deletes   int
-	deleteErr error
+	deletes int
 }
 
 func (s *deleteK8sService) DeleteTeam(context.Context, *team.DeleteTeamCommand) error {
 	s.deletes++
-	return s.deleteErr
+	return nil
 }
 
 func TestDeleteTeamDeletedHandlers(t *testing.T) {
@@ -47,10 +45,10 @@ func TestDeleteTeamDeletedHandlers(t *testing.T) {
 		targetingKey string
 		legacyErr    error
 		wantErr      error
-		wantRuns     int
+		want         []teamdelete.Deleted
 		wantK8s      int
 	}{
-		{name: "legacy path", targetingKey: "disabled", wantRuns: 1},
+		{name: "legacy path", targetingKey: "disabled", want: []teamdelete.Deleted{{OrgID: 2, TeamID: 11, TeamUID: "legacy-uid"}}},
 		{name: "legacy failure skips handlers", targetingKey: "disabled", legacyErr: deleteErr, wantErr: deleteErr},
 		// The Team API storage runs the handlers on the redirect path.
 		{name: "k8s path leaves the handlers to the storage", targetingKey: "enabled", wantK8s: 1},
@@ -65,16 +63,13 @@ func TestDeleteTeamDeletedHandlers(t *testing.T) {
 				iamFeatures:       iamapi.Features{UsersAPI: true},
 				k8sService:        k8s,
 				legacyService:     &LegacyService{store: &deleteStore{uid: "legacy-uid", err: tt.legacyErr}, tracer: tracing.InitializeTracerForTest()},
-				logger:            log.NewNopLogger(),
 				deleted:           registry,
 			}
 			var got []teamdelete.Deleted
-			for range 2 {
-				registry.RegisterDeleted(func(_ context.Context, d teamdelete.Deleted) error {
-					got = append(got, d)
-					return nil
-				})
-			}
+			registry.RegisterDeleted(func(_ context.Context, d teamdelete.Deleted) error {
+				got = append(got, d)
+				return nil
+			})
 			ctx := openfeature.WithTransactionContext(context.Background(), openfeature.NewEvaluationContext(tt.targetingKey, nil))
 
 			err := service.DeleteTeam(ctx, &team.DeleteTeamCommand{OrgID: 2, ID: 11})
@@ -83,12 +78,7 @@ func TestDeleteTeamDeletedHandlers(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
-			want := teamdelete.Deleted{OrgID: 2, TeamID: 11, TeamUID: "legacy-uid"}
-			if tt.wantRuns == 0 {
-				require.Empty(t, got)
-			} else {
-				require.Equal(t, []teamdelete.Deleted{want, want}, got)
-			}
+			require.Equal(t, tt.want, got)
 			require.Equal(t, tt.wantK8s, k8s.deletes)
 		})
 	}

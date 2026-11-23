@@ -30,18 +30,12 @@ type Deleted struct {
 // DeletedHandler runs after a team is deleted. Its error is logged and never fails the deletion.
 type DeletedHandler func(ctx context.Context, deleted Deleted) error
 
-type DeletedRegistrar interface {
-	RegisterDeleted(handler DeletedHandler)
-}
-
 // DeletedRegistry holds the handlers shared by every team deletion path.
 type DeletedRegistry struct {
 	mu       sync.RWMutex
 	handlers []DeletedHandler
 	logger   log.Logger
 }
-
-var _ DeletedRegistrar = (*DeletedRegistry)(nil)
 
 func ProvideDeletedRegistry() *DeletedRegistry {
 	return &DeletedRegistry{logger: log.New("team.deleted")}
@@ -51,6 +45,16 @@ func (r *DeletedRegistry) RegisterDeleted(handler DeletedHandler) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.handlers = append(r.handlers, handler)
+}
+
+// HasHandlers reports whether any handler is registered.
+func (r *DeletedRegistry) HasHandlers() bool {
+	if r == nil {
+		return false
+	}
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return len(r.handlers) > 0
 }
 
 // Run calls every handler in registration order, logging errors and panics so they never fail a completed deletion.

@@ -17,12 +17,16 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/apiserver/pkg/util/dryrun"
 
 	iam "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	grafanarequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/team/teamdelete"
 )
 
 type rosterStore struct {
@@ -30,11 +34,12 @@ type rosterStore struct {
 	access      authlib.AccessClient
 	directory   legacy.LegacyIdentityStore
 	hiddenUsers func(context.Context) (map[string]struct{}, error)
+	deleted     *teamdelete.DeletedRegistry
 }
 
-// NewRosterStore restricts membership on Team get, list and watch to callers with get_permissions.
-func NewRosterStore(inner grafanarest.Storage, access authlib.AccessClient, directory legacy.LegacyIdentityStore, hiddenUsers func(context.Context) (map[string]struct{}, error)) grafanarest.Storage {
-	s := &rosterStore{inner, access, directory, hiddenUsers}
+// NewRosterStore restricts membership on Team get, list and watch to callers with get_permissions, runs the deleted handlers on Delete and refuses deletecollection while any are registered.
+func NewRosterStore(inner grafanarest.Storage, access authlib.AccessClient, directory legacy.LegacyIdentityStore, hiddenUsers func(context.Context) (map[string]struct{}, error), deleted *teamdelete.DeletedRegistry) grafanarest.Storage {
+	s := &rosterStore{inner, access, directory, hiddenUsers, deleted}
 	// Preserve the optional operations and storage metadata of the registry.
 	// The dual writer supports collection deletion but does not support watch.
 	if w, ok := inner.(rest.Watcher); ok {
@@ -48,42 +53,70 @@ func NewRosterStore(inner grafanarest.Storage, access authlib.AccessClient, dire
 				rest.Watcher
 				rest.CollectionDeleter
 				registryMetadata
-			}{s, watcher, reg, reg}
+			}{s, watcher, guardedCollectionDeleter{reg, s.deleted}, reg}
 		}
 		if d, ok := inner.(rest.CollectionDeleter); ok {
 			return struct {
 				*rosterStore
 				rest.Watcher
 				rest.CollectionDeleter
-			}{s, watcher, d}
-		}
-		if reg, ok := inner.(registryMetadata); ok {
-			return struct {
-				*rosterStore
-				rest.Watcher
-				registryMetadata
-			}{s, watcher, reg}
+			}{s, watcher, guardedCollectionDeleter{d, s.deleted}}
 		}
 		return struct {
 			*rosterStore
 			rest.Watcher
 		}{s, watcher}
 	}
-	if reg, ok := inner.(registryMetadata); ok {
-		if _, isDeleter := inner.(rest.CollectionDeleter); !isDeleter {
-			return struct {
-				*rosterStore
-				registryMetadata
-			}{s, reg}
-		}
-	}
 	if d, ok := inner.(rest.CollectionDeleter); ok {
 		return struct {
 			*rosterStore
 			rest.CollectionDeleter
-		}{s, d}
+		}{s, guardedCollectionDeleter{d, s.deleted}}
 	}
 	return s
+}
+
+// guardedCollectionDeleter refuses collection deletes while deleted handlers are registered, since they would skip them.
+type guardedCollectionDeleter struct {
+	rest.CollectionDeleter
+	deleted *teamdelete.DeletedRegistry
+}
+
+func (g guardedCollectionDeleter) DeleteCollection(ctx context.Context, validation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	if g.deleted.HasHandlers() {
+		return nil, apierrors.NewMethodNotSupported(iam.TeamResourceInfo.GroupResource(), "deletecollection")
+	}
+	return g.CollectionDeleter.DeleteCollection(ctx, validation, options, listOptions)
+}
+
+// Delete runs the deleted handlers once after the delete completes, for every dual-write mode.
+func (s *rosterStore) Delete(ctx context.Context, name string, validation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	if !s.deleted.HasHandlers() {
+		return s.Storage.Delete(ctx, name, validation, options)
+	}
+	// The internal ID is only on the stored object, so read it before it is gone.
+	var teamID int64
+	logger := log.New("team.deleted").FromContext(ctx)
+	if obj, err := s.Storage.Get(ctx, name, &metav1.GetOptions{}); err != nil {
+		if !apierrors.IsNotFound(err) {
+			logger.Error("team ID unknown for deleted handlers, get failed", "teamUID", name, "error", err)
+		}
+	} else if meta, err := utils.MetaAccessor(obj); err != nil {
+		logger.Error("team ID unknown for deleted handlers, no accessor", "teamUID", name, "error", err)
+	} else {
+		teamID = meta.GetDeprecatedInternalID() // nolint:staticcheck
+	}
+	obj, deleted, err := s.Storage.Delete(ctx, name, validation, options)
+	if err != nil || !deleted || (options != nil && dryrun.IsDryRun(options.DryRun)) {
+		return obj, deleted, err
+	}
+	ns, err := grafanarequest.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		logger.Error("team deleted handlers skipped, no namespace", "teamUID", name, "error", err)
+		return obj, deleted, nil
+	}
+	s.deleted.Run(ctx, teamdelete.Deleted{OrgID: ns.OrgID, TeamID: teamID, TeamUID: name})
+	return obj, deleted, nil
 }
 
 type registryMetadata interface {

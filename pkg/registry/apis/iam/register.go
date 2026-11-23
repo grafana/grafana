@@ -669,13 +669,11 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 			return err
 		}
 	}
-	// Wrapping the final storage runs the deleted handlers once in every dual-write mode.
-	teamStorage = team.WithDeletedHandlers(teamStorage, b.teamDeleted)
 	b.teamStorage = teamStorage
 	hiddenUsers := func(ctx context.Context) (map[string]struct{}, error) {
 		return user.ReadHiddenUsers(ctx, b.cfgProvider, b.settingService)
 	}
-	storage[teamResource.StoragePath()] = team.NewRosterStore(teamStorage, b.accessClient, b.store, hiddenUsers)
+	storage[teamResource.StoragePath()] = team.NewRosterStore(teamStorage, b.accessClient, b.store, hiddenUsers, b.teamDeleted)
 	storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(b.teamStorage, b.tracing)
 
 	if b.teamSearchHandler != nil {
