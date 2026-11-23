@@ -42,11 +42,6 @@ func TestIntegrationLiveWebsocket(t *testing.T) {
 	defaultNS := helper.Namespacer(helper.Org1.OrgID)
 
 	t.Run("discovery", func(t *testing.T) {
-		// The version has a route but no resources, so k8s leaves it out of
-		// aggregated discovery, and with router middleware on the router then
-		// hides the group. Remove this skip once route-only versions are listed.
-		t.Skip("route-only versions are not in aggregated discovery yet")
-
 		t.Run("group is listed", func(t *testing.T) {
 			// The version has no resources, so check the group list rather than
 			// aggregated discovery.

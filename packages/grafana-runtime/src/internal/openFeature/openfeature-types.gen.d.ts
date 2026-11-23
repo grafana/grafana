@@ -16,6 +16,7 @@ declare module "@openfeature/core" {
     | "cloudWatchCrossAccountQuerying"
     | "alertingBacktesting"
     | "lokiShardSplitting"
+    | "live.useAPIServerWebsocket"
     | "lokiLogsDataplane"
     | "faroSessionReplay"
     | "queryHistory.localOnly"

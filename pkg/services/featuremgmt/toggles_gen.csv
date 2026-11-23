@@ -8,7 +8,8 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-27,alertingRuleGroupSortByFolderFullpath,experimental,@grafana/alerting-squad,false,false,false
 2024-10-23,lokiShardSplitting,experimental,@grafana/observability-logs,false,false,true
 2023-02-09,lokiQuerySplitting,GA,@grafana/observability-logs,false,false,true
-2026-05-14,live.runAPIServer,experimental,@grafana/grafana-app-platform-squad,true,true,false
+2026-05-14,live.runAPIServer,experimental,@grafana/grafana-app-platform-squad,false,true,false
+2026-11-23,live.useAPIServerWebsocket,experimental,@grafana/grafana-app-platform-squad,false,false,true
 2026-05-14,live.keepHAPrefixInCloud,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2026-11-12,router.registerCoreAPIs,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2026-09-10,grafana.useRouterMiddleware,experimental,@grafana/grafana-app-platform-squad,false,true,false
