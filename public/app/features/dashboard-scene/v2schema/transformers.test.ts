@@ -8,6 +8,8 @@ import * as libpanels from 'app/features/library-panels/state/api';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
 
+jest.mock('app/features/library-panels/state/api', () => makeSpyable('app/features/library-panels/state/api'));
+
 const defaultDashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
   kind: 'DashboardWithAccessInfo',
   metadata: {

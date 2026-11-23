@@ -12,7 +12,7 @@ import (
 )
 
 // secureValuesField is the top-level object field where kinds declare inline
-// secure values (common.InlineSecureValues).
+// secure values (resource.InlineSecureValues).
 const secureValuesField = "secure"
 
 // ErrSecureValuesNotAllowed matches a rejection by checkSecureValues. Callers

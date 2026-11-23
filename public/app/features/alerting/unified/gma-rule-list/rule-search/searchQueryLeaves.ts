@@ -108,6 +108,11 @@ export function buildSharedLeaves({
     });
   }
 
+  if (filter.paused) {
+    // NotIn is only accepted on labels, state and health, so "not paused" is paused=false.
+    leaves.push({ key: 'paused', leaf: { filter: { field: 'paused', operator: 'In', values: [filter.paused] } } });
+  }
+
   return leaves;
 }
 

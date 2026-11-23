@@ -39,6 +39,8 @@ import { UnifiedAlertListPanel } from './UnifiedAlertList';
 import { GroupMode, SortOrder, STAT_THRESHOLDS_DEFAULT, type UnifiedAlertListOptions, ViewMode } from './types';
 import * as utils from './util';
 
+jest.mock('./util', () => makeSpyable('./util'));
+
 const grafanaRuleMock = {
   promRules: {
     grafana: {

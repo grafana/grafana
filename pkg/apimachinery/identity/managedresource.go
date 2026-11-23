@@ -120,7 +120,7 @@ func CheckManagerOnUpdate(auth authtypes.AuthInfo, obj, old utils.GrafanaMetaAcc
 			// resources, so admins need the ability to detach manually.
 			if errors.Is(err, ErrResourceIsManagedInRepository) {
 				if requester, ok := auth.(Requester); ok &&
-					(requester.GetIsGrafanaAdmin() || requester.HasRole(RoleAdmin)) {
+					(requester.GetIsGrafanaAdmin() || requester.HasRole(authtypes.RoleAdmin)) {
 					return nil
 				}
 			}
