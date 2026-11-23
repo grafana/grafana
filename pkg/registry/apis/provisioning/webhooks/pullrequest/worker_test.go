@@ -5,18 +5,67 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/grafana/authlib/authn"
+	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/codes"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/router/routertest"
+	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
+
+func TestProvidePullRequestWorker_SupportedResources(t *testing.T) {
+	router := routertest.NewServer(t, map[string]string{
+		"/apis/discovery/v1alpha2/manifests": `{"apiVersion":"apps.grafana.app/v1alpha2","kind":"AppManifestList","items":[{"apiVersion":"apps.grafana.app/v1alpha2","kind":"AppManifest","metadata":{"name":"example"},"spec":{"appName":"example","group":"example.ext.grafana.app","versions":[{"name":"v1","served":true,"kinds":[{"kind":"Widget","scope":"Namespaced","extensions":{"provisioning":{"enabled":true}}}]}]}}]}`,
+		"/apis/example.ext.grafana.app/v1":   `{"kind":"APIResourceList","apiVersion":"v1","groupVersion":"example.ext.grafana.app/v1","resources":[{"name":"widgets","namespaced":true,"kind":"Widget","verbs":["get","list","create"]}]}`,
+	})
+	configProvider := apiserver.RestConfigProviderFunc(func(context.Context) (*rest.Config, error) {
+		return &rest.Config{Host: router.URL}, nil
+	})
+	supportedResourceProvider := resources.NewSupportedResourceProvider(nil)
+	worker := ProvidePullRequestWorker(&setting.Cfg{}, nil, nil, configProvider, supportedResourceProvider, prometheus.NewRegistry())
+
+	repo := repository.NewMockReader(t)
+	repo.EXPECT().Config().Return(&provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "repo", Namespace: "default"}})
+	repo.EXPECT().Read(mock.Anything, mock.Anything, mock.Anything).Return(nil, repository.ErrFileNotFound).Maybe()
+	parse := func() *resources.ParsedResource {
+		parser, err := worker.evaluator.(*evaluator).parsers.GetParser(t.Context(), repo)
+		require.NoError(t, err)
+		parsed, err := parser.Parse(t.Context(), &repository.FileInfo{
+			Path: "team/widget.json",
+			Data: []byte(`{"apiVersion":"example.ext.grafana.app/v1","kind":"Widget","metadata":{"name":"widget-1"},"spec":{}}`),
+		})
+		require.NoError(t, err)
+		return parsed
+	}
+	require.False(t, parse().FolderScoped)
+
+	watcher, err := resources.NewRemoteManifestWatcher(supportedResourceProvider, nil, resource.ManifestWatcherConfig{
+		DiscoveryURL:      router.URL,
+		DiscoveryAudience: provisioning.GROUP,
+		Exchanger:         authn.NewStaticTokenExchanger("router-token"),
+	})
+	require.NoError(t, err)
+	require.NoError(t, services.StartAndAwaitRunning(t.Context(), watcher))
+	t.Cleanup(watcher.StopAsync)
+
+	parsed := parse()
+	require.True(t, parsed.FolderScoped)
+	require.Equal(t, resources.ParseFolder("team", "repo").ID, parsed.Meta.GetFolder())
+}
 
 func TestPullRequestWorker_IsSupported(t *testing.T) {
 	tests := []struct {

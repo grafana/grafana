@@ -88,6 +88,10 @@ func (r *rawChunkWriter) OnChunk(chunk *pluginv2.QueryChunkedDataResponse) error
 		_, _ = r.w.Write(chunk.Frame) // raw JSON bytes
 	}
 
+	if chunk.Status != 0 {
+		_, _ = fmt.Fprintf(r.w, `,"status":%d`, chunk.Status)
+	}
+
 	if chunk.Error != "" {
 		r.writeField("error", chunk.Error)
 
@@ -112,9 +116,18 @@ func (r *rawChunkWriter) writeField(f string, v string) {
 	_, _ = r.w.Write(b)
 }
 
-// WriteError implements [backend.ChunkedDataWriter].
-func (r *rawChunkWriter) WriteError(ctx context.Context, refID string, status backend.Status, err error) error {
-	return fmt.Errorf("rawChunkWriter does not support: WriteError")
+// WriteError implements [backend.ChunkedDataWriter]. It writes the line of an error chunk, so that a
+// middleware can reject one query of a chunked request and let the other queries run.
+func (r *rawChunkWriter) WriteError(_ context.Context, refID string, status backend.Status, err error) error {
+	chunk := &pluginv2.QueryChunkedDataResponse{
+		RefId:  refID,
+		Status: int32(status), //nolint:gosec // HTTP status codes fit in int32
+	}
+	if err != nil {
+		chunk.Error = err.Error()
+		chunk.ErrorSource = string(backend.ErrorSourceFromError(err))
+	}
+	return r.OnChunk(chunk)
 }
 
 // WriteFrame implements [backend.ChunkedDataWriter].

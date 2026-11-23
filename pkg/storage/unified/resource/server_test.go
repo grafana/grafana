@@ -29,7 +29,6 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	"go.opentelemetry.io/otel/trace"
-	"gocloud.dev/blob/memblob"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -60,7 +59,7 @@ func TestSimpleServer(t *testing.T) {
 		Login:          "testuser",
 		UserID:         123,
 		UserUID:        "u123",
-		OrgRole:        identity.RoleAdmin,
+		OrgRole:        authlib.RoleAdmin,
 		IsGrafanaAdmin: true, // can do anything
 	}
 	ctx := authlib.WithAuthInfo(context.Background(), testUserA)
@@ -583,7 +582,7 @@ func TestListStoredResources(t *testing.T) {
 		Login:          "testuser",
 		UserID:         123,
 		UserUID:        "u123",
-		OrgRole:        identity.RoleAdmin,
+		OrgRole:        authlib.RoleAdmin,
 		IsGrafanaAdmin: true,
 	}
 	ctx := authlib.WithAuthInfo(context.Background(), testUser)
@@ -1374,7 +1373,7 @@ func TestGracefulShutdown(t *testing.T) {
 		Login:          "testuser",
 		UserID:         123,
 		UserUID:        "u123",
-		OrgRole:        identity.RoleAdmin,
+		OrgRole:        authlib.RoleAdmin,
 		IsGrafanaAdmin: true,
 	}
 	ctx := authlib.WithAuthInfo(context.Background(), testUser)
@@ -1574,7 +1573,7 @@ func newWatchTestUser() *identity.StaticRequester {
 		Login:          "testuser",
 		UserID:         123,
 		UserUID:        "u123",
-		OrgRole:        identity.RoleAdmin,
+		OrgRole:        authlib.RoleAdmin,
 		IsGrafanaAdmin: true,
 	}
 }
@@ -2918,7 +2917,7 @@ func TestNewEventPermissionChecks(t *testing.T) {
 		Login:     "testuser",
 		UserID:    123,
 		UserUID:   "u123",
-		OrgRole:   identity.RoleEditor,
+		OrgRole:   authlib.RoleEditor,
 		Namespace: "default",
 	}
 	ctx := authlib.WithAuthInfo(context.Background(), user)
@@ -3209,7 +3208,7 @@ func TestFolderDeletePermissionChecks(t *testing.T) {
 		Login:     "testuser",
 		UserID:    123,
 		UserUID:   "u123",
-		OrgRole:   identity.RoleEditor,
+		OrgRole:   authlib.RoleEditor,
 		Namespace: "default",
 	}
 	ctx := authlib.WithAuthInfo(context.Background(), user)
@@ -3330,6 +3329,14 @@ func TestFolderDeletePermissionChecks(t *testing.T) {
 		require.Equal(t, parentFolderUID, capturedFolder)
 		require.NotEqual(t, folderName, capturedFolder)
 	})
+}
+
+func TestInitializeBlobStorageRejectsBucketURL(t *testing.T) {
+	_, err := initializeBlobStorage(ResourceServerOptions{Blob: BlobConfig{
+		URL:     "mem://",
+		Backend: NewKVBlobSupport(nil),
+	}})
+	require.ErrorContains(t, err, "blob_url is no longer supported")
 }
 
 // stubBlobSupport records whether PutResourceBlob was reached so tests can
@@ -3709,12 +3716,9 @@ func TestGetBlobReferenceChecks(t *testing.T) {
 		require.True(t, blob.getReached)
 	})
 
-	t.Run("reads a referenced blob from object storage using its content type", func(t *testing.T) {
+	t.Run("reads a referenced blob from KV storage using its content type", func(t *testing.T) {
 		srv, _, _ := newBlobAuthzTestServer(t, nil)
-		bucket := memblob.OpenBucket(nil)
-		t.Cleanup(func() { require.NoError(t, bucket.Close()) })
-		blob, err := NewCDKBlobSupport(ctx, CDKBlobSupportOptions{Bucket: bucket})
-		require.NoError(t, err)
+		blob := NewKVBlobSupport(setupBadgerKV(t))
 		srv.blob = blob
 
 		value := []byte(`{"title":"test"}`)
@@ -3891,7 +3895,7 @@ func newKeysOnlyTestServerWithMaxPageBytes(t *testing.T, maxPageBytes int, autho
 		UserID:         123,
 		UserUID:        "u123",
 		Namespace:      "*",
-		OrgRole:        identity.RoleAdmin,
+		OrgRole:        authlib.RoleAdmin,
 		IsGrafanaAdmin: true,
 	})
 
@@ -4486,7 +4490,7 @@ func newRecordingTestServer(t *testing.T, ac authlib.AccessClient, identityNames
 	authCtx := func(ns string) context.Context {
 		return authlib.WithAuthInfo(context.Background(), &identity.StaticRequester{
 			Type: authlib.TypeAccessPolicy, Name: "svc", UserUID: "svc",
-			Namespace: ns, OrgRole: identity.RoleAdmin, IsGrafanaAdmin: true,
+			Namespace: ns, OrgRole: authlib.RoleAdmin, IsGrafanaAdmin: true,
 		})
 	}
 	return srv, authCtx(identityNamespace), authCtx("*")
@@ -4864,7 +4868,7 @@ func TestResourceServerQOSTenantIsolation(t *testing.T) {
 		}
 		ctxFor := func(namespace string) context.Context {
 			return authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{
-				Type: authlib.TypeUser, UserID: 123, UserUID: "u123", OrgRole: identity.RoleEditor, Namespace: namespace,
+				Type: authlib.TypeUser, UserID: 123, UserUID: "u123", OrgRole: authlib.RoleEditor, Namespace: namespace,
 			})
 		}
 

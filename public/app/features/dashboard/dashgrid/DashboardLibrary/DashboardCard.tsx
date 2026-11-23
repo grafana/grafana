@@ -77,6 +77,15 @@ interface BaseProps {
   tags?: string[];
   /** Resolved display name of the user who created the template. Only rendered for `custom_dashboard_template`. */
   createdByName?: string;
+  /**
+   * Picks the card instead of opening it: a click anywhere on the card hands it to `onSelect`. Used where a
+   * template is attached to the Assistant prompt rather than opened.
+   */
+  onSelect?: () => void;
+  /** Shows the card as picked. Only read together with `onSelect`. */
+  selected?: boolean;
+  /** With `onSelect`, adds a small Preview button in the thumbnail's corner. */
+  onPreview?: () => void;
 }
 
 // Discriminated on `kind` so the `dashboard` shape is correlated with the kind of card being rendered.
@@ -106,6 +115,9 @@ function DashboardCardComponent({
   onDelete,
   tags,
   createdByName,
+  onSelect,
+  selected = false,
+  onPreview,
 }: Props) {
   const styles = useStyles2(getStyles);
   const isCompatibilityAppEnabled = config.featureToggles.dashboardValidatorApp;
@@ -166,7 +178,18 @@ function DashboardCardComponent({
   const hasCompatActions = isCompatibilityAppEnabled && showCompatibilityBadge && onCompatibilityCheck;
 
   return (
-    <article className={styles.card}>
+    <article
+      className={cx(styles.card, onSelect && styles.selectableCard, onSelect && selected && styles.selectedCard)}
+    >
+      {onSelect && (
+        <button
+          type="button"
+          className={styles.selectButton}
+          onClick={onSelect}
+          aria-pressed={selected}
+          aria-label={t('dashboard-library.card.attach-template-button-label', 'Attach template: {{title}}', { title })}
+        />
+      )}
       {hasCardMenu && (
         <div className={styles.cardMenu}>
           <Dropdown
@@ -222,17 +245,20 @@ function DashboardCardComponent({
       <div
         className={cx(
           isLogo ? styles.logoContainer : styles.thumbnailContainer,
-          isCustomTemplate && styles.customTemplateThumbnail
+          isCustomTemplate && styles.customTemplateThumbnail,
+          onSelect && styles.selectableThumbnail
         )}
       >
         {imageUrl ? (
           <img
             src={imageUrl}
             alt={title}
+            loading="lazy"
             className={cx(
               isLogo ? styles.logo : styles.thumbnail,
               dimThumbnail && showDatasourceProvidedBadge && styles.dimmedImage,
-              kind === 'suggested_dashboard' ? styles.thumbnailCoverImage : styles.thumbnailContainImage
+              kind === 'suggested_dashboard' ? styles.thumbnailCoverImage : styles.thumbnailContainImage,
+              onSelect && styles.selectableThumbnailImage
             )}
             onError={(e) => {
               console.error('Failed to load image for:', title, 'URL:', imageUrl);
@@ -257,68 +283,97 @@ function DashboardCardComponent({
             <Badge text={t('dashboard-library.card.community-badge', 'Community')} color="blue" />
           </div>
         )}
-        <div className={styles.thumbnailOverlay}>
-          <Button
-            variant="secondary"
-            className={styles.overlayButton}
-            onClick={() => onClick()}
-            aria-label={
-              kind === 'template_dashboard'
-                ? t('dashboard-library.card.view-template-button-label', 'View template: {{title}}', { title })
-                : kind === 'suggested_dashboard'
-                  ? t('dashboard-library.card.view-dashboard-button-label', 'View dashboard: {{title}}', { title })
-                  : t('dashboard-library.card.use-template-button-label', 'Use template: {{title}}', { title })
-            }
-          >
-            {kind === 'template_dashboard' ? (
-              <Trans i18nKey="dashboard-library.card.view-template-button">View template</Trans>
-            ) : kind === 'suggested_dashboard' ? (
-              <Trans i18nKey="dashboard-library.card.view-dashboard-button">View dashboard</Trans>
-            ) : (
-              <Trans i18nKey="dashboard-library.card.use-template-button">Use template</Trans>
-            )}
-          </Button>
-          {assistantAvailable && showAssistantButton && (
+        {onSelect && onPreview && (
+          <div className={styles.previewAction}>
+            <Button
+              size="sm"
+              variant="secondary"
+              icon="external-link-alt"
+              onClick={onPreview}
+              tooltip={t('dashboard-library.card.preview-template-button', 'Preview')}
+              aria-label={t('dashboard-library.card.preview-template-button-label', 'Preview template: {{title}}', {
+                title,
+              })}
+            />
+          </div>
+        )}
+        {!onSelect && (
+          <div className={styles.thumbnailOverlay}>
             <Button
               variant="secondary"
               className={styles.overlayButton}
-              onClick={onUseAssistantClick}
-              icon="ai-sparkle"
-              aria-label={t(
-                'dashboard-library.card.customize-with-assistant-button-label',
-                'Customize with Assistant: {{title}}',
-                { title }
-              )}
+              onClick={() => onClick()}
+              aria-label={
+                kind === 'template_dashboard'
+                  ? t('dashboard-library.card.view-template-button-label', 'View template: {{title}}', { title })
+                  : kind === 'suggested_dashboard'
+                    ? t('dashboard-library.card.view-dashboard-button-label', 'View dashboard: {{title}}', { title })
+                    : t('dashboard-library.card.use-template-button-label', 'Use template: {{title}}', { title })
+              }
             >
-              <Trans i18nKey="dashboard-library.card.customize-with-assistant-button">Customize with Assistant</Trans>
+              {kind === 'template_dashboard' ? (
+                <Trans i18nKey="dashboard-library.card.view-template-button">View template</Trans>
+              ) : kind === 'suggested_dashboard' ? (
+                <Trans i18nKey="dashboard-library.card.view-dashboard-button">View dashboard</Trans>
+              ) : (
+                <Trans i18nKey="dashboard-library.card.use-template-button">Use template</Trans>
+              )}
             </Button>
-          )}
-        </div>
+            {assistantAvailable && showAssistantButton && (
+              <Button
+                variant="secondary"
+                className={styles.overlayButton}
+                onClick={onUseAssistantClick}
+                icon="ai-sparkle"
+                aria-label={t(
+                  'dashboard-library.card.customize-with-assistant-button-label',
+                  'Customize with Assistant: {{title}}',
+                  { title }
+                )}
+              >
+                <Trans i18nKey="dashboard-library.card.customize-with-assistant-button">Customize with Assistant</Trans>
+              </Button>
+            )}
+          </div>
+        )}
       </div>
-      <div className={styles.bottomSection}>
+      <div className={cx(styles.bottomSection, onSelect && styles.selectableBottomSection)}>
         {isCustomTemplate && (
           <h3 className={styles.customTemplateTitle}>
             <span className={styles.titleText}>{title}</span>
           </h3>
         )}
-        {dashboard.description && (
+        {/* A picker card keeps to its title and author, so every card in its grid has the same height. */}
+        {!onSelect && dashboard.description && (
           <div title={dashboard.description}>
             <p data-testid="dashboard-card-description" className={styles.description}>
               {dashboard.description}
             </p>
           </div>
         )}
-        {tags && tags.length > 0 && (
+        {!onSelect && tags && tags.length > 0 && (
           <div className={styles.tagsContainer}>
             <TagList tags={tags} className={styles.tagList} />
           </div>
         )}
-        {isCustomTemplate && createdByName && (
-          <p className={styles.createdBy}>
-            <span className={styles.createdByLabel}>
-              <Trans i18nKey="dashboard-library.dashboard-card.created-by-label">Created by:</Trans>
-            </span>{' '}
-            {createdByName}
+        {onSelect && kind === 'template_dashboard' && (
+          <p className={cx(styles.createdBy, styles.selectableCreatedBy)}>
+            <Trans i18nKey="dashboard-library.card.provisioned-by-grafana">
+              <span className={styles.createdByLabel}>Provisioned by</span> Grafana
+            </Trans>
+          </p>
+        )}
+        {/* In the picker the line stays without a creator, so the card's title lines up with the others in its row. */}
+        {isCustomTemplate && (createdByName || onSelect) && (
+          <p className={cx(styles.createdBy, onSelect && styles.selectableCreatedBy)}>
+            {createdByName && (
+              <>
+                <span className={styles.createdByLabel}>
+                  <Trans i18nKey="dashboard-library.dashboard-card.created-by-label">Created by:</Trans>
+                </span>{' '}
+                {createdByName}
+              </>
+            )}
           </p>
         )}
         {hasCompatActions && (
@@ -448,7 +503,28 @@ function DetailsTooltipContent({ details }: { details: Details }) {
   );
 }
 
+// The picker's grid sets the card height; the thumbnail takes what the title and author leave.
+const pickerThumbnail = {
+  flex: '1 1 0',
+  minHeight: 0,
+  aspectRatio: 'auto',
+};
+
 function getStyles(theme: GrafanaTheme2) {
+  // Shown on hover or focus, and always where there is no hover, like a touch screen.
+  const previewAction = css({
+    position: 'absolute',
+    top: theme.spacing(0.5),
+    right: theme.spacing(0.5),
+    zIndex: 2,
+    opacity: 0,
+    '@media (hover: none)': {
+      opacity: 1,
+    },
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: 'opacity 0.15s ease',
+    },
+  });
   const thumbnailOverlay = css({
     position: 'absolute',
     inset: 0,
@@ -532,6 +608,47 @@ function getStyles(theme: GrafanaTheme2) {
       },
     }),
     thumbnailOverlay,
+    // Quieter than the template modal's cards: the picker sits inside a bordered panel. Hover only tints the
+    // background, like the viz picker's items, so a picked card keeps its accent border under the pointer.
+    selectableCard: css({
+      width: '100%',
+      borderColor: theme.colors.border.weak,
+      '&:hover': {
+        backgroundColor: theme.colors.action.hover,
+      },
+      [`&:hover .${previewAction}, &:focus-within .${previewAction}`]: {
+        opacity: 1,
+      },
+    }),
+    // The whole card picks the template; Preview sits above it.
+    selectButton: css({
+      position: 'absolute',
+      inset: 0,
+      zIndex: 1,
+      padding: 0,
+      border: 0,
+      background: 'transparent',
+      borderRadius: theme.shape.radius.default,
+      cursor: 'pointer',
+      // Drawn inside the card, since the picker's scrolling list clips anything outside it.
+      '&:focus-visible': {
+        outline: `2px solid ${theme.colors.primary.main}`,
+        outlineOffset: -2,
+      },
+    }),
+    previewAction,
+    // Matches the viz picker's selected item (PanelTypeCard `current`): accent border and selected tint. Only the
+    // colour of the card's own 1px border changes, so nothing is drawn outside the card and nothing moves.
+    selectedCard: css({
+      borderColor: theme.colors.accent.main,
+      backgroundColor: theme.colors.action.selected,
+    }),
+    selectableThumbnail: css(pickerThumbnail),
+    // Cropped to the top of the dashboard rather than letterboxed, since the shape varies with the column width.
+    selectableThumbnailImage: css({
+      objectFit: 'cover',
+      objectPosition: 'top',
+    }),
     overlayButton: css({
       width: '80%',
       justifyContent: 'center',
@@ -615,6 +732,16 @@ function getStyles(theme: GrafanaTheme2) {
     createdByLabel: css({
       fontWeight: theme.typography.fontWeightBold,
     }),
+    // A custom card's title sits in this section and a Grafana card's above it, so without the inset both titles
+    // line up across a row.
+    selectableBottomSection: css({
+      paddingTop: 0,
+    }),
+    // Right under the title: a picker card has no description or tags between them. One line tall even when empty.
+    selectableCreatedBy: css({
+      minHeight: `calc(1lh + ${theme.spacing(0.25)})`,
+      paddingTop: theme.spacing(0.25),
+    }),
     bottomSection: css({
       display: 'flex',
       flexDirection: 'column',
@@ -694,16 +821,19 @@ function getStyles(theme: GrafanaTheme2) {
 
 interface DashboardCardSkeletonProps {
   showCompatibilityBadge?: boolean;
+  /** Fills its grid cell, as a picker card does, instead of the template modal's fixed card width. */
+  fluid?: boolean;
 }
 
 const DashboardCardSkeleton: SkeletonComponent<DashboardCardSkeletonProps> = ({
   rootProps,
   showCompatibilityBadge,
+  fluid,
 }) => {
   const styles = useStyles2(getSkeletonStyles);
   return (
-    <div className={styles.card} style={rootProps.style}>
-      <Skeleton containerClassName={styles.thumbnail} height="100%" />
+    <div className={cx(styles.card, fluid && styles.fluid)} style={rootProps.style}>
+      <Skeleton containerClassName={cx(styles.thumbnail, fluid && styles.fluidThumbnail)} height="100%" />
       <Skeleton height={22} width="70%" />
       <Skeleton height={19} width="90%" />
       {showCompatibilityBadge && <Skeleton height={33} width={100} />}
@@ -712,6 +842,12 @@ const DashboardCardSkeleton: SkeletonComponent<DashboardCardSkeletonProps> = ({
 };
 
 const getSkeletonStyles = (theme: GrafanaTheme2) => ({
+  fluid: css({
+    width: '100%',
+    height: '100%',
+    borderColor: theme.colors.border.weak,
+  }),
+  fluidThumbnail: css(pickerThumbnail),
   card: css({
     width: '350px',
     border: `1px solid ${theme.colors.border.strong}`,
