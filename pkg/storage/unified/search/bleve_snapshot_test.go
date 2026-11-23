@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -1719,7 +1720,7 @@ func TestBackgroundGlobalIndexBuildAndSnapshotRestore(t *testing.T) {
 					kind.group+"/v1", kind.name, name, name),
 			})
 			require.NoError(t, err)
-			require.Nil(t, rsp.Error)
+			require.Positive(t, rsp.ResourceVersion)
 		}
 	}
 	key := resource.GlobalSearchKey("default")
@@ -1756,8 +1757,8 @@ func TestBackgroundGlobalIndexBuildAndSnapshotRestore(t *testing.T) {
 	// Startup does not build the global index; the first search does, and gets
 	// 503 while it is being built.
 	rsp, err := server.Search(ctx, req)
-	require.NoError(t, err)
-	require.Equal(t, resource.NewServiceUnavailableError("the global search index for this namespace is still being built"), rsp.Error)
+	require.Nil(t, rsp)
+	require.Equal(t, resource.NewServiceUnavailableError("the global search index for this namespace is still being built").String(), resourceutil.ErrorResultFromGRPCDetails(err).String())
 	select {
 	case <-paused.started:
 	case <-ctx.Done():
@@ -1768,7 +1769,7 @@ func TestBackgroundGlobalIndexBuildAndSnapshotRestore(t *testing.T) {
 		t.Helper()
 		require.Eventually(t, func() bool {
 			rsp, err := server.Search(ctx, req)
-			return err == nil && rsp.Error == nil && rsp.TotalHits == 6
+			return err == nil && rsp != nil && rsp.TotalHits == 6
 		}, 5*time.Second, 10*time.Millisecond)
 	}
 	assertSearch(server)

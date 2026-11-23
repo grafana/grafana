@@ -16,6 +16,7 @@ import {
   type LinkModel,
   type ValueLinkConfig,
 } from '@grafana/data';
+import { getPillElements } from '@grafana/data/internal';
 import { type SortColumn } from '@grafana/react-data-grid';
 import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode, TableCellHeight } from '@grafana/schema';
 
@@ -26,7 +27,6 @@ import { getJustifyContent } from './styles';
 import { type GetActionsFunctionLocal, type MeasureCellHeightEntry, type TableColumn, type TableRow } from './types';
 import {
   applySort,
-  buildCellHeightMeasurers,
   buildHeaderHeightMeasurers,
   buildInspectValue,
   buildNestedColumnWidthsMap,
@@ -34,7 +34,6 @@ import {
   compileFrameToRecords,
   computeColWidths,
   computeContentAwareColWidths,
-  createBoundedCache,
   createFitWidthMeasurer,
   createTypographyContext,
   displayJsonValue,
@@ -130,6 +129,12 @@ describe('TableNG utils', () => {
       expect(inferPills('[a, b')).toEqual(['[a', 'b']);
     });
 
+    it('comma-splits when whitespace precedes the opening bracket', () => {
+      // The '[' check runs on the untrimmed string; filtering shares this
+      // implementation so filter options agree with the pills.
+      expect(inferPills(' ["a", "b"]')).toEqual(['["a"', '"b"]']);
+    });
+
     it('memoizes by input so repeated calls (per resize tick) reuse the same array', () => {
       // string inputs compare by value
       expect(inferPills('a,b,c')).toBe(inferPills('a,b,c'));
@@ -137,46 +142,9 @@ describe('TableNG utils', () => {
       const arr = ['x', 'y'];
       expect(inferPills(arr)).toBe(inferPills(arr));
     });
-  });
 
-  describe('createBoundedCache', () => {
-    it('returns stored values and undefined for absent keys', () => {
-      const cache = createBoundedCache<string, number>(8);
-      cache.set('a', 1);
-      expect(cache.get('a')).toBe(1);
-      expect(cache.get('missing')).toBeUndefined();
-    });
-
-    it('evicts the oldest entries once churn exceeds capacity', () => {
-      const cache = createBoundedCache<number, number>(4);
-      for (let i = 0; i < 100; i++) {
-        cache.set(i, i);
-      }
-      // early keys have rotated out; the most recent ones are still present
-      expect(cache.get(0)).toBeUndefined();
-      expect(cache.get(99)).toBe(99);
-    });
-
-    it('stays within ~2x maxSize even when reads continuously promote from the secondary generation', () => {
-      // Regression: promotion in get() must run the same rotation check as set(); otherwise a run of
-      // promoting reads grows the primary map past maxSize and the ~2x bound is lost.
-      const maxSize = 8;
-      const cache = createBoundedCache<number, number>(maxSize);
-      const total = 2000;
-      for (let i = 0; i < total; i++) {
-        cache.set(i, i);
-        // re-read a window of recent keys to exercise the secondary->primary promotion path
-        for (let j = Math.max(0, i - 2 * maxSize); j <= i; j++) {
-          cache.get(j);
-        }
-      }
-      let retained = 0;
-      for (let i = 0; i < total; i++) {
-        if (cache.get(i) !== undefined) {
-          retained++;
-        }
-      }
-      expect(retained).toBeLessThanOrEqual(2 * maxSize);
+    it('returns the same cached array as the shared filtering helper', () => {
+      expect(inferPills('p,q')).toBe(getPillElements('p,q'));
     });
   });
 
@@ -470,6 +438,43 @@ describe('TableNG utils', () => {
   });
 
   describe('getAlignmentFactor', () => {
+    it('measures unreduced sparkline frames as null', () => {
+      const frame = createDataFrame({
+        fields: [{ name: 'value', type: FieldType.number, values: [12345] }],
+      });
+      const field: Field = {
+        name: 'sparkline',
+        type: FieldType.frame,
+        config: { custom: { cellOptions: { type: TableCellDisplayMode.Sparkline } } },
+        values: [{ ...frame, value: 1 }, frame],
+        display: (value) => ({ text: value === null ? 'N/A' : String(value), numeric: Number(value) }),
+      };
+
+      expect(getAlignmentFactor(field, { text: '1', numeric: 1 }, 0)).toEqual({
+        text: 'N/A',
+        numeric: 0,
+      });
+    });
+
+    it('measures reduced sparkline values instead of data frame objects', () => {
+      const field: Field = {
+        name: 'sparkline',
+        type: FieldType.frame,
+        config: { custom: { cellOptions: { type: TableCellDisplayMode.Sparkline } } },
+        values: [1, 8.88, 9].map((value) => ({
+          ...createDataFrame({ fields: [{ name: 'value', type: FieldType.number, values: [value] }] }),
+          value,
+        })),
+        display: (value) => ({ text: String(value), numeric: Number(value), suffix: ' ms' }),
+      };
+
+      expect(getAlignmentFactor(field, { text: '1', numeric: 1, suffix: ' ms' }, 0)).toEqual({
+        text: '8.88',
+        numeric: 8.88,
+        suffix: ' ms',
+      });
+    });
+
     it('should create a new alignment factor when none exists', () => {
       // Create a field with no existing alignment factor
       const field: Field = {
@@ -487,13 +492,49 @@ describe('TableNG utils', () => {
       // Call getAlignmentFactor with the first row
       const result = getAlignmentFactor(field, displayValue, 0);
 
-      // Verify the result has the text property
-      expect(result).toEqual(expect.objectContaining({ text: '1' }));
+      // The factor is the longest value of the rows that follow, not the first row's own text
+      expect(result).toEqual(expect.objectContaining({ text: '4444' }));
 
       // Verify that field.state was created and contains the alignment factor
       expect(field.state).toBeDefined();
       expect(field.state?.alignmentFactors).toBeDefined();
-      expect(field.state?.alignmentFactors).toEqual(expect.objectContaining({ text: '1' }));
+      expect(field.state?.alignmentFactors).toEqual(expect.objectContaining({ text: '4444' }));
+    });
+
+    it('should keep the longest formatted value, with its prefix and suffix, of the next rows', () => {
+      // Values of the same magnitude in a mixed order, as in a sorted gauge column: the widest
+      // formatted text, not the first one, decides how much room every cell reserves
+      const field: Field = {
+        name: 'test',
+        type: FieldType.number,
+        config: {},
+        values: [1, 8.88, 9, 9.22],
+        display: (value: unknown) => ({ text: String(value), numeric: Number(value), suffix: ' ms' }),
+      };
+
+      const result = getAlignmentFactor(field, { text: '1', numeric: 1, suffix: ' ms' }, 0);
+
+      expect(result).toEqual({ text: '8.88', numeric: 8.88, suffix: ' ms' });
+      // Shorter rows after the longest one do not shrink it
+      expect(field.state?.alignmentFactors).toEqual({ text: '8.88', numeric: 8.88, suffix: ' ms' });
+    });
+
+    it('should store a copy of the longest value, displaying each row once', () => {
+      const shown: DisplayValue[] = [];
+      const display = jest.fn((value: unknown) => {
+        const dv: DisplayValue = { text: String(value), numeric: Number(value) };
+        shown.push(dv);
+        return dv;
+      });
+      const field: Field = { name: 'test', type: FieldType.number, config: {}, values: [1, 22, 4444, 333], display };
+
+      const result = getAlignmentFactor(field, { text: '1', numeric: 1 }, 0);
+
+      expect(display).toHaveBeenCalledTimes(3);
+      expect(result).toEqual({ text: '4444', numeric: 4444 });
+      // The factor kept in the field state is its own object, not the row's display value
+      expect(result).not.toBe(shown[1]);
+      expect(field.state?.alignmentFactors).toBe(result);
     });
 
     it('should update alignment factor when a longer value is found', () => {
@@ -568,18 +609,16 @@ describe('TableNG utils', () => {
       // Call getAlignmentFactor with the first row
       const result = getAlignmentFactor(field, displayValue, 0);
 
-      // Verify the result has the text property
-      expect(result).toEqual(expect.objectContaining({ text: '1' }));
+      // Verify the result is the longest of the following rows
+      expect(result).toEqual(expect.objectContaining({ text: '4444' }));
 
       // Verify that field.state was preserved and alignment factor was added
       expect(field.state).toBeDefined();
       // Check for the valid property we used
       expect(field.state?.calcs).toBeDefined();
       expect(field.state?.alignmentFactors).toBeDefined();
-      expect(field.state?.alignmentFactors).toEqual(expect.objectContaining({ text: '1' }));
+      expect(field.state?.alignmentFactors).toEqual(expect.objectContaining({ text: '4444' }));
     });
-
-    it.todo('alignmentFactor.text = displayValue.text;');
   });
 
   describe('getColumnTypes', () => {
@@ -1496,163 +1535,6 @@ describe('TableNG utils', () => {
 
       const measurers = buildHeaderHeightMeasurers(fields, ctx);
       expect(measurers).toBeUndefined();
-    });
-  });
-
-  describe('buildCellHeightMeasurers', () => {
-    const theme = createTheme();
-    const ctx = {
-      fontFamily: 'sans-serif',
-      letterSpacing: 0.15,
-      ctx: {} as CanvasRenderingContext2D,
-      measureHeight: jest.fn(() => 2),
-      estimateHeight: jest.fn(() => 2),
-      measureWidth: (text: string) => text.length * 8,
-      avgCharWidth: 7,
-      numericCharWidth: 7,
-      monoCharWidth: 7,
-    };
-
-    it('sets up text height measurers for each text column if wrapping is on', () => {
-      const fields: Field[] = [
-        { name: 'Name', type: FieldType.string, values: [], config: { custom: { wrapText: true } } },
-        {
-          name: 'Address',
-          type: FieldType.string,
-          values: [],
-          config: { custom: { wrapText: true } },
-        },
-      ];
-      const measurers = buildCellHeightMeasurers(fields, ctx, theme);
-      expect(measurers![0].measure).toEqual(expect.any(Function));
-      expect(measurers![0].fieldIdxs).toEqual([0, 1]);
-    });
-
-    it('does not return the index of columns which are not wrapped', () => {
-      const fields: Field[] = [
-        { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
-        {
-          name: 'Address',
-          type: FieldType.string,
-          values: [],
-          config: { custom: { wrapText: true } },
-        },
-      ];
-
-      const measurers = buildCellHeightMeasurers(fields, ctx, theme);
-      expect(measurers![0].fieldIdxs).toEqual([1]);
-    });
-
-    it('sets up line counting for pills if present and wrapping is on', () => {
-      const fields: Field[] = [
-        {
-          name: 'Tags',
-          type: FieldType.string,
-          values: ['tag1,tag2', 'tag3', '["tag4","tag5","tag6"]'],
-          config: { custom: { wrapText: true, cellOptions: { type: TableCellDisplayMode.Pill } } },
-        },
-      ];
-      const measurers = buildCellHeightMeasurers(fields, ctx, theme);
-      // pills are measured precisely (the cheap estimate was removed because it mis-ranked columns)
-      expect(measurers![0].measure).toEqual(expect.any(Function));
-      expect(measurers![0].measure('tag1,tag2', 100, fields[0], 0, 22)).toEqual(expect.any(Number));
-      expect(measurers![0].fieldIdxs).toEqual([0]);
-    });
-
-    it('sets up line counting for datalinks if present and wrapping is on', () => {
-      const fields: Field[] = [
-        {
-          name: 'Links',
-          type: FieldType.string,
-          values: ['http://example.com/1', 'http://example.com/2'],
-          config: { custom: { wrapText: true, cellOptions: { type: TableCellDisplayMode.DataLinks } } },
-          getLinks: jest.fn((): LinkModel[] => [
-            { title: 'Link 1', href: 'http://example.com/1', target: '_blank', origin: { datasourceUid: 'test' } },
-            { title: 'Link 2', href: 'http://example.com/2', target: '_self', origin: { datasourceUid: 'test' } },
-          ]),
-        },
-      ];
-      const measurers = buildCellHeightMeasurers(fields, ctx, theme);
-      expect(measurers![0].measure).toEqual(expect.any(Function));
-      expect(measurers![0].measure('http://example.com/1', 100, fields[0], 0, 22)).toEqual(expect.any(Number));
-      expect(measurers![0].fieldIdxs).toEqual([0]);
-    });
-
-    it('enables text counting for Time fields rendered by AutoCellRenderer', () => {
-      const fields: Field[] = [
-        { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
-        {
-          name: 'Time',
-          type: FieldType.time,
-          values: [],
-          config: { custom: { wrapText: true } },
-          display: (v) => ({ text: '2024-03-26 14:30:00', numeric: v as number, color: undefined, title: undefined }),
-        },
-      ];
-
-      const measurers = buildCellHeightMeasurers(fields, ctx, theme);
-      // Time fields use AutoCellRenderer (same as string fields) and can produce long formatted strings
-      expect(measurers).toBeDefined();
-      expect(measurers![0].fieldIdxs).toEqual([1]);
-    });
-
-    it('enables text counting for Number fields rendered by AutoCellRenderer', () => {
-      const fields: Field[] = [
-        {
-          name: 'Value',
-          type: FieldType.number,
-          values: [],
-          config: { custom: { wrapText: true } },
-          display: (v) => ({ text: String(v), numeric: v as number, color: undefined, title: undefined }),
-        },
-      ];
-
-      const measurers = buildCellHeightMeasurers(fields, ctx, theme);
-      expect(measurers).toBeDefined();
-      expect(measurers![0].fieldIdxs).toEqual([0]);
-    });
-
-    it('does not enable text counting for non-AutoCellRenderer fields like Gauge', () => {
-      const fields: Field[] = [
-        { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
-        {
-          name: 'Score',
-          type: FieldType.number,
-          values: [],
-          config: { custom: { wrapText: true, cellOptions: { type: TableCellDisplayMode.Gauge } } },
-        },
-      ];
-
-      const measurers = buildCellHeightMeasurers(fields, ctx, theme);
-      // Gauge cells don't use AutoCellRenderer, so no measurer is set up
-      expect(measurers).toBeUndefined();
-    });
-
-    it('returns an undefined if no columns are wrapped', () => {
-      const fields: Field[] = [
-        { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
-        { name: 'Age', type: FieldType.number, values: [], config: { custom: {} } },
-      ];
-
-      const measurers = buildCellHeightMeasurers(fields, ctx, theme);
-      expect(measurers).toBeUndefined();
-    });
-
-    it('clamps by maxHeight if set', () => {
-      const fields: Field[] = [
-        {
-          name: 'Tags',
-          type: FieldType.string,
-          values: ['tag1,tag2', 'tag3', '["tag4","tag5","tag6"]'],
-          config: { custom: { wrapText: true, cellOptions: { type: TableCellDisplayMode.Pill } } },
-        },
-      ];
-      const measurers = buildCellHeightMeasurers(fields, ctx, theme);
-      expect(measurers![0].measure!(fields[0].values[2], 20, fields[0], 2, 100)).toBeGreaterThan(50);
-
-      fields[0].config!.custom!.maxHeight = 50;
-      const measurersWithMax = buildCellHeightMeasurers(fields, ctx, theme, 50);
-      expect(measurersWithMax![0].measure!(fields[0].values[2], 20, fields[0], 2, 100)).toBe(50);
     });
   });
 

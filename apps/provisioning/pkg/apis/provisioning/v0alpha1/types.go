@@ -32,15 +32,15 @@ func (Repository) OpenAPIModelName() string {
 
 type SecureValues struct {
 	// Token used to connect the configured repository
-	Token common.InlineSecureValue `json:"token,omitzero,omitempty"`
+	Token resource.InlineSecureValue `json:"token,omitzero,omitempty"`
 
 	// Some webhooks (including github) require a secret key value
-	WebhookSecret common.InlineSecureValue `json:"webhookSecret,omitzero,omitempty"`
+	WebhookSecret resource.InlineSecureValue `json:"webhookSecret,omitzero,omitempty"`
 
 	// Private key used to sign commits the repository writes back. The format
 	// is selected by spec.commit.signingMethod. When unset, commits are
 	// unsigned.
-	CommitSigningKey common.InlineSecureValue `json:"commitSigningKey,omitzero,omitempty"`
+	CommitSigningKey resource.InlineSecureValue `json:"commitSigningKey,omitzero,omitempty"`
 }
 
 func (SecureValues) OpenAPIModelName() string {
@@ -202,6 +202,13 @@ const (
 // IsGit returns true if the repository type is git or github
 func (r RepositoryType) IsGit() bool {
 	return r == GitRepositoryType || r == GitHubRepositoryType || r == GitHubEnterpriseRepositoryType || r == BitbucketRepositoryType || r == GitLabRepositoryType
+}
+
+// AllowsSecureValues reports whether files in a repository of this type may
+// create or remove secure values. A secret committed to git stays in a history
+// we cannot redact, and a file should not delete a value it never owned.
+func (r RepositoryType) AllowsSecureValues() bool {
+	return !r.IsGit()
 }
 
 // GitHub || GitHubEnterprise
@@ -974,6 +981,20 @@ type ResourceCount struct {
 
 func (ResourceCount) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ResourceCount"
+}
+
+// What a single manager manages.
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type ResourceCountList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	// +listType=atomic
+	Items []ResourceCount `json:"items"`
+}
+
+func (ResourceCountList) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ResourceCountList"
 }
 
 // TestResults is the result of a test connection operation

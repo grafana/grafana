@@ -29,10 +29,6 @@ interface TransPropsBase {
    */
   ns?: string;
   /**
-   * Whether to unescape HTML entities
-   */
-  shouldUnescape?: boolean;
-  /**
    * Values to interpolate into the translation
    */
   values?: Record<string, unknown>;

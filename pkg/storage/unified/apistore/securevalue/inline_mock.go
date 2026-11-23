@@ -7,6 +7,7 @@ import (
 
 	mock "github.com/stretchr/testify/mock"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	v0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
@@ -86,7 +87,7 @@ func (_c *MockInlineSecureValueSupport_CanReference_Call) RunAndReturn(run func(
 }
 
 // CreateInline provides a mock function with given fields: ctx, owner, value, desc
-func (_m *MockInlineSecureValueSupport) CreateInline(ctx context.Context, owner v0alpha1.ObjectReference, value v0alpha1.RawSecureValue, desc *string) (string, error) {
+func (_m *MockInlineSecureValueSupport) CreateInline(ctx context.Context, owner v0alpha1.ObjectReference, value resource.RawSecureValue, desc *string) (string, error) {
 	ret := _m.Called(ctx, owner, value, desc)
 
 	if len(ret) == 0 {
@@ -95,16 +96,16 @@ func (_m *MockInlineSecureValueSupport) CreateInline(ctx context.Context, owner 
 
 	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, v0alpha1.ObjectReference, v0alpha1.RawSecureValue, *string) (string, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, v0alpha1.ObjectReference, resource.RawSecureValue, *string) (string, error)); ok {
 		return rf(ctx, owner, value, desc)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, v0alpha1.ObjectReference, v0alpha1.RawSecureValue, *string) string); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, v0alpha1.ObjectReference, resource.RawSecureValue, *string) string); ok {
 		r0 = rf(ctx, owner, value, desc)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, v0alpha1.ObjectReference, v0alpha1.RawSecureValue, *string) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, v0alpha1.ObjectReference, resource.RawSecureValue, *string) error); ok {
 		r1 = rf(ctx, owner, value, desc)
 	} else {
 		r1 = ret.Error(1)
@@ -121,15 +122,15 @@ type MockInlineSecureValueSupport_CreateInline_Call struct {
 // CreateInline is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner v0alpha1.ObjectReference
-//   - value v0alpha1.RawSecureValue
+//   - value resource.RawSecureValue
 //   - desc *string
 func (_e *MockInlineSecureValueSupport_Expecter) CreateInline(ctx interface{}, owner interface{}, value interface{}, desc interface{}) *MockInlineSecureValueSupport_CreateInline_Call {
 	return &MockInlineSecureValueSupport_CreateInline_Call{Call: _e.mock.On("CreateInline", ctx, owner, value, desc)}
 }
 
-func (_c *MockInlineSecureValueSupport_CreateInline_Call) Run(run func(ctx context.Context, owner v0alpha1.ObjectReference, value v0alpha1.RawSecureValue, desc *string)) *MockInlineSecureValueSupport_CreateInline_Call {
+func (_c *MockInlineSecureValueSupport_CreateInline_Call) Run(run func(ctx context.Context, owner v0alpha1.ObjectReference, value resource.RawSecureValue, desc *string)) *MockInlineSecureValueSupport_CreateInline_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(v0alpha1.ObjectReference), args[2].(v0alpha1.RawSecureValue), args[3].(*string))
+		run(args[0].(context.Context), args[1].(v0alpha1.ObjectReference), args[2].(resource.RawSecureValue), args[3].(*string))
 	})
 	return _c
 }
@@ -139,7 +140,7 @@ func (_c *MockInlineSecureValueSupport_CreateInline_Call) Return(_a0 string, _a1
 	return _c
 }
 
-func (_c *MockInlineSecureValueSupport_CreateInline_Call) RunAndReturn(run func(context.Context, v0alpha1.ObjectReference, v0alpha1.RawSecureValue, *string) (string, error)) *MockInlineSecureValueSupport_CreateInline_Call {
+func (_c *MockInlineSecureValueSupport_CreateInline_Call) RunAndReturn(run func(context.Context, v0alpha1.ObjectReference, resource.RawSecureValue, *string) (string, error)) *MockInlineSecureValueSupport_CreateInline_Call {
 	_c.Call.Return(run)
 	return _c
 }

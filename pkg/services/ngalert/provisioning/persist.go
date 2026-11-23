@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/quota"
 )
@@ -50,9 +51,10 @@ type TransactionManager interface {
 // RuleStore represents the ability to persist and query alert rules.
 type RuleStore interface {
 	rulestore.RuleReader
-	rulestore.RulePageReader
+	rulestore.RuleGroupIntervalReader
 	rulestore.RuleWriter
 	rulestore.RuleVersionReader
+	ngrulesvc.DeltaCalculator
 }
 
 // QuotaChecker represents the ability to evaluate whether quotas are met.

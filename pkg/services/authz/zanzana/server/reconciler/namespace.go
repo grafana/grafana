@@ -66,11 +66,7 @@ func (r *Reconciler) fetchGlobalRolePerms(ctx context.Context) (
 
 	crd := iamv0.GlobalRoleInfo.GroupVersionResource()
 
-	clients, err := r.clientFactory.Clients(ctx, "")
-	if err != nil {
-		return nil, tracing.Errorf(span, "failed to get cluster clients: %w", err)
-	}
-	resourceClient, _, err := clients.ForResource(ctx, crd)
+	resourceClient, err := r.clientFactory.ForResource(ctx, "", crd)
 	if err != nil {
 		return nil, tracing.Errorf(span, "failed to get client for %s: %w", crd, err)
 	}
@@ -141,16 +137,7 @@ func (r *Reconciler) fetchAnonymousTuples(ctx context.Context, namespace string,
 	))
 	defer span.End()
 
-	clients, err := r.clientFactory.Clients(ctx, namespace)
-	if err != nil {
-		// Client acquisition is shared with the CRD fetch (which already ran and would have
-		// surfaced this). Skip anonymous reconciliation rather than failing on it here.
-		r.logger.Debug("skipping anonymous reconcile: failed to get clients",
-			"namespace", namespace, "error", err)
-		return nil
-	}
-
-	resourceClient, _, err := clients.ForResource(ctx, anonymousSettingsGVR)
+	resourceClient, err := r.clientFactory.ForResource(ctx, namespace, anonymousSettingsGVR)
 	if err != nil {
 		// The settings apiserver is not wired for this deployment; anonymous access is not
 		// reconciled. This is the expected path when settings_apiserver_url is unset (standalone)
@@ -220,13 +207,12 @@ func (r *Reconciler) fetchAnonymousTuples(ctx context.Context, namespace string,
 // GlobalRole tuples are injected selectively: only GlobalRoles that are NOT referenced by any
 // namespace Role are added standalone. GlobalRoles that ARE referenced already have their
 // permissions inlined into the namespace Role's tuples via TranslateRoleToTuples composition.
-func (r *Reconciler) fetchAndTranslateTuples(ctx context.Context, namespace string) (map[string]*openfgav1.TupleKey, error) {
+func (r *Reconciler) fetchAndTranslateTuples(ctx context.Context, namespace string, globalRolePerms map[string][]*authzextv1.RolePermission) (map[string]*openfgav1.TupleKey, error) {
 	ctx, span := r.tracer.Start(ctx, "reconciler.fetchAndTranslateTuples", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 	))
 	defer span.End()
 
-	globalRolePerms := r.getGlobalRolePerms()
 	expectedMap := make(map[string]*openfgav1.TupleKey, len(globalRolePerms)*2)
 
 	// Track which GlobalRoles are referenced by namespace Roles via RoleRefs.
@@ -310,14 +296,7 @@ func (r *Reconciler) fetchAndTranslateCRD(
 	objectsFetched := 0
 	tuplesProduced := 0
 
-	// Get the dynamic client for this namespace
-	clients, err := r.clientFactory.Clients(ctx, namespace)
-	if err != nil {
-		return tracing.Errorf(span, "failed to get clients for namespace %s: %w", namespace, err)
-	}
-
-	// Get the resource interface for the specific CRD
-	resourceClient, _, err := clients.ForResource(ctx, crd)
+	resourceClient, err := r.clientFactory.ForResource(ctx, namespace, crd)
 	if err != nil {
 		return tracing.Errorf(span, "failed to get client for resource %s: %w", crd.String(), err)
 	}

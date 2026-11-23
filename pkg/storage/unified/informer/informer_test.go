@@ -45,6 +45,12 @@ func newFakeSubscriber() *fakeSubscriber {
 
 func (f *fakeSubscriber) Enabled() bool { return true }
 
+func (*fakeSubscriber) Started() <-chan struct{} {
+	ch := make(chan struct{})
+	close(ch)
+	return ch
+}
+
 // failSubscribes makes the next n Subscribe calls fail, as they do while the
 // embedded NATS server is still starting and has no client URL.
 func (f *fakeSubscriber) failSubscribes(n int) {

@@ -3,17 +3,22 @@ package serviceaccount
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
+	"github.com/grafana/authlib/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
-	"github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 )
 
 func ValidateOnCreate(ctx context.Context, obj *iamv0alpha1.ServiceAccount) error {
+	if err := validateNameNotNumeric(obj.Name); err != nil {
+		return err
+	}
+
 	if obj.Spec.Title == "" {
 		return apierrors.NewBadRequest("service account must have a title")
 	}
@@ -23,7 +28,7 @@ func ValidateOnCreate(ctx context.Context, obj *iamv0alpha1.ServiceAccount) erro
 		return apierrors.NewUnauthorized("no identity found")
 	}
 
-	requestedRole := identity.RoleType(obj.Spec.Role)
+	requestedRole := types.RoleType(obj.Spec.Role)
 	if !requestedRole.IsValid() {
 		return apierrors.NewBadRequest(fmt.Sprintf("invalid role: %s", requestedRole))
 	}
@@ -53,6 +58,16 @@ func ValidateOnCreate(ctx context.Context, obj *iamv0alpha1.ServiceAccount) erro
 	return nil
 }
 
+// metadata.name is stored as user.uid. Reject numeric names to avoid confusing
+// them with internal user IDs, including values with leading zeros such as "01".
+func validateNameNotNumeric(name string) error {
+	if _, err := strconv.ParseInt(name, 10, 64); err == nil {
+		return apierrors.NewBadRequest("name must not be a number")
+	}
+
+	return nil
+}
+
 func ValidateOnUpdate(ctx context.Context, obj, old *iamv0alpha1.ServiceAccount) error {
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
@@ -62,7 +77,7 @@ func ValidateOnUpdate(ctx context.Context, obj, old *iamv0alpha1.ServiceAccount)
 		return apierrors.NewBadRequest("service account must have a title")
 	}
 
-	requestedRole := identity.RoleType(obj.Spec.Role)
+	requestedRole := types.RoleType(obj.Spec.Role)
 	if !requestedRole.IsValid() {
 		return apierrors.NewBadRequest(fmt.Sprintf("invalid role: %s", requestedRole))
 	}

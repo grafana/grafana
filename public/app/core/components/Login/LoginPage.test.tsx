@@ -9,8 +9,8 @@ import { customLoginHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { RedirectToUrlKey } from 'app/core/services/context_srv';
-import { rememberLoginSectionTitle } from 'app/core/services/loginSectionTitle';
+import { contextSrv, RedirectToUrlKey } from 'app/core/services/context_srv';
+import { rememberLoginDashboardTitle, rememberLoginSectionTitle } from 'app/core/services/loginSectionTitle';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 
 import LoginPage from './LoginPage';
@@ -188,6 +188,28 @@ describe('section login title', () => {
 
     await act(async () => setTestFlags({ [FlagKeys.GrafanaPreserveLoginTabTitle]: false }));
     expect(document.title).toBe('Grafana');
+  });
+
+  it('returns to the generic section title when dashboard retention is disabled', async () => {
+    const originalSignedIn = contextSrv.user.isSignedIn;
+    try {
+      setTestFlags({
+        [FlagKeys.GrafanaPreserveLoginTabTitle]: true,
+        [FlagKeys.GrafanaPreserveDashboardLoginTabTitle]: true,
+      });
+      contextSrv.user.isSignedIn = true;
+      rememberLoginSectionTitle({ id: 'dashboards/browse', text: 'Dashboards' }, '/d/abc/test');
+      rememberLoginDashboardTitle('Mimir / Writes', '/d/abc/test');
+      contextSrv.user.isSignedIn = false;
+      sessionStorage.setItem(RedirectToUrlKey, encodeURIComponent('/d/abc/test'));
+      render(<LoginPage />);
+      expect(document.title).toBe('Mimir / Writes - Sign in - Grafana');
+
+      await act(async () => setTestFlags({ [FlagKeys.GrafanaPreserveLoginTabTitle]: true }));
+      expect(document.title).toBe('Dashboards - Sign in - Grafana');
+    } finally {
+      contextSrv.user.isSignedIn = originalSignedIn;
+    }
   });
 
   it('uses the normal title without a matching destination', () => {

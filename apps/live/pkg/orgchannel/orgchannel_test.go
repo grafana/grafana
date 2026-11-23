@@ -3,7 +3,10 @@ package orgchannel
 import (
 	"testing"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 func TestStripK8sNamespace(t *testing.T) {
@@ -45,6 +48,35 @@ func TestStripK8sNamespace(t *testing.T) {
 	channelID = "-1/grafana/dashboard/uid/abc123"
 	_, _, err = StripK8sNamespace(channelID)
 	require.Error(t, err)
+}
+
+func TestUserID(t *testing.T) {
+	tests := []struct {
+		name     string
+		user     *identity.StaticRequester
+		expected string
+	}{
+		{
+			name:     "user in a stack",
+			user:     &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u-abc", Namespace: "stacks-123"},
+			expected: "stacks-123/user:u-abc",
+		},
+		{
+			name:     "service account in an org",
+			user:     &identity.StaticRequester{Type: authlib.TypeServiceAccount, UserUID: "sa-1", Namespace: "default"},
+			expected: "default/service-account:sa-1",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.expected, UserID(tt.user))
+		})
+	}
+
+	// The same user identifier in two namespaces must not collide.
+	a := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "1", Namespace: "stacks-1"}
+	b := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "1", Namespace: "stacks-2"}
+	require.NotEqual(t, UserID(a), UserID(b))
 }
 
 func TestPrependOrgID(t *testing.T) {

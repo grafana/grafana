@@ -3,6 +3,7 @@ package migrations
 import (
 	"context"
 	"errors"
+	"net/http"
 	"testing"
 	"time"
 
@@ -10,6 +11,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -109,7 +112,7 @@ func TestFolderTreeValidatorBuildUnifiedFolderParentMapLaterPageFails(t *testing
 		require.ErrorContains(t, err, "connection reset")
 	})
 
-	t.Run("search response carries an error", func(t *testing.T) {
+	t.Run("search returns a status error", func(t *testing.T) {
 		setFolderSearchPageSize(t, 2)
 
 		client := resource.NewMockResourceClient(t)
@@ -118,11 +121,12 @@ func TestFolderTreeValidatorBuildUnifiedFolderParentMapLaterPageFails(t *testing
 		client.On("Search", mock.Anything, folderSearchRequest()).
 			Return(folderFieldValuesPage([]testFolder{{"root", ""}, {"child-a", "root"}}), nil).Once()
 		client.On("Search", mock.Anything, folderSearchRequest("child-a")).
-			Return(&resourcepb.ResourceSearchResponse{Error: resource.NewBadRequestError("bad cursor")}, nil).Once()
+			Return(nil, badCursorStatusError(t)).Once()
 
 		_, err := validator.buildUnifiedFolderParentMap(t.Context(), "stack-1", log.NewNopLogger())
 		require.ErrorContains(t, err, "(page 2)")
 		require.ErrorContains(t, err, "bad cursor")
+		require.Equal(t, int32(http.StatusBadRequest), resource.AsErrorResult(err).Code, "status details must survive wrapping")
 	})
 
 	t.Run("unsupported result format", func(t *testing.T) {
@@ -278,7 +282,6 @@ func TestDecodeFolderRowsFromBleve(t *testing.T) {
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}, nil, nil)
 	require.NoError(t, err)
-	require.Nil(t, fieldValues.GetError())
 
 	rows, err := decodeFolderRows(fieldValues)
 	require.NoError(t, err)
@@ -366,4 +369,12 @@ func folderIndexItem(key resource.NamespacedResource, name, parent string) *reso
 			Folder: parent,
 		}).UpdateCopyFields(),
 	}
+}
+
+func badCursorStatusError(t *testing.T) error {
+	t.Helper()
+	result := resource.NewBadRequestError("bad cursor")
+	st, err := status.New(codes.InvalidArgument, result.Message).WithDetails(result)
+	require.NoError(t, err)
+	return st.Err()
 }

@@ -15,13 +15,13 @@ import (
 	"testing"
 	"time"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
-	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/routes"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
 	"github.com/grafana/grafana/pkg/api/datasource/validation"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -31,7 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -43,8 +42,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -53,6 +50,7 @@ import (
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web"
@@ -68,12 +66,12 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 	cfg := &setting.Cfg{}
 
 	t.Run("Plugin with routes", func(t *testing.T) {
-		routes := []*plugins.Route{
+		pluginRoutes := []*plugins.Route{
 			{
 				Path:    "api/v4/",
 				URL:     "https://www.google.com",
 				ReqRole: org.RoleEditor,
-				Headers: []plugins.Header{
+				Headers: []routes.ProxyHeader{
 					{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
 				},
 			},
@@ -81,24 +79,24 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 				Path:    "api/admin",
 				URL:     "https://www.google.com",
 				ReqRole: org.RoleAdmin,
-				Headers: []plugins.Header{
+				Headers: []routes.ProxyHeader{
 					{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
 				},
 			},
 			{
 				Path: "api/anon",
 				URL:  "https://www.google.com",
-				Headers: []plugins.Header{
+				Headers: []routes.ProxyHeader{
 					{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
 				},
 			},
 			{
 				Path: "api/common",
 				URL:  "{{.JsonData.dynamicUrl}}",
-				URLParams: []plugins.URLParam{
+				URLParams: []routes.ProxyURLParam{
 					{Name: "{{.JsonData.queryParam}}", Content: "{{.SecureJsonData.key}}"},
 				},
-				Headers: []plugins.Header{
+				Headers: []routes.ProxyHeader{
 					{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
 				},
 			},
@@ -161,9 +159,9 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 
 		t.Run("When matching route path", func(t *testing.T) {
 			ctx, req := setUp()
-			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/v4/some/method")
+			proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "api/v4/some/method")
 			require.NoError(t, err)
-			proxy.matchedRoute = routes[0]
+			proxy.matchedRoute = pluginRoutes[0]
 			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.matchedRoute, dsInfo, proxy.settings)
 
 			assert.Equal(t, "https://www.google.com/some/method", req.URL.String())
@@ -172,9 +170,9 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 
 		t.Run("When matching route path and has dynamic url", func(t *testing.T) {
 			ctx, req := setUp()
-			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/common/some/method")
+			proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "api/common/some/method")
 			require.NoError(t, err)
-			proxy.matchedRoute = routes[3]
+			proxy.matchedRoute = pluginRoutes[3]
 			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.matchedRoute, dsInfo, proxy.settings)
 
 			assert.Equal(t, "https://dynamic.grafana.com/some/method?apiKey=123", req.URL.String())
@@ -183,9 +181,9 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 
 		t.Run("When matching route path with no url", func(t *testing.T) {
 			ctx, req := setUp()
-			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "")
+			proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "")
 			require.NoError(t, err)
-			proxy.matchedRoute = routes[4]
+			proxy.matchedRoute = pluginRoutes[4]
 			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.matchedRoute, dsInfo, proxy.settings)
 
 			assert.Equal(t, "http://localhost/asd", req.URL.String())
@@ -193,15 +191,15 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 
 		t.Run("When matching route path and has setting url", func(t *testing.T) {
 			ctx, req := setUp()
-			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/common/some/method")
+			proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "api/common/some/method")
 			require.NoError(t, err)
 			proxy.matchedRoute = &plugins.Route{
 				Path: "api/common",
 				URL:  "{{.URL}}",
-				Headers: []plugins.Header{
+				Headers: []routes.ProxyHeader{
 					{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
 				},
-				URLParams: []plugins.URLParam{
+				URLParams: []routes.ProxyURLParam{
 					{Name: "{{.JsonData.queryParam}}", Content: "{{.SecureJsonData.key}}"},
 				},
 			}
@@ -223,9 +221,9 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 
 		t.Run("When matching route path and has dynamic body", func(t *testing.T) {
 			ctx, req := setUp()
-			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/body")
+			proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "api/body")
 			require.NoError(t, err)
-			proxy.matchedRoute = routes[5]
+			proxy.matchedRoute = pluginRoutes[5]
 			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.matchedRoute, dsInfo, proxy.settings)
 
 			content, err := io.ReadAll(req.Body)
@@ -235,9 +233,9 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 
 		t.Run("When matching route path ending with a slash", func(t *testing.T) {
 			ctx, req := setUp()
-			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "mypath/some-route/")
+			proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "mypath/some-route/")
 			require.NoError(t, err)
-			proxy.matchedRoute = routes[6]
+			proxy.matchedRoute = pluginRoutes[6]
 			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.matchedRoute, dsInfo, proxy.settings)
 
 			assert.Equal(t, "https://example.com/api/v1/some-route/", req.URL.String())
@@ -245,9 +243,9 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 
 		t.Run("When matching proxy path is already encoded", func(t *testing.T) {
 			ctx, req := setUp()
-			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/our%20devices")
+			proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "/our%20devices")
 			require.NoError(t, err)
-			proxy.matchedRoute = routes[9]
+			proxy.matchedRoute = pluginRoutes[9]
 			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.matchedRoute, dsInfo, proxy.settings)
 
 			assert.Equal(t, "http://encoded.com/our%20devices", req.URL.String())
@@ -256,7 +254,7 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 		t.Run("Validating request", func(t *testing.T) {
 			t.Run("plugin route with valid role", func(t *testing.T) {
 				ctx, _ := setUp()
-				proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/v4/some/method")
+				proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "api/v4/some/method")
 				require.NoError(t, err)
 				err = proxy.validateRequest()
 				require.NoError(t, err)
@@ -264,7 +262,7 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 
 			t.Run("plugin route with admin role and user is editor", func(t *testing.T) {
 				ctx, _ := setUp()
-				proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/admin")
+				proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "api/admin")
 				require.NoError(t, err)
 				err = proxy.validateRequest()
 				require.Error(t, err)
@@ -273,7 +271,7 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 			t.Run("plugin route with admin role and user is admin", func(t *testing.T) {
 				ctx, _ := setUp()
 				ctx.OrgRole = org.RoleAdmin
-				proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/admin")
+				proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "api/admin")
 				require.NoError(t, err)
 				err = proxy.validateRequest()
 				require.NoError(t, err)
@@ -281,7 +279,7 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 
 			t.Run("path with slashes and user is editor", func(t *testing.T) {
 				ctx, _ := setUp()
-				proxy, err := setupDSProxyTest(t, ctx, ds, routes, "//api//admin")
+				proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "//api//admin")
 				require.NoError(t, err)
 				err = proxy.validateRequest()
 				require.Error(t, err)
@@ -291,9 +289,9 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 		t.Run("plugin route with RBAC protection user is allowed", func(t *testing.T) {
 			ctx, _ := setUp()
 			ctx.OrgID = int64(1)
-			ctx.OrgRole = identity.RoleNone
+			ctx.OrgRole = claims.RoleNone
 			ctx.Permissions = map[int64]map[string][]string{1: {"test-app.settings:read": nil}}
-			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/rbac-restricted")
+			proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "api/rbac-restricted")
 			require.NoError(t, err)
 			err = proxy.validateRequest()
 			require.NoError(t, err)
@@ -302,9 +300,9 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 		t.Run("plugin route with RBAC protection user is not allowed", func(t *testing.T) {
 			ctx, _ := setUp()
 			ctx.OrgID = int64(1)
-			ctx.OrgRole = identity.RoleNone
+			ctx.OrgRole = claims.RoleNone
 			ctx.Permissions = map[int64]map[string][]string{1: {"test-app:read": nil}}
-			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/rbac-restricted")
+			proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "api/rbac-restricted")
 			require.NoError(t, err)
 			err = proxy.validateRequest()
 			require.Error(t, err)
@@ -313,9 +311,9 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 		t.Run("plugin route with dynamic RBAC protection user is allowed", func(t *testing.T) {
 			ctx, _ := setUp()
 			ctx.OrgID = int64(1)
-			ctx.OrgRole = identity.RoleNone
+			ctx.OrgRole = claims.RoleNone
 			ctx.Permissions = map[int64]map[string][]string{1: {"datasources:read": {"datasources:uid:dsUID"}}}
-			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/rbac-home")
+			proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "api/rbac-home")
 			require.NoError(t, err)
 			err = proxy.validateRequest()
 			require.NoError(t, err)
@@ -324,10 +322,10 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 		t.Run("plugin route with dynamic RBAC protection user is not allowed", func(t *testing.T) {
 			ctx, _ := setUp()
 			ctx.OrgID = int64(1)
-			ctx.OrgRole = identity.RoleNone
+			ctx.OrgRole = claims.RoleNone
 			// Has access but to another app
 			ctx.Permissions = map[int64]map[string][]string{1: {"datasources:read": {"datasources:uid:notTheDsUID"}}}
-			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/rbac-home")
+			proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "api/rbac-home")
 			require.NoError(t, err)
 			err = proxy.validateRequest()
 			require.Error(t, err)
@@ -335,12 +333,12 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 	})
 
 	t.Run("Plugin with multiple routes for token auth", func(t *testing.T) {
-		routes := []*plugins.Route{
+		pluginRoutes := []*plugins.Route{
 			{
 				Path: "pathwithtoken1",
 				URL:  "https://api.nr1.io/some/path",
-				TokenAuth: &plugins.JWTTokenAuth{
-					Url: "https://login.server.com/{{.JsonData.tenantId}}/oauth2/token",
+				TokenAuth: &routes.ProxyTokenAuth{
+					URL: "https://login.server.com/{{.JsonData.tenantId}}/oauth2/token",
 					Params: map[string]string{
 						"grant_type":    "client_credentials",
 						"client_id":     "{{.JsonData.clientId}}",
@@ -352,8 +350,8 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 			{
 				Path: "pathwithtoken2",
 				URL:  "https://api.nr2.io/some/path",
-				TokenAuth: &plugins.JWTTokenAuth{
-					Url: "https://login.server.com/{{.JsonData.tenantId}}/oauth2/token",
+				TokenAuth: &routes.ProxyTokenAuth{
+					URL: "https://login.server.com/{{.JsonData.tenantId}}/oauth2/token",
 					Params: map[string]string{
 						"grant_type":    "client_credentials",
 						"client_id":     "{{.JsonData.clientId}}",
@@ -401,9 +399,9 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 					},
 				}
 
-				proxy, err := setupDSProxyTest(t, ctx, ds, routes, "pathwithtoken1")
+				proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "pathwithtoken1")
 				require.NoError(t, err)
-				ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, routes[0], dsInfo, proxy.settings)
+				ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, pluginRoutes[0], dsInfo, proxy.settings)
 
 				authorizationHeaderCall1 = req.Header.Get("Authorization")
 				assert.Equal(t, "https://api.nr1.io/some/path", req.URL.String())
@@ -417,10 +415,10 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 					require.NoError(t, err)
 					client = newFakeHTTPClient(t, json2)
 
-					proxy, err := setupDSProxyTest(t, ctx, ds, routes, "pathwithtoken2")
+					proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "pathwithtoken2")
 					require.NoError(t, err)
 
-					ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, routes[1], dsInfo, proxy.settings)
+					ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, pluginRoutes[1], dsInfo, proxy.settings)
 
 					authorizationHeaderCall2 = req.Header.Get("Authorization")
 
@@ -435,9 +433,9 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 
 						client = newFakeHTTPClient(t, []byte{})
 
-						proxy, err := setupDSProxyTest(t, ctx, ds, routes, "pathwithtoken1")
+						proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "pathwithtoken1")
 						require.NoError(t, err)
-						ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, routes[0], dsInfo, proxy.settings)
+						ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, pluginRoutes[0], dsInfo, proxy.settings)
 
 						authorizationHeaderCall3 := req.Header.Get("Authorization")
 						assert.Equal(t, "https://api.nr1.io/some/path", req.URL.String())
@@ -451,11 +449,11 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 	})
 
 	t.Run("When proxying graphite", func(t *testing.T) {
-		var routes []*plugins.Route
+		var pluginRoutes []*plugins.Route
 		ds := &datasources.DataSource{URL: "htttp://graphite:8080", Type: datasources.DS_GRAPHITE}
 		ctx := newReqContext(t)
 
-		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/render", func(proxy *DataSourceProxy) {
+		proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "/render", func(proxy *DataSourceProxy) {
 			proxy.settings = &DataSourceProxySettings{}
 		})
 		require.NoError(t, err)
@@ -479,8 +477,8 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 		}
 
 		ctx := newReqContext(t)
-		var routes []*plugins.Route
-		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "")
+		var pluginRoutes []*plugins.Route
+		proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "")
 		require.NoError(t, err)
 
 		req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
@@ -501,8 +499,8 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 		}
 
 		ctx := newReqContext(t)
-		var routes []*plugins.Route
-		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "")
+		var pluginRoutes []*plugins.Route
+		proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "")
 		require.NoError(t, err)
 
 		requestURL, err := url.Parse("http://grafana.com/sub")
@@ -527,8 +525,8 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 		}
 
 		ctx := newReqContext(t)
-		var routes []*plugins.Route
-		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "")
+		var pluginRoutes []*plugins.Route
+		proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "")
 		require.NoError(t, err)
 
 		requestURL, err := url.Parse("http://grafana.com/sub")
@@ -548,9 +546,9 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 			URL:  "http://host/root/",
 		}
 		ctx := newReqContext(t)
-		var routes []*plugins.Route
+		var pluginRoutes []*plugins.Route
 
-		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/path/to/folder/")
+		proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "/path/to/folder/")
 		require.NoError(t, err)
 
 		req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
@@ -582,8 +580,8 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 			Context:      &web.Context{Req: req},
 		}
 
-		var routes []*plugins.Route
-		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/path/to/folder/", func(proxy *DataSourceProxy) {
+		var pluginRoutes []*plugins.Route
+		proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "/path/to/folder/", func(proxy *DataSourceProxy) {
 			proxy.oAuthTokenService = &oauthtokentest.MockOauthTokenService{
 				GetCurrentOauthTokenFunc: func(_ context.Context, _ identity.Requester, _ *auth.UserToken) *oauth2.Token {
 					return (&oauth2.Token{
@@ -651,7 +649,7 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 	t.Run("When proxying data source proxy should handle authentication", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
-		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+		secretsStore := secretskvs.NewSQLSecretsKVStore(legacysql.NewDatabaseProvider(sqlStore), secretsService, log.New("test.logger"))
 
 		tests := []*testCase{
 			createAuthTest(t, secretsStore, datasources.DS_INFLUXDB_08, "http://localhost:9090", authTypePassword, authCheckQuery),
@@ -718,7 +716,7 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 						UID:      "dsUID",
 						JsonData: simplejson.New(),
 					}
-					routes := []*plugins.Route{
+					pluginRoutes := []*plugins.Route{
 						{
 							Path:    tc.ConfigurationPath,
 							ReqRole: org.RoleAdmin,
@@ -747,7 +745,7 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 						Context:      &web.Context{Req: req},
 						SignedInUser: &user.SignedInUser{OrgRole: org.RoleViewer},
 					}
-					proxy, err := setupDSProxyTest(t, ctx, ds, routes, tc.InputPath)
+					proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, tc.InputPath)
 					require.NoError(t, err, "failed to setup proxy test")
 					err = proxy.validateRequest()
 					if tc.ExpectError {
@@ -763,11 +761,11 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 
 func TestDataSourceProxy_userAgentHeader(t *testing.T) {
 	ds := &datasources.DataSource{Type: datasources.DS_GRAPHITE, URL: "http://graphite:8080"}
-	var routes []*plugins.Route
+	var pluginRoutes []*plugins.Route
 
 	t.Run("When DataProxyForwardUserAgent config is disabled", func(t *testing.T) {
 		ctx := newReqContext(t)
-		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/render", func(p *DataSourceProxy) {
+		proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "/render", func(p *DataSourceProxy) {
 			p.settings = &DataSourceProxySettings{
 				DataProxyUserAgent:        "Grafana/5.3.0",
 				DataProxyForwardUserAgent: false,
@@ -786,7 +784,7 @@ func TestDataSourceProxy_userAgentHeader(t *testing.T) {
 
 	t.Run("When DataProxyForwardUserAgent config is enabled", func(t *testing.T) {
 		ctx := newReqContext(t)
-		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/render", func(p *DataSourceProxy) {
+		proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "/render", func(p *DataSourceProxy) {
 			p.settings = &DataSourceProxySettings{
 				DataProxyUserAgent:        "Grafana/5.3.0",
 				DataProxyForwardUserAgent: true,
@@ -805,7 +803,7 @@ func TestDataSourceProxy_userAgentHeader(t *testing.T) {
 
 	t.Run("When DataProxyForwardUserAgent config is enabled but the client User-Agent is empty", func(t *testing.T) {
 		ctx := newReqContext(t)
-		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/render", func(p *DataSourceProxy) {
+		proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "/render", func(p *DataSourceProxy) {
 			p.settings = &DataSourceProxySettings{
 				DataProxyUserAgent:        "Grafana/5.3.0",
 				DataProxyForwardUserAgent: true,
@@ -824,7 +822,7 @@ func TestDataSourceProxy_userAgentHeader(t *testing.T) {
 
 	t.Run("When DataProxyForwardUserAgent config is enabled with a custom DataProxyUserAgent", func(t *testing.T) {
 		ctx := newReqContext(t)
-		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/render", func(p *DataSourceProxy) {
+		proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "/render", func(p *DataSourceProxy) {
 			p.settings = &DataSourceProxySettings{
 				DataProxyUserAgent:        "MyCorp/1.0",
 				DataProxyForwardUserAgent: true,
@@ -843,7 +841,7 @@ func TestDataSourceProxy_userAgentHeader(t *testing.T) {
 
 	t.Run("When DataProxyForwardUserAgent config is enabled and DataProxyUserAgent is empty", func(t *testing.T) {
 		ctx := newReqContext(t)
-		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/render", func(p *DataSourceProxy) {
+		proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "/render", func(p *DataSourceProxy) {
 			p.settings = &DataSourceProxySettings{
 				DataProxyUserAgent:        "",
 				DataProxyForwardUserAgent: true,
@@ -862,7 +860,7 @@ func TestDataSourceProxy_userAgentHeader(t *testing.T) {
 
 	t.Run("When DataProxyForwardUserAgent is enabled and the client User-Agent exceeds the length cap, it is truncated", func(t *testing.T) {
 		ctx := newReqContext(t)
-		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/render", func(p *DataSourceProxy) {
+		proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "/render", func(p *DataSourceProxy) {
 			p.settings = &DataSourceProxySettings{
 				DataProxyUserAgent:        "Grafana/5.3.0",
 				DataProxyForwardUserAgent: true,
@@ -883,7 +881,7 @@ func TestDataSourceProxy_userAgentHeader(t *testing.T) {
 
 	t.Run("When DataProxyForwardUserAgent is enabled and the client User-Agent is exactly the cap, it is forwarded unchanged", func(t *testing.T) {
 		ctx := newReqContext(t)
-		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/render", func(p *DataSourceProxy) {
+		proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "/render", func(p *DataSourceProxy) {
 			p.settings = &DataSourceProxySettings{
 				DataProxyUserAgent:        "Grafana/5.3.0",
 				DataProxyForwardUserAgent: true,
@@ -955,8 +953,8 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 
 	t.Run("When response header Set-Cookie is not set should remove proxied Set-Cookie header", func(t *testing.T) {
 		ctx, ds := setUp(t)
-		var routes []*plugins.Route
-		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/render")
+		var pluginRoutes []*plugins.Route
+		proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "/render")
 		require.NoError(t, err)
 
 		proxy.HandleRequest()
@@ -971,8 +969,8 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 				"Set-Cookie": "important_cookie=important_value",
 			},
 		})
-		var routes []*plugins.Route
-		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/render")
+		var pluginRoutes []*plugins.Route
+		proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "/render")
 		require.NoError(t, err)
 
 		proxy.HandleRequest()
@@ -983,8 +981,8 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 
 	t.Run("When response should set Content-Security-Policy header", func(t *testing.T) {
 		ctx, ds := setUp(t)
-		var routes []*plugins.Route
-		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/render")
+		var pluginRoutes []*plugins.Route
+		proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "/render")
 		require.NoError(t, err)
 
 		proxy.HandleRequest()
@@ -1003,8 +1001,8 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 				t.Log("Wrote 401 response")
 			},
 		})
-		var routes []*plugins.Route
-		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/render")
+		var pluginRoutes []*plugins.Route
+		proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "/render")
 		require.NoError(t, err)
 
 		proxy.HandleRequest()
@@ -1026,8 +1024,8 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 		})
 
 		ctx.Req = httptest.NewRequest("GET", "/api/datasources/proxy/1/path/%2Ftest%2Ftest%2F?query=%2Ftest%2Ftest%2F", nil)
-		var routes []*plugins.Route
-		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/path/%2Ftest%2Ftest%2F")
+		var pluginRoutes []*plugins.Route
+		proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "/path/%2Ftest%2Ftest%2F")
 		require.NoError(t, err)
 
 		proxy.HandleRequest()
@@ -1050,8 +1048,8 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 
 		ctx.Req = httptest.NewRequest("GET", "/api/datasources/proxy/1/path/%2Ftest%2Ftest%2F?query=%2Ftest%2Ftest%2F", nil)
 
-		var routes []*plugins.Route
-		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/path/%2Ftest%2Ftest%2F")
+		var pluginRoutes []*plugins.Route
+		proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, "/path/%2Ftest%2Ftest%2F")
 		require.NoError(t, err)
 
 		proxy.HandleRequest()
@@ -1071,8 +1069,8 @@ func TestNewDataSourceProxy_InvalidURL(t *testing.T) {
 		URL:  "://host/root",
 	}
 
-	var routes []*plugins.Route
-	_, err := setupDSProxyTest(t, &ctx, &ds, routes, "api/mehtod")
+	var pluginRoutes []*plugins.Route
+	_, err := setupDSProxyTest(t, &ctx, &ds, pluginRoutes, "api/mehtod")
 	require.Error(t, err)
 	assert.True(t, strings.HasPrefix(err.Error(), `validation of data source URL "://host/root" failed`))
 }
@@ -1085,7 +1083,7 @@ func TestDataSourceProxy_LokiRouteAccessControl(t *testing.T) {
 		writeAction = "alert.rules.external:write"
 	)
 
-	routes := []*plugins.Route{
+	pluginRoutes := []*plugins.Route{
 		{
 			Path:      "api/v1/rules",
 			ReqAction: readAction,
@@ -1111,14 +1109,14 @@ func TestDataSourceProxy_LokiRouteAccessControl(t *testing.T) {
 			method:      http.MethodGet,
 			path:        "api/v1/rules",
 			permissions: map[string][]string{readAction: {dsScope}},
-			wantRoute:   routes[0],
+			wantRoute:   pluginRoutes[0],
 		},
 		{
 			name:        "allows allow-listed Loki alert rule writes with scoped write permission",
 			method:      http.MethodPost,
 			path:        "api/v1/rules",
 			permissions: map[string][]string{writeAction: {dsScope}},
-			wantRoute:   routes[1],
+			wantRoute:   pluginRoutes[1],
 		},
 		{
 			name:        "denies allow-listed Loki alert rule writes without scoped write permission",
@@ -1142,7 +1140,7 @@ func TestDataSourceProxy_LokiRouteAccessControl(t *testing.T) {
 				Context: &web.Context{Req: req},
 				SignedInUser: &user.SignedInUser{
 					OrgID:       1,
-					OrgRole:     identity.RoleNone,
+					OrgRole:     claims.RoleNone,
 					Permissions: map[int64]map[string][]string{1: tc.permissions},
 				},
 			}
@@ -1152,7 +1150,7 @@ func TestDataSourceProxy_LokiRouteAccessControl(t *testing.T) {
 				URL:  "http://loki:3100",
 			}
 
-			proxy, err := setupDSProxyTest(t, ctx, ds, routes, tc.path)
+			proxy, err := setupDSProxyTest(t, ctx, ds, pluginRoutes, tc.path)
 			require.NoError(t, err)
 
 			err = proxy.validateRequest()
@@ -1178,8 +1176,8 @@ func TestNewDataSourceProxy_ProtocolLessURL(t *testing.T) {
 		URL:  "127.0.01:5432",
 	}
 
-	var routes []*plugins.Route
-	_, err := setupDSProxyTest(t, &ctx, &ds, routes, "api/mehtod")
+	var pluginRoutes []*plugins.Route
+	_, err := setupDSProxyTest(t, &ctx, &ds, pluginRoutes, "api/mehtod")
 
 	require.NoError(t, err)
 }
@@ -1216,8 +1214,8 @@ func TestNewDataSourceProxy_MSSQL(t *testing.T) {
 				URL:  tc.url,
 			}
 
-			var routes []*plugins.Route
-			p, err := setupDSProxyTest(t, &ctx, &ds, routes, "api/method")
+			var pluginRoutes []*plugins.Route
+			p, err := setupDSProxyTest(t, &ctx, &ds, pluginRoutes, "api/method")
 			if tc.err == nil {
 				require.NoError(t, err)
 				assert.Equal(t, &url.URL{
@@ -1240,23 +1238,23 @@ func getDatasourceProxiedRequest(t *testing.T, ctx *contextmodel.ReqContext, pro
 	}
 	tracer := tracing.InitializeTracerForTest()
 
-	var routes []*plugins.Route
+	var pluginRoutes []*plugins.Route
 	cfg := setting.NewCfg()
 	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
-	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+	secretsStore := secretskvs.NewSQLSecretsKVStore(legacysql.NewDatabaseProvider(sqlStore), secretsService, log.New("test.logger"))
 	features := featuremgmt.WithFeatures()
 	quotaService := quotatest.New(false, nil)
 	dsRetriever := datasourceservice.ProvideDataSourceRetriever(sqlStore, features)
 	dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, features, acimpl.ProvideAccessControl(features),
-		&actest.FakePermissionsService{}, quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{},
-		plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()), dsRetriever)
+		&actest.FakePermissionsService{}, quotaService, &pluginstore.FakePluginStore{},
+		dsRetriever, nil)
 	require.NoError(t, err)
 
 	loader, err := NewDataSourceLoader(ds, dsService)
 	require.NoError(t, err)
 
-	proxy, err := NewDataSourceProxy(loader, routes, toHTTPContext(t, ctx), "", proxyCfg, httpclient.NewProvider(), &oauthtoken.Service{}, tracer, features, nil, nil)
+	proxy, err := NewDataSourceProxy(loader, pluginRoutes, toHTTPContext(t, ctx), "", proxyCfg, httpclient.NewProvider(), &oauthtoken.Service{}, tracer, features, nil, nil)
 	require.NoError(t, err)
 	req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
 	require.NoError(t, err)
@@ -1374,20 +1372,20 @@ func runDatasourceAuthTest(t *testing.T,
 	ctx := newReqContext(t)
 	tracer := tracing.InitializeTracerForTest()
 
-	var routes []*plugins.Route
+	var pluginRoutes []*plugins.Route
 	features := featuremgmt.WithFeatures()
 	quotaService := quotatest.New(false, nil)
 	var sqlStore db.DB = nil
 	dsRetriever := datasourceservice.ProvideDataSourceRetriever(sqlStore, features)
 	dsService, err := datasourceservice.ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acimpl.ProvideAccessControl(features),
-		&actest.FakePermissionsService{}, quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{},
-		plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()), dsRetriever)
+		&actest.FakePermissionsService{}, quotaService, &pluginstore.FakePluginStore{},
+		dsRetriever, nil)
 	require.NoError(t, err)
 
 	loader, err := NewDataSourceLoader(test.datasource, dsService)
 	require.NoError(t, err)
 
-	proxy, err := NewDataSourceProxy(loader, routes, toHTTPContext(t, ctx), "", &DataSourceProxySettings{}, httpclient.NewProvider(), &oauthtoken.Service{}, tracer, features, nil, nil)
+	proxy, err := NewDataSourceProxy(loader, pluginRoutes, toHTTPContext(t, ctx), "", &DataSourceProxySettings{}, httpclient.NewProvider(), &oauthtoken.Service{}, tracer, features, nil, nil)
 	require.NoError(t, err)
 
 	req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
@@ -1400,7 +1398,7 @@ func runDatasourceAuthTest(t *testing.T,
 
 func Test_PathCheck(t *testing.T) {
 	// Ensure that we test routes appropriately. This test reproduces a historical bug where two routes were defined with different role requirements but the same method and the more privileged route was tested first. Here we ensure auth checks are applied based on the correct route, not just the method.
-	routes := []*plugins.Route{
+	pluginRoutes := []*plugins.Route{
 		{
 			Path:    "a",
 			URL:     "https://www.google.com",
@@ -1425,25 +1423,25 @@ func Test_PathCheck(t *testing.T) {
 		return ctx, req
 	}
 	ctx, _ := setUp()
-	proxy, err := setupDSProxyTest(t, ctx, &datasources.DataSource{}, routes, "b")
+	proxy, err := setupDSProxyTest(t, ctx, &datasources.DataSource{}, pluginRoutes, "b")
 	require.NoError(t, err)
 
 	require.Nil(t, proxy.validateRequest())
-	require.Equal(t, routes[1], proxy.matchedRoute)
+	require.Equal(t, pluginRoutes[1], proxy.matchedRoute)
 }
 
-func setupDSProxyTest(t *testing.T, ctx *contextmodel.ReqContext, ds *datasources.DataSource, routes []*plugins.Route, path string, opts ...func(proxy *DataSourceProxy)) (*DataSourceProxy, error) {
+func setupDSProxyTest(t *testing.T, ctx *contextmodel.ReqContext, ds *datasources.DataSource, pluginRoutes []*plugins.Route, path string, opts ...func(proxy *DataSourceProxy)) (*DataSourceProxy, error) {
 	t.Helper()
 
 	cfg := setting.NewCfg()
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
-	secretsStore := secretskvs.NewSQLSecretsKVStore(dbtest.NewFakeDB(), secretsService, log.NewNopLogger())
+	secretsStore := secretskvs.NewSQLSecretsKVStore(legacysql.NewDatabaseProvider(dbtest.NewFakeDB()), secretsService, log.NewNopLogger())
 	features := featuremgmt.WithFeatures()
 	var sqlStore db.DB = nil
 	dsRetriever := datasourceservice.ProvideDataSourceRetriever(sqlStore, features)
 	dsService, err := datasourceservice.ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acimpl.ProvideAccessControl(features),
-		&actest.FakePermissionsService{}, quotatest.New(false, nil), &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{},
-		plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()), dsRetriever)
+		&actest.FakePermissionsService{}, quotatest.New(false, nil), &pluginstore.FakePluginStore{},
+		dsRetriever, nil)
 	require.NoError(t, err)
 
 	tracer := tracing.InitializeTracerForTest()
@@ -1451,7 +1449,7 @@ func setupDSProxyTest(t *testing.T, ctx *contextmodel.ReqContext, ds *datasource
 	loader, err := NewDataSourceLoader(ds, dsService)
 	require.NoError(t, err)
 
-	proxy, err := NewDataSourceProxy(loader, routes, toHTTPContext(t, ctx), path, &DataSourceProxySettings{}, httpclient.NewProvider(), &oauthtoken.Service{}, tracer, features, nil, nil)
+	proxy, err := NewDataSourceProxy(loader, pluginRoutes, toHTTPContext(t, ctx), path, &DataSourceProxySettings{}, httpclient.NewProvider(), &oauthtoken.Service{}, tracer, features, nil, nil)
 	if err != nil {
 		return nil, err
 	}

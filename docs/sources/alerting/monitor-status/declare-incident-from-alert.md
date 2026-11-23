@@ -21,7 +21,7 @@ Declare an incident from a firing alert to streamline your alert to incident wor
 
 ## Before you begin
 
-- Ensure you have [Grafana Incident](/docs/grafana-cloud/incident/) installed.
+- Ensure you have [Grafana IRM](/docs/grafana-cloud/observe-and-act/respond-to-incidents/) installed.
 - You must have a firing alert.
 
 ## Procedure
@@ -44,14 +44,14 @@ To declare an incident from a firing alert, complete the following steps.
 
 1. Select a severity.
 1. Add labels, as required.
-1. Click **More options** to include a channel prefix and status.
-1. Click **Automated options** to enable automated actions configured by admins.
+1. Click **Additional details** to select the incident's status and start time.
+1. Click **Automated actions** to enable automated actions configured by admins.
 1. Click **Declare Incident**.
 
 ## Next steps
 
-View and manage the incident in the **Grafana Incident** application.
+View and manage the incident in the **Grafana IRM** application.
 
 {{< figure src="/media/docs/alerting/incident-response-management-timeline-ui.png" max-width="750px" alt="Incident timeline view in Grafana Incident" >}}
 
-For more information, refer to the [Grafana Incident documentation](/docs/grafana-cloud/incident/configure-settings/).
+For more information, refer to the [Grafana IRM documentation](/docs/grafana-cloud/observe-and-act/respond-to-incidents/).

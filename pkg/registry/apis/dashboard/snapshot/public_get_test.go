@@ -47,7 +47,7 @@ func TestPublicSnapshotLookupOutsideDefaultNamespace(t *testing.T) {
 			result := obj.(*dashv0.Snapshot)
 			require.Equal(t, "org-2", result.Namespace)
 			require.Nil(t, result.Spec.DeleteKey)
-			require.Nil(t, result.Spec.Dashboard)
+			require.Nil(t, result.Blobs.Dashboard)
 		})
 	}
 }

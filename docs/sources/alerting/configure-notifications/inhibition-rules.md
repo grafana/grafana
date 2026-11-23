@@ -118,6 +118,12 @@ In this example:
 - The _target_ matcher selects `warning` alerts. The rule suppresses these while the source alert fires.
 - The `equal` field ensures suppression only applies when source and target share the same `cluster` and `namespace` label values.
 
+## Evaluation order of source and target alerts
+
+An inhibition rule only suppresses a target alert if the source alert is already firing when the target alert is notified. If the target alert rule is evaluated before the source alert rule, the target alert can be sent before the source alert fires.
+
+To avoid this, use a [rule sequence](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/rule-sequences/) to evaluate the alert rule that inhibits before the alert rules that it might inhibit. List the source alert rule first in `spec.alertingRules`.
+
 ## Inhibition rules and managed routes
 
 An Alertmanager can serve multiple routing trees: the default Grafana-managed route and any routes imported from Prometheus Alertmanager or Mimir configurations. Inhibition rules behave differently depending on how each rule is created:

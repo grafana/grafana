@@ -253,6 +253,13 @@ function isErrorNamespaceKey(normalized: string): boolean {
 
 function isStacktraceAttributeKey(key: string): boolean {
   const normalized = normalizeAttributeKey(key);
+
+  // OTel `code.*` attributes (code.stacktrace, code.function.name, ...) describe where the
+  // telemetry was emitted, not an error, so they must not light up the error details.
+  if (normalized.startsWith('code_')) {
+    return false;
+  }
+
   if (normalized.endsWith('stacktrace') || normalized.endsWith('stack_trace')) {
     return true;
   }

@@ -3,9 +3,12 @@ package federated
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	tptestutil "github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
@@ -16,6 +19,7 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngalertstore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -267,8 +271,7 @@ func TestIntegrationLegacyTableIsStale(t *testing.T) {
 		}}
 	}
 
-	// legacyTableIsStale queries kv_store when Cfg is nil, so every case needs a real
-	// session/helper, even the ones exercising the config-based fast path.
+	// Every case needs a real session/helper, even the ones exercising the config-based fast path.
 	// The check itself must run inside the WithDbSession callback -- the session isn't
 	// valid once that callback returns.
 	withSession := func(t *testing.T, check func(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper)) {
@@ -286,9 +289,11 @@ func TestIntegrationLegacyTableIsStale(t *testing.T) {
 	t.Run("no config means the legacy table is still the source of truth", func(t *testing.T) {
 		s := &LegacyStatsGetter{}
 		withSession(t, func(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper) {
-			stale, err := s.legacyTableIsStale(sess, helper, alertRuleResource)
-			require.NoError(t, err)
-			require.False(t, stale)
+			for _, resource := range LegacyCountedResources {
+				stale, err := s.legacyTableIsStale(sess, helper, resource)
+				require.NoError(t, err)
+				require.False(t, stale, resource)
+			}
 		})
 	})
 
@@ -355,21 +360,196 @@ func TestIntegrationLegacyTableIsStale(t *testing.T) {
 		}))
 	})
 
-	t.Run("nil Cfg falls back to the per-stack kv_store marker", func(t *testing.T) {
+	// A provider serving several databases over one connection names each table with its schema.
+	t.Run("library panels migration is found when tables are named with a schema", func(t *testing.T) {
+		ctx := context.Background()
+		testDB, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		require.NoError(t, migrations.EnsureMigrationLogTable(ctx, testDB, cfg))
+		base, err := legacysql.NewDatabaseProvider(testDB)(ctx)
+		require.NoError(t, err)
 		s := &LegacyStatsGetter{}
-		withSession(t, func(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper) {
-			_, err := sess.Exec("INSERT INTO "+helper.Table("kv_store")+" (org_id, namespace, "+helper.DB.Quote("key")+", value, created, updated) VALUES (0, ?, ?, ?, ?, ?)",
-				migratedKVNamespace, alertRuleResource, migratedKVValue, time.Now(), time.Now())
-			require.NoError(t, err)
+		require.NoError(t, testDB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			schema := "main"
+			switch testDB.GetDBType() {
+			case migrator.MySQL:
+				_, err := sess.SQL("SELECT DATABASE()").Get(&schema)
+				require.NoError(t, err)
+			case migrator.Postgres:
+				_, err := sess.SQL("SELECT current_schema()").Get(&schema)
+				require.NoError(t, err)
+			}
+			helper := *base
+			helper.Table = func(n string) string { return schema + "." + n }
 
-			stale, err := s.legacyTableIsStale(sess, helper, alertRuleResource)
-			require.NoError(t, err)
-			require.True(t, stale)
-
-			// A different resource's key must not be affected.
-			stale, err = s.legacyTableIsStale(sess, helper, recordingRuleResource)
+			stale, err := s.legacyTableIsStale(sess, &helper, libraryPanelResource)
 			require.NoError(t, err)
 			require.False(t, stale)
-		})
+
+			_, err = sess.Exec("INSERT INTO "+helper.Table(migrationLogTable)+" ("+helper.DB.Quote("migration_id")+", "+
+				helper.DB.Quote("sql")+", "+helper.DB.Quote("success")+", "+helper.DB.Quote("error")+", "+
+				helper.DB.Quote("timestamp")+") VALUES (?, ?, ?, ?, ?)",
+				libraryPanelMigration, "test", true, "", time.Now())
+			require.NoError(t, err)
+			stale, err = s.legacyTableIsStale(sess, &helper, libraryPanelResource)
+			require.NoError(t, err)
+			require.True(t, stale)
+			return nil
+		}))
 	})
+
+	t.Run("library panels migration makes legacy counts stale without config", func(t *testing.T) {
+		ctx := context.Background()
+		testDB, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		require.NoError(t, migrations.EnsureMigrationLogTable(ctx, testDB, cfg))
+		helper, err := legacysql.NewDatabaseProvider(testDB)(ctx)
+		require.NoError(t, err)
+		s := &LegacyStatsGetter{}
+		require.NoError(t, testDB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			stale, err := s.legacyTableIsStale(sess, helper, libraryPanelResource)
+			require.NoError(t, err)
+			require.False(t, stale)
+
+			_, err = sess.Exec("INSERT INTO "+helper.Table(migrationLogTable)+" ("+helper.DB.Quote("migration_id")+", "+
+				helper.DB.Quote("sql")+", "+helper.DB.Quote("success")+", "+helper.DB.Quote("error")+", "+
+				helper.DB.Quote("timestamp")+") VALUES (?, ?, ?, ?, ?)",
+				libraryPanelMigration, "test", true, "", time.Now())
+			require.NoError(t, err)
+			stale, err = s.legacyTableIsStale(sess, helper, libraryPanelResource)
+			require.NoError(t, err)
+			require.True(t, stale)
+			return nil
+		}))
+	})
+}
+
+func TestIntegrationLegacyStatsRecordMetrics(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	migrated := func(resource string) *setting.Cfg {
+		return &setting.Cfg{UnifiedStorage: map[string]setting.UnifiedStorageConfig{
+			resource: {DualWriterMode: grafanarest.Mode5},
+		}}
+	}
+	logger := newRecordingLogger()
+	run := func(t *testing.T, cfg *setting.Cfg) (*prometheus.Registry, *legacyStatsMetrics) {
+		t.Helper()
+		*logger.lines = nil
+		testDB, _ := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		reg := prometheus.NewRegistry()
+		m := newLegacyStatsMetrics(reg)
+		store := &LegacyStatsGetter{SQL: withServer(legacysql.NewDatabaseProvider(testDB), "db-1"), Cfg: cfg, metrics: m, logger: logger}
+		_, err := store.GetStats(request.WithNamespace(context.Background(), "default"), &resourcepb.ResourceStatsRequest{Namespace: "default", Folder: []string{"f1"}})
+		require.NoError(t, err)
+		return reg, m
+	}
+
+	t.Run("each counted resource records a duration", func(t *testing.T) {
+		reg, m := run(t, nil)
+		for _, name := range legacyResources {
+			require.Equal(t, uint64(1), observations(t, reg, name, legacyOutcomeOK), name)
+			require.Equal(t, 0.0, tptestutil.ToFloat64(m.skipped.WithLabelValues(name, legacySkipMigrated)), name)
+		}
+		counted := logger.withMsg("Counted legacy resources")
+		require.Len(t, counted, 3)
+		for _, l := range counted {
+			require.Equal(t, "debug", l.level)
+			require.Equal(t, "db-1", l.fields["dbServer"])
+			require.Equal(t, "default", l.fields["namespace"])
+			require.Equal(t, "f1", l.fields["folder"])
+			require.Equal(t, legacyOutcomeOK, l.fields["outcome"])
+			require.Contains(t, l.fields, "duration")
+		}
+	})
+
+	for name, configKey := range map[string]string{
+		legacyAlertRules:      alertRuleResource,
+		legacyRecordingRules:  recordingRuleResource,
+		legacyLibraryElements: libraryPanelResource,
+	} {
+		t.Run("a migrated "+name+" is skipped, not timed", func(t *testing.T) {
+			reg, m := run(t, migrated(configKey))
+			for _, other := range legacyResources {
+				if other == name {
+					require.Equal(t, 1.0, tptestutil.ToFloat64(m.skipped.WithLabelValues(other, legacySkipMigrated)), other)
+					require.Equal(t, uint64(0), observations(t, reg, other, legacyOutcomeOK), other)
+					continue
+				}
+				require.Equal(t, 0.0, tptestutil.ToFloat64(m.skipped.WithLabelValues(other, legacySkipMigrated)), other)
+				require.Equal(t, uint64(1), observations(t, reg, other, legacyOutcomeOK), "%s still runs", other)
+			}
+			skipped := logger.withMsg("Skipped legacy count")
+			require.Len(t, skipped, 1)
+			require.Equal(t, name, skipped[0].fields["resource"])
+			require.Equal(t, legacySkipMigrated, skipped[0].fields["reason"])
+			require.Equal(t, "db-1", skipped[0].fields["dbServer"])
+		})
+	}
+}
+
+func TestIntegrationLegacyStatsRecordsFailedStalenessCheck(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	testDB, _ := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	ctx := request.WithNamespace(context.Background(), "default")
+	// Pointing the alert rule table at a name that doesn't exist makes the count fail
+	// without touching the shared test database.
+	provider := func(context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+		return &legacysql.LegacyDatabaseHelper{DB: testDB, Table: func(n string) string {
+			if n == "alert_rule" {
+				return "alert_rule_missing"
+			}
+			return n
+		}}, nil
+	}
+	reg := prometheus.NewRegistry()
+	logger := newRecordingLogger()
+	store := &LegacyStatsGetter{SQL: withServer(provider, "db-1"), metrics: newLegacyStatsMetrics(reg), logger: logger}
+
+	_, err := store.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: "default", Folder: []string{"f1"}})
+
+	var countErr *CountError
+	require.ErrorAs(t, err, &countErr)
+	require.Equal(t, []string{legacyAlertRules}, countErr.Resources)
+	require.Equal(t, uint64(1), observations(t, reg, legacyAlertRules, legacyOutcomeError))
+	require.Equal(t, uint64(0), observations(t, reg, legacyRecordingRules, legacyOutcomeError), "the first failure ends the request")
+
+	failed := logger.withMsg("Legacy count failed")
+	require.Len(t, failed, 1)
+	require.Equal(t, "error", failed[0].level)
+	require.Equal(t, legacyAlertRules, failed[0].fields["resource"])
+	require.Equal(t, "db-1", failed[0].fields["dbServer"])
+	require.Equal(t, legacyOutcomeError, failed[0].fields["outcome"])
+	require.NotNil(t, failed[0].fields["error"])
+}
+
+// withServer names the database server on the helpers a provider returns.
+func withServer(p legacysql.LegacyDatabaseProvider, server string) legacysql.LegacyDatabaseProvider {
+	return func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+		h, err := p(ctx)
+		if err != nil {
+			return nil, err
+		}
+		c := *h
+		c.Server = server
+		return &c, nil
+	}
+}
+
+func TestIntegrationLegacyStatsTimesEachChunkQuery(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	testDB, _ := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	reg := prometheus.NewRegistry()
+	store := &LegacyStatsGetter{SQL: legacysql.NewDatabaseProvider(testDB), metrics: newLegacyStatsMetrics(reg)}
+	folders := make([]string, 2*folderBatchSize+1)
+	for i := range folders {
+		folders[i] = fmt.Sprintf("folder-%d", i)
+	}
+
+	_, err := store.GetStats(request.WithNamespace(context.Background(), "default"), &resourcepb.ResourceStatsRequest{Namespace: "default", Folder: folders})
+	require.NoError(t, err)
+
+	for _, name := range legacyResources {
+		require.Equal(t, uint64(3), observations(t, reg, name, legacyOutcomeOK), "%s: one observation per chunk", name)
+	}
 }

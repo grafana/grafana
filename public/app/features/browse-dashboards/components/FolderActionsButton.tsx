@@ -11,18 +11,19 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { type RepoType } from 'app/features/provisioning/Wizard/types';
 import { BulkMoveProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkMoveProvisionedResource';
 import { DeleteProvisionedFolderForm } from 'app/features/provisioning/components/Folders/DeleteProvisionedFolderForm';
-import { FolderPermissions } from 'app/features/provisioning/components/Folders/FolderPermissions';
 import { isItemManagedByRepository } from 'app/features/provisioning/utils/managedResource';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ShowModalReactEvent } from 'app/types/events';
 import { type FolderDTO } from 'app/types/folders';
 
-import { useDeleteFolderMutationFacade, useMoveFolderMutationFacade } from '../../../api/clients/folder/v1beta1/hooks';
+import { useMoveFolder } from '../../../api/clients/folder/v1beta1/hooks';
 import { extractErrorMessage } from '../../../api/utils';
+import { useDeleteFolderMutation } from '../api/browseDashboardsAPI';
 import { getFolderPermissions } from '../permissions';
 
 import { DeleteModal } from './BrowseActions/DeleteModal';
 import { MoveModal } from './BrowseActions/MoveModal';
+import { FolderPermissions } from './FolderPermissions';
 
 interface Props {
   folder: FolderDTO;
@@ -39,8 +40,8 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo, reposito
   const [showManageOwnersModal, setShowManageOwnersModal] = useState(false);
   const [showDeleteProvisionedFolderDrawer, setShowDeleteProvisionedFolderDrawer] = useState(false);
   const [showMoveProvisionedFolderDrawer, setShowMoveProvisionedFolderDrawer] = useState(false);
-  const [moveFolder] = useMoveFolderMutationFacade();
-  const deleteFolder = useDeleteFolderMutationFacade();
+  const [moveFolder] = useMoveFolder();
+  const [deleteFolder] = useDeleteFolderMutation();
 
   const {
     canEditFolders,
@@ -192,11 +193,7 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo, reposito
           onClose={() => setShowPermissionsDrawer(false)}
           size="md"
         >
-          <FolderPermissions
-            folderUID={folder.uid}
-            canSetPermissions={canSetPermissions}
-            isProvisionedFolder={isProvisionedFolder}
-          />
+          <FolderPermissions folder={folder} />
         </Drawer>
       )}
       {showManageOwnersModal && (

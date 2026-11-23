@@ -323,6 +323,10 @@
       window.__grafanaUseLuxon = true;
       [[end]]
 
+      [[if .LiveDisabled]]
+      window.grafanaBootData.settings.liveEnabled = false;
+      [[end]]
+
       [[if .AssetSriChecksEnabled]]
         // For enabling SRI checks on dynamically loaded Grafana assets
         window.__grafanaAssetSriChecksEnabled = true;

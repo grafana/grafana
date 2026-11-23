@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useAsyncRetry } from 'react-use';
 
 import { t, Trans } from '@grafana/i18n';
 import { getMostUsedDashboards, isMostUsedAvailable } from 'app/features/browse-dashboards/api/mostUsed';
 import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
-import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { useStarredSearch } from 'app/features/stars/hooks';
 
 import { FooterAction } from '../FooterActions';
 import { type HomeCardTab, HomeTabbedCard } from '../HomeTabbedCard';
@@ -26,16 +26,15 @@ export function DashboardTabs() {
   const [initialLoadDone, setInitialLoadDone] = useState(false);
 
   const recent = useRecentActivity();
-
+  // Searched again on each visit so a rename or delete from another tab shows. Searched in full, then cut: stars on
+  // deleted or inaccessible items don't take up slots, and the rows come in title order.
   const {
-    value: starredDashboards,
+    rows: starredRows,
     loading: starredLoading,
     error: starredError,
-    retry: starredRetry,
-  } = useAsyncRetry(async () => {
-    const response = await getGrafanaSearcher().starred({ limit: MAX_STARRED });
-    return response.view.toArray();
-  }, []);
+    refetch: starredRetry,
+  } = useStarredSearch({ refetchOnMountOrArgChange: true });
+  const starredDashboards = starredRows?.slice(0, MAX_STARRED);
 
   const {
     value: mostUsedDashboards,
@@ -56,9 +55,6 @@ export function DashboardTabs() {
   const hasDashboards = hasMostUsed || hasStarred || recent.kinds.includes('dashboard');
   const { foldersByUid } = useDashboardLocationInfo(hasDashboards);
 
-  // Auto-switch to the non-empty tab when initial data finishes loading
-  const didAutoSwitch = useRef(false);
-
   // Tabs worth landing on, in display order.
   const selectableTabs = useMemo(
     () => [
@@ -69,31 +65,13 @@ export function DashboardTabs() {
     [hasRecent, hasMostUsed, hasStarred]
   );
 
-  useEffect(() => {
-    if (didAutoSwitch.current || initialLoading) {
-      return;
-    }
-
-    // Already on a tab with content: lock in and stay.
-    if (selectableTabs.includes(activeTab)) {
-      didAutoSwitch.current = true;
-      return;
-    }
-
-    // Current tab is empty - switch to the first tab with content
-    const [target] = selectableTabs;
-    if (target) {
-      setActiveTab(target);
-      didAutoSwitch.current = true;
-    }
-  }, [initialLoading, selectableTabs, activeTab]);
-
   // Latch once loaded so a later per-source refetch can't flash the skeleton back.
-  useEffect(() => {
-    if (!initialLoading) {
-      setInitialLoadDone(true);
+  if (!initialLoading && !initialLoadDone) {
+    setInitialLoadDone(true);
+    if (!selectableTabs.includes(activeTab) && selectableTabs[0]) {
+      setActiveTab(selectableTabs[0]);
     }
-  }, [initialLoading]);
+  }
 
   // The Recent footer belongs to its list: only once the list is loaded with rows, an empty row of the same height
   // until then. The dashboard tabs link out.
@@ -110,7 +88,7 @@ export function DashboardTabs() {
       label: t('home.dashboard-tabs.recent', 'Recent'),
       // What the list shows; the whole history is one filter option away.
       counter: recent.items.length,
-      content: <RecentActivityTab recent={recent} foldersByUid={foldersByUid} onStarChange={starredRetry} />,
+      content: <RecentActivityTab recent={recent} foldersByUid={foldersByUid} />,
       filter: showRecentFooter && recent.kinds.length > 1 && <RecentActivityFilterCombobox recent={recent} />,
       footer: showRecentFooter && <ClearRecentActivityAction recent={recent} />,
     },
@@ -124,7 +102,7 @@ export function DashboardTabs() {
               <DashboardListTab
                 dashboards={mostUsedDashboards ?? []}
                 loading={mostUsedLoading}
-                error={mostUsedError}
+                error={!!mostUsedError}
                 retry={mostUsedRetry}
                 foldersByUid={foldersByUid}
                 loadingText={t('home.most-used-dashboards-tab.loading', 'Loading most used dashboards...')}
@@ -152,8 +130,6 @@ export function DashboardTabs() {
           errorTitle={t('home.starred-dashboards-tab.error-title', 'Could not load starred dashboards')}
           emptyMessage={t('home.starred-dashboards-tab.empty', 'Your starred dashboards will appear here.')}
           source="homepage_starredTab"
-          // Unstarring a row here removes it from this list.
-          onStarChange={starredRetry}
         />
       ),
       footer: viewAllDashboards,

@@ -32,31 +32,76 @@ const specialCaseOwnerRef: OwnerReference[] = [
   },
 ];
 
-const folderToAppPlatform = (folder: (typeof mockTree)[number]['item'], id?: number, namespace?: string): Folder => {
-  return {
-    ...baseResponse,
+export interface FolderResourceInput {
+  uid: string;
+  title: string;
+  namespace?: string;
+  /** Becomes the `grafana.app/deprecatedInternalID` label */
+  id?: number;
+  /** Becomes the `grafana.app/folder` annotation */
+  parentUid?: string;
+  managedBy?: string;
+  managerId?: string;
+  createdBy?: string;
+  updatedBy?: string;
+  created?: string;
+  updated?: string;
+  generation?: number;
+  ownerReferences?: OwnerReference[];
+}
 
-    metadata: {
-      name: folder.uid,
-      namespace: namespace ?? 'default',
-      uid: folder.uid,
-      creationTimestamp: '2023-01-01T00:00:00Z',
-      annotations: {
-        // TODO: Generalise annotations in fixture data
-        'grafana.app/createdBy': 'user:1',
-        'grafana.app/updatedBy': 'user:2',
-        'grafana.app/managedBy': ('managedBy' in folder ? folder.managedBy : 'user') ?? 'user',
-        'grafana.app/updatedTimestamp': '2024-01-01T00:00:00Z',
-        ...(folder.kind === 'folder' && folder.parentUID ? { 'grafana.app/folder': folder.parentUID } : {}),
-      },
-      labels: {
-        'grafana.app/deprecatedInternalID': String(id ?? '123'),
-      },
-      ...(folder.uid === folderA.item.uid ? { ownerReferences: specialCaseOwnerRef } : {}),
+/** Builds a `folder.grafana.app/v1beta1` Folder resource the way the API serializes one. */
+export const buildFolderResource = ({
+  uid,
+  title,
+  namespace = 'default',
+  id = 123,
+  parentUid,
+  managedBy,
+  managerId,
+  createdBy,
+  updatedBy,
+  created = '2023-01-01T00:00:00Z',
+  updated = '2024-01-01T00:00:00Z',
+  generation,
+  ownerReferences,
+}: FolderResourceInput): Folder => ({
+  ...baseResponse,
+  metadata: {
+    name: uid,
+    namespace,
+    uid,
+    creationTimestamp: created,
+    ...(generation !== undefined ? { generation } : {}),
+    annotations: {
+      ...(createdBy ? { 'grafana.app/createdBy': createdBy } : {}),
+      ...(updatedBy ? { 'grafana.app/updatedBy': updatedBy } : {}),
+      ...(managedBy ? { 'grafana.app/managedBy': managedBy } : {}),
+      ...(managerId ? { 'grafana.app/managerId': managerId } : {}),
+      'grafana.app/updatedTimestamp': updated,
+      ...(parentUid ? { 'grafana.app/folder': parentUid } : {}),
     },
-    spec: { title: folder.title!, description: '' },
-  };
-};
+    labels: {
+      'grafana.app/deprecatedInternalID': String(id),
+    },
+    ...(ownerReferences ? { ownerReferences } : {}),
+  },
+  spec: { title, description: '' },
+});
+
+const folderToAppPlatform = (folder: (typeof mockTree)[number]['item'], id?: number, namespace?: string): Folder =>
+  buildFolderResource({
+    uid: folder.uid,
+    title: folder.title!,
+    namespace,
+    id,
+    parentUid: folder.kind === 'folder' ? folder.parentUID : undefined,
+    // TODO: Generalise annotations in fixture data
+    managedBy: ('managedBy' in folder ? folder.managedBy : 'user') ?? 'user',
+    createdBy: 'user:1',
+    updatedBy: 'user:2',
+    ownerReferences: folder.uid === folderA.item.uid ? specialCaseOwnerRef : undefined,
+  });
 
 export const BASE = '/apis/folder.grafana.app/v1beta1/namespaces/:namespace';
 export const FOLDERS = `${BASE}/folders`;
