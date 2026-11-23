@@ -73,6 +73,21 @@ describe('GMA rule list saved searches', () => {
     expect(screen.getByText('Busy CPUs (default)')).toBeInTheDocument();
   });
 
+  it('leaves the URL alone when the user navigates away while the default loads', async () => {
+    const stored = JSON.stringify([{ id: '1', name: 'Busy CPUs', query: 'cpu', isDefault: true }]);
+    let releaseStorage = () => {};
+    jest
+      .spyOn(UserStorage.prototype, 'getItem')
+      .mockImplementation(() => new Promise((resolve) => (releaseStorage = () => resolve(stored))));
+    renderAlertRules('/?view=list');
+
+    act(() => locationService.push('/alerting/rules/recording?view=list'));
+    await act(async () => releaseStorage());
+
+    expect(locationService.getLocation().pathname).toBe('/alerting/rules/recording');
+    expect(searchParam()).toBeNull();
+  });
+
   it('lists the rules unfiltered when the saved searches cannot be loaded', async () => {
     jest.spyOn(UserStorage.prototype, 'getItem').mockRejectedValue(new Error('storage unavailable'));
 
