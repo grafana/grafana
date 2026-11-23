@@ -59,7 +59,7 @@ func Authorize(t *testing.T, helper *common.ProvisioningTestHelper, name, code s
 		if !assert.NoError(collect, err) {
 			return
 		}
-		assert.False(collect, conn.Secure.Token.IsZero(), "secure should contain the exchanged token")
+		assert.False(collect, conn.Secure[provisioning.ConnectionSecureToken].IsZero(), "secure should contain the exchanged token")
 		assert.Positive(collect, conn.Status.Token.LastUpdated, "token lastUpdated should be set")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "token should be stored after authorize")
 	return conn

@@ -532,8 +532,8 @@ func TestWebhookOnUpdate(t *testing.T) {
 						Url: "https://example.com/webhook",
 					},
 				},
-				Secure: provisioning.SecureValues{
-					WebhookSecret: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.RepositorySecureWebhookSecret: resource.InlineSecureValue{
 						Name: "valid-secret",
 					},
 				},

@@ -183,8 +183,8 @@ func TestGitHubRepositoryTest(t *testing.T) {
 					},
 					Type: provisioning.RepositorySpecTypeGithub,
 				},
-				Secure: provisioning.SecureValues{
-					Token: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.RepositorySecureToken: resource.InlineSecureValue{
 						Name: "with-name",
 					},
 				},
@@ -210,8 +210,8 @@ func TestGitHubRepositoryTest(t *testing.T) {
 					},
 					Type: provisioning.RepositorySpecTypeGithub,
 				},
-				Secure: provisioning.SecureValues{
-					Token: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.RepositorySecureToken: resource.InlineSecureValue{
 						Name: "with-name",
 					},
 				},
@@ -858,8 +858,8 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 			},
 			Type: provisioning.RepositorySpecTypeGithub,
 		},
-		Secure: provisioning.SecureValues{
-			Token: resource.InlineSecureValue{
+		Secure: resource.InlineSecureValues{
+			provisioning.RepositorySecureToken: resource.InlineSecureValue{
 				Name: "with-name",
 			},
 		},

@@ -3132,7 +3132,7 @@ func TestRepositoryController_shouldGenerateTokenFromConnection_ExpiredCounter(t
 				Status: provisioning.RepositoryStatus{
 					Token: provisioning.RepositoryTokenStatus{LastUpdated: oldEnough.UnixMilli(), Expiration: tt.expiration},
 				},
-				Secure: provisioning.SecureValues{Token: resource.InlineSecureValue{Create: "existing-token"}},
+				Secure: resource.InlineSecureValues{provisioning.RepositorySecureToken: resource.InlineSecureValue{Create: "existing-token"}},
 			}
 
 			rc.shouldGenerateTokenFromConnection(obj)
@@ -3230,8 +3230,8 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 			},
 		},
 		// Existing (non-zero) token so IsZero() == false and we exercise the expiry path
-		Secure: provisioning.SecureValues{
-			Token: resource.InlineSecureValue{Create: "old-expiring-token"},
+		Secure: resource.InlineSecureValues{
+			provisioning.RepositorySecureToken: resource.InlineSecureValue{Create: "old-expiring-token"},
 		},
 	}
 
@@ -3451,8 +3451,8 @@ func TestRepositoryController_process_RegeneratesTokenWhenSecretNotFound(t *test
 					},
 				},
 				// Orphaned reference: name is set but the secret is gone.
-				Secure: provisioning.SecureValues{
-					Token: resource.InlineSecureValue{Name: "orphaned-token"},
+				Secure: resource.InlineSecureValues{
+					provisioning.RepositorySecureToken: resource.InlineSecureValue{Name: "orphaned-token"},
 				},
 			}
 

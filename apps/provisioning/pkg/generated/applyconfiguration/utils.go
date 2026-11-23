@@ -34,8 +34,6 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &provisioningv0alpha1.ConnectionGitOAuthConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("ConnectionOAuthConfig"):
 		return &provisioningv0alpha1.ConnectionOAuthConfigApplyConfiguration{}
-	case v0alpha1.SchemeGroupVersion.WithKind("ConnectionSecure"):
-		return &provisioningv0alpha1.ConnectionSecureApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("ConnectionSpec"):
 		return &provisioningv0alpha1.ConnectionSpecApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("ConnectionStatus"):
@@ -114,8 +112,6 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &provisioningv0alpha1.ResourceCountApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("ResourceRef"):
 		return &provisioningv0alpha1.ResourceRefApplyConfiguration{}
-	case v0alpha1.SchemeGroupVersion.WithKind("SecureValues"):
-		return &provisioningv0alpha1.SecureValuesApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("SyncJobOptions"):
 		return &provisioningv0alpha1.SyncJobOptionsApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("TestJobOptions"):

@@ -301,6 +301,48 @@ func TestIntegrationProvisioning_ConnectionMutation(t *testing.T) {
 			}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 		})
 	})
+
+	t.Run("should drop unknown and empty secure values", func(t *testing.T) {
+		connection := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      "unknown-secure-values",
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"title": "Test Connection",
+				"type":  provisioning.ConnectionTypeGithub,
+				"github": map[string]any{
+					"appID":          "123456",
+					"installationID": "454545",
+				},
+			},
+			"secure": map[string]any{
+				"privateKey":    map[string]any{"create": privateKeyBase64},
+				"clientSecret":  map[string]any{},
+				"webhookSecret": map[string]any{"create": "not-a-connection-secret"},
+			},
+		}}
+
+		c, err := helper.CreateGithubConnection(t, connection)
+		require.NoError(t, err, "failed to create resource")
+		t.Cleanup(func() {
+			cleanupCtx := context.WithoutCancel(t.Context())
+			require.EventuallyWithT(t, func(collect *assert.CollectT) {
+				err := helper.Connections.Resource.Delete(cleanupCtx, c.GetName(), metav1.DeleteOptions{})
+				require.NoError(collect, err)
+			}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
+		})
+
+		stored, err := helper.Connections.Resource.Get(t.Context(), c.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+		secure, _, err := unstructured.NestedMap(stored.Object, "secure")
+		require.NoError(t, err)
+		require.Contains(t, secure, "privateKey")
+		require.NotContains(t, secure, "clientSecret", "empty secure values must not be stored")
+		require.NotContains(t, secure, "webhookSecret", "unknown secure keys must not be stored")
+	})
 }
 
 func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
@@ -634,7 +676,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 				return false
 			}
 			// Connection should be unhealthy with error message about app ID mismatch
-			return !conn.Secure.Token.IsZero() &&
+			return !conn.Secure[provisioning.ConnectionSecureToken].IsZero() &&
 				conn.Generation == conn.Status.ObservedGeneration &&
 				!conn.Status.Health.Healthy &&
 				conn.Status.Health.Checked > 0 &&
@@ -729,14 +771,14 @@ func TestIntegrationConnectionController_TokenCreation(t *testing.T) {
 		initial, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, initial)
-		require.False(t, initial.Secure.Token.IsZero())
+		require.False(t, initial.Secure[provisioning.ConnectionSecureToken].IsZero())
 
 		// Verifying token
-		decrypted, err := decryptService.Decrypt(t.Context(), "provisioning.grafana.app", initial.Namespace, initial.Secure.Token.Name)
+		decrypted, err := decryptService.Decrypt(t.Context(), "provisioning.grafana.app", initial.Namespace, initial.Secure[provisioning.ConnectionSecureToken].Name)
 		require.NoError(t, err, "decryption error")
 		require.Len(t, decrypted, 1)
 
-		val := decrypted[initial.Secure.Token.Name].Value()
+		val := decrypted[initial.Secure[provisioning.ConnectionSecureToken].Name].Value()
 		require.NotNil(t, val)
 		k := val.DangerouslyExposeAndConsumeValue()
 		valid, err := verifyToken(t, "12345", k)
@@ -786,14 +828,14 @@ func TestIntegrationConnectionController_TokenCreation(t *testing.T) {
 		initial, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, initial)
-		require.False(t, initial.Secure.Token.IsZero())
+		require.False(t, initial.Secure[provisioning.ConnectionSecureToken].IsZero())
 
 		// Verifying token
-		decrypted, err := decryptService.Decrypt(t.Context(), "provisioning.grafana.app", initial.Namespace, initial.Secure.Token.Name)
+		decrypted, err := decryptService.Decrypt(t.Context(), "provisioning.grafana.app", initial.Namespace, initial.Secure[provisioning.ConnectionSecureToken].Name)
 		require.NoError(t, err, "decryption error")
 		require.Len(t, decrypted, 1)
 
-		val := decrypted[initial.Secure.Token.Name].Value()
+		val := decrypted[initial.Secure[provisioning.ConnectionSecureToken].Name].Value()
 		require.NotNil(t, val)
 		k := val.DangerouslyExposeAndConsumeValue()
 		valid, err := verifyToken(t, "12345", k)
@@ -844,14 +886,14 @@ func TestIntegrationConnectionController_TokenCreation(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, c)
 		// Verify secret got updated
-		require.NotEqual(t, c.Secure.Token.Name, initial.Secure.Token.Name)
+		require.NotEqual(t, c.Secure[provisioning.ConnectionSecureToken].Name, initial.Secure[provisioning.ConnectionSecureToken].Name)
 
 		// Verifying token
-		newSecretDecrypted, err := decryptService.Decrypt(t.Context(), "provisioning.grafana.app", c.Namespace, c.Secure.Token.Name)
+		newSecretDecrypted, err := decryptService.Decrypt(t.Context(), "provisioning.grafana.app", c.Namespace, c.Secure[provisioning.ConnectionSecureToken].Name)
 		require.NoError(t, err, "decryption error")
 		require.Len(t, decrypted, 1)
 
-		newVal := newSecretDecrypted[c.Secure.Token.Name].Value()
+		newVal := newSecretDecrypted[c.Secure[provisioning.ConnectionSecureToken].Name].Value()
 		require.NotNil(t, newVal)
 		newK := newVal.DangerouslyExposeAndConsumeValue()
 		require.NotEqual(t, k, newK)

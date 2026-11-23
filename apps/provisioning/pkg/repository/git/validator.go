@@ -73,7 +73,7 @@ func ValidateGitConfigFields(repo *provisioning.Repository, url, branch, path st
 	}
 
 	// Reject http:// together with a token: the token would travel in cleartext on every git operation.
-	if !allowInsecure && IsInsecureURLWithToken(url, !repo.Secure.Token.IsZero() || repo.HasConnection()) {
+	if !allowInsecure && IsInsecureURLWithToken(url, !repo.Secure[provisioning.RepositorySecureToken].IsZero() || repo.HasConnection()) {
 		list = append(list, field.Invalid(field.NewPath("spec", t, "url"), url,
 			"http:// is not allowed when a token is configured; use https:// to avoid sending credentials in cleartext"))
 	}
@@ -89,7 +89,7 @@ func ValidateGitConfigFields(repo *provisioning.Repository, url, branch, path st
 	isNewObject := repo.Generation == 0
 	if len(repo.Spec.Workflows) > 0 {
 		// For new objects, if a token is provided, then the connection should not be there
-		if !repo.Secure.Token.IsZero() {
+		if !repo.Secure[provisioning.RepositorySecureToken].IsZero() {
 			if isNewObject &&
 				repo.Spec.Connection != nil &&
 				repo.Spec.Connection.Name != "" {

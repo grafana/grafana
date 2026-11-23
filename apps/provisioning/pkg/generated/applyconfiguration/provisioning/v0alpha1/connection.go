@@ -5,6 +5,7 @@
 package v0alpha1
 
 import (
+	resource "github.com/grafana/grafana-app-sdk/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	v1 "k8s.io/client-go/applyconfigurations/meta/v1"
@@ -19,9 +20,10 @@ import (
 type ConnectionApplyConfiguration struct {
 	v1.TypeMetaApplyConfiguration    `json:""`
 	*v1.ObjectMetaApplyConfiguration `json:"metadata,omitempty"`
-	Spec                             *ConnectionSpecApplyConfiguration   `json:"spec,omitempty"`
-	Secure                           *ConnectionSecureApplyConfiguration `json:"secure,omitempty"`
-	Status                           *ConnectionStatusApplyConfiguration `json:"status,omitempty"`
+	Spec                             *ConnectionSpecApplyConfiguration `json:"spec,omitempty"`
+	// Secure is keyed by ConnectionSecureKeys. Its OpenAPI schema is ConnectionSecure.
+	Secure map[string]resource.InlineSecureValue `json:"secure,omitempty"`
+	Status *ConnectionStatusApplyConfiguration   `json:"status,omitempty"`
 }
 
 // Connection constructs a declarative configuration of the Connection type for use with
@@ -203,11 +205,17 @@ func (b *ConnectionApplyConfiguration) WithSpec(value *ConnectionSpecApplyConfig
 	return b
 }
 
-// WithSecure sets the Secure field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the Secure field is set to the value of the last call.
-func (b *ConnectionApplyConfiguration) WithSecure(value *ConnectionSecureApplyConfiguration) *ConnectionApplyConfiguration {
-	b.Secure = value
+// WithSecure puts the entries into the Secure field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, the entries provided by each call will be put on the Secure field,
+// overwriting an existing map entries in Secure field with the same key.
+func (b *ConnectionApplyConfiguration) WithSecure(entries map[string]resource.InlineSecureValue) *ConnectionApplyConfiguration {
+	if b.Secure == nil && len(entries) > 0 {
+		b.Secure = make(map[string]resource.InlineSecureValue, len(entries))
+	}
+	for k, v := range entries {
+		b.Secure[k] = v
+	}
 	return b
 }
 

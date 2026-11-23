@@ -50,17 +50,17 @@ func ValidateGitHubAppCredentials(conn *provisioning.Connection, label, appID, i
 	var list field.ErrorList
 
 	// Check if required secure values are present (without decryption)
-	if conn.Secure.PrivateKey.IsZero() {
+	if conn.Secure[provisioning.ConnectionSecurePrivateKey].IsZero() {
 		list = append(list, field.Required(field.NewPath("secure", "privateKey"), fmt.Sprintf("privateKey must be specified for %s connection", label)))
 	}
-	if !conn.Secure.ClientSecret.IsZero() {
+	if !conn.Secure[provisioning.ConnectionSecureClientSecret].IsZero() {
 		list = append(list, field.Forbidden(field.NewPath("secure", "clientSecret"), fmt.Sprintf("clientSecret is forbidden in %s connection", label)))
 	}
 
 	// Validate private key content if new is provided
-	if !conn.Secure.PrivateKey.Create.IsZero() {
+	if !conn.Secure[provisioning.ConnectionSecurePrivateKey].Create.IsZero() {
 		// Decode base64-encoded private key
-		privateKeyPEM, err := base64.StdEncoding.DecodeString(string(conn.Secure.PrivateKey.Create))
+		privateKeyPEM, err := base64.StdEncoding.DecodeString(string(conn.Secure[provisioning.ConnectionSecurePrivateKey].Create))
 		if err != nil {
 			list = append(list, field.Invalid(field.NewPath("secure", "privateKey"), "[REDACTED]", "privateKey must be base64 encoded"))
 		} else {

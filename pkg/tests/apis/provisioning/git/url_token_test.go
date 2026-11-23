@@ -52,14 +52,14 @@ func TestIntegrationProvisioning_GitRequiresNewTokenWhenRepositoryURLChanges(t *
 			repoObj := common.MustFromUnstructured[provisioning.Repository](t, repo)
 			repoObj.Spec.Git.Url = new(changedRemote.URL)
 			repoObj.Spec.Git.TokenUser = new(changedUser.Username)
-			repoObj.Secure.Token = resource.InlineSecureValue{Create: resource.RawSecureValue(changedUser.Password)}
+			repoObj.SetSecureValue(provisioning.RepositorySecureToken, resource.InlineSecureValue{Create: resource.RawSecureValue(changedUser.Password)})
 
 			result, err := helper.Repositories.Resource.Update(t.Context(), common.MustToUnstructured(t, repoObj), metav1.UpdateOptions{})
 			require.NoError(collect, err)
 
 			updatedRepo := common.MustFromUnstructured[provisioning.Repository](t, result)
 			require.Equal(collect, changedRemote.URL, ptr.Deref(updatedRepo.Spec.Git.Url, ""))
-			require.NotEmpty(collect, updatedRepo.Secure.Token.Name)
+			require.NotEmpty(collect, updatedRepo.Secure[provisioning.RepositorySecureToken].Name)
 		}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 	})
 

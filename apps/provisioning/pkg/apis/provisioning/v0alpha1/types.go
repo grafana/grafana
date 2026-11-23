@@ -22,15 +22,37 @@ type Repository struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   RepositorySpec   `json:"spec,omitempty"`
-	Secure SecureValues     `json:"secure,omitzero,omitempty"`
-	Status RepositoryStatus `json:"status,omitempty"`
+	Spec RepositorySpec `json:"spec,omitempty"`
+	// Secure is keyed by RepositorySecureKeys. Its OpenAPI schema is SecureValues.
+	Secure resource.InlineSecureValues `json:"secure,omitzero,omitempty"`
+	Status RepositoryStatus            `json:"status,omitempty"`
 }
 
 func (Repository) OpenAPIModelName() string {
 	return OpenAPIPrefix + "Repository"
 }
 
+func (o *Repository) GetSecureValues() resource.InlineSecureValues { return o.Secure }
+
+func (o *Repository) SetSecureValues(values resource.InlineSecureValues) error {
+	o.Secure = values
+	return nil
+}
+
+// Keys accepted in Repository.Secure. They must match the JSON names in SecureValues.
+const (
+	RepositorySecureToken            = "token"
+	RepositorySecureWebhookSecret    = "webhookSecret"
+	RepositorySecureCommitSigningKey = "commitSigningKey"
+)
+
+// RepositorySecureKeys lists every key accepted in Repository.Secure.
+var RepositorySecureKeys = []string{RepositorySecureToken, RepositorySecureWebhookSecret, RepositorySecureCommitSigningKey}
+
+// SecureValues only defines the OpenAPI schema of Repository.Secure, which is
+// stored as a map. This comment is detached so the model keeps no description.
+
+// +k8s:deepcopy-gen=false
 type SecureValues struct {
 	// Token used to connect the configured repository
 	Token resource.InlineSecureValue `json:"token,omitzero,omitempty"`
@@ -46,10 +68,6 @@ type SecureValues struct {
 
 func (SecureValues) OpenAPIModelName() string {
 	return OpenAPIPrefix + "SecureValues"
-}
-
-func (v SecureValues) IsZero() bool {
-	return v.Token.IsZero() && v.WebhookSecret.IsZero() && v.CommitSigningKey.IsZero()
 }
 
 type RepositoryLocalRepositoryConfig struct {

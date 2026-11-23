@@ -108,11 +108,11 @@ func (e *extra) Validate(_ context.Context, obj runtime.Object) field.ErrorList 
 		errs = append(errs, field.Required(field.NewPath("spec", "oauth", "clientID"), "clientID must be specified for OAuth app connections"))
 	}
 
-	if conn.Secure.ClientSecret.IsZero() || conn.Secure.ClientSecret.Remove {
+	if conn.Secure[provisioning.ConnectionSecureClientSecret].IsZero() || conn.Secure[provisioning.ConnectionSecureClientSecret].Remove {
 		errs = append(errs, field.Required(field.NewPath("secure", "clientSecret"), "clientSecret must be specified for OAuth app connections"))
 	}
 
-	if !conn.Secure.PrivateKey.IsZero() {
+	if !conn.Secure[provisioning.ConnectionSecurePrivateKey].IsZero() {
 		errs = append(errs, field.Forbidden(field.NewPath("secure", "privateKey"), "privateKey is forbidden in OAuth app connections"))
 	}
 

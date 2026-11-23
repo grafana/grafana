@@ -405,7 +405,7 @@ func (cc *ConnectionController) process(ctx context.Context, key string) (err er
 			}
 			logger.Warn("connection token secret could not be decrypted, regenerating", "error", err)
 			conn = conn.DeepCopy()
-			conn.Secure.Token = resource.InlineSecureValue{}
+			delete(conn.Secure, provisioning.ConnectionSecureToken)
 			c, err = cc.connectionFactory.Build(ctx, conn)
 		}
 		if err != nil {
@@ -477,7 +477,7 @@ func (cc *ConnectionController) process(ctx context.Context, key string) (err er
 				"path":  "/status/token",
 				"value": tokenStatus,
 			})
-			conn.Secure.Token = resource.InlineSecureValue{Create: token}
+			conn.SetSecureValue(provisioning.ConnectionSecureToken, resource.InlineSecureValue{Create: token})
 		}
 	}
 
@@ -544,7 +544,7 @@ func (cc *ConnectionController) shouldGenerateToken(
 		}
 	}
 
-	if obj.Secure.Token.IsZero() {
+	if obj.Secure[provisioning.ConnectionSecureToken].IsZero() {
 		// An OAuth connection has no token until the user completes the authorization
 		// flow after creation; there is nothing to generate until one is stored.
 		if _, ok := c.(connection.OAuthConnection); ok {

@@ -137,7 +137,7 @@ func WaitForWebhook(t *testing.T, helper *common.GitTestHelper, repoName string,
 			return
 		}
 		require.NotNil(collect, repo.Status.Webhook, "webhook should be set")
-		require.NotEmpty(collect, repo.Secure.WebhookSecret.Name, "webhook secret should be created")
+		require.NotEmpty(collect, repo.Secure[provisioning.RepositorySecureWebhookSecret].Name, "webhook secret should be created")
 		require.Equal(collect, expected, repository.GetID(repo.Status.Webhook))
 		require.Equal(collect, ExpectedWebhookURL(helper.Namespace, repoName), repo.Status.Webhook.Url)
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "webhook should be created")
@@ -152,7 +152,7 @@ func readWebhookSecret(t *testing.T, helper *common.GitTestHelper, repoName stri
 	if err != nil {
 		return "", err
 	}
-	secretName := repo.Secure.WebhookSecret.Name
+	secretName := repo.Secure[provisioning.RepositorySecureWebhookSecret].Name
 	if secretName == "" {
 		return "", fmt.Errorf("webhook secret is not stored")
 	}

@@ -57,7 +57,7 @@ type SecureValues interface {
 type secureValues struct {
 	svc       decrypt.DecryptService
 	metrics   *DecryptMetrics
-	names     provisioning.SecureValues
+	names     resource.InlineSecureValues
 	namespace string
 }
 
@@ -113,7 +113,7 @@ func isNotFoundErr(err error) bool {
 }
 
 func (s *secureValues) Token(ctx context.Context) (resource.RawSecureValue, error) {
-	v, err := s.get(ctx, s.names.Token, secretTypeToken)
+	v, err := s.get(ctx, s.names[provisioning.RepositorySecureToken], secretTypeToken)
 	if errors.Is(err, ErrSecretNotFound) {
 		return "", fmt.Errorf("%w: %w", ErrTokenNotFound, err)
 	}
@@ -121,15 +121,15 @@ func (s *secureValues) Token(ctx context.Context) (resource.RawSecureValue, erro
 }
 
 func (s *secureValues) WebhookSecret(ctx context.Context) (resource.RawSecureValue, error) {
-	return s.get(ctx, s.names.WebhookSecret, secretTypeWebhookSecret)
+	return s.get(ctx, s.names[provisioning.RepositorySecureWebhookSecret], secretTypeWebhookSecret)
 }
 
 func (s *secureValues) CommitSigningKey(ctx context.Context) (resource.RawSecureValue, error) {
-	return s.get(ctx, s.names.CommitSigningKey, secretTypeCommitSigningKey)
+	return s.get(ctx, s.names[provisioning.RepositorySecureCommitSigningKey], secretTypeCommitSigningKey)
 }
 
 func ProvideDecrypter(svc decrypt.DecryptService, metrics *DecryptMetrics) Decrypter {
 	return func(r *provisioning.Repository) SecureValues {
-		return &secureValues{svc: svc, metrics: metrics, names: r.Secure, namespace: r.Namespace}
+		return &secureValues{svc: svc, metrics: metrics, names: resource.CopySecureValues(r.Secure), namespace: r.Namespace}
 	}
 }

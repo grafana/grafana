@@ -1210,7 +1210,9 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			patchOperations = append(patchOperations, tokenOps...)
 		}
 
-		obj.Secure.Token.Create = token
+		tokenValue := obj.Secure[provisioning.RepositorySecureToken]
+		tokenValue.Create = token
+		obj.SetSecureValue(provisioning.RepositorySecureToken, tokenValue)
 	}
 
 	phase = reconcilePhaseBuild
@@ -1260,7 +1262,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			// Work on a copy so we don't mutate the shared informer-cache object, and
 			// overwrite the whole value so the stale reference name is cleared too.
 			obj = obj.DeepCopy()
-			obj.Secure.Token = resource.InlineSecureValue{Create: token}
+			obj.SetSecureValue(provisioning.RepositorySecureToken, resource.InlineSecureValue{Create: token})
 
 			repo, err = rc.repoFactory.Build(ctx, obj)
 		}
@@ -1733,7 +1735,7 @@ func (rc *RepositoryController) shouldGenerateTokenFromConnection(
 	// or
 	// - The token has not been recently created, and
 	// - The token will expire before the next resync interval
-	if obj.Secure.Token.IsZero() {
+	if obj.Secure[provisioning.RepositorySecureToken].IsZero() {
 		rc.tokenMetrics.recordRefreshReason(refreshReasonMissing)
 		return true
 	}
@@ -1820,7 +1822,7 @@ func (rc *RepositoryController) generateRepositoryToken(
 	// HACK - here we need to do different things based on the status of repository
 	// https://github.com/grafana/git-ui-sync-project/issues/745 to have a proper fix on it
 	switch {
-	case obj.Secure.IsZero():
+	case len(obj.Secure) == 0:
 		patchOperations = append(patchOperations, map[string]any{
 			"op":   "add",
 			"path": "/secure",
@@ -1830,7 +1832,7 @@ func (rc *RepositoryController) generateRepositoryToken(
 				},
 			},
 		})
-	case obj.Secure.Token.IsZero():
+	case obj.Secure[provisioning.RepositorySecureToken].IsZero():
 		patchOperations = append(patchOperations, map[string]any{
 			"op":   "add",
 			"path": "/secure/token",

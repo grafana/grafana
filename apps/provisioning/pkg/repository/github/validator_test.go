@@ -78,8 +78,8 @@ func TestValidate(t *testing.T) {
 						Branch: "main",
 					},
 				},
-				Secure: provisioning.SecureValues{
-					Token: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.RepositorySecureToken: resource.InlineSecureValue{
 						Create: resource.NewSecretValue("test-token"),
 					},
 				},
@@ -100,8 +100,8 @@ func TestValidate(t *testing.T) {
 						Branch: "main",
 					},
 				},
-				Secure: provisioning.SecureValues{
-					Token: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.RepositorySecureToken: resource.InlineSecureValue{
 						Create: resource.NewSecretValue("test-token"),
 					},
 				},
@@ -137,8 +137,8 @@ func TestValidate(t *testing.T) {
 						Path:   new("grafana"),
 					},
 				},
-				Secure: provisioning.SecureValues{
-					Token: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.RepositorySecureToken: resource.InlineSecureValue{
 						Create: resource.NewSecretValue("test-token"),
 					},
 				},

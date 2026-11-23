@@ -168,8 +168,16 @@ func schema_pkg_apis_provisioning_v0alpha1_Connection(ref common.ReferenceCallba
 					},
 					"secure": {
 						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(ConnectionSecure{}.OpenAPIModelName()),
+							Description: "Secure is keyed by ConnectionSecureKeys. Its OpenAPI schema is ConnectionSecure.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(resource.InlineSecureValue{}.OpenAPIModelName()),
+									},
+								},
+							},
 						},
 					},
 					"status": {
@@ -182,7 +190,7 @@ func schema_pkg_apis_provisioning_v0alpha1_Connection(ref common.ReferenceCallba
 			},
 		},
 		Dependencies: []string{
-			ConnectionSecure{}.OpenAPIModelName(), ConnectionSpec{}.OpenAPIModelName(), ConnectionStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			resource.InlineSecureValue{}.OpenAPIModelName(), ConnectionSpec{}.OpenAPIModelName(), ConnectionStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -2028,8 +2036,16 @@ func schema_pkg_apis_provisioning_v0alpha1_Repository(ref common.ReferenceCallba
 					},
 					"secure": {
 						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(SecureValues{}.OpenAPIModelName()),
+							Description: "Secure is keyed by RepositorySecureKeys. Its OpenAPI schema is SecureValues.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(resource.InlineSecureValue{}.OpenAPIModelName()),
+									},
+								},
+							},
 						},
 					},
 					"status": {
@@ -2042,7 +2058,7 @@ func schema_pkg_apis_provisioning_v0alpha1_Repository(ref common.ReferenceCallba
 			},
 		},
 		Dependencies: []string{
-			RepositorySpec{}.OpenAPIModelName(), RepositoryStatus{}.OpenAPIModelName(), SecureValues{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			resource.InlineSecureValue{}.OpenAPIModelName(), RepositorySpec{}.OpenAPIModelName(), RepositoryStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 

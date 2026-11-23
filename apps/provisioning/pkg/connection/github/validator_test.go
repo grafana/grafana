@@ -83,8 +83,8 @@ func TestValidate(t *testing.T) {
 						InstallationID: "456",
 					},
 				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecurePrivateKey: resource.InlineSecureValue{
 						Create: "invalid",
 					},
 				},
@@ -105,8 +105,8 @@ func TestValidate(t *testing.T) {
 						InstallationID: "456",
 					},
 				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecurePrivateKey: resource.InlineSecureValue{
 						Create: resource.NewSecretValue(invalidBase64),
 					},
 				},
@@ -127,8 +127,8 @@ func TestValidate(t *testing.T) {
 						InstallationID: "456",
 					},
 				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecurePrivateKey: resource.InlineSecureValue{
 						Create: resource.NewSecretValue(privateKeyBase64),
 					},
 				},
@@ -148,14 +148,14 @@ func TestValidate(t *testing.T) {
 						InstallationID: "456",
 					},
 				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecurePrivateKey: resource.InlineSecureValue{
 						Create: resource.NewSecretValue("test-key"),
 					},
-					Token: resource.InlineSecureValue{
+					provisioning.ConnectionSecureToken: resource.InlineSecureValue{
 						Create: resource.NewSecretValue("test-token"),
 					},
-					ClientSecret: resource.InlineSecureValue{
+					provisioning.ConnectionSecureClientSecret: resource.InlineSecureValue{
 						Create: resource.NewSecretValue("test-secret"),
 					},
 				},
@@ -175,11 +175,11 @@ func TestValidate(t *testing.T) {
 						InstallationID: "456",
 					},
 				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecurePrivateKey: resource.InlineSecureValue{
 						Create: resource.NewSecretValue("test-key"),
 					},
-					Token: resource.InlineSecureValue{
+					provisioning.ConnectionSecureToken: resource.InlineSecureValue{
 						Create: resource.NewSecretValue("test-token"),
 					},
 				},
@@ -199,11 +199,11 @@ func TestValidate(t *testing.T) {
 						AppID: "123",
 					},
 				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecurePrivateKey: resource.InlineSecureValue{
 						Create: resource.NewSecretValue("test-key"),
 					},
-					Token: resource.InlineSecureValue{
+					provisioning.ConnectionSecureToken: resource.InlineSecureValue{
 						Create: resource.NewSecretValue("test-token"),
 					},
 				},
@@ -224,8 +224,8 @@ func TestValidate(t *testing.T) {
 						InstallationID: "456",
 					},
 				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecurePrivateKey: resource.InlineSecureValue{
 						Create: resource.NewSecretValue(privateKeyBase64),
 					},
 				},
@@ -246,8 +246,8 @@ func TestValidate(t *testing.T) {
 						InstallationID: "xyz789",
 					},
 				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecurePrivateKey: resource.InlineSecureValue{
 						Create: resource.NewSecretValue(privateKeyBase64),
 					},
 				},
@@ -268,8 +268,8 @@ func TestValidate(t *testing.T) {
 						InstallationID: "install-id",
 					},
 				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecurePrivateKey: resource.InlineSecureValue{
 						Create: resource.NewSecretValue(privateKeyBase64),
 					},
 				},
@@ -290,11 +290,11 @@ func TestValidate(t *testing.T) {
 						InstallationID: "456",
 					},
 				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecurePrivateKey: resource.InlineSecureValue{
 						Create: resource.NewSecretValue(privateKeyBase64),
 					},
-					Token: resource.InlineSecureValue{
+					provisioning.ConnectionSecureToken: resource.InlineSecureValue{
 						Create: resource.NewSecretValue("test-token"),
 					},
 				},

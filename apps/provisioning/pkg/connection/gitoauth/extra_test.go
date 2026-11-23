@@ -76,8 +76,8 @@ func TestExtra_Validate(t *testing.T) {
 					Oauth:    &provisioning.ConnectionOAuthConfig{ClientID: "client-id"},
 					GitOAuth: tt.gitOAuth,
 				},
-				Secure: provisioning.ConnectionSecure{
-					ClientSecret: resource.InlineSecureValue{Create: resource.NewSecretValue("client-secret")},
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecureClientSecret: resource.InlineSecureValue{Create: resource.NewSecretValue("client-secret")},
 				},
 			}
 

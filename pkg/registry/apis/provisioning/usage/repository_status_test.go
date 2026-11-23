@@ -28,7 +28,7 @@ func TestRepositoryUsageStatusFromRepository(t *testing.T) {
 			Workflows: []provisioning.RepositorySpecWorkflows{provisioning.RepositorySpecWorkflowsWrite},
 			Sync:      provisioning.RepositorySyncOptions{Enabled: true, Target: provisioning.RepositorySyncOptionsTargetInstance},
 		},
-		Secure: provisioning.SecureValues{Token: resource.InlineSecureValue{Name: "repo-token"}},
+		Secure: resource.InlineSecureValues{provisioning.RepositorySecureToken: resource.InlineSecureValue{Name: "repo-token"}},
 		Status: provisioning.RepositoryStatus{
 			Health: provisioning.RepositoryHealthStatus{Healthy: true},
 			Sync:   provisioning.RepositorySyncStatus{State: provisioning.JobStateSuccess, Finished: 1_600_000_000_000},
@@ -81,7 +81,7 @@ func TestRepositoryAuthMethod(t *testing.T) {
 			name: "direct token",
 			repo: &provisioning.Repository{
 				Spec:   provisioning.RepositorySpec{Type: provisioning.RepositorySpecTypeGit},
-				Secure: provisioning.SecureValues{Token: resource.InlineSecureValue{Name: "repo-token"}},
+				Secure: resource.InlineSecureValues{provisioning.RepositorySecureToken: resource.InlineSecureValue{Name: "repo-token"}},
 			},
 			want: "token",
 		},

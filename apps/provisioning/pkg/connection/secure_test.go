@@ -83,8 +83,8 @@ func TestSecureValues_PrivateKey(t *testing.T) {
 					Name:      "test-connection",
 					Namespace: "default",
 				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecurePrivateKey: resource.InlineSecureValue{
 						Create: resource.NewSecretValue("create-private-key"),
 					},
 				},
@@ -98,8 +98,8 @@ func TestSecureValues_PrivateKey(t *testing.T) {
 					Name:      "test-connection",
 					Namespace: "default",
 				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: resource.InlineSecureValue{},
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecurePrivateKey: resource.InlineSecureValue{},
 				},
 			},
 			expectedValue: "",
@@ -111,8 +111,8 @@ func TestSecureValues_PrivateKey(t *testing.T) {
 					Name:      "test-connection",
 					Namespace: "default",
 				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecurePrivateKey: resource.InlineSecureValue{
 						Name: "private-key-ref",
 					},
 				},
@@ -129,8 +129,8 @@ func TestSecureValues_PrivateKey(t *testing.T) {
 					Name:      "test-connection",
 					Namespace: "default",
 				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecurePrivateKey: resource.InlineSecureValue{
 						Name: "private-key-ref",
 					},
 				},
@@ -145,8 +145,8 @@ func TestSecureValues_PrivateKey(t *testing.T) {
 					Name:      "test-connection",
 					Namespace: "default",
 				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecurePrivateKey: resource.InlineSecureValue{
 						Name: "missing-key",
 					},
 				},
@@ -161,8 +161,8 @@ func TestSecureValues_PrivateKey(t *testing.T) {
 					Name:      "test-connection",
 					Namespace: "default",
 				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecurePrivateKey: resource.InlineSecureValue{
 						Name: "private-key-ref",
 					},
 				},
@@ -213,8 +213,8 @@ func TestSecureValues_ClientSecret(t *testing.T) {
 					Name:      "test-connection",
 					Namespace: "default",
 				},
-				Secure: provisioning.ConnectionSecure{
-					ClientSecret: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecureClientSecret: resource.InlineSecureValue{
 						Create: resource.NewSecretValue("create-client-secret"),
 					},
 				},
@@ -228,8 +228,8 @@ func TestSecureValues_ClientSecret(t *testing.T) {
 					Name:      "test-connection",
 					Namespace: "default",
 				},
-				Secure: provisioning.ConnectionSecure{
-					ClientSecret: resource.InlineSecureValue{},
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecureClientSecret: resource.InlineSecureValue{},
 				},
 			},
 			expectedValue: "",
@@ -241,8 +241,8 @@ func TestSecureValues_ClientSecret(t *testing.T) {
 					Name:      "test-connection",
 					Namespace: "default",
 				},
-				Secure: provisioning.ConnectionSecure{
-					ClientSecret: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecureClientSecret: resource.InlineSecureValue{
 						Name: "client-secret-ref",
 					},
 				},
@@ -259,8 +259,8 @@ func TestSecureValues_ClientSecret(t *testing.T) {
 					Name:      "test-connection",
 					Namespace: "default",
 				},
-				Secure: provisioning.ConnectionSecure{
-					ClientSecret: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecureClientSecret: resource.InlineSecureValue{
 						Name: "client-secret-ref",
 					},
 				},
@@ -309,8 +309,8 @@ func TestSecureValues_Token(t *testing.T) {
 					Name:      "test-connection",
 					Namespace: "default",
 				},
-				Secure: provisioning.ConnectionSecure{
-					Token: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecureToken: resource.InlineSecureValue{
 						Create: resource.NewSecretValue("create-token"),
 					},
 				},
@@ -324,8 +324,8 @@ func TestSecureValues_Token(t *testing.T) {
 					Name:      "test-connection",
 					Namespace: "default",
 				},
-				Secure: provisioning.ConnectionSecure{
-					Token: resource.InlineSecureValue{},
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecureToken: resource.InlineSecureValue{},
 				},
 			},
 			expectedValue: "",
@@ -337,8 +337,8 @@ func TestSecureValues_Token(t *testing.T) {
 					Name:      "test-connection",
 					Namespace: "default",
 				},
-				Secure: provisioning.ConnectionSecure{
-					Token: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecureToken: resource.InlineSecureValue{
 						Name: "token-ref",
 					},
 				},
@@ -355,8 +355,8 @@ func TestSecureValues_Token(t *testing.T) {
 					Name:      "test-connection",
 					Namespace: "default",
 				},
-				Secure: provisioning.ConnectionSecure{
-					Token: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecureToken: resource.InlineSecureValue{
 						Name: "token-ref",
 					},
 				},
@@ -371,8 +371,8 @@ func TestSecureValues_Token(t *testing.T) {
 					Name:      "test-connection",
 					Namespace: "default",
 				},
-				Secure: provisioning.ConnectionSecure{
-					Token: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecureToken: resource.InlineSecureValue{
 						Name: "missing-token",
 					},
 				},
@@ -387,8 +387,8 @@ func TestSecureValues_Token(t *testing.T) {
 					Name:      "test-connection",
 					Namespace: "default",
 				},
-				Secure: provisioning.ConnectionSecure{
-					Token: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecureToken: resource.InlineSecureValue{
 						Name: "token-ref",
 					},
 				},
@@ -426,8 +426,8 @@ func TestSecureValues_Token(t *testing.T) {
 func TestSecureValues_NotFoundSentinel(t *testing.T) {
 	conn := &provisioning.Connection{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-connection", Namespace: "default"},
-		Secure: provisioning.ConnectionSecure{
-			Token: resource.InlineSecureValue{Name: "token-ref"},
+		Secure: resource.InlineSecureValues{
+			provisioning.ConnectionSecureToken: resource.InlineSecureValue{Name: "token-ref"},
 		},
 	}
 
@@ -467,7 +467,7 @@ func TestSecureValues_NotFoundSentinel(t *testing.T) {
 	t.Run("missing private key does not carry ErrTokenNotFound", func(t *testing.T) {
 		pkConn := &provisioning.Connection{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-connection", Namespace: "default"},
-			Secure:     provisioning.ConnectionSecure{PrivateKey: resource.InlineSecureValue{Name: "pk-ref"}},
+			Secure:     resource.InlineSecureValues{provisioning.ConnectionSecurePrivateKey: resource.InlineSecureValue{Name: "pk-ref"}},
 		}
 		decrypter := connection.ProvideDecrypter(&mockDecryptService{results: map[string]decrypt.DecryptResult{}}, nil)
 		_, err := decrypter(pkConn).PrivateKey(context.Background())
@@ -479,7 +479,7 @@ func TestSecureValues_NotFoundSentinel(t *testing.T) {
 func TestSecureValues_DecryptTimeout(t *testing.T) {
 	conn := &provisioning.Connection{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-connection", Namespace: "default"},
-		Secure:     provisioning.ConnectionSecure{Token: resource.InlineSecureValue{Name: "token-ref"}},
+		Secure:     resource.InlineSecureValues{provisioning.ConnectionSecureToken: resource.InlineSecureValue{Name: "token-ref"}},
 	}
 
 	t.Run("bounds a deadline-less caller context", func(t *testing.T) {
@@ -518,14 +518,14 @@ func TestSecureValues_MultipleFields(t *testing.T) {
 				Name:      "test-connection",
 				Namespace: "default",
 			},
-			Secure: provisioning.ConnectionSecure{
-				PrivateKey: resource.InlineSecureValue{
+			Secure: resource.InlineSecureValues{
+				provisioning.ConnectionSecurePrivateKey: resource.InlineSecureValue{
 					Name: "private-key-ref",
 				},
-				ClientSecret: resource.InlineSecureValue{
+				provisioning.ConnectionSecureClientSecret: resource.InlineSecureValue{
 					Name: "client-secret-ref",
 				},
-				Token: resource.InlineSecureValue{
+				provisioning.ConnectionSecureToken: resource.InlineSecureValue{
 					Name: "token-ref",
 				},
 			},
@@ -561,14 +561,14 @@ func TestSecureValues_MultipleFields(t *testing.T) {
 				Name:      "test-connection",
 				Namespace: "default",
 			},
-			Secure: provisioning.ConnectionSecure{
-				PrivateKey: resource.InlineSecureValue{
+			Secure: resource.InlineSecureValues{
+				provisioning.ConnectionSecurePrivateKey: resource.InlineSecureValue{
 					Create: resource.NewSecretValue("inline-private-key"),
 				},
-				ClientSecret: resource.InlineSecureValue{
+				provisioning.ConnectionSecureClientSecret: resource.InlineSecureValue{
 					Name: "client-secret-ref",
 				},
-				Token: resource.InlineSecureValue{
+				provisioning.ConnectionSecureToken: resource.InlineSecureValue{
 					Create: resource.NewSecretValue("inline-token"),
 				},
 			},

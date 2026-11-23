@@ -162,7 +162,7 @@ func TestIntegrationProvisioning_HealthAndTokenRefreshWhileOverNamespaceQuota(t 
 		connObj := common.MustFromUnstructured[provisioning.Connection](t, obj)
 		assert.NotEqual(c, int64(0), connObj.Status.ObservedGeneration,
 			"connection should be reconciled at least once")
-		assert.False(c, connObj.Secure.Token.IsZero(),
+		assert.False(c, connObj.Secure[provisioning.ConnectionSecureToken].IsZero(),
 			"connection should have a token after initial reconciliation")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "connection %s should be reconciled with token", connName)
 
@@ -209,7 +209,7 @@ func TestIntegrationProvisioning_HealthAndTokenRefreshWhileOverNamespaceQuota(t 
 				return
 			}
 			r := common.MustFromUnstructured[provisioning.Repository](t, obj)
-			assert.False(c, r.Secure.Token.IsZero(),
+			assert.False(c, r.Secure[provisioning.RepositorySecureToken].IsZero(),
 				"repo %s should have a token after initial reconciliation", name)
 		}, common.WaitTimeoutDefault, common.WaitIntervalDefault,
 			"repo %s should be reconciled with an initial token", name)

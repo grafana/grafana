@@ -44,8 +44,8 @@ func TestIntegrationV1Beta1Connection_Create_GitHub(t *testing.T) {
 				InstallationID: "789012",
 			},
 		},
-		Secure: provisioning.ConnectionSecure{
-			PrivateKey: resource.InlineSecureValue{
+		Secure: resource.InlineSecureValues{
+			provisioning.ConnectionSecurePrivateKey: resource.InlineSecureValue{
 				Create: resource.NewSecretValue(common.TestGithubPrivateKeyBase64()),
 			},
 		},
@@ -69,7 +69,7 @@ func TestIntegrationV1Beta1Connection_Create_GitHub(t *testing.T) {
 	require.Equal(t, connection.Spec.Github.InstallationID, createdConn.Spec.Github.InstallationID)
 
 	// Secure values should not be returned (Create should be empty)
-	require.Empty(t, createdConn.Secure.PrivateKey.Create)
+	require.Empty(t, createdConn.Secure[provisioning.ConnectionSecurePrivateKey].Create)
 
 	// Clean up. Retry on transient 409 conflicts: unified storage guards the delete with the object's
 	// current RV, which the ConnectionController's async /status patches keep bumping.
@@ -107,8 +107,8 @@ func TestIntegrationV1Beta1Connection_Create_GitLab(t *testing.T) {
 				ClientID: "gitlab-client-123",
 			},
 		},
-		Secure: provisioning.ConnectionSecure{
-			ClientSecret: resource.InlineSecureValue{
+		Secure: resource.InlineSecureValues{
+			provisioning.ConnectionSecureClientSecret: resource.InlineSecureValue{
 				Create: resource.NewSecretValue("gitlab-client-secret"),
 			},
 		},
@@ -162,8 +162,8 @@ func TestIntegrationV1Beta1Connection_Create_Bitbucket(t *testing.T) {
 				ClientID: "bitbucket-client-456",
 			},
 		},
-		Secure: provisioning.ConnectionSecure{
-			ClientSecret: resource.InlineSecureValue{
+		Secure: resource.InlineSecureValues{
+			provisioning.ConnectionSecureClientSecret: resource.InlineSecureValue{
 				Create: resource.NewSecretValue("bitbucket-client-secret"),
 			},
 		},
@@ -218,8 +218,8 @@ func TestIntegrationV1Beta1Connection_Get(t *testing.T) {
 				InstallationID: "789012",
 			},
 		},
-		Secure: provisioning.ConnectionSecure{
-			PrivateKey: resource.InlineSecureValue{
+		Secure: resource.InlineSecureValues{
+			provisioning.ConnectionSecurePrivateKey: resource.InlineSecureValue{
 				Create: resource.NewSecretValue(common.TestGithubPrivateKeyBase64()),
 			},
 		},
@@ -279,8 +279,8 @@ func TestIntegrationV1Beta1Connection_List(t *testing.T) {
 				InstallationID: "789012",
 			},
 		},
-		Secure: provisioning.ConnectionSecure{
-			PrivateKey: resource.InlineSecureValue{
+		Secure: resource.InlineSecureValues{
+			provisioning.ConnectionSecurePrivateKey: resource.InlineSecureValue{
 				Create: resource.NewSecretValue(common.TestGithubPrivateKeyBase64()),
 			},
 		},
@@ -345,8 +345,8 @@ func TestIntegrationV1Beta1Connection_Update(t *testing.T) {
 				InstallationID: "789012",
 			},
 		},
-		Secure: provisioning.ConnectionSecure{
-			PrivateKey: resource.InlineSecureValue{
+		Secure: resource.InlineSecureValues{
+			provisioning.ConnectionSecurePrivateKey: resource.InlineSecureValue{
 				Create: resource.NewSecretValue(common.TestGithubPrivateKeyBase64()),
 			},
 		},
@@ -436,8 +436,8 @@ func TestIntegrationV1Beta1Connection_Delete(t *testing.T) {
 				InstallationID: "789012",
 			},
 		},
-		Secure: provisioning.ConnectionSecure{
-			PrivateKey: resource.InlineSecureValue{
+		Secure: resource.InlineSecureValues{
+			provisioning.ConnectionSecurePrivateKey: resource.InlineSecureValue{
 				Create: resource.NewSecretValue(common.TestGithubPrivateKeyBase64()),
 			},
 		},

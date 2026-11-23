@@ -15,15 +15,37 @@ type Connection struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   ConnectionSpec   `json:"spec,omitempty"`
-	Secure ConnectionSecure `json:"secure,omitzero,omitempty"`
-	Status ConnectionStatus `json:"status,omitempty"`
+	Spec ConnectionSpec `json:"spec,omitempty"`
+	// Secure is keyed by ConnectionSecureKeys. Its OpenAPI schema is ConnectionSecure.
+	Secure resource.InlineSecureValues `json:"secure,omitzero,omitempty"`
+	Status ConnectionStatus            `json:"status,omitempty"`
 }
 
 func (Connection) OpenAPIModelName() string {
 	return OpenAPIPrefix + "Connection"
 }
 
+func (o *Connection) GetSecureValues() resource.InlineSecureValues { return o.Secure }
+
+func (o *Connection) SetSecureValues(values resource.InlineSecureValues) error {
+	o.Secure = values
+	return nil
+}
+
+// Keys accepted in Connection.Secure. They must match the JSON names in ConnectionSecure.
+const (
+	ConnectionSecurePrivateKey   = "privateKey"
+	ConnectionSecureClientSecret = "clientSecret"
+	ConnectionSecureToken        = "token"
+)
+
+// ConnectionSecureKeys lists every key accepted in Connection.Secure.
+var ConnectionSecureKeys = []string{ConnectionSecurePrivateKey, ConnectionSecureClientSecret, ConnectionSecureToken}
+
+// ConnectionSecure only defines the OpenAPI schema of Connection.Secure, which
+// is stored as a map. This comment is detached so the model keeps no description.
+
+// +k8s:deepcopy-gen=false
 type ConnectionSecure struct {
 	// PrivateKey is the reference to the private key used for GitHub App authentication.
 	// This value is stored securely and cannot be read back
@@ -41,10 +63,6 @@ type ConnectionSecure struct {
 
 func (ConnectionSecure) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ConnectionSecure"
-}
-
-func (v ConnectionSecure) IsZero() bool {
-	return v.PrivateKey.IsZero() && v.Token.IsZero() && v.ClientSecret.IsZero()
 }
 
 type ConnectionGitHubConfig struct {

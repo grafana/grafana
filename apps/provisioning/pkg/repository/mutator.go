@@ -48,6 +48,7 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 	if !ok {
 		return fmt.Errorf("expected repository configuration, got %T", obj)
 	}
+	r.NormalizeSecureValues()
 
 	// Enforcing the presence of finalizers in resources not marked for deletion.
 	if r.DeletionTimestamp == nil || r.DeletionTimestamp.IsZero() {
@@ -117,17 +118,13 @@ func clearZeroPointers(v reflect.Value) {
 // CopySecureValues copies secure values from old to new repository if they are zero in the new one.
 // This preserves existing secrets during updates when they are not provided in the new object.
 func CopySecureValues(new, old *provisioning.Repository) {
-	if old == nil || old.Secure.IsZero() {
+	if old == nil {
 		return
 	}
-	if new.Secure.Token.IsZero() {
-		new.Secure.Token = old.Secure.Token
-	}
-	if new.Secure.WebhookSecret.IsZero() {
-		new.Secure.WebhookSecret = old.Secure.WebhookSecret
-	}
-	if new.Secure.CommitSigningKey.IsZero() {
-		new.Secure.CommitSigningKey = old.Secure.CommitSigningKey
+	for _, key := range provisioning.RepositorySecureKeys {
+		if new.Secure[key].IsZero() {
+			new.SetSecureValue(key, old.Secure[key])
+		}
 	}
 }
 
@@ -150,7 +147,7 @@ func InvalidateConnectionTokenOnURLChange(new, old *provisioning.Repository) {
 		return
 	}
 	// Nothing to invalidate if no token is stored, and a caller-supplied one wins.
-	if old.Secure.Token.IsZero() || suppliedNewToken(new, old) {
+	if old.Secure[provisioning.RepositorySecureToken].IsZero() || suppliedNewToken(new, old) {
 		return
 	}
 	// Must match the exemption exactly: marking the token for removal counts as supplying
@@ -159,7 +156,7 @@ func InvalidateConnectionTokenOnURLChange(new, old *provisioning.Repository) {
 		return
 	}
 
-	new.Secure.Token = resource.InlineSecureValue{Remove: true}
+	new.SetSecureValue(provisioning.RepositorySecureToken, resource.InlineSecureValue{Remove: true})
 }
 
 // suppliedNewToken reports whether the incoming object carries a token decision of its own.
@@ -167,14 +164,14 @@ func InvalidateConnectionTokenOnURLChange(new, old *provisioning.Repository) {
 // read, and treating that as a new token would let it move the URL on the old credential.
 // Only the credential identity counts, so a description cannot stand in for a new token.
 func suppliedNewToken(new, old *provisioning.Repository) bool {
-	token := new.Secure.Token
+	token := new.Secure[provisioning.RepositorySecureToken]
 	switch {
 	case token.IsZero():
 		return false
 	case token.Remove || !token.Create.IsZero():
 		return true
 	default:
-		return token.Name != old.Secure.Token.Name
+		return token.Name != old.Secure[provisioning.RepositorySecureToken].Name
 	}
 }
 

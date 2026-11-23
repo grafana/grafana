@@ -118,6 +118,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 				responder.Error(err)
 				return
 			}
+			cfg.NormalizeSecureValues()
 
 			// In case the body is an empty object
 			if !reflect.ValueOf(cfg).IsZero() {
@@ -234,7 +235,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 						return
 					}
 
-					cfg.Secure.Token = resource.InlineSecureValue{Create: token.Token}
+					cfg.SetSecureValue(provisioning.RepositorySecureToken, resource.InlineSecureValue{Create: token.Token})
 				}
 
 				// Create a temporary repository

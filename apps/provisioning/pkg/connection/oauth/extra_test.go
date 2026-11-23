@@ -224,8 +224,8 @@ func TestExtra_Validate(t *testing.T) {
 					Type:  provisioning.ConnectionTypeGitlabOAuth,
 					Oauth: &provisioning.ConnectionOAuthConfig{},
 				},
-				Secure: provisioning.ConnectionSecure{
-					ClientSecret: resource.InlineSecureValue{Create: resource.NewSecretValue("client-secret")},
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecureClientSecret: resource.InlineSecureValue{Create: resource.NewSecretValue("client-secret")},
 				},
 			},
 			errorContains: []string{"clientID must be specified"},
@@ -247,8 +247,8 @@ func TestExtra_Validate(t *testing.T) {
 					Type:  provisioning.ConnectionTypeGitlabOAuth,
 					Oauth: &provisioning.ConnectionOAuthConfig{ClientID: "client-id"},
 				},
-				Secure: provisioning.ConnectionSecure{
-					ClientSecret: resource.InlineSecureValue{Remove: true},
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecureClientSecret: resource.InlineSecureValue{Remove: true},
 				},
 			},
 			errorContains: []string{"clientSecret must be specified"},
@@ -260,9 +260,9 @@ func TestExtra_Validate(t *testing.T) {
 					Type:  provisioning.ConnectionTypeGitlabOAuth,
 					Oauth: &provisioning.ConnectionOAuthConfig{ClientID: "client-id"},
 				},
-				Secure: provisioning.ConnectionSecure{
-					ClientSecret: resource.InlineSecureValue{Create: resource.NewSecretValue("client-secret")},
-					PrivateKey:   resource.InlineSecureValue{Create: resource.NewSecretValue("private-key")},
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecureClientSecret: resource.InlineSecureValue{Create: resource.NewSecretValue("client-secret")},
+					provisioning.ConnectionSecurePrivateKey:   resource.InlineSecureValue{Create: resource.NewSecretValue("private-key")},
 				},
 			},
 			errorContains: []string{"privateKey is forbidden"},
@@ -274,8 +274,8 @@ func TestExtra_Validate(t *testing.T) {
 					Type:  provisioning.ConnectionTypeGitlabOAuth,
 					Oauth: &provisioning.ConnectionOAuthConfig{ClientID: "client-id"},
 				},
-				Secure: provisioning.ConnectionSecure{
-					ClientSecret: resource.InlineSecureValue{Create: resource.NewSecretValue("client-secret")},
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecureClientSecret: resource.InlineSecureValue{Create: resource.NewSecretValue("client-secret")},
 				},
 			},
 			validateSpec: func(_ provisioning.ConnectionSpec) field.ErrorList {
@@ -290,8 +290,8 @@ func TestExtra_Validate(t *testing.T) {
 					Type:  provisioning.ConnectionTypeGitlabOAuth,
 					Oauth: &provisioning.ConnectionOAuthConfig{ClientID: "client-id"},
 				},
-				Secure: provisioning.ConnectionSecure{
-					ClientSecret: resource.InlineSecureValue{Create: resource.NewSecretValue("client-secret")},
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecureClientSecret: resource.InlineSecureValue{Create: resource.NewSecretValue("client-secret")},
 				},
 			},
 		},

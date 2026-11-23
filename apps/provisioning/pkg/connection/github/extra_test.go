@@ -254,8 +254,8 @@ func TestExtra_Mutate(t *testing.T) {
 						InstallationID: "456",
 					},
 				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecurePrivateKey: resource.InlineSecureValue{
 						Create: resource.NewSecretValue(privateKeyBase64),
 					},
 				},
@@ -264,7 +264,7 @@ func TestExtra_Mutate(t *testing.T) {
 			validateResult: func(t *testing.T, obj runtime.Object) {
 				conn := obj.(*provisioning.Connection)
 				assert.Equal(t, "https://github.com/settings/installations/456", conn.Spec.Url)
-				assert.True(t, conn.Secure.Token.Create.IsZero(), "Token should not be generated in mutator")
+				assert.True(t, conn.Secure[provisioning.ConnectionSecureToken].Create.IsZero(), "Token should not be generated in mutator")
 			},
 		},
 		{
@@ -294,7 +294,7 @@ func TestExtra_Mutate(t *testing.T) {
 			validateResult: func(t *testing.T, obj runtime.Object) {
 				conn := obj.(*provisioning.Connection)
 				assert.Empty(t, conn.Spec.Url, "URL should not be set")
-				assert.True(t, conn.Secure.Token.Create.IsZero(), "Token should not be generated")
+				assert.True(t, conn.Secure[provisioning.ConnectionSecureToken].Create.IsZero(), "Token should not be generated")
 			},
 		},
 		{
@@ -326,11 +326,11 @@ func TestExtra_Mutate(t *testing.T) {
 						InstallationID: "456",
 					},
 				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecurePrivateKey: resource.InlineSecureValue{
 						Name: "existing-key",
 					},
-					Token: resource.InlineSecureValue{
+					provisioning.ConnectionSecureToken: resource.InlineSecureValue{
 						Create: resource.NewSecretValue("existing-token"),
 					},
 				},
@@ -340,7 +340,8 @@ func TestExtra_Mutate(t *testing.T) {
 				conn := obj.(*provisioning.Connection)
 				assert.Equal(t, "https://github.com/settings/installations/456", conn.Spec.Url)
 				// Token should remain unchanged
-				assert.Equal(t, "existing-token", conn.Secure.Token.Create.DangerouslyExposeAndConsumeValue())
+				token := conn.Secure[provisioning.ConnectionSecureToken].Create
+				assert.Equal(t, "existing-token", token.DangerouslyExposeAndConsumeValue())
 			},
 		},
 	}

@@ -28,7 +28,7 @@ func TestTestConnector_RequiresNewTokenWhenURLChanges(t *testing.T) {
 	oldRepo := &staticTestRepository{
 		cfg: testGitHubRepository("test", "default", "https://github.com/grafana/old"),
 	}
-	oldRepo.cfg.Secure.Token = resource.InlineSecureValue{Name: "old-token"}
+	oldRepo.cfg.SetSecureValue(provisioningv0alpha1.RepositorySecureToken, resource.InlineSecureValue{Name: "old-token"})
 
 	repoFactory := repository.NewMockFactory(t)
 	connector := NewTestConnector(
@@ -54,7 +54,7 @@ func TestTestConnector_AllowsURLChangeWithNewToken(t *testing.T) {
 	oldRepo := &staticTestRepository{
 		cfg: testGitHubRepository("test", "default", "https://github.com/grafana/old"),
 	}
-	oldRepo.cfg.Secure.Token = resource.InlineSecureValue{Name: "old-token"}
+	oldRepo.cfg.SetSecureValue(provisioningv0alpha1.RepositorySecureToken, resource.InlineSecureValue{Name: "old-token"})
 
 	tmpRepo := &staticTestRepository{
 		cfg: testGitHubRepository("test", "default", "https://github.com/grafana/new"),
@@ -64,7 +64,7 @@ func TestTestConnector_AllowsURLChangeWithNewToken(t *testing.T) {
 	repoFactory := repository.NewMockFactory(t)
 	repoFactory.EXPECT().Build(mock.Anything, mock.MatchedBy(func(cfg *provisioningv0alpha1.Repository) bool {
 		return cfg.URL() == "https://github.com/grafana/new" &&
-			cfg.Secure.Token.Create == resource.RawSecureValue("new-token")
+			cfg.Secure[provisioningv0alpha1.RepositorySecureToken].Create == resource.RawSecureValue("new-token")
 	})).Return(tmpRepo, nil).Once()
 
 	responder := &testResponder{}
@@ -88,7 +88,7 @@ func TestTestConnector_AllowsUnchangedURLWithoutNewToken(t *testing.T) {
 	oldRepo := &staticTestRepository{
 		cfg: testGitHubRepository("test", "default", "https://github.com/grafana/repo"),
 	}
-	oldRepo.cfg.Secure.Token = resource.InlineSecureValue{Name: "old-token"}
+	oldRepo.cfg.SetSecureValue(provisioningv0alpha1.RepositorySecureToken, resource.InlineSecureValue{Name: "old-token"})
 
 	tmpRepo := &staticTestRepository{
 		cfg: testGitHubRepository("test", "default", "https://github.com/grafana/repo"),
@@ -98,7 +98,7 @@ func TestTestConnector_AllowsUnchangedURLWithoutNewToken(t *testing.T) {
 	repoFactory := repository.NewMockFactory(t)
 	repoFactory.EXPECT().Build(mock.Anything, mock.MatchedBy(func(cfg *provisioningv0alpha1.Repository) bool {
 		return cfg.URL() == "https://github.com/grafana/repo" &&
-			cfg.Secure.Token.Name == "old-token"
+			cfg.Secure[provisioningv0alpha1.RepositorySecureToken].Name == "old-token"
 	})).Return(tmpRepo, nil).Once()
 
 	responder := &testResponder{}
@@ -131,21 +131,21 @@ func TestTestConnector_URLChangeWithConnection(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			old := testGitHubRepository("test", "default", "https://github.com/grafana/old")
 			old.Spec.Connection = &provisioningv0alpha1.RepositoryConnectionInfo{Name: "connection"}
-			old.Secure.Token = resource.InlineSecureValue{Name: "old-token"}
+			old.SetSecureValue(provisioningv0alpha1.RepositorySecureToken, resource.InlineSecureValue{Name: "old-token"})
 			original := old.DeepCopy()
 			updated := old.DeepCopy()
 			updated.Spec.Github.Url = new("https://github.com/grafana/new")
-			updated.Secure.Token = tc.token
+			updated.SetSecureValue(provisioningv0alpha1.RepositorySecureToken, tc.token)
 			body, err := json.Marshal(updated)
 			require.NoError(t, err)
 			conn := connection.NewMockConnection(t)
 			conn.EXPECT().GenerateRepositoryToken(mock.Anything, mock.MatchedBy(func(cfg *provisioningv0alpha1.Repository) bool {
-				return cfg.URL() == updated.URL() && cfg.Secure.Token == (resource.InlineSecureValue{Remove: true})
+				return cfg.URL() == updated.URL() && cfg.Secure[provisioningv0alpha1.RepositorySecureToken] == (resource.InlineSecureValue{Remove: true})
 			})).Return(&connection.ExpirableSecureValue{Token: "connection-token"}, tc.err).Once()
 			factory := repository.NewMockFactory(t)
 			if tc.err == nil {
 				factory.EXPECT().Build(mock.Anything, mock.MatchedBy(func(cfg *provisioningv0alpha1.Repository) bool {
-					return cfg.URL() == updated.URL() && cfg.Secure.Token == (resource.InlineSecureValue{Create: "connection-token"})
+					return cfg.URL() == updated.URL() && cfg.Secure[provisioningv0alpha1.RepositorySecureToken] == (resource.InlineSecureValue{Create: "connection-token"})
 				})).Return(&staticTestRepository{cfg: updated, rsp: &provisioningv0alpha1.TestResults{Success: true, Code: http.StatusOK}}, nil).Once()
 			}
 			responder := &testResponder{}

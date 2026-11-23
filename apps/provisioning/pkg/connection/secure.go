@@ -51,7 +51,7 @@ type SecureValues interface {
 type secureValues struct {
 	svc       decrypt.DecryptService
 	metrics   *DecryptMetrics
-	names     provisioning.ConnectionSecure
+	names     resource.InlineSecureValues
 	namespace string
 }
 
@@ -107,15 +107,15 @@ func isNotFoundErr(err error) bool {
 }
 
 func (s *secureValues) PrivateKey(ctx context.Context) (resource.RawSecureValue, error) {
-	return s.get(ctx, s.names.PrivateKey, secretTypePrivateKey)
+	return s.get(ctx, s.names[provisioning.ConnectionSecurePrivateKey], secretTypePrivateKey)
 }
 
 func (s *secureValues) ClientSecret(ctx context.Context) (resource.RawSecureValue, error) {
-	return s.get(ctx, s.names.ClientSecret, secretTypeClientSecret)
+	return s.get(ctx, s.names[provisioning.ConnectionSecureClientSecret], secretTypeClientSecret)
 }
 
 func (s *secureValues) Token(ctx context.Context) (resource.RawSecureValue, error) {
-	v, err := s.get(ctx, s.names.Token, secretTypeToken)
+	v, err := s.get(ctx, s.names[provisioning.ConnectionSecureToken], secretTypeToken)
 	if errors.Is(err, ErrSecretNotFound) {
 		return "", fmt.Errorf("%w: %w", ErrTokenNotFound, err)
 	}
@@ -124,6 +124,6 @@ func (s *secureValues) Token(ctx context.Context) (resource.RawSecureValue, erro
 
 func ProvideDecrypter(svc decrypt.DecryptService, metrics *DecryptMetrics) Decrypter {
 	return func(c *provisioning.Connection) SecureValues {
-		return &secureValues{svc: svc, metrics: metrics, names: c.Secure, namespace: c.Namespace}
+		return &secureValues{svc: svc, metrics: metrics, names: resource.CopySecureValues(c.Secure), namespace: c.Namespace}
 	}
 }

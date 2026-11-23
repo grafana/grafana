@@ -348,6 +348,28 @@ func TestAdmissionMutator_Mutate_ForwardsOldObjectToFactory(t *testing.T) {
 	require.NoError(t, m.Mutate(context.Background(), attr, nil))
 }
 
+func TestAdmissionMutator_Mutate_DropsUnsupportedSecureValues(t *testing.T) {
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test"},
+		Secure: resource.InlineSecureValues{
+			provisioning.RepositorySecureToken:         {Name: "token"},
+			provisioning.RepositorySecureWebhookSecret: {},
+			provisioning.ConnectionSecurePrivateKey:    {Create: resource.NewSecretValue("secret")},
+			"unknown":                                  {Name: "other"},
+		},
+	}
+
+	factory := NewMockFactory(t)
+	factory.EXPECT().Mutate(mock.Anything, mock.MatchedBy(func(r *provisioning.Repository) bool {
+		return len(r.Secure) == 1 // the factory must only see supported values
+	}), mock.Anything).Return(nil).Once()
+
+	m := NewAdmissionMutator(factory, 60*time.Second)
+	require.NoError(t, m.Mutate(context.Background(), newMutatorTestAttributes(repo, nil, admission.Create), nil))
+
+	assert.Equal(t, resource.InlineSecureValues{provisioning.RepositorySecureToken: {Name: "token"}}, repo.Secure)
+}
+
 func TestAdmissionMutator_Mutate_SkipsSubresourcePatches(t *testing.T) {
 	factory := NewMockFactory(t)
 	// No EXPECT() set up for Mutate: the mock will fail the test if it's called,
@@ -444,8 +466,8 @@ func TestCopySecureValues(t *testing.T) {
 			name: "copies token from old to new when new is zero",
 			new:  &provisioning.Repository{},
 			old: &provisioning.Repository{
-				Secure: provisioning.SecureValues{
-					Token: resource.InlineSecureValue{Name: "old-token"},
+				Secure: resource.InlineSecureValues{
+					provisioning.RepositorySecureToken: resource.InlineSecureValue{Name: "old-token"},
 				},
 			},
 			wantToken: resource.InlineSecureValue{Name: "old-token"},
@@ -454,8 +476,8 @@ func TestCopySecureValues(t *testing.T) {
 			name: "copies webhook secret from old to new when new is zero",
 			new:  &provisioning.Repository{},
 			old: &provisioning.Repository{
-				Secure: provisioning.SecureValues{
-					WebhookSecret: resource.InlineSecureValue{Name: "old-secret"},
+				Secure: resource.InlineSecureValues{
+					provisioning.RepositorySecureWebhookSecret: resource.InlineSecureValue{Name: "old-secret"},
 				},
 			},
 			wantSecret: resource.InlineSecureValue{Name: "old-secret"},
@@ -464,8 +486,8 @@ func TestCopySecureValues(t *testing.T) {
 			name: "copies commit signing key from old to new when new is zero",
 			new:  &provisioning.Repository{},
 			old: &provisioning.Repository{
-				Secure: provisioning.SecureValues{
-					CommitSigningKey: resource.InlineSecureValue{Name: "old-signing-key"},
+				Secure: resource.InlineSecureValues{
+					provisioning.RepositorySecureCommitSigningKey: resource.InlineSecureValue{Name: "old-signing-key"},
 				},
 			},
 			wantSigningKey: resource.InlineSecureValue{Name: "old-signing-key"},
@@ -473,13 +495,13 @@ func TestCopySecureValues(t *testing.T) {
 		{
 			name: "does not overwrite existing token in new",
 			new: &provisioning.Repository{
-				Secure: provisioning.SecureValues{
-					Token: resource.InlineSecureValue{Name: "new-token"},
+				Secure: resource.InlineSecureValues{
+					provisioning.RepositorySecureToken: resource.InlineSecureValue{Name: "new-token"},
 				},
 			},
 			old: &provisioning.Repository{
-				Secure: provisioning.SecureValues{
-					Token: resource.InlineSecureValue{Name: "old-token"},
+				Secure: resource.InlineSecureValues{
+					provisioning.RepositorySecureToken: resource.InlineSecureValue{Name: "old-token"},
 				},
 			},
 			wantToken: resource.InlineSecureValue{Name: "new-token"},
@@ -501,9 +523,9 @@ func TestCopySecureValues(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			CopySecureValues(tt.new, tt.old)
-			assert.Equal(t, tt.wantToken, tt.new.Secure.Token)
-			assert.Equal(t, tt.wantSecret, tt.new.Secure.WebhookSecret)
-			assert.Equal(t, tt.wantSigningKey, tt.new.Secure.CommitSigningKey)
+			assert.Equal(t, tt.wantToken, tt.new.Secure[provisioning.RepositorySecureToken])
+			assert.Equal(t, tt.wantSecret, tt.new.Secure[provisioning.RepositorySecureWebhookSecret])
+			assert.Equal(t, tt.wantSigningKey, tt.new.Secure[provisioning.RepositorySecureCommitSigningKey])
 		})
 	}
 }
@@ -516,7 +538,7 @@ func TestInvalidateConnectionTokenOnURLChange(t *testing.T) {
 				Github:     &provisioning.RepositoryGitHubRepositoryConfig{Url: new(url)},
 				Connection: &provisioning.RepositoryConnectionInfo{Name: "gh-app"},
 			},
-			Secure: provisioning.SecureValues{Token: token},
+			Secure: resource.InlineSecureValues{provisioning.RepositorySecureToken: token},
 		}
 	}
 	describe := func(s string) *string { return &s }
@@ -582,7 +604,7 @@ func TestInvalidateConnectionTokenOnURLChange(t *testing.T) {
 					Type:   provisioning.RepositorySpecTypeGithub,
 					Github: &provisioning.RepositoryGitHubRepositoryConfig{Url: new("https://github.com/grafana/old")},
 				},
-				Secure: provisioning.SecureValues{Token: resource.InlineSecureValue{Name: "old-token"}},
+				Secure: resource.InlineSecureValues{provisioning.RepositorySecureToken: resource.InlineSecureValue{Name: "old-token"}},
 			},
 			wantToken: resource.InlineSecureValue{},
 		},
@@ -591,7 +613,7 @@ func TestInvalidateConnectionTokenOnURLChange(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			InvalidateConnectionTokenOnURLChange(tt.new, tt.old)
-			assert.Equal(t, tt.wantToken, tt.new.Secure.Token)
+			assert.Equal(t, tt.wantToken, tt.new.Secure[provisioning.RepositorySecureToken])
 		})
 	}
 }
@@ -606,7 +628,7 @@ func TestInvalidateConnectionTokenDoesNotBypassHostCheck(t *testing.T) {
 				Github:     &provisioning.RepositoryGitHubRepositoryConfig{Url: new(url)},
 				Connection: &provisioning.RepositoryConnectionInfo{Name: "gh-app"},
 			},
-			Secure: provisioning.SecureValues{Token: token},
+			Secure: resource.InlineSecureValues{provisioning.RepositorySecureToken: token},
 		}
 	}
 	old := connectionRepo("https://github.com/grafana/old", resource.InlineSecureValue{Name: "old-token"})
@@ -661,7 +683,7 @@ func TestAdmissionMutator_Mutate_InvalidatesAfterURLNormalization(t *testing.T) 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			oldRepo := newRepoAt("https://github.com/grafana/repo")
-			oldRepo.Secure.Token = resource.InlineSecureValue{Name: "old-token"}
+			oldRepo.SetSecureValue(provisioning.RepositorySecureToken, resource.InlineSecureValue{Name: "old-token"})
 			newRepo := newRepoAt(tt.newURL)
 
 			factory := NewMockFactory(t)
@@ -677,7 +699,7 @@ func TestAdmissionMutator_Mutate_InvalidatesAfterURLNormalization(t *testing.T) 
 
 			require.NoError(t, m.Mutate(context.Background(), attr, nil))
 			// A zero token means the mutator left it alone, so storage keeps the stored one.
-			assert.Equal(t, tt.wantToken, newRepo.Secure.Token)
+			assert.Equal(t, tt.wantToken, newRepo.Secure[provisioning.RepositorySecureToken])
 		})
 	}
 }
@@ -687,7 +709,7 @@ func TestAdmissionMutator_Mutate_InvalidatesAfterURLNormalization(t *testing.T) 
 // a supplied token, skipping both the re-mint and the host check.
 func TestSuppliedNewTokenIgnoresDescription(t *testing.T) {
 	repoWithToken := func(token resource.InlineSecureValue) *provisioning.Repository {
-		return &provisioning.Repository{Secure: provisioning.SecureValues{Token: token}}
+		return &provisioning.Repository{Secure: resource.InlineSecureValues{provisioning.RepositorySecureToken: token}}
 	}
 	describe := func(s string) *string { return &s }
 

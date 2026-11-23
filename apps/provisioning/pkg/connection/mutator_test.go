@@ -128,6 +128,29 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 	}
 }
 
+func TestAdmissionMutator_Mutate_DropsUnsupportedSecureValues(t *testing.T) {
+	conn := &provisioning.Connection{
+		ObjectMeta: metav1.ObjectMeta{Name: "test"},
+		Spec:       provisioning.ConnectionSpec{Type: provisioning.ConnectionTypeGithub},
+		Secure: resource.InlineSecureValues{
+			provisioning.ConnectionSecurePrivateKey:    {Name: "private-key"},
+			provisioning.ConnectionSecureToken:         {Description: new("only a description")},
+			provisioning.RepositorySecureWebhookSecret: {Create: resource.NewSecretValue("secret")},
+			"unknown": {Name: "other"},
+		},
+	}
+
+	factory := NewMockFactory(t)
+	factory.EXPECT().Mutate(mock.Anything, mock.MatchedBy(func(c *provisioning.Connection) bool {
+		return len(c.Secure) == 1 // the factory must only see supported values
+	})).Return(nil).Once()
+
+	m := NewAdmissionMutator(factory)
+	require.NoError(t, m.Mutate(t.Context(), newMutatorTestAttributes(conn, nil, admission.Create), nil))
+
+	assert.Equal(t, resource.InlineSecureValues{provisioning.ConnectionSecurePrivateKey: {Name: "private-key"}}, conn.Secure)
+}
+
 func TestAdmissionMutator_MutateUpdateOAuthToken(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -138,7 +161,7 @@ func TestAdmissionMutator_MutateUpdateOAuthToken(t *testing.T) {
 		newGitOAuth  *provisioning.ConnectionGitOAuthConfig
 		oldGitOAuth  *provisioning.ConnectionGitOAuthConfig
 		newOAuth     *provisioning.ConnectionOAuthConfig
-		newSecure    provisioning.ConnectionSecure
+		newSecure    resource.InlineSecureValues
 		oldOAuth     *provisioning.ConnectionOAuthConfig
 		wantToken    resource.InlineSecureValue
 	}{
@@ -211,8 +234,8 @@ func TestAdmissionMutator_MutateUpdateOAuthToken(t *testing.T) {
 		{
 			name:     "removes token when oauth client secret is changed",
 			newOAuth: &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
-			newSecure: provisioning.ConnectionSecure{
-				ClientSecret: resource.InlineSecureValue{Create: "new-secret-value"},
+			newSecure: resource.InlineSecureValues{
+				provisioning.ConnectionSecureClientSecret: resource.InlineSecureValue{Create: "new-secret-value"},
 			},
 			oldOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
 			wantToken: resource.InlineSecureValue{Remove: true},
@@ -220,8 +243,8 @@ func TestAdmissionMutator_MutateUpdateOAuthToken(t *testing.T) {
 		{
 			name:     "removes token when oauth client secret reference is changed",
 			newOAuth: &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
-			newSecure: provisioning.ConnectionSecure{
-				ClientSecret: resource.InlineSecureValue{Name: "new-secret"},
+			newSecure: resource.InlineSecureValues{
+				provisioning.ConnectionSecureClientSecret: resource.InlineSecureValue{Name: "new-secret"},
 			},
 			oldOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
 			wantToken: resource.InlineSecureValue{Remove: true},
@@ -229,8 +252,8 @@ func TestAdmissionMutator_MutateUpdateOAuthToken(t *testing.T) {
 		{
 			name:     "keeps token when oauth client secret reference is unchanged",
 			newOAuth: &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
-			newSecure: provisioning.ConnectionSecure{
-				ClientSecret: resource.InlineSecureValue{Name: "old-secret"},
+			newSecure: resource.InlineSecureValues{
+				provisioning.ConnectionSecureClientSecret: resource.InlineSecureValue{Name: "old-secret"},
 			},
 			oldOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
 			wantToken: resource.InlineSecureValue{},
@@ -275,15 +298,15 @@ func TestAdmissionMutator_MutateUpdateOAuthToken(t *testing.T) {
 					GithubEnterpriseOAuth: githubEnterpriseConfig(tt.oldServerURL),
 					GitOAuth:              tt.oldGitOAuth,
 				},
-				Secure: provisioning.ConnectionSecure{
-					Token:        resource.InlineSecureValue{Name: "old-token"},
-					ClientSecret: resource.InlineSecureValue{Name: "old-secret"},
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecureToken:        resource.InlineSecureValue{Name: "old-token"},
+					provisioning.ConnectionSecureClientSecret: resource.InlineSecureValue{Name: "old-secret"},
 				},
 			}
 
 			m := NewAdmissionMutator(factory)
 			require.NoError(t, m.Mutate(t.Context(), newMutatorTestAttributes(obj, old, admission.Update), nil))
-			assert.Equal(t, tt.wantToken, obj.Secure.Token)
+			assert.Equal(t, tt.wantToken, obj.Secure[provisioning.ConnectionSecureToken])
 		})
 	}
 }
@@ -329,7 +352,7 @@ func TestAdmissionMutator_Mutate_RunsForBundledSpecChange(t *testing.T) {
 	old := &provisioning.Connection{
 		ObjectMeta: metav1.ObjectMeta{Name: "test"},
 		Spec:       provisioning.ConnectionSpec{Type: provisioning.ConnectionTypeGithub, Url: "https://old.example.com"},
-		Secure:     provisioning.ConnectionSecure{Token: resource.InlineSecureValue{Name: "old-token"}},
+		Secure:     resource.InlineSecureValues{provisioning.ConnectionSecureToken: resource.InlineSecureValue{Name: "old-token"}},
 	}
 	// Bundled onto a /status request: URL change without a new token must
 	// still trigger the OAuth token removal in Mutate.
@@ -345,7 +368,7 @@ func TestAdmissionMutator_Mutate_RunsForBundledSpecChange(t *testing.T) {
 	attr := newMutatorTestAttributesWithSubresource(conn, old, admission.Update, "status")
 
 	require.NoError(t, m.Mutate(t.Context(), attr, nil))
-	assert.True(t, conn.Secure.Token.Remove, "URL change should invalidate the stored OAuth token even on a bundled status request")
+	assert.True(t, conn.Secure[provisioning.ConnectionSecureToken].Remove, "URL change should invalidate the stored OAuth token even on a bundled status request")
 }
 
 func githubEnterpriseConfig(serverURL string) *provisioning.ConnectionGitHubEnterpriseOAuthConfig {
@@ -368,8 +391,8 @@ func TestCopySecureValues(t *testing.T) {
 			name: "copies private key from old to new when new is zero",
 			new:  &provisioning.Connection{},
 			old: &provisioning.Connection{
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: resource.InlineSecureValue{Name: "old-key"},
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecurePrivateKey: resource.InlineSecureValue{Name: "old-key"},
 				},
 			},
 			wantPrivateKey: resource.InlineSecureValue{Name: "old-key"},
@@ -378,8 +401,8 @@ func TestCopySecureValues(t *testing.T) {
 			name: "copies token from old to new when new is zero",
 			new:  &provisioning.Connection{},
 			old: &provisioning.Connection{
-				Secure: provisioning.ConnectionSecure{
-					Token: resource.InlineSecureValue{Name: "old-token"},
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecureToken: resource.InlineSecureValue{Name: "old-token"},
 				},
 			},
 			wantToken: resource.InlineSecureValue{Name: "old-token"},
@@ -388,8 +411,8 @@ func TestCopySecureValues(t *testing.T) {
 			name: "copies client secret from old to new when new is zero",
 			new:  &provisioning.Connection{},
 			old: &provisioning.Connection{
-				Secure: provisioning.ConnectionSecure{
-					ClientSecret: resource.InlineSecureValue{Name: "old-secret"},
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecureClientSecret: resource.InlineSecureValue{Name: "old-secret"},
 				},
 			},
 			wantClientSecret: resource.InlineSecureValue{Name: "old-secret"},
@@ -397,17 +420,17 @@ func TestCopySecureValues(t *testing.T) {
 		{
 			name: "does not overwrite existing values in new",
 			new: &provisioning.Connection{
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey:   resource.InlineSecureValue{Name: "new-key"},
-					Token:        resource.InlineSecureValue{Name: "new-token"},
-					ClientSecret: resource.InlineSecureValue{Name: "new-secret"},
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecurePrivateKey:   resource.InlineSecureValue{Name: "new-key"},
+					provisioning.ConnectionSecureToken:        resource.InlineSecureValue{Name: "new-token"},
+					provisioning.ConnectionSecureClientSecret: resource.InlineSecureValue{Name: "new-secret"},
 				},
 			},
 			old: &provisioning.Connection{
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey:   resource.InlineSecureValue{Name: "old-key"},
-					Token:        resource.InlineSecureValue{Name: "old-token"},
-					ClientSecret: resource.InlineSecureValue{Name: "old-secret"},
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecurePrivateKey:   resource.InlineSecureValue{Name: "old-key"},
+					provisioning.ConnectionSecureToken:        resource.InlineSecureValue{Name: "old-token"},
+					provisioning.ConnectionSecureClientSecret: resource.InlineSecureValue{Name: "old-secret"},
 				},
 			},
 			wantPrivateKey:   resource.InlineSecureValue{Name: "new-key"},
@@ -430,10 +453,10 @@ func TestCopySecureValues(t *testing.T) {
 			name: "copies all values when all are zero in new",
 			new:  &provisioning.Connection{},
 			old: &provisioning.Connection{
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey:   resource.InlineSecureValue{Name: "old-key"},
-					Token:        resource.InlineSecureValue{Name: "old-token"},
-					ClientSecret: resource.InlineSecureValue{Name: "old-secret"},
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecurePrivateKey:   resource.InlineSecureValue{Name: "old-key"},
+					provisioning.ConnectionSecureToken:        resource.InlineSecureValue{Name: "old-token"},
+					provisioning.ConnectionSecureClientSecret: resource.InlineSecureValue{Name: "old-secret"},
 				},
 			},
 			wantPrivateKey:   resource.InlineSecureValue{Name: "old-key"},
@@ -445,9 +468,9 @@ func TestCopySecureValues(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			CopySecureValues(tt.new, tt.old)
-			assert.Equal(t, tt.wantPrivateKey, tt.new.Secure.PrivateKey)
-			assert.Equal(t, tt.wantToken, tt.new.Secure.Token)
-			assert.Equal(t, tt.wantClientSecret, tt.new.Secure.ClientSecret)
+			assert.Equal(t, tt.wantPrivateKey, tt.new.Secure[provisioning.ConnectionSecurePrivateKey])
+			assert.Equal(t, tt.wantToken, tt.new.Secure[provisioning.ConnectionSecureToken])
+			assert.Equal(t, tt.wantClientSecret, tt.new.Secure[provisioning.ConnectionSecureClientSecret])
 		})
 	}
 }

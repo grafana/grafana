@@ -105,7 +105,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 	logger := logging.FromContext(ctx)
 
 	// If given token doesn't exists, or the privateKey is being renewed, we need to generate a new token for testing.
-	if c.secrets.Token.IsZero() || !c.obj.Secure.PrivateKey.Create.IsZero() {
+	if c.secrets.Token.IsZero() || !c.obj.Secure[provisioning.ConnectionSecurePrivateKey].Create.IsZero() {
 		// In case the token is not generated, we create one on the fly
 		// to testing that the other fields are valid.
 		token, _, err := GenerateJWTToken(c.cfg.AppID(), c.secrets.PrivateKey)
@@ -123,7 +123,9 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				},
 			), nil
 		}
-		c.obj.Secure.Token.Create = token
+		tokenValue := c.obj.Secure[provisioning.ConnectionSecureToken]
+		tokenValue.Create = token
+		c.obj.SetSecureValue(provisioning.ConnectionSecureToken, tokenValue)
 		c.secrets.Token = token
 	} else {
 		// In case the token is there, we verify it's correct.

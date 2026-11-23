@@ -70,8 +70,8 @@ func TestConnection_Mutate(t *testing.T) {
 						InstallationID: "456",
 					},
 				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecurePrivateKey: resource.InlineSecureValue{
 						Create: resource.NewSecretValue(privateKeyBase64),
 					},
 				},
@@ -95,8 +95,8 @@ func TestConnection_Mutate(t *testing.T) {
 						InstallationID: "456",
 					},
 				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecurePrivateKey: resource.InlineSecureValue{
 						Create: resource.NewSecretValue(privateKeyBase64),
 					},
 				},
@@ -107,7 +107,7 @@ func TestConnection_Mutate(t *testing.T) {
 			wantErr: false,
 			validateResult: func(t *testing.T, connection *provisioning.Connection) {
 				assert.Equal(t, "https://github.com/settings/installations/456", connection.Spec.Url)
-				assert.True(t, connection.Secure.Token.Create.IsZero(), "Token should not be generated in mutator")
+				assert.True(t, connection.Secure[provisioning.ConnectionSecureToken].Create.IsZero(), "Token should not be generated in mutator")
 			},
 		},
 		{
@@ -216,11 +216,11 @@ func TestConnection_Test(t *testing.T) {
 						InstallationID: "456",
 					},
 				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecurePrivateKey: resource.InlineSecureValue{
 						Create: resource.RawSecureValue(privateKeyBase64),
 					},
-					Token: resource.InlineSecureValue{
+					provisioning.ConnectionSecureToken: resource.InlineSecureValue{
 						Create: token,
 					},
 				},
@@ -281,8 +281,8 @@ func TestConnection_Test(t *testing.T) {
 						InstallationID: "456",
 					},
 				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecurePrivateKey: resource.InlineSecureValue{
 						Create: resource.RawSecureValue(privateKeyBase64),
 					},
 				},
@@ -343,11 +343,11 @@ func TestConnection_Test(t *testing.T) {
 						InstallationID: "456",
 					},
 				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecurePrivateKey: resource.InlineSecureValue{
 						Create: resource.RawSecureValue(privateKeyBase64),
 					},
-					Token: resource.InlineSecureValue{
+					provisioning.ConnectionSecureToken: resource.InlineSecureValue{
 						Create: token,
 					},
 				},
@@ -1682,8 +1682,8 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 						InstallationID: "456",
 					},
 				},
-				Secure: provisioning.ConnectionSecure{
-					Token: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecureToken: resource.InlineSecureValue{
 						Create: resource.RawSecureValue("jwt-token"),
 					},
 				},
@@ -1759,8 +1759,8 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 						InstallationID: "456",
 					},
 				},
-				Secure: provisioning.ConnectionSecure{
-					Token: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecureToken: resource.InlineSecureValue{
 						Create: resource.RawSecureValue("jwt-token"),
 					},
 				},
@@ -1785,8 +1785,8 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 						InstallationID: "456",
 					},
 				},
-				Secure: provisioning.ConnectionSecure{
-					Token: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecureToken: resource.InlineSecureValue{
 						Create: resource.RawSecureValue("jwt-token"),
 					},
 				},
@@ -1813,8 +1813,8 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 						InstallationID: "456",
 					},
 				},
-				Secure: provisioning.ConnectionSecure{
-					Token: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecureToken: resource.InlineSecureValue{
 						Create: resource.RawSecureValue("jwt-token"),
 					},
 				},
@@ -1847,8 +1847,8 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 						InstallationID: "456",
 					},
 				},
-				Secure: provisioning.ConnectionSecure{
-					Token: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecureToken: resource.InlineSecureValue{
 						Create: resource.RawSecureValue("jwt-token"),
 					},
 				},
@@ -1881,8 +1881,8 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 						InstallationID: "456",
 					},
 				},
-				Secure: provisioning.ConnectionSecure{
-					Token: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecureToken: resource.InlineSecureValue{
 						Create: resource.RawSecureValue("jwt-token"),
 					},
 				},
@@ -1915,8 +1915,8 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 						InstallationID: "456",
 					},
 				},
-				Secure: provisioning.ConnectionSecure{
-					Token: resource.InlineSecureValue{
+				Secure: resource.InlineSecureValues{
+					provisioning.ConnectionSecureToken: resource.InlineSecureValue{
 						Create: resource.RawSecureValue("jwt-token"),
 					},
 				},
@@ -1948,8 +1948,8 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 			}
 
 			conn := github.NewConnection(tt.connection, mockFactory, github.ConnectionSecrets{
-				Token:      tt.connection.Secure.Token.Create,
-				PrivateKey: tt.connection.Secure.PrivateKey.Create,
+				Token:      tt.connection.Secure[provisioning.ConnectionSecureToken].Create,
+				PrivateKey: tt.connection.Secure[provisioning.ConnectionSecurePrivateKey].Create,
 			})
 			token, err := conn.GenerateRepositoryToken(t.Context(), tt.repo)
 
@@ -1975,8 +1975,8 @@ func TestConnection_ListRepositories(t *testing.T) {
 					InstallationID: "456",
 				},
 			},
-			Secure: provisioning.ConnectionSecure{
-				Token: resource.InlineSecureValue{
+			Secure: resource.InlineSecureValues{
+				provisioning.ConnectionSecureToken: resource.InlineSecureValue{
 					Create: resource.NewSecretValue("test-token"),
 				},
 			},
@@ -2039,8 +2039,8 @@ func TestConnection_ListRepositories(t *testing.T) {
 					InstallationID: "456",
 				},
 			},
-			Secure: provisioning.ConnectionSecure{
-				Token: resource.InlineSecureValue{
+			Secure: resource.InlineSecureValues{
+				provisioning.ConnectionSecureToken: resource.InlineSecureValue{
 					Create: resource.NewSecretValue("test-token"),
 				},
 			},
@@ -2078,8 +2078,8 @@ func TestConnection_ListRepositories(t *testing.T) {
 					InstallationID: "456",
 				},
 			},
-			Secure: provisioning.ConnectionSecure{
-				Token: resource.InlineSecureValue{
+			Secure: resource.InlineSecureValues{
+				provisioning.ConnectionSecureToken: resource.InlineSecureValue{
 					Create: resource.NewSecretValue("test-token"),
 				},
 			},
@@ -2110,8 +2110,8 @@ func TestConnection_ListRepositories(t *testing.T) {
 					InstallationID: "456",
 				},
 			},
-			Secure: provisioning.ConnectionSecure{
-				Token: resource.InlineSecureValue{
+			Secure: resource.InlineSecureValues{
+				provisioning.ConnectionSecureToken: resource.InlineSecureValue{
 					Create: resource.NewSecretValue("test-token"),
 				},
 			},
@@ -2142,8 +2142,8 @@ func TestConnection_ListRepositories(t *testing.T) {
 					InstallationID: "456",
 				},
 			},
-			Secure: provisioning.ConnectionSecure{
-				Token: resource.InlineSecureValue{
+			Secure: resource.InlineSecureValues{
+				provisioning.ConnectionSecureToken: resource.InlineSecureValue{
 					Create: resource.NewSecretValue("test-token"),
 				},
 			},

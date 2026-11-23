@@ -1211,11 +1211,11 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 func (b *APIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	if b.gv.Version == "v1beta1" {
 		return func(rc common.ReferenceCallback) map[string]common.OpenAPIDefinition {
-			defs := provisioning.GetOpenAPIDefinitions(rc)
+			defs := provisioning.GetOpenAPIDefinitionsWithSecureValues(rc)
 			return ReplaceOpenAPIVersion(defs, "provisioning", "v0alpha1", "v1beta1")
 		}
 	}
-	return provisioning.GetOpenAPIDefinitions
+	return provisioning.GetOpenAPIDefinitionsWithSecureValues
 }
 
 // TODO: move endpoint specific logic to the connector so that we don't have things spread out all over the place.

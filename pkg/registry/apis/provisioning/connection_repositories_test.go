@@ -214,8 +214,8 @@ func TestConnectionRepositoriesConnector_WithGitHubConnection(t *testing.T) {
 					InstallationID: "789012",
 				},
 			},
-			Secure: provisioning.ConnectionSecure{
-				Token: resource.InlineSecureValue{
+			Secure: resource.InlineSecureValues{
+				provisioning.ConnectionSecureToken: resource.InlineSecureValue{
 					Create: resource.NewSecretValue("test-token"),
 				},
 			},
@@ -304,8 +304,8 @@ func TestConnectionRepositoriesConnector_WithGitHubConnection(t *testing.T) {
 					InstallationID: "789012",
 				},
 			},
-			Secure: provisioning.ConnectionSecure{
-				Token: resource.InlineSecureValue{
+			Secure: resource.InlineSecureValues{
+				provisioning.ConnectionSecureToken: resource.InlineSecureValue{
 					Create: resource.NewSecretValue("test-token"),
 				},
 			},

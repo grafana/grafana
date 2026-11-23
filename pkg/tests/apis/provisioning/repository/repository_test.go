@@ -2058,7 +2058,7 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 		require.NotEqual(collectT, 0, conn.Status.ObservedGeneration, "resource should be reconciled at least once")
 		require.Equal(collectT, conn.Status.ObservedGeneration, conn.Generation, "resource should be reconciled")
 		// Token should be there
-		require.False(collectT, conn.Secure.Token.IsZero())
+		require.False(collectT, conn.Secure[provisioning.ConnectionSecureToken].IsZero())
 	}, time.Second*10, time.Second, "Expected connection to be reconciled")
 
 	// Create a repository WITH the connection
@@ -2096,16 +2096,16 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 		require.NotEqual(collectT, 0, r.Status.ObservedGeneration, "resource should be reconciled at least once")
 		require.Equal(collectT, r.Status.ObservedGeneration, r.Generation, "resource should be reconciled")
 		// Token should be there
-		require.False(collectT, r.Secure.Token.IsZero())
+		require.False(collectT, r.Secure[provisioning.RepositorySecureToken].IsZero())
 		// Verify fieldErrors field exists (may be empty or contain validation warnings)
 		// fieldErrors are populated from testResults and may contain warnings even when healthy
 		require.NotNil(collectT, r.Status.FieldErrors, "fieldErrors field should exist in status")
 
-		decrypted, err := decryptService.Decrypt(t.Context(), "provisioning.grafana.app", r.GetNamespace(), r.Secure.Token.Name)
+		decrypted, err := decryptService.Decrypt(t.Context(), "provisioning.grafana.app", r.GetNamespace(), r.Secure[provisioning.RepositorySecureToken].Name)
 		require.NoError(collectT, err, "decryption error")
 		require.Len(collectT, decrypted, 1)
 
-		val := decrypted[r.Secure.Token.Name].Value()
+		val := decrypted[r.Secure[provisioning.RepositorySecureToken].Name].Value()
 		require.NotNil(collectT, val)
 		require.Equal(collectT, "someToken", val.DangerouslyExposeAndConsumeValue())
 	}, time.Second*10, time.Second, "Expected repo to be reconciled")
@@ -2166,20 +2166,20 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 		require.NoError(collectT, err, "can get repository")
 		r := common.MustFromUnstructured[provisioning.Repository](t, repo)
 		// Token should be there
-		require.False(collectT, r.Secure.Token.IsZero())
+		require.False(collectT, r.Secure[provisioning.RepositorySecureToken].IsZero())
 		// and different from the previous one
 		require.NotEqual(collectT,
-			firstReconciledRepo.Secure.Token.Name,
-			r.Secure.Token.Name,
+			firstReconciledRepo.Secure[provisioning.RepositorySecureToken].Name,
+			r.Secure[provisioning.RepositorySecureToken].Name,
 			"token should be updated",
 		)
 
 		// Just checking the token is what is going to be returned by the mock GH API
-		decrypted, err := decryptService.Decrypt(t.Context(), "provisioning.grafana.app", r.GetNamespace(), r.Secure.Token.Name)
+		decrypted, err := decryptService.Decrypt(t.Context(), "provisioning.grafana.app", r.GetNamespace(), r.Secure[provisioning.RepositorySecureToken].Name)
 		require.NoError(collectT, err, "decryption error")
 		require.Len(collectT, decrypted, 1)
 
-		val := decrypted[r.Secure.Token.Name].Value()
+		val := decrypted[r.Secure[provisioning.RepositorySecureToken].Name].Value()
 		require.NotNil(collectT, val)
 		require.Equal(collectT, "someToken", val.DangerouslyExposeAndConsumeValue())
 	}, time.Second*10, time.Second, "Expected repo token to be regenerated")

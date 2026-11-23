@@ -202,7 +202,7 @@ func repositoryAuthMethod(repo *provisioning.Repository) string {
 		return "none"
 	case repo.Spec.Connection != nil && repo.Spec.Connection.Name != "":
 		return "connection"
-	case !repo.Secure.Token.IsZero():
+	case !repo.Secure[provisioning.RepositorySecureToken].IsZero():
 		return "token"
 	default:
 		return "anonymous"

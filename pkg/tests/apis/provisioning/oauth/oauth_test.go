@@ -146,7 +146,7 @@ func TestIntegrationProvisioning_OAuthConnectionUnauthorized(t *testing.T) {
 		}
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "connection should be reconciled")
 
-	require.True(t, oauthsuite.GetConnection(t, helper, name).Secure.Token.IsZero(), "controller must not mint a token for oauth connections")
+	require.True(t, oauthsuite.GetConnection(t, helper, name).Secure[provisioning.ConnectionSecureToken].IsZero(), "controller must not mint a token for oauth connections")
 }
 
 func TestIntegrationProvisioning_OAuthConnectionAuthorizeRequests(t *testing.T) {
@@ -222,7 +222,7 @@ func TestIntegrationProvisioning_OAuthConnectionTokenDropOnCredentialChange(t *t
 
 			oauthsuite.UpdateConnection(t, helper, name, tt.mutate)
 
-			assert.Equal(t, tt.keepToken, !oauthsuite.GetConnection(t, helper, name).Secure.Token.IsZero())
+			assert.Equal(t, tt.keepToken, !oauthsuite.GetConnection(t, helper, name).Secure[provisioning.ConnectionSecureToken].IsZero())
 		})
 	}
 }

@@ -1036,9 +1036,9 @@ func TestAdmissionValidator_CopiesSecureValuesOnUpdate(t *testing.T) {
 			Type:  provisioning.RepositorySpecTypeGithub,
 			Sync:  provisioning.RepositorySyncOptions{IntervalSeconds: new(int64(60))},
 		},
-		Secure: provisioning.SecureValues{
-			Token:         resource.InlineSecureValue{Name: "old-token"},
-			WebhookSecret: resource.InlineSecureValue{Name: "old-secret"},
+		Secure: resource.InlineSecureValues{
+			provisioning.RepositorySecureToken:         resource.InlineSecureValue{Name: "old-token"},
+			provisioning.RepositorySecureWebhookSecret: resource.InlineSecureValue{Name: "old-secret"},
 		},
 	}
 
@@ -1061,8 +1061,8 @@ func TestAdmissionValidator_CopiesSecureValuesOnUpdate(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify secure values were copied
-	assert.Equal(t, "old-token", newRepo.Secure.Token.Name)
-	assert.Equal(t, "old-secret", newRepo.Secure.WebhookSecret.Name)
+	assert.Equal(t, "old-token", newRepo.Secure[provisioning.RepositorySecureToken].Name)
+	assert.Equal(t, "old-secret", newRepo.Secure[provisioning.RepositorySecureWebhookSecret].Name)
 }
 
 func TestAdmissionValidator_RequiresNewTokenWhenURLChanges(t *testing.T) {
@@ -1132,10 +1132,10 @@ func TestAdmissionValidator_RequiresNewTokenWhenURLChanges(t *testing.T) {
 			)
 
 			oldRepo := newGitHubRepositoryForURLChangeTest(tt.oldURL)
-			oldRepo.Secure.Token = resource.InlineSecureValue{Name: "old-token"}
+			oldRepo.SetSecureValue(provisioning.RepositorySecureToken, resource.InlineSecureValue{Name: "old-token"})
 
 			newRepo := newGitHubRepositoryForURLChangeTest(tt.newURL)
-			newRepo.Secure.Token = tt.newToken
+			newRepo.SetSecureValue(provisioning.RepositorySecureToken, tt.newToken)
 			if tt.connection != "" {
 				oldRepo.Spec.Connection = &provisioning.RepositoryConnectionInfo{Name: tt.connection}
 				newRepo.Spec.Connection = &provisioning.RepositoryConnectionInfo{Name: tt.connection}
@@ -1147,7 +1147,7 @@ func TestAdmissionValidator_RequiresNewTokenWhenURLChanges(t *testing.T) {
 			if tt.wantErr {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tt.wantErrContains)
-				assert.Equal(t, tt.newToken, newRepo.Secure.Token, "secure values should not be copied after rejection")
+				assert.Equal(t, tt.newToken, newRepo.Secure[provisioning.RepositorySecureToken], "secure values should not be copied after rejection")
 				return
 			}
 
@@ -1465,7 +1465,7 @@ func TestAdmissionValidator_Validate_StillValidatesSecureValuesBundledWithDisabl
 	// A new token riding along with the disable is content the validators have to see.
 	repo := old.DeepCopy()
 	repo.Spec.Sync.Enabled = false
-	repo.Secure.Token = resource.InlineSecureValue{Create: "new-token"}
+	repo.SetSecureValue(provisioning.RepositorySecureToken, resource.InlineSecureValue{Create: "new-token"})
 
 	mockFactory := NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).

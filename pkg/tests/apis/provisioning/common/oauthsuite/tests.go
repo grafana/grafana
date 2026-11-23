@@ -51,7 +51,7 @@ func testAuthorizeRejectsInvalidCode(t *testing.T, helper *common.ProvisioningTe
 	statusCode, err := PostAuthorize(t, helper.AdminREST, name, "not-a-valid-code")
 	require.Error(t, err, "the provider must reject an unknown authorization code")
 	require.Equal(t, http.StatusBadRequest, statusCode)
-	require.True(t, GetConnection(t, helper, name).Secure.Token.IsZero(), "a rejected code must not store a token")
+	require.True(t, GetConnection(t, helper, name).Secure[provisioning.ConnectionSecureToken].IsZero(), "a rejected code must not store a token")
 }
 
 func testValidation(t *testing.T, helper *common.ProvisioningTestHelper, p Provider) {
@@ -84,7 +84,7 @@ func testTokenDropOnProviderFieldChange(t *testing.T, helper *common.Provisionin
 				tt.Mutate(obj.Object["spec"].(map[string]any))
 			})
 
-			require.True(t, GetConnection(t, helper, name).Secure.Token.IsZero(), "the token must be dropped when %s changes", tt.Name)
+			require.True(t, GetConnection(t, helper, name).Secure[provisioning.ConnectionSecureToken].IsZero(), "the token must be dropped when %s changes", tt.Name)
 		})
 	}
 }
@@ -161,7 +161,7 @@ func testRepositoryUsesConnectionToken(t *testing.T, helper *common.Provisioning
 		if !assert.NoError(collect, err) {
 			return
 		}
-		assert.False(collect, r.Secure.Token.IsZero(), "repository token should be generated from the connection")
+		assert.False(collect, r.Secure[provisioning.RepositorySecureToken].IsZero(), "repository token should be generated from the connection")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 
 	helper.SyncAndWait(t, repo, nil)

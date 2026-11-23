@@ -41,7 +41,7 @@ func TestIntegrationProvisioning_GitHubAppURLChangeRemovesToken(t *testing.T) {
 			Github:  &provisioning.ConnectionGitHubConfig{AppID: "123456", InstallationID: "454545"},
 			Webhook: &provisioning.ConnectionWebhookConfig{Disabled: true},
 		},
-		Secure: provisioning.ConnectionSecure{PrivateKey: resource.InlineSecureValue{
+		Secure: resource.InlineSecureValues{provisioning.ConnectionSecurePrivateKey: resource.InlineSecureValue{
 			Create: resource.RawSecureValue(base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))),
 		}},
 	}
@@ -57,9 +57,9 @@ func TestIntegrationProvisioning_GitHubAppURLChangeRemovesToken(t *testing.T) {
 			Webhook:    &provisioning.RepositoryWebhookConfig{Disabled: new(true)},
 			Sync:       provisioning.RepositorySyncOptions{Target: provisioning.RepositorySyncOptionsTargetFolder},
 		},
-		Secure: provisioning.SecureValues{
-			Token:         resource.InlineSecureValue{Create: "old-token"},
-			WebhookSecret: resource.InlineSecureValue{Create: "webhook-secret"},
+		Secure: resource.InlineSecureValues{
+			provisioning.RepositorySecureToken:         resource.InlineSecureValue{Create: "old-token"},
+			provisioning.RepositorySecureWebhookSecret: resource.InlineSecureValue{Create: "webhook-secret"},
 		},
 	}
 	for _, includeTokenReference := range []bool{false, true} {
@@ -73,8 +73,8 @@ func TestIntegrationProvisioning_GitHubAppURLChangeRemovesToken(t *testing.T) {
 			created, err := helper.Repositories.Resource.Create(t.Context(), common.MustToUnstructured(t, repo), metav1.CreateOptions{})
 			require.NoError(t, err)
 			stored := common.MustFromUnstructured[provisioning.Repository](t, created)
-			require.NotEmpty(t, stored.Secure.Token.Name)
-			require.NotEmpty(t, stored.Secure.WebhookSecret.Name)
+			require.NotEmpty(t, stored.Secure[provisioning.RepositorySecureToken].Name)
+			require.NotEmpty(t, stored.Secure[provisioning.RepositorySecureWebhookSecret].Name)
 
 			err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
 				current, err := helper.Repositories.Resource.Get(t.Context(), repo.Name, metav1.GetOptions{})
@@ -82,10 +82,10 @@ func TestIntegrationProvisioning_GitHubAppURLChangeRemovesToken(t *testing.T) {
 					return err
 				}
 				updated := common.MustFromUnstructured[provisioning.Repository](t, current)
-				require.NotEmpty(t, updated.Secure.Token.Name)
+				require.NotEmpty(t, updated.Secure[provisioning.RepositorySecureToken].Name)
 				updated.Spec.Github.Url = new(ptr.Deref(updated.Spec.Github.Url, "") + "-new")
 				if !includeTokenReference {
-					updated.Secure.Token = resource.InlineSecureValue{}
+					updated.SetSecureValue(provisioning.RepositorySecureToken, resource.InlineSecureValue{})
 				}
 				result, err := helper.Repositories.Resource.Update(t.Context(), common.MustToUnstructured(t, updated), metav1.UpdateOptions{})
 				if err != nil {
@@ -93,8 +93,8 @@ func TestIntegrationProvisioning_GitHubAppURLChangeRemovesToken(t *testing.T) {
 				}
 				saved := common.MustFromUnstructured[provisioning.Repository](t, result)
 				assert.Equal(t, updated.URL(), saved.URL())
-				assert.True(t, saved.Secure.Token.IsZero(), "storage must consume the removal marker without restoring the token")
-				assert.Equal(t, stored.Secure.WebhookSecret, saved.Secure.WebhookSecret)
+				assert.True(t, saved.Secure[provisioning.RepositorySecureToken].IsZero(), "storage must consume the removal marker without restoring the token")
+				assert.Equal(t, stored.Secure[provisioning.RepositorySecureWebhookSecret], saved.Secure[provisioning.RepositorySecureWebhookSecret])
 				return nil
 			})
 			require.NoError(t, err)
@@ -193,7 +193,7 @@ func TestIntegrationProvisioning_GitHubAppURLChangeTestEndpoint(t *testing.T) {
 	obj, err := helper.Repositories.Resource.Get(t.Context(), repo.Name, metav1.GetOptions{})
 	require.NoError(t, err)
 	stored := common.MustFromUnstructured[provisioning.Repository](t, obj)
-	require.NotEmpty(t, stored.Secure.Token.Name)
+	require.NotEmpty(t, stored.Secure[provisioning.RepositorySecureToken].Name)
 
 	for _, tc := range []struct {
 		name       string
@@ -202,14 +202,14 @@ func TestIntegrationProvisioning_GitHubAppURLChangeTestEndpoint(t *testing.T) {
 		statusCode int
 	}{
 		{name: "omitted token", repository: "new", statusCode: http.StatusOK},
-		{name: "stored reference", repository: "new", token: stored.Secure.Token, statusCode: http.StatusOK},
+		{name: "stored reference", repository: "new", token: stored.Secure[provisioning.RepositorySecureToken], statusCode: http.StatusOK},
 		{name: "removal marker", repository: "new", token: resource.InlineSecureValue{Remove: true}, statusCode: http.StatusOK},
 		{name: "inaccessible repository", repository: "inaccessible", statusCode: http.StatusUnprocessableEntity},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			updated := stored.DeepCopy()
 			updated.Spec.Github.Url = new(gitServer.URL + "/grafana/" + tc.repository)
-			updated.Secure.Token = tc.token
+			updated.SetSecureValue(provisioning.RepositorySecureToken, tc.token)
 			body, err := json.Marshal(updated)
 			require.NoError(t, err)
 			tokensBefore, requestsBefore := tokenRequests.Load(), newRepoRequests.Load()
@@ -306,7 +306,7 @@ func TestIntegrationProvisioning_ConnectionRepositoryURLChange(t *testing.T) {
 		current, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 		require.NoError(collect, err)
 		stored := common.MustFromUnstructured[provisioning.Repository](t, current)
-		require.NotEmpty(collect, stored.Secure.Token.Name, "token should be minted from the connection")
+		require.NotEmpty(collect, stored.Secure[provisioning.RepositorySecureToken].Name, "token should be minted from the connection")
 		require.NotZero(collect, stored.Status.Token.LastUpdated, "token status should be stamped")
 		mintedAt = stored.Status.Token.LastUpdated
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "connection token should be generated")
@@ -324,7 +324,7 @@ func TestIntegrationProvisioning_ConnectionRepositoryURLChange(t *testing.T) {
 			current, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 			require.NoError(collect, err)
 			reconciled := common.MustFromUnstructured[provisioning.Repository](t, current)
-			require.NotEmpty(collect, reconciled.Secure.Token.Name, "a token should be stored again")
+			require.NotEmpty(collect, reconciled.Secure[provisioning.RepositorySecureToken].Name, "a token should be stored again")
 			require.Greater(collect, reconciled.Status.Token.LastUpdated, mintedAt,
 				"token should be re-minted for the new repository")
 		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "token should be regenerated after the url change")
