@@ -9,6 +9,7 @@ import (
 	"slices"
 	"testing"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -18,8 +19,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/storage"
-
-	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana-app-sdk/resource"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -417,7 +416,7 @@ func TestSecureLifecycle(t *testing.T) {
 			return out, nil, nil
 		}
 
-		requester := &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, OrgRole: identity.RoleAdmin, IsGrafanaAdmin: true}
+		requester := &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, OrgRole: claims.RoleAdmin, IsGrafanaAdmin: true}
 		ctx := identity.WithRequester(context.Background(), requester)
 
 		err := s.GuaranteedUpdate(ctx, "example/test", &unstructured.Unstructured{}, false, &storage.Preconditions{}, tryUpdate, nil)
