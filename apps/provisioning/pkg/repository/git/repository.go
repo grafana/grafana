@@ -18,10 +18,10 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/nanogit"
 	"github.com/grafana/nanogit/log"
 	"github.com/grafana/nanogit/metrics"
@@ -52,8 +52,8 @@ type RepositoryConfig struct {
 	URL              string
 	Branch           string
 	TokenUser        string
-	Token            common.RawSecureValue
-	CommitSigningKey common.RawSecureValue
+	Token            resource.RawSecureValue
+	CommitSigningKey resource.RawSecureValue
 	SigningMethod    provisioning.SigningMethod
 	SMIMECertificate string
 	Path             string

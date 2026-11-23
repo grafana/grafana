@@ -50,6 +50,7 @@ import (
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web"
@@ -288,7 +289,7 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 		t.Run("plugin route with RBAC protection user is allowed", func(t *testing.T) {
 			ctx, _ := setUp()
 			ctx.OrgID = int64(1)
-			ctx.OrgRole = identity.RoleNone
+			ctx.OrgRole = claims.RoleNone
 			ctx.Permissions = map[int64]map[string][]string{1: {"test-app.settings:read": nil}}
 			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/rbac-restricted")
 			require.NoError(t, err)
@@ -299,7 +300,7 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 		t.Run("plugin route with RBAC protection user is not allowed", func(t *testing.T) {
 			ctx, _ := setUp()
 			ctx.OrgID = int64(1)
-			ctx.OrgRole = identity.RoleNone
+			ctx.OrgRole = claims.RoleNone
 			ctx.Permissions = map[int64]map[string][]string{1: {"test-app:read": nil}}
 			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/rbac-restricted")
 			require.NoError(t, err)
@@ -310,7 +311,7 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 		t.Run("plugin route with dynamic RBAC protection user is allowed", func(t *testing.T) {
 			ctx, _ := setUp()
 			ctx.OrgID = int64(1)
-			ctx.OrgRole = identity.RoleNone
+			ctx.OrgRole = claims.RoleNone
 			ctx.Permissions = map[int64]map[string][]string{1: {"datasources:read": {"datasources:uid:dsUID"}}}
 			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/rbac-home")
 			require.NoError(t, err)
@@ -321,7 +322,7 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 		t.Run("plugin route with dynamic RBAC protection user is not allowed", func(t *testing.T) {
 			ctx, _ := setUp()
 			ctx.OrgID = int64(1)
-			ctx.OrgRole = identity.RoleNone
+			ctx.OrgRole = claims.RoleNone
 			// Has access but to another app
 			ctx.Permissions = map[int64]map[string][]string{1: {"datasources:read": {"datasources:uid:notTheDsUID"}}}
 			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/rbac-home")
@@ -648,7 +649,7 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 	t.Run("When proxying data source proxy should handle authentication", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
-		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+		secretsStore := secretskvs.NewSQLSecretsKVStore(legacysql.NewDatabaseProvider(sqlStore), secretsService, log.New("test.logger"))
 
 		tests := []*testCase{
 			createAuthTest(t, secretsStore, datasources.DS_INFLUXDB_08, "http://localhost:9090", authTypePassword, authCheckQuery),
@@ -1139,7 +1140,7 @@ func TestDataSourceProxy_LokiRouteAccessControl(t *testing.T) {
 				Context: &web.Context{Req: req},
 				SignedInUser: &user.SignedInUser{
 					OrgID:       1,
-					OrgRole:     identity.RoleNone,
+					OrgRole:     claims.RoleNone,
 					Permissions: map[int64]map[string][]string{1: tc.permissions},
 				},
 			}
@@ -1241,7 +1242,7 @@ func getDatasourceProxiedRequest(t *testing.T, ctx *contextmodel.ReqContext, pro
 	cfg := setting.NewCfg()
 	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
-	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+	secretsStore := secretskvs.NewSQLSecretsKVStore(legacysql.NewDatabaseProvider(sqlStore), secretsService, log.New("test.logger"))
 	features := featuremgmt.WithFeatures()
 	quotaService := quotatest.New(false, nil)
 	dsRetriever := datasourceservice.ProvideDataSourceRetriever(sqlStore, features)
@@ -1434,7 +1435,7 @@ func setupDSProxyTest(t *testing.T, ctx *contextmodel.ReqContext, ds *datasource
 
 	cfg := setting.NewCfg()
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
-	secretsStore := secretskvs.NewSQLSecretsKVStore(dbtest.NewFakeDB(), secretsService, log.NewNopLogger())
+	secretsStore := secretskvs.NewSQLSecretsKVStore(legacysql.NewDatabaseProvider(dbtest.NewFakeDB()), secretsService, log.NewNopLogger())
 	features := featuremgmt.WithFeatures()
 	var sqlStore db.DB = nil
 	dsRetriever := datasourceservice.ProvideDataSourceRetriever(sqlStore, features)

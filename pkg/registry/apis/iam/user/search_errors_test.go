@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -85,7 +86,7 @@ func TestUserAdmissionPreservesSearchErrorStatus(t *testing.T) {
 				backend := NewUnifiedSearchClient(&MockClient{MockResponses: index.MockResponses, MockError: index.MockError}, nil)
 				selector := selectorForBackend(backend)
 				ctx := identity.WithRequester(t.Context(), &legacyuser.SignedInUser{
-					Namespace: "stacks-1", IsGrafanaAdmin: true, OrgRole: identity.RoleAdmin,
+					Namespace: "stacks-1", IsGrafanaAdmin: true, OrgRole: authlib.RoleAdmin,
 				})
 				oldObj := &iamv0.User{Spec: iamv0.UserSpec{Login: "alice", Email: "alice@example.com", Role: "Admin"}}
 				obj := oldObj.DeepCopy()

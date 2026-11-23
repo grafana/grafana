@@ -1,6 +1,7 @@
 import { MappingType } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { locationService, reportInteraction, setPluginImportUtils } from '@grafana/runtime';
+import { type VizPanel } from '@grafana/scenes';
 import {
   type FieldConfigSource,
   type Spec as DashboardV2Spec,
@@ -372,6 +373,43 @@ describe('dashboard tracking', () => {
           isDynamicDashboard: true,
         });
       }
+    });
+
+    it.each([
+      ['overrides', { defaults: { varMappings: { min: '$min' } }, overrides: null }],
+      [
+        'override properties',
+        {
+          defaults: { varMappings: { min: '$min' } },
+          overrides: [{ matcher: { id: 'byName', options: 'A' }, properties: null }],
+        },
+      ],
+      [
+        'defaults',
+        {
+          defaults: null,
+          overrides: [
+            {
+              matcher: { id: 'byName', options: 'A' },
+              properties: [
+                {
+                  id: 'thresholds',
+                  value: { mode: 'absolute', steps: [{ value: 0, color: 'red', valueExpr: '$t' }] },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    ])('does not throw for panels whose saved field config has null %s', (_, fieldConfig) => {
+      const scene = buildSceneWithTextPanels([{}], [{ defaults: {}, overrides: [] }]);
+      scene.state.body.getVizPanels()[0].setState({ fieldConfig } as unknown as Partial<VizPanel['state']>);
+
+      expect(() => trackDashboardSceneLoaded(scene, 42)).not.toThrow();
+      expect(reportInteraction).toHaveBeenCalledWith(
+        'dashboards_panel_option_variable_usage',
+        expect.objectContaining({ panel_count: 1, trigger: 'load' })
+      );
     });
 
     it.each([
