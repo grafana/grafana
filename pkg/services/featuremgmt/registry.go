@@ -3463,6 +3463,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "grafana.assistantPageCanvas",
+			Description: "Lets Grafana Assistant show a conversation's canvas as tabs above the page",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "grafana.otelLogDetails",
 			Description: "Enables a new version of log details optimized for displaying OTel logs",
 			Stage:       FeatureStageExperimental,
