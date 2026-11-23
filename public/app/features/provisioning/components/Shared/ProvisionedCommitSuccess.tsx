@@ -40,7 +40,11 @@ export function ProvisionedCommitSuccess({ outcome }: Props) {
             {isDirect ? getDirectHeadline(branch || configuredBranch) : getBranchHeadline(action, provider, count)}
           </Text>
           <Text variant="bodySmall" color="secondary">
-            {isDirect ? (
+            {isDirect && outcome.pendingSync ? (
+              <Trans i18nKey="provisioning.commit-success.pending-sync-body">
+                Grafana applies this version the next time it syncs the repository.
+              </Trans>
+            ) : isDirect ? (
               <Trans i18nKey="provisioning.commit-success.direct-body">
                 This version is already live in Grafana for everyone in your organization.
               </Trans>

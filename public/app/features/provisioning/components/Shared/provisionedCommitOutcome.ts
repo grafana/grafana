@@ -32,6 +32,7 @@ export interface ProvisionedCommitOutcome {
   prUrl?: string;
   /** How many resources the commit covers. A bulk action passes its selection count. */
   count?: number;
+  pendingSync?: boolean;
 }
 
 interface CommitOutcomeArgs {
@@ -44,6 +45,7 @@ interface CommitOutcomeArgs {
   prTitle?: string;
   repository?: RepositoryView;
   count?: number;
+  pendingSync?: boolean;
 }
 
 /**
@@ -59,6 +61,7 @@ export function buildCommitOutcome({
   prTitle,
   repository,
   count,
+  pendingSync,
 }: CommitOutcomeArgs): ProvisionedCommitOutcome {
   return {
     action,
@@ -70,10 +73,11 @@ export function buildCommitOutcome({
     sourceUrl: urls?.sourceURL,
     prUrl: appendPullRequestTitleParam(urls?.newPullRequestURL, repository?.type, prTitle),
     count,
+    pendingSync,
   };
 }
 
-/** Whether the commit went straight to the configured branch, so it is live in Grafana already. */
+/** Whether the commit went straight to the configured branch. */
 export function isDirectCommit({ branch, configuredBranch }: ProvisionedCommitOutcome): boolean {
   return !branch || branch === configuredBranch;
 }
@@ -137,6 +141,7 @@ export function parseStoredCommitOutcome(raw: string, pathname: string): StoredC
       sourceUrl: url('sourceUrl'),
       prUrl: url('prUrl'),
       count: typeof count === 'number' ? count : undefined,
+      pendingSync: Reflect.get(record, 'pendingSync') === true,
     },
   };
 }

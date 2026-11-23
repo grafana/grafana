@@ -44,7 +44,7 @@ export function ProvisionedCommitSteps({ kindKey, outcome, resourceName, branchV
   // Only a direct commit is live in Grafana: a branch commit exists on the branch alone until the
   // pull request merges, so only a kind with a preview page can show one. A delete leaves nothing,
   // and an action over many resources has no single page to offer.
-  const canView = outcome.action !== 'delete' && (outcome.count ?? 1) === 1;
+  const canView = outcome.action !== 'delete' && (outcome.count ?? 1) === 1 && !(isDirect && outcome.pendingSync);
   const viewUrl = !canView ? undefined : isDirect ? resourceName && kind?.getRoute?.(resourceName) : branchViewUrl;
 
   // The drawer outlives the commit it reports, so a route it is already on leaves it over the page.

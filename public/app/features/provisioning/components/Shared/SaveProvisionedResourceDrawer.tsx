@@ -3,6 +3,7 @@ import { customAlphabet } from 'nanoid';
 import { useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useLocation } from 'react-router-dom-v5-compat';
+import useMountedState from 'react-use/lib/useMountedState';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -101,7 +102,8 @@ interface BaseDrawerProps {
   /** Prefix for generated branch names. Defaults to the kind's key. */
   branchPrefix?: string;
   directory?: string;
-  onDismiss?: () => void;
+  /** Receives the commit outcome when the drawer closes after a commit. */
+  onDismiss?: (outcome?: ProvisionedCommitOutcome) => void;
 }
 
 /**
@@ -222,7 +224,17 @@ function FormContent({
         dispatch(invalidateAction);
       }
 
-      onCommitted(buildCommitOutcome({ action, ref: data.ref, urls: data.urls, message, prTitle, repository }));
+      onCommitted(
+        buildCommitOutcome({
+          action,
+          ref: data.ref,
+          urls: data.urls,
+          message,
+          prTitle,
+          repository,
+          pendingSync: !isDelete && !data.resource?.upsert,
+        })
+      );
     } catch (err) {
       showError(err);
     }
@@ -259,7 +271,7 @@ function FormContent({
             >
               {primaryLabel()}
             </Button>
-            <Button variant="secondary" fill="outline" onClick={onDismiss}>
+            <Button variant="secondary" fill="outline" onClick={() => onDismiss?.()}>
               {t('provisioning.save-resource.button-cancel', 'Cancel')}
             </Button>
           </>
@@ -287,7 +299,7 @@ interface SuccessProps {
   kindKey?: ResourceKindKey;
   resourceName?: string;
   outcome: ProvisionedCommitOutcome;
-  onDismiss?: () => void;
+  onDismiss?: (outcome: ProvisionedCommitOutcome) => void;
 }
 
 interface RepositoryStepProps {
@@ -310,7 +322,7 @@ function RepositoryStep({ onSelect, onDismiss }: RepositoryStepProps) {
           <Button type="submit" disabled={!selected}>
             {t('provisioning.save-resource.button-next', 'Next')}
           </Button>
-          <Button variant="secondary" fill="outline" onClick={onDismiss}>
+          <Button variant="secondary" fill="outline" onClick={() => onDismiss?.()}>
             {t('provisioning.save-resource.button-cancel', 'Cancel')}
           </Button>
         </>
@@ -338,7 +350,7 @@ function SuccessContent({ kindKey, resourceName, outcome, onDismiss }: SuccessPr
           kindKey={kindKey}
           outcome={outcome}
           resourceName={resourceName}
-          onDismiss={() => onDismiss?.()}
+          onDismiss={() => onDismiss?.(outcome)}
         />
       }
     >
@@ -440,6 +452,7 @@ function ResourceDrawerContent({
   const isDelete = action === 'delete';
   const [outcome, setOutcome] = useState<ProvisionedCommitOutcome | undefined>(undefined);
   useEffect(() => (outcome ? clearStoredCommitOutcome : undefined), [outcome]);
+  const isMounted = useMountedState();
   const [selectedRepository, setSelectedRepository] = useState(repositoryName);
 
   // A new resource needs a name; generate one once for the lifetime of the drawer as a fallback.
@@ -479,6 +492,9 @@ function ResourceDrawerContent({
   const drawerTitle = getDrawerTitle(isDelete);
 
   const onCommitted = (committed: ProvisionedCommitOutcome) => {
+    if (!isMounted()) {
+      return;
+    }
     setOutcome(committed);
     storeCommitOutcome({ outcome: committed, kindKey, resourceName });
   };
@@ -511,7 +527,7 @@ function ResourceDrawerContent({
           </Text>
         )
       }
-      onClose={() => onDismiss?.()}
+      onClose={() => onDismiss?.(outcome)}
     >
       {outcome ? (
         <SuccessContent kindKey={kindKey} resourceName={resourceName} outcome={outcome} onDismiss={onDismiss} />

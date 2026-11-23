@@ -56,7 +56,7 @@ export const PlaylistNewPage = () => {
           title={provisionedPlaylist.spec?.title ?? ''}
           action="create"
           repositoryName={selectedRepository}
-          onDismiss={() => setProvisionedPlaylist(undefined)}
+          onDismiss={(outcome) => (outcome ? locationService.push(PLAYLISTS_URL) : setProvisionedPlaylist(undefined))}
         />
       )}
     </Page>
