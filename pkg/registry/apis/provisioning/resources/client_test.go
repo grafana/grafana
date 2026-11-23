@@ -9,7 +9,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
@@ -23,6 +26,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // playlistKind is an arbitrary identifier used only to exercise the supported-set plumbing
@@ -725,4 +729,44 @@ func testManifests(resources ...SupportedResource) []*app.ManifestData {
 		})
 	}
 	return []*app.ManifestData{{Group: testManifestGroup, Versions: []app.ManifestVersion{version}}}
+}
+
+func TestRouterSwitchClientFactory(t *testing.T) {
+	routerClients := NewMockResourceClients(t)
+	dedicatedClients := NewMockResourceClients(t)
+	router := NewMockClientFactory(t)
+	router.EXPECT().Clients(mock.Anything, "default").Return(routerClients, nil).Once()
+	dedicated := NewMockClientFactory(t)
+	dedicated.EXPECT().Clients(mock.Anything, "default").Return(dedicatedClients, nil).Twice()
+	factory := NewRouterSwitchClientFactory(router, dedicated)
+
+	for _, step := range []struct {
+		enabled bool
+		want    ResourceClients
+	}{
+		{enabled: false, want: dedicatedClients},
+		{enabled: true, want: routerClients},
+		{enabled: false, want: dedicatedClients},
+	} {
+		setRouterClientFlag(t, step.enabled)
+		got, err := factory.Clients(t.Context(), "default")
+		require.NoError(t, err)
+		require.Same(t, step.want, got)
+	}
+}
+
+func setRouterClientFlag(t *testing.T, enabled bool) {
+	t.Helper()
+	variant := "disabled"
+	if enabled {
+		variant = "enabled"
+	}
+	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagProvisioningRouterClient: {
+			State:          memprovider.Enabled,
+			DefaultVariant: variant,
+			Variants:       map[string]any{"enabled": true, "disabled": false},
+		},
+	})))
+	t.Cleanup(func() { _ = openfeature.SetProviderAndWait(openfeature.NoopProvider{}) })
 }
