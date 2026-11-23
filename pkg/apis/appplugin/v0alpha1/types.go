@@ -39,6 +39,7 @@ func (SettingsList) OpenAPIModelName() string {
 
 type SettingsSpec struct {
 	Enabled  bool                `json:"enabled"`
+	Pinned   bool                `json:"pinned"`
 	JsonData common.Unstructured `json:"jsonData,omitzero"`
 }
 

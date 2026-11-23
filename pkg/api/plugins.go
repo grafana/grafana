@@ -164,6 +164,7 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 
 		if pluginSetting, exists := pluginSettingsMap[pluginDef.ID]; exists {
 			listItem.Enabled = pluginSetting.Enabled
+			listItem.Pinned = pluginSetting.Pinned
 		}
 
 		if listItem.DefaultNavUrl == "" || !listItem.Enabled {
@@ -223,6 +224,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.
 
 	if plugin.IsApp() {
 		dto.Enabled = plugin.AutoEnabled
+		dto.Pinned = plugin.AutoEnabled
 		dto.AutoEnabled = plugin.AutoEnabled
 	}
 
@@ -236,6 +238,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.
 		}
 	} else {
 		dto.Enabled = ps.Enabled
+		dto.Pinned = ps.Pinned
 		dto.JsonData = ps.JSONData
 
 		for k, v := range hs.PluginSettings.DecryptedValues(ps) {
@@ -273,6 +276,7 @@ func (hs *HTTPServer) UpdatePluginSetting(c *contextmodel.ReqContext) response.R
 	cmd.PluginId = pluginID
 	if err := hs.PluginSettings.UpdatePluginSetting(c.Req.Context(), &pluginsettings.UpdateArgs{
 		Enabled:                 cmd.Enabled,
+		Pinned:                  cmd.Pinned,
 		JSONData:                cmd.JsonData,
 		SecureJSONData:          cmd.SecureJsonData,
 		PluginVersion:           cmd.PluginVersion,
