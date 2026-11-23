@@ -18,7 +18,7 @@ Use `Button` to trigger an action, such as saving a form, running a query or ope
 ## Never use for
 
 - **Navigation.** To add an anchor that looks like a button, use the `<LinkButton>` component and pass an `href` prop. For a link inside text, use `TextLink`.
-- **An icon without a label.** Before using buttons without text, always consider using [IconButton](/docs/inputs-iconbutton--docs) instead.
+- **An icon without a label.** Before using buttons without text, always consider using [IconButton](/docs/inputs-iconbutton--docs) instead. The exception is an icon-only `Button` inside a `ButtonGroup`, such as the menu toggle of a split button, which needs an `aria-label`.
 - **An action inside a sentence or a line of data.** Use [`InlineButton` for inline actions](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/guidance/patterns/inline-actions.md).
 
 ## Do's and don'ts
@@ -32,7 +32,7 @@ Use `Button` to trigger an action, such as saving a form, running a query or ope
 - Don't use buttons with icons and buttons without icons in a button group.
 - Don't have more than one primary action.
 - Don't pair a solid primary and solid destructive button -- one must take precedence over the other.
-- Don't use buttons with icons only (in case this is impossible please always add text for a tooltip and an aria label as they are needed to meet accessible requirements).
+- Don't use buttons with icons only (in case this is impossible please always add text for a tooltip and an aria label as they are needed to meet accessible requirements). Inside a `ButtonGroup`, an icon-only `Button` with an `aria-label` is fine, as in the split button example below.
 
 To join buttons, such as a split button, wrap them in `ButtonGroup`. It removes the inner border radius between adjacent buttons, so don't reset it with `:nth-child` rules.
 
@@ -91,7 +91,7 @@ import { Button } from '@grafana/ui';
 
 - `variant`: `primary`, `secondary`, `accent`, `destructive` or `success`. Defaults to `primary`, or to `accent` when `fill` is `text`.
 - `fill`: `solid` (default), `outline` or `text`.
-- `size`: `xs`, `sm`, `md` (default) or `lg`.
+- `size`: `sm`, `md` (default) or `lg`.
 - `icon` adds an icon, and `iconPlacement` puts it on the `left` (default) or `right` of the label.
 - `fullWidth` makes the button grow to fill its container.
 - `type` defaults to `button`, so set `type="submit"` to submit a form.
@@ -335,14 +335,14 @@ When using a button please always follow a11y rules (e.g. W3C Recommendation [3.
 
 - Use ARIA tags when using buttons to ensure they are accessible.
   - For example buttons represented by icons, the accessible name may be provided from the aria-label or aria-labelledby attributes.
-  - Using role="button" instead of the semantic `<button>` or `<input type="button">` (iOS "clickable elements" fix for role="button").
+  - Use `Button`, which renders a semantic `<button>`, rather than adding `role="button"` to another element.
 
 `Button` handles:
 
 - **Element:** it renders a native `<button>`.
 - **Icon-only buttons:** a button without children must have an `aria-label` or a `tooltip`. A string `tooltip` becomes the accessible name when there is no `aria-label`.
 - **Disabled:** a disabled button doesn't call `onClick`. With a `tooltip`, it sets `aria-disabled` instead of the native `disabled` attribute, so the tooltip stays reachable.
-- **Focus:** it shows a focus ring for keyboard focus and hides it for mouse focus.
+- **Focus:** it shows a focus ring for keyboard focus and hides it for mouse focus. A disabled button shows no focus ring. That includes a disabled button with a `tooltip`, which stays focusable because it uses `aria-disabled`.
 
 ## Props
 
