@@ -1831,7 +1831,7 @@ func startBookmarkWatch(t *testing.T, req *resourcepb.WatchRequest, configure fu
 	})
 	require.NoError(t, err)
 	srv.log = log.NewNopLogger()
-	srv.broadcaster = NewBroadcaster(ctx, events, newBroadcasterMetrics(prometheus.NewRegistry()), nil)
+	srv.setWatchState(newBroadcaster(ctx, events, newBroadcasterMetrics(prometheus.NewRegistry()), writtenEventIdentity), nil)
 	if configure != nil {
 		configure(srv, stream)
 	}
@@ -2157,7 +2157,13 @@ func TestIncrementalBookmarksFilteredProgress(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
-				events, stream, _ := startBookmarkWatch(t, bookmarkWatchRequest(), func(srv *server, _ *bookmarkWatchServer) {
+				req, rv := bookmarkWatchRequest(), int64(101)
+				if tt.kv {
+					// KV resumes are snowflakes; old enough that the filtered-progress delay passes.
+					req.Since = snowflakeFromTime(advanceBookmarkClock().Add(-2 * time.Minute))
+					rv = req.Since + 1
+				}
+				events, stream, _ := startBookmarkWatch(t, req, func(srv *server, _ *bookmarkWatchServer) {
 					if tt.kv {
 						srv.backend = &kvStorageBackend{}
 					}
@@ -2165,7 +2171,7 @@ func TestIncrementalBookmarksFilteredProgress(t *testing.T) {
 						tt.configure(srv)
 					}
 				})
-				event := bookmarkWrittenEvent(101)
+				event := bookmarkWrittenEvent(rv)
 				if tt.filter != nil {
 					tt.filter(event)
 				}
@@ -2176,7 +2182,7 @@ func TestIncrementalBookmarksFilteredProgress(t *testing.T) {
 
 				require.Empty(t, stream.events, "filtered objects must not be sent")
 				time.Sleep(time.Second)
-				requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, 101)
+				requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, rv)
 				time.Sleep(2 * time.Second)
 
 				// Finish later bookmark ticks before checking that unchanged progress is not repeated.
@@ -2228,7 +2234,11 @@ func TestIncrementalBookmarksWaitForSuccessfulSend(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
 				entered, release := make(chan struct{}), make(chan struct{})
 				sendErr := errors.New("send failed")
-				events, stream, done := startBookmarkWatch(t, bookmarkWatchRequest(), func(srv *server, stream *bookmarkWatchServer) {
+				req := bookmarkWatchRequest()
+				// KV resumes are snowflakes; old enough that the filtered-progress delay passes.
+				req.Since = snowflakeFromTime(advanceBookmarkClock().Add(-2 * time.Minute))
+				first, second := req.Since+1, req.Since+2
+				events, stream, done := startBookmarkWatch(t, req, func(srv *server, stream *bookmarkWatchServer) {
 					srv.backend = &kvStorageBackend{}
 					stream.beforeSend = func(event *resourcepb.WatchEvent) error {
 						if event.Type == resourcepb.WatchEvent_ADDED {
@@ -2245,7 +2255,7 @@ func TestIncrementalBookmarksWaitForSuccessfulSend(t *testing.T) {
 						return nil
 					}
 				})
-				events <- bookmarkWrittenEvent(101)
+				events <- bookmarkWrittenEvent(first)
 
 				// Enter the blocked Send before supplying the next pending event.
 				synctest.Wait()
@@ -2255,7 +2265,7 @@ func TestIncrementalBookmarksWaitForSuccessfulSend(t *testing.T) {
 				default:
 					t.Fatal("matching send was not reached")
 				}
-				pending := bookmarkWrittenEvent(102)
+				pending := bookmarkWrittenEvent(second)
 				pending.Key.Resource = "other"
 				events <- pending
 				time.Sleep(2 * time.Second)
@@ -2276,7 +2286,7 @@ func TestIncrementalBookmarksWaitForSuccessfulSend(t *testing.T) {
 					return
 				}
 
-				requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, 101)
+				requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, first)
 
 				// Finish the pending bookmark after the delivered object before reading it.
 				synctest.Wait()
@@ -2284,11 +2294,11 @@ func TestIncrementalBookmarksWaitForSuccessfulSend(t *testing.T) {
 				require.NotEmpty(t, stream.events)
 				bookmark := <-stream.events
 				require.Equal(t, resourcepb.WatchEvent_BOOKMARK, bookmark.Type)
-				if bookmark.Resource.Version == 101 {
+				if bookmark.Resource.Version == first {
 					time.Sleep(time.Second)
-					requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, 102)
+					requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, second)
 				} else {
-					require.Equal(t, int64(102), bookmark.Resource.Version)
+					require.Equal(t, second, bookmark.Resource.Version)
 				}
 			})
 		})
