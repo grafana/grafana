@@ -1,6 +1,7 @@
 import { MappingType } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { locationService, reportInteraction, setPluginImportUtils } from '@grafana/runtime';
+import { type VizPanel } from '@grafana/scenes';
 import {
   type FieldConfigSource,
   type Spec as DashboardV2Spec,
@@ -77,6 +78,39 @@ function buildSceneWithTextPanels(
       spec: { x: 0, y: index * 8, width: 12, height: 8, element: { kind: 'ElementReference', name } },
     });
   });
+
+  return getTestDashboardSceneFromSaveModel({
+    elements,
+    layout: { kind: 'GridLayout', spec: { items } },
+  });
+}
+
+function buildSceneWithTablePanels(count: number) {
+  const elements: DashboardV2Spec['elements'] = {};
+  const items: GridLayoutItemKind[] = [];
+
+  for (let index = 0; index < count; index++) {
+    const name = `table-panel-${index}`;
+
+    elements[name] = {
+      kind: 'Panel',
+      spec: {
+        ...defaultPanelSpec(),
+        id: index + 1,
+        title: name,
+        vizConfig: {
+          ...defaultVizConfigKind(),
+          group: 'table',
+          spec: { options: {}, fieldConfig: { defaults: {}, overrides: [] } },
+        },
+      },
+    };
+
+    items.push({
+      kind: 'GridLayoutItem',
+      spec: { x: 0, y: index * 8, width: 12, height: 8, element: { kind: 'ElementReference', name } },
+    });
+  }
 
   return getTestDashboardSceneFromSaveModel({
     elements,
@@ -342,6 +376,43 @@ describe('dashboard tracking', () => {
     });
 
     it.each([
+      ['overrides', { defaults: { varMappings: { min: '$min' } }, overrides: null }],
+      [
+        'override properties',
+        {
+          defaults: { varMappings: { min: '$min' } },
+          overrides: [{ matcher: { id: 'byName', options: 'A' }, properties: null }],
+        },
+      ],
+      [
+        'defaults',
+        {
+          defaults: null,
+          overrides: [
+            {
+              matcher: { id: 'byName', options: 'A' },
+              properties: [
+                {
+                  id: 'thresholds',
+                  value: { mode: 'absolute', steps: [{ value: 0, color: 'red', valueExpr: '$t' }] },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    ])('does not throw for panels whose saved field config has null %s', (_, fieldConfig) => {
+      const scene = buildSceneWithTextPanels([{}], [{ defaults: {}, overrides: [] }]);
+      scene.state.body.getVizPanels()[0].setState({ fieldConfig } as unknown as Partial<VizPanel['state']>);
+
+      expect(() => trackDashboardSceneLoaded(scene, 42)).not.toThrow();
+      expect(reportInteraction).toHaveBeenCalledWith(
+        'dashboards_panel_option_variable_usage',
+        expect.objectContaining({ panel_count: 1, trigger: 'load' })
+      );
+    });
+
+    it.each([
       ['the flag is off', { defaults: { varMappings: { min: '$min' } }, overrides: [] }, false, true],
       ['the dashboard is not v2', { defaults: { varMappings: { min: '$min' } }, overrides: [] }, true, false],
       ['no panel uses variables', { defaults: { min: 0 }, overrides: [] }, true, true],
@@ -410,6 +481,36 @@ describe('dashboard tracking', () => {
       trackDashboardSceneLoaded(buildSceneWithTextPanels([{ mode: 'markdown', content: mermaidMarkdown }]), 42);
 
       expect(reportInteraction).not.toHaveBeenCalledWith('dashboards_text_panel_usage', expect.anything());
+    });
+  });
+
+  describe('table panel usage tracking', () => {
+    it('counts every table panel when table.refreshNewFeatures is enabled', () => {
+      setTestFlags({ 'table.refreshNewFeatures': true, ...defaultFlags });
+
+      trackDashboardSceneLoaded(buildSceneWithTablePanels(2), 42);
+
+      expect(reportInteraction).toHaveBeenCalledWith('dashboards_table_panel_usage', {
+        isDynamicDashboard: true,
+        dashboard_uid: 'dashboard-test',
+        table_panel_count: 2,
+      });
+    });
+
+    it('does not report for a dashboard without a table panel', () => {
+      setTestFlags({ 'table.refreshNewFeatures': true, ...defaultFlags });
+
+      trackDashboardSceneLoaded(buildTestScene(), 42);
+
+      expect(reportInteraction).not.toHaveBeenCalledWith('dashboards_table_panel_usage', expect.anything());
+    });
+
+    it('does not report when table.refreshNewFeatures is disabled', () => {
+      setTestFlags({ 'table.refreshNewFeatures': false, ...defaultFlags });
+
+      trackDashboardSceneLoaded(buildSceneWithTablePanels(2), 42);
+
+      expect(reportInteraction).not.toHaveBeenCalledWith('dashboards_table_panel_usage', expect.anything());
     });
   });
 });

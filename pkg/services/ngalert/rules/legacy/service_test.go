@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -93,7 +94,7 @@ func TestUpdateAlertRulePersistencePreconditions(t *testing.T) {
 			ruleStore: store, provenanceStore: fakes.NewFakeProvisioningStore(),
 			xact: xact, authz: fakeUpdateAuthz{},
 		}
-		_, err := service.UpdateAlertRule(context.Background(), requester, *updated, utils.ManagerProperties{})
+		_, err := service.UpdateAlertRule(context.Background(), requester, *updated, utils.ManagerProperties{}, false)
 		require.NoError(t, err)
 		require.Equal(t, updated.Title, persisted.Title)
 		require.Equal(t, baselineVersion, stored.Version)
@@ -115,7 +116,7 @@ func TestUpdateAlertRulePersistencePreconditions(t *testing.T) {
 			return nil
 		}
 		service := &LegacyRuleService{ruleStore: store, provenanceStore: provenance, xact: store, authz: fakeUpdateAuthz{}}
-		_, err := service.UpdateAlertRule(context.Background(), requester, *updated, utils.ManagerProperties{})
+		_, err := service.UpdateAlertRule(context.Background(), requester, *updated, utils.ManagerProperties{}, false)
 		require.ErrorIs(t, err, rulestore.ErrOptimisticLock)
 	})
 }
@@ -227,14 +228,14 @@ func TestListAlertRules(t *testing.T) {
 type fakeDeleteAuthz struct {
 	ruleAccessControlService
 	canWriteAll   bool
-	authorizeFunc func(delta *rulestore.GroupDelta) error
+	authorizeFunc func(delta *ngrulesvc.GroupDelta) error
 }
 
 func (f *fakeDeleteAuthz) CanWriteAllRules(context.Context, identity.Requester) (bool, error) {
 	return f.canWriteAll, nil
 }
 
-func (f *fakeDeleteAuthz) AuthorizeRuleGroupWrite(_ context.Context, _ identity.Requester, delta *rulestore.GroupDelta) error {
+func (f *fakeDeleteAuthz) AuthorizeRuleGroupWrite(_ context.Context, _ identity.Requester, delta *ngrulesvc.GroupDelta) error {
 	if f.authorizeFunc == nil {
 		return nil
 	}
@@ -296,17 +297,32 @@ func TestDeleteAlertRules(t *testing.T) {
 	t.Run("deletes all rules and their provenance in a single transaction", func(t *testing.T) {
 		e := setup(t)
 
-		require.NoError(t, e.service.DeleteAlertRules(context.Background(), u, e.rules, nil))
+		require.NoError(t, e.service.DeleteAlertRules(context.Background(), u, e.rules, nil, false))
 
 		require.Empty(t, e.ruleStore.Rules[orgID])
 		require.Equal(t, 1, e.xact.calls)
 		require.Equal(t, len(e.rules), deletedProvenances(e))
 	})
 
+	t.Run("dry-run checks every rule but deletes nothing", func(t *testing.T) {
+		e := setup(t)
+
+		require.NoError(t, e.service.DeleteAlertRules(context.Background(), u, e.rules, nil, true))
+
+		require.Len(t, e.ruleStore.Rules[orgID], len(e.rules))
+		require.Zero(t, e.xact.calls)
+		require.Zero(t, deletedProvenances(e))
+
+		e.authz.canWriteAll = false
+		forbidden := errors.New("forbidden")
+		e.authz.authorizeFunc = func(*ngrulesvc.GroupDelta) error { return forbidden }
+		require.ErrorIs(t, e.service.DeleteAlertRules(context.Background(), u, e.rules, nil, true), forbidden)
+	})
+
 	t.Run("is a no-op for an empty set", func(t *testing.T) {
 		e := setup(t)
 
-		require.NoError(t, e.service.DeleteAlertRules(context.Background(), u, nil, nil))
+		require.NoError(t, e.service.DeleteAlertRules(context.Background(), u, nil, nil, false))
 
 		require.Len(t, e.ruleStore.Rules[orgID], len(e.rules))
 		require.Zero(t, e.xact.calls)
@@ -322,7 +338,7 @@ func TestDeleteAlertRules(t *testing.T) {
 			return utils.ManagerProperties{}, nil
 		}
 
-		err := e.service.DeleteAlertRules(context.Background(), u, e.rules, nil)
+		err := e.service.DeleteAlertRules(context.Background(), u, e.rules, nil, false)
 
 		var utilErr errutil.Error
 		require.ErrorAs(t, err, &utilErr)
@@ -336,14 +352,14 @@ func TestDeleteAlertRules(t *testing.T) {
 			e := setup(t)
 			e.authz.canWriteAll = false
 			forbidden := errors.New("forbidden")
-			e.authz.authorizeFunc = func(delta *rulestore.GroupDelta) error {
+			e.authz.authorizeFunc = func(delta *ngrulesvc.GroupDelta) error {
 				if delta.Delete[0].UID == e.rules[2].UID {
 					return forbidden
 				}
 				return nil
 			}
 
-			err := e.service.DeleteAlertRules(context.Background(), u, e.rules, nil)
+			err := e.service.DeleteAlertRules(context.Background(), u, e.rules, nil, false)
 
 			require.ErrorIs(t, err, forbidden)
 			require.Len(t, e.ruleStore.Rules[orgID], len(e.rules))
@@ -356,7 +372,7 @@ func TestDeleteAlertRules(t *testing.T) {
 			gone := e.rules[0]
 			e.ruleStore.Rules[orgID] = e.rules[1:]
 
-			require.NoError(t, e.service.DeleteAlertRules(context.Background(), u, e.rules, nil))
+			require.NoError(t, e.service.DeleteAlertRules(context.Background(), u, e.rules, nil, false))
 
 			require.Empty(t, e.ruleStore.Rules[orgID])
 			require.Equal(t, 1, e.xact.calls)
@@ -387,7 +403,7 @@ func TestDeleteAlertRule_SingleTransaction(t *testing.T) {
 		xact:            xact,
 	}
 
-	require.NoError(t, service.DeleteAlertRule(context.Background(), u, rule.UID, utils.ManagerProperties{}))
+	require.NoError(t, service.DeleteAlertRule(context.Background(), u, rule.UID, utils.ManagerProperties{}, false))
 
 	require.Empty(t, ruleStore.Rules[orgID])
 	require.Equal(t, 1, xact.calls)

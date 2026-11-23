@@ -8,7 +8,8 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-27,alertingRuleGroupSortByFolderFullpath,experimental,@grafana/alerting-squad,false,false,false
 2024-10-23,lokiShardSplitting,experimental,@grafana/observability-logs,false,false,true
 2023-02-09,lokiQuerySplitting,GA,@grafana/observability-logs,false,false,true
-2026-05-14,live.runAPIServer,experimental,@grafana/grafana-app-platform-squad,true,true,false
+2026-05-14,live.runAPIServer,experimental,@grafana/grafana-app-platform-squad,false,true,false
+2026-11-23,live.useAPIServerWebsocket,experimental,@grafana/grafana-app-platform-squad,false,false,true
 2026-05-14,live.keepHAPrefixInCloud,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2026-11-12,router.registerCoreAPIs,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2026-09-10,grafana.useRouterMiddleware,experimental,@grafana/grafana-app-platform-squad,false,true,false
@@ -266,7 +267,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-08,pyroscopeUTF8LabelNames,preview,@grafana/observability-traces-and-profiling,false,false,false
 2026-01-14,alertingSyncDispatchTimer,experimental,@grafana/alerting-squad,false,true,false
 2026-01-19,queryWithAssistant,experimental,@grafana/data-sources-plugins,false,false,true
-2026-01-23,queryEditorNext,preview,@grafana/datapro,false,false,true
+2026-01-23,queryEditorNext,GA,@grafana/datapro,false,false,true
 2026-08-27,queryeditor.coauthoringUi,experimental,@grafana/datapro,false,false,true
 2026-03-10,kubernetesTeamsApi,experimental,@grafana/identity-access-team,false,false,false
 2026-03-17,kubernetesTeamsRedirect,experimental,@grafana/identity-access-team,false,false,false
@@ -299,7 +300,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-06,grafana.scenesFlickeringFix,GA,@grafana/dashboards-squad,false,false,true
 2026-06-17,grafana.viewPanelPane,preview,@grafana/dashboards-squad,false,false,true
 2026-04-09,datasourcesApiServerEnableHealthEndpointRedirect,experimental,@grafana/grafana-datasources-core-services,false,false,false
-2026-08-13,flameGraph.tableNg,experimental,@grafana/observability-traces-and-profiling,false,false,true
+2026-08-13,flameGraph.tableNg,GA,@grafana/observability-traces-and-profiling,false,false,true
 2026-03-11,inlineLogDetailsNoScrolls,GA,@grafana/observability-logs,false,false,true
 2026-03-24,logsTablePanelNG,GA,@grafana/observability-logs,false,false,true
 2026-05-08,plugins.useMTPluginSettings,experimental,@grafana/grafana-frontend-platform,false,false,true
@@ -350,7 +351,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-07-29,table.autoColumnWidths,experimental,@grafana/dataviz-squad,false,false,true
 2026-08-18,table.refresh,experimental,@grafana/dataviz-squad,false,false,true
 2026-09-14,table.refreshNewFeatures,experimental,@grafana/dataviz-squad,false,false,true
-2026-08-12,table.inspectDataTableNG,experimental,@grafana/dataviz-squad,false,false,true
+2026-08-12,table.inspectDataTableNG,GA,@grafana/dataviz-squad,false,false,true
 2026-06-23,dataviz.experimentalColorSchemes,experimental,@grafana/dataviz-squad,false,false,true
 2026-10-02,dataviz.tabularNums,preview,@grafana/dataviz-squad,false,false,true
 2026-08-05,datetime.useLuxon,GA,@grafana/grafana-frontend-platform,false,false,false
@@ -384,11 +385,11 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-08-04,alerting.stateManagerRequireWarm,experimental,@grafana/alerting-squad,false,false,false
 2026-08-12,grafana.pluginPathNesting,experimental,@grafana/grafana-frontend-navigation,false,false,false
 2026-08-10,pluginsForceTls13,experimental,@grafana/data-sources-plugins,false,false,false
-2026-08-13,rawPrometheus.tableNg,experimental,@grafana/data-sources-plugins,false,false,true
+2026-08-13,rawPrometheus.tableNg,GA,@grafana/data-sources-plugins,false,false,true
 2026-08-14,datasources.queryGateway,experimental,@grafana/data-sources-plugins,false,false,false
 2026-09-09,datasources.querier.newName,experimental,@grafana/grafana-datasources-core-services,false,false,true
 2026-08-18,grafana.panelPluginTransformations,experimental,@grafana/dataviz-squad,false,false,true
-2026-08-19,grafana.dashboardsAutoHeightPanels,experimental,@grafana/dashboards-squad,false,false,true
+2026-08-19,grafana.dashboardsAutoHeightPanels,preview,@grafana/dashboards-squad,false,false,true
 2026-08-25,grafana.dashboardAutoGridDefault,GA,@grafana/dashboards-squad,false,false,true
 2026-09-10,saml.gosaml2Provider,experimental,@grafana/identity-access-team,false,false,false
 2026-09-07,grafana.multiTenantUserPermissions,experimental,@grafana/identity-access-team,false,false,true
@@ -414,3 +415,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-11-09,datasources.gatewayRateLimits,experimental,@grafana/data-sources-plugins,false,false,false
 2026-11-11,plugins.disableMTPluginsFallback,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-11-17,grafana.logsInfiniteScrollTop,preview,@grafana/observability-logs,false,false,true
+2026-11-11,grafana.dashboardQuestions,experimental,@grafana/dashboards-squad,false,false,true

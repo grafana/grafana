@@ -8,16 +8,14 @@ import { Button, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { PanelEditPanelWrapper } from '../PanelEditPanelWrapper';
 import { type PanelEditor } from '../PanelEditor';
-import { QueryEditorBanner } from '../QueryEditorBanner';
 
 import { PanelDataPaneNext } from './PanelDataPaneNext';
 import { QueryEditorContextWrapper } from './QueryEditor/QueryEditorContextWrapper';
 import { Sidebar } from './QueryEditor/Sidebar/Sidebar';
 import { SidebarSize } from './constants';
-import { useQueryEditorBanner, useVizAndDataPaneLayout } from './hooks';
+import { useVizAndDataPaneLayout } from './hooks';
 
 export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) {
-  const { showBanner, dismissBanner } = useQueryEditorBanner();
   const { scene, sidebarSize, setSidebarSize, isScrollingLayout, vizDataSplitter, sidebarSplitter } =
     useVizAndDataPaneLayout(model);
   const styles = useStyles2(getStyles, sidebarSize);
@@ -57,15 +55,6 @@ export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) 
     </div>
   );
 
-  const banner = showBanner ? (
-    <QueryEditorBanner
-      useQueryExperienceNext={model.state.useQueryExperienceNext ?? false}
-      onToggle={model.onToggleQueryEditorVersion}
-      onDismiss={dismissBanner}
-      className={styles.banner}
-    />
-  ) : null;
-
   const sidebarPane = (
     <div {...sidebarSplitter.primaryProps} className={cx(sidebarSplitter.primaryProps.className, styles.sidebar)}>
       {sidebarSplitter.splitterState.collapsed ? (
@@ -93,7 +82,6 @@ export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) 
     <VizDataSplit
       splitter={vizDataSplitter}
       viz={viz}
-      banner={banner}
       secondaryClassName={styles.bottom}
       expandClassName={styles.expandQueryPaneMini}
     >
@@ -121,7 +109,6 @@ export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) 
         <VizDataSplit
           splitter={vizDataSplitter}
           viz={viz}
-          banner={banner}
           secondaryClassName={styles.dataPane}
           expandClassName={styles.expandQueryPane}
         >
@@ -133,13 +120,7 @@ export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) 
 
   return (
     <div className={styles.pageContainer}>
-      <QueryEditorContextWrapper
-        dataPane={nextDataPane}
-        onSwitchToClassic={model.onToggleQueryEditorVersion}
-        showVersionBanner={showBanner}
-      >
-        {isFull ? fullLayout : miniLayout}
-      </QueryEditorContextWrapper>
+      <QueryEditorContextWrapper dataPane={nextDataPane}>{isFull ? fullLayout : miniLayout}</QueryEditorContextWrapper>
     </div>
   );
 }
@@ -149,8 +130,7 @@ type SnappingSplitter = ReturnType<typeof useVizAndDataPaneLayout>['vizDataSplit
 interface VizDataSplitProps {
   splitter: SnappingSplitter;
   viz: ReactNode;
-  banner: ReactNode;
-  /** Rendered below the banner when the bottom pane is open. */
+  /** Rendered when the bottom pane is open. */
   children: ReactNode;
   /** Class for the bottom (secondary) pane. */
   secondaryClassName: string;
@@ -160,7 +140,7 @@ interface VizDataSplitProps {
 
 // Vertical viz/data split shared by both layouts. Only the bottom pane's contents and class names
 // differ between Mini and Full, so they're passed in.
-function VizDataSplit({ splitter, viz, banner, children, secondaryClassName, expandClassName }: VizDataSplitProps) {
+function VizDataSplit({ splitter, viz, children, secondaryClassName, expandClassName }: VizDataSplitProps) {
   return (
     <div {...splitter.containerProps}>
       {viz}
@@ -169,10 +149,7 @@ function VizDataSplit({ splitter, viz, banner, children, secondaryClassName, exp
         {splitter.splitterState.collapsed ? (
           <ExpandQueryPane onClick={splitter.onToggleCollapse} className={expandClassName} />
         ) : (
-          <>
-            {banner}
-            {children}
-          </>
+          children
         )}
       </div>
     </div>
@@ -243,11 +220,6 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
       overflow: 'hidden',
       gap: theme.spacing(1),
       paddingBottom: theme.spacing(1),
-    }),
-    banner: css({
-      minWidth: 0,
-      overflow: 'hidden',
-      ...(isMini && { marginLeft: theme.spacing(2) }),
     }),
     vizPane: css({
       position: 'relative',

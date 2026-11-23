@@ -84,15 +84,14 @@ describe('NestedFolderList', () => {
   it('shows the read-only badge on a provisioned folder row when the user can edit', async () => {
     renderList({ canEdit: true });
 
-    expect(await screen.findByText('Read only')).toBeInTheDocument();
-    expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
+    expect(await screen.findByTestId('icon-exchange-alt-lock')).toBeInTheDocument();
   });
 
-  it('keeps the managed badge but hides the read-only badge when the user cannot edit', async () => {
+  it('keeps the managed badge but hides the lock when the user cannot edit', async () => {
     renderList({ canEdit: false });
 
     expect(await screen.findByTestId('icon-exchange-alt')).toBeInTheDocument();
-    expect(screen.queryByText('Read only')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('icon-exchange-alt-lock')).not.toBeInTheDocument();
   });
 
   it('shows the managed badge for a nested search result', async () => {

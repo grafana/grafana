@@ -30,6 +30,7 @@ import { createDefaultQuery } from 'app/features/query/state/queryDefaults';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { type LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
+import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import {
   type AdHocTransformationsByPanelKey,
@@ -37,13 +38,15 @@ import {
   restoreAdHocTransformations,
 } from '../scene/panel-actions/adHocTransformations';
 import { type DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
+import { serializeAutoGridItem } from '../serialization/layoutSerializers/AutoGridLayoutSerializer';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { DashboardEditActionEvent } from '../sidebar/events';
 import { SIDEBAR_COLLAPSED_KEY } from '../sidebar/shared';
 import { clearDefaultQuery } from '../utils/clearDefaultQuery';
 import { findVizPanelByKey } from '../utils/findVizPanel';
+import { DashboardInteractions } from '../utils/interactions';
 import { getEmptyQueryRunnerState } from '../utils/queryRunnerState';
-import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
+import { getDashboardSceneFor, getLibraryPanelBehavior, isInV2Dashboard } from '../utils/utils';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { DataProviderSharer } from './PanelDataPane/DataProviderSharer';
@@ -51,8 +54,6 @@ import { type PanelDataPane } from './PanelDataPane/PanelDataPane';
 import { createPanelDataPane } from './PanelDataPane/PanelDataPaneFactory';
 import { type PanelDataPaneNext } from './PanelEditNext/PanelDataPaneNext';
 import { PanelEditorRendererNext } from './PanelEditNext/PanelEditorRendererNext';
-import { QUERY_EDITOR_V2_PREFERENCE_KEY } from './PanelEditNext/constants';
-import { getLocalStorageWithTTL, setLocalStorageWithTTL } from './PanelEditNext/localStorageWithTTL';
 import { trackEditorVersionToggle } from './PanelEditNext/tracking';
 import { PanelEditorRenderer } from './PanelEditorRenderer';
 import { PanelOptionsPane } from './PanelOptionsPane';
@@ -77,10 +78,14 @@ interface PanelEditSummary {
   panel_id: number;
   is_new_panel: boolean;
   is_library_panel: boolean;
+  // Bursts of query edits made in either query editor; see recordQueryEdit.
+  query_change_count: number;
   query_editor: 'classic' | 'next';
   // Same key every dashboards_* interaction carries, so these events split by layout the same way.
   isDynamicDashboard: boolean;
 }
+
+const QUERY_EDIT_BURST_MS = 2000;
 
 export interface PanelEditorState extends SceneObjectState {
   isNewPanel: boolean;
@@ -112,6 +117,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   private _layoutItemAdHocTransformations?: AdHocTransformationsByPanelKey;
   private _layoutItem: DashboardLayoutItem;
   private _originalSaveModel!: Panel;
+  private _reloadBaseline!: ReturnType<PanelEditor['getReloadModel']>;
   private _changesHaveBeenMade = false;
   // Analytics only: the baseline excludes what the editor itself sets up (default query, plugin defaults),
   // unlike _originalSaveModel, so it can tell which areas the user changed.
@@ -120,6 +126,8 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   private _savedBaseline?: PanelEditSnapshot;
   private _savedInEditor = false;
   private _discardSummary?: PanelEditSummary;
+  private _queryChangeCount = 0;
+  private _lastQueryEditAt = -Infinity;
 
   public constructor(state: PanelEditorState) {
     super(state);
@@ -156,6 +164,8 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     this._discardSummary = undefined;
     this._savedInEditor = false;
     this._savedBaseline = undefined;
+    this._queryChangeCount = 0;
+    this._lastQueryEditAt = -Infinity;
     this.resetChangeBaseline();
 
     // Splitter layout and table view changes remount the preview; keep its event subscriptions alive.
@@ -224,6 +234,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       panel_id: getPanelIdForVizPanel(panel),
       is_new_panel: this.state.isNewPanel,
       is_library_panel: getLibraryPanelBehavior(panel) !== undefined,
+      query_change_count: this._queryChangeCount,
       query_editor: this.state.useQueryExperienceNext ? 'next' : 'classic',
       isDynamicDashboard: isDashboardNewLayoutsEnabled(),
     };
@@ -295,9 +306,48 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     this.gotPanelPlugin(plugin);
   }
 
-  private setOriginalState(panelRef: SceneObjectRef<VizPanel>) {
+  public hasUnsavedChangesForReload(): boolean {
+    const { subtitle, ...current } = this.getReloadModel(this.getPanel());
+    const { subtitle: originalSubtitle, ...original } = this._reloadBaseline;
+    return !deepEqual(original, current) || (isInV2Dashboard(this._layoutItem) && subtitle !== originalSubtitle);
+  }
+
+  private getReloadModel(panel: VizPanel) {
+    const gridItem = this._layoutItem instanceof DashboardGridItem ? this._layoutItem : undefined;
+    const library = getLibraryPanelBehavior(panel);
+    // The dashboard serializer only emits a reference for a linked panel. Reload also loses its shared draft.
+    const libraryContent = library ? vizPanelToPanel(panel.clone({ $behaviors: undefined })) : undefined;
+    if (libraryContent && !getFeatureFlagClient().getBooleanValue(FlagKeys.PreferLibraryPanelTitle, false)) {
+      delete libraryContent.title;
+    }
+    return {
+      panel: vizPanelToPanel(panel, undefined, false, gridItem),
+      libraryContent,
+      subtitle: library ? undefined : panel.state.subtitle,
+      layout: this._layoutItem instanceof AutoGridItem ? serializeAutoGridItem(this._layoutItem) : undefined,
+      repeat:
+        library && gridItem?.state.variableName
+          ? {
+              variable: gridItem.state.variableName,
+              direction: gridItem.state.repeatDirection,
+              maxPerRow: gridItem.state.maxPerRow,
+            }
+          : undefined,
+    };
+  }
+
+  private setOriginalState(panelRef: SceneObjectRef<VizPanel>, dashboardSaved = false) {
     const panel = panelRef.resolve();
 
+    const reloadModel = this.getReloadModel(panel);
+    // Saving the dashboard leaves shared library edits unpublished.
+    if (dashboardSaved && reloadModel.libraryContent) {
+      reloadModel.libraryContent = this._reloadBaseline.libraryContent;
+      if (!isInV2Dashboard(this._layoutItem)) {
+        reloadModel.repeat = this._reloadBaseline.repeat;
+      }
+    }
+    this._reloadBaseline = reloadModel;
     this._originalSaveModel = vizPanelToPanel(panel);
     this._layoutItemState = sceneUtils.cloneSceneObjectState(this._layoutItem.state);
     this._layoutItemAdHocTransformations = collectAdHocTransformations(this._layoutItem);
@@ -343,6 +393,8 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       this.setOriginalState(this.state.panelRef);
       this._setupChangeDetection();
       this._updateDataPane(plugin);
+      // The editor may install a default query while opening an untouched panel.
+      this._reloadBaseline = this.getReloadModel(panel);
       this.resetChangeBaseline();
 
       // Setup options pane
@@ -455,10 +507,21 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     locationService.partial({ editPanel: null });
   };
 
+  /**
+   * Called when a query editor changes a query. Editors report every keystroke, so edits less than
+   * QUERY_EDIT_BURST_MS apart count once: the count says how often someone went back to a query.
+   */
+  public recordQueryEdit(now = Date.now()) {
+    if (now - this._lastQueryEditAt > QUERY_EDIT_BURST_MS) {
+      this._queryChangeCount++;
+    }
+    this._lastQueryEditAt = now;
+  }
+
   public dashboardSaved() {
     this._savedInEditor = true;
     this._savedBaseline = takePanelEditSnapshot(this.getPanel(), this._layoutItem);
-    this.setOriginalState(this.state.panelRef);
+    this.setOriginalState(this.state.panelRef, true);
     this.setState({ isDirty: false });
 
     // Remember that we have done changes
@@ -471,7 +534,13 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
   public onSaveLibraryPanel = () => {
     this.setState({ showLibraryPanelSaveModal: true });
+    this.reportLibraryPanelAction('save_library_panel');
   };
+
+  private reportLibraryPanelAction(item: 'save_library_panel' | 'unlink_library_panel') {
+    const panel = this.getPanel();
+    DashboardInteractions.panelActionClicked(item, getPanelIdForVizPanel(panel), 'panel_editor', panel.state.pluginId);
+  }
 
   public onConfirmSaveLibraryPanel = () => {
     this._savedInEditor = true;
@@ -486,6 +555,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
   public onUnlinkLibraryPanel = () => {
     this.setState({ showLibraryPanelUnlinkModal: true });
+    this.reportLibraryPanelAction('unlink_library_panel');
   };
 
   public onDismissUnlinkLibraryPanelModal = () => {
@@ -533,8 +603,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     trackEditorVersionToggle(newUseQueryExperienceNext ? 'upgrade' : 'downgrade');
     const dataPane = createPanelDataPane(this.getPanel(), newUseQueryExperienceNext);
 
-    setLocalStorageWithTTL(QUERY_EDITOR_V2_PREFERENCE_KEY, newUseQueryExperienceNext);
-
     this.setState({
       useQueryExperienceNext: newUseQueryExperienceNext,
       dataPane,
@@ -556,11 +624,7 @@ function setLayoutItemState(
 }
 
 export function buildPanelEditScene(panel: VizPanel, isNewPanel = false): PanelEditor {
-  const isQueryEditorNextEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.QueryEditorNext, false);
-  const storedPreference = isQueryEditorNextEnabled
-    ? getLocalStorageWithTTL<boolean>(QUERY_EDITOR_V2_PREFERENCE_KEY)
-    : null;
-  const useQueryExperienceNext = storedPreference ?? isQueryEditorNextEnabled;
+  const useQueryExperienceNext = getFeatureFlagClient().getBooleanValue(FlagKeys.QueryEditorNext, true);
 
   return new PanelEditor({
     useQueryExperienceNext,

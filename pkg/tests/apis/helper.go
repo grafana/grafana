@@ -30,6 +30,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/kube-openapi/pkg/spec3"
 
+	authlib "github.com/grafana/authlib/types"
 	appsdk_k8s "github.com/grafana/grafana-app-sdk/k8s"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
@@ -217,7 +218,7 @@ func buildK8sTestHelper(t *testing.T, opts K8sTestHelperOpts, listenerAddress st
 	userSvc, err := userimpl.NewLegacyService(
 		legacysql.NewDatabaseProvider(c.env.SQLStore), orgSvc, c.env.Cfg, teamSvc,
 		localcache.ProvideService(), tracing.NewNoopTracerService(), quotaService,
-		supportbundlestest.NewFakeBundleService(), nil)
+		supportbundlestest.NewFakeBundleService(), nil, nil)
 	require.NoError(c.t, err)
 	c.userSvc = userSvc
 
@@ -268,6 +269,34 @@ func (c *K8sTestHelper) loadAPIGroups() {
 
 		time.Sleep(100 * time.Millisecond)
 	}
+}
+
+// WaitForCoreApp waits until the router serves group from a core app. Until
+// its first reconcile completes, the router leaves every request to the
+// embedded API server, which would make a routed run test the legacy builder.
+func (c *K8sTestHelper) WaitForCoreApp(group string) {
+	c.t.Helper()
+	require.EventuallyWithT(c.t, func(t *assert.CollectT) {
+		rsp := DoRequest(c, RequestParams{
+			User: c.Org1.Admin,
+			Path: "/apis/discovery/v1alpha2/status",
+		}, &struct {
+			Ready  bool `json:"ready"`
+			Groups []struct {
+				Group  string `json:"group"`
+				Source string `json:"source"`
+			} `json:"groups"`
+		}{})
+		if !assert.Equal(t, http.StatusOK, rsp.Response.StatusCode, "router status: %s", rsp.Body) {
+			return
+		}
+		assert.True(t, rsp.Result.Ready, "router is not ready")
+		served := false
+		for _, g := range rsp.Result.Groups {
+			served = served || (g.Group == group && g.Source == "core")
+		}
+		assert.True(t, served, "router does not serve %s from a core app", group)
+	}, 30*time.Second, 100*time.Millisecond)
 }
 
 func (c *K8sTestHelper) GetEnv() server.TestEnv {
@@ -887,7 +916,7 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 	baseUrl := fmt.Sprintf("http://%s", c.env.Server.HTTPServer.Listener.Addr())
 
 	// make org1 admins grafana admins
-	isGrafanaAdmin := basicRole == identity.RoleAdmin && orgId == 1
+	isGrafanaAdmin := basicRole == authlib.RoleAdmin && orgId == 1
 	login := name
 	if isGrafanaAdmin {
 		login = "grafana-admin"
@@ -925,7 +954,7 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 		require.NoError(c.t, err)
 		for _, o := range orgs {
 			_ = c.orgSvc.AddOrgUser(context.Background(), &org.AddOrgUserCommand{
-				Role:   identity.RoleAdmin,
+				Role:   authlib.RoleAdmin,
 				OrgID:  o.ID,
 				UserID: u.ID,
 			})
