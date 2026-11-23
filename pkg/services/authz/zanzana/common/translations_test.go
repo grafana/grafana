@@ -93,3 +93,26 @@ func TestActionListEntryLegacyScopeKind(t *testing.T) {
 		})
 	}
 }
+
+func TestSupportedActionsUseListedResourceScopeKind(t *testing.T) {
+	const secretRead = "secret.securevalues:read"
+	const folderRead = "folders:read"
+	secret := resourceTranslations["secret.securevalues"]
+	folder := resourceTranslations[KindFolders]
+	secret.mapping = map[string]actionMapping{
+		secretRead:   newMapping(RelationGet, ""),
+		folderRead:   newScopedMapping(RelationGet, folder.group, folder.resource, ""),
+		"other:read": newScopedMapping(RelationGet, "other.example", secret.resource, ""),
+	}
+	folder.mapping = map[string]actionMapping{
+		folderRead: newMapping(RelationGet, ""),
+		secretRead: newScopedMapping(RelationGet, secret.group, secret.resource, ""),
+	}
+
+	entries := buildSupportedActions(map[string]resourceTranslation{KindFolders: folder, "secret.securevalues": secret})
+	require.ElementsMatch(t, []ActionListEntry{
+		{Action: secretRead, Group: secret.group, Resource: "securevalues", Verb: "get", LegacyScopeKind: "secret.securevalues"},
+		{Action: folderRead, Group: folder.group, Resource: "folders", Verb: "get", LegacyScopeKind: "folders"},
+		{Action: "other:read", Group: "other.example", Resource: "securevalues", Verb: "get", LegacyScopeKind: "securevalues"},
+	}, entries)
+}

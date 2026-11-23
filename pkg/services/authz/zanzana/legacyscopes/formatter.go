@@ -12,16 +12,13 @@ import (
 // Formatter expresses grant locations as UID scopes without IAM lookups.
 type Formatter struct{}
 
-// resourceScope scopes an object by the resource type Zanzana listed it under
-// (e.g. "folders:uid:abc"), not by the action prefix, so permission actions like
-// "folders.permissions:read" stay scoped on "folders:uid:<uid>".
-func resourceScope(resource, name string) string {
-	return ac.Scope(resource, "uid", name)
+// A legacy kind can differ from the listed API resource, as it does for secure values.
+func resourceScope(kind, name string) string {
+	return ac.Scope(kind, "uid", name)
 }
 
-// resourceWildcardScope is the org-wide scope for the listed resource ("folders:*").
-func resourceWildcardScope(resource string) string {
-	return ac.Scope(resource, "*")
+func resourceWildcardScope(kind string) string {
+	return ac.Scope(kind, "*")
 }
 
 // folderScopeForLegacyRBAC returns a legacy RBAC scope for folder-scoped access (folders:uid:<uid>).
