@@ -19,5 +19,5 @@ export function useRepositoryList(
     return collator.compare(titleA, titleB);
   });
 
-  return [sortedItems, query.isLoading];
+  return [sortedItems, query.isLoading && !query.error];
 }

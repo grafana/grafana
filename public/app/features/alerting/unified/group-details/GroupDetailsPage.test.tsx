@@ -395,6 +395,18 @@ describe('GroupDetailsPage', () => {
       );
       expect(ui.exportButton.query()).not.toBeInTheDocument();
     });
+
+    it('should keep showing the error when the group does not exist', async () => {
+      const { dataSource: mimirDs } = mimirDataSource();
+
+      setRulerRuleGroupResolver(() => HttpResponse.json({ message: 'group does not exist' }, { status: 404 }));
+
+      renderGroupDetailsPage(mimirDs.uid, 'test-mimir-namespace', 'non-existing-group');
+
+      // The group loader refetches the failed query on mount; the page must stay on the error, not go back to loading
+      expect(await screen.findByText(/The group is being deleted/)).toBeInTheDocument();
+      expect(screen.getByRole('alert', { name: /Error loading the group/ })).toHaveTextContent(/group does not exist/);
+    });
   });
 
   describe('Ungrouped rules', () => {
