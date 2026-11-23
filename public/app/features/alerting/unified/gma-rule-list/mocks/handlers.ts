@@ -10,6 +10,7 @@ import {
 import server from '@grafana/test-utils/server';
 
 import { mockK8sAlertRule } from '../../mocks/server/handlers/k8s/alertRules.k8s';
+import { type DeletedRule } from '../deleted-rules/deletedRulesPage';
 import { type RuleKind } from '../shared/ruleKind';
 
 const RULES_BASE = getAPIBaseURL('rules.alerting.grafana.app', 'v0alpha1');
@@ -97,6 +98,8 @@ export function makeDeletedRule(overrides: Partial<AlertRule> = {}): AlertRule {
     metadata: {
       name: 'deleted-rule-uid',
       deletionTimestamp: '2026-11-10T10:00:00Z',
+      resourceVersion: '42',
+      generation: -999,
       annotations: {
         'grafana.app/folder': 'folder-uid',
         'grafana.app/updatedBy': 'user-uid-123',
@@ -131,6 +134,29 @@ export function mockTrashRecordingRules(rules: RecordingRule[], continueToken?: 
   );
 }
 
+/** Acts like the API server's create: it refuses server-set metadata and a name that already exists. */
+export function mockRuleCreate(kind: RuleKind, { existingNames = [] }: { existingNames?: string[] } = {}) {
+  server.use(
+    http.post<{ namespace: string }, DeletedRule>(
+      kind === 'alert' ? TRASH_RULES_URL : TRASH_RECORDING_RULES_URL,
+      async ({ request }) => {
+        const rule = await request.json();
+        const { name = '', resourceVersion, generation = 0 } = rule.metadata;
+        if (resourceVersion || generation < 0) {
+          return HttpResponse.json(
+            { message: 'resourceVersion and generation must not be set on create' },
+            { status: 400 }
+          );
+        }
+        if (existingNames.includes(name)) {
+          return HttpResponse.json({ message: `"${name}" already exists` }, { status: 409 });
+        }
+        return HttpResponse.json(rule, { status: 201 });
+      }
+    )
+  );
+}
+
 export function makeDeletedRecordingRule(overrides: Partial<RecordingRule> = {}): RecordingRule {
   return {
     apiVersion: `${API_GROUP}/${API_VERSION}`,
@@ -138,6 +164,8 @@ export function makeDeletedRecordingRule(overrides: Partial<RecordingRule> = {})
     metadata: {
       name: 'deleted-recording-rule-uid',
       deletionTimestamp: '2026-11-10T10:00:00Z',
+      resourceVersion: '42',
+      generation: -999,
       annotations: {
         'grafana.app/folder': 'folder-uid',
         'grafana.app/updatedBy': 'user-uid-123',

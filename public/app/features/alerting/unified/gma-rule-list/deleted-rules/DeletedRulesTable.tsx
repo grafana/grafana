@@ -6,20 +6,20 @@ import { FolderByUid } from '../folder-browsing/FolderByUid';
 
 import { type DeletedRule } from './deletedRulesPage';
 
-interface DeletedRulesTableProps {
-  rules: DeletedRule[];
+interface DeletedRulesTableProps<Rule extends DeletedRule> {
+  rules: Rule[];
   /** Pre-resolved folder paths: uid → display path string (override for tests) */
   folderPaths: Record<string, string>;
   /** Pre-resolved user names from IAM getDisplayMapping: uid → display name */
   userNames: Record<string, string>;
-  onReview: (rule: DeletedRule) => void;
-  onRestore: (rule: DeletedRule) => void;
+  onReview: (rule: Rule) => void;
+  onRestore: (rule: Rule) => void;
   hasMore: boolean;
   isLoadingMore: boolean;
   onLoadMore: () => void;
 }
 
-export function DeletedRulesTable({
+export function DeletedRulesTable<Rule extends DeletedRule>({
   rules,
   folderPaths,
   userNames,
@@ -28,7 +28,7 @@ export function DeletedRulesTable({
   hasMore,
   isLoadingMore,
   onLoadMore,
-}: DeletedRulesTableProps) {
+}: DeletedRulesTableProps<Rule>) {
   if (rules.length === 0) {
     return (
       <EmptyState
@@ -38,7 +38,7 @@ export function DeletedRulesTable({
     );
   }
 
-  const columns: Array<Column<DeletedRule>> = [
+  const columns: Array<Column<Rule>> = [
     {
       id: 'title',
       header: t('alerting.recently-deleted.table.title', 'Title'),
@@ -103,7 +103,7 @@ export function DeletedRulesTable({
 
   return (
     <Stack direction="column" gap={2}>
-      <InteractiveTable<DeletedRule> columns={columns} data={rules} getRowId={(rule) => rule.metadata?.name ?? ''} />
+      <InteractiveTable<Rule> columns={columns} data={rules} getRowId={(rule) => rule.metadata?.name ?? ''} />
       {hasMore && (
         <Button variant="secondary" onClick={onLoadMore} disabled={isLoadingMore}>
           {isLoadingMore ? <Spinner /> : <Trans i18nKey="alerting.recently-deleted.load-more">Load more</Trans>}

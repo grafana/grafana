@@ -15,8 +15,8 @@ export interface RestoreResult {
   error?: unknown;
 }
 
-export interface RuleRestorer {
-  restore: (rule: DeletedRule) => Promise<RestoreResult>;
+export interface RuleRestorer<Rule extends DeletedRule> {
+  restore: (rule: Rule) => Promise<RestoreResult>;
   isRestoring: boolean;
 }
 

@@ -4,11 +4,13 @@ import {
   useCreateAlertRuleMutation,
 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
-import { type DeletedRule, type RestoreResult, toRestoreResult } from './deletedRulesPage';
+import { type DeletedRule, type RuleRestorer, toRestoreResult } from './deletedRulesPage';
 
 const GROUP_LABELS_TO_REMOVE = new Set(['grafana.com/group', 'grafana.com/group-index']);
 
-export function sanitizeForRestore(rule: DeletedRule) {
+export function sanitizeForRestore<Rule extends DeletedRule>(
+  rule: Rule
+): Pick<Rule, 'apiVersion' | 'kind' | 'spec'> & { metadata: ObjectMeta } {
   const { resourceVersion, deletionTimestamp, managedFields, finalizers, generation, ...cleanMeta } =
     rule.metadata ?? {};
 
@@ -16,26 +18,19 @@ export function sanitizeForRestore(rule: DeletedRule) {
     Object.entries(cleanMeta.labels ?? {}).filter(([key]) => !GROUP_LABELS_TO_REMOVE.has(key))
   );
 
-  // Explicitly typed so callers can access ObjectMeta fields (e.g. in tests) even though
-  // the destructured fields above are removed at runtime.
-  const sanitizedMeta: ObjectMeta = { ...cleanMeta, labels: cleanLabels };
-
   return {
     apiVersion: rule.apiVersion,
     kind: rule.kind,
-    metadata: sanitizedMeta,
+    metadata: { ...cleanMeta, labels: cleanLabels },
     spec: rule.spec,
   };
 }
 
-export function useRestoreAlertRule() {
+export function useRestoreAlertRule(): RuleRestorer<AlertRule> {
   const [createAlertRule, { isLoading }] = useCreateAlertRuleMutation();
 
-  const restore = async (rule: DeletedRule): Promise<RestoreResult> => {
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const payload = sanitizeForRestore(rule) as AlertRule;
-    return toRestoreResult(await createAlertRule({ alertRule: payload }));
-  };
+  const restore = async (rule: AlertRule) =>
+    toRestoreResult(await createAlertRule({ alertRule: sanitizeForRestore(rule) }));
 
   return { restore, isRestoring: isLoading };
 }

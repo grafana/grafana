@@ -46,17 +46,22 @@ function useDeletedByNames(rules: DeletedRule[]): Record<string, string> {
   }, [data]);
 }
 
-interface DeletedRulesViewProps {
+interface DeletedRulesViewProps<Rule extends DeletedRule> {
   kind: RuleKind;
-  list: UseDeletedRulesResult<DeletedRule>;
-  restorer: RuleRestorer;
+  list: UseDeletedRulesResult<Rule>;
+  restorer: RuleRestorer<Rule>;
   restoreTitle: string;
 }
 
-export function DeletedRulesView({ kind, list, restorer, restoreTitle }: DeletedRulesViewProps) {
+export function DeletedRulesView<Rule extends DeletedRule>({
+  kind,
+  list,
+  restorer,
+  restoreTitle,
+}: DeletedRulesViewProps<Rule>) {
   const { items, hasMore, isLoading, isFetchingMore, error, loadMore, refetch, totalFromApi } = list;
-  const [reviewing, setReviewing] = useState<DeletedRule | null>(null);
-  const [restoring, setRestoring] = useState<DeletedRule | null>(null);
+  const [reviewing, setReviewing] = useState<Rule | null>(null);
+  const [restoring, setRestoring] = useState<Rule | null>(null);
   const userNames = useDeletedByNames(items);
 
   useTrackDeletedRulesPageView(kind, totalFromApi);

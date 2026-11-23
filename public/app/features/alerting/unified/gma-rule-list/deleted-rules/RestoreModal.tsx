@@ -10,16 +10,23 @@ import { type RuleKind } from '../shared/ruleKind';
 import { trackRestoreAttempt, trackRestoreFailure, trackRestoreSuccess } from './analytics';
 import { type DeletedRule, type RuleRestorer } from './deletedRulesPage';
 
-interface RestoreModalProps {
+interface RestoreModalProps<Rule extends DeletedRule> {
   kind: RuleKind;
-  rule: DeletedRule;
-  restorer: RuleRestorer;
+  rule: Rule;
+  restorer: RuleRestorer<Rule>;
   title: string;
   onDismiss: () => void;
   onRefetch?: () => void;
 }
 
-export function RestoreModal({ kind, rule, restorer, title, onDismiss, onRefetch }: RestoreModalProps) {
+export function RestoreModal<Rule extends DeletedRule>({
+  kind,
+  rule,
+  restorer,
+  title,
+  onDismiss,
+  onRefetch,
+}: RestoreModalProps<Rule>) {
   const [error, setError] = useState<string | null>(null);
   const ruleTitle = rule.spec?.title ?? '';
   const uid = rule.metadata?.name ?? '';
