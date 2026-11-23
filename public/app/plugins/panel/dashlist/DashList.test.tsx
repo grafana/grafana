@@ -13,7 +13,6 @@ import {
   setMockStarredFolders,
 } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { contextSrv } from 'app/core/services/context_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import { CollectionsStarsSrv } from 'app/features/stars/service';
 
@@ -25,9 +24,7 @@ import { type Options } from './panelcfg.gen';
 const [_, { folderA, folderA_dashbdD, dashbdE }] = getFolderFixtures();
 
 setBackendSrv(backendSrv);
-// Stars go through the runtime service, which refuses signed-out callers
 setStarsSrv(new CollectionsStarsSrv());
-contextSrv.isSignedIn = true;
 setupMockServer();
 
 const defaultOptions: Options = {

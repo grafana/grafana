@@ -22,9 +22,7 @@ jest.mock('./analytics/main', () => ({
 const [_, { dashbdD, folderA, folderA_folderB_dashbdB }] = getFolderFixtures();
 
 setBackendSrv(backendSrv);
-// Stars go through the runtime service, which refuses signed-out callers
 setStarsSrv(new CollectionsStarsSrv());
-contextSrv.isSignedIn = true;
 setupMockServer();
 locationUtil.initialize({
   config: { appSubUrl: '/foo/bar' } as GrafanaConfig,
@@ -123,14 +121,7 @@ describe('StarToolbarButton', () => {
         () => new HttpResponse(null, { status: 500 })
       )
     );
-    const { user } = render(
-      <StarToolbarButton
-        title={itemToStar.title}
-        group="dashboard.grafana.app"
-        kind="Dashboard"
-        name={itemToStar.uid}
-      />
-    );
+    const { user } = setup(itemToStar);
 
     await user.click(await findStarButton(itemToStar.title, false));
 

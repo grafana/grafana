@@ -55,9 +55,7 @@ jest.mock('app/core/services/pageHistory/pageHistorySrv', () => ({
 }));
 
 setBackendSrv(backendSrv);
-// Stars go through the runtime service, which refuses signed-out callers
 setStarsSrv(new CollectionsStarsSrv());
-contextSrv.isSignedIn = true;
 setupMockServer();
 // The kind filter is a Combobox; without a measured rect the virtualizer renders no options in jsdom.
 mockComboboxRect();
