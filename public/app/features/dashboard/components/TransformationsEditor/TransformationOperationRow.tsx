@@ -319,8 +319,16 @@ export const TransformationOperationRow = ({
         headerElement={renderHeader}
         disabled={disabled}
         expanderMessages={{
-          close: `Collapse transformation row ${index + 1} - ${uiConfig.name}`,
-          open: `Expand transformation row ${index + 1} - ${uiConfig.name}`,
+          close: t(
+            'dashboard.transformation-operation-row.expander-close',
+            'Collapse transformation row {{number}} - {{name}}',
+            { number: index + 1, name: uiConfig.name }
+          ),
+          open: t(
+            'dashboard.transformation-operation-row.expander-open',
+            'Expand transformation row {{number}} - {{name}}',
+            { number: index + 1, name: uiConfig.name }
+          ),
         }}
       >
         {showFilterEditor && (

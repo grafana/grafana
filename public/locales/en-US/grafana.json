@@ -7174,6 +7174,8 @@
     },
     "transformation-operation-row": {
       "body-delete": "Note that removing one transformation may break others. If there is only a single transformation, you will go back to the main selection screen.",
+      "expander-close": "Collapse transformation row {{number}} - {{name}}",
+      "expander-open": "Expand transformation row {{number}} - {{name}}",
       "render-actions": {
         "confirmText-delete": "Delete",
         "title-debug": "Debug",
