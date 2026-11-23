@@ -541,6 +541,10 @@ func (s *service) start(ctx context.Context) error {
 	// Capture the discovery seam so preferred can re-prioritize without a scheme mutation; group priorities mirror startup.
 	s.groupDiscoveryPriority = builder.BuilderGroupPriorities(builders)
 	s.discoveryManager = server.AggregatedDiscoveryGroupManager
+	if globalSearchAPIEnabled || globalHybridAPIEnabled {
+		// Global search has routes but no resources.
+		appsdkapiserver.AdvertiseRouteOnlyVersion(server.AggregatedDiscoveryGroupManager, globalSearchGV)
+	}
 
 	// Install the API group+version for existing builders
 	err = builder.InstallAPIs(s.scheme,
