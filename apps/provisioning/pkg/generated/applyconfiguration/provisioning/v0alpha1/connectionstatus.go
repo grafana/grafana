@@ -4,10 +4,6 @@
 
 package v0alpha1
 
-import (
-	v1 "k8s.io/client-go/applyconfigurations/meta/v1"
-)
-
 // ConnectionStatusApplyConfiguration represents a declarative configuration of the ConnectionStatus type for use
 // with apply.
 //
@@ -20,7 +16,7 @@ type ConnectionStatusApplyConfiguration struct {
 	// These errors are intended to help users identify and fix issues in the spec.
 	FieldErrors []ErrorDetailsApplyConfiguration `json:"fieldErrors,omitempty"`
 	// Conditions represent the latest available observations of the connection's state.
-	Conditions []v1.ConditionApplyConfiguration `json:"conditions,omitempty"`
+	Conditions []ConnectionConditionApplyConfiguration `json:"conditions,omitempty"`
 	// The connection health status
 	Health *RepositoryHealthStatusApplyConfiguration `json:"health,omitempty"`
 	// Token holds metadata about the last generated connection token, used to avoid
@@ -58,7 +54,7 @@ func (b *ConnectionStatusApplyConfiguration) WithFieldErrors(values ...*ErrorDet
 // WithConditions adds the given value to the Conditions field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the Conditions field.
-func (b *ConnectionStatusApplyConfiguration) WithConditions(values ...*v1.ConditionApplyConfiguration) *ConnectionStatusApplyConfiguration {
+func (b *ConnectionStatusApplyConfiguration) WithConditions(values ...*ConnectionConditionApplyConfiguration) *ConnectionStatusApplyConfiguration {
 	for i := range values {
 		if values[i] == nil {
 			panic("nil value passed to WithConditions")

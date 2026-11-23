@@ -19,7 +19,9 @@ import (
 // repositoryConditions and connectionConditions adapt Repository/Connection to the
 // generic condition helpers below.
 func repositoryConditions(r *provisioning.Repository) []metav1.Condition { return r.Status.Conditions }
-func connectionConditions(c *provisioning.Connection) []metav1.Condition { return c.Status.Conditions }
+func connectionConditions(c *provisioning.Connection) []metav1.Condition {
+	return provisioning.ConditionsToMeta(c.Status.Conditions)
+}
 
 // readConditions fetches the named resource of type T and returns its status
 // conditions via getConditions. Used both directly and from
@@ -222,7 +224,7 @@ func TestIntegrationProvisioning_ConnectionStatusPatch_ValidatesBundledSpecChang
 	updated, err := helper.Connections.Resource.Get(t.Context(), connName, metav1.GetOptions{})
 	require.NoError(t, err, "failed to get connection after the pure status patch")
 	conn := common.MustFromUnstructured[provisioning.Connection](t, updated)
-	found := common.FindCondition(conn.Status.Conditions, pureStatusCondition.Type)
+	found := common.FindCondition(provisioning.ConditionsToMeta(conn.Status.Conditions), pureStatusCondition.Type)
 	require.NotNil(t, found, "status condition should have been written by the pure status patch")
 	require.Equal(t, metav1.ConditionTrue, found.Status)
 
@@ -263,6 +265,6 @@ func TestIntegrationProvisioning_ConnectionStatusPatch_ValidatesBundledSpecChang
 	conn = common.MustFromUnstructured[provisioning.Connection](t, updated)
 
 	require.Equal(t, "123456", conn.Spec.Github.AppID, "the cleared appID must not have been persisted")
-	require.Nil(t, common.FindCondition(conn.Status.Conditions, bundledCondition.Type),
+	require.Nil(t, common.FindCondition(provisioning.ConditionsToMeta(conn.Status.Conditions), bundledCondition.Type),
 		"the bundled status write must not land either: the whole patch was rejected atomically")
 }

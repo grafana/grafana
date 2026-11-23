@@ -60,7 +60,7 @@ func LogConnectionUsageStatus(logger logging.Logger, conn *provisioning.Connecti
 // object. It performs no I/O — every field is read from the object in hand.
 func ConnectionUsageStatusFromConnection(conn *provisioning.Connection) ConnectionUsageStatus {
 	var readyReason string
-	if ready := meta.FindStatusCondition(conn.Status.Conditions, provisioning.ConditionTypeReady); ready != nil {
+	if ready := meta.FindStatusCondition(provisioning.ConditionsToMeta(conn.Status.Conditions), provisioning.ConditionTypeReady); ready != nil {
 		readyReason = ready.Reason
 	}
 

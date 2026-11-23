@@ -523,7 +523,7 @@ func TestConnectionHealthChecker_RefreshHealthWithPatchOps(t *testing.T) {
 						Healthy: true,
 						Checked: time.Now().Add(-20 * time.Second).UnixMilli(),
 					},
-					Conditions: []metav1.Condition{
+					Conditions: provisioning.ConditionsFromMeta[provisioning.ConnectionCondition]([]metav1.Condition{
 						{
 							Type:               provisioning.ConditionTypeReady,
 							Status:             metav1.ConditionTrue,
@@ -532,7 +532,7 @@ func TestConnectionHealthChecker_RefreshHealthWithPatchOps(t *testing.T) {
 							ObservedGeneration: 1,
 							LastTransitionTime: metav1.Now(),
 						},
-					},
+					}),
 				},
 			},
 			testResults: &provisioning.TestResults{

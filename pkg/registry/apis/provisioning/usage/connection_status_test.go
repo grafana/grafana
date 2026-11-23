@@ -24,9 +24,9 @@ func TestConnectionUsageStatusFromConnection(t *testing.T) {
 		},
 		Status: provisioning.ConnectionStatus{
 			Health: provisioning.ConnectionHealthStatus{Healthy: true},
-			Conditions: []metav1.Condition{
+			Conditions: provisioning.ConditionsFromMeta[provisioning.ConnectionCondition]([]metav1.Condition{
 				{Type: provisioning.ConditionTypeReady, Status: metav1.ConditionTrue, Reason: provisioning.ReasonAvailable},
-			},
+			}),
 		},
 	}
 
@@ -47,9 +47,9 @@ func TestConnectionUsageStatusFromConnection_AuthFailure(t *testing.T) {
 		Spec: provisioning.ConnectionSpec{Type: provisioning.ConnectionTypeGithub},
 		Status: provisioning.ConnectionStatus{
 			Health: provisioning.ConnectionHealthStatus{Healthy: false},
-			Conditions: []metav1.Condition{
+			Conditions: provisioning.ConditionsFromMeta[provisioning.ConnectionCondition]([]metav1.Condition{
 				{Type: provisioning.ConditionTypeReady, Status: metav1.ConditionFalse, Reason: provisioning.ReasonAuthenticationFailed},
-			},
+			}),
 		},
 	}
 

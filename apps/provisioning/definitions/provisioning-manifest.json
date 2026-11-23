@@ -129,8 +129,8 @@
                                 "description": "Mirrors metav1.Condition, which CUE cannot reference directly.",
                                 "properties": {
                                     "lastTransitionTime": {
-                                        "description": "lastTransitionTime is the last time the condition transitioned from one status to another.",
-                                        "format": "date-time",
+                                        "description": "lastTransitionTime is the last time the condition transitioned from one status to another.\nNull when unset, matching the encoding of the zero metav1.Time.",
+                                        "nullable": true,
                                         "type": "string"
                                     },
                                     "message": {
@@ -884,8 +884,8 @@
                                 "description": "Mirrors metav1.Condition, which CUE cannot reference directly.",
                                 "properties": {
                                     "lastTransitionTime": {
-                                        "description": "lastTransitionTime is the last time the condition transitioned from one status to another.",
-                                        "format": "date-time",
+                                        "description": "lastTransitionTime is the last time the condition transitioned from one status to another.\nNull when unset, matching the encoding of the zero metav1.Time.",
+                                        "nullable": true,
                                         "type": "string"
                                     },
                                     "message": {
@@ -2306,8 +2306,8 @@
                                 "description": "Mirrors metav1.Condition, which CUE cannot reference directly.",
                                 "properties": {
                                     "lastTransitionTime": {
-                                        "description": "lastTransitionTime is the last time the condition transitioned from one status to another.",
-                                        "format": "date-time",
+                                        "description": "lastTransitionTime is the last time the condition transitioned from one status to another.\nNull when unset, matching the encoding of the zero metav1.Time.",
+                                        "nullable": true,
                                         "type": "string"
                                     },
                                     "message": {
@@ -3061,8 +3061,8 @@
                                 "description": "Mirrors metav1.Condition, which CUE cannot reference directly.",
                                 "properties": {
                                     "lastTransitionTime": {
-                                        "description": "lastTransitionTime is the last time the condition transitioned from one status to another.",
-                                        "format": "date-time",
+                                        "description": "lastTransitionTime is the last time the condition transitioned from one status to another.\nNull when unset, matching the encoding of the zero metav1.Time.",
+                                        "nullable": true,
                                         "type": "string"
                                     },
                                     "message": {

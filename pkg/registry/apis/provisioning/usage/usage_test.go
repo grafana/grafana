@@ -250,9 +250,9 @@ func TestMetricCollector_ConnectionStats(t *testing.T) {
 				},
 				Status: provisioning.ConnectionStatus{
 					Health: provisioning.ConnectionHealthStatus{Healthy: false},
-					Conditions: []metav1.Condition{
+					Conditions: provisioning.ConditionsFromMeta[provisioning.ConnectionCondition]([]metav1.Condition{
 						{Type: provisioning.ConditionTypeReady, Reason: provisioning.ReasonAuthenticationFailed},
-					},
+					}),
 				},
 			},
 		}, nil

@@ -496,7 +496,7 @@ func (cc *ConnectionController) process(ctx context.Context, key string) (err er
 		patchOperations = append(patchOperations, healthResult.PatchOps...)
 	}
 	if conditionPatchOps := BuildConditionPatchOpsFromExisting(
-		conn.Status.Conditions, conn.GetGeneration(), healthResult.ReadyCondition,
+		provisioning.ConditionsToMeta(conn.Status.Conditions), conn.GetGeneration(), healthResult.ReadyCondition,
 	); conditionPatchOps != nil {
 		patchOperations = append(patchOperations, conditionPatchOps...)
 	}

@@ -244,7 +244,7 @@ type ConnectionStatus struct {
 	// +listMapKey=type
 	// +patchMergeKey=type
 	// +patchStrategy=merge
-	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
+	Conditions []ConnectionCondition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
 
 	// The connection health status
 	Health ConnectionHealthStatus `json:"health"`

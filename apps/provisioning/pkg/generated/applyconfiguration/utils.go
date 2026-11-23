@@ -28,6 +28,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &provisioningv0alpha1.ConnectionApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("ConnectionBitbucketConfig"):
 		return &provisioningv0alpha1.ConnectionBitbucketConfigApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("ConnectionCondition"):
+		return &provisioningv0alpha1.ConnectionConditionApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("ConnectionGitHubConfig"):
 		return &provisioningv0alpha1.ConnectionGitHubConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("ConnectionGitHubEnterpriseConfig"):

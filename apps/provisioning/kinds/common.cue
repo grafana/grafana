@@ -1,11 +1,8 @@
+// Definitions shared by more than one kind. Schemas reference them directly; redeclaring one
+// under the same name inside a schema generates a self-referencing OpenAPI component.
+// App SDK codegen emits a copy of each per kind, prefixed with the kind name (RepositoryHealthStatus).
+
 package repository
-
-import ( "time"
-
-	// Definitions shared by more than one kind. Schemas reference them directly; redeclaring one
-	// under the same name inside a schema generates a self-referencing OpenAPI component.
-	// App SDK codegen emits a copy of each per kind, prefixed with the kind name (RepositoryHealthStatus).
-)
 
 #HealthFailureType: "hook" | "health"
 
@@ -57,7 +54,8 @@ import ( "time"
 	// observedGeneration represents the .metadata.generation that the condition was set based upon.
 	observedGeneration?: int64
 	// lastTransitionTime is the last time the condition transitioned from one status to another.
-	lastTransitionTime: string & time.Time
+	// Null when unset, matching the encoding of the zero metav1.Time.
+	lastTransitionTime: string | null
 	// reason contains a programmatic identifier indicating the reason for the condition's last transition.
 	reason: string
 	// message is a human readable message indicating details about the transition.

@@ -1569,14 +1569,14 @@ export type ConnectionSpec = {
   /** Webhook configuration for this connection */
   webhook?: ConnectionWebhookConfig;
 };
-export type Condition = {
-  /** lastTransitionTime is the last time the condition transitioned from one status to another. This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable. */
-  lastTransitionTime: Time;
-  /** message is a human readable message indicating details about the transition. This may be an empty string. */
+export type ConnectionCondition = {
+  /** lastTransitionTime is the last time the condition transitioned from one status to another. */
+  lastTransitionTime: string;
+  /** message is a human readable message indicating details about the transition. */
   message: string;
-  /** observedGeneration represents the .metadata.generation that the condition was set based upon. For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date with respect to the current state of the instance. */
+  /** observedGeneration represents the .metadata.generation that the condition was set based upon. */
   observedGeneration?: number;
-  /** reason contains a programmatic identifier indicating the reason for the condition's last transition. Producers of specific condition types may define expected values and meanings for this field, and whether the values are considered a guaranteed API. The value should be a CamelCase string. This field may not be empty. */
+  /** reason contains a programmatic identifier indicating the reason for the condition's last transition. */
   reason: string;
   /** status of the condition, one of True, False, Unknown. */
   status: string;
@@ -1615,7 +1615,7 @@ export type TokenStatus = {
 };
 export type ConnectionStatus = {
   /** Conditions represent the latest available observations of the connection's state. */
-  conditions?: Condition[];
+  conditions?: ConnectionCondition[];
   /** FieldErrors are errors that occurred during validation of the connection spec. These errors are intended to help users identify and fix issues in the spec. */
   fieldErrors?: ErrorDetails[];
   /** The connection health status */
@@ -2084,6 +2084,20 @@ export type RepositorySpec = {
   webhook?: WebhookConfig;
   /** UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly) */
   workflows: ('branch' | 'write')[];
+};
+export type Condition = {
+  /** lastTransitionTime is the last time the condition transitioned from one status to another. This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable. */
+  lastTransitionTime: Time;
+  /** message is a human readable message indicating details about the transition. This may be an empty string. */
+  message: string;
+  /** observedGeneration represents the .metadata.generation that the condition was set based upon. For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date with respect to the current state of the instance. */
+  observedGeneration?: number;
+  /** reason contains a programmatic identifier indicating the reason for the condition's last transition. Producers of specific condition types may define expected values and meanings for this field, and whether the values are considered a guaranteed API. The value should be a CamelCase string. This field may not be empty. */
+  reason: string;
+  /** status of the condition, one of True, False, Unknown. */
+  status: string;
+  /** type of condition in CamelCase or in foo.example.com/CamelCase. */
+  type: string;
 };
 export type DeletionStatus = {
   /** Cause classifies the blocking error. It may be absent on older statuses.

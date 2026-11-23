@@ -25,6 +25,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		ConnectionAuthorizeRequestSpec{}.OpenAPIModelName():        schema_pkg_apis_provisioning_v0alpha1_ConnectionAuthorizeRequestSpec(ref),
 		ConnectionAuthorizeRequestStatus{}.OpenAPIModelName():      schema_pkg_apis_provisioning_v0alpha1_ConnectionAuthorizeRequestStatus(ref),
 		ConnectionBitbucketConfig{}.OpenAPIModelName():             schema_pkg_apis_provisioning_v0alpha1_ConnectionBitbucketConfig(ref),
+		ConnectionCondition{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_ConnectionCondition(ref),
 		ConnectionGitHubConfig{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_ConnectionGitHubConfig(ref),
 		ConnectionGitHubEnterpriseConfig{}.OpenAPIModelName():      schema_pkg_apis_provisioning_v0alpha1_ConnectionGitHubEnterpriseConfig(ref),
 		ConnectionGitHubEnterpriseOAuthConfig{}.OpenAPIModelName(): schema_pkg_apis_provisioning_v0alpha1_ConnectionGitHubEnterpriseOAuthConfig(ref),
@@ -454,6 +455,66 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionBitbucketConfig(ref common.
 	}
 }
 
+func schema_pkg_apis_provisioning_v0alpha1_ConnectionCondition(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Mirrors metav1.Condition with the same JSON encoding: lastTransitionTime is an RFC3339 timestamp, or null when unset.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Description: "type of condition in CamelCase or in foo.example.com/CamelCase.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Description: "status of the condition, one of True, False, Unknown.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"observedGeneration": {
+						SchemaProps: spec.SchemaProps{
+							Description: "observedGeneration represents the .metadata.generation that the condition was set based upon.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"lastTransitionTime": {
+						SchemaProps: spec.SchemaProps{
+							Description: "lastTransitionTime is the last time the condition transitioned from one status to another.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"reason": {
+						SchemaProps: spec.SchemaProps{
+							Description: "reason contains a programmatic identifier indicating the reason for the condition's last transition.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"message": {
+						SchemaProps: spec.SchemaProps{
+							Description: "message is a human readable message indicating details about the transition.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"type", "status", "lastTransitionTime", "reason", "message"},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_provisioning_v0alpha1_ConnectionGitHubConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -852,7 +913,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionStatus(ref common.Reference
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref("io.k8s.apimachinery.pkg.apis.meta.v1.Condition"),
+										Ref: ref(ConnectionCondition{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -877,7 +938,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionStatus(ref common.Reference
 			},
 		},
 		Dependencies: []string{
-			ErrorDetails{}.OpenAPIModelName(), RepositoryHealthStatus{}.OpenAPIModelName(), RepositoryTokenStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.Condition"},
+			ConnectionCondition{}.OpenAPIModelName(), ErrorDetails{}.OpenAPIModelName(), RepositoryHealthStatus{}.OpenAPIModelName(), RepositoryTokenStatus{}.OpenAPIModelName()},
 	}
 }
 

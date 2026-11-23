@@ -547,7 +547,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 		conn, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
 		require.NoError(t, err)
 		assert.False(t, conn.Status.Health.Healthy, "connection should be unhealthy")
-		readyCondition := meta.FindStatusCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
+		readyCondition := meta.FindStatusCondition(provisioning.ConditionsToMeta(conn.Status.Conditions), provisioning.ConditionTypeReady)
 		require.NotNil(t, readyCondition, "Ready condition should exist")
 		assert.Equal(t, metav1.ConditionFalse, readyCondition.Status, "connection should be disconnected")
 		// Check that error message mentions API unavailable
@@ -645,7 +645,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 		conn, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
 		require.NoError(t, err)
 		assert.False(t, conn.Status.Health.Healthy, "connection should be unhealthy")
-		readyCondition := meta.FindStatusCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
+		readyCondition := meta.FindStatusCondition(provisioning.ConditionsToMeta(conn.Status.Conditions), provisioning.ConditionTypeReady)
 		require.NotNil(t, readyCondition, "Ready condition should exist")
 		assert.Equal(t, metav1.ConditionFalse, readyCondition.Status, "connection should be disconnected")
 		// Check that error message mentions app ID mismatch
@@ -833,7 +833,7 @@ func TestIntegrationConnectionController_TokenCreation(t *testing.T) {
 			if err != nil {
 				return false
 			}
-			readyCondition := meta.FindStatusCondition(updated.Status.Conditions, provisioning.ConditionTypeReady)
+			readyCondition := meta.FindStatusCondition(provisioning.ConditionsToMeta(updated.Status.Conditions), provisioning.ConditionTypeReady)
 			return updated.Status.ObservedGeneration == updated.Generation &&
 				updated.Status.Health.Checked > 0 &&
 				readyCondition != nil && readyCondition.Status == metav1.ConditionTrue &&
@@ -915,7 +915,7 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 		initial, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
 		require.NoError(t, err)
 		assert.True(t, initial.Status.Health.Healthy, "connection should be healthy")
-		readyCondition := meta.FindStatusCondition(initial.Status.Conditions, provisioning.ConditionTypeReady)
+		readyCondition := meta.FindStatusCondition(provisioning.ConditionsToMeta(initial.Status.Conditions), provisioning.ConditionTypeReady)
 		require.NotNil(t, readyCondition, "Ready condition should exist")
 		assert.Equal(t, metav1.ConditionTrue, readyCondition.Status, "connection should be connected")
 		assert.Greater(t, initial.Status.Health.Checked, int64(0), "health check timestamp should be set")
@@ -1015,7 +1015,7 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 		assert.Empty(t, final.Status.FieldErrors, "fieldErrors should be empty when connection is healthy after spec change")
 		// Verify Ready condition is still set correctly
 		assert.NotEmpty(t, final.Status.Conditions, "conditions should be set")
-		readyCondition := meta.FindStatusCondition(final.Status.Conditions, provisioning.ConditionTypeReady)
+		readyCondition := meta.FindStatusCondition(provisioning.ConditionsToMeta(final.Status.Conditions), provisioning.ConditionTypeReady)
 		assert.NotNil(t, readyCondition, "Ready condition should exist")
 		assert.Equal(t, metav1.ConditionTrue, readyCondition.Status, "Ready condition should be True")
 		assert.Equal(t, provisioning.ReasonAvailable, readyCondition.Reason, "Ready condition should have Available reason")
@@ -1122,7 +1122,7 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 		conn, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
 		require.NoError(t, err)
 		assert.False(t, conn.Status.Health.Healthy, "connection should be unhealthy")
-		readyCondition := meta.FindStatusCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
+		readyCondition := meta.FindStatusCondition(provisioning.ConditionsToMeta(conn.Status.Conditions), provisioning.ConditionTypeReady)
 		require.NotNil(t, readyCondition, "Ready condition should exist")
 		assert.Equal(t, metav1.ConditionFalse, readyCondition.Status, "connection should be disconnected")
 		assert.Equal(t, conn.Generation, conn.Status.ObservedGeneration, "connection should be reconciled")
@@ -1234,7 +1234,7 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 		conn, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
 		require.NoError(t, err)
 		assert.False(t, conn.Status.Health.Healthy, "connection should be unhealthy")
-		readyCondition := meta.FindStatusCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
+		readyCondition := meta.FindStatusCondition(provisioning.ConditionsToMeta(conn.Status.Conditions), provisioning.ConditionTypeReady)
 		require.NotNil(t, readyCondition, "Ready condition should exist")
 		assert.Equal(t, metav1.ConditionFalse, readyCondition.Status, "connection should be disconnected")
 		assert.Equal(t, conn.Generation, conn.Status.ObservedGeneration, "connection should be reconciled")
@@ -1417,7 +1417,7 @@ func TestIntegrationConnectionController_FieldErrorsCleared(t *testing.T) {
 		assert.Empty(t, connHealthy.Status.FieldErrors, "fieldErrors should be cleared when connection becomes healthy")
 		// Verify Ready condition is now True
 		assert.NotEmpty(t, connHealthy.Status.Conditions, "conditions should be set")
-		readyCondition := meta.FindStatusCondition(connHealthy.Status.Conditions, provisioning.ConditionTypeReady)
+		readyCondition := meta.FindStatusCondition(provisioning.ConditionsToMeta(connHealthy.Status.Conditions), provisioning.ConditionTypeReady)
 		assert.NotNil(t, readyCondition, "Ready condition should exist")
 		assert.Equal(t, metav1.ConditionTrue, readyCondition.Status, "Ready condition should be True when connection becomes healthy")
 		assert.Equal(t, provisioning.ReasonAvailable, readyCondition.Reason, "Ready condition should have Available reason")
@@ -1819,7 +1819,7 @@ func TestIntegrationConnectionController_GranularConditionReasons(t *testing.T) 
 		conn, err := connClient.Get(t.Context(), connName, metav1.GetOptions{})
 		require.NoError(t, err)
 		assert.False(t, conn.Status.Health.Healthy, "connection should be unhealthy")
-		readyCondition := meta.FindStatusCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
+		readyCondition := meta.FindStatusCondition(provisioning.ConditionsToMeta(conn.Status.Conditions), provisioning.ConditionTypeReady)
 		require.NotNil(t, readyCondition, "Ready condition should exist")
 		assert.Equal(t, metav1.ConditionFalse, readyCondition.Status, "connection should be disconnected")
 
@@ -2104,7 +2104,7 @@ func TestIntegrationProvisioning_GithubAppPermissionValidation(t *testing.T) {
 				assert.True(t, conn.Status.Health.Healthy, "connection should be healthy with valid permissions")
 				assert.Empty(t, conn.Status.FieldErrors, "should have no field errors when healthy")
 
-				readyCondition := meta.FindStatusCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
+				readyCondition := meta.FindStatusCondition(provisioning.ConditionsToMeta(conn.Status.Conditions), provisioning.ConditionTypeReady)
 				assert.Equal(t, metav1.ConditionTrue, readyCondition.Status, "Ready condition should be True")
 			} else {
 				assert.False(t, conn.Status.Health.Healthy, "connection should be unhealthy with invalid permissions")
@@ -2129,7 +2129,7 @@ func TestIntegrationProvisioning_GithubAppPermissionValidation(t *testing.T) {
 					}
 				}
 
-				readyCondition := meta.FindStatusCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
+				readyCondition := meta.FindStatusCondition(provisioning.ConditionsToMeta(conn.Status.Conditions), provisioning.ConditionTypeReady)
 				assert.Equal(t, metav1.ConditionFalse, readyCondition.Status, "Ready condition should be False")
 				assert.Equal(t, provisioning.ReasonAuthenticationFailed, readyCondition.Reason,
 					"Ready condition should have InvalidSpec reason")
@@ -2321,7 +2321,7 @@ func TestIntegrationProvisioning_GithubAppInstallationPermissionValidation(t *te
 				assert.True(t, conn.Status.Health.Healthy, "connection should be healthy with valid permissions")
 				assert.Empty(t, conn.Status.FieldErrors, "should have no field errors when healthy")
 
-				readyCondition := meta.FindStatusCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
+				readyCondition := meta.FindStatusCondition(provisioning.ConditionsToMeta(conn.Status.Conditions), provisioning.ConditionTypeReady)
 				assert.Equal(t, metav1.ConditionTrue, readyCondition.Status, "Ready condition should be True")
 			} else {
 				assert.False(t, conn.Status.Health.Healthy, "connection should be unhealthy with invalid permissions")
@@ -2346,7 +2346,7 @@ func TestIntegrationProvisioning_GithubAppInstallationPermissionValidation(t *te
 					}
 				}
 
-				readyCondition := meta.FindStatusCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
+				readyCondition := meta.FindStatusCondition(provisioning.ConditionsToMeta(conn.Status.Conditions), provisioning.ConditionTypeReady)
 				assert.Equal(t, metav1.ConditionFalse, readyCondition.Status, "Ready condition should be False")
 				assert.Equal(t, provisioning.ReasonAuthenticationFailed, readyCondition.Reason,
 					"Ready condition should have InvalidSpec reason")

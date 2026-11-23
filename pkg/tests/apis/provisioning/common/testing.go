@@ -1432,7 +1432,7 @@ func (h *ProvisioningTestHelper) WaitForHealthyConnection(t *testing.T, name str
 		assert.Greater(collect, conn.Status.Health.Checked, int64(0),
 			"connection %s health check has not run yet", name)
 		assert.True(collect, conn.Status.Health.Healthy, "connection %s is not healthy yet", name)
-		ready := FindCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
+		ready := FindCondition(provisioning.ConditionsToMeta(conn.Status.Conditions), provisioning.ConditionTypeReady)
 		if assert.NotNil(collect, ready, "connection %s should have a Ready condition", name) {
 			assert.Equal(collect, metav1.ConditionTrue, ready.Status, "connection %s Ready condition should be true", name)
 		}

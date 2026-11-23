@@ -135,7 +135,7 @@ func MetricCollector(tracer tracing.Tracer, namespaces NamespaceLister, reposito
 				}
 				for _, conn := range conns {
 					connCounts[string(conn.Spec.Type)]++
-					if r := readyReason(conn.Status.Conditions); r != "" {
+					if r := readyReason(provisioning.ConditionsToMeta(conn.Status.Conditions)); r != "" {
 						connReadyReasonCounts[strings.ToLower(r)]++
 					}
 					connAgg.observe(conn)

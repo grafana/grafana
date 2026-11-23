@@ -140,7 +140,7 @@ func TestIntegrationProvisioning_OAuthConnectionUnauthorized(t *testing.T) {
 		assert.Equal(collect, conn.Generation, conn.Status.ObservedGeneration, "controller should have reconciled the connection")
 		assert.Positive(collect, conn.Status.Health.Checked, "health check should have run")
 		assert.False(collect, conn.Status.Health.Healthy, "unauthorized connection should be unhealthy")
-		ready := meta.FindStatusCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
+		ready := meta.FindStatusCondition(provisioning.ConditionsToMeta(conn.Status.Conditions), provisioning.ConditionTypeReady)
 		if assert.NotNil(collect, ready, "connection should have a Ready condition") {
 			assert.Equal(collect, metav1.ConditionFalse, ready.Status, "an unauthorized connection should not be ready")
 		}

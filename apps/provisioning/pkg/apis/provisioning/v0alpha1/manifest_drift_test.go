@@ -47,6 +47,9 @@ var externalGoDefinitions = map[string]spec.Schema{
 var knownDifferences = map[string]string{
 	// A single-value disjunction becomes `const`, which kube-openapi has no field for.
 	"Repository status.deletion.state": "enum is [] in CUE, [Blocked] in Go",
+	// Repository status still uses metav1.Condition, which carries date-time; the shared CUE
+	// condition matches the string-typed ConnectionCondition until Repository moves to it.
+	"Repository status.conditions[].lastTransitionTime": `format is "" in CUE, "date-time" in Go`,
 }
 
 func TestManifestMatchesGoTypes(t *testing.T) {
