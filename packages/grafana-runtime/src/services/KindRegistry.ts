@@ -68,7 +68,6 @@ export interface KindRegistry {
   readonly coversGroup: (kind: KindInfo, group: string) => boolean;
   /** The kind an object of this API group and Kubernetes kind belongs to. */
   readonly findKind: (group: string, kind: string) => KindInfo | undefined;
-  readonly addKinds: (kinds: KindInfo[]) => void;
 }
 
 let singletonInstance: KindRegistry | undefined;

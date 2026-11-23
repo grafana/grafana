@@ -55,6 +55,7 @@ import {
   setGetObservablePluginFunctions,
   setGetObservablePluginLinks,
   setDataSourcePicker,
+  setDynamicKindRegistry,
   setJourneyRegistry,
   setJourneyTracker,
   setKindRegistry,
@@ -87,6 +88,7 @@ import { initializeCrashDetection } from './core/crash';
 import { NAMESPACES, GRAFANA_NAMESPACE } from './core/internationalization/constants';
 import { loadTranslations } from './core/internationalization/loadTranslations';
 import { kindRegistry } from './core/kinds/coreKinds';
+import { dynamicKindRegistry } from './core/kinds/dynamicKinds';
 import { postInitTasks, preInitTasks } from './core/lifecycle-hooks';
 import { setMonacoEnv } from './core/monacoEnv';
 import { handleRedirectTo } from './core/navigation/handleRedirectTo';
@@ -250,6 +252,7 @@ export class GrafanaApp {
       setLocationSrv(locationService);
       setCorrelationsService(new CorrelationsService());
       setKindRegistry(kindRegistry);
+      setDynamicKindRegistry(dynamicKindRegistry);
       setPanelScreenshotService(new PanelScreenshotServiceImpl());
       setEmbeddedDashboard(EmbeddedDashboardLazy);
       setTimeZoneResolver(() => contextSrv.user.timezone);

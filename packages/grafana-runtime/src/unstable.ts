@@ -20,6 +20,7 @@ export {
   type KindLabelOptions,
   type KindRegistry,
 } from './services/KindRegistry';
+export { getDynamicKindRegistry, type DynamicKindRegistry } from './services/DynamicKindRegistry';
 // Plugins bundling @grafana/plugin-compat < 0.5.0 only look for these here.
 export {
   /** @deprecated Import from `@grafana/runtime` instead. */
