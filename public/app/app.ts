@@ -58,6 +58,7 @@ import {
   setJourneyRegistry,
   setJourneyTracker,
   setKindRegistry,
+  setPageHistoryService,
   setPanelDataErrorView,
   setPanelRenderer,
   setPluginPage,
@@ -250,6 +251,8 @@ export class GrafanaApp {
       setLocationSrv(locationService);
       setCorrelationsService(new CorrelationsService());
       setKindRegistry(kindRegistry);
+      // Only reading is exposed: not the service's `clear` or `start`.
+      setPageHistoryService({ getEntries: () => pageHistorySrv.getEntries() });
       setPanelScreenshotService(new PanelScreenshotServiceImpl());
       setEmbeddedDashboard(EmbeddedDashboardLazy);
       setTimeZoneResolver(() => contextSrv.user.timezone);
