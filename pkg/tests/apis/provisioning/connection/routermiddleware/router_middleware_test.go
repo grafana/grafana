@@ -1,19 +1,15 @@
-package connection
+package routermiddleware
 
 import (
 	"context"
 	"encoding/base64"
 	"testing"
 
-	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 // The in-process connection controller reads and patches connections through
@@ -21,15 +17,7 @@ import (
 // status patches carry the provisioning requester, which the router would
 // otherwise route without the loopback credentials.
 func TestIntegrationConnectionController_HealthCheckWithRouterMiddleware(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t,
-		common.WithConnectionTypes([]string{"github"}),
-		func(opts *testinfra.GrafanaOpts) {
-			opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagGrafanaUseRouterMiddleware)
-		},
-	)
-	helper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient()
+	helper := sharedHelper(t)
 
 	conn := &unstructured.Unstructured{Object: map[string]any{
 		"apiVersion": "provisioning.grafana.app/v0alpha1",
