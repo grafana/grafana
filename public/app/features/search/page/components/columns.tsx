@@ -16,6 +16,7 @@ import { Checkbox, Icon, type IconName, TagList, Text, Tooltip } from '@grafana/
 import { formatDate } from 'app/core/internationalization/dates';
 import { findKindBySearchKind } from 'app/core/kinds/coreKinds';
 import { PluginIconName } from 'app/features/plugins/admin/types';
+import { findStarredKindBySearchKind } from 'app/features/stars/kinds';
 
 import { DescriptionTooltip } from '../../components/DescriptionTooltip';
 import { getIconForKind } from '../../service/icons';
@@ -451,12 +452,12 @@ function makeTypeColumn(
       const kind = kindField?.values[i] ?? 'dashboard';
       let icon: IconName = 'apps';
       let txt = kind;
-      // The kind table names the kinds in the search index; a panel's name comes from its plugin, and
-      // anything else shows its kind
-      const coreKind = findKindBySearchKind(kind);
-      if (coreKind) {
-        txt = coreKind.getLabel();
-        icon = coreKind.icon;
+      // The kind table names the kinds in the search index and the stars registry the app kinds; a panel's
+      // name comes from its plugin, and anything else shows its kind
+      const kindInfo = findKindBySearchKind(kind) ?? findStarredKindBySearchKind(kind);
+      if (kindInfo) {
+        txt = kindInfo.getLabel();
+        icon = kindInfo.icon;
       } else if (kind === 'panel') {
         icon = `${PluginIconName.panel}`;
         const type = typeField.values[i];

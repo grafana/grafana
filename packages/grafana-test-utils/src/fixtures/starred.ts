@@ -34,3 +34,18 @@ export const setMockStarredFolders = (uids: string[]) => {
   mockStarredFoldersMap.clear();
   uids.forEach((uid) => mockStarredFoldersMap.set(uid, true));
 };
+
+/**
+ * Stars of the kinds app plugins declare, keyed by `${group}/${kind}`. Nothing is starred by
+ * default; the stars endpoints read and write these like the dashboard and folder maps.
+ */
+export const mockStarredPluginKinds = new Map<string, Map<string, boolean>>();
+
+export const setupMockStarredPluginKinds = () => {
+  mockStarredPluginKinds.clear();
+};
+
+/** Seed the starred objects of a plugin kind for a test (replaces that kind's set). */
+export const setMockStarredPluginKind = (group: string, kind: string, names: string[]) => {
+  mockStarredPluginKinds.set(`${group}/${kind}`, new Map(names.map((name) => [name, true])));
+};

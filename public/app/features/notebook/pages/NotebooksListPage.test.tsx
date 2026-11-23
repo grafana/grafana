@@ -7,6 +7,7 @@ import { locationService } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
+import { type SearchResultItem, type WhereNode } from 'app/features/apiserver/search';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { NotebookAnalytics } from '../analytics/main';
@@ -14,8 +15,6 @@ import { ROWS_PER_PAGE } from '../list/NotebooksTable';
 import {
   useLazyNotebookFieldFacetQuery,
   type NotebookSearchQuery,
-  type ResultItem,
-  type WhereNode,
   useSearchNotebooksInfiniteQuery,
 } from '../list/notebookSearchApi';
 import { NOTEBOOKS_PAGE_LIMIT } from '../list/useNotebooksList';
@@ -53,7 +52,7 @@ const mockUseLazyNotebookFieldFacetQuery = jest.mocked(useLazyNotebookFieldFacet
 const mockUseGetDisplayMappingQuery = jest.mocked(useGetDisplayMappingQuery);
 const mockListFiltered = jest.mocked(NotebookAnalytics.listFiltered);
 
-function makeHit(name: string, title: string, tags: string[] = [], createdBy = 'user:abc'): ResultItem {
+function makeHit(name: string, title: string, tags: string[] = [], createdBy = 'user:abc'): SearchResultItem {
   return {
     resource: { group: 'dashboard.grafana.app', resource: 'notebooks', kind: 'Notebook', name },
     fields: { title, tags, createdBy, created: Date.UTC(2026, 0, 1), updated: Date.UTC(2026, 1, 1) },
@@ -69,7 +68,7 @@ function leavesOf(where: WhereNode | undefined): WhereNode[] {
 }
 
 /** A page the server filled to the limit, which is what truncation looks like on the wire. */
-function makeFullPage(): ResultItem[] {
+function makeFullPage(): SearchResultItem[] {
   return Array.from({ length: NOTEBOOKS_PAGE_LIMIT }, (_, i) => makeHit(`nb${i}`, `Notebook ${i}`));
 }
 
@@ -78,7 +77,7 @@ function makeFullPage(): ResultItem[] {
  * now, so a fake that ignored the request body would let a wrong query pass unnoticed.
  */
 function setNotebooks(
-  items: ResultItem[],
+  items: SearchResultItem[],
   extra: {
     isLoading?: boolean;
     error?: unknown;

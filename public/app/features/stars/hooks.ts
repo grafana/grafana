@@ -4,10 +4,10 @@ import { useCallback, useMemo } from 'react';
 import { useAddStarMutation, useRemoveStarMutation, useListStarsQuery } from 'app/api/clients/collections/v1alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
 import { type DashboardQueryResult } from 'app/features/search/service/types';
-import { useDispatch } from 'app/types/store';
+import { useDispatch, useSelector } from 'app/types/store';
 
 import { refetchStarred, useSearchStarredQuery } from './api';
-import { STARRED_KINDS } from './kinds';
+import { selectStarredKinds, starsHoldAppKind, useDiscoverAppKindsQuery } from './kinds';
 import { canUseStars, findStarredNames, userStarsFieldSelector } from './utils';
 
 /** Star or unstar the item with this id. Every starred view follows the `Stars` cache the mutation invalidates. */
@@ -84,17 +84,22 @@ export const useStarredSearch = ({
 }: { skip?: boolean; refetchOnMountOrArgChange?: boolean } = {}) => {
   const canStar = canUseStars();
   const stars = useListStarsQuery(skip || !canStar ? skipToken : { fieldSelector: userStarsFieldSelector() });
+  // App kinds are discovered once the stars hold one, and the search waits for them so it runs once, over every kind
+  const needsAppKinds = starsHoldAppKind(stars.data);
+  const appKinds = useDiscoverAppKindsQuery(needsAppKinds ? undefined : skipToken);
+  const kindsSettled = !needsAppKinds || appKinds.isSuccess || appKinds.isError;
+  const kinds = useSelector(selectStarredKinds);
 
-  // Keyed by search kind, names sorted, so the cache key is the set and not the order the API listed it in
+  // Names sorted, so the cache key is the set and not the order the API listed it in
   const args = useMemo(() => {
-    if (!stars.data) {
+    if (!stars.data || !kindsSettled) {
       return undefined;
     }
-    return STARRED_KINDS.flatMap(({ group, kind, searchKind }) => {
+    return kinds.flatMap(({ group, kind }) => {
       const names = [...findStarredNames(stars.data, group, kind)].sort();
-      return names.length > 0 ? [{ kind: searchKind, names }] : [];
+      return names.length > 0 ? [{ group, kind, names }] : [];
     });
-  }, [stars.data]);
+  }, [stars.data, kinds, kindsSettled]);
   const search = useSearchStarredQuery(args ?? skipToken, { refetchOnMountOrArgChange });
   const dispatch = useDispatch();
   const refetch = useCallback(() => dispatch(refetchStarred()), [dispatch]);
@@ -103,7 +108,8 @@ export const useStarredSearch = ({
     // A user without a stars resource has nothing starred: settled and empty, not waiting on a request never made
     rows: !skip && !canStar ? NO_STARRED_ROWS : search.data,
     // Until the first rows land; a changed star set keeps the previous rows up while it loads.
-    loading: stars.isLoading || search.isLoading,
+    loading: stars.isLoading || appKinds.isLoading || search.isLoading,
+    // A failed discovery is not one: the dashboards and folders still list
     error: stars.isError || search.isError,
     refetch,
   };
