@@ -4884,15 +4884,35 @@
     {
       "metadata": {
         "name": "live.runAPIServer",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-05-14T12:37:47Z"
+        "resourceVersion": "1795434432420",
+        "creationTimestamp": "2026-05-14T12:37:47Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-23 11:47:12.420025 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Registers a live apiserver",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
-        "requiresDevMode": true,
         "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "live.useAPIServerWebsocket",
+        "resourceVersion": "1795434496471",
+        "creationTimestamp": "2026-11-23T11:33:35Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-23 11:48:16.471971 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Connects Grafana Live to the live.grafana.app websocket instead of /api/live/ws",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
       }

@@ -3,7 +3,6 @@ package resource
 import (
 	"context"
 	"errors"
-	"io"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -38,20 +37,32 @@ func cacheEvent(gr GroupResource, rv int64) *WrittenEvent {
 func newWatchBroadcaster(t *testing.T, floor int64, seed ...*WrittenEvent) (*broadcaster[*WrittenEvent], chan<- *WrittenEvent) {
 	t.Helper()
 	input := make(chan *WrittenEvent)
-	b := newBroadcasterWithSizes(t.Context(), input, watchChanSize, defaultOverflowCap, newBroadcasterMetrics(prometheus.NewRegistry()), nil,
-		&seededCacheConfig[*WrittenEvent]{
-			identity: writtenEventIdentity,
-			initialize: func(context.Context) (cacheSeed[*WrittenEvent], error) {
-				return cacheSeed[*WrittenEvent]{items: seed, initialCacheFloor: floor}, nil
-			},
-		})
+	b := newBroadcasterWithSizes(t.Context(), input, watchChanSize, defaultOverflowCap, newBroadcasterMetrics(prometheus.NewRegistry()), writtenEventIdentity,
+		&seededCacheConfig[*WrittenEvent]{initialize: func(context.Context) (cacheSeed[*WrittenEvent], error) {
+			return cacheSeed[*WrittenEvent]{items: seed, initialCacheFloor: floor}, nil
+		}})
 	require.NoError(t, b.waitReady(t.Context()))
 	return b, input
 }
 
 func checkedWatch(t *testing.T, b *broadcaster[*WrittenEvent], gr GroupResource, since int64) (<-chan *WrittenEvent, error) {
 	t.Helper()
-	return b.subscribeWatch(t.Context(), "test", gr.Resource, &watchResume{groupResource: gr, since: since, requestedRV: since})
+	sub, err := b.subscribeWatch(t.Context(), "test", gr, &watchResume{since: since, requestedRV: since})
+	if err != nil {
+		return nil, err
+	}
+	return sub.events(), nil
+}
+
+var intGR = GroupResource{Resource: "r"}
+
+// intIdentity routes every int to intGR with the value as its RV.
+func intIdentity(v int) (GroupResource, int64) {
+	return intGR, int64(v)
+}
+
+func intResume(since int64) *watchResume {
+	return &watchResume{since: since, requestedRV: since}
 }
 
 func TestWatchCacheFloors(t *testing.T) {
@@ -76,29 +87,36 @@ func TestWatchCacheFloors(t *testing.T) {
 	check(unknown, 50, false)
 	check(playlist, 50, false)
 
-	// The playlist floor must survive even when no playlist events remain.
+	// Bursts in another group/resource evict only that group/resource's events.
 	for rv := int64(101); rv <= 1100; rv++ {
 		input <- cacheEvent(plugin, rv)
 	}
-	check(playlist, 99, true)
-	check(playlist, 100, false)
-	check(plugin, 100, true)
+	check(playlist, 49, true)
+	check(playlist, 50, false)
+	check(plugin, 599, true)
+	check(plugin, 600, false)
 	check(unknown, 50, false)
 
-	input <- cacheEvent(playlist, 1101)
-	for rv := int64(1102); rv <= 1601; rv++ {
-		input <- cacheEvent(plugin, rv)
+	// The playlist floor survives even when no playlist events remain.
+	for rv := int64(1101); rv <= 1600; rv++ {
+		input <- cacheEvent(playlist, rv)
 	}
-	check(playlist, 100, true)
+	check(playlist, 99, true)
+	check(playlist, 100, false)
+	input <- cacheEvent(playlist, 1601)
 	check(playlist, 1100, true)
 	check(playlist, 1101, false)
+	for rv := int64(1602); rv <= 1701; rv++ {
+		input <- cacheEvent(plugin, rv)
+	}
 
 	replay, err := checkedWatch(t, b, plugin, 1200)
 	require.NoError(t, err)
 	defer b.Unsubscribe(replay)
-	for rv := int64(1102); rv <= 1601; rv++ {
+	for rv := int64(1602); rv <= 1701; rv++ {
 		require.Equal(t, rv, (<-replay).ResourceVersion)
 	}
+	require.Empty(t, replay, "replay must not include other group/resources")
 }
 
 func TestRingBufferEvictionWraparound(t *testing.T) {
@@ -111,26 +129,9 @@ func TestRingBufferEvictionWraparound(t *testing.T) {
 		}
 	}
 	require.Equal(t, defaultCacheSize, ring.len)
-	dst := make(chan int, defaultCacheSize)
-	require.True(t, ring.readInto(dst))
-	for i := 3 * defaultCacheSize; i < 4*defaultCacheSize; i++ {
-		require.Equal(t, i, <-dst)
+	for i := range ring.len {
+		require.Equal(t, 3*defaultCacheSize+i, ring.at(i))
 	}
-}
-
-func TestCheckedWatchRequiresSeededCache(t *testing.T) {
-	metrics := newBroadcasterMetrics(prometheus.NewRegistry())
-	b := newBroadcasterWithSizes(t.Context(), make(chan int), watchChanSize, defaultOverflowCap, metrics, nil, nil)
-
-	stream, err := b.subscribeWatch(t.Context(), "resume", "r", &watchResume{since: 50, requestedRV: 50})
-	require.ErrorContains(t, err, "checked resume requires a seeded watch cache")
-	require.Nil(t, stream)
-	requireMetricValue(t, metrics.SubscriptionsTotal.WithLabelValues("r", subscriptionResultReplayFailed), 1)
-	requireMetricValue(t, metrics.Subscribers.WithLabelValues("r"), 0)
-
-	stream, err = b.subscribeWatch(t.Context(), "no resume", "r", nil)
-	require.NoError(t, err)
-	b.Unsubscribe(stream)
 }
 
 func TestCheckedWatchConcurrentEviction(t *testing.T) {
@@ -156,11 +157,7 @@ func TestCheckedWatchConcurrentEviction(t *testing.T) {
 		// Admission before eviction owns all subsequent events independently
 		// of the shared ring, even though a new resume would now expire.
 		for rv := int64(101); rv <= 601; rv++ {
-			event := <-stream
-			if event.ResourceVersion == 100 {
-				event = <-stream
-			}
-			require.Equal(t, rv, event.ResourceVersion)
+			require.Equal(t, rv, (<-stream).ResourceVersion)
 		}
 		b.Unsubscribe(stream)
 	}
@@ -173,9 +170,9 @@ func TestCheckedWatchCancellation(t *testing.T) {
 		for range 250 {
 			ctx, cancel := context.WithCancel(t.Context())
 			wg.Go(func() {
-				stream, err := b.subscribeWatch(ctx, "cancel", "r", nil)
+				sub, err := b.subscribeWatch(ctx, "cancel", intGR, nil)
 				if err == nil {
-					b.Unsubscribe(stream)
+					b.Unsubscribe(sub.events())
 				}
 			})
 			cancel()
@@ -186,44 +183,44 @@ func TestCheckedWatchCancellation(t *testing.T) {
 	})
 }
 
-func TestWatchSeedReadinessAndGenericSubscribers(t *testing.T) {
+func TestCheckedWatchWaitsForSeed(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		input := make(chan *WrittenEvent, 2)
 		gr := GroupResource{Group: "g", Resource: "r"}
 		release := make(chan struct{})
-		b := newBroadcasterWithSizes(t.Context(), input, watchChanSize, defaultOverflowCap, newBroadcasterMetrics(prometheus.NewRegistry()), nil,
-			&seededCacheConfig[*WrittenEvent]{
-				identity: writtenEventIdentity,
-				initialize: func(ctx context.Context) (cacheSeed[*WrittenEvent], error) {
-					select {
-					case <-ctx.Done():
-						return cacheSeed[*WrittenEvent]{}, ctx.Err()
-					case <-release:
-						return cacheSeed[*WrittenEvent]{items: []*WrittenEvent{cacheEvent(gr, 50)}, initialCacheFloor: 50}, nil
-					}
-				},
-			})
-		stream, err := b.Subscribe(t.Context(), "internal", "r")
-		require.NoError(t, err)
+		b := newBroadcasterWithSizes(t.Context(), input, watchChanSize, defaultOverflowCap, newBroadcasterMetrics(prometheus.NewRegistry()), writtenEventIdentity,
+			&seededCacheConfig[*WrittenEvent]{initialize: func(ctx context.Context) (cacheSeed[*WrittenEvent], error) {
+				select {
+				case <-ctx.Done():
+					return cacheSeed[*WrittenEvent]{}, ctx.Err()
+				case <-release:
+					return cacheSeed[*WrittenEvent]{items: []*WrittenEvent{cacheEvent(gr, 50)}, initialCacheFloor: 50}, nil
+				}
+			}})
+		type result struct {
+			sub *watchSubscription[*WrittenEvent]
+			err error
+		}
+		subscribed := make(chan result, 1)
+		go func() {
+			sub, err := b.subscribeWatch(t.Context(), "watch", gr, &watchResume{since: 50, requestedRV: 50})
+			subscribed <- result{sub: sub, err: err}
+		}()
 		input <- cacheEvent(gr, 51)
 		input <- cacheEvent(gr, 52)
 		synctest.Wait()
-		require.Empty(t, stream)
-		select {
-		case <-b.initAttempt.done:
-			t.Fatal("cache became ready before initialization finished")
-		default:
-		}
+		require.Empty(t, subscribed, "checked watches must wait for the seed")
 		close(release)
-		require.NoError(t, b.waitReady(t.Context()))
-		require.Equal(t, int64(50), (<-stream).ResourceVersion)
-		require.Equal(t, int64(51), (<-stream).ResourceVersion)
-		require.Equal(t, int64(52), (<-stream).ResourceVersion)
+		res := <-subscribed
+		require.NoError(t, res.err)
+		for _, want := range []int64{51, 52} {
+			require.Equal(t, want, (<-res.sub.events()).ResourceVersion)
+		}
 		synctest.Wait()
-		require.Empty(t, stream)
+		require.Empty(t, res.sub.events())
+		b.Unsubscribe(res.sub.events())
 	})
 }
-
 func TestBroadcasterRetriesInitializationOnNextCheckedWatch(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		ctx, cancel := context.WithCancel(t.Context())
@@ -233,7 +230,7 @@ func TestBroadcasterRetriesInitializationOnNextCheckedWatch(t *testing.T) {
 		secondRelease := make(chan struct{})
 		loadErr := errors.New("seed load failed")
 		var attempts atomic.Int32
-		b := newBroadcasterWithSizes(ctx, input, watchChanSize, defaultOverflowCap, newBroadcasterMetrics(prometheus.NewRegistry()), nil,
+		b := newBroadcasterWithSizes(ctx, input, watchChanSize, defaultOverflowCap, newBroadcasterMetrics(prometheus.NewRegistry()), intIdentity,
 			&seededCacheConfig[int]{initialize: func(ctx context.Context) (cacheSeed[int], error) {
 				switch attempts.Add(1) {
 				case 1:
@@ -253,33 +250,26 @@ func TestBroadcasterRetriesInitializationOnNextCheckedWatch(t *testing.T) {
 				}
 			}})
 
-		generic, err := b.Subscribe(t.Context(), "internal", "r")
-		require.NoError(t, err)
 		first := make(chan error, 1)
 		go func() {
-			_, err := b.subscribeWatch(t.Context(), "first", "r", nil)
+			_, err := b.subscribeWatch(t.Context(), "first", intGR, nil)
 			first <- err
 		}()
 		synctest.Wait()
 		close(firstRelease)
 		require.ErrorIs(t, <-first, loadErr)
 		require.Equal(t, int32(1), attempts.Load())
-		select {
-		case _, ok := <-generic:
-			require.True(t, ok, "retryable failure must not close generic subscribers")
-		default:
-		}
 
 		type result struct {
-			stream <-chan int
-			err    error
+			sub *watchSubscription[int]
+			err error
 		}
 		const watcherCount = 10
 		second := make(chan result, watcherCount)
 		for range watcherCount {
 			go func() {
-				stream, err := b.subscribeWatch(t.Context(), "second", "r", nil)
-				second <- result{stream: stream, err: err}
+				sub, err := b.subscribeWatch(t.Context(), "second", intGR, intResume(0))
+				second <- result{sub: sub, err: err}
 			}()
 		}
 		synctest.Wait()
@@ -289,25 +279,22 @@ func TestBroadcasterRetriesInitializationOnNextCheckedWatch(t *testing.T) {
 		for range watcherCount {
 			res := <-second
 			require.NoError(t, res.err)
-			require.Equal(t, 50, <-res.stream)
-			streams = append(streams, res.stream)
+			require.Equal(t, 50, <-res.sub.events())
+			streams = append(streams, res.sub.events())
 		}
-		require.Equal(t, 50, <-generic)
 
 		input <- 51
-		require.Equal(t, 51, <-generic)
 		for _, stream := range streams {
 			require.Equal(t, 51, <-stream)
 			b.Unsubscribe(stream)
 		}
-		b.Unsubscribe(generic)
 	})
 }
 
-func TestBroadcasterFatalInitializationFailureClosesQueuedSubscribers(t *testing.T) {
+func TestBroadcasterFatalInitializationFailureRejectsWatches(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		release := make(chan struct{})
-		b := newBroadcasterWithSizes(t.Context(), make(chan int), watchChanSize, defaultOverflowCap, newBroadcasterMetrics(prometheus.NewRegistry()), nil,
+		b := newBroadcasterWithSizes(t.Context(), make(chan int), watchChanSize, defaultOverflowCap, newBroadcasterMetrics(prometheus.NewRegistry()), intIdentity,
 			&seededCacheConfig[int]{initialize: func(ctx context.Context) (cacheSeed[int], error) {
 				select {
 				case <-ctx.Done():
@@ -316,22 +303,23 @@ func TestBroadcasterFatalInitializationFailureClosesQueuedSubscribers(t *testing
 					return cacheSeed[int]{items: make([]int, defaultCacheSize+1)}, nil
 				}
 			}})
-		stream, err := b.Subscribe(t.Context(), "internal", "r")
-		require.NoError(t, err)
+		waiting := make(chan error, 1)
+		go func() {
+			_, err := b.subscribeWatch(t.Context(), "waiting", intGR, nil)
+			waiting <- err
+		}()
+		synctest.Wait()
 		close(release)
-		require.ErrorContains(t, b.waitReady(t.Context()), "cache capacity")
+		require.ErrorContains(t, <-waiting, "cache capacity")
 		<-b.terminated
-		_, ok := <-stream
-		require.False(t, ok)
-		stream, err = b.Subscribe(t.Context(), "after failure", "r")
-		require.ErrorIs(t, err, io.EOF)
-		require.Nil(t, stream)
+		sub, err := b.subscribeWatch(t.Context(), "after failure", intGR, nil)
+		require.ErrorContains(t, err, "cache capacity")
+		require.Nil(t, sub)
 	})
 }
-
 func TestCheckedWatchCancellationDuringInitialization(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		b := newBroadcasterWithSizes(t.Context(), make(chan int), watchChanSize, defaultOverflowCap, newBroadcasterMetrics(prometheus.NewRegistry()), nil,
+		b := newBroadcasterWithSizes(t.Context(), make(chan int), watchChanSize, defaultOverflowCap, newBroadcasterMetrics(prometheus.NewRegistry()), intIdentity,
 			&seededCacheConfig[int]{initialize: func(ctx context.Context) (cacheSeed[int], error) {
 				<-ctx.Done()
 				return cacheSeed[int]{}, ctx.Err()
@@ -339,12 +327,118 @@ func TestCheckedWatchCancellationDuringInitialization(t *testing.T) {
 		ctx, cancel := context.WithCancel(t.Context())
 		done := make(chan error, 1)
 		go func() {
-			_, err := b.subscribeWatch(ctx, "cancel", "r", nil)
+			_, err := b.subscribeWatch(ctx, "cancel", intGR, nil)
 			done <- err
 		}()
 		synctest.Wait()
 		cancel()
 		require.ErrorIs(t, <-done, context.Canceled)
 		require.Empty(t, b.subscribe)
+	})
+}
+
+func TestCheckedWatchRoutesByGroupResource(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		playlist := GroupResource{Group: "playlist.grafana.app", Resource: "playlists"}
+		dashboard := GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
+		input := make(chan *WrittenEvent)
+		const subBuf, ovfCap = 4, 8
+		b := newBroadcasterWithSizes(t.Context(), input, subBuf, ovfCap, newBroadcasterMetrics(prometheus.NewRegistry()), writtenEventIdentity, nil)
+
+		scoped, err := b.subscribeWatch(t.Context(), "playlists", playlist, nil)
+		require.NoError(t, err)
+		slow, err := b.subscribeWatch(t.Context(), "dashboards", dashboard, nil)
+		require.NoError(t, err)
+
+		// A burst past the overflow cap disconnects the slow dashboards watcher
+		// but never reaches the watcher of another group/resource.
+		for rv := int64(1); rv <= subBuf+ovfCap+1; rv++ {
+			input <- cacheEvent(dashboard, rv)
+		}
+		input <- cacheEvent(playlist, 100)
+		synctest.Wait()
+		require.Equal(t, int64(100), (<-scoped.events()).ResourceVersion)
+		require.Empty(t, scoped.events())
+		requireClosedAfterDrain(t, slow.events())
+		b.Unsubscribe(scoped.events())
+	})
+}
+
+// requireClosedAfterDrain fails instead of blocking if ch is still open once
+// its buffered items are read.
+func requireClosedAfterDrain[T any](t *testing.T, ch <-chan T) {
+	t.Helper()
+	for {
+		select {
+		case _, ok := <-ch:
+			if !ok {
+				return
+			}
+		default:
+			t.Fatal("subscriber was not disconnected")
+		}
+	}
+}
+func TestCheckedWatchReplaysOnlyOnResume(t *testing.T) {
+	playlist := GroupResource{Group: "playlist.grafana.app", Resource: "playlists"}
+	dashboard := GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
+	b, _ := newWatchBroadcaster(t, 10, cacheEvent(playlist, 10), cacheEvent(dashboard, 11), cacheEvent(playlist, 12))
+
+	fresh, err := b.subscribeWatch(t.Context(), "list", playlist, nil)
+	require.NoError(t, err)
+	require.Empty(t, fresh.events(), "watches starting from a list or the latest RV must not replay")
+	b.Unsubscribe(fresh.events())
+
+	resumed, err := checkedWatch(t, b, playlist, 10)
+	require.NoError(t, err)
+	require.Equal(t, int64(12), (<-resumed).ResourceVersion)
+	require.Empty(t, resumed)
+	b.Unsubscribe(resumed)
+
+	negative, err := checkedWatch(t, b, playlist, -1)
+	require.NoError(t, err)
+	defer b.Unsubscribe(negative)
+	require.Equal(t, int64(10), (<-negative).ResourceVersion)
+	require.Equal(t, int64(12), (<-negative).ResourceVersion)
+	require.Empty(t, negative)
+}
+
+func TestBroadcasterWatchProgress(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		playlist := GroupResource{Group: "playlist.grafana.app", Resource: "playlists"}
+		dashboard := GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
+		b, input := newWatchBroadcaster(t, 9, cacheEvent(playlist, 10))
+		// Replayed events count as delivered too.
+		sub, err := b.subscribeWatch(t.Context(), "playlists", playlist, &watchResume{since: 9, requestedRV: 9})
+		require.NoError(t, err)
+		stream := sub.events()
+		defer b.Unsubscribe(stream)
+		consumed := int64(0)
+		require.Zero(t, sub.rv(consumed), "progress must not cover the unread replay")
+		require.Equal(t, int64(10), (<-stream).ResourceVersion)
+		consumed++
+		// The watch advances from its replay directly; shared progress only
+		// counts events received after it subscribed.
+		require.Zero(t, sub.rv(consumed), "nothing newer than the watch's start")
+
+		input <- cacheEvent(dashboard, 20)
+		synctest.Wait()
+		require.Equal(t, int64(20), sub.rv(consumed), "other group/resources establish progress")
+
+		input <- cacheEvent(playlist, 30)
+		input <- cacheEvent(dashboard, 40)
+		synctest.Wait()
+		require.Zero(t, sub.rv(consumed), "progress must not cover undelivered events")
+		require.Equal(t, int64(30), (<-stream).ResourceVersion)
+		consumed++
+		require.Equal(t, int64(40), sub.rv(consumed))
+
+		input <- cacheEvent(dashboard, 35)
+		synctest.Wait()
+		require.Equal(t, int64(40), sub.rv(consumed), "late events must not regress progress")
+
+		b.Unsubscribe(stream)
+		synctest.Wait()
+		require.Zero(t, sub.rv(consumed), "a removed subscription has no progress")
 	})
 }

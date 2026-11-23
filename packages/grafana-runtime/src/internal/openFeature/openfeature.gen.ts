@@ -310,6 +310,8 @@ export const FlagKeys = {
   KubernetesTeamsApi: "kubernetesTeamsApi",
   /** Routes library panel requests from /api to the /apis endpoint */
   LibraryelementsKubernetesLibraryPanels: "libraryelements.kubernetesLibraryPanels",
+  /** Connects Grafana Live to the live.grafana.app websocket instead of /api/live/ws */
+  LiveUseAPIServerWebsocket: "live.useAPIServerWebsocket",
   /** Enables the logs tableNG panel to replace existing tableRT */
   LogsTablePanelNG: "logsTablePanelNG",
   /** Changes logs responses from Loki to be compliant with the dataplane specification. */
@@ -2054,6 +2056,17 @@ export const useFlagKubernetesTeamsApi = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagLibraryelementsKubernetesLibraryPanels = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("libraryelements.kubernetesLibraryPanels", false, options).value;
+};
+
+/**
+ * Connects Grafana Live to the live.grafana.app websocket instead of /api/live/ws
+ *
+ * **Details:**
+ * - flag key: `live.useAPIServerWebsocket`
+ * - default value: `false`
+ */
+export const useFlagLiveUseAPIServerWebsocket = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("live.useAPIServerWebsocket", false, options).value;
 };
 
 /**
