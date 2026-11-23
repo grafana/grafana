@@ -1,0 +1,11 @@
+apiVersion: notifications.alerting.grafana.app/v1beta1
+kind: InhibitionRule
+spec:
+  source_matchers:
+    - type: "="
+      label: alertname
+      value: CompatSmokeSource
+  target_matchers:
+    - type: "="
+      label: alertname
+      value: CompatSmokeTarget

@@ -10,6 +10,7 @@ import {
   type ColorSchemeDiff,
   type PaneView,
   type ViewMode,
+  type SymbolLabel,
   type TextAlign,
 } from '../types';
 
@@ -29,6 +30,7 @@ type Props = {
   onItemFocused: (data: ClickedItemData) => void;
   focusedItemData?: ClickedItemData;
   textAlign: TextAlign;
+  symbolLabel: SymbolLabel;
   onSandwich: (label: string) => void;
   colorScheme: ColorScheme | ColorSchemeDiff;
 
@@ -63,6 +65,7 @@ const FlameGraphCanvas = ({
   onItemFocused,
   focusedItemData,
   textAlign,
+  symbolLabel,
   onSandwich,
   colorScheme,
   totalProfileTicks,
@@ -101,6 +104,7 @@ const FlameGraphCanvas = ({
     rangeMin,
     matchedLabels,
     textAlign,
+    symbolLabel,
     totalViewTicks,
     // We need this so that if we have a diff profile and are in sandwich view we still show the same diff colors.
     totalColorTicks: data.isDiffFlamegraph() ? totalProfileTicks : totalViewTicks,

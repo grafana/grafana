@@ -16,6 +16,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/util/dryrun"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
@@ -55,7 +56,7 @@ func getLegacySettingsResourceVersion(ps *pluginsettings.DTO) string {
 
 // toSecureJSONData translates InlineSecureValues from a write request into the
 // plaintext map expected by UpdateArgs. Name-only entries (keep-existing) are skipped.
-func toSecureJSONData(secure common.InlineSecureValues) map[string]string {
+func toSecureJSONData(secure resource.InlineSecureValues) map[string]string {
 	if len(secure) == 0 {
 		return nil
 	}
@@ -163,10 +164,10 @@ func (s *settingsStorage) get(ctx context.Context) (*apppluginV0.Settings, error
 		obj.Spec.Pinned = ps.Pinned
 		obj.Spec.JsonData = common.Unstructured{Object: ps.JSONData}
 
-		secureValues := make(common.InlineSecureValues, len(ps.SecureJSONData))
+		secureValues := make(resource.InlineSecureValues, len(ps.SecureJSONData))
 		for k, v := range ps.SecureJSONData {
 			if len(v) > 0 {
-				secureValues[k] = common.InlineSecureValue{Name: getLegacySecureValueName(s.pluginID, k)}
+				secureValues[k] = resource.InlineSecureValue{Name: getLegacySecureValueName(s.pluginID, k)}
 			}
 		}
 		obj.Secure = secureValues

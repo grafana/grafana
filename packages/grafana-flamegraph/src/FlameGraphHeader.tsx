@@ -1,14 +1,14 @@
 import { css, cx } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import * as React from 'react';
-import { useDebounce, usePrevious } from 'react-use';
+import { useDebounce } from 'react-use';
 
 import { type ChatContextItem, OpenAssistantButton } from '@grafana/assistant';
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Button, Dropdown, IconButton, Input, Menu, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
 import { MIN_WIDTH_TO_SHOW_SPLIT_PANE_SELECTORS } from './constants';
-import { type TextAlign, PaneView, ViewMode } from './types';
+import { type SymbolLabel, type TextAlign, PaneView, ViewMode } from './types';
 
 type Props = {
   search: string;
@@ -181,8 +181,13 @@ const FlameGraphHeader = (props: Props) => {
 };
 
 export const alignOptions: Array<SelectableValue<TextAlign>> = [
-  { value: 'left', description: 'Align text left', icon: 'align-left' },
-  { value: 'right', description: 'Align text right', icon: 'align-right' },
+  { value: 'left', description: 'Align text left', icon: 'align-left', ariaLabel: 'Align text left' },
+  { value: 'right', description: 'Align text right', icon: 'align-right', ariaLabel: 'Align text right' },
+];
+
+export const symbolLabelOptions: Array<SelectableValue<SymbolLabel>> = [
+  { value: 'full', label: 'Full', description: 'Show the import path', ariaLabel: 'Show full symbol' },
+  { value: 'name', label: 'Name', description: 'Show function name', ariaLabel: 'Show function name' },
 ];
 
 const viewModeOptions: Array<SelectableValue<ViewMode>> = [
@@ -201,7 +206,7 @@ function useSearchInput(
   setSearch: (search: string) => void
 ): [string | undefined, (search: string) => void] {
   const [localSearchState, setLocalSearchState] = useState(search);
-  const prevSearch = usePrevious(search);
+  const [prevSearch, setPrevSearch] = useState(search);
 
   // Debouncing cause changing parent search triggers rerender on both the flamegraph and table
   useDebounce(
@@ -214,11 +219,12 @@ function useSearchInput(
 
   // Make sure we still handle updates from parent (from clicking on a table item for example). We check if the parent
   // search value changed to something that isn't our local value.
-  useEffect(() => {
-    if (prevSearch !== search && search !== localSearchState) {
+  if (prevSearch !== search) {
+    setPrevSearch(search);
+    if (search !== localSearchState) {
       setLocalSearchState(search);
     }
-  }, [search, prevSearch, localSearchState]);
+  }
 
   return [localSearchState, setLocalSearchState];
 }

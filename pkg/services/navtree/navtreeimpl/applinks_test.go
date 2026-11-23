@@ -4,11 +4,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/open-feature/go-sdk/openfeature"
-	"github.com/open-feature/go-sdk/openfeature/memprovider"
-	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -24,6 +20,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAddAppLinks(t *testing.T) {
@@ -935,14 +934,14 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 					Type:       "page",
 					AddToNav:   true,
 					DefaultNav: true,
-					Role:       identity.RoleViewer,
+					Role:       authlib.RoleViewer,
 				},
 				{
 					Name:     "Catalog",
 					Path:     "/a/test-app1/catalog",
 					Type:     "page",
 					AddToNav: true,
-					Role:     identity.RoleEditor,
+					Role:     authlib.RoleEditor,
 					Action:   catalogReadAction,
 				},
 				{
@@ -950,7 +949,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 					Path:     "/a/test-app1/announcements",
 					Type:     "page",
 					AddToNav: true,
-					Role:     identity.RoleViewer,
+					Role:     authlib.RoleViewer,
 					Action:   pluginaccesscontrol.ActionAppAccess,
 				},
 			},
@@ -979,7 +978,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 		user.Permissions = map[int64]map[string][]string{
 			1: {pluginaccesscontrol.ActionAppAccess: []string{"plugins:id:not-the-test-app1"}},
 		}
-		user.OrgRole = identity.RoleNone
+		user.OrgRole = authlib.RoleNone
 		service.features = featuremgmt.WithFeatures()
 
 		err := service.addAppLinks(&treeRoot, reqCtx)
@@ -991,7 +990,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 		user.Permissions = map[int64]map[string][]string{
 			1: {pluginaccesscontrol.ActionAppAccess: []string{"plugins:id:test-app1"}},
 		}
-		user.OrgRole = identity.RoleNone
+		user.OrgRole = authlib.RoleNone
 		service.features = featuremgmt.WithFeatures()
 
 		err := service.addAppLinks(&treeRoot, reqCtx)
@@ -1007,7 +1006,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 		user.Permissions = map[int64]map[string][]string{
 			1: {pluginaccesscontrol.ActionAppAccess: []string{"plugins:id:test-app1"}, catalogReadAction: []string{}},
 		}
-		user.OrgRole = identity.RoleViewer
+		user.OrgRole = authlib.RoleViewer
 		service.features = featuremgmt.WithFeatures()
 
 		err := service.addAppLinks(&treeRoot, reqCtx)
@@ -1025,7 +1024,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 		user.Permissions = map[int64]map[string][]string{
 			1: {pluginaccesscontrol.ActionAppAccess: []string{"*"}},
 		}
-		user.OrgRole = identity.RoleEditor
+		user.OrgRole = authlib.RoleEditor
 		service.features = featuremgmt.WithFeatures()
 
 		err := service.addAppLinks(&treeRoot, reqCtx)
@@ -1050,7 +1049,7 @@ func TestReadNavigationSettingsAssistantLabel(t *testing.T) {
 func TestProcessAssistantAppPlugin(t *testing.T) {
 	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
 	reqCtx := &contextmodel.ReqContext{
-		SignedInUser: &user.SignedInUser{OrgRole: identity.RoleAdmin},
+		SignedInUser: &user.SignedInUser{OrgRole: authlib.RoleAdmin},
 		Context:      &web.Context{Req: httpReq},
 	}
 	assistantApp := pluginstore.Plugin{
@@ -1212,7 +1211,7 @@ func TestAssistantPagesTopLevelNavigation(t *testing.T) {
 			httpReq, err := http.NewRequest(http.MethodGet, "/", nil)
 			require.NoError(t, err)
 			reqCtx := &contextmodel.ReqContext{
-				SignedInUser: &user.SignedInUser{OrgRole: identity.RoleViewer},
+				SignedInUser: &user.SignedInUser{OrgRole: authlib.RoleViewer},
 				Context:      &web.Context{Req: httpReq},
 			}
 			plugin := pluginstore.Plugin{JSONData: plugins.JSONData{
@@ -1540,7 +1539,7 @@ func TestAssistantPagesCreateAction(t *testing.T) {
 			reqCtx := &contextmodel.ReqContext{
 				SignedInUser: &user.SignedInUser{
 					OrgID:       1,
-					OrgRole:     identity.RoleViewer,
+					OrgRole:     authlib.RoleViewer,
 					Permissions: map[int64]map[string][]string{1: tt.permissions},
 				},
 				Context: &web.Context{Req: httpReq},
