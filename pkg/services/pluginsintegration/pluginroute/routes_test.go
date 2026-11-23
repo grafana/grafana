@@ -974,7 +974,7 @@ func TestGetAPIRoutesWithInvalidSearchDeclarations(t *testing.T) {
 // refuses a proxy operation.
 func TestVersionRoutesRefuseProxyOperations(t *testing.T) {
 	proxy := &spec3.Operation{}
-	proxy.AddExtension(definition.ExtensionProxy, definition.ProxyTarget{URL: "https://example"})
+	proxy.AddExtension(manifestroutes.ExtensionProxy, manifestroutes.ProxyTarget{URL: "https://example"})
 	plain := &spec3.Operation{}
 	manifest := testManifest(t)
 	manifest.Versions[1].OpenAPI.Paths = map[string]spec3.PathProps{

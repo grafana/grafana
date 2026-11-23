@@ -1545,6 +1545,9 @@
         "recording-rules_one": "{{formatted}} recording rule",
         "recording-rules_other": "{{formatted}} recording rules"
       },
+      "saved-searches": {
+        "applied-default": "{{name}} (default)"
+      },
       "search": {
         "default-policy-unavailable": "Filtering by the default policy isn't available yet.",
         "folders-disabled": "Clear filters to browse by folder",
@@ -6270,7 +6273,10 @@
       "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "add-visualization-button": "Add visualization",
       "add-visualization-header": "Start your new dashboard by adding a visualization",
+      "assistant-limit-reached": "You have used all of this month's Assistant prompts.",
       "assistant-placeholder": "Describe your dashboard. This will open the assistant chat and start a conversation.",
+      "assistant-placeholder-template": "Add changes, or send as is",
+      "assistant-sign-in": "Sign in to use the Assistant.",
       "auto-grid": "Auto grid",
       "auto-grid-description": "Panels resize to fit and form uniform grids",
       "build-assistant": "Build your dashboard with Assistant",
@@ -6284,6 +6290,8 @@
       "mobile-not-available": "Building a new dashboard isn't available on small screens. Switch to a larger screen to continue.",
       "or-start-blank": "Or build it yourself",
       "select-layout-header": "Select layout",
+      "templates-empty": "No templates available",
+      "templates-title": "Start from a template",
       "title": "New dashboard"
     },
     "errors": {
@@ -6735,6 +6743,9 @@
           "description": "Click or drag to paste panel",
           "title": "Paste panel"
         },
+        "question": {
+          "label": "Question"
+        },
         "row": {
           "add-label": "Add row",
           "group-label": "Group into rows"
@@ -6858,6 +6869,7 @@
         "objects": "Objects",
         "panel": "Panel",
         "panels": "Panels",
+        "question": "Question",
         "row": "Row",
         "rows": "Rows",
         "section-filters-set": "Filters",
@@ -6908,6 +6920,36 @@
           "empty": "(empty)",
           "no-title": "<no title>"
         }
+      },
+      "questions": {
+        "add-question": "Add question",
+        "description-dashboard": "Viewers can ask it about this dashboard.",
+        "description-row": "Viewers can ask it about the panels in this row.",
+        "description-tab": "Viewers can ask it about the panels in this tab.",
+        "new-question": "New question",
+        "placeholder": "What changed since the previous period?",
+        "question": "Question",
+        "question-title": "Title",
+        "question-title-description": "Viewers see it on the dashboard instead of the question. Leave it empty to show the question.",
+        "question-title-placeholder": "What changed?",
+        "sources": {
+          "collapse": "Collapse {{name}}",
+          "description-dashboard": "With none picked, the question is answered from every panel on this dashboard.",
+          "description-row": "With none picked, the question is answered from every panel in this row.",
+          "description-tab": "With none picked, the question is answered from every panel in this tab.",
+          "entire-dashboard": "Entire dashboard",
+          "expand": "Expand {{name}}",
+          "label": "Source panels",
+          "no-panels": "This dashboard has no panels with queries to answer from.",
+          "panel-count_one": "{{count}} panel",
+          "panel-count_other": "{{count}} panels",
+          "picked-count_one": "{{count}} panel picked",
+          "picked-count_other": "{{count}} panels picked",
+          "unavailable-panel": "Panel {{panelId}} (unavailable)",
+          "untitled-row": "Untitled row",
+          "untitled-tab": "Untitled tab"
+        },
+        "title": "Questions"
       },
       "row": {
         "header": {
@@ -7254,6 +7296,7 @@
   },
   "dashboard-library": {
     "card": {
+      "attach-template-button-label": "Attach template: {{title}}",
       "community-badge": "Community",
       "customize-with-assistant-button": "Customize with Assistant",
       "customize-with-assistant-button-label": "Customize with Assistant: {{title}}",
@@ -7270,6 +7313,9 @@
       "edit-template-menu-item": "Edit",
       "more-actions-label": "More actions for {{title}}",
       "no-preview": "No preview available ",
+      "preview-template-button": "Preview",
+      "preview-template-button-label": "Preview template: {{title}}",
+      "provisioned-by-grafana": "<0>Provisioned by</0> Grafana",
       "use-template-button": "Use template",
       "use-template-button-label": "Use template: {{title}}",
       "view-dashboard-button": "View dashboard",
@@ -7305,6 +7351,10 @@
     "custom-dashboard-template-filters": {
       "creator-placeholder": "Filter by created by",
       "search-placeholder": "Search",
+      "sort": {
+        "asc": "Alphabetically (A–Z)",
+        "desc": "Alphabetically (Z–A)"
+      },
       "sort-placeholder": "Sort"
     },
     "dashboard-card": {
@@ -8133,6 +8183,20 @@
       },
       "selection-options": "Selection options",
       "static-options-legend": "Static options"
+    },
+    "question-actions": {
+      "add": "Add question",
+      "remove": "Remove question",
+      "reorder": "Reorder questions",
+      "update": "Change question"
+    },
+    "question-edit": {
+      "delete-confirm": "Delete question",
+      "delete-text": "Are you sure you want to delete: {{name}}?",
+      "delete-title": "Delete question"
+    },
+    "question-edit-actions": {
+      "tooltip-question-settings": "Question settings"
     },
     "refresh-select": {
       "options": {
@@ -12000,13 +12064,19 @@
       "filter-apps": "Apps",
       "filter-dashboards": "Dashboards",
       "filter-explore": "Explore",
+      "filter-folders": "Folders",
       "filter-label": "Show only",
+      "filter-notebooks": "Notebooks",
       "filter-pages": "Pages",
+      "filter-playlists": "Playlists",
       "kind-alerting": "Alerting",
       "kind-app": "App",
       "kind-dashboard": "Dashboard",
       "kind-explore": "Explore",
+      "kind-folder": "Folder",
+      "kind-notebook": "Notebook",
       "kind-page": "Page",
+      "kind-playlist": "Playlist",
       "loading": "Loading your recent activity..."
     },
     "recommendations": {
@@ -13950,8 +14020,8 @@
       "list-none": "You have no notebooks yet. Create one instead.",
       "list-none-read-only": "You have no notebooks yet, and no permission to create one.",
       "list-truncated": "Not every notebook is shown. Narrow the search to find others.",
-      "lock-time-range": "Lock to {{range}}",
       "lock-time-range-description": "Keep this visualization on the window it was captured in. Unlocked, it follows the notebook time range.",
+      "lock-time-range-short": "Lock time range",
       "lock-time-ranges": "Lock panels to the time ranges they showed",
       "lock-time-ranges-description": "Keep each visualization on the window it was captured in. Unlocked, they follow the notebook time range.",
       "note-description": "Added to the notebook as a text block before the panel.",
@@ -15194,7 +15264,6 @@
     "finish-step": {
       "description-enable-previews": "Adds an image preview of dashboard changes in pull requests. Images of your Grafana dashboards will be shared in your Git repository and visible to anyone with repository access.",
       "description-image-rendering": "Requires image rendering. <2>Set up image rendering</2>",
-      "description-read-only": "Resources can't be modified through Grafana.",
       "description-sync-interval": "How often to sync changes from the repository",
       "error-sync-interval-required": "Sync interval is required",
       "label-enable-previews": "Enable dashboard previews in pull requests",
@@ -15971,6 +16040,17 @@
       "button-submitting": "Submitting...",
       "error-instance-repository-exists": "Instance repository already exists",
       "error-save-repository-setting": "Failed to save repository setting"
+    },
+    "workflow": {
+      "direct-push": "Direct push",
+      "direct-push-description": "Changes are committed straight to {{branch}}.",
+      "direct-push-description-no-branch": "Changes are committed straight to the synchronized branch.",
+      "merge-request": "Merge request",
+      "merge-request-description": "Changes are saved to another branch, ready for you to open a merge request into {{branch}}.",
+      "merge-request-description-no-branch": "Changes are saved to another branch, ready for you to open a merge request.",
+      "pull-request": "Pull request",
+      "pull-request-description": "Changes are saved to another branch, ready for you to open a pull request into {{branch}}.",
+      "pull-request-description-no-branch": "Changes are saved to another branch, ready for you to open a pull request."
     }
   },
   "public-dashboard": {
@@ -17787,7 +17867,6 @@
     },
     "time-range": {
       "apply": "Apply time range",
-      "aria-role": "Time range selection",
       "default-title": "Time ranges",
       "dialog-label": "Relative time range picker",
       "example-title": "Example time ranges",

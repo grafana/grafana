@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	authlib "github.com/grafana/authlib/types"
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -179,7 +180,7 @@ func (s *SocialGrafanaCom) UserInfo(ctx context.Context, client *http.Client, _ 
 	}
 
 	if !s.info.SkipOrgRoleSync {
-		userInfo.OrgRoles, err = s.orgRoleMapper.MapOrgRolesContext(ctx, NewMappingConfiguration(map[string]map[int64]org.RoleType{}, false), nil, identity.RoleType(data.Role))
+		userInfo.OrgRoles, err = s.orgRoleMapper.MapOrgRolesContext(ctx, NewMappingConfiguration(map[string]map[int64]org.RoleType{}, false), nil, authlib.RoleType(data.Role))
 		if err != nil {
 			return nil, fmt.Errorf("map organization roles: %w", err)
 		}
