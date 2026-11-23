@@ -103,8 +103,7 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (r
 		return fmt.Errorf("failed to get quota getter: %w", err)
 	}
 
-	// nil unless keys_only_relist is on, which keeps the full-object re-list.
-	repoKeys, err := controllerCfg.ProvisioningKeysLister(logger, apisprovisioning.RepositoryResourceInfo.GroupVersionResource())
+	repoKeys, err := controllerCfg.ProvisioningKeysLister(apisprovisioning.RepositoryResourceInfo.GroupVersionResource())
 	if err != nil {
 		return err
 	}

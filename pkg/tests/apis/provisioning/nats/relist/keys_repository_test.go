@@ -1,4 +1,4 @@
-package relistkeys
+package relist
 
 import (
 	"path/filepath"
