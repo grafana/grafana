@@ -1954,8 +1954,9 @@ type bleveIndex struct {
 	// RV returned by last List/ListModifiedSince operation. Updated when updating index.
 	resourceVersion atomic.Int64
 
-	// Requests arriving before this time can reuse the last successful update.
+	// Requests arriving before this time reuse the last update's result, including failures.
 	nextUpdateTime time.Time
+	lastUpdateErr  error
 
 	standard resource.SearchableDocumentFields
 	fields   resource.SearchableDocumentFields
@@ -4042,9 +4043,6 @@ func (b *bleveIndex) startUpdater() {
 
 const maxWait = 5 * time.Second
 
-// Allow slow updates to finish after callers stop waiting, but bound stalled attempts.
-const indexUpdateTimeout = 30 * time.Second
-
 func (b *bleveIndex) runUpdater(ctx context.Context) {
 	for {
 		start := time.Now()
@@ -4079,7 +4077,11 @@ func (b *bleveIndex) runUpdater(ctx context.Context) {
 		for ix := 0; ix < len(batch); {
 			req := batch[ix]
 			if req.requestTime.Before(b.nextUpdateTime) {
-				req.callback <- updateResult{rv: b.resourceVersion.Load()}
+				if b.lastUpdateErr != nil {
+					req.callback <- updateResult{err: b.lastUpdateErr}
+				} else {
+					req.callback <- updateResult{rv: b.resourceVersion.Load()}
+				}
 				batch = append(batch[:ix], batch[ix+1:]...)
 			} else {
 				// Keep in the batch
@@ -4097,9 +4099,8 @@ func (b *bleveIndex) runUpdater(ctx context.Context) {
 		if err == nil {
 			started := time.Now()
 			rv, err = b.updateIndexWithLatestModifications(ctx, len(batch))
-			if err == nil {
-				b.nextUpdateTime = started.Add(b.minUpdateInterval)
-			}
+			b.nextUpdateTime = started.Add(b.minUpdateInterval)
+			b.lastUpdateErr = err
 		}
 		for _, req := range batch {
 			req.callback <- updateResult{rv: rv, err: err}
@@ -4108,9 +4109,6 @@ func (b *bleveIndex) runUpdater(ctx context.Context) {
 }
 
 func (b *bleveIndex) updateIndexWithLatestModifications(ctx context.Context, requests int) (int64, error) {
-	ctx, cancel := context.WithTimeout(ctx, indexUpdateTimeout)
-	defer cancel()
-
 	ctx, span := tracer.Start(ctx, "search.bleveIndex.updateIndexWithLatestModifications")
 	defer span.End()
 

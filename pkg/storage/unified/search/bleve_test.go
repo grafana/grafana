@@ -3353,39 +3353,39 @@ func TestIndexUpdateWithErrors(t *testing.T) {
 	}
 }
 
-func TestIndexUpdateDeadlineAndRecovery(t *testing.T) {
+func TestIndexUpdatePacesRetriesAfterFailure(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		const initialRV int64 = 10
+		const minInterval = 100 * time.Millisecond
+		updateErr := errors.New("KV unavailable")
 		var attempts []int64
-		idx := newTestBleveUpdater(t, func(ctx context.Context, _ resource.ResourceIndex, sinceRV int64) (int64, int, error) {
+		idx := newTestBleveUpdater(t, func(_ context.Context, _ resource.ResourceIndex, sinceRV int64) (int64, int, error) {
 			attempts = append(attempts, sinceRV)
 			if len(attempts) == 1 {
-				if _, ok := ctx.Deadline(); !ok {
-					return 0, 0, errors.New("missing index update deadline")
-				}
-				<-ctx.Done()
-				// A result returned after the deadline must not advance the checkpoint.
-				return sinceRV + 1, 1, nil
+				return sinceRV + 1, 1, updateErr
 			}
 			return sinceRV + 2, 1, nil
 		})
 		idx.resourceVersion.Store(initialRV)
-		idx.minUpdateInterval = 100 * time.Millisecond
+		idx.minUpdateInterval = minInterval
 
-		firstErr := make(chan error, 1)
-		go func() {
-			_, err := idx.UpdateIndex(t.Context())
-			firstErr <- err
-		}()
-		synctest.Wait()
+		_, err := idx.UpdateIndex(t.Context())
+		require.ErrorIs(t, err, updateErr)
+		synctest.Sleep(minInterval - time.Nanosecond)
+		_, err = idx.UpdateIndex(t.Context())
+		require.ErrorIs(t, err, updateErr)
+		require.Equal(t, []int64{initialRV}, attempts)
 
-		// This caller arrived within the minimum update interval, but there was
-		// no successful refresh to reuse. It needs a new attempt.
+		synctest.Sleep(time.Nanosecond)
 		rv, err := idx.UpdateIndex(t.Context())
-		require.ErrorIs(t, <-firstErr, context.DeadlineExceeded)
 		require.NoError(t, err)
 		require.Equal(t, initialRV+2, rv)
 		require.Equal(t, []int64{initialRV, initialRV}, attempts)
+
+		rv, err = idx.UpdateIndex(t.Context())
+		require.NoError(t, err)
+		require.Equal(t, initialRV+2, rv)
+		require.Len(t, attempts, 2)
 	})
 }
 
