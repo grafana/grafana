@@ -15097,14 +15097,9 @@
       "open-pull-request-yourself": "Open the repository and create a pull or merge request from the branch you saved to.",
       "pending-sync-body": "Grafana applies this version the next time it syncs the repository.",
       "repository": "the repository",
-      "title-created_one": "A new resource has been created in a branch in {{provider}}.",
-      "title-created_other": "New resources have been created in a branch in {{provider}}.",
-      "title-deleted_one": "The resource has been deleted in a branch in {{provider}}.",
-      "title-deleted_other": "The resources have been deleted in a branch in {{provider}}.",
-      "title-moved_one": "The resource has been moved in a branch in {{provider}}.",
-      "title-moved_other": "The resources have been moved in a branch in {{provider}}.",
-      "title-updated_one": "The resource has been updated in a branch in {{provider}}.",
-      "title-updated_other": "The resources have been updated in a branch in {{provider}}.",
+      "title-created": "A new resource has been created in a branch in {{provider}}.",
+      "title-deleted": "The resource has been deleted in a branch in {{provider}}.",
+      "title-updated": "The resource has been updated in a branch in {{provider}}.",
       "your-branch": "Your branch"
     },
     "config-form": {

@@ -7,25 +7,14 @@ import { RepoTypeDisplay } from 'app/features/provisioning/Wizard/types';
 
 import { getBranchUrl } from '../utils/url';
 
-import { type ProvisionedCommitOutcome, isDirectCommit } from './provisionedCommitOutcome';
-
-/** The commit this drawer just made, which picks the success copy. */
-export type CommitAction = 'create' | 'update' | 'delete' | 'move';
+import { type CommitAction, type ProvisionedCommitOutcome, isDirectCommit } from './provisionedCommitOutcome';
 
 interface Props {
   outcome: ProvisionedCommitOutcome;
 }
 
-/**
- * What the drawer shows once the commit lands: where the change went, and where to go next.
- *
- * The two states differ in consequence, not just in wording — a commit on the configured branch is
- * dual-written, so it is already live for the whole organization, while a commit on another branch
- * exists only on that branch until the pull request merges.
- */
 export function ProvisionedCommitSuccess({ outcome }: Props) {
   const { action, branch, configuredBranch, repoType, repoUrl, message: commitMessage, sourceUrl } = outcome;
-  const count = outcome.count ?? 1;
   const styles = useStyles2(getStyles);
   const isDirect = isDirectCommit(outcome);
   const hasCommit = Boolean(commitMessage);
@@ -37,7 +26,7 @@ export function ProvisionedCommitSuccess({ outcome }: Props) {
         <Icon name="check-circle" className={styles.successIcon} />
         <Stack direction="column" gap={0.5}>
           <Text weight="medium">
-            {isDirect ? getDirectHeadline(branch || configuredBranch) : getBranchHeadline(action, provider, count)}
+            {isDirect ? getDirectHeadline(branch || configuredBranch) : getBranchHeadline(action, provider)}
           </Text>
           <Text variant="bodySmall" color="secondary">
             {isDirect && outcome.pendingSync ? (
@@ -55,7 +44,6 @@ export function ProvisionedCommitSuccess({ outcome }: Props) {
               </Trans>
             )}
           </Text>
-          {/* A plain git remote has no pull request API, so opening one is a manual step. */}
           {!isDirect && repoType === 'git' && (
             <Text variant="bodySmall" color="secondary">
               <Trans i18nKey="provisioning.commit-success.open-pull-request-yourself">
@@ -153,7 +141,6 @@ function BranchRow({ label, branch, note, href }: BranchRowProps) {
           fill="text"
           size="sm"
           icon="external-link-alt"
-          // Branch names contain slashes, which i18n would escape into the label.
           aria-label={t('provisioning.commit-success.open-branch', 'Open {{branch}} in the repository', {
             branch,
             interpolation: { escapeValue: false },
@@ -164,42 +151,25 @@ function BranchRow({ label, branch, note, href }: BranchRowProps) {
   );
 }
 
-/** A repository without a configured branch (a local one, say) has no branch to name. */
 function getDirectHeadline(branch?: string): string {
   return branch
     ? t('provisioning.commit-success.committed-to', 'Committed to {{branch}}.', { branch })
     : t('provisioning.commit-success.committed', 'Changes committed.');
 }
 
-function getBranchHeadline(action: CommitAction, provider: string, count: number): string {
+function getBranchHeadline(action: CommitAction, provider: string): string {
   switch (action) {
     case 'update':
-      return t('provisioning.commit-success.title-updated', '', {
-        count,
+      return t('provisioning.commit-success.title-updated', 'The resource has been updated in a branch in {{provider}}.', {
         provider,
-        defaultValue_one: 'The resource has been updated in a branch in {{provider}}.',
-        defaultValue_other: 'The resources have been updated in a branch in {{provider}}.',
       });
     case 'delete':
-      return t('provisioning.commit-success.title-deleted', '', {
-        count,
+      return t('provisioning.commit-success.title-deleted', 'The resource has been deleted in a branch in {{provider}}.', {
         provider,
-        defaultValue_one: 'The resource has been deleted in a branch in {{provider}}.',
-        defaultValue_other: 'The resources have been deleted in a branch in {{provider}}.',
-      });
-    case 'move':
-      return t('provisioning.commit-success.title-moved', '', {
-        count,
-        provider,
-        defaultValue_one: 'The resource has been moved in a branch in {{provider}}.',
-        defaultValue_other: 'The resources have been moved in a branch in {{provider}}.',
       });
     default:
-      return t('provisioning.commit-success.title-created', '', {
-        count,
+      return t('provisioning.commit-success.title-created', 'A new resource has been created in a branch in {{provider}}.', {
         provider,
-        defaultValue_one: 'A new resource has been created in a branch in {{provider}}.',
-        defaultValue_other: 'New resources have been created in a branch in {{provider}}.',
       });
   }
 }
@@ -215,8 +185,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexShrink: 0,
     marginTop: theme.spacing(0.5),
   }),
-  // Without this the commit message, which can be any length, pushes the repository link out of
-  // the row instead of wrapping.
   commit: css({
     display: 'flex',
     flexDirection: 'column',

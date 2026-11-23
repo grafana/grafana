@@ -8,61 +8,32 @@ import { isValidRepoType } from '../../guards';
 import { appendPullRequestTitleParam } from '../../utils/pullRequestTitle';
 import { isResourceKindKey, type ResourceKindKey } from '../../utils/resourceKinds';
 
-import { type CommitAction } from './ProvisionedCommitSuccess';
+const COMMIT_ACTIONS = ['create', 'update', 'delete'] as const;
 
-/**
- * A landed commit, in the shape the drawer reports it: where it went, and where to go next.
- *
- * It is a snapshot rather than a live lookup because the write moves the ground underneath one — a
- * created resource stops being a new save, and a resource committed to a branch is not in Grafana at
- * all, so re-resolving its repository afterwards finds nothing. Build it as the commit lands.
- */
+export type CommitAction = (typeof COMMIT_ACTIONS)[number];
+
 export interface ProvisionedCommitOutcome {
   action: CommitAction;
-  /** Branch the commit landed on; absent for a direct write to the configured branch. */
   branch?: string;
   configuredBranch?: string;
   repoType?: RepoType;
-  /** Repository base URL, for the branch links and the way out to the provider. */
   repoUrl?: string;
   message?: string;
-  /** Link to the committed file. */
   sourceUrl?: string;
-  /** Pull request the pushed branch opens, where the provider has one. */
   prUrl?: string;
-  /** How many resources the commit covers. A bulk action passes its selection count. */
-  count?: number;
   pendingSync?: boolean;
 }
 
-interface CommitOutcomeArgs {
+export function buildCommitOutcome(args: {
   action: CommitAction;
-  /** Branch the write reported landing on; absent for a direct write to the configured branch. */
   ref?: string;
   urls?: RepositoryUrLs;
   message?: string;
-  /** Rendered pull-request title, which prefills the provider's "open pull request" form. */
   prTitle?: string;
   repository?: RepositoryView;
-  count?: number;
   pendingSync?: boolean;
-}
-
-/**
- * Normalizes what a write or a job reported into the outcome the drawer shows, so every kind reports
- * a commit the same way. The response's own URLs win over the repository's, which only describe
- * where the repository is rather than where this commit landed.
- */
-export function buildCommitOutcome({
-  action,
-  ref,
-  urls,
-  message,
-  prTitle,
-  repository,
-  count,
-  pendingSync,
-}: CommitOutcomeArgs): ProvisionedCommitOutcome {
+}): ProvisionedCommitOutcome {
+  const { action, ref, urls, message, prTitle, repository, pendingSync } = args;
   return {
     action,
     branch: ref,
@@ -72,12 +43,10 @@ export function buildCommitOutcome({
     message,
     sourceUrl: urls?.sourceURL,
     prUrl: appendPullRequestTitleParam(urls?.newPullRequestURL, repository?.type, prTitle),
-    count,
     pendingSync,
   };
 }
 
-/** Whether the commit went straight to the configured branch. */
 export function isDirectCommit({ branch, configuredBranch }: ProvisionedCommitOutcome): boolean {
   return !branch || branch === configuredBranch;
 }
@@ -87,8 +56,6 @@ export interface StoredCommitOutcome {
   kindKey?: ResourceKindKey;
   resourceName?: string;
 }
-
-const COMMIT_ACTIONS: CommitAction[] = ['create', 'update', 'delete', 'move'];
 
 export function storeCommitOutcome({ outcome, kindKey, resourceName }: StoredCommitOutcome) {
   const path = locationService.getLocation().pathname;
@@ -127,7 +94,6 @@ export function parseStoredCommitOutcome(raw: string, pathname: string): StoredC
   }
   const repoType = text('repoType');
   const kindKey = text('kindKey');
-  const count = Reflect.get(record, 'count');
   return {
     kindKey: kindKey && isResourceKindKey(kindKey) ? kindKey : undefined,
     resourceName: text('resourceName'),
@@ -140,7 +106,6 @@ export function parseStoredCommitOutcome(raw: string, pathname: string): StoredC
       message: text('message'),
       sourceUrl: url('sourceUrl'),
       prUrl: url('prUrl'),
-      count: typeof count === 'number' ? count : undefined,
       pendingSync: Reflect.get(record, 'pendingSync') === true,
     },
   };
