@@ -234,7 +234,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
               {getWorkflowForRef(repository, selectedBranch) === 'write'
                 ? t(
                     'provisioned-resource-form.save-or-delete-resource-shared-fields.commit-target-direct',
-                    'This commit goes straight to {{branch}} and applies in Grafana right away, for everyone in your organization.',
+                    'This commit goes straight to {{branch}}, the branch that Grafana syncs for everyone in your organization.',
                     { branch: repository.branch }
                   )
                 : t(
