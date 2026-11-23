@@ -305,8 +305,8 @@ importers:
         specifier: ^0.18.0
         version: 0.18.0(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)
       '@grafana/prometheus':
-        specifier: 13.2.3
-        version: 13.2.3(1748a23a2a87810d418bd023656497a3)
+        specifier: 13.2.4
+        version: 13.2.4(1748a23a2a87810d418bd023656497a3)
       '@grafana/runtime':
         specifier: workspace:*
         version: link:packages/grafana-runtime
@@ -3879,8 +3879,8 @@ packages:
       monaco-editor:
         optional: true
 
-  '@grafana/prometheus@13.2.3':
-    resolution: {integrity: sha512-T/zVYpVKXhMbqCyCaJa/afqkmZ8459i5Jvo5GMsjldLO5zKZTvNZft2b1GLEDxXPt6Lq1FTV/JVA5QT/dzmrlw==}
+  '@grafana/prometheus@13.2.4':
+    resolution: {integrity: sha512-vdP8h1B6MefT3pvZxEE/0HFO6K20gGujn9e7stX8JNshZohy/xenJ6tnUlaMpVGmpUvBr5Z65mD2dFIqZOl/Qw==}
     engines: {node: '>=24', npm: '>=11.16.0'}
     peerDependencies:
       '@grafana/assistant': 0.1.34
@@ -16669,7 +16669,7 @@ snapshots:
       - react-native
       - supports-color
 
-  '@grafana/prometheus@13.2.3(1748a23a2a87810d418bd023656497a3)':
+  '@grafana/prometheus@13.2.4(1748a23a2a87810d418bd023656497a3)':
     dependencies:
       '@emotion/css': 11.13.5(supports-color@7.2.0)
       '@floating-ui/react': 0.27.20(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
