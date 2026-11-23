@@ -482,8 +482,8 @@ importers:
         specifier: 1.11.13
         version: 1.11.13
       i18next:
-        specifier: ^26.3.6
-        version: 26.4.2(@typescript/typescript6@6.0.2)
+        specifier: ^27.0.0
+        version: 27.2.2(@typescript/typescript6@6.0.2)
       idb:
         specifier: ^8.0.3
         version: 8.0.4
@@ -1012,7 +1012,7 @@ importers:
         version: 0.2.1
       i18next-cli:
         specifier: ^1.48.0
-        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(@typescript/typescript6@6.0.2)(i18next@26.4.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))
+        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(@typescript/typescript6@6.0.2)(i18next@27.2.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))
       ignore:
         specifier: 7.0.12
         version: 7.0.12
@@ -1098,8 +1098,8 @@ importers:
         specifier: ^0.3.12
         version: 0.3.12
       react-i18next:
-        specifier: ^17.0.9
-        version: 17.0.15(@typescript/typescript6@6.0.2)(i18next@26.4.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        specifier: ^18.0.0
+        version: 18.0.3(@types/react@19.2.18)(@typescript/typescript6@6.0.2)(i18next@27.2.2(@typescript/typescript6@6.0.2))(react@19.2.8)
       react-refresh:
         specifier: ^0.18.0
         version: 0.18.0
@@ -1211,7 +1211,7 @@ importers:
         version: 19.2.4(@types/react@19.2.18)
       i18next-cli:
         specifier: ^1.48.0
-        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(i18next@26.4.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(typescript@6.0.2)
+        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(i18next@27.2.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(typescript@6.0.2)
       typescript:
         specifier: 6.0.2
         version: 6.0.2
@@ -1297,7 +1297,7 @@ importers:
         version: 19.2.4(@types/react@19.2.18)
       i18next-cli:
         specifier: ^1.48.0
-        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(i18next@26.4.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(typescript@6.0.2)
+        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(i18next@27.2.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(typescript@6.0.2)
       typescript:
         specifier: 6.0.2
         version: 6.0.2
@@ -1346,7 +1346,7 @@ importers:
         version: 19.2.4(@types/react@19.2.18)
       i18next-cli:
         specifier: ^1.48.0
-        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(i18next@26.4.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(typescript@6.0.2)
+        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(i18next@27.2.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(typescript@6.0.2)
       typescript:
         specifier: 6.0.2
         version: 6.0.2
@@ -1439,7 +1439,7 @@ importers:
         version: typescript@7.0.2
       i18next-cli:
         specifier: ^1.48.0
-        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(@typescript/typescript6@6.0.2)(i18next@26.4.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))
+        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(@typescript/typescript6@6.0.2)(i18next@27.2.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))
       react:
         specifier: 19.2.8
         version: 19.2.8
@@ -1809,8 +1809,8 @@ importers:
         specifier: ^3.1.3
         version: 3.1.3
       i18next:
-        specifier: ^26.3.6
-        version: 26.4.2(@typescript/typescript6@6.0.2)
+        specifier: ^27.0.0
+        version: 27.2.2(@typescript/typescript6@6.0.2)
       i18next-browser-languagedetector:
         specifier: ^8.0.0
         version: 8.3.1
@@ -1824,8 +1824,8 @@ importers:
         specifier: '>=19'
         version: 19.2.8
       react-i18next:
-        specifier: ^17.0.9
-        version: 17.0.15(@typescript/typescript6@6.0.2)(i18next@26.4.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        specifier: ^18.0.0
+        version: 18.0.3(@types/react@19.2.18)(@typescript/typescript6@6.0.2)(i18next@27.2.2(@typescript/typescript6@6.0.2))(react@19.2.8)
     devDependencies:
       '@types/react':
         specifier: 19.2.18
@@ -2244,7 +2244,7 @@ importers:
         version: typescript@7.0.2
       i18next-cli:
         specifier: ^1.48.0
-        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(@typescript/typescript6@6.0.2)(i18next@26.4.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))
+        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(@typescript/typescript6@6.0.2)(i18next@27.2.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))
       jest:
         specifier: ^29.6.4
         version: 29.7.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.5)(@typescript/typescript6@6.0.2))
@@ -10779,8 +10779,9 @@ packages:
   i18next@23.16.8:
     resolution: {integrity: sha512-06r/TitrM88Mg5FdUXAKL96dJMzgqLE5dv3ryBAra4KCwD9mJ4ndOTS95ZuymIGoE+2hzfdaMak2X11/es7ZWg==}
 
-  i18next@26.4.2:
-    resolution: {integrity: sha512-RX+R0VLg13IbvRuJSxnqykUFS9vQZTl8wYpWPCIUDWVrSGjsQywB5Y+pjzrkboxGAuYfJZVH1InFTdgBdxq6ug==}
+  i18next@27.2.2:
+    resolution: {integrity: sha512-1/AJgz/bpE/YL6tqekQlZAzDhkmrUBbgU8+Xon/Lwv6c5WdYuyFZ9mb86OVfR2C2XujUDT7Rz23Ydaq4l981lA==}
+    engines: {node: '>=22'}
     peerDependencies:
       typescript: ^5 || ^6 || ^7
     peerDependenciesMeta:
@@ -13211,6 +13212,20 @@ packages:
       react-dom:
         optional: true
       react-native:
+        optional: true
+      typescript:
+        optional: true
+
+  react-i18next@18.0.3:
+    resolution: {integrity: sha512-S84rtVuaKuiRtoCOspbGEaDlFjka+KvK/A5YCOr4LQ41XF3iJOrJ5rqQTD/jJHFVUf6X1i4ZMN5PGGgpz8NN6g==}
+    engines: {node: '>=22'}
+    peerDependencies:
+      '@types/react': '*'
+      i18next: '>= 27.0.1'
+      react: '>= 18.0.0'
+      typescript: ^5 || ^6 || ^7
+    peerDependenciesMeta:
+      '@types/react':
         optional: true
       typescript:
         optional: true
@@ -24499,7 +24514,7 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.29.7
 
-  i18next-cli@1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(@typescript/typescript6@6.0.2)(i18next@26.4.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8)):
+  i18next-cli@1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(@typescript/typescript6@6.0.2)(i18next@27.2.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8)):
     dependencies:
       '@croct/json5-parser': 0.2.2
       '@swc/core': 1.15.40(@swc/helpers@0.5.17)
@@ -24515,7 +24530,7 @@ snapshots:
       minimatch: 10.2.6
       ora: 9.4.0
       react: 19.2.8
-      react-i18next: 17.0.15(@typescript/typescript6@6.0.2)(i18next@26.4.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      react-i18next: 17.0.15(@typescript/typescript6@6.0.2)(i18next@27.2.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       yaml: 2.9.0
     transitivePeerDependencies:
       - '@swc/helpers'
@@ -24525,7 +24540,7 @@ snapshots:
       - react-native
       - typescript
 
-  i18next-cli@1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(i18next@26.4.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(typescript@6.0.2):
+  i18next-cli@1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(i18next@27.2.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(typescript@6.0.2):
     dependencies:
       '@croct/json5-parser': 0.2.2
       '@swc/core': 1.15.40(@swc/helpers@0.5.17)
@@ -24541,7 +24556,7 @@ snapshots:
       minimatch: 10.2.6
       ora: 9.4.0
       react: 19.2.8
-      react-i18next: 17.0.15(i18next@26.4.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.2)
+      react-i18next: 17.0.15(i18next@27.2.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.2)
       yaml: 2.9.0
     transitivePeerDependencies:
       - '@swc/helpers'
@@ -24572,7 +24587,7 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.29.7
 
-  i18next@26.4.2(@typescript/typescript6@6.0.2):
+  i18next@27.2.2(@typescript/typescript6@6.0.2):
     optionalDependencies:
       typescript: '@typescript/typescript6@6.0.2'
 
@@ -27782,27 +27797,36 @@ snapshots:
     dependencies:
       react: 19.2.8
 
-  react-i18next@17.0.15(@typescript/typescript6@6.0.2)(i18next@26.4.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+  react-i18next@17.0.15(@typescript/typescript6@6.0.2)(i18next@27.2.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
     dependencies:
       '@babel/runtime': 7.29.7
       html-parse-stringify: 4.0.1
-      i18next: 26.4.2(@typescript/typescript6@6.0.2)
+      i18next: 27.2.2(@typescript/typescript6@6.0.2)
       react: 19.2.8
       use-sync-external-store: 1.6.0(react@19.2.8)
     optionalDependencies:
       react-dom: 19.2.8(react@19.2.8)
       typescript: '@typescript/typescript6@6.0.2'
 
-  react-i18next@17.0.15(i18next@26.4.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.2):
+  react-i18next@17.0.15(i18next@27.2.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.2):
     dependencies:
       '@babel/runtime': 7.29.7
       html-parse-stringify: 4.0.1
-      i18next: 26.4.2(@typescript/typescript6@6.0.2)
+      i18next: 27.2.2(@typescript/typescript6@6.0.2)
       react: 19.2.8
       use-sync-external-store: 1.6.0(react@19.2.8)
     optionalDependencies:
       react-dom: 19.2.8(react@19.2.8)
       typescript: 6.0.2
+
+  react-i18next@18.0.3(@types/react@19.2.18)(@typescript/typescript6@6.0.2)(i18next@27.2.2(@typescript/typescript6@6.0.2))(react@19.2.8):
+    dependencies:
+      html-parse-stringify: 4.0.1
+      i18next: 27.2.2(@typescript/typescript6@6.0.2)
+      react: 19.2.8
+    optionalDependencies:
+      '@types/react': 19.2.18
+      typescript: '@typescript/typescript6@6.0.2'
 
   react-immutable-proptypes@2.2.0(immutable@5.2.1):
     dependencies:
