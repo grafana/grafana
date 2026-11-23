@@ -8279,7 +8279,6 @@
     },
     "save-provisioned-dashboard-form": {
       "advanced-options": "Advanced options",
-      "back-to-dashboards": "Back to all dashboards",
       "back-to-details": "Back to details",
       "cancel": "Cancel",
       "cancel-folder": "Cancel",
@@ -8308,15 +8307,12 @@
       "label-title": "Title",
       "new-folder": "New folder",
       "next": "Next",
-      "open-pull-request": "Open pull request",
-      "open-repository": "Open repository",
       "repo-path-required": "Missing required fields for saving",
       "save-json-to-file": "Save JSON to file",
       "see-docs": "See <2>documentation</2> for more information about provisioning.",
       "title-required": "Dashboard title is required",
       "title-same-as-folder": "Dashboard name cannot be the same as the folder name",
-      "title-validation-failed": "Dashboard title validation failed.",
-      "view-dashboard": "View dashboard"
+      "title-validation-failed": "Dashboard title validation failed."
     },
     "scenes-new-rule-from-panel-button": {
       "body-no-alerting-capable-query-found": "Cannot create alerts from this panel because no query to an alerting capable datasource is found.",
@@ -15005,11 +15001,6 @@
       "label-name-template": "Branch name template",
       "placeholder-name-template": "grafana/{{actionVar}}-{{titleVar}}-{{randomVar}}"
     },
-    "bulk-action-outcome": {
-      "close": "Close",
-      "open-pull-request": "Open pull request",
-      "open-repository": "Open repository"
-    },
     "cloud-info-box": {
       "body": "Skip the setup and get Git Sync fully managed and hosted on Grafana Cloud with the <2>free-forever Grafana Cloud plan</2>.",
       "title": "You can also use Git Sync on Grafana Cloud"
@@ -15037,6 +15028,13 @@
     },
     "commit-signing-info": {
       "description": "To enable verified commits, <2>set up commit signing</2> for your account."
+    },
+    "commit-steps": {
+      "back-to-list": "Back to all {{resources}}",
+      "close": "Close",
+      "open-pull-request": "Open pull request",
+      "open-repository": "Open repository",
+      "view": "View {{resource}}"
     },
     "commit-success": {
       "branch-body": "The rest of the Grafana users in your organization will still see the current version saved to the configured branch until this branch is merged.",
@@ -15851,10 +15849,6 @@
       "drawer-title-save": "Save provisioned resource",
       "error-saving": "Failed to save changes",
       "missing-info": "Missing required fields for saving",
-      "next-list": "Back to all {{resources}}",
-      "next-view": "View {{resource}}",
-      "open-pull-request": "Open pull request",
-      "open-repository": "Open repository",
       "read-only-message": "To edit this resource, please update it in your repository directly."
     },
     "save-target-switch": {

@@ -1,32 +1,18 @@
-import { useNavigate } from 'react-router-dom-v5-compat';
+import { Stack } from '@grafana/ui';
 
-import { Trans, t } from '@grafana/i18n';
-import { Button, LinkButton, Stack } from '@grafana/ui';
-import { type RepoType } from 'app/features/provisioning/Wizard/types';
-
-import { type CommitAction, ProvisionedCommitSuccess } from '../Shared/ProvisionedCommitSuccess';
+import { ProvisionedCommitSteps } from '../Shared/ProvisionedCommitSteps';
+import { ProvisionedCommitSuccess } from '../Shared/ProvisionedCommitSuccess';
+import { type ProvisionedCommitOutcome } from '../Shared/provisionedCommitOutcome';
 
 /**
- * Everything the drawer needs to report a landed commit, snapshotted when it lands.
- *
- * It is a snapshot rather than a live lookup because the save moves the ground underneath one: a
- * created dashboard stops being a new save, and a dashboard committed to a branch is not in Grafana
- * at all, so re-resolving the repository afterwards finds nothing.
+ * A landed dashboard commit, which is the shared outcome plus the two things only dashboards have:
+ * the name the commit gave the dashboard, and a branch commit's preview page.
  */
-export interface DashboardCommitOutcome {
-  action: CommitAction;
-  /** Branch the commit landed on; absent for a direct write to the configured branch. */
-  branch?: string;
-  configuredBranch?: string;
-  repoType?: RepoType;
-  repoUrl?: string;
-  message: string;
-  /** Link to the committed file. */
-  sourceUrl?: string;
-  /** Pull request the pushed branch opens, where the provider has one. */
-  prUrl?: string;
-  /** Where "View dashboard" goes: the branch preview, or the saved dashboard. */
-  viewUrl?: string;
+export interface DashboardCommitOutcome extends ProvisionedCommitOutcome {
+  /** `metadata.name` the write reported, for the step onto the dashboard's own page. */
+  resourceName?: string;
+  /** Where a commit on a branch is previewed, which only dashboards have a page for. */
+  branchViewUrl?: string;
 }
 
 interface Props {
@@ -36,44 +22,17 @@ interface Props {
 
 /** What the dashboard save drawer shows once the commit has landed. */
 export function ProvisionedDashboardOutcome({ outcome, onDismiss }: Props) {
-  const navigate = useNavigate();
-  // The drawer outlives the commit it reports, so a route it is already on leaves it over the page.
-  const leaveTo = (url: string) => {
-    onDismiss();
-    navigate(url);
-  };
-  // A plain git remote opens no pull request, so the way out to the server is the repository itself.
-  const externalUrl = outcome.prUrl || (outcome.branch ? outcome.repoUrl : undefined);
-
   return (
     <Stack direction="column" gap={3}>
-      <ProvisionedCommitSuccess
-        action={outcome.action}
-        branch={outcome.branch}
-        configuredBranch={outcome.configuredBranch}
-        repoType={outcome.repoType}
-        repoUrl={outcome.repoUrl}
-        commitMessage={outcome.message}
-        sourceUrl={outcome.sourceUrl}
-      />
+      <ProvisionedCommitSuccess outcome={outcome} />
       <Stack gap={2} wrap="wrap">
-        {externalUrl && (
-          <LinkButton href={externalUrl} target="_blank" variant="primary" icon="external-link-alt">
-            {outcome.prUrl
-              ? t('dashboard-scene.save-provisioned-dashboard-form.open-pull-request', 'Open pull request')
-              : t('dashboard-scene.save-provisioned-dashboard-form.open-repository', 'Open repository')}
-          </LinkButton>
-        )}
-        {outcome.viewUrl && (
-          <Button variant="secondary" onClick={() => leaveTo(outcome.viewUrl!)}>
-            <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.view-dashboard">View dashboard</Trans>
-          </Button>
-        )}
-        <Button variant="secondary" onClick={() => leaveTo('/dashboards')}>
-          <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.back-to-dashboards">
-            Back to all dashboards
-          </Trans>
-        </Button>
+        <ProvisionedCommitSteps
+          kindKey="dashboard"
+          outcome={outcome}
+          resourceName={outcome.resourceName}
+          branchViewUrl={outcome.branchViewUrl}
+          onDismiss={onDismiss}
+        />
       </Stack>
     </Stack>
   );

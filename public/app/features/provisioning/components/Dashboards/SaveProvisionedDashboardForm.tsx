@@ -43,12 +43,12 @@ import { useCommitTarget } from '../../hooks/useCommitTarget';
 import { type ProvisionedDashboardFormData } from '../../types/form';
 import { type CommitTemplateVars, getResourceCommitMessage } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
-import { appendPullRequestTitleParam } from '../../utils/pullRequestTitle';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { getRequestRef } from '../../utils/workflow';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
+import { buildCommitOutcome } from '../Shared/provisionedCommitOutcome';
 import { getProvisionedRequestError } from '../utils/errors';
 import { validateProvisionedFolderName } from '../utils/folderName';
 import { ensureFolderPathTrailingSlash, joinPath, slugifyForFilename, splitPath } from '../utils/path';
@@ -232,15 +232,15 @@ export function SaveProvisionedDashboardForm({
   // The repository is read here, while it still resolves: after the commit a created dashboard is
   // no longer a new save and a branch commit is not in Grafana, so the lookup comes back empty.
   const commitSnapshot = useCallback(
-    (wrapper: ResourceWrapper) => ({
-      message,
-      sourceUrl: wrapper.urls?.sourceURL,
-      prUrl: appendPullRequestTitleParam(wrapper.urls?.newPullRequestURL, repository?.type, prTitle),
-      repoUrl: wrapper.urls?.repositoryURL ?? repository?.url,
-      configuredBranch: repository?.branch,
-      repoType: repository?.type,
-    }),
-    [message, prTitle, repository?.branch, repository?.type, repository?.url]
+    (wrapper: ResourceWrapper) =>
+      buildCommitOutcome({
+        action: isNew ? 'create' : 'update',
+        urls: wrapper.urls,
+        message,
+        prTitle,
+        repository,
+      }),
+    [isNew, message, prTitle, repository]
   );
 
   const showError = (error: unknown) => {
@@ -322,13 +322,7 @@ export function SaveProvisionedDashboardForm({
         editPanel: null,
       });
 
-      reportCommit({
-        ...commitSnapshot(wrapper),
-        action: isNew ? 'create' : 'update',
-        // Staying on the preview URL would keep showing the deleted branch (and its recovery
-        // banner) for a draft that was just saved, so point at the saved dashboard instead.
-        viewUrl: upsert?.metadata?.name ? CORE_KINDS.dashboard.getRoute(upsert.metadata.name) : undefined,
-      });
+      reportCommit({ ...commitSnapshot(wrapper), resourceName: upsert?.metadata?.name });
     },
     [isNew, recoverToNewBranch, handleDismiss, commitSnapshot, reportCommit]
   );
@@ -344,12 +338,11 @@ export function SaveProvisionedDashboardForm({
       handleDismiss(wrapper, { showSaved: false });
       reportCommit({
         ...commitSnapshot(wrapper),
-        action: isNew ? 'create' : 'update',
         branch: ref,
-        // Unlike most kinds, a dashboard on a branch is viewable. A new one is reached at its own
-        // URL; an existing one needs the preview route to be rendered from that ref rather than
-        // from what is on the configured branch.
-        viewUrl:
+        resourceName: upsert?.metadata?.name,
+        // A new dashboard on a branch is reachable at its own URL; an existing one has to be
+        // previewed from that ref, or the page renders what is on the configured branch instead.
+        branchViewUrl:
           isNew && upsert?.metadata?.name
             ? CORE_KINDS.dashboard.getRoute(upsert.metadata.name)
             : getPreviewUrl(ref, path, info.repoType),

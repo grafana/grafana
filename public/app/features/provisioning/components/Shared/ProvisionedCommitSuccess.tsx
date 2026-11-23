@@ -3,27 +3,17 @@ import { css } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Box, Divider, Icon, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
-import { RepoTypeDisplay, type RepoType } from 'app/features/provisioning/Wizard/types';
+import { RepoTypeDisplay } from 'app/features/provisioning/Wizard/types';
 
 import { getBranchUrl } from '../utils/url';
+
+import { type ProvisionedCommitOutcome, isDirectCommit } from './provisionedCommitOutcome';
 
 /** The commit this drawer just made, which picks the success copy. */
 export type CommitAction = 'create' | 'update' | 'delete' | 'move';
 
 interface Props {
-  action: CommitAction;
-  /** Branch the commit landed on. Omitted when it went straight to the configured branch. */
-  branch?: string;
-  configuredBranch?: string;
-  repoType?: RepoType;
-  /** Repository base URL, for the branch links. */
-  repoUrl?: string;
-  /** The commit message, shown as the last commit. */
-  commitMessage?: string;
-  /** Link to the committed file. */
-  sourceUrl?: string;
-  /** How many resources the commit covers. Bulk actions pass their selection count. */
-  count?: number;
+  outcome: ProvisionedCommitOutcome;
 }
 
 /**
@@ -33,18 +23,11 @@ interface Props {
  * dual-written, so it is already live for the whole organization, while a commit on another branch
  * exists only on that branch until the pull request merges.
  */
-export function ProvisionedCommitSuccess({
-  action,
-  branch,
-  configuredBranch,
-  repoType,
-  repoUrl,
-  commitMessage,
-  sourceUrl,
-  count = 1,
-}: Props) {
+export function ProvisionedCommitSuccess({ outcome }: Props) {
+  const { action, branch, configuredBranch, repoType, repoUrl, message: commitMessage, sourceUrl } = outcome;
+  const count = outcome.count ?? 1;
   const styles = useStyles2(getStyles);
-  const isDirect = !branch || branch === configuredBranch;
+  const isDirect = isDirectCommit(outcome);
   const hasCommit = Boolean(commitMessage);
   const provider = repoType ? RepoTypeDisplay[repoType] : t('provisioning.commit-success.repository', 'the repository');
 
@@ -82,7 +65,7 @@ export function ProvisionedCommitSuccess({
       {(!isDirect || hasCommit) && (
         <Box borderStyle="solid" borderColor="weak" borderRadius="default" padding={2}>
           <Stack direction="column" gap={2}>
-            {!isDirect && (
+            {!isDirect && branch && (
               <>
                 <BranchRow
                   label={t('provisioning.commit-success.your-branch', 'Your branch')}

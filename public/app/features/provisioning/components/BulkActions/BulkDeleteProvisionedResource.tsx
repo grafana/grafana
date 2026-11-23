@@ -26,6 +26,7 @@ import { getRequestRef, getWorkflowForRef } from '../../utils/workflow';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { ResourceJobStatus } from '../Shared/ResourceJobStatus';
+import { buildCommitOutcome } from '../Shared/provisionedCommitOutcome';
 import { getCanPushToConfiguredBranch } from '../defaults';
 
 import { BulkActionOutcome } from './BulkActionOutcome';
@@ -121,13 +122,15 @@ function FormContent({
           {submitted ? (
             outcome ? (
               <BulkActionOutcome
-                action="delete"
-                jobRef={getJobRef(submitted.jobSpec)}
-                repository={repository}
-                urls={outcome.urls}
-                commitMessage={message}
-                count={collectSelectedItems(selectedItems).length}
-                prTitle={submitted.prTitle}
+                outcome={buildCommitOutcome({
+                  action: 'delete',
+                  ref: getJobRef(submitted.jobSpec),
+                  urls: outcome.urls,
+                  message,
+                  prTitle: submitted.prTitle,
+                  repository,
+                  count: collectSelectedItems(selectedItems).length,
+                })}
                 onDismiss={onDismiss}
               />
             ) : (

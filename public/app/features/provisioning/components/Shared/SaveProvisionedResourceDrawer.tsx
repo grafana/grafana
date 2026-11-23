@@ -2,17 +2,12 @@ import { css } from '@emotion/css';
 import { customAlphabet } from 'nanoid';
 import { useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, Drawer, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
-import {
-  type RepositoryUrLs,
-  type RepositoryView,
-  useDeleteRepositoryFilesWithPathMutation,
-} from 'app/api/clients/provisioning/v0alpha1';
+import { Button, Drawer, Stack, Text, useStyles2 } from '@grafana/ui';
+import { type RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import {
   AnnoKeyManagerIdentity,
   AnnoKeyManagerKind,
@@ -31,7 +26,6 @@ import { type BaseProvisionedFormData } from '../../types/form';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { getManagerIdentity, getSourcePath, type ManagedResource } from '../../utils/managedResource';
-import { appendPullRequestTitleParam } from '../../utils/pullRequestTitle';
 import {
   getKindKeyByGroupKind,
   resourceKindInfos,
@@ -44,9 +38,11 @@ import { getCanPushToConfiguredBranch, getDefaultRef } from '../defaults';
 import { getProvisionedRequestError } from '../utils/errors';
 import { slugifyForFilename } from '../utils/path';
 
+import { ProvisionedCommitSteps } from './ProvisionedCommitSteps';
 import { ProvisionedCommitSuccess } from './ProvisionedCommitSuccess';
 import { ProvisionedDrawerLayout } from './ProvisionedDrawerLayout';
 import { ResourceEditFormSharedFields } from './ResourceEditFormSharedFields';
+import { type ProvisionedCommitOutcome, buildCommitOutcome } from './provisionedCommitOutcome';
 
 /** Commit action handled by this drawer. */
 type ProvisionedResourceAction = 'create' | 'update' | 'delete';
@@ -73,16 +69,6 @@ function getNewResourcePath(title: string, kindKey: string): string {
   return `${slugifyForFilename(title) || kindKey}.json`;
 }
 
-/** The commit that landed, which the drawer's success state renders. */
-interface CommitOutcome {
-  /** Branch the commit landed on; absent for a direct write to the configured branch. */
-  ref?: string;
-  urls?: RepositoryUrLs;
-  message: string;
-  /** Rendered pull-request title, which prefills the provider's "open pull request" form. */
-  prTitle: string;
-}
-
 interface BaseDrawerProps {
   /**
    * The resource to commit (`create`/`update`) or remove (`delete`). It carries everything the drawer
@@ -102,8 +88,6 @@ interface BaseDrawerProps {
   readOnlyMessage?: string;
   /** Prefix for generated branch names. Defaults to the kind's key. */
   branchPrefix?: string;
-  /** In-app list page the drawer's "Back to all ..." step returns to. The caller owns its routes. */
-  redirectUrl: string;
   onDismiss?: () => void;
 }
 
@@ -125,7 +109,7 @@ interface FormProps {
   initialValues: BaseProvisionedFormData;
   repository?: RepositoryView;
   canPushToConfiguredBranch: boolean;
-  onCommitted: (outcome: CommitOutcome) => void;
+  onCommitted: (outcome: ProvisionedCommitOutcome) => void;
   onDismiss?: () => void;
 }
 
@@ -224,7 +208,7 @@ function FormContent({
         dispatch(invalidateAction);
       }
 
-      onCommitted({ ref: data.ref, urls: data.urls, message, prTitle });
+      onCommitted(buildCommitOutcome({ action, ref: data.ref, urls: data.urls, message, prTitle, repository }));
     } catch (err) {
       showError(err);
     }
@@ -287,70 +271,25 @@ function FormContent({
 
 interface SuccessProps {
   kindKey: ResourceKindKey;
-  action: ProvisionedResourceAction;
   resourceName: string;
-  redirectUrl: string;
-  repository?: RepositoryView;
-  outcome: CommitOutcome;
+  outcome: ProvisionedCommitOutcome;
   onDismiss?: () => void;
 }
 
-function SuccessContent({ kindKey, action, resourceName, redirectUrl, repository, outcome, onDismiss }: SuccessProps) {
-  const navigate = useNavigate();
-  // The drawer outlives the commit it reports, so a route it is already on leaves it over the page.
-  const leaveTo = (url: string) => {
-    onDismiss?.();
-    navigate(url);
-  };
-  // Widened from the literal registry entry, whose optional members the union hides.
-  const kind: ResourceKindInfo = resourceKindInfos[kindKey];
-  const isDirect = !outcome.ref;
-  const prUrl = appendPullRequestTitleParam(outcome.urls?.newPullRequestURL, repository?.type, outcome.prTitle);
-  // A plain git remote opens no pull request, so the way out to the server is the repository itself.
-  const repoUrl = outcome.urls?.repositoryURL ?? repository?.url;
-  const externalUrl = prUrl || (isDirect ? undefined : repoUrl);
-
-  // Only a direct commit is live in Grafana: a branch commit exists on the branch alone until the
-  // pull request merges, so there is nothing to view yet.
-  const resourceRoute = action === 'delete' || !isDirect ? undefined : kind.getRoute?.(resourceName);
-
+function SuccessContent({ kindKey, resourceName, outcome, onDismiss }: SuccessProps) {
   return (
     <ProvisionedDrawerLayout
       footer={
-        <>
-          {/* Opening the pull request is what carries a branch commit forward. */}
-          {externalUrl && (
-            <LinkButton href={externalUrl} target="_blank" variant="primary" icon="external-link-alt">
-              {prUrl
-                ? t('provisioning.save-resource.open-pull-request', 'Open pull request')
-                : t('provisioning.save-resource.open-repository', 'Open repository')}
-            </LinkButton>
-          )}
-          {resourceRoute && (
-            <Button variant="secondary" onClick={() => leaveTo(resourceRoute)}>
-              {t('provisioning.save-resource.next-view', 'View {{resource}}', {
-                resource: kind.getLabel({ upperFirst: false }),
-              })}
-            </Button>
-          )}
-          {/* Closing the drawer is what returns to the editor, so no button repeats it. */}
-          <Button variant="secondary" onClick={() => leaveTo(redirectUrl)}>
-            {t('provisioning.save-resource.next-list', 'Back to all {{resources}}', {
-              resources: kind.getPluralLabel({ upperFirst: false }),
-            })}
-          </Button>
-        </>
+        /* Closing the drawer is what returns to the editor, so no step repeats it. */
+        <ProvisionedCommitSteps
+          kindKey={kindKey}
+          outcome={outcome}
+          resourceName={resourceName}
+          onDismiss={() => onDismiss?.()}
+        />
       }
     >
-      <ProvisionedCommitSuccess
-        action={action}
-        branch={outcome.ref}
-        configuredBranch={repository?.branch}
-        repoType={repository?.type}
-        repoUrl={repoUrl}
-        commitMessage={outcome.message}
-        sourceUrl={outcome.urls?.sourceURL}
-      />
+      <ProvisionedCommitSuccess outcome={outcome} />
     </ProvisionedDrawerLayout>
   );
 }
@@ -386,7 +325,6 @@ type ResourceDrawerContentProps = SaveProvisionedResourceDrawerProps & { kindKey
 
 function ResourceDrawerContent({
   kindKey,
-  redirectUrl,
   resource,
   action,
   title,
@@ -398,7 +336,7 @@ function ResourceDrawerContent({
   const styles = useStyles2(getStyles);
   const isNew = action === 'create';
   const isDelete = action === 'delete';
-  const [outcome, setOutcome] = useState<CommitOutcome | undefined>(undefined);
+  const [outcome, setOutcome] = useState<ProvisionedCommitOutcome | undefined>(undefined);
 
   // A new resource needs a name; generate one once for the lifetime of the drawer as a fallback.
   const generatedName = useMemo(() => generateResourceName(), []);
@@ -469,15 +407,7 @@ function ResourceDrawerContent({
       onClose={() => onDismiss?.()}
     >
       {outcome ? (
-        <SuccessContent
-          kindKey={kindKey}
-          action={action}
-          resourceName={resourceName}
-          redirectUrl={redirectUrl}
-          repository={repository}
-          outcome={outcome}
-          onDismiss={onDismiss}
-        />
+        <SuccessContent kindKey={kindKey} resourceName={resourceName} outcome={outcome} onDismiss={onDismiss} />
       ) : (
         <ProvisionedFormGate
           isLoading={isLoading}

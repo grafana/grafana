@@ -32,6 +32,7 @@ import { MoveActionAvailableTargetWarning } from '../Shared/MoveActionAvailableT
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { ResourceJobStatus } from '../Shared/ResourceJobStatus';
+import { buildCommitOutcome } from '../Shared/provisionedCommitOutcome';
 
 import { BulkActionOutcome } from './BulkActionOutcome';
 import {
@@ -172,13 +173,15 @@ function FormContent({
           {submitted ? (
             outcome ? (
               <BulkActionOutcome
-                action="move"
-                jobRef={getJobRef(submitted.jobSpec)}
-                repository={repository}
-                urls={outcome.urls}
-                commitMessage={message}
-                count={collectSelectedItems(selectedItems).length}
-                prTitle={submitted.prTitle}
+                outcome={buildCommitOutcome({
+                  action: 'move',
+                  ref: getJobRef(submitted.jobSpec),
+                  urls: outcome.urls,
+                  message,
+                  prTitle: submitted.prTitle,
+                  repository,
+                  count: collectSelectedItems(selectedItems).length,
+                })}
                 onDismiss={onDismiss}
               />
             ) : (

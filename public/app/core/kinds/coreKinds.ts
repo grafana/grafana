@@ -48,6 +48,7 @@ export const CORE_KINDS = {
     icon: 'folder',
     iconColor: 'semi-dark-blue',
     getRoute: page('/dashboards/f'),
+    getListRoute: () => '/dashboards',
   },
   dashboard: {
     group: DASHBOARD_API_GROUP,
@@ -60,6 +61,7 @@ export const CORE_KINDS = {
     icon: 'apps',
     iconColor: 'semi-dark-orange',
     getRoute: page('/d'),
+    getListRoute: () => '/dashboards',
   },
   notebook: {
     // Also served from the dashboards group, under its own plural
@@ -74,6 +76,7 @@ export const CORE_KINDS = {
     icon: 'gf-notebook',
     iconColor: 'semi-dark-purple',
     getRoute: page(NOTEBOOKS_BASE_URL),
+    getListRoute: () => NOTEBOOKS_BASE_URL,
   },
   playlist: {
     group: PLAYLIST_API_GROUP,
@@ -86,6 +89,7 @@ export const CORE_KINDS = {
     iconColor: 'semi-dark-orange',
     // The edit page, not /playlists/play, which starts the fullscreen slideshow at once
     getRoute: page('/playlists/edit'),
+    getListRoute: () => '/playlists',
   },
   // No `getRoute`: a library panel has no page of its own, only its row on the collection page
   librarypanel: {
@@ -98,6 +102,7 @@ export const CORE_KINDS = {
     getLabel: label(() => t('core-kinds.librarypanel.label', 'library panel')),
     getPluralLabel: label(() => t('core-kinds.librarypanel.label-plural', 'library panels')),
     icon: 'library-panel',
+    getListRoute: () => '/library-panels',
   },
   repository: {
     group: PROVISIONING_API_GROUP,
@@ -108,6 +113,7 @@ export const CORE_KINDS = {
     getPluralLabel: label(() => t('core-kinds.repository.label-plural', 'repositories')),
     icon: 'code-branch',
     getRoute: page(PROVISIONING_URL),
+    getListRoute: () => PROVISIONING_URL,
   },
   connection: {
     group: PROVISIONING_API_GROUP,
@@ -118,6 +124,7 @@ export const CORE_KINDS = {
     getPluralLabel: label(() => t('core-kinds.connection.label-plural', 'connections')),
     icon: 'plug',
     getRoute: page(CONNECTIONS_URL, '/edit'),
+    getListRoute: () => CONNECTIONS_URL,
   },
   datasource: {
     // No API serves this group. Each plugin has its own, like `prometheus.datasource.grafana.app`.
@@ -132,6 +139,7 @@ export const CORE_KINDS = {
     getPluralLabel: label(() => t('core-kinds.datasource.label-plural', 'data sources')),
     icon: 'database',
     getRoute: page('/connections/datasources/edit'),
+    getListRoute: () => '/connections/datasources',
   },
 } as const satisfies Record<CoreKindKey, CoreKindInfo>;
 

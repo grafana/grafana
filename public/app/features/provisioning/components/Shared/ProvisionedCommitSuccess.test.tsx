@@ -6,7 +6,11 @@ const repoUrl = 'https://github.com/your-org/your-repo';
 
 describe('ProvisionedCommitSuccess', () => {
   it('reports a direct commit as already live for the organization', () => {
-    render(<ProvisionedCommitSuccess action="update" configuredBranch="main" repoType="github" repoUrl={repoUrl} />);
+    render(
+      <ProvisionedCommitSuccess
+        outcome={{ action: 'update', configuredBranch: 'main', repoType: 'github', repoUrl: repoUrl }}
+      />
+    );
 
     expect(screen.getByText('Committed to main.')).toBeInTheDocument();
     expect(screen.getByText(/already live in Grafana for everyone in your organization/i)).toBeInTheDocument();
@@ -17,12 +21,14 @@ describe('ProvisionedCommitSuccess', () => {
   it('reports a branch commit as invisible to others, and links both branches', () => {
     render(
       <ProvisionedCommitSuccess
-        action="create"
-        branch="grafana-sync/create-playlist/abc123"
-        configuredBranch="main"
-        repoType="github"
-        repoUrl={repoUrl}
-        commitMessage='create: playlist "StockholmWallTV2"'
+        outcome={{
+          action: 'create',
+          branch: 'grafana-sync/create-playlist/abc123',
+          configuredBranch: 'main',
+          repoType: 'github',
+          repoUrl: repoUrl,
+          message: 'create: playlist "StockholmWallTV2"',
+        }}
       />
     );
 
@@ -42,11 +48,13 @@ describe('ProvisionedCommitSuccess', () => {
   it('links the commit message to the committed file', () => {
     render(
       <ProvisionedCommitSuccess
-        action="create"
-        configuredBranch="main"
-        repoType="github"
-        commitMessage="create: playlist"
-        sourceUrl={`${repoUrl}/blob/main/stockholmwalltv2.json`}
+        outcome={{
+          action: 'create',
+          configuredBranch: 'main',
+          repoType: 'github',
+          message: 'create: playlist',
+          sourceUrl: `${repoUrl}/blob/main/stockholmwalltv2.json`,
+        }}
       />
     );
 
@@ -58,7 +66,7 @@ describe('ProvisionedCommitSuccess', () => {
   });
 
   it('reports no commit row where the write reported only a content hash', () => {
-    render(<ProvisionedCommitSuccess action="create" configuredBranch="main" repoType="git" />);
+    render(<ProvisionedCommitSuccess outcome={{ action: 'create', configuredBranch: 'main', repoType: 'git' }} />);
 
     expect(screen.queryByText(/last commit/i)).not.toBeInTheDocument();
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
@@ -69,25 +77,41 @@ describe('ProvisionedCommitSuccess', () => {
     ['delete', /deleted in a branch/i],
     ['move', /moved in a branch/i],
   ] as const)('names the %s action in the branch headline', (action, expected) => {
-    render(<ProvisionedCommitSuccess action={action} branch="feature" configuredBranch="main" repoType="github" />);
+    render(
+      <ProvisionedCommitSuccess
+        outcome={{ action: action, branch: 'feature', configuredBranch: 'main', repoType: 'github' }}
+      />
+    );
 
     expect(screen.getByText(expected)).toBeInTheDocument();
   });
 
   it('tells the user to open the pull request themselves on a plain git remote', () => {
-    render(<ProvisionedCommitSuccess action="create" branch="feature" configuredBranch="main" repoType="git" />);
+    render(
+      <ProvisionedCommitSuccess
+        outcome={{ action: 'create', branch: 'feature', configuredBranch: 'main', repoType: 'git' }}
+      />
+    );
 
     expect(screen.getByText(/create a pull or merge request from the branch you saved to/i)).toBeInTheDocument();
   });
 
   it('does not ask for a manual pull request where the provider opens one', () => {
-    render(<ProvisionedCommitSuccess action="create" branch="feature" configuredBranch="main" repoType="github" />);
+    render(
+      <ProvisionedCommitSuccess
+        outcome={{ action: 'create', branch: 'feature', configuredBranch: 'main', repoType: 'github' }}
+      />
+    );
 
     expect(screen.queryByText(/create a pull or merge request/i)).not.toBeInTheDocument();
   });
 
   it('omits the branch links when the repository has no browsable branch URLs', () => {
-    render(<ProvisionedCommitSuccess action="create" branch="feature" configuredBranch="main" repoType="local" />);
+    render(
+      <ProvisionedCommitSuccess
+        outcome={{ action: 'create', branch: 'feature', configuredBranch: 'main', repoType: 'local' }}
+      />
+    );
 
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
     expect(screen.getByText('feature')).toBeInTheDocument();

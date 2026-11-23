@@ -447,7 +447,12 @@ describe('SaveProvisionedDashboardForm', () => {
     await waitFor(() =>
       expect(props.drawer.setState).toHaveBeenCalledWith({
         showDiff: false,
-        commitOutcome: expect.objectContaining({ action: 'create', viewUrl: '/d/new-dashboard' }),
+        // Committed to a branch, where a new dashboard is still reachable at its own URL.
+        commitOutcome: expect.objectContaining({
+          action: 'create',
+          resourceName: 'new-dashboard',
+          branchViewUrl: '/d/new-dashboard',
+        }),
       })
     );
     expect(mockNavigate).not.toHaveBeenCalled();
@@ -1313,7 +1318,9 @@ describe('SaveProvisionedDashboardForm', () => {
     await waitFor(() => expect(props.drawer.setState).toHaveBeenCalled());
     const outcome = jest.mocked(props.drawer.setState).mock.calls.at(-1)![0].commitOutcome;
     expect(outcome?.branch).toBeUndefined();
-    expect(outcome?.viewUrl).toBe('/d/test-dashboard');
+    // The step onto the dashboard is built from the kind's registry route, so only the name travels.
+    expect(outcome?.resourceName).toBe('test-dashboard');
+    expect(outcome?.branchViewUrl).toBeUndefined();
   });
 
   describe('pending changes', () => {
@@ -1476,12 +1483,11 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(savedUrl!.searchParams.get('ref')).toBe('develop');
 
     // A dashboard on a branch is viewable, so the preview is offered as a step rather than forced.
-    // A dashboard on a branch is viewable, so the preview is offered rather than forced.
     await waitFor(() => expect(props.drawer.setState).toHaveBeenCalled());
     const outcome = jest.mocked(props.drawer.setState).mock.calls.at(-1)![0].commitOutcome;
     expect(outcome).toEqual(expect.objectContaining({ action: 'update', branch: 'develop' }));
-    expect(outcome?.viewUrl).toContain('/preview/');
-    expect(outcome?.viewUrl).toContain('ref=develop');
+    expect(outcome?.branchViewUrl).toContain('/preview/');
+    expect(outcome?.branchViewUrl).toContain('ref=develop');
   });
 
   it('should properly handle read-only state for a repository without workflows', () => {

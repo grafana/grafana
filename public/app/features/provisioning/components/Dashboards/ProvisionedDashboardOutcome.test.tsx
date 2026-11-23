@@ -16,6 +16,7 @@ const base: DashboardCommitOutcome = {
   configuredBranch: 'main',
   repoType: 'github',
   repoUrl: 'https://github.com/your-org/your-repo',
+  resourceName: 'fleet-overview',
 };
 
 describe('ProvisionedDashboardOutcome', () => {
@@ -49,16 +50,14 @@ describe('ProvisionedDashboardOutcome', () => {
   });
 
   it('offers no external link for a direct commit, which has no branch to raise a request from', () => {
-    render(<ProvisionedDashboardOutcome onDismiss={onDismiss} outcome={{ ...base, viewUrl: '/d/fleet-overview' }} />);
+    render(<ProvisionedDashboardOutcome onDismiss={onDismiss} outcome={base} />);
 
     expect(screen.getByText('Committed to main.')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /open (pull request|repository)/i })).not.toBeInTheDocument();
   });
 
   it('dismisses the drawer before navigating, so it is not left over the page it lands on', async () => {
-    const { user } = render(
-      <ProvisionedDashboardOutcome onDismiss={onDismiss} outcome={{ ...base, viewUrl: '/d/fleet-overview' }} />
-    );
+    const { user } = render(<ProvisionedDashboardOutcome onDismiss={onDismiss} outcome={base} />);
 
     await user.click(screen.getByRole('button', { name: /view dashboard/i }));
     expect(mockNavigate).toHaveBeenCalledWith('/d/fleet-overview');
@@ -70,7 +69,7 @@ describe('ProvisionedDashboardOutcome', () => {
   });
 
   it('omits the view step when the commit produced nothing to view', () => {
-    render(<ProvisionedDashboardOutcome onDismiss={onDismiss} outcome={base} />);
+    render(<ProvisionedDashboardOutcome onDismiss={onDismiss} outcome={{ ...base, resourceName: undefined }} />);
 
     expect(screen.queryByRole('button', { name: /view dashboard/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /back to all dashboards/i })).toBeInTheDocument();
