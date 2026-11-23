@@ -1,6 +1,8 @@
 import { groupBy } from 'lodash';
 import { HttpResponse, http } from 'msw';
 
+import { type GlobalSearchQuery } from '@grafana/api-clients/rtkq/search/v0alpha1';
+
 /** A kind served by the app platform, as the discovery and per-kind search handlers describe it. */
 export interface MockServedKind {
   group: string;
@@ -17,11 +19,6 @@ export interface MockKindResource {
   description?: string;
   tags?: string[];
 }
-
-type WhereNode = {
-  and?: WhereNode[];
-  filter?: { field: string; values: string[] };
-};
 
 // The server's page cap: a request asking for more is answered with this many
 const MAX_PAGE_SIZE = 500;
@@ -65,7 +62,7 @@ export function getKindDiscoveryHandler(...served: MockServedKind[]) {
  */
 export function getKindSearchHandler(served: MockServedKind, resources: MockKindResource[]) {
   return http.post(kindSearchRoute(served), async ({ request }) => {
-    const body = (await request.json()) as { where?: WhereNode; limit?: number };
+    const body = (await request.json()) as GlobalSearchQuery;
     const leaves = body.where?.and ?? (body.where ? [body.where] : []);
     const names = leaves.find((leaf) => leaf.filter?.field === 'name')?.filter?.values;
     const matched = names ? resources.filter((resource) => names.includes(resource.name)) : resources;
