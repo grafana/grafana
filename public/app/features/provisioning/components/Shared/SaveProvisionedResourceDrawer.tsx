@@ -82,7 +82,7 @@ function getNewResourcePath(title: string, kindKey: string): string {
   return `${slugifyForFilename(title) || kindKey}.json`;
 }
 
-interface BaseDrawerProps {
+export interface SaveProvisionedResourceDrawerProps {
   /**
    * The resource to commit (`create`/`update`) or remove (`delete`). It carries everything the drawer
    * needs: its `apiVersion`+`kind` resolve the {@link ResourceKindInfo} (label, invalidation),
@@ -91,10 +91,10 @@ interface BaseDrawerProps {
    */
   resource: ProvisionedResource;
   /**
-   * Human-readable title for the commit message and a new resource's file slug. Passed explicitly
-   * rather than read from `spec.title` because the title field isn't consistent across kinds (e.g.
-   * correlations and teams carry it on `spec.name`); the committed file body still comes from
-   * `resource.spec`.
+   * Human-readable title for the drawer subtitle, the commit message and a new resource's file slug.
+   * Passed explicitly rather than read from `spec.title` because the title field isn't consistent
+   * across kinds (e.g. correlations and teams carry it on `spec.name`); the committed file body still
+   * comes from `resource.spec`.
    */
   title: string;
   /** Message shown when the repository can't be edited from the UI. */
@@ -102,18 +102,10 @@ interface BaseDrawerProps {
   /** Prefix for generated branch names. Defaults to the kind's key. */
   branchPrefix?: string;
   directory?: string;
-  /** Receives the commit outcome when the drawer closes after a commit. */
+  action: ProvisionedResourceAction;
+  repositoryName?: string;
   onDismiss?: (outcome?: ProvisionedCommitOutcome) => void;
 }
-
-/**
- * `action` + `repositoryName` are a discriminated union: `create` takes an optional `repositoryName` (a
- * new resource has no manager annotations yet, so they're synthesised for the chosen repository, and
- * the drawer asks for one first when none is given), while `update`/`delete` resolve the repository
- * from the existing resource's annotations and take none.
- */
-export type SaveProvisionedResourceDrawerProps = BaseDrawerProps &
-  ({ action: 'create'; repositoryName?: string } | { action: 'update' | 'delete'; repositoryName?: never });
 
 interface FormProps {
   kindKey?: ResourceKindKey;
@@ -173,8 +165,7 @@ function FormContent({
     setComment: (value) => methods.setValue('comment', value, { shouldDirty: false }),
   });
 
-  // Branch-name template fill/lock follows from the target branch, as does whether this commit
-  // lands directly on the configured branch or opens a pull request.
+  // Branch-name template fill/lock and the PR title follow from the target branch.
   const { workflow, isResolving, lockBranch, prTitle } = useCommitTarget({
     repository,
     vars: templateVars,
@@ -217,7 +208,6 @@ function FormContent({
       if (landedOn) {
         setLastBranch(repoName, landedOn);
       }
-      // The committed change has to show up on the list the drawer's "Next" steps lead back to.
       const kind: ResourceKindInfo | undefined = kindKey && resourceKindInfos[kindKey];
       const invalidateAction = kind?.invalidateListTags?.();
       if (invalidateAction) {
@@ -249,8 +239,6 @@ function FormContent({
     if (isDelete) {
       return t('provisioning.save-resource.button-delete', 'Delete');
     }
-    // Naming the branch makes the consequence of a direct commit explicit: it is dual-written, so
-    // it is live for everyone immediately, where a branch commit is not.
     return isDirectWrite && repository?.branch
       ? t('provisioning.save-resource.button-commit-to-configured', 'Commit to {{branch}}', {
           branch: repository.branch,
@@ -345,7 +333,6 @@ function SuccessContent({ kindKey, resourceName, outcome, onDismiss }: SuccessPr
   return (
     <ProvisionedDrawerLayout
       footer={
-        /* Closing the drawer is what returns to the editor, so no step repeats it. */
         <ProvisionedCommitSteps
           kindKey={kindKey}
           outcome={outcome}
@@ -402,13 +389,12 @@ export function CommitOutcomeDrawer({ stored, onDismiss }: { stored: string; onD
  * Drawer for committing a repository-managed resource to git — usable directly from a resource's
  * pages with no per-kind wrapper. Pass the resource, its title and the action: the drawer resolves
  * the kind from the resource's `apiVersion`+`kind` and derives the rest — the committed file body, a
- * new resource's name/path/annotations and the commit message. Once the commit lands the drawer
- * stays open and reports where the change went, so the caller needs no pull-request banner.
- * Renders nothing if the resource has no apiVersion or kind.
+ * new resource's name/path/annotations and the commit message. `delete` commits no body. Renders nothing if the resource
+ * has no apiVersion or kind.
  */
 export function SaveProvisionedResourceDrawer(props: SaveProvisionedResourceDrawerProps) {
   // The resource carries its own identity: its API group (from apiVersion) + Kubernetes kind resolve
-  // the registry descriptor, so callers don't pass the kind separately.
+  // the registry key, so callers don't pass the kind separately.
   const group = props.resource.apiVersion?.split('/')[0];
   const { kind } = props.resource;
   if (!group || !kind) {
@@ -515,7 +501,6 @@ function ResourceDrawerContent({
   return (
     <Drawer
       size="sm"
-      // The pinned footer keeps the commit action in view, so the drawer manages its own scrolling.
       scrollableContent={false}
       title={drawerTitle}
       subtitle={

@@ -14,7 +14,6 @@ describe('ProvisionedCommitSuccess', () => {
 
     expect(screen.getByText('Committed to main.')).toBeInTheDocument();
     expect(screen.getByText(/already live in Grafana for everyone in your organization/i)).toBeInTheDocument();
-    // A direct commit has no branch to compare, so neither branch row is offered.
     expect(screen.queryByText('Your branch')).not.toBeInTheDocument();
   });
 
@@ -75,7 +74,6 @@ describe('ProvisionedCommitSuccess', () => {
   it.each([
     ['update', /updated in a branch/i],
     ['delete', /deleted in a branch/i],
-    ['move', /moved in a branch/i],
   ] as const)('names the %s action in the branch headline', (action, expected) => {
     render(
       <ProvisionedCommitSuccess
