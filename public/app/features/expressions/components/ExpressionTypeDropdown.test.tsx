@@ -51,4 +51,22 @@ describe('ExpressionTypeDropdown', () => {
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(onSelect).toHaveBeenCalledWith(ExpressionQueryType.reduce);
   });
+
+  it('makes the info icon for each expression type keyboard focusable', async () => {
+        const onSelect = jest.fn();
+        const user = userEvent.setup();
+    render(
+            <ExpressionTypeDropdown handleOnSelect={onSelect}>
+                      <Button>Add expression</Button>
+            </ExpressionTypeDropdown>
+          );
+
+        await user.click(screen.getByRole('button', { name: 'Add expression' }));
+        const menu = await screen.findByRole('menu');
+        const math = within(menu).getByRole('menuitem', { name: 'Math' });
+        expect(math.querySelectorAll('svg[tabindex="0"]')).toHaveLength(1);
+  });
+  
+
+  
 });
