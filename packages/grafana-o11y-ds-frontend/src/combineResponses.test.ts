@@ -20,7 +20,7 @@ describe('cloneQueryResponse', () => {
   it('clones query responses', () => {
     const clonedA = cloneQueryResponse(responseA);
     expect(clonedA).not.toBe(responseA);
-    expect(clonedA).toEqual(clonedA);
+    expect(clonedA).toEqual(responseA);
   });
 });
 
