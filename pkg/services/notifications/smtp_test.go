@@ -976,3 +976,44 @@ func TestSmtpSendLiveSettings(t *testing.T) {
 		assert.Empty(t, srv.MessagesAndPurge())
 	})
 }
+
+type fakeSender struct {
+	send func() error
+}
+
+func (f fakeSender) Send(string, []string, io.WriterTo) error { return f.send() }
+
+func TestSendWithRecover(t *testing.T) {
+	sc := newTestSmtpClient(t, setting.NewCfg())
+	newMsg := func() *gomail.Message {
+		m := gomail.NewMessage()
+		m.SetHeader("From", "from@example.com")
+		m.SetHeader("To", "to@example.com")
+		return m
+	}
+
+	t.Run("converts a panic into an error", func(t *testing.T) {
+		sender := fakeSender{send: func() error {
+			var w io.Writer
+			_, err := w.Write(nil)
+			return err
+		}}
+
+		var err error
+		require.NotPanics(t, func() { err = sc.sendWithRecover(sender, newMsg()) })
+		require.ErrorContains(t, err, "panic while sending email")
+	})
+
+	t.Run("passes a send error through unchanged", func(t *testing.T) {
+		sendErr := errors.New("connection reset")
+
+		err := sc.sendWithRecover(fakeSender{send: func() error { return sendErr }}, newMsg())
+
+		require.ErrorContains(t, err, sendErr.Error())
+		require.NotContains(t, err.Error(), "panic")
+	})
+
+	t.Run("returns nil on success", func(t *testing.T) {
+		require.NoError(t, sc.sendWithRecover(fakeSender{send: func() error { return nil }}, newMsg()))
+	})
+}
