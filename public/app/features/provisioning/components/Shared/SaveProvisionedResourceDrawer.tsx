@@ -219,6 +219,7 @@ function FormContent({
           message,
           prTitle,
           repository,
+          filePath: path,
           pendingSync: !isDelete && !data.resource?.upsert,
         })
       );
@@ -335,8 +336,8 @@ function SuccessContent({ kindKey, resourceName, outcome, onDismiss }: SuccessPr
 
 function getDrawerTitle(isDelete: boolean) {
   return isDelete
-    ? t('provisioning.save-resource.drawer-title-delete', 'Delete provisioned resource')
-    : t('provisioning.save-resource.drawer-title-save', 'Save provisioned resource');
+    ? t('provisioning.save-resource.title-delete-resource', 'Delete provisioned resource')
+    : t('provisioning.save-resource.title-save-resource', 'Save provisioned resource');
 }
 
 export function CommitOutcomeDrawer({ stored, onDismiss }: { stored: string; onDismiss: () => void }) {
@@ -480,8 +481,8 @@ function ResourceDrawerContent({
       scrollableContent={false}
       title={drawerTitle}
       subtitle={
-        sourcePath ? (
-          <span className={styles.path}>{sourcePath}</span>
+        outcome?.filePath || sourcePath ? (
+          <span className={styles.path}>{outcome?.filePath || sourcePath}</span>
         ) : (
           <Text variant="bodySmall" color="secondary">
             {title}
