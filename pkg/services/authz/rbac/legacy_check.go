@@ -186,12 +186,8 @@ func (s *Service) validateLegacyCheckNamespace(ctx context.Context, req *authzex
 		}
 
 		orgID := req.GetRequesterOrgId()
-		if orgID < accesscontrol.NoOrgID {
-			return types.NamespaceInfo{}, errors.New("requester org must be positive, 0 or NoOrgID")
-		}
-		if orgID == accesscontrol.GlobalOrgID || orgID == accesscontrol.NoOrgID {
-			// Global requester state still needs a concrete instance namespace for transport.
-			orgID = 1
+		if orgID < 1 {
+			return types.NamespaceInfo{}, errors.New("wildcard legacy namespace requires a positive requester org ID")
 		}
 		namespace = s.legacyScopeNamespace(orgID)
 	}

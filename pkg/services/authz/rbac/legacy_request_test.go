@@ -114,10 +114,10 @@ func TestLegacyCheckNamespace(t *testing.T) {
 	}{
 		{name: "on-prem wildcard", namespace: "*", orgID: proto.Int64(12), wantNamespace: "org-12"},
 		{name: "cloud wildcard", namespace: "*", orgID: proto.Int64(1), stackID: "123", wantNamespace: "stacks-123"},
-		{name: "on-prem global wildcard", namespace: "*", orgID: proto.Int64(accesscontrol.GlobalOrgID), wantNamespace: "default"},
-		{name: "on-prem no-membership wildcard", namespace: "*", orgID: proto.Int64(accesscontrol.NoOrgID), wantNamespace: "default"},
-		{name: "cloud global wildcard", namespace: "*", orgID: proto.Int64(accesscontrol.GlobalOrgID), stackID: "123", wantNamespace: "stacks-123"},
-		{name: "cloud no-membership wildcard", namespace: "*", orgID: proto.Int64(accesscontrol.NoOrgID), stackID: "123", wantNamespace: "stacks-123"},
+		{name: "on-prem global wildcard", namespace: "*", orgID: proto.Int64(accesscontrol.GlobalOrgID), wantError: "wildcard legacy namespace requires a positive requester org ID"},
+		{name: "on-prem no-membership wildcard", namespace: "*", orgID: proto.Int64(accesscontrol.NoOrgID), wantError: "wildcard legacy namespace requires a positive requester org ID"},
+		{name: "cloud global wildcard", namespace: "*", orgID: proto.Int64(accesscontrol.GlobalOrgID), stackID: "123", wantError: "wildcard legacy namespace requires a positive requester org ID"},
+		{name: "cloud no-membership wildcard", namespace: "*", orgID: proto.Int64(accesscontrol.NoOrgID), stackID: "123", wantError: "wildcard legacy namespace requires a positive requester org ID"},
 		{name: "explicit namespace is preserved", namespace: "stacks-456", orgID: proto.Int64(1), stackID: "123", wantNamespace: "stacks-456"},
 		{name: "standalone concrete namespace", namespace: "org-12", orgID: proto.Int64(12), standalone: true, wantNamespace: "org-12"},
 		{name: "caller can access resolved target", namespace: "*", orgID: proto.Int64(12), callerNamespace: "org-12", wantNamespace: "org-12"},
@@ -130,7 +130,7 @@ func TestLegacyCheckNamespace(t *testing.T) {
 			wantError: "rpc error: code = PermissionDenied desc = namespace does not match",
 		},
 		{name: "missing org", namespace: "*", wantError: "legacy check requires requester org ID"},
-		{name: "invalid org", namespace: "*", orgID: proto.Int64(-2), wantError: "requester org must be positive, 0 or NoOrgID"},
+		{name: "invalid org", namespace: "*", orgID: proto.Int64(-2), wantError: "wildcard legacy namespace requires a positive requester org ID"},
 		{name: "standalone wildcard", namespace: "*", orgID: proto.Int64(12), standalone: true, wantError: "wildcard legacy namespace requires the embedded server"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
