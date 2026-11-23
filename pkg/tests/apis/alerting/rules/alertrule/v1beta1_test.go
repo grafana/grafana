@@ -90,22 +90,32 @@ func TestIntegrationRuleUpdatePreconditions(t *testing.T) {
 				{"recordingrules", recordingRuleBody, "metric", "initial_metric", "changed_metric"},
 			} {
 				t.Run(tc.resource, func(t *testing.T) {
-					for _, gv := range []schema.GroupVersion{v0alpha1.GroupVersion, v1beta1.GroupVersion} {
+					ctx := context.Background()
+					resource := tc.resource
+					versions := []schema.GroupVersion{v0alpha1.GroupVersion, v1beta1.GroupVersion}
+					createdByVersion := make(map[schema.GroupVersion]map[string]any)
+					// In Mode 2, a pending update for one rule can roll back another rule's
+					// mirrored create in the same batch. Finish both creates before issuing updates.
+					for _, gv := range versions {
+						client := versionClient{rc: helper.Org1.Admin.RESTClient(t, &gv), gv: gv}
+						body := tc.body(t)
+						body["spec"].(map[string]any)[tc.field] = tc.initial
+						created, err := client.create(ctx, resource, body)
+						require.NoError(t, err)
+						name := field(t, created, "metadata", "name").(string)
+						t.Cleanup(func() { _ = client.delete(ctx, resource, name) })
+						if mode == grafanarest.Mode2 {
+							readUnified(t, helper, resource, name)
+						}
+						createdByVersion[gv] = created
+					}
+
+					for _, gv := range versions {
 						t.Run(gv.Version, func(t *testing.T) {
-							ctx := context.Background()
 							client := versionClient{rc: helper.Org1.Admin.RESTClient(t, &gv), gv: gv}
 							otherWriter := versionClient{rc: helper.Org1.Admin.RESTClient(t, &gv), gv: gv}
-							resource := tc.resource
-							body := tc.body(t)
-							body["spec"].(map[string]any)[tc.field] = tc.initial
-							created, err := client.create(ctx, resource, body)
-							require.NoError(t, err)
+							created := createdByVersion[gv]
 							name := field(t, created, "metadata", "name").(string)
-							t.Cleanup(func() { _ = client.delete(ctx, resource, name) })
-							if mode == grafanarest.Mode2 {
-								readUnified(t, helper, resource, name)
-							}
-
 							baseline, err := client.get(ctx, resource, name)
 							require.NoError(t, err)
 							finalRead, err := client.get(ctx, resource, name)
