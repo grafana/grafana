@@ -10,13 +10,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 func NewFakeSQLSecretsKVStore(t *testing.T, sqlStore *sqlstore.SQLStore) *SecretsKVStoreSQL {
 	t.Helper()
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
-	return NewSQLSecretsKVStore(legacysql.NewDatabaseProvider(sqlStore), secretsService, log.New("test.logger"))
+	return NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 }
 
 // In memory kv store used for testing

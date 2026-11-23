@@ -58,11 +58,6 @@ func (f FakeSecretsStore) DeleteDataKey(_ context.Context, id string) error {
 	return nil
 }
 
-// Tenant is the same for every context, as the fake holds a single set of data keys.
-func (f FakeSecretsStore) Tenant(_ context.Context) (string, error) {
-	return "", nil
-}
-
 func (f FakeSecretsStore) ReEncryptDataKeys(_ context.Context, _ map[secrets.ProviderID]secrets.Provider, _ secrets.ProviderID) error { //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	return nil
 }

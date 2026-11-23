@@ -44,17 +44,6 @@ type LegacyDatabaseHelper struct {
 
 	// Server names the database server behind DB, for logs. Empty when unknown.
 	Server string
-
-	// StackID and Slug name the tenant whose data DB and Table resolve to, so per-tenant caches can
-	// be keyed without holding DB. Providers serving more than one tenant must set them; a
-	// single-tenant provider may leave them zero.
-	StackID int64
-	Slug    string
-}
-
-// TenantKey names the tenant by StackID and Slug, for keying per-tenant caches.
-func (h *LegacyDatabaseHelper) TenantKey() string {
-	return fmt.Sprintf("%d/%s", h.StackID, h.Slug)
 }
 
 // Helper to pick the correct dialect

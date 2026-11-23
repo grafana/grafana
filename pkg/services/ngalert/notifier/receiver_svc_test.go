@@ -7,8 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/storage/legacysql"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -45,7 +43,7 @@ func TestIntegrationReceiverService_GetReceiver(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(legacysql.NewDatabaseProvider(sqlStore)))
+	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 
 	redactedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 		1: {
@@ -96,7 +94,7 @@ func TestIntegrationReceiverService_GetReceivers(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(legacysql.NewDatabaseProvider(sqlStore)))
+	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 
 	redactedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 		1: {
@@ -238,7 +236,7 @@ func TestIntegrationReceiverService_DecryptRedact(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(legacysql.NewDatabaseProvider(sqlStore)))
+	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 
 	getMethods := []string{"single", "multi"}
 
