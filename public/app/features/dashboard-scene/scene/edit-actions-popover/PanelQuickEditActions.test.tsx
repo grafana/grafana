@@ -54,9 +54,12 @@ afterEach(() => {
   setTestFlags({});
 });
 
+// Whether a panel shows its quick edits outlives its popover and is keyed by the panel's key, so each test gets its own.
+let panelCount = 0;
+
 function setup({ pluginId = 'with-quick-edits', flag = true }: { pluginId?: string; flag?: boolean } = {}) {
   setTestFlags({ 'grafana.panelQuickEdits': flag });
-  const panel = new VizPanel({ key: `panel-${pluginId}`, pluginId, options: { legend: { showLegend: true } } });
+  const panel = new VizPanel({ key: `panel-${++panelCount}`, pluginId, options: { legend: { showLegend: true } } });
   const dashboard = new DashboardScene({
     isEditing: true,
     body: new AutoGridLayoutManager({ layout: new AutoGridLayout({ children: [new AutoGridItem({ body: panel })] }) }),
@@ -90,6 +93,49 @@ it('swaps the actions for the quick edits, each named with its current value', a
 
   expect(screen.getByRole('button', { name: 'Legend: Shown' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Panel settings' }).closest('[inert]')).not.toBeNull();
+});
+
+it('keeps focus on the bar as the quick edits swap in and out', async () => {
+  const { user } = setup();
+
+  await user.click(screen.getByRole('button', { name: 'Quick edits' }));
+  expect(screen.getByRole('button', { name: 'Back to panel actions' })).toHaveFocus();
+
+  await user.click(screen.getByRole('button', { name: 'Back to panel actions' }));
+  expect(screen.getByRole('button', { name: 'Quick edits' })).toHaveFocus();
+});
+
+it('focuses the quick edit card as it opens, and Escape closes it and refocuses its button', async () => {
+  const { user } = setup();
+  await user.click(screen.getByRole('button', { name: 'Quick edits' }));
+
+  await user.click(screen.getByRole('button', { name: 'Legend: Shown' }));
+  expect(screen.getByRole('dialog', { name: 'Legend' })).toHaveFocus();
+
+  await user.keyboard('{Escape}');
+  expect(screen.queryByRole('dialog', { name: 'Legend' })).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Legend: Shown' })).toHaveFocus();
+});
+
+it('moves Tab from the open quick edit card into its controls', async () => {
+  const { user } = setup();
+  await user.click(screen.getByRole('button', { name: 'Quick edits' }));
+  await user.click(screen.getByRole('button', { name: 'Legend: Shown' }));
+
+  await user.tab();
+
+  expect(within(screen.getByRole('dialog', { name: 'Legend' })).getByRole('button', { name: 'Close' })).toHaveFocus();
+});
+
+it('refocuses the quick edit button when the card is closed with its close button', async () => {
+  const { user } = setup();
+  await user.click(screen.getByRole('button', { name: 'Quick edits' }));
+  await user.click(screen.getByRole('button', { name: 'Legend: Shown' }));
+
+  await user.click(within(screen.getByRole('dialog', { name: 'Legend' })).getByRole('button', { name: 'Close' }));
+
+  expect(screen.queryByRole('dialog', { name: 'Legend' })).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Legend: Shown' })).toHaveFocus();
 });
 
 it('changes the option from the quick edit card as an undoable edit', async () => {

@@ -69,6 +69,8 @@ export function QuickEditButtons({
       ))}
       {open && (
         <QuickEditCard
+          // Remounted for each quick edit, so the card takes focus and pulses again when another one opens.
+          key={open.quickEdit.id}
           title={open.quickEdit.title}
           icon={open.quickEdit.icon}
           panel={getPanelElement()}

@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { type MouseEvent, type ReactNode, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -51,6 +51,16 @@ export function PanelActionsWithQuickEdits({ panel, spacing = 'edit-actions', ch
   const [showQuickEdits, setShowQuickEdits] = usePanelQuickEditsView(panel.state.key!);
   const { holdOpen, getReference } = useEditActionsPopover();
   const [bar, setBar] = useState<HTMLDivElement | null>(null);
+  const boltRef = useRef<HTMLButtonElement>(null);
+  const backRef = useRef<HTMLButtonElement>(null);
+  const focusAfterSwap = useRef<HTMLButtonElement | null>(null);
+
+  // The swap makes the pressed button inert, which would drop its focus to the page, so focus moves to the button
+  // that takes its place. In a layout effect, so it moves before the browser drops it.
+  useLayoutEffect(() => {
+    focusAfterSwap.current?.focus({ preventScroll: true });
+    focusAfterSwap.current = null;
+  }, [showQuickEdits]);
 
   if (!quickEdits.edits.length) {
     return <>{children}</>;
@@ -59,8 +69,15 @@ export function PanelActionsWithQuickEdits({ panel, spacing = 'edit-actions', ch
   const quickEditsLabel = t('dashboard-scene.panel-edit-actions.show-quick-edits', 'Quick edits');
   const backLabel = t('dashboard-scene.panel-edit-actions.show-panel-actions', 'Back to panel actions');
 
-  const onShowQuickEdits = () => {
-    setShowQuickEdits(true);
+  const swap = (show: boolean, event: MouseEvent<HTMLButtonElement>) => {
+    if (event.currentTarget.contains(document.activeElement)) {
+      focusAfterSwap.current = show ? backRef.current : boltRef.current;
+    }
+    setShowQuickEdits(show);
+  };
+
+  const onShowQuickEdits = (event: MouseEvent<HTMLButtonElement>) => {
+    swap(true, event);
     DashboardInteractions.panelQuickEditsShown({
       panel_type: panel.state.pluginId,
       panel_id: getPanelIdForVizPanel(panel),
@@ -71,6 +88,7 @@ export function PanelActionsWithQuickEdits({ panel, spacing = 'edit-actions', ch
     <div className={swapStyles.stack}>
       <div className={swapStyles.layer} inert={showQuickEdits}>
         <IconButton
+          ref={boltRef}
           name="bolt"
           variant="secondary"
           size="md"
@@ -86,6 +104,7 @@ export function PanelActionsWithQuickEdits({ panel, spacing = 'edit-actions', ch
         <div className={cx(swapStyles.layer, swapStyles.quick, showQuickEdits && swapStyles.quickShown)}>
           <div className={swapStyles.back}>
             <IconButton
+              ref={backRef}
               name="angle-left"
               variant="secondary"
               size="md"
@@ -93,7 +112,7 @@ export function PanelActionsWithQuickEdits({ panel, spacing = 'edit-actions', ch
               aria-label={backLabel}
               tooltip={backLabel}
               tooltipPlacement="top"
-              onClick={() => setShowQuickEdits(false)}
+              onClick={(event) => swap(false, event)}
             />
           </div>
           <div className={swapStyles.inset} ref={setBar}>

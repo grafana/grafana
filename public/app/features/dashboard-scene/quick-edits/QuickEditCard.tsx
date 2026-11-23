@@ -22,14 +22,15 @@ interface Props {
 /**
  * A card with one quick edit's controls, placed beside the panel: right of it, else left, else above or below.
  * It pulses once as it opens and outlines the panel while open, so both the card and what it changes stand out.
- * It stays open while menus it opens are used (they portal elsewhere) and closes on Escape or a press anywhere
- * else. Escape returns focus to the button that opened it.
+ * It takes focus as it opens, so Escape closes it and Tab moves through its controls. It stays open while menus it
+ * opens are used (they portal elsewhere) and closes on Escape or a press anywhere else. Closing it from the keyboard
+ * or its close button returns focus to the button that opened it.
  */
 export function QuickEditCard({ title, icon, panel, bar, onClose, children }: Props) {
   const styles = useStyles2(getStyles);
   const {
     floatingStyles,
-    refs: { setFloating, setReference },
+    refs: { setFloating, setReference, floating },
   } = useFloating({
     placement: 'right-start',
     whileElementsMounted: autoUpdate,
@@ -54,6 +55,17 @@ export function QuickEditCard({ title, icon, panel, bar, onClose, children }: Pr
   // Set by a press anywhere in the card's React tree, which includes menus it portals elsewhere in the DOM.
   const pressedInside = useRef(false);
   const returnFocusTo = useRef(document.activeElement);
+
+  useEffect(() => {
+    floating.current?.focus({ preventScroll: true });
+  }, [floating]);
+
+  const closeAndReturnFocus = () => {
+    onClose();
+    if (returnFocusTo.current instanceof HTMLElement) {
+      returnFocusTo.current.focus({ preventScroll: true });
+    }
+  };
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -81,10 +93,7 @@ export function QuickEditCard({ title, icon, panel, bar, onClose, children }: Pr
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Escape' && !event.defaultPrevented) {
       event.stopPropagation();
-      onClose();
-      if (returnFocusTo.current instanceof HTMLElement) {
-        returnFocusTo.current.focus();
-      }
+      closeAndReturnFocus();
     }
   };
 
@@ -98,6 +107,7 @@ export function QuickEditCard({ title, icon, panel, bar, onClose, children }: Pr
         className={styles.card}
         role="dialog"
         aria-label={title}
+        tabIndex={-1}
         onKeyDown={onKeyDown}
         onPointerDownCapture={() => {
           pressedInside.current = true;
@@ -106,7 +116,12 @@ export function QuickEditCard({ title, icon, panel, bar, onClose, children }: Pr
         <div className={styles.header}>
           <Icon name={icon} />
           <span className={styles.title}>{title}</span>
-          <IconButton name="times" size="sm" onClick={onClose} tooltip={t('dashboard.quick-edits.close', 'Close')} />
+          <IconButton
+            name="times"
+            size="sm"
+            onClick={closeAndReturnFocus}
+            tooltip={t('dashboard.quick-edits.close', 'Close')}
+          />
         </div>
         <div className={styles.body}>{children}</div>
       </div>
