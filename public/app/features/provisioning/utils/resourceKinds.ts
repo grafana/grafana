@@ -187,7 +187,7 @@ const allKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
 function knownKindInfos(): ResourceKindInfo[] {
   const added = getKinds()
     .filter((kind) => !allKindInfos.some((info) => info.group === kind.group && info.kind === kind.kind))
-    .map((kind) => ({ ...kind, list: async () => [], alwaysAvailable: false }));
+    .map((kind) => ({ ...kind, list: () => listViaDiscovery(kind.group, kind.resource), alwaysAvailable: false }));
   return [...allKindInfos, ...added];
 }
 
@@ -283,7 +283,7 @@ export function getAvailableResourceKinds(availableResources?: SupportedResource
   if (!availableResources) {
     return allKindInfos;
   }
-  return allKindInfos.filter((info) =>
+  return knownKindInfos().filter((info) =>
     availableResources.some(
       (r) => r.group !== undefined && coversGroup(info, r.group) && r.kind === info.kind && !r.disabled
     )
@@ -312,7 +312,7 @@ export function isResourceKindAvailable(info: ResourceKindInfo, availableResourc
  * how to `list()` itself.
  */
 export function getMigratableKinds(availableResources?: SupportedResource[]): ResourceKindInfo[] {
-  return allKindInfos.filter((info) => {
+  return knownKindInfos().filter((info) => {
     if (info.kind === resourceKindInfos.folder.kind) {
       return false;
     }
@@ -430,6 +430,14 @@ async function listViaApiserver(group: string, version: string, resource: string
   const url = `${getAPIBaseURL(group, version)}/${resource}`;
   const response = await getBackendSrv().get<{ items?: ApiserverListItem[] }>(url);
   return toListedResources(response.items);
+}
+
+async function listViaDiscovery(group: string, resource: string): Promise<ListedResource[]> {
+  const apis = await getAPIGroupDiscoveryList();
+  const version = apis.items
+    .find((api) => api.metadata.name === group)
+    ?.versions.find((v) => v.resources.some((r) => r.resource === resource));
+  return version ? listViaApiserver(group, version.version, resource) : [];
 }
 
 /**
