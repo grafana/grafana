@@ -27,6 +27,8 @@ export interface DashboardEditSessionTracking {
   /** Original action executions during the period; undo/redo do not change these counts. */
   manual_edits: Array<{ action: string; count: number }>;
   ai_edits: Array<{ action: string; count: number }>;
+  /** A Composer session was open at some point in the period, so a save or discard can be read as Composer's. */
+  composer_used: boolean;
 }
 
 export function getEditActors(manual: boolean, assistant: boolean): DashboardEditActors {

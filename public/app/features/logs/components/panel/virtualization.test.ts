@@ -44,6 +44,12 @@ describe('Virtualization', () => {
     TWO_LINES_OF_CHARACTERS = (CONTAINER_SIZE / LETTER_WIDTH) * 1.5;
   });
 
+  describe('measureTextHeight', () => {
+    test('Puts one char per line when no char fits in the available width', () => {
+      expect(virtualization.measureTextHeight('abc', 0).lines).toBe(3);
+    });
+  });
+
   describe('getLogLineSize', () => {
     test('Returns the a single line if the display mode is unwrapped', () => {
       const size = getLogLineSize(virtualization, [log], container, [], { ...defaultOptions, showTime: true }, 0);

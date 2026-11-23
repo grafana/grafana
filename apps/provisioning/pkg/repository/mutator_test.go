@@ -15,8 +15,8 @@ import (
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authentication/user"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 func newMutatorTestAttributes(obj, old runtime.Object, op admission.Operation) admission.Attributes {
@@ -395,65 +395,65 @@ func TestCopySecureValues(t *testing.T) {
 		name           string
 		new            *provisioning.Repository
 		old            *provisioning.Repository
-		wantToken      common.InlineSecureValue
-		wantSecret     common.InlineSecureValue
-		wantSigningKey common.InlineSecureValue
+		wantToken      resource.InlineSecureValue
+		wantSecret     resource.InlineSecureValue
+		wantSigningKey resource.InlineSecureValue
 	}{
 		{
 			name: "copies token from old to new when new is zero",
 			new:  &provisioning.Repository{},
 			old: &provisioning.Repository{
 				Secure: provisioning.SecureValues{
-					Token: common.InlineSecureValue{Name: "old-token"},
+					Token: resource.InlineSecureValue{Name: "old-token"},
 				},
 			},
-			wantToken: common.InlineSecureValue{Name: "old-token"},
+			wantToken: resource.InlineSecureValue{Name: "old-token"},
 		},
 		{
 			name: "copies webhook secret from old to new when new is zero",
 			new:  &provisioning.Repository{},
 			old: &provisioning.Repository{
 				Secure: provisioning.SecureValues{
-					WebhookSecret: common.InlineSecureValue{Name: "old-secret"},
+					WebhookSecret: resource.InlineSecureValue{Name: "old-secret"},
 				},
 			},
-			wantSecret: common.InlineSecureValue{Name: "old-secret"},
+			wantSecret: resource.InlineSecureValue{Name: "old-secret"},
 		},
 		{
 			name: "copies commit signing key from old to new when new is zero",
 			new:  &provisioning.Repository{},
 			old: &provisioning.Repository{
 				Secure: provisioning.SecureValues{
-					CommitSigningKey: common.InlineSecureValue{Name: "old-signing-key"},
+					CommitSigningKey: resource.InlineSecureValue{Name: "old-signing-key"},
 				},
 			},
-			wantSigningKey: common.InlineSecureValue{Name: "old-signing-key"},
+			wantSigningKey: resource.InlineSecureValue{Name: "old-signing-key"},
 		},
 		{
 			name: "does not overwrite existing token in new",
 			new: &provisioning.Repository{
 				Secure: provisioning.SecureValues{
-					Token: common.InlineSecureValue{Name: "new-token"},
+					Token: resource.InlineSecureValue{Name: "new-token"},
 				},
 			},
 			old: &provisioning.Repository{
 				Secure: provisioning.SecureValues{
-					Token: common.InlineSecureValue{Name: "old-token"},
+					Token: resource.InlineSecureValue{Name: "old-token"},
 				},
 			},
-			wantToken: common.InlineSecureValue{Name: "new-token"},
+			wantToken: resource.InlineSecureValue{Name: "new-token"},
 		},
 		{
 			name:      "handles nil old repository",
 			new:       &provisioning.Repository{},
 			old:       nil,
-			wantToken: common.InlineSecureValue{},
+			wantToken: resource.InlineSecureValue{},
 		},
 		{
 			name:      "handles old repository with zero secure values",
 			new:       &provisioning.Repository{},
 			old:       &provisioning.Repository{},
-			wantToken: common.InlineSecureValue{},
+			wantToken: resource.InlineSecureValue{},
 		},
 	}
 
@@ -468,7 +468,7 @@ func TestCopySecureValues(t *testing.T) {
 }
 
 func TestInvalidateConnectionTokenOnURLChange(t *testing.T) {
-	connectionRepo := func(url string, token common.InlineSecureValue) *provisioning.Repository {
+	connectionRepo := func(url string, token resource.InlineSecureValue) *provisioning.Repository {
 		return &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
 				Type:       provisioning.GitHubRepositoryType,
@@ -484,49 +484,49 @@ func TestInvalidateConnectionTokenOnURLChange(t *testing.T) {
 		name      string
 		new       *provisioning.Repository
 		old       *provisioning.Repository
-		wantToken common.InlineSecureValue
+		wantToken resource.InlineSecureValue
 	}{
 		{
 			name:      "marks a stored token for removal when the url changes",
-			new:       connectionRepo("https://github.com/grafana/new", common.InlineSecureValue{}),
-			old:       connectionRepo("https://github.com/grafana/old", common.InlineSecureValue{Name: "old-token"}),
-			wantToken: common.InlineSecureValue{Remove: true},
+			new:       connectionRepo("https://github.com/grafana/new", resource.InlineSecureValue{}),
+			old:       connectionRepo("https://github.com/grafana/old", resource.InlineSecureValue{Name: "old-token"}),
+			wantToken: resource.InlineSecureValue{Remove: true},
 		},
 		{
 			name:      "keeps the token when the url is unchanged",
-			new:       connectionRepo("https://github.com/grafana/repo", common.InlineSecureValue{}),
-			old:       connectionRepo("https://github.com/grafana/repo", common.InlineSecureValue{Name: "old-token"}),
-			wantToken: common.InlineSecureValue{},
+			new:       connectionRepo("https://github.com/grafana/repo", resource.InlineSecureValue{}),
+			old:       connectionRepo("https://github.com/grafana/repo", resource.InlineSecureValue{Name: "old-token"}),
+			wantToken: resource.InlineSecureValue{},
 		},
 		{
 			name:      "keeps the token when the host changes",
-			new:       connectionRepo("https://ghe.example.com/grafana/old", common.InlineSecureValue{}),
-			old:       connectionRepo("https://github.com/grafana/old", common.InlineSecureValue{Name: "old-token"}),
-			wantToken: common.InlineSecureValue{},
+			new:       connectionRepo("https://ghe.example.com/grafana/old", resource.InlineSecureValue{}),
+			old:       connectionRepo("https://github.com/grafana/old", resource.InlineSecureValue{Name: "old-token"}),
+			wantToken: resource.InlineSecureValue{},
 		},
 		{
 			name:      "marks an echoed stored reference for removal",
-			new:       connectionRepo("https://github.com/grafana/new", common.InlineSecureValue{Name: "old-token"}),
-			old:       connectionRepo("https://github.com/grafana/old", common.InlineSecureValue{Name: "old-token"}),
-			wantToken: common.InlineSecureValue{Remove: true},
+			new:       connectionRepo("https://github.com/grafana/new", resource.InlineSecureValue{Name: "old-token"}),
+			old:       connectionRepo("https://github.com/grafana/old", resource.InlineSecureValue{Name: "old-token"}),
+			wantToken: resource.InlineSecureValue{Remove: true},
 		},
 		{
 			name:      "marks an echoed reference carrying a description for removal",
-			new:       connectionRepo("https://github.com/grafana/new", common.InlineSecureValue{Name: "old-token", Description: describe("git token")}),
-			old:       connectionRepo("https://github.com/grafana/old", common.InlineSecureValue{Name: "old-token"}),
-			wantToken: common.InlineSecureValue{Remove: true},
+			new:       connectionRepo("https://github.com/grafana/new", resource.InlineSecureValue{Name: "old-token", Description: describe("git token")}),
+			old:       connectionRepo("https://github.com/grafana/old", resource.InlineSecureValue{Name: "old-token"}),
+			wantToken: resource.InlineSecureValue{Remove: true},
 		},
 		{
 			name:      "keeps a caller-supplied token",
-			new:       connectionRepo("https://github.com/grafana/new", common.InlineSecureValue{Create: "caller-token"}),
-			old:       connectionRepo("https://github.com/grafana/old", common.InlineSecureValue{Name: "old-token"}),
-			wantToken: common.InlineSecureValue{Create: "caller-token"},
+			new:       connectionRepo("https://github.com/grafana/new", resource.InlineSecureValue{Create: "caller-token"}),
+			old:       connectionRepo("https://github.com/grafana/old", resource.InlineSecureValue{Name: "old-token"}),
+			wantToken: resource.InlineSecureValue{Create: "caller-token"},
 		},
 		{
 			name:      "does nothing when no token is stored",
-			new:       connectionRepo("https://github.com/grafana/new", common.InlineSecureValue{}),
-			old:       connectionRepo("https://github.com/grafana/old", common.InlineSecureValue{}),
-			wantToken: common.InlineSecureValue{},
+			new:       connectionRepo("https://github.com/grafana/new", resource.InlineSecureValue{}),
+			old:       connectionRepo("https://github.com/grafana/old", resource.InlineSecureValue{}),
+			wantToken: resource.InlineSecureValue{},
 		},
 		{
 			name: "leaves a token-authenticated repository alone",
@@ -541,9 +541,9 @@ func TestInvalidateConnectionTokenOnURLChange(t *testing.T) {
 					Type:   provisioning.GitHubRepositoryType,
 					GitHub: &provisioning.GitHubRepositoryConfig{URL: "https://github.com/grafana/old"},
 				},
-				Secure: provisioning.SecureValues{Token: common.InlineSecureValue{Name: "old-token"}},
+				Secure: provisioning.SecureValues{Token: resource.InlineSecureValue{Name: "old-token"}},
 			},
-			wantToken: common.InlineSecureValue{},
+			wantToken: resource.InlineSecureValue{},
 		},
 	}
 
@@ -558,7 +558,7 @@ func TestInvalidateConnectionTokenOnURLChange(t *testing.T) {
 // The mutator marks the token for removal, which makes it non-zero. A host change must
 // still be rejected afterwards rather than slipping through as "a token was supplied".
 func TestInvalidateConnectionTokenDoesNotBypassHostCheck(t *testing.T) {
-	connectionRepo := func(url string, token common.InlineSecureValue) *provisioning.Repository {
+	connectionRepo := func(url string, token resource.InlineSecureValue) *provisioning.Repository {
 		return &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
 				Type:       provisioning.GitHubRepositoryType,
@@ -568,13 +568,13 @@ func TestInvalidateConnectionTokenDoesNotBypassHostCheck(t *testing.T) {
 			Secure: provisioning.SecureValues{Token: token},
 		}
 	}
-	old := connectionRepo("https://github.com/grafana/old", common.InlineSecureValue{Name: "old-token"})
+	old := connectionRepo("https://github.com/grafana/old", resource.InlineSecureValue{Name: "old-token"})
 
-	sameHost := connectionRepo("https://github.com/grafana/new", common.InlineSecureValue{})
+	sameHost := connectionRepo("https://github.com/grafana/new", resource.InlineSecureValue{})
 	InvalidateConnectionTokenOnURLChange(sameHost, old)
 	assert.False(t, RequiresNewTokenForURLChange(sameHost, old), "same-host move should be allowed")
 
-	hostChange := connectionRepo("https://ghe.example.com/grafana/old", common.InlineSecureValue{})
+	hostChange := connectionRepo("https://ghe.example.com/grafana/old", resource.InlineSecureValue{})
 	InvalidateConnectionTokenOnURLChange(hostChange, old)
 	assert.True(t, RequiresNewTokenForURLChange(hostChange, old), "host change must still require a token")
 }
@@ -598,29 +598,29 @@ func TestAdmissionMutator_Mutate_InvalidatesAfterURLNormalization(t *testing.T) 
 	tests := []struct {
 		name      string
 		newURL    string
-		wantToken common.InlineSecureValue
+		wantToken resource.InlineSecureValue
 	}{
 		{
 			name:      "same repository with a .git suffix leaves the token alone",
 			newURL:    "https://github.com/grafana/repo.git",
-			wantToken: common.InlineSecureValue{},
+			wantToken: resource.InlineSecureValue{},
 		},
 		{
 			name:      "same repository with a trailing slash leaves the token alone",
 			newURL:    "https://github.com/grafana/repo/",
-			wantToken: common.InlineSecureValue{},
+			wantToken: resource.InlineSecureValue{},
 		},
 		{
 			name:      "a different repository still invalidates",
 			newURL:    "https://github.com/grafana/other.git",
-			wantToken: common.InlineSecureValue{Remove: true},
+			wantToken: resource.InlineSecureValue{Remove: true},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			oldRepo := newRepoAt("https://github.com/grafana/repo")
-			oldRepo.Secure.Token = common.InlineSecureValue{Name: "old-token"}
+			oldRepo.Secure.Token = resource.InlineSecureValue{Name: "old-token"}
 			newRepo := newRepoAt(tt.newURL)
 
 			factory := NewMockFactory(t)
@@ -645,50 +645,50 @@ func TestAdmissionMutator_Mutate_InvalidatesAfterURLNormalization(t *testing.T) 
 // reference that carries a description would never match the stored one and would count as
 // a supplied token, skipping both the re-mint and the host check.
 func TestSuppliedNewTokenIgnoresDescription(t *testing.T) {
-	repoWithToken := func(token common.InlineSecureValue) *provisioning.Repository {
+	repoWithToken := func(token resource.InlineSecureValue) *provisioning.Repository {
 		return &provisioning.Repository{Secure: provisioning.SecureValues{Token: token}}
 	}
 	describe := func(s string) *string { return &s }
 
 	tests := []struct {
 		name string
-		new  common.InlineSecureValue
-		old  common.InlineSecureValue
+		new  resource.InlineSecureValue
+		old  resource.InlineSecureValue
 		want bool
 	}{
 		{
 			name: "echoed reference with a description is not a new token",
-			new:  common.InlineSecureValue{Name: "inline-abc", Description: describe("git token")},
-			old:  common.InlineSecureValue{Name: "inline-abc"},
+			new:  resource.InlineSecureValue{Name: "inline-abc", Description: describe("git token")},
+			old:  resource.InlineSecureValue{Name: "inline-abc"},
 			want: false,
 		},
 		{
 			name: "same description in a different allocation is not a new token",
-			new:  common.InlineSecureValue{Name: "inline-abc", Description: describe("git token")},
-			old:  common.InlineSecureValue{Name: "inline-abc", Description: describe("git token")},
+			new:  resource.InlineSecureValue{Name: "inline-abc", Description: describe("git token")},
+			old:  resource.InlineSecureValue{Name: "inline-abc", Description: describe("git token")},
 			want: false,
 		},
 		{
 			name: "a different reference is a new token",
-			new:  common.InlineSecureValue{Name: "inline-xyz"},
-			old:  common.InlineSecureValue{Name: "inline-abc"},
+			new:  resource.InlineSecureValue{Name: "inline-xyz"},
+			old:  resource.InlineSecureValue{Name: "inline-abc"},
 			want: true,
 		},
 		{
 			name: "a created value is a new token",
-			new:  common.InlineSecureValue{Create: "raw-token"},
-			old:  common.InlineSecureValue{Name: "inline-abc"},
+			new:  resource.InlineSecureValue{Create: "raw-token"},
+			old:  resource.InlineSecureValue{Name: "inline-abc"},
 			want: true,
 		},
 		{
 			name: "a removal marker is a token decision",
-			new:  common.InlineSecureValue{Remove: true},
-			old:  common.InlineSecureValue{Name: "inline-abc"},
+			new:  resource.InlineSecureValue{Remove: true},
+			old:  resource.InlineSecureValue{Name: "inline-abc"},
 			want: true,
 		},
 		{
 			name: "an absent token is not a new token",
-			old:  common.InlineSecureValue{Name: "inline-abc"},
+			old:  resource.InlineSecureValue{Name: "inline-abc"},
 			want: false,
 		},
 	}

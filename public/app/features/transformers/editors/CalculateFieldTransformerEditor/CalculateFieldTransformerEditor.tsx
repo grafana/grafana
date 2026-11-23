@@ -46,6 +46,70 @@ interface CalculateFieldTransformerEditorState {
 
 const okTypes = new Set<FieldType>([FieldType.time, FieldType.number, FieldType.string, FieldType.boolean]);
 
+const getVariableNames = (): OperatorFunction<string[], string[]> => {
+  const templateSrv = getTemplateSrv();
+
+  return (source) =>
+    source.pipe(
+      map((input) => {
+        input.push(...templateSrv.getVariables().map((v) => '$' + v.name));
+        return input;
+      })
+    );
+};
+
+const extractAllNames = (): OperatorFunction<DataFrame[], string[]> => {
+  return (source) =>
+    source.pipe(
+      map((input) => {
+        const allNames: string[] = [];
+        const byName: KeyValue<boolean> = {};
+
+        for (const frame of input) {
+          for (const field of frame.fields) {
+            if (!okTypes.has(field.type)) {
+              continue;
+            }
+
+            const displayName = getFieldDisplayName(field, frame, input);
+
+            if (!byName[displayName]) {
+              byName[displayName] = true;
+              allNames.push(displayName);
+            }
+          }
+        }
+
+        return allNames;
+      })
+    );
+};
+
+const extractNamesAndSelected = (
+  configuredOptions: string[]
+): OperatorFunction<string[], { names: string[]; selected: string[] }> => {
+  return (source) =>
+    source.pipe(
+      map((allNames) => {
+        if (!configuredOptions.length) {
+          return { names: allNames, selected: [] };
+        }
+
+        const names: string[] = [];
+        const selected: string[] = [];
+
+        for (const v of allNames) {
+          if (configuredOptions.includes(v)) {
+            selected.push(v);
+          }
+          names.push(v);
+        }
+
+        return { names, selected };
+      })
+    );
+};
+
 export const CalculateFieldTransformerEditor = (props: CalculateFieldTransformerEditorProps) => {
   const { options, onChange, input } = props;
   const configuredOptions = options?.reduce?.include;
@@ -105,70 +169,6 @@ export const CalculateFieldTransformerEditor = (props: CalculateFieldTransformer
     };
   }, [input, configuredOptions]);
 
-  const getVariableNames = (): OperatorFunction<string[], string[]> => {
-    const templateSrv = getTemplateSrv();
-
-    return (source) =>
-      source.pipe(
-        map((input) => {
-          input.push(...templateSrv.getVariables().map((v) => '$' + v.name));
-          return input;
-        })
-      );
-  };
-
-  const extractAllNames = (): OperatorFunction<DataFrame[], string[]> => {
-    return (source) =>
-      source.pipe(
-        map((input) => {
-          const allNames: string[] = [];
-          const byName: KeyValue<boolean> = {};
-
-          for (const frame of input) {
-            for (const field of frame.fields) {
-              if (!okTypes.has(field.type)) {
-                continue;
-              }
-
-              const displayName = getFieldDisplayName(field, frame, input);
-
-              if (!byName[displayName]) {
-                byName[displayName] = true;
-                allNames.push(displayName);
-              }
-            }
-          }
-
-          return allNames;
-        })
-      );
-  };
-
-  const extractNamesAndSelected = (
-    configuredOptions: string[]
-  ): OperatorFunction<string[], { names: string[]; selected: string[] }> => {
-    return (source) =>
-      source.pipe(
-        map((allNames) => {
-          if (!configuredOptions.length) {
-            return { names: allNames, selected: [] };
-          }
-
-          const names: string[] = [];
-          const selected: string[] = [];
-
-          for (const v of allNames) {
-            if (configuredOptions.includes(v)) {
-              selected.push(v);
-            }
-            names.push(v);
-          }
-
-          return { names, selected };
-        })
-      );
-  };
-
   const onToggleReplaceFields = (e: React.FormEvent<HTMLInputElement>) => {
     onChange({
       ...options,
@@ -178,11 +178,9 @@ export const CalculateFieldTransformerEditor = (props: CalculateFieldTransformer
 
   const onModeChanged = (value: SelectableValue<CalculateFieldMode>) => {
     const mode = value.value ?? CalculateFieldMode.BinaryOperation;
-    if (mode === CalculateFieldMode.WindowFunctions) {
-      options.window = options.window ?? defaultWindowOptions;
-    }
     onChange({
       ...options,
+      ...(mode === CalculateFieldMode.WindowFunctions && { window: options.window ?? defaultWindowOptions }),
       mode,
     });
   };

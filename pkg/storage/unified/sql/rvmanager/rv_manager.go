@@ -392,7 +392,9 @@ func (m *ResourceVersionManager) execBatch(ctx context.Context, group, resource 
 			}
 			span.AddEvent("resource_history_versions_updated")
 
-			// Record the latest RV in the resource version table
+			// Record the next RV, one above the last write, in the resource
+			// version table. Lists return it as their RV, and the NATS
+			// notifier's late-write floors rely on it being above that write.
 			err = m.SaveRV(ctx, tx, group, resource, rv)
 			if err != nil {
 				span.AddEvent("save_rv_failed", trace.WithAttributes(

@@ -110,12 +110,21 @@ func (k *kvStorageBackend) loadWatchSeedWithLimit(ctx context.Context, handoffRV
 	return seed, ctx.Err()
 }
 
-func (k *kvStorageBackend) watchWriteEventsWithSeed(ctx context.Context, captured func()) (watchSeed, <-chan *WrittenEvent, error) {
+func (k *kvStorageBackend) watchWriteEventsWithSeed(ctx context.Context, floors *raisedFloors, captured func()) (watchSeed, <-chan *WrittenEvent, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	started := false
+	if floors == nil {
+		// Only resumes read the floors, so a caller without any passes none.
+		floors = newRaisedFloors()
+	}
+	gaps := NewUnknownGaps(floors, k.raiseAllFloors(floors), k.log)
 	opts := k.watchOpts
 	ready := make(chan error, 1)
 	opts.CaptureReady = ready
+	opts.Invalidate = func() {
+		gaps.Report()
+		k.expireWatches()
+	}
 	notifications := k.notifier.Watch(ctx, opts)
 	boundary := make(chan int64)
 	startDelivery := make(chan struct{})
@@ -130,10 +139,11 @@ func (k *kvStorageBackend) watchWriteEventsWithSeed(ctx context.Context, capture
 			for range notifications {
 			}
 		}()
-		k.runSeededWatchEvents(ctx, notifications, boundary, startDelivery, opts.BufferSize, overflow, out)
+		k.runSeededWatchEvents(ctx, notifications, boundary, startDelivery, opts.BufferSize, overflow, out, k.lostWatchEvents(floors))
 	}()
 	defer func() {
 		if !started {
+			gaps.Abandon()
 			cancel()
 			for range out {
 			}
@@ -147,9 +157,7 @@ func (k *kvStorageBackend) watchWriteEventsWithSeed(ctx context.Context, capture
 			return watchSeed{}, nil, fmt.Errorf("establish watch capture: %w", err)
 		}
 	}
-	if captured != nil {
-		captured()
-	}
+	gaps.Capture(captured)
 
 	// Fix the snapshot ceiling before settling. An unrestricted snapshot taken
 	// afterwards could include newer writes ahead of still-persisting lower RVs,
@@ -216,7 +224,40 @@ func (k *kvStorageBackend) watchWriteEventsWithSeed(ctx context.Context, capture
 	}
 
 	started = true
+	go gaps.RaiseFloors(ctx, nil)
 	return seed, out, nil
+}
+
+// lostWatchEvents raises the floors above writes the stream failed to read
+// back, then expires the watches. A resume admitted after the expiry takes the
+// new generation, so only a floor raised before it can reject the resume.
+func (k *kvStorageBackend) lostWatchEvents(floors *raisedFloors) func([]Event) {
+	return func(events []Event) {
+		for _, e := range events {
+			floors.Raise(GroupResource{Group: e.Group, Resource: e.Resource}, e.ResourceVersion)
+		}
+		k.expireWatches()
+	}
+}
+
+func (k *kvStorageBackend) expireWatches() {
+	if k.watchInvalidator != nil {
+		k.watchInvalidator.Invalidate()
+	}
+}
+
+// raiseAllFloors raises every collection's floor to the latest RV, which is
+// above any write lost before a bus drop or reconnect was reported. KV RVs are
+// global, so one floor covers every collection.
+func (k *kvStorageBackend) raiseAllFloors(floors *raisedFloors) func(context.Context) error {
+	return func(ctx context.Context) error {
+		latest, err := k.latestResourceVersion(ctx)
+		if err != nil {
+			return err
+		}
+		floors.raiseAll(latest)
+		return nil
+	}
 }
 
 // Drain capture throughout snapshot reads so startup cannot backpressure an
@@ -232,6 +273,7 @@ func (k *kvStorageBackend) runSeededWatchEvents(
 	pendingThreshold int,
 	overflow chan<- struct{},
 	out chan<- *WrittenEvent,
+	lost func([]Event),
 ) {
 	var pending []Event
 	var highestRV int64
@@ -274,7 +316,7 @@ waiting:
 			return event.ResourceVersion <= highestRV || event.PreviousRV < 0
 		})
 		for batch := range slices.Chunk(events, dataBatchSize) {
-			if !k.emitWriteEvents(ctx, batch, out) {
+			if !k.emitWriteEvents(ctx, batch, out, lost) {
 				return false
 			}
 		}

@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 
+import { getLogger } from '@grafana/runtime/unstable';
+
 import { getPluginEntitlement } from '../api';
 import { isMarketplacePlugin } from '../helpers';
 import { type CatalogPlugin } from '../types';
@@ -43,12 +45,22 @@ export function usePluginEntitlement(plugin: CatalogPlugin | undefined): Entitle
     }
 
     let cancelled = false;
-    getPluginEntitlement(pluginId!).then((entitled) => {
-      if (!cancelled) {
-        entitlementCache.set(pluginId!, entitled);
-        setState({ entitled, isLoading: false });
-      }
-    });
+    getPluginEntitlement(pluginId!)
+      .then((entitled) => {
+        if (!cancelled) {
+          entitlementCache.set(pluginId!, entitled);
+          setState({ entitled, isLoading: false });
+        }
+      })
+      .catch((error: unknown) => {
+        getLogger('features.plugins').logError(error instanceof Error ? error : new Error(String(error)), {
+          pluginId: pluginId!,
+        });
+        // Not cached, so the next mount retries.
+        if (!cancelled) {
+          setState({ entitled: false, isLoading: false });
+        }
+      });
     return () => {
       cancelled = true;
     };

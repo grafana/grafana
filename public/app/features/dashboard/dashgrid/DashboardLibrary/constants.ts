@@ -8,6 +8,7 @@ export const EVENT_LOCATIONS = {
   DASHBOARD_PAGE_SUGGESTED_DASHBOARDS_BANNER: 'dashboard_page_suggested_dashboards_banner',
   DASHBOARD_TEMPLATES_MODAL: 'dashboard_templates_modal',
   DASHBOARD_SETTINGS_PAGE: 'dashboard_settings_page',
+  EMPTY_DASHBOARD_PROMPT: 'empty_dashboard_prompt',
 } as const;
 
 /**
@@ -31,6 +32,7 @@ export const TemplateDashboardSourceEntryPoint = {
   COMMAND_PALETTE: 'command_palette',
   BROWSE_DASHBOARDS_PAGE: 'browse_dashboards_page_create_new_button',
   ASSISTANT_BUTTON: 'assistant_button',
+  EMPTY_DASHBOARD_PROMPT: 'empty_dashboard_prompt',
 } as const;
 
 /**
@@ -76,6 +78,7 @@ export const DashboardTemplatesSourceEntryPointMap: Record<string, SourceEntryPo
   quickAdd: TemplateDashboardSourceEntryPoint.QUICK_ADD_BUTTON,
   commandPalette: TemplateDashboardSourceEntryPoint.COMMAND_PALETTE,
   createNewButton: TemplateDashboardSourceEntryPoint.BROWSE_DASHBOARDS_PAGE,
+  emptyDashboardPrompt: TemplateDashboardSourceEntryPoint.EMPTY_DASHBOARD_PROMPT,
 };
 
 export type EventLocation = (typeof EVENT_LOCATIONS)[keyof typeof EVENT_LOCATIONS];
