@@ -209,6 +209,48 @@ func TestExecBatch_RetriesOnSQLiteBusy(t *testing.T) {
 	})
 }
 
+// TestExecBatch_FailedWriteDoesNotFailOthers guards against one write failing every other
+// write that happened to be batched with it, e.g. a background dual-write of an unrelated
+// object that already exists.
+func TestExecBatch_FailedWriteDoesNotFailOthers(t *testing.T) {
+	dbp := test.NewDBProviderMatchWords(t)
+	manager, err := NewResourceVersionManager(ResourceManagerOptions{
+		DB:      dbp.DB,
+		Dialect: sqltemplate.DialectForDriver(dbp.DB.DriverName()),
+	})
+	require.NoError(t, err)
+
+	// The batch rolls back because the first write fails.
+	dbp.SQLMock.ExpectBegin()
+	dbp.SQLMock.ExpectExec("insert failing").WillReturnError(errors.New("already exists"))
+	dbp.SQLMock.ExpectRollback()
+	// The second write is retried without it.
+	dbp.SQLMock.ExpectBegin()
+	dbp.SQLMock.ExpectExec("insert ok").WillReturnResult(sqlmock.NewResult(1, 1))
+	expectSuccessfulResourceVersionExec(t, dbp)
+	dbp.SQLMock.ExpectCommit()
+
+	newOp := func(query, guid string) writeOp {
+		return writeOp{
+			key: &resourcepb.ResourceKey{Group: "g", Resource: "r", Name: guid},
+			fn: func(ctx context.Context, tx db.Tx) (string, error) {
+				_, err := tx.ExecContext(ctx, query)
+				return guid, err
+			},
+			done: make(chan writeOpResult, 1),
+		}
+	}
+	failing, ok := newOp("insert failing", "guid-1"), newOp("insert ok", "guid-2")
+	manager.execBatch(context.Background(), "g", "r", []writeOp{failing, ok})
+
+	require.ErrorContains(t, (<-failing.done).err, "already exists")
+	res := <-ok.done
+	require.NoError(t, res.err)
+	require.Equal(t, "guid-2", res.guid)
+	require.Equal(t, int64(200), res.rv)
+	require.NoError(t, dbp.SQLMock.ExpectationsWereMet())
+}
+
 func TestBatchTransactionTimeout_explicitOverride(t *testing.T) {
 	dbp := test.NewDBProviderMatchWords(t)
 	m, err := NewResourceVersionManager(ResourceManagerOptions{

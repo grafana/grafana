@@ -304,6 +304,7 @@ func (m *ResourceVersionManager) execBatch(ctx context.Context, group, resource 
 	}))
 	defer timer.ObserveDuration()
 
+	retryCtx := ctx
 	ctx, cancel := context.WithTimeout(ctx, m.batchTransactionTimeout())
 	defer cancel()
 
@@ -312,11 +313,14 @@ func (m *ResourceVersionManager) execBatch(ctx context.Context, group, resource 
 		guidToSnowflakeRV map[string]int64
 		guids             []string
 		rvs               []int64
+		// failedOp is the index of the write whose own error rolled back the batch, or -1.
+		failedOp int
 	)
 
 	runBatch := func() error {
 		// Reset per-attempt state so SQLite busy retries do not carry over
 		// guids/rvs from a rolled-back attempt.
+		failedOp = -1
 		guidToRV = make(map[string]int64, len(batch))
 		guidToSnowflakeRV = make(map[string]int64, len(batch))
 		guids = make([]string, len(batch))
@@ -335,6 +339,7 @@ func (m *ResourceVersionManager) execBatch(ctx context.Context, group, resource 
 						attribute.Int("operation_index", i),
 						attribute.String("error", err.Error()),
 					))
+					failedOp = i
 					return err
 				}
 				guids[i] = guid
@@ -434,6 +439,16 @@ func (m *ResourceVersionManager) execBatch(ctx context.Context, group, resource 
 		))
 	} else {
 		span.AddEvent("batch_transaction_completed")
+	}
+
+	// One write's own error rolled back the others with it. Fail only that write and
+	// retry the rest, so it does not fail writes that merely shared its batch. Busy and
+	// timeout errors are not specific to that write, so they still fail the whole batch.
+	if err != nil && failedOp >= 0 && len(batch) > 1 && ctx.Err() == nil && !sqlite.IsBusyOrLocked(err) {
+		batch[failedOp].done <- writeOpResult{err: err, batchTraceLink: trace.LinkFromContext(ctx)}
+		rest := append(batch[:failedOp:failedOp], batch[failedOp+1:]...)
+		m.execBatch(retryCtx, group, resource, rest)
+		return
 	}
 
 	// notify the caller that the operations are done
