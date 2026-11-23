@@ -169,10 +169,15 @@ func TestDatasourceCreateThroughUpdateSetsDefaults(t *testing.T) {
 	lifecycle := &recordingPermissionsLifecycle{}
 	store, _, storage := newDatasourceLifecycleStorage(t, grafanarest.Mode5, lifecycle)
 	obj := &datasourceV0.DataSource{ObjectMeta: metav1.ObjectMeta{Name: "test-ds", Namespace: "stacks-2"}}
-	_, wasCreated, err := store.Update(ctx, obj.Name, rest.DefaultUpdatedObjectInfo(obj), nil, nil, true, &metav1.UpdateOptions{})
+	info := rest.DefaultUpdatedObjectInfo(obj, func(_ context.Context, obj, _ runtime.Object) (runtime.Object, error) {
+		obj.(*datasourceV0.DataSource).Annotations = map[string]string{utils.AnnoKeyGrantPermissions: utils.AnnoGrantPermissionsDefault}
+		return obj, nil
+	})
+	_, wasCreated, err := store.Update(ctx, obj.Name, info, nil, nil, true, &metav1.UpdateOptions{})
 	require.NoError(t, err)
 	require.True(t, wasCreated)
 	require.NotNil(t, storage.saved)
+	require.NotContains(t, storage.saved.Annotations, utils.AnnoKeyGrantPermissions)
 	require.Len(t, lifecycle.created, 1)
 }
 
@@ -223,7 +228,11 @@ type datasourceTestStorage struct {
 func (*datasourceTestStorage) Versioner() storage.Versioner { return storage.APIObjectVersioner{} }
 
 func (s *datasourceTestStorage) Create(_ context.Context, _ string, obj, out runtime.Object, _ uint64) error {
-	s.saved = obj.(*datasourceV0.DataSource).DeepCopy()
+	ds := obj.(*datasourceV0.DataSource)
+	if ds.Annotations[utils.AnnoKeyGrantPermissions] == utils.AnnoGrantPermissionsDefault {
+		return errors.New("missing default permission creator")
+	}
+	s.saved = ds.DeepCopy()
 	s.saved.ResourceVersion = "1"
 	*out.(*datasourceV0.DataSource) = *s.saved
 	return nil
@@ -237,7 +246,7 @@ func (s *datasourceTestStorage) Get(_ context.Context, key string, _ storage.Get
 	return nil
 }
 
-func (s *datasourceTestStorage) GuaranteedUpdate(_ context.Context, key string, out runtime.Object, ignoreNotFound bool, _ *storage.Preconditions, update storage.UpdateFunc, _ runtime.Object) error {
+func (s *datasourceTestStorage) GuaranteedUpdate(ctx context.Context, key string, out runtime.Object, ignoreNotFound bool, _ *storage.Preconditions, update storage.UpdateFunc, _ runtime.Object) error {
 	var existing datasourceV0.DataSource
 	var version uint64
 	if s.saved != nil {
@@ -249,6 +258,9 @@ func (s *datasourceTestStorage) GuaranteedUpdate(_ context.Context, key string, 
 	obj, _, err := update(&existing, storage.ResponseMeta{ResourceVersion: version})
 	if err != nil {
 		return err
+	}
+	if version == 0 {
+		return s.Create(ctx, key, obj, out, 0)
 	}
 	s.saved = obj.(*datasourceV0.DataSource).DeepCopy()
 	*out.(*datasourceV0.DataSource) = *s.saved

@@ -24,14 +24,8 @@ type unifiedDatasourceStorage struct {
 }
 
 func (s *unifiedDatasourceStorage) Create(ctx context.Context, obj runtime.Object, validate rest.ValidateObjectFunc, opts *metav1.CreateOptions) (runtime.Object, error) {
-	meta, err := utils.MetaAccessor(obj)
-	if err != nil {
+	if err := consumeDefaultPermissionsAnnotation(obj); err != nil {
 		return nil, err
-	}
-	// This store sets defaults after Create. Consume the explicit request for the
-	// same defaults before unified storage tries to dispatch its annotation hook.
-	if meta.GetAnnotation(utils.AnnoKeyGrantPermissions) == utils.AnnoGrantPermissionsDefault {
-		meta.SetAnnotation(utils.AnnoKeyGrantPermissions, "")
 	}
 	created, err := s.Store.Create(ctx, obj, validate, opts)
 	if err != nil || dryrun.IsDryRun(opts.DryRun) || dualwrite.IsMirroredCreate(ctx) {
@@ -44,6 +38,9 @@ func (s *unifiedDatasourceStorage) Create(ctx context.Context, obj runtime.Objec
 }
 
 func (s *unifiedDatasourceStorage) Update(ctx context.Context, name string, info rest.UpdatedObjectInfo, validateCreate rest.ValidateObjectFunc, validateUpdate rest.ValidateObjectUpdateFunc, forceAllowCreate bool, opts *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	info = rest.WrapUpdatedObjectInfo(info, func(_ context.Context, obj, _ runtime.Object) (runtime.Object, error) {
+		return obj, consumeDefaultPermissionsAnnotation(obj)
+	})
 	obj, created, err := s.Store.Update(ctx, name, info, validateCreate, validateUpdate, forceAllowCreate, opts)
 	if err != nil || !created || dryrun.IsDryRun(opts.DryRun) || dualwrite.IsMirroredUpdate(ctx) {
 		return obj, created, err
@@ -52,6 +49,19 @@ func (s *unifiedDatasourceStorage) Update(ctx context.Context, name string, info
 		return nil, false, err
 	}
 	return obj, true, nil
+}
+
+// Defaults are written once by the REST store. Consume the explicit default
+// before unified storage's annotation hook can run on a create or upsert.
+func consumeDefaultPermissionsAnnotation(obj runtime.Object) error {
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return err
+	}
+	if meta.GetAnnotation(utils.AnnoKeyGrantPermissions) == utils.AnnoGrantPermissionsDefault {
+		meta.SetAnnotation(utils.AnnoKeyGrantPermissions, "")
+	}
+	return nil
 }
 
 func (s *unifiedDatasourceStorage) setDefaults(ctx context.Context, obj runtime.Object) error {
@@ -65,10 +75,9 @@ func (s *unifiedDatasourceStorage) setDefaults(ctx context.Context, obj runtime.
 	}
 	if actor, ok := authlib.AuthInfoFrom(ctx); ok && actor.GetIdentifier() != "" {
 		var kind iamv0.ResourcePermissionSpecPermissionKind
-		switch actor.GetIdentityType() {
-		case authlib.TypeUser:
+		if identityType := actor.GetIdentityType(); identityType == authlib.TypeUser {
 			kind = iamv0.ResourcePermissionSpecPermissionKindUser
-		case authlib.TypeServiceAccount:
+		} else if identityType == authlib.TypeServiceAccount {
 			kind = iamv0.ResourcePermissionSpecPermissionKindServiceAccount
 		}
 		if kind != "" {
