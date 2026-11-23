@@ -66,6 +66,7 @@ Closing standalone query rows early cancels the stream; it does not establish th
 For a standalone query, `QueryRowContext` closes its rows after `Scan` reads one row, so it cannot confirm success of a later stream tail.
 For a standalone query, drain `Rows` and check `Rows.Err()` when you need complete-result success.
 Inside a transaction, closing rows early drains the remaining result to command completion with bounded memory.
+If the drain takes more than one second, the driver cancels the stream, aborts the transaction, and returns an error matching `context.DeadlineExceeded` from `Rows.Close`.
 A new error found during `Rows.Close` aborts the transaction, so check the close error when you stop reading early.
 
 Preparation makes no RPC and does not retain the preparation context as query identity.

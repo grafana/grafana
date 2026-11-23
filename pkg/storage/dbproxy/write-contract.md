@@ -40,6 +40,7 @@ Use `Statement.query_name`, `sql`, and `parameters` for each `query` or `exec` c
 Query responses follow the [Query value and metadata rules](grpc-contract.md#values-and-column-metadata).
 `ok` for a pending `query` confirms it finished successfully; receiving some rows does not rule out a later error.
 If you close transaction rows early, the Go SQL driver drains to `ok` or `error` with bounded memory before continuing.
+If the drain exceeds one second, the driver cancels the stream and aborts the transaction.
 Standalone `Query` still cancels on early close.
 A new error discovered during `Rows.Close` aborts the transaction.
 Errors already reported by `Rows.Next` or `Exec` remain recoverable when the database permits.

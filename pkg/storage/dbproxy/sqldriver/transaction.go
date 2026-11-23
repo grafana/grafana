@@ -332,20 +332,36 @@ type transactionRows struct {
 	tx *transaction
 }
 
+const rowsDrainTimeout = time.Second
+
 func (r *transactionRows) Close() error {
 	if r.done {
 		return nil
 	}
+	// database/sql closes open rows before calling the driver's Rollback.
+	// Bound the drain so Rollback can finish even if Recv is stalled.
+	timer := time.AfterFunc(rowsDrainTimeout, r.tx.abort)
+	err := r.drain()
+	if !timer.Stop() {
+		// The callback may still be running. Abort before releasing the connection.
+		r.tx.abort()
+		return fmt.Errorf("proxy transaction: timed out draining rows: %w", context.DeadlineExceeded)
+	}
+	if err != nil {
+		r.tx.abort()
+	}
+	return err
+}
+
+func (r *transactionRows) drain() error {
+	// Consume the terminal frame before allowing another command on the stream.
 	values := make([]driver.Value, len(r.columns))
-	// A query is complete only at its ok frame. Discard rows in constant space;
-	// a newly discovered error must abort the transaction before Commit.
 	for {
 		err := r.rows.Next(values)
 		if errors.Is(err, io.EOF) {
 			return nil
 		}
 		if err != nil {
-			r.tx.abort()
 			return err
 		}
 	}

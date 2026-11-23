@@ -232,11 +232,12 @@ func TestTransactionCloseDiscoversErrorAndBlocksLaterWrites(t *testing.T) {
 			}
 		}
 	}})
-	tx, err := pool.BeginTx(sqldriver.WithQuery(context.Background(), "stacks-1", "begin"), nil)
+	tx, err := pool.BeginTx(sqldriver.WithQuery(t.Context(), "stacks-1", "begin"), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	rows, err := tx.QueryContext(sqldriver.WithQuery(context.Background(), "stacks-1", "read.partial"), "SELECT n")
+	defer tx.Rollback()
+	rows, err := tx.QueryContext(sqldriver.WithQuery(t.Context(), "stacks-1", "read.partial"), "SELECT n")
 	if err != nil {
 		t.Fatal(err)
 	}
