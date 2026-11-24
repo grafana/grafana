@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -906,7 +907,7 @@ func setup(t *testing.T, isMultiTenant bool, mockClient clientapi.QueryDataClien
 		pluginContext:          pc,
 		pluginRequestValidator: rv,
 		queryService:           queryService,
-		signedInUser:           &user.SignedInUser{OrgID: 1, Login: "login", Name: "name", Email: "email", OrgRole: identity.RoleAdmin, Namespace: "ns1"},
+		signedInUser:           &user.SignedInUser{OrgID: 1, Login: "login", Name: "name", Email: "email", OrgRole: authlib.RoleAdmin, Namespace: "ns1"},
 	}
 }
 

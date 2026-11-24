@@ -19,6 +19,11 @@ import { ExposedComponentsRegistry } from '../extensions/registry/ExposedCompone
 import * as importPluginModule from './importPluginModule';
 import { pluginImporter, clearCaches } from './pluginImporter';
 
+jest.mock('../components/restrictedGrafanaApis/restrictedGrafanaApis', () =>
+  makeSpyable('../components/restrictedGrafanaApis/restrictedGrafanaApis')
+);
+jest.mock('./importPluginModule', () => makeSpyable('./importPluginModule'));
+
 jest.mock('../extensions/registry/setup', () => ({
   ...jest.requireActual('../extensions/registry/setup'),
   getPluginExtensionRegistries: jest.fn(),

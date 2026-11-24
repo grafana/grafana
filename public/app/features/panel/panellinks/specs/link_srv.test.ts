@@ -579,6 +579,12 @@ describe('linkSrv', () => {
           documentation: "Adds current time range's to value",
           origin: VariableOrigin.BuiltIn,
         },
+        {
+          value: '__url_tab_state',
+          label: 'Current dashboard tabs',
+          documentation: 'Adds selected dashboard tabs as URL parameters',
+          origin: VariableOrigin.BuiltIn,
+        },
       ]);
     });
   });

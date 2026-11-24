@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	apicommon "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/nanogit/gittest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -51,7 +51,7 @@ func TestIntegrationProvisioning_GitRequiresNewTokenWhenRepositoryURLChanges(t *
 			repoObj := common.MustFromUnstructured[provisioning.Repository](t, repo)
 			repoObj.Spec.Git.URL = changedRemote.URL
 			repoObj.Spec.Git.TokenUser = changedUser.Username
-			repoObj.Secure.Token = apicommon.InlineSecureValue{Create: apicommon.RawSecureValue(changedUser.Password)}
+			repoObj.Secure.Token = resource.InlineSecureValue{Create: resource.RawSecureValue(changedUser.Password)}
 
 			result, err := helper.Repositories.Resource.Update(t.Context(), common.MustToUnstructured(t, repoObj), metav1.UpdateOptions{})
 			require.NoError(collect, err)

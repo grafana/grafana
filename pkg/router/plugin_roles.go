@@ -4,39 +4,18 @@ import (
 	"fmt"
 	"maps"
 	"slices"
-	"strings"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/authz/rbac"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/manifestroles"
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
-// Unified storage enforces RBAC on every group ending in .ext.grafana.app, and
-// a group it holds no static mapping for is checked as "stack role AND folder
-// permission": the caller must hold the scopeless <group>/<resource>:<verb>
-// action, and their permission on the object's folder then decides. Nothing
-// else grants that action -- a plugin cannot even declare it in plugin.json,
-// since plugin actions must carry the plugin id as their prefix -- so these
-// registrations are what make a plugin's kinds reachable at all.
-
-var (
-	viewerVerbs = []string{utils.VerbGet, utils.VerbList, utils.VerbWatch}
-	editorVerbs = append(slices.Clone(viewerVerbs),
-		utils.VerbCreate, utils.VerbUpdate, utils.VerbPatch, utils.VerbDelete, utils.VerbDeleteCollection)
-	adminVerbs = append(slices.Clone(editorVerbs),
-		utils.VerbGetPermissions, utils.VerbSetPermissions)
-)
-
-// permissionSetVerbs expands the permission sets a manifest role may name
-// instead of listing verbs itself.
-var permissionSetVerbs = map[string][]string{
-	app.ManifestRolePermissionSetViewer: viewerVerbs,
-	app.ManifestRolePermissionSetEditor: editorVerbs,
-	app.ManifestRolePermissionSetAdmin:  adminVerbs,
-}
+// These registrations are what make a plugin's kinds reachable at all: unified
+// storage checks every .ext.grafana.app group for actions nothing else grants.
+// manifestroles names the actions, so that the IAM roles cloud reconciles from
+// the same manifests name them the same way.
 
 // basicRoles are the groups a manifest may bind a role to.
 var basicRoles = map[string]string{
@@ -74,7 +53,7 @@ func manifestRoleRegistrations(group, pluginName string, manifest *app.ManifestD
 	if manifest == nil {
 		return nil
 	}
-	resources := kindResourceNames(manifest)
+	resources := manifestroles.ResourceNames(manifest)
 	if len(resources) == 0 {
 		return nil
 	}
@@ -94,7 +73,7 @@ func manifestRoleRegistrations(group, pluginName string, manifest *app.ManifestD
 	// Sorted, so the same manifest always declares the same list.
 	for _, name := range slices.Sorted(maps.Keys(manifest.Roles)) {
 		role := manifest.Roles[name]
-		permissions := rolePermissions(group, role, resources)
+		permissions := toPermissions(manifestroles.RoleActions(group, role, resources, logging.DefaultLogger))
 		if len(permissions) == 0 {
 			logging.DefaultLogger.Warn("skipping manifest role that grants nothing",
 				"group", group, "role", name)
@@ -129,15 +108,16 @@ func defaultRoleRegistrations(group, pluginName string, resources map[string]str
 		name        string
 		displayName string
 		description string
-		verbs       []string
+		set         string
 		grant       string
 	}{
-		{"reader", "Reader", "Read the kinds " + group + " serves", viewerVerbs, string(org.RoleViewer)},
-		{"writer", "Writer", "Write the kinds " + group + " serves", editorVerbs, string(org.RoleEditor)},
+		{"reader", "Reader", "Read the kinds " + group + " serves", app.ManifestRolePermissionSetViewer, string(org.RoleViewer)},
+		{"writer", "Writer", "Write the kinds " + group + " serves", app.ManifestRolePermissionSetEditor, string(org.RoleEditor)},
 	}
 
 	out := make([]ac.RoleRegistration, 0, len(defaults))
 	for _, d := range defaults {
+		verbs, _ := manifestroles.PermissionSetVerbs(d.set)
 		out = append(out, ac.RoleRegistration{
 			Role: ac.RoleDTO{
 				Version:     1,
@@ -145,7 +125,7 @@ func defaultRoleRegistrations(group, pluginName string, resources map[string]str
 				DisplayName: d.displayName,
 				Description: d.description,
 				Group:       pluginName,
-				Permissions: permissionsFor(group, slices.Sorted(maps.Values(resources)), d.verbs),
+				Permissions: toPermissions(manifestroles.VerbActions(group, slices.Sorted(maps.Values(resources)), verbs, logging.DefaultLogger)),
 				OrgID:       ac.GlobalOrgID,
 			},
 			Grants: []string{d.grant},
@@ -154,90 +134,12 @@ func defaultRoleRegistrations(group, pluginName string, resources map[string]str
 	return out
 }
 
-// rolePermissions converts one manifest role's kinds into RBAC permissions.
-//
-// A role kind may name a kind's custom route, as Kind/<route>, which grants the
-// <resource>/<route> subresource a route's declared access check asks for.
-func rolePermissions(group string, role app.ManifestRole, resources map[string]string) []ac.Permission {
-	seen := map[string]bool{}
-	permissions := make([]ac.Permission, 0, len(role.Kinds))
-	for _, kind := range role.Kinds {
-		base, sub, isSub := strings.Cut(kind.Kind, "/")
-		resource, ok := resources[base]
-		if !ok {
-			logging.DefaultLogger.Warn("skipping manifest role kind that no served version declares",
-				"group", group, "kind", kind.Kind)
-			continue
-		}
-		if isSub {
-			// A declared check names a subresource as one path segment, so
-			// anything else would grant an action no check asks for.
-			if sub == "" || strings.Contains(sub, "/") {
-				logging.DefaultLogger.Warn("skipping manifest role kind that names no single custom route",
-					"group", group, "kind", kind.Kind)
-				continue
-			}
-			// Built-in subresources, not routes, so no declared check asks for
-			// them, and users may not write status at all.
-			if strings.EqualFold(sub, "status") || strings.EqualFold(sub, "scale") {
-				logging.DefaultLogger.Warn("skipping manifest role kind that names a built-in subresource",
-					"group", group, "kind", kind.Kind)
-				continue
-			}
-			resource += "/" + sub
-		}
-		for _, permission := range permissionsFor(group, []string{resource}, roleKindVerbs(group, kind)) {
-			if seen[permission.Action] {
-				continue
-			}
-			seen[permission.Action] = true
-			permissions = append(permissions, permission)
-		}
-	}
-	return permissions
-}
-
-// roleKindVerbs resolves the verbs a role grants on one kind, from the verbs it
-// lists or the permission set it names.
-func roleKindVerbs(group string, kind app.ManifestRoleKind) []string {
-	if len(kind.Verbs) > 0 {
-		return kind.Verbs
-	}
-	if kind.PermissionSet == nil {
-		return nil
-	}
-	verbs, ok := permissionSetVerbs[strings.ToLower(*kind.PermissionSet)]
-	if !ok {
-		logging.DefaultLogger.Warn("skipping manifest role kind with an unknown permission set",
-			"group", group, "kind", kind.Kind, "permissionSet", *kind.PermissionSet)
-	}
-	return verbs
-}
-
-// permissionsFor builds the scopeless actions the folder-authz model reads as
-// the stack role. Sorted and deduplicated, since several Kubernetes verbs
-// collapse onto one RBAC verb.
-func permissionsFor(group string, resources []string, verbs []string) []ac.Permission {
-	actions := map[string]bool{}
-	for _, resource := range resources {
-		for _, verb := range verbs {
-			// The same table the authz service derives the action to check
-			// from, so a verb it translates differently cannot name an action
-			// no access check ever asks for.
-			rbacVerb, ok := rbac.ActionVerb(verb)
-			if !ok {
-				logging.DefaultLogger.Warn("skipping manifest role verb Grafana does not authorize",
-					"group", group, "resource", resource, "verb", verb)
-				continue
-			}
-			actions[group+"/"+resource+":"+rbacVerb] = true
-		}
-	}
-
+// toPermissions wraps actions as scopeless permissions: a scopeless grant is
+// what checkPermissionWithFolderAuthz reads as the stack role; a wildcard scope
+// collapses to "*" instead and is not one.
+func toPermissions(actions []string) []ac.Permission {
 	permissions := make([]ac.Permission, 0, len(actions))
-	for _, action := range slices.Sorted(maps.Keys(actions)) {
-		// A scopeless grant is what checkPermissionWithFolderAuthz reads as the
-		// stack role; a wildcard scope collapses to "*" instead and is not one.
+	for _, action := range actions {
 		permissions = append(permissions, ac.Permission{Action: action})
 	}
 	return permissions
@@ -273,24 +175,6 @@ func roleGrants(group string, bindings *app.ManifestRoleBindings) map[string][]s
 			"group", group, "boundTo", name)
 	}
 	return grants
-}
-
-// kindResourceNames maps each kind a served version declares to the resource
-// name its storage is registered under, which is what an RBAC action names.
-func kindResourceNames(manifest *app.ManifestData) map[string]string {
-	resources := map[string]string{}
-	for _, version := range manifest.Versions {
-		if !version.Served {
-			continue
-		}
-		for _, kind := range version.Kinds {
-			if kind.Resource == "" {
-				continue // kindstore.New refuses these, so they have no resource
-			}
-			resources[kind.Kind] = kind.Resource
-		}
-	}
-	return resources
 }
 
 // roleName qualifies a manifest role name with the group it grants access to,

@@ -33,7 +33,7 @@ func runTestResourcePermissionScenarios(t *testing.T, backend resource.StorageBa
 		UserID:         123,
 		UserUID:        "u123",
 		Namespace:      nsPrefix + "-ns1",
-		OrgRole:        identity.RoleAdmin,
+		OrgRole:        types.RoleAdmin,
 		IsGrafanaAdmin: true,
 	}
 
@@ -283,7 +283,7 @@ func runTestListTrashAccessControl(t *testing.T, backend resource.StorageBackend
 		UserID:         123,
 		UserUID:        "u123",
 		Namespace:      namespace,
-		OrgRole:        identity.RoleAdmin,
+		OrgRole:        types.RoleAdmin,
 		IsGrafanaAdmin: true, // admin user
 	}
 
@@ -293,7 +293,7 @@ func runTestListTrashAccessControl(t *testing.T, backend resource.StorageBackend
 		UserID:         456,
 		UserUID:        "u456",
 		Namespace:      namespace,
-		OrgRole:        identity.RoleEditor,
+		OrgRole:        types.RoleEditor,
 		IsGrafanaAdmin: false, // non-admin user
 	}
 

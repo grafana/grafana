@@ -19,12 +19,6 @@ import (
 	v1alpha1 "github.com/grafana/grafana/apps/live/pkg/apis/live/v1alpha1"
 )
 
-var (
-	rawSchemaChannelv1alpha1     = []byte(`{"Channel":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"data":{"additionalProperties":true,"description":"DataFrame schema","type":"object"},"minute_rate":{"description":"The message count in the last min","type":"integer"},"path":{"description":"The Channel path","type":"string"}},"required":["path","minute_rate","data"],"type":"object"}}`)
-	versionSchemaChannelv1alpha1 app.VersionSchema
-	_                            = json.Unmarshal(rawSchemaChannelv1alpha1, &versionSchemaChannelv1alpha1)
-)
-
 var appManifestData = app.ManifestData{
 	AppName:          "live",
 	AppDisplayName:   "live",
@@ -34,42 +28,16 @@ var appManifestData = app.ManifestData{
 		{
 			Name:   "v1alpha1",
 			Served: true,
-			Kinds: []app.ManifestVersionKind{
-				{
-					Kind:       "Channel",
-					Plural:     "Channels",
-					Resource:   "channels",
-					Scope:      "Namespaced",
-					Conversion: false,
-					Search: &app.ManifestVersionKindSearch{
-						Endpoint: new(false),
-					},
-					Schema: &versionSchemaChannelv1alpha1,
-				},
-			},
+			Kinds:  []app.ManifestVersionKind{},
 			// nolint:staticcheck
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{
-					"/something": {
+					"/ws": {
 						Get: &spec3.Operation{
 							OperationProps: spec3.OperationProps{
-
-								OperationId: "getSomething",
-
-								Parameters: []*spec3.Parameter{
-
-									{
-										ParameterProps: spec3.ParameterProps{
-											Name: "message",
-											In:   "query",
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Type: []string{"string"},
-												},
-											},
-										},
-									},
-								},
+								Summary:     "Open a Grafana Live websocket",
+								Description: "Upgrades the connection to a Grafana Live (Centrifuge) websocket for the namespace. The request must include a websocket upgrade; the requester must belong to the namespace.",
+								OperationId: "connectWebsocket",
 
 								Responses: &spec3.Responses{
 									ResponsesProps: spec3.ResponsesProps{
@@ -82,35 +50,10 @@ var appManifestData = app.ManifestData{
 															Schema: &spec.Schema{
 																SchemaProps: spec.SchemaProps{
 																	Type: []string{"object"},
-																	Properties: map[string]spec.Schema{
-																		"apiVersion": {
-																			SchemaProps: spec.SchemaProps{
-																				Type:        []string{"string"},
-																				Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-																			},
+																	AdditionalProperties: &spec.SchemaOrBool{
+																		Schema: &spec.Schema{
+																			SchemaProps: spec.SchemaProps{},
 																		},
-																		"kind": {
-																			SchemaProps: spec.SchemaProps{
-																				Type:        []string{"string"},
-																				Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-																			},
-																		},
-																		"message": {
-																			SchemaProps: spec.SchemaProps{
-																				Type: []string{"string"},
-																			},
-																		},
-																		"namespace": {
-																			SchemaProps: spec.SchemaProps{
-																				Type: []string{"string"},
-																			},
-																		},
-																	},
-																	Required: []string{
-																		"namespace",
-																		"message",
-																		"apiVersion",
-																		"kind",
 																	},
 																}},
 														}},
@@ -127,7 +70,7 @@ var appManifestData = app.ManifestData{
 			},
 			OpenAPI: func() app.ManifestVersionOpenAPI {
 				var openAPI app.ManifestVersionOpenAPI
-				if err := json.Unmarshal([]byte("{\"paths\":{\"/namespaces/{namespace}/something\":{\"get\":{\"operationId\":\"getSomething\",\"parameters\":[{\"name\":\"message\",\"in\":\"query\",\"schema\":{\"type\":\"string\"}}],\"responses\":{\"default\":{\"description\":\"Default OK response\",\"content\":{\"application/json\":{\"schema\":{\"type\":\"object\",\"required\":[\"namespace\",\"message\",\"apiVersion\",\"kind\"],\"properties\":{\"apiVersion\":{\"description\":\"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\",\"type\":\"string\"},\"kind\":{\"description\":\"Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\",\"type\":\"string\"},\"message\":{\"type\":\"string\"},\"namespace\":{\"type\":\"string\"}},\"additionalProperties\":false}}}}}},\"parameters\":[{\"name\":\"namespace\",\"in\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}}]}}}"), &openAPI); err != nil {
+				if err := json.Unmarshal([]byte("{\"paths\":{\"/namespaces/{namespace}/ws\":{\"get\":{\"summary\":\"Open a Grafana Live websocket\",\"description\":\"Upgrades the connection to a Grafana Live (Centrifuge) websocket for the namespace. The request must include a websocket upgrade; the requester must belong to the namespace.\",\"operationId\":\"connectWebsocket\",\"responses\":{\"default\":{\"description\":\"Default OK response\",\"content\":{\"application/json\":{\"schema\":{\"type\":\"object\",\"additionalProperties\":{}}}}}}},\"parameters\":[{\"name\":\"namespace\",\"in\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}}]}}}"), &openAPI); err != nil {
 					panic(err)
 				}
 				return openAPI
@@ -144,9 +87,7 @@ func RemoteManifest() app.Manifest {
 	return app.NewAPIServerManifest("live")
 }
 
-var kindVersionToGoType = map[string]resource.Kind{
-	"Channel/v1alpha1": v1alpha1.ChannelKind(),
-}
+var kindVersionToGoType = map[string]resource.Kind{}
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.
 // If there is no association for the provided Kind and Version, exists will return false.
@@ -156,7 +97,7 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 }
 
 var customRouteToGoResponseType = map[string]any{
-	"v1alpha1||<namespace>/something|GET": v1alpha1.GetSomethingResponse{},
+	"v1alpha1||<namespace>/ws|GET": v1alpha1.ConnectWebsocketResponse{},
 }
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.

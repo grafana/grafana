@@ -103,7 +103,7 @@ export function buildAlertRuleResource(
     metadata: {
       name: existingK8sName,
       annotations: { [FOLDER_ANNOTATION]: folderUid },
-      labels: { ...labels, [FOLDER_ANNOTATION]: folderUid },
+      labels: { [FOLDER_ANNOTATION]: folderUid },
     },
     spec,
   };
@@ -137,7 +137,7 @@ export function buildRecordingRuleResource(
     metadata: {
       name: existingK8sName,
       annotations: { [FOLDER_ANNOTATION]: folderUid },
-      labels: { ...labels, [FOLDER_ANNOTATION]: folderUid },
+      labels: { [FOLDER_ANNOTATION]: folderUid },
     },
     spec,
   };
