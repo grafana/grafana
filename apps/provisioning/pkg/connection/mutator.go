@@ -32,11 +32,16 @@ func NewAdmissionMutator(factory Factory) *AdmissionMutator {
 
 // Mutate applies mutations to Connection resources
 func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	obj := a.GetObject()
+	// Status patches from any client must store conditions as metav1.Condition did.
+	if c, ok := obj.(*provisioning.Connection); ok {
+		c.Status.Conditions = provisioning.NormalizeConditions(c.Status.Conditions)
+	}
+
 	if a.GetSubresource() != "" && !provisioningadmission.SpecAndSecureChanged(a) {
 		return nil // pure status patch: spec/secure untouched, nothing to (re)mutate
 	}
 
-	obj := a.GetObject()
 	if obj == nil {
 		return nil
 	}

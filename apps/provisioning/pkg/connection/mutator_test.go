@@ -305,6 +305,26 @@ func TestAdmissionMutator_Mutate_SkipsSubresourcePatches(t *testing.T) {
 	require.NoError(t, m.Mutate(t.Context(), attr, nil))
 }
 
+func TestAdmissionMutator_Mutate_NormalizesConditionsOnStatusPatch(t *testing.T) {
+	// No EXPECT() on the factory: normalization must not depend on the spec mutation path.
+	m := NewAdmissionMutator(NewMockFactory(t))
+	old := &provisioning.Connection{
+		ObjectMeta: metav1.ObjectMeta{Name: "test"},
+		Spec:       provisioning.ConnectionSpec{Type: provisioning.ConnectionTypeGithub},
+	}
+	conn := old.DeepCopy()
+	conn.Status.Conditions = []provisioning.ConnectionCondition{{
+		Type: provisioning.ConditionTypeReady, Status: "True", ObservedGeneration: new(int64(0)),
+		LastTransitionTime: new("2026-01-02T03:04:05.123+01:00"),
+	}}
+
+	attr := newMutatorTestAttributesWithSubresource(conn, old, admission.Update, "status")
+	require.NoError(t, m.Mutate(t.Context(), attr, nil))
+	assert.Equal(t, []provisioning.ConnectionCondition{{
+		Type: provisioning.ConditionTypeReady, Status: "True", LastTransitionTime: new("2026-01-02T02:04:05Z"),
+	}}, conn.Status.Conditions)
+}
+
 func TestAdmissionMutator_Mutate_RunsForBundledSpecChange(t *testing.T) {
 	old := &provisioning.Connection{
 		ObjectMeta: metav1.ObjectMeta{Name: "test"},

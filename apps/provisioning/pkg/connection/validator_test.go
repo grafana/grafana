@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -334,6 +335,21 @@ func TestAdmissionValidator_Validate_SkipsSubresourcePatches(t *testing.T) {
 	attr := newValidatorTestAttributesWithSubresource(conn, old, admission.Update, false, "status")
 
 	require.NoError(t, v.Validate(context.Background(), attr, nil))
+}
+
+func TestAdmissionValidator_Validate_RejectsUnparsableConditionTime(t *testing.T) {
+	// No EXPECT() on the factory: the check runs before the status-patch shortcut.
+	v := NewAdmissionValidator(NewMockFactory(t), nil)
+	old := &provisioning.Connection{
+		ObjectMeta: metav1.ObjectMeta{Name: "test"},
+		Spec:       provisioning.ConnectionSpec{Type: provisioning.ConnectionTypeGithub},
+	}
+	conn := old.DeepCopy()
+	conn.Status.Conditions = []provisioning.ConnectionCondition{{Type: provisioning.ConditionTypeReady, LastTransitionTime: new("yesterday")}}
+
+	err := v.Validate(context.Background(), newValidatorTestAttributesWithSubresource(conn, old, admission.Update, false, "status"), nil)
+	require.True(t, apierrors.IsInvalid(err), "expected an Invalid error, got %v", err)
+	assert.Contains(t, err.Error(), "status.conditions[0].lastTransitionTime")
 }
 
 func TestAdmissionValidator_Validate_RunsForBundledSpecChange(t *testing.T) {

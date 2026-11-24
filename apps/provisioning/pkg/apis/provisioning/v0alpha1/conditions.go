@@ -5,6 +5,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 // Mirrors metav1.Condition with the same JSON encoding: lastTransitionTime is an RFC3339 timestamp, or null when unset.
@@ -104,6 +105,31 @@ func ConditionsFromMeta[C Condition](in []metav1.Condition) []C {
 		out[i] = ConditionFromMeta[C](c)
 	}
 	return out
+}
+
+// ValidateConditions rejects a lastTransitionTime that isn't RFC3339, as decoding into metav1.Time did.
+func ValidateConditions[C Condition](path *field.Path, conditions []C) field.ErrorList {
+	var list field.ErrorList
+	for i, c := range conditions {
+		ts := conditionFields(c).LastTransitionTime
+		if ts == nil {
+			continue
+		}
+		if _, err := time.Parse(time.RFC3339, *ts); err != nil {
+			list = append(list, field.Invalid(path.Index(i).Child("lastTransitionTime"), *ts, "must be an RFC3339 timestamp"))
+		}
+	}
+	return list
+}
+
+// NormalizeConditions rewrites conditions in the encoding of metav1.Condition: UTC whole seconds and no
+// zero observedGeneration. Mutation runs before validation, so conditions that ValidateConditions rejects
+// are returned unchanged rather than having their timestamp silently cleared.
+func NormalizeConditions[C Condition](conditions []C) []C {
+	if len(ValidateConditions(field.NewPath(""), conditions)) > 0 {
+		return conditions
+	}
+	return ConditionsFromMeta[C](ConditionsToMeta(conditions))
 }
 
 // SetStatusCondition applies meta.SetStatusCondition to conditions and reports whether they changed.

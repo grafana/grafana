@@ -2,11 +2,13 @@ package v0alpha1
 
 import (
 	"encoding/json"
+	"slices"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 func TestConditionJSONMatchesMetav1(t *testing.T) {
@@ -59,4 +61,53 @@ func TestSetStatusCondition(t *testing.T) {
 	require.NotNil(t, conditions[0].LastTransitionTime, "meta.SetStatusCondition stamps new conditions")
 
 	require.False(t, SetStatusCondition(&conditions, metav1.Condition{Type: ConditionTypeReady, Status: metav1.ConditionTrue, Reason: ReasonAvailable}))
+}
+
+func TestValidateConditions(t *testing.T) {
+	path := field.NewPath("status", "conditions")
+	tests := map[string]struct {
+		timestamp *string
+		wantErr   bool
+	}{
+		"unset":               {timestamp: nil},
+		"UTC":                 {timestamp: new("2026-01-02T03:04:05Z")},
+		"offset and fraction": {timestamp: new("2026-01-02T03:04:05.123+01:00")},
+		"empty":               {timestamp: new(""), wantErr: true},
+		"not a timestamp":     {timestamp: new("yesterday"), wantErr: true},
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			conditions := []ConnectionCondition{{Type: ConditionTypeReady}, {Type: "Other", LastTransitionTime: tt.timestamp}}
+			list := ValidateConditions(path, conditions)
+			if !tt.wantErr {
+				require.Empty(t, list)
+				return
+			}
+			require.Len(t, list, 1)
+			require.Equal(t, "status.conditions[1].lastTransitionTime", list[0].Field)
+			require.Equal(t, field.ErrorTypeInvalid, list[0].Type)
+		})
+	}
+}
+
+func TestNormalizeConditions(t *testing.T) {
+	t.Run("rewrites in the metav1.Condition encoding", func(t *testing.T) {
+		got := NormalizeConditions([]ConnectionCondition{{
+			Type: ConditionTypeReady, Status: "True", ObservedGeneration: new(int64(0)),
+			LastTransitionTime: new("2026-01-02T03:04:05.123+01:00"),
+		}})
+		require.Equal(t, []ConnectionCondition{{
+			Type: ConditionTypeReady, Status: "True", LastTransitionTime: new("2026-01-02T02:04:05Z"),
+		}}, got)
+	})
+	t.Run("leaves invalid conditions for validation to reject", func(t *testing.T) {
+		in := []ConnectionCondition{
+			{Type: ConditionTypeReady, ObservedGeneration: new(int64(0))},
+			{Type: "Other", LastTransitionTime: new("yesterday")},
+		}
+		require.Equal(t, in, NormalizeConditions(slices.Clone(in)))
+	})
+	t.Run("nil stays nil", func(t *testing.T) {
+		require.Nil(t, NormalizeConditions[ConnectionCondition](nil))
+	})
 }

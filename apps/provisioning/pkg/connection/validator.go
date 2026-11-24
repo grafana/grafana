@@ -49,13 +49,21 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 		return nil
 	}
 
-	if a.GetSubresource() != "" && !provisioningadmission.SpecAndSecureChanged(a) {
-		return nil // pure status patch: spec/secure untouched, nothing to (re)validate
-	}
-
 	obj := a.GetObject()
 	if obj == nil {
 		return nil
+	}
+
+	// Checked before the status-patch shortcut: an unparsable timestamp would make the object
+	// undecodable by a backend that still reads conditions as metav1.Condition.
+	if c, ok := obj.(*provisioning.Connection); ok {
+		if list := provisioning.ValidateConditions(field.NewPath("status", "conditions"), c.Status.Conditions); len(list) > 0 {
+			return apierrors.NewInvalid(provisioning.ConnectionResourceInfo.GroupVersionKind().GroupKind(), c.GetName(), list)
+		}
+	}
+
+	if a.GetSubresource() != "" && !provisioningadmission.SpecAndSecureChanged(a) {
+		return nil // pure status patch: spec/secure untouched, nothing to (re)validate
 	}
 
 	// Do not validate objects we are trying to delete
