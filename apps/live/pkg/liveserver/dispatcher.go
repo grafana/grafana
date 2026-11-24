@@ -462,8 +462,14 @@ func (d *Dispatcher) OnSubscribe(ctx context.Context, client *centrifuge.Client,
 		ready := make(chan struct{})
 		subscribeReply.SubscriptionReady = ready
 		go func() {
-			<-ready
-			reply.OnSubscriptionReady()
+			select {
+			case <-ready:
+				reply.OnSubscriptionReady()
+			case <-client.Context().Done():
+				// The client disconnected, or subscription setup failed before
+				// the reply was written; ready is never closed in that case, so
+				// stop waiting instead of leaking the goroutine.
+			}
 		}()
 	}
 	return subscribeReply, nil
