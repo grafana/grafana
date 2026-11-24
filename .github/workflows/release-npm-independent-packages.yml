@@ -110,15 +110,6 @@ jobs:
           github_app: grafana-pr-automation
           permission_set: main
 
-      # grafana-writer is the only app allowed to create refs and push here: it carries workflows:write, which
-      # skips the pre-receive workflow-file scan that times out on this repository.
-      - name: Get GitHub App token (writer)
-        id: get-writer-app-token
-        uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
-        with:
-          github_app: grafana-writer
-          permission_set: release-writer-main
-
       # Every tag exists when the tag job succeeded, so the version pull request is marked as released.
       - name: Mark the version pull request as tagged
         if: needs.tag.result == 'success'
@@ -154,6 +145,15 @@ jobs:
           echo "Dry run: the version pull request would be created or updated with these changes."
           git status --short
           git diff --stat
+
+      # grafana-writer is the only app allowed to create refs and push here: it carries workflows:write, which
+      # skips the pre-receive workflow-file scan that times out on this repository.
+      - name: Get GitHub App token (writer)
+        id: get-writer-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
+        with:
+          github_app: grafana-writer
+          permission_set: release-writer-main
 
       # Commits what Nx changed to the version pull request branch and opens the pull request, or updates it when the
       # result differs. It runs only when Nx changed files: with nothing to commit the action would reset an existing
