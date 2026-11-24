@@ -2,6 +2,12 @@
 
 # 13.0.14 (2026-11-24)
 
+### Security
+
+- Security: Fix CVE-2026-107561
+- Security: Fix CVE-2026-88943
+- Security: Fix CVE-2026-88960
+
 <!-- 13.0.14 END -->
 <!-- 13.0.13 START -->
 
