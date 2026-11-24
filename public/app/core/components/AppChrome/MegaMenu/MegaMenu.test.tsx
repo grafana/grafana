@@ -5,7 +5,7 @@ import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils
 import { type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, reportInteraction, setBackendSrv } from '@grafana/runtime';
-import { getKindDiscoveryHandler, getKindSearchHandler } from '@grafana/test-utils/handlers';
+import { getAPIGroupHandler, getKindSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import {
   customGetUserPreferencesHandler,
@@ -826,7 +826,7 @@ describe('MegaMenu', () => {
     setMockStarredDashboards([]);
     setMockStarredPluginKind(MOCK_STARRED_KIND_SERVED.group, MOCK_STARRED_KIND_SERVED.kind, [pageUuid]);
     server.use(
-      getKindDiscoveryHandler(MOCK_STARRED_KIND_SERVED),
+      getAPIGroupHandler(MOCK_STARRED_KIND_SERVED.group, MOCK_STARRED_KIND_SERVED.version),
       getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [{ name: pageUuid, title: 'Capacity review' }])
     );
     setupSearcher([]);

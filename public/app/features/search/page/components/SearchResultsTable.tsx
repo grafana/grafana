@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useMemo, useReducer, useRef, useCallback, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useCallback, useState, type CSSProperties } from 'react';
 import * as React from 'react';
 import { useTable, type Column, type TableOptions, type Cell } from 'react-table';
 import { FixedSizeList } from 'react-window';
@@ -64,9 +64,6 @@ export const SearchResultsTable = React.memo(
     const [listEl, setListEl] = useState<FixedSizeList | null>(null);
     const highlightIndex = useSearchKeyboardNavigation(keyboardEvents, 0, response);
     const { value: panelPluginMetas = EMPTY_PANEL_PLUGIN_METAS } = usePanelPluginMetasMap();
-    // A page loaded later can correct the row count of the first; the table renders again to read it
-    const [, readRowCountAgain] = useReducer((reads: number) => reads + 1, 0);
-    const rowCount = response.totalRows;
 
     const memoizedData = useMemo(() => {
       if (!response?.view?.dataFrame.fields.length) {
@@ -76,11 +73,10 @@ export const SearchResultsTable = React.memo(
       // as we only use this to fake the length of our data set for react-table we need to make sure we always return an array
       // filled with values at each index otherwise we'll end up trying to call accessRow for null|undefined value in
       // https://github.com/tannerlinsley/react-table/blob/7be2fc9d8b5e223fc998af88865ae86a88792fdb/src/hooks/useTable.js#L585
-      return Array(rowCount).fill(0);
-    }, [response, rowCount]);
+      return Array(response.totalRows).fill(0);
+    }, [response]);
 
-    // Scroll to the top and clear loader cache when the query results change. A corrected row count is not a new
-    // result: the reader stays where they scrolled to
+    // Scroll to the top and clear loader cache when the query results change
     useEffect(() => {
       if (infiniteLoaderRef.current) {
         infiniteLoaderRef.current.resetloadMoreItemsCache();
@@ -88,7 +84,7 @@ export const SearchResultsTable = React.memo(
       if (listEl) {
         listEl.scrollTo(0);
       }
-    }, [response, listEl]);
+    }, [memoizedData, listEl]);
 
     // React-table column definitions
     const memoizedColumns = useMemo(() => {
@@ -128,11 +124,7 @@ export const SearchResultsTable = React.memo(
 
     const handleLoadMore = useCallback(
       async (startIndex: number, endIndex: number) => {
-        const counted = response.totalRows;
         await response.loadMoreItems(endIndex);
-        if (response.totalRows !== counted) {
-          readRowCountAgain();
-        }
 
         // After we load more items, select them if the "select all" checkbox
         // is selected

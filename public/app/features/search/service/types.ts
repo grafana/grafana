@@ -43,7 +43,7 @@ export interface SearchQuery {
 }
 
 export interface DashboardQueryResult {
-  kind: string; // panel, dashboard, folder, or a registered kind's group/Kind
+  kind: string; // panel, dashboard, folder
   name: string;
   uid: string;
   url: string; // link to value (unique)
@@ -90,7 +90,7 @@ export interface QueryResponse {
   /** Checks if a row in the view needs to be added */
   isItemLoaded: (index: number) => boolean;
 
-  /** The total query results size. A page loaded later can correct it, so read it again after loading more */
+  /** the total query results size */
   totalRows: number;
 }
 

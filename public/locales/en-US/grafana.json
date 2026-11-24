@@ -13794,6 +13794,7 @@
     },
     "megamenu-item": {
       "children-error": "Failed to load items",
+      "children-partial-error": "Failed to load some items",
       "collapse-aria-label": "Collapse section: {{sectionName}}",
       "expand-aria-label": "Expand section: {{sectionName}}",
       "loading-aria-label": "Loading {{sectionName}}",

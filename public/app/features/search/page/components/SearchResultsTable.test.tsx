@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type MouseEvent } from 'react';
 import { Subject } from 'rxjs';
@@ -159,36 +159,6 @@ describe('SearchResultsTable', () => {
       await screen.findByRole('table');
 
       expect(screen.queryByLabelText('Description')).not.toBeInTheDocument();
-    });
-
-    it('drops the loading rows once a page shows the results end before the count', async () => {
-      const response: QueryResponse = {
-        view: new DataFrameView<DashboardQueryResult>(dataFrames[0]),
-        isItemLoaded: (index) => index < 1,
-        // Two more rows than the page holds
-        totalRows: 3,
-        // The next page comes back empty, so the count drops to the row already shown
-        loadMoreItems: async () => {
-          response.totalRows = 1;
-        },
-      };
-
-      render(
-        <SearchResultsTable
-          keyboardEvents={mockKeyboardEvents}
-          response={response}
-          onTagSelected={mockOnTagSelected}
-          selection={mockSelection}
-          selectionToggle={mockSelectionToggle}
-          clearSelection={mockClearSelection}
-          height={1000}
-          width={1000}
-        />
-      );
-
-      // The header row and the one result
-      await waitFor(() => expect(screen.getAllByRole('row')).toHaveLength(2));
-      expect(screen.getByText('My dashboard 1')).toBeInTheDocument();
     });
   });
 

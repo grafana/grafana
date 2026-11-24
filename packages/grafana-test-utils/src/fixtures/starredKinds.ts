@@ -1,8 +1,8 @@
 import { type MockServedKind } from '../handlers/apis/kindSearch/handlers';
 
 /**
- * An app kind Grafana has a page for, as the apiserver describes it: the Assistant's Page. Pair with
- * getKindDiscoveryHandler and getKindSearchHandler; Grafana shows its stars once discovery serves it.
+ * An app kind Grafana has a page for, as the apiserver serves it: the Assistant's Page. Pair with
+ * getAPIGroupHandler and getKindSearchHandler; Grafana shows its stars once the instance serves its group.
  */
 export const MOCK_STARRED_KIND_SERVED: MockServedKind = {
   group: 'assistant.ext.grafana.app',

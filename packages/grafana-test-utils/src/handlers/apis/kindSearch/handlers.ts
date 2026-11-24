@@ -1,9 +1,8 @@
-import { groupBy } from 'lodash';
 import { HttpResponse, http } from 'msw';
 
 import { type GlobalSearchQuery } from '@grafana/api-clients/rtkq/search/v0alpha1';
 
-/** A kind served by the app platform, as the discovery and per-kind search handlers describe it. */
+/** A kind served by the app platform, as its API group and its per-kind search answer for it. */
 export interface MockServedKind {
   group: string;
   version: string;
@@ -26,43 +25,24 @@ const MAX_PAGE_SIZE = 500;
 export const kindSearchRoute = (served: MockServedKind) =>
   `/apis/${served.group}/${served.version}/namespaces/:namespace/${served.plural}/search`;
 
-/** A group version that serves routes but no resources, as discovery lists `live.grafana.app/v1alpha1`. */
-type MockRouteOnlyVersion = Pick<MockServedKind, 'group' | 'version'>;
-
 /**
- * Answers aggregated API discovery (`GET /apis`) for the served kinds the way the apiserver does:
- * each group with its versions and their resources. A version given without a kind serves routes
- * only. Core resolves the version and plural of a registered kind through this.
+ * Answers the discovery of one API group (`GET /apis/{group}/`) the way the apiserver does: the versions the
+ * group serves, the first of them preferred. A group given no version is not registered, which is a 404.
  */
-export function getKindDiscoveryHandler(...served: Array<MockServedKind | MockRouteOnlyVersion>) {
-  return http.get('/apis', () =>
-    HttpResponse.json({
-      kind: 'APIGroupDiscoveryList',
-      apiVersion: 'apidiscovery.k8s.io/v2',
-      metadata: {},
-      items: Object.entries(groupBy(served, (entry) => entry.group)).map(([group, entries]) => ({
-        metadata: { name: group },
-        versions: Object.entries(groupBy(entries, (entry) => entry.version)).map(([version, versionEntries]) => {
-          const versionKinds = versionEntries.filter((entry): entry is MockServedKind => 'kind' in entry);
-          return {
-            version,
-            freshness: 'Current',
-            // Left out of the JSON when undefined: the apiserver lists a route-only version without `resources`
-            resources:
-              versionKinds.length === 0
-                ? undefined
-                : versionKinds.map((kind) => ({
-                    resource: kind.plural,
-                    responseKind: { group: '', version: '', kind: kind.kind },
-                    scope: 'Namespaced',
-                    singularResource: kind.plural.replace(/s$/, ''),
-                    verbs: ['create', 'delete', 'get', 'list', 'patch', 'update', 'watch'],
-                  })),
-          };
-        }),
-      })),
-    })
-  );
+export function getAPIGroupHandler(group: string, ...versions: string[]) {
+  return http.get(`/apis/${group}/`, () => {
+    if (versions.length === 0) {
+      return new HttpResponse(null, { status: 404 });
+    }
+    const served = versions.map((version) => ({ groupVersion: `${group}/${version}`, version }));
+    return HttpResponse.json({
+      kind: 'APIGroup',
+      apiVersion: 'v1',
+      name: group,
+      versions: served,
+      preferredVersion: served[0],
+    });
+  });
 }
 
 /**

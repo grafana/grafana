@@ -428,5 +428,6 @@ function trashItemToSearchResult(item: ResultItem, deletedByDisplayMap: Map<stri
     folder,
     tags: Array.isArray(tags) ? tags.filter((tag): tag is string => typeof tag === 'string') : [],
     field,
+    url: '',
   };
 }

@@ -3,8 +3,10 @@ import { useState } from 'react';
 import { testWithStarsUser } from 'test/helpers/testWithStarsUser';
 import { render, screen, waitFor } from 'test/test-utils';
 
+import { type GlobalSearchQuery } from '@grafana/api-clients/rtkq/search/v0alpha1';
+import { AppEvents } from '@grafana/data';
 import { config, setBackendSrv } from '@grafana/runtime';
-import { getKindDiscoveryHandler, getKindSearchHandler, kindSearchRoute } from '@grafana/test-utils/handlers';
+import { getAPIGroupHandler, getKindSearchHandler, kindSearchRoute } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import {
   getFolderFixtures,
@@ -13,10 +15,11 @@ import {
   setMockStarredFolders,
   setMockStarredPluginKind,
 } from '@grafana/test-utils/unstable';
+import { appEvents } from 'app/core/app_events';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type GrafanaSearcher, type SearchQuery } from 'app/features/search/service/types';
-import { useStarItem, useStarredSearch } from 'app/features/stars/hooks';
+import { useStarItem, useStarredSearchWithAppKinds } from 'app/features/stars/hooks';
 
 import { useNavTree } from './useNavTree';
 
@@ -29,26 +32,52 @@ const [_, { dashbdD, folderA_dashbdD, folderA }] = getFolderFixtures();
 const starredDashboards = [dashbdD.item, folderA_dashbdD.item];
 // A plugin kind's name is whatever its API uses; a Page's is a UUID
 const PAGE_UUID = '7d0c6f1e-3b2a-4c5d-9e8f-0a1b2c3d4e5f';
+const OTHER_PAGE_UUID = 'a2d9f0c4-6f1b-4c0e-8a57-3e9b1d7c5f20';
 const PAGE_URL = `/a/grafana-assistant-app/pages/${PAGE_UUID}`;
 const { group: PAGE_GROUP, kind: PAGE_KIND } = MOCK_STARRED_KIND_SERVED;
 const PAGE_ROW = `synced-starred/${PAGE_GROUP}/${PAGE_KIND}/${PAGE_UUID}`;
+// A version the Page kind is no longer searched at, for a group that still prefers it
+const RETIRED_VERSION = 'v0alpha0';
 
 setBackendSrv(backendSrv);
 setupMockServer();
 
-/** Serves the Page kind through discovery, so it resolves through its own search. */
+/** Serves the Page kind's API group, so the kind resolves through its own search. */
 function servePages() {
-  server.use(getKindDiscoveryHandler(MOCK_STARRED_KIND_SERVED));
+  server.use(getAPIGroupHandler(PAGE_GROUP, MOCK_STARRED_KIND_SERVED.version));
+}
+
+/** Holds the Page search open until `answer` is called; it then finds the starred Page. */
+function holdPageSearch() {
+  let answer = () => {};
+  const held = new Promise<void>((resolve) => {
+    answer = resolve;
+  });
+  const asked = jest.fn(async () => {
+    await held;
+    return HttpResponse.json({
+      metadata: { totalHits: 1, totalHitsRelation: 'eq' },
+      items: [
+        {
+          resource: { group: PAGE_GROUP, resource: 'pages', kind: PAGE_KIND, name: PAGE_UUID },
+          fields: { title: 'My Page' },
+        },
+      ],
+    });
+  });
+  server.use(http.post(kindSearchRoute(MOCK_STARRED_KIND_SERVED), asked));
+  return { asked, answer };
 }
 
 /** Renders the tree plus the starred search status, with a read-only list of the tree's starred children */
 const TestHarness = () => {
   const navTree = useNavTree();
-  const { loading: starredLoading, error: starredError } = useStarredSearch();
+  const { loading: starredLoading, error: starredError, refetch } = useStarredSearchWithAppKinds();
   const starred = navTree.find((item) => item.id === 'starred');
 
   return (
     <>
+      <button onClick={refetch}>search again</button>
       <span data-testid="loading-state">{String(starredLoading)}</span>
       <span data-testid="error-state">{String(starredError)}</span>
       <ul data-testid="starred-list">
@@ -235,20 +264,20 @@ describe('useNavTree', () => {
     expect(screen.getByTestId('synced-starred/dashboard/d50')).toBeInTheDocument();
   });
 
-  it('loads the app kinds only once the stars hold one, then lists it', async () => {
+  it('asks for the API of an app kind only once the stars hold one of its objects, then lists it', async () => {
     const dashUid = dashbdD.item.uid;
     setMockStarredDashboards([dashUid]);
-    const discovery = jest.fn(() => HttpResponse.json({ items: [] }));
-    server.use(http.get('/apis', discovery));
+    const group = jest.fn(() => new HttpResponse(null, { status: 404 }));
+    server.use(http.get(`/apis/${PAGE_GROUP}/`, group));
     setupSearchMock([{ uid: dashUid, name: 'My Dashboard', url: `/d/${dashUid}`, kind: 'dashboard' }]);
 
     const { unmount } = render(<TestHarness />);
 
-    // Dashboards alone need no discovery
+    // Dashboards alone ask nothing of a plugin
     await waitFor(() => {
       expect(screen.getByTestId(`synced-starred/dashboard/${dashUid}`)).toBeInTheDocument();
     });
-    expect(discovery).not.toHaveBeenCalled();
+    expect(group).not.toHaveBeenCalled();
     unmount();
 
     setMockStarredPluginKind(PAGE_GROUP, PAGE_KIND, [PAGE_UUID]);
@@ -264,96 +293,335 @@ describe('useNavTree', () => {
     expect(screen.getByTestId(PAGE_ROW)).toHaveAttribute('data-icon', 'cube');
   });
 
-  it('lists a starred plugin object when the instance also serves a version with routes only', async () => {
+  it('asks the kind search for the starred names alone', async () => {
     setMockStarredDashboards([]);
     setMockStarredPluginKind(PAGE_GROUP, PAGE_KIND, [PAGE_UUID]);
+    servePages();
+    const queries: unknown[] = [];
     server.use(
-      getKindDiscoveryHandler({ group: 'live.grafana.app', version: 'v1alpha1' }, MOCK_STARRED_KIND_SERVED),
-      getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [{ name: PAGE_UUID, title: 'My Page' }])
+      http.post(kindSearchRoute(MOCK_STARRED_KIND_SERVED), async ({ request }) => {
+        queries.push(await request.json());
+        return HttpResponse.json({ metadata: { totalHits: 0, totalHitsRelation: 'eq' }, items: [] });
+      })
     );
     setupSearchMock([]);
 
     render(<TestHarness />);
 
     await waitFor(() => {
-      expect(screen.getByTestId(PAGE_ROW)).toHaveTextContent('My Page');
+      expect(queries).toHaveLength(1);
     });
+    // The server decodes strictly, so the whole body is the contract
+    expect(queries).toEqual([
+      {
+        apiVersion: 'search.grafana.app/v0alpha1',
+        kind: 'SearchQuery',
+        where: { filter: { field: 'name', operator: 'In', values: [PAGE_UUID] } },
+        fields: ['title', 'folder', 'description', 'tags'],
+        limit: 1,
+      },
+    ]);
+  });
+
+  it('names a plugin row after the object when it has no title', async () => {
+    setMockStarredDashboards([]);
+    setMockStarredPluginKind(PAGE_GROUP, PAGE_KIND, [PAGE_UUID]);
+    servePages();
+    server.use(getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [{ name: PAGE_UUID, title: '' }]));
+    setupSearchMock([]);
+
+    render(<TestHarness />);
+
+    expect(await screen.findByTestId(PAGE_ROW)).toHaveTextContent(PAGE_UUID);
+  });
+
+  it('lists every plugin row of a star set larger than one page of the kind search', async () => {
+    const names = Array.from({ length: 501 }, (_, index) => `p${index}`);
+    setMockStarredDashboards([]);
+    setMockStarredPluginKind(PAGE_GROUP, PAGE_KIND, names);
+    servePages();
+    server.use(
+      getKindSearchHandler(
+        MOCK_STARRED_KIND_SERVED,
+        names.map((name) => ({ name, title: name }))
+      )
+    );
+    setupSearchMock([]);
+
+    render(<TestHarness />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('starred-list').children).toHaveLength(501);
+    });
+  });
+
+  it('asks the kind search again when a page stops short of the starred names', async () => {
+    setMockStarredDashboards([]);
+    setMockStarredPluginKind(PAGE_GROUP, PAGE_KIND, [PAGE_UUID, OTHER_PAGE_UUID]);
+    servePages();
+    const item = (name: string, title: string) => ({
+      resource: { group: PAGE_GROUP, resource: 'pages', kind: PAGE_KIND, name },
+      fields: { title },
+    });
+    const tokens: Array<string | undefined> = [];
+    server.use(
+      http.post<{ namespace: string }, GlobalSearchQuery>(
+        kindSearchRoute(MOCK_STARRED_KIND_SERVED),
+        async ({ request }) => {
+          const query = await request.json();
+          tokens.push(query.continue);
+          // The server may cut a page short; it then hands out a token for the rest
+          return HttpResponse.json(
+            query.continue
+              ? { metadata: { totalHits: 2, totalHitsRelation: 'lte' }, items: [item(OTHER_PAGE_UUID, 'Second page')] }
+              : {
+                  metadata: { totalHits: 2, totalHitsRelation: 'lte', continue: 'rest' },
+                  items: [item(PAGE_UUID, 'First page')],
+                }
+          );
+        }
+      )
+    );
+    setupSearchMock([]);
+
+    render(<TestHarness />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('starred-list').children).toHaveLength(2);
+    });
+    expect(tokens).toEqual([undefined, 'rest']);
+  });
+
+  it('asks the kind search once when a page holds every starred name, though it comes with a token', async () => {
+    setMockStarredDashboards([]);
+    setMockStarredPluginKind(PAGE_GROUP, PAGE_KIND, [PAGE_UUID, OTHER_PAGE_UUID]);
+    servePages();
+    // The server hands out a token with a full page, as it cannot tell whether more would follow
+    const asked = jest.fn(() =>
+      HttpResponse.json({
+        metadata: { totalHits: 2, totalHitsRelation: 'lte', continue: 'more' },
+        items: [PAGE_UUID, OTHER_PAGE_UUID].map((name) => ({
+          resource: { group: PAGE_GROUP, resource: 'pages', kind: PAGE_KIND, name },
+          fields: { title: name },
+        })),
+      })
+    );
+    server.use(http.post(kindSearchRoute(MOCK_STARRED_KIND_SERVED), asked));
+    setupSearchMock([]);
+
+    render(<TestHarness />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('starred-list').children).toHaveLength(2);
+    });
+    expect(asked).toHaveBeenCalledTimes(1);
+  });
+
+  it('stops asking a kind search that hands out a token with every page', async () => {
+    setMockStarredDashboards([]);
+    setMockStarredPluginKind(PAGE_GROUP, PAGE_KIND, [PAGE_UUID]);
+    servePages();
+    const asked = jest.fn(() =>
+      HttpResponse.json({ metadata: { totalHits: 1, totalHitsRelation: 'lte', continue: 'more' }, items: [] })
+    );
+    server.use(http.post(kindSearchRoute(MOCK_STARRED_KIND_SERVED), asked));
+    setupSearchMock([]);
+
+    render(<TestHarness />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('loading-state')).toHaveTextContent('false');
+    });
+    // A page accounts for one name at least, so one starred name is one page at most
+    expect(asked).toHaveBeenCalledTimes(1);
   });
 
   it.each([
     {
-      desc: 'lists the group stale, as it does a group whose backend it cannot read',
-      answer: () =>
-        HttpResponse.json({
-          items: [{ metadata: { name: PAGE_GROUP }, versions: [{ version: 'v0alpha1', freshness: 'Stale' }] }],
-        }),
+      desc: 'cannot be read',
+      first: http.get(`/apis/${PAGE_GROUP}/`, () => new HttpResponse(null, { status: 503 })),
     },
-    { desc: 'fails', answer: () => new HttpResponse(null, { status: 503 }) },
-  ])('lists a starred plugin object once the stars are read again, when discovery first $desc', async ({ answer }) => {
-    const folderUid = folderA.item.uid;
+    { desc: 'prefers a version since retired', first: getAPIGroupHandler(PAGE_GROUP, RETIRED_VERSION) },
+  ])('lists a starred plugin object on the next search, when its API group first $desc', async ({ first }) => {
     setMockStarredDashboards([]);
     setMockStarredPluginKind(PAGE_GROUP, PAGE_KIND, [PAGE_UUID]);
-    const firstDiscovery = jest.fn(answer);
     server.use(
-      http.get('/apis', firstDiscovery),
+      first,
+      http.post(
+        kindSearchRoute({ ...MOCK_STARRED_KIND_SERVED, version: RETIRED_VERSION }),
+        () => new HttpResponse(null, { status: 404 })
+      ),
       getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [{ name: PAGE_UUID, title: 'My Page' }])
     );
-    // A failed discovery is logged
-    jest.spyOn(console, 'error').mockImplementation(() => {});
-    setupSearchMock([{ uid: folderUid, name: 'My Folder', url: `/dashboards/f/${folderUid}`, kind: 'folder' }]);
+    // A group that cannot be read is logged, and so is a search at a version no longer served
+    const error = jest.spyOn(console, 'error').mockImplementation(() => {});
+    // The spy may be an earlier test's, with that test's calls
+    error.mockClear();
+    setupSearchMock([]);
 
-    const { user } = render(<StarFolderHarness uid={folderUid} />);
+    const { user } = render(<TestHarness />);
     await waitFor(() => {
-      expect(firstDiscovery).toHaveBeenCalledTimes(1);
+      expect(error).toHaveBeenCalledTimes(1);
     });
 
-    // The plugin is back, and starring a folder reads the stars again
+    // The plugin is back at its current version; the version is asked for with every search, not kept
     servePages();
-    await user.click(screen.getByRole('button', { name: 'star folder' }));
+    await user.click(screen.getByRole('button', { name: 'search again' }));
 
-    expect(await screen.findByTestId(`synced-starred/folder/${folderUid}`)).toHaveTextContent('My Folder');
     expect(await screen.findByTestId(PAGE_ROW)).toHaveTextContent('My Page');
   });
 
-  it('keeps dashboards in the nav and reports no error when a plugin kind API is unavailable', async () => {
+  it('lists the starred dashboards, no longer loading, while the kind search is still out', async () => {
     const dashUid = dashbdD.item.uid;
     setMockStarredDashboards([dashUid]);
     setMockStarredPluginKind(PAGE_GROUP, PAGE_KIND, [PAGE_UUID]);
     servePages();
-    server.use(http.post(kindSearchRoute(MOCK_STARRED_KIND_SERVED), () => new HttpResponse(null, { status: 503 })));
-    jest.spyOn(console, 'error').mockImplementation(() => {});
+    const pageSearch = holdPageSearch();
     setupSearchMock([{ uid: dashUid, name: 'My Dashboard', url: `/d/${dashUid}`, kind: 'dashboard' }]);
 
     render(<TestHarness />);
 
-    await waitFor(() => {
-      expect(screen.getByTestId(`synced-starred/dashboard/${dashUid}`)).toBeInTheDocument();
-    });
+    expect(await screen.findByTestId(`synced-starred/dashboard/${dashUid}`)).toHaveTextContent('My Dashboard');
+    // There are rows to show, so a plugin's API does not hold the list up
     expect(screen.getByTestId('loading-state')).toHaveTextContent('false');
-
-    // A plugin kind's API is served by the plugin and may be absent: not an error, the object is simply not shown
-    expect(screen.getByTestId('error-state')).toHaveTextContent('false');
     expect(screen.queryByTestId(PAGE_ROW)).not.toBeInTheDocument();
+
+    pageSearch.answer();
+    expect(await screen.findByTestId(PAGE_ROW)).toHaveTextContent('My Page');
   });
 
-  it('drops stars of a kind the instance does not serve', async () => {
-    const dashUid = dashbdD.item.uid;
-    setMockStarredDashboards([dashUid]);
+  it('stays loading until the kind search answers, when it has the only starred objects', async () => {
+    setMockStarredDashboards([]);
     setMockStarredPluginKind(PAGE_GROUP, PAGE_KIND, [PAGE_UUID]);
-    server.use(getKindDiscoveryHandler());
-    const mockSearcher = setupSearchMock([
-      { uid: dashUid, name: 'My Dashboard', url: `/d/${dashUid}`, kind: 'dashboard' },
-    ]);
+    servePages();
+    const pageSearch = holdPageSearch();
+    setupSearchMock([]);
 
     render(<TestHarness />);
 
     await waitFor(() => {
-      expect(screen.getByTestId(`synced-starred/dashboard/${dashUid}`)).toBeInTheDocument();
+      expect(pageSearch.asked).toHaveBeenCalledTimes(1);
+    });
+    // Not an empty list yet: the only starred objects are still on their way
+    expect(screen.getByTestId('loading-state')).toHaveTextContent('true');
+
+    pageSearch.answer();
+    expect(await screen.findByTestId(PAGE_ROW)).toHaveTextContent('My Page');
+    expect(screen.getByTestId('loading-state')).toHaveTextContent('false');
+  });
+
+  it('lists a folder starred while the kind search is still out', async () => {
+    const folderUid = folderA.item.uid;
+    setMockStarredDashboards([]);
+    setMockStarredPluginKind(PAGE_GROUP, PAGE_KIND, [PAGE_UUID]);
+    servePages();
+    const pageSearch = holdPageSearch();
+    setupSearchMock([{ uid: folderUid, name: 'My Folder', url: `/dashboards/f/${folderUid}`, kind: 'folder' }]);
+
+    const { user } = render(<StarFolderHarness uid={folderUid} />);
+    await waitFor(() => {
+      expect(pageSearch.asked).toHaveBeenCalledTimes(1);
+    });
+
+    await user.click(screen.getByRole('button', { name: 'star folder' }));
+
+    // A plugin's API that has yet to answer does not hold up a star made meanwhile
+    expect(await screen.findByTestId(`synced-starred/folder/${folderUid}`)).toHaveTextContent('My Folder');
+
+    pageSearch.answer();
+    expect(await screen.findByTestId(PAGE_ROW)).toHaveTextContent('My Page');
+  });
+
+  it.each([
+    { status: 405, level: 'warn', says: 'is served without a search endpoint' },
+    { status: 404, level: 'error', says: 'Failed to resolve starred assistant.ext.grafana.app/Page' },
+    { status: 503, level: 'error', says: 'Failed to resolve starred assistant.ext.grafana.app/Page' },
+  ] as const)(
+    'keeps dashboards in the nav without an error, logging a console $level, when the kind search answers $status',
+    async ({ status, level, says }) => {
+      const dashUid = dashbdD.item.uid;
+      setMockStarredDashboards([dashUid]);
+      setMockStarredPluginKind(PAGE_GROUP, PAGE_KIND, [PAGE_UUID]);
+      servePages();
+      server.use(http.post(kindSearchRoute(MOCK_STARRED_KIND_SERVED), () => new HttpResponse(null, { status })));
+      const log = jest.spyOn(console, level).mockImplementation(() => {});
+      // The spy may be an earlier test's, with that test's calls
+      log.mockClear();
+      setupSearchMock([{ uid: dashUid, name: 'My Dashboard', url: `/d/${dashUid}`, kind: 'dashboard' }]);
+
+      render(<TestHarness />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId(`synced-starred/dashboard/${dashUid}`)).toBeInTheDocument();
+      });
+      // The dashboard row does not wait for the plugin's API, which is logged once it has answered
+      await waitFor(() => {
+        expect(log).toHaveBeenCalledTimes(1);
+      });
+      expect(log.mock.calls[0][0]).toContain(says);
+
+      // A plugin kind's API is served by the plugin and may be absent: not an error, the object is simply not shown
+      expect(screen.getByTestId('error-state')).toHaveTextContent('false');
+      expect(screen.queryByTestId(PAGE_ROW)).not.toBeInTheDocument();
+    }
+  );
+
+  it('lists the starred plugin objects, with the error, when the search of dashboards and folders fails', async () => {
+    const dashUid = dashbdD.item.uid;
+    setMockStarredDashboards([dashUid]);
+    setMockStarredPluginKind(PAGE_GROUP, PAGE_KIND, [PAGE_UUID]);
+    servePages();
+    server.use(getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [{ name: PAGE_UUID, title: 'My Page' }]));
+    setupSearchMock([]).search.mockRejectedValue(new Error('the index is down'));
+
+    render(<TestHarness />);
+
+    expect(await screen.findByTestId(PAGE_ROW)).toHaveTextContent('My Page');
+    // The rows that loaded show, and the error tells a view that they are not all of them
+    await waitFor(() => {
+      expect(screen.getByTestId('error-state')).toHaveTextContent('true');
+    });
+    expect(screen.getByTestId('loading-state')).toHaveTextContent('false');
+  });
+
+  it('drops stars of a kind the instance does not serve', async () => {
+    setMockStarredDashboards([]);
+    setMockStarredPluginKind(PAGE_GROUP, PAGE_KIND, [PAGE_UUID]);
+    server.use(getAPIGroupHandler(PAGE_GROUP));
+    setupSearchMock([]);
+
+    render(<TestHarness />);
+
+    // Nothing else is starred, so the list is loading until the group has answered
+    await waitFor(() => {
+      expect(screen.getByTestId('loading-state')).toHaveTextContent('false');
     });
 
     // The instance has no Page API, so the star is neither searched for nor listed
-    expect(mockSearcher.search).toHaveBeenCalledWith({ name: [dashUid], kind: ['dashboard'], limit: 1 });
-    expect(screen.getByTestId('starred-list').children).toHaveLength(1);
+    expect(screen.getByTestId('starred-list')).toBeEmptyDOMElement();
+  });
+
+  it('raises no toast when the kind search fails', async () => {
+    setMockStarredDashboards([]);
+    setMockStarredPluginKind(PAGE_GROUP, PAGE_KIND, [PAGE_UUID]);
+    servePages();
+    server.use(http.post(kindSearchRoute(MOCK_STARRED_KIND_SERVED), () => new HttpResponse(null, { status: 503 })));
+    // The failed search is logged
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    const alertDecided = jest.spyOn(backendSrv, 'showErrorAlert');
+    const emit = jest.spyOn(appEvents, 'emit');
+    setupSearchMock([]);
+
+    render(<TestHarness />);
+
+    // The backend service decides on an alert a moment after a request fails
+    await waitFor(() => {
+      expect(alertDecided).toHaveBeenCalledWith(
+        expect.objectContaining({ url: expect.stringContaining('pages/search') }),
+        expect.anything()
+      );
+    });
+    expect(emit).not.toHaveBeenCalledWith(AppEvents.alertError, expect.anything());
   });
 
   it('drops stars of a kind Grafana has no page for, whatever page another plugin has at its plural', async () => {
@@ -366,7 +634,10 @@ describe('useNavTree', () => {
       { id: 'starred', text: 'Starred', children: [] },
       { id: 'plugin-page-unrelated-app', text: 'Things', url: '/a/unrelated-app/things', pluginId: 'unrelated-app' },
     ];
-    server.use(getKindDiscoveryHandler(things), getKindSearchHandler(things, [{ name: 't1', title: 'My Thing' }]));
+    server.use(
+      getAPIGroupHandler(things.group, things.version),
+      getKindSearchHandler(things, [{ name: 't1', title: 'My Thing' }])
+    );
     setupSearchMock([{ uid: dashUid, name: 'My Dashboard', url: `/d/${dashUid}`, kind: 'dashboard' }]);
 
     render(<TestHarness />);

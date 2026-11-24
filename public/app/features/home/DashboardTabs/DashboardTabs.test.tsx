@@ -7,9 +7,19 @@ import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1'
 import { config, reportInteraction, setBackendSrv } from '@grafana/runtime';
 import { setDataSourceInstanceSettings } from '@grafana/runtime/internal';
 import { mockComboboxRect } from '@grafana/test-utils';
-import { getCustomSearchHandler, searchRoute } from '@grafana/test-utils/handlers';
+import {
+  getAPIGroupHandler,
+  getCustomSearchHandler,
+  getKindSearchHandler,
+  searchRoute,
+} from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { setMockStarredDashboards, setMockStarredFolders } from '@grafana/test-utils/unstable';
+import {
+  MOCK_STARRED_KIND_SERVED,
+  setMockStarredDashboards,
+  setMockStarredFolders,
+  setMockStarredPluginKind,
+} from '@grafana/test-utils/unstable';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -146,6 +156,51 @@ describe('DashboardTabs', () => {
     expect(await screen.findByText('Starred Dashboard 1')).toBeInTheDocument();
     expect(screen.getByText('Starred Dashboard 2')).toBeInTheDocument();
     expect(screen.getByText('Starred Dashboard 3')).toBeInTheDocument();
+  });
+
+  it('lists a starred object of an app kind among the starred dashboards, linking into the plugin', async () => {
+    const pageUuid = '7d0c6f1e-3b2a-4c5d-9e8f-0a1b2c3d4e5f';
+    setMockStarredDashboards(['starred-1']);
+    setMockStarredPluginKind(MOCK_STARRED_KIND_SERVED.group, MOCK_STARRED_KIND_SERVED.kind, [pageUuid]);
+    server.use(
+      getAPIGroupHandler(MOCK_STARRED_KIND_SERVED.group, MOCK_STARRED_KIND_SERVED.version),
+      getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [{ name: pageUuid, title: 'Capacity review' }])
+    );
+
+    render(<DashboardTabs />);
+
+    // Recent is empty, so the card lands on Starred.
+    expect(await screen.findByRole('link', { name: 'Capacity review' })).toHaveAttribute(
+      'href',
+      `/a/grafana-assistant-app/pages/${pageUuid}`
+    );
+    expect(screen.getByText('Starred Dashboard 1')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /starred.*2/i })).toBeInTheDocument();
+  });
+
+  it('lists the starred objects that loaded under a retryable warning when the dashboard search fails', async () => {
+    const pageUuid = '7d0c6f1e-3b2a-4c5d-9e8f-0a1b2c3d4e5f';
+    setMockStarredDashboards(['starred-1']);
+    setMockStarredPluginKind(MOCK_STARRED_KIND_SERVED.group, MOCK_STARRED_KIND_SERVED.kind, [pageUuid]);
+    server.use(
+      http.get(searchRoute, () => HttpResponse.json({}, { status: 500 })),
+      getAPIGroupHandler(MOCK_STARRED_KIND_SERVED.group, MOCK_STARRED_KIND_SERVED.version),
+      getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [{ name: pageUuid, title: 'Capacity review' }])
+    );
+
+    const { user } = render(<DashboardTabs />);
+
+    // Recent is empty, so the card lands on Starred.
+    expect(await screen.findByRole('link', { name: 'Capacity review' })).toBeInTheDocument();
+    expect(screen.getByText('Could not load starred dashboards')).toBeInTheDocument();
+    expect(screen.queryByText('Starred Dashboard 1')).not.toBeInTheDocument();
+
+    server.use(getCustomSearchHandler(starredHits));
+    await user.click(screen.getByRole('button', { name: /retry/i }));
+
+    expect(await screen.findByText('Starred Dashboard 1')).toBeInTheDocument();
+    expect(screen.queryByText('Could not load starred dashboards')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Capacity review' })).toBeInTheDocument();
   });
 
   it('offers the full dashboard list from the dashboard tabs only', async () => {

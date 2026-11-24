@@ -174,6 +174,20 @@ describe('MegaMenuItem rendering branches', () => {
     expect(screen.getByText('Failed to load items')).toBeInTheDocument();
   });
 
+  it('renders the children that loaded, then an error message, when some children failed to load', () => {
+    const section: NavModelItem = {
+      id: 'dynamic',
+      text: 'Dynamic',
+      url: '/dynamic',
+      children: [{ id: 'dynamic/loaded', text: 'Loaded item', url: '/dynamic/loaded' }],
+    };
+
+    renderMenuItem(service, { link: section, childrenLoadError: true, defaultExpanded: true });
+
+    expect(screen.getByRole('link', { name: 'Loaded item' })).toBeInTheDocument();
+    expect(screen.getByText('Failed to load some items')).toBeInTheDocument();
+  });
+
   it('renders the empty message for an expanded section with no children and no loading state', () => {
     const section: NavModelItem = {
       id: 'empty',

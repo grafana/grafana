@@ -4,10 +4,11 @@ import { useCallback, useMemo } from 'react';
 import { useAddStarMutation, useRemoveStarMutation, useListStarsQuery } from 'app/api/clients/collections/v1alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
 import { type DashboardQueryResult } from 'app/features/search/service/types';
-import { useDispatch, useSelector } from 'app/types/store';
+import { useDispatch } from 'app/types/store';
 
 import { refetchStarred, useSearchStarredQuery } from './api';
-import { selectStarredKinds, starsHoldAppKind, useDiscoverAppKindsQuery } from './kinds';
+import { refetchStarredAppKinds, useSearchStarredAppKindsQuery } from './kindSearch';
+import { STARRED_APP_KINDS, STARRED_KINDS } from './kinds';
 import { canUseStars, findStarredNames, userStarsFieldSelector } from './utils';
 
 /** Star or unstar the item with this id. Every starred view follows the `Stars` cache the mutation invalidates. */
@@ -69,8 +70,11 @@ export const useStarredItems = (group: string, kind: string) => {
 /** The settled rows of a user without a stars resource; one array, so views keyed on the rows keep their memos */
 const NO_STARRED_ROWS: DashboardQueryResult[] = [];
 
+// Created once, not per sort
+const collator = new Intl.Collator();
+
 /**
- * The user's starred items of every kind Grafana shows, as search rows that follow the star set. The set is RTK
+ * The user's starred dashboards and folders, as search rows that follow the star set. The set is RTK
  * cache every star toggle invalidates and the search is keyed by it, so a toggle anywhere re-searches while the
  * previous rows stay up. Every caller shares one cache entry per star set; a view cuts the rows it shows after
  * sorting them. `skip` leaves both requests unmade for a view that does not render stars, and a user without a
@@ -84,22 +88,17 @@ export const useStarredSearch = ({
 }: { skip?: boolean; refetchOnMountOrArgChange?: boolean } = {}) => {
   const canStar = canUseStars();
   const stars = useListStarsQuery(skip || !canStar ? skipToken : { fieldSelector: userStarsFieldSelector() });
-  // App kinds are discovered once the stars hold one, and the search waits for them so it runs once, over every kind
-  const needsAppKinds = starsHoldAppKind(stars.data);
-  const appKinds = useDiscoverAppKindsQuery(needsAppKinds ? undefined : skipToken);
-  const kindsSettled = !needsAppKinds || appKinds.isSuccess || appKinds.isError;
-  const kinds = useSelector(selectStarredKinds);
 
-  // Names sorted, so the cache key is the set and not the order the API listed it in
+  // Keyed by search kind, names sorted, so the cache key is the set and not the order the API listed it in
   const args = useMemo(() => {
-    if (!stars.data || !kindsSettled) {
+    if (!stars.data) {
       return undefined;
     }
-    return kinds.flatMap(({ group, kind }) => {
+    return STARRED_KINDS.flatMap(({ group, kind, searchKind }) => {
       const names = [...findStarredNames(stars.data, group, kind)].sort();
-      return names.length > 0 ? [{ group, kind, names }] : [];
+      return names.length > 0 ? [{ kind: searchKind, names }] : [];
     });
-  }, [stars.data, kinds, kindsSettled]);
+  }, [stars.data]);
   const search = useSearchStarredQuery(args ?? skipToken, { refetchOnMountOrArgChange });
   const dispatch = useDispatch();
   const refetch = useCallback(() => dispatch(refetchStarred()), [dispatch]);
@@ -108,9 +107,58 @@ export const useStarredSearch = ({
     // A user without a stars resource has nothing starred: settled and empty, not waiting on a request never made
     rows: !skip && !canStar ? NO_STARRED_ROWS : search.data,
     // Until the first rows land; a changed star set keeps the previous rows up while it loads.
-    loading: stars.isLoading || appKinds.isLoading || search.isLoading,
-    // A failed discovery is not one: the dashboards and folders still list
+    loading: stars.isLoading || search.isLoading,
     error: stars.isError || search.isError,
+    refetch,
+  };
+};
+
+/**
+ * `useStarredSearch` with the starred objects of app kinds added, as one list in title order. The app rows are
+ * searched apart, each kind through its plugin's API, and only a view that lists every kind asks for them.
+ * Neither search waits for the other: `rows` holds what has answered so far. With `error` set the search of the
+ * dashboards and folders failed, so the rows are not all of the stars. A kind whose plugin cannot be searched is
+ * left out, not reported as an error.
+ */
+export const useStarredSearchWithAppKinds = ({
+  refetchOnMountOrArgChange,
+}: { refetchOnMountOrArgChange?: boolean } = {}) => {
+  const indexed = useStarredSearch({ refetchOnMountOrArgChange });
+  // The cache entry the search above reads
+  const stars = useListStarsQuery(canUseStars() ? { fieldSelector: userStarsFieldSelector() } : skipToken);
+
+  // Keyed by search kind, names sorted, so the cache key is the set and not the order the API listed it in
+  const args = useMemo(
+    () =>
+      STARRED_APP_KINDS.flatMap(({ group, kind, searchKind }) => {
+        const names = [...findStarredNames(stars.data, group, kind)].sort();
+        return names.length > 0 ? [{ kind: searchKind, names }] : [];
+      }),
+    [stars.data]
+  );
+  const apps = useSearchStarredAppKindsQuery(args.length > 0 ? args : skipToken, { refetchOnMountOrArgChange });
+  // A skipped query keeps the rows of its last star set, which no longer holds an app object
+  const appRows = args.length > 0 ? apps.data : undefined;
+
+  const rows = useMemo(() => {
+    if (!appRows?.length) {
+      return indexed.rows;
+    }
+    // Each search answers in its own order; sorted together, every kind reads as one list
+    return [...(indexed.rows ?? []), ...appRows].sort((a, b) => collator.compare(a.name, b.name));
+  }, [indexed.rows, appRows]);
+  const dispatch = useDispatch();
+  const { refetch: refetchIndexed } = indexed;
+  const refetch = useCallback(() => {
+    refetchIndexed();
+    dispatch(refetchStarredAppKinds());
+  }, [refetchIndexed, dispatch]);
+
+  return {
+    rows,
+    // Until there is a row to show or both searches have answered
+    loading: !rows?.length && (indexed.loading || apps.isLoading),
+    error: indexed.error,
     refetch,
   };
 };

@@ -56,7 +56,10 @@ interface Props {
   canCustomise?: boolean;
   /** Section-level only: children are being fetched, show placeholders instead of the empty message */
   loadingChildren?: boolean;
-  /** Section-level only: fetching children failed, show an error instead of the empty message */
+  /**
+   * Section-level only: fetching children failed. Shows an error instead of the empty message, or after the
+   * children that did load
+   */
   childrenLoadError?: boolean;
   /** Disable the pin/hide controls (e.g. while a save is in flight) so edits can't be made and lost. */
   disabled?: boolean;
@@ -315,6 +318,12 @@ export function MegaMenuItem({
           ) : (
             <div className={styles.emptyMessage} aria-live="polite">
               {link.emptyMessage}
+            </div>
+          )}
+          {/* Some children loaded and show above; the rest failed */}
+          {childrenLoadError && linkHasChildren(link) && (
+            <div className={styles.emptyMessage} aria-live="polite">
+              {t('navigation.megamenu-item.children-partial-error', 'Failed to load some items')}
             </div>
           )}
         </ul>
