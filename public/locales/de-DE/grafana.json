@@ -1543,6 +1543,9 @@
         "recording-rules_one": "{{formatted}} Aufzeichnungsregel",
         "recording-rules_other": "{{formatted}} Aufzeichnungsregeln"
       },
+      "saved-searches": {
+        "applied-default": ""
+      },
       "search": {
         "default-policy-unavailable": "Das Filtern nach der Standardrichtlinie ist noch nicht verfügbar.",
         "folders-disabled": "Filter löschen, um nach Ordner zu durchsuchen",
@@ -3027,12 +3030,12 @@
       },
       "empty": "",
       "error": "",
-      "load-more": "",
       "restore": {
         "body": "",
         "confirm": "",
         "conflict": "",
         "error": "",
+        "recording-title": "",
         "restoring": "",
         "title": ""
       },
@@ -3187,10 +3190,6 @@
         "group-name": "Name der Evaluierungsgruppe",
         "group-text": "Alle Regeln in der ausgewählten Gruppe werden alle {{evaluateEvery}} evaluiert.",
         "interval-label": "Evaluierungsintervall",
-        "mode": {
-          "legacy": "Gruppen verwenden (Legacy)",
-          "new": "Intervall festlegen"
-        },
         "new-group": "Neue Evaluierungsgruppe",
         "pause": {
           "alerting": "Aktivieren, um die Evaluierung für diese Warnregel zu pausieren.",
@@ -6740,6 +6739,9 @@
           "description": "Klicken oder ziehen Sie, um das Panel einzufügen",
           "title": "Panel einfügen"
         },
+        "question": {
+          "label": ""
+        },
         "row": {
           "add-label": "Zeile hinzufügen",
           "group-label": "In Zeilen gruppieren"
@@ -6863,6 +6865,7 @@
         "objects": "Objekte",
         "panel": "Panel",
         "panels": "Panels",
+        "question": "",
         "row": "Zeile",
         "rows": "Zeilen",
         "section-filters-set": "Filter",
@@ -6913,6 +6916,36 @@
           "empty": "(leer)",
           "no-title": "<kein Titel>"
         }
+      },
+      "questions": {
+        "add-question": "",
+        "description-dashboard": "",
+        "description-row": "",
+        "description-tab": "",
+        "new-question": "",
+        "placeholder": "",
+        "question": "",
+        "question-title": "",
+        "question-title-description": "",
+        "question-title-placeholder": "",
+        "sources": {
+          "collapse": "",
+          "description-dashboard": "",
+          "description-row": "",
+          "description-tab": "",
+          "entire-dashboard": "",
+          "expand": "",
+          "label": "",
+          "no-panels": "",
+          "unavailable-panel": "",
+          "untitled-row": "",
+          "untitled-tab": "",
+          "panel-count_one": "",
+          "panel-count_other": "",
+          "picked-count_one": "",
+          "picked-count_other": ""
+        },
+        "title": ""
       },
       "row": {
         "header": {
@@ -7174,6 +7207,8 @@
     },
     "transformation-operation-row": {
       "body-delete": "Beachten Sie, dass das Entfernen einer Transformation andere beschädigen kann. Wenn nur eine einzige Transformation vorliegt, kehren Sie zum Hauptauswahlbildschirm zurück.",
+      "expander-close": "",
+      "expander-open": "",
       "render-actions": {
         "confirmText-delete": "Löschen",
         "title-debug": "Debuggen",
@@ -8146,6 +8181,20 @@
       },
       "selection-options": "Auswahloptionen",
       "static-options-legend": "Statische Optionen"
+    },
+    "question-actions": {
+      "add": "",
+      "remove": "",
+      "reorder": "",
+      "update": ""
+    },
+    "question-edit": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
+    "question-edit-actions": {
+      "tooltip-question-settings": ""
     },
     "refresh-select": {
       "options": {
@@ -14204,32 +14253,6 @@
     },
     "units": {
       "clear-tooltip": "Einheitenauswahl löschen"
-    },
-    "var-mapping-checks": {
-      "data-macro": "",
-      "not-allowed": "",
-      "not-found": "",
-      "not-number": "",
-      "not-one-value": "",
-      "out-of-range": "",
-      "resolves": "",
-      "values": ""
-    },
-    "var-mapping-toggle": {
-      "aria-label-picker": "",
-      "fallback-off": "",
-      "fallback-on": "",
-      "group-matching": "",
-      "group-other": "",
-      "hint-boolean": "",
-      "hint-number": "",
-      "hint-option": "",
-      "hint-option-no-fallback": "",
-      "new-variable": "",
-      "option-current": "",
-      "placeholder": "",
-      "use-fixed-value": "",
-      "use-variable": ""
     }
   },
   "org": {
@@ -14326,7 +14349,8 @@
     },
     "get-panel-links-variable-suggestions": {
       "label": {
-        "all-variables": "Alle Variablen"
+        "all-variables": "Alle Variablen",
+        "current-dashboard-tabs": ""
       }
     },
     "header-menu": {
@@ -15237,7 +15261,6 @@
     "finish-step": {
       "description-enable-previews": "Fügt eine Bildvorschau der Dashboard-Änderungen bei Pull-Requests hinzu. Bilder Ihrer Grafana-Dashboards werden in Ihrem Git-Repository bereitgestellt und sind für jede Person mit Repository-Zugriff sichtbar.",
       "description-image-rendering": "Erfordert Bild-Rendering. <2>Bild-Rendering einrichten</2>",
-      "description-read-only": "Ressourcen können über Grafana nicht geändert werden.",
       "description-sync-interval": "Wie oft Änderungen aus dem Repository synchronisiert werden sollen",
       "error-sync-interval-required": "Synchronisierungsintervall erforderlich",
       "label-enable-previews": "Dashboard-Vorschau in Pull-Requests aktivieren",
@@ -16014,6 +16037,17 @@
       "button-submitting": "Übertragen …",
       "error-instance-repository-exists": "Das Instanz-Repository existiert bereits",
       "error-save-repository-setting": "Repository-Einstellung konnte nicht gespeichert werden"
+    },
+    "workflow": {
+      "direct-push": "",
+      "direct-push-description": "",
+      "direct-push-description-no-branch": "",
+      "merge-request": "",
+      "merge-request-description": "",
+      "merge-request-description-no-branch": "",
+      "pull-request": "",
+      "pull-request-description": "",
+      "pull-request-description-no-branch": ""
     }
   },
   "public-dashboard": {

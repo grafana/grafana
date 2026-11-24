@@ -1561,6 +1561,9 @@
         "recording-rules_many": "{{formatted}} правил записи",
         "recording-rules_other": "{{formatted}} правила записи"
       },
+      "saved-searches": {
+        "applied-default": ""
+      },
       "search": {
         "default-policy-unavailable": "Фильтр по политике по умолчанию пока недоступен.",
         "folders-disabled": "Очистите фильтры, чтобы выполнить поиск по папкам",
@@ -3075,12 +3078,12 @@
       },
       "empty": "",
       "error": "",
-      "load-more": "",
       "restore": {
         "body": "",
         "confirm": "",
         "conflict": "",
         "error": "",
+        "recording-title": "",
         "restoring": "",
         "title": ""
       },
@@ -3235,10 +3238,6 @@
         "group-name": "Имя группы оценки",
         "group-text": "Все правила в выбранной группе оцениваются каждые {{evaluateEvery}}.",
         "interval-label": "Интервал оценки",
-        "mode": {
-          "legacy": "Использовать группы (устаревшее)",
-          "new": "Задать интервал"
-        },
         "new-group": "Новая группа оценки",
         "pause": {
           "alerting": "Включите, чтобы приостановить оценку для этого правила оповещения.",
@@ -6840,6 +6839,9 @@
           "description": "Нажмите или перетащите, чтобы вставить панель",
           "title": "Вставьте панель"
         },
+        "question": {
+          "label": ""
+        },
         "row": {
           "add-label": "Добавить строку",
           "group-label": "Группировать в строки"
@@ -6963,6 +6965,7 @@
         "objects": "Объекты",
         "panel": "Панель",
         "panels": "Панели",
+        "question": "",
         "row": "Строка",
         "rows": "Строки",
         "section-filters-set": "Фильтры",
@@ -7015,6 +7018,40 @@
           "empty": "(пусто)",
           "no-title": "<нет заголовка>"
         }
+      },
+      "questions": {
+        "add-question": "",
+        "description-dashboard": "",
+        "description-row": "",
+        "description-tab": "",
+        "new-question": "",
+        "placeholder": "",
+        "question": "",
+        "question-title": "",
+        "question-title-description": "",
+        "question-title-placeholder": "",
+        "sources": {
+          "collapse": "",
+          "description-dashboard": "",
+          "description-row": "",
+          "description-tab": "",
+          "entire-dashboard": "",
+          "expand": "",
+          "label": "",
+          "no-panels": "",
+          "unavailable-panel": "",
+          "untitled-row": "",
+          "untitled-tab": "",
+          "panel-count_one": "",
+          "panel-count_few": "",
+          "panel-count_many": "",
+          "panel-count_other": "",
+          "picked-count_one": "",
+          "picked-count_few": "",
+          "picked-count_many": "",
+          "picked-count_other": ""
+        },
+        "title": ""
       },
       "row": {
         "header": {
@@ -7276,6 +7313,8 @@
     },
     "transformation-operation-row": {
       "body-delete": "Обратите внимание, что удаление одного преобразования может привести к нарушению работы других. Если имеется только одно преобразование, вы вернетесь на главный экран выбора.",
+      "expander-close": "",
+      "expander-open": "",
       "render-actions": {
         "confirmText-delete": "Удалить",
         "title-debug": "Отладка",
@@ -8258,6 +8297,20 @@
       },
       "selection-options": "Параметры выбора",
       "static-options-legend": "Статические параметры"
+    },
+    "question-actions": {
+      "add": "",
+      "remove": "",
+      "reorder": "",
+      "update": ""
+    },
+    "question-edit": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
+    "question-edit-actions": {
+      "tooltip-question-settings": ""
     },
     "refresh-select": {
       "options": {
@@ -14426,32 +14479,6 @@
     },
     "units": {
       "clear-tooltip": "Очистить выбор единицы"
-    },
-    "var-mapping-checks": {
-      "data-macro": "",
-      "not-allowed": "",
-      "not-found": "",
-      "not-number": "",
-      "not-one-value": "",
-      "out-of-range": "",
-      "resolves": "",
-      "values": ""
-    },
-    "var-mapping-toggle": {
-      "aria-label-picker": "",
-      "fallback-off": "",
-      "fallback-on": "",
-      "group-matching": "",
-      "group-other": "",
-      "hint-boolean": "",
-      "hint-number": "",
-      "hint-option": "",
-      "hint-option-no-fallback": "",
-      "new-variable": "",
-      "option-current": "",
-      "placeholder": "",
-      "use-fixed-value": "",
-      "use-variable": ""
     }
   },
   "org": {
@@ -14548,7 +14575,8 @@
     },
     "get-panel-links-variable-suggestions": {
       "label": {
-        "all-variables": "Все переменные"
+        "all-variables": "Все переменные",
+        "current-dashboard-tabs": ""
       }
     },
     "header-menu": {
@@ -15465,7 +15493,6 @@
     "finish-step": {
       "description-enable-previews": "Обеспечивает возможность просмотра изображений с изменениями дашборда в запросах на включение изменений. Изображения дашбордов Grafana будут публиковаться в вашем репозитории Git и видны всем, у кого есть доступ к репозиторию.",
       "description-image-rendering": "Требует визуализации изображений. <2>Настройте визуализацию изображений</2>.",
-      "description-read-only": "Ресурсы невозможно изменить через Grafana.",
       "description-sync-interval": "Как часто синхронизировать изменения из репозитория",
       "error-sync-interval-required": "Требуется указать интервал синхронизации",
       "label-enable-previews": "Включить просмотр дашбордов в запросах на включение изменений",
@@ -16272,6 +16299,17 @@
       "button-submitting": "Отправка...",
       "error-instance-repository-exists": "Репозиторий экземпляров уже существует",
       "error-save-repository-setting": "Не удалось сохранить параметры репозитория"
+    },
+    "workflow": {
+      "direct-push": "",
+      "direct-push-description": "",
+      "direct-push-description-no-branch": "",
+      "merge-request": "",
+      "merge-request-description": "",
+      "merge-request-description-no-branch": "",
+      "pull-request": "",
+      "pull-request-description": "",
+      "pull-request-description-no-branch": ""
     }
   },
   "public-dashboard": {

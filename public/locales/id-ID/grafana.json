@@ -1534,6 +1534,9 @@
         "alert-rules_other": "{{formatted}} aturan peringatan",
         "recording-rules_other": "{{formatted}} aturan perekaman"
       },
+      "saved-searches": {
+        "applied-default": ""
+      },
       "search": {
         "default-policy-unavailable": "Pemfilteran berdasarkan kebijakan default belum tersedia.",
         "folders-disabled": "Hapus filter untuk menelusuri berdasarkan folder",
@@ -3003,12 +3006,12 @@
       },
       "empty": "",
       "error": "",
-      "load-more": "",
       "restore": {
         "body": "",
         "confirm": "",
         "conflict": "",
         "error": "",
+        "recording-title": "",
         "restoring": "",
         "title": ""
       },
@@ -3163,10 +3166,6 @@
         "group-name": "Nama grup evaluasi",
         "group-text": "Semua aturan dalam grup yang dipilih dievaluasi setiap {{evaluateEvery}}.",
         "interval-label": "Interval evaluasi",
-        "mode": {
-          "legacy": "Gunakan grup (Lama)",
-          "new": "Atur interval"
-        },
         "new-group": "Grup evaluasi baru",
         "pause": {
           "alerting": "Aktifkan untuk menjeda evaluasi untuk aturan peringatan ini.",
@@ -6690,6 +6689,9 @@
           "description": "Klik atau seret untuk menempelkan panel",
           "title": "Tempel panel"
         },
+        "question": {
+          "label": ""
+        },
         "row": {
           "add-label": "Tambahkan baris",
           "group-label": "Kelompokkan ke dalam baris"
@@ -6813,6 +6815,7 @@
         "objects": "Objek",
         "panel": "Panel",
         "panels": "Panel",
+        "question": "",
         "row": "Baris",
         "rows": "Baris",
         "section-filters-set": "Filter",
@@ -6862,6 +6865,34 @@
           "empty": "(kosong)",
           "no-title": "<tanpa judul>"
         }
+      },
+      "questions": {
+        "add-question": "",
+        "description-dashboard": "",
+        "description-row": "",
+        "description-tab": "",
+        "new-question": "",
+        "placeholder": "",
+        "question": "",
+        "question-title": "",
+        "question-title-description": "",
+        "question-title-placeholder": "",
+        "sources": {
+          "collapse": "",
+          "description-dashboard": "",
+          "description-row": "",
+          "description-tab": "",
+          "entire-dashboard": "",
+          "expand": "",
+          "label": "",
+          "no-panels": "",
+          "unavailable-panel": "",
+          "untitled-row": "",
+          "untitled-tab": "",
+          "panel-count_other": "",
+          "picked-count_other": ""
+        },
+        "title": ""
       },
       "row": {
         "header": {
@@ -7123,6 +7154,8 @@
     },
     "transformation-operation-row": {
       "body-delete": "Perhatikan bahwa menghapus satu transformasi dapat merusak yang lain. Jika hanya ada satu transformasi, Anda akan kembali ke layar pemilihan utama.",
+      "expander-close": "",
+      "expander-open": "",
       "render-actions": {
         "confirmText-delete": "Hapus",
         "title-debug": "Debug",
@@ -8090,6 +8123,20 @@
       },
       "selection-options": "Opsi pemilihan",
       "static-options-legend": "Opsi statis"
+    },
+    "question-actions": {
+      "add": "",
+      "remove": "",
+      "reorder": "",
+      "update": ""
+    },
+    "question-edit": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
+    "question-edit-actions": {
+      "tooltip-question-settings": ""
     },
     "refresh-select": {
       "options": {
@@ -14093,32 +14140,6 @@
     },
     "units": {
       "clear-tooltip": "Hapus pemilihan unit"
-    },
-    "var-mapping-checks": {
-      "data-macro": "",
-      "not-allowed": "",
-      "not-found": "",
-      "not-number": "",
-      "not-one-value": "",
-      "out-of-range": "",
-      "resolves": "",
-      "values": ""
-    },
-    "var-mapping-toggle": {
-      "aria-label-picker": "",
-      "fallback-off": "",
-      "fallback-on": "",
-      "group-matching": "",
-      "group-other": "",
-      "hint-boolean": "",
-      "hint-number": "",
-      "hint-option": "",
-      "hint-option-no-fallback": "",
-      "new-variable": "",
-      "option-current": "",
-      "placeholder": "",
-      "use-fixed-value": "",
-      "use-variable": ""
     }
   },
   "org": {
@@ -14215,7 +14236,8 @@
     },
     "get-panel-links-variable-suggestions": {
       "label": {
-        "all-variables": "Semua variabel"
+        "all-variables": "Semua variabel",
+        "current-dashboard-tabs": ""
       }
     },
     "header-menu": {
@@ -15123,7 +15145,6 @@
     "finish-step": {
       "description-enable-previews": "Menambahkan pratinjau gambar dari perubahan dasbor di permintaan pull. Gambar dasbor Grafana Anda akan dibagikan di repositori Git Anda dan dapat dilihat oleh siapa saja yang memiliki akses repositori.",
       "description-image-rendering": "Membutuhkan rendering gambar. <2>Atur rendering gambar</2>",
-      "description-read-only": "Sumber daya tidak dapat dimodifikasi melalui Grafana.",
       "description-sync-interval": "Frekuens menyinkronkan perubahan dari repositori",
       "error-sync-interval-required": "Interval sinkronisasi wajib diisi",
       "label-enable-previews": "Aktifkan pratinjau dasbor dalam permintaan pull",
@@ -15885,6 +15906,17 @@
       "button-submitting": "Mengirim...",
       "error-instance-repository-exists": "Repositori instans sudah ada",
       "error-save-repository-setting": "Gagal menyimpan pengaturan repositori"
+    },
+    "workflow": {
+      "direct-push": "",
+      "direct-push-description": "",
+      "direct-push-description-no-branch": "",
+      "merge-request": "",
+      "merge-request-description": "",
+      "merge-request-description-no-branch": "",
+      "pull-request": "",
+      "pull-request-description": "",
+      "pull-request-description-no-branch": ""
     }
   },
   "public-dashboard": {

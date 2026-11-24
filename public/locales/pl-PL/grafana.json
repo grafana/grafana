@@ -1561,6 +1561,9 @@
         "recording-rules_many": "{{formatted}} reguł rejestrowania",
         "recording-rules_other": "{{formatted}} reguły rejestrowania"
       },
+      "saved-searches": {
+        "applied-default": ""
+      },
       "search": {
         "default-policy-unavailable": "Filtrowanie według zasad domyślnych nie jest jeszcze dostępne.",
         "folders-disabled": "Wyczyść filtry, aby przeglądać wg folderu",
@@ -3075,12 +3078,12 @@
       },
       "empty": "",
       "error": "",
-      "load-more": "",
       "restore": {
         "body": "",
         "confirm": "",
         "conflict": "",
         "error": "",
+        "recording-title": "",
         "restoring": "",
         "title": ""
       },
@@ -3235,10 +3238,6 @@
         "group-name": "Nazwa grupy oceny",
         "group-text": "Wszystkie reguły w wybranej grupie są oceniane co {{evaluateEvery}}.",
         "interval-label": "Odstęp czasu oceny",
-        "mode": {
-          "legacy": "Użyj grup (starsza wersja)",
-          "new": "Ustaw odstęp czasu"
-        },
         "new-group": "Nowa grupa oceny",
         "pause": {
           "alerting": "Włącz, aby wstrzymać ocenę tej reguły alertu.",
@@ -6840,6 +6839,9 @@
           "description": "Kliknij lub przeciągnij, aby wkleić panel",
           "title": "Wklej panel"
         },
+        "question": {
+          "label": ""
+        },
         "row": {
           "add-label": "Dodaj wiersz",
           "group-label": "Grupuj w wierszach"
@@ -6963,6 +6965,7 @@
         "objects": "Obiekty",
         "panel": "Panel",
         "panels": "Panele",
+        "question": "",
         "row": "Wiersz",
         "rows": "Wiersze",
         "section-filters-set": "Filtry",
@@ -7015,6 +7018,40 @@
           "empty": "(puste)",
           "no-title": "<bez tytułu>"
         }
+      },
+      "questions": {
+        "add-question": "",
+        "description-dashboard": "",
+        "description-row": "",
+        "description-tab": "",
+        "new-question": "",
+        "placeholder": "",
+        "question": "",
+        "question-title": "",
+        "question-title-description": "",
+        "question-title-placeholder": "",
+        "sources": {
+          "collapse": "",
+          "description-dashboard": "",
+          "description-row": "",
+          "description-tab": "",
+          "entire-dashboard": "",
+          "expand": "",
+          "label": "",
+          "no-panels": "",
+          "unavailable-panel": "",
+          "untitled-row": "",
+          "untitled-tab": "",
+          "panel-count_one": "",
+          "panel-count_few": "",
+          "panel-count_many": "",
+          "panel-count_other": "",
+          "picked-count_one": "",
+          "picked-count_few": "",
+          "picked-count_many": "",
+          "picked-count_other": ""
+        },
+        "title": ""
       },
       "row": {
         "header": {
@@ -7276,6 +7313,8 @@
     },
     "transformation-operation-row": {
       "body-delete": "Pamiętaj, że usunięcie jednej transformacji może spowodować uszkodzenie innych. Jeśli istnieje tylko jedna transformacja, powrócisz do głównego ekranu wyboru.",
+      "expander-close": "",
+      "expander-open": "",
       "render-actions": {
         "confirmText-delete": "Usuń",
         "title-debug": "Debugowanie",
@@ -8258,6 +8297,20 @@
       },
       "selection-options": "Opcje wyboru",
       "static-options-legend": "Opcje statyczne"
+    },
+    "question-actions": {
+      "add": "",
+      "remove": "",
+      "reorder": "",
+      "update": ""
+    },
+    "question-edit": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
+    "question-edit-actions": {
+      "tooltip-question-settings": ""
     },
     "refresh-select": {
       "options": {
@@ -14426,32 +14479,6 @@
     },
     "units": {
       "clear-tooltip": "Wyczyść wybór jednostki"
-    },
-    "var-mapping-checks": {
-      "data-macro": "",
-      "not-allowed": "",
-      "not-found": "",
-      "not-number": "",
-      "not-one-value": "",
-      "out-of-range": "",
-      "resolves": "",
-      "values": ""
-    },
-    "var-mapping-toggle": {
-      "aria-label-picker": "",
-      "fallback-off": "",
-      "fallback-on": "",
-      "group-matching": "",
-      "group-other": "",
-      "hint-boolean": "",
-      "hint-number": "",
-      "hint-option": "",
-      "hint-option-no-fallback": "",
-      "new-variable": "",
-      "option-current": "",
-      "placeholder": "",
-      "use-fixed-value": "",
-      "use-variable": ""
     }
   },
   "org": {
@@ -14548,7 +14575,8 @@
     },
     "get-panel-links-variable-suggestions": {
       "label": {
-        "all-variables": "Wszystkie zmienne"
+        "all-variables": "Wszystkie zmienne",
+        "current-dashboard-tabs": ""
       }
     },
     "header-menu": {
@@ -15465,7 +15493,6 @@
     "finish-step": {
       "description-enable-previews": "Dodaje podgląd obrazu zmian pulpitu w żądaniach pull. Obrazy pulpitów Grafany zostaną udostępnione w repozytorium Git i będą widoczne dla każdego, kto ma do niego dostęp.",
       "description-image-rendering": "Wymaga renderowania obrazów. <2>Skonfiguruj renderowanie obrazów</2>",
-      "description-read-only": "Zasobów nie można modyfikować za pośrednictwem usługi Grafana.",
       "description-sync-interval": "Jak często synchronizować zmiany z repozytorium",
       "error-sync-interval-required": "Odstęp czasu synchronizacji jest wymagany",
       "label-enable-previews": "Włącz podglądy pulpitu w żądaniach pull",
@@ -16272,6 +16299,17 @@
       "button-submitting": "Zgłaszanie…",
       "error-instance-repository-exists": "Repozytorium instancji już istnieje",
       "error-save-repository-setting": "Nie udało się zapisać ustawienia repozytorium"
+    },
+    "workflow": {
+      "direct-push": "",
+      "direct-push-description": "",
+      "direct-push-description-no-branch": "",
+      "merge-request": "",
+      "merge-request-description": "",
+      "merge-request-description-no-branch": "",
+      "pull-request": "",
+      "pull-request-description": "",
+      "pull-request-description-no-branch": ""
     }
   },
   "public-dashboard": {

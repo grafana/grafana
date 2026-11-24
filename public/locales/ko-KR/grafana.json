@@ -1534,6 +1534,9 @@
         "alert-rules_other": "{{formatted}} 경보 규칙",
         "recording-rules_other": "{{formatted}} 기록 규칙"
       },
+      "saved-searches": {
+        "applied-default": ""
+      },
       "search": {
         "default-policy-unavailable": "기본 정책을 기준으로 필터링하는 기능은 아직 지원되지 않습니다.",
         "folders-disabled": "폴더별로 탐색하려면 필터를 해제하세요",
@@ -3003,12 +3006,12 @@
       },
       "empty": "",
       "error": "",
-      "load-more": "",
       "restore": {
         "body": "",
         "confirm": "",
         "conflict": "",
         "error": "",
+        "recording-title": "",
         "restoring": "",
         "title": ""
       },
@@ -3163,10 +3166,6 @@
         "group-name": "평가 그룹 이름",
         "group-text": "선택한 그룹의 모든 규칙은 {{evaluateEvery}}마다 평가됩니다.",
         "interval-label": "평가 간격",
-        "mode": {
-          "legacy": "그룹 사용(레거시)",
-          "new": "간격 설정"
-        },
         "new-group": "새 평가 그룹",
         "pause": {
           "alerting": "이 경고 규칙에 대한 평가를 일시 중지하려면 켜세요.",
@@ -6690,6 +6689,9 @@
           "description": "클릭하거나 드래그하여 패널 붙여넣기",
           "title": "패널 붙여넣기"
         },
+        "question": {
+          "label": ""
+        },
         "row": {
           "add-label": "행 추가",
           "group-label": "행으로 그룹화"
@@ -6813,6 +6815,7 @@
         "objects": "개체",
         "panel": "패널",
         "panels": "패널",
+        "question": "",
         "row": "행",
         "rows": "행",
         "section-filters-set": "필터",
@@ -6862,6 +6865,34 @@
           "empty": "(비어 있음)",
           "no-title": "<제목 없음>"
         }
+      },
+      "questions": {
+        "add-question": "",
+        "description-dashboard": "",
+        "description-row": "",
+        "description-tab": "",
+        "new-question": "",
+        "placeholder": "",
+        "question": "",
+        "question-title": "",
+        "question-title-description": "",
+        "question-title-placeholder": "",
+        "sources": {
+          "collapse": "",
+          "description-dashboard": "",
+          "description-row": "",
+          "description-tab": "",
+          "entire-dashboard": "",
+          "expand": "",
+          "label": "",
+          "no-panels": "",
+          "unavailable-panel": "",
+          "untitled-row": "",
+          "untitled-tab": "",
+          "panel-count_other": "",
+          "picked-count_other": ""
+        },
+        "title": ""
       },
       "row": {
         "header": {
@@ -7123,6 +7154,8 @@
     },
     "transformation-operation-row": {
       "body-delete": "하나의 변환을 제거하면 다른 변환이 제대로 작동하지 않을 수 있습니다. 변환이 하나만 있는 경우 기본 선택 화면으로 돌아갑니다.",
+      "expander-close": "",
+      "expander-open": "",
       "render-actions": {
         "confirmText-delete": "삭제",
         "title-debug": "디버그",
@@ -8090,6 +8123,20 @@
       },
       "selection-options": "선택 옵션",
       "static-options-legend": "정적 옵션"
+    },
+    "question-actions": {
+      "add": "",
+      "remove": "",
+      "reorder": "",
+      "update": ""
+    },
+    "question-edit": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
+    "question-edit-actions": {
+      "tooltip-question-settings": ""
     },
     "refresh-select": {
       "options": {
@@ -14093,32 +14140,6 @@
     },
     "units": {
       "clear-tooltip": "단위 선택 지우기"
-    },
-    "var-mapping-checks": {
-      "data-macro": "",
-      "not-allowed": "",
-      "not-found": "",
-      "not-number": "",
-      "not-one-value": "",
-      "out-of-range": "",
-      "resolves": "",
-      "values": ""
-    },
-    "var-mapping-toggle": {
-      "aria-label-picker": "",
-      "fallback-off": "",
-      "fallback-on": "",
-      "group-matching": "",
-      "group-other": "",
-      "hint-boolean": "",
-      "hint-number": "",
-      "hint-option": "",
-      "hint-option-no-fallback": "",
-      "new-variable": "",
-      "option-current": "",
-      "placeholder": "",
-      "use-fixed-value": "",
-      "use-variable": ""
     }
   },
   "org": {
@@ -14215,7 +14236,8 @@
     },
     "get-panel-links-variable-suggestions": {
       "label": {
-        "all-variables": "모든 변수"
+        "all-variables": "모든 변수",
+        "current-dashboard-tabs": ""
       }
     },
     "header-menu": {
@@ -15123,7 +15145,6 @@
     "finish-step": {
       "description-enable-previews": "풀 요청에서 대시보드 변경 사항의 이미지 미리 보기를 추가합니다. Grafana 대시보드의 이미지는 Git 리포지토리에서 공유되며 리포지토리 액세스 권한이 있는 모든 사용자가 볼 수 있습니다.",
       "description-image-rendering": "이미지 렌더링이 필요합니다. <2>이미지 렌더링 설정</2>",
-      "description-read-only": "Grafana를 통해 리소스를 수정할 수 없습니다.",
       "description-sync-interval": "리포지토리의 변경 사항을 동기화하는 빈도",
       "error-sync-interval-required": "동기화 간격은 필수 입력 항목입니다",
       "label-enable-previews": "풀 요청에서 대시보드 미리 보기 활성화",
@@ -15885,6 +15906,17 @@
       "button-submitting": "제출 중…",
       "error-instance-repository-exists": "인스턴스 리포지토리가 이미 존재합니다",
       "error-save-repository-setting": "리포지토리 설정 저장 실패"
+    },
+    "workflow": {
+      "direct-push": "",
+      "direct-push-description": "",
+      "direct-push-description-no-branch": "",
+      "merge-request": "",
+      "merge-request-description": "",
+      "merge-request-description-no-branch": "",
+      "pull-request": "",
+      "pull-request-description": "",
+      "pull-request-description-no-branch": ""
     }
   },
   "public-dashboard": {

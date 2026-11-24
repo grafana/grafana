@@ -1543,6 +1543,9 @@
         "recording-rules_one": "{{formatted}} registreringsregel",
         "recording-rules_other": "{{formatted}} registreringsregler"
       },
+      "saved-searches": {
+        "applied-default": ""
+      },
       "search": {
         "default-policy-unavailable": "Filtrering enligt standardpolicyn är inte tillgänglig ännu.",
         "folders-disabled": "Rensa filter för att bläddra efter mapp",
@@ -3027,12 +3030,12 @@
       },
       "empty": "",
       "error": "",
-      "load-more": "",
       "restore": {
         "body": "",
         "confirm": "",
         "conflict": "",
         "error": "",
+        "recording-title": "",
         "restoring": "",
         "title": ""
       },
@@ -3187,10 +3190,6 @@
         "group-name": "Namn för utvärderingsgrupp",
         "group-text": "Alla regler i den valda gruppen utvärderas varje {{evaluateEvery}}.",
         "interval-label": "Utvärderingsintervall",
-        "mode": {
-          "legacy": "Använd grupper (föråldrat)",
-          "new": "Ange intervall"
-        },
         "new-group": "Ny utvärderingsgrupp",
         "pause": {
           "alerting": "Aktivera om du vill pausa utvärderingen för den här varningsregeln.",
@@ -6740,6 +6739,9 @@
           "description": "Klicka eller dra för att klistra in panelen",
           "title": "Klistra in panel"
         },
+        "question": {
+          "label": ""
+        },
         "row": {
           "add-label": "Lägg till rad",
           "group-label": "Gruppera i rader"
@@ -6863,6 +6865,7 @@
         "objects": "Objekt",
         "panel": "Panel",
         "panels": "Paneler",
+        "question": "",
         "row": "Rad",
         "rows": "Rader",
         "section-filters-set": "Filter",
@@ -6913,6 +6916,36 @@
           "empty": "(tomt)",
           "no-title": "<no title>"
         }
+      },
+      "questions": {
+        "add-question": "",
+        "description-dashboard": "",
+        "description-row": "",
+        "description-tab": "",
+        "new-question": "",
+        "placeholder": "",
+        "question": "",
+        "question-title": "",
+        "question-title-description": "",
+        "question-title-placeholder": "",
+        "sources": {
+          "collapse": "",
+          "description-dashboard": "",
+          "description-row": "",
+          "description-tab": "",
+          "entire-dashboard": "",
+          "expand": "",
+          "label": "",
+          "no-panels": "",
+          "unavailable-panel": "",
+          "untitled-row": "",
+          "untitled-tab": "",
+          "panel-count_one": "",
+          "panel-count_other": "",
+          "picked-count_one": "",
+          "picked-count_other": ""
+        },
+        "title": ""
       },
       "row": {
         "header": {
@@ -7174,6 +7207,8 @@
     },
     "transformation-operation-row": {
       "body-delete": "Observera att om du tar bort en transformering kan det påverka andra. Om endast en transformering finns, återgår du till huvudskärmen för val.",
+      "expander-close": "",
+      "expander-open": "",
       "render-actions": {
         "confirmText-delete": "Radera",
         "title-debug": "Felsök",
@@ -8146,6 +8181,20 @@
       },
       "selection-options": "Urvalsalternativ",
       "static-options-legend": "Statiska alternativ"
+    },
+    "question-actions": {
+      "add": "",
+      "remove": "",
+      "reorder": "",
+      "update": ""
+    },
+    "question-edit": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
+    "question-edit-actions": {
+      "tooltip-question-settings": ""
     },
     "refresh-select": {
       "options": {
@@ -14204,32 +14253,6 @@
     },
     "units": {
       "clear-tooltip": "Rensa enhetsval"
-    },
-    "var-mapping-checks": {
-      "data-macro": "",
-      "not-allowed": "",
-      "not-found": "",
-      "not-number": "",
-      "not-one-value": "",
-      "out-of-range": "",
-      "resolves": "",
-      "values": ""
-    },
-    "var-mapping-toggle": {
-      "aria-label-picker": "",
-      "fallback-off": "",
-      "fallback-on": "",
-      "group-matching": "",
-      "group-other": "",
-      "hint-boolean": "",
-      "hint-number": "",
-      "hint-option": "",
-      "hint-option-no-fallback": "",
-      "new-variable": "",
-      "option-current": "",
-      "placeholder": "",
-      "use-fixed-value": "",
-      "use-variable": ""
     }
   },
   "org": {
@@ -14326,7 +14349,8 @@
     },
     "get-panel-links-variable-suggestions": {
       "label": {
-        "all-variables": "Alla variabler"
+        "all-variables": "Alla variabler",
+        "current-dashboard-tabs": ""
       }
     },
     "header-menu": {
@@ -15237,7 +15261,6 @@
     "finish-step": {
       "description-enable-previews": "Lägger till en förhandsgranskning av ändringar i instrumentpanelen för pull-förfrågningar. Bilder av dina Grafana-instrumentpaneler kommer att delas på din Git-lagringsplats och vara synliga för alla med lagringsåtkomst.",
       "description-image-rendering": "Kräver bildrendering. <2>Konfigurera bildrendering</2>",
-      "description-read-only": "Resurser kan inte ändras via Grafana.",
       "description-sync-interval": "Hur ofta ändringar ska synkroniseras från lagringsplatsen",
       "error-sync-interval-required": "Synkroniseringsintervall är obligatoriskt",
       "label-enable-previews": "Aktivera förhandsgranskningar av panelen i pull-förfrågningar",
@@ -16014,6 +16037,17 @@
       "button-submitting": "Skickar …",
       "error-instance-repository-exists": "Instanslagringsplatsen finns redan",
       "error-save-repository-setting": "Det gick inte att spara lagringsplatsinställningen"
+    },
+    "workflow": {
+      "direct-push": "",
+      "direct-push-description": "",
+      "direct-push-description-no-branch": "",
+      "merge-request": "",
+      "merge-request-description": "",
+      "merge-request-description-no-branch": "",
+      "pull-request": "",
+      "pull-request-description": "",
+      "pull-request-description-no-branch": ""
     }
   },
   "public-dashboard": {

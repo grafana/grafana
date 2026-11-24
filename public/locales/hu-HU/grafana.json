@@ -1543,6 +1543,9 @@
         "recording-rules_one": "{{formatted}} rögzítési szabály",
         "recording-rules_other": "{{formatted}} rögzítési szabályok"
       },
+      "saved-searches": {
+        "applied-default": ""
+      },
       "search": {
         "default-policy-unavailable": "Az alapértelmezett házirend szerinti szűrés még nem érhető el.",
         "folders-disabled": "Törölje a szűrőket a mappa szerinti böngészéshez",
@@ -3027,12 +3030,12 @@
       },
       "empty": "",
       "error": "",
-      "load-more": "",
       "restore": {
         "body": "",
         "confirm": "",
         "conflict": "",
         "error": "",
+        "recording-title": "",
         "restoring": "",
         "title": ""
       },
@@ -3187,10 +3190,6 @@
         "group-name": "Értékelési csoport neve",
         "group-text": "A kijelölt csoport összes szabálya kiértékelésének gyakorisága: {{evaluateEvery}}.",
         "interval-label": "Értékelési intervallum",
-        "mode": {
-          "legacy": "Csoportok használata (örökölt)",
-          "new": "Intervallum beállítása"
-        },
         "new-group": "Új értékelési csoport",
         "pause": {
           "alerting": "Kapcsolja be az ehhez a riasztási szabályhoz tartozó értékelés szüneteltetéséhez.",
@@ -6740,6 +6739,9 @@
           "description": "Kattintson vagy húzza a panel beillesztéséhez",
           "title": "Panel beillesztése"
         },
+        "question": {
+          "label": ""
+        },
         "row": {
           "add-label": "Sor hozzáadása",
           "group-label": "Csoportosítás sorokba"
@@ -6863,6 +6865,7 @@
         "objects": "Objektumok",
         "panel": "Panel",
         "panels": "Panelek",
+        "question": "",
         "row": "Sor",
         "rows": "Sorok",
         "section-filters-set": "Szűrők",
@@ -6913,6 +6916,36 @@
           "empty": "(üres)",
           "no-title": "<nincs cím>"
         }
+      },
+      "questions": {
+        "add-question": "",
+        "description-dashboard": "",
+        "description-row": "",
+        "description-tab": "",
+        "new-question": "",
+        "placeholder": "",
+        "question": "",
+        "question-title": "",
+        "question-title-description": "",
+        "question-title-placeholder": "",
+        "sources": {
+          "collapse": "",
+          "description-dashboard": "",
+          "description-row": "",
+          "description-tab": "",
+          "entire-dashboard": "",
+          "expand": "",
+          "label": "",
+          "no-panels": "",
+          "unavailable-panel": "",
+          "untitled-row": "",
+          "untitled-tab": "",
+          "panel-count_one": "",
+          "panel-count_other": "",
+          "picked-count_one": "",
+          "picked-count_other": ""
+        },
+        "title": ""
       },
       "row": {
         "header": {
@@ -7174,6 +7207,8 @@
     },
     "transformation-operation-row": {
       "body-delete": "Ne feledje, hogy egy transzformáció eltávolítása másokat is megszakíthat. Ha csak egy transzformáció van, visszakerül a fő kiválasztási képernyőre.",
+      "expander-close": "",
+      "expander-open": "",
       "render-actions": {
         "confirmText-delete": "Törlés",
         "title-debug": "Hibakeresés",
@@ -8146,6 +8181,20 @@
       },
       "selection-options": "Kijelölés beállításai",
       "static-options-legend": "Statikus opciók"
+    },
+    "question-actions": {
+      "add": "",
+      "remove": "",
+      "reorder": "",
+      "update": ""
+    },
+    "question-edit": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
+    "question-edit-actions": {
+      "tooltip-question-settings": ""
     },
     "refresh-select": {
       "options": {
@@ -14204,32 +14253,6 @@
     },
     "units": {
       "clear-tooltip": "Egységkiválasztás törlése"
-    },
-    "var-mapping-checks": {
-      "data-macro": "",
-      "not-allowed": "",
-      "not-found": "",
-      "not-number": "",
-      "not-one-value": "",
-      "out-of-range": "",
-      "resolves": "",
-      "values": ""
-    },
-    "var-mapping-toggle": {
-      "aria-label-picker": "",
-      "fallback-off": "",
-      "fallback-on": "",
-      "group-matching": "",
-      "group-other": "",
-      "hint-boolean": "",
-      "hint-number": "",
-      "hint-option": "",
-      "hint-option-no-fallback": "",
-      "new-variable": "",
-      "option-current": "",
-      "placeholder": "",
-      "use-fixed-value": "",
-      "use-variable": ""
     }
   },
   "org": {
@@ -14326,7 +14349,8 @@
     },
     "get-panel-links-variable-suggestions": {
       "label": {
-        "all-variables": "Összes változó"
+        "all-variables": "Összes változó",
+        "current-dashboard-tabs": ""
       }
     },
     "header-menu": {
@@ -15237,7 +15261,6 @@
     "finish-step": {
       "description-enable-previews": "Hozzáadja az irányítópult változásainak előnézetét a lekérésekben. A Grafana-irányítópultok képei meg lesznek osztva a Git-tárban, és bárki számára láthatóak lesznek, aki hozzáféréssel rendelkezik az adattárhoz.",
       "description-image-rendering": "Képalkotást igényel. <2>Állítsa be a képalkotást</2>",
-      "description-read-only": "Az erőforrások nem módosíthatók a Grafanán keresztül.",
       "description-sync-interval": "Az adattárbeli változások szinkronizálásának gyakorisága",
       "error-sync-interval-required": "A szinkronizálási intervallum megadása kötelező",
       "label-enable-previews": "Az irányítópult előnézeteinek engedélyezése a lekérésekben",
@@ -16014,6 +16037,17 @@
       "button-submitting": "Küldés…",
       "error-instance-repository-exists": "A példánytár már létezik",
       "error-save-repository-setting": "Az adattár beállításának mentése nem sikerült"
+    },
+    "workflow": {
+      "direct-push": "",
+      "direct-push-description": "",
+      "direct-push-description-no-branch": "",
+      "merge-request": "",
+      "merge-request-description": "",
+      "merge-request-description-no-branch": "",
+      "pull-request": "",
+      "pull-request-description": "",
+      "pull-request-description-no-branch": ""
     }
   },
   "public-dashboard": {

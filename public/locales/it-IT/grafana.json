@@ -1543,6 +1543,9 @@
         "recording-rules_one": "",
         "recording-rules_other": ""
       },
+      "saved-searches": {
+        "applied-default": ""
+      },
       "search": {
         "default-policy-unavailable": "",
         "folders-disabled": "",
@@ -3027,12 +3030,12 @@
       },
       "empty": "",
       "error": "",
-      "load-more": "",
       "restore": {
         "body": "",
         "confirm": "",
         "conflict": "",
         "error": "",
+        "recording-title": "",
         "restoring": "",
         "title": ""
       },
@@ -3187,10 +3190,6 @@
         "group-name": "Nome del gruppo di valutazione",
         "group-text": "Tutte le regole nel gruppo selezionato vengono valutate ogni {{evaluateEvery}}.",
         "interval-label": "Intervallo di valutazione",
-        "mode": {
-          "legacy": "Utilizza gruppi (Obsoleto)",
-          "new": "Imposta intervallo"
-        },
         "new-group": "Nuovo gruppo di valutazione",
         "pause": {
           "alerting": "Attiva per mettere in pausa la valutazione per questa regola di avviso.",
@@ -6740,6 +6739,9 @@
           "description": "Fai clic o trascina per incollare il pannello",
           "title": "Incolla pannello"
         },
+        "question": {
+          "label": ""
+        },
         "row": {
           "add-label": "Aggiungi riga",
           "group-label": "Raggruppa in righe"
@@ -6863,6 +6865,7 @@
         "objects": "Oggetti",
         "panel": "Pannello",
         "panels": "Pannelli",
+        "question": "",
         "row": "Riga",
         "rows": "Righe",
         "section-filters-set": "Filtri",
@@ -6913,6 +6916,36 @@
           "empty": "(vuoto)",
           "no-title": "<nessun titolo>"
         }
+      },
+      "questions": {
+        "add-question": "",
+        "description-dashboard": "",
+        "description-row": "",
+        "description-tab": "",
+        "new-question": "",
+        "placeholder": "",
+        "question": "",
+        "question-title": "",
+        "question-title-description": "",
+        "question-title-placeholder": "",
+        "sources": {
+          "collapse": "",
+          "description-dashboard": "",
+          "description-row": "",
+          "description-tab": "",
+          "entire-dashboard": "",
+          "expand": "",
+          "label": "",
+          "no-panels": "",
+          "unavailable-panel": "",
+          "untitled-row": "",
+          "untitled-tab": "",
+          "panel-count_one": "",
+          "panel-count_other": "",
+          "picked-count_one": "",
+          "picked-count_other": ""
+        },
+        "title": ""
       },
       "row": {
         "header": {
@@ -7174,6 +7207,8 @@
     },
     "transformation-operation-row": {
       "body-delete": "Tieni presente che la rimozione di una trasformazione può interromperne altre. Se è presente una sola trasformazione, tornerai alla schermata di selezione principale.",
+      "expander-close": "",
+      "expander-open": "",
       "render-actions": {
         "confirmText-delete": "Elimina",
         "title-debug": "Esegui il debug",
@@ -8146,6 +8181,20 @@
       },
       "selection-options": "Seleziona opzioni",
       "static-options-legend": "Opzioni statiche"
+    },
+    "question-actions": {
+      "add": "",
+      "remove": "",
+      "reorder": "",
+      "update": ""
+    },
+    "question-edit": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
+    "question-edit-actions": {
+      "tooltip-question-settings": ""
     },
     "refresh-select": {
       "options": {
@@ -14204,32 +14253,6 @@
     },
     "units": {
       "clear-tooltip": "Cancella selezione unità"
-    },
-    "var-mapping-checks": {
-      "data-macro": "",
-      "not-allowed": "",
-      "not-found": "",
-      "not-number": "",
-      "not-one-value": "",
-      "out-of-range": "",
-      "resolves": "",
-      "values": ""
-    },
-    "var-mapping-toggle": {
-      "aria-label-picker": "",
-      "fallback-off": "",
-      "fallback-on": "",
-      "group-matching": "",
-      "group-other": "",
-      "hint-boolean": "",
-      "hint-number": "",
-      "hint-option": "",
-      "hint-option-no-fallback": "",
-      "new-variable": "",
-      "option-current": "",
-      "placeholder": "",
-      "use-fixed-value": "",
-      "use-variable": ""
     }
   },
   "org": {
@@ -14326,7 +14349,8 @@
     },
     "get-panel-links-variable-suggestions": {
       "label": {
-        "all-variables": "Tutte le variabili"
+        "all-variables": "Tutte le variabili",
+        "current-dashboard-tabs": ""
       }
     },
     "header-menu": {
@@ -15237,7 +15261,6 @@
     "finish-step": {
       "description-enable-previews": "Aggiunge un'anteprima dell'immagine delle modifiche alla dashboard nelle richieste di pull. Le immagini delle dashboard Grafana verranno condivise nel repository Git e saranno visibili a chiunque abbia accesso al repository.",
       "description-image-rendering": "Richiede il rendering dell'immagine. <2>Configura il rendering delle immagini</2>",
-      "description-read-only": "Le risorse non possono essere modificate tramite Grafana.",
       "description-sync-interval": "Con quale frequenza sincronizzare le modifiche dal repository",
       "error-sync-interval-required": "L'intervallo di sincronizzazione è obbligatorio",
       "label-enable-previews": "Abilita le anteprime della dashboard nelle richieste di pull",
@@ -16014,6 +16037,17 @@
       "button-submitting": "Invio in corso...",
       "error-instance-repository-exists": "Il repository delle istanze esiste già",
       "error-save-repository-setting": "Impossibile salvare le impostazioni del repository"
+    },
+    "workflow": {
+      "direct-push": "",
+      "direct-push-description": "",
+      "direct-push-description-no-branch": "",
+      "merge-request": "",
+      "merge-request-description": "",
+      "merge-request-description-no-branch": "",
+      "pull-request": "",
+      "pull-request-description": "",
+      "pull-request-description-no-branch": ""
     }
   },
   "public-dashboard": {
