@@ -56,7 +56,7 @@ func NewRequestGroupAudienceProvider(fallback string) *RequestGroupAudienceProvi
 
 func (p *RequestGroupAudienceProvider) GetAudiences(req *http.Request) []string {
 	group := utils.APIGroupFromRequest(req)
-	// HACK: datasource API servers accept the shared *.datasource.grafana.app audience, so access policies need one entry for every datasource group.
+	// HACK: datasource API servers accept the shared *.datasource.grafana.app audience, so access policies need only one entry for all datasource groups.
 	if strings.HasSuffix(group, ".datasource.grafana.app") {
 		return []string{"*.datasource.grafana.app"}
 	}
