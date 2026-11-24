@@ -3069,7 +3069,7 @@ Enter a comma-separated list of plugin identifiers whose backend processes inher
 The default is empty.
 
 By default, a backend plugin process receives the variables Grafana sets for it and a fixed allowlist of host variables.
-The allowlist is `PLUGIN_UNIX_SOCKET_DIR`, `HTTP_PROXY`, `HTTPS_PROXY`, `NO_PROXY` and their lowercase forms, `SSL_CERT_FILE`, and `SSL_CERT_DIR`.
+The allowlist is `PLUGIN_UNIX_SOCKET_DIR`, `HTTP_PROXY`, `HTTPS_PROXY`, `NO_PROXY`, `SSL_CERT_FILE`, `SSL_CERT_DIR`, and the lowercase forms of the three proxy variables.
 Use this option only when a plugin needs a host variable that isn't in the allowlist.
 Forwarding the whole environment exposes every secret in the Grafana server environment to that plugin process.
 When Grafana and the host environment set the same variable, the plugin process receives the value Grafana sets.
@@ -3313,7 +3313,8 @@ Sets a soft memory limit for the plugin backend process.
 Grafana passes the value to the process as the Go runtime `GOMEMLIMIT` variable.
 The value is a byte count with a `B`, `KiB`, `MiB`, `GiB`, or `TiB` suffix, for example `512MiB` or `2GiB`.
 The value `off` removes the limit that `default_memory_limit` or a forwarded `GOMEMLIMIT` sets for this plugin.
-The plugin ID in the section name and the value are case-sensitive, so `off` is accepted and `OFF` is not.
+The value is case-sensitive: `off` and `512MiB` are valid, but `OFF` and `512mib` aren't.
+The plugin ID in the section name is also case-sensitive.
 If the value has any other format, such as the decimal unit `12GB`, Grafana fails to start and reports the section, key, and value.
 The Go runtime aborts a process that starts with a malformed `GOMEMLIMIT`.
 
