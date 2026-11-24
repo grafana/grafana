@@ -24,7 +24,7 @@ func TestLegacyCheckTeamIDsIdentityScope(t *testing.T) {
 		{name: "anonymous", orgID: 12, idType: types.TypeAnonymous},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			requester := &authn.Identity{OrgID: tc.orgID, Type: tc.idType, TeamIDs: []int64{42}}
+			requester := &authn.Identity{OrgID: tc.orgID, Type: tc.idType, TeamIDs: []int64{42}} //nolint:staticcheck // Exercise legacy numeric memberships, not team UIDs.
 			require.Equal(t, tc.want, legacyCheckTeamIDs(requester))
 		})
 	}
