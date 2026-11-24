@@ -26,7 +26,6 @@ import (
 )
 
 func TestFolderControllerOwnsNATSSubscriber(t *testing.T) {
-	t.Skip("NATS informer mechanisms have no SDK implementation yet; the supplier refuses keyed kinds under NATS")
 	for _, tc := range []struct {
 		name               string
 		recovery, resource bool
@@ -122,7 +121,6 @@ func testFolderControllerOwnsNATSSubscriber(t *testing.T, recovery, resource boo
 }
 
 func TestFolderControllerCacheSyncFailureCause(t *testing.T) {
-	t.Skip("NATS informer mechanisms have no SDK implementation yet; the supplier refuses keyed kinds under NATS")
 	srv := natstest.RunServer(&natsserver.Options{Host: "127.0.0.1", Port: -1})
 	t.Cleanup(func() { srv.Shutdown(); srv.WaitForShutdown() })
 	listing := make(chan struct{}, 1)

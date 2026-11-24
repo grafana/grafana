@@ -43,7 +43,7 @@ func TestProvideHistoryJobCleanup_DeletesOnlyExpiredJobs(t *testing.T) {
 				client := fake.NewClientset(jobs...)
 
 				cfg := &setting.Cfg{NATS: setting.NATSSettings{Enabled: tc.natsEnabled}}
-				source, err := ProvideHistoryJobCleanup(context.Background(), informers.ProvideSupplier(cfg, nil), informerstest.NewClients(jobs...), client, expiration)
+				source, err := ProvideHistoryJobCleanup(context.Background(), informers.ProvideSupplier(cfg), informerstest.NewClients(jobs...), client, expiration)
 				require.NoError(t, err)
 
 				stop := make(chan struct{})

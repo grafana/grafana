@@ -45,7 +45,7 @@ func (r *addRecorder) got() []string {
 func TestNewHistoricJobDeltaSource(t *testing.T) {
 	for name, supplier := range map[string]operator.InformerSupplier{
 		"NATS off watches the API":                  nil,
-		"NATS on re-lists, needing no subscription": natsSupplier(nil),
+		"NATS on re-lists, needing no subscription": natsSupplier(),
 	} {
 		t.Run(name, func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {

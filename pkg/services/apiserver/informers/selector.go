@@ -9,33 +9,18 @@
 package informers
 
 import (
-	"errors"
-	"fmt"
-
 	"github.com/grafana/grafana-app-sdk/operator"
-	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 
-	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// What each mechanism provides, least capable first: the order they are offered in.
-var (
-	// ReList has no live channel: it re-lists every object on a schedule.
-	ReList = operator.WatchOptions{
-		Resync: &operator.WatchResyncOptions{},
-	}
-	// NotifyOnly delivers identities live, round-robined over the replicas, with no resync.
-	NotifyOnly = operator.WatchOptions{
-		Live: &operator.WatchLiveOptions{Detail: operator.WatchDetailIdentity, Distribution: operator.WatchDistributionShared},
-	}
-	// NotifyWithReList is NotifyOnly plus a keys-only re-list delivered to every replica.
-	NotifyWithReList = operator.WatchOptions{
-		Live:   NotifyOnly.Live,
-		Resync: &operator.WatchResyncOptions{Detail: operator.WatchDetailIdentity},
-	}
-)
+// ReList has no live channel: it re-lists every object on a schedule. It is the
+// only mechanism offered besides the API watch until the NATS notification
+// mechanisms have SDK implementations.
+var ReList = operator.WatchOptions{
+	Resync: &operator.WatchResyncOptions{},
+}
 
 // KeyedNeeds is what a work-queue controller needs when it enqueues keys and reads
 // each object fresh: identities are enough, each key is worked once so live
@@ -46,21 +31,14 @@ var KeyedNeeds = operator.WatchOptions{
 	Resync: &operator.WatchResyncOptions{Detail: operator.WatchDetailIdentity},
 }
 
-var errNotImplemented = errors.New("not implemented")
-
 // ProvideSupplier returns the decider over the watch mechanisms this deployment
 // has, for every informer to be built with: the provisioning and folder
 // controllers through NewDeltaSource, and SDK apps and operators as their
 // InformerSupplier. The re-list is offered whenever NATS is configured, since it
-// needs no subscription; the NATS mechanisms when the subscriber is enabled
-// (subscriber may be nil). Those fail to build until they have SDK
-// implementations, so a kind they are selected for has no informer.
-func ProvideSupplier(cfg *setting.Cfg, subscriber nats.Subscriber) operator.InformerSupplier {
-	live := nats.Enabled(subscriber)
+// needs no subscription; every kind it does not satisfy takes the API watch.
+func ProvideSupplier(cfg *setting.Cfg) operator.InformerSupplier {
 	return operator.NewSelectingInformerSupplier(simple.DefaultInformerSupplier,
 		offer(cfg.NATS.Enabled, ReList, newReListInformer),
-		offer(live, NotifyOnly, unimplemented("NATS notify-only")),
-		offer(live, NotifyWithReList, unimplemented("NATS notify with re-list")),
 	)
 }
 
@@ -70,10 +48,4 @@ func offer(available bool, provides operator.WatchOptions, supplier operator.Inf
 		return nil
 	}
 	return operator.NewInformerMechanism(provides, supplier)
-}
-
-func unimplemented(mechanism string) operator.InformerSupplier {
-	return func(kind resource.Kind, _ resource.ClientGenerator, _ operator.InformerOptions) (operator.Informer, error) {
-		return nil, fmt.Errorf("%s informer for %s: %w", mechanism, kind.GroupVersionKind(), errNotImplemented)
-	}
 }

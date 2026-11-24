@@ -67,7 +67,7 @@ func TestNewDeltaSource_ReListRedeliversOnEachPass(t *testing.T) {
 		source, err := NewDeltaSource(operator.InformerRequest{
 			Kind:     testKind,
 			Clients:  clients,
-			Supplier: ProvideSupplier(natsCfg(true), nil),
+			Supplier: ProvideSupplier(natsCfg(true)),
 			Options:  operator.InformerOptions{WatchNeeds: resyncOnly, CacheResyncInterval: time.Minute},
 		}, newThing)
 		require.NoError(t, err)
@@ -88,8 +88,8 @@ func TestNewDeltaSource_FailsWhenTheSupplierCannotBuild(t *testing.T) {
 	_, err := NewDeltaSource(operator.InformerRequest{
 		Kind:     testKind,
 		Clients:  informerstest.NewClients(),
-		Supplier: ProvideSupplier(natsCfg(true), enabledSubscriber{}),
-		Options:  operator.InformerOptions{WatchNeeds: KeyedNeeds},
+		Supplier: ProvideSupplier(natsCfg(true)),
+		Options:  operator.InformerOptions{WatchNeeds: resyncOnly},
 	}, newThing)
-	assert.ErrorIs(t, err, errNotImplemented)
+	assert.Error(t, err)
 }

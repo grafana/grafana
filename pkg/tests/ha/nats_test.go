@@ -93,7 +93,6 @@ func natsNodeOpts(sqlKV bool) testinfra.GrafanaOpts {
 // polling the database, and a node that leaves is dropped from the peers' routes.
 func TestIntegrationNATSEmbeddedCluster(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
-	t.Skip("NATS informer mechanisms have no SDK implementation yet; the supplier refuses keyed kinds under NATS")
 
 	t.Run("legacy SQL", func(t *testing.T) { testNATSEmbeddedCluster(t, false) })
 	t.Run("KV", func(t *testing.T) { testNATSEmbeddedCluster(t, true) })

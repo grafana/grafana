@@ -21,7 +21,7 @@ var env = common.NewSharedEnv(common.WithNATSReListOnly(2 * time.Second))
 
 func sharedHelper(t *testing.T) *common.ProvisioningTestHelper {
 	t.Helper()
-	t.Skip("NATS informer mechanisms have no SDK implementation yet; the supplier refuses keyed kinds under NATS")
+	t.Skip("the keys re-list is the NATS notify-with-re-list mechanism, which has no SDK implementation yet")
 	helper := env.GetCleanHelper(t)
 	helper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient()
 	return helper

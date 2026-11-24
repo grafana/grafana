@@ -31,7 +31,6 @@ import (
 // through the legacy HTTP API (the user and team services).
 func TestIntegrationLegacyWatchNotifications(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
-	t.Skip("NATS informer mechanisms have no SDK implementation yet; the supplier refuses keyed kinds under NATS")
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction:      false,
@@ -389,7 +388,6 @@ func TestIntegrationLegacyWatchNotifications(t *testing.T) {
 // nothing is announced.
 func TestIntegrationLegacyWatchNotificationsDisabled(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
-	t.Skip("NATS informer mechanisms have no SDK implementation yet; the supplier refuses keyed kinds under NATS")
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction:      false,

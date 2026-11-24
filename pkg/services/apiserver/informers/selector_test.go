@@ -14,7 +14,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -30,32 +29,25 @@ func natsCfg(enabled bool) *setting.Cfg {
 
 func TestProvideSupplier(t *testing.T) {
 	for _, tc := range []struct {
-		name       string
-		cfg        *setting.Cfg
-		subscriber nats.Subscriber
-		needs      operator.WatchOptions
-		want       string
+		name  string
+		cfg   *setting.Cfg
+		needs operator.WatchOptions
+		want  string
 	}{
 		{name: "without NATS a keyed kind takes the API watch", cfg: natsCfg(false), needs: KeyedNeeds, want: "watch"},
 		{name: "without NATS a resync-only kind takes the API watch", cfg: natsCfg(false), needs: resyncOnly, want: "watch"},
-		{name: "under NATS a resync-only kind takes the cheaper re-list", cfg: natsCfg(true), subscriber: enabledSubscriber{}, needs: resyncOnly, want: "relist"},
-		{name: "under NATS a keyed kind takes the NATS notifications, not implemented yet", cfg: natsCfg(true), subscriber: enabledSubscriber{}, needs: KeyedNeeds, want: "unimplemented"},
-		{name: "a keyed kind skips the re-list, which has no live channel", cfg: natsCfg(true), needs: KeyedNeeds, want: "watch"},
-		{name: "default needs (whole objects to every replica) take the API watch", cfg: natsCfg(true), subscriber: enabledSubscriber{}, needs: operator.WatchOptions{}, want: "watch"},
+		{name: "under NATS a resync-only kind takes the cheaper re-list", cfg: natsCfg(true), needs: resyncOnly, want: "relist"},
+		{name: "under NATS a keyed kind skips the re-list, which has no live channel", cfg: natsCfg(true), needs: KeyedNeeds, want: "watch"},
+		{name: "default needs (whole objects to every replica) take the API watch", cfg: natsCfg(true), needs: operator.WatchOptions{}, want: "watch"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			inf, err := ProvideSupplier(tc.cfg, tc.subscriber)(testKind, fakeClients{client: &pagedClient{}},
+			inf, err := ProvideSupplier(tc.cfg)(testKind, fakeClients{client: &pagedClient{}},
 				operator.InformerOptions{WatchNeeds: tc.needs, CacheResyncInterval: time.Minute})
-			switch tc.want {
-			case "unimplemented":
-				assert.ErrorIs(t, err, errNotImplemented)
-			case "relist":
-				require.NoError(t, err)
-				provides, _ := operator.InformerWatchOptions(inf)
+			require.NoError(t, err)
+			provides, _ := operator.InformerWatchOptions(inf)
+			if tc.want == "relist" {
 				assert.Equal(t, ReList, provides)
-			case "watch":
-				require.NoError(t, err)
-				provides, _ := operator.InformerWatchOptions(inf)
+			} else {
 				assert.NotEqual(t, ReList, provides)
 			}
 		})
@@ -101,10 +93,6 @@ func TestReListInformer_RequiresAnInterval(t *testing.T) {
 	_, err := newReListInformer(testKind, fakeClients{client: &pagedClient{}}, operator.InformerOptions{WatchNeeds: resyncOnly})
 	assert.Error(t, err)
 }
-
-type enabledSubscriber struct{ nats.Subscriber }
-
-func (enabledSubscriber) Enabled() bool { return true }
 
 type fakeClients struct {
 	resource.ClientGenerator

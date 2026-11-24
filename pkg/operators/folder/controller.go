@@ -96,7 +96,7 @@ func RunFolderController(ctx context.Context, deps server.OperatorDependencies) 
 		}
 	}
 
-	source, err := newFolderSource(informers.ProvideSupplier(deps.Config, subscriber), informers.Clients(folderConfig))
+	source, err := newFolderSource(informers.ProvideSupplier(deps.Config), informers.Clients(folderConfig))
 	if err != nil {
 		return err
 	}

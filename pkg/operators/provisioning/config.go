@@ -149,7 +149,7 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*Control
 		workerCount:    operatorSec.Key("worker_count").MustInt(1),
 		drainTimeout:   operatorSec.Key("drain_timeout").MustDuration(30 * time.Second),
 	}
-	controllerCfg.informers = apiinformers.ProvideSupplier(cfg, controllerCfg.natsSubscriber)
+	controllerCfg.informers = apiinformers.ProvideSupplier(cfg)
 
 	for _, opt := range registeredConfigOptions {
 		if err := opt(context.Background(), controllerCfg); err != nil {

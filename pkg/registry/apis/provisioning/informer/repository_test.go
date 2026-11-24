@@ -180,9 +180,10 @@ func TestNewRepositoryDeltaSource(t *testing.T) {
 	assert.Equal(t, 1, count)
 }
 
-// Under NATS a repository needs the live notifications, which have no SDK
-// informer yet, so building the source fails rather than silently watching.
-func TestNewRepositoryDeltaSource_FailsUnderNATS(t *testing.T) {
-	_, _, err := NewRepositoryDeltaSource(natsSupplier(newFakeSubscriber()), informerstest.NewClients(), fake.NewClientset(), time.Minute)
-	assert.Error(t, err)
+// Under NATS a repository still takes the API watch: the re-list has no live
+// channel, and the NATS notifications are not offered until they have SDK
+// informers.
+func TestNewRepositoryDeltaSource_WatchesUnderNATS(t *testing.T) {
+	_, _, err := NewRepositoryDeltaSource(natsSupplier(), informerstest.NewClients(), fake.NewClientset(), time.Minute)
+	assert.NoError(t, err)
 }

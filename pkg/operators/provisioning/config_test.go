@@ -227,7 +227,6 @@ func TestClientsWithoutAnAggregatedServer(t *testing.T) {
 }
 
 func TestControllersOwnNATSSubscriber(t *testing.T) {
-	t.Skip("NATS informer mechanisms have no SDK implementation yet; the supplier refuses keyed kinds under NATS")
 	originalOptions := registeredConfigOptions
 	t.Cleanup(func() { registeredConfigOptions = originalOptions })
 

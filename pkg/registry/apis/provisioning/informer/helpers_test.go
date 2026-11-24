@@ -36,9 +36,9 @@ type fakeSubscriber struct {
 	handlers map[string]nats.MessageHandler
 }
 
-// natsSupplier offers the NATS mechanisms, live ones only when sub is non-nil.
-func natsSupplier(sub nats.Subscriber) operator.InformerSupplier {
-	return apiinformers.ProvideSupplier(&setting.Cfg{NATS: setting.NATSSettings{Enabled: true}}, sub)
+// natsSupplier is the supplier of a deployment with NATS configured.
+func natsSupplier() operator.InformerSupplier {
+	return apiinformers.ProvideSupplier(&setting.Cfg{NATS: setting.NATSSettings{Enabled: true}})
 }
 
 func newFakeSubscriber() *fakeSubscriber {
