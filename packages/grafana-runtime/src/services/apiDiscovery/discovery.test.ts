@@ -4,15 +4,15 @@ import { config } from '../../config';
 import { type BackendSrv, type FetchError, setBackendSrv } from '../backendSrv';
 import { setLogger } from '../logging/registry';
 
-import { API_DISCOVERY_TIMEOUT_MS, getApiGroup, invalidateApiDiscovery, setApiDiscoveryForTesting } from './discovery';
-import { type APIGroup, type APIGroupList } from './types';
+import { API_DISCOVERY_TIMEOUT_MS, getAPIGroup, invalidateAPIDiscovery, setAPIDiscoveryForTesting } from './discovery';
+import { type K8sAPIGroup, type K8sAPIGroupList } from './types';
 
 const backendGet = jest.fn();
 const logError = jest.fn();
 const originalUser = config.bootData.user;
 const originalPublicDashboardAccessToken = config.publicDashboardAccessToken;
 
-const dashboardGroup: APIGroup = {
+const dashboardGroup: K8sAPIGroup = {
   name: 'dashboard.grafana.app',
   versions: [
     { groupVersion: 'dashboard.grafana.app/v1beta1', version: 'v1beta1' },
@@ -21,7 +21,7 @@ const dashboardGroup: APIGroup = {
   preferredVersion: { groupVersion: 'dashboard.grafana.app/v1beta1', version: 'v1beta1' },
 };
 
-const groupList: APIGroupList = { groups: [dashboardGroup] };
+const groupList: K8sAPIGroupList = { groups: [dashboardGroup] };
 
 const dashboardInfo = {
   group: 'dashboard.grafana.app',
@@ -51,7 +51,7 @@ function requestedUrls(): string[] {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  invalidateApiDiscovery();
+  invalidateAPIDiscovery();
   setBackendSrv({ get: backendGet } as unknown as BackendSrv);
   setLogger('grafana/runtime.apis.discovery', {
     logDebug: jest.fn(),
@@ -73,18 +73,18 @@ afterAll(() => {
   config.publicDashboardAccessToken = originalPublicDashboardAccessToken;
 });
 
-describe('getApiGroup', () => {
+describe('getAPIGroup', () => {
   describe('when the root request succeeds', () => {
     beforeEach(() => {
       respondTo({ '/apis': () => Promise.resolve(groupList) });
     });
 
     it('returns the group in server order with its preferred version', async () => {
-      await expect(getApiGroup('dashboard.grafana.app')).resolves.toEqual(dashboardInfo);
+      await expect(getAPIGroup('dashboard.grafana.app')).resolves.toEqual(dashboardInfo);
     });
 
     it('requests the plain group list without an error toast', async () => {
-      await getApiGroup('dashboard.grafana.app');
+      await getAPIGroup('dashboard.grafana.app');
 
       expect(backendGet).toHaveBeenCalledWith(
         '/apis',
@@ -95,33 +95,33 @@ describe('getApiGroup', () => {
     });
 
     it('returns undefined for a group the server does not list, without logging', async () => {
-      await expect(getApiGroup('annotation.grafana.app')).resolves.toBeUndefined();
+      await expect(getAPIGroup('annotation.grafana.app')).resolves.toBeUndefined();
       expect(logError).not.toHaveBeenCalled();
     });
 
     it('caches the list for served and unlisted groups', async () => {
-      await getApiGroup('dashboard.grafana.app');
-      await getApiGroup('annotation.grafana.app');
-      await getApiGroup('dashboard.grafana.app');
+      await getAPIGroup('dashboard.grafana.app');
+      await getAPIGroup('annotation.grafana.app');
+      await getAPIGroup('dashboard.grafana.app');
 
       expect(requestedUrls()).toEqual(['/apis']);
     });
 
     it('shares one in-flight request between concurrent callers', async () => {
       const results = await Promise.all([
-        getApiGroup('dashboard.grafana.app'),
-        getApiGroup('dashboard.grafana.app'),
-        getApiGroup('annotation.grafana.app'),
+        getAPIGroup('dashboard.grafana.app'),
+        getAPIGroup('dashboard.grafana.app'),
+        getAPIGroup('annotation.grafana.app'),
       ]);
 
       expect(results).toEqual([dashboardInfo, dashboardInfo, undefined]);
       expect(requestedUrls()).toEqual(['/apis']);
     });
 
-    it('requests the list again after invalidateApiDiscovery()', async () => {
-      await getApiGroup('dashboard.grafana.app');
-      invalidateApiDiscovery();
-      await getApiGroup('dashboard.grafana.app');
+    it('requests the list again after invalidateAPIDiscovery()', async () => {
+      await getAPIGroup('dashboard.grafana.app');
+      invalidateAPIDiscovery();
+      await getAPIGroup('dashboard.grafana.app');
 
       expect(requestedUrls()).toEqual(['/apis', '/apis']);
     });
@@ -130,13 +130,13 @@ describe('getApiGroup', () => {
       const { preferredVersion, ...withoutPreferred } = dashboardGroup;
       respondTo({ '/apis': () => Promise.resolve({ groups: [withoutPreferred] }) });
 
-      await expect(getApiGroup('dashboard.grafana.app')).resolves.toMatchObject({ preferredVersion: 'v1beta1' });
+      await expect(getAPIGroup('dashboard.grafana.app')).resolves.toMatchObject({ preferredVersion: 'v1beta1' });
     });
 
     it('treats a listed group without versions as not served', async () => {
       respondTo({ '/apis': () => Promise.resolve({ groups: [{ ...dashboardGroup, versions: [] }] }) });
 
-      await expect(getApiGroup('dashboard.grafana.app')).resolves.toBeUndefined();
+      await expect(getAPIGroup('dashboard.grafana.app')).resolves.toBeUndefined();
     });
   });
 
@@ -149,15 +149,15 @@ describe('getApiGroup', () => {
     ])('falls back to the group endpoint on %s', async (_, root) => {
       respondTo({ '/apis': root, '/apis/dashboard.grafana.app/': () => Promise.resolve(dashboardGroup) });
 
-      await expect(getApiGroup('dashboard.grafana.app')).resolves.toEqual(dashboardInfo);
+      await expect(getAPIGroup('dashboard.grafana.app')).resolves.toEqual(dashboardInfo);
       expect(requestedUrls()).toEqual(['/apis', '/apis/dashboard.grafana.app/']);
     });
 
     it('returns undefined when the group endpoint answers 404, and caches it', async () => {
       respondTo({ '/apis': () => Promise.reject(fetchError(500)) });
 
-      await expect(getApiGroup('annotation.grafana.app')).resolves.toBeUndefined();
-      await expect(getApiGroup('annotation.grafana.app')).resolves.toBeUndefined();
+      await expect(getAPIGroup('annotation.grafana.app')).resolves.toBeUndefined();
+      await expect(getAPIGroup('annotation.grafana.app')).resolves.toBeUndefined();
 
       expect(requestedUrls()).toEqual(['/apis', '/apis/annotation.grafana.app/']);
     });
@@ -168,26 +168,26 @@ describe('getApiGroup', () => {
         '/apis/dashboard.grafana.app/': () => Promise.resolve(dashboardGroup),
       });
 
-      await getApiGroup('dashboard.grafana.app');
-      await getApiGroup('dashboard.grafana.app');
+      await getAPIGroup('dashboard.grafana.app');
+      await getAPIGroup('dashboard.grafana.app');
 
       expect(requestedUrls()).toEqual(['/apis', '/apis/dashboard.grafana.app/']);
     });
 
     it('retries the root request for a group it has not answered yet', async () => {
       respondTo({ '/apis': () => Promise.reject(fetchError(500)) });
-      await getApiGroup('annotation.grafana.app');
+      await getAPIGroup('annotation.grafana.app');
 
       respondTo({ '/apis': () => Promise.resolve(groupList) });
 
-      await expect(getApiGroup('dashboard.grafana.app')).resolves.toEqual(dashboardInfo);
+      await expect(getAPIGroup('dashboard.grafana.app')).resolves.toEqual(dashboardInfo);
       expect(requestedUrls()).toEqual(['/apis', '/apis/annotation.grafana.app/', '/apis']);
     });
 
     it('logs one event per failed request, not per caller', async () => {
       respondTo({ '/apis': () => Promise.reject(fetchError(500)) });
 
-      await Promise.all([getApiGroup('annotation.grafana.app'), getApiGroup('annotation.grafana.app')]);
+      await Promise.all([getAPIGroup('annotation.grafana.app'), getAPIGroup('annotation.grafana.app')]);
 
       expect(logError).toHaveBeenCalledTimes(1);
       expect(logError).toHaveBeenCalledWith(
@@ -205,18 +205,18 @@ describe('getApiGroup', () => {
     ])('returns undefined on %s, and retries on the next call', async (_, status) => {
       backendGet.mockRejectedValue(fetchError(status));
 
-      await expect(getApiGroup('dashboard.grafana.app')).resolves.toBeUndefined();
+      await expect(getAPIGroup('dashboard.grafana.app')).resolves.toBeUndefined();
 
       respondTo({ '/apis': () => Promise.resolve(groupList) });
 
-      await expect(getApiGroup('dashboard.grafana.app')).resolves.toEqual(dashboardInfo);
+      await expect(getAPIGroup('dashboard.grafana.app')).resolves.toEqual(dashboardInfo);
       expect(requestedUrls()).toEqual(['/apis', '/apis/dashboard.grafana.app/', '/apis']);
     });
 
     it('logs both the failed root request and the failed group request', async () => {
       backendGet.mockRejectedValue(fetchError(500));
 
-      await getApiGroup('dashboard.grafana.app');
+      await getAPIGroup('dashboard.grafana.app');
 
       expect(logError).toHaveBeenCalledTimes(2);
       expect(logError).toHaveBeenCalledWith(
@@ -229,7 +229,7 @@ describe('getApiGroup', () => {
       jest.useFakeTimers();
       backendGet.mockReturnValue(new Promise(() => {}));
 
-      const pending = getApiGroup('dashboard.grafana.app');
+      const pending = getAPIGroup('dashboard.grafana.app');
       await jest.advanceTimersByTimeAsync(API_DISCOVERY_TIMEOUT_MS);
       await jest.advanceTimersByTimeAsync(API_DISCOVERY_TIMEOUT_MS);
 
@@ -238,14 +238,14 @@ describe('getApiGroup', () => {
       expect(logError).toHaveBeenCalledWith(expect.any(Error), expect.objectContaining({ reason: 'timeout' }));
 
       respondTo({ '/apis': () => Promise.resolve(groupList) });
-      await expect(getApiGroup('dashboard.grafana.app')).resolves.toEqual(dashboardInfo);
+      await expect(getAPIGroup('dashboard.grafana.app')).resolves.toEqual(dashboardInfo);
     });
 
     it('aborts a request that outlasts the timeout', async () => {
       jest.useFakeTimers();
       backendGet.mockReturnValue(new Promise(() => {}));
 
-      const pending = getApiGroup('dashboard.grafana.app');
+      const pending = getAPIGroup('dashboard.grafana.app');
       await jest.advanceTimersByTimeAsync(API_DISCOVERY_TIMEOUT_MS);
 
       const [, , , options] = backendGet.mock.calls[0];
@@ -263,7 +263,7 @@ describe('getApiGroup', () => {
     ])('returns undefined without a request for %s', async (_, user) => {
       setBootUser(user);
 
-      await expect(getApiGroup('dashboard.grafana.app')).resolves.toBeUndefined();
+      await expect(getAPIGroup('dashboard.grafana.app')).resolves.toBeUndefined();
       expect(backendGet).not.toHaveBeenCalled();
       expect(logError).not.toHaveBeenCalled();
     });
@@ -273,43 +273,43 @@ describe('getApiGroup', () => {
       setBootUser({ isSignedIn: false, orgRole: '' });
       config.publicDashboardAccessToken = 'public-token';
 
-      await expect(getApiGroup('dashboard.grafana.app')).resolves.toBeUndefined();
+      await expect(getAPIGroup('dashboard.grafana.app')).resolves.toBeUndefined();
       expect(backendGet).not.toHaveBeenCalled();
     });
 
     it('requests the list once a session exists', async () => {
       setBootUser(undefined);
-      await getApiGroup('dashboard.grafana.app');
+      await getAPIGroup('dashboard.grafana.app');
 
       setBootUser({ isSignedIn: false, orgRole: OrgRole.Viewer });
       respondTo({ '/apis': () => Promise.resolve(groupList) });
 
-      await expect(getApiGroup('dashboard.grafana.app')).resolves.toEqual(dashboardInfo);
+      await expect(getAPIGroup('dashboard.grafana.app')).resolves.toEqual(dashboardInfo);
     });
   });
 
   it('returns undefined without a request for a group name that is not a valid API group', async () => {
-    await expect(getApiGroup('../api/admin')).resolves.toBeUndefined();
+    await expect(getAPIGroup('../api/admin')).resolves.toBeUndefined();
     expect(backendGet).not.toHaveBeenCalled();
   });
 });
 
-describe('setApiDiscoveryForTesting', () => {
+describe('setAPIDiscoveryForTesting', () => {
   it('answers from the given groups without a request or a session', async () => {
     setBootUser(undefined);
-    setApiDiscoveryForTesting([dashboardInfo]);
+    setAPIDiscoveryForTesting([dashboardInfo]);
 
-    await expect(getApiGroup('dashboard.grafana.app')).resolves.toEqual(dashboardInfo);
-    await expect(getApiGroup('annotation.grafana.app')).resolves.toBeUndefined();
+    await expect(getAPIGroup('dashboard.grafana.app')).resolves.toEqual(dashboardInfo);
+    await expect(getAPIGroup('annotation.grafana.app')).resolves.toBeUndefined();
     expect(backendGet).not.toHaveBeenCalled();
   });
 
-  it('is cleared by invalidateApiDiscovery()', async () => {
-    setApiDiscoveryForTesting([dashboardInfo]);
-    invalidateApiDiscovery();
+  it('is cleared by invalidateAPIDiscovery()', async () => {
+    setAPIDiscoveryForTesting([dashboardInfo]);
+    invalidateAPIDiscovery();
     respondTo({ '/apis': () => Promise.resolve({ groups: [] }) });
 
-    await expect(getApiGroup('dashboard.grafana.app')).resolves.toBeUndefined();
+    await expect(getAPIGroup('dashboard.grafana.app')).resolves.toBeUndefined();
     expect(requestedUrls()).toEqual(['/apis']);
   });
 });

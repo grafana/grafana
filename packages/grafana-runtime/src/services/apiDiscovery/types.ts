@@ -1,9 +1,9 @@
 /**
- * An `/apis` group the server serves, as returned by {@link getApiGroup}.
+ * An `/apis` group the server serves, as returned by {@link getAPIGroup}.
  *
  * @alpha
  */
-export interface ApiGroupInfo {
+export interface APIGroupInfo {
   /** The group name, such as `dashboard.grafana.app`. */
   group: string;
   /** In the order the server lists them, which is its order of preference. */
@@ -18,13 +18,13 @@ interface GroupVersionForDiscovery {
 }
 
 /** The Kubernetes `APIGroup`, served by `GET /apis/<group>/`. */
-export interface APIGroup {
+export interface K8sAPIGroup {
   name: string;
   versions: GroupVersionForDiscovery[];
   preferredVersion?: GroupVersionForDiscovery;
 }
 
 /** The Kubernetes `APIGroupList`, served by `GET /apis`. */
-export interface APIGroupList {
-  groups: APIGroup[];
+export interface K8sAPIGroupList {
+  groups: K8sAPIGroup[];
 }

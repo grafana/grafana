@@ -29,7 +29,7 @@ function isAggregatedDiscoveryRequest(request: Request): boolean {
 }
 
 /** Handlers for the plain `GET /apis` group list and `GET /apis/<group>/`, serving only `served`. */
-export function getApiDiscoveryHandlers(served: Readonly<Record<string, readonly string[]>> = SERVED_API_VERSIONS) {
+export function getAPIDiscoveryHandlers(served: Readonly<Record<string, readonly string[]>> = SERVED_API_VERSIONS) {
   return [
     http.get('/apis', ({ request }) => {
       if (isAggregatedDiscoveryRequest(request)) {
@@ -52,4 +52,4 @@ export function getApiDiscoveryHandlers(served: Readonly<Record<string, readonly
   ];
 }
 
-export default getApiDiscoveryHandlers();
+export default getAPIDiscoveryHandlers();

@@ -2,13 +2,13 @@ import { getFetchErrorContext } from '../../utils/getCachedPromise';
 import { getBackendSrv, isFetchError } from '../backendSrv';
 import { isSignedInOrAnonymous } from '../user';
 
-import { logApiDiscoveryError } from './logging';
-import { type APIGroup, type APIGroupList, type ApiGroupInfo } from './types';
+import { logAPIDiscoveryError } from './logging';
+import { type K8sAPIGroup, type K8sAPIGroupList, type APIGroupInfo } from './types';
 
 /** `unknown` means discovery could not answer. It is never cached, so the next caller asks again. */
 type Outcome<T> = { kind: 'known'; value: T } | { kind: 'unknown' };
 
-type GroupsByName = ReadonlyMap<string, ApiGroupInfo>;
+type GroupsByName = ReadonlyMap<string, APIGroupInfo>;
 
 /** A discovery request that takes longer counts as unknown, so callers are never held up for long. */
 export const API_DISCOVERY_TIMEOUT_MS = 5_000;
@@ -60,7 +60,7 @@ class OutcomeCache<T> {
 }
 
 const rootCache = new OutcomeCache<GroupsByName>();
-const groupCache = new OutcomeCache<ApiGroupInfo | undefined>();
+const groupCache = new OutcomeCache<APIGroupInfo | undefined>();
 
 /**
  * Returns the versions the server serves for an `/apis` group, such as `dashboard.grafana.app`.
@@ -74,12 +74,12 @@ const groupCache = new OutcomeCache<ApiGroupInfo | undefined>();
  * current user may do, so a request to a served group can still fail with a 403. What to do on
  * `undefined`, such as calling a legacy API, is up to the caller.
  *
- * The first call fetches `GET /apis`. Later calls reuse the answer until {@link invalidateApiDiscovery}
+ * The first call fetches `GET /apis`. Later calls reuse the answer until {@link invalidateAPIDiscovery}
  * or a page reload.
  *
  * @alpha
  */
-export async function getApiGroup(group: string): Promise<ApiGroupInfo | undefined> {
+export async function getAPIGroup(group: string): Promise<APIGroupInfo | undefined> {
   if (!GROUP_NAME_PATTERN.test(group)) {
     return undefined;
   }
@@ -90,12 +90,12 @@ export async function getApiGroup(group: string): Promise<ApiGroupInfo | undefin
     return valueOf(await fromFallback);
   }
 
-  const root = await rootCache.get(ROOT_URL, fetchApiGroupList);
+  const root = await rootCache.get(ROOT_URL, fetchAPIGroupList);
   if (root.kind === 'known') {
     return root.value.get(group);
   }
 
-  return valueOf(await groupCache.get(group, () => fetchApiGroup(group)));
+  return valueOf(await groupCache.get(group, () => fetchAPIGroup(group)));
 }
 
 /**
@@ -104,22 +104,22 @@ export async function getApiGroup(group: string): Promise<ApiGroupInfo | undefin
  *
  * @alpha
  */
-export function invalidateApiDiscovery(): void {
+export function invalidateAPIDiscovery(): void {
   rootCache.clear();
   groupCache.clear();
 }
 
 /**
- * Makes discovery answer from `groups` without requests or a session, until `invalidateApiDiscovery()`.
+ * Makes discovery answer from `groups` without requests or a session, until `invalidateAPIDiscovery()`.
  *
  * @internal
  */
-export function setApiDiscoveryForTesting(groups: readonly ApiGroupInfo[]): void {
+export function setAPIDiscoveryForTesting(groups: readonly APIGroupInfo[]): void {
   if (process.env.NODE_ENV !== 'test') {
-    throw new Error('setApiDiscoveryForTesting function can only be called from tests.');
+    throw new Error('setAPIDiscoveryForTesting function can only be called from tests.');
   }
 
-  invalidateApiDiscovery();
+  invalidateAPIDiscovery();
   rootCache.set(ROOT_URL, new Map(groups.map((info) => [info.group, info])));
 }
 
@@ -127,18 +127,18 @@ function valueOf<T>(outcome: Outcome<T | undefined>): T | undefined {
   return outcome.kind === 'known' ? outcome.value : undefined;
 }
 
-async function fetchApiGroupList(): Promise<Outcome<GroupsByName>> {
+async function fetchAPIGroupList(): Promise<Outcome<GroupsByName>> {
   if (!isSignedInOrAnonymous()) {
     return UNKNOWN;
   }
 
   try {
     const response = await getWithTimeout(ROOT_URL);
-    if (!isAPIGroupList(response)) {
+    if (!isK8sAPIGroupList(response)) {
       throw new Error('API discovery: the response is not an APIGroupList');
     }
 
-    const infos = response.groups.map(toApiGroupInfo).filter((info) => info !== undefined);
+    const infos = response.groups.map(toAPIGroupInfo).filter((info) => info !== undefined);
     return { kind: 'known', value: new Map(infos.map((info) => [info.group, info])) };
   } catch (error) {
     logRequestFailure(ROOT_URL, error);
@@ -146,7 +146,7 @@ async function fetchApiGroupList(): Promise<Outcome<GroupsByName>> {
   }
 }
 
-async function fetchApiGroup(group: string): Promise<Outcome<ApiGroupInfo | undefined>> {
+async function fetchAPIGroup(group: string): Promise<Outcome<APIGroupInfo | undefined>> {
   if (!isSignedInOrAnonymous()) {
     return UNKNOWN;
   }
@@ -154,10 +154,10 @@ async function fetchApiGroup(group: string): Promise<Outcome<ApiGroupInfo | unde
   const url = `${ROOT_URL}/${group}/`;
   try {
     const response = await getWithTimeout(url);
-    if (!isAPIGroup(response)) {
+    if (!isK8sAPIGroup(response)) {
       throw new Error('API discovery: the response is not an APIGroup');
     }
-    return { kind: 'known', value: toApiGroupInfo(response) };
+    return { kind: 'known', value: toAPIGroupInfo(response) };
   } catch (error) {
     if (isFetchError(error) && error.status === 404) {
       return { kind: 'known', value: undefined };
@@ -191,14 +191,14 @@ async function getWithTimeout(url: string): Promise<unknown> {
 
 function logRequestFailure(url: string, error: unknown): void {
   const timedOut = error instanceof DiscoveryTimeoutError;
-  logApiDiscoveryError('API discovery: request failed', error, {
+  logAPIDiscoveryError('API discovery: request failed', error, {
     ...getFetchErrorContext(error),
     url,
     reason: timedOut ? 'timeout' : 'error',
   });
 }
 
-function toApiGroupInfo(apiGroup: APIGroup): ApiGroupInfo | undefined {
+function toAPIGroupInfo(apiGroup: K8sAPIGroup): APIGroupInfo | undefined {
   const versions = apiGroup.versions.map(({ version }) => version);
   if (versions.length === 0) {
     return undefined;
@@ -208,11 +208,11 @@ function toApiGroupInfo(apiGroup: APIGroup): ApiGroupInfo | undefined {
   return { group: apiGroup.name, versions, preferredVersion };
 }
 
-function isAPIGroupList(value: unknown): value is APIGroupList {
-  return isObject(value) && Array.isArray(value.groups) && value.groups.every(isAPIGroup);
+function isK8sAPIGroupList(value: unknown): value is K8sAPIGroupList {
+  return isObject(value) && Array.isArray(value.groups) && value.groups.every(isK8sAPIGroup);
 }
 
-function isAPIGroup(value: unknown): value is APIGroup {
+function isK8sAPIGroup(value: unknown): value is K8sAPIGroup {
   return (
     isObject(value) &&
     typeof value.name === 'string' &&

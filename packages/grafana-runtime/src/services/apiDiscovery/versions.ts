@@ -1,4 +1,4 @@
-import { type ApiGroupInfo } from './types';
+import { type APIGroupInfo } from './types';
 
 // The Kubernetes version format: v<major>, optionally followed by alpha<minor> or beta<minor>.
 const VERSION_PATTERN = /^v(\d+)(?:(alpha|beta)(\d+))?$/;
@@ -16,7 +16,7 @@ function parseVersion(version: string) {
  * Sorts versions from most to least stable, the way Kubernetes ranks them: GA before beta before
  * alpha, then the higher version first. Versions that don't follow that format go last, alphabetically.
  */
-export function compareApiVersions(a: string, b: string): number {
+export function compareAPIVersions(a: string, b: string): number {
   const parsedA = parseVersion(a);
   const parsedB = parseVersion(b);
 
@@ -37,9 +37,9 @@ export function compareApiVersions(a: string, b: string): number {
  * The server's preferred version if the caller supports it, otherwise the most stable version both
  * support. Never a version the caller did not list.
  */
-export function selectApiVersion(group: ApiGroupInfo, supported: readonly string[]): string | undefined {
+export function selectAPIVersion(group: APIGroupInfo, supported: readonly string[]): string | undefined {
   if (supported.includes(group.preferredVersion)) {
     return group.preferredVersion;
   }
-  return group.versions.filter((version) => supported.includes(version)).sort(compareApiVersions)[0];
+  return group.versions.filter((version) => supported.includes(version)).sort(compareAPIVersions)[0];
 }

@@ -112,5 +112,5 @@ export {
 } from '../services/dataSource/constants';
 export { setExpressionDataSourceInstance } from '../services/dataSource/expressionDs';
 export { isSignedInOrAnonymous } from '../services/user';
-export { setApiDiscoveryForTesting } from '../services/apiDiscovery/discovery';
+export { setAPIDiscoveryForTesting } from '../services/apiDiscovery/discovery';
 export { assertPluginIdFormat } from '../services/pluginUtils';

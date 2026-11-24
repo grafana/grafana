@@ -1,10 +1,10 @@
-import { compareApiVersions, selectApiVersion } from './versions';
+import { compareAPIVersions, selectAPIVersion } from './versions';
 
-describe('compareApiVersions', () => {
+describe('compareAPIVersions', () => {
   it('sorts versions from most to least stable', () => {
     const versions = ['v0alpha1', 'v1alpha1', 'v2', 'v1beta1', 'v1', 'v2beta1', 'v1beta2', 'v1alpha2'];
 
-    expect([...versions].sort(compareApiVersions)).toEqual([
+    expect([...versions].sort(compareAPIVersions)).toEqual([
       'v2',
       'v1',
       'v2beta1',
@@ -17,11 +17,11 @@ describe('compareApiVersions', () => {
   });
 
   it('sorts versions that do not follow the Kubernetes pattern last, alphabetically', () => {
-    expect(['foo', 'v1alpha1', 'bar', 'v1'].sort(compareApiVersions)).toEqual(['v1', 'v1alpha1', 'bar', 'foo']);
+    expect(['foo', 'v1alpha1', 'bar', 'v1'].sort(compareAPIVersions)).toEqual(['v1', 'v1alpha1', 'bar', 'foo']);
   });
 });
 
-describe('selectApiVersion', () => {
+describe('selectAPIVersion', () => {
   const group = {
     group: 'dashboard.grafana.app',
     versions: ['v1beta1', 'v0alpha1', 'v2beta1'],
@@ -29,20 +29,20 @@ describe('selectApiVersion', () => {
   };
 
   it("returns the server's preferred version when the caller supports it", () => {
-    expect(selectApiVersion(group, ['v0alpha1', 'v2beta1', 'v1beta1'])).toBe('v1beta1');
+    expect(selectAPIVersion(group, ['v0alpha1', 'v2beta1', 'v1beta1'])).toBe('v1beta1');
   });
 
   it('returns the most stable common version when the caller does not support the preferred one', () => {
-    expect(selectApiVersion(group, ['v0alpha1', 'v2beta1'])).toBe('v2beta1');
+    expect(selectAPIVersion(group, ['v0alpha1', 'v2beta1'])).toBe('v2beta1');
   });
 
   it('ignores the order of the supported versions', () => {
-    expect(selectApiVersion(group, ['v2beta1', 'v0alpha1'])).toBe('v2beta1');
-    expect(selectApiVersion(group, ['v0alpha1', 'v2beta1'])).toBe('v2beta1');
+    expect(selectAPIVersion(group, ['v2beta1', 'v0alpha1'])).toBe('v2beta1');
+    expect(selectAPIVersion(group, ['v0alpha1', 'v2beta1'])).toBe('v2beta1');
   });
 
   it('returns undefined when the caller and the server have no version in common', () => {
-    expect(selectApiVersion(group, ['v1', 'v2'])).toBeUndefined();
-    expect(selectApiVersion(group, [])).toBeUndefined();
+    expect(selectAPIVersion(group, ['v1', 'v2'])).toBeUndefined();
+    expect(selectAPIVersion(group, [])).toBeUndefined();
   });
 });

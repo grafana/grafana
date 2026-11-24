@@ -3,12 +3,12 @@ import { setupServer } from 'msw/node';
 import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { getApiDiscoveryHandlers, SERVED_API_VERSIONS } from './discovery';
+import { getAPIDiscoveryHandlers, SERVED_API_VERSIONS } from './discovery';
 
 const AGGREGATED_ACCEPT =
   'application/json;g=apidiscovery.k8s.io;v=v2;as=APIGroupDiscoveryList,application/json;g=apidiscovery.k8s.io;v=v2beta1;as=APIGroupDiscoveryList,application/json';
 
-const server = setupServer(...getApiDiscoveryHandlers());
+const server = setupServer(...getAPIDiscoveryHandlers());
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
 afterEach(() => server.resetHandlers());
@@ -69,7 +69,7 @@ describe('API discovery handlers', () => {
 
   it('pass aggregated discovery requests on to the next handler', async () => {
     const aggregatedHandler = http.get('/apis', () => HttpResponse.json({ kind: 'APIGroupDiscoveryList', items: [] }));
-    server.resetHandlers(...getApiDiscoveryHandlers(), aggregatedHandler);
+    server.resetHandlers(...getAPIDiscoveryHandlers(), aggregatedHandler);
 
     const body = await (await fetch('/apis', { headers: { Accept: AGGREGATED_ACCEPT } })).json();
 
@@ -77,7 +77,7 @@ describe('API discovery handlers', () => {
   });
 
   it('serve only the given groups', async () => {
-    server.use(...getApiDiscoveryHandlers({ 'iam.grafana.app': ['v0alpha1'] }));
+    server.use(...getAPIDiscoveryHandlers({ 'iam.grafana.app': ['v0alpha1'] }));
 
     const list = await (await fetch('/apis')).json();
     const folder = await fetch('/apis/folder.grafana.app/');
