@@ -68,7 +68,7 @@ The following are the components of the CloudWatch query editor.
 
 ## Use Builder and Code modes
 
-Both the Metric Search and Metric Insights query types provide two editing modes. Use the **Builder** and **Code** toggle in the query editor to switch between them.
+The Metric Search, Metric Insights, and PromQL query types each provide two editing modes. Use the **Builder** and **Code** toggle in the query editor to switch between them.
 
 ### Builder mode
 
@@ -76,6 +76,7 @@ Builder mode lets you construct a query from drop-downs and form fields without 
 
 - For **Metric Search** queries, select the namespace, metric name, statistic, and dimensions.
 - For **Metric Insights** queries, select the namespace, metric name, filter, group, and order options using the [Metrics Insights keywords](#use-metrics-insights-keywords). Grafana constructs a SQL query based on your selections.
+- For **PromQL** queries, refer to [Use PromQL Builder mode](#use-promql-builder-mode).
 
 ### Code mode
 
@@ -83,6 +84,7 @@ Code mode lets you write your query directly in a code editor:
 
 - For **Metric Search** queries, write a metric math or `SEARCH` expression.
 - For **Metric Insights** queries, write a Metrics Insights SQL query.
+- For **PromQL** queries, refer to [Use PromQL Code mode](#use-promql-code-mode).
 
 The code editor includes a built-in autocomplete feature that suggests keywords, aggregations, namespaces, metrics, labels, and label values.
 Suggestions appear after typing a space, comma, or dollar (`$`) character, or by pressing <key>CTRL</key>+<key>Space</key>.
@@ -95,10 +97,11 @@ To run the query, click **Run query** above the code editor.
 
 ## Query CloudWatch metrics
 
-You can create two types of queries in the CloudWatch query editor:
+You can create three types of queries in the CloudWatch query editor:
 
 - [Metric Search](#metric-search-queries), which helps you retrieve and filter available metrics.
 - [Metric Insights](#use-metric-insights-syntax), which uses the Metrics Insights feature to fetch time series data.
+- [PromQL](#promql-queries), which queries CloudWatch metrics using Prometheus Query Language (PromQL).
 
 The query type you use depends on how you want to interact with AWS metrics. Use the drop-down in the upper middle of the query editor to select which type you want to create.
 
@@ -229,55 +232,55 @@ This table summarizes common Metrics Insights query keywords:
 
 The **PromQL** query type lets you query CloudWatch metrics using [Prometheus Query Language (PromQL)](https://prometheus.io/docs/prometheus/latest/querying/basics/). This uses [Amazon CloudWatch's managed PromQL support](https://aws.amazon.com/blogs/mt/introducing-opentelemetry-promql-support-in-amazon-cloudwatch/), which exposes CloudWatch metrics through a Prometheus-compatible query API.
 
-Select **PromQL** from the query type drop-down in the upper middle of the query editor. No data source configuration changes are required. The plugin sends signed requests to the CloudWatch endpoint for the selected **Region**, so PromQL queries use the same authentication and region settings as your other CloudWatch queries.
+Select **PromQL** from the query type drop-down. No data source configuration changes are required. Grafana sends signed requests to the CloudWatch endpoint for the selected **Region**, so PromQL queries use the same authentication and region settings as your other CloudWatch queries.
 
 {{< admonition type="note" >}}
 PromQL support must be available for your metrics in the selected AWS region. For details on availability and CloudWatch's PromQL implementation, refer to the [AWS documentation](https://aws.amazon.com/blogs/mt/introducing-opentelemetry-promql-support-in-amazon-cloudwatch/).
 {{< /admonition >}}
 
-The PromQL query type has two editing modes. Use the **Builder**/**Code** toggle in the query editor header to switch between them:
+The PromQL query type has two editing modes. Use the **Builder** and **Code** toggle to switch between them:
 
 - [Builder mode](#use-promql-builder-mode), which provides a visual query-building interface.
 - [Code mode](#use-promql-code-mode), which provides a code editor for writing raw PromQL.
 
-Grafana keeps the query in sync when you switch modes. If a raw query written in Code mode can't be represented visually, Grafana prompts you before switching to Builder mode, because parts of the query may be lost.
+Grafana keeps the query in sync when you switch modes. If Grafana can't represent a Code mode query in Builder mode, Grafana shows **Parsing error: Switch to builder mode?** before switching, because parts of the query may be lost. Click **Continue** to switch anyway, or **Cancel** to keep editing in Code mode.
 
-You can augment PromQL queries with [template variables](../template-variables/). Grafana interpolates template variables in the expression before sending the query to CloudWatch.
+In either mode, enable **Explain** to display a step-by-step explanation of the current PromQL expression.
+
+You can augment PromQL queries with [template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/template-variables/). Grafana interpolates template variables in the expression before sending the query to CloudWatch.
 
 #### Use PromQL Builder mode
 
 Builder mode provides a visual interface for constructing a PromQL query without writing it by hand:
 
-1. Select a metric.
-1. Add label filters to narrow the results. Choose a label key and value from the drop-downs.
-1. Optionally chain operations, such as aggregations and functions, to transform the query.
+1. Under **Metric**, select a metric.
+1. Under **Label filters**, choose a label key and value to narrow the results.
+1. Optional: Under **Operations**, add operations, such as aggregations and functions, to transform the query.
 
 Grafana constructs the PromQL expression from your selections. Switch to Code mode at any time to view or refine the generated expression.
 
 #### Use PromQL Code mode
 
-Code mode provides a Monaco-based editor for writing raw PromQL expressions.
+Code mode provides a code editor for writing raw PromQL expressions.
 
-The editor includes autocomplete:
+The editor autocompletes the following:
 
-- **Metric name autocomplete**: Typing suggests CloudWatch metrics available in the current region.
-- **Label key autocomplete**: Inside `{}`, suggests the available label keys for the selected metric.
-- **Label value autocomplete**: After `key="`, suggests values for that label.
+- Metric names, as you type, from the CloudWatch metrics available in the current region.
+- Label keys for the selected metric, inside `{}`.
+- Values for a label, after `key="`.
 
 Click **Metrics browser** to open a visual browser that lists CloudWatch metrics for the current region. Select a metric to list its labels, choose labels and values to build a selector, then click **Use query** to write the selector into the editor.
 
-Enable the **Explain** toggle in the query editor header to display a human-readable, step-by-step explanation of the current PromQL expression.
-
 #### PromQL query options
 
-The following options are available for PromQL queries in both Builder and Code modes:
+The following options are available for PromQL queries in both Builder and Code modes. To display them, expand **Options**.
 
-| **Option**    | **Description**                                                                                                                                                                                                                                                            |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Legend**    | Controls the time series name. `Auto` shows only the labels that distinguish each series. `Verbose` shows the full set of labels. `Custom` lets you provide a template using label names, such as `{{InstanceId}}`.                                                          |
-| **Min step**  | The lower bound on the interval between data points. For example, set `1m` to lock data points to one-minute boundaries. Supports duration strings such as `15s`, `1m`, and `1h`.                                                                                          |
-| **Format**    | The format of the returned data. Choose `Time series` to render a graph, or `Table` to render tabular data.                                                                                                                                                               |
-| **Type**      | The query type. Choose `Range` to return data over the selected time range, or `Instant` to return a single value at the end of the time range.                                                                                                                            |
+| **Option**   | **Description**                                                                                                                                                                                                                                                                                   |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Legend**   | Controls the time series name. `Auto` shows only the labels that distinguish each series. `Verbose` shows the full set of labels. `Custom` lets you provide a template using label names, such as `{{InstanceId}}`. The default is `Auto`.                                                        |
+| **Min step** | The minimum interval between data points. Grafana calculates the step from the time range and the maximum number of data points, and never uses a step smaller than this value. Supports duration strings such as `15s`, `1m`, and `1h`. Leave the field empty to let Grafana calculate the step. |
+| **Format**   | The format of the returned data. Choose `Time series` to render a graph, or `Table` to render tabular data. The default is `Time series`.                                                                                                                                                         |
+| **Type**     | The query type. Choose `Range` to return data over the selected time range, or `Instant` to return a single value at the end of the time range. The default is `Range`.                                                                                                                           |
 
 ## Query CloudWatch Logs
 
