@@ -153,7 +153,7 @@ function getDataSourceConfig(amSourceName: string) {
   return dsConfig;
 }
 
-export async function fetchPromBuildInfo(url: string): Promise<PromBuildInfoResponse | undefined> {
+async function fetchPromBuildInfo(url: string): Promise<PromBuildInfoResponse | undefined> {
   const response = await lastValueFrom(
     getBackendSrv().fetch<PromBuildInfoResponse>({
       url: `${url}/api/v1/status/buildinfo`,

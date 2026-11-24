@@ -1,5 +1,5 @@
 import { clone, sampleSize } from 'lodash';
-import memoize from 'micro-memoize';
+import { memoize } from 'micro-memoize';
 import { createElement } from 'react';
 import { type HeaderGroup, type Row } from 'react-table';
 
