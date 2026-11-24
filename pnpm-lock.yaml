@@ -533,8 +533,8 @@ importers:
         specifier: 12.3.0
         version: 12.3.0
       micro-memoize:
-        specifier: ^4.1.2
-        version: 4.2.0
+        specifier: ^5.0.0
+        version: 5.2.2
       ml-regression-polynomial:
         specifier: ^4.0.0
         version: 4.0.0
@@ -1389,8 +1389,8 @@ importers:
         specifier: ^4.17.21
         version: 4.18.1
       micro-memoize:
-        specifier: ^4.1.2
-        version: 4.2.0
+        specifier: ^5.0.0
+        version: 5.2.2
       msw:
         specifier: ^2.0.0
         version: 2.10.4(@types/node@26.6.5)(@typescript/typescript6@6.0.2)
@@ -1815,8 +1815,8 @@ importers:
         specifier: ^2.2.1
         version: 2.2.1
       micro-memoize:
-        specifier: ^4.1.2
-        version: 4.2.0
+        specifier: ^5.0.0
+        version: 5.2.2
       react:
         specifier: '>=19'
         version: 19.2.8
@@ -2466,8 +2466,8 @@ importers:
         specifier: ^4.17.23
         version: 4.18.1
       micro-memoize:
-        specifier: ^4.1.2
-        version: 4.2.0
+        specifier: ^5.0.0
+        version: 5.2.2
       monaco-editor:
         specifier: ^0.34.1
         version: 0.34.1
@@ -10164,6 +10164,10 @@ packages:
   fast-equals@4.0.3:
     resolution: {integrity: sha512-G3BSX9cfKttjr+2o1O22tYMLq0DPluZnYtq1rXumE1SpL/F/SLIfHx08WYQoWSIpeMYf8sRbJ8++71+v6Pnxfg==}
 
+  fast-equals@5.4.5:
+    resolution: {integrity: sha512-yKEpcFuRPu/pTQL2VB8YKE2yFldrLlIsoWtJeBnAdqEhvu21OgkFT0C8njf/xYc2LSZGEr3K9JGjthHJxnVLvQ==}
+    engines: {node: '>=6.0.0'}
+
   fast-glob@3.3.3:
     resolution: {integrity: sha512-7MptL8U0cqcFdzIzwOTHoilX9x5BrNqye7Z/LuC7kCMRio1EMSyqRK3BEAUD7sXRq4iT4AzTVuZdhgQ2TCvYLg==}
     engines: {node: '>=8.6.0'}
@@ -10191,6 +10195,9 @@ packages:
 
   fast-string-width@3.0.2:
     resolution: {integrity: sha512-gX8LrtNEI5hq8DVUfRQMbr5lpaS4nMIWV+7XEbXk2b8kiQIizgnlr12B4dA3ZEx3308ze0O4Q1R+cHts8kyUJg==}
+
+  fast-stringify@4.0.3:
+    resolution: {integrity: sha512-HJouFZmaXofRDp0W/5998CAti608tPWj/twaY3DfvtnRqb4CU8X7HXSsuAxknWLyymnARNeNUz2xeY6+/DINZQ==}
 
   fast-uri@3.1.8:
     resolution: {integrity: sha512-GZMtZUTNRpOVIECoXwLNZS5xUGE+mVNbTB8h/7Rwh2TFWcBQiPzTgyZi05BF9UMZKkLJv8XBRJTlU7zg8+ZfMg==}
@@ -12084,8 +12091,8 @@ packages:
     resolution: {integrity: sha512-4113TdXeLAsMruJ79OpFL5O8+LTFXhQqZ260rF3tgUmiNAtRm4Uume04I+65PRN6yZ69J4f8rVYWW8zRk65UYw==}
     engines: {node: '>=22.12.0'}
 
-  micro-memoize@4.2.0:
-    resolution: {integrity: sha512-dRxIsNh0XosO9sd3aASUabKOzG9dloLO41g74XUGThpHBoGm1ttakPT5in14CuW/EDedkniaShFHbymmmKGOQA==}
+  micro-memoize@5.2.2:
+    resolution: {integrity: sha512-BQGcwWF+rFFN9kdxnoUP0bdjPSBFfuusK4N5EncO7ORWunkfu1BFeLrR6aPmD5OkPdQi6xYxrSeEtKqNe0JaMA==}
 
   micromark-util-character@2.1.1:
     resolution: {integrity: sha512-wv8tdUTJ3thSFFFJKtpYKOYiGP2+v96Hvk4Tu8KpCAsTMs6yi+nVmGh1syvSCsaxz45J6Jbw+9DD6g97+NV67Q==}
@@ -23854,6 +23861,8 @@ snapshots:
 
   fast-equals@4.0.3: {}
 
+  fast-equals@5.4.5: {}
+
   fast-glob@3.3.3:
     dependencies:
       '@nodelib/fs.stat': 2.0.5
@@ -23879,6 +23888,8 @@ snapshots:
   fast-string-width@3.0.2:
     dependencies:
       fast-string-truncated-width: 3.0.3
+
+  fast-stringify@4.0.3: {}
 
   fast-uri@3.1.8: {}
 
@@ -26413,7 +26424,10 @@ snapshots:
       stylis: 4.4.0
       ts-dedent: 2.3.0
 
-  micro-memoize@4.2.0: {}
+  micro-memoize@5.2.2:
+    dependencies:
+      fast-equals: 5.4.5
+      fast-stringify: 4.0.3
 
   micromark-util-character@2.1.1:
     dependencies:

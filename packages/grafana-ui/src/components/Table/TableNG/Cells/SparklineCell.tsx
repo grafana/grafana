@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import memoize from 'micro-memoize';
+import { memoize } from 'micro-memoize';
 import * as React from 'react';
 
 import { type FieldConfig, getMinMaxAndDelta, type Field, isDataFrameWithValue } from '@grafana/data';
@@ -132,5 +132,5 @@ export const getStyles: TableCellStyles = memoize(
         ...(textAlign === 'right' && { flexDirection: 'row-reverse' }),
       },
     }),
-  { isMatchingKey: isTableCellStylesKeyEqual }
+  { isKeyEqual: isTableCellStylesKeyEqual }
 );
