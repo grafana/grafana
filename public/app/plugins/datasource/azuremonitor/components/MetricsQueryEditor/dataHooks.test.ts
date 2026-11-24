@@ -199,6 +199,41 @@ describe('AzureMonitor: metrics dataHooks', () => {
     });
   });
 
+  describe('multi-resource metadata scope', () => {
+    const twoResources = [
+      { subscription: 'sub-abc-123', resourceGroup: 'rg1', resourceName: 'rn1', region: 'westus2' },
+      { subscription: 'sub-abc-123', resourceGroup: 'rg2', resourceName: 'rn2', region: 'westus2' },
+    ];
+    const queryFor = (metricNamespace: string) => ({
+      ...bareQuery,
+      azureMonitor: { metricNamespace, metricName: 'metric', region: 'westus2', resources: twoResources },
+    });
+
+    // A selection saved with the batch API enabled can hold types the subscription-level
+    // metricdefinitions endpoint rejects; those are looked up via the first resource.
+    it.each([
+      ['looks up an incompatible type via the first resource', 'microsoft.operationalinsights/workspaces', false],
+      ['looks up a compatible type at the subscription level', 'Microsoft.Compute/virtualMachines', true],
+    ])('%s', async (_name, metricNamespace, expectedMultipleResources) => {
+      const query = queryFor(metricNamespace);
+      renderHook(() => useMetricNames(query, datasource, onChange, setError));
+      renderHook(() => useMetricMetadata(query, datasource, onChange));
+
+      await waitFor(() => {
+        expect(datasource.azureMonitorDatasource.getMetricNames).toHaveBeenCalledWith(
+          expect.objectContaining({ resourceGroup: 'rg1', resourceName: 'rn1', metricNamespace }),
+          expectedMultipleResources,
+          'westus2'
+        );
+        expect(datasource.azureMonitorDatasource.getMetricMetadata).toHaveBeenCalledWith(
+          expect.objectContaining({ resourceGroup: 'rg1', resourceName: 'rn1', metricNamespace }),
+          expectedMultipleResources,
+          'westus2'
+        );
+      });
+    });
+  });
+
   describe('useMetricsMetadataHook', () => {
     const metricsMetadataConfig = {
       name: 'useMetricMetadata',

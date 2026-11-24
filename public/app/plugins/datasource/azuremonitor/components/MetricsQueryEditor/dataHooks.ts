@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 
 import { rangeUtil } from '@grafana/data';
 
+import { multiResourceCompatibleTypes } from '../../azureMetadata/resourceTypes';
 import { type AzureMonitorResource } from '../../dataquery.gen';
 import type Datasource from '../../datasource';
 import TimegrainConverter from '../../time_grain_converter';
@@ -50,6 +51,13 @@ const getResourceGroupAndName = (resources?: AzureMonitorResource[]) => {
   };
 };
 
+// usesSubscriptionScope reports whether metadata for the selection comes from the subscription-level
+// metricdefinitions endpoint. Azure rejects that endpoint for types that aren't multi-resource compatible,
+// which a selection saved with the batch API enabled can include, so those are looked up via the first
+// resource instead, as the batch API does.
+const usesSubscriptionScope = (resources?: AzureMonitorResource[], metricNamespace?: string) =>
+  (resources?.length ?? 0) > 1 && (multiResourceCompatibleTypes[metricNamespace?.toLocaleLowerCase() ?? ''] ?? false);
+
 export const useMetricNamespaces: DataHook = (query, datasource, onChange, setError) => {
   const { subscription } = query;
   const { metricNamespace, resources } = query.azureMonitor ?? {};
@@ -97,7 +105,7 @@ export const useMetricNames: DataHook = (query, datasource, onChange, setError) 
   const { subscription } = query;
   const { metricNamespace, metricName, resources, customNamespace } = query.azureMonitor ?? {};
   const { resourceGroup, resourceName } = getResourceGroupAndName(resources);
-  const multipleResources = (resources && resources.length > 1) ?? false;
+  const multipleResources = usesSubscriptionScope(resources, metricNamespace);
   const region = query.azureMonitor?.region ?? '';
   const batchAPIEnabled = datasource.azureMonitorDatasource.batchAPIEnabled;
 
@@ -153,7 +161,7 @@ export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasour
   const { resources, metricNamespace, metricName, aggregation, timeGrain, customNamespace, region } =
     query.azureMonitor ?? {};
   const { resourceGroup, resourceName } = getResourceGroupAndName(resources);
-  const multipleResources = (resources && resources.length > 1) ?? false;
+  const multipleResources = usesSubscriptionScope(resources, metricNamespace);
   const batchAPIEnabled = datasource.azureMonitorDatasource.batchAPIEnabled;
 
   // Fetch new metric metadata when the fields change
