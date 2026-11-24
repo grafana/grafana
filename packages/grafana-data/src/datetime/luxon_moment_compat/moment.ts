@@ -522,35 +522,34 @@ function parseWithFormat(value: string, format: MomentFormat, options?: MomentOp
   const momentFormat = typeof format === 'string' ? format : 'ISO_8601';
   const fmt = convertMomentToLuxonForParsing(momentFormat, options?.locale);
 
-  let parseValue = value;
-  const parsed = parseFromCachedFormat(value, fmt, options);
-  if (parsed.isValid || parsed.invalidReason !== 'unparsable') {
-    return parsed;
-  }
-
-  // Retried only after the as-is parse fails so formats with a literal suffix (e.g. "D[th]") keep working.
+  // The value as given is always tried before the one without ordinal suffixes, so formats with a
+  // literal suffix (e.g. "D[th]") keep working.
   const withoutOrdinals = stripOrdinalSuffixes(value);
-  if (withoutOrdinals !== value) {
-    parseValue = withoutOrdinals;
-    const parsedWithoutOrdinals = parseFromCachedFormat(parseValue, fmt, options);
-    if (parsedWithoutOrdinals.isValid || parsedWithoutOrdinals.invalidReason !== 'unparsable') {
-      return parsedWithoutOrdinals;
+  const candidates = withoutOrdinals === value ? [value] : [value, withoutOrdinals];
+
+  for (const candidate of candidates) {
+    const parsed = parseFromCachedFormat(candidate, fmt, options);
+    if (parsed.isValid || parsed.invalidReason !== 'unparsable') {
+      return parsed;
     }
   }
 
   if (typeof format === 'string') {
     const permissiveInputs: Array<[string, string]> = [];
     const abbreviatedMonthFormat = format.replaceAll('MMMM', 'MMM');
-    const valueWithoutCommas = parseValue.replaceAll(',', '');
     const formatWithoutCommas = format.replaceAll(',', '');
 
-    if (abbreviatedMonthFormat !== format) {
-      permissiveInputs.push([parseValue, abbreviatedMonthFormat]);
-    }
-    if (valueWithoutCommas !== parseValue || formatWithoutCommas !== format) {
-      permissiveInputs.push([valueWithoutCommas, formatWithoutCommas]);
+    for (const candidate of candidates) {
+      const valueWithoutCommas = candidate.replaceAll(',', '');
+
       if (abbreviatedMonthFormat !== format) {
-        permissiveInputs.push([valueWithoutCommas, formatWithoutCommas.replaceAll('MMMM', 'MMM')]);
+        permissiveInputs.push([candidate, abbreviatedMonthFormat]);
+      }
+      if (valueWithoutCommas !== candidate || formatWithoutCommas !== format) {
+        permissiveInputs.push([valueWithoutCommas, formatWithoutCommas]);
+        if (abbreviatedMonthFormat !== format) {
+          permissiveInputs.push([valueWithoutCommas, formatWithoutCommas.replaceAll('MMMM', 'MMM')]);
+        }
       }
     }
 

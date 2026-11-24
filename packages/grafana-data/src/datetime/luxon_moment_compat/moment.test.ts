@@ -282,6 +282,11 @@ describe('formatted string parsing', () => {
       expect(moment.utc('Nov 20 1st 2026', 'MMM D [1st] YYYY').toISOString()).toBe('2026-11-20T00:00:00.000Z');
     });
 
+    it('keeps the comma and month-name retries working for formats with a literal suffix', () => {
+      expect(moment.utc('20th November 2026', 'D[th], MMMM YYYY').toISOString()).toBe('2026-11-20T00:00:00.000Z');
+      expect(moment.utc('20th Nov 2026', 'D[th] MMMM YYYY').toISOString()).toBe('2026-11-20T00:00:00.000Z');
+    });
+
     it('does not treat a suffix on a longer number as an ordinal', () => {
       expect(moment.utc('Nov 2020th, 2026', 'MMM D, YYYY').isValid()).toBe(false);
     });
