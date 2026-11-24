@@ -1,16 +1,18 @@
 # Multi-tenant `live.grafana.app`
 
-Status: in progress, updated 2026-11-23. Supersedes the October explorations ("Multi-tenant Live
+Status: in progress, updated 2026-11-24. Supersedes the October explorations ("Multi-tenant Live
 service", "Datasource streams via Live Redis") where they disagree.
 
-| Step    | PR                               | State                                             |
-| ------- | -------------------------------- | ------------------------------------------------- |
-| 1       | grafana/grafana#138603           | Merged                                            |
-| 2, 3, 5 | grafana/grafana#138604           | Merged                                            |
-| —       | grafana/grafana#138607           | Merged; route-only versions in discovery          |
-| 4       | grafana/grafana#138625           | Draft; frontend toggle and enabled discovery test |
-| 6a      | grafana/grafana-enterprise#15116 | Open; needs #138604 in the pinned grafana         |
-| rest    | —                                | Not started                                       |
+| Step    | PR                               | State                                                             |
+| ------- | -------------------------------- | ----------------------------------------------------------------- |
+| 1       | grafana/grafana#138603           | Merged                                                            |
+| 2, 3, 5 | grafana/grafana#138604           | Merged                                                            |
+| —       | grafana/grafana#138607           | Merged; route-only versions in discovery                          |
+| 4       | grafana/grafana#138625           | Merged; frontend toggle and enabled discovery test                |
+| 6a      | grafana/grafana-enterprise#15116 | Merged                                                            |
+| 6b      | grafana/grafana-enterprise#15175 | Draft; server core, wiring, limit, first metrics                  |
+| 6b      | grafana/grafana#138724           | Draft; dispatcher `Observer` for subscribe and disconnect metrics |
+| rest    | —                                | Not started                                                       |
 
 ## Goal
 
@@ -56,7 +58,7 @@ routing decision only.
 | Redis prefix           | Cloud drops the per-stack `ha_prefix` and uses bare `gf_live`, so an MT node can share the keyspace (unless `live.keepHAPrefixInCloud` is on) | `pkg/services/live/live.go`                                                           |
 | Redis enabled          | Only for stacks where `haEnabled` is true: HA plan, more than one replica, or HPA                                                             | hosted-grafana `pkg/hgapi/features/features.go`                                       |
 | Centrifuge credentials | `UserID` is `orgchannel.UserID(user)`: namespace plus authlib UID (step 1)                                                                    | `pkg/services/live/live.go` `serveWebsocket`                                          |
-| `apps/live`            | `v1alpha1`: no kinds, one `/ws` route; installed behind `live.runAPIServer` (experimental, `RequiresDevMode`)                                 | `apps/live/kinds/`, `pkg/registry/apps/live/register.go`, `pkg/registry/apps/apps.go` |
+| `apps/live`            | `v1alpha1`: no kinds, one `/ws` route; installed behind `live.runAPIServer` (experimental, off by default)                                    | `apps/live/kinds/`, `pkg/registry/apps/live/register.go`, `pkg/registry/apps/apps.go` |
 
 ### Findings that shaped the design
 
@@ -81,8 +83,8 @@ routing decision only.
    `pkg/tests/apis/live/live_test.go` is removed in #138625, and the group shows up in `/apis`,
    aggregated discovery, `/openapi/v3`, and `/apis/discovery/v1alpha2/{status,manifests}` with
    router middleware on.
-6. **The toggle can't be enabled in cloud.** `live.runAPIServer` has `RequiresDevMode: true`.
-   _Kept for now; removed before cloud rollout._
+6. **The toggle can't be enabled in cloud.** `live.runAPIServer` had `RequiresDevMode: true`.
+   _Removed in grafana/grafana#138625._
 7. **Centrifuge user IDs must be unique per namespace.** One MT node holds connections for many
    stacks. _Resolved in step 1 (`orgchannel.UserID`), used by ST and later MT._
 8. **Origin checks live in the handler.** The HG gateway doesn't check Origin on GET. ST checks it
@@ -181,8 +183,11 @@ it:
 - The gateway has already authenticated the user; `APIServerAuthenticator` verifies the access and
   ID tokens and their namespace.
 - `UserID` is `orgchannel.UserID(user)`. The requester goes on the context the same way ST does it.
-- `ExpireAt` follows ID-token expiry. On expiry the server disconnects with a reconnect code, and
-  the client reconnects through the gateway with fresh tokens.
+- ID-token expiry is handled by the shared dispatcher: when a subscribe, publish or RPC finds the
+  ID token expired, it calls `node.Refresh(..., WithRefreshExpired(true))`, which closes the
+  connection with `DisconnectExpired` (a reconnect code). The client reconnects through the
+  gateway with fresh tokens. MT sets no `ExpireAt`, so an idle connection is not closed until it
+  does something; subscriptions authorized earlier stay until then.
 - Origin is checked against the stack URL (from cloudconfig `StackInfo`) plus
   `[live] allowed_origins`.
 - Graceful shutdown disconnects every client with a reconnect code before the grace period ends.
@@ -198,10 +203,15 @@ it:
 
 **Limits and metrics**
 
-- A per-namespace connection limit, replacing the per-pod `[live] max_connections`.
-- Metrics following `contribute/backend/instrumentation.md`: open connections, subscriptions by
-  scope, subscribe errors by reason, disconnects by reason, Redis node health. No stack or channel
-  labels.
+- A per-namespace connection limit (`--live.max-connections-per-namespace`, off by default),
+  replacing the per-pod `[live] max_connections`. The dispatcher counts clients per namespace and
+  asks the host for each namespace's limit (`liveserver.Options.MaxConnectionsForNamespace`; a
+  negative limit means none). A client over the limit is disconnected with
+  `DisconnectConnectionLimit` right after it connects. The count is per replica.
+- Metrics following `contribute/backend/instrumentation.md`, with no stack or channel labels:
+  `grafana_live_mt_connections`, `grafana_live_mt_websocket_rejected_total{reason}` and
+  `grafana_live_mt_redis_up{instance}` from the server itself, and subscriptions by scope and
+  result and disconnects by reason from the dispatcher `Observer` (`liveserver.Options.Observer`).
 
 To keep enterprise thin, the code shared by ST and MT lives in `apps/live/pkg` (step 5):
 
@@ -239,7 +249,7 @@ Later, raw routes in ST and MT under `/apis/live.grafana.app/v1alpha1/namespaces
 
 ### Frontend
 
-The `live.useAPIServerWebsocket` feature toggle (experimental, dev mode only, off by default)
+The `live.useAPIServerWebsocket` feature toggle (experimental, off by default)
 chooses the ws URL. When it is on, the frontend connects to
 `${appUrl}/apis/live.grafana.app/v1alpha1/namespaces/${config.namespace}/ws`; otherwise it keeps
 `/api/live/ws`. `initGrafanaLive` reads the flag through OpenFeature and passes `websocketPath` to
@@ -272,10 +282,10 @@ frontend PR.
 | ----- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------- | ---------------- |
 | 1     | grafana                     | Centrifuge `UserID` = `orgchannel.UserID(user)` (`GetNamespace() + "/" + GetUID()`)                                                                                                                                                                                                              | none                            | Merged (#138603) |
 | 2+3   | grafana                     | ST (on-prem, dev mode) only: `rawroutes` and the ST mount; `/ws` raw route backed by `GrafanaLive`; manifest-documented `/ws` with 426 fallback (no kinds); `NewAppInstaller(websocket)` and `rawroutes.NewHandler` for MT; integration test `pkg/tests/apis/live` (runs with router middleware) | 1                               | Merged (#138604) |
-| 4     | grafana (frontend)          | `live.useAPIServerWebsocket` toggle for the `/apis/live.grafana.app/...` ws URL                                                                                                                                                                                                                  | 2+3                             | #138625          |
+| 4     | grafana (frontend)          | `live.useAPIServerWebsocket` toggle for the `/apis/live.grafana.app/...` ws URL                                                                                                                                                                                                                  | 2+3                             | Merged (#138625) |
 | 5     | grafana                     | `apps/live/pkg/liveserver` (Redis engine setup, Origin check, `Dispatcher` with per-scope handlers) and `apps/live/pkg/features` (dashboard handler behind `DashboardAccess`, namespace fix); `GrafanaLive` wires its scopes into it                                                             | 1                               | Merged (#138604) |
-| 6a    | grafana-enterprise          | Register `live.grafana.app` in the standalone factory with a stub provider; collect, validate and mount raw routes after authn                                                                                                                                                                   | 2+3                             | #15116           |
-| 6b    | grafana-enterprise          | MT live server: per-instance nodes, stack→node selection, origin, expiry, shutdown, limits, metrics; remove `RequiresDevMode` from `live.runAPIServer` before cloud rollout                                                                                                                      | 5, 6a                           | Not started      |
+| 6a    | grafana-enterprise          | Register `live.grafana.app` in the standalone factory with a stub provider; collect, validate and mount raw routes after authn                                                                                                                                                                   | 2+3                             | Merged (#15116)  |
+| 6b    | grafana-enterprise          | MT live server: per-instance nodes, stack→node selection, origin, expiry, shutdown, limits, metrics                                                                                                                                                                                              | 5, 6a                           | In progress      |
 | 7     | deployment_tools            | mt-service for dev0, dev1 and ops; flags, Redis credentials, HPA, PDB, alerts                                                                                                                                                                                                                    | 6b                              | Not started      |
 | 8     | deployment_tools            | Gateway direct route, GOFF routing and authn rules, auth-api audiences                                                                                                                                                                                                                           | 7                               | Not started      |
 | Later | grafana, grafana-enterprise | Push on MT: move the push handler to `apps/live/pkg`, raw push routes with `streams`/`create` → `live:push`, a runner per Redis instance                                                                                                                                                         | gateway service account support | Postponed        |
@@ -285,8 +295,8 @@ for groups that only have routes.
 
 ## Rollout
 
-1. **ST first.** Ship 1–4 (on-prem, dev mode). Then remove `RequiresDevMode`, and turn on
-   `live.runAPIServer` and the frontend toggle for dev stacks. The browser now uses
+1. **ST first.** Steps 1–4 are merged. Turn on `live.runAPIServer` and the frontend toggle for dev
+   stacks. The browser now uses
    `/apis/live.grafana.app/.../ws`, served by ST.
 2. **MT in dev0.** Deploy 6b–7. Add GOFF `direct` for a few internal HA stacks. Open the same
    dashboard in a tab routed to MT and one routed to ST, save it in one, and confirm the event
@@ -301,7 +311,9 @@ Local development uses mt-tilt with ST Grafana, the MT live server and Redis.
 
 ## Open questions
 
-1. Is reconnect on ID-token expiry acceptable for the first pass?
+1. Is reconnect on ID-token expiry acceptable for the first pass? It is lazy: the connection
+   closes when the next subscribe, publish or RPC finds the token expired, so an idle connection
+   keeps its earlier subscriptions until then.
 2. Should `[live]` go into the hgapi MT config allowlist (`GetMTConfig`), so MT reads the stack's
    Redis node from cloudconfig instead of re-deriving hgapi's rule from flags? That would put the
    password in StackInfo.
