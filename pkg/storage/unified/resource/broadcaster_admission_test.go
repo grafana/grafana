@@ -18,7 +18,7 @@ func TestSubscriptionReplayFailureContract(t *testing.T) {
 				return cacheSeed[int]{items: []int{1, 2}}, nil
 			}})
 
-		sub, err := b.subscribeWatch(t.Context(), "checked", intGR, intResume(0))
+		sub, err := b.subscribeWatch(t.Context(), "checked", intGR, "", intResume(0))
 		require.ErrorIs(t, err, io.ErrShortBuffer)
 		require.Nil(t, sub)
 		synctest.Wait()
