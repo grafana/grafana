@@ -110,6 +110,11 @@ describe('isMtFallbackConfigured', () => {
     expect(isMtFallbackConfigured()).toBe(true);
   });
 
+  it('accepts an explicit flag value without reading the client', () => {
+    expect(isMtFallbackConfigured({ allowList: ['/dashboards/*'] })).toBe(true);
+    expect(isMtFallbackConfigured({})).toBe(false);
+  });
+
   it.each([
     ['the flag is unset', undefined],
     ['the flag value is an empty object', {}],

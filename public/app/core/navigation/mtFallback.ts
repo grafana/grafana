@@ -12,12 +12,17 @@ export const useIsUrlAllowed = (location: Pick<Location, 'pathname'>): boolean =
 
 export const useIsMtFallbackConfigured = (): boolean => isMtFallbackConfigured(useFlagGrafanaMtFallback());
 
-export const isMtFallbackConfigured = (flagValue: JsonValue): boolean => Boolean(getAllowedList(flagValue)?.length);
-
-// Non-hook variant for code outside React (e.g. backend_srv); does not re-render on flag changes.
-export const isMtFallbackConfigured = (): boolean => {
-  const flagValue = getFeatureFlagClient().getObjectValue<JsonValue>(FlagKeys.GrafanaMtFallback, {});
-  return Boolean(getAllowedList(flagValue)?.length);
+/**
+ * Returns whether MT fallback is configured.
+ * Pass an explicit flag value from React hooks, or omit it to read from the feature-flag client
+ * (for non-React call sites such as backend_srv).
+ */
+export const isMtFallbackConfigured = (flagValue?: JsonValue): boolean => {
+  const value =
+    flagValue !== undefined
+      ? flagValue
+      : getFeatureFlagClient().getObjectValue<JsonValue>(FlagKeys.GrafanaMtFallback, {});
+  return Boolean(getAllowedList(value)?.length);
 };
 
 const getAllowedList = (value: JsonValue): string[] | undefined => {
