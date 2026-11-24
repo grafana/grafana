@@ -443,18 +443,17 @@ func (p *EnvVarsProvider) goRuntimeEnvVars(pluginID string) []string {
 }
 
 func (p *EnvVarsProvider) memoryLimit(pluginID string) string {
-	limit := p.cfg.PluginSettings.MemoryLimit(pluginID)
-	if limit == "" {
-		limit = p.cfg.DefaultMemoryLimit
+	for _, limit := range []string{p.cfg.PluginSettings.MemoryLimit(pluginID), p.cfg.DefaultMemoryLimit} {
+		if limit == "" {
+			continue
+		}
+		if err := config.ValidateMemoryLimit(limit); err != nil {
+			p.logger.Warn("Ignoring memory limit the plugin process would not start with", "pluginId", pluginID, "error", err)
+			continue
+		}
+		return limit
 	}
-	if limit == "" {
-		return ""
-	}
-	if err := config.ValidateMemoryLimit(limit); err != nil {
-		p.logger.Warn("Ignoring memory limit the plugin process would not start with", "pluginId", pluginID, "error", err)
-		return ""
-	}
-	return limit
+	return ""
 }
 
 // envVar returns a string in the format "key=value" for an environment variable.

@@ -1591,6 +1591,14 @@ func TestPluginEnvVarsProvider_goRuntimeEnvVars(t *testing.T) {
 			wantLimit:   "8GiB",
 		},
 		{
+			name:         "the default limit applies when the plugin limit is dropped",
+			hostLimit:    "8GiB",
+			forward:      true,
+			defaultLimit: "2GiB",
+			pluginLimit:  "12GB",
+			wantLimit:    "2GiB",
+		},
+		{
 			name:         "a default limit the process would not start with is dropped",
 			defaultLimit: "0",
 		},
