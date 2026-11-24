@@ -160,6 +160,20 @@ describe('dashboardMutationApi', () => {
         title: 'Overview',
         panels: [{ title: 'Requests', vizType: 'stat' }],
       });
+      // Grafana Assistant sends section variables only when this parse keeps them.
+      const scoped = dashboardMutationApi.getPayloadSchema('RENDER_PLAN')!.safeParse({
+        planId: 'section-variables-probe',
+        title: 'probe',
+        layout: 'tabs',
+        sections: [{ title: 'tab', panels: [], variables: ['pod'] }],
+        variables: [],
+      });
+      expect(scoped.success).toBe(true);
+      const scopedSection = scoped.success && isRecord(scoped.data) ? scoped.data.sections : undefined;
+      expect(Array.isArray(scopedSection) ? scopedSection[0] : undefined).toMatchObject({
+        title: 'tab',
+        variables: ['pod'],
+      });
       expect(dashboardMutationApi.getPayloadSchema('GET_PLAN')).toBeNull();
 
       setTestFlags({
