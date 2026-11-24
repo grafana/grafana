@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/validation"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -255,10 +256,20 @@ func TestCascadeDelete_StampSkippedWhenFolderChangedAfterDelete(t *testing.T) {
 
 func TestCascadeDelete_RefusesBeforeDeleteWhenAnnotationsDoNotFit(t *testing.T) {
 	f := finalizerFolder("f")
-	f.Annotations = map[string]string{"big": strings.Repeat("x", 256*1024)}
+	// Valid on its own, one byte under the limit; only adding the requester overflows it.
+	f.Annotations = map[string]string{"big": strings.Repeat("x", validation.TotalAnnotationSizeLimitB-len("big")-1)}
+	require.Less(t, annotationSize(f), validation.TotalAnnotationSizeLimitB+1, "fixture must fit before the requester is added")
 	store := newTerminatingStore(f)
 	err := forceDeleteAs(store, userA, forceDelete(), nil)
 	require.True(t, apierrors.IsBadRequest(err))
 	require.Nil(t, store.deleteOptions, "delete must not start")
 	require.Nil(t, f.DeletionTimestamp)
+}
+
+func annotationSize(f *foldersv1.Folder) int {
+	n := 0
+	for k, v := range f.Annotations {
+		n += len(k) + len(v)
+	}
+	return n
 }
