@@ -71,7 +71,7 @@ func TestSharedLoaderAddsAliasesAfterMergingBothSources(t *testing.T) {
 	sql := db.NewTestStore(t)
 	seedGrant(t, sql, "managed:team-reader", 1, 7, ac.Permission{Action: "teams:read", Scope: "teams:id:42"})
 
-	offLoader := legacypermissions.ProvideLoader(sql, legacypermissions.NewRoleCatalog(), resourcepermissions.NewActionSetService(), localcache.New(0, 0), loaderConfig(true), featuremgmt.WithFeatures(), &enforcementLicense{enabled: true}, &aliasGrantClient{}, aliasIAMConfig(iam.URL))
+	offLoader := legacypermissions.ProvideLoader(sql, legacypermissions.NewRoleCatalog(), resourcepermissions.NewActionSetService(), localcache.New(0, 0), loaderConfig(true), featuremgmt.WithFeatures(), &enforcementLicense{enabled: true}, &aliasGrantClient{}, aliasIAMConfig(iam.URL), nil)
 	off, err := offLoader.GetUserPermissions(t.Context(), &user.SignedInUser{UserID: 7, UserUID: "alice", OrgID: 1, Namespace: "default"}, ac.Options{})
 	require.NoError(t, err)
 	require.Contains(t, off, ac.Permission{Action: "teams:read", Scope: "teams:id:42"})
@@ -79,7 +79,7 @@ func TestSharedLoaderAddsAliasesAfterMergingBothSources(t *testing.T) {
 	mu.Lock()
 	require.Empty(t, calls, "flag-off must not read IAM metadata")
 	mu.Unlock()
-	loader := legacypermissions.ProvideLoader(sql, legacypermissions.NewRoleCatalog(), resourcepermissions.NewActionSetService(), localcache.New(0, 0), loaderConfig(true), featuremgmt.WithFeatures(featuremgmt.FlagZanzanaMergeUserPermissions), &enforcementLicense{enabled: true}, &aliasGrantClient{}, aliasIAMConfig(iam.URL))
+	loader := legacypermissions.ProvideLoader(sql, legacypermissions.NewRoleCatalog(), resourcepermissions.NewActionSetService(), localcache.New(0, 0), loaderConfig(true), featuremgmt.WithFeatures(featuremgmt.FlagZanzanaMergeUserPermissions), &enforcementLicense{enabled: true}, &aliasGrantClient{}, aliasIAMConfig(iam.URL), nil)
 	requester := &user.SignedInUser{UserID: 7, UserUID: "alice", OrgID: 1, Namespace: "default"}
 	for range 2 {
 		got, err := loader.GetUserPermissions(t.Context(), requester, ac.Options{})
