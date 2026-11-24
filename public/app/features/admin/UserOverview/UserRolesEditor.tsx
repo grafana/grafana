@@ -1,7 +1,7 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useState } from 'react';
 
-import { OrgRole } from '@grafana/data';
+import { type OrgRole } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Alert, Button, Stack } from '@grafana/ui';
 import { useUpdateOrgUserForCurrentOrgMutation } from 'app/api/clients/legacy';
@@ -9,22 +9,20 @@ import { useListRolesQuery } from 'app/api/clients/roles';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
+import { type OrgUser } from 'app/types/user';
 
 import { OrgRolePicker } from '../OrgRolePicker';
 import { getBasicRoleDisabled } from '../Users/userRolePermissions';
 
 import { ActionError } from './ActionError';
-import { type UserMembership } from './api';
+import { useAction } from './hooks';
 
-function isBasicRole(role: string): role is OrgRole {
-  return Object.values(OrgRole).some((value) => value === role);
-}
-
-export function UserRolesEditor({ user, basicRole }: { user: UserMembership; basicRole: string }) {
+export function UserRolesEditor({ member }: { member: OrgUser }) {
   const [editing, setEditing] = useState(false);
-  const [updateBasicRole, { isError: failed, isLoading: pending, error }] = useUpdateOrgUserForCurrentOrgMutation();
+  const [updateBasicRole, { isLoading: pending }] = useUpdateOrgUserForCurrentOrgMutation();
+  const { run, error } = useAction();
   const licensed = contextSrv.licensedAccessControlEnabled();
-  const canEditBasic = !getBasicRoleDisabled(user);
+  const canEditBasic = !getBasicRoleDisabled(member);
   const canEditDirect =
     licensed &&
     contextSrv.hasPermission(AccessControlAction.ActionUserRolesList) &&
@@ -34,30 +32,40 @@ export function UserRolesEditor({ user, basicRole }: { user: UserMembership; bas
   const options = useListRolesQuery(
     editing && canEditDirect ? { delegatable: true, targetOrgId: contextSrv.user.orgId } : skipToken
   );
-  if ((!canEditBasic && !canEditDirect) || !isBasicRole(basicRole)) {
+  if (!canEditBasic && !canEditDirect) {
     return null;
   }
-  const updateBasic = (role: OrgRole) => updateBasicRole({ userId: user.id, updateOrgUserCommand: { role } }).unwrap();
+
+  const updateBasic = (role: OrgRole) => {
+    const update = updateBasicRole({ userId: member.userId, updateOrgUserCommand: { role } }).unwrap();
+    run(update);
+    // The role picker awaits the write itself, to drop its selection when the server rejects it.
+    return update;
+  };
+
   return (
     <Stack direction="column" gap={2}>
-      {failed && <ActionError error={error} />}
+      {Boolean(error) && <ActionError error={error} />}
       {editing ? (
         <Stack gap={2}>
           {canEditDirect ? (
             <UserRolePicker
-              userId={user.id}
+              userId={member.userId}
               orgId={contextSrv.user.orgId}
-              basicRole={basicRole}
+              basicRole={member.role}
               roleOptions={options.data ?? []}
               isLoading={options.isFetching || pending}
               disabled={!!options.error}
               basicRoleDisabled={!canEditBasic}
               onBasicRoleChange={updateBasic}
+              onRolesUpdate={run}
             />
           ) : (
             <OrgRolePicker
-              value={basicRole}
-              onChange={updateBasic}
+              value={member.role}
+              onChange={(role) => {
+                run(updateBasicRole({ userId: member.userId, updateOrgUserCommand: { role } }).unwrap());
+              }}
               disabled={pending}
               aria-label={t('admin.user-overview.basic', 'Basic role')}
             />

@@ -1011,11 +1011,6 @@
       "count": 1
     }
   },
-  "public/app/core/components/RolePicker/UserRolePicker.tsx": {
-    "react-hooks/preserve-manual-memoization": {
-      "count": 1
-    }
-  },
   "public/app/core/components/RolePickerDrawer/RolePickerDrawer.tsx": {
     "@grafana/require-no-margin": {
       "count": 1
@@ -1140,11 +1135,6 @@
   "public/app/features/admin/UserCreatePage.tsx": {
     "@grafana/require-no-margin": {
       "count": 4
-    }
-  },
-  "public/app/features/admin/UserLdapSyncInfo.tsx": {
-    "@grafana/no-gf-form": {
-      "count": 3
     }
   },
   "public/app/features/admin/Users/OrgUsersTable.tsx": {

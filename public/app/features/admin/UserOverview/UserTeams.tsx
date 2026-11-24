@@ -1,46 +1,46 @@
 import { useMemo } from 'react';
 
-import { type Team } from '@grafana/api-clients/rtkq/iam/v0alpha1';
 import { t } from '@grafana/i18n';
-import { type Column, Text } from '@grafana/ui';
+import { type Column, EmptyState, InteractiveTable } from '@grafana/ui';
 
-import { LoadError } from './LoadError';
+import { LoadState } from './LoadState';
 import { TeamLink } from './TeamLink';
-import { UserTable } from './UserTable';
-import { useGetOverviewTeamsQuery } from './api';
-
-const collator = new Intl.Collator();
+import { type UserTeam, useUserOverview, useUserTeams } from './hooks';
 
 export function UserTeams({ uid }: { uid: string }) {
-  const { currentData: teams, isFetching, error } = useGetOverviewTeamsQuery(uid);
-  const columns = useMemo<Array<Column<Team>>>(
+  const { user } = useUserOverview(uid);
+  const { teams, error } = useUserTeams(user?.uid);
+  const columns = useMemo<Array<Column<UserTeam>>>(
     () => [
       {
         id: 'name',
         header: t('admin.user-overview.team-name', 'Team name'),
         cell: ({ row: { original } }) => <TeamLink team={original} />,
-        sortType: (a, b) => collator.compare(a.original.spec.title, b.original.spec.title),
+        sortType: 'string',
       },
       {
         id: 'email',
         header: t('admin.user-overview.email', 'Email'),
-        cell: ({ row: { original } }) => original.spec.email || '—',
-        sortType: (a, b) => collator.compare(a.original.spec.email || '', b.original.spec.email || ''),
+        cell: ({ row: { original } }) => original.email || '—',
+        sortType: 'string',
       },
     ],
     []
   );
-  if (isFetching) {
-    return <Text>{t('admin.user-overview.loading', 'Loading…')}</Text>;
+
+  if (error || !teams) {
+    return <LoadState error={error} />;
   }
-  if (error) {
-    return <LoadError error={error} />;
+  if (!teams.length) {
+    return (
+      <EmptyState
+        variant="call-to-action"
+        message={t(
+          'admin.user-overview.no-teams',
+          'This user does not belong to any teams in the current organization.'
+        )}
+      />
+    );
   }
-  return teams?.length ? (
-    <UserTable data={teams} columns={columns} getRowId={(team) => team.metadata.name!} />
-  ) : (
-    <Text color="secondary">
-      {t('admin.user-overview.no-teams', 'This user does not belong to any teams in the current organization.')}
-    </Text>
-  );
+  return <InteractiveTable columns={columns} data={teams} getRowId={(team) => team.uid} />;
 }

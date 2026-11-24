@@ -1,274 +1,147 @@
-import { css } from '@emotion/css';
-import { useState } from 'react';
-
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, Input, RadioButtonGroup, Stack } from '@grafana/ui';
+import { Stack } from '@grafana/ui';
 import {
-  useUpdateUserMutation,
   useAdminUpdateUserPasswordMutation,
   useAdminUpdateUserPermissionsMutation,
+  useUpdateUserMutation,
 } from 'app/api/clients/legacy';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { AccountManagement } from './AccountManagement';
+import { AccountActions } from './AccountActions';
 import { ActionError } from './ActionError';
-import { type UserAccount, type UserIdentity, type UserMembership } from './api';
+import { BooleanRow, DetailRow, DetailTable, TextRow } from './DetailRows';
+import { LoadError, LoadState } from './LoadState';
+import { type OverviewUser, useAction, useUserOverview } from './hooks';
 
-type EditableField = 'name' | 'email' | 'login' | 'password' | 'isGrafanaAdmin';
-interface DetailField {
-  label: string;
-  value?: string;
-  edit?: EditableField;
-  locked?: string;
+function formatLastActive({ lastSeenAt, createdAt }: OverviewUser) {
+  if (!lastSeenAt) {
+    return undefined;
+  }
+  const lastSeen = Date.parse(lastSeenAt);
+  // An account that never signed in carries a last-seen time from before its creation.
+  if (!lastSeen || (createdAt && lastSeen < Date.parse(createdAt))) {
+    return t('admin.user-overview.never', 'Never');
+  }
+  return `${dateTimeFormatTimeAgo(lastSeen)} (${dateTimeFormat(lastSeen)})`;
 }
 
-export function UserDetails({
-  user,
-  account,
-  membership,
-}: {
-  user: UserIdentity;
-  account?: UserAccount;
-  membership?: UserMembership;
-}) {
-  const [editing, setEditing] = useState<EditableField | null>(null);
-  const [value, setValue] = useState('');
+export function UserDetails({ uid }: { uid: string }) {
+  const { user, profile, account, members, isMembershipUnknown } = useUserOverview(uid);
+  const { run, error } = useAction();
   const [updateProfile, profileUpdate] = useUpdateUserMutation();
-  const [updatePassword, passwordUpdate] = useAdminUpdateUserPasswordMutation();
-  const [updateAdmin, adminUpdate] = useAdminUpdateUserPermissionsMutation();
-  const mutation = editing === 'password' ? passwordUpdate : editing === 'isGrafanaAdmin' ? adminUpdate : profileUpdate;
-  const pending = mutation.isLoading;
-  const failed = editing && mutation.isError;
+  const [updatePassword] = useAdminUpdateUserPasswordMutation();
+  const [updateAdmin] = useAdminUpdateUserPermissionsMutation();
+  if (!user) {
+    return null;
+  }
+
+  const can = (action: AccessControlAction) => !!profile && contextSrv.hasPermissionInMetadata(action, profile);
+  const managedExternally = t('admin.user-overview.managed-externally', 'Managed externally');
+  const profileLock = user.isExternal || user.isProvisioned ? managedExternally : undefined;
+  const adminLock = profile?.isGrafanaAdminExternallySynced || user.isProvisioned ? managedExternally : undefined;
   const yes = t('admin.user-overview.yes', 'Yes');
   const no = t('admin.user-overview.no', 'No');
-  const origins = user.authLabels;
-  const origin = origins ? [...new Set(origins)].join(', ') || t('admin.user-overview.local', 'Grafana') : undefined;
-  const provisioned = user.isProvisioned;
-  const external = user.isExternal || provisioned;
-  const synced = external ? t('admin.user-overview.managed-externally', 'Managed externally') : undefined;
-  const can = (action: AccessControlAction) => !!account && contextSrv.hasPermissionInMetadata(action, account);
-  const canEditProfile = can(AccessControlAction.UsersWrite) && !external;
-  const canEditPassword = can(AccessControlAction.UsersPasswordUpdate) && !external;
-  const canEditAdmin =
-    can(AccessControlAction.UsersPermissionsUpdate) && !account?.isGrafanaAdminExternallySynced && !provisioned;
-  const isAdmin = user.isGrafanaAdmin;
-  const created = membership?.createdAt ?? account?.createdAt ?? account?.created ?? user.createdAt;
-  const lastSeenAt = membership?.lastSeenAt;
-  const lastSeen = lastSeenAt ? Date.parse(lastSeenAt) : 0;
-  const never = !lastSeen || (created && lastSeen < new Date(created).getTime());
-  const fields: DetailField[] = [
-    {
-      label: t('admin.user-overview.login', 'Login'),
-      value: user.login,
-      edit: canEditProfile ? 'login' : undefined,
-      locked: synced,
-    },
-    {
-      label: t('admin.user-overview.name', 'Name'),
-      value: user.name,
-      edit: canEditProfile ? 'name' : undefined,
-      locked: synced,
-    },
-    {
-      label: t('admin.user-overview.email', 'Email'),
-      value: user.email,
-      edit: canEditProfile ? 'email' : undefined,
-      locked: synced,
-    },
-    { label: t('admin.user-overview.origin', 'Origin'), value: origin },
-    { label: t('admin.user-overview.provisioned', 'Provisioned'), value: provisioned ? yes : no },
-    {
-      label: t('admin.user-overview.status', 'Status'),
-      value: user.isDisabled
-        ? t('admin.user-overview.disabled', 'Disabled')
-        : t('admin.user-overview.enabled', 'Enabled'),
-    },
-    { label: t('admin.user-overview.created', 'Created'), value: created ? dateTimeFormat(created) : undefined },
-    {
-      label: t('admin.user-overview.last-active', 'Last active'),
-      value: !lastSeenAt
-        ? undefined
-        : never
-          ? t('admin.user-overview.never', 'Never')
-          : `${dateTimeFormatTimeAgo(lastSeen)} (${dateTimeFormat(lastSeen)})`,
-    },
-    {
-      label: t('admin.user-overview.grafana-admin', 'Grafana admin'),
-      value: isAdmin ? yes : no,
-      edit: canEditAdmin ? 'isGrafanaAdmin' : undefined,
-      locked:
-        account?.isGrafanaAdminExternallySynced || provisioned
-          ? t('admin.user-overview.managed-externally', 'Managed externally')
-          : undefined,
-    },
-    ...(account
-      ? [
-          {
-            label: t('admin.user-profile.label-numerical-identifier', 'Numerical identifier'),
-            value: String(user.id),
-          },
-        ]
-      : []),
-    ...(canEditPassword
-      ? [{ label: t('admin.user-profile.label-password', 'Password'), value: '••••••••', edit: 'password' as const }]
-      : []),
-  ];
 
-  const save = async () => {
-    if (!account || !editing) {
-      return;
+  // A field closes once the account is read again, so that it shows what the server stored.
+  const stored = (update: Promise<unknown>) => run(update.then(() => account.refetch().unwrap()));
+  // A profile save sends login, name and email together. A second save waits for the first and the
+  // account it stored: sent earlier, it would write back a value from before the first save.
+  const savingProfile = profileUpdate.isLoading || account.isFetching;
+  const saveProfile = (field: 'login' | 'name' | 'email') => {
+    if (profileLock || !can(AccessControlAction.UsersWrite)) {
+      return undefined;
     }
-    const field = editing;
-    const result = await (field === 'isGrafanaAdmin'
-      ? updateAdmin({
-          userId: user.uid,
-          adminUpdateUserPermissionsForm: { isGrafanaAdmin: value === 'true' },
-        })
-      : field === 'password'
-        ? updatePassword({ userId: user.uid, adminUpdateUserPasswordForm: { password: value } })
-        : updateProfile({
-            userId: user.uid,
-            updateUserCommand: {
-              name: user.name,
-              email: user.email,
-              login: user.login,
-              [field]: value,
-            },
-          }));
-    if (!('error' in result)) {
-      setEditing(null);
-    }
+    return (value: string) =>
+      stored(
+        updateProfile({
+          userId: uid,
+          updateUserCommand: { login: user.login, name: user.name, email: user.email, [field]: value },
+        }).unwrap()
+      );
   };
+  const savePassword =
+    profileLock || !can(AccessControlAction.UsersPasswordUpdate)
+      ? undefined
+      : (password: string) => run(updatePassword({ userId: uid, adminUpdateUserPasswordForm: { password } }).unwrap());
+  const saveAdmin =
+    adminLock || !can(AccessControlAction.UsersPermissionsUpdate)
+      ? undefined
+      : (isGrafanaAdmin: boolean) =>
+          stored(updateAdmin({ userId: uid, adminUpdateUserPermissionsForm: { isGrafanaAdmin } }).unwrap());
 
   return (
     <Stack direction="column" gap={3}>
-      {failed && <ActionError error={mutation.error} />}
-      <table className="filter-table form-inline">
-        <tbody>
-          {fields.map((field) => (
-            <DetailRow
-              key={field.label}
-              field={field}
-              editing={editing === field.edit}
-              value={value}
-              pending={pending}
-              onChange={setValue}
-              onSave={save}
-              onCancel={() => setEditing(null)}
-              onEdit={() => {
-                setEditing(field.edit!);
-                profileUpdate.reset();
-                passwordUpdate.reset();
-                adminUpdate.reset();
-                setValue(
-                  field.edit === 'password'
-                    ? ''
-                    : field.edit === 'isGrafanaAdmin'
-                      ? String(isAdmin)
-                      : (field.value ?? '')
-                );
-              }}
+      {Boolean(error) && <ActionError error={error} />}
+      <DetailTable>
+        <TextRow
+          label={t('admin.user-overview.login', 'Login')}
+          value={user.login}
+          locked={profileLock}
+          onSave={saveProfile('login')}
+          busy={savingProfile}
+        />
+        <TextRow
+          label={t('admin.user-overview.name', 'Name')}
+          value={user.name}
+          locked={profileLock}
+          onSave={saveProfile('name')}
+          busy={savingProfile}
+        />
+        <TextRow
+          label={t('admin.user-overview.email', 'Email')}
+          value={user.email}
+          type="email"
+          locked={profileLock}
+          onSave={saveProfile('email')}
+          busy={savingProfile}
+        />
+        <DetailRow
+          label={t('admin.user-overview.origin', 'Origin')}
+          value={[...new Set(user.authLabels)].join(', ') || t('admin.user-overview.local', 'Grafana')}
+        />
+        <DetailRow label={t('admin.user-overview.provisioned', 'Provisioned')} value={user.isProvisioned ? yes : no} />
+        <DetailRow
+          label={t('admin.user-overview.status', 'Status')}
+          value={
+            user.isDisabled
+              ? t('admin.user-overview.disabled', 'Disabled')
+              : t('admin.user-overview.enabled', 'Enabled')
+          }
+        />
+        <DetailRow
+          label={t('admin.user-overview.created', 'Created')}
+          value={user.createdAt && dateTimeFormat(user.createdAt)}
+        />
+        <DetailRow label={t('admin.user-overview.last-active', 'Last active')} value={formatLastActive(user)} />
+        {profile && (
+          <>
+            <BooleanRow
+              label={t('admin.user-overview.grafana-admin', 'Grafana admin')}
+              value={profile.isGrafanaAdmin}
+              locked={adminLock}
+              onSave={saveAdmin}
             />
-          ))}
-        </tbody>
-      </table>
-      {account && <AccountManagement user={account} />}
+            <DetailRow
+              label={t('admin.user-profile.label-numerical-identifier', 'Numerical identifier')}
+              value={String(user.id)}
+            />
+          </>
+        )}
+        {savePassword && (
+          <TextRow
+            label={t('admin.user-profile.label-password', 'Password')}
+            value=""
+            type="password"
+            onSave={savePassword}
+          />
+        )}
+      </DetailTable>
+      {profile && <AccountActions user={profile} run={run} />}
+      {(account.isLoading || members.isLoading) && <LoadState />}
+      {Boolean(account.error) && <LoadError error={account.error} />}
+      {(Boolean(members.error) || isMembershipUnknown) && <LoadError error={members.error} />}
     </Stack>
   );
 }
-
-function DetailRow({
-  field,
-  editing,
-  value,
-  pending,
-  onChange,
-  onSave,
-  onCancel,
-  onEdit,
-}: {
-  field: DetailField;
-  editing: boolean;
-  value: string;
-  pending: boolean;
-  onChange: (value: string) => void;
-  onSave: () => void;
-  onCancel: () => void;
-  onEdit: () => void;
-}) {
-  if (editing) {
-    return (
-      <tr>
-        <td className={`width-16 ${labelStyle}`}>{field.label}</td>
-        <td className="width-25" colSpan={2}>
-          <form
-            id={`user-field-${field.edit}`}
-            onSubmit={(event) => {
-              event.preventDefault();
-              onSave();
-            }}
-          >
-            {field.edit === 'isGrafanaAdmin' ? (
-              <RadioButtonGroup
-                options={[
-                  { label: t('admin.user-overview.yes', 'Yes'), value: 'true' },
-                  { label: t('admin.user-overview.no', 'No'), value: 'false' },
-                ]}
-                value={value}
-                onChange={onChange}
-                disabled={pending}
-              />
-            ) : (
-              <Input
-                aria-label={field.label}
-                value={value}
-                onChange={(event) => onChange(event.currentTarget.value)}
-                type={field.edit === 'password' ? 'password' : field.edit === 'email' ? 'email' : 'text'}
-                autoFocus
-                disabled={pending}
-                width={30}
-              />
-            )}
-          </form>
-        </td>
-        <td>
-          <Stack gap={1}>
-            <Button type="submit" form={`user-field-${field.edit}`} disabled={pending}>
-              {t('admin.user-overview.save', 'Save')}
-            </Button>
-            <Button fill="text" disabled={pending} onClick={onCancel}>
-              {t('admin.user-overview.cancel', 'Cancel')}
-            </Button>
-          </Stack>
-        </td>
-      </tr>
-    );
-  }
-  return (
-    <tr>
-      <td className={`width-16 ${labelStyle}`}>{field.label}</td>
-      <td className="width-25" colSpan={2}>
-        {field.value || '—'}
-      </td>
-      <td>
-        {field.edit ? (
-          <Button
-            fill="text"
-            aria-label={t('admin.user-overview.edit-field', 'Edit {{field}}', { field: field.label })}
-            disabled={pending}
-            onClick={onEdit}
-          >
-            {t('admin.user-profile.edit-button', 'Edit')}
-          </Button>
-        ) : (
-          field.locked && <span className={lockStyle}>{field.locked}</span>
-        )}
-      </td>
-    </tr>
-  );
-}
-
-const labelStyle = css({ fontWeight: 500 });
-const lockStyle = css({ fontStyle: 'italic', marginRight: '0.6rem' });

@@ -244,9 +244,6 @@
       "label-password": "Password",
       "label-username": "Username"
     },
-    "user-ldap-sync-info": {
-      "label-ldap": "LDAP"
-    },
     "user-list-admin-page-un-connected": {
       "label": {
         "active-last-days": "Active last 30 days",
@@ -279,6 +276,7 @@
       "cancel-button": "Cancel"
     },
     "user-overview": {
+      "action-error": "Unable to complete the request. Please try again.",
       "assignment": "Assignment type",
       "authentication": "Authentication",
       "basic": "Basic role",
@@ -297,7 +295,6 @@
       "grafana-admin": "Grafana admin",
       "inherited": "Inherited from team",
       "last-active": "Last active",
-      "ldap-error": "Unable to load authentication information",
       "load-error": "Unable to load this information. Please try again.",
       "loading": "Loading…",
       "local": "Grafana",
@@ -309,8 +306,8 @@
       "no-basic-role": "No basic role",
       "no-teams": "This user does not belong to any teams in the current organization.",
       "not-found": "This information is not available",
+      "not-member": "This user is not a member of the current organization.",
       "organizations": "Organizations",
-      "orgs-error": "Unable to load organizations",
       "origin": "Origin",
       "provisioned": "Provisioned",
       "role": "Role",
@@ -318,13 +315,11 @@
       "roles": "Roles",
       "save": "Save",
       "sessions": "Sessions",
-      "sessions-error": "Unable to load sessions",
       "source": "Source",
       "status": "Status",
       "team-name": "Team name",
       "teams": "Teams",
       "title": "User",
-      "update-error": "Unable to update user. Please try again.",
       "yes": "Yes"
     },
     "user-profile": {

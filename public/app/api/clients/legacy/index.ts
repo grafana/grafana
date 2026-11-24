@@ -4,32 +4,39 @@ import {
   generatedAPI,
   type SetTeamRolesApiArg,
   type CreateTeamApiArg,
+  type GetOrgUsersForCurrentOrgApiArg,
+  type GetUserByIdApiArg,
 } from '@grafana/api-clients/internal/rtkq/legacy';
 import { type RequestOptions } from '@grafana/api-clients/rtkq';
-import { generatedAPI as iamAPI } from '@grafana/api-clients/rtkq/iam/v0alpha1';
 import { type SyncInfo } from 'app/types/ldap';
 import { type OrgUser, type UserDTO, type UserOrg, type UserSession } from 'app/types/user';
 
 type Definitions = DefinitionsFromApi<typeof generatedAPI>;
+// The OpenAPI spec leaves every field of these responses optional, and types auth tokens as the internal model.
 type UserDefinitions = {
-  getUserById: OverrideResultType<Definitions['getUserById'], UserDTO & { createdAt?: string }>;
+  getUserById: OverrideResultType<Definitions['getUserById'], UserDTO>;
   getUserOrgList: OverrideResultType<Definitions['getUserOrgList'], UserOrg[]>;
   getOrgUsersForCurrentOrg: OverrideResultType<Definitions['getOrgUsersForCurrentOrg'], OrgUser[]>;
   adminGetUserAuthTokens: OverrideResultType<Definitions['adminGetUserAuthTokens'], UserSession[]>;
   getSyncStatus: OverrideResultType<Definitions['getSyncStatus'], SyncInfo>;
 };
 
-async function invalidateIAMUser(
-  _arg: unknown,
-  { dispatch, queryFulfilled }: Parameters<NonNullable<Definitions['updateUser']['onQueryStarted']>>[1]
+/**
+ * Asks the backend for the caller's permissions on each returned user.
+ * The OpenAPI spec does not declare the parameter, so the generated query cannot send it.
+ */
+function withAccessControlMetadata<ApiArg, Def extends { query?: (arg: ApiArg) => RequestOptions }>(
+  endpointDefinition: Def
 ) {
-  try {
-    await queryFulfilled;
-    // User management still writes through legacy routes while readers can use IAM.
-    dispatch(iamAPI.util.invalidateTags(['User']));
-  } catch {
-    // The mutation result exposes failures to the caller; failed writes change no data.
+  const originalQuery = endpointDefinition.query;
+  if (!originalQuery) {
+    return;
   }
+
+  endpointDefinition.query = (queryArg: ApiArg) => {
+    const requestOptions = originalQuery(queryArg);
+    return { ...requestOptions, params: { ...requestOptions.params, accesscontrol: true } };
+  };
 }
 
 /**
@@ -60,28 +67,23 @@ function withSuccessAlertCheck<ApiArg extends {}, Def extends { query?: (arg: Ap
 
 export const legacyAPI = generatedAPI.enhanceEndpoints<never, UserDefinitions>({
   endpoints: {
-    updateUser: { onQueryStarted: invalidateIAMUser },
-    adminDisableUser: { onQueryStarted: invalidateIAMUser, invalidatesTags: ['admin_users', 'users'] },
-    adminEnableUser: { onQueryStarted: invalidateIAMUser, invalidatesTags: ['admin_users', 'users'] },
-    adminUpdateUserPermissions: { onQueryStarted: invalidateIAMUser, invalidatesTags: ['admin_users', 'users'] },
-    updateOrgUser: { onQueryStarted: invalidateIAMUser, invalidatesTags: ['orgs', 'org', 'users'] },
-    updateOrgUserForCurrentOrg: { onQueryStarted: invalidateIAMUser, invalidatesTags: ['org', 'users'] },
-    addOrgUser: { onQueryStarted: invalidateIAMUser, invalidatesTags: ['orgs', 'org', 'users'] },
-    removeOrgUser: { onQueryStarted: invalidateIAMUser, invalidatesTags: ['orgs', 'org', 'users'] },
-    postSyncUserWithLdap: { onQueryStarted: invalidateIAMUser, invalidatesTags: ['admin_ldap', 'org', 'users'] },
-    getUserById: (definition) => {
-      const query = definition.query!;
-      definition.query = (arg) => ({ ...query(arg), params: { accesscontrol: true } });
+    adminUpdateUserPermissions: { invalidatesTags: ['admin_users', 'users'] },
+    adminDisableUser: { invalidatesTags: ['admin_users', 'users'] },
+    adminEnableUser: { invalidatesTags: ['admin_users', 'users'] },
+    updateOrgUser: { invalidatesTags: ['orgs', 'org', 'users'] },
+    updateOrgUserForCurrentOrg: { invalidatesTags: ['org', 'users'] },
+    addOrgUser: { invalidatesTags: ['orgs', 'org', 'users'] },
+    removeOrgUser: { invalidatesTags: ['orgs', 'org', 'users'] },
+    postSyncUserWithLdap: { invalidatesTags: ['admin_ldap', 'org', 'users'] },
+    // Users also change outside this cache (the Users list, a deletion), so these two reads are
+    // dropped as soon as no page uses them. A later visit reads the user again.
+    getUserById: (endpointDefinition) => {
+      withAccessControlMetadata<GetUserByIdApiArg, typeof endpointDefinition>(endpointDefinition);
+      endpointDefinition.keepUnusedDataFor = 0;
     },
-    getOrgUsersForCurrentOrg: (definition) => {
-      const query = definition.query!;
-      definition.query = (arg) => {
-        const options = query(arg);
-        return { ...options, params: { ...options.params, accesscontrol: true } };
-      };
-    },
-    adminGetUserAuthTokens: {
-      transformResponse: (sessions: UserSession[]) => [...sessions].reverse(),
+    getOrgUsersForCurrentOrg: (endpointDefinition) => {
+      withAccessControlMetadata<GetOrgUsersForCurrentOrgApiArg, typeof endpointDefinition>(endpointDefinition);
+      endpointDefinition.keepUnusedDataFor = 0;
     },
     createTeam: (endpointDefinition) => {
       withSuccessAlertCheck<CreateTeamApiArg, typeof endpointDefinition>(endpointDefinition);
@@ -92,22 +94,13 @@ export const legacyAPI = generatedAPI.enhanceEndpoints<never, UserDefinitions>({
   },
 });
 
+// The generated hooks, typed with the response overrides above.
 export const {
   useGetUserByIdQuery,
   useGetUserOrgListQuery,
   useGetOrgUsersForCurrentOrgQuery,
   useAdminGetUserAuthTokensQuery,
   useGetSyncStatusQuery,
-  useUpdateUserMutation,
-  useAdminUpdateUserPasswordMutation,
-  useAdminUpdateUserPermissionsMutation,
-  useAdminDeleteUserMutation,
-  useAdminDisableUserMutation,
-  useAdminEnableUserMutation,
-  useAdminLogoutUserMutation,
-  useAdminRevokeUserAuthTokenMutation,
-  useRemoveOrgUserMutation,
-  useUpdateOrgUserMutation,
 } = legacyAPI;
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files

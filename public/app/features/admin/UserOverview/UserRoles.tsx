@@ -1,82 +1,89 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo } from 'react';
 
+import { OrgRole } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Alert, type Column, Stack, Text } from '@grafana/ui';
-import { useListTeamsRolesQuery } from 'app/api/clients/legacy';
+import { Alert, type Column, InteractiveTable, Stack, Text } from '@grafana/ui';
+import { type RoleDto, useListTeamsRolesQuery } from 'app/api/clients/legacy';
 import { useListUserRolesQuery } from 'app/api/clients/roles';
 import { contextSrv } from 'app/core/services/context_srv';
+import { addDisplayNameForFixedRole, addFilteredDisplayName } from 'app/core/utils/roles';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { LoadError } from './LoadError';
+import { LoadError, LoadState } from './LoadState';
 import { TeamLink } from './TeamLink';
 import { UserRolesEditor } from './UserRolesEditor';
-import { UserTable } from './UserTable';
-import { type UserIdentity, type UserMembership, type RoleAssignment, useGetOverviewTeamsQuery } from './api';
+import { type UserTeam, useUserOverview, useUserTeams } from './hooks';
 
-const collator = new Intl.Collator();
+interface RoleRow {
+  id: string;
+  role: string;
+  description?: string;
+  type: string;
+  source: string;
+  team?: UserTeam;
+}
 
-export function UserRoles({ user, membership }: { user: UserIdentity; membership?: UserMembership }) {
-  const basicRole = membership?.role;
+// Display names repeat across groups ("Reader"), so the label carries the group, as in the role picker.
+function roleLabel(dto: RoleDto) {
+  const role = addDisplayNameForFixedRole(addFilteredDisplayName(dto));
+  return role.filteredDisplayName || role.displayName || role.name;
+}
+
+export function UserRoles({ uid }: { uid: string }) {
+  const { user, member, members, isNotMember, isMembershipUnknown } = useUserOverview(uid);
   const licensed = contextSrv.licensedAccessControlEnabled();
   const canReadUserRoles = contextSrv.hasPermission(AccessControlAction.ActionUserRolesList);
   const canReadTeamRoles = contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList);
-  const teams = useGetOverviewTeamsQuery(licensed && canReadTeamRoles ? user.uid : skipToken);
+  // A user outside the organization has no roles in it, so the role requests wait for the membership lookup.
+  // A failed lookup does not stop them: the roles are read under their own permissions.
+  const loadRoles = !!user && !members.isLoading && !isNotMember;
+
   const directRoles = useListUserRolesQuery(
-    licensed && canReadUserRoles && user.id > 0
-      ? { userId: user.id, targetOrgId: contextSrv.user.orgId, includeMapped: true }
+    licensed && canReadUserRoles && user && loadRoles
+      ? // The role picker reads with the same arguments, so both share one request.
+        { userId: user.id, includeHidden: true, includeMapped: true, targetOrgId: contextSrv.user.orgId }
       : skipToken
   );
-  const teamIds = (teams.currentData ?? [])
-    .map((team) => Number(team.metadata.labels?.['grafana.app/deprecatedInternalID']))
-    .filter((id) => id > 0);
-  const roles = useListTeamsRolesQuery(
-    licensed && canReadTeamRoles && teamIds.length ? { rolesSearchQuery: { teamIds } } : skipToken
-  );
-  const assignments = useMemo<RoleAssignment[]>(
+  const teams = useUserTeams(user?.uid, { skip: !licensed || !canReadTeamRoles || !loadRoles });
+  const teamIds = (teams.teams ?? []).map((team) => team.id).filter((id): id is number => !!id);
+  const teamRoles = useListTeamsRolesQuery(teamIds.length ? { rolesSearchQuery: { teamIds } } : skipToken);
+
+  const rows = useMemo<RoleRow[]>(() => {
+    const basic: RoleRow[] = member
+      ? [
+          {
+            id: 'basic',
+            role: member.role === OrgRole.None ? t('admin.user-overview.no-basic-role', 'No basic role') : member.role,
+            type: t('admin.user-overview.basic', 'Basic role'),
+            source: t('admin.user-overview.default', 'Default basic role'),
+          },
+        ]
+      : [];
+    const direct = (directRoles.currentData ?? [])
+      .filter((role) => !role.hidden)
+      .map((role) => ({
+        id: `direct:${role.uid}`,
+        role: roleLabel(role),
+        description: role.description,
+        type: t('admin.user-overview.direct', 'Directly assigned'),
+        source: '—',
+      }));
+    const inherited = (teams.teams ?? []).flatMap((team) =>
+      ((team.id && teamRoles.currentData?.[team.id]) || []).map((role) => ({
+        id: `${team.uid}:${role.uid}`,
+        role: roleLabel(role),
+        description: role.description,
+        type: t('admin.user-overview.inherited', 'Inherited from team'),
+        source: team.name,
+        team,
+      }))
+    );
+    return [...basic, ...direct, ...inherited];
+  }, [member, directRoles.currentData, teams.teams, teamRoles.currentData]);
+
+  const columns = useMemo<Array<Column<RoleRow>>>(
     () => [
-      ...(basicRole
-        ? [
-            {
-              id: 'basic',
-              role: basicRole === 'None' ? t('admin.user-overview.no-basic-role', 'No basic role') : basicRole,
-              type: 'direct' as const,
-            },
-          ]
-        : []),
-      ...(directRoles.currentData ?? []).map(
-        (role): RoleAssignment => ({
-          id: `direct:${role.uid}`,
-          role: role.displayName || role.name,
-          description: role.description,
-          type: 'direct',
-        })
-      ),
-      ...(teams.currentData ?? []).flatMap((team) =>
-        (roles.currentData?.[Number(team.metadata.labels?.['grafana.app/deprecatedInternalID'])] ?? []).map(
-          (role): RoleAssignment => ({
-            id: `${team.metadata.name}:${role.uid}`,
-            role: role.displayName || role.name || '',
-            description: role.description,
-            type: 'team',
-            team,
-          })
-        )
-      ),
-    ],
-    [basicRole, directRoles.currentData, teams.currentData, roles.currentData]
-  );
-  const columns = useMemo<Array<Column<RoleAssignment>>>(() => {
-    const assignmentType = (assignment: RoleAssignment) =>
-      assignment.id === 'basic'
-        ? t('admin.user-overview.basic', 'Basic role')
-        : assignment.type === 'team'
-          ? t('admin.user-overview.inherited', 'Inherited from team')
-          : t('admin.user-overview.direct', 'Directly assigned');
-    const source = (assignment: RoleAssignment) =>
-      assignment.team?.spec.title ??
-      (assignment.id === 'basic' ? t('admin.user-overview.default', 'Default basic role') : user.login);
-    return [
       {
         id: 'role',
         header: t('admin.user-overview.role', 'Role'),
@@ -91,36 +98,42 @@ export function UserRoles({ user, membership }: { user: UserIdentity; membership
       {
         id: 'type',
         header: t('admin.user-overview.assignment', 'Assignment type'),
-        cell: ({ row: { original } }) => assignmentType(original),
-        sortType: (a, b) => collator.compare(assignmentType(a.original), assignmentType(b.original)),
+        sortType: 'string',
       },
       {
         id: 'source',
         header: t('admin.user-overview.source', 'Source'),
-        cell: ({ row: { original } }) => (original.team ? <TeamLink team={original.team} /> : source(original)),
-        sortType: (a, b) => collator.compare(source(a.original), source(b.original)),
+        sortType: 'string',
+        cell: ({ row: { original } }) => (original.team ? <TeamLink team={original.team} /> : original.source),
       },
-    ];
-  }, [user.login]);
+    ],
+    []
+  );
+
+  if (isNotMember) {
+    return (
+      <Alert
+        severity="info"
+        title={t('admin.user-overview.not-member', 'This user is not a member of the current organization.')}
+      />
+    );
+  }
+
+  const error = teams.error || teamRoles.error || directRoles.error;
+  const forbidden = members.isUninitialized || (licensed && (!canReadUserRoles || !canReadTeamRoles));
   return (
     <Stack direction="column" gap={2}>
-      {!!user.id && membership && <UserRolesEditor user={membership} basicRole={membership.role} />}
-      {licensed && (!canReadUserRoles || !canReadTeamRoles) && (
+      {member && <UserRolesEditor member={member} />}
+      {(Boolean(members.error) || isMembershipUnknown) && <LoadError error={members.error} />}
+      {forbidden && (
         <Alert
           severity="warning"
           title={t('admin.user-overview.forbidden', 'You do not have permission to view this information')}
         />
       )}
-      {Boolean(teams.error || roles.error || directRoles.error) && (
-        <LoadError error={teams.error || roles.error || directRoles.error} />
-      )}
-      {licensed && canReadUserRoles && !user.id && (
-        <Alert severity="warning" title={t('admin.user-overview.not-found', 'This information is not available')} />
-      )}
-      {(teams.isFetching || roles.isFetching || directRoles.isFetching) && (
-        <Text>{t('admin.user-overview.loading', 'Loading…')}</Text>
-      )}
-      <UserTable columns={columns} data={assignments} getRowId={(assignment) => assignment.id} />
+      {Boolean(error) && <LoadError error={error} />}
+      {(members.isLoading || directRoles.isLoading || teams.isLoading || teamRoles.isLoading) && <LoadState />}
+      <InteractiveTable columns={columns} data={rows} getRowId={(row) => row.id} />
     </Stack>
   );
 }

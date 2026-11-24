@@ -36,6 +36,7 @@ export interface UserDTO extends WithAccessControlMetadata {
   isAdmin?: boolean;
   isExternal?: boolean;
   updatedAt?: string;
+  createdAt?: string;
   authLabels?: string[];
   theme?: string;
   avatarUrl?: string;

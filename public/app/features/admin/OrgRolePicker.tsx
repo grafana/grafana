@@ -7,7 +7,7 @@ interface Props {
   disabled?: boolean;
   'aria-label'?: string;
   inputId?: string;
-  onChange: (role: OrgRole) => void | Promise<unknown>;
+  onChange: (role: OrgRole) => void;
   autoFocus?: boolean;
   width?: number | 'auto';
 }
@@ -21,13 +21,7 @@ export function OrgRolePicker({ value, onChange, 'aria-label': ariaLabel, inputI
       inputId={inputId}
       value={value}
       options={options}
-      onChange={async (val) => {
-        try {
-          await onChange(val.value ?? OrgRole.None);
-        } catch {
-          // Mutation errors are displayed by the caller; the value stays controlled by props.
-        }
-      }}
+      onChange={(val) => onChange(val.value ?? OrgRole.None)}
       placeholder={t('admin.org-role-picker.placeholder-choose-role', 'Choose role...')}
       aria-label={ariaLabel}
       autoFocus={autoFocus}

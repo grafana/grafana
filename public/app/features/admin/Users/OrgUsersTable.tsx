@@ -174,7 +174,10 @@ export const OrgUsersTable = ({
               aria-label={t('admin.org-users-table.columns.aria-label-role', 'Role')}
               value={value}
               disabled={basicRoleDisabled}
-              onChange={(newRole) => onRoleChange(newRole, original)}
+              onChange={(newRole) => {
+                // The select is controlled and the request reports its own failure, so a rejection needs no handling.
+                Promise.resolve(onRoleChange(newRole, original)).catch(() => {});
+              }}
             />
           );
         },
