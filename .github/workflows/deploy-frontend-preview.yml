@@ -110,6 +110,7 @@ jobs:
             ${{ steps.check.outputs.has-backend-changes == 'true' && '⚠️ **Warning:** this PR contains backend changes. The preview only swaps the frontend assets of an existing instance, so it may not work correctly.' || '' }}
 
   build:
+    # Build and Deploy in seperate jobs, so the OIDC-enabled step never executes code from a PR
     name: Build frontend
     needs: check
     if: needs.check.outputs.head-sha != '' && (needs.check.outputs.is-fork == 'false' || github.run_attempt == 1)
@@ -136,6 +137,8 @@ jobs:
           ref: ${{ needs.check.outputs.head-sha }}
           path: ${{ needs.check.outputs.is-fork == 'true' && 'preview-source' || '.' }}
           persist-credentials: false
+
+      # Internal non-fork invocations build
       - name: Set up Node.js
         if: needs.check.outputs.is-fork == 'false'
         # Only the internal build uses local actions from the checkout.
@@ -206,14 +209,11 @@ jobs:
           retention-days: 1
 
   deploy:
+    # Build and Deploy in seperate jobs, so the OIDC-enabled step never executes code from a PR
     name: Deploy preview assets
-    # Uploads from a separate job so the OIDC-enabled step never runs
-    # alongside code built from the PR.
     needs: [check, build]
     if: needs.check.outputs.is-fork == 'false' || github.run_attempt == 1
     runs-on: ubuntu-arm64-small
-    # Never cancel an in-flight upload. Newer deploys queue behind it; GitHub
-    # keeps only the newest pending job in the group.
     concurrency:
       group: ${{ github.workflow }}-deploy-${{ needs.check.outputs.pr-number }}
       cancel-in-progress: false
@@ -235,10 +235,8 @@ jobs:
           name: frontend-preview-build
           path: dist/frontend
 
-      # The deploy name is the folder users put in the preview assets cookie.
-      # It must match the backend's validation: alphanumeric and underscores
-      # only. It is stable across pushes so an already-set cookie picks up new
-      # builds of the same PR.
+      # Folder name must pass backend's validation (alphanum + underscores).
+      # Should be stable across pushes so already-set cookie picks up new builds of the same PR
       - name: Create deploy name
         id: deploy-name
         env:
@@ -320,7 +318,7 @@ jobs:
             ✅ The preview for commit ${{ needs.check.outputs.head-sha }} is live: **[open the preview](${{ steps.preview-url.outputs.url }})**.
 
             ${{ needs.check.outputs.is-fork == 'true' && '- This preview runs fork code in your session on the preview stack. Open it only if you trust the commit listed above.' || '- Each new push to this PR builds and deploys the preview again automatically.' }}
-            ${{ needs.check.outputs.is-fork == 'true' && '- A member or owner of the Grafana GitHub organization must comment `/deploy-to-fs` again to build and deploy a newer commit.' || '- Share the above link for others to preview it in their browsers too.' }}
+            ${{ needs.check.outputs.is-fork == 'true' && '- A Grafana org member must comment `/deploy-to-fs` again to build and deploy a newer commit.' || '- Share the above link for others to preview it in their browsers too.' }}
 
             ${{ needs.check.outputs.has-backend-changes == 'true' && '⚠️ **Warning:** this PR contains backend changes. The preview only swaps the frontend assets of an existing instance, so it may not work correctly.' || '' }}
 
