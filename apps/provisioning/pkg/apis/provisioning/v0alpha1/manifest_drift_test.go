@@ -312,7 +312,7 @@ func normalizedType(s spec.Schema) string {
 	if t == "" && len(s.Properties) > 0 {
 		return "object"
 	}
-	if t == "object" && len(s.Properties) == 0 && (s.AdditionalProperties == nil || s.AdditionalProperties.Schema == nil || isEmptySchema(*s.AdditionalProperties.Schema)) {
+	if t == "object" && len(s.Properties) == 0 && acceptsAnyValue(s.AdditionalProperties) {
 		// An open object and an untyped value both accept anything.
 		return ""
 	}
@@ -331,6 +331,18 @@ func sorted(in []string) []string {
 	out := slices.Clone(in)
 	sort.Strings(out)
 	return out
+}
+
+// acceptsAnyValue reports whether additionalProperties leaves an object open: unset, true, or
+// the empty schema that CUE emits for `_`. A closed object (false) is still an object.
+func acceptsAnyValue(ap *spec.SchemaOrBool) bool {
+	if ap == nil {
+		return true
+	}
+	if ap.Schema == nil {
+		return ap.Allows
+	}
+	return isEmptySchema(*ap.Schema)
 }
 
 func isEmptySchema(s spec.Schema) bool {
