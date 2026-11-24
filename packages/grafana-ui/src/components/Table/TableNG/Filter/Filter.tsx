@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { clsx } from 'clsx';
-import memoize from 'micro-memoize';
+import { memoize } from 'micro-memoize';
 import { memo, useRef } from 'react';
 
 import { type Field, type GrafanaTheme2 } from '@grafana/data';
