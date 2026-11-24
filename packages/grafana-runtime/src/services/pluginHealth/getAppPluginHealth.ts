@@ -4,7 +4,13 @@ import { type HealthCheckResult, HealthStatus } from '../../utils/DataSourceWith
 import { getBackendSrv, isFetchError } from '../backendSrv';
 import { getPluginMetaFromCache } from '../pluginMeta/plugins';
 import { logPluginSettingsDebug, logPluginSettingsError } from '../pluginSettings/logging';
-import { assertApiVersion, assertPluginIdFormat, getApiVersion, getNamespace, isAuthError } from '../pluginUtils';
+import {
+  assertApiVersion,
+  assertPluginIdFormat,
+  getNamespace,
+  isAuthError,
+  resolveAppPluginAPIVersion,
+} from '../pluginUtils';
 
 interface K8sHealthCheckResult extends Omit<HealthCheckResult, 'message'> {
   message?: string;
@@ -70,7 +76,8 @@ function getAppHealth(pluginId: string, apiVersion: string, showErrorAlert?: boo
  * Get the health for a plugin.
  * @param pluginId - The id of the plugin.
  * @param showErrorAlert - Whether to show a UI error alert if the request fails. Defaults to `false`.
- * @param apiVersion - Which api version to use for the request. Defaults to the current api version.
+ * @param apiVersion - Which api version to use for the request. Defaults to the version that API discovery
+ * resolves for the plugin; when none resolves, the legacy endpoint is used.
  * @returns The plugin's `HealthCheckResult`, or `undefined` for non-app plugins
  * when k8s metadata is available.
  */
@@ -95,7 +102,14 @@ export async function getAppPluginHealth(
     return undefined;
   }
 
-  const resolvedApiVersion = apiVersion ?? (await getApiVersion());
+  const resolvedApiVersion = apiVersion ?? (await resolveAppPluginAPIVersion(pluginId));
+  if (resolvedApiVersion === undefined) {
+    logPluginSettingsDebug('PluginHealth: API not served, falling back to getting legacy plugin health', {
+      pluginId,
+    });
+    return getLegacyAppHealth(pluginId, showErrorAlert);
+  }
+
   assertApiVersion(resolvedApiVersion);
 
   return getAppHealth(pluginId, resolvedApiVersion, showErrorAlert);

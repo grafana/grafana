@@ -3,12 +3,14 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { invalidateCachedPromisesCache } from '../../utils/getCachedPromise';
 import { type MonitoringLogger } from '../../utils/logging';
+import { invalidateAPIDiscovery } from '../apiDiscovery/discovery';
 import { type BackendSrv, setBackendSrv } from '../backendSrv';
 import { setLogger, initializeLoggersRegistry } from '../logging/registry';
 import { getPluginMetaFromCache, refetchPluginMeta } from '../pluginMeta/plugins';
 import { clockPanelMetaOnPrem, myOrgTestAppMeta, v0alpha1Response } from '../pluginMeta/test-fixtures/v0alpha1Response';
 
 import { getPluginSettings } from './getPluginSettings';
+import { isAPIDiscoveryRequest, serveAppPluginAPIs, signInViewer } from './test-fixtures/apiDiscovery';
 import { legacyMyOrgTestAppSettings } from './test-fixtures/legacy.settings';
 import { clockPanelOnPremPluginMeta, myOrgTestAppSettings, testdataPluginMeta } from './test-fixtures/v0alpha1Response';
 
@@ -53,6 +55,11 @@ describe('settings', () => {
       logWarning: jest.fn(),
     };
     setLogger('grafana/runtime.plugins.settings', logger);
+    setLogger('grafana/runtime.apis.discovery', logger);
+  });
+
+  afterEach(() => {
+    invalidateAPIDiscovery();
   });
 
   describe('when plugins.useMTPluginSettings flag is enabled', () => {
@@ -68,6 +75,7 @@ describe('settings', () => {
       getPluginMetaFromCacheMock.mockResolvedValue(myOrgTestAppMeta);
       refetchPluginMetaMock.mockResolvedValue(myOrgTestAppMeta);
       backendSrv.get = jest.fn().mockResolvedValue(myOrgTestAppSettings);
+      serveAppPluginAPIs('myorg-test-app');
     });
 
     describe('getPluginSettings', () => {
@@ -121,6 +129,66 @@ describe('settings', () => {
 
         expect(result).toEqual(testdataPluginMeta);
         expect(backendSrv.get).not.toHaveBeenCalled();
+      });
+
+      describe('when discovery resolves no version', () => {
+        it('should fall back to the legacy api when the plugin API group is not served', async () => {
+          serveAppPluginAPIs('other-app');
+          backendSrv.get = jest.fn().mockResolvedValue(legacyMyOrgTestAppSettings);
+
+          const response = await getPluginSettings(legacyMyOrgTestAppSettings.id);
+
+          expect(response).toEqual(legacyMyOrgTestAppSettings);
+          expect(backendSrv.get).toHaveBeenCalledTimes(1);
+          expect(backendSrv.get).toHaveBeenCalledWith('/api/plugins/myorg-test-app/settings', undefined, undefined, {
+            showErrorAlert: false,
+            validatePath: true,
+          });
+        });
+
+        it('should fall back to the legacy api when discovery cannot answer', async () => {
+          invalidateAPIDiscovery();
+          const session = signInViewer();
+          backendSrv.get = jest
+            .fn()
+            .mockImplementation((url: string) =>
+              isAPIDiscoveryRequest(url) ? Promise.reject({ status: 500 }) : Promise.resolve(legacyMyOrgTestAppSettings)
+            );
+
+          try {
+            const response = await getPluginSettings(legacyMyOrgTestAppSettings.id);
+            expect(response).toEqual(legacyMyOrgTestAppSettings);
+          } finally {
+            session.restore();
+          }
+
+          expect(backendSrv.get).toHaveBeenCalledWith('/apis', undefined, undefined, expect.anything());
+          expect(backendSrv.get).toHaveBeenLastCalledWith(
+            '/api/plugins/myorg-test-app/settings',
+            undefined,
+            undefined,
+            { showErrorAlert: false, validatePath: true }
+          );
+        });
+
+        it('should fetch from new apis once the group is served after a legacy fallback', async () => {
+          serveAppPluginAPIs('other-app');
+          backendSrv.get = jest.fn().mockResolvedValue(legacyMyOrgTestAppSettings);
+          await getPluginSettings(legacyMyOrgTestAppSettings.id);
+
+          serveAppPluginAPIs('myorg-test-app');
+          backendSrv.get = jest.fn().mockResolvedValue(myOrgTestAppSettings);
+          const response = await getPluginSettings(legacyMyOrgTestAppSettings.id);
+
+          expect(response).toMatchObject(legacyMyOrgTestAppSettings);
+          expect(backendSrv.get).toHaveBeenCalledTimes(1);
+          expect(backendSrv.get).toHaveBeenCalledWith(
+            '/apis/myorg-test-app/v0alpha1/namespaces/default/app/instance',
+            undefined,
+            undefined,
+            { showErrorAlert: false, validatePath: true }
+          );
+        });
       });
 
       it('should reject with Unknown Plugin message if error status is not 403 or 401', async () => {
@@ -189,6 +257,22 @@ describe('settings', () => {
     });
 
     describe('getPluginSettings', () => {
+      it('should not send a discovery request', async () => {
+        const session = signInViewer();
+
+        try {
+          await getPluginSettings(legacyMyOrgTestAppSettings.id);
+        } finally {
+          session.restore();
+        }
+
+        expect(backendSrv.get).toHaveBeenCalledTimes(1);
+        expect(backendSrv.get).toHaveBeenCalledWith('/api/plugins/myorg-test-app/settings', undefined, undefined, {
+          showErrorAlert: false,
+          validatePath: true,
+        });
+      });
+
       it('should fetch settings when cache is empty', async () => {
         const response = await getPluginSettings(legacyMyOrgTestAppSettings.id);
 

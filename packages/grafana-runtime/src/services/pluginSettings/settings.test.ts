@@ -4,12 +4,14 @@ import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { TracedError } from '../../utils/TracedError';
 import { invalidateCachedPromisesCache } from '../../utils/getCachedPromise';
 import { type MonitoringLogger } from '../../utils/logging';
+import { invalidateAPIDiscovery } from '../apiDiscovery/discovery';
 import { type BackendSrv, setBackendSrv } from '../backendSrv';
 import { setLogger, initializeLoggersRegistry } from '../logging/registry';
 import { getPluginMetaFromCache, refetchPluginMeta } from '../pluginMeta/plugins';
 import { clockPanelMetaOnPrem, myOrgTestAppMeta } from '../pluginMeta/test-fixtures/v0alpha1Response';
 
 import { isAppPluginEnabled } from './settings';
+import { serveAppPluginAPIs } from './test-fixtures/apiDiscovery';
 import { legacyClockPanelOnPrem, legacyMyOrgTestAppSettings } from './test-fixtures/legacy.settings';
 import { myOrgTestAppSettings } from './test-fixtures/v0alpha1Response';
 jest.mock('../pluginMeta/plugins', () => ({
@@ -52,6 +54,11 @@ describe('settings', () => {
       logWarning: jest.fn(),
     };
     setLogger('grafana/runtime.plugins.settings', logger);
+    setLogger('grafana/runtime.apis.discovery', logger);
+  });
+
+  afterEach(() => {
+    invalidateAPIDiscovery();
   });
 
   describe('when plugins.useMTPluginSettings flag is enabled', () => {
@@ -67,6 +74,7 @@ describe('settings', () => {
       getPluginMetaFromCacheMock.mockResolvedValue(myOrgTestAppMeta);
       refetchPluginMetaMock.mockResolvedValue(myOrgTestAppMeta);
       backendSrv.get = jest.fn().mockResolvedValue(myOrgTestAppSettings);
+      serveAppPluginAPIs('myorg-test-app');
     });
 
     describe('isAppPluginEnabled', () => {

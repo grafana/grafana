@@ -1,10 +1,68 @@
-import { assertPluginIdFormat, assertApiVersion, getApiVersion, assertUIDFormat } from './pluginUtils';
+import { invalidateAPIDiscovery, setAPIDiscoveryForTesting } from './apiDiscovery/discovery';
+import { setLogger } from './logging/registry';
+import {
+  assertPluginIdFormat,
+  assertApiVersion,
+  getApiVersion,
+  assertUIDFormat,
+  getCacheKey,
+  resolveAppPluginAPIVersion,
+} from './pluginUtils';
 
 describe('getApiVersion', () => {
   it('should resolve the current API version', async () => {
     const url = await getApiVersion();
 
     expect(url).toBe('v0alpha1');
+  });
+});
+
+describe('resolveAppPluginAPIVersion', () => {
+  afterEach(() => {
+    invalidateAPIDiscovery();
+  });
+
+  it('resolves the version from the API group named after the plugin', async () => {
+    setAPIDiscoveryForTesting([{ group: 'myorg-test-app', versions: ['v1', 'v0alpha1'], preferredVersion: 'v1' }]);
+
+    await expect(resolveAppPluginAPIVersion('myorg-test-app')).resolves.toBe('v0alpha1');
+  });
+
+  it('returns undefined when the group is not served', async () => {
+    setAPIDiscoveryForTesting([{ group: 'other-app', versions: ['v0alpha1'], preferredVersion: 'v0alpha1' }]);
+
+    await expect(resolveAppPluginAPIVersion('myorg-test-app')).resolves.toBeUndefined();
+  });
+
+  it('returns undefined when the group serves no supported version', async () => {
+    setAPIDiscoveryForTesting([{ group: 'myorg-test-app', versions: ['v1'], preferredVersion: 'v1' }]);
+
+    await expect(resolveAppPluginAPIVersion('myorg-test-app')).resolves.toBeUndefined();
+  });
+
+  it.each(['MyOrg-test-app', 'myorg_test_app', '-myorg-test-app'])(
+    'returns undefined without asking discovery when %s cannot be an API group name',
+    async (pluginId) => {
+      const logWarning = jest.fn();
+      setLogger('grafana/runtime.apis.discovery', {
+        logDebug: jest.fn(),
+        logError: jest.fn(),
+        logInfo: jest.fn(),
+        logMeasurement: jest.fn(),
+        logWarning,
+      });
+      setAPIDiscoveryForTesting([{ group: pluginId, versions: ['v0alpha1'], preferredVersion: 'v0alpha1' }]);
+
+      await expect(resolveAppPluginAPIVersion(pluginId)).resolves.toBeUndefined();
+      expect(logWarning).not.toHaveBeenCalled();
+    }
+  );
+});
+
+describe('getCacheKey', () => {
+  it('keys app plugin settings by plugin and API version', () => {
+    expect(getCacheKey('myorg-test-app', 'v0alpha1')).not.toBe(getCacheKey('myorg-test-app', 'v1'));
+    expect(getCacheKey('myorg-test-app', 'v0alpha1')).not.toBe(getCacheKey('other-app', 'v0alpha1'));
   });
 });
 

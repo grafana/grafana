@@ -4,9 +4,9 @@ import { getFeatureFlagClient } from '../../internal/openFeature';
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { getCachedPromiseWithArgs } from '../../utils/getCachedPromise';
 import { refetchPluginMeta } from '../pluginMeta/plugins';
-import { assertPluginIdFormat, getApiVersion, getCacheKey, getLegacyCacheKey } from '../pluginUtils';
+import { assertPluginIdFormat, getLegacyCacheKey, resolveAppPluginAPIVersion } from '../pluginUtils';
 
-import { getAppPluginSettings, getLegacySettings } from './getPluginSettings';
+import { getAppPluginSettings, getAppSettingsCacheKey, getLegacySettings } from './getPluginSettings';
 import { logPluginSettingsDebug } from './logging';
 import { getSettingsMapper } from './mappers/mappers';
 
@@ -28,7 +28,15 @@ export async function refetchPluginSettings(pluginId: string): Promise<PluginMet
     return mapper(meta.spec);
   }
 
-  const settings = await refetchCachedAppSettings(pluginId, false, await getApiVersion());
+  const apiVersion = await resolveAppPluginAPIVersion(pluginId);
+  if (!apiVersion) {
+    logPluginSettingsDebug('PluginSettings: API not served, falling back to refetching legacy plugin settings', {
+      pluginId,
+    });
+    return refetchCachedLegacySettings(pluginId, false);
+  }
+
+  const settings = await refetchCachedAppSettings(pluginId, false, apiVersion);
   const mapper = getSettingsMapper();
   return mapper(meta.spec, settings);
 }
@@ -40,5 +48,5 @@ export const refetchCachedLegacySettings = getCachedPromiseWithArgs(getLegacySet
 
 export const refetchCachedAppSettings = getCachedPromiseWithArgs(getAppPluginSettings, {
   invalidate: true,
-  cacheKeyFn: getCacheKey,
+  cacheKeyFn: getAppSettingsCacheKey,
 });

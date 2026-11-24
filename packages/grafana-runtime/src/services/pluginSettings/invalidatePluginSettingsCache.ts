@@ -1,7 +1,5 @@
-import { getFeatureFlagClient } from '../../internal/openFeature';
-import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { invalidateCachedPromise } from '../../utils/getCachedPromise';
-import { getLegacyCacheKey, getCacheKey } from '../pluginUtils';
+import { getLegacyCacheKey, getCacheKey, SUPPORTED_APP_PLUGIN_API_VERSIONS } from '../pluginUtils';
 
 /**
  * Invalidate the cached plugin settings for a plugin so the next call to
@@ -10,10 +8,9 @@ import { getLegacyCacheKey, getCacheKey } from '../pluginUtils';
  * @param pluginId - The id of the plugin.
  */
 export function invalidatePluginSettingsCache(pluginId: string): void {
-  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPluginSettings, false)) {
-    invalidateCachedPromise(getLegacyCacheKey(pluginId));
-    return;
+  // The MT path also falls back to the legacy cache, so drop every key the settings may sit under.
+  invalidateCachedPromise(getLegacyCacheKey(pluginId));
+  for (const apiVersion of SUPPORTED_APP_PLUGIN_API_VERSIONS) {
+    invalidateCachedPromise(getCacheKey(pluginId, apiVersion));
   }
-
-  invalidateCachedPromise(getCacheKey(pluginId));
 }

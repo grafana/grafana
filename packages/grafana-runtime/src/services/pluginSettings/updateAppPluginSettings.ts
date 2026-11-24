@@ -7,7 +7,7 @@ import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { replaceCachedPromise } from '../../utils/getCachedPromise';
 import { getBackendSrv } from '../backendSrv';
 import { refetchPluginMeta } from '../pluginMeta/plugins';
-import { assertPluginIdFormat, getApiVersion, getCacheKey, getNamespace } from '../pluginUtils';
+import { assertPluginIdFormat, getCacheKey, getNamespace, resolveAppPluginAPIVersion } from '../pluginUtils';
 
 import { logPluginSettingsDebug, logPluginSettingsError } from './logging';
 import { getSettingsMapper } from './mappers/mappers';
@@ -25,8 +25,11 @@ function updateLegacySettings(pluginId: string, data: Partial<PluginMeta>): Prom
     });
 }
 
-async function internalUpdateAppPluginSettings(pluginId: string, data: Partial<PluginMeta>): Promise<v0alpha1Settings> {
-  const apiVersion = await getApiVersion();
+async function internalUpdateAppPluginSettings(
+  pluginId: string,
+  apiVersion: string,
+  data: Partial<PluginMeta>
+): Promise<v0alpha1Settings> {
   const spec = settingsSpecMapper(data);
   const secure = inlineSecureValuesMapper(data);
   const update = {
@@ -82,8 +85,17 @@ export async function updateAppPluginSettings(pluginId: string, data: Partial<Pl
     return mapper(meta.spec);
   }
 
-  const updatedSettings = await internalUpdateAppPluginSettings(pluginId, data);
-  const cacheKey = getCacheKey(pluginId);
+  const apiVersion = await resolveAppPluginAPIVersion(pluginId);
+  if (!apiVersion) {
+    logPluginSettingsDebug('PluginSettings: API not served, falling back to updating legacy plugin settings', {
+      pluginId,
+    });
+    await updateLegacySettings(pluginId, data);
+    return refetchCachedLegacySettings(pluginId, false);
+  }
+
+  const updatedSettings = await internalUpdateAppPluginSettings(pluginId, apiVersion, data);
+  const cacheKey = getCacheKey(pluginId, apiVersion);
   replaceCachedPromise(cacheKey, updatedSettings); // add updated settings to cache
   const mapper = getSettingsMapper();
   return mapper(meta.spec, updatedSettings);
