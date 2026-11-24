@@ -2,6 +2,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { JSX } from 'react';
 
+import { Tooltip } from '../Tooltip/Tooltip';
+
 import { LinkButton } from './LinkButton';
 
 const setup = (jsx: JSX.Element) => render(jsx);
@@ -68,6 +70,28 @@ describe('LinkButton', () => {
         <LinkButton href="https://grafana.com" tooltip="More about Grafana" onFocus={onFocus} onBlur={onBlur}>
           Click me
         </LinkButton>
+        <button>Next</button>
+      </>
+    );
+
+    await userEvent.tab();
+    expect(onFocus).toHaveBeenCalledTimes(1);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('More about Grafana');
+
+    await userEvent.tab();
+    expect(onBlur).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps onFocus and onBlur working when the link is wrapped in a Tooltip', async () => {
+    const onFocus = jest.fn();
+    const onBlur = jest.fn();
+    setup(
+      <>
+        <Tooltip content="More about Grafana">
+          <LinkButton href="https://grafana.com" onFocus={onFocus} onBlur={onBlur}>
+            Click me
+          </LinkButton>
+        </Tooltip>
         <button>Next</button>
       </>
     );
