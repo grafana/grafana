@@ -993,7 +993,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	}
 	connectionControllerService := provisioning3.ProvideConnectionControllerService(apiBuilder)
 	historyJobCleanupService := provisioning3.ProvideHistoryJobCleanupService(cfg, apiBuilder, eventualRestConfigProvider)
-	repositoryControllerService := provisioning3.ProvideRepositoryControllerService(cfg, apiBuilder, eventualRestConfigProvider)
+	repositoryControllerService := provisioning3.ProvideRepositoryControllerService(apiBuilder)
 	healthService := grpcserver.ProvideHealthService(grpcserverProvider)
 	reflectionService, err := grpcserver.ProvideReflectionService(cfg, grpcserverProvider)
 	if err != nil {
@@ -1802,7 +1802,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	connectionControllerService := provisioning3.ProvideConnectionControllerService(apiBuilder)
 	historyJobCleanupService := provisioning3.ProvideHistoryJobCleanupService(cfg, apiBuilder, eventualRestConfigProvider)
-	repositoryControllerService := provisioning3.ProvideRepositoryControllerService(cfg, apiBuilder, eventualRestConfigProvider)
+	repositoryControllerService := provisioning3.ProvideRepositoryControllerService(apiBuilder)
 	healthService := grpcserver.ProvideHealthService(grpcserverProvider)
 	reflectionService, err := grpcserver.ProvideReflectionService(cfg, grpcserverProvider)
 	if err != nil {

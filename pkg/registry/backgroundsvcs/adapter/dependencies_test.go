@@ -39,4 +39,11 @@ func TestDependencyMap(t *testing.T) {
 		require.Contains(t, deps[BackgroundServices], ProvisioningConnectionController)
 		require.NotContains(t, deps[Core], ProvisioningConnectionController)
 	})
+
+	t.Run("the provisioning repository controller waits for the API server but not for classic provisioning", func(t *testing.T) {
+		deps := dependencyMap()
+		require.Equal(t, []string{GrafanaAPIServer}, deps[ProvisioningRepositoryController])
+		require.Contains(t, deps[BackgroundServices], ProvisioningRepositoryController)
+		require.NotContains(t, deps[Core], ProvisioningRepositoryController)
+	})
 }

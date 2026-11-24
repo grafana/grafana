@@ -2,61 +2,77 @@ package provisioning
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-app-sdk/logging"
+	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 const defaultWebhookSecretRotationInterval = 30 * 24 * time.Hour
 
-var _ registry.CanBeDisabled = (*RepositoryControllerService)(nil)
+// RepositoryControllerServiceName is the background-service module name of
+// [RepositoryControllerService].
+const RepositoryControllerServiceName = "provisioning-repository-controller"
 
-// RepositoryControllerService reconciles provisioning repositories. Run blocks
-// until the Grafana API server is running, then runs the repository controller
-// until shutdown.
+// RepositoryControllerService runs the repository controller in the Grafana
+// process once the provisioning API is served.
 type RepositoryControllerService struct {
-	builder            *APIBuilder
-	configProvider     apiserver.RestConfigProvider
-	disableControllers bool
+	services.NamedService
+
+	builder *APIBuilder
+	run     func(ctx context.Context, restConfig *clientrest.Config) error
 }
 
-func ProvideRepositoryControllerService(cfg *setting.Cfg, builder *APIBuilder, configProvider apiserver.RestConfigProvider) *RepositoryControllerService {
-	return &RepositoryControllerService{
-		builder:            builder,
-		configProvider:     configProvider,
-		disableControllers: cfg.DisableControllers,
-	}
+// ProvideRepositoryControllerService is called by Wire. Depending on the
+// builder orders it after [RegisterAPIService], which registers the
+// provisioning API group with the API server.
+func ProvideRepositoryControllerService(builder *APIBuilder) *RepositoryControllerService {
+	s := &RepositoryControllerService{builder: builder}
+	s.run = s.runController
+	s.NamedService = services.NewBasicService(nil, s.running, nil).WithName(RepositoryControllerServiceName)
+	return s
 }
 
-// IsDisabled reports whether this instance runs no repository controller: the
-// builder is nil when provisioning is disabled, and controllers can be turned
-// off by configuration.
+// IsDisabled implements registry.CanBeDisabled.
 func (s *RepositoryControllerService) IsDisabled() bool {
-	return s.builder == nil || s.disableControllers
+	return s.builder == nil || s.builder.onlyApiServer
 }
 
+// Run implements registry.BackgroundService.
 func (s *RepositoryControllerService) Run(ctx context.Context) error {
-	restConfig, err := s.configProvider.GetRestConfig(ctx)
-	if ctx.Err() != nil {
-		// Shut down before the API server became ready.
+	if err := s.StartAsync(ctx); err != nil {
+		return err
+	}
+	return s.AwaitTerminated(context.Background())
+}
+
+func (s *RepositoryControllerService) running(ctx context.Context) error {
+	// Status patches and job writes carry the provisioning requester, so a
+	// routed config would send them through the router, which strips the
+	// loopback credentials before a remote backend.
+	restConfig, err := s.builder.awaitLoopbackConfig(ctx)
+	if err == nil {
+		err = s.run(ctx, restConfig)
+	}
+	if errors.Is(err, context.Canceled) && ctx.Err() != nil {
 		return nil
 	}
-	if err != nil {
-		return fmt.Errorf("get rest config: %w", err)
-	}
+	return err
+}
+
+func (s *RepositoryControllerService) runController(ctx context.Context, restConfig *clientrest.Config) error {
 	client, err := clientset.NewForConfig(restConfig)
 	if err != nil {
 		return fmt.Errorf("create provisioning clientset: %w", err)
