@@ -11,6 +11,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/bwmarrin/snowflake"
@@ -1076,6 +1077,50 @@ func testDataStoreIntegration(t *testing.T, ctx context.Context, ds *dataStore) 
 		require.True(t, remainingUUIDs[versions[0].rv])
 		require.False(t, remainingUUIDs[versions[1].rv]) // deleted
 		require.True(t, remainingUUIDs[versions[2].rv])
+	})
+}
+
+type scriptedKeyPages struct {
+	KV
+	keys func(context.Context, ListOptions) iter.Seq2[string, error]
+}
+
+func (s scriptedKeyPages) Keys(ctx context.Context, _ string, opts ListOptions) iter.Seq2[string, error] {
+	return s.keys(ctx, opts)
+}
+
+func TestPagedKeysTimeoutAppliesPerPage(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		const timeout = 10 * time.Second
+		var pages int
+		store := scriptedKeyPages{keys: func(ctx context.Context, _ ListOptions) iter.Seq2[string, error] {
+			return func(yield func(string, error) bool) {
+				pages++
+				deadline, ok := ctx.Deadline()
+				require.True(t, ok)
+				require.Equal(t, timeout, time.Until(deadline))
+				if pages == 3 {
+					<-ctx.Done()
+					// A scan that stops yielding on cancellation must not look like EOF.
+					return
+				}
+				synctest.Sleep(6 * time.Second)
+				require.NoError(t, ctx.Err())
+				yield(fmt.Sprintf("key-%d", 3-pages), nil)
+			}
+		}}
+
+		var keys []string
+		var scanErr error
+		for key, err := range pagedKeysWithTimeout(t.Context(), store, kv.EventsSection, ListOptions{Sort: SortOrderDesc}, 1, timeout) {
+			if err != nil {
+				scanErr = err
+				break
+			}
+			keys = append(keys, key)
+		}
+		require.Equal(t, []string{"key-2", "key-1"}, keys)
+		require.ErrorIs(t, scanErr, context.DeadlineExceeded)
 	})
 }
 
