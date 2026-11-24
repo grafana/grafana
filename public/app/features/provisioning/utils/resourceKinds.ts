@@ -5,7 +5,7 @@ import { type KindInfo } from '@grafana/runtime/unstable';
 import { playlistAPIv1 } from 'app/api/clients/playlist/v1';
 import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
-import { CORE_KINDS, coversGroup, getAppKinds } from 'app/core/kinds/coreKinds';
+import { CORE_KINDS, coversGroup, getKinds } from 'app/core/kinds/coreKinds';
 import { getAPIGroupDiscoveryList } from 'app/features/apiserver/discovery';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
@@ -183,10 +183,6 @@ export interface ResourceKindInfo extends KindInfo {
 // each call site. The registry keys and literal `kind` values stay the source of truth for the unions above.
 const allKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
 
-function registryKinds(): KindInfo[] {
-  return [...Object.values(CORE_KINDS), ...getAppKinds()];
-}
-
 function isResourceKindKey(key: string): key is ResourceKindKey {
   return key in resourceKindInfos;
 }
@@ -222,7 +218,7 @@ export function getAvailableResourceKinds(availableResources?: SupportedResource
   if (!availableResources) {
     return allKindInfos;
   }
-  return registryKinds().filter((info) =>
+  return getKinds().filter((info) =>
     availableResources.some(
       (r) => r.group !== undefined && coversGroup(info, r.group) && r.kind === info.kind && !r.disabled
     )
