@@ -21,6 +21,12 @@ import { TimelineChart } from './TimelineChart';
 import * as timelineChartUtils from './utils';
 import { prepareTimelineFields, TimelineMode } from './utils';
 
+jest.mock('./utils', () =>
+  jest.requireActual('test/helpers/partialMock').partialMock(jest.requireActual('./utils'), {
+    preparePlotConfigBuilder: jest.fn(),
+  })
+);
+
 // jest-canvas-mock reports `TextMetrics.width === text.length`, which throws off uPlot axis
 // layout vs. the browser. Route @grafana/ui's measureText through the deterministic mock and
 // share the canvas context with uPlot so gradient/axis geometry lands in the snapshot.
@@ -210,7 +216,8 @@ describe('TimelineChart (canvas)', () => {
     applyDefaultUPlotAxisMeasureTextMock(jest.mocked(uPlotAxisMeasureText));
 
     prepConfigSpy = jest
-      .spyOn(timelineChartUtils, 'preparePlotConfigBuilder')
+      .mocked(timelineChartUtils.preparePlotConfigBuilder)
+      .mockReset()
       .mockImplementation((opts: Parameters<typeof timelineChartUtils.preparePlotConfigBuilder>[0]) => {
         const builder: UPlotConfigBuilder = realPreparePlotConfigBuilder(opts);
         // Capture the live uPlot instance and separate out the axis-only draw events so the
@@ -227,7 +234,7 @@ describe('TimelineChart (canvas)', () => {
   });
 
   afterEach(() => {
-    prepConfigSpy.mockRestore();
+    jest.mocked(timelineChartUtils.preparePlotConfigBuilder).mockReset();
   });
 
   it('invokes preparePlotConfigBuilder to build the uPlot config', async () => {
