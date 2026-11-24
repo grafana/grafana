@@ -36,50 +36,56 @@ async function loadPluginMetas(): Promise<PluginMetasResponse> {
   return result;
 }
 
-export async function installPluginMeta(pluginId: string, version: string): Promise<void> {
+export async function installPluginMeta(
+  pluginId: string,
+  version: string,
+  { updateExisting = false }: { updateExisting?: boolean } = {}
+): Promise<void> {
   assertPluginIdFormat(pluginId);
 
   const apiVersion = await getApiVersion();
-  const spec = { ...defaultSpec(), id: pluginId, version };
-  const metadata = { name: pluginId, namespace: config.namespace };
+  const pluginsUrl = `apis/plugins.grafana.app/${apiVersion}/namespaces/${config.namespace}/plugins`;
+
+  if (!updateExisting) {
+    return createPluginMeta(pluginsUrl, apiVersion, pluginId, version);
+  }
+
+  const pluginUrl = `${pluginsUrl}/${pluginId}`;
+  const existingResult = await fetch(pluginUrl);
+  if (existingResult.status === 404) {
+    return createPluginMeta(pluginsUrl, apiVersion, pluginId, version);
+  }
+
+  throwIfNotOk(existingResult, 'install', pluginId);
+  const existing: Plugin = await existingResult.json();
+
+  const updated = await fetch(pluginUrl, {
+    method: 'PUT',
+    body: JSON.stringify({ ...existing, spec: { ...existing.spec, version } }),
+    headers: { 'content-type': 'application/json' },
+  });
+  throwIfNotOk(updated, 'install', pluginId);
+}
+
+async function createPluginMeta(
+  pluginsUrl: string,
+  apiVersion: string,
+  pluginId: string,
+  version: string
+): Promise<void> {
   const data: Plugin = {
     apiVersion: `plugins.grafana.app/${apiVersion}`,
     kind: 'Plugin',
-    metadata,
-    spec,
+    metadata: { name: pluginId, namespace: config.namespace },
+    spec: { ...defaultSpec(), id: pluginId, version },
     status: {},
   };
-
-  const pluginsUrl = `apis/plugins.grafana.app/${apiVersion}/namespaces/${config.namespace}/plugins`;
-  const result = await fetch(pluginsUrl, {
+  const created = await fetch(pluginsUrl, {
     method: 'POST',
     body: JSON.stringify(data),
     headers: { 'content-type': 'application/json' },
   });
-
-  // The plugin already exists when it is updated or its version is changed, so move the existing resource to the
-  // requested version, like the server side install registrar does.
-  if (result.status === 409) {
-    await updatePluginMetaVersion(`${pluginsUrl}/${pluginId}`, pluginId, version);
-    return;
-  }
-
-  throwIfNotOk(result, 'install', pluginId);
-}
-
-async function updatePluginMetaVersion(url: string, pluginId: string, version: string): Promise<void> {
-  const existingResult = await fetch(url);
-  throwIfNotOk(existingResult, 'install', pluginId);
-
-  const existing: Plugin = await existingResult.json();
-  const updated: Plugin = { ...existing, spec: { ...existing.spec, version } };
-  const result = await fetch(url, {
-    method: 'PUT',
-    body: JSON.stringify(updated),
-    headers: { 'content-type': 'application/json' },
-  });
-
-  throwIfNotOk(result, 'install', pluginId);
+  throwIfNotOk(created, 'install', pluginId);
 }
 
 function throwIfNotOk(result: Response, action: 'install' | 'uninstall', pluginId: string): void {
@@ -105,11 +111,6 @@ export async function uninstallPluginMeta(pluginId: string): Promise<void> {
       method: 'DELETE',
     }
   );
-
-  // Nothing to remove when the plugin has no resource, which is the state an uninstall is after.
-  if (result.status === 404) {
-    return;
-  }
 
   throwIfNotOk(result, 'uninstall', pluginId);
 }

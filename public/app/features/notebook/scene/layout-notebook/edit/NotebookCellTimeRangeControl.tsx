@@ -26,9 +26,8 @@ import {
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
+import { TimeRangeSelector } from '@grafana/ui/unstable';
 
-import { TimePickerContent } from '../../../../../../../packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker/TimePickerContent';
-import { getQuickOptions } from '../../../../../../../packages/grafana-ui/src/components/DateTimePickers/options';
 import { isNotebookScene } from '../../isNotebookScene';
 import { type NotebookCellItem } from '../NotebookCellItem';
 import { buildCellTimeRangeSpec, type CellTimeRangeSpec } from '../cellTimeRange';
@@ -356,7 +355,7 @@ function NotebookCellTimeRangePopoverContent({ cell, onClose }: { cell: Notebook
         const validHistory = getValidHistory(storedHistory);
 
         return (
-          <TimePickerContent
+          <TimeRangeSelector
             className={styles.picker}
             value={value}
             onChange={(timeRange) => {
@@ -372,7 +371,7 @@ function NotebookCellTimeRangePopoverContent({ cell, onClose }: { cell: Notebook
             timeZone={ancestorTimeZone}
             fiscalYearStartMonth={fiscalYearStartMonth}
             hideTimeZone
-            quickOptions={getQuickRanges(cell) ?? getQuickOptions()}
+            quickOptions={getQuickRanges(cell)}
             history={deserializeHistory(validHistory)}
             showHistory
             weekStart={getAncestorWeekStart(cell)}

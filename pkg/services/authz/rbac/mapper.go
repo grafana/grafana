@@ -846,6 +846,30 @@ func NewMapperRegistry() MapperRegistry {
 				folderSupport:   false,
 				skipScopeOnVerb: nil,
 			},
+			"datasources/alertrules": translation{
+				resource:  "datasources",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbGet:    accesscontrol.ActionAlertingRuleExternalRead,
+					utils.VerbUpdate: accesscontrol.ActionAlertingRuleExternalWrite,
+				},
+			},
+			"datasources/alertinstances": translation{
+				resource:  "datasources",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbGet:    accesscontrol.ActionAlertingInstancesExternalRead,
+					utils.VerbUpdate: accesscontrol.ActionAlertingInstancesExternalWrite,
+				},
+			},
+			"datasources/alertnotifications": translation{
+				resource:  "datasources",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbGet:    accesscontrol.ActionAlertingNotificationsExternalRead,
+					utils.VerbUpdate: accesscontrol.ActionAlertingNotificationsExternalWrite,
+				},
+			},
 			// Only datasources:admin carries the caching actions.
 			"datasources/caching": translation{
 				resource:  "datasources",

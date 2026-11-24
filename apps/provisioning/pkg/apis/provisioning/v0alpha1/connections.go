@@ -3,7 +3,7 @@ package v0alpha1
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana-app-sdk/resource"
 )
 
 // When this code is changed, make sure to update the code generation.
@@ -27,16 +27,16 @@ func (Connection) OpenAPIModelName() string {
 type ConnectionSecure struct {
 	// PrivateKey is the reference to the private key used for GitHub App authentication.
 	// This value is stored securely and cannot be read back
-	PrivateKey common.InlineSecureValue `json:"privateKey,omitzero,omitempty"`
+	PrivateKey resource.InlineSecureValue `json:"privateKey,omitzero,omitempty"`
 
 	// ClientSecret is the reference to the secret used for other providers authentication,
 	// and Github on-behalf-of authentication.
 	// This value is stored securely and cannot be read back
-	ClientSecret common.InlineSecureValue `json:"clientSecret,omitzero,omitempty"`
+	ClientSecret resource.InlineSecureValue `json:"clientSecret,omitzero,omitempty"`
 
 	// Token is the reference of the token used to act as the Connection.
 	// This value is stored securely and cannot be read back
-	Token common.InlineSecureValue `json:"token,omitzero,omitempty"`
+	Token resource.InlineSecureValue `json:"token,omitzero,omitempty"`
 }
 
 func (ConnectionSecure) OpenAPIModelName() string {

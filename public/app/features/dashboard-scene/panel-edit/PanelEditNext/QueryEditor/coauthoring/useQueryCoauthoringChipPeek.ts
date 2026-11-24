@@ -1,10 +1,12 @@
-import { type MouseEvent, type PointerEvent, useCallback, useEffect, useRef } from 'react';
+import { type MouseEvent, type PointerEvent, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 
 const HOLD_DELAY_MS = 200;
 
 export function useQueryCoauthoringChipPeek(onPeek?: (index: number) => void, onStopPeek?: () => void) {
   const callbacks = useRef({ onPeek, onStopPeek });
-  callbacks.current = { onPeek, onStopPeek };
+  useLayoutEffect(() => {
+    callbacks.current = { onPeek, onStopPeek };
+  });
   const pending = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const held = useRef(false);
   const suppressClick = useRef(false);

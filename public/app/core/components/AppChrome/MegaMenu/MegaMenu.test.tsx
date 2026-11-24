@@ -1,17 +1,21 @@
 import { HttpResponse } from 'msw';
 import { type JSX } from 'react';
+import { testWithAppKind } from 'test/helpers/testWithAppKind';
 import { testWithStarsUser } from 'test/helpers/testWithStarsUser';
 import { act, fireEvent, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { type NavModelItem, PluginExtensionPoints } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, reportInteraction, setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
+import { getAPIGroupHandler, getKindSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import {
   customGetUserPreferencesHandler,
   customPatchUserPreferencesHandler,
   getFolderFixtures,
+  MOCK_APP_KIND,
   mockUserPreferences,
+  setMockStarredAppKind,
   setMockStarredDashboards,
   setMockStarredFolders,
   setMockUserPreferences,
@@ -98,6 +102,7 @@ const renderMegaMenu = ({
 };
 
 testWithStarsUser();
+testWithAppKind();
 
 describe('MegaMenu', () => {
   beforeEach(() => {
@@ -1076,5 +1081,45 @@ describe('MegaMenu', () => {
     // so screen readers don't hear the two rows as identical links.
     expect(starredSection().getByTitle('Dashboard')).toBe(starredSection().getByTestId('icon-apps'));
     expect(starredSection().getByTitle('Folder')).toBe(starredSection().getByTestId('icon-folder'));
+  });
+
+  it('renders a starred app object with its kind icon titled for screen readers, linking into the plugin', async () => {
+    setMockStarredDashboards([]);
+    setMockStarredAppKind(MOCK_APP_KIND.group, MOCK_APP_KIND.kind, ['t1']);
+    server.use(
+      getAPIGroupHandler(MOCK_APP_KIND.group, MOCK_APP_KIND.version),
+      getKindSearchHandler(MOCK_APP_KIND, [{ name: 't1', title: 'Capacity review' }])
+    );
+    setupSearcher([]);
+
+    const { user } = renderMegaMenu();
+
+    await user.click(await screen.findByRole('button', { name: 'Expand section: Starred' }));
+
+    // Waits on the row's text: a role query polled over the whole menu is slow
+    await screen.findByText('Capacity review');
+    const starredSection = within(screen.getByRole('link', { name: 'Starred' }).closest('li')!);
+    expect(starredSection.getByRole('link', { name: 'Capacity review' })).toHaveAttribute(
+      'href',
+      '/a/test-things-app/things/t1'
+    );
+
+    // The kind icon doubles as the row's accessible kind, like the dashboard/folder icons do.
+    expect(starredSection.getByTitle('Thing')).toBe(starredSection.getByTestId('icon-cube'));
+  });
+
+  it('reports a click on a starred row as a click on a starred item of its kind', async () => {
+    const { user } = renderMegaMenu();
+
+    await user.click(await screen.findByRole('button', { name: 'Expand section: Starred' }));
+    // Waits on the row's text: a role query polled over the whole menu is slow
+    await screen.findByText(STARRED_DASHBOARD.name);
+    const starredSection = within(screen.getByRole('link', { name: 'Starred' }).closest('li')!);
+    await user.click(starredSection.getByRole('link', { name: STARRED_DASHBOARD.name }));
+
+    expect(reportInteraction).toHaveBeenCalledWith(
+      'grafana_navigation_item_clicked',
+      expect.objectContaining({ path: STARRED_DASHBOARD.url, itemIsStarred: true, itemKind: 'dashboard' })
+    );
   });
 });

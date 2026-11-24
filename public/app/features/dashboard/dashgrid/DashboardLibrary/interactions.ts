@@ -106,8 +106,8 @@ export const TemplateDashboardInteractions = {
   ...DashboardLibraryInteractions,
   itemClicked: async (
     properties: ItemClickedInteractionProperties & {
-      /** Which button was clicked (template modal only): View template vs Customize with Assistant */
-      action?: 'view_template' | 'assistant';
+      /** What the click did: View template, Customize with Assistant, or attach the template to the Assistant prompt */
+      action?: 'view_template' | 'assistant' | 'attach_template';
     }
   ) => {
     const isDashboardTemplatesAssistantEnabled = await isTemplateDashboardAssistantEnabled();

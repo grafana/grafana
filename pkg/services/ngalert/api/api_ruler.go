@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/api/apierrors"
@@ -30,6 +31,7 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -81,7 +83,7 @@ var ignoreFieldsForValidate = [...]string{"RuleGroupIndex", "FolderFullpath"}
 func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceUID string, group string) response.Response {
 	var permanently bool
 	if c.QueryBool("deletePermanently") {
-		if !c.HasRole(identity.RoleAdmin) {
+		if !c.HasRole(authlib.RoleAdmin) {
 			return ErrResp(http.StatusForbidden, errors.New("only administrators can delete rules permanently"), "")
 		}
 		permanently = true
@@ -275,7 +277,7 @@ func (srv RulerSrv) RouteGetRulesGroupConfig(c *contextmodel.ReqContext, namespa
 // RouteGetRulesConfig returns all alert rules that are available to the current user
 func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Response {
 	if strings.ToLower(c.Query("deleted")) == "true" {
-		if !c.HasRole(identity.RoleAdmin) {
+		if !c.HasRole(authlib.RoleAdmin) {
 			return ErrResp(http.StatusForbidden, errors.New("only admins can get deleted rules"), "")
 		}
 		rules, err := srv.store.ListDeletedRules(c.Req.Context(), c.GetOrgID())
@@ -417,7 +419,7 @@ func alertRuleVersionsToAlertRules(vs []*ngmodels.AlertRuleVersion) []*ngmodels.
 func (srv RulerSrv) RoutePostNameRulesConfig(c *contextmodel.ReqContext, ruleGroupConfig apimodels.PostableRuleGroupConfig, namespaceUID string) response.Response {
 	var deletePermanently bool
 	if c.QueryBool("deletePermanently") {
-		if !c.HasRole(identity.RoleAdmin) {
+		if !c.HasRole(authlib.RoleAdmin) {
 			return ErrResp(http.StatusForbidden, errors.New("only administrators can delete rules permanently"), "")
 		}
 		deletePermanently = true
@@ -508,8 +510,8 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 }
 
 //nolint:gocyclo
-func (srv RulerSrv) performUpdateAlertRules(ctx context.Context, c *contextmodel.ReqContext, groupKey ngmodels.AlertRuleGroupKey, rules []*ngmodels.AlertRuleWithOptionals, deletePermanently bool) (*rulestore.GroupDelta, *ngmodels.AlertConfiguration, error) {
-	var finalChanges *rulestore.GroupDelta
+func (srv RulerSrv) performUpdateAlertRules(ctx context.Context, c *contextmodel.ReqContext, groupKey ngmodels.AlertRuleGroupKey, rules []*ngmodels.AlertRuleWithOptionals, deletePermanently bool) (*ngrulesvc.GroupDelta, *ngmodels.AlertConfiguration, error) {
+	var finalChanges *ngrulesvc.GroupDelta
 	var dbConfig *ngmodels.AlertConfiguration
 	err := srv.xactManager.InTransaction(ctx, func(tranCtx context.Context) error {
 		id, _ := c.GetInternalID()
@@ -517,7 +519,7 @@ func (srv RulerSrv) performUpdateAlertRules(ctx context.Context, c *contextmodel
 
 		logger := srv.log.New("namespace_uid", groupKey.NamespaceUID, "group",
 			groupKey.RuleGroup, "org_id", groupKey.OrgID, "user_id", id, "userNamespace", userNamespace)
-		groupChanges, err := rulestore.CalculateChanges(tranCtx, srv.store, groupKey, rules)
+		groupChanges, err := srv.store.CalculateChanges(tranCtx, groupKey, rules)
 		if err != nil {
 			return err
 		}
@@ -577,7 +579,7 @@ func (srv RulerSrv) performUpdateAlertRules(ctx context.Context, c *contextmodel
 			return err
 		}
 
-		finalChanges = rulestore.UpdateCalculatedRuleFields(groupChanges)
+		finalChanges = ngrulesvc.UpdateCalculatedRuleFields(groupChanges)
 		logger.Debug("Updating database with the authorized changes", "add", len(finalChanges.New), "update", len(finalChanges.New), "delete", len(finalChanges.Delete))
 
 		// Delete first as this could prevent future unique constraint violations.
@@ -652,7 +654,7 @@ func (srv RulerSrv) performUpdateAlertRules(ctx context.Context, c *contextmodel
 	return finalChanges, dbConfig, nil
 }
 
-func changesToResponse(finalChanges *rulestore.GroupDelta) response.Response {
+func changesToResponse(finalChanges *ngrulesvc.GroupDelta) response.Response {
 	body := apimodels.UpdateRuleGroupResponse{
 		Message: "rule group updated successfully",
 		Created: make([]string, 0, len(finalChanges.New)),
@@ -744,7 +746,7 @@ func toNamespaceErrorResponse(err error) response.Response {
 
 // verifyProvisionedRulesNotAffected check that neither of provisioned alerts are affected by changes.
 // Returns errProvisionedResource if there is at least one rule in groups affected by changes that was provisioned.
-func verifyProvisionedRulesNotAffected(ctx context.Context, provenanceStore provisioning.ProvisioningStore, orgID int64, ch *rulestore.GroupDelta) error {
+func verifyProvisionedRulesNotAffected(ctx context.Context, provenanceStore provisioning.ProvisioningStore, orgID int64, ch *ngrulesvc.GroupDelta) error {
 	provenances, err := provenanceStore.GetProvenances(ctx, orgID, (&ngmodels.AlertRule{}).ResourceType())
 	if err != nil {
 		return err
@@ -765,7 +767,7 @@ func verifyProvisionedRulesNotAffected(ctx context.Context, provenanceStore prov
 	return fmt.Errorf("%w: alert rule group [%s]", errProvisionedResource, errorMsg.String())
 }
 
-func validateQueries(ctx context.Context, groupChanges *rulestore.GroupDelta, validator ConditionValidator, user identity.Requester) error {
+func validateQueries(ctx context.Context, groupChanges *ngrulesvc.GroupDelta, validator ConditionValidator, user identity.Requester) error {
 	if len(groupChanges.New) > 0 {
 		for _, rule := range groupChanges.New {
 			err := validator.Validate(eval.NewContext(ctx, user), rule.GetEvalCondition())
@@ -789,7 +791,7 @@ func validateQueries(ctx context.Context, groupChanges *rulestore.GroupDelta, va
 }
 
 // shouldValidate returns true if the rule is not paused and there are changes in the rule that are not ignored
-func shouldValidate(delta rulestore.RuleDelta) bool {
+func shouldValidate(delta ngrulesvc.RuleDelta) bool {
 	for _, diff := range delta.Diff {
 		if !slices.Contains(ignoreFieldsForValidate[:], diff.Path) {
 			return true

@@ -4,14 +4,12 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy"
 )
 
-func NewStorage(legacySvc legacy.LegacyRuleService, namespacer request.NamespaceMapper) grafanarest.Storage {
+func NewStorage(rules *legacy.RecordingRules) grafanarest.Storage {
 	return &legacyStorage{
-		service:        legacySvc,
-		namespacer:     namespacer,
+		rules:          rules,
 		tableConverter: rest.NewDefaultTableConvertor(ResourceInfo.GroupResource()),
 	}
 }

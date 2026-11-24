@@ -418,6 +418,33 @@ func TestValidateCreate(t *testing.T) {
 			expectedErr: folder.ErrNameExists,
 		},
 		{
+			name: "title General is allowed in a nested folder",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "abc123",
+					Annotations: map[string]string{"grafana.app/folder": "p1"},
+				},
+				Spec: folders.FolderSpec{Title: "General"},
+			},
+			mockFolders: map[string]*folders.Folder{
+				"p1": {
+					ObjectMeta: metav1.ObjectMeta{Name: "p1"},
+					Spec:       folders.FolderSpec{Title: "p1 title"},
+				},
+			},
+		},
+		{
+			name: "title General is rejected under the general root annotation",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "abc123",
+					Annotations: map[string]string{"grafana.app/folder": folder.GeneralFolderUID},
+				},
+				Spec: folders.FolderSpec{Title: "General"},
+			},
+			expectedErr: folder.ErrNameExists,
+		},
+		{
 			name: "cannot create a circular reference",
 			folder: &folders.Folder{
 				ObjectMeta: metav1.ObjectMeta{
@@ -593,6 +620,38 @@ func TestValidateUpdate(t *testing.T) {
 				Spec: folders.FolderSpec{
 					Title: "old title",
 				},
+			},
+			expectedErr: "folder.name-exists",
+		},
+		{
+			name: "title General is allowed when renaming a nested folder",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "nnn",
+					Annotations: map[string]string{"grafana.app/folder": "parent"},
+				},
+				Spec: folders.FolderSpec{Title: "General"},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "nnn",
+					Annotations: map[string]string{"grafana.app/folder": "parent"},
+				},
+				Spec: folders.FolderSpec{Title: "old title"},
+			},
+		},
+		{
+			name: "nested folder titled General cannot be moved to root",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{Name: "nnn"},
+				Spec:       folders.FolderSpec{Title: "General"},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "nnn",
+					Annotations: map[string]string{"grafana.app/folder": "parent"},
+				},
+				Spec: folders.FolderSpec{Title: "General"},
 			},
 			expectedErr: "folder.name-exists",
 		},

@@ -94,12 +94,20 @@ var (
 			Name:            "live.runAPIServer",
 			Description:     "Registers a live apiserver",
 			Stage:           FeatureStageExperimental,
-			RequiresDevMode: true,
 			HideFromDocs:    true,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true,
 			Expression:      "false",
 			Generate:        Generate{Go: true},
+		},
+		{
+			Name:         "live.useAPIServerWebsocket",
+			Description:  "Connects Grafana Live to the live.grafana.app websocket instead of /api/live/ws",
+			Stage:        FeatureStageExperimental,
+			HideFromDocs: true,
+			Owner:        grafanaAppPlatformSquad,
+			Expression:   "false",
+			Generate:     Generate{React: true},
 		},
 		{
 			Name:            "live.keepHAPrefixInCloud",
@@ -2208,6 +2216,15 @@ var (
 			Expression:   "false",
 			HideFromDocs: true,
 		},
+		{
+			Name:         "plugins.useMTPluginInstall",
+			Description:  "Installs, updates and uninstalls plugins through the plugins API only, and falls back to the legacy API if that call fails",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaCatalogSquad,
+			Generate:     Generate{Go: true, React: true},
+			Expression:   "false",
+			HideFromDocs: true,
+		},
 		// Deprecated: prefer grafana.dashboardGlobalVariables. Kept registered so
 		// cloud enablement via the legacy wave remains valid until that flag is
 		// removed in a follow-up after all consumers read the new key.
@@ -3566,6 +3583,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true, React: true},
+		},
+		{
+			Name:         "datasources.gatewayQueryUsage",
+			Description:  "Record billed query usage (Mimir samples read, Loki bytes processed) in query gateway audit events",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataSourcesPlugins,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
 		},
 		{
 			Name:         "plugins.disableMTPluginsFallback",

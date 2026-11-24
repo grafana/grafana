@@ -7,9 +7,9 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
 import { grantPermissionsHelper } from '../../test/test-utils';
-import { ruleItem } from '../mocks/factories';
-import { failFirstCall, mockFolderParents, mockRuleSearch, ruleSearchUrl } from '../mocks/handlers';
-import { setupRuleListBackend } from '../mocks/ruleListBackend';
+import { folderFactory, folderItem, recordingRuleFactory, ruleItem } from '../mocks/factories';
+import { FOLDER_SEARCH_URL, failFirstCall, mockFolderParents, mockRuleSearch, ruleSearchUrl } from '../mocks/handlers';
+import { type RuleListBackend, setupRuleListBackend } from '../mocks/ruleListBackend';
 
 import RecordingRulesPage from './RecordingRulesPage';
 
@@ -249,6 +249,11 @@ describe('RecordingRulesPage search', () => {
 
   beforeEach(() => {
     mockFolderParents({ 'folder-1': 'Team Metrics' });
+    server.use(
+      http.post(FOLDER_SEARCH_URL, () =>
+        HttpResponse.json({ items: [folderItem('folder-1', 'Team Metrics')], metadata: {} })
+      )
+    );
     ruleSearchBodies = [];
     mockRuleSearch('recording', (body) => {
       ruleSearchBodies.push(body);
@@ -280,11 +285,11 @@ describe('RecordingRulesPage search', () => {
 
   it('restores the input and the request from the URL on load', async () => {
     render(<RecordingRulesPage />, {
-      historyOptions: { initialEntries: ['/?search=folder%3Afolder-1%20metric%3Acpu_usage'] },
+      historyOptions: { initialEntries: ['/?search=folder%3A%22Team%20Metrics%22%20metric%3Acpu_usage'] },
     });
 
     expect(await screen.findByText('cpu:usage:rate5m')).toBeInTheDocument();
-    expect(searchInput()).toHaveValue('folder:folder-1 metric:cpu_usage');
+    expect(searchInput()).toHaveValue('folder:"Team Metrics" metric:cpu_usage');
     expect(ruleSearchBodies.map((body) => body.where)).toEqual([
       {
         and: [
@@ -307,7 +312,7 @@ describe('RecordingRulesPage search', () => {
   });
 
   it.each([
-    ['cpu metric:', 'Some filters could not be applied: metric'],
+    ['cpu metric:', 'Put a value right after the colon, with no space: metric:'],
     ['health:bad', 'Use one of these values for health: ok, nodata, error, unknown'],
   ])('shows why %j cannot be searched, keeps it as typed and sends no request', async (search, message) => {
     render(<RecordingRulesPage />, { historyOptions: { initialEntries: [`/?${new URLSearchParams({ search })}`] } });
@@ -344,6 +349,77 @@ describe('RecordingRulesPage search', () => {
     expect(searchInput()).toHaveAttribute('aria-invalid', 'true');
     expect(searchInput()).toHaveAccessibleDescription(description);
     expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+  });
+});
+
+describe('RecordingRulesPage folder filters', () => {
+  let backend: RuleListBackend;
+
+  beforeEach(() => {
+    backend = setupRuleListBackend({
+      folders: [
+        folderFactory.build({ metadata: { name: 'db-metrics' }, spec: { title: 'Metrics' } }),
+        folderFactory.build({ metadata: { name: 'k8s-metrics' }, spec: { title: 'Metrics' } }),
+      ],
+      recordingRules: [
+        recordingRuleFactory.inFolder('db-metrics').build({ spec: { title: 'db:queries:rate5m' } }),
+        recordingRuleFactory.inFolder('k8s-metrics').build({ spec: { title: 'pod:restarts:rate5m' } }),
+      ],
+    });
+  });
+
+  function renderWithSearch(search: string) {
+    return render(<RecordingRulesPage />, {
+      historyOptions: { initialEntries: [`/?${new URLSearchParams({ search, view: 'list' })}`] },
+    });
+  }
+
+  it.each([
+    { search: 'folder:Metrics', rules: ['db:queries:rate5m', 'pod:restarts:rate5m'] },
+    { search: 'folderUid:k8s-metrics', rules: ['pod:restarts:rate5m'] },
+  ])('lists $rules for $search', async ({ search, rules }) => {
+    renderWithSearch(search);
+
+    const rows = await screen.findAllByRole('listitem');
+    expect(rows.map((row) => row.querySelector('a')?.textContent)).toEqual(rules);
+  });
+
+  it.each([
+    { search: 'folder:Nope', message: 'No recording rules match this folder' },
+    { search: 'folder:Metrics label:team=none', message: 'No recording rules found' },
+  ])('says "$message" for $search', async ({ search, message }) => {
+    renderWithSearch(search);
+
+    expect(await screen.findByText(message)).toBeInTheDocument();
+  });
+
+  it('warns that only 500 folders are searched when 501 match', async () => {
+    const folders = Array.from({ length: 501 }, (_, index) =>
+      folderFactory.build({ metadata: { name: `folder-${index}` }, spec: { title: 'Shared' } })
+    );
+    setupRuleListBackend({
+      folders,
+      recordingRules: folders.map((folder) =>
+        recordingRuleFactory
+          .inFolder(folder.metadata.name!)
+          .build({ spec: { title: `Rule in ${folder.metadata.name}` } })
+      ),
+    });
+    renderWithSearch('folder:Shared');
+
+    expect(await screen.findByText('Rule in folder-0')).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('Showing results from only the first 500 matching folders.');
+  });
+
+  it('shows a failed folder lookup with Retry, and lists the rules once Retry succeeds', async () => {
+    backend.failNext('folderSearch');
+    const { user } = renderWithSearch('folder:Metrics');
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Failed to load recording rules');
+
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
+
+    expect(await screen.findByText('db:queries:rate5m')).toBeInTheDocument();
   });
 });
 

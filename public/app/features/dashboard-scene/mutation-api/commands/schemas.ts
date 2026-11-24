@@ -954,14 +954,23 @@ const renderPlanEditableSectionShape = {
 
 function buildRenderPlanFields<P extends z.core.$ZodShape, S extends z.core.$ZodShape>(panelShape: P, sectionShape: S) {
   const panels = z.array(z.object(panelShape));
+  const sectionVariables = z
+    .optional(z.array(z.string()))
+    .check(
+      z.describe(
+        'Names of stand-in variables for this row or tab only. Sample values are generated here. Dashboard-wide names stay in the plan variables.'
+      )
+    );
   const row = z.object({
     ...sectionShape,
     title: z.string().check(z.describe('Row title')),
+    variables: sectionVariables,
     panels: panels.check(z.describe('Panels in this row, rendered as query-less placeholders')),
   });
   const section = z.object({
     ...sectionShape,
     title: z.string().check(z.describe('Row or tab title')),
+    variables: sectionVariables,
     panels: panels.check(z.describe('Panels in this row/tab, rendered as query-less placeholders')),
     sections: z
       .optional(z.array(row))
