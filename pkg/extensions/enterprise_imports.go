@@ -298,7 +298,6 @@ import (
 	_ "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	_ "github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	_ "github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
-	_ "github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
 	_ "github.com/grafana/grafana/pkg/registry/apis/query"
 	_ "github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
 	_ "github.com/grafana/grafana/pkg/registry/apis/search"
