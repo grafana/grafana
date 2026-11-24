@@ -58,13 +58,15 @@ interface Props {
   fill?: PropsOf<typeof Button>['fill'];
 }
 
+type MenuItemsProps = Omit<Props, 'buttonSize' | 'fill'>;
+
 /**
  * Get a list of menu items + divider elements for rendering in an alert rule's
  * dropdown menu
  * If the consumer of this component comes from the alert list view, we need to use promRule to check abilities and permissions,
  * as we have removed all requests to the ruler API in the list view.
  */
-const AlertRuleMenu = ({
+const AlertRuleMenuItems = ({
   promRule,
   rulerRule,
   identifier,
@@ -74,9 +76,7 @@ const AlertRuleMenu = ({
   handleDelete,
   handleDuplicateRule,
   onPauseChange,
-  buttonSize,
-  fill,
-}: Props) => {
+}: MenuItemsProps) => {
   // check all abilities and permissions using rulerRule
   const rulerAbilities = useRuleAdministrationAbility(rulerRule, groupIdentifier);
   const rulerSilenceAbility = useRuleSilenceAbility(rulerRule);
@@ -132,7 +132,7 @@ const AlertRuleMenu = ({
     config.featureToggles.alertingEnrichmentPerRule &&
     isGranted(enrichmentReadAbility);
 
-  const menuItems = (
+  return (
     <>
       {canManageEnrichments && (
         <Menu.Item
@@ -207,13 +207,22 @@ const AlertRuleMenu = ({
       )}
     </>
   );
-
-  return (
-    <Dropdown overlay={<Menu>{menuItems}</Menu>} placement="bottom">
-      <MoreButton size={buttonSize} fill={fill} />
-    </Dropdown>
-  );
 };
+
+// The hooks live in AlertRuleMenuItems, which Dropdown only mounts while the menu is open,
+// so a closed menu stays cheap in lists with many rows.
+const AlertRuleMenu = ({ buttonSize, fill, ...menuItemsProps }: Props) => (
+  <Dropdown
+    overlay={
+      <Menu>
+        <AlertRuleMenuItems {...menuItemsProps} />
+      </Menu>
+    }
+    placement="bottom"
+  >
+    <MoreButton size={buttonSize} fill={fill} />
+  </Dropdown>
+);
 
 interface ExportMenuItemProps {
   identifier: RuleIdentifier;

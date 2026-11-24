@@ -24,7 +24,42 @@ import { fromCombinedRule } from 'app/features/alerting/unified/utils/rule-id';
 import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
+import { useEnrichmentAbility } from '../../hooks/abilities/otherAbilities';
+import {
+  usePromRuleAdministrationAbility,
+  usePromRuleExportAbility,
+  usePromRuleSilenceAbility,
+} from '../../hooks/abilities/rules/promRuleAbilities';
+import {
+  useRuleAdministrationAbility,
+  useRuleExportAbility,
+  useRuleSilenceAbility,
+} from '../../hooks/abilities/rules/rulerRuleAbilities';
 import { RuleAction } from '../../hooks/abilities/types';
+
+// Call-through spies: the real hooks still run, we only record whether they were invoked.
+jest.mock('../../hooks/abilities/otherAbilities', () => {
+  const actual = jest.requireActual('../../hooks/abilities/otherAbilities');
+  return { ...actual, useEnrichmentAbility: jest.fn(actual.useEnrichmentAbility) };
+});
+jest.mock('../../hooks/abilities/rules/promRuleAbilities', () => {
+  const actual = jest.requireActual('../../hooks/abilities/rules/promRuleAbilities');
+  return {
+    ...actual,
+    usePromRuleAdministrationAbility: jest.fn(actual.usePromRuleAdministrationAbility),
+    usePromRuleExportAbility: jest.fn(actual.usePromRuleExportAbility),
+    usePromRuleSilenceAbility: jest.fn(actual.usePromRuleSilenceAbility),
+  };
+});
+jest.mock('../../hooks/abilities/rules/rulerRuleAbilities', () => {
+  const actual = jest.requireActual('../../hooks/abilities/rules/rulerRuleAbilities');
+  return {
+    ...actual,
+    useRuleAdministrationAbility: jest.fn(actual.useRuleAdministrationAbility),
+    useRuleExportAbility: jest.fn(actual.useRuleExportAbility),
+    useRuleSilenceAbility: jest.fn(actual.useRuleSilenceAbility),
+  };
+});
 
 jest.mock('app/features/alerting/unified/utils/misc', () =>
   jest
@@ -55,10 +90,11 @@ jest.mock('../../hooks/ruleGroup/usePauseAlertRule', () => ({
 
 const server = setupMswServer();
 
-setPluginLinksHook(() => ({
+const mockPluginLinksHook = jest.fn(() => ({
   links: [],
   isLoading: false,
 }));
+setPluginLinksHook(mockPluginLinksHook);
 
 setupDataSources();
 
@@ -256,6 +292,88 @@ describe('AlertRuleMenu', () => {
       const menuContents = await getMenuContents();
       expect(menuContents).toHaveLength(1);
       expect(menuContents).toContain('Copy link');
+    });
+  });
+
+  describe('Menu lifecycle', () => {
+    const menuHooks = {
+      useAssistant: mockUseAssistant,
+      usePluginLinks: mockPluginLinksHook,
+      useEnrichmentAbility: jest.mocked(useEnrichmentAbility),
+      usePromRuleAdministrationAbility: jest.mocked(usePromRuleAdministrationAbility),
+      usePromRuleExportAbility: jest.mocked(usePromRuleExportAbility),
+      usePromRuleSilenceAbility: jest.mocked(usePromRuleSilenceAbility),
+      useRuleAdministrationAbility: jest.mocked(useRuleAdministrationAbility),
+      useRuleExportAbility: jest.mocked(useRuleExportAbility),
+      useRuleSilenceAbility: jest.mocked(useRuleSilenceAbility),
+    };
+    const hooksCalledSoFar = () =>
+      Object.entries(menuHooks)
+        .filter(([, hook]) => hook.mock.calls.length > 0)
+        .map(([name]) => name);
+
+    it('runs the ability, assistant and plugin-link hooks only once the More button is clicked', async () => {
+      const { mockRule, identifier, groupIdentifier } = createDefaultRuleSetup();
+
+      render(
+        <AlertRuleMenu
+          promRule={mockRule.promRule}
+          rulerRule={mockRule.rulerRule}
+          identifier={identifier}
+          groupIdentifier={groupIdentifier}
+          handleSilence={handleSilence}
+          handleDelete={handleDelete}
+          handleDuplicateRule={handleDuplicateRule}
+        />
+      );
+      expect(await ui.moreButton.find()).toBeInTheDocument();
+
+      expect(hooksCalledSoFar()).toEqual([]);
+
+      await openMenu();
+
+      expect(hooksCalledSoFar()).toEqual(Object.keys(menuHooks));
+    });
+
+    it('updates the open menu when the rule is paused while the menu stays open', async () => {
+      grantUserPermissions([
+        AccessControlAction.AlertingRuleRead,
+        AccessControlAction.AlertingRuleUpdate,
+        AccessControlAction.FoldersRead,
+      ]);
+      const folderAccessControl = {
+        [AccessControlAction.AlertingRuleRead]: true,
+        [AccessControlAction.AlertingRuleUpdate]: true,
+        [AccessControlAction.FoldersRead]: true,
+      };
+      setFolderAccessControl(folderAccessControl);
+      mockFolderApi(server).folder(
+        'namespace-uid',
+        mockFolder({ uid: 'namespace-uid', title: 'Test Folder', accessControl: folderAccessControl })
+      );
+
+      const { mockRule, identifier, groupIdentifier } = createDefaultRuleSetup();
+      const pausedRule = getGrafanaRule({ rulerRule: mockGrafanaRulerRule({ is_paused: true }) });
+      const renderMenu = (rule: typeof mockRule) => (
+        <AlertRuleMenu
+          promRule={rule.promRule}
+          rulerRule={rule.rulerRule}
+          identifier={identifier}
+          groupIdentifier={groupIdentifier}
+          handleSilence={handleSilence}
+          handleDelete={handleDelete}
+          handleDuplicateRule={handleDuplicateRule}
+        />
+      );
+
+      const { rerender } = render(renderMenu(mockRule));
+      await openMenu();
+      expect(await ui.menuItems.pause.find()).toBeInTheDocument();
+
+      rerender(renderMenu(pausedRule));
+
+      expect(await ui.menuItems.resume.find()).toBeInTheDocument();
+      expect(ui.menuItems.pause.query()).not.toBeInTheDocument();
     });
   });
 

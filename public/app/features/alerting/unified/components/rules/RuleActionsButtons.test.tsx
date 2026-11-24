@@ -15,6 +15,7 @@ import {
   mockPromAlertingRule,
 } from 'app/features/alerting/unified/mocks';
 import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
+import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
@@ -31,6 +32,7 @@ const mockContextSrv = jest.mocked(contextSrv);
 
 const ui = {
   detailsButton: byRole('link', { name: /View/ }),
+  editButton: byRole('link', { name: /Edit/ }),
   menu: byRole('menu'),
   moreButton: byLabelText(/More/),
   pauseButton: byRole('menuitem', { name: /Pause evaluation/ }),
@@ -102,6 +104,26 @@ describe('RuleActionsButtons', () => {
     await user.click(await ui.pauseButton.find());
 
     expect(ui.menu.query()).not.toBeInTheDocument();
+  });
+
+  it('opens the menu on ability data the row already loaded, with the first item focused', async () => {
+    const user = userEvent.setup();
+    grantAllPermissions();
+    const requests = await captureRequests();
+    // Plugin settings are left out: "Declare incident" fetches its own whenever the menu opens
+    const abilityPaths = () =>
+      requests.map((request) => new URL(request.url).pathname).filter((path) => !path.startsWith('/api/plugins/'));
+
+    render(<RuleActionsButtons rule={getGrafanaRule()} rulesSource="grafana" />);
+    await ui.editButton.find();
+    const pathsBeforeOpen = abilityPaths();
+
+    await user.click(await ui.moreButton.find());
+    await ui.menu.find();
+
+    expect(pathsBeforeOpen).toContain('/api/v1/ngalert');
+    expect(abilityPaths()).toEqual(pathsBeforeOpen);
+    expect(ui.pauseButton.get()).toHaveFocus();
   });
 
   it('renders correct options for Cloud rule', async () => {
