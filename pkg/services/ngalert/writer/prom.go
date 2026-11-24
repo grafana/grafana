@@ -30,6 +30,10 @@ const (
 	networkErrConnectionRefused = "connection refused"
 	networkErrNoSuchHost        = "no such host"
 
+	// MimirMaxActiveSeriesError is returned when a tenant is over its active series limit.
+	// Mimir picks the HTTP status for it, 429 by default, so match the id and not the status.
+	MimirMaxActiveSeriesError = "err-mimir-max-active-series"
+
 	// NOTE: Mimir errors were copied from globalerror package:
 	// https://github.com/grafana/mimir/blob/1ff367ef58987cd1941de03a8d6923fde82dfdd3/pkg/util/globalerror/user.go
 	// Variable names have been standardized as Mimir+{globalerror.ID}+Error for consistency

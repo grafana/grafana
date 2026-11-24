@@ -45,6 +45,10 @@ export enum ColorSchemeDiff {
 
 export type TextAlign = 'left' | 'right';
 
+// 'name' shows the function without the import path. Independent of TextAlign,
+// so a name-only label can still be left or right aligned.
+export type SymbolLabel = 'full' | 'name';
+
 export interface ProfileTooltipData {
   percentValue: number;
   percentSelf: number;

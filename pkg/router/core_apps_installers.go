@@ -9,10 +9,9 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/grafana/authlib/authn"
 	"github.com/open-feature/go-sdk/openfeature"
 	"k8s.io/client-go/rest"
-
-	"github.com/grafana/authlib/authn"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
@@ -20,11 +19,14 @@ import (
 	"github.com/grafana/grafana-app-sdk/plugin"
 	"github.com/grafana/grafana-app-sdk/plugin/appadapter"
 	"github.com/grafana/grafana-app-sdk/simple"
-
 	collectionsmanifest "github.com/grafana/grafana/apps/collections/pkg/apis/manifestdata"
 	collectionsapp "github.com/grafana/grafana/apps/collections/pkg/app"
+	playlistmanifest "github.com/grafana/grafana/apps/playlist/pkg/apis/manifestdata"
+	playlistapp "github.com/grafana/grafana/apps/playlist/pkg/app"
 	preferencesmanifest "github.com/grafana/grafana/apps/preferences/pkg/apis/manifestdata"
 	preferencesapp "github.com/grafana/grafana/apps/preferences/pkg/app"
+	userstoragemanifest "github.com/grafana/grafana/apps/userstorage/pkg/apis/manifestdata"
+	userstorageapp "github.com/grafana/grafana/apps/userstorage/pkg/app"
 	"github.com/grafana/grafana/pkg/apiserver/appsdk"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/definition"
@@ -35,6 +37,22 @@ import (
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+// CoreAppProviders returns the core apps the router serves in-process. A nil
+// cfg leaves the preferences app with zero-value defaults.
+func CoreAppProviders(cfg *setting.Cfg) []app.Provider {
+	return []app.Provider{
+		simple.NewAppProvider(playlistmanifest.LocalManifest(), &playlistapp.PlaylistConfig{}, playlistapp.New),
+		// collections serves stars.
+		simple.NewAppProvider(collectionsmanifest.LocalManifest(), nil, collectionsapp.New),
+		// Without Defaults, preferences has no configured defaults to merge.
+		simple.NewAppProvider(preferencesmanifest.LocalManifest(), &preferencesapp.Config{
+			Defaults:          prefsapi.DefaultSpec(cfg),
+			HomeDashboardName: home.DASHBOARD_NAME,
+			IsValidTheme:      pref.IsValidThemeID,
+		}, preferencesapp.New),
+	}
+}
 
 // registerCoreAPIs reports whether the router serves the core apps' groups.
 // Like settingsEnabled, it is evaluated through OpenFeature, so a remote
@@ -116,6 +134,21 @@ func directInstallers(ctx context.Context, cfg *setting.Cfg) []appsdk.AppInstall
 		log.Warn("router: skipping the preferences app", "err", err)
 	} else {
 		installers = append(installers, preferences)
+	}
+
+	userstorageManifest := userstoragemanifest.LocalManifest()
+	userstorage, err := appsdk.NewDefaultAppInstaller(
+		simple.NewAppProvider(userstorageManifest, nil, userstorageapp.New),
+		app.Config{
+			KubeConfig:   rest.Config{}, // replaced when the installer initializes the app
+			ManifestData: *userstorageManifest.ManifestData,
+		},
+		userstoragemanifest.NewGoTypeAssociator(),
+	)
+	if err != nil {
+		log.Warn("router: skipping the userstorage app", "err", err)
+	} else {
+		installers = append(installers, userstorage)
 	}
 
 	return installers

@@ -25,11 +25,10 @@ import (
 	"github.com/prometheus/common/model"
 	"gopkg.in/ini.v1"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
-
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/config"
@@ -421,6 +420,7 @@ type Cfg struct {
 	DataProxyIdleConnTimeout       int
 	ResponseLimit                  int64
 	DataProxyRowLimit              int64
+	DataProxySeriesLimit           int64
 	DataProxyUserAgent             string
 	DataProxyForwardUserAgent      bool
 
@@ -809,6 +809,9 @@ type Cfg struct {
 	// aggregating facets on the post-filter path. Zero falls back to the
 	// default in search.PostRankAuthzConfig.effective().
 	SearchPostRankAuthzFacetSampleSize int
+	// SearchPostRankAuthzExactCountThreshold enables full authorized counts for
+	// small global-search result sets. Zero disables optional counting.
+	SearchPostRankAuthzExactCountThreshold int
 
 	// Vector storage
 	EnableVectorBackend bool
@@ -2288,11 +2291,11 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.AutoAssignOrgId = users.Key("auto_assign_org_id").MustInt(1)
 	cfg.LoginDefaultOrgId = users.Key("login_default_org_id").MustInt64(-1)
 	cfg.AutoAssignOrgRole = users.Key("auto_assign_org_role").In(
-		string(identity.RoleViewer), []string{
-			string(identity.RoleNone),
-			string(identity.RoleViewer),
-			string(identity.RoleEditor),
-			string(identity.RoleAdmin),
+		string(authlib.RoleViewer), []string{
+			string(authlib.RoleNone),
+			string(authlib.RoleViewer),
+			string(authlib.RoleEditor),
+			string(authlib.RoleAdmin),
 		})
 	cfg.VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 
