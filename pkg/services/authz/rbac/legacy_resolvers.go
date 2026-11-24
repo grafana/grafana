@@ -80,8 +80,17 @@ func (s *Service) validateLegacyScopeNamespace(ns types.NamespaceInfo) error {
 		return nil
 	}
 
-	if s.legacyScopeNamespace == nil || s.legacyScopeNamespace(ns.OrgID) != ns.Value {
-		return errors.New("namespace does not belong to embedded scope resolvers")
+	if s.legacyScopeNamespace == nil {
+		return errors.New("legacy scope namespace is not set")
+	}
+
+	namespace := s.legacyScopeNamespace(ns.OrgID)
+	if namespace != ns.Value {
+		return fmt.Errorf(
+			"namespace %q does not belong to embedded scope resolvers: expected %q",
+			ns.Value,
+			namespace,
+		)
 	}
 
 	return nil
@@ -232,10 +241,10 @@ func (s *Service) legacyResolverRequester(
 
 		requester.UserID = identifiers.ID
 		requester.UserUID = identifiers.UID
-		requester.OrgRole = identity.RoleType(role.Role)
+		requester.OrgRole = types.RoleType(role.Role)
 		requester.IsGrafanaAdmin = role.IsAdmin
 	case types.TypeAnonymous:
-		requester.OrgRole = identity.RoleType(s.settings.AnonOrgRole)
+		requester.OrgRole = types.RoleType(s.settings.AnonOrgRole)
 	case types.TypeRenderService:
 	default:
 		return nil, fmt.Errorf("unsupported identity type: %s", req.identityType)

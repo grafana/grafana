@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import memoize from 'micro-memoize';
+import { memoize } from 'micro-memoize';
 
 import { renderMarkdown } from '@grafana/data';
 
@@ -50,5 +50,5 @@ export const getStyles: TableCellStyles = memoize(
         whiteSpace: 'pre-line',
       },
     }),
-  { isMatchingKey: isTableCellStylesKeyEqual }
+  { isKeyEqual: isTableCellStylesKeyEqual }
 );

@@ -8,7 +8,8 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-27,alertingRuleGroupSortByFolderFullpath,experimental,@grafana/alerting-squad,false,false,false
 2024-10-23,lokiShardSplitting,experimental,@grafana/observability-logs,false,false,true
 2023-02-09,lokiQuerySplitting,GA,@grafana/observability-logs,false,false,true
-2026-05-14,live.runAPIServer,experimental,@grafana/grafana-app-platform-squad,true,true,false
+2026-05-14,live.runAPIServer,experimental,@grafana/grafana-app-platform-squad,false,true,false
+2026-11-23,live.useAPIServerWebsocket,experimental,@grafana/grafana-app-platform-squad,false,false,true
 2026-05-14,live.keepHAPrefixInCloud,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2026-11-12,router.registerCoreAPIs,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2026-09-10,grafana.useRouterMiddleware,experimental,@grafana/grafana-app-platform-squad,false,true,false
@@ -256,6 +257,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-10-26,grafana.restrictWatchToServiceIdentities,experimental,@grafana/grafana-search-and-storage,false,false,false
 2026-10-07,grafana.publishLegacySQLEvents,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2026-05-08,plugins.useMTPlugins,GA,@grafana/grafana-catalog,false,false,false
+2026-11-23,plugins.useMTPluginInstall,experimental,@grafana/grafana-catalog,false,false,false
 2026-05-15,globalDashboardVariables,experimental,@grafana/dashboards-squad,false,true,false
 2026-08-05,grafana.dashboardGlobalVariables,preview,@grafana/dashboards-squad,false,false,false
 2026-10-15,grafana.dashboardVariablesMigration,experimental,@grafana/dashboards-squad,false,false,false
@@ -412,6 +414,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-11-06,grafana.folderPickerFolderEditAccess,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-10-21,grafana.panelOptionInterpolation,experimental,@grafana/dashboards-squad,false,false,true
 2026-11-09,datasources.gatewayRateLimits,experimental,@grafana/data-sources-plugins,false,false,false
+2026-11-18,datasources.gatewayQueryUsage,experimental,@grafana/data-sources-plugins,false,false,false
 2026-11-11,plugins.disableMTPluginsFallback,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-11-17,grafana.logsInfiniteScrollTop,preview,@grafana/observability-logs,false,false,true
 2026-11-11,grafana.dashboardQuestions,experimental,@grafana/dashboards-squad,false,false,true

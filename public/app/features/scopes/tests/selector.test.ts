@@ -1,3 +1,4 @@
+import { fireEvent } from '@testing-library/react';
 import { type DataSourceFallbackWatcher, watchDataSourceFallbacks } from 'test/helpers/seedDataSources';
 
 import { locationService, setBackendSrv } from '@grafana/runtime';
@@ -8,6 +9,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 
 import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
 import { type ScopesService } from '../ScopesService';
+import { type ScopesSelectorService } from '../selector/ScopesSelectorService';
 
 import {
   applyScopes,
@@ -58,12 +60,14 @@ describe('Selector', () => {
   let fetchSelectedScopesSpy: jest.SpyInstance;
   let dashboardReloadSpy: jest.SpyInstance;
   let scopesService: ScopesService;
+  let selectorService: ScopesSelectorService;
 
   testWithFlags({ [FlagKeys.ScopeFilters]: true });
 
   beforeEach(async () => {
     const result = await renderDashboard();
     scopesService = result.scopesService;
+    selectorService = result.scopesSelectorService;
     fetchSelectedScopesSpy = jest.spyOn(result.client, 'fetchMultipleScopes');
     dashboardReloadSpy = jest.spyOn(getDashboardScenePageStateManager(), 'reloadDashboard');
     window.localStorage.clear();
@@ -88,6 +92,28 @@ describe('Selector', () => {
     await selectResultCloud();
     await cancelScopes();
     expect(fetchSelectedScopesSpy).not.toHaveBeenCalled();
+    expect(getListOfScopes(scopesService)).toEqual([]);
+  });
+
+  // The shortcut handler responds to the Meta key only (Cmd on macOS). The Apply button shows Ctrl+Enter on Windows
+  // and Linux, but the handler does not respond to the Ctrl key, so it is deliberately not asserted either way here.
+  it('Applies the selection on Meta+Enter (Cmd+Enter on macOS)', async () => {
+    await openSelector();
+    await selectResultCloud();
+    fireEvent.keyDown(window, { key: 'Enter', metaKey: true });
+    await jest.runOnlyPendingTimersAsync();
+    expect(selectorService.state.appliedScopes.map(({ scopeId }) => scopeId)).toEqual(['cloud']);
+    expect(getListOfScopes(scopesService)).toEqual(MOCK_SCOPES.filter(({ metadata: { name } }) => name === 'cloud'));
+  });
+
+  it('Does not apply the selection on Enter without the Meta key', async () => {
+    await openSelector();
+    await selectResultCloud();
+    fireEvent.keyDown(window, { key: 'Enter' });
+    await jest.runOnlyPendingTimersAsync();
+    // Read the applied scopes from the selector service itself. The list the scopes context exposes leaves out scopes
+    // whose details have not loaded yet, so an empty list there would not prove that nothing was applied.
+    expect(selectorService.state.appliedScopes).toEqual([]);
     expect(getListOfScopes(scopesService)).toEqual([]);
   });
 

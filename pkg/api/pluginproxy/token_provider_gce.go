@@ -3,6 +3,7 @@ package pluginproxy
 import (
 	"context"
 
+	"github.com/grafana/grafana-app-sdk/routes"
 	googletokenprovider "github.com/grafana/grafana-google-sdk-go/pkg/tokenprovider"
 	"github.com/grafana/grafana/pkg/plugins"
 )
@@ -13,7 +14,7 @@ type gceAccessTokenProvider struct {
 }
 
 func newGceAccessTokenProvider(ctx context.Context, ds DSInfo, pluginRoute *plugins.Route,
-	authParams *plugins.JWTTokenAuth) *gceAccessTokenProvider {
+	authParams *routes.ProxyTokenAuth) *gceAccessTokenProvider {
 	cfg := googletokenprovider.Config{
 		RoutePath:         pluginRoute.Path,
 		RouteMethod:       pluginRoute.Method,

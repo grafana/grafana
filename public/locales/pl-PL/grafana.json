@@ -1561,6 +1561,9 @@
         "recording-rules_many": "{{formatted}} reguł rejestrowania",
         "recording-rules_other": "{{formatted}} reguły rejestrowania"
       },
+      "saved-searches": {
+        "applied-default": ""
+      },
       "search": {
         "default-policy-unavailable": "Filtrowanie według zasad domyślnych nie jest jeszcze dostępne.",
         "folders-disabled": "Wyczyść filtry, aby przeglądać wg folderu",
@@ -1568,7 +1571,8 @@
           "contact-point": "Bezpośredni punkt kontaktu (wzajemnie wyklucza się z filtrem policy:).",
           "dashboard": "Pulpit, z którym powiązana jest reguła (wartością kanoniczną jest UID pulpitu).",
           "datasource": "Źródło danych zapytania, do którego odnosi się reguła (wartością kanoniczną jest UID).",
-          "folder": "Folder (wartością kanoniczną jest UID folderu).",
+          "folder": "",
+          "folder-uid": "",
           "health": "Stan reguły: „ok”, „nodata” (brak danych), „error” (błąd) lub „unknown” (nieznany).",
           "label": "Dopasowanie etykiety: label:key (istnieje), label:!key (brak), label:key=value (równa się), label:key!=wartość (różne od), label:key=~re (pasuje do wyrażenia regularnego), label:key!~re (nie pasuje do wyrażenia regularnego). Wartość zawierającą spacje należy ująć w cudzysłów: label:team=\"a b\".",
           "metric": "Nazwa rejestrowanej metryki (dokładne dopasowanie).",
@@ -1589,12 +1593,14 @@
         "invalid-tokens": "Nie udało się zastosować niektórych filtrów: {{tokens}}",
         "invalid-value": "Użyj jednej z tych wartości dla {{key}}: {{values}}",
         "label": "Szukaj",
+        "missing-value": "",
         "placeholder": "Szukaj według nazwy lub wprowadź wyrażenie do filtrowania…",
         "property": {
           "contact-point": "Punkt kontaktu",
           "dashboard": "Pulpit",
           "datasource": "Źródło danych zapytania",
           "folder": "Folder",
+          "folder-uid": "",
           "health": "Stan",
           "labels": "Etykiety",
           "metric": "Rejestrowana metryka",
@@ -1630,6 +1636,8 @@
         "tooltip-with-interval": ""
       },
       "shared": {
+        "folder-search-limit": "",
+        "folder-search-limit-description": "",
         "load-more": "Wczytaj więcej",
         "load-more-error": "Nie udało się wczytać dalszych wyników",
         "loading-rules": "Wczytywanie reguł",
@@ -2010,6 +2018,7 @@
         "routing": "Przekierowywanie powiadomień",
         "routing-none": "Nie wybrano drzewa zasad",
         "routing-tree": "Drzewo zasad: {{name}}",
+        "rules-error": "",
         "rules-skipped": "Reguły alertów nie zostaną zaimportowane.",
         "rules-title": "",
         "skipped": "Pominięto",
@@ -2022,6 +2031,7 @@
         "validation-warning": "Nazwy niektórych zasobów zostaną zmienione, aby uniknąć konfliktów.",
         "will-import-config": "Ta konfiguracja zostanie zaimportowana",
         "will-import-rules": "Reguły zostaną zaimportowane",
+        "yaml-datasource": "",
         "will-import-rules-count_one": "{{count}} reguła zostanie zaimportowana",
         "will-import-rules-count_few": "{{count}} reguły zostaną zaimportowane",
         "will-import-rules-count_many": "{{count}} reguł zostanie zaimportowanych",
@@ -2132,9 +2142,14 @@
         "target-datasource-required": "Wybierz docelowe źródło danych",
         "target-folder": "Katalog docelowy",
         "target-folder-desc": "Folder, w którym będą przechowywane zaimportowane reguły",
+        "yaml-empty-group": "",
         "yaml-error": "Nie udało się przetworzyć pliku YAML: {{error}}",
         "yaml-file": "Plik YAML z regułami",
-        "yaml-required": "Wybierz plik"
+        "yaml-no-rules": "",
+        "yaml-required": "Wybierz plik",
+        "yaml-target-datasource": "",
+        "yaml-target-datasource-desc": "",
+        "yaml-target-datasource-required": ""
       },
       "success": "Reguły alertów zostały zaimportowane do reguł zarządzanych przez Grafanę.",
       "target-folder": {
@@ -3063,12 +3078,12 @@
       },
       "empty": "",
       "error": "",
-      "load-more": "",
       "restore": {
         "body": "",
         "confirm": "",
         "conflict": "",
         "error": "",
+        "recording-title": "",
         "restoring": "",
         "title": ""
       },
@@ -3223,10 +3238,6 @@
         "group-name": "Nazwa grupy oceny",
         "group-text": "Wszystkie reguły w wybranej grupie są oceniane co {{evaluateEvery}}.",
         "interval-label": "Odstęp czasu oceny",
-        "mode": {
-          "legacy": "Użyj grup (starsza wersja)",
-          "new": "Ustaw odstęp czasu"
-        },
         "new-group": "Nowa grupa oceny",
         "pause": {
           "alerting": "Włącz, aby wstrzymać ocenę tej reguły alertu.",
@@ -5839,6 +5850,10 @@
       "label": "",
       "label-plural": ""
     },
+    "notebook": {
+      "label": "",
+      "label-plural": ""
+    },
     "playlist": {
       "label": "",
       "label-plural": ""
@@ -6352,7 +6367,10 @@
       "add-visualization-body": "Wybierz źródło danych, a następnie wyszukaj i zwizualizuj dane na wykresach, w statystykach i tabelach lub utwórz listy, korzystaj ze znaczników markdown i innych widżetów.",
       "add-visualization-button": "Dodaj wizualizację",
       "add-visualization-header": "Dodaj wizualizację, aby rozpocząć tworzenie nowego pulpitu",
+      "assistant-limit-reached": "",
       "assistant-placeholder": "Opisz swój pulpit. Spowoduje to otwarcie czatu z asystentem i rozpoczęcie rozmowy.",
+      "assistant-placeholder-template": "",
+      "assistant-sign-in": "",
       "auto-grid": "Automatyczna siatka",
       "auto-grid-description": "Panele zmieniają rozmiar, aby pasowały i tworzyły jednolite siatki",
       "build-assistant": "Stwórz swój pulpit z Asystentem",
@@ -6366,6 +6384,8 @@
       "mobile-not-available": "",
       "or-start-blank": "Możesz też stworzyć go samodzielnie",
       "select-layout-header": "Wybierz układ",
+      "templates-empty": "",
+      "templates-title": "",
       "title": "Nowy pulpit"
     },
     "errors": {
@@ -6819,6 +6839,9 @@
           "description": "Kliknij lub przeciągnij, aby wkleić panel",
           "title": "Wklej panel"
         },
+        "question": {
+          "label": ""
+        },
         "row": {
           "add-label": "Dodaj wiersz",
           "group-label": "Grupuj w wierszach"
@@ -6942,6 +6965,7 @@
         "objects": "Obiekty",
         "panel": "Panel",
         "panels": "Panele",
+        "question": "",
         "row": "Wiersz",
         "rows": "Wiersze",
         "section-filters-set": "Filtry",
@@ -6994,6 +7018,40 @@
           "empty": "(puste)",
           "no-title": "<bez tytułu>"
         }
+      },
+      "questions": {
+        "add-question": "",
+        "description-dashboard": "",
+        "description-row": "",
+        "description-tab": "",
+        "new-question": "",
+        "placeholder": "",
+        "question": "",
+        "question-title": "",
+        "question-title-description": "",
+        "question-title-placeholder": "",
+        "sources": {
+          "collapse": "",
+          "description-dashboard": "",
+          "description-row": "",
+          "description-tab": "",
+          "entire-dashboard": "",
+          "expand": "",
+          "label": "",
+          "no-panels": "",
+          "unavailable-panel": "",
+          "untitled-row": "",
+          "untitled-tab": "",
+          "panel-count_one": "",
+          "panel-count_few": "",
+          "panel-count_many": "",
+          "panel-count_other": "",
+          "picked-count_one": "",
+          "picked-count_few": "",
+          "picked-count_many": "",
+          "picked-count_other": ""
+        },
+        "title": ""
       },
       "row": {
         "header": {
@@ -7255,6 +7313,8 @@
     },
     "transformation-operation-row": {
       "body-delete": "Pamiętaj, że usunięcie jednej transformacji może spowodować uszkodzenie innych. Jeśli istnieje tylko jedna transformacja, powrócisz do głównego ekranu wyboru.",
+      "expander-close": "",
+      "expander-open": "",
       "render-actions": {
         "confirmText-delete": "Usuń",
         "title-debug": "Debugowanie",
@@ -7342,6 +7402,7 @@
   },
   "dashboard-library": {
     "card": {
+      "attach-template-button-label": "",
       "community-badge": "Społeczność",
       "customize-with-assistant-button": "Dostosuj za pomocą Asystenta",
       "customize-with-assistant-button-label": "Dostosuj za pomocą Asystenta: {{title}}",
@@ -7358,6 +7419,9 @@
       "edit-template-menu-item": "Edytuj",
       "more-actions-label": "Więcej działań dotyczących szablonu {{title}}",
       "no-preview": "Brak dostępnego podglądu ",
+      "preview-template-button": "",
+      "preview-template-button-label": "",
+      "provisioned-by-grafana": "",
       "use-template-button": "Użyj szablonu",
       "use-template-button-label": "Użyj szablonu: {{title}}",
       "view-dashboard-button": "Wyświetl pulpit",
@@ -7395,6 +7459,10 @@
     "custom-dashboard-template-filters": {
       "creator-placeholder": "Filtruj wg „utworzone przez”",
       "search-placeholder": "Szukaj",
+      "sort": {
+        "asc": "",
+        "desc": ""
+      },
       "sort-placeholder": "Sortuj"
     },
     "dashboard-card": {
@@ -8229,6 +8297,20 @@
       },
       "selection-options": "Opcje wyboru",
       "static-options-legend": "Opcje statyczne"
+    },
+    "question-actions": {
+      "add": "",
+      "remove": "",
+      "reorder": "",
+      "update": ""
+    },
+    "question-edit": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
+    "question-edit-actions": {
+      "tooltip-question-settings": ""
     },
     "refresh-select": {
       "options": {
@@ -12148,13 +12230,19 @@
       "filter-apps": "Aplikacje",
       "filter-dashboards": "Pulpity",
       "filter-explore": "Eksploruj",
+      "filter-folders": "",
       "filter-label": "Pokaż tylko",
+      "filter-notebooks": "",
       "filter-pages": "Strony",
+      "filter-playlists": "",
       "kind-alerting": "Alerty",
       "kind-app": "Aplikacja",
       "kind-dashboard": "Pulpit",
       "kind-explore": "Eksploruj",
+      "kind-folder": "",
+      "kind-notebook": "",
       "kind-page": "Strona",
+      "kind-playlist": "",
       "loading": "Wczytywanie Twojej ostatniej aktywności…"
     },
     "recommendations": {
@@ -13838,7 +13926,7 @@
       "page-assistant-below": "",
       "page-floating-assistant": "",
       "page-only": "",
-      "pop-up": "",
+      "pop-out": "",
       "right": ""
     },
     "assistant-workspace": {
@@ -14152,8 +14240,8 @@
       "list-none": "Nie masz jeszcze żadnych notatników. Utwórz nowy notatnik.",
       "list-none-read-only": "Nie masz jeszcze żadnych notatników i nie masz uprawnień do ich tworzenia.",
       "list-truncated": "Nie wszystkie notatniki są wyświetlane. Zawęź wyszukiwanie, aby znaleźć inne notatniki.",
-      "lock-time-range": "Zablokuj w zakresie {{range}}",
       "lock-time-range-description": "Zachowaj tę wizualizację w oknie, w którym została przechwycona. Po odblokowaniu będzie ona zgodna z zakresem czasu notatnika.",
+      "lock-time-range-short": "",
       "lock-time-ranges": "Zablokuj panele w zakresach czasu, które były w nich wyświetlane",
       "lock-time-ranges-description": "Zachowaj każdą wizualizację w oknie, w którym została przechwycona. Po odblokowaniu będą one zgodne z zakresem czasu notatnika.",
       "note-description": "",
@@ -14391,32 +14479,6 @@
     },
     "units": {
       "clear-tooltip": "Wyczyść wybór jednostki"
-    },
-    "var-mapping-checks": {
-      "data-macro": "",
-      "not-allowed": "",
-      "not-found": "",
-      "not-number": "",
-      "not-one-value": "",
-      "out-of-range": "",
-      "resolves": "",
-      "values": ""
-    },
-    "var-mapping-toggle": {
-      "aria-label-picker": "",
-      "fallback-off": "",
-      "fallback-on": "",
-      "group-matching": "",
-      "group-other": "",
-      "hint-boolean": "",
-      "hint-number": "",
-      "hint-option": "",
-      "hint-option-no-fallback": "",
-      "new-variable": "",
-      "option-current": "",
-      "placeholder": "",
-      "use-fixed-value": "",
-      "use-variable": ""
     }
   },
   "org": {
@@ -14513,7 +14575,8 @@
     },
     "get-panel-links-variable-suggestions": {
       "label": {
-        "all-variables": "Wszystkie zmienne"
+        "all-variables": "Wszystkie zmienne",
+        "current-dashboard-tabs": ""
       }
     },
     "header-menu": {
@@ -15430,7 +15493,6 @@
     "finish-step": {
       "description-enable-previews": "Dodaje podgląd obrazu zmian pulpitu w żądaniach pull. Obrazy pulpitów Grafany zostaną udostępnione w repozytorium Git i będą widoczne dla każdego, kto ma do niego dostęp.",
       "description-image-rendering": "Wymaga renderowania obrazów. <2>Skonfiguruj renderowanie obrazów</2>",
-      "description-read-only": "Zasobów nie można modyfikować za pośrednictwem usługi Grafana.",
       "description-sync-interval": "Jak często synchronizować zmiany z repozytorium",
       "error-sync-interval-required": "Odstęp czasu synchronizacji jest wymagany",
       "label-enable-previews": "Włącz podglądy pulpitu w żądaniach pull",
@@ -16237,6 +16299,17 @@
       "button-submitting": "Zgłaszanie…",
       "error-instance-repository-exists": "Repozytorium instancji już istnieje",
       "error-save-repository-setting": "Nie udało się zapisać ustawienia repozytorium"
+    },
+    "workflow": {
+      "direct-push": "",
+      "direct-push-description": "",
+      "direct-push-description-no-branch": "",
+      "merge-request": "",
+      "merge-request-description": "",
+      "merge-request-description-no-branch": "",
+      "pull-request": "",
+      "pull-request-description": "",
+      "pull-request-description-no-branch": ""
     }
   },
   "public-dashboard": {
@@ -17926,6 +17999,16 @@
       "text_many": "",
       "text_other": ""
     },
+    "display-completion": {
+      "color": "",
+      "helper": "",
+      "icon": "",
+      "numeric": "",
+      "percent": "",
+      "prefix": "",
+      "suffix": "",
+      "text": ""
+    },
     "editor": {
       "aria-label-content": "Zawartość tekstowa",
       "aria-label-mode": "Tryb tekstowy: {{mode}}",
@@ -18069,7 +18152,6 @@
     },
     "time-range": {
       "apply": "Zastosuj zakres czasu",
-      "aria-role": "Wybór zakresu czasu",
       "default-title": "Zakresy czasu",
       "dialog-label": "Selektor względnego zakresu czasu",
       "example-title": "Przykładowe zakresy czasu",
