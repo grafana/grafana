@@ -1386,6 +1386,22 @@ func TestParsedResource_ToSaveBytes(t *testing.T) {
 		require.Equal(t, string(data), string(again))
 	})
 
+	t.Run("folder manifests retain only the name in metadata", func(t *testing.T) {
+		obj := &unstructured.Unstructured{}
+		obj.SetGroupVersionKind(FolderKind)
+		obj.SetName("team")
+		obj.SetAnnotations(map[string]string{"example.com/owner": "team-a"})
+
+		for _, path := range []string{"_folder.json", "team/_folder.json"} {
+			parsed := &ParsedResource{Info: &repository.FileInfo{Path: path}, Obj: obj}
+			data, err := parsed.ToSaveBytes()
+			require.NoError(t, err)
+			var file map[string]any
+			require.NoError(t, json.Unmarshal(data, &file))
+			require.Equal(t, map[string]any{"name": "team"}, file["metadata"], path)
+		}
+	})
+
 	t.Run("writes the same metadata to YAML files", func(t *testing.T) {
 		metadata := serverMetadata()
 		metadata["annotations"].(map[string]any)["example.com/owner"] = "team-a"

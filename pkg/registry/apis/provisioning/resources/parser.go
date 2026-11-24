@@ -236,7 +236,9 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	}
 	obj.SetNamespace(r.repo.Namespace)
 
-	parsed.InvalidAnnotations = dropNonStringAnnotations(obj.Object)
+	if !IsFolderMetadataFile(info.Path) {
+		parsed.InvalidAnnotations = dropNonStringAnnotations(obj.Object)
+	}
 	parsed.Meta.SetManagerProperties(utils.ManagerProperties{
 		Kind:     utils.ManagerKindRepo,
 		Identity: r.repo.Name,
@@ -637,9 +639,8 @@ func (f *ParsedResource) forceCreate(ctx context.Context) (done bool, err error)
 	return false, nil
 }
 
-// ToSaveBytes serializes the resource as it is stored in the repository. Only
-// the name and the user annotations of the metadata are written: Grafana-owned
-// annotations and server fields are derived again when the file is read back.
+// ToSaveBytes writes the resource name and, for ordinary resource files, user
+// annotations. Folder manifests retain only the name in metadata.
 func (f *ParsedResource) ToSaveBytes() ([]byte, error) {
 	obj := f.Obj.DeepCopy().Object
 	delete(obj, "status")
@@ -648,10 +649,12 @@ func (f *ParsedResource) ToSaveBytes() ([]byte, error) {
 		delete(obj, "metadata")
 	} else {
 		metadata := map[string]any{"name": name}
-		annotations := f.Obj.GetAnnotations()
-		maps.DeleteFunc(annotations, func(key, _ string) bool { return OmitAnnotationFromFile(key) })
-		if len(annotations) > 0 {
-			metadata["annotations"] = annotations
+		if !IsFolderMetadataFile(f.Info.Path) {
+			annotations := f.Obj.GetAnnotations()
+			maps.DeleteFunc(annotations, func(key, _ string) bool { return OmitAnnotationFromFile(key) })
+			if len(annotations) > 0 {
+				metadata["annotations"] = annotations
+			}
 		}
 		obj["metadata"] = metadata
 	}

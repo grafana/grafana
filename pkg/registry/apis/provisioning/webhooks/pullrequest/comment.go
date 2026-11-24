@@ -107,6 +107,8 @@ func (c *commenter) generateComment(_ context.Context, info changeInfo) (string,
 		}
 	}
 
+	writeAnnotationWarnings(&buf, info.Changes)
+
 	if info.HasRemovedMetadataChanges() {
 		if err := c.templateMetadataNotice.Execute(&buf, &info); err != nil {
 			return "", fmt.Errorf("unable to execute metadata notice template: %w", err)
@@ -128,6 +130,42 @@ func (c *commenter) generateComment(_ context.Context, info changeInfo) (string,
 		result = strings.ReplaceAll(result, "\n\n\n", "\n\n")
 	}
 	return result, nil
+}
+
+// Use an indented Markdown code block so paths and annotation keys are literal,
+// including backticks. Quoting keeps each file on a single indented line.
+func writeAnnotationWarnings(buf *bytes.Buffer, changes []fileChangeInfo) {
+	const maxKeysPerFile = 5
+	files := 0
+	for _, change := range changes {
+		if change.Parsed == nil || change.Parsed.DryRunResponse == nil || len(change.Parsed.InvalidAnnotations) == 0 {
+			continue
+		}
+
+		files++
+		if files > maxDisplayedChanges {
+			continue
+		}
+		if files == 1 {
+			buf.WriteString("\n\n### ⚠️ Ignored annotations\n\nGit Sync ignores these annotations because their values must be strings.\n\n")
+		}
+
+		fmt.Fprintf(buf, "    %q:", change.Change.Path)
+		keys := change.Parsed.InvalidAnnotations
+		for _, key := range keys[:min(len(keys), maxKeysPerFile)] {
+			if len(key) > maxErrorLength {
+				key = strings.ToValidUTF8(key[:maxErrorLength], "") + "…"
+			}
+			fmt.Fprintf(buf, " %q", key)
+		}
+		if len(keys) > maxKeysPerFile {
+			fmt.Fprintf(buf, " … (%d more)", len(keys)-maxKeysPerFile)
+		}
+		buf.WriteByte('\n')
+	}
+	if files > maxDisplayedChanges {
+		fmt.Fprintf(buf, "\n%d more files with ignored annotations.", files-maxDisplayedChanges)
+	}
 }
 
 const commentTemplateUnsupportedFork = "ℹ️ **Pull request preview skipped**\n\n" + unsupportedForkMessage

@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -75,6 +76,29 @@ func TestGenerateComment_EscapesTitle(t *testing.T) {
 	require.NoError(t, commenter.Comment(context.Background(), repo, 1, info))
 	require.Contains(t, captured, "Pipes \\| Brackets \\[x\\] newline")
 	require.NotContains(t, captured, "Brackets [x]")
+}
+
+func TestGenerateComment_AnnotationWarnings(t *testing.T) {
+	const key = "@team | [docs](guide.md) `note`\nnext line"
+	changes := make([]fileChangeInfo, maxDisplayedChanges, maxDisplayedChanges+2)
+	changes = append(changes, fileChangeInfo{
+		Change: repository.VersionedFileChange{Path: "nested/dash.yaml"},
+		Parsed: &resources.ParsedResource{
+			InvalidAnnotations: []string{key, "custom/enabled"},
+			DryRunResponse:     &unstructured.Unstructured{},
+		},
+	}, fileChangeInfo{
+		Change: repository.VersionedFileChange{Action: repository.FileActionDeleted, Path: "old.yaml"},
+		Parsed: &resources.ParsedResource{InvalidAnnotations: []string{"old-key"}},
+	})
+
+	body, err := NewCommenter(false, URLProvider{}).(*commenter).generateComment(t.Context(), changeInfo{Changes: changes})
+	require.NoError(t, err)
+	require.Contains(t, body, "All resources passed validation.")
+	require.NotContains(t, body, "Validation Issues")
+	require.Contains(t, body, "### ⚠️ Ignored annotations")
+	require.Contains(t, body, "\n\n    \"nested/dash.yaml\": \"@team | [docs](guide.md) `note`\\nnext line\" \"custom/enabled\"\n")
+	require.NotContains(t, body, "old-key")
 }
 
 func TestCommenter_Comment_FailedToComment(t *testing.T) {

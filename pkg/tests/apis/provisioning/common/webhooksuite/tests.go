@@ -153,7 +153,16 @@ func testPullRequestWebhookPostsComment(t *testing.T, helper *common.GitTestHelp
 	branchName := "feature-pr-comment"
 	_, err := local.Git("checkout", "-b", branchName)
 	require.NoError(t, err, "failed to create feature branch")
-	require.NoError(t, local.UpdateFile(dashboardPath, string(common.DashboardJSON("pr-comment-dash", "PR Comment Dashboard Updated", 2))))
+	const updatedDashboard = `{
+		"apiVersion": "dashboard.grafana.app/v1",
+		"kind": "Dashboard",
+		"metadata": {
+			"name": "pr-comment-dash",
+			"annotations": {"example.com/owner": "team-a", "@team/enabled": true}
+		},
+		"spec": {"title": "PR Comment Dashboard Updated", "schemaVersion": 39, "panels": []}
+	}`
+	require.NoError(t, local.UpdateFile(dashboardPath, updatedDashboard))
 	_, err = local.Git("add", dashboardPath)
 	require.NoError(t, err, "failed to add dashboard")
 	_, err = local.Git("commit", "-m", "Update dashboard")
@@ -183,6 +192,10 @@ func testPullRequestWebhookPostsComment(t *testing.T, helper *common.GitTestHelp
 	require.Contains(t, comment, "Grafana detected dashboard changes in this pull request")
 	require.Contains(t, comment, dashboardPath)
 	require.Contains(t, comment, "PR Comment Dashboard Updated")
+	require.Contains(t, comment, "Ignored annotations")
+	require.Contains(t, comment, "\n    \"dashboard.json\": \"@team/enabled\"\n")
+	require.NotContains(t, comment, "example.com/owner")
+	require.NotContains(t, comment, "Validation failed")
 
 	originalURL := commentLink(t, comment, "[view current](")
 	require.Equal(t, "/d/pr-comment-dash/pr-comment-dashboard-updated", originalURL.Path)
