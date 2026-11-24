@@ -2883,6 +2883,30 @@ func TestIntegrationFolderValidationReturns400(t *testing.T) {
 			require.Equal(t, uc.expectedMessageID, string(statusErr.ErrStatus.Details.UID))
 		})
 	}
+
+	t.Run("nested title General is allowed but cannot be moved to root", func(t *testing.T) {
+		parent, err := client.Resource.Create(context.Background(),
+			makeFolder("nested-general-parent", "Nested General Parent", ""), metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		nested, err := client.Resource.Create(context.Background(),
+			makeFolder("nested-general", "General", parent.GetName()), metav1.CreateOptions{})
+		require.NoError(t, err, "a nested folder may be titled General")
+
+		annotations := nested.GetAnnotations()
+		delete(annotations, utils.AnnoKeyFolder)
+		nested.SetAnnotations(annotations)
+
+		_, err = client.Resource.Update(context.Background(), nested, metav1.UpdateOptions{})
+		require.Error(t, err)
+		require.Truef(t, apierrors.IsBadRequest(err),
+			"expected HTTP 400 BadRequest; got: %v (%T)", err, err)
+
+		var statusErr *apierrors.StatusError
+		require.True(t, errors.As(err, &statusErr), "expected *apierrors.StatusError; got %T", err)
+		require.NotNil(t, statusErr.ErrStatus.Details, "expected Status.Details to carry the errutil messageID")
+		require.Equal(t, "folder.name-exists", string(statusErr.ErrStatus.Details.UID))
+	})
 }
 
 // The k6 app provisions its own subfolders through a service account, so that
