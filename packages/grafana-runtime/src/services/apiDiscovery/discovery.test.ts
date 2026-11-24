@@ -4,7 +4,13 @@ import { config } from '../../config';
 import { type BackendSrv, type FetchError, setBackendSrv } from '../backendSrv';
 import { setLogger } from '../logging/registry';
 
-import { API_DISCOVERY_TIMEOUT_MS, getAPIGroup, invalidateAPIDiscovery, setAPIDiscoveryForTesting } from './discovery';
+import {
+  API_DISCOVERY_TIMEOUT_MS,
+  getAPIGroup,
+  getAPIGroupOutcome,
+  invalidateAPIDiscovery,
+  setAPIDiscoveryForTesting,
+} from './discovery';
 import { type K8sAPIGroup, type K8sAPIGroupList } from './types';
 
 const backendGet = jest.fn();
@@ -308,6 +314,25 @@ describe('getAPIGroup', () => {
     await getAPIGroup('annotation.grafana.app');
 
     expect(logWarning).not.toHaveBeenCalled();
+  });
+});
+
+describe('getAPIGroupOutcome', () => {
+  it('tells a served group, a group that is not served, and unknown discovery apart', async () => {
+    respondTo({ '/apis': () => Promise.resolve(groupList) });
+
+    await expect(getAPIGroupOutcome('dashboard.grafana.app')).resolves.toEqual({ kind: 'known', value: dashboardInfo });
+    await expect(getAPIGroupOutcome('annotation.grafana.app')).resolves.toEqual({ kind: 'known', value: undefined });
+
+    invalidateAPIDiscovery();
+    backendGet.mockRejectedValue(fetchError(500));
+
+    await expect(getAPIGroupOutcome('dashboard.grafana.app')).resolves.toEqual({ kind: 'unknown' });
+  });
+
+  it('reports a group name that is not a valid API group as not served', async () => {
+    await expect(getAPIGroupOutcome('../api/admin')).resolves.toEqual({ kind: 'known', value: undefined });
+    expect(backendGet).not.toHaveBeenCalled();
   });
 });
 

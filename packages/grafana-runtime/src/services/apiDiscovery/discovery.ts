@@ -8,7 +8,7 @@ import { logAPIDiscoveryError, logAPIDiscoveryWarning } from './logging';
 import { type K8sAPIGroup, type K8sAPIGroupList, type APIGroupInfo } from './types';
 
 /** `unknown` means discovery could not answer. It is never cached, so the next caller asks again. */
-type Outcome<T> = { kind: 'known'; value: T } | { kind: 'unknown' };
+export type Outcome<T> = { kind: 'known'; value: T } | { kind: 'unknown' };
 
 type GroupsByName = ReadonlyMap<string, APIGroupInfo>;
 
@@ -82,23 +82,33 @@ const groupCache = new OutcomeCache<APIGroupInfo | undefined>();
  * @alpha
  */
 export async function getAPIGroup(group: string): Promise<APIGroupInfo | undefined> {
+  return valueOf(await getAPIGroupOutcome(group));
+}
+
+/**
+ * Like {@link getAPIGroup}, but tells a group the server does not serve (`known` with `undefined`)
+ * apart from discovery that could not answer (`unknown`).
+ *
+ * @internal
+ */
+export async function getAPIGroupOutcome(group: string): Promise<Outcome<APIGroupInfo | undefined>> {
   if (!GROUP_NAME_PATTERN.test(group)) {
     logAPIDiscoveryWarning('API discovery: not a valid API group name, such as dashboard.grafana.app', { group });
-    return undefined;
+    return { kind: 'known', value: undefined };
   }
 
   // A group answered by the fallback stays answered, so a broken root endpoint is not retried for it.
   const fromFallback = groupCache.peek(group);
   if (fromFallback) {
-    return valueOf(await fromFallback);
+    return fromFallback;
   }
 
   const root = await rootCache.get(ROOT_URL, fetchAPIGroupList);
   if (root.kind === 'known') {
-    return root.value.get(group);
+    return { kind: 'known', value: root.value.get(group) };
   }
 
-  return valueOf(await groupCache.get(group, () => fetchAPIGroup(group)));
+  return groupCache.get(group, () => fetchAPIGroup(group));
 }
 
 /**

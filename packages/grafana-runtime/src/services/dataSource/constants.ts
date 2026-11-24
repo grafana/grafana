@@ -9,3 +9,5 @@ export const MT_SETTINGS_FETCH_FAILED = `DataSource: failed to load the settings
 export const MT_SETTINGS_NOT_FOUND_STALE_LIST_WARNING = `DataSource: a data source in the list was not found by the MT settings API — the list is stale`;
 export const MISSING_PLUGIN_DROPPED_WARNING = `DataSource: dropped data sources whose plugin is not installed`;
 export const DIRECT_ACCESS_UNSUPPORTED_WARNING = `DataSource: direct (browser) access is not supported with MT data source settings — credentials are not available`;
+export const MT_GROUP_NOT_SERVED_DROPPED_WARNING = `DataSource: dropped data sources whose API group is not served in a supported version`;
+export const MT_API_DISCOVERY_UNKNOWN_WARNING = `DataSource: API discovery could not answer — using the v0alpha1 MT APIs`;

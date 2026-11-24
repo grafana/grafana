@@ -1,4 +1,4 @@
-import { config } from '../../../../config';
+import { resolveAPIBaseURLOutcome, toBaseURL } from '../../../apiDiscovery/resolve';
 import { getBackendSrv, isFetchError } from '../../../backendSrv';
 
 import { type DataSourceConnection, type DataSourceConnectionList, type DataSourceResource } from './types';
@@ -6,13 +6,32 @@ import { type DataSourceConnection, type DataSourceConnectionList, type DataSour
 // The MT source logs its failed requests, and a 404 is an expected answer. Neither must show an error toast.
 const REQUEST_OPTIONS = { showErrorAlert: false };
 
-function getConnectionsUrl(): string {
-  return `apis/query.grafana.app/v0alpha1/namespaces/${config.namespace}/connections`;
+const QUERY_GROUP = 'query.grafana.app';
+const SUPPORTED_VERSIONS = ['v0alpha1', 'v1beta1'];
+// Every MT API served this version before discovery, so it is the best guess when discovery cannot answer.
+const LEGACY_VERSION = 'v0alpha1';
+
+/** Called when discovery could not answer for `group`, and the legacy version is used instead. */
+export type OnDiscoveryUnknown = (group: string) => void;
+
+/**
+ * The base URL of `group`, or `undefined` when the server does not serve it in a supported version.
+ * Discovery that cannot answer falls back to the legacy version instead of failing.
+ */
+export async function resolveMTApiBaseUrl(
+  group: string,
+  onDiscoveryUnknown: OnDiscoveryUnknown
+): Promise<string | undefined> {
+  const outcome = await resolveAPIBaseURLOutcome(group, SUPPORTED_VERSIONS);
+  if (outcome.kind === 'known') {
+    return outcome.value;
+  }
+  onDiscoveryUnknown(group);
+  return getLegacyMTApiBaseUrl(group);
 }
 
-function getDataSourceResourceUrl(connection: DataSourceConnection): string {
-  const VERSION = 'v0alpha1';
-  return `apis/${connection.group}/${VERSION}/namespaces/${config.namespace}/datasources/${encodeURIComponent(connection.name)}`;
+export function getLegacyMTApiBaseUrl(group: string): string {
+  return toBaseURL(group, LEGACY_VERSION);
 }
 
 export interface FetchConnectionsOptions {
@@ -20,13 +39,20 @@ export interface FetchConnectionsOptions {
   requestId: string;
   /** Checked before each page. A fetch that a newer one replaced stops and resolves `undefined`. */
   isCurrent: () => boolean;
+  onDiscoveryUnknown: OnDiscoveryUnknown;
 }
 
 /** Every connection: the API returns at most 1000 per page, so this follows `metadata.continue`. */
 export async function fetchConnections({
   requestId,
   isCurrent,
+  onDiscoveryUnknown,
 }: FetchConnectionsOptions): Promise<DataSourceConnectionList | undefined> {
+  const baseUrl = await resolveMTApiBaseUrl(QUERY_GROUP, onDiscoveryUnknown);
+  if (!baseUrl) {
+    throw new Error(`DataSource: ${QUERY_GROUP} is not served in a supported version`);
+  }
+
   const items: DataSourceConnection[] = [];
   let next: string | undefined;
   do {
@@ -36,7 +62,7 @@ export async function fetchConnections({
     }
     const params = next ? { continue: next } : undefined;
     const page = await getBackendSrv().get<DataSourceConnectionList>(
-      getConnectionsUrl(),
+      `${baseUrl}/connections`,
       params,
       requestId,
       REQUEST_OPTIONS
@@ -47,13 +73,14 @@ export async function fetchConnections({
   return { items };
 }
 
-/** Resolves `undefined` on a 404; every other failure rejects with the `FetchError`. */
-export async function fetchDataSourceResource(
-  connection: DataSourceConnection
-): Promise<DataSourceResource | undefined> {
+/**
+ * `baseUrl` comes from {@link resolveMTApiBaseUrl}. Resolves `undefined` on a 404; every other
+ * failure rejects with the `FetchError`.
+ */
+export async function fetchDataSourceResource(baseUrl: string, uid: string): Promise<DataSourceResource | undefined> {
   try {
     return await getBackendSrv().get<DataSourceResource>(
-      getDataSourceResourceUrl(connection),
+      `${baseUrl}/datasources/${encodeURIComponent(uid)}`,
       undefined,
       undefined,
       REQUEST_OPTIONS

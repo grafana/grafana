@@ -9,6 +9,8 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { config } from '../../../../config';
 import { FlagKeys } from '../../../../internal/openFeature/openfeature.gen';
 import { invalidateCachedPromisesCache } from '../../../../utils/getCachedPromise';
+import { invalidateAPIDiscovery, setAPIDiscoveryForTesting } from '../../../apiDiscovery/discovery';
+import { type APIGroupInfo } from '../../../apiDiscovery/types';
 import { type BackendSrv, setBackendSrv } from '../../../backendSrv';
 import { type DataSourceSrv, setDataSourceSrv } from '../../../dataSourceSrv';
 import { setLogger } from '../../../logging/registry';
@@ -17,7 +19,9 @@ import {
   DIRECT_ACCESS_UNSUPPORTED_WARNING,
   FALLBACK_TO_LEGACY_SETTINGS_WARNING,
   MISSING_PLUGIN_DROPPED_WARNING,
+  MT_API_DISCOVERY_UNKNOWN_WARNING,
   MT_FILL_FAILED,
+  MT_GROUP_NOT_SERVED_DROPPED_WARNING,
   NUMERIC_ID_REF_WARNING,
   MT_SETTINGS_FETCH_FAILED,
   MT_SETTINGS_NOT_FOUND_STALE_LIST_WARNING,
@@ -36,8 +40,14 @@ import {
 import { MTDataSource } from './mtSource';
 import { type DataSourceConnection, type DataSourceResource } from './types';
 
-const CONNECTIONS_URL = 'apis/query.grafana.app/v0alpha1/namespaces/default/connections';
-const PROM_URL = 'apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/default/datasources/uid-prom';
+const CONNECTIONS_URL = '/apis/query.grafana.app/v0alpha1/namespaces/default/connections';
+const PROM_URL = '/apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/default/datasources/uid-prom';
+
+function served(group: string, versions: string[] = ['v0alpha1']): APIGroupInfo {
+  return { group, versions, preferredVersion: versions[0] };
+}
+
+const defaultDiscovery = [served('query.grafana.app'), served('prometheus.datasource.grafana.app')];
 
 function meta(id: string, name: string, extra: Partial<DataSourcePluginMeta> = {}): DataSourcePluginMeta {
   return { id, name, type: 'datasource', metrics: true, ...extra } as DataSourcePluginMeta;
@@ -109,6 +119,7 @@ beforeAll(() => {
 
 afterAll(() => {
   setTestFlags({});
+  invalidateAPIDiscovery();
 });
 
 beforeEach(() => {
@@ -137,6 +148,7 @@ beforeEach(() => {
   config.bootData.user = { isSignedIn: true, orgRole: OrgRole.Admin } as CurrentUserDTO;
   setDatasourcePluginMetas(metas);
   setDataSourceSrv(undefined as unknown as DataSourceSrv);
+  setAPIDiscoveryForTesting(defaultDiscovery);
   routes = {
     [CONNECTIONS_URL]: { status: 200, body: { items: [promConnection] } },
     [PROM_URL]: { status: 200, body: promResource },
@@ -350,13 +362,14 @@ describe('failed fill', () => {
 
 describe('overlapping list fetches', () => {
   const lokiConnection: DataSourceConnection = { ...promConnection, name: 'uid-loki', title: 'Loki', labels: {} };
-  const lokiUrl = 'apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/default/datasources/uid-loki';
+  const lokiUrl = '/apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/default/datasources/uid-loki';
   const cancelled = () => Object.assign(new Error('Request was aborted'), { cancelled: true, status: -1, data: null });
 
   it('loads the settings of a data source that a refresh added while an older fill was in flight', async () => {
     const olderFill = deferred<unknown>();
     backendGet.mockImplementationOnce(() => olderFill.promise);
     initDataSourceInstanceSettings({}, '');
+    await flushPromises();
     expect(callsTo(CONNECTIONS_URL)).toBe(1);
 
     routes[CONNECTIONS_URL] = { status: 200, body: { items: [promConnection, lokiConnection] } };
@@ -374,6 +387,7 @@ describe('overlapping list fetches', () => {
     const source = new MTDataSource();
 
     const first = source.loadList();
+    await flushPromises();
     routes[CONNECTIONS_URL] = { status: 200, body: { items: [promConnection, lokiConnection] } };
     const second = source.refreshList();
     older.reject(cancelled());
@@ -403,6 +417,7 @@ describe('overlapping list fetches', () => {
     const source = new MTDataSource();
 
     const first = source.loadList();
+    await flushPromises();
     const second = source.refreshList();
     olderFirstPage.resolve({ items: [promConnection], metadata: { continue: 'v1_1' } });
     await Promise.all([first, second]);
@@ -424,5 +439,157 @@ describe('refresh after a data source change', () => {
       reason: 'reload',
       source: 'mt',
     });
+  });
+});
+
+describe('API versions from discovery', () => {
+  const PROM_V1BETA1_URL = '/apis/prometheus.datasource.grafana.app/v1beta1/namespaces/default/datasources/uid-prom';
+  const postgres = meta('grafana-postgresql-datasource', 'PostgreSQL', { aliasIDs: ['postgres'] });
+  const pgConnection: DataSourceConnection = {
+    title: 'PG',
+    name: 'uid-pg',
+    group: 'postgres.datasource.grafana.app',
+    plugin: 'postgres',
+  };
+  const pgResource: DataSourceResource = { metadata: { name: 'uid-pg' }, spec: { title: 'PG', jsonData: {} } };
+
+  function discoveryCalls(): string[] {
+    return backendGet.mock.calls.map(([url]) => url).filter((url) => url === '/apis' || url.endsWith('/'));
+  }
+
+  it('loads the settings from the preferred version of a promoted group', async () => {
+    setAPIDiscoveryForTesting([
+      served('query.grafana.app'),
+      served('prometheus.datasource.grafana.app', ['v1beta1', 'v0alpha1']),
+    ]);
+    routes[PROM_V1BETA1_URL] = { status: 200, body: promResource };
+    initDataSourceInstanceSettings({}, '');
+
+    expect((await getDataSourceInstanceSettings('uid-prom'))?.name).toBe('Prom');
+    expect(callsTo(PROM_V1BETA1_URL)).toBe(1);
+    expect(callsTo(PROM_URL)).toBe(0);
+  });
+
+  it('lists connections from the preferred version of a promoted query.grafana.app', async () => {
+    const promotedConnectionsUrl = '/apis/query.grafana.app/v1beta1/namespaces/default/connections';
+    setAPIDiscoveryForTesting([
+      served('query.grafana.app', ['v1beta1', 'v0alpha1']),
+      served('prometheus.datasource.grafana.app'),
+    ]);
+    routes[promotedConnectionsUrl] = routes[CONNECTIONS_URL];
+    initDataSourceInstanceSettings({}, '');
+
+    expect((await getDataSourceInstanceList()).map((item) => item.uid)).toEqual(['uid-prom', 'grafana']);
+    expect(callsTo(promotedConnectionsUrl)).toBe(1);
+    expect(callsTo(CONNECTIONS_URL)).toBe(0);
+  });
+
+  it('resolves an aliased plugin type through the group of its canonical plugin id', async () => {
+    const canonicalUrl =
+      '/apis/grafana-postgresql-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/uid-pg';
+    setDatasourcePluginMetas({ ...metas, postgres });
+    setAPIDiscoveryForTesting([...defaultDiscovery, served('grafana-postgresql-datasource.datasource.grafana.app')]);
+    routes[CONNECTIONS_URL] = { status: 200, body: { items: [promConnection, pgConnection] } };
+    routes[canonicalUrl] = { status: 200, body: pgResource };
+    initDataSourceInstanceSettings({}, '');
+
+    expect((await getDataSourceInstanceList()).map((item) => item.uid)).toEqual(['uid-pg', 'uid-prom', 'grafana']);
+    expect((await getDataSourceInstanceSettings('uid-pg'))?.type).toBe('grafana-postgresql-datasource');
+    expect(callsTo(canonicalUrl)).toBe(1);
+  });
+
+  it('keeps a data source whose group is not served out of the list and lookups, without requesting it', async () => {
+    setAPIDiscoveryForTesting([served('query.grafana.app')]);
+    initDataSourceInstanceSettings({}, '');
+
+    expect((await getDataSourceInstanceList({ all: true })).map((item) => item.uid)).toEqual(['grafana']);
+    expect(await getDataSourceInstanceListItem('uid-prom')).toBeUndefined();
+    expect(await getDataSourceInstanceSettings('uid-prom')).toBeUndefined();
+    // Like an orphan, a dropped default leaves -- Grafana -- as the default.
+    expect((await getDataSourceInstanceSettings(null))?.uid).toBe('grafana');
+    expect(backendGet.mock.calls.map(([url]) => url)).toEqual([CONNECTIONS_URL]);
+    expect(logWarning).toHaveBeenCalledWith(MT_GROUP_NOT_SERVED_DROPPED_WARNING, {
+      count: '1',
+      groups: 'prometheus.datasource.grafana.app',
+    });
+  });
+
+  it('drops a data source whose group is served in no version this client supports', async () => {
+    setAPIDiscoveryForTesting([served('query.grafana.app'), served('prometheus.datasource.grafana.app', ['v2'])]);
+    initDataSourceInstanceSettings({}, '');
+
+    expect((await getDataSourceInstanceList()).map((item) => item.uid)).toEqual(['grafana']);
+    expect(callsTo(PROM_URL)).toBe(0);
+  });
+
+  it('falls back to v0alpha1 and logs once when discovery cannot answer', async () => {
+    invalidateAPIDiscovery();
+    const lokiConnection = { ...promConnection, name: 'uid-loki', title: 'Loki', labels: {} };
+    const lokiUrl = '/apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/default/datasources/uid-loki';
+    routes['/apis'] = { status: 500 };
+    routes['/apis/query.grafana.app/'] = { status: 500 };
+    routes['/apis/prometheus.datasource.grafana.app/'] = { status: 500 };
+    routes[CONNECTIONS_URL] = { status: 200, body: { items: [promConnection, lokiConnection] } };
+    routes[lokiUrl] = { status: 200, body: { metadata: { name: 'uid-loki' }, spec: { title: 'Loki', jsonData: {} } } };
+    initDataSourceInstanceSettings({}, '');
+
+    expect((await getDataSourceInstanceList()).map((item) => item.uid)).toEqual(['uid-loki', 'uid-prom', 'grafana']);
+    // The data source groups reuse the unknown answer instead of asking again.
+    expect(discoveryCalls()).toEqual(['/apis', '/apis/query.grafana.app/']);
+    const discoveryCallsAfterFill = discoveryCalls().length;
+    expect((await getDataSourceInstanceSettings('uid-prom'))?.name).toBe('Prom');
+    expect((await getDataSourceInstanceSettings('uid-loki'))?.name).toBe('Loki');
+    // Unknown answers are not cached, so the settings loads reuse the fill's URLs instead of asking again.
+    expect(discoveryCalls()).toHaveLength(discoveryCallsAfterFill);
+    const unknownWarnings = logWarning.mock.calls.filter(([message]) => message === MT_API_DISCOVERY_UNKNOWN_WARNING);
+    expect(unknownWarnings).toEqual([[MT_API_DISCOVERY_UNKNOWN_WARNING, { group: 'query.grafana.app' }]]);
+  });
+
+  it('fails the fill without requesting connections when query.grafana.app is not served', async () => {
+    setAPIDiscoveryForTesting([served('prometheus.datasource.grafana.app')]);
+    initDataSourceInstanceSettings({}, '');
+
+    await expect(getDataSourceInstanceList()).rejects.toBeInstanceOf(DataSourceListFetchError);
+    expect(backendGet).not.toHaveBeenCalled();
+    expect(logError.mock.calls.map(([error]) => error.message)).toContain(MT_FILL_FAILED);
+  });
+
+  it('shares one discovery request between the fill and every settings load', async () => {
+    invalidateAPIDiscovery();
+    const lokiConnection: DataSourceConnection = {
+      title: 'Loki',
+      name: 'uid-loki',
+      group: 'loki.datasource.grafana.app',
+      plugin: 'loki',
+    };
+    const lokiUrl = '/apis/loki.datasource.grafana.app/v0alpha1/namespaces/default/datasources/uid-loki';
+    const promConnections = ['uid-prom', 'uid-prom-2', 'uid-prom-3'].map((name) => ({
+      ...promConnection,
+      name,
+      title: name,
+    }));
+    setDatasourcePluginMetas({ ...metas, loki: meta('loki', 'Loki') });
+    const groupVersion = (name: string) => ({
+      name,
+      versions: [{ groupVersion: `${name}/v0alpha1`, version: 'v0alpha1' }],
+    });
+    routes['/apis'] = {
+      status: 200,
+      body: {
+        groups: [
+          groupVersion('query.grafana.app'),
+          groupVersion('prometheus.datasource.grafana.app'),
+          groupVersion('loki.datasource.grafana.app'),
+        ],
+      },
+    };
+    routes[CONNECTIONS_URL] = { status: 200, body: { items: [...promConnections, lokiConnection] } };
+    routes[lokiUrl] = { status: 200, body: { metadata: { name: 'uid-loki' }, spec: { title: 'Loki', jsonData: {} } } };
+    initDataSourceInstanceSettings({}, '');
+
+    expect(await getDataSourceInstanceList()).toHaveLength(5);
+    await Promise.all([getDataSourceInstanceSettings('uid-prom'), getDataSourceInstanceSettings('uid-loki')]);
+
+    expect(discoveryCalls()).toEqual(['/apis']);
   });
 });
