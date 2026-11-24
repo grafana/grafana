@@ -13,15 +13,23 @@ import * as InlineButtonStories from './InlineButton.story';
 Use `InlineButton` for actions within text or data that open a dialog or drawer, reveal more content, or otherwise
 update the current page.
 
+## Never use for
+
 Use `TextLink` for navigation. Use `Button` for actions that should have the standard button treatment.
 
-Do not override `InlineButton` to create other button treatments.
+## Do's and don'ts
+
+Don't override `InlineButton` to create other button treatments.
+
+## Usage
 
 <Canvas of={InlineButtonStories.Inline} />
 
-## Disabled
+### Disabled
 
 <Canvas of={InlineButtonStories.Disabled} />
+
+## Accessibility
 
 ## Props
 

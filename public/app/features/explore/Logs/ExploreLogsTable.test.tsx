@@ -12,7 +12,7 @@ import {
   toUtc,
 } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
-import { mockClientSize } from '@grafana/test-utils';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 import { type Options } from 'app/plugins/panel/logstable/options/types';
 
 import { FIELD_SELECTOR_MIN_WIDTH } from '../../logs/components/fieldSelector/FieldSelector';
@@ -24,7 +24,7 @@ import { getMockLokiFrame, getMockLokiFrameDataPlane } from './utils/mocks';
 // react-data-grid sizes its virtualized viewport from the client box, which jsdom reports as 0 - without
 // this the table only renders a single column.
 beforeAll(() => {
-  mockClientSize({ width: 800, height: 600 });
+  mockBoundingClientRect({ width: 800, height: 600 });
 });
 
 const publishMockFn = jest.fn();

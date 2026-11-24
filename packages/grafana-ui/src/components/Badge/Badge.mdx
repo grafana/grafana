@@ -5,15 +5,45 @@ import { ExampleFrame } from '../../utils/storybook/ExampleFrame';
 
 <Meta title="MDX|Badge" component={Badge} />
 
-## Badge
+# Badge
 
 The badge component adds meta information to other content, for example about release status or new elements. You can add any `Icon` component or use the badge without an icon.
 
-## Options
+## When to use
+
+Use `Badge` for a short, read-only label next to other content, such as a status or a "New!" marker.
+
+## Never use for
+
+- **A feature's release stage.** Use `FeatureBadge` with `featureState`. It renders a `Badge` with the standard text, icon and color for each stage, in accordance with [Grafana's Release Life Cycle](https://grafana.com/docs/release-life-cycle).
+- **A label that users click or remove.** Use `Tag`. Its `onClick` renders the label as a button, and `onRemove` adds a remove button. `Badge` renders a `div` with no button role or keyboard activation, so don't attach `onClick` to it.
+
+## Do's and don'ts
+
+- Do pick a `color` from the badge colors. Don't override the badge's background, border or text color with `className`. Each badge color sets all three together.
+- Do keep tooltip content short. Avoid putting lengthy content in the tooltip.
+
+```tsx
+// Don't
+<Badge color="blue" text="New!" className={css({ background: theme.colors.primary.main, color: 'white' })} />
+
+// Do
+<Badge color="purple" text="New!" />
+```
+
+## Usage
+
+```tsx
+import { Badge } from '@grafana/ui';
+
+<Badge color="blue" text="New!" icon="rocket" />;
+```
 
 ### Color
 
-Badge accepts the named visualisation colors to change the appearance. Note that these colors are not the same as the design system tokens such as success or error.
+Badge accepts the named visualization colors to change the appearance: `blue`, `red`, `green`, `orange`, `purple`, `darkgrey` and `brand`. Note that these colors are not the same as the design system tokens such as success or error.
+
+An unknown `color` logs a warning and falls back to `darkgrey`. In development it also throws an error.
 
 <ExampleFrame>
   <Stack direction="row">
@@ -22,6 +52,8 @@ Badge accepts the named visualisation colors to change the appearance. Note that
     <Badge color="green" text="Green" />
     <Badge color="orange" text="Orange" />
     <Badge color="purple" text="Purple" />
+    <Badge color="darkgrey" text="Dark grey" />
+    <Badge color="brand" text="Brand" />
   </Stack>
 </ExampleFrame>
 
@@ -40,5 +72,26 @@ Specify a tooltip to show additional information on hover. Avoid putting lengthy
 <ExampleFrame>
   <Badge icon="rocket" color="blue" text="New!" tooltip="Check out this new feature!" />
 </ExampleFrame>
+
+### Long text
+
+With the visual refresh enabled, a badge truncates text that doesn't fit. Without a `tooltip`, a truncated badge shows its full text in a tooltip. With a `tooltip`, the text is truncated and your tooltip is shown instead.
+
+### Loading
+
+Render `Badge.Skeleton` as a placeholder while the badge's content loads.
+
+## Accessibility
+
+`Badge` handles:
+
+- **Tooltip:** with `tooltip`, the badge becomes keyboard focusable and shows the tooltip on focus as well as hover. The tooltip describes the badge through `aria-describedby` while it's open.
+- **Icon:** the icon is hidden from assistive technology with `aria-hidden`, so the meaning comes from `text`.
+
+You provide:
+
+- `text` that carries the meaning on its own. Don't rely on color alone, for example a red badge with no text.
+
+## Props
 
 <ArgTypes of={Badge} />

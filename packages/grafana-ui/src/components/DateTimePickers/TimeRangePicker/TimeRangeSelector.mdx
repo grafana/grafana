@@ -1,0 +1,39 @@
+import { ArgTypes } from '@storybook/addon-docs/blocks';
+import { TimeRangeSelector } from './TimeRangeSelector';
+
+# TimeRangeSelector
+
+This unstable API is subject to breaking changes and has no stable compatibility guarantee.
+
+## When to use
+
+Use this standalone selector inside a consumer-owned popover.
+
+## Never use for
+
+No component-specific guidance documented yet.
+
+## Do's and don'ts
+
+No component-specific guidance documented yet.
+
+## Usage
+
+Import `TimeRangeSelector` and `TimeRangeSelectorProps` from `@grafana/ui/unstable`.
+
+It supports relative and absolute ranges, timezone settings, and recent ranges
+without navigation or zoom controls. Standard quick ranges are supplied by default; pass `quickOptions`
+to replace them, including an empty array to omit predefined options.
+
+The consumer owns the trigger, opening and dismissal, selected value, and history
+persistence. Pass `history` and `showHistory` to display recent ranges.
+
+```tsx
+<TimeRangeSelector value={value} onChange={setValue} timeZone={timeZone} onChangeTimeZone={setTimeZone} />
+```
+
+## Accessibility
+
+## Props
+
+<ArgTypes of={TimeRangeSelector} />

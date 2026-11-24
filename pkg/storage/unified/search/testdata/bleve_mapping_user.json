@@ -197,6 +197,16 @@
               }
             ]
           },
+          "provisioned": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "type": "boolean",
+                "store": true
+              }
+            ]
+          },
           "role": {
             "enabled": true,
             "dynamic": true,

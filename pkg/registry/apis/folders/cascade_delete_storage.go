@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -76,22 +77,89 @@ func newCascadeDeleteStorage(store grafanarest.Storage, searcher resourcepb.Reso
 			*cascadeDeleteStorage
 			rest.Watcher
 			rest.CollectionDeleter
-		}{base, watcher, cascadeCollectionDeleter{inner: collectionDeleter}}
+		}{base, watcher, cascadeCollectionDeleter{lister: store, inner: collectionDeleter}}
 	}
 	return base
 }
 
-// cascadeCollectionDeleter rejects forced collection deletes, which the registry runs item by item
-// without going through cascadeDeleteStorage.Delete, skipping the cascade and the contents check.
+// cascadeCollectionDeleter rejects collection deletes, which the registry runs item by item without
+// cascadeDeleteStorage.Delete: forced ones, and any selecting a folder the cascade controller finishes.
 type cascadeCollectionDeleter struct {
-	inner rest.CollectionDeleter
+	lister rest.Lister
+	inner  rest.CollectionDeleter
 }
 
 func (c cascadeCollectionDeleter) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
 	if forceDeleteFromDeleteOptions(options) {
 		return nil, apierrors.NewBadRequest("forced collection delete is not supported for folders; delete folders individually")
 	}
-	return c.inner.DeleteCollection(ctx, deleteValidation, options, listOptions)
+	// The registry drops these after the first page, so a multi-page selection can't be reproduced
+	// here. Only a positive limit makes it stop after the first page and keep them.
+	if listOptions != nil && listOptions.Limit <= 0 && (listOptions.ResourceVersion != "" || listOptions.ResourceVersionMatch != "") {
+		return nil, apierrors.NewBadRequest("resourceVersion and resourceVersionMatch are only supported for folder collection deletes with a positive limit")
+	}
+	// Reject up front so a refused request deletes nothing.
+	if name, err := c.firstFinalizerFolder(ctx, listOptions); err != nil {
+		return nil, err
+	} else if name != "" {
+		return nil, errCollectionDeleteFinalizerFolder(name)
+	}
+	// Best-effort backstop for a folder created after the listing; others may already be deleted.
+	return c.inner.DeleteCollection(ctx, func(ctx context.Context, obj runtime.Object) error {
+		if f, ok := obj.(*foldersv1.Folder); ok && hasCascadeDeleteFinalizer(f) {
+			return errCollectionDeleteFinalizerFolder(f.Name)
+		}
+		if deleteValidation != nil {
+			return deleteValidation(ctx, obj)
+		}
+		return nil
+	}, options, listOptions)
+}
+
+func errCollectionDeleteFinalizerFolder(name string) error {
+	return apierrors.NewBadRequest(fmt.Sprintf("folder %q has the cascade-delete finalizer; delete it individually, not as part of a collection", name))
+}
+
+// deleteCollectionPageSize is the generic registry's internal page size for collection deletes. The
+// preflight uses it too, so a selection the registry lists in one page isn't split into more
+// (costlier) pages here.
+const deleteCollectionPageSize = 10000
+
+// firstFinalizerFolder returns the first selected folder with the cascade finalizer, paging like the
+// registry (one page when the caller sets a limit).
+func (c cascadeCollectionDeleter) firstFinalizerFolder(ctx context.Context, listOptions *metainternalversion.ListOptions) (string, error) {
+	listOpts := &metainternalversion.ListOptions{}
+	if listOptions != nil {
+		listOpts = listOptions.DeepCopy()
+	}
+	singlePage := listOpts.Limit > 0
+	if !singlePage {
+		listOpts.Limit = deleteCollectionPageSize
+	}
+	for {
+		list, err := c.lister.List(ctx, listOpts)
+		if err != nil {
+			return "", err
+		}
+		items, err := meta.ExtractList(list)
+		if err != nil {
+			return "", err
+		}
+		for _, item := range items {
+			if f, ok := item.(*foldersv1.Folder); ok && hasCascadeDeleteFinalizer(f) {
+				return f.Name, nil
+			}
+		}
+		accessor, err := meta.ListAccessor(list)
+		if err != nil {
+			return "", err
+		}
+		next := accessor.GetContinue()
+		if singlePage || next == "" {
+			return "", nil
+		}
+		listOpts.Continue = next
+	}
 }
 
 // Delete removes a folder and, when cascade delete is enabled, its entire subtree. A forced delete of

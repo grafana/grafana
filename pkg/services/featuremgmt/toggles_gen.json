@@ -2045,6 +2045,20 @@
     },
     {
       "metadata": {
+        "name": "datasources.gatewayQueryUsage",
+        "resourceVersion": "1795014708911",
+        "creationTimestamp": "2026-11-18T15:11:48Z"
+      },
+      "spec": {
+        "description": "Record billed query usage (Mimir samples read, Loki bytes processed) in query gateway audit events",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasources.gatewayRateLimits",
         "resourceVersion": "1794262635153",
         "creationTimestamp": "2026-11-09T22:17:15Z"
@@ -4897,15 +4911,35 @@
     {
       "metadata": {
         "name": "live.runAPIServer",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-05-14T12:37:47Z"
+        "resourceVersion": "1795434432420",
+        "creationTimestamp": "2026-05-14T12:37:47Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-23 11:47:12.420025 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Registers a live apiserver",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
-        "requiresDevMode": true,
         "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "live.useAPIServerWebsocket",
+        "resourceVersion": "1795434496471",
+        "creationTimestamp": "2026-11-23T11:33:35Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-23 11:48:16.471971 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Connects Grafana Live to the live.grafana.app websocket instead of /api/live/ws",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -5427,6 +5461,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-catalog",
         "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "plugins.useMTPluginInstall",
+        "resourceVersion": "1795439959840",
+        "creationTimestamp": "2026-11-23T13:19:19Z"
+      },
+      "spec": {
+        "description": "Installs, updates and uninstalls plugins through the plugins API only, and falls back to the legacy API if that call fails",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-catalog",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },

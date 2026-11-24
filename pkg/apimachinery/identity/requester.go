@@ -49,7 +49,7 @@ type Requester interface {
 	GetOrgID() int64
 
 	// GetOrgRole returns the role of the active entity in the active organization.
-	GetOrgRole() RoleType
+	GetOrgRole() claims.RoleType
 
 	// GetPermissions returns the permissions of the active entity.
 	GetPermissions() map[string][]string
@@ -86,7 +86,7 @@ type Requester interface {
 	// Legacy
 
 	// HasRole returns true if the active entity has the given role in the active organization.
-	HasRole(role RoleType) bool
+	HasRole(role claims.RoleType) bool
 	// GetCacheKey returns a unique key for the entity.
 	// Add an extra prefix to avoid collisions with other caches
 	GetCacheKey() string

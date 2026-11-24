@@ -9,12 +9,12 @@ import (
 	"github.com/grafana/nanogit/gittest"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
-	apicommon "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -57,7 +57,7 @@ func TestIntegrationRepository_HiddenPathContract(t *testing.T) {
 			gitRepo, err := git.NewRepository(t.Context(), &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{Type: provisioning.GitRepositoryType},
 			}, git.RepositoryConfig{
-				URL: remote.URL, Branch: "main", Path: prefix, TokenUser: user.Username, Token: apicommon.RawSecureValue(user.Password),
+				URL: remote.URL, Branch: "main", Path: prefix, TokenUser: user.Username, Token: resource.RawSecureValue(user.Password),
 			}, nil, nil)
 			require.NoError(t, err)
 			githubRepo, err := github.NewRepository(t.Context(), &provisioning.Repository{

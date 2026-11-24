@@ -17,6 +17,8 @@ import { type AlertManagerDataSource } from '../utils/datasource';
 
 import { AlertmanagerProvider, getOrgAlertmanagerLocalStorageKey, useAlertmanager } from './AlertmanagerContext';
 
+jest.mock('../hooks/useAlertManagerSources', () => makeSpyable('../hooks/useAlertManagerSources'));
+
 const externalAmProm: AlertManagerDataSource = {
   name: 'PrometheusAm',
   imgUrl: '',

@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -41,6 +42,7 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	alerting "github.com/grafana/grafana/pkg/tests/api/alerting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -440,6 +442,64 @@ func TestIntegrationFolderCascadeDeleteFinalizer(t *testing.T) {
 			_, err = client.Resource.Get(ctx, "flag-on", metav1.GetOptions{})
 			require.True(t, apierrors.IsNotFound(err), "expected NotFound, got %v", err)
 		})
+	})
+
+	// folderStorage hides deletecollection, so it is only served once the legacy permissions service
+	// is left unwired, which this toggle does.
+	t.Run("a collection delete selecting a finalizer folder is rejected and deletes nothing", func(t *testing.T) {
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified",
+			EnableFeatureToggles: []string{featuremgmt.FlagFolderAsyncCascadeDeleteThroughController, featuremgmt.FlagKubernetesAuthzResourcePermissionApis},
+		})
+		client := helper.GetResourceClient(apis.ResourceClientArgs{User: helper.Org1.Admin, GVR: gvr})
+		expected := []string{folders.CascadeDeleteFinalizer}
+
+		const label = "collection-delete"
+		for _, name := range []string{"coll-a-plain", "coll-b-final"} {
+			obj := newFolderObject(gvr.GroupVersion().String(), name)
+			obj.SetLabels(map[string]string{label: "true", name: "true"})
+			_, err := client.Resource.Create(ctx, obj, metav1.CreateOptions{})
+			require.NoError(t, err)
+		}
+
+		// Every folder created with the flag on gets the finalizer, so strip it from one directly in
+		// storage to get a plain folder that sorts before the finalizer one.
+		svcCtx, _ := identity.WithServiceIdentity(ctx, helper.Org1.OrgID)
+		key := &resourcepb.ResourceKey{Namespace: "default", Group: gvr.Group, Resource: gvr.Resource, Name: "coll-a-plain"}
+		stored, err := helper.GetEnv().ResourceClient.Read(svcCtx, &resourcepb.ReadRequest{Key: key})
+		require.NoError(t, err)
+		var raw map[string]any
+		require.NoError(t, json.Unmarshal(stored.Value, &raw))
+		delete(raw["metadata"].(map[string]any), "finalizers")
+		value, err := json.Marshal(raw)
+		require.NoError(t, err)
+		_, err = helper.GetEnv().ResourceClient.Update(svcCtx, &resourcepb.UpdateRequest{Key: key, ResourceVersion: stored.ResourceVersion, Value: value})
+		require.NoError(t, err)
+
+		before := map[string]string{}
+		for name, wantFinalizers := range map[string][]string{"coll-a-plain": nil, "coll-b-final": expected} {
+			got, err := client.Resource.Get(ctx, name, metav1.GetOptions{})
+			require.NoError(t, err)
+			require.Equal(t, wantFinalizers, got.GetFinalizers(), name)
+			before[name] = got.GetResourceVersion()
+		}
+
+		err = client.Resource.DeleteCollection(ctx, metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: label + "=true"})
+		require.True(t, apierrors.IsBadRequest(err), "expected 400, got %v", err)
+		require.Contains(t, err.Error(), "coll-b-final")
+
+		// A selector matching only the plain folder must pass the preflight, so it honors the selector.
+		err = client.Resource.DeleteCollection(ctx, metav1.DeleteOptions{DryRun: []string{metav1.DryRunAll}}, metav1.ListOptions{LabelSelector: "coll-a-plain=true"})
+		require.NoError(t, err)
+
+		for name, rv := range before {
+			got, err := client.Resource.Get(ctx, name, metav1.GetOptions{})
+			require.NoError(t, err, name)
+			require.Nil(t, got.GetDeletionTimestamp(), name)
+			require.Equal(t, rv, got.GetResourceVersion(), name)
+		}
 	})
 }
 
@@ -2883,6 +2943,30 @@ func TestIntegrationFolderValidationReturns400(t *testing.T) {
 			require.Equal(t, uc.expectedMessageID, string(statusErr.ErrStatus.Details.UID))
 		})
 	}
+
+	t.Run("nested title General is allowed but cannot be moved to root", func(t *testing.T) {
+		parent, err := client.Resource.Create(context.Background(),
+			makeFolder("nested-general-parent", "Nested General Parent", ""), metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		nested, err := client.Resource.Create(context.Background(),
+			makeFolder("nested-general", "General", parent.GetName()), metav1.CreateOptions{})
+		require.NoError(t, err, "a nested folder may be titled General")
+
+		annotations := nested.GetAnnotations()
+		delete(annotations, utils.AnnoKeyFolder)
+		nested.SetAnnotations(annotations)
+
+		_, err = client.Resource.Update(context.Background(), nested, metav1.UpdateOptions{})
+		require.Error(t, err)
+		require.Truef(t, apierrors.IsBadRequest(err),
+			"expected HTTP 400 BadRequest; got: %v (%T)", err, err)
+
+		var statusErr *apierrors.StatusError
+		require.True(t, errors.As(err, &statusErr), "expected *apierrors.StatusError; got %T", err)
+		require.NotNil(t, statusErr.ErrStatus.Details, "expected Status.Details to carry the errutil messageID")
+		require.Equal(t, "folder.name-exists", string(statusErr.ErrStatus.Details.UID))
+	})
 }
 
 // The k6 app provisions its own subfolders through a service account, so that

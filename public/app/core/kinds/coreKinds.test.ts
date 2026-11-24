@@ -1,4 +1,6 @@
-import { CORE_KINDS, coversGroup, findKind } from './coreKinds';
+import { type KindInfo } from '@grafana/runtime/unstable';
+
+import { addKinds, CORE_KINDS, coversGroup, findKind, getAppKinds } from './coreKinds';
 
 describe('getRoute', () => {
   it('encodes the object name', () => {
@@ -47,10 +49,50 @@ describe('collection groups', () => {
 describe('findKind', () => {
   it('tells apart kinds that share a group', () => {
     expect(findKind('dashboard.grafana.app', 'Dashboard')).toBe(CORE_KINDS.dashboard);
+    expect(findKind('dashboard.grafana.app', 'Notebook')).toBe(CORE_KINDS.notebook);
     expect(findKind('dashboard.grafana.app', 'LibraryPanel')).toBe(CORE_KINDS.librarypanel);
   });
 
   it('finds nothing for a kind the group does not serve', () => {
     expect(findKind('dashboard.grafana.app', 'Playlist')).toBeUndefined();
+  });
+});
+
+describe('app kinds', () => {
+  const group = 'example.ext.grafana.app';
+
+  function appKind(kind: string, label: string): KindInfo {
+    return {
+      group,
+      kind,
+      resource: `${kind.toLowerCase()}s`,
+      folderScoped: false,
+      getLabel: () => label,
+      getPluralLabel: () => `${label}s`,
+      icon: 'tag-alt',
+    };
+  }
+
+  it('finds a kind that a plugin adds by its group and kind', () => {
+    const note = appKind('Note', 'Note');
+    addKinds([note]);
+
+    expect(findKind(group, 'Note')).toBe(note);
+    expect(findKind('other.ext.grafana.app', 'Note')).toBeUndefined();
+  });
+
+  it('keeps the core row when a plugin adds a kind that Grafana serves', () => {
+    addKinds([{ ...appKind('Dashboard', 'Plugin dashboard'), group: 'dashboard.grafana.app' }]);
+
+    expect(findKind('dashboard.grafana.app', 'Dashboard')).toBe(CORE_KINDS.dashboard);
+    expect(getAppKinds().some((kind) => kind.kind === 'Dashboard')).toBe(false);
+  });
+
+  it('replaces a kind that a plugin adds again', () => {
+    addKinds([appKind('Widget', 'Old widget')]);
+    addKinds([appKind('Widget', 'New widget')]);
+
+    expect(getAppKinds().filter((kind) => kind.kind === 'Widget')).toHaveLength(1);
+    expect(findKind(group, 'Widget')?.getLabel()).toBe('New widget');
   });
 });

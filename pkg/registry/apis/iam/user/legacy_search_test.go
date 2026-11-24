@@ -49,7 +49,7 @@ func TestUserLegacySearchClient_Search(t *testing.T) {
 			})).Return(&org.SearchOrgUsersQueryResult{
 				OrgUsers: []*org.OrgUserDTO{{
 					UID: "uid1", UserID: 42, Name: "Test User", Email: email, Login: login,
-					Role: "Viewer", Created: created, LastSeenAt: seen, IsDisabled: true,
+					Role: "Viewer", Created: created, LastSeenAt: seen, IsDisabled: true, IsProvisioned: true,
 				}},
 				TotalCount: 25,
 			}, nil).Once()
@@ -70,6 +70,7 @@ func TestUserLegacySearchClient_Search(t *testing.T) {
 			require.Equal(t, seen.Unix(), hit.LastSeenAt)
 			require.NotEmpty(t, hit.LastSeenAtAge)
 			require.True(t, hit.Disabled)
+			require.True(t, hit.Provisioned)
 		})
 	}
 }

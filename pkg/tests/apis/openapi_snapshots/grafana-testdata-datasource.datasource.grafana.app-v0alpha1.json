@@ -1563,22 +1563,17 @@
         },
         "additionalProperties": false
       },
-      "com.github.grafana.grafana-plugin-sdk-go.backend.DataResponse": {
-        "description": "todo... improve schema",
+      "com.github.grafana.grafana-app-sdk.resource.InlineSecureValue": {
         "type": "object",
-        "additionalProperties": true
-      },
-      "com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue": {
-        "description": "Allow access to a secure value inside",
         "oneOf": [
           {
             "required": [
-              "name"
+              "create"
             ]
           },
           {
             "required": [
-              "create"
+              "name"
             ]
           },
           {
@@ -1587,29 +1582,44 @@
             ]
           }
         ],
+        "not": {
+          "required": [
+            "description"
+          ],
+          "not": {
+            "required": [
+              "create"
+            ]
+          }
+        },
         "properties": {
           "create": {
-            "description": "Create a secure value -- this is only used for POST/PUT",
+            "description": "Plaintext value to create in the secret service. Used only in create or update requests.",
             "type": "string",
             "maxLength": 24576,
             "minLength": 1
           },
           "description": {
-            "description": "Optionally when creating a secure value, you can pass a custom description.",
+            "description": "Optional description for a newly created secret. Only valid when create is set.",
             "type": "string"
           },
           "name": {
-            "description": "Name in the secret service (reference)",
+            "description": "Reference to an existing value in the secret service.",
             "type": "string",
             "maxLength": 253,
             "minLength": 1
           },
           "remove": {
-            "description": "Remove this value from the secure value map Values owned by this resource will be deleted if necessary",
+            "description": "Remove this entry from the secure value map, deleting the secret if it is owned by this resource.",
             "type": "boolean"
           }
         },
         "additionalProperties": false
+      },
+      "com.github.grafana.grafana-plugin-sdk-go.backend.DataResponse": {
+        "description": "todo... improve schema",
+        "type": "object",
+        "additionalProperties": true
       },
       "com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured": {
         "type": "object",
@@ -1647,7 +1657,7 @@
             "description": "Secure values allows setting values that are never shown to users The returned properties are only the names of the configured values",
             "type": "object",
             "additionalProperties": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue"
+              "$ref": "#/components/schemas/com.github.grafana.grafana-app-sdk.resource.InlineSecureValue"
             }
           },
           "spec": {
