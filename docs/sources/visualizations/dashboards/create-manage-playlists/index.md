@@ -55,7 +55,7 @@ You can start a playlist in four different view modes. View modes determine how 
 
 1. Click **Start \<playlist name\>**.
 
-The playlist displays each dashboard for the time specified in the **Interval** field, set when creating or editing a playlist. After a playlist starts, you can start or stop it it using the [controls](#playlist-controls) at the top of your screen.
+The playlist displays each dashboard for the time specified in the **Interval** field, set when creating or editing a playlist. You can override this time for individual dashboards by [setting a per-dashboard interval](#set-a-per-dashboard-interval). After a playlist starts, you can start or stop it it using the [controls](#playlist-controls) at the top of your screen.
 
 ### Playlist modes
 
@@ -86,12 +86,26 @@ You can create a playlist to present dashboards in a sequence, with a set order 
 1. Click **Playlists**.
 1. Click **New playlist**.
 1. In the **Name** field, enter a descriptive name.
-1. In the **Interval** field, enter the time interval each dashboard is displayed before moving on to the next dashboard.
+1. In the **Interval** field, enter the time interval each dashboard is displayed before moving on to the next dashboard. Use a number followed by `ms`, `s`, `m`, or `h`, for example `30s`, `5m`, or `1h`.
 1. In the **Add dashboards** section, add dashboards to the playlist using the **Add by title** and **Add by tag** drop-down options.
 
    Added dashboards are displayed in a list in the **Dashboards** section of the page, in the order you added them. This is also the play order of the dashboards.
 
+1. Optional: [Set a per-dashboard interval](#set-a-per-dashboard-interval) for any dashboard that should display for a different amount of time.
 1. Click **Save**.
+
+## Set a per-dashboard interval
+
+By default, every dashboard in a playlist is displayed for the playlist's **Interval**. You can override the interval for individual dashboards, for example to keep an overview dashboard on screen longer than the others.
+
+1. Open the playlist for editing, or start creating a new one.
+1. In the list of dashboards, find the dashboard you want to change.
+1. In the interval field next to the dashboard, enter a duration such as `30s`, `5m`, or `1h`. Supported units are `ms`, `s`, `m`, and `h`. A number without a unit is read as seconds.
+1. Click **Save**.
+
+If you leave the field blank, the dashboard uses the playlist's **Interval**; the field's placeholder shows that value. If an entry isn't a valid duration, the field is highlighted and you can't save the playlist until you fix or clear it.
+
+When you add dashboards by tag, every dashboard that matches the tag uses the interval set on that tag entry.
 
 ## Edit a playlist
 
@@ -100,7 +114,7 @@ You can edit a playlist including adding, removing, and rearranging the order of
 1. Click **Dashboards** in the main menu.
 1. Click **Playlists**.
 1. Find the playlist you want to update and click **Edit playlist**. Do one or more of the following:
-   - Edit - Update the name and time interval.
+   - Edit - Update the name and time interval, including any per-dashboard intervals.
    - Add dashboards - Search for dashboards by title or tag to add them to the playlist.
    - Rearrange dashboards - Click and drag the dashboards into your desired order.
    - Remove dashboards - Click the **X** next to the name of the dashboard you want to remove from the playlist.

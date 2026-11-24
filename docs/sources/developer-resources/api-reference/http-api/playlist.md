@@ -198,7 +198,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
     "items": [
       {
         "type": "dashboard_by_uid",
-        "value": "dashboard-uid-1"
+        "value": "dashboard-uid-1",
+        "interval": "30s"
       },
       {
         "type": "dashboard_by_tag",
@@ -208,6 +209,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
   }
 }
 ```
+
+Each item accepts an optional `interval` that overrides the playlist's `spec.interval` for that item. Use a number followed by `ms`, `s`, `m`, or `h`. When omitted, the item uses `spec.interval`.
 
 ### Example response
 
