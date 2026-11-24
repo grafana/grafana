@@ -193,6 +193,7 @@ const (
 	loadError   = "error"
 
 	resultAttribute = "swrcache.result"
+	keyAttribute    = "swrcache.key"
 )
 
 type metrics struct {
@@ -249,6 +250,14 @@ const (
 	resultStaleCancelled = "stale_cancelled"
 )
 
+type entryState int
+
+const (
+	stateMissing entryState = iota
+	stateFresh
+	stateStale
+)
+
 // Get returns the value for key, loading it when needed. The value is shared with other callers
 // and must not be modified. A failed load is not cached: while the loader keeps failing for a key
 // that has no value, every Get calls it again (concurrent Gets share one call). A caller whose
@@ -260,68 +269,106 @@ func (c *Cache[K, V]) Get(ctx context.Context, key K) (V, error) {
 }
 
 func (c *Cache[K, V]) get(ctx context.Context, key K) (V, string, error) {
-	var zero, oldValue V
-	stale := false
-
-	// Classification, the throttle decision and flight creation share one critical section, so a
-	// flight that finished a moment ago is always visible as a fresh entry.
-	c.mu.Lock()
-	e, found := c.entries.Get(key)
-	if found && e.loaded {
-		age := time.Since(e.loadedAt)
-		switch {
-		case age >= c.opts.TTL:
-			// Reset in place: a refresh that is still running stores its result into this entry.
-			e.loaded = false
-			e.value = zero
-		case !e.stale && age < c.opts.RefreshInterval:
-			value := e.value
-			c.mu.Unlock()
-			return value, resultFresh, nil
-		default:
-			stale = true
-			oldValue = e.value
-		}
+	state, value, flt := c.begin(ctx, key)
+	switch {
+	case state == stateFresh:
+		return value, resultFresh, nil
+	case state == stateStale && flt == nil:
+		return value, resultStaleThrottled, nil
+	case state == stateStale:
+		return c.awaitRefresh(ctx, flt, value)
+	default:
+		return awaitLoad(ctx, flt)
 	}
-	if stale {
+}
+
+// begin is the locked part of a read. Classification, the throttle decision and flight creation
+// share one critical section, so a flight that finished a moment ago is always visible as a fresh
+// entry. It returns the value of a fresh or stale entry and the flight to wait on. The flight is
+// nil for a fresh entry and for a stale one whose refresh is throttled.
+func (c *Cache[K, V]) begin(ctx context.Context, key K) (entryState, V, *flight[V]) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	e, _ := c.entries.Get(key)
+	state := c.classify(e)
+	switch state {
+	case stateFresh:
+		return state, e.value, nil
+	case stateStale:
 		now := time.Now()
 		if !e.lastRefreshStart.IsZero() && now.Sub(e.lastRefreshStart) < c.opts.MinRefreshInterval {
-			c.mu.Unlock()
-			return oldValue, resultStaleThrottled, nil
+			return state, e.value, nil
 		}
 		e.lastRefreshStart = now
+		return state, e.value, c.joinOrStartFlight(ctx, key, e)
+	default:
+		var zero V
+		return state, zero, c.joinOrStartFlight(ctx, key, e)
 	}
-	flt, running := c.flights[key]
-	if !running {
-		if !found {
-			e = &entry[V]{}
-			c.entries.Add(key, e)
-		}
-		flt = &flight[V]{done: make(chan struct{})}
-		c.flights[key] = flt
-		go c.run(ctx, key, e, e.gen, flt)
-	}
-	c.mu.Unlock()
+}
 
-	if stale {
-		timer := time.NewTimer(c.opts.StaleWait)
-		defer timer.Stop()
-		select {
-		case <-flt.done:
-			if flt.err != nil {
-				return oldValue, resultStaleError, nil
-			}
-			return flt.value, resultRefreshed, nil
-		case <-timer.C:
-			return oldValue, resultStaleTimeout, nil
-		case <-ctx.Done():
-			return oldValue, resultStaleCancelled, nil
-		}
+// classify reports the state of e, which is nil when the key is not cached. It resets an expired
+// entry in place rather than removing it, because a refresh that is still running stores its
+// result into this entry. c.mu must be held.
+func (c *Cache[K, V]) classify(e *entry[V]) entryState {
+	if e == nil || !e.loaded {
+		return stateMissing
 	}
+	age := time.Since(e.loadedAt)
+	switch {
+	case age >= c.opts.TTL:
+		var zero V
+		e.loaded, e.value = false, zero
+		return stateMissing
+	case e.stale || age >= c.opts.RefreshInterval:
+		return stateStale
+	default:
+		return stateFresh
+	}
+}
+
+// joinOrStartFlight returns the load running for key, or starts one that stores into e. When e is
+// nil it adds a new entry first. A read that joins a running load adds no entry, even when the
+// load's entry was evicted. c.mu must be held.
+func (c *Cache[K, V]) joinOrStartFlight(ctx context.Context, key K, e *entry[V]) *flight[V] {
+	if flt, running := c.flights[key]; running {
+		return flt
+	}
+	if e == nil {
+		e = &entry[V]{}
+		c.entries.Add(key, e)
+	}
+	flt := &flight[V]{done: make(chan struct{})}
+	c.flights[key] = flt
+	go c.run(ctx, key, e, e.gen, flt)
+	return flt
+}
+
+// awaitRefresh waits up to StaleWait for the refresh flt and falls back to oldValue.
+func (c *Cache[K, V]) awaitRefresh(ctx context.Context, flt *flight[V], oldValue V) (V, string, error) {
+	timer := time.NewTimer(c.opts.StaleWait)
+	defer timer.Stop()
+	select {
+	case <-flt.done:
+		if flt.err != nil {
+			return oldValue, resultStaleError, nil
+		}
+		return flt.value, resultRefreshed, nil
+	case <-timer.C:
+		return oldValue, resultStaleTimeout, nil
+	case <-ctx.Done():
+		return oldValue, resultStaleCancelled, nil
+	}
+}
+
+// awaitLoad waits for flt without a time limit, because there is no value to fall back to.
+func awaitLoad[V any](ctx context.Context, flt *flight[V]) (V, string, error) {
 	select {
 	case <-flt.done:
 		return flt.value, resultMiss, flt.err
 	case <-ctx.Done():
+		var zero V
 		return zero, resultCancelled, ctx.Err()
 	}
 }
@@ -331,7 +378,8 @@ func (c *Cache[K, V]) get(ctx context.Context, key K) (V, string, error) {
 func (c *Cache[K, V]) run(ctx context.Context, key K, e *entry[V], gen uint64, flt *flight[V]) {
 	loadCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), c.opts.LoadTimeout)
 	defer cancel()
-	spanCtx, span := c.tracer.Start(loadCtx, c.opts.MetricsPrefix+".load")
+	spanCtx, span := c.tracer.Start(loadCtx, c.opts.MetricsPrefix+".load",
+		trace.WithAttributes(attribute.String(keyAttribute, fmt.Sprint(key))))
 	start := time.Now()
 
 	var (

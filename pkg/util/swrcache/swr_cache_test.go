@@ -196,11 +196,12 @@ func runInBubble(t *testing.T, name string, fn func(t *testing.T)) {
 
 func TestCache_Get(t *testing.T) {
 	runInBubble(t, "should load once and serve fresh values when the entry is younger than RefreshInterval", func(t *testing.T) {
+		opts := validOptions()
 		loader := &scriptedLoader{}
-		cache := newTestCache(t, validOptions(), loader)
+		cache := newTestCache(t, opts, loader)
 
 		require.Equal(t, 1, mustGet(t, cache, "tenant-a"))
-		synctest.Sleep(30 * time.Second)
+		synctest.Sleep(opts.RefreshInterval / 2)
 		require.Equal(t, 1, mustGet(t, cache, "tenant-a"))
 		require.Equal(t, 1, loader.callCount())
 	})
@@ -225,66 +226,73 @@ func TestCache_Get(t *testing.T) {
 	})
 
 	runInBubble(t, "should refresh and return the new value when the entry is older than RefreshInterval and the load finishes within StaleWait", func(t *testing.T) {
+		opts := validOptions()
+		loadDelay := opts.StaleWait / 4
 		loader := &scriptedLoader{fn: func(ctx context.Context, key string, call int) (int, error) {
 			if call == 2 {
-				time.Sleep(50 * time.Millisecond)
+				time.Sleep(loadDelay)
 			}
 			return call, nil
 		}}
-		cache := newTestCache(t, validOptions(), loader)
+		cache := newTestCache(t, opts, loader)
 
 		require.Equal(t, 1, mustGet(t, cache, "tenant-a"))
-		synctest.Sleep(time.Minute)
+		synctest.Sleep(opts.RefreshInterval)
 		require.Equal(t, 2, mustGet(t, cache, "tenant-a"))
 	})
 
 	runInBubble(t, "should serve the old value when the refresh takes longer than StaleWait, then serve the new value after it finishes", func(t *testing.T) {
+		opts := validOptions()
+		loadDelay := opts.StaleWait * 5
 		loader := &scriptedLoader{fn: func(ctx context.Context, key string, call int) (int, error) {
 			if call == 2 {
-				time.Sleep(time.Second)
+				time.Sleep(loadDelay)
 			}
 			return call, nil
 		}}
-		cache := newTestCache(t, validOptions(), loader)
+		cache := newTestCache(t, opts, loader)
 
 		require.Equal(t, 1, mustGet(t, cache, "tenant-a"))
-		synctest.Sleep(time.Minute)
+		synctest.Sleep(opts.RefreshInterval)
 		require.Equal(t, 1, mustGet(t, cache, "tenant-a"))
-		synctest.Sleep(time.Second)
+		synctest.Sleep(loadDelay)
 		require.Equal(t, 2, mustGet(t, cache, "tenant-a"))
 		require.Equal(t, 2, loader.callCount())
 	})
 
 	runInBubble(t, "should serve the old value when the refresh fails", func(t *testing.T) {
+		opts := validOptions()
 		loader := &scriptedLoader{fn: failCalls(2)}
-		cache := newTestCache(t, validOptions(), loader)
+		cache := newTestCache(t, opts, loader)
 
 		require.Equal(t, 1, mustGet(t, cache, "tenant-a"))
-		synctest.Sleep(time.Minute)
+		synctest.Sleep(opts.RefreshInterval)
 		require.Equal(t, 1, mustGet(t, cache, "tenant-a"))
 		require.Equal(t, 2, loader.callCount())
 	})
 
 	runInBubble(t, "should serve the old value without loading when an age-based refresh started less than MinRefreshInterval ago", func(t *testing.T) {
+		opts := validOptions()
 		loader := &scriptedLoader{fn: failCalls(2)}
-		cache := newTestCache(t, validOptions(), loader)
+		cache := newTestCache(t, opts, loader)
 
 		require.Equal(t, 1, mustGet(t, cache, "tenant-a"))
-		synctest.Sleep(time.Minute)
+		synctest.Sleep(opts.RefreshInterval)
 		require.Equal(t, 1, mustGet(t, cache, "tenant-a"))
 		require.Equal(t, 1, mustGet(t, cache, "tenant-a"))
 		require.Equal(t, 2, loader.callCount())
 
-		synctest.Sleep(5 * time.Second)
+		synctest.Sleep(opts.MinRefreshInterval)
 		require.Equal(t, 3, mustGet(t, cache, "tenant-a"))
 	})
 
 	runInBubble(t, "should refresh on the next read when MarkStale is called less than MinRefreshInterval after a refresh", func(t *testing.T) {
+		opts := validOptions()
 		loader := &scriptedLoader{}
-		cache := newTestCache(t, validOptions(), loader)
+		cache := newTestCache(t, opts, loader)
 
 		require.Equal(t, 1, mustGet(t, cache, "tenant-a"))
-		synctest.Sleep(time.Minute)
+		synctest.Sleep(opts.RefreshInterval)
 		require.Equal(t, 2, mustGet(t, cache, "tenant-a"))
 		cache.MarkStale("tenant-a")
 		require.Equal(t, 3, mustGet(t, cache, "tenant-a"))
@@ -297,15 +305,20 @@ func TestCache_Get(t *testing.T) {
 			}
 			return call, nil
 		}}
-		cache := newTestCache(t, validOptions(), loader)
+		opts := validOptions()
+		cache := newTestCache(t, opts, loader)
+
+		const failedRefreshes = 5
+		// Each step exceeds RefreshInterval and MinRefreshInterval, so every read starts a refresh.
+		step := opts.TTL / (failedRefreshes + 1)
 
 		require.Equal(t, 1, mustGet(t, cache, "tenant-a"))
-		for i := range 5 {
-			synctest.Sleep(10 * time.Minute)
+		for i := range failedRefreshes {
+			synctest.Sleep(step)
 			require.Equal(t, 1, mustGet(t, cache, "tenant-a"))
 			require.Equal(t, i+2, loader.callCount())
 		}
-		synctest.Sleep(11 * time.Minute)
+		synctest.Sleep(opts.TTL - failedRefreshes*step + time.Second)
 		_, err := cache.Get(t.Context(), "tenant-a")
 		require.ErrorIs(t, err, errBoom)
 		require.Equal(t, 7, loader.callCount())
@@ -325,25 +338,27 @@ func TestCache_Get(t *testing.T) {
 				}
 				return call, nil
 			}}
-			cache := newTestCache(t, validOptions(), loader)
+			opts := validOptions()
+			cache := newTestCache(t, opts, loader)
 
 			require.Equal(t, 1, mustGet(t, cache, "tenant-a"))
-			synctest.Sleep(time.Minute)
+			synctest.Sleep(opts.RefreshInterval)
 			require.Equal(t, 1, mustGet(t, cache, "tenant-a"))
 			require.Equal(t, 1, cache.Len())
 
-			synctest.Sleep(5 * time.Second)
+			synctest.Sleep(opts.MinRefreshInterval)
 			require.Equal(t, 3, mustGet(t, cache, "tenant-a"))
 			require.Equal(t, 1, cache.Len())
 		})
 	}
 
 	runInBubble(t, "should load again and not serve the old value when the entry is older than TTL", func(t *testing.T) {
+		opts := validOptions()
 		loader := &scriptedLoader{}
-		cache := newTestCache(t, validOptions(), loader)
+		cache := newTestCache(t, opts, loader)
 
 		require.Equal(t, 1, mustGet(t, cache, "tenant-a"))
-		synctest.Sleep(time.Hour)
+		synctest.Sleep(opts.TTL)
 		require.Equal(t, 2, mustGet(t, cache, "tenant-a"))
 	})
 
@@ -354,12 +369,13 @@ func TestCache_Get(t *testing.T) {
 			}
 			return call, nil
 		}}
-		cache := newTestCache(t, validOptions(), loader)
+		opts := validOptions()
+		cache := newTestCache(t, opts, loader)
 
 		require.Equal(t, 1, mustGet(t, cache, "tenant-a"))
-		synctest.Sleep(59 * time.Minute)
+		synctest.Sleep(opts.TTL - opts.RefreshInterval)
 		require.Equal(t, 1, mustGet(t, cache, "tenant-a"))
-		synctest.Sleep(2 * time.Minute)
+		synctest.Sleep(opts.RefreshInterval * 2)
 		_, err := cache.Get(t.Context(), "tenant-a")
 		require.ErrorIs(t, err, errBoom)
 		require.Equal(t, 0, cache.Len())
@@ -369,13 +385,13 @@ func TestCache_Get(t *testing.T) {
 		release := make(chan struct{})
 		loader := &scriptedLoader{fn: blockCalls(release, 2)}
 		opts := validOptions()
-		opts.LoadTimeout = 3 * time.Hour
+		opts.LoadTimeout = opts.TTL * 3
 		cache := newTestCache(t, opts, loader)
 
 		require.Equal(t, 1, mustGet(t, cache, "tenant-a"))
-		synctest.Sleep(time.Minute)
+		synctest.Sleep(opts.RefreshInterval)
 		require.Equal(t, 1, mustGet(t, cache, "tenant-a"))
-		synctest.Sleep(time.Hour)
+		synctest.Sleep(opts.TTL)
 
 		expired := getAsync(t.Context(), cache, "tenant-a")
 		synctest.Wait()
@@ -398,13 +414,13 @@ func TestCache_Get(t *testing.T) {
 			return call, nil
 		}}
 		opts := validOptions()
-		opts.LoadTimeout = 3 * time.Hour
+		opts.LoadTimeout = opts.TTL * 3
 		cache := newTestCache(t, opts, loader)
 
 		require.Equal(t, 1, mustGet(t, cache, "tenant-a"))
-		synctest.Sleep(time.Minute)
+		synctest.Sleep(opts.RefreshInterval)
 		require.Equal(t, 1, mustGet(t, cache, "tenant-a"))
-		synctest.Sleep(time.Hour)
+		synctest.Sleep(opts.TTL)
 
 		expired := getAsync(t.Context(), cache, "tenant-a")
 		synctest.Wait()
@@ -462,10 +478,11 @@ func TestCache_Get(t *testing.T) {
 	runInBubble(t, "should store the result as stale when MarkStale runs during the load", func(t *testing.T) {
 		release := make(chan struct{})
 		loader := &scriptedLoader{fn: blockCalls(release, 2)}
-		cache := newTestCache(t, validOptions(), loader)
+		opts := validOptions()
+		cache := newTestCache(t, opts, loader)
 
 		require.Equal(t, 1, mustGet(t, cache, "tenant-a"))
-		synctest.Sleep(time.Minute)
+		synctest.Sleep(opts.RefreshInterval)
 		require.Equal(t, 1, mustGet(t, cache, "tenant-a"))
 		cache.MarkStale("tenant-a")
 		close(release)
@@ -508,10 +525,11 @@ func TestCache_Get(t *testing.T) {
 	runInBubble(t, "should refresh on the read after a joined load when MarkStale ran during that load", func(t *testing.T) {
 		release := make(chan struct{})
 		loader := &scriptedLoader{fn: blockCalls(release, 2)}
-		cache := newTestCache(t, validOptions(), loader)
+		opts := validOptions()
+		cache := newTestCache(t, opts, loader)
 
 		require.Equal(t, 1, mustGet(t, cache, "tenant-a"))
-		synctest.Sleep(time.Minute)
+		synctest.Sleep(opts.RefreshInterval)
 		require.Equal(t, 1, mustGet(t, cache, "tenant-a"))
 		cache.MarkStale("tenant-a")
 		joiner := getAsync(t.Context(), cache, "tenant-a")
@@ -535,10 +553,11 @@ func TestCache_Get(t *testing.T) {
 			}
 			return call, nil
 		}}
-		cache := newTestCache(t, validOptions(), loader)
+		opts := validOptions()
+		cache := newTestCache(t, opts, loader)
 
 		require.Equal(t, 1, mustGet(t, cache, "tenant-a"))
-		synctest.Sleep(time.Minute)
+		synctest.Sleep(opts.RefreshInterval)
 		require.Equal(t, 1, mustGet(t, cache, "tenant-a"))
 		cache.MarkStale("tenant-a")
 		joiner := getAsync(t.Context(), cache, "tenant-a")
@@ -554,13 +573,13 @@ func TestCache_Get(t *testing.T) {
 		release := make(chan struct{})
 		loader := &scriptedLoader{fn: blockCalls(release, 2)}
 		opts := validOptions()
-		opts.LoadTimeout = 3 * time.Hour
+		opts.LoadTimeout = opts.TTL * 3
 		cache := newTestCache(t, opts, loader)
 
 		require.Equal(t, 1, mustGet(t, cache, "tenant-a"))
-		synctest.Sleep(time.Minute)
+		synctest.Sleep(opts.RefreshInterval)
 		require.Equal(t, 1, mustGet(t, cache, "tenant-a"))
-		synctest.Sleep(time.Hour)
+		synctest.Sleep(opts.TTL)
 		cache.MarkStale("tenant-a")
 		close(release)
 		synctest.Wait()
@@ -658,22 +677,24 @@ func TestCache_Get(t *testing.T) {
 	})
 
 	runInBubble(t, "should return the old value at once when StaleWait is zero, then the new value after the refresh", func(t *testing.T) {
+		opts := validOptions()
+		// Derived before StaleWait is zeroed: the refresh would fit within the original StaleWait.
+		loadDelay := opts.StaleWait / 4
+		opts.StaleWait = 0
 		loader := &scriptedLoader{fn: func(ctx context.Context, key string, call int) (int, error) {
 			if call == 2 {
-				time.Sleep(50 * time.Millisecond)
+				time.Sleep(loadDelay)
 			}
 			return call, nil
 		}}
-		opts := validOptions()
-		opts.StaleWait = 0
 		cache := newTestCache(t, opts, loader)
 
 		require.Equal(t, 1, mustGet(t, cache, "tenant-a"))
-		synctest.Sleep(time.Minute)
+		synctest.Sleep(opts.RefreshInterval)
 		start := time.Now()
 		require.Equal(t, 1, mustGet(t, cache, "tenant-a"))
 		require.Equal(t, start, time.Now())
-		synctest.Sleep(100 * time.Millisecond)
+		synctest.Sleep(loadDelay * 2)
 		require.Equal(t, 2, mustGet(t, cache, "tenant-a"))
 		require.Equal(t, 2, loader.callCount())
 	})
@@ -685,17 +706,18 @@ func TestCache_Get(t *testing.T) {
 		cache := newTestCache(t, opts, loader)
 
 		require.Equal(t, 1, mustGet(t, cache, "tenant-a"))
-		synctest.Sleep(time.Minute)
+		synctest.Sleep(opts.RefreshInterval)
 		require.Equal(t, 1, mustGet(t, cache, "tenant-a"))
 		require.Equal(t, 3, mustGet(t, cache, "tenant-a"))
 		require.Equal(t, 3, loader.callCount())
 	})
 
 	runInBubble(t, "should count an expired entry in Len when no read has touched it since it expired", func(t *testing.T) {
-		cache := newTestCache(t, validOptions(), &scriptedLoader{})
+		opts := validOptions()
+		cache := newTestCache(t, opts, &scriptedLoader{})
 
 		mustGet(t, cache, "tenant-a")
-		synctest.Sleep(time.Hour)
+		synctest.Sleep(opts.TTL)
 
 		require.Equal(t, 1, cache.Len())
 	})
@@ -768,10 +790,11 @@ func TestCache_Get(t *testing.T) {
 	runInBubble(t, "should return the old value when the caller is cancelled while waiting for a refresh", func(t *testing.T) {
 		release := make(chan struct{})
 		loader := &scriptedLoader{fn: blockCalls(release, 2)}
-		cache := newTestCache(t, validOptions(), loader)
+		opts := validOptions()
+		cache := newTestCache(t, opts, loader)
 
 		mustGet(t, cache, "tenant-a")
-		synctest.Sleep(time.Minute)
+		synctest.Sleep(opts.RefreshInterval)
 		cancelCtx, cancel := context.WithCancel(t.Context())
 		cancelled := getAsync(cancelCtx, cache, "tenant-a")
 		synctest.Wait()
