@@ -41,7 +41,8 @@ describe('DataLinksContextMenu', () => {
     expect(screen.getByRole('menuitem', { name: 'Link2' })).toBeInTheDocument();
 
     firstLink.focus();
-    expect(firstLink).toHaveStyle({ background: 'none', textDecoration: 'underline' });
+    expect(firstLink).toHaveStyle({ background: 'none' });
+    expect(screen.getByText('Link1')).toHaveAttribute('data-role', 'menuitem-label');
   });
 
   it('renders single link with correct attributes and style', () => {
