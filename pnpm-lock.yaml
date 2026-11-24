@@ -945,8 +945,8 @@ importers:
         specifier: 0.0.15
         version: 0.0.15
       css-loader:
-        specifier: 7.1.2
-        version: 7.1.2(@rspack/core@2.2.4(@swc/helpers@0.5.17))(webpack@5.105.0)
+        specifier: 7.1.5
+        version: 7.1.5(@rspack/core@2.2.4(@swc/helpers@0.5.17))(webpack@5.105.0)
       enquirer:
         specifier: ^2.4.1
         version: 2.4.1
@@ -1992,8 +1992,8 @@ importers:
         specifier: ^14.0.0
         version: 14.0.0(webpack@5.105.0)
       css-loader:
-        specifier: 7.1.2
-        version: 7.1.2(@rspack/core@2.2.4(@swc/helpers@0.5.17))(webpack@5.105.0)
+        specifier: 7.1.5
+        version: 7.1.5(@rspack/core@2.2.4(@swc/helpers@0.5.17))(webpack@5.105.0)
       eslint:
         specifier: 9.32.0
         version: 9.32.0(jiti@2.7.0)(supports-color@7.2.0)
@@ -2638,8 +2638,8 @@ importers:
         specifier: 1.8.2
         version: 1.8.2
       css-loader:
-        specifier: 7.1.2
-        version: 7.1.2(@rspack/core@2.2.4(@swc/helpers@0.5.17))(webpack@5.105.0)
+        specifier: 7.1.5
+        version: 7.1.5(@rspack/core@2.2.4(@swc/helpers@0.5.17))(webpack@5.105.0)
       csstype:
         specifier: 3.1.3
         version: 3.1.3
@@ -9075,11 +9075,11 @@ packages:
   css-in-js-utils@3.1.0:
     resolution: {integrity: sha512-fJAcud6B3rRu+KHYk+Bwf+WFL2MDCJJ1XG9x137tJQ0xYxor7XziQtuGFbWNdqrvF4Tk26O3H73nfVqXt/fW1A==}
 
-  css-loader@7.1.2:
-    resolution: {integrity: sha512-6WvYYn7l/XEGN8Xu2vWFt9nVzrCn39vKyTEFf/ExEyoksJjjSZV/0/35XPlMbpnr6VGhZIUg5yJrL8tGfes/FA==}
+  css-loader@7.1.5:
+    resolution: {integrity: sha512-Q7iAfQkU2twNBryKX/vGAlE+GAmkF7quhSzAGNK8fBimxk3+tqg245rH52UPb9dioBolBc8rP0ihmHBaDTJQBA==}
     engines: {node: '>= 18.12.0'}
     peerDependencies:
-      '@rspack/core': 0.x || 1.x
+      '@rspack/core': 0.x || ^1.0.0 || ^2.0.0-0
       webpack: ^5.27.0
     peerDependenciesMeta:
       '@rspack/core':
@@ -22504,7 +22504,7 @@ snapshots:
     dependencies:
       hyphenate-style-name: 1.0.4
 
-  css-loader@7.1.2(@rspack/core@2.2.4(@swc/helpers@0.5.17))(webpack@5.105.0):
+  css-loader@7.1.5(@rspack/core@2.2.4(@swc/helpers@0.5.17))(webpack@5.105.0):
     dependencies:
       icss-utils: 5.1.0(postcss@8.5.33)
       postcss: 8.5.33
