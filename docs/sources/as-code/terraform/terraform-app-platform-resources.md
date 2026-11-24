@@ -43,20 +43,22 @@ In Grafana Cloud, use `stack_id` instead.
 
 ### Affected resources
 
-The `stack_id` requirement applies to all `grafana_apps_*` resources, including the following:
+The `stack_id` requirement applies to typed `grafana_apps_*` resources, including the following:
 
-| Area                     | Resources                                                                                                                         |
-| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
-| **Alerting**             | `grafana_apps_rules_*`, `grafana_apps_notifications_*`, and `grafana_apps_alertenrichment_alertenrichment_v1beta1`                |
-| **Dashboards**           | `grafana_apps_dashboard_dashboard_v1beta1`, `grafana_apps_dashboard_dashboard_v2beta1`, and `grafana_apps_dashboard_dashboard_v2` |
-| **Git Sync**             | `grafana_apps_provisioning_connection_v0alpha1` and `grafana_apps_provisioning_repository_v0alpha1`                               |
-| **Playlists**            | `grafana_apps_playlist_*`                                                                                                         |
-| **Saved queries**        | `grafana_apps_queries_query_v1`                                                                                                   |
-| **Secrets Management**   | `grafana_apps_secret_*`                                                                                                           |
-| **Service Center**       | `grafana_apps_servicemodel_component_v1alpha1`                                                                                    |
-| **Generic App Platform** | `grafana_apps_generic_resource`                                                                                                   |
+| Area                   | Resources                                                                                                                         |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| **Alerting**           | `grafana_apps_rules_*`, `grafana_apps_notifications_*`, and `grafana_apps_alertenrichment_alertenrichment_v1beta1`                |
+| **Dashboards**         | `grafana_apps_dashboard_dashboard_v1beta1`, `grafana_apps_dashboard_dashboard_v2beta1`, and `grafana_apps_dashboard_dashboard_v2` |
+| **Git Sync**           | `grafana_apps_provisioning_connection_v0alpha1` and `grafana_apps_provisioning_repository_v0alpha1`                               |
+| **Playlists**          | `grafana_apps_playlist_*`                                                                                                         |
+| **Product activation** | `grafana_apps_productactivation_*`                                                                                                |
+| **Saved queries**      | `grafana_apps_queries_query_v1`                                                                                                   |
+| **Secrets Management** | `grafana_apps_secret_*`                                                                                                           |
+| **Service Center**     | `grafana_apps_servicemodel_component_v1alpha1`                                                                                    |
 
 For the complete list, refer to the [Grafana provider documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+
+Unlike typed `grafana_apps_*` resources, `grafana_apps_generic_resource` discovers the stack namespace from `/bootdata` automatically and uses `stack_id` only as a fallback or to verify that the configured stack matches the instance.
 
 Other resources, such as `grafana_folder`, `grafana_dashboard`, and `grafana_rule_group`, use the Grafana HTTP API and don't need `stack_id`.
 You can set `stack_id` in a provider that manages both kinds of resources.
@@ -65,9 +67,9 @@ You can set `stack_id` in a provider that manages both kinds of resources.
 
 Before you begin, ensure you have the following:
 
-- A Grafana Cloud stack. To create one, refer to [Create and manage a Grafana Cloud stack using Terraform](../terraform-cloud-stack/).
-- [Terraform](https://developer.hashicorp.com/terraform/install) installed on your machine.
-- The `grafana/grafana` Terraform provider version 4.44.0 or later. This version adds the `grafana_apps_servicemodel_component_v1alpha1` resource that this guide uses.
+- **Grafana Cloud stack:** You need a Grafana Cloud stack to provision resources into. To create one, refer to [Create and manage a Grafana Cloud stack using Terraform](../terraform-cloud-stack/).
+- **Terraform CLI:** Install [Terraform](https://developer.hashicorp.com/terraform/install) on your machine.
+- **Grafana Terraform provider:** Use `grafana/grafana` version 4.44.0 or later, which adds the `grafana_apps_servicemodel_component_v1alpha1` resource that this guide uses.
 
 {{< admonition type="note" >}}
 All of the following Terraform configuration files should be saved in the same directory.
@@ -129,8 +131,8 @@ provider "grafana" {
 
 Replace the following placeholders:
 
-- _`<GRAFANA_URL>`_ with the URL of your Grafana Cloud stack, for example `https://my-stack.grafana.net/`.
-- _`<STACK_ID>`_ with the stack ID that you found in [Find your stack ID](#find-your-stack-id), for example `123456`.
+- _`<GRAFANA_URL>`_ is the URL of your Grafana Cloud stack, for example `https://my-stack.grafana.net/`.
+- _`<STACK_ID>`_ is the stack ID that you found in [Find your stack ID](#find-your-stack-id), for example `123456`.
 
 The `grafana_auth` variable holds the service account token.
 To keep the token out of your configuration files, you set it through the `TF_VAR_grafana_auth` environment variable when you apply the configuration.
@@ -169,10 +171,10 @@ resource "grafana_apps_servicemodel_component_v1alpha1" "<RESOURCE_NAME>" {
 
 Replace the following placeholders:
 
-- _`<RESOURCE_NAME>`_ with a name for the resource in Terraform, for example `payments`.
-- _`<SERVICE_UID>`_ with the identifier of the service, for example `payments-api`.
+- _`<RESOURCE_NAME>`_ is a name for the resource in Terraform, for example `payments`.
+- _`<SERVICE_UID>`_ is the identifier of the service, for example `payments-api`.
   The identifier can only contain lowercase letters, numbers, and dashes, and must be 2 to 63 characters long.
-- _`<SERVICE_TITLE>`_ with the display name of the service in Service Center, for example `Payments API`.
+- _`<SERVICE_TITLE>`_ is the display name of the service in Service Center, for example `Payments API`.
 
 If your configuration uses more than one Grafana provider, add a `provider` argument to the resource that references the provider with `stack_id`, for example `provider = grafana.my_stack`.
 
@@ -184,13 +186,13 @@ In a terminal, run the following commands from the directory where all of the co
 
 1. Initialize a working directory containing Terraform configuration files.
 
-   ```shell
+   ```sh
    terraform init
    ```
 
 1. Set the service account token, then preview the changes that Terraform makes.
 
-   ```shell
+   ```sh
    export TF_VAR_grafana_auth='<TOKEN>'
    terraform plan
    ```
@@ -199,7 +201,7 @@ In a terminal, run the following commands from the directory where all of the co
 
 1. Apply the configuration files.
 
-   ```shell
+   ```sh
    terraform apply
    ```
 
