@@ -153,12 +153,22 @@ func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPerm
 	} else if req.NoOrgMembership {
 		orgID = -1
 	}
+	return s.loader.streamPermissions(ctx, req, stream, namespace, orgID)
+}
+
+func (l *Loader) streamPermissions(ctx context.Context, req *authzv1.LegacyGetUserPermissionsRequest, stream authzv1.LegacyAuthzService_LegacyGetUserPermissionsServer, namespace string, orgID int64) error {
 	requester := &legacyRequester{
 		SignedInUser: &user.SignedInUser{OrgID: orgID, OrgRole: types.RoleType(req.Identity.OrgRole), IsGrafanaAdmin: req.Identity.IsGrafanaAdmin, TeamIDs: req.Identity.TeamIds}, //nolint:staticcheck // The compatibility contract carries numeric RBAC memberships separately from contextual groups.
 		identity:     req.Identity, namespace: namespace,
 	}
-	permissions, err := s.loader.GetUserPermissions(ctx, requester, ac.Options{ReloadCache: req.ReloadCache, SkipZanzanaCache: req.SkipZanzanaCache})
+	if ns, ok := ctx.Value(remoteNamespaceKey{}).(string); ok {
+		requester.remoteCacheKey = remoteIdentityCacheKey(req.Identity, ns, orgID)
+	}
+	permissions, err := l.GetUserPermissions(ctx, requester, ac.Options{ReloadCache: req.ReloadCache, SkipZanzanaCache: req.SkipZanzanaCache})
 	if err != nil {
+		return err
+	}
+	if err := ctx.Err(); err != nil {
 		return err
 	}
 	// Load successfully before streaming; clients discard all chunks on error.
@@ -183,8 +193,9 @@ func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPerm
 // roles, teams or admin state from database-backed identity caches.
 type legacyRequester struct {
 	*user.SignedInUser
-	identity  *authzv1.LegacyPermissionIdentity
-	namespace string
+	identity       *authzv1.LegacyPermissionIdentity
+	namespace      string
+	remoteCacheKey string
 }
 
 func (r *legacyRequester) GetIdentityType() types.IdentityType {
@@ -211,6 +222,9 @@ func (r *legacyRequester) GetNamespace() string        { return r.namespace }
 func (r *legacyRequester) GetGroups() []string         { return r.identity.Groups }
 func (r *legacyRequester) GetExternalGroups() []string { return r.identity.Groups }
 func (r *legacyRequester) GetCacheKey() string {
+	if r.remoteCacheKey != "" {
+		return r.remoteCacheKey
+	}
 	if r.identity.CacheKey != nil {
 		return *r.identity.CacheKey
 	}

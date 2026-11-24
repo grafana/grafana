@@ -413,6 +413,7 @@ func RegisterRBACAuthZService(
 	userPermissionsResolver rbac.UserPermissionsResolver,
 	exchangeClient authnlib.TokenExchanger,
 	cfg RBACServerSettings,
+	legacyEnumeration ...*legacypermissions.RemoteServer,
 ) {
 	var folderStore store.FolderStore
 	// FIXME: for now we default to using database read proxy for folders if the api url is not configured.
@@ -458,7 +459,20 @@ func RegisterRBACAuthZService(
 
 	srv := handler.GetServer()
 	authzv1.RegisterAuthzServiceServer(srv, server)
-	authzextv1.RegisterLegacyAuthzServiceServer(srv, server)
+	if len(legacyEnumeration) > 0 && legacyEnumeration[0] != nil {
+		authzextv1.RegisterLegacyAuthzServiceServer(srv, &remoteLegacyServer{Service: server, enumeration: legacyEnumeration[0]})
+	} else {
+		authzextv1.RegisterLegacyAuthzServiceServer(srv, server)
+	}
+}
+
+type remoteLegacyServer struct {
+	*rbac.Service
+	enumeration *legacypermissions.RemoteServer
+}
+
+func (s *remoteLegacyServer) LegacyGetUserPermissions(req *authzextv1.LegacyGetUserPermissionsRequest, stream authzextv1.LegacyAuthzService_LegacyGetUserPermissionsServer) error {
+	return s.enumeration.LegacyGetUserPermissions(req, stream)
 }
 
 type NoopCache struct{}

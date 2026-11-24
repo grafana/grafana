@@ -69,8 +69,8 @@ func NewLoader(sql db.DB, catalog *RoleCatalog, actionResolver ac.ActionResolver
 
 // NewEnforcedLoader follows standalone AuthZ's SQL-backed policy without a local
 // license or role catalog. Default roles must already be persisted in SQL.
-// Permission caches are not tenant-scoped yet; callers must not share a cached
-// loader across tenants. This constructor does not register a remote handler.
+// RemoteServer scopes cache keys to the validated transport tenant. Direct callers
+// must not share a cached loader across tenants. This constructor registers no handler.
 func NewEnforcedLoader(database legacysql.LegacyDatabaseProvider, actions ac.ActionResolver,
 	cache *localcache.CacheService, cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	zanzana MigratedPermissions, scopeResolver legacyscopes.ScopeResolver,
@@ -152,7 +152,7 @@ func (l *Loader) GetUserPermissions(ctx context.Context, user identity.Requester
 	} else if settings.enforcementEnabled || options.ReloadCache || shadow.IsShadow(ctx) {
 		permissions, err = l.assemble(ctx, user, options, settings)
 	} else {
-		value, loadErr, _ := l.flight.Do(user.GetCacheKey(), func() (any, error) {
+		value, loadErr, _ := l.flight.Do(tenantCacheKey(ctx, user.GetCacheKey()), func() (any, error) {
 			return l.assemble(ctx, user, options, settings)
 		})
 		err = loadErr
@@ -317,10 +317,13 @@ func (l *Loader) cachedTeams(ctx context.Context, user identity.Requester, optio
 	ctx, span := tracer.Start(ctx, "authz.legacypermissions.cache.teams")
 	span.SetAttributes(attribute.Bool("cache.reload", options.ReloadCache), attribute.Bool("permission.shadow", shadow.IsShadow(ctx)))
 	defer func() { endPermissionSpan(span, err) }()
+	if _, remote := ctx.Value(remoteNamespaceKey{}).(string); remote {
+		return l.remoteCachedTeams(ctx, user, options, p)
+	}
 	var permissions [][]ac.Permission
 	var missing []int64
 	for _, teamID := range user.GetTeams() {
-		if value, ok := l.cache.Get(ac.GetTeamPermissionCacheKey(teamID, user.GetOrgID())); ok && !options.ReloadCache {
+		if value, ok := l.cache.Get(tenantCacheKey(ctx, ac.GetTeamPermissionCacheKey(teamID, user.GetOrgID()))); ok && !options.ReloadCache {
 			metrics.MAccessPermissionsCacheUsage.WithLabelValues(ac.CacheHit).Inc()
 			permissions = append(permissions, value.([]ac.Permission))
 		} else {
@@ -344,7 +347,7 @@ func (l *Loader) cachedTeams(ctx context.Context, user identity.Requester, optio
 	for teamID, grants := range teams {
 		grants = l.actions.ExpandActionSets(grants)
 		if !shadow.IsShadow(ctx) {
-			l.cache.Set(ac.GetTeamPermissionCacheKey(teamID, user.GetOrgID()), grants, cacheTTL)
+			l.cache.Set(tenantCacheKey(ctx, ac.GetTeamPermissionCacheKey(teamID, user.GetOrgID())), grants, cacheTTL)
 		}
 		permissions = append(permissions, grants)
 	}
@@ -352,6 +355,7 @@ func (l *Loader) cachedTeams(ctx context.Context, user identity.Requester, optio
 }
 
 func (l *Loader) cached(ctx context.Context, source, key string, options ac.Options, load func(context.Context) ([]ac.Permission, error)) (_ []ac.Permission, err error) {
+	key = tenantCacheKey(ctx, key)
 	ctx, span := tracer.Start(ctx, "authz.legacypermissions.cache")
 	span.SetAttributes(attribute.String("cache.source", source), attribute.Bool("cache.reload", options.ReloadCache), attribute.Bool("permission.shadow", shadow.IsShadow(ctx)), attribute.Bool("cache.load_executed", false))
 	defer func() { endPermissionSpan(span, err) }()
