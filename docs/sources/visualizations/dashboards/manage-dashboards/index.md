@@ -136,7 +136,7 @@ After 12 months, Grafana permanently removes them.
 You can access the list of deleted dashboards from the **Dashboards** page by clicking the **Recently deleted** button, or by navigating to **Dashboards > Recently deleted**.
 
 {{% admonition type="note" %}}
-You can restore dashboards that you deleted. Users with admin permission on a given folder can restore any dashboard deleted from that folder.
+You can restore dashboards that you deleted. Users with admin permission on a given folder can restore any dashboard deleted from that folder. The **Recently deleted** list only shows dashboards you can restore.
 {{% /admonition %}}
 
 To restore one or more dashboards, follow these steps:
