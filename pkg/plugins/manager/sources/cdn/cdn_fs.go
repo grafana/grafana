@@ -85,7 +85,8 @@ func (f FS) Rel(base string) (string, error) {
 		return "", errors.New("host mismatch")
 	}
 
-	return filepath.Rel(base1.Path, base2.Path)
+	rel, err := filepath.Rel(base1.Path, base2.Path)
+	return filepath.ToSlash(rel), err
 }
 
 func (f FS) Base() string {

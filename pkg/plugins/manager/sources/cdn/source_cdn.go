@@ -289,10 +289,10 @@ func (s *Source) collectBundles(ctx context.Context, foundPlugins map[pluginKey]
 		known[trimSlash(key.path)] = struct{}{}
 		configured[jd.ID] = struct{}{}
 	}
-	// A plugin whose own cdn_url could not be fetched is still configured, and must not be replaced by the URL
+	// A configured plugin that could not be fetched is still configured, and must not be replaced by the URL
 	// derived from its parent
 	for pluginID, cfg := range s.cfg.PluginSettings {
-		if cfg["cdn_url"] != "" {
+		if cfg["cdn_url"] != "" || (s.cdnService.PluginSupported(pluginID) && cfg["cdn_version"] != "") {
 			configured[pluginID] = struct{}{}
 		}
 	}

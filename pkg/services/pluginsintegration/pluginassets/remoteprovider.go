@@ -52,6 +52,7 @@ func (s *RemoteProvider) AssetPath(plugin pluginassets2.PluginInfo, assetPath ..
 	}
 
 	if relativePath, err := filepath.Rel(s.staticRootPath, pluginFSBase); err == nil {
+		relativePath = filepath.ToSlash(relativePath)
 		// If plugin lives under Grafana's static root path, and CDN URL is set
 		if !strings.Contains(relativePath, "..") && s.grafanaCDNURL != "" {
 			base, err := url.JoinPath(s.grafanaCDNURL, "public", relativePath)

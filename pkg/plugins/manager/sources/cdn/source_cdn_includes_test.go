@@ -132,4 +132,26 @@ func TestCDNSource_Discover_DeclarativeIncludes(t *testing.T) {
 		require.Empty(t, got[0].Children)
 		require.NotNil(t, errorTracker.Error(context.Background(), "test-panel"), "the failure is recorded for the configured plugin")
 	})
+
+	t.Run("a configured template child that cannot be fetched is not replaced by the derived URL", func(t *testing.T) {
+		srv := pluginJSONServer(t, map[string]string{
+			"/app/plugin.json":       pluginJSON("test-app", "app", `{"type": "panel", "name": "panel", "path": "panel/plugin.json"}`),
+			"/app/panel/plugin.json": pluginJSON("test-panel", "panel", ""),
+		})
+		cfg := &config.PluginManagementCfg{
+			PluginsCDNURLTemplate: srv.URL,
+			PluginSettings: config.PluginSettings{
+				"test-app":   {"cdn_url": srv.URL + "/app"},
+				"test-panel": {"cdn": "true", "cdn_version": "1.0.0"},
+			},
+		}
+		source := NewCDNSource(cfg, pluginscdn.ProvideService(cfg), pluginerrs.ProvideErrorTracker())
+
+		got, err := source.Discover(context.Background())
+		require.NoError(t, err)
+
+		require.Len(t, got, 1)
+		require.Equal(t, "test-app", got[0].Primary.JSONData.ID)
+		require.Empty(t, got[0].Children)
+	})
 }
