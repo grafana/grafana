@@ -10,6 +10,7 @@ import "@openfeature/core";
 
 declare module "@openfeature/core" {
   export type BooleanFlagKey =
+    | "dataviz.statRefresh"
     | "panelTitleSearch"
     | "publicDashboardsEmailSharing"
     | "canvasPanelNesting"

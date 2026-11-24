@@ -154,6 +154,8 @@ export const FlagKeys = {
   DatavizExperimentalColorSchemes: "dataviz.experimentalColorSchemes",
   /** Enable the option to reverse by value color schemes */
   DatavizReverseColorScheme: "dataviz.reverseColorScheme",
+  /** Enables the new stat panel */
+  DatavizStatRefresh: "dataviz.statRefresh",
   /** Enables tabular numerals for visualization legend values */
   DatavizTabularNums: "dataviz.tabularNums",
   /** Disables legacy scripted dashboards, which are deprecated and will be removed in Grafana 14. Set to false to temporarily restore them. */
@@ -1196,6 +1198,17 @@ export const useFlagDatavizExperimentalColorSchemes = (options?: ReactFlagEvalua
  */
 export const useFlagDatavizReverseColorScheme = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dataviz.reverseColorScheme", false, options).value;
+};
+
+/**
+ * Enables the new stat panel
+ *
+ * **Details:**
+ * - flag key: `dataviz.statRefresh`
+ * - default value: `false`
+ */
+export const useFlagDatavizStatRefresh = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dataviz.statRefresh", false, options).value;
 };
 
 /**
