@@ -390,7 +390,6 @@ export function SaveProvisionedDashboardForm({
 
   const { handleSuccess } = useProvisionedRequestHandler<Dashboard>({
     folderUID: defaultValues.folder?.uid,
-    resourceType: CORE_KINDS.dashboard.kind,
     repository,
     isNewBranch,
     handlers: {
@@ -597,7 +596,7 @@ export function SaveProvisionedDashboardForm({
           {!isNew && !readOnly && <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />}
 
           <ResourceEditFormSharedFields
-            resourceType={CORE_KINDS.dashboard.kind}
+            kind={CORE_KINDS.dashboard}
             readOnly={readOnly}
             canPushToConfiguredBranch={canPushToConfiguredBranch}
             repository={repository}

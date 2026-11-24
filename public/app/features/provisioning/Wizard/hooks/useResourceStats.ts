@@ -27,7 +27,7 @@ function getManagedCount(managed?: ManagerStats[]) {
     if (manager.kind === ManagerKind.Repo) {
       // Loop through stats inside each manager and sum up the counts for known kinds
       manager.stats.forEach((stat) => {
-        if (findKindByResource(stat.resource)) {
+        if (findKindByResource(stat.group, stat.resource)) {
           totalCount += stat.count;
         }
       });
@@ -42,7 +42,7 @@ function getResourceCount(stats?: ResourceCount[], managed?: ManagerStats[]) {
 
   const addStat = (stat: ResourceCount) => {
     // Only count kinds the UI knows about (folders, dashboards, ...).
-    if (findKindByResource(stat.resource)) {
+    if (findKindByResource(stat.group, stat.resource)) {
       resourceCount += stat.count;
     }
   };

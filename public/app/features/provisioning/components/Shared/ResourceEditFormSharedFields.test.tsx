@@ -7,6 +7,7 @@ import { mockComboboxRect } from '@grafana/test-utils';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 
 import { useBranchDropdownOptions } from '../../hooks/useBranchDropdownOptions';
 import { useGetRepositoryFolders } from '../../hooks/useGetRepositoryFolders';
@@ -100,7 +101,7 @@ function setup(options: SetupOptions = {}) {
 
   return render(
     <FormWrapper>
-      <ResourceEditFormSharedFields {...componentProps} resourceType="Dashboard" />
+      <ResourceEditFormSharedFields {...componentProps} kind={CORE_KINDS.dashboard} />
     </FormWrapper>
   );
 }
@@ -360,7 +361,7 @@ describe('ResourceEditFormSharedFields', () => {
 
         return (
           <FormProvider {...methods}>
-            <ResourceEditFormSharedFields canPushToConfiguredBranch={true} isNew={true} resourceType="Dashboard" />
+            <ResourceEditFormSharedFields canPushToConfiguredBranch={true} isNew={true} kind={CORE_KINDS.dashboard} />
           </FormProvider>
         );
       };
@@ -389,7 +390,7 @@ describe('ResourceEditFormSharedFields', () => {
 
         return (
           <FormProvider {...methods}>
-            <ResourceEditFormSharedFields canPushToConfiguredBranch={true} isNew={true} resourceType="Dashboard" />
+            <ResourceEditFormSharedFields canPushToConfiguredBranch={true} isNew={true} kind={CORE_KINDS.dashboard} />
           </FormProvider>
         );
       };
@@ -442,7 +443,7 @@ describe('ResourceEditFormSharedFields', () => {
               <ResourceEditFormSharedFields
                 canPushToConfiguredBranch={false}
                 repository={{ ...mockRepo.github, branch: 'main' }}
-                resourceType="Dashboard"
+                kind={CORE_KINDS.dashboard}
               />
               <button type="submit">Submit</button>
             </form>

@@ -175,7 +175,6 @@ function FormContent({
 
   const { handleSuccess } = useProvisionedRequestHandler({
     isNewBranch,
-    resourceType: kind.kind,
     repository,
     successMessage,
     handlers: {
@@ -229,7 +228,7 @@ function FormContent({
       <form onSubmit={handleSubmit(doSave)}>
         <Stack direction="column" gap={2}>
           <ResourceEditFormSharedFields
-            resourceType={kind.kind}
+            kind={kind}
             isNew={isNew}
             canPushToConfiguredBranch={canPushToConfiguredBranch}
             repository={repository}

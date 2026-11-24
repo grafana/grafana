@@ -9,7 +9,7 @@ function resource(overrides: Partial<ResourceListItem>): ResourceListItem {
 describe('createGrafanaLinkResolver', () => {
   it('resolves a dashboard file to its in-app dashboard route', () => {
     const resolve = createGrafanaLinkResolver(
-      [resource({ resource: 'dashboards', name: 'abc', path: 'team-a/cpu.json' })],
+      [resource({ group: 'dashboard.grafana.app', resource: 'dashboards', name: 'abc', path: 'team-a/cpu.json' })],
       undefined
     );
 
@@ -18,7 +18,7 @@ describe('createGrafanaLinkResolver', () => {
 
   it('resolves a folder directory link to its in-app folder route', () => {
     const resolve = createGrafanaLinkResolver(
-      [resource({ resource: 'folders', name: 'fold1', path: 'team-a' })],
+      [resource({ group: 'folder.grafana.app', resource: 'folders', name: 'fold1', path: 'team-a' })],
       undefined
     );
 
@@ -29,7 +29,7 @@ describe('createGrafanaLinkResolver', () => {
 
   it('resolves a link to a folder _folder.json to the folder it describes', () => {
     const resolve = createGrafanaLinkResolver(
-      [resource({ resource: 'folders', name: 'fold1', path: 'team-a' })],
+      [resource({ group: 'folder.grafana.app', resource: 'folders', name: 'fold1', path: 'team-a' })],
       undefined
     );
 
@@ -38,7 +38,7 @@ describe('createGrafanaLinkResolver', () => {
 
   it('normalizes a trailing slash on the resource path', () => {
     const resolve = createGrafanaLinkResolver(
-      [resource({ resource: 'folders', name: 'fold1', path: 'team-a/' })],
+      [resource({ group: 'folder.grafana.app', resource: 'folders', name: 'fold1', path: 'team-a/' })],
       undefined
     );
 
@@ -47,7 +47,7 @@ describe('createGrafanaLinkResolver', () => {
 
   it('resolves a playlist to its edit route', () => {
     const resolve = createGrafanaLinkResolver(
-      [resource({ resource: 'playlists', name: 'pl1', path: 'playlists/weekly.json' })],
+      [resource({ group: 'playlist.grafana.app', resource: 'playlists', name: 'pl1', path: 'playlists/weekly.json' })],
       undefined
     );
 
@@ -56,7 +56,7 @@ describe('createGrafanaLinkResolver', () => {
 
   it('returns undefined for kinds without a per-item route (library panels)', () => {
     const resolve = createGrafanaLinkResolver(
-      [resource({ resource: 'librarypanels', name: 'lp1', path: 'panels/graph.json' })],
+      [resource({ group: 'dashboard.grafana.app', resource: 'librarypanels', name: 'lp1', path: 'panels/graph.json' })],
       undefined
     );
 
@@ -65,7 +65,7 @@ describe('createGrafanaLinkResolver', () => {
 
   it('returns undefined for a path with no synced resource', () => {
     const resolve = createGrafanaLinkResolver(
-      [resource({ resource: 'dashboards', name: 'abc', path: 'team-a/cpu.json' })],
+      [resource({ group: 'dashboard.grafana.app', resource: 'dashboards', name: 'abc', path: 'team-a/cpu.json' })],
       undefined
     );
 
@@ -77,7 +77,7 @@ describe('createGrafanaLinkResolver', () => {
     // The root folder has an empty path; joined with the configured root it keys
     // at the configured root, which a root `_folder.json` link resolves to.
     const resolve = createGrafanaLinkResolver(
-      [resource({ resource: 'folders', name: 'root-folder', path: '' })],
+      [resource({ group: 'folder.grafana.app', resource: 'folders', name: 'root-folder', path: '' })],
       'dev/resources'
     );
 
@@ -86,7 +86,7 @@ describe('createGrafanaLinkResolver', () => {
 
   it('resolves a root _folder.json link when the repository has no configured path', () => {
     const resolve = createGrafanaLinkResolver(
-      [resource({ resource: 'folders', name: 'root-folder', path: '' })],
+      [resource({ group: 'folder.grafana.app', resource: 'folders', name: 'root-folder', path: '' })],
       undefined
     );
 
@@ -97,7 +97,7 @@ describe('createGrafanaLinkResolver', () => {
     // A `local` repo's configured root is an absolute filesystem path; the
     // rewriter strips the leading slash, so the resolver must too.
     const resolve = createGrafanaLinkResolver(
-      [resource({ resource: 'dashboards', name: 'abc', path: 'team-a/cpu.json' })],
+      [resource({ group: 'dashboard.grafana.app', resource: 'dashboards', name: 'abc', path: 'team-a/cpu.json' })],
       '/data/repo'
     );
 
@@ -107,7 +107,7 @@ describe('createGrafanaLinkResolver', () => {
   it('returns undefined when the matched resource has no name', () => {
     // A nameless entry would otherwise build a broken route like `/d/`.
     const resolve = createGrafanaLinkResolver(
-      [resource({ resource: 'dashboards', name: '', path: 'team-a/cpu.json' })],
+      [resource({ group: 'dashboard.grafana.app', resource: 'dashboards', name: '', path: 'team-a/cpu.json' })],
       undefined
     );
 
@@ -117,7 +117,10 @@ describe('createGrafanaLinkResolver', () => {
   it('does not match a non-metadata file against a root-keyed entry', () => {
     // A resource keyed at the repo root ("/") must not be returned for an
     // unrelated file whose folder-metadata fallback resolves to an empty dir.
-    const resolve = createGrafanaLinkResolver([resource({ resource: 'folders', name: 'root', path: '/' })], undefined);
+    const resolve = createGrafanaLinkResolver(
+      [resource({ group: 'folder.grafana.app', resource: 'folders', name: 'root', path: '/' })],
+      undefined
+    );
 
     expect(resolve('team-a/cpu.json')).toBeUndefined();
   });
@@ -126,7 +129,7 @@ describe('createGrafanaLinkResolver', () => {
     // Resource paths from the API are relative to the configured root; the paths
     // passed to the resolver are full repo-root paths that include that prefix.
     const resolve = createGrafanaLinkResolver(
-      [resource({ resource: 'dashboards', name: 'abc', path: 'team-a/cpu.json' })],
+      [resource({ group: 'dashboard.grafana.app', resource: 'dashboards', name: 'abc', path: 'team-a/cpu.json' })],
       'grafana'
     );
 
@@ -137,7 +140,7 @@ describe('createGrafanaLinkResolver', () => {
   describe('markdown docs', () => {
     it('resolves a markdown doc to its containing folder page with a docTab param', () => {
       const resolve = createGrafanaLinkResolver(
-        [resource({ resource: 'folders', name: 'fold1', path: 'team-a' })],
+        [resource({ group: 'folder.grafana.app', resource: 'folders', name: 'fold1', path: 'team-a' })],
         undefined
       );
 
@@ -146,7 +149,7 @@ describe('createGrafanaLinkResolver', () => {
 
     it('resolves a README in the repository root to the root folder page', () => {
       const resolve = createGrafanaLinkResolver(
-        [resource({ resource: 'folders', name: 'root-folder', path: '' })],
+        [resource({ group: 'folder.grafana.app', resource: 'folders', name: 'root-folder', path: '' })],
         undefined
       );
 
@@ -155,7 +158,7 @@ describe('createGrafanaLinkResolver', () => {
 
     it('encodes a doc file name with spaces in the docTab param', () => {
       const resolve = createGrafanaLinkResolver(
-        [resource({ resource: 'folders', name: 'fold1', path: 'team-a' })],
+        [resource({ group: 'folder.grafana.app', resource: 'folders', name: 'fold1', path: 'team-a' })],
         undefined
       );
 
@@ -164,7 +167,7 @@ describe('createGrafanaLinkResolver', () => {
 
     it('joins the configured repository path when resolving a doc folder', () => {
       const resolve = createGrafanaLinkResolver(
-        [resource({ resource: 'folders', name: 'fold1', path: 'team-a' })],
+        [resource({ group: 'folder.grafana.app', resource: 'folders', name: 'fold1', path: 'team-a' })],
         'grafana'
       );
 
@@ -175,7 +178,7 @@ describe('createGrafanaLinkResolver', () => {
       // Only a dashboard is synced here; the doc's directory has no folder resource,
       // so the caller falls back to the host link.
       const resolve = createGrafanaLinkResolver(
-        [resource({ resource: 'dashboards', name: 'abc', path: 'team-a/cpu.json' })],
+        [resource({ group: 'dashboard.grafana.app', resource: 'dashboards', name: 'abc', path: 'team-a/cpu.json' })],
         undefined
       );
 

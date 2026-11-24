@@ -4,6 +4,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { type KindInfo } from '@grafana/runtime/unstable';
 import { Combobox, Field, Input, TextArea } from '@grafana/ui';
 import {
   type RepositoryView,
@@ -26,7 +27,7 @@ import { joinPath, splitPath } from '../utils/path';
 type SharedFieldName = 'path' | 'comment';
 
 interface DashboardEditFormSharedFieldsProps {
-  resourceType: string;
+  kind: KindInfo;
   canPushToConfiguredBranch: boolean;
   isNew?: boolean;
   readOnly?: boolean;
@@ -47,7 +48,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
     canPushToConfiguredBranch,
     repository,
     isNew,
-    resourceType,
+    kind,
     hiddenFields,
     allowPathEdit,
     lockComment = false,
@@ -85,8 +86,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
 
     // New resources with an editable path (dashboards, playlists) get a path-exists check so a
     // duplicate path is caught before submit rather than only by the API.
-    const shouldValidatePath =
-      isNew && (resourceType === CORE_KINDS.dashboard.kind || resourceType === CORE_KINDS.playlist.kind);
+    const shouldValidatePath = isNew && (kind === CORE_KINDS.dashboard || kind === CORE_KINDS.playlist);
 
     const canPushToNonConfiguredBranch = repository?.workflows?.includes('branch');
     const canOnlyPushToConfiguredBranch = canPushToConfiguredBranch && !canPushToNonConfiguredBranch;
@@ -114,7 +114,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
       canPushToNonConfiguredBranch,
     });
 
-    const showFolderFilename = (isNew || allowPathEdit) && resourceType === CORE_KINDS.dashboard.kind;
+    const showFolderFilename = (isNew || allowPathEdit) && kind === CORE_KINDS.dashboard;
     const configuredRepoPath = isGitProvider(repository?.type) ? stripSlashes(repository?.path ?? '') : undefined;
 
     // A new branch only exists after the save creates it; until the selected branch is a known
@@ -128,7 +128,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
     });
 
     const pathText =
-      resourceType === CORE_KINDS.folder.kind
+      kind === CORE_KINDS.folder
         ? t(
             'provisioned-resource-form.save-or-delete-resource-shared-fields.description-folder-path',
             'Folder path inside the repository'

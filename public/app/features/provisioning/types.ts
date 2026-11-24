@@ -1,3 +1,5 @@
+import { type KindInfo } from '@grafana/runtime/unstable';
+
 import {
   type BitbucketRepositoryConfig,
   type BranchOptions,
@@ -126,6 +128,7 @@ export type SyncStatus = 'synced' | 'pending';
 export interface TreeItem {
   title: string;
   type: string;
+  kind?: KindInfo;
   path: string;
   level: number;
   children: TreeItem[];

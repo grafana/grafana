@@ -115,7 +115,6 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
 
   const { handleSuccess } = useProvisionedRequestHandler({
     isNewBranch,
-    resourceType: CORE_KINDS.folder.kind,
     folderUID: folder.uid,
     repository,
     successMessage: t(
@@ -183,7 +182,7 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
           </Field>
 
           <ResourceEditFormSharedFields
-            resourceType={CORE_KINDS.folder.kind}
+            kind={CORE_KINDS.folder}
             isNew={false}
             canPushToConfiguredBranch={canPushToConfiguredBranch}
             repository={repository}

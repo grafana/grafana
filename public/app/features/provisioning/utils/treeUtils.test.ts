@@ -1,4 +1,5 @@
 import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 
 import { type TreeItem } from '../types';
 
@@ -191,37 +192,34 @@ describe('mergeFilesAndResources', () => {
 });
 
 describe('getTreeItemKind', () => {
-  it('should return Dashboard for dashboard resources', () => {
+  it('should return the dashboard kind for dashboard resources', () => {
     const result = getTreeItemKind('dashboards/test.json', mockResource);
 
-    expect(result).toBe('Dashboard');
+    expect(result).toBe(CORE_KINDS.dashboard);
   });
 
-  it('should return Folder for folder resources', () => {
+  it('should return the folder kind for folder resources', () => {
     const result = getTreeItemKind('dashboards', mockFolderResource);
 
-    expect(result).toBe('Folder');
+    expect(result).toBe(CORE_KINDS.folder);
   });
 
-  it('should return Playlist for playlist resources', () => {
+  it('should return the playlist kind for playlist resources', () => {
     const result = getTreeItemKind('my-playlist.json', mockPlaylistResource);
 
-    expect(result).toBe('Playlist');
+    expect(result).toBe(CORE_KINDS.playlist);
   });
 
-  it('should return File for unsynced files regardless of extension', () => {
-    const result = getTreeItemKind('some/path/file.json', undefined);
-
-    expect(result).toBe('File');
+  it('should return the folder kind for a path without an extension or resource', () => {
+    expect(getTreeItemKind('some/path', undefined)).toBe(CORE_KINDS.folder);
   });
 
-  it('should return File for non-JSON paths without resource', () => {
-    const result = getTreeItemKind('some/path/file.txt', undefined);
-
-    expect(result).toBe('File');
+  it('should return no kind for unsynced files regardless of extension', () => {
+    expect(getTreeItemKind('some/path/file.json', undefined)).toBeUndefined();
+    expect(getTreeItemKind('some/path/file.txt', undefined)).toBeUndefined();
   });
 
-  it('should return File when resource type is unknown', () => {
+  it('should return no kind when resource type is unknown', () => {
     const unknownResource = {
       ...mockResource,
       resource: 'unknown-type',
@@ -229,26 +227,25 @@ describe('getTreeItemKind', () => {
 
     const result = getTreeItemKind('some/path', unknownResource);
 
-    expect(result).toBe('File');
+    expect(result).toBeUndefined();
+  });
+
+  it('should return no kind when the resource name belongs to another group', () => {
+    const otherGroup = { ...mockResource, group: 'dashboardv2.example.app' };
+
+    expect(getTreeItemKind('dashboards/test.json', otherGroup)).toBeUndefined();
   });
 });
 
 describe('getIconName', () => {
-  it('should return the icon for a known resource-backed item', () => {
-    expect(getIconName({ type: 'Dashboard', resource: 'dashboards' })).toBe('apps');
-    expect(getIconName({ type: 'Folder', resource: 'folders' })).toBe('folder');
+  it('should return the icon of the item kind', () => {
+    expect(getIconName({ kind: CORE_KINDS.dashboard })).toBe('apps');
+    expect(getIconName({ kind: CORE_KINDS.folder })).toBe('folder');
+    expect(getIconName({ kind: CORE_KINDS.playlist })).toBe('presentation-play');
   });
 
-  it('should return the icon for a playlist item', () => {
-    expect(getIconName({ type: 'Playlist', resource: 'playlists' })).toBe('presentation-play');
-  });
-
-  it('should return the folder icon for a folder inferred from a path', () => {
-    expect(getIconName({ type: 'Folder' })).toBe('folder');
-  });
-
-  it('should fall back to the file icon for the non-resource File type', () => {
-    expect(getIconName({ type: 'File' })).toBe('file-alt');
+  it('should fall back to the file icon for an item without a kind', () => {
+    expect(getIconName({})).toBe('file-alt');
   });
 });
 
@@ -1021,6 +1018,7 @@ describe('flattenTree', () => {
         path: 'folder',
         title: 'Folder',
         type: 'Folder',
+        kind: CORE_KINDS.folder,
         level: 0,
         children: [
           {
@@ -1047,12 +1045,14 @@ describe('flattenTree', () => {
         path: 'folder',
         title: 'Folder',
         type: 'Folder',
+        kind: CORE_KINDS.folder,
         level: 0,
         children: [
           {
             path: 'folder/subfolder',
             title: 'Subfolder',
             type: 'Folder',
+            kind: CORE_KINDS.folder,
             level: 0,
             children: [
               {
@@ -1082,6 +1082,7 @@ describe('flattenTree', () => {
         path: 'folder',
         title: 'Folder',
         type: 'Folder',
+        kind: CORE_KINDS.folder,
         level: 0,
         children: [
           { path: 'folder/a.json', title: 'a.json', type: 'File', level: 0, children: [] },
@@ -1108,6 +1109,7 @@ describe('flattenTree', () => {
         path: 'folder',
         title: 'Folder',
         type: 'Folder',
+        kind: CORE_KINDS.folder,
         level: 0,
         children: [{ path: 'folder/file.json', title: 'file.json', type: 'File', level: 0, children: [] }],
       },
@@ -1128,6 +1130,7 @@ describe('flattenTree', () => {
         path: 'folder',
         title: 'Folder',
         type: 'Folder',
+        kind: CORE_KINDS.folder,
         level: 0,
         children: [{ path: 'folder/file.json', title: 'file.json', type: 'File', level: 0, children: [] }],
       },
@@ -1147,12 +1150,14 @@ describe('flattenTree', () => {
         path: 'folder',
         title: 'Folder',
         type: 'Folder',
+        kind: CORE_KINDS.folder,
         level: 0,
         children: [
           {
             path: 'folder/subfolder',
             title: 'Subfolder',
             type: 'Folder',
+            kind: CORE_KINDS.folder,
             level: 0,
             children: [
               { path: 'folder/subfolder/file.json', title: 'file.json', type: 'File', level: 0, children: [] },
@@ -1179,6 +1184,7 @@ describe('filterTree', () => {
       path: 'dashboards',
       title: 'Dashboards',
       type: 'Folder',
+      kind: CORE_KINDS.folder,
       level: 0,
       children: [
         {
@@ -1292,6 +1298,7 @@ describe('filterByStatusAndResources by status', () => {
       path: 'dashboards',
       title: 'Dashboards',
       type: 'Folder',
+      kind: CORE_KINDS.folder,
       level: 0,
       status: 'pending',
       children: [
@@ -1317,6 +1324,7 @@ describe('filterByStatusAndResources by status', () => {
       path: 'reports',
       title: 'Reports',
       type: 'Folder',
+      kind: CORE_KINDS.folder,
       level: 0,
       status: 'synced',
       children: [
@@ -1369,6 +1377,7 @@ describe('filterByStatusAndResources by status', () => {
         path: 'folder',
         title: 'Folder',
         type: 'Folder',
+        kind: CORE_KINDS.folder,
         level: 0,
         status: 'pending',
         children: [{ path: 'folder/a.json', title: 'a', type: 'Dashboard', level: 0, status: 'synced', children: [] }],
@@ -1388,6 +1397,7 @@ describe('filterByStatusAndResources by status', () => {
         path: 'folder',
         title: 'Folder',
         type: 'Folder',
+        kind: CORE_KINDS.folder,
         level: 0,
         status: 'pending',
         missingFolderMetadata: true,
@@ -1405,6 +1415,7 @@ describe('filterByStatusAndResources by resource', () => {
       path: 'folder',
       title: 'Folder',
       type: 'Folder',
+      kind: CORE_KINDS.folder,
       resource: 'folders',
       level: 0,
       children: [
@@ -1437,6 +1448,7 @@ describe('filterByStatusAndResources by status and resource', () => {
       path: 'folder',
       title: 'Folder',
       type: 'Folder',
+      kind: CORE_KINDS.folder,
       resource: 'folders',
       status: 'pending',
       level: 0,

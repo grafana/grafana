@@ -47,8 +47,8 @@ interface ResourceTreeViewProps {
 type TreeCell<T extends keyof FlatTreeItem = keyof FlatTreeItem> = CellProps<FlatTreeItem, FlatTreeItem[T]>;
 
 function getGrafanaLink(item: TreeItem) {
-  if (item.resourceName && item.resource) {
-    return findKindByResource(item.resource)?.getRoute?.(item.resourceName);
+  if (item.resourceName) {
+    return item.kind?.getRoute?.(item.resourceName);
   }
   return undefined;
 }
@@ -81,9 +81,9 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
   );
 
   const resourceFilterOptions: Array<ComboboxOption<string>> = useMemo(() => {
-    const resources = new Set(resourcesQuery.data?.items?.map((item) => item.resource));
-    return Array.from(resources, (value) => ({
-      label: findKindByResource(value)?.getPluralLabel() ?? value,
+    const resources = new Map(resourcesQuery.data?.items?.map((item) => [item.resource, item.group]));
+    return Array.from(resources, ([value, group]) => ({
+      label: findKindByResource(group, value)?.getPluralLabel() ?? value,
       value,
     }));
   }, [resourcesQuery.data?.items]);

@@ -22,7 +22,6 @@ import { useLastBranch } from './useLastBranch';
 // Information object that gets passed to all handlers
 interface ProvisionedOperationInfo {
   repoType: RepoType;
-  resourceType?: string;
 }
 
 /**
@@ -43,7 +42,6 @@ interface RequestHandlers<T> {
 interface ProvisionedHandlerOptions<T> {
   folderUID?: string; // this is used to refetch folder items
   repository?: RepositoryView;
-  resourceType?: string;
   /** The commit created the branch: the destination page shows the PR banner, so no toast. */
   isNewBranch?: boolean;
   successMessage?: string;
@@ -113,11 +111,11 @@ export function useProvisionedRequestHandler<T>(options: ProvisionedHandlerOptio
   const { setLastBranch } = useLastBranch();
 
   const handleSuccess = (data: ResourceWrapper, overrides?: Partial<ProvisionedHandlerOptions<T>>) => {
-    const { folderUID, repository, resourceType, isNewBranch, successMessage, handlers } = {
+    const { folderUID, repository, isNewBranch, successMessage, handlers } = {
       ...options,
       ...overrides,
     };
-    const info: ProvisionedOperationInfo = { repoType: repository?.type || 'git', resourceType };
+    const info: ProvisionedOperationInfo = { repoType: repository?.type || 'git' };
 
     const { ref, path, urls, resource } = data;
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions

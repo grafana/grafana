@@ -137,7 +137,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
               />
 
               <ResourceEditFormSharedFields
-                resourceType={CORE_KINDS.folder.kind}
+                kind={CORE_KINDS.folder}
                 isNew={false}
                 canPushToConfiguredBranch={canPushToConfiguredBranch}
                 repository={repository}

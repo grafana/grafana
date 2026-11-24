@@ -39,7 +39,7 @@ describe('useProvisionedRequestHandler', () => {
     it('should publish success event and call onDismiss', () => {
       const { handlers, mockPublish, render } = setup();
 
-      const { result } = render({ resourceType: 'dashboard', handlers });
+      const { result } = render({ handlers });
       result.current.handleSuccess(createMockResourceWrapper());
 
       expect(mockPublish).toHaveBeenCalledWith({
@@ -60,7 +60,6 @@ describe('useProvisionedRequestHandler', () => {
       const { result } = render({
         repository: { ...githubRepository, branch: 'main' },
         isNewBranch: true,
-        resourceType: 'dashboard',
         handlers,
       });
       result.current.handleSuccess(wrapper);
@@ -72,7 +71,6 @@ describe('useProvisionedRequestHandler', () => {
           urls: { compareURL: 'http://example.com/edit' },
         },
         expect.objectContaining({
-          resourceType: 'dashboard',
           repoType: 'github',
         }),
         expect.any(Object),
@@ -91,7 +89,6 @@ describe('useProvisionedRequestHandler', () => {
       const { result } = render({
         repository: { ...githubRepository, branch: 'main' },
         isNewBranch: false,
-        resourceType: 'dashboard',
         handlers,
       });
       result.current.handleSuccess(wrapper);
@@ -106,7 +103,6 @@ describe('useProvisionedRequestHandler', () => {
       const { handlers, render } = setup();
 
       const { result } = render({
-        resourceType: 'dashboard',
         repository: {
           ...githubRepository,
           branch: 'main',
@@ -132,7 +128,6 @@ describe('useProvisionedRequestHandler', () => {
       const { handlers, render } = setup();
 
       const { result } = render({
-        resourceType: 'dashboard',
         repository: {
           ...githubRepository,
           branch: 'main',
@@ -159,7 +154,6 @@ describe('useProvisionedRequestHandler', () => {
 
       const { result } = render({
         repository: { ...githubRepository, branch: 'main' },
-        resourceType: 'dashboard',
         handlers,
       });
       result.current.handleSuccess(wrapper);
@@ -191,7 +185,7 @@ describe('useProvisionedRequestHandler', () => {
       const { handlers, mockPublish, render } = setup();
       const wrapper = createMockResourceWrapper({ ref: 'feature-branch', path: '/dashboard.json' });
 
-      const { result } = render({ resourceType: 'dashboard', isNewBranch: false, handlers });
+      const { result } = render({ isNewBranch: false, handlers });
       result.current.handleSuccess(wrapper, { isNewBranch: true });
 
       // The override wins: a new branch suppresses the toast the hook options would have shown.
@@ -204,7 +198,7 @@ describe('useProvisionedRequestHandler', () => {
       const { handlers, render } = setup();
       const overrideWrite = jest.fn();
 
-      const { result } = render({ resourceType: 'dashboard', handlers });
+      const { result } = render({ handlers });
       result.current.handleSuccess(createMockResourceWrapper(), { handlers: { onWriteSuccess: overrideWrite } });
 
       expect(overrideWrite).toHaveBeenCalled();

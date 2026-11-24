@@ -178,7 +178,7 @@ export function MoveProvisionedDashboardForm({
               </Field>
 
               <ResourceEditFormSharedFields
-                resourceType={CORE_KINDS.dashboard.kind}
+                kind={CORE_KINDS.dashboard}
                 isNew={isNew}
                 readOnly={readOnly}
                 canPushToConfiguredBranch={canPushToConfiguredBranch}

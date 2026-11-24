@@ -224,7 +224,7 @@ export function ProvisionedImportForm({
 
         {!isLibraryPanelImportBlocked && !isReadOnlyRepo && (
           <ResourceEditFormSharedFields
-            resourceType={CORE_KINDS.dashboard.kind}
+            kind={CORE_KINDS.dashboard}
             isNew
             canPushToConfiguredBranch={canPushToConfiguredBranch}
             repository={repository}

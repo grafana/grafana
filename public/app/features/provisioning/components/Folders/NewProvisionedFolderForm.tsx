@@ -152,7 +152,6 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
     folderUID: folder?.metadata.name ?? GENERAL_FOLDER_UID,
     isNewBranch,
     repository,
-    resourceType: CORE_KINDS.folder.kind,
     handlers: {
       onDismiss,
       onBranchSuccess,
@@ -246,7 +245,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
           )}
 
           <ResourceEditFormSharedFields
-            resourceType={CORE_KINDS.folder.kind}
+            kind={CORE_KINDS.folder}
             isNew
             canPushToConfiguredBranch={canPushToConfiguredBranch}
             repository={repository}

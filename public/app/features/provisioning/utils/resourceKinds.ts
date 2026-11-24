@@ -199,7 +199,7 @@ export function isResourceKindAvailable(info: KindInfo, availableResources?: Sup
  */
 export function getMigratableKinds(availableResources?: SupportedResource[]): ResourceKindInfo[] {
   return allKindInfos.filter((info) => {
-    if (info.kind === resourceKindInfos.folder.kind) {
+    if (info === resourceKindInfos.folder) {
       return false;
     }
     return availableResources ? isResourceKindAvailable(info, availableResources) : info.alwaysAvailable;

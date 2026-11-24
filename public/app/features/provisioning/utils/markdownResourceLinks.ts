@@ -61,7 +61,7 @@ export function createGrafanaLinkResolver(
       return undefined;
     }
 
-    return findKindByResource(resource.resource)?.getRoute?.(resource.name);
+    return findKindByResource(resource.group, resource.resource)?.getRoute?.(resource.name);
   };
 }
 

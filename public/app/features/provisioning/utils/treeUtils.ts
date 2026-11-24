@@ -1,11 +1,11 @@
+import { type KindInfo } from '@grafana/runtime/unstable';
 import { type IconName } from '@grafana/ui';
 import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
-import { findKindByResource } from 'app/core/kinds/coreKinds';
+import { CORE_KINDS, findKindByResource } from 'app/core/kinds/coreKinds';
 
 import { type FileDetails, type FlatTreeItem, type SyncStatus, type TreeItem } from '../types';
 
 import { getFolderMetadataPath, getParentFolderResourceHash, isFolderMetadataPath } from './folderMetadata';
-import { resourceKindInfos } from './resourceKinds';
 
 const collator = new Intl.Collator();
 
@@ -45,7 +45,7 @@ export function mergeFilesAndResources(files: unknown[], resources: ResourceList
   // Merge resources
   for (const resource of resources) {
     const path = resource.path.replace(/\/+$/, '');
-    if (!path && resource.resource !== resourceKindInfos.folder.resource) {
+    if (!path && findKindByResource(resource.group, resource.resource) !== CORE_KINDS.folder) {
       continue;
     }
     const existing = merged.get(path);
@@ -59,17 +59,18 @@ export function mergeFilesAndResources(files: unknown[], resources: ResourceList
   return Array.from(merged.values());
 }
 
-export function getTreeItemKind(path: string, resource?: ResourceListItem): string {
-  const kindInfo = resource && findKindByResource(resource.resource);
-  if (kindInfo) {
-    return kindInfo.kind;
+/** The kind of a tree item, or undefined for a plain file. */
+export function getTreeItemKind(path: string, resource?: ResourceListItem): KindInfo | undefined {
+  if (resource) {
+    return findKindByResource(resource.group, resource.resource);
   }
-  // Inferred folder (no extension means it's a folder from file paths)
-  if (!resource && !path.includes('.')) {
-    return 'Folder';
-  }
-  // Unsynced files are "File" - don't infer Dashboard from .json
-  return 'File';
+  // Inferred folder (no extension means it's a folder from file paths). Unsynced files stay plain
+  // files: don't infer Dashboard from .json
+  return path.includes('.') ? undefined : CORE_KINDS.folder;
+}
+
+function isFolder(node: TreeItem): boolean {
+  return node.kind === CORE_KINDS.folder;
 }
 
 function getDisplayTitle(path: string, resource?: ResourceListItem): string {
@@ -79,11 +80,8 @@ function getDisplayTitle(path: string, resource?: ResourceListItem): string {
   return path.split('/').pop() ?? path;
 }
 
-export function getIconName({ type, resource }: Pick<TreeItem, 'type' | 'resource'>): IconName {
-  const kind = resource
-    ? findKindByResource(resource)
-    : type === resourceKindInfos.folder.kind && resourceKindInfos.folder;
-  return kind ? kind.icon : 'file-alt';
+export function getIconName({ kind }: Pick<TreeItem, 'kind'>): IconName {
+  return kind?.icon ?? 'file-alt';
 }
 
 export function getStatus(fileHash?: string, resourceHash?: string): SyncStatus {
@@ -95,13 +93,13 @@ export function getStatus(fileHash?: string, resourceHash?: string): SyncStatus 
 }
 
 function calculateFolderStatus(node: TreeItem): SyncStatus | undefined {
-  if (node.type !== 'Folder') {
+  if (!isFolder(node)) {
     return node.status;
   }
 
   // If any child is pending, folder is pending.
   for (const child of node.children) {
-    const childStatus = child.type === 'Folder' ? calculateFolderStatus(child) : child.status;
+    const childStatus = isFolder(child) ? calculateFolderStatus(child) : child.status;
     if (childStatus === 'pending') {
       return 'pending';
     }
@@ -118,12 +116,13 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
 
   // Create all nodes (files, dashboards, folders)
   for (const item of mergedItems) {
-    const type = !item.resource && item.file?.hash === '' ? 'Folder' : getTreeItemKind(item.path, item.resource);
+    const kind =
+      !item.resource && item.file?.hash === '' ? CORE_KINDS.folder : getTreeItemKind(item.path, item.resource);
     const isFolderMetadata = isFolderMetadataPath(item.path);
     // Show sync status for any provisioned resource kind (Folder, Dashboard, Playlist, ...) or for
-    // unsynced .json files that haven't been turned into a resource yet. `type` is only 'File' for
-    // paths that don't map to a kind in the resource registry.
-    const showStatus = type !== 'File' || item.path.endsWith('.json');
+    // unsynced .json files that haven't been turned into a resource yet. `kind` is only unset for
+    // paths that don't map to a kind in the kind registry.
+    const showStatus = kind !== undefined || item.path.endsWith('.json');
     const resourceHash = isFolderMetadata
       ? getParentFolderResourceHash(item.path, lookupResourceHash)
       : item.resource?.hash;
@@ -131,7 +130,8 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
     nodeMap.set(item.path, {
       path: item.path,
       title: getDisplayTitle(item.path, item.resource),
-      type,
+      type: kind?.kind ?? 'File',
+      kind,
       level: 0,
       children: [],
       resourceName: item.resource?.name,
@@ -146,7 +146,7 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
   // has a non-empty hash, the metadata was previously synced — its absence means the
   // file was removed from the remote repo, so the folder is pending until the next sync.
   for (const [path, node] of nodeMap) {
-    if (path && node.type === 'Folder' && node.resourceName) {
+    if (path && isFolder(node) && node.resourceName) {
       const metadataPath = getFolderMetadataPath(path);
       const fileExists = nodeMap.has(metadataPath);
       node.missingFolderMetadata = !fileExists;
@@ -184,10 +184,10 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
   // Sort: folders first, then alphabetically, recursively
   const sortNodes = (nodes: TreeItem[]) => {
     nodes.sort((a, b) => {
-      if (a.type === 'Folder' && b.type !== 'Folder') {
+      if (isFolder(a) && !isFolder(b)) {
         return -1;
       }
-      if (a.type !== 'Folder' && b.type === 'Folder') {
+      if (!isFolder(a) && isFolder(b)) {
         return 1;
       }
       return collator.compare(a.title, b.title);
@@ -202,7 +202,7 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
   // Update folder statuses recursively (folders inherit pending from children)
   const updateFolderStatus = (nodes: TreeItem[]) => {
     for (const node of nodes) {
-      if (node.type === 'Folder') {
+      if (isFolder(node)) {
         updateFolderStatus(node.children);
         node.status = calculateFolderStatus(node);
       }
@@ -258,7 +258,7 @@ export function filterTree(items: TreeItem[], searchQuery: string): TreeItem[] {
       return node;
     }
 
-    if (node.type === 'Folder' && node.children.length > 0) {
+    if (isFolder(node) && node.children.length > 0) {
       const filteredChildren = node.children.map(filterNode).filter((n): n is TreeItem => n !== null);
       return filteredChildren.length > 0 ? { ...node, children: filteredChildren } : null;
     }
@@ -308,7 +308,7 @@ export function filterByStatusAndResources(
   };
 
   const filterNode = (node: TreeItem): TreeItem | null => {
-    if (node.type === 'Folder' && node.children.length > 0) {
+    if (isFolder(node) && node.children.length > 0) {
       const filteredChildren = node.children.map(filterNode).filter((n): n is TreeItem => n !== null);
       if (filteredChildren.length > 0) {
         return { ...node, children: filteredChildren };

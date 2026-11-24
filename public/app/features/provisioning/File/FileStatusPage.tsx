@@ -14,7 +14,7 @@ import {
 } from 'app/api/clients/provisioning/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { CORE_KINDS } from 'app/core/kinds/coreKinds';
+import { CORE_KINDS, findKind } from 'app/core/kinds/coreKinds';
 
 import { PROVISIONING_PREVIEW_URL } from '../constants';
 import { useGetResourceRepositoryView } from '../hooks/useGetResourceRepositoryView';
@@ -74,7 +74,8 @@ interface Props {
 }
 
 function ResourceView({ wrap, repo, repoRef, tab, isReadOnlyRepo }: Props) {
-  const isDashboard = wrap.resource?.type?.kind === CORE_KINDS.dashboard.kind;
+  const type = wrap.resource?.type;
+  const isDashboard = !!type?.group && !!type.kind && findKind(type.group, type.kind) === CORE_KINDS.dashboard;
   const existingName = wrap.resource?.existing?.metadata?.name;
   const location = useLocation();
   const [queryParams] = useQueryParams();

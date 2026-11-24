@@ -270,7 +270,7 @@ describe('FolderReadmePanel', () => {
       path: 'dashboards/team-a/cpu.json',
       resource: 'dashboards',
       name: 'abc',
-      group: '',
+      group: 'dashboard.grafana.app',
       hash: '',
     };
 
@@ -357,7 +357,7 @@ describe('FolderReadmePanel', () => {
                 path: 'dashboards/team-a/cpu.json',
                 resource: 'dashboards',
                 name: isB ? 'bbb' : 'aaa',
-                group: '',
+                group: 'dashboard.grafana.app',
                 hash: '',
               },
             ],
@@ -388,7 +388,9 @@ describe('FolderReadmePanel', () => {
 
     it('navigates in-app to the containing folder doc tab when a markdown link maps to a synced folder', async () => {
       // A folder is keyed by its directory; the doc's containing folder resolves it.
-      setResources([{ path: 'dashboards/team-a', resource: 'folders', name: 'fold1', group: '', hash: '' }]);
+      setResources([
+        { path: 'dashboards/team-a', resource: 'folders', name: 'fold1', group: 'folder.grafana.app', hash: '' },
+      ]);
       setReadmeResult({ markdownContent: 'See [contributing](./CONTRIBUTING.md)' });
 
       const { user } = setup();

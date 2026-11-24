@@ -151,7 +151,7 @@ function FixFolderMetadataForm({
         <Stack direction="column" gap={2}>
           <ProvisioningAlert error={submitError} />
           <ResourceEditFormSharedFields
-            resourceType={CORE_KINDS.folder.kind}
+            kind={CORE_KINDS.folder}
             canPushToConfiguredBranch={canPushToConfiguredBranch}
             repository={repository}
             hiddenFields={['path', 'comment']}

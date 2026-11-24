@@ -103,7 +103,7 @@ export function RepositoryListItem({ repository }: Props) {
           {status?.stats?.length && (
             <Stack gap={1} direction="row" wrap>
               {status.stats.map((stat, index) => {
-                const kind = findKindByResource(stat.resource);
+                const kind = findKindByResource(stat.group, stat.resource);
                 return (
                   <LinkButton
                     key={index}
