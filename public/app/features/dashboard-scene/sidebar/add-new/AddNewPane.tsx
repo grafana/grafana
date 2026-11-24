@@ -20,6 +20,7 @@ import { AddButton } from './AddButton';
 import { AddFilters } from './AddFilters';
 import { AddLink } from './AddLink';
 import { AddNewSection } from './AddNewSection';
+import { AddQuestion } from './AddQuestion';
 import { AddRow } from './AddRow';
 import { AddTab } from './AddTab';
 import { AddVariable } from './AddVariable';
@@ -137,6 +138,7 @@ function AddNewPaneRenderer({ model }: SceneComponentProps<AddNewPane>) {
           <AddVariable dashboardScene={dashboardScene} selectedElement={selectedObj} />
           <AddAnnotationQuery dashboardScene={dashboardScene} selectedElement={selectedObj} />
           <AddLink dashboardScene={dashboardScene} />
+          <AddQuestion dashboardScene={dashboardScene} selectedElement={selectedObj} />
         </AddNewSection>
       </ScrollContainer>
     </div>

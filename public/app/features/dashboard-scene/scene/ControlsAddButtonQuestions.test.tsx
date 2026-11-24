@@ -34,19 +34,23 @@ describe('AddControlsButton', () => {
     });
   });
 
-  it('adds a question to the dashboard and opens it', async () => {
-    setTestFlags({ 'grafana.dashboardQuestions': true });
-    const dashboard = renderAddButton('v2');
+  it.each([false, true])(
+    'adds a question to the dashboard and opens it, with the sidebar closed and explicit opening %s',
+    async (sidebarExplicitOpen) => {
+      setTestFlags({ 'grafana.dashboardQuestions': true, 'grafana.dashboardSidebarExplicitOpen': sidebarExplicitOpen });
+      const dashboard = renderAddButton('v2');
 
-    await userEvent.click(screen.getByTestId(selectors.components.ControlsAddButton.triggerButton));
-    await userEvent.click(screen.getByRole('menuitem', { name: 'Question' }));
+      await userEvent.click(screen.getByTestId(selectors.components.ControlsAddButton.triggerButton));
+      await userEvent.click(screen.getByRole('menuitem', { name: 'Question' }));
 
-    await waitFor(() => {
-      expect(dashboard.state.questions).toEqual([{ text: '' }]);
-    });
-    const selected = dashboard.state.sidebar.getSelectedObject();
-    expect(selected instanceof QuestionEdit && selected.state.questionIndex).toBe(0);
-  });
+      await waitFor(() => {
+        expect(dashboard.state.questions).toEqual([{ text: '' }]);
+      });
+      const selected = dashboard.state.sidebar.getSelectedObject();
+      expect(selected instanceof QuestionEdit && selected.state.questionIndex).toBe(0);
+      expect(dashboard.state.sidebar.state.openPane?.getId()).toBe('element');
+    }
+  );
 
   it.each<[string, boolean, 'v1' | 'v2']>([
     ['grafana.dashboardQuestions is off', false, 'v2'],

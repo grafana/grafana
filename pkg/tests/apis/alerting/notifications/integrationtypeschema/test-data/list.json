@@ -6061,6 +6061,22 @@
               },
               {
                 "dependsOn": "",
+                "description": "Displays the message in a monospace font. Cannot be used with HTML formatting.",
+                "element": "checkbox",
+                "inputType": "",
+                "label": "Monospace",
+                "placeholder": "",
+                "propertyName": "monospace",
+                "required": false,
+                "secure": false,
+                "showWhen": {
+                  "field": "",
+                  "is": ""
+                },
+                "validationRule": ""
+              },
+              {
+                "dependsOn": "",
                 "description": "Note that `basic_auth` and `bearer_token` options are mutually exclusive.",
                 "element": "subform",
                 "inputType": "",

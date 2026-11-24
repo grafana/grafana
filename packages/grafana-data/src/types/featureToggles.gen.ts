@@ -430,11 +430,6 @@ export interface FeatureToggles {
   */
   playlistsRBAC?: boolean;
   /**
-  * Enables Saved queries (query library) RBAC permissions
-  * @default true
-  */
-  savedQueriesRBAC?: boolean;
-  /**
   * Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page
   * @default false
   */

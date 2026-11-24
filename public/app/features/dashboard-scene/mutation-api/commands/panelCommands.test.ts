@@ -79,10 +79,9 @@ let currentTestScene: unknown;
 
 jest.mock('../../utils/utils', () => {
   const actual = jest.requireActual('../../utils/utils');
-  return {
-    ...actual,
-    getDashboardSceneFor: jest.fn(() => currentTestScene ?? { state: { isEditing: true } }),
-  };
+  return jest
+    .requireActual('test/helpers/partialMock')
+    .partialMock(actual, { getDashboardSceneFor: jest.fn(() => currentTestScene ?? { state: { isEditing: true } }) });
 });
 
 function mockSerializer(elementMap: Record<string, number> = {}) {

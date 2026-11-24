@@ -74,11 +74,12 @@ func TestLegacyStorage_DryRun(t *testing.T) {
 	quotas.EXPECT().LimitOK()
 	folderService := foldertest.NewFakeService()
 	folderService.ExpectedFolder = &folder.Folder{UID: "test-folder-uid", Title: "Test Folder"}
-	svc := legacy.NewLegacyRuleService(
+	svc := legacy.New(
 		ruleStore, fakes.NewFakeProvisioningStore(), folderService, &quotas, ruleStore,
 		60, log.NewNopLogger(), nil, allowAllRuleAccessControl{}, nil,
+		request.GetNamespaceMapper(&setting.Cfg{}),
 	)
-	s := &legacyStorage{rules: legacy.NewRecordingRules(svc, request.GetNamespaceMapper(&setting.Cfg{}))}
+	s := &legacyStorage{rules: svc.RecordingRules()}
 	ctx := genericapirequest.WithNamespace(context.Background(), "default")
 	ctx = identity.WithRequester(ctx, &user.SignedInUser{OrgID: 1, UserUID: "test-user"})
 	dryRun := []string{metav1.DryRunAll}

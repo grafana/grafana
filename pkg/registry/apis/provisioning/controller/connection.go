@@ -468,7 +468,7 @@ func (cc *ConnectionController) process(ctx context.Context, key string) (err er
 			// live re-validation. Use "add": status.token is a newly introduced field
 			// that may be absent on Connections created before this change, and "add"
 			// both creates and replaces.
-			tokenStatus := provisioning.TokenStatus{LastUpdated: time.Now().UnixMilli()}
+			tokenStatus := provisioning.ConnectionTokenStatus{LastUpdated: time.Now().UnixMilli()}
 			if !tokenExpiresAt.IsZero() {
 				tokenStatus.Expiration = tokenExpiresAt.UnixMilli()
 			}

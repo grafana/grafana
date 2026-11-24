@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -21,7 +22,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -1786,6 +1790,59 @@ func TestIntegrationProvisioning_DeleteRepositoryClearsJobQueue(t *testing.T) {
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "queue should be cleared for the deleted repository")
 }
 
+// TestIntegrationProvisioning_ForceDeleteOrphanedManagedResources verifies that
+// resources outliving their repository can be force-deleted by an admin, while the root
+// folder of a live repository still cannot. The repository root folder carries a manager
+// but no source path, so it used to fail with "managed resource is missing source path
+// annotation" forever. A force delete stamps the folder terminating label first, so this
+// also covers the metadata-only update of an orphan.
+func TestIntegrationProvisioning_ForceDeleteOrphanedManagedResources(t *testing.T) {
+	helper := sharedHelper(t)
+
+	const repo = "orphaned-resources"
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		Template:   common.TestdataPath("github.json.tmpl"),
+		SyncTarget: "folder",
+		Workflows:  []string{},
+	})
+
+	dashboards := helper.RequireRepoDashboardCount(t, repo, 3)
+	helper.RequireRepoFolderCount(t, repo, 6)
+
+	rootFolder, err := helper.Folders.Resource.Get(t.Context(), repo, metav1.GetOptions{})
+	require.NoError(t, err)
+	require.NotContains(t, rootFolder.GetAnnotations(), utils.AnnoKeySourcePath,
+		"the repository root folder has no source path")
+
+	forceDelete := metav1.DeleteOptions{GracePeriodSeconds: new(int64)}
+
+	t.Run("resources of a live repository are still routed to the repository", func(t *testing.T) {
+		err := helper.Folders.Resource.Delete(t.Context(), repo, forceDelete)
+		require.Error(t, err, "root folder of a live repository must not be deletable directly")
+
+		_, err = helper.Folders.Resource.Get(t.Context(), repo, metav1.GetOptions{})
+		require.NoError(t, err, "root folder should still exist")
+	})
+
+	deleteRepositoryKeepResources(t, helper, repo)
+
+	t.Run("orphaned resource with a source path can be deleted", func(t *testing.T) {
+		dash := dashboards[0]
+		require.Contains(t, dash.GetAnnotations(), utils.AnnoKeySourcePath)
+
+		require.NoError(t, helper.DashboardsV1.Resource.Delete(t.Context(), dash.GetName(), metav1.DeleteOptions{}))
+		_, err := helper.DashboardsV1.Resource.Get(t.Context(), dash.GetName(), metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err), "dashboard should be deleted, got: %v", err)
+	})
+
+	t.Run("orphaned resource without a source path can be deleted", func(t *testing.T) {
+		require.NoError(t, helper.Folders.Resource.Delete(t.Context(), repo, forceDelete))
+		_, err := helper.Folders.Resource.Get(t.Context(), repo, metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err), "root folder should be deleted, got: %v", err)
+	})
+}
+
 func TestIntegrationProvisioning_JobPermissions(t *testing.T) {
 	helper := sharedHelper(t)
 
@@ -1937,8 +1994,6 @@ func TestIntegrationProvisioning_RefsPermissions(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_EmptyPath(t *testing.T) {
-	t.Skip("Disabled: provisioning sync jobs time out in CI")
-
 	helper := sharedHelper(t)
 
 	t.Run("repository with empty path syncs from root", func(t *testing.T) {
@@ -2128,11 +2183,11 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 			Scheduled: now.UnixMilli(),
 			LastRef:   firstReconciledRepo.Status.Sync.LastRef,
 		}
-		firstReconciledRepo.Status.Health = provisioning.HealthStatus{
+		firstReconciledRepo.Status.Health = provisioning.RepositoryHealthStatus{
 			Healthy: true,
 			Checked: now.UnixMilli(),
 		}
-		firstReconciledRepo.Status.Token = provisioning.TokenStatus{
+		firstReconciledRepo.Status.Token = provisioning.RepositoryTokenStatus{
 			LastUpdated: now.Add(-2 * time.Minute).UnixMilli(),
 			Expiration:  now.Add(-time.Minute).UnixMilli(),
 		}
@@ -2817,4 +2872,305 @@ func TestIntegrationProvisioning_FolderTitleUpdatesOnSync(t *testing.T) {
 		title, _, _ := unstructured.NestedString(folderObj.Object, "spec", "title")
 		assert.Equal(collect, updatedTitle, title, "folder title should be updated after sync")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "root folder title should be updated after sync")
+}
+
+// filesStatus issues a raw request to the repository files endpoint and returns the HTTP status
+// code with the API error, so the response's own shape can be asserted.
+func filesStatus(t *testing.T, helper *common.ProvisioningTestHelper, verb, repo, path string) (int, error) {
+	t.Helper()
+	req := helper.AdminREST.Get()
+	if verb == http.MethodDelete {
+		req = helper.AdminREST.Delete()
+	}
+	var statusCode int
+	result := req.
+		Namespace("default").
+		Resource("repositories").
+		Name(repo).
+		Suffix("files", path).
+		Do(t.Context()).
+		StatusCode(&statusCode)
+	return statusCode, result.Error()
+}
+
+// requireRepositoryNotFound asserts the response identifies the repository in the request path as
+// the missing thing. Routing a managed write relies on these details to tell a deleted repository
+// apart from a missing file inside a live one.
+func requireRepositoryNotFound(t *testing.T, repo string, code int, err error) {
+	t.Helper()
+	require.Equal(t, http.StatusNotFound, code)
+	require.True(t, apierrors.IsNotFound(err), "got: %v", err)
+
+	status, ok := errors.AsType[*apierrors.StatusError](err)
+	require.True(t, ok, "got %T: %v", err, err)
+	require.Equal(t, metav1.StatusReasonNotFound, status.ErrStatus.Reason)
+	require.NotNil(t, status.ErrStatus.Details, "the response must name what was not found")
+	require.Equal(t, provisioning.GROUP, status.ErrStatus.Details.Group)
+	require.Equal(t, "repositories", status.ErrStatus.Details.Kind)
+	require.Equal(t, repo, status.ErrStatus.Details.Name)
+}
+
+// detailsKind reads the details kind of an API error, empty when it names nothing.
+func detailsKind(err error) string {
+	status, ok := errors.AsType[*apierrors.StatusError](err)
+	if !ok || status.ErrStatus.Details == nil {
+		return ""
+	}
+	return status.ErrStatus.Details.Kind
+}
+
+// dashboardCopyForRepo writes a copy of a test dashboard with the repository name added to its name.
+// Orphaned dashboards stay managed by their deleted repository, so a second repository in the same
+// test cannot sync the same dashboard name.
+func dashboardCopyForRepo(t *testing.T, from, repo string) string {
+	t.Helper()
+	raw, err := os.ReadFile(from) //nolint:gosec
+	require.NoError(t, err)
+	var dashboard map[string]any
+	require.NoError(t, json.Unmarshal(raw, &dashboard))
+	metadata, ok := dashboard["metadata"].(map[string]any)
+	require.True(t, ok, "%s has no metadata", from)
+	metadata["name"] = fmt.Sprintf("%s-%s", metadata["name"], repo)
+
+	out, err := json.Marshal(dashboard)
+	require.NoError(t, err)
+	copyPath := filepath.Join(t.TempDir(), filepath.Base(from))
+	require.NoError(t, os.WriteFile(copyPath, out, 0o600))
+	return copyPath
+}
+
+// orphanedRepoResources syncs a folder-target repository with a nested directory, then deletes the
+// repository while keeping only the cleanup finalizer so its resources are left behind. It returns
+// the names of the resources that outlived it.
+func orphanedRepoResources(t *testing.T, helper *common.ProvisioningTestHelper, repo string) (rootDashboard, nestedDashboard, nestedFolder string) {
+	t.Helper()
+
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
+		Copies: map[string]string{
+			dashboardCopyForRepo(t, "../testdata/all-panels.json", repo):   "dashboard.json",
+			dashboardCopyForRepo(t, "../testdata/text-options.json", repo): "nested/nested-dashboard.json",
+		},
+	})
+
+	bySourcePath := map[string]string{}
+	for _, d := range helper.RequireRepoDashboardCount(t, repo, 2) {
+		bySourcePath[d.GetAnnotations()[utils.AnnoKeySourcePath]] = d.GetName()
+	}
+	rootDashboard = bySourcePath["dashboard.json"]
+	nestedDashboard = bySourcePath["nested/nested-dashboard.json"]
+	require.NotEmpty(t, rootDashboard, "source paths: %v", bySourcePath)
+	require.NotEmpty(t, nestedDashboard, "source paths: %v", bySourcePath)
+
+	for _, f := range helper.RequireRepoFolderCount(t, repo, 2) {
+		if f.GetName() != repo {
+			nestedFolder = f.GetName()
+		}
+	}
+	require.NotEmpty(t, nestedFolder, "the nested directory should have produced a folder")
+
+	rootFolder, err := helper.Folders.Resource.Get(t.Context(), repo, metav1.GetOptions{})
+	require.NoError(t, err)
+	require.NotContains(t, rootFolder.GetAnnotations(), utils.AnnoKeySourcePath,
+		"the root folder represents the repository, not a file")
+
+	deleteRepositoryKeepResources(t, helper, repo)
+
+	_, err = helper.Folders.Resource.Get(t.Context(), repo, metav1.GetOptions{})
+	require.NoError(t, err, "the root folder should have outlived its repository")
+
+	return rootDashboard, nestedDashboard, nestedFolder
+}
+
+// TestIntegrationProvisioning_DeleteOrphanedManagedResources covers deleting resources that outlive
+// the repository managing them, and the files-endpoint responses the routing relies on to tell a
+// deleted repository apart from a missing file.
+func TestIntegrationProvisioning_DeleteOrphanedManagedResources(t *testing.T) {
+	helper := sharedHelper(t)
+
+	const repo = "orphan-delete-test"
+
+	t.Run("a missing file in a live repository is not reported as a missing repository", func(t *testing.T) {
+		helper.CreateLocalRepo(t, common.TestRepo{Name: repo + "-live", SyncTarget: "folder", SkipSync: true})
+
+		code, err := filesStatus(t, helper, http.MethodGet, repo+"-live", "no-such-file.json")
+
+		require.Equal(t, http.StatusNotFound, code)
+		require.True(t, apierrors.IsNotFound(err), "got: %v", err)
+		require.NotEqual(t, "repositories", detailsKind(err),
+			"a missing file must not look like a missing repository: %v", err)
+	})
+
+	rootDashboard, nestedDashboard, nestedFolder := orphanedRepoResources(t, helper, repo)
+
+	t.Run("the files endpoint names the repository as the missing thing", func(t *testing.T) {
+		t.Run("GET", func(t *testing.T) {
+			code, err := filesStatus(t, helper, http.MethodGet, repo, "dashboard.json")
+			requireRepositoryNotFound(t, repo, code, err)
+		})
+
+		t.Run("DELETE", func(t *testing.T) {
+			code, err := filesStatus(t, helper, http.MethodDelete, repo, "dashboard.json")
+			requireRepositoryNotFound(t, repo, code, err)
+		})
+	})
+
+	// Deleted bottom-up: a dashboard and a nested folder both have a source path, so their deletes
+	// are routed and recover from the repository not-found; the root folder has none to route with.
+	t.Run("an orphaned dashboard can be deleted", func(t *testing.T) {
+		require.NoError(t, helper.DashboardsV1.Resource.Delete(t.Context(), nestedDashboard, metav1.DeleteOptions{}))
+		helper.RequireDashboardsNotFound(t, nestedDashboard)
+	})
+
+	t.Run("an orphaned nested folder can be deleted", func(t *testing.T) {
+		require.NoError(t, helper.Folders.Resource.Delete(t.Context(), nestedFolder, metav1.DeleteOptions{}))
+		helper.RequireFoldersNotFound(t, nestedFolder)
+	})
+
+	t.Run("an orphaned root folder can be deleted", func(t *testing.T) {
+		require.NoError(t, helper.DashboardsV1.Resource.Delete(t.Context(), rootDashboard, metav1.DeleteOptions{}))
+		helper.RequireDashboardsNotFound(t, rootDashboard)
+
+		require.NoError(t, helper.Folders.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{}))
+		helper.RequireFoldersNotFound(t, repo)
+	})
+}
+
+// TestIntegrationProvisioning_ReleaseOrphanedManagedResources covers detaching resources whose
+// repository is gone. With the repository gone, the caller needs no admin role, only the permission
+// to update the resource.
+func TestIntegrationProvisioning_ReleaseOrphanedManagedResources(t *testing.T) {
+	helper := sharedHelper(t)
+
+	release := func(t *testing.T, client *apis.K8sResourceClient, name string) error {
+		t.Helper()
+		fresh, err := client.Resource.Get(t.Context(), name, metav1.GetOptions{})
+		require.NoError(t, err)
+
+		annotations := fresh.GetAnnotations()
+		for _, key := range []string{
+			utils.AnnoKeyManagerKind, utils.AnnoKeyManagerIdentity,
+			utils.AnnoKeySourcePath, utils.AnnoKeySourceChecksum,
+		} {
+			delete(annotations, key)
+		}
+		fresh.SetAnnotations(annotations)
+
+		_, err = client.Resource.Update(t.Context(), fresh, metav1.UpdateOptions{})
+		return err
+	}
+
+	for _, caller := range []struct {
+		role    string
+		user    apis.User
+		allowed bool
+	}{
+		{role: "viewer", user: helper.Org1.Viewer, allowed: false},
+		{role: "editor", user: helper.Org1.Editor, allowed: true},
+		{role: "admin", user: helper.Org1.Admin, allowed: true},
+	} {
+		t.Run(caller.role, func(t *testing.T) {
+			repo := "orphan-release-" + caller.role
+			rootDashboard, _, nestedFolder := orphanedRepoResources(t, helper, repo)
+
+			// ensureSameRepoManager rejects an unmanaged resource inside a folder that is still
+			// repo-managed. Release the root folder first, so only the caller's permissions decide
+			// the releases below.
+			require.NoError(t, release(t, helper.Folders, repo))
+
+			for _, resource := range []struct {
+				kind  string
+				gvr   schema.GroupVersionResource
+				admin *apis.K8sResourceClient
+				name  string
+			}{
+				{kind: "folder", gvr: folder.FolderResourceInfo.GroupVersionResource(), admin: helper.Folders, name: nestedFolder},
+				{kind: "dashboard", gvr: dashboardV1.DashboardResourceInfo.GroupVersionResource(), admin: helper.DashboardsV1, name: rootDashboard},
+			} {
+				t.Run(resource.kind, func(t *testing.T) {
+					client := helper.GetResourceClient(apis.ResourceClientArgs{
+						User:      caller.user,
+						Namespace: "default",
+						GVR:       resource.gvr,
+					})
+
+					err := release(t, client, resource.name)
+
+					stored, getErr := resource.admin.Resource.Get(t.Context(), resource.name, metav1.GetOptions{})
+					require.NoError(t, getErr)
+					if caller.allowed {
+						require.NoError(t, err)
+						require.NotContains(t, stored.GetAnnotations(), utils.AnnoKeyManagerKind)
+						require.NotContains(t, stored.GetAnnotations(), utils.AnnoKeyManagerIdentity)
+						require.NotContains(t, stored.GetAnnotations(), utils.AnnoKeySourcePath)
+						return
+					}
+					require.True(t, apierrors.IsForbidden(err), "a %s without update permission must not release: %v", caller.role, err)
+					require.Equal(t, repo, stored.GetAnnotations()[utils.AnnoKeyManagerIdentity], "the resource must stay managed")
+				})
+			}
+		})
+	}
+}
+
+// TestIntegrationProvisioning_DeleteOrphanedManagedResourcesByRole covers who may delete a resource
+// whose repository is gone. The caller needs no admin role, only the permission to delete the resource.
+func TestIntegrationProvisioning_DeleteOrphanedManagedResourcesByRole(t *testing.T) {
+	helper := sharedHelper(t)
+
+	for _, caller := range []struct {
+		role    string
+		user    apis.User
+		allowed bool
+	}{
+		// viewer does not have folders:delete permission
+		{role: "viewer", user: helper.Org1.Viewer, allowed: false},
+		{role: "editor", user: helper.Org1.Editor, allowed: true},
+		{role: "admin", user: helper.Org1.Admin, allowed: true},
+	} {
+		t.Run(caller.role, func(t *testing.T) {
+			repo := "orphan-delete-" + caller.role
+			_, nestedDashboard, nestedFolder := orphanedRepoResources(t, helper, repo)
+
+			// The dashboard goes first: a folder is deleted once it is empty.
+			for _, resource := range []struct {
+				kind  string
+				gvr   schema.GroupVersionResource
+				admin *apis.K8sResourceClient
+				name  string
+			}{
+				{kind: "dashboard", gvr: dashboardV1.DashboardResourceInfo.GroupVersionResource(), admin: helper.DashboardsV1, name: nestedDashboard},
+				{kind: "folder", gvr: folder.FolderResourceInfo.GroupVersionResource(), admin: helper.Folders, name: nestedFolder},
+			} {
+				t.Run(resource.kind, func(t *testing.T) {
+					if resource.kind == "folder" {
+						// A caller who cannot delete the dashboard leaves it in the folder, and a folder that is
+						// not empty is refused whatever the caller's permissions. Empty it as an admin, so the
+						// result depends on the permissions of the caller only.
+						err := helper.DashboardsV1.Resource.Delete(t.Context(), nestedDashboard, metav1.DeleteOptions{})
+						if err != nil {
+							require.True(t, apierrors.IsNotFound(err), "empty the folder: %v", err)
+						}
+					}
+					client := helper.GetResourceClient(apis.ResourceClientArgs{
+						User:      caller.user,
+						Namespace: "default",
+						GVR:       resource.gvr,
+					})
+
+					err := client.Resource.Delete(t.Context(), resource.name, metav1.DeleteOptions{})
+
+					_, getErr := resource.admin.Resource.Get(t.Context(), resource.name, metav1.GetOptions{})
+					if caller.allowed {
+						require.NoError(t, err)
+						require.True(t, apierrors.IsNotFound(getErr), "the %s should be deleted, got: %v", resource.kind, getErr)
+						return
+					}
+					require.True(t, apierrors.IsForbidden(err), "a %s without delete permission must not delete: %v", caller.role, err)
+					require.NoError(t, getErr, "the %s must still exist", resource.kind)
+				})
+			}
+		})
+	}
 }

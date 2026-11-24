@@ -38,10 +38,12 @@ import (
 	githubRepository "github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/search"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
@@ -60,6 +62,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
@@ -1165,6 +1168,13 @@ func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h 
 			}
 		}
 
+		// Types a distribution adds to the global search are named apart, so this
+		// snapshot covers only what every build serves.
+		if dropAddedGlobalSearchTypes(rsp.Result) {
+			body, err = rsp.Result.MarshalJSON()
+			require.NoError(t, err)
+		}
+
 		var prettyJSON bytes.Buffer
 		err = json.Indent(&prettyJSON, body, "", "  ")
 		require.NoError(t, err)
@@ -1194,6 +1204,31 @@ func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h 
 			}
 		}
 	})
+}
+
+// globalSearchPath is the global search route as the search group's OpenAPI
+// spec names it.
+const globalSearchPath = "/apis/" + searchv0.APIVERSION + "/namespaces/{namespace}/" + resource.GlobalSearchResource + "/" + searchv0.SearchPathSegment
+
+// dropAddedGlobalSearchTypes removes the final paragraph of the global search
+// description when it names the types a distribution adds, and reports whether
+// it did. Nothing else is touched, so the snapshot still catches any other
+// change to that description or to another route.
+func dropAddedGlobalSearchTypes(api *spec3.OpenAPI) bool {
+	if api == nil || api.Paths == nil {
+		return false
+	}
+	path := api.Paths.Paths[globalSearchPath]
+	if path == nil || path.Post == nil {
+		return false
+	}
+	description := path.Post.Description
+	last := strings.LastIndex(description, "\n\n")
+	if last < 0 || !strings.HasPrefix(description[last+len("\n\n"):], search.GlobalSearchDeploymentTypesPrefix) {
+		return false
+	}
+	path.Post.Description = description[:last]
+	return true
 }
 
 // CreateServiceAccount creates a service account with the specified name, organization, and role using the HTTP API

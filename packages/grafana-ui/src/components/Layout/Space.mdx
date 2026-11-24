@@ -5,18 +5,26 @@ import { Space } from './Space';
 
 # Space
 
-The `Space` component is a component used to add space between elements. Horizontal space is added using the `h` prop, while vertical space is added using the `v` prop. When adding horizontal space between inline or inline-block elements, the `layout` prop should be set to `inline`, otherwise the `block` value of the prop can be used.
+The `Space` component is a component used to add space between elements.
 
-### Usage
-
-#### When to use
+## When to use
 
 Use the `Space` component to add space between elements that cannot be spaced using flex or grid layout.
 
-#### When not to use
+## Never use for
 
 Do not use the `Space` component to add space between elements inside the `Stack` component. Instead, use the `gap` prop on the `Stack` component.
 
-### Props
+## Do's and don'ts
+
+No component-specific guidance documented yet.
+
+## Usage
+
+Horizontal space is added using the `h` prop, while vertical space is added using the `v` prop. When adding horizontal space between inline or inline-block elements, the `layout` prop should be set to `inline`, otherwise the `block` value of the prop can be used.
+
+## Accessibility
+
+## Props
 
 <ArgTypes of={Space} />

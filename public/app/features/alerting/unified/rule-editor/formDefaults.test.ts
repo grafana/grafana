@@ -19,10 +19,11 @@ import {
 } from './formDefaults';
 import { isAlertQueryOfAlertData, isExpressionQueryInAlert } from './formProcessing';
 
-jest.mock('../utils/datasource', () => ({
-  ...jest.requireActual('../utils/datasource'),
-  getDefaultOrFirstCompatibleDataSource: jest.fn(),
-}));
+jest.mock('../utils/datasource', () =>
+  jest
+    .requireActual('test/helpers/partialMock')
+    .partialMock(jest.requireActual('../utils/datasource'), { getDefaultOrFirstCompatibleDataSource: jest.fn() })
+);
 
 const mocks = {
   getDefaultOrFirstCompatibleDataSource: jest.mocked(getDefaultOrFirstCompatibleDataSource),

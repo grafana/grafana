@@ -11,6 +11,7 @@ import (
 	_ "github.com/fullstorydev/grpchan/inprocgrpc"
 	_ "github.com/go-kit/log"
 	_ "github.com/google/go-github/v82/github"
+	_ "github.com/gorilla/websocket"
 	_ "github.com/grafana/authlib/authz/proto/v1"
 	_ "github.com/grafana/dataplane/examples"
 	_ "github.com/grafana/grafana-app-sdk/routes"
