@@ -19,7 +19,7 @@ import { Step1Wrapper } from './Step1Wrapper';
 import { Step2Wrapper } from './Step2Wrapper';
 import { StepperStateProvider, useStepperState } from './Wizard/StepperState';
 import { WizardLayout } from './Wizard/WizardLayout';
-import { getImportPlan } from './Wizard/steps';
+import { WIZARD_STEPS, getImportPlan } from './Wizard/steps';
 import { StepKey } from './Wizard/types';
 import { useRulesToImport } from './hooks';
 import { ReviewStep } from './review/ReviewStep';
@@ -30,33 +30,34 @@ import { useNotificationsDryRun } from './useNotificationsDryRun';
 import { useNotificationsStepNavigation } from './useNotificationsStepNavigation';
 import { useRulesStepNavigation } from './useRulesStepNavigation';
 
-function Wizard({ notificationsLock, rulesOnly }: { notificationsLock?: NotificationsLock; rulesOnly?: boolean }) {
+function Wizard({ notificationsLock, stepKeys }: { notificationsLock?: NotificationsLock; stepKeys: StepKey[] }) {
   const [searchParams] = useURLSearchParams();
   // Settings > Import > Alert rules links here with ?step=rules, so rule-only imports start on the rules step.
   const initialStep = searchParams.get('step') === StepKey.Rules ? StepKey.Rules : undefined;
 
   return (
-    <StepperStateProvider initialStep={initialStep} rulesOnly={rulesOnly}>
+    <StepperStateProvider initialStep={initialStep} stepKeys={stepKeys}>
       <ImportWizardContent notificationsLock={notificationsLock} />
     </StepperStateProvider>
   );
 }
 
-export function ImportWizardGate({ rulesOnly: forceRulesOnly = false }: { rulesOnly?: boolean }) {
+export function ImportWizardGate({ stepKeys: forcedStepKeys }: { stepKeys?: StepKey[] }) {
   const importAlertmanagerAPIEnabled = useFlagAlertingImportAlertmanagerAPI();
   // Without notifications permission there is no notifications step, so nothing to lock and nothing to read.
   const { canImportNotifications } = useCanImportToGMA();
-  const rulesOnly = forceRulesOnly || !canImportNotifications;
-  const { isActive, isLoading } = useIsAutoSyncActive({ skip: rulesOnly });
+  const stepKeys = forcedStepKeys ?? (canImportNotifications ? WIZARD_STEPS.full : WIZARD_STEPS.rulesOnly);
+  const hasNotificationsStep = stepKeys.includes(StepKey.Notifications);
+  const { isActive, isLoading } = useIsAutoSyncActive({ skip: !hasNotificationsStep });
   const { stagedConfig, isLoading: isStagedConfigLoading } = useStagedConfig({
-    skip: !importAlertmanagerAPIEnabled || rulesOnly,
+    skip: !importAlertmanagerAPIEnabled || !hasNotificationsStep,
   });
 
-  if (rulesOnly) {
-    return <Wizard rulesOnly />;
+  if (!hasNotificationsStep) {
+    return <Wizard stepKeys={stepKeys} />;
   }
   if (!importAlertmanagerAPIEnabled) {
-    return <Wizard notificationsLock="import-api-disabled" />;
+    return <Wizard stepKeys={stepKeys} notificationsLock="import-api-disabled" />;
   }
   if (isLoading || isStagedConfigLoading) {
     return <LoadingPlaceholder text={t('alerting.import-to-gma.loading', 'Loading…')} />;
@@ -71,7 +72,7 @@ export function ImportWizardGate({ rulesOnly: forceRulesOnly = false }: { rulesO
   } else if (stagedConfig) {
     notificationsLock = 'staged';
   }
-  return <Wizard notificationsLock={notificationsLock} />;
+  return <Wizard stepKeys={stepKeys} notificationsLock={notificationsLock} />;
 }
 
 /**
@@ -84,7 +85,7 @@ export const ImportRulesPage = withPageErrorBoundary(function ImportRulesPage() 
       navId={getAlertRulesNavId()}
       pageNav={{ text: t('alerting.import-to-gma.pageTitle', 'Import alert rules') }}
     >
-      <ImportWizardGate rulesOnly />
+      <ImportWizardGate stepKeys={WIZARD_STEPS.rulesOnly} />
     </AlertingPageWrapper>
   );
 });

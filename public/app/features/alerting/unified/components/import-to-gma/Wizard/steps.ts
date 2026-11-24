@@ -4,28 +4,36 @@ import { type ImportFormValues } from '../types';
 
 import { type NotificationsSourceOption, type RulesSourceOption, StepKey, type WizardStep } from './types';
 
+/** Settings > Import runs the full list. The rules importer, for users who can't open Settings, runs the short one. */
+export const WIZARD_STEPS = {
+  full: [StepKey.Notifications, StepKey.Rules, StepKey.Review],
+  rulesOnly: [StepKey.Rules, StepKey.Review],
+};
+
 /**
  * Returns the wizard steps configuration.
  * Uses a function to ensure translations are evaluated at runtime.
  */
-export const getWizardSteps = ({ rulesOnly = false }: { rulesOnly?: boolean } = {}): WizardStep[] =>
-  [
-    {
+export const getWizardSteps = (stepKeys: StepKey[] = WIZARD_STEPS.full): WizardStep[] => {
+  const steps: Record<StepKey, WizardStep> = {
+    [StepKey.Notifications]: {
       id: StepKey.Notifications,
       name: t('alerting.import-to-gma.wizard.step-notifications', 'Notification configuration'),
       description: t('alerting.import-to-gma.wizard.step-notifications-desc', 'Contact points, policies, templates'),
     },
-    {
+    [StepKey.Rules]: {
       id: StepKey.Rules,
       name: t('alerting.import-to-gma.wizard.step-rules', 'Rules'),
       description: t('alerting.import-to-gma.wizard.step-rules-desc', 'Alert and recording rules'),
     },
-    {
+    [StepKey.Review]: {
       id: StepKey.Review,
       name: t('alerting.import-to-gma.wizard.step-review', 'Review & import'),
       description: t('alerting.import-to-gma.wizard.step-review-desc', 'Preview and confirm import'),
     },
-  ].filter((step) => !(rulesOnly && step.id === StepKey.Notifications));
+  };
+  return stepKeys.map((key) => steps[key]);
+};
 
 /** Whether Step 1's notifications will be handled via continuous Auto-sync instead of a one-time import. */
 export function isAutoSyncSelected(

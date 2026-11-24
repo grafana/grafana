@@ -1,6 +1,6 @@
 import { type PropsWithChildren, createContext, memo, useCallback, useContext, useMemo, useState } from 'react';
 
-import { getWizardSteps } from './steps';
+import { WIZARD_STEPS, getWizardSteps } from './steps';
 import { StepKey, StepState, type VisitedSteps, type WizardStep } from './types';
 
 interface StepperStateContextValue {
@@ -32,13 +32,13 @@ const StepperStateContext = createContext<StepperStateContextValue | null>(null)
 
 interface StepperStateProviderProps extends PropsWithChildren {
   initialStep?: StepKey;
-  /** Drop the notifications step, for users who can only import rules. Opens on the rules step. */
-  rulesOnly?: boolean;
+  /** The steps to run, in order. Opens on the first one. */
+  stepKeys?: StepKey[];
 }
 
 export const StepperStateProvider = memo<StepperStateProviderProps>(
-  ({ children, rulesOnly = false, initialStep = rulesOnly ? StepKey.Rules : StepKey.Notifications }) => {
-    const steps = useMemo(() => getWizardSteps({ rulesOnly }), [rulesOnly]);
+  ({ children, stepKeys = WIZARD_STEPS.full, initialStep = stepKeys[0] }) => {
+    const steps = useMemo(() => getWizardSteps(stepKeys), [stepKeys]);
     const [activeStep, setActiveStep] = useState<StepKey>(initialStep);
     const [visitedSteps, setVisitedSteps] = useState<VisitedSteps>({
       [StepKey.Notifications]: StepState.Idle,
