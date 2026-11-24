@@ -8,7 +8,8 @@ It contains the [gRPC API](grpc-contract.md), an optional authenticated [connect
 Import `github.com/grafana/grafana/pkg/storage/dbproxy/api/dbproxy/v1` for the request and response types and `NewDatabaseProxyServiceClient`.
 The generated package also provides `DatabaseProxyServiceServer` for server implementations.
 The V1 service defines `Query`, `Exec`, and `Transaction`.
-The `Exec` and `Transaction` bindings define the wire contract; runtime support follows in later releases.
+The Go SQL driver supports writes and transactions when the proxy server implements `Exec` and `Transaction`.
+Older servers return `UNIMPLEMENTED` for those methods.
 
 For `database/sql`, follow the [SQL driver guide](sql-driver.md).
 For wire values, stream completion, errors, and SQL limits, read the [V1 contract](grpc-contract.md).

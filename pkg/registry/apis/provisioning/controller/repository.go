@@ -276,6 +276,12 @@ func (rc *RepositoryController) Run(ctx context.Context, workerCount int, onStar
 	}
 }
 
+// ShutDownQueue releases the work queue when Run is never called, such as
+// when the informer cache fails to sync. Run shuts the queue down itself.
+func (rc *RepositoryController) ShutDownQueue() {
+	rc.queue.ShutDown()
+}
+
 func (rc *RepositoryController) runWorker(ctx context.Context) {
 	for rc.processNextWorkItem(ctx) {
 	}
