@@ -66,8 +66,92 @@ describe('API discovery handlers', () => {
     expect(response?.status).toBe(404);
   });
 
-  it('leave aggregated discovery requests to other handlers', async () => {
-    await expect(request('/apis', { headers: { Accept: AGGREGATED_ACCEPT } })).resolves.toBeUndefined();
+  it('answer an aggregated GET /apis with every group and version', async () => {
+    const response = await request('/apis', { headers: { Accept: AGGREGATED_ACCEPT } });
+    const body = await response?.json();
+
+    expect(response?.headers.get('content-type')).toContain('as=APIGroupDiscoveryList');
+    expect(body.kind).toBe('APIGroupDiscoveryList');
+    expect(
+      Object.fromEntries(
+        body.items.map((item: { metadata: { name: string }; versions: Array<{ version: string }> }) => [
+          item.metadata.name,
+          item.versions.map(({ version }) => version),
+        ])
+      )
+    ).toEqual(SERVED_API_VERSIONS);
+  });
+
+  it('answer GET /apis/<group>/<version> with an empty APIResourceList by default', async () => {
+    const body = await (await request('/apis/folder.grafana.app/v1beta1'))?.json();
+
+    expect(body).toEqual({
+      kind: 'APIResourceList',
+      apiVersion: 'v1',
+      groupVersion: 'folder.grafana.app/v1beta1',
+      resources: [],
+    });
+  });
+
+  it.each([
+    ['a group', '/apis/annotation.grafana.app/v0alpha1'],
+    ['a version', '/apis/folder.grafana.app/v0alpha1'],
+  ])('answer 404 for %s that is not served', async (_, path) => {
+    const response = await request(path);
+
+    expect(response?.status).toBe(404);
+  });
+
+  describe('with resources', () => {
+    const handlers = getAPIDiscoveryHandlers(
+      { 'dashboard.grafana.app': ['v1beta1'] },
+      {
+        'dashboard.grafana.app/v1beta1': [
+          {
+            resource: 'dashboards',
+            kind: 'Dashboard',
+            namespaced: true,
+            verbs: ['get', 'list'],
+            subresources: [{ subresource: 'dto', verbs: ['get'] }],
+          },
+        ],
+      }
+    );
+
+    it('list subresources as <resource>/<subresource> entries in the APIResourceList', async () => {
+      const body = await (await request('/apis/dashboard.grafana.app/v1beta1', undefined, handlers))?.json();
+
+      expect(body.resources).toEqual([
+        { name: 'dashboards', kind: 'Dashboard', namespaced: true, verbs: ['get', 'list'] },
+        { name: 'dashboards/dto', kind: 'Dashboard', namespaced: true, verbs: ['get'] },
+      ]);
+    });
+
+    it('list them in the aggregated discovery list', async () => {
+      const body = await (await request('/apis', { headers: { Accept: AGGREGATED_ACCEPT } }, handlers))?.json();
+      const responseKind = { group: 'dashboard.grafana.app', version: 'v1beta1', kind: 'Dashboard' };
+
+      expect(body.items).toEqual([
+        {
+          metadata: { name: 'dashboard.grafana.app' },
+          versions: [
+            {
+              version: 'v1beta1',
+              freshness: 'Current',
+              resources: [
+                {
+                  resource: 'dashboards',
+                  responseKind,
+                  scope: 'Namespaced',
+                  verbs: ['get', 'list'],
+                  subresources: [{ subresource: 'dto', responseKind, verbs: ['get'] }],
+                },
+              ],
+            },
+          ],
+        },
+      ]);
+    });
   });
 
   it('serve only the given groups', async () => {
