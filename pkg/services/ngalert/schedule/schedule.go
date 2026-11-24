@@ -89,8 +89,14 @@ type schedule struct {
 
 	stateManager *state.Manager
 
+	// disabledOrgs are the organizations for which alerting is disabled. The
+	// scheduler's rule set omits their rules, so orphaned-state cleanup must
+	// not treat them as deleted.
+	disabledOrgs map[int64]struct{}
+
 	// orphanedStatesCleaned is set once the state cache has been checked for
-	// entries of rules that no longer exist, which happens on the first tick.
+	// entries of rules that no longer exist, which happens on the first tick
+	// with a successful fetch of the alert rules.
 	orphanedStatesCleaned bool
 
 	appURL               *url.URL
@@ -147,6 +153,9 @@ type SchedulerCfg struct {
 	// SeriesBudget caps the series tracked for stale markers by all recording rules of this scheduler.
 	// nil counts them without a limit.
 	SeriesBudget SeriesBudget
+
+	// DisabledOrgs are the organizations for which alerting is disabled.
+	DisabledOrgs map[int64]struct{}
 }
 
 // NewScheduler returns a new scheduler.
@@ -183,6 +192,7 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 		recordingWriter:        cfg.RecordingWriter,
 		ruleStopReasonProvider: cfg.RuleStopReasonProvider,
 		featureToggles:         cfg.FeatureToggles,
+		disabledOrgs:           cfg.DisabledOrgs,
 	}
 
 	return &sch
@@ -306,12 +316,15 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	// this is the new current state. rulesDiff contains the previously existing rules that were different between this state and the previous state.
 	alertRules, folderTitles := sch.schedulableAlertRules.all()
 
-	// On the first tick, clean up state cache entries of rules that no longer
-	// exist. A rule that was deleted after the state cache was warmed but
-	// before this tick was never registered, so the regular deleted-rule
-	// handling below never runs for it and its state would otherwise live in
-	// the cache until the next restart.
-	if !sch.orphanedStatesCleaned {
+	// On the first tick with a successful fetch, clean up state cache entries
+	// of rules that no longer exist. A rule that was deleted after the state
+	// cache was warmed but before this tick was never registered, so the
+	// regular deleted-rule handling below never runs for it and its state
+	// would otherwise live in the cache until the next restart.
+	// The cleanup must not run after a failed fetch: the registry then still
+	// holds the previous state, which is empty on the first tick, and every
+	// warmed cache entry would wrongly look deleted.
+	if !sch.orphanedStatesCleaned && err == nil {
 		sch.orphanedStatesCleaned = true
 		sch.deleteOrphanedRuleStates(ctx, alertRules)
 	}
@@ -465,6 +478,12 @@ func (sch *schedule) deleteOrphanedRuleStates(ctx context.Context, alertRules []
 	}
 	for _, key := range sch.stateManager.GetCachedRuleKeys() {
 		if _, ok := existing[key]; ok {
+			continue
+		}
+		if _, disabled := sch.disabledOrgs[key.OrgID]; disabled {
+			// The scheduler's rule set omits rules of disabled orgs while the
+			// state cache warm loads instances for all orgs, so a rule of a
+			// disabled org would wrongly look deleted. Leave its state alone.
 			continue
 		}
 		sch.log.FromContext(ctx).Info("Removing state of alert rule that no longer exists", key.LogContext()...)
