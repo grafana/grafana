@@ -12,6 +12,7 @@ import { QueryOptionsOverlay } from '../QueryOptionsOverlay';
 
 import { StackedAddBar } from './StackedAddBar';
 import { StackedSection } from './StackedSection';
+import { getStackedLayoutStyles } from './styles';
 import { useStackedItemScroll } from './useStackedItemScroll';
 import {
   getSelectedStackedItem,
@@ -100,15 +101,7 @@ export function StackedEditorRenderer() {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({
-    display: 'flex',
-    flexDirection: 'column',
-    flex: 1,
-    minHeight: 0,
-  }),
-  errorAlert: css({
-    flex: '0 0 auto',
-  }),
+  ...getStackedLayoutStyles(),
   scrollArea: css({
     flex: 1,
     minHeight: 0,

@@ -3,13 +3,16 @@ package rbac
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/shadow"
 	authzv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
@@ -25,7 +28,33 @@ func RegisterEmbeddedLegacyCheckServer(channel *inprocgrpc.Channel, service *Ser
 }
 
 func (s *embeddedLegacyCheckServer) LegacyCheck(ctx context.Context, req *authzv1.LegacyCheckRequest) (*authzv1.LegacyCheckResponse, error) {
+	if shadow.IsShadow(inprocgrpc.ClientContext(ctx)) {
+		ctx = shadow.WithContext(ctx)
+		return s.service.withLegacyCheckInstrumentation(ctx, req, s.service.legacyShadowCheck)
+	}
+
 	return s.service.withLegacyCheckInstrumentation(ctx, req, s.service.legacyCheck)
+}
+
+func (s *Service) legacyShadowCheck(ctx context.Context, req *authzv1.LegacyCheckRequest) (response *authzv1.LegacyCheckResponse, err error) {
+	// In-process RPC handlers run in a separate goroutine from the shadow runner.
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			err = fmt.Errorf("legacy check shadow panicked: %v", recovered)
+		}
+	}()
+
+	// SkipCache refreshes shared caches. Comparisons need private, uncached reads instead.
+	comparison := *s
+	comparison.idCache = &noopCache[store.UserIdentifiers]{}
+	comparison.permCache = &noopCache[map[string]bool]{}
+	comparison.permDenialCache = &noopCache[bool]{}
+	comparison.userTeamCache = &noopCache[[]int64]{}
+	comparison.basicRoleCache = &noopCache[store.BasicRole]{}
+	comparison.folderCache = &noopCache[folderTree]{}
+	comparison.teamIDCache = &noopCache[map[int64]string]{}
+
+	return comparison.legacyCheck(ctx, req)
 }
 
 func (s *Service) prepareLegacyInternalEvaluation(
@@ -104,8 +133,8 @@ func (s *Service) validateLegacyInternalEvaluation(
 		return errors.New("internal legacy identity cannot be combined with an action restriction")
 	}
 
-	if req.GetSubject() != "" || req.GetGlobalEvaluation() != nil {
-		return errors.New("internal legacy identity cannot be combined with a subject or global evaluation")
+	if req.GetSubject() != "" {
+		return errors.New("internal legacy identity cannot be combined with a subject")
 	}
 
 	if namespace.OrgID < 1 || s.legacyScopeNamespace == nil || s.legacyScopeNamespace(namespace.OrgID) != namespace.Value {

@@ -72,6 +72,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Config",
 					Plural:     "Configs",
+					Resource:   "configs",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Admission: &app.AdmissionCapabilities{
@@ -88,6 +89,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "InhibitionRule",
 					Plural:     "InhibitionRules",
+					Resource:   "inhibitionrules",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaInhibitionRulev0alpha1,
@@ -96,6 +98,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Receiver",
 					Plural:     "Receivers",
+					Resource:   "receivers",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaReceiverv0alpha1,
@@ -206,6 +209,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "RoutingTree",
 					Plural:     "RoutingTrees",
+					Resource:   "routingtrees",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaRoutingTreev0alpha1,
@@ -214,6 +218,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "TemplateGroup",
 					Plural:     "TemplateGroups",
+					Resource:   "templategroups",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaTemplateGroupv0alpha1,
@@ -222,6 +227,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "TimeInterval",
 					Plural:     "TimeIntervals",
+					Resource:   "timeintervals",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaTimeIntervalv0alpha1,
@@ -594,6 +600,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Config",
 					Plural:     "Configs",
+					Resource:   "configs",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Admission: &app.AdmissionCapabilities{
@@ -610,6 +617,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "InhibitionRule",
 					Plural:     "InhibitionRules",
+					Resource:   "inhibitionrules",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaInhibitionRulev1beta1,
@@ -618,6 +626,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Receiver",
 					Plural:     "Receivers",
+					Resource:   "receivers",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaReceiverv1beta1,
@@ -728,6 +737,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "RoutingTree",
 					Plural:     "RoutingTrees",
+					Resource:   "routingtrees",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaRoutingTreev1beta1,
@@ -736,6 +746,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "TemplateGroup",
 					Plural:     "TemplateGroups",
+					Resource:   "templategroups",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaTemplateGroupv1beta1,
@@ -744,6 +755,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "TimeInterval",
 					Plural:     "TimeIntervals",
+					Resource:   "timeintervals",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaTimeIntervalv1beta1,

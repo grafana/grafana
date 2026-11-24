@@ -297,14 +297,89 @@ func TestIntegrationRBACParityCheck(t *testing.T) {
 
 		// -- subresources ----------------------------------------------------
 		{
-			name:         "dashboard annotation get via the dashboard-scoped annotation action",
-			permissions:  []accesscontrol.Permission{{Action: "annotations:read", Scope: "dashboards:uid:dash1"}},
-			req:          parityCheckReq(dashboardGroup, dashboardResource, "annotations", utils.VerbGet, "dash1", ""),
-			expected:     true,
-			zanzanaToday: new(false),
-			divergence: "Zanzana's translation table has no entry for the annotations:* actions, so the grant " +
-				"produces no tuple at all. RBAC maps the annotations subresource onto annotations:read " +
-				"scoped to the dashboard.",
+			name:        "dashboard annotation get via the dashboard-scoped annotation action",
+			permissions: []accesscontrol.Permission{{Action: "annotations:read", Scope: "dashboards:uid:dash1"}},
+			req:         parityCheckReq(dashboardGroup, dashboardResource, "annotations", utils.VerbGet, "dash1", ""),
+			expected:    true,
+		},
+		{
+			name:        "dashboard annotation get via the dashboards:view action set on the dashboard",
+			permissions: []accesscontrol.Permission{{Action: "dashboards:view", Scope: "dashboards:uid:dash1"}},
+			req:         parityCheckReq(dashboardGroup, dashboardResource, "annotations", utils.VerbGet, "dash1", ""),
+			expected:    true,
+		},
+		{
+			name:        "dashboard annotation create via the dashboards:view action set on the dashboard",
+			permissions: []accesscontrol.Permission{{Action: "dashboards:view", Scope: "dashboards:uid:dash1"}},
+			req:         parityCheckReq(dashboardGroup, dashboardResource, "annotations", utils.VerbCreate, "dash1", ""),
+			expected:    false,
+		},
+		{
+			name:        "dashboard annotation update via the dashboards:view action set on the dashboard",
+			permissions: []accesscontrol.Permission{{Action: "dashboards:view", Scope: "dashboards:uid:dash1"}},
+			req:         parityCheckReq(dashboardGroup, dashboardResource, "annotations", utils.VerbUpdate, "dash1", ""),
+			expected:    false,
+		},
+		{
+			name:        "dashboard annotation get via the dashboards:edit action set on the dashboard",
+			permissions: []accesscontrol.Permission{{Action: "dashboards:edit", Scope: "dashboards:uid:dash1"}},
+			req:         parityCheckReq(dashboardGroup, dashboardResource, "annotations", utils.VerbGet, "dash1", ""),
+			expected:    true,
+		},
+		{
+			name:        "dashboard annotation create via the dashboards:edit action set on the dashboard",
+			permissions: []accesscontrol.Permission{{Action: "dashboards:edit", Scope: "dashboards:uid:dash1"}},
+			req:         parityCheckReq(dashboardGroup, dashboardResource, "annotations", utils.VerbCreate, "dash1", ""),
+			expected:    true,
+		},
+		{
+			name:        "dashboard annotation update via the dashboards:edit action set on the dashboard",
+			permissions: []accesscontrol.Permission{{Action: "dashboards:edit", Scope: "dashboards:uid:dash1"}},
+			req:         parityCheckReq(dashboardGroup, dashboardResource, "annotations", utils.VerbUpdate, "dash1", ""),
+			expected:    true,
+		},
+		{
+			name:        "dashboard annotation delete via the dashboards:edit action set on the dashboard",
+			permissions: []accesscontrol.Permission{{Action: "dashboards:edit", Scope: "dashboards:uid:dash1"}},
+			req:         parityCheckReq(dashboardGroup, dashboardResource, "annotations", utils.VerbDelete, "dash1", ""),
+			expected:    true,
+		},
+		{
+			name:        "dashboard annotation delete via the dashboards:admin action set on the dashboard",
+			permissions: []accesscontrol.Permission{{Action: "dashboards:admin", Scope: "dashboards:uid:dash1"}},
+			req:         parityCheckReq(dashboardGroup, dashboardResource, "annotations", utils.VerbDelete, "dash1", ""),
+			expected:    true,
+		},
+		{
+			name:        "dashboard annotation get via the dashboards:view action set on another dashboard",
+			permissions: []accesscontrol.Permission{{Action: "dashboards:view", Scope: "dashboards:uid:other"}},
+			req:         parityCheckReq(dashboardGroup, dashboardResource, "annotations", utils.VerbGet, "dash1", ""),
+			expected:    false,
+		},
+		{
+			name:        "dashboard annotation create via the annotations all-types scope",
+			permissions: []accesscontrol.Permission{{Action: "annotations:create", Scope: "annotations:type:*"}},
+			req:         parityCheckReq(dashboardGroup, dashboardResource, "annotations", utils.VerbCreate, "dash1", ""),
+			expected:    true,
+		},
+		{
+			name:        "dashboard annotation get with only the dashboard type scope",
+			permissions: []accesscontrol.Permission{{Action: "annotations:read", Scope: "annotations:type:dashboard"}},
+			req:         parityCheckReq(dashboardGroup, dashboardResource, "annotations", utils.VerbGet, "dash1", ""),
+			expected:    false,
+		},
+		{
+			name:        "dashboard annotation create via the folders wildcard annotation grant at the root",
+			permissions: []accesscontrol.Permission{{Action: "annotations:create", Scope: "folders:*"}},
+			req:         parityCheckReq(dashboardGroup, dashboardResource, "annotations", utils.VerbCreate, "dash1", ""),
+			expected:    true,
+		},
+		{
+			name:        "dashboard annotation delete outside the folder-scoped annotation grant",
+			permissions: []accesscontrol.Permission{{Action: "annotations:delete", Scope: "folders:uid:folder1"}},
+			folders:     []rbacstore.Folder{{UID: "folder1"}, {UID: "folder2"}},
+			req:         parityCheckReq(dashboardGroup, dashboardResource, "annotations", utils.VerbDelete, "dash1", "folder2"),
+			expected:    false,
 		},
 		{
 			name:        "dashboard annotation get via folders:view on the parent folder",
@@ -312,6 +387,38 @@ func TestIntegrationRBACParityCheck(t *testing.T) {
 			folders:     []rbacstore.Folder{{UID: "folder1"}},
 			req:         parityCheckReq(dashboardGroup, dashboardResource, "annotations", utils.VerbGet, "dash1", "folder1"),
 			expected:    true,
+		},
+
+		// -- organization annotations (annotation.grafana.app) ---------------
+		{
+			name:        "organization annotation list (tags) with the organization scope",
+			permissions: []accesscontrol.Permission{{Action: "annotations:read", Scope: "annotations:type:organization"}},
+			req:         parityCheckReq(annotationGroup, "annotations", "", utils.VerbList, "organization", ""),
+			expected:    true,
+		},
+		{
+			name:        "organization annotation create with the organization scope",
+			permissions: []accesscontrol.Permission{{Action: "annotations:create", Scope: "annotations:type:organization"}},
+			req:         parityCheckReq(annotationGroup, "annotations", "", utils.VerbCreate, "organization", ""),
+			expected:    true,
+		},
+		{
+			name:        "organization annotation update with the organization scope",
+			permissions: []accesscontrol.Permission{{Action: "annotations:write", Scope: "annotations:type:organization"}},
+			req:         parityCheckReq(annotationGroup, "annotations", "", utils.VerbUpdate, "organization", ""),
+			expected:    true,
+		},
+		{
+			name:        "organization annotation delete with the organization scope",
+			permissions: []accesscontrol.Permission{{Action: "annotations:delete", Scope: "annotations:type:organization"}},
+			req:         parityCheckReq(annotationGroup, "annotations", "", utils.VerbDelete, "organization", ""),
+			expected:    true,
+		},
+		{
+			name:        "organization annotation create with only the read action",
+			permissions: []accesscontrol.Permission{{Action: "annotations:read", Scope: "annotations:type:organization"}},
+			req:         parityCheckReq(annotationGroup, "annotations", "", utils.VerbCreate, "organization", ""),
+			expected:    false,
 		},
 
 		// -- teams (a typed, non-folder resource) ----------------------------
@@ -1470,6 +1577,19 @@ func permissionToTuples(subject string, perm accesscontrol.Permission) ([]*openf
 
 	if identifier == "" {
 		identifier = "*"
+	}
+	if kind == common.KindAnnotations {
+		// Go through the role conversion so the organization scope normalization is exercised.
+		tuples, err := zanzana.ConvertRolePermissionsToTuples("parity", []zanzana.RolePermission{
+			{Action: perm.Action, Kind: kind, Identifier: identifier},
+		})
+		if err != nil {
+			return nil, false
+		}
+		for _, tuple := range tuples {
+			tuple.User = subject
+		}
+		return tuples, len(tuples) > 0
 	}
 	return common.TranslateToResourceTuples(subject, perm.Action, kind, identifier)
 }

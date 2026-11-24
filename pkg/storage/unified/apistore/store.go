@@ -14,7 +14,6 @@ import (
 	"net/http"
 	"reflect"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/bwmarrin/snowflake"
@@ -31,7 +30,6 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
-	"k8s.io/client-go/dynamic"
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 
@@ -40,6 +38,7 @@ import (
 	"github.com/grafana/dskit/concurrency"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	secrets "github.com/grafana/grafana/pkg/storage/unified/apistore/securevalue"
@@ -148,11 +147,6 @@ type Storage struct {
 	snowflake      *snowflake.Node    // used to enforce internal ids
 	configProvider RestConfigProvider // used for provisioning
 
-	// Lazily initialized because GetRestConfig blocks until the API server is
-	// fully started (eventualRestConfigProvider), while NewStorage is called
-	// during API group installation — before the server is ready.
-	getDynClient func(ctx context.Context) (dynamic.Interface, error)
-
 	serializer Serializer
 	versioner  storage.Versioner
 
@@ -181,7 +175,7 @@ func NewStorage(
 	getAttrsFunc storage.AttrFunc,
 	trigger storage.IndexerFuncs,
 	indexers *cache.Indexers,
-	configProvider RestConfigProvider, // needed to talk to folder service -- ??? can we use the storage client directly?
+	configProvider RestConfigProvider, // used for provisioning
 	opts StorageOptions,
 ) (storage.Interface, factory.DestroyFunc, error) {
 	s := &Storage{
@@ -215,35 +209,6 @@ func NewStorage(
 		if opts.GVK.Group != s.gr.Group {
 			return nil, nil, fmt.Errorf("storage group mismatch (%+v) %+v", s.gr, s.opts.GVK)
 		}
-	}
-
-	if opts.EnableFolderSupport && configProvider != nil {
-		var mu sync.Mutex
-		var client dynamic.Interface
-		s.getDynClient = func(ctx context.Context) (dynamic.Interface, error) {
-			mu.Lock()
-			defer mu.Unlock()
-			if err := ctx.Err(); err != nil {
-				return nil, err
-			}
-			if client != nil {
-				return client, nil
-			}
-			cfg, err := configProvider.GetRestConfig(ctx)
-			if err != nil {
-				return nil, fmt.Errorf("failed to get REST config: %w", err)
-			}
-			initialized, err := dynamic.NewForConfig(cfg)
-			if err != nil {
-				return nil, fmt.Errorf("failed to create dynamic client: %w", err)
-			}
-			// Cache only successful initialization so a canceled request cannot poison the store.
-			client = initialized
-			return client, nil
-		}
-	} else if opts.EnableFolderSupport {
-		logging.DefaultLogger.Warn("configProvider is not configured; repo-manager folder consistency checks will be skipped",
-			"resource", config.GroupResource.String())
 	}
 
 	if opts.DeprecatedInternalID == DeprecatedID_Required {
@@ -373,12 +338,10 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 	}
 
 	// Make sure we are looking at the correct namespace
-	if meta.GetNamespace() != rkey.Namespace {
-		if meta.GetNamespace() == "" {
-			meta.SetNamespace(rkey.Namespace)
-		} else {
-			return apierrors.NewBadRequest("namespace mismatch")
-		}
+	if meta.GetNamespace() == "" {
+		meta.SetNamespace(rkey.Namespace) // set a missing namespace
+	} else if meta.GetNamespace() != rkey.Namespace {
+		return apierrors.NewBadRequest("namespace mismatch")
 	}
 
 	v, err := s.prepareObjectForStorage(ctx, obj)
@@ -492,6 +455,9 @@ func (s *Storage) Delete(
 		return storage.NewKeyNotFoundError(key, 0)
 	}
 
+	// The user a service deletes on behalf of; the server records them as the deleter.
+	actingUser, _ := identity.MetadataIdentityUIDFrom(ctx)
+
 	var lastErr error
 	bo := backoff.New(ctx, updateRetryConfig)
 	for bo.Ongoing() {
@@ -499,7 +465,7 @@ func (s *Storage) Delete(
 			return err
 		}
 
-		cmd := &resourcepb.DeleteRequest{Key: k}
+		cmd := &resourcepb.DeleteRequest{Key: k, ActingUserUid: actingUser}
 
 		if preconditions != nil {
 			if err := preconditions.Check(key, out); err != nil {
@@ -520,7 +486,7 @@ func (s *Storage) Delete(
 		if err != nil {
 			return fmt.Errorf("unable to read object %w", err)
 		}
-		if err = checkManagerPropertiesOnDelete(info, meta); err != nil {
+		if err = identity.CheckManagerOnDelete(info, meta); err != nil {
 			_, err = s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_DELETED, key, out, out)
 			return err
 		}
@@ -783,6 +749,13 @@ func (s *Storage) processItem(ctx context.Context, item *resourcepb.ResourceWrap
 }
 
 func (s *Storage) processDecodedItem(obj runtime.Object, resourceVersion int64, opts storage.ListOptions, predicate storage.SelectionPredicate) (runtime.Object, bool, error) {
+	if declared := s.opts.GVK; !declared.Empty() {
+		gvk := obj.GetObjectKind().GroupVersionKind()
+		if gvk.Group == declared.Group {
+			obj.GetObjectKind().SetGroupVersionKind(declared.GroupVersion().WithKind(gvk.Kind))
+		}
+	}
+
 	if err := s.versioner.UpdateObject(obj, uint64(resourceVersion)); err != nil {
 		return nil, false, err
 	}

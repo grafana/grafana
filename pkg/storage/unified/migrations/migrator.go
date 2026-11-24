@@ -24,6 +24,14 @@ type MigrateOptions struct {
 	Progress    func(count int, msg string)
 
 	inlineBlobs bool
+
+	// StatementTimeout overrides the Postgres statement_timeout for legacy reads. Zero keeps the DB setting.
+	StatementTimeout time.Duration
+}
+
+// StatementTimeoutSQL sets the Postgres statement_timeout for the current transaction only.
+func StatementTimeoutSQL(d time.Duration) string {
+	return fmt.Sprintf("SET LOCAL statement_timeout = %d", d.Milliseconds())
 }
 
 // Read from legacy and write into unified storage
@@ -191,9 +199,7 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts MigrateOptions) (*r
 	}
 	m.log.Info("finished migrating legacy resources", "namespace", opts.Namespace, "orgId", info.OrgID, "stackId", info.StackID)
 	response, err := stream.CloseAndRecv()
-	// BulkProcess is client-streaming, so server interceptors don't convert its embedded
-	// error into a status; keep reading it until the bulk producer returns status errors.
-	if err := resource.ErrorFromResponse(response.GetError(), err); err != nil {
+	if err != nil {
 		return response, err
 	}
 	if response == nil {

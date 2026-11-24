@@ -19,9 +19,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/nanogit"
 	"github.com/grafana/nanogit/mocks"
 	"github.com/grafana/nanogit/protocol"
@@ -152,11 +152,11 @@ func TestNewRepository_SendsUserAgent(t *testing.T) {
 
 type emptySecureValues struct{}
 
-func (emptySecureValues) Token(context.Context) (common.RawSecureValue, error) { return "", nil }
-func (emptySecureValues) WebhookSecret(context.Context) (common.RawSecureValue, error) {
+func (emptySecureValues) Token(context.Context) (resource.RawSecureValue, error) { return "", nil }
+func (emptySecureValues) WebhookSecret(context.Context) (resource.RawSecureValue, error) {
 	return "", nil
 }
-func (emptySecureValues) CommitSigningKey(context.Context) (common.RawSecureValue, error) {
+func (emptySecureValues) CommitSigningKey(context.Context) (resource.RawSecureValue, error) {
 	return "", nil
 }
 
@@ -2537,6 +2537,10 @@ func TestNewGitRepository(t *testing.T) {
 				} else {
 					require.Empty(t, gitRepo.(*gitRepository).writerOptions)
 				}
+				// The hardcoded per-file content cap is always seeded into the
+				// post-read size check so oversized blobs are rejected even if
+				// WithMaxFileSize is never called explicitly.
+				require.Equal(t, int64(maxFileContentBytes), gitRepo.(*gitRepository).maxBytes.Load())
 			}
 		})
 	}

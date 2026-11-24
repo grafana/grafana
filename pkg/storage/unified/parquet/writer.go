@@ -2,6 +2,7 @@ package parquet
 
 import (
 	"context"
+	"errors"
 	"io"
 
 	"github.com/apache/arrow-go/v18/arrow"
@@ -46,34 +47,39 @@ func NewParquetWriter(f io.Writer) (*parquetWriter, error) {
 }
 
 // ProcessBulk implements resource.BulkProcessingBackend.
-func (w *parquetWriter) ProcessBulk(ctx context.Context, setting resource.BulkSettings, iter resource.BulkRequestIterator) *resourcepb.BulkResponse {
+func (w *parquetWriter) ProcessBulk(ctx context.Context, setting resource.BulkSettings, iter resource.BulkRequestIterator) (*resourcepb.BulkResponse, error) {
 	defer func() { _ = w.Close() }()
 
-	var err error
+	var writeErr error
 	for iter.Next() {
 		if iter.RollbackRequested() {
+			// The iterator reports the cause; the partial file must not be used.
+			writeErr = errors.New("bulk rollback requested")
 			break
 		}
 
 		req := iter.Request()
-
-		err = w.Write(ctx, req.Key, req.Value)
-		if err != nil {
+		if writeErr = w.Write(ctx, req.Key, req.Value); writeErr != nil {
 			break
 		}
 	}
 
-	rsp, err := w.CloseWithResults()
-	if err != nil {
-		w.logger.Warn("error closing parquet file", "err", err)
+	if writeErr == nil {
+		// Iterators stop early on cancellation without reporting it.
+		writeErr = ctx.Err()
+	}
+
+	rsp, closeErr := w.CloseWithResults()
+	if closeErr != nil {
+		w.logger.Warn("error closing parquet file", "err", closeErr)
+	}
+	if err := errors.Join(writeErr, closeErr); err != nil {
+		return nil, err
 	}
 	if rsp == nil {
 		rsp = &resourcepb.BulkResponse{}
 	}
-	if err != nil {
-		rsp.Error = resource.AsErrorResult(err)
-	}
-	return rsp
+	return rsp, nil
 }
 
 type parquetWriter struct {
@@ -107,13 +113,14 @@ func (w *parquetWriter) Close() error {
 	if w.writer == nil {
 		return nil
 	}
+	var flushErr error
 	if w.rv.Len() > 0 {
-		_ = w.flush()
+		flushErr = w.flush()
 	}
 	w.logger.Info("close")
 	err := w.writer.Close()
 	w.writer = nil
-	return err
+	return errors.Join(flushErr, err)
 }
 
 // writes the current buffer to parquet and re-inits the arrow buffer

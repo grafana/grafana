@@ -98,7 +98,6 @@ func TestIntegrationKVBlobSupportOnResourceBlob(t *testing.T) {
 							put := env.put(t, writer.store, key, tc.contentType, `{"from":"`+writer.name+`"}`)
 
 							rsp := env.get(t, reader.store, key, put.Uid)
-							require.Nil(t, rsp.Error)
 							require.Equal(t, `{"from":"`+writer.name+`"}`, string(rsp.Value))
 							require.Equal(t, tc.contentType, rsp.ContentType)
 						})
@@ -184,7 +183,6 @@ func (e *kvBlobTestEnv) put(t *testing.T, store resource.BlobSupport, key *resou
 		Value:       []byte(value),
 	})
 	require.NoError(t, err)
-	require.Nil(t, rsp.Error)
 	return rsp
 }
 

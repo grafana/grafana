@@ -334,7 +334,9 @@ test.describe('Text sandbox network boundary', () => {
     await expect(page.locator('#host')).toHaveCount(1);
   });
 
-  test('tracks asynchronous content size, rebuilds for theme changes, and blocks refreshed data', async ({ page }) => {
+  test('tracks asynchronous content size, preserves content on CSS changes, and blocks refreshed data', async ({
+    page,
+  }) => {
     const requests: string[] = [];
     await page.route('https://external.test/**', (route) => {
       requests.push(route.request().url());
@@ -366,8 +368,17 @@ test.describe('Text sandbox network boundary', () => {
     const previous = await page.locator('iframe').elementHandle();
     await page.evaluate(() => window.sandboxSession.update({ globalCss: '.markdown-html { color: rgb(4, 5, 6); }' }));
     await expect(page.frameLocator('iframe').getByText('Content')).toHaveCSS('color', 'rgb(4, 5, 6)');
-    expect(await previous!.evaluate((frame) => frame.isConnected)).toBe(false);
-    await expect(page.locator('iframe')).toHaveCSS('height', '40px');
+    // CSS-only updates must preserve runtime DOM changes and keep size observation active.
+    expect(await previous!.evaluate((frame) => frame.isConnected)).toBe(true);
+    await expect(page.locator('iframe')).toHaveCSS('height', '180px');
+    await page
+      .frameLocator('iframe')
+      .locator('#content')
+      .evaluate((content) => {
+        content.style.height = '220px';
+      });
+    await expect(page.locator('iframe')).toHaveCSS('height', '220px');
+    await expect.poll(() => page.evaluate(() => window.sandboxHeights.at(-1))).toBe(220);
 
     await page.evaluate(() =>
       window.sandboxSession.update({ html: '<img src="https://external.test/refresh?secret=data">' })

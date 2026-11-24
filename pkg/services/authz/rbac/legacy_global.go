@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 )
 
@@ -23,10 +22,10 @@ type legacyGlobalPermissionLoader interface {
 }
 
 func (s *Service) validateLegacyGlobalEvaluation(
-	global *authzextv1.LegacyGlobalEvaluation,
+	requesterOrgID int64,
 	req legacyScopeRequest,
 ) error {
-	if global.GetRequesterOrgId() != accesscontrol.NoOrgID && global.GetRequesterOrgId() != accesscontrol.GlobalOrgID {
+	if requesterOrgID != accesscontrol.NoOrgID && requesterOrgID != accesscontrol.GlobalOrgID {
 		return errors.New("global evaluation requires requester org 0 or NoOrgID")
 	}
 
@@ -50,7 +49,7 @@ func (s *Service) validateLegacyGlobalEvaluation(
 func (s *Service) getLegacyGlobalIdentity(
 	ctx context.Context,
 	req legacyScopeRequest,
-	global *authzextv1.LegacyGlobalEvaluation,
+	requesterOrgID int64,
 ) (*legacyGlobalIdentity, error) {
 	identifiers, err := s.getUserIdentifiers(ctx, req.namespace, req.userUID, req.skipCache)
 	if err != nil {
@@ -75,11 +74,11 @@ func (s *Service) getLegacyGlobalIdentity(
 			Type:           req.identityType,
 			UserID:         identifiers.ID,
 			UserUID:        identifiers.UID,
-			OrgID:          global.GetRequesterOrgId(),
-			OrgRole:        identity.RoleNone,
+			OrgID:          requesterOrgID,
+			OrgRole:        types.RoleNone,
 			IsGrafanaAdmin: role.IsAdmin,
 			Namespace:      req.namespace.Value,
-			CacheKey:       fmt.Sprintf("%s:global:%d:%s", req.namespace.Value, global.GetRequesterOrgId(), types.NewTypeID(req.identityType, identifiers.UID)),
+			CacheKey:       fmt.Sprintf("%s:global:%d:%s", req.namespace.Value, requesterOrgID, types.NewTypeID(req.identityType, identifiers.UID)),
 		},
 	}, nil
 }
@@ -124,11 +123,11 @@ func legacyGlobalResolverRequester(
 
 func (s *Service) prepareLegacyGlobalEvaluation(
 	ctx context.Context,
-	global *authzextv1.LegacyGlobalEvaluation,
+	requesterOrgID int64,
 	actions []string,
 	scopeRequest legacyScopeRequest,
 ) (legacyEvaluationArgs, error) {
-	if err := s.validateLegacyGlobalEvaluation(global, scopeRequest); err != nil {
+	if err := s.validateLegacyGlobalEvaluation(requesterOrgID, scopeRequest); err != nil {
 		return legacyEvaluationArgs{}, err
 	}
 
@@ -136,7 +135,7 @@ func (s *Service) prepareLegacyGlobalEvaluation(
 		return legacyEvaluationArgs{scopeRequest: scopeRequest}, nil
 	}
 
-	checkedIdentity, err := s.getLegacyGlobalIdentity(ctx, scopeRequest, global)
+	checkedIdentity, err := s.getLegacyGlobalIdentity(ctx, scopeRequest, requesterOrgID)
 	if err != nil {
 		return legacyEvaluationArgs{}, err
 	}

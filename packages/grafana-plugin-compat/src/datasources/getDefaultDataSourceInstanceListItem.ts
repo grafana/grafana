@@ -4,7 +4,6 @@ import {
   getDataSourceSrv,
   getDefaultDataSourceInstanceListItem as stableGetDefaultDataSourceInstanceListItem,
 } from '@grafana/runtime';
-import { getDefaultDataSourceInstanceListItem as unstableGetDefaultDataSourceInstanceListItem } from '@grafana/runtime/unstable';
 
 /**
  * Resolve the item whose data source is the org default, or `undefined` when the list holds none.
@@ -16,10 +15,6 @@ export async function getDefaultDataSourceInstanceListItem(
 ): Promise<DataSourceInstanceListItem | undefined> {
   if (typeof stableGetDefaultDataSourceInstanceListItem === 'function') {
     return stableGetDefaultDataSourceInstanceListItem(items);
-  }
-
-  if (typeof unstableGetDefaultDataSourceInstanceListItem === 'function') {
-    return unstableGetDefaultDataSourceInstanceListItem(items);
   }
 
   return backwardsCompatibleGetDefaultDataSourceInstanceListItem(items);

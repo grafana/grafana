@@ -23,49 +23,45 @@ description: Create and edit a dashboard
 weight: 1
 image_maps:
   - key: sidebar-toolbar
-    src: /media/docs/grafana/dashboards/screenshot-edit-mode-imagemap-v13.1.png
+    src: /media/docs/grafana/dashboards/screenshot-edit-mode-imagemap-v13.3.png
     alt: An annotated image of the sidebar and toolbar
     points:
       - x_coord: 101
-        y_coord: 11
+        y_coord: 17
         content: |
           **Add new element**: Click to open the sidebar with add options. Click again to close. Edit mode only.
       - x_coord: 101
-        y_coord: 18
+        y_coord: 23
         content: |
           **Dashboard options**: Click the icon to open the sidebar and access dashboard options. Click again to close. Edit mode only.
       - x_coord: 101
-        y_coord: 24.5
+        y_coord: 29.5
         content: |
           **Feedback**: Submit feedback on the new editing experience. Edit mode only.
       - x_coord: 101
-        y_coord: 31
+        y_coord: 35.5
         content: |
           **Edit as code**: Edit the dashboard JSON. Click again to close. Edit mode only.
       - x_coord: 101
-        y_coord: 38.5
+        y_coord: 43.5
         content: |
           **Export**: Click to display [export](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/share-dashboards-panels/#export-dashboards) options.
       - x_coord: 101
-        y_coord: 45
+        y_coord: 50
         content: |
           **Content outline**: Navigate a dashboard using the [Content outline](#navigate-using-the-content-outline).
       - x_coord: 101
-        y_coord: 51
+        y_coord: 56
         content: |
           **Filters overview**: Open the filters overview drawer.
       - x_coord: 101
-        y_coord: 57
+        y_coord: 62
         content: |
           **Dashboard insights**: View [dashboard analytics](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/assess-dashboard-usage/) including information about users, activity, and query counts.
       - x_coord: 101
-        y_coord: 65
+        y_coord: 70
         content: |
           **Hide**: Click to hide the sidebar and toolbar.
-      - x_coord: 89
-        y_coord: 13
-        content: |
-          **Dock/Undock**: Click to dock or undock the sidebar.
 ---
 
 # Create dashboards
@@ -77,6 +73,12 @@ Each panel needs at least one query to display a visualization.
 
 - Ensure that you have the proper permissions. For more information about permissions, refer to [About users and permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/).
 - Understand the query language of the target data source.
+
+{{< admonition type="tip" >}}
+The following directions guide you through building a dashboard from the empty state.
+You can also start from templates, including custom templates created by your organization, or suggestions.
+For more information, refer to [Create dashboards from templates and suggestions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-template-dashboards/).
+{{< /admonition >}}
 
 ## Create a dashboard
 
@@ -92,7 +94,7 @@ To create a dashboard, follow these steps:
    - Create a dashboard with Grafana Assistant by describing what you want to build. Make sure to save your dashboard.
    - Click **+ Add visualization**. Then proceed to the next step.
 
-   {{< figure src="/media/docs/grafana/dashboards/screenshot-empty-dashboard-v13.3.png" max-width="750px" alt="Empty dashboard with sidebar open" >}}
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-empty-dashboard-v13.3.png" max-width="750px" alt="Empty dashboard" >}}
 
 {{< /shared >}}
 
@@ -149,7 +151,7 @@ To create a dashboard, follow these steps:
 1. Select a folder, if applicable.
 1. Click **Save**
 1. Click **Back**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 {{< /docs/list >}}
 
@@ -230,10 +232,14 @@ To navigate the dashboard using the outline, follow these steps:
 
 To edit a dashboard, follow these steps:
 
+{{< admonition type="note" >}}
+Editing a dashboard, including building one with Grafana Assistant, isn't available on small screens
+{{< /admonition >}}
+
 <!-- prettier-ignore-start -->
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Do one of the following:
 
    | Update                 | Action                        |
@@ -253,7 +259,7 @@ To edit a dashboard, follow these steps:
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
 1. Click **Back**, if needed.
-1. Click **Exit edit**
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 <!-- prettier-ignore-end -->
 
@@ -265,7 +271,7 @@ This lets you make these changes directly on the dashboard, without opening the 
 To group or delete multiple panels, follow these steps:
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Hold `Shift` and click each panel you want to select.
 
    A dotted blue line surrounds the selected panels.
@@ -283,7 +289,7 @@ To group or delete multiple panels, follow these steps:
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 If you hover over a panel that isn't part of your selection, the tooltip displays single-panel options instead.
 
@@ -329,10 +335,16 @@ However, you can change this default in the dashboard settings.
 In the auto grid layout, panels are automatically sized and positioned as you add them.
 There are default parameters to constrain the layout, and you can update these to have more control over the display:
 
-- **Min column width**: Choose from **Standard**, **Narrow**, **Wide**, or **Custom**, for which you can enter the minimum width in pixels.
-- **Max columns**: Set a number up to 10.
-- **Row height**: Choose from **Standard**, **Short**, **Tall**, and **Custom**, for which you can enter the row height in pixels.
-- **Fill screen**: Toggle the switch on to have the panel fill the entire height of the screen. If the panel is in a row, the **Fill screen** toggle for the row must also be enabled (refer to [grouping configuration options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-groupings/#grouping-configuration-options).
+| Option            | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Min column width  | Choose from **Standard**, **Narrow**, **Wide**, or **Custom**, for which you can enter the minimum width in pixels.                                                                                                                                                                                                                                                                                                                                                                                      |
+| Max columns       | Set a number up to 10.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| Row height        | Choose from **Standard**, **Short**, **Tall**, and **Custom**, for which you can enter the row height in pixels. The named sizes are the same as for **Row height**: **Short** is 168 pixels, **Standard** is 320 pixels, and **Tall** is 512 pixels.                                                                                                                                                                                                                                                    |
+| Fill screen       | <p>Toggle the switch on to have the panel fill the entire height of the screen. If the panel is in a row, the **Fill screen** toggle for the row must also be enabled (refer to [grouping configuration options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-groupings/#grouping-configuration-options)).</p><p>When **Fill screen** is toggled on, the [Auto fit](#auto-fit-panels-to-content) option isn't available.</p> |
+| Auto fit          | Toggle the switch on to size panels to their content instead of to a fixed row height. This option is available only when the **Fill screen** option is toggled off, and Grafana hides **Fill screen** when **Auto fit** is toggled on. For more information, refer to [Auto fit panels to content](#auto-fit-panels-to-content). (Public preview)                                                                                                                                                       |
+| Min height        | Only displayed when **Auto fit** is toggled on. The smallest height a panel can have. Choose from **None**, **Short**, **Standard**, **Tall**, or **Custom**. For **Custom**, enter a height in pixels from 50 to 2000. When you select **None**, a panel can shrink to the height of its content.                                                                                                                                                                                                       |
+| Max height        | Only displayed when **Auto fit** is toggled on. The largest height to which a panel can grow. Choose from **Unlimited**, **Short**, **Standard**, **Tall**, or **Custom**. For **Custom**, enter a height in pixels from 50 to 10000. The default is **Unlimited**.                                                                                                                                                                                                                                      |
+| Match row heights | Only displayed when **Auto fit** is toggled on. Controls how panels that share a row line up. This option is on by default, which stretches all panels in a row to the height of the tallest panel. Turn it off to have each panel keep its own height. Panels that don't auto fit maintain the row height.                                                                                                                                                                                              |
 
 If you try to resize a panel in auto grid layout, a dialog box opens with the following options:
 
@@ -341,23 +353,54 @@ If you try to resize a panel in auto grid layout, a dialog box opens with the fo
 
 If you're working in a tab, the layout type indicator is automatically displayed. To see which layout type is active for a row, hover your cursor over that row to display the indicator.
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-auto-layout-indicators-v13.2.png" max-width="750px" alt="Dashboard showing auto layout indicators" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-auto-layout-indicators-v13.3.png" max-width="750px" alt="Dashboard showing auto layout indicators" >}}
 
 For repeated panels, this interaction is available on the last panel in the group.
+
+#### Auto fit panels to content
+
+{{< docs/public-preview product="Auto fit" featureFlag="`grafana.dashboardsAutoHeightPanels`" >}}
+
+By default, the auto grid layout gives every panel the same fixed height, which you set with **Row height**.
+With the **Auto fit** option enabled, each panel sets its height to match its content, within a minimum and maximum height range that you choose.
+For example, when you lower the **Min height** selection, a short text panel doesn't leave empty space.
+Alternatively, when you set the **Max height** to **Unlimited**, a long table can show all of its rows without an inner scroll bar.
+
+Auto fit only works with the table and text visualizations.
+Other visualizations keep the row height, even when you turn on **Auto fit**.
+
+##### Auto fit behavior
+
+- **Unsupported panels**: Rows that include a panel that doesn't support auto fit are always at least as tall as the row height.
+- **Shorter rows**: In rows where every panel auto fits, setting **Min height** lower than the row height makes the row shorter, so there's no empty space below short panels.
+- **Content overflow**: If a panel's content is taller than the **Max height** setting, the panel stops growing. The panel header stays in place, and the content scrolls.
+- **Pagination**: Panels that paginate their content work differently. For example, when you turn on **Enable pagination** in the options of a table panel with a max height, the panel shows as many rows per page as will fit.
+  With **Max height** set to **Unlimited**, the panel grows to show all of its content, so there's no page height to fit.
+
+##### Override auto fit for a panel
+
+You can override the layout setting for individual table and text panels.
+When you select a panel with one of these visualizations, the **Auto fit** section in the sidebar offers the following choices:
+
+- **Default**: The panel follows the layout setting.
+- **On**: The panel fits to its content, even when **Auto fit** is off for the layout.
+- **Off**: The panel keeps the row height, even when **Auto fit** is on for the layout.
+
+Repeated panels use the same setting as the panel they repeat.
 
 ### Update panel layout
 
 To update the panel layout, follow these steps:
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the dashboard or the grouping that contains the panel layout you want to update.
 1. Click the **Dashboard options** icon to open the sidebar, if needed.
 1. Under **Layout**, select **Custom** or **Auto**.
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 ## Configure repeat options
 
@@ -371,7 +414,7 @@ To configure repeats, follow these steps:
 {{< docs/list >}}
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the panel, row, or tab you want to update to open the sidebar, or click the **Dashboard options** icon to open it.
 
    If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
@@ -390,7 +433,7 @@ To configure repeats, follow these steps:
 1. When you've finished setting the repeat option, click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 {{< /shared >}}
 
@@ -487,7 +530,7 @@ For this rule type, you can select time ranges from **5 minutes** to **5 years**
 To configure a show/hide rule, follow these steps:
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the panel, row, or tab you want to update to open the sidebar, or click the **Dashboard options** icon to open it.
 
    If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
@@ -507,7 +550,7 @@ To configure a show/hide rule, follow these steps:
 1. When you've finished setting rules, save the dashboard.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 Hidden panels, rows, or tabs aren't visible when the dashboard is in view mode.
 In edit mode, hidden dashboard elements are displayed with an icon or overlay indicating this.
@@ -517,7 +560,7 @@ In edit mode, hidden dashboard elements are displayed with an icon or overlay in
 To move a panel, follow these steps:
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Navigate to the panel you want to move.
 
    If the dashboard is large, open the **Content outline** and use it to navigate to the panel.
@@ -530,7 +573,7 @@ To move a panel, follow these steps:
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save** again.
-1. Click **Exit edit**
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 ## Resize a panel
 
@@ -539,7 +582,7 @@ When your dashboard or grouping has a **Custom** layout, you can manually resize
 To resize a panel, follow these steps:
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Navigate to the panel you want to resize.
 
    If the dashboard is large, open the **Content outline** and use it to navigate to the panel.
@@ -548,7 +591,7 @@ To resize a panel, follow these steps:
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 ## Copy, duplicate, or delete dashboard elements
 
@@ -558,7 +601,7 @@ To delete several panels at once, you can also use the actions tooltip; refer to
 To manage dashboard elements, follow these steps:
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Do one of the following:
    - For panels, rows, or tabs, click the element you want to update to open the sidebar. If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
    - For dashboard controls&mdash;filters, variables, annotations, or links&mdash; click the control at the top of the dashboard to display the edit and delete options, and then click the edit icon for the control. This opens the sidebar.
@@ -573,14 +616,14 @@ To manage dashboard elements, follow these steps:
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 ## Copy a dashboard
 
 To make a copy of a dashboard, follow these steps:
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the **Save** drop-down list and select **Save as copy**.
 1. (Optional) Specify the name, folder, description, and whether or not to copy the original dashboard tags for the copied dashboard.
 
@@ -589,6 +632,13 @@ To make a copy of a dashboard, follow these steps:
 1. Click **Save**.
 
 You're now in the copied dashboard.
+
+## Save a dashboard as a template
+
+You can save a dashboard as a custom template, which gives you and your team a consistent starting point for new dashboards.
+A custom template lets you apply your organization's preferred layout, panels, and settings.
+
+For directions on how to do this, refer to the [Create custom dashboards templates](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-template-dashboards/#create-custom-dashboard-templates) documentation.
 
 ## Frequently asked questions
 
