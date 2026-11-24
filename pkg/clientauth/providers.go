@@ -3,6 +3,7 @@ package clientauth
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -54,7 +55,12 @@ func NewRequestGroupAudienceProvider(fallback string) *RequestGroupAudienceProvi
 }
 
 func (p *RequestGroupAudienceProvider) GetAudiences(req *http.Request) []string {
-	if group := utils.APIGroupFromRequest(req); group != "" {
+	group := utils.APIGroupFromRequest(req)
+	// HACK: datasource API servers accept the shared *.datasource.grafana.app audience, so access policies need one entry for every datasource group.
+	if strings.HasSuffix(group, ".datasource.grafana.app") {
+		return []string{"*.datasource.grafana.app"}
+	}
+	if group != "" {
 		return []string{group}
 	}
 	return []string{p.fallback}

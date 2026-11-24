@@ -77,6 +77,7 @@ func TestRequestGroupAudienceProvider(t *testing.T) {
 	for path, want := range map[string][]string{
 		"/apis/dashboard.grafana.app/v1/namespaces/default/dashboards": {"dashboard.grafana.app"},
 		"/apis/provisioning.grafana.app/v0alpha1":                      {"provisioning.grafana.app"},
+		"/apis/loki.datasource.grafana.app/v0alpha1":                   {"*.datasource.grafana.app"},
 		"/apis":       {"grafana"},
 		"/openapi/v3": {"grafana"},
 	} {
