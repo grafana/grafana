@@ -236,11 +236,7 @@ export const MenuItem = React.memo(
               aria-hidden
             />
           )}
-          <span
-            className={cx(styles.ellipsis, styles.label, {
-              [styles.linkLabel]: variant === 'link' && !destructive && !disabled,
-            })}
-          >
+          <span className={cx(styles.ellipsis, styles.label)} data-role="menuitem-label">
             {label}
           </span>
           <div className={cx(styles.rightWrapper, { [styles.withShortcut]: hasShortcut })}>
@@ -281,8 +277,6 @@ MenuItem.displayName = 'MenuItem';
 const getStyles = (theme: GrafanaTheme2, size: 'sm' | 'md' | undefined) => {
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   const menuPadding = theme.components.menu.padding * theme.spacing.gridSize;
-  const linkLabel = css({ color: theme.colors.text.primary });
-
   return {
     item: css({
       ...(size === 'sm' ? theme.typography.bodySmall : size === 'md' ? theme.typography.body : {}),
@@ -320,10 +314,11 @@ const getStyles = (theme: GrafanaTheme2, size: 'sm' | 'md' | undefined) => {
       '&:hover, &:focus-visible': {
         background: 'none',
         color: theme.colors.text.primary,
+      },
+      '&:hover [data-role="menuitem-label"], &:focus-visible [data-role="menuitem-label"]': {
         textDecoration: 'underline',
       },
     }),
-    linkLabel,
     active: css({
       background: theme.colors.action.hover,
       // needed to show active items in forced colors mode

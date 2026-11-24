@@ -122,15 +122,40 @@ describe('MenuItem', () => {
     expect(screen.getByRole('menuitem', { name: 'URL Item' })).toBeInTheDocument();
   });
 
-  it('keeps menu semantics while rendering the link variant without a background', () => {
-    render(<MenuItem label="External link" url="https://example.com" variant="link" />);
+  it('keeps menu semantics while underlining only the link label', () => {
+    render(
+      <MenuItem
+        label="External link"
+        description="Link description"
+        shortcut="Ctrl+K"
+        component={() => <span>Custom content</span>}
+        url="https://example.com"
+        variant="link"
+      />
+    );
 
     const menuTextColor = createTheme().colors.text.primary;
-    expect(screen.getByRole('menuitem', { name: 'External link' })).toHaveStyle({
+    const label = screen.getByText('External link');
+    const item = label.closest('[role="menuitem"]')!;
+    const itemClasses = item.className.split(' ');
+    const underlineRules = Array.from(document.styleSheets)
+      .flatMap((sheet) => Array.from(sheet.cssRules))
+      .map((rule) => rule.cssText)
+      .filter(
+        (rule) =>
+          itemClasses.some((className) => rule.includes(`.${className}`)) && rule.includes('text-decoration: underline')
+      );
+    expect(item).toHaveStyle({
       background: 'none',
       color: menuTextColor,
     });
-    expect(screen.getByText('External link')).toHaveStyle({ color: menuTextColor });
+    expect(label).toHaveAttribute('data-role', 'menuitem-label');
+    for (const text of ['Link description', 'Ctrl+K', 'Custom content']) {
+      expect(screen.getByText(text)).not.toHaveAttribute('data-role', 'menuitem-label');
+    }
+    expect(underlineRules).toHaveLength(1);
+    expect(underlineRules[0]).toContain(':hover [data-role="menuitem-label"]');
+    expect(underlineRules[0]).toContain(':focus-visible [data-role="menuitem-label"]');
   });
 
   it('renders extra component if provided', async () => {
