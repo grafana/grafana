@@ -3,61 +3,40 @@ package provisioning
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/pkg/infra/nats"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
-	deleteresourcespkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/deleteresources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/fixfoldermetadata"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/perftest"
-	releaseresourcespkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/releaseresources"
-	jobsync "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/jobqueue"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
-type driverConfig struct {
-	concurrentDrivers int
-	maxJobTimeout     time.Duration
-	// jobInterval is the jobs informer's resync cadence; the driver uses it as
-	// the post-claim cooldown so failed-run recovery tracks the configured
-	// pickup interval.
-	jobInterval          time.Duration
-	leaseRenewalInterval time.Duration
-	maxSyncWorkers       int
-}
-
-// buildDriver constructs the full ConcurrentJobDriver including all workers.
-// This is the single source of truth for driver construction used by both operators.
-func buildDriver(
-	cfg *setting.Cfg,
-	controllerCfg *ControllerConfig,
+// buildJobQueue resolves the job queue dependencies from the operator config and
+// hands them to jobqueue.ProvideJobQueue, which the API server uses as well.
+func buildJobQueue(
+	controllerCfg *jobQueueControllerConfig,
 	registry prometheus.Registerer,
-	tracer tracing.Tracer,
-	dc driverConfig,
 	jobStore jobs.Store,
 	jobHistoryWriter jobs.HistoryWriter,
-) (*jobs.ConcurrentJobDriver, error) {
-	workers, metrics, err := buildWorkers(cfg, controllerCfg, registry, tracer, dc.maxSyncWorkers)
+) (*jobqueue.Queue, error) {
+	tracer, err := controllerCfg.Tracer()
 	if err != nil {
-		return nil, fmt.Errorf("build workers: %w", err)
+		return nil, fmt.Errorf("failed to provide tracing service: %w", err)
 	}
 
-	repoFactory, err := controllerCfg.RepositoryFactory()
+	clients, err := controllerCfg.Clients()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get repository factory: %w", err)
+		return nil, fmt.Errorf("failed to get clients: %w", err)
+	}
+	parsers := resources.NewParserFactory(clients)
+
+	resourceLister, err := controllerCfg.ResourceLister()
+	if err != nil {
+		return nil, err
 	}
 
 	provisioningClient, err := controllerCfg.ProvisioningClient()
@@ -65,142 +44,48 @@ func buildDriver(
 		return nil, fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	repoGetter := resources.NewRepositoryGetter(
-		repoFactory,
-		provisioningClient.ProvisioningV0alpha1(),
-	)
-	// This is basically our own JobQueue system
-	driver, err := jobs.NewConcurrentJobDriver(
-		dc.concurrentDrivers,
-		dc.maxJobTimeout,
-		dc.jobInterval,
-		dc.leaseRenewalInterval,
-		jobStore,
-		repoGetter,
-		jobHistoryWriter,
-		registry,
-		metrics,
-		nats.Enabled(controllerCfg.natsSubscriber),
-		workers...,
-	)
+	repoFactory, err := controllerCfg.RepositoryFactory()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get repository factory: %w", err)
 	}
-	driver.SetTracer(tracer)
-	return driver, nil
-}
-
-func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry prometheus.Registerer, tracer tracing.Tracer, maxSyncWorkers int) ([]jobs.Worker, *jobs.JobMetrics, error) {
-	// Evaluated per job via OpenFeature so the flag behaves consistently with the
-	// API server (see performanceEnabled in the provisioning apiserver package).
-	perfTestingEnabled := func(ctx context.Context) bool {
-		return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningPerformance, false, openfeature.TransactionContext(ctx))
-	}
-
-	clients, err := controllerCfg.Clients()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get clients: %w", err)
-	}
-	parsers := resources.NewParserFactory(clients)
-
-	resourceLister, err := controllerCfg.ResourceLister()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	provisioningClient, err := controllerCfg.ProvisioningClient()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create provisioning client: %w", err)
-	}
-
-	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister)
-	statusPatcher := controller.NewRepositoryStatusPatcher(provisioningClient.ProvisioningV0alpha1())
 
 	urlProvider, err := controllerCfg.URLProvider()
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get URL provider: %w", err)
+		return nil, fmt.Errorf("failed to get URL provider: %w", err)
 	}
 
-	metrics := jobs.RegisterJobMetrics(registry)
-
-	syncer := jobsync.NewSyncer(jobsync.Compare, jobsync.FullSync, jobsync.IncrementalSync, tracer, maxSyncWorkers, metrics, cfg.ProvisioningSyncResourceTimeout)
-	syncWorker := jobsync.NewSyncWorker(
-		clients,
-		repositoryResources,
-		statusPatcher.Patch,
-		syncer,
-		metrics,
-		tracer,
-		maxSyncWorkers,
-		cfg.ProvisioningMaxFileSize,
+	return jobqueue.ProvideJobQueue(
+		jobqueue.Config{
+			ConcurrentDrivers:    controllerCfg.concurrentDrivers,
+			MaxJobTimeout:        controllerCfg.maxJobTimeout,
+			JobInterval:          controllerCfg.jobInterval,
+			LeaseRenewalInterval: controllerCfg.leaseRenewalInterval,
+			MaxSyncWorkers:       controllerCfg.maxSyncWorkers,
+			MaxFileSize:          controllerCfg.Settings.ProvisioningMaxFileSize,
+			SyncResourceTimeout:  controllerCfg.Settings.ProvisioningSyncResourceTimeout,
+		},
+		jobqueue.Dependencies{
+			Client:              provisioningClient,
+			Subscriber:          controllerCfg.natsSubscriber,
+			Clients:             clients,
+			RepositoryResources: resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister),
+			ResourceLister:      resourceLister,
+			PatchStatus:         controller.NewRepositoryStatusPatcher(provisioningClient.ProvisioningV0alpha1()).Patch,
+			Store:               jobStore,
+			RepoGetter:          resources.NewRepositoryGetter(repoFactory, provisioningClient.ProvisioningV0alpha1()),
+			HistoryWriter:       jobHistoryWriter,
+			Tracer:              tracer,
+			Registry:            registry,
+			PerformanceEnabled:  performanceEnabled,
+			// The operator has no rendering service, so pull request comments carry no screenshots.
+			ScreenshotRenderer: pullrequest.NewNoOpRenderer(),
+			PullRequestURLs:    pullrequest.URLProvider{Internal: urlProvider, Public: urlProvider},
+		},
 	)
+}
 
-	stageIfPossible := repository.WrapWithStageAndPushIfPossible
-
-	// Standalone export generates new UIDs so exported files
-	// don't reference existing resource identifiers.
-	exportWorker := export.NewExportWorker(
-		clients,
-		repositoryResources,
-		export.ExportAllWithNewUIDs,
-		stageIfPossible,
-		metrics,
-	)
-
-	// Migration export preserves original names so the takeover
-	// allowlist can correlate resources during the sync phase.
-	migrateExportWorker := export.NewExportWorker(
-		clients,
-		repositoryResources,
-		export.ExportAll,
-		stageIfPossible,
-		metrics,
-	)
-	cleaner := migrate.NewNamespaceCleaner(clients)
-	unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
-		cleaner,
-		migrateExportWorker,
-		syncWorker,
-	)
-	migrationWorker := migrate.NewMigrationWorkerFromUnified(unifiedStorageMigrator)
-
-	// Delete
-	deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, repositoryResources, metrics)
-
-	// Move
-	moveWorker := move.NewWorker(syncWorker, stageIfPossible, repositoryResources, metrics)
-
-	// Fix Metadata
-	fixMetadataWorker := fixfoldermetadata.NewWorker(clients)
-
-	// Release Resources (orphan cleanup — removes ownership annotations)
-	releaseResourcesWorker := releaseresourcespkg.NewWorker(resourceLister, clients, 10)
-
-	// Delete Resources (orphan cleanup — deletes managed resources)
-	deleteResourcesWorker := deleteresourcespkg.NewWorker(resourceLister, clients, 10)
-
-	// Synthetic load-testing worker; a no-op unless provisioning.performance is enabled.
-	perfTestWorker := perftest.NewWorker(perfTestingEnabled)
-
-	// PullRequest
-	renderer := pullrequest.NewNoOpRenderer()
-	urls := pullrequest.URLProvider{Internal: urlProvider, Public: urlProvider}
-	evaluator := pullrequest.NewEvaluator(renderer, parsers, urls, registry)
-	commenter := pullrequest.NewCommenter(false, urls)
-	prWorker := pullrequest.NewPullRequestWorker(evaluator, commenter, registry)
-
-	workers := []jobs.Worker{
-		syncWorker,
-		exportWorker,
-		migrationWorker,
-		deleteWorker,
-		moveWorker,
-		fixMetadataWorker,
-		releaseResourcesWorker,
-		deleteResourcesWorker,
-		perfTestWorker,
-		prWorker,
-	}
-
-	return workers, &metrics, nil
+// performanceEnabled is evaluated per job via OpenFeature so the flag behaves
+// consistently with the API server.
+func performanceEnabled(ctx context.Context) bool {
+	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningPerformance, false, openfeature.TransactionContext(ctx))
 }

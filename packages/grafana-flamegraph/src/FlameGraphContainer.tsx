@@ -259,8 +259,8 @@ const FlameGraphContainer = ({
 
     const leftPane = (
       <FlameGraphPane
-        {...commonPaneProps}
         key="left-pane"
+        {...commonPaneProps}
         paneView={leftPaneView}
         viewMode={ViewMode.Split}
         paneViewForContextMenu={leftPaneView}
@@ -271,8 +271,8 @@ const FlameGraphContainer = ({
 
     const rightPane = (
       <FlameGraphPane
-        {...commonPaneProps}
         key="right-pane"
+        {...commonPaneProps}
         paneView={rightPaneView}
         viewMode={ViewMode.Split}
         paneViewForContextMenu={rightPaneView}

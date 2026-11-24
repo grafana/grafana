@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana-app-sdk/routes"
 	datasourcesV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 )
@@ -31,8 +32,8 @@ func TestAccessToken_pluginWithTokenAuthRoute(t *testing.T) {
 		Path:   "pathwithtokenauth1",
 		URL:    "",
 		Method: "GET",
-		TokenAuth: &plugins.JWTTokenAuth{
-			Url: server.URL + "/oauth/token",
+		TokenAuth: &routes.ProxyTokenAuth{
+			URL: server.URL + "/oauth/token",
 			Scopes: []string{
 				"https://www.testapi.com/auth/monitoring.read",
 				"https://www.testapi.com/auth/cloudplatformprojects.readonly",
@@ -47,8 +48,8 @@ func TestAccessToken_pluginWithTokenAuthRoute(t *testing.T) {
 		},
 	}
 
-	authParams := &plugins.JWTTokenAuth{
-		Url: server.URL + "/oauth/token",
+	authParams := &routes.ProxyTokenAuth{
+		URL: server.URL + "/oauth/token",
 		Scopes: []string{
 			"https://www.testapi.com/auth/monitoring.read",
 			"https://www.testapi.com/auth/cloudplatformprojects.readonly",
@@ -228,8 +229,8 @@ func TestAccessToken_datasourceIsolation(t *testing.T) {
 			route := &plugins.Route{
 				Path:   "query",
 				Method: http.MethodGet,
-				TokenAuth: &plugins.JWTTokenAuth{
-					Url: server.URL,
+				TokenAuth: &routes.ProxyTokenAuth{
+					URL: server.URL,
 					Params: map[string]string{
 						"client_secret": "{{.SecureJsonData.client_secret}}",
 					},

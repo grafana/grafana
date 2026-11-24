@@ -1,18 +1,41 @@
-import { useId, useState } from 'react';
+import { type ReactNode, useId, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { buildRoutingTreeOptions, isDefaultRoutingTreeName, useRoutingTrees } from '@grafana/alerting/unstable';
 import { t } from '@grafana/i18n';
 import { useDataSourceInstanceList } from '@grafana/runtime';
-import { Combobox, Input, MultiCombobox } from '@grafana/ui';
+import { Box, Collapse, Combobox, Divider, Input, MultiCombobox, Stack } from '@grafana/ui';
+import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
-import {
-  FieldLabelWithTooltip,
-  SidebarField,
-  ToggleButtonGroup,
-  type ToggleOption,
-} from '../../rule-list/filter/RulesFilterSidebar';
+import { SidebarField, ToggleButtonGroup, type ToggleOption } from '../../rule-list/filter/RulesFilterSidebar';
+
+import { type HealthValue } from './sharedRuleFilter';
+
+/** The filter sidebar beside the rules, or folded above them on narrow screens so the rules keep the full width. */
+export function FilterSidebarLayout({ sidebar, children }: { sidebar: ReactNode; children: ReactNode }) {
+  const isWide = useMediaQueryMinWidth('lg');
+  const [isOpen, setIsOpen] = useState(false);
+
+  // The rules keep their place in the tree across layouts, so resizing doesn't remount the list.
+  return (
+    <Stack direction={isWide ? 'row' : 'column'} gap={1}>
+      {isWide ? (
+        <Box width={32} shrink={0}>
+          {sidebar}
+        </Box>
+      ) : (
+        <Collapse label={t('alerting.gma-rule-list.sidebar.filters', 'Filters')} isOpen={isOpen} onToggle={setIsOpen}>
+          {sidebar}
+        </Collapse>
+      )}
+      {isWide && <Divider direction="vertical" spacing={0} />}
+      <Box flex={1} minWidth={0}>
+        {children}
+      </Box>
+    </Stack>
+  );
+}
 
 /** One choice of a few, plus All for no filter. */
 export function ChoiceFilter<Value extends string>({
@@ -87,13 +110,9 @@ export function FolderFilter({ folderUids, onChange }: { folderUids: string[]; o
   return (
     <SidebarField
       htmlFor={id}
-      label={
-        <FieldLabelWithTooltip
-          label={t('alerting.gma-rule-list.sidebar.folder', 'Folder')}
-          tooltip={t('alerting.gma-rule-list.sidebar.folder-description', 'Rules directly in this folder')}
-          tooltipTitle={t('alerting.gma-rule-list.sidebar.folder-help', 'Folder filter help')}
-        />
-      }
+      label={t('alerting.gma-rule-list.sidebar.folder', 'Folder')}
+      tooltip={t('alerting.gma-rule-list.sidebar.folder-description', 'Rules directly in this folder')}
+      tooltipTitle={t('alerting.gma-rule-list.sidebar.folder-help', 'Folder filter help')}
     >
       <MultiCombobox<string>
         id={id}
@@ -135,6 +154,62 @@ export function DataSourceFilter({
   );
 }
 
+export function HealthFilter({
+  health,
+  onChange,
+}: {
+  health: HealthValue | undefined;
+  onChange: (health: HealthValue | undefined) => void;
+}) {
+  return (
+    <ChoiceFilter
+      label={t('alerting.gma-rule-list.sidebar.health', 'Health')}
+      value={health}
+      onChange={onChange}
+      options={[
+        { label: t('alerting.gma-rule-list.sidebar.health-ok', 'OK'), value: 'ok' },
+        { label: t('alerting.gma-rule-list.sidebar.health-nodata', 'No data'), value: 'nodata' },
+        { label: t('alerting.gma-rule-list.sidebar.health-error', 'Error'), value: 'error' },
+        { label: t('alerting.gma-rule-list.sidebar.health-unknown', 'Unknown'), value: 'unknown' },
+      ]}
+    />
+  );
+}
+
+export function PausedFilter({
+  paused,
+  onChange,
+}: {
+  paused: 'true' | undefined;
+  onChange: (paused: 'true' | undefined) => void;
+}) {
+  return (
+    <ChoiceFilter
+      label={t('alerting.gma-rule-list.sidebar.paused', 'Paused')}
+      value={paused}
+      onChange={onChange}
+      options={[{ label: t('alerting.gma-rule-list.sidebar.paused-true', 'Paused'), value: 'true' }]}
+    />
+  );
+}
+
+export function PluginRulesFilter({ hide, onChange }: { hide: boolean; onChange: (hide: boolean) => void }) {
+  const labelId = useId();
+  return (
+    <SidebarField label={t('alerting.gma-rule-list.sidebar.plugin-rules', 'Plugin rules')} labelId={labelId}>
+      <ToggleButtonGroup<boolean>
+        aria-labelledby={labelId}
+        value={hide}
+        onChange={onChange}
+        options={[
+          { label: t('alerting.gma-rule-list.sidebar.plugin-rules-show', 'Show'), value: false },
+          { label: t('alerting.gma-rule-list.sidebar.plugin-rules-hide', 'Hide'), value: true },
+        ]}
+      />
+    </SidebarField>
+  );
+}
+
 /** Named notification policies only: the search can't match the default policy yet. */
 export function PolicyFilter({
   policy,
@@ -152,16 +227,12 @@ export function PolicyFilter({
   return (
     <SidebarField
       htmlFor={id}
-      label={
-        <FieldLabelWithTooltip
-          label={t('alerting.gma-rule-list.sidebar.policy', 'Notification policy')}
-          tooltip={t(
-            'alerting.gma-rule-list.sidebar.policy-description',
-            'Rules routed through it, not straight to a contact point'
-          )}
-          tooltipTitle={t('alerting.gma-rule-list.sidebar.policy-help', 'Notification policy filter help')}
-        />
-      }
+      label={t('alerting.gma-rule-list.sidebar.policy', 'Notification policy')}
+      tooltip={t(
+        'alerting.gma-rule-list.sidebar.policy-description',
+        'Rules routed through it, not straight to a contact point'
+      )}
+      tooltipTitle={t('alerting.gma-rule-list.sidebar.policy-help', 'Notification policy filter help')}
     >
       <Combobox
         id={id}

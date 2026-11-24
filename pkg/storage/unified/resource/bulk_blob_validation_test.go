@@ -134,7 +134,7 @@ func TestBulkProcessNegotiatedBlobUploads(t *testing.T) {
 			srv := &server{backend: backend, blob: blob, blobTransfers: newBlobTransfers(), access: authlib.FixedAccessClient(true), bulkBatchOptions: DefaultBulkBatchOptions()}
 			req := newBulkBlobNormalizationRequest()
 			settings := BulkSettings{Collection: []*resourcepb.ResourceKey{req.Key}, SkipValidation: skip}
-			ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", OrgRole: identity.RoleAdmin})
+			ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", OrgRole: authlib.RoleAdmin})
 			ctx = metadata.NewIncomingContext(ctx, metadata.Join(settings.ToMD(), metadata.Pairs(resourcepb.InlineBlobMetadataKey, "1")))
 			stream := &negotiatedBulkBlobStream{bulkBlobValidationStream: bulkBlobValidationStream{testBulkProcessServer: testBulkProcessServer{ctx: ctx, requests: []*resourcepb.BulkRequest{
 				req, bulkTestChunk("dashboard", []byte("abc"), false), bulkTestChunk("dashboard", nil, true), newTestBulkRequest("next"),
@@ -180,7 +180,7 @@ func TestBulkProcessBlobValidationBeforeUpload(t *testing.T) {
 				Resource:  req.Key.Resource,
 			}
 			tc.edit(req)
-			ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", OrgRole: identity.RoleAdmin})
+			ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", OrgRole: authlib.RoleAdmin})
 			md := metadata.Join((&BulkSettings{Collection: []*resourcepb.ResourceKey{collection}, SkipValidation: true}).ToMD(), metadata.Pairs(resourcepb.InlineBlobMetadataKey, "1"))
 			ctx = metadata.NewIncomingContext(ctx, md)
 			stream := &negotiatedBulkBlobStream{bulkBlobValidationStream: bulkBlobValidationStream{testBulkProcessServer: testBulkProcessServer{ctx: ctx, requests: []*resourcepb.BulkRequest{req}}}}
@@ -204,7 +204,7 @@ func TestBulkProcessRemoteBlobHandshake(t *testing.T) {
 	srv := &server{backend: backend, blob: blob, blobTransfers: newBlobTransfers(), access: authlib.FixedAccessClient(true), bulkBatchOptions: DefaultBulkBatchOptions()}
 	listener := bufconn.Listen(1 << 20)
 	grpcServer := grpc.NewServer(grpc.StreamInterceptor(func(_ any, stream grpc.ServerStream, _ *grpc.StreamServerInfo, next grpc.StreamHandler) error {
-		ctx := authlib.WithAuthInfo(stream.Context(), &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", OrgRole: identity.RoleAdmin})
+		ctx := authlib.WithAuthInfo(stream.Context(), &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", OrgRole: authlib.RoleAdmin})
 		return next(srv, contextStream{ServerStream: stream, ctx: ctx})
 	}))
 	resourcepb.RegisterBulkStoreServer(grpcServer, srv)
@@ -256,7 +256,7 @@ func TestBulkProcessNegotiatedInputUsesBoundedDiskSpool(t *testing.T) {
 				newTestBulkRequest("item-5"),
 			}
 			settings := BulkSettings{Collection: []*resourcepb.ResourceKey{reqs[0].Key}}
-			ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", OrgRole: identity.RoleAdmin})
+			ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", OrgRole: authlib.RoleAdmin})
 			ctx = metadata.NewIncomingContext(ctx, metadata.Join(settings.ToMD(), metadata.Pairs(resourcepb.InlineBlobMetadataKey, "1")))
 			stream := &negotiatedBulkBlobStream{bulkBlobValidationStream: bulkBlobValidationStream{testBulkProcessServer: testBulkProcessServer{ctx: ctx, requests: reqs}}}
 
@@ -285,7 +285,7 @@ func TestBulkProcessReturnsDiskSpoolReplayErrors(t *testing.T) {
 			srv := &server{backend: backend, blob: blob, blobTransfers: newBlobTransfers(), access: authlib.FixedAccessClient(true), bulkBatchOptions: DefaultBulkBatchOptions()}
 			req := newTestBulkRequest("item")
 			settings := BulkSettings{Collection: []*resourcepb.ResourceKey{req.Key}}
-			ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", OrgRole: identity.RoleAdmin})
+			ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", OrgRole: authlib.RoleAdmin})
 			ctx = metadata.NewIncomingContext(ctx, metadata.Join(settings.ToMD(), metadata.Pairs(resourcepb.InlineBlobMetadataKey, "1")))
 			stream := &negotiatedBulkBlobStream{bulkBlobValidationStream: bulkBlobValidationStream{testBulkProcessServer: testBulkProcessServer{ctx: ctx, requests: []*resourcepb.BulkRequest{req}}}}
 
@@ -308,7 +308,7 @@ func TestBulkProcessRemoteBackendFailure(t *testing.T) {
 	}
 	listener := bufconn.Listen(1 << 20)
 	grpcServer := grpc.NewServer(grpc.StreamInterceptor(func(_ any, stream grpc.ServerStream, _ *grpc.StreamServerInfo, next grpc.StreamHandler) error {
-		ctx := authlib.WithAuthInfo(stream.Context(), &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", OrgRole: identity.RoleAdmin})
+		ctx := authlib.WithAuthInfo(stream.Context(), &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", OrgRole: authlib.RoleAdmin})
 		return next(srv, contextStream{ServerStream: stream, ctx: ctx})
 	}))
 	resourcepb.RegisterBulkStoreServer(grpcServer, srv)
@@ -356,7 +356,7 @@ func TestBulkProcessBlobUploadFailureDoesNotPublish(t *testing.T) {
 			srv := &server{backend: backend, blob: blob, blobTransfers: newBlobTransfers(), access: authlib.FixedAccessClient(true), bulkBatchOptions: DefaultBulkBatchOptions()}
 			req := newBulkBlobNormalizationRequest()
 			md := metadata.Join((&BulkSettings{Collection: []*resourcepb.ResourceKey{req.Key}, SkipValidation: true}).ToMD(), metadata.Pairs(resourcepb.InlineBlobMetadataKey, "1"))
-			ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", OrgRole: identity.RoleAdmin})
+			ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", OrgRole: authlib.RoleAdmin})
 			ctx = metadata.NewIncomingContext(ctx, md)
 			stream := &negotiatedBulkBlobStream{bulkBlobValidationStream: bulkBlobValidationStream{testBulkProcessServer: testBulkProcessServer{ctx: ctx, requests: append([]*resourcepb.BulkRequest{req}, tc.frames...)}}}
 			err := srv.BulkProcess(stream)
@@ -389,7 +389,7 @@ func TestBulkProcessBlobHandshakeFailsClosed(t *testing.T) {
 			backend := &bulkBlobValidationBackend{}
 			srv := &server{backend: backend, blob: tc.blob, access: authlib.FixedAccessClient(true), bulkBatchOptions: DefaultBulkBatchOptions()}
 			req := newBulkBlobNormalizationRequest()
-			ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", OrgRole: identity.RoleAdmin})
+			ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", OrgRole: authlib.RoleAdmin})
 			md := BulkSettings{Collection: []*resourcepb.ResourceKey{req.Key}}
 			header := md.ToMD()
 			header[resourcepb.InlineBlobMetadataKey] = tc.version
@@ -444,7 +444,7 @@ func runBulkBlobValidationTest(t *testing.T, req *resourcepb.BulkRequest, skip b
 		SkipValidation: skip,
 	}
 	ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{
-		Type: authlib.TypeUser, UserUID: "u1", OrgRole: identity.RoleAdmin,
+		Type: authlib.TypeUser, UserUID: "u1", OrgRole: authlib.RoleAdmin,
 	})
 	ctx = metadata.NewIncomingContext(ctx, settings.ToMD())
 	stream := &bulkBlobValidationStream{testBulkProcessServer: testBulkProcessServer{ctx: ctx, requests: []*resourcepb.BulkRequest{req}}}

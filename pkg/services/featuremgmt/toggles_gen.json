@@ -2045,6 +2045,20 @@
     },
     {
       "metadata": {
+        "name": "datasources.gatewayQueryUsage",
+        "resourceVersion": "1795014708911",
+        "creationTimestamp": "2026-11-18T15:11:48Z"
+      },
+      "spec": {
+        "description": "Record billed query usage (Mimir samples read, Loki bytes processed) in query gateway audit events",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasources.gatewayRateLimits",
         "resourceVersion": "1794262635153",
         "creationTimestamp": "2026-11-09T22:17:15Z"
@@ -2745,15 +2759,19 @@
     {
       "metadata": {
         "name": "flameGraph.tableNg",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-08-13T19:21:31Z"
+        "resourceVersion": "1795040338225",
+        "creationTimestamp": "2026-08-13T19:21:31Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-18 22:18:58.225136 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Renders the flame graph's top table using TableNG instead of the legacy Table",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/observability-traces-and-profiling",
         "frontend": true,
-        "expression": "false"
+        "hideFromDocs": true,
+        "expression": "true"
       }
     },
     {
@@ -3073,6 +3091,21 @@
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.dashboardQuestions",
+        "resourceVersion": "1794393400338",
+        "creationTimestamp": "2026-11-11T10:36:40Z"
+      },
+      "spec": {
+        "description": "Lets editors save questions on dashboards, rows, and tabs, which plugins offer to viewers in the dashboard controls",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -4043,10 +4076,10 @@
     {
       "metadata": {
         "name": "grafana.visualDesignRefresh",
-        "resourceVersion": "1794390113100",
+        "resourceVersion": "1794999519670",
         "creationTimestamp": "2026-06-12T11:11:47Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-11-11 09:41:53.100333 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-11-18 10:58:39.670875 +0000 UTC"
         }
       },
       "spec": {
@@ -4055,7 +4088,7 @@
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true,
         "hideFromDocs": true,
-        "expression": "true"
+        "expression": "false"
       }
     },
     {
@@ -4850,15 +4883,35 @@
     {
       "metadata": {
         "name": "live.runAPIServer",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-05-14T12:37:47Z"
+        "resourceVersion": "1795434432420",
+        "creationTimestamp": "2026-05-14T12:37:47Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-23 11:47:12.420025 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Registers a live apiserver",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
-        "requiresDevMode": true,
         "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "live.useAPIServerWebsocket",
+        "resourceVersion": "1795434496471",
+        "creationTimestamp": "2026-11-23T11:33:35Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-23 11:48:16.471971 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Connects Grafana Live to the live.grafana.app websocket instead of /api/live/ws",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -5674,15 +5727,18 @@
     {
       "metadata": {
         "name": "queryEditorNext",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-01-23T18:40:47Z"
+        "resourceVersion": "1794414145067",
+        "creationTimestamp": "2026-01-23T18:40:47Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-11 16:22:25.067667 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables next generation query editor experience",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/datapro",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -5868,15 +5924,19 @@
     {
       "metadata": {
         "name": "rawPrometheus.tableNg",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-08-13T20:46:09Z"
+        "resourceVersion": "1795040338225",
+        "creationTimestamp": "2026-08-13T20:46:09Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-18 22:18:58.225136 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Renders the raw Prometheus query results table using TableNG instead of the legacy Table",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/data-sources-plugins",
         "frontend": true,
-        "expression": "false"
+        "hideFromDocs": true,
+        "expression": "true"
       }
     },
     {
@@ -6533,16 +6593,19 @@
     {
       "metadata": {
         "name": "table.inspectDataTableNG",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-08-12T18:20:19Z"
+        "resourceVersion": "1795039264932",
+        "creationTimestamp": "2026-08-12T18:20:19Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-18 22:01:04.932465 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables TableNG in the panel inspector's Data tab, replacing the legacy Table (TableRT)",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {

@@ -1,7 +1,8 @@
 package navtreeimpl
 
 import (
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	authlib "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/login/social"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ssoutils"
@@ -53,7 +54,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Url:      s.cfg.AppSubURL + "/admin/migrate-to-cloud",
 		})
 	}
-	if c.HasRole(identity.RoleAdmin) && s.cfg.ProvisioningEnabled {
+	if c.HasRole(authlib.RoleAdmin) && s.cfg.ProvisioningEnabled {
 		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
 			Text:     "Provisioning",
 			Id:       "provisioning",
@@ -100,7 +101,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 	}
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if (s.cfg.Env == setting.Dev) || s.features.IsEnabled(ctx, featuremgmt.FlagEnableExtensionsAdminPage) && hasAccess(pluginaccesscontrol.AdminAccessEvaluator) {
+	if (s.cfg.Env == setting.Dev || s.features.IsEnabled(ctx, featuremgmt.FlagEnableExtensionsAdminPage)) && hasAccess(pluginaccesscontrol.AdminAccessEvaluator) {
 		pluginsNodeLinks = append(pluginsNodeLinks, &navtree.NavLink{
 			Text:     "Extensions",
 			Icon:     "plug",

@@ -56,6 +56,9 @@ export enum DataSourceType {
   PprofPyroscope = 'pprof-pyroscope',
   Unknown = 'unknown',
 } 
+// 'name' shows the function without the import path. Independent of TextAlign,
+// so a name-only label can still be left or right aligned.
+export type SymbolLabel = 'full' | 'name';
 
 export interface ProfileTooltipData {
   percentValue: number;

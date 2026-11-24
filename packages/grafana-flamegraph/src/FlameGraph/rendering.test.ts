@@ -4,7 +4,7 @@ import { DataSourceType, FrameType } from '../types';
 
 import { getBarColorBySpace } from './colors';
 import { FlameGraphDataContainer, type LevelItem } from './dataTransform';
-import { walkTree } from './rendering';
+import { functionName, walkTree } from './rendering';
 import { textToDataContainer } from './testHelpers';
 
 function makeDataFrame(fields: Record<string, Array<number | string>>) {
@@ -372,5 +372,31 @@ describe('getBarColorBySpace', () => {
     [FrameType.Unknown, 'rgb(255, 182, 193)'],
   ])('returns the expected color for %s', (frameType, expected) => {
     expect(getBarColorBySpace(frameType).toRgbString()).toBe(expected);
+  });
+});
+
+const symbol = 'github.com/grafana/mimir/pkg/storegateway.(*BucketStore).Series';
+
+describe('Name labels', () => {
+  it('drops the import path', () => {
+    expect(functionName(symbol)).toBe('storegateway.(*BucketStore).Series');
+  });
+
+  it('keeps a slash that belongs to the function', () => {
+    expect(functionName('encoding/json.(*structEncoder).(encoding/json.encode)-fm')).toBe(
+      'json.(*structEncoder).(encoding/json.encode)-fm'
+    );
+  });
+
+  it('keeps type parameters in the name', () => {
+    expect(functionName('github.com/foo/bar.Map[k8s.io/api.Pod].Get')).toBe('bar.Map[k8s.io/api.Pod].Get');
+  });
+
+  it('keeps a collapsed-frame count on the Name label', () => {
+    expect(functionName(`(4) ${symbol}`)).toBe('(4) storegateway.(*BucketStore).Series');
+  });
+
+  it('does not treat a method receiver as a collapsed-frame count', () => {
+    expect(functionName('(*conn).serve')).toBe('(*conn).serve');
   });
 });
