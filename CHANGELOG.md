@@ -2,6 +2,12 @@
 
 # 13.1.11 (2026-11-24)
 
+### Security
+
+- Security: Fix CVE-2026-107561
+- Security: Fix CVE-2026-88943
+- Security: Fix CVE-2026-88960
+
 <!-- 13.1.11 END -->
 <!-- 13.1.10 START -->
 

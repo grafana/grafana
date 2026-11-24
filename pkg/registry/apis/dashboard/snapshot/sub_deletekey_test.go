@@ -50,7 +50,7 @@ func TestDeleteKeyREST_Connect_SameOrg(t *testing.T) {
 	responder := &capturingResponder{}
 
 	// Caller in org 1, snapshot owned by org 1.
-	handler, err := r.Connect(ctxForOrg(1), "snap-1", nil, responder)
+	handler, err := r.Connect(ctxForUser(1, 2), "snap-1", nil, responder)
 	require.NoError(t, err)
 	require.NotNil(t, handler)
 
