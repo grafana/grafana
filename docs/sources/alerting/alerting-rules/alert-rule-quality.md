@@ -62,7 +62,7 @@ Before you begin, check that you have the following permissions in your Grafana 
 
 - **Rule access:** Have permission to view the Grafana-managed alert rules you want to assess.
 - **Policy permissions:** To configure the quality policy, have the Admin role in your organization or a role with `alert.rules.quality:write` and `alert.rules:read`.
-  This applies to Team policies too: only organization admins create, edit, and delete them.
+  This applies to Team policies too: only organization administrators create, edit, and delete them.
 - **Rule updates:** To fix findings, have permission to update the affected rules.
   For provisioned rules, you also need access to their source configuration and permission to reapply it.
 
@@ -111,7 +111,7 @@ A policy follows the folder, not the person writing the rule.
 Grafana evaluates policies when an as-code write reaches a folder, whoever makes the write and whichever teams they belong to.
 
 - **Team policy:** Applies to every as-code write into a folder that the team owns.
-- **Org policy:** Applies when no owning team of the folder has a Team policy, so folders without an owning team are always covered.
+- **Org policy:** Applies when no owning team of the folder or any of its ancestors has a Team policy, so folders without an owning team are always covered.
 
 A team has at most one Team policy.
 
@@ -138,9 +138,9 @@ If a team owns a folder but has no Team policy, it doesn't affect which policy a
 ### Rejected writes
 
 A rejected write lists every policy the rule failed, and the missing fields for each rule under each policy.
-It shows every missing requirement, including requirements set by other teams that you aren't a member of, so you can fix the source configuration in one pass.
+It shows every missing enforced requirement, including requirements set by other teams that you aren't a member of, so you can fix the source configuration in one pass.
 Each failing policy is named: either the Org policy or the policy of a team.
-The message also says that org admins can change the policy.
+The message also says that organization administrators can change the policy.
 
 Team policies change only which requirements are enforced. Enforcement scope stays the same as described in [Supported enforcement paths](#supported-enforcement-paths):
 
@@ -155,7 +155,7 @@ If Grafana can't resolve a folder's owners or read a policy, the write isn't blo
 
 ### Manage Team policies
 
-In this version, only organization admins create, edit, and delete policies, Team policies included.
+In this version, only organization administrators create, edit, and delete policies, Team policies included.
 Team admins can't manage their team's policy.
 
 To create a Team policy, follow these steps:
@@ -165,10 +165,7 @@ To create a Team policy, follow these steps:
 3. Select the **Team** the policy is for.
 4. Add the required annotations and labels, as described in [Configure a quality policy](#configure-a-quality-policy), and click **Save**.
 
-To edit or delete a Team policy, select it in the policy list. To delete it, click **Delete policy** and confirm.
-
-Deleting a team also deletes its Team policy.
-The policy of a deleted team never applies.
+To edit or delete a Team policy, click **Edit** beside the team's policy. To delete it, click **Delete policy** and confirm.
 
 ## Configure a quality policy
 
@@ -306,7 +303,7 @@ Use the following guidance when you can't access the feature, resolve a finding,
 | No findings match your search, but the score is below 10.0.                | Clear **Search** to view all findings. Search filters don't change the score.                                                                                                             |
 | A finding remains after enforcement is disabled.                           | Detect-only requirements still produce findings. Fill in the missing value or remove the requirement from the policy.                                                                     |
 | A provisioning write is rejected by the quality policy.                    | Use the rule and field details in the error to update the source configuration, then reapply it.                                                                                          |
-| A rejection names a team policy that you didn't expect.                    | The write goes to a folder, or a subfolder of a folder, owned by that team. Add the fields every named policy lists, or ask an org admin to change the policy.                            |
+| A rejection names a team policy that you didn't expect.                    | The write goes to a folder, or a subfolder of a folder, owned by that team. Add the fields every named policy lists, or ask an organization administrator to change the policy.           |
 | A rule in a team's folder isn't checked against the Org policy.            | The team has its own policy, which replaces the Org policy for its folders. Check that `alerting.ruleQualityTeamPolicies` is on and review the team's policy.                             |
 | A write succeeds despite a quality finding.                                | Check that the requirement is enforced and the policy is saved. Confirm that the write uses a [supported enforcement path](#supported-enforcement-paths) and isn't one of its exceptions. |
 
