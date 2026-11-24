@@ -42,6 +42,7 @@ type IndexViewData struct {
 	AutoLoginRedirectURL    string `json:"autoLoginRedirectURL,omitempty"`
 	AssetSriChecksEnabled   bool   `json:"-"`
 	LegacyFeatureToggleMode string `json:"-"`
+	BootdataAnalytics       bool   `json:"-"`
 
 	// ESModuleAssetsEnabled mirrors Assets.ESModule — the template uses it to pick the
 	// matching <script type>.

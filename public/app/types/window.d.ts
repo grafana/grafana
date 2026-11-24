@@ -35,6 +35,9 @@ export declare global {
      */
     __grafanaLegacyFeatureToggleMode?: LegacyFeatureToggleMode;
 
+    /** Controlled by the `grafana.bootdataAnalytics` feature flag. Counts reads of bootdata settings. */
+    __grafanaBootdataAnalytics?: boolean;
+
     /**
      * (Potential) wait for API call to fetch boot data and place it on `window.grafanaBootData`.
      * Required in new index.html to fetch necessary data before app init()
