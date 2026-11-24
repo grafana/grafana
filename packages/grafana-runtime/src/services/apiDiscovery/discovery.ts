@@ -1,4 +1,5 @@
 import { isObject } from '@grafana/data';
+import { type LogContext } from '@grafana/faro-web-sdk';
 
 import { getFetchErrorContext } from '../../utils/getCachedPromise';
 import { getBackendSrv, isFetchError } from '../backendSrv';
@@ -6,7 +7,14 @@ import { API_VERSION_PATTERN } from '../pluginUtils';
 import { isSignedInOrAnonymous } from '../user';
 
 import { logAPIDiscoveryError, logAPIDiscoveryWarning } from './logging';
-import { fromK8sAPIResourceList, isK8sAPIResourceList, type ResourceList } from './resources';
+import {
+  fromK8sAPIGroupDiscoveryList,
+  fromK8sAPIResourceList,
+  hasStaleVersion,
+  isK8sAPIGroupDiscoveryList,
+  isK8sAPIResourceList,
+  type ResourceList,
+} from './resources';
 import {
   type K8sAPIGroup,
   type K8sAPIGroupList,
@@ -16,7 +24,7 @@ import {
 } from './types';
 
 /** `unknown` means discovery could not answer. It is never cached, so the next caller asks again. */
-type Outcome<T> = { kind: 'known'; value: T } | { kind: 'unknown' };
+type Outcome<T> = { kind: 'known'; value: T } | { kind: 'partial'; value: T } | { kind: 'unknown' };
 
 type GroupsByName = ReadonlyMap<string, APIGroupInfo>;
 
@@ -27,6 +35,8 @@ const ROOT_URL = '/apis';
 const UNKNOWN: Outcome<never> = { kind: 'unknown' };
 // A DNS subdomain, as Kubernetes requires for group names. The name ends up in a URL path.
 const GROUP_NAME_PATTERN = /^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$/;
+const AGGREGATED_DISCOVERY_ACCEPT =
+  'application/json;g=apidiscovery.k8s.io;v=v2;as=APIGroupDiscoveryList,application/json;g=apidiscovery.k8s.io;v=v2beta1;as=APIGroupDiscoveryList,application/json';
 
 class DiscoveryTimeoutError extends Error {
   constructor(url: string) {
@@ -51,7 +61,7 @@ class OutcomeCache<T> {
 
     const pending = load().then((outcome) => {
       // The identity check keeps an entry that invalidation or a test seed put here meanwhile.
-      if (outcome.kind === 'unknown' && this.entries.get(key) === pending) {
+      if (outcome.kind !== 'known' && this.entries.get(key) === pending) {
         this.entries.delete(key);
       }
       return outcome;
@@ -72,6 +82,7 @@ class OutcomeCache<T> {
 const rootCache = new OutcomeCache<GroupsByName>();
 const groupCache = new OutcomeCache<APIGroupInfo | undefined>();
 const resourceListCache = new OutcomeCache<ResourceList | undefined>();
+const allResourcesCache = new OutcomeCache<readonly APIResourceInfo[]>();
 
 /**
  * Returns the versions the server serves for an `/apis` group, such as `dashboard.grafana.app`.
@@ -162,6 +173,25 @@ export async function isAPIResourceAvailable({
 }
 
 /**
+ * Returns every resource the server serves, across all `/apis` groups and versions, in the order the
+ * server lists them: by group, then by version, the preferred version first.
+ *
+ * Resolves `undefined` when discovery can't answer, which is not cached (see {@link getAPIGroup}). It never
+ * rejects and never shows an error to the user. A version the server lists as stale, because it couldn't
+ * read it, keeps the resources the server last knew of. Such an answer isn't cached, so the next call asks
+ * the server again.
+ *
+ * The first call fetches the aggregated `GET /apis` (`APIGroupDiscoveryList`), which is much larger than the
+ * group list {@link getAPIGroup} reads. Later calls reuse the answer until {@link invalidateAPIDiscovery} or
+ * a page reload. Ask for one group version with {@link getAPIResources} instead when that is all you need.
+ *
+ * @alpha
+ */
+export async function getAllAPIResources(): Promise<readonly APIResourceInfo[] | undefined> {
+  return valueOf(await allResourcesCache.get(ROOT_URL, fetchAllAPIResources));
+}
+
+/**
  * Forgets every cached discovery answer, so the next call asks the server again. Call it after
  * something changes which groups the server serves, such as installing or removing an app plugin.
  *
@@ -171,6 +201,7 @@ export function invalidateAPIDiscovery(): void {
   rootCache.clear();
   groupCache.clear();
   resourceListCache.clear();
+  allResourcesCache.clear();
 }
 
 /**
@@ -188,7 +219,7 @@ export function setAPIDiscoveryForTesting(groups: readonly APIGroupInfo[]): void
 }
 
 function valueOf<T>(outcome: Outcome<T | undefined>): T | undefined {
-  return outcome.kind === 'known' ? outcome.value : undefined;
+  return outcome.kind === 'unknown' ? undefined : outcome.value;
 }
 
 async function fetchAPIGroupList(): Promise<Outcome<GroupsByName>> {
@@ -271,7 +302,24 @@ async function fetchResourceList(group: string, version: string): Promise<Outcom
   }
 }
 
-async function getWithTimeout(url: string): Promise<unknown> {
+async function fetchAllAPIResources(): Promise<Outcome<readonly APIResourceInfo[]>> {
+  if (!isSignedInOrAnonymous()) {
+    return UNKNOWN;
+  }
+
+  try {
+    const response = await getWithTimeout(ROOT_URL, { Accept: AGGREGATED_DISCOVERY_ACCEPT });
+    if (!isK8sAPIGroupDiscoveryList(response)) {
+      throw new Error('API discovery: the response is not an APIGroupDiscoveryList');
+    }
+    return { kind: hasStaleVersion(response) ? 'partial' : 'known', value: fromK8sAPIGroupDiscoveryList(response) };
+  } catch (error) {
+    logRequestFailure(ROOT_URL, error, { format: 'aggregated' });
+    return UNKNOWN;
+  }
+}
+
+async function getWithTimeout(url: string, headers?: Record<string, string>): Promise<unknown> {
   const controller = new AbortController();
   let timer: ReturnType<typeof setTimeout> | undefined;
   // Racing the request, rather than relying on the abort alone, settles even if the request ignores the signal.
@@ -286,6 +334,7 @@ async function getWithTimeout(url: string): Promise<unknown> {
     const request = getBackendSrv().get<unknown>(url, undefined, undefined, {
       showErrorAlert: false,
       abortSignal: controller.signal,
+      headers,
     });
     return await Promise.race([request, timeout]);
   } finally {
@@ -293,10 +342,11 @@ async function getWithTimeout(url: string): Promise<unknown> {
   }
 }
 
-function logRequestFailure(url: string, error: unknown): void {
+function logRequestFailure(url: string, error: unknown, context?: LogContext): void {
   const timedOut = error instanceof DiscoveryTimeoutError;
   logAPIDiscoveryError('API discovery: request failed', error, {
     ...getFetchErrorContext(error),
+    ...context,
     url,
     reason: timedOut ? 'timeout' : 'error',
   });

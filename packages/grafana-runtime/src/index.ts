@@ -130,6 +130,7 @@ export { getAppPluginHealth } from './services/pluginHealth/getAppPluginHealth';
 export { callAppPluginProxy } from './services/pluginProxy/callAppPluginProxy';
 export { callDataSourcePluginProxy } from './services/pluginProxy/callDataSourcePluginProxy';
 export {
+  getAllAPIResources,
   getAPIGroup,
   getAPIResources,
   invalidateAPIDiscovery,

@@ -6,13 +6,19 @@ import { setLogger } from '../logging/registry';
 
 import {
   API_DISCOVERY_TIMEOUT_MS,
+  getAllAPIResources,
   getAPIGroup,
   getAPIResources,
   invalidateAPIDiscovery,
   isAPIResourceAvailable,
   setAPIDiscoveryForTesting,
 } from './discovery';
-import { type K8sAPIGroup, type K8sAPIGroupList, type K8sAPIResourceList } from './types';
+import {
+  type K8sAPIGroup,
+  type K8sAPIGroupDiscoveryList,
+  type K8sAPIGroupList,
+  type K8sAPIResourceList,
+} from './types';
 
 const backendGet = jest.fn();
 const logError = jest.fn();
@@ -535,5 +541,178 @@ describe('isAPIResourceAvailable', () => {
     await isAPIResourceAvailable({ ...folders, subresource: 'access' });
 
     expect(requestedUrls()).toEqual([FOLDER_RESOURCES_URL]);
+  });
+});
+
+const AGGREGATED_ACCEPT =
+  'application/json;g=apidiscovery.k8s.io;v=v2;as=APIGroupDiscoveryList,application/json;g=apidiscovery.k8s.io;v=v2beta1;as=APIGroupDiscoveryList,application/json';
+
+const discoveryList: K8sAPIGroupDiscoveryList = {
+  items: [
+    {
+      metadata: { name: 'dashboard.grafana.app' },
+      versions: [
+        {
+          version: 'v1beta1',
+          freshness: 'Current',
+          resources: [
+            {
+              resource: 'dashboards',
+              responseKind: { kind: 'Dashboard' },
+              scope: 'Namespaced',
+              verbs: ['get', 'list'],
+              subresources: [{ subresource: 'dto', verbs: ['get'] }],
+            },
+          ],
+        },
+      ],
+    },
+    { metadata: { name: 'quotas.grafana.app' }, versions: [{ version: 'v0alpha1', freshness: 'Current' }] },
+  ],
+};
+
+const dashboardsInfo = {
+  group: 'dashboard.grafana.app',
+  version: 'v1beta1',
+  resource: 'dashboards',
+  kind: 'Dashboard',
+  namespaced: true,
+  verbs: ['get', 'list'],
+  subresources: ['dto'],
+};
+
+const staleGroup = {
+  metadata: { name: 'example.ext.grafana.app' },
+  versions: [
+    {
+      version: 'v1',
+      freshness: 'Stale',
+      resources: [{ resource: 'widgets', responseKind: { kind: 'Widget' }, scope: 'Namespaced', verbs: ['list'] }],
+    },
+  ],
+};
+
+function respondToAggregated(answer: () => Promise<unknown>) {
+  backendGet.mockImplementation((url: string, _params, _requestId, options?: { headers?: Record<string, string> }) => {
+    if (url !== '/apis') {
+      return Promise.reject(fetchError(404));
+    }
+    return options?.headers?.Accept === AGGREGATED_ACCEPT ? answer() : Promise.resolve(groupList);
+  });
+}
+
+function requestedFormats(): string[] {
+  return backendGet.mock.calls.map(([url, , , options]) => (options?.headers ? `${url} aggregated` : url));
+}
+
+describe('getAllAPIResources', () => {
+  describe('when the server serves aggregated discovery', () => {
+    beforeEach(() => {
+      respondToAggregated(() => Promise.resolve(discoveryList));
+    });
+
+    it('returns every resource by group and version', async () => {
+      await expect(getAllAPIResources()).resolves.toEqual([dashboardsInfo]);
+    });
+
+    it('requests aggregated discovery from /apis without an error toast', async () => {
+      await getAllAPIResources();
+
+      expect(backendGet).toHaveBeenCalledWith(
+        '/apis',
+        undefined,
+        undefined,
+        expect.objectContaining({ showErrorAlert: false, headers: { Accept: AGGREGATED_ACCEPT } })
+      );
+    });
+
+    it('caches the answer apart from the group list', async () => {
+      await getAllAPIResources();
+      await getAPIGroup('dashboard.grafana.app');
+      await getAllAPIResources();
+      await getAPIGroup('dashboard.grafana.app');
+
+      expect(requestedFormats()).toEqual(['/apis aggregated', '/apis']);
+    });
+
+    it('shares one in-flight request between concurrent callers', async () => {
+      const results = await Promise.all([getAllAPIResources(), getAllAPIResources(), getAllAPIResources()]);
+
+      expect(results).toEqual([[dashboardsInfo], [dashboardsInfo], [dashboardsInfo]]);
+      expect(requestedFormats()).toEqual(['/apis aggregated']);
+    });
+
+    it('requests it again after invalidateAPIDiscovery()', async () => {
+      await getAllAPIResources();
+      invalidateAPIDiscovery();
+      await getAllAPIResources();
+
+      expect(requestedFormats()).toEqual(['/apis aggregated', '/apis aggregated']);
+    });
+  });
+
+  it('returns what a stale version lists without caching it, until no version is stale', async () => {
+    respondToAggregated(() => Promise.resolve({ items: [...discoveryList.items, staleGroup] }));
+
+    await expect(getAllAPIResources()).resolves.toEqual([
+      dashboardsInfo,
+      {
+        group: 'example.ext.grafana.app',
+        version: 'v1',
+        resource: 'widgets',
+        kind: 'Widget',
+        namespaced: true,
+        verbs: ['list'],
+        subresources: [],
+      },
+    ]);
+
+    respondToAggregated(() => Promise.resolve(discoveryList));
+
+    await expect(getAllAPIResources()).resolves.toEqual([dashboardsInfo]);
+    await expect(getAllAPIResources()).resolves.toEqual([dashboardsInfo]);
+    expect(requestedFormats()).toEqual(['/apis aggregated', '/apis aggregated']);
+    expect(logError).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['a server error', () => Promise.reject(fetchError(500))],
+    ['a 401', () => Promise.reject(fetchError(401))],
+    ['a group list, as a server without aggregated discovery answers', () => Promise.resolve(groupList)],
+    ['a response that is not a discovery list', () => Promise.resolve('<!doctype html>')],
+  ])('returns undefined on %s, logs it once, and retries on the next call', async (_, answer) => {
+    respondToAggregated(answer);
+
+    const results = await Promise.all([getAllAPIResources(), getAllAPIResources()]);
+
+    expect(results).toEqual([undefined, undefined]);
+    expect(logError).toHaveBeenCalledTimes(1);
+    expect(logError).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({ url: '/apis', format: 'aggregated' })
+    );
+
+    respondToAggregated(() => Promise.resolve(discoveryList));
+
+    await expect(getAllAPIResources()).resolves.toEqual([dashboardsInfo]);
+    expect(requestedFormats()).toEqual(['/apis aggregated', '/apis aggregated']);
+  });
+
+  it('treats a request that outlasts the timeout as unknown', async () => {
+    jest.useFakeTimers();
+    backendGet.mockReturnValue(new Promise(() => {}));
+
+    const pending = getAllAPIResources();
+    await jest.advanceTimersByTimeAsync(API_DISCOVERY_TIMEOUT_MS);
+
+    await expect(pending).resolves.toBeUndefined();
+    expect(logError).toHaveBeenCalledWith(expect.any(Error), expect.objectContaining({ reason: 'timeout' }));
+  });
+
+  it('returns undefined without a request when there is no session', async () => {
+    setBootUser(undefined);
+
+    await expect(getAllAPIResources()).resolves.toBeUndefined();
+    expect(backendGet).not.toHaveBeenCalled();
   });
 });
