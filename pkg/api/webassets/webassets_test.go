@@ -1,6 +1,7 @@
 package webassets
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -253,5 +255,110 @@ func TestGetWebAssetsFromDevServer(t *testing.T) {
 		assets, err := GetWebAssets(context.Background(), "build-swagger", cfg, license)
 		require.NoError(t, err)
 		require.Empty(t, assets.ContentDeliveryURL)
+	})
+}
+
+func TestReadWebAssetsBounds(t *testing.T) {
+	const (
+		maxManifestSize = 1024 * 1024
+		maxAssets       = 256
+		maxIntegrity    = 512
+	)
+	const manifest = `{"entrypoints":{"app":{"assets":{"js":["public/build/app.js"]}}}}`
+	paths := func(n int) []string {
+		files := make([]string, n)
+		for i := range files {
+			files[i] = "public/build/app.js"
+		}
+		return files
+	}
+	build := func(mutate func(app, dark, light *EntryPointInfo, m map[string]ManifestInfo)) []byte {
+		app, dark, light := &EntryPointInfo{}, &EntryPointInfo{}, &EntryPointInfo{}
+		app.Assets.JS = []string{"public/build/app.js"}
+		m := map[string]ManifestInfo{"entrypoints": {App: app, Dark: dark, Light: light}}
+		mutate(app, dark, light, m)
+		data, err := json.Marshal(m)
+		require.NoError(t, err)
+		return data
+	}
+
+	cases := map[string]struct {
+		data    []byte
+		wantErr bool
+	}{
+		"at size limit":   {data: []byte(manifest + strings.Repeat(" ", maxManifestSize-len(manifest)))},
+		"over size limit": {data: []byte(manifest + strings.Repeat(" ", maxManifestSize+1-len(manifest))), wantErr: true},
+		"max app JS and CSS": {data: build(func(app, _, _ *EntryPointInfo, _ map[string]ManifestInfo) {
+			app.Assets.JS, app.Assets.CSS = paths(maxAssets/2), paths(maxAssets/2)
+		})},
+		"too many app JS and CSS": {wantErr: true, data: build(func(app, _, _ *EntryPointInfo, _ map[string]ManifestInfo) {
+			app.Assets.JS, app.Assets.CSS = paths(maxAssets/2), paths(maxAssets/2+1)
+		})},
+		"max integrity": {data: build(func(_, _, _ *EntryPointInfo, m map[string]ManifestInfo) {
+			m["app.js"] = ManifestInfo{FilePath: "public/build/app.js", Integrity: strings.Repeat("a", maxIntegrity)}
+		})},
+		"integrity too long": {wantErr: true, data: build(func(_, _, _ *EntryPointInfo, m map[string]ManifestInfo) {
+			m["app.js"] = ManifestInfo{FilePath: "public/build/app.js", Integrity: strings.Repeat("a", maxIntegrity+1)}
+		})},
+	}
+	for name, tt := range cases {
+		t.Run(name, func(t *testing.T) {
+			assets, err := readWebAssets(bytes.NewReader(tt.data))
+			if tt.wantErr {
+				require.Error(t, err)
+				require.Nil(t, assets)
+				return
+			}
+			require.NoError(t, err)
+			require.NotEmpty(t, assets.JSFiles)
+
+			filename := filepath.Join(t.TempDir(), AssetsManifestFile)
+			require.NoError(t, os.WriteFile(filename, tt.data, 0600))
+			assets, err = ReadWebAssetsFromFile(filename)
+			require.NoError(t, err)
+			require.NotEmpty(t, assets.JSFiles)
+		})
+	}
+
+	t.Run("file over size limit", func(t *testing.T) {
+		filename := filepath.Join(t.TempDir(), AssetsManifestFile)
+		require.NoError(t, os.WriteFile(filename, cases["over size limit"].data, 0600))
+		assets, err := ReadWebAssetsFromFile(filename)
+		require.Error(t, err)
+		require.Nil(t, assets)
+	})
+
+	for _, file := range []string{"../app.js", "/public/build/app.js", "public/build/../app.js", "https://example.com/app.js"} {
+		for _, location := range []string{"app JS", "app CSS", "dark CSS", "light CSS"} {
+			t.Run(fmt.Sprintf("rejects %q in %s", file, location), func(t *testing.T) {
+				data := build(func(app, dark, light *EntryPointInfo, _ map[string]ManifestInfo) {
+					switch location {
+					case "app JS":
+						app.Assets.JS = []string{file}
+					case "app CSS":
+						app.Assets.CSS = []string{file}
+					case "dark CSS":
+						dark.Assets.CSS = []string{file}
+					case "light CSS":
+						light.Assets.CSS = []string{file}
+					}
+				})
+				assets, err := readWebAssets(bytes.NewReader(data))
+				require.Error(t, err)
+				require.Nil(t, assets)
+			})
+		}
+	}
+
+	t.Run("accepts clean relative paths including themes", func(t *testing.T) {
+		data := build(func(app, dark, light *EntryPointInfo, _ map[string]ManifestInfo) {
+			app.Assets.CSS = []string{"public/build/app.css"}
+			dark.Assets.CSS = []string{"public/build/dark.css"}
+			light.Assets.CSS = []string{"public/build/light.css"}
+		})
+		assets, err := readWebAssets(bytes.NewReader(data))
+		require.NoError(t, err)
+		require.Equal(t, "public/build/dark.css", assets.Dark)
+		require.Equal(t, "public/build/light.css", assets.Light)
 	})
 }

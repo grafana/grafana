@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -117,6 +118,32 @@ func GetWebAssets(ctx context.Context, buildDir string, cfg *setting.Cfg, licens
 // returns rather than hanging the render on a listener that never answers.
 const devServerManifestTimeout = 10 * time.Second
 
+// The manifest lists initial chunks, not every lazy-loaded asset.
+const (
+	maxManifestSize         = 1024 * 1024
+	maxEntrypointAssets     = 256
+	maxAssetPathLength      = 4096
+	maxAssetIntegrityLength = 512
+)
+
+func validateAssetPath(file string) error {
+	if len(file) > maxAssetPathLength {
+		return fmt.Errorf("assets-manifest.json asset path exceeds %d bytes", maxAssetPathLength)
+	}
+	// Bundlers emit public/build/... or public/build-swagger/... relative to the
+	// server/CDN root. Never allow an asset to escape that root or become a URL.
+	if file == "" || file == "." || file == ".." || path.IsAbs(file) ||
+		path.Clean(file) != file || strings.HasPrefix(file, "../") || strings.ContainsAny(file, `\:%?#`) {
+		return fmt.Errorf("assets-manifest.json asset path must be a clean relative path")
+	}
+	for i := range len(file) {
+		if file[i] < 0x20 || file[i] == 0x7f {
+			return fmt.Errorf("assets-manifest.json asset path contains a control character")
+		}
+	}
+	return nil
+}
+
 // readDevServerAssets reads the manifest from a running bundler dev server, which stands in for
 // the CDN: the browser then fetches bundles straight from it, which is what lets it hot-replace
 // modules, and the dev server never has to write a build to disk. Returns nil when there is no
@@ -170,8 +197,7 @@ func ReadWebAssetsFromCDN(ctx context.Context, buildDir string, baseURL string) 
 	if response.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("unexpected status code %d fetching assets-manifest.json from %s", response.StatusCode, baseURL)
 	}
-	const maxManifestSize = 10 * 1024 * 1024
-	dto, err := readWebAssets(io.LimitReader(response.Body, maxManifestSize))
+	dto, err := readWebAssets(response.Body)
 	if err == nil {
 		dto.PublicPath = PublicPathFor(buildDir)
 		dto.SetContentDeliveryURL(baseURL)
@@ -180,25 +206,49 @@ func ReadWebAssetsFromCDN(ctx context.Context, buildDir string, baseURL string) 
 }
 
 func readWebAssets(r io.Reader) (*dtos.EntryPointAssets, error) {
-	manifest := map[string]ManifestInfo{}
-	if err := json.NewDecoder(r).Decode(&manifest); err != nil {
-		return nil, fmt.Errorf("failed to read assets-manifest.json %w", err)
+	data, err := io.ReadAll(io.LimitReader(r, maxManifestSize+1))
+	if err != nil {
+		return nil, fmt.Errorf("failed to read assets-manifest.json: %w", err)
+	}
+	if len(data) > maxManifestSize {
+		return nil, fmt.Errorf("assets-manifest.json exceeds %d bytes", maxManifestSize)
+	}
+	var manifest map[string]ManifestInfo
+	if err := json.Unmarshal(data, &manifest); err != nil {
+		return nil, fmt.Errorf("failed to parse assets-manifest.json: %w", err)
+	}
+	entryPoints := manifest["entrypoints"]
+	if entryPoints.App == nil || len(entryPoints.App.Assets.JS) == 0 {
+		return nil, fmt.Errorf("missing app entry, try running `pnpm build`")
 	}
 
-	integrity := make(map[string]string, 100)
-	for _, v := range manifest {
-		if v.Integrity != "" && v.FilePath != "" {
-			integrity[v.FilePath] = v.Integrity
+	if len(entryPoints.App.Assets.JS)+len(entryPoints.App.Assets.CSS) > maxEntrypointAssets {
+		return nil, fmt.Errorf("assets-manifest.json exceeds %d entrypoint assets", maxEntrypointAssets)
+	}
+
+	integrity := make(map[string]string)
+	for _, entry := range manifest {
+		if len(entry.Integrity) > maxAssetIntegrityLength {
+			return nil, fmt.Errorf("assets-manifest.json integrity exceeds %d bytes", maxAssetIntegrityLength)
+		}
+		if entry.FilePath != "" && entry.Integrity != "" {
+			integrity[entry.FilePath] = entry.Integrity
 		}
 	}
 
-	entryPoints, ok := manifest["entrypoints"]
-	if !ok {
-		return nil, fmt.Errorf("could not find entrypoints in asssets-manifest")
+	for _, files := range [2][]string{entryPoints.App.Assets.JS, entryPoints.App.Assets.CSS} {
+		for _, file := range files {
+			if err := validateAssetPath(file); err != nil {
+				return nil, err
+			}
+		}
 	}
-
-	if entryPoints.App == nil || len(entryPoints.App.Assets.JS) == 0 {
-		return nil, fmt.Errorf("missing app entry, try running `pnpm build`")
+	for _, theme := range [2]*EntryPointInfo{entryPoints.Dark, entryPoints.Light} {
+		if theme != nil && len(theme.Assets.CSS) > 0 {
+			if err := validateAssetPath(theme.Assets.CSS[0]); err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	rsp := &dtos.EntryPointAssets{
