@@ -276,12 +276,20 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
       });
     });
 
-    it('should not write when the plugin already has the requested version', async () => {
-      global.fetch = jest.fn().mockResolvedValueOnce({ ok: true, status: 200, json: async () => existing });
+    it('should write again when the plugin already has the requested version so a retry can repair grafana.com', async () => {
+      global.fetch = jest
+        .fn()
+        .mockResolvedValueOnce({ ok: true, status: 200, json: async () => existing })
+        .mockResolvedValueOnce({ ok: true, status: 200 });
 
       await installPluginMeta('myorg-test-panel', '1.0.0', { updateExisting: true });
 
-      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(global.fetch).toHaveBeenNthCalledWith(2, pluginUrl, {
+        body: JSON.stringify(existing),
+        headers: { 'content-type': 'application/json' },
+        method: 'PUT',
+      });
     });
 
     it('should throw an error if creating the plugin fails', async () => {

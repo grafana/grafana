@@ -58,9 +58,6 @@ export async function installPluginMeta(
 
   throwIfNotOk(existingResult, 'install', pluginId);
   const existing: Plugin = await existingResult.json();
-  if (existing.spec.version === version) {
-    return;
-  }
 
   const updated = await fetch(pluginUrl, {
     method: 'PUT',
