@@ -134,6 +134,25 @@ func TestGlobalDocumentBuilder(t *testing.T) {
 	}
 }
 
+func TestGlobalDocumentBuilderVariable(t *testing.T) {
+	key := &resourcepb.ResourceKey{Namespace: "ns", Group: "dashboard.grafana.app", Resource: "variables", Name: "region--folder-a"}
+	value := []byte(`{
+		"apiVersion": "dashboard.grafana.app/v2beta1", "kind": "Variable",
+		"metadata": {
+			"name": "region--folder-a", "namespace": "ns",
+			"annotations": {"grafana.app/folder": "folder-a"}
+		},
+		"spec": {"kind": "CustomVariable", "spec": {"name": "region", "query": "us-east,us-west"}}
+	}`)
+
+	doc, err := (&globalDocumentBuilder{}).BuildDocument(t.Context(), key, 20, value)
+	require.NoError(t, err)
+	assert.Equal(t, "region", doc.Title)
+	assert.Equal(t, "region--folder-a", doc.Name)
+	assert.Equal(t, key, doc.Key)
+	assert.Equal(t, "folder-a", doc.Folder)
+}
+
 func TestGlobalDocumentBuilderToleratesSpecFields(t *testing.T) {
 	for _, tc := range []struct {
 		name      string
@@ -142,7 +161,11 @@ func TestGlobalDocumentBuilderToleratesSpecFields(t *testing.T) {
 		wantTags  []string
 	}{
 		{name: "name fallback", spec: `{"name":"Spec name"}`, wantTitle: "Spec name"},
-		{name: "title takes precedence", spec: `{"title":"Title","name":"Name"}`, wantTitle: "Title"},
+		{name: "title takes precedence", spec: `{"title":"Title","name":"Name","spec":{"name":"Nested"}}`, wantTitle: "Title"},
+		{name: "name takes precedence", spec: `{"name":"Name","spec":{"name":"Nested"}}`, wantTitle: "Name"},
+		{name: "empty name uses nested name", spec: `{"name":"","spec":{"name":"Nested"}}`, wantTitle: "Nested"},
+		{name: "invalid nested spec", spec: `{"spec":42}`},
+		{name: "invalid nested name", spec: `{"spec":{"name":42}}`},
 		{name: "mixed tags", spec: `{"tags":[null,42,{},[],"","ops"]}`, wantTags: []string{"ops"}},
 		{name: "non-list tags", spec: `{"tags":"ops"}`},
 		{name: "invalid field types", spec: `{"title":42,"description":{},"tags":null}`},
@@ -201,20 +224,30 @@ func (b *globalDocumentBlob) GetResourceBlob(_ context.Context, key *resourcepb.
 
 func TestGlobalDocumentBuilderLoadsBlob(t *testing.T) {
 	spec := `{"title":"Blob title","description":"Blob description","tags":["blob-tag",null,42,{},[],""],"views_total":42}`
+	variableSpec := `{"kind":"CustomVariable","spec":{"name":"region","query":"us-east,us-west"}}`
 	for _, tc := range []struct {
-		name  string
-		value string
+		name            string
+		resource        string
+		value           string
+		wantTitle       string
+		wantDescription string
+		wantTags        []string
 	}{
-		{name: "spec", value: spec},
 		{
-			name:  "resource",
-			value: `{"metadata":{"name":"old-name","annotations":{"grafana.app/folder":"old-folder"}},"spec":` + spec + `}`,
+			name: "spec", resource: "dashboards", value: spec,
+			wantTitle: "Blob title", wantDescription: "Blob description", wantTags: []string{"blob-tag"},
 		},
+		{
+			name: "resource", resource: "dashboards",
+			value:     `{"metadata":{"name":"old-name","annotations":{"grafana.app/folder":"old-folder"}},"spec":` + spec + `}`,
+			wantTitle: "Blob title", wantDescription: "Blob description", wantTags: []string{"blob-tag"},
+		},
+		{name: "variable spec", resource: "variables", value: variableSpec, wantTitle: "region"},
+		{name: "variable resource", resource: "variables", value: `{"spec":` + variableSpec + `}`, wantTitle: "region"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			key := &resourcepb.ResourceKey{Namespace: "ns", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "item"}
+			key := &resourcepb.ResourceKey{Namespace: "ns", Group: "dashboard.grafana.app", Resource: tc.resource, Name: "item"}
 			value := fmt.Appendf(nil, `{
-				"apiVersion": "dashboard.grafana.app/v0alpha1", "kind": "Dashboard",
 				"metadata": {
 					"name": "item", "namespace": "ns",
 					"labels": {"team": "search"},
@@ -232,9 +265,9 @@ func TestGlobalDocumentBuilderLoadsBlob(t *testing.T) {
 			assert.Equal(t, key, doc.Key)
 			assert.Equal(t, "item", doc.Name)
 			assert.Equal(t, int64(20), doc.RV)
-			assert.Equal(t, "Blob title", doc.Title)
-			assert.Equal(t, "Blob description", doc.Description)
-			assert.Equal(t, []string{"blob-tag"}, doc.Tags)
+			assert.Equal(t, tc.wantTitle, doc.Title)
+			assert.Equal(t, tc.wantDescription, doc.Description)
+			assert.Equal(t, tc.wantTags, doc.Tags)
 			assert.Equal(t, "current-folder", doc.Folder)
 			assert.Equal(t, map[string]string{"team": "search"}, doc.Labels)
 			assert.Empty(t, doc.Fields)
@@ -312,13 +345,17 @@ func TestGlobalSearchCoversTheKindsThatOptIn(t *testing.T) {
 	folders := schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}
 	notebooks := schema.GroupResource{Group: "dashboard.grafana.app", Resource: "notebooks"}
 	playlists := schema.GroupResource{Group: "playlist.grafana.app", Resource: "playlists"}
+	variables := schema.GroupResource{Group: "dashboard.grafana.app", Resource: "variables"}
 	got := globalSearchCoverageOf(AppManifests())
-	assert.Equal(t, []schema.GroupResource{dashboards, folders, notebooks, playlists}, got.types)
+	assert.Equal(t, []schema.GroupResource{dashboards, folders, notebooks, playlists, variables}, got.types)
+	// Nothing is registered in this repository, so its own apps cover the same types.
+	assert.Equal(t, got.types, BuiltinGlobalSearchResourceTypes())
 	assert.Equal(t, map[schema.GroupResource]string{
 		dashboards: "Dashboard",
 		folders:    "Folder",
 		notebooks:  "Notebook",
 		playlists:  "Playlist",
+		variables:  "Variable",
 	}, got.kinds)
 }
 

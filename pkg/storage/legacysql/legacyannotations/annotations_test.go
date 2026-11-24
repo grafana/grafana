@@ -176,3 +176,21 @@ func TestPolicyDropping(t *testing.T) {
 		require.Contains(t, dashboardLike.ToStore(obj), utils.AnnoKeyKubectlLastAppliedConfig)
 	})
 }
+
+func TestIsManagedUsesTheRawKind(t *testing.T) {
+	// A kind with no identity reads as unmanaged, which is right for a reader and
+	// wrong for a gate: the kind alone is enough to persist.
+	halfFilled := &unstructured.Unstructured{Object: map[string]any{}}
+	halfFilled.SetAnnotations(map[string]string{utils.AnnoKeyManagerKind: string(utils.ManagerKindRepo)})
+
+	meta, err := utils.MetaAccessor(halfFilled)
+	require.NoError(t, err)
+	_, managed := meta.GetManagerProperties()
+	require.False(t, managed, "the reader still says unmanaged")
+
+	require.True(t, IsManaged(halfFilled), "but the gate has to run")
+
+	err = CheckManagerOnCreate(identity.WithRequester(context.Background(),
+		&identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "uuu"}), halfFilled)
+	require.True(t, apierrors.IsForbidden(err), "expected a forbidden response: %v", err)
+}

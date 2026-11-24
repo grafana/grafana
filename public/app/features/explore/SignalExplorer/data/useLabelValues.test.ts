@@ -5,6 +5,8 @@ import type { TimeRange } from '@grafana/data';
 import * as client from './metricResourceClient';
 import { useLabelValues } from './useLabelValues';
 
+jest.mock('./metricResourceClient', () => makeSpyable('./metricResourceClient'));
+
 const range = { raw: { from: 'now-1h', to: 'now' }, from: {}, to: {} } as unknown as TimeRange;
 
 function deferred<T>(): { promise: Promise<T>; resolve: (value: T) => void } {

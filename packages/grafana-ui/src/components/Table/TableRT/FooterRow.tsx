@@ -35,10 +35,10 @@ export function FooterRow(props: FooterRowProps) {
         return (
           <div
             className={tableStyles.tfoot}
+            key={key}
             {...footerGroupProps}
             role="row"
             aria-rowindex={ariaRowIndex}
-            key={key}
             data-testid={e2eSelectorsTable.footer}
           >
             {footerGroup.headers.map((column: ColumnInstance) => renderFooterCell(column, tableStyles))}

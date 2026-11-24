@@ -1345,6 +1345,12 @@ func withIndexCacheTTL(ttl time.Duration) setupOption {
 	}
 }
 
+func withIndexCacheTTLIdleOnly(enabled bool) setupOption {
+	return func(options *BleveOptions) {
+		options.IndexCacheTTLIdleOnly = enabled
+	}
+}
+
 func withGlobalIndexIdleTimeout(timeout time.Duration) setupOption {
 	return func(options *BleveOptions) {
 		options.GlobalIndexIdleTimeout = timeout
@@ -1863,6 +1869,7 @@ func TestBuildIndexExpiration(t *testing.T) {
 			builtIndex, err := backend.BuildIndex(context.Background(), ns, int64(docs), "test", indexTestDocs(ns, docs, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 			require.NoError(t, err)
 
+			require.Same(t, builtIndex, backend.GetIndex(ns))
 			// Evict indexes.
 			backend.runEvictExpiredOrUnownedIndexes(time.Now().Add(5 * time.Minute))
 
@@ -1889,6 +1896,125 @@ func TestBuildIndexExpiration(t *testing.T) {
 				} else {
 					checkOpenIndexes(t, reg, 0, 1)
 				}
+			}
+		})
+	}
+}
+
+func TestMemoryIndexIdleOnlyExpiration(t *testing.T) {
+	const ttl = 4 * time.Hour
+	backend, reg := setupBleveBackend(t, withIndexCacheTTL(ttl), withIndexCacheTTLIdleOnly(true))
+	key := resource.NamespacedResource{Namespace: "test", Group: "group", Resource: "resource"}
+	build := func(rebuild bool) resource.ResourceIndex {
+		idx, err := backend.BuildIndex(t.Context(), key, 1, "test", indexTestDocs(key, 1, 100), nil, rebuild, time.Time{}, 0, resource.BuildIndexOptions{})
+		require.NoError(t, err)
+		require.True(t, idx.(*bleveIndex).expiration.IsZero())
+		return idx
+	}
+	build(false)
+
+	searched := time.Now().Add(-2 * ttl).Truncate(time.Millisecond)
+	require.NotNil(t, backend.getIndexForSearch(key, searched))
+	backend.runEvictExpiredOrUnownedIndexes(searched.Add(ttl))
+	require.NotNil(t, backend.PeekIndex(key), "the idle timeout has not been exceeded")
+
+	searchedAgain := searched.Add(ttl / 2)
+	require.NotNil(t, backend.getIndexForSearch(key, searchedAgain))
+	backend.runEvictExpiredOrUnownedIndexes(searched.Add(ttl + time.Millisecond))
+	require.NotNil(t, backend.PeekIndex(key), "a search must extend the lifetime beyond the original TTL")
+
+	// Neither background access nor replacement should keep an unused index open.
+	require.NotNil(t, backend.getCachedIndex(key, searchedAgain.Add(ttl)))
+	rebuilt := build(true)
+	_, err := indexTestDocs(key, 1, 101)(rebuilt)
+	require.NoError(t, err)
+	require.Equal(t, searchedAgain.UnixMilli(), rebuilt.(*bleveIndex).lastSearchedAt.Load())
+	backend.runEvictExpiredOrUnownedIndexes(searchedAgain.Add(ttl))
+	require.Same(t, rebuilt, backend.PeekIndex(key))
+
+	backend.runEvictExpiredOrUnownedIndexes(searchedAgain.Add(ttl + time.Millisecond))
+	require.Nil(t, backend.PeekIndex(key))
+	_, err = rebuilt.DocCount(t.Context(), "", nil)
+	require.ErrorIs(t, err, bleve.ErrorIndexClosed)
+	checkOpenIndexes(t, reg, 0, 0)
+}
+
+func TestMemoryIndexIdleOnlyTTL(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		ttl      time.Duration
+		deadline time.Duration
+	}{
+		{name: "disabled"},
+		{name: "negative", ttl: -time.Second},
+		{name: "sub-millisecond", ttl: time.Nanosecond, deadline: time.Millisecond},
+		{name: "fractional millisecond", ttl: 1500 * time.Microsecond, deadline: 2 * time.Millisecond},
+		{name: "short", ttl: time.Second, deadline: time.Second},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend, reg := setupBleveBackend(t, withIndexCacheTTL(tc.ttl), withIndexCacheTTLIdleOnly(true))
+			key := resource.NamespacedResource{Namespace: "test", Group: "group", Resource: "resource"}
+			idx, err := backend.BuildIndex(t.Context(), key, 1, "test", indexTestDocs(key, 1, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+			require.NoError(t, err)
+			cached := idx.(*bleveIndex)
+			require.True(t, cached.expiration.IsZero())
+			built := time.UnixMilli(cached.lastSearchedAt.Load())
+
+			if tc.ttl <= 0 {
+				backend.runEvictExpiredOrUnownedIndexes(built.Add(24 * time.Hour))
+				require.Same(t, idx, backend.PeekIndex(key))
+				checkOpenIndexes(t, reg, 1, 0)
+				return
+			}
+			backend.runEvictExpiredOrUnownedIndexes(built.Add(tc.deadline))
+			require.Same(t, idx, backend.PeekIndex(key))
+			backend.runEvictExpiredOrUnownedIndexes(built.Add(tc.deadline + time.Millisecond))
+			require.Nil(t, backend.PeekIndex(key), "a never-searched index must also go idle")
+			checkOpenIndexes(t, reg, 0, 0)
+		})
+	}
+}
+
+func TestIdleOnlyExpirationPreservesOtherCleanup(t *testing.T) {
+	const ttl = 4 * time.Hour
+	for _, tc := range []struct {
+		name       string
+		memory     bool
+		global     bool
+		owned      bool
+		ownsError  error
+		elapsed    time.Duration
+		wantClosed bool
+	}{
+		{name: "owned file", owned: true, elapsed: ttl + time.Minute},
+		{name: "unowned file", elapsed: unownedIndexIdleTimeout + time.Millisecond, wantClosed: true},
+		{name: "unowned memory", memory: true, elapsed: unownedIndexIdleTimeout + time.Millisecond, wantClosed: true},
+		{name: "idle global file", global: true, owned: true, elapsed: time.Hour + time.Millisecond, wantClosed: true},
+		{name: "file ownership error", ownsError: errors.New("ownership unavailable"), elapsed: ttl + time.Minute},
+		{name: "memory ownership error", memory: true, ownsError: errors.New("ownership unavailable"), elapsed: ttl + time.Millisecond, wantClosed: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend, _ := setupBleveBackend(t, withIndexCacheTTL(ttl), withIndexCacheTTLIdleOnly(true), withGlobalIndexIdleTimeout(time.Hour),
+				withOwnsIndexFn(func(resource.NamespacedResource) (bool, error) { return tc.owned, tc.ownsError }))
+			docKey := resource.NamespacedResource{Namespace: "test", Group: "group", Resource: "resource"}
+			key := docKey
+			if tc.global {
+				key = resource.GlobalSearchKey(key.Namespace)
+			}
+			docs := defaultFileThreshold
+			if tc.memory {
+				docs = 1
+			}
+			idx, err := backend.BuildIndex(t.Context(), key, int64(docs), "test", indexTestDocs(docKey, docs, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+			require.NoError(t, err)
+			lastSearch := time.UnixMilli(idx.(*bleveIndex).lastSearchedAt.Load())
+			backend.runEvictExpiredOrUnownedIndexes(lastSearch.Add(tc.elapsed))
+			if tc.wantClosed {
+				require.Nil(t, backend.PeekIndex(key))
+				_, err := idx.DocCount(t.Context(), "", nil)
+				require.ErrorIs(t, err, bleve.ErrorIndexClosed)
+			} else {
+				require.Same(t, idx, backend.PeekIndex(key))
 			}
 		})
 	}
@@ -2021,6 +2147,113 @@ func TestRebuildDoesNotReopenAnIdleClosedGlobalIndex(t *testing.T) {
 	_, err = rebuilt.DocCount(t.Context(), "", nil)
 	require.ErrorIs(t, err, bleve.ErrorIndexClosed, "the discarded index is closed")
 	require.Equal(t, before, listDirs(), "the discarded index's directory is removed; the closed one stays for a later search")
+}
+
+func TestRebuildAfterIndexEviction(t *testing.T) {
+	const ttl = 4 * time.Hour
+	for _, tc := range []struct {
+		name        string
+		idleOnly    bool
+		memory      bool
+		grow        bool
+		owned       bool
+		wantDiscard bool
+	}{
+		{name: "idle-only memory", idleOnly: true, memory: true, owned: true, wantDiscard: true},
+		{name: "idle-only memory promoted to file", idleOnly: true, memory: true, grow: true, owned: true, wantDiscard: true},
+		{name: "age-based memory", memory: true, owned: true},
+		{name: "unowned file", idleOnly: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend, reg := setupBleveBackend(t, withIndexCacheTTL(ttl), withIndexCacheTTLIdleOnly(tc.idleOnly),
+				withOwnsIndexFn(func(resource.NamespacedResource) (bool, error) { return tc.owned, nil }))
+			key := resource.NamespacedResource{Namespace: "test", Group: "group", Resource: "resource"}
+			docs := defaultFileThreshold
+			if tc.memory {
+				docs = 1
+			}
+			original, err := backend.BuildIndex(t.Context(), key, int64(docs), "test", indexTestDocs(key, docs, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+			require.NoError(t, err)
+
+			if tc.grow {
+				docs = defaultFileThreshold
+				_, err := indexTestDocs(key, docs, 101)(original)
+				require.NoError(t, err)
+				count, err := original.DocCount(t.Context(), "", nil)
+				require.NoError(t, err)
+				require.EqualValues(t, docs, count)
+				require.Equal(t, indexStorageMemory, original.(*bleveIndex).indexStorage)
+			}
+
+			var replacement resource.ResourceIndex
+			rebuilt, err := backend.BuildIndex(t.Context(), key, int64(docs), "rebuild", func(index resource.ResourceIndex) (int64, error) {
+				cached := backend.peekCachedIndex(key)
+				require.NotNil(t, cached)
+				var deadline time.Time
+				switch {
+				case tc.memory && tc.idleOnly:
+					deadline = time.UnixMilli(cached.lastSearchedAt.Load()).Add(ttl)
+				case tc.memory:
+					deadline = cached.expiration
+				default:
+					deadline = time.UnixMilli(cached.lastFetchedFromCache.Load()).Add(unownedIndexIdleTimeout)
+				}
+				backend.runEvictExpiredOrUnownedIndexes(deadline.Add(time.Millisecond))
+				require.Nil(t, backend.PeekIndex(key))
+				replacement = index
+				rv, err := indexTestDocs(key, docs, 102)(index)
+				if tc.grow {
+					require.NoError(t, err)
+					promoted, _, _ := index.(*adaptiveBuildIndex).finalState()
+					require.Equal(t, indexStorageFile, promoted.indexStorage)
+				}
+				return rv, err
+			}, nil, true, time.Time{}, 0, resource.BuildIndexOptions{})
+
+			if tc.wantDiscard {
+				require.ErrorIs(t, err, resource.ErrIndexClosedDuringRebuild)
+				require.Nil(t, backend.PeekIndex(key))
+				_, err = replacement.DocCount(t.Context(), "", nil)
+				require.ErrorIs(t, err, bleve.ErrorIndexClosed)
+				checkOpenIndexes(t, reg, 0, 0)
+				verifyDirEntriesCount(t, backend.getResourceDir(key), 0)
+			} else {
+				require.NoError(t, err)
+				require.Same(t, rebuilt, backend.PeekIndex(key))
+				if tc.memory {
+					checkOpenIndexes(t, reg, 1, 0)
+				} else {
+					checkOpenIndexes(t, reg, 0, 1)
+				}
+			}
+			_, err = original.DocCount(t.Context(), "", nil)
+			require.ErrorIs(t, err, bleve.ErrorIndexClosed)
+		})
+	}
+}
+
+func TestRebuildSkipsMemoryIndexEvictedBeforeBackendLookup(t *testing.T) {
+	const ttl = 4 * time.Hour
+	backend, reg := setupBleveBackend(t, withIndexCacheTTL(ttl), withIndexCacheTTLIdleOnly(true))
+	key := resource.NamespacedResource{Namespace: "test", Group: "group", Resource: "resource"}
+	_, err := backend.BuildIndex(t.Context(), key, 1, "test", indexTestDocs(key, 1, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+	require.NoError(t, err)
+	original := backend.PeekIndex(key)
+	require.NotNil(t, original)
+
+	lastSearch := time.UnixMilli(original.(*bleveIndex).lastSearchedAt.Load())
+	backend.runEvictExpiredOrUnownedIndexes(lastSearch.Add(ttl + time.Millisecond))
+	require.Nil(t, backend.PeekIndex(key))
+
+	builderCalled := false
+	_, err = backend.BuildIndex(t.Context(), key, 1, "rebuild", func(index resource.ResourceIndex) (int64, error) {
+		builderCalled = true
+		return indexTestDocs(key, 1, 101)(index)
+	}, nil, true, time.Time{}, 0, resource.BuildIndexOptions{RebuildFrom: original})
+	require.ErrorIs(t, err, resource.ErrIndexClosedDuringRebuild)
+	require.False(t, builderCalled)
+	require.Nil(t, backend.PeekIndex(key))
+	checkOpenIndexes(t, reg, 0, 0)
 }
 
 func TestNewUnownedIndexIdleTimeout(t *testing.T) {
@@ -3118,6 +3351,72 @@ func TestIndexUpdateWithErrors(t *testing.T) {
 			})
 		})
 	}
+}
+
+func TestIndexUpdatePacesRetriesAfterFailure(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		const initialRV int64 = 10
+		const minInterval = 100 * time.Millisecond
+		updateErr := errors.New("KV unavailable")
+		var attempts []int64
+		idx := newTestBleveUpdater(t, func(_ context.Context, _ resource.ResourceIndex, sinceRV int64) (int64, int, error) {
+			attempts = append(attempts, sinceRV)
+			if len(attempts) == 1 {
+				return sinceRV + 1, 1, updateErr
+			}
+			return sinceRV + 2, 1, nil
+		})
+		idx.resourceVersion.Store(initialRV)
+		idx.minUpdateInterval = minInterval
+
+		_, err := idx.UpdateIndex(t.Context())
+		require.ErrorIs(t, err, updateErr)
+		synctest.Sleep(minInterval - time.Nanosecond)
+		_, err = idx.UpdateIndex(t.Context())
+		require.ErrorIs(t, err, updateErr)
+		require.Equal(t, []int64{initialRV}, attempts)
+
+		synctest.Sleep(time.Nanosecond)
+		rv, err := idx.UpdateIndex(t.Context())
+		require.NoError(t, err)
+		require.Equal(t, initialRV+2, rv)
+		require.Equal(t, []int64{initialRV, initialRV}, attempts)
+
+		rv, err = idx.UpdateIndex(t.Context())
+		require.NoError(t, err)
+		require.Equal(t, initialRV+2, rv)
+		require.Len(t, attempts, 2)
+	})
+}
+
+func TestIndexUpdateCallerCancellationDoesNotCancelSharedUpdate(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		finish := make(chan struct{})
+		idx := newTestBleveUpdater(t, func(ctx context.Context, _ resource.ResourceIndex, sinceRV int64) (int64, int, error) {
+			select {
+			case <-ctx.Done():
+				return 0, 0, ctx.Err()
+			case <-finish:
+				return sinceRV + 1, 1, ctx.Err()
+			}
+		})
+
+		ctx, cancel := context.WithCancel(t.Context())
+		defer cancel()
+		callerErr := make(chan error, 1)
+		go func() {
+			_, err := idx.UpdateIndex(ctx)
+			callerErr <- err
+		}()
+		synctest.Wait()
+
+		cancel()
+		require.ErrorIs(t, <-callerErr, context.Canceled)
+		close(finish)
+		synctest.Wait()
+
+		require.Equal(t, int64(1), idx.resourceVersion.Load())
+	})
 }
 
 func TestIndexBuildInfo(t *testing.T) {

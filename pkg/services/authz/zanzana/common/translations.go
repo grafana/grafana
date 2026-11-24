@@ -89,6 +89,22 @@ var (
 const annotationsSubresource = "annotations"
 
 var resourceTranslations = map[string]resourceTranslation{
+	"secret.securevalues": {
+		typ:      TypeResource,
+		group:    "secret.grafana.app",
+		resource: "securevalues",
+		mapping: map[string]actionMapping{
+			"secret.securevalues:view":              newMapping(RelationSetView, ""),
+			"secret.securevalues:edit":              newMapping(RelationSetEdit, ""),
+			"secret.securevalues:admin":             newMapping(RelationSetAdmin, ""),
+			"secret.securevalues:read":              newMapping(RelationGet, ""),
+			"secret.securevalues:write":             newMapping(RelationUpdate, ""),
+			"secret.securevalues:create":            newMapping(RelationCreate, ""),
+			"secret.securevalues:delete":            newMapping(RelationDelete, ""),
+			"secret.securevalues.permissions:read":  newMapping(RelationGetPermissions, ""),
+			"secret.securevalues.permissions:write": newMapping(RelationSetPermissions, ""),
+		},
+	},
 	KindAnnotations: {
 		typ:      TypeResource,
 		group:    annotationGroup,
@@ -105,15 +121,21 @@ var resourceTranslations = map[string]resourceTranslation{
 		group:    "datasource.grafana.app",
 		resource: "datasources",
 		mapping: map[string]actionMapping{
-			"datasources:create":            newUnscopedMapping(RelationCreate),
-			"datasources:read":              newMapping(RelationGet, ""),
-			"datasources:write":             newMapping(RelationUpdate, ""),
-			"datasources:delete":            newMapping(RelationDelete, ""),
-			"datasources:query":             newMapping(RelationCreate, "query"),
-			"datasources.permissions:read":  newMapping(RelationGetPermissions, ""),
-			"datasources.permissions:write": newMapping(RelationSetPermissions, ""),
-			"datasources.caching:read":      newMapping(RelationGet, "caching"),
-			"datasources.caching:write":     newMapping(RelationUpdate, "caching"),
+			"datasources:create":                 newUnscopedMapping(RelationCreate),
+			"datasources:read":                   newMapping(RelationGet, ""),
+			"datasources:write":                  newMapping(RelationUpdate, ""),
+			"datasources:delete":                 newMapping(RelationDelete, ""),
+			"datasources:query":                  newMapping(RelationCreate, "query"),
+			"datasources.permissions:read":       newMapping(RelationGetPermissions, ""),
+			"datasources.permissions:write":      newMapping(RelationSetPermissions, ""),
+			"datasources.caching:read":           newMapping(RelationGet, "caching"),
+			"datasources.caching:write":          newMapping(RelationUpdate, "caching"),
+			"alert.instances.external:read":      newMapping(RelationGet, "alertinstances"),
+			"alert.instances.external:write":     newMapping(RelationUpdate, "alertinstances"),
+			"alert.rules.external:read":          newMapping(RelationGet, "alertrules"),
+			"alert.rules.external:write":         newMapping(RelationUpdate, "alertrules"),
+			"alert.notifications.external:read":  newMapping(RelationGet, "alertnotifications"),
+			"alert.notifications.external:write": newMapping(RelationUpdate, "alertnotifications"),
 		},
 	},
 	KindFolders: {

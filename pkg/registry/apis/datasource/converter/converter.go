@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/authlib/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -38,6 +38,12 @@ var annotationPolicy = legacyannotations.NewPolicy(
 	// and is returned on every read, so this one is never stored. kubectl falls back
 	// to a two-way merge without it, which loses field deletions but not secrets.
 	utils.AnnoKeyKubectlLastAppliedConfig,
+
+	// Attribution the legacy path has no trusted value for. Storing what the client
+	// sent would let a read report an arbitrary creator or editor; the row has no
+	// column behind these, so they are dropped rather than echoed back.
+	utils.AnnoKeyCreatedBy,
+	utils.AnnoKeyUpdatedBy,
 )
 
 type Converter struct {
@@ -141,10 +147,10 @@ func (r *Converter) AsDataSource(ds *datasources.DataSource) (*datasourceV0.Data
 
 // ToInlineSecureValues converts secure json into InlineSecureValues with reference names
 // The names are predictable and can be used while we implement dual writing for secrets
-func ToInlineSecureValues(dsUID string, keys iter.Seq[string]) common.InlineSecureValues {
-	values := make(common.InlineSecureValues)
+func ToInlineSecureValues(dsUID string, keys iter.Seq[string]) resource.InlineSecureValues {
+	values := make(resource.InlineSecureValues)
 	for k := range keys {
-		values[k] = common.InlineSecureValue{
+		values[k] = resource.InlineSecureValue{
 			Name: GetLegacySecureValueName(dsUID, k),
 		}
 	}
@@ -243,6 +249,9 @@ func (r *Converter) ToUpdateCommand(ds *datasourceV0.DataSource) (*datasources.U
 
 		// The only field different than add
 		Version: version,
+
+		// The resource contains the full state after any PATCH has been applied.
+		BasicAuthUserSet: true,
 	}
 
 	cmd.Annotations = annotationPolicy.ToStore(ds)

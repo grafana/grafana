@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
+	authlib "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
@@ -117,7 +118,7 @@ func (l *libraryElementIndexProvider) GetLibraryElementInfo(ctx context.Context)
 
 	user := &identity.StaticRequester{
 		OrgID:   nsInfo.OrgID,
-		OrgRole: identity.RoleAdmin,
+		OrgRole: authlib.RoleAdmin,
 	}
 
 	const perPage = 1_000

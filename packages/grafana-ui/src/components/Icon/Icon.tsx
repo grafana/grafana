@@ -118,6 +118,7 @@ export const Icon = memo(
 
       return (
         <SVG
+          cacheElements
           data-testid={`icon-${iconName}`}
           aria-hidden={
             rest.tabIndex === undefined &&

@@ -11,6 +11,8 @@ import {
 } from './configFromQuery';
 import * as importDynamic from './configFromQueryDynamic';
 
+jest.mock('./configFromQueryDynamic', () => makeSpyable('./configFromQueryDynamic'));
+
 describe('config from data', () => {
   const config = toDataFrame({
     fields: [

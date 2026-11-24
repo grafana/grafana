@@ -903,7 +903,7 @@ func openTestSearchIndex(t *testing.T, client resource.ResourceClient, gr schema
 		UserID:  1,
 		UserUID: "user-uid-1",
 		OrgID:   1,
-		OrgRole: identity.RoleAdmin,
+		OrgRole: authlib.RoleAdmin,
 		Login:   "testuser",
 		Name:    "Test User",
 	})

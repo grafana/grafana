@@ -205,23 +205,31 @@ func (cfg *configsV0) mapToDatasourceFromConfig(apiVersion int64) *configs {
 	return r
 }
 
-// provisioningAnnotations marks a data source as provisioned from a config file, the
-// way the dashboard provisioner records its origin.
-func provisioningAnnotations(ds *upsertDataSourceFromConfig, sourceFile string) map[string]string {
-	annotations := map[string]string{
-		utils.AnnoKeyManagerKind: string(utils.ManagerKindClassicFP), //nolint:staticcheck
-	}
+// provisioningManager marks a data source as provisioned from a config file, the way
+// the dashboard provisioner records its origin, split as the row stores it: the manager
+// in columns of its own, everything else in the annotation blob.
+//
+// The split matters. Reads resolve the manager from the columns, so putting the kind
+// and identity only in the blob leaves a file-provisioned data source looking unmanaged
+// to /apis -- no badge, no read-only guard, and invisible to a query by manager.
+func provisioningManager(ds *upsertDataSourceFromConfig, sourceFile string) (kind, identity string, annotations map[string]string) {
+	annotations = map[string]string{}
 	if sourceFile != "" {
-		annotations[utils.AnnoKeyManagerIdentity] = sourceFile
 		annotations[utils.AnnoKeySourcePath] = sourceFile
 	}
 	if ds.Editable {
 		annotations[utils.AnnoKeyManagerAllowsEdits] = "true"
 	}
-	return annotations
+	if len(annotations) == 0 {
+		annotations = nil
+	}
+	// The identity of a classic kind may be empty; the kind alone marks it managed.
+	return string(utils.ManagerKindClassicFP), sourceFile, annotations //nolint:staticcheck
 }
 
 func createInsertCommand(ds *upsertDataSourceFromConfig, sourceFile string) *datasources.AddDataSourceCommand {
+	managerKind, managerIdentity, managerAnnotations := provisioningManager(ds, sourceFile)
+
 	jsonData := simplejson.New()
 	if len(ds.JSONData) > 0 {
 		for k, v := range ds.JSONData {
@@ -246,7 +254,9 @@ func createInsertCommand(ds *upsertDataSourceFromConfig, sourceFile string) *dat
 		ReadOnly:        !ds.Editable,
 		UID:             ds.UID,
 		IsPrunable:      ds.IsPrunable,
-		Annotations:     provisioningAnnotations(ds, sourceFile),
+		ManagerKind:     managerKind,
+		ManagerIdentity: managerIdentity,
+		Annotations:     managerAnnotations,
 	}
 
 	if cmd.UID == "" {
@@ -263,6 +273,8 @@ func safeUIDFromName(name string) string {
 }
 
 func createUpdateCommand(ds *upsertDataSourceFromConfig, id int64, sourceFile string) *datasources.UpdateDataSourceCommand {
+	managerKind, managerIdentity, managerAnnotations := provisioningManager(ds, sourceFile)
+
 	jsonData := simplejson.New()
 	if len(ds.JSONData) > 0 {
 		for k, v := range ds.JSONData {
@@ -293,7 +305,9 @@ func createUpdateCommand(ds *upsertDataSourceFromConfig, id int64, sourceFile st
 
 		// The file is the source of truth on every boot, so a renamed or edited
 		// config rewrites the annotations rather than merging into stale ones.
-		Annotations:       provisioningAnnotations(ds, sourceFile),
+		ManagerKind:       managerKind,
+		ManagerIdentity:   managerIdentity,
+		Annotations:       managerAnnotations,
 		UpdateAnnotations: true,
 	}
 }

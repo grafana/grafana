@@ -2,6 +2,7 @@ import { cleanup, render as RTLRender, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
+import { render as renderWithProviders, waitFor } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import {
@@ -13,7 +14,7 @@ import {
 import { FlagKeys } from '@grafana/runtime/internal';
 import { SceneTimeRange, SceneVariableSet, UrlSyncContextProvider, behaviors } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags, testWithFlags } from '@grafana/test-utils/unstable';
 
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
@@ -21,6 +22,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { DashboardLinksEditView } from './DashboardLinksEditView';
+import { DashboardLinksEditViewRenderer } from './DashboardLinksEditViewRenderer';
 import { createDashboardEditViewFor } from './createDashboardEditViewFor';
 import { NEW_LINK } from './links/utils';
 
@@ -457,3 +459,53 @@ async function buildTestScene() {
 
   return { dashboard, settings };
 }
+
+function renderSidebarRedirect() {
+  const view = new DashboardLinksEditView({});
+  const dashboard = new DashboardScene({
+    isEditing: true,
+    editview: view,
+  });
+  const user = userEvent.setup();
+  const result = renderWithProviders(<DashboardLinksEditViewRenderer model={view} />);
+  const elements = {
+    takeMeThere: () => result.getByRole('button', { name: 'Take me there' }),
+  };
+
+  return {
+    ...result,
+    dashboard,
+    user,
+    elements,
+    actions: {
+      async goToSidebar() {
+        await user.click(elements.takeMeThere());
+      },
+    },
+  };
+}
+
+describe.each([true, false])('DashboardLinksEditView with explicit sidebar opening %s', (explicitOpen) => {
+  afterEach(cleanup);
+
+  testWithFlags({
+    dashboardNewLayouts: true,
+    [FlagKeys.GrafanaDashboardSettingsRedesign]: true,
+    [FlagKeys.GrafanaDashboardSidebarExplicitOpen]: explicitOpen,
+  });
+
+  it('when clicking Take me there with the sidebar closed, opens dashboard settings at links', async () => {
+    const { dashboard, actions } = renderSidebarRedirect();
+    const sidebar = dashboard.state.sidebar;
+    expect(sidebar.state.openPane).toBeUndefined();
+
+    await actions.goToSidebar();
+
+    await waitFor(() => expect(sidebar.state.openPane?.getId()).toBe('element'));
+    expect(sidebar.getSelectedObject()).toBe(dashboard);
+    expect(locationService.getSearchObject()).toMatchObject({
+      showCategory: 'dashboard-links',
+      highlightCategory: 'dashboard-links',
+    });
+  });
+});

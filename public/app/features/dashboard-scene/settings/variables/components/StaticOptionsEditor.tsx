@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { type MetricFindValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -20,10 +20,12 @@ export function StaticOptionsEditor({
     )
     .join('\n');
   const [draft, setDraft] = useState(serializedOptions);
+  const [prevSerializedOptions, setPrevSerializedOptions] = useState(serializedOptions);
   // Undo/redo can replace options while the editor stays mounted.
-  useEffect(() => {
+  if (serializedOptions !== prevSerializedOptions) {
+    setPrevSerializedOptions(serializedOptions);
     setDraft(serializedOptions);
-  }, [serializedOptions]);
+  }
 
   return (
     <CodeMirrorEditor

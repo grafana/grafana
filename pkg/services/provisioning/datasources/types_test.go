@@ -25,48 +25,69 @@ func TestCreateUpdateCommand(t *testing.T) {
 	})
 }
 
-func TestProvisioningAnnotations(t *testing.T) {
+func TestProvisioningManager(t *testing.T) {
 	tests := []struct {
-		name       string
-		ds         *upsertDataSourceFromConfig
-		sourceFile string
-		want       map[string]string
+		name            string
+		ds              *upsertDataSourceFromConfig
+		sourceFile      string
+		wantKind        string
+		wantIdentity    string
+		wantAnnotations map[string]string
 	}{
 		{
-			name:       "read only data source",
-			ds:         &upsertDataSourceFromConfig{Name: "test"},
-			sourceFile: "prometheus.yaml",
-			want: map[string]string{
-				utils.AnnoKeyManagerKind:     "classic-file-provisioning",
-				utils.AnnoKeyManagerIdentity: "prometheus.yaml",
-				utils.AnnoKeySourcePath:      "prometheus.yaml",
+			name:         "read only data source",
+			ds:           &upsertDataSourceFromConfig{Name: "test"},
+			sourceFile:   "prometheus.yaml",
+			wantKind:     "classic-file-provisioning",
+			wantIdentity: "prometheus.yaml",
+			wantAnnotations: map[string]string{
+				utils.AnnoKeySourcePath: "prometheus.yaml",
 			},
 		},
 		{
-			name:       "editable data source allows edits",
-			ds:         &upsertDataSourceFromConfig{Name: "test", Editable: true},
-			sourceFile: "prometheus.yaml",
-			want: map[string]string{
-				utils.AnnoKeyManagerKind:        "classic-file-provisioning",
-				utils.AnnoKeyManagerIdentity:    "prometheus.yaml",
+			name:         "editable data source allows edits",
+			ds:           &upsertDataSourceFromConfig{Name: "test", Editable: true},
+			sourceFile:   "prometheus.yaml",
+			wantKind:     "classic-file-provisioning",
+			wantIdentity: "prometheus.yaml",
+			wantAnnotations: map[string]string{
 				utils.AnnoKeySourcePath:         "prometheus.yaml",
 				utils.AnnoKeyManagerAllowsEdits: "true",
 			},
 		},
 		{
-			name: "classic file provisioning needs no identity",
-			ds:   &upsertDataSourceFromConfig{Name: "test"},
-			want: map[string]string{
-				utils.AnnoKeyManagerKind: "classic-file-provisioning",
-			},
+			name:     "classic file provisioning needs no identity",
+			ds:       &upsertDataSourceFromConfig{Name: "test"},
+			wantKind: "classic-file-provisioning",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			require.Equal(t, tt.want, provisioningAnnotations(tt.ds, tt.sourceFile))
+			kind, identity, annotations := provisioningManager(tt.ds, tt.sourceFile)
+			// The manager goes in columns, not the blob: a read resolves it from
+			// there, so leaving it in the blob makes this look unmanaged to /apis.
+			require.Equal(t, tt.wantKind, kind)
+			require.Equal(t, tt.wantIdentity, identity)
+			require.Equal(t, tt.wantAnnotations, annotations)
+			require.NotContains(t, annotations, utils.AnnoKeyManagerKind)
+			require.NotContains(t, annotations, utils.AnnoKeyManagerIdentity)
 		})
 	}
+}
+
+func TestProvisioningCommandsCarryTheManager(t *testing.T) {
+	ds := &upsertDataSourceFromConfig{OrgID: 1, Name: "test", Editable: true}
+
+	insert := createInsertCommand(ds, "prometheus.yaml")
+	require.Equal(t, "classic-file-provisioning", insert.ManagerKind)
+	require.Equal(t, "prometheus.yaml", insert.ManagerIdentity)
+	require.Equal(t, "prometheus.yaml", insert.Annotations[utils.AnnoKeySourcePath])
+
+	update := createUpdateCommand(ds, 1, "prometheus.yaml")
+	require.Equal(t, "classic-file-provisioning", update.ManagerKind)
+	require.Equal(t, "prometheus.yaml", update.ManagerIdentity)
+	require.True(t, update.UpdateAnnotations)
 }
 
 func TestManagedElsewhere(t *testing.T) {

@@ -6,9 +6,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 // TestNewRepository_ServerURL verifies the REST API base URL on the underlying client is resolved
@@ -41,7 +41,7 @@ func TestNewRepository_ServerURL(t *testing.T) {
 			gitRepo := git.NewMockGitRepository(t)
 			gitRepo.EXPECT().URL().Return(tt.repoURL).Maybe()
 
-			repo, err := NewRepository(context.Background(), &provisioning.Repository{}, gitRepo, ProvideFactory(), common.RawSecureValue(""))
+			repo, err := NewRepository(context.Background(), &provisioning.Repository{}, gitRepo, ProvideFactory(), resource.RawSecureValue(""))
 			require.NoError(t, err)
 
 			gr, ok := repo.(*githubRepository)

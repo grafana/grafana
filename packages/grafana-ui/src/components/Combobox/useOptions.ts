@@ -2,7 +2,7 @@
 /* eslint no-restricted-syntax: ["error", "SpreadElement"] */
 
 import { debounce } from 'lodash';
-import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useLayoutEffect, useState, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
 
@@ -38,7 +38,9 @@ export function useOptions<T extends string | number>(
   // consumers pass a new function on every render.
   // TODO: switch to useEffectEvent once React stabilises it.
   const rawOptionsRef = useRef(rawOptions);
-  rawOptionsRef.current = rawOptions;
+  useLayoutEffect(() => {
+    rawOptionsRef.current = rawOptions;
+  });
 
   const stableRawOptions = useCallback((searchTerm: string) => {
     const currentRawOptions = rawOptionsRef.current;

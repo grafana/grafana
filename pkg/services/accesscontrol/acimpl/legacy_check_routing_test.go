@@ -107,7 +107,7 @@ func TestEvaluateLegacyCheckRouting(t *testing.T) {
 			authzextv1.RegisterLegacyAuthzServiceServer(channel, backend)
 			ac := ProvideAccessControlTest()
 			if !tc.missingClient {
-				ac.SetLegacyCheckClient(legacyclient.NewLegacyClient(channel), false, types.OrgNamespaceFormatter)
+				require.NoError(t, ac.SetLegacyCheckClient(legacyclient.NewLegacyClient(channel), false, types.OrgNamespaceFormatter, nil))
 			}
 			var evaluator accesscontrol.AccessControl = ac
 			if tc.withoutResolvers {
@@ -145,6 +145,36 @@ func TestEvaluateLegacyCheckRouting(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestLegacyCheckClientInterface(t *testing.T) {
+	ac := ProvideAccessControlTest()
+	calls := 0
+	require.NoError(t, ac.SetLegacyCheckClient(legacyCheckClientFunc(func(_ context.Context, req legacyclient.LegacyCheckRequest) (bool, error) {
+		calls++
+		require.Equal(t, "user:user-uid", req.Subject)
+		require.Equal(t, "default", req.Namespace)
+		require.Equal(t, calls == 2, req.SkipScopeResolution)
+		return true, nil
+	}), false, types.OrgNamespaceFormatter, nil))
+
+	requester := &user.SignedInUser{UserID: 1, UserUID: "user-uid", OrgID: 1}
+	evaluator := accesscontrol.EvalPermission("dashboards:read", "dashboards:uid:one")
+	allowed, err := ac.evaluateLegacyCheck(t.Context(), requester, evaluator)
+	require.NoError(t, err)
+	require.True(t, allowed)
+
+	withoutResolvers := ac.WithoutResolvers().(*AccessControl)
+	allowed, err = withoutResolvers.evaluateLegacyCheck(t.Context(), requester, evaluator)
+	require.NoError(t, err)
+	require.True(t, allowed)
+	require.Equal(t, 2, calls)
+}
+
+type legacyCheckClientFunc func(context.Context, legacyclient.LegacyCheckRequest) (bool, error)
+
+func (f legacyCheckClientFunc) LegacyCheck(ctx context.Context, req legacyclient.LegacyCheckRequest) (bool, error) {
+	return f(ctx, req)
 }
 
 type legacyCheckRoutingServer struct {

@@ -16,7 +16,8 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana-app-sdk/resource"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
@@ -188,11 +189,11 @@ func (s *legacyStorage) prepareUpdate(ctx context.Context, name string, objInfo 
 	}
 
 	// Expose any secure value changes to the dual writer
-	var secureChanges common.InlineSecureValues
+	var secureChanges resource.InlineSecureValues
 	for k, v := range ds.Secure {
 		if v.Remove || v.Create != "" {
 			if secureChanges == nil {
-				secureChanges = make(common.InlineSecureValues)
+				secureChanges = make(resource.InlineSecureValues)
 			}
 			secureChanges[k] = v
 
@@ -214,7 +215,7 @@ func (s *legacyStorage) prepareUpdate(ctx context.Context, name string, objInfo 
 	// Keep all the old secure values
 	if len(oldDS.Secure) > 0 {
 		if ds.Secure == nil {
-			ds.Secure = map[string]common.InlineSecureValue{}
+			ds.Secure = map[string]resource.InlineSecureValue{}
 		}
 		for k, v := range oldDS.Secure {
 			_, found := ds.Secure[k]
@@ -237,17 +238,25 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	}
 
 	// The manager lives on the stored object, so deleting a managed resource needs a
-	// read first. Only the gate needs it, so a missing object falls through to the
-	// delete, which reports not-found the way it always did.
-	if old, err := s.Get(ctx, name, &metav1.GetOptions{}); err == nil {
-		if ds, ok := old.(*v0alpha1.DataSource); ok {
-			if err := legacyannotations.CheckManagerOnDelete(ctx, ds); err != nil {
-				return nil, false, err
-			}
-			if err := s.checkFileProvisionedEdits(ctx, ds); err != nil {
-				return nil, false, err
-			}
+	// read first. A missing object falls through to the delete, which reports
+	// not-found the way it always did; any other read failure is returned rather than
+	// deleting a row whose manager could not be checked.
+	switch old, err := s.Get(ctx, name, &metav1.GetOptions{}); {
+	case err == nil:
+		ds, ok := old.(*v0alpha1.DataSource)
+		if !ok {
+			return nil, false, fmt.Errorf("expected a datasource object")
 		}
+		if err := legacyannotations.CheckManagerOnDelete(ctx, ds); err != nil {
+			return nil, false, err
+		}
+		if err := s.checkFileProvisionedEdits(ctx, ds); err != nil {
+			return nil, false, err
+		}
+	case apierrors.IsNotFound(err):
+		// Nothing to gate; the delete below reports it.
+	default:
+		return nil, false, err
 	}
 
 	err := s.datasources.DeleteDataSource(ctx, name)

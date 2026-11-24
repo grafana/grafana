@@ -247,6 +247,22 @@ func TestToFolderLegacyCounts(t *testing.T) {
 			want: folder.DescendantCounts{"alertrules": 3},
 		},
 		{
+			name: "unified library panels are ignored while legacy reports library_elements",
+			input: counts(
+				stat("dashboard.grafana.app", "librarypanels", 5),
+				stat("sql-fallback", "library_elements", 3),
+			),
+			want: folder.DescendantCounts{"library_elements": 3},
+		},
+		{
+			name: "unified library panels are kept when legacy reports nothing for them",
+			input: counts(
+				stat("dashboard.grafana.app", "librarypanels", 5),
+				stat("sql-fallback", "alertrules", 0),
+			),
+			want: folder.DescendantCounts{"librarypanels": 5, "alertrules": 0},
+		},
+		{
 			name: "empty folder stays empty",
 			input: counts(
 				stat("dashboard.grafana.app", "dashboards", 0),

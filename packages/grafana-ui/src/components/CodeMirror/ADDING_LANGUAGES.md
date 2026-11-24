@@ -45,7 +45,7 @@ The examples below add Python support. Replace all Python references with the la
 Run the shared editor tests and formatting checks from the repository root:
 
 ```bash
-pnpm exec jest --no-watch packages/grafana-ui/src/components/CodeMirror/languageLoader.test.ts packages/grafana-ui/src/components/CodeMirror/CodeEditor.test.tsx
+pnpm exec jest --no-watch packages/grafana-ui/src/components/CodeMirror/languageLoader.test.ts packages/grafana-ui/src/components/CodeMirror/BaseCodeEditor.test.tsx
 pnpm exec prettier --check packages/grafana-ui/src/components/CodeMirror/ADDING_LANGUAGES.md
 ```
 

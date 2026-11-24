@@ -16,6 +16,38 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
+func TestNewSearchOptionsExactCountThreshold(t *testing.T) {
+	for _, threshold := range []int{0, 100} {
+		t.Run(fmt.Sprint(threshold), func(t *testing.T) {
+			cfg := snapshotOptionsTestCfg(t)
+			cfg.EnableSearch = true
+			cfg.SearchPostRankAuthzExactCountThreshold = threshold
+			opts, err := NewSearchOptions(cfg, nil, resource.ProvideIndexMetrics(prometheus.NewRegistry()), nil, nil)
+			require.NoError(t, err)
+			t.Cleanup(opts.Backend.Stop)
+			backend := opts.Backend.(*bleveBackend)
+			require.Equal(t, threshold, backend.opts.PostRankAuthz.effective().ExactCountThreshold)
+		})
+	}
+}
+
+func TestNewSearchOptionsIndexCacheTTLIdleOnly(t *testing.T) {
+	for _, idleOnly := range []bool{false, true} {
+		t.Run(fmt.Sprint(idleOnly), func(t *testing.T) {
+			cfg := snapshotOptionsTestCfg(t)
+			cfg.EnableSearch = true
+			cfg.IndexCacheTTL = 4 * time.Hour
+			cfg.IndexCacheTTLIdleOnly = idleOnly
+			opts, err := NewSearchOptions(cfg, nil, resource.ProvideIndexMetrics(prometheus.NewRegistry()), nil, nil)
+			require.NoError(t, err)
+			t.Cleanup(opts.Backend.Stop)
+			backend := opts.Backend.(*bleveBackend)
+			require.Equal(t, idleOnly, backend.opts.IndexCacheTTLIdleOnly)
+			require.Equal(t, 4*time.Hour, backend.opts.IndexCacheTTL)
+		})
+	}
+}
+
 func TestNewSearchOptionsGlobalIndexStartupBuild(t *testing.T) {
 	for _, startupBuild := range []bool{false, true} {
 		t.Run(fmt.Sprint(startupBuild), func(t *testing.T) {

@@ -9,6 +9,8 @@ import { createTheme, ThemeContext } from '@grafana/data';
 import { DiffEditor } from './DiffEditor';
 import * as languageLoader from './languageLoader';
 
+jest.mock('./languageLoader', () => makeSpyable('./languageLoader'));
+
 function DiffWithParentInput({ lineSeparator }: { lineSeparator: string }): ReactElement {
   const [value, setValue] = useState('');
 
