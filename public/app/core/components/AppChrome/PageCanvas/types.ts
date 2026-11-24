@@ -52,10 +52,18 @@ export interface PageCanvasModel {
   onCloseCanvas(): void;
 }
 
+/** The Grafana page under the canvas. */
+interface PageCanvasPage {
+  /** The page's name as its breadcrumbs end, for example "Alert rules". */
+  title: string;
+}
+
 /** Props core passes to the `grafana/page-canvas/v0-alpha` component. */
 export interface PageCanvasProps {
   /** Shows the canvas for `model`, or removes it with `null`. Call it again whenever the model changes. */
   setCanvas(model: PageCanvasModel | null): void;
+  /** The page under the canvas. Undefined while no page has set its navigation. */
+  page?: PageCanvasPage;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

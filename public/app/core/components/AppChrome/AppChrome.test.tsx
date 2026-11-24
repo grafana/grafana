@@ -51,10 +51,11 @@ jest.mock('@grafana/runtime', () => {
   };
 });
 
-const mockPageCanvasPlugin: { setCanvas?: PageCanvasProps['setCanvas'] } = {};
+const mockPageCanvasPlugin: { setCanvas?: PageCanvasProps['setCanvas']; props?: PageCanvasProps } = {};
 const mockPageCanvasComponent = Object.assign(
-  function PageCanvasPluginStub({ setCanvas }: PageCanvasProps) {
-    mockPageCanvasPlugin.setCanvas = setCanvas;
+  function PageCanvasPluginStub(props: PageCanvasProps) {
+    mockPageCanvasPlugin.setCanvas = props.setCanvas;
+    mockPageCanvasPlugin.props = props;
     return <div data-testid="page-canvas-plugin">Report content</div>;
   },
   {
@@ -1521,6 +1522,7 @@ describe('AppChrome', () => {
     beforeEach(async () => {
       pageMounts = 0;
       mockPageCanvasPlugin.setCanvas = undefined;
+      mockPageCanvasPlugin.props = undefined;
       await act(async () => {
         setTestFlags({ 'grafana.assistantPageCanvas': true });
       });
@@ -1607,6 +1609,28 @@ describe('AppChrome', () => {
         expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
       });
       expect(screen.queryByTestId('page-canvas-plugin')).not.toBeInTheDocument();
+    });
+
+    it("passes the page's name, and the new name when the page's navigation changes", async () => {
+      const { context } = setup(<Page navId="child1">Children</Page>);
+      await screen.findByTestId('page-canvas-plugin');
+      await waitFor(() => {
+        expect(mockPageCanvasPlugin.props?.page).toEqual({ title: 'Child1' });
+      });
+      const page = mockPageCanvasPlugin.props?.page;
+
+      act(() => context.chrome.update({ actions: [] }));
+      expect(mockPageCanvasPlugin.props?.page).toBe(page);
+
+      act(() => context.chrome.update({ pageNav: { text: 'Edit rule' } }));
+      expect(mockPageCanvasPlugin.props?.page).toEqual({ title: 'Edit rule' });
+    });
+
+    it('passes no page until a page sets its navigation', async () => {
+      const { context } = setup(<div>Children</div>);
+      act(() => context.chrome.update({ actions: [] }));
+      await screen.findByTestId('page-canvas-plugin');
+      expect(mockPageCanvasPlugin.props).not.toHaveProperty('page');
     });
 
     it('renders the page as before with the flag off', async () => {

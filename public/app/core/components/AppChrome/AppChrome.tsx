@@ -79,7 +79,7 @@ export function AppChrome({ children }: Props) {
   const scopes = useScopes();
   const isSplashScreenEnabled = useBooleanFlagValue('splashScreen', false);
   const pageCanvasEnabled = useFlagGrafanaAssistantPageCanvas();
-  const { canvas: pageCanvas, pane: pageCanvasPane } = usePageCanvas(pageCanvasEnabled && !state.chromeless);
+  const { canvas: pageCanvas, pane: pageCanvasPane } = usePageCanvas(pageCanvasEnabled && !state.chromeless, state);
   // With a canvas, its tab strip stays above the page, so the page scrolls inside the page area as it does beside the
   // docked sidebar.
   const pageAreaContained = !state.chromeless && (isExtensionSidebarOpen || pageCanvas !== null);
