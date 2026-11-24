@@ -9,7 +9,6 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -45,20 +44,6 @@ func TestProvideDatasourcePermissionsClient(t *testing.T) {
 	}
 	permissions, _ := newTestDatasourceResourcePermissions()
 	require.Same(t, permissions, ProvideDatasourcePermissionsClient(permissions))
-}
-
-func TestAfterDeleteDeletesPermissions(t *testing.T) {
-	const namespace, uid = "stacks-2", "ds-uid"
-	permissions, dyn := newTestDatasourceResourcePermissions()
-	require.NoError(t, permissions.SetDefault(t.Context(), namespace, uid, nil))
-	b := &DataSourceAPIBuilder{permissionClient: permissions}
-
-	b.afterDelete(&datasourceV0.DataSource{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: uid}}, nil)
-
-	resource := dyn.Resource(iamv0.ResourcePermissionInfo.GroupVersionResource())
-	rpName := rpclient.Name(datasourceV0.DataSourceResourceInfo.GroupResource(), uid)
-	_, err := resource.Namespace(namespace).Get(t.Context(), rpName, metav1.GetOptions{})
-	require.True(t, apierrors.IsNotFound(err))
 }
 
 func TestDatasourceCreatePermissions(t *testing.T) {

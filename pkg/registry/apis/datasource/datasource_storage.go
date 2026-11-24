@@ -95,19 +95,3 @@ func (s *datasourcePermissionStorage) setDefaultsIfEnabled(ctx context.Context, 
 		logging.FromContext(ctx).Error("Failed to set default datasource permissions", "namespace", meta.GetNamespace(), "uid", meta.GetName(), "error", err)
 	}
 }
-
-// afterDelete runs only after unified storage deleted the datasource, including for each item of a
-// collection delete. With dual writes the legacy service may also call the deleter; a repeated delete is a no-op.
-func (b *DataSourceAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteOptions) {
-	meta, err := utils.MetaAccessor(obj)
-	if err != nil {
-		logging.DefaultLogger.Error("Failed to access deleted datasource object metadata", "error", err)
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), datasources.PermissionsDeleteTimeout)
-	defer cancel()
-	if err := b.permissionClient.DeletePermissions(ctx, meta.GetNamespace(), meta.GetName()); err != nil {
-		logging.DefaultLogger.Error("Failed to delete datasource permissions", "error", err)
-	}
-}
