@@ -37,7 +37,7 @@ Set `invalid` and `error` on the `Field` to show a validation error. Don't recre
 ```tsx
 // Don't
 <Field label="Name">
-  <Input id="name" className={css({ borderColor: theme.colors.error.border })} />
+  <Input id="name" className={css({ '& input': { borderColor: theme.colors.error.border } })} />
 </Field>
 
 // Do

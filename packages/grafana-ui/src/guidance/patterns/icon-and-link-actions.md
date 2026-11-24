@@ -24,7 +24,7 @@ Don't reset a text button to get a bare icon:
 />
 ```
 
-`Button` merges `className` after its own styles, so the reset wins but only for the properties you list. The button keeps its size-based font and hover background, and each override has to be repeated for hover, focus and disabled. It also drifts from the theme whenever `Button`'s styles change.
+`Button` merges `className` after its own styles, so the reset wins in the default state, but not everywhere. The hover background still appears, and a disabled button gets its transparent 1px border back from the disabled styles. An icon-only `Button` also gives its icon negative side margins sized for the default padding, so with `padding: 0` the icon overhangs the button's edges. The reset also drifts from the theme whenever `Button`'s styles change.
 
 Use `IconButton`:
 
