@@ -1,5 +1,5 @@
 import { type DataSourceInstanceListItem } from '@grafana/data';
-import { DataSourceWithBackend } from '@grafana/runtime';
+import { DataSourceWithBackend, type getDataSourceInstance } from '@grafana/runtime';
 
 import { type Solution, type SolutionId } from './types';
 
@@ -38,12 +38,22 @@ export function deferred<T>() {
   return { promise, resolve };
 }
 
-/** Passes the backend-instance check, serves resource calls from `getResource` and health from `callHealthCheck`. */
-export function backendInstance(getResource: jest.Mock, callHealthCheck?: jest.Mock): DataSourceWithBackend {
+/** Passes the backend-instance check and serves resource calls from `getResource`. */
+export function backendInstance(getResource: jest.Mock): DataSourceWithBackend {
   const instance: DataSourceWithBackend = Object.create(DataSourceWithBackend.prototype);
   instance.getResource = getResource;
-  if (callHealthCheck) {
-    instance.callHealthCheck = callHealthCheck;
-  }
   return instance;
+}
+
+/**
+ * `getDataSourceInstance` stand-in whose instances answer `callHealthCheck` through `get` at the legacy
+ * health URL, so suites keep stubbing health per URL now that probes go through callHealthCheck().
+ */
+export function healthCheckThrough(get: jest.Mock): typeof getDataSourceInstance {
+  return async (ref) => {
+    const uid = typeof ref === 'string' ? ref : ref?.uid;
+    const instance = backendInstance(jest.fn());
+    instance.callHealthCheck = (options) => get(`/api/datasources/uid/${uid}/health`, undefined, undefined, options);
+    return instance;
+  };
 }

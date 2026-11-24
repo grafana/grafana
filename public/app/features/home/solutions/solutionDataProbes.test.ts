@@ -11,7 +11,7 @@ import {
 
 import { resetProbeHealth } from './probeUtils';
 import { lokiHasRecentLabels, probeFound, prometheusHasRecentMetrics, tempoHasTraces } from './solutionDataProbes';
-import { backendInstance } from './test-utils';
+import { backendInstance, healthCheckThrough } from './test-utils';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -44,6 +44,7 @@ beforeEach(() => {
   // Health checks share getBackendSrv().get: answer /health OK by default so every candidate is probed.
   mockProxyGet.mockImplementation(async (url: string) => (url.endsWith('/health') ? { status: 'OK' } : undefined));
   jest.mocked(getBackendSrv).mockReturnValue({ get: mockProxyGet, fetch: mockProxyFetch } as unknown as BackendSrv);
+  mockInstance.mockImplementation(healthCheckThrough(mockProxyGet));
 });
 
 afterEach(() => {

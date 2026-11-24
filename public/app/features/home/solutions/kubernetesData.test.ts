@@ -14,6 +14,7 @@ import {
   config,
   createQueryRunner,
   getBackendSrv,
+  getDataSourceInstance,
   getDataSourceInstanceList,
   getDefaultDataSourceInstanceListItem,
 } from '@grafana/runtime';
@@ -27,11 +28,13 @@ import {
   resetKubernetesPrometheusResolution,
 } from './kubernetesData';
 import { resetProbeHealth } from './probeUtils';
+import { healthCheckThrough } from './test-utils';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   createQueryRunner: jest.fn(),
   getBackendSrv: jest.fn(),
+  getDataSourceInstance: jest.fn(),
   getDataSourceInstanceList: jest.fn(),
   getDefaultDataSourceInstanceListItem: jest.fn(),
 }));
@@ -98,6 +101,7 @@ beforeEach(() => {
   // Health gate: every candidate healthy unless a test overrides by uid.
   healthGet.mockResolvedValue({ status: 'OK' });
   jest.mocked(getBackendSrv).mockReturnValue({ get: healthGet } as unknown as BackendSrv);
+  jest.mocked(getDataSourceInstance).mockImplementation(healthCheckThrough(healthGet));
   window.localStorage.clear();
   resetKubernetesPrometheusResolution();
   // The /health cache is module-level and shared across scans; a cached OK would leak between tests.
