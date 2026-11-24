@@ -67,7 +67,7 @@ func TestEmbeddedSearchDirectoryCallerAndZanzanaOnlyGrant(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, caller.GetUID(), actual.GetUID())
 				require.Equal(t, token, actual.GetIDToken())
-				require.Equal(t, token, c.SignedInUser.GetIDToken())
+				require.Equal(t, token, c.GetIDToken())
 				require.Equal(t, caller.GetPermissions(), actual.GetPermissions())
 				require.False(t, identity.IsServiceIdentity(r.Context()))
 				if actual.GetIDToken() == "" {

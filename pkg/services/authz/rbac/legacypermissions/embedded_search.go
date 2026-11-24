@@ -137,6 +137,10 @@ func (s *embeddedServer) LegacySearchUsersPermissions(req *authzv1.LegacySearchU
 		return status.Error(codes.Internal, "legacy permission search failed")
 	}
 
+	return streamSearchResults(stream, results)
+}
+
+func streamSearchResults(stream authzv1.LegacyAuthzService_LegacySearchUsersPermissionsServer, results map[int64][]accesscontrol.Permission) error {
 	for id, permissions := range results {
 		if len(permissions) == 0 {
 			if err := stream.Send(&authzv1.LegacySearchUsersPermissionsResponse{UserId: id, NilPermissions: permissions == nil}); err != nil {

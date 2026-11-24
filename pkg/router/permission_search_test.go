@@ -47,6 +47,7 @@ type searchDirectoryConfig struct {
 }
 
 func (d searchDirectoryConfig) GetDirectRestConfig(*contextmodel.ReqContext) *rest.Config {
+	//nolint:bodyclose // The REST client owns the returned response body.
 	return &rest.Config{Transport: &options.RoundTripperFunc{Fn: responsewriter.WrapHandler(d.handler)}}
 }
 
