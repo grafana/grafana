@@ -191,6 +191,29 @@ func TestRequestConfigProvider_PluginRequestConfig_appURL(t *testing.T) {
 	})
 }
 
+func TestRequestConfigProvider_PluginRequestConfig_SeriesLimit(t *testing.T) {
+	t.Run("Sends the configured series limit", func(t *testing.T) {
+		cfg := newTestServerConfig()
+		cfg.DataProxySeriesLimit = 500000
+
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(), nil)
+		require.NoError(t, err)
+
+		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
+		require.Subset(t, p.PluginRequestConfig(context.Background(), "", nil), map[string]string{"GF_SERIES_LIMIT": "500000"})
+	})
+
+	t.Run("Sends no series limit when it is zero", func(t *testing.T) {
+		cfg := newTestServerConfig()
+
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(), nil)
+		require.NoError(t, err)
+
+		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
+		require.NotContains(t, p.PluginRequestConfig(context.Background(), "", nil), "GF_SERIES_LIMIT")
+	})
+}
+
 func TestRequestConfigProvider_PluginRequestConfig_SQL(t *testing.T) {
 	t.Run("Uses the configured values", func(t *testing.T) {
 		cfg := newTestServerConfig()

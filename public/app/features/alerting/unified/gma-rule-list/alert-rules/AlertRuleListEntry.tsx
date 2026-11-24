@@ -2,6 +2,7 @@ import { useGetAlertRuleQuery } from '@grafana/api-clients/rtkq/rules.alerting/v
 
 import { RuleActionsSkeleton } from '../../rule-list/components/RuleActionsSkeleton';
 import { useFolderPath } from '../folder-browsing/folderLookups';
+import { useOpenRuleSequence } from '../rule-sequences/RuleSequenceDrawer';
 import { useRuleSequenceMembership } from '../rule-sequences/ruleSequenceMembership';
 
 import { AlertRuleActions } from './AlertRuleActions';
@@ -20,6 +21,12 @@ export function AlertRuleListEntry({ searchHit, showFolderPath }: AlertRuleListE
   const { data: fullRule, isLoading: isRuleLoading } = useGetAlertRuleQuery({ name: searchHit.uid });
   const { sequence, isLoading: isSequenceLoading } = useRuleSequenceMembership('alert', searchHit.uid);
   const isLoading = isRuleLoading || isSequenceLoading;
+  const openRuleSequence = useOpenRuleSequence();
+  const openSequence = () => {
+    if (sequence) {
+      openRuleSequence({ sequenceUid: sequence.uid, ruleKind: 'alert', ruleUid: searchHit.uid });
+    }
+  };
 
   let actions = null;
   if (isLoading) {
@@ -29,6 +36,13 @@ export function AlertRuleListEntry({ searchHit, showFolderPath }: AlertRuleListE
   }
 
   return (
-    <AlertRuleRow searchHit={searchHit} folderPath={folderPath} rule={fullRule} sequence={sequence} actions={actions} />
+    <AlertRuleRow
+      searchHit={searchHit}
+      folderPath={folderPath}
+      rule={fullRule}
+      sequence={sequence}
+      onSequenceClick={openSequence}
+      actions={actions}
+    />
   );
 }

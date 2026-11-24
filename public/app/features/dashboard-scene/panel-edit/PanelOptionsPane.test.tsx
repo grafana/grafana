@@ -15,12 +15,18 @@ import { transformSaveModelToScene } from '../serialization/transformSaveModelTo
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { findVizPanelByKey } from '../utils/findVizPanel';
 import { activateFullSceneTree } from '../utils/test-utils';
-import * as utils from '../utils/utils';
+import { getDashboardSceneFor } from '../utils/utils';
 
 import { PanelOptionsPane } from './PanelOptionsPane';
 import { testDashboard } from './testfiles/testDashboard';
 
-jest.spyOn(utils, 'getDashboardSceneFor').mockReturnValue(new DashboardScene({}));
+jest.mock('../utils/utils', () =>
+  jest
+    .requireActual('test/helpers/partialMock')
+    .partialMock(jest.requireActual('../utils/utils'), { getDashboardSceneFor: jest.fn() })
+);
+
+jest.mocked(getDashboardSceneFor).mockReturnValue(new DashboardScene({}));
 
 const pluginWithFieldConfig = getPanelPlugin({
   id: 'TestPanel',

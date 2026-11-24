@@ -14,10 +14,12 @@ jest.mock('kbar', () => ({
   useRegisterActions: jest.fn(),
 }));
 
-jest.mock('./state/query', () => ({
-  ...jest.requireActual('./state/query'),
-  runQueries: jest.fn(() => ({ type: 'mock-run-queries' })),
-}));
+jest.mock('./state/query', () => {
+  const actual = jest.requireActual('./state/query');
+  return jest.requireActual('test/helpers/partialMock').partialMock(actual, {
+    runQueries: jest.fn(() => ({ type: 'mock-run-queries' })),
+  });
+});
 
 const useKBarMock = jest.mocked(useKBar);
 const useRegisterActionsMock = jest.mocked(useRegisterActions);

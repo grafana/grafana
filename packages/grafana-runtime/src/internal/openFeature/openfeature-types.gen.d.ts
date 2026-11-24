@@ -16,6 +16,7 @@ declare module "@openfeature/core" {
     | "cloudWatchCrossAccountQuerying"
     | "alertingBacktesting"
     | "lokiShardSplitting"
+    | "live.useAPIServerWebsocket"
     | "lokiLogsDataplane"
     | "faroSessionReplay"
     | "queryHistory.localOnly"
@@ -65,8 +66,6 @@ declare module "@openfeature/core" {
     | "grafana.filterablePanels"
     | "grafana.savedQueriesPage"
     | "playlistsRBAC"
-    | "savedQueriesRBAC"
-    | "newSavedQueriesExperience"
     | "dashboardLibrary"
     | "suggestedDashboards"
     | "dashboardValidatorApp"
@@ -121,9 +120,11 @@ declare module "@openfeature/core" {
     | "azureResourcePickerUpdates"
     | "heatmapNegativeLogBuckets"
     | "pieChartGradientColorScheme"
+    | "dataviz.reverseColorScheme"
     | "pluginInsights"
     | "transformationsEmptyPlaceholder"
     | "plugins.useMTPlugins"
+    | "plugins.useMTPluginInstall"
     | "globalDashboardVariables"
     | "grafana.dashboardGlobalVariables"
     | "grafana.dashboardVariablesMigration"
@@ -182,6 +183,7 @@ declare module "@openfeature/core" {
     | "assistant.dashboardPlanEditing"
     | "grafana.multiTenantNavTree"
     | "grafana.navigationInfoArchRefresh"
+    | "grafana.navigationAdminSubNav"
     | "grafana.exploreMetricsSidebar"
     | "grafana.dynamicTraceToLogs"
     | "grafana.configFromQueryDynamicName"
@@ -197,6 +199,8 @@ declare module "@openfeature/core" {
     | "datasources.gatewayGuardrails"
     | "grafana.pluginExtensionReactElementProps"
     | "grafana.extensionSidebarFloating"
+    | "grafana.extensionSidebarPlacements"
+    | "grafana.megaMenuPeekAndDock"
     | "grafana.otelLogDetails"
     | "grafana.announcementBannerDismissible"
     | "datasources.gatewayAuditPolicy"
@@ -208,7 +212,9 @@ declare module "@openfeature/core" {
     | "grafana.folderPickerFolderEditAccess"
     | "grafana.panelOptionInterpolation"
     | "datasources.gatewayRateLimits"
-    | "plugins.disableMTPluginsFallback";
+    | "plugins.disableMTPluginsFallback"
+    | "grafana.logsInfiniteScrollTop"
+    | "grafana.dashboardQuestions";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =

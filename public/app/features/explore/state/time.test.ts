@@ -12,10 +12,12 @@ import { changeRangeAction, changeRefreshInterval, timeReducer, updateTime, upda
 // Keep the real query module (its reducer backs the store) but turn runQueries into a spy so we can
 // inspect the userInitiated flag the auto/time-sync reruns pass.
 const runQueriesMock = jest.fn((payload: unknown) => ({ type: 'explore/runQueries/mock', payload }));
-jest.mock('./query', () => ({
-  ...jest.requireActual('./query'),
-  runQueries: (payload: unknown) => runQueriesMock(payload),
-}));
+jest.mock('./query', () => {
+  const actual = jest.requireActual('./query');
+  return jest.requireActual('test/helpers/partialMock').partialMock(actual, {
+    runQueries: (payload: unknown) => runQueriesMock(payload),
+  });
+});
 
 const mockTimeSrv = {
   init: jest.fn(),

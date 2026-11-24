@@ -1,5 +1,5 @@
 import { useRegisterActions, useKBar, type Action, Priority } from 'kbar';
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -13,7 +13,6 @@ import { isSplit, selectPanes } from './state/selectors';
 
 // FIXME: this should use the new IDs
 export const ExploreActions = () => {
-  const [actions, setActions] = useState<Action[]>([]);
   const { query } = useKBar();
   const dispatch = useDispatch();
   const panes = useSelector(selectPanes);
@@ -21,7 +20,7 @@ export const ExploreActions = () => {
 
   const canWriteCorrelations = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
 
-  useEffect(() => {
+  const actions = useMemo(() => {
     const keys = Object.keys(panes);
     const exploreSection = {
       name: t('explore.explore-actions.section-explore', 'Explore'),
@@ -107,8 +106,8 @@ export const ExploreActions = () => {
         section: exploreSection,
       });
     }
-    setActions(actionsArr);
-  }, [panes, splitted, query, dispatch, canWriteCorrelations]);
+    return actionsArr;
+  }, [panes, splitted, dispatch, canWriteCorrelations]);
 
   useRegisterActions(!query ? [] : actions, [actions, query]);
 

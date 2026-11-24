@@ -79,6 +79,69 @@ func TestGetAdminNode_ProvisioningLink(t *testing.T) {
 	})
 }
 
+func TestGetAdminNode_ExtensionsLink(t *testing.T) {
+	newService := func(env string) ServiceImpl {
+		cfg := setting.NewCfg()
+		cfg.Env = env
+
+		lic := licensingtest.NewFakeLicensing()
+		lic.On("FeatureEnabled", mock.Anything).Return(false)
+
+		return ServiceImpl{
+			cfg:           cfg,
+			accessControl: acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+			authnService:  &authntest.FakeService{ExpectedIdentity: &authn.Identity{}},
+			license:       lic,
+			features:      featuremgmt.WithFeatures(),
+		}
+	}
+
+	newReqCtx := func(permissions map[string][]string) *contextmodel.ReqContext {
+		httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+		return &contextmodel.ReqContext{
+			SignedInUser: &user.SignedInUser{
+				OrgID:       1,
+				OrgRole:     org.RoleAdmin,
+				Permissions: map[int64]map[string][]string{1: permissions},
+			},
+			IsSignedIn: true,
+			Context:    &web.Context{Req: httpReq},
+		}
+	}
+
+	hasExtensionsLink := func(node *navtree.NavLink) bool {
+		for _, section := range node.Children {
+			for _, link := range section.Children {
+				if link.Id == "extensions" {
+					return true
+				}
+			}
+		}
+		return false
+	}
+
+	t.Run("hides the extensions link in dev without plugin permissions", func(t *testing.T) {
+		svc := newService(setting.Dev)
+		node, err := svc.getAdminNode(newReqCtx(map[string][]string{}))
+		require.NoError(t, err)
+		require.False(t, hasExtensionsLink(node))
+	})
+
+	t.Run("shows the extensions link in dev with plugin write access", func(t *testing.T) {
+		svc := newService(setting.Dev)
+		node, err := svc.getAdminNode(newReqCtx(map[string][]string{"plugins:write": {}}))
+		require.NoError(t, err)
+		require.True(t, hasExtensionsLink(node))
+	})
+
+	t.Run("hides the extensions link outside dev without the toggle", func(t *testing.T) {
+		svc := newService(setting.Prod)
+		node, err := svc.getAdminNode(newReqCtx(map[string][]string{"plugins:write": {}}))
+		require.NoError(t, err)
+		require.False(t, hasExtensionsLink(node))
+	})
+}
+
 func TestBuildDashboardNavLinks(t *testing.T) {
 	newService := func() ServiceImpl {
 		return ServiceImpl{

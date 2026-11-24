@@ -28,6 +28,9 @@ const rsdoctorMetrics = {
   initialChunks: 2,
   asyncChunks: 1,
   largestAsyncJsBytes: 500,
+  totalChunksJsBytes: 630,
+  asyncChunksJsBytes: 500,
+  namedAsyncChunksJsBytes: 500,
   'entrypoints.app.js.bytes': 130,
   'entrypoints.app.js.gzipBytes': 65,
   'entrypoints.app.css.bytes': 20,
@@ -127,9 +130,9 @@ function rsdoctorReport() {
   return {
     chunkGraph: {
       chunks: [
-        { id: 'main', initial: true, modules: [1, 2, 5, 6], assets: ['app.js', 'app.css'] },
+        { id: 'main', name: 'app', initial: true, modules: [1, 2, 5, 6], assets: ['app.js', 'app.css'] },
         { id: 'vendor', initial: true, modules: [1, 2], assets: ['vendor.js'] },
-        { id: 'lazy', initial: false, modules: [4], assets: ['lazy.js'] },
+        { id: 'lazy', name: 'lazy', initial: false, modules: [4], assets: ['lazy.js'] },
       ],
       assets: [
         { path: 'app.js', size: 100, gzipSize: 50 },
@@ -199,6 +202,9 @@ describe('reportBundleMetrics', () => {
       initialChunks: 0,
       asyncChunks: 0,
       largestAsyncJsBytes: 0,
+      totalChunksJsBytes: 0,
+      asyncChunksJsBytes: 0,
+      namedAsyncChunksJsBytes: 0,
       compileMs: 13,
     });
 

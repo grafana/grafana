@@ -1,8 +1,13 @@
 import { getDashboardModel } from 'test/helpers/getDashboardModel';
 
-import * as runtime from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 
 import { trackDashboardLoaded } from './tracking';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn((...args) => jest.requireActual('@grafana/runtime').reportInteraction(...args)),
+}));
 
 describe('trackDashboardLoaded', () => {
   it('should report dashboard_loaded interaction with correct parameters', () => {
@@ -31,7 +36,7 @@ describe('trackDashboardLoaded', () => {
       liveNow: true,
     };
     const model = getDashboardModel(dashboardJSON);
-    const reportInteractionSpy = jest.spyOn(runtime, 'reportInteraction');
+    const reportInteractionSpy = jest.mocked(reportInteraction);
 
     trackDashboardLoaded(model, 200, 16);
 

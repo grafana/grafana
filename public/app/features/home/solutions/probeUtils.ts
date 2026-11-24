@@ -1,4 +1,4 @@
-import memoize from 'micro-memoize';
+import { memoize } from 'micro-memoize';
 import { fromEvent, lastValueFrom, type Observable, throwError } from 'rxjs';
 import { map, mergeMap, takeUntil } from 'rxjs/operators';
 
@@ -32,7 +32,7 @@ export function datasourceFact<T>(
       const ds = await datasource();
       return ds ? fetch(ds) : null;
     },
-    { isPromise: retryOnError }
+    { async: retryOnError }
   );
 }
 

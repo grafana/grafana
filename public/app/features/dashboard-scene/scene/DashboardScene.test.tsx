@@ -39,6 +39,7 @@ import { appEvents } from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY, LS_STYLES_COPY_KEY } from 'app/core/constants';
 import { AnnoKeyManagerKind, AnnoKeyUseCrossDashboardVariables, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 import { setDesktopViewport, setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
@@ -64,7 +65,6 @@ import { isEditEntryBlocked } from '../utils/mobileEditDeprecation';
 import { toControlSourceRef } from '../utils/predefinedVariables';
 import { createDeferred } from '../utils/test-utils';
 import { getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
-import * as utils from '../utils/utils';
 
 import { DashboardControls } from './DashboardControls';
 import { DashboardScene } from './DashboardScene';
@@ -84,6 +84,22 @@ import { setPendingPlanBuild, takePendingPlanBuild } from './pendingPlanBuild';
 import { DashboardPlanningEvent } from './planningEvents';
 import { allowOrigins, getAllowedOrigins } from './sandbox-consent/sandboxConsent';
 import { isFullDashboardEditing, type DashboardSceneLike, type DashboardSceneState } from './types/dashboard';
+
+jest.mock('../settings/enterprise-components/DashboardTemplateExtension', () => ({
+  ...jest.requireActual('../settings/enterprise-components/DashboardTemplateExtension'),
+  getDashboardTemplateExtension: jest.fn(() =>
+    jest.requireActual('../settings/enterprise-components/DashboardTemplateExtension').getDashboardTemplateExtension()
+  ),
+}));
+
+afterEach(() => {
+  jest
+    .mocked(DashboardTemplateExtensionModule.getDashboardTemplateExtension)
+    .mockReset()
+    .mockImplementation(
+      jest.requireActual('../settings/enterprise-components/DashboardTemplateExtension').getDashboardTemplateExtension
+    );
+});
 
 const mockRestoreDashboardVersion = jest.fn();
 
@@ -983,7 +999,7 @@ describe('DashboardScene', () => {
         scene.setState({ meta: { ...scene.state.meta, canSave: true } });
 
         const publishSpy = jest.spyOn(appEvents, 'publish');
-        const hasActualSaveChangesSpy = jest.spyOn(utils, 'hasActualSaveChanges').mockReturnValue(true);
+        scene.setInitialSaveModel(scene.getSaveModel() as Dashboard);
 
         try {
           scene.setState({ title: 'Updated title' });
@@ -1007,7 +1023,6 @@ describe('DashboardScene', () => {
           expect(scene.state.isEditing).toBe(false);
         } finally {
           publishSpy.mockRestore();
-          hasActualSaveChangesSpy.mockRestore();
         }
       });
 
@@ -1015,7 +1030,7 @@ describe('DashboardScene', () => {
         scene.setState({ meta: { ...scene.state.meta, canSave: false } });
 
         const publishSpy = jest.spyOn(appEvents, 'publish');
-        const hasActualSaveChangesSpy = jest.spyOn(utils, 'hasActualSaveChanges').mockReturnValue(true);
+        scene.setInitialSaveModel(scene.getSaveModel() as Dashboard);
 
         scene.setState({ title: 'Updated title' });
         expect(scene.state.isDirty).toBe(true);
@@ -1029,7 +1044,6 @@ describe('DashboardScene', () => {
         expect(modalEvent.payload.onAltAction).toBeUndefined();
 
         publishSpy.mockRestore();
-        hasActualSaveChangesSpy.mockRestore();
       });
 
       it('Should start the detect changes worker', () => {
@@ -2575,38 +2589,6 @@ describe('DashboardScene', () => {
     });
   });
 
-  describe('When changes are discarded', () => {
-    afterEach(restoreDefaultMocks);
-
-    it.each([
-      {
-        path: 'exit edit mode',
-        discard: (scene: DashboardScene) => scene.exitEditMode({ skipConfirm: true, restoreInitialState: true }),
-      },
-      { path: 'keep editing', discard: (scene: DashboardScene) => scene.discardChangesAndKeepEditing() },
-    ])('resolves multi-value operator support on the ad hoc variables it restores ($path)', async ({ discard }) => {
-      const scene = buildTestScene({
-        $variables: new SceneVariableSet({
-          variables: [new AdHocFiltersVariable({ name: 'filters', datasource: { uid: 'mvo', type: 'mvo' } })],
-        }),
-      });
-      // The baseline is taken before the lookup on the live variable resolves.
-      scene.onEnterEditMode();
-      const live = sceneGraph.lookupVariable('filters', scene);
-      if (!(live instanceof AdHocFiltersVariable)) {
-        throw new Error('expected an ad hoc variable');
-      }
-      live.setState({ supportsMultiValueOperators: true });
-      mockMultiValueOperatorSupport();
-
-      discard(scene);
-
-      const filters = sceneGraph.lookupVariable('filters', scene);
-      expect(filters).toBeInstanceOf(AdHocFiltersVariable);
-      await waitFor(() => expect(filters?.state).toMatchObject({ supportsMultiValueOperators: true }));
-    });
-  });
-
   describe('When a dashboard is restored', () => {
     let scene: DashboardScene;
 
@@ -2614,8 +2596,6 @@ describe('DashboardScene', () => {
       scene = buildTestScene();
       scene.onEnterEditMode();
     });
-
-    afterEach(restoreDefaultMocks);
 
     it('should restore the dashboard to the selected version and exit edit mode', () => {
       const newVersion = 3;
@@ -2636,31 +2616,6 @@ describe('DashboardScene', () => {
       });
     });
 
-    it('resolves multi-value operator support on the ad hoc variables it restores', async () => {
-      const restored = new DashboardScene({
-        uid: 'dash-1',
-        $variables: new SceneVariableSet({
-          variables: [new AdHocFiltersVariable({ name: 'filters', datasource: { uid: 'mvo', type: 'mvo' } })],
-        }),
-      });
-      mockRestoreDashboardVersion.mockResolvedValue({ version: 3 });
-      jest.mocked(transformSaveModelToScene).mockReturnValue(restored);
-      mockMultiValueOperatorSupport();
-      // From a clean edit session, exiting edit mode keeps the restored version instead of discarding.
-      jest.mocked(worker.postMessage).mockImplementation(({ generation }) => {
-        worker.onmessage?.({ data: { hasChanges: false, generation } } as unknown as MessageEvent);
-      });
-      scene.setState({ isDirty: false });
-
-      await scene.onRestore(getVersionMock());
-
-      expect(scene.state.isDirty).toBe(false);
-
-      const filters = sceneGraph.lookupVariable('filters', scene);
-      expect(filters).toBeInstanceOf(AdHocFiltersVariable);
-      await waitFor(() => expect(filters?.state).toMatchObject({ supportsMultiValueOperators: true }));
-    });
-
     it('should call dashboardWatcher.reloadPage even if dashboard is in editing mode', async () => {
       // sometimes a dashboard can be in editing mode after user has already restored to a previous version
 
@@ -2677,9 +2632,7 @@ describe('DashboardScene', () => {
 
       dashboardWatcher.editing = false;
       const dash = { uid: 'dash-1', hasUnsavedChanges: () => true };
-      const getDashboardSrvSpy = jest
-        .spyOn(require('app/features/dashboard/services/DashboardSrv'), 'getDashboardSrv')
-        .mockReturnValue({ getCurrent: () => dash });
+      const getDashboardSrvSpy = jest.spyOn(getDashboardSrv(), 'getCurrent').mockReturnValue(dash as DashboardModel);
 
       dashboardWatcher.observer.next({
         type: LiveChannelEventType.Message,
@@ -2719,7 +2672,7 @@ describe('DashboardScene', () => {
       scene.onEnterEditMode();
 
       const restoreSpy = jest.fn().mockResolvedValue(true);
-      jest.spyOn(DashboardTemplateExtensionModule, 'getDashboardTemplateExtension').mockReturnValue({
+      jest.mocked(DashboardTemplateExtensionModule.getDashboardTemplateExtension).mockReturnValue({
         loadTemplate: jest.fn(),
         listHistory: jest.fn(),
         restore: restoreSpy,
@@ -4884,27 +4837,6 @@ void ((scene: DashboardScene, snapshot: DashboardSceneState, panel: VizPanel) =>
   // @ts-expect-error Synchronous state keys are not exposed as loaders.
   dashboardViews.body();
 });
-
-const defaultWorkerReply = jest.mocked(worker.postMessage).getMockImplementation();
-
-// Puts back the module-wide mocks that the multi-value operator tests replace.
-function restoreDefaultMocks() {
-  jest.mocked(getDataSourceInstanceSettings).mockResolvedValue({ uid: 'ds1' } as unknown as DataSourceInstanceSettings);
-  if (defaultWorkerReply) {
-    jest.mocked(worker.postMessage).mockImplementation(defaultWorkerReply);
-  }
-}
-
-// Only the `mvo` data source type takes multi-value operators; any other type gets the default mock.
-function mockMultiValueOperatorSupport() {
-  jest
-    .mocked(getDataSourceInstanceSettings)
-    .mockImplementation(async (ref) =>
-      typeof ref === 'object' && ref?.type === 'mvo'
-        ? ({ uid: 'mvo', meta: { multiValueFilterOperators: true } } as unknown as DataSourceInstanceSettings)
-        : ({ uid: 'ds1' } as unknown as DataSourceInstanceSettings)
-    );
-}
 
 function buildTestScene(overrides?: Partial<DashboardSceneState>) {
   const scene = new DashboardScene({

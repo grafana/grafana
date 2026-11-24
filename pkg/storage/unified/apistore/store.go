@@ -338,12 +338,10 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 	}
 
 	// Make sure we are looking at the correct namespace
-	if meta.GetNamespace() != rkey.Namespace {
-		if meta.GetNamespace() == "" {
-			meta.SetNamespace(rkey.Namespace)
-		} else {
-			return apierrors.NewBadRequest("namespace mismatch")
-		}
+	if meta.GetNamespace() == "" {
+		meta.SetNamespace(rkey.Namespace) // set a missing namespace
+	} else if meta.GetNamespace() != rkey.Namespace {
+		return apierrors.NewBadRequest("namespace mismatch")
 	}
 
 	v, err := s.prepareObjectForStorage(ctx, obj)
@@ -457,6 +455,9 @@ func (s *Storage) Delete(
 		return storage.NewKeyNotFoundError(key, 0)
 	}
 
+	// The user a service deletes on behalf of; the server records them as the deleter.
+	actingUser, _ := identity.MetadataIdentityUIDFrom(ctx)
+
 	var lastErr error
 	bo := backoff.New(ctx, updateRetryConfig)
 	for bo.Ongoing() {
@@ -464,7 +465,7 @@ func (s *Storage) Delete(
 			return err
 		}
 
-		cmd := &resourcepb.DeleteRequest{Key: k}
+		cmd := &resourcepb.DeleteRequest{Key: k, ActingUserUid: actingUser}
 
 		if preconditions != nil {
 			if err := preconditions.Check(key, out); err != nil {

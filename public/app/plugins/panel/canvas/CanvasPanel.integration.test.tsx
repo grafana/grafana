@@ -21,13 +21,18 @@ import { mockComboboxRect } from '@grafana/test-utils';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { PanelContextProvider } from '@grafana/ui';
 import { Scene } from 'app/features/canvas/runtime/scene';
-import * as sceneAbleManagement from 'app/features/canvas/runtime/sceneAbleManagement';
+import { calculateZoomToFitScale } from 'app/features/canvas/runtime/sceneAbleManagement';
+import type * as SceneAbleManagement from 'app/features/canvas/runtime/sceneAbleManagement';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { CanvasPanel } from 'app/plugins/panel/canvas/CanvasPanel';
 import { CONNECTION_ANCHOR_DIV_ID } from 'app/plugins/panel/canvas/components/connections/ConnectionAnchors';
 import { HorizontalConstraint, type Options, VerticalConstraint } from 'app/plugins/panel/canvas/panelcfg.gen';
 
+jest.mock('app/features/canvas/runtime/sceneAbleManagement', () => ({
+  ...jest.requireActual('app/features/canvas/runtime/sceneAbleManagement'),
+  calculateZoomToFitScale: jest.fn(),
+}));
 const theme = createTheme();
 
 jest.mock('react-router-dom-v5-compat', () => ({
@@ -712,6 +717,13 @@ describe('Canvas', () => {
   const user = userEvent.setup();
 
   beforeEach(() => {
+    jest
+      .mocked(calculateZoomToFitScale)
+      .mockReset()
+      .mockImplementation(
+        jest.requireActual<typeof SceneAbleManagement>('app/features/canvas/runtime/sceneAbleManagement')
+          .calculateZoomToFitScale
+      );
     jest.spyOn(getDashboardSrv(), 'getCurrent').mockReturnValue({ editable: true } as DashboardModel);
   });
 
@@ -791,7 +803,7 @@ describe('Canvas', () => {
     });
 
     it('zoom to content', async () => {
-      const calculateZoomToFitScaleSpy = jest.spyOn(sceneAbleManagement, 'calculateZoomToFitScale').mockReturnValue({
+      const calculateZoomToFitScaleSpy = jest.mocked(calculateZoomToFitScale).mockReturnValue({
         scale: 2,
         centerX: 100,
         centerY: 100,

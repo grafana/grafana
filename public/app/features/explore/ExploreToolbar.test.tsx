@@ -13,10 +13,12 @@ import { makeExplorePaneState } from './state/utils';
 // Keep the real query module (it also exports the reducer the store relies on) but turn runQueries
 // into a spy that returns an inert action so we can inspect its payload.
 const runQueriesMock = jest.fn((payload: unknown) => ({ type: 'explore/runQueries/mock', payload }));
-jest.mock('./state/query', () => ({
-  ...jest.requireActual('./state/query'),
-  runQueries: (payload: unknown) => runQueriesMock(payload),
-}));
+jest.mock('./state/query', () => {
+  const actual = jest.requireActual('./state/query');
+  return jest.requireActual('test/helpers/partialMock').partialMock(actual, {
+    runQueries: (payload: unknown) => runQueriesMock(payload),
+  });
+});
 
 // Expose the Run button's onRefresh and the refresh interval's func as trivial buttons.
 jest.mock('@grafana/ui', () => ({

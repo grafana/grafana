@@ -10,24 +10,30 @@ import { makeExplorePaneState } from './utils';
 // Keep the real query module (its reducer backs the store) but spy on runQueries so we can inspect the
 // userInitiated flag the initial URL-load run passes.
 const runQueriesMock = jest.fn((payload: unknown) => ({ type: 'explore/runQueries/mock', payload }));
-jest.mock('./query', () => ({
-  ...jest.requireActual('./query'),
-  runQueries: (payload: unknown) => runQueriesMock(payload),
-}));
+jest.mock('./query', () => {
+  const actual = jest.requireActual('./query');
+  return jest.requireActual('test/helpers/partialMock').partialMock(actual, {
+    runQueries: (payload: unknown) => runQueriesMock(payload),
+  });
+});
 
 // Avoid hitting the datasource service / correlations storage during initializeExplore.
-jest.mock('./utils', () => ({
-  ...jest.requireActual('./utils'),
-  loadAndInitDatasource: jest.fn().mockResolvedValue({
-    instance: { uid: 'ds1', name: 'testDs', getRef: () => ({ uid: 'ds1' }), meta: { id: 'something' } },
-    history: [],
-  }),
-}));
+jest.mock('./utils', () => {
+  const actual = jest.requireActual('./utils');
+  return jest.requireActual('test/helpers/partialMock').partialMock(actual, {
+    loadAndInitDatasource: jest.fn().mockResolvedValue({
+      instance: { uid: 'ds1', name: 'testDs', getRef: () => ({ uid: 'ds1' }), meta: { id: 'something' } },
+      history: [],
+    }),
+  });
+});
 
-jest.mock('app/features/correlations/utils', () => ({
-  ...jest.requireActual('app/features/correlations/utils'),
-  getCorrelationsFromStorage: jest.fn().mockResolvedValue({ correlations: [] }),
-}));
+jest.mock('app/features/correlations/utils', () => {
+  const actual = jest.requireActual('app/features/correlations/utils');
+  return jest.requireActual('test/helpers/partialMock').partialMock(actual, {
+    getCorrelationsFromStorage: jest.fn().mockResolvedValue({ correlations: [] }),
+  });
+});
 
 describe('explorePane reducer', () => {
   describe('setAddingSavedQueryAction', () => {

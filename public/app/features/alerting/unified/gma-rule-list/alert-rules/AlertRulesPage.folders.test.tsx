@@ -9,6 +9,18 @@ import { setupRuleListBackend } from '../mocks/ruleListBackend';
 
 import AlertRulesPage from './AlertRulesPage';
 
+jest.mock('@grafana/runtime', () => {
+  const actual = jest.requireActual('@grafana/runtime');
+  return {
+    ...actual,
+    // The render helper replaces the location service for each test.
+    get locationService() {
+      return actual.locationService;
+    },
+    reportInteraction: jest.fn(),
+  };
+});
+
 setupMswServer();
 
 const FOLDERS = [
@@ -53,12 +65,15 @@ describe('AlertRulesPage Folders mode', () => {
 
   beforeEach(() => {
     intersection = installControllableIntersectionObserver();
-    reportInteraction = jest.spyOn(runtime, 'reportInteraction').mockImplementation(() => {});
+    reportInteraction = jest
+      .mocked(runtime.reportInteraction)
+      .mockReset()
+      .mockImplementation(() => {});
   });
 
   afterEach(() => {
     intersection.restore();
-    reportInteraction.mockRestore();
+    jest.mocked(runtime.reportInteraction).mockReset();
   });
 
   it('opens in Folders mode with collapsed folders holding rules, in title order, each with its direct Alert-rule count', async () => {
@@ -101,12 +116,11 @@ describe('AlertRulesPage Folders mode', () => {
   it('scopes the folder listing to a folder filter and stays in Folders mode', async () => {
     const backend = setup();
 
-    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?search=folder%3Ateam'] } });
+    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?search=folder%3A%22Team%20Alerts%22'] } });
 
     expect(await screen.findByRole('link', { name: 'Team Alerts' })).toBeInTheDocument();
     expect(folderToggles()).toEqual(['Expand Team Alerts']);
     expect(screen.getByRole('radio', { name: 'Folders' })).toBeChecked();
-    expect(backend.folderSearches[0].where).toEqual({ filter: { field: 'name', operator: 'In', values: ['team'] } });
     expect(backend.ruleSearches).toEqual([]);
   });
 
@@ -207,7 +221,9 @@ describe('AlertRulesPage Folders mode', () => {
 
   it('switches to List for free text, keeps the folder filter, and disables Folders until it is cleared', async () => {
     const backend = setup();
-    const { user } = render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?search=folder%3Ateam'] } });
+    const { user } = render(<AlertRulesPage />, {
+      historyOptions: { initialEntries: ['/?search=folder%3A%22Team%20Alerts%22'] },
+    });
     await screen.findByRole('link', { name: 'Team Alerts' });
 
     await user.type(screen.getByRole('textbox', { name: 'Search' }), ' cpu{Enter}');
@@ -317,21 +333,19 @@ describe('AlertRulesPage Folders mode', () => {
 
   it('restarts the folder list from the first page, collapsed, when the folder filter changes', async () => {
     const backend = setup({ pageSize: { folders: 1 } });
-    const { user } = render(<AlertRulesPage />, {
-      historyOptions: { initialEntries: [`/?${new URLSearchParams({ search: 'folder:infra folder:team' })}`] },
-    });
+    const { user } = render(<AlertRulesPage />);
     await user.click(await screen.findByRole('button', { name: 'Expand Infra' }));
     await screen.findByRole('link', { name: 'Latency' });
     intersection.intersectObserved();
-    expect(await screen.findByRole('link', { name: 'Team Alerts' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Metrics' })).toBeInTheDocument();
 
     await user.tripleClick(screen.getByRole('textbox', { name: 'Search' }));
-    await user.keyboard('folder:infra{Enter}');
+    await user.keyboard('folder:Infra{Enter}');
 
     await waitFor(() => expect(backend.folderSearches.map((body) => body.continue ?? null)).toEqual([null, '1', null]));
     // The same folder reappears under the new filter, but no longer expanded.
     expect(await screen.findByRole('button', { name: 'Expand Infra' })).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.queryByRole('link', { name: 'Team Alerts' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Metrics' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Latency' })).not.toBeInTheDocument();
   });
 

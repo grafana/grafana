@@ -1,4 +1,13 @@
-import { findMatchesInText, parseFlags } from './text';
+import { findHighlightChunksInText, findMatchesInText, parseFlags } from './text';
+
+describe('findHighlightChunksInText()', () => {
+  it('tags each chunk with the index of the search word that matched', () => {
+    expect(findHighlightChunksInText({ searchWords: ['foo', /x/, 'bar'], textToHighlight: 'bar foo' })).toEqual([
+      { length: 3, start: 4, text: 'foo', end: 7, searchIndex: 0 },
+      { length: 3, start: 0, text: 'bar', end: 3, searchIndex: 2 },
+    ]);
+  });
+});
 
 describe('findMatchesInText()', () => {
   it('gets no matches for when search and or line are empty', () => {

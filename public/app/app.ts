@@ -13,6 +13,7 @@ import {
   standardFieldConfigEditorRegistry,
   standardTransformersRegistry,
 } from '@grafana/data';
+import { setVarMappingsEnabledResolver } from '@grafana/data/internal';
 import { DEFAULT_LANGUAGE, t } from '@grafana/i18n';
 import { initializeI18n, loadNamespacedResources } from '@grafana/i18n/internal';
 import {
@@ -56,6 +57,7 @@ import {
   setDataSourcePicker,
   setJourneyRegistry,
   setJourneyTracker,
+  setKindRegistry,
   setPanelDataErrorView,
   setPanelRenderer,
   setPluginPage,
@@ -84,6 +86,7 @@ import { createErrorNotification } from './core/copy/appNotification';
 import { initializeCrashDetection } from './core/crash';
 import { NAMESPACES, GRAFANA_NAMESPACE } from './core/internationalization/constants';
 import { loadTranslations } from './core/internationalization/loadTranslations';
+import { kindRegistry } from './core/kinds/coreKinds';
 import { postInitTasks, preInitTasks } from './core/lifecycle-hooks';
 import { setMonacoEnv } from './core/monacoEnv';
 import { handleRedirectTo } from './core/navigation/handleRedirectTo';
@@ -230,6 +233,7 @@ export class GrafanaApp {
           import('./core/journeys/panelEdit'),
           import('./core/journeys/datasourceConfigure'),
           import('./core/journeys/exploreToDashboard'),
+          import('./core/journeys/datasourcePickerSelect'),
         ]);
 
         // Warn about registry entries that have no start trigger wired up
@@ -245,9 +249,13 @@ export class GrafanaApp {
       setPanelDataErrorView(LazyPanelDataErrorView);
       setLocationSrv(locationService);
       setCorrelationsService(new CorrelationsService());
+      setKindRegistry(kindRegistry);
       setPanelScreenshotService(new PanelScreenshotServiceImpl());
       setEmbeddedDashboard(EmbeddedDashboardLazy);
       setTimeZoneResolver(() => contextSrv.user.timezone);
+      setVarMappingsEnabledResolver(() =>
+        getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPanelOptionInterpolation, false)
+      );
       initGrafanaLive();
       setCurrentUser(contextSrv.user);
 

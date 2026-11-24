@@ -1,8 +1,4 @@
-const applyFieldOverridesMock = jest.fn(); // needs to be first in this file
-
 import { Subject } from 'rxjs';
-
-// Importing this way to be able to spy on grafana/data
 
 import * as grafanaData from '@grafana/data';
 import { type DataSourceApi, DataTransformerID, dateTime, type TypedVariableModel } from '@grafana/data';
@@ -24,8 +20,11 @@ import { PanelQueryRunner, type QueryRunnerOptions } from './PanelQueryRunner';
 jest.mock('@grafana/data', () => ({
   __esModule: true,
   ...jest.requireActual('@grafana/data'),
-  applyFieldOverrides: applyFieldOverridesMock,
+  applyFieldOverrides: jest.fn(),
+  transformDataFrame: jest.fn((...args) => jest.requireActual('@grafana/data').transformDataFrame(...args)),
 }));
+
+const applyFieldOverridesMock = jest.mocked(grafanaData.applyFieldOverrides);
 
 jest.mock('app/core/services/backend_srv');
 jest.mock('app/core/config', () => ({
@@ -304,7 +303,7 @@ describe('PanelQueryRunner', () => {
     'transformations',
     (ctx) => {
       it('should apply when transformations are set', async () => {
-        const spy = jest.spyOn(grafanaData, 'transformDataFrame');
+        const spy = jest.mocked(grafanaData.transformDataFrame);
         spy.mockClear();
 
         ctx.runner.getData({ withTransforms: true, withFieldConfig: true }).subscribe({
@@ -370,7 +369,7 @@ describe('PanelQueryRunner', () => {
     'getData',
     (ctx) => {
       it('should not apply transformations when transform option is false', async () => {
-        const spy = jest.spyOn(grafanaData, 'transformDataFrame');
+        const spy = jest.mocked(grafanaData.transformDataFrame);
         spy.mockClear();
         ctx.runner.getData({ withTransforms: false, withFieldConfig: true }).subscribe({
           next: (data: grafanaData.PanelData) => {
@@ -414,7 +413,7 @@ describe('PanelQueryRunner', () => {
     'getData',
     (ctx) => {
       it('should not apply transformations when transform option is false', async () => {
-        const spy = jest.spyOn(grafanaData, 'transformDataFrame');
+        const spy = jest.mocked(grafanaData.transformDataFrame);
         spy.mockClear();
         ctx.runner.getData({ withTransforms: false, withFieldConfig: true }).subscribe({
           next: (data: grafanaData.PanelData) => {

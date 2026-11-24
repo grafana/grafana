@@ -17,9 +17,10 @@ import { config, getBackendSrv } from '@grafana/runtime';
 import { generatedAPI, type ListStarsApiResponse } from 'app/api/clients/collections/v1alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
 import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 import kbn from 'app/core/utils/kbn';
-import { STARRED_KINDS } from 'app/features/stars/kinds';
-import { findStarredNames, userStarsFieldSelector } from 'app/features/stars/utils';
+import { STARRED_INDEX_KINDS } from 'app/features/stars/kinds';
+import { canUseStars, findStarredNames, userStarsFieldSelector } from 'app/features/stars/utils';
 import { dispatch } from 'app/store/store';
 
 import { isRootFolderUID } from '../constants';
@@ -81,13 +82,17 @@ export class UnifiedSearcher implements GrafanaSearcher {
     if (query.facet?.length) {
       throw new Error('facets not supported!');
     }
+    // A user without a stars resource has nothing starred
+    if (!canUseStars()) {
+      return noDataResponse();
+    }
     const result: { data: ListStarsApiResponse } = await dispatch(
       generatedAPI.endpoints.listStars.initiate({
         fieldSelector: userStarsFieldSelector(),
       })
     );
     // One uid may be starred as several kinds, so the search gets each uid once
-    const starsIds = [...new Set(STARRED_KINDS.flatMap((k) => findStarredNames(result.data, k.group, k.kind)))];
+    const starsIds = [...new Set(STARRED_INDEX_KINDS.flatMap((k) => findStarredNames(result.data, k.group, k.kind)))];
 
     if (starsIds.length) {
       return this.doSearchQuery({
@@ -511,9 +516,9 @@ async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
 }
 
 export function toURL(resource: string, name: string, title: string): string {
-  if (resource === 'folders') {
-    return `${config.appSubUrl}/dashboards/f/${name}`;
-  }
-  const slug = kbn.slugifyForUrl(title);
-  return `${config.appSubUrl}/d/${name}/${slug}`;
+  const route =
+    resource === CORE_KINDS.folder.resource
+      ? CORE_KINDS.folder.getRoute(name)
+      : `${CORE_KINDS.dashboard.getRoute(name)}/${kbn.slugifyForUrl(title)}`;
+  return `${config.appSubUrl}${route}`;
 }
