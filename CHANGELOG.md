@@ -209,6 +209,11 @@
 - **Runtime:** Stabilize plugin settings APIs [#134723](https://github.com/grafana/grafana/pull/134723), [@leventebalogh](https://github.com/leventebalogh)
 
 <!-- 13.3.0 END -->
+<!-- 13.2.7 START -->
+
+# 13.2.7 (2026-11-24)
+
+<!-- 13.2.7 END -->
 <!-- 13.2.6 START -->
 
 # 13.2.6 (2026-11-10)
