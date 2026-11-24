@@ -118,9 +118,8 @@ func TestParseManagerKindString(t *testing.T) {
 
 func registerManagerKindForTest(t *testing.T, kind ManagerKind) {
 	t.Helper()
-	registered := managerKindRegistry
 	RegisterManagerKind(kind)
-	t.Cleanup(func() { managerKindRegistry = registered })
+	t.Cleanup(func() { delete(managerKindRegistry, kind) })
 }
 
 func TestRegisterManagerKind(t *testing.T) {

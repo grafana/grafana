@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"slices"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -75,7 +74,7 @@ const (
 	ManagerKindClassicConvertedPrometheus ManagerKind = "classic-converted-prometheus"
 )
 
-var managerKindRegistry []ManagerKind
+var managerKindRegistry = map[ManagerKind]struct{}{}
 
 // RegisterManagerKind adds a manager kind on top of the built-in ones.
 func RegisterManagerKind(kind ManagerKind) {
@@ -87,25 +86,21 @@ func RegisterManagerKind(kind ManagerKind) {
 		panic(fmt.Sprintf("RegisterManagerKind: %q is a built-in kind", kind))
 	}
 
-	if slices.Contains(managerKindRegistry, kind) {
+	if _, ok := managerKindRegistry[kind]; ok {
 		panic(fmt.Sprintf("RegisterManagerKind: %q is already registered", kind))
 	}
 
-	managerKindRegistry = append(managerKindRegistry, kind)
+	managerKindRegistry[kind] = struct{}{}
 }
 
 // ParseManagerKindString parses a string into a ManagerKind: a built-in kind or one
 // added with RegisterManagerKind. For any other value it returns ManagerKindUnknown.
 func ParseManagerKindString(v string) ManagerKind {
-	if kind := parseBuiltinManagerKind(v); kind != ManagerKindUnknown {
-		return kind
-	}
-
-	if slices.Contains(managerKindRegistry, ManagerKind(v)) {
+	if _, ok := managerKindRegistry[ManagerKind(v)]; ok {
 		return ManagerKind(v)
 	}
 
-	return ManagerKindUnknown
+	return parseBuiltinManagerKind(v)
 }
 
 func parseBuiltinManagerKind(v string) ManagerKind {

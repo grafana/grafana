@@ -13,7 +13,6 @@ package identity
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	authtypes "github.com/grafana/authlib/types"
@@ -47,33 +46,29 @@ func CheckClassicFPAssignment(auth authtypes.AuthInfo, obj utils.GrafanaMetaAcce
 }
 
 // ManagerKindRegistration represents a manager kind that a build adds on top of the built-in ones.
-type ManagerKindRegistration struct {
-	Kind utils.ManagerKind
+type ManagerKindRegistration interface {
+	Kind() utils.ManagerKind
 
 	// CheckAssignment decides who may assign the kind.
-	CheckAssignment func(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error
+	CheckAssignment(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error
 }
 
-var managerKindRegistry []ManagerKindRegistration
+var managerKindRegistry = map[utils.ManagerKind]ManagerKindRegistration{}
 
 // RegisterManagerKind registers a manager kind with the check that decides who may assign it.
 func RegisterManagerKind(registration ManagerKindRegistration) {
-	if registration.CheckAssignment == nil {
-		panic(fmt.Sprintf("RegisterManagerKind: %q has no assignment check", registration.Kind))
-	}
+	kind := registration.Kind()
 
-	utils.RegisterManagerKind(registration.Kind)
+	utils.RegisterManagerKind(kind)
 
-	managerKindRegistry = append(managerKindRegistry, registration)
+	managerKindRegistry[kind] = registration
 }
 
 func checkRegisteredKindAssignment(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
 	kind := utils.ParseManagerKindString(obj.GetAnnotation(utils.AnnoKeyManagerKind))
 
-	for _, registration := range managerKindRegistry {
-		if registration.Kind == kind {
-			return registration.CheckAssignment(auth, obj)
-		}
+	if registration, ok := managerKindRegistry[kind]; ok {
+		return registration.CheckAssignment(auth, obj)
 	}
 
 	return nil

@@ -215,13 +215,20 @@ func TestCheckOnCreateAndDelete(t *testing.T) {
 
 var errMayNotAssign = errors.New("may not assign")
 
-func assignableBy(may func(authtypes.AuthInfo) bool) func(authtypes.AuthInfo, utils.GrafanaMetaAccessor) error {
-	return func(auth authtypes.AuthInfo, _ utils.GrafanaMetaAccessor) error {
-		if may(auth) {
-			return nil
-		}
-		return errMayNotAssign
+type testManagerKind struct {
+	kind      utils.ManagerKind
+	mayAssign func(authtypes.AuthInfo) bool
+}
+
+func (k testManagerKind) Kind() utils.ManagerKind {
+	return k.kind
+}
+
+func (k testManagerKind) CheckAssignment(auth authtypes.AuthInfo, _ utils.GrafanaMetaAccessor) error {
+	if k.mayAssign(auth) {
+		return nil
 	}
+	return errMayNotAssign
 }
 
 const (
@@ -232,13 +239,13 @@ const (
 // A registration lasts for the whole test binary and a second one panics, so the
 // tests share these instead of registering their own.
 func init() {
-	identity.RegisterManagerKind(identity.ManagerKindRegistration{
-		Kind:            kindAssignedByProvisioner,
-		CheckAssignment: assignableBy(identity.IsProvisioningServiceIdentity),
+	identity.RegisterManagerKind(testManagerKind{
+		kind:      kindAssignedByProvisioner,
+		mayAssign: identity.IsProvisioningServiceIdentity,
 	})
-	identity.RegisterManagerKind(identity.ManagerKindRegistration{
-		Kind:            kindAssignedByNobody,
-		CheckAssignment: assignableBy(func(authtypes.AuthInfo) bool { return false }),
+	identity.RegisterManagerKind(testManagerKind{
+		kind:      kindAssignedByNobody,
+		mayAssign: func(authtypes.AuthInfo) bool { return false },
 	})
 }
 
@@ -295,27 +302,22 @@ func TestRegisteredManagerKind(t *testing.T) {
 
 	t.Run("a second registration panics and keeps the first", func(t *testing.T) {
 		require.Panics(t, func() {
-			identity.RegisterManagerKind(identity.ManagerKindRegistration{
-				Kind:            kindAssignedByProvisioner,
-				CheckAssignment: assignableBy(anyone),
+			identity.RegisterManagerKind(testManagerKind{
+				kind:      kindAssignedByProvisioner,
+				mayAssign: anyone,
 			})
 		})
 		obj := managedBy(t, utils.ManagerProperties{Kind: kindAssignedByProvisioner, Identity: "the-manager"})
 		require.ErrorIs(t, identity.CheckManagerOnCreate(who.user, obj), errMayNotAssign)
 	})
 
-	t.Run("built-in kinds and missing checks are refused", func(t *testing.T) {
+	t.Run("built-in kinds are refused", func(t *testing.T) {
 		require.Panics(t, func() {
-			identity.RegisterManagerKind(identity.ManagerKindRegistration{
-				Kind:            utils.ManagerKindRepo,
-				CheckAssignment: assignableBy(anyone),
+			identity.RegisterManagerKind(testManagerKind{
+				kind:      utils.ManagerKindRepo,
+				mayAssign: anyone,
 			})
 		})
 		require.ErrorIs(t, identity.CheckManagerOnCreate(who.user, repo), identity.ErrResourceIsManagedInRepository)
-
-		require.Panics(t, func() {
-			identity.RegisterManagerKind(identity.ManagerKindRegistration{Kind: "test-without-a-check"})
-		})
-		require.Equal(t, utils.ManagerKindUnknown, utils.ParseManagerKindString("test-without-a-check"))
 	})
 }
