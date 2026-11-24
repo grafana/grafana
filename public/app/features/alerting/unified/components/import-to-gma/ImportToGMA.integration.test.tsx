@@ -336,6 +336,23 @@ describe('ImportToGMA wizard — user who can only import rules', () => {
     expect(requestedUrls.filter((url) => url.includes('/alertmanager/grafana/config'))).toEqual([]);
   });
 
+  it('does not read the auto-sync config, even when allowed to', async () => {
+    // Editors get this permission through the Viewer role, so nothing but the wizard stops the request.
+    grantUserPermissions([
+      AccessControlAction.AlertingRuleCreate,
+      AccessControlAction.AlertingRuleExternalRead,
+      AccessControlAction.AlertingProvisioningSetStatus,
+      AccessControlAction.ActionAlertingNotificationsConfigRead,
+    ]);
+    server.events.on('request:start', recordRequest);
+    render(<ImportWizardGate />);
+
+    await screen.findByRole('group', { name: /import rules/i });
+    await waitFor(() => expect(requestedUrls.length).toBeGreaterThan(0));
+
+    expect(requestedUrls.filter((url) => url.includes('/configs/'))).toEqual([]);
+  });
+
   it('renders in the alert rules page shell with its own title', async () => {
     render(<ImportRulesPage />);
 

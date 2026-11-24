@@ -15,7 +15,9 @@ export function useAutoSyncPrediction(
   datasourceUID: string | undefined,
   datasourceName: string | null | undefined
 ): PredictedSyncIdentifier | undefined {
-  const { predictSyncIdentifier, isLoading: isLoadingAutoSyncConfig } = useAutoSyncConfiguration();
+  const { predictSyncIdentifier, isLoading: isLoadingAutoSyncConfig } = useAutoSyncConfiguration({
+    skip: !autoSyncActive,
+  });
   const {
     data: policyTrees,
     isSuccess: hasPolicyTrees,

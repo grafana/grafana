@@ -66,12 +66,19 @@ interface UseImportJobArgs {
   /** The rules to send: the ones of the data source after the namespace and group filter, or the ones in the file. */
   rulesToImport: RulerCloudRulesConfigDTO | undefined;
   liveNotificationsLock: NotificationsLock | undefined;
+  /** For a wizard without the notifications step, which is the only one that saves the auto-sync config. */
+  skipAutoSyncConfig?: boolean;
 }
 
-export function useImportJob({ getImportValues, rulesToImport, liveNotificationsLock }: UseImportJobArgs) {
+export function useImportJob({
+  getImportValues,
+  rulesToImport,
+  liveNotificationsLock,
+  skipAutoSyncConfig,
+}: UseImportJobArgs) {
   const importNotifications = useImportNotifications();
   const importRules = useImportRules();
-  const { save: saveAutoSync } = useAutoSyncConfiguration();
+  const { save: saveAutoSync } = useAutoSyncConfiguration({ skip: skipAutoSyncConfig });
   const notifyApp = useAppNotification();
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);

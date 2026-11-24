@@ -47,7 +47,7 @@ export function ImportWizardGate({ rulesOnly: forceRulesOnly = false }: { rulesO
   // Without notifications permission there is no notifications step, so nothing to lock and nothing to read.
   const { canImportNotifications } = useCanImportToGMA();
   const rulesOnly = forceRulesOnly || !canImportNotifications;
-  const { isActive, isLoading } = useIsAutoSyncActive();
+  const { isActive, isLoading } = useIsAutoSyncActive({ skip: rulesOnly });
   const { stagedConfig, isLoading: isStagedConfigLoading } = useStagedConfig({
     skip: !importAlertmanagerAPIEnabled || rulesOnly,
   });
@@ -93,7 +93,7 @@ export const ImportRulesPage = withPageErrorBoundary(function ImportRulesPage() 
  * Inner content component that uses the stepper state
  */
 function ImportWizardContent({ notificationsLock: liveNotificationsLock }: { notificationsLock?: NotificationsLock }) {
-  const { activeStep, setStepCompleted } = useStepperState();
+  const { steps, activeStep, setStepCompleted } = useStepperState();
 
   useEffect(() => {
     trackImportToGMAWizardStarted();
@@ -164,7 +164,12 @@ function ImportWizardContent({ notificationsLock: liveNotificationsLock }: { not
   });
 
   const { notificationsLock, showConfirmModal, importStatus, importError, startImport, confirmImport, closeConfirm } =
-    useImportJob({ getImportValues, rulesToImport, liveNotificationsLock });
+    useImportJob({
+      getImportValues,
+      rulesToImport,
+      liveNotificationsLock,
+      skipAutoSyncConfig: !steps.some(({ id }) => id === StepKey.Notifications),
+    });
 
   // A locked notifications step has nothing to fill in, so the sidebar shouldn't hold back the steps after
   // it. This only touches the sidebar's own state; the form never marks the step completed, so nothing
