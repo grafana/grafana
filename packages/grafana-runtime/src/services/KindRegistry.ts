@@ -66,8 +66,12 @@ export interface KindRegistry {
    * the collection, which is the group a single object carries.
    */
   readonly coversGroup: (kind: KindInfo, group: string) => boolean;
-  /** The kind an object of this API group and Kubernetes kind belongs to. */
+  /** The kind an object of this API group and Kubernetes kind belongs to, among core and app kinds. */
   readonly findKind: (group: string, kind: string) => KindInfo | undefined;
+  /** The kinds that app plugins add. A kind that Grafana serves itself is never among them. */
+  readonly getAppKinds: () => KindInfo[];
+  /** Adds the kinds an app plugin serves. A kind that Grafana serves itself keeps its core row. */
+  readonly addKinds: (kinds: KindInfo[]) => void;
 }
 
 let singletonInstance: KindRegistry | undefined;
