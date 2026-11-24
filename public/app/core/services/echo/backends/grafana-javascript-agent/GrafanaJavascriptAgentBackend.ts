@@ -109,9 +109,7 @@ export class GrafanaJavascriptAgentBackend
         // Faro copies these config attributes into every new session, so they survive rotation.
         session: {
           attributes: {
-            mtFallbackConfigured: String(
-              isMtFallbackConfigured(getFeatureFlagClient().getObjectValue(FlagKeys.GrafanaMtFallback, {}))
-            ),
+            mtFallbackConfigured: String(isMtFallbackConfigured()),
           },
         },
         // Faro rotates sessions on expiration/inactivity without navigation; re-anchor the
