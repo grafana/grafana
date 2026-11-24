@@ -110,6 +110,11 @@ func (s *Service) legacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 		isInternalIdentity = req.GetInternalIdentity() != nil
 	)
 	if !isInternalIdentity {
+		// An explicit empty restriction cannot grant access, even for an untyped requester.
+		if restriction := req.GetRestriction(); restriction != nil && len(restriction.GetActions()) == 0 {
+			return &authzextv1.LegacyCheckResponse{Allowed: false}, nil
+		}
+
 		userUID, idType, err = s.validateSubject(ctx, req.GetSubject())
 		if err != nil {
 			return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
