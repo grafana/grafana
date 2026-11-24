@@ -1,9 +1,9 @@
+import { API_VERSION_PATTERN } from '../pluginUtils';
+
 import { type APIGroupInfo } from './types';
 
-// The Kubernetes version format: v<major>, optionally followed by alpha<minor> or beta<minor>.
-const VERSION_PATTERN = /^v(\d+)(?:(alpha|beta)(\d+))?$/;
 function parseVersion(version: string) {
-  const match = VERSION_PATTERN.exec(version);
+  const match = API_VERSION_PATTERN.exec(version);
   if (!match) {
     return undefined;
   }

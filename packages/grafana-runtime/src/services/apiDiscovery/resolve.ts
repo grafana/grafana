@@ -1,4 +1,4 @@
-import { config } from '../../config';
+import { getNamespace } from '../pluginUtils';
 
 import { getAPIGroup } from './discovery';
 import { selectAPIVersion } from './versions';
@@ -51,5 +51,5 @@ export async function resolveAPIBaseURL(
     return undefined;
   }
   const base = `/apis/${group}/${version}`;
-  return namespaced ? `${base}/namespaces/${config.namespace}` : base;
+  return namespaced ? `${base}/namespaces/${getNamespace()}` : base;
 }
