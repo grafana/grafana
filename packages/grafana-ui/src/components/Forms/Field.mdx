@@ -49,7 +49,7 @@ Set `invalid` and `error` on the `Field` to show a validation error. Don't recre
 
 ### Spacing and layout
 
-Use `noMargin` to remove the field's bottom margin and `horizontal` to put the label and input on one row. Don't select the field's inner elements with `className`, because its markup isn't part of its API. See [styling a component's internal elements](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/guidance/patterns/styling-internals.md).
+Use `noMargin` to remove the field's bottom margin and `horizontal` to put the label and input on one row. `noMargin` is the preferred way to drop the margin, though a margin set with `className` also works, because `className` styles the field's root element. Don't select the field's inner elements with `className`, because its markup isn't part of its API. See [styling a component's internal elements](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/guidance/patterns/styling-internals.md).
 
 To make a field narrower, size its container. `Input` fills the width it's given, and its `width` prop is meant only for inline forms.
 
