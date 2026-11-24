@@ -151,6 +151,19 @@ export function findKind(group: string, kind: string): KindInfo | undefined {
   return [...kinds, ...appKinds.values()].find((row) => row.kind === kind && coversGroup(row, group));
 }
 
+/** The kind behind a plural resource name, among core and app kinds; narrowed by `group` when given. */
+export function findKindByResource(resource: string, group?: string): KindInfo | undefined {
+  return [...kinds, ...appKinds.values()].find(
+    (row) => row.resource === resource && (group === undefined || coversGroup(row, group))
+  );
+}
+
+/** The group that names an object's kind: the collection's group for a collection member, else `group`. */
+export function getKindGroup(group: string, kind: string): string {
+  const info = findKind(group, kind);
+  return info?.collectionGroup ? info.group : group;
+}
+
 /** The kinds that app plugins add. */
 export function getAppKinds(): KindInfo[] {
   return [...appKinds.values()];
@@ -171,4 +184,12 @@ export function findKindBySearchKind(searchKind: string): KindInfo | undefined {
 }
 
 /** This table and its lookups as the `KindRegistry` that `@grafana/runtime` defines for plugins. */
-export const kindRegistry: KindRegistry = { coreKinds: CORE_KINDS, coversGroup, findKind, getAppKinds, addKinds };
+export const kindRegistry: KindRegistry = {
+  coreKinds: CORE_KINDS,
+  coversGroup,
+  findKind,
+  findKindByResource,
+  getKindGroup,
+  getAppKinds,
+  addKinds,
+};
