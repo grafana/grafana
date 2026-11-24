@@ -755,3 +755,16 @@ func TestSampleRow_EnumField(t *testing.T) {
 	require.Equal(t, []any{int64(1), "Up", new("Up")}, SampleRow(frame, 0))
 	require.Equal(t, []any{int64(2), "7", (*data.EnumItemIndex)(nil)}, SampleRow(frame, 1))
 }
+
+func TestSampleRow_TimeFieldInUTC(t *testing.T) {
+	local := time.Date(2026, 1, 2, 12, 0, 0, 0, time.FixedZone("UTC+2", 2*60*60))
+	utc := time.Date(2026, 1, 2, 10, 0, 0, 0, time.UTC)
+
+	frame := data.NewFrame("A",
+		data.NewField("time", nil, []time.Time{local, local}),
+		data.NewField("nullableTime", nil, []*time.Time{&local, nil}),
+	)
+
+	require.Equal(t, []any{utc, &utc}, SampleRow(frame, 0))
+	require.Equal(t, []any{utc, (*time.Time)(nil)}, SampleRow(frame, 1))
+}

@@ -186,6 +186,13 @@ func SampleRow(frame *data.Frame, rowIdx int) []any {
 				text := enumText(field, *v)
 				row[i] = &text
 			}
+		case time.Time:
+			row[i] = v.UTC()
+		case *time.Time:
+			if v != nil {
+				utc := v.UTC()
+				row[i] = &utc
+			}
 		}
 	}
 	return row
