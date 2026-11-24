@@ -2,6 +2,7 @@ package supervision
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/grafana/dskit/services"
@@ -22,4 +23,19 @@ func Watch(ctx context.Context, svc services.Service) (context.Context, func() e
 		}
 		return nil
 	}
+}
+
+// Start watches svc and starts it. The caller must defer stop even when Start
+// returns an error, and include its error in the operator's return value.
+// A start interrupted by svc failing reports that failure, not the
+// cancellation it caused.
+func Start(ctx context.Context, svc services.Service) (_ context.Context, stop func() error, _ error) {
+	ctx, stop = Watch(ctx, svc)
+	if err := services.StartAndAwaitRunning(ctx, svc); err != nil {
+		if errors.Is(err, context.Canceled) && ctx.Err() != nil {
+			err = context.Cause(ctx)
+		}
+		return ctx, stop, fmt.Errorf("start %s: %w", services.DescribeService(svc), err)
+	}
+	return ctx, stop, nil
 }

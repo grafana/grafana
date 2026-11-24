@@ -3,12 +3,9 @@ package provisioning
 import (
 	"context"
 	"fmt"
-	"log/slog"
-	"os"
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -18,9 +15,7 @@ import (
 )
 
 func RunJobController(ctx context.Context, deps server.OperatorDependencies) error {
-	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
-	})).With("logger", "provisioning-job-controller")
+	logger := newOperatorLogger("provisioning-job-controller")
 	logger.Info("Starting provisioning job controller")
 
 	controllerCfg, err := setupJobsControllerFromConfig(deps.Config, deps.Registerer)
@@ -61,7 +56,7 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 	// }
 
 	jobHistoryWriter := jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV0alpha1())
-	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobClaimExpiry, deps.Registerer)
+	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobs.ClaimExpiry, deps.Registerer)
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
@@ -93,20 +88,7 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 	deps.HealthNotifier.SetNotReady()
 	logger.Info("shutdown signal received, waiting for goroutines to finish")
 
-	shutdownTimeout := 30 * time.Second
-	done := make(chan struct{})
-	go func() {
-		wg.Wait()
-		close(done)
-	}()
-
-	select {
-	case <-done:
-		logger.Info("jobs operator shutdown complete")
-	case <-time.After(shutdownTimeout):
-		logger.Warn("shutdown timeout exceeded, forcing exit", "timeout", shutdownTimeout)
-	}
-
+	awaitShutdown(logger, &wg, 30*time.Second)
 	return nil
 }
 

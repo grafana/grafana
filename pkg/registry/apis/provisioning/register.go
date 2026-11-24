@@ -68,14 +68,6 @@ import (
 
 const repoControllerWorkers = 1
 
-// jobClaimExpiry is how long a job claim is considered valid before it is
-// treated as abandoned. It governs both claim staleness in the job store and
-// the cleanup controller that reaps expired jobs, so the two must use the same
-// value. The lease renewal interval is derived as a fraction of this so a
-// worker renews several times before its claim goes stale; otherwise a single
-// delayed renewal can let a running job be reaped and re-run by another worker.
-const jobClaimExpiry = 60 * time.Second
-
 var (
 	_ builder.APIGroupBuilder               = (*APIBuilder)(nil)
 	_ builder.APIGroupMutation              = (*APIBuilder)(nil)
@@ -1145,7 +1137,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			b.publishLoopbackConfig(config)
 
 			// Initialize the API client-based job store
-			b.jobs, err = jobs.NewJobStore(b.client, jobClaimExpiry, b.registry)
+			b.jobs, err = jobs.NewJobStore(b.client, jobs.ClaimExpiry, b.registry)
 			if err != nil {
 				return fmt.Errorf("create API client job store: %w", err)
 			}
@@ -1188,7 +1180,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			jobCleanupController := jobs.NewJobCleanupController(
 				b.jobs,
 				jobHistoryWriter,
-				jobClaimExpiry,
+				jobs.ClaimExpiry,
 			)
 
 			go func() {

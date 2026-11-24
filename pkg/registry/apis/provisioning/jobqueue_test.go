@@ -19,6 +19,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -37,7 +38,7 @@ func TestProvideJobQueueService(t *testing.T) {
 		assert.Equal(t, 45*time.Second, s.cfg.JobInterval)
 		assert.Equal(t, int64(1024), s.cfg.MaxFileSize)
 		assert.Equal(t, 5*time.Second, s.cfg.SyncResourceTimeout)
-		assert.Equal(t, jobClaimExpiry/3, s.cfg.LeaseRenewalInterval)
+		assert.Equal(t, jobs.ClaimExpiry/3, s.cfg.LeaseRenewalInterval)
 		assert.True(t, s.cfg.AllowImageRendering)
 		assert.Equal(t, "https://grafana.internal/", s.pullRequestURLs.Internal(t.Context(), "ns"))
 		assert.Equal(t, "https://grafana.example.com/", s.pullRequestURLs.Public(t.Context(), "ns"))

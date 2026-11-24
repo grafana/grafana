@@ -2,11 +2,9 @@ package provisioning
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
-	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-app-sdk/logging"
 	clientrest "k8s.io/client-go/rest"
 
@@ -30,9 +28,8 @@ var _ registry.CanBeDisabled = (*JobQueueService)(nil)
 // JobQueueService runs the provisioning job driver in the Grafana process once
 // the provisioning API is served, and processes jobs until shutdown.
 type JobQueueService struct {
-	services.NamedService
+	*loopbackService
 
-	builder            *APIBuilder
 	screenshotRenderer pullrequest.ScreenshotRenderer
 	pullRequestURLs    pullrequest.URLProvider
 	cfg                jobqueue.Config
@@ -57,56 +54,28 @@ func ProvideJobQueueService(
 	}
 
 	s := &JobQueueService{
-		builder:            builder,
 		screenshotRenderer: pullrequest.NewScreenshotRenderer(renderer, blobstore),
 		pullRequestURLs:    pullrequest.URLsFromConfig(cfg),
 		cfg: jobqueue.Config{
 			ConcurrentDrivers: 3,
 			MaxJobTimeout:     20 * time.Minute,
 			JobInterval:       jobPollInterval,
-			// Renew the lease well before it expires. Using jobClaimExpiry as
+			// Renew the lease well before it expires. Using jobs.ClaimExpiry as
 			// the renewal interval would schedule the single renewal at the
 			// exact moment the claim goes stale, so any delay (GC pause,
 			// apiserver blip) lets the cleanup controller reap a job that is
 			// still running and risks duplicate execution. A third of the
 			// expiry gives three renewal attempts before the claim is
 			// considered abandoned.
-			LeaseRenewalInterval: jobClaimExpiry / 3,
+			LeaseRenewalInterval: jobs.ClaimExpiry / 3,
 			MaxSyncWorkers:       10,
 			MaxFileSize:          cfg.ProvisioningMaxFileSize,
 			SyncResourceTimeout:  cfg.ProvisioningSyncResourceTimeout,
 			AllowImageRendering:  cfg.ProvisioningAllowImageRendering,
 		},
 	}
-	s.NamedService = services.NewBasicService(nil, s.running, nil).WithName(JobQueueServiceName)
+	s.loopbackService = newLoopbackService(JobQueueServiceName, builder, s.runQueue)
 	return s
-}
-
-// IsDisabled implements registry.CanBeDisabled.
-func (s *JobQueueService) IsDisabled() bool {
-	return s.builder == nil || s.builder.onlyApiServer
-}
-
-// Run implements registry.BackgroundService.
-func (s *JobQueueService) Run(ctx context.Context) error {
-	if err := s.StartAsync(ctx); err != nil {
-		return err
-	}
-	return s.AwaitTerminated(context.Background())
-}
-
-func (s *JobQueueService) running(ctx context.Context) error {
-	// Job claims, status patches and repository status patches carry the
-	// provisioning requester. A routed config would send them through the
-	// router, which strips the loopback credentials before a remote backend.
-	restConfig, err := s.builder.awaitLoopbackConfig(ctx)
-	if err == nil {
-		err = s.runQueue(ctx, restConfig)
-	}
-	if errors.Is(err, context.Canceled) && ctx.Err() != nil {
-		return nil
-	}
-	return err
 }
 
 func (s *JobQueueService) runQueue(ctx context.Context, restConfig *clientrest.Config) error {
@@ -116,7 +85,7 @@ func (s *JobQueueService) runQueue(ctx context.Context, restConfig *clientrest.C
 	}
 
 	b := s.builder
-	store, err := jobs.NewJobStore(client.ProvisioningV0alpha1(), jobClaimExpiry, b.registry)
+	store, err := jobs.NewJobStore(client.ProvisioningV0alpha1(), jobs.ClaimExpiry, b.registry)
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}

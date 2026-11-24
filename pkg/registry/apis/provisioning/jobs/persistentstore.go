@@ -83,6 +83,14 @@ var (
 	_ Store = (*persistentStore)(nil)
 )
 
+// ClaimExpiry is how long a job claim is considered valid before it is
+// treated as abandoned. It governs both claim staleness in the job store and
+// the cleanup controller that reaps expired jobs, so the two must use the same
+// value. The lease renewal interval is derived as a fraction of this so a
+// worker renews several times before its claim goes stale; otherwise a single
+// delayed renewal can let a running job be reaped and re-run by another worker.
+const ClaimExpiry = 60 * time.Second
+
 // persistentStore is a job queue implementation that uses the API client instead of rest.Storage.
 type persistentStore struct {
 	client client.ProvisioningV0alpha1Interface

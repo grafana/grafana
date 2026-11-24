@@ -4,11 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
-	"os"
-
-	"github.com/grafana/dskit/services"
-	"github.com/grafana/grafana-app-sdk/logging"
 
 	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/operators/internal/supervision"
@@ -18,9 +13,7 @@ import (
 
 // RunConnectionController starts the connection controller operator.
 func RunConnectionController(ctx context.Context, deps server.OperatorDependencies) (runErr error) {
-	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
-	})).With("logger", "provisioning-connection-controller")
+	logger := newOperatorLogger("provisioning-connection-controller")
 	logger.Info("Starting provisioning connection controller")
 
 	controllerCfg, err := setupFromConfig(deps.Config, deps.Registerer)
@@ -28,16 +21,13 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 		return fmt.Errorf("failed to setup config: %w", err)
 	}
 
-	ctx, stopSubscriber := supervision.Watch(ctx, controllerCfg.natsSubscriber)
+	ctx, stopSubscriber, err := supervision.Start(ctx, controllerCfg.natsSubscriber)
 	defer func() {
 		deps.HealthNotifier.SetNotReady()
 		runErr = errors.Join(runErr, stopSubscriber())
 	}()
-	if err := services.StartAndAwaitRunning(ctx, controllerCfg.natsSubscriber); err != nil {
-		if errors.Is(err, context.Canceled) && ctx.Err() != nil {
-			err = context.Cause(ctx)
-		}
-		return fmt.Errorf("failed to start NATS subscriber: %w", err)
+	if err != nil {
+		return err
 	}
 
 	provisioningClient, err := controllerCfg.ProvisioningClient()

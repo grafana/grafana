@@ -82,3 +82,28 @@ func TestWatch(t *testing.T) {
 		require.ErrorIs(t, context.Cause(ctx), context.Canceled)
 	})
 }
+
+func TestStart(t *testing.T) {
+	t.Run("startup failure is reported and stop still cleans up", func(t *testing.T) {
+		failure := errors.New("subscriber failed")
+		svc := services.NewBasicService(func(context.Context) error { return failure }, func(ctx context.Context) error {
+			<-ctx.Done()
+			return nil
+		}, nil)
+		ctx, stop, err := Start(t.Context(), svc)
+		require.ErrorIs(t, err, failure)
+		<-ctx.Done()
+		require.ErrorIs(t, context.Cause(ctx), failure)
+		require.ErrorIs(t, stop(), failure)
+	})
+
+	t.Run("running service is stopped on stop", func(t *testing.T) {
+		svc := services.NewIdleService(nil, nil)
+		ctx, stop, err := Start(t.Context(), svc)
+		require.NoError(t, err)
+		require.Equal(t, services.Running, svc.State())
+		require.NoError(t, ctx.Err())
+		require.NoError(t, stop())
+		require.Equal(t, services.Terminated, svc.State())
+	})
+}
