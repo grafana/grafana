@@ -188,6 +188,18 @@ describe('DashboardControlsExtensionPoint', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
+  // Composer hides the edit surfaces, so the questions show as viewers see them, whichever mode it is over.
+  it.each<[string, Partial<DashboardSceneState>]>([
+    ['Viewing', { mode: 'composer' }],
+    ['Editing', { mode: 'composer', isEditing: true, composerEditing: true }],
+  ])('renders the questions as viewers see them while Composer is over %s', (_, dashboardState) => {
+    setTestFlags({ 'grafana.dashboardQuestions': true });
+    renderControls([{ text: 'What stands out?' }, { text: 'Why did errors rise?' }], dashboardState, 'v2');
+
+    // One control for every question, not one for each, as while the dashboard is edited.
+    expect(screen.getByRole('button', { name: 'What stands out?, Why did errors rise?' })).toBeInTheDocument();
+  });
+
   describe('while the dashboard is edited', () => {
     const questions = [{ text: 'What stands out?' }, { text: 'Why did errors rise?' }];
 
@@ -208,18 +220,27 @@ describe('DashboardControlsExtensionPoint', () => {
       expect(container).toBeEmptyDOMElement();
     });
 
-    it('opens a question for editing from its control', async () => {
-      setTestFlags({ 'grafana.dashboardQuestions': true });
-      const { dashboard } = renderEditableControls(questions);
+    // The sidebar is closed on a dashboard just loaded and edited, so the settings must open it.
+    it.each([false, true])(
+      'opens a question for editing from its control, with the sidebar closed and explicit opening %s',
+      async (sidebarExplicitOpen) => {
+        setTestFlags({
+          'grafana.dashboardQuestions': true,
+          'grafana.dashboardSidebarExplicitOpen': sidebarExplicitOpen,
+        });
+        const { dashboard } = renderEditableControls(questions);
+        expect(dashboard.state.sidebar.state.openPane).toBeUndefined();
 
-      await hoverAndRest(screen.getByRole('button', { name: 'Why did errors rise?' }));
-      await userEvent.click(screen.getByRole('button', { name: 'Question settings' }));
+        await hoverAndRest(screen.getByRole('button', { name: 'Why did errors rise?' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Question settings' }));
 
-      await waitFor(() => {
-        const selected = dashboard.state.sidebar.getSelectedObject();
-        expect(selected instanceof QuestionEdit && selected.state.questionIndex).toBe(1);
-      });
-    });
+        await waitFor(() => {
+          const selected = dashboard.state.sidebar.getSelectedObject();
+          expect(selected instanceof QuestionEdit && selected.state.questionIndex).toBe(1);
+        });
+        expect(dashboard.state.sidebar.state.openPane?.getId()).toBe('element');
+      }
+    );
 
     it('deletes a question from its control once the editor confirms', async () => {
       setTestFlags({ 'grafana.dashboardQuestions': true });
