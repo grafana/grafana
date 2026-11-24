@@ -61,6 +61,9 @@ func userScopeKind(action string) string {
 
 // Permissions formats grant locations. Numeric aliases are added by the permission loader.
 func (r Formatter) Permissions(resource, action, scope string, resp *authzv1.ListResponse) []ac.Permission {
+	if resource == "securevalues" && (strings.HasPrefix(action, "secret.securevalues:") || strings.HasPrefix(action, "secret.securevalues.permissions:")) {
+		resource = "secret.securevalues"
+	}
 	permissions := []ac.Permission{}
 
 	// Build the set of scopes that satisfy the filter: the exact scope plus
@@ -114,6 +117,10 @@ func (r Formatter) Permissions(resource, action, scope string, resp *authzv1.Lis
 				Action: action,
 				Scope:  ac.Scope("folders", "*"),
 			})
+		} else if resource == "dashboards" && strings.HasPrefix(action, "annotations:") {
+			appendIfMatches(ac.Permission{Action: action, Scope: resourceWildcardScope(resource)})
+			// Legacy annotation grants use folders:* for access across all dashboards.
+			appendIfMatches(ac.Permission{Action: action, Scope: ac.Scope("folders", "*")})
 		} else if isTeamRBACAction(action) {
 			appendIfMatches(ac.Permission{
 				Action: action,

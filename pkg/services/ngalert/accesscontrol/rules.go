@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
-	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
+	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 )
 
 const (
@@ -195,7 +195,7 @@ func checkFolderAccessByFullpath(user identity.Requester, rule models.Namespaced
 // AuthorizeRuleChanges analyzes changes in the rule group, and checks whether the changes are authorized.
 // NOTE: if there are rules for deletion, and the user does not have access to data sources that a rule uses, the rule is removed from the list.
 // If the user is not authorized to perform the changes the function returns ErrAuthorization with a description of what action is not authorized.
-func (r *RuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error {
+func (r *RuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *ngrulesvc.GroupDelta) error {
 	namespaceScope := folder.ScopeFoldersProvider.GetResourceScopeUID(change.GroupKey.NamespaceUID)
 
 	rules, existingGroup := change.AffectedGroups[change.GroupKey]

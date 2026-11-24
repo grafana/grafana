@@ -24,10 +24,10 @@ import (
 	testingclock "k8s.io/utils/clock/testing"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller/mocks"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
@@ -218,7 +218,7 @@ func TestConnectionController_process(t *testing.T) {
 							},
 						},
 						Secure: provisioning.ConnectionSecure{
-							Token: common.InlineSecureValue{
+							Token: resource.InlineSecureValue{
 								Name: "existing-token",
 							},
 						},
@@ -287,7 +287,7 @@ func TestConnectionController_process(t *testing.T) {
 					},
 				},
 				Secure: provisioning.ConnectionSecure{
-					Token: common.InlineSecureValue{
+					Token: resource.InlineSecureValue{
 						Name: "existing-token",
 					},
 				},
@@ -315,7 +315,7 @@ func TestConnectionController_process(t *testing.T) {
 							Type: provisioning.GithubConnectionType,
 						},
 						Secure: provisioning.ConnectionSecure{
-							Token: common.InlineSecureValue{
+							Token: resource.InlineSecureValue{
 								Name: "existing-token",
 							},
 						},
@@ -391,7 +391,7 @@ func TestConnectionController_process(t *testing.T) {
 					Type: provisioning.GithubConnectionType,
 				},
 				Secure: provisioning.ConnectionSecure{
-					Token: common.InlineSecureValue{
+					Token: resource.InlineSecureValue{
 						Name: "existing-token",
 					},
 				},
@@ -419,7 +419,7 @@ func TestConnectionController_process(t *testing.T) {
 							Type: provisioning.GithubConnectionType,
 						},
 						Secure: provisioning.ConnectionSecure{
-							Token: common.InlineSecureValue{
+							Token: resource.InlineSecureValue{
 								Name: "existing-token",
 							},
 						},
@@ -491,7 +491,7 @@ func TestConnectionController_process(t *testing.T) {
 					Type: provisioning.GithubConnectionType,
 				},
 				Secure: provisioning.ConnectionSecure{
-					Token: common.InlineSecureValue{
+					Token: resource.InlineSecureValue{
 						Name: "existing-token",
 					},
 				},
@@ -519,7 +519,7 @@ func TestConnectionController_process(t *testing.T) {
 							Type: provisioning.GithubConnectionType,
 						},
 						Secure: provisioning.ConnectionSecure{
-							Token: common.InlineSecureValue{
+							Token: resource.InlineSecureValue{
 								Name: "existing-token",
 							},
 						},
@@ -592,7 +592,7 @@ func TestConnectionController_process(t *testing.T) {
 					Type: provisioning.GithubConnectionType,
 				},
 				Secure: provisioning.ConnectionSecure{
-					Token: common.InlineSecureValue{
+					Token: resource.InlineSecureValue{
 						Name: "existing-token",
 					},
 				},
@@ -620,7 +620,7 @@ func TestConnectionController_process(t *testing.T) {
 							Type: provisioning.GithubConnectionType,
 						},
 						Secure: provisioning.ConnectionSecure{
-							Token: common.InlineSecureValue{
+							Token: resource.InlineSecureValue{
 								Name: "existing-token",
 							},
 						},
@@ -698,7 +698,7 @@ func TestConnectionController_process(t *testing.T) {
 					Type: provisioning.GithubConnectionType,
 				},
 				Secure: provisioning.ConnectionSecure{
-					Token: common.InlineSecureValue{
+					Token: resource.InlineSecureValue{
 						Name: "existing-token",
 					},
 				},
@@ -978,7 +978,7 @@ func TestConnectionController_process(t *testing.T) {
 							Type: provisioning.GithubConnectionType,
 						},
 						Secure: provisioning.ConnectionSecure{
-							Token: common.InlineSecureValue{
+							Token: resource.InlineSecureValue{
 								Name: "existing-token",
 							},
 						},
@@ -1051,7 +1051,7 @@ func TestConnectionController_process(t *testing.T) {
 					Type: provisioning.GithubConnectionType,
 				},
 				Secure: provisioning.ConnectionSecure{
-					Token: common.InlineSecureValue{
+					Token: resource.InlineSecureValue{
 						Name: "existing-token",
 					},
 				},
@@ -1079,7 +1079,7 @@ func TestConnectionController_process(t *testing.T) {
 							Type: provisioning.GithubConnectionType,
 						},
 						Secure: provisioning.ConnectionSecure{
-							Token: common.InlineSecureValue{
+							Token: resource.InlineSecureValue{
 								Name: "existing-token",
 							},
 						},
@@ -1141,7 +1141,7 @@ func TestConnectionController_process(t *testing.T) {
 					Type: provisioning.GithubConnectionType,
 				},
 				Secure: provisioning.ConnectionSecure{
-					Token: common.InlineSecureValue{
+					Token: resource.InlineSecureValue{
 						Name: "existing-token",
 					},
 				},
@@ -1174,7 +1174,7 @@ func TestConnectionController_process(t *testing.T) {
 						},
 						// Orphaned reference: name is set but the secret can't be decrypted.
 						Secure: provisioning.ConnectionSecure{
-							Token: common.InlineSecureValue{Name: "orphaned-token"},
+							Token: resource.InlineSecureValue{Name: "orphaned-token"},
 						},
 					},
 				}
@@ -1457,7 +1457,7 @@ func TestConnectionController_generateConnectionToken_ReturnsExpiry(t *testing.T
 
 	token, expiresAt, ops, err := cc.generateConnectionToken(context.Background(), mockConn)
 	require.NoError(t, err)
-	assert.Equal(t, common.RawSecureValue("tok"), token)
+	assert.Equal(t, resource.RawSecureValue("tok"), token)
 	assert.True(t, exp.Equal(expiresAt))
 	require.Len(t, ops, 1)
 }
@@ -1517,7 +1517,7 @@ func TestConnectionController_shouldGenerateToken_BackfillsExpiredFromLiveExpiry
 			// Pre-upgrade token: LastUpdated set, but no persisted expiration.
 			Token: provisioning.TokenStatus{LastUpdated: time.Now().Add(-time.Hour).UnixMilli(), Expiration: 0},
 		},
-		Secure: provisioning.ConnectionSecure{Token: common.InlineSecureValue{Create: "existing-token"}},
+		Secure: provisioning.ConnectionSecure{Token: resource.InlineSecureValue{Create: "existing-token"}},
 	}
 	mockConn := connection.NewMockTokenConnection(t)
 	mockConn.EXPECT().ValidateToken().Return(time.Now().Add(-time.Minute), nil)
@@ -1556,9 +1556,10 @@ func useFakeConnectionQueueClock(t *testing.T, cc *ConnectionController) *testin
 	t.Helper()
 	cc.queue.ShutDown()
 	clock := testingclock.NewFakeClock(time.Now())
-	cc.queue = workqueue.NewTypedRateLimitingQueueWithConfig(
+	cc.queue = newWorkerQueue(
+		&cc.queueLag,
 		workqueue.DefaultTypedControllerRateLimiter[string](),
-		workqueue.TypedRateLimitingQueueConfig[string]{Clock: clock},
+		workqueue.TypedQueueConfig[string]{Clock: clock},
 	)
 	t.Cleanup(cc.queue.ShutDown)
 	return clock
@@ -1784,7 +1785,7 @@ func TestConnectionController_RecentlyWrittenTokenReschedulesKey(t *testing.T) {
 		cc, reg := newConnectionControllerForQueueTest(t)
 		conn := &provisioning.Connection{
 			ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "conn", ResourceVersion: "5"},
-			Secure:     provisioning.ConnectionSecure{Token: common.InlineSecureValue{Name: "recent-token"}},
+			Secure:     provisioning.ConnectionSecure{Token: resource.InlineSecureValue{Name: "recent-token"}},
 			Status:     provisioning.ConnectionStatus{Token: provisioning.TokenStatus{LastUpdated: time.Now().UnixMilli()}},
 		}
 		original := conn.DeepCopy()
@@ -1803,10 +1804,12 @@ func TestConnectionController_RecentlyWrittenTokenReschedulesKey(t *testing.T) {
 		require.True(t, cc.processNextWorkItem(t.Context()))
 		synctest.Wait()
 		require.Zero(t, cc.queue.Len())
+		assert.Zero(t, cc.queueLag.lag())
 
 		time.Sleep(tokenWriteRetryDelay - time.Nanosecond)
 		synctest.Wait()
 		require.Zero(t, cc.queue.Len(), "token retry must wait for the configured delay")
+		assert.Zero(t, cc.queueLag.lag(), "token retry backoff must not count as queue lag")
 		time.Sleep(time.Nanosecond)
 		synctest.Wait()
 		require.Equal(t, 1, cc.queue.Len())

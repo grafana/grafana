@@ -238,7 +238,12 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, drawer, isHeld }: P
 
         <Stack direction="column" gap={1}>
           <Field noMargin label={t('dashboard-scene.save-dashboard-as-form.label-folder', 'Folder')}>
-            <FolderPicker onChange={onFolderChange} value={formValues.folder?.uid} disabled={state.loading} />
+            <FolderPicker
+              onChange={onFolderChange}
+              value={formValues.folder?.uid}
+              disabled={state.loading}
+              permission="create"
+            />
           </Field>
           <FolderDescription folderUid={formValues.folder?.uid} />
         </Stack>

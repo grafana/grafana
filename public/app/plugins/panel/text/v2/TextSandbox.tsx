@@ -12,8 +12,9 @@ import {
 } from 'app/features/dashboard-scene/scene/sandbox-consent/sandboxConsent';
 
 import { SandboxFrame } from './SandboxFrame';
-import { inlineSandboxFonts } from './sandboxFonts';
-import { getGlobalCss, textSandboxPolicy, type TextSandboxState } from './sandboxPolicy';
+import { getPreparedSandboxFonts, inlineSandboxFonts } from './sandboxFonts';
+import { textSandboxPolicy, type TextSandboxState } from './sandboxPolicy';
+import { getSandboxCss } from './sandboxStyles';
 import { isTextNewFeaturesEnabled } from './utils';
 
 export interface TextSandboxProps {
@@ -33,15 +34,19 @@ export function TextSandbox({ html, hasData = true, testId, className, minHeight
   const consentKey = useId();
   const { dashboardUid, panelId, panelTitle } = consent ?? {};
   const origins = useAllowedOrigins(dashboardUid, panelId);
-  const [globalCss, setGlobalCss] = useState('');
+  const [globalCss, setGlobalCss] = useState<string>();
+  // Height and consent updates must not repeat HTML sanitization when content is unchanged.
+  const sanitizedHtml = useMemo(() => (hasData ? textUtil.sanitizeTextPanelContent(html) : html), [html, hasData]);
   const mermaid = useMemo(() => (isTextNewFeaturesEnabled() ? getMermaidConfig(theme) : undefined), [theme]);
   const fontRoot = `${window.__grafana_public_path__ || 'public/'}fonts/`;
 
   useLayoutEffect(() => {
     let disposed = false;
-    const css = getGlobalCss();
-    setGlobalCss(css.replace(/@font-face\s*\{[^}]*\}/g, ''));
-    if (css.includes('@font-face')) {
+    const css = getSandboxCss(theme);
+    const preparedCss = getPreparedSandboxFonts(css, fontRoot);
+    // Render with fallback fonts immediately; slow font downloads must not hold content back.
+    setGlobalCss(preparedCss ?? css.replace(/@font-face\s*\{[^}]*\}/g, ''));
+    if (preparedCss === undefined && css.includes('@font-face')) {
       void inlineSandboxFonts(css, fontRoot).then((css) => {
         if (!disposed) {
           setGlobalCss(css);
@@ -70,17 +75,19 @@ export function TextSandbox({ html, hasData = true, testId, className, minHeight
   return (
     <div className={className} data-testid={testId}>
       <div ref={host} style={{ position: 'relative' }}>
-        <SandboxFrame
-          html={hasData ? textUtil.sanitizeTextPanelContent(html) : html}
-          globalCss={globalCss}
-          policy={hasData ? textSandboxPolicy(origins, fontRoot) : undefined}
-          mermaid={mermaid}
-          diagramError={t('textng.sandbox.diagram-error', 'Diagram could not be rendered')}
-          title={t('textng.sandbox.title', 'Text panel content')}
-          minHeight={minHeight}
-          onState={onState}
-          onHeight={onHeight}
-        />
+        {globalCss !== undefined && (
+          <SandboxFrame
+            html={sanitizedHtml}
+            globalCss={globalCss}
+            policy={hasData ? textSandboxPolicy(origins, fontRoot) : undefined}
+            mermaid={mermaid}
+            diagramError={t('textng.sandbox.diagram-error', 'Diagram could not be rendered')}
+            title={t('textng.sandbox.title', 'Text panel content')}
+            minHeight={minHeight}
+            onState={onState}
+            onHeight={onHeight}
+          />
+        )}
       </div>
     </div>
   );

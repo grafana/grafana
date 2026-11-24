@@ -1,13 +1,16 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 
 import { reportInteraction } from '@grafana/runtime';
 
+import { FloatingHeightHandle } from './FloatingHeightHandle';
 import {
   FLOATING_DRAG_HANDLE_ATTRIBUTE,
   FLOATING_SNAP_DURATION_MS,
+  keepFloatingBottomEdge,
   useDockedDrag,
   useFloatingDrag,
+  useFloatingHeightRoom,
 } from './useFloatingDrag';
 
 jest.mock('@grafana/runtime', () => ({
@@ -37,16 +40,29 @@ const onDock = jest.fn();
 const onCollapse = jest.fn();
 /** Whether the extension has anything to collapse. */
 let collapsible = true;
+/** Whether pushing against the left edge docks there; off, like the flag that turns it on. */
+let leftDockable = false;
+/** Whether taking the pointer to the bottom edge docks there; off, like the flag that turns it on. */
+let bottomDockable = false;
 
-function Floating() {
+function Floating({ children }: { children?: ReactNode }) {
   const [element, setElement] = useState<HTMLDivElement | null>(null);
-  const preview = useFloatingDrag(element, { dockWidth: 360, onDock, canCollapse: () => collapsible, onCollapse });
+  const preview = useFloatingDrag(element, {
+    dockWidth: 360,
+    dockHeight: 320,
+    onDock,
+    canDockLeft: () => leftDockable,
+    canDockBottom: () => bottomDockable,
+    canCollapse: () => collapsible,
+    onCollapse,
+  });
   return (
     <>
       <div ref={setElement} data-testid="floating">
         <button type="button" {...{ [FLOATING_DRAG_HANDLE_ATTRIBUTE]: '' }} onClick={onHandleClick}>
           Move
         </button>
+        {children}
       </div>
       {preview && <div data-testid="preview">{JSON.stringify(preview)}</div>}
     </>
@@ -60,6 +76,8 @@ beforeEach(() => {
   onDock.mockClear();
   onCollapse.mockClear();
   collapsible = true;
+  leftDockable = false;
+  bottomDockable = false;
   jest.mocked(reportInteraction).mockClear();
   window.localStorage.clear();
   jest.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
@@ -193,6 +211,7 @@ it('previews the docked sidebar while the pointer is at the right edge, and dock
   fireEvent.pointerMove(handle(), { clientX: 1000, clientY: 300 });
   expect(JSON.parse(screen.getByTestId('preview').textContent ?? '')).toEqual({
     action: 'dock',
+    side: 'right',
     top: 0,
     left: 664,
     width: 360,
@@ -202,12 +221,90 @@ it('previews the docked sidebar while the pointer is at the right edge, and dock
   fireEvent.pointerUp(handle(), { clientX: 1000, clientY: 300 });
   fireEvent.click(handle());
   expect(onDock).toHaveBeenCalledTimes(1);
+  expect(onDock).toHaveBeenCalledWith('right');
   expect(onCollapse).not.toHaveBeenCalled();
   expect(screen.queryByTestId('preview')).not.toBeInTheDocument();
   expect(onHandleClick).not.toHaveBeenCalled();
   expect(reportInteraction).not.toHaveBeenCalled();
   // Docking does not remember where the drag left the box.
   expect(window.localStorage.getItem('grafana.navigation.extensionSidebarFloatingOffset')).toBeNull();
+});
+
+describe('docking on the left', () => {
+  beforeEach(() => {
+    leftDockable = true;
+  });
+
+  it('previews the docked sidebar at the left edge while the pointer is there, and docks there when let go', () => {
+    render(<Floating />);
+    fireEvent.pointerDown(handle(), { clientX: 500, clientY: 520, button: 0 });
+
+    // The box stops at the gutter 304px left; 16px further is not a push yet.
+    fireEvent.pointerMove(handle(), { clientX: 180, clientY: 300 });
+    expect(screen.queryByTestId('preview')).not.toBeInTheDocument();
+
+    // Within 32px of the page's left edge.
+    fireEvent.pointerMove(handle(), { clientX: 20, clientY: 300 });
+    expect(JSON.parse(screen.getByTestId('preview').textContent ?? '')).toEqual({
+      action: 'dock',
+      side: 'left',
+      top: 0,
+      left: 0,
+      width: 360,
+      height: 768,
+    });
+
+    fireEvent.pointerUp(handle(), { clientX: 20, clientY: 300 });
+    fireEvent.click(handle());
+    expect(onDock).toHaveBeenCalledTimes(1);
+    expect(onDock).toHaveBeenCalledWith('left');
+    expect(onHandleClick).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('preview')).not.toBeInTheDocument();
+  });
+
+  it('docks after the docked menu, which the page content reserves as padding', () => {
+    const pageContent = document.createElement('div');
+    pageContent.id = 'pageContent';
+    pageContent.style.paddingLeft = '320px';
+    document.body.appendChild(pageContent);
+    render(<Floating />);
+    fireEvent.pointerDown(handle(), { clientX: 500, clientY: 520, button: 0 });
+
+    // Over the menu: the box stays on the page content while the drag pushes on past its left edge.
+    fireEvent.pointerMove(handle(), { clientX: 300, clientY: 300 });
+    expect(JSON.parse(screen.getByTestId('preview').textContent ?? '')).toEqual({
+      action: 'dock',
+      side: 'left',
+      top: 0,
+      left: 320,
+      width: 360,
+      height: 768,
+    });
+  });
+
+  it('switches the preview to the right edge when the drag goes there', () => {
+    render(<Floating />);
+    fireEvent.pointerDown(handle(), { clientX: 500, clientY: 520, button: 0 });
+
+    fireEvent.pointerMove(handle(), { clientX: 20, clientY: 300 });
+    expect(JSON.parse(screen.getByTestId('preview').textContent ?? '')).toMatchObject({ side: 'left' });
+    fireEvent.pointerMove(handle(), { clientX: 1000, clientY: 300 });
+    expect(JSON.parse(screen.getByTestId('preview').textContent ?? '')).toMatchObject({ side: 'right' });
+
+    fireEvent.pointerUp(handle(), { clientX: 1000, clientY: 300 });
+    expect(onDock).toHaveBeenCalledWith('right');
+  });
+
+  it('only moves the box against the left edge while left docking is off', () => {
+    leftDockable = false;
+    render(<Floating />);
+
+    drag({ x: 500, y: 520 }, { x: 20, y: 300 });
+
+    expect(onDock).not.toHaveBeenCalled();
+    // Snapped to the left edge, 24px in.
+    expect(floating().style.transform).toBe('translate(-288px, -220px)');
+  });
 });
 
 it('does not dock when the pointer leaves the right edge before letting go, or the drag is cancelled', () => {
@@ -314,6 +411,78 @@ it('in the bottom-right corner, does what the harder push does', () => {
   // 216px past the right stop and 214px past the bottom one.
   fireEvent.pointerMove(handle(), { clientX: 1020, clientY: 750 });
   expect(JSON.parse(screen.getByTestId('preview').textContent ?? '')).toMatchObject({ action: 'dock' });
+});
+
+describe('docking at the bottom', () => {
+  beforeEach(() => {
+    bottomDockable = true;
+  });
+
+  it('collapses while pushed down, and docks at the bottom once the pointer reaches the bottom edge', () => {
+    render(<Floating />);
+    fireEvent.pointerDown(handle(), { clientX: 500, clientY: 520, button: 0 });
+
+    // 164px past where the box stopped, but 68px from the bottom edge: a collapse.
+    fireEvent.pointerMove(handle(), { clientX: 500, clientY: 700 });
+    expect(JSON.parse(screen.getByTestId('preview').textContent ?? '')).toMatchObject({ action: 'collapse' });
+
+    // Within 32px of the bottom edge (768): the strip across the page, 320px tall.
+    fireEvent.pointerMove(handle(), { clientX: 500, clientY: 750 });
+    expect(JSON.parse(screen.getByTestId('preview').textContent ?? '')).toEqual({
+      action: 'dock',
+      side: 'bottom',
+      top: 448,
+      left: 0,
+      width: 1024,
+      height: 320,
+    });
+
+    fireEvent.pointerUp(handle(), { clientX: 500, clientY: 750 });
+    fireEvent.click(handle());
+    expect(onDock).toHaveBeenCalledWith('bottom');
+    expect(onCollapse).not.toHaveBeenCalled();
+    expect(onHandleClick).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('preview')).not.toBeInTheDocument();
+  });
+
+  it('docks after the docked menu, which the page content reserves as padding', () => {
+    const pageContent = document.createElement('div');
+    pageContent.id = 'pageContent';
+    pageContent.style.paddingLeft = '320px';
+    document.body.appendChild(pageContent);
+    render(<Floating />);
+    fireEvent.pointerDown(handle(), { clientX: 500, clientY: 520, button: 0 });
+
+    fireEvent.pointerMove(handle(), { clientX: 500, clientY: 750 });
+
+    expect(JSON.parse(screen.getByTestId('preview').textContent ?? '')).toMatchObject({
+      side: 'bottom',
+      left: 320,
+      width: 704,
+    });
+  });
+
+  it('in the bottom-right corner, docks on the edge the drag pushes harder', () => {
+    render(<Floating />);
+    fireEvent.pointerDown(handle(), { clientX: 500, clientY: 520, button: 0 });
+
+    fireEvent.pointerMove(handle(), { clientX: 560, clientY: 760 });
+    expect(JSON.parse(screen.getByTestId('preview').textContent ?? '')).toMatchObject({ side: 'bottom' });
+
+    // 211px past the right stop.
+    fireEvent.pointerMove(handle(), { clientX: 1015, clientY: 760 });
+    expect(JSON.parse(screen.getByTestId('preview').textContent ?? '')).toMatchObject({ side: 'right' });
+  });
+
+  it('only collapses at the bottom edge while bottom docking is off', () => {
+    bottomDockable = false;
+    render(<Floating />);
+
+    drag({ x: 500, y: 520 }, { x: 500, y: 750 });
+
+    expect(onDock).not.toHaveBeenCalled();
+    expect(onCollapse).toHaveBeenCalledTimes(1);
+  });
 });
 
 it('keeps a handle that sits outside the box on the page too, and snaps by it', () => {
@@ -455,6 +624,100 @@ it('left in the bottom half, keeps its bottom edge, re-clamped while the box has
   expect(floating().style.transform).toBe('translate(0px, -200px)');
 });
 
+it.each([
+  [
+    'dragged',
+    (resize: HTMLElement) => {
+      fireEvent.pointerDown(resize, { clientY: 200, button: 0 });
+      fireEvent.pointerMove(resize, { clientY: 184 });
+      fireEvent.pointerUp(resize, { clientY: 184 });
+    },
+  ],
+  ['stepped with the arrow keys', (resize: HTMLElement) => fireEvent.keyDown(resize, { key: 'ArrowUp' })],
+])('keeps its bottom edge when resized from its top edge, though left in the top half: %s', (_how, resizeFromTop) => {
+  const { unmount } = render(
+    <Floating>
+      <FloatingHeightHandle
+        edge="top"
+        options={{ minHeight: 100 }}
+        height={undefined}
+        onHeightChange={jest.fn()}
+        onWidthChange={jest.fn()}
+      />
+    </Floating>
+  );
+  // Top edge at 200, so anchored there.
+  drag({ x: 700, y: 520 }, { x: 700, y: 220 });
+  expect(floating().style.transform).toBe('translate(0px, -300px)');
+
+  resizeFromTop(screen.getByRole('separator', { name: 'Resize sidebar height' }));
+  // 16px taller. Untranslated, the container keeps its bottom edge, so its top is 16px higher.
+  resizeBox({ top: 484, height: 260 });
+  // The top edge moved up to 184 with the resize, and the bottom edge stayed at 444.
+  expect(floating().style.transform).toBe('translate(0px, -300px)');
+
+  // Floating again, it is where the resize left it.
+  unmount();
+  render(<Floating />);
+  expect(floating().style.transform).toBe('translate(0px, -300px)');
+});
+
+describe('the room a remembered height is held to', () => {
+  // In ExtensionSidebar's order: the room is read before the drag places the box.
+  function FloatingWithRoom() {
+    const [element, setElement] = useState<HTMLDivElement | null>(null);
+    const room = useFloatingHeightRoom(element);
+    useFloatingDrag(element, {
+      dockWidth: 360,
+      dockHeight: 320,
+      onDock,
+      canDockLeft: () => false,
+      canDockBottom: () => false,
+      canCollapse: () => false,
+      onCollapse,
+    });
+    return (
+      <div ref={setElement} data-testid="floating">
+        <span data-testid="room">{room}</span>
+      </div>
+    );
+  }
+  const room = () => screen.getByTestId('room');
+
+  it('reaches up to the gutter under the top bar, for a box kept at its bottom edge', () => {
+    render(<FloatingWithRoom />);
+    // 744 at the bottom, less the 8px gutter.
+    expect(room()).toHaveTextContent('736');
+  });
+
+  it('reaches down to the gutter above the page bottom, for a box left in the top half', () => {
+    window.localStorage.setItem(
+      'grafana.navigation.extensionSidebarFloatingOffset',
+      JSON.stringify({ x: 0, y: 100, anchor: 'top' })
+    );
+    render(<FloatingWithRoom />);
+    expect(floating().style.transform).toBe('translate(0px, -400px)');
+    // Its top edge at 100 stays, so it can grow down to 760.
+    expect(room()).toHaveTextContent('660');
+
+    resizeBox({ top: 500, height: 244 });
+    expect(room()).toHaveTextContent('660');
+  });
+
+  it('follows the bottom edge once a resize from the top edge keeps it, as the handles do', () => {
+    window.localStorage.setItem(
+      'grafana.navigation.extensionSidebarFloatingOffset',
+      JSON.stringify({ x: 0, y: 100, anchor: 'top' })
+    );
+    render(<FloatingWithRoom />);
+    expect(room()).toHaveTextContent('660');
+
+    act(() => keepFloatingBottomEdge());
+    // 344 at the bottom (its top at 100, 244 tall), less the 8px gutter: the room the handles resize within.
+    expect(room()).toHaveTextContent('336');
+  });
+});
+
 it('moves only by its handle, with the primary button, following the pointer that grabbed it', () => {
   render(<Floating />);
 
@@ -487,14 +750,37 @@ describe('dragged from the docked sidebar', () => {
   const onFloat = jest.fn();
 
   /** The sidebar docked until a drag floats it; the same element, as in ExtensionSidebar. */
-  function Sidebar({ floatingWidth = 480 }: { floatingWidth?: number }) {
+  function Sidebar({
+    floatingWidth = 480,
+    dockSide = 'right',
+  }: {
+    floatingWidth?: number;
+    dockSide?: 'left' | 'right' | 'bottom';
+  }) {
     const [element, setElement] = useState<HTMLDivElement | null>(null);
     const [isFloating, setIsFloating] = useState(false);
-    useFloatingDrag(isFloating ? element : null, { dockWidth: 360, onDock, canCollapse: () => false, onCollapse });
-    const preview = useDockedDrag(isFloating ? null : element, floatingWidth, () => {
-      onFloat();
-      natural = floatingBox;
-      setIsFloating(true);
+    useFloatingDrag(isFloating ? element : null, {
+      dockWidth: 360,
+      dockHeight: 320,
+      onDock,
+      canDockLeft: () => false,
+      canDockBottom: () => false,
+      canCollapse: () => false,
+      onCollapse,
+    });
+    const preview = useDockedDrag(isFloating ? null : element, {
+      dockSide,
+      dockWidth: 360,
+      dockHeight: 320,
+      floatingWidth,
+      onFloat: () => {
+        onFloat();
+        natural = floatingBox;
+        setIsFloating(true);
+      },
+      onDock,
+      canDockLeft: () => leftDockable,
+      canDockBottom: () => bottomDockable,
     });
     return (
       <>
@@ -513,6 +799,8 @@ describe('dragged from the docked sidebar', () => {
   beforeEach(() => {
     natural = docked;
     onFloat.mockClear();
+    leftDockable = true;
+    bottomDockable = true;
   });
 
   it('stays put and previews nothing until the pointer is pulled 40px left of where it was grabbed', () => {
@@ -626,9 +914,201 @@ describe('dragged from the docked sidebar', () => {
   it('keeps the preview inside the page', () => {
     render(<Sidebar />);
     fireEvent.pointerDown(handle(), { clientX: 700, clientY: 60, button: 0 });
-    fireEvent.pointerMove(handle(), { clientX: 10, clientY: 760 });
+    // Short of the bottom edge, which docks there.
+    fireEvent.pointerMove(handle(), { clientX: 40, clientY: 730 });
 
-    expect(preview()).toMatchObject({ left: 8, top: 592 });
+    expect(preview()).toMatchObject({ action: 'float', left: 8, top: 592 });
+  });
+
+  describe('docking on the other side', () => {
+    beforeEach(() => {
+      // The page content reserves the docked nav as padding.
+      const pageContent = document.createElement('div');
+      pageContent.id = 'pageContent';
+      pageContent.style.paddingLeft = '320px';
+      document.body.appendChild(pageContent);
+    });
+
+    it('previews the sidebar docked after the nav once the pointer reaches it, and docks there when let go', () => {
+      render(<Sidebar />);
+
+      fireEvent.pointerDown(handle(), { clientX: 900, clientY: 60, button: 0 });
+      fireEvent.pointerMove(handle(), { clientX: 352, clientY: 300 });
+      expect(preview()).toMatchObject({ action: 'float' });
+
+      fireEvent.pointerMove(handle(), { clientX: 351, clientY: 300 });
+      expect(preview()).toEqual({ action: 'dock', side: 'left', top: 0, left: 320, width: 360, height: 768 });
+      // Over the nav too.
+      fireEvent.pointerMove(handle(), { clientX: 100, clientY: 300 });
+      expect(preview()).toMatchObject({ action: 'dock', side: 'left' });
+
+      fireEvent.pointerUp(handle(), { clientX: 100, clientY: 300 });
+      fireEvent.click(handle());
+
+      expect(onDock).toHaveBeenCalledWith('left');
+      expect(onFloat).not.toHaveBeenCalled();
+      expect(onHandleClick).not.toHaveBeenCalled();
+      expect(screen.queryByTestId('preview')).not.toBeInTheDocument();
+    });
+
+    it('floats instead when the pointer leaves the edge before letting go, and docks nowhere when cancelled', () => {
+      render(<Sidebar />);
+      fireEvent.pointerDown(handle(), { clientX: 900, clientY: 60, button: 0 });
+      fireEvent.pointerMove(handle(), { clientX: 330, clientY: 300 });
+      fireEvent.pointerCancel(handle(), { clientX: 330, clientY: 300 });
+
+      expect(onDock).not.toHaveBeenCalled();
+      expect(screen.queryByTestId('preview')).not.toBeInTheDocument();
+
+      fireEvent.pointerDown(handle(), { clientX: 900, clientY: 60, button: 0 });
+      fireEvent.pointerMove(handle(), { clientX: 330, clientY: 300 });
+      fireEvent.pointerMove(handle(), { clientX: 500, clientY: 300 });
+      expect(preview()).toMatchObject({ action: 'float' });
+      fireEvent.pointerUp(handle(), { clientX: 500, clientY: 300 });
+
+      expect(onDock).not.toHaveBeenCalled();
+      expect(onFloat).toHaveBeenCalledTimes(1);
+    });
+
+    it('docked on the left, previews the sidebar at the right edge once the pointer reaches it, and docks there', () => {
+      natural = { left: 320, top: 40, width: 360, height: 728 };
+      document.getElementById('pageContent')!.style.paddingLeft = '680px';
+      render(<Sidebar dockSide="left" />);
+
+      fireEvent.pointerDown(handle(), { clientX: 400, clientY: 60, button: 0 });
+      fireEvent.pointerMove(handle(), { clientX: 992, clientY: 300 });
+      expect(preview()).toMatchObject({ action: 'float' });
+
+      fireEvent.pointerMove(handle(), { clientX: 993, clientY: 300 });
+      expect(preview()).toEqual({ action: 'dock', side: 'right', top: 0, left: 664, width: 360, height: 768 });
+
+      fireEvent.pointerUp(handle(), { clientX: 993, clientY: 300 });
+
+      expect(onDock).toHaveBeenCalledWith('right');
+      expect(onFloat).not.toHaveBeenCalled();
+    });
+
+    it('floats at the left and bottom edges while those docks are off', () => {
+      leftDockable = false;
+      bottomDockable = false;
+      render(<Sidebar />);
+
+      fireEvent.pointerDown(handle(), { clientX: 900, clientY: 60, button: 0 });
+      fireEvent.pointerMove(handle(), { clientX: 100, clientY: 300 });
+      expect(preview()).toMatchObject({ action: 'float' });
+      fireEvent.pointerMove(handle(), { clientX: 600, clientY: 760 });
+      expect(preview()).toMatchObject({ action: 'float' });
+      fireEvent.pointerUp(handle(), { clientX: 600, clientY: 760 });
+
+      expect(onDock).not.toHaveBeenCalled();
+      expect(onFloat).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not dock on the side it is already docked on', () => {
+      render(<Sidebar />);
+
+      drag({ x: 700, y: 60 }, { x: 1020, y: 300 });
+
+      expect(onDock).not.toHaveBeenCalled();
+      expect(onFloat).not.toHaveBeenCalled();
+    });
+
+    it('docked on the right, previews the strip at the bottom once the pointer reaches it, and docks there', () => {
+      render(<Sidebar />);
+
+      fireEvent.pointerDown(handle(), { clientX: 900, clientY: 60, button: 0 });
+      fireEvent.pointerMove(handle(), { clientX: 600, clientY: 736 });
+      expect(preview()).toMatchObject({ action: 'float' });
+
+      // Within 32px of the bottom edge: across the page past the nav, up to the sidebar's own right edge.
+      fireEvent.pointerMove(handle(), { clientX: 600, clientY: 737 });
+      expect(preview()).toEqual({ action: 'dock', side: 'bottom', top: 448, left: 320, width: 704, height: 320 });
+
+      // In to the left edge's corner: the nearer edge.
+      fireEvent.pointerMove(handle(), { clientX: 340, clientY: 740 });
+      expect(preview()).toMatchObject({ action: 'dock', side: 'left' });
+
+      fireEvent.pointerMove(handle(), { clientX: 600, clientY: 760 });
+      fireEvent.pointerUp(handle(), { clientX: 600, clientY: 760 });
+
+      expect(onDock).toHaveBeenCalledWith('bottom');
+      expect(onFloat).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('docked at the bottom, after the nav', () => {
+    const dockedBottom = { left: 320, top: 448, width: 704, height: 320 };
+
+    beforeEach(() => {
+      natural = dockedBottom;
+      // The page content reserves the nav as padding, and ends where the sidebar starts.
+      const pageContent = document.createElement('div');
+      pageContent.id = 'pageContent';
+      pageContent.style.paddingLeft = '320px';
+      document.body.appendChild(pageContent);
+    });
+
+    it('previews nothing until the pointer is pulled 40px up from where it was grabbed, then floats there', () => {
+      render(<Sidebar dockSide="bottom" />);
+
+      fireEvent.pointerDown(handle(), { clientX: 600, clientY: 500, button: 0 });
+      fireEvent.pointerMove(handle(), { clientX: 700, clientY: 470 });
+      expect(screen.queryByTestId('preview')).not.toBeInTheDocument();
+
+      fireEvent.pointerMove(handle(), { clientX: 600, clientY: 455 });
+      expect(preview()).toEqual({ action: 'float', left: 360, top: 439, width: 480, height: 168 });
+
+      fireEvent.pointerUp(handle(), { clientX: 600, clientY: 455 });
+      expect(onFloat).toHaveBeenCalledTimes(1);
+      expect(onDock).not.toHaveBeenCalled();
+    });
+
+    it('previews as soon as the pointer is above its top edge, when grabbed near it', () => {
+      render(<Sidebar dockSide="bottom" />);
+
+      fireEvent.pointerDown(handle(), { clientX: 600, clientY: 460, button: 0 });
+      fireEvent.pointerMove(handle(), { clientX: 600, clientY: 452 });
+      expect(screen.queryByTestId('preview')).not.toBeInTheDocument();
+
+      fireEvent.pointerMove(handle(), { clientX: 600, clientY: 444 });
+      expect(preview()).toMatchObject({ action: 'float' });
+    });
+
+    it('docks on the left or the right side once the pointer reaches that edge', () => {
+      render(<Sidebar dockSide="bottom" />);
+
+      fireEvent.pointerDown(handle(), { clientX: 600, clientY: 500, button: 0 });
+      fireEvent.pointerMove(handle(), { clientX: 340, clientY: 600 });
+      // The page's full height, which the page takes back from the strip.
+      expect(preview()).toEqual({ action: 'dock', side: 'left', top: 0, left: 320, width: 360, height: 768 });
+
+      fireEvent.pointerMove(handle(), { clientX: 1010, clientY: 600 });
+      expect(preview()).toEqual({ action: 'dock', side: 'right', top: 0, left: 664, width: 360, height: 768 });
+
+      fireEvent.pointerUp(handle(), { clientX: 1010, clientY: 600 });
+      expect(onDock).toHaveBeenCalledWith('right');
+      expect(onFloat).not.toHaveBeenCalled();
+    });
+
+    it('still docks on the right while the left dock is off', () => {
+      leftDockable = false;
+      render(<Sidebar dockSide="bottom" />);
+
+      fireEvent.pointerDown(handle(), { clientX: 600, clientY: 500, button: 0 });
+      fireEvent.pointerMove(handle(), { clientX: 340, clientY: 300 });
+      expect(preview()).toMatchObject({ action: 'float' });
+      fireEvent.pointerMove(handle(), { clientX: 1010, clientY: 300 });
+      expect(preview()).toMatchObject({ action: 'dock', side: 'right' });
+    });
+
+    it('does not dock at the bottom it is already docked at', () => {
+      render(<Sidebar dockSide="bottom" />);
+
+      drag({ x: 600, y: 500 }, { x: 600, y: 760 });
+
+      expect(onDock).not.toHaveBeenCalled();
+      expect(onFloat).not.toHaveBeenCalled();
+    });
   });
 
   it('does not float when the pointer comes back over the sidebar before letting go, or the drag is cancelled', () => {
@@ -648,5 +1128,64 @@ describe('dragged from the docked sidebar', () => {
     expect(onHandleClick).not.toHaveBeenCalled();
     expect(screen.queryByTestId('preview')).not.toBeInTheDocument();
     expect(floating()).not.toHaveAttribute('data-dragging');
+  });
+
+  describe('docked on the left, after the nav', () => {
+    const dockedLeft = { left: 320, top: 40, width: 360, height: 728 };
+
+    beforeEach(() => {
+      natural = dockedLeft;
+      // The page content reserves the nav and the sidebar as padding.
+      const pageContent = document.createElement('div');
+      pageContent.id = 'pageContent';
+      pageContent.style.paddingLeft = '680px';
+      document.body.appendChild(pageContent);
+    });
+
+    it('previews nothing until the pointer is pulled 40px right of where it was grabbed', () => {
+      render(<Sidebar dockSide="left" />);
+
+      fireEvent.pointerDown(handle(), { clientX: 400, clientY: 60, button: 0 });
+      fireEvent.pointerMove(handle(), { clientX: 430, clientY: 60 });
+      expect(screen.queryByTestId('preview')).not.toBeInTheDocument();
+
+      fireEvent.pointerMove(handle(), { clientX: 440, clientY: 60 });
+      // Kept inside the sidebar's room and the page, which it takes back once floating: from 320 + the gutter.
+      expect(preview()).toEqual({ action: 'float', left: 328, top: 44, width: 480, height: 168 });
+    });
+
+    it('previews as soon as the pointer is past its right edge, when grabbed near it', () => {
+      render(<Sidebar dockSide="left" />);
+
+      fireEvent.pointerDown(handle(), { clientX: 670, clientY: 60, button: 0 });
+      fireEvent.pointerMove(handle(), { clientX: 676, clientY: 300 });
+      expect(screen.queryByTestId('preview')).not.toBeInTheDocument();
+
+      fireEvent.pointerMove(handle(), { clientX: 684, clientY: 300 });
+      expect(preview()).toMatchObject({ action: 'float' });
+    });
+
+    it('does not float when pulled toward the nav', () => {
+      render(<Sidebar dockSide="left" />);
+
+      drag({ x: 600, y: 60 }, { x: 300, y: 300 });
+
+      expect(onFloat).not.toHaveBeenCalled();
+      expect(onHandleClick).not.toHaveBeenCalled();
+    });
+
+    it('floats where it is let go', () => {
+      // Floating, the sidebar gives its room back to the page.
+      onFloat.mockImplementationOnce(() => {
+        document.getElementById('pageContent')!.style.paddingLeft = '320px';
+      });
+      render(<Sidebar dockSide="left" />);
+
+      drag({ x: 400, y: 60 }, { x: 800, y: 300 });
+
+      expect(onFloat).toHaveBeenCalledTimes(1);
+      // Top left corner at (536, 284): centred on the pointer, short of the page's right edge by the gutter.
+      expect(floating().style.transform).toBe('translate(224px, -216px)');
+    });
   });
 });

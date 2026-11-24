@@ -41,14 +41,11 @@ const dsList = [
   },
 ];
 
-const mockGetList = jest.fn((_args?: { pluginId?: string }) => dsList);
+const mockGetInstanceList = jest.fn(async (_args?: { pluginId?: string }) => dsList);
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => ({
-    getList: (args: { pluginId?: string }) => mockGetList(args),
-  }),
-  getDataSourceInstanceList: jest.fn(async () => dsList),
+  getDataSourceInstanceList: (args?: { pluginId?: string }) => mockGetInstanceList(args),
 }));
 describe('DataSourceVariableEditor', () => {
   it('shoud render correctly with multi and all not checked', async () => {
@@ -226,11 +223,11 @@ describe('getDataSourceVariableOptions undo/redo', () => {
     expect(variable.state.regex).toBe('/2$/');
     expect(sidebar.state.undoStack).toHaveLength(1);
 
-    act(() => sidebar.undoAction());
+    await act(async () => sidebar.undoAction());
     expect(variable.state.regex).toBe('/1$/');
     expect(screen.getByTestId(nameFilter)).toHaveValue('/1$/');
 
-    act(() => sidebar.redoAction());
+    await act(async () => sidebar.redoAction());
     expect(variable.state.regex).toBe('/2$/');
     expect(screen.getByTestId(nameFilter)).toHaveValue('/2$/');
   });
@@ -245,7 +242,7 @@ function setup(jsx: JSX.Element) {
 }
 
 describe('data source selection undo/redo', () => {
-  afterEach(() => mockGetList.mockImplementation(() => dsList));
+  afterEach(() => mockGetInstanceList.mockImplementation(async () => dsList));
 
   it('restores the selected data source when undoing a name filter', async () => {
     const { nameFilter } = selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable;
@@ -266,16 +263,19 @@ describe('data source selection undo/redo', () => {
     await user.tab();
     expect(variable.state.value).toBe('ds1');
 
-    act(() => sidebar.undoAction());
+    await act(async () => sidebar.undoAction());
     expect(variable.state).toMatchObject({ regex: '', value: 'ds2', text: 'DataSourceInstance2' });
 
-    act(() => sidebar.redoAction());
+    await act(async () => sidebar.redoAction());
     expect(variable.state).toMatchObject({ regex: '/1$/', value: 'ds1', text: 'DataSourceInstance1' });
   });
 
   it('restores a non-default data source selection when undoing a type change', async () => {
     mockBoundingClientRect();
-    mockGetList.mockImplementation((args) => dsList.filter((ds) => ds.meta.id === args?.pluginId));
+    // Only the variable's own lookup is narrowed to its plugin; the type picker lists every type.
+    mockGetInstanceList.mockImplementation(async (args) =>
+      args?.pluginId ? dsList.filter((ds) => ds.meta.id === args.pluginId) : dsList
+    );
     const variable = new DataSourceVariable({
       name: 'dsVariable',
       pluginId: 'dsTestDataSource',
@@ -292,10 +292,10 @@ describe('data source selection undo/redo', () => {
     await user.click(await screen.findByRole('option', { name: 'abDS' }));
     expect(variable.state).toMatchObject({ pluginId: 'ABCDS', value: 'ds3' });
 
-    act(() => sidebar.undoAction());
+    await act(async () => sidebar.undoAction());
     expect(variable.state).toMatchObject({ pluginId: 'dsTestDataSource', value: 'ds2', text: 'DataSourceInstance2' });
 
-    act(() => sidebar.redoAction());
+    await act(async () => sidebar.redoAction());
     expect(variable.state).toMatchObject({ pluginId: 'ABCDS', value: 'ds3', text: 'ABCDataSourceInstance' });
   });
 });

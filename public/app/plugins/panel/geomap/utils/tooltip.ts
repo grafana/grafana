@@ -28,7 +28,7 @@ export const setTooltipListeners = (panel: GeomapPanel) => {
 
   panel.map?.on('singleclick', (evt) => pointerClickListener(evt, panel));
   panel.map?.on('pointermove', debouncedMove);
-  panel.map?.getViewport().addEventListener('pointerleave', () => {
+  panel.map?.getViewport()?.addEventListener('pointerleave', () => {
     debouncedMove.cancel();
     panel.props.eventBus.publish(new DataHoverClearEvent());
     panel.clearTooltip();

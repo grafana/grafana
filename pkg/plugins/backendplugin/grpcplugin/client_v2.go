@@ -55,8 +55,6 @@ type ClientV2 struct {
 	grpcplugin.ResourceClient
 	grpcplugin.DataClient
 	grpcplugin.StreamClient
-	grpcplugin.AdmissionClient
-	grpcplugin.ConversionClient
 
 	QueryDataFormat QueryDataFormat
 
@@ -76,16 +74,6 @@ func newClientV2(rpcClient plugin.ClientProtocol) (*ClientV2, error) {
 	}
 
 	rawData, err := rpcClient.Dispense("data")
-	if err != nil {
-		return nil, err
-	}
-
-	rawAdmission, err := rpcClient.Dispense("admission")
-	if err != nil {
-		return nil, err
-	}
-
-	rawConversion, err := rpcClient.Dispense("conversion")
 	if err != nil {
 		return nil, err
 	}
@@ -111,18 +99,6 @@ func newClientV2(rpcClient plugin.ClientProtocol) (*ClientV2, error) {
 	if rawData != nil {
 		if dataClient, ok := rawData.(grpcplugin.DataClient); ok {
 			c.DataClient = dataClient
-		}
-	}
-
-	if rawAdmission != nil {
-		if admissionClient, ok := rawAdmission.(grpcplugin.AdmissionClient); ok {
-			c.AdmissionClient = admissionClient
-		}
-	}
-
-	if rawConversion != nil {
-		if conversionClient, ok := rawConversion.(grpcplugin.ConversionClient); ok {
-			c.ConversionClient = conversionClient
 		}
 	}
 
@@ -178,7 +154,7 @@ func (c *ClientV2) QueryData(ctx context.Context, req *backend.QueryDataRequest)
 	if err != nil {
 		return nil, err
 	}
-	resp, err := backend.FromProto().QueryDataResponse(protoResp)
+	resp, err := backend.FromProto().ConsumeQueryDataResponse(protoResp)
 	if err != nil {
 		return nil, err
 	}
@@ -282,14 +258,22 @@ func (c *ClientV2) QueryChunkedData(ctx context.Context, req *backend.QueryChunk
 	}
 
 	sizes := responsesize.FromContext(ctx)
+	received := false
 	for {
 		chunk, err := stream.Recv()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				return nil
 			}
+			// A server stream reports the status of the plugin at the first Recv, not when it opens.
+			// The fallback is safe only before a chunk reached the writer.
+			if !received && status.Code(err) == codes.Unimplemented {
+				c.chunkUnimplemented.Store(true)
+				return c.queryChunkedDataFacade(ctx, req, w)
+			}
 			return err
 		}
+		received = true
 		sizes.AddChunk(chunk)
 
 		if isRaw {
@@ -297,11 +281,6 @@ func (c *ClientV2) QueryChunkedData(ctx context.Context, req *backend.QueryChunk
 				return err
 			}
 			continue // do not decode the frame
-		}
-
-		frame, err := data.UnmarshalArrowFrame(chunk.Frame)
-		if err != nil {
-			return err
 		}
 
 		if chunk.Error != "" {
@@ -313,6 +292,14 @@ func (c *ClientV2) QueryChunkedData(ctx context.Context, req *backend.QueryChunk
 			}
 		}
 
+		// A chunk from WriteError has no frame.
+		if len(chunk.Frame) == 0 {
+			continue
+		}
+		frame, err := data.UnmarshalArrowFrame(chunk.Frame)
+		if err != nil {
+			return err
+		}
 		if err = w.WriteFrame(ctx, chunk.RefId, chunk.FrameId, frame); err != nil {
 			return err
 		}
@@ -338,7 +325,7 @@ func (c *ClientV2) queryChunkedDataFacade(ctx context.Context, req *backend.Quer
 	}
 
 	// Send the responses as individual chunks
-	rsp, err := backend.FromProto().QueryDataResponse(protoResp)
+	rsp, err := backend.FromProto().ConsumeQueryDataResponse(protoResp)
 	if err != nil {
 		return err
 	}
@@ -433,63 +420,6 @@ func (c *ClientV2) RunStream(ctx context.Context, req *backend.RunStreamRequest,
 			return err
 		}
 	}
-}
-
-func (c *ClientV2) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
-	if c.AdmissionClient == nil {
-		return nil, plugins.ErrMethodNotImplemented
-	}
-
-	protoReq := backend.ToProto().AdmissionRequest(req)
-	protoResp, err := c.AdmissionClient.ValidateAdmission(ctx, protoReq)
-
-	if err != nil {
-		if status.Code(err) == codes.Unimplemented {
-			return nil, plugins.ErrMethodNotImplemented
-		}
-
-		return nil, fmt.Errorf("%v: %w", "Failed to ValidateAdmission", err)
-	}
-
-	return backend.FromProto().ValidationResponse(protoResp), nil
-}
-
-func (c *ClientV2) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
-	if c.AdmissionClient == nil {
-		return nil, plugins.ErrMethodNotImplemented
-	}
-
-	protoReq := backend.ToProto().AdmissionRequest(req)
-	protoResp, err := c.AdmissionClient.MutateAdmission(ctx, protoReq)
-
-	if err != nil {
-		if status.Code(err) == codes.Unimplemented {
-			return nil, plugins.ErrMethodNotImplemented
-		}
-
-		return nil, fmt.Errorf("%v: %w", "Failed to MutateAdmission", err)
-	}
-
-	return backend.FromProto().MutationResponse(protoResp), nil
-}
-
-func (c *ClientV2) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-	if c.ConversionClient == nil {
-		return nil, plugins.ErrMethodNotImplemented
-	}
-
-	protoReq := backend.ToProto().ConversionRequest(req)
-	protoResp, err := c.ConversionClient.ConvertObjects(ctx, protoReq)
-
-	if err != nil {
-		if status.Code(err) == codes.Unimplemented {
-			return nil, plugins.ErrMethodNotImplemented
-		}
-
-		return nil, fmt.Errorf("%v: %w", "Failed to ConvertObject", err)
-	}
-
-	return backend.FromProto().ConversionResponse(protoResp), nil
 }
 
 // handleGrpcStatusError sets the error source via context based on the error source provided. Regardless of its value,

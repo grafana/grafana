@@ -1,4 +1,4 @@
-import { getByRole, render, screen, act, waitFor, within } from '@testing-library/react';
+import { getByRole, render, renderHook, screen, act, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as React from 'react';
 import { lastValueFrom, of } from 'rxjs';
@@ -10,23 +10,37 @@ import {
   toDataFrame,
   getDefaultTimeRange,
   FieldType,
+  type DataSourceApi,
+  type DataSourceRef,
+  type ScopedVars,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { setRunRequest } from '@grafana/runtime';
-import { QueryVariable, TextBoxVariable } from '@grafana/scenes';
+// eslint-disable-next-line @grafana/no-get-data-source-srv -- The picker still resolves its current value through this service.
+import { getDataSourceInstance, getDataSourceSrv, setRunRequest } from '@grafana/runtime';
+import {
+  DataSourceVariable,
+  QueryVariable,
+  SafeSerializableSceneObject,
+  sceneGraph,
+  SceneTimeRange,
+  SceneVariableSet,
+  TextBoxVariable,
+} from '@grafana/scenes';
 import { VariableRefresh, VariableSort } from '@grafana/schema';
 import { mockBoundingClientRect } from '@grafana/test-utils';
-import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { mockDataSource } from 'app/features/alerting/unified/testSetup/mockDataSource';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
+import { type VariableQueryEditorProps } from 'app/features/variables/types';
+
+import { DashboardScene } from '../../../../scene/DashboardScene';
+import { AutoGridLayoutManager } from '../../../../scene/layout-auto-grid/AutoGridLayoutManager';
+import { RowItem } from '../../../../scene/layout-rows/RowItem';
+import { RowsLayoutManager } from '../../../../scene/layout-rows/RowsLayoutManager';
 
 import { QueryVariableEditor, Editor } from './QueryVariableEditor';
 import { getQueryVariableOptions } from './getQueryVariableOptions';
-
-jest.mock('@grafana/runtime/internal', () => ({
-  ...jest.requireActual('@grafana/runtime/internal'),
-  useFlagGrafanaQueryVarEditorRedesign: () => false,
-}));
+import { useDraftVariable } from './useDraftVariable';
 
 const defaultDatasource = mockDataSource({
   name: 'Default Test Data Source',
@@ -40,7 +54,7 @@ const promDatasource = mockDataSource({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => ({
+  getDataSourceSrv: jest.fn(() => ({
     get: async () => ({
       ...defaultDatasource,
       variables: {
@@ -52,7 +66,7 @@ jest.mock('@grafana/runtime', () => ({
     }),
     getList: () => [defaultDatasource, promDatasource],
     getInstanceSettings: () => ({ ...defaultDatasource }),
-  }),
+  })),
   getDataSourceInstance: jest.fn(async () => ({
     ...defaultDatasource,
     variables: {
@@ -464,68 +478,52 @@ describe('QueryVariableEditor', () => {
     consoleWarnSpy.mockRestore();
   });
 
-  it('should return an OptionsPaneItemDescriptor that renders ModalEditor with expected interactions', async () => {
+  it('when a query is previewed and discarded in the modal, the variable is unchanged', async () => {
     const variable = new QueryVariable({
       name: 'test',
       datasource: { uid: defaultDatasource.uid, type: defaultDatasource.type },
       query: 'initial query',
     });
-    const refreshOptionsSpy = jest.spyOn(variable, 'refreshOptions');
-
-    const result = getQueryVariableOptions(variable);
-
-    expect(result.length).toBe(1);
-    const descriptor = result[0];
-
-    // Mock the parent property that OptionsPaneItem expects
+    const [descriptor] = getQueryVariableOptions(variable);
     descriptor.parent = new OptionsPaneCategoryDescriptor({
-      id: 'mock-parent-id',
-      title: 'Mock Parent',
+      id: 'query-options',
+      title: 'Query options',
     });
-
-    const { queryByRole } = render(descriptor.renderElement());
     const user = userEvent.setup();
+    render(descriptor.renderElement());
 
-    // 1. Initial state: "Open variable editor" button is visible, Modal is not.
-    const openEditorButton = screen.getByRole('button', { name: 'Open variable editor' });
-    expect(openEditorButton).toBeInTheDocument();
-    expect(queryByRole('dialog')).not.toBeInTheDocument(); // Modal has role 'dialog'
+    await user.click(screen.getByRole('button', { name: 'Open variable editor' }));
+    const modal = await screen.findByRole('dialog', { name: 'Query variable: test' });
+    const queryInput = await within(modal).findByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput
+    );
+    await user.clear(queryInput);
+    await user.type(queryInput, 'updated query');
+    await user.tab();
+    await user.click(within(modal).getByRole('button', { name: 'Run query' }));
 
-    // 2. Opening Modal
-    await user.click(openEditorButton);
-    const modal = await screen.findByRole('dialog'); // wait for modal to appear
-    expect(modal).toBeInTheDocument();
-    expect(within(modal).getByText('Query Variable')).toBeInTheDocument(); // Modal title
+    expect(await within(modal).findByText('Preview of values (3)')).toBeInTheDocument();
+    expect(within(modal).getByText('val1')).toBeInTheDocument();
+    expect(within(modal).getByText('val2')).toBeInTheDocument();
+    expect(within(modal).getByText('val11')).toBeInTheDocument();
+    expect(queryInput).toHaveValue('updated query');
+    expect(variable.state.query).toBe('initial query');
+    expect(variable.state.options).toEqual([]);
+    expect(within(modal).queryByRole('radio', { name: /on dashboard load/i })).not.toBeInTheDocument();
 
-    // 3. Assert Editor's key elements are rendered
-    // DataSourcePicker's Field
-    expect(within(modal).getByLabelText('Target data source')).toBeInTheDocument();
-    // Regex input placeholder
-    expect(within(modal).getByPlaceholderText(/text>.*value/i)).toBeInTheDocument();
-    // Sort select (check for its current value display)
-    expect(within(modal).getByText('Disabled')).toBeInTheDocument(); // Default sort is 0 (Disabled)
-    // Refresh select (check for its current value display)
-    expect(within(modal).getByRole('radio', { name: /on dashboard load/i })).toBeChecked(); // Default refresh
+    await user.click(within(modal).getByRole('button', { name: 'Discard' }));
 
-    // 4. Assert Preview and Close buttons are visible
-    const previewButton = within(modal).getByRole('button', { name: 'Preview' });
-    // To distinguish from the header 'X' (aria-label="Close"), find the span with text "Close" and get its parent button.
-    const closeButtonTextSpan = within(modal).getByText(/^Close$/);
-    const closeButton = closeButtonTextSpan.closest('button')!;
-    expect(previewButton).toBeInTheDocument();
-    expect(closeButton).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(variable.state.query).toBe('initial query');
+    expect(variable.state.options).toEqual([]);
 
-    // 5. Preview button calls variable.refreshOptions()
-    await user.click(previewButton);
-    expect(refreshOptionsSpy).toHaveBeenCalledTimes(1);
-
-    // 6. Closing Modal
-    await user.click(closeButton);
-    await waitFor(() => {
-      expect(queryByRole('dialog')).not.toBeInTheDocument();
-    });
-
-    refreshOptionsSpy.mockRestore();
+    await user.click(screen.getByRole('button', { name: 'Open variable editor' }));
+    const reopenedModal = await screen.findByRole('dialog', { name: 'Query variable: test' });
+    expect(
+      await within(reopenedModal).findByTestId(
+        selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput
+      )
+    ).toHaveValue('initial query');
   });
 });
 
@@ -557,4 +555,130 @@ describe('Editor', () => {
 
     expect(variable.state.datasource).toEqual({ uid: 'mock-ds-3', type: 'prometheus' });
   });
+
+  it.each([
+    { scope: 'concrete', uid: promDatasource.uid, label: promDatasource.name, editor: 'sidebar' },
+    { scope: 'row-scoped', uid: '${AZ_PROMETHEUS}', label: '${AZ_PROMETHEUS}', editor: 'sidebar' },
+    { scope: 'row-scoped draft', uid: '${AZ_PROMETHEUS}', label: '${AZ_PROMETHEUS}', editor: 'draft' },
+    { scope: 'row-scoped settings', uid: '${AZ_PROMETHEUS}', label: '${AZ_PROMETHEUS}', editor: 'settings' },
+  ])(
+    'retains the $scope Prometheus datasource and query after opening and dismissing the picker',
+    async ({ uid, label, editor }) => {
+      const datasourceRef = { uid, type: 'prometheus' };
+      const query = 'label_values(cluster)';
+      const datasourceVariable = new DataSourceVariable({
+        name: 'AZ_PROMETHEUS',
+        pluginId: 'prometheus',
+        value: promDatasource.uid,
+        text: promDatasource.name,
+        isMulti: false,
+        includeAll: false,
+      });
+      const queryVariable = new QueryVariable({ name: 'Cluster', datasource: datasourceRef, query, definition: query });
+      const row = new RowItem({
+        title: 'Row',
+        $variables: new SceneVariableSet({ variables: [datasourceVariable, queryVariable] }),
+        layout: AutoGridLayoutManager.createEmpty(),
+      });
+      // Parent links provide scope without activating the dashboard and running variable queries.
+      const dashboard = new DashboardScene({
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+        body: new RowsLayoutManager({ rows: [row] }),
+      });
+      const editedVariable =
+        editor === 'draft'
+          ? renderHook(() => useDraftVariable(queryVariable)).result.current.draftVariable
+          : queryVariable;
+      const rowScope = { __sceneObject: new SafeSerializableSceneObject(editedVariable) };
+      const variableRef = { uid: '${AZ_PROMETHEUS}', type: 'prometheus' };
+
+      const resolveSettings = (ref?: DataSourceRef | string | null, scopedVars?: ScopedVars) => {
+        const uid = typeof ref === 'string' ? ref : ref?.uid;
+        if (!uid) {
+          return undefined;
+        }
+
+        const context = scopedVars?.__sceneObject?.value.valueOf() ?? dashboard;
+        const resolvedUid = sceneGraph.interpolate(context, uid, scopedVars);
+        if (resolvedUid !== promDatasource.uid) {
+          return undefined;
+        }
+
+        return uid === resolvedUid
+          ? promDatasource
+          : { ...promDatasource, uid, name: uid, isDefault: false, rawRef: { uid: resolvedUid, type: 'prometheus' } };
+      };
+
+      expect(resolveSettings(variableRef)).toBeUndefined();
+      expect(resolveSettings(variableRef, rowScope)?.rawRef?.uid).toBe(promDatasource.uid);
+
+      function PrometheusQueryEditor({ query, datasource }: VariableQueryEditorProps) {
+        return <input aria-label={`${datasource.type} variable query`} value={query} readOnly />;
+      }
+
+      const datasource: DataSourceApi = {
+        ...promDatasource,
+        query: jest.fn(),
+        testDatasource: jest.fn(),
+        getRef: () => ({ uid: promDatasource.uid, type: 'prometheus' }),
+        variables: {
+          getType: () => VariableSupportType.Custom,
+          query: jest.fn(),
+          editor: jest.fn().mockImplementation(PrometheusQueryEditor),
+        },
+      };
+      const serviceMock = jest.mocked(getDataSourceSrv);
+      const instanceMock = jest.mocked(getDataSourceInstance);
+      const originalService = serviceMock.getMockImplementation()!;
+      const originalInstance = instanceMock.getMockImplementation()!;
+      serviceMock.mockReturnValue({
+        ...getDataSourceSrv(),
+        getInstanceSettings: resolveSettings,
+        getList: () => [promDatasource, resolveSettings(variableRef, rowScope)!],
+      });
+      instanceMock.mockImplementation(async (ref, scopedVars) => {
+        if (!resolveSettings(ref, scopedVars)) {
+          throw new Error(`Datasource ${typeof ref === 'string' ? ref : ref?.uid} was not found`);
+        }
+        return datasource;
+      });
+
+      try {
+        const user = userEvent.setup();
+        await act(async () =>
+          render(
+            editor === 'settings' ? (
+              <QueryVariableEditor variable={editedVariable} onRunQuery={jest.fn()} />
+            ) : (
+              <Editor variable={editedVariable} />
+            )
+          )
+        );
+
+        const picker = screen.getByLabelText(editor === 'settings' ? 'Data source' : 'Target data source');
+        await user.click(picker);
+        expect(picker).toHaveAttribute('aria-expanded', 'true');
+        await user.keyboard('{Escape}');
+        expect(picker).toHaveAttribute('aria-expanded', 'false');
+
+        expect(queryVariable.state.datasource).toEqual(datasourceRef);
+        expect(queryVariable.state.query).toBe(query);
+        expect(queryVariable.state.definition).toBe(query);
+        expect(editedVariable.state).toMatchObject({ datasource: datasourceRef, query, definition: query });
+        await waitFor(() => {
+          expect({
+            datasource: picker.getAttribute('placeholder'),
+            query: screen.queryByRole('textbox', { name: 'prometheus variable query' })?.getAttribute('value'),
+          }).toEqual({ datasource: label, query });
+        });
+
+        const datasourceLoads = instanceMock.mock.calls.length;
+        act(() => editedVariable.setState({ regex: 'cluster.*' }));
+        expect(instanceMock).toHaveBeenCalledTimes(datasourceLoads);
+      } finally {
+        serviceMock.mockImplementation(originalService);
+        instanceMock.mockImplementation(originalInstance);
+      }
+    }
+  );
 });

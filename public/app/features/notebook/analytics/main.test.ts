@@ -154,13 +154,31 @@ describe('NotebookAnalytics.cellAddedFromAddToNotebook', () => {
 
   afterEach(() => unsubscribe());
 
+  it('identifies the app for content added to an existing notebook', () => {
+    NotebookAnalytics.cellAddedFromAddToNotebook('nb-1', 'plugin', 2, undefined, false, false, 'grafana-assistant-app');
+    expect(events).toEqual([
+      {
+        notebookUid: 'nb-1',
+        source: 'plugin',
+        position: 2,
+        target: 'existing',
+        cellType: 'markdown',
+        lockTimeRange: false,
+        hasText: false,
+        originPluginId: 'grafana-assistant-app',
+        schema_version: 1,
+      },
+    ]);
+  });
+
   it('sends the shape of the added panel next to the notebook and the position', () => {
     NotebookAnalytics.cellAddedFromAddToNotebook(
       'nb-1',
       'explore',
       2,
       { panel: defaultVisualizationPanelKind(), isLibraryPanel: false },
-      true
+      true,
+      false
     );
 
     expect(events).toEqual([
@@ -171,6 +189,7 @@ describe('NotebookAnalytics.cellAddedFromAddToNotebook', () => {
         cellType: 'panel',
         target: 'existing',
         lockTimeRange: true,
+        hasText: false,
         schema_version: 1,
         panelType: 'timeseries',
         datasourceTypes: [],
@@ -190,6 +209,7 @@ describe('NotebookAnalytics.cellAddedFromAddToNotebook', () => {
       'dashboard_panel',
       0,
       { panel: defaultVisualizationPanelKind(), isLibraryPanel: true },
+      false,
       false
     );
 
@@ -201,7 +221,7 @@ describe('NotebookAnalytics.cellAddedFromAddToNotebook', () => {
   // A chat answer brings text next to its panels. There is no panel to describe, so those properties
   // are left off rather than sent empty.
   it('reports a markdown cell with no panel properties', () => {
-    NotebookAnalytics.cellAddedFromAddToNotebook('nb-1', 'plugin', 3, undefined, false);
+    NotebookAnalytics.cellAddedFromAddToNotebook('nb-1', 'plugin', 3, undefined, false, false);
 
     expect(events).toEqual([
       {
@@ -211,9 +231,24 @@ describe('NotebookAnalytics.cellAddedFromAddToNotebook', () => {
         cellType: 'markdown',
         target: 'existing',
         lockTimeRange: false,
+        hasText: false,
         schema_version: 1,
       },
     ]);
+  });
+
+  // The text typed in the modal is not a cell event of its own, so this is how its use is counted.
+  it('reports that the person typed text with the panel it came with', () => {
+    NotebookAnalytics.cellAddedFromAddToNotebook(
+      'nb-1',
+      'dashboard_panel',
+      1,
+      { panel: defaultVisualizationPanelKind(), isLibraryPanel: false },
+      false,
+      true
+    );
+
+    expect(events).toEqual([expect.objectContaining({ hasText: true, cellType: 'panel', position: 1 })]);
   });
 });
 
@@ -233,13 +268,30 @@ describe('NotebookAnalytics.created', () => {
 
   afterEach(() => unsubscribe());
 
+  it('identifies the app without changing the existing plugin source', () => {
+    NotebookAnalytics.created('nb-1', 'plugin', 1, undefined, false, false, 'grafana-lokiexplore-app');
+    expect(events).toEqual([
+      {
+        notebookUid: 'nb-1',
+        source: 'plugin',
+        cellCount: 1,
+        target: 'new',
+        lockTimeRange: false,
+        hasText: false,
+        originPluginId: 'grafana-lokiexplore-app',
+        schema_version: 1,
+      },
+    ]);
+  });
+
   it('describes the panel the notebook was created around', () => {
     NotebookAnalytics.created(
       'nb-1',
       'dashboard_panel',
       1,
       { panel: defaultVisualizationPanelKind(), isLibraryPanel: true },
-      true
+      true,
+      false
     );
 
     expect(events).toEqual([
@@ -249,6 +301,7 @@ describe('NotebookAnalytics.created', () => {
         cellCount: 1,
         target: 'new',
         lockTimeRange: true,
+        hasText: false,
         schema_version: 1,
         panelType: 'timeseries',
         datasourceTypes: [],
@@ -256,6 +309,19 @@ describe('NotebookAnalytics.created', () => {
         isLibraryPanel: true,
       },
     ]);
+  });
+
+  it('reports that the person typed text with the panel', () => {
+    NotebookAnalytics.created(
+      'nb-1',
+      'dashboard_panel',
+      2,
+      { panel: defaultVisualizationPanelKind(), isLibraryPanel: false },
+      false,
+      true
+    );
+
+    expect(events).toEqual([expect.objectContaining({ hasText: true, cellCount: 2 })]);
   });
 
   // The blank notebook route creates from whatever cells exist by the first save. There is no one
@@ -323,5 +389,40 @@ describe('NotebookAnalytics prompts, retries, blocks and incidents', () => {
     NotebookAnalytics.incidentActionCompleted('nb-1', 'attach');
 
     expect(captured.incident_action_completed).toEqual([{ notebookUid: 'nb-1', action: 'attach', schema_version: 1 }]);
+  });
+});
+
+describe('plugin add failure attribution', () => {
+  it('reports the originating app when the write fails', () => {
+    setEchoSrv(new Echo());
+    const events: Array<Record<string, unknown>> = [];
+    const unsubscribe = onInteraction('grafana_notebook_add_to_notebook_failed', (properties) =>
+      events.push(properties)
+    );
+    try {
+      NotebookAnalytics.addToNotebookFailed(
+        'nb-1',
+        'plugin',
+        'existing',
+        'write_failed',
+        false,
+        false,
+        'grafana-assistant-app'
+      );
+      expect(events).toEqual([
+        {
+          notebookUid: 'nb-1',
+          source: 'plugin',
+          target: 'existing',
+          reason: 'write_failed',
+          lockTimeRange: false,
+          hasText: false,
+          originPluginId: 'grafana-assistant-app',
+          schema_version: 1,
+        },
+      ]);
+    } finally {
+      unsubscribe();
+    }
   });
 });
