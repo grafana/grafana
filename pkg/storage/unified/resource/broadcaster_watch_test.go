@@ -7,6 +7,7 @@ import (
 	"sync/atomic"
 	"testing"
 	"testing/synctest"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
@@ -518,9 +519,7 @@ func TestCheckedWatchRoutesByNamespace(t *testing.T) {
 	})
 }
 
-// Writes that move to another namespace must still refill a watch's channel
-// from its overflow right away, not on the next drain tick.
-func TestCheckedWatchDrainsOverflowOnOtherNamespaceWrites(t *testing.T) {
+func TestCheckedWatchDrainsOverflowOnTickWithoutMatchingWrites(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		gr := GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
 		input := make(chan *WrittenEvent)
@@ -538,13 +537,30 @@ func TestCheckedWatchDrainsOverflowOnOtherNamespaceWrites(t *testing.T) {
 
 		input <- namespacedCacheEvent(gr, "second", 6)
 		synctest.Wait()
-		require.Len(t, sub.events(), subBuf, "the overflow must be drained without waiting for the ticker")
+		require.Empty(t, sub.events(), "writes to other namespaces must leave the overflow to the ticker")
 
+		time.Sleep(drainInterval)
+		synctest.Wait()
+		require.Len(t, sub.events(), subBuf, "the ticker must refill the channel")
+		require.Equal(t, int64(3), (<-sub.events()).ResourceVersion)
+		require.Equal(t, int64(4), (<-sub.events()).ResourceVersion)
+
+		input <- namespacedCacheEvent(gr, "first", 7)
+		synctest.Wait()
+		require.Len(t, sub.events(), subBuf, "a matching write must drain overflow immediately")
+		require.Equal(t, int64(5), (<-sub.events()).ResourceVersion)
+		require.Equal(t, int64(7), (<-sub.events()).ResourceVersion)
+		require.Empty(t, b.overflowing, "draining the last item must clear the overflow index")
+
+		for rv := int64(8); rv <= 10; rv++ {
+			input <- namespacedCacheEvent(gr, "first", rv)
+		}
+		synctest.Wait()
 		collection := sub.sub.collection
-		require.Contains(t, collection.overflowing["first"], sub.events())
+		require.Contains(t, b.overflowing, sub.events())
 		b.Unsubscribe(sub.events())
 		synctest.Wait()
-		require.Empty(t, collection.overflowing)
+		require.Empty(t, b.overflowing)
 		require.Empty(t, collection.byNamespace)
 		require.Empty(t, b.scoped)
 	})
