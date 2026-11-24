@@ -19,8 +19,11 @@ export interface APIGroupInfo {
 /**
  * A resource the server serves in one group version, as returned by {@link getAPIResources}.
  *
- * Like {@link APIGroupInfo}, a simplified version of the Kubernetes discovery entries rather than the
- * entries themselves: subresources are folded into their resource, and the scope is a boolean.
+ * A simplified version of the Kubernetes discovery entries, not the entries themselves, so the public
+ * API and the plugin-compat wrappers don't depend on the Kubernetes format. Kubernetes describes a
+ * resource in two shapes, an `APIResourceList` entry and an aggregated `APIResourceDiscovery`, and
+ * this one type stands for both: each entry carries its group and version, subresources are folded
+ * into their resource, and the scope is a boolean.
  *
  * @alpha
  */
@@ -43,6 +46,9 @@ export interface APIResourceInfo {
 
 /**
  * What {@link isAPIResourceAvailable} checks.
+ *
+ * Kubernetes has no type for this question, so it names only what a caller checks: `subresource` and
+ * `verb` are optional and narrow the check.
  *
  * @alpha
  */
