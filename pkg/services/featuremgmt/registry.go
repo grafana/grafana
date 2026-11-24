@@ -768,22 +768,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:        "pdfTables",
-			Description: "Enables generating table data as PDF in reporting",
-			Stage:       FeatureStagePublicPreview,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Owner:       grafanaOperatorExperienceSquad,
-			Expression:  "false",
-		},
-		{
-			Name:        "reporting.pdfTablesFrontend",
-			Description: "Enables frontend-rendered table appendix pages in PDF reports",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{Go: true},
-			Owner:       grafanaOperatorExperienceSquad,
-			Expression:  "false",
-		},
-		{
 			Name:        "reportingV2Layouts",
 			Description: "Enable v2 dashboard layout support in reports (auto-grid, tabs, rows)",
 			Stage:       FeatureStageExperimental,

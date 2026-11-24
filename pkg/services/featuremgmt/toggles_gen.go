@@ -247,14 +247,6 @@ const (
 	// Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state
 	FlagGrafanaSavedDashboardViews = "grafana.savedDashboardViews"
 
-	// FlagPdfTables
-	// Enables generating table data as PDF in reporting
-	FlagPdfTables = "pdfTables"
-
-	// FlagReportingPdfTablesFrontend
-	// Enables frontend-rendered table appendix pages in PDF reports
-	FlagReportingPdfTablesFrontend = "reporting.pdfTablesFrontend"
-
 	// FlagReportRenderBinding
 	// Enables render binding support for report rendering
 	FlagReportRenderBinding = "reportRenderBinding"

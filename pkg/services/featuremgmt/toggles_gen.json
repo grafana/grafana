@@ -5289,11 +5289,15 @@
     {
       "metadata": {
         "name": "pdfTables",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2023-11-06T13:39:22Z"
+        "resourceVersion": "1795528186282",
+        "creationTimestamp": "2023-11-06T13:39:22Z",
+        "deletionTimestamp": "2026-11-24T14:03:49Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-24 13:49:46.282804 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables generating table data as PDF in reporting",
+        "description": "Enables table data appendices in PDF reports",
         "stage": "preview",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "expression": "false"
@@ -6100,7 +6104,8 @@
       "metadata": {
         "name": "reporting.pdfTablesFrontend",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-04-22T08:15:18Z"
+        "creationTimestamp": "2026-04-22T08:15:18Z",
+        "deletionTimestamp": "2026-11-24T13:49:46Z"
       },
       "spec": {
         "description": "Enables frontend-rendered table appendix pages in PDF reports",

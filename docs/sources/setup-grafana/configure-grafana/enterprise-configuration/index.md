@@ -173,26 +173,6 @@ Scale factor for rendering images. Value `2` is enough for monitor resolutions, 
 
 Set the maximum file size in megabytes for the report email attachments. Default is `10`.
 
-### fonts_path
-
-Path to the directory containing font files.
-
-### font_regular
-
-Name of the TrueType font file with regular style. Default is `DejaVuSansCondensed.ttf`.
-
-### font_bold
-
-Name of the TrueType font file with bold style.
-
-### font_italic
-
-Name of the TrueType font file with italic style. Default is `DejaVuSansCondensed-Oblique.ttf`.
-
-### font_min_text_size
-
-The minimum pixel size that Grafana uses when rendering fonts. Default is `4`.
-
 ### max_request_retries
 
 Maximum number of times the following reporting rendering requests are retried before returning an error: generating PDFs, generating embedded dashboard images for report emails, and generating attached CSV files. Default is `0`, which means it is disabled.

@@ -88,7 +88,7 @@ In the **PDF** section, use the following switches to choose what it contains:
 When you turn a switch off, that item no longer appears on any page, and the panels get the space instead.
 If you turn all three off, Grafana removes the header area unless the report has **Show template variables** selected.
 
-These switches apply to the report PDF and to the separate PDF of table data.
+These switches apply to the report PDF, including its table data appendix.
 They also apply to the PDFs you generate with **Preview PDF** during report creation and with **Export as PDF** on a dashboard.
 
 ### PDF footer
@@ -175,8 +175,6 @@ The next report that Grafana generates uses the updated footer.
 To check it sooner, click **Preview PDF** during report creation.
 
 The footer applies to the report PDF, and to the PDFs you generate with **Preview PDF** during report creation and with **Export as PDF** on a dashboard.
-The separate PDF of table data isn't affected by these settings.
-It always prints a page number and the company logo.
 
 ### Embedded Image
 

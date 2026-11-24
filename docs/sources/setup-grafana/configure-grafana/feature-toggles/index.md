@@ -82,7 +82,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `dashboard.notebooks`                | Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels            |
 | `dashboardUndoRedo`                  | Enables undo/redo in dynamic dashboards                                                                                        |
 | `feedbackButton`                     | Enables the feedback button in the dashboard edit sidebar                                                                      |
-| `pdfTables`                          | Enables generating table data as PDF in reporting                                                                              |
 | `canvasPanelPanZoom`                 | Allow pan and zoom in canvas panel                                                                                             |
 | `secretsManagementAppPlatformUI`     | Enable the secrets management app platform UI                                                                                  |
 | `secretsKeeperUI`                    | Enable the Secrets Keeper management UI for configuring external secret storage                                                |

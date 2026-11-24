@@ -295,11 +295,6 @@ export interface FeatureToggles {
   */
   feedbackButton?: boolean;
   /**
-  * Enables generating table data as PDF in reporting
-  * @default false
-  */
-  pdfTables?: boolean;
-  /**
   * Enable v2 dashboard layout support in reports (auto-grid, tabs, rows)
   * @default false
   */

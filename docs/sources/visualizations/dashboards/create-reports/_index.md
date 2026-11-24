@@ -304,7 +304,6 @@ At this step, select one or more report attachment options.
 You can select multiple options, but you must select _at least one_:
 
 - **Attach the report as a PDF** - Attach the report as one PDF file.
-- **[Attach a separate PDF of table data](#table-data-in-pdf)** - Attach a separate PDF file to the report email for each table panel on the selected dashboard. Public preview only.
 - **Attach a CSV file of table panel data** - Attach a CSV file to the report email for each table panel on the selected dashboard.
 
 #### PDF format
@@ -320,7 +319,7 @@ If you selected a PDF attachment, configure the following formatting options:
 | Zoom                            | Zoom in to enlarge text in your PDF or zoom out to see more data (like table columns) per panel. |
 | Combine all dashboard PDFs in one file     | Click the checkbox if you want to generate one PDF file for all the dashboards included in the report. This option is only displayed if there are multiple dashboards in the report. |
 | Show template variables         | Click the checkbox to show dashboard variables. This option is only displayed if the report contains variables. |
-| [Include table data as PDF appendix](#table-data-in-pdf) | Add an appendix of the dashboard table data to the report PDF. This is useful when there's more data in your table visualization than can be shown in the dashboard PDF. _Public preview only._ |
+| [Include table data as PDF appendix](#table-data-in-pdf) | Add an appendix of the dashboard table data to the report PDF. This is useful when there's more data in your table visualization than can be shown in the dashboard PDF. |
 <!-- prettier-ignore-end -->
 
 These options apply to one report.
@@ -341,14 +340,9 @@ To choose which items appear in the PDF header and footer for every report in yo
 
 #### Table data in PDF
 
-{{< admonition type="note" >}}
-Available in public preview (`pdfTables` feature toggle) in [Grafana Enterprise](ref:grafana-enterprise) with the [Grafana image renderer service](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/), as well as in [Grafana Cloud](/docs/grafana-cloud/).
-{{< /admonition >}}
+Select **Include table data as PDF appendix** to add table visualization rows to the dashboard PDF. The appendix indicates when a table exceeds the rendering row limit.
 
-When there's more data in your table visualizations than can be shown in the dashboard PDF, you can select one of these two options to access all table visualization data as PDF in your reports:
-
-- **Include table data as PDF appendix** - Adds an appendix to the dashboard PDF.
-- **Attach a separate PDF of table data** - Generates a separate PDF file.
+Reports configured with a separate table data PDF include that table data as an appendix to the dashboard PDF.
 
 ## Send a report using the API
 
