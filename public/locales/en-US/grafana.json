@@ -16200,6 +16200,18 @@
       "title-data-source-help": "Data source help"
     }
   },
+  "query-coauthoring": {
+    "surface": {
+      "debug": "Debug query",
+      "edit-query": "Explain or modify query {{refId}}",
+      "error": "Error",
+      "explain-modify": "Explain or modify",
+      "highlight-actions": "Query selection actions",
+      "no-data": "No data",
+      "proposed": "Proposed",
+      "resume": "Resume"
+    }
+  },
   "query-editor-coauthoring": {
     "accept": "Accept",
     "assistant-context-title": "Query coauthoring context",

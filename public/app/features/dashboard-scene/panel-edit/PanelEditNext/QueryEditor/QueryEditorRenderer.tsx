@@ -1,6 +1,15 @@
 import { ProviderStatus, useBooleanFlagDetails, useOpenFeatureClientStatus } from '@openfeature/react-sdk';
 import { isEqual } from 'lodash';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  type ComponentProps,
+  type ComponentType,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import {
   CoreApp,
@@ -24,12 +33,14 @@ import {
   useQueryEditorUIContext,
   useQueryRunnerContext,
 } from './QueryEditorContext';
+import { useCoauthoringEditor } from './coauthoring/QueryCoauthoringEditor';
 import { QueryCoauthoringSurface } from './coauthoring/QueryCoauthoringSurface';
 import {
   type InternalQueryEditorCoauthoringPropsV1,
   type QueryEditorCoauthoringAdapterV1,
   type QueryEditorCoauthoringRegistrationV1,
 } from './coauthoring/internalCoauthoringContract';
+import { type QueryEditorPropsWithCoauthoring } from './coauthoring/queryCoauthoringContracts';
 import { reportQueryCoauthoringDecision } from './coauthoring/queryCoauthoringDecision';
 import { type QueryPreview } from './coauthoring/queryPreview';
 import { supportsQueryCoauthoring } from './coauthoring/supportsQueryCoauthoring';
@@ -68,6 +79,7 @@ export function QueryEditorPanel({
   startQueryPreview,
   onQueryEdited,
 }: QueryEditorPanelProps) {
+  const coauthoring = useCoauthoringEditor(query, queries);
   const coauthoringFlag = useBooleanFlagDetails(FlagKeys.QueryeditorCoauthoringUi, false);
   const providerStatus = useOpenFeatureClientStatus();
   const coauthoringEnabled = coauthoringFlag.value;
@@ -110,22 +122,38 @@ export function QueryEditorPanel({
   });
 
   const { onChange: onTransactionChange, editorQuery } = proposalTransaction;
-  // Read through a ref so onChange stays stable: an editor that keeps its first onChange still compares
-  // with the current query.
-  const currentQueryRef = useRef(editorQuery ?? query);
+  // Editors can retain their first callback; compare with the latest displayed query and Surface state.
+  const currentQueryRef = useRef({
+    query: (coauthoring.active ? coauthoring.editorQuery : editorQuery) ?? query,
+    coauthoringActive: coauthoring.active,
+    coauthoringQuery: coauthoring.editorQuery,
+  });
   useLayoutEffect(() => {
-    currentQueryRef.current = editorQuery ?? query;
+    currentQueryRef.current = {
+      query: (coauthoring.active ? coauthoring.editorQuery : editorQuery) ?? query,
+      coauthoringActive: coauthoring.active,
+      coauthoringQuery: coauthoring.editorQuery,
+    };
   });
   const onEditorChange = useCallback(
     (updatedQuery: DataQuery) => {
-      // An editor echoing the query it was given (including an AI proposal on preview) isn't an edit.
-      if (!isEqual(updatedQuery, currentQueryRef.current)) {
+      const current = currentQueryRef.current;
+      if (current.coauthoringActive && isEqual(updatedQuery, current.coauthoringQuery)) {
+        return;
+      }
+      if (!isEqual(updatedQuery, current.query)) {
         onQueryEdited?.();
       }
       onTransactionChange(updatedQuery);
     },
     [onQueryEdited, onTransactionChange]
   );
+  const revertInline = proposalTransaction.revert;
+  useEffect(() => {
+    if (coauthoring.active) {
+      revertInline();
+    }
+  }, [coauthoring.active, revertInline]);
 
   const coauthoringHost = useMemo(
     () => ({
@@ -198,26 +226,31 @@ export function QueryEditorPanel({
 
   const { datasource, dsSettings } = queryDsData;
   const internalCoauthoringProps: InternalQueryEditorCoauthoringPropsV1 = {
-    unstable_queryEditorCoauthoringV1: coauthoringEnabled && coauthoringSupported ? coauthoringRegistration : undefined,
+    unstable_queryEditorCoauthoringV1:
+      coauthoringEnabled && !coauthoring.active && coauthoringSupported ? coauthoringRegistration : undefined,
   };
+  const Editor: ComponentType<QueryEditorPropsWithCoauthoring<ComponentProps<typeof QueryEditorComponent>>> =
+    QueryEditorComponent;
   return (
     <>
+      {coauthoring.toolbar}
       <DataSourcePluginContextProvider instanceSettings={dsSettings}>
         <ErrorBoundaryAlert boundaryName="query-editor-renderer">
-          <QueryEditorComponent
+          <Editor
             key={coauthoringIdentity}
             {...internalCoauthoringProps}
+            {...(coauthoring.host ? { queryCoauthoring: coauthoring.host } : {})}
             app={CoreApp.PanelEditor}
             data={filteredData}
             datasource={datasource}
             onAddQuery={addQuery}
             onChange={onEditorChange}
             onRunQuery={proposalTransaction.run}
-            queries={proposalTransaction.editorQueries}
-            query={proposalTransaction.editorQuery ?? query}
+            queries={coauthoring.active ? coauthoring.editorQueries : proposalTransaction.editorQueries}
+            query={(coauthoring.active ? coauthoring.editorQuery : proposalTransaction.editorQuery) ?? query}
             range={filteredData?.timeRange}
           />
-          {coauthoringAdapter && (
+          {!coauthoring.active && coauthoringAdapter && (
             <QueryCoauthoringSurface
               adapter={coauthoringAdapter}
               host={coauthoringHost}

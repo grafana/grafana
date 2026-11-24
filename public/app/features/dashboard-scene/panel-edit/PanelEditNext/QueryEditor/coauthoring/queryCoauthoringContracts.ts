@@ -18,6 +18,8 @@ export interface QueryCoauthoringTarget {
 }
 
 export interface QueryCoauthoringEntryRequest {
+  entryId: string;
+  baseline: QueryCoauthoringEntryBaseline;
   target: QueryCoauthoringTarget;
   ranges: QueryCoauthoringRange[];
   intent: 'explain_or_modify' | 'debug';
@@ -50,10 +52,6 @@ export interface QueryCoauthoringStagedOption {
   error?: string;
 }
 
-export type QueryCoauthoringStageResult =
-  | { status: 'staged'; id: string; diffs: QueryCoauthoringDiff[] }
-  | { status: 'invalid' | 'unchanged' | 'stale' | 'unsupported' };
-
 export type QueryCoauthoringApplyResult =
   | { status: 'applied'; revision: number }
   | { status: 'aborted' | 'stale' | 'blocked' | 'closed' | 'invalid' | 'no_user_activation' };
@@ -70,6 +68,9 @@ export interface QueryCoauthoringState {
   previewedOption: string | 'original';
   canUndo: boolean;
   stale: boolean;
+  contextGeneration: number;
+  dependencies: Record<string, string[]>;
+  problems: QueryCoauthoringProblem[];
 }
 
 export interface QueryCoauthoringSession {
@@ -78,10 +79,11 @@ export interface QueryCoauthoringSession {
   readonly closed: Promise<QueryCoauthoringClosedReason>;
   getState(): QueryCoauthoringState;
   subscribe(listener: (state: QueryCoauthoringState) => void): () => void;
+  getContext(options: { baseRevision: number; signal?: AbortSignal }): Promise<QueryCoauthoringContextResult>;
   /** Results correspond to the input options in order. A proposal contains at most three options. */
   stageProposal(
     proposal: QueryCoauthoringOption[],
-    options: { baseRevision: number; signal?: AbortSignal }
+    options: { baseRevision: number; baseContextGeneration: number; signal?: AbortSignal }
   ): Promise<QueryCoauthoringStageResult[]>;
   preview(optionId: string | 'original'): { ok: true } | { ok: false; reason: 'stale' };
   /** Accept and undo require transient user activation. */
@@ -96,16 +98,16 @@ export interface QueryCoauthoringSession {
 
 export interface QueryCoauthoringAPI {
   readonly version: 1;
+  getAvailability(): { eligible: boolean };
+  subscribeAvailability(listener: (value: { eligible: boolean }) => void): () => void;
   onEnterRequested(listener: (request: QueryCoauthoringEntryRequest) => void): () => void;
   onResumeRequested(listener: (request: { sessionId: string }) => void): () => void;
-  canEnter(
-    target: QueryCoauthoringTarget
-  ): { ok: true } | { ok: false; reason: 'not_in_panel_edit' | 'unsupported_datasource' | 'unknown_query' };
+  canEnter(target: QueryCoauthoringTarget): { ok: true } | { ok: false; reason: 'not_in_panel_edit' | 'unknown_query' };
   /**
    * Rejects when `canEnter(target)` is not ok.
    * Consumers keep their own session types and validate the returned handle at runtime.
    */
-  enter(target: QueryCoauthoringTarget): Promise<unknown>;
+  enter(target: QueryCoauthoringTarget, options: { entryId: string }): Promise<unknown>;
 }
 
 export interface QueryCoauthoringLanguageDescription {
@@ -127,6 +129,7 @@ export type QueryCoauthoringPrepareResult<TQuery extends DataQuery = DataQuery> 
 
 export interface QueryCoauthoringLanguage<TQuery extends DataQuery = DataQuery> {
   readonly version: 1;
+  getQuerySupport?(query: TQuery): { editable: boolean };
   describe(query: TQuery, options: { signal?: AbortSignal }): Promise<QueryCoauthoringLanguageDescription>;
   prepare(baseline: TQuery, text: string): QueryCoauthoringPrepareResult<TQuery>;
 }
@@ -161,17 +164,6 @@ export type QueryEditorPropsWithCoauthoring<TProps> = TProps & {
 export type RestrictedGrafanaApisWithQueryCoauthoring = RestrictedGrafanaApisContextType & {
   queryCoauthoring?: QueryCoauthoringAPI;
 };
-
-export function isQueryCoauthoringAPI(value: unknown): value is QueryCoauthoringAPI {
-  return (
-    isRecord(value) &&
-    value.version === 1 &&
-    typeof value.onEnterRequested === 'function' &&
-    typeof value.onResumeRequested === 'function' &&
-    typeof value.canEnter === 'function' &&
-    typeof value.enter === 'function'
-  );
-}
 
 export function isQueryCoauthoringLanguage(value: unknown): value is QueryCoauthoringLanguage {
   return (
@@ -210,6 +202,7 @@ export function isQueryCoauthoringSession(value: unknown): value is QueryCoautho
     typeof value.closed.then === 'function' &&
     typeof value.closed.catch === 'function' &&
     typeof value.closed.finally === 'function' &&
+    typeof value.getContext === 'function' &&
     typeof value.getState === 'function' &&
     typeof value.subscribe === 'function' &&
     typeof value.stageProposal === 'function' &&
@@ -218,5 +211,80 @@ export function isQueryCoauthoringSession(value: unknown): value is QueryCoautho
     typeof value.undo === 'function' &&
     typeof value.select === 'function' &&
     typeof value.exit === 'function'
+  );
+}
+
+export type QueryCoauthoringFailure =
+  | 'datasource_resolution_failed'
+  | 'language_resolution_failed'
+  | 'support_check_failed'
+  | 'description_failed'
+  | 'preparation_failed';
+
+export type QueryCoauthoringUnsupported = 'missing_language' | 'unsupported_language_version';
+
+export type QueryCoauthoringDescriptionResult =
+  | { status: 'ready'; value: QueryCoauthoringLanguageDescription }
+  | { status: 'unavailable'; reason: QueryCoauthoringUnsupported }
+  | { status: 'failed'; reason: QueryCoauthoringFailure };
+
+export type QueryCoauthoringEditability =
+  | { kind: 'editable' | 'read_only' }
+  | { kind: 'unknown'; reason: 'missing_query_support' | QueryCoauthoringFailure }
+  | { kind: 'unsupported'; reason: QueryCoauthoringUnsupported };
+
+export interface QueryCoauthoringQueryContext {
+  refId: string;
+  name?: string;
+  dependencies: string[];
+  editability: QueryCoauthoringEditability;
+  description: QueryCoauthoringDescriptionResult;
+}
+
+export type QueryCoauthoringEntryBaseline = {
+  refId: string;
+  revision: number;
+  contextGeneration: number;
+  ranges: QueryCoauthoringRange[];
+} & (
+  | { status: 'ready'; text: string }
+  | { status: 'unavailable'; reason: QueryCoauthoringUnsupported }
+  | { status: 'failed'; reason: QueryCoauthoringFailure }
+);
+
+export type QueryCoauthoringProblem =
+  | { scope: 'query'; refId: string; kind: 'error' | 'no-data'; message?: string }
+  | { scope: 'panel'; kind: 'error'; message?: string };
+
+export type QueryCoauthoringContextResult =
+  | {
+      status: 'ready';
+      sessionId: string;
+      revision: number;
+      contextGeneration: number;
+      queries: QueryCoauthoringQueryContext[];
+      entry: QueryCoauthoringEntryBaseline & { matchesCurrentText: boolean | 'unknown' };
+    }
+  | { status: 'stale'; currentRevision: number; currentContextGeneration: number }
+  | { status: 'aborted' | 'closed' };
+
+export type QueryCoauthoringStageResult =
+  | { status: 'staged'; id: string; diffs: QueryCoauthoringDiff[] }
+  | { status: 'unchanged' | 'stale' | 'aborted' | 'closed' }
+  | { status: 'invalid'; issue: { kind: 'invalid_text'; refId: string } | { kind: 'invalid_change'; refId?: string } }
+  | { status: 'unsupported'; issue: { kind: QueryCoauthoringUnsupported; refId: string } }
+  | { status: 'rejected'; issue: { kind: 'read_only' | 'unknown_editability' | 'entry_ranges_changed'; refId: string } }
+  | { status: 'failed'; issue: { kind: QueryCoauthoringFailure; refId: string } };
+
+export function isQueryCoauthoringAPI(value: unknown): value is QueryCoauthoringAPI {
+  return (
+    isRecord(value) &&
+    value.version === 1 &&
+    typeof value.getAvailability === 'function' &&
+    typeof value.subscribeAvailability === 'function' &&
+    typeof value.onEnterRequested === 'function' &&
+    typeof value.onResumeRequested === 'function' &&
+    typeof value.canEnter === 'function' &&
+    typeof value.enter === 'function'
   );
 }

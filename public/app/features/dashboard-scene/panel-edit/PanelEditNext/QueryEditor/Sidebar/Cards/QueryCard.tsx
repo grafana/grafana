@@ -1,3 +1,4 @@
+import { t } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
 import { Icon } from '@grafana/ui';
 import { DataSourceLogo } from 'app/features/datasources/components/picker/DataSourceLogo';
@@ -11,6 +12,9 @@ import {
   useQueryRunnerContext,
   useQueryEditorTypeConfig,
 } from '../../QueryEditorContext';
+import { QueryCoauthoringCard } from '../../coauthoring/QueryCoauthoringCard';
+import { isQueryCoauthoringSurfaceActive } from '../../coauthoring/queryCoauthoringApi';
+import { useCoauthoringCardHealth } from '../../coauthoring/useCoauthoringSurface';
 import { usePanelScopedVars } from '../../hooks/usePanelScopedVars';
 import { getEditorType } from '../../utils';
 
@@ -35,12 +39,19 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
   const { data } = useQueryRunnerContext();
   const typeConfig = useQueryEditorTypeConfig();
 
+  const health = useCoauthoringCardHealth(query.refId);
   const error = data?.errors?.find((e) => e.refId === query.refId)?.message;
   const isSelected = selectedQuery?.refId === query.refId;
   const isMultiSelected = multiSelectMode && selectedQueryRefIds.includes(query.refId);
   const isHidden = !!query.hide;
 
-  const item = queryToActionItem(query, { error });
+  const item = queryToActionItem(query, {
+    error: isQueryCoauthoringSurfaceActive()
+      ? health.error
+        ? (health.errorMessage ?? t('query-coauthoring.surface.error', 'Error'))
+        : undefined
+      : error,
+  });
 
   return (
     <>
@@ -61,6 +72,7 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
           <Icon name={typeConfig[editorType].icon} color={typeConfig[editorType].color} size="sm" />
         )}
         <CardTitle title={query.refId} isHidden={isHidden} />
+        <QueryCoauthoringCard refId={query.refId} />
       </SidebarCard>
       {pendingExpression?.insertAfter === query.refId && (
         <GhostSidebarCard id={PENDING_CARD_ID.expression} type={QueryEditorType.Expression} />
