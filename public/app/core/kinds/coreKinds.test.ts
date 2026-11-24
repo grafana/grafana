@@ -1,6 +1,14 @@
 import { type KindInfo } from '@grafana/runtime/unstable';
 
-import { addKinds, CORE_KINDS, coversGroup, findKind, getAppKinds } from './coreKinds';
+import {
+  addKinds,
+  CORE_KINDS,
+  coversGroup,
+  findKind,
+  findKindByResource,
+  getAppKinds,
+  getKindGroup,
+} from './coreKinds';
 
 describe('getRoute', () => {
   it('encodes the object name', () => {
@@ -58,6 +66,33 @@ describe('findKind', () => {
   });
 });
 
+describe('findKindByResource', () => {
+  it('finds a core kind by its plural resource name', () => {
+    expect(findKindByResource('playlists')).toBe(CORE_KINDS.playlist);
+  });
+
+  it('narrows by group, including a group served inside a collection', () => {
+    expect(findKindByResource('dashboards', 'dashboard.grafana.app')).toBe(CORE_KINDS.dashboard);
+    expect(findKindByResource('dashboards', 'folder.grafana.app')).toBeUndefined();
+    expect(findKindByResource(CORE_KINDS.datasource.resource, `prometheus.${CORE_KINDS.datasource.group}`)).toBe(
+      CORE_KINDS.datasource
+    );
+  });
+});
+
+describe('getKindGroup', () => {
+  it('names a collection member by the collection group', () => {
+    expect(getKindGroup(`prometheus.${CORE_KINDS.datasource.group}`, CORE_KINDS.datasource.kind)).toBe(
+      CORE_KINDS.datasource.group
+    );
+  });
+
+  it('keeps the group of a kind served under its own group, or of an unknown kind', () => {
+    expect(getKindGroup('dashboard.grafana.app', 'Dashboard')).toBe('dashboard.grafana.app');
+    expect(getKindGroup('unknown.example.app', 'Thing')).toBe('unknown.example.app');
+  });
+});
+
 describe('app kinds', () => {
   const group = 'example.ext.grafana.app';
 
@@ -79,6 +114,7 @@ describe('app kinds', () => {
 
     expect(findKind(group, 'Note')).toBe(note);
     expect(findKind('other.ext.grafana.app', 'Note')).toBeUndefined();
+    expect(findKindByResource('notes', group)).toBe(note);
   });
 
   it('keeps the core row when a plugin adds a kind that Grafana serves', () => {
