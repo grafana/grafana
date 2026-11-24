@@ -8,19 +8,26 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
+	"github.com/grafana/grafana/pkg/plugins/manager/sources/cdn"
+	"github.com/grafana/grafana/pkg/plugins/pluginerrs"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Service struct {
 	cfg            *config.PluginManagementCfg
+	cdn            *pluginscdn.Service
+	errorTracker   pluginerrs.ErrorTracker
 	staticRootPath string
 
 	log log.Logger
 }
 
-func ProvideService(cfg *setting.Cfg, pCcfg *config.PluginManagementCfg) *Service {
+func ProvideService(cfg *setting.Cfg, pCcfg *config.PluginManagementCfg, cdnService *pluginscdn.Service, errorTracker pluginerrs.ErrorTracker) *Service {
 	return &Service{
 		cfg:            pCcfg,
+		cdn:            cdnService,
+		errorTracker:   errorTracker,
 		staticRootPath: cfg.StaticRootPath,
 		log:            log.New("plugin.sources"),
 	}
@@ -35,7 +42,20 @@ func (s *Service) List(_ context.Context) []plugins.PluginSource {
 	}
 	r = append(r, s.externalPluginSources()...)
 	r = append(r, s.pluginSettingSources()...)
+	r = append(r, s.remoteSources()...)
 	return r
+}
+
+// remoteSources provides the source for plugins that are served from a remote URL ([plugin.<id>] cdn_url).
+// This is only available in development mode, e.g. to load a plugin's frontend from a dev server. It is not
+// a supported way to install plugins.
+func (s *Service) remoteSources() []plugins.PluginSource {
+	if !s.cfg.DevMode {
+		return nil
+	}
+	return []plugins.PluginSource{
+		cdn.NewCDNSource(s.cfg, s.cdn, s.errorTracker),
+	}
 }
 
 func (s *Service) externalPluginSources() []plugins.PluginSource {

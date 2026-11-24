@@ -335,14 +335,15 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	pluginsourcesService := pluginsources.ProvideService(cfg, pluginManagementCfg)
+	pluginscdnService := pluginscdn.ProvideService(pluginManagementCfg)
+	errorRegistry := pluginerrs.ProvideErrorTracker()
+	pluginsourcesService := pluginsources.ProvideService(cfg, pluginManagementCfg, pluginscdnService, errorRegistry)
 	discovery := pipeline.ProvideDiscoveryStage(pluginManagementCfg, inMemory)
 	keystoreService := keystore.ProvideService(kvStore)
 	keyRetriever := dynamic.ProvideService(cfg, keystoreService)
 	keyretrieverService := keyretriever.ProvideService(keyRetriever)
 	signatureSignature := signature.ProvideService(pluginManagementCfg, keyretrieverService)
 	localProvider := pluginassets.NewLocalProvider()
-	pluginscdnService := pluginscdn.ProvideService(pluginManagementCfg)
 	bootstrap := pipeline.ProvideBootstrapStage(pluginManagementCfg, signatureSignature, localProvider, pluginscdnService)
 	unsignedPluginAuthorizer := signature.ProvideOSSAuthorizer(pluginManagementCfg)
 	validation := signature.ProvideValidatorService(unsignedPluginAuthorizer)
@@ -492,7 +493,6 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	errorRegistry := pluginerrs.ProvideErrorTracker()
 	loaderLoader := loader.ProvideService(pluginManagementCfg, discovery, bootstrap, validate, initialize, terminate, errorRegistry)
 	pluginstoreService, err := pluginstore.ProvideService(inMemory, pluginsourcesService, loaderLoader, featureToggles)
 	if err != nil {
@@ -1144,14 +1144,15 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	pluginsourcesService := pluginsources.ProvideService(cfg, pluginManagementCfg)
+	pluginscdnService := pluginscdn.ProvideService(pluginManagementCfg)
+	errorRegistry := pluginerrs.ProvideErrorTracker()
+	pluginsourcesService := pluginsources.ProvideService(cfg, pluginManagementCfg, pluginscdnService, errorRegistry)
 	discovery := pipeline.ProvideDiscoveryStage(pluginManagementCfg, inMemory)
 	keystoreService := keystore.ProvideService(kvStore)
 	keyRetriever := dynamic.ProvideService(cfg, keystoreService)
 	keyretrieverService := keyretriever.ProvideService(keyRetriever)
 	signatureSignature := signature.ProvideService(pluginManagementCfg, keyretrieverService)
 	localProvider := pluginassets.NewLocalProvider()
-	pluginscdnService := pluginscdn.ProvideService(pluginManagementCfg)
 	bootstrap := pipeline.ProvideBootstrapStage(pluginManagementCfg, signatureSignature, localProvider, pluginscdnService)
 	unsignedPluginAuthorizer := signature.ProvideOSSAuthorizer(pluginManagementCfg)
 	validation := signature.ProvideValidatorService(unsignedPluginAuthorizer)
@@ -1290,7 +1291,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	errorRegistry := pluginerrs.ProvideErrorTracker()
 	loaderLoader := loader.ProvideService(pluginManagementCfg, discovery, bootstrap, validate, initialize, terminate, errorRegistry)
 	pluginstoreService, err := pluginstore.ProvideService(inMemory, pluginsourcesService, loaderLoader, featureToggles)
 	if err != nil {
@@ -2131,14 +2131,15 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	if err != nil {
 		return nil, err
 	}
-	pluginsourcesService := pluginsources.ProvideService(cfg, pluginManagementCfg)
+	pluginscdnService := pluginscdn.ProvideService(pluginManagementCfg)
+	errorRegistry := pluginerrs.ProvideErrorTracker()
+	pluginsourcesService := pluginsources.ProvideService(cfg, pluginManagementCfg, pluginscdnService, errorRegistry)
 	discovery := pipeline.ProvideDiscoveryStage(pluginManagementCfg, inMemory)
 	keystoreService := keystore.ProvideService(kvStore)
 	keyRetriever := dynamic.ProvideService(cfg, keystoreService)
 	keyretrieverService := keyretriever.ProvideService(keyRetriever)
 	signatureSignature := signature.ProvideService(pluginManagementCfg, keyretrieverService)
 	localProvider := pluginassets.NewLocalProvider()
-	pluginscdnService := pluginscdn.ProvideService(pluginManagementCfg)
 	bootstrap := pipeline.ProvideBootstrapStage(pluginManagementCfg, signatureSignature, localProvider, pluginscdnService)
 	unsignedPluginAuthorizer := signature.ProvideOSSAuthorizer(pluginManagementCfg)
 	validation := signature.ProvideValidatorService(unsignedPluginAuthorizer)
@@ -2233,7 +2234,6 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	if err != nil {
 		return nil, err
 	}
-	errorRegistry := pluginerrs.ProvideErrorTracker()
 	loaderLoader := loader.ProvideService(pluginManagementCfg, discovery, bootstrap, validate, initialize, terminate, errorRegistry)
 	pluginstoreService, err := pluginstore.ProvideService(inMemory, pluginsourcesService, loaderLoader, featureToggles)
 	if err != nil {

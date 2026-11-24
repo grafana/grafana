@@ -10,10 +10,31 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
+	"github.com/grafana/grafana/pkg/plugins/manager/sources/cdn"
+	"github.com/grafana/grafana/pkg/plugins/pluginerrs"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestSources_List(t *testing.T) {
+	t.Run("A remote source is only listed in dev mode", func(t *testing.T) {
+		testdata := testDataDir(t)
+		cfg := &setting.Cfg{StaticRootPath: testdata}
+
+		for _, devMode := range []bool{false, true} {
+			pCfg := &config.PluginManagementCfg{DevMode: devMode}
+			srcs := ProvideService(cfg, pCfg, pluginscdn.ProvideService(pCfg), pluginerrs.ProvideErrorTracker()).List(context.Background())
+
+			remote := 0
+			for _, src := range srcs {
+				if _, ok := src.(*cdn.Source); ok {
+					remote++
+				}
+			}
+			require.Equal(t, map[bool]int{false: 0, true: 1}[devMode], remote, "devMode=%v", devMode)
+		}
+	})
+
 	t.Run("Plugin sources are populated by default and listed in specific order", func(t *testing.T) {
 		testdata := testDataDir(t)
 
@@ -33,7 +54,7 @@ func TestSources_List(t *testing.T) {
 			},
 		}
 
-		s := ProvideService(cfg, pCfg)
+		s := ProvideService(cfg, pCfg, pluginscdn.ProvideService(pCfg), pluginerrs.ProvideErrorTracker())
 		srcs := s.List(context.Background())
 
 		ctx := context.Background()
@@ -102,7 +123,7 @@ func TestSources_List(t *testing.T) {
 			PluginsPaths: []string{filepath.Join(testdata, "symbolic-plugin-dirs")},
 		}
 
-		s := ProvideService(cfg, pCfg)
+		s := ProvideService(cfg, pCfg, pluginscdn.ProvideService(pCfg), pluginerrs.ProvideErrorTracker())
 		ctx := context.Background()
 		srcs := s.List(ctx)
 		uris := map[plugins.Class]map[string]struct{}{}

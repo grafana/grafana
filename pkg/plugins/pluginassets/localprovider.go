@@ -1,6 +1,7 @@
 package pluginassets
 
 import (
+	"net/url"
 	"path"
 	"path/filepath"
 
@@ -24,5 +25,12 @@ func (s *LocalProvider) Module(plugin PluginInfo) (string, error) {
 }
 
 func (s *LocalProvider) AssetPath(plugin PluginInfo, assetPath ...string) (string, error) {
+	// Plugins discovered from a remote URL (e.g. cdn_url) are served from there, not from Grafana
+	if plugin.FS != nil {
+		if u, err := url.Parse(plugin.FS.Base()); err == nil && (u.Scheme == "http" || u.Scheme == "https") && u.Host != "" {
+			return url.JoinPath(plugin.FS.Base(), assetPath...)
+		}
+	}
+
 	return path.Join("public/plugins", plugin.JsonData.ID, path.Join(assetPath...)), nil
 }
