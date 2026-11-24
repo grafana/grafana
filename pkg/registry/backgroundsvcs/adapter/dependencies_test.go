@@ -32,4 +32,13 @@ func TestDependencyMap(t *testing.T) {
 		require.Equal(t, []string{NATSServer}, deps[NATSSubscriber])
 		require.Equal(t, []string{NATSServer}, deps[NATSPublisher])
 	})
+
+	for _, module := range []string{ProvisioningConnectionController, ProvisioningRepositoryController, ProvisioningJobQueue} {
+		t.Run(module+" waits for the API server but not for classic provisioning", func(t *testing.T) {
+			deps := dependencyMap()
+			require.Equal(t, []string{GrafanaAPIServer}, deps[module])
+			require.Contains(t, deps[BackgroundServices], module)
+			require.NotContains(t, deps[Core], module)
+		})
+	}
 }

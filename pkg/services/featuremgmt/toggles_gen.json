@@ -2045,6 +2045,20 @@
     },
     {
       "metadata": {
+        "name": "datasources.gatewayQueryUsage",
+        "resourceVersion": "1795014708911",
+        "creationTimestamp": "2026-11-18T15:11:48Z"
+      },
+      "spec": {
+        "description": "Record billed query usage (Mimir samples read, Loki bytes processed) in query gateway audit events",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasources.gatewayRateLimits",
         "resourceVersion": "1794262635153",
         "creationTimestamp": "2026-11-09T22:17:15Z"

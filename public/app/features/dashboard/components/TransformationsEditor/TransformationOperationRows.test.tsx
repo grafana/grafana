@@ -117,6 +117,18 @@ describe('TransformationOperationRows', () => {
     expect(screen.queryByTestId('transformation-refid-div')).not.toBeInTheDocument();
   });
 
+  it('names each row expander after its transformation', async () => {
+    setup([
+      { id: 'a', transformation: { id: DataTransformerID.reduce, options: {} } },
+      { id: 'b', transformation: { id: DataTransformerID.merge, options: {} } },
+    ]);
+
+    expect(await screen.findByRole('button', { name: 'Collapse transformation row 1 - Reduce' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Collapse transformation row 2 - Merge series/tables' })
+    ).toBeInTheDocument();
+  });
+
   describe('within a scene', () => {
     let prevContext: typeof window.__grafanaSceneContext;
 
