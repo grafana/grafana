@@ -25,6 +25,9 @@ import { configureStore } from 'app/store/configureStore';
 import { LogsPanel } from './LogsPanel';
 import * as useDatasourcesFromTargetsModule from './useDatasourcesFromTargets';
 
+jest.mock('@grafana/ui', () => makeSpyable('@grafana/ui'));
+jest.mock('./useDatasourcesFromTargets', () => makeSpyable('./useDatasourcesFromTargets'));
+
 type LogsPanelProps = ComponentProps<typeof LogsPanel>;
 type LogLineContextProps = ComponentProps<typeof LogLineContext>;
 
