@@ -89,6 +89,10 @@ type schedule struct {
 
 	stateManager *state.Manager
 
+	// orphanedStatesCleaned is set once the state cache has been checked for
+	// entries of rules that no longer exist, which happens on the first tick.
+	orphanedStatesCleaned bool
+
 	appURL               *url.URL
 	disableGrafanaFolder bool
 	jitterEvaluations    JitterStrategy
@@ -302,6 +306,16 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	// this is the new current state. rulesDiff contains the previously existing rules that were different between this state and the previous state.
 	alertRules, folderTitles := sch.schedulableAlertRules.all()
 
+	// On the first tick, clean up state cache entries of rules that no longer
+	// exist. A rule that was deleted after the state cache was warmed but
+	// before this tick was never registered, so the regular deleted-rule
+	// handling below never runs for it and its state would otherwise live in
+	// the cache until the next restart.
+	if !sch.orphanedStatesCleaned {
+		sch.orphanedStatesCleaned = true
+		sch.deleteOrphanedRuleStates(ctx, alertRules)
+	}
+
 	// registeredDefinitions is a map used for finding deleted alert rules
 	// initially it is assigned to all known alert rules from the previous cycle
 	// each alert rule found also in this cycle is removed
@@ -439,6 +453,28 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	sch.deleteAlertRule(ctx, toDelete...)
 
 	return readyToRun, registeredDefinitions, updatedRules
+}
+
+// deleteOrphanedRuleStates removes state cache entries of alert rules that
+// no longer exist, sending resolved notifications for firing alerts just like
+// the routine of a deleted rule does.
+func (sch *schedule) deleteOrphanedRuleStates(ctx context.Context, alertRules []*ngmodels.AlertRule) {
+	existing := make(map[ngmodels.AlertRuleKey]struct{}, len(alertRules))
+	for _, rule := range alertRules {
+		existing[rule.GetKey()] = struct{}{}
+	}
+	for _, key := range sch.stateManager.GetCachedRuleKeys() {
+		if _, ok := existing[key]; ok {
+			continue
+		}
+		sch.log.FromContext(ctx).Info("Removing state of alert rule that no longer exists", key.LogContext()...)
+		keyWithGroup := ngmodels.AlertRuleKeyWithGroup{AlertRuleKey: key}
+		transitions := sch.stateManager.DeleteStateByRuleUID(ctx, keyWithGroup, ngmodels.StateReasonRuleDeleted)
+		expiredAlerts := state.FromAlertsStateToStoppedAlert(transitions, sch.appURL, sch.clock)
+		if len(expiredAlerts.PostableAlerts) > 0 {
+			sch.alertsSender.Send(ctx, key, expiredAlerts)
+		}
+	}
 }
 
 // runJobFn sends the scheduled evaluation to the evaluation routine, optionally with a previous item to log the trigger source.
