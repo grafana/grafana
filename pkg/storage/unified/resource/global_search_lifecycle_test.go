@@ -518,6 +518,41 @@ func (stalledIndexBlob) GetResourceBlob(ctx context.Context, _ *resourcepb.Resou
 	return nil, ctx.Err()
 }
 
+func TestColdGlobalIndexBuildSkipsTimedOutBlob(t *testing.T) {
+	for _, cancelBuild := range []bool{false, true} {
+		t.Run(fmt.Sprintf("cancel build: %t", cancelBuild), func(t *testing.T) {
+			src := dashboardType("ns")
+			storage := &multiTypeStorage{
+				live:   map[NamespacedResource][]string{src: {"dash-a", "dash-b"}},
+				bodies: map[string][]byte{"dash-a": fmt.Appendf(nil, `{"metadata":{"name":"dash-a","annotations":{%q:"blob-uid"}}}`, utils.AnnoKeyBlob)},
+			}
+			server := globalTestServer(t, storage, &mockSearchBackend{})
+			server.builders.blob = stalledIndexBlob{}
+			synctest.Test(t, func(t *testing.T) {
+				ctx := t.Context()
+				if cancelBuild {
+					var cancel context.CancelFunc
+					ctx, cancel = context.WithTimeout(ctx, time.Second)
+					defer cancel()
+				}
+				idx, err := server.build(ctx, GlobalSearchKey(src.Namespace), 2, "test", false, time.Time{})
+				if cancelBuild {
+					require.ErrorIs(t, err, context.DeadlineExceeded)
+					require.Nil(t, idx)
+					require.Zero(t, server.reconcileQueue.Len())
+					return
+				}
+				require.NoError(t, err)
+				require.Equal(t, map[NamespacedResource][]string{src: {"dash-b"}}, indexedNames(t, idx.(*MockResourceIndex)))
+				lastReconcile, err := idx.ReconciledAt()
+				require.NoError(t, err)
+				require.True(t, lastReconcile.IsZero(), "a build missing a document must not be marked reconciled")
+				require.Equal(t, 1, server.reconcileQueue.Len())
+			})
+		})
+	}
+}
+
 func TestGlobalIndexRetainsDocumentOnBlobReadTimeout(t *testing.T) {
 	for _, tc := range []struct {
 		name string
@@ -538,13 +573,17 @@ func TestGlobalIndexRetainsDocumentOnBlobReadTimeout(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			src := dashboardType("ns")
 			storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
-				live:    map[NamespacedResource][]string{src: {"dash-a"}},
+				live:    map[NamespacedResource][]string{src: {"dash-a", "dash-b", "dash-c"}},
 				listRVs: map[NamespacedResource]int64{src: 50},
 				bodies:  map[string][]byte{"dash-a": fmt.Appendf(nil, `{"metadata":{"name":"dash-a","annotations":{%q:"blob-uid"}}}`, utils.AnnoKeyBlob)},
 			}}
-			server, idx := repairServer(t, storage, map[schema.GroupResource][]DocumentRef{
-				dashboardsGroupResource: {{Name: "dash-a", RV: 40}},
-			})
+			refs := []DocumentRef{{Name: "dash-b", RV: 40}, {Name: "gone", RV: 40}}
+			if tc.name != "reconcile" {
+				// Reconciliation should also keep processing both passes if a
+				// blob in the missing-document pass times out.
+				refs = append([]DocumentRef{{Name: "dash-a", RV: 40}}, refs...)
+			}
+			server, idx := repairServer(t, storage, map[schema.GroupResource][]DocumentRef{dashboardsGroupResource: refs})
 			server.builders.blob = stalledIndexBlob{}
 
 			synctest.Test(t, func(t *testing.T) {
@@ -556,15 +595,32 @@ func TestGlobalIndexRetainsDocumentOnBlobReadTimeout(t *testing.T) {
 					require.ErrorIs(t, err, context.DeadlineExceeded)
 				}
 				require.Equal(t, 30*time.Second, time.Since(start))
-				require.Empty(t, idx.indexedItems(), "a timeout must not delete the existing document")
+				if tc.name == "write notification" {
+					require.Empty(t, idx.indexedItems(), "a timeout must not delete the existing document")
+					return
+				}
+				var indexed, removed []string
+				for _, item := range idx.indexedItems() {
+					if item.Action == ActionDelete {
+						removed = append(removed, item.Key.Name)
+					} else {
+						indexed = append(indexed, item.Doc.Key.Name)
+					}
+				}
+				require.ElementsMatch(t, []string{"dash-b", "dash-c"}, indexed)
+				require.Equal(t, []string{"gone"}, removed)
 			})
 
+			idx.bulkItems = nil
 			server.builders.blob = &globalDocumentBlob{response: &resourcepb.GetBlobResponse{Value: []byte(`{"title":"New title"}`)}}
 			require.NoError(t, tc.run(t.Context(), server, idx, src))
-			items := idx.indexedItems()
-			require.Len(t, items, 1)
-			require.Equal(t, ActionIndex, items[0].Action)
-			require.Equal(t, "New title", items[0].Doc.Title)
+			for _, item := range idx.indexedItems() {
+				if item.Action == ActionIndex && item.Doc.Key.Name == "dash-a" {
+					require.Equal(t, "New title", item.Doc.Title)
+					return
+				}
+			}
+			t.Fatal("retry did not index dash-a")
 		})
 	}
 }

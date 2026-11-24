@@ -664,15 +664,7 @@ func (s *searchServer) reconcileResourceType(ctx context.Context, index Resource
 	// Sorted so a repair is reproducible, not in map order.
 	slices.Sort(inIndex)
 
-	result, err := s.reindex(ctx, index, src, missing, false)
-	if err != nil {
-		return result, err
-	}
-	updated, err := s.reindex(ctx, index, src, inIndex, true)
-	result.Reindexed += updated.Reindexed
-	result.Removed += updated.Removed
-	result.Failed += updated.Failed
-	return result, err
+	return s.reindex(ctx, index, src, missing, inIndex)
 }
 
 // refDiff is what differs between the index and a listing of storage.
@@ -777,9 +769,9 @@ func (d *refDiff) compare(name string, indexedRV, storedRV int64) {
 // older versions, so comparing versions would leave them stale.
 //
 // Everything is written before anything is removed, so the type does not vanish
-// from search while the rebuild runs. An object that fails to build is removed
-// rather than kept, because its old document may describe what the import
-// replaced.
+// from search while the rebuild runs. Keep an object if its read is interrupted
+// and retry the rebuild. Remove an invalid document, which may describe what
+// the import replaced.
 func (s *searchServer) rebuildResourceType(ctx context.Context, index ResourceIndex, key, src NamespacedResource) (repairResult, error) {
 	if err := checkRepairTarget(key, src); err != nil {
 		return repairResult{}, err
@@ -800,14 +792,13 @@ func (s *searchServer) rebuildResourceType(ctx context.Context, index ResourceIn
 	logger := s.log.New("namespace", src.Namespace, "resource", src.GroupResource())
 
 	var result repairResult
-	written := map[string]struct{}{}
+	var interrupted error
 	_, err := s.storage.ListIterator(ctx, &resourcepb.ListRequest{
 		Options: &resourcepb.ListOptions{
 			Key: &resourcepb.ResourceKey{Namespace: src.Namespace, Group: src.Group, Resource: src.Resource},
 		},
 	}, func(iter ListIterator) error {
 		items := make([]*BulkIndexItem, 0, maxBatchSize)
-		names := make([]string, 0, maxBatchSize)
 		flush := func() error {
 			if len(items) == 0 {
 				return nil
@@ -815,11 +806,8 @@ func (s *searchServer) rebuildResourceType(ctx context.Context, index ResourceIn
 			if err := index.BulkIndex(&BulkIndexRequest{Items: items, Path: IndexPathUpdate}); err != nil {
 				return err
 			}
-			for _, name := range names {
-				written[name] = struct{}{}
-			}
 			result.Reindexed += len(items)
-			items, names = items[:0], names[:0]
+			items = items[:0]
 			return nil
 		}
 
@@ -829,17 +817,23 @@ func (s *searchServer) rebuildResourceType(ctx context.Context, index ResourceIn
 			}
 			docKey := &resourcepb.ResourceKey{Namespace: src.Namespace, Group: src.Group, Resource: src.Resource, Name: iter.Name()}
 			doc, err := builder.BuildDocument(ctx, docKey, iter.ResourceVersion(), iter.Value())
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
 			if err != nil {
 				result.Failed++
 				if isDocumentBuildInterrupted(err) {
-					// Don't prune documents after an incomplete scan.
-					return err
+					// Keep the old document until a retry can replace it.
+					delete(indexed, docKey.Name)
+					if interrupted == nil {
+						interrupted = err
+					}
 				}
 				logger.Warn("failed to build a document while rebuilding a resource type", "key", SearchID(docKey), "error", err)
 				continue
 			}
+			delete(indexed, docKey.Name)
 			items = append(items, &BulkIndexItem{Action: ActionIndex, Doc: doc})
-			names = append(names, iter.Name())
 			if len(items) >= maxBatchSize {
 				if err := flush(); err != nil {
 					return err
@@ -855,18 +849,15 @@ func (s *searchServer) rebuildResourceType(ctx context.Context, index ResourceIn
 		return result, err
 	}
 
-	var removed []string
-	for name := range indexed {
-		if _, ok := written[name]; !ok {
-			removed = append(removed, name)
-		}
+	if err := ctx.Err(); err != nil {
+		return result, err
 	}
-	slices.Sort(removed)
+	removed := slices.Sorted(maps.Keys(indexed))
 	if err := s.removeFromIndex(index, src, removed); err != nil {
 		return result, err
 	}
 	result.Removed = len(removed)
-	return result, nil
+	return result, interrupted
 }
 
 // removeResourceType removes every document of a type a global index no longer
@@ -935,16 +926,15 @@ func (s *searchServer) removeFromIndex(index ResourceIndex, src NamespacedResour
 	return nil
 }
 
-// reindex reads and writes the named objects. One that cannot be built is
-// skipped, not fatal, so a bad object does not block the rest; the next reconcile
-// retries it. With removeMissing, the names are in the index, and one storage no
-// longer holds is removed from it.
+// reindex repairs missing and previously indexed documents. Only previously
+// indexed names need a removal on NotFound. A blob timeout leaves the document
+// for retry without blocking the other repairs.
 //
 // Reads go in small chunks, writes in full batches: each write is a separate
 // index batch with its own fixed cost.
-func (s *searchServer) reindex(ctx context.Context, index ResourceIndex, src NamespacedResource, names []string, removeMissing bool) (repairResult, error) {
+func (s *searchServer) reindex(ctx context.Context, index ResourceIndex, src NamespacedResource, missing, inIndex []string) (repairResult, error) {
 	var result repairResult
-	if len(names) == 0 {
+	if len(missing) == 0 && len(inIndex) == 0 {
 		return result, nil
 	}
 
@@ -977,52 +967,65 @@ func (s *searchServer) reindex(ctx context.Context, index ResourceIndex, src Nam
 		return flush()
 	}
 
-	// Requests are built a chunk at a time, so only the comparison scales with
-	// the size of the type.
-	for chunk := range slices.Chunk(names, readChunkSize) {
-		requests := make([]BatchReadRequest, 0, len(chunk))
-		for _, name := range chunk {
-			requests = append(requests, BatchReadRequest{ReadRequest: &resourcepb.ReadRequest{
-				Key: &resourcepb.ResourceKey{Namespace: src.Namespace, Group: src.Group, Resource: src.Resource, Name: name},
-			}})
-		}
-
-		// One response per request, in order, so a not found names its request.
-		read := 0
-		for response := range readResourcesInChunks(ctx, s.storage, requests, readChunkSize) {
-			if ctx.Err() != nil {
-				return result, ctx.Err()
+	var interrupted error
+	for _, pass := range []struct {
+		names         []string
+		removeMissing bool
+	}{{missing, false}, {inIndex, true}} {
+		// Requests are built a chunk at a time, so only the comparison scales with
+		// the size of the type.
+		for chunk := range slices.Chunk(pass.names, readChunkSize) {
+			requests := make([]BatchReadRequest, 0, len(chunk))
+			for _, name := range chunk {
+				requests = append(requests, BatchReadRequest{ReadRequest: &resourcepb.ReadRequest{
+					Key: &resourcepb.ResourceKey{Namespace: src.Namespace, Group: src.Group, Resource: src.Resource, Name: name},
+				}})
 			}
-			read++
-			if response.Error != nil {
-				// Anything but not found is a storage failure, returned so the
-				// caller does not think the type is repaired.
-				if response.Error.Code != http.StatusNotFound || read > len(requests) {
-					return result, StatusError(response.Error)
+
+			// One response per request, in order, so a not found names its request.
+			read := 0
+			for response := range readResourcesInChunks(ctx, s.storage, requests, readChunkSize) {
+				if ctx.Err() != nil {
+					return result, ctx.Err()
 				}
-				if !removeMissing {
+				read++
+				if response.Error != nil {
+					// Anything but not found is a storage failure, returned so the
+					// caller does not think the type is repaired.
+					if response.Error.Code != http.StatusNotFound || read > len(requests) {
+						return result, StatusError(response.Error)
+					}
+					if !pass.removeMissing {
+						continue
+					}
+					if err := add(&BulkIndexItem{Action: ActionDelete, Key: requests[read-1].Key}); err != nil {
+						return result, err
+					}
 					continue
 				}
-				if err := add(&BulkIndexItem{Action: ActionDelete, Key: requests[read-1].Key}); err != nil {
+				doc, err := builder.BuildDocument(ctx, response.Key, response.ResourceVersion, response.Value)
+				if ctx.Err() != nil {
+					return result, ctx.Err()
+				}
+				if err != nil {
+					result.Failed++
+					if interrupted == nil && isDocumentBuildInterrupted(err) {
+						interrupted = err
+					}
+					logger.Warn("failed to build a document while reconciling", "key", SearchID(response.Key), "error", err)
+					continue
+				}
+				if err := add(&BulkIndexItem{Action: ActionIndex, Doc: doc}); err != nil {
 					return result, err
 				}
-				continue
-			}
-			doc, err := builder.BuildDocument(ctx, response.Key, response.ResourceVersion, response.Value)
-			if err != nil {
-				result.Failed++
-				if isDocumentBuildInterrupted(err) {
-					return result, err
-				}
-				logger.Warn("failed to build a document while reconciling", "key", SearchID(response.Key), "error", err)
-				continue
-			}
-			if err := add(&BulkIndexItem{Action: ActionIndex, Doc: doc}); err != nil {
-				return result, err
 			}
 		}
 	}
-	return result, flush()
+	if err := ctx.Err(); err != nil {
+		return result, err
+	}
+	err := flush()
+	return result, errors.Join(interrupted, err)
 }
 
 // watchRetryDelay is how long to wait before asking storage for a new
