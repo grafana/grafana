@@ -4,7 +4,7 @@ import { ASSISTANT_PAGES_PATH } from 'app/core/constants';
 interface AppKindPage {
   group: string;
   kind: string;
-  /** The plural the kind's API serves it under */
+  /** The plural the kind's API serves it under. Not looked up: if the API renames it, change it here */
   resource: string;
   /** Without the app sub url. An object's page is this path plus its name */
   listPath: string;
