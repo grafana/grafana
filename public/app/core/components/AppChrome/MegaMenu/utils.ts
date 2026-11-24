@@ -6,7 +6,7 @@ import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
-import { DASHBOARDS_TAB_NAV_IDS, NavID, STARRED_ID_PREFIX } from 'app/core/navtree/constants';
+import { DASHBOARDS_TAB_NAV_IDS, isStarredNavItem, NavID } from 'app/core/navtree/constants';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 
 import { ShowModalReactEvent } from '../../../../types/events';
@@ -62,13 +62,14 @@ export const enrichWithInteractionTracking = (
   }
 
   newItem.onClick = () => {
-    const itemIsStarred = newItem?.parentItem?.id === 'starred';
+    // Only the leaves of the Starred section carry a kind, and they have no parentItem to tell them by
+    const itemKind = isStarredNavItem(newItem) ? newItem.starredKind : undefined;
     reportInteraction('grafana_navigation_item_clicked', {
       path: newItem.url ?? newItem.id,
       menuIsDocked: megaMenuDockedState,
       itemIsBookmarked: newItem?.parentItem?.id === 'bookmarks',
-      itemIsStarred,
-      itemKind: itemIsStarred ? (newItem.url?.includes('/dashboards/f/') ? 'folder' : 'dashboard') : undefined,
+      itemIsStarred: itemKind !== undefined,
+      itemKind,
       isNew,
       ...getNavExperimentPayload(),
     });
@@ -168,12 +169,12 @@ function getEditionAndUpdateLinks(): NavModelItem[] {
 
 /**
  * Whether an item can be pinned. "Create" actions are shortcuts, Home is excluded, and individual
- * starred dashboards (the `starred/` id prefix) aren't pinnable — only the Starred section is.
+ * starred items aren't pinnable — only the Starred section is.
  * This also makes Starred a pinning "leaf" (no pinnable children), so it pins/unpins as a whole
  * regardless of its dynamic children.
  */
 const isPinnable = (item: NavModelItem): boolean =>
-  Boolean(item.url) && !item.isCreateAction && item.id !== 'home' && !item.id?.startsWith(STARRED_ID_PREFIX);
+  Boolean(item.url) && !item.isCreateAction && item.id !== 'home' && !isStarredNavItem(item);
 
 // Children that participate in pinning.
 const pinnableChildren = (item: NavModelItem): NavModelItem[] => (item.children ?? []).filter(isPinnable);
@@ -311,13 +312,10 @@ export const hiddenKey = (item: NavModelItem): string => item.id ?? item.url ?? 
 
 /**
  * Whether an item can be hidden (any depth). Needs an id or url; excludes Home/Bookmarks/Starred,
- * create actions and the dynamic starred sub-items (the `starred/` id prefix).
+ * create actions and the dynamic starred sub-items.
  */
 export const isHideable = (item: NavModelItem): boolean =>
-  Boolean(hiddenKey(item)) &&
-  !PROTECTED_NAV_IDS.has(item.id ?? '') &&
-  !item.isCreateAction &&
-  !item.id?.startsWith(STARRED_ID_PREFIX);
+  Boolean(hiddenKey(item)) && !PROTECTED_NAV_IDS.has(item.id ?? '') && !item.isCreateAction && !isStarredNavItem(item);
 
 // Children that can be hidden — used when "breaking apart" a hidden parent.
 const hideableChildren = (item: NavModelItem): NavModelItem[] => (item.children ?? []).filter(isHideable);
