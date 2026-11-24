@@ -148,7 +148,6 @@
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
     "@types/react-refresh": "^0",
-    "@types/react-resizable": "3.0.8",
     "@types/react-router": "5.1.20",
     "@types/react-router-dom": "5.3.3",
     "@types/react-table": "7.7.20",
@@ -381,7 +380,7 @@
     "react-loading-skeleton": "3.5.0",
     "react-moveable": "0.56.0",
     "react-redux": "9.3.0",
-    "react-resizable": "3.0.5",
+    "react-resizable": "4.0.2",
     "react-router": "5.3.4",
     "react-router-dom": "5.3.4",
     "react-router-dom-v5-compat": "^6.26.1",
@@ -404,7 +403,7 @@
     "slate": "0.47.9",
     "slate-plain-serializer": "0.7.13",
     "slate-react": "0.22.10",
-    "swagger-ui-react": "5.35.0",
+    "swagger-ui-react": "5.35.1",
     "systemjs": "6.15.1",
     "tinycolor2": "1.6.0",
     "tslib": "2.9.1",
@@ -416,7 +415,7 @@
   "engines": {
     "node": ">= 22 <27"
   },
-  "packageManager": "pnpm@12.21.0",
+  "packageManager": "pnpm@12.22.0",
   "msw": {
     "workerDirectory": [
       "public"

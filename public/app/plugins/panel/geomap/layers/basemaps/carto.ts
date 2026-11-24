@@ -68,7 +68,12 @@ export const carto: MapLayerRegistryItem<CartoConfig> = {
       // CARTO serves every style with the same id and ol-mapbox-style caches paint functions per id,
       // so without a unique one the first basemap on the page repaints all the others.
       fetch(styleUrl)
-        .then((response) => response.json())
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`${response.status} ${response.statusText}`);
+          }
+          return response.json();
+        })
         .then((glStyle) => apply(layer, { ...glStyle, id: styleUrl }, { styleUrl }))
         .then(() =>
           layer.getLayers().forEach((child) => {

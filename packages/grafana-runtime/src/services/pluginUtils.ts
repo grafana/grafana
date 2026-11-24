@@ -37,3 +37,9 @@ export function assertApiVersion(apiVersion = ''): void {
     throw new Error(`Invalid API version "${apiVersion}"`);
   }
 }
+const uidPattern = /^[a-zA-Z0-9_-]{1,40}$/;
+export function assertUIDFormat(uid = ''): void {
+  if (typeof uid !== 'string' || !uidPattern.test(uid)) {
+    throw new Error(`Invalid UID "${uid}"`);
+  }
+}

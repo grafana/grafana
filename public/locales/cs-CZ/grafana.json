@@ -1561,6 +1561,9 @@
         "recording-rules_many": "{{formatted}} pravidel záznamu",
         "recording-rules_other": "{{formatted}} pravidel záznamu"
       },
+      "saved-searches": {
+        "applied-default": ""
+      },
       "search": {
         "default-policy-unavailable": "Filtrování podle výchozích zásad zatím není k dispozici.",
         "folders-disabled": "Pro procházení podle složky vymažte filtry",
@@ -3075,12 +3078,12 @@
       },
       "empty": "",
       "error": "",
-      "load-more": "",
       "restore": {
         "body": "",
         "confirm": "",
         "conflict": "",
         "error": "",
+        "recording-title": "",
         "restoring": "",
         "title": ""
       },
@@ -3235,10 +3238,6 @@
         "group-name": "Název hodnotící skupiny",
         "group-text": "Všechna pravidla ve vybrané skupině jsou vyhodnocena každých {{evaluateEvery}}.",
         "interval-label": "Interval hodnocení",
-        "mode": {
-          "legacy": "Použít skupiny (starší verze)",
-          "new": "Nastavit interval"
-        },
         "new-group": "Nová hodnotící skupina",
         "pause": {
           "alerting": "Zapnutím pozastavíte hodnocení tohoto pravidla výstrahy.",
@@ -6840,6 +6839,9 @@
           "description": "Kliknutím nebo přetažením vložte panel",
           "title": "Vložit panel"
         },
+        "question": {
+          "label": ""
+        },
         "row": {
           "add-label": "Přidat řádek",
           "group-label": "Seskupit do řádků"
@@ -6963,6 +6965,7 @@
         "objects": "Objekty",
         "panel": "Panel",
         "panels": "Panely",
+        "question": "",
         "row": "Řádek",
         "rows": "Řádky",
         "section-filters-set": "Filtry",
@@ -7015,6 +7018,40 @@
           "empty": "(prázdné)",
           "no-title": "<bez názvu>"
         }
+      },
+      "questions": {
+        "add-question": "",
+        "description-dashboard": "",
+        "description-row": "",
+        "description-tab": "",
+        "new-question": "",
+        "placeholder": "",
+        "question": "",
+        "question-title": "",
+        "question-title-description": "",
+        "question-title-placeholder": "",
+        "sources": {
+          "collapse": "",
+          "description-dashboard": "",
+          "description-row": "",
+          "description-tab": "",
+          "entire-dashboard": "",
+          "expand": "",
+          "label": "",
+          "no-panels": "",
+          "unavailable-panel": "",
+          "untitled-row": "",
+          "untitled-tab": "",
+          "panel-count_one": "",
+          "panel-count_few": "",
+          "panel-count_many": "",
+          "panel-count_other": "",
+          "picked-count_one": "",
+          "picked-count_few": "",
+          "picked-count_many": "",
+          "picked-count_other": ""
+        },
+        "title": ""
       },
       "row": {
         "header": {
@@ -7276,6 +7313,8 @@
     },
     "transformation-operation-row": {
       "body-delete": "Upozorňujeme, že odstranění jedné transformace může narušit ostatní transformace. Pokud je k dispozici pouze jedna transformace, vrátíte se zpět na hlavní obrazovku výběru.",
+      "expander-close": "",
+      "expander-open": "",
       "render-actions": {
         "confirmText-delete": "Odstranit",
         "title-debug": "Ladění",
@@ -8258,6 +8297,20 @@
       },
       "selection-options": "Možnosti výběru",
       "static-options-legend": "Statické možnosti"
+    },
+    "question-actions": {
+      "add": "",
+      "remove": "",
+      "reorder": "",
+      "update": ""
+    },
+    "question-edit": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
+    "question-edit-actions": {
+      "tooltip-question-settings": ""
     },
     "refresh-select": {
       "options": {
@@ -14426,32 +14479,6 @@
     },
     "units": {
       "clear-tooltip": "Vymazat výběr jednotky"
-    },
-    "var-mapping-checks": {
-      "data-macro": "",
-      "not-allowed": "",
-      "not-found": "",
-      "not-number": "",
-      "not-one-value": "",
-      "out-of-range": "",
-      "resolves": "",
-      "values": ""
-    },
-    "var-mapping-toggle": {
-      "aria-label-picker": "",
-      "fallback-off": "",
-      "fallback-on": "",
-      "group-matching": "",
-      "group-other": "",
-      "hint-boolean": "",
-      "hint-number": "",
-      "hint-option": "",
-      "hint-option-no-fallback": "",
-      "new-variable": "",
-      "option-current": "",
-      "placeholder": "",
-      "use-fixed-value": "",
-      "use-variable": ""
     }
   },
   "org": {
@@ -14548,7 +14575,8 @@
     },
     "get-panel-links-variable-suggestions": {
       "label": {
-        "all-variables": "Všechny proměnné"
+        "all-variables": "Všechny proměnné",
+        "current-dashboard-tabs": ""
       }
     },
     "header-menu": {
@@ -15465,7 +15493,6 @@
     "finish-step": {
       "description-enable-previews": "Přidá náhled obrázku změn nástěnky v pull requestech. Obrázky nástěnek Grafana budou sdíleny ve vašem úložišti Git a uvidí je každý, kdo má přístup k úložišti.",
       "description-image-rendering": "Vyžaduje vykreslení obrázků. <2>Nastavit vykreslování obrázků</2>",
-      "description-read-only": "Zdroje nelze upravovat přes Grafanu.",
       "description-sync-interval": "Jak často synchronizovat změny z úložiště",
       "error-sync-interval-required": "Je vyžadován interval synchronizace",
       "label-enable-previews": "Povolit náhledy nástěnek v pull requestech",
@@ -16272,6 +16299,17 @@
       "button-submitting": "Odesílání…",
       "error-instance-repository-exists": "Instance úložiště už existuje",
       "error-save-repository-setting": "Nastavení úložiště se nepodařilo uložit"
+    },
+    "workflow": {
+      "direct-push": "",
+      "direct-push-description": "",
+      "direct-push-description-no-branch": "",
+      "merge-request": "",
+      "merge-request-description": "",
+      "merge-request-description-no-branch": "",
+      "pull-request": "",
+      "pull-request-description": "",
+      "pull-request-description-no-branch": ""
     }
   },
   "public-dashboard": {
