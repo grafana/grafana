@@ -204,9 +204,10 @@ it:
 **Limits and metrics**
 
 - A per-namespace connection limit (`--live.max-connections-per-namespace`, off by default),
-  replacing the per-pod `[live] max_connections`. It is checked before the websocket upgrade and
-  released when the hijacked connection closes. A namespace at its limit gets a 429. The count is
-  per replica.
+  replacing the per-pod `[live] max_connections`. The dispatcher counts clients per namespace and
+  asks the host for each namespace's limit (`liveserver.Options.MaxConnectionsForNamespace`; a
+  negative limit means none). A client over the limit is disconnected with
+  `DisconnectConnectionLimit` right after it connects. The count is per replica.
 - Metrics following `contribute/backend/instrumentation.md`, with no stack or channel labels:
   `grafana_live_mt_connections`, `grafana_live_mt_websocket_rejected_total{reason}` and
   `grafana_live_mt_redis_up{instance}` from the server itself, and subscriptions by scope and

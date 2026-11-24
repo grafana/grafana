@@ -96,6 +96,12 @@ type Options struct {
 	// MaxConnections is the most clients the node accepts; negative means no
 	// limit.
 	MaxConnections int
+	// MaxConnectionsForNamespace returns the most clients a namespace may keep
+	// connected to this dispatcher's node; a negative value means no limit. It is
+	// optional, and is checked in addition to MaxConnections, which counts every
+	// client of the node. A host serving many namespaces from one node sets this
+	// instead of MaxConnections.
+	MaxConnectionsForNamespace func(namespace string) int
 	// Observer is optional and receives subscribe and disconnect events.
 	Observer Observer
 }
@@ -109,6 +115,9 @@ type Dispatcher struct {
 
 	channels   map[string]model.ChannelHandler
 	channelsMu sync.RWMutex
+
+	nsConns   map[string]int
+	nsConnsMu sync.Mutex
 }
 
 // NewDispatcher returns a dispatcher for node. Call Attach before node.Run.
@@ -117,6 +126,7 @@ func NewDispatcher(node *centrifuge.Node, opts Options) *Dispatcher {
 		node:     node,
 		opts:     opts,
 		channels: make(map[string]model.ChannelHandler),
+		nsConns:  make(map[string]int),
 	}
 }
 
@@ -154,6 +164,13 @@ func (d *Dispatcher) onConnect(client *centrifuge.Client) {
 		)
 		connectSpan.AddEvent("disconnect", trace.WithAttributes(attribute.String("reason", "connection limit reached")))
 		// The disconnect handler below is not registered yet, so report this one here.
+		d.observeDisconnect(centrifuge.DisconnectConnectionLimit.Code)
+		client.Disconnect(centrifuge.DisconnectConnectionLimit)
+		return
+	}
+	releaseNamespace, ok := d.acquireNamespaceConnection(client)
+	if !ok {
+		connectSpan.AddEvent("disconnect", trace.WithAttributes(attribute.String("reason", "namespace connection limit reached")))
 		d.observeDisconnect(centrifuge.DisconnectConnectionLimit.Code)
 		client.Disconnect(centrifuge.DisconnectConnectionLimit)
 		return
@@ -267,6 +284,7 @@ func (d *Dispatcher) onConnect(client *centrifuge.Client) {
 		_, span := tracer.Start(client.Context(), "live.OnDisconnect")
 		defer span.End()
 
+		releaseNamespace()
 		d.observeDisconnect(e.Code)
 
 		reason := e.Reason
@@ -649,4 +667,43 @@ func (d *Dispatcher) GetChannelHandlerFactory(ctx context.Context, user identity
 		return nil, fmt.Errorf("%w: %q", ErrScopeNotAvailable, scope)
 	}
 	return h.GetHandlerFactory(ctx, user, namespace)
+}
+
+// acquireNamespaceConnection counts the client against its namespace. It
+// returns the func that releases the slot, which must be called once when the
+// client disconnects, and false when the namespace is at its limit.
+func (d *Dispatcher) acquireNamespaceConnection(client *centrifuge.Client) (func(), bool) {
+	if d.opts.MaxConnectionsForNamespace == nil {
+		return func() {}, true
+	}
+	user, err := identity.GetRequester(client.Context())
+	if err != nil || user == nil {
+		return func() {}, true
+	}
+	release, ok := d.acquireNamespace(user.GetNamespace())
+	if !ok {
+		logger.Warn("Max number of Live connections reached for a namespace", "namespace", user.GetNamespace(), "user", client.UserID(), "client", client.ID())
+	}
+	return release, ok
+}
+
+func (d *Dispatcher) acquireNamespace(ns string) (func(), bool) {
+	limit := d.opts.MaxConnectionsForNamespace(ns)
+
+	d.nsConnsMu.Lock()
+	defer d.nsConnsMu.Unlock()
+	if limit >= 0 && d.nsConns[ns] >= limit {
+		return nil, false
+	}
+	d.nsConns[ns]++
+	var once sync.Once
+	return func() {
+		once.Do(func() {
+			d.nsConnsMu.Lock()
+			defer d.nsConnsMu.Unlock()
+			if d.nsConns[ns]--; d.nsConns[ns] <= 0 {
+				delete(d.nsConns, ns)
+			}
+		})
+	}, true
 }

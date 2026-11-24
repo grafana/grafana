@@ -72,3 +72,42 @@ func TestDispatcherObserver(t *testing.T) {
 	d2.observeSubscribe("x", nil)
 	d2.observeDisconnect(0)
 }
+
+func TestDispatcherNamespaceLimit(t *testing.T) {
+	limits := map[string]int{"stacks-1": 2, "stacks-2": -1, "stacks-3": 0}
+	d, _ := newTestDispatcher(t, Options{MaxConnectionsForNamespace: func(ns string) int {
+		if l, ok := limits[ns]; ok {
+			return l
+		}
+		return -1
+	}})
+
+	r1, ok := d.acquireNamespace("stacks-1")
+	require.True(t, ok)
+	_, ok = d.acquireNamespace("stacks-1")
+	require.True(t, ok)
+	_, ok = d.acquireNamespace("stacks-1")
+	require.False(t, ok, "third connection is over the limit")
+
+	_, ok = d.acquireNamespace("stacks-3")
+	require.False(t, ok, "a limit of zero admits nobody")
+
+	for i := 0; i < 50; i++ {
+		_, ok = d.acquireNamespace("stacks-2")
+		require.True(t, ok, "a negative limit means no limit")
+	}
+
+	r1()
+	r1() // releasing twice frees one slot only
+	_, ok = d.acquireNamespace("stacks-1")
+	require.True(t, ok)
+	_, ok = d.acquireNamespace("stacks-1")
+	require.False(t, ok)
+
+	t.Run("no callback means no limit", func(t *testing.T) {
+		d, _ := newTestDispatcher(t, Options{})
+		release, ok := d.acquireNamespaceConnection(nil)
+		require.True(t, ok)
+		release()
+	})
+}
