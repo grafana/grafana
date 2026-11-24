@@ -1,4 +1,5 @@
 import { http, HttpResponse } from 'msw';
+import { testWithAppKind } from 'test/helpers/testWithAppKind';
 import { testWithStarsUser } from 'test/helpers/testWithStarsUser';
 import { render, screen, waitFor } from 'test/test-utils';
 
@@ -7,9 +8,9 @@ import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import {
   getFolderFixtures,
-  MOCK_STARRED_KIND_SERVED,
+  MOCK_APP_KIND,
+  setMockStarredAppKind,
   setMockStarredFolders,
-  setMockStarredPluginKind,
 } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
@@ -41,6 +42,7 @@ const findStarButton = (title: string, isStarred: boolean) =>
   screen.findByRole('button', { name: new RegExp(`^${isStarred ? 'unmark' : 'mark'} "${title}" as favorite`, 'i') });
 
 testWithStarsUser();
+testWithAppKind();
 
 describe('DashList', () => {
   it('renders different groups of dashboards', async () => {
@@ -78,9 +80,9 @@ describe('DashList', () => {
   });
 
   it('lists starred dashboards without asking for the API of the app kinds the stars also hold', async () => {
-    setMockStarredPluginKind(MOCK_STARRED_KIND_SERVED.group, MOCK_STARRED_KIND_SERVED.kind, ['a-page']);
+    setMockStarredAppKind(MOCK_APP_KIND.group, MOCK_APP_KIND.kind, ['t1']);
     const group = jest.fn(() => new HttpResponse(null, { status: 404 }));
-    server.use(http.get(`/apis/${MOCK_STARRED_KIND_SERVED.group}/`, group));
+    server.use(http.get(`/apis/${MOCK_APP_KIND.group}/`, group));
     const props = getPanelProps({ ...defaultOptions, showStarred: true });
     render(<DashList {...props} />);
 

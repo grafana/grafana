@@ -4,7 +4,7 @@ import { useAsyncRetry } from 'react-use';
 import { t, Trans } from '@grafana/i18n';
 import { getMostUsedDashboards, isMostUsedAvailable } from 'app/features/browse-dashboards/api/mostUsed';
 import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
-import { useStarredSearchWithAppKinds } from 'app/features/stars/hooks';
+import { useStarredSearch } from 'app/features/stars/hooks';
 
 import { FooterAction } from '../FooterActions';
 import { type HomeCardTab, HomeTabbedCard } from '../HomeTabbedCard';
@@ -33,7 +33,7 @@ export function DashboardTabs() {
     loading: starredLoading,
     error: starredError,
     refetch: starredRetry,
-  } = useStarredSearchWithAppKinds({ refetchOnMountOrArgChange: true });
+  } = useStarredSearch({ refetchOnMountOrArgChange: true });
   const starredDashboards = starredRows?.slice(0, MAX_STARRED);
 
   const {

@@ -1,14 +1,11 @@
 import { useMemo } from 'react';
 
 import { type NavModelItem } from '@grafana/data';
-import { useStarredSearchWithAppKinds } from 'app/features/stars/hooks';
-import { findStarredKindBySearchKind } from 'app/features/stars/kinds';
+import { useStarredSearch } from 'app/features/stars/hooks';
+import { getStarredKinds } from 'app/features/stars/kinds';
 import { useSelector } from 'app/types/store';
 
-import { NavID, STARRED_ID_PREFIX } from './constants';
-
-// Created once, not per sort
-const collator = new Intl.Collator();
+import { NavID, STARRED_ID_PREFIX, type StarredNavItem } from './constants';
 
 /**
  * The nav tree as the menu shows it: the redux tree with the Starred section's children derived from the stars
@@ -17,33 +14,28 @@ const collator = new Intl.Collator();
  */
 export function useNavTree(): NavModelItem[] {
   const navTree = useSelector((state) => state.navBarTree);
-  const { rows } = useStarredSearchWithAppKinds();
+  const { rows } = useStarredSearch();
+  const kinds = getStarredKinds();
 
-  const starredChildren = useMemo(() => {
-    if (!rows) {
-      return [];
-    }
-    return (
-      rows
-        // The rows are of starred kinds already; the lookup is for the icon and the sort group
-        .flatMap((row) => {
-          const kind = findStarredKindBySearchKind(row.kind);
-          return kind ? [{ kind, row }] : [];
-        })
-        .sort((a, b) => a.kind.sortWeight - b.kind.sortWeight || collator.compare(a.row.name, b.row.name))
-        .map(
-          ({ kind, row }): NavModelItem => ({
-            // A dashboard and a folder may share a uid, so the kind is part of the identity
-            id: `${STARRED_ID_PREFIX}${row.kind}/${row.uid}`,
-            text: row.name,
-            url: row.url,
-            icon: kind.icon,
-            // Labels the leaf's icon and its click analytics with the kind
-            starredKind: row.kind,
-          })
-        )
-    );
-  }, [rows]);
+  const starredChildren = useMemo(
+    () =>
+      // Grouped by kind, in the kinds' display order. The rows come in title order, which each group keeps
+      kinds.flatMap((kind) =>
+        (rows ?? [])
+          .filter((row) => row.kind === kind.searchKind)
+          .map(
+            (row): StarredNavItem => ({
+              // A dashboard and a folder may share a uid, so the kind is part of the identity
+              id: `${STARRED_ID_PREFIX}${row.kind}/${row.uid}`,
+              text: row.name,
+              url: row.url,
+              icon: kind.icon,
+              starredKind: row.kind,
+            })
+          )
+      ),
+    [rows, kinds]
+  );
 
   return useMemo(
     () => navTree.map((item) => (item.id === NavID.starred ? { ...item, children: starredChildren } : item)),

@@ -8,7 +8,7 @@ import { useDispatch } from 'app/types/store';
 
 import { refetchStarred, useSearchStarredQuery } from './api';
 import { refetchStarredAppKinds, useSearchStarredAppKindsQuery } from './kindSearch';
-import { STARRED_APP_KINDS, STARRED_KINDS } from './kinds';
+import { getStarredAppKinds, STARRED_INDEX_KINDS, type StarredKind } from './kinds';
 import { canUseStars, findStarredNames, userStarsFieldSelector } from './utils';
 
 /** Star or unstar the item with this id. Every starred view follows the `Stars` cache the mutation invalidates. */
@@ -74,6 +74,25 @@ const NO_STARRED_ROWS: DashboardQueryResult[] = [];
 const collator = new Intl.Collator();
 
 /**
+ * The star set as the argument of a starred search: the starred names of each of `kinds` that has any, by search
+ * kind. Names are sorted, so the argument is the set and not the order the API listed it in. Undefined until the
+ * set is read, which `skip` and a user without a stars resource never do.
+ */
+const useStarredNames = (kinds: readonly StarredKind[], skip = false) => {
+  const stars = useListStarsQuery(skip || !canUseStars() ? skipToken : { fieldSelector: userStarsFieldSelector() });
+  const names = useMemo(
+    () =>
+      stars.data &&
+      kinds.flatMap(({ group, kind, searchKind }) => {
+        const starred = [...findStarredNames(stars.data, group, kind)].sort();
+        return starred.length > 0 ? [{ kind: searchKind, names: starred }] : [];
+      }),
+    [stars.data, kinds]
+  );
+  return { stars, names };
+};
+
+/**
  * The user's starred dashboards and folders, as search rows that follow the star set. The set is RTK
  * cache every star toggle invalidates and the search is keyed by it, so a toggle anywhere re-searches while the
  * previous rows stay up. Every caller shares one cache entry per star set; a view cuts the rows it shows after
@@ -82,24 +101,13 @@ const collator = new Intl.Collator();
  * not show rows renamed or deleted from another tab. `refetch` re-runs both requests; it is stable, so a view can
  * call it from an effect on its own refresh schedule.
  */
-export const useStarredSearch = ({
+export const useStarredDashboardsAndFolders = ({
   skip,
   refetchOnMountOrArgChange,
 }: { skip?: boolean; refetchOnMountOrArgChange?: boolean } = {}) => {
   const canStar = canUseStars();
-  const stars = useListStarsQuery(skip || !canStar ? skipToken : { fieldSelector: userStarsFieldSelector() });
-
-  // Keyed by search kind, names sorted, so the cache key is the set and not the order the API listed it in
-  const args = useMemo(() => {
-    if (!stars.data) {
-      return undefined;
-    }
-    return STARRED_KINDS.flatMap(({ group, kind, searchKind }) => {
-      const names = [...findStarredNames(stars.data, group, kind)].sort();
-      return names.length > 0 ? [{ kind: searchKind, names }] : [];
-    });
-  }, [stars.data]);
-  const search = useSearchStarredQuery(args ?? skipToken, { refetchOnMountOrArgChange });
+  const { stars, names } = useStarredNames(STARRED_INDEX_KINDS, skip);
+  const search = useSearchStarredQuery(names ?? skipToken, { refetchOnMountOrArgChange });
   const dispatch = useDispatch();
   const refetch = useCallback(() => dispatch(refetchStarred()), [dispatch]);
 
@@ -114,39 +122,26 @@ export const useStarredSearch = ({
 };
 
 /**
- * `useStarredSearch` with the starred objects of app kinds added, as one list in title order. The app rows are
- * searched apart, each kind through its plugin's API, and only a view that lists every kind asks for them.
- * Neither search waits for the other: `rows` holds what has answered so far. With `error` set the search of the
- * dashboards and folders failed, so the rows are not all of the stars. A kind whose plugin cannot be searched is
- * left out, not reported as an error.
+ * Every starred object Grafana shows, as one list in title order: the starred dashboards and folders, with the
+ * starred objects of app kinds added. The app rows are searched apart, each kind through its plugin's API; a view
+ * of dashboards or folders alone has `useStarredDashboardsAndFolders`, which asks no plugin. Neither search waits
+ * for the other: `rows` holds what has answered so far. With `error` set the search of the dashboards and folders
+ * failed, so the rows are not all of the stars. A kind whose plugin cannot be searched is left out, not reported
+ * as an error.
  */
-export const useStarredSearchWithAppKinds = ({
-  refetchOnMountOrArgChange,
-}: { refetchOnMountOrArgChange?: boolean } = {}) => {
-  const indexed = useStarredSearch({ refetchOnMountOrArgChange });
-  // The cache entry the search above reads
-  const stars = useListStarsQuery(canUseStars() ? { fieldSelector: userStarsFieldSelector() } : skipToken);
-
-  // Keyed by search kind, names sorted, so the cache key is the set and not the order the API listed it in
-  const args = useMemo(
-    () =>
-      STARRED_APP_KINDS.flatMap(({ group, kind, searchKind }) => {
-        const names = [...findStarredNames(stars.data, group, kind)].sort();
-        return names.length > 0 ? [{ kind: searchKind, names }] : [];
-      }),
-    [stars.data]
-  );
-  const apps = useSearchStarredAppKindsQuery(args.length > 0 ? args : skipToken, { refetchOnMountOrArgChange });
-  // A skipped query keeps the rows of its last star set, which no longer holds an app object
-  const appRows = args.length > 0 ? apps.data : undefined;
+export const useStarredSearch = ({ refetchOnMountOrArgChange }: { refetchOnMountOrArgChange?: boolean } = {}) => {
+  const indexed = useStarredDashboardsAndFolders({ refetchOnMountOrArgChange });
+  // A set without an app object is searched too, with no request: its empty rows replace those of the set before
+  const { names } = useStarredNames(getStarredAppKinds());
+  const apps = useSearchStarredAppKindsQuery(names ?? skipToken, { refetchOnMountOrArgChange });
 
   const rows = useMemo(() => {
-    if (!appRows?.length) {
+    if (!apps.data?.length) {
       return indexed.rows;
     }
     // Each search answers in its own order; sorted together, every kind reads as one list
-    return [...(indexed.rows ?? []), ...appRows].sort((a, b) => collator.compare(a.name, b.name));
-  }, [indexed.rows, appRows]);
+    return [...(indexed.rows ?? []), ...apps.data].sort((a, b) => collator.compare(a.name, b.name));
+  }, [indexed.rows, apps.data]);
   const dispatch = useDispatch();
   const { refetch: refetchIndexed } = indexed;
   const refetch = useCallback(() => {

@@ -4,6 +4,7 @@ import { act, getWrapper, render, screen } from 'test/test-utils';
 import { type NavModelItem } from '@grafana/data';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { type StarredNavItem } from 'app/core/navtree/constants';
 import { StPodReadyService, StPodStatus } from 'app/core/services/StPodReadyService';
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -106,7 +107,7 @@ describe('MegaMenuItem rendering branches', () => {
   });
 
   it('labels a starred folder leaf icon so screen readers can tell folders and dashboards apart', () => {
-    const starredFolder: NavModelItem = {
+    const starredFolder: StarredNavItem = {
       id: 'starred/folder/abc',
       text: 'My Folder',
       url: '/dashboards/f/abc',
@@ -120,7 +121,7 @@ describe('MegaMenuItem rendering branches', () => {
   });
 
   it('labels a starred dashboard leaf icon so screen readers can tell folders and dashboards apart', () => {
-    const starredDashboard: NavModelItem = {
+    const starredDashboard: StarredNavItem = {
       id: 'starred/dashboard/xyz',
       text: 'My Dashboard',
       url: '/d/xyz',
@@ -131,21 +132,6 @@ describe('MegaMenuItem rendering branches', () => {
     renderMenuItem(service, { link: starredDashboard });
 
     expect(screen.getByTitle('Dashboard')).toBeInTheDocument();
-  });
-
-  it('leaves a starred leaf icon untitled when the leaf carries no kind, so a wrong kind is never announced', () => {
-    const bootDataLeaf: NavModelItem = {
-      id: 'starred/xyz',
-      text: 'My Dashboard',
-      url: '/d/xyz',
-      icon: 'apps',
-    };
-
-    renderMenuItem(service, { link: bootDataLeaf });
-
-    // The icon renders, hidden from screen readers as an untitled icon is
-    expect(screen.getByTestId('icon-apps')).toHaveAttribute('aria-hidden', 'true');
-    expect(screen.queryByTitle('Dashboard')).not.toBeInTheDocument();
   });
 
   it('renders loading skeletons for an expanded section whose children are being fetched', () => {

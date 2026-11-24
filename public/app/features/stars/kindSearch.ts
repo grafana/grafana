@@ -1,12 +1,10 @@
 import { chunk } from 'lodash';
 
+import { type ResultItem, type SearchQuery, type SearchResults } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import {
-  API_GROUP as SEARCH_API_GROUP,
-  API_VERSION as SEARCH_API_VERSION,
+  API_GROUP as SEARCH_GROUP,
+  API_VERSION as SEARCH_VERSION,
   generatedAPI as searchAPI,
-  type GlobalResultItem,
-  type GlobalSearchQuery,
-  type GlobalSearchResults,
 } from '@grafana/api-clients/rtkq/search/v0alpha1';
 import { locationUtil } from '@grafana/data';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
@@ -14,7 +12,8 @@ import { getAPIBaseURL } from 'app/api/utils';
 import { getAPIGroupVersions } from 'app/features/apiserver/discovery';
 import { type DashboardQueryResult } from 'app/features/search/service/types';
 
-import { STARRED_APP_KINDS, type StarredAppKind } from './kinds';
+import { getStarredAppKinds, type StarredAppKind } from './kinds';
+import { type StarredNames } from './utils';
 
 /**
  * TODO: Switch to the global search when it is enabled, and delete this file. One search across
@@ -24,9 +23,11 @@ import { STARRED_APP_KINDS, type StarredAppKind } from './kinds';
  * Resolves starred names of an app kind to titles and folders through the kind's own search
  * endpoint, `POST /apis/{group}/{version}/namespaces/{ns}/{plural}/search`, which the app platform
  * mounts for every served namespaced kind whose manifest does not opt out of search. No client is
- * generated for an app kind, so the request is built here. Its query and results are those of the
- * global search, less what only a search across kinds has, so the types are that client's.
+ * generated for an app kind, so the request is built here. Every kind's search takes the same query
+ * and answers with the same results, so the types are those generated for the dashboard kind's.
  */
+
+const SEARCH_API_VERSION = `${SEARCH_GROUP}/${SEARCH_VERSION}`;
 
 // Server page-size cap for a single search request
 const MAX_SEARCH_LIMIT = 500;
@@ -34,32 +35,26 @@ const MAX_SEARCH_LIMIT = 500;
 /** Tag for the starred rows of app kinds, which are searched apart from the dashboards and folders. */
 const STARRED_APP_SEARCH_TAG = 'StarredAppSearch';
 
-/** The starred names of one app kind, by its search kind. */
-interface StarredAppNames {
-  kind: string;
-  names: string[];
-}
-
 /**
  * The objects with these names, which are no more than a page holds. A name matches one object at most, so one
  * request can answer for them all, but the server may still cut a page short. It then hands out a token for the
  * rest, which is followed until every name is accounted for. A page accounts for one name at least, so there are
  * no more pages than names, and a server that hands out a token with every page is not asked forever.
  */
-async function searchNames(url: string, names: string[]): Promise<GlobalResultItem[]> {
-  const items: GlobalResultItem[] = [];
+async function searchNames(url: string, names: string[]): Promise<ResultItem[]> {
+  const items: ResultItem[] = [];
   let token: string | undefined;
   for (let page = 0; page < names.length; page++) {
-    const query: GlobalSearchQuery = {
+    const query: SearchQuery = {
       // The server refuses a query without its envelope
-      apiVersion: `${SEARCH_API_GROUP}/${SEARCH_API_VERSION}`,
+      apiVersion: SEARCH_API_VERSION,
       kind: 'SearchQuery',
       where: { filter: { field: 'name', operator: 'In', values: names } },
-      fields: ['title', 'folder', 'description', 'tags'],
+      fields: ['title', 'folder', 'description'],
       limit: names.length,
       continue: token,
     };
-    const results = await getBackendSrv().post<GlobalSearchResults>(
+    const results = await getBackendSrv().post<SearchResults>(
       url,
       query,
       // The kind's stars are simply not shown; a global toast for an optional plugin API would only confuse
@@ -80,7 +75,7 @@ async function searchNames(url: string, names: string[]): Promise<GlobalResultIt
  * unshown rather than failing the list around them.
  */
 async function searchStarredRows(kind: StarredAppKind, names: string[]): Promise<DashboardQueryResult[]> {
-  let items: GlobalResultItem[];
+  let items: ResultItem[];
   try {
     // TODO: Resolve the version through the shared API discovery service once there is one. Until then the kind
     // is taken to be served at its group's preferred version, which is asked for with every search, not kept:
@@ -108,7 +103,8 @@ async function searchStarredRows(kind: StarredAppKind, names: string[]): Promise
   }
 
   return items.map((item) => {
-    const fields = item.fields ?? {};
+    // The generated type leaves the values unchecked
+    const fields: Record<string, unknown> = item.fields ?? {};
     const { name } = item.resource;
     return {
       kind: kind.searchKind,
@@ -118,7 +114,8 @@ async function searchStarredRows(kind: StarredAppKind, names: string[]): Promise
       url: locationUtil.assureBaseUrl(kind.getRoute(name)),
       description: typeof fields.description === 'string' ? fields.description : '',
       location: typeof fields.folder === 'string' ? fields.folder : '',
-      tags: Array.isArray(fields.tags) ? fields.tags.filter((tag): tag is string => typeof tag === 'string') : [],
+      // The rest of a dashboard search row, which an app object has no value for
+      tags: [],
       panel_type: '',
       ds_uid: [],
     };
@@ -130,12 +127,12 @@ async function searchStarredRows(kind: StarredAppKind, names: string[]): Promise
 const kindSearchAPI = searchAPI.enhanceEndpoints({ addTagTypes: [STARRED_APP_SEARCH_TAG] }).injectEndpoints({
   endpoints: (build) => ({
     /** Starred objects of app kinds as search rows, each kind through its own search endpoint, in no order. */
-    searchStarredAppKinds: build.query<DashboardQueryResult[], StarredAppNames[]>({
+    searchStarredAppKinds: build.query<DashboardQueryResult[], StarredNames[]>({
       providesTags: [STARRED_APP_SEARCH_TAG],
       queryFn: async (starred) => {
         const rows = await Promise.all(
           starred.map(({ kind: searchKind, names }) => {
-            const kind = STARRED_APP_KINDS.find((candidate) => candidate.searchKind === searchKind);
+            const kind = getStarredAppKinds().find((candidate) => candidate.searchKind === searchKind);
             return kind ? searchStarredRows(kind, names) : [];
           })
         );

@@ -13,7 +13,7 @@ import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { useStyles2, Text, IconButton, Icon, Stack, FeatureBadge, Box } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useIsStPodLoading } from 'app/core/navigation/useIsStPodLoading';
-import { STARRED_ID_PREFIX } from 'app/core/navtree/constants';
+import { isStarredNavItem } from 'app/core/navtree/constants';
 import { findStarredKindBySearchKind } from 'app/features/stars/kinds';
 
 import { Indent } from '../../Indent/Indent';
@@ -99,9 +99,10 @@ export function MegaMenuItem({
   const hasActiveChild = hasChildMatch(link, activeItem);
   const isStPodLoading = useIsStPodLoading(link.url ?? '');
   const isActive = link === activeItem || (level === MAX_DEPTH && hasActiveChild);
-  // Starred leaf rows (id `starred/<kind>/<uid>`) carry a per-kind icon (folder vs dashboard) that must
-  // render alongside the label the same way section-header icons do, so the two kinds are distinguishable.
-  const isStarredLeaf = Boolean(link.id?.startsWith(STARRED_ID_PREFIX));
+  // Starred leaf rows carry a per-kind icon (folder vs dashboard) that must render alongside the label the
+  // same way section-header icons do, so the kinds are distinguishable.
+  const starredKind = isStarredNavItem(link) ? link.starredKind : undefined;
+  const isStarredLeaf = starredKind !== undefined;
   const [sectionExpanded, setSectionExpanded] = useLocalStorage(
     `grafana.navigation.expanded[${expandKeyPrefix}${link.text}]`,
     defaultExpanded ?? Boolean(hasActiveChild)
@@ -147,7 +148,7 @@ export function MegaMenuItem({
   // Announce the kind on starred-leaf icons so a same-named dashboard/folder pair doesn't read
   // as two identical links to screen readers. Other icons stay untitled (and thus aria-hidden):
   // level-0 section icons must, or they double-announce the label.
-  const starredLeafIconTitle = link.starredKind ? findStarredKindBySearchKind(link.starredKind)?.getLabel() : undefined;
+  const starredLeafIconTitle = starredKind ? findStarredKindBySearchKind(starredKind)?.getLabel() : undefined;
 
   let iconElement: React.JSX.Element | null = null;
 
@@ -176,8 +177,21 @@ export function MegaMenuItem({
   // every item shows it (gating lives in MegaMenuItemText). With it on, any nav item is pinnable
   // except Home and the dynamic starred sub-items (`starred/<kind>/<uid>`) — including top-level sections,
   // parents and leaves alike. (Bookmarks is already dropped from the tree when customising.)
-  const isPinnableItem = link.id !== 'home' && !link.id?.startsWith(STARRED_ID_PREFIX);
+  const isPinnableItem = link.id !== 'home' && !isStarredLeaf;
   const showPin = !canCustomise || isPinnableItem;
+
+  const hasChildren = linkHasChildren(link);
+  // Placeholders stand in for children that are still being fetched
+  const showPlaceholders = !hasChildren && loadingChildren;
+  // Follows the children that loaded, or stands in for them
+  let childrenMessage: string | undefined;
+  if (childrenLoadError) {
+    childrenMessage = hasChildren
+      ? t('navigation.megamenu-item.children-partial-error', 'Failed to load some items')
+      : t('navigation.megamenu-item.children-error', 'Failed to load items');
+  } else if (!hasChildren) {
+    childrenMessage = link.emptyMessage;
+  }
 
   return (
     <li
@@ -273,7 +287,7 @@ export function MegaMenuItem({
       </StPodPendingTooltip>
       {childrenVisible && (
         <ul className={styles.children}>
-          {linkHasChildren(link) ? (
+          {hasChildren &&
             link.children
               .filter((childLink) => !childLink.isCreateAction)
               .map((childLink) => (
@@ -295,8 +309,8 @@ export function MegaMenuItem({
                   collapseEmptyControls={collapseEmptyControls}
                   disabled={disabled}
                 />
-              ))
-          ) : loadingChildren ? (
+              ))}
+          {showPlaceholders ? (
             <Box
               display="flex"
               direction="column"
@@ -311,20 +325,12 @@ export function MegaMenuItem({
               <Skeleton width={120} />
               <Skeleton width={90} />
             </Box>
-          ) : childrenLoadError ? (
-            <div className={styles.emptyMessage} aria-live="polite">
-              {t('navigation.megamenu-item.children-error', 'Failed to load items')}
-            </div>
           ) : (
-            <div className={styles.emptyMessage} aria-live="polite">
-              {link.emptyMessage}
-            </div>
-          )}
-          {/* Some children loaded and show above; the rest failed */}
-          {childrenLoadError && linkHasChildren(link) && (
-            <div className={styles.emptyMessage} aria-live="polite">
-              {t('navigation.megamenu-item.children-partial-error', 'Failed to load some items')}
-            </div>
+            childrenMessage && (
+              <div className={styles.emptyMessage} aria-live="polite">
+                {childrenMessage}
+              </div>
+            )
           )}
         </ul>
       )}

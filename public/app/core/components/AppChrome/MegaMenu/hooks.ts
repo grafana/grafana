@@ -17,7 +17,7 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { useNavTree } from 'app/core/navtree/useNavTree';
 import { findNavByUrl } from 'app/core/navtree/utils';
 import { setBookmark } from 'app/core/reducers/navBarTree';
-import { useStarredSearchWithAppKinds } from 'app/features/stars/hooks';
+import { useStarredSearch } from 'app/features/stars/hooks';
 import { useDispatch } from 'app/types/store';
 
 import { contextSrv } from '../../../services/context_srv';
@@ -321,7 +321,7 @@ export const useNavCustomization = () => {
   }, [variant]);
 
   // Searched again on each open so a rename or delete from another tab shows; the tree reads the same rows
-  const { loading: starredItemsLoading, error: starredItemsError } = useStarredSearchWithAppKinds({
+  const { loading: starredItemsLoading, error: starredItemsError } = useStarredSearch({
     refetchOnMountOrArgChange: true,
   });
 

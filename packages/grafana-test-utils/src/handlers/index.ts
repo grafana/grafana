@@ -4,7 +4,7 @@ export { USAGE_URL as QUOTAS_USAGE_URL } from './apis/quotas.grafana.app/v0alpha
 export { MERGED_PREFS_URL, preferencesHandlers } from './apis/preferences.grafana.app/v1/handlers';
 export { starsRoute } from './apis/collections.grafana.app/v1alpha1/handlers';
 export { getAPIGroupHandler, getKindSearchHandler, kindSearchRoute } from './apis/kindSearch/handlers';
-export type { MockServedKind, MockKindResource } from './apis/kindSearch/handlers';
+export type { MockAppKind, MockAppKindObject } from './apis/kindSearch/handlers';
 export {
   getCustomSearchHandler,
   searchRoute,

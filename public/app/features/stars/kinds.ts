@@ -1,8 +1,5 @@
-import { type IconName } from '@grafana/data';
 import { type KindInfo } from '@grafana/runtime/unstable';
-import { CORE_KINDS } from 'app/core/kinds/coreKinds';
-
-import { APP_KIND_PAGES } from './appKindPages';
+import { CORE_KINDS, getAppKinds } from 'app/core/kinds/coreKinds';
 
 /**
  * A kind whose starred objects Grafana shows. The Stars resource stores names per API group and kind; this says how
@@ -16,8 +13,6 @@ export interface StarredKind extends Pick<KindInfo, 'group' | 'kind' | 'getLabel
    * string would share one entry.
    */
   searchKind: string;
-  /** Starred lists group by this rank, alphabetical within it. */
-  sortWeight: number;
 }
 
 /**
@@ -28,37 +23,46 @@ export interface StarredAppKind extends StarredKind, Pick<KindInfo, 'resource'> 
   getRoute: NonNullable<KindInfo['getRoute']>;
 }
 
-const DASHBOARD: StarredKind = { ...CORE_KINDS.dashboard, sortWeight: 0 };
-
-const FOLDER: StarredKind = { ...CORE_KINDS.folder, sortWeight: 1 };
-
 /**
  * The kinds of the dashboard search index whose stars Grafana shows, in display order. The index holds no app
- * kind: those are `STARRED_APP_KINDS`, and a search of the index never finds their stars.
+ * kind, so a search of it never finds their stars.
  */
-export const STARRED_KINDS: readonly StarredKind[] = [DASHBOARD, FOLDER];
+export const STARRED_INDEX_KINDS: readonly StarredKind[] = [CORE_KINDS.dashboard, CORE_KINDS.folder];
 
-// TODO: Temporary. One icon for every app kind, until a kind can declare its own
-const APP_KIND_ICON: IconName = 'cube';
+let registered: readonly KindInfo[] = [];
+let appKinds: readonly StarredAppKind[] = [];
+let allKinds: readonly StarredKind[] = STARRED_INDEX_KINDS;
 
-/** The app kinds whose stars Grafana shows. They list after Grafana's own kinds, in the order of their table. */
-export const STARRED_APP_KINDS: readonly StarredAppKind[] = APP_KIND_PAGES.map(
-  ({ group, kind, resource, listPath }, index) => ({
-    group,
-    kind,
-    resource,
-    searchKind: `${group}/${kind}`,
-    // TODO: Temporary. The kind name stands in for a label, until a kind can declare one
-    getLabel: () => kind,
-    icon: APP_KIND_ICON,
-    // Without the app sub path, as a core kind's route is
-    getRoute: (name) => `${listPath}/${encodeURIComponent(name)}`,
-    sortWeight: FOLDER.sortWeight + 1 + index,
-  })
-);
+// The kind registry has no change event, so its app kinds are compared on each read. The lists are rebuilt when
+// they changed and are the same arrays until then, for a view to memoize on
+function readAppKinds() {
+  const kinds = getAppKinds();
+  if (kinds.length === registered.length && kinds.every((kind, index) => kind === registered[index])) {
+    return;
+  }
+  registered = kinds;
+  appKinds = kinds.flatMap(({ group, kind, resource, getLabel, icon, getRoute }) =>
+    getRoute ? [{ group, kind, resource, getLabel, icon, getRoute, searchKind: `${group}/${kind}` }] : []
+  );
+  allKinds = [...STARRED_INDEX_KINDS, ...appKinds];
+}
+
+/**
+ * The app kinds whose stars Grafana shows: those their plugins added to the kind registry with a page, in the
+ * order they were added. A kind without a page has nowhere to link its objects to.
+ */
+export function getStarredAppKinds(): readonly StarredAppKind[] {
+  readAppKinds();
+  return appKinds;
+}
+
+/** Every kind whose stars Grafana shows, in display order: the kinds of the index, then the app kinds. */
+export function getStarredKinds(): readonly StarredKind[] {
+  readAppKinds();
+  return allKinds;
+}
 
 /** The kind behind a search row's or nav leaf's kind string; undefined for kinds nobody can star, such as panels. */
 export function findStarredKindBySearchKind(searchKind: string): StarredKind | undefined {
-  const isSearchKind = (candidate: StarredKind) => candidate.searchKind === searchKind;
-  return STARRED_KINDS.find(isSearchKind) ?? STARRED_APP_KINDS.find(isSearchKind);
+  return getStarredKinds().find((candidate) => candidate.searchKind === searchKind);
 }

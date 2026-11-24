@@ -1,4 +1,5 @@
 import { HttpResponse } from 'msw';
+import { testWithAppKind } from 'test/helpers/testWithAppKind';
 import { testWithStarsUser } from 'test/helpers/testWithStarsUser';
 import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
@@ -11,11 +12,11 @@ import {
   customGetUserPreferencesHandler,
   customPatchUserPreferencesHandler,
   getFolderFixtures,
-  MOCK_STARRED_KIND_SERVED,
+  MOCK_APP_KIND,
   mockUserPreferences,
+  setMockStarredAppKind,
   setMockStarredDashboards,
   setMockStarredFolders,
-  setMockStarredPluginKind,
   setMockUserPreferences,
   setTestFlags,
 } from '@grafana/test-utils/unstable';
@@ -94,6 +95,7 @@ const renderMegaMenu = ({
 };
 
 testWithStarsUser();
+testWithAppKind();
 
 describe('MegaMenu', () => {
   beforeEach(() => {
@@ -822,12 +824,11 @@ describe('MegaMenu', () => {
   });
 
   it('renders a starred app object with its kind icon titled for screen readers, linking into the plugin', async () => {
-    const pageUuid = '7d0c6f1e-3b2a-4c5d-9e8f-0a1b2c3d4e5f';
     setMockStarredDashboards([]);
-    setMockStarredPluginKind(MOCK_STARRED_KIND_SERVED.group, MOCK_STARRED_KIND_SERVED.kind, [pageUuid]);
+    setMockStarredAppKind(MOCK_APP_KIND.group, MOCK_APP_KIND.kind, ['t1']);
     server.use(
-      getAPIGroupHandler(MOCK_STARRED_KIND_SERVED.group, MOCK_STARRED_KIND_SERVED.version),
-      getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [{ name: pageUuid, title: 'Capacity review' }])
+      getAPIGroupHandler(MOCK_APP_KIND.group, MOCK_APP_KIND.version),
+      getKindSearchHandler(MOCK_APP_KIND, [{ name: 't1', title: 'Capacity review' }])
     );
     setupSearcher([]);
 
@@ -840,11 +841,11 @@ describe('MegaMenu', () => {
     const starredSection = within(screen.getByRole('link', { name: 'Starred' }).closest('li')!);
     expect(starredSection.getByRole('link', { name: 'Capacity review' })).toHaveAttribute(
       'href',
-      `/a/grafana-assistant-app/pages/${pageUuid}`
+      '/a/test-things-app/things/t1'
     );
 
     // The kind icon doubles as the row's accessible kind, like the dashboard/folder icons do.
-    expect(starredSection.getByTitle('Page')).toBe(starredSection.getByTestId('icon-cube'));
+    expect(starredSection.getByTitle('Thing')).toBe(starredSection.getByTestId('icon-cube'));
   });
 
   it('reports a click on a starred row as a click on a starred item of its kind', async () => {

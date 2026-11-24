@@ -1,33 +1,17 @@
 import { HttpResponse, http } from 'msw';
 
-import { mockStarredDashboardsMap, mockStarredFoldersMap, mockStarredPluginKinds } from '../../../../fixtures/starred';
-
-// Grafana's own kinds have fixed in-memory sets; any other group/kind is a plugin kind
-const CORE_RESOURCE_MAPS: Record<string, Map<string, boolean>> = {
-  'dashboard.grafana.app/Dashboard': mockStarredDashboardsMap,
-  'folder.grafana.app/Folder': mockStarredFoldersMap,
-};
+import { mockStarSets } from '../../../../fixtures/starred';
 
 // The Stars API accepts any group/kind, so a star of an unseen kind starts a new set
 const getStarsMapFor = (group: string, kind: string) => {
   const key = `${group}/${kind}`;
-  const core = CORE_RESOURCE_MAPS[key];
-  if (core) {
-    return core;
+  let names = mockStarSets.get(key);
+  if (!names) {
+    names = new Map();
+    mockStarSets.set(key, names);
   }
-  let map = mockStarredPluginKinds.get(key);
-  if (!map) {
-    map = new Map();
-    mockStarredPluginKinds.set(key, map);
-  }
-  return map;
+  return names;
 };
-
-const starredResources = () =>
-  [...Object.entries(CORE_RESOURCE_MAPS), ...mockStarredPluginKinds.entries()].map(([key, map]) => {
-    const [group, kind] = key.split('/');
-    return { group, kind, names: Array.from(map.keys()) };
-  });
 
 export const starsRoute = '/apis/collections.grafana.app/v1alpha1/namespaces/:namespace/stars';
 
@@ -48,7 +32,10 @@ const getStarsHandler = () =>
             creationTimestamp: '2025-05-14T14:02:10Z',
           },
           spec: {
-            resource: starredResources(),
+            resource: Array.from(mockStarSets, ([key, names]) => {
+              const [group, kind] = key.split('/');
+              return { group, kind, names: Array.from(names.keys()) };
+            }),
           },
           status: {},
         },
