@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/textproto"
 	"sort"
 	"strings"
@@ -17,6 +18,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
+	gomail "gopkg.in/mail.v2"
 
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -628,7 +630,7 @@ func TestDialAndSendClosesConnectionAfterSendPanic(t *testing.T) {
 	client := newTestSmtpClient(t, setting.NewCfg())
 
 	var err error
-	require.NotPanics(t, func() { err = client.dialAndSend([]*gomail.Dialer{dialer}, msg) })
+	require.NotPanics(t, func() { err = client.dialAndSend(dialer, msg) })
 
 	require.ErrorContains(t, err, "panic while sending email")
 	select {
