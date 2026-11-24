@@ -10,9 +10,7 @@ export const useIsUrlAllowed = (location: Pick<Location, 'pathname'>): boolean =
   return urlList.some((pattern) => matchPath(pattern, location.pathname) !== null);
 };
 
-export const useIsMtFallbackConfigured = (): boolean => isMtFallbackConfigured(useFlagGrafanaMtFallback());
-
-export const isMtFallbackConfigured = (flagValue: JsonValue): boolean => Boolean(getAllowedList(flagValue)?.length);
+export const useIsMtFallbackConfigured = (): boolean => Boolean(getAllowedList(useFlagGrafanaMtFallback())?.length);
 
 // Non-hook variant for code outside React (e.g. backend_srv); does not re-render on flag changes.
 export const isMtFallbackConfigured = (): boolean => {
