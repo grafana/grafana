@@ -184,12 +184,4 @@ export function findKindBySearchKind(searchKind: string): KindInfo | undefined {
 }
 
 /** This table and its lookups as the `KindRegistry` that `@grafana/runtime` defines for plugins. */
-export const kindRegistry: KindRegistry = {
-  coreKinds: CORE_KINDS,
-  coversGroup,
-  findKind,
-  findKindByResource,
-  getKindGroup,
-  getAppKinds,
-  addKinds,
-};
+export const kindRegistry: KindRegistry = { coreKinds: CORE_KINDS, coversGroup, findKind, getAppKinds, addKinds };

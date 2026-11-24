@@ -68,20 +68,6 @@ export interface KindRegistry {
   readonly coversGroup: (kind: KindInfo, group: string) => boolean;
   /** The kind an object of this API group and Kubernetes kind belongs to, among core and app kinds. */
   readonly findKind: (group: string, kind: string) => KindInfo | undefined;
-  /**
-   * The kind behind a plural resource name, such as `dashboards`, among core and app kinds. Pass the
-   * group when you have it: kinds in different groups can share a resource name.
-   *
-   * @alpha
-   */
-  readonly findKindByResource: (resource: string, group?: string) => KindInfo | undefined;
-  /**
-   * The group that names an object's kind: the collection's group for a member of a collection kind,
-   * such as a data source, and otherwise the object's own group.
-   *
-   * @alpha
-   */
-  readonly getKindGroup: (group: string, kind: string) => string;
   /** The kinds that app plugins add. A kind that Grafana serves itself is never among them. */
   readonly getAppKinds: () => KindInfo[];
   /** Adds the kinds an app plugin serves. A kind that Grafana serves itself keeps its core row. */
