@@ -285,7 +285,10 @@ const getStyles = (theme: GrafanaTheme2, size: 'sm' | 'md' | undefined) => {
 
   return {
     item: css({
-      ...(size === 'sm' ? theme.typography.bodySmall : size === 'md' ? theme.typography.body : {}),
+      ...({
+        sm: theme.typography.bodySmall,
+        md: theme.typography.body,
+      }[size]),
       background: 'none',
       cursor: 'pointer',
       whiteSpace: 'nowrap',
