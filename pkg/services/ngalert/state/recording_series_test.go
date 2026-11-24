@@ -147,6 +147,20 @@ func TestRecordingSeriesManager_Track(t *testing.T) {
 		require.EqualValues(t, 1, m.Tracked())
 	})
 
+	t.Run("a series is stale at the first tick after the interval grew", func(t *testing.T) {
+		m, _ := newSeriesTestManager(RecordingSeriesCfg{}, nil)
+		rule := seriesTestRule("r")
+		rule.IntervalSeconds = 10
+		last := seriesTick0.Add(50 * time.Second)
+		m.Track(rule, seriesTarget1, last, seriesLabels(1, 2))
+
+		longer := *rule
+		longer.IntervalSeconds = 60
+		stale := m.Track(&longer, seriesTarget1, seriesTick0.Add(time.Minute), seriesLabels(1))
+
+		require.Equal(t, []string{"2"}, labelIDs(stale))
+	})
+
 	t.Run("a stale series is reported once", func(t *testing.T) {
 		m, _ := newSeriesTestManager(RecordingSeriesCfg{}, nil)
 		rule := seriesTestRule("r")

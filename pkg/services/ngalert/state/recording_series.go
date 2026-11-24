@@ -440,6 +440,8 @@ func (m *RecordingSeriesManager) takeMissing(rule *models.AlertRule, c *cache, t
 	one := int64(1)
 	passRule := *rule
 	passRule.MissingSeriesEvalsToResolve = &one
+	// A zero interval drops the elapsed time check, which would delay a marker after the interval grows.
+	passRule.IntervalSeconds = 0
 	transitions, _ := processMissingSeriesStates(c, log.NewNopLogger(), at, &passRule, nil)
 
 	var stale []StaleSeries
