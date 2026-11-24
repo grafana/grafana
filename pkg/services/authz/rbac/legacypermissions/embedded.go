@@ -8,6 +8,7 @@ import (
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	"github.com/grafana/authlib/types"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -85,6 +86,10 @@ type embeddedServer struct {
 // NewEmbeddedClient owns a private in-process channel. The legacy handler is
 // deliberately never registered on a network server or the Check/List channel.
 func NewEmbeddedClient(loader *Loader, cfg *setting.Cfg) legacyclient.LegacyUserPermissionsClient {
+	return newEmbeddedClient(loader, cfg, nil)
+}
+
+func newEmbeddedClient(loader *Loader, cfg *setting.Cfg, reg prometheus.Registerer) legacyclient.LegacyUserPermissionsClient {
 	guard := new(int)
 	server := &embeddedServer{loader: loader, cfg: cfg, guard: guard}
 	channel := (&inprocgrpc.Channel{}).WithServerStreamInterceptor(func(srv any, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
@@ -111,7 +116,7 @@ func NewEmbeddedClient(loader *Loader, cfg *setting.Cfg) legacyclient.LegacyUser
 		ctx = types.WithAuthInfo(ctx, LegacyPermissionCaller("*"))
 		return handler(srv, embeddedStream{ServerStream: stream, ctx: ctx})
 	})
-	authzv1.RegisterLegacyAuthzServiceServer(channel, server)
+	authzv1.RegisterLegacyAuthzServiceServer(channel, InstrumentServer(server, reg, "embedded"))
 	return &embeddedClient{LegacyUserPermissionsClient: legacyclient.NewLegacyClient(channel)}
 }
 
