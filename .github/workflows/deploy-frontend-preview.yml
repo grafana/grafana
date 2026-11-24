@@ -129,6 +129,7 @@ jobs:
     needs: check
     if: needs.check.outputs.head-sha != '' && (needs.check.outputs.is-fork == 'false' || github.run_attempt == 1)
     runs-on: ubuntu-x64-large
+    timeout-minutes: 45
     # A newer eligible request cancels a stale build without interrupting an upload.
     concurrency:
       group: ${{ github.workflow }}-build-${{ needs.check.outputs.pr-number }}
@@ -167,7 +168,7 @@ jobs:
       # runner credentials, cache APIs, or workflow command files to fork code.
       - name: Build fork frontend in a container
         if: needs.check.outputs.is-fork == 'true'
-        timeout-minutes: 60
+        timeout-minutes: 30
         shell: bash
         run: |
           node_version=$(<preview-config/.nvmrc)
@@ -179,7 +180,7 @@ jobs:
           marker=$(openssl rand -hex 16)
           echo "::stop-commands::$marker"
           trap 'echo "::$marker::"' EXIT
-          docker run --rm \
+          docker run --rm --name "fork-preview-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
             --user "$(id -u):$(id -g)" --cap-drop ALL --security-opt no-new-privileges \
             --mount "type=bind,src=$GITHUB_WORKSPACE/preview-source,dst=/checkout,readonly" \
             --mount "type=bind,src=$GITHUB_WORKSPACE/dist,dst=/out" \
@@ -196,6 +197,16 @@ jobs:
               "
               cp -a dist/frontend /out/
             '
+
+      - name: Remove fork build container after failure or cancellation
+        if: ${{ (failure() || cancelled()) && needs.check.outputs.is-fork == 'true' }}
+        timeout-minutes: 1
+        shell: bash
+        run: |
+          container="fork-preview-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          if docker container inspect "$container" >/dev/null 2>&1; then
+            docker rm -f "$container"
+          fi
 
       - name: Validate fork artifact before upload
         if: needs.check.outputs.is-fork == 'true'
@@ -240,6 +251,7 @@ jobs:
     needs: [check, build]
     if: needs.check.outputs.is-fork == 'false' || github.run_attempt == 1
     runs-on: ubuntu-arm64-small
+    timeout-minutes: 20
     concurrency:
       group: ${{ github.workflow }}-deploy-${{ needs.check.outputs.pr-number }}
       cancel-in-progress: false
