@@ -3822,20 +3822,6 @@
     },
     {
       "metadata": {
-        "name": "grafana.responsiveTimePickerTabs",
-        "resourceVersion": "1795130480782",
-        "creationTimestamp": "2026-11-19T23:21:20Z"
-      },
-      "spec": {
-        "description": "Enable tabs and an inline calendar in the compact time range picker",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-frontend-navigation",
-        "frontend": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "grafana.restrictWatchToServiceIdentities",
         "resourceVersion": "1793306194106",
         "creationTimestamp": "2026-10-26T09:57:55Z",

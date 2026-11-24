@@ -35,9 +35,11 @@ export function CompactTimePickerContent(props: Props) {
     return 'relative';
   });
   const activeTab = hideQuickRanges ? 'absolute' : selectedTab;
+  const [autoFocusSearch, setAutoFocusSearch] = useState(true);
   const id = useId();
   const styles = useStyles2(getStyles);
   const selectTab = (tab: PickerTab) => {
+    setAutoFocusSearch(false);
     setSelectedTab(tab);
     store.set(storageKey, tab);
   };
@@ -93,7 +95,7 @@ export function CompactTimePickerContent(props: Props) {
         {activeTab === 'relative' ? (
           <>
             <FilterInput
-              autoFocus
+              autoFocus={autoFocusSearch}
               width={0}
               value={props.searchTerm}
               onChange={props.onSearch}
@@ -101,7 +103,12 @@ export function CompactTimePickerContent(props: Props) {
               placeholder={t('time-picker.tabs.search-placeholder', 'Type quick ranges e.g. 3h')}
               aria-label={t('time-picker.tabs.search-label', 'Search quick ranges')}
               onKeyDown={(event) => {
-                if (event.key === 'Enter' && !event.nativeEvent.isComposing && props.quickOptions[0]) {
+                if (
+                  event.key === 'Enter' &&
+                  props.searchTerm.trim() &&
+                  !event.nativeEvent.isComposing &&
+                  props.quickOptions[0]
+                ) {
                   event.preventDefault();
                   props.onChange(mapOptionToTimeRange(props.quickOptions[0], props.timeZone));
                 }

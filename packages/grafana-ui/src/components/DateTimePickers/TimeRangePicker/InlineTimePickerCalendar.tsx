@@ -1,7 +1,5 @@
 import { css } from '@emotion/css';
 import { FocusScope } from '@react-aria/focus';
-import { useOverlay } from '@react-aria/overlays';
-import { useRef } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -19,8 +17,6 @@ interface Props extends Omit<TimePickerCalendarProps, 'isOpen' | 'onApply'> {
 
 export function InlineTimePickerCalendar(props: Props) {
   const styles = useStyles2(getStyles);
-  const ref = useRef<HTMLElement>(null);
-  const { overlayProps } = useOverlay({ isOpen: true, onClose: props.onClose }, ref);
   return (
     <FocusScope autoFocus>
       <section
@@ -28,8 +24,12 @@ export function InlineTimePickerCalendar(props: Props) {
         tabIndex={-1}
         aria-label={t('time-picker.inline-calendar.label', 'Calendar')}
         className={styles.calendar}
-        ref={ref}
-        {...overlayProps}
+        onKeyDownCapture={(event) => {
+          if (event.key === 'Escape') {
+            event.stopPropagation();
+            props.onClose();
+          }
+        }}
       >
         <Body {...props} />
         <Stack gap={2} justifyContent="space-between">

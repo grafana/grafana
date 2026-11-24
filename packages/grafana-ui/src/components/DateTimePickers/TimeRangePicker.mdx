@@ -1,0 +1,18 @@
+import { ArgTypes } from '@storybook/addon-docs/blocks';
+import { TimeRangePicker } from './TimeRangePicker';
+
+# TimeRangePicker
+
+Use `TimeRangePicker` to select relative or absolute time ranges, with optional timezone and fiscal-year controls.
+
+## Usage
+
+Import the supported component from `@grafana/ui`. Supply `value`, `onChange`, and the navigation callbacks. Use `quickRanges` to replace the built-in presets and `history` to supply recently used absolute ranges.
+
+## Experimental compact design
+
+Grafana's experimental tabbed design is available through `ExperimentalTimeRangePicker` in `@grafana/ui/internal`. Its `compactDesign`, `hideHistory`, and `hideFiscalYear` options are internal and may change without notice. They are not part of `TimeRangePickerProps`.
+
+The compact design separates Relative and Absolute ranges. Search accepts custom durations such as `3h`; Enter applies a result only when search is nonempty. Arrow keys, Home, and End switch tabs while preserving tab focus. The inline calendar updates the date inputs; **Apply time range** commits the range after any time edits.
+
+<ArgTypes of={TimeRangePicker} />

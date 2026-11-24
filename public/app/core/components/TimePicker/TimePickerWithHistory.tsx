@@ -10,7 +10,10 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { useFlagGrafanaResponsiveTimePickerTabs } from '@grafana/runtime/internal';
-import { type TimeRangePickerProps, TimeRangePicker } from '@grafana/ui';
+import {
+  type ExperimentalTimeRangePickerProps as TimeRangePickerProps,
+  ExperimentalTimeRangePicker as TimeRangePicker,
+} from '@grafana/ui/internal';
 import { appEvents } from 'app/core/app_events';
 
 const LOCAL_STORAGE_KEY = 'grafana.dashboard.timepicker.history';

@@ -20,7 +20,7 @@ import { getFocusStyles } from '../../../themes/mixins';
 import { FilterInput } from '../../FilterInput/FilterInput';
 import { Icon } from '../../Icon/Icon';
 import { TextLink } from '../../Link/TextLink';
-import { type TimeRangePickerProps } from '../TimeRangePicker';
+import { type ExperimentalTimeRangePickerProps as TimeRangePickerProps } from '../TimeRangePicker';
 import { type WeekStart } from '../WeekStartPicker';
 
 import { CompactTimePickerContent } from './CompactTimePickerContent';

@@ -1,9 +1,13 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { rangeUtil, store } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
-import { TimeRangePicker, type TimeRangePickerProps } from '../TimeRangePicker';
+import {
+  ExperimentalTimeRangePicker as TimeRangePicker,
+  type ExperimentalTimeRangePickerProps as TimeRangePickerProps,
+} from '../TimeRangePicker';
 
 import { TimeRangePickerContext } from './TimeRangePickerContext';
 
@@ -221,4 +225,44 @@ it('remembers tabs and applies ranges when storage is blocked', async () => {
     store.delete('grafana.timepicker.tab');
     storage.mockRestore();
   }
+});
+
+it('keeps the picker open when Enter is pressed without a search', async () => {
+  const { open, user, onChange } = setup();
+  await open();
+  await user.keyboard('{Enter}');
+  expect(screen.getByRole('textbox', { name: 'Search quick ranges' })).toHaveFocus();
+  expect(onChange).not.toHaveBeenCalled();
+});
+
+it('keeps focus on the active tab during arrow navigation', async () => {
+  const { open, user } = setup();
+  await open();
+  await user.click(screen.getByRole('tab', { name: 'Absolute' }));
+  await user.keyboard('{ArrowLeft}');
+  expect(screen.getByRole('tab', { name: 'Relative' })).toHaveFocus();
+  expect(screen.getByRole('tab', { name: 'Absolute' })).toHaveAttribute('tabindex', '-1');
+  await user.keyboard('{ArrowRight}');
+  expect(screen.getByRole('tab', { name: 'Absolute' })).toHaveFocus();
+  expect(screen.getByRole('tab', { name: 'Relative' })).toHaveAttribute('tabindex', '-1');
+});
+
+it('closes the picker on an outside click while the inline calendar is open', async () => {
+  const { open, user } = setup();
+  await open();
+  await user.click(screen.getByRole('tab', { name: 'Absolute' }));
+  await user.click(screen.getAllByRole('button', { name: 'Open calendar' })[0]);
+  expect(screen.getByRole('dialog', { name: 'Calendar' })).toBeVisible();
+  const backdrop = screen
+    .getByTestId(selectors.components.TimePicker.overlayContent)
+    .querySelector('[role="presentation"]');
+  if (!backdrop) {
+    throw new Error('backdrop not found');
+  }
+  // jsdom has no PointerEvent, so React Aria listens for mouse events.
+  // eslint-disable-next-line testing-library/prefer-user-event
+  fireEvent.mouseDown(backdrop);
+  // eslint-disable-next-line testing-library/prefer-user-event
+  fireEvent.mouseUp(backdrop);
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 });

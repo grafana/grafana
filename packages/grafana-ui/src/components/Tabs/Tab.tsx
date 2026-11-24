@@ -86,7 +86,7 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
       role: 'tab',
       'aria-selected': active,
       'aria-disabled': disabled,
-      tabIndex: disabled ? -1 : undefined,
+      tabIndex: disabled ? -1 : otherProps.tabIndex,
       title: !!tooltip ? undefined : otherProps.title, // If tooltip is provided, don't set the title on the link or button, it looks weird
     };
 

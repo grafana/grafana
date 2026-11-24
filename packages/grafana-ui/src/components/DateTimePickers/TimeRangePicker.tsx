@@ -32,11 +32,6 @@ import { useTimeSync } from './utils/useTimeSync';
 
 /** @public */
 export interface TimeRangePickerProps {
-  /** Compact presentation. The tabbed design is opt-in. */
-  compactDesign?: 'legacy' | 'tabs';
-  /** Hide supplied history. Defaults to false; persistence remains the caller's responsibility. */
-  hideHistory?: boolean;
-  hideFiscalYear?: boolean;
   hideText?: boolean;
   value: TimeRange;
   timeZone?: TimeZone;
@@ -86,6 +81,18 @@ export interface TimeRangePickerProps {
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/date-time-pickers-timerangepicker--docs
  */
 export function TimeRangePicker(props: TimeRangePickerProps) {
+  return <ExperimentalTimeRangePicker {...props} />;
+}
+
+export interface ExperimentalTimeRangePickerProps extends TimeRangePickerProps {
+  /** Compact presentation. The tabbed design is opt-in. */
+  compactDesign?: 'legacy' | 'tabs';
+  /** Hide supplied history. Defaults to false; persistence remains the caller's responsibility. */
+  hideHistory?: boolean;
+  hideFiscalYear?: boolean;
+}
+
+export function ExperimentalTimeRangePicker(props: ExperimentalTimeRangePickerProps) {
   const [isOpen, setOpen] = useState(false);
   const defaultCompactDesign = useContext(TimeRangePickerContext);
 

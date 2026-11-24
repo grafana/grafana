@@ -17842,6 +17842,10 @@
       "time-zone-option": "Time zone",
       "time-zone-selection": "Time zone selection"
     },
+    "inline-calendar": {
+      "label": "Calendar",
+      "update-inputs": "Update inputs"
+    },
     "range-content": {
       "apply-button": "Apply time range",
       "default-error": "Enter a date ({{dateExample}}) or relative time ({{relativeTimeExample1}}, {{relativeTimeExample2}})",
@@ -17859,6 +17863,12 @@
       "to": "to",
       "zoom-out-button": "Zoom out time range",
       "zoom-out-tooltip-new": "Time range zoom out <br/> t -"
+    },
+    "tabs": {
+      "absolute": "Absolute",
+      "relative": "Relative",
+      "search-label": "Search quick ranges",
+      "search-placeholder": "Type quick ranges e.g. 3h"
     },
     "time-range": {
       "apply": "Apply time range",

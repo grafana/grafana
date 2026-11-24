@@ -18,14 +18,6 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
-			Name:        "grafana.responsiveTimePickerTabs",
-			Description: "Enable tabs and an inline calendar in the compact time range picker",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendNavigation,
-			Expression:  "false",
-			Generate:    Generate{LegacyFrontend: true, React: true},
-		},
-		{
 			Name:        "panelTitleSearch",
 			Description: "Search for dashboards using panel title",
 			Stage:       FeatureStagePublicPreview,

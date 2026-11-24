@@ -134,3 +134,8 @@ export { InternalCodeMirrorEditor } from '../components/CodeMirror/CodeEditorLaz
 export type { InternalCodeMirrorEditorProps } from '../components/CodeMirror/types';
 
 export { TimeRangePickerContext } from '../components/DateTimePickers/TimeRangePicker/TimeRangePickerContext';
+
+export {
+  ExperimentalTimeRangePicker,
+  type ExperimentalTimeRangePickerProps,
+} from '../components/DateTimePickers/TimeRangePicker';

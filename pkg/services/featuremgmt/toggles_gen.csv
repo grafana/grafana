@@ -1,5 +1,4 @@
 Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
-2026-11-19,grafana.responsiveTimePickerTabs,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2022-02-15,panelTitleSearch,preview,@grafana/grafana-search-and-storage,false,false,false
 2023-01-03,publicDashboardsEmailSharing,preview,@grafana/grafana-operator-experience-squad,false,false,false
 2023-06-19,lokiExperimentalStreaming,experimental,@grafana/data-sources-plugins,false,false,false

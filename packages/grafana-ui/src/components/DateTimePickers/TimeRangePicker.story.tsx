@@ -4,7 +4,7 @@ import { useArgs } from 'storybook/preview-api';
 
 import { dateTime, DefaultTimeZone } from '@grafana/data';
 
-import { TimeRangePicker } from './TimeRangePicker';
+import { ExperimentalTimeRangePicker as TimeRangePicker } from './TimeRangePicker';
 
 const to = dateTime();
 const from = to.subtract(6, 'h');
