@@ -31,6 +31,9 @@ type RepositoryControllerService struct {
 func ProvideRepositoryControllerService(builder *APIBuilder) *RepositoryControllerService {
 	s := &RepositoryControllerService{}
 	s.loopbackService = newLoopbackService(RepositoryControllerServiceName, builder, s.runController)
+	// A changed or cleared bootstrap_path must be applied before the
+	// controller syncs the repository it replaces.
+	s.awaitBootstrap = true
 	return s
 }
 

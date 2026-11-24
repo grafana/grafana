@@ -26,6 +26,19 @@ func TestLoopbackService_Run(t *testing.T) {
 		})
 	})
 
+	t.Run("runs on the loopback config without waiting for the bootstrap repository unless asked to", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			builder := &APIBuilder{loopbackReady: make(chan struct{}), bootstrapDone: make(chan struct{})}
+			builder.publishLoopbackConfig(&clientrest.Config{})
+			svc := newLoopbackService("test", builder, func(ctx context.Context, _ *clientrest.Config) error {
+				return nil
+			})
+
+			require.NoError(t, svc.Run(t.Context()))
+			require.False(t, isClosed(builder.bootstrapDone))
+		})
+	})
+
 	t.Run("a cancellation that is not a shutdown fails the service", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			builder := &APIBuilder{loopbackReady: make(chan struct{})}

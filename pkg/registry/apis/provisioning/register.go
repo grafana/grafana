@@ -170,6 +170,9 @@ type APIBuilder struct {
 	// before loopbackReady is closed.
 	loopbackConfig *clientrest.Config
 	loopbackReady  chan struct{}
+	// bootstrapDone is closed when the post-start hook returns, after it has
+	// reconciled the bootstrap repository.
+	bootstrapDone chan struct{}
 }
 
 // NewAPIBuilder creates an API builder for the provisioning API.
@@ -271,6 +274,7 @@ func NewAPIBuilder(
 		// Request body cap for job creation. Non-positive (<=0) uses the default.
 		maxJobBodySize: maxJobBodySize,
 		loopbackReady:  make(chan struct{}),
+		bootstrapDone:  make(chan struct{}),
 	}
 
 	b.setResourceLister(resources.NewResourceLister(unified, clients, supportedResourceProvider.Get()))
@@ -306,6 +310,18 @@ func (b *APIBuilder) awaitLoopbackConfig(ctx context.Context) (*clientrest.Confi
 		return b.loopbackConfig, nil
 	case <-ctx.Done():
 		return nil, context.Cause(ctx)
+	}
+}
+
+// awaitBootstrapReconciled blocks until the post-start hook has reconciled the
+// bootstrap repository, so a changed or cleared bootstrap_path is applied
+// before anything syncs the repository it replaces.
+func (b *APIBuilder) awaitBootstrapReconciled(ctx context.Context) error {
+	select {
+	case <-b.bootstrapDone:
+		return nil
+	case <-ctx.Done():
+		return context.Cause(ctx)
 	}
 }
 
@@ -1118,6 +1134,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 	hookName := fmt.Sprintf("grafana-provisioning-%s", b.gv.Version)
 	postStartHooks := map[string]genericapiserver.PostStartHookFunc{
 		hookName: func(postStartHookCtx genericapiserver.PostStartHookContext) error {
+			// Deferred so that every return signals it; otherwise the repository
+			// controller would wait forever.
+			defer close(b.bootstrapDone)
+
 			var config *clientrest.Config
 			var err error
 			if b.restConfigGetter == nil {
@@ -1128,10 +1148,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 					return err
 				}
 			}
-			// The background services wait for this config, so they start only
-			// after the bootstrap repository is reconciled. Deferred so that every
-			// later return publishes it; otherwise they would wait forever.
-			defer b.publishLoopbackConfig(config)
+			b.publishLoopbackConfig(config)
 
 			c, err := clientset.NewForConfig(config)
 			if err != nil {
