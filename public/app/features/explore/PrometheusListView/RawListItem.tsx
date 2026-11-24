@@ -137,7 +137,7 @@ const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels, 
             tooltip={t('explore.raw-list-item.tooltip-copy-to-clipboard', 'Copy to clipboard')}
             onClick={() => {
               reportInteraction('grafana_explore_prometheus_instant_query_ui_raw_toggle_expand');
-              copyTextToClipboard(stringRep).catch();
+              copyTextToClipboard(stringRep).catch(() => {});
             }}
             name="copy"
           />
