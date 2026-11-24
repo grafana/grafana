@@ -68,14 +68,17 @@ describe('findKind', () => {
 });
 
 describe('findKindByResource', () => {
-  it('finds a core kind by its plural resource name', () => {
-    expect(findKindByResource('playlists')).toBe(CORE_KINDS.playlist);
+  it('finds a core kind by its group and plural resource name', () => {
+    expect(findKindByResource('playlist.grafana.app', 'playlists')).toBe(CORE_KINDS.playlist);
+    expect(findKindByResource('dashboard.grafana.app', 'dashboards')).toBe(CORE_KINDS.dashboard);
   });
 
-  it('narrows by group, including a group served inside a collection', () => {
-    expect(findKindByResource('dashboards', 'dashboard.grafana.app')).toBe(CORE_KINDS.dashboard);
-    expect(findKindByResource('dashboards', 'folder.grafana.app')).toBeUndefined();
-    expect(findKindByResource(CORE_KINDS.datasource.resource, `prometheus.${CORE_KINDS.datasource.group}`)).toBe(
+  it('finds nothing for a resource the group does not serve', () => {
+    expect(findKindByResource('folder.grafana.app', 'dashboards')).toBeUndefined();
+  });
+
+  it('finds a kind served inside a collection group', () => {
+    expect(findKindByResource(`prometheus.${CORE_KINDS.datasource.group}`, CORE_KINDS.datasource.resource)).toBe(
       CORE_KINDS.datasource
     );
   });
@@ -115,15 +118,26 @@ describe('app kinds', () => {
 
     expect(findKind(group, 'Note')).toBe(note);
     expect(findKind('other.ext.grafana.app', 'Note')).toBeUndefined();
-    expect(findKindByResource('notes', group)).toBe(note);
+    expect(findKindByResource(group, 'notes')).toBe(note);
+    expect(findKindByResource('other.ext.grafana.app', 'notes')).toBeUndefined();
     expect(getKinds()).toEqual(expect.arrayContaining([CORE_KINDS.dashboard, note]));
+  });
+
+  it('keeps a kind with a core kind name apart when its group differs', () => {
+    const dashboard = { ...appKind('Dashboard', 'Plugin dashboard'), group: 'dashboardv2.example.app' };
+    addKinds([dashboard]);
+
+    expect(findKind('dashboardv2.example.app', 'Dashboard')).toBe(dashboard);
+    expect(findKindByResource('dashboardv2.example.app', 'dashboards')).toBe(dashboard);
+    expect(findKind('dashboard.grafana.app', 'Dashboard')).toBe(CORE_KINDS.dashboard);
+    expect(findKindByResource('dashboard.grafana.app', 'dashboards')).toBe(CORE_KINDS.dashboard);
   });
 
   it('keeps the core row when a plugin adds a kind that Grafana serves', () => {
     addKinds([{ ...appKind('Dashboard', 'Plugin dashboard'), group: 'dashboard.grafana.app' }]);
 
     expect(findKind('dashboard.grafana.app', 'Dashboard')).toBe(CORE_KINDS.dashboard);
-    expect(getAppKinds().some((kind) => kind.kind === 'Dashboard')).toBe(false);
+    expect(getAppKinds().some((kind) => kind.group === 'dashboard.grafana.app')).toBe(false);
   });
 
   it('replaces a kind that a plugin adds again', () => {

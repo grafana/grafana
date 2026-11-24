@@ -156,9 +156,9 @@ export function findKind(group: string, kind: string): KindInfo | undefined {
   return getKinds().find((row) => row.kind === kind && coversGroup(row, group));
 }
 
-/** The kind behind a plural resource name, among core and app kinds; narrowed by `group` when given. */
-export function findKindByResource(resource: string, group?: string): KindInfo | undefined {
-  return getKinds().find((row) => row.resource === resource && (group === undefined || coversGroup(row, group)));
+/** The kind an object of this API group and plural resource name belongs to, among core and app kinds. */
+export function findKindByResource(group: string, resource: string): KindInfo | undefined {
+  return getKinds().find((row) => row.resource === resource && coversGroup(row, group));
 }
 
 /** The group that names an object's kind: the collection's group for a collection member, else `group`. */
