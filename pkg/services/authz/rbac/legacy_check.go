@@ -333,7 +333,7 @@ func validateLegacyTeamIDs(req *authzextv1.LegacyCheckRequest, idType types.Iden
 	}
 
 	if orgID < 1 || (idType != types.TypeUser && idType != types.TypeServiceAccount) {
-		return errors.New("legacy team memberships require an organization user or service account")
+		return fmt.Errorf("legacy team memberships require an organization user or service account; got identity type %q with organization ID %d", idType, orgID)
 	}
 
 	for _, id := range req.GetTeamIds().GetIds() {

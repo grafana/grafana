@@ -121,12 +121,12 @@ func TestLegacyCheckTeamSnapshotValidation(t *testing.T) {
 		{name: "ordinary registration", wantError: "legacy team memberships require the embedded server"},
 		{name: "zero ID", embedded: true, modify: func(r *authzv1.LegacyCheckRequest) { r.TeamIds.Ids = []int64{0} }, wantError: "legacy team IDs must be positive"},
 		{name: "negative ID", embedded: true, modify: func(r *authzv1.LegacyCheckRequest) { r.TeamIds.Ids = []int64{-1} }, wantError: "legacy team IDs must be positive"},
-		{name: "global", embedded: true, modify: func(r *authzv1.LegacyCheckRequest) { r.RequesterOrgId = proto.Int64(0) }, wantError: "legacy team memberships require an organization user or service account"},
-		{name: "anonymous", embedded: true, modify: func(r *authzv1.LegacyCheckRequest) { r.Subject = "anonymous:0" }, wantError: "legacy team memberships require an organization user or service account"},
+		{name: "global", embedded: true, modify: func(r *authzv1.LegacyCheckRequest) { r.RequesterOrgId = proto.Int64(0) }, wantError: `legacy team memberships require an organization user or service account; got identity type "user" with organization ID 0`},
+		{name: "anonymous", embedded: true, modify: func(r *authzv1.LegacyCheckRequest) { r.Subject = "anonymous:0" }, wantError: `legacy team memberships require an organization user or service account; got identity type "anonymous" with organization ID 12`},
 		{name: "internal", embedded: true, modify: func(r *authzv1.LegacyCheckRequest) {
 			r.Subject = ""
 			r.InternalIdentity = &authzv1.LegacyInternalIdentity{Profile: "service"}
-		}, wantError: "legacy team memberships require an organization user or service account"},
+		}, wantError: `legacy team memberships require an organization user or service account; got identity type "" with organization ID 12`},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			s := NewTestService("checked-user", nil, nil)
