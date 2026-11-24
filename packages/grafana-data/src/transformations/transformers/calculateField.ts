@@ -2,12 +2,15 @@ import { defaults } from 'lodash';
 import { map } from 'rxjs/operators';
 
 import { getTimeField } from '../../dataframe/processDataFrame';
+import { getDisplayProcessor } from '../../field/displayProcessor';
 import { getFieldDisplayName } from '../../field/fieldState';
+import { createTheme } from '../../themes/createTheme';
 import { NullValueMode } from '../../types/data';
 import { type DataFrame, FieldType, type Field } from '../../types/dataFrame';
 import { type DataTransformContext, type DataTransformerInfo } from '../../types/transformations';
 import { BinaryOperationID, binaryOperators } from '../../utils/binaryOperators';
 import { UnaryOperationID, unaryOperators } from '../../utils/unaryOperators';
+import { formattedValueToString } from '../../valueFormats/baseFormatters';
 import { doStandardCalcs, fieldReducers, ReducerID } from '../fieldReducer';
 import { getFieldMatcher } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
@@ -23,6 +26,7 @@ export enum CalculateFieldMode {
   BinaryOperation = 'binary',
   UnaryOperation = 'unary',
   Index = 'index',
+  Template = 'template',
 }
 
 export enum WindowSizeMode {
@@ -72,6 +76,13 @@ interface IndexOptions {
   asPercentile: boolean;
 }
 
+export interface TemplateOptions {
+  template: string;
+  decimals?: number;
+}
+
+export type FieldTemplatePart = { text: string } | { field: string };
+
 const defaultNumericVizOptions: ReduceOptions = {
   reducer: ReducerID.sum,
 };
@@ -106,6 +117,7 @@ export interface CalculateFieldTransformerOptions {
   binary?: BinaryOptions;
   unary?: UnaryOptions;
   index?: IndexOptions;
+  template?: TemplateOptions;
 
   // Remove other fields
   replaceFields?: boolean;
@@ -159,6 +171,11 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
             break;
           case CalculateFieldMode.UnaryOperation:
             creator = getUnaryCreator(defaults(options.unary, defaultUnaryOptions), data);
+            break;
+          case CalculateFieldMode.Template:
+            if (options.template?.template) {
+              creator = getTemplateCreator(options.template, data);
+            }
             break;
           case CalculateFieldMode.BinaryOperation:
             const fieldNames: string[] = [];
@@ -269,7 +286,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
 
           const field: Field = {
             name: getNameFromOptions(options),
-            type: FieldType.number,
+            type: mode === CalculateFieldMode.Template ? FieldType.string : FieldType.number,
             config: {},
             values,
           };
@@ -671,6 +688,80 @@ function getUnaryCreator(options: UnaryOptions, allFrames: DataFrame[]): ValuesC
   };
 }
 
+// Name-based subset of the data link syntax; `__data` survives the dashboard variable interpolation that runs first.
+const FIELD_REFERENCE_PATTERN = /\$\{__data\.fields(?:\.(\w+)|\["([^"]*)"\]|\['([^']*)'\])\}/g;
+
+export function parseFieldTemplate(template: string): FieldTemplatePart[] {
+  const parts: FieldTemplatePart[] = [];
+  const regex = new RegExp(FIELD_REFERENCE_PATTERN);
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(template)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push({ text: template.slice(lastIndex, match.index) });
+    }
+    parts.push({ field: match[1] ?? match[2] ?? match[3] });
+    lastIndex = regex.lastIndex;
+  }
+
+  if (lastIndex < template.length) {
+    parts.push({ text: template.slice(lastIndex) });
+  }
+
+  return parts;
+}
+
+export function getFieldTemplateReference(name: string): string {
+  if (/^\w+$/.test(name)) {
+    return `\${__data.fields.${name}}`;
+  }
+  return name.includes('"') ? `\${__data.fields['${name}']}` : `\${__data.fields["${name}"]}`;
+}
+
+function getTemplateCreator(options: TemplateOptions, allFrames: DataFrame[]): ValuesCreator {
+  const parts = parseFieldTemplate(options.template);
+  const theme = createTheme();
+  const hasReferences = parts.some((part) => 'field' in part);
+
+  return (frame: DataFrame) => {
+    let resolvedAny = !hasReferences;
+    const resolved = parts.map((part) => {
+      if ('text' in part) {
+        return part.text;
+      }
+      const field =
+        frame.fields.find((f) => f.name === part.field) ??
+        frame.fields.find((f) => getFieldDisplayName(f, frame, allFrames) === part.field);
+      if (!field) {
+        return '';
+      }
+      resolvedAny = true;
+      const formatField =
+        options.decimals == null ? field : { ...field, config: { ...field.config, decimals: options.decimals } };
+      return { values: field.values, display: getDisplayProcessor({ field: formatField, theme }) };
+    });
+
+    if (!resolvedAny) {
+      return undefined;
+    }
+
+    const values = new Array<string>(frame.length);
+    for (let i = 0; i < frame.length; i++) {
+      let row = '';
+      for (const part of resolved) {
+        if (typeof part === 'string') {
+          row += part;
+        } else if (part.values[i] != null) {
+          row += formattedValueToString(part.display(part.values[i]));
+        }
+      }
+      values[i] = row;
+    }
+    return values;
+  };
+}
+
 export function getNameFromOptions(options: CalculateFieldTransformerOptions) {
   if (options.alias?.length) {
     return options.alias;
@@ -713,6 +804,8 @@ export function getNameFromOptions(options: CalculateFieldTransformerOptions) {
       break;
     case CalculateFieldMode.Index:
       return 'Row';
+    case CalculateFieldMode.Template:
+      return 'Template';
   }
 
   return 'math';

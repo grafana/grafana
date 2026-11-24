@@ -17768,6 +17768,7 @@
           "binary-operation": "Binary operation",
           "reduce-row": "Reduce row",
           "row-index": "Row index",
+          "template": "Template",
           "unary-operation": "Unary operation"
         }
       },
@@ -18470,6 +18471,18 @@
         "prepare-spatial-field": "Prepare spatial field",
         "transform": "Transform"
       }
+    },
+    "template-options-editor": {
+      "aria-label-insert-field": "Insert field",
+      "error-unknown-fields": "Unknown fields: {{fields}}",
+      "label-decimals": "Decimals",
+      "label-insert-field": "Insert field",
+      "label-template": "Template",
+      "placeholder-decimals": "auto",
+      "placeholder-insert-field": "Select field",
+      "placeholder-template": "${__data.fields.host}: ${__data.fields.message}",
+      "tooltip-decimals": "Decimals for numbers in the template. Panel decimals do not apply because they are set after transformations run.",
+      "tooltip-template": "Combine text and field values into a string. Reference a field with ${__data.fields.name}."
     },
     "time-series-table": {
       "description": {

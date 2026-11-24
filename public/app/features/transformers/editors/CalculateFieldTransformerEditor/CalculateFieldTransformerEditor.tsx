@@ -33,6 +33,7 @@ import { BinaryOperationOptionsEditor } from './BinaryOperationOptionsEditor';
 import { CumulativeOptionsEditor } from './CumulativeOptionsEditor';
 import { IndexOptionsEditor } from './IndexOptionsEditor';
 import { ReduceRowOptionsEditor } from './ReduceRowOptionsEditor';
+import { TemplateOptionsEditor } from './TemplateOptionsEditor';
 import { UnaryOperationEditor } from './UnaryOperationEditor';
 import { WindowOptionsEditor } from './WindowOptionsEditor';
 import { LABEL_WIDTH } from './constants';
@@ -81,6 +82,10 @@ export const CalculateFieldTransformerEditor = (props: CalculateFieldTransformer
     {
       value: CalculateFieldMode.WindowFunctions,
       label: t('transformers.calculate-field-transformer-editor.label.window-functions', 'Window functions'),
+    },
+    {
+      value: CalculateFieldMode.Template,
+      label: t('transformers.calculate-field-transformer-editor.calculation-modes.label.template', 'Template'),
     },
   ];
 
@@ -242,6 +247,14 @@ export const CalculateFieldTransformerEditor = (props: CalculateFieldTransformer
       )}
       {mode === CalculateFieldMode.Index && (
         <IndexOptionsEditor options={options} onChange={props.onChange}></IndexOptionsEditor>
+      )}
+      {mode === CalculateFieldMode.Template && (
+        <TemplateOptionsEditor
+          names={state.names}
+          input={input}
+          options={options}
+          onChange={props.onChange}
+        ></TemplateOptionsEditor>
       )}
       <InlineField
         labelWidth={LABEL_WIDTH}
