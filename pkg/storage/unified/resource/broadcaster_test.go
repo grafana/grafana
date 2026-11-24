@@ -230,6 +230,35 @@ func TestBroadcasterOverflowSpoolsInsteadOfDisconnecting(t *testing.T) {
 	}
 }
 
+func TestBroadcasterRefillsOverflowWhenDeliveryBufferRunsLow(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		ctx := t.Context()
+		input := make(chan int)
+		defer close(input)
+		b := newBroadcasterWithSizes(ctx, input, 4, 4, nil, intIdentity, nil)
+		sub, err := b.subscribeWatch(ctx, "test", intGR, "", nil)
+		require.NoError(t, err)
+		events := sub.events()
+
+		for rv := 1; rv <= 8; rv++ {
+			input <- rv
+		}
+		synctest.Wait()
+
+		for i, buffered := range []int{3, 4, 3, 4, 3, 2, 1, 0} {
+			select {
+			case rv := <-events:
+				require.Equal(t, i+1, rv)
+			default:
+				t.Fatal("delivery stalled before the next drain tick")
+			}
+			sub.requestRefill()
+			synctest.Wait()
+			require.Len(t, events, buffered)
+		}
+	})
+}
+
 func TestBroadcasterDisconnectsOnOverflowCapExceeded(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		ctx := t.Context()

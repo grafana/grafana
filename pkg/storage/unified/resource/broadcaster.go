@@ -125,10 +125,11 @@ type subscription[T any] struct {
 	gr        GroupResource // also the metric label for subscriber-attributed metrics
 	namespace string        // empty to receive every namespace
 	// collection is the index the subscriber is registered in.
-	collection  *collectionSubscribers[T]
-	ch          chan T
-	overflow    []T // pending items when channel is full, nil when not overflowing
-	hasOverflow atomic.Bool
+	collection   *collectionSubscribers[T]
+	ch           chan T
+	overflow     []T // pending items when channel is full, nil when not overflowing
+	hasOverflow  atomic.Bool
+	refillQueued atomic.Bool
 	// delivered counts events handed to the subscriber, through ch or overflow.
 	// Its watch reads it to tell whether it has consumed them all.
 	delivered atomic.Int64
@@ -360,20 +361,23 @@ func (s *watchSubscription[T]) events() <-chan T {
 	return s.sub.ch
 }
 
-// requestRefill is called after consuming an event. Watches without a backlog
-// stay off the refill queue, and multiple reads can share one drain attempt.
+// requestRefill batches overflow delivery once the channel is at most half full.
+// The per-watch flag coalesces requests before they contend for the shared lock.
 func (s *watchSubscription[T]) requestRefill() {
-	if !s.sub.hasOverflow.Load() {
+	sub := s.sub
+	if !sub.hasOverflow.Load() || len(sub.ch) > cap(sub.ch)/2 || !sub.refillQueued.CompareAndSwap(false, true) {
 		return
 	}
 	b := s.b
 	b.refillMu.Lock()
-	if s.sub.hasOverflow.Load() {
-		b.refills[s.sub] = struct{}{}
+	if sub.hasOverflow.Load() {
+		b.refills[sub] = struct{}{}
 		select {
 		case b.refillReady <- struct{}{}:
 		default:
 		}
+	} else {
+		sub.refillQueued.Store(false)
 	}
 	b.refillMu.Unlock()
 }
@@ -557,6 +561,8 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 			refills, b.refills = b.refills, refills
 			b.refillMu.Unlock()
 			for sub := range refills {
+				// Let the reader request another refill while this drain makes progress.
+				sub.refillQueued.Store(false)
 				b.drainOverflow(sub)
 			}
 			clear(refills)
