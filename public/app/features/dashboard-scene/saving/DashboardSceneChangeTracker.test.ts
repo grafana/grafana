@@ -5,8 +5,12 @@ import { type CorsWorker } from 'app/core/utils/CorsWorker';
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { DashboardSceneChangeTracker } from './DashboardSceneChangeTracker';
-import * as createDetectChangesWorker from './createDetectChangesWorker';
+import { createWorker } from './createDetectChangesWorker';
 import { type DashboardChangesRequest, type DashboardChangesResponse } from './shared';
+
+jest.mock('./createDetectChangesWorker', () => ({
+  createWorker: jest.fn(),
+}));
 
 jest.mock('../serialization/transformSceneToSaveModel', () => {
   return {
@@ -20,6 +24,10 @@ jest.mock('../serialization/transformSceneToSaveModel', () => {
 });
 
 describe('DashboardSceneChangeTracker', () => {
+  beforeEach(() => {
+    jest.mocked(createWorker).mockReset();
+  });
+
   afterEach(() => {
     jest.restoreAllMocks();
     jest.useRealTimers();
@@ -101,9 +109,7 @@ describe('DashboardSceneChangeTracker', () => {
     const scene = new DashboardScene({ title: 'Initial dashboard' });
     scene.setInitialSaveModel({ title: 'Initial dashboard', schemaVersion: 30 });
     const postMessage = jest.fn();
-    const workerSpy = jest
-      .spyOn(createDetectChangesWorker, 'createWorker')
-      .mockImplementation(() => ({ postMessage }) as unknown as CorsWorker);
+    const workerSpy = jest.mocked(createWorker).mockImplementation(() => ({ postMessage }) as unknown as CorsWorker);
     const tracker = new DashboardSceneChangeTracker(scene);
 
     try {
@@ -127,13 +133,13 @@ describe('DashboardSceneChangeTracker', () => {
       expect(postMessage).toHaveBeenCalledTimes(2);
     } finally {
       tracker.stopTrackingChanges();
-      workerSpy.mockRestore();
+      workerSpy.mockReset();
     }
   });
 
   it('should set _changesWorker to undefined when terminate is called', () => {
     const terminate = jest.fn();
-    jest.spyOn(createDetectChangesWorker, 'createWorker').mockImplementation(
+    jest.mocked(createWorker).mockImplementation(
       () =>
         ({
           terminate,
@@ -151,7 +157,7 @@ describe('DashboardSceneChangeTracker', () => {
     const scene = new DashboardScene({});
     const postMessage = jest.fn();
 
-    jest.spyOn(createDetectChangesWorker, 'createWorker').mockImplementation(() => {
+    jest.mocked(createWorker).mockImplementation(() => {
       return {
         postMessage,
       } as unknown as CorsWorker;
@@ -185,7 +191,7 @@ function buildChangeTracker() {
     onmessage: null as ((event: MessageEvent<DashboardChangesResponse>) => void) | null,
     terminate: jest.fn(),
   };
-  jest.spyOn(createDetectChangesWorker, 'createWorker').mockReturnValue(worker as unknown as CorsWorker);
+  jest.mocked(createWorker).mockReturnValue(worker as unknown as CorsWorker);
 
   return { scene, tracker: new DashboardSceneChangeTracker(scene), worker };
 }

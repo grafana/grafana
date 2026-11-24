@@ -66,8 +66,6 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &provisioningv0alpha1.GitOAuthConnectionConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("GitRepositoryConfig"):
 		return &provisioningv0alpha1.GitRepositoryConfigApplyConfiguration{}
-	case v0alpha1.SchemeGroupVersion.WithKind("HealthStatus"):
-		return &provisioningv0alpha1.HealthStatusApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("HistoricJob"):
 		return &provisioningv0alpha1.HistoricJobApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("Job"):
@@ -92,10 +90,14 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &provisioningv0alpha1.QuotaStatusApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("Repository"):
 		return &provisioningv0alpha1.RepositoryApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("RepositoryHealthStatus"):
+		return &provisioningv0alpha1.RepositoryHealthStatusApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("RepositorySpec"):
 		return &provisioningv0alpha1.RepositorySpecApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("RepositoryStatus"):
 		return &provisioningv0alpha1.RepositoryStatusApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("RepositoryTokenStatus"):
+		return &provisioningv0alpha1.RepositoryTokenStatusApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("RepositoryURLs"):
 		return &provisioningv0alpha1.RepositoryURLsApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("ResourceCount"):
@@ -112,8 +114,6 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &provisioningv0alpha1.SyncStatusApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("TestJobOptions"):
 		return &provisioningv0alpha1.TestJobOptionsApplyConfiguration{}
-	case v0alpha1.SchemeGroupVersion.WithKind("TokenStatus"):
-		return &provisioningv0alpha1.TokenStatusApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("WebhookConfig"):
 		return &provisioningv0alpha1.WebhookConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("WebhookStatus"):

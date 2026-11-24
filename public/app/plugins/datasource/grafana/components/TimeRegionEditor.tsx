@@ -149,91 +149,96 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
 
   return (
     <FieldSet className={styles.wrapper}>
-      <Field
-        label={t('dashboard-settings.time-regions.advanced-label', 'Advanced')}
-        description={
-          <>
-            {t('dashboard-settings.time-regions.advanced-description-use', 'Use ')}
-            <a href="https://crontab.run/" target="_blank" rel="noreferrer">
-              {t('dashboard-settings.time-regions.advanced-description-cron', 'Cron syntax')}
-            </a>
-            {t(
-              'dashboard-settings.time-regions.advanced-description-rest',
-              ' to define a recurrence schedule and duration'
-            )}
-          </>
-        }
-      >
-        <Switch
-          id="time-regions-adanced-mode-toggle"
-          value={value.mode === 'cron'}
-          onChange={(e: ChangeEvent<HTMLInputElement>) => onModeChange(e.currentTarget.checked ? 'cron' : null)}
-        />
-      </Field>
+      <Stack direction="column" gap={2}>
+        <Field
+          noMargin
+          label={t('dashboard-settings.time-regions.advanced-label', 'Advanced')}
+          description={
+            <>
+              {t('dashboard-settings.time-regions.advanced-description-use', 'Use ')}
+              <a href="https://crontab.run/" target="_blank" rel="noreferrer">
+                {t('dashboard-settings.time-regions.advanced-description-cron', 'Cron syntax')}
+              </a>
+              {t(
+                'dashboard-settings.time-regions.advanced-description-rest',
+                ' to define a recurrence schedule and duration'
+              )}
+            </>
+          }
+        >
+          <Switch
+            id="time-regions-adanced-mode-toggle"
+            value={value.mode === 'cron'}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => onModeChange(e.currentTarget.checked ? 'cron' : null)}
+          />
+        </Field>
 
-      {value.mode == null && (
-        <>
-          <Field label="From">
-            <Stack gap={0.5}>
-              <Select
-                options={days}
-                isClearable
-                placeholder="Everyday"
-                value={value.fromDayOfWeek ?? null}
-                onChange={(v) => onFromDayOfWeekChange(v)}
-                width={20}
-              />
-              <TimeOfDayPicker
-                value={from}
-                onChange={(v) => onTimeChange(v, 'from')}
-                allowEmpty={true}
-                placeholder="HH:mm"
-              />
-            </Stack>
-          </Field>
-          <Field label="To">
-            <Stack gap={0.5}>
-              {(value.fromDayOfWeek || value.toDayOfWeek) && (
+        {value.mode == null && (
+          <>
+            <Field noMargin label="From">
+              <Stack gap={0.5}>
                 <Select
                   options={days}
                   isClearable
-                  placeholder={getToPlaceholder()}
-                  value={value.toDayOfWeek ?? null}
-                  onChange={(v) => onToDayOfWeekChange(v)}
+                  placeholder="Everyday"
+                  value={value.fromDayOfWeek ?? null}
+                  onChange={(v) => onFromDayOfWeekChange(v)}
                   width={20}
                 />
-              )}
-              <TimeOfDayPicker
-                value={to}
-                onChange={(v) => onTimeChange(v, 'to')}
-                allowEmpty={true}
-                placeholder="HH:mm"
+                <TimeOfDayPicker
+                  value={from}
+                  onChange={(v) => onTimeChange(v, 'from')}
+                  allowEmpty={true}
+                  placeholder="HH:mm"
+                />
+              </Stack>
+            </Field>
+            <Field noMargin label="To">
+              <Stack gap={0.5}>
+                {(value.fromDayOfWeek || value.toDayOfWeek) && (
+                  <Select
+                    options={days}
+                    isClearable
+                    placeholder={getToPlaceholder()}
+                    value={value.toDayOfWeek ?? null}
+                    onChange={(v) => onToDayOfWeekChange(v)}
+                    width={20}
+                  />
+                )}
+                <TimeOfDayPicker
+                  value={to}
+                  onChange={(v) => onTimeChange(v, 'to')}
+                  allowEmpty={true}
+                  placeholder="HH:mm"
+                />
+              </Stack>
+            </Field>
+          </>
+        )}
+        {value.mode === 'cron' && (
+          <>
+            <Field noMargin label="Cron expression">
+              <Input
+                onChange={(e: ChangeEvent<HTMLInputElement>) => onCronExprChange(e.target.value)}
+                value={value.cronExpr}
+                placeholder="0 9 * * 1-5"
+                width={40}
               />
-            </Stack>
-          </Field>
-        </>
-      )}
-      {value.mode === 'cron' && (
-        <>
-          <Field label="Cron expression">
-            <Input
-              onChange={(e: ChangeEvent<HTMLInputElement>) => onCronExprChange(e.target.value)}
-              value={value.cronExpr}
-              placeholder="0 9 * * 1-5"
-              width={40}
-            />
-          </Field>
-          <Field label="Duration">
-            <Input
-              onChange={(e: ChangeEvent<HTMLInputElement>) => onDurationChange(e.target.value)}
-              value={value.duration}
-              placeholder="8h"
-              width={40}
-            />
-          </Field>
-        </>
-      )}
-      <Field label="Timezone">{renderTimezone()}</Field>
+            </Field>
+            <Field noMargin label="Duration">
+              <Input
+                onChange={(e: ChangeEvent<HTMLInputElement>) => onDurationChange(e.target.value)}
+                value={value.duration}
+                placeholder="8h"
+                width={40}
+              />
+            </Field>
+          </>
+        )}
+        <Field noMargin label="Timezone">
+          {renderTimezone()}
+        </Field>
+      </Stack>
     </FieldSet>
   );
 };
@@ -242,6 +247,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css({
       maxWidth: theme.spacing(60),
+      paddingBottom: theme.spacing(2),
       marginBottom: theme.spacing(2),
     }),
     timezoneContainer: css({
