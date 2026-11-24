@@ -21,13 +21,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/storage/legacysql/legacyannotations"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
-
-// annotationPolicy is the default: the manager in columns, the updated timestamp from
-// its own column, and the keys a client could fill with a secret never stored.
-var annotationPolicy = legacyannotations.DefaultPolicy()
 
 type Converter struct {
 	mapper request.NamespaceMapper
@@ -96,7 +91,7 @@ func (r *Converter) AsDataSource(ds *datasources.DataSource) (*datasourceV0.Data
 		}
 	}
 
-	ds.Write(annotationPolicy, obj)
+	ds.Write(datasources.AnnotationPolicy, obj)
 
 	if ds.APIVersion != "" {
 		obj.APIVersion = fmt.Sprintf("%s/%s", r.group, ds.APIVersion)
@@ -173,7 +168,7 @@ func (r *Converter) ToAddCommand(ds *datasourceV0.DataSource) (*datasources.AddD
 		IsDefault:       isDefault,
 	}
 
-	cmd.Read(annotationPolicy, ds)
+	cmd.Read(datasources.AnnotationPolicy, ds)
 
 	jsonData := ds.Spec.JSONData()
 	if jsonData != nil {
@@ -220,10 +215,7 @@ func (r *Converter) ToUpdateCommand(ds *datasourceV0.DataSource) (*datasources.U
 		BasicAuthUserSet: true,
 	}
 
-	cmd.Read(annotationPolicy, ds)
-	// A PUT carries the whole object, so dropping the annotations means releasing
-	// the resource. The legacy HTTP API has no such annotations and leaves this false.
-	cmd.UpdateAnnotations = true
+	cmd.Read(datasources.AnnotationPolicy, ds) // a PUT is authoritative: no annotations releases
 
 	jsonData := ds.Spec.JSONData()
 	if jsonData != nil {
@@ -284,7 +276,7 @@ func (r Converter) AsLegacyDatasource(ds *datasourceV0.DataSource) (*datasources
 		}
 	}
 
-	legacyDS.Read(annotationPolicy, ds)
+	legacyDS.Read(datasources.AnnotationPolicy, ds)
 
 	if jsonData := ds.Spec.JSONData(); jsonData != nil {
 		legacyDS.JsonData = simplejson.NewFromAny(jsonData)

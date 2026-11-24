@@ -77,6 +77,20 @@ func TestColumnsRoundTrip(t *testing.T) {
 	}
 }
 
+func TestColumnsAsAnnotations(t *testing.T) {
+	columns := Columns{
+		ManagerKind:     string(utils.ManagerKindRepo),
+		ManagerIdentity: "my-repo",
+		Annotations:     map[string]string{utils.AnnoKeySourcePath: "a.yaml", utils.AnnoKeyManagerKind: "stale"},
+	}
+	require.Equal(t, map[string]string{
+		utils.AnnoKeyManagerKind:     "repo",
+		utils.AnnoKeyManagerIdentity: "my-repo",
+		utils.AnnoKeySourcePath:      "a.yaml",
+	}, columns.AsAnnotations(managerInColumns))
+	require.Nil(t, Columns{}.AsAnnotations(managerInColumns))
+}
+
 func TestColumnsWriteDoesNotLetTheBlobBeatTheColumn(t *testing.T) {
 	// A row written before the manager had columns can still carry it in the blob.
 	// The column has to win, or an old row would resurrect a stale manager.

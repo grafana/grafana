@@ -2,6 +2,7 @@ package legacyannotations
 
 import (
 	"fmt"
+	"maps"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -51,18 +52,34 @@ func (c *Columns) Read(p Policy, obj metav1.Object) {
 // Write puts c back onto obj, the manager first so Policy.Apply cannot overwrite it
 // with a stale copy from a row written before the columns existed.
 func (c Columns) Write(p Policy, obj metav1.Object) {
-	if c.ManagerKind != "" {
-		annotations := obj.GetAnnotations()
+	if manager := c.manager(); len(manager) > 0 {
+		annotations := maps.Clone(obj.GetAnnotations())
 		if annotations == nil {
-			annotations = make(map[string]string, 2)
+			annotations = make(map[string]string, len(manager))
 		}
-		annotations[utils.AnnoKeyManagerKind] = c.ManagerKind
-		if c.ManagerIdentity != "" {
-			annotations[utils.AnnoKeyManagerIdentity] = c.ManagerIdentity
-		}
+		maps.Copy(annotations, manager)
 		obj.SetAnnotations(annotations)
 	}
 	p.Apply(obj, c.Annotations)
+}
+
+// AsAnnotations returns every annotation the row holds -- the manager and the blob --
+// for a caller that wants them without an object to put them on.
+func (c Columns) AsAnnotations(p Policy) map[string]string {
+	obj := &metav1.ObjectMeta{}
+	c.Write(p, obj)
+	return obj.Annotations
+}
+
+func (c Columns) manager() map[string]string {
+	manager := make(map[string]string, 2)
+	if c.ManagerKind != "" {
+		manager[utils.AnnoKeyManagerKind] = c.ManagerKind
+		if c.ManagerIdentity != "" {
+			manager[utils.AnnoKeyManagerIdentity] = c.ManagerIdentity
+		}
+	}
+	return manager
 }
 
 // UpdateColumns is embedded in the command that updates a row, adding the one thing a
@@ -78,6 +95,13 @@ type UpdateColumns struct {
 	//
 	// swagger:ignore
 	UpdateAnnotations bool `json:"-" xorm:"-"`
+}
+
+// Read fills the columns from obj, as the caller that is the source of truth for
+// them: unlike Columns.Read, it marks them to be written as given, including cleared.
+func (u *UpdateColumns) Read(p Policy, obj metav1.Object) {
+	u.Columns.Read(p, obj)
+	u.UpdateAnnotations = true
 }
 
 // ColumnsToWrite returns the columns xorm must write even when their Go values are

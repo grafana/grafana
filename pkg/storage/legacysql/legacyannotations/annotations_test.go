@@ -1,17 +1,11 @@
 package legacyannotations
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	authtypes "github.com/grafana/authlib/types"
-
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -108,48 +102,6 @@ func TestPolicyApply(t *testing.T) {
 	})
 }
 
-func TestCheckManagerGates(t *testing.T) {
-	managed := func(kind utils.ManagerKind, id string) metav1.Object {
-		obj := &unstructured.Unstructured{Object: map[string]any{}}
-		meta, err := utils.MetaAccessor(obj)
-		require.NoError(t, err)
-		meta.SetManagerProperties(utils.ManagerProperties{Kind: kind, Identity: id})
-		return obj
-	}
-	unmanaged := func() metav1.Object { return &unstructured.Unstructured{Object: map[string]any{}} }
-
-	provisioningCtx, _, err := identity.WithProvisioningIdentity(context.Background(), "default")
-	require.NoError(t, err)
-	userCtx := identity.WithRequester(context.Background(),
-		&identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "uuu"})
-
-	t.Run("a repo-managed write is a 403, not the routing sentinel", func(t *testing.T) {
-		// Unified storage answers this by re-routing to git; SQL cannot, so the
-		// sentinel must not reach the client as a bare error.
-		err := CheckManagerOnCreate(userCtx, managed(utils.ManagerKindRepo, "my-repo"))
-		require.True(t, apierrors.IsForbidden(err), "expected a forbidden response: %v", err)
-		require.NotErrorIs(t, err, identity.ErrResourceIsManagedInRepository)
-	})
-
-	t.Run("the provisioner may write its own resources", func(t *testing.T) {
-		require.NoError(t, CheckManagerOnCreate(provisioningCtx, managed(utils.ManagerKindRepo, "my-repo")))
-		require.NoError(t, CheckManagerOnDelete(provisioningCtx, managed(utils.ManagerKindRepo, "my-repo")))
-	})
-
-	t.Run("manager immutability", func(t *testing.T) {
-		err := CheckManagerOnUpdate(provisioningCtx,
-			managed(utils.ManagerKindTerraform, "my-repo"), managed(utils.ManagerKindRepo, "my-repo"))
-		require.True(t, utils.IsForbiddenManagerKindChangeError(err), "expected a kind-change conflict: %v", err)
-	})
-
-	t.Run("an unmanaged write needs no identity", func(t *testing.T) {
-		bare := context.Background()
-		require.NoError(t, CheckManagerOnCreate(bare, unmanaged()))
-		require.NoError(t, CheckManagerOnUpdate(bare, unmanaged(), unmanaged()))
-		require.NoError(t, CheckManagerOnDelete(bare, unmanaged()))
-	})
-}
-
 func TestPolicyDropping(t *testing.T) {
 	policy := dashboardLike.Dropping(utils.AnnoKeyKubectlLastAppliedConfig)
 
@@ -175,22 +127,4 @@ func TestPolicyDropping(t *testing.T) {
 	t.Run("the policy it was derived from is unchanged", func(t *testing.T) {
 		require.Contains(t, dashboardLike.ToStore(obj), utils.AnnoKeyKubectlLastAppliedConfig)
 	})
-}
-
-func TestIsManagedUsesTheRawKind(t *testing.T) {
-	// A kind with no identity reads as unmanaged, which is right for a reader and
-	// wrong for a gate: the kind alone is enough to persist.
-	halfFilled := &unstructured.Unstructured{Object: map[string]any{}}
-	halfFilled.SetAnnotations(map[string]string{utils.AnnoKeyManagerKind: string(utils.ManagerKindRepo)})
-
-	meta, err := utils.MetaAccessor(halfFilled)
-	require.NoError(t, err)
-	_, managed := meta.GetManagerProperties()
-	require.False(t, managed, "the reader still says unmanaged")
-
-	require.True(t, IsManaged(halfFilled), "but the gate has to run")
-
-	err = CheckManagerOnCreate(identity.WithRequester(context.Background(),
-		&identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "uuu"}), halfFilled)
-	require.True(t, apierrors.IsForbidden(err), "expected a forbidden response: %v", err)
 }

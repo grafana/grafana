@@ -150,14 +150,8 @@ func (dc *DatasourceProvisioner) provisionCorrelations(ctx context.Context, cfg 
 // managedElsewhere reports whether a data source already belongs to a manager that is
 // not file provisioning, and so must not be taken over by a config file.
 func managedElsewhere(ds *datasources.DataSource) bool {
-	switch utils.ParseManagerKindString(ds.ManagerKind) {
-	case utils.ManagerKindUnknown,
-		utils.ManagerKindClassicFP, //nolint:staticcheck
-		utils.ManagerKindFileProvisioning:
-		return false
-	default:
-		return true
-	}
+	kind := utils.ParseManagerKindString(ds.ManagerKind)
+	return kind != utils.ManagerKindUnknown && !utils.IsFileProvisioned(kind)
 }
 
 type DataSourceMapKey struct {

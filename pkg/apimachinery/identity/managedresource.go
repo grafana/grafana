@@ -109,7 +109,9 @@ func CheckManagerOnUpdate(auth authtypes.AuthInfo, obj, old utils.GrafanaMetaAcc
 	managerOld, hasOld := old.GetManagerProperties()
 
 	if !hasNew && !hasOld {
-		return nil // neither old nor new are managed
+		// A kind with no identity reads as unmanaged but is still persisted, so it is
+		// gated the way a create would be.
+		return CheckManagerWriteAuthz(auth, obj)
 	}
 
 	// Removing a manager: the caller must be authorized for the *old* manager.

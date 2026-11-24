@@ -370,11 +370,9 @@ func TestAnnotations(t *testing.T) {
 
 			// Reading puts the columns back alongside the blob.
 			back, err := converter.AsDataSource(&datasources.DataSource{
-				UID:             "ds-uid",
-				Type:            "grafana-testdata-datasource",
-				Annotations:     add.Annotations,
-				ManagerKind:     add.ManagerKind,
-				ManagerIdentity: add.ManagerIdentity,
+				UID:     "ds-uid",
+				Type:    "grafana-testdata-datasource",
+				Columns: add.Columns,
 			})
 			require.NoError(t, err)
 
@@ -414,11 +412,9 @@ func TestAnnotations(t *testing.T) {
 		require.NoError(t, err)
 
 		back, err := converter.AsDataSource(&datasources.DataSource{
-			UID:             "ds-uid",
-			Type:            "grafana-testdata-datasource",
-			Annotations:     add.Annotations,
-			ManagerKind:     add.ManagerKind,
-			ManagerIdentity: add.ManagerIdentity,
+			UID:     "ds-uid",
+			Type:    "grafana-testdata-datasource",
+			Columns: add.Columns,
 		})
 		require.NoError(t, err)
 

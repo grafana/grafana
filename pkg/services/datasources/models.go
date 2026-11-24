@@ -264,6 +264,10 @@ func (cmd *UpdateDataSourceCommand) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// AnnotationPolicy is how a data source splits its annotations between columns and the
+// annotation blob.
+var AnnotationPolicy = legacyannotations.DefaultPolicy()
+
 // GetDataSourcesByManagerQuery finds the data sources a given manager owns. Identity
 // is optional: leaving it empty matches every data source of that kind, which is what
 // the classic kinds need since their identity is absent or unstable.

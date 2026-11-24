@@ -19,7 +19,6 @@ import (
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	queryV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -326,24 +325,18 @@ func (s *Service) asConnection(ds *datasources.DataSource) (*queryV0.DataSourceC
 	return conn, nil
 }
 
-// connectionAnnotations rebuilds the grafana.app annotations of a data source for a
-// connection listing: the manager from its columns, the rest from the blob. Keys
-// outside grafana.app are dropped -- see DataSourceConnection.Annotations.
+// connectionAnnotations returns the grafana.app annotations of a data source for a
+// connection listing. Keys outside grafana.app are dropped -- see
+// DataSourceConnection.Annotations.
 func connectionAnnotations(ds *datasources.DataSource) map[string]string {
-	annotations := make(map[string]string, len(ds.Annotations)+2)
-	for k, v := range ds.Annotations {
+	var annotations map[string]string
+	for k, v := range ds.AsAnnotations(datasources.AnnotationPolicy) {
 		if strings.HasPrefix(k, grafanaAnnotationPrefix) {
+			if annotations == nil {
+				annotations = map[string]string{}
+			}
 			annotations[k] = v
 		}
-	}
-	if ds.ManagerKind != "" {
-		annotations[utils.AnnoKeyManagerKind] = ds.ManagerKind
-	}
-	if ds.ManagerIdentity != "" {
-		annotations[utils.AnnoKeyManagerIdentity] = ds.ManagerIdentity
-	}
-	if len(annotations) == 0 {
-		return nil
 	}
 	return annotations
 }

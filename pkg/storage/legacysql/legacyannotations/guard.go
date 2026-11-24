@@ -17,24 +17,19 @@ import (
 // Guard applies the write rules for a legacy store's objects, so a store gets them by
 // calling three methods rather than reimplementing them:
 //
-//	guard := legacyannotations.NewGuard[*v0alpha1.DataSource](resourceInfo.GroupResource())
+//	guard := legacyannotations.Guard{Resource: resourceInfo.GroupResource()}
 //
 //	func (s *store) Create(ctx context.Context, obj *v0alpha1.DataSource) error {
-//		return s.guard.OnCreate(ctx, obj)
+//		return guard.OnCreate(ctx, obj)
 //	}
-//
-// T is the store's own object type. The rules only need metav1.Object, so the type
-// parameter buys no behaviour -- it buys call sites: a store passes and receives its
-// concrete type, with no conversions at the boundary and no interface to assert back
-// out of in OnUpdate, where the proposed object is mutated in place.
-type Guard[T metav1.Object] struct {
+type Guard struct {
 	// Resource names the resource in the errors it returns.
 	Resource schema.GroupResource
 }
 
 // OnCreate refuses a create whose manager annotations the caller may not assign.
-func (g Guard[T]) OnCreate(ctx context.Context, obj T) error {
-	if !IsManaged(obj) {
+func (g Guard) OnCreate(ctx context.Context, obj metav1.Object) error {
+	if !isManaged(obj) {
 		return nil
 	}
 	auth, err := identity.GetRequester(ctx)
@@ -44,13 +39,10 @@ func (g Guard[T]) OnCreate(ctx context.Context, obj T) error {
 	return g.forbid(identity.CheckManagerOnCreate(auth, accessorOf(obj)))
 }
 
-// OnUpdate prepares and checks an update. It retains the stored annotations when the
-// request carries none, then applies the manager rules and the file-provisioning
-// policy. proposed is modified in place, so call it before converting to a command.
-func (g Guard[T]) OnUpdate(ctx context.Context, proposed, old T) error {
-	g.retainOnPut(ctx, proposed, old)
-
-	if IsManaged(proposed) || IsManaged(old) {
+// OnUpdate refuses an update the manager rules or the file-provisioning policy do not
+// allow.
+func (g Guard) OnUpdate(ctx context.Context, proposed, old metav1.Object) error {
+	if isManaged(proposed) || isManaged(old) {
 		auth, err := identity.GetRequester(ctx)
 		if err != nil {
 			return err
@@ -63,8 +55,8 @@ func (g Guard[T]) OnUpdate(ctx context.Context, proposed, old T) error {
 }
 
 // OnDelete refuses a delete the manager does not allow.
-func (g Guard[T]) OnDelete(ctx context.Context, obj T) error {
-	if IsManaged(obj) {
+func (g Guard) OnDelete(ctx context.Context, obj metav1.Object) error {
+	if isManaged(obj) {
 		auth, err := identity.GetRequester(ctx)
 		if err != nil {
 			return err
@@ -76,7 +68,7 @@ func (g Guard[T]) OnDelete(ctx context.Context, obj T) error {
 	return g.checkFileProvisioned(ctx, obj)
 }
 
-// retainOnPut keeps the stored annotations when a PUT carries none.
+// RetainOnPut keeps the stored annotations when a PUT carries none.
 //
 // A PUT replaces the whole object, so an empty annotation map would otherwise read as
 // "release this resource". Grafana's own UI sends exactly that for data sources: its
@@ -84,9 +76,11 @@ func (g Guard[T]) OnDelete(ctx context.Context, obj T) error {
 // would strip provenance, and an admin -- who is allowed to release a repo-managed
 // resource -- would detach it without meaning to.
 //
-// Removing a manager stays possible with a PATCH that clears the annotations, which
-// goes through the same rules as any other manager change.
-func (g Guard[T]) retainOnPut(ctx context.Context, proposed, old T) {
+// Call it from admission, which runs once per store: during dual write the legacy and
+// the unified copy are each updated from the same request, and retaining on only one
+// of them leaves the other released. Removing a manager stays possible with a PATCH
+// that clears the annotations, which goes through the same rules as any other change.
+func RetainOnPut(ctx context.Context, proposed, old metav1.Object) {
 	if len(proposed.GetAnnotations()) > 0 || len(old.GetAnnotations()) == 0 {
 		return
 	}
@@ -97,8 +91,8 @@ func (g Guard[T]) retainOnPut(ctx context.Context, proposed, old T) {
 }
 
 // checkFileProvisioned refuses a write to a resource provisioned from a file whose
-// config did not allow edits. See NewGuard for why it is limited to those kinds.
-func (g Guard[T]) checkFileProvisioned(ctx context.Context, old T) error {
+// config did not allow edits. See utils.IsFileProvisioned for why it is limited to those kinds.
+func (g Guard) checkFileProvisioned(ctx context.Context, old metav1.Object) error {
 	manager, managed := accessorOf(old).GetManagerProperties()
 	if !managed || manager.AllowsEdits {
 		return nil
@@ -113,13 +107,41 @@ func (g Guard[T]) checkFileProvisioned(ctx context.Context, old T) error {
 		errors.New("resource is provisioned from a file and its config does not allow edits"))
 }
 
-// asForbidden turns the repo-managed sentinel into a 403. Unified storage answers that
+// forbid turns the repo-managed sentinel into a 403. Unified storage answers that
 // case by re-routing the write to the provisioning files endpoint; a SQL table has
 // nowhere to route it, so the caller gets a refusal rather than a bare error.
-func (g Guard[T]) forbid(err error) error {
+func (g Guard) forbid(err error) error {
 	if !errors.Is(err, identity.ErrResourceIsManagedInRepository) {
 		return err
 	}
 	return apierrors.NewForbidden(g.Resource, "",
 		errors.New("this resource is managed by a repository and can not be edited directly"))
 }
+
+// isManaged reports whether obj names a manager, so a gate knows whether it has to
+// run. See utils.HasManager for why this is not GetManagerProperties.
+func isManaged(obj metav1.Object) bool {
+	return utils.HasManager(obj.GetAnnotations())
+}
+
+func accessorOf(obj metav1.Object) utils.GrafanaMetaAccessor {
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return emptyAccessor{} // only a nil object fails here
+	}
+	return meta
+}
+
+// emptyAccessor stands in for a nil object so the checks see an unmanaged resource
+// rather than panicking.
+type emptyAccessor struct {
+	utils.GrafanaMetaAccessor
+}
+
+func (emptyAccessor) GetAnnotations() map[string]string { return nil }
+
+func (emptyAccessor) GetManagerProperties() (utils.ManagerProperties, bool) {
+	return utils.ManagerProperties{}, false
+}
+
+func (emptyAccessor) GetAnnotation(string) string { return "" }

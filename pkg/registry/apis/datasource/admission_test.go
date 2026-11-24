@@ -4,18 +4,23 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 	jsonpatch "gopkg.in/evanphx/json-patch.v4"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	authtypes "github.com/grafana/authlib/types"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -339,6 +344,48 @@ func TestDataSourceUpdateGuardAllowsStaleUnifiedMirror(t *testing.T) {
 	}
 }
 
+func TestDataSourceUpdateRetainsAnnotationsInBothStores(t *testing.T) {
+	featuremgmt.WithDisabledFlags(t, featuremgmt.FlagDatasourcesTeamHttpHeadersWriteGuard)
+	resourceInfo := datasourceV0.DataSourceResourceInfo.WithGroupAndShortName("prometheus.datasource.grafana.app", "prometheus")
+	admissionPlugin := builder.NewAdmissionFromBuilders([]builder.APIGroupBuilder{&DataSourceAPIBuilder{datasourceResourceInfo: resourceInfo}})
+	managed := map[string]string{
+		utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+		utils.AnnoKeyManagerIdentity: "tf",
+	}
+	stored := func() *datasourceV0.DataSource {
+		ds := updateGuardDataSource("example", nil)
+		ds.SetAnnotations(maps.Clone(managed))
+		return ds
+	}
+	provider := &countingUpdateDatasourceProvider{stored: stored()}
+	legacy := &legacyStorage{datasources: provider, resourceInfo: &resourceInfo}
+	mirror := &updateGuardMirrorStorage{old: stored(), done: make(chan error, 1)}
+	cfg := dualwrite.NewFakeConfig()
+	cfg.UnifiedStorage[resourceInfo.GroupResource().String()] = setting.UnifiedStorageConfig{DualWriterMode: grafanarest.Mode1}
+	store, err := dualwrite.ProvideServiceForTests(cfg).NewStorage(resourceInfo.GroupResource(), legacy, mirror)
+	require.NoError(t, err)
+
+	// What the UI sends: the same object with an empty annotation map.
+	requested := updateGuardDataSource("example", map[string]any{"httpMethod": "POST"})
+	requested.SetAnnotations(map[string]string{})
+	ctx := identity.WithRequester(
+		request.WithRequestInfo(context.Background(), &request.RequestInfo{Verb: "update"}),
+		&identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "uuu"})
+	_, _, err = store.Update(ctx, "example", admittedUpdateInfo(requested, resourceInfo, admissionPlugin), nil, nil, false, &metav1.UpdateOptions{})
+	require.NoError(t, err)
+
+	require.Equal(t, managed, provider.lastUpdated.GetAnnotations(), "SQL keeps the manager")
+	select {
+	case err := <-mirror.done:
+		require.NoError(t, err)
+	case <-time.After(5 * time.Second):
+		t.Fatal("timed out waiting for mirrored update")
+	}
+	updated, err := meta.Accessor(mirror.updated)
+	require.NoError(t, err)
+	require.Equal(t, managed, updated.GetAnnotations(), "and so does the unified copy")
+}
+
 func TestDataSourceUpdateGuardDryRunUsesSQLState(t *testing.T) {
 	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagDatasourcesTeamHttpHeadersWriteGuard)
 	resourceInfo := datasourceV0.DataSourceResourceInfo.WithGroupAndShortName("prometheus.datasource.grafana.app", "prometheus")
@@ -490,9 +537,10 @@ func TestDataSourceUpdateGuardUnifiedPrimary(t *testing.T) {
 
 type updateGuardMirrorStorage struct {
 	grafanarest.Storage
-	old    *datasourceV0.DataSource
-	done   chan error
-	dryRun []string
+	old     *datasourceV0.DataSource
+	updated runtime.Object
+	done    chan error
+	dryRun  []string
 }
 
 func (s *updateGuardMirrorStorage) Update(ctx context.Context, _ string, info rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc,
@@ -506,6 +554,7 @@ func (s *updateGuardMirrorStorage) Update(ctx context.Context, _ string, info re
 		err = createValidation(ctx, obj)
 	}
 	s.dryRun = append([]string(nil), options.DryRun...)
+	s.updated = obj
 	s.done <- err
 	return obj, s.old == nil, err
 }

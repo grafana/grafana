@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/storage/legacysql/legacyannotations"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -718,11 +719,11 @@ func TestIntegrationAnnotations(t *testing.T) {
 	addManaged := func(t *testing.T, ss SqlStore) *datasources.DataSource {
 		t.Helper()
 		ds, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-			OrgID:       10,
-			Name:        "managed",
-			Type:        datasources.DS_GRAPHITE,
-			Access:      datasources.DS_ACCESS_DIRECT,
-			Annotations: annotations,
+			OrgID:   10,
+			Name:    "managed",
+			Type:    datasources.DS_GRAPHITE,
+			Access:  datasources.DS_ACCESS_DIRECT,
+			Columns: legacyannotations.Columns{Annotations: annotations},
 		})
 		require.NoError(t, err)
 		return ds
@@ -770,13 +771,15 @@ func TestIntegrationAnnotations(t *testing.T) {
 			"grafana.app/sourcePath": "datasources/renamed.yaml",
 		}
 		_, err := ss.UpdateDataSource(context.Background(), &datasources.UpdateDataSourceCommand{
-			ID:                added.ID,
-			OrgID:             10,
-			Name:              "managed",
-			Type:              datasources.DS_GRAPHITE,
-			Access:            datasources.DS_ACCESS_DIRECT,
-			Annotations:       moved,
-			UpdateAnnotations: true,
+			ID:     added.ID,
+			OrgID:  10,
+			Name:   "managed",
+			Type:   datasources.DS_GRAPHITE,
+			Access: datasources.DS_ACCESS_DIRECT,
+			UpdateColumns: legacyannotations.UpdateColumns{
+				Columns:           legacyannotations.Columns{Annotations: moved},
+				UpdateAnnotations: true,
+			},
 		})
 		require.NoError(t, err)
 
@@ -788,12 +791,12 @@ func TestIntegrationAnnotations(t *testing.T) {
 		added := addManaged(t, ss)
 
 		_, err := ss.UpdateDataSource(context.Background(), &datasources.UpdateDataSourceCommand{
-			ID:                added.ID,
-			OrgID:             10,
-			Name:              "managed",
-			Type:              datasources.DS_GRAPHITE,
-			Access:            datasources.DS_ACCESS_DIRECT,
-			UpdateAnnotations: true,
+			ID:            added.ID,
+			OrgID:         10,
+			Name:          "managed",
+			Type:          datasources.DS_GRAPHITE,
+			Access:        datasources.DS_ACCESS_DIRECT,
+			UpdateColumns: legacyannotations.UpdateColumns{UpdateAnnotations: true},
 		})
 		require.NoError(t, err)
 
@@ -809,12 +812,11 @@ func TestIntegrationGetDataSourcesByManager(t *testing.T) {
 	add := func(t *testing.T, name, kind, identity string) {
 		t.Helper()
 		_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-			OrgID:           10,
-			Name:            name,
-			Type:            datasources.DS_GRAPHITE,
-			Access:          datasources.DS_ACCESS_DIRECT,
-			ManagerKind:     kind,
-			ManagerIdentity: identity,
+			OrgID:   10,
+			Name:    name,
+			Type:    datasources.DS_GRAPHITE,
+			Access:  datasources.DS_ACCESS_DIRECT,
+			Columns: legacyannotations.Columns{ManagerKind: kind, ManagerIdentity: identity},
 		})
 		require.NoError(t, err)
 	}
@@ -899,9 +901,9 @@ func TestIntegrationLargeAnnotationRoundTrip(t *testing.T) {
 		Name:   "kubectl-managed",
 		Type:   datasources.DS_GRAPHITE,
 		Access: datasources.DS_ACCESS_DIRECT,
-		Annotations: map[string]string{
+		Columns: legacyannotations.Columns{Annotations: map[string]string{
 			"kubectl.kubernetes.io/last-applied-configuration": large,
-		},
+		}},
 	})
 	require.NoError(t, err)
 

@@ -176,8 +176,6 @@ func (s *legacyStorage) prepareUpdate(ctx context.Context, name string, objInfo 
 		return nil, fmt.Errorf("expected a datasource object (old)")
 	}
 
-	// Retains the stored annotations when this PUT carries none, then applies the
-	// manager rules and the file-provisioning policy.
 	if err := s.guard().OnUpdate(ctx, ds, oldDS); err != nil {
 		return nil, err
 	}
@@ -277,8 +275,6 @@ func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation r
 	return nil, nil
 }
 
-// guard applies the shared write rules for a legacy store, typed to this store's own
-// object so the calls above need no conversions.
-func (s *legacyStorage) guard() legacyannotations.Guard[*v0alpha1.DataSource] {
-	return legacyannotations.Guard[*v0alpha1.DataSource]{Resource: s.resourceInfo.GroupResource()}
+func (s *legacyStorage) guard() legacyannotations.Guard {
+	return legacyannotations.Guard{Resource: s.resourceInfo.GroupResource()}
 }

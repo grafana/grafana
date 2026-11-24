@@ -139,6 +139,13 @@ func TestCheckOnUpdate(t *testing.T) {
 			proposed: unmanaged(t),
 		},
 		{
+			name:      "a kind with no identity is assigned like a create would",
+			auth:      who.user,
+			old:       unmanaged(t),
+			proposed:  managedBy(t, utils.ManagerProperties{Kind: utils.ManagerKindRepo}),
+			forbidden: true,
+		},
+		{
 			name:     "the who.provisioner rewriting its own resource",
 			auth:     who.provisioner,
 			old:      managedBy(t, repo),

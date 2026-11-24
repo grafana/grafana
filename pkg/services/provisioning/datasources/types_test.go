@@ -74,7 +74,7 @@ func TestManagedElsewhere(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.kind, func(t *testing.T) {
-			require.Equal(t, tt.want, managedElsewhere(&datasources.DataSource{ManagerKind: tt.kind}))
+			require.Equal(t, tt.want, managedElsewhere(&datasources.DataSource{Columns: legacyannotations.Columns{ManagerKind: tt.kind}}))
 		})
 	}
 }

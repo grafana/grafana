@@ -34,16 +34,9 @@
 package legacyannotations
 
 import (
-	"context"
-	"errors"
 	"maps"
-	"net/http"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // Policy describes which annotations a legacy SQL table stores in its annotation
@@ -130,85 +123,3 @@ func (p Policy) Apply(obj metav1.Object, stored map[string]string) {
 	}
 	obj.SetAnnotations(annotations)
 }
-
-// CheckManagerOnCreate, CheckManagerOnUpdate and CheckManagerOnDelete apply the same
-// manager gates unified storage applies on every write, so the SQL path is not a way
-// around them. They differ from the unified versions in two respects. Unified storage
-// answers a write to a repo-managed resource by re-routing it to the provisioning
-// files endpoint, and a SQL table has nowhere to route it, so that case is a 403 here.
-// And an unmanaged write is not gated at all, so these resolve the requester only once
-// a manager is actually involved: a write that was never gated must not start
-// requiring an identity it never needed.
-
-func CheckManagerOnCreate(ctx context.Context, obj metav1.Object) error {
-	if !IsManaged(obj) {
-		return nil
-	}
-	auth, err := identity.GetRequester(ctx)
-	if err != nil {
-		return err
-	}
-	return asForbidden(identity.CheckManagerOnCreate(auth, accessorOf(obj)))
-}
-
-func CheckManagerOnUpdate(ctx context.Context, proposed, old metav1.Object) error {
-	if !IsManaged(proposed) && !IsManaged(old) {
-		return nil
-	}
-	auth, err := identity.GetRequester(ctx)
-	if err != nil {
-		return err
-	}
-	return asForbidden(identity.CheckManagerOnUpdate(auth, accessorOf(proposed), accessorOf(old)))
-}
-
-func CheckManagerOnDelete(ctx context.Context, obj metav1.Object) error {
-	if !IsManaged(obj) {
-		return nil
-	}
-	auth, err := identity.GetRequester(ctx)
-	if err != nil {
-		return err
-	}
-	return asForbidden(identity.CheckManagerOnDelete(auth, accessorOf(obj)))
-}
-
-// IsManaged reports whether obj names a manager, so a gate knows whether it has to
-// run. See utils.HasManager for why this is not GetManagerProperties.
-func IsManaged(obj metav1.Object) bool {
-	return utils.HasManager(obj.GetAnnotations())
-}
-
-func asForbidden(err error) error {
-	if !errors.Is(err, identity.ErrResourceIsManagedInRepository) {
-		return err
-	}
-	return &apierrors.StatusError{ErrStatus: metav1.Status{
-		Status:  metav1.StatusFailure,
-		Code:    http.StatusForbidden,
-		Reason:  metav1.StatusReasonForbidden,
-		Message: "This resource is managed by a repository and can not be edited directly",
-	}}
-}
-
-func accessorOf(obj metav1.Object) utils.GrafanaMetaAccessor {
-	meta, err := utils.MetaAccessor(obj)
-	if err != nil {
-		return emptyAccessor{} // only a nil object fails here
-	}
-	return meta
-}
-
-// emptyAccessor stands in for a nil object so the checks see an unmanaged resource
-// rather than panicking.
-type emptyAccessor struct {
-	utils.GrafanaMetaAccessor
-}
-
-func (emptyAccessor) GetAnnotations() map[string]string { return nil }
-
-func (emptyAccessor) GetManagerProperties() (utils.ManagerProperties, bool) {
-	return utils.ManagerProperties{}, false
-}
-
-func (emptyAccessor) GetAnnotation(string) string { return "" }
