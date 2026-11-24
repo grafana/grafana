@@ -50,7 +50,6 @@ func (s *PermissionSearch) Search(ctx context.Context, usr identity.Requester, o
 
 	var results map[int64][]ac.Permission
 	if options.UserID > 0 {
-		// The API checks the named target. Only bulk search applies the visibility filter here.
 		permissions, err := s.SearchUserPermissions(ctx, usr.GetOrgID(), options, enforced)
 		if err != nil {
 			return nil, err

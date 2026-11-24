@@ -227,7 +227,9 @@ func testPermissionSearchCacheHitsAndExpiry(t *testing.T, enabled bool) {
 				t.Fatalf("unsupported change case: %s", change)
 			}
 
-			// Raw store changes bypass mutation hooks; expiry must still refresh cached results.
+			// Raw store changes bypass mutation hooks, so the cached result remains until expiry.
+			f.assertSearch(t, caller, query, searchPermissionsResponse{usr.ID: before})
+
 			items := f.cache.Items()
 			require.NotEmpty(t, items)
 			for key, item := range items {
