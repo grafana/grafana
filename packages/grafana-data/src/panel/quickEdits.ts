@@ -46,7 +46,8 @@ export interface PanelQuickEdit<TOptions = unknown, TFieldConfigOptions = unknow
   labels?: Partial<Record<string, string>>;
   /** Shows the plugin's presets instead of options. Left out for plugins without a presets supplier. */
   presets?: boolean;
-  summary?: (context: PanelQuickEditContext<TOptions, TFieldConfigOptions>) => PanelQuickEditSummary;
+  // A method, so a plugin with its own options can still be passed where any plugin is expected.
+  summary?(context: PanelQuickEditContext<TOptions, TFieldConfigOptions>): PanelQuickEditSummary;
 }
 
 /** @alpha */
