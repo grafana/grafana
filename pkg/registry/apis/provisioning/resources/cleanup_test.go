@@ -6,8 +6,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	jsonpatch "gopkg.in/evanphx/json-patch.v4"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 func TestEscapePatchString(t *testing.T) {
@@ -101,6 +104,42 @@ func TestGetReleasePatch(t *testing.T) {
 			}
 		})
 	}
+}
+
+// The storage layer only allows an orphan release when the write clears both annotations: managerKind and managerId
+// This test confirms both are cleared during cleanup.
+func TestGetReleasePatchClearsManagerAnnotations(t *testing.T) {
+	obj := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "dashboard.grafana.app/v1beta1",
+		"kind":       "Dashboard",
+		"metadata":   map[string]any{"name": "dash-1", "namespace": "default"},
+	}}
+	meta, err := utils.MetaAccessor(obj)
+	require.NoError(t, err)
+	meta.SetManagerProperties(utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "my-repo"})
+	meta.SetSourceProperties(utils.SourceProperties{Path: "dashboards/d.json", Checksum: "abc"})
+	_, managed := meta.GetManagerProperties()
+	require.True(t, managed)
+
+	item := &provisioning.ResourceListItem{Name: "dash-1", Path: "dashboards/d.json", Hash: "abc"}
+	data, err := GetReleasePatch(item)
+	require.NoError(t, err)
+	patch, err := jsonpatch.DecodePatch(data)
+	require.NoError(t, err)
+	original, err := json.Marshal(obj.Object)
+	require.NoError(t, err)
+	patched, err := patch.Apply(original)
+	require.NoError(t, err)
+
+	released := &unstructured.Unstructured{}
+	require.NoError(t, json.Unmarshal(patched, &released.Object))
+	annotations := released.GetAnnotations()
+	assert.NotContains(t, annotations, utils.AnnoKeyManagerKind)
+	assert.NotContains(t, annotations, utils.AnnoKeyManagerIdentity)
+	releasedMeta, err := utils.MetaAccessor(released)
+	require.NoError(t, err)
+	_, managed = releasedMeta.GetManagerProperties()
+	assert.False(t, managed)
 }
 
 func TestSortResourceListForRelease(t *testing.T) {
