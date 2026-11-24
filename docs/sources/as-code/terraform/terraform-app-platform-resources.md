@@ -18,19 +18,14 @@ canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/terraform-a
 
 # Configure the Grafana provider for App Platform resources in Grafana Cloud
 
-Learn how to configure the [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs) to manage App Platform resources in a Grafana Cloud stack.
-App Platform resources are the Terraform resources whose names start with `grafana_apps_`, such as Service Center services, alert rules, and dashboards.
+Learn how to configure the [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs) to manage App Platform resources in a Grafana Cloud stack. App Platform resources include several features and products (such as Service Center services, alert rules, or dashboards) that use the Grafana Kubernetes-style APIs. For more information, refer to [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
-To manage these resources in Grafana Cloud, you must set the `stack_id` argument in the provider configuration, in addition to `url` and `auth`.
-If you omit `stack_id`, Terraform fails with an `HTTP 403 - Forbidden` error, even though `url` already points to your stack.
-
-In this guide, you configure the provider with `stack_id` and create a Service Center service with the [`grafana_apps_servicemodel_component_v1alpha1`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/apps_servicemodel_component_v1alpha1) resource.
-You can use the same provider configuration for any other App Platform resource.
+In this guide you'll set the provider's `stack_id` and create a Service Center service with the [`grafana_apps_servicemodel_component_v1alpha1`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/apps_servicemodel_component_v1alpha1) resource. You can use the same provider configuration for any other App Platform resource.
 
 ## Why App Platform resources need a stack ID
 
-App Platform resources use the Grafana Kubernetes-style APIs, where every resource belongs to a namespace.
-In Grafana Cloud, the namespace of a stack is `stacks-<STACK_ID>`.
+The App Platform resources HTTP API requires that every resource belongs to a namespace. In Grafana Cloud, the namespace of a stack is `stacks-<STACK_ID>`. To manage these resources in Grafana Cloud, you must set the `stack_id` argument in the provider configuration, in addition to `url` and `auth`.
+If you omit `stack_id`, Terraform fails with an `HTTP 403 - Forbidden` error, even though `url` already points to your stack.
 
 The provider builds the namespace from its own configuration, not from the stack URL:
 
@@ -38,12 +33,9 @@ The provider builds the namespace from its own configuration, not from the stack
 - **If you don't set `stack_id`:** The provider falls back to `org_id`, which defaults to `1`, and sends requests to the `default` namespace.
   Grafana Cloud rejects requests to this namespace with `HTTP 403 - Forbidden`.
 
-The `org_id` argument only applies to self-managed Grafana OSS and Grafana Enterprise instances.
-In Grafana Cloud, use `stack_id` instead.
-
 ### Affected resources
 
-The `stack_id` requirement applies to typed `grafana_apps_*` resources, including the following:
+In the Terraform registry, Grafana App Platform resources names start with `grafana_apps_`. The `stack_id` requirement applies to the following resources:
 
 | Area                   | Resources                                                                                                                         |
 | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
@@ -58,9 +50,9 @@ The `stack_id` requirement applies to typed `grafana_apps_*` resources, includin
 
 For the complete list, refer to the [Grafana provider documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
 
-Unlike typed `grafana_apps_*` resources, `grafana_apps_generic_resource` discovers the stack namespace from `/bootdata` automatically and uses `stack_id` only as a fallback or to verify that the configured stack matches the instance.
+Unlike typed `grafana_apps_*` resources, `grafana_apps_generic_resource` discovers the stack namespace automatically and uses `stack_id` only as a fallback or to verify that the configured stack matches the instance.
 
-Other resources, such as `grafana_folder`, `grafana_dashboard`, and `grafana_rule_group`, use the Grafana HTTP API and don't need `stack_id`.
+Other resources, such as `grafana_folder`, `grafana_dashboard`, and `grafana_rule_group`, use the legacy Grafana HTTP API and don't need `stack_id`.
 You can set `stack_id` in a provider that manages both kinds of resources.
 
 ## Before you begin
@@ -131,11 +123,10 @@ provider "grafana" {
 
 Replace the following placeholders:
 
-- _`<GRAFANA_URL>`_ is the URL of your Grafana Cloud stack, for example `https://my-stack.grafana.net/`.
-- _`<STACK_ID>`_ is the stack ID that you found in [Find your stack ID](#find-your-stack-id), for example `123456`.
+- _`<GRAFANA_URL>`_: The URL of your Grafana Cloud stack, for example `https://my-stack.grafana.net/`.
+- _`<STACK_ID>`_: The stack ID that you found in [Find your stack ID](#find-your-stack-id), for example `123456`.
 
-The `grafana_auth` variable holds the service account token.
-To keep the token out of your configuration files, you set it through the `TF_VAR_grafana_auth` environment variable when you apply the configuration.
+The `grafana_auth` variable holds the service account token. To keep the token out of your configuration files, set it through the `TF_VAR_grafana_auth` environment variable when you apply the configuration.
 
 You can also set the stack ID through the `GRAFANA_STACK_ID` environment variable instead of the `stack_id` argument.
 
@@ -235,6 +226,6 @@ To learn more about managing Grafana Cloud using Terraform, refer to the [Grafan
 ## Next steps
 
 - To manage alerting resources, refer to [Use Terraform to provision alerting resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/terraform-provisioning/).
-- To manage saved queries, refer to [Manage saved queries using Terraform](../manage-saved-queries/).
-- To manage secure values, refer to [Manage secrets in Grafana Cloud using Terraform](../terraform-secrets-management/).
+- To manage saved queries, refer to [Manage saved queries using Terraform](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/terraform/manage-saved-queries/).
+- To manage secure values, refer to [Manage secrets in Grafana Cloud using Terraform](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/terraform/terraform-secrets-management/).
 - To synchronize a Git repository with Grafana, refer to [Set up Git Sync with Terraform](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/git-sync-setup/set-up-terraform/).
