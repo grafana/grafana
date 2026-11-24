@@ -1126,6 +1126,35 @@ func TestImportRebuildsOnlyTheImportedType(t *testing.T) {
 	assert.Equal(t, importTuesday, idx.completedTypeBuilds[dashboardsGroupResource].StorageImportTime)
 }
 
+func TestImportCheckContinuesAfterBlobTimeout(t *testing.T) {
+	dashboards, folders := dashboardType("ns"), folderType("ns")
+	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+		live:   map[NamespacedResource][]string{dashboards: {"dash-a"}, folders: {"folder-a"}},
+		bodies: map[string][]byte{"dash-a": fmt.Appendf(nil, `{"metadata":{"name":"dash-a","annotations":{%q:"blob-uid"}}}`, utils.AnnoKeyBlob)},
+	}}
+	storage.lastImportTimes = importedAt(importTuesday, importTuesday)
+	server, idx := repairServer(t, storage, nil)
+	idx.completedTypeBuilds = heldAt(importMonday, importMonday)
+	server.builders.blob = stalledIndexBlob{}
+	key := GlobalSearchKey("ns")
+
+	synctest.Test(t, func(t *testing.T) {
+		err := server.syncTypes(t.Context(), key, nil)
+		require.ErrorIs(t, err, context.DeadlineExceeded)
+		require.Equal(t, []NamespacedResource{dashboards, folders}, storage.listed)
+		require.Equal(t, map[NamespacedResource][]string{folders: {"folder-a"}}, indexedNames(t, idx))
+		require.Equal(t, heldAt(importMonday, importTuesday), idx.completedTypeBuilds)
+	})
+
+	server.builders.blob = &globalDocumentBlob{response: &resourcepb.GetBlobResponse{Value: []byte(`{"title":"Restored"}`)}}
+	storage.listed = nil
+	idx.bulkItems = nil
+	require.NoError(t, server.syncTypes(t.Context(), key, nil))
+	require.Equal(t, []NamespacedResource{dashboards}, storage.listed)
+	require.Equal(t, map[NamespacedResource][]string{dashboards: {"dash-a"}}, indexedNames(t, idx))
+	require.Equal(t, heldAt(importTuesday, importTuesday), idx.completedTypeBuilds)
+}
+
 // Nothing is done when storage reports the import the index already caught up
 // with, or no import at all.
 func TestImportCheckLeavesCaughtUpTypesAlone(t *testing.T) {

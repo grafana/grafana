@@ -488,6 +488,7 @@ func (s *searchServer) syncTypes(ctx context.Context, key NamespacedResource, on
 	if err != nil || len(stale) == 0 {
 		return err
 	}
+	var interrupted []error
 	for _, p := range stale {
 		if ctx.Err() != nil {
 			return ctx.Err()
@@ -500,7 +501,15 @@ func (s *searchServer) syncTypes(ctx context.Context, key NamespacedResource, on
 		}
 		res, err := s.rebuildResourceType(ctx, idx, key, p.src)
 		if err != nil {
-			return err
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
+			if _, ok := errors.AsType[*interruptedTypeBuildError](err); !ok {
+				return err
+			}
+			// Keep this import pending without blocking other types.
+			interrupted = append(interrupted, fmt.Errorf("rebuilding %s: %w", p.src.GroupResource(), err))
+			continue
 		}
 		s.log.Info("rebuilt a resource type in the global search index", "namespace", key.Namespace, "resource", p.src.GroupResource(),
 			"reindexed", res.Reindexed, "removed", res.Removed, "failed", res.Failed)
@@ -515,7 +524,7 @@ func (s *searchServer) syncTypes(ctx context.Context, key NamespacedResource, on
 			return err
 		}
 	}
-	return nil
+	return errors.Join(interrupted...)
 }
 
 // queueReconcile queues a reconcile of one global index, whatever its slot.
@@ -857,8 +866,18 @@ func (s *searchServer) rebuildResourceType(ctx context.Context, index ResourceIn
 		return result, err
 	}
 	result.Removed = len(removed)
-	return result, interrupted
+	if interrupted != nil {
+		return result, &interruptedTypeBuildError{cause: interrupted}
+	}
+	return result, nil
 }
+
+// interruptedTypeBuildError means a rebuild finished except for interrupted
+// document reads, so other types can be rebuilt before retrying this one.
+type interruptedTypeBuildError struct{ cause error }
+
+func (e *interruptedTypeBuildError) Error() string { return e.cause.Error() }
+func (e *interruptedTypeBuildError) Unwrap() error { return e.cause }
 
 // removeResourceType removes every document of a type a global index no longer
 // covers, and then forgets the type, so a failure part way is retried.
