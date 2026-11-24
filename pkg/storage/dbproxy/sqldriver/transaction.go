@@ -121,7 +121,7 @@ func (c *conn) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.Tx, e
 	return tx, nil
 }
 
-func (t *transaction) start(ctx context.Context) (func(), error) {
+func (t *transaction) start(ctx context.Context) (func() bool, error) {
 	if t.life.Err() != nil {
 		t.abort()
 		return nil, errTransactionAborted
@@ -142,7 +142,18 @@ func (t *transaction) start(ctx context.Context) (func(), error) {
 		return nil, err
 	}
 	stop := context.AfterFunc(ctx, t.abort)
-	return func() { stop(); t.mu.Lock(); t.pending = false; t.mu.Unlock() }, nil
+	return func() bool {
+		completed := stop()
+		if !completed {
+			// The cancellation callback may still be running. Mark the transaction
+			// aborted before allowing another command to start.
+			t.abort()
+		}
+		t.mu.Lock()
+		t.pending = false
+		t.mu.Unlock()
+		return completed
+	}, nil
 }
 func (t *transaction) abort() {
 	t.mu.Lock()
@@ -211,14 +222,18 @@ func (t *transaction) exec(ctx context.Context, identity queryIdentity, query st
 	if err != nil {
 		return nil, err
 	}
-	defer done()
 	if err := t.send(ctx, &dbproxyv1.TransactionRequest{Command: &dbproxyv1.TransactionRequest_Exec{Exec: &dbproxyv1.Statement{QueryName: identity.name, Sql: query, Parameters: params}}}); err != nil {
 		t.abort()
+		done()
 		return nil, fmt.Errorf("proxy transaction exec: %w", err)
 	}
 	reply, err := t.recv()
+	completed := done()
 	if err != nil {
 		return nil, err
+	}
+	if !completed {
+		return nil, fmt.Errorf("proxy transaction exec: %w", ctx.Err())
 	}
 	switch result := reply.Result.(type) {
 	case *dbproxyv1.TransactionResponse_Exec:
@@ -275,7 +290,7 @@ func (t *transaction) query(ctx context.Context, identity queryIdentity, query s
 		t.abort()
 		return nil, fmt.Errorf("proxy transaction query: %w", err)
 	}
-	return &transactionRows{tx: t, rows: &rows{columns: result.Query.Columns, stream: transactionQueryStream{tx: t}, cancel: done}}, nil
+	return &transactionRows{tx: t, rows: &rows{columns: result.Query.Columns, stream: transactionQueryStream{tx: t}, cancel: func() { done() }}}, nil
 }
 func (t *transaction) end(commit bool) error {
 	defer t.finish()

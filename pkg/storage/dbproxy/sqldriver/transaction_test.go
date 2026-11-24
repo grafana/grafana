@@ -6,6 +6,7 @@ import (
 	"errors"
 	"testing"
 	"testing/synctest"
+	"time"
 
 	dbproxyv1 "github.com/grafana/grafana/pkg/storage/dbproxy/api/dbproxy/v1"
 	"github.com/grafana/grafana/pkg/storage/dbproxy/sqldriver"
@@ -69,6 +70,67 @@ func TestStalledTransactionRowsAbortOnClose(t *testing.T) {
 	}
 }
 
+func TestTransactionExecDeadlineAtReply(t *testing.T) {
+	for _, tc := range []struct {
+		name         string
+		expireInRecv bool
+	}{
+		{name: "deadline wins", expireInRecv: true},
+		{name: "exec wins"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				ok := &dbproxyv1.TransactionResponse{Result: &dbproxyv1.TransactionResponse_Ok{Ok: &emptypb.Empty{}}}
+				ctx := sqldriver.WithQuery(t.Context(), "stacks-1", "write.deadline")
+				stmtCtx, cancel := context.WithTimeout(ctx, time.Second)
+				defer cancel()
+				stream := &stalledTransactionStream{
+					responses: []*dbproxyv1.TransactionResponse{
+						ok,
+						{Result: &dbproxyv1.TransactionResponse_Exec{Exec: &dbproxyv1.ExecResponse{RowsAffected: 1}}},
+						ok,
+					},
+				}
+				if tc.expireInRecv {
+					stream.beforeExecReply = func() {
+						<-stmtCtx.Done()
+						synctest.Wait() // Let an already-armed abort callback run before delivering the reply.
+					}
+				}
+				connector, err := sqldriver.New(stalledTransactionClient{stream: stream}).OpenConnector("")
+				if err != nil {
+					t.Fatal(err)
+				}
+				pool := sql.OpenDB(connector)
+				t.Cleanup(func() { _ = pool.Close() })
+				tx, err := pool.BeginTx(ctx, nil)
+				if err != nil {
+					t.Fatal(err)
+				}
+				defer func() { _ = tx.Rollback() }()
+
+				result, execErr := tx.ExecContext(stmtCtx, "UPDATE t SET n=1")
+				<-stmtCtx.Done()
+				synctest.Wait()
+				commitErr := tx.Commit()
+				if tc.expireInRecv {
+					if !errors.Is(execErr, context.DeadlineExceeded) || result != nil || commitErr == nil {
+						t.Fatalf("ExecContext = (%v, %v), Commit = %v; want deadline error and failed commit", result, execErr, commitErr)
+					}
+					if len(stream.requests) != 2 {
+						t.Fatalf("expected no command after aborted exec, got %v", stream.requests)
+					}
+					return
+				}
+				if execErr != nil || commitErr != nil {
+					t.Fatalf("ExecContext = %v, Commit = %v; want both to succeed", execErr, commitErr)
+				}
+				assertResult(t, result, 1, 0)
+			})
+		})
+	}
+}
+
 type stalledTransactionClient struct {
 	dbproxyv1.DatabaseProxyServiceClient
 	stream *stalledTransactionStream
@@ -81,9 +143,10 @@ func (c stalledTransactionClient) Transaction(ctx context.Context, _ ...grpc.Cal
 
 type stalledTransactionStream struct {
 	grpc.BidiStreamingClient[dbproxyv1.TransactionRequest, dbproxyv1.TransactionResponse]
-	ctx       context.Context
-	requests  []*dbproxyv1.TransactionRequest
-	responses []*dbproxyv1.TransactionResponse
+	ctx             context.Context
+	requests        []*dbproxyv1.TransactionRequest
+	responses       []*dbproxyv1.TransactionResponse
+	beforeExecReply func()
 }
 
 func (s *stalledTransactionStream) Send(req *dbproxyv1.TransactionRequest) error {
@@ -98,5 +161,8 @@ func (s *stalledTransactionStream) Recv() (*dbproxyv1.TransactionResponse, error
 	}
 	resp := s.responses[0]
 	s.responses = s.responses[1:]
+	if resp.GetExec() != nil && s.beforeExecReply != nil {
+		s.beforeExecReply()
+	}
 	return resp, nil
 }
