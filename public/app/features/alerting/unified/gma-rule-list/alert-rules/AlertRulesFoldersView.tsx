@@ -67,7 +67,7 @@ export function AlertRulesFoldersView({ scope }: FoldersViewProps) {
   }
 
   return (
-    <Stack direction="column" gap={2}>
+    <Stack direction="column" gap={1}>
       <RuleRowList>
         {folders.map((folder) => (
           <AlertFolderListEntry

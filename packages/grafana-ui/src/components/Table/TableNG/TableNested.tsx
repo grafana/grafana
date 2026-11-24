@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import memoize from 'micro-memoize';
+import { memoize } from 'micro-memoize';
 import { useCallback, useId, useMemo, useRef, useState } from 'react';
 
 import { type DataFrame, type Field, FieldType } from '@grafana/data';

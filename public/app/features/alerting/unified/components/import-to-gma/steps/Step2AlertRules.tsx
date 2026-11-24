@@ -1,14 +1,10 @@
 import { isEmpty, noop } from 'lodash';
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
-import {
-  isSupportedExternalPrometheusFlavoredRulesSourceType,
-  useDataSourcesWithValidRecordingTargetByUid,
-} from '@grafana/alerting/internal';
+import { useDataSourcesWithValidRecordingTargetByUid } from '@grafana/alerting/internal';
 import { buildRoutingTreeOptions, useRoutingTrees } from '@grafana/alerting/unstable';
-import { type DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import {
@@ -21,7 +17,6 @@ import {
   Field,
   InlineField,
   InlineSwitch,
-  RadioButtonList,
   Stack,
   Text,
 } from '@grafana/ui';
@@ -30,15 +25,12 @@ import { DataSourcePicker } from 'app/features/datasources/components/picker/Dat
 import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker';
 import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
-import { DataSourceType } from '../../../utils/datasource';
-import { stringifyErrorLike } from '../../../utils/misc';
 import { CreateNewFolder } from '../../create-folder/CreateNewFolder';
-import { getRulesSourceOptions, isAutoSyncSelected } from '../Wizard/steps';
-import { useNamespaceGroupOptions, useRulesToImport } from '../hooks';
+import { isAutoSyncSelected } from '../Wizard/steps';
+import { useRulesToImport } from '../hooks';
 import { type ImportFormValues } from '../types';
-import { parseYamlFileToRulerRulesConfigDTO } from '../yamlToRulerConverter';
 
-import { YamlFileDropzone, getYamlFileDescription } from './YamlFileDropzone';
+import { ImportSourceCard } from './ImportSourceCard';
 import { usePredictedAutoSyncIdentifier } from './useAutoSyncPrediction';
 import { getRoutingTreeOptions, isStep2Valid } from './utils';
 
@@ -46,22 +38,6 @@ interface Step2ContentProps {
   step1Completed: boolean;
   /** Whether the user has permission to import rules */
   canImport: boolean;
-}
-
-const supportedImportTypes: string[] = [DataSourceType.Prometheus, DataSourceType.Loki];
-
-async function validateRulesYamlFile(file: File | null): Promise<string | true> {
-  if (!file) {
-    return t('alerting.import-to-gma.step2.yaml-required', 'Please select a file');
-  }
-  try {
-    await parseYamlFileToRulerRulesConfigDTO(file, file.name);
-    return true;
-  } catch (error) {
-    return t('alerting.import-to-gma.step2.yaml-error', 'Failed to parse YAML file: {{error}}', {
-      error: stringifyErrorLike(error),
-    });
-  }
 }
 
 /**
@@ -75,9 +51,6 @@ export function Step2Content({ step1Completed, canImport }: Step2ContentProps) {
     register,
     watch,
     setValue,
-    getValues,
-    trigger,
-    clearErrors,
     formState: { errors },
   } = useFormContext<ImportFormValues>();
 
@@ -85,7 +58,6 @@ export function Step2Content({ step1Completed, canImport }: Step2ContentProps) {
 
   const [
     rulesSource,
-    rulesDatasourceUID,
     rulesDatasourceName,
     rulesYamlFile,
     policyTreeName,
@@ -98,7 +70,6 @@ export function Step2Content({ step1Completed, canImport }: Step2ContentProps) {
     autoSyncNotificationsEnabled,
   ] = watch([
     'rulesSource',
-    'rulesDatasourceUID',
     'rulesDatasourceName',
     'rulesYamlFile',
     'policyTreeName',
@@ -120,11 +91,6 @@ export function Step2Content({ step1Completed, canImport }: Step2ContentProps) {
   );
   const createdTreeName = autoSyncSelected ? (autoSyncIdentifier ?? '') : policyTreeName;
 
-  const { namespaceOptions, groupOptions, isLoadingNamespaces } = useNamespaceGroupOptions(
-    rulesSource,
-    rulesDatasourceName,
-    namespace
-  );
   const { someRulesAreSkipped, rulesThatMightBeOverwritten } = useRulesToImport({
     rulesSource,
     rulesDatasourceName,
@@ -133,14 +99,6 @@ export function Step2Content({ step1Completed, canImport }: Step2ContentProps) {
     ruleGroup,
     targetFolder,
   });
-
-  // Reset namespace/group if datasource changes
-  useEffect(() => {
-    setValue('namespace', undefined);
-    setValue('ruleGroup', undefined);
-  }, [rulesDatasourceName, setValue]);
-
-  const rulesSourceOptions = getRulesSourceOptions(true);
 
   const { trees: existingTrees, isLoading: isLoadingRoutingTrees } = useRoutingTrees();
   const existingTreeOptions = useMemo(() => buildRoutingTreeOptions(existingTrees), [existingTrees]);
@@ -152,52 +110,6 @@ export function Step2Content({ step1Completed, canImport }: Step2ContentProps) {
 
   const handlePolicyTreeChange = (option: ComboboxOption<string> | null) => {
     setValue('selectedRoutingTree', option?.value ?? 'default');
-  };
-
-  const handleSourceChange = (value: ImportFormValues['rulesSource']) => {
-    setValue('rulesSource', value);
-    if (value === 'datasource') {
-      setValue('rulesYamlFile', null);
-    }
-    clearErrors('rulesYamlFile');
-    clearErrors('rulesDatasourceUID');
-  };
-
-  // Clearing lets the user back out of this step. A recording rules target that was only filled in from this
-  // data source goes with it.
-  const handleDatasourceClear = (currentUID: string | undefined, onChange: (uid: undefined) => void) => {
-    if (getValues('targetDatasourceUID') === currentUID) {
-      setValue('targetDatasourceUID', undefined);
-    }
-    onChange(undefined);
-    setValue('rulesDatasourceName', null);
-  };
-
-  const handleDatasourceChange = (ds: DataSourceInstanceSettings, onChange: (uid: string) => void) => {
-    onChange(ds.uid);
-    setValue('rulesDatasourceName', ds.name);
-    if (!getValues('targetDatasourceUID') && recordingTargets.byUid.has(ds.uid)) {
-      setValue('targetDatasourceUID', ds.uid);
-    }
-  };
-
-  const handleNamespaceChange = (option: ComboboxOption<string> | null, onChange: (value?: string) => void) => {
-    setValue('ruleGroup', undefined);
-    onChange(option?.value);
-  };
-
-  const handleGroupChange = (option: ComboboxOption<string> | null) => {
-    setValue('ruleGroup', option?.value);
-  };
-
-  // Check a new file right away. Removing it just empties the step, which isn't an error.
-  const handleYamlFileChange = (file: File | null, onChange: (file: File | null) => void) => {
-    onChange(file);
-    if (file) {
-      trigger('rulesYamlFile');
-    } else {
-      clearErrors('rulesYamlFile');
-    }
   };
 
   const handleTargetFolderChange = (uid: string | undefined, title: string | undefined) => {
@@ -264,137 +176,7 @@ export function Step2Content({ step1Completed, canImport }: Step2ContentProps) {
         </Box>
       </Box>
 
-      {/* Import Source Card */}
-      <Box backgroundColor="secondary" borderRadius="default" borderColor="weak" borderStyle="solid">
-        <Box display="flex" alignItems="center" justifyContent="space-between" padding={2}>
-          <Text variant="h5" element="h3">
-            {t('alerting.import-to-gma.step2.source-title', 'Import source')}
-          </Text>
-        </Box>
-        <Divider spacing={0} />
-        <Box padding={2}>
-          <Field noMargin>
-            <Controller
-              render={({ field: { onChange, ref, ...field } }) => (
-                <RadioButtonList {...field} onChange={handleSourceChange} options={rulesSourceOptions} />
-              )}
-              control={control}
-              name="rulesSource"
-            />
-          </Field>
-
-          <Box marginTop={2}>
-            {rulesSource === 'datasource' && (
-              <Stack direction="column" gap={2}>
-                <Field
-                  label={t('alerting.import-to-gma.step2.datasource', 'Data source')}
-                  invalid={!!errors.rulesDatasourceUID}
-                  error={errors.rulesDatasourceUID?.message}
-                  noMargin
-                >
-                  <Controller
-                    render={({ field: { ref, onChange, ...field } }) => (
-                      <DataSourcePicker
-                        {...field}
-                        alerting
-                        disabled={recordingTargets.isLoading}
-                        filter={(ds) =>
-                          isSupportedExternalPrometheusFlavoredRulesSourceType(ds.type) &&
-                          supportedImportTypes.includes(ds.type)
-                        }
-                        current={field.value}
-                        onClear={() => handleDatasourceClear(field.value, onChange)}
-                        onChange={(ds) => handleDatasourceChange(ds, onChange)}
-                        noDefault
-                        width={40}
-                      />
-                    )}
-                    control={control}
-                    name="rulesDatasourceUID"
-                  />
-                </Field>
-
-                {/* Namespace and Group Filter */}
-                {rulesDatasourceUID && (
-                  <Stack direction="row" gap={2}>
-                    <Field
-                      label={t('alerting.import-to-gma.step2.namespace', 'Namespace')}
-                      description={t('alerting.import-to-gma.step2.namespace-desc', 'Filter by namespace (optional)')}
-                      noMargin
-                    >
-                      <Controller
-                        render={({ field: { onChange, ref, ...field } }) => (
-                          <Combobox
-                            {...field}
-                            onChange={(option) => handleNamespaceChange(option, onChange)}
-                            placeholder={t('alerting.import-to-gma.step2.select-namespace', 'All namespaces')}
-                            options={namespaceOptions}
-                            width={30}
-                            loading={isLoadingNamespaces}
-                            disabled={isLoadingNamespaces || !rulesDatasourceName}
-                            isClearable
-                            data-testid={selectors.pages.Alerting.ImportToGMA.namespaceInput}
-                          />
-                        )}
-                        name="namespace"
-                        control={control}
-                      />
-                    </Field>
-                    <Field
-                      label={t('alerting.import-to-gma.step2.group', 'Group')}
-                      description={t('alerting.import-to-gma.step2.group-desc', 'Filter by group (optional)')}
-                      noMargin
-                    >
-                      <Controller
-                        render={({ field: { ref, ...field } }) => (
-                          <Combobox
-                            {...field}
-                            options={groupOptions}
-                            width={30}
-                            onChange={handleGroupChange}
-                            placeholder={t('alerting.import-to-gma.step2.select-group', 'All groups')}
-                            loading={isLoadingNamespaces}
-                            disabled={isLoadingNamespaces || !namespace || !rulesDatasourceName}
-                            isClearable
-                            data-testid={selectors.pages.Alerting.ImportToGMA.groupInput}
-                          />
-                        )}
-                        name="ruleGroup"
-                        control={control}
-                      />
-                    </Field>
-                  </Stack>
-                )}
-              </Stack>
-            )}
-
-            {rulesSource === 'yaml' && (
-              <Field
-                label={t('alerting.import-to-gma.step2.yaml-file', 'Rules YAML file')}
-                description={getYamlFileDescription()}
-                invalid={!!errors.rulesYamlFile}
-                error={errors.rulesYamlFile?.message}
-                noMargin
-              >
-                <Controller
-                  render={({ field: { onChange } }) => (
-                    <YamlFileDropzone file={rulesYamlFile} onChange={(file) => handleYamlFileChange(file, onChange)} />
-                  )}
-                  control={control}
-                  name="rulesYamlFile"
-                  rules={{
-                    required: {
-                      value: true,
-                      message: t('alerting.import-to-gma.step2.yaml-required', 'Please select a file'),
-                    },
-                    validate: validateRulesYamlFile,
-                  }}
-                />
-              </Field>
-            )}
-          </Box>
-        </Box>
-      </Box>
+      <ImportSourceCard recordingTargets={recordingTargets} />
 
       {/* Additional Settings Card */}
       <Box backgroundColor="secondary" borderRadius="default" borderColor="weak" borderStyle="solid">
@@ -556,10 +338,18 @@ export function useStep2Validation(canImport: boolean): boolean {
     watch,
     formState: { errors },
   } = useFormContext<ImportFormValues>();
-  const [rulesSource, rulesDatasourceUID, rulesYamlFile, selectedRoutingTree, targetDatasourceUID] = watch([
+  const [
+    rulesSource,
+    rulesDatasourceUID,
+    rulesYamlFile,
+    yamlImportTargetDatasourceUID,
+    selectedRoutingTree,
+    targetDatasourceUID,
+  ] = watch([
     'rulesSource',
     'rulesDatasourceUID',
     'rulesYamlFile',
+    'yamlImportTargetDatasourceUID',
     'selectedRoutingTree',
     'targetDatasourceUID',
   ]);
@@ -567,7 +357,7 @@ export function useStep2Validation(canImport: boolean): boolean {
   const hasStep2Errors =
     !!errors.rulesSource ||
     (rulesSource === 'datasource' && !!errors.rulesDatasourceUID) ||
-    (rulesSource === 'yaml' && !!errors.rulesYamlFile) ||
+    (rulesSource === 'yaml' && (!!errors.rulesYamlFile || !!errors.yamlImportTargetDatasourceUID)) ||
     !!errors.selectedRoutingTree ||
     !!errors.targetDatasourceUID;
 
@@ -579,6 +369,7 @@ export function useStep2Validation(canImport: boolean): boolean {
     rulesSource,
     rulesYamlFile,
     rulesDatasourceUID,
+    yamlImportTargetDatasourceUID,
     selectedRoutingTree,
     targetDatasourceUID,
   });

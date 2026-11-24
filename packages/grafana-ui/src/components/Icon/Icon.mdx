@@ -7,13 +7,19 @@ import { Icon } from './Icon';
 
 Grafana's wrapper component over [Font Awesome](https://fontawesome.com/) and Unicons icons
 
-## Accessibility
+## When to use
 
-`Icon` is aria-hidden by default. If your icon has semantic meaning, please provide a `title` or wrap it in a `Tooltip`.
+No component-specific guidance documented yet.
 
-### Usage with Tooltip
+## Never use for
 
-If you decide to use a `Tooltip` to wrap `Icon`, you need to set a `title` or `aria-label` on the `Icon` component in order for it to appear in the accessibility tree. `Tooltip` only provides `aria-describedby` on interaction.
+No component-specific guidance documented yet.
+
+## Do's and don'ts
+
+No component-specific guidance documented yet.
+
+## Usage
 
 ### Changing icon size
 
@@ -24,5 +30,15 @@ import { css } from '@emotion/css';
 
 <Icon name="check" />;
 ```
+
+## Accessibility
+
+`Icon` is aria-hidden by default. If your icon has semantic meaning, please provide a `title` or wrap it in a `Tooltip`.
+
+### Usage with Tooltip
+
+If you decide to use a `Tooltip` to wrap `Icon`, you need to set a `title` or `aria-label` on the `Icon` component in order for it to appear in the accessibility tree. `Tooltip` only provides `aria-describedby` on interaction.
+
+## Props
 
 <ArgTypes of={Icon} />

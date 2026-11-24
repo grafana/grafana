@@ -11,6 +11,7 @@ import {
 import { TracingInstrumentation } from '@grafana/faro-web-tracing';
 import { type EchoBackend, type EchoEvent, EchoEventType } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { isMtFallbackConfigured } from 'app/core/navigation/mtFallback';
 
 import { EchoSrvTransport } from './EchoSrvTransport';
 import { beforeSendHandler } from './beforeSendHandler';
@@ -104,6 +105,13 @@ export class GrafanaJavascriptAgentBackend
       trackResources: options.trackResources,
       sessionTracking: {
         persistent: true,
+        // Lets frontend monitoring split signals by whether the stack has the MT fallback enabled.
+        // Faro copies these config attributes into every new session, so they survive rotation.
+        session: {
+          attributes: {
+            mtFallbackConfigured: String(isMtFallbackConfigured()),
+          },
+        },
         // Faro rotates sessions on expiration/inactivity without navigation; re-anchor the
         // sessionStart page attribute so it never describes the previous session.
         onSessionChange: () => refreshFaroPageMeta?.(),

@@ -19,10 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/bootstrap"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -100,10 +98,6 @@ func ProvideProvisioningOSSConnectionExtras(
 	}
 }
 
-func ProvideExtraWorkers(pullRequestWorker *pullrequest.PullRequestWorker) []jobs.Worker {
-	return []jobs.Worker{pullRequestWorker}
-}
-
 func ProvideFactoryFromConfig(cfg *setting.Cfg, tracer tracing.Tracer, extras []repository.Extra) (repository.Factory, error) {
 	types := cfg.ProvisioningRepositoryTypes
 	if len(types) == 0 {
@@ -129,7 +123,11 @@ func ProvideConnectionFactoryFromConfig(cfg *setting.Cfg, tracer tracing.Tracer,
 	types := cfg.ProvisioningConnectionTypes
 	if len(types) == 0 {
 		// Enforcing default connection values if settings are not set
-		types = []string{string(apisprovisioning.GithubConnectionType)}
+		types = []string{
+			string(apisprovisioning.GithubConnectionType),
+			string(apisprovisioning.GithubOAuthConnectionType),
+			string(apisprovisioning.GitOAuthConnectionType),
+		}
 	}
 
 	return connection.ProvideFactory(connection.ToConnectionTypes(types), extras, tracer)

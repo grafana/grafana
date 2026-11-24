@@ -2,6 +2,8 @@ package app
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -12,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
@@ -198,6 +201,93 @@ func (b *byIDProvider) GetMeta(_ context.Context, ref meta.PluginRef) (*meta.Res
 		return nil, meta.ErrMetaNotFound
 	}
 	return &meta.Result{Meta: m, TTL: time.Hour}, nil
+}
+
+func TestMetaStorage_List_ClientCancelledIsNotReportedAsServerFault(t *testing.T) {
+	provider := meta.NewProviderManager(&stubProvider{})
+
+	mockClient := &mockResourceClient{
+		listFunc: func(_ context.Context, _ string, _ resource.ListOptions) (resource.ListObject, error) {
+			return nil, context.Canceled
+		},
+	}
+
+	storage := NewMetaStorage(&logging.NoOpLogger{}, provider, func(_ context.Context) (*pluginsv0alpha1.PluginClient, error) {
+		return pluginsv0alpha1.NewPluginClient(mockClient), nil
+	})
+
+	_, err := storage.List(testContext("default"), nil)
+	require.Error(t, err)
+
+	var statusErr *apierrors.StatusError
+	require.True(t, errors.As(err, &statusErr), "expected a *apierrors.StatusError, got %T", err)
+	assert.EqualValues(t, 499, statusErr.Status().Code, "a client cancellation must not be reported as a 500")
+}
+
+func TestMetaStorage_Get_ClientCancelledIsNotReportedAsServerFault(t *testing.T) {
+	provider := meta.NewProviderManager(&stubProvider{})
+
+	mockClient := &mockResourceClient{
+		getFunc: func(_ context.Context, _ resource.Identifier) (resource.Object, error) {
+			return nil, context.Canceled
+		},
+	}
+
+	storage := NewMetaStorage(&logging.NoOpLogger{}, provider, func(_ context.Context) (*pluginsv0alpha1.PluginClient, error) {
+		return pluginsv0alpha1.NewPluginClient(mockClient), nil
+	})
+
+	_, err := storage.Get(testContext("default"), "test-plugin", &metav1.GetOptions{})
+	require.Error(t, err)
+
+	var statusErr *apierrors.StatusError
+	require.True(t, errors.As(err, &statusErr), "expected a *apierrors.StatusError, got %T", err)
+	assert.EqualValues(t, 499, statusErr.Status().Code)
+}
+
+func TestWrapStorageError(t *testing.T) {
+	gr := schema.GroupResource{Group: "plugins.grafana.app", Resource: "metas"}
+
+	t.Run("context.Canceled maps to 499, not 500", func(t *testing.T) {
+		err := wrapStorageError(fmt.Errorf("failed to list plugins: %w", context.Canceled), "get", gr, "test-plugin")
+
+		var statusErr *apierrors.StatusError
+		require.True(t, errors.As(err, &statusErr))
+		assert.EqualValues(t, 499, statusErr.Status().Code)
+		// apierrors.NewGenericServerResponse would silently discard the real
+		// error text for an unrecognized code like 499 -- guard against
+		// reintroducing that by asserting our message actually survives.
+		assert.Contains(t, statusErr.Status().Message, "failed to list plugins")
+
+		require.NotNil(t, statusErr.Status().Details)
+		assert.Equal(t, gr.Group, statusErr.Status().Details.Group)
+		assert.Equal(t, gr.Resource, statusErr.Status().Details.Kind)
+		assert.Equal(t, "test-plugin", statusErr.Status().Details.Name)
+	})
+
+	t.Run("context.DeadlineExceeded maps to 504, not 500", func(t *testing.T) {
+		err := wrapStorageError(context.DeadlineExceeded, "list", gr, "")
+
+		var statusErr *apierrors.StatusError
+		require.True(t, errors.As(err, &statusErr))
+		assert.EqualValues(t, 504, statusErr.Status().Code)
+	})
+
+	t.Run("a wrapped context.Canceled is still detected", func(t *testing.T) {
+		err := wrapStorageError(fmt.Errorf("failed to list plugins: %w", context.Canceled), "list", gr, "")
+
+		var statusErr *apierrors.StatusError
+		require.True(t, errors.As(err, &statusErr))
+		assert.EqualValues(t, 499, statusErr.Status().Code)
+	})
+
+	t.Run("other errors still map to 500", func(t *testing.T) {
+		err := wrapStorageError(errors.New("boom"), "get", gr, "test-plugin")
+
+		var statusErr *apierrors.StatusError
+		require.True(t, errors.As(err, &statusErr))
+		assert.EqualValues(t, 500, statusErr.Status().Code)
+	})
 }
 
 // stubProvider always returns the same MetaSpec.

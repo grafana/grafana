@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	ngalertac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
@@ -21,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type allowAllRuleAccessControl struct{}
@@ -72,11 +74,12 @@ func TestLegacyStorage_DryRun(t *testing.T) {
 	quotas.EXPECT().LimitOK()
 	folderService := foldertest.NewFakeService()
 	folderService.ExpectedFolder = &folder.Folder{UID: "test-folder-uid", Title: "Test Folder"}
-	svc := legacy.NewLegacyRuleService(
+	svc := legacy.New(
 		ruleStore, fakes.NewFakeProvisioningStore(), folderService, &quotas, ruleStore,
 		60, log.NewNopLogger(), nil, allowAllRuleAccessControl{}, nil,
+		request.GetNamespaceMapper(&setting.Cfg{}),
 	)
-	s := &legacyStorage{service: *svc, namespacer: nsMapperForTest()}
+	s := &legacyStorage{rules: svc.RecordingRules()}
 	ctx := genericapirequest.WithNamespace(context.Background(), "default")
 	ctx = identity.WithRequester(ctx, &user.SignedInUser{OrgID: 1, UserUID: "test-user"})
 	dryRun := []string{metav1.DryRunAll}

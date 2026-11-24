@@ -730,6 +730,10 @@ const (
 	// Enables plugins decoupling from bootdata
 	FlagPluginsUseMTPlugins = "plugins.useMTPlugins"
 
+	// FlagPluginsUseMTPluginInstall
+	// Installs, updates and uninstalls plugins through the plugins API only, and falls back to the legacy API if that call fails
+	FlagPluginsUseMTPluginInstall = "plugins.useMTPluginInstall"
+
 	// FlagGlobalDashboardVariables
 	// Enables global and folder-scoped dashboard variables via dashboard.grafana.app
 	FlagGlobalDashboardVariables = "globalDashboardVariables"
@@ -1069,4 +1073,8 @@ const (
 	// FlagDatasourcesGatewayRateLimits
 	// Enable support for query gateway rate limits
 	FlagDatasourcesGatewayRateLimits = "datasources.gatewayRateLimits"
+
+	// FlagDatasourcesGatewayQueryUsage
+	// Record billed query usage (Mimir samples read, Loki bytes processed) in query gateway audit events
+	FlagDatasourcesGatewayQueryUsage = "datasources.gatewayQueryUsage"
 )

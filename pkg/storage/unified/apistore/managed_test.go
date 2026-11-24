@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	clientrest "k8s.io/client-go/rest"
 
+	"github.com/grafana/authlib/authn"
 	authtypes "github.com/grafana/authlib/types"
 
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
@@ -52,7 +53,7 @@ func TestManagedAuthorizer_ManagerKindConflict(t *testing.T) {
 func TestManagedAuthorizer(t *testing.T) {
 	user := &identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "uuu"}
 	serverAdmin := &identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "server-admin-uuu", IsGrafanaAdmin: true}
-	orgAdmin := &identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "org-admin-uuu", OrgRole: identity.RoleAdmin}
+	orgAdmin := &identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "org-admin-uuu", OrgRole: authtypes.RoleAdmin}
 	_, provisioner, err := identity.WithProvisioningIdentity(context.Background(), "default")
 	require.NoError(t, err)
 
@@ -405,7 +406,22 @@ func TestManagedAuthorizer(t *testing.T) {
 			},
 		},
 		{
-			name: "audience includes provisioning group",
+			name: "provisioning service identity",
+			auth: &identity.StaticRequester{
+				Type:              authtypes.TypeAccessPolicy,
+				UserUID:           "random-uid",
+				AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{Rest: authn.AccessTokenClaims{ServiceIdentity: provisioning.GROUP}},
+			},
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind: string(utils.ManagerKindRepo),
+					},
+				},
+			},
+		},
+		{
+			name: "audience includes provisioning group without the service identity",
 			auth: &audienceAuthInfo{
 				StaticRequester: &identity.StaticRequester{Type: authtypes.TypeAccessPolicy, UserUID: "random-uid"},
 				audience:        []string{provisioning.GROUP},
@@ -417,6 +433,7 @@ func TestManagedAuthorizer(t *testing.T) {
 					},
 				},
 			},
+			err: "this resource is managed by a repository",
 		},
 		{
 			name: "server admin can release repo-managed dashboard",
