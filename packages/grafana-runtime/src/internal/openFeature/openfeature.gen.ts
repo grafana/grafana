@@ -176,6 +176,8 @@ export const FlagKeys = {
   GlobalDashboardVariables: "globalDashboardVariables",
   /** Allow admins to make announcement banners dismissible by users */
   GrafanaAnnouncementBannerDismissible: "grafana.announcementBannerDismissible",
+  /** Enable tracking of bootdata property access */
+  GrafanaBootdataAnalytics: "grafana.bootdataAnalytics",
   /** Shows dashboard tags in the command palette */
   GrafanaCmdkDashboardTags: "grafana.cmdkDashboardTags",
   /** Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette */
@@ -1317,6 +1319,17 @@ export const useFlagGlobalDashboardVariables = (options?: ReactFlagEvaluationOpt
  */
 export const useFlagGrafanaAnnouncementBannerDismissible = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.announcementBannerDismissible", true, options).value;
+};
+
+/**
+ * Enable tracking of bootdata property access
+ *
+ * **Details:**
+ * - flag key: `grafana.bootdataAnalytics`
+ * - default value: `false`
+ */
+export const useFlagGrafanaBootdataAnalytics = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.bootdataAnalytics", false, options).value;
 };
 
 /**

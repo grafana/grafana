@@ -1073,4 +1073,8 @@ const (
 	// FlagDatasourcesGatewayQueryUsage
 	// Record billed query usage (Mimir samples read, Loki bytes processed) in query gateway audit events
 	FlagDatasourcesGatewayQueryUsage = "datasources.gatewayQueryUsage"
+
+	// FlagGrafanaBootdataAnalytics
+	// Enable tracking of bootdata property access
+	FlagGrafanaBootdataAnalytics = "grafana.bootdataAnalytics"
 )

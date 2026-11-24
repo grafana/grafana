@@ -417,3 +417,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-11-11,plugins.disableMTPluginsFallback,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-11-17,grafana.logsInfiniteScrollTop,preview,@grafana/observability-logs,false,false,true
 2026-11-11,grafana.dashboardQuestions,experimental,@grafana/dashboards-squad,false,false,true
+2026-11-24,grafana.bootdataAnalytics,experimental,@grafana/grafana-frontend-platform,false,false,false

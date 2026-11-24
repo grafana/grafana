@@ -214,7 +214,8 @@ declare module "@openfeature/core" {
     | "datasources.gatewayRateLimits"
     | "plugins.disableMTPluginsFallback"
     | "grafana.logsInfiniteScrollTop"
-    | "grafana.dashboardQuestions";
+    | "grafana.dashboardQuestions"
+    | "grafana.bootdataAnalytics";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =
