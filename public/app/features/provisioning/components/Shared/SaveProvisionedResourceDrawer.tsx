@@ -6,6 +6,7 @@ import useMountedState from 'react-use/lib/useMountedState';
 
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
+import { type KindInfo } from '@grafana/runtime/unstable';
 import { Button, Drawer, Stack, Text } from '@grafana/ui';
 import {
   type RepositoryView,
@@ -18,6 +19,7 @@ import {
   AnnoKeySourcePath,
   ManagerKind,
 } from 'app/features/apiserver/types';
+import { findKind } from 'app/core/kinds/coreKinds';
 import { useDispatch } from 'app/types/store';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
@@ -393,17 +395,24 @@ export function SaveProvisionedResourceDrawer(props: SaveProvisionedResourceDraw
     return null;
   }
   return (
-    <ResourceDrawerContent {...props} kindKey={getKindKeyByGroupKind(group, kind)} resourceType={kind.toLowerCase()} />
+    <ResourceDrawerContent
+      {...props}
+      kindKey={getKindKeyByGroupKind(group, kind)}
+      kindInfo={findKind(group, kind)}
+      resourceType={kind.toLowerCase()}
+    />
   );
 }
 
 type ResourceDrawerContentProps = SaveProvisionedResourceDrawerProps & {
   kindKey?: ResourceKindKey;
+  kindInfo?: KindInfo;
   resourceType: string;
 };
 
 function ResourceDrawerContent({
   kindKey,
+  kindInfo,
   resourceType,
   resource,
   action,
@@ -457,8 +466,8 @@ function ResourceDrawerContent({
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
   const sourcePath = getSourcePath(managedResource);
 
-  const kindLabel = kindKey ? resourceKindInfos[kindKey].getLabel({ upperFirst: false }) : resourceType;
-  const pluralLabel = kindKey ? resourceKindInfos[kindKey].getPluralLabel({ upperFirst: false }) : undefined;
+  const kindLabel = kindInfo?.getLabel({ upperFirst: false }) ?? resourceType;
+  const pluralLabel = kindInfo?.getPluralLabel({ upperFirst: false });
   const drawerTitle = getDrawerTitle(isDelete, kindLabel);
 
   const onCommitted = (committed: ProvisionedCommitOutcome) => {

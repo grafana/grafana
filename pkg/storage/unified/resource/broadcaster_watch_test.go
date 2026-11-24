@@ -7,6 +7,7 @@ import (
 	"sync/atomic"
 	"testing"
 	"testing/synctest"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
@@ -34,6 +35,12 @@ func cacheEvent(gr GroupResource, rv int64) *WrittenEvent {
 	return &WrittenEvent{Key: &resourcepb.ResourceKey{Group: gr.Group, Resource: gr.Resource}, ResourceVersion: rv}
 }
 
+func namespacedCacheEvent(gr GroupResource, namespace string, rv int64) *WrittenEvent {
+	event := cacheEvent(gr, rv)
+	event.Key.Namespace = namespace
+	return event
+}
+
 func newWatchBroadcaster(t *testing.T, floor int64, seed ...*WrittenEvent) (*broadcaster[*WrittenEvent], chan<- *WrittenEvent) {
 	t.Helper()
 	input := make(chan *WrittenEvent)
@@ -47,7 +54,7 @@ func newWatchBroadcaster(t *testing.T, floor int64, seed ...*WrittenEvent) (*bro
 
 func checkedWatch(t *testing.T, b *broadcaster[*WrittenEvent], gr GroupResource, since int64) (<-chan *WrittenEvent, error) {
 	t.Helper()
-	sub, err := b.subscribeWatch(t.Context(), "test", gr, &watchResume{since: since, requestedRV: since})
+	sub, err := b.subscribeWatch(t.Context(), "test", gr, "", &watchResume{since: since, requestedRV: since})
 	if err != nil {
 		return nil, err
 	}
@@ -57,8 +64,8 @@ func checkedWatch(t *testing.T, b *broadcaster[*WrittenEvent], gr GroupResource,
 var intGR = GroupResource{Resource: "r"}
 
 // intIdentity routes every int to intGR with the value as its RV.
-func intIdentity(v int) (GroupResource, int64) {
-	return intGR, int64(v)
+func intIdentity(v int) (GroupResource, string, int64) {
+	return intGR, "", int64(v)
 }
 
 func intResume(since int64) *watchResume {
@@ -170,7 +177,7 @@ func TestCheckedWatchCancellation(t *testing.T) {
 		for range 250 {
 			ctx, cancel := context.WithCancel(t.Context())
 			wg.Go(func() {
-				sub, err := b.subscribeWatch(ctx, "cancel", intGR, nil)
+				sub, err := b.subscribeWatch(ctx, "cancel", intGR, "", nil)
 				if err == nil {
 					b.Unsubscribe(sub.events())
 				}
@@ -203,7 +210,7 @@ func TestCheckedWatchWaitsForSeed(t *testing.T) {
 		}
 		subscribed := make(chan result, 1)
 		go func() {
-			sub, err := b.subscribeWatch(t.Context(), "watch", gr, &watchResume{since: 50, requestedRV: 50})
+			sub, err := b.subscribeWatch(t.Context(), "watch", gr, "", &watchResume{since: 50, requestedRV: 50})
 			subscribed <- result{sub: sub, err: err}
 		}()
 		input <- cacheEvent(gr, 51)
@@ -252,7 +259,7 @@ func TestBroadcasterRetriesInitializationOnNextCheckedWatch(t *testing.T) {
 
 		first := make(chan error, 1)
 		go func() {
-			_, err := b.subscribeWatch(t.Context(), "first", intGR, nil)
+			_, err := b.subscribeWatch(t.Context(), "first", intGR, "", nil)
 			first <- err
 		}()
 		synctest.Wait()
@@ -268,7 +275,7 @@ func TestBroadcasterRetriesInitializationOnNextCheckedWatch(t *testing.T) {
 		second := make(chan result, watcherCount)
 		for range watcherCount {
 			go func() {
-				sub, err := b.subscribeWatch(t.Context(), "second", intGR, intResume(0))
+				sub, err := b.subscribeWatch(t.Context(), "second", intGR, "", intResume(0))
 				second <- result{sub: sub, err: err}
 			}()
 		}
@@ -305,14 +312,14 @@ func TestBroadcasterFatalInitializationFailureRejectsWatches(t *testing.T) {
 			}})
 		waiting := make(chan error, 1)
 		go func() {
-			_, err := b.subscribeWatch(t.Context(), "waiting", intGR, nil)
+			_, err := b.subscribeWatch(t.Context(), "waiting", intGR, "", nil)
 			waiting <- err
 		}()
 		synctest.Wait()
 		close(release)
 		require.ErrorContains(t, <-waiting, "cache capacity")
 		<-b.terminated
-		sub, err := b.subscribeWatch(t.Context(), "after failure", intGR, nil)
+		sub, err := b.subscribeWatch(t.Context(), "after failure", intGR, "", nil)
 		require.ErrorContains(t, err, "cache capacity")
 		require.Nil(t, sub)
 	})
@@ -327,7 +334,7 @@ func TestCheckedWatchCancellationDuringInitialization(t *testing.T) {
 		ctx, cancel := context.WithCancel(t.Context())
 		done := make(chan error, 1)
 		go func() {
-			_, err := b.subscribeWatch(ctx, "cancel", intGR, nil)
+			_, err := b.subscribeWatch(ctx, "cancel", intGR, "", nil)
 			done <- err
 		}()
 		synctest.Wait()
@@ -345,9 +352,9 @@ func TestCheckedWatchRoutesByGroupResource(t *testing.T) {
 		const subBuf, ovfCap = 4, 8
 		b := newBroadcasterWithSizes(t.Context(), input, subBuf, ovfCap, newBroadcasterMetrics(prometheus.NewRegistry()), writtenEventIdentity, nil)
 
-		scoped, err := b.subscribeWatch(t.Context(), "playlists", playlist, nil)
+		scoped, err := b.subscribeWatch(t.Context(), "playlists", playlist, "", nil)
 		require.NoError(t, err)
-		slow, err := b.subscribeWatch(t.Context(), "dashboards", dashboard, nil)
+		slow, err := b.subscribeWatch(t.Context(), "dashboards", dashboard, "", nil)
 		require.NoError(t, err)
 
 		// A burst past the overflow cap disconnects the slow dashboards watcher
@@ -384,7 +391,7 @@ func TestCheckedWatchReplaysOnlyOnResume(t *testing.T) {
 	dashboard := GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
 	b, _ := newWatchBroadcaster(t, 10, cacheEvent(playlist, 10), cacheEvent(dashboard, 11), cacheEvent(playlist, 12))
 
-	fresh, err := b.subscribeWatch(t.Context(), "list", playlist, nil)
+	fresh, err := b.subscribeWatch(t.Context(), "list", playlist, "", nil)
 	require.NoError(t, err)
 	require.Empty(t, fresh.events(), "watches starting from a list or the latest RV must not replay")
 	b.Unsubscribe(fresh.events())
@@ -409,7 +416,7 @@ func TestBroadcasterWatchProgress(t *testing.T) {
 		dashboard := GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
 		b, input := newWatchBroadcaster(t, 9, cacheEvent(playlist, 10))
 		// Replayed events count as delivered too.
-		sub, err := b.subscribeWatch(t.Context(), "playlists", playlist, &watchResume{since: 9, requestedRV: 9})
+		sub, err := b.subscribeWatch(t.Context(), "playlists", playlist, "", &watchResume{since: 9, requestedRV: 9})
 		require.NoError(t, err)
 		stream := sub.events()
 		defer b.Unsubscribe(stream)
@@ -440,5 +447,121 @@ func TestBroadcasterWatchProgress(t *testing.T) {
 		b.Unsubscribe(stream)
 		synctest.Wait()
 		require.Zero(t, sub.rv(consumed), "a removed subscription has no progress")
+	})
+}
+
+func TestBroadcasterWatchCollectionProgress(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		gr := GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
+		b, input := newWatchBroadcaster(t, 0)
+		existing, err := b.subscribeWatch(t.Context(), "second", gr, "second", nil)
+		require.NoError(t, err)
+
+		input <- namespacedCacheEvent(gr, "second", 10)
+		synctest.Wait()
+		require.Equal(t, int64(10), (<-existing.events()).ResourceVersion)
+		require.Equal(t, int64(10), existing.collectionRV(1))
+
+		sub, err := b.subscribeWatch(t.Context(), "first", gr, "first", nil)
+		require.NoError(t, err)
+		require.Zero(t, sub.collectionRV(0), "progress must exclude writes before registration")
+
+		input <- namespacedCacheEvent(gr, "second", 20)
+		synctest.Wait()
+		require.Empty(t, sub.events())
+		require.Equal(t, int64(20), sub.collectionRV(0))
+
+		input <- namespacedCacheEvent(gr, "first", 30)
+		input <- namespacedCacheEvent(gr, "second", 40)
+		synctest.Wait()
+		require.Len(t, sub.events(), 1)
+		require.Zero(t, sub.collectionRV(0), "a matching event is still unread")
+		require.Equal(t, int64(30), (<-sub.events()).ResourceVersion)
+		require.Equal(t, int64(40), sub.collectionRV(1))
+
+		b.Unsubscribe(existing.events())
+		b.Unsubscribe(sub.events())
+		synctest.Wait()
+		require.Zero(t, sub.collectionRV(1), "a removed subscription has no progress")
+		require.NotContains(t, b.scoped, gr)
+
+		fresh, err := b.subscribeWatch(t.Context(), "first", gr, "first", nil)
+		require.NoError(t, err)
+		defer b.Unsubscribe(fresh.events())
+		input <- namespacedCacheEvent(gr, "second", 35)
+		synctest.Wait()
+		require.Equal(t, int64(35), fresh.collectionRV(0), "the previous collection watermark was discarded")
+	})
+}
+
+func TestCheckedWatchRoutesByNamespace(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		gr := GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
+		input := make(chan *WrittenEvent)
+		b := newBroadcasterWithSizes(t.Context(), input, watchChanSize, defaultOverflowCap, newBroadcasterMetrics(prometheus.NewRegistry()), writtenEventIdentity, nil)
+		first, err := b.subscribeWatch(t.Context(), "first", gr, "first", nil)
+		require.NoError(t, err)
+		all, err := b.subscribeWatch(t.Context(), "all", gr, "", nil)
+		require.NoError(t, err)
+
+		input <- namespacedCacheEvent(gr, "second", 1)
+		input <- namespacedCacheEvent(gr, "first", 2)
+		input <- cacheEvent(gr, 3)
+		synctest.Wait()
+		require.Len(t, first.events(), 1)
+		require.Equal(t, int64(2), (<-first.events()).ResourceVersion)
+		require.Len(t, all.events(), 3)
+		require.Equal(t, int64(1), (<-all.events()).ResourceVersion)
+		require.Equal(t, int64(2), (<-all.events()).ResourceVersion)
+		require.Equal(t, int64(3), (<-all.events()).ResourceVersion)
+		b.Unsubscribe(first.events())
+		b.Unsubscribe(all.events())
+	})
+}
+
+func TestCheckedWatchDrainsOverflowOnTickWithoutMatchingWrites(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		gr := GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
+		input := make(chan *WrittenEvent)
+		const subBuf = 2
+		b := newBroadcasterWithSizes(t.Context(), input, subBuf, defaultOverflowCap, newBroadcasterMetrics(prometheus.NewRegistry()), writtenEventIdentity, nil)
+		sub, err := b.subscribeWatch(t.Context(), "first", gr, "first", nil)
+		require.NoError(t, err)
+
+		for rv := int64(1); rv <= 5; rv++ {
+			input <- namespacedCacheEvent(gr, "first", rv)
+		}
+		synctest.Wait()
+		require.Equal(t, int64(1), (<-sub.events()).ResourceVersion)
+		require.Equal(t, int64(2), (<-sub.events()).ResourceVersion)
+
+		input <- namespacedCacheEvent(gr, "second", 6)
+		synctest.Wait()
+		require.Empty(t, sub.events(), "writes to other namespaces must leave the overflow to the ticker")
+
+		time.Sleep(drainInterval)
+		synctest.Wait()
+		require.Len(t, sub.events(), subBuf, "the ticker must refill the channel")
+		require.Equal(t, int64(3), (<-sub.events()).ResourceVersion)
+		require.Equal(t, int64(4), (<-sub.events()).ResourceVersion)
+
+		input <- namespacedCacheEvent(gr, "first", 7)
+		synctest.Wait()
+		require.Len(t, sub.events(), subBuf, "a matching write must drain overflow immediately")
+		require.Equal(t, int64(5), (<-sub.events()).ResourceVersion)
+		require.Equal(t, int64(7), (<-sub.events()).ResourceVersion)
+		require.Empty(t, b.overflowing, "draining the last item must clear the overflow index")
+
+		for rv := int64(8); rv <= 10; rv++ {
+			input <- namespacedCacheEvent(gr, "first", rv)
+		}
+		synctest.Wait()
+		collection := sub.sub.collection
+		require.Contains(t, b.overflowing, sub.events())
+		b.Unsubscribe(sub.events())
+		synctest.Wait()
+		require.Empty(t, b.overflowing)
+		require.Empty(t, collection.byNamespace)
+		require.Empty(t, b.scoped)
 	})
 }
