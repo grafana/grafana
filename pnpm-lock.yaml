@@ -635,8 +635,8 @@ importers:
         specifier: 2.10.4
         version: 2.10.4(react@19.2.8)
       react-virtualized-auto-sizer:
-        specifier: 1.0.26
-        version: 1.0.26(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        specifier: 2.0.4
+        version: 2.0.4(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       react-window:
         specifier: 1.8.11
         version: 1.8.11(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -1715,8 +1715,8 @@ importers:
         specifier: ^17.6.1
         version: 17.6.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       react-virtualized-auto-sizer:
-        specifier: ^1.0.26
-        version: 1.0.26(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        specifier: ^2.0.0
+        version: 2.0.4(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       tinycolor2:
         specifier: ^1.6.0
         version: 1.6.0
@@ -2197,8 +2197,8 @@ importers:
         specifier: ^17.6.1
         version: 17.6.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       react-virtualized-auto-sizer:
-        specifier: ^1.0.26
-        version: 1.0.26(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        specifier: ^2.0.0
+        version: 2.0.4(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       rxjs:
         specifier: ^7.8.2
         version: 7.8.2
@@ -13435,6 +13435,12 @@ packages:
     peerDependencies:
       react: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0 || ^19.0.0
       react-dom: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0 || ^19.0.0
+
+  react-virtualized-auto-sizer@2.0.4:
+    resolution: {integrity: sha512-OgkJ2qCvm7ahHpkiHwHyRz9n1nSLr+U1Tz1xewtXF++KKwLt5X7tcuQA8dmsL2RPpEhB3Uz8jtSNSZ86Mx/lEQ==}
+    peerDependencies:
+      react: ^18.0.0 || ^19.0.0
+      react-dom: ^18.0.0 || ^19.0.0
 
   react-window-infinite-loader@1.0.10:
     resolution: {integrity: sha512-NO/csdHlxjWqA2RJZfzQgagAjGHspbO2ik9GtWZb0BY1Nnapq0auG8ErI+OhGCzpjYJsCYerqUlK6hkq9dfAAA==}
@@ -28072,6 +28078,11 @@ snapshots:
       react: 19.2.8
 
   react-virtualized-auto-sizer@1.0.26(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+    dependencies:
+      react: 19.2.8
+      react-dom: 19.2.8(react@19.2.8)
+
+  react-virtualized-auto-sizer@2.0.4(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
     dependencies:
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
