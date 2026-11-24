@@ -244,7 +244,7 @@ The **Add panel to notebook** dialog box has the following options:
 | Option                                  | Description |
 | --------------------------------------- | ----------- |
 | Target notebook                         | Choose **New notebook** to create a notebook for the panel, or **Existing notebook** to add the panel to a notebook you already have. If you only have permission to create notebooks or only to edit them, the dialog box shows just the available option. |
-| Notebook name                           | Available when you create a new notebook. Enter a name for the notebook. The name must be unique. |
+| Notebook name                           | Available when you create a new notebook. Enter a unique name for the notebook. |
 | Search by title                         | Available when you add the panel to an existing notebook. Enter all or part of a notebook title to find the notebook. Then select it in the list. |
 | Filter by tags                          | Available when you add the panel to an existing notebook. Filter the list by tag, sort the list, or select **Created by me** to narrow the results. Then select the notebook in the list. |
 | Text above the panel (optional)         | Enter text to add to the notebook as a text block before the panel. Use it to explain why you added the panel. |
