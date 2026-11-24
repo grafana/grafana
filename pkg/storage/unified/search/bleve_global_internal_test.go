@@ -332,8 +332,9 @@ func TestGlobalIndexPagesThroughSameNamedDocuments(t *testing.T) {
 	assert.Len(t, seen, 3, "no document is repeated")
 }
 
-// Counts per creator cover every type the caller may read, and nothing else, so a
-// client can group hits by owner. A document without a creator adds no term.
+// Counts per creator cover every document the caller may read, and nothing else,
+// so a client can group hits by owner. An unreadable document is left out even
+// when its type is readable. A document without a creator adds no term.
 func TestGlobalIndexFacetsOnCreator(t *testing.T) {
 	backend, _ := setupBleveBackend(t)
 	ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "default"})
@@ -356,13 +357,14 @@ func TestGlobalIndexFacetsOnCreator(t *testing.T) {
 			doc("dashboard.grafana.app", "dashboards", "a", "user:alice"),
 			doc("dashboard.grafana.app", "dashboards", "b", "user:alice"),
 			doc("folder.grafana.app", "folders", "c", "user:bob"),
-			doc("playlist.grafana.app", "playlists", "d", "user:carol"),
+			doc("folder.grafana.app", "folders", "d", "user:carol"),
 			doc("dashboard.grafana.app", "dashboards", "e", ""),
 		}})
 	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 
-	access := NewStubAccessClient(map[string]bool{"dashboards": true, "folders": true})
+	// Bob's folder stays readable; Carol's is denied by name.
+	access := &folderAccessClient{denied: map[string]bool{"d": true}}
 	rsp, err := index.Search(ctx, access, &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: key.Namespace}},
 		Limit:   10,
