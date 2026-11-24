@@ -82,7 +82,7 @@ func TestConnectionController_process(t *testing.T) {
 						},
 						Status: provisioning.ConnectionStatus{
 							ObservedGeneration: 1,
-							Health: provisioning.HealthStatus{
+							Health: provisioning.ConnectionHealthStatus{
 								Healthy: true,
 								Checked: time.Now().UnixMilli(),
 							},
@@ -105,7 +105,7 @@ func TestConnectionController_process(t *testing.T) {
 				},
 				Status: provisioning.ConnectionStatus{
 					ObservedGeneration: 1,
-					Health: provisioning.HealthStatus{
+					Health: provisioning.ConnectionHealthStatus{
 						Healthy: true,
 						Checked: time.Now().UnixMilli(),
 					},
@@ -125,7 +125,7 @@ func TestConnectionController_process(t *testing.T) {
 						},
 						Status: provisioning.ConnectionStatus{
 							ObservedGeneration: 1,
-							Health: provisioning.HealthStatus{
+							Health: provisioning.ConnectionHealthStatus{
 								Healthy: true,
 								Checked: time.Now().Add(-10 * time.Minute).UnixMilli(),
 							},
@@ -148,7 +148,7 @@ func TestConnectionController_process(t *testing.T) {
 					Success: true,
 					Code:    http.StatusOK,
 				}
-				healthStatus := provisioning.HealthStatus{
+				healthStatus := provisioning.ConnectionHealthStatus{
 					Healthy: true,
 					Checked: time.Now().UnixMilli(),
 				}
@@ -177,7 +177,7 @@ func TestConnectionController_process(t *testing.T) {
 				},
 				Status: provisioning.ConnectionStatus{
 					ObservedGeneration: 1,
-					Health: provisioning.HealthStatus{
+					Health: provisioning.ConnectionHealthStatus{
 						Healthy: true,
 						Checked: time.Now().Add(-10 * time.Minute).UnixMilli(),
 					},
@@ -204,7 +204,7 @@ func TestConnectionController_process(t *testing.T) {
 						},
 						Status: provisioning.ConnectionStatus{
 							ObservedGeneration: 1,
-							Health: provisioning.HealthStatus{
+							Health: provisioning.ConnectionHealthStatus{
 								Healthy: false,
 								Checked: time.Now().Add(-2 * time.Minute).UnixMilli(),
 								Error:   provisioning.HealthFailureHealth,
@@ -239,7 +239,7 @@ func TestConnectionController_process(t *testing.T) {
 					Code:    http.StatusBadRequest,
 					Errors:  []provisioning.ErrorDetails{{Detail: "connection failed"}},
 				}
-				healthStatus := provisioning.HealthStatus{
+				healthStatus := provisioning.ConnectionHealthStatus{
 					Healthy: false,
 					Checked: time.Now().UnixMilli(),
 					Error:   provisioning.HealthFailureHealth,
@@ -273,7 +273,7 @@ func TestConnectionController_process(t *testing.T) {
 				},
 				Status: provisioning.ConnectionStatus{
 					ObservedGeneration: 1,
-					Health: provisioning.HealthStatus{
+					Health: provisioning.ConnectionHealthStatus{
 						Healthy: false,
 						Checked: time.Now().Add(-2 * time.Minute).UnixMilli(),
 						Error:   provisioning.HealthFailureHealth,
@@ -306,7 +306,7 @@ func TestConnectionController_process(t *testing.T) {
 						},
 						Status: provisioning.ConnectionStatus{
 							ObservedGeneration: 1,
-							Health: provisioning.HealthStatus{
+							Health: provisioning.ConnectionHealthStatus{
 								Healthy: true,
 								Checked: time.Now().Add(-10 * time.Minute).UnixMilli(),
 							},
@@ -335,7 +335,7 @@ func TestConnectionController_process(t *testing.T) {
 					Success: true,
 					Code:    http.StatusOK,
 				}
-				healthStatus := provisioning.HealthStatus{
+				healthStatus := provisioning.ConnectionHealthStatus{
 					Healthy: true,
 					Checked: time.Now().UnixMilli(),
 				}
@@ -379,11 +379,11 @@ func TestConnectionController_process(t *testing.T) {
 				},
 				Status: provisioning.ConnectionStatus{
 					ObservedGeneration: 1,
-					Health: provisioning.HealthStatus{
+					Health: provisioning.ConnectionHealthStatus{
 						Healthy: true,
 						Checked: time.Now().Add(-10 * time.Minute).UnixMilli(),
 					},
-					Token: provisioning.TokenStatus{
+					Token: provisioning.ConnectionTokenStatus{
 						LastUpdated: time.Now().Add(-8 * time.Second).UnixMilli(),
 					},
 				},
@@ -410,7 +410,7 @@ func TestConnectionController_process(t *testing.T) {
 						},
 						Status: provisioning.ConnectionStatus{
 							ObservedGeneration: 1,
-							Health: provisioning.HealthStatus{
+							Health: provisioning.ConnectionHealthStatus{
 								Healthy: true,
 								Checked: time.Now().Add(-10 * time.Minute).UnixMilli(),
 							},
@@ -439,7 +439,7 @@ func TestConnectionController_process(t *testing.T) {
 					Success: true,
 					Code:    http.StatusOK,
 				}
-				healthStatus := provisioning.HealthStatus{
+				healthStatus := provisioning.ConnectionHealthStatus{
 					Healthy: true,
 					Checked: time.Now().UnixMilli(),
 				}
@@ -482,7 +482,7 @@ func TestConnectionController_process(t *testing.T) {
 				},
 				Status: provisioning.ConnectionStatus{
 					ObservedGeneration: 1,
-					Health: provisioning.HealthStatus{
+					Health: provisioning.ConnectionHealthStatus{
 						Healthy: true,
 						Checked: time.Now().Add(-10 * time.Minute).UnixMilli(),
 					},
@@ -510,7 +510,7 @@ func TestConnectionController_process(t *testing.T) {
 						},
 						Status: provisioning.ConnectionStatus{
 							ObservedGeneration: 1,
-							Health: provisioning.HealthStatus{
+							Health: provisioning.ConnectionHealthStatus{
 								Healthy: true,
 								Checked: time.Now().Add(-10 * time.Minute).UnixMilli(),
 							},
@@ -539,7 +539,7 @@ func TestConnectionController_process(t *testing.T) {
 					Success: true,
 					Code:    http.StatusOK,
 				}
-				healthStatus := provisioning.HealthStatus{
+				healthStatus := provisioning.ConnectionHealthStatus{
 					Healthy: true,
 					Checked: time.Now().UnixMilli(),
 				}
@@ -583,7 +583,7 @@ func TestConnectionController_process(t *testing.T) {
 				},
 				Status: provisioning.ConnectionStatus{
 					ObservedGeneration: 1,
-					Health: provisioning.HealthStatus{
+					Health: provisioning.ConnectionHealthStatus{
 						Healthy: true,
 						Checked: time.Now().Add(-10 * time.Minute).UnixMilli(),
 					},
@@ -611,7 +611,7 @@ func TestConnectionController_process(t *testing.T) {
 						},
 						Status: provisioning.ConnectionStatus{
 							ObservedGeneration: 1,
-							Health: provisioning.HealthStatus{
+							Health: provisioning.ConnectionHealthStatus{
 								Healthy: true,
 								Checked: time.Now().Add(-1 * time.Minute).UnixMilli(), // Recently checked
 							},
@@ -640,7 +640,7 @@ func TestConnectionController_process(t *testing.T) {
 					Success: true,
 					Code:    http.StatusOK,
 				}
-				healthStatus := provisioning.HealthStatus{
+				healthStatus := provisioning.ConnectionHealthStatus{
 					Healthy: true,
 					Checked: time.Now().UnixMilli(),
 				}
@@ -689,7 +689,7 @@ func TestConnectionController_process(t *testing.T) {
 				},
 				Status: provisioning.ConnectionStatus{
 					ObservedGeneration: 1,
-					Health: provisioning.HealthStatus{
+					Health: provisioning.ConnectionHealthStatus{
 						Healthy: true,
 						Checked: time.Now().Add(-1 * time.Minute).UnixMilli(),
 					},
@@ -717,7 +717,7 @@ func TestConnectionController_process(t *testing.T) {
 						},
 						Status: provisioning.ConnectionStatus{
 							ObservedGeneration: 1,
-							Health: provisioning.HealthStatus{
+							Health: provisioning.ConnectionHealthStatus{
 								Healthy: true,
 								Checked: time.Now().Add(-10 * time.Minute).UnixMilli(),
 							},
@@ -746,7 +746,7 @@ func TestConnectionController_process(t *testing.T) {
 				},
 				Status: provisioning.ConnectionStatus{
 					ObservedGeneration: 1,
-					Health: provisioning.HealthStatus{
+					Health: provisioning.ConnectionHealthStatus{
 						Healthy: true,
 						Checked: time.Now().Add(-10 * time.Minute).UnixMilli(),
 					},
@@ -785,7 +785,7 @@ func TestConnectionController_process(t *testing.T) {
 					Success: true,
 					Code:    http.StatusOK,
 				}
-				healthStatus := provisioning.HealthStatus{
+				healthStatus := provisioning.ConnectionHealthStatus{
 					Healthy: true,
 					Checked: time.Now().UnixMilli(),
 				}
@@ -894,7 +894,7 @@ func TestConnectionController_process(t *testing.T) {
 						},
 						Status: provisioning.ConnectionStatus{
 							ObservedGeneration: 1,
-							Health: provisioning.HealthStatus{
+							Health: provisioning.ConnectionHealthStatus{
 								Healthy: true,
 								Checked: time.Now().Add(-10 * time.Minute).UnixMilli(),
 							},
@@ -924,7 +924,7 @@ func TestConnectionController_process(t *testing.T) {
 				mockHealthChecker.EXPECT().RefreshHealthWithPatchOps(mock.Anything, mock.Anything).Return(
 					ConnectionHealthResultWithPatchOps{
 						TestResults:  &provisioning.TestResults{Success: true},
-						HealthStatus: provisioning.HealthStatus{Healthy: true},
+						HealthStatus: provisioning.ConnectionHealthStatus{Healthy: true},
 						PatchOps:     []map[string]interface{}{},
 					},
 					nil,
@@ -943,7 +943,7 @@ func TestConnectionController_process(t *testing.T) {
 				},
 				Status: provisioning.ConnectionStatus{
 					ObservedGeneration: 1,
-					Health: provisioning.HealthStatus{
+					Health: provisioning.ConnectionHealthStatus{
 						Healthy: true,
 						Checked: time.Now().Add(-10 * time.Minute).UnixMilli(),
 					},
@@ -969,7 +969,7 @@ func TestConnectionController_process(t *testing.T) {
 						},
 						Status: provisioning.ConnectionStatus{
 							ObservedGeneration: 1,
-							Health: provisioning.HealthStatus{
+							Health: provisioning.ConnectionHealthStatus{
 								Healthy: true,
 								Checked: time.Now().Add(-10 * time.Minute).UnixMilli(),
 							},
@@ -998,7 +998,7 @@ func TestConnectionController_process(t *testing.T) {
 					Success: true,
 					Code:    http.StatusOK,
 				}
-				healthStatus := provisioning.HealthStatus{
+				healthStatus := provisioning.ConnectionHealthStatus{
 					Healthy: true,
 					Checked: time.Now().UnixMilli(),
 				}
@@ -1042,7 +1042,7 @@ func TestConnectionController_process(t *testing.T) {
 				},
 				Status: provisioning.ConnectionStatus{
 					ObservedGeneration: 1,
-					Health: provisioning.HealthStatus{
+					Health: provisioning.ConnectionHealthStatus{
 						Healthy: true,
 						Checked: time.Now().Add(-10 * time.Minute).UnixMilli(),
 					},
@@ -1070,7 +1070,7 @@ func TestConnectionController_process(t *testing.T) {
 						},
 						Status: provisioning.ConnectionStatus{
 							ObservedGeneration: 1,
-							Health: provisioning.HealthStatus{
+							Health: provisioning.ConnectionHealthStatus{
 								Healthy: false,
 								Checked: time.Now().Add(-2 * time.Minute).UnixMilli(),
 							},
@@ -1099,7 +1099,7 @@ func TestConnectionController_process(t *testing.T) {
 					Success: false,
 					Code:    http.StatusBadRequest,
 				}
-				healthStatus := provisioning.HealthStatus{
+				healthStatus := provisioning.ConnectionHealthStatus{
 					Healthy: false,
 					Checked: time.Now().UnixMilli(),
 				}
@@ -1132,7 +1132,7 @@ func TestConnectionController_process(t *testing.T) {
 				},
 				Status: provisioning.ConnectionStatus{
 					ObservedGeneration: 1,
-					Health: provisioning.HealthStatus{
+					Health: provisioning.ConnectionHealthStatus{
 						Healthy: false,
 						Checked: time.Now().Add(-2 * time.Minute).UnixMilli(),
 					},
@@ -1160,7 +1160,7 @@ func TestConnectionController_process(t *testing.T) {
 						},
 						Status: provisioning.ConnectionStatus{
 							ObservedGeneration: 1,
-							Health: provisioning.HealthStatus{
+							Health: provisioning.ConnectionHealthStatus{
 								Healthy: true,
 								Checked: time.Now().UnixMilli(),
 							},
@@ -1205,7 +1205,7 @@ func TestConnectionController_process(t *testing.T) {
 				mockHealthChecker.EXPECT().RefreshHealthWithPatchOps(mock.Anything, mock.Anything).
 					Return(ConnectionHealthResultWithPatchOps{
 						TestResults:  &provisioning.TestResults{Success: true},
-						HealthStatus: provisioning.HealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
+						HealthStatus: provisioning.ConnectionHealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
 					}, nil)
 				mockStatusPatcher.EXPECT().Patch(
 					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
@@ -1386,7 +1386,7 @@ func TestConnectionController_process_FieldErrors(t *testing.T) {
 			mockHealthChecker.EXPECT().RefreshHealthWithPatchOps(mock.Anything, conn).Return(
 				ConnectionHealthResultWithPatchOps{
 					TestResults:  tt.testResults,
-					HealthStatus: provisioning.HealthStatus{Healthy: false},
+					HealthStatus: provisioning.ConnectionHealthStatus{Healthy: false},
 				},
 				nil,
 			)
@@ -1491,7 +1491,7 @@ func TestConnectionController_shouldGenerateToken_ExpiredCounter(t *testing.T) {
 			}
 			obj := &provisioning.Connection{
 				Status: provisioning.ConnectionStatus{
-					Token: provisioning.TokenStatus{LastUpdated: lastUpdated, Expiration: tt.expiration},
+					Token: provisioning.ConnectionTokenStatus{LastUpdated: lastUpdated, Expiration: tt.expiration},
 				},
 			}
 
@@ -1515,7 +1515,7 @@ func TestConnectionController_shouldGenerateToken_BackfillsExpiredFromLiveExpiry
 	obj := &provisioning.Connection{
 		Status: provisioning.ConnectionStatus{
 			// Pre-upgrade token: LastUpdated set, but no persisted expiration.
-			Token: provisioning.TokenStatus{LastUpdated: time.Now().Add(-time.Hour).UnixMilli(), Expiration: 0},
+			Token: provisioning.ConnectionTokenStatus{LastUpdated: time.Now().Add(-time.Hour).UnixMilli(), Expiration: 0},
 		},
 		Secure: provisioning.ConnectionSecure{Token: resource.InlineSecureValue{Create: "existing-token"}},
 	}
@@ -1786,7 +1786,7 @@ func TestConnectionController_RecentlyWrittenTokenReschedulesKey(t *testing.T) {
 		conn := &provisioning.Connection{
 			ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "conn", ResourceVersion: "5"},
 			Secure:     provisioning.ConnectionSecure{Token: resource.InlineSecureValue{Name: "recent-token"}},
-			Status:     provisioning.ConnectionStatus{Token: provisioning.TokenStatus{LastUpdated: time.Now().UnixMilli()}},
+			Status:     provisioning.ConnectionStatus{Token: provisioning.ConnectionTokenStatus{LastUpdated: time.Now().UnixMilli()}},
 		}
 		original := conn.DeepCopy()
 		cc.conns = informer.NewCachedConnectionGetter(&mockConnectionLister{conn: conn})

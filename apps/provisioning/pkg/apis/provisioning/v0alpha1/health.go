@@ -2,15 +2,17 @@ package v0alpha1
 
 // HealthFailureType represents different types of healthcheck failures
 // +enum
-type HealthFailureType string
+type RepositoryHealthFailureType string
 
-func (HealthFailureType) OpenAPIModelName() string {
+func (RepositoryHealthFailureType) OpenAPIModelName() string {
 	return OpenAPIPrefix + "HealthFailureType"
 }
 
+type ConnectionHealthFailureType = RepositoryHealthFailureType
+
 const (
-	HealthFailureHook   HealthFailureType = "hook"
-	HealthFailureHealth HealthFailureType = "health"
+	HealthFailureHook   RepositoryHealthFailureType = "hook"
+	HealthFailureHealth RepositoryHealthFailureType = "health"
 )
 
 // Condition types for Repository and Connection resources
@@ -137,12 +139,12 @@ const (
 	ReasonQuotaExceeded = "QuotaExceeded"
 )
 
-type HealthStatus struct {
+type RepositoryHealthStatus struct {
 	// When not healthy, requests will not be executed
 	Healthy bool `json:"healthy"`
 
 	// The type of the error
-	Error HealthFailureType `json:"error,omitempty"`
+	Error RepositoryHealthFailureType `json:"error,omitempty"`
 
 	// When the health was checked last time
 	Checked int64 `json:"checked,omitempty"`
@@ -153,6 +155,8 @@ type HealthStatus struct {
 	Message []string `json:"message,omitempty"`
 }
 
-func (HealthStatus) OpenAPIModelName() string {
+func (RepositoryHealthStatus) OpenAPIModelName() string {
 	return OpenAPIPrefix + "HealthStatus"
 }
+
+type ConnectionHealthStatus = RepositoryHealthStatus

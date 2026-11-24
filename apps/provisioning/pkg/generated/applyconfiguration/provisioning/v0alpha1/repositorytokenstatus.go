@@ -4,23 +4,23 @@
 
 package v0alpha1
 
-// TokenStatusApplyConfiguration represents a declarative configuration of the TokenStatus type for use
+// RepositoryTokenStatusApplyConfiguration represents a declarative configuration of the RepositoryTokenStatus type for use
 // with apply.
-type TokenStatusApplyConfiguration struct {
+type RepositoryTokenStatusApplyConfiguration struct {
 	LastUpdated *int64 `json:"lastUpdated,omitempty"`
 	Expiration  *int64 `json:"expiration,omitempty"`
 }
 
-// TokenStatusApplyConfiguration constructs a declarative configuration of the TokenStatus type for use with
+// RepositoryTokenStatusApplyConfiguration constructs a declarative configuration of the RepositoryTokenStatus type for use with
 // apply.
-func TokenStatus() *TokenStatusApplyConfiguration {
-	return &TokenStatusApplyConfiguration{}
+func RepositoryTokenStatus() *RepositoryTokenStatusApplyConfiguration {
+	return &RepositoryTokenStatusApplyConfiguration{}
 }
 
 // WithLastUpdated sets the LastUpdated field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the LastUpdated field is set to the value of the last call.
-func (b *TokenStatusApplyConfiguration) WithLastUpdated(value int64) *TokenStatusApplyConfiguration {
+func (b *RepositoryTokenStatusApplyConfiguration) WithLastUpdated(value int64) *RepositoryTokenStatusApplyConfiguration {
 	b.LastUpdated = &value
 	return b
 }
@@ -28,7 +28,7 @@ func (b *TokenStatusApplyConfiguration) WithLastUpdated(value int64) *TokenStatu
 // WithExpiration sets the Expiration field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Expiration field is set to the value of the last call.
-func (b *TokenStatusApplyConfiguration) WithExpiration(value int64) *TokenStatusApplyConfiguration {
+func (b *RepositoryTokenStatusApplyConfiguration) WithExpiration(value int64) *RepositoryTokenStatusApplyConfiguration {
 	b.Expiration = &value
 	return b
 }
