@@ -348,6 +348,8 @@ func TestGlobalSearchCoversTheKindsThatOptIn(t *testing.T) {
 	variables := schema.GroupResource{Group: "dashboard.grafana.app", Resource: "variables"}
 	got := globalSearchCoverageOf(AppManifests())
 	assert.Equal(t, []schema.GroupResource{dashboards, folders, notebooks, playlists, variables}, got.types)
+	// Nothing is registered in this repository, so its own apps cover the same types.
+	assert.Equal(t, got.types, BuiltinGlobalSearchResourceTypes())
 	assert.Equal(t, map[schema.GroupResource]string{
 		dashboards: "Dashboard",
 		folders:    "Folder",
