@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/plugin-compat",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "private": true,
   "description": "Compatibility shims that let Grafana plugins adopt new Grafana host APIs across a range of host versions",
   "keywords": [
@@ -41,6 +41,17 @@
       "require": {
         "types": "./dist/cjs/apps.d.cts",
         "default": "./dist/cjs/apps.cjs"
+      }
+    },
+    "./apis": {
+      "@grafana-app/source": "./src/apis.ts",
+      "import": {
+        "types": "./dist/esm/apis.d.mts",
+        "default": "./dist/esm/apis.mjs"
+      },
+      "require": {
+        "types": "./dist/cjs/apis.d.cts",
+        "default": "./dist/cjs/apis.cjs"
       }
     }
   },

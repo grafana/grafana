@@ -26,6 +26,9 @@ Ships both ESM and CommonJS builds, so it works with `import` and `require`.
 - `@grafana/plugin-compat/apps` — `getPluginSettings`, `updateAppPluginSettings`,
   `getAppPluginHealth`, and `callAppPluginProxy`. Replacements for the
   `getBackendSrv()` plugin-settings, app-health, and plugin-proxy endpoints.
+- `@grafana/plugin-compat/apis` — `getAPIGroup`, `resolveAPIVersion`, and
+  `resolveAPIBaseURL`. Find out which `/apis` groups and versions the host
+  serves, so you can call them with your own client.
 
 ## Usage
 
@@ -77,3 +80,33 @@ registerRuntimeDataSourceInstance({ dataSource: new MyRuntimeDataSource('my-plug
 
 On hosts with the async APIs, a data source registered this way is not visible
 to `getDataSourceSrv()`. Look it up with `getDataSourceInstance` instead.
+
+### API discovery
+
+Resolve the base URL for the versions your plugin supports, call it with your
+own client, and use the legacy API when it resolves `undefined`:
+
+```ts
+import { getBackendSrv } from '@grafana/runtime';
+import { resolveAPIBaseURL } from '@grafana/plugin-compat/apis';
+
+const baseURL = await resolveAPIBaseURL('dashboard.grafana.app', ['v1beta1']);
+
+if (baseURL) {
+  const resource = await getBackendSrv().get(`${baseURL}/dashboards/${uid}`);
+} else {
+  const legacy = await getBackendSrv().get(`/api/dashboards/uid/${uid}`);
+}
+```
+
+When you list several versions, you get the server's preferred version if it's
+one of them, otherwise the most stable version you both have. Use
+`resolveAPIVersion` when the response shape depends on the version, or
+`getAPIGroup` for every version the server serves. The URL ends in the current
+namespace; pass `{ namespaced: false }` for cluster-scoped resources.
+
+They resolve `undefined` when the group isn't served, when no listed version
+is, or when discovery can't answer (no user session, or the request failed),
+and never reject. On hosts with API discovery in `@grafana/runtime`, answers
+come from the host's cache, shared with Grafana itself. On older hosts each call
+requests `GET /apis/<group>/` again; only concurrent calls share a request.

@@ -1,3 +1,7 @@
+# 0.13.0 (2026-11-24)
+
+Add the `@grafana/plugin-compat/apis` entry point with `getAPIGroup`, `resolveAPIVersion` and `resolveAPIBaseURL`, to find out which `/apis` groups and versions the host serves. They use the host's stable `@grafana/runtime` API discovery when available. On older hosts they request `GET /apis/<group>/` themselves, sharing concurrent requests but caching nothing. They resolve `undefined` when the group isn't served or the request fails, and never reject.
+
 # 0.12.0 (2026-11-16)
 
 Add `callDataSourcePluginProxy` to `@grafana/plugin-compat/datasources`. It uses the host's stable `@grafana/runtime` export when available and falls back to the legacy datasource-proxy endpoint on older hosts.
