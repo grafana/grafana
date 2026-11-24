@@ -3,6 +3,7 @@ package builders
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -168,35 +169,52 @@ func TestDashboardDocumentBuilder(t *testing.T) {
 	})
 }
 
-type stalledDashboardBlob struct{ resource.BlobSupport }
+type stalledDashboardBlob struct {
+	resource.BlobSupport
+	err error
+}
 
-func (stalledDashboardBlob) GetResourceBlob(ctx context.Context, _ *resourcepb.ResourceKey, _ *utils.BlobInfo, _ bool) (*resourcepb.GetBlobResponse, error) {
+func (b stalledDashboardBlob) GetResourceBlob(ctx context.Context, _ *resourcepb.ResourceKey, _ *utils.BlobInfo, _ bool) (*resourcepb.GetBlobResponse, error) {
 	if _, ok := ctx.Deadline(); !ok {
 		return nil, fmt.Errorf("missing blob read deadline")
 	}
 	<-ctx.Done()
+	if b.err != nil {
+		return nil, b.err
+	}
 	return nil, ctx.Err()
 }
 
 func TestDashboardDocumentBuilderBlobReadDeadline(t *testing.T) {
-	for _, parentTimeout := range []time.Duration{0, time.Second} {
-		t.Run(parentTimeout.String(), func(t *testing.T) {
+	for _, tc := range []struct {
+		name          string
+		parentTimeout time.Duration
+		blobErr       error
+	}{
+		{name: "default deadline"},
+		{name: "shorter parent deadline", parentTimeout: time.Second},
+		{name: "preserves blob error", blobErr: errors.New("blob read failed")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
 				ctx := t.Context()
 				want := dashboardBlobReadTimeout
-				if parentTimeout > 0 {
+				if tc.parentTimeout > 0 {
 					var cancel context.CancelFunc
-					ctx, cancel = context.WithTimeout(ctx, parentTimeout)
+					ctx, cancel = context.WithTimeout(ctx, tc.parentTimeout)
 					defer cancel()
-					want = parentTimeout
+					want = tc.parentTimeout
 				}
 				blob := (&utils.BlobInfo{UID: "body", Size: 1}).String()
 				value := fmt.Appendf(nil, `{"metadata":{"name":"dashboard","annotations":{%q:%q}}}`, utils.AnnoKeyBlob, blob)
-				builder := &DashboardDocumentBuilder{Blob: stalledDashboardBlob{}}
+				builder := &DashboardDocumentBuilder{Blob: stalledDashboardBlob{err: tc.blobErr}}
 				start := time.Now()
 				doc, err := builder.BuildDocument(ctx, &resourcepb.ResourceKey{Name: "dashboard"}, 1, value)
 				require.Nil(t, doc)
 				require.ErrorIs(t, err, context.DeadlineExceeded)
+				if tc.blobErr != nil {
+					require.ErrorIs(t, err, tc.blobErr)
+				}
 				require.Equal(t, want, time.Since(start))
 			})
 		})

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"slices"
 	"sort"
@@ -119,8 +120,8 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 		readCtx, cancel := context.WithTimeout(ctx, dashboardBlobReadTimeout)
 		defer cancel()
 		rsp, err := s.Blob.GetResourceBlob(readCtx, key, blob, true)
-		if readErr := readCtx.Err(); readErr != nil {
-			err = readErr
+		if readErr := readCtx.Err(); readErr != nil && !errors.Is(err, readErr) {
+			err = errors.Join(err, readErr)
 		}
 		if err != nil {
 			return nil, fmt.Errorf("error reading blob: %w", err)
