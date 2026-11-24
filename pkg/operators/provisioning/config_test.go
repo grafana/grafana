@@ -33,7 +33,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/router/routertest"
 	"github.com/grafana/grafana/pkg/server"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -202,14 +201,14 @@ func TestClientsServeManifestKindsFromTheAggregatedServer(t *testing.T) {
 	require.Equal(t, token, router.AccessToken("/apis/"+stubRouterGroup+"/v1/namespaces/default/widgets"))
 }
 
-func TestClientsUseTheRouterForDashboardsWithTheRouterClientFlag(t *testing.T) {
+func TestClientsUseTheRouterForDashboardsWithTheRouterClientSetting(t *testing.T) {
 	dashboards := "/apis/dashboard.grafana.app/v1/namespaces/default/dashboards"
 	router := routertest.NewServer(t, map[string]string{
 		"/apis/dashboard.grafana.app/v1": `{"kind":"APIResourceList","apiVersion":"v1","groupVersion":"dashboard.grafana.app/v1","resources":[{"name":"dashboards","namespaced":true,"kind":"Dashboard","verbs":["list"]}]}`,
 		dashboards:                       `{"apiVersion":"dashboard.grafana.app/v1","kind":"DashboardList","items":[]}`,
 	})
 	cfg := newClientsConfig(t, newStubSigner(t).URL, map[string]string{"aggregated_server_url": router.URL})
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagProvisioningRouterClient)
+	cfg.Settings.ProvisioningRouterClient = true
 
 	factory, err := cfg.Clients()
 	require.NoError(t, err)

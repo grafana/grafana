@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
@@ -24,7 +23,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // playlistKind is an arbitrary identifier used only to exercise the supported-set plumbing
@@ -727,24 +725,4 @@ func testManifests(resources ...SupportedResource) []*app.ManifestData {
 		})
 	}
 	return []*app.ManifestData{{Group: testManifestGroup, Versions: []app.ManifestVersion{version}}}
-}
-
-func TestRouterSwitchClientFactory(t *testing.T) {
-	routerClients := NewMockResourceClients(t)
-	dedicatedClients := NewMockResourceClients(t)
-	router := NewMockClientFactory(t)
-	router.EXPECT().Clients(mock.Anything, "default").Return(routerClients, nil).Once()
-	dedicated := NewMockClientFactory(t)
-	dedicated.EXPECT().Clients(mock.Anything, "default").Return(dedicatedClients, nil).Once()
-	factory := NewRouterSwitchClientFactory(router, dedicated)
-
-	featuremgmt.WithDisabledFlags(t, featuremgmt.FlagProvisioningRouterClient)
-	got, err := factory.Clients(t.Context(), "default")
-	require.NoError(t, err)
-	require.Same(t, dedicatedClients, got)
-
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagProvisioningRouterClient)
-	got, err = factory.Clients(t.Context(), "default")
-	require.NoError(t, err)
-	require.Same(t, routerClients, got)
 }

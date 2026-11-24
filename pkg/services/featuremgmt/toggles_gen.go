@@ -99,10 +99,6 @@ const (
 	// Enables the synthetic 'test' provisioning job type for load and performance testing of the job queue and controllers
 	FlagProvisioningPerformance = "provisioning.performance"
 
-	// FlagProvisioningRouterClient
-	// Sends the requests of the provisioning operators for all API groups through the router at aggregated_server_url, instead of the dedicated dashboards, folders and provisioning URLs
-	FlagProvisioningRouterClient = "provisioning.routerClient"
-
 	// FlagAwsAsyncQueryCaching
 	// Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled
 	FlagAwsAsyncQueryCaching = "awsAsyncQueryCaching"

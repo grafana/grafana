@@ -336,7 +336,6 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		return nil, fmt.Errorf("failed to convert TLS config for transport: %w", err)
 	}
 
-	var routerConfigProvider apiserver.RestConfigProvider
 	for group, url := range apiServerURLs {
 		// Build audiences: always include the group, and add provisioning.GROUP only if different
 		audiences := []string{group}
@@ -345,6 +344,9 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		}
 		if group == resources.AnyGroup {
 			audiences = []string{provisioning.GROUP}
+			if c.Settings.ProvisioningRouterClient {
+				audiences = append(audiences, resources.DashboardResource.Group, resources.FolderResource.Group)
+			}
 		}
 
 		config := &rest.Config{
@@ -364,15 +366,6 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 			RateLimiter: flowcontrol.NewFakeAlwaysRateLimiter(),
 		}
 		configProviders[group] = NewDirectConfigProvider(config)
-		if group == resources.AnyGroup {
-			routerConfig := rest.CopyConfig(config)
-			routerConfig.WrapTransport = clientauth.NewTokenExchangeTransportWrapper(
-				tokenExchangeClient,
-				clientauth.NewStaticAudienceProvider(provisioning.GROUP, resources.DashboardResource.Group, resources.FolderResource.Group),
-				clientauth.NewStaticNamespaceProvider(clientauth.WildcardNamespace),
-			)
-			routerConfigProvider = NewDirectConfigProvider(routerConfig)
-		}
 	}
 
 	c.manifestWatcher, err = resources.NewRemoteManifestWatcher(supportedResourceProvider, c.Registry(), resource.ManifestWatcherConfig{
@@ -387,8 +380,11 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		return nil, fmt.Errorf("failed to create manifest watcher: %w", err)
 	}
 	clients := resources.NewClientFactoryForMultipleAPIServers(configProviders, supportedResourceProvider)
-	if routerConfigProvider != nil {
-		clients = resources.NewRouterSwitchClientFactory(resources.NewClientFactory(routerConfigProvider, supportedResourceProvider), clients)
+	if c.Settings.ProvisioningRouterClient {
+		if aggregatedServerURL == "" {
+			return nil, fmt.Errorf("aggregated_server_url is required in [operator] section when [provisioning] router_client is enabled")
+		}
+		clients = resources.NewClientFactory(configProviders[resources.AnyGroup], supportedResourceProvider)
 	}
 	c.clients = clients
 	return clients, nil

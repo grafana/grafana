@@ -290,14 +290,6 @@ var (
 			Generate:    Generate{Go: true},
 		},
 		{
-			Name:        "provisioning.routerClient",
-			Description: "Sends the requests of the provisioning operators for all API groups through the router at aggregated_server_url, instead of the dedicated dashboards, folders and provisioning URLs",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAppPlatformSquad,
-			Expression:  "false",
-			Generate:    Generate{Go: true},
-		},
-		{
 			Name:        "awsAsyncQueryCaching",
 			Description: "Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled",
 			Stage:       FeatureStageGeneralAvailability,
