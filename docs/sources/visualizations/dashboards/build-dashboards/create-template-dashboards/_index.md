@@ -57,7 +57,6 @@ To start a dashboard from a template on an empty dashboard, follow these steps:
 1. Click **New** and select **New dashboard**.
 1. In the prompt, click **Start from a template** to open the template list, if it isn't already open.
 1. To find a template, do one or both of the following:
-
    - Enter a template name in the search bar.
    - Click the **Sort** drop-down list and select **Alphabetically (A–Z)** or **Alphabetically (Z–A)**.
 
