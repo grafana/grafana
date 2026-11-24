@@ -221,6 +221,14 @@ func TestClientsUseTheRouterForDashboardsWithTheRouterClientSetting(t *testing.T
 	require.Equal(t, "Bearer token-for-dashboard.grafana.app", router.AccessToken(dashboards))
 }
 
+func TestClientsRequireTheAggregatedServerWithTheRouterClientSetting(t *testing.T) {
+	cfg := newClientsConfig(t, newStubSigner(t).URL, nil)
+	cfg.Settings.ProvisioningRouterClient = true
+
+	_, err := cfg.Clients()
+	require.ErrorContains(t, err, "aggregated_server_url is required")
+}
+
 // Production has no aggregated server yet, so the operators must run with the configured
 // resources only.
 func TestClientsWithoutAnAggregatedServer(t *testing.T) {
