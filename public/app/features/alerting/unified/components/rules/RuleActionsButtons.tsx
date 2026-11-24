@@ -24,8 +24,6 @@ import { EnrichmentDrawerExtension } from '../rule-list/extensions/EnrichmentDra
 
 import { RedirectToCloneRule } from './CloneRule';
 
-export const matchesWidth = (width: number) => window.matchMedia(`(max-width: ${width}px)`).matches;
-
 interface Props {
   rule: CombinedRule;
   rulesSource: RulesSource;

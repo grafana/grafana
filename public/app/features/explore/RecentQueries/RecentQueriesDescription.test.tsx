@@ -4,10 +4,11 @@ import { getRichHistorySettings } from 'app/core/utils/richHistory';
 
 import { RecentQueriesDescription } from './RecentQueriesDescription';
 
-jest.mock('app/core/utils/richHistory', () => ({
-  ...jest.requireActual('app/core/utils/richHistory'),
-  getRichHistorySettings: jest.fn(),
-}));
+jest.mock('app/core/utils/richHistory', () =>
+  jest
+    .requireActual('test/helpers/partialMock')
+    .partialMock(jest.requireActual('app/core/utils/richHistory'), { getRichHistorySettings: jest.fn() })
+);
 
 const getRichHistorySettingsMock = jest.mocked(getRichHistorySettings);
 

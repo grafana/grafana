@@ -10,7 +10,6 @@ import {
   type RuleGroupIdentifier,
   type RuleGroupIdentifierV2,
   type RuleIdentifier,
-  type RuleWithLocation,
 } from 'app/types/unified-alerting';
 import {
   type Annotations,
@@ -100,10 +99,6 @@ export function fromCombinedRule(ruleSourceName: string, rule: CombinedRule): Ru
   }
 
   throw new Error('Could not create an id for a rule that is missing both `rulerRule` and `promRule`.');
-}
-
-export function fromRuleWithLocation(rule: RuleWithLocation): RuleIdentifier {
-  return fromRulerRule(rule.ruleSourceName, rule.namespace, rule.group.name, rule.rule);
 }
 
 export function equal(a: RuleIdentifier, b: RuleIdentifier) {
