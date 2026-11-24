@@ -12,6 +12,7 @@ import (
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authentication/user"
 
+	"github.com/grafana/authlib/authn"
 	authlib "github.com/grafana/authlib/types"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -1536,15 +1537,10 @@ func newHistoricJobAdmissionTestAttributes(obj runtime.Object, op admission.Oper
 	)
 }
 
-// fakeProvisioningAuthInfo embeds StaticRequester to satisfy the Requester
-// interface while overriding the audience, so the token-audience branch of
-// IsProvisioningServiceIdentity can be exercised.
-type fakeProvisioningAuthInfo struct {
-	*identity.StaticRequester
-	audience []string
+func withProvisioningServiceIdentity(r identity.StaticRequester) *identity.StaticRequester {
+	r.AccessTokenClaims = &authn.Claims[authn.AccessTokenClaims]{Rest: authn.AccessTokenClaims{ServiceIdentity: "provisioning.grafana.app"}}
+	return &r
 }
-
-func (f fakeProvisioningAuthInfo) GetAudience() []string { return f.audience }
 
 func TestValidateAuthor(t *testing.T) {
 	requester := &identity.StaticRequester{
@@ -1556,10 +1552,7 @@ func TestValidateAuthor(t *testing.T) {
 	userCtx := identity.WithRequester(t.Context(), requester)
 	serviceCtx, _, err := identity.WithProvisioningIdentity(t.Context(), "default")
 	require.NoError(t, err)
-	audienceCtx := identity.WithRequester(t.Context(), fakeProvisioningAuthInfo{
-		StaticRequester: &identity.StaticRequester{Type: authlib.TypeAccessPolicy, UserUID: "42"},
-		audience:        []string{"provisioning.grafana.app"},
-	})
+	serviceIdentityCtx := identity.WithRequester(t.Context(), withProvisioningServiceIdentity(identity.StaticRequester{Type: authlib.TypeAccessPolicy, UserUID: "42"}))
 
 	annotations := map[string]string{
 		AnnoAuthor:       requester.GetName(),
@@ -1623,17 +1616,14 @@ func TestValidateAuthor(t *testing.T) {
 			wantErrContains: AnnoAuthorEmail + " may not be set by the provisioning service",
 		},
 		{
-			name:        "create by audience-based provisioning identity",
-			ctx:         audienceCtx,
+			name:        "create by the provisioning service identity",
+			ctx:         serviceIdentityCtx,
 			operation:   admission.Create,
 			annotations: map[string]string{AnnoAuthor: "grot", AnnoAuthorID: "123", AnnoAuthorOrigin: "github"},
 		},
 		{
-			name: "create by a user whose token carries the provisioning audience",
-			ctx: identity.WithRequester(t.Context(), fakeProvisioningAuthInfo{
-				StaticRequester: requester,
-				audience:        []string{"provisioning.grafana.app"},
-			}),
+			name:        "create by a user whose token carries the provisioning service identity",
+			ctx:         identity.WithRequester(t.Context(), withProvisioningServiceIdentity(*requester)),
 			operation:   admission.Create,
 			annotations: annotations,
 		},
