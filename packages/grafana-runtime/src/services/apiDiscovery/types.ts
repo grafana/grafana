@@ -1,6 +1,10 @@
 /**
  * An `/apis` group the server serves, as returned by {@link getAPIGroup}.
  *
+ * A simplified version of the Kubernetes `APIGroup` response, not the response itself, so the public
+ * API and the plugin-compat wrappers don't depend on the Kubernetes format. `preferredVersion` is
+ * always set, and versions are plain strings.
+ *
  * @alpha
  */
 export interface APIGroupInfo {
