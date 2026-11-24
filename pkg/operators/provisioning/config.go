@@ -371,13 +371,9 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		configProviders[group] = NewDirectConfigProvider(config)
 	}
 
-	discoveryAudience := provisioning.GROUP
-	if c.Settings.ProvisioningRouterClient {
-		discoveryAudience = routerAudience
-	}
 	c.manifestWatcher, err = resources.NewRemoteManifestWatcher(supportedResourceProvider, c.Registry(), resource.ManifestWatcherConfig{
 		DiscoveryURL:      aggregatedServerURL,
-		DiscoveryAudience: discoveryAudience,
+		DiscoveryAudience: routerAudience,
 		Exchanger:         tokenExchangeClient,
 		TLS:               &tlsConfig,
 		PollInterval:      time.Minute,
