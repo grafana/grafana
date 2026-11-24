@@ -87,7 +87,11 @@ export function TableCellInspectorDrawer({
   return (
     <Drawer onClose={onDismiss} title={t('grafana-ui.table.inspect-drawer-title', 'Inspect value')} tabs={tabBar}>
       <Stack direction="column" gap={2}>
-        <ClipboardButton icon="copy" getText={() => text} style={{ marginLeft: 'auto', width: '200px' }}>
+        <ClipboardButton
+          icon="copy"
+          getText={() => (currentMode === TableCellInspectorMode.code ? text : textOnly)}
+          style={{ marginLeft: 'auto', width: '200px' }}
+        >
           <Trans i18nKey="grafana-ui.table.copy">Copy to Clipboard</Trans>
         </ClipboardButton>
         {currentMode === 'code' && codeMirrorEnabled ? (

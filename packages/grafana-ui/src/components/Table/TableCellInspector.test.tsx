@@ -1,9 +1,14 @@
 import { screen, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { copyTextToClipboard } from '../../utils/copyToClipboard';
 import { type CodeMirrorEditorProps } from '../CodeMirror/types';
 
 import { TableCellInspector, TableCellInspectorDrawer, TableCellInspectorMode } from './TableCellInspector';
+
+jest.mock('../../utils/copyToClipboard', () => ({
+  copyTextToClipboard: jest.fn().mockResolvedValue(undefined),
+}));
 
 const mockCodeMirrorEditor = jest.fn(({ value }: CodeMirrorEditorProps) => (
   <div data-testid="code-mirror-editor">{value}</div>
@@ -44,6 +49,25 @@ describe('TableCellInspector', () => {
       />
     );
     expect(screen.getByText('{"region":"eu"}')).toBeInTheDocument();
+  });
+
+  it('copies the value of the active tab', async () => {
+    const user = userEvent.setup();
+    render(
+      <TableCellInspector
+        value={'{\n  "region": "eu"\n}'}
+        plainText={'{"region":"eu"}'}
+        onDismiss={() => {}}
+        mode={TableCellInspectorMode.text}
+      />
+    );
+
+    await user.click(screen.getByText('Copy to Clipboard'));
+    expect(copyTextToClipboard).toHaveBeenCalledWith('{"region":"eu"}', expect.anything());
+
+    await user.click(screen.getByRole('tab', { name: 'Code editor' }));
+    await user.click(screen.getByText('Copy to Clipboard'));
+    expect(copyTextToClipboard).toHaveBeenLastCalledWith('{\n  "region": "eu"\n}', expect.anything());
   });
 
   it('shows the code view in Monaco', () => {
