@@ -266,6 +266,10 @@ To access values and labels from other fields use:
 | `__data.fields["NameOfField"]`    | Value of field using name instead of index |
 | `__data.fields[1].labels.cluster` | Access labels of another field             |
 
+### Dashboard tabs
+
+Use `${__url_tab_state}` to preserve the selected tabs when a data link opens the same dashboard. The variable adds the URL parameters for the selected tabs, including nested tabs. For example, `/d/<UID>?${__url_time_range}&${__url_tab_state}` preserves both the time range and tab selection.
+
 ### Template variables
 
 When linking to another dashboard that uses template variables, select variable values for whoever clicks the link.

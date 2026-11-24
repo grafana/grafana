@@ -1,3 +1,7 @@
+# 0.12.0 (2026-11-16)
+
+Add `callDataSourcePluginProxy` to `@grafana/plugin-compat/datasources`. It uses the host's stable `@grafana/runtime` export when available and falls back to the legacy datasource-proxy endpoint on older hosts.
+
 # 0.11.0 (2026-11-10)
 
 Add `getDataSourceInstanceListItem` to `@grafana/plugin-compat/datasources`. It uses the host's stable `@grafana/runtime` export when available and otherwise resolves through `getDataSourceSrv().getInstanceSettings`, returning only the list item fields (`uid`, `name`, `type`, `meta`).

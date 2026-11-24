@@ -5,10 +5,11 @@ import (
 	"testing"
 
 	authlib "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana-app-sdk/routes"
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
@@ -306,10 +307,10 @@ func TestJsonDataToMetaJSONData(t *testing.T) {
 					URL:       "https://api.example.com",
 					ReqRole:   authlib.RoleAdmin,
 					ReqAction: "read",
-					Headers:   []plugins.Header{{Name: "Authorization", Content: "Bearer token"}},
-					URLParams: []plugins.URLParam{{Name: "param1", Content: "value1"}},
-					TokenAuth: &plugins.JWTTokenAuth{
-						Url:    "https://auth.example.com/token",
+					Headers:   []routes.ProxyHeader{{Name: "Authorization", Content: "Bearer token"}},
+					URLParams: []routes.ProxyURLParam{{Name: "param1", Content: "value1"}},
+					TokenAuth: &routes.ProxyTokenAuth{
+						URL:    "https://auth.example.com/token",
 						Scopes: []string{"read", "write"},
 						Params: map[string]string{
 							"grant_type":    "client_credentials",
@@ -318,8 +319,8 @@ func TestJsonDataToMetaJSONData(t *testing.T) {
 							"resource":      "api://resource",
 						},
 					},
-					JwtTokenAuth: &plugins.JWTTokenAuth{
-						Url:    "https://jwt.example.com/token",
+					JwtTokenAuth: &routes.ProxyTokenAuth{
+						URL:    "https://jwt.example.com/token",
 						Scopes: []string{"read"},
 						// #nosec G101 -- test fixture, not a real credential
 						Params: map[string]string{
