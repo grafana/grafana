@@ -183,7 +183,7 @@ jobs:
               cp -a dist/frontend /out/
             '
 
-      - name: Check fork artifact contains only regular files
+      - name: Validate fork artifact before upload
         if: needs.check.outputs.is-fork == 'true'
         shell: bash
         run: |
@@ -194,11 +194,23 @@ jobs:
               exit 1
             fi
           done
-          invalid=$(find dist/frontend ! -type f ! -type d -print -quit)
-          if [[ -n "$invalid" ]]; then
-            echo "Fork artifact contains a link or a special file"
-            exit 1
-          fi
+          # Count directories too, and use logical file sizes to include sparse files.
+          find dist/frontend -mindepth 1 -printf '%y %s\n' |
+            awk '
+              $1 != "f" && $1 != "d" {
+                print "Fork artifact contains a link or a special file" > "/dev/stderr"
+                exit 1
+              }
+              NR > 25000 {
+                print "Fork artifact exceeds 25,000 entries" > "/dev/stderr"
+                exit 1
+              }
+              $1 == "f" { bytes += $2 }
+              bytes > 1024 * 1024 * 1024 {
+                print "Fork artifact exceeds 1 GiB uncompressed" > "/dev/stderr"
+                exit 1
+              }
+            '
 
       - name: Upload build artifact
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
