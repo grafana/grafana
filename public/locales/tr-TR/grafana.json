@@ -1543,6 +1543,9 @@
         "recording-rules_one": "{{formatted}} kayıt kuralı",
         "recording-rules_other": "{{formatted}} kayıt kuralı"
       },
+      "saved-searches": {
+        "applied-default": ""
+      },
       "search": {
         "default-policy-unavailable": "Varsayılan politikaya göre filtreleme henüz kullanılamıyor.",
         "folders-disabled": "Klasöre göre göz atmak için filtreleri temizleyin",
@@ -3027,12 +3030,12 @@
       },
       "empty": "",
       "error": "",
-      "load-more": "",
       "restore": {
         "body": "",
         "confirm": "",
         "conflict": "",
         "error": "",
+        "recording-title": "",
         "restoring": "",
         "title": ""
       },
@@ -3187,10 +3190,6 @@
         "group-name": "Değerlendirme grubu adı",
         "group-text": " Seçilen gruptaki tüm kurallar {{evaluateEvery}} aralıklarla değerlendirilir.",
         "interval-label": "Değerlendirme aralığı",
-        "mode": {
-          "legacy": "Grupları kullan (Eski)",
-          "new": "Aralık belirle"
-        },
         "new-group": "Yeni değerlendirme grubu",
         "pause": {
           "alerting": "Bu uyarı kuralı için değerlendirmeyi duraklatmak için açın.",
@@ -6740,6 +6739,9 @@
           "description": "Paneli yapıştırmak için tıklayın veya sürükleyin",
           "title": "Paneli yapıştır"
         },
+        "question": {
+          "label": ""
+        },
         "row": {
           "add-label": "Satır ekle",
           "group-label": "Satırlar hâlinde grupla"
@@ -6863,6 +6865,7 @@
         "objects": "Nesneler",
         "panel": "Panel",
         "panels": "Paneller",
+        "question": "",
         "row": "Satır",
         "rows": "Satırlar",
         "section-filters-set": "Filtreler",
@@ -6913,6 +6916,36 @@
           "empty": "(boş)",
           "no-title": "<başlık yok>"
         }
+      },
+      "questions": {
+        "add-question": "",
+        "description-dashboard": "",
+        "description-row": "",
+        "description-tab": "",
+        "new-question": "",
+        "placeholder": "",
+        "question": "",
+        "question-title": "",
+        "question-title-description": "",
+        "question-title-placeholder": "",
+        "sources": {
+          "collapse": "",
+          "description-dashboard": "",
+          "description-row": "",
+          "description-tab": "",
+          "entire-dashboard": "",
+          "expand": "",
+          "label": "",
+          "no-panels": "",
+          "unavailable-panel": "",
+          "untitled-row": "",
+          "untitled-tab": "",
+          "panel-count_one": "",
+          "panel-count_other": "",
+          "picked-count_one": "",
+          "picked-count_other": ""
+        },
+        "title": ""
       },
       "row": {
         "header": {
@@ -7174,6 +7207,8 @@
     },
     "transformation-operation-row": {
       "body-delete": "Bir dönüşümü kaldırmanın diğerlerini bozabileceğini unutmayın. Yalnızca tek bir dönüşüm varsa ana seçim ekranına geri döneceksiniz.",
+      "expander-close": "",
+      "expander-open": "",
       "render-actions": {
         "confirmText-delete": "Sil",
         "title-debug": "Hata ayıklama",
@@ -8146,6 +8181,20 @@
       },
       "selection-options": "Seçim ayarları",
       "static-options-legend": "Statik seçenekler"
+    },
+    "question-actions": {
+      "add": "",
+      "remove": "",
+      "reorder": "",
+      "update": ""
+    },
+    "question-edit": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
+    "question-edit-actions": {
+      "tooltip-question-settings": ""
     },
     "refresh-select": {
       "options": {
@@ -14204,32 +14253,6 @@
     },
     "units": {
       "clear-tooltip": "Birim seçimini temizle"
-    },
-    "var-mapping-checks": {
-      "data-macro": "",
-      "not-allowed": "",
-      "not-found": "",
-      "not-number": "",
-      "not-one-value": "",
-      "out-of-range": "",
-      "resolves": "",
-      "values": ""
-    },
-    "var-mapping-toggle": {
-      "aria-label-picker": "",
-      "fallback-off": "",
-      "fallback-on": "",
-      "group-matching": "",
-      "group-other": "",
-      "hint-boolean": "",
-      "hint-number": "",
-      "hint-option": "",
-      "hint-option-no-fallback": "",
-      "new-variable": "",
-      "option-current": "",
-      "placeholder": "",
-      "use-fixed-value": "",
-      "use-variable": ""
     }
   },
   "org": {
@@ -14326,7 +14349,8 @@
     },
     "get-panel-links-variable-suggestions": {
       "label": {
-        "all-variables": "Tüm değişkenler"
+        "all-variables": "Tüm değişkenler",
+        "current-dashboard-tabs": ""
       }
     },
     "header-menu": {
@@ -15237,7 +15261,6 @@
     "finish-step": {
       "description-enable-previews": "Çekme isteklerinde pano değişikliklerinin görsel ön izlemesini ekler. Grafana panolarınızın görselleri Git deponuzda paylaşılacak ve depo erişimi olan herkes tarafından görülebilecektir.",
       "description-image-rendering": "Görsel oluşturma gerektirir. <2>Görsel oluşturmayı ayarlayın</2>",
-      "description-read-only": "Kaynaklar Grafana aracılığıyla değiştirilemez.",
       "description-sync-interval": "Depodaki değişikliklerin ne sıklıkta eşitleneceği",
       "error-sync-interval-required": "Sync aralığı gereklidir",
       "label-enable-previews": "Çekme isteklerinde pano ön izlemelerini etkinleştir",
@@ -16014,6 +16037,17 @@
       "button-submitting": "Gönderiliyor...",
       "error-instance-repository-exists": "Örnek deposu zaten var",
       "error-save-repository-setting": "Depo ayarı kaydedilemedi"
+    },
+    "workflow": {
+      "direct-push": "",
+      "direct-push-description": "",
+      "direct-push-description-no-branch": "",
+      "merge-request": "",
+      "merge-request-description": "",
+      "merge-request-description-no-branch": "",
+      "pull-request": "",
+      "pull-request-description": "",
+      "pull-request-description-no-branch": ""
     }
   },
   "public-dashboard": {
