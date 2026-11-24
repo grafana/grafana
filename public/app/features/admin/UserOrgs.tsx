@@ -255,8 +255,6 @@ const AddToOrgModal = memo(({ isOpen, user, userOrgs, onOrgAdd, onDismiss }: Add
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
   const [role, setRole] = useState<OrgRole>(OrgRole.Viewer);
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
-  const [pendingOrgId, setPendingOrgId] = useState<number | null>(null);
-  const [pendingUserId, setPendingUserId] = useState<number | null>(null);
   const [pendingRoles, setPendingRoles] = useState<Role[]>([]);
   const styles = useStyles2(getAddToOrgModalStyles);
 
@@ -282,12 +280,10 @@ const AddToOrgModal = memo(({ isOpen, user, userOrgs, onOrgAdd, onDismiss }: Add
     // add the stored userRoles also
     if (contextSrv.licensedAccessControlEnabled()) {
       if (contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd)) {
-        if (pendingUserId) {
-          await updateUserRoles(pendingRoles, pendingUserId, pendingOrgId!);
-          // clear pending state
-          setPendingOrgId(null);
+        if (user && pendingRoles.length) {
+          // The roles go to the organization selected now, which can differ from the one they were picked in.
+          await updateUserRoles(pendingRoles, user.id, selectedOrg!.id);
           setPendingRoles([]);
-          setPendingUserId(null);
         }
       }
     }
@@ -297,18 +293,9 @@ const AddToOrgModal = memo(({ isOpen, user, userOrgs, onOrgAdd, onDismiss }: Add
     // clear selectedOrg when modal is canceled
     setSelectedOrg(null);
     setPendingRoles([]);
-    setPendingOrgId(null);
-    setPendingUserId(null);
     if (onDismiss) {
       onDismiss();
     }
-  };
-
-  const onRoleUpdate = async (roles: Role[], userId: number, orgId: number | undefined) => {
-    // keep the new role assignments for user
-    setPendingRoles(roles);
-    setPendingOrgId(orgId!);
-    setPendingUserId(userId);
   };
 
   return (
@@ -332,7 +319,7 @@ const AddToOrgModal = memo(({ isOpen, user, userOrgs, onOrgAdd, onDismiss }: Add
             basicRoleDisabled={false}
             roleOptions={roleOptions}
             apply={true}
-            onApplyRoles={onRoleUpdate}
+            onApplyRoles={setPendingRoles}
             pendingRoles={pendingRoles}
           />
         </Field>

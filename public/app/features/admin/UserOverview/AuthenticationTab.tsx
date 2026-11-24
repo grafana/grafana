@@ -53,7 +53,10 @@ export function AuthenticationTab({ user }: { user: UserDTO }) {
           </Button>
         )}
         {canReadLDAPUser && (
-          <LinkButton variant="secondary" href={`/admin/authentication/ldap?username=${user.login}`}>
+          <LinkButton
+            variant="secondary"
+            href={`/admin/authentication/ldap?username=${encodeURIComponent(user.login)}`}
+          >
             <Trans i18nKey="admin.ldap-sync.debug-button">Debug LDAP Mapping</Trans>
           </LinkButton>
         )}

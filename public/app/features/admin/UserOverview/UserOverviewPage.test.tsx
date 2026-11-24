@@ -1,5 +1,6 @@
 import { delay, http, HttpResponse } from 'msw';
 import { Route, Routes } from 'react-router-dom-v5-compat';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { act, render, screen, within, waitFor } from 'test/test-utils';
 
 import { OrgRole } from '@grafana/data';
@@ -906,6 +907,45 @@ describe('organizations', () => {
     await user.click(screen.getByRole('button', { name: 'Confirm removal' }));
     await waitFor(() => expect(removals).toHaveBeenCalledTimes(1));
   });
+
+  it('assigns the picked roles in the organization that the user is added to', async () => {
+    const writes = jest.fn();
+    server.use(
+      http.get('/api/orgs', () =>
+        HttpResponse.json([
+          { id: 1, name: 'Main Org.' },
+          { id: 2, name: 'Org A' },
+          { id: 3, name: 'Org B' },
+        ])
+      ),
+      http.get('/api/access-control/roles', () =>
+        HttpResponse.json([{ ...role, group: 'Dashboards', delegatable: true }])
+      ),
+      http.post('/api/orgs/:orgId/users', ({ params }) => {
+        writes('add to org', params.orgId);
+        return HttpResponse.json({ message: 'User added to organization' });
+      }),
+      http.put('/api/access-control/users/12/roles', async ({ request }) => {
+        writes('set roles in org', new URL(request.url).searchParams.get('targetOrgId'), await request.json());
+        return HttpResponse.json({ message: 'Roles updated' });
+      })
+    );
+    const { user } = setup('organizations');
+    await user.click(await screen.findByRole('button', { name: 'Add user to organization' }));
+    const dialog = screen.getByRole('dialog');
+    // The roles are picked while one organization is selected, and the user is added to another.
+    await selectOptionInTest(within(dialog).getByRole('combobox'), 'Org A');
+    await user.click(within(within(dialog).getByTestId('role-picker')).getByText('Viewer'));
+    await user.click(within(screen.getByLabelText('Role picker menu')).getAllByRole('checkbox')[0]);
+    await user.click(screen.getByRole('button', { name: 'Apply' }));
+    await selectOptionInTest(within(dialog).getByRole('combobox'), 'Org B');
+    await user.click(within(dialog).getByRole('button', { name: 'Add to organization' }));
+    await waitFor(() => expect(writes).toHaveBeenCalledTimes(2));
+    expect(writes.mock.calls).toEqual([
+      ['add to org', '3'],
+      ['set roles in org', '3', { orgId: 3, roleUids: ['reader'] }],
+    ]);
+  });
 });
 
 describe('sessions', () => {
@@ -1005,5 +1045,25 @@ describe('authentication', () => {
     expect(await screen.findByText('Not enabled')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Sync user' }));
     await waitFor(() => expect(syncs).toHaveBeenCalledTimes(1));
+  });
+
+  it('encodes the login in the link to the LDAP debug view', async () => {
+    server.use(
+      http.get('/api/users/alice', () =>
+        HttpResponse.json({
+          ...profile,
+          login: 'alice&ops+1#x',
+          isExternal: true,
+          isExternallySynced: true,
+          authLabels: ['LDAP'],
+        })
+      ),
+      http.get('/api/admin/ldap-sync-status', () => HttpResponse.json({ enabled: false, schedule: '', nextSync: '' }))
+    );
+    setup('authentication');
+    expect(await screen.findByRole('link', { name: 'Debug LDAP Mapping' })).toHaveAttribute(
+      'href',
+      '/admin/authentication/ldap?username=alice%26ops%2B1%23x'
+    );
   });
 });
