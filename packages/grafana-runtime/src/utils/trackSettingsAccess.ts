@@ -8,11 +8,11 @@ export type SettingsAccessSource = 'config' | 'bootData';
 const createBootDataEvents = defineFeatureEvents('grafana', 'bootdata');
 
 /** Fired periodically with how many times a bootdata setting was read since the previous flush. */
-export const settingAccessed = createBootDataEvents<{ path: string; source: SettingsAccessSource; count: number }>(
+const settingAccessed = createBootDataEvents<{ path: string; source: SettingsAccessSource; count: number }>(
   'setting_accessed'
 );
 
-export const FLUSH_INTERVAL_MS = 30_000;
+const FLUSH_INTERVAL_MS = 30_000;
 
 // Their child keys are user data (datasource/plugin names) with unbounded cardinality, and
 // featureToggles is already reported by the legacy feature toggle proxy.
@@ -21,7 +21,7 @@ const NO_RECURSE_PATHS = new Set(['datasources', 'panels', 'apps', 'featureToggl
 const counts = new Map<string, { source: SettingsAccessSource; path: string; count: number }>();
 let flushTimer: ReturnType<typeof setInterval> | undefined;
 
-export function flushSettingsAccessCounts() {
+function flushSettingsAccessCounts() {
   for (const { source, path, count } of counts.values()) {
     try {
       settingAccessed({ source, path, count });
@@ -44,14 +44,6 @@ function startFlushing() {
   }
   flushTimer = setInterval(flushSettingsAccessCounts, FLUSH_INTERVAL_MS);
   window.addEventListener('pagehide', onPageHide);
-}
-
-/** Test-only: drops pending counts and stops the flush timer. */
-export function resetSettingsAccessTracking() {
-  counts.clear();
-  clearInterval(flushTimer);
-  flushTimer = undefined;
-  window.removeEventListener('pagehide', onPageHide);
 }
 
 function count(source: SettingsAccessSource, path: string) {
