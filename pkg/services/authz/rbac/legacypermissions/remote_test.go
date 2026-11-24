@@ -46,7 +46,7 @@ func TestRemoteRejectsBeforeLoading(t *testing.T) {
 		{"wrong tenant", caller("stacks-2", "authz.grafana.app/userpermissions:get"), nil, codes.PermissionDenied},
 		{"wildcard request", granted, func(r *authzv1.LegacyGetUserPermissionsRequest) { r.Namespace = "*" }, codes.InvalidArgument},
 		{"missing identity", granted, func(r *authzv1.LegacyGetUserPermissionsRequest) { r.Identity = nil }, codes.InvalidArgument},
-		{"missing ID", granted, func(r *authzv1.LegacyGetUserPermissionsRequest) { r.Identity.InternalId = nil }, codes.InvalidArgument},
+		{"missing UID", granted, func(r *authzv1.LegacyGetUserPermissionsRequest) { r.Identity.Uid = "" }, codes.InvalidArgument},
 		{"conflicting flags", granted, func(r *authzv1.LegacyGetUserPermissionsRequest) { r.GlobalOrg = true; r.NoOrgMembership = true }, codes.InvalidArgument},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -54,7 +54,7 @@ func TestRemoteRejectsBeforeLoading(t *testing.T) {
 			if tc.change != nil {
 				tc.change(req)
 			}
-			err := NewRemoteServer(nil, nil).LegacyGetUserPermissions(req, remoteTestStream{ctx: tc.ctx})
+			err := NewRemoteServer(nil, nil, nil).LegacyGetUserPermissions(req, remoteTestStream{ctx: tc.ctx})
 			require.Equal(t, tc.code, status.Code(err))
 		})
 	}
@@ -82,7 +82,7 @@ func TestRemoteCacheIsolationAndRefresh(t *testing.T) {
 func TestRemoteAndEmbeddedMetricsShareRegistry(t *testing.T) {
 	reg := prometheus.NewRegistry()
 	newEmbeddedClient(nil, nil, reg)
-	NewRemoteServer(nil, reg)
+	NewRemoteServer(nil, reg, nil)
 	families, err := reg.Gather()
 	require.NoError(t, err)
 	for _, family := range families {

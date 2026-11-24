@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	authzv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
@@ -56,6 +57,7 @@ func remoteMetricCounts(t *testing.T, reg *prometheus.Registry) map[string]uint6
 func TestIntegrationRemoteMetrics(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	sql := db.NewTestStore(t)
+	seedRemoteIdentity(t, sql)
 	for _, scenario := range []string{"success", "authorization", "validation", "load", "stream", "canceled"} {
 		t.Run(scenario, func(t *testing.T) {
 			reg := prometheus.NewRegistry()
@@ -69,7 +71,7 @@ func TestIntegrationRemoteMetrics(t *testing.T) {
 				}
 				return legacysql.NewDatabaseProvider(sql)(ctx)
 			}, resourcepermissions.NewActionSetService(), localcache.New(0, 0), loaderConfig(false), featuremgmt.WithFeatures(), nil, nil)
-			server := legacypermissions.NewRemoteServer(loader, reg)
+			server := legacypermissions.NewRemoteServer(loader, reg, tracing.InitializeTracerForTest())
 			require.Equal(t, map[string]uint64{"ok": 0, "error": 0}, remoteMetricCounts(t, reg))
 			id := int64(7)
 			req := &authzv1.LegacyGetUserPermissionsRequest{Namespace: "stacks-1", Identity: &authzv1.LegacyPermissionIdentity{Type: "user", Uid: "user-7", InternalId: &id, HasUniqueId: true, OrgRole: "None"}}

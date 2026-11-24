@@ -22,6 +22,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	authzv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
@@ -45,6 +46,7 @@ func TestIntegrationRemoteLegacyPermissionsGRPC(t *testing.T) {
 	providers := map[string]legacysql.LegacyDatabaseProvider{}
 	for _, ns := range []string{"stacks-1", "stacks-2"} {
 		sql := db.NewTestStore(t)
+		seedRemoteIdentity(t, sql)
 		seedGrant(t, sql, "custom:tenant", 1, 7, ac.Permission{Action: "dashboards:read", Scope: "dashboards:uid:" + ns})
 		require.NoError(t, sql.WithDbSession(context.Background(), func(sess *db.Session) error {
 			now := time.Now()
@@ -87,7 +89,7 @@ func TestIntegrationRemoteLegacyPermissionsGRPC(t *testing.T) {
 		return types.WithAuthInfo(ctx, authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{Rest: authn.AccessTokenClaims{Namespace: "*", Permissions: []string{"authz.grafana.app/userpermissions:get"}}})), nil
 	}
 	server := grpc.NewServer(grpc.StreamInterceptor(grpcAuth.StreamServerInterceptor(authenticate)))
-	authzv1.RegisterLegacyAuthzServiceServer(server, &remoteIntegrationServer{handler: legacypermissions.NewRemoteServer(loader, nil)})
+	authzv1.RegisterLegacyAuthzServiceServer(server, &remoteIntegrationServer{handler: legacypermissions.NewRemoteServer(loader, nil, tracing.InitializeTracerForTest())})
 	go func() { _ = server.Serve(listener) }()
 	t.Cleanup(server.Stop)
 	t.Cleanup(func() { _ = listener.Close() })
@@ -95,10 +97,10 @@ func TestIntegrationRemoteLegacyPermissionsGRPC(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = connection.Close() })
 	client := authzv1.NewLegacyAuthzServiceClient(connection)
-	id := int64(7)
+	id := int64(999)
 	maliciousKey := "same-key"
 	for _, ns := range []string{"stacks-1", "stacks-2", "stacks-1", "stacks-2"} {
-		req := &authzv1.LegacyGetUserPermissionsRequest{Namespace: ns, Identity: &authzv1.LegacyPermissionIdentity{Type: "user", Uid: "user-7", InternalId: &id, HasUniqueId: true, OrgRole: "Viewer", TeamIds: []int64{9}, CacheKey: &maliciousKey}}
+		req := &authzv1.LegacyGetUserPermissionsRequest{Namespace: ns, Identity: &authzv1.LegacyPermissionIdentity{Type: "user", Uid: "user-7", InternalId: &id, HasUniqueId: false, OrgRole: "Admin", IsGrafanaAdmin: true, TeamIds: []int64{999}, CacheKey: &maliciousKey}}
 		//nolint:staticcheck // Exercise the transitional RPC directly, without its wrapper client.
 		stream, err := client.LegacyGetUserPermissions(context.Background(), req)
 		require.NoError(t, err)

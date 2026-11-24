@@ -9,9 +9,11 @@ import (
 
 	authzlib "github.com/grafana/authlib/authz"
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -24,10 +26,11 @@ type remoteNamespaceKey struct{}
 type RemoteServer struct {
 	loader  *Loader
 	metrics *serverMetrics
+	tracer  tracing.Tracer
 }
 
-func NewRemoteServer(loader *Loader, reg prometheus.Registerer) *RemoteServer {
-	return &RemoteServer{loader: loader, metrics: newMetrics(reg, "remote")}
+func NewRemoteServer(loader *Loader, reg prometheus.Registerer, tracer tracing.Tracer) *RemoteServer {
+	return &RemoteServer{loader: loader, metrics: newMetrics(reg, "remote"), tracer: tracer}
 }
 
 func (s *RemoteServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPermissionsRequest, stream authzv1.LegacyAuthzService_LegacyGetUserPermissionsServer) error {
@@ -47,6 +50,12 @@ func (s *RemoteServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPermis
 	} else if req.NoOrgMembership {
 		orgID = -1
 	}
+	identity, err := s.loadIdentity(ctx, ns, req.Identity, orgID)
+	if err != nil {
+		return err
+	}
+	req = proto.Clone(req).(*authzv1.LegacyGetUserPermissionsRequest)
+	req.Identity = identity
 	if err := s.loader.streamPermissions(ctx, req, stream, req.Namespace, orgID); err != nil {
 		return err
 	}
@@ -82,22 +91,12 @@ func authorizeRemoteRequest(ctx context.Context, req *authzv1.LegacyGetUserPermi
 	id := req.Identity
 	switch types.IdentityType(id.Type) {
 	case types.TypeUser, types.TypeServiceAccount:
-		if id.InternalId == nil || *id.InternalId <= 0 || id.Uid == "" {
-			return types.NamespaceInfo{}, status.Error(codes.InvalidArgument, "user identity requires UID and positive internal ID")
+		if id.Uid == "" {
+			return types.NamespaceInfo{}, status.Error(codes.InvalidArgument, "user identity requires UID")
 		}
 	case types.TypeAnonymous:
 	default:
 		return types.NamespaceInfo{}, status.Error(codes.InvalidArgument, "unsupported legacy identity type")
-	}
-	for _, team := range id.TeamIds {
-		if team <= 0 {
-			return types.NamespaceInfo{}, status.Error(codes.InvalidArgument, "team ID must be positive")
-		}
-	}
-	switch types.RoleType(id.OrgRole) {
-	case types.RoleNone, types.RoleViewer, types.RoleEditor, types.RoleAdmin, "":
-	default:
-		return types.NamespaceInfo{}, status.Error(codes.InvalidArgument, "invalid organization role")
 	}
 	return ns, nil
 }
