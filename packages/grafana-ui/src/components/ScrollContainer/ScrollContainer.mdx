@@ -7,7 +7,21 @@ import { ScrollContainer } from './ScrollContainer';
 
 This component is used to create a scrollable container. It uses native scrollbars, has an option to show scroll indicators, and supports most `Box` properties.
 
-## Migrating from CustomScrollbar
+## When to use
+
+No component-specific guidance documented yet.
+
+## Never use for
+
+No component-specific guidance documented yet.
+
+## Do's and don'ts
+
+No component-specific guidance documented yet.
+
+## Usage
+
+### Migrating from CustomScrollbar
 
 ScrollContainer is intended to be a functionally equivalent replacement for CustomScrollbar. If you're not using any additional props in CustomScrollbar, it should be a drop-in replacement.
 
@@ -17,7 +31,7 @@ If you were using additional props, there are roughly 3 categories of changes:
 2. Props that have been removed but the **same behavior can be achieved in a different way**
 3. Props that have been removed and are **no longer supported**
 
-### Props that have been renamed
+#### Props that have been renamed
 
 - `autoHeightMin` is now `minHeight`
 - `autoHeightMax` is now `maxHeight`
@@ -25,7 +39,7 @@ If you were using additional props, there are roughly 3 categories of changes:
 - `testId` is now `data-testid`
 - `scrollRefCallback` is now `ref`
 
-### Props that have been removed but the same behavior can be achieved in a different way
+#### Props that have been removed but the same behavior can be achieved in a different way
 
 - `hideHorizontalTrack` and `hideVerticalTrack` have been removed.
   - You can achieve the same behavior by setting either `overflowX` or `overflowY` to `hidden`. These names more closely match the CSS properties they represent.
@@ -52,13 +66,19 @@ If you were using additional props, there are roughly 3 categories of changes:
     return <ScrollContainer ref={scrollRef}>// Your amazing scrolling content</ScrollContainer>;
     ```
 
-### Props that have been removed and are no longer supported
+#### Props that have been removed and are no longer supported
 
 - `autoHide`, `autoHideTimeout` and `hideTracksWhenNotNeeded`.
   - These props no longer make sense when using native scrollbars, since some operating systems (Windows for example) don't have overlay scrollbars.
 - `className`
   - Like our other design system components, the intention is that you'll never need to write custom CSS for this component. We extend all the base `Box` props, so everything _should_ be available as a prop.
 - `updateAfterMountMs`
-  - This wasn't very react-y, and could cause inconsistent behaviour.
+  - This wasn't very react-y, and could cause inconsistent behavior.
+
+## Accessibility
+
+No component-specific guidance documented yet.
+
+## Props
 
 <ArgTypes of={ScrollContainer} />

@@ -6,13 +6,25 @@ import { WithContextMenu } from './WithContextMenu';
 
 A menu displaying additional options when it's not possible to show them at all times due to a space constraint.
 
-`ContextMenu` wraps `Menu` to supply options as a list, and display at absolute coordinates.
+## When to use
 
-### Usage
+No component-specific guidance documented yet.
+
+## Never use for
+
+No component-specific guidance documented yet.
+
+## Do's and don'ts
+
+No component-specific guidance documented yet.
+
+## Usage
+
+`ContextMenu` wraps `Menu` to supply options as a list, and display at absolute coordinates.
 
 There are controlled and uncontrolled versions of the component available. With the controlled component (`ContextMenu`) the open/close logic needs to be handled separately. Uncontrolled component (`WithContextMenu`) handles this logic internally.
 
-#### Controlled component
+### Controlled component
 
 ```jsx
 <ContextMenu
@@ -23,7 +35,7 @@ There are controlled and uncontrolled versions of the component available. With 
 />
 ```
 
-#### Uncontrolled component
+### Uncontrolled component
 
 ```jsx
 <WithContextMenu getContextMenuItems={() => [{ label: 'Test', items: [{ label: 'First' }, { label: 'Second' }] }]}>
@@ -31,10 +43,16 @@ There are controlled and uncontrolled versions of the component available. With 
 </WithContextMenu>
 ```
 
-### Props of ContextMenu
+## Accessibility
+
+No component-specific guidance documented yet.
+
+## Props
+
+### ContextMenu
 
 <ArgTypes of={ContextMenu} />
 
-### Props of WithContextMenu
+### WithContextMenu
 
 <ArgTypes of={WithContextMenu} />

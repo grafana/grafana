@@ -3,21 +3,33 @@ import { LoadingPlaceholder } from './LoadingPlaceholder';
 
 # LoadingPlaceholder
 
-Loading indicator with a text label. Use this component when an individual element or section within an already-rendered page is loading — for example, a data table, chart, or form that is fetching its own data.
+Loading indicator with a text label.
 
-### Usage
+## When to use
+
+Use this component when an individual element or section within an already-rendered page is loading — for example, a data table, chart, or form that is fetching its own data.
+
+- A specific section of the page is fetching data independently
+- An inline element needs a transient loading state
+
+## Never use for
+
+For cases where the entire page or view is not yet ready to display, use [PageLoader](?path=/docs/information-pageloader--docs) instead.
+
+## Do's and don'ts
+
+No component-specific guidance documented yet.
+
+## Usage
 
 ```jsx
 <LoadingPlaceholder text="Loading..." />
 ```
 
-### When to use
+## Accessibility
 
-- A specific section of the page is fetching data independently
-- An inline element needs a transient loading state
+No component-specific guidance documented yet.
 
-For cases where the entire page or view is not yet ready to display, use [PageLoader](?path=/docs/information-pageloader--docs) instead.
-
-### Props
+## Props
 
 <ArgTypes of={LoadingPlaceholder} />
