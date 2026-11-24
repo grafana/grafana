@@ -1,5 +1,7 @@
 ---
-canonical: https://grafana.com/docs/grafana/latest/alerting/configure-notifications/import-alertmanager-configuration/
+aliases:
+  - ../../configure-notifications/import-alertmanager-configuration/ # /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/import-alertmanager-configuration/
+canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/data-source-managed-alerts/import-alertmanager-configuration/
 description: Import an existing Prometheus or Mimir Alertmanager configuration as Grafana-managed notification resources, then manage them directly in Grafana Alerting.
 keywords:
   - grafana
@@ -14,7 +16,7 @@ labels:
     - oss
 menuTitle: Import Alertmanager configuration
 title: Import Alertmanager configuration to Grafana-managed notifications
-weight: 460
+weight: 60
 ---
 
 # Import Alertmanager configuration to Grafana-managed notifications
@@ -101,7 +103,7 @@ The import wizard is on the **Import** tab of the Grafana Alerting settings, whi
 
    Grafana validates the configuration as you fill in the form and reports any conflicts. The form lists the resources that Grafana renames before you import.
 
-1. Click **Continue**. On the **Rules** step, either configure the [rules import](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/) or click **Skip**.
+1. Click **Continue**. On the **Rules** step, either configure the [rules import](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/alerting-migration/) or click **Skip**.
 1. Review the summary, then click **Start import**.
 
 If a configuration is already staged, the **Import notification configuration** step shows it instead of the import form. [Promote or revert it](#review-promote-or-revert-a-staged-configuration) before you import another one, or click **Continue** to import rules only.
@@ -363,5 +365,5 @@ Consider the following when you import an Alertmanager configuration:
 
 After you import your notification configuration:
 
-- [Import your data source-managed alert rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/) and route them through the imported policy tree.
+- [Import your data source-managed alert rules](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/alerting-migration/) and route them through the imported policy tree.
 - Review the imported [contact points](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/), [notification policies](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-notification-policy/), [templates](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/), and [time intervals](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/mute-timings/).

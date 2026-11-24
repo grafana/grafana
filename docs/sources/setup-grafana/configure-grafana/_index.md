@@ -2382,7 +2382,7 @@ Configures max number of alert annotations that Grafana stores. Default value is
 
 ### `[unified_alerting.prometheus_conversion]`
 
-This section applies only to rules imported as Grafana-managed rules. For more information about the import process, refer to [Import data source-managed rules to Grafana-managed rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/).
+This section applies only to rules imported as Grafana-managed rules. For more information about the import process, refer to [Import data source-managed rules to Grafana-managed rules](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/alerting-migration/).
 
 #### `rule_query_offset`
 

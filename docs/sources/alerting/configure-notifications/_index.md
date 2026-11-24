@@ -35,7 +35,8 @@ The topics in this section include step-by-step instructions for:
 - [Templating notifications](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/) to customize notification messages.
 - [Configuring silences](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-silence/) or [mute timings](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/mute-timings/) to stop notifications.
 - [Configuring inhibition rules](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/inhibition-rules/) to suppress notifications for dependent alerts when a root-cause alert is already firing.
-- [Importing an Alertmanager configuration](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/import-alertmanager-configuration/) to convert an existing Prometheus or Mimir notification setup into Grafana-managed resources.
+
+To convert an existing Prometheus or Mimir notification setup into Grafana-managed resources, refer to [Import Alertmanager configuration to Grafana-managed notifications](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/import-alertmanager-configuration/).
 
 After you configure notifications, you can refer to [View notification history](/docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-notification-history/) to confirm delivery and troubleshoot failed notifications.
 
@@ -43,19 +44,16 @@ After you configure notifications, you can refer to [View notification history](
 
 Grafana Alerting is based on the Prometheus Alerting model, whose architecture decouples rule evaluation from notification handling.
 
-- The alert rule evaluator, either Grafana or the data source, evaluates alert rules and triggers alerts.
+- The alert rule evaluator, which is Grafana for Grafana-managed alert rules, evaluates alert rules and triggers alerts.
 - The alert notification manager, known as the **Alertmanager**, receives alerts and manages their notifications.
 
 {{< figure src="/media/docs/alerting/alerting-alertmanager-architecture.png" max-width="750px" alt="A diagram with the alert generator and alert manager architecture" >}}
 
-In Grafana, you can use different types of alert rules and configure multiple Alertmanagers.
+Grafana includes a built-in Alertmanager, the **Grafana Alertmanager**, which receives all Grafana-managed alerts by default. The Grafana Alertmanager manages the notification resources described in this section, such as contact points, templates, notification policies, silences, mute timings, and active time intervals.
 
-By default, Grafana uses its built-in Alertmanager, and Grafana Cloud instances include an additional Alertmanager.
+The topics in this section describe how to configure notifications in the Grafana Alertmanager.
 
-{{< figure src="/media/docs/alerting/alerting-choose-alertmanager.png" max-width="750px" alt="A screenshot choosing an Alertmanager in the notification policies UI" >}}
+You can also use other Alertmanagers with Grafana Alerting:
 
-When having multiple Alertmanagers, note that each Alertmanager manages its own independent notification resources, such as contact points, templates, policies, silences, mute timings, active time intervals, and active notifications.
-
-These notification resources cannot be shared across different Alertmanagers.
-
-Use the **Choose Alertmanager** dropdown to select the Alertmanager you want to configure.
+- To send Grafana-managed alerts to another Alertmanager, refer to [Configure Alertmanagers](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/).
+- To manage the notification resources of another Alertmanager, such as a Mimir or Prometheus Alertmanager, refer to [Manage notification resources in other Alertmanagers](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/manage-alertmanager-resources/). Each Alertmanager manages its own independent notification resources, and you can't share them across Alertmanagers.

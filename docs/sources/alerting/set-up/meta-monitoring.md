@@ -169,14 +169,6 @@ Alternatively, you can access the [History page](/docs/grafana/<GRAFANA_VERSION>
 
 If you have enabled notification history, you can also refer to [View notification history](/docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-notification-history/) to review sent notifications and delivery outcomes in the **History** page **Notifications** tab.
 
-## Metrics for Mimir-managed alerts
-
-To meta monitor Grafana Mimir-managed alerts, open source and on-premise users need a Prometheus/Mimir server, or another metrics database to collect and store metrics exported by the Mimir ruler.
-
-#### rule_evaluation_failures_total
-
-This metric is a counter that shows you the total number of rule evaluation failures.
-
 ## Metrics for Alertmanager
 
 To meta monitor the Alertmanager, you need a Prometheus/Mimir server, or another metrics database to collect and store metrics exported by Alertmanager.

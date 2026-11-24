@@ -3,7 +3,7 @@ labels:
   products:
     - enterprise
     - oss
-title: Grafana managed alerts
+title: Grafana-managed alerts
 ---
 
 ## Clustering
@@ -12,7 +12,7 @@ The current alerting system doesn't support high availability. Alert notificatio
 
 ## Alert evaluation
 
-Grafana managed alerts are evaluated by the Grafana backend. Rule evaluations are scheduled, according to the alert rule configuration, and queries are evaluated by an engine that is part of core Grafana.
+Grafana-managed alerts are evaluated by the Grafana backend. Rule evaluations are scheduled, according to the alert rule configuration, and queries are evaluated by an engine that is part of core Grafana.
 
 Alerting rules can only query backend data sources with alerting enabled:
 

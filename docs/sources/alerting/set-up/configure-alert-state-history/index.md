@@ -17,7 +17,7 @@ weight: 250
 
 # Configure alert state history
 
-Alerting can record all alert rule state changes for your Grafana managed alert rules in a Loki or Prometheus instance, or in both.
+Alerting can record all alert rule state changes for your Grafana-managed alert rules in a Loki or Prometheus instance, or in both.
 
 - With Prometheus, you can query the `GRAFANA_ALERTS` metric for alert state changes in **Grafana Explore**.
 - With Loki, you can query and view alert state changes in **Grafana Explore** and the [Grafana Alerting History views](/docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-alert-state-history/).

@@ -22,21 +22,6 @@ title: Configure Alertmanagers
 weight: 200
 ---
 
-{{< admonition type="caution" >}}
-Pre-provisioned Loki and Prometheus data source-managed alerts have been deprecated in Grafana Cloud and can not be created in new stacks.
-New Grafana Cloud stacks will use Grafana-managed alerting (GMA) by default. Datasource-managed alerting (DMA) is not provisioned in new stacks. Existing stacks are not affected.
-
-This applies to the default Loki and Prometheus Grafana Cloud data sources managed by Grafana Labs and Cloud Alertmanager, which will not be available nor will Grafana provision the data source for it. If you add your own Mimir, Loki, or Alertmanager data sources, you can continue to use data source-managed alerts.
-
-Cloud users can import DMA rules into GMA rules with the import tool. See the [import data source-managed alerts to Grafana-managed alerts documentation](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/alerting-migration/) for information on how to do this.
-{{< /admonition >}}
-
-{{< admonition type="note" >}}
-The standalone Alertmanager UI in Grafana Cloud (for example, `https://alertmanager-<REGION>.grafana.net/alertmanager/`) is deprecated and no longer available.
-
-All Alertmanager functionality, including silences, notification policies, contact points, and mute timings, is now available in the Grafana Alerting UI. Use the `Choose Alertmanager` dropdown to select the Alertmanager you want to manage. To manage silences, go to **Alerts & IRM** > **Alerting** > **Silences**.
-{{< /admonition >}}
-
 # Configure Alertmanagers
 
 Grafana Alerting is based on the architecture of the Prometheus alerting system. Grafana sends firing and resolved alerts to an Alertmanager, which is responsible for [handling notifications](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/). This architecture decouples alert rule evaluation from notification handling, improving scalability.
@@ -47,7 +32,15 @@ Grafana includes a built-in **Grafana Alertmanager** to handle notifications. Th
 
 - Use different [types of Alertmanagers](#types-of-alertmanagers-in-grafana) with Grafana
 - [Add other Alertmanager](#add-an-alertmanager) and [enable it to receive all Grafana-managed alerts](#enable-an-alertmanager-to-receive-grafana-managed-alerts)
-- Use an [Alertmanager as a contact point]() to route specific alerts
+- Use an [Alertmanager as a contact point](#use-an-alertmanager-as-a-contact-point-to-receive-specific-alerts) to route specific alerts
+
+{{< admonition type="caution" >}}
+In Grafana Cloud, data source-managed alerts for the default Loki and Prometheus data sources are deprecated. New Grafana Cloud stacks use Grafana-managed alerts by default, and Grafana Labs doesn't provision the Grafana Cloud Alertmanager for them. Existing stacks aren't affected. If you add your own Alertmanager data source, you can continue to use it.
+
+The standalone Alertmanager UI in Grafana Cloud, for example `https://alertmanager-<REGION>.grafana.net/alertmanager/`, is also deprecated and no longer available.
+
+For more information, refer to [Legacy data source-managed alerts](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/).
+{{< /admonition >}}
 
 ## Alertmanager resources
 
@@ -58,9 +51,7 @@ It’s important to note that each Alertmanager manages its own independent aler
 - Silences
 - Active notifications
 
-Use the `Choose Alertmanager` dropdown on these pages to switch between Alertmanagers and view or manage their resources.
-
-{{< figure src="/media/docs/alerting/alerting-choose-alertmanager.png" max-width="750px" alt="A screenshot choosing an Alertmanager in the notification policies UI" >}}
+The [Configure notifications](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/) documentation describes how to manage these resources in the Grafana Alertmanager. To view or manage the resources of another Alertmanager, refer to [Manage notification resources in other Alertmanagers](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/manage-alertmanager-resources/).
 
 ## Types of Alertmanagers in Grafana
 
@@ -82,13 +73,9 @@ Alertmanagers should be configured as data sources using Grafana Configuration f
 
 For provisioning instructions, refer to the [Alertmanager data source documentation](/docs/grafana/<GRAFANA_VERSION>/datasources/alertmanager/).
 
-After adding an Alertmanager, you can use the Grafana Alerting UI to manage notification policies, contact points, silences, and other alerting resources from within Grafana.
+After adding an Alertmanager, you can manage its notification policies, contact points, silences, and other alerting resources from within Grafana. For instructions and limitations, refer to [Manage notification resources in other Alertmanagers](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/manage-alertmanager-resources/).
 
-{{< admonition type="note" >}}
-When using Prometheus, you can manage silences in the Grafana Alerting UI. However, other Alertmanager resources such as contact points, notification policies, and templates are read-only because the Prometheus Alertmanager HTTP API does not support updates for these resources.
-{{< /admonition >}}
-
-When using multiple Alertmanagers, use the `Choose Alertmanager` dropdown to switch between Alertmanagers.
+When the [Prometheus Alerting](/docs/plugins/grafana-prometheusalerting-app/latest/) app plugin is installed and enabled, you manage these resources in the plugin instead. For details, refer to [When the Prometheus Alerting plugin is installed](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/#when-the-prometheus-alerting-plugin-is-installed).
 
 ## Enable an Alertmanager to receive Grafana-managed alerts
 
@@ -102,8 +89,10 @@ After enabling **Receive Grafana Alerts** in the Data Source Settings, you must 
 
 All Grafana-managed alerts are forwarded to Alertmanagers marked as `Receiving Grafana-managed alerts`.
 
+When the [Prometheus Alerting](/docs/plugins/grafana-prometheusalerting-app/latest/) app plugin is installed and enabled, you can still enable or disable an Alertmanager from the **Settings** page, but the page doesn't let you edit the configuration of other Alertmanagers. Edit their configuration in the plugin.
+
 {{< admonition type="note" >}}
-Grafana Alerting does not support forwarding Grafana-managed alerts to the AlertManager in Amazon Managed Service for Prometheus. For more details, refer to [this GitHub issue](https://github.com/grafana/grafana/issues/64064).
+Grafana Alerting does not support forwarding Grafana-managed alerts to the Alertmanager in Amazon Managed Service for Prometheus. For more details, refer to [this GitHub issue](https://github.com/grafana/grafana/issues/64064).
 {{< /admonition >}}
 
 ## Use an Alertmanager as a contact point to receive specific alerts

@@ -22,7 +22,7 @@ weight: 402
 
 Users can transpose their [now-deprecated recorded queries](/docs/grafana/latest/administration/recorded-queries/) into Grafana-managed recording rules in a few easy steps. The query PromQL for each recorded query has been exposed on the recorded queries list along with the existing data source, time range, and interval values to simplify the migration process.
 
-## Migrate your recorded queries to Grafana-managed alert rules
+## Migrate your recorded queries to Grafana-managed recording rules
 
 1. Navigate to **Administration** -> **Plugins and Data** -> **Recorded queries.**
 
@@ -30,9 +30,9 @@ Users can transpose their [now-deprecated recorded queries](/docs/grafana/latest
 
    {{< figure alt="Example of relevant recorded query information"  src="/media/docs/alerting/rec-query-example.png" max-width="800px" >}}
 
-1. Now navigate to **Alerting** -> **Alert rules.**
+1. Now navigate to **Alerting** -> **Recording rules**.
 
-1. At the top of the Alert rules page, click **More** -> **New Grafana recording rule**.
+1. At the top of the **Recording rules** page, click **New recording rule**.
 
    Add a name for your Recording Rule and a name for the new metric that the recording rule generates.
 

@@ -32,10 +32,6 @@ Use mute timings to temporarily pause notifications for a specific recurring per
 
 Active time intervals provide the opposite functionality, where alerts handled by a notification policy are suppressed unless the notification happens at a time that matches the time interval. Use active time intervals for periods where you want to reduce alert noise. Mute timings take precedence over active time intervals when they overlap.
 
-{{< admonition type="note" >}}
-Mute timings and active time intervals are assigned to a [specific Alertmanager](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/#alertmanager-architecture) and only suppress notifications for alerts managed by that Alertmanager.
-{{< /admonition >}}
-
 ## Mute timings and active time intervals vs silences
 
 [Mute timings and active time intervals](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/mute-timings/) and [silences](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-silence/) are distinct methods to suppress notifications. They do not prevent alert rules from being evaluated or stop alert instances from appearing in the user interface; they only prevent notifications from being created.
@@ -53,7 +49,6 @@ The following table highlights the key differences between mute timings and sile
 
 1. In the left-side menu, click **Alerts & IRM**, and then **Alerting**.
 1. Click **Notification configuration**, then select the **Time intervals** tab.
-1. From the **Alertmanager** dropdown, select an external Alertmanager. By default, the **Grafana Alertmanager** is selected.
 1. Click **+ New time interval**.
 1. Fill out the form to create a [time interval](#time-intervals) to match against for your mute timing or active time interval.
 1. Save your changes.

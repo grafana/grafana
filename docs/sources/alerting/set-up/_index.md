@@ -15,7 +15,7 @@ weight: 160
 
 # Additional configuration
 
-Grafana Alerting offers a variety of advanced configuration options to further tailor your alerting setup. These optional features include configuring up permissions and role-based access control, adding external Alertmanagers, or defining your alerting setup as code. While not essential for basic alerting, these options can enhance security, scalability, and automation in complex environments.
+Grafana Alerting offers a variety of advanced configuration options to further tailor your alerting setup. These optional features include configuring permissions and role-based access control, adding external Alertmanagers, defining your alerting setup as code, or working with legacy data source-managed alerts. While not essential for basic alerting, these options can enhance security, scalability, and automation in complex environments.
 
 The following topics provide you with advanced configuration options for Grafana Alerting.
 

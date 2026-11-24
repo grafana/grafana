@@ -25,13 +25,13 @@ Grafana-managed recording rules let you pre-compute query results and store them
 
 This guide explains how to configure recording rules for the **Tempo data source**, including product-specific considerations, such as TraceQL metrics queries, time range alignment, and evaluation delays.
 
-For additional information, refer to [Grafana-managed recording rules](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/).
+For additional information, refer to [Grafana-managed recording rules](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-recording-rules/).
 
 ## Create a new Tempo recording rule
 
-1. In Grafana, go to **Alerts & IRM** > **Alerting** > **Alert rules**.
+1. In Grafana, go to **Alerts & IRM** > **Alerting** > **Recording rules**.
 
-1. From the **More+** menu, select **New Grafana recording rule**.
+1. Click **New recording rule**.
 
 1. Enter recording rule and metric name.
 

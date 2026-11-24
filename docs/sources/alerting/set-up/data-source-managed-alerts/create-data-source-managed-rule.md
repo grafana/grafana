@@ -1,44 +1,46 @@
 ---
 aliases:
-  - ../unified-alerting/alerting-rules/create-mimir-loki-managed-rule/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/alerting-rules/create-mimir-loki-managed-rule/
-  - ../unified-alerting/alerting-rules/edit-cortex-loki-namespace-group/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/alerting-rules/edit-cortex-loki-namespace-group/
-  - ../unified-alerting/alerting-rules/edit-mimir-loki-namespace-group/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/alerting-rules/edit-mimir-loki-namespace-group/
-  - ../alerting-rules/create-mimir-loki-managed-rule/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-mimir-loki-managed-rule/
-canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-data-source-managed-rule/
-description: Configure data source-managed alert rules alert for an external Grafana Mimir or Loki instance
+  - ../../unified-alerting/alerting-rules/create-mimir-loki-managed-rule/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/alerting-rules/create-mimir-loki-managed-rule/
+  - ../../unified-alerting/alerting-rules/edit-cortex-loki-namespace-group/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/alerting-rules/edit-cortex-loki-namespace-group/
+  - ../../unified-alerting/alerting-rules/edit-mimir-loki-namespace-group/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/alerting-rules/edit-mimir-loki-namespace-group/
+  - ../../alerting-rules/create-mimir-loki-managed-rule/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-mimir-loki-managed-rule/
+  - ../../alerting-rules/create-data-source-managed-rule/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-data-source-managed-rule/
+canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/data-source-managed-alerts/create-data-source-managed-rule/
+description: Configure data source-managed alert rules for an external Grafana Mimir or Loki instance
 keywords:
   - grafana
   - alerting
   - guide
   - rules
   - create
+  - data source-managed
 labels:
   products:
     - cloud
     - enterprise
     - oss
+menuTitle: Data source-managed alert rules
 title: Configure data source-managed alert rules
-weight: 400
+weight: 100
 ---
-
-{{< admonition type="caution" >}}
-Pre-provisioned Loki and Prometheus data source-managed alerts have been deprecated in Grafana Cloud and can not be created in new stacks.
-New Grafana Cloud stacks will use Grafana-managed alerting (GMA) by default. Datasource-managed alerting (DMA) is not provisioned in new stacks. Existing stacks are not affected.
-
-This applies to the default Loki and Prometheus Grafana Cloud data sources managed by Grafana Labs and Cloud Alertmanager, which will not be available nor will Grafana provision the data source for it. If you add your own Mimir, Loki, or Alertmanager data sources, you can continue to use data source-managed alerts.
-
-Cloud users can import DMA rules into GMA rules with the import tool. See the [import data source-managed alerts to Grafana-managed alerts documentation](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/alerting-migration/) for information on how to do this.
-{{< /admonition >}}
 
 # Configure data source-managed alert rules
 
 Data source-managed alert rules are alert rules that are stored in the data source, such as in Prometheus or Loki, rather than in Grafana.
 
+{{< admonition type="caution" >}}
+Support for data source-managed alert rules in the Grafana Alerting UI is legacy functionality, and data source-managed alerts for the default Grafana Cloud data sources are deprecated. For details and alternatives, including the [Prometheus Alerting](/docs/plugins/grafana-prometheusalerting-app/latest/) app plugin, refer to [Legacy data source-managed alerts](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/).
+{{< /admonition >}}
+
+{{< admonition type="note" >}}
+The steps on this page don't apply when the [Prometheus Alerting](/docs/plugins/grafana-prometheusalerting-app/latest/) app plugin is installed and enabled. In that case, you create and manage data source-managed alert rules in the plugin. Refer to [Create an alert rule](/docs/plugins/grafana-prometheusalerting-app/latest/alerting-rules/create-alert-rule/) in the plugin documentation, and to [When the Prometheus Alerting plugin is installed](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/#when-the-prometheus-alerting-plugin-is-installed).
+{{< /admonition >}}
+
 In Grafana Alerting, you can:
 
 1. Create and edit data source-managed rules for Grafana Mimir and Grafana Loki data sources.
 1. View rules from Prometheus data sources when [Manage alerts via Alerting UI](/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure/) is enabled. However, you cannot create or edit these rules in Grafana.
-1. [Import data source-managed rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/) from Loki, Mimir, and Prometheus into Grafana-managed rules.
+1. [Import data source-managed rules](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/alerting-migration/) from Loki, Mimir, and Prometheus into Grafana-managed rules.
 
 {{< admonition type="note" >}}
 Data source-managed rules are supported for horizontal scalability, but they can introduce more operational complexity than Grafana-managed alert rules.
@@ -133,6 +135,8 @@ Use [alert rule evaluation](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamental
 ### Configure labels and notifications
 
 Add [labels](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#labels) to your alert rules to set which [notification policy](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/notification-policies/) should handle your firing alert instances.
+
+The Alertmanager configured for the data source handles the notifications for data source-managed alert rules, not the Grafana Alertmanager. To manage its notification policies and contact points in Grafana, refer to [Manage notification resources in other Alertmanagers](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/manage-alertmanager-resources/).
 
 All alert rules and instances, irrespective of their labels, match the default notification policy. If there are no nested policies, or no nested policies match the labels in the alert rule or alert instance, then the default notification policy is the matching policy.
 

@@ -75,9 +75,11 @@ Permissions for managing Grafana-managed alert rules.
 | `alert.rules:write`  | `folders:*`<br>`folders:uid:*` | Update Grafana alert rules in a folder and its subfolders. Combine this permission with `folders:read` in a scope that includes the folder. To allow query modifications add `datasources:query` in the scope of data sources the user can query. |
 | `alert.rules:delete` | `folders:*`<br>`folders:uid:*` | Delete Grafana alert rules in a folder and its subfolders. Combine this permission with `folders:read` in a scope that includes the folder.                                                                                                       |
 
+To open the **Alert rules** and **Recording rules** pages, a user needs the `alert.rules:read` permission. The `alert.rules.external:read` permission doesn't give access to these pages.
+
 ### External alert rules
 
-Permissions for managing alert rules in external data sources that support alerting.
+Permissions for managing alert rules in external data sources that support alerting. These permissions only apply to [legacy data source-managed alerts](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/).
 
 | Action                       | Applicable scope                       | Description                                                                                    |
 | ---------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------- |
@@ -99,7 +101,7 @@ Permissions for managing alert instances and silences in Grafana.
 
 ### External alert instances
 
-Permissions for managing alert instances in external data sources.
+Permissions for managing alert instances in external data sources. These permissions only apply to [legacy data source-managed alerts](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/).
 
 | Action                           | Applicable scope                       | Description                                                       |
 | -------------------------------- | -------------------------------------- | ----------------------------------------------------------------- |
@@ -145,7 +147,7 @@ Permissions for managing notification templates.
 
 ### External notifications
 
-Permissions for managing notification resources in external data sources.
+Permissions for managing notification resources in external data sources. These permissions only apply to [notification resources in other Alertmanagers](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/manage-alertmanager-resources/), which is legacy functionality.
 
 | Action                               | Applicable scope                       | Description                                                                                                      |
 | ------------------------------------ | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |

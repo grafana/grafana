@@ -33,12 +33,14 @@ An alert rule is a set of evaluation criteria for when an alert rule should fire
 
 ## About Grafana-managed alert rules
 
-Grafana-managed alert rules can query a wide range of backend data sources, including multiple data sources in a single alert rule. They support expression-based transformations, advanced alert conditions, images in notifications, handling of error and no data states, and [more](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-data-source-managed-rule/#comparison-with-grafana-managed-rules).
+Grafana-managed alert rules can query a wide range of backend data sources, including multiple data sources in a single alert rule. They support expression-based transformations, advanced alert conditions, images in notifications, handling of error and no data states, and more.
 
-You can find the supported public data sources in the [Grafana Plugins directory](/grafana/plugins/data-source-plugins/?features=alerting). For step-by-step instructions, see [Configure Grafana-managed alert rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/).
+You can find the supported public data sources in the [Grafana Plugins directory](/grafana/plugins/data-source-plugins/?features=alerting). For step-by-step instructions, refer to [Configure Grafana-managed alert rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/).
+
+Grafana Alerting can also display and manage alert rules that are stored and evaluated in a Prometheus-compatible data source, such as Mimir or Loki. This is legacy functionality. For more information, including a [comparison of both types of alert rules](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/create-data-source-managed-rule/#comparison-with-grafana-managed-rules), refer to [Legacy data source-managed alerts](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/).
 
 ## Recording rules
 
 Similar to alert rules, recording rules are evaluated periodically. A recording rule pre-computes frequently used or computationally expensive queries, and saves the results as a new time series metric.
 
-The new recording metric can then be used in alert rules and dashboards to optimize their queries. For further details, refer to [Create recording rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/).
+The new recording metric can then be used in alert rules and dashboards to optimize their queries. For further details, refer to [Create Grafana-managed recording rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/).
