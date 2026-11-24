@@ -2,7 +2,7 @@ import { type IconName } from '@grafana/ui';
 import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 import { findKindByResource } from 'app/core/kinds/coreKinds';
 
-import { type FileDetails, type FlatTreeItem, type TreeItemKind, type SyncStatus, type TreeItem } from '../types';
+import { type FileDetails, type FlatTreeItem, type SyncStatus, type TreeItem } from '../types';
 
 import { getFolderMetadataPath, getParentFolderResourceHash, isFolderMetadataPath } from './folderMetadata';
 import { resourceKindInfos } from './resourceKinds';
@@ -59,7 +59,7 @@ export function mergeFilesAndResources(files: unknown[], resources: ResourceList
   return Array.from(merged.values());
 }
 
-export function getTreeItemKind(path: string, resource?: ResourceListItem): TreeItemKind {
+export function getTreeItemKind(path: string, resource?: ResourceListItem): string {
   const kindInfo = resource && findKindByResource(resource.resource);
   if (kindInfo) {
     return kindInfo.kind;

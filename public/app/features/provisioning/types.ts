@@ -11,8 +11,6 @@ import {
   type RepositorySpec,
 } from '../../api/clients/provisioning/v0alpha1';
 
-import { type ResourceKindName } from './utils/resourceKinds';
-
 export type JobType = 'sync' | 'delete' | 'move' | 'fix' | 'releaseResources' | 'deleteResources';
 
 // Repository type definition - extracted from API client
@@ -123,16 +121,14 @@ export interface StatusInfo {
   message?: string | string[];
 }
 
-// Tree view types for combined Resources/Files view. The resource labels (`Dashboard`, `Playlist`,
-// ...) are derived from the kind registry via `ResourceKindName`, so a new kind needs no edit here.
-// `File` is the fallback for plain files/directories that don't map to a known kind; `getTreeItemKind`
-// also infers `Folder` from plain directory paths that have no backing resource.
-export type TreeItemKind = ResourceKindName | 'File' | (string & {});
+// Tree view types for combined Resources/Files view. An item's `type` is its kind (`Dashboard`,
+// `Playlist`, ...), or `File` for plain files/directories that don't map to a known kind;
+// `getTreeItemKind` also infers `Folder` from plain directory paths that have no backing resource.
 export type SyncStatus = 'synced' | 'pending';
 
 export interface TreeItem {
   title: string;
-  type: TreeItemKind;
+  type: string;
   path: string;
   level: number;
   children: TreeItem[];

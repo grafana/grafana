@@ -62,13 +62,9 @@ type OnCoreKinds = {
  * shared description in {@link CORE_KINDS} (identity, icon, label, pages) and adds what only
  * provisioning needs.
  *
- * `as const` preserves the literal field types so the tree labels ({@link ResourceKindName}) are
- * derived from this object: adding a kind is ONE entry here and one in
- * {@link CORE_KINDS} (plus, if needed, enabling it on the backend so it appears in the settings
- * endpoint's `availableResources`) — no parallel unions to keep in sync. Entries are validated
- * against {@link ResourceKindInfo} where `allKindInfos` is built below; `as const` is used instead of
- * `satisfies ResourceKindInfo` because the interface references the derived types, which `satisfies`
- * would make a circular reference.
+ * Adding a kind is ONE entry here and one in {@link CORE_KINDS} (plus, if needed, enabling it on the
+ * backend so it appears in the settings endpoint's `availableResources`). Entries are validated
+ * against {@link ResourceKindInfo} where `allKindInfos` is built below.
  */
 export const resourceKindInfos = {
   folder: {
@@ -124,17 +120,8 @@ export const resourceKindInfos = {
 } as const satisfies OnCoreKinds;
 
 /**
- * Tree-view labels for the provisioning *resource* kinds (`Folder`, `Dashboard`, ...), derived from
- * the registry's `kind`s so the set stays in lockstep with the kinds above. The full tree
- * {@link TreeItemKind} (these labels plus the `File` fallback) is assembled from this in `../types`, so a
- * new kind needs no edit there either.
- */
-export type ResourceKindName = (typeof resourceKindInfos)[keyof typeof resourceKindInfos]['kind'];
-
-/**
  * Consumer-facing shape of a registry entry: the kind's shared description plus what provisioning
- * needs to know about it. `kind` is typed as the derived union, so a {@link ResourceKindInfo}
- * carries the kind's tree label without a separate lookup.
+ * needs to know about it.
  *
  * This is the single source of truth the UI reads from instead of scattering per-kind knowledge
  * across switch statements (tree labels, count labels, resource-ref unions, how to enumerate each
@@ -143,8 +130,6 @@ export type ResourceKindName = (typeof resourceKindInfos)[keyof typeof resourceK
  * `availableResources`.
  */
 export interface ResourceKindInfo extends KindInfo {
-  /** Kubernetes Kind, e.g. `Dashboard`. Also the label shown for this kind in the files/resources tree. */
-  kind: ResourceKindName;
   /**
    * Enumerates every resource of this kind on the instance. Each kind owns how it
    * lists itself — dashboards/folders through the unified search index, playlists

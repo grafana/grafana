@@ -19,12 +19,10 @@ import { getRepoFileUrl } from '../utils/git';
 import { PushSuccessMessage } from './PushSuccessMessage';
 import { useLastBranch } from './useLastBranch';
 
-type ResourceType = string;
-
 // Information object that gets passed to all handlers
 interface ProvisionedOperationInfo {
   repoType: RepoType;
-  resourceType?: ResourceType;
+  resourceType?: string;
 }
 
 /**
@@ -45,7 +43,7 @@ interface RequestHandlers<T> {
 interface ProvisionedHandlerOptions<T> {
   folderUID?: string; // this is used to refetch folder items
   repository?: RepositoryView;
-  resourceType?: ResourceType;
+  resourceType?: string;
   /** The commit created the branch: the destination page shows the PR banner, so no toast. */
   isNewBranch?: boolean;
   successMessage?: string;
