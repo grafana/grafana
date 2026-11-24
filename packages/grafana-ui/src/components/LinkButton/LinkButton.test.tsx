@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import type { JSX } from 'react';
 
 import { LinkButton } from './LinkButton';
@@ -36,6 +37,47 @@ describe('LinkButton', () => {
     // Assert that the icon comes before the text span in the DOM
     expect(link.childNodes[0]).toBe(icon);
     expect(link.childNodes[1]).toBe(textSpan);
+  });
+
+  it('calls onFocus and onBlur when the link gains and loses keyboard focus', async () => {
+    const onFocus = jest.fn();
+    const onBlur = jest.fn();
+    setup(
+      <>
+        <LinkButton href="https://grafana.com" onFocus={onFocus} onBlur={onBlur}>
+          Click me
+        </LinkButton>
+        <button>Next</button>
+      </>
+    );
+
+    await userEvent.tab();
+    expect(screen.getByRole('link', { name: 'Click me' })).toHaveFocus();
+    expect(onFocus).toHaveBeenCalledTimes(1);
+    expect(onBlur).not.toHaveBeenCalled();
+
+    await userEvent.tab();
+    expect(onBlur).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps onFocus and onBlur working when the link also has a tooltip', async () => {
+    const onFocus = jest.fn();
+    const onBlur = jest.fn();
+    setup(
+      <>
+        <LinkButton href="https://grafana.com" tooltip="More about Grafana" onFocus={onFocus} onBlur={onBlur}>
+          Click me
+        </LinkButton>
+        <button>Next</button>
+      </>
+    );
+
+    await userEvent.tab();
+    expect(onFocus).toHaveBeenCalledTimes(1);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('More about Grafana');
+
+    await userEvent.tab();
+    expect(onBlur).toHaveBeenCalledTimes(1);
   });
 
   it('sanitizes javascript: URLs in href', () => {
