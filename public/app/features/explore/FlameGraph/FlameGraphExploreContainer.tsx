@@ -27,7 +27,7 @@ export const FlameGraphExploreContainer = (props: Props) => {
   const useTableNG = useFlagFlameGraphTableNg();
   const tableRefreshEnabled = useFlagTableRefresh();
   const contentAwareWidthsEnabled = useFlagTableAutoColumnWidths();
-  const dataSource = useFlameGraphDataSourceType(props.request);
+  const dataSource = useFlameGraphDataSourceType(props.request, props.dataFrames[0]);
 
   return (
     <div className={styles.container}>

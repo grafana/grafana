@@ -20,7 +20,7 @@ export const FlameGraphPanel = (props: PanelProps<Options>) => {
   const useTableNG = useFlagFlameGraphTableNg();
   const tableRefreshEnabled = useFlagTableRefresh();
   const contentAwareWidthsEnabled = useFlagTableAutoColumnWidths();
-  const dataSource = useFlameGraphDataSourceType(props.data.request);
+  const dataSource = useFlameGraphDataSourceType(props.data.request, props.data.series[0]);
 
   const wrongFields = checkFields(props.data.series[0]);
   if (wrongFields) {
