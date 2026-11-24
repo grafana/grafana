@@ -32,6 +32,8 @@ export interface DashboardPlanRow {
   id: string;
   title: string;
   repeatFor?: string;
+  /** Stand-in variable names that apply only while this row or tab is selected. */
+  variables?: string[];
   panels: DashboardPlanPanel[];
 }
 

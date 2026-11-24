@@ -334,6 +334,26 @@ function mergeThresholdValues(field: Field, theme: GrafanaTheme2): Field | undef
   };
 }
 
+/**
+ * Duration to use when the start and end of the state are equal. Timestamps are whole
+ * milliseconds, so this can't occur naturally and the tooltip can safely show it as 0ms.
+ */
+export const ZERO_DURATION_END_OFFSET = 0.5;
+
+/** If a state ends at or before its start, set its end to just after the start so it still shows on the diagram. */
+function ensureEndAfterStart(startField: Field, endField: Field): Field {
+  return {
+    ...endField,
+    values: endField.values.map((end, i) => {
+      const start = startField.values[i];
+      if (end == null || start == null || end > start) {
+        return end;
+      }
+      return start + ZERO_DURATION_END_OFFSET;
+    }),
+  };
+}
+
 // This will return a set of frames with only graphable values included
 export function prepareTimelineFields(
   series: DataFrame[] | undefined,
@@ -382,7 +402,7 @@ export function prepareTimelineFields(
 
       let endFrame: DataFrame = {
         length: frame.length,
-        fields: [frame.fields[endFieldIdx]],
+        fields: [ensureEndAfterStart(frame.fields[startFieldIdx], frame.fields[endFieldIdx])],
       };
 
       frame = outerJoinDataFrames({
