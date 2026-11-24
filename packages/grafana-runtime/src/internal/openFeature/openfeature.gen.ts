@@ -338,6 +338,8 @@ export const FlagKeys = {
   PluginsDisableMTPluginsFallback: "plugins.disableMTPluginsFallback",
   /** Initializes data source instance settings asynchronously from the API instead of synchronously from boot data */
   PluginsInitDataSourcesAsync: "plugins.initDataSourcesAsync",
+  /** Installs, updates and uninstalls plugins through the plugins API only, and falls back to the legacy API if that call fails */
+  PluginsUseMTPluginInstall: "plugins.useMTPluginInstall",
   /** Enables plugins setting from new apis */
   PluginsUseMTPluginSettings: "plugins.useMTPluginSettings",
   /** Enables plugins decoupling from bootdata */
@@ -2208,6 +2210,17 @@ export const useFlagPluginsDisableMTPluginsFallback = (options?: ReactFlagEvalua
  */
 export const useFlagPluginsInitDataSourcesAsync = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("plugins.initDataSourcesAsync", false, options).value;
+};
+
+/**
+ * Installs, updates and uninstalls plugins through the plugins API only, and falls back to the legacy API if that call fails
+ *
+ * **Details:**
+ * - flag key: `plugins.useMTPluginInstall`
+ * - default value: `false`
+ */
+export const useFlagPluginsUseMTPluginInstall = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("plugins.useMTPluginInstall", false, options).value;
 };
 
 /**

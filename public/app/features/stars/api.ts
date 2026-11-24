@@ -5,14 +5,8 @@ import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult } from 'app/features/search/service/types';
 import { type ThunkResult } from 'app/types/store';
 
-import { STARRED_KINDS } from './kinds';
-import { findStarredNames, userStarsFieldSelector } from './utils';
-
-/** The starred names of one search kind. */
-interface StarredNames {
-  kind: string;
-  names: string[];
-}
+import { STARRED_INDEX_KINDS } from './kinds';
+import { findStarredNames, type StarredNames, userStarsFieldSelector } from './utils';
 
 /** Tag for the starred search rows, invalidated by changes that rewrite rows without changing the star set. */
 const STARRED_SEARCH_TAG = 'StarredSearch';
@@ -84,7 +78,7 @@ export const invalidateStarredSearchFor =
     const { data } = collectionsAPIv1alpha1.endpoints.listStars.select({ fieldSelector: userStarsFieldSelector() })(
       getState()
     );
-    const starredNames = new Set(STARRED_KINDS.flatMap(({ group, kind }) => findStarredNames(data, group, kind)));
+    const starredNames = new Set(STARRED_INDEX_KINDS.flatMap(({ group, kind }) => findStarredNames(data, group, kind)));
     if (uids.some((uid) => starredNames.has(uid))) {
       dispatch(invalidateStarredSearch());
     }

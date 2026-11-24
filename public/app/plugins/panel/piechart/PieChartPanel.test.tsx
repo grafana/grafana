@@ -503,6 +503,18 @@ describe('PieChartPanel', () => {
       expect(within(legend).getByText('Chrome')).toBeInTheDocument();
       expect(within(legend).getByText('60')).toBeInTheDocument();
     });
+
+    it('limits the legend items when legend limit is set', () => {
+      setup({
+        options: buildOptions({ legend: buildLegend({ limit: 1 }) }),
+        data: { series: defaultSliceSeries },
+      });
+
+      const legend = screen.getByTestId(selectors.components.VizLayout.legend);
+      expect(within(legend).getByText('Chrome')).toBeInTheDocument();
+      expect(within(legend).queryByText('Firefox')).not.toBeInTheDocument();
+      expect(within(legend).getByText(/show all/)).toBeInTheDocument();
+    });
   });
 });
 
