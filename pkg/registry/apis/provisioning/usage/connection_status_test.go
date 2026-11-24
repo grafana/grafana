@@ -23,7 +23,7 @@ func TestConnectionUsageStatusFromConnection(t *testing.T) {
 			Webhook: &provisioning.ConnectionWebhookConfig{Disabled: true},
 		},
 		Status: provisioning.ConnectionStatus{
-			Health: provisioning.HealthStatus{Healthy: true},
+			Health: provisioning.ConnectionHealthStatus{Healthy: true},
 			Conditions: []metav1.Condition{
 				{Type: provisioning.ConditionTypeReady, Status: metav1.ConditionTrue, Reason: provisioning.ReasonAvailable},
 			},
@@ -46,7 +46,7 @@ func TestConnectionUsageStatusFromConnection_AuthFailure(t *testing.T) {
 	conn := &provisioning.Connection{
 		Spec: provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
 		Status: provisioning.ConnectionStatus{
-			Health: provisioning.HealthStatus{Healthy: false},
+			Health: provisioning.ConnectionHealthStatus{Healthy: false},
 			Conditions: []metav1.Condition{
 				{Type: provisioning.ConditionTypeReady, Status: metav1.ConditionFalse, Reason: provisioning.ReasonAuthenticationFailed},
 			},

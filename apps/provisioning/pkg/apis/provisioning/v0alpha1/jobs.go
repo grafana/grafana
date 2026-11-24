@@ -106,6 +106,11 @@ const (
 	JobStateWarning JobState = "warning"
 )
 
+type (
+	RepositoryJobState = JobState
+	HistoricJobState   = JobState
+)
+
 func (j JobState) Finished() bool {
 	return j == JobStateSuccess || j == JobStateError || j == JobStateWarning
 }

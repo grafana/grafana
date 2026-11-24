@@ -65,6 +65,7 @@ import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { type DashboardSceneState } from '../scene/types/dashboard';
 import { DashboardSidebar } from '../sidebar/DashboardSidebar';
+import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 
 import { buildVizPanel } from './layoutSerializers/utils';
@@ -81,64 +82,44 @@ import {
 } from './transformSceneToSaveModelSchemaV2';
 
 // Mock dependencies
-jest.mock('../utils/dashboardSceneGraph', () => {
-  const original = jest.requireActual('../utils/dashboardSceneGraph');
-  const getElementIdentifierForVizPanel = jest.fn().mockImplementation((panel) => {
-    // Return the panel key if it exists, otherwise use panel-1 as default
-    return panel?.state?.key || 'panel-1';
-  });
-  // Walk up from a panel collecting the full chain of enclosing repeat-clone section keys.
-  const getEnclosingRepeatCloneKeys = jest.fn().mockImplementation((panel) => {
-    const keys = [];
-    let current = panel?.parent;
-    while (current) {
-      if (current.state?.repeatSourceKey && current.state?.key) {
-        keys.push(current.state.key);
-      }
-      current = current.parent;
+// Return the panel key if it exists, otherwise use panel-1 as default
+jest
+  .spyOn(dashboardSceneGraph, 'getElementIdentifierForVizPanel')
+  .mockImplementation((panel) => panel?.state?.key || 'panel-1');
+
+// Walk up from a panel collecting the full chain of enclosing repeat-clone section keys.
+jest.spyOn(dashboardSceneGraph, 'getEnclosingRepeatCloneKeys').mockImplementation((panel) => {
+  const keys = [];
+  let current = panel?.parent;
+  while (current) {
+    const state: { repeatSourceKey?: string; key?: string } = current.state;
+    if (state.repeatSourceKey && state.key) {
+      keys.push(state.key);
     }
-    return keys;
-  });
-  return {
-    ...original,
-    dashboardSceneGraph: {
-      ...original.dashboardSceneGraph,
-      getElementIdentifierForVizPanel,
-      getEnclosingRepeatCloneKeys,
-      getSnapshotElementIdentifierForVizPanel: jest.fn().mockImplementation((panel) => {
-        const base =
-          panel?.state?.repeatSourceKey && panel?.state?.key ? panel.state.key : getElementIdentifierForVizPanel(panel);
-        const enclosingCloneKeys = getEnclosingRepeatCloneKeys(panel);
-        return enclosingCloneKeys.length ? `${enclosingCloneKeys.join('-')}-${base}` : base;
-      }),
-      getPanelLinks: jest.fn().mockImplementation(() => {
-        return new VizPanelLinks({
-          rawLinks: [
-            { title: 'Test Link 1', url: 'http://test1.com', targetBlank: true },
-            { title: 'Test Link 2', url: 'http://test2.com' },
-          ],
-          menu: new VizPanelLinksMenu({}),
-        });
-      }),
-    },
-  };
+    current = current.parent;
+  }
+  return keys;
 });
 
-jest.mock('../utils/utils', () => {
-  const original = jest.requireActual('../utils/utils');
-  return {
-    ...original,
-    getDashboardSceneFor: jest.fn().mockImplementation(() => ({
-      serializer: {
-        getDSReferencesMapping: jest.fn().mockReturnValue({
-          panels: new Map([['panel-1', new Set(['A'])]]),
-          variables: new Set(),
-          annotations: new Set(),
-        }),
-      },
-    })),
-  };
+jest.spyOn(dashboardSceneGraph, 'getSnapshotElementIdentifierForVizPanel').mockImplementation((panel) => {
+  const base =
+    panel?.state?.repeatSourceKey && panel?.state?.key
+      ? panel.state.key
+      : dashboardSceneGraph.getElementIdentifierForVizPanel(panel);
+  const enclosingCloneKeys = dashboardSceneGraph.getEnclosingRepeatCloneKeys(panel);
+  return enclosingCloneKeys.length ? `${enclosingCloneKeys.join('-')}-${base}` : base;
 });
+
+jest.spyOn(dashboardSceneGraph, 'getPanelLinks').mockImplementation(
+  () =>
+    new VizPanelLinks({
+      rawLinks: [
+        { title: 'Test Link 1', url: 'http://test1.com', targetBlank: true },
+        { title: 'Test Link 2', url: 'http://test2.com' },
+      ],
+      menu: new VizPanelLinksMenu({}),
+    })
+);
 
 function setupDashboardScene(state: Partial<DashboardSceneState>): DashboardScene {
   return new DashboardScene(state);

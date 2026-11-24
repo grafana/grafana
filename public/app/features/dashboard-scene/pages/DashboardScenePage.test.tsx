@@ -36,7 +36,7 @@ import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
 import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
 import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import * as libraryPanels from 'app/features/library-panels/state/api';
+import { getLibraryPanel } from 'app/features/library-panels/state/api';
 import { DASHBOARD_FROM_LS_KEY, DashboardRoutes } from 'app/types/dashboard';
 
 import { setPublicDashboardConfigFn } from '../../dashboard/components/PublicDashboard/usePublicDashboardConfig';
@@ -46,6 +46,14 @@ import { createDeferred } from '../utils/test-utils';
 
 import { DashboardScenePage, type Props } from './DashboardScenePage';
 import { DashboardScenePageStateManagerV2, getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
+
+jest.mock('app/features/library-panels/state/api', () =>
+  jest
+    .requireActual('test/helpers/partialMock')
+    .partialMock(jest.requireActual('app/features/library-panels/state/api'), {
+      getLibraryPanel: jest.fn(),
+    })
+);
 
 const mockBackendGet = jest.fn();
 
@@ -114,6 +122,10 @@ const panelPlugin = getPanelPlugin(
 panelPlugin.meta.info.logos.small = 'public/build/img/grafana_icon.svg';
 
 beforeEach(() => {
+  jest
+    .mocked(getLibraryPanel)
+    .mockReset()
+    .mockImplementation(jest.requireActual('app/features/library-panels/state/api').getLibraryPanel);
   setPanelPluginMetas({ 'custom-viz-panel': panelPlugin.meta });
   const grafanaSettings = makeDataSourceSettings('-- Grafana --', 'Grafana', 'grafana');
   seedDataSources([{ settings: grafanaSettings, api: new MockDataSourceApi(grafanaSettings) }], { legacySrv: 'mock' });
@@ -345,7 +357,9 @@ describe('DashboardScenePage', () => {
       expect(screen.queryByText('Loading ...')).not.toBeInTheDocument();
     } finally {
       cleanup();
-      fetchPanel.mockRestore();
+      fetchPanel
+        .mockReset()
+        .mockImplementation(jest.requireActual('app/features/library-panels/state/api').getLibraryPanel);
     }
   });
 
@@ -393,7 +407,9 @@ describe('DashboardScenePage', () => {
         expect(screen.queryByText('Loading ...')).not.toBeInTheDocument();
       } finally {
         cleanup();
-        fetchPanel.mockRestore();
+        fetchPanel
+          .mockReset()
+          .mockImplementation(jest.requireActual('app/features/library-panels/state/api').getLibraryPanel);
         loadEditor.mockRestore();
       }
     }
@@ -429,7 +445,9 @@ describe('DashboardScenePage', () => {
       expect(panel.isActive).toBe(false);
     } finally {
       cleanup();
-      fetchPanel.mockRestore();
+      fetchPanel
+        .mockReset()
+        .mockImplementation(jest.requireActual('app/features/library-panels/state/api').getLibraryPanel);
     }
   });
 
@@ -485,7 +503,9 @@ describe('DashboardScenePage', () => {
         expect(screen.queryByText('Loading ...')).not.toBeInTheDocument();
       } finally {
         cleanup();
-        fetchPanel.mockRestore();
+        fetchPanel
+          .mockReset()
+          .mockImplementation(jest.requireActual('app/features/library-panels/state/api').getLibraryPanel);
         loadEditor.mockRestore();
       }
     }
@@ -809,7 +829,7 @@ function mockPendingLibraryPanel() {
     })
   );
   const pending = createDeferred<LibraryPanel>();
-  const fetchPanel = jest.spyOn(libraryPanels, 'getLibraryPanel').mockReturnValue(pending.promise);
+  const fetchPanel = jest.mocked(getLibraryPanel).mockReturnValue(pending.promise);
   const libraryPanel: LibraryPanel = {
     uid: 'library-a',
     name: 'Library A',
