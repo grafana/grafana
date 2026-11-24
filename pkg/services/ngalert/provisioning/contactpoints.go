@@ -327,12 +327,29 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	if err := ecp.checkProtectedFields(ctx, user, existingReceiverUID, typeSchema, rawContactPoint, contactPoint); err != nil {
 		return err
 	}
+	revision, err := ecp.configStore.Get(ctx, orgID)
+	if err != nil {
+		return err
+	}
+	var storedSecrets map[string]string
+	if stored, ok := revision.Config.GetGrafanaReceiverMap()[contactPoint.UID]; ok {
+		storedSecrets = stored.SecureSettings
+	}
+	decryptStored := ecp.decryptValueOrRedacted(ctx, true, contactPoint.UID)
+
 	// transform to internal model
 	extractedSecrets, err := RemoveSecretsForContactPoint(&contactPoint)
 	if err != nil {
 		return err
 	}
 	for k, v := range extractedSecrets {
+		// Encryption is not deterministic, so re-encrypting an unchanged secret would change the
+		// stored configuration and reload the Alertmanager. The comparison uses the revision that
+		// is saved below, so a ciphertext is reused only if it holds exactly the submitted value.
+		if encrypted, ok := storedSecrets[k]; ok && decryptStored(encrypted) == v {
+			extractedSecrets[k] = encrypted
+			continue
+		}
 		encryptedValue, err := ecp.encryptValue(ctx, v)
 		if err != nil {
 			return err
@@ -352,11 +369,6 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 		DisableResolveMessage: contactPoint.DisableResolveMessage,
 		Settings:              jsonData,
 		SecureSettings:        extractedSecrets,
-	}
-	// save to store
-	revision, err := ecp.configStore.Get(ctx, orgID)
-	if err != nil {
-		return err
 	}
 
 	oldReceiver, newReceiver, fullRemoval, newReceiverCreated := stitchReceiver(revision.Config, mergedReceiver)
