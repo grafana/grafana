@@ -533,8 +533,8 @@ importers:
         specifier: 12.3.0
         version: 12.3.0
       micro-memoize:
-        specifier: ^4.1.2
-        version: 4.2.0
+        specifier: ^5.0.0
+        version: 5.2.2
       ml-regression-polynomial:
         specifier: ^4.0.0
         version: 4.0.0
@@ -605,8 +605,8 @@ importers:
         specifier: 9.3.0
         version: 9.3.0(@types/react@19.2.18)(react@19.2.8)(redux@5.0.1)
       react-resizable:
-        specifier: 3.0.5
-        version: 3.0.5(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        specifier: 4.0.2
+        version: 4.0.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       react-router:
         specifier: 5.3.4
         version: 5.3.4(react@19.2.8)
@@ -686,8 +686,8 @@ importers:
         specifier: 2.9.1
         version: 2.9.1
       type-fest:
-        specifier: ^4.18.2
-        version: 4.41.0
+        specifier: ^6.0.0
+        version: 6.0.3
       uplot:
         specifier: 1.6.32
         version: 1.6.32
@@ -860,9 +860,6 @@ importers:
       '@types/react-refresh':
         specifier: ^0
         version: 0.14.7
-      '@types/react-resizable':
-        specifier: 3.0.8
-        version: 3.0.8
       '@types/react-router':
         specifier: 5.1.20
         version: 5.1.20
@@ -1392,8 +1389,8 @@ importers:
         specifier: ^4.17.21
         version: 4.18.1
       micro-memoize:
-        specifier: ^4.1.2
-        version: 4.2.0
+        specifier: ^5.0.0
+        version: 5.2.2
       msw:
         specifier: ^2.0.0
         version: 2.10.4(@types/node@26.6.5)(@typescript/typescript6@6.0.2)
@@ -1401,8 +1398,8 @@ importers:
         specifier: ^1.6.0
         version: 1.6.0
       type-fest:
-        specifier: ^4.40.0
-        version: 4.41.0
+        specifier: ^6.0.0
+        version: 6.0.3
     devDependencies:
       '@grafana/test-utils':
         specifier: workspace:*
@@ -1818,8 +1815,8 @@ importers:
         specifier: ^2.2.1
         version: 2.2.1
       micro-memoize:
-        specifier: ^4.1.2
-        version: 4.2.0
+        specifier: ^5.0.0
+        version: 5.2.2
       react:
         specifier: '>=19'
         version: 19.2.8
@@ -1852,7 +1849,7 @@ importers:
         specifier: workspace:*
         version: link:../grafana-e2e-selectors
       '@grafana/plugin-compat':
-        specifier: ^0.11.0
+        specifier: ^0.12.0
         version: link:../grafana-plugin-compat
       '@grafana/plugin-ui':
         specifier: ^0.18.0
@@ -2469,8 +2466,8 @@ importers:
         specifier: ^4.17.23
         version: 4.18.1
       micro-memoize:
-        specifier: ^4.1.2
-        version: 4.2.0
+        specifier: ^5.0.0
+        version: 5.2.2
       monaco-editor:
         specifier: ^0.34.1
         version: 0.34.1
@@ -7327,9 +7324,6 @@ packages:
   '@types/react-refresh@0.14.7':
     resolution: {integrity: sha512-XIdFxBMm9VdO49M+Nn4Ud3eVwRub6vhJjCzd7g09kUF5NKsITGoCEwCXE1YupIRPo7A6JGc5fUV2Y5l31OYxcA==}
 
-  '@types/react-resizable@3.0.8':
-    resolution: {integrity: sha512-Pcvt2eGA7KNXldt1hkhVhAgZ8hK41m0mp89mFgQi7LAAEZiaLgm4fHJ5zbJZ/4m2LVaAyYrrRRv1LHDcrGQanA==}
-
   '@types/react-router-dom@5.3.3':
     resolution: {integrity: sha512-kpqnYK4wcdm5UaWI3fLcELopqLrHgLqNsdpHauzlQktfkHL3npOSwtj1Uz9oKBAzs7lFtVkV8j83voAz2D8fhw==}
 
@@ -10170,6 +10164,10 @@ packages:
   fast-equals@4.0.3:
     resolution: {integrity: sha512-G3BSX9cfKttjr+2o1O22tYMLq0DPluZnYtq1rXumE1SpL/F/SLIfHx08WYQoWSIpeMYf8sRbJ8++71+v6Pnxfg==}
 
+  fast-equals@5.4.5:
+    resolution: {integrity: sha512-yKEpcFuRPu/pTQL2VB8YKE2yFldrLlIsoWtJeBnAdqEhvu21OgkFT0C8njf/xYc2LSZGEr3K9JGjthHJxnVLvQ==}
+    engines: {node: '>=6.0.0'}
+
   fast-glob@3.3.3:
     resolution: {integrity: sha512-7MptL8U0cqcFdzIzwOTHoilX9x5BrNqye7Z/LuC7kCMRio1EMSyqRK3BEAUD7sXRq4iT4AzTVuZdhgQ2TCvYLg==}
     engines: {node: '>=8.6.0'}
@@ -10197,6 +10195,9 @@ packages:
 
   fast-string-width@3.0.2:
     resolution: {integrity: sha512-gX8LrtNEI5hq8DVUfRQMbr5lpaS4nMIWV+7XEbXk2b8kiQIizgnlr12B4dA3ZEx3308ze0O4Q1R+cHts8kyUJg==}
+
+  fast-stringify@4.0.3:
+    resolution: {integrity: sha512-HJouFZmaXofRDp0W/5998CAti608tPWj/twaY3DfvtnRqb4CU8X7HXSsuAxknWLyymnARNeNUz2xeY6+/DINZQ==}
 
   fast-uri@3.1.8:
     resolution: {integrity: sha512-GZMtZUTNRpOVIECoXwLNZS5xUGE+mVNbTB8h/7Rwh2TFWcBQiPzTgyZi05BF9UMZKkLJv8XBRJTlU7zg8+ZfMg==}
@@ -12090,8 +12091,8 @@ packages:
     resolution: {integrity: sha512-4113TdXeLAsMruJ79OpFL5O8+LTFXhQqZ260rF3tgUmiNAtRm4Uume04I+65PRN6yZ69J4f8rVYWW8zRk65UYw==}
     engines: {node: '>=22.12.0'}
 
-  micro-memoize@4.2.0:
-    resolution: {integrity: sha512-dRxIsNh0XosO9sd3aASUabKOzG9dloLO41g74XUGThpHBoGm1ttakPT5in14CuW/EDedkniaShFHbymmmKGOQA==}
+  micro-memoize@5.2.2:
+    resolution: {integrity: sha512-BQGcwWF+rFFN9kdxnoUP0bdjPSBFfuusK4N5EncO7ORWunkfu1BFeLrR6aPmD5OkPdQi6xYxrSeEtKqNe0JaMA==}
 
   micromark-util-character@2.1.1:
     resolution: {integrity: sha512-wv8tdUTJ3thSFFFJKtpYKOYiGP2+v96Hvk4Tu8KpCAsTMs6yi+nVmGh1syvSCsaxz45J6Jbw+9DD6g97+NV67Q==}
@@ -13330,6 +13331,12 @@ packages:
     peerDependencies:
       react: '>= 16.3'
 
+  react-resizable@4.0.2:
+    resolution: {integrity: sha512-jZD9ghYRmyJCw0+awYctSZ+9pmX1WXQvzDrTovELYc8obC/BShTI2r4c14LIVzeQ+vJZNb0yKM7bG2eqv7Vfyg==}
+    peerDependencies:
+      react: '>= 16.3'
+      react-dom: '>= 16.3'
+
   react-router-dom-v5-compat@6.30.6:
     resolution: {integrity: sha512-I54amXpivD3V0r1BYUIj1qLOljXx+UpbLG63Bqbm3BdKH62z4H3znC0L7SyMTYAMEDZuUjDSlqtkBRG/OEDXBg==}
     engines: {node: '>=14.0.0'}
@@ -14416,6 +14423,10 @@ packages:
   tabbable@6.5.0:
     resolution: {integrity: sha512-wieBHXygIm7OyQOu5hQlkk62/WyCFYGlWg7L6/ZCUZwx0o398Zkn4pVmMyfYhfMG8kGrj/Krt8eIk6UKC6VzwA==}
 
+  tagged-tag@1.0.0:
+    resolution: {integrity: sha512-yEFYrVhod+hdNyx7g5Bnkkb0G6si8HJurOoOEgC8B/O0uXLHlaey/65KRv6cuWBNhBgHKAROVpc7QyYqE5gFng==}
+    engines: {node: '>=20'}
+
   tapable@2.3.3:
     resolution: {integrity: sha512-uxc/zpqFg6x7C8vOE7lh6Lbda8eEL9zmVm/PLeTPBRhh1xCgdWaQ+J1CUieGpIfm2HdtsUpRv+HshiasBMcc6A==}
     engines: {node: '>=6'}
@@ -14773,6 +14784,10 @@ packages:
   type-fest@4.41.0:
     resolution: {integrity: sha512-TeTSQ6H5YHvpqVwBRcnLDCBnDOHWYu7IvGbHT6N8AOymcr9PJGjc1GTtiWZTYg0NCgYwvnYWEkVChQAr9bjfwA==}
     engines: {node: '>=16'}
+
+  type-fest@6.0.3:
+    resolution: {integrity: sha512-MOJXegkac3h+sWdVb6VY/ACclsa71z3BprNpedGV8ljIzYCo+LRWgyIkWhidKNoiNJOb6kUds1pNCyzQ2p6hJQ==}
+    engines: {node: '>=22'}
 
   type-is@2.1.0:
     resolution: {integrity: sha512-faYHw0anBbc/kWF3zFTEnxSFOAGUX9GFbOBthvDdLsIlEoWOFOtS0zgCiQYwIskL9iGXZL3kAXD8OoZ4GmMATA==}
@@ -20688,10 +20703,6 @@ snapshots:
       '@types/babel__core': 7.20.5
       csstype: 3.2.3
 
-  '@types/react-resizable@3.0.8':
-    dependencies:
-      '@types/react': 19.2.18
-
   '@types/react-router-dom@5.3.3':
     dependencies:
       '@types/history': 4.7.11
@@ -23850,6 +23861,8 @@ snapshots:
 
   fast-equals@4.0.3: {}
 
+  fast-equals@5.4.5: {}
+
   fast-glob@3.3.3:
     dependencies:
       '@nodelib/fs.stat': 2.0.5
@@ -23875,6 +23888,8 @@ snapshots:
   fast-string-width@3.0.2:
     dependencies:
       fast-string-truncated-width: 3.0.3
+
+  fast-stringify@4.0.3: {}
 
   fast-uri@3.1.8: {}
 
@@ -26409,7 +26424,10 @@ snapshots:
       stylis: 4.4.0
       ts-dedent: 2.3.0
 
-  micro-memoize@4.2.0: {}
+  micro-memoize@5.2.2:
+    dependencies:
+      fast-equals: 5.4.5
+      fast-stringify: 4.0.3
 
   micromark-util-character@2.1.1:
     dependencies:
@@ -27931,6 +27949,13 @@ snapshots:
     transitivePeerDependencies:
       - react-dom
 
+  react-resizable@4.0.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+    dependencies:
+      prop-types: 15.8.1
+      react: 19.2.8
+      react-dom: 19.2.8(react@19.2.8)
+      react-draggable: 4.7.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+
   react-router-dom-v5-compat@6.30.6(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8):
     dependencies:
       '@remix-run/router': 1.23.4
@@ -29425,6 +29450,8 @@ snapshots:
 
   tabbable@6.5.0: {}
 
+  tagged-tag@1.0.0: {}
+
   tapable@2.3.3: {}
 
   tar-stream@2.2.0:
@@ -29758,6 +29785,10 @@ snapshots:
   type-fest@3.13.1: {}
 
   type-fest@4.41.0: {}
+
+  type-fest@6.0.3:
+    dependencies:
+      tagged-tag: 1.0.0
 
   type-is@2.1.0:
     dependencies:

@@ -54,14 +54,15 @@ func newDryRunFixture(t *testing.T, quotaReached bool) *dryRunFixture {
 	folderService := foldertest.NewFakeService()
 	folderService.ExpectedFolder = &folder.Folder{UID: "test-folder-uid", Title: "Test Folder"}
 	validator := &switchableValidator{}
-	svc := legacy.NewLegacyRuleService(
+	svc := legacy.New(
 		ruleStore, fakes.NewFakeProvisioningStore(), folderService, &quotas, ruleStore,
 		60, log.NewNopLogger(), nil, fakeRuleAccessControl{}, validator,
+		request.GetNamespaceMapper(&setting.Cfg{}),
 	)
 	ctx := genericapirequest.WithNamespace(context.Background(), "default")
 	ctx = identity.WithRequester(ctx, &user.SignedInUser{OrgID: 1, UserUID: "test-user"})
 	return &dryRunFixture{
-		storage:   &legacyStorage{rules: legacy.NewAlertRules(svc, request.GetNamespaceMapper(&setting.Cfg{}))},
+		storage:   &legacyStorage{rules: svc.AlertRules()},
 		ruleStore: ruleStore,
 		validator: validator,
 		ctx:       ctx,

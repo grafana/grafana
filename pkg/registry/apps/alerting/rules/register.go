@@ -95,7 +95,7 @@ func RegisterAppInstaller(
 
 	// Search routes through a dual-writer-aware client per kind: the legacy
 	// backend (provisioning service) serves modes 0-3, the unified client 4+.
-	legacySearch := search.NewLegacyClient(*ng.Api.LegacyRuleService)
+	legacySearch := search.NewLegacyClient(ng.Api.LegacyRuleService.Searcher())
 	unifiedSearch := search.NewUnifiedClient(unifiedClient)
 	searchHandler := search.NewHandler(
 		dualwrite.NewSelector[search.Backend](dual, alertrule.ResourceInfo.GroupResource(), legacySearch, unifiedSearch),
@@ -435,12 +435,11 @@ func (a *AppInstaller) GetStorageOptions(gr schema.GroupResource) *apistore.Stor
 // served version, and the legacy store is not tied to one, because the
 // apiserver converts to the hub version before storage is called.
 func (a *AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafanarest.Storage {
-	namespacer := reqns.GetNamespaceMapper(a.cfg)
 	switch gvr.GroupResource() {
 	case recordingrule.ResourceInfo.GroupResource():
-		return recordingrule.NewStorage(*a.ng.Api.LegacyRuleService, namespacer)
+		return recordingrule.NewStorage(a.ng.Api.LegacyRuleService.RecordingRules())
 	case alertrule.ResourceInfo.GroupResource():
-		return alertrule.NewStorage(*a.ng.Api.LegacyRuleService, namespacer)
+		return alertrule.NewStorage(a.ng.Api.LegacyRuleService.AlertRules())
 	case rulesequence.ResourceInfo.GroupResource():
 		return nil
 	case config.ResourceInfo.GroupResource():
@@ -470,13 +469,12 @@ func newWritesUnifiedChecker(dual dualwrite.Service, gr schema.GroupResource) fu
 // legacy/dual-write parents. The rule status is persisted to alert_rule.k8s_status
 // via the shared rule store. Matched on the resource alone, as in GetLegacyStorage.
 func (a *AppInstaller) GetLegacyStatus(gvr schema.GroupVersionResource, unified *appsdkapiserver.StatusREST) rest.Storage {
-	namespacer := reqns.GetNamespaceMapper(a.cfg)
 	writesUnified := newWritesUnifiedChecker(a.dual, gvr.GroupResource())
 	switch gvr.GroupResource() {
 	case recordingrule.ResourceInfo.GroupResource():
-		return recordingrule.NewStatusStorage(*a.ng.Api.LegacyRuleService, namespacer, unified, writesUnified)
+		return recordingrule.NewStatusStorage(a.ng.Api.LegacyRuleService.RecordingRules(), unified, writesUnified)
 	case alertrule.ResourceInfo.GroupResource():
-		return alertrule.NewStatusStorage(*a.ng.Api.LegacyRuleService, namespacer, unified, writesUnified)
+		return alertrule.NewStatusStorage(a.ng.Api.LegacyRuleService.AlertRules(), unified, writesUnified)
 	default:
 		return nil
 	}

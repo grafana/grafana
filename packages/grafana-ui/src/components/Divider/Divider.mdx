@@ -5,17 +5,22 @@ import { Divider } from './Divider';
 
 # Divider
 
-### Usage
-
-#### When to use
+## When to use
 
 When creating separation between large sections of page content or smaller parts of components like in the page info section of the header.
 
-#### When not to use
+## Never use for
 
 Dividers should be used sparingly.
 
 Don’t use dividers when white space (padding / margins) is sufficient to separate out sections. When sections are related to each other, they may not need dividers (ex: filtering / search related to a table).
+
+## Do's and don'ts
+
+- Import and add the Divider component inside the code where you would normally add an hr or a div.
+- Don't modify the color of the divider
+
+## Usage
 
 ### Variants
 
@@ -70,14 +75,8 @@ import { Divider } from '@grafana/ui';
 
 ```
 
-### Dos
+## Accessibility
 
-    - Import and add the Divider component inside the code where you would normally add an hr or a div.
-
-### Don'ts
-
-    - Do not modify the color of the divider
-
-### Props
+## Props
 
 <ArgTypes of={Divider} />
