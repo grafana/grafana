@@ -28,21 +28,7 @@ A performant and accessible combobox component that supports both synchronous an
 
 ## Do's and don'ts
 
-Custom option renderers must meet these requirements:
-
-- Keep the renderer pure and free of side effects. Virtualized rows can render repeatedly, and the render function _may_ be called before an option is rendered, such as to measure layout.
-- Custom content can use variable heights. Combobox starts with a conservative two-line estimate, then measures each mounted custom row and updates the virtual layout.
-- Menu and option width is estimated from that `label` and `description` on items. It is currently not measured from the custom content, so ensure your custom content fits within the estimated width or can wrap.
-- Include the option label or equivalent accessible text in the rendered content. The plain string `label` is still used for filtering and for the selected input value.
-- Don't nest buttons, links, inputs, or other interactive controls. The option row owns focus and selection.
-
-Consider the following when implementing async behavior:
-
-- Consumers should return filtered options matching the input. This is bested suited for APIs that support filtering/search.
-- When the menu is opened with blank input (e.g. initial click with no selected value) the function will be called with an empty string.
-- Consumers should only ever load top-n options from APIs using this async function. If your API does not support filtering, consider loading options yourself and just passing the sync options array in
-- Combobox does not cache calls to the async function. If you need this, implement your own caching.
-- Calls to the async function are debounced, so consumers should not need to implement this themselves.
+No component-specific guidance documented yet.
 
 ## Usage
 
@@ -81,6 +67,14 @@ Combobox uses its default content for generated custom-value and select-all opti
 />
 ```
 
+Custom option renderers must meet these requirements:
+
+- Keep the renderer pure and free of side effects. Virtualized rows can render repeatedly, and the render function _may_ be called before an option is rendered, such as to measure layout.
+- Custom content can use variable heights. Combobox starts with a conservative two-line estimate, then measures each mounted custom row and updates the virtual layout.
+- Menu and option width is estimated from that `label` and `description` on items. It is currently not measured from the custom content, so ensure your custom content fits within the estimated width or can wrap.
+- Include the option label or equivalent accessible text in the rendered content. The plain string `label` is still used for filtering and for the selected input value.
+- Don't nest buttons, links, inputs, or other interactive controls. The option row owns focus and selection.
+
 ### Grouping
 
 Each option object may also have a `group` string property. Options with matching group names will be sorted together, as will options with undefined groups. Combobox will order these based on the first occurence of each `group` (or absence of `group`) in the `options` prop.
@@ -88,6 +82,14 @@ Each option object may also have a `group` string property. Options with matchin
 ### Async behavior
 
 When using Combobox with options from a remote source as the user types, you can supply the `options` prop as an function that is called on each keypress with the current input value and returns a promise resolving to an array of options matching the input.
+
+Consider the following when implementing async behavior:
+
+- Consumers should return filtered options matching the input. This is bested suited for APIs that support filtering/search.
+- When the menu is opened with blank input (e.g. initial click with no selected value) the function will be called with an empty string.
+- Consumers should only ever load top-n options from APIs using this async function. If your API does not support filtering, consider loading options yourself and just passing the sync options array in
+- Combobox does not cache calls to the async function. If you need this, implement your own caching.
+- Calls to the async function are debounced, so consumers should not need to implement this themselves.
 
 ### Value
 
