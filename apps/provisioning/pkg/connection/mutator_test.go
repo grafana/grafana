@@ -386,6 +386,27 @@ func TestAdmissionMutator_Mutate_ClearsZeroPointers(t *testing.T) {
 		require.NoError(t, NewAdmissionMutator(NewMockFactory(t)).Mutate(t.Context(), attr, nil))
 		assert.Equal(t, provisioning.ConnectionTokenStatus{Expiration: new(int64(5))}, conn.Status.Token)
 	})
+
+	t.Run("status lists, keeping an empty lastTransitionTime for validation", func(t *testing.T) {
+		conn := &provisioning.Connection{
+			ObjectMeta: metav1.ObjectMeta{Name: "test"},
+			Spec:       provisioning.ConnectionSpec{Type: provisioning.ConnectionTypeGithub},
+			Status: provisioning.ConnectionStatus{
+				FieldErrors: []provisioning.ConnectionErrorDetails{{Type: "FieldValueInvalid", Field: new("spec.url"), Detail: new("")}},
+				Conditions: []provisioning.ConnectionCondition{{
+					Type: provisioning.ConditionTypeReady, Status: "True", ObservedGeneration: new(int64(0)), LastTransitionTime: new(""),
+				}},
+			},
+		}
+		old := conn.DeepCopy()
+
+		attr := newMutatorTestAttributesWithSubresource(conn, old, admission.Update, "status")
+		require.NoError(t, NewAdmissionMutator(NewMockFactory(t)).Mutate(t.Context(), attr, nil))
+		assert.Equal(t, []provisioning.ConnectionErrorDetails{{Type: "FieldValueInvalid", Field: new("spec.url")}}, conn.Status.FieldErrors)
+		assert.Equal(t, []provisioning.ConnectionCondition{{
+			Type: provisioning.ConditionTypeReady, Status: "True", LastTransitionTime: new(""),
+		}}, conn.Status.Conditions)
+	})
 }
 
 func TestAdmissionMutator_Mutate_RunsForBundledSpecChange(t *testing.T) {
