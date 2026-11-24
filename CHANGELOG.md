@@ -2,6 +2,11 @@
 
 # 13.3.2 (2026-11-24)
 
+### Security
+
+- Security: Fix CVE-2026-107561
+- Security: Fix CVE-2026-88960
+
 ### Features and enhancements
 
 - **Provisioning:** Preserve existing folder identities when creating children [#137552](https://github.com/grafana/grafana/pull/137552), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
@@ -212,6 +217,12 @@
 <!-- 13.2.7 START -->
 
 # 13.2.7 (2026-11-24)
+
+## Security
+
+- Security: Fix CVE-2026-107561
+- Security: Fix CVE-2026-88943
+- Security: Fix CVE-2026-88960
 
 <!-- 13.2.7 END -->
 <!-- 13.2.6 START -->
@@ -517,6 +528,12 @@
 <!-- 13.1.11 START -->
 
 # 13.1.11 (2026-11-24)
+
+## Security
+
+- Security: Fix CVE-2026-107561
+- Security: Fix CVE-2026-88943
+- Security: Fix CVE-2026-88960
 
 <!-- 13.1.11 END -->
 <!-- 13.1.10 START -->
@@ -893,6 +910,18 @@
 <!-- 13.0.14 START -->
 
 # 13.0.14 (2026-11-24)
+
+### Security
+
+- Security: Fix CVE-2026-107561
+- Security: Fix CVE-2026-88943
+- Security: Fix CVE-2026-88960
+- Security: Fix CVE-2026-107561
+- Security: Fix CVE-2026-88943
+- Security: Fix CVE-2026-88960
+- Security: Fix CVE-2026-107561
+- Security: Fix CVE-2026-88943
+- Security: Fix CVE-2026-88960
 
 <!-- 13.0.14 END -->
 <!-- 13.0.13 START -->
@@ -1458,6 +1487,15 @@
 <!-- 12.4.16 START -->
 
 # 12.4.16 (2026-11-24)
+
+### Security
+
+- Security: Fix CVE-2026-107561
+- Security: Fix CVE-2026-88943
+- Security: Fix CVE-2026-88960
+- Security: Fix CVE-2026-107561
+- Security: Fix CVE-2026-88943
+- Security: Fix CVE-2026-88960
 
 <!-- 12.4.16 END -->
 <!-- 12.4.15 START -->
