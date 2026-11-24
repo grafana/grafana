@@ -12,7 +12,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "13.2.6";
+export const pluginVersion = "13.2.7";
 
 export enum PointShape {
   Circle = 'circle',
