@@ -164,7 +164,14 @@ export function SelectBase<T, Rest = {}>({
   const disabled = disabledProp ?? fieldContext.disabled;
   const invalid = invalidProp ?? fieldContext.invalid;
 
-  const reactSelectRef = useRef<HTMLElement & { controlRef: HTMLElement }>(null);
+  const reactSelectRef = useRef<
+    HTMLElement & {
+      controlRef: HTMLElement;
+      state: { focusableOptionsWithIds: unknown[] };
+      setState: (state: { focusableOptionsWithIds: unknown[] }) => void;
+      getFocusableOptionsWithIds: () => unknown[];
+    }
+  >(null);
   const [closeToBottom, setCloseToBottom] = useState<boolean>(false);
   const selectStyles = useCustomSelectStyles(theme, width);
   const [hasInputValue, setHasInputValue] = useState<boolean>(!!inputValue);
@@ -214,6 +221,20 @@ export function SelectBase<T, Rest = {}>({
       setCloseToBottom(distance < maxMenuHeight);
     }
   }, [maxMenuHeight, menuPlacement, loadOptions, isOpen]);
+
+  // react-select skips the option ids when the menu is already open on mount (ValuePicker, SegmentSelect).
+  // Screen readers need them to announce the highlighted option, so build them here.
+  useEffect(() => {
+    const select = reactSelectRef.current;
+    if (isOpen && select?.state.focusableOptionsWithIds.length === 0) {
+      const focusableOptionsWithIds = select.getFocusableOptionsWithIds();
+      if (focusableOptionsWithIds.length > 0) {
+        select.setState({ focusableOptionsWithIds });
+      }
+    }
+    // Only on mount, react-select updates the ids after that
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const onChangeWithEmpty = useCallback(
     (value: SelectableValue<T>, action: ActionMeta) => {

@@ -52,4 +52,19 @@ describe('ValuePicker', () => {
     expect(screen.getByRole('button')).toBeInTheDocument();
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
   });
+
+  it('should point the combobox at the option highlighted with the arrow keys', async () => {
+    const { user } = setup(<ValuePicker {...defaultProps} />);
+
+    await user.click(screen.getByRole('button'));
+
+    const combobox = screen.getByRole('combobox');
+    const activeOption = () => document.getElementById(combobox.getAttribute('aria-activedescendant')!);
+
+    await user.keyboard('{ArrowDown}');
+    expect(activeOption()).toHaveAccessibleName('Option 1');
+
+    await user.keyboard('{ArrowDown}');
+    expect(activeOption()).toHaveAccessibleName('Option 2');
+  });
 });
