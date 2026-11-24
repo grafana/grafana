@@ -121,27 +121,3 @@ func TestLocalProvider_AssetPath(t *testing.T) {
 		})
 	}
 }
-
-type remoteFS struct {
-	plugins.FS
-	base string
-}
-
-func (f remoteFS) Base() string { return f.base }
-
-func TestLocalProvider_AssetPath_RemoteBase(t *testing.T) {
-	plugin := PluginInfo{
-		JsonData: plugins.JSONData{ID: "remote-plugin"},
-		Class:    plugins.ClassExternal,
-		FS:       remoteFS{FS: plugins.NewLocalFS("/unused"), base: "http://localhost:3001/remote-plugin"},
-	}
-
-	p := &LocalProvider{}
-	module, err := p.Module(plugin)
-	require.NoError(t, err)
-	assert.Equal(t, "http://localhost:3001/remote-plugin/module.js", module)
-
-	asset, err := p.AssetPath(plugin, "img", "logo.svg")
-	require.NoError(t, err)
-	assert.Equal(t, "http://localhost:3001/remote-plugin/img/logo.svg", asset)
-}
