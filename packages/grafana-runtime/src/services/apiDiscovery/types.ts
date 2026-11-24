@@ -78,44 +78,49 @@ export interface K8sAPIGroupList {
   groups: K8sAPIGroup[];
 }
 
+// Kubernetes writes an empty list as `null`, and leaves out the aggregated fields marked `omitempty`.
+
 /** An entry of the Kubernetes `APIResourceList`. Subresources are entries named `<resource>/<subresource>`. */
 interface K8sAPIResource {
   name: string;
   kind: string;
   namespaced: boolean;
-  verbs: string[];
+  verbs: string[] | null;
 }
 
 /** The Kubernetes `APIResourceList`, served by `GET /apis/<group>/<version>`. */
 export interface K8sAPIResourceList {
   groupVersion: string;
-  resources: K8sAPIResource[];
+  resources: K8sAPIResource[] | null;
 }
 
 interface K8sAPISubresourceDiscovery {
   subresource: string;
-  verbs: string[];
+  verbs: string[] | null;
 }
 
 interface K8sAPIResourceDiscovery {
   resource: string;
   responseKind?: { kind?: string };
   scope: 'Namespaced' | 'Cluster';
-  verbs: string[];
+  verbs: string[] | null;
   subresources?: K8sAPISubresourceDiscovery[];
 }
 
 interface K8sAPIVersionDiscovery {
   version: string;
-  resources: K8sAPIResourceDiscovery[];
+  /** `Stale` when the server couldn't read the version, and lists the resources it last knew of. */
+  freshness?: string;
+  /** Left out for a version that serves routes only. */
+  resources?: K8sAPIResourceDiscovery[];
 }
 
 interface K8sAPIGroupDiscovery {
   metadata: { name: string };
-  versions: K8sAPIVersionDiscovery[];
+  versions?: K8sAPIVersionDiscovery[];
 }
 
 /** The Kubernetes aggregated discovery `APIGroupDiscoveryList`, served by `GET /apis` on request. */
 export interface K8sAPIGroupDiscoveryList {
-  items: K8sAPIGroupDiscovery[];
+  items: K8sAPIGroupDiscovery[] | null;
 }

@@ -732,3 +732,132 @@ describe('getAllAPIResources', () => {
     });
   });
 });
+
+// Kubernetes writes an empty list as `null`, and leaves out the aggregated fields marked `omitempty`.
+describe('responses shaped the way Kubernetes writes them', () => {
+  it('reads null resource and verb lists from GET /apis/<group>/<version> as empty', async () => {
+    respondTo({
+      '/apis': () => Promise.resolve(groupList),
+      [DASHBOARD_V1_URL]: () =>
+        Promise.resolve({
+          groupVersion: 'dashboard.grafana.app/v1beta1',
+          resources: [{ name: 'snapshots', kind: 'Snapshot', namespaced: true, verbs: null }],
+        }),
+      '/apis/dashboard.grafana.app/v0alpha1': () =>
+        Promise.resolve({ groupVersion: 'dashboard.grafana.app/v0alpha1', resources: null }),
+    });
+
+    await expect(getAPIResources('dashboard.grafana.app', 'v1beta1')).resolves.toEqual([
+      { ...snapshotsInfo, verbs: [] },
+    ]);
+    await expect(getAPIResources('dashboard.grafana.app', 'v0alpha1')).resolves.toEqual([]);
+    expect(logError).not.toHaveBeenCalled();
+  });
+
+  it('reads an aggregated list with omitted and null fields', async () => {
+    respondTo({
+      [AGGREGATED_ROUTE]: () =>
+        Promise.resolve({
+          items: [
+            {
+              metadata: { name: 'quotas.grafana.app' },
+              // A version that serves routes only has no resources field.
+              versions: [{ version: 'v0alpha1', freshness: 'Current' }],
+            },
+            { metadata: { name: 'empty.grafana.app' } },
+            {
+              metadata: { name: 'dashboard.grafana.app' },
+              versions: [
+                {
+                  version: 'v1beta1',
+                  resources: [
+                    {
+                      resource: 'dashboards',
+                      scope: 'Namespaced',
+                      verbs: null,
+                      subresources: [{ subresource: 'dto', verbs: null }],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        }),
+    });
+
+    await expect(getAllAPIResources()).resolves.toEqual([
+      { ...dashboardsInfo, kind: '', verbs: [], subresources: ['dto'] },
+    ]);
+    expect(logError).not.toHaveBeenCalled();
+  });
+
+  it('reads a null aggregated list as empty', async () => {
+    respondTo({ [AGGREGATED_ROUTE]: () => Promise.resolve({ items: null }) });
+
+    await expect(getAllAPIResources()).resolves.toEqual([]);
+  });
+
+  it('still rejects a response without a resource list', async () => {
+    respondTo({
+      '/apis': () => Promise.resolve(groupList),
+      [DASHBOARD_V1_URL]: () => Promise.resolve({ kind: 'Status' }),
+    });
+
+    await expect(getAPIResources('dashboard.grafana.app', 'v1beta1')).resolves.toBeUndefined();
+    expect(logError).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('getAllAPIResources with a stale version', () => {
+  // The router marks a version stale when it couldn't read its backend, and lists the resources it last knew of.
+  const staleList = {
+    items: [
+      {
+        metadata: { name: 'dashboard.grafana.app' },
+        versions: [
+          {
+            version: 'v1beta1',
+            freshness: 'Stale',
+            resources: [
+              {
+                resource: 'snapshots',
+                responseKind: { kind: 'Snapshot' },
+                scope: 'Namespaced',
+                verbs: ['get', 'list'],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+
+  it('returns the resources the server last knew of', async () => {
+    respondTo({ [AGGREGATED_ROUTE]: () => Promise.resolve(staleList) });
+
+    await expect(getAllAPIResources()).resolves.toEqual([snapshotsInfo]);
+    expect(logError).not.toHaveBeenCalled();
+  });
+
+  it('does not keep the answer, so the next call asks again', async () => {
+    respondTo({ [AGGREGATED_ROUTE]: () => Promise.resolve(staleList) });
+    await getAllAPIResources();
+
+    const fresh = {
+      items: [{ ...staleList.items[0], versions: [{ ...staleList.items[0].versions[0], freshness: 'Current' }] }],
+    };
+    respondTo({ [AGGREGATED_ROUTE]: () => Promise.resolve(fresh) });
+    await getAllAPIResources();
+    await getAllAPIResources();
+
+    expect(requestedUrls()).toEqual([AGGREGATED_ROUTE, AGGREGATED_ROUTE]);
+  });
+
+  it('shares one in-flight request between concurrent callers', async () => {
+    respondTo({ [AGGREGATED_ROUTE]: () => Promise.resolve(staleList) });
+
+    await Promise.all([getAllAPIResources(), getAllAPIResources()]);
+
+    expect(requestedUrls()).toEqual([AGGREGATED_ROUTE]);
+  });
+});

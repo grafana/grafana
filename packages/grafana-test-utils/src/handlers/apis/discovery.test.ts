@@ -82,6 +82,12 @@ describe('API discovery handlers', () => {
     ).toEqual(SERVED_API_VERSIONS);
   });
 
+  it('leave out the resources of a version without any in the aggregated list, as Kubernetes does', async () => {
+    const body = await (await request('/apis', { headers: { Accept: AGGREGATED_ACCEPT } }))?.json();
+
+    expect(body.items[0].versions[0]).toEqual({ version: 'v1alpha1', freshness: 'Current' });
+  });
+
   it('answer GET /apis/<group>/<version> with an empty APIResourceList by default', async () => {
     const body = await (await request('/apis/folder.grafana.app/v1beta1'))?.json();
 

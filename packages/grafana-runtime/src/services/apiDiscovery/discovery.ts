@@ -9,6 +9,7 @@ import {
   fromK8sAPIGroupDiscoveryList,
   fromK8sAPIResourceList,
   type GroupVersionResources,
+  hasStaleVersion,
   isK8sAPIGroupDiscoveryList,
   isK8sAPIResourceList,
 } from './resources';
@@ -20,8 +21,11 @@ import {
   type APIResourceQuery,
 } from './types';
 
-/** `unknown` means discovery could not answer. It is never cached, so the next caller asks again. */
-type Outcome<T> = { kind: 'known'; value: T } | { kind: 'unknown' };
+/**
+ * `unknown` means discovery could not answer, and `partial` that its answer may be incomplete. Neither is
+ * cached, so the next caller asks again.
+ */
+type Outcome<T> = { kind: 'known'; value: T } | { kind: 'partial'; value: T } | { kind: 'unknown' };
 
 type GroupsByName = ReadonlyMap<string, APIGroupInfo>;
 
@@ -58,7 +62,7 @@ class OutcomeCache<T> {
 
     const pending = load().then((outcome) => {
       // The identity check keeps an entry that invalidation or a test seed put here meanwhile.
-      if (outcome.kind === 'unknown' && this.entries.get(key) === pending) {
+      if (outcome.kind !== 'known' && this.entries.get(key) === pending) {
         this.entries.delete(key);
       }
       return outcome;
@@ -223,7 +227,7 @@ export function setAPIDiscoveryForTesting(groups: readonly APIGroupInfo[]): void
 }
 
 function valueOf<T>(outcome: Outcome<T | undefined>): T | undefined {
-  return outcome.kind === 'known' ? outcome.value : undefined;
+  return outcome.kind === 'unknown' ? undefined : outcome.value;
 }
 
 async function getGroupVersionResources(group: string, version: string): Promise<GroupVersionResources | undefined> {
@@ -306,7 +310,7 @@ async function fetchAggregatedDiscovery(): Promise<Outcome<readonly APIResourceI
     if (!isK8sAPIGroupDiscoveryList(response)) {
       throw new Error('API discovery: the response is not an APIGroupDiscoveryList');
     }
-    return { kind: 'known', value: fromK8sAPIGroupDiscoveryList(response) };
+    return { kind: hasStaleVersion(response) ? 'partial' : 'known', value: fromK8sAPIGroupDiscoveryList(response) };
   } catch (error) {
     logRequestFailure(ROOT_URL, error);
     return UNKNOWN;

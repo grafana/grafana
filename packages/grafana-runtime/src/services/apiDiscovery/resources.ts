@@ -13,8 +13,9 @@ export function fromK8sAPIResourceList(
   version: string,
   list: K8sAPIResourceList
 ): GroupVersionResources {
-  const subresources = list.resources.filter(({ name }) => name.includes('/'));
-  const resources = list.resources
+  const entries = list.resources ?? [];
+  const subresources = entries.filter(({ name }) => name.includes('/'));
+  const resources = entries
     .filter(({ name }) => !name.includes('/'))
     .map(({ name, kind, namespaced, verbs }) => ({
       group,
@@ -22,74 +23,74 @@ export function fromK8sAPIResourceList(
       resource: name,
       kind,
       namespaced,
-      verbs,
+      verbs: verbs ?? [],
       subresources: subresources
         .filter((sub) => sub.name.startsWith(`${name}/`))
         .map((sub) => sub.name.slice(name.length + 1)),
     }));
-  return { resources, subresourceVerbs: new Map(subresources.map(({ name, verbs }) => [name, verbs])) };
+  return { resources, subresourceVerbs: new Map(subresources.map(({ name, verbs }) => [name, verbs ?? []])) };
 }
 
 export function fromK8sAPIGroupDiscoveryList(list: K8sAPIGroupDiscoveryList): APIResourceInfo[] {
-  return list.items.flatMap(({ metadata, versions }) =>
-    versions.flatMap(({ version, resources }) =>
+  return (list.items ?? []).flatMap(({ metadata, versions = [] }) =>
+    versions.flatMap(({ version, resources = [] }) =>
       resources.map((entry) => ({
         group: metadata.name,
         version,
         resource: entry.resource,
         kind: entry.responseKind?.kind ?? '',
         namespaced: entry.scope === 'Namespaced',
-        verbs: entry.verbs,
+        verbs: entry.verbs ?? [],
         subresources: (entry.subresources ?? []).map(({ subresource }) => subresource),
       }))
     )
   );
 }
 
+export function hasStaleVersion(list: K8sAPIGroupDiscoveryList): boolean {
+  return (list.items ?? []).some(({ versions = [] }) => versions.some(({ freshness }) => freshness === 'Stale'));
+}
+
 export function isK8sAPIResourceList(value: unknown): value is K8sAPIResourceList {
-  return (
-    isObject(value) &&
-    'resources' in value &&
-    Array.isArray(value.resources) &&
-    value.resources.every(
-      (entry) =>
-        isObject(entry) &&
-        'name' in entry &&
-        typeof entry.name === 'string' &&
-        'kind' in entry &&
-        typeof entry.kind === 'string' &&
-        'namespaced' in entry &&
-        typeof entry.namespaced === 'boolean' &&
-        'verbs' in entry &&
-        isStringArray(entry.verbs)
-    )
-  );
+  return isObject(value) && 'resources' in value && isNullableList(value.resources, isK8sAPIResource);
 }
 
 export function isK8sAPIGroupDiscoveryList(value: unknown): value is K8sAPIGroupDiscoveryList {
+  return isObject(value) && 'items' in value && isNullableList(value.items, isK8sAPIGroupDiscovery);
+}
+
+function isK8sAPIResource(value: unknown): boolean {
   return (
     isObject(value) &&
-    'items' in value &&
-    Array.isArray(value.items) &&
-    value.items.every(
-      (item) =>
-        isObject(item) &&
-        'metadata' in item &&
-        isObject(item.metadata) &&
-        'name' in item.metadata &&
-        typeof item.metadata.name === 'string' &&
-        'versions' in item &&
-        Array.isArray(item.versions) &&
-        item.versions.every(
-          (version) =>
-            isObject(version) &&
-            'version' in version &&
-            typeof version.version === 'string' &&
-            'resources' in version &&
-            Array.isArray(version.resources) &&
-            version.resources.every(isK8sAPIResourceDiscovery)
-        )
-    )
+    'name' in value &&
+    typeof value.name === 'string' &&
+    'kind' in value &&
+    typeof value.kind === 'string' &&
+    'namespaced' in value &&
+    typeof value.namespaced === 'boolean' &&
+    'verbs' in value &&
+    isNullableList(value.verbs, isString)
+  );
+}
+
+function isK8sAPIGroupDiscovery(value: unknown): boolean {
+  return (
+    isObject(value) &&
+    'metadata' in value &&
+    isObject(value.metadata) &&
+    'name' in value.metadata &&
+    typeof value.metadata.name === 'string' &&
+    (!('versions' in value) || isList(value.versions, isK8sAPIVersionDiscovery))
+  );
+}
+
+function isK8sAPIVersionDiscovery(value: unknown): boolean {
+  return (
+    isObject(value) &&
+    'version' in value &&
+    typeof value.version === 'string' &&
+    (!('freshness' in value) || typeof value.freshness === 'string') &&
+    (!('resources' in value) || isList(value.resources, isK8sAPIResourceDiscovery))
   );
 }
 
@@ -101,10 +102,9 @@ function isK8sAPIResourceDiscovery(value: unknown): boolean {
     'scope' in value &&
     typeof value.scope === 'string' &&
     'verbs' in value &&
-    isStringArray(value.verbs) &&
+    isNullableList(value.verbs, isString) &&
     (!('responseKind' in value) || isResponseKind(value.responseKind)) &&
-    (!('subresources' in value) ||
-      (Array.isArray(value.subresources) && value.subresources.every(isK8sAPISubresourceDiscovery)))
+    (!('subresources' in value) || isList(value.subresources, isK8sAPISubresourceDiscovery))
   );
 }
 
@@ -114,7 +114,7 @@ function isK8sAPISubresourceDiscovery(value: unknown): boolean {
     'subresource' in value &&
     typeof value.subresource === 'string' &&
     'verbs' in value &&
-    isStringArray(value.verbs)
+    isNullableList(value.verbs, isString)
   );
 }
 
@@ -122,6 +122,14 @@ function isResponseKind(value: unknown): boolean {
   return isObject(value) && (!('kind' in value) || typeof value.kind === 'string');
 }
 
-function isStringArray(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every((item) => typeof item === 'string');
+function isNullableList(value: unknown, isItem: (item: unknown) => boolean): boolean {
+  return value === null || isList(value, isItem);
+}
+
+function isList(value: unknown, isItem: (item: unknown) => boolean): boolean {
+  return Array.isArray(value) && value.every(isItem);
+}
+
+function isString(value: unknown): value is string {
+  return typeof value === 'string';
 }

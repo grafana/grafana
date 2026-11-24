@@ -50,21 +50,19 @@ function toAPIGroupDiscoveryList(served: ServedAPIVersions, resources: ServedAPI
     metadata: { name: group },
     versions: versions.map((version) => {
       const responseKind = (kind: string) => ({ group, version, kind });
-      return {
-        version,
-        freshness: 'Current',
-        resources: (resources[`${group}/${version}`] ?? []).map(
-          ({ resource, kind, namespaced, verbs, subresources }) => ({
-            resource,
-            responseKind: responseKind(kind),
-            scope: namespaced ? 'Namespaced' : 'Cluster',
-            verbs,
-            ...(subresources && {
-              subresources: subresources.map((sub) => ({ ...sub, responseKind: responseKind(kind) })),
-            }),
-          })
-        ),
-      };
+      const listed = (resources[`${group}/${version}`] ?? []).map(
+        ({ resource, kind, namespaced, verbs, subresources }) => ({
+          resource,
+          responseKind: responseKind(kind),
+          scope: namespaced ? 'Namespaced' : 'Cluster',
+          verbs,
+          ...(subresources && {
+            subresources: subresources.map((sub) => ({ ...sub, responseKind: responseKind(kind) })),
+          }),
+        })
+      );
+      // Kubernetes leaves out an empty resource list, as for a version that serves routes only.
+      return { version, freshness: 'Current', ...(listed.length > 0 && { resources: listed }) };
     }),
   }));
   return { kind: 'APIGroupDiscoveryList', apiVersion: 'apidiscovery.k8s.io/v2', metadata: {}, items };
