@@ -20,8 +20,6 @@ message LegacyCheckRequest {
   string namespace = 1;
   // Subject in authlib TypeID format, for example "user:1" or "service-account:uid".
   string subject = 2;
-  // Optional contextual team UIDs (used when external-group based team grants are in effect).
-  repeated string teams = 5;
   // Bypass server-side caches when true.
   bool skip_cache = 6;
   // Required check expression, including for a single permission.
@@ -39,6 +37,13 @@ message LegacyCheckRequest {
   // Trusted caller's effective action limit, applied to both org and global checks.
   // Required for global checks. For org checks, absent is unrestricted; present with no actions denies all.
   LegacyActionRestriction restriction = 11;
+  // Trusted embedded organization membership snapshot. Absence loads memberships
+  // server-side; a present empty message asserts that the subject has no teams.
+  LegacyTeamIDs team_ids = 12;
+}
+
+message LegacyTeamIDs {
+  repeated int64 ids = 1;
 }
 
 message LegacyActionRestriction {

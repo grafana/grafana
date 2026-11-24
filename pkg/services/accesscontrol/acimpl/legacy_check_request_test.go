@@ -23,7 +23,6 @@ func TestBuildLegacyCheckRequest(t *testing.T) {
 		UserUID:   "user-uid",
 		OrgID:     1,
 		Namespace: "stacks-123",
-		TeamUIDs:  []string{"team-1", "team-2"},
 	}
 	evaluator := accesscontrol.EvalAll(
 		accesscontrol.EvalPermission("dashboards:read", "dashboards:uid:dash-1", "dashboards:uid:dash-2"),
@@ -37,7 +36,6 @@ func TestBuildLegacyCheckRequest(t *testing.T) {
 		Restriction:         &legacyclient.LegacyActionRestriction{},
 		Namespace:           "stacks-123",
 		Subject:             "user:user-uid",
-		Teams:               []string{"team-1", "team-2"},
 		SkipCache:           false,
 		SkipScopeResolution: false,
 		Evaluator:           evaluator,
@@ -46,15 +44,10 @@ func TestBuildLegacyCheckRequest(t *testing.T) {
 	request, err := ac.buildLegacyCheckRequest(
 		requester,
 		evaluator,
-		false,
 		types.OrgNamespaceFormatter,
 	)
 
 	require.NoError(t, err)
-	require.Equal(t, expected, request)
-
-	requester.TeamUIDs[0] = "changed-team"
-
 	require.Equal(t, expected, request)
 }
 
@@ -110,7 +103,6 @@ func TestBuildLegacyCheckRequestIdentity(t *testing.T) {
 				Namespace:           "org-2",
 				Subject:             tc.subject,
 				Evaluator:           accesscontrol.EvalPermission("dashboards:read"),
-				Teams:               nil,
 				SkipCache:           false,
 				SkipScopeResolution: false,
 			}
@@ -118,7 +110,6 @@ func TestBuildLegacyCheckRequestIdentity(t *testing.T) {
 			request, err := ac.buildLegacyCheckRequest(
 				&tc.requester,
 				accesscontrol.EvalPermission("dashboards:read"),
-				false,
 				types.OrgNamespaceFormatter,
 			)
 
@@ -128,76 +119,14 @@ func TestBuildLegacyCheckRequestIdentity(t *testing.T) {
 	}
 }
 
-func TestBuildLegacyCheckRequestGroups(t *testing.T) {
-	tests := []struct {
-		name              string
-		useExternalGroups bool
-		externalGroups    []string
-		expected          []string
-	}{
-		{
-			name:           "stored teams when external groups are disabled",
-			externalGroups: []string{"external-team"},
-			expected:       []string{"stored-team"},
-		},
-		{
-			name:              "external groups when enabled",
-			useExternalGroups: true,
-			externalGroups:    []string{"external-team"},
-			expected:          []string{"external-team"},
-		},
-		{
-			name:              "nil external groups do not fall back to stored teams",
-			useExternalGroups: true,
-		},
-		{
-			name:              "empty external groups do not fall back to stored teams",
-			useExternalGroups: true,
-			externalGroups:    []string{},
-			expected:          []string{},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			ac := ProvideAccessControlTest()
-			requester := &user.SignedInUser{
-				UserID:         42,
-				UserUID:        "user-uid",
-				OrgID:          1,
-				TeamUIDs:       []string{"stored-team"},
-				ExternalGroups: tc.externalGroups,
-			}
-
-			request, err := ac.buildLegacyCheckRequest(
-				requester,
-				accesscontrol.EvalPermission("dashboards:read"),
-				tc.useExternalGroups,
-				types.OrgNamespaceFormatter,
-			)
-
-			require.NoError(t, err)
-			require.Equal(t, tc.expected, request.Teams)
-
-			requester.TeamUIDs[0] = "changed-stored-team"
-			if len(requester.ExternalGroups) > 0 {
-				requester.ExternalGroups[0] = "changed-external-team"
-			}
-			require.Equal(t, tc.expected, request.Teams)
-		})
-	}
-}
-
 func TestBuildLegacyCheckRequestWithoutResolvers(t *testing.T) {
 	ac := ProvideAccessControlTest()
 	withoutResolvers := ac.WithoutResolvers().(*AccessControl)
 	requester := &user.SignedInUser{
-		UserID:         42,
-		UserUID:        "user-uid",
-		OrgID:          1,
-		Namespace:      "stacks-123",
-		TeamUIDs:       []string{"stored-team"},
-		ExternalGroups: []string{"external-team"},
+		UserID:    42,
+		UserUID:   "user-uid",
+		OrgID:     1,
+		Namespace: "stacks-123",
 	}
 	evaluator := accesscontrol.EvalPermission("dashboards:read", "dashboards:id:1")
 
@@ -214,7 +143,6 @@ func TestBuildLegacyCheckRequestWithoutResolvers(t *testing.T) {
 			request, err := tc.ac.buildLegacyCheckRequest(
 				requester,
 				evaluator,
-				true,
 				types.OrgNamespaceFormatter,
 			)
 
@@ -225,7 +153,6 @@ func TestBuildLegacyCheckRequestWithoutResolvers(t *testing.T) {
 				Namespace:           "stacks-123",
 				Subject:             "user:user-uid",
 				Evaluator:           accesscontrol.EvalPermission("dashboards:read", "dashboards:id:1"),
-				Teams:               []string{"external-team"},
 				SkipScopeResolution: tc.skipScopeResolution,
 			}
 			require.Equal(t, expected, request)
@@ -261,7 +188,6 @@ func TestBuildLegacyCheckRequestRejectsInvalidInput(t *testing.T) {
 			request, err := ac.buildLegacyCheckRequest(
 				tc.requester,
 				tc.evaluator,
-				false,
 				types.OrgNamespaceFormatter,
 			)
 
@@ -391,12 +317,10 @@ func TestBuildLegacyCheckRequestGlobalEvaluation(t *testing.T) {
 				RequesterOrgID: ptr.To(tc.orgID),
 			}
 
-			useExternalGroups := false
 			got, err := ProvideAccessControlTest().
 				buildLegacyCheckRequest(
 					requester,
 					accesscontrol.EvalPermission("users:read"),
-					useExternalGroups,
 					apirequest.GetNamespaceMapper(cfg),
 				)
 			require.NoError(t, err)
@@ -424,7 +348,6 @@ func TestBuildLegacyCheckRequestCloudOrganization(t *testing.T) {
 	got, err := ProvideAccessControlTest().buildLegacyCheckRequest(
 		requester,
 		accesscontrol.EvalPermission("users:read"),
-		false,
 		apirequest.GetNamespaceMapper(cfg),
 	)
 
@@ -453,7 +376,7 @@ func TestBuildLegacyCheckRequestEffectiveActions(t *testing.T) {
 				UserID: 1, UserUID: "u-1", OrgID: 12, Permissions: tc.permissions,
 			}
 			req, err := ProvideAccessControlTest().buildLegacyCheckRequest(
-				requester, accesscontrol.EvalPermission("library.panels:read"), false, types.OrgNamespaceFormatter,
+				requester, accesscontrol.EvalPermission("library.panels:read"), types.OrgNamespaceFormatter,
 			)
 			require.NoError(t, err)
 			require.NotNil(t, req.Restriction)

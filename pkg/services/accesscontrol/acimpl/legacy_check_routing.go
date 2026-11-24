@@ -16,7 +16,6 @@ var _ legacyclient.LegacyCheckClientSetter = (*AccessControl)(nil)
 
 func (a *AccessControl) SetLegacyCheckClient(
 	client legacyclient.LegacyAccessClient,
-	useExternalGroups bool,
 	namespace types.NamespaceFormatter,
 	reg prometheus.Registerer,
 ) error {
@@ -26,7 +25,6 @@ func (a *AccessControl) SetLegacyCheckClient(
 	}
 	a.legacyCheckShadow = comparison
 	a.legacyCheckClient = client
-	a.useExternalGroups = useExternalGroups
 	a.legacyNamespace = namespace
 	return nil
 }
@@ -40,7 +38,7 @@ func (a *AccessControl) evaluateLegacyCheck(
 		return false, errors.New("legacy check client is not configured")
 	}
 
-	request, err := a.buildLegacyCheckRequest(user, evaluator, a.useExternalGroups, a.legacyNamespace)
+	request, err := a.buildLegacyCheckRequest(user, evaluator, a.legacyNamespace)
 	if err != nil {
 		return false, err
 	}

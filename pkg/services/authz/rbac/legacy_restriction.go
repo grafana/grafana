@@ -54,7 +54,7 @@ func (s *Service) getLegacyPermissions(ctx context.Context, req legacyScopeReque
 		return s.getLegacyGlobalPermissions(ctx, req.globalIdentity, actions)
 	}
 
-	return s.getLegacyIdentityPermissions(ctx, req.namespace, req.identityType, req.userUID, actions, req.skipCache)
+	return s.getLegacyIdentityPermissions(ctx, req.namespace, req.identityType, req.userUID, actions, req.skipCache, req.teamIDs)
 }
 
 func (s *Service) prepareLegacyPermissions(ctx context.Context, actions []string, req legacyScopeRequest) (legacyEvaluationArgs, error) {

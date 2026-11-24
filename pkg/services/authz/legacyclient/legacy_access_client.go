@@ -23,7 +23,7 @@ type LegacyAccessClient interface {
 // In contrast, legacypermissions.ProvideClient only needs the loader and config,
 // allowing constructor injection for LegacyGetUserPermissions.
 type LegacyCheckClientSetter interface {
-	SetLegacyCheckClient(client LegacyAccessClient, useExternalGroups bool, namespace types.NamespaceFormatter, reg prometheus.Registerer) error
+	SetLegacyCheckClient(client LegacyAccessClient, namespace types.NamespaceFormatter, reg prometheus.Registerer) error
 }
 
 type LegacyCheckRequest struct {
@@ -37,8 +37,9 @@ type LegacyCheckRequest struct {
 	// Evaluator supports the built-in permission, ALL and ANY evaluators.
 	// Unsupported evaluators return an error without making an RPC.
 	Evaluator accesscontrol.Evaluator
-	// Teams contains contextual team UIDs, not legacy numeric membership IDs.
-	Teams               []string
+	// TeamIDs is a trusted embedded membership snapshot. Nil loads memberships
+	// server-side; a non-nil empty slice asserts that the subject has no teams.
+	TeamIDs             []int64
 	SkipCache           bool
 	SkipScopeResolution bool
 	// InternalIdentity asserts a predefined profile or background grants on the trusted embedded channel.

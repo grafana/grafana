@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"time"
 
@@ -32,6 +33,9 @@ func (s *Service) LegacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 				Allowed: false,
 				Error:   "internal legacy identities require the embedded server",
 			}, nil
+		}
+		if req.GetTeamIds() != nil {
+			return &authzextv1.LegacyCheckResponse{Error: "legacy team memberships require the embedded server"}, nil
 		}
 
 		return s.legacyCheck(ctx, req)
@@ -121,6 +125,10 @@ func (s *Service) legacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 		}
 	}
 
+	if err := validateLegacyTeamIDs(req, idType, requesterOrgID); err != nil {
+		return &authzextv1.LegacyCheckResponse{Error: err.Error()}, nil
+	}
+
 	ctx = request.WithNamespace(ctx, ns.Value)
 	evaluator, actions, err := convertLegacyExpression(req.GetExpression())
 	if err != nil {
@@ -133,6 +141,11 @@ func (s *Service) legacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 		identityType: idType,
 		userUID:      userUID,
 		skipCache:    req.GetSkipCache(),
+	}
+
+	if req.GetTeamIds() != nil {
+		// Preserve explicit empty membership across protobuf's nil repeated fields.
+		scopeRequest.teamIDs = append([]int64{}, req.GetTeamIds().GetIds()...)
 	}
 
 	if restriction := req.GetRestriction(); restriction != nil {
@@ -235,6 +248,7 @@ func (s *Service) getLegacyIdentityPermissions(
 	userUID string,
 	actions []string,
 	skipCache bool,
+	teamIDs []int64,
 ) (map[string][]string, error) {
 	permissions := make(map[string][]string, len(actions))
 	query := store.PermissionsQuery{}
@@ -245,7 +259,7 @@ func (s *Service) getLegacyIdentityPermissions(
 			return nil, fmt.Errorf("could not get user identifiers: %w", err)
 		}
 
-		query, err = s.getLegacyUserPermissionQuery(ctx, ns, identifiers, skipCache)
+		query, err = s.getLegacyUserPermissionQuery(ctx, ns, identifiers, skipCache, teamIDs)
 		if err != nil {
 			return nil, fmt.Errorf("could not get legacy user permission query: %w", err)
 		}
@@ -291,23 +305,43 @@ func (s *Service) getLegacyUserPermissionQuery(
 	ns types.NamespaceInfo,
 	userIdentifiers *store.UserIdentifiers,
 	skipCache bool,
+	teamIDs []int64,
 ) (store.PermissionsQuery, error) {
 	basicRole, err := s.getUserBasicRoleWithCache(ctx, ns, userIdentifiers, skipCache)
 	if err != nil {
 		return store.PermissionsQuery{}, fmt.Errorf("could not get user basic role: %w", err)
 	}
 
-	teamIDs, err := s.getUserTeamsWithCache(ctx, ns, userIdentifiers, skipCache)
-	if err != nil {
-		return store.PermissionsQuery{}, fmt.Errorf("could not get user teams: %w", err)
+	if teamIDs == nil {
+		teamIDs, err = s.getUserTeamsWithCache(ctx, ns, userIdentifiers, skipCache)
+		if err != nil {
+			return store.PermissionsQuery{}, fmt.Errorf("could not get user teams: %w", err)
+		}
 	}
 
 	return store.PermissionsQuery{
 		UserID:        userIdentifiers.ID,
-		TeamIDs:       teamIDs,
+		TeamIDs:       slices.Clone(teamIDs),
 		Role:          basicRole.Role,
 		IsServerAdmin: basicRole.IsAdmin,
 	}, nil
+}
+
+func validateLegacyTeamIDs(req *authzextv1.LegacyCheckRequest, idType types.IdentityType, orgID int64) error {
+	if req.GetTeamIds() == nil {
+		return nil
+	}
+
+	if orgID < 1 || (idType != types.TypeUser && idType != types.TypeServiceAccount) {
+		return errors.New("legacy team memberships require an organization user or service account")
+	}
+
+	for _, id := range req.GetTeamIds().GetIds() {
+		if id < 1 {
+			return errors.New("legacy team IDs must be positive")
+		}
+	}
+	return nil
 }
 
 type legacyEvaluationArgs struct {

@@ -66,12 +66,17 @@ func (c *LegacyClient) PrepareLegacyCheck(req LegacyCheckRequest) (func(context.
 		orgID := *req.RequesterOrgID
 		requesterOrgID = &orgID
 	}
+	var teamIDs *authzextv1.LegacyTeamIDs
+	if req.TeamIDs != nil {
+		teamIDs = &authzextv1.LegacyTeamIDs{Ids: slices.Clone(req.TeamIDs)}
+	}
+
 	request := &authzextv1.LegacyCheckRequest{
 		Namespace:           req.Namespace,
 		RequesterOrgId:      requesterOrgID,
 		Subject:             req.Subject,
 		Expression:          expression,
-		Teams:               slices.Clone(req.Teams),
+		TeamIds:             teamIDs,
 		SkipCache:           req.SkipCache,
 		SkipScopeResolution: req.SkipScopeResolution,
 		InternalIdentity:    internal,

@@ -36,6 +36,7 @@ type legacyScopeRequest struct {
 	identityType      types.IdentityType
 	userUID           string
 	skipCache         bool
+	teamIDs           []int64
 	restrictedActions []string
 	globalIdentity    *legacyGlobalIdentity
 	internalRequester identity.Requester

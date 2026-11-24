@@ -95,7 +95,7 @@ func TestLegacyCheckUntypedRequesterParity(t *testing.T) {
 					service := NewTestService("u-1", nil, nil).WithLegacyScopeResolvers(acimpl.ProvideScopeResolverRegistry(ac), types.OrgNamespaceFormatter)
 					service.store, service.permissionStore = nil, nil
 					client := &untypedLegacyCheckClient{client: newEmbeddedLegacyCheckTestClient(service)}
-					require.NoError(t, ac.SetLegacyCheckClient(client, false, types.OrgNamespaceFormatter, nil))
+					require.NoError(t, ac.SetLegacyCheckClient(client, types.OrgNamespaceFormatter, nil))
 
 					synctest.Test(t, func(t *testing.T) {
 						allowed, err := ac.Evaluate(t.Context(), requester, accesscontrol.EvalPermission("plugins.app:access", "plugins:id:test-app"))

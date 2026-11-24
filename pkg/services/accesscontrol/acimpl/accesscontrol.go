@@ -49,7 +49,6 @@ type AccessControl struct {
 	openFeatureClient   *openfeature.Client
 	legacyCheckClient   legacyclient.LegacyAccessClient
 	legacyCheckShadow   *legacyCheckShadow
-	useExternalGroups   bool
 	legacyNamespace     types.NamespaceFormatter
 }
 
@@ -134,7 +133,6 @@ func (a *AccessControl) WithoutResolvers() accesscontrol.AccessControl {
 		openFeatureClient:   a.openFeatureClient,
 		legacyCheckClient:   a.legacyCheckClient,
 		legacyCheckShadow:   a.legacyCheckShadow,
-		useExternalGroups:   a.useExternalGroups,
 		legacyNamespace:     a.legacyNamespace,
 	}
 }
