@@ -66,7 +66,10 @@ type RecordingSeriesManager struct {
 }
 
 type trackedRule struct {
-	mtx sync.Mutex
+	// saveMtx keeps the saves of the rule in order, so an older snapshot never overwrites a newer one.
+	// It is taken before mtx and held across the store write.
+	saveMtx sync.Mutex
+	mtx     sync.Mutex
 	// removed is set once the rule left the map, so a caller that was waiting for the lock starts over.
 	removed bool
 	caches  map[SeriesTarget]*cache
@@ -139,7 +142,7 @@ func (m *RecordingSeriesManager) Track(rule *models.AlertRule, target SeriesTarg
 	}
 
 	stale := m.takeMissing(rule, c, target, at, seen)
-	stale = append(stale, m.takeOtherTargets(tr, key, target, c, at)...)
+	stale = append(stale, m.takeOtherTargets(tr, key, target, series)...)
 	if len(stale) > 0 {
 		tr.dirty = true
 	}
@@ -173,9 +176,13 @@ func (m *RecordingSeriesManager) Forget(key models.AlertRuleKey) {
 	m.remove(key)
 }
 
-// Delete stops tracking the rule and removes its stored series.
+// Delete stops tracking the rule and removes its stored series. It waits for a save in flight, so
+// the save cannot write the row back.
 func (m *RecordingSeriesManager) Delete(ctx context.Context, key models.AlertRuleKeyWithGroup) error {
-	m.remove(key.AlertRuleKey)
+	if tr := m.remove(key.AlertRuleKey); tr != nil {
+		tr.saveMtx.Lock()
+		tr.saveMtx.Unlock() //nolint:staticcheck // only waits for a save in flight
+	}
 	if m.store == nil {
 		return nil
 	}
@@ -184,7 +191,8 @@ func (m *RecordingSeriesManager) Delete(ctx context.Context, key models.AlertRul
 
 // Persist saves the series of the rule if they changed and the last save is older than the save interval.
 // A rule that changes on almost every tick would otherwise rewrite its whole row each time.
-// Call it at the end of a tick, after the markers were written and the failed ones retained.
+// Call it at the end of a tick, after the markers were written.
+// Saves of one rule are kept in order, so callers need not serialize Persist, Flush and Delete.
 // It does nothing unless write-through is on, as the periodic full sync saves them otherwise.
 func (m *RecordingSeriesManager) Persist(ctx context.Context, key models.AlertRuleKeyWithGroup) error {
 	return m.save(ctx, key, false)
@@ -204,14 +212,23 @@ func (m *RecordingSeriesManager) save(ctx context.Context, key models.AlertRuleK
 	if tr == nil {
 		return nil
 	}
-	now := m.clock.Now()
-	if !tr.dirty || (!force && !tr.lastSave.IsZero() && now.Sub(tr.lastSave) < m.cfg.SaveInterval) {
+	if !m.dueForSave(tr, force) {
+		tr.mtx.Unlock()
+		return nil
+	}
+	tr.mtx.Unlock()
+
+	// The snapshot is taken under saveMtx, so a save that waited does not write an older one.
+	tr.saveMtx.Lock()
+	defer tr.saveMtx.Unlock()
+	tr.mtx.Lock()
+	if tr.removed || !m.dueForSave(tr, force) {
 		tr.mtx.Unlock()
 		return nil
 	}
 	series := m.seriesOf(key.AlertRuleKey, tr)
 	tr.dirty = false
-	tr.lastSave = now
+	tr.lastSave = m.clock.Now()
 	tr.mtx.Unlock()
 
 	if err := m.store.SaveRecordingSeriesForRule(ctx, key, series); err != nil {
@@ -221,6 +238,14 @@ func (m *RecordingSeriesManager) save(ctx context.Context, key models.AlertRuleK
 		return err
 	}
 	return nil
+}
+
+// dueForSave reports whether the rule has changes to save and may be saved now. The caller holds tr.mtx.
+func (m *RecordingSeriesManager) dueForSave(tr *trackedRule, force bool) bool {
+	if !tr.dirty {
+		return false
+	}
+	return force || tr.lastSave.IsZero() || m.clock.Now().Sub(tr.lastSave) >= m.cfg.SaveInterval
 }
 
 // GetRecordingSeries returns the tracked series by rule, for the periodic full sync.
@@ -367,15 +392,16 @@ func (tr *trackedRule) cache(target SeriesTarget) *cache {
 }
 
 // remove takes the rule out of the map and gives its room back to the budget.
-func (m *RecordingSeriesManager) remove(key models.AlertRuleKey) {
+func (m *RecordingSeriesManager) remove(key models.AlertRuleKey) *trackedRule {
 	m.mtx.Lock()
 	tr, ok := m.rules[key]
 	delete(m.rules, key)
 	m.mtx.Unlock()
 	if !ok {
-		return
+		return nil
 	}
 	m.discard(key, tr)
+	return tr
 }
 
 // discard empties a rule that is no longer in the map. It waits for a caller that still holds the rule.
@@ -428,8 +454,15 @@ func (m *RecordingSeriesManager) takeMissing(rule *models.AlertRule, c *cache, t
 }
 
 // takeOtherTargets stales what the rule tracked under a target it no longer writes to.
-// A series that is still output under the same metric is live, so no marker would be right for it.
-func (m *RecordingSeriesManager) takeOtherTargets(tr *trackedRule, key models.AlertRuleKey, current SeriesTarget, currentCache *cache, at time.Time) []StaleSeries {
+// A series still in the output under the same metric is live, also when the budget refused to track it.
+func (m *RecordingSeriesManager) takeOtherTargets(tr *trackedRule, key models.AlertRuleKey, current SeriesTarget, output []data.Labels) []StaleSeries {
+	if len(tr.caches) < 2 {
+		return nil
+	}
+	live := make(map[data.Fingerprint]struct{}, len(output))
+	for _, labels := range output {
+		live[labels.Fingerprint()] = struct{}{}
+	}
 	var stale []StaleSeries
 	for target, c := range tr.caches {
 		if target == current {
@@ -437,7 +470,7 @@ func (m *RecordingSeriesManager) takeOtherTargets(tr *trackedRule, key models.Al
 		}
 		for _, s := range drain(key, target, c) {
 			m.release(1)
-			if target.Metric == current.Metric && outputAt(currentCache, key, s.Labels.Fingerprint(), at) {
+			if _, ok := live[s.Labels.Fingerprint()]; ok && target.Metric == current.Metric {
 				continue
 			}
 			stale = append(stale, s)
@@ -507,12 +540,6 @@ func drain(key models.AlertRuleKey, target SeriesTarget, c *cache) []StaleSeries
 	}
 	c.reset()
 	return out
-}
-
-// outputAt reports whether the series was output in the tick.
-func outputAt(c *cache, key models.AlertRuleKey, fp data.Fingerprint, at time.Time) bool {
-	e := c.get(key.OrgID, key.UID, fp)
-	return e != nil && e.LastEvaluationTime.Equal(at)
 }
 
 // ruleStateCount is the number of states of the rule.

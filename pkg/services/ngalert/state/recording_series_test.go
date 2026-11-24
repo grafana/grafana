@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -67,6 +68,26 @@ func (f *fakeSeriesStore) DeleteRecordingSeriesForRule(_ context.Context, key mo
 func (f *fakeSeriesStore) FullSyncWithSeries(context.Context, []models.AlertInstance, map[models.AlertRuleKey][]models.RecordingSeries, int, func(int) time.Duration) error {
 	f.fullSyncs++
 	return nil
+}
+
+// blockingSeriesStore holds its first save until release is closed.
+type blockingSeriesStore struct {
+	*fakeSeriesStore
+	entered chan struct{}
+	release chan struct{}
+	calls   atomic.Int32
+}
+
+func (b *blockingSeriesStore) SaveRecordingSeriesForRule(ctx context.Context, key models.AlertRuleKeyWithGroup, series []models.RecordingSeries) error {
+	if b.calls.Add(1) == 1 {
+		close(b.entered)
+		<-b.release
+	}
+	return b.fakeSeriesStore.SaveRecordingSeriesForRule(ctx, key, series)
+}
+
+func newBlockingSeriesStore() *blockingSeriesStore {
+	return &blockingSeriesStore{fakeSeriesStore: &fakeSeriesStore{}, entered: make(chan struct{}), release: make(chan struct{})}
 }
 
 type fakeInstanceAndSeriesStore struct {
@@ -249,6 +270,18 @@ func TestRecordingSeriesManager_Budget(t *testing.T) {
 		require.EqualValues(t, 1, m.Tracked())
 	})
 
+	t.Run("a series the budget refused is still live when the target changes", func(t *testing.T) {
+		b := NewSeriesBudget(2)
+		m, _ := newSeriesTestManager(RecordingSeriesCfg{Budget: b}, nil)
+		rule := seriesTestRule("r")
+		m.Track(rule, seriesTarget1, seriesTick0, seriesLabels(1, 2))
+
+		stale := m.Track(rule, seriesTarget2, seriesTick1, seriesLabels(1, 2, 3))
+
+		require.Empty(t, labelIDs(stale), "series 1 and 2 are still output, even though the full budget kept them out of the new target")
+		require.Zero(t, b.Used())
+	})
+
 	t.Run("without a budget there is no limit", func(t *testing.T) {
 		m, mt := newSeriesTestManager(RecordingSeriesCfg{}, nil)
 		ids := make([]int, 500)
@@ -426,6 +459,68 @@ func TestRecordingSeriesManager_Persist(t *testing.T) {
 		advanceSeriesClock(m, interval)
 		require.NoError(t, m.Persist(ctx, key))
 		require.Len(t, store.saves, 2, "nothing changed since")
+	})
+
+	t.Run("a slow save cannot overwrite a newer one", func(t *testing.T) {
+		store := newBlockingSeriesStore()
+		m, _ := newSeriesTestManager(RecordingSeriesCfg{WriteThrough: true}, store)
+		rule := seriesTestRule("r")
+		key := rule.GetKeyWithGroup()
+		m.Track(rule, seriesTarget1, seriesTick0, seriesLabels(1, 2))
+
+		persisted := make(chan error, 1)
+		go func() { persisted <- m.Persist(ctx, key) }()
+		<-store.entered
+		m.Track(rule, seriesTarget1, seriesTick1, seriesLabels(3))
+		var flushErr error
+		flushed := make(chan struct{})
+		go func() {
+			defer close(flushed)
+			flushErr = m.Flush(ctx, key)
+		}()
+		select {
+		case <-flushed:
+		case <-time.After(100 * time.Millisecond):
+		}
+		close(store.release)
+		require.NoError(t, <-persisted)
+		<-flushed
+		require.NoError(t, flushErr)
+
+		require.Len(t, store.saves, 2)
+		require.Len(t, store.saves[1].series, 1, "the newer set is saved last")
+		require.Equal(t, "3", store.saves[1].series[0].Labels["id"])
+	})
+
+	t.Run("delete waits for a save in flight, so the row is not written back", func(t *testing.T) {
+		store := newBlockingSeriesStore()
+		m, _ := newSeriesTestManager(RecordingSeriesCfg{WriteThrough: true}, store)
+		rule := seriesTestRule("r")
+		key := rule.GetKeyWithGroup()
+		m.Track(rule, seriesTarget1, seriesTick0, seriesLabels(1))
+
+		persisted := make(chan error, 1)
+		go func() { persisted <- m.Persist(ctx, key) }()
+		<-store.entered
+		var deleteErr error
+		deleted := make(chan struct{})
+		go func() {
+			defer close(deleted)
+			deleteErr = m.Delete(ctx, key)
+		}()
+		select {
+		case <-deleted:
+			close(store.release)
+			t.Fatal("delete returned while a save was in flight")
+		case <-time.After(100 * time.Millisecond):
+		}
+		close(store.release)
+		require.NoError(t, <-persisted)
+		<-deleted
+		require.NoError(t, deleteErr)
+
+		require.Len(t, store.saves, 1, "the save finished before the delete reached the store")
+		require.Len(t, store.deletes, 1)
 	})
 
 	t.Run("flush saves a held back change at once", func(t *testing.T) {
