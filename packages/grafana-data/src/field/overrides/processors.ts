@@ -12,6 +12,7 @@ import { type SelectableValue } from '../../types/select';
 import { type SliderMarks } from '../../types/slider';
 import { type Threshold, type ThresholdsConfig } from '../../types/thresholds';
 import { MappingType, type ValueMapping, type ValueMappingResult } from '../../types/valueMapping';
+import { standardEditorsRegistry } from '../standardFieldConfigEditorRegistry';
 import { sortThresholds } from '../thresholds';
 
 export const identityOverrideProcessor = <T>(value: T) => {
@@ -261,13 +262,18 @@ export type VarMappingKind = 'number' | 'string';
 
 /**
  * How a property's `varMappings` expression resolves, or `undefined` when it can't have one.
- * Numeric properties resolve to a number. Only the standard unit resolves to a string; other string
- * properties either interpolate already (displayName) or would render unresolved syntax.
+ * Numeric properties edited with the standard number input resolve to a number. Sliders and the
+ * editors plugins pair with `numberOverrideProcessor` can't show an expression, so they don't get
+ * one. Only the standard unit resolves to a string; other string properties either interpolate
+ * already (displayName) or would render unresolved syntax.
  * Shared by the `applyFieldOverrides` resolution and the editors so both agree on the same set.
  */
-export function getVarMappingKind(item: Pick<FieldConfigPropertyItem, 'id' | 'process'>): VarMappingKind | undefined {
+export function getVarMappingKind(
+  item: Pick<FieldConfigPropertyItem, 'id' | 'process' | 'editor'>
+): VarMappingKind | undefined {
   if (item.process === numberOverrideProcessor) {
-    return 'number';
+    const numberEditor = standardEditorsRegistry.getIfExists('number')?.editor;
+    return numberEditor !== undefined && item.editor === numberEditor ? 'number' : undefined;
   }
   if (item.id === FieldConfigProperty.Unit) {
     return 'string';

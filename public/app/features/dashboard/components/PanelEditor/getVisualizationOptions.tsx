@@ -14,7 +14,7 @@ import {
   type FieldConfigPropertyItem,
   PanelOptionsEditorBuilder,
 } from '@grafana/data';
-import { isVarMappingExpressionInput } from '@grafana/data/internal';
+import { getVarMappingKind, isVarMappingExpressionInput } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { VizPanel } from '@grafana/scenes';
 import { Input } from '@grafana/ui';
@@ -30,12 +30,7 @@ import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 import { getReportableOptionValue } from './getReportableOptionValue';
 import { getOptionOverrides, getVarMappingOptionOverrides } from './state/getOptionOverrides';
 import { type OptionPaneRenderProps } from './types';
-import {
-  getVarMappingEditingKind,
-  setOptionImmutably,
-  updateDefaultFieldConfigValue,
-  updateDefaultFieldConfigVarMapping,
-} from './utils';
+import { setOptionImmutably, updateDefaultFieldConfigValue, updateDefaultFieldConfigVarMapping } from './utils';
 
 type categoryGetter = (categoryNames?: string[]) => OptionsPaneCategoryDescriptor;
 
@@ -122,7 +117,7 @@ function getDefaultsEditing(
   const writeValue = (config: FieldConfigSource, v: unknown) =>
     updateDefaultFieldConfigValue(config, fieldOption.path, v, fieldOption.isCustom);
 
-  const kind = varMappingsEnabled ? getVarMappingEditingKind(fieldOption) : undefined;
+  const kind = varMappingsEnabled ? getVarMappingKind(fieldOption) : undefined;
 
   return {
     // The unit picker already accepts custom text, so it can take an expression as is

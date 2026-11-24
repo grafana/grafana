@@ -435,8 +435,8 @@ let isVarMappingsEnabled = () => false;
 
 /**
  * Used by Grafana internals to decide whether `varMappings` are resolved. Grafana backs it with the
- * grafana.panelOptionInterpolation flag. While it returns false every panel uses its stored values
- * and the expressions stay in the saved JSON.
+ * grafana.panelOptionInterpolation flag and whether the dashboard on screen is v2. While it returns
+ * false every panel uses its stored values and the expressions stay in the saved JSON.
  *
  * @internal
  */
@@ -455,9 +455,15 @@ function resolveVarMappingInput(
   rawValue: unknown,
   context: FieldOverrideEnv
 ): unknown {
-  const kind = getVarMappingKind(item);
   const expr = context.varMappings?.[varMappingId];
-  if (!kind || typeof expr !== 'string' || !isVarMappingsEnabled()) {
+  if (typeof expr !== 'string' || !isVarMappingsEnabled()) {
+    return rawValue;
+  }
+
+  // Checked last: the kind reads the editors registry, which must not be read before Grafana
+  // registers its editors, or registering them later throws
+  const kind = getVarMappingKind(item);
+  if (!kind) {
     return rawValue;
   }
 

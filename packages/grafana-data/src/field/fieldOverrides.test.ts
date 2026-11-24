@@ -13,7 +13,7 @@ import { ThresholdsMode } from '../types/thresholds';
 import { MappingType, type ValueMapping } from '../types/valueMapping';
 import { Registry } from '../utils/Registry';
 import { locationUtil } from '../utils/location';
-import { mockStandardProperties } from '../utils/tests/mockStandardProperties';
+import { mockNumberEditor, mockStandardProperties } from '../utils/tests/mockStandardProperties';
 
 import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { getDisplayProcessor } from './displayProcessor';
@@ -30,6 +30,7 @@ import {
 } from './fieldOverrides';
 import { getFieldDisplayName } from './fieldState';
 import { booleanOverrideProcessor, numberOverrideProcessor } from './overrides/processors';
+import { standardEditorsRegistry } from './standardFieldConfigEditorRegistry';
 
 const property1: FieldConfigPropertyItem = {
   id: 'custom.property1', // Match field properties
@@ -75,15 +76,29 @@ const shouldApplyFalse: FieldConfigPropertyItem = {
   name: 'Should Apply False',
 };
 
+// varMappings only resolve for numeric properties edited with the standard number editor
+standardEditorsRegistry.setInit(() => [{ id: 'number', name: 'Number', editor: mockNumberEditor }]);
+
 const customNumber: FieldConfigPropertyItem = {
   id: 'custom.number',
   path: 'number',
   isCustom: true,
   process: numberOverrideProcessor,
   shouldApply: () => true,
+  override: mockNumberEditor,
+  editor: mockNumberEditor,
+  name: 'Custom Number',
+};
+
+const customSlider: FieldConfigPropertyItem = {
+  id: 'custom.slider',
+  path: 'slider',
+  isCustom: true,
+  process: numberOverrideProcessor,
+  shouldApply: () => true,
   override: jest.fn(),
   editor: jest.fn(),
-  name: 'Custom Number',
+  name: 'Custom Slider',
 };
 
 const customBoolean: FieldConfigPropertyItem = {
@@ -98,7 +113,16 @@ const customBoolean: FieldConfigPropertyItem = {
 };
 
 export const customFieldRegistry: FieldConfigOptionsRegistry = new Registry<FieldConfigPropertyItem>(() => {
-  return [property1, property2, property3, shouldApplyFalse, customNumber, customBoolean, ...mockStandardProperties()];
+  return [
+    property1,
+    property2,
+    property3,
+    shouldApplyFalse,
+    customNumber,
+    customSlider,
+    customBoolean,
+    ...mockStandardProperties(),
+  ];
 });
 
 locationUtil.initialize({
@@ -816,15 +840,15 @@ describe('applyFieldOverrides', () => {
       expect(resolve('7.8')).toEqual(7);
     });
 
-    it('resolves varMappings for custom numeric properties only', () => {
+    it('resolves varMappings for custom number inputs only, not sliders or switches', () => {
       const replaceVariables = makeReplaceVariables({ v: '9' });
 
       const data = applyFieldOverrides({
         data: [numField],
         fieldConfig: {
           defaults: {
-            custom: { number: 1, boolean: false },
-            varMappings: { 'custom.number': '$v', 'custom.boolean': '$v' },
+            custom: { number: 1, slider: 2, boolean: false },
+            varMappings: { 'custom.number': '$v', 'custom.slider': '$v', 'custom.boolean': '$v' },
           },
           overrides: [],
         },
@@ -835,6 +859,7 @@ describe('applyFieldOverrides', () => {
 
       const custom = data.fields[0].config.custom;
       expect(custom.number).toEqual(9);
+      expect(custom.slider).toEqual(2);
       expect(custom.boolean).toEqual(false);
     });
 

@@ -2,7 +2,7 @@ import { mergeWith, isArray, isObject, set, unset, isEqual, pickBy } from 'lodas
 
 import { type FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
 import { fieldColorModeRegistry } from '../field/fieldColor';
-import { type FieldColorConfigSettings } from '../field/overrides/processors';
+import { type FieldColorConfigSettings, getVarMappingKind } from '../field/overrides/processors';
 import { FieldColorModeId } from '../types/fieldColor';
 import {
   type ConfigOverrideRule,
@@ -79,7 +79,7 @@ function applyFieldConfigDefaults(existingFieldConfig: FieldConfigSource, plugin
   // entries are not registered themselves, so check the property they map.
   result.overrides = filterFieldConfigOverrides(result.overrides, (prop) => {
     if (isVarMappingProp(prop)) {
-      return plugin.fieldConfigRegistry.getIfExists(unwrapVarMappingPropId(prop.id)) !== undefined;
+      return keepsVarMapping(unwrapVarMappingPropId(prop.id), plugin.fieldConfigRegistry);
     }
     return plugin.fieldConfigRegistry.getIfExists(prop.id) !== undefined;
   });
@@ -113,6 +113,16 @@ export function filterFieldConfigOverrides(
   });
 }
 
+/**
+ * Whether an expression for this property id is kept: the property is registered and can take one.
+ * Panels ignore an expression on an option that can't, like a slider, so it's dropped rather than
+ * saved again.
+ */
+function keepsVarMapping(id: string, fieldConfigRegistry: FieldConfigOptionsRegistry): boolean {
+  const item = fieldConfigRegistry.getIfExists(id);
+  return item !== undefined && getVarMappingKind(item) !== undefined;
+}
+
 function cleanProperties(obj: object, parentPath: string, fieldConfigRegistry: FieldConfigOptionsRegistry) {
   let found = false;
 
@@ -120,7 +130,9 @@ function cleanProperties(obj: object, parentPath: string, fieldConfigRegistry: F
     // varMappings is not a registered property and its keys are property ids, not paths, so its
     // keys are pruned by the property they map instead, like varMappings.<id> override entries.
     if (parentPath === '' && propName === 'varMappings') {
-      const kept = isObject(value) ? Object.entries(value).filter(([key]) => fieldConfigRegistry.getIfExists(key)) : [];
+      const kept = isObject(value)
+        ? Object.entries(value).filter(([key]) => keepsVarMapping(key, fieldConfigRegistry))
+        : [];
       if (kept.length === 0) {
         unset(obj, propName);
       } else {

@@ -31,7 +31,15 @@ standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
 
 setPluginImportUtils({
   // useFieldConfig() pulls in the standard field config properties (incl. min/max/decimals)
-  importPanelPlugin: () => Promise.resolve(getPanelPlugin({}).useFieldConfig()),
+  importPanelPlugin: () =>
+    Promise.resolve(
+      getPanelPlugin({}).useFieldConfig({
+        useCustomConfig: (builder) =>
+          builder
+            .addSliderInput({ path: 'lineWidth', name: 'Line width', settings: { min: 0, max: 10, step: 1 } })
+            .addNumberInput({ path: 'pointSize', name: 'Point size' }),
+      })
+    ),
   getPanelPluginFromCache: () => undefined,
 });
 
@@ -182,6 +190,23 @@ describe('Variables in panel field config via varMappings (dashboard scene)', ()
     await tick();
 
     expect(stepValues()).toEqual([-Infinity, 80, 90]);
+
+    deactivate();
+  });
+
+  it('resolves a number input expression but keeps the stored value of a slider expression', async () => {
+    const variable = new CustomVariable({ name: 'w', query: '4', value: '4', text: '4' });
+    const panel = buildPanel({
+      custom: { lineWidth: 1, pointSize: 5 },
+      varMappings: { 'custom.lineWidth': '$w', 'custom.pointSize': '$w' },
+    });
+    const scene = buildScene(panel, new SceneVariableSet({ variables: [variable] }));
+
+    const deactivate = activateFullSceneTree(scene);
+    await tick();
+
+    const { custom } = panel.applyFieldConfig(sceneGraph.getData(panel).state.data!).series[0].fields[0].config;
+    expect(custom).toMatchObject({ pointSize: 4, lineWidth: 1 });
 
     deactivate();
   });

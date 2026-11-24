@@ -2,6 +2,7 @@ import { type FieldOverrideContext } from '../../types/fieldOverrides';
 import { type InterpolateFunction } from '../../types/panel';
 import { ThresholdsMode } from '../../types/thresholds';
 import { MappingType, SpecialValueMatch, type ValueMapping } from '../../types/valueMapping';
+import { standardEditorsRegistry } from '../standardFieldConfigEditorRegistry';
 
 import {
   getVarMappingKind,
@@ -333,15 +334,26 @@ describe('resolveVarMappingString', () => {
 });
 
 describe('getVarMappingKind', () => {
-  it('resolves numeric properties to numbers', () => {
-    expect(getVarMappingKind({ id: 'min', process: numberOverrideProcessor })).toBe('number');
-    expect(getVarMappingKind({ id: 'custom.lineWidth', process: numberOverrideProcessor })).toBe('number');
+  const NumberEditor = () => null;
+  const OtherEditor = () => null;
+  standardEditorsRegistry.setInit(() => [{ id: 'number', name: 'Number', editor: NumberEditor }]);
+
+  it('resolves numeric properties edited with the number input to numbers', () => {
+    expect(getVarMappingKind({ id: 'min', process: numberOverrideProcessor, editor: NumberEditor })).toBe('number');
+  });
+
+  it('gives no kind to numeric properties with another editor, like a slider', () => {
+    expect(
+      getVarMappingKind({ id: 'custom.lineWidth', process: numberOverrideProcessor, editor: OtherEditor })
+    ).toBeUndefined();
   });
 
   it('resolves only the standard unit to a string', () => {
-    expect(getVarMappingKind({ id: 'unit', process: stringOverrideProcessor })).toBe('string');
-    expect(getVarMappingKind({ id: 'noValue', process: stringOverrideProcessor })).toBeUndefined();
-    expect(getVarMappingKind({ id: 'custom.unit', process: stringOverrideProcessor })).toBeUndefined();
+    expect(getVarMappingKind({ id: 'unit', process: stringOverrideProcessor, editor: OtherEditor })).toBe('string');
+    expect(getVarMappingKind({ id: 'noValue', process: stringOverrideProcessor, editor: OtherEditor })).toBeUndefined();
+    expect(
+      getVarMappingKind({ id: 'custom.unit', process: stringOverrideProcessor, editor: OtherEditor })
+    ).toBeUndefined();
   });
 });
 

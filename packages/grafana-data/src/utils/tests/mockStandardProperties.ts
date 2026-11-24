@@ -6,6 +6,9 @@ import {
 } from '../../field/overrides/processors';
 import { ThresholdsMode } from '../../types/thresholds';
 
+/** Stands in for the standard number editor; register it as `number` for varMappings to resolve */
+export const mockNumberEditor = () => null;
+
 export const mockStandardProperties = () => {
   const title = {
     id: 'displayName',
@@ -45,8 +48,8 @@ export const mockStandardProperties = () => {
     name: 'Min',
     description: 'Minimum expected value',
 
-    editor: () => null,
-    override: () => null,
+    editor: mockNumberEditor,
+    override: mockNumberEditor,
     // the real processor, so applyFieldOverrides-level tests exercise varMappings resolution
     process: numberOverrideProcessor,
 
@@ -62,8 +65,8 @@ export const mockStandardProperties = () => {
     name: 'Max',
     description: 'Maximum expected value',
 
-    editor: () => null,
-    override: () => null,
+    editor: mockNumberEditor,
+    override: mockNumberEditor,
     // the real processor, so applyFieldOverrides-level tests exercise varMappings resolution
     process: numberOverrideProcessor,
 
@@ -97,8 +100,8 @@ export const mockStandardProperties = () => {
     name: 'Decimals',
     description: 'Number of decimal to be shown for a value',
 
-    editor: () => null,
-    override: () => null,
+    editor: mockNumberEditor,
+    override: mockNumberEditor,
     // the real processor, so applyFieldOverrides-level tests exercise varMappings resolution
     process: numberOverrideProcessor,
 

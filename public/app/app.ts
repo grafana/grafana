@@ -111,6 +111,7 @@ import { initAlerting } from './features/alerting/unified/initAlerting';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { EmbeddedDashboardLazy } from './features/dashboard-scene/embedding/EmbeddedDashboardLazy';
 import { DashboardLevelTimeMacro } from './features/dashboard-scene/scene/DashboardLevelTimeMacro';
+import { isActiveDashboardV2 } from './features/dashboard-scene/scene/types/dashboard';
 import { RuntimeDataSourcePickerShim } from './features/datasources/components/picker/RuntimeDataSourcePickerShim';
 import { dataSource as expressionDatasource } from './features/expressions/ExpressionDatasource';
 import { initGrafanaLive } from './features/live';
@@ -253,8 +254,10 @@ export class GrafanaApp {
       setPanelScreenshotService(new PanelScreenshotServiceImpl());
       setEmbeddedDashboard(EmbeddedDashboardLazy);
       setTimeZoneResolver(() => contextSrv.user.timezone);
-      setVarMappingsEnabledResolver(() =>
-        getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPanelOptionInterpolation, false)
+      setVarMappingsEnabledResolver(
+        () =>
+          getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPanelOptionInterpolation, false) &&
+          isActiveDashboardV2()
       );
       initGrafanaLive();
       setCurrentUser(contextSrv.user);

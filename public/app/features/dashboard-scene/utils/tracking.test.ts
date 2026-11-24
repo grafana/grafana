@@ -1,4 +1,9 @@
-import { MappingType } from '@grafana/data';
+import {
+  MappingType,
+  type PanelPlugin,
+  standardEditorsRegistry,
+  standardFieldConfigEditorRegistry,
+} from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { locationService, reportInteraction, setPluginImportUtils } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';
@@ -10,6 +15,7 @@ import {
   type GridLayoutItemKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { setTestFlags, testWithFlags } from '@grafana/test-utils/unstable';
+import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 
 import { CustomDashboardTemplateInteractions } from '../analytics/dashboard-templates/main';
 import nestedDashboard from '../serialization/testfiles/nested_dashboard.json';
@@ -39,10 +45,17 @@ jest.mock('../analytics/dashboard-templates/main', () => ({
   },
 }));
 
+// Unset, panels never load a plugin; a test sets it to load one synchronously on activation
+let cachedPanelPlugin: PanelPlugin | undefined;
+
 setPluginImportUtils({
-  importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
-  getPanelPluginFromCache: (id: string) => undefined,
+  importPanelPlugin: (id: string) => Promise.resolve(cachedPanelPlugin ?? getPanelPlugin({})),
+  getPanelPluginFromCache: (id: string) => cachedPanelPlugin,
 });
+
+// The real option editors, so a panel with a loaded plugin tells number inputs from sliders
+standardEditorsRegistry.setInit(getAllOptionEditors);
+standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
 
 export function buildTestScene() {
   const dashboard = getTestDashboardSceneFromSaveModel(nestedDashboard as Partial<DashboardV2Spec>);
@@ -372,6 +385,39 @@ describe('dashboard tracking', () => {
           dashboard_uid: 'dashboard-test',
           isDynamicDashboard: true,
         });
+      }
+    });
+
+    it('does not count an expression the panel ignores once its plugin has loaded', () => {
+      const plugin = getPanelPlugin({ id: 'text' }).useFieldConfig({
+        useCustomConfig: (builder) =>
+          builder.addSliderInput({ path: 'lineWidth', name: 'Line width', settings: { min: 0, max: 10, step: 1 } }),
+      });
+      cachedPanelPlugin = plugin;
+      const scene = buildSceneWithTextPanels(
+        [{}, {}],
+        [
+          { defaults: { varMappings: { 'custom.lineWidth': '$w' } }, overrides: [] },
+          { defaults: { varMappings: { min: '$min' } }, overrides: [] },
+        ]
+      );
+      const panels = scene.state.body.getVizPanels();
+      // Only the plugin load matters here, so the panels don't run queries
+      panels.forEach((panel) => panel.setState({ $data: undefined }));
+      const deactivate = panels.map((panel) => panel.activate());
+
+      try {
+        expect(panels.map((panel) => panel.getPlugin())).toEqual([plugin, plugin]);
+
+        trackDashboardSceneLoaded(scene, 42);
+
+        expect(reportInteraction).toHaveBeenCalledWith(
+          'dashboards_panel_option_variable_usage',
+          expect.objectContaining({ panel_count: 1, field_config_count: 1, trigger: 'load' })
+        );
+      } finally {
+        deactivate.forEach((fn) => fn());
+        cachedPanelPlugin = undefined;
       }
     });
 
