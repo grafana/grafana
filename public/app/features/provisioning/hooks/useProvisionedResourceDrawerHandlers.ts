@@ -40,7 +40,7 @@ export interface ProvisionedResourceDrawerHandlers {
  * `invalidateListTags` (if any) is dispatched so the committed change shows up there.
  */
 export function useProvisionedResourceDrawerHandlers(
-  kind: ResourceKindInfo,
+  kind: Pick<ResourceKindInfo, 'invalidateListTags'>,
   redirectUrl: string,
   action: ResourceBranchAction
 ): ProvisionedResourceDrawerHandlers {

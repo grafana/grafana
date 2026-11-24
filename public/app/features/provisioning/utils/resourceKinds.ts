@@ -5,7 +5,14 @@ import { type KindInfo } from '@grafana/runtime/unstable';
 import { playlistAPIv1 } from 'app/api/clients/playlist/v1';
 import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
-import { CORE_KINDS, coversGroup, getAppKinds } from 'app/core/kinds/coreKinds';
+import {
+  CORE_KINDS,
+  coversGroup,
+  findKind,
+  findKindByResource,
+  getAppKinds,
+  getKindGroup,
+} from 'app/core/kinds/coreKinds';
 import { getAPIGroupDiscoveryList } from 'app/features/apiserver/discovery';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
@@ -154,7 +161,7 @@ export type ResourceKindName = (typeof resourceKindInfos)[ResourceKindKey]['kind
  */
 export interface ResourceKindInfo extends KindInfo {
   /** Kubernetes Kind, e.g. `Dashboard`. Also the label shown for this kind in the files/resources tree. */
-  kind: ResourceKindName | (string & {});
+  kind: ResourceKindName;
   /**
    * Enumerates every resource of this kind on the instance. Each kind owns how it
    * lists itself — dashboards/folders through the unified search index, playlists
@@ -183,11 +190,8 @@ export interface ResourceKindInfo extends KindInfo {
 // each call site. The registry keys and literal `kind` values stay the source of truth for the unions above.
 const allKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
 
-function knownKindInfos(): ResourceKindInfo[] {
-  const added = [...Object.values(CORE_KINDS), ...getAppKinds()]
-    .filter((kind) => !allKindInfos.some((info) => info.group === kind.group && info.kind === kind.kind))
-    .map((kind) => ({ ...kind, list: async () => [], alwaysAvailable: false }));
-  return [...allKindInfos, ...added];
+function registryKinds(): KindInfo[] {
+  return [...Object.values(CORE_KINDS), ...getAppKinds()];
 }
 
 /**
@@ -195,13 +199,12 @@ function knownKindInfos(): ResourceKindInfo[] {
  * resource, so every member of a collection is reported as one kind.
  */
 export function getReportedGroup(group?: string, kind?: string): string | undefined {
-  const info = getKindInfoByGroupKind(group, kind);
-  return info?.collectionGroup ? info.group : group;
+  return group && kind ? getKindGroup(group, kind) : group;
 }
 
 /** Look up a kind by its plural resource name (`ResourceListItem.resource`). */
-export function getKindInfoByResource(resource?: string): ResourceKindInfo | undefined {
-  return knownKindInfos().find((info) => info.resource === resource);
+export function getKindInfoByResource(resource?: string): KindInfo | undefined {
+  return resource ? findKindByResource(resource) : undefined;
 }
 
 /**
@@ -209,8 +212,8 @@ export function getKindInfoByResource(resource?: string): ResourceKindInfo | und
  * items can be the `File` fallback, which has no backing kind and resolves to `undefined`) so
  * callers don't depend on the `TreeItemKind` union and create an import cycle with `../types`.
  */
-export function getKindInfoByKind(kind: string): ResourceKindInfo | undefined {
-  return knownKindInfos().find((info) => info.kind === kind);
+export function getKindInfoByKind(kind: string): KindInfo | undefined {
+  return registryKinds().find((info) => info.kind === kind);
 }
 
 /**
@@ -221,8 +224,8 @@ export function getKindInfoByKind(kind: string): ResourceKindInfo | undefined {
  * Prefer `getKindInfoByStat` when a `resource` is available: several kinds can
  * share an API group, so the group alone does not always identify the kind.
  */
-export function getKindInfoByStatGroup(group?: string): ResourceKindInfo | undefined {
-  return knownKindInfos().find((info) => (group !== undefined && coversGroup(info, group)) || info.resource === group);
+export function getKindInfoByStatGroup(group?: string): KindInfo | undefined {
+  return registryKinds().find((info) => (group !== undefined && coversGroup(info, group)) || info.resource === group);
 }
 
 function isResourceKindKey(key: string): key is ResourceKindKey {
@@ -247,11 +250,14 @@ export function getKindKeyByGroupKind(group?: string, kind?: string): ResourceKi
 }
 
 /** Look up a kind from a resource or a job summary row; see {@link getKindKeyByGroupKind}. */
-export function getKindInfoByGroupKind(group?: string, kind?: string): ResourceKindInfo | undefined {
+export function getKindInfoByGroupKind(group?: string, kind?: string): KindInfo | undefined {
+  if (group && kind) {
+    return findKind(group, kind);
+  }
   if (!group && !kind) {
     return undefined;
   }
-  return knownKindInfos().find((info) => (!group || coversGroup(info, group)) && (!kind || info.kind === kind));
+  return registryKinds().find((info) => (!group || coversGroup(info, group)) && (!kind || info.kind === kind));
 }
 
 /**
@@ -260,12 +266,8 @@ export function getKindInfoByGroupKind(group?: string, kind?: string): ResourceK
  * identifies the kind even when kinds share a group, so we match on it first and
  * fall back to a group-only match for stats that omit the resource.
  */
-export function getKindInfoByStat(stat: { group?: string; resource?: string }): ResourceKindInfo | undefined {
-  const byResource = knownKindInfos().find((info) => info.resource === stat.resource);
-  if (byResource) {
-    return byResource;
-  }
-  return getKindInfoByStatGroup(stat.group);
+export function getKindInfoByStat(stat: { group?: string; resource?: string }): KindInfo | undefined {
+  return getKindInfoByResource(stat.resource) ?? getKindInfoByStatGroup(stat.group);
 }
 
 /**
@@ -278,11 +280,11 @@ export function getKindInfoByStat(stat: { group?: string; resource?: string }): 
  * backend currently ships disabled (e.g. playlists), so callers that must respect
  * the disabled state should wait for `availableResources` to be populated.
  */
-export function getAvailableResourceKinds(availableResources?: SupportedResource[]): ResourceKindInfo[] {
+export function getAvailableResourceKinds(availableResources?: SupportedResource[]): KindInfo[] {
   if (!availableResources) {
     return allKindInfos;
   }
-  return knownKindInfos().filter((info) =>
+  return registryKinds().filter((info) =>
     availableResources.some(
       (r) => r.group !== undefined && coversGroup(info, r.group) && r.kind === info.kind && !r.disabled
     )
@@ -290,7 +292,7 @@ export function getAvailableResourceKinds(availableResources?: SupportedResource
 }
 
 /** Whether a given kind is currently enabled for provisioning per the settings endpoint. */
-export function isResourceKindAvailable(info: ResourceKindInfo, availableResources?: SupportedResource[]): boolean {
+export function isResourceKindAvailable(info: KindInfo, availableResources?: SupportedResource[]): boolean {
   // Compare on group/kind rather than object identity so callers can pass an
   // equivalent descriptor that isn't the exact registry instance.
   return getAvailableResourceKinds(availableResources).some(

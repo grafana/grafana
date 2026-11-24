@@ -2,11 +2,12 @@ import { HttpResponse, http } from 'msw';
 
 import server from '@grafana/test-utils/server';
 import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
-import { addKinds } from 'app/core/kinds/coreKinds';
+import { addKinds, CORE_KINDS } from 'app/core/kinds/coreKinds';
 
 import { setupProvisioningMswServer } from '../mocks/server';
 
 import {
+  type ResourceKindInfo,
   resourceKindInfos,
   getAvailableResourceKinds,
   getKindInfoByGroupKind,
@@ -95,22 +96,22 @@ describe('resourceKinds registry', () => {
 
   it('carries a list-cache invalidation action only for kinds committed through the shared drawer', () => {
     // Playlists commit via SaveProvisionedResourceDrawer and must refresh their list afterwards;
-    // dashboards/folders use their own forms, so they don't carry an invalidation action. Looked up
-    // via getKindInfoByResource so the widened ResourceKindInfo type exposes the optional field (the
-    // `as const` registry entries narrow it away on kinds that omit it).
-    expect(getKindInfoByResource('playlists')?.invalidateListTags?.()).toMatchObject({ type: expect.any(String) });
-    expect(getKindInfoByResource('folders')?.invalidateListTags).toBeUndefined();
-    expect(getKindInfoByResource('dashboards')?.invalidateListTags).toBeUndefined();
-    expect(getKindInfoByResource('librarypanels')?.invalidateListTags).toBeUndefined();
+    // dashboards/folders use their own forms, so they don't carry an invalidation action. Widened to
+    // ResourceKindInfo so the optional field is visible (the `as const` entries narrow it away).
+    const info = (key: keyof typeof resourceKindInfos): ResourceKindInfo => resourceKindInfos[key];
+    expect(info('playlist').invalidateListTags?.()).toMatchObject({ type: expect.any(String) });
+    expect(info('folder').invalidateListTags).toBeUndefined();
+    expect(info('dashboard').invalidateListTags).toBeUndefined();
+    expect(info('librarypanel').invalidateListTags).toBeUndefined();
   });
 });
 
 describe('getKindInfoByResource', () => {
   it('resolves by plural resource name', () => {
-    expect(getKindInfoByResource('dashboards')).toBe(resourceKindInfos.dashboard);
-    expect(getKindInfoByResource('folders')).toBe(resourceKindInfos.folder);
-    expect(getKindInfoByResource('playlists')).toBe(resourceKindInfos.playlist);
-    expect(getKindInfoByResource('librarypanels')).toBe(resourceKindInfos.librarypanel);
+    expect(getKindInfoByResource('dashboards')).toBe(CORE_KINDS.dashboard);
+    expect(getKindInfoByResource('folders')).toBe(CORE_KINDS.folder);
+    expect(getKindInfoByResource('playlists')).toBe(CORE_KINDS.playlist);
+    expect(getKindInfoByResource('librarypanels')).toBe(CORE_KINDS.librarypanel);
   });
 
   it('returns undefined for unknown or missing resources', () => {
@@ -121,8 +122,8 @@ describe('getKindInfoByResource', () => {
 
 describe('getKindInfoByKind', () => {
   it('resolves by kind', () => {
-    expect(getKindInfoByKind('Dashboard')).toBe(resourceKindInfos.dashboard);
-    expect(getKindInfoByKind('Folder')).toBe(resourceKindInfos.folder);
+    expect(getKindInfoByKind('Dashboard')).toBe(CORE_KINDS.dashboard);
+    expect(getKindInfoByKind('Folder')).toBe(CORE_KINDS.folder);
   });
 
   it('returns undefined for the non-resource File type', () => {
@@ -132,12 +133,12 @@ describe('getKindInfoByKind', () => {
 
 describe('getKindInfoByStatGroup', () => {
   it('matches the full API group', () => {
-    expect(getKindInfoByStatGroup('dashboard.grafana.app')).toBe(resourceKindInfos.dashboard);
-    expect(getKindInfoByStatGroup('folder.grafana.app')).toBe(resourceKindInfos.folder);
+    expect(getKindInfoByStatGroup('dashboard.grafana.app')).toBe(CORE_KINDS.dashboard);
+    expect(getKindInfoByStatGroup('folder.grafana.app')).toBe(CORE_KINDS.folder);
   });
 
   it('matches the legacy short plural form', () => {
-    expect(getKindInfoByStatGroup('folders')).toBe(resourceKindInfos.folder);
+    expect(getKindInfoByStatGroup('folders')).toBe(CORE_KINDS.folder);
   });
 
   it('returns undefined for unknown groups', () => {
@@ -147,19 +148,19 @@ describe('getKindInfoByStatGroup', () => {
 
 describe('getKindInfoByGroupKind', () => {
   it('resolves a job summary row by group and kind', () => {
-    expect(getKindInfoByGroupKind('dashboard.grafana.app', 'Dashboard')).toBe(resourceKindInfos.dashboard);
-    expect(getKindInfoByGroupKind('folder.grafana.app', 'Folder')).toBe(resourceKindInfos.folder);
+    expect(getKindInfoByGroupKind('dashboard.grafana.app', 'Dashboard')).toBe(CORE_KINDS.dashboard);
+    expect(getKindInfoByGroupKind('folder.grafana.app', 'Folder')).toBe(CORE_KINDS.folder);
   });
 
   it('disambiguates kinds that share an API group by the kind', () => {
     // Dashboards and library panels both live in dashboard.grafana.app.
-    expect(getKindInfoByGroupKind('dashboard.grafana.app', 'LibraryPanel')).toBe(resourceKindInfos.librarypanel);
-    expect(getKindInfoByGroupKind('dashboard.grafana.app', 'Dashboard')).toBe(resourceKindInfos.dashboard);
+    expect(getKindInfoByGroupKind('dashboard.grafana.app', 'LibraryPanel')).toBe(CORE_KINDS.librarypanel);
+    expect(getKindInfoByGroupKind('dashboard.grafana.app', 'Dashboard')).toBe(CORE_KINDS.dashboard);
   });
 
   it('resolves on whichever identifier is present', () => {
-    expect(getKindInfoByGroupKind(undefined, 'Playlist')).toBe(resourceKindInfos.playlist);
-    expect(getKindInfoByGroupKind('playlist.grafana.app', undefined)).toBe(resourceKindInfos.playlist);
+    expect(getKindInfoByGroupKind(undefined, 'Playlist')).toBe(CORE_KINDS.playlist);
+    expect(getKindInfoByGroupKind('playlist.grafana.app', undefined)).toBe(CORE_KINDS.playlist);
   });
 
   it('returns undefined when nothing matches or both identifiers are missing', () => {
@@ -170,27 +171,23 @@ describe('getKindInfoByGroupKind', () => {
 
 describe('getKindInfoByStat', () => {
   it('resolves by the plural resource name', () => {
-    expect(getKindInfoByStat({ group: 'dashboard.grafana.app', resource: 'dashboards' })).toBe(
-      resourceKindInfos.dashboard
-    );
-    expect(getKindInfoByStat({ group: 'playlist.grafana.app', resource: 'playlists' })).toBe(
-      resourceKindInfos.playlist
-    );
+    expect(getKindInfoByStat({ group: 'dashboard.grafana.app', resource: 'dashboards' })).toBe(CORE_KINDS.dashboard);
+    expect(getKindInfoByStat({ group: 'playlist.grafana.app', resource: 'playlists' })).toBe(CORE_KINDS.playlist);
   });
 
   it('prefers the resource over the group when they point at different kinds', () => {
     // The resource uniquely identifies the kind, so it wins over a group that
     // would otherwise resolve to a different kind.
-    expect(getKindInfoByStat({ group: 'dashboard.grafana.app', resource: 'folders' })).toBe(resourceKindInfos.folder);
+    expect(getKindInfoByStat({ group: 'dashboard.grafana.app', resource: 'folders' })).toBe(CORE_KINDS.folder);
     // Dashboards and library panels share dashboard.grafana.app; the resource tells them apart.
     expect(getKindInfoByStat({ group: 'dashboard.grafana.app', resource: 'librarypanels' })).toBe(
-      resourceKindInfos.librarypanel
+      CORE_KINDS.librarypanel
     );
   });
 
   it('falls back to a group-only match when the resource is missing or unknown', () => {
-    expect(getKindInfoByStat({ group: 'folder.grafana.app' })).toBe(resourceKindInfos.folder);
-    expect(getKindInfoByStat({ group: 'folders' })).toBe(resourceKindInfos.folder);
+    expect(getKindInfoByStat({ group: 'folder.grafana.app' })).toBe(CORE_KINDS.folder);
+    expect(getKindInfoByStat({ group: 'folders' })).toBe(CORE_KINDS.folder);
   });
 
   it('returns undefined when neither resource nor group is known', () => {
@@ -230,7 +227,7 @@ describe('getAvailableResourceKinds', () => {
 
     const result = getAvailableResourceKinds(available);
 
-    expect(result).toEqual([resourceKindInfos.dashboard]);
+    expect(result).toEqual([CORE_KINDS.dashboard]);
     expect(isResourceKindAvailable(resourceKindInfos.dashboard, available)).toBe(true);
     expect(isResourceKindAvailable(resourceKindInfos.folder, available)).toBe(false);
     expect(isResourceKindAvailable(resourceKindInfos.playlist, available)).toBe(false);
@@ -308,9 +305,9 @@ describe('collection groups', () => {
   const testdata = 'grafana-testdata-datasource.datasource.grafana.app';
 
   it('resolves a resource reported under a served group back to the kind', () => {
-    expect(getKindInfoByGroupKind(testdata, 'DataSource')).toBe(resourceKindInfos.datasource);
-    expect(getKindInfoByStat({ group: testdata })).toBe(resourceKindInfos.datasource);
-    expect(getKindInfoByStatGroup(testdata)).toBe(resourceKindInfos.datasource);
+    expect(getKindInfoByGroupKind(testdata, 'DataSource')).toBe(CORE_KINDS.datasource);
+    expect(getKindInfoByStat({ group: testdata })).toBe(CORE_KINDS.datasource);
+    expect(getKindInfoByStatGroup(testdata)).toBe(CORE_KINDS.datasource);
   });
 
   it('reports a served group as the collection, and every other group unchanged', () => {

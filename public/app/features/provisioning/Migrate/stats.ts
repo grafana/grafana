@@ -63,7 +63,7 @@ export function computeKindTotals(data: ResourceStats | undefined, kinds: Resour
 export function computeFolderCounts(data: ResourceStats | undefined): FolderCounts {
   const { folder } = resourceKindInfos;
   const isFolder = (group: string, resource: string) =>
-    resource === folder.resource && getKindInfoByStatGroup(group) === folder;
+    resource === folder.resource && getKindInfoByStatGroup(group)?.kind === folder.kind;
 
   let total = 0;
   let managed = 0;

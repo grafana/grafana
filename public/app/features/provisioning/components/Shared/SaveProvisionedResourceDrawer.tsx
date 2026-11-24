@@ -4,6 +4,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
+import { type KindInfo } from '@grafana/runtime/unstable';
 import { Button, Drawer, Stack, Text } from '@grafana/ui';
 import { type RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import {
@@ -29,6 +30,7 @@ import {
   getKindInfoByGroupKind,
   getKindKeyByGroupKind,
   type ResourceKindInfo,
+  resourceKindInfos,
 } from '../../utils/resourceKinds';
 import { getRequestRef } from '../../utils/workflow';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
@@ -102,7 +104,7 @@ export type SaveProvisionedResourceDrawerProps = BaseDrawerProps &
 
 interface FormProps {
   kindKey: AnyResourceKindKey;
-  kind: ResourceKindInfo;
+  kind: KindInfo;
   redirectUrl: string;
   resourceName: string;
   title: string;
@@ -143,7 +145,9 @@ function FormContent({
   const { handleSubmit, watch, formState } = methods;
   const ref = watch('ref') ?? '';
 
-  const { onWriteSuccess, onBranchSuccess } = useProvisionedResourceDrawerHandlers(kind, redirectUrl, action);
+  const coreKey = getKindKeyByGroupKind(kind.group, kind.kind);
+  const coreInfo: ResourceKindInfo | undefined = coreKey && resourceKindInfos[coreKey];
+  const { onWriteSuccess, onBranchSuccess } = useProvisionedResourceDrawerHandlers(coreInfo ?? {}, redirectUrl, action);
 
   const templateVars: CommitTemplateVars = {
     action,
@@ -294,7 +298,7 @@ export function SaveProvisionedResourceDrawer(props: SaveProvisionedResourceDraw
 
 type ResourceDrawerContentProps = SaveProvisionedResourceDrawerProps & {
   kindKey: AnyResourceKindKey;
-  kind: ResourceKindInfo;
+  kind: KindInfo;
 };
 
 function ResourceDrawerContent({
