@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useRef, type ReactNode, type RefObject } from 'react';
+import { createContext, useContext, useLayoutEffect, useMemo, useRef, type ReactNode, type RefObject } from 'react';
 
 export type EditActionsLayout = {
   getPortalRoot: () => HTMLElement | undefined;
@@ -37,7 +37,9 @@ export function EditActionsLayoutProvider({
 }) {
   // Keep the context value identity stable so panels do not re-render on dock or resize.
   const sidebarLayoutRef = useRef({ isDocked, isHidden });
-  sidebarLayoutRef.current = { isDocked, isHidden };
+  useLayoutEffect(() => {
+    sidebarLayoutRef.current = { isDocked, isHidden };
+  });
 
   const layout = useMemo<EditActionsLayout>(
     () => ({

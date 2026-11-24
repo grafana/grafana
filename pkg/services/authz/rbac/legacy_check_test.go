@@ -71,6 +71,19 @@ func TestService_LegacyCheck(t *testing.T) {
 			subject: "render:0",
 			action:  "dashboards:read",
 			scopes:  []string{"dashboards:uid:dash-1"},
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboards:read", Scope: "dashboards:*"},
+			},
+			allowed: true,
+		},
+		{
+			name:    "renderer app access",
+			subject: "render:0",
+			action:  "plugins.app:access",
+			scopes:  []string{"plugins:id:grafana-irm-app"},
+			permissions: []accesscontrol.Permission{
+				{Action: "plugins.app:access", Scope: "plugins:id:*"},
+			},
 			allowed: true,
 		},
 		{
@@ -159,12 +172,44 @@ func TestService_LegacyCheck(t *testing.T) {
 			require.Empty(t, resp.GetError())
 			require.Equal(t, tc.allowed, resp.GetAllowed())
 			require.Nil(t, evaluator.user)
+			require.Len(t, permissions.queries, 1)
+			require.Equal(t, tc.action, permissions.queries[0].Action)
+			require.Equal(t, s.actionResolver.ResolveAction(tc.action), permissions.queries[0].ActionSets)
 			if tc.subject == "render:0" {
-				require.Empty(t, permissions.queries)
-			} else {
-				require.Len(t, permissions.queries, 1)
-				require.Equal(t, tc.action, permissions.queries[0].Action)
-				require.Equal(t, s.actionResolver.ResolveAction(tc.action), permissions.queries[0].ActionSets)
+				require.Equal(t, "Admin", permissions.queries[0].Role)
+				require.Zero(t, permissions.queries[0].UserID)
+			}
+		})
+	}
+}
+
+func TestService_LegacyCheckRenderServiceRestriction(t *testing.T) {
+	grants := []accesscontrol.Permission{
+		{Action: "plugins.app:access", Scope: "plugins:id:*"},
+		{Action: "users:delete", Scope: "*"},
+	}
+	for _, tc := range []struct {
+		name    string
+		action  string
+		scope   string
+		allowed bool
+	}{
+		{name: "restricted action allowed", action: "plugins.app:access", scope: "plugins:id:grafana-irm-app", allowed: true},
+		{name: "action outside restriction denied", action: "users:delete", scope: "*", allowed: false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			s := NewTestService("u-1", grants, nil)
+			permissions := &legacyPermissionStore{PermissionStore: s.permissionStore}
+			s.permissionStore = permissions
+			req := legacyPermissionRequest("render:0", tc.action, tc.scope)
+			req.Restriction = &authzextv1.LegacyActionRestriction{Actions: []string{"plugins.app:access"}}
+			resp, err := s.LegacyCheck(legacyCheckContext(t), req)
+			require.NoError(t, err)
+			require.Empty(t, resp.GetError())
+			require.Equal(t, tc.allowed, resp.GetAllowed())
+			for _, query := range permissions.queries {
+				require.Equal(t, "plugins.app:access", query.Action)
+				require.Equal(t, "Admin", query.Role)
 			}
 		})
 	}

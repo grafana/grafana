@@ -76,6 +76,12 @@ describe('hasNothingToResume', () => {
     expect(nothingToResume('/d/abc')).toBe(false);
   });
 
+  it('exempts folders, notebooks and playlists: no menu entry carries their uid', () => {
+    expect(nothingToResume('/dashboards/f/abc/my-folder')).toBe(false);
+    expect(nothingToResume('/notebooks/abc')).toBe(false);
+    expect(nothingToResume('/playlists/edit/abc')).toBe(false);
+  });
+
   it('matches nav urls that carry the app sub url', () => {
     const subUrl = (appSubUrl: string) =>
       locationUtil.initialize({

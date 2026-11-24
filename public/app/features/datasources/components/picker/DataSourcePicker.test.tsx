@@ -16,6 +16,8 @@ import { ModalRoot, ModalsProvider } from '@grafana/ui';
 import { DataSourcePicker, type DataSourcePickerProps } from './DataSourcePicker';
 import * as utils from './utils';
 
+jest.mock('./utils', () => makeSpyable('./utils'));
+
 const pluginMetaInfo: PluginMetaInfo = {
   author: { name: '' },
   description: '',

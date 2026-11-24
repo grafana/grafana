@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { Suspense } from 'react';
+import { type ReactNode, Suspense, useCallback } from 'react';
 
 import { type ChatContextItem } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -13,18 +13,33 @@ export const STANDALONE_PROMPT_COMPONENT_ID = 'grafana-assistant-app/standalone-
  * keep in sync with grafana-assistant-app `StandaloneAssistantPromptProps`
  */
 interface StandalonePromptProps {
-  onSubmit: (prompt: string, contextItems: ChatContextItem[]) => void;
+  /** A promise that rejects keeps the prompt's text and pills. Older plugin versions do not wait on it. */
+  onSubmit: (prompt: string, contextItems: ChatContextItem[]) => void | Promise<void>;
   placeholder?: string;
   hideModeSelector?: boolean;
   mode?: string;
   className?: string;
+  /** Context attached from outside the prompt, shown as pills. Older plugin versions ignore it. */
+  hostContextItems?: ChatContextItem[];
+  onHostContextItemRemove?: (id: string) => void;
+  /**
+   * Controls shown next to the prompt's + button. A function, since the props reach the plugin deep-cloned and an
+   * element does not survive the clone. Older plugin versions do not show them.
+   */
+  renderHostActions?: () => ReactNode;
 }
 
 interface DashboardLandingPromptProps {
-  onSubmit: (prompt: string, contextItems: ChatContextItem[]) => void;
+  onSubmit: (prompt: string, contextItems: ChatContextItem[]) => void | Promise<void>;
   placeholder?: string;
   className?: string;
+  hostContextItems?: ChatContextItem[];
+  onHostContextItemRemove?: (id: string) => void;
+  renderHostActions?: () => ReactNode;
 }
+
+/** The plugin's text box with one line of text: the loading slot takes it, and the host keeps it as a floor. */
+export const PROMPT_HEIGHT = 91;
 
 function PromptLoadingSlot() {
   const styles = useStyles2(getStyles);
@@ -40,8 +55,23 @@ function PromptLoadingSlot() {
  * Grafana host for the new-dashboard prompt. ChatInput itself lives in the
  * assistant plugin; this file configures the placeholder and dashboarding mode.
  */
-export function DashboardLandingPrompt({ onSubmit, placeholder }: DashboardLandingPromptProps) {
+export function DashboardLandingPrompt({
+  onSubmit,
+  placeholder,
+  hostContextItems,
+  onHostContextItemRemove,
+  renderHostActions,
+}: DashboardLandingPromptProps) {
   const { component: Prompt, isLoading } = usePluginComponent<StandalonePromptProps>(STANDALONE_PROMPT_COMPONENT_ID);
+  const submit = useCallback(
+    (prompt: string, contextItems: ChatContextItem[]) => {
+      const result = onSubmit(prompt, contextItems);
+      // An older plugin drops the promise, so its rejection must not surface as unhandled.
+      result?.catch(() => {});
+      return result;
+    },
+    [onSubmit]
+  );
 
   if (!Prompt) {
     return isLoading ? <PromptLoadingSlot /> : null;
@@ -50,7 +80,7 @@ export function DashboardLandingPrompt({ onSubmit, placeholder }: DashboardLandi
   return (
     <Suspense fallback={<PromptLoadingSlot />}>
       <Prompt
-        onSubmit={onSubmit}
+        onSubmit={submit}
         placeholder={
           placeholder ??
           t(
@@ -60,6 +90,9 @@ export function DashboardLandingPrompt({ onSubmit, placeholder }: DashboardLandi
         }
         hideModeSelector
         mode="dashboarding"
+        hostContextItems={hostContextItems}
+        onHostContextItemRemove={onHostContextItemRemove}
+        renderHostActions={renderHostActions}
       />
     </Suspense>
   );
@@ -69,7 +102,7 @@ function getStyles(_theme: GrafanaTheme2) {
   return {
     slot: css({
       width: '100%',
-      height: 100,
+      height: PROMPT_HEIGHT,
     }),
     loadingSlot: css({
       display: 'flex',
