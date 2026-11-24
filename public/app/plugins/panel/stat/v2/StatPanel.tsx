@@ -12,10 +12,12 @@ import {
 } from '@grafana/data';
 import { findNumericFieldMinMax } from '@grafana/data/internal';
 import { BigValueTextMode, BigValueGraphMode } from '@grafana/schema';
-import { BigValue, DataLinksContextMenu, useTheme2, VizRepeater, type VizRepeaterRenderValueProps } from '@grafana/ui';
+import { DataLinksContextMenu, useTheme2, VizRepeater, type VizRepeaterRenderValueProps } from '@grafana/ui';
 import { type DataLinksContextMenuApi } from '@grafana/ui/internal';
 
 import { type Options } from '../panelcfg.gen';
+
+import { BigValue } from './BigValue/BigValue';
 
 export const StatPanel = memo(
   ({
