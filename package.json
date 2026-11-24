@@ -356,7 +356,7 @@
     "marked": "18.2.1",
     "memoize-one": "6.0.0",
     "mermaid": "12.3.0",
-    "micro-memoize": "^4.1.2",
+    "micro-memoize": "^5.0.0",
     "ml-regression-polynomial": "^4.0.0",
     "ml-regression-simple-linear": "^3.0.0",
     "moment": "2.31.0",
