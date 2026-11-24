@@ -1,4 +1,4 @@
-import { useCallback, useId, useState } from 'react';
+import { useCallback, useId, useRef, useState } from 'react';
 
 import { QueryWithAssistantButton } from '@grafana/assistant';
 import { CoreApp, type DataSourceInstanceSettings, type SelectableValue } from '@grafana/data';
@@ -55,6 +55,15 @@ export function QueryHeader({
 }: QueryHeaderProps) {
   const { editorMode } = query;
   const [showConfirm, setShowConfirm] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
+  const [isCopying, setIsCopying] = useState(false);
+  const copyAttempt = useRef(0);
+
+  const resetCopy = () => {
+    copyAttempt.current++;
+    setCopyFailed(false);
+    setIsCopying(false);
+  };
   const toRawSql = db.toRawSql;
 
   const htmlId = useId();
@@ -280,15 +289,39 @@ export function QueryHeader({
 
         <ConfirmModal
           isOpen={showConfirm}
-          onCopy={() => {
+          copyFailed={copyFailed}
+          isCopying={isCopying}
+          onCopy={async (appendTo) => {
+            if (isCopying) {
+              return;
+            }
+
+            const attempt = ++copyAttempt.current;
+            setCopyFailed(false);
+            setIsCopying(true);
+
+            try {
+              await copyTextToClipboard(query.rawSql ?? '', appendTo);
+            } catch {
+              if (attempt === copyAttempt.current) {
+                setCopyFailed(true);
+                setIsCopying(false);
+              }
+              return;
+            }
+
+            if (attempt !== copyAttempt.current) {
+              return;
+            }
+
             reportInteraction('grafana_sql_editor_mode_changed', {
               datasource: query.datasource?.type,
               selectedEditorMode: EditorMode.Builder,
               type: 'copy',
             });
 
+            resetCopy();
             setShowConfirm(false);
-            copyTextToClipboard(query.rawSql!).catch(() => {});
             onChange({
               ...query,
               rawSql: toRawSql(query),
@@ -302,6 +335,7 @@ export function QueryHeader({
               type: 'discard',
             });
 
+            resetCopy();
             setShowConfirm(false);
             onChange({
               ...query,
@@ -316,6 +350,7 @@ export function QueryHeader({
               type: 'cancel',
             });
 
+            resetCopy();
             setShowConfirm(false);
           }}
         />

@@ -6,6 +6,7 @@
         "cancel": "Cancel",
         "clipboard": "Do you want to copy your code to the clipboard?",
         "copy-code-and-switch": "Copy code and switch",
+        "copy-failed": "Could not copy SQL to the clipboard. Your code has not been changed.",
         "discard-code-and-switch": "Discard code and switch",
         "warning": "Warning"
       },
