@@ -7,45 +7,61 @@ import {
   type RulerRuleGroupDTO,
 } from 'app/types/unified-alerting-dto';
 
-const GROUPS_ERROR = 'Invalid YAML format: missing or invalid groups array';
-const NAMESPACE_ERROR = 'Invalid YAML format: namespace must be a string';
-
+// The fields below are typed the way the backend decodes them (PrometheusRuleGroup, PrometheusRule),
+// so a file the backend would reject fails in the file step and not when the import is submitted.
 const nonEmptyString = z.string().check(z.minLength(1));
-// Arrays pass too: the guards this schema replaced accepted anything non-null of type 'object'.
-const objectLike = z.custom<object>((value) => typeof value === 'object' && value !== null);
+// Same grammar as the backend's model.ParseDuration: descending units, each at most once.
+const DURATION_UNITS = /^(\d+y)?(\d+w)?(\d+d)?(\d+h)?(\d+m)?(\d+s)?(\d+ms)?$/;
+const prometheusDuration = z
+  .string()
+  .check(
+    z.refine(
+      (value) => value === '0' || (value !== '' && DURATION_UNITS.test(value)),
+      'must be a Prometheus duration, for example 5m or 1h30m'
+    )
+  );
+// A null value is fine: the backend ignores it.
+const stringMap = z.record(z.string(), z.nullable(z.string()));
 
-// Loose objects keep keys we don't validate (interval, keep_firing_for, ...) instead of stripping them.
+// Loose objects keep keys the backend ignores instead of stripping them.
 const ruleSchema = z
   .looseObject({
+    alert: z.nullish(z.string()),
+    record: z.nullish(z.string()),
     expr: nonEmptyString,
-    for: z.optional(z.string()),
-    labels: z.optional(objectLike),
-    annotations: z.optional(objectLike),
+    for: z.nullish(prometheusDuration),
+    keep_firing_for: z.nullish(prometheusDuration),
+    labels: z.nullish(stringMap),
+    annotations: z.nullish(stringMap),
   })
-  // alert and record are left untyped: a non-string or empty one counts as absent, as before.
-  .check(z.refine((rule) => isNonEmptyString(rule.alert) !== isNonEmptyString(rule.record)));
+  .check(
+    z.refine(
+      (rule) => nonEmptyString.safeParse(rule.alert).success !== nonEmptyString.safeParse(rule.record).success,
+      'a rule needs either an alert or a record name, not both'
+    )
+  );
+
+const groupSchema = z.looseObject({
+  name: nonEmptyString,
+  // The backend rejects a null interval, so it stays optional only.
+  interval: z.optional(prometheusDuration),
+  query_offset: z.nullish(prometheusDuration),
+  limit: z.nullish(z.literal(0, 'limit is not supported')),
+  labels: z.nullish(stringMap),
+  rules: z.array(ruleSchema),
+});
 
 const prometheusYamlFileSchema = z.object({
   namespace: z.optional(z.string()),
-  groups: z.array(z.looseObject({ name: nonEmptyString, rules: z.array(ruleSchema) })),
+  groups: z.array(groupSchema),
 });
 
-function isNonEmptyString(value: unknown): boolean {
-  return typeof value === 'string' && value !== '';
-}
+const MAX_REPORTED_ISSUES = 10;
 
-function toErrorMessage(issues: z.core.$ZodIssue[]): string {
-  const hasStructuralIssue = issues.some(
-    ({ path }) => path.length === 0 || (path[0] === 'groups' && path.length === 1)
-  );
-  if (hasStructuralIssue) {
-    return GROUPS_ERROR;
-  }
-  if (issues.some(({ path }) => path[0] === 'namespace')) {
-    return NAMESPACE_ERROR;
-  }
-  // The message names the group, not the rule: the first issue belongs to the first invalid group.
-  return `${GROUPS_ERROR} at index ${String(issues[0].path[1])}`;
+function toErrorMessage({ issues }: z.core.$ZodError): string {
+  const message = z.prettifyError({ issues: issues.slice(0, MAX_REPORTED_ISSUES) });
+  const hidden = issues.length - MAX_REPORTED_ISSUES;
+  return hidden > 0 ? `${message}\n…and ${hidden} more` : message;
 }
 
 // only use this function directly for testing purposes, use parseYamlFileToRulerRulesConfigDTO instead
@@ -56,7 +72,7 @@ export function parseYamlToRulerRulesConfigDTO(
   const result = prometheusYamlFileSchema.safeParse(load(yamlAsString));
 
   if (!result.success) {
-    throw new Error(toErrorMessage(result.error.issues));
+    throw new Error(toErrorMessage(result.error));
   }
 
   const { namespace = defaultNamespace, groups } = result.data;

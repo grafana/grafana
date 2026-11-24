@@ -100,95 +100,6 @@ describe('parseYamlToRulerRulesConfigDTO', () => {
     expect(() => parseYamlToRulerRulesConfigDTO(invalidYaml, 'default-namespace')).toThrow();
   });
 
-  it('should throw error for missing groups array', () => {
-    const yaml = `
-      namespace: test-namespace
-      invalid: content
-    `;
-    expect(() => parseYamlToRulerRulesConfigDTO(yaml, 'default-namespace')).toThrow(
-      'Invalid YAML format: missing or invalid groups array'
-    );
-  });
-
-  it('should throw error for invalid group format', () => {
-    const yaml = `
-      namespace: test-namespace
-      groups:
-        - invalid: group
-    `;
-    expect(() => parseYamlToRulerRulesConfigDTO(yaml, 'default-namespace')).toThrow(
-      'Invalid YAML format: missing or invalid groups array at index 0'
-    );
-  });
-
-  it('should throw error for invalid rule format', () => {
-    const yaml = `
-      namespace: test-namespace
-      groups:
-        - name: test-group
-          rules:
-            - invalid: rule
-    `;
-    expect(() => parseYamlToRulerRulesConfigDTO(yaml, 'default-namespace')).toThrow(
-      'Invalid YAML format: missing or invalid groups array at index 0'
-    );
-  });
-
-  it('should throw error for empty YAML string', () => {
-    const emptyYaml = '';
-    expect(() => parseYamlToRulerRulesConfigDTO(emptyYaml, 'default-namespace')).toThrow(
-      'Invalid YAML format: missing or invalid groups array'
-    );
-  });
-
-  it('should throw error for rule missing expr field', () => {
-    const yaml = `
-      namespace: test-namespace
-      groups:
-        - name: test-group
-          rules:
-            - alert: TestAlert
-              for: 5m
-              labels:
-                severity: warning
-    `;
-    expect(() => parseYamlToRulerRulesConfigDTO(yaml, 'default-namespace')).toThrow(
-      'Invalid YAML format: missing or invalid groups array at index 0'
-    );
-  });
-
-  it('should throw error for rule with expr but missing both alert and record fields', () => {
-    const yaml = `
-      namespace: test-namespace
-      groups:
-        - name: test-group
-          rules:
-            - expr: up == 0
-              for: 5m
-              labels:
-                severity: warning
-    `;
-    expect(() => parseYamlToRulerRulesConfigDTO(yaml, 'default-namespace')).toThrow(
-      'Invalid YAML format: missing or invalid groups array at index 0'
-    );
-  });
-
-  it('should throw error for rule with both alert and record fields', () => {
-    const yaml = `
-      namespace: test-namespace
-      groups:
-        - name: test-group
-          rules:
-            - alert: TestAlert
-              record: test:rate5m
-              expr: up == 0
-              for: 5m
-    `;
-    expect(() => parseYamlToRulerRulesConfigDTO(yaml, 'default-namespace')).toThrow(
-      'Invalid YAML format: missing or invalid groups array at index 0'
-    );
-  });
-
   it('should handle multiple groups and rules', () => {
     const yaml = `
       namespace: test-namespace
@@ -236,59 +147,120 @@ describe('parseYamlToRulerRulesConfigDTO', () => {
     expect(result).toEqual(expected);
   });
 
-  describe('validation edge cases', () => {
-    // toThrow(new Error(..)) compares the whole message; a string argument only matches a substring.
-    const GROUPS_ERROR = 'Invalid YAML format: missing or invalid groups array';
-    const NAMESPACE_ERROR = 'Invalid YAML format: namespace must be a string';
-    const groupAt = (i: number) => `${GROUPS_ERROR} at index ${i}`;
+  describe('validation', () => {
     const parse = (yaml: string) => parseYamlToRulerRulesConfigDTO(yaml, 'default-namespace');
+    const errorOf = (yaml: string): string => {
+      try {
+        parse(yaml);
+      } catch (error) {
+        return error instanceof Error ? error.message : String(error);
+      }
+      throw new Error('expected the YAML to be rejected');
+    };
+    const indent = (text: string, spaces: number) =>
+      text
+        .split('\n')
+        .map((line) => ' '.repeat(spaces) + line)
+        .join('\n');
     const withRule = (rule: string) => `
 groups:
   - name: g
     rules:
       - expr: up == 0
-${rule
-  .split('\n')
-  .map((line) => `        ${line}`)
-  .join('\n')}
+${indent(rule, 8)}
+`;
+    const withGroup = (group: string) => `
+groups:
+  - name: g
+${indent(group, 4)}
+    rules: []
 `;
 
     it.each([
-      ['non-string for', 'alert: A\nfor: 5'],
-      ['null for', 'alert: A\nfor: null'],
-      ['null labels', 'alert: A\nlabels: null'],
-      ['scalar labels', 'alert: A\nlabels: foo'],
-      ['scalar annotations', 'alert: A\nannotations: 5'],
-      ['null annotations', 'alert: A\nannotations: null'],
-      ['empty alert and no record', 'alert: ""'],
-      ['empty record and no alert', 'record: ""'],
-    ])('rejects a rule with %s', (_name, rule) => {
-      expect(() => parse(withRule(rule))).toThrow(new Error(groupAt(0)));
+      ['non-string for', 'alert: A\nfor: 5', 'groups[0].rules[0].for'],
+      ['for that is not a duration', 'alert: A\nfor: five minutes', 'groups[0].rules[0].for'],
+      ['for with units out of order', 'alert: A\nfor: 20s4h', 'groups[0].rules[0].for'],
+      ['for with a repeated unit', 'alert: A\nfor: 20h20h', 'groups[0].rules[0].for'],
+      ['a fractional for', 'alert: A\nfor: 1.5h', 'groups[0].rules[0].for'],
+      ['an empty for', 'alert: A\nfor: ""', 'groups[0].rules[0].for'],
+      [
+        'keep_firing_for that is not a duration',
+        'alert: A\nkeep_firing_for: soon',
+        'groups[0].rules[0].keep_firing_for',
+      ],
+      ['scalar labels', 'alert: A\nlabels: foo', 'groups[0].rules[0].labels'],
+      ['labels as a list', 'alert: A\nlabels: [team, ops]', 'groups[0].rules[0].labels'],
+      ['a numeric label value', 'alert: A\nlabels:\n  priority: 1', 'groups[0].rules[0].labels.priority'],
+      ['a boolean label value', 'alert: A\nlabels:\n  paging: true', 'groups[0].rules[0].labels.paging'],
+      ['scalar annotations', 'alert: A\nannotations: 5', 'groups[0].rules[0].annotations'],
+      ['annotations as a list', 'alert: A\nannotations: [a]', 'groups[0].rules[0].annotations'],
+      ['a numeric annotation value', 'alert: A\nannotations:\n  count: 1', 'groups[0].rules[0].annotations.count'],
+      ['a non-string alert', 'alert: 5\nrecord: r', 'groups[0].rules[0].alert'],
+      ['a non-string record', 'alert: A\nrecord: 5', 'groups[0].rules[0].record'],
+      ['an empty alert and no record', 'alert: ""', 'either an alert or a record'],
+      ['an empty record and no alert', 'record: ""', 'either an alert or a record'],
+      ['no alert and no record', 'for: 5m', 'either an alert or a record'],
+      ['both alert and record', 'alert: A\nrecord: r', 'either an alert or a record'],
+    ])('rejects a rule with %s', (_name, rule, expected) => {
+      expect(errorOf(withRule(rule))).toContain(expected);
+    });
+
+    it('rejects a rule without expr', () => {
+      expect(errorOf('groups:\n  - name: g\n    rules:\n      - alert: A')).toContain('groups[0].rules[0].expr');
     });
 
     it('rejects a rule with an empty expr', () => {
-      const yaml = `
-groups:
-  - name: g
-    rules:
-      - alert: A
-        expr: ""
-`;
-      expect(() => parse(yaml)).toThrow(new Error(groupAt(0)));
+      expect(errorOf('groups:\n  - name: g\n    rules:\n      - alert: A\n        expr: ""')).toContain(
+        'groups[0].rules[0].expr'
+      );
+    });
+
+    it('rejects a rule that is not a map', () => {
+      expect(errorOf('groups:\n  - name: g\n    rules:\n      - nope')).toContain('groups[0].rules[0]');
     });
 
     it.each([
-      ['a group without rules', 'groups:\n  - name: g'],
-      ['a group with non-array rules', 'groups:\n  - name: g\n    rules: nope'],
-      ['a group without a name', 'groups:\n  - rules: []'],
-      ['a group with an empty name', 'groups:\n  - name: ""\n    rules: []'],
-      ['a scalar group', 'groups:\n  - nope'],
-      ['a null group', 'groups:\n  - null'],
-    ])('rejects %s', (_name, yaml) => {
-      expect(() => parse(yaml)).toThrow(new Error(groupAt(0)));
+      ['a group without rules', 'groups:\n  - name: g', 'groups[0].rules'],
+      ['a group with non-array rules', 'groups:\n  - name: g\n    rules: nope', 'groups[0].rules'],
+      ['a group without a name', 'groups:\n  - rules: []', 'groups[0].name'],
+      ['a group with an empty name', 'groups:\n  - name: ""\n    rules: []', 'groups[0].name'],
+      ['a scalar group', 'groups:\n  - nope', 'groups[0]'],
+      ['a null group', 'groups:\n  - null', 'groups[0]'],
+      ['an interval that is not a duration', withGroup('interval: 1 minute'), 'groups[0].interval'],
+      ['a numeric interval', withGroup('interval: 60'), 'groups[0].interval'],
+      ['an interval with units out of order', withGroup('interval: 20s4h'), 'groups[0].interval'],
+      ['a null interval', withGroup('interval:'), 'groups[0].interval'],
+      ['a query_offset that is not a duration', withGroup('query_offset: later'), 'groups[0].query_offset'],
+      ['a limit', withGroup('limit: 5'), 'limit is not supported'],
+      ['labels as a list', withGroup('labels: [team]'), 'groups[0].labels'],
+      ['a numeric label value', withGroup('labels:\n  priority: 1'), 'groups[0].labels.priority'],
+    ])('rejects %s', (_name, yaml, expected) => {
+      expect(errorOf(yaml)).toContain(expected);
     });
 
-    it('reports the index of the first invalid group', () => {
+    it.each([
+      ['groups is not an array', 'groups: nope'],
+      ['groups is null', 'groups: null'],
+      ['groups is missing', 'namespace: test-namespace\ninvalid: content'],
+      ['the document is a scalar', 'just a string'],
+      ['the document is null', 'null'],
+      ['the document is empty', ''],
+    ])('rejects a file where %s', (_name, yaml) => {
+      expect(() => parse(yaml)).toThrow();
+    });
+
+    it('reports at most ten issues and counts the rest', () => {
+      const rules = Array.from(
+        { length: 300 },
+        (_, i) => `      - alert: A${i}\n        expr: up\n        labels:\n          priority: 1`
+      );
+      const message = errorOf(`groups:\n  - name: g\n    rules:\n${rules.join('\n')}`);
+      expect(message).toContain('groups[0].rules[0].labels.priority');
+      expect(message).toContain('and 290 more');
+      expect(message.length).toBeLessThan(2000);
+    });
+
+    it('names the group and rule of every invalid rule', () => {
       const yaml = `
 groups:
   - name: ok
@@ -297,31 +269,26 @@ groups:
         expr: up == 0
   - name: bad
     rules:
-      - invalid: rule
+      - alert: B
+      - alert: C
+        expr: up == 0
+        for: soon
 `;
-      expect(() => parse(yaml)).toThrow(new Error(groupAt(1)));
-    });
-
-    it.each([
-      ['groups is not an array', 'groups: nope'],
-      ['groups is null', 'groups: null'],
-      ['the document is a scalar', 'just a string'],
-      ['the document is null', 'null'],
-    ])('rejects a file where %s', (_name, yaml) => {
-      expect(() => parse(yaml)).toThrow(new Error(GROUPS_ERROR));
+      const message = errorOf(yaml);
+      expect(message).toContain('groups[1].rules[0].expr');
+      expect(message).toContain('groups[1].rules[1].for');
+      expect(message).not.toContain('groups[0]');
     });
 
     it('rejects a non-string namespace', () => {
-      expect(() => parse('namespace: 5\ngroups: []')).toThrow(new Error(NAMESPACE_ERROR));
-      expect(() => parse('namespace: null\ngroups: []')).toThrow(new Error(NAMESPACE_ERROR));
+      expect(errorOf('namespace: 5\ngroups: []')).toContain('namespace');
+      expect(errorOf('namespace: null\ngroups: []')).toContain('namespace');
     });
 
-    it('reports the groups error before the namespace error', () => {
-      expect(() => parse('namespace: 5\ngroups: nope')).toThrow(new Error(GROUPS_ERROR));
-    });
-
-    it('reports the namespace error before an invalid group', () => {
-      expect(() => parse('namespace: 5\ngroups:\n  - invalid: group')).toThrow(new Error(NAMESPACE_ERROR));
+    it('reports every problem in the file together', () => {
+      const message = errorOf('namespace: 5\ngroups:\n  - invalid: group');
+      expect(message).toContain('namespace');
+      expect(message).toContain('groups[0].name');
     });
 
     it('accepts empty groups and groups without rules', () => {
@@ -337,36 +304,99 @@ groups:
       });
     });
 
-    it('treats a non-string alert as absent when record is set', () => {
-      expect(parse(withRule('alert: 5\nrecord: r'))).toEqual({
-        'default-namespace': [{ name: 'g', rules: [{ alert: 5, record: 'r', expr: 'up == 0' }] }],
+    it('accepts the fields the backend types as durations and string maps', () => {
+      const yaml = `
+groups:
+  - name: g
+    interval: 1m30s
+    query_offset: 30s
+    limit: 0
+    labels:
+      team: ops
+    rules:
+      - alert: A
+        expr: up == 0
+        for: 5m
+        keep_firing_for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: down
+`;
+      expect(parse(yaml)).toEqual({
+        'default-namespace': [
+          {
+            name: 'g',
+            interval: '1m30s',
+            query_offset: '30s',
+            limit: 0,
+            labels: { team: 'ops' },
+            rules: [
+              {
+                alert: 'A',
+                expr: 'up == 0',
+                for: '5m',
+                keep_firing_for: '10m',
+                labels: { severity: 'warning' },
+                annotations: { summary: 'down' },
+              },
+            ],
+          },
+        ],
       });
     });
 
-    it('accepts array and non-string-valued labels and annotations', () => {
-      const result = parse(withRule('alert: A\nlabels: [a, b]\nannotations:\n  count: 1'));
-      expect(result['default-namespace'][0].rules[0]).toMatchObject({ labels: ['a', 'b'], annotations: { count: 1 } });
+    it('accepts null where the backend ignores it', () => {
+      const yaml = `
+groups:
+  - name: g
+    query_offset:
+    limit:
+    labels:
+    rules:
+      - alert:
+        record: r
+        expr: up
+        for:
+        keep_firing_for:
+        labels:
+          severity:
+        annotations:
+      - alert: A
+        expr: up
+        annotations:
+          summary:
+`;
+      expect(() => parse(yaml)).not.toThrow();
+    });
+
+    it('accepts every duration unit in descending order, and a quoted zero', () => {
+      const yaml = `
+groups:
+  - name: g
+    interval: 1y2w3d4h5m6s7ms
+    rules:
+      - alert: A
+        expr: up
+        for: 5ms
+        keep_firing_for: "0"
+`;
+      expect(() => parse(yaml)).not.toThrow();
     });
 
     it('keeps unknown keys on groups and rules', () => {
       const yaml = `
 groups:
   - name: g
-    interval: 1m
-    limit: 5
+    source_tenants: [tenant-a]
     rules:
       - alert: A
         expr: up == 0
-        keep_firing_for: 10m
+        extra: value
 `;
       expect(parse(yaml)).toEqual({
         'default-namespace': [
-          {
-            name: 'g',
-            interval: '1m',
-            limit: 5,
-            rules: [{ alert: 'A', expr: 'up == 0', keep_firing_for: '10m' }],
-          },
+          { name: 'g', source_tenants: ['tenant-a'], rules: [{ alert: 'A', expr: 'up == 0', extra: 'value' }] },
         ],
       });
     });
