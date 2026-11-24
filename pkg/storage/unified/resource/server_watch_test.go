@@ -1732,6 +1732,70 @@ func (q heldPreviousReadQueue) Enqueue(ctx context.Context, _ string, run func()
 	}
 }
 
+func TestWatchExpiresWhenSharedReadTimesOut(t *testing.T) {
+	for _, mode := range []string{"inline", "queued"} {
+		t.Run(mode, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				setup := newPreviousReadTestServer
+				if mode == "queued" {
+					setup = newQueuedPreviousReadTestServer
+				}
+				srv, backend := setup(t, func(ctx context.Context, _ int64) {
+					<-ctx.Done()
+				})
+				srv.queueConfig.Timeout = 100 * time.Millisecond
+
+				owner, ownerDone := startPreviousReadWatch(t, srv, newWatchTestUser())
+				synctest.Wait()
+				backend.events <- previousReadUpdate()
+				time.Sleep(srv.queueConfig.Timeout / 2)
+				synctest.Wait()
+				follower, followerDone := startPreviousReadWatch(t, srv, newWatchTestUser())
+				synctest.Wait()
+				require.EqualValues(t, 1, backend.reads.Load())
+
+				time.Sleep(srv.queueConfig.Timeout / 2)
+				synctest.Wait()
+				require.Empty(t, owner.events)
+				require.Len(t, ownerDone, 1)
+				require.True(t, IsResourceVersionExpired(<-ownerDone))
+				require.EqualValues(t, 2, backend.reads.Load(), "the late follower retries within its remaining budget")
+
+				time.Sleep(srv.queueConfig.Timeout / 2)
+				synctest.Wait()
+				require.Empty(t, follower.events)
+				require.Len(t, followerDone, 1)
+				require.True(t, IsResourceVersionExpired(<-followerDone))
+			})
+		})
+	}
+}
+
+func TestWatchExpiresWhenCachedPreviousReadCannotQueueAuthorization(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		srv, backend := newPreviousReadTestServer(t, nil)
+		_, err := readPreviousForTest(t.Context(), srv)
+		require.NoError(t, err)
+		srv.queueConfig.MinBackoff = time.Millisecond
+		srv.queueConfig.MaxBackoff = time.Millisecond
+		srv.queueConfig.MaxRetries = 1
+		srv.queue = previousReadQueueFunc(func(func()) error {
+			return scheduler.ErrTenantQueueFull
+		})
+
+		stream, done := startPreviousReadWatch(t, srv, newWatchTestUser())
+		synctest.Wait()
+		backend.events <- previousReadUpdate()
+		time.Sleep(2 * time.Millisecond)
+		synctest.Wait()
+
+		require.EqualValues(t, 1, backend.reads.Load(), "authorization must use the cached revision")
+		require.Empty(t, stream.events)
+		require.Len(t, done, 1)
+		require.True(t, IsResourceVersionExpired(<-done))
+	})
+}
+
 func TestWatchExpiresWhenFollowerAuthorizationTimesOut(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		srv, backend := newPreviousReadTestServer(t, nil)

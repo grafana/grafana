@@ -3,7 +3,6 @@ package resource
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"runtime/debug"
 	"strconv"
@@ -13,8 +12,6 @@ import (
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/backoff"
 	"github.com/hashicorp/golang-lru/v2/simplelru"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 
@@ -496,7 +493,6 @@ func (p *previousReads) leave(id string, flight *previousReadFlight) {
 }
 
 var errPreviousReadPanic = errors.New("previous version read panicked")
-var errPreviousReadAuthTimeout = errors.New("previous version authorization timed out")
 
 // readPrevious reads an event's previous version for a watch, sharing the
 // backend read with other watches of the event.
@@ -563,11 +559,7 @@ func (s *server) readPrevious(ctx context.Context, user claims.AuthInfo, key *re
 		auth = runPreviousRead(ctx, authorize)
 	}
 	if auth.err != nil {
-		err := previousReadRPCError(auth.err)
-		if !inline && status.Code(err) == codes.DeadlineExceeded {
-			return nil, fmt.Errorf("%w: %w", errPreviousReadAuthTimeout, err)
-		}
-		return nil, err
+		return nil, previousReadRPCError(auth.err)
 	}
 	return auth.response, nil
 }
