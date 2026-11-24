@@ -2,6 +2,7 @@ package snapshot
 
 import (
 	"context"
+	"fmt"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -9,6 +10,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
 // storageWrapper wraps a rest.Storage and hides the not supported interfaces
@@ -20,7 +22,8 @@ import (
 // via the dedicated /snapshots/{name}/deletekey subresource and the dashboard
 // via the dedicated /snapshots/{name}/dashboard subresource
 type storageWrapper struct {
-	inner rest.Storage
+	inner         rest.Storage
+	accessControl ac.AccessControl
 }
 
 var (
@@ -34,8 +37,8 @@ var (
 )
 
 // NewStorageWrapper wraps a storage to hide the rest.Creater interface.
-func NewStorageWrapper(s rest.Storage) rest.Storage {
-	return &storageWrapper{inner: s}
+func NewStorageWrapper(s rest.Storage, accessControl ac.AccessControl) rest.Storage {
+	return &storageWrapper{inner: s, accessControl: accessControl}
 }
 
 func (n *storageWrapper) New() runtime.Object   { return n.inner.New() }
@@ -63,6 +66,17 @@ func (n *storageWrapper) List(ctx context.Context, options *internalversion.List
 	return stripSensitiveFieldsFromList(obj), nil
 }
 func (n *storageWrapper) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	obj, err := n.inner.(rest.Getter).Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
+		return nil, false, err
+	}
+	snap, ok := obj.(*dashv0.Snapshot)
+	if !ok {
+		return nil, false, fmt.Errorf("expected Snapshot, got %T", obj)
+	}
+	if err := authorizeSnapshotDelete(ctx, snap, n.accessControl); err != nil {
+		return nil, false, err
+	}
 	return n.inner.(rest.GracefulDeleter).Delete(ctx, name, deleteValidation, options)
 }
 

@@ -11,6 +11,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 )
 
@@ -19,12 +20,13 @@ import (
 // It reads from the unwrapped inner storage which retains the deleteKey in the spec,
 // unlike the public-facing storage wrapper which strips it on GET/LIST.
 type deleteKeyREST struct {
-	getter rest.Getter
+	getter        rest.Getter
+	accessControl ac.AccessControl
 }
 
 // NewDeleteKeyREST creates a new subresource handler for the deleteKey endpoint.
-func NewDeleteKeyREST(getter rest.Getter) (rest.Storage, error) {
-	return &deleteKeyREST{getter: getter}, nil
+func NewDeleteKeyREST(getter rest.Getter, accessControl ac.AccessControl) (rest.Storage, error) {
+	return &deleteKeyREST{getter: getter, accessControl: accessControl}, nil
 }
 
 var (
@@ -77,6 +79,10 @@ func (r *deleteKeyREST) Connect(ctx context.Context, name string, opts runtime.O
 	}
 	if snap.Namespace != ns.Value {
 		return nil, apierrors.NewNotFound(dashv0.SnapshotResourceInfo.GroupResource(), name)
+	}
+
+	if err := authorizeSnapshotDelete(ctx, snap, r.accessControl); err != nil {
+		return nil, err
 	}
 
 	deleteKey := ""
