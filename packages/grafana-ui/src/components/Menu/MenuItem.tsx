@@ -279,10 +279,12 @@ const getStyles = (theme: GrafanaTheme2, size: 'sm' | 'md' | undefined) => {
   const menuPadding = theme.components.menu.padding * theme.spacing.gridSize;
   return {
     item: css({
-      ...({
-        sm: theme.typography.bodySmall,
-        md: theme.typography.body,
-      }[size]),
+      ...(size
+        ? {
+            sm: theme.typography.bodySmall,
+            md: theme.typography.body,
+          }[size]
+        : {}),
       background: 'none',
       cursor: 'pointer',
       whiteSpace: 'nowrap',
