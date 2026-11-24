@@ -1,6 +1,7 @@
 package xorm
 
 import (
+	"database/sql"
 	"encoding/json"
 	"testing"
 	"time"
@@ -41,6 +42,41 @@ func TestBasicOperationsWithSqlite(t *testing.T) {
 	require.NoError(t, err)
 
 	testBasicOperations(t, eng)
+}
+
+func TestNewEngineWithDB(t *testing.T) {
+	t.Run("uses the given sql.DB", func(t *testing.T) {
+		db, err := sql.Open("sqlite3", ":memory:")
+		require.NoError(t, err)
+		// A single connection, so every query sees the same in-memory database.
+		db.SetMaxOpenConns(1)
+
+		eng, err := NewEngineWithDB("sqlite3", ":memory:", db)
+		require.NoError(t, err)
+		t.Cleanup(func() { require.NoError(t, eng.Close()) })
+
+		require.Equal(t, "sqlite3", eng.DriverName())
+		require.Same(t, db, eng.DB().DB)
+
+		_, err = eng.Exec("CREATE TABLE test_struct (id int primary key, comment text, json text)")
+		require.NoError(t, err)
+
+		testBasicOperations(t, eng)
+	})
+
+	t.Run("rejects a nil sql.DB", func(t *testing.T) {
+		_, err := NewEngineWithDB("sqlite3", ":memory:", nil)
+		require.Error(t, err)
+	})
+
+	t.Run("rejects an unknown driver name", func(t *testing.T) {
+		db, err := sql.Open("sqlite3", ":memory:")
+		require.NoError(t, err)
+		t.Cleanup(func() { require.NoError(t, db.Close()) })
+
+		_, err = NewEngineWithDB("unknown", ":memory:", db)
+		require.ErrorContains(t, err, "unsupported driver name")
+	})
 }
 
 func testBasicOperations(t *testing.T, eng *Engine) {

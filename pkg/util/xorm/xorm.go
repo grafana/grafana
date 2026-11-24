@@ -58,6 +58,25 @@ func init() {
 // NewEngine new a db manager according to the parameter. Currently support four
 // drivers
 func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
+	return newEngine(driverName, dataSourceName, func() (*core.DB, error) {
+		return core.Open(driverName, dataSourceName)
+	})
+}
+
+// NewEngineWithDB creates an engine on top of a *sql.DB the caller has already opened,
+// for example with sql.OpenDB and a driver.Connector that sets per-connection credentials.
+// driverName and dataSourceName still select the dialect and give it the database name,
+// but connections are only ever opened through db.
+func NewEngineWithDB(driverName string, dataSourceName string, db *sql.DB) (*Engine, error) {
+	if db == nil {
+		return nil, fmt.Errorf("db cannot be nil")
+	}
+	return newEngine(driverName, dataSourceName, func() (*core.DB, error) {
+		return core.FromDB(db), nil
+	})
+}
+
+func newEngine(driverName string, dataSourceName string, open func() (*core.DB, error)) (*Engine, error) {
 	driver := core.QueryDriver(driverName)
 	if driver == nil {
 		return nil, fmt.Errorf("unsupported driver name: %v", driverName)
@@ -73,7 +92,7 @@ func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 		return nil, fmt.Errorf("unsupported dialect type: %v", uri.DbType)
 	}
 
-	db, err := core.Open(driverName, dataSourceName)
+	db, err := open()
 	if err != nil {
 		return nil, err
 	}

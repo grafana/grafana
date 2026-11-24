@@ -48,6 +48,12 @@ type DatabaseConfig struct {
 	QueryRetries int
 	// SQLite only
 	TransactionRetries int
+	// MySQL only: sign in with a Microsoft Entra ID access token for the identity
+	// configured in [azure] instead of a password. Open engines with OpenEngine.
+	AzureEntraAuth bool
+
+	// Set by NewDatabaseConfig when AzureEntraAuth is true.
+	azureEntraToken azureEntraTokenFunc
 }
 
 func NewDatabaseConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*DatabaseConfig, error) {
@@ -58,6 +64,10 @@ func NewDatabaseConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*
 	dbCfg := &DatabaseConfig{}
 	if err := dbCfg.readConfig(cfg); err != nil {
 		return nil, err
+	}
+
+	if err := dbCfg.configureAzureEntraAuth(cfg); err != nil {
+		return nil, fmt.Errorf("[database] azure_entra_auth_enabled: %w", err)
 	}
 
 	if err := dbCfg.buildConnectionString(cfg, features); err != nil {
@@ -129,6 +139,41 @@ func (dbCfg *DatabaseConfig) readConfig(cfg *setting.Cfg) error {
 	dbCfg.LogQueries = sec.Key("log_queries").MustBool(false)
 	dbCfg.DeleteAutoGenIDs = sec.Key("delete_auto_gen_ids").MustBool(false)
 
+	dbCfg.AzureEntraAuth = sec.Key("azure_entra_auth_enabled").MustBool(false)
+
+	return nil
+}
+
+// configureAzureEntraAuth checks that the configuration can be used with Microsoft Entra
+// ID authentication and sets up the token source.
+func (dbCfg *DatabaseConfig) configureAzureEntraAuth(cfg *setting.Cfg) error {
+	if !dbCfg.AzureEntraAuth {
+		return nil
+	}
+
+	if dbCfg.Type != migrator.MySQL {
+		return fmt.Errorf("only supported with database type %q, not %q", migrator.MySQL, dbCfg.Type)
+	}
+	if dbCfg.ConnectionString != "" {
+		return errors.New("can't be combined with connection_string; use host, name and user")
+	}
+	if dbCfg.Pwd != "" {
+		return errors.New("remove the database password: Grafana signs in with an access token instead")
+	}
+	// The access token is sent in cleartext, so it must only ever travel over TLS.
+	switch dbCfg.SslMode {
+	case "true":
+	case "skip-verify":
+		azureEntraLog.Warn("ssl_mode is skip-verify: the database server's certificate is not verified, so anyone who can intercept the connection can capture the access token. Use ssl_mode = true")
+	default:
+		return errors.New("requires ssl_mode = true, because the access token is sent as a cleartext password")
+	}
+
+	getToken, err := newAzureEntraTokenFunc(cfg.Azure)
+	if err != nil {
+		return err
+	}
+	dbCfg.azureEntraToken = getToken
 	return nil
 }
 

@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"context"
+	"database/sql/driver"
 	"errors"
 	"fmt"
 	"os"
@@ -291,6 +292,9 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 	}
 
 	ss.log.Info("Connecting to DB", "dbtype", ss.dbCfg.Type)
+	if ss.dbCfg.AzureEntraAuth {
+		ss.log.Info("Signing in to the database with Microsoft Entra ID access tokens")
+	}
 	if ss.dbCfg.Type == migrator.SQLite {
 		ss.log.Info("Using SQLite driver", "driver", sqlite.DriverType())
 	}
@@ -334,7 +338,7 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 		}
 
 		var err error
-		engine, err = xorm.NewEngine(ss.dbCfg.Type, ss.dbCfg.ConnectionString)
+		engine, err = ss.openEngine(ss.dbCfg.ConnectionString)
 		if err != nil {
 			return err
 		}
@@ -397,7 +401,7 @@ func (ss *SQLStore) ensureTransactionIsolationCompatibility(engine *xorm.Engine,
 			// replace with compatible system var for transaction isolation
 			connectionString = strings.ReplaceAll(connectionString, "&transaction_isolation", "&tx_isolation")
 			// recreate the xorm engine with new connection string that is compatible
-			engine, err = xorm.NewEngine(ss.dbCfg.Type, connectionString)
+			engine, err = ss.openEngine(connectionString)
 			if err != nil {
 				return nil, err
 			}
@@ -407,6 +411,15 @@ func (ss *SQLStore) ensureTransactionIsolationCompatibility(engine *xorm.Engine,
 	}
 
 	return engine, nil
+}
+
+// openEngine opens an engine for the configured database with the given connection string.
+func (ss *SQLStore) openEngine(connectionString string) (*xorm.Engine, error) {
+	var wrapDriver func(driver.Driver) driver.Driver
+	if ss.cfg.DatabaseInstrumentQueries {
+		wrapDriver = func(d driver.Driver) driver.Driver { return wrapDriverWithHooks(d, ss.tracer) }
+	}
+	return ss.dbCfg.openEngine(ss.dbCfg.Type, connectionString, wrapDriver)
 }
 
 func (ss *SQLStore) GetMigrationLockAttemptTimeout() int {

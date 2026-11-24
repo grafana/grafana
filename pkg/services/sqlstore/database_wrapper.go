@@ -53,9 +53,15 @@ func WrapDatabaseDriverWithHooks(dbType string, tracer tracing.Tracer) string {
 	}
 
 	driverWithHooks := dbType + "WithHooks"
-	sql.Register(driverWithHooks, sqlhooks.Wrap(d, &databaseQueryWrapper{log: log.New("sqlstore.metrics"), tracer: tracer}))
+	sql.Register(driverWithHooks, wrapDriverWithHooks(d, tracer))
 	core.RegisterDriver(driverWithHooks, &databaseQueryWrapperDriver{dbType: dbType})
 	return driverWithHooks
+}
+
+// wrapDriverWithHooks wraps d in the hooks that WrapDatabaseDriverWithHooks registers,
+// for connections that aren't opened through the registered driver.
+func wrapDriverWithHooks(d driver.Driver, tracer tracing.Tracer) driver.Driver {
+	return sqlhooks.Wrap(d, &databaseQueryWrapper{log: log.New("sqlstore.metrics"), tracer: tracer})
 }
 
 // databaseQueryWrapper satisfies the sqlhook.databaseQueryWrapper interface

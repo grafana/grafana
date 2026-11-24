@@ -419,6 +419,36 @@ The database user's password (not applicable for `sqlite3`). If the password con
 Use either URL or the previous fields to configure the database
 Example: `type://user:password@host:port/name`
 
+#### `azure_entra_auth_enabled`
+
+Only applicable to `mysql`. Set to `true` to sign in to [Azure Database for MySQL](https://learn.microsoft.com/en-us/azure/mysql/security/security-entra-authentication) with a Microsoft Entra ID access token instead of a password. Default is `false`.
+
+Grafana gets a token for every new connection, because a token is only valid for up to an hour and the server only checks it when a connection opens. The token is for the workload identity or managed identity that's enabled in the [`[azure]`](#azure) section; if both are enabled, Grafana uses the workload identity.
+
+The access token travels as a cleartext password, so `ssl_mode` must be `true`. Leave `password` empty, and set `user` to the name of the database user for the identity. To create that user, sign in to the server as its Microsoft Entra admin and run:
+
+```sql
+CREATE AADUSER 'grafana' IDENTIFIED BY '<client ID of the managed identity>';
+GRANT ALL PRIVILEGES ON grafana.* TO 'grafana'@'%';
+```
+
+For example, with workload identity in Azure Kubernetes Service:
+
+```ini
+[azure]
+workload_identity_enabled = true
+
+[database]
+type = mysql
+host = my-server.mysql.database.azure.com:3306
+name = grafana
+user = grafana
+azure_entra_auth_enabled = true
+ssl_mode = true
+ca_cert_path = /etc/ssl/certs/ca-certificates.crt
+server_cert_name = my-server.mysql.database.azure.com
+```
+
 #### `max_idle_conn`
 
 The maximum number of connections in the idle connection pool.

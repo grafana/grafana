@@ -1,6 +1,7 @@
 package store
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -115,6 +116,11 @@ func parseConfig(cfg *setting.Cfg, logger log.Logger) (*sqlstore.DatabaseConfig,
 	grafanaDBCfg, err := sqlstore.NewDatabaseConfig(cfg, nil)
 	if err != nil {
 		return nil, nil, nil
+	}
+	// OpenFGA opens its own connections from the connection string, which carries no
+	// access token.
+	if grafanaDBCfg.AzureEntraAuth {
+		return nil, nil, errors.New("zanzana doesn't support [database] azure_entra_auth_enabled")
 	}
 
 	zanzanaDBCfg := &sqlcommon.Config{
