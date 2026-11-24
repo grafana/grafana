@@ -1117,14 +1117,14 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		if err != nil {
 			return err
 		}
-		snapshotWrapper := snapshot.NewStorageWrapper(snapshotDualWrite, b.snapshotOptions)
+		snapshotWrapper := snapshot.NewStorageWrapper(snapshotDualWrite, b.snapshotOptions, b.accessControl)
 		storage[snapshots.StoragePath()] = snapshotWrapper
 		b.snapshotStorage = snapshotDualWrite // for use in routes (needs rest.Creater)
 		storage[snapshots.StoragePath("dashboard")], err = snapshot.NewDashboardREST(snapshotDualWrite)
 		if err != nil {
 			return err
 		}
-		storage[snapshots.StoragePath("deletekey")], err = snapshot.NewDeleteKeyREST(snapshotDualWrite)
+		storage[snapshots.StoragePath("deletekey")], err = snapshot.NewDeleteKeyREST(snapshotDualWrite, b.accessControl)
 		if err != nil {
 			return err
 		}

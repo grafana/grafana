@@ -2,7 +2,6 @@ package api
 
 import (
 	"bytes"
-	"context"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -37,7 +36,6 @@ import (
 	loginservice "github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfotest"
 	"github.com/grafana/grafana/pkg/services/navtree"
-	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -144,8 +142,7 @@ func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 	cfg.OAuthAutoLogin = true
 
 	oauthError := errors.New("User not a member of one of the required organizations")
-	encryptedError, err := hs.SecretsService.Encrypt(context.Background(), []byte(oauthError.Error()), secrets.WithoutScope())
-	require.NoError(t, err)
+	signedError := hex.EncodeToString(append(hs.signedCookieMAC(loginErrorCookieName, oauthError.Error()), oauthError.Error()...))
 	expCookiePath := "/"
 	if len(cfg.AppSubURL) > 0 {
 		expCookiePath = cfg.AppSubURL
@@ -153,7 +150,7 @@ func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 	cookie := http.Cookie{
 		Name:     loginErrorCookieName,
 		MaxAge:   60,
-		Value:    hex.EncodeToString(encryptedError),
+		Value:    signedError,
 		HttpOnly: true,
 		Path:     expCookiePath,
 		Secure:   hs.Cfg.CookieSecure,

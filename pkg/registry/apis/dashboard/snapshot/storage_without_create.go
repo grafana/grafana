@@ -19,6 +19,7 @@ import (
 	"k8s.io/klog/v2"
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
@@ -32,8 +33,9 @@ import (
 // via the dedicated /snapshots/{name}/deletekey subresource and the dashboard
 // via the dedicated /snapshots/{name}/dashboard subresource
 type storageWrapper struct {
-	inner   rest.Storage
-	options dashv0.SnapshotSharingOptions
+	inner         rest.Storage
+	options       dashv0.SnapshotSharingOptions
+	accessControl ac.AccessControl
 }
 
 var (
@@ -47,8 +49,8 @@ var (
 )
 
 // NewStorageWrapper wraps a storage to hide the rest.Creater interface.
-func NewStorageWrapper(s rest.Storage, options dashv0.SnapshotSharingOptions) rest.Storage {
-	return &storageWrapper{inner: s, options: options}
+func NewStorageWrapper(s rest.Storage, options dashv0.SnapshotSharingOptions, accessControl ac.AccessControl) rest.Storage {
+	return &storageWrapper{inner: s, options: options, accessControl: accessControl}
 }
 
 func (n *storageWrapper) New() runtime.Object   { return n.inner.New() }
@@ -85,6 +87,9 @@ func (n *storageWrapper) Delete(ctx context.Context, name string, deleteValidati
 	snap, ok := obj.(*dashv0.Snapshot)
 	if !ok {
 		return nil, false, fmt.Errorf("expected Snapshot, got %T", obj)
+	}
+	if err := authorizeSnapshotDelete(ctx, snap, n.accessControl); err != nil {
+		return nil, false, err
 	}
 
 	// Delete the local snapshot

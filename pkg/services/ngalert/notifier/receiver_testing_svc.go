@@ -3,6 +3,7 @@ package notifier
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/alerting/receivers/schema"
@@ -105,6 +106,21 @@ func (t *ReceiverTestingService) PatchIntegrationAndTest(ctx context.Context, us
 		if existing == nil {
 			return IntegrationTestResult{}, models.ErrReceiverTestingIntegrationNotFound.Errorf("")
 		}
+		// Protected fields are checked against the schema the request declares.
+		// Different versions might protect different fields, so the version must match the stored one.
+		if integration.Config.Version != existing.Config.Version {
+			return IntegrationTestResult{}, models.ErrReceiverTestingInvalidIntegration(
+				fmt.Sprintf("integration version cannot be changed when testing an existing integration: stored %s, requested %s",
+					existing.Config.Version, integration.Config.Version),
+			)
+		}
+		// Secrets are copied by field name, so they must not move to another type.
+		if len(requiredSecrets) > 0 && integration.Config.Type() != existing.Config.Type() {
+			return IntegrationTestResult{}, models.ErrReceiverTestingInvalidIntegration(
+				fmt.Sprintf("stored secrets cannot be used when changing the integration type from %s to %s",
+					existing.Config.Type(), integration.Config.Type()),
+			)
+		}
 		if len(requiredSecrets) > 0 {
 			i = integration.Clone()
 			i.WithExistingSecureFields(existing, requiredSecrets)
@@ -114,7 +130,28 @@ func (t *ReceiverTestingService) PatchIntegrationAndTest(ctx context.Context, us
 			return IntegrationTestResult{}, err
 		}
 	}
-	return t.testIntegration(ctx, user, alert, rcv, i)
+	result, err := t.testIntegration(ctx, user, alert, rcv, i)
+	if len(i.SecureSettings) > 0 {
+		result.LastNotifyAttemptError = t.redactSecrets(ctx, i, result.LastNotifyAttemptError)
+	}
+	return result, err
+}
+
+// redactSecrets removes the decrypted secure settings from a notifier error message.
+// Notifiers can echo credentials in their errors, and the error is returned to the caller.
+func (t *ReceiverTestingService) redactSecrets(ctx context.Context, integration models.Integration, msg string) string {
+	if msg == "" {
+		return msg
+	}
+	decryptFn := DecryptIntegrationSettings(ctx, t.encryptionService)
+	for _, encrypted := range integration.SecureSettings {
+		secret, err := decryptFn(encrypted)
+		if err != nil || secret == "" {
+			continue
+		}
+		msg = strings.ReplaceAll(msg, secret, "[REDACTED]")
+	}
+	return msg
 }
 
 func (t *ReceiverTestingService) authorizeEdits(ctx context.Context, user identity.Requester, rcv *models.Receiver, integration, existing *models.Integration) error {

@@ -1,3 +1,14 @@
+<!-- 13.2.7 START -->
+
+# 13.2.7 (2026-11-24)
+
+### Security
+
+- Security: Fix CVE-2026-107561
+- Security: Fix CVE-2026-88943
+- Security: Fix CVE-2026-88960
+
+<!-- 13.2.7 END -->
 <!-- 13.2.6 START -->
 
 # 13.2.6 (2026-11-10)
