@@ -25,10 +25,10 @@ import {
   useGetRepositoryResourcesQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { findKindByResource } from 'app/core/kinds/coreKinds';
 
 import { type FlatTreeItem, type TreeItem } from '../types';
 import { getRepoFileUrl, getRepoHrefForProvider } from '../utils/git';
-import { getKindInfoByKind, getKindInfoByResource } from '../utils/resourceKinds';
 import {
   buildTree,
   filterByStatusAndResources,
@@ -47,8 +47,8 @@ interface ResourceTreeViewProps {
 type TreeCell<T extends keyof FlatTreeItem = keyof FlatTreeItem> = CellProps<FlatTreeItem, FlatTreeItem[T]>;
 
 function getGrafanaLink(item: TreeItem) {
-  if (item.resourceName) {
-    return getKindInfoByKind(item.type)?.getRoute?.(item.resourceName);
+  if (item.resourceName && item.resource) {
+    return findKindByResource(item.resource)?.getRoute?.(item.resourceName);
   }
   return undefined;
 }
@@ -83,7 +83,7 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
   const resourceFilterOptions: Array<ComboboxOption<string>> = useMemo(() => {
     const resources = new Set(resourcesQuery.data?.items?.map((item) => item.resource));
     return Array.from(resources, (value) => ({
-      label: getKindInfoByResource(value)?.getPluralLabel() ?? value,
+      label: findKindByResource(value)?.getPluralLabel() ?? value,
       value,
     }));
   }, [resourcesQuery.data?.items]);
@@ -129,7 +129,7 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
         header: t('provisioning.resource-tree.header-title', 'Title'),
         cell: ({ row: { original } }: TreeCell) => {
           const { item, level, isExpandable, isExpanded } = original;
-          const iconName = getIconName(item.type);
+          const iconName = getIconName(item);
           const link = getGrafanaLink(item);
           // Label the fold toggle by the item's own title so screen readers announce which
           // folder is being expanded/collapsed without needing a separate translated string.

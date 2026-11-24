@@ -1,6 +1,6 @@
 import { type ResourceStats } from 'app/api/clients/provisioning/v0alpha1';
 
-import { type ResourceKindInfo, getKindInfoByStatGroup, resourceKindInfos } from '../utils/resourceKinds';
+import { type ResourceKindInfo, resourceKindInfos } from '../utils/resourceKinds';
 
 /** Total and managed counts for a single resource type, shown in a KPI card. */
 interface MigrationTotals {
@@ -63,7 +63,7 @@ export function computeKindTotals(data: ResourceStats | undefined, kinds: Resour
 export function computeFolderCounts(data: ResourceStats | undefined): FolderCounts {
   const { folder } = resourceKindInfos;
   const isFolder = (group: string, resource: string) =>
-    resource === folder.resource && getKindInfoByStatGroup(group)?.kind === folder.kind;
+    resource === folder.resource && (group === folder.group || group === folder.resource);
 
   let total = 0;
   let managed = 0;

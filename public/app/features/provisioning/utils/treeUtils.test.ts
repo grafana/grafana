@@ -235,16 +235,20 @@ describe('getTreeItemKind', () => {
 
 describe('getIconName', () => {
   it('should return the icon for a known resource-backed item', () => {
-    expect(getIconName('Dashboard')).toBe('apps');
-    expect(getIconName('Folder')).toBe('folder');
+    expect(getIconName({ type: 'Dashboard', resource: 'dashboards' })).toBe('apps');
+    expect(getIconName({ type: 'Folder', resource: 'folders' })).toBe('folder');
   });
 
   it('should return the icon for a playlist item', () => {
-    expect(getIconName('Playlist')).toBe('presentation-play');
+    expect(getIconName({ type: 'Playlist', resource: 'playlists' })).toBe('presentation-play');
+  });
+
+  it('should return the folder icon for a folder inferred from a path', () => {
+    expect(getIconName({ type: 'Folder' })).toBe('folder');
   });
 
   it('should fall back to the file icon for the non-resource File type', () => {
-    expect(getIconName('File')).toBe('file-alt');
+    expect(getIconName({ type: 'File' })).toBe('file-alt');
   });
 });
 

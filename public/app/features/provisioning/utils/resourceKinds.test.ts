@@ -10,13 +10,7 @@ import {
   type ResourceKindInfo,
   resourceKindInfos,
   getAvailableResourceKinds,
-  getKindInfoByGroupKind,
-  getKindInfoByKind,
-  getKindInfoByResource,
-  getKindInfoByStat,
-  getKindInfoByStatGroup,
   getMigratableKinds,
-  getReportedGroup,
   isResourceKindAvailable,
   readImmediateParent,
 } from './resourceKinds';
@@ -61,18 +55,6 @@ describe('resourceKinds registry', () => {
     });
   });
 
-  // A bootstrap repository provisions repositories and connections, and their stat badges fall
-  // back to a generic icon and a dead link for any kind the registry does not know.
-  it('resolves provisioning kinds from a repository stat, including their admin routes', () => {
-    const repository = getKindInfoByStat({ group: 'provisioning.grafana.app', resource: 'repositories' });
-    const connection = getKindInfoByStat({ group: 'provisioning.grafana.app', resource: 'connections' });
-
-    expect(repository?.icon).toBe('code-branch');
-    expect(repository?.getRoute?.('bootstrap')).toBe('/admin/provisioning/bootstrap');
-    expect(connection?.icon).toBe('plug');
-    expect(connection?.getRoute?.('github-app')).toBe('/admin/provisioning/connections/github-app/edit');
-  });
-
   // They are configuration, not content: the Migrate flow must never offer to move them.
   it('never enumerates provisioning kinds for migration', async () => {
     expect(await resourceKindInfos.repository.list()).toEqual([]);
@@ -103,96 +85,6 @@ describe('resourceKinds registry', () => {
     expect(info('folder').invalidateListTags).toBeUndefined();
     expect(info('dashboard').invalidateListTags).toBeUndefined();
     expect(info('librarypanel').invalidateListTags).toBeUndefined();
-  });
-});
-
-describe('getKindInfoByResource', () => {
-  it('resolves by plural resource name', () => {
-    expect(getKindInfoByResource('dashboards')).toBe(CORE_KINDS.dashboard);
-    expect(getKindInfoByResource('folders')).toBe(CORE_KINDS.folder);
-    expect(getKindInfoByResource('playlists')).toBe(CORE_KINDS.playlist);
-    expect(getKindInfoByResource('librarypanels')).toBe(CORE_KINDS.librarypanel);
-  });
-
-  it('returns undefined for unknown or missing resources', () => {
-    expect(getKindInfoByResource('unknown-type')).toBeUndefined();
-    expect(getKindInfoByResource(undefined)).toBeUndefined();
-  });
-});
-
-describe('getKindInfoByKind', () => {
-  it('resolves by kind', () => {
-    expect(getKindInfoByKind('Dashboard')).toBe(CORE_KINDS.dashboard);
-    expect(getKindInfoByKind('Folder')).toBe(CORE_KINDS.folder);
-  });
-
-  it('returns undefined for the non-resource File type', () => {
-    expect(getKindInfoByKind('File')).toBeUndefined();
-  });
-});
-
-describe('getKindInfoByStatGroup', () => {
-  it('matches the full API group', () => {
-    expect(getKindInfoByStatGroup('dashboard.grafana.app')).toBe(CORE_KINDS.dashboard);
-    expect(getKindInfoByStatGroup('folder.grafana.app')).toBe(CORE_KINDS.folder);
-  });
-
-  it('matches the legacy short plural form', () => {
-    expect(getKindInfoByStatGroup('folders')).toBe(CORE_KINDS.folder);
-  });
-
-  it('returns undefined for unknown groups', () => {
-    expect(getKindInfoByStatGroup('alert.grafana.app')).toBeUndefined();
-  });
-});
-
-describe('getKindInfoByGroupKind', () => {
-  it('resolves a job summary row by group and kind', () => {
-    expect(getKindInfoByGroupKind('dashboard.grafana.app', 'Dashboard')).toBe(CORE_KINDS.dashboard);
-    expect(getKindInfoByGroupKind('folder.grafana.app', 'Folder')).toBe(CORE_KINDS.folder);
-  });
-
-  it('disambiguates kinds that share an API group by the kind', () => {
-    // Dashboards and library panels both live in dashboard.grafana.app.
-    expect(getKindInfoByGroupKind('dashboard.grafana.app', 'LibraryPanel')).toBe(CORE_KINDS.librarypanel);
-    expect(getKindInfoByGroupKind('dashboard.grafana.app', 'Dashboard')).toBe(CORE_KINDS.dashboard);
-  });
-
-  it('resolves on whichever identifier is present', () => {
-    expect(getKindInfoByGroupKind(undefined, 'Playlist')).toBe(CORE_KINDS.playlist);
-    expect(getKindInfoByGroupKind('playlist.grafana.app', undefined)).toBe(CORE_KINDS.playlist);
-  });
-
-  it('returns undefined when nothing matches or both identifiers are missing', () => {
-    expect(getKindInfoByGroupKind('alert.grafana.app', 'AlertRule')).toBeUndefined();
-    expect(getKindInfoByGroupKind(undefined, undefined)).toBeUndefined();
-  });
-});
-
-describe('getKindInfoByStat', () => {
-  it('resolves by the plural resource name', () => {
-    expect(getKindInfoByStat({ group: 'dashboard.grafana.app', resource: 'dashboards' })).toBe(CORE_KINDS.dashboard);
-    expect(getKindInfoByStat({ group: 'playlist.grafana.app', resource: 'playlists' })).toBe(CORE_KINDS.playlist);
-  });
-
-  it('prefers the resource over the group when they point at different kinds', () => {
-    // The resource uniquely identifies the kind, so it wins over a group that
-    // would otherwise resolve to a different kind.
-    expect(getKindInfoByStat({ group: 'dashboard.grafana.app', resource: 'folders' })).toBe(CORE_KINDS.folder);
-    // Dashboards and library panels share dashboard.grafana.app; the resource tells them apart.
-    expect(getKindInfoByStat({ group: 'dashboard.grafana.app', resource: 'librarypanels' })).toBe(
-      CORE_KINDS.librarypanel
-    );
-  });
-
-  it('falls back to a group-only match when the resource is missing or unknown', () => {
-    expect(getKindInfoByStat({ group: 'folder.grafana.app' })).toBe(CORE_KINDS.folder);
-    expect(getKindInfoByStat({ group: 'folders' })).toBe(CORE_KINDS.folder);
-  });
-
-  it('returns undefined when neither resource nor group is known', () => {
-    expect(getKindInfoByStat({ group: 'alert.grafana.app', resource: 'rules' })).toBeUndefined();
-    expect(getKindInfoByStat({})).toBeUndefined();
   });
 });
 
@@ -303,20 +195,6 @@ describe('getMigratableKinds', () => {
 // reports for an individual resource, in availableResources and on a job result row.
 describe('collection groups', () => {
   const testdata = 'grafana-testdata-datasource.datasource.grafana.app';
-
-  it('resolves a resource reported under a served group back to the kind', () => {
-    expect(getKindInfoByGroupKind(testdata, 'DataSource')).toBe(CORE_KINDS.datasource);
-    expect(getKindInfoByStat({ group: testdata })).toBe(CORE_KINDS.datasource);
-    expect(getKindInfoByStatGroup(testdata)).toBe(CORE_KINDS.datasource);
-  });
-
-  it('reports a served group as the collection, and every other group unchanged', () => {
-    expect(getReportedGroup(testdata, 'DataSource')).toBe('datasource.grafana.app');
-    expect(getReportedGroup('dashboard.grafana.app', 'Dashboard')).toBe('dashboard.grafana.app');
-    // An unknown group is no collection member we can name, so it stays as reported.
-    expect(getReportedGroup('something.else', 'Thing')).toBe('something.else');
-    expect(getReportedGroup(undefined, undefined)).toBeUndefined();
-  });
 
   it('is available and migratable when the backend declares any plugin group', () => {
     const available: SupportedResource[] = [{ group: testdata, kind: 'DataSource' }];
@@ -452,14 +330,6 @@ describe('plugin kinds', () => {
         icon: 'tag-alt',
       },
     ]);
-  });
-
-  it('finds a plugin kind by its resource, kind, stat and group', () => {
-    expect(getKindInfoByResource('things')?.getLabel()).toBe('Plugin thing');
-    expect(getKindInfoByKind('Thing')?.icon).toBe('tag-alt');
-    expect(getKindInfoByStat({ group, resource: 'things' })?.getPluralLabel()).toBe('Plugin things');
-    expect(getKindInfoByGroupKind(group, 'Thing')?.resource).toBe('things');
-    expect(getKindInfoByStatGroup(group)?.kind).toBe('Thing');
   });
 
   it('reports a plugin kind as available once the backend enables it', () => {

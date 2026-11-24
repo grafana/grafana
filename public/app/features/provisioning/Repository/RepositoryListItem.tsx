@@ -7,6 +7,7 @@ import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Card, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
+import { findKindByResource } from 'app/core/kinds/coreKinds';
 
 import { RepoIcon } from '../Shared/RepoIcon';
 import { StatusBadge } from '../Shared/StatusBadge';
@@ -22,7 +23,7 @@ import {
   isProvisioningResourceReadOnly,
 } from '../utils/managedResource';
 import { getRepositoryEditUrl, getRepositoryResourcesUrl } from '../utils/repository';
-import { getKindInfoByStat, resourceKindInfos } from '../utils/resourceKinds';
+import { resourceKindInfos } from '../utils/resourceKinds';
 import { getManagedReadOnlyTooltip } from '../utils/tooltip';
 
 import { SyncRepository } from './SyncRepository';
@@ -107,10 +108,10 @@ export function RepositoryListItem({ repository }: Props) {
                   fill="outline"
                   size="md"
                   variant="secondary"
-                  icon={getKindInfoByStat(stat)?.icon ?? 'file-alt'}
+                  icon={findKindByResource(stat.resource)?.icon ?? 'file-alt'}
                   href={getRepositoryResourcesUrl(name, stat.resource)}
                 >
-                  {`${stat.count} ${getKindInfoByStat(stat)?.getPluralLabel({ upperFirst: false }) ?? stat.resource}`}
+                  {`${stat.count} ${findKindByResource(stat.resource)?.getPluralLabel({ upperFirst: false }) ?? stat.resource}`}
                 </LinkButton>
               ))}
             </Stack>

@@ -17,6 +17,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { type Repository, type ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
+import { findKindByResource } from 'app/core/kinds/coreKinds';
 
 import { RecentJobs } from '../Job/RecentJobs';
 import { QuotaLimitNote } from '../Shared/QuotaLimitNote';
@@ -27,7 +28,6 @@ import { getRemoteConfig } from '../utils/git';
 import { isQuotaReachedOrExceeded } from '../utils/quota';
 import { getRepositoryResourcesUrl } from '../utils/repository';
 import { isGitHubBased } from '../utils/repositoryTypes';
-import { getKindInfoByStat } from '../utils/resourceKinds';
 import { formatTimestamp } from '../utils/time';
 
 import { RepositoryHealthCard } from './RepositoryHealthCard';
@@ -58,7 +58,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
         id: 'Resource',
         header: 'Resource Type',
         cell: ({ row: { original } }: StatCell<'resource'>) => {
-          const info = getKindInfoByStat(original);
+          const info = findKindByResource(original.resource);
           return (
             <Stack direction="row" gap={1} alignItems="center">
               <Icon name={info?.icon ?? 'file-alt'} />

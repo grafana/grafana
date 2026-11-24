@@ -1,10 +1,11 @@
 import { type IconName } from '@grafana/ui';
 import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
+import { findKindByResource } from 'app/core/kinds/coreKinds';
 
 import { type FileDetails, type FlatTreeItem, type TreeItemKind, type SyncStatus, type TreeItem } from '../types';
 
 import { getFolderMetadataPath, getParentFolderResourceHash, isFolderMetadataPath } from './folderMetadata';
-import { getKindInfoByKind, getKindInfoByResource, resourceKindInfos } from './resourceKinds';
+import { resourceKindInfos } from './resourceKinds';
 
 const collator = new Intl.Collator();
 
@@ -59,7 +60,7 @@ export function mergeFilesAndResources(files: unknown[], resources: ResourceList
 }
 
 export function getTreeItemKind(path: string, resource?: ResourceListItem): TreeItemKind {
-  const kindInfo = getKindInfoByResource(resource?.resource);
+  const kindInfo = resource && findKindByResource(resource.resource);
   if (kindInfo) {
     return kindInfo.kind;
   }
@@ -78,8 +79,11 @@ function getDisplayTitle(path: string, resource?: ResourceListItem): string {
   return path.split('/').pop() ?? path;
 }
 
-export function getIconName(type: TreeItemKind): IconName {
-  return getKindInfoByKind(type)?.icon ?? 'file-alt';
+export function getIconName({ type, resource }: Pick<TreeItem, 'type' | 'resource'>): IconName {
+  const kind = resource
+    ? findKindByResource(resource)
+    : type === resourceKindInfos.folder.kind && resourceKindInfos.folder;
+  return kind ? kind.icon : 'file-alt';
 }
 
 export function getStatus(fileHash?: string, resourceHash?: string): SyncStatus {

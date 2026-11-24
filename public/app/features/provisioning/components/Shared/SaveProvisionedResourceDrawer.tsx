@@ -7,6 +7,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { type KindInfo } from '@grafana/runtime/unstable';
 import { Button, Drawer, Stack, Text } from '@grafana/ui';
 import { type RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { findKind } from 'app/core/kinds/coreKinds';
 import {
   AnnoKeyManagerIdentity,
   AnnoKeyManagerKind,
@@ -27,7 +28,6 @@ import { getCurrentCommitUser } from '../../utils/currentUser';
 import { getManagerIdentity, getSourcePath, type ManagedResource } from '../../utils/managedResource';
 import {
   type AnyResourceKindKey,
-  getKindInfoByGroupKind,
   getKindKeyByGroupKind,
   type ResourceKindInfo,
   resourceKindInfos,
@@ -280,7 +280,7 @@ export function SaveProvisionedResourceDrawer(props: SaveProvisionedResourceDraw
   // The resource carries its own identity: its API group (from apiVersion) + Kubernetes kind resolve
   // the registry key, so callers don't pass the kind separately.
   const group = props.resource.apiVersion?.split('/')[0];
-  const kind = getKindInfoByGroupKind(group, props.resource.kind);
+  const kind = group && props.resource.kind ? findKind(group, props.resource.kind) : undefined;
   const kindKey = getKindKeyByGroupKind(group, props.resource.kind) ?? kind?.kind.toLowerCase();
   if (!kind || !kindKey) {
     // Pages only open this for known managed resources, so an unresolved kind means a bad fixture or a

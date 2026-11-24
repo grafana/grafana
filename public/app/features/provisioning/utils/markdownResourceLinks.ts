@@ -1,11 +1,12 @@
 import { urlUtil } from '@grafana/data';
 import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
+import { findKindByResource } from 'app/core/kinds/coreKinds';
 
 import { splitPath } from '../components/utils/path';
 import { FOLDER_METADATA_FILE } from '../constants';
 
 import { FOLDER_DOC_TAB_PARAM, isMarkdownFile } from './folderDocConventions';
-import { getKindInfoByResource, resourceKindInfos } from './resourceKinds';
+import { resourceKindInfos } from './resourceKinds';
 
 /**
  * Builds a resolver that maps a repo file/directory path to the in-app Grafana
@@ -60,7 +61,7 @@ export function createGrafanaLinkResolver(
       return undefined;
     }
 
-    return getKindInfoByResource(resource.resource)?.getRoute?.(resource.name);
+    return findKindByResource(resource.resource)?.getRoute?.(resource.name);
   };
 }
 

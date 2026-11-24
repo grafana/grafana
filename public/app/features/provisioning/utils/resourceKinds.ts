@@ -5,14 +5,7 @@ import { type KindInfo } from '@grafana/runtime/unstable';
 import { playlistAPIv1 } from 'app/api/clients/playlist/v1';
 import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
-import {
-  CORE_KINDS,
-  coversGroup,
-  findKind,
-  findKindByResource,
-  getAppKinds,
-  getKindGroup,
-} from 'app/core/kinds/coreKinds';
+import { CORE_KINDS, coversGroup, getAppKinds } from 'app/core/kinds/coreKinds';
 import { getAPIGroupDiscoveryList } from 'app/features/apiserver/discovery';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
@@ -194,40 +187,6 @@ function registryKinds(): KindInfo[] {
   return [...Object.values(CORE_KINDS), ...getAppKinds()];
 }
 
-/**
- * The group a kind is named by: the collection rather than the member group that served a given
- * resource, so every member of a collection is reported as one kind.
- */
-export function getReportedGroup(group?: string, kind?: string): string | undefined {
-  return group && kind ? getKindGroup(group, kind) : group;
-}
-
-/** Look up a kind by its plural resource name (`ResourceListItem.resource`). */
-export function getKindInfoByResource(resource?: string): KindInfo | undefined {
-  return resource ? findKindByResource(resource) : undefined;
-}
-
-/**
- * Look up a kind by its Kubernetes Kind, which is also its tree label. Accepts any string (tree
- * items can be the `File` fallback, which has no backing kind and resolves to `undefined`) so
- * callers don't depend on the `TreeItemKind` union and create an import cycle with `../types`.
- */
-export function getKindInfoByKind(kind: string): KindInfo | undefined {
-  return registryKinds().find((info) => info.kind === kind);
-}
-
-/**
- * Look up a kind by a resource-stat group, accepting both the full API group
- * (`folder.grafana.app`) and the legacy short plural (`folders`) that the stats
- * endpoint can return interchangeably.
- *
- * Prefer `getKindInfoByStat` when a `resource` is available: several kinds can
- * share an API group, so the group alone does not always identify the kind.
- */
-export function getKindInfoByStatGroup(group?: string): KindInfo | undefined {
-  return registryKinds().find((info) => (group !== undefined && coversGroup(info, group)) || info.resource === group);
-}
-
 function isResourceKindKey(key: string): key is ResourceKindKey {
   return key in resourceKindInfos;
 }
@@ -247,27 +206,6 @@ export function getKindKeyByGroupKind(group?: string, kind?: string): ResourceKi
     const info: ResourceKindInfo = resourceKindInfos[key];
     return (!group || coversGroup(info, group)) && (!kind || info.kind === kind);
   });
-}
-
-/** Look up a kind from a resource or a job summary row; see {@link getKindKeyByGroupKind}. */
-export function getKindInfoByGroupKind(group?: string, kind?: string): KindInfo | undefined {
-  if (group && kind) {
-    return findKind(group, kind);
-  }
-  if (!group && !kind) {
-    return undefined;
-  }
-  return registryKinds().find((info) => (!group || coversGroup(info, group)) && (!kind || info.kind === kind));
-}
-
-/**
- * Look up a kind from a resource-stat entry (`ResourceCount`), which carries both
- * an API `group` and a plural `resource` name. The plural resource uniquely
- * identifies the kind even when kinds share a group, so we match on it first and
- * fall back to a group-only match for stats that omit the resource.
- */
-export function getKindInfoByStat(stat: { group?: string; resource?: string }): KindInfo | undefined {
-  return getKindInfoByResource(stat.resource) ?? getKindInfoByStatGroup(stat.group);
 }
 
 /**
