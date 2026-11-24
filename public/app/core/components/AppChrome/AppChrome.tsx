@@ -627,6 +627,11 @@ const getContentSizeStyles = (
     // Replaces `pageContainerMenuDocked*`'s padding, which only reserves the nav.
     contentDockedLeft: css({
       paddingLeft: `calc(${pageOffset} + ${extensionSidebarWidth}px) !important`,
+      // The page card's left edge moves over with the side panel, so it still meets the panel.
+      ...(sidePanelWidth &&
+        visualRefreshEnabled && {
+          '&::before': { left: `calc(${pageOffset} + ${extensionSidebarWidth}px) !important` },
+        }),
     }),
     // Docked on the left, the sidebar starts past the nav, ahead of the side panel.
     sidebarAfterNav: css({
