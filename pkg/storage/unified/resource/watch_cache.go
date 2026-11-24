@@ -6,7 +6,9 @@ import (
 	"sync"
 )
 
-type eventIdentity[T any] func(T) (GroupResource, int64)
+// eventIdentity returns an event's collection, namespace and RV. An empty
+// namespace (cluster-scoped events) reaches only watches of all namespaces.
+type eventIdentity[T any] func(T) (gr GroupResource, namespace string, rv int64)
 
 type watchResume struct {
 	since       int64
@@ -121,7 +123,7 @@ func (c *watchCache[T]) seed(seed cacheSeed[T]) error {
 }
 
 func (c *watchCache[T]) add(item T) GroupResource {
-	gr, rv := c.identity(item)
+	gr, _, rv := c.identity(item)
 	c.maxRV = max(c.maxRV, rv)
 	size := cacheItemSize(item)
 	if size > c.maxBytes {
@@ -167,7 +169,7 @@ func (c *watchCache[T]) add(item T) GroupResource {
 // evict removes the oldest entry in its collection and unlinks it from the
 // shared FIFO. The shared oldest entry is also the oldest in its collection.
 func (c *watchCache[T]) evict(entry *cacheEntry[T]) {
-	gr, rv := c.identity(entry.item)
+	gr, _, rv := c.identity(entry.item)
 	ring := c.rings[gr]
 	ring.removeOldest()
 	if ring.len == 0 {
@@ -218,7 +220,7 @@ func (c *watchCache[T]) replay(dst chan<- T, gr GroupResource, since int64) erro
 	for i := range ring.len {
 		item := ring.at(i).item
 		if since > 0 {
-			_, rv := c.identity(item)
+			_, _, rv := c.identity(item)
 			if rv <= since {
 				continue
 			}
