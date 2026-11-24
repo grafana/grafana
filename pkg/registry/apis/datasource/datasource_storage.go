@@ -25,35 +25,17 @@ var (
 )
 
 type permissionWrapper struct {
-	inner                 grafanarest.Storage
+	grafanarest.Storage
 	permissionClient      *rpclient.Client
 	permissionsOnCreation func(context.Context, string) (bool, error)
 }
 
 func newDatasourceStorage(store grafanarest.Storage, permissions *rpclient.Client, policy func(context.Context, string) (bool, error)) grafanarest.Storage {
-	return &permissionWrapper{inner: store, permissionClient: permissions, permissionsOnCreation: policy}
-}
-
-func (s *permissionWrapper) New() runtime.Object     { return s.inner.New() }
-func (s *permissionWrapper) NamespaceScoped() bool   { return s.inner.NamespaceScoped() }
-func (s *permissionWrapper) GetSingularName() string { return s.inner.GetSingularName() }
-func (s *permissionWrapper) Destroy()                { s.inner.Destroy() }
-func (s *permissionWrapper) NewList() runtime.Object { return s.inner.NewList() }
-func (s *permissionWrapper) ConvertToTable(ctx context.Context, obj runtime.Object, options runtime.Object) (*metav1.Table, error) {
-	return s.inner.ConvertToTable(ctx, obj, options)
-}
-func (s *permissionWrapper) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	return s.inner.Get(ctx, name, options)
-}
-func (s *permissionWrapper) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	return s.inner.List(ctx, options)
-}
-func (s *permissionWrapper) Delete(ctx context.Context, name string, validate rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	return s.inner.Delete(ctx, name, validate, options)
+	return &permissionWrapper{Storage: store, permissionClient: permissions, permissionsOnCreation: policy}
 }
 
 func (s *permissionWrapper) Create(ctx context.Context, obj runtime.Object, validate rest.ValidateObjectFunc, opts *metav1.CreateOptions) (runtime.Object, error) {
-	created, err := s.inner.Create(ctx, obj, validate, opts)
+	created, err := s.Storage.Create(ctx, obj, validate, opts)
 	if err != nil || s.permissionClient == nil || dryrun.IsDryRun(opts.DryRun) {
 		return created, err
 	}
@@ -62,7 +44,7 @@ func (s *permissionWrapper) Create(ctx context.Context, obj runtime.Object, vali
 }
 
 func (s *permissionWrapper) Update(ctx context.Context, name string, info rest.UpdatedObjectInfo, validateCreate rest.ValidateObjectFunc, validateUpdate rest.ValidateObjectUpdateFunc, forceAllowCreate bool, opts *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	obj, created, err := s.inner.Update(ctx, name, info, validateCreate, validateUpdate, forceAllowCreate, opts)
+	obj, created, err := s.Storage.Update(ctx, name, info, validateCreate, validateUpdate, forceAllowCreate, opts)
 	if err != nil || !created || s.permissionClient == nil || dryrun.IsDryRun(opts.DryRun) {
 		return obj, created, err
 	}
@@ -94,7 +76,7 @@ func (s *permissionWrapper) setDefaultsIfEnabled(ctx context.Context, obj runtim
 }
 
 func (s *permissionWrapper) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
-	watcher, ok := s.inner.(rest.Watcher)
+	watcher, ok := s.Storage.(rest.Watcher)
 	if !ok {
 		return nil, errWatchUnsupported
 	}
@@ -102,7 +84,7 @@ func (s *permissionWrapper) Watch(ctx context.Context, options *internalversion.
 }
 
 func (s *permissionWrapper) DeleteCollection(ctx context.Context, validate rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	deleter, ok := s.inner.(rest.CollectionDeleter)
+	deleter, ok := s.Storage.(rest.CollectionDeleter)
 	if !ok {
 		return nil, errCollectionDeleteUnsupported
 	}
@@ -110,7 +92,7 @@ func (s *permissionWrapper) DeleteCollection(ctx context.Context, validate rest.
 }
 
 func (s *permissionWrapper) StorageVersion() runtime.GroupVersioner {
-	provider, ok := s.inner.(rest.StorageVersionProvider)
+	provider, ok := s.Storage.(rest.StorageVersionProvider)
 	if !ok {
 		return nil
 	}
@@ -118,7 +100,7 @@ func (s *permissionWrapper) StorageVersion() runtime.GroupVersioner {
 }
 
 func (s *permissionWrapper) GetResetFields() map[fieldpath.APIVersion]*fieldpath.Set {
-	strategy, ok := s.inner.(rest.ResetFieldsStrategy)
+	strategy, ok := s.Storage.(rest.ResetFieldsStrategy)
 	if !ok {
 		return nil
 	}
@@ -126,7 +108,7 @@ func (s *permissionWrapper) GetResetFields() map[fieldpath.APIVersion]*fieldpath
 }
 
 func (s *permissionWrapper) ReadinessCheck() error {
-	ready, ok := s.inner.(rest.StorageWithReadiness)
+	ready, ok := s.Storage.(rest.StorageWithReadiness)
 	if !ok {
 		return nil
 	}
@@ -134,7 +116,7 @@ func (s *permissionWrapper) ReadinessCheck() error {
 }
 
 func (s *permissionWrapper) GetCorruptObjDeleter() rest.GracefulDeleter {
-	provider, ok := s.inner.(rest.CorruptObjectDeleterProvider)
+	provider, ok := s.Storage.(rest.CorruptObjectDeleterProvider)
 	if !ok {
 		return nil
 	}
@@ -142,7 +124,7 @@ func (s *permissionWrapper) GetCorruptObjDeleter() rest.GracefulDeleter {
 }
 
 func (s *permissionWrapper) DeleteReturnsDeletedObject() bool {
-	deleter, ok := s.inner.(rest.MayReturnFullObjectDeleter)
+	deleter, ok := s.Storage.(rest.MayReturnFullObjectDeleter)
 	return ok && deleter.DeleteReturnsDeletedObject()
 }
 
