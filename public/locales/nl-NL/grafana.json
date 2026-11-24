@@ -1543,6 +1543,9 @@
         "recording-rules_one": "{{formatted}} opnameregel",
         "recording-rules_other": "{{formatted}} opnameregels"
       },
+      "saved-searches": {
+        "applied-default": ""
+      },
       "search": {
         "default-policy-unavailable": "Filteren op het standaardbeleid is nog niet beschikbaar.",
         "folders-disabled": "Filters wissen om op map te bladeren",
@@ -3027,12 +3030,12 @@
       },
       "empty": "",
       "error": "",
-      "load-more": "",
       "restore": {
         "body": "",
         "confirm": "",
         "conflict": "",
         "error": "",
+        "recording-title": "",
         "restoring": "",
         "title": ""
       },
@@ -3187,10 +3190,6 @@
         "group-name": "Naam evaluatiegroep",
         "group-text": "Alle regels in de geselecteerde groep worden elke {{evaluateEvery}} geëvalueerd.",
         "interval-label": "Evaluatie-interval",
-        "mode": {
-          "legacy": "Groepen gebruiken (verouderd)",
-          "new": "Interval instellen"
-        },
         "new-group": "Nieuwe evaluatiegroep",
         "pause": {
           "alerting": "Schakel in om de evaluatie voor deze waarschuwingsregel te pauzeren.",
@@ -6740,6 +6739,9 @@
           "description": "Klik of sleep om paneel te plakken",
           "title": "Paneel plakken"
         },
+        "question": {
+          "label": ""
+        },
         "row": {
           "add-label": "Rij toevoegen",
           "group-label": "Groeperen in rijen"
@@ -6863,6 +6865,7 @@
         "objects": "Objecten",
         "panel": "Paneel",
         "panels": "Panelen",
+        "question": "",
         "row": "Rij",
         "rows": "Rijen",
         "section-filters-set": "Filters",
@@ -6913,6 +6916,36 @@
           "empty": "(leeg)",
           "no-title": "<geen titel>"
         }
+      },
+      "questions": {
+        "add-question": "",
+        "description-dashboard": "",
+        "description-row": "",
+        "description-tab": "",
+        "new-question": "",
+        "placeholder": "",
+        "question": "",
+        "question-title": "",
+        "question-title-description": "",
+        "question-title-placeholder": "",
+        "sources": {
+          "collapse": "",
+          "description-dashboard": "",
+          "description-row": "",
+          "description-tab": "",
+          "entire-dashboard": "",
+          "expand": "",
+          "label": "",
+          "no-panels": "",
+          "unavailable-panel": "",
+          "untitled-row": "",
+          "untitled-tab": "",
+          "panel-count_one": "",
+          "panel-count_other": "",
+          "picked-count_one": "",
+          "picked-count_other": ""
+        },
+        "title": ""
       },
       "row": {
         "header": {
@@ -7174,6 +7207,8 @@
     },
     "transformation-operation-row": {
       "body-delete": "Let op: het verwijderen van één transformatie kan invloed hebben op andere. Als er maar één transformatie is, keer je terug naar het hoofdselectiescherm.",
+      "expander-close": "",
+      "expander-open": "",
       "render-actions": {
         "confirmText-delete": "Verwijderen",
         "title-debug": "Fouten opsporen",
@@ -8146,6 +8181,20 @@
       },
       "selection-options": "Selectiemogelijkheden",
       "static-options-legend": "Statische opties"
+    },
+    "question-actions": {
+      "add": "",
+      "remove": "",
+      "reorder": "",
+      "update": ""
+    },
+    "question-edit": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
+    "question-edit-actions": {
+      "tooltip-question-settings": ""
     },
     "refresh-select": {
       "options": {
@@ -14204,32 +14253,6 @@
     },
     "units": {
       "clear-tooltip": "Eenheidsselectie wissen"
-    },
-    "var-mapping-checks": {
-      "data-macro": "",
-      "not-allowed": "",
-      "not-found": "",
-      "not-number": "",
-      "not-one-value": "",
-      "out-of-range": "",
-      "resolves": "",
-      "values": ""
-    },
-    "var-mapping-toggle": {
-      "aria-label-picker": "",
-      "fallback-off": "",
-      "fallback-on": "",
-      "group-matching": "",
-      "group-other": "",
-      "hint-boolean": "",
-      "hint-number": "",
-      "hint-option": "",
-      "hint-option-no-fallback": "",
-      "new-variable": "",
-      "option-current": "",
-      "placeholder": "",
-      "use-fixed-value": "",
-      "use-variable": ""
     }
   },
   "org": {
@@ -14326,7 +14349,8 @@
     },
     "get-panel-links-variable-suggestions": {
       "label": {
-        "all-variables": "Alle variabelen"
+        "all-variables": "Alle variabelen",
+        "current-dashboard-tabs": ""
       }
     },
     "header-menu": {
@@ -15237,7 +15261,6 @@
     "finish-step": {
       "description-enable-previews": "Voegt een afbeeldingsvoorbeeld toe van dashboardwijzigingen in pull requests. Afbeeldingen van je Grafana-dashboards worden gedeeld in je Git-repository en zijn zichtbaar voor iedereen met toegang tot de repository.",
       "description-image-rendering": "Vereist beeldweergave. <2>Beeldweergave instellen</2>",
-      "description-read-only": "Bronnen kunnen niet worden gewijzigd via Grafana.",
       "description-sync-interval": "Hoe vaak wijzigingen uit de repository moeten worden gesynchroniseerd",
       "error-sync-interval-required": "Synchronisatie-interval is vereist",
       "label-enable-previews": "Dashboardvoorbeelden inschakelen in pull requests",
@@ -16014,6 +16037,17 @@
       "button-submitting": "Indienen...",
       "error-instance-repository-exists": "Er bestaat al een instantierepository",
       "error-save-repository-setting": "Kan de repository-instelling niet opslaan"
+    },
+    "workflow": {
+      "direct-push": "",
+      "direct-push-description": "",
+      "direct-push-description-no-branch": "",
+      "merge-request": "",
+      "merge-request-description": "",
+      "merge-request-description-no-branch": "",
+      "pull-request": "",
+      "pull-request-description": "",
+      "pull-request-description-no-branch": ""
     }
   },
   "public-dashboard": {

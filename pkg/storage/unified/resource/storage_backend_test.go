@@ -2967,6 +2967,55 @@ func TestKvStorageBackend_ListIterator_SpecificResourceVersion(t *testing.T) {
 	require.Equal(t, objectToJSONBytes(t, originalObj), collectedItems[0])
 }
 
+func TestListModifiedSinceBoundsKVKeyReads(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		sinceAge  time.Duration
+		stallRead int
+	}{
+		{name: "latest event lookup", stallRead: 1},
+		{name: "event store page", sinceAge: time.Minute, stallRead: 2},
+		{name: "data store page", sinceAge: 2 * time.Hour, stallRead: 2},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				time.Sleep(time.Until(time.Date(2025, time.January, 1, 0, 0, 0, 0, time.UTC)))
+				ns := NamespacedResource{Namespace: "default", Group: "apps", Resource: "resources"}
+				latest := EventKey{Namespace: ns.Namespace, Group: ns.Group, Resource: ns.Resource, Name: "latest", ResourceVersion: snowflakeFromTime(time.Now()), Action: DataActionCreated}
+				reads := 0
+				store := scriptedKeyPages{keys: func(ctx context.Context, _ ListOptions) iter.Seq2[string, error] {
+					return func(yield func(string, error) bool) {
+						reads++
+						deadline, ok := ctx.Deadline()
+						require.True(t, ok)
+						require.Equal(t, listModifiedSinceReadTimeout, time.Until(deadline))
+						if reads == tc.stallRead {
+							<-ctx.Done()
+							return
+						}
+						yield(latest.String(), nil)
+					}
+				}}
+				backend := &kvStorageBackend{
+					dataStore:            &dataStore{kv: store},
+					eventStore:           newEventStore(store),
+					log:                  &logging.NoOpLogger{},
+					eventRetentionPeriod: time.Hour,
+				}
+
+				_, seq := backend.ListModifiedSince(t.Context(), ns, snowflakeFromTime(time.Now().Add(-tc.sinceAge)), nil)
+				var errs []error
+				for _, err := range seq {
+					errs = append(errs, err)
+				}
+				require.Len(t, errs, 1)
+				require.ErrorIs(t, errs[0], context.DeadlineExceeded)
+				require.Equal(t, tc.stallRead, reads)
+			})
+		})
+	}
+}
+
 func TestKvStorageBackend_ListModifiedSince(t *testing.T) {
 	backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
 		opts.SearchLookback = time.Second
