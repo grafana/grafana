@@ -5,8 +5,7 @@ import { type KindInfo } from '@grafana/runtime/unstable';
 import { playlistAPIv1 } from 'app/api/clients/playlist/v1';
 import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
-import { CORE_KINDS, coversGroup } from 'app/core/kinds/coreKinds';
-import { getKinds } from 'app/core/kinds/dynamicKinds';
+import { CORE_KINDS, coversGroup, getAppKinds } from 'app/core/kinds/coreKinds';
 import { getAPIGroupDiscoveryList } from 'app/features/apiserver/discovery';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
@@ -185,7 +184,7 @@ export interface ResourceKindInfo extends KindInfo {
 const allKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
 
 function knownKindInfos(): ResourceKindInfo[] {
-  const added = getKinds()
+  const added = [...Object.values(CORE_KINDS), ...getAppKinds()]
     .filter((kind) => !allKindInfos.some((info) => info.group === kind.group && info.kind === kind.kind))
     .map((kind) => ({ ...kind, list: async () => [], alwaysAvailable: false }));
   return [...allKindInfos, ...added];

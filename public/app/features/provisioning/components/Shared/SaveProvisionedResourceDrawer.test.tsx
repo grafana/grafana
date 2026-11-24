@@ -5,7 +5,7 @@ import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { type Playlist } from 'app/api/clients/playlist/v1';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
-import { addKinds } from 'app/core/kinds/dynamicKinds';
+import { addKinds } from 'app/core/kinds/coreKinds';
 
 import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
 import { setupProvisioningMswServer } from '../../mocks/server';

@@ -2,7 +2,7 @@ import { HttpResponse, http } from 'msw';
 
 import server from '@grafana/test-utils/server';
 import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
-import { addKinds } from 'app/core/kinds/dynamicKinds';
+import { addKinds } from 'app/core/kinds/coreKinds';
 
 import { setupProvisioningMswServer } from '../mocks/server';
 

@@ -1,7 +1,7 @@
 import { render, screen, within } from 'test/test-utils';
 
 import { type JobResourceSummary } from 'app/api/clients/provisioning/v0alpha1';
-import { addKinds } from 'app/core/kinds/dynamicKinds';
+import { addKinds } from 'app/core/kinds/coreKinds';
 
 import { JobSummary } from './JobSummary';
 
