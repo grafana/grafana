@@ -39,6 +39,7 @@ export function RowContainer({
     collapse,
     fillScreen,
     hideHeader: isHeaderHidden,
+    headerStyle,
     isDropTarget,
     key,
     repeatSourceKey,
@@ -66,6 +67,7 @@ export function RowContainer({
       className={cx(
         styles.wrapper,
         'dashboard-row-wrapper',
+        headerStyle === 'report' && styles.wrapperReport,
         isDragging && styles.dragging,
         isCollapsed && styles.wrapperCollapsed,
         shouldGrow && styles.wrapperGrow,
@@ -109,7 +111,11 @@ export function RowContainer({
       )}
       {!isCollapsed && (
         <div
-          className={cx(styles.rowLayoutWrapper, (!isHeaderHidden || isEditing) && styles.rowLayoutIndented)}
+          className={cx(
+            styles.rowLayoutWrapper,
+            // Report sections align their panels with the heading and prose, so they skip the indent rail.
+            (!isHeaderHidden || isEditing) && headerStyle !== 'report' && styles.rowLayoutIndented
+          )}
           id={contentId}
         >
           <SectionControlsRow variableSet={rowVariablesSet} data={model.state.$data}>
@@ -168,6 +174,12 @@ function getStyles(theme: GrafanaTheme2) {
         left: '-16px',
         width: '1px',
         backgroundColor: theme.colors.border.weak,
+      },
+    }),
+    wrapperReport: css({
+      paddingTop: theme.spacing(2),
+      '&:first-child': {
+        paddingTop: 0,
       },
     }),
     dragging: css({

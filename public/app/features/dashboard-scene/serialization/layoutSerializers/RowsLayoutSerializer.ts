@@ -81,6 +81,14 @@ export function serializeRow(row: RowItem, isSnapshot?: boolean): RowsLayoutRowK
     },
   };
 
+  // Only emit the report fields when authored, so saving an existing dashboard does not add them.
+  if (row.state.headerStyle === 'report') {
+    rowKind.spec.headerStyle = 'report';
+  }
+  if (row.state.summary) {
+    rowKind.spec.summary = row.state.summary;
+  }
+
   const sectionVariables = serializeSectionVariables(row.state.$variables);
   if (sectionVariables) {
     rowKind.spec.variables = sectionVariables;
@@ -133,6 +141,8 @@ export function deserializeRow(
     collapse: row.spec.collapse,
     hideHeader: row.spec.hideHeader,
     fillScreen: row.spec.fillScreen,
+    headerStyle: row.spec.headerStyle === 'report' ? 'report' : undefined,
+    summary: row.spec.summary,
     repeatByVariable: row.spec.repeat?.value,
     questions: deserializeQuestions(row.spec.prompts, elements),
     $variables: deserializeSectionVariables(row.spec.variables),

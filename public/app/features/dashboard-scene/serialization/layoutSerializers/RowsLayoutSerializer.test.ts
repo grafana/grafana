@@ -603,3 +603,87 @@ describe('questions', () => {
     expect(serialized.rows[0].spec).not.toHaveProperty('prompts');
   });
 });
+
+describe('report sections', () => {
+  const reportLayout: DashboardV2Spec['layout'] = {
+    kind: 'RowsLayout',
+    spec: {
+      rows: [
+        {
+          kind: 'RowsLayoutRow',
+          spec: {
+            title: 'Rollout checkpoint',
+            collapse: false,
+            headerStyle: 'report',
+            summary: 'Wave coverage does **not** establish readiness.\n\n- one\n- two',
+            layout: {
+              kind: 'AutoGridLayout',
+              spec: { columnWidthMode: 'standard', rowHeightMode: 'standard', items: [] },
+            },
+          },
+        },
+        {
+          kind: 'RowsLayoutRow',
+          spec: {
+            title: 'Plain row',
+            collapse: false,
+            layout: {
+              kind: 'AutoGridLayout',
+              spec: { columnWidthMode: 'standard', rowHeightMode: 'standard', items: [] },
+            },
+          },
+        },
+      ],
+    },
+  };
+
+  it('round-trips the header style and the exact summary text', () => {
+    const serialized = serializeRowsLayout(deserializeRowsLayout(reportLayout, {}, false));
+    const [report] = (serialized.spec as RowsLayoutSpec).rows;
+
+    expect(report.spec.headerStyle).toBe('report');
+    expect(report.spec.summary).toBe('Wave coverage does **not** establish readiness.\n\n- one\n- two');
+  });
+
+  it('does not add report fields to a row that never had them', () => {
+    const serialized = serializeRowsLayout(deserializeRowsLayout(reportLayout, {}, false));
+    const plain = (serialized.spec as RowsLayoutSpec).rows[1];
+
+    expect(plain.spec).not.toHaveProperty('headerStyle');
+    expect(plain.spec).not.toHaveProperty('summary');
+  });
+
+  it('keeps the summary when the row switches back to the default style', () => {
+    const rows = deserializeRowsLayout(reportLayout, {}, false);
+    rows.state.rows[0].onChangeHeaderStyle(undefined);
+
+    const report = (serializeRowsLayout(rows).spec as RowsLayoutSpec).rows[0];
+
+    expect(report.spec).not.toHaveProperty('headerStyle');
+    expect(report.spec.summary).toBe('Wave coverage does **not** establish readiness.\n\n- one\n- two');
+  });
+
+  it('treats an explicit default style like an absent one', () => {
+    const layout: DashboardV2Spec['layout'] = {
+      kind: 'RowsLayout',
+      spec: {
+        rows: [
+          {
+            kind: 'RowsLayoutRow',
+            spec: {
+              title: 'Row',
+              collapse: false,
+              headerStyle: 'default',
+              layout: { kind: 'GridLayout', spec: { items: [] } },
+            },
+          },
+        ],
+      },
+    };
+
+    const rows = deserializeRowsLayout(layout, {}, false);
+
+    expect(rows.state.rows[0].state.headerStyle).toBeUndefined();
+    expect((serializeRowsLayout(rows).spec as RowsLayoutSpec).rows[0].spec).not.toHaveProperty('headerStyle');
+  });
+});

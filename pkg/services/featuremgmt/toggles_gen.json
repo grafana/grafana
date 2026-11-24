@@ -3170,6 +3170,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.dashboardsReportLayouts",
+        "resourceVersion": "1795510463594",
+        "creationTimestamp": "2026-11-24T08:54:23Z"
+      },
+      "spec": {
+        "description": "Enables authoring report sections, editorial prose, and the responsive split in dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.dedicatedGrafanaComProxyAPIToken",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-05-05T13:55:22Z"

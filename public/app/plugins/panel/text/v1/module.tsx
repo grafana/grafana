@@ -2,6 +2,7 @@ import { PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { CodeLanguage, defaultCodeOptions, defaultOptions, type Options, TextMode } from '../panelcfg.gen';
+import { addTextStyleOption } from '../textStyleOption';
 
 import { TextPanel } from './TextPanel';
 import { TextPanelEditor } from './TextPanelEditor';
@@ -10,20 +11,21 @@ import { textPanelMigrationHandler } from './textPanelMigrationHandler';
 export const plugin = new PanelPlugin<Options>(TextPanel)
   .setPanelOptions((builder) => {
     const category = [t('text.category-text', 'Text')];
+    builder.addRadio({
+      path: 'mode',
+      name: t('text.name-mode', 'Mode'),
+      category,
+      settings: {
+        options: [
+          { value: TextMode.Markdown, label: t('text.mode-options.label-markdown', 'Markdown') },
+          { value: TextMode.HTML, label: t('text.mode-options.label-html', 'HTML') },
+          { value: TextMode.Code, label: t('text.mode-options.label-code', 'Code') },
+        ],
+      },
+      defaultValue: defaultOptions.mode,
+    });
+    addTextStyleOption(builder, category);
     builder
-      .addRadio({
-        path: 'mode',
-        name: t('text.name-mode', 'Mode'),
-        category,
-        settings: {
-          options: [
-            { value: TextMode.Markdown, label: t('text.mode-options.label-markdown', 'Markdown') },
-            { value: TextMode.HTML, label: t('text.mode-options.label-html', 'HTML') },
-            { value: TextMode.Code, label: t('text.mode-options.label-code', 'Code') },
-          ],
-        },
-        defaultValue: defaultOptions.mode,
-      })
       .addSelect({
         path: 'code.language',
         name: t('text.name-language', 'Language'),

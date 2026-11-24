@@ -1211,6 +1211,10 @@
         "type": "object",
         "required": ["columnWidthMode", "rowHeightMode", "items"],
         "properties": {
+          "columnLayout": {
+            "description": "Gives one of exactly two saved, non-repeated items a 2:1 share of the row. Absent means the regular column settings apply.",
+            "type": "string"
+          },
           "columnWidth": {
             "type": "number",
             "format": "double"
@@ -3076,6 +3080,10 @@
           "fillScreen": {
             "type": "boolean"
           },
+          "headerStyle": {
+            "description": "\"report\" presents the row title as a report section heading and shows the summary below it. Absent means \"default\".",
+            "type": "string"
+          },
           "hideHeader": {
             "type": "boolean"
           },
@@ -3091,6 +3099,10 @@
           },
           "repeat": {
             "$ref": "#/components/schemas/DashboardRowRepeatOptions"
+          },
+          "summary": {
+            "description": "Authored Markdown shown under a report section heading. Rendered without raw HTML, images, embeds, or variable interpolation.",
+            "type": "string"
           },
           "title": {
             "type": "string"

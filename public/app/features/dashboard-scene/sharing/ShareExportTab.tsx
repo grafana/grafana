@@ -2,7 +2,7 @@ import saveAs from 'file-saver';
 import { cloneDeep } from 'lodash';
 
 import { t } from '@grafana/i18n';
-import { SceneObjectBase } from '@grafana/scenes';
+import { sceneGraph, SceneObjectBase } from '@grafana/scenes';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { AnnoKeyFolder, AnnoKeyFolderTitle, AnnoKeyFolderUrl, type ObjectMeta } from 'app/features/apiserver/types';
@@ -14,6 +14,7 @@ import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { type DashboardJson } from 'app/features/manage-dashboards/types';
 
 import { makeExportableV1, makeExportableV2 } from '../scene/export/exporters';
+import { RowItem } from '../scene/layout-rows/RowItem';
 import { getVariablesCompatibility } from '../utils/getVariablesCompatibility';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor, hasLibraryPanelsInV1Dashboard } from '../utils/utils';
@@ -112,6 +113,28 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
     initialSaveModelVersion: 'v1' | 'v2';
   }> => {
     try {
+      // The classic model has no field for report summaries, so a classic copy would drop authored text.
+      const summarizedRows = sceneGraph
+        .findAllObjects(
+          getDashboardSceneFor(this),
+          (obj) => obj instanceof RowItem && Boolean(obj.state.summary?.trim())
+        )
+        .map((row) => (row instanceof RowItem ? row.state.title : undefined));
+      if (summarizedRows.length > 0) {
+        return {
+          json: {
+            error: t(
+              'dashboard-scene.share-export-tab.classic-report-summary-error',
+              'Classic export is unavailable: report section summaries ({{titles}}) cannot be represented in the classic format and would be lost. Export the V2 resource instead.',
+              // Rendered as text, not HTML, so titles are shown verbatim.
+              { titles: summarizedRows.map((title) => `"${title}"`).join(', '), interpolation: { escapeValue: false } }
+            ),
+          },
+          initialSaveModelVersion,
+          hasLibraryPanels: undefined,
+        };
+      }
+
       const api = await getDashboardAPI('v1');
       const dto = await api.getDashboardDTO(uid);
       const spec = dto.dashboard;

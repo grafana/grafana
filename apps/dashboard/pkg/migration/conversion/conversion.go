@@ -206,24 +206,36 @@ func RegisterConversions(s *runtime.Scheme, dsIndexProvider schemaversion.DataSo
 	// v2 conversions
 	if err := s.AddConversionFunc((*dashv2.Dashboard)(nil), (*dashv0.Dashboard)(nil),
 		normalizeConversion(dashv2.APIVERSION, dashv0.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
+			if err := checkReportSummariesRepresentable(a.(*dashv2.Dashboard), dashv0.APIVERSION); err != nil {
+				return err
+			}
 			return Convert_V2_to_V0(a.(*dashv2.Dashboard), b.(*dashv0.Dashboard), scope, dsIndexProvider)
 		})); err != nil {
 		return err
 	}
 	if err := s.AddConversionFunc((*dashv2.Dashboard)(nil), (*dashv1.Dashboard)(nil),
 		normalizeConversion(dashv2.APIVERSION, dashv1.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
+			if err := checkReportSummariesRepresentable(a.(*dashv2.Dashboard), dashv1.APIVERSION); err != nil {
+				return err
+			}
 			return Convert_V2_to_V1beta1(a.(*dashv2.Dashboard), b.(*dashv1.Dashboard), scope, dsIndexProvider)
 		})); err != nil {
 		return err
 	}
 	if err := s.AddConversionFunc((*dashv2.Dashboard)(nil), (*dashv2alpha1.Dashboard)(nil),
 		normalizeConversion(dashv2.APIVERSION, dashv2alpha1.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
+			if err := checkReportSummariesRepresentable(a.(*dashv2.Dashboard), dashv2alpha1.APIVERSION); err != nil {
+				return err
+			}
 			return Convert_V2_to_V2alpha1(a.(*dashv2.Dashboard), b.(*dashv2alpha1.Dashboard), scope)
 		})); err != nil {
 		return err
 	}
 	if err := s.AddConversionFunc((*dashv2.Dashboard)(nil), (*dashv2beta1.Dashboard)(nil),
 		normalizeConversion(dashv2.APIVERSION, dashv2beta1.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
+			if err := checkReportSummariesRepresentable(a.(*dashv2.Dashboard), dashv2beta1.APIVERSION); err != nil {
+				return err
+			}
 			return Convert_V2_to_V2beta1(a.(*dashv2.Dashboard), b.(*dashv2beta1.Dashboard), scope)
 		})); err != nil {
 		return err

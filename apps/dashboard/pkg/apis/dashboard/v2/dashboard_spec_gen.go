@@ -1283,6 +1283,12 @@ type DashboardRowsLayoutRowSpec struct {
 	Annotations          []DashboardAnnotationQueryKind                                              `json:"annotations,omitempty"`
 	// Prompts viewers can run on the panels in this row, offered by plugins in the row's controls.
 	Prompts []DashboardPrompt `json:"prompts,omitempty"`
+	// "report" presents the row title as a report section heading and shows the summary below it.
+	// Absent means "default".
+	HeaderStyle *DashboardRowsLayoutRowSpecHeaderStyle `json:"headerStyle,omitempty"`
+	// Authored Markdown shown under a report section heading. Rendered without raw HTML,
+	// images, embeds, or variable interpolation.
+	Summary *string `json:"summary,omitempty"`
 }
 
 // NewDashboardRowsLayoutRowSpec creates a new DashboardRowsLayoutRowSpec object.
@@ -1490,7 +1496,10 @@ type DashboardAutoGridLayoutSpec struct {
 	MaxHeightMode   *DashboardAutoGridLayoutSpecMaxHeightMode  `json:"maxHeightMode,omitempty"`
 	MaxHeight       *float64                                   `json:"maxHeight,omitempty"`
 	MatchRowHeights *bool                                      `json:"matchRowHeights,omitempty"`
-	Items           []DashboardAutoGridLayoutItemKind          `json:"items"`
+	// Gives one of exactly two saved, non-repeated items a 2:1 share of the row.
+	// Absent means the regular column settings apply.
+	ColumnLayout *DashboardAutoGridColumnLayout    `json:"columnLayout,omitempty"`
+	Items        []DashboardAutoGridLayoutItemKind `json:"items"`
 }
 
 // NewDashboardAutoGridLayoutSpec creates a new DashboardAutoGridLayoutSpec object.
@@ -1509,6 +1518,19 @@ func NewDashboardAutoGridLayoutSpec() *DashboardAutoGridLayoutSpec {
 // OpenAPIModelName returns the OpenAPI model name for DashboardAutoGridLayoutSpec.
 func (DashboardAutoGridLayoutSpec) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardAutoGridLayoutSpec"
+}
+
+// +k8s:openapi-gen=true
+type DashboardAutoGridColumnLayout string
+
+const (
+	DashboardAutoGridColumnLayoutSplitWideFirst  DashboardAutoGridColumnLayout = "split-wide-first"
+	DashboardAutoGridColumnLayoutSplitWideSecond DashboardAutoGridColumnLayout = "split-wide-second"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardAutoGridColumnLayout.
+func (DashboardAutoGridColumnLayout) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardAutoGridColumnLayout"
 }
 
 // +k8s:openapi-gen=true
@@ -2819,6 +2841,19 @@ const (
 // OpenAPIModelName returns the OpenAPI model name for DashboardRepeatOptionsDirection.
 func (DashboardRepeatOptionsDirection) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardRepeatOptionsDirection"
+}
+
+// +k8s:openapi-gen=true
+type DashboardRowsLayoutRowSpecHeaderStyle string
+
+const (
+	DashboardRowsLayoutRowSpecHeaderStyleDefault DashboardRowsLayoutRowSpecHeaderStyle = "default"
+	DashboardRowsLayoutRowSpecHeaderStyleReport  DashboardRowsLayoutRowSpecHeaderStyle = "report"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardRowsLayoutRowSpecHeaderStyle.
+func (DashboardRowsLayoutRowSpecHeaderStyle) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardRowsLayoutRowSpecHeaderStyle"
 }
 
 // +k8s:openapi-gen=true

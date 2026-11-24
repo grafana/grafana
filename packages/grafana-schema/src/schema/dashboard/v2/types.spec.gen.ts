@@ -854,6 +854,12 @@ export interface RowsLayoutRowSpec {
 	annotations?: AnnotationQueryKind[];
 	// Prompts viewers can run on the panels in this row, offered by plugins in the row's controls.
 	prompts?: Prompt[];
+	// "report" presents the row title as a report section heading and shows the summary below it.
+	// Absent means "default".
+	headerStyle?: "default" | "report";
+	// Authored Markdown shown under a report section heading. Rendered without raw HTML,
+	// images, embeds, or variable interpolation.
+	summary?: string;
 }
 
 export const defaultRowsLayoutRowSpec = (): RowsLayoutRowSpec => ({
@@ -973,6 +979,9 @@ export interface AutoGridLayoutSpec {
 	maxHeightMode?: "unlimited" | "short" | "standard" | "tall" | "custom";
 	maxHeight?: number;
 	matchRowHeights?: boolean;
+	// Gives one of exactly two saved, non-repeated items a 2:1 share of the row.
+	// Absent means the regular column settings apply.
+	columnLayout?: AutoGridColumnLayout;
 	items: AutoGridLayoutItemKind[];
 }
 
@@ -985,6 +994,10 @@ export const defaultAutoGridLayoutSpec = (): AutoGridLayoutSpec => ({
 	matchRowHeights: true,
 	items: [],
 });
+
+export type AutoGridColumnLayout = "split-wide-first" | "split-wide-second";
+
+export const defaultAutoGridColumnLayout = (): AutoGridColumnLayout => ("split-wide-first");
 
 export interface AutoGridLayoutItemKind {
 	kind: "AutoGridLayoutItem";

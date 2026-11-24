@@ -23,7 +23,10 @@ async function commitValue(input: HTMLElement, value: string) {
 function setup(manager: AutoGridLayoutManager) {
   const dashboard = new DashboardScene({ isEditing: true, body: manager });
   const deactivate = activateFullSceneTree(dashboard);
-  const [columnOptions, rowOptions] = getSidebarOptions(manager);
+  const options = getSidebarOptions(manager);
+  const optionById = (id: string) => options.find((option) => option.props.id === id)!;
+  const columnOptions = optionById('layout-auto-grid-column-options');
+  const rowOptions = optionById('layout-auto-grid-row-height');
 
   render(
     <>

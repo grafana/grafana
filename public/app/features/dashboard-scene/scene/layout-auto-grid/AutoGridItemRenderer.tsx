@@ -25,7 +25,13 @@ import {
   getNamedHeightInPixels,
 } from './AutoGridLayoutManager';
 import { AutoGridResizeIntercept } from './AutoGridResizeIntercept';
-import { DRAGGED_ITEM_HEIGHT, DRAGGED_ITEM_LEFT, DRAGGED_ITEM_TOP, DRAGGED_ITEM_WIDTH } from './const';
+import {
+  AUTO_GRID_HIDDEN_ITEM_CLASS,
+  DRAGGED_ITEM_HEIGHT,
+  DRAGGED_ITEM_LEFT,
+  DRAGGED_ITEM_TOP,
+  DRAGGED_ITEM_WIDTH,
+} from './const';
 
 export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem>) {
   const { body, repeatedPanels = [], key, fitContent: itemFitContent } = model.useState();
@@ -141,6 +147,8 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
                 : {})}
               className={cx(
                 isConditionallyHidden && !isEditing && styles.hidden,
+                // Stable hook for the split layout, which widens the remaining sibling.
+                isConditionallyHidden && !isEditing && AUTO_GRID_HIDDEN_ITEM_CLASS,
                 fitContentOn && styles.itemFitContent,
                 isMaxHeightBounded && styles.itemMaxHeightScroll
               )}

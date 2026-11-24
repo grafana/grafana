@@ -11,9 +11,10 @@ import {
   type InterpolateFunction,
 } from '@grafana/data';
 import { CodeEditor, ScrollContainer, useStyles2 } from '@grafana/ui';
+import { getEditorialMarkdownStyles } from 'app/core/components/ReportProse/styles';
 import config from 'app/core/config';
 
-import { defaultCodeOptions, type Options, TextMode } from '../panelcfg.gen';
+import { defaultCodeOptions, type Options, TextMode, TextStyle } from '../panelcfg.gen';
 
 export interface Props extends PanelProps<Options> {}
 
@@ -59,11 +60,12 @@ export function TextPanel(props: Props) {
     );
   }
 
+  const isEditorial = processed.mode === TextMode.Markdown && props.options.textStyle === TextStyle.Editorial;
   const content = (
     <DangerouslySetHtmlContent
       allowRerender
       html={processed.content}
-      className={cx('markdown-html', styles.markdownHtml)}
+      className={cx('markdown-html', styles.markdownHtml, isEditorial && styles.editorial)}
       data-testid="TextPanel-converted-content"
     />
   );
@@ -138,4 +140,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   markdownHtmlFit: css({
     height: 'auto',
   }),
+  editorial: css(getEditorialMarkdownStyles(theme)),
 });

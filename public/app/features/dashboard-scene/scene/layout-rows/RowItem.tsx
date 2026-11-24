@@ -53,6 +53,10 @@ export interface RowItemState extends SceneObjectState {
   title?: string;
   collapse?: boolean;
   hideHeader?: boolean;
+  /** `'report'` renders the title as a section heading followed by the summary. */
+  headerStyle?: RowHeaderStyle;
+  /** Authored Markdown. Kept when the style returns to default so switching back restores it. */
+  summary?: string;
   fillScreen?: boolean;
   isDropTarget?: boolean;
   conditionalRendering?: ConditionalRenderingGroup;
@@ -63,6 +67,8 @@ export interface RowItemState extends SceneObjectState {
   /** Marks object as a repeated object and a key pointer to source object */
   repeatSourceKey?: string;
 }
+
+export type RowHeaderStyle = 'default' | 'report';
 
 export class RowItem
   extends SceneObjectBase<RowItemState>
@@ -310,6 +316,25 @@ export class RowItem
 
   public onHeaderHiddenToggle(hideHeader = !this.state.hideHeader) {
     this.setState({ hideHeader });
+  }
+
+  public onChangeHeaderStyle(headerStyle: RowHeaderStyle | undefined) {
+    this.setState({ headerStyle });
+  }
+
+  public onChangeSummary(summary: string | undefined) {
+    this.setState({ summary });
+  }
+
+  /** Number of rows this row is nested in. Heading levels follow nesting, not font size. */
+  public getReportSectionDepth(): number {
+    let depth = 0;
+    for (let parent = this.parent; parent; parent = parent.parent) {
+      if (parent instanceof RowItem) {
+        depth++;
+      }
+    }
+    return depth;
   }
 
   public onChangeFillScreen(fillScreen: boolean) {

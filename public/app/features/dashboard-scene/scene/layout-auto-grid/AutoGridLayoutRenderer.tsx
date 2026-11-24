@@ -16,7 +16,8 @@ import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 
 import { type AutoGridLayout, type AutoGridLayoutState } from './AutoGridLayout';
-import { AutoGridLayoutManager } from './AutoGridLayoutManager';
+import { type AutoGridColumnLayout, AutoGridLayoutManager } from './AutoGridLayoutManager';
+import { AUTO_GRID_HIDDEN_ITEM_CLASS } from './const';
 
 export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLayout>) {
   const { children, isHidden, draggedChildren } = model.useState();
@@ -29,7 +30,10 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
   } = dashboardState;
   const isEditing = isFullDashboardEditing(dashboardState);
   const layoutManager = sceneGraph.getAncestor(model, AutoGridLayoutManager);
-  const { fillScreen, matchRowHeights, dropPosition } = layoutManager.useState();
+  const { fillScreen, matchRowHeights, dropPosition, columnLayout } = layoutManager.useState();
+  // Activity follows the saved items, so a drag preview never flips the arrangement.
+  const split = columnLayout ? layoutManager.getColumnSplit(children) : undefined;
+  const splitStyles = useStyles2(getSplitStyles);
   const soloPanelContext = useSoloPanelContext();
   const autoHeightPanelsEnabled = useFlagGrafanaDashboardsAutoHeightPanels();
   // Off => align items to the top so a tall fit panel doesn't stretch its row siblings.
@@ -69,11 +73,13 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
     return result;
   };
 
-  return (
+  const grid = (
     <div
       data-testid={selectors.components.LayoutContainer(getTestIdForLayout(model))}
       className={cx(
         styles.container,
+        split?.isActive && splitStyles.split,
+        split?.isActive && split.columnLayout && splitStyles[split.columnLayout],
         fillScreen && styles.containerFillScreen,
         noStretchSiblings && styles.containerNoStretch,
         isEditing && styles.containerEditing
@@ -85,7 +91,38 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
       {showCanvasActions && <CanvasGridAddActions layoutManager={layoutManager} />}
     </div>
   );
+
+  if (!split?.isActive) {
+    return grid;
+  }
+
+  // The split reacts to the section's width, not the window's, so a docked sidebar or a
+  // nested row stacks the pair as soon as the section itself gets narrow.
+  return <div className={cx(splitStyles.container, fillScreen && splitStyles.containerFillScreen)}>{grid}</div>;
 }
+
+const getSplitStyles = (theme: GrafanaTheme2) => {
+  // Theme-owned threshold: below this section width the pair stacks in document order.
+  const twoColumns = `@container (min-width: ${theme.breakpoints.values.md}px)`;
+  return {
+    container: css({
+      containerType: 'inline-size',
+      display: 'flex',
+      flexDirection: 'column',
+      minWidth: 0,
+    }),
+    containerFillScreen: css({ flexGrow: 1 }),
+    split: css({
+      gridTemplateColumns: 'minmax(0, 1fr)',
+      // One visible item takes the full width instead of leaving an empty column.
+      [`& > :only-child, & > .${AUTO_GRID_HIDDEN_ITEM_CLASS} + *, & > :has(+ .${AUTO_GRID_HIDDEN_ITEM_CLASS})`]: {
+        gridColumn: '1 / -1',
+      },
+    }),
+    'split-wide-first': css({ [twoColumns]: { gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)' } }),
+    'split-wide-second': css({ [twoColumns]: { gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 2fr)' } }),
+  } satisfies Record<'container' | 'containerFillScreen' | 'split' | AutoGridColumnLayout, string>;
+};
 
 function DropPlaceholder({ styles }: { styles: ReturnType<typeof getStyles> }) {
   return <div className={styles.dropPlaceholder} />;

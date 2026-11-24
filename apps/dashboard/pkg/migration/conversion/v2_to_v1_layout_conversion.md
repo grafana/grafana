@@ -71,6 +71,18 @@ V2 RowsLayout                         V1 panels[]
 └────────────────────────┘            Next row starts at y:8
 ```
 
+### Report Section Row
+
+A row with `headerStyle: "report"` converts like any other row; the header style has no V1 equivalent and is dropped.
+
+A row with a non-empty `summary` is **not converted**. V1, v2alpha1, and v2beta1 have no field for the authored text, so
+the conversion to any of them fails with `ReportSummaryNotRepresentableError` (see `v2_report_content.go`) instead of
+silently dropping it. Readers fall back to the stored v2 resource, which keeps a legacy write-back from erasing the
+summary. The frontend refuses the classic export for the same reason.
+
+`AutoGridLayout.columnLayout` (the 2:1 split) only sets column widths and is dropped like the other Auto grid sizing
+options.
+
 ---
 
 ## TabsLayout Conversion

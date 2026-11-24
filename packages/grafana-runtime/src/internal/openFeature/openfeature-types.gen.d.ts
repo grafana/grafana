@@ -194,6 +194,7 @@ declare module "@openfeature/core" {
     | "datasources.querier.newName"
     | "grafana.panelPluginTransformations"
     | "grafana.dashboardsAutoHeightPanels"
+    | "grafana.dashboardsReportLayouts"
     | "grafana.dashboardAutoGridDefault"
     | "grafana.multiTenantUserPermissions"
     | "datasources.gatewayGuardrails"

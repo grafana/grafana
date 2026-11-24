@@ -34,6 +34,7 @@ export function serializeAutoGridLayout(
     maxHeightMode,
     maxHeight,
     matchRowHeights,
+    columnLayout,
     columnWidth,
     rowHeight,
     layout,
@@ -53,6 +54,7 @@ export function serializeAutoGridLayout(
       maxHeightMode: !maxHeightMode || maxHeightMode === 'unlimited' ? undefined : maxHeightMode,
       maxHeight: maxHeightMode === 'custom' ? maxHeight : undefined,
       matchRowHeights: matchRowHeights === false ? false : undefined,
+      ...(columnLayout && { columnLayout }),
       ...serializeAutoGridColumnWidth(columnWidth),
       ...serializeAutoGridRowHeight(rowHeight),
       ...serializeAutoGridMinHeight(minHeight),
@@ -153,6 +155,7 @@ export function deserializeAutoGridLayout(
     maxHeightMode,
     maxHeight,
     matchRowHeights,
+    columnLayout,
   } = layout.spec;
 
   const children = layout.spec.items.map((item) => deserializeAutoGridItem(item, elements, panelIdGenerator));
@@ -173,6 +176,7 @@ export function deserializeAutoGridLayout(
     maxHeightMode,
     maxHeight,
     matchRowHeights,
+    columnLayout,
     layout: new AutoGridLayout({
       templateColumns: getTemplateColumnsTemplate(
         maxColumnCount ?? defaults.maxColumnCount!,

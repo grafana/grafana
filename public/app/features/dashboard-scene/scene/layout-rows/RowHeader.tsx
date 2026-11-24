@@ -3,8 +3,10 @@ import { type DraggableProvided } from '@hello-pangea/dnd';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { clearButtonStyles, ClipboardButton, Icon, Tooltip, useElementSelection, useStyles2 } from '@grafana/ui';
+import { ReportProse } from 'app/core/components/ReportProse/ReportProse';
+import { REPORT_SERIF_STACK } from 'app/core/components/ReportProse/styles';
 
 import { toggleRowCollapse } from '../../actions/layout/toggleRowCollapse';
 import { useDashboardState, useInterpolatedTitle } from '../../utils/utils';
@@ -37,7 +39,8 @@ export function RowHeader({
   onHeaderEnter,
   onHeaderLeave,
 }: Props) {
-  const { layout, hideHeader: isHeaderHidden, key } = model.useState();
+  const { layout, hideHeader: isHeaderHidden, headerStyle, summary, key } = model.useState();
+  const isReport = headerStyle === 'report';
   const dashboardState = useDashboardState(model);
   const isEditing = isFullDashboardEditing(dashboardState);
   const { planning } = dashboardState;
@@ -46,15 +49,18 @@ export function RowHeader({
   const styles = useStyles2(getStyles);
   const clearStyles = useStyles2(clearButtonStyles);
   const isTopLevel = model.parent?.parent instanceof DashboardScene;
+  const reportDepth = isReport ? model.getReportSectionDepth() : 0;
   const layoutType = mapIdToGridLayoutType(layout.descriptor.id);
 
   const titleElement = (
     <span
       className={cx(
         styles.rowTitle,
+        isReport && styles.reportTitle,
         isHeaderHidden && styles.rowTitleHidden,
-        !isTopLevel && styles.rowTitleNested,
-        isCollapsed && styles.rowTitleCollapsed
+        !isTopLevel && !isReport && styles.rowTitleNested,
+        isReport && reportDepth > 0 && styles.reportTitleNested,
+        isCollapsed && !isReport && styles.rowTitleCollapsed
       )}
       data-testid={selectors.components.DashboardRow.title(title)}
     >
@@ -72,55 +78,111 @@ export function RowHeader({
     </span>
   );
 
+  const collapseIcon = (
+    <Icon name={isCollapsed ? 'angle-right' : 'angle-down'} className={cx(isReport && styles.reportChevron)} />
+  );
+  const collapseButton = (
+    <button
+      onClick={(evt) => {
+        if (isEditing) {
+          toggleRowCollapse(model);
+        } else {
+          model.onCollapseToggle();
+        }
+        onClearSelection?.();
+      }}
+      className={cx(clearStyles, styles.rowTitleButton, isReport && styles.reportTitleButton)}
+      aria-expanded={!isCollapsed}
+      aria-controls={contentId}
+      aria-label={
+        // A report heading in view mode names itself through the title inside the button.
+        isReport && !isEditing
+          ? undefined
+          : isCollapsed
+            ? t('dashboard.rows-layout.row.expand', 'Expand row {{title}}', { title })
+            : t('dashboard.rows-layout.row.collapse', 'Collapse row {{title}}', { title })
+      }
+      data-testid={selectors.components.DashboardRow.toggle(title)}
+    >
+      {/* Report headings lead with the title so it lines up with the prose and panels below. */}
+      {!isReport && collapseIcon}
+      {!isEditing && titleElement}
+      {isReport && collapseIcon}
+    </button>
+  );
+  const ReportHeading = REPORT_HEADING_TAGS[Math.min(reportDepth, REPORT_HEADING_TAGS.length - 1)];
+
   return (
-    <SectionEditActionsWrapper kind="row" item={model} disabled={isDragging}>
-      <div
-        className={cx(styles.rowHeader, 'dashboard-row-header')}
-        onMouseEnter={isSelectable ? onHeaderEnter : undefined}
-        onMouseLeave={isSelectable ? onHeaderLeave : undefined}
-        data-dashboard-element-key={key}
-        data-dashboard-element-type="row"
-        {...dragHandleProps}
-      >
-        <button
-          onClick={(evt) => {
-            if (isEditing) {
-              toggleRowCollapse(model);
-            } else {
-              model.onCollapseToggle();
-            }
-            onClearSelection?.();
-          }}
-          className={cx(clearStyles, styles.rowTitleButton)}
-          aria-expanded={!isCollapsed}
-          aria-controls={contentId}
-          aria-label={
-            isCollapsed
-              ? t('dashboard.rows-layout.row.expand', 'Expand row {{title}}', { title })
-              : t('dashboard.rows-layout.row.collapse', 'Collapse row {{title}}', { title })
-          }
-          data-testid={selectors.components.DashboardRow.toggle(title)}
+    <>
+      <SectionEditActionsWrapper kind="row" item={model} disabled={isDragging}>
+        <div
+          className={cx(styles.rowHeader, isReport && styles.reportHeader, 'dashboard-row-header')}
+          onMouseEnter={isSelectable ? onHeaderEnter : undefined}
+          onMouseLeave={isSelectable ? onHeaderLeave : undefined}
+          data-dashboard-element-key={key}
+          data-dashboard-element-type="row"
+          {...dragHandleProps}
         >
-          <Icon name={isCollapsed ? 'angle-right' : 'angle-down'} />
-          {!isEditing && titleElement}
-        </button>
-        {isEditing && titleElement}
-        {!isEditing && !planning && (
-          <ClipboardButton
-            icon="link"
-            size="sm"
-            fill="text"
-            variant="secondary"
-            className={cx(styles.copyLinkButton, 'dashboard-row-header-copy-link')}
-            aria-label={t('dashboard.rows-layout.row.copy-link', 'Copy link to row')}
-            tooltip={t('dashboard.rows-layout.row.copy-link', 'Copy link to row')}
-            getText={() => model.getUrl()}
-          />
-        )}
-        {isEditing && layoutType && <LayoutModeIndicator layoutType={layoutType} className="layout-indicator" />}
-        {isDraggable && <Icon name="draggabledots" className="dashboard-row-header-drag-handle" />}
-      </div>
-    </SectionEditActionsWrapper>
+          {isReport ? (
+            <ReportHeading className={styles.reportHeading}>
+              {isEditing && titleElement}
+              {collapseButton}
+            </ReportHeading>
+          ) : (
+            <>
+              {collapseButton}
+              {isEditing && titleElement}
+            </>
+          )}
+          {!isEditing && !planning && (
+            <ClipboardButton
+              icon="link"
+              size="sm"
+              fill="text"
+              variant="secondary"
+              className={cx(styles.copyLinkButton, 'dashboard-row-header-copy-link')}
+              aria-label={t('dashboard.rows-layout.row.copy-link', 'Copy link to row')}
+              tooltip={t('dashboard.rows-layout.row.copy-link', 'Copy link to row')}
+              getText={() => model.getUrl()}
+            />
+          )}
+          {isEditing && layoutType && <LayoutModeIndicator layoutType={layoutType} className="layout-indicator" />}
+          {isDraggable && <Icon name="draggabledots" className="dashboard-row-header-drag-handle" />}
+        </div>
+      </SectionEditActionsWrapper>
+      {isReport && <ReportSummary summary={summary} isEditing={isEditing} isHeaderHidden={isHeaderHidden} />}
+    </>
+  );
+}
+
+/** Indexed by nesting depth; the dashboard title is the page's h1, so the outermost section is an h2. */
+const REPORT_HEADING_TAGS = ['h2', 'h3', 'h4', 'h5', 'h6'] as const;
+
+interface ReportSummaryProps {
+  summary: string | undefined;
+  isEditing: boolean;
+  isHeaderHidden: boolean | undefined;
+}
+
+function ReportSummary({ summary, isEditing, isHeaderHidden }: ReportSummaryProps) {
+  const styles = useStyles2(getStyles);
+
+  if (!summary?.trim()) {
+    return isEditing ? (
+      <p className={cx(styles.reportSummary, styles.reportSummaryPlaceholder)}>
+        <Trans i18nKey="dashboard.rows-layout.report.summary-placeholder">
+          Add a summary in the row options to tell readers what this section establishes.
+        </Trans>
+      </p>
+    ) : null;
+  }
+
+  return (
+    <ReportProse
+      markdown={summary}
+      className={cx(styles.reportSummary, isHeaderHidden && styles.reportSummaryHidden)}
+      data-testid={selectors.components.DashboardRow.reportSummary}
+    />
   );
 }
 
@@ -201,6 +263,68 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     rowTitleCollapsed: css({
       color: theme.colors.text.secondary,
+    }),
+    reportHeader: css({
+      alignItems: 'flex-start',
+      marginBottom: theme.spacing(0.5),
+      padding: 0,
+    }),
+    reportHeading: css({
+      display: 'flex',
+      alignItems: 'baseline',
+      gap: theme.spacing(0.5),
+      minWidth: 0,
+      margin: 0,
+      // Typography lives on the title span; the element only carries the semantics.
+      font: 'inherit',
+    }),
+    reportTitleButton: css({
+      alignItems: 'baseline',
+      textAlign: 'left',
+      gap: theme.spacing(0.75),
+      padding: 0,
+      color: 'inherit',
+      '&:hover .report-chevron, &:focus-visible .report-chevron': {
+        color: theme.colors.text.primary,
+      },
+    }),
+    reportTitle: css({
+      fontFamily: REPORT_SERIF_STACK,
+      fontSize: '1.75rem',
+      lineHeight: 1.2,
+      fontWeight: 600,
+      letterSpacing: '-0.01em',
+      color: theme.colors.text.primary,
+      whiteSpace: 'normal',
+      textWrap: 'balance',
+      overflow: 'visible',
+      gap: theme.spacing(1),
+    }),
+    reportTitleNested: css({
+      fontSize: '1.3rem',
+    }),
+    reportChevron: cx(
+      'report-chevron',
+      css({
+        flexShrink: 0,
+        color: theme.colors.text.secondary,
+        alignSelf: 'center',
+        [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+          transition: 'color 0.2s',
+        },
+      })
+    ),
+    reportSummary: css({
+      margin: theme.spacing(0, 0, 2),
+    }),
+    reportSummaryHidden: css({
+      opacity: 0.6,
+    }),
+    reportSummaryPlaceholder: css({
+      fontFamily: REPORT_SERIF_STACK,
+      fontStyle: 'italic',
+      fontSize: '1.0625rem',
+      color: theme.colors.text.disabled,
     }),
   };
 }

@@ -38,6 +38,8 @@ export function ExportAsCodeRenderer({ model }: SceneComponentProps<ExportAsCode
     skipInvalid: true,
   });
   const stringifiedDashboard = isViewingYAML ? stringifiedDashboardYAML : stringifiedDashboardJson;
+  // A refused export (for example classic with report summaries) must not be saved as if it were the dashboard.
+  const hasExportError = Boolean(dashboardJson.value?.json && 'error' in dashboardJson.value.json);
 
   const onClickDownload = async () => {
     await model.onSaveAsFile();
@@ -84,6 +86,7 @@ export function ExportAsCodeRenderer({ model }: SceneComponentProps<ExportAsCode
             variant="primary"
             icon="download-alt"
             onClick={onClickDownload}
+            disabled={hasExportError}
           >
             <Trans i18nKey="export.json.download-button">Download file</Trans>
           </Button>
@@ -91,7 +94,7 @@ export function ExportAsCodeRenderer({ model }: SceneComponentProps<ExportAsCode
             data-testid={selector.copyToClipboardButton}
             variant="secondary"
             icon="copy"
-            disabled={dashboardJson.loading}
+            disabled={dashboardJson.loading || hasExportError}
             getText={() => stringifiedDashboard ?? ''}
             onClipboardCopy={model.onClipboardCopy}
           >

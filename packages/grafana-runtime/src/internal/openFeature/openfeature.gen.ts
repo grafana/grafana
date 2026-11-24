@@ -208,6 +208,8 @@ export const FlagKeys = {
   GrafanaDashboardVariablesMigration: "grafana.dashboardVariablesMigration",
   /** Enables the auto-height feature for dashboard panels */
   GrafanaDashboardsAutoHeightPanels: "grafana.dashboardsAutoHeightPanels",
+  /** Enables authoring report sections, editorial prose, and the responsive split in dashboards */
+  GrafanaDashboardsReportLayouts: "grafana.dashboardsReportLayouts",
   /** Enables the draft dashboard lifecycle: new dashboards can be created as drafts that stay hidden from list and search until they are published */
   GrafanaDraftDashboards: "grafana.draftDashboards",
   /** Check for the existence of logs when linking from the Trace View */
@@ -1493,6 +1495,17 @@ export const useFlagGrafanaDashboardVariablesMigration = (options?: ReactFlagEva
  */
 export const useFlagGrafanaDashboardsAutoHeightPanels = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.dashboardsAutoHeightPanels", false, options).value;
+};
+
+/**
+ * Enables authoring report sections, editorial prose, and the responsive split in dashboards
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardsReportLayouts`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDashboardsReportLayouts = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardsReportLayouts", false, options).value;
 };
 
 /**

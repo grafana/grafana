@@ -1053,6 +1053,13 @@ func schema_pkg_apis_dashboard_v2_DashboardAutoGridLayoutSpec(ref common.Referen
 							Format: "",
 						},
 					},
+					"columnLayout": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Gives one of exactly two saved, non-repeated items a 2:1 share of the row. Absent means the regular column settings apply.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"items": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
@@ -4165,6 +4172,20 @@ func schema_pkg_apis_dashboard_v2_DashboardRowsLayoutRowSpec(ref common.Referenc
 									},
 								},
 							},
+						},
+					},
+					"headerStyle": {
+						SchemaProps: spec.SchemaProps{
+							Description: "\"report\" presents the row title as a report section heading and shows the summary below it. Absent means \"default\".",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"summary": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Authored Markdown shown under a report section heading. Rendered without raw HTML, images, embeds, or variable interpolation.",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},

@@ -22,6 +22,7 @@ import {
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
+import { getEditorialMarkdownStyles } from 'app/core/components/ReportProse/styles';
 import config from 'app/core/config';
 
 import {
@@ -32,6 +33,7 @@ import {
   type Options,
   RenderMode,
   TextMode,
+  TextStyle,
 } from '../panelcfg.gen';
 
 import { TextNGCodeView } from './TextNGCodeView';
@@ -296,6 +298,7 @@ export function TextNGPanel(props: Props) {
     <TextNGView
       {...processed}
       code={options.code}
+      textStyle={options.textStyle}
       fitContent={fitContentOn}
       contentRef={contentRef}
       consent={consent}
@@ -357,6 +360,7 @@ interface ProcessedContent extends RenderedContent {
 
 interface TextNGViewProps extends ProcessedContent {
   code: Options['code'];
+  textStyle?: TextStyle;
   fitContent?: boolean;
   contentRef?: Ref<HTMLDivElement>;
   transparent?: boolean;
@@ -369,6 +373,7 @@ const TextNGView = memo(function TextNGView({
   content,
   error,
   code,
+  textStyle,
   fitContent,
   contentRef,
   transparent,
@@ -410,7 +415,11 @@ const TextNGView = memo(function TextNGView({
       hasData={hasData}
       minHeight={fitContent ? undefined : fillHeight}
       consent={consent}
-      className={cx('markdown-html', fitContent ? styles.markdownHtmlFit : styles.markdownHtml)}
+      className={cx(
+        'markdown-html',
+        fitContent ? styles.markdownHtmlFit : styles.markdownHtml,
+        mode === TextMode.Markdown && textStyle === TextStyle.Editorial && styles.editorial
+      )}
       testId="TextNGPanel-converted-content"
     />
   );
@@ -469,7 +478,7 @@ function EditorLoadingFallback({
             !isCode && layout.htmlPreviewPane
           )}
         >
-          <TextNGView {...rendered} code={options.code} transparent={transparent} />
+          <TextNGView {...rendered} code={options.code} textStyle={options.textStyle} transparent={transparent} />
         </div>
       </div>
       {(isCode || hasFooter) && <Stack minHeight={theme.components.height.md} />}
@@ -535,6 +544,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   markdownHtmlFit: css({
     height: 'auto',
   }),
+  editorial: css(getEditorialMarkdownStyles(theme)),
   codeContainer: css({
     height: '100%',
     overflow: 'hidden',

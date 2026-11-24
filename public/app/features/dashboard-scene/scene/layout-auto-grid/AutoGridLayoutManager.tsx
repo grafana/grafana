@@ -61,6 +61,8 @@ interface AutoGridLayoutManagerState extends SceneObjectState {
   maxHeightMode?: AutoGridMaxHeightMode;
   maxHeight?: number;
   matchRowHeights?: boolean;
+  /** Two-item split; see {@link AutoGridLayoutManager.getColumnSplit} for when it applies. */
+  columnLayout?: AutoGridColumnLayout;
   /** Whether this grid is currently a drop target */
   isDropTarget?: boolean;
   /** Position index where a placeholder should be shown for external drops */
@@ -72,6 +74,14 @@ export type AutoGridRowHeight = 'short' | 'standard' | 'tall' | 'custom' | numbe
 /** Min height for content-fit panels: `'none'` means no floor (the analog of max height's `'unlimited'`). */
 export type AutoGridMinHeight = 'none' | AutoGridRowHeight;
 export type AutoGridMaxHeightMode = 'unlimited' | 'short' | 'standard' | 'tall' | 'custom';
+export type AutoGridColumnLayout = 'split-wide-first' | 'split-wide-second';
+
+export interface AutoGridColumnSplit {
+  columnLayout: AutoGridColumnLayout | undefined;
+  isActive: boolean;
+  /** Why a chosen split falls back to the regular column settings. */
+  inactiveReason?: 'item-count' | 'repeat';
+}
 
 /**
  * Feature toggle for the whole auto-height (content-fit) panels feature.
@@ -390,6 +400,29 @@ export class AutoGridLayoutManager
 
   public onMatchRowHeightsChanged(matchRowHeights: boolean) {
     this.setState({ matchRowHeights });
+  }
+
+  public onColumnLayoutChanged(columnLayout: AutoGridColumnLayout | undefined) {
+    this.setState({ columnLayout });
+  }
+
+  /**
+   * A split applies only to exactly two saved, non-repeated items. Otherwise the saved
+   * choice is kept and the regular column settings render, so adding a third panel or a
+   * repeat never loses the author's intent.
+   */
+  public getColumnSplit(children: AutoGridItem[] = this.state.layout.state.children): AutoGridColumnSplit {
+    const { columnLayout } = this.state;
+    if (!columnLayout) {
+      return { columnLayout, isActive: false };
+    }
+    if (children.length !== 2) {
+      return { columnLayout, isActive: false, inactiveReason: 'item-count' };
+    }
+    if (children.some((child) => child.state.variableName)) {
+      return { columnLayout, isActive: false, inactiveReason: 'repeat' };
+    }
+    return { columnLayout, isActive: true };
   }
 
   public onRowHeightChanged(rowHeight: AutoGridRowHeight) {

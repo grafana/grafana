@@ -158,6 +158,12 @@ export const versionedComponents = {
     addNewTabButton: {
       '13.2.0': 'data-testid sidebar add new tab button',
     },
+    addReportSectionButton: {
+      '13.3.0': 'data-testid sidebar add report section button',
+    },
+    addReportPreset: {
+      '13.3.0': (preset: string) => `data-testid sidebar add report preset ${preset}`,
+    },
   },
   EditActionsPopover: {
     container: {
@@ -1031,6 +1037,12 @@ export const versionedComponents = {
         fillScreen: {
           '12.1.0': 'data-testid fill screen switch',
         },
+        columnLayout: {
+          '13.3.0': 'data-testid auto grid column layout',
+        },
+        resetColumnLayout: {
+          '13.3.0': 'data-testid auto grid reset column layout',
+        },
       },
       TabsLayout: {
         titleInput: {
@@ -1040,6 +1052,12 @@ export const versionedComponents = {
       RowsLayout: {
         titleInput: {
           '12.3.0': 'data-testid row title input',
+        },
+        headerStyle: {
+          '13.3.0': 'data-testid row header style',
+        },
+        summaryInput: {
+          '13.3.0': 'data-testid row summary input',
         },
       },
     },
@@ -1895,6 +1913,9 @@ export const versionedComponents = {
     },
     wrapper: {
       '12.1.0': (title: string) => `data-testid dashboard-row-wrapper-for-${title}`,
+    },
+    reportSummary: {
+      '13.3.0': 'data-testid dashboard report section summary',
     },
   },
   UserProfile: {

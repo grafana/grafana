@@ -40,6 +40,10 @@ export function ResourceExport({
   const isV2Dashboard =
     dashboardJson.value?.json && 'spec' in dashboardJson.value.json && 'elements' in dashboardJson.value.json.spec;
   const showV2LibPanelAlert = isV2Dashboard && isSharingExternally && hasLibraryPanels;
+  const exportError =
+    dashboardJson.value?.json && 'error' in dashboardJson.value.json
+      ? String(dashboardJson.value.json.error)
+      : undefined;
 
   const switchExportLabel =
     exportFormat === ExportFormat.V2Resource
@@ -120,14 +124,26 @@ export function ResourceExport({
         </Stack>
       )}
 
-      {dashboardJson.value?.initialSaveModelVersion === 'v2' && exportFormat === ExportFormat.Classic && (
-        <Alert title="" severity="warning" topSpacing={2}>
-          <Trans i18nKey="dashboard-scene.resource-export.classic-v2-warning">
-            This dashboard uses the V2 schema. Features like tabs and conditional rendering cannot be represented in the
-            classic format and may be lost.
-          </Trans>
+      {exportError && (
+        <Alert
+          title={t('dashboard-scene.resource-export.export-unavailable', 'Export unavailable')}
+          severity="error"
+          topSpacing={2}
+        >
+          {exportError}
         </Alert>
       )}
+
+      {!exportError &&
+        dashboardJson.value?.initialSaveModelVersion === 'v2' &&
+        exportFormat === ExportFormat.Classic && (
+          <Alert title="" severity="warning" topSpacing={2}>
+            <Trans i18nKey="dashboard-scene.resource-export.classic-v2-warning">
+              This dashboard uses the V2 schema. Features like tabs and conditional rendering cannot be represented in
+              the classic format and may be lost.
+            </Trans>
+          </Alert>
+        )}
 
       {showV2LibPanelAlert && (
         <Alert

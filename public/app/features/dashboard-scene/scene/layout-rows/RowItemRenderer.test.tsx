@@ -242,3 +242,69 @@ describe('RowItemRenderer', () => {
     expect(screen.queryByText('Deploys')).not.toBeInTheDocument();
   });
 });
+
+describe('RowItemRenderer report sections', () => {
+  function renderReport(rowState: Partial<RowItem['state']>) {
+    const inner = new RowItem({
+      key: 'inner',
+      title: 'Inner section',
+      headerStyle: 'report',
+      summary: 'Nested **reading**.',
+      layout: AutoGridLayoutManager.createEmpty(),
+    });
+    const row = new RowItem({
+      key: 'outer',
+      title: 'Rollout checkpoint',
+      headerStyle: 'report',
+      summary: 'Coverage does **not** establish readiness. <img src="https://example.com/x.png" onerror="alert(1)">',
+      layout: new RowsLayoutManager({ rows: [inner] }),
+      ...rowState,
+    });
+    const scene = new DashboardScene({
+      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      body: new RowsLayoutManager({ rows: [row] }),
+    });
+    render(<scene.Component model={scene} />);
+  }
+
+  it('derives heading levels from nesting and keeps the collapse control inside the heading', () => {
+    renderReport({});
+
+    const outer = screen.getByRole('heading', { level: 2, name: 'Rollout checkpoint' });
+    expect(outer.querySelector('button[aria-expanded="true"]')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 3, name: 'Inner section' })).toBeInTheDocument();
+  });
+
+  it('renders the summary as static prose without raw HTML or remote images', () => {
+    renderReport({});
+
+    const [summary] = screen.getAllByTestId(selectors.components.DashboardRow.reportSummary);
+    expect(summary.querySelector('strong')).toHaveTextContent('not');
+    expect(summary.querySelector('img')).not.toBeInTheDocument();
+    expect(summary).toHaveTextContent('<img src="https://example.com/x.png" onerror="alert(1)">');
+  });
+
+  it('keeps heading and summary visible when collapsed and hides only the panels', () => {
+    renderReport({ collapse: true });
+
+    expect(screen.getByRole('heading', { level: 2, name: 'Rollout checkpoint' })).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.components.DashboardRow.reportSummary)).toHaveTextContent(
+      'Coverage does not establish readiness.'
+    );
+    expect(screen.queryByRole('heading', { name: 'Inner section' })).not.toBeInTheDocument();
+  });
+
+  it('hides heading and summary together when the header is hidden', () => {
+    renderReport({ hideHeader: true, layout: AutoGridLayoutManager.createEmpty() });
+
+    expect(screen.queryByRole('heading', { name: 'Rollout checkpoint' })).not.toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.DashboardRow.reportSummary)).not.toBeInTheDocument();
+  });
+
+  it('does not show a saved summary once the row is back to the default style', () => {
+    renderReport({ headerStyle: undefined, layout: AutoGridLayoutManager.createEmpty() });
+
+    expect(screen.queryByRole('heading', { name: 'Rollout checkpoint' })).not.toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.DashboardRow.reportSummary)).not.toBeInTheDocument();
+  });
+});

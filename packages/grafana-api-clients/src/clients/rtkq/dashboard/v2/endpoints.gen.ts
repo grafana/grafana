@@ -713,6 +713,8 @@ export type DashboardAutoGridLayoutItemKind = {
   spec: DashboardAutoGridLayoutItemSpec;
 };
 export type DashboardAutoGridLayoutSpec = {
+  /** Gives one of exactly two saved, non-repeated items a 2:1 share of the row. Absent means the regular column settings apply. */
+  columnLayout?: string;
   columnWidth?: number;
   columnWidthMode: string;
   fillScreen?: boolean;
@@ -1044,11 +1046,15 @@ export type DashboardRowsLayoutRowSpec = {
   collapse?: boolean;
   conditionalRendering?: DashboardConditionalRenderingGroupKind;
   fillScreen?: boolean;
+  /** "report" presents the row title as a report section heading and shows the summary below it. Absent means "default". */
+  headerStyle?: string;
   hideHeader?: boolean;
   layout: DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind;
   /** Prompts viewers can run on the panels in this row, offered by plugins in the row's controls. */
   prompts?: DashboardPrompt[];
   repeat?: DashboardRowRepeatOptions;
+  /** Authored Markdown shown under a report section heading. Rendered without raw HTML, images, embeds, or variable interpolation. */
+  summary?: string;
   title?: string;
   variables?: DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind[];
 };

@@ -28,6 +28,9 @@ composableKinds: PanelCfg: {
 				// Whether the content template renders once, or once per row of query data.
 				RenderMode: "once" | "perRow" @cuetsy(kind="enum",memberNames="Once|PerRow")
 
+				// Typography for rendered markdown. Editorial matches report section summaries.
+				TextStyle: "default" | "editorial" @cuetsy(kind="enum",memberNames="Default|Editorial")
+
 				CodeOptions: {
 					// The language passed to monaco code editor
 					language:        CodeLanguage
@@ -39,6 +42,7 @@ composableKinds: PanelCfg: {
 					mode:        TextMode & (*"markdown" | _)
 					renderMode?: RenderMode & (*"once" | _)
 					code?:       CodeOptions
+					textStyle?:  TextStyle
 					// Rows per page once a per-row render pages its content. Unset fits the page to the panel height.
 					pageSize?: number
 					content: string | *"""

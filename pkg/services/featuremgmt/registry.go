@@ -3367,6 +3367,15 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
+			Name:         "grafana.dashboardsReportLayouts",
+			Description:  "Enables authoring report sections, editorial prose, and the responsive split in dashboards",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+			HideFromDocs: true,
+		},
+		{
 			Name:        "grafana.dashboardAutoGridDefault",
 			Description: "Uses auto grid as the default layout for new dashboards",
 			Stage:       FeatureStageGeneralAvailability,

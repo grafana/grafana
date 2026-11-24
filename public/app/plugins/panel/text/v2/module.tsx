@@ -2,6 +2,7 @@ import { type DataFrame, FieldConfigProperty, PanelPlugin, type PanelOptionsSupp
 import { t } from '@grafana/i18n';
 
 import { defaultCodeOptions, defaultOptions, type Options, RenderMode } from '../panelcfg.gen';
+import { addTextStyleOption } from '../textStyleOption';
 
 import { TextNGPanel } from './TextNGPanel';
 import { hasRenderableData, MAX_RENDERED_ROWS } from './renderContent';
@@ -32,6 +33,7 @@ export const textNGPanelOptions: PanelOptionsSupplier<Options> = (builder) => {
   addHiddenOption('content', defaultOptions.content);
   addHiddenOption('code.language', defaultCodeOptions.language);
   addHiddenOption('code.showLineNumbers', defaultCodeOptions.showLineNumbers);
+  addTextStyleOption(builder, category);
 
   builder.addRadio({
     path: 'renderMode',

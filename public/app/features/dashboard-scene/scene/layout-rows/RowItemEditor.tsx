@@ -2,8 +2,9 @@ import { lazy, Suspense, useId, useMemo, useRef } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
+import { useFlagGrafanaDashboardsReportLayouts } from '@grafana/runtime/internal';
 import { useSceneObjectState } from '@grafana/scenes';
-import { Alert, Field, Input, Switch, TextLink } from '@grafana/ui';
+import { Alert, Field, Input, RadioButtonGroup, Switch, TextArea, TextLink } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
@@ -31,7 +32,7 @@ import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
 import { generateUniqueTitle, useSidebarInputAutoFocus } from '../layouts-shared/utils';
 
-import { type RowItem } from './RowItem';
+import { type RowHeaderStyle, type RowItem } from './RowItem';
 
 // The list pulls in the annotation editor and data source picker; keep them out of the main bundle
 const SectionAnnotationsList = lazy(() =>
@@ -55,6 +56,31 @@ export function useSidebarOptions(this: RowItem, isNewElement: boolean): Options
             id: 'dash-row-title',
             skipField: true,
             render: () => <RowTitleInput row={model} isNewElement={isNewElement} />,
+          })
+        )
+        .addItem(
+          new OptionsPaneItemDescriptor({
+            title: t('dashboard.rows-layout.row-options.row.header-style', 'Header style'),
+            id: 'dash-row-header-style',
+            description: t(
+              'dashboard.rows-layout.row-options.row.header-style-description',
+              'Report presents the title as a section heading with a summary below it.'
+            ),
+            // Authoring is gated; a saved report section stays editable so it can be switched back.
+            useShowIf: () => useIsReportAuthoringAvailable(model),
+            render: (descriptor) => <RowHeaderStyleSelect id={descriptor.props.id} row={model} />,
+          })
+        )
+        .addItem(
+          new OptionsPaneItemDescriptor({
+            title: t('dashboard.rows-layout.row-options.row.summary', 'Summary'),
+            id: 'dash-row-summary',
+            description: t(
+              'dashboard.rows-layout.row-options.row.summary-description',
+              'Markdown for paragraphs, emphasis, lists, code, and links. HTML, images, and variables are not rendered.'
+            ),
+            useShowIf: () => model.useState().headerStyle === 'report',
+            render: (descriptor) => <RowSummaryInput id={descriptor.props.id} row={model} />,
           })
         )
         .addItem(
@@ -222,6 +248,76 @@ function RowTitleInput({ row, isNewElement }: { row: RowItem; isNewElement: bool
         data-testid={selectors.components.PanelEditor.ElementEditPane.RowsLayout.titleInput}
       />
     </Field>
+  );
+}
+
+function useIsReportAuthoringAvailable(row: RowItem): boolean {
+  const isEnabled = useFlagGrafanaDashboardsReportLayouts();
+  const { headerStyle, summary } = row.useState();
+  return isEnabled || headerStyle === 'report' || Boolean(summary);
+}
+
+function RowHeaderStyleSelect({ row, id }: { row: RowItem; id?: string }) {
+  const { headerStyle = 'default' } = row.useState();
+  const options: Array<{ label: string; value: RowHeaderStyle }> = [
+    { label: t('dashboard.rows-layout.row-options.row.header-style-default', 'Default'), value: 'default' },
+    { label: t('dashboard.rows-layout.row-options.row.header-style-report', 'Report'), value: 'report' },
+  ];
+
+  return (
+    <RadioButtonGroup
+      id={id}
+      options={options}
+      value={headerStyle}
+      fullWidth
+      data-testid={selectors.components.PanelEditor.ElementEditPane.RowsLayout.headerStyle}
+      onChange={(next) => {
+        // Default is stored as absent so a round trip through Report leaves the row unchanged.
+        const nextStyle = next === 'report' ? 'report' : undefined;
+        const prevStyle = row.state.headerStyle;
+        edit({
+          meta: { actionId: 'row.changeHeaderStyle' },
+          description: t('dashboard.edit-actions.row-header-style', 'Change row header style'),
+          source: row,
+          perform: () => row.onChangeHeaderStyle(nextStyle),
+          undo: () => row.onChangeHeaderStyle(prevStyle),
+        });
+      }}
+    />
+  );
+}
+
+function RowSummaryInput({ row, id }: { row: RowItem; id?: string }) {
+  const { summary = '' } = row.useState();
+  const prevSummary = useRef<string | undefined>(undefined);
+
+  return (
+    <TextArea
+      id={id}
+      rows={5}
+      value={summary}
+      placeholder={t(
+        'dashboard.rows-layout.row-options.row.summary-placeholder',
+        'What should a reader take away from this section?'
+      )}
+      onFocus={() => (prevSummary.current = row.state.summary)}
+      onChange={(e) => row.onChangeSummary(e.currentTarget.value || undefined)}
+      onBlur={() => {
+        const before = prevSummary.current;
+        const after = row.state.summary;
+        if (before === after) {
+          return;
+        }
+        edit({
+          meta: { actionId: 'row.changeSummary' },
+          description: t('dashboard.edit-actions.row-summary', 'Change row summary'),
+          source: row,
+          perform: () => row.onChangeSummary(after),
+          undo: () => row.onChangeSummary(before),
+        });
+      }}
+      data-testid={selectors.components.PanelEditor.ElementEditPane.RowsLayout.summaryInput}
+    />
   );
 }
 

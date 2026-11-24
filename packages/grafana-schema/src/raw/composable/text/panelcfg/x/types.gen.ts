@@ -40,6 +40,14 @@ export enum RenderMode {
   PerRow = 'perRow',
 }
 
+/**
+ * Typography for rendered markdown. Editorial matches report section summaries.
+ */
+export enum TextStyle {
+  Default = 'default',
+  Editorial = 'editorial',
+}
+
 export interface CodeOptions {
   /**
    * The language passed to monaco code editor
@@ -68,6 +76,7 @@ export interface Options {
    */
   pageSize?: number;
   renderMode?: RenderMode;
+  textStyle?: TextStyle;
 }
 
 export const defaultOptions: Partial<Options> = {

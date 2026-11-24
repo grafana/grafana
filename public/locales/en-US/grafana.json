@@ -5917,6 +5917,18 @@
       "layout-indicator": "Auto layout – panel sizes are managed automatically",
       "name": "Auto",
       "options": {
+        "column-layout": "Column layout",
+        "column-layout-active": "Splits 2:1 when the section is wide enough and stacks in order when it is narrow. The column options below apply only when the split is inactive.",
+        "column-layout-even": "Even",
+        "column-layout-even-description": "Panels share the row equally using the column options below",
+        "column-layout-inactive-count": "The split needs exactly two panels; this grid has {{panelCount}}. The regular column options apply until it has two again.",
+        "column-layout-inactive-repeat": "A repeated panel can produce any number of items, so the regular column options apply. The split returns when the repeat is removed.",
+        "column-layout-inactive-title": "Split is inactive",
+        "column-layout-reset": "Reset to even",
+        "column-layout-wide-first": "Wide first",
+        "column-layout-wide-first-description": "The first panel takes two thirds of the row",
+        "column-layout-wide-second": "Wide second",
+        "column-layout-wide-second-description": "The second panel takes two thirds of the row",
         "custom-min-height": {
           "clear": "Clear"
         },
@@ -6181,6 +6193,7 @@
     "edit-actions": {
       "add": "Add {{typeName}}",
       "add-conditional-rule": "Add {{ruleDescription}} rule",
+      "auto-grid-column-layout": "Change column layout",
       "auto-grid-column-width": "Change min column width",
       "auto-grid-fill-screen-disable": "Disable fill screen",
       "auto-grid-fill-screen-enable": "Enable fill screen",
@@ -6224,9 +6237,11 @@
       "replace-panel": "Replace panel",
       "row-fill-screen-disable": "Disable row fill screen",
       "row-fill-screen-enable": "Enable row fill screen",
+      "row-header-style": "Change row header style",
       "row-hide-header": "Hide row header",
       "row-repeat-variable": "Row repeat by",
       "row-show-header": "Show row header",
+      "row-summary": "Change row summary",
       "row-title": "Change row title",
       "rows-hide-header": "Hide row headers",
       "rows-show-header": "Show row headers",
@@ -6638,6 +6653,12 @@
         }
       }
     },
+    "report-section": {
+      "existing-content-title": "Overview",
+      "new-title": "New section",
+      "note-content": "**What this shows.** Write the reading a reviewer should take from the chart beside this note, and what it does not establish.",
+      "note-title": "Note"
+    },
     "review": {
       "no-changes": "No changes to save"
     },
@@ -6654,6 +6675,9 @@
       "header-hidden-tooltip": "Row header only visible in edit mode",
       "name": "Rows",
       "new-row-title": "New row",
+      "report": {
+        "summary-placeholder": "Add a summary in the row options to tell readers what this section establishes."
+      },
       "row": {
         "collapse": "Collapse row {{title}}",
         "copy-link": "Copy link to row",
@@ -6674,7 +6698,14 @@
         },
         "row": {
           "fill-screen": "Fill screen",
+          "header-style": "Header style",
+          "header-style-default": "Default",
+          "header-style-description": "Report presents the title as a section heading with a summary below it.",
+          "header-style-report": "Report",
           "hide-header": "Hide row header",
+          "summary": "Summary",
+          "summary-description": "Markdown for paragraphs, emphasis, lists, code, and links. HTML, images, and variables are not rendered.",
+          "summary-placeholder": "What should a reader take away from this section?",
           "title": "Title"
         },
         "section-annotations": {
@@ -6741,6 +6772,19 @@
         },
         "question": {
           "label": "Question"
+        },
+        "report": {
+          "description": "A titled section with a written summary, then its panels",
+          "evidence-note": "Evidence + note",
+          "evidence-note-description": "A wide chart beside a written note",
+          "preset-aria-label": "{{label}}: {{description}}",
+          "presets": "Report layout presets",
+          "reading-flow": "Reading flow",
+          "reading-flow-description": "One column, read top to bottom",
+          "section": "Report section",
+          "side-by-side": "Side by side",
+          "side-by-side-description": "Two equal columns to compare",
+          "title": "Report"
         },
         "row": {
           "add-label": "Add row",
@@ -7778,6 +7822,7 @@
     },
     "get-edit-options": {
       "title": {
+        "column-layout": "Column layout",
         "column-options": "Column options",
         "row-height-options": "Row height options"
       }
@@ -8206,6 +8251,7 @@
     },
     "resource-export": {
       "classic-v2-warning": "This dashboard uses the V2 schema. Features like tabs and conditional rendering cannot be represented in the classic format and may be lost.",
+      "export-unavailable": "Export unavailable",
       "label": {
         "advanced-options": "Advanced options",
         "classic": "Classic",
@@ -8384,6 +8430,9 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Toggle share menu"
+    },
+    "share-export-tab": {
+      "classic-report-summary-error": "Classic export is unavailable: report section summaries ({{titles}}) cannot be represented in the classic format and would be lost. Export the V2 resource instead."
     },
     "sharing": {
       "save-before-share": {
@@ -17700,7 +17749,13 @@
     "name-language": "Language",
     "name-mode": "Mode",
     "name-show-line-numbers": "Show line numbers",
-    "name-show-mini-map": "Show mini map"
+    "name-show-mini-map": "Show mini map",
+    "name-text-style": "Style",
+    "text-style-description": "Editorial sets markdown in the same serif prose as report section summaries.",
+    "text-style-options": {
+      "label-default": "Default",
+      "label-editorial": "Editorial"
+    }
   },
   "textng": {
     "category-data": "Data",

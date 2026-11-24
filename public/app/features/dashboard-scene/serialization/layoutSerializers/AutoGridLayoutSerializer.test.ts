@@ -258,3 +258,59 @@ describe('serialization', () => {
     expect(serializedOverrides.spec.items[1].spec.fitContent).toBeUndefined();
   });
 });
+
+describe('column split', () => {
+  const splitLayout = (columnLayout?: 'split-wide-first' | 'split-wide-second'): DashboardV2Spec['layout'] => ({
+    kind: 'AutoGridLayout',
+    spec: {
+      maxColumnCount: 3,
+      columnWidthMode: 'narrow',
+      rowHeightMode: 'standard',
+      ...(columnLayout && { columnLayout }),
+      items: [item('panel-a'), item('panel-b')],
+    },
+  });
+
+  const attach = (manager: AutoGridLayoutManager) => {
+    new DashboardScene({ body: manager });
+    return manager;
+  };
+
+  it('round-trips the split together with the regular column settings and item order', () => {
+    const serialized = serialize(attach(deserializeAutoGridLayout(splitLayout('split-wide-second'), elements, false)));
+
+    expect(serialized.spec.columnLayout).toBe('split-wide-second');
+    // The regular settings stay saved so they apply whenever the split is inactive.
+    expect(serialized.spec.maxColumnCount).toBe(3);
+    expect(serialized.spec.columnWidthMode).toBe('narrow');
+    // Without a serializer element map, names derive from the panel ids (panel-a is 1, panel-b is 2).
+    expect(serialized.spec.items.map((i) => i.spec.element.name)).toEqual(['panel-1', 'panel-2']);
+  });
+
+  it('does not add a column layout to a grid without one', () => {
+    const serialized = serialize(attach(deserializeAutoGridLayout(splitLayout(), elements, false)));
+
+    expect(serialized.spec).not.toHaveProperty('columnLayout');
+  });
+
+  it('is active only for exactly two non-repeated items and keeps the saved choice otherwise', () => {
+    const manager = attach(deserializeAutoGridLayout(splitLayout('split-wide-first'), elements, false));
+    const [first, second] = manager.state.layout.state.children;
+
+    expect(manager.getColumnSplit()).toEqual({ columnLayout: 'split-wide-first', isActive: true });
+
+    expect(manager.getColumnSplit([first])).toEqual({
+      columnLayout: 'split-wide-first',
+      isActive: false,
+      inactiveReason: 'item-count',
+    });
+
+    second.setState({ variableName: 'env' });
+    expect(manager.getColumnSplit()).toEqual({
+      columnLayout: 'split-wide-first',
+      isActive: false,
+      inactiveReason: 'repeat',
+    });
+    expect(serialize(manager).spec.columnLayout).toBe('split-wide-first');
+  });
+});

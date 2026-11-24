@@ -4,12 +4,28 @@ import React, { useEffect } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n';
-import { useFlagGrafanaDashboardsAutoHeightPanels } from '@grafana/runtime/internal';
-import { Button, Combobox, type ComboboxOption, Field, InlineSwitch, Input, Stack, useStyles2 } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import {
+  useFlagGrafanaDashboardsAutoHeightPanels,
+  useFlagGrafanaDashboardsReportLayouts,
+} from '@grafana/runtime/internal';
+import {
+  Alert,
+  Button,
+  Combobox,
+  type ComboboxOption,
+  Field,
+  InlineSwitch,
+  Input,
+  RadioButtonList,
+  Stack,
+  Text,
+  useStyles2,
+} from '@grafana/ui';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import {
+  changeAutoGridColumnLayout,
   changeAutoGridColumnWidth,
   changeAutoGridFillScreen,
   changeAutoGridFitContent,
@@ -22,6 +38,7 @@ import {
 } from '../../actions/layout/changeAutoGridOption';
 
 import {
+  type AutoGridColumnLayout,
   type AutoGridColumnWidth,
   type AutoGridMaxHeightMode,
   type AutoGridMinHeight,
@@ -31,6 +48,16 @@ import {
 
 export function getSidebarOptions(layoutManager: AutoGridLayoutManager): OptionsPaneItemDescriptor[] {
   const options: OptionsPaneItemDescriptor[] = [];
+
+  options.push(
+    new OptionsPaneItemDescriptor({
+      id: 'layout-auto-grid-column-layout',
+      title: t('dashboard-scene.get-edit-options.title.column-layout', 'Column layout'),
+      skipField: true,
+      useShowIf: () => useIsSplitAuthoringAvailable(layoutManager),
+      render: () => <GridLayoutColumnSplit layoutManager={layoutManager} />,
+    })
+  );
 
   options.push(
     new OptionsPaneItemDescriptor({
@@ -51,6 +78,105 @@ export function getSidebarOptions(layoutManager: AutoGridLayoutManager): Options
   );
 
   return options;
+}
+
+function useIsSplitAuthoringAvailable(layoutManager: AutoGridLayoutManager): boolean {
+  const isEnabled = useFlagGrafanaDashboardsReportLayouts();
+  const { columnLayout } = layoutManager.useState();
+  // Authoring is gated; a saved split stays visible so it can be reset.
+  return isEnabled || columnLayout !== undefined;
+}
+
+type ColumnLayoutChoice = 'even' | AutoGridColumnLayout;
+
+function GridLayoutColumnSplit({ layoutManager }: { layoutManager: AutoGridLayoutManager }) {
+  const { columnLayout } = layoutManager.useState();
+  const { children } = layoutManager.state.layout.useState();
+  const styles = useStyles2(getStyles);
+  const split = layoutManager.getColumnSplit(children);
+
+  const options: Array<{ label: string; value: ColumnLayoutChoice; description: string }> = [
+    {
+      label: t('dashboard.auto-grid.options.column-layout-even', 'Even'),
+      value: 'even',
+      description: t(
+        'dashboard.auto-grid.options.column-layout-even-description',
+        'Panels share the row equally using the column options below'
+      ),
+    },
+    {
+      label: t('dashboard.auto-grid.options.column-layout-wide-first', 'Wide first'),
+      value: 'split-wide-first',
+      description: t(
+        'dashboard.auto-grid.options.column-layout-wide-first-description',
+        'The first panel takes two thirds of the row'
+      ),
+    },
+    {
+      label: t('dashboard.auto-grid.options.column-layout-wide-second', 'Wide second'),
+      value: 'split-wide-second',
+      description: t(
+        'dashboard.auto-grid.options.column-layout-wide-second-description',
+        'The second panel takes two thirds of the row'
+      ),
+    },
+  ];
+
+  return (
+    <div
+      className={styles.optionGroup}
+      data-testid={selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.columnLayout}
+    >
+      <Field label={t('dashboard.auto-grid.options.column-layout', 'Column layout')} noMargin>
+        <RadioButtonList
+          name={`column-layout-${layoutManager.state.key}`}
+          options={options}
+          value={columnLayout ?? 'even'}
+          onChange={(value) => changeAutoGridColumnLayout(layoutManager, value === 'even' ? undefined : value)}
+        />
+      </Field>
+      {split.isActive && (
+        <div className={styles.splitNote}>
+          <Text element="p" variant="bodySmall" color="secondary">
+            <Trans i18nKey="dashboard.auto-grid.options.column-layout-active">
+              Splits 2:1 when the section is wide enough and stacks in order when it is narrow. The column options below
+              apply only when the split is inactive.
+            </Trans>
+          </Text>
+        </div>
+      )}
+      {split.columnLayout && !split.isActive && (
+        <Alert
+          severity="info"
+          title={t('dashboard.auto-grid.options.column-layout-inactive-title', 'Split is inactive')}
+          topSpacing={1}
+          bottomSpacing={0}
+        >
+          <Stack direction="column" alignItems="flex-start" gap={1}>
+            {split.inactiveReason === 'repeat'
+              ? t(
+                  'dashboard.auto-grid.options.column-layout-inactive-repeat',
+                  'A repeated panel can produce any number of items, so the regular column options apply. The split returns when the repeat is removed.'
+                )
+              : t(
+                  'dashboard.auto-grid.options.column-layout-inactive-count',
+                  'The split needs exactly two panels; this grid has {{panelCount}}. The regular column options apply until it has two again.',
+                  { panelCount: children.length }
+                )}
+            <Button
+              size="sm"
+              variant="secondary"
+              fill="outline"
+              onClick={() => changeAutoGridColumnLayout(layoutManager, undefined)}
+              data-testid={selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.resetColumnLayout}
+            >
+              <Trans i18nKey="dashboard.auto-grid.options.column-layout-reset">Reset to even</Trans>
+            </Button>
+          </Stack>
+        </Alert>
+      )}
+    </div>
+  );
 }
 
 function GridLayoutColumns({ layoutManager }: { layoutManager: AutoGridLayoutManager }) {
@@ -491,5 +617,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   narrowSelector: css({
     width: theme.spacing(10),
+  }),
+  splitNote: css({
+    marginTop: theme.spacing(1),
   }),
 });

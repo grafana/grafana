@@ -4,6 +4,7 @@ import SVG from 'react-inlinesvg';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { useFlagGrafanaDashboardsReportLayouts } from '@grafana/runtime/internal';
 import { type SceneComponentProps, sceneGraph, SceneObjectBase } from '@grafana/scenes';
 import { ScrollContainer, Sidebar, useStyles2 } from '@grafana/ui';
 import { useDragAndDrop } from '@grafana/ui/internal';
@@ -20,6 +21,7 @@ import { AddButton } from './AddButton';
 import { AddFilters } from './AddFilters';
 import { AddLink } from './AddLink';
 import { AddNewSection } from './AddNewSection';
+import { AddReportSection } from './AddReportSection';
 import { AddRow } from './AddRow';
 import { AddTab } from './AddTab';
 import { AddVariable } from './AddVariable';
@@ -39,6 +41,7 @@ function AddNewPaneRenderer({ model }: SceneComponentProps<AddNewPane>) {
   const dashboardScene = getDashboardSceneLike(model);
   const orchestrator = dashboardScene.state.layoutOrchestrator;
   const selectedObj = sidebar.getSelectedObject();
+  const isReportLayoutsEnabled = useFlagGrafanaDashboardsReportLayouts();
 
   const onStartDragging = (result: { draggableId: string }) => {
     const mode = result.draggableId === 'paste-panel-drag' ? 'paste' : 'newPanel';
@@ -132,6 +135,17 @@ function AddNewPaneRenderer({ model }: SceneComponentProps<AddNewPane>) {
           <AddRow dashboardScene={dashboardScene} selectedElement={selectedObj} />
           <AddTab dashboardScene={dashboardScene} selectedElement={selectedObj} />
         </AddNewSection>
+        {isReportLayoutsEnabled && (
+          <AddNewSection
+            title={t('dashboard.sidebar.add.report.title', 'Report')}
+            description={t(
+              'dashboard.sidebar.add.report.description',
+              'A titled section with a written summary, then its panels'
+            )}
+          >
+            <AddReportSection dashboardScene={dashboardScene} selectedElement={selectedObj} />
+          </AddNewSection>
+        )}
         <AddNewSection title={t('dashboard.sidebar.add.dashboard-controls', 'Dashboard controls')}>
           <AddFilters dashboardScene={dashboardScene} />
           <AddVariable dashboardScene={dashboardScene} selectedElement={selectedObj} />

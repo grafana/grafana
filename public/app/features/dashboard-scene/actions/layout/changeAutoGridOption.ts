@@ -1,6 +1,7 @@
 import { t } from '@grafana/i18n';
 
 import {
+  type AutoGridColumnLayout,
   type AutoGridColumnWidth,
   type AutoGridLayoutManager,
   type AutoGridMaxHeightMode,
@@ -31,6 +32,7 @@ function changeAutoGridOption(
     maxHeightMode,
     maxHeight,
     matchRowHeights,
+    columnLayout,
   } = layoutManager.state;
   const { templateColumns, autoRows } = layoutManager.state.layout.state;
 
@@ -50,6 +52,7 @@ function changeAutoGridOption(
         maxHeightMode,
         maxHeight,
         matchRowHeights,
+        columnLayout,
       });
       layoutManager.state.layout.setState({ templateColumns, autoRows });
     },
@@ -143,5 +146,17 @@ export function changeAutoGridMatchRowHeights(layoutManager: AutoGridLayoutManag
       ? t('dashboard.edit-actions.auto-grid-match-row-heights-enable', 'Enable match row heights')
       : t('dashboard.edit-actions.auto-grid-match-row-heights-disable', 'Disable match row heights'),
     () => layoutManager.onMatchRowHeightsChanged(matchRowHeights)
+  );
+}
+
+export function changeAutoGridColumnLayout(
+  layoutManager: AutoGridLayoutManager,
+  columnLayout: AutoGridColumnLayout | undefined
+) {
+  changeAutoGridOption(
+    layoutManager,
+    'layout.changeColumnLayout',
+    t('dashboard.edit-actions.auto-grid-column-layout', 'Change column layout'),
+    () => layoutManager.onColumnLayoutChanged(columnLayout)
   );
 }
