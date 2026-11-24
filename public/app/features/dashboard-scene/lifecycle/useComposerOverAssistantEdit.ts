@@ -13,8 +13,16 @@ import { takeComposerRequestOverAssistantEdit } from './pendingChangesSave';
 export function useComposerOverAssistantEdit(uid: string | undefined, isEditing: boolean) {
   const entry = useAssistantComposerEntry('dashboard');
   useEffect(() => {
-    // Take the request whenever it can be made, so one the user left Editing before is not made later.
-    if (entry && uid && takeComposerRequestOverAssistantEdit(uid) && isEditing) {
+    if (!uid) {
+      return;
+    }
+    // Leaving Editing ends the Assistant's edit, so the request goes too, even before it can be made: Editing
+    // entered later is the user's own session.
+    if (!isEditing) {
+      takeComposerRequestOverAssistantEdit(uid);
+      return;
+    }
+    if (entry && takeComposerRequestOverAssistantEdit(uid)) {
       entry.request({ resource: 'dashboard', uid }, { assistantEdit: true });
     }
   }, [entry, uid, isEditing]);

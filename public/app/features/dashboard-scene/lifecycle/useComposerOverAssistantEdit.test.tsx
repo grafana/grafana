@@ -123,3 +123,17 @@ it('drops the request when the user leaves Editing before the sidebar knows the 
   expect(openedSidebars()).toEqual([]);
   expect(takeComposerRequestOverAssistantEdit).toHaveBeenCalledWith(TARGET.uid);
 });
+
+it('drops the request when the user leaves Editing and comes back while the sidebar is still loading', () => {
+  jest.mocked(useExtensionSidebarContext).mockReturnValue(sidebarContext('loading'));
+  const { rerender } = renderHook(({ isEditing }) => useComposerOverAssistantEdit(TARGET.uid, isEditing), {
+    initialProps: { isEditing: true },
+  });
+  rerender({ isEditing: false });
+  rerender({ isEditing: true });
+
+  jest.mocked(useExtensionSidebarContext).mockReturnValue(sidebarContext('available'));
+  rerender({ isEditing: true });
+
+  expect(openedSidebars()).toEqual([]);
+});
