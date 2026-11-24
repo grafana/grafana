@@ -73,7 +73,7 @@ export interface K8sAPIGroupList {
 }
 
 /** An entry of the Kubernetes `APIResourceList`. Subresources are entries named `<resource>/<subresource>`. */
-export interface K8sAPIResource {
+interface K8sAPIResource {
   name: string;
   kind: string;
   namespaced: boolean;
