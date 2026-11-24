@@ -1618,6 +1618,7 @@ func TestCascadeDelete_RejectsCollectionDeleteOfFinalizerFolders(t *testing.T) {
 		for name, opts := range map[string]*metainternalversion.ListOptions{
 			"resourceVersion":      {ResourceVersion: "7"},
 			"resourceVersionMatch": {ResourceVersionMatch: metav1.ResourceVersionMatchExact},
+			"negative limit":       {Limit: -1, ResourceVersion: "7", ResourceVersionMatch: metav1.ResourceVersionMatchExact},
 		} {
 			t.Run(name, func(t *testing.T) {
 				store := newStore(newFolder("a"))

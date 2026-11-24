@@ -94,9 +94,9 @@ func (c cascadeCollectionDeleter) DeleteCollection(ctx context.Context, deleteVa
 		return nil, apierrors.NewBadRequest("forced collection delete is not supported for folders; delete folders individually")
 	}
 	// The registry drops these after the first page, so a multi-page selection can't be reproduced
-	// here. With a limit it stops after the first page and keeps them.
-	if listOptions != nil && listOptions.Limit == 0 && (listOptions.ResourceVersion != "" || listOptions.ResourceVersionMatch != "") {
-		return nil, apierrors.NewBadRequest("resourceVersion and resourceVersionMatch are only supported for folder collection deletes with a limit")
+	// here. Only a positive limit makes it stop after the first page and keep them.
+	if listOptions != nil && listOptions.Limit <= 0 && (listOptions.ResourceVersion != "" || listOptions.ResourceVersionMatch != "") {
+		return nil, apierrors.NewBadRequest("resourceVersion and resourceVersionMatch are only supported for folder collection deletes with a positive limit")
 	}
 	// Reject up front so a refused request deletes nothing.
 	if name, err := c.firstFinalizerFolder(ctx, listOptions); err != nil {
