@@ -2,85 +2,55 @@ package legacypermissions
 
 import (
 	"context"
-	"errors"
 	"testing"
+	"time"
 
-	authzv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
+	authzv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
-type metricTestServer struct {
-	authzv1.UnimplementedLegacyAuthzServiceServer
-	call func() error
-}
-
-func (s metricTestServer) LegacyGetUserPermissions(*authzv1.LegacyGetUserPermissionsRequest, authzv1.LegacyAuthzService_LegacyGetUserPermissionsServer) error {
-	return s.call()
-}
-
 func TestLegacyPermissionsMetrics(t *testing.T) {
-	for _, implementation := range []string{"embedded", "remote"} {
-		for _, err := range []error{nil, errors.New("load failed"), context.Canceled, context.DeadlineExceeded} {
-			t.Run(implementation+"/"+statusLabel(err), func(t *testing.T) {
-				reg := prometheus.NewRegistry()
-				calls := 0
-				server := InstrumentServer(metricTestServer{call: func() error { calls++; return err }}, reg, implementation)
-				require.ErrorIs(t, server.LegacyGetUserPermissions(nil, nil), err)
-				require.Equal(t, 1, calls)
-				families, gatherErr := reg.Gather()
-				require.NoError(t, gatherErr)
-				require.Len(t, families, 1)
-				require.Equal(t, "grafana_authz_legacy_get_user_permissions_duration_seconds", families[0].GetName())
-				for _, metric := range families[0].Metric {
-					labels := map[string]string{}
-					for _, label := range metric.Label {
-						labels[label.GetName()] = label.GetValue()
-					}
-					require.Equal(t, implementation, labels["implementation"])
-					var count uint64
-					if labels["status"] == statusLabel(err) {
-						count = 1
-					}
-					require.Equal(t, count, metric.Histogram.GetSampleCount())
-				}
-			})
-		}
-	}
-}
-
-func statusLabel(err error) string {
-	if err != nil {
-		return "error"
-	}
-	return "ok"
-}
-
-func TestLegacyPermissionsMetricsPanic(t *testing.T) {
-	reg := prometheus.NewRegistry()
-	server := InstrumentServer(metricTestServer{call: func() error { panic("loader panic") }}, reg, "embedded")
-	require.PanicsWithValue(t, "loader panic", func() { _ = server.LegacyGetUserPermissions(nil, nil) })
-	families, err := reg.Gather()
-	require.NoError(t, err)
-	for _, metric := range families[0].Metric {
-		for _, label := range metric.Label {
-			if label.GetName() == "status" && label.GetValue() == "error" {
-				require.Equal(t, uint64(1), metric.Histogram.GetSampleCount())
-				return
-			}
-		}
-	}
-	t.Fatal("missing error observation")
-}
-
-func TestLegacyPermissionsMetricsSharedRegistry(t *testing.T) {
 	reg := prometheus.NewRegistry()
 	for _, implementation := range []string{"embedded", "remote"} {
-		server := InstrumentServer(metricTestServer{call: func() error { return nil }}, reg, implementation)
-		require.NoError(t, server.LegacyGetUserPermissions(nil, nil))
+		m := newMetrics(reg, implementation)
+		m.observe(time.Now(), "ok")
+		m.observe(time.Now(), "error")
 	}
 	families, err := reg.Gather()
 	require.NoError(t, err)
 	require.Len(t, families, 1)
+	require.Equal(t, "grafana_authz_legacy_get_user_permissions_duration_seconds", families[0].GetName())
 	require.Len(t, families[0].Metric, 4)
+	for _, metric := range families[0].Metric {
+		require.Equal(t, uint64(1), metric.Histogram.GetSampleCount())
+	}
+}
+
+func TestLegacyPermissionsMetricsValidationError(t *testing.T) {
+	reg := prometheus.NewRegistry()
+	guard := new(int)
+	server := &embeddedServer{guard: guard, metrics: newMetrics(reg, "embedded")}
+	stream := embeddedStream{ctx: context.WithValue(t.Context(), embeddedCallKey{}, guard)}
+	err := server.LegacyGetUserPermissions(nil, &grpc.GenericServerStream[authzv1.LegacyGetUserPermissionsRequest, authzv1.LegacyGetUserPermissionsResponse]{ServerStream: stream})
+	require.Equal(t, codes.InvalidArgument, status.Code(err))
+	families, err := reg.Gather()
+	require.NoError(t, err)
+	require.Len(t, families, 1)
+	for _, metric := range families[0].Metric {
+		labels := map[string]string{}
+		for _, label := range metric.Label {
+			labels[label.GetName()] = label.GetValue()
+		}
+		require.Equal(t, "embedded", labels["implementation"])
+		var count uint64
+		if labels["status"] == "error" {
+			count = 1
+		}
+		require.Equal(t, count, metric.Histogram.GetSampleCount())
+	}
 }

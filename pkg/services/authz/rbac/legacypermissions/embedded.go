@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	"github.com/grafana/authlib/types"
@@ -78,9 +79,10 @@ func (s embeddedStream) Context() context.Context { return s.ctx }
 
 type embeddedServer struct {
 	authzv1.UnimplementedLegacyAuthzServiceServer
-	loader *Loader
-	cfg    *setting.Cfg
-	guard  *int
+	loader  *Loader
+	cfg     *setting.Cfg
+	guard   *int
+	metrics *serverMetrics
 }
 
 // NewEmbeddedClient owns a private in-process channel. The legacy handler is
@@ -91,7 +93,7 @@ func NewEmbeddedClient(loader *Loader, cfg *setting.Cfg) legacyclient.LegacyUser
 
 func newEmbeddedClient(loader *Loader, cfg *setting.Cfg, reg prometheus.Registerer) legacyclient.LegacyUserPermissionsClient {
 	guard := new(int)
-	server := &embeddedServer{loader: loader, cfg: cfg, guard: guard}
+	server := &embeddedServer{loader: loader, cfg: cfg, guard: guard, metrics: newMetrics(reg, "embedded")}
 	channel := (&inprocgrpc.Channel{}).WithServerStreamInterceptor(func(srv any, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		ctx := stream.Context()
 		if clientCtx := inprocgrpc.ClientContext(ctx); clientCtx != nil {
@@ -116,11 +118,14 @@ func newEmbeddedClient(loader *Loader, cfg *setting.Cfg, reg prometheus.Register
 		ctx = types.WithAuthInfo(ctx, LegacyPermissionCaller("*"))
 		return handler(srv, embeddedStream{ServerStream: stream, ctx: ctx})
 	})
-	authzv1.RegisterLegacyAuthzServiceServer(channel, InstrumentServer(server, reg, "embedded"))
+	authzv1.RegisterLegacyAuthzServiceServer(channel, server)
 	return &embeddedClient{LegacyUserPermissionsClient: legacyclient.NewLegacyClient(channel)}
 }
 
 func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPermissionsRequest, stream authzv1.LegacyAuthzService_LegacyGetUserPermissionsServer) error {
+	started := time.Now()
+	result := "error"
+	defer func() { s.metrics.observe(started, result) }()
 	ctx := stream.Context()
 	if s.guard == nil || ctx.Value(embeddedCallKey{}) != s.guard {
 		return status.Error(codes.PermissionDenied, "legacy enumeration is embedded-only")
@@ -181,6 +186,7 @@ func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPerm
 			return err
 		}
 	}
+	result = "ok"
 	return nil
 }
 

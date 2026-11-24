@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/grafana/authlib/types"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -30,7 +31,8 @@ func TestIntegrationEmbeddedLegacySnapshotMultipleChunks(t *testing.T) {
 		grants[i] = ac.Permission{Action: "users:create", Scope: fmt.Sprintf("users:uid:user-%d", i)}
 	}
 	catalog.Replace(map[string][]ac.Permission{"Viewer": grants})
-	client := legacypermissions.NewEmbeddedClient(legacypermissions.NewLoader(sql, catalog, resourcepermissions.NewActionSetService(), localcache.New(0, 0), cfg, featuremgmt.WithFeatures(), &licensing.OSSLicensingService{}, nil), cfg)
+	reg := prometheus.NewRegistry()
+	client := legacypermissions.ProvideClient(legacypermissions.NewLoader(sql, catalog, resourcepermissions.NewActionSetService(), localcache.New(0, 0), cfg, featuremgmt.WithFeatures(), &licensing.OSSLicensingService{}, nil), cfg, reg)
 	result, err := client.LegacyGetUserPermissions(context.Background(), legacypermissions.LegacyPermissionCaller("stacks-12"), legacyclient.LegacyGetUserPermissionsRequest{
 		Namespace: "stacks-12", Identity: legacyclient.LegacyPermissionIdentity{Type: types.TypeAnonymous, OrgRole: "Viewer"},
 	})
@@ -40,4 +42,18 @@ func TestIntegrationEmbeddedLegacySnapshotMultipleChunks(t *testing.T) {
 		require.Equal(t, types.Permission{Action: grants[i].Action, Scope: grants[i].Scope}, permission)
 	}
 	require.Equal(t, types.Permission{Action: "folders:read", Scope: "folders:uid:sharedwithme"}, result.Permissions[len(grants)])
+	families, err := reg.Gather()
+	require.NoError(t, err)
+	require.Len(t, families, 1)
+	for _, metric := range families[0].Metric {
+		for _, label := range metric.Label {
+			if label.GetName() == "status" {
+				var count uint64
+				if label.GetValue() == "ok" {
+					count = 1
+				}
+				require.Equal(t, count, metric.Histogram.GetSampleCount())
+			}
+		}
+	}
 }
