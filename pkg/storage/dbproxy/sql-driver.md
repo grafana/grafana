@@ -83,7 +83,8 @@ Provide `WithQuery` on each execution context, even when you prepared the statem
 Use `BeginTx` with a concrete stack namespace and the default isolation level.
 You can request `ReadOnly` through `sql.TxOptions`.
 The Begin context owns the transaction lifetime, and each statement context supplies its own query name and deadline.
-The driver also limits transaction stream setup, each send, and each receive to 30 seconds. A single `Rows.Next()` shares one 30-second budget across all frames it consumes.
+The driver cancels the transaction stream if setup, a send, or a receive exceeds 30 seconds. A single `Rows.Next()` shares one 30-second budget across all frames it consumes.
+Cancellation requires the underlying client to honor its context. During setup, waiting for an in-flight token exchange in `authlib` can outlast that budget.
 If that budget expires, the driver cancels the stream. A commit acknowledgment already received still confirms the commit.
 To unblock a concurrent `Rows.Next()` promptly before calling `Rollback`, cancel the statement context rather than waiting for the driver timeout.
 All statements in a transaction must use the same namespace.

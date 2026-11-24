@@ -3,7 +3,10 @@ package sqldriver_test
 import (
 	"context"
 	"database/sql"
+	"database/sql/driver"
 	"errors"
+	"fmt"
+	"strings"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -303,6 +306,30 @@ func beginFakeTransaction(t *testing.T, ctx context.Context, stream *stalledTran
 	return tx
 }
 
+func TestUnknownCommitDoesNotExposeBadConn(t *testing.T) {
+	for _, phase := range []string{"send", "receive"} {
+		t.Run(phase, func(t *testing.T) {
+			lost := fmt.Errorf("commit acknowledgement lost: %w", driver.ErrBadConn)
+			stream := &stalledTransactionStream{responses: []*dbproxyv1.TransactionResponse{
+				{Result: &dbproxyv1.TransactionResponse_Ok{Ok: &emptypb.Empty{}}},
+			}}
+			if phase == "send" {
+				stream.commitSendErr = lost
+			} else {
+				stream.finalRecvErr = lost
+			}
+			ctx := sqldriver.WithQuery(t.Context(), "stacks-1", "")
+			err := beginFakeTransaction(t, ctx, stream).Commit()
+			if !errors.Is(err, sqldriver.ErrOutcomeUnknown) || errors.Is(err, driver.ErrBadConn) || !strings.Contains(err.Error(), lost.Error()) {
+				t.Errorf("Commit = %v, want unknown outcome with diagnostic text but no retry sentinel", err)
+			}
+			if len(stream.requests) != 2 || stream.requests[1].GetCommit() == nil {
+				t.Fatalf("expected a single commit attempt, got %v", stream.requests)
+			}
+		})
+	}
+}
+
 func TestTransactionCommitAcknowledgementAtIOTimeout(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		beginOK := &dbproxyv1.TransactionResponse{Result: &dbproxyv1.TransactionResponse_Ok{Ok: &emptypb.Empty{}}}
@@ -396,19 +423,27 @@ func (c stalledTransactionClient) Transaction(ctx context.Context, _ ...grpc.Cal
 
 type stalledTransactionStream struct {
 	grpc.BidiStreamingClient[dbproxyv1.TransactionRequest, dbproxyv1.TransactionResponse]
-	ctx         context.Context
-	requests    []*dbproxyv1.TransactionRequest
-	responses   []*dbproxyv1.TransactionResponse
-	beforeReply func(*dbproxyv1.TransactionResponse)
+	ctx           context.Context
+	requests      []*dbproxyv1.TransactionRequest
+	responses     []*dbproxyv1.TransactionResponse
+	beforeReply   func(*dbproxyv1.TransactionResponse)
+	commitSendErr error
+	finalRecvErr  error
 }
 
 func (s *stalledTransactionStream) Send(req *dbproxyv1.TransactionRequest) error {
 	s.requests = append(s.requests, req)
+	if req.GetCommit() != nil {
+		return s.commitSendErr
+	}
 	return nil
 }
 
 func (s *stalledTransactionStream) Recv() (*dbproxyv1.TransactionResponse, error) {
 	if len(s.responses) == 0 {
+		if s.finalRecvErr != nil {
+			return nil, s.finalRecvErr
+		}
 		<-s.ctx.Done()
 		return nil, status.Error(codes.Canceled, s.ctx.Err().Error())
 	}

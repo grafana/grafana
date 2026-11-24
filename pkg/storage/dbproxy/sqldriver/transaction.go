@@ -31,14 +31,18 @@ func standaloneExecError(err error) error {
 	if errors.Is(err, client.ErrNotSent) {
 		return fmt.Errorf("proxy exec: %w", err)
 	}
-	if errors.Is(err, driver.ErrBadConn) {
-		// database/sql retries ErrBadConn. After dispatch, the write may have run.
-		return fmt.Errorf("proxy exec: %w: %v", ErrOutcomeUnknown, err)
-	}
-	if status.Code(err) == codes.Unimplemented || definiteRejection(err) {
+	if !errors.Is(err, driver.ErrBadConn) && (status.Code(err) == codes.Unimplemented || definiteRejection(err)) {
 		return fmt.Errorf("proxy exec: %w", err)
 	}
-	return fmt.Errorf("proxy exec: %w: %w", ErrOutcomeUnknown, err)
+	return unknownOutcomeError("proxy exec", err)
+}
+
+func unknownOutcomeError(operation string, err error) error {
+	if errors.Is(err, driver.ErrBadConn) {
+		// ErrBadConn signals that retrying is safe, which is not true after possible dispatch.
+		return fmt.Errorf("%s: %w: %v", operation, ErrOutcomeUnknown, err)
+	}
+	return fmt.Errorf("%s: %w: %w", operation, ErrOutcomeUnknown, err)
 }
 
 func definiteRejection(err error) bool {
@@ -359,7 +363,7 @@ func (t *transaction) end(commit bool) error {
 	if err := t.send(ctx, request); err != nil {
 		t.abort()
 		if commit {
-			return fmt.Errorf("proxy commit: %w: %w", ErrOutcomeUnknown, err)
+			return unknownOutcomeError("proxy commit", err)
 		}
 		return fmt.Errorf("proxy rollback: %w", err)
 	}
@@ -372,7 +376,7 @@ func (t *transaction) end(commit bool) error {
 	}
 	if err != nil {
 		if commit {
-			return fmt.Errorf("proxy commit: %w: %w", ErrOutcomeUnknown, err)
+			return unknownOutcomeError("proxy commit", err)
 		}
 		return err
 	}
