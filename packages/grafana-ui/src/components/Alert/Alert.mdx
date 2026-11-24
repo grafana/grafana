@@ -92,7 +92,9 @@ It is important to always use simple and concise language when crafting messagin
 
 ### Calls to Action
 
-Alerts (Inline Alerts specifically) can contain calls to action (CTAs), especially if there is an action a user can take to remedy or correct the reason the Alert is being shown. When providing a CTA within an Alert be sure to keep the label concise and ensure the action the user can take is clear, and try to keep the labels short (a few words at most). See Grafana's [UX Writing guidelines](https://grafana.com/docs/writers-toolkit/write/style-guide/ux-writing/).
+Use `Alert.action` for a button separate from the message, such as **Learn more**. To also show the default close button, pass `onRemove` and leave `buttonContent` unset.
+
+Let `Alert` position the action so it can wrap below the message. An absolutely positioned button can cover the text at narrow widths.
 
 ## <a name="main-elements"/>Main elements
 
