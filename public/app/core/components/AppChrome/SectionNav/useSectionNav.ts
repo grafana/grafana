@@ -4,20 +4,14 @@ import { locationUtil, type NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { useSelector } from 'app/types/store';
 
-import { getActiveItem } from '../MegaMenu/utils';
+import { getActiveItem, hiddenKey } from '../MegaMenu/utils';
 
 export interface SectionNavModel {
   /** Groups with at least one destination */
   groups: NavModelItem[];
-  /** The key of the current link, as sectionNavLinkKey gives it */
+  /** The key of the current link, as hiddenKey gives it */
   activeId?: string;
 }
-
-/**
- * Identifies a link in the section nav: its id, or its url when it has none, as an
- * app's pages arrive. The same key the mega menu uses to pin and hide an item.
- */
-export const sectionNavLinkKey = (item: NavModelItem): string | undefined => item.id ?? item.url;
 
 function toPathname(url?: string): string {
   return url ? locationUtil.stripBaseFromUrl(url).split(/[?#]/)[0] : '';
@@ -68,11 +62,9 @@ function findByPathname(items: NavModelItem[], pathname: string): NavModelItem |
 
 // The link in the panel that an item belongs to: the item itself, or the link it is nested under
 function findLink(groups: NavModelItem[], target: NavModelItem | undefined): NavModelItem | undefined {
-  const targetKey = target && sectionNavLinkKey(target);
+  const targetKey = target && hiddenKey(target);
   const contains = (node: NavModelItem): boolean =>
-    node === target ||
-    (targetKey !== undefined && sectionNavLinkKey(node) === targetKey) ||
-    Boolean(node.children?.some(contains));
+    node === target || (targetKey && hiddenKey(node) === targetKey) || Boolean(node.children?.some(contains));
   return target ? groups.flatMap((group) => group.children ?? []).find(contains) : undefined;
 }
 
@@ -121,6 +113,6 @@ export function useSectionNav(
     }
 
     const activeLink = findLink(groups, active);
-    return { groups, activeId: activeLink && sectionNavLinkKey(activeLink) };
+    return { groups, activeId: activeLink && hiddenKey(activeLink) };
   }, [sectionId, enabled, navTree, pathname, currentPage]);
 }

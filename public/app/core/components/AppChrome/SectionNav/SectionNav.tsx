@@ -4,7 +4,7 @@ import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { Icon, Link, useStyles2 } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/internal';
 
-import { sectionNavLinkKey } from './useSectionNav';
+import { hiddenKey } from '../MegaMenu/utils';
 
 interface Props {
   label: string;
@@ -25,7 +25,7 @@ export function SectionNav({ label, groups, activeId }: Props) {
               <SectionNavLink
                 key={item.id ?? item.url}
                 item={item}
-                isActive={activeId !== undefined && sectionNavLinkKey(item) === activeId}
+                isActive={!!activeId && hiddenKey(item) === activeId}
               />
             ))}
           </ul>
