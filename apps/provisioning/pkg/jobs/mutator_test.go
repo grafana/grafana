@@ -87,12 +87,9 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			},
 		},
 		{
-			name:      "user whose token carries the provisioning audience is still attributed",
-			operation: admission.Create,
-			requester: fakeProvisioningAuthInfo{
-				StaticRequester: userRequester,
-				audience:        []string{"provisioning.grafana.app"},
-			},
+			name:        "user whose token carries the provisioning service identity is still attributed",
+			operation:   admission.Create,
+			requester:   withProvisioningServiceIdentity(*userRequester),
 			annotations: map[string]string{AnnoAuthor: "Spoofed", AnnoAuthorOrigin: "GitHub"},
 			expected: map[string]string{
 				AnnoAuthor:       "Test User",
