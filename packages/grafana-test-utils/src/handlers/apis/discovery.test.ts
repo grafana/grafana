@@ -1,18 +1,19 @@
-import { HttpResponse, http } from 'msw';
-import { setupServer } from 'msw/node';
+import { getResponse } from 'msw';
 import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { getAPIDiscoveryHandlers, SERVED_API_VERSIONS } from './discovery';
 
+// The handlers use relative paths, which MSW resolves against the page in jsdom. The package tests
+// run in Node, so the origin is passed explicitly.
+const ORIGIN = 'http://localhost';
+
 const AGGREGATED_ACCEPT =
   'application/json;g=apidiscovery.k8s.io;v=v2;as=APIGroupDiscoveryList,application/json;g=apidiscovery.k8s.io;v=v2beta1;as=APIGroupDiscoveryList,application/json';
 
-const server = setupServer(...getAPIDiscoveryHandlers());
-
-beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
+function request(path: string, init?: RequestInit, handlers = getAPIDiscoveryHandlers()) {
+  return getResponse(handlers, new Request(`${ORIGIN}${path}`, init), { baseUrl: ORIGIN });
+}
 
 function listDirectories(path: string): string[] {
   return readdirSync(path, { withFileTypes: true })
@@ -34,8 +35,7 @@ describe('API discovery handlers', () => {
   });
 
   it('answer GET /apis with an APIGroupList', async () => {
-    const response = await fetch('/apis');
-    const body = await response.json();
+    const body = await (await request('/apis'))?.json();
 
     expect(body.kind).toBe('APIGroupList');
     expect(body.groups).toContainEqual({
@@ -51,8 +51,7 @@ describe('API discovery handlers', () => {
   });
 
   it('answer GET /apis/<group>/ with the APIGroup', async () => {
-    const response = await fetch('/apis/folder.grafana.app/');
-    const body = await response.json();
+    const body = await (await request('/apis/folder.grafana.app/'))?.json();
 
     expect(body).toMatchObject({
       kind: 'APIGroup',
@@ -62,27 +61,22 @@ describe('API discovery handlers', () => {
   });
 
   it('answer 404 for a group that is not served', async () => {
-    const response = await fetch('/apis/annotation.grafana.app/');
+    const response = await request('/apis/annotation.grafana.app/');
 
-    expect(response.status).toBe(404);
+    expect(response?.status).toBe(404);
   });
 
-  it('pass aggregated discovery requests on to the next handler', async () => {
-    const aggregatedHandler = http.get('/apis', () => HttpResponse.json({ kind: 'APIGroupDiscoveryList', items: [] }));
-    server.resetHandlers(...getAPIDiscoveryHandlers(), aggregatedHandler);
-
-    const body = await (await fetch('/apis', { headers: { Accept: AGGREGATED_ACCEPT } })).json();
-
-    expect(body.kind).toBe('APIGroupDiscoveryList');
+  it('leave aggregated discovery requests to other handlers', async () => {
+    await expect(request('/apis', { headers: { Accept: AGGREGATED_ACCEPT } })).resolves.toBeUndefined();
   });
 
   it('serve only the given groups', async () => {
-    server.use(...getAPIDiscoveryHandlers({ 'iam.grafana.app': ['v0alpha1'] }));
+    const handlers = getAPIDiscoveryHandlers({ 'iam.grafana.app': ['v0alpha1'] });
 
-    const list = await (await fetch('/apis')).json();
-    const folder = await fetch('/apis/folder.grafana.app/');
+    const list = await (await request('/apis', undefined, handlers))?.json();
+    const folder = await request('/apis/folder.grafana.app/', undefined, handlers);
 
     expect(list.groups.map((group: { name: string }) => group.name)).toEqual(['iam.grafana.app']);
-    expect(folder.status).toBe(404);
+    expect(folder?.status).toBe(404);
   });
 });
