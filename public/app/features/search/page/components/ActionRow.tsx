@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type FormEvent } from 'react';
+import { type FormEvent, useReducer } from 'react';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -85,6 +85,18 @@ export const ActionRow = ({
   const createdByMe = `user:${contextSrv.user.uid}`;
   const isFilteredByMe = state.createdBy === createdByMe;
 
+  const draftExtension = getDraftDashboardExtension();
+  const DraftModeControl = onDraftsOnlyChange ? draftExtension?.DraftModeControl : undefined;
+  // isEnabled() is not reactive, so re-render when the control changes draft mode
+  const [, rerender] = useReducer((n: number) => n + 1, 0);
+  const onDraftModeChange = () => {
+    // Without draft mode the Drafts checkbox is hidden, so an active drafts filter could not be cleared
+    if (!draftExtension?.isEnabled() && state.draftsOnly) {
+      onDraftsOnlyChange?.(false);
+    }
+    rerender();
+  };
+
   return (
     <Stack justifyContent="space-between" alignItems="center" wrap={true}>
       <Stack alignItems="center" wrap={true}>
@@ -121,7 +133,7 @@ export const ActionRow = ({
             />
           </div>
         )}
-        {onDraftsOnlyChange && getDraftDashboardExtension()?.isEnabled() && (
+        {onDraftsOnlyChange && draftExtension?.isEnabled() && (
           <div className={styles.checkboxWrapper}>
             <Checkbox
               label={t('search.actions.drafts-only', 'Drafts')}
@@ -130,6 +142,7 @@ export const ActionRow = ({
             />
           </div>
         )}
+        {DraftModeControl && <DraftModeControl onChange={onDraftModeChange} />}
         {state.datasource && (
           <Button icon="times" variant="secondary" onClick={() => onDatasourceChange(undefined)}>
             <Trans i18nKey="search.actions.remove-datasource-filter">
