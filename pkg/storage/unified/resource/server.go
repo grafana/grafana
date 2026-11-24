@@ -2565,7 +2565,9 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 				}
 				if event.PreviousRV > 0 {
 					prevObj, err := s.readPrevious(ctx, user, event.Key, event.PreviousRV)
-					if err != nil && AsErrorResult(err).Code == http.StatusNotFound {
+					if errors.Is(err, errPreviousReadPanic) {
+						return status.Error(codes.Internal, "internal server error")
+					} else if err != nil && AsErrorResult(err).Code == http.StatusNotFound {
 						// History pruning can remove the previous revision while the event is still replayable.
 						s.log.Debug("previous object no longer available", "key", event.Key, "resource_version", event.PreviousRV)
 					} else if err != nil {
