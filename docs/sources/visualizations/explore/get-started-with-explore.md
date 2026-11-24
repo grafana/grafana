@@ -72,7 +72,7 @@ The toolbar provides quick access to frequently used tools and settings.
 
 - **Data source picker** - Select a data source from the dropdown menu, or use absolute time.
 - **Split** - Click to compare visualizations side by side. Refer to [Split and compare](#split-and-compare) for additional detail.
-- **Add** - Click to add your exploration to a dashboard or to a notebook. You can also use this to declare an incident, create a forecast, detect outliers, and run an investigation. Refer to [Add panels from Dashboards and Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/notebooks/#add-panels-from-dashboards-and-explore) for more information on adding your exploration to a notebook.
+- **Add** - Click to add your exploration to a dashboard or to a notebook. You can also use this to declare an incident, create a forecast, detect outliers, and run an investigation. Refer to [Add a query from Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/notebooks/#add-a-query-from-explore) for more information on adding your exploration to a notebook.
 - **Time picker** - Select a time range form the time picker. You can also enter an absolute time range. Refer to [Time picker](#time-picker) for more information.
 - **Run query** - Click to run your query.
 
