@@ -223,8 +223,8 @@ const healthCache = new Map<string, TtlCachedPromise<boolean>>();
  * health check owns its cutoff, which cancels the request.
  */
 export function isDatasourceHealthy(uid: string): Promise<boolean> {
-  // /api/datasources/.../health is legacy-only; on a multi-tenant stack the probe query (which has its own
-  // deadline) decides on its own. The gate goes once this uses DataSourceWithBackend.callHealthCheck().
+  // The multi-tenant homepage does not probe health at all: the probe query (which has its own deadline)
+  // decides on its own.
   if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaMultiTenantHomepage, false)) {
     return Promise.resolve(true);
   }
@@ -232,16 +232,17 @@ export function isDatasourceHealthy(uid: string): Promise<boolean> {
   if (!cache) {
     cache = createTtlCachedPromise(
       () =>
-        withDeadline(HEALTH_CHECK_TIMEOUT_MS, undefined, (signal) =>
-          getBackendSrv().get<{ status?: string }>(
-            `/api/datasources/uid/${encodeURIComponent(uid)}/health`,
-            undefined,
-            undefined,
-            { showErrorAlert: false, abortSignal: signal }
-          )
-        )
-          .then((res) => res?.status === 'OK')
-          .catch(() => false),
+        // callHealthCheck() picks the legacy /api or the datasource API server route per datasource, so
+        // the probe follows the `datasources.apiserver.fe-allowed-types` rollout instead of pinning /api.
+        withDeadline(HEALTH_CHECK_TIMEOUT_MS, undefined, async (signal) => {
+          const instance = await resolveBackendInstance(uid);
+          // No backend means no health endpoint to ask, and a deadline during the lookup must not send one.
+          if (!instance || signal.aborted) {
+            return false;
+          }
+          const res = await instance.callHealthCheck({ abortSignal: signal });
+          return res?.status === 'OK';
+        }).catch(() => false),
       PROBE_TTL_MS
     );
     healthCache.set(uid, cache);

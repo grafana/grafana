@@ -450,8 +450,10 @@ class DataSourceWithBackend<
 
   /**
    * Run the datasource healthcheck
+   *
+   * @param options.abortSignal - cancels the in-flight request, e.g. when the caller enforces a deadline.
    */
-  async callHealthCheck(): Promise<HealthCheckResult> {
+  async callHealthCheck(options?: { abortSignal?: AbortSignal }): Promise<HealthCheckResult> {
     const useNewApi = this.supportsDatasourceApi('health');
     const healthCheckURL = useNewApi
       ? `/apis/${this.meta?.id ?? this.type}.datasource.grafana.app/v0alpha1/namespaces/${config.namespace}/datasources/${this.uid}/health`
@@ -464,6 +466,7 @@ class DataSourceWithBackend<
           url: healthCheckURL,
           showErrorAlert: false,
           headers: this.getRequestHeaders(),
+          abortSignal: options?.abortSignal,
         })
       )
         .then((v: FetchResponse<DatasourcesV0HealthCheckResult>) => toHealthCheckResult(v.data))
@@ -485,6 +488,7 @@ class DataSourceWithBackend<
         url: healthCheckURL,
         showErrorAlert: false,
         headers: this.getRequestHeaders(),
+        abortSignal: options?.abortSignal,
       })
     )
       .then((v: FetchResponse<HealthCheckResult>) => v.data)

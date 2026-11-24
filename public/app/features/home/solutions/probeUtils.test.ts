@@ -36,7 +36,19 @@ jest.mock('@grafana/runtime', () => ({
   getDefaultDataSourceInstanceListItem: jest.fn(),
 }));
 const getDataSourceInstanceListMock = jest.mocked(getDataSourceInstanceList);
-const healthGetMock = jest.fn();
+/** Health answer per uid, as returned by `DataSourceWithBackend.callHealthCheck(options)`. */
+const healthCheckMock = jest.fn();
+
+/** Resolves every uid to a backend instance whose `callHealthCheck` reports through `healthCheckMock`. */
+function mockHealthBackends() {
+  jest.mocked(getDataSourceInstance).mockImplementation(async (ref) => {
+    const uid = typeof ref === 'string' ? ref : ref?.uid;
+    return backendInstance(
+      jest.fn(),
+      jest.fn((options?: { abortSignal?: AbortSignal }) => healthCheckMock(uid, options))
+    );
+  });
+}
 
 function listItem(ds: { uid?: string; name: string }): DataSourceInstanceListItem {
   return {
@@ -327,42 +339,52 @@ describe('listProbeCandidates', () => {
 describe('isDatasourceHealthy', () => {
   beforeEach(() => {
     resetProbeHealth();
-    healthGetMock.mockReset();
-    jest.mocked(getBackendSrv).mockReturnValue({ get: healthGetMock } as unknown as BackendSrv);
+    healthCheckMock.mockReset();
+    mockHealthBackends();
   });
 
   it('reports a datasource whose health check answers OK as healthy', async () => {
-    healthGetMock.mockResolvedValue({ status: 'OK' });
+    healthCheckMock.mockResolvedValue({ status: 'OK' });
 
     await expect(isDatasourceHealthy('healthy')).resolves.toBe(true);
-    expect(healthGetMock).toHaveBeenCalledWith('/api/datasources/uid/healthy/health', undefined, undefined, {
-      showErrorAlert: false,
-      abortSignal: expect.any(AbortSignal),
-    });
+    expect(healthCheckMock).toHaveBeenCalledWith('healthy', { abortSignal: expect.any(AbortSignal) });
   });
 
   it('reports a non-OK status as unhealthy', async () => {
-    healthGetMock.mockResolvedValue({ status: 'ERROR' });
+    healthCheckMock.mockResolvedValue({ status: 'ERROR' });
 
     await expect(isDatasourceHealthy('sick')).resolves.toBe(false);
   });
 
   it('reports a rejected health check as unhealthy', async () => {
-    healthGetMock.mockRejectedValue(new Error('connection refused'));
+    healthCheckMock.mockRejectedValue(new Error('connection refused'));
 
     await expect(isDatasourceHealthy('broken')).resolves.toBe(false);
+  });
+
+  it('reports a datasource without a backend as unhealthy without sending a request', async () => {
+    jest.mocked(getDataSourceInstance).mockResolvedValue({} as Awaited<ReturnType<typeof getDataSourceInstance>>);
+
+    await expect(isDatasourceHealthy('frontend-only')).resolves.toBe(false);
+    expect(healthCheckMock).not.toHaveBeenCalled();
+  });
+
+  it('reports an empty health answer as unhealthy', async () => {
+    healthCheckMock.mockResolvedValue(undefined);
+
+    await expect(isDatasourceHealthy('empty')).resolves.toBe(false);
   });
 
   it('reports a health check that hangs past the cutoff as unhealthy', async () => {
     jest.useFakeTimers();
     try {
-      healthGetMock.mockReturnValue(new Promise(() => {}));
+      healthCheckMock.mockReturnValue(new Promise(() => {}));
 
       const promise = isDatasourceHealthy('hung');
       await jest.advanceTimersByTimeAsync(HEALTH_CHECK_TIMEOUT_MS + 1);
 
       await expect(promise).resolves.toBe(false);
-      expect(healthGetMock.mock.calls[0][3].abortSignal.aborted).toBe(true);
+      expect(healthCheckMock.mock.calls[0][1].abortSignal.aborted).toBe(true);
     } finally {
       jest.useRealTimers();
     }
@@ -372,29 +394,29 @@ describe('isDatasourceHealthy', () => {
     setTestFlags({ [FlagKeys.GrafanaMultiTenantHomepage]: true });
     try {
       await expect(isDatasourceHealthy('unprobed')).resolves.toBe(true);
-      expect(healthGetMock).not.toHaveBeenCalled();
+      expect(healthCheckMock).not.toHaveBeenCalled();
     } finally {
       setTestFlags({});
     }
 
     // Nothing was cached for the uid, so the next read with the legacy API available probes it.
-    healthGetMock.mockResolvedValue({ status: 'ERROR' });
+    healthCheckMock.mockResolvedValue({ status: 'ERROR' });
     await expect(isDatasourceHealthy('unprobed')).resolves.toBe(false);
-    expect(healthGetMock).toHaveBeenCalledTimes(1);
+    expect(healthCheckMock).toHaveBeenCalledTimes(1);
   });
 
   it('shares one /health request per uid across concurrent callers', async () => {
-    healthGetMock.mockResolvedValue({ status: 'OK' });
+    healthCheckMock.mockResolvedValue({ status: 'OK' });
 
     await expect(Promise.all([isDatasourceHealthy('shared'), isDatasourceHealthy('shared')])).resolves.toEqual([
       true,
       true,
     ]);
-    expect(healthGetMock).toHaveBeenCalledTimes(1);
+    expect(healthCheckMock).toHaveBeenCalledTimes(1);
   });
 
   it('issues one /health request per overlapping uid across scans with different candidate orders', async () => {
-    healthGetMock.mockResolvedValue({ status: 'OK' });
+    healthCheckMock.mockResolvedValue({ status: 'OK' });
     const a = listItem({ uid: 'a', name: 'a' });
     const b = listItem({ uid: 'b', name: 'b' });
     const c = listItem({ uid: 'c', name: 'c' });
@@ -404,11 +426,11 @@ describe('isDatasourceHealthy', () => {
       findDatasourceWithData([c, a, b], async () => false),
     ]);
 
-    expect(healthGetMock).toHaveBeenCalledTimes(3);
-    expect(healthGetMock.mock.calls.map(([url]) => url).sort()).toEqual([
-      '/api/datasources/uid/a/health',
-      '/api/datasources/uid/b/health',
-      '/api/datasources/uid/c/health',
+    expect(healthCheckMock).toHaveBeenCalledTimes(3);
+    expect(healthCheckMock.mock.calls.map(([uid]) => uid).sort()).toEqual([
+      'a',
+      'b',
+      'c',
     ]);
   });
 
@@ -416,16 +438,16 @@ describe('isDatasourceHealthy', () => {
     const nowSpy = jest.spyOn(Date, 'now');
     try {
       nowSpy.mockReturnValue(0);
-      healthGetMock.mockResolvedValue({ status: 'ERROR' });
+      healthCheckMock.mockResolvedValue({ status: 'ERROR' });
       await expect(isDatasourceHealthy('flaky')).resolves.toBe(false);
       await expect(isDatasourceHealthy('flaky')).resolves.toBe(false);
-      expect(healthGetMock).toHaveBeenCalledTimes(1);
+      expect(healthCheckMock).toHaveBeenCalledTimes(1);
 
       nowSpy.mockReturnValue(61_000);
-      healthGetMock.mockResolvedValue({ status: 'OK' });
+      healthCheckMock.mockResolvedValue({ status: 'OK' });
 
       await expect(isDatasourceHealthy('flaky')).resolves.toBe(true);
-      expect(healthGetMock).toHaveBeenCalledTimes(2);
+      expect(healthCheckMock).toHaveBeenCalledTimes(2);
     } finally {
       nowSpy.mockRestore();
     }
@@ -435,9 +457,9 @@ describe('isDatasourceHealthy', () => {
 describe('findDatasourceWithData', () => {
   beforeEach(() => {
     resetProbeHealth();
-    healthGetMock.mockReset();
-    healthGetMock.mockResolvedValue({ status: 'OK' });
-    jest.mocked(getBackendSrv).mockReturnValue({ get: healthGetMock } as unknown as BackendSrv);
+    healthCheckMock.mockReset();
+    healthCheckMock.mockResolvedValue({ status: 'OK' });
+    mockHealthBackends();
   });
 
   it('prefers the first candidate in priority order even when a later one settles sooner', async () => {
@@ -490,8 +512,8 @@ describe('findDatasourceWithData', () => {
     const lateHealth = new Promise<{ status: string }>((resolve) => {
       resolveLateHealth = resolve;
     });
-    healthGetMock.mockImplementation((url: string) =>
-      url.includes('/late/') ? lateHealth : Promise.resolve({ status: 'OK' })
+    healthCheckMock.mockImplementation((uid: string) =>
+      uid === 'late' ? lateHealth : Promise.resolve({ status: 'OK' })
     );
     const first = listItem({ uid: 'first', name: 'first' });
     const late = listItem({ uid: 'late', name: 'late' });
@@ -517,11 +539,11 @@ describe('findDatasourceWithData', () => {
 
     await expect(findDatasourceWithData([], hasData)).resolves.toBeNull();
     expect(hasData).not.toHaveBeenCalled();
-    expect(healthGetMock).not.toHaveBeenCalled();
+    expect(healthCheckMock).not.toHaveBeenCalled();
   });
 
   it('never probes an unhealthy candidate', async () => {
-    healthGetMock.mockImplementation(async (url: string) => ({ status: url.includes('/sick/') ? 'ERROR' : 'OK' }));
+    healthCheckMock.mockImplementation(async (uid: string) => ({ status: uid === 'sick' ? 'ERROR' : 'OK' }));
     const sick = listItem({ uid: 'sick', name: 'sick' });
     const healthy = listItem({ uid: 'healthy', name: 'healthy' });
     const hasData = jest.fn(async () => true);
@@ -537,7 +559,7 @@ describe('findDatasourceWithData', () => {
 
     await expect(findDatasourceWithData(candidates, hasData)).resolves.toBe(candidates[1]);
     expect(hasData.mock.calls.map(([ds]) => ds.uid)).toEqual(['p1', 'p2', 'p3', 'p4', 'p5']);
-    expect(healthGetMock).toHaveBeenCalledTimes(5);
+    expect(healthCheckMock).toHaveBeenCalledTimes(5);
   });
 
   it('continues to the next batch when the first has none', async () => {
@@ -570,8 +592,8 @@ describe('findDatasourceWithData', () => {
   it('probes a candidate as soon as its own health answers, not after the slowest one', async () => {
     jest.useFakeTimers();
     try {
-      healthGetMock.mockImplementation((url: string) =>
-        url.includes('/slow/')
+      healthCheckMock.mockImplementation((uid: string) =>
+        uid === 'slow'
           ? new Promise((resolve) => setTimeout(() => resolve({ status: 'OK' }), 2_000))
           : Promise.resolve({ status: 'OK' })
       );
@@ -601,7 +623,7 @@ describe('findDatasourceWithData', () => {
         listItem({ uid: `p${i + 1}`, name: `p${i + 1}` })
       );
       const last = candidates[candidates.length - 1];
-      healthGetMock.mockImplementation(
+      healthCheckMock.mockImplementation(
         () => new Promise((resolve) => setTimeout(() => resolve({ status: 'OK' }), HEALTH_CHECK_TIMEOUT_MS - 1))
       );
       const hasData = (ds: DataSourceInstanceListItem) =>

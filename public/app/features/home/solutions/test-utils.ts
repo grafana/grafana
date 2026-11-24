@@ -38,9 +38,12 @@ export function deferred<T>() {
   return { promise, resolve };
 }
 
-/** Passes the backend-instance check and serves resource calls from `getResource`. */
-export function backendInstance(getResource: jest.Mock): DataSourceWithBackend {
+/** Passes the backend-instance check, serves resource calls from `getResource` and health from `callHealthCheck`. */
+export function backendInstance(getResource: jest.Mock, callHealthCheck?: jest.Mock): DataSourceWithBackend {
   const instance: DataSourceWithBackend = Object.create(DataSourceWithBackend.prototype);
   instance.getResource = getResource;
+  if (callHealthCheck) {
+    instance.callHealthCheck = callHealthCheck;
+  }
   return instance;
 }

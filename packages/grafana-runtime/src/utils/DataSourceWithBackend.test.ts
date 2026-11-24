@@ -736,6 +736,22 @@ describe('DataSourceWithBackend', () => {
       });
     });
 
+    test.each([
+      ['legacy', {}],
+      ['new', { health: ['dummy', 'canonical-id'] }],
+    ])('forwards the abort signal to the %s API request', async (_api, allowedTypes) => {
+      mockGetObjectValue.mockImplementation((key, defaultValue) =>
+        key === 'datasources.apiserver.fe-allowed-types' ? allowedTypes : defaultValue
+      );
+      const { ds } = createMockDatasource();
+      mockDatasourceRequest.mockResolvedValueOnce({ data: { status: HealthStatus.OK } } as FetchResponse);
+      const controller = new AbortController();
+
+      await ds.callHealthCheck({ abortSignal: controller.signal });
+
+      expect(mockDatasourceRequest).toHaveBeenCalledWith(expect.objectContaining({ abortSignal: controller.signal }));
+    });
+
     test('parses new API response and maps unknown status to HealthStatus.Unknown', async () => {
       mockGetObjectValue.mockImplementation((key, defaultValue) =>
         key === 'datasources.apiserver.fe-allowed-types' ? { health: ['dummy', 'canonical-id'] } : defaultValue
