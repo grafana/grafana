@@ -346,9 +346,7 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 			UID:             cmd.UID,
 			IsPrunable:      cmd.IsPrunable,
 			APIVersion:      cmd.APIVersion,
-			Annotations:     cmd.Annotations,
-			ManagerKind:     cmd.ManagerKind,
-			ManagerIdentity: cmd.ManagerIdentity,
+			Columns:         cmd.Columns,
 		}
 
 		if _, err := sess.Insert(ds); err != nil {
@@ -425,9 +423,7 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 			UID:             cmd.UID,
 			IsPrunable:      cmd.IsPrunable,
 			APIVersion:      cmd.APIVersion,
-			Annotations:     cmd.Annotations,
-			ManagerKind:     cmd.ManagerKind,
-			ManagerIdentity: cmd.ManagerIdentity,
+			Columns:         cmd.Columns,
 		}
 
 		sess.UseBool("is_default")
@@ -449,10 +445,9 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 		// secure json data to the unified secrets table.
 		sess.MustCols("secure_json_data")
 		sess.MustCols("api_version")
-		if cmd.UpdateAnnotations {
-			// Only an authoritative caller clears these; see UpdateDataSourceCommand.UpdateAnnotations.
-			sess.MustCols("annotations", "manager_kind", "manager_identity")
-		}
+		// Empty for a caller that is not authoritative for them, where MustCols is a
+		// no-op and xorm's zero-value skip leaves the stored columns alone.
+		sess.MustCols(cmd.ColumnsToWrite()...)
 
 		var updateSession *xorm.Session
 		if cmd.Version != 0 {

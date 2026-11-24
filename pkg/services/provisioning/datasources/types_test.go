@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/storage/legacysql/legacyannotations"
 )
 
 func TestUIDFromNames(t *testing.T) {
@@ -25,69 +26,36 @@ func TestCreateUpdateCommand(t *testing.T) {
 	})
 }
 
-func TestProvisioningManager(t *testing.T) {
-	tests := []struct {
-		name            string
-		ds              *upsertDataSourceFromConfig
-		sourceFile      string
-		wantKind        string
-		wantIdentity    string
-		wantAnnotations map[string]string
-	}{
-		{
-			name:         "read only data source",
-			ds:           &upsertDataSourceFromConfig{Name: "test"},
-			sourceFile:   "prometheus.yaml",
-			wantKind:     "classic-file-provisioning",
-			wantIdentity: "prometheus.yaml",
-			wantAnnotations: map[string]string{
-				utils.AnnoKeySourcePath: "prometheus.yaml",
-			},
-		},
-		{
-			name:         "editable data source allows edits",
-			ds:           &upsertDataSourceFromConfig{Name: "test", Editable: true},
-			sourceFile:   "prometheus.yaml",
-			wantKind:     "classic-file-provisioning",
-			wantIdentity: "prometheus.yaml",
-			wantAnnotations: map[string]string{
-				utils.AnnoKeySourcePath:         "prometheus.yaml",
-				utils.AnnoKeyManagerAllowsEdits: "true",
-			},
-		},
-		{
-			name:     "classic file provisioning needs no identity",
-			ds:       &upsertDataSourceFromConfig{Name: "test"},
-			wantKind: "classic-file-provisioning",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			kind, identity, annotations := provisioningManager(tt.ds, tt.sourceFile)
-			// The manager goes in columns, not the blob: a read resolves it from
-			// there, so leaving it in the blob makes this look unmanaged to /apis.
-			require.Equal(t, tt.wantKind, kind)
-			require.Equal(t, tt.wantIdentity, identity)
-			require.Equal(t, tt.wantAnnotations, annotations)
-			require.NotContains(t, annotations, utils.AnnoKeyManagerKind)
-			require.NotContains(t, annotations, utils.AnnoKeyManagerIdentity)
-		})
-	}
-}
-
 func TestProvisioningCommandsCarryTheManager(t *testing.T) {
+	// Reads resolve the manager from its columns, so leaving it in the blob makes a
+	// file-provisioned data source look unmanaged to /apis.
+	want := legacyannotations.Columns{
+		ManagerKind:     "classic-file-provisioning",
+		ManagerIdentity: "prometheus.yaml",
+		Annotations: map[string]string{
+			utils.AnnoKeySourcePath:         "prometheus.yaml",
+			utils.AnnoKeyManagerAllowsEdits: "true",
+		},
+	}
 	ds := &upsertDataSourceFromConfig{OrgID: 1, Name: "test", Editable: true}
 
-	insert := createInsertCommand(ds, "prometheus.yaml")
-	require.Equal(t, "classic-file-provisioning", insert.ManagerKind)
-	require.Equal(t, "prometheus.yaml", insert.ManagerIdentity)
-	require.Equal(t, "prometheus.yaml", insert.Annotations[utils.AnnoKeySourcePath])
+	require.Equal(t, want, createInsertCommand(ds, "prometheus.yaml").Columns)
 
 	update := createUpdateCommand(ds, 1, "prometheus.yaml")
-	require.Equal(t, "classic-file-provisioning", update.ManagerKind)
-	require.Equal(t, "prometheus.yaml", update.ManagerIdentity)
-	require.True(t, update.UpdateAnnotations)
+	require.Equal(t, want, update.Columns)
+	require.True(t, update.UpdateAnnotations, "the file is the source of truth on every boot")
+
+	t.Run("a config without editable allows no edits", func(t *testing.T) {
+		readOnly := createInsertCommand(&upsertDataSourceFromConfig{Name: "test"}, "prometheus.yaml")
+		require.NotContains(t, readOnly.Annotations, utils.AnnoKeyManagerAllowsEdits)
+	})
+
+	t.Run("a classic kind needs no identity", func(t *testing.T) {
+		noFile := createInsertCommand(&upsertDataSourceFromConfig{Name: "test"}, "")
+		require.Equal(t, "classic-file-provisioning", noFile.ManagerKind)
+		require.Empty(t, noFile.ManagerIdentity)
+		require.Empty(t, noFile.Annotations)
+	})
 }
 
 func TestManagedElsewhere(t *testing.T) {

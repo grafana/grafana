@@ -237,6 +237,30 @@ func CheckSameRepoManager(folder, resource GrafanaMetaAccessor) error {
 	return nil
 }
 
+// HasManager reports whether annotations name a manager at all.
+//
+// It differs from GetManagerProperties, which reports a kind without an identity as
+// unmanaged so that a half-filled annotation does not make a resource look managed.
+// That is the right answer for a reader and the wrong one for a gate: the kind alone
+// is enough to persist, so a write carrying only `managedBy` still has to be checked.
+func HasManager(annotations map[string]string) bool {
+	return annotations[AnnoKeyManagerKind] != ""
+}
+
+// IsFileProvisioned reports whether kind is one of the file-provisioning kinds, whose
+// provisioner writes to storage directly rather than through an API. They are the only
+// kinds whose AllowsEdits can be enforced without also refusing the manager itself:
+// Terraform and kubectl write through the same endpoints as a user, with a caller's own
+// token, so there is nothing to tell them apart by.
+func IsFileProvisioned(kind ManagerKind) bool {
+	switch kind { //nolint:staticcheck
+	case ManagerKindClassicFP, ManagerKindFileProvisioning:
+		return true
+	default:
+		return false
+	}
+}
+
 func NewForbiddenManagerKindChangeError(current, requested ManagerProperties) *apierrors.StatusError {
 	return &apierrors.StatusError{ErrStatus: metav1.Status{
 		Status: metav1.StatusFailure,

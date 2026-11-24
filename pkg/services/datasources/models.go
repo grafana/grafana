@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/legacysql/legacyannotations"
 )
 
 const (
@@ -71,18 +72,8 @@ type DataSource struct {
 	// swagger:ignore
 	IsPrunable bool `xorm:"is_prunable"`
 
-	// Annotations holds metadata.annotations of the app platform API, except the ones
-	// a column already carries: source properties, manager flags, and whatever the
-	// API adds later.
-	// swagger:ignore
-	Annotations map[string]string `json:"-" xorm:"annotations"`
-	// ManagerKind and ManagerIdentity are the grafana.app/managedBy and
-	// grafana.app/managerId annotations. They sit in columns rather than the blob so
-	// that "everything repo X manages" is answerable in SQL.
-	// swagger:ignore
-	ManagerKind string `json:"-" xorm:"manager_kind"`
-	// swagger:ignore
-	ManagerIdentity string `json:"-" xorm:"manager_identity"`
+	// Annotations, ManagerKind and ManagerIdentity, and the rules for writing them.
+	legacyannotations.Columns `xorm:"extends"`
 
 	Created time.Time `json:"created,omitempty"`
 	Updated time.Time `json:"updated,omitempty"`
@@ -192,10 +183,8 @@ type AddDataSourceCommand struct {
 	// swagger:ignore
 	IsPrunable bool `json:"-"`
 
-	// Never settable through the legacy HTTP API.
-	Annotations     map[string]string `json:"-"`
-	ManagerKind     string            `json:"-"`
-	ManagerIdentity string            `json:"-"`
+	// Never settable through the legacy HTTP API; these are json:"-" at the source.
+	legacyannotations.Columns
 
 	OrgID                   int64             `json:"-"`
 	UserID                  int64             `json:"-"`
@@ -232,16 +221,8 @@ type UpdateDataSourceCommand struct {
 	// The previous version -- used for optimistic locking
 	Version int `json:"version"`
 
-	// Never settable through the legacy HTTP API.
-	Annotations     map[string]string `json:"-"`
-	ManagerKind     string            `json:"-"`
-	ManagerIdentity string            `json:"-"`
-
-	// UpdateAnnotations marks the caller authoritative for Annotations: they are
-	// written as given, including cleared. Callers that leave it false keep whatever is
-	// already stored, so an edit that knows nothing about annotations (the legacy HTTP
-	// API) cannot silently release a provisioned data source.
-	UpdateAnnotations bool `json:"-"`
+	// Never settable through the legacy HTTP API; these are json:"-" at the source.
+	legacyannotations.UpdateColumns
 
 	OrgID                   int64             `json:"-"`
 	ID                      int64             `json:"-"`

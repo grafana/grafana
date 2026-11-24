@@ -173,19 +173,10 @@ func CheckManagerOnDelete(ctx context.Context, obj metav1.Object) error {
 	return asForbidden(identity.CheckManagerOnDelete(auth, accessorOf(obj)))
 }
 
-// IsManaged reports whether obj carries manager annotations.
-//
-// GetManagerProperties reports a kind without an identity as unmanaged, so that a
-// half-filled annotation does not mark a resource managed. That is the right answer
-// for a reader and the wrong one for a gate: the kind alone is enough to persist, so
-// a caller could write `managedBy: repo` with no identity and skip authorization. The
-// raw annotation decides here.
+// IsManaged reports whether obj names a manager, so a gate knows whether it has to
+// run. See utils.HasManager for why this is not GetManagerProperties.
 func IsManaged(obj metav1.Object) bool {
-	meta := accessorOf(obj)
-	if _, managed := meta.GetManagerProperties(); managed {
-		return true
-	}
-	return meta.GetAnnotation(utils.AnnoKeyManagerKind) != ""
+	return utils.HasManager(obj.GetAnnotations())
 }
 
 func asForbidden(err error) error {
