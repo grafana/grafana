@@ -310,7 +310,10 @@ type previousReadResult struct {
 	err      error
 }
 
-type previousReadLoader func(context.Context, func(*BackendReadResponse)) previousReadResult
+// previousReadLookup runs inside the QoS slot and can reuse or publish a raw read.
+type previousReadLookup func(fetch func() *BackendReadResponse) *BackendReadResponse
+
+type previousReadLoader func(context.Context, previousReadLookup) previousReadResult
 
 type previousReadFlight struct {
 	waiters int
@@ -373,13 +376,34 @@ func (p *previousReads) read(ctx context.Context, key *resourcepb.ResourceKey, r
 	}
 	// Retry through QoS with this watch's own context. Joining another
 	// retry could give this watch a shorter deadline than it has left.
-	return load(ctx, func(rsp *BackendReadResponse) {
-		p.mu.Lock()
-		defer p.mu.Unlock()
-		if ctx.Err() == nil {
-			p.cacheResponse(id, rv, rsp)
-		}
-	})
+	return p.retry(ctx, id, rv, load)
+}
+
+func (p *previousReads) retry(ctx context.Context, id string, rv int64, load previousReadLoader) previousReadResult {
+	// The default queue can run the loader inline, so waiting for the retry
+	// separately lets the watch leave even if the worker ignores cancellation.
+	done := make(chan previousReadResult, 1)
+	go func() {
+		done <- load(ctx, func(fetch func() *BackendReadResponse) *BackendReadResponse {
+			// Another retry may have filled the cache while this one queued.
+			p.mu.Lock()
+			rsp, ok := p.get(id)
+			p.mu.Unlock()
+			if ok {
+				return rsp
+			}
+			rsp = fetch()
+			if rsp != nil {
+				p.mu.Lock()
+				if ctx.Err() == nil {
+					p.cacheResponse(id, rv, rsp)
+				}
+				p.mu.Unlock()
+			}
+			return rsp
+		})
+	}()
+	return waitPreviousRead(ctx, done)
 }
 
 func (p *previousReads) readOnce(ctx context.Context, id string, rv int64, load previousReadLoader) previousReadResult {
@@ -405,18 +429,22 @@ func (p *previousReads) readOnce(ctx context.Context, id string, rv int64, load 
 	defer p.leave(id, flight)
 
 	if owner {
-		select {
-		case <-ctx.Done():
-			return previousReadResult{err: ctx.Err()}
-		case result := <-flight.owner:
-			return result
-		}
+		return waitPreviousRead(ctx, flight.owner)
 	}
 	select {
 	case <-ctx.Done():
 		return previousReadResult{err: ctx.Err()}
 	case <-flight.ready:
 		return flight.result
+	}
+}
+
+func waitPreviousRead(ctx context.Context, done <-chan previousReadResult) previousReadResult {
+	select {
+	case <-ctx.Done():
+		return previousReadResult{err: ctx.Err()}
+	case result := <-done:
+		return result
 	}
 }
 
@@ -437,9 +465,13 @@ func (p *previousReads) runFlight(ctx context.Context, id string, rv int64, flig
 			close(flight.ready)
 		})
 	}
-	result := load(ctx, func(rsp *BackendReadResponse) {
+	result := load(ctx, func(fetch func() *BackendReadResponse) *BackendReadResponse {
 		// Followers can authorize as soon as the backend read completes.
-		finish(previousReadResult{backend: rsp})
+		rsp := fetch()
+		if rsp != nil {
+			finish(previousReadResult{backend: rsp})
+		}
+		return rsp
 	})
 	// Release followers even if the backend read never produced a result.
 	finish(previousReadResult{err: result.err})
@@ -478,7 +510,7 @@ func (s *server) readPrevious(ctx context.Context, user claims.AuthInfo, key *re
 	ctx, cancel := context.WithTimeout(ctx, s.queueConfig.Timeout)
 	defer cancel()
 	req := &resourcepb.ReadRequest{Key: key, ResourceVersion: rv}
-	result := s.previousReads.read(ctx, key, rv, func(sharedCtx context.Context, publish func(*BackendReadResponse)) (result previousReadResult) {
+	result := s.previousReads.read(ctx, key, rv, func(sharedCtx context.Context, lookup previousReadLookup) (result previousReadResult) {
 		defer s.recoverPreviousRead(sharedCtx, &result.err)
 		var ownerResult previousReadResult
 		if err := s.runInQueue(sharedCtx, key.Namespace, "read", func(queueCtx context.Context) {
@@ -487,14 +519,19 @@ func (s *server) readPrevious(ctx context.Context, user claims.AuthInfo, key *re
 			if queueCtx.Err() != nil {
 				return
 			}
-			rsp := s.backend.ReadResource(queueCtx, req)
+			rsp := lookup(func() *BackendReadResponse {
+				rsp := s.backend.ReadResource(queueCtx, req)
+				if queueCtx.Err() != nil {
+					return nil
+				}
+				if rsp == nil {
+					panic("previous version backend returned no response")
+				}
+				return rsp
+			})
 			if queueCtx.Err() != nil {
 				return
 			}
-			if rsp == nil {
-				panic("previous version backend returned no response")
-			}
-			publish(rsp)
 			// The owner authorizes in this slot with its own deadline and
 			// identity. If it left, only the other watches need the result.
 			if ctx.Err() == nil {

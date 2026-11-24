@@ -3,10 +3,7 @@ package resource
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
-	"slices"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -20,7 +17,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 )
@@ -1253,123 +1249,152 @@ func TestKVWatchBookmarksFollowLateSameCollectionWrites(t *testing.T) {
 	})
 }
 
+const previousReadTestRV = 150
+
 type previousReadBackend struct {
 	legacyWatchBackend
-	reads    atomic.Int64
-	release  <-chan struct{}
-	canceled chan<- struct{}
+	reads      atomic.Int64
+	beforeRead func(context.Context, int64)
 }
 
 func (b *previousReadBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *BackendReadResponse {
-	b.reads.Add(1)
-	if b.release != nil {
-		select {
-		case <-b.release:
-		case <-ctx.Done():
-			if b.canceled != nil {
-				b.canceled <- struct{}{}
-			}
-			return nil
-		}
+	attempt := b.reads.Add(1)
+	if b.beforeRead != nil {
+		b.beforeRead(ctx, attempt)
+	}
+	if ctx.Err() != nil {
+		return nil
 	}
 	return &BackendReadResponse{Key: req.Key, ResourceVersion: req.ResourceVersion, Folder: "a", Value: []byte(`{"previous":true}`)}
 }
 
-// folderAccessClient allows each user to get objects in its folders only.
-type folderAccessClient struct {
-	folders map[string][]string
+func newPreviousReadTestServer(t *testing.T, beforeRead func(context.Context, int64)) (*server, *previousReadBackend) {
+	t.Helper()
+	backend := &previousReadBackend{
+		legacyWatchBackend: legacyWatchBackend{events: make(chan *WrittenEvent)},
+		beforeRead:         beforeRead,
+	}
+	srv := initWatchServerWithSeededWatches(t, backend, false)
+	t.Cleanup(func() { close(backend.events) })
+	return srv, backend
 }
 
-func (c *folderAccessClient) Check(_ context.Context, user authlib.AuthInfo, _ authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
-	return authlib.CheckResponse{Allowed: slices.Contains(c.folders[user.GetUID()], folder)}, nil
+type previousReadAccess struct {
+	authlib.AccessClient
+	check func(context.Context, authlib.AuthInfo, string) (authlib.CheckResponse, error)
 }
 
-func (c *folderAccessClient) Compile(_ context.Context, user authlib.AuthInfo, _ authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
-	return func(_, folder string) bool { return slices.Contains(c.folders[user.GetUID()], folder) }, authlib.NoopZookie{}, nil
+func (a previousReadAccess) Check(ctx context.Context, user authlib.AuthInfo, _ authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+	return a.check(ctx, user, folder)
 }
 
-func (c *folderAccessClient) BatchCheck(context.Context, authlib.AuthInfo, authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
-	return authlib.BatchCheckResponse{}, errors.New("not implemented")
+func (a previousReadAccess) Compile(ctx context.Context, user authlib.AuthInfo, _ authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
+	return func(_, folder string) bool {
+		result, err := a.check(ctx, user, folder)
+		return err == nil && result.Allowed
+	}, authlib.NoopZookie{}, nil
 }
 
-// Watches that deliver the same event share the read of its previous version,
-// but each is authorized for it on its own.
+func startPreviousReadWatch(t *testing.T, srv *server, user authlib.AuthInfo) (*mockWatchServer, <-chan error) {
+	t.Helper()
+	stream := newMockWatchServer(authlib.WithAuthInfo(t.Context(), user))
+	req := bookmarkWatchRequest()
+	req.AllowWatchBookmarks = false
+	done := make(chan error, 1)
+	go func() { done <- srv.Watch(req, stream) }()
+	return stream, done
+}
+
+func previousReadUpdate() *WrittenEvent {
+	event := bookmarkWrittenEvent(200)
+	event.Type, event.Folder, event.PreviousRV = resourcepb.WatchEvent_MODIFIED, "b", previousReadTestRV
+	return event
+}
+
 func TestWatchSharesPreviousVersionReads(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		release := make(chan struct{})
-		var releaseOnce sync.Once
-		releaseRead := func() { releaseOnce.Do(func() { close(release) }) }
+		releaseRead := sync.OnceFunc(func() { close(release) })
 		defer releaseRead()
-		backend := &previousReadBackend{legacyWatchBackend: legacyWatchBackend{events: make(chan *WrittenEvent)}, release: release}
-		defer close(backend.events)
-		srv := initWatchServerWithSeededWatches(t, backend, false)
+		srv, backend := newPreviousReadTestServer(t, func(ctx context.Context, _ int64) {
+			select {
+			case <-release:
+			case <-ctx.Done():
+			}
+		})
 		both, onlyB := newWatchTestUser(), newWatchTestUser()
 		onlyB.UserUID = "u456"
-		srv.access = &folderAccessClient{folders: map[string][]string{both.GetUID(): {"a", "b"}, onlyB.GetUID(): {"b"}}}
-
-		streams := map[string]*mockWatchServer{}
-		for _, user := range []*identity.StaticRequester{both, both, onlyB, onlyB} {
-			ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), user))
-			defer cancel()
-			req := bookmarkWatchRequest()
-			req.AllowWatchBookmarks = false
-			stream := newMockWatchServer(ctx)
-			streams[fmt.Sprintf("%s-%d", user.UserUID, len(streams))] = stream
-			go func() { _ = srv.Watch(req, stream) }()
+		srv.access = previousReadAccess{srv.access, func(_ context.Context, user authlib.AuthInfo, folder string) (authlib.CheckResponse, error) {
+			return authlib.CheckResponse{Allowed: folder == "b" || (folder == "a" && user.GetUID() == both.GetUID())}, nil
+		}}
+		users := []authlib.AuthInfo{both, both, onlyB, onlyB}
+		streams := make([]*mockWatchServer, 0, len(users))
+		for _, user := range users {
+			stream, _ := startPreviousReadWatch(t, srv, user)
+			streams = append(streams, stream)
 		}
 		synctest.Wait()
 
-		// The update moved the object from folder a to folder b.
-		event := bookmarkWrittenEvent(200)
-		event.Type, event.Folder, event.PreviousRV = resourcepb.WatchEvent_MODIFIED, "b", 150
-		backend.events <- event
+		backend.events <- previousReadUpdate() // The update moved the object from folder a to folder b.
 		synctest.Wait()
-		require.Equal(t, int64(1), backend.reads.Load(), "watches must share the in-flight previous version read")
+		require.EqualValues(t, 1, backend.reads.Load(), "watches must share the in-flight read")
 		releaseRead()
 		synctest.Wait()
-		for name, stream := range streams {
-			require.NotEmpty(t, stream.events, name)
-			delivered := <-stream.events
-			require.Equal(t, int64(200), delivered.Resource.Version, name)
-			if strings.HasPrefix(name, both.UserUID) {
-				require.NotNil(t, delivered.Previous, "%s may read folder a", name)
-				require.Equal(t, int64(150), delivered.Previous.Version)
+
+		for i, stream := range streams {
+			require.Len(t, stream.events, 1)
+			event := <-stream.events
+			require.EqualValues(t, 200, event.Resource.Version)
+			if users[i].GetUID() == both.GetUID() {
+				require.NotNil(t, event.Previous)
+				require.EqualValues(t, previousReadTestRV, event.Previous.Version)
 			} else {
-				require.Nil(t, delivered.Previous, "%s may not read folder a", name)
+				require.Nil(t, event.Previous, "the watch may see folder b but cannot read the prior revision in folder a")
 			}
 		}
 	})
 }
 
+func TestWatchPreviousReadPanicReturnsInternal(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		srv, backend := newPreviousReadTestServer(t, func(context.Context, int64) { panic("previous read failed") })
+		stream, done := startPreviousReadWatch(t, srv, newWatchTestUser())
+		synctest.Wait()
+		backend.events <- previousReadUpdate()
+		synctest.Wait()
+		require.Len(t, done, 1)
+		require.Equal(t, codes.Internal, status.Code(<-done))
+		require.Empty(t, stream.events)
+	})
+}
+
+func readPreviousForTest(ctx context.Context, srv *server) (*resourcepb.ReadResponse, error) {
+	return srv.readPrevious(ctx, newWatchTestUser(), bookmarkWrittenEvent(200).Key, previousReadTestRV)
+}
+
+func startPreviousRead(ctx context.Context, srv *server) <-chan error {
+	done := make(chan error, 1)
+	go func() {
+		_, err := readPreviousForTest(ctx, srv)
+		done <- err
+	}()
+	synctest.Wait()
+	return done
+}
+
 func TestWatchPreviousReadCancelsWhenLastWaiterLeaves(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		events := make(chan *WrittenEvent)
-		defer close(events)
-		release := make(chan struct{})
-		defer close(release)
 		canceled := make(chan struct{}, 1)
-		backend := &previousReadBackend{
-			legacyWatchBackend: legacyWatchBackend{events: events},
-			release:            release, canceled: canceled,
-		}
-		srv := initWatchServerWithSeededWatches(t, backend, false)
-		key := bookmarkWrittenEvent(200).Key
-		user := newWatchTestUser()
+		srv, backend := newPreviousReadTestServer(t, func(ctx context.Context, _ int64) {
+			<-ctx.Done()
+			canceled <- struct{}{}
+		})
 		first, cancelFirst := context.WithCancel(t.Context())
 		defer cancelFirst()
 		second, cancelSecond := context.WithCancel(t.Context())
 		defer cancelSecond()
-		firstDone, secondDone := make(chan error, 1), make(chan error, 1)
-		go func() {
-			_, err := srv.readPrevious(first, user, key, 150)
-			firstDone <- err
-		}()
-		synctest.Wait()
-		go func() {
-			_, err := srv.readPrevious(second, user, key, 150)
-			secondDone <- err
-		}()
-		synctest.Wait()
+		firstDone := startPreviousRead(first, srv)
+		secondDone := startPreviousRead(second, srv)
 		require.EqualValues(t, 1, backend.reads.Load())
 
 		cancelFirst()
@@ -1381,68 +1406,6 @@ func TestWatchPreviousReadCancelsWhenLastWaiterLeaves(t *testing.T) {
 		synctest.Wait()
 		require.Equal(t, codes.Canceled, status.Code(<-secondDone))
 		require.Len(t, canceled, 1, "the final waiter must cancel the backend read")
-	})
-}
-
-type panickingPreviousReadBackend struct {
-	legacyWatchBackend
-}
-
-func (*panickingPreviousReadBackend) ReadResource(context.Context, *resourcepb.ReadRequest) *BackendReadResponse {
-	panic("previous read failed")
-}
-
-func TestWatchPreviousReadPanicReturnsInternal(t *testing.T) {
-	synctest.Test(t, func(t *testing.T) {
-		events := make(chan *WrittenEvent)
-		defer close(events)
-		srv := initWatchServerWithSeededWatches(t, &panickingPreviousReadBackend{legacyWatchBackend{events: events}}, false)
-		ctx := authlib.WithAuthInfo(t.Context(), newWatchTestUser())
-		stream := newMockWatchServer(ctx)
-		req := bookmarkWatchRequest()
-		done := make(chan error, 1)
-		go func() { done <- srv.Watch(req, stream) }()
-		synctest.Wait()
-
-		event := bookmarkWrittenEvent(200)
-		event.PreviousRV = 150
-		events <- event
-		synctest.Wait()
-		require.Len(t, done, 1)
-		require.Equal(t, codes.Internal, status.Code(<-done))
-		require.Empty(t, stream.events)
-	})
-}
-
-type blockingPreviousReadAccess struct {
-	folderAccessClient
-}
-
-func (*blockingPreviousReadAccess) Check(ctx context.Context, _ authlib.AuthInfo, _ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
-	if _, ok := ctx.Deadline(); !ok {
-		return authlib.CheckResponse{}, errors.New("authorization has no deadline")
-	}
-	<-ctx.Done()
-	return authlib.CheckResponse{}, ctx.Err()
-}
-
-func TestWatchPreviousReadAuthorizationTimeout(t *testing.T) {
-	synctest.Test(t, func(t *testing.T) {
-		events := make(chan *WrittenEvent)
-		defer close(events)
-		backend := &previousReadBackend{legacyWatchBackend: legacyWatchBackend{events: events}}
-		srv := initWatchServerWithSeededWatches(t, backend, false)
-		srv.queueConfig.Timeout = 100 * time.Millisecond
-		srv.access = &blockingPreviousReadAccess{}
-		user := newWatchTestUser()
-		event := bookmarkWrittenEvent(200)
-		for range 2 {
-			start := time.Now()
-			_, err := srv.readPrevious(t.Context(), user, event.Key, 150)
-			require.Equal(t, codes.DeadlineExceeded, status.Code(err), "%v", err)
-			require.Equal(t, srv.queueConfig.Timeout, time.Since(start))
-		}
-		require.EqualValues(t, 1, backend.reads.Load(), "authorization must time out even on a cache hit")
 	})
 }
 
@@ -1459,223 +1422,206 @@ func (q *previousReadTestQueue) Enqueue(_ context.Context, _ string, run func())
 	return nil
 }
 
-type queuedPreviousReadAccess struct {
-	folderAccessClient
-	queue *previousReadTestQueue
-}
-
-func (a *queuedPreviousReadAccess) Check(context.Context, authlib.AuthInfo, authlib.CheckRequest, string) (authlib.CheckResponse, error) {
-	if !a.queue.running.Load() {
-		return authlib.CheckResponse{}, errors.New("authorization ran outside QoS")
-	}
-	return authlib.CheckResponse{Allowed: true}, nil
-}
-
 func TestWatchPreviousReadAuthorizesUnderQoS(t *testing.T) {
-	synctest.Test(t, func(t *testing.T) {
-		events := make(chan *WrittenEvent)
-		defer close(events)
-		backend := &previousReadBackend{legacyWatchBackend: legacyWatchBackend{events: events}}
-		srv := initWatchServerWithSeededWatches(t, backend, false)
-		queue := &previousReadTestQueue{}
-		srv.queue = queue
-		srv.access = &queuedPreviousReadAccess{queue: queue}
-		for i := range 2 {
-			rsp, err := srv.readPrevious(t.Context(), newWatchTestUser(), bookmarkWrittenEvent(200).Key, 150)
-			require.NoError(t, err)
-			require.EqualValues(t, 150, rsp.ResourceVersion)
-			require.EqualValues(t, i+1, queue.admissions.Load(), "each watch should use one QoS admission")
-		}
-		require.EqualValues(t, 1, backend.reads.Load(), "cache hits must still authorize through QoS")
-	})
-}
+	for _, tc := range []struct {
+		name string
+		wait bool
+	}{{"successful", false}, {"deadline", true}} {
+		t.Run(tc.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				srv, backend := newPreviousReadTestServer(t, nil)
+				queue := &previousReadTestQueue{}
+				srv.queue = queue
+				srv.queueConfig.Timeout = 100 * time.Millisecond
+				srv.access = previousReadAccess{srv.access, func(ctx context.Context, _ authlib.AuthInfo, _ string) (authlib.CheckResponse, error) {
+					if !queue.running.Load() {
+						return authlib.CheckResponse{}, errors.New("authorization ran outside QoS")
+					}
+					if tc.wait {
+						if _, ok := ctx.Deadline(); !ok {
+							return authlib.CheckResponse{}, errors.New("authorization has no deadline")
+						}
+						<-ctx.Done()
+						return authlib.CheckResponse{}, ctx.Err()
+					}
+					return allow()
+				}}
 
-type timingOutPreviousReadBackend struct {
-	previousReadBackend
-	attempts       atomic.Int64
-	retryDelay     time.Duration
-	retryDeadlines chan<- time.Time
-}
-
-func (b *timingOutPreviousReadBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *BackendReadResponse {
-	if b.attempts.Add(1) == 1 {
-		<-ctx.Done()
-		return nil
+				for i := range 2 {
+					start := time.Now()
+					rsp, err := readPreviousForTest(t.Context(), srv)
+					if tc.wait {
+						require.Equal(t, codes.DeadlineExceeded, status.Code(err), "%v", err)
+						require.Equal(t, srv.queueConfig.Timeout, time.Since(start))
+					} else {
+						require.NoError(t, err)
+						require.EqualValues(t, previousReadTestRV, rsp.ResourceVersion)
+					}
+					// The watch can report its deadline before the inline callback unwinds.
+					synctest.Wait()
+					require.EqualValues(t, i+1, queue.admissions.Load(), "each watch should use one QoS admission")
+				}
+				require.EqualValues(t, 1, backend.reads.Load(), "the second watch must authorize the cached revision")
+			})
+		})
 	}
-	if b.retryDeadlines != nil {
-		deadline, _ := ctx.Deadline()
-		b.retryDeadlines <- deadline
-	}
-	if b.retryDelay > 0 {
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-time.After(b.retryDelay):
-		}
-	}
-	return b.previousReadBackend.ReadResource(ctx, req)
-}
-
-func TestWatchPreviousReadRetriesSharedQueueTimeout(t *testing.T) {
-	synctest.Test(t, func(t *testing.T) {
-		events := make(chan *WrittenEvent)
-		defer close(events)
-		retryDeadlines := make(chan time.Time, 1)
-		backend := &timingOutPreviousReadBackend{
-			previousReadBackend: previousReadBackend{legacyWatchBackend: legacyWatchBackend{events: events}},
-			retryDeadlines:      retryDeadlines,
-		}
-		srv := initWatchServerWithSeededWatches(t, backend, false)
-		const budget = 100 * time.Millisecond
-		srv.queueConfig.Timeout = budget
-		key := bookmarkWrittenEvent(200).Key
-		user := newWatchTestUser()
-		srv.access = &folderAccessClient{folders: map[string][]string{user.GetUID(): {"a"}}}
-		first := make(chan error, 1)
-		go func() {
-			_, err := srv.readPrevious(t.Context(), user, key, 150)
-			first <- err
-		}()
-		synctest.Wait()
-		require.EqualValues(t, 1, backend.attempts.Load())
-
-		time.Sleep(budget / 2)
-		deadline := time.Now().Add(budget)
-		rsp, err := srv.readPrevious(t.Context(), user, key, 150)
-		require.NoError(t, err)
-		require.EqualValues(t, 150, rsp.ResourceVersion)
-		require.Equal(t, deadline, <-retryDeadlines, "retry must use the late caller's remaining budget")
-		require.Equal(t, codes.DeadlineExceeded, status.Code(<-first))
-	})
 }
 
 func TestWatchPreviousReadRetriesUseIndependentDeadlines(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		events := make(chan *WrittenEvent)
-		defer close(events)
-		backend := &timingOutPreviousReadBackend{
-			previousReadBackend: previousReadBackend{legacyWatchBackend: legacyWatchBackend{events: events}},
-			retryDelay:          2 * time.Millisecond,
-		}
-		srv := initWatchServerWithSeededWatches(t, backend, false)
 		const budget = 100 * time.Millisecond
+		retryDeadlines := make(chan time.Time, 2)
+		srv, backend := newPreviousReadTestServer(t, func(ctx context.Context, attempt int64) {
+			if attempt == 1 {
+				<-ctx.Done()
+				return
+			}
+			deadline, _ := ctx.Deadline()
+			retryDeadlines <- deadline
+			select {
+			case <-ctx.Done():
+			case <-time.After(2 * time.Millisecond):
+			}
+		})
 		srv.queueConfig.Timeout = budget
-		key := bookmarkWrittenEvent(200).Key
-		user := newWatchTestUser()
-		srv.access = &folderAccessClient{folders: map[string][]string{user.GetUID(): {"a"}}}
-		startRead := func() <-chan error {
-			done := make(chan error, 1)
-			go func() {
-				_, err := srv.readPrevious(t.Context(), user, key, 150)
-				done <- err
-			}()
-			synctest.Wait()
-			return done
-		}
 
-		first := startRead()
+		first := startPreviousRead(t.Context(), srv)
 		time.Sleep(time.Millisecond)
-		early := startRead()
+		earlyDeadline := time.Now().Add(budget)
+		early := startPreviousRead(t.Context(), srv)
 		time.Sleep(budget/2 - time.Millisecond)
-		late := startRead()
-		require.EqualValues(t, 1, backend.attempts.Load(), "all three callers initially share a read")
+		lateDeadline := time.Now().Add(budget)
+		require.EqualValues(t, 1, backend.reads.Load(), "the first read is still in flight")
 
+		rsp, err := readPreviousForTest(t.Context(), srv)
+		require.NoError(t, err, "the late caller has time for its own retry")
+		require.EqualValues(t, previousReadTestRV, rsp.ResourceVersion)
 		require.Equal(t, codes.DeadlineExceeded, status.Code(<-first))
 		require.Equal(t, codes.DeadlineExceeded, status.Code(<-early))
-		require.NoError(t, <-late, "the late caller has enough time for its own retry")
-		require.EqualValues(t, 3, backend.attempts.Load(), "both followers must start independent retries")
+		require.EqualValues(t, 3, backend.reads.Load(), "both followers must start independent retries")
+		require.ElementsMatch(t, []time.Time{earlyDeadline, lateDeadline}, []time.Time{<-retryDeadlines, <-retryDeadlines})
 	})
 }
 
-func loadPreviousReadForTest(ctx context.Context, p *previousReads, key *resourcepb.ResourceKey, rv int64, load func() *BackendReadResponse) (*BackendReadResponse, error) {
-	result := p.read(ctx, key, rv, func(_ context.Context, publish func(*BackendReadResponse)) previousReadResult {
-		rsp := load()
-		publish(rsp)
-		return previousReadResult{backend: rsp}
+func TestWatchPreviousReadStopsWaitingForStalledInlineRetry(t *testing.T) {
+	for _, stalled := range []string{"backend", "authorization"} {
+		t.Run(stalled, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				const budget = 100 * time.Millisecond
+				release := make(chan struct{})
+				defer close(release)
+				srv, backend := newPreviousReadTestServer(t, func(ctx context.Context, attempt int64) {
+					if attempt == 1 {
+						<-ctx.Done()
+					} else if stalled == "backend" {
+						<-release
+					}
+				})
+				if stalled == "authorization" {
+					srv.access = previousReadAccess{srv.access, func(context.Context, authlib.AuthInfo, string) (authlib.CheckResponse, error) {
+						<-release
+						return allow()
+					}}
+				}
+				srv.queueConfig.Timeout = budget
+
+				first := startPreviousRead(t.Context(), srv)
+				time.Sleep(budget / 2)
+				late := startPreviousRead(t.Context(), srv)
+				time.Sleep(budget)
+				synctest.Wait()
+				require.EqualValues(t, 2, backend.reads.Load())
+				require.Equal(t, codes.DeadlineExceeded, status.Code(<-first))
+				require.Len(t, late, 1, "the late watch must return while its retry is still blocked")
+				require.Equal(t, codes.DeadlineExceeded, status.Code(<-late))
+			})
+		})
+	}
+}
+
+type heldPreviousReadQueue chan func()
+
+func (q heldPreviousReadQueue) Enqueue(ctx context.Context, _ string, run func()) error {
+	select {
+	case q <- run:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
+func TestWatchPreviousReadRetryRechecksCacheAfterAdmission(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		const budget = 100 * time.Millisecond
+		srv, backend := newPreviousReadTestServer(t, func(ctx context.Context, attempt int64) {
+			if attempt == 1 {
+				<-ctx.Done()
+			}
+		})
+		srv.queueConfig.Timeout = budget
+		queue := make(heldPreviousReadQueue, 2)
+		srv.queue = queue
+		checks := 0
+		srv.access = previousReadAccess{srv.access, func(context.Context, authlib.AuthInfo, string) (authlib.CheckResponse, error) {
+			checks++
+			return allow()
+		}}
+
+		first := startPreviousRead(t.Context(), srv)
+		require.Len(t, queue, 1)
+		go (<-queue)()
+		synctest.Wait()
+		time.Sleep(budget / 2)
+		lateA, lateB := startPreviousRead(t.Context(), srv), startPreviousRead(t.Context(), srv)
+		time.Sleep(budget / 2)
+		synctest.Wait()
+		require.Equal(t, codes.DeadlineExceeded, status.Code(<-first))
+		require.Len(t, queue, 2, "both retries reached the queue before either one completed")
+
+		(<-queue)()
+		(<-queue)()
+		synctest.Wait()
+		require.NoError(t, <-lateA)
+		require.NoError(t, <-lateB)
+		require.EqualValues(t, 2, backend.reads.Load(), "the second admitted retry must use the cached result")
+		require.Equal(t, 2, checks, "both callers must still authorize the revision")
 	})
-	return result.backend, result.err
-}
-
-func TestPreviousReadsDontCacheNonExactRevision(t *testing.T) {
-	p := newPreviousReads()
-	key := bookmarkWrittenEvent(200).Key
-	loads := 0
-	load := func() *BackendReadResponse {
-		loads++
-		if loads == 1 {
-			return &BackendReadResponse{ResourceVersion: 100}
-		}
-		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusNotFound}}
-	}
-	rsp, err := loadPreviousReadForTest(t.Context(), p, key, 150, load)
-	require.NoError(t, err)
-	require.EqualValues(t, 100, rsp.ResourceVersion)
-	rsp, err = loadPreviousReadForTest(t.Context(), p, key, 150, load)
-	require.NoError(t, err)
-	require.NotNil(t, rsp.Error)
-	require.EqualValues(t, http.StatusNotFound, rsp.Error.Code)
-}
-
-func TestPreviousReadsDontCacheOversizedRevision(t *testing.T) {
-	p := newPreviousReads()
-	key := bookmarkWrittenEvent(1).Key
-	small := &BackendReadResponse{ResourceVersion: 1, Value: []byte("small")}
-	large := &BackendReadResponse{ResourceVersion: 2, Value: make([]byte, 1, previousReadsMaxBytes+1)}
-	for _, tc := range []struct {
-		rv   int64
-		want *BackendReadResponse
-	}{{1, small}, {2, large}} {
-		got, err := loadPreviousReadForTest(t.Context(), p, key, tc.rv, func() *BackendReadResponse { return tc.want })
-		require.NoError(t, err)
-		require.Same(t, tc.want, got)
-	}
-
-	readAgain := func(rv int64, fallback *BackendReadResponse) *BackendReadResponse {
-		got, err := loadPreviousReadForTest(t.Context(), p, key, rv, func() *BackendReadResponse { return fallback })
-		require.NoError(t, err)
-		return got
-	}
-	require.Same(t, small, readAgain(2, small), "oversized revisions must be loaded again")
-	require.Same(t, small, readAgain(1, large), "an oversized read must preserve existing entries")
 }
 
 func TestPreviousReadsCache(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		p := newPreviousReads()
-		key := &resourcepb.ResourceKey{Namespace: "ns", Group: "g", Resource: "r", Name: "n"}
-		loads := 0
-		next := &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError}}
-		read := func(rv int64) *BackendReadResponse {
-			rsp, err := loadPreviousReadForTest(t.Context(), p, key, rv, func() *BackendReadResponse {
-				loads++
-				read := *next
-				read.ResourceVersion = rv
-				return &read
+		key := bookmarkWrittenEvent(200).Key
+		read := func(rv int64, next *BackendReadResponse) *BackendReadResponse {
+			result := p.read(t.Context(), key, rv, func(_ context.Context, lookup previousReadLookup) previousReadResult {
+				return previousReadResult{backend: lookup(func() *BackendReadResponse { return next })}
 			})
-			require.NoError(t, err)
-			return rsp
+			require.NoError(t, result.err)
+			return result.backend
 		}
+		transient := &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError}}
+		missing := &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusNotFound}}
+		older := &BackendReadResponse{ResourceVersion: 1}
 
-		read(1)
-		read(1)
-		require.Equal(t, 2, loads, "transient errors must be retried")
-
-		next = &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusNotFound}}
-		read(1)
-		read(1)
-		require.Equal(t, 3, loads, "missing revisions stay missing")
-
+		require.Same(t, transient, read(2, transient))
+		require.Same(t, older, read(2, older), "transient errors must be retried")
+		require.Same(t, missing, read(2, missing), "a non-exact revision must not mask a later NotFound")
+		require.Same(t, missing, read(2, transient), "confirmed misses stay cached")
 		time.Sleep(previousReadsTTL + time.Second)
-		read(1)
-		require.Equal(t, 4, loads, "expired reads are loaded again")
+		require.Same(t, transient, read(2, transient), "expired reads are loaded again")
 
-		next = &BackendReadResponse{Value: make([]byte, previousReadsMaxBytes/2+1)}
-		read(2)
-		read(3)
-		require.Equal(t, 6, loads)
-		read(3)
-		require.Equal(t, 6, loads, "the newest read stays")
-		read(2)
-		require.Equal(t, 7, loads, "the byte limit drops the oldest reads")
+		small := &BackendReadResponse{ResourceVersion: 1, Value: []byte("small")}
+		oversized := &BackendReadResponse{ResourceVersion: 2, Value: make([]byte, 1, previousReadsMaxBytes+1)}
+		require.Same(t, small, read(1, small))
+		require.Same(t, oversized, read(2, oversized))
+		require.Same(t, transient, read(2, transient), "an oversized allocation must be loaded again")
+		require.Same(t, small, read(1, transient), "an oversized read must preserve existing entries")
+
+		first := &BackendReadResponse{ResourceVersion: 3, Value: make([]byte, previousReadsMaxBytes/2+1)}
+		second := &BackendReadResponse{ResourceVersion: 4, Value: make([]byte, previousReadsMaxBytes/2+1)}
+		require.Same(t, first, read(3, first))
+		require.Same(t, second, read(4, second))
+		require.Same(t, second, read(4, transient), "the newest read stays")
+		require.Same(t, transient, read(3, transient), "the byte limit drops the oldest reads")
 	})
 }
