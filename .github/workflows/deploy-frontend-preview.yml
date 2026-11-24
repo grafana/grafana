@@ -49,6 +49,7 @@ jobs:
           REPO: ${{ github.repository }}
           # Forks require a fresh /deploy-to-fs comment from a user account, not a bot or a rerun.
           ALLOW_FORK: ${{ github.event_name == 'issue_comment' && github.run_attempt == 1 && github.event.comment.user.type == 'User' }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
         run: |
           set -euo pipefail
 
@@ -62,6 +63,19 @@ jobs:
             is_fork=false
           elif [ -z "$head_repo" ] || [ "$ALLOW_FORK" != "true" ]; then
             exit 0
+          else
+            command_pattern='^/deploy-to-fs[[:blank:]]+([0-9a-fA-F]{40})[[:space:]]*$'
+            shopt -s nocasematch
+            if [[ ! "$COMMENT_BODY" =~ $command_pattern ]]; then
+              echo "::error::For a fork preview, comment /deploy-to-fs followed by the full 40-character PR head SHA."
+              exit 1
+            fi
+            approved_sha=${BASH_REMATCH[1],,}
+            shopt -u nocasematch
+            if [[ "$approved_sha" != "$head_sha" ]]; then
+              echo "::error::The approved SHA is not the current PR head. Review the latest commit and post a new /deploy-to-fs comment with its full SHA."
+              exit 1
+            fi
           fi
 
           # A preview only swaps out the frontend assets served by an existing
@@ -105,7 +119,7 @@ jobs:
           message: |
             ### Frontend preview
 
-            ⏳ The preview build for commit ${{ steps.check.outputs.head-sha }} is queued.
+            ⏳ The preview build for commit `${{ steps.check.outputs.head-sha }}` is queued.
 
             ${{ steps.check.outputs.has-backend-changes == 'true' && '⚠️ **Warning:** this PR contains backend changes. The preview only swaps the frontend assets of an existing instance, so it may not work correctly.' || '' }}
 
@@ -327,10 +341,10 @@ jobs:
           message: |
             ### Frontend preview
 
-            ✅ The preview for commit ${{ needs.check.outputs.head-sha }} is live: **[open the preview](${{ steps.preview-url.outputs.url }})**.
+            ✅ The preview for commit `${{ needs.check.outputs.head-sha }}` is live: **[open the preview](${{ steps.preview-url.outputs.url }})**.
 
             ${{ needs.check.outputs.is-fork == 'true' && '- This preview runs fork code in your session on the preview stack. Open it only if you trust the commit listed above.' || '- Each new push to this PR builds and deploys the preview again automatically.' }}
-            ${{ needs.check.outputs.is-fork == 'true' && '- A Grafana org member must comment `/deploy-to-fs` again to build and deploy a newer commit.' || '- Share the above link for others to preview it in their browsers too.' }}
+            ${{ needs.check.outputs.is-fork == 'true' && '- To deploy a newer commit, a Grafana org member must comment `/deploy-to-fs <full head SHA>`.' || '- Share the above link for others to preview it in their browsers too.' }}
 
             ${{ needs.check.outputs.has-backend-changes == 'true' && '⚠️ **Warning:** this PR contains backend changes. The preview only swaps the frontend assets of an existing instance, so it may not work correctly.' || '' }}
 
