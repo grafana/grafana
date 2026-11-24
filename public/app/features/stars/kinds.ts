@@ -4,11 +4,11 @@ import { uniqBy } from 'lodash';
 import { type IconName } from '@grafana/data';
 import { type KindInfo } from '@grafana/runtime/unstable';
 import { collectionsAPIv1alpha1, type StarsList } from 'app/api/clients/collections/v1alpha1';
-import { CORE_KINDS, findKind } from 'app/core/kinds/coreKinds';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 import { discoveryResources, getAPIGroupDiscoveryList } from 'app/features/apiserver/discovery';
 import { dispatch, store } from 'app/store/store';
 
-import { appKindListPathResolver } from './appKindPages';
+import { appKindListPath } from './appKindPages';
 
 /**
  * What the starred views read of any kind, under the names the shared kind description gives them. A core kind
@@ -99,24 +99,14 @@ interface AppKindDiscovery {
   complete: boolean;
 }
 
-/**
- * The app kinds Grafana can show as starred: every namespaced kind API discovery lists that is not a core
- * kind, with a plugin page to link to.
- */
+/** The app kinds Grafana can show as starred: those it has a page for, as API discovery serves them. */
 async function discoverAppKinds(): Promise<AppKindDiscovery> {
   const apis = await getAPIGroupDiscoveryList();
-  // Discovery lists a group's versions by preference, so a kind's first entry is its preferred version. A core
-  // kind is described by the kind table, whatever a plugin names its pages
-  const served = uniqBy(
-    discoveryResources(apis).filter(
-      ({ responseKind: { group, kind }, scope }) => scope === 'Namespaced' && !findKind(group, kind)
-    ),
-    ({ responseKind: { group, kind } }) => `${group}/${kind}`
-  );
-  const listPathFor = appKindListPathResolver(served.map(({ resource }) => resource));
+  // Discovery lists a group's versions by preference, so a kind's first entry is its preferred version
+  const served = uniqBy(discoveryResources(apis), ({ responseKind: { group, kind } }) => `${group}/${kind}`);
   return {
     kinds: served.flatMap(({ responseKind: { group, kind, version }, resource }) => {
-      const listPath = listPathFor(resource);
+      const listPath = appKindListPath(group, kind);
       return listPath ? [{ group, kind, version, resource, listPath }] : [];
     }),
     // A group whose backend could not be read is listed stale, with its kinds missing or out of date
@@ -128,8 +118,8 @@ const appKindsAPI = collectionsAPIv1alpha1.injectEndpoints({
   endpoints: (build) => ({
     /**
      * Discovered once per page load and kept for its whole life: what an instance serves only changes
-     * with a deploy. A failed discovery is retried by the next caller, since RTK re-runs a rejected query.
-     * An incomplete one carries the tag of the star set, so it is run again whenever the stars are read again.
+     * with a deploy. A failed or incomplete discovery carries the tag of the star set, so it is run again
+     * whenever the stars are read again.
      */
     discoverAppKinds: build.query<AppKindDiscovery, void>({
       queryFn: async () => {
@@ -140,7 +130,7 @@ const appKindsAPI = collectionsAPIv1alpha1.injectEndpoints({
           return { error };
         }
       },
-      providesTags: (discovery) => (discovery?.complete === false ? ['Stars'] : []),
+      providesTags: (discovery) => (discovery?.complete ? [] : ['Stars']),
       keepUnusedDataFor: Infinity,
     }),
   }),
@@ -162,15 +152,15 @@ export function getStarredKinds(): readonly StarredKind[] {
   return store ? selectStarredKinds(store.getState()) : GRAFANA_KINDS;
 }
 
-/** Whether the stars hold an object of a kind other than Grafana's own, which only discovery can describe. */
+/** Whether the stars hold an object of an app kind Grafana has a page for; discovery tells how it is served. */
 export function starsHoldAppKind(stars: StarsList | undefined): boolean {
   const resources = stars?.items?.[0]?.spec.resource ?? [];
-  return resources.some(({ group, kind, names }) => names.length > 0 && !findKind(group, kind));
+  return resources.some(({ group, kind, names }) => names.length > 0 && appKindListPath(group, kind) !== undefined);
 }
 
 /**
  * Discovers the app kinds when the stars hold an object of one, or waits for the discovery already running;
- * stars of Grafana's own kinds need no discovery. Resolves either way.
+ * other stars need no discovery. Resolves either way.
  */
 export async function loadStarredKindsFor(stars: StarsList | undefined): Promise<void> {
   if (starsHoldAppKind(stars)) {
@@ -211,4 +201,14 @@ export function partitionStarred(resources: StarredNames[]): {
     }
   }
   return { indexed, app };
+}
+
+/**
+ * Tells whether an object is starred, by the kind string of its search row and its uid. A uid is unique within
+ * its kind only, and the dashboard index matches a starred uid against every kind it is asked for, so it also
+ * answers with an object of another kind that shares the uid.
+ */
+export function starredMatcher(byKind: readonly StarredNamesOfKind[]): (searchKind: string, uid: string) => boolean {
+  const starred = new Map(byKind.map(({ kind, names }) => [kind.searchKind, new Set(names)]));
+  return (searchKind, uid) => starred.get(searchKind)?.has(uid) ?? false;
 }

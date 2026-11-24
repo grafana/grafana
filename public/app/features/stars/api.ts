@@ -13,6 +13,7 @@ import {
   getStarredKinds,
   type KindSearchStarredKind,
   partitionStarred,
+  starredMatcher,
   type StarredNames,
   type StarredNamesOfKind,
 } from './kinds';
@@ -37,18 +38,15 @@ async function searchDashboardIndex(
     return [];
   }
   const kinds = byKind.map(({ kind }) => kind.searchKind);
-  // A uid is matched against every kind asked for, so a resource of another kind that shares a starred uid
-  // comes back too: leave it room in the limit, drop it after.
-  const starredBySearchKind = new Map(byKind.map(({ kind, names }) => [kind.searchKind, new Set(names)]));
+  const isStarred = starredMatcher(byKind);
   const searcher = getGrafanaSearcher();
   const responses = await Promise.all(
     chunk(uids, NAMES_PER_REQUEST).map((names) =>
+      // A resource of another kind that shares a starred uid comes back too: leave it room in the limit
       searcher.search({ name: names, kind: kinds, limit: names.length * kinds.length })
     )
   );
-  return responses
-    .flatMap((response) => response.view.toArray())
-    .filter((row) => starredBySearchKind.get(row.kind)?.has(row.uid));
+  return responses.flatMap((response) => response.view.toArray()).filter((row) => isStarred(row.kind, row.uid));
 }
 
 /** Rows of the app kinds, each through its own search endpoint; a kind whose API is unavailable yields none. */

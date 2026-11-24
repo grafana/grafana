@@ -20,7 +20,7 @@ import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 import kbn from 'app/core/utils/kbn';
 import { searchAppKindHits } from 'app/features/stars/kindSearch';
-import { loadStarredKindsFor, partitionStarred } from 'app/features/stars/kinds';
+import { loadStarredKindsFor, partitionStarred, starredMatcher } from 'app/features/stars/kinds';
 import { canUseStars, userStarsFieldSelector } from 'app/features/stars/utils';
 import { dispatch } from 'app/store/store';
 
@@ -107,58 +107,71 @@ export class UnifiedSearcher implements GrafanaSearcher {
     const { indexed, app } = partitionStarred(stars?.items?.[0]?.spec.resource ?? []);
     const indexNames = [...new Set(indexed.flatMap(({ names }) => names))];
     const indexQuery = { ...query, name: indexNames, query: query.query ?? '*' };
+    const searchesApps = app.length > 0 && !isDashboardOnlyQuery(query);
 
-    if (app.length === 0 || isDashboardOnlyQuery(query)) {
-      return indexNames.length > 0 ? this.doSearchQuery(indexQuery) : noDataResponse();
+    if (indexNames.length === 0 && !searchesApps) {
+      return noDataResponse();
+    }
+    if (query.deleted) {
+      // The trash is listed whole by its own endpoint, and holds dashboards alone
+      return this.doSearchQuery(indexQuery);
     }
 
     const sort = query.sort ?? '';
-    const uri = await this.newRequest(indexQuery);
-    const [index, appHits] = await Promise.all([
-      indexNames.length > 0 ? this.fetchResponse(uri) : Promise.resolve<SearchAPIResponse>({ hits: [], totalHits: 0 }),
-      searchAppKindHits(
-        app,
-        {
-          text: query.query,
-          tags: query.tags,
-          folder: query.location || undefined,
-          createdBy: query.createdBy,
-          ownerReferences: query.ownerReference,
-        },
-        // The app rows trail the server-sorted index rows, so a title sort can only order them among themselves
-        toSortParam(sort) === '-title' ? 'desc' : 'asc'
-      ),
-    ]);
-    const total = index.totalHits + appHits.length;
-    if (total === 0) {
-      return noDataResponse();
-    }
-
-    // One row sequence: the index's server pages, then the app rows, which the index does not hold. The app rows
-    // start where the index ends: at its first count, or sooner once it answers a page empty, as it does when a
-    // starred item is deleted between two pages
     const limit = query.limit ?? pageSize;
-    let indexEnd = index.totalHits;
+    const uri = await this.newRequest(indexQuery);
+    const [firstIndexPage, appHits] = await Promise.all([
+      indexNames.length > 0 ? this.fetchResponse(uri) : undefined,
+      searchesApps
+        ? searchAppKindHits(
+            app,
+            {
+              text: query.query,
+              tags: query.tags,
+              folder: query.location || undefined,
+              createdBy: query.createdBy,
+              ownerReferences: query.ownerReference,
+            },
+            // The app rows trail the server-sorted index rows, so a title sort can only order them among themselves
+            toSortParam(sort) === '-title' ? 'desc' : 'asc'
+          )
+        : [],
+    ]);
+
+    // One row sequence: the index's pages, less the rows of another kind that share a starred uid, then the app
+    // rows, which the index does not hold. The index ends at its first count, or sooner once it answers a page
+    // empty, as it does when it counted a row the user cannot read or one was deleted since.
+    const isStarred = starredMatcher(indexed);
+    let prefetched = firstIndexPage;
+    let indexEnd = firstIndexPage?.totalHits ?? 0;
+    // The rows read from the index so far, and how many of them are shown
+    let indexRead = 0;
+    let indexShown = 0;
     const page = async (offset: number): Promise<SearchAPIResponse> => {
-      if (offset < indexEnd) {
-        const rsp = await this.fetchResponse(`${uri}&offset=${offset}`);
-        if (rsp.hits.length > 0) {
-          return rsp;
+      const hits: SearchHit[] = [];
+      while (hits.length === 0 && indexRead < indexEnd) {
+        const rsp = prefetched ?? (await this.fetchResponse(`${uri}&offset=${indexRead}`));
+        prefetched = undefined;
+        if (rsp.hits.length === 0) {
+          indexEnd = indexRead;
+          break;
         }
-        indexEnd = offset;
+        const starred = rsp.hits.filter((hit) => isStarred(searchKindOf(hit), hit.name));
+        hits.push(...starred);
+        indexRead += rsp.hits.length;
+        indexShown += starred.length;
       }
-      const start = offset - indexEnd;
-      return { hits: appHits.slice(start, start + limit), totalHits: total };
+      const indexLeft = Math.max(indexEnd - indexRead, 0);
+      if (indexLeft === 0) {
+        // Filled up to the limit with app rows once the index has none left
+        const start = offset + hits.length - indexShown;
+        hits.push(...appHits.slice(start, start + limit - hits.length));
+      }
+      return { hits, totalHits: indexShown + indexLeft + appHits.length };
     };
-    // The first page is filled up to the limit with app rows once the index has none left: a response takes
-    // its columns and row count from its first page, so an empty one would hide the app rows behind it
-    const indexExhausted = index.hits.length >= index.totalHits;
-    const first: SearchAPIResponse = {
-      ...index,
-      hits: indexExhausted ? [...index.hits, ...appHits.slice(0, limit - index.hits.length)] : index.hits,
-      totalHits: total,
-    };
-    return this.toQueryResponse(first, sort, page);
+    // A response takes its columns from its first page, so that page holds rows whenever any row is starred
+    const first = await page(0);
+    return first.hits.length > 0 ? this.toQueryResponse(first, sort, page) : noDataResponse();
   }
 
   async tags(query: SearchQuery): Promise<TermCount[]> {
@@ -169,12 +182,25 @@ export class UnifiedSearcher implements GrafanaSearcher {
   }
 
   getLocationInfo() {
-    return this.locationInfo;
+    return this.namedLocations();
   }
 
-  reloadLocationInfo() {
+  async reloadLocationInfo(): Promise<Record<string, LocationInfo>> {
     this.locationInfo = loadLocationInfo();
-    return this.locationInfo;
+    return (await this.locationInfo) ?? builtInLocations();
+  }
+
+  /**
+   * The folders' names, by uid, for showing where a row is. They are best effort: when they cannot be read, only
+   * the built-in locations are named, and the rows are listed all the same. A failed lookup is not kept: the
+   * reader that finds one looks the names up once more.
+   */
+  private async namedLocations(): Promise<Record<string, LocationInfo>> {
+    const lookup = this.locationInfo;
+    if ((await lookup) === undefined && this.locationInfo === lookup) {
+      this.locationInfo = loadLocationInfo();
+    }
+    return (await this.locationInfo) ?? builtInLocations();
   }
 
   // TODO: Implement this correctly
@@ -230,7 +256,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
       locationInfo: customMeta?.locationInfo ?? {},
       sortBy: customMeta?.sortBy,
     };
-    meta.locationInfo = await this.locationInfo;
+    meta.locationInfo = await this.namedLocations();
 
     // Update the DataFrame meta to point to the typed meta object
     if (first.meta) {
@@ -263,15 +289,18 @@ export class UnifiedSearcher implements GrafanaSearcher {
         }
         const resp = await fetchPage(offset);
         const frame = toDashboardResults(resp, sort);
-        // Fewer rows are left than the first page counted, as when one is deleted since: asking for this page
-        // again would never end
         if (frame.length === 0) {
+          // Fewer rows are left than were counted, as when one is deleted since: the rows end here, and asking
+          // for this page again would never end
+          meta.count = offset;
           return;
         }
 
         // We append the frames and align the fields here, but if there are new fields, view won't know about them
         // and won't be accessible by doing `view.get(0).newField` for example
         appendFrame(view.dataFrame, frame);
+        // The count is the latest page's: an earlier one may count rows the user cannot read, or that are gone
+        meta.count = Math.max(resp.totalHits, view.dataFrame.length);
 
         // Add all the location lookup info
         const submeta = frame.meta?.custom;
@@ -287,7 +316,10 @@ export class UnifiedSearcher implements GrafanaSearcher {
     };
 
     return {
-      totalRows: meta.count ?? first.length,
+      // Read on each access: a later page can correct the count of the first
+      get totalRows() {
+        return meta.count;
+      },
 
       // This will be mutated when loadMoreItems is called.
       view,
@@ -328,6 +360,9 @@ export class UnifiedSearcher implements GrafanaSearcher {
     }
 
     const locationInfo = await this.locationInfo;
+    if (!locationInfo) {
+      return rsp;
+    }
     const hits = rsp.hits.map((hit) => {
       // Root-parented hits arrive with "" or "general" — neither lives in
       // locationInfo, since the root folder is synthetic. Collapse to
@@ -350,6 +385,10 @@ export class UnifiedSearcher implements GrafanaSearcher {
 
   async isFolderCacheStale(hits: SearchHit[]): Promise<boolean> {
     const locationInfo = await this.locationInfo;
+    // The names could not be read, so no folder can be told missing from them
+    if (!locationInfo) {
+      return false;
+    }
     return hits.some((hit) => {
       // Root-parented hits ("" or "general") never appear in locationInfo —
       // skip them so we don't reload the cache and remap them to "Shared with me".
@@ -493,6 +532,11 @@ function getSortFieldDisplayName(name: string) {
   return name;
 }
 
+/** The kind string of a hit's row: its own, or for the dashboard index the singular of its plural resource. */
+function searchKindOf(hit: SearchHit): string {
+  return hit.kind ?? hit.resource.substring(0, hit.resource.length - 1);
+}
+
 export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFrame {
   const hits = rsp.hits;
   if (hits.length < 1) {
@@ -525,7 +569,7 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
       folder,
       location,
       name: hit.title, // 🤯 FIXME hit.name is k8s name, eg grafana dashboards UID
-      kind: hit.kind ?? hit.resource.substring(0, hit.resource.length - 1), // dashboard "kind" is not plural
+      kind: searchKindOf(hit),
       managedBy: hit.managedBy,
       ...field,
     };
@@ -548,36 +592,44 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
   return frame;
 }
 
-async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
+/** The locations every search names: the root folder, and the one standing in for folders the user cannot see. */
+function builtInLocations(): Record<string, LocationInfo> {
+  return {
+    general: {
+      kind: 'folder',
+      name: 'Dashboards',
+      url: `${config.appSubUrl}/dashboards`,
+    }, // share location info with everyone
+    sharedwithme: {
+      kind: 'sharedwithme',
+      name: 'Shared with me',
+      url: '',
+    },
+  };
+}
+
+/** The folders' names by uid, or undefined when the request for them failed. */
+async function loadLocationInfo(): Promise<Record<string, LocationInfo> | undefined> {
   // TODO: use proper pagination and API client for search.
   // TODO: This tries to load all the folders upfront even though it may not be neccessary if user does not render all
   //  the search results.
   const uri = `${searchURI}?type=folder&limit=100000`;
-  const rsp = getBackendSrv()
-    .get<SearchAPIResponse>(uri)
-    .then((rsp) => {
-      const locationInfo: Record<string, LocationInfo> = {
-        general: {
-          kind: 'folder',
-          name: 'Dashboards',
-          url: `${config.appSubUrl}/dashboards`,
-        }, // share location info with everyone
-        sharedwithme: {
-          kind: 'sharedwithme',
-          name: 'Shared with me',
-          url: '',
-        },
-      };
-      for (const hit of rsp.hits) {
-        locationInfo[hit.name] = {
-          name: hit.title,
-          kind: 'folder',
-          url: toURL('folders', hit.name, hit.title),
-        };
-      }
-      return locationInfo;
-    });
-  return rsp;
+  let rsp: SearchAPIResponse;
+  try {
+    rsp = await getBackendSrv().get<SearchAPIResponse>(uri);
+  } catch {
+    // The names are best effort, and a failed request alerts the user on its own
+    return undefined;
+  }
+  const locationInfo = builtInLocations();
+  for (const hit of rsp.hits) {
+    locationInfo[hit.name] = {
+      name: hit.title,
+      kind: 'folder',
+      url: toURL('folders', hit.name, hit.title),
+    };
+  }
+  return locationInfo;
 }
 
 export function toURL(resource: string, name: string, title: string): string {

@@ -90,7 +90,7 @@ export interface QueryResponse {
   /** Checks if a row in the view needs to be added */
   isItemLoaded: (index: number) => boolean;
 
-  /** the total query results size */
+  /** The total query results size. A page loaded later can correct it, so read it again after loading more */
   totalRows: number;
 }
 

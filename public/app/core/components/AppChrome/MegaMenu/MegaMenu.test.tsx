@@ -11,7 +11,6 @@ import {
   customGetUserPreferencesHandler,
   customPatchUserPreferencesHandler,
   getFolderFixtures,
-  MOCK_STARRED_KIND_PAGE,
   MOCK_STARRED_KIND_SERVED,
   mockUserPreferences,
   setMockStarredDashboards,
@@ -823,17 +822,16 @@ describe('MegaMenu', () => {
   });
 
   it('renders a starred app object with its kind icon titled for screen readers, linking into the plugin', async () => {
-    const thingUuid = '7d0c6f1e-3b2a-4c5d-9e8f-0a1b2c3d4e5f';
+    const pageUuid = '7d0c6f1e-3b2a-4c5d-9e8f-0a1b2c3d4e5f';
     setMockStarredDashboards([]);
-    setMockStarredPluginKind(MOCK_STARRED_KIND_SERVED.group, MOCK_STARRED_KIND_SERVED.kind, [thingUuid]);
+    setMockStarredPluginKind(MOCK_STARRED_KIND_SERVED.group, MOCK_STARRED_KIND_SERVED.kind, [pageUuid]);
     server.use(
       getKindDiscoveryHandler(MOCK_STARRED_KIND_SERVED),
-      getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [{ name: thingUuid, title: 'Capacity review' }])
+      getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [{ name: pageUuid, title: 'Capacity review' }])
     );
     setupSearcher([]);
 
-    // The plugin's page in the nav tree is what links the kind into the plugin
-    const { user } = renderMegaMenu({ navBarTree: [...customisableNavTree, MOCK_STARRED_KIND_PAGE] });
+    const { user } = renderMegaMenu();
 
     await user.click(await screen.findByRole('button', { name: 'Expand section: Starred' }));
 
@@ -842,11 +840,11 @@ describe('MegaMenu', () => {
     const starredSection = within(screen.getByRole('link', { name: 'Starred' }).closest('li')!);
     expect(starredSection.getByRole('link', { name: 'Capacity review' })).toHaveAttribute(
       'href',
-      `/a/test-things-app/things/${thingUuid}`
+      `/a/grafana-assistant-app/pages/${pageUuid}`
     );
 
     // The kind icon doubles as the row's accessible kind, like the dashboard/folder icons do.
-    expect(starredSection.getByTitle('Thing')).toBe(starredSection.getByTestId('icon-cube'));
+    expect(starredSection.getByTitle('Page')).toBe(starredSection.getByTestId('icon-cube'));
   });
 
   it('reports a click on a starred row as a click on a starred item of its kind', async () => {
