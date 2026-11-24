@@ -2,6 +2,7 @@ import { cloneDeep } from 'lodash';
 
 import { type NavModelItem } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
+import { type StarredNavItem } from 'app/core/navtree/constants';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 
 import {
@@ -151,35 +152,19 @@ describe('enrichWithInteractionTracking', () => {
     jest.mocked(reportInteraction).mockClear();
   });
 
-  it('reports a starred folder click with itemKind folder', () => {
-    const item: NavModelItem = {
-      text: 'Folder 1',
-      id: 'starred/f1',
-      url: '/dashboards/f/f1/',
-      parentItem: { text: 'Starred', id: 'starred' },
+  it('reports the kind a starred leaf carries', () => {
+    const item: StarredNavItem = {
+      text: 'Thing 1',
+      id: 'starred/t1',
+      url: '/a/test-things-app/things/t1',
+      starredKind: 'things.ext.grafana.app/Thing',
     };
 
     enrichWithInteractionTracking(item, false).onClick?.();
 
     expect(reportInteraction).toHaveBeenCalledWith(
       'grafana_navigation_item_clicked',
-      expect.objectContaining({ itemIsStarred: true, itemKind: 'folder' })
-    );
-  });
-
-  it('reports a starred dashboard click with itemKind dashboard', () => {
-    const item: NavModelItem = {
-      text: 'Dashboard 1',
-      id: 'starred/d1',
-      url: '/d/d1',
-      parentItem: { text: 'Starred', id: 'starred' },
-    };
-
-    enrichWithInteractionTracking(item, false).onClick?.();
-
-    expect(reportInteraction).toHaveBeenCalledWith(
-      'grafana_navigation_item_clicked',
-      expect.objectContaining({ itemIsStarred: true, itemKind: 'dashboard' })
+      expect.objectContaining({ itemIsStarred: true, itemKind: 'things.ext.grafana.app/Thing' })
     );
   });
 
@@ -419,6 +404,12 @@ describe('hiding helpers', () => {
 
   describe('isHideable', () => {
     it('is true for sections and children, but false for Home/Bookmarks/Starred, create actions and starred sub-items', () => {
+      const starredLeaf: StarredNavItem = {
+        text: 'A dashboard',
+        id: 'starred/dashboard/abc',
+        url: '/d/abc',
+        starredKind: 'dashboard',
+      };
       expect(isHideable(tree[1])).toBe(true); // Explore (top-level)
       expect(isHideable({ text: 'Users', id: 'cfg/access/users', url: '/admin/users' })).toBe(true); // nested child
       // A plugin nav item with only a url (no id) is still hideable — keyed by its url.
@@ -430,7 +421,7 @@ describe('hiding helpers', () => {
       expect(isHideable({ text: 'New', id: 'dashboards/new', url: '/dashboard/new', isCreateAction: true })).toBe(
         false
       );
-      expect(isHideable({ text: 'A dashboard', id: 'starred/abc', url: '/d/abc' })).toBe(false);
+      expect(isHideable(starredLeaf)).toBe(false);
     });
   });
 
