@@ -131,16 +131,18 @@ _jobSchema: {
 		progressUpdates?: int32
 	}
 	#JobResourceSummary: {
-		group?:  string
-		kind?:   string
+		group?: string
+		kind?:  string
+		// The count (if known)
 		total?:  int64
 		create?: int64
 		update?: int64
 		delete?: int64
-		write?:  int64
 		// Create or update (export)
-		error?: int64
+		write?: int64
 		// The error count
+		error?: int64
+		// The warning count
 		warning?: int64
 		// No action required (useful for sync)
 		noop?: int64

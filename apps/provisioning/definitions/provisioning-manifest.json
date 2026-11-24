@@ -1414,7 +1414,7 @@
                                         "type": "integer"
                                     },
                                     "error": {
-                                        "description": "Create or update (export)",
+                                        "description": "The error count",
                                         "type": "integer"
                                     },
                                     "errors": {
@@ -1435,6 +1435,7 @@
                                         "type": "integer"
                                     },
                                     "total": {
+                                        "description": "The count (if known)",
                                         "type": "integer"
                                     },
                                     "totalChanges": {
@@ -1445,7 +1446,7 @@
                                         "type": "integer"
                                     },
                                     "warning": {
-                                        "description": "The error count",
+                                        "description": "The warning count",
                                         "type": "integer"
                                     },
                                     "warnings": {
@@ -1455,6 +1456,7 @@
                                         "type": "array"
                                     },
                                     "write": {
+                                        "description": "Create or update (export)",
                                         "type": "integer"
                                     }
                                 },
@@ -1845,7 +1847,7 @@
                                         "type": "integer"
                                     },
                                     "error": {
-                                        "description": "Create or update (export)",
+                                        "description": "The error count",
                                         "type": "integer"
                                     },
                                     "errors": {
@@ -1866,6 +1868,7 @@
                                         "type": "integer"
                                     },
                                     "total": {
+                                        "description": "The count (if known)",
                                         "type": "integer"
                                     },
                                     "totalChanges": {
@@ -1876,7 +1879,7 @@
                                         "type": "integer"
                                     },
                                     "warning": {
-                                        "description": "The error count",
+                                        "description": "The warning count",
                                         "type": "integer"
                                     },
                                     "warnings": {
@@ -1886,6 +1889,7 @@
                                         "type": "array"
                                     },
                                     "write": {
+                                        "description": "Create or update (export)",
                                         "type": "integer"
                                     }
                                 },
@@ -3578,7 +3582,7 @@
                                         "type": "integer"
                                     },
                                     "error": {
-                                        "description": "Create or update (export)",
+                                        "description": "The error count",
                                         "type": "integer"
                                     },
                                     "errors": {
@@ -3599,6 +3603,7 @@
                                         "type": "integer"
                                     },
                                     "total": {
+                                        "description": "The count (if known)",
                                         "type": "integer"
                                     },
                                     "totalChanges": {
@@ -3609,7 +3614,7 @@
                                         "type": "integer"
                                     },
                                     "warning": {
-                                        "description": "The error count",
+                                        "description": "The warning count",
                                         "type": "integer"
                                     },
                                     "warnings": {
@@ -3619,6 +3624,7 @@
                                         "type": "array"
                                     },
                                     "write": {
+                                        "description": "Create or update (export)",
                                         "type": "integer"
                                     }
                                 },
@@ -4009,7 +4015,7 @@
                                         "type": "integer"
                                     },
                                     "error": {
-                                        "description": "Create or update (export)",
+                                        "description": "The error count",
                                         "type": "integer"
                                     },
                                     "errors": {
@@ -4030,6 +4036,7 @@
                                         "type": "integer"
                                     },
                                     "total": {
+                                        "description": "The count (if known)",
                                         "type": "integer"
                                     },
                                     "totalChanges": {
@@ -4040,7 +4047,7 @@
                                         "type": "integer"
                                     },
                                     "warning": {
-                                        "description": "The error count",
+                                        "description": "The warning count",
                                         "type": "integer"
                                     },
                                     "warnings": {
@@ -4050,6 +4057,7 @@
                                         "type": "array"
                                     },
                                     "write": {
+                                        "description": "Create or update (export)",
                                         "type": "integer"
                                     }
                                 },
