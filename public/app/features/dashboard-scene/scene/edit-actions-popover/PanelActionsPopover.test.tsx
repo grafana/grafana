@@ -715,6 +715,8 @@ describe('<PanelActionsWrapper />', () => {
     });
 
     describe('with quick edits', () => {
+      // Lets a test make the plugin stop offering the Legend quick edit, as a plugin can as the panel changes.
+      let offersLegend = true;
       const withQuickEdits = getPanelPlugin({ id: 'with-quick-edits' })
         .setPanelOptions((builder) =>
           builder.addBooleanSwitch({
@@ -726,13 +728,19 @@ describe('<PanelActionsWrapper />', () => {
         )
         .setPresetsSupplier(() => [])
         .setQuickEdits(() => [
-          {
-            id: 'legend',
-            title: 'Legend',
-            icon: 'list-ul',
-            optionIds: ['legend.showLegend'],
-            summary: ({ options }) => ({ text: options.legend.showLegend ? 'Shown' : 'Hidden' }),
-          },
+          ...(offersLegend
+            ? [
+                {
+                  id: 'legend',
+                  title: 'Legend',
+                  icon: 'list-ul' as const,
+                  optionIds: ['legend.showLegend'],
+                  summary: ({ options }: { options: { legend: { showLegend: boolean } } }) => ({
+                    text: options.legend.showLegend ? 'Shown' : 'Hidden',
+                  }),
+                },
+              ]
+            : []),
           presetsQuickEdit(),
         ]);
       let deactivate: (() => void) | undefined;
@@ -755,6 +763,7 @@ describe('<PanelActionsWrapper />', () => {
       afterEach(() => {
         deactivate?.();
         deactivate = undefined;
+        offersLegend = true;
       });
 
       async function renderWithQuickEdits({ isEditing }: { isEditing: boolean }) {
@@ -790,6 +799,53 @@ describe('<PanelActionsWrapper />', () => {
 
         expect(panel.state.options).toEqual({ legend: { showLegend: false } });
         expect(within(getToolbar()).getByRole('button', { name: 'Legend: Hidden' })).toBeInTheDocument();
+      });
+
+      async function openLegendCard() {
+        const context = await renderWithQuickEdits({ isEditing: true });
+        await context.user.click(within(getToolbar()).getByRole('button', { name: 'Quick edits' }));
+        await context.user.click(within(getToolbar()).getByRole('button', { name: 'Legend: Shown' }));
+        return context;
+      }
+
+      test('closing a quick edit card with its close button keeps the popover open and refocuses its button', async () => {
+        const { user } = await openLegendCard();
+
+        await user.click(within(screen.getByRole('dialog', { name: 'Legend' })).getByRole('button', { name: 'Close' }));
+
+        expect(within(getToolbar()).getByRole('button', { name: 'Legend: Shown' })).toHaveFocus();
+      });
+
+      test('Escape on a quick edit card the pointer is over keeps the popover open and refocuses its button', async () => {
+        const { user } = await openLegendCard();
+
+        await user.hover(screen.getByRole('dialog', { name: 'Legend' }));
+        await user.keyboard('{Escape}');
+
+        expect(within(getToolbar()).getByRole('button', { name: 'Legend: Shown' })).toHaveFocus();
+      });
+
+      test('after a quick edit card closes, the popover closes once the pointer moves off the panel', async () => {
+        const { user } = await openLegendCard();
+        await user.click(within(screen.getByRole('dialog', { name: 'Legend' })).getByRole('button', { name: 'Close' }));
+        expect(getToolbar()).toBeInTheDocument();
+
+        await user.hover(document.body);
+
+        expect(screen.queryByRole('toolbar', { name: 'Panel actions' })).not.toBeInTheDocument();
+      });
+
+      test('when the open quick edit is no longer offered, the popover closes once the pointer moves off the panel', async () => {
+        const { panel, user } = await openLegendCard();
+
+        offersLegend = false;
+        act(() => panel.onOptionsChange({ legend: { showLegend: false } }));
+        expect(screen.queryByRole('dialog', { name: 'Legend' })).not.toBeInTheDocument();
+        // From the bar, as the button the pointer was on went with the quick edit.
+        await user.hover(getToolbar());
+        await user.hover(document.body);
+
+        expect(screen.queryByRole('toolbar', { name: 'Panel actions' })).not.toBeInTheDocument();
       });
 
       test('the panel is outlined while its quick edit card is open', async () => {

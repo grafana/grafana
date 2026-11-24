@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -37,16 +37,24 @@ export function QuickEditButtons({
   const [openId, setOpenId] = useState<string | null>(null);
   const { edits, applyPreset } = quickEdits;
   const open = edits.find((edit) => edit.quickEdit.id === openId);
-
-  const close = useCallback(() => {
+  // The open quick edit can drop out, e.g. when a change leaves it nothing to offer, which takes its card with it.
+  // Forget it, so its card doesn't reopen by itself if it comes back.
+  if (openId !== null && !open) {
     setOpenId(null);
-    onCardOpenChange?.(false);
-  }, [onCardOpenChange]);
+  }
+
+  // Follows whether a card is showing rather than each open and close, so a card that goes with its quick edit lets
+  // go too.
+  const isCardOpen = open !== undefined;
+  useEffect(() => {
+    onCardOpenChange?.(isCardOpen);
+  }, [isCardOpen, onCardOpenChange]);
+
+  const close = useCallback(() => setOpenId(null), []);
 
   const toggle = (edit: ResolvedQuickEdit) => {
     const next = openId === edit.quickEdit.id ? null : edit.quickEdit.id;
     setOpenId(next);
-    onCardOpenChange?.(next !== null);
     if (next) {
       DashboardInteractions.panelQuickEditOpened({
         quick_edit: next,

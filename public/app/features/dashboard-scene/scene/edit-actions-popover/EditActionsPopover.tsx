@@ -198,14 +198,30 @@ export function EditActionsPopover({
     }
   }, [keepOpen, isOpen, refs]);
 
-  const popoverContextValue = useMemo(
-    () => ({
+  // Closes the popover once the pointer next moves, if it moves outside, after being released while the pointer was
+  // elsewhere.
+  const closeIfPointerOutside = useRef<((event: PointerEvent) => void) | null>(null);
+
+  const popoverContextValue = useMemo(() => {
+    const isInside = (target: EventTarget | null) =>
+      target instanceof Node &&
+      Boolean(refs.domReference.current?.contains(target) || refs.floating.current?.contains(target));
+    const cancelPendingClose = () => {
+      const listener = closeIfPointerOutside.current;
+      if (listener) {
+        POINTER_EVENTS.forEach((type) => window.removeEventListener(type, listener, { capture: true }));
+        closeIfPointerOutside.current = null;
+      }
+    };
+
+    return {
       closePopover: () => setIsOpen(false),
       holdOpen: (hold: boolean) => {
         if (hold === heldByContentRef.current) {
           return;
         }
         heldByContentRef.current = hold;
+        cancelPendingClose();
         if (hold) {
           lastPointerTarget.current = null;
           POINTER_EVENTS.forEach((type) =>
@@ -214,23 +230,35 @@ export function EditActionsPopover({
           return;
         }
         POINTER_EVENTS.forEach((type) => window.removeEventListener(type, trackPointer.current, { capture: true }));
-        // Close now when the pointer left while held open; hover will not report leaving again.
         const target = lastPointerTarget.current;
-        const inside =
-          target instanceof Node &&
-          (refs.domReference.current?.contains(target) || refs.floating.current?.contains(target));
-        if (target && !inside) {
-          setIsOpen(false);
+        if (!target || isInside(target)) {
+          return;
         }
+        // The pointer left while held open, e.g. onto a card the content opened, and hover will not report leaving
+        // again. Closing now would also take the focus that the content is returning into the popover, e.g. to the
+        // button that opened the card, so wait for the pointer to move.
+        const listener = (event: PointerEvent) => {
+          cancelPendingClose();
+          if (!isInside(event.target)) {
+            setIsOpen(false);
+          }
+        };
+        closeIfPointerOutside.current = listener;
+        POINTER_EVENTS.forEach((type) => window.addEventListener(type, listener, { capture: true, passive: true }));
       },
       getReference: () => (refs.domReference.current instanceof Element ? refs.domReference.current : null),
-    }),
-    [refs]
-  );
+    };
+  }, [refs]);
 
   useEffect(() => {
     const listener = trackPointer.current;
-    return () => POINTER_EVENTS.forEach((type) => window.removeEventListener(type, listener, { capture: true }));
+    return () => {
+      POINTER_EVENTS.forEach((type) => window.removeEventListener(type, listener, { capture: true }));
+      const pending = closeIfPointerOutside.current;
+      if (pending) {
+        POINTER_EVENTS.forEach((type) => window.removeEventListener(type, pending, { capture: true }));
+      }
+    };
   }, []);
 
   const floating = (
