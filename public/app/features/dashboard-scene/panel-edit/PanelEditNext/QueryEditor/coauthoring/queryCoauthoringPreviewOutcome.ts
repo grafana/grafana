@@ -1,5 +1,7 @@
-import { type DataQuery, FieldType, LoadingState, type PanelData } from '@grafana/data';
+import { FieldType, LoadingState, type PanelData } from '@grafana/data';
 import { isExpressionReference } from '@grafana/runtime';
+
+import { expressionReferences } from './queryCoauthoringDependencies';
 
 export type QueryPreviewOutcome =
   | { kind: 'loading' }
@@ -57,34 +59,20 @@ export function classifyQueryPreview(data: PanelData | undefined, refId: string)
   return { kind: 'ok', notices: [...new Set(notices)] };
 }
 
-function truncateMessage(message: string): string {
-  return message.length > 500 ? message.slice(0, 499) + '…' : message;
+/** Classifies one query without folding downstream expression results into its health. */
+export function classifyQueryResult(data: PanelData | undefined, refId: string): QueryPreviewOutcome {
+  if (!data || data.state === LoadingState.Loading || data.state === LoadingState.Streaming) {
+    return { kind: 'loading' };
+  }
+  return classifyQueryPreview(
+    {
+      ...data,
+      request: data.request && { ...data.request, targets: [] },
+    },
+    refId
+  );
 }
 
-function expressionReferences(query: DataQuery): string[] {
-  if (
-    'type' in query &&
-    query.type === 'classic_conditions' &&
-    'conditions' in query &&
-    Array.isArray(query.conditions)
-  ) {
-    return query.conditions.flatMap((condition: unknown) => {
-      if (!condition || typeof condition !== 'object' || !('query' in condition)) {
-        return [];
-      }
-      const input = condition.query;
-      if (!input || typeof input !== 'object' || !('params' in input) || !Array.isArray(input.params)) {
-        return [];
-      }
-      return typeof input.params[0] === 'string' ? [input.params[0]] : [];
-    });
-  }
-  if (!('expression' in query) || typeof query.expression !== 'string') {
-    return [];
-  }
-  const references = Array.from(
-    query.expression.matchAll(/\$(?:\{([^}]+)\}|([A-Za-z0-9_]+))/g),
-    (match) => match[1] ?? match[2]
-  );
-  return [query.expression.trim(), ...references];
+function truncateMessage(message: string): string {
+  return message.length > 500 ? message.slice(0, 499) + '…' : message;
 }

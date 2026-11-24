@@ -74,7 +74,8 @@ function matchingTokens(
 export function queryCoauthoringDiff(
   baseline: string,
   proposed: string,
-  focusRanges: QueryEditorCoauthoringContextV1['focusRanges']
+  focusRanges: QueryEditorCoauthoringContextV1['focusRanges'],
+  includeWhitespace = false
 ): QueryCoauthoringDiffHunk[] {
   const originalTokens = tokenize(baseline);
   const proposedTokens = tokenize(proposed);
@@ -88,7 +89,7 @@ export function queryCoauthoringDiff(
     const original = originalTokens.slice(originalIndex, originalMatch).join('');
     const proposed = proposedTokens.slice(proposedIndex, proposedMatch).join('');
     const to = from + original.length;
-    if (original.trim() || proposed.trim()) {
+    if (includeWhitespace ? original !== proposed : original.trim() || proposed.trim()) {
       const inside = focusRanges.some((range) =>
         from === to ? range.from < from && from < range.to : range.from <= from && to <= range.to
       );
