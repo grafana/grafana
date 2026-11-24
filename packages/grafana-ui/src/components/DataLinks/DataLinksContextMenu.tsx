@@ -68,7 +68,7 @@ export const DataLinksContextMenu = ({ children, links, style }: DataLinksContex
 
   if (linksCounter > 1) {
     return (
-      <WithContextMenu renderMenuItems={renderMenuItems}>
+      <WithContextMenu size="sm" renderMenuItems={renderMenuItems}>
         {({ openMenu }) => {
           // Keyboard activation — anchor the menu to the trigger element
           // itself instead of fabricating a synthetic MouseEvent. This works

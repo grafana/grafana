@@ -7,7 +7,6 @@ import { type MenuItemProps } from '../Menu/MenuItem';
 export function DataLinkMenuItems({ links, variant }: { links: LinkModel[]; variant?: MenuItemProps['variant'] }) {
   return links.map((link, index) => (
     <Menu.Item
-      size="sm"
       variant={variant}
       key={index}
       label={link.title?.trim() ? link.title : t('grafana-ui.data-link-menu-items.link', 'Link')}
