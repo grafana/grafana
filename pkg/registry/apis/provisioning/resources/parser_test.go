@@ -90,6 +90,28 @@ spec:
 		require.EqualError(t, err, "resource validation failed: name.metadata.name: Required value: missing name in resource")
 	})
 
+	t.Run("drops only the annotations whose values are not strings", func(t *testing.T) {
+		parsed, err := parser.Parse(t.Context(), &repository.FileInfo{
+			Path: "dashboard.yaml",
+			Data: []byte(`apiVersion: dashboard.grafana.app/v1
+kind: Dashboard
+metadata:
+  name: dash
+  annotations:
+    grafana.app/useCrossDashboardVariables: '{"global":"all"}'
+    example.com/enabled: true
+    example.com/owner: team-a
+`),
+		})
+		require.NoError(t, err)
+		require.Equal(t, []string{"example.com/enabled"}, parsed.InvalidAnnotations)
+		annotations := parsed.Obj.GetAnnotations()
+		require.Equal(t, `{"global":"all"}`, annotations[AnnoKeyUseCrossDashboardVariables])
+		require.Equal(t, "team-a", annotations["example.com/owner"])
+		require.NotContains(t, annotations, "example.com/enabled")
+		require.Equal(t, string(utils.ManagerKindRepo), annotations[utils.AnnoKeyManagerKind], "Grafana still stamps its own annotations")
+	})
+
 	t.Run("generate name will generate a name", func(t *testing.T) {
 		dash, err := parser.Parse(context.Background(), &repository.FileInfo{
 			Data: []byte(`apiVersion: dashboard.grafana.app/v0alpha1
@@ -235,6 +257,7 @@ spec:
 		info := &repository.FileInfo{Path: "team-a/dash.json", Data: body}
 		first, err := parser.Parse(context.Background(), info)
 		require.NoError(t, err)
+		require.Empty(t, first.InvalidAnnotations)
 		written, err := first.ToSaveBytes()
 		require.NoError(t, err)
 
@@ -243,8 +266,8 @@ spec:
 		require.Equal(t, map[string]any{
 			"name": "dash",
 			"annotations": map[string]any{
-				utils.AnnoKeyUseCrossDashboardVariables: `{"global":["gateway_base_url"],"folder":"none"}`,
-				"example.com/owner":                     "team-a",
+				AnnoKeyUseCrossDashboardVariables: `{"global":["gateway_base_url"],"folder":"none"}`,
+				"example.com/owner":               "team-a",
 			},
 		}, file["metadata"])
 
@@ -1332,8 +1355,9 @@ func TestParsedResource_ToSaveBytes(t *testing.T) {
 	t.Run("keeps user annotations and drops labels and everything else", func(t *testing.T) {
 		metadata := serverMetadata()
 		annotations := metadata["annotations"].(map[string]any)
-		annotations[utils.AnnoKeyUseCrossDashboardVariables] = `{"global":"all","folder":"none"}`
+		annotations[AnnoKeyUseCrossDashboardVariables] = `{"global":"all","folder":"none"}`
 		annotations["example.com/owner"] = "team-a"
+		annotations[utils.AnnoKeyKubectlLastAppliedConfig] = `{"secure":{"token":{"create":"old-value"}}}`
 		obj := newObj(metadata)
 		before := obj.DeepCopy()
 		parsed := &ParsedResource{Info: &repository.FileInfo{Path: "dash.json"}, Obj: obj}
@@ -1349,8 +1373,8 @@ func TestParsedResource_ToSaveBytes(t *testing.T) {
 			"metadata": map[string]any{
 				"name": "dash",
 				"annotations": map[string]any{
-					utils.AnnoKeyUseCrossDashboardVariables: `{"global":"all","folder":"none"}`,
-					"example.com/owner":                     "team-a",
+					AnnoKeyUseCrossDashboardVariables: `{"global":"all","folder":"none"}`,
+					"example.com/owner":               "team-a",
 				},
 			},
 			"spec": map[string]any{"title": "Test dashboard"},

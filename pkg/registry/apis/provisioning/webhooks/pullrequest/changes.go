@@ -83,7 +83,7 @@ type fileChangeInfo struct {
 	PreviewScreenshotURL string
 
 	// HasRemovedMetadata is true when the original file contains metadata fields
-	// (namespace, labels, Grafana-owned annotations) that will be removed when parsing the resource.
+	// (namespace, labels, or annotations omitted on write) that will be removed when parsing the resource.
 	HasRemovedMetadata bool
 }
 
@@ -288,6 +288,10 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 		return info
 	}
 
+	// Find a name within the file
+	obj := info.Parsed.Obj
+	info.Title = info.Parsed.Meta.FindTitle(obj.GetName())
+
 	if change.Action == repository.FileActionUpdated {
 		// Detect metadata stripped by resource parser.
 		// Read the file from the default branch (empty ref) and compare its
@@ -301,15 +305,13 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 		}
 	}
 
-	// Find a name within the file
-	obj := info.Parsed.Obj
-	info.Title = info.Parsed.Meta.FindTitle(obj.GetName())
-
 	// Check what happens when we apply changes
 	// NOTE: this will also invoke any server side validation
 	err = info.Parsed.DryRun(ctx)
 	if err != nil {
 		info.Error = err.Error()
+	} else if len(info.Parsed.InvalidAnnotations) > 0 {
+		info.Error = "metadata.annotations values must be strings. Git Sync ignores these annotations: " + strings.Join(info.Parsed.InvalidAnnotations, ", ")
 	}
 
 	// Link back to the resource in Grafana when it already exists there.
@@ -477,7 +479,7 @@ func renderPath(grafanaBaseURL, urlPath string) string {
 }
 
 // hasRemovedMetadata returns true if the original object (from the file)
-// contains metadata fields (namespace, labels, Grafana-owned annotations) that
+// contains metadata fields (namespace, labels, or annotations omitted on write) that
 // are absent or different in the parsed object (post-Parse).
 func hasRemovedMetadata(original, parsed *unstructured.Unstructured) bool {
 	if original.GetNamespace() != "" && parsed.GetNamespace() != original.GetNamespace() {
@@ -486,11 +488,10 @@ func hasRemovedMetadata(original, parsed *unstructured.Unstructured) bool {
 	if len(original.GetLabels()) > 0 && hasMissingKeys(original.GetLabels(), parsed.GetLabels()) {
 		return true
 	}
-	// Removing a user annotation is an intentional change, not something Git Sync
-	// strips, so only Grafana-owned annotations count.
+	// User annotations can be deleted intentionally in the PR. Report only keys Git Sync strips.
 	parsedAnnotations := parsed.GetAnnotations()
 	for k := range original.GetAnnotations() {
-		if _, exists := parsedAnnotations[k]; !exists && resources.IsGrafanaOwnedAnnotation(k) {
+		if _, exists := parsedAnnotations[k]; !exists && resources.OmitAnnotationFromFile(k) {
 			return true
 		}
 	}

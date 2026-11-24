@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -30,7 +31,7 @@ func TestIntegrationProvisioning_FileWritesKeepUserAnnotations(t *testing.T) {
 		renamedTitle = "User annotations renamed"
 
 		ownerKey        = "example.com/owner"
-		crossVarsKey    = utils.AnnoKeyUseCrossDashboardVariables
+		crossVarsKey    = resources.AnnoKeyUseCrossDashboardVariables
 		crossVarsAll    = `{"global":"all","folder":"none"}`
 		crossVarsPicked = `{"global":["gateway_base_url"],"folder":"none"}`
 	)
@@ -209,10 +210,15 @@ func TestIntegrationProvisioning_FileWritesKeepUserAnnotations(t *testing.T) {
 		require.Equal(t, "team-a", annotations[ownerKey])
 		require.Equal(t, repo, annotations[utils.AnnoKeyManagerIdentity], "the dashboard should still be managed by the repository")
 
-		// Reading the file back must yield the same selection.
+		// A change made only in the file must reach Grafana through the pull sync.
+		const fromFile = `{"global":"none","folder":"all"}`
+		require.NoError(t, unstructured.SetNestedField(file, fromFile, "metadata", "annotations", crossVarsKey))
+		data, err := json.MarshalIndent(file, "", "  ")
+		require.NoError(t, err)
+		helper.WriteToProvisioningPath(t, path, data)
 		helper.SyncAndWait(t, repo, nil)
-		require.Equal(t, crossVarsPicked, liveDashboard(t, name).GetAnnotations()[crossVarsKey],
-			"a sync from the file should keep the selection")
+		require.Equal(t, fromFile, liveDashboard(t, name).GetAnnotations()[crossVarsKey],
+			"a sync from the file should apply the repository's selection")
 	})
 
 	t.Run("removing the annotation removes it from the file and the dashboard", func(t *testing.T) {
@@ -248,16 +254,16 @@ func TestIntegrationProvisioning_FileWritesKeepUserAnnotations(t *testing.T) {
 				"uid":             plantedUID,
 				"resourceVersion": "12345",
 				"annotations": map[string]any{
-					utils.AnnoKeyCreatedBy:                "user:evil",
-					utils.AnnoKeyManagerKind:              "plugin",
-					utils.AnnoKeyManagerIdentity:          "other",
-					utils.AnnoKeySourcePath:               "elsewhere.json",
-					utils.AnnoKeyFolder:                   "bogus",
-					"grafana.app/folderTitle":             "x",
-					"grafana.app/saved-from-ui":           "x",
-					"grafana.com/updatedBy":               "x",
-					utils.AnnoKeyKubectlLastAppliedConfig: "{}",
-					ownerKey:                              "me",
+					utils.AnnoKeyCreatedBy:       "user:evil",
+					utils.AnnoKeyManagerKind:     "plugin",
+					utils.AnnoKeyManagerIdentity: "other",
+					utils.AnnoKeySourcePath:      "elsewhere.json",
+					utils.AnnoKeyFolder:          "bogus",
+					"grafana.app/folderTitle":    "x",
+					"grafana.app/saved-from-ui":  "x",
+					"grafana.com/updatedBy":      "x",
+					"kubernetes.io/change-cause": "created from the UI",
+					ownerKey:                     "me",
 				},
 			},
 			"spec": map[string]any{
@@ -272,9 +278,12 @@ func TestIntegrationProvisioning_FileWritesKeepUserAnnotations(t *testing.T) {
 
 		file := committedFile(t, createdPath)
 		require.Equal(t, map[string]any{
-			"name":        createdName,
-			"annotations": map[string]any{ownerKey: "me"},
-		}, file["metadata"], "only the name and the user annotation should be written")
+			"name": createdName,
+			"annotations": map[string]any{
+				ownerKey:                     "me",
+				"kubernetes.io/change-cause": "created from the UI",
+			},
+		}, file["metadata"], "only the name and the user annotations should be written")
 		require.NotContains(t, file, "status", "status should not be written")
 
 		live := liveDashboard(t, createdName)
@@ -286,5 +295,50 @@ func TestIntegrationProvisioning_FileWritesKeepUserAnnotations(t *testing.T) {
 		require.NotEqual(t, "bogus", annotations[utils.AnnoKeyFolder])
 		require.Equal(t, "me", annotations[ownerKey])
 		require.NotEqual(t, plantedUID, string(live.GetUID()), "the request body should not choose the uid")
+	})
+
+	t.Run("annotations with non-string values are dropped on their own", func(t *testing.T) {
+		const (
+			mixedName = "mixed-annotations-dash"
+			mixedPath = "mixed-annotations.json"
+			flagKey   = "example.com/enabled"
+		)
+		mixed, err := json.MarshalIndent(map[string]any{
+			"apiVersion": "dashboard.grafana.app/v1",
+			"kind":       "Dashboard",
+			"metadata": map[string]any{
+				"name": mixedName,
+				"annotations": map[string]any{
+					crossVarsKey: crossVarsAll,
+					ownerKey:     "team-a",
+					flagKey:      true,
+				},
+			},
+			"spec": map[string]any{"title": "Mixed annotations", "schemaVersion": 42, "panels": []any{}},
+		}, "", "  ")
+		require.NoError(t, err)
+		helper.WriteToProvisioningPath(t, mixedPath, mixed)
+		helper.SyncAndWait(t, repo, nil)
+
+		live := liveDashboard(t, mixedName)
+		annotations := live.GetAnnotations()
+		require.Equal(t, crossVarsAll, annotations[crossVarsKey], "the pull should keep the selection")
+		require.Equal(t, "team-a", annotations[ownerKey], "the pull should keep the other user annotations")
+		require.NotContains(t, annotations, flagKey, "the pull should drop the annotation that is not a string")
+
+		body := frontendBody(t, live)
+		sent := bodyAnnotations(t, body)
+		sent[flagKey] = true
+		require.NoError(t, unstructured.SetNestedMap(body, sent, "metadata", "annotations"))
+		require.NoError(t, unstructured.SetNestedField(body, "Mixed annotations renamed", "spec", "title"))
+		writeFile(t, "PUT", mixedPath, body)
+
+		require.Equal(t, map[string]any{
+			"name": mixedName,
+			"annotations": map[string]any{
+				crossVarsKey: crossVarsAll,
+				ownerKey:     "team-a",
+			},
+		}, committedFile(t, mixedPath)["metadata"], "a write should keep the valid annotations and drop only the one that is not a string")
 	})
 }

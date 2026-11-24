@@ -8,8 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-func TestIsGrafanaOwnedAnnotation(t *testing.T) {
-	owned := []string{
+func TestOmitAnnotationFromFile(t *testing.T) {
+	omitted := []string{
 		utils.AnnoKeyCreatedBy,
 		utils.AnnoKeyUpdatedBy,
 		utils.AnnoKeyUpdatedTimestamp,
@@ -34,17 +34,15 @@ func TestIsGrafanaOwnedAnnotation(t *testing.T) {
 		"GRAFANA.APP/x",
 		"grafana.app/a/b",
 		"grafana.app/usecrossdashboardvariables", // the allowlist is an exact match
-		"kubernetes.io/change-cause",
-		"k8s.io/x",
 	}
-	for _, key := range owned {
+	for _, key := range omitted {
 		t.Run(key, func(t *testing.T) {
-			require.True(t, IsGrafanaOwnedAnnotation(key))
+			require.True(t, OmitAnnotationFromFile(key))
 		})
 	}
 
 	user := []string{
-		utils.AnnoKeyUseCrossDashboardVariables,
+		AnnoKeyUseCrossDashboardVariables,
 		"team",
 		"grafana.app",
 		"/foo",
@@ -53,11 +51,33 @@ func TestIsGrafanaOwnedAnnotation(t *testing.T) {
 		"grafana.app.user.example/foo",
 		"notgrafana.app/x",
 		"example.com/grafana.app",
-		"app.kubernetes.io/name",
+		"kubernetes.io/change-cause",
+		"k8s.io/x",
 	}
 	for _, key := range user {
 		t.Run("user "+key, func(t *testing.T) {
-			require.False(t, IsGrafanaOwnedAnnotation(key))
+			require.False(t, OmitAnnotationFromFile(key))
 		})
 	}
+}
+
+func TestDropNonStringAnnotations(t *testing.T) {
+	obj := map[string]any{"metadata": map[string]any{"annotations": map[string]any{
+		"example.com/owner": "team-a",
+		"example.com/empty": nil,
+		"example.com/flag":  true,
+		"example.com/count": int64(3),
+		"example.com/ratio": 1.5,
+		"example.com/map":   map[string]any{"global": "all"},
+		"example.com/list":  []any{"a"},
+	}}}
+
+	dropped := dropNonStringAnnotations(obj)
+
+	require.Equal(t, []string{"example.com/count", "example.com/flag", "example.com/list", "example.com/map", "example.com/ratio"}, dropped)
+	require.Equal(t, map[string]any{"metadata": map[string]any{"annotations": map[string]any{
+		"example.com/owner": "team-a",
+		"example.com/empty": nil,
+	}}}, obj)
+	require.Nil(t, dropNonStringAnnotations(map[string]any{"metadata": map[string]any{"name": "dash"}}))
 }

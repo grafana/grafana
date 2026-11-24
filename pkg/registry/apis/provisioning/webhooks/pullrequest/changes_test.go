@@ -2096,6 +2096,60 @@ func TestRenderScreenshotFromGrafanaURL(t *testing.T) {
 	}
 }
 
+func TestEvaluateFile_UserAnnotations(t *testing.T) {
+	const manifest = "apiVersion: dashboard.grafana.app/v1\nkind: Dashboard\nmetadata:\n  name: my-dash\n"
+	const selection = "  annotations:\n    grafana.app/useCrossDashboardVariables: '{\"global\":\"all\"}'\n"
+	const mixedAnnotations = selection + "    example.com/enabled: true\n"
+	for _, tt := range []struct {
+		name        string
+		action      repository.FileAction
+		annotations string
+		wantError   bool
+	}{
+		{name: "intentional deletion", action: repository.FileActionUpdated},
+		{name: "valid selection", action: repository.FileActionCreated, annotations: selection},
+		{name: "selection retained alongside an unquoted boolean", action: repository.FileActionUpdated, annotations: mixedAnnotations, wantError: true},
+		{name: "new file with an unquoted boolean", action: repository.FileActionCreated, annotations: mixedAnnotations, wantError: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			change := repository.VersionedFileChange{Action: tt.action, Path: "dashboard.yaml", Ref: "pr"}
+			head := &repository.FileInfo{Path: change.Path, Ref: change.Ref, Data: []byte(manifest + tt.annotations)}
+			reader := repository.NewMockReader(t)
+			if tt.action == repository.FileActionUpdated {
+				base := &repository.FileInfo{Path: change.Path, Data: []byte(manifest + selection)}
+				reader.EXPECT().Read(mock.Anything, change.Path, "").Return(base, nil)
+			}
+			reader.EXPECT().Read(mock.Anything, change.Path, change.Ref).Return(head, nil)
+
+			// Drop the non-string annotation and stamp the rest, as Parse does when
+			// it loads the PR file.
+			obj, gvk, _, err := resources.ParseFileResource(t.Context(), head)
+			require.NoError(t, err)
+			var invalid []string
+			if tt.wantError {
+				unstructured.RemoveNestedField(obj.Object, "metadata", "annotations", "example.com/enabled")
+				invalid = []string{"example.com/enabled"}
+			}
+			meta, err := utils.MetaAccessor(obj)
+			require.NoError(t, err)
+			meta.SetManagerProperties(utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "repo"})
+			parser := resources.NewMockParser(t)
+			parser.EXPECT().Parse(mock.Anything, head).Return(&resources.ParsedResource{
+				Info: head, GVK: *gvk, Obj: obj, Meta: meta, DryRunResponse: obj, InvalidAnnotations: invalid,
+			}, nil)
+
+			info := (&evaluator{}).evaluateFile(t.Context(), reader, "http://host", "", 0, change, provisioning.PullRequestJobOptions{}, parser, false)
+			require.NotEmpty(t, info.PreviewURL, "the preview link is kept either way")
+			require.False(t, info.HasRemovedMetadata)
+			if tt.wantError {
+				require.Equal(t, "metadata.annotations values must be strings. Git Sync ignores these annotations: example.com/enabled", info.Error)
+			} else {
+				require.Empty(t, info.Error)
+			}
+		})
+	}
+}
+
 func TestHasStrippedMetadata(t *testing.T) {
 	t.Run("original has extra metadata, parsed has only name", func(t *testing.T) {
 		original := &unstructured.Unstructured{Object: map[string]any{

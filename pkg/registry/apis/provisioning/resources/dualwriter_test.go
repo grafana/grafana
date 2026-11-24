@@ -1962,8 +1962,8 @@ func TestDualReadWriter_UpdateResourceWritesOnlyUserAnnotations(t *testing.T) {
 			"namespace": "default",
 			"labels":    map[string]any{"team": "platform"},
 			"annotations": map[string]any{
-				utils.AnnoKeyUseCrossDashboardVariables: `{"global":"all","folder":"none"}`,
-				"example.com/owner":                     "team-a",
+				AnnoKeyUseCrossDashboardVariables: `{"global":"all","folder":"none"}`,
+				"example.com/owner":               "team-a",
 			},
 		},
 		"spec": map[string]any{"title": "Dash renamed"},
@@ -2016,8 +2016,8 @@ func TestDualReadWriter_UpdateResourceWritesOnlyUserAnnotations(t *testing.T) {
 	require.Equal(t, map[string]any{
 		"name": "dash",
 		"annotations": map[string]any{
-			utils.AnnoKeyUseCrossDashboardVariables: `{"global":"all","folder":"none"}`,
-			"example.com/owner":                     "team-a",
+			AnnoKeyUseCrossDashboardVariables: `{"global":"all","folder":"none"}`,
+			"example.com/owner":               "team-a",
 		},
 	}, saved["metadata"], "the file gets the user annotations only")
 
@@ -2026,7 +2026,7 @@ func TestDualReadWriter_UpdateResourceWritesOnlyUserAnnotations(t *testing.T) {
 	require.Equal(t, string(utils.ManagerKindRepo), liveAnnotations[utils.AnnoKeyManagerKind])
 	require.Equal(t, repoName, liveAnnotations[utils.AnnoKeyManagerIdentity])
 	require.Equal(t, path, liveAnnotations[utils.AnnoKeySourcePath])
-	require.Equal(t, `{"global":"all","folder":"none"}`, liveAnnotations[utils.AnnoKeyUseCrossDashboardVariables])
+	require.Equal(t, `{"global":"all","folder":"none"}`, liveAnnotations[AnnoKeyUseCrossDashboardVariables])
 	require.Equal(t, "team-a", liveAnnotations["example.com/owner"])
 }
 

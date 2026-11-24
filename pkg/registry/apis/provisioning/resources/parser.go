@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"path"
 	"strings"
 
@@ -128,6 +129,9 @@ type ParsedResource struct {
 
 	// Parsed contents
 	Obj *unstructured.Unstructured
+	// InvalidAnnotations lists the annotations dropped from the source file because
+	// their values are not strings, so previews can report them.
+	InvalidAnnotations []string
 	// Metadata accessor for the file object
 	Meta utils.GrafanaMetaAccessor
 
@@ -232,6 +236,7 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	}
 	obj.SetNamespace(r.repo.Namespace)
 
+	parsed.InvalidAnnotations = dropNonStringAnnotations(obj.Object)
 	parsed.Meta.SetManagerProperties(utils.ManagerProperties{
 		Kind:     utils.ManagerKindRepo,
 		Identity: r.repo.Name,
@@ -643,7 +648,9 @@ func (f *ParsedResource) ToSaveBytes() ([]byte, error) {
 		delete(obj, "metadata")
 	} else {
 		metadata := map[string]any{"name": name}
-		if annotations := userAnnotations(f.Obj.GetAnnotations()); len(annotations) > 0 {
+		annotations := f.Obj.GetAnnotations()
+		maps.DeleteFunc(annotations, func(key, _ string) bool { return OmitAnnotationFromFile(key) })
+		if len(annotations) > 0 {
 			metadata["annotations"] = annotations
 		}
 		obj["metadata"] = metadata
