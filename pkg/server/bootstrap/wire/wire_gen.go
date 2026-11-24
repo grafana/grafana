@@ -451,7 +451,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	}
 	roleCatalog := legacypermissions.NewRoleCatalog()
 	legacypermissionsLoader := legacypermissions.ProvideLoader(sqlStore, roleCatalog, actionSetService, cacheService, cfg, featureToggles, ossLicensingService, zanzanaClient, eventualRestConfigProvider)
-	legacyUserPermissionsClient := legacypermissions.ProvideClient(legacypermissionsLoader, cfg)
+	legacyUserPermissionsClient := legacypermissions.ProvideClient(legacypermissionsLoader, cfg, registerer)
 	acimplService, err := acimpl.ProvideService(cfg, sqlStore, routeRegisterImpl, cacheService, accessControl, userimplService, actionSetService, featureToggles, tracingService, permissionRegistry, serverLockService, zanzanaClient, eventualRestConfigProvider, features, legacyUserPermissionsClient, roleCatalog, registerer)
 	if err != nil {
 		return nil, err
@@ -991,6 +991,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
+	connectionControllerService := provisioning3.ProvideConnectionControllerService(apiBuilder)
 	historyJobCleanupService := provisioning3.ProvideHistoryJobCleanupService(cfg, apiBuilder, eventualRestConfigProvider)
 	healthService := grpcserver.ProvideHealthService(grpcserverProvider)
 	reflectionService, err := grpcserver.ProvideReflectionService(cfg, grpcserverProvider)
@@ -1064,7 +1065,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		return nil, err
 	}
 	tokenexchangeService := tokenexchange.ProvideService(cfg, pluginauthConfig, routeRegisterImpl)
-	backgroundServiceRegistry := backgroundsvcs.ProvideBackgroundServiceRegistry(httpServer, alertNG, cleanUpService, grafanaLive, gateway, notificationService, pluginstoreService, renderingService, userAuthTokenService, tracingService, provisioningServiceImpl, usageStats, statscollectorService, grafanaService, pluginsService, internalMetricsService, secretsService, remoteCache, storageService, serviceAccountsService, grpcserverProvider, secretMigrationProviderImpl, loginattemptimplService, supportbundlesimplService, v9, keyRetriever, angulardetectorsproviderDynamic, apiserverService, routerService, anonDeviceService, ssosettingsimplService, pluginexternalService, plugininstallerService, zanzanaReconciler, appregistryService, dashboardUpdater, dashboardServiceImpl, worker, fixedRolesLoader, noopIAMRolesSyncer, noopGlobalRoleSeeder, syncer, embeddedZanzanaService, natsServer, publisherService, subscriberService, sqlStore, reconciler, folderUIDRepairService, ssoSettingsBackfill, historyJobCleanupService, serviceImpl, serviceAccountsProxy, healthService, reflectionService, apiService, apiregistryService, idimplService, teamAPI, ssosettingsimplService, cloudmigrationService, registration, ofrepAPIBuilder, tokenexchangeService)
+	backgroundServiceRegistry := backgroundsvcs.ProvideBackgroundServiceRegistry(httpServer, alertNG, cleanUpService, grafanaLive, gateway, notificationService, pluginstoreService, renderingService, userAuthTokenService, tracingService, provisioningServiceImpl, usageStats, statscollectorService, grafanaService, pluginsService, internalMetricsService, secretsService, remoteCache, storageService, serviceAccountsService, grpcserverProvider, secretMigrationProviderImpl, loginattemptimplService, supportbundlesimplService, v9, keyRetriever, angulardetectorsproviderDynamic, apiserverService, routerService, anonDeviceService, ssosettingsimplService, pluginexternalService, plugininstallerService, zanzanaReconciler, appregistryService, dashboardUpdater, dashboardServiceImpl, worker, fixedRolesLoader, noopIAMRolesSyncer, noopGlobalRoleSeeder, syncer, embeddedZanzanaService, natsServer, publisherService, subscriberService, sqlStore, reconciler, folderUIDRepairService, ssoSettingsBackfill, connectionControllerService, historyJobCleanupService, serviceImpl, serviceAccountsProxy, healthService, reflectionService, apiService, apiregistryService, idimplService, teamAPI, ssosettingsimplService, cloudmigrationService, registration, ofrepAPIBuilder, tokenexchangeService)
 	usageStatsProvidersRegistry := usagestatssvcs.ProvideUsageStatsProvidersRegistry(acimplService, userimplService)
 	serverServer, err := server.New(opts, cfg, httpServer, acimplService, provisioningServiceImpl, backgroundServiceRegistry, usageStatsProvidersRegistry, statscollectorService, tracingService, featureToggles, registerer)
 	if err != nil {
@@ -1248,7 +1249,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	roleCatalog := legacypermissions.NewRoleCatalog()
 	legacypermissionsLoader := legacypermissions.ProvideLoader(sqlStore, roleCatalog, actionSetService, cacheService, cfg, featureToggles, ossLicensingService, zanzanaClient, eventualRestConfigProvider)
-	legacyUserPermissionsClient := legacypermissions.ProvideClient(legacypermissionsLoader, cfg)
+	legacyUserPermissionsClient := legacypermissions.ProvideClient(legacypermissionsLoader, cfg, registerer)
 	acimplService, err := acimpl.ProvideService(cfg, sqlStore, routeRegisterImpl, cacheService, accessControl, userimplService, actionSetService, featureToggles, tracingService, permissionRegistry, serverLockService, zanzanaClient, eventualRestConfigProvider, features, legacyUserPermissionsClient, roleCatalog, registerer)
 	if err != nil {
 		return nil, err
@@ -1798,6 +1799,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
+	connectionControllerService := provisioning3.ProvideConnectionControllerService(apiBuilder)
 	historyJobCleanupService := provisioning3.ProvideHistoryJobCleanupService(cfg, apiBuilder, eventualRestConfigProvider)
 	healthService := grpcserver.ProvideHealthService(grpcserverProvider)
 	reflectionService, err := grpcserver.ProvideReflectionService(cfg, grpcserverProvider)
@@ -1871,7 +1873,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	tokenexchangeService := tokenexchange.ProvideService(cfg, pluginauthConfig, routeRegisterImpl)
-	backgroundServiceRegistry := backgroundsvcs.ProvideBackgroundServiceRegistry(httpServer, alertNG, cleanUpService, grafanaLive, gateway, notificationService, pluginstoreService, renderingService, userAuthTokenService, tracingService, provisioningServiceImpl, usageStats, statscollectorService, grafanaService, pluginsService, internalMetricsService, secretsService, remoteCache, storageService, serviceAccountsService, grpcserverProvider, secretMigrationProviderImpl, loginattemptimplService, supportbundlesimplService, v9, keyRetriever, angulardetectorsproviderDynamic, apiserverService, routerService, anonDeviceService, ssosettingsimplService, pluginexternalService, plugininstallerService, zanzanaReconciler, appregistryService, dashboardUpdater, dashboardServiceImpl, worker, fixedRolesLoader, noopIAMRolesSyncer, noopGlobalRoleSeeder, syncer, embeddedZanzanaService, natsServer, publisherService, subscriberService, sqlStore, reconciler, folderUIDRepairService, ssoSettingsBackfill, historyJobCleanupService, serviceImpl, serviceAccountsProxy, healthService, reflectionService, apiService, apiregistryService, idimplService, teamAPI, ssosettingsimplService, cloudmigrationService, registration, ofrepAPIBuilder, tokenexchangeService)
+	backgroundServiceRegistry := backgroundsvcs.ProvideBackgroundServiceRegistry(httpServer, alertNG, cleanUpService, grafanaLive, gateway, notificationService, pluginstoreService, renderingService, userAuthTokenService, tracingService, provisioningServiceImpl, usageStats, statscollectorService, grafanaService, pluginsService, internalMetricsService, secretsService, remoteCache, storageService, serviceAccountsService, grpcserverProvider, secretMigrationProviderImpl, loginattemptimplService, supportbundlesimplService, v9, keyRetriever, angulardetectorsproviderDynamic, apiserverService, routerService, anonDeviceService, ssosettingsimplService, pluginexternalService, plugininstallerService, zanzanaReconciler, appregistryService, dashboardUpdater, dashboardServiceImpl, worker, fixedRolesLoader, noopIAMRolesSyncer, noopGlobalRoleSeeder, syncer, embeddedZanzanaService, natsServer, publisherService, subscriberService, sqlStore, reconciler, folderUIDRepairService, ssoSettingsBackfill, connectionControllerService, historyJobCleanupService, serviceImpl, serviceAccountsProxy, healthService, reflectionService, apiService, apiregistryService, idimplService, teamAPI, ssosettingsimplService, cloudmigrationService, registration, ofrepAPIBuilder, tokenexchangeService)
 	usageStatsProvidersRegistry := usagestatssvcs.ProvideUsageStatsProvidersRegistry(acimplService, userimplService)
 	serverServer, err := server.New(opts, cfg, httpServer, acimplService, provisioningServiceImpl, backgroundServiceRegistry, usageStatsProvidersRegistry, statscollectorService, tracingService, featureToggles, registerer)
 	if err != nil {
@@ -2007,7 +2009,7 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (server.Runner, err
 	hooksService := hooks.ProvideService()
 	ossLicensingService := licensing.ProvideService(cfg, hooksService)
 	legacypermissionsLoader := legacypermissions.ProvideLoader(sqlStore, roleCatalog, actionSetService, cacheService, cfg, featureToggles, ossLicensingService, zanzanaClient, eventualRestConfigProvider)
-	legacyUserPermissionsClient := legacypermissions.ProvideClient(legacypermissionsLoader, cfg)
+	legacyUserPermissionsClient := legacypermissions.ProvideClient(legacypermissionsLoader, cfg, registerer)
 	acimplService, err := acimpl.ProvideService(cfg, sqlStore, routeRegisterImpl, cacheService, accessControl, userimplService, actionSetService, featureToggles, tracingService, permissionRegistry, serverLockService, zanzanaClient, eventualRestConfigProvider, features, legacyUserPermissionsClient, roleCatalog, registerer)
 	if err != nil {
 		return server.Runner{}, err
@@ -2191,7 +2193,7 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	}
 	roleCatalog := legacypermissions.NewRoleCatalog()
 	legacypermissionsLoader := legacypermissions.ProvideLoader(sqlStore, roleCatalog, actionSetService, cacheService, cfg, featureToggles, ossLicensingService, zanzanaClient, eventualRestConfigProvider)
-	legacyUserPermissionsClient := legacypermissions.ProvideClient(legacypermissionsLoader, cfg)
+	legacyUserPermissionsClient := legacypermissions.ProvideClient(legacypermissionsLoader, cfg, registerer)
 	acimplService, err := acimpl.ProvideService(cfg, sqlStore, routeRegisterImpl, cacheService, accessControl, userimplService, actionSetService, featureToggles, tracingService, permissionRegistry, serverLockService, zanzanaClient, eventualRestConfigProvider, features, legacyUserPermissionsClient, roleCatalog, registerer)
 	if err != nil {
 		return nil, err

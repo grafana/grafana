@@ -11,17 +11,11 @@ enterprise_dir=${2:-}
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 discover="$script_dir/pkgs-with-tests-named.sh"
 
-test_timeout=12
-test_parallelism=1
-if (( sqlite )); then
-    if [[ ${GOMAXPROCS:-} =~ ^[1-9][0-9]*$ ]]; then
-        test_parallelism=$GOMAXPROCS
-    else
-        test_parallelism=$(nproc 2>/dev/null || getconf _NPROCESSORS_ONLN)
-    fi
-    if [[ -n "$enterprise_dir" ]]; then
-        test_timeout=16
-    fi
+test_flags=(-timeout=12m)
+if (( ! sqlite )); then
+    test_flags=(-p=1 "${test_flags[@]}")
+elif [[ -n "$enterprise_dir" ]]; then
+    test_flags=(-timeout=16m)
 fi
 
 grafana_packages=$("$discover" -b TestIntegration -i)
@@ -47,76 +41,6 @@ while IFS= read -r package; do
     esac
 done <<< "$packages"
 
-run_test_binary() {
-    local pkg=$1 dir=$2 binary=$3 minutes=$4
-    local result_file="$binary.log" started=$SECONDS
-    # Give the test binary one extra minute to handle its own test timeout.
-    if (
-        cd "$dir" &&
-            timeout -s QUIT -k 5s "$((minutes + 1))m" \
-                "$binary" -test.paniconexit0 -test.timeout="${minutes}m" -test.run '^TestIntegration'
-    ) > "$result_file" 2>&1; then
-        if grep -Fqx 'testing: warning: no tests to run' "$result_file"; then
-            printf 'ok  \t%s\t%ss [no tests to run]\n' "$pkg" "$((SECONDS - started))"
-        else
-            printf 'ok  \t%s\t%ss\n' "$pkg" "$((SECONDS - started))"
-        fi
-    else
-        cat "$result_file"
-        printf 'FAIL\t%s\t%ss\n' "$pkg" "$((SECONDS - started))"
-        return 1
-    fi
-}
-
-run_compiled_tests() {
-    local binaries package_dirs go_root pkg dir has_tests name parent
-    local -a batch=() collisions=()
-    local -A seen=() binary_paths=()
-    binaries=$(mktemp -d "${RUNNER_TEMP:-${TMPDIR:-/tmp}}/sql-integration.XXXXXXXX")
-    package_dirs=$(CGO_ENABLED=0 go list "${build_tags[@]}" -f '{{.ImportPath}}{{"\t"}}{{.Dir}}{{if or .TestGoFiles .XTestGoFiles}}{{"\t"}}tests{{end}}' "$@")
-    go_root=$(go env GOROOT)
-
-    # Go names the test binaries in a directory after the final non-version import path element.
-    while IFS=$'\t' read -r pkg dir has_tests; do
-        if [[ -z "$has_tests" ]]; then
-            printf '?\t%s\t[no test files]\n' "$pkg"
-            continue
-        fi
-        name=${pkg##*/}
-        if [[ "$name" =~ ^v([2-9]|[1-9][0-9]+)$ && "$pkg" == */* ]]; then
-            parent=${pkg%/*}
-            name=${parent##*/}
-        fi
-        if [[ "${seen[$name]:-}" ]]; then
-            binary_paths["$pkg"]="$binaries/duplicate.${#collisions[@]}"
-            collisions+=("$pkg")
-        else
-            seen["$name"]=1
-            binary_paths["$pkg"]="$binaries/$name.test"
-            batch+=("$pkg")
-        fi
-    done <<< "$package_dirs"
-    if (( ${#batch[@]} == 0 )); then
-        return
-    fi
-
-    # Match the linker flags used for temporary go test binaries to reduce peak link memory.
-    local -a compile_flags=(-vet=off -ldflags='-s -w' "${build_tags[@]}" -c)
-    echo "Compiling test binaries"
-    CGO_ENABLED=0 go test "${compile_flags[@]}" -o "$binaries/" "${batch[@]}"
-    for pkg in "${collisions[@]}"; do
-        CGO_ENABLED=0 go test "${compile_flags[@]}" -o "${binary_paths[$pkg]}" "$pkg"
-    done
-
-    echo "Running compiled tests"
-    export -f run_test_binary
-    while IFS=$'\t' read -r pkg dir has_tests; do
-        [[ -n "$has_tests" ]] || continue
-        printf '%s\0' "$pkg" "$dir" "${binary_paths[$pkg]}" "$test_timeout"
-    done <<< "$package_dirs" |
-        PATH="$go_root/bin:$PATH" CGO_ENABLED=0 xargs -0 -n 4 -P "$test_parallelism" bash -c 'run_test_binary "$@"' _
-}
-
 run_tests() {
     if (( $# == 0 )); then
         echo "No packages in this shard for $PWD"
@@ -124,7 +48,12 @@ run_tests() {
     fi
 
     echo "Testing packages in $PWD"
-    run_compiled_tests "$@"
+    if (( ! sqlite )); then
+        echo "Precompiling, no tests will be run"
+        CGO_ENABLED=0 go test -vet=off "${build_tags[@]}" -run='^$' "$@"
+    fi
+    echo "Running tests now"
+    CGO_ENABLED=0 go test -vet=off "${build_tags[@]}" "${test_flags[@]}" -run '^TestIntegration' "$@"
 }
 
 run_tests "${grafana_shard[@]}"
