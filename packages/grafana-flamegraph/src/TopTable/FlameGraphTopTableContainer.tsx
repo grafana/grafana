@@ -281,12 +281,14 @@ function buildTableDataFrame(
   } else {
     const totalTicks = data.data.length > 0 ? data.getValue(0) : 0;
     const unitTitle = data.getUnitTitle();
+    const showSamples = data.shouldShowSamples();
     const selfField = createProfileValueField({
       name: 'Self',
       unit: data.selfField.config.unit,
       totalTicks,
       unitTitle,
       display: data.valueDisplayProcessor,
+      showSamples,
     });
     const totalField = createProfileValueField({
       name: 'Total',
@@ -294,6 +296,7 @@ function buildTableDataFrame(
       totalTicks,
       unitTitle,
       display: data.valueDisplayProcessor,
+      showSamples,
     });
 
     for (let key in table) {
@@ -344,9 +347,10 @@ interface ProfileValueFieldOptions {
   totalTicks: number;
   unitTitle: string;
   display: DisplayProcessor;
+  showSamples: boolean;
 }
 
-function createProfileValueField({ name, unit, totalTicks, unitTitle, display }: ProfileValueFieldOptions): Field {
+function createProfileValueField({ name, unit, totalTicks, unitTitle, display, showSamples }: ProfileValueFieldOptions): Field {
   const field = createNumberField(name, unit);
   const cellOptions: TableCustomCellOptions = {
     type: TableCellDisplayMode.Custom,
@@ -363,6 +367,7 @@ function createProfileValueField({ name, unit, totalTicks, unitTitle, display }:
         displaySelf: display(selfField.values[rowIndex]),
         unitTitle,
         totalTicks,
+        showSamples,
       });
       const percentage = field.name === 'Self' ? tooltipData.percentSelf : tooltipData.percentValue;
 
