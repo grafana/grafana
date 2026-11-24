@@ -3,17 +3,21 @@ package cascadedelete
 import (
 	"context"
 	"errors"
+	"maps"
 	"slices"
 	"sort"
+	"strconv"
 	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/cache"
 
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -43,27 +47,57 @@ type memStore struct {
 	// failDelete makes Delete of the named child return the error.
 	failDelete map[string]error
 
-	deleteCalls  []string
+	deleteCalls []string
+	// noIdentity counts calls made without the service identity, which the remote storage client refuses.
+	noIdentity   int
 	statusWrites int
 	listedRows   int
 	// gets counts Get calls per folder: one per controller pass.
 	gets map[string]int
+	// rvs is bumped on every change, like the real store.
+	rvs map[string]int
 }
 
 func newMemStore() *memStore {
-	return &memStore{folders: map[string]*memFolder{}, dashboards: map[string]string{}, failDelete: map[string]error{}, gets: map[string]int{}}
+	return &memStore{folders: map[string]*memFolder{}, dashboards: map[string]string{}, failDelete: map[string]error{}, gets: map[string]int{}, rvs: map[string]int{}}
 }
 
+// notify delivers a folder change to the handler. The caller holds m.mu.
 func (m *memStore) notify(name string, deleted bool) {
 	if m.handler == nil {
 		return
 	}
-	obj := &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Namespace: testNamespace, Name: name}}
 	if deleted {
-		m.handler.OnDelete(obj)
+		delete(m.rvs, name)
+		m.handler.OnDelete(&foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Namespace: testNamespace, Name: name}})
 		return
 	}
+	m.rvs[name]++
+	obj := m.eventObject(name)
 	m.handler.OnUpdate(obj, obj)
+}
+
+func (m *memStore) eventObject(name string) *foldersv1.Folder {
+	return &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Namespace: testNamespace, Name: name, ResourceVersion: strconv.Itoa(m.rvs[name])}}
+}
+
+// initialList delivers every folder as the informer's first list does.
+func (m *memStore) initialList() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for _, name := range slices.Sorted(maps.Keys(m.folders)) {
+		m.handler.OnAdd(m.eventObject(name), true)
+	}
+}
+
+// resync re-delivers every folder at its current version, like a re-list.
+func (m *memStore) resync() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for _, name := range slices.Sorted(maps.Keys(m.folders)) {
+		obj := m.eventObject(name)
+		m.handler.OnUpdate(obj, obj)
+	}
 }
 
 func (m *memStore) getCount(name string) int {
@@ -109,9 +143,17 @@ func (m *memStore) get(name string) *foldersv1.Folder {
 	return m.getLocked(name)
 }
 
-func (m *memStore) Get(_ context.Context, _, name string) (*foldersv1.Folder, error) {
+// track notes a call that lacks the service identity. The caller holds m.mu.
+func (m *memStore) track(ctx context.Context) {
+	if !identity.IsServiceIdentity(ctx) {
+		m.noIdentity++
+	}
+}
+
+func (m *memStore) Get(ctx context.Context, _, name string) (*foldersv1.Folder, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	m.track(ctx)
 	m.gets[name]++
 	f := m.getLocked(name)
 	if f == nil {
@@ -125,7 +167,7 @@ func (m *memStore) getLocked(name string) *foldersv1.Folder {
 	if !ok {
 		return nil
 	}
-	out := &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Namespace: testNamespace, Name: name, Finalizers: slices.Clone(f.finalizers)}}
+	out := &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Namespace: testNamespace, Name: name, UID: types.UID(name + "-uid"), Finalizers: slices.Clone(f.finalizers)}}
 	if f.parent != "" {
 		out.Annotations = map[string]string{utils.AnnoKeyFolder: f.parent}
 	}
@@ -159,9 +201,10 @@ func (m *memStore) childrenOf(folderUID string, kind ChildKind) []Child {
 	return out
 }
 
-func (m *memStore) ListChildren(_ context.Context, _, folderUID string, kind ChildKind, offset, limit int64) ([]Child, int64, error) {
+func (m *memStore) ListChildren(ctx context.Context, _, folderUID string, kind ChildKind, offset, limit int64) ([]Child, int64, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	m.track(ctx)
 	all := m.childrenOf(folderUID, kind)
 	page := pageOf(all, offset, limit)
 	m.listedRows += len(page)
@@ -175,9 +218,10 @@ func pageOf(all []Child, offset, limit int64) []Child {
 	return all[start:end]
 }
 
-func (m *memStore) Delete(_ context.Context, _, parentUID string, c Child) (DeleteOutcome, error) {
+func (m *memStore) Delete(ctx context.Context, _, parentUID string, c Child) (DeleteOutcome, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	m.track(ctx)
 	if err := m.failDelete[c.Name]; err != nil {
 		return 0, err
 	}
@@ -214,9 +258,10 @@ func (m *memStore) Delete(_ context.Context, _, parentUID string, c Child) (Dele
 	}
 }
 
-func (m *memStore) UpdateCascadeStatus(_ context.Context, _ string, name string, s foldersv1.FolderCascadeDeleteStatus) error {
+func (m *memStore) UpdateCascadeStatus(ctx context.Context, _ string, name string, s foldersv1.FolderCascadeDeleteStatus) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	m.track(ctx)
 	f, ok := m.folders[name]
 	if !ok {
 		return apierrors.NewNotFound(foldersv1.FolderResourceInfo.GroupResource(), name)
@@ -228,9 +273,10 @@ func (m *memStore) UpdateCascadeStatus(_ context.Context, _ string, name string,
 	return nil
 }
 
-func (m *memStore) RemoveFinalizer(_ context.Context, _ string, name string, _ []string) error {
+func (m *memStore) RemoveFinalizer(ctx context.Context, _ string, name string, _ []string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	m.track(ctx)
 	f, ok := m.folders[name]
 	if !ok {
 		return apierrors.NewNotFound(foldersv1.FolderResourceInfo.GroupResource(), name)
@@ -256,10 +302,15 @@ func sortedKeys[V any](m map[string]V) []string {
 
 func newTestReconciler(m *memStore, batch int) *Reconciler {
 	return &Reconciler{
-		Children:  m,
-		Deleter:   m,
+		Handlers:  []KindHandler{{ChildFolder, m, m}, {ChildDashboard, m, m}},
 		Folders:   m,
 		BatchSize: batch,
+	}
+}
+
+func setLister(r *Reconciler, l ChildLister) {
+	for i := range r.Handlers {
+		r.Handlers[i].Lister = l
 	}
 }
 

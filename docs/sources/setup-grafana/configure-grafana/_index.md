@@ -523,6 +523,144 @@ You can optionally set this value to `false` after all Grafana instances that wr
 
 <hr />
 
+### `[nats]`
+
+Configures the NATS message bus that Grafana instances use to notify each other of unified storage changes, so that watches don't poll the database.
+The bus is available in Grafana 13.4 and later, and it's off by default.
+In a high availability cluster on MySQL or PostgreSQL, `enabled = true` and an open `cluster_port` between the instances are enough to cluster.
+For a guide to setting it up in a high availability cluster, refer to [Set up NATS for high availability](../set-up-nats-for-high-availability/).
+
+#### `enabled`
+
+Set to `true` to turn on the NATS message bus.
+Grafana then publishes a notification for each unified storage write and, unless you set `notifier = false`, serves unified storage watches from the bus.
+The default value is `false`.
+
+#### `mode`
+
+Either `embedded` or `external`.
+In `embedded` mode, each Grafana instance runs a NATS server inside the Grafana process, and the instances of a cluster connect to each other.
+In `external` mode, Grafana connects to the NATS servers in `client_urls`.
+The default value is `embedded`.
+
+#### `client_urls`
+
+Comma-separated list of NATS server URLs to connect to, for example `tls://nats-1.example.internal:4222,tls://nats-2.example.internal:4222`.
+Required in `external` mode.
+
+#### `listen_address`
+
+The address that the embedded server binds `cluster_port` to.
+Grafana only opens `cluster_port` when instances can find each other through a MySQL or PostgreSQL database, or when you set `listen_address`.
+If empty, Grafana binds `0.0.0.0`, so that instances on other hosts can connect.
+To secure the connections between instances, refer to [Encrypt traffic between instances](../set-up-nats-for-high-availability/#encrypt-traffic-between-instances).
+The default value is empty.
+
+#### `cluster_port`
+
+The port that embedded servers use to connect to each other.
+A single instance on SQLite doesn't open it.
+Allow inbound TCP traffic on this port from the other Grafana instances.
+The default value is `6222`.
+
+#### `advertise_address`
+
+The host name or IP address that other instances dial to reach this instance's `cluster_port`, without a port.
+If empty and `listen_address` is a specific address, Grafana advertises `listen_address`.
+If empty and the cluster port listens on a wildcard address such as `0.0.0.0`, Grafana advertises the first IPv4 address of a network interface that's up and isn't a loopback interface, and logs it at startup.
+Set it when that picks the wrong network, for example on hosts with several network interfaces, behind network address translation, or for IPv6.
+
+#### `cluster_tls_cert_path`
+
+Path to the PEM-encoded certificate that this instance presents to its peers on `cluster_port`.
+Setting `cluster_tls_cert_path`, `cluster_tls_key_path`, and `cluster_tls_ca_path` turns on mutual TLS between embedded servers.
+Set all three together, on every instance.
+
+The certificate must allow both server and client authentication, and its subject alternative names must match the host that the instance advertises.
+Grafana checks the files every 15 seconds and loads changed certificates without a restart.
+
+#### `cluster_tls_key_path`
+
+Path to the PEM-encoded private key for `cluster_tls_cert_path`.
+The key must not be protected by a passphrase.
+
+#### `cluster_tls_ca_path`
+
+Path to the PEM-encoded CA certificates that verify the certificates of peers.
+The file can contain several CA certificates, for example while you rotate the CA.
+
+#### `notifier`
+
+Controls whether unified storage watches use the bus instead of polling the database.
+If empty, it follows `enabled`.
+Set it to `false` to publish notifications but keep polling, for example during a staged rollout.
+Refer to [Turn on NATS in a running cluster](../set-up-nats-for-high-availability/#turn-on-nats-in-a-running-cluster).
+
+#### `notifier_watch_max_age`
+
+The maximum duration of a watch served from the bus, after which Grafana ends it so that its client lists again.
+Only applies when `enabled` and `notifier` are both `true`.
+A value of `0` turns off expiry.
+If empty, it's `1h` while `notifier` is on, and `0` otherwise.
+Refer to [What changes when you turn on NATS](../set-up-nats-for-high-availability/#what-changes-when-you-turn-on-nats).
+
+#### `tls_enabled`
+
+Set to `true` to use TLS for the connection to the NATS servers in `external` mode.
+The `tls_*` settings don't apply in `embedded` mode, where Grafana connects inside the process.
+To encrypt traffic between embedded servers, use the `cluster_tls_*` settings.
+The default value is `false`.
+
+#### `tls_ca_cert_path`
+
+Path to the CA certificate that verifies the external NATS servers.
+
+#### `tls_cert_path`
+
+Path to the client certificate, if the external NATS servers require client certificates.
+
+#### `tls_key_path`
+
+Path to the private key for `tls_cert_path`.
+
+#### `tls_server_name`
+
+The server name to verify in the certificates of the external NATS servers, if it differs from the host in `client_urls`.
+
+#### `tls_insecure_skip_verify`
+
+Set to `true` to skip the verification of the external NATS servers' certificates.
+Only use it for testing.
+The default value is `false`.
+
+#### `auth_mode`
+
+How Grafana authenticates to external NATS servers.
+One of `none`, `token`, or `credentials`.
+With `token`, Grafana presents `token`.
+With `credentials`, Grafana presents a NATS credentials file.
+The default value is `none`.
+
+#### `token`
+
+The token that Grafana presents when `auth_mode = token`.
+
+#### `credentials_file`
+
+Path to the NATS credentials file (`.creds`) that Grafana presents when `auth_mode = credentials`.
+
+#### `publisher_credentials_file`
+
+Path to a credentials file for publishing only, if publishing and subscribing use different identities.
+If empty, Grafana uses `credentials_file`.
+
+#### `subscriber_credentials_file`
+
+Path to a credentials file for subscribing only, if publishing and subscribing use different identities.
+If empty, Grafana uses `credentials_file`.
+
+<hr />
+
 ### `[remote_cache]`
 
 Caches authentication tokens and other temporary authentication-related data in the configured database, Redis, or Memcached. This setting doesn't configure [Query Caching in Grafana Enterprise](../../administration/data-source-management/#query-and-resource-caching).
@@ -619,6 +757,10 @@ Limits the amount of bytes that Grafana reads from responses of outgoing HTTP re
 #### `row_limit`
 
 Limits the number of rows that Grafana processes from SQL data sources. Default is `1000000`.
+
+#### `series_limit`
+
+Limits the number of series that Grafana processes from one Prometheus query. A query that returns more series fails with an error. Default is `0`, which means no limit.
 
 #### `user_agent`
 
@@ -970,6 +1112,12 @@ Increasing this value allows processing more dashboards in each cleanup cycle bu
 <hr />
 
 ### `[folder]`
+
+#### `pending_deletion_resource_enabled`
+
+Mounts the internal `PendingFolderDeletion` API at `folder.grafana.app/v1alpha1`. Default is `false`. This process-global setting requires a restart. It doesn't enable pending-deletion writers or recovery, and access remains restricted to authorized internal services.
+
+Pending entries use `<folder.metadata.name>-<folder.metadata.uid>` as their name: the exact folder API name followed by its Kubernetes incarnation UID, not its display title. Recording rejects names outside Grafana's supported character set (ASCII letters, digits, `-`, `_`, `:`, and `.`) and names longer than 253 bytes without altering them. `spec.folderName` and `spec.folderUID` retain the two original values separately.
 
 #### `deleted_resource_cleanup_interval`
 
@@ -1658,7 +1806,7 @@ Options are `debug`, `info`, `warn`, `error`. `critical` is an alias for `error`
 Optional settings to set different levels for specific loggers.
 For example: `filters = sqlstore:debug`
 
-You can use multiple filters with a comma-seperated list:
+You can use multiple filters with a comma-separated list:
 For example: `filters = sqlstore:debug,plugins:info`
 
 The equivalent for a `docker-compose.yaml` looks like this:
@@ -2186,11 +2334,11 @@ This section configures where Grafana Alerting writes alert state history. Refer
 
 #### `enabled `
 
-Enables recording alert state history. Default is `false`.
+Enables recording alert state history. Default is `true`.
 
 #### `backend `
 
-Select the backend used to store alert state history. Supported values: `loki`, `prometheus`, `multiple`.
+Select the backend used to store alert state history. Supported values: `loki`, `prometheus`, `annotations`, `multiple`.
 
 #### `loki_remote_url `
 
@@ -2220,11 +2368,11 @@ Used only when `backend = multiple`. Comma-separated list of secondary backends 
 
 ### `[unified_alerting.state_history.annotations]`
 
-This section controls retention of annotations automatically created while evaluating alert rules when alerting state history backend is configured to be annotations (see setting [unified_alerting.state_history].backend)
+This section controls retention of annotations automatically created while evaluating alert rules when alerting state history backend is configured to be `annotations` (see setting [unified_alerting.state_history].backend)
 
 #### `max_age`
 
-Configures for how long alert annotations are stored. Default is 0, which keeps them forever. This setting should be expressed as an duration. Ex 6h (hours), 10d (days), 2w (weeks), 1M (month).
+Configures for how long alert annotations are stored. Default is 0, which keeps them forever. This setting should be expressed as a duration. Ex 6h (hours), 10d (days), 2w (weeks), 1M (month).
 
 #### `max_annotations_to_keep`
 
@@ -2244,6 +2392,10 @@ Set the query offset to imported Grafana-managed rules when `query_offset` is no
 
 Set the default data source UID to use for query execution when importing Prometheus rules. Grafana uses this default when the `X-Grafana-Alerting-Datasource-UID` header isn't provided during import. If this option isn't set, the header becomes required. The default value is empty.
 
+#### `max_request_body_bytes`
+
+Set the maximum allowed request body size in bytes for Prometheus conversion API POST endpoints. This limits the size of rule group and Alertmanager configuration payloads that can be imported. Set to `0` to disable the limit. The default value is `52428800` (50 MB).
+
 <hr>
 
 ### `[recording_rules]`
@@ -2255,6 +2407,10 @@ Set the maximum size, in bytes (estimated from label names and values), of a sin
 #### `max_write_concurrency`
 
 Set the maximum number of requests of a split recording rule write that may be in flight at once. This setting has no effect unless `max_write_batch_size` is set. The default value of `0` uses the client default. The value must be between `0` and `32`.
+
+#### `max_tracked_series`
+
+Set the maximum number of series that Grafana remembers for stale markers across all recording rules. After the limit is reached, Grafana still evaluates and writes every series, but new series get no stale marker, and Grafana logs a warning. One million series take roughly 1.2 to 1.5 GiB of memory, which is an estimate. The limit is shared by all organizations and is first come, first served. Set it to `0` for no limit. The default value is `1000000`.
 
 <hr>
 
@@ -2293,6 +2449,21 @@ This setting should be expressed as a duration. Examples: 6h (hours), 10d (days)
 #### `max_annotations_to_keep`
 
 Configures max number of API annotations that Grafana keeps. Default value is 0, which keeps all API annotations.
+
+### `[annotations.app_platform]`
+
+Configures the new annotations API, which is served at `/apis/annotation.grafana.app`. For more information, refer to the [Annotations HTTP API](../../developer-resources/api-reference/http-api/annotations/).
+
+#### `enabled`
+
+Set to `true` to enable the new annotations API. The default is `false`.
+
+#### `max_age`
+
+Rejects new annotations with a `time` older than this duration. The default is 0, which disables the check.
+This setting should be expressed as a duration. Examples: 24h (hours), 720h (30 days).
+
+This setting doesn't delete stored annotations. To configure how long Grafana stores annotations, refer to the existing `[annotations.dashboard]` and `[annotations.api]` settings.
 
 <hr>
 
@@ -3029,6 +3200,18 @@ If you want to allow an internal or self-hosted Git server, such as an on-premis
 
 This field is empty by default.
 
+#### `bootstrap_path`
+
+Directory that Grafana registers a local repository over at startup, so the files you mount there can declare the instance's own repositories and connections. Add repositories, connections, dashboards, and folders to that directory to provision them on startup.
+
+You can't edit this repository's configuration, because it comes from this setting, but you can edit the resources it provisions. The setting requires the `local` repository type, and it forbids the `instance` sync target.
+
+The value must be a path that a local repository can read. Grafana doesn't start when the path contains a traversal (`..`) or a hidden component, or when it's the filesystem root.
+
+Emptying this setting deletes the repository that an earlier run registered and everything that repository provisioned.
+
+This field is empty by default.
+
 #### `min_sync_interval`
 
 The minimum sync interval that you can set for a repository. Indicates how often the controller will check for changes in the repository that were not propagated by a webhook. The minimum value is `10s`. Default is `10s`.
@@ -3041,7 +3224,7 @@ Supported types: `local`, `git`, `github`. Grafana Enterprise additionally suppo
 
 #### `connection_types`
 
-List of enabled connection types, separated by `|`. When empty, defaults are applied by each subsystem.
+List of enabled connection types, separated by `|`. When empty, Grafana enables all supported connection types.
 
 Supported types: `github`, `githubOAuth`, and `gitOAuth`. Grafana Enterprise additionally supports `githubEnterprise`, `githubEnterpriseOAuth`, `bitbucketOAuth`, and `gitlabOAuth`.
 
@@ -3052,6 +3235,10 @@ Maximum number of repositories allowed. Default is `10`. Set to `0` for unlimite
 #### `max_resources_per_repository`
 
 Maximum number of resources (dashboards, folders, etc.) allowed per repository. Default is `0`, which means unlimited.
+
+#### `max_job_body_size`
+
+Maximum size, in bytes, of the request body when you create a provisioning job, for example a pull or migrate job. Requests above this size are rejected with `413 Request Entity Too Large`. A value of `0` or less uses the default (150KiB).
 
 #### `public_root_url`
 

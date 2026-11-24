@@ -5,9 +5,23 @@ import { UsersIndicator } from './UsersIndicator';
 
 # UsersIndicator
 
-A component that displays a set of user icons indicating which users are currently active. If there are too many users to display all the icons, it will collapse the icons into a single icon with a number indicating the number of additional users.
+A component that displays a set of user icons indicating which users are currently active.
+
+## When to use
+
+No component-specific guidance documented yet.
+
+## Never use for
+
+No component-specific guidance documented yet.
+
+## Do's and don'ts
+
+No component-specific guidance documented yet.
 
 ## Usage
+
+If there are too many users to display all the icons, it will collapse the icons into a single icon with a number indicating the number of additional users.
 
 ```tsx
 import { UsersIndicator } from '@grafana/ui';
@@ -45,9 +59,7 @@ const ExampleComponent = () => {
 };
 ```
 
-<ArgTypes of={UsersIndicator} />
-
-## UserView type
+### UserView type
 
 ```tsx
 import { DateTimeInput } from '@grafana/data';
@@ -63,3 +75,9 @@ export interface UserView {
   lastActiveAt?: DateTimeInput;
 }
 ```
+
+## Accessibility
+
+## Props
+
+<ArgTypes of={UsersIndicator} />

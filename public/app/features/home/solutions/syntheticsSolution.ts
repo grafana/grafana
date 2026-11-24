@@ -1,4 +1,4 @@
-import memoize from 'micro-memoize';
+import { memoize } from 'micro-memoize';
 
 import { formattedValueToString, getValueFormat, locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -76,7 +76,7 @@ export function syntheticsSolution(
       appId: SYNTHETIC_MONITORING_APP_ID,
       description: t(
         'home.solutions.synthetics.description',
-        'Monitor uptime and performance of your endpoints from probes around the world.'
+        'Monitor the digital experience of your endpoints and user journeys from probes around the world.'
       ),
       setupHint: t('home.solutions.synthetics.setup-hint', 'create a check'),
       setupCta: async () => {

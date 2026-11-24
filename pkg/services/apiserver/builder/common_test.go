@@ -82,7 +82,7 @@ func TestManifestsFromBuildersPrefersFullManifest(t *testing.T) {
 			Name:   gv.Version,
 			Served: true,
 			Kinds: []app.ManifestVersionKind{{
-				Kind: "Widget", Plural: "widgets", Scope: "Namespaced",
+				Kind: "Widget", Plural: "widgets", Resource: "widgets", Scope: "Namespaced",
 				Search: &app.ManifestVersionKindSearch{Endpoint: &searchDisabled},
 			}},
 		}},

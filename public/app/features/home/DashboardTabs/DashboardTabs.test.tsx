@@ -1,14 +1,26 @@
 import { http, HttpResponse } from 'msw';
 import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
+import { testWithAppKind } from 'test/helpers/testWithAppKind';
+import { testWithStarsUser } from 'test/helpers/testWithStarsUser';
 import { render, screen, waitFor, within } from 'test/test-utils';
 
 import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { config, reportInteraction, setBackendSrv } from '@grafana/runtime';
 import { setDataSourceInstanceSettings } from '@grafana/runtime/internal';
 import { mockComboboxRect } from '@grafana/test-utils';
-import { getCustomSearchHandler, searchRoute } from '@grafana/test-utils/handlers';
+import {
+  getAPIGroupHandler,
+  getCustomSearchHandler,
+  getKindSearchHandler,
+  searchRoute,
+} from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { setMockStarredDashboards, setMockStarredFolders } from '@grafana/test-utils/unstable';
+import {
+  MOCK_APP_KIND,
+  setMockStarredAppKind,
+  setMockStarredDashboards,
+  setMockStarredFolders,
+} from '@grafana/test-utils/unstable';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -88,6 +100,9 @@ function seedRecent(uids: string[]) {
   seedHistory(uids.map((uid) => dashboardEntry(uid)));
 }
 
+testWithStarsUser();
+testWithAppKind();
+
 beforeEach(() => {
   jest.clearAllMocks();
   window.localStorage.removeItem(FILTER_KEY);
@@ -143,6 +158,49 @@ describe('DashboardTabs', () => {
     expect(await screen.findByText('Starred Dashboard 1')).toBeInTheDocument();
     expect(screen.getByText('Starred Dashboard 2')).toBeInTheDocument();
     expect(screen.getByText('Starred Dashboard 3')).toBeInTheDocument();
+  });
+
+  it('lists a starred object of an app kind among the starred dashboards, linking into the plugin', async () => {
+    setMockStarredDashboards(['starred-1']);
+    setMockStarredAppKind(MOCK_APP_KIND.group, MOCK_APP_KIND.kind, ['t1']);
+    server.use(
+      getAPIGroupHandler(MOCK_APP_KIND.group, MOCK_APP_KIND.version),
+      getKindSearchHandler(MOCK_APP_KIND, [{ name: 't1', title: 'Capacity review' }])
+    );
+
+    render(<DashboardTabs />);
+
+    // Recent is empty, so the card lands on Starred.
+    expect(await screen.findByRole('link', { name: 'Capacity review' })).toHaveAttribute(
+      'href',
+      '/a/test-things-app/things/t1'
+    );
+    expect(screen.getByText('Starred Dashboard 1')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /starred.*2/i })).toBeInTheDocument();
+  });
+
+  it('lists the starred objects that loaded under a retryable warning when the dashboard search fails', async () => {
+    setMockStarredDashboards(['starred-1']);
+    setMockStarredAppKind(MOCK_APP_KIND.group, MOCK_APP_KIND.kind, ['t1']);
+    server.use(
+      http.get(searchRoute, () => HttpResponse.json({}, { status: 500 })),
+      getAPIGroupHandler(MOCK_APP_KIND.group, MOCK_APP_KIND.version),
+      getKindSearchHandler(MOCK_APP_KIND, [{ name: 't1', title: 'Capacity review' }])
+    );
+
+    const { user } = render(<DashboardTabs />);
+
+    // Recent is empty, so the card lands on Starred.
+    expect(await screen.findByRole('link', { name: 'Capacity review' })).toBeInTheDocument();
+    expect(screen.getByText('Could not load starred dashboards')).toBeInTheDocument();
+    expect(screen.queryByText('Starred Dashboard 1')).not.toBeInTheDocument();
+
+    server.use(getCustomSearchHandler(starredHits));
+    await user.click(screen.getByRole('button', { name: /retry/i }));
+
+    expect(await screen.findByText('Starred Dashboard 1')).toBeInTheDocument();
+    expect(screen.queryByText('Could not load starred dashboards')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Capacity review' })).toBeInTheDocument();
   });
 
   it('offers the full dashboard list from the dashboard tabs only', async () => {
@@ -278,6 +336,25 @@ describe('DashboardTabs', () => {
       expect(await screen.findByText('Other Folder')).toBeInTheDocument();
       expect(screen.getByText('Starred Dashboard 1')).toBeInTheDocument();
       expect(screen.queryByText('Starred Folder')).not.toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /starred.*2/i })).toBeInTheDocument();
+    });
+
+    // A dashboard and a folder may share a uid; each is its own row, keyed by kind, or React warns about duplicate
+    // keys and the console guard fails the test
+    it('lists a dashboard and a folder that share a uid as two rows', async () => {
+      setMockStarredFolders(['shared']);
+      setMockStarredDashboards(['shared']);
+      server.use(
+        getCustomSearchHandler([
+          makeDashboardHit({ name: 'shared', title: 'Shared Dashboard' }),
+          makeDashboardHit({ name: 'shared', title: 'Shared Folder', resource: 'folders' }),
+        ])
+      );
+
+      render(<DashboardTabs />);
+
+      expect(await screen.findByText('Shared Dashboard')).toBeInTheDocument();
+      expect(screen.getByText('Shared Folder')).toBeInTheDocument();
       expect(screen.getByRole('tab', { name: /starred.*2/i })).toBeInTheDocument();
     });
   });
@@ -455,6 +532,9 @@ describe('DashboardTabs', () => {
       expect(jest.mocked(recentActivityShown)).toHaveBeenCalledTimes(1);
       expect(jest.mocked(recentActivityShown)).toHaveBeenCalledWith({
         total_count: 4,
+        folder_count: 0,
+        notebook_count: 0,
+        playlist_count: 0,
         page_count: 0,
         dashboard_count: 1,
         explore_count: 1,
@@ -644,6 +724,53 @@ describe('DashboardTabs', () => {
 
       expect(await screen.findByRole('link', { name: /Recent Dashboard 1/ })).toBeInTheDocument();
       expect(screen.getByRole('tab', { name: /recent/i })).toHaveAttribute('aria-selected', 'true');
+    });
+
+    describe('playlists', () => {
+      const playlistEntry: PageHistoryEntry = {
+        kind: 'playlist',
+        uid: 'pl-1',
+        pathname: '/playlists/edit/pl-1',
+        search: '',
+        lastVisited: Date.now() - 30_000,
+      };
+      const playlistsRoute = '*/apis/playlist.grafana.app/*/namespaces/*/playlists';
+
+      it('titles a playlist row with the playlist name', async () => {
+        seedHistory([playlistEntry]);
+        server.use(
+          http.get(playlistsRoute, () =>
+            HttpResponse.json({ items: [{ metadata: { name: 'pl-1' }, spec: { title: 'NOC wall', interval: '5m' } }] })
+          )
+        );
+
+        render(<DashboardTabs />);
+
+        expect(await screen.findByRole('link', { name: /NOC wall/ })).toBeInTheDocument();
+        expect(jest.mocked(recentActivityShown)).toHaveBeenCalledWith(
+          expect.objectContaining({ total_count: 1, playlist_count: 1, folder_count: 0, notebook_count: 0 })
+        );
+      });
+
+      it('drops playlist rows but keeps the rest when playlist access is denied', async () => {
+        seedHistory([recentDashboardEntry, playlistEntry]);
+        server.use(http.get(playlistsRoute, () => HttpResponse.json({}, { status: 403 })));
+
+        render(<DashboardTabs />);
+
+        expect(await screen.findByRole('link', { name: /Recent Dashboard 1/ })).toBeInTheDocument();
+        expect(screen.queryByText('Could not load your recent activity')).not.toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: /playlist/i })).not.toBeInTheDocument();
+      });
+
+      it('still shows the retryable error when the playlist lookup fails for another reason', async () => {
+        seedHistory([recentDashboardEntry, playlistEntry]);
+        server.use(http.get(playlistsRoute, () => HttpResponse.json({}, { status: 500 })));
+
+        render(<DashboardTabs />);
+
+        expect(await screen.findByText('Could not load your recent activity')).toBeInTheDocument();
+      });
     });
   });
 });

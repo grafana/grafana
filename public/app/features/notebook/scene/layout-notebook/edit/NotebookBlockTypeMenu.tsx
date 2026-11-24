@@ -2,6 +2,7 @@ import { type KeyboardEvent, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
 import { Menu, type IconName } from '@grafana/ui';
+import { useSavedQueriesAvailable } from 'app/features/notebook/utils';
 
 /** The block types the add-block menu offers. Insertion itself belongs to edit mode. */
 export type NotebookBlockType = 'heading' | 'paragraph' | 'code' | 'visualization';
@@ -24,9 +25,13 @@ export function getNotebookBlockTypeOptions(): NotebookBlockTypeOption[] {
 
 interface Props {
   onPick?: (type: NotebookBlockType) => void;
+  /** Visualization submenu entry, only offered when saved queries are available. */
+  onPickSavedQuery?: () => void;
 }
 
-export function NotebookBlockTypeMenu({ onPick }: Props) {
+export function NotebookBlockTypeMenu({ onPick, onPickSavedQuery }: Props) {
+  const savedQueriesAvailable = useSavedQueriesAvailable();
+
   const menuRef = useRef<HTMLDivElement>(null);
   // Focus has to move through Menu's own callback: focusing an item directly would leave Menu's
   // internal index behind, and the next ArrowUp/Down would step from the wrong item.
@@ -85,9 +90,44 @@ export function NotebookBlockTypeMenu({ onPick }: Props) {
       }}
       onKeyDown={handleKeyDown}
     >
-      {getNotebookBlockTypeOptions().map((option) => (
-        <Menu.Item key={option.type} icon={option.icon} label={option.label} onClick={() => onPick?.(option.type)} />
-      ))}
+      {getNotebookBlockTypeOptions().map((option) => {
+        if (option.type !== 'visualization' || !savedQueriesAvailable || !onPickSavedQuery) {
+          return (
+            <Menu.Item
+              key={option.type}
+              icon={option.icon}
+              label={option.label}
+              onClick={() => onPick?.(option.type)}
+            />
+          );
+        }
+
+        // A plain array: Menu.Item opens a submenu on childItems.length, so a null child would still count.
+        // Child clicks must bubble for a host Dropdown to close, so the parent's onClick filters them out.
+        const childItems = [
+          <Menu.Item
+            key="new-from-saved-queries"
+            icon="book-open"
+            label={t('notebook.add-block.new-from-saved-queries', 'New from Saved Queries')}
+            onClick={onPickSavedQuery}
+          />,
+        ];
+
+        return (
+          <Menu.Item
+            key={option.type}
+            icon={option.icon}
+            label={option.label}
+            onClick={(event) => {
+              const clickedItem = event.target instanceof Element ? event.target.closest('[role="menuitem"]') : null;
+              if (clickedItem === event.currentTarget) {
+                onPick?.(option.type);
+              }
+            }}
+            childItems={childItems}
+          />
+        );
+      })}
     </Menu>
   );
 }

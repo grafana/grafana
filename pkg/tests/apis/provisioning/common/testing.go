@@ -441,6 +441,13 @@ func (h *ProvisioningTestHelper) AwaitJob(t *testing.T, job *unstructured.Unstru
 	require.NotEmpty(t, repo)
 
 	var lastResult *unstructured.Unstructured
+	// EventuallyWithT fails via FailNow, which still runs deferred calls, so this
+	// only fires when the job never reached the historic store.
+	defer func() {
+		if lastResult == nil {
+			h.logUnarchivedJob(t, job)
+		}
+	}()
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		result, err := h.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{},
 			"jobs", string(job.GetUID()))
@@ -460,6 +467,43 @@ func (h *ProvisioningTestHelper) AwaitJob(t *testing.T, job *unstructured.Unstru
 	require.NotNil(t, lastResult, "expected job result to be non-nil")
 
 	return lastResult
+}
+
+// logUnarchivedJob explains why a job never showed up in the historic store by
+// checking whether it is still in the active store. Job names are deterministic,
+// so the UID is compared to rule out a namesake.
+func (h *ProvisioningTestHelper) logUnarchivedJob(t *testing.T, job *unstructured.Unstructured) {
+	t.Helper()
+
+	// t.Context() is already cancelled by the time a timed-out wait unwinds.
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	name := job.GetName()
+	active, err := h.Jobs.Resource.Get(ctx, name, metav1.GetOptions{})
+	switch {
+	case apierrors.IsNotFound(err):
+		t.Logf("job %q (uid %s) is gone from the active store and was never archived", name, job.GetUID())
+	case err != nil:
+		t.Logf("job %q: could not inspect the active store: %v", name, err)
+	case active.GetUID() != job.GetUID():
+		t.Logf("job %q: active store holds a different job (uid %s, expected %s)", name, active.GetUID(), job.GetUID())
+	default:
+		state, _, _ := unstructured.NestedString(active.Object, "status", "state")
+		claim := active.GetLabels()[jobs.LabelJobClaim]
+		if claim == "" {
+			t.Logf("job %q is still active and was never claimed (status.state=%q)", name, state)
+			return
+		}
+		// The claim label is the claim time in unix millis; the owner token is deliberately not logged.
+		claimedAt, parseErr := strconv.ParseInt(claim, 10, 64)
+		if parseErr != nil {
+			t.Logf("job %q is still active and claimed (status.state=%q, unparsable claim %q)", name, state, claim)
+			return
+		}
+		t.Logf("job %q is still active and claimed %s ago (status.state=%q)",
+			name, time.Since(time.UnixMilli(claimedAt)).Round(time.Second), state)
+	}
 }
 
 func (h *ProvisioningTestHelper) AwaitJobs(t *testing.T, repoName string) {
@@ -969,6 +1013,14 @@ func (h *ProvisioningTestHelper) CreateLocalRepo(t *testing.T, repo TestRepo) {
 	require.NoError(t, err)
 	h.WaitForHealthyRepository(t, repo.Name)
 
+	if !repo.SkipSync {
+		// The controller queues its own "<repo>-sync" as the repo turns healthy,
+		// and our sync below reuses that name. On SQLite the two jobs' watch
+		// events can arrive out of order, which loses our job in the job
+		// driver's informer, so let the controller's job finish and go first.
+		h.waitForControllerSync(t, repo.Name)
+	}
+
 	for from, to := range repo.Copies {
 		if repo.LocalPath != "" {
 			fullPath := path.Join(localPath, to)
@@ -989,6 +1041,36 @@ func (h *ProvisioningTestHelper) CreateLocalRepo(t *testing.T, repo TestRepo) {
 	} else {
 		h.DebugState(t, repo.Name, "AFTER REPO CREATION")
 	}
+}
+
+// waitForControllerSync waits until the repository's sync is no longer pending
+// or working and no active job for it remains. Unlike AwaitJobs it never
+// queues a job itself.
+func (h *ProvisioningTestHelper) waitForControllerSync(t *testing.T, repo string) {
+	t.Helper()
+
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		obj, err := h.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "failed to get repository %s", repo) {
+			return
+		}
+		state := MustNestedString(obj.Object, "status", "sync", "state")
+		assert.NotContains(collect,
+			[]string{string(provisioning.JobStatePending), string(provisioning.JobStateWorking)},
+			state, "controller sync for repository %s is still %q", repo, state)
+
+		list, err := h.Jobs.Resource.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(collect, err, "failed to list active jobs") {
+			return
+		}
+		var active []string
+		for _, item := range list.Items {
+			if item.GetLabels()[jobs.LabelRepository] == repo {
+				active = append(active, item.GetName())
+			}
+		}
+		assert.Empty(collect, active, "repository %s still has active jobs", repo)
+	}, WaitTimeoutDefault, WaitIntervalDefault, "controller sync for repository %s should finish", repo)
 }
 
 // filterManagedResources returns the resources managed by repoName.
@@ -1229,22 +1311,26 @@ func (h *ProvisioningTestHelper) RequireSingleRepoDashboard(t *testing.T, repoNa
 	return &dashboard
 }
 
-// TriggerConnectionReconciliation forces the controller to re-process a connection
-// by touching its status (aging the health timestamp by 1ms). A merge patch on the
-// status subresource carries no resourceVersion, so it never conflicts with
-// concurrent controller reconciliations.
+// TriggerConnectionReconciliation forces the controller to re-process a connection by touching
+// its status (aging the health timestamp by 1ms). The patch carries no resourceVersion, but the
+// apiserver still read-modify-writes it, so it races with the controller's own status writes.
 func (h *ProvisioningTestHelper) TriggerConnectionReconciliation(t *testing.T, name string) {
 	t.Helper()
-	statusPatch, err := json.Marshal(map[string]any{
-		"status": map[string]any{
-			"health": map[string]any{
-				"checked": time.Now().UnixMilli() - 1,
+	err := RetryOnConflict(t, func() error {
+		statusPatch, err := json.Marshal(map[string]any{
+			"status": map[string]any{
+				"health": map[string]any{
+					"checked": time.Now().UnixMilli() - 1,
+				},
 			},
-		},
+		})
+		if err != nil {
+			return err
+		}
+		_, err = h.Connections.Resource.Patch(t.Context(), name,
+			types.MergePatchType, statusPatch, metav1.PatchOptions{}, "status")
+		return err
 	})
-	require.NoError(t, err)
-	_, err = h.Connections.Resource.Patch(t.Context(), name,
-		types.MergePatchType, statusPatch, metav1.PatchOptions{}, "status")
 	require.NoError(t, err, "failed to patch status for connection %s", name)
 }
 
@@ -1540,11 +1626,6 @@ type GrafanaOption func(opts *testinfra.GrafanaOpts)
 // Useful for debugging a test in development.
 //
 
-// WithoutProvisioningFolderMetadata disables the FlagProvisioningFolderMetadata feature toggle.
-func WithoutProvisioningFolderMetadata(opts *testinfra.GrafanaOpts) {
-	opts.DisableFeatureToggles = append(opts.DisableFeatureToggles, featuremgmt.FlagProvisioningFolderMetadata)
-}
-
 func WithRepositoryTypes(types []string) GrafanaOption {
 	return func(opts *testinfra.GrafanaOpts) {
 		opts.ProvisioningRepositoryTypes = types
@@ -1554,6 +1635,14 @@ func WithRepositoryTypes(types []string) GrafanaOption {
 func WithConnectionTypes(types []string) GrafanaOption {
 	return func(opts *testinfra.GrafanaOpts) {
 		opts.ProvisioningConnectionTypes = types
+	}
+}
+
+// WithProvisioningBootstrapPath sets [provisioning] bootstrap_path. The directory and its files
+// must exist before the server starts.
+func WithProvisioningBootstrapPath(path string) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningBootstrapPath = path
 	}
 }
 
@@ -1650,13 +1739,12 @@ func WithNATSReListOnly(resync time.Duration) GrafanaOption {
 	}
 }
 
-// WithKeysOnlyReList sets [provisioning] keys_only_relist, so the connection
-// informer's periodic re-list asks storage for keys instead of whole objects.
-// Off by default in Grafana, so a test that wants the keys path must say so, and
-// the tests that do not keep covering the full-object path.
-func WithKeysOnlyReList() GrafanaOption {
+// WithResourceLister sets [provisioning] resource_lister, selecting where the managed-resource
+// list and the repository stats are read from. Off by default, so a test keeps the shipped
+// "search" reader unless it says otherwise.
+func WithResourceLister(mode string) GrafanaOption {
 	return func(opts *testinfra.GrafanaOpts) {
-		opts.ProvisioningKeysOnlyReList = true
+		opts.ProvisioningResourceLister = mode
 	}
 }
 
@@ -1717,7 +1805,7 @@ func defaultGrafanaOpts(provisioningPath string) testinfra.GrafanaOpts {
 	}
 }
 
-func buildProvisioningHelper(t *testing.T, k8sHelper *apis.K8sTestHelper, provisioningPath string) *ProvisioningTestHelper {
+func buildProvisioningHelper(t *testing.T, k8sHelper *apis.K8sTestHelper, provisioningPath string, opts testinfra.GrafanaOpts) *ProvisioningTestHelper {
 	t.Helper()
 
 	k8sHelper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient()
@@ -1792,7 +1880,11 @@ func buildProvisioningHelper(t *testing.T, k8sHelper *apis.K8sTestHelper, provis
 		DashboardsV2beta1:  dashboardsV2beta1Client,
 	}
 
-	h.CleanupAllResources(t)
+	// A bootstrap repository is registered at startup and never re-registered, so
+	// wiping it here would leave the test nothing to assert on.
+	if opts.ProvisioningBootstrapPath == "" {
+		h.CleanupAllResources(t)
+	}
 
 	return h
 }
@@ -1804,7 +1896,7 @@ func RunGrafana(t *testing.T, options ...GrafanaOption) *ProvisioningTestHelper 
 		o(&opts)
 	}
 	k8sHelper := apis.NewK8sTestHelper(t, opts)
-	return buildProvisioningHelper(t, k8sHelper, provisioningPath)
+	return buildProvisioningHelper(t, k8sHelper, provisioningPath, opts)
 }
 
 // RunGrafanaShared is like RunGrafana but the server shutdown is not tied to
@@ -1824,7 +1916,7 @@ func runGrafanaShared(t *testing.T, options ...GrafanaOption) (*ProvisioningTest
 		serverShutdown()
 		_ = os.RemoveAll(provisioningPath)
 	}
-	return buildProvisioningHelper(t, k8sHelper, provisioningPath), shutdownFunc
+	return buildProvisioningHelper(t, k8sHelper, provisioningPath, opts), shutdownFunc
 }
 
 func isTransientDeleteError(err error) bool {
@@ -2703,10 +2795,20 @@ func (h *ProvisioningTestHelper) UpdateGithubConnection(
 	}
 
 	var res *unstructured.Unstructured
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+	// The controller can write status between the caller's read and this update.
+	// Each attempt uses the latest resourceVersion so a conflict can resolve.
+	err = RetryOnConflict(t, func() error {
+		latest, getErr := h.Connections.Resource.Get(t.Context(), connection.GetName(), metav1.GetOptions{})
+		if getErr != nil {
+			return getErr
+		}
+		connection.SetResourceVersion(latest.GetResourceVersion())
 		res, err = h.Connections.Resource.Update(t.Context(), connection, metav1.UpdateOptions{FieldValidation: "Strict"})
-		require.NoError(collect, err)
-	}, WaitTimeoutDefault, WaitIntervalDefault, "connection should be updated")
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
 
 	return res, nil
 }
@@ -3570,6 +3672,31 @@ func startGitServer(t *testing.T) *gittest.Server {
 		}
 	})
 	return gitServer
+}
+
+// StartPublicGitRemote starts a throwaway git server with one repository that has a
+// single commit on main. gittest repositories are readable without credentials, so
+// tests can exercise anonymous access without depending on a real Git host.
+func StartPublicGitRemote(t *testing.T, repoName string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
+	t.Helper()
+
+	gitServer := startGitServer(t)
+	user, err := gitServer.CreateUser(t.Context())
+	require.NoError(t, err, "failed to create user")
+	remote, err := gitServer.CreateRepo(t.Context(), repoName, user)
+	require.NoError(t, err, "failed to create remote repository")
+
+	local, err := gittest.NewLocalRepo(t.Context())
+	require.NoError(t, err, "failed to create local repository")
+	t.Cleanup(func() {
+		if err := local.Cleanup(); err != nil {
+			t.Logf("failed to cleanup local repo: %v", err)
+		}
+	})
+	_, err = local.InitWithRemote(user, remote)
+	require.NoError(t, err, "failed to initialize local repo with remote")
+
+	return remote, local
 }
 
 // GetHelper returns the shared helper, starting it on first use.

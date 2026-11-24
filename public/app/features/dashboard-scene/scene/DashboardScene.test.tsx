@@ -2,7 +2,9 @@ import { waitFor } from '@testing-library/react';
 import { createBrowserHistory } from 'history';
 
 import {
+  AppEvents,
   CoreApp,
+  type PanelPluginMeta,
   type DataSourceInstanceSettings,
   type GrafanaConfig,
   LiveChannelEventType,
@@ -13,6 +15,7 @@ import {
   store,
 } from '@grafana/data';
 import { config, getDataSourceInstanceSettings, locationService, RefreshEvent } from '@grafana/runtime';
+import { setPanelPluginMetas } from '@grafana/runtime/internal';
 import {
   sceneGraph,
   SceneGridLayout,
@@ -37,8 +40,10 @@ import { LS_PANEL_COPY_KEY, LS_STYLES_COPY_KEY } from 'app/core/constants';
 import { AnnoKeyManagerKind, AnnoKeyUseCrossDashboardVariables, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
+import { setDesktopViewport, setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DashboardEventAction } from 'app/features/live/dashboard/types';
+import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/constants';
 import { VariablesChanged } from 'app/features/variables/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
@@ -55,6 +60,7 @@ import { getCloneKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { findVizPanelByKey } from '../utils/findVizPanel';
 import { DashboardInteractions } from '../utils/interactions';
+import { isEditEntryBlocked } from '../utils/mobileEditDeprecation';
 import { toControlSourceRef } from '../utils/predefinedVariables';
 import { createDeferred } from '../utils/test-utils';
 import { getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
@@ -63,7 +69,9 @@ import * as utils from '../utils/utils';
 import { DashboardControls } from './DashboardControls';
 import { DashboardScene } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
+import { UNCONFIGURED_PANEL_PLUGIN_ID } from './UnconfiguredPanel';
 import { DashboardFiltersOverviewDrawer } from './dashboard-filters-overview/DashboardFiltersOverviewDrawer';
+import { getDashboardMode } from './dashboardModes';
 import { dashboardViews } from './dashboardViewRegistry';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from './layout-auto-grid/AutoGridLayout';
@@ -75,7 +83,7 @@ import { PanelTimeRange } from './panel-timerange/PanelTimeRange';
 import { setPendingPlanBuild, takePendingPlanBuild } from './pendingPlanBuild';
 import { DashboardPlanningEvent } from './planningEvents';
 import { allowOrigins, getAllowedOrigins } from './sandbox-consent/sandboxConsent';
-import { type DashboardSceneLike, type DashboardSceneState } from './types/dashboard';
+import { isFullDashboardEditing, type DashboardSceneLike, type DashboardSceneState } from './types/dashboard';
 
 const mockRestoreDashboardVersion = jest.fn();
 
@@ -165,6 +173,60 @@ describe('DashboardScene', () => {
 
         // @ts-expect-error it is a private property
         expect(scene._changesWorker).toBeUndefined();
+      });
+    });
+
+    describe('Discarding with ad hoc table transformations', () => {
+      const hideA = [{ id: 'organize', options: { excludeByName: { A: true } } }];
+      const hideB = [{ id: 'organize', options: { excludeByName: { B: true } } }];
+      let scene: DashboardScene;
+      let deactivateScene: () => void;
+
+      function getAdHocTransformations(key: string) {
+        return findVizPanelByKey(scene, key)!.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER);
+      }
+
+      beforeEach(() => {
+        scene = buildTestScene();
+        locationService.push('/d/dash-1');
+        deactivateScene = scene.activate();
+        findVizPanelByKey(scene, 'panel-1')!.getRuntimeTransformations().set(TABLE_TRANSFORMATIONS_OWNER, hideA);
+        scene.onEnterEditMode();
+        findVizPanelByKey(scene, 'panel-2')!.getRuntimeTransformations().set(TABLE_TRANSFORMATIONS_OWNER, hideB);
+        scene.setState({ title: 'Updated title' });
+      });
+
+      afterEach(() => deactivateScene());
+
+      it('keeps the ad hoc table transformations each panel shows when leaving edit mode', () => {
+        scene.exitEditMode({ skipConfirm: true, restoreInitialState: true });
+
+        expect(scene.state.title).toBe('hello');
+        expect(getAdHocTransformations('panel-1')).toEqual(hideA);
+        expect(getAdHocTransformations('panel-2')).toEqual(hideB);
+      });
+
+      it('keeps the ad hoc table transformations each panel shows when discarding and editing on', () => {
+        scene.discardChangesAndKeepEditing();
+
+        expect(scene.state.title).toBe('hello');
+        expect(getAdHocTransformations('panel-1')).toEqual(hideA);
+        expect(getAdHocTransformations('panel-2')).toEqual(hideB);
+      });
+
+      it('gives a panel whose transformations changed its ad hoc table transformations from when editing started', () => {
+        const panel = findVizPanelByKey(scene, 'panel-1')!;
+        const transformer = panel.state.$data;
+        if (!(transformer instanceof SceneDataTransformer)) {
+          throw new Error('Expected a data transformer');
+        }
+        transformer.setState({ transformations: [{ id: 'organize', options: { renameByName: { A: 'Renamed' } } }] });
+        panel.getRuntimeTransformations().set(TABLE_TRANSFORMATIONS_OWNER, hideB);
+
+        scene.exitEditMode({ skipConfirm: true, restoreInitialState: true });
+
+        expect(findVizPanelByKey(scene, 'panel-1')!.state.$data?.state).toMatchObject({ transformations: [] });
+        expect(getAdHocTransformations('panel-1')).toEqual(hideA);
       });
     });
 
@@ -314,6 +376,172 @@ describe('DashboardScene', () => {
 
         expect(scene.state.planning).toBeUndefined();
         setPendingPlanBuild(undefined);
+      });
+    });
+
+    describe('Mobile edit deprecation', () => {
+      afterEach(() => {
+        setTestFlags({});
+      });
+
+      it('auto-enters edit mode normally on /dashboard/new on a mobile viewport when the toggle is off', () => {
+        setMobileViewport();
+        const scene = buildTestScene();
+        locationService.push('/dashboard/new');
+        const replaceSpy = jest.spyOn(locationService, 'replace');
+
+        scene.activate();
+
+        expect(scene.state.isEditing).toBe(true);
+        expect(scene.state.isDirty).toBe(true);
+        expect(replaceSpy).not.toHaveBeenCalled();
+      });
+
+      it('does not enter edit mode and warns instead, when the toggle is on and the viewport is mobile-sized', () => {
+        setTestFlags({ 'grafana.mobileEditDeprecation': true });
+        setMobileViewport();
+        const scene = buildTestScene();
+        scene.activate();
+        const emitSpy = jest.spyOn(appEvents, 'emit');
+
+        scene.onEnterEditMode();
+
+        expect(scene.state.isEditing).toBeFalsy();
+        expect(emitSpy).toHaveBeenCalledWith(AppEvents.alertWarning, [
+          'Dashboard editing is not available on small screens. Switch to a larger screen to continue.',
+        ]);
+      });
+
+      it('enters edit mode normally when the toggle is on but the viewport is not mobile-sized', () => {
+        setTestFlags({ 'grafana.mobileEditDeprecation': true });
+        setDesktopViewport();
+        const scene = buildTestScene();
+        scene.activate();
+
+        scene.onEnterEditMode();
+
+        expect(scene.state.isEditing).toBe(true);
+      });
+
+      it('enters edit mode normally on a mobile viewport when the toggle is off', () => {
+        setMobileViewport();
+        const scene = buildTestScene();
+        scene.activate();
+
+        scene.onEnterEditMode();
+
+        expect(scene.state.isEditing).toBe(true);
+      });
+
+      it('redirects to /dashboards and warns instead of auto-entering edit mode when a new dashboard opens on mobile', () => {
+        setTestFlags({ 'grafana.mobileEditDeprecation': true });
+        setMobileViewport();
+        const scene = buildTestScene();
+        locationService.push('/dashboard/new');
+        const replaceSpy = jest.spyOn(locationService, 'replace');
+        const emitSpy = jest.spyOn(appEvents, 'emit');
+
+        scene.activate();
+
+        expect(scene.state.isEditing).toBeFalsy();
+        expect(scene.state.isDirty).toBeFalsy();
+        expect(replaceSpy).toHaveBeenCalledWith('/dashboards');
+        expect(emitSpy).toHaveBeenCalledWith(AppEvents.alertWarning, [
+          'Dashboard editing is not available on small screens. Switch to a larger screen to continue.',
+        ]);
+      });
+
+      it('blocks switching into edit mode via setDashboardMode when the viewport is mobile-sized', () => {
+        setTestFlags({
+          dashboardNewLayouts: true,
+          'grafana.dashboardPreviewMode': true,
+          'grafana.mobileEditDeprecation': true,
+        });
+        setMobileViewport();
+        const scene = buildTestScene({ meta: { canEdit: true, canSave: true } });
+        scene.activate();
+
+        const result = scene.setDashboardMode('edit');
+
+        expect(result).toBe(false);
+        expect(scene.state.isEditing).toBeFalsy();
+      });
+
+      describe('after the window shrinks mid-session', () => {
+        const modesAndMobile = {
+          dashboardNewLayouts: true,
+          'grafana.dashboardPreviewMode': true,
+          'grafana.mobileEditDeprecation': true,
+        };
+
+        function startEditingOnDesktop() {
+          setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+          const scene = buildTestScene({ meta: { canEdit: true, canSave: true } });
+          scene.activate();
+          scene.onEnterEditMode();
+          return scene;
+        }
+
+        it('keeps an active edit session: re-entering the same mode is not rejected or warned about', () => {
+          const scene = startEditingOnDesktop();
+          const alertSpy = jest.spyOn(appEvents, 'emit');
+          alertSpy.mockClear();
+          setTestFlags(modesAndMobile);
+          setMobileViewport();
+
+          expect(scene.setDashboardMode('edit')).toBe(true);
+          expect(scene.onEnterEditMode()).toBe(true);
+          expect(isEditEntryBlocked(scene)).toBe(false);
+          scene.openFullEditor();
+          expect(isFullDashboardEditing(scene.state)).toBe(true);
+          expect(scene.state.isEditing).toBe(true);
+          expect(alertSpy.mock.calls.filter(([e]) => e === AppEvents.alertWarning)).toEqual([]);
+        });
+
+        it('does not let a Viewing session switch back to Editing', () => {
+          const scene = startEditingOnDesktop();
+          expect(scene.setDashboardMode('view')).toBe(true);
+          expect(scene.state.isEditing).toBe(true);
+          setTestFlags(modesAndMobile);
+          setMobileViewport();
+
+          expect(scene.setDashboardMode('edit')).toBe(false);
+          expect(isEditEntryBlocked(scene)).toBe(true);
+          scene.openFullEditor();
+          expect(isFullDashboardEditing(scene.state)).toBe(false);
+          expect(getDashboardMode(scene.state)).toBe('view');
+        });
+      });
+
+      describe('onOpenSettings', () => {
+        it('warns instead of opening settings when the viewport is mobile-sized', () => {
+          setTestFlags({ 'grafana.mobileEditDeprecation': true });
+          setMobileViewport();
+          const scene = buildTestScene({ meta: { canEdit: true, canSave: true } });
+          scene.activate();
+          const partialSpy = jest.spyOn(locationService, 'partial');
+          const emitSpy = jest.spyOn(appEvents, 'emit');
+
+          scene.onOpenSettings();
+
+          expect(partialSpy).not.toHaveBeenCalled();
+          expect(emitSpy).toHaveBeenCalledWith(AppEvents.alertWarning, [
+            'Dashboard editing is not available on small screens. Switch to a larger screen to continue.',
+          ]);
+        });
+
+        it('still opens settings for a session already in full editing', () => {
+          const scene = buildTestScene({ meta: { canEdit: true, canSave: true } });
+          scene.activate();
+          scene.onEnterEditMode();
+          setTestFlags({ 'grafana.mobileEditDeprecation': true });
+          setMobileViewport();
+          const partialSpy = jest.spyOn(locationService, 'partial');
+
+          scene.onOpenSettings();
+
+          expect(partialSpy).toHaveBeenCalledWith({ editview: 'settings' });
+        });
       });
     });
 
@@ -1128,6 +1356,25 @@ describe('DashboardScene', () => {
         expect(scene.state.isEditing).toBe(true);
         expect(scene.state.body.getVizPanels().length).toBe(7);
         expect(panel.state.key).toBe('panel-7');
+      });
+
+      it('does not add the panel to the layout when onEnterEditMode is blocked and never actually enters editing', async () => {
+        // onEnterEditMode can no-op without throwing -- addPanel must check isEditing afterwards
+        // rather than assume entering edit mode always succeeds.
+        // Old layouts, like the sibling test above: the new-layout add path funnels through an
+        // edit-action event that independently no-ops outside editing, which would mask this
+        // specific addPanel() guard.
+        setTestFlags({ dashboardNewLayouts: false });
+        scene.exitEditMode({ skipConfirm: true });
+        expect(scene.state.isEditing).toBe(false);
+        const panelCountBefore = scene.state.body.getVizPanels().length;
+        jest.spyOn(scene, 'onEnterEditMode').mockImplementation(() => false);
+
+        await scene.onCreateNewPanel();
+
+        expect(scene.state.isEditing).toBe(false);
+        expect(scene.state.body.getVizPanels().length).toBe(panelCountBefore);
+        setTestFlags({});
       });
 
       it('Should select new row', () => {
@@ -4701,3 +4948,23 @@ function getVersionMock(): DecoratedRevisionModel {
     ageString: '7 years ago',
   };
 }
+
+describe('changing to a plugin that skips default queries', () => {
+  afterEach(() => setPanelPluginMetas({}));
+
+  it.each([
+    [UNCONFIGURED_PANEL_PLUGIN_ID, [{ refId: 'A' }], []],
+    ['timeseries', [{ refId: 'A' }], [{ refId: 'A' }]],
+    [UNCONFIGURED_PANEL_PLUGIN_ID, [{ refId: 'A', hide: true }], [{ refId: 'A', hide: true }]],
+  ])('preserves configured queries from %s', async (pluginId, queries, expected) => {
+    setPanelPluginMetas({ custom: { skipDefaultQuery: true } as PanelPluginMeta });
+    const runner = new SceneQueryRunner({ queries });
+    const panel = new VizPanel({ pluginId, $data: runner });
+    jest.spyOn(panel, 'changePluginType').mockResolvedValue();
+    const scene = new DashboardScene({
+      body: new DefaultGridLayoutManager({ grid: new SceneGridLayout({ children: [] }) }),
+    });
+    await scene.changePanelPlugin(panel, 'custom');
+    expect(runner.state.queries).toEqual(expected);
+  });
+});

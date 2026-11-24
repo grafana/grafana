@@ -158,7 +158,7 @@ func TestIntegrationMigrateSnapshots(t *testing.T) {
 		require.NotNil(t, snap.Spec.ExternalUrl)
 		require.Equal(t, "https://example.com/share/ext-key", *snap.Spec.ExternalUrl)
 		require.Equal(t, "https://delete.example.com/private/ext-del?token=original", snap.GetExternalDeleteURL())
-		require.Nil(t, snap.Spec.Dashboard)
+		require.Nil(t, snap.Blobs.Dashboard)
 		require.NotNil(t, snap.Spec.DeleteKey)
 		require.Equal(t, "ext-del", *snap.Spec.DeleteKey)
 	})
@@ -179,7 +179,6 @@ func TestIntegrationMigrateSnapshots(t *testing.T) {
 
 		var snap dashV0.Snapshot
 		require.NoError(t, json.Unmarshal(stream.sent[0].Value, &snap))
-		require.Nil(t, snap.Spec.Dashboard)
 		require.Nil(t, snap.Blobs.Dashboard)
 		require.Equal(t, "private-delete", *snap.Spec.DeleteKey)
 		require.Equal(t, "int-key", snap.Name)

@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 
+import { type AlertManagerDataSourceJsonData } from '@grafana/alerting/internal';
 import { type DataSourceSettings } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
-import { type AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { useDispatch } from 'app/types/store';
 
@@ -16,12 +16,16 @@ import { isNotFoundError } from '../../api/util';
 import {
   type AutoSyncHealth,
   type AutoSyncState,
+  type PredictedSyncIdentifier,
+  type SyncIdentifiersInUse,
   autoSyncInitializingMessage,
   deriveAutoSyncState,
   deriveReadiness,
   deriveSyncHealth,
   deriveSyncSource,
   filterMimirCortexDatasources,
+  getSyncIdentifier,
+  predictSyncIdentifier,
 } from '../../utils/autoSync';
 import { AUTO_SYNC_CONFIG_POLL_INTERVAL_MS } from '../../utils/constants';
 import { stringifyErrorLike } from '../../utils/misc';
@@ -32,7 +36,13 @@ export interface UseAutoSyncConfigurationResult {
   syncHealth: AutoSyncHealth;
   autoSyncEligibleAlertmanagers: Array<DataSourceSettings<AlertManagerDataSourceJsonData>>;
   selectedUid: string;
+  /** The datasource the last sync ran from, kept on the status after sync is turned off. */
+  lastSyncedUid: string;
   setSelectedUid: (uid: string) => void;
+  /** The name a sync from `uid` imports under, to compare with the staged config's identifier. */
+  getSyncIdentifier: (uid: string) => string;
+  /** The name a first sync from `uid` would use, and whether the sync would fail with it. */
+  predictSyncIdentifier: (uid: string, datasourceName: string, inUse: SyncIdentifiersInUse) => PredictedSyncIdentifier;
   /** Persists the given UID (or the current selection). Resolves to true on success. */
   save: (uidOverride?: string, opts?: { silent?: boolean }) => Promise<boolean>;
   /** Clears the synced UID. Resolves to true on success. */
@@ -55,6 +65,8 @@ export function useAutoSyncConfiguration(): UseAutoSyncConfigurationResult {
     // polling, a pre-seed 404 stays cached as a rejection and "try again in a moment" never comes true.
     pollingInterval: AUTO_SYNC_CONFIG_POLL_INTERVAL_MS,
     skipPollingIfUnfocused: true,
+    // Polling pauses while the tab is in the background, so catch up as soon as the user comes back.
+    refetchOnFocus: true,
     refetchOnMountOrArgChange: true,
   });
   // Mirrors useAutoSyncConfigQuery's own RBAC gate: an unconditional caller (e.g. the Import
@@ -161,7 +173,11 @@ export function useAutoSyncConfiguration(): UseAutoSyncConfigurationResult {
     syncHealth,
     autoSyncEligibleAlertmanagers,
     selectedUid,
+    lastSyncedUid: configResource?.status?.externalAlertmanagerSync?.datasourceUid ?? '',
     setSelectedUid: (uid: string) => setSelectedOverride(uid),
+    getSyncIdentifier: (uid: string) => getSyncIdentifier(configResource, uid),
+    predictSyncIdentifier: (uid: string, datasourceName: string, inUse: SyncIdentifiersInUse) =>
+      predictSyncIdentifier(configResource, uid, datasourceName, inUse),
     save: (uidOverride?: string, opts?: { silent?: boolean }) => persist(uidOverride ?? selectedUid, opts),
     // Clearing the UID, not deleting: delete is denied on the singleton, and admission permits clearing.
     disableSync: () => persist(''),

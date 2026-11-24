@@ -10,6 +10,7 @@ import { validationSrv } from 'app/features/manage-dashboards/services/Validatio
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
+import { FolderDescription } from './FolderDescription';
 import { type SaveDashboardDrawer } from './SaveDashboardDrawer';
 import { getSaveDashboardErrorInfo } from './saveErrors';
 import {
@@ -235,9 +236,17 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, drawer, isHeld }: P
           />
         </Field>
 
-        <Field noMargin label={t('dashboard-scene.save-dashboard-as-form.label-folder', 'Folder')}>
-          <FolderPicker onChange={onFolderChange} value={formValues.folder?.uid} disabled={state.loading} />
-        </Field>
+        <Stack direction="column" gap={1}>
+          <Field noMargin label={t('dashboard-scene.save-dashboard-as-form.label-folder', 'Folder')}>
+            <FolderPicker
+              onChange={onFolderChange}
+              value={formValues.folder?.uid}
+              disabled={state.loading}
+              permission="create"
+            />
+          </Field>
+          <FolderDescription folderUid={formValues.folder?.uid} />
+        </Stack>
         {!changeInfo.isNew && (
           <Field noMargin label={t('dashboard-scene.save-dashboard-as-form.label-copy-tags', 'Copy tags')}>
             <Switch {...register('copyTags')} disabled={state.loading} />

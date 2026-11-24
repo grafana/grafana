@@ -17,9 +17,6 @@ func parseResults(result *resourcepb.ResourceSearchResponse) (*iamv0.GetSearchUs
 	if result == nil {
 		return iamv0.NewGetSearchUsersResponse(), nil
 	}
-	if result.Error != nil {
-		return iamv0.NewGetSearchUsersResponse(), resource.StatusError(result.Error)
-	}
 
 	if result.GetResultFormat() != resourcepb.ResourceSearchRequest_FIELD_VALUES {
 		return iamv0.NewGetSearchUsersResponse(), fmt.Errorf("unsupported search result format %d", result.GetResultFormat())
@@ -41,6 +38,7 @@ func parseResults(result *resourcepb.ResourceSearchResponse) (*iamv0.GetSearchUs
 		hit.Login, _ = values[builders.USER_LOGIN].(string)
 		hit.Role, _ = values[builders.USER_ROLE].(string)
 		hit.Disabled, _ = values[builders.USER_DISABLED].(bool)
+		hit.Provisioned, _ = values[builders.USER_PROVISIONED].(bool)
 		hit.ExternalAuthModules, _ = values[builders.USER_EXTERNAL_AUTH_MODULES].([]string)
 		hit.Created, _ = values[resource.SEARCH_FIELD_CREATED].(int64)
 		if lastSeenAt, ok := values[builders.USER_LAST_SEEN_AT].(int64); ok {

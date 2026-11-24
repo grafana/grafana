@@ -1,7 +1,7 @@
 name: Frontend preview check
 description: >-
   Determines whether a pull request is eligible for a frontend preview deploy:
-  not from a fork, and not changing backend code. Used by the
+  not from a fork. Also reports whether the PR changes backend code. Used by the
   deploy-frontend-preview workflow.
 
 inputs:
@@ -15,9 +15,19 @@ inputs:
 outputs:
   should-deploy:
     description: >-
-      'true' when the PR is eligible for a frontend preview deploy: not from a
-      fork, and no changed file is backend code
+      'true' when the PR is eligible for a frontend preview deploy: not from
+      a fork, and not backend-only
     value: ${{ steps.check.outputs.should-deploy }}
+  has-backend-changes:
+    description: >-
+      'true' when any changed file is backend code, which a frontend preview
+      does not reflect
+    value: ${{ steps.check.outputs.has-backend-changes }}
+  backend-only:
+    description: >-
+      'true' when every changed file is backend code, so a frontend preview
+      would have nothing to show
+    value: ${{ steps.check.outputs.backend-only }}
   head-sha:
     description: Head commit SHA of the pull request
     value: ${{ steps.check.outputs.head-sha }}
@@ -49,29 +59,34 @@ runs:
 
         # A preview only swaps out the frontend assets served by an existing
         # instance, so backend changes in the PR would not be reflected.
-        frontend_only=true
+        has_backend_changes=false
+        backend_only=true
         if [ -z "$files" ]; then
-          frontend_only=false
+          backend_only=false
         fi
 
         while IFS= read -r file; do
           case "$file" in
             pkg/*)
-              echo "Not frontend-only, found: ${file}"
-              frontend_only=false
-              break
+              echo "Backend change found: ${file}"
+              has_backend_changes=true
+              ;;
+            *)
+              backend_only=false
               ;;
           esac
         done <<< "$files"
 
         should_deploy=false
-        if [ "$frontend_only" = "true" ] && [ "$is_fork" = "false" ]; then
+        if [ "$is_fork" = "false" ] && [ "$backend_only" = "false" ]; then
           should_deploy=true
         fi
 
         {
           echo "should-deploy=${should_deploy}"
+          echo "has-backend-changes=${has_backend_changes}"
+          echo "backend-only=${backend_only}"
           echo "head-sha=${head_sha}"
         } >> "$GITHUB_OUTPUT"
 
-        echo "PR #${PR_NUMBER}: should-deploy=${should_deploy} (frontend-only=${frontend_only}, is-fork=${is_fork}), head-sha=${head_sha}"
+        echo "PR #${PR_NUMBER}: should-deploy=${should_deploy} (has-backend-changes=${has_backend_changes}, backend-only=${backend_only}, is-fork=${is_fork}), head-sha=${head_sha}"

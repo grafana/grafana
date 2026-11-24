@@ -12,9 +12,12 @@ import { type QueryActionComponent, RowActionComponents } from 'app/features/que
 import { useQueryEditorRowExtensionActions } from 'app/features/query/components/QueryEditorRowExtensionActions';
 
 import { QueryEditorType } from '../../constants';
-import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
+import { useActionsContext, useQueryRunnerContext } from '../QueryEditorContext';
+
+import { type QueryActionTarget } from './headerActionTarget';
 
 interface PluginActionsProps {
+  target: QueryActionTarget;
   app?: CoreApp;
 }
 
@@ -25,16 +28,13 @@ interface PluginActionsProps {
  * These are controlled by plugins and rendered as icon buttons, so they
  * need to live at the header level rather than inside a menu.
  */
-export function PluginActions({ app }: PluginActionsProps) {
+export function PluginActions({ target, app }: PluginActionsProps) {
   const { queries, data } = useQueryRunnerContext();
   const { addQuery } = useActionsContext();
-  const { selectedQuery, selectedQueryDsData, cardType } = useQueryEditorUIContext();
+  const { query, cardType, dsData } = target;
+  const dsSettings = dsData?.dsSettings;
 
   const extraActions = useMemo(() => {
-    if (!selectedQuery) {
-      return [];
-    }
-
     const unscopedActions = RowActionComponents.getAllExtraRenderAction();
 
     let scopedActions: QueryActionComponent[] = [];
@@ -45,27 +45,27 @@ export function PluginActions({ app }: PluginActionsProps) {
     return [...unscopedActions, ...scopedActions]
       .map((action, index) =>
         action({
-          query: selectedQuery,
+          query,
           queries,
           timeRange: data?.timeRange,
           onAddQuery: addQuery,
-          dataSource: selectedQueryDsData?.dsSettings,
+          dataSource: dsSettings,
           key: index,
         })
       )
       .filter(Boolean);
-  }, [selectedQuery, app, queries, data?.timeRange, addQuery, selectedQueryDsData?.dsSettings]);
+  }, [query, app, queries, data?.timeRange, addQuery, dsSettings]);
 
-  const telemetryComponents = useAdaptiveTelemetryComponents(selectedQuery);
+  const telemetryComponents = useAdaptiveTelemetryComponents(query);
   const extensionActions = useQueryEditorRowExtensionActions({
-    query: selectedQuery ?? { refId: '' },
+    query,
     queries,
-    dataSource: selectedQueryDsData?.dsSettings,
+    dataSource: dsSettings,
     app,
     timeRange: data?.timeRange,
   });
 
-  if (!selectedQuery || cardType === QueryEditorType.Expression) {
+  if (cardType === QueryEditorType.Expression) {
     return null;
   }
 

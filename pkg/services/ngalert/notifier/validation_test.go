@@ -148,3 +148,8 @@ func TestNewNotificationSettingsValidator_Routes(t *testing.T) {
 		})
 	}
 }
+
+func TestNewNotificationSettingsValidator_Config(t *testing.T) {
+	cfg := &v1.AMConfigV1{}
+	assert.Same(t, cfg, NewNotificationSettingsValidator(cfg).Config())
+}

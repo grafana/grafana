@@ -5,7 +5,7 @@ export { MOCK_TEAMS, MOCK_TEAM_GROUPS } from './fixtures/teams';
 export {
   MOCK_SCOPES,
   MOCK_NODES,
-  MOCK_SCOPE_DASHBOARD_BINDINGS,
+  MOCK_SCOPE_NAVIGATIONS,
   MOCK_SUB_SCOPE_MIMIR_ITEMS,
   MOCK_SUB_SCOPE_LOKI_ITEMS,
   MOCK_DEFAULT_SCOPE,
@@ -18,11 +18,11 @@ export {
   customPatchUserPreferencesHandler,
 } from './handlers/apis/preferences.grafana.app/v1/handlers';
 export { mockUserPreferences, setupMockUserPreferences, setMockUserPreferences } from './fixtures/preferences';
-export { setMockStarredDashboards, setMockStarredFolders } from './fixtures/starred';
+export { setMockStarredAppKind, setMockStarredDashboards, setMockStarredFolders } from './fixtures/starred';
+export { MOCK_APP_KIND } from './fixtures/appKinds';
 export { mockPluginMeta, setMockPluginMetas, type MockPluginMeta } from './fixtures/pluginMetas';
 export { customSetTeamRolesHandler } from './handlers/api/access-control/handlers';
-export { customCreateFolderHandler, customFolderCountsHandler } from './handlers/api/folders/handlers';
-export { customCreateFolderHandler as customCreateFolderHandlerAppPlatform } from './handlers/apis/folder.grafana.app/v1beta1/handlers';
+export { customCreateFolderHandler } from './handlers/apis/folder.grafana.app/v1beta1/handlers';
 
 export * as folderHandlers from './handlers/apis/folder.grafana.app/v1beta1/handlers';
 

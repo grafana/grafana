@@ -17,6 +17,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/storage/legacysql"
+
 	"github.com/go-openapi/strfmt"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -189,7 +191,7 @@ func TestIntegrationApplyConfig(t *testing.T) {
 	// Encrypt receivers to save secrets in the database.
 	var c v1store.AMConfigDB
 	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithSecret), &c))
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(legacysql.NewDatabaseProvider(db.InitTestDB(t)))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	var err error
 	c.AlertmanagerConfig.Receivers, err = encryptedGrafanaReceivers(c.AlertmanagerConfig.Receivers, notifier.EncryptIntegrationSettings(context.Background(), secretsService))
 	require.NoError(t, err)
@@ -327,7 +329,7 @@ func TestIntegrationApplyConfig(t *testing.T) {
 
 func TestCompareAndSendConfiguration(t *testing.T) {
 	const tenantID = "test"
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(legacysql.NewDatabaseProvider(db.InitTestDB(t)))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	var got string
 	var gotCnt int
@@ -601,7 +603,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 // managed receivers before being sent to the remote Alertmanager.
 func TestCompareAndSendConfigurationConvertsMimirReceivers(t *testing.T) {
 	const tenantID = "test"
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(legacysql.NewDatabaseProvider(db.InitTestDB(t)))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	var got string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -842,7 +844,7 @@ func Test_isDefaultConfiguration(t *testing.T) {
 			}))
 			defer server.Close()
 
-			secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+			secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(legacysql.NewDatabaseProvider(db.InitTestDB(t)))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			c := AlertmanagerConfig{
 				OrgID:         1,
 				TenantID:      tenantID,
@@ -911,7 +913,7 @@ receivers:
 		},
 	}
 
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(legacysql.NewDatabaseProvider(db.InitTestDB(t)))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	c := AlertmanagerConfig{
 		OrgID:         1,
@@ -1010,7 +1012,7 @@ receivers:
 		},
 	}
 
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(legacysql.NewDatabaseProvider(db.InitTestDB(t)))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	tc := notifier.NewCrypto(secretsService, nil, log.NewNopLogger())
 	ctx := context.Background()
 
@@ -1072,7 +1074,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 	var testConfigCreatedAt int64
 
 	store := ngfakes.NewFakeKVStore(t)
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(legacysql.NewDatabaseProvider(db.InitTestDB(t)))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	moa, am := newRemoteMOA(t, cfg, nil, featuremgmt.WithFeatures(), secretsService)
 	am.state = notifier.NewFileStore(1, store)
@@ -1648,13 +1650,13 @@ func receiverDBToAPI(r *v1store.ReceiverDB) *definition.PostableApiReceiver {
 	}
 }
 
-// receiverAPIToDB converts the shared upstream definition.PostableApiReceiver into the
-// persisted ReceiverDB shape.
-func receiverAPIToDB(r *definition.PostableApiReceiver) *v1store.ReceiverDB {
-	return &v1store.ReceiverDB{
-		Name:                    r.Name,
-		GrafanaManagedReceivers: integrationsAPIToDB(r.GrafanaManagedReceivers),
+// receiverToDB converts the ngmodels.Receiver into the persisted ReceiverDB shape.
+func receiverToDB(r *ngmodels.Receiver) (*v1store.ReceiverDB, error) {
+	m, err := legacy_storage.ReceiverToPostableApiReceiver(r)
+	if err != nil {
+		return nil, err
 	}
+	return v1.PostableApiReceiverToDB(&m), nil
 }
 
 func integrationsDBToAPI(in []*v1store.PostableGrafanaReceiverDB) []*definition.PostableGrafanaReceiver {
@@ -1673,28 +1675,14 @@ func integrationsDBToAPI(in []*v1store.PostableGrafanaReceiverDB) []*definition.
 	return out
 }
 
-func integrationsAPIToDB(in []*definition.PostableGrafanaReceiver) []*v1store.PostableGrafanaReceiverDB {
-	out := make([]*v1store.PostableGrafanaReceiverDB, 0, len(in))
-	for _, r := range in {
-		out = append(out, &v1store.PostableGrafanaReceiverDB{
-			UID:                   r.UID,
-			Name:                  r.Name,
-			Type:                  r.Type,
-			Version:               r.Version,
-			DisableResolveMessage: r.DisableResolveMessage,
-			Settings:              r.Settings,
-			SecureSettings:        r.SecureSettings,
-		})
-	}
-	return out
-}
-
 // encryptedGrafanaReceivers encrypts each receiver's secure settings.
 func encryptedGrafanaReceivers(receivers []*v1store.ReceiverDB, encryptFn ngmodels.EncryptFn) ([]*v1store.ReceiverDB, error) {
 	encrypted := make([]*v1store.ReceiverDB, len(receivers))
 	for i, r := range receivers {
-		// We don't care about the provenance here, so we pass ProvenanceNone.
-		rcv, err := PostableApiReceiverToReceiver(receiverDBToAPI(r), ngmodels.ProvenanceNone, ngmodels.ResourceOriginGrafana)
+		if r == nil {
+			continue
+		}
+		rcv, err := legacy_storage.PostableApiReceiverToReceiver(v1.ReceiverToModel(*r), ngmodels.ResourceOriginGrafana)
 		if err != nil {
 			return nil, err
 		}
@@ -1703,11 +1691,11 @@ func encryptedGrafanaReceivers(receivers []*v1store.ReceiverDB, encryptFn ngmode
 			return nil, fmt.Errorf("failed to encrypt receiver %q: %w", rcv.Name, err)
 		}
 
-		postable, err := ReceiverToPostableApiReceiver(rcv)
+		storable, err := receiverToDB(rcv)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert Receiver %q to APIReceiver: %w", rcv.Name, err)
 		}
-		encrypted[i] = receiverAPIToDB(postable)
+		encrypted[i] = storable
 	}
 	return encrypted, nil
 }

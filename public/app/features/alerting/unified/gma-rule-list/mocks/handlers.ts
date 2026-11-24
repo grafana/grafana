@@ -1,8 +1,16 @@
 import { HttpResponse, http } from 'msw';
 
 import { getAPIBaseURL } from '@grafana/api-clients';
+import {
+  API_GROUP,
+  API_VERSION,
+  type AlertRule,
+  type RecordingRule,
+} from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import server from '@grafana/test-utils/server';
 
+import { mockK8sAlertRule } from '../../mocks/server/handlers/k8s/alertRules.k8s';
+import { type DeletedRule } from '../deleted-rules/deletedRulesPage';
 import { type RuleKind } from '../shared/ruleKind';
 
 const RULES_BASE = getAPIBaseURL('rules.alerting.grafana.app', 'v0alpha1');
@@ -55,3 +63,123 @@ export function mockFolderParents(titleByUid: Record<string, string>) {
 
 export { mockK8sAlertRule, getAlertRuleHandler } from '../../mocks/server/handlers/k8s/alertRules.k8s';
 export { getRecordingRuleHandler } from '../../mocks/server/handlers/k8s/recordingrules.k8s';
+export {
+  getRuleSequenceHandler,
+  getRuleSequenceSearchHandler,
+} from '../../mocks/server/handlers/k8s/ruleSequences.k8s';
+
+export const TRASH_RULES_URL = `/apis/${API_GROUP}/${API_VERSION}/namespaces/:namespace/alertrules`;
+
+export function mockTrashRules(rules: AlertRule[], continueToken?: string) {
+  server.use(
+    http.get<{ namespace: string }>(TRASH_RULES_URL, ({ request }) => {
+      const url = new URL(request.url);
+      if (url.searchParams.get('labelSelector')?.includes('get-trash')) {
+        return HttpResponse.json({
+          kind: 'AlertRuleList',
+          apiVersion: `${API_GROUP}/${API_VERSION}`,
+          metadata: continueToken ? { continue: continueToken } : {},
+          items: rules,
+        });
+      }
+      return HttpResponse.json({
+        kind: 'AlertRuleList',
+        apiVersion: `${API_GROUP}/${API_VERSION}`,
+        metadata: {},
+        items: [],
+      });
+    })
+  );
+}
+
+export function makeDeletedRule(overrides: Partial<AlertRule> = {}): AlertRule {
+  return {
+    ...mockK8sAlertRule({ uid: `deleted-${Math.random().toString(36).slice(2)}`, title: 'Deleted rule' }),
+    metadata: {
+      name: 'deleted-rule-uid',
+      deletionTimestamp: '2026-11-10T10:00:00Z',
+      resourceVersion: '42',
+      generation: -999,
+      annotations: {
+        'grafana.app/folder': 'folder-uid',
+        'grafana.app/updatedBy': 'user-uid-123',
+      },
+      ...overrides.metadata,
+    },
+    ...overrides,
+  };
+}
+
+export const TRASH_RECORDING_RULES_URL = `/apis/${API_GROUP}/${API_VERSION}/namespaces/:namespace/recordingrules`;
+
+export function mockTrashRecordingRules(rules: RecordingRule[], continueToken?: string) {
+  server.use(
+    http.get<{ namespace: string }>(TRASH_RECORDING_RULES_URL, ({ request }) => {
+      const url = new URL(request.url);
+      if (url.searchParams.get('labelSelector')?.includes('get-trash')) {
+        return HttpResponse.json({
+          kind: 'RecordingRuleList',
+          apiVersion: `${API_GROUP}/${API_VERSION}`,
+          metadata: continueToken ? { continue: continueToken } : {},
+          items: rules,
+        });
+      }
+      return HttpResponse.json({
+        kind: 'RecordingRuleList',
+        apiVersion: `${API_GROUP}/${API_VERSION}`,
+        metadata: {},
+        items: [],
+      });
+    })
+  );
+}
+
+/** Acts like the API server's create: it refuses server-set metadata and a name that already exists. */
+export function mockRuleCreate(kind: RuleKind, { existingNames = [] }: { existingNames?: string[] } = {}) {
+  server.use(
+    http.post<{ namespace: string }, DeletedRule>(
+      kind === 'alert' ? TRASH_RULES_URL : TRASH_RECORDING_RULES_URL,
+      async ({ request }) => {
+        const rule = await request.json();
+        const { name = '', resourceVersion, generation = 0 } = rule.metadata;
+        if (resourceVersion || generation < 0) {
+          return HttpResponse.json(
+            { message: 'resourceVersion and generation must not be set on create' },
+            { status: 400 }
+          );
+        }
+        if (existingNames.includes(name)) {
+          return HttpResponse.json({ message: `"${name}" already exists` }, { status: 409 });
+        }
+        return HttpResponse.json(rule, { status: 201 });
+      }
+    )
+  );
+}
+
+export function makeDeletedRecordingRule(overrides: Partial<RecordingRule> = {}): RecordingRule {
+  return {
+    apiVersion: `${API_GROUP}/${API_VERSION}`,
+    kind: 'RecordingRule',
+    metadata: {
+      name: 'deleted-recording-rule-uid',
+      deletionTimestamp: '2026-11-10T10:00:00Z',
+      resourceVersion: '42',
+      generation: -999,
+      annotations: {
+        'grafana.app/folder': 'folder-uid',
+        'grafana.app/updatedBy': 'user-uid-123',
+      },
+      ...overrides.metadata,
+    },
+    spec: {
+      title: 'Deleted recording rule',
+      metric: 'my_metric',
+      expressions: {},
+      targetDatasourceUID: 'ds-uid',
+      trigger: { interval: '1m' },
+      ...overrides.spec,
+    },
+    ...overrides,
+  };
+}

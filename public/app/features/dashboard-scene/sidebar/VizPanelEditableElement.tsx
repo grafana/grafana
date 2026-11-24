@@ -11,6 +11,7 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { duplicatePanel } from '../actions/layout/duplicatePanel';
+import { removePanel } from '../actions/layout/removePanels';
 import {
   PanelBackgroundSwitch,
   PanelDescriptionTextArea,
@@ -25,7 +26,6 @@ import {
   type EditableDashboardElement,
   type EditableDashboardElementInfo,
 } from '../scene/types/EditableDashboardElement';
-import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
@@ -118,9 +118,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   public useSidebarOptions = useSidebarOptions.bind(this);
 
   public onDelete(source: EditActionSource = 'edit_pane') {
-    DashboardInteractions.panelActionClicked('delete', getPanelIdForVizPanel(this.panel), source);
-    const layout = dashboardSceneGraph.getLayoutManagerFor(this.panel);
-    layout.removePanel?.(this.panel);
+    removePanel(this.panel, source);
   }
 
   public onConfirmDelete() {
@@ -140,12 +138,22 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   }
 
   public onDuplicate(source: EditActionSource = 'edit_pane') {
-    DashboardInteractions.panelActionClicked('duplicate', getPanelIdForVizPanel(this.panel), source);
+    DashboardInteractions.panelActionClicked(
+      'duplicate',
+      getPanelIdForVizPanel(this.panel),
+      source,
+      this.panel.state.pluginId
+    );
     duplicatePanel(this.panel);
   }
 
   public onCopy(source: EditActionSource = 'edit_pane') {
-    DashboardInteractions.panelActionClicked('copy', getPanelIdForVizPanel(this.panel), source);
+    DashboardInteractions.panelActionClicked(
+      'copy',
+      getPanelIdForVizPanel(this.panel),
+      source,
+      this.panel.state.pluginId
+    );
     const dashboard = getDashboardSceneFor(this.panel);
     dashboard.copyPanel(this.panel);
   }
@@ -173,9 +181,9 @@ const OpenPanelEditViz = ({ panel }: OpenPanelEditVizProps) => {
       onClick={() => {
         const panelId = getPanelIdForVizPanel(panel);
         locationService.partial({ editPanel: panelId });
-        DashboardInteractions.panelActionClicked('configure', panelId, 'edit_pane');
+        DashboardInteractions.panelActionClicked('configure', panelId, 'edit_pane', panel.state.pluginId);
       }}
-      icon="graph-bar"
+      icon="pen"
       variant="secondary"
       fullWidth
       tooltip={t(

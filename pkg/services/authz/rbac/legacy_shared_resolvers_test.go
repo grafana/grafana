@@ -145,10 +145,11 @@ func TestLegacyCheckEmbeddedNamespaceIsolation(t *testing.T) {
 		return "stacks-123"
 	})
 	for _, tc := range []struct {
-		name      string
-		namespace string
-		want      *authzextv1.LegacyCheckResponse
-		calls     int
+		name          string
+		namespace     string
+		withoutMapper bool
+		want          *authzextv1.LegacyCheckResponse
+		calls         int
 	}{
 		{
 			name:      "local stack",
@@ -157,13 +158,29 @@ func TestLegacyCheckEmbeddedNamespaceIsolation(t *testing.T) {
 			calls:     1,
 		},
 		{
+			name:      "wildcard targets local stack",
+			namespace: "*",
+			want:      &authzextv1.LegacyCheckResponse{Allowed: true},
+			calls:     2,
+		},
+		{
 			name:      "different stack with the same org ID",
 			namespace: "stacks-456",
 			want: &authzextv1.LegacyCheckResponse{
 				Allowed: false,
-				Error:   "namespace does not belong to embedded scope resolvers",
+				Error:   `namespace "stacks-456" does not belong to embedded scope resolvers: expected "stacks-123"`,
 			},
-			calls: 1,
+			calls: 2,
+		},
+		{
+			name:          "missing namespace mapper",
+			namespace:     "stacks-123",
+			withoutMapper: true,
+			want: &authzextv1.LegacyCheckResponse{
+				Allowed: false,
+				Error:   "legacy scope namespace is not set",
+			},
+			calls: 2,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -173,7 +190,12 @@ func TestLegacyCheckEmbeddedNamespaceIsolation(t *testing.T) {
 			})
 			req := legacyPermissionRequest("user:u-1", "folders:write", "folders:uid:child")
 			req.Namespace = tc.namespace
-			got, err := s.LegacyCheck(ctx, req)
+			req.RequesterOrgId = proto.Int64(1)
+			service := s
+			if tc.withoutMapper {
+				service = s.WithLegacyScopeResolvers(acimpl.ProvideScopeResolverRegistry(ac), nil)
+			}
+			got, err := service.LegacyCheck(ctx, req)
 			require.NoError(t, err)
 			require.True(t, proto.Equal(tc.want, got), "want %v, got %v", tc.want, got)
 			require.Equal(t, tc.calls, calls)
@@ -201,7 +223,7 @@ func TestLegacyResolverRequester(t *testing.T) {
 				UserUID:        "u-1",
 				OrgID:          12,
 				Namespace:      "org-12",
-				OrgRole:        identity.RoleViewer,
+				OrgRole:        types.RoleViewer,
 				IsGrafanaAdmin: false,
 				CacheKey:       "org-12:user:1",
 			},
@@ -219,7 +241,7 @@ func TestLegacyResolverRequester(t *testing.T) {
 				UserUID:        "u-1",
 				OrgID:          12,
 				Namespace:      "org-12",
-				OrgRole:        identity.RoleEditor,
+				OrgRole:        types.RoleEditor,
 				IsGrafanaAdmin: false,
 				CacheKey:       "org-12:service-account:u-1",
 			},
@@ -232,7 +254,7 @@ func TestLegacyResolverRequester(t *testing.T) {
 				UserUID:        "0",
 				OrgID:          12,
 				Namespace:      "org-12",
-				OrgRole:        identity.RoleViewer,
+				OrgRole:        types.RoleViewer,
 				IsGrafanaAdmin: false,
 				CacheKey:       "org-12:anonymous:0",
 			},

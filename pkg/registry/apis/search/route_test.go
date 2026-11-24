@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
@@ -145,13 +146,27 @@ func TestGlobalSearchRoute_DescribesItsFieldsAndHasAValidExample(t *testing.T) {
 	assert.Equal(t, resource.SEARCH_FIELD_FOLDER_TREE, client.got.Options.Fields[0].Key)
 
 	const pkg = "com.github.grafana.grafana.pkg.apis.search.v0alpha1."
-	assert.Contains(t, r.Schemas, pkg+"SearchQuery")
+	assert.Contains(t, r.Schemas, pkg+"GlobalSearchQuery")
 	assert.Contains(t, r.Schemas, pkg+"GlobalSearchResults")
 	for name, schema := range r.Schemas {
 		for _, ref := range collectRefs(&schema) {
 			assert.Contains(t, r.Schemas, ref, "%s references %s, which is not published", name, ref)
 		}
 	}
+}
+
+// A type a distribution adds is named in a closing paragraph of its own, so the
+// rest of the description is the same in every build.
+func TestGlobalSearchDescription_NamesAddedTypesLast(t *testing.T) {
+	dashboards := schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
+	templates := schema.GroupResource{Group: "dashboardtemplates.grafana.app", Resource: "dashboardtemplates"}
+	builtin := []schema.GroupResource{dashboards}
+
+	without := globalSearchDescription(builtin, builtin)
+	assert.NotContains(t, without, GlobalSearchDeploymentTypesPrefix)
+
+	with := globalSearchDescription(builtin, []schema.GroupResource{dashboards, templates})
+	assert.Equal(t, without+"\n\n"+GlobalSearchDeploymentTypesPrefix+"`dashboardtemplates.grafana.app/dashboardtemplates`.", with)
 }
 
 func TestTrashRoute_EveryRefResolves(t *testing.T) {

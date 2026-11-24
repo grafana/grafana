@@ -1,11 +1,13 @@
 import { type UserEvent } from '@testing-library/user-event';
 import { GrafanaRuleFormStep, renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { screen } from 'test/test-utils';
+import { cleanup, screen } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import * as runtime from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { mockBoundingClientRect } from '@grafana/test-utils';
+import { testWithFlags } from '@grafana/test-utils/unstable';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { type ExpressionEditorProps } from '../components/rule-editor/ExpressionEditor';
@@ -71,6 +73,31 @@ describe('RuleEditor cloud', () => {
     ]);
   });
 
+  it('offers the Grafana-managed / data source-managed rule type selector', async () => {
+    const { user } = renderRuleEditor();
+
+    await ui.inputs.name.find();
+    await user.click(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Query).get());
+
+    expect(await screen.findByRole('radio', { name: 'Data source-managed' })).toBeInTheDocument();
+  });
+
+  describe('with alerting.gmaOnlyListView on', () => {
+    // Unmount before the flags reset, or flag-reading components re-render outside act().
+    afterEach(cleanup);
+    testWithFlags({ [FlagKeys.AlertingGmaOnlyListView]: true });
+
+    it('does not offer the rule type selector', async () => {
+      const { user } = renderRuleEditor();
+
+      await ui.inputs.name.find();
+      await user.click(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Query).get());
+
+      expect(await screen.findAllByLabelText(/Remove expression/)).toHaveLength(1);
+      expect(screen.queryByRole('radio', { name: 'Data source-managed' })).not.toBeInTheDocument();
+    });
+  });
+
   it('can create a new cloud alert', async () => {
     const { user } = renderRuleEditor();
 
@@ -94,7 +121,10 @@ describe('RuleEditor cloud', () => {
 
     expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toBeInTheDocument();
 
+    // the switch carries over the data source of the query
     const dataSourceSelect = await ui.inputs.dataSource.find();
+    expect(dataSourceSelect).toHaveAttribute('placeholder', MIMIR_DATASOURCE_UID);
+
     await user.click(dataSourceSelect);
     await user.click(screen.getByText(MIMIR_DATASOURCE_UID));
 

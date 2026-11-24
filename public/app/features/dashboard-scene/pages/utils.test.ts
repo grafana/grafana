@@ -3,11 +3,13 @@ import { configureStore } from 'app/store/configureStore';
 
 import { updateNavModel } from './utils';
 
+jest.mock('app/api/clients/folder/v1beta1/hooks', () => makeSpyable('app/api/clients/folder/v1beta1/hooks'));
+
 describe('utils', () => {
   it('Should update nav model', async () => {
     const reduxStore = configureStore();
 
-    jest.spyOn(folderHooks, 'getFolderByUidFacade').mockResolvedValue({
+    jest.spyOn(folderHooks, 'getCombinedFolder').mockResolvedValue({
       id: 1,
       uid: 'new-folder',
       title: 'NewFolder',

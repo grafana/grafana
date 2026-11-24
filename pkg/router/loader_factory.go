@@ -2,13 +2,16 @@ package router
 
 import (
 	"context"
+	"fmt"
 	"slices"
 
 	"github.com/grafana/authlib/types"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
+	"github.com/grafana/grafana/pkg/apiserver/appsdk"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
@@ -20,16 +23,54 @@ import (
 )
 
 // ProvideRoutesLoader serves local plugins, or no groups without plugin
-// sources. It never loads the cloud sources: the
-// standalone router tries ProvideCloudRoutesLoader first, and calls this only
+// sources, and the core apps from the installers when the router registers
+// them. It never loads the cloud sources: the standalone router tries
+// ProvideCloudRoutesLoader first, and calls ProvideStandaloneRoutesLoader only
 // when [cloud_router] configures none, and Grafana itself never polls them.
-func ProvideRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies) (RoutesLoader, error) {
+func ProvideRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies, apps []appsdk.AppInstaller) (RoutesLoader, error) {
+	loader, err := provideBaseRoutesLoader(cfg, deps)
+	if err != nil {
+		return nil, err
+	}
+	if !standaloneRouter(cfg) && registerCoreAPIs() {
+		if !MiddlewareEnabled(cfg, deps.Features) {
+			return nil, fmt.Errorf("%s requires %s", featuremgmt.FlagRouterRegisterCoreAPIs, featuremgmt.FlagGrafanaUseRouterMiddleware)
+		}
+		coreApps, err := coreAppsFromInstallers(context.Background(), apps, cfg, deps.PluginAuth)
+		if err != nil {
+			return nil, err
+		}
+		loader = newCoreAppsLoader(loader, deps.PluginDependencies, coreApps)
+	}
+	// In grafana cloud, each stack *may* aggregate a multi-tenant upstream service
+	if MiddlewareEnabled(cfg, deps.Features) {
+		remote, err := newRemoteServicesLoader(context.Background(), cfg, loader)
+		if err != nil {
+			// A bad remote services config must not stop Grafana from starting;
+			// the base groups keep serving without the remote ones.
+			logging.DefaultLogger.Warn("router: remote services not mounted", "err", err)
+			return loader, nil
+		}
+		return remote, nil
+	}
+	return loader, nil
+}
+
+// ProvideStandaloneRoutesLoader is ProvideRoutesLoader for the standalone
+// router, which has no installers of its own to run. Taking none keeps Wire
+// from constructing every installer (and their storage, NATS and so on) only
+// to discard them.
+func ProvideStandaloneRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies) (RoutesLoader, error) {
+	return provideBaseRoutesLoader(cfg, deps)
+}
+
+func provideBaseRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies) (RoutesLoader, error) {
 	dev, err := newDevTargets(cfg, deps.PluginDependencies)
 	if err != nil {
 		return nil, err
 	}
 	if deps.PluginSources != nil || dev != nil {
-		if middlewareEnabled(cfg, deps.Features) {
+		if MiddlewareEnabled(cfg, deps.Features) {
 			// When running in ST grafana as middleware, declare plugin roles and resolve settings storage defaults
 			if deps.PluginSources != nil {
 				if err := initLocalPlugins(context.Background(), deps); err != nil {
@@ -106,13 +147,13 @@ type RoutesLoaderClients struct {
 	SecureValues       secret.InlineSecureValueSupport
 }
 
-// middlewareEnabled reports whether the router serves API groups inside a
+// MiddlewareEnabled reports whether the router serves API groups inside a
 // single-tenant Grafana, ahead of the embedded API server. App plugin settings
 // are only served by the router, so enabling them enables it too. The
 // standalone router has no embedded API server to stand in front of, so it is
 // never middleware, whatever the flags say: otherwise a flag that also reaches
 // its deployment would drop its cloud sources.
-func middlewareEnabled(cfg *setting.Cfg, features featuremgmt.FeatureToggles) bool {
+func MiddlewareEnabled(cfg *setting.Cfg, features featuremgmt.FeatureToggles) bool {
 	if standaloneRouter(cfg) {
 		return false
 	}
@@ -120,7 +161,7 @@ func middlewareEnabled(cfg *setting.Cfg, features featuremgmt.FeatureToggles) bo
 }
 
 // settingsEnabled reports whether the router serves app plugin settings. It is
-// read once, at startup, like middlewareEnabled, which it turns on: settings
+// read once, at startup, like MiddlewareEnabled, which it turns on: settings
 // served without middleware would never be reached, and middleware without
 // settings would take over plugin groups without their settings.
 //

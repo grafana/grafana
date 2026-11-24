@@ -3,8 +3,8 @@ import { byRole } from 'testing-library-selector';
 
 import { config } from '@grafana/runtime';
 
-import { mockLocalStorage } from '../mocks';
 import { getPreviewToggle, setPreviewToggle } from '../previewToggles';
+import { mockLocalStorage } from '../testSetup/mockLocalStorage';
 
 import { RuleListPageTitle } from './RuleListPageTitle';
 

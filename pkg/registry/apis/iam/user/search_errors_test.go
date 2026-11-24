@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -28,9 +29,9 @@ import (
 func TestUnifiedSearchErrorStatus(t *testing.T) {
 	plainErr := errors.New("private database failure")
 	for name, index := range map[string]*MockClient{
-		"embedded": {MockResponses: []*resourcepb.ResourceSearchResponse{{Error: &resourcepb.ErrorResult{
+		"detailed": {MockError: resource.GRPCStatusError(&resourcepb.ErrorResult{
 			Code: http.StatusTooManyRequests, Message: "search is busy",
-		}}}},
+		})},
 		"transport": {MockError: fmt.Errorf("search: %w", status.Error(codes.ResourceExhausted, "search is busy"))},
 		"plain":     {MockError: plainErr},
 		"internal":  {MockError: status.Error(codes.Internal, "private database failure")},
@@ -75,9 +76,9 @@ func TestUnifiedSearchErrorStatus(t *testing.T) {
 
 func TestUserAdmissionPreservesSearchErrorStatus(t *testing.T) {
 	for name, index := range map[string]*MockClient{
-		"embedded": {MockResponses: []*resourcepb.ResourceSearchResponse{{Error: &resourcepb.ErrorResult{
+		"detailed": {MockError: resource.GRPCStatusError(&resourcepb.ErrorResult{
 			Code: http.StatusServiceUnavailable, Message: "index unavailable",
-		}}}},
+		})},
 		"transport": {MockError: status.Error(codes.Unavailable, "index unavailable")},
 	} {
 		for _, operation := range []string{"create", "update email", "update login"} {
@@ -85,7 +86,7 @@ func TestUserAdmissionPreservesSearchErrorStatus(t *testing.T) {
 				backend := NewUnifiedSearchClient(&MockClient{MockResponses: index.MockResponses, MockError: index.MockError}, nil)
 				selector := selectorForBackend(backend)
 				ctx := identity.WithRequester(t.Context(), &legacyuser.SignedInUser{
-					Namespace: "stacks-1", IsGrafanaAdmin: true, OrgRole: identity.RoleAdmin,
+					Namespace: "stacks-1", IsGrafanaAdmin: true, OrgRole: authlib.RoleAdmin,
 				})
 				oldObj := &iamv0.User{Spec: iamv0.UserSpec{Login: "alice", Email: "alice@example.com", Role: "Admin"}}
 				obj := oldObj.DeepCopy()
@@ -128,13 +129,6 @@ func TestUserTeamReadErrorStatus(t *testing.T) {
 	}
 }
 
-func TestParseResultsPreservesErrorStatus(t *testing.T) {
-	_, err := parseResults(&resourcepb.ResourceSearchResponse{Error: &resourcepb.ErrorResult{
-		Code: http.StatusServiceUnavailable, Message: "index unavailable",
-	}})
-	require.True(t, apierrors.IsServiceUnavailable(err), "got %v", err)
-}
-
 func TestUserTeamSearchErrorStatus(t *testing.T) {
 	failure := &resourcepb.ErrorResult{
 		Code: http.StatusTooManyRequests, Reason: string(metav1.StatusReasonTooManyRequests), Message: "search is busy",
@@ -144,7 +138,7 @@ func TestUserTeamSearchErrorStatus(t *testing.T) {
 	require.NoError(t, err)
 	plainErr := errors.New("search failed")
 	for name, client := range map[string]*userTeamsIndexClient{
-		"embedded":  {response: &resourcepb.ResourceSearchResponse{Error: failure}},
+		"detailed":  {err: st.Err()},
 		"transport": {err: fmt.Errorf("search: %w", st.Err())},
 		"plain":     {err: plainErr},
 	} {

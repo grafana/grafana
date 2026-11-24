@@ -1,17 +1,27 @@
+import { act, screen, waitFor } from '@testing-library/react';
+import { createElement, Fragment } from 'react';
 import { of } from 'rxjs';
+import { render } from 'test/test-utils';
 
 import {
   type DataQueryRequest,
+  type DataQuery,
   type DataSourceApi,
   type DataTransformerConfig,
+  FieldType,
   LoadingState,
   type PanelPlugin,
-  store,
+  standardTransformersRegistry,
+  toDataFrame,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
+import { reportInteraction } from '@grafana/runtime';
 import {
   type CancelActivationHandler,
   CustomVariable,
+  registerRuntimeDataSource,
+  RuntimeDataSource,
+  SceneDataNode,
   SceneDataTransformer,
   sceneGraph,
   SceneGridLayout,
@@ -21,42 +31,53 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
-import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
+import { mockDataSource } from 'app/features/alerting/unified/testSetup/mockDataSource';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import * as libAPI from 'app/features/library-panels/state/api';
-import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/hooks';
-import { dispatch } from 'app/store/store';
+import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/constants';
+import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
+import { edit } from '../actions/utils/edit';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { setupPanelNotices } from '../scene/setupPanelNotices';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { findVizPanelByKey } from '../utils/findVizPanel';
 import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
+import { DashboardInteractions } from '../utils/interactions';
 import { activateFullSceneTree } from '../utils/test-utils';
 import { getLibraryPanelBehavior } from '../utils/utils';
 
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
+import { PanelDataQueriesTab } from './PanelDataPane/PanelDataQueriesTab';
+import { PanelDataTransformationsTab } from './PanelDataPane/PanelDataTransformationsTab';
 import { PanelDataPaneNext } from './PanelEditNext/PanelDataPaneNext';
-import { QUERY_EDITOR_V2_PREFERENCE_KEY } from './PanelEditNext/constants';
-import { getLocalStorageWithTTL, setLocalStorageWithTTL } from './PanelEditNext/localStorageWithTTL';
+import { usePanelContext, useQueryEditorUIContext } from './PanelEditNext/QueryEditor/QueryEditorContext';
+import { QueryEditorContextWrapper } from './PanelEditNext/QueryEditor/QueryEditorContextWrapper';
+import { TransformationEditorRenderer } from './PanelEditNext/QueryEditor/TransformationEditorRenderer';
+import { PanelEditPanelWrapper } from './PanelEditPanelWrapper';
 import { buildPanelEditScene } from './PanelEditor';
 
-const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request: DataQueryRequest) => {
+jest.mock('app/features/library-panels/state/api', () => makeSpyable('app/features/library-panels/state/api'));
+
+const loadingResponse = (ds: DataSourceApi, request: DataQueryRequest) => {
   return of({
     state: LoadingState.Loading,
     series: [],
     timeRange: request.range,
   });
-});
+};
+const runRequestMock = jest.fn().mockImplementation(loadingResponse);
 
 let pluginPromise: Promise<PanelPlugin> | undefined;
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
   getRunRequest: () => (ds: DataSourceApi, request: DataQueryRequest) => {
     return runRequestMock(ds, request);
   },
@@ -66,6 +87,7 @@ jest.mock('@grafana/runtime', () => ({
   }),
   config: {
     ...jest.requireActual('@grafana/runtime').config,
+    defaultDatasource: 'ds1',
     panels: {
       text: {
         skipDataQuery: true,
@@ -89,14 +111,21 @@ const dataSources = {
 
 setupDataSources(...Object.values(dataSources));
 
-jest.mock('app/store/store', () => ({
-  ...jest.requireActual('app/store/store'),
-  dispatch: jest.fn(),
-}));
+const RUNTIME_DS_UID = 'panel-editor-runtime-ds';
+
+class RuntimeTestDataSource extends RuntimeDataSource {
+  query() {
+    return of({ data: [] });
+  }
+}
+
+// Runtime datasources skip plugin loading, so query runners reach the mocked runRequest.
+registerRuntimeDataSource({ dataSource: new RuntimeTestDataSource('panel-editor-runtime-ds', RUNTIME_DS_UID) });
 
 let deactivate: CancelActivationHandler | undefined;
 
 describe('PanelEditor', () => {
+  beforeAll(() => standardTransformersRegistry.setInit(getStandardTransformers));
   afterEach(() => {
     if (deactivate) {
       deactivate();
@@ -135,31 +164,75 @@ describe('PanelEditor', () => {
   });
 
   describe('Entering panel edit', () => {
-    beforeEach(() => jest.mocked(dispatch).mockClear());
+    it('applies panel options and tracks changes after the preview layout item remounts', async () => {
+      const { panelEditor, panel, gridItem, deactivatePanel } = await setup({ activateFullTree: false });
+      let observedDisplayMode = panel.state.displayMode;
+      const subscription = panel.subscribeToState((state) => {
+        observedDisplayMode = state.displayMode;
+      });
 
-    it('pauses ad hoc table transformations and restores them on exit', async () => {
+      const unmountPreview = gridItem.activate();
+      unmountPreview();
+      deactivatePanel!();
+      const unmountRemountedPreview = gridItem.activate();
+      const unmountRemountedPanel = panel.activate();
+
+      try {
+        edit({
+          meta: { actionId: 'panel.changeBackground' },
+          source: panel,
+          description: 'Change panel background',
+          perform: () => panel.setState({ displayMode: 'transparent' }),
+          undo: () => panel.setState({ displayMode: 'default' }),
+        });
+
+        expect(panel.state.displayMode).toBe('transparent');
+        expect(observedDisplayMode).toBe('transparent');
+        expect(panelEditor.state.isDirty).toBe(true);
+      } finally {
+        subscription.unsubscribe();
+        unmountRemountedPanel();
+        unmountRemountedPreview();
+      }
+
+      deactivate!();
+      deactivate = undefined;
+      expect(gridItem.isActive).toBe(false);
+      expect(panel.isActive).toBe(false);
+    });
+
+    it('releases a replaced data provider, then the replacement when editing ends', async () => {
+      const { panel, deactivatePanel } = await setup({
+        activateFullTree: false,
+        pluginSkipDataQuery: false,
+      });
+      const original = panel.state.$data!;
+      const replacement = new SceneDataNode({
+        data: { state: LoadingState.Done, series: [], timeRange: sceneGraph.getTimeRange(panel).state.value },
+      });
+      const releasePreviewProvider = replacement.activate();
+
+      panel.setState({ $data: replacement });
+      releasePreviewProvider();
+      deactivatePanel!();
+
+      expect(original.isActive).toBe(false);
+      expect(replacement.isActive).toBe(true);
+
+      deactivate!();
+      deactivate = undefined;
+      expect(replacement.isActive).toBe(false);
+    });
+
+    it('keeps ad hoc table transformations applied while editing and after leaving', async () => {
       const transformations: DataTransformerConfig[] = [{ id: 'organize', options: { indexByName: { B: 0, A: 1 } } }];
       const { panel } = await setup({ pluginId: 'table', initialTableTransformations: transformations });
 
-      expect(panel.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER)).toEqual([]);
-      expect(dispatch).toHaveBeenCalledWith(
-        expect.objectContaining({
-          payload: expect.objectContaining({
-            title: 'Ad hoc transformations are disabled in edit mode',
-          }),
-        })
-      );
+      expect(panel.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER)).toEqual(transformations);
 
       deactivate!();
       deactivate = undefined;
       expect(panel.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER)).toEqual(transformations);
-    });
-
-    it('does not notify when the table has no ad hoc transformations', async () => {
-      const { panel } = await setup({ pluginId: 'table' });
-
-      expect(panel.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER)).toEqual([]);
-      expect(dispatch).not.toHaveBeenCalled();
     });
 
     it('should clear sidebar selection', () => {
@@ -192,6 +265,132 @@ describe('PanelEditor', () => {
     });
   });
 
+  describe.each([
+    { useNext: false, noticesFirst: false },
+    { useNext: true, noticesFirst: false },
+    { useNext: false, noticesFirst: true },
+    { useNext: true, noticesFirst: true },
+  ])(
+    'transformation editing with queryEditorNext=$useNext and noticesFirst=$noticesFirst',
+    ({ useNext, noticesFirst }) => {
+      beforeEach(() => {
+        setTestFlags({ queryEditorNext: useNext });
+      });
+
+      afterEach(() => {
+        setTestFlags({});
+        runRequestMock.mockImplementation(loadingResponse);
+      });
+
+      it('keeps format edits synchronized after preview remounts and Table View changes', async () => {
+        const { dashboard, panelEditor, panel, gridItem, deactivatePanel, deactivateNotices } = await setup({
+          activateFullTree: false,
+          pluginSkipDataQuery: false,
+          activateNoticesFirst: noticesFirst,
+        });
+        const transformer = panel.state.$data as SceneDataTransformer;
+        const queryRunner = getQueryRunnerFor(panel)!;
+        const dataPane = panelEditor.state.dataPane!;
+        transformer.setState({
+          transformations: [{ id: 'formatTime', options: { timeField: 'time', outputFormat: '' } }],
+        });
+        const formattedTime = () => transformer.state.data?.series[0]?.fields[0].values[0];
+
+        // Only the query returns the source frame, so each edit must reach the transformer's output: the classic
+        // editor reprocesses the transformations, and the next editor re-runs the query.
+        const sourceFrame = () =>
+          toDataFrame({ fields: [{ name: 'time', type: FieldType.time, values: [Date.UTC(2026, 0, 2, 12)] }] });
+        runRequestMock.mockImplementation((ds: DataSourceApi, request: DataQueryRequest) =>
+          of({ state: LoadingState.Done, series: [sourceFrame()], timeRange: request.range })
+        );
+        queryRunner.setState({ datasource: { uid: RUNTIME_DS_UID } });
+
+        let preview = render(createElement(PanelEditPanelWrapper, { panel, dashboard }));
+        act(() => {
+          deactivatePanel!();
+          deactivateNotices?.();
+        });
+        act(() => {
+          queryRunner.setState({
+            data: {
+              state: LoadingState.Done,
+              series: [sourceFrame()],
+              timeRange: sceneGraph.getTimeRange(panel).state.value,
+            },
+          });
+        });
+        const editor = render(
+          dataPane instanceof PanelDataPaneNext
+            ? createElement(QueryEditorContextWrapper, {
+                dataPane,
+                children: createElement(MountedTransformationEditor),
+              })
+            : createElement(PanelDataTransformationsTab.Component, {
+                model: dataPane.state.tabs.find(
+                  (tab): tab is PanelDataTransformationsTab => tab instanceof PanelDataTransformationsTab
+                )!,
+              })
+        );
+        if (useNext) {
+          await editor.user.click(screen.getByRole('button', { name: 'Edit transformation' }));
+        }
+        const format = await screen.findByRole('textbox', { name: 'Format' });
+        expect(screen.getByRole('region', { name: 'original title' })).toBeInTheDocument();
+
+        if (!noticesFirst) {
+          // The preview's scene activations end while the transformation editor stays mounted.
+          preview.unmount();
+          preview = render(createElement(PanelEditPanelWrapper, { panel, dashboard }));
+        }
+
+        try {
+          await editor.user.type(format, 'YYYY');
+          expect(format).toHaveValue('YYYY');
+          expect(transformer.state.transformations).toEqual([
+            { id: 'formatTime', options: { outputFormat: 'YYYY', timeField: 'time', useTimezone: true } },
+          ]);
+          await waitFor(() => expect(formattedTime()).toBe('2026'));
+
+          act(() => panelEditor.onToggleTableView());
+          preview.rerender(
+            createElement(PanelEditPanelWrapper, { panel, dashboard, tableView: panelEditor.state.tableView })
+          );
+          expect(screen.queryByRole('region', { name: 'original title' })).not.toBeInTheDocument();
+          await editor.user.type(format, '-MM');
+          expect(format).toHaveValue('YYYY-MM');
+          expect(transformer.isActive).toBe(true);
+          expect(queryRunner.isActive).toBe(true);
+          expect(transformer.state.transformations).toEqual([
+            { id: 'formatTime', options: { outputFormat: 'YYYY-MM', timeField: 'time', useTimezone: true } },
+          ]);
+          await waitFor(() => expect(formattedTime()).toBe('2026-01'));
+
+          act(() => panelEditor.onToggleTableView());
+          preview.rerender(
+            createElement(PanelEditPanelWrapper, { panel, dashboard, tableView: panelEditor.state.tableView })
+          );
+          await editor.user.type(format, '-DD');
+          expect(format).toHaveValue('YYYY-MM-DD');
+          expect(transformer.state.transformations).toEqual([
+            { id: 'formatTime', options: { outputFormat: 'YYYY-MM-DD', timeField: 'time', useTimezone: true } },
+          ]);
+          await waitFor(() => expect(formattedTime()).toBe('2026-01-02'));
+          expect(panelEditor.state.isDirty).toBe(true);
+        } finally {
+          editor.unmount();
+          preview.unmount();
+        }
+
+        deactivate!();
+        deactivate = undefined;
+        expect(gridItem.isActive).toBe(false);
+        expect(panel.isActive).toBe(false);
+        expect(transformer.isActive).toBe(false);
+        expect(queryRunner.isActive).toBe(false);
+      });
+    }
+  );
+
   describe('When discarding', () => {
     it('should discard changes revert all changes', async () => {
       const { panelEditor, panel, dashboard } = await setup();
@@ -202,6 +401,37 @@ describe('PanelEditor', () => {
       const discardedPanel = findVizPanelByKey(dashboard, panel.state.key!)!;
 
       expect(discardedPanel.state.title).toBe('original title');
+    });
+
+    it('gives the reverted panel the ad hoc table transformations it showed', async () => {
+      const hideB: DataTransformerConfig[] = [{ id: 'organize', options: { excludeByName: { B: true } } }];
+      const { panelEditor, panel, dashboard } = await setup({ pluginId: 'table', initialTableTransformations: [] });
+
+      panel.setState({ title: 'changed title' });
+      panel.getRuntimeTransformations().set(TABLE_TRANSFORMATIONS_OWNER, hideB);
+      panelEditor.onDiscard();
+
+      const discardedPanel = findVizPanelByKey(dashboard, panel.state.key!)!;
+      expect(discardedPanel.state.title).toBe('original title');
+      expect(discardedPanel.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER)).toEqual(hideB);
+    });
+
+    it('gives the reverted panel its ad hoc table transformations from when editing started if its transformations changed', async () => {
+      const hideA: DataTransformerConfig[] = [{ id: 'organize', options: { excludeByName: { A: true } } }];
+      const hideB: DataTransformerConfig[] = [{ id: 'organize', options: { excludeByName: { B: true } } }];
+      const { panelEditor, panel, dashboard } = await setup({ pluginId: 'table', initialTableTransformations: hideA });
+      const transformer = panel.state.$data;
+      if (!(transformer instanceof SceneDataTransformer)) {
+        throw new Error('Expected a data transformer');
+      }
+
+      transformer.setState({ transformations: [{ id: 'organize', options: { renameByName: { A: 'Renamed' } } }] });
+      panel.getRuntimeTransformations().set(TABLE_TRANSFORMATIONS_OWNER, hideB);
+      panelEditor.onDiscard();
+
+      const discardedPanel = findVizPanelByKey(dashboard, panel.state.key!)!;
+      expect(discardedPanel.state.$data?.state).toMatchObject({ transformations: [] });
+      expect(discardedPanel.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER)).toEqual(hideA);
     });
 
     it('should discard a newly added panel', async () => {
@@ -227,12 +457,46 @@ describe('PanelEditor', () => {
     });
   });
 
+  describe('When panel changes are undone', () => {
+    afterEach(() => setTestFlags({}));
+
+    it('keeps the ad hoc table transformations a panel shows when its panel changes are undone and redone', async () => {
+      setTestFlags({ dashboardNewLayouts: true });
+      const hideB: DataTransformerConfig[] = [{ id: 'organize', options: { excludeByName: { B: true } } }];
+      const { dashboard, panel, gridItem } = await setup({ pluginId: 'table', initialTableTransformations: [] });
+      panel.setState({ title: 'changed title' });
+      panel.getRuntimeTransformations().set(TABLE_TRANSFORMATIONS_OWNER, hideB);
+      deactivate!();
+      deactivate = undefined;
+      dashboard.setState({ editPanel: undefined });
+      deactivate = activateFullSceneTree(dashboard);
+
+      dashboard.state.sidebar.undoAction();
+      expect(gridItem.state.body.state.title).toBe('original title');
+      expect(gridItem.state.body.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER)).toEqual(hideB);
+
+      dashboard.state.sidebar.redoAction();
+      expect(gridItem.state.body.state.title).toBe('changed title');
+      expect(gridItem.state.body.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER)).toEqual(hideB);
+    });
+  });
+
   describe('When changes are made', () => {
     it('Should set state to dirty', async () => {
       const { panelEditor, panel } = await setup({});
 
       expect(panelEditor.state.isDirty).toBe(undefined);
 
+      panel.setState({ title: 'changed title' });
+
+      expect(panelEditor.state.isDirty).toBe(true);
+    });
+
+    it('sets state to dirty for changes made after the editor is activated again', async () => {
+      const { panelEditor, panel } = await setup({ activateFullTree: false });
+
+      deactivate!();
+      deactivate = panelEditor.activate();
       panel.setState({ title: 'changed title' });
 
       expect(panelEditor.state.isDirty).toBe(true);
@@ -256,6 +520,349 @@ describe('PanelEditor', () => {
       // Change back to already saved state
       panel.setState({ title: 'changed title' });
       expect(panelEditor.state.isDirty).toBe(false);
+    });
+  });
+
+  describe('Reporting query option changes', () => {
+    let panelSettingChanged: jest.SpyInstance;
+
+    beforeEach(() => {
+      setTestFlags({ queryEditorNext: false });
+      panelSettingChanged = jest.spyOn(DashboardInteractions, 'panelSettingChanged').mockImplementation();
+    });
+
+    afterEach(() => {
+      panelSettingChanged.mockRestore();
+      setTestFlags({});
+    });
+
+    it('reports a query option changed in the classic query editor', async () => {
+      const { panelEditor } = await setup();
+      const { dataPane } = panelEditor.state;
+      const queriesTab =
+        dataPane instanceof PanelDataPane
+          ? dataPane.state.tabs.find((tab) => tab instanceof PanelDataQueriesTab)
+          : undefined;
+      if (!(queriesTab instanceof PanelDataQueriesTab)) {
+        throw new Error('Expected the classic queries tab');
+      }
+
+      queriesTab.onQueryOptionsChange({ ...queriesTab.buildQueryOptions(), maxDataPoints: 100 });
+
+      expect(panelSettingChanged).toHaveBeenCalledTimes(1);
+      expect(panelSettingChanged).toHaveBeenCalledWith({
+        item: 'change_query_option',
+        source: 'panel_editor',
+        panel_type: 'text',
+        panel_id: 1,
+        option: 'max_data_points',
+        editor: 'classic',
+      });
+    });
+
+    it('does not report hide time info that the classic query editor drops for lack of a time range', async () => {
+      const { panelEditor, panel } = await setup();
+      const { dataPane } = panelEditor.state;
+      const queriesTab =
+        dataPane instanceof PanelDataPane
+          ? dataPane.state.tabs.find((tab) => tab instanceof PanelDataQueriesTab)
+          : undefined;
+      if (!(queriesTab instanceof PanelDataQueriesTab)) {
+        throw new Error('Expected the classic queries tab');
+      }
+
+      queriesTab.onQueryOptionsChange({ ...queriesTab.buildQueryOptions(), timeRange: { hide: true } });
+
+      expect(panel.state.$timeRange).toBeUndefined();
+      expect(panelSettingChanged).not.toHaveBeenCalled();
+    });
+
+    it('reports a query option changed in the next query editor', async () => {
+      setTestFlags({ queryEditorNext: true });
+      const { panelEditor } = await setup();
+      const { dataPane } = panelEditor.state;
+      if (!(dataPane instanceof PanelDataPaneNext)) {
+        throw new Error('Expected the next data pane');
+      }
+
+      dataPane.onQueryOptionsChange({
+        queries: [],
+        dataSource: { uid: 'ds1' },
+        maxDataPoints: 500,
+        timeRange: { from: '1h' },
+      });
+
+      expect(panelSettingChanged).toHaveBeenCalledTimes(1);
+      expect(panelSettingChanged).toHaveBeenCalledWith(
+        expect.objectContaining({ item: 'change_query_option', option: 'relative_time', editor: 'next' })
+      );
+    });
+  });
+
+  describe('Reporting the close and discard interactions', () => {
+    const NO_CHANGES = {
+      changed: false,
+      changed_options: false,
+      changed_field_config: false,
+      changed_overrides: false,
+      changed_queries: false,
+      changed_transformations: false,
+      changed_panel_info: false,
+      changed_repeat: false,
+      saved_in_editor: false,
+      panel_type: 'text',
+      panel_id: 1,
+      is_new_panel: false,
+      is_library_panel: false,
+      query_change_count: 0,
+      query_editor: 'classic',
+      isDynamicDashboard: true,
+    };
+
+    const reported = (name: string) =>
+      jest
+        .mocked(reportInteraction)
+        .mock.calls.filter(([interactionName]) => interactionName === name)
+        .map(([, properties, options]) => ({ properties, options }));
+
+    const closeEditor = () => {
+      deactivate!();
+      deactivate = undefined;
+    };
+
+    beforeEach(() => {
+      setTestFlags({ queryEditorNext: false });
+      jest.mocked(reportInteraction).mockClear();
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('reports a non-silent close with no changed areas when nothing was edited', async () => {
+      await setup();
+
+      closeEditor();
+
+      expect(reported('panel_edit_closed')).toEqual([
+        { properties: { ...NO_CHANGES, outcome: 'kept' }, options: undefined },
+      ]);
+      expect(reported('panel_edit_discarded')).toEqual([]);
+    });
+
+    it('reports the areas the user changed when the editor closes', async () => {
+      const { panel } = await setup();
+
+      panel.setState({ title: 'changed title', options: { content: 'Hello' } });
+      closeEditor();
+
+      expect(reported('panel_edit_closed')).toEqual([
+        {
+          properties: {
+            ...NO_CHANGES,
+            changed: true,
+            changed_options: true,
+            changed_panel_info: true,
+            outcome: 'kept',
+          },
+          options: undefined,
+        },
+      ]);
+    });
+
+    it('does not count the default query the editor adds to a panel without data as a change', async () => {
+      const { panel } = await setup({ withoutData: true });
+      expect(getQueryRunnerFor(panel)?.state.queries).toHaveLength(1);
+
+      closeEditor();
+
+      expect(reported('panel_edit_closed')[0].properties).toEqual({ ...NO_CHANGES, outcome: 'kept' });
+    });
+
+    it('reports a discard with the discarded areas, then a close with the discarded outcome', async () => {
+      const { panel, panelEditor } = await setup();
+
+      getQueryRunnerFor(panel)?.setState({ maxDataPoints: 123 });
+      panelEditor.onDiscard();
+      closeEditor();
+
+      const discardedChanges = { ...NO_CHANGES, changed: true, changed_queries: true };
+      expect(reported('panel_edit_discarded')).toEqual([{ properties: discardedChanges, options: undefined }]);
+      expect(reported('panel_edit_closed')).toEqual([
+        { properties: { ...discardedChanges, outcome: 'discarded' }, options: undefined },
+      ]);
+    });
+
+    it('keeps the areas changed before a save inside the editor in the close event', async () => {
+      const { panel, panelEditor } = await setup();
+
+      getQueryRunnerFor(panel)?.setState({ maxDataPoints: 123 });
+      panelEditor.dashboardSaved();
+      closeEditor();
+
+      expect(reported('panel_edit_closed')[0].properties).toEqual({
+        ...NO_CHANGES,
+        changed: true,
+        changed_queries: true,
+        saved_in_editor: true,
+        outcome: 'kept',
+      });
+    });
+
+    it('reports a discard after a save inside the editor with only the areas changed since the save', async () => {
+      const { panel, panelEditor } = await setup();
+
+      getQueryRunnerFor(panel)?.setState({ maxDataPoints: 123 });
+      panelEditor.dashboardSaved();
+      panel.setState({ title: 'changed title' });
+      panelEditor.onDiscard();
+      closeEditor();
+
+      const discardedChanges = { ...NO_CHANGES, changed: true, changed_panel_info: true, saved_in_editor: true };
+      expect(getQueryRunnerFor(panel)?.state.maxDataPoints).toBe(123);
+      expect(reported('panel_edit_discarded')).toEqual([{ properties: discardedChanges, options: undefined }]);
+      expect(reported('panel_edit_closed')[0].properties).toEqual({ ...discardedChanges, outcome: 'discarded' });
+    });
+
+    it('reports saving a library panel from the editor as a library panel saved in the editor', async () => {
+      const saveLibPanel = jest.spyOn(libAPI, 'saveLibPanel').mockResolvedValue(undefined);
+      try {
+        const libraryPanel = new LibraryPanelBehavior({
+          uid: 'lib-uid',
+          name: 'Library panel',
+          isLoaded: true,
+          _loadedPanel: { uid: 'lib-uid', name: 'Library panel', type: 'panel', version: 1, model: { type: 'text' } },
+        });
+        const { panelEditor } = await setup({ libraryPanel });
+
+        panelEditor.onConfirmSaveLibraryPanel();
+        closeEditor();
+
+        expect(saveLibPanel).toHaveBeenCalledTimes(1);
+        expect(reported('panel_edit_closed')[0].properties).toEqual({
+          ...NO_CHANGES,
+          saved_in_editor: true,
+          is_library_panel: true,
+          outcome: 'kept',
+        });
+      } finally {
+        saveLibPanel.mockRestore();
+      }
+    });
+
+    it('reports a discarded new panel as a new panel with the discarded outcome', async () => {
+      const { panelEditor } = await setup({ isNewPanel: true });
+
+      panelEditor.onDiscard();
+      closeEditor();
+
+      expect(reported('panel_edit_closed')[0].properties).toEqual({
+        ...NO_CHANGES,
+        is_new_panel: true,
+        outcome: 'discarded',
+      });
+    });
+
+    it('reports a repeat change made in the editor', async () => {
+      const { gridItem } = await setup();
+
+      gridItem.setState({ variableName: 'server' });
+      closeEditor();
+
+      expect(reported('panel_edit_closed')[0].properties).toEqual({
+        ...NO_CHANGES,
+        changed: true,
+        changed_repeat: true,
+        outcome: 'kept',
+      });
+    });
+
+    it('reports the next query editor when the panel was edited with it', async () => {
+      setTestFlags({ queryEditorNext: true });
+      try {
+        await setup();
+
+        closeEditor();
+
+        expect(reported('panel_edit_closed')[0].properties).toEqual({
+          ...NO_CHANGES,
+          query_editor: 'next',
+          outcome: 'kept',
+        });
+      } finally {
+        setTestFlags({});
+      }
+    });
+
+    it('reports a dashboard without dynamic layouts as not dynamic', async () => {
+      setTestFlags({ queryEditorNext: false, dashboardNewLayouts: false });
+      try {
+        await setup();
+
+        closeEditor();
+
+        expect(reported('panel_edit_closed')[0].properties).toEqual({
+          ...NO_CHANGES,
+          isDynamicDashboard: false,
+          outcome: 'kept',
+        });
+      } finally {
+        setTestFlags({});
+      }
+    });
+
+    it('counts query edits less than two seconds apart as one', async () => {
+      const { panelEditor } = await setup();
+
+      panelEditor.recordQueryEdit(10_000);
+      panelEditor.recordQueryEdit(11_500);
+      panelEditor.recordQueryEdit(13_000);
+      panelEditor.recordQueryEdit(15_500);
+      closeEditor();
+
+      expect(reported('panel_edit_closed')[0].properties).toEqual({
+        ...NO_CHANGES,
+        query_change_count: 2,
+        outcome: 'kept',
+      });
+    });
+
+    it('counts a query edit reported by the classic query editor', async () => {
+      const { panelEditor } = await setup();
+      const { dataPane } = panelEditor.state;
+      const queriesTab =
+        dataPane instanceof PanelDataPane
+          ? dataPane.state.tabs.find((tab) => tab instanceof PanelDataQueriesTab)
+          : undefined;
+      if (!(queriesTab instanceof PanelDataQueriesTab)) {
+        throw new Error('Expected the classic queries tab');
+      }
+
+      queriesTab.onQueryEdited();
+      closeEditor();
+
+      expect(reported('panel_edit_closed')[0].properties).toMatchObject({ query_change_count: 1 });
+    });
+
+    it('counts a query edit reported by the next query editor', async () => {
+      setTestFlags({ queryEditorNext: true });
+      try {
+        const { panelEditor } = await setup();
+        const { dataPane } = panelEditor.state;
+        if (!(dataPane instanceof PanelDataPaneNext)) {
+          throw new Error('Expected the next data pane');
+        }
+
+        dataPane.onQueryEdited();
+        closeEditor();
+
+        expect(reported('panel_edit_closed')[0].properties).toMatchObject({
+          query_change_count: 1,
+          query_editor: 'next',
+        });
+      } finally {
+        setTestFlags({});
+      }
     });
   });
 
@@ -414,9 +1021,63 @@ describe('PanelEditor', () => {
       expect(panel.state.$behaviors?.length).toBe(1);
       expect(panel.state.$behaviors![0]).toBe(otherBehavior);
     });
+
+    it('reports clicking Save and Unlink on a library panel from the panel editor', () => {
+      const track = jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
+      const panel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'text',
+        $behaviors: [new LibraryPanelBehavior({ isLoaded: true, uid: 'uid', name: 'libraryPanelName' })],
+      });
+      new DashboardGridItem({ body: panel });
+      const editScene = buildPanelEditScene(panel);
+
+      editScene.onSaveLibraryPanel();
+      editScene.onUnlinkLibraryPanel();
+
+      expect(track.mock.calls).toEqual([
+        ['save_library_panel', 1, 'panel_editor', 'text'],
+        ['unlink_library_panel', 1, 'panel_editor', 'text'],
+      ]);
+      track.mockRestore();
+    });
   });
 
   describe('PanelDataPane', () => {
+    it('allows reload after default query setup and protects a subsequent query edit', async () => {
+      const { panel, panelEditor } = await setup({ pluginId: 'timeseries', withoutData: true });
+      const runner = getQueryRunnerFor(panel)!;
+      expect(runner.state.queries).toEqual([{ refId: 'A' }]);
+      expect(panelEditor.hasUnsavedChangesForReload()).toBe(false);
+
+      runner.setState({ queries: [{ refId: 'A', expression: '2' }] });
+      expect(panelEditor.hasUnsavedChangesForReload()).toBe(true);
+    });
+
+    it.each([true, false])('honors skipDefaultQuery=%s when opening a panel without data', async (skipDefaultQuery) => {
+      const { panel } = await setup({ pluginSkipDataQuery: false, skipDefaultQuery, withoutData: true });
+      expect(getQueryRunnerFor(panel)?.state.queries).toEqual(skipDefaultQuery ? [] : [{ refId: 'A' }]);
+      if (skipDefaultQuery) {
+        expect(getQueryRunnerFor(panel)?.isDataReadyToDisplay()).toBe(true);
+      }
+    });
+
+    it('removes only the untouched starter query on a new opted-in panel', async () => {
+      const { panel } = await setup({ isNewPanel: true, pluginSkipDataQuery: false, skipDefaultQuery: true });
+      expect(getQueryRunnerFor(panel)?.state.queries).toEqual([]);
+    });
+
+    it.each([true, false])('preserves configured queries on opted-in panels (new=%s)', async (isNewPanel) => {
+      const queries = [{ refId: 'A', expr: 'up', hide: true }];
+      const { panel } = await setup({ isNewPanel, pluginSkipDataQuery: false, skipDefaultQuery: true, queries });
+      expect(getQueryRunnerFor(panel)?.state.queries).toEqual([{ refId: 'A', expr: 'up', hide: true }]);
+    });
+
+    it('preserves an existing panel query even when it looks like a starter', async () => {
+      const { panel } = await setup({ pluginSkipDataQuery: false, skipDefaultQuery: true });
+      expect(getQueryRunnerFor(panel)?.state.queries).toEqual([{ refId: 'A' }]);
+    });
+
     it('should not exist if panel is skipDataQuery', async () => {
       const { panelEditor, panel } = await setup({ pluginSkipDataQuery: true });
       expect(panelEditor.state.dataPane).toBeUndefined();
@@ -435,12 +1096,10 @@ describe('PanelEditor', () => {
   describe('Query editor version toggle', () => {
     describe('when queryEditorNext feature toggle is enabled', () => {
       beforeEach(() => {
-        store.delete(QUERY_EDITOR_V2_PREFERENCE_KEY);
         setTestFlags({ queryEditorNext: true });
       });
 
       afterEach(() => {
-        store.delete(QUERY_EDITOR_V2_PREFERENCE_KEY);
         setTestFlags({});
       });
 
@@ -467,49 +1126,38 @@ describe('PanelEditor', () => {
         expect(panelEditor.state.dataPane).toBeInstanceOf(PanelDataPaneNext);
       });
 
-      it('should use v2 when stored preference is true', async () => {
-        setLocalStorageWithTTL(QUERY_EDITOR_V2_PREFERENCE_KEY, true);
+      it('should open the next panel edit in the v2 query editor after switching to v1', async () => {
+        const { panelEditor } = await setup({ pluginSkipDataQuery: false });
+        panelEditor.onToggleQueryEditorVersion();
+
+        const { panelEditor: nextPanelEditor } = await setup({ pluginSkipDataQuery: false });
+
+        expect(nextPanelEditor.state.dataPane).toBeInstanceOf(PanelDataPaneNext);
+      });
+    });
+
+    describe('when queryEditorNext feature toggle is unresolved', () => {
+      beforeEach(() => {
+        setTestFlags({});
+      });
+
+      it('should fall back to the v2 query editor experience', async () => {
         const { panelEditor } = await setup({ pluginSkipDataQuery: false });
 
         expect(panelEditor.state.dataPane).toBeInstanceOf(PanelDataPaneNext);
-      });
-
-      it('should use v1 when stored preference is false (user downgraded)', async () => {
-        setLocalStorageWithTTL(QUERY_EDITOR_V2_PREFERENCE_KEY, false);
-        const { panelEditor } = await setup({ pluginSkipDataQuery: false });
-
-        expect(panelEditor.state.dataPane).toBeInstanceOf(PanelDataPane);
-      });
-
-      it('should persist the preference to local storage when toggled', async () => {
-        const { panelEditor } = await setup({ pluginSkipDataQuery: false });
-
-        panelEditor.onToggleQueryEditorVersion(); // v2 -> v1
-        expect(getLocalStorageWithTTL<boolean>(QUERY_EDITOR_V2_PREFERENCE_KEY)).toBe(false);
-
-        panelEditor.onToggleQueryEditorVersion(); // v1 -> v2
-        expect(getLocalStorageWithTTL<boolean>(QUERY_EDITOR_V2_PREFERENCE_KEY)).toBe(true);
       });
     });
 
     describe('when queryEditorNext feature toggle is disabled', () => {
       beforeEach(() => {
-        setTestFlags({});
+        setTestFlags({ queryEditorNext: false });
       });
 
       afterEach(() => {
-        store.delete(QUERY_EDITOR_V2_PREFERENCE_KEY);
+        setTestFlags({});
       });
 
       it('should use the v1 query editor experience', async () => {
-        const { panelEditor } = await setup({ pluginSkipDataQuery: false });
-
-        expect(panelEditor.state.dataPane).toBeInstanceOf(PanelDataPane);
-      });
-
-      it('should ignore a stored v2 preference and use the v1 query editor experience', async () => {
-        setLocalStorageWithTTL(QUERY_EDITOR_V2_PREFERENCE_KEY, true);
-
         const { panelEditor } = await setup({ pluginSkipDataQuery: false });
 
         expect(panelEditor.state.dataPane).toBeInstanceOf(PanelDataPane);
@@ -526,9 +1174,14 @@ describe('PanelEditor', () => {
 });
 
 interface SetupOptions {
+  activateFullTree?: boolean;
+  activateNoticesFirst?: boolean;
   isNewPanel?: boolean;
   pluginId?: string;
   pluginSkipDataQuery?: boolean;
+  skipDefaultQuery?: boolean;
+  queries?: DataQuery[];
+  withoutData?: boolean;
   repeatByVariable?: string;
   skipWait?: boolean;
   pluginLoadTime?: number;
@@ -538,7 +1191,10 @@ interface SetupOptions {
 
 async function setup(options: SetupOptions = {}) {
   const panelPluginId = options.pluginId ?? 'text';
-  const pluginToLoad = getPanelPlugin({ id: panelPluginId, skipDataQuery: options.pluginSkipDataQuery });
+  const pluginToLoad = getPanelPlugin(
+    { id: panelPluginId, skipDataQuery: options.pluginSkipDataQuery, skipDefaultQuery: options.skipDefaultQuery },
+    () => createElement('div', null, 'Preview visualization')
+  );
   let pluginResolve = (plugin: PanelPlugin) => {};
 
   pluginPromise = new Promise<PanelPlugin>((resolve) => {
@@ -549,16 +1205,21 @@ async function setup(options: SetupOptions = {}) {
     key: 'panel-1',
     pluginId: panelPluginId,
     title: 'original title',
+    extendPanelContext: options.activateNoticesFirst ? setupPanelNotices : undefined,
     $behaviors: options.libraryPanel ? [options.libraryPanel] : undefined,
     $data: new SceneDataTransformer({
       transformations: [],
       $data: new SceneQueryRunner({
-        queries: [{ refId: 'A' }],
+        queries: options.queries ?? [{ refId: 'A' }],
         maxDataPoints: 500,
         datasource: { uid: 'ds1' },
       }),
     }),
   });
+
+  if (options.withoutData) {
+    panel.setState({ $data: undefined });
+  }
 
   if (options.initialTableTransformations) {
     panel.getRuntimeTransformations().set(TABLE_TRANSFORMATIONS_OWNER, options.initialTableTransformations);
@@ -591,7 +1252,15 @@ async function setup(options: SetupOptions = {}) {
 
   panelEditor.debounceSaveModelDiff = false;
 
-  deactivate = activateFullSceneTree(dashboard);
+  // Notices can own the provider before the panel activates, as with an existing status surface.
+  const deactivateNotices = options.activateNoticesFirst ? panel.getPanelContext().activateNotices!() : undefined;
+  let deactivatePanel: CancelActivationHandler | undefined;
+  if (options.activateFullTree === false) {
+    deactivatePanel = panel.activate();
+    deactivate = panelEditor.activate();
+  } else {
+    deactivate = activateFullSceneTree(dashboard);
+  }
 
   if (!options.skipWait) {
     //console.log('pluginResolve(pluginToLoad)');
@@ -599,5 +1268,16 @@ async function setup(options: SetupOptions = {}) {
     await new Promise((r) => setTimeout(r, 1));
   }
 
-  return { dashboard, panel, gridItem, panelEditor, pluginResolve };
+  return { dashboard, panel, gridItem, panelEditor, pluginResolve, deactivatePanel, deactivateNotices };
+}
+
+function MountedTransformationEditor() {
+  const { transformations } = usePanelContext();
+  const { setSelectedTransformation } = useQueryEditorUIContext();
+  return createElement(
+    Fragment,
+    null,
+    createElement('button', { onClick: () => setSelectedTransformation(transformations[0]) }, 'Edit transformation'),
+    createElement(TransformationEditorRenderer)
+  );
 }

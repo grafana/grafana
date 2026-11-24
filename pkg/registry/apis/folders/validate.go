@@ -1,6 +1,7 @@
 package folders
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -99,6 +100,12 @@ func hasK6Ancestor(info *folders.FolderInfoList, self string) bool {
 	return false
 }
 
+// isReservedRootTitle reports whether the title collides with the root folder's
+// display name; nested folders may reuse it.
+func isReservedRootTitle(title, parentName string) bool {
+	return folder.IsRootFolderUID(parentName) && strings.EqualFold(title, dashboards.RootFolderName)
+}
+
 func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGetter, maxDepth int, dryRun bool) error {
 	id := f.Name
 
@@ -131,11 +138,11 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 		return folder.ErrAPITitleEmpty
 	}
 
-	if strings.EqualFold(f.Spec.Title, dashboards.RootFolderName) {
+	parentName := meta.GetFolder()
+
+	if isReservedRootTitle(f.Spec.Title, parentName) {
 		return folder.ErrNameExists.Errorf("a folder with that name already exists")
 	}
-
-	parentName := meta.GetFolder()
 
 	// checked before resolving the tree so it also rejects a k6 parent we cannot read
 	if parentName == accesscontrol.K6FolderUID && !isServiceAccount(ctx) {
@@ -203,7 +210,7 @@ func validateOnUpdate(ctx context.Context,
 		return folder.ErrAPITitleEmpty
 	}
 
-	if strings.EqualFold(obj.Spec.Title, dashboards.RootFolderName) {
+	if isReservedRootTitle(obj.Spec.Title, folderObj.GetFolder()) {
 		return folder.ErrNameExists.Errorf("a folder with that name already exists")
 	}
 
@@ -563,7 +570,7 @@ func getChildrenBatch(ctx context.Context, searcher resourcepb.ResourceIndexClie
 		Offset:       offset,
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
-	if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
+	if err := resource.StatusErrorFromGRPC(err); err != nil {
 		backendLogger.FromContext(ctx).Error("Failed to search folders", "operation", "subtreeSearch", "namespace", namespace, "parents", parentUIDs, "error", err)
 		public := backendStatusError(err)
 		return nil, false, &public
@@ -591,6 +598,7 @@ func validateOnDelete(ctx context.Context,
 	searcher resourcepb.ResourceIndexClient,
 	deleteOptions *metav1.DeleteOptions,
 	cascadeDeleteEnabled bool,
+	metrics *deleteCheckMetrics,
 ) error {
 	// Non-empty folder delete is opt-in via gracePeriodSeconds=0 when kubernetesFolderCascadeDelete
 	// is enabled (same pattern as dashboard delete validation). This only bypasses the empty-folder
@@ -606,27 +614,48 @@ func validateOnDelete(ctx context.Context,
 			msg = "folder force-delete bypassing empty check; its child folders and dashboards will be deleted by the cascade controller"
 		}
 		logging.FromContext(ctx).Warn(msg, "folder", f.Name, "namespace", f.Namespace)
+		metrics.record(deleteCheckBypassedForce, blockingKindNone)
 		return nil
 	}
 
 	resp, err := searcher.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: f.Namespace, Kinds: countedKinds, Folder: []string{f.Name}})
-	rawErr, publicErr := countStatsErrors(resp.GetError(), err, true)
-	if rawErr == nil && resp.Stats == nil {
+	rawErr, publicErr := countStatsErrors(err, true)
+	if rawErr == nil && resp.GetStats() == nil {
 		rawErr = errors.New("count response did not include stats")
 		publicErr = countFailedError(rawErr, true)
 	}
 	if rawErr != nil {
 		_ = tracing.Error(trace.SpanFromContext(ctx), rawErr)
 		logging.FromContext(ctx).Error("Could not verify if folder is empty", "namespace", f.Namespace, "folder", f.Name, "error", rawErr)
+		outcome := deleteCheckRefusedCountFailed
+		if isCanceled(rawErr) {
+			outcome = deleteCheckRefusedCountCanceled // a caller disconnect, not a backend failure
+		}
+		metrics.record(outcome, blockingKindNone)
 		return publicErr
 	}
 
 	allowedResourceTypes := []string{"alertrules", "recordingrules", "dashboards", "library_elements", "librarypanels", "folders", "variables"}
 
-	for _, v := range resp.Stats {
+	// Sorted so the refusal and its blocking_kind label don't depend on the response order.
+	stats := slices.Clone(resp.GetStats())
+	slices.SortFunc(stats, func(a, b *resourcepb.ResourceStatsResponse_Stats) int {
+		return cmp.Or(cmp.Compare(a.Resource, b.Resource), cmp.Compare(a.Group, b.Group))
+	})
+	// A sql-fallback entry means legacy is authoritative for that resource; unified then only holds
+	// a dual-write copy that can outlive its legacy row.
+	legacyLibraryPanels := slices.ContainsFunc(stats, func(s *resourcepb.ResourceStatsResponse_Stats) bool {
+		return s.Group == "sql-fallback" && s.Resource == "library_elements"
+	})
+	for _, v := range stats {
+		if legacyLibraryPanels && v.Resource == "librarypanels" {
+			continue
+		}
 		if slices.Contains(allowedResourceTypes, v.Resource) && v.Count > 0 {
+			metrics.record(deleteCheckRefusedNotEmpty, v.Resource)
 			return folder.ErrFolderNotEmpty.Errorf("folder is not empty, contains %d %s", v.Count, v.Resource)
 		}
 	}
+	metrics.record(deleteCheckAllowed, blockingKindNone)
 	return nil
 }

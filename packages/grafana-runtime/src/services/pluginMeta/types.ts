@@ -16,4 +16,5 @@ export interface PluginMetasResponse {
 
 export type FrontendSettings = {
   datasources: Record<string, { type: string; meta: DataSourcePluginMeta }>;
+  panels: PanelPluginMetas;
 };

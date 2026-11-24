@@ -1,4 +1,4 @@
-import memoize from 'micro-memoize';
+import { memoize } from 'micro-memoize';
 
 import { formattedValueToString, getValueFormat } from '@grafana/data';
 import { t } from '@grafana/i18n';

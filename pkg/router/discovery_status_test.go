@@ -117,23 +117,23 @@ func TestRouterStatusIsOpenToAdminByConfiguration(t *testing.T) {
 func TestRouterStatusOpenToAdmin(t *testing.T) {
 	svc, _, _ := newStatusService(t)
 	const path = "/apis/discovery/v1alpha2/status"
-	request := func(role identity.RoleType) *http.Request {
+	request := func(role types.RoleType) *http.Request {
 		req := httptest.NewRequest(http.MethodGet, path, nil)
 		return req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{
 			Type: types.TypeUser, UserUID: "test-user", OrgID: 1, Namespace: "*", OrgRole: role,
 		}))
 	}
-	status := func(role identity.RoleType) int {
+	status := func(role types.RoleType) int {
 		rec := httptest.NewRecorder()
 		svc.router.HandleFunc(rec, request(role))
 		return rec.Code
 	}
 
-	require.Equal(t, http.StatusForbidden, status(identity.RoleAdmin), "off by default")
+	require.Equal(t, http.StatusForbidden, status(types.RoleAdmin), "off by default")
 
 	svc.router.statusOpenToAdmin = true
-	require.Equal(t, http.StatusOK, status(identity.RoleAdmin))
-	for _, role := range []identity.RoleType{identity.RoleEditor, identity.RoleViewer, identity.RoleNone} {
+	require.Equal(t, http.StatusOK, status(types.RoleAdmin))
+	for _, role := range []types.RoleType{types.RoleEditor, types.RoleViewer, types.RoleNone} {
 		require.Equal(t, http.StatusForbidden, status(role), string(role))
 	}
 }

@@ -1,12 +1,14 @@
 import { FormProvider, useForm } from 'react-hook-form';
-import { render, screen, testWithFeatureToggles } from 'test/test-utils';
+import { render, screen } from 'test/test-utils';
 
+import { FlagKeys } from '@grafana/runtime/internal';
+import { testWithFlags } from '@grafana/test-utils/unstable';
 import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { setupMswServer } from '../../mockApi';
 import { grafanaRulerRule } from '../../mocks/grafanaRulerApi';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL, getDefaultFormValues } from '../../rule-editor/formDefaults';
-import { type RuleFormValues } from '../../types/rule-form';
+import { RuleFormType, type RuleFormValues } from '../../types/rule-form';
 
 import {
   EvaluationGroupCreationModal,
@@ -182,40 +184,44 @@ function EvaluationBehaviorWrapper({
 
 const ungroupWarning = /This will remove the alert rule from its group/i;
 
-describe('GrafanaEvaluationBehaviorStep — ungroup warning (rulesAPIV2)', () => {
-  testWithFeatureToggles({ enable: ['alerting.rulesAPIV2'] });
+describe('GrafanaEvaluationBehaviorStep — alerting.gmaOnlyListView on', () => {
+  testWithFlags({ [FlagKeys.AlertingGmaOnlyListView]: true });
 
-  it('warns when an existing grouped rule is switched to ungrouped', async () => {
-    const { user } = render(<EvaluationBehaviorWrapper existing group="my-group" isUngroupedRuleGroup={false} />);
+  it('shows only the evaluation interval for a new rule', () => {
+    render(<EvaluationBehaviorWrapper existing={false} group="" isUngroupedRuleGroup />);
 
-    expect(screen.queryByText(ungroupWarning)).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole('radio', { name: 'Set interval' }));
-
-    expect(await screen.findByText(ungroupWarning)).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: /evaluation interval/i })).toBeInTheDocument();
+    expect(screen.queryByText('Select an evaluation group...')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /new evaluation group/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio')).not.toBeInTheDocument();
   });
 
-  it('hides the warning again when switching back to using groups', async () => {
-    const { user } = render(<EvaluationBehaviorWrapper existing group="my-group" isUngroupedRuleGroup={false} />);
+  it('shows only the evaluation interval and warns when editing a grouped rule', () => {
+    render(<EvaluationBehaviorWrapper existing group="my-group" isUngroupedRuleGroup={false} />);
 
-    await user.click(screen.getByRole('radio', { name: 'Set interval' }));
-    expect(await screen.findByText(ungroupWarning)).toBeInTheDocument();
-
-    await user.click(screen.getByRole('radio', { name: 'Use groups (Legacy)' }));
-    expect(screen.queryByText(ungroupWarning)).not.toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: /evaluation interval/i })).toBeInTheDocument();
+    expect(screen.queryByText('Select an evaluation group...')).not.toBeInTheDocument();
+    expect(screen.getByText(ungroupWarning)).toBeInTheDocument();
   });
 
-  it('does not show the picker or warning for a rule that was already ungrouped', () => {
+  it('does not warn for a rule that was already ungrouped', () => {
     render(<EvaluationBehaviorWrapper existing group={`no_group_for_rule_${'a'.repeat(36)}`} isUngroupedRuleGroup />);
 
-    expect(screen.queryByRole('radio', { name: 'Set interval' })).not.toBeInTheDocument();
     expect(screen.queryByText(ungroupWarning)).not.toBeInTheDocument();
   });
+});
 
-  it('does not warn when a new (non-existing) rule is set to ungrouped', async () => {
-    const { user } = render(<EvaluationBehaviorWrapper existing={false} group="" isUngroupedRuleGroup={false} />);
+describe('GrafanaEvaluationBehaviorStep — alerting.gmaOnlyListView off', () => {
+  it('shows the group picker without a mode switch for a new rule', () => {
+    render(<EvaluationBehaviorWrapper existing={false} group="" isUngroupedRuleGroup={false} />);
 
-    await user.click(screen.getByRole('radio', { name: 'Set interval' }));
+    expect(screen.getByText('Select an evaluation group...')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /new evaluation group/i })).toBeInTheDocument();
+    expect(screen.queryByRole('radio')).not.toBeInTheDocument();
+  });
+
+  it('does not warn when editing a grouped rule', () => {
+    render(<EvaluationBehaviorWrapper existing group="my-group" isUngroupedRuleGroup={false} />);
 
     expect(screen.queryByText(ungroupWarning)).not.toBeInTheDocument();
   });
@@ -302,6 +308,46 @@ describe('GrafanaEvaluationBehaviorStep — evaluateEvery validation (rule-based
 
     expect(screen.queryByText(/Cannot be less than \d+ seconds/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Must be a multiple of \d+ seconds/)).not.toBeInTheDocument();
+  });
+});
+
+function AlertingRuleWrapper({ isUngroupedRuleGroup }: { isUngroupedRuleGroup: boolean }) {
+  const formApi = useForm<RuleFormValues>({
+    defaultValues: { ...getDefaultFormValues(), type: RuleFormType.grafana, isUngroupedRuleGroup },
+  });
+  return (
+    <FormProvider {...formApi}>
+      <GrafanaEvaluationBehaviorStep existing={false} enableProvisionedGroups={false} />
+    </FormProvider>
+  );
+}
+
+const selectedQuickPicks = () =>
+  screen.queryAllByRole('option', { selected: true }).map((option) => option.textContent);
+
+describe('GrafanaEvaluationBehaviorStep — quick picks follow typed durations', () => {
+  it('selects the pending period and keep firing for quick picks matching what was typed', async () => {
+    const { user } = render(<AlertingRuleWrapper isUngroupedRuleGroup={false} />);
+
+    const pendingPeriod = screen.getByRole('textbox', { name: /pending period/i });
+    await user.clear(pendingPeriod);
+    await user.type(pendingPeriod, '3m');
+    const keepFiringFor = screen.getByRole('textbox', { name: /keep firing for/i });
+    await user.clear(keepFiringFor);
+    await user.type(keepFiringFor, '4m');
+
+    expect(selectedQuickPicks()).toEqual(['3m', '4m']);
+  });
+
+  it('selects the evaluation interval quick pick matching what was typed', async () => {
+    const { user } = render(<AlertingRuleWrapper isUngroupedRuleGroup />);
+
+    const input = screen.getByRole('textbox', { name: /evaluation interval/i });
+    await user.clear(input);
+    await user.type(input, '5m');
+
+    // The evaluation interval picks come first; "None" is the default keep firing for
+    expect(selectedQuickPicks()).toEqual(['5m', 'None']);
   });
 });
 

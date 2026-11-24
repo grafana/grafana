@@ -12,12 +12,12 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
@@ -75,11 +75,14 @@ func (s *stubServer) GetStore(_ context.Context, ns string) (*zanzana.StoreInfo,
 // error, driving reconcileNamespace into its "namespace deleted" branch.
 type notFoundClientFactory struct{}
 
-func (notFoundClientFactory) Clients(_ context.Context, ns string) (resources.ResourceClients, error) {
+func (notFoundClientFactory) ForResource(ctx context.Context, ns string, gvr schema.GroupVersionResource) (dynamic.ResourceInterface, error) {
+	if ns == "" {
+		return (fakeAnonClientFactory{dyn: newGlobalRoleTestClient()}).ForResource(ctx, ns, gvr)
+	}
 	return nil, apierrors.NewNotFound(schema.GroupResource{Resource: "namespaces"}, ns)
 }
 
-func newReconcilerForTest(srv *stubServer, cf resources.ClientFactory) *Reconciler {
+func newReconcilerForTest(srv *stubServer, cf ClientFactory) *Reconciler {
 	return &Reconciler{
 		server:        srv,
 		clientFactory: cf,
