@@ -287,7 +287,6 @@ func TestIntegrationUserService(t *testing.T) {
 				require.Equal(t, "K8s Service User", getRsp.Result.Name)
 				require.Equal(t, "k8s-service-user@example.com", getRsp.Result.Email)
 				require.Equal(t, "k8s-service-user", getRsp.Result.Login)
-
 			})
 		})
 	}
