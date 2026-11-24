@@ -1,6 +1,6 @@
 import { config } from '../config';
 
-export function getApiVersion(): string {
+export async function getApiVersion(): Promise<string> {
   return 'v0alpha1';
 }
 
@@ -35,5 +35,11 @@ const apiVersionPattern = /^v[0-9]+(?:(?:alpha|beta)[0-9]+)?$/;
 export function assertApiVersion(apiVersion = ''): void {
   if (typeof apiVersion !== 'string' || !apiVersionPattern.test(apiVersion)) {
     throw new Error(`Invalid API version "${apiVersion}"`);
+  }
+}
+const uidPattern = /^[a-zA-Z0-9_-]{1,40}$/;
+export function assertUIDFormat(uid = ''): void {
+  if (typeof uid !== 'string' || !uidPattern.test(uid)) {
+    throw new Error(`Invalid UID "${uid}"`);
   }
 }

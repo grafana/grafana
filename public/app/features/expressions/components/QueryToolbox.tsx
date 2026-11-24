@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useRef, useState, type JSX } from 'react';
+import { useCallback, useEffect, useState, type JSX } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -20,7 +20,7 @@ export const QueryToolbox = ({ onFormatCode, onExpand, isExpanded, query }: Quer
   const styles = useStyles2(getStyles);
 
   const [showCopySuccess, setShowCopySuccess] = useState(false);
-  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [buttonElement, setButtonElement] = useState<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     if (!showCopySuccess) {
@@ -69,14 +69,14 @@ export const QueryToolbox = ({ onFormatCode, onExpand, isExpanded, query }: Quer
           />
         )}
         {showCopySuccess && (
-          <InlineToast placement="top" referenceElement={buttonRef.current}>
+          <InlineToast placement="top" referenceElement={buttonElement}>
             {copiedText}
           </InlineToast>
         )}
         <IconButton
           name={showCopySuccess ? 'check' : 'copy'}
           onClick={copyTextCallback}
-          ref={buttonRef}
+          ref={setButtonElement}
           size="xs"
           tooltip={t('expressions.query-toolbox.tooltip-copy-query', 'Copy query')}
           variant={showCopySuccess ? 'primary' : 'secondary'}

@@ -14,7 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
@@ -172,11 +172,11 @@ func (s *legacyStorage) prepareUpdate(ctx context.Context, name string, objInfo 
 	}
 
 	// Expose any secure value changes to the dual writer
-	var secureChanges common.InlineSecureValues
+	var secureChanges resource.InlineSecureValues
 	for k, v := range ds.Secure {
 		if v.Remove || v.Create != "" {
 			if secureChanges == nil {
-				secureChanges = make(common.InlineSecureValues)
+				secureChanges = make(resource.InlineSecureValues)
 			}
 			secureChanges[k] = v
 
@@ -198,7 +198,7 @@ func (s *legacyStorage) prepareUpdate(ctx context.Context, name string, objInfo 
 	// Keep all the old secure values
 	if len(oldDS.Secure) > 0 {
 		if ds.Secure == nil {
-			ds.Secure = map[string]common.InlineSecureValue{}
+			ds.Secure = map[string]resource.InlineSecureValue{}
 		}
 		for k, v := range oldDS.Secure {
 			_, found := ds.Secure[k]

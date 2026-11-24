@@ -430,7 +430,8 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 	// its initial poll completes before the index is built.
 	if searchOptions.SearchFields != nil || searchOptions.EmbeddingConfig != nil {
 		if mwCfg := resource.NewManifestWatcherConfig(s.cfg); mwCfg != nil {
-			watcher, err := resource.NewManifestWatcher(*mwCfg, s.reg, searchOptions.ManifestReloader(s.log))
+			watcherReg := prometheus.WrapRegistererWith(prometheus.Labels{"component": "search"}, s.reg)
+			watcher, err := resource.NewManifestWatcher(*mwCfg, watcherReg, searchOptions.ManifestReloader(s.log))
 			if err != nil {
 				return err
 			}

@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -28,9 +28,9 @@ func TestRepositoryUsageStatusFromRepository(t *testing.T) {
 			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
 			Sync:      provisioning.SyncOptions{Enabled: true, Target: provisioning.SyncTargetTypeInstance},
 		},
-		Secure: provisioning.SecureValues{Token: common.InlineSecureValue{Name: "repo-token"}},
+		Secure: provisioning.SecureValues{Token: resource.InlineSecureValue{Name: "repo-token"}},
 		Status: provisioning.RepositoryStatus{
-			Health: provisioning.HealthStatus{Healthy: true},
+			Health: provisioning.RepositoryHealthStatus{Healthy: true},
 			Sync:   provisioning.SyncStatus{State: provisioning.JobStateSuccess, Finished: 1_600_000_000_000},
 			Stats:  stats,
 			Conditions: []metav1.Condition{
@@ -81,7 +81,7 @@ func TestRepositoryAuthMethod(t *testing.T) {
 			name: "direct token",
 			repo: &provisioning.Repository{
 				Spec:   provisioning.RepositorySpec{Type: provisioning.GitRepositoryType},
-				Secure: provisioning.SecureValues{Token: common.InlineSecureValue{Name: "repo-token"}},
+				Secure: provisioning.SecureValues{Token: resource.InlineSecureValue{Name: "repo-token"}},
 			},
 			want: "token",
 		},
@@ -114,7 +114,7 @@ func TestRepositoryUsageStatusFromRepository_AuthFailure(t *testing.T) {
 	repo := &provisioning.Repository{
 		Spec: provisioning.RepositorySpec{Type: provisioning.GitHubRepositoryType},
 		Status: provisioning.RepositoryStatus{
-			Health: provisioning.HealthStatus{Healthy: false, Error: provisioning.HealthFailureHealth},
+			Health: provisioning.RepositoryHealthStatus{Healthy: false, Error: provisioning.HealthFailureHealth},
 			Conditions: []metav1.Condition{
 				{Type: provisioning.ConditionTypeReady, Status: metav1.ConditionFalse, Reason: provisioning.ReasonAuthenticationFailed},
 			},

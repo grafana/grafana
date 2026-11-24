@@ -7,11 +7,13 @@ import (
 	"testing"
 
 	"github.com/emicklei/go-restful/v3"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic"
 
+	alertingv1beta1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	rulesApp "github.com/grafana/grafana/apps/alerting/rules/pkg/app"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
@@ -193,7 +195,7 @@ func TestRegisterAppInstaller_UnifiedAlertingEnabled(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			enabled := tt.enabled
 			cfg := &setting.Cfg{UnifiedAlerting: setting.UnifiedAlertingSettings{Enabled: &enabled}}
-			ng := &ngalert.AlertNG{Cfg: cfg, Api: &api.API{LegacyRuleService: &legacy.LegacyRuleService{}}}
+			ng := &ngalert.AlertNG{Cfg: cfg, Api: &api.API{LegacyRuleService: &legacy.Service{}}}
 
 			inst, err := RegisterAppInstaller(cfg, ng, nil, nil, nil)
 			if err != nil {
@@ -269,4 +271,21 @@ func TestNewExternalRulerSyncDatasourceChecker(t *testing.T) {
 		check := newExternalRulerSyncDatasourceChecker(enabledCfg, ds, actest.FakeAccessControl{ExpectedEvaluate: true})
 		require.NoError(t, check(ctxFor("ds1"), "ds1"))
 	})
+}
+
+func TestNotificationSettingsValidatorChecksSettingsWithoutOrg(t *testing.T) {
+	// Without an org in the context the receivers can't be resolved, but the settings themselves are still checked.
+	validate := newNotificationSettingsValidator(nil)
+	settings := func(groupInterval string) alertingv1beta1.AlertRuleNotificationSettings {
+		interval := alertingv1beta1.AlertRulePromDuration(groupInterval)
+		return alertingv1beta1.AlertRuleNotificationSettings{SimplifiedRouting: &alertingv1beta1.AlertRuleSimplifiedRouting{
+			Type:          alertingv1beta1.AlertRuleNotificationSettingsTypeSimplifiedRouting,
+			Receiver:      "receiver",
+			GroupInterval: &interval,
+		}}
+	}
+	require.NoError(t, validate(context.Background(), settings("1m")))
+	err := validate(context.Background(), settings("0s"))
+	require.ErrorContains(t, err, "group interval must be greater than zero")
+	require.True(t, apierrors.IsBadRequest(err), "the legacy store rejects these with a BadRequest: %v", err)
 }

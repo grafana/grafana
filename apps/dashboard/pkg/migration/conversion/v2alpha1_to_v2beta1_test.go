@@ -7,6 +7,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
@@ -193,6 +195,67 @@ func TestV2alpha1ToV2beta1(t *testing.T) {
 			},
 		},
 		{
+			name: "group by variable with datasource uid but no type",
+			createV2alpha1: func() *dashv2alpha1.Dashboard {
+				uid := "${ds}"
+				return &dashv2alpha1.Dashboard{
+					Spec: dashv2alpha1.DashboardSpec{
+						Title: "Test Dashboard",
+						Variables: []dashv2alpha1.DashboardVariableKind{
+							{
+								GroupByVariableKind: &dashv2alpha1.DashboardGroupByVariableKind{
+									Kind: "GroupByVariable",
+									Spec: dashv2alpha1.DashboardGroupByVariableSpec{
+										Name:       "groupby",
+										Datasource: &dashv2alpha1.DashboardDataSourceRef{Uid: &uid},
+									},
+								},
+							},
+						},
+					},
+				}
+			},
+			validateV2beta1: func(t *testing.T, v2beta1 *dashv2beta1.Dashboard) {
+				require.Len(t, v2beta1.Spec.Variables, 1)
+				groupBy := v2beta1.Spec.Variables[0].GroupByVariableKind
+				require.NotNil(t, groupBy)
+				assert.Equal(t, "", groupBy.Group)
+				require.NotNil(t, groupBy.Datasource)
+				require.NotNil(t, groupBy.Datasource.Name)
+				assert.Equal(t, "${ds}", *groupBy.Datasource.Name)
+				assert.Equal(t, "groupby", groupBy.Spec.Name)
+			},
+		},
+		{
+			name: "group by variable without datasource",
+			createV2alpha1: func() *dashv2alpha1.Dashboard {
+				return &dashv2alpha1.Dashboard{
+					Spec: dashv2alpha1.DashboardSpec{
+						Title: "Test Dashboard",
+						Variables: []dashv2alpha1.DashboardVariableKind{
+							{
+								GroupByVariableKind: &dashv2alpha1.DashboardGroupByVariableKind{
+									Kind: "GroupByVariable",
+									Spec: dashv2alpha1.DashboardGroupByVariableSpec{
+										Name: "groupby",
+									},
+								},
+							},
+						},
+					},
+				}
+			},
+			validateV2beta1: func(t *testing.T, v2beta1 *dashv2beta1.Dashboard) {
+				require.Len(t, v2beta1.Spec.Variables, 1)
+				groupBy := v2beta1.Spec.Variables[0].GroupByVariableKind
+				require.NotNil(t, groupBy)
+				assert.Equal(t, "", groupBy.Group)
+				require.NotNil(t, groupBy.Datasource)
+				assert.Nil(t, groupBy.Datasource.Name)
+				assert.Equal(t, "groupby", groupBy.Spec.Name)
+			},
+		},
+		{
 			name: "dashboard with matcher config conversion (transformation filter and field override)",
 			createV2alpha1: func() *dashv2alpha1.Dashboard {
 				scopeSeries := dashv2alpha1.DashboardMatcherScopeSeries
@@ -316,6 +379,71 @@ func TestV2alpha1ToV2beta1(t *testing.T) {
 
 			// Run custom validation
 			tc.validateV2beta1(t, &v2beta1)
+		})
+	}
+}
+
+// TestV1ToV2_GroupByVariableWithoutDatasourceType covers the full v1 -> v2 chain used by the
+// /dto endpoint for group by variables whose v1 datasource ref doesn't resolve to a type.
+func TestV1ToV2_GroupByVariableWithoutDatasourceType(t *testing.T) {
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
+
+	scheme := runtime.NewScheme()
+	err := RegisterConversions(scheme, dsProvider, leProvider)
+	require.NoError(t, err)
+
+	templateUID := "${ds}"
+	testCases := []struct {
+		name           string
+		datasource     interface{}
+		expectedDsName *string
+	}{
+		{
+			name:           "template variable uid without type",
+			datasource:     map[string]interface{}{"uid": templateUID},
+			expectedDsName: &templateUID,
+		},
+		{
+			name:           "no datasource",
+			datasource:     nil,
+			expectedDsName: nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			variable := map[string]interface{}{
+				"name":    "groupby",
+				"type":    "groupby",
+				"current": map[string]interface{}{},
+			}
+			if tc.datasource != nil {
+				variable["datasource"] = tc.datasource
+			}
+
+			v1Dash := &dashv1.Dashboard{
+				Spec: dashv1.DashboardSpec{
+					Object: map[string]interface{}{
+						"title":         "groupby without ds type",
+						"schemaVersion": 41,
+						"templating":    map[string]interface{}{"list": []interface{}{variable}},
+						"panels":        []interface{}{},
+					},
+				},
+			}
+
+			var v2Dash dashv2.Dashboard
+			require.NoError(t, scheme.Convert(v1Dash, &v2Dash, nil))
+
+			require.Len(t, v2Dash.Spec.Variables, 1)
+			groupBy := v2Dash.Spec.Variables[0].GroupByVariableKind
+			require.NotNil(t, groupBy)
+			assert.Equal(t, "groupby", groupBy.Spec.Name)
+			assert.Equal(t, "", groupBy.Group)
+			require.NotNil(t, groupBy.Datasource)
+			assert.Equal(t, tc.expectedDsName, groupBy.Datasource.Name)
 		})
 	}
 }

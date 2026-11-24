@@ -6,8 +6,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 var (
@@ -18,7 +18,7 @@ var (
 )
 
 type ExpirableSecureValue struct {
-	Token     common.RawSecureValue
+	Token     resource.RawSecureValue
 	ExpiresAt time.Time
 }
 

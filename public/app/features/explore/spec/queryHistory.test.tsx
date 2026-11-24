@@ -8,7 +8,8 @@ import { type DataQuery } from '@grafana/schema';
 import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
 
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
-import * as localStorage from '../../../core/history/RichHistoryLocalStorage';
+import RichHistoryLocalStorage from '../../../core/history/RichHistoryLocalStorage';
+import { RichHistoryStorageWarning } from '../../../core/history/RichHistoryStorage';
 import { Tabs } from '../QueriesDrawer/QueriesDrawerContext';
 
 import {
@@ -210,13 +211,21 @@ describe('Explore: Query History', () => {
     await waitForExplore();
     await openQueryHistory();
 
-    jest.spyOn(localStorage, 'cleanUpUnstarredQuery').mockImplementationOnce((queries) => {
-      return { queriesToKeep: queries, limitExceeded: true };
-    });
+    const addToRichHistory = RichHistoryLocalStorage.prototype.addToRichHistory;
+    const addToRichHistorySpy = jest
+      .spyOn(RichHistoryLocalStorage.prototype, 'addToRichHistory')
+      .mockImplementationOnce(async function (this: RichHistoryLocalStorage, query) {
+        const result = await addToRichHistory.call(this, query);
+        return {
+          ...result,
+          warning: { type: RichHistoryStorageWarning.LimitExceeded, message: 'Query history reached the limit.' },
+        };
+      });
 
     await inputQuery('query #2');
     await runQuery();
     await assertQueryHistory(['{"expr":"query #2"}', '{"expr":"query #1"}']);
+    addToRichHistorySpy.mockRestore();
   });
 
   it('add comments to query history', async () => {

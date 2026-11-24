@@ -61,7 +61,8 @@ describe('RuleInspector', () => {
     );
 
     expect(editor).toHaveFocus();
-    expect(editor).toHaveTextContent('summary: Edited summary');
+    // getBoundingClientRect is mocked to 400px for every element, so CodeMirror renders an arbitrary window of the
+    // pasted lines. The pasted content is verified through the form values asserted after Apply instead.
     expect(form.getValues('name')).toBe('Original rule');
 
     await user.click(screen.getByRole('button', { name: 'Apply' }));

@@ -14,11 +14,7 @@ import (
 	"time"
 	"uuid"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -31,7 +27,7 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
-	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
+	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
@@ -39,6 +35,9 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/cmputil"
 	"github.com/grafana/grafana/pkg/web"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRouteDeleteAlertRules(t *testing.T) {
@@ -884,7 +883,7 @@ func TestRouteGetRulesConfig(t *testing.T) {
 			IsSignedIn: true,
 			SignedInUser: &user.SignedInUser{
 				OrgID:   orgID,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: authlib.RoleAdmin,
 				Permissions: map[int64]map[string][]string{
 					orgID: {datasources.ActionQuery: {datasources.ScopeAll}},
 				},
@@ -999,7 +998,7 @@ func TestVerifyProvisionedRulesNotAffected(t *testing.T) {
 			affectedGroups[g] = rules
 		}
 	}
-	ch := &rulestore.GroupDelta{
+	ch := &ngrulesvc.GroupDelta{
 		GroupKey:       group,
 		AffectedGroups: affectedGroups,
 	}
@@ -1046,11 +1045,11 @@ func TestVerifyProvisionedRulesNotAffected(t *testing.T) {
 
 func TestValidateQueries(t *testing.T) {
 	gen := models.RuleGen
-	delta := rulestore.GroupDelta{
+	delta := ngrulesvc.GroupDelta{
 		New: []*models.AlertRule{
 			gen.With(gen.WithCondition("New")).GenerateRef(),
 		},
-		Update: []rulestore.RuleDelta{
+		Update: []ngrulesvc.RuleDelta{
 			{
 				Existing: gen.With(gen.WithCondition("New")).GenerateRef(),
 				New:      gen.With(gen.WithCondition("Update_New")).GenerateRef(),

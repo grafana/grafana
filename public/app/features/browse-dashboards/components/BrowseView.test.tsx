@@ -20,6 +20,13 @@ import { fullyLoadedViewItemCollection } from '../fixtures/state.fixtures';
 
 import { BrowseView } from './BrowseView';
 
+jest.mock('app/features/provisioning/hooks/useFolderDocs', () =>
+  makeSpyable('app/features/provisioning/hooks/useFolderDocs')
+);
+jest.mock('app/features/provisioning/hooks/useFolderReadme', () =>
+  makeSpyable('app/features/provisioning/hooks/useFolderReadme')
+);
+
 const [
   mockTree,
   { folderA, folderA_folderA, folderA_folderB, folderA_folderB_dashbdB, dashbdD, folderB_empty, folderC },

@@ -31,6 +31,8 @@ import { K8sAnnotations } from '../../utils/k8s/constants';
 
 import * as analytics from './notificationPolicyAnalytics';
 
+jest.mock('./notificationPolicyAnalytics', () => makeSpyable('./notificationPolicyAnalytics'));
+
 jest.mock('../../useRouteGroupsMatcher');
 
 // The export drawer uses IntersectionObserver which is not available in JSDOM.

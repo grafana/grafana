@@ -15,8 +15,8 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	repo "github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 func TestParseWebhooks(t *testing.T) {
@@ -99,7 +99,7 @@ func TestParseWebhooks(t *testing.T) {
 	}
 
 	gh := &githubWebhookRepository{
-		secret: common.RawSecureValue("webhook-secret"),
+		secret: resource.RawSecureValue("webhook-secret"),
 	}
 
 	for _, tt := range tests {
@@ -133,7 +133,7 @@ func TestPullRequestWebhookForkStatus(t *testing.T) {
 		{name: "missing base identity", headRepo: `{"id":2}`, baseRepo: `{}`},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			gh := &githubWebhookRepository{secret: common.RawSecureValue("webhook-secret")}
+			gh := &githubWebhookRepository{secret: resource.RawSecureValue("webhook-secret")}
 			payload := fmt.Sprintf(`{"action":"opened","repository":{"full_name":"org/repo"},"pull_request":{"number":123,"head":{"ref":"feature","sha":"abc","repo":%s},"base":{"ref":"main","repo":%s}}}`, tt.headRepo, tt.baseRepo)
 			event, err := verifyAndProcess(t, gh, signedWebhookRequest(t, "pull_request", "webhook-secret", "", payload))
 			require.NoError(t, err)
@@ -162,7 +162,7 @@ func TestGitHubRepository_ProcessRequest_ReplayKey(t *testing.T) {
 
 	newRepo := func(secret string) *githubWebhookRepository {
 		return &githubWebhookRepository{
-			secret: common.RawSecureValue(secret),
+			secret: resource.RawSecureValue(secret),
 		}
 	}
 
@@ -490,7 +490,7 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 			// Create a GitHub repository with the test config. A fresh cache
 			// per subtest keeps replay state from leaking across cases.
 			r := &githubWebhookRepository{
-				secret: common.RawSecureValue("webhook-secret"),
+				secret: resource.RawSecureValue("webhook-secret"),
 			}
 
 			event, err := verifyAndProcess(t, r, tt.setupRequest())

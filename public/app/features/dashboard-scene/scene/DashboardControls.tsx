@@ -4,8 +4,8 @@ import Skeleton from 'react-loading-skeleton';
 import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
-import { useFlagGrafanaScopesDashboardsMegaMenu } from '@grafana/runtime/internal';
+import { locationService } from '@grafana/runtime';
+import { useFlagGrafanaScopesDashboardsMegaMenu, useFlagScopeFilters } from '@grafana/runtime/internal';
 import {
   type SceneObjectState,
   SceneObjectBase,
@@ -39,6 +39,7 @@ import { getDashboardSceneFor, isLibraryPanel } from '../utils/utils';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
 
 import { AddControlsButton } from './ControlsAddButton';
+import { DashboardControlsExtensionPoint } from './DashboardControlsExtensionPoint';
 import { DashboardDataLayerControls } from './DashboardDataLayerControls';
 import { DashboardDataLayerSet } from './DashboardDataLayerSet';
 import { DashboardLinksControls } from './DashboardLinksControls';
@@ -232,6 +233,7 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
 }
 
 function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardControls>) {
+  const scopeFiltersEnabled = useFlagScopeFilters();
   const {
     refreshPicker,
     timePicker,
@@ -263,6 +265,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         <>
           <div data-testid={selectors.pages.Dashboard.Controls} className={styles.controls}>
             {!hideVariableControls && <VariableControls dashboard={dashboard} />}
+            <DashboardControlsExtensionPoint dashboard={dashboard} />
             {!hideVariableControls && dashboardNewLayoutsEnabled && <AddControlsButton dashboard={dashboard} />}
             <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)} data-dashboard-actions>
               <div className={styles.fixedControls}>
@@ -307,7 +310,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
           </div>
         )}
       </div>
-      {config.featureToggles.scopeFilters && !editPanel && !scopesMegaMenuEnabled && (
+      {scopeFiltersEnabled && !editPanel && !scopesMegaMenuEnabled && (
         <ContextualNavigationPaneToggle className={styles.contextualNavToggle} hideWhenOpen={true} />
       )}
       {!hideVariableControls && (
@@ -317,6 +320,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         </>
       )}
       {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
+      <DashboardControlsExtensionPoint dashboard={dashboard} />
       {!hideDashboardControls && hasDashboardControls && <DashboardControlsButton dashboard={dashboard} />}
       {!hideVariableControls && dashboardNewLayoutsEnabled && <AddControlsButton dashboard={dashboard} />}
       <DefaultControlsLoadingSkeleton

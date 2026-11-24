@@ -76,21 +76,19 @@ export const ConfigureCorrelationSourceForm = () => {
 
   const formText = getFormText(currentType, targetDataSource?.name);
 
-  function VariableList() {
-    return (
-      <>
-        {variables.map((name, i) => (
-          <span className={styles.variable} key={i}>
-            {name}
-            {i < variables.length - 1
-              ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-                ', '
-              : ''}
-          </span>
-        ))}
-      </>
-    );
-  }
+  const variableList = (
+    <>
+      {variables.map((name, i) => (
+        <span className={styles.variable} key={i}>
+          {name}
+          {i < variables.length - 1
+            ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+              ', '
+            : ''}
+        </span>
+      ))}
+    </>
+  );
 
   return (
     <>
@@ -159,7 +157,7 @@ export const ConfigureCorrelationSourceForm = () => {
               <Card.Heading>{formText.heading}</Card.Heading>
               <Card.Description>
                 {formText.descriptionPre}
-                <VariableList />
+                {variableList}
                 <br />
                 <Trans i18nKey="correlations.source-form.description">
                   A data point needs to provide values to all variables as fields or as transformations output to make

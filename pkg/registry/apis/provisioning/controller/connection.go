@@ -18,10 +18,10 @@ import (
 	"k8s.io/client-go/util/workqueue"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
@@ -405,7 +405,7 @@ func (cc *ConnectionController) process(ctx context.Context, key string) (err er
 			}
 			logger.Warn("connection token secret could not be decrypted, regenerating", "error", err)
 			conn = conn.DeepCopy()
-			conn.Secure.Token = common.InlineSecureValue{}
+			conn.Secure.Token = resource.InlineSecureValue{}
 			c, err = cc.connectionFactory.Build(ctx, conn)
 		}
 		if err != nil {
@@ -468,7 +468,7 @@ func (cc *ConnectionController) process(ctx context.Context, key string) (err er
 			// live re-validation. Use "add": status.token is a newly introduced field
 			// that may be absent on Connections created before this change, and "add"
 			// both creates and replaces.
-			tokenStatus := provisioning.TokenStatus{LastUpdated: time.Now().UnixMilli()}
+			tokenStatus := provisioning.ConnectionTokenStatus{LastUpdated: time.Now().UnixMilli()}
 			if !tokenExpiresAt.IsZero() {
 				tokenStatus.Expiration = tokenExpiresAt.UnixMilli()
 			}
@@ -477,7 +477,7 @@ func (cc *ConnectionController) process(ctx context.Context, key string) (err er
 				"path":  "/status/token",
 				"value": tokenStatus,
 			})
-			conn.Secure.Token = common.InlineSecureValue{Create: token}
+			conn.Secure.Token = resource.InlineSecureValue{Create: token}
 		}
 	}
 
@@ -593,7 +593,7 @@ func (cc *ConnectionController) shouldGenerateToken(
 func (cc *ConnectionController) generateConnectionToken(
 	ctx context.Context,
 	conn connection.TokenConnection,
-) (token common.RawSecureValue, expiresAt time.Time, patchOperations []map[string]interface{}, err error) {
+) (token resource.RawSecureValue, expiresAt time.Time, patchOperations []map[string]interface{}, err error) {
 	logger := logging.FromContext(ctx)
 
 	start := time.Now()
