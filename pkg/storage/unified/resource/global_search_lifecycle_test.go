@@ -23,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -34,6 +35,7 @@ type multiTypeStorage struct {
 
 	// Names whose stored body cannot be turned into a document.
 	broken map[string]bool
+	bodies map[string][]byte
 
 	live     map[NamespacedResource][]string
 	listRVs  map[NamespacedResource]int64
@@ -57,7 +59,7 @@ func (m *multiTypeStorage) ListIterator(_ context.Context, req *resourcepb.ListR
 	if rv == 0 {
 		rv = 1
 	}
-	return rv, cb(&namedListIterator{names: m.live[key], rv: rv, keysOnly: req.GetKeysOnly(), broken: m.broken})
+	return rv, cb(&namedListIterator{names: m.live[key], rv: rv, keysOnly: req.GetKeysOnly(), broken: m.broken, bodies: m.bodies})
 }
 
 // namedListIterator lists objects under their own names and resource version,
@@ -67,6 +69,7 @@ type namedListIterator struct {
 	rv       int64
 	keysOnly bool
 	broken   map[string]bool
+	bodies   map[string][]byte
 	pos      int
 }
 
@@ -88,6 +91,9 @@ func (i *namedListIterator) Value() []byte {
 	name := i.names[i.pos-1]
 	if i.broken[name] {
 		return []byte("not an object")
+	}
+	if value, ok := i.bodies[name]; ok {
+		return value
 	}
 	return testObjectJSON(name, name)
 }
@@ -468,7 +474,10 @@ func (m *reconcileStorage) readOne(request *resourcepb.ReadRequest) *BackendRead
 	if t, ok := m.titles[key.GetName()]; ok {
 		title = t
 	}
-	value := testObjectJSON(key.GetName(), title)
+	value, ok := m.bodies[key.GetName()]
+	if !ok {
+		value = testObjectJSON(key.GetName(), title)
+	}
 	if m.broken[key.GetName()] {
 		value = []byte("not an object")
 	}
@@ -497,6 +506,67 @@ func repairServer(t *testing.T, storage StorageBackend, refs map[schema.GroupRes
 	idx := &MockResourceIndex{documentRefs: refs}
 	search := &mockSearchBackend{cache: map[NamespacedResource]ResourceIndex{GlobalSearchKey("ns"): idx}}
 	return globalTestServer(t, storage, search), idx
+}
+
+type stalledIndexBlob struct{ BlobSupport }
+
+func (stalledIndexBlob) GetResourceBlob(ctx context.Context, _ *resourcepb.ResourceKey, _ *utils.BlobInfo, _ bool) (*resourcepb.GetBlobResponse, error) {
+	if _, ok := ctx.Deadline(); !ok {
+		return nil, errors.New("missing blob read deadline")
+	}
+	<-ctx.Done()
+	return nil, ctx.Err()
+}
+
+func TestGlobalIndexRetainsDocumentOnBlobReadTimeout(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		run  func(context.Context, *searchServer, *MockResourceIndex, NamespacedResource) error
+	}{
+		{name: "write notification", run: func(ctx context.Context, s *searchServer, idx *MockResourceIndex, src NamespacedResource) error {
+			return s.writeCurrentState(ctx, idx, src, []string{"dash-a"})
+		}},
+		{name: "reconcile", run: func(ctx context.Context, s *searchServer, idx *MockResourceIndex, src NamespacedResource) error {
+			_, err := s.reconcileResourceType(ctx, idx, GlobalSearchKey(src.Namespace), src)
+			return err
+		}},
+		{name: "rebuild", run: func(ctx context.Context, s *searchServer, idx *MockResourceIndex, src NamespacedResource) error {
+			_, err := s.rebuildResourceType(ctx, idx, GlobalSearchKey(src.Namespace), src)
+			return err
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			src := dashboardType("ns")
+			storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+				live:    map[NamespacedResource][]string{src: {"dash-a"}},
+				listRVs: map[NamespacedResource]int64{src: 50},
+				bodies:  map[string][]byte{"dash-a": fmt.Appendf(nil, `{"metadata":{"name":"dash-a","annotations":{%q:"blob-uid"}}}`, utils.AnnoKeyBlob)},
+			}}
+			server, idx := repairServer(t, storage, map[schema.GroupResource][]DocumentRef{
+				dashboardsGroupResource: {{Name: "dash-a", RV: 40}},
+			})
+			server.builders.blob = stalledIndexBlob{}
+
+			synctest.Test(t, func(t *testing.T) {
+				start := time.Now()
+				err := tc.run(t.Context(), server, idx, src)
+				if tc.name == "write notification" {
+					require.NoError(t, err)
+				} else {
+					require.ErrorIs(t, err, context.DeadlineExceeded)
+				}
+				require.Equal(t, 30*time.Second, time.Since(start))
+				require.Empty(t, idx.indexedItems(), "a timeout must not delete the existing document")
+			})
+
+			server.builders.blob = &globalDocumentBlob{response: &resourcepb.GetBlobResponse{Value: []byte(`{"title":"New title"}`)}}
+			require.NoError(t, tc.run(t.Context(), server, idx, src))
+			items := idx.indexedItems()
+			require.Len(t, items, 1)
+			require.Equal(t, ActionIndex, items[0].Action)
+			require.Equal(t, "New title", items[0].Doc.Title)
+		})
+	}
 }
 
 func TestReconcileIndexesWhatIsMissing(t *testing.T) {

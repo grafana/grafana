@@ -259,15 +259,15 @@ func (b *globalDocumentBuilder) BuildDocument(ctx context.Context, key *resource
 		if b.blob == nil {
 			return nil, fmt.Errorf("blob support is not configured")
 		}
-		rsp, err := b.blob.GetResourceBlob(ctx, key, info, true)
+		body, err := ReadBlobForIndex(ctx, b.blob, key, info)
 		if err != nil {
-			return nil, fmt.Errorf("error reading blob: %w", err)
+			return nil, err
 		}
 		var content struct {
 			globalDocumentSpec
 			Spec *globalDocumentSpec `json:"spec"`
 		}
-		if err := json.Unmarshal(rsp.GetValue(), &content); err != nil {
+		if err := json.Unmarshal(body, &content); err != nil {
 			return nil, err
 		}
 		// Blobs can hold a full resource or just its spec. Keep the stored
@@ -830,8 +830,12 @@ func (s *searchServer) rebuildResourceType(ctx context.Context, index ResourceIn
 			docKey := &resourcepb.ResourceKey{Namespace: src.Namespace, Group: src.Group, Resource: src.Resource, Name: iter.Name()}
 			doc, err := builder.BuildDocument(ctx, docKey, iter.ResourceVersion(), iter.Value())
 			if err != nil {
-				logger.Warn("failed to build a document while rebuilding a resource type", "key", SearchID(docKey), "error", err)
 				result.Failed++
+				if isDocumentBuildInterrupted(err) {
+					// Don't prune documents after an incomplete scan.
+					return err
+				}
+				logger.Warn("failed to build a document while rebuilding a resource type", "key", SearchID(docKey), "error", err)
 				continue
 			}
 			items = append(items, &BulkIndexItem{Action: ActionIndex, Doc: doc})
@@ -1006,8 +1010,11 @@ func (s *searchServer) reindex(ctx context.Context, index ResourceIndex, src Nam
 			}
 			doc, err := builder.BuildDocument(ctx, response.Key, response.ResourceVersion, response.Value)
 			if err != nil {
-				logger.Warn("failed to build a document while reconciling", "key", SearchID(response.Key), "error", err)
 				result.Failed++
+				if isDocumentBuildInterrupted(err) {
+					return result, err
+				}
+				logger.Warn("failed to build a document while reconciling", "key", SearchID(response.Key), "error", err)
 				continue
 			}
 			if err := add(&BulkIndexItem{Action: ActionIndex, Doc: doc}); err != nil {
@@ -1200,8 +1207,8 @@ func (s *searchServer) applyWrittenKeys(ctx context.Context, batch []*WrittenEve
 // writeCurrentState reads the named objects of one type from storage and writes
 // what it finds: the object's document if it exists, a removal if it does not.
 // An object that cannot be built is removed too, the same as in a type rebuild,
-// so a reconcile sees it missing and tries again. An object whose read fails for
-// another reason is left as it is, for a reconcile to repair.
+// so a reconcile sees it missing and tries again. An object whose storage read
+// fails or whose build is interrupted is left as it is, for a reconcile to repair.
 func (s *searchServer) writeCurrentState(ctx context.Context, index ResourceIndex, src NamespacedResource, names []string) error {
 	builder := &globalDocumentBuilder{blob: s.builders.blob}
 	logger := s.log.New("namespace", src.Namespace, "resource", src.GroupResource())
@@ -1238,7 +1245,9 @@ func (s *searchServer) writeCurrentState(ctx context.Context, index ResourceInde
 		doc, err := builder.BuildDocument(ctx, key, response.ResourceVersion, response.Value)
 		if err != nil {
 			logger.Warn("failed to build a document for a write notification", "key", SearchID(key), "error", err)
-			items = append(items, &BulkIndexItem{Action: ActionDelete, Key: key})
+			if !isDocumentBuildInterrupted(err) {
+				items = append(items, &BulkIndexItem{Action: ActionDelete, Key: key})
+			}
 			continue
 		}
 		items = append(items, &BulkIndexItem{Action: ActionIndex, Doc: doc})
