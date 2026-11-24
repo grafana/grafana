@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"reflect"
 	"slices"
 	"sort"
 	"strings"
@@ -44,9 +45,6 @@ var externalGoDefinitions = map[string]spec.Schema{
 // matched on the exact difference, so another mismatch at the same path still fails.
 // The test fails when one of them stops occurring, so fixed entries get removed.
 var knownDifferences = map[string]string{
-	// CUE `_` becomes an object with arbitrary values; Go accepts any JSON value.
-	"Repository status.fieldErrors[].badValue": `type is "object" in CUE, "" in Go`,
-	"Connection status.fieldErrors[].badValue": `type is "object" in CUE, "" in Go`,
 	// A single-value disjunction becomes `const`, which kube-openapi has no field for.
 	"Repository status.deletion.state": "enum is [] in CUE, [Blocked] in Go",
 }
@@ -191,6 +189,9 @@ func (c *schemaComparer) compare(path string, goSchema, cueSchema spec.Schema) {
 		c.differf(path, "type is %q in CUE, %q in Go", got, want)
 		return
 	}
+	if normalizedType(goSchema) == "string" && cueSchema.Format != goSchema.Format {
+		c.differf(path, "format is %q in CUE, %q in Go", cueSchema.Format, goSchema.Format)
+	}
 	if got, want := enumValues(cueSchema), enumValues(goSchema); !slices.Equal(got, want) {
 		c.differf(path, "enum is %v in CUE, %v in Go", got, want)
 	}
@@ -239,7 +240,7 @@ func itemsSchema(s spec.Schema) *spec.Schema {
 }
 
 func mapValueSchema(s spec.Schema) *spec.Schema {
-	if s.AdditionalProperties == nil {
+	if s.AdditionalProperties == nil || s.AdditionalProperties.Schema == nil || isEmptySchema(*s.AdditionalProperties.Schema) {
 		return nil
 	}
 	return s.AdditionalProperties.Schema
@@ -311,7 +312,7 @@ func normalizedType(s spec.Schema) string {
 	if t == "" && len(s.Properties) > 0 {
 		return "object"
 	}
-	if t == "object" && len(s.Properties) == 0 && (s.AdditionalProperties == nil || s.AdditionalProperties.Schema == nil) {
+	if t == "object" && len(s.Properties) == 0 && (s.AdditionalProperties == nil || s.AdditionalProperties.Schema == nil || isEmptySchema(*s.AdditionalProperties.Schema)) {
 		// An open object and an untyped value both accept anything.
 		return ""
 	}
@@ -330,4 +331,8 @@ func sorted(in []string) []string {
 	out := slices.Clone(in)
 	sort.Strings(out)
 	return out
+}
+
+func isEmptySchema(s spec.Schema) bool {
+	return reflect.DeepEqual(s, spec.Schema{})
 }
