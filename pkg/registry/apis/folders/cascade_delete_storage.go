@@ -28,12 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-// folderTerminatingLabel is stamped on a folder once cascade deletion of its subtree has started.
-const (
-	folderTerminatingLabel      = "grafana.app/folder-terminating"
-	folderTerminatingLabelValue = "true"
-)
-
 // childFolderPageSize bounds each search page when enumerating child folders or dashboards.
 var childFolderPageSize int64 = 1000
 
@@ -610,7 +604,7 @@ func (s *cascadeDeleteStorage) markTerminating(ctx context.Context, name string,
 		if labels == nil {
 			labels = map[string]string{}
 		}
-		labels[folderTerminatingLabel] = folderTerminatingLabelValue
+		labels[utils.LabelKeyFolderTerminating] = utils.LabelValueFolderTerminating
 		meta.SetLabels(labels)
 		return obj, nil
 	})
