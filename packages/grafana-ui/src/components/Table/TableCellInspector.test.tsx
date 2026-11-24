@@ -51,6 +51,18 @@ describe('TableCellInspector', () => {
     expect(screen.getByText('{"region":"eu"}')).toBeInTheDocument();
   });
 
+  it('keeps the surrounding whitespace of the raw value in the plain text tab', () => {
+    render(
+      <TableCellInspector
+        value={'{\n  "region": "eu"\n}'}
+        plainText={'  {"region":"eu"} \n'}
+        onDismiss={() => {}}
+        mode={TableCellInspectorMode.text}
+      />
+    );
+    expect(screen.getByRole('dialog').querySelector('pre')?.textContent).toBe('  {"region":"eu"} \n');
+  });
+
   it('copies the value of the active tab', async () => {
     const user = userEvent.setup();
     render(

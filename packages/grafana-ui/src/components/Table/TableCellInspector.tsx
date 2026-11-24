@@ -57,8 +57,8 @@ export function TableCellInspectorDrawer({
   const [currentMode, setMode] = useState(mode);
   const text = toString(value).trim();
   // The plain text tab shows the value as it came from the data source, without the
-  // indentation applied to the code editor.
-  const textOnly = toString(plainText ?? value).trim();
+  // indentation applied to the code editor and without trimming it.
+  const textOnly = plainText != null ? toString(plainText) : text;
   const styles = useStyles2(getStyles);
 
   const tabs = [
