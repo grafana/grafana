@@ -1,10 +1,10 @@
 import { type IconName, isIconName } from '@grafana/data';
 
 /** What a tab shows: the plugin's content in the canvas pane, or the live Grafana page at the tab's `href`. */
-export type PageCanvasTabShows = 'pane' | 'page';
+type PageCanvasTabShows = 'pane' | 'page';
 
 /** A spinner (`working`) or a dot (`updated`) after a tab's label, with the label screen readers announce. */
-export interface PageCanvasTabIndicator {
+interface PageCanvasTabIndicator {
   kind: 'working' | 'updated';
   label: string;
 }
@@ -67,7 +67,7 @@ function isFunction(value: unknown): value is (...args: unknown[]) => unknown {
 }
 
 /** A path in this Grafana: a plugin's data must not send the router to another origin or a script URL. */
-export function isAppPath(value: unknown): value is string {
+function isAppPath(value: unknown): value is string {
   return typeof value === 'string' && value.startsWith('/') && !value.startsWith('//') && !/[\\\s]/.test(value);
 }
 

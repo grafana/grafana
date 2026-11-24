@@ -9,7 +9,7 @@ import { PageCanvasTabs, pageCanvasTabElementId } from './PageCanvasTabs';
 import { type PageCanvasModel } from './types';
 import { usePageCanvasShortcuts } from './usePageCanvasShortcuts';
 
-export const PAGE_CANVAS_PANE_ID = 'page-canvas-pane';
+const PAGE_CANVAS_PANE_ID = 'page-canvas-pane';
 
 interface Props {
   canvas: PageCanvasModel | null;
@@ -21,7 +21,7 @@ interface Props {
 }
 
 /** Whether the active tab covers the page: a pane tab does, and so does the reopen state when every tab is closed. */
-export function isPageCovered(canvas: PageCanvasModel | null): boolean {
+function isPageCovered(canvas: PageCanvasModel | null): boolean {
   if (!canvas) {
     return false;
   }
