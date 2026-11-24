@@ -16,6 +16,9 @@ import (
 // dependencies on app packages.
 const provisioningServiceIdentity = "provisioning.grafana.app"
 
+// frontendServiceIdentity is the access-policy UID the MT frontend service's token carries.
+const frontendServiceIdentity = "frontend-service-system"
+
 type ctxUserKey struct{}
 type metadataIdentityUIDKey struct{}
 type ctxOrgIDKey struct{}
@@ -308,4 +311,12 @@ func IsProvisioningServiceIdentity(auth types.AuthInfo) bool {
 	}
 	return auth.GetUID() == types.NewTypeID(types.TypeAccessPolicy, serviceNameForProvisioning) ||
 		(auth.GetIdentityType() == types.TypeAccessPolicy && slices.Contains(auth.GetExtra()[authn.ServiceIdentityKey], provisioningServiceIdentity))
+}
+
+// IsFrontendServiceIdentity reports whether auth is the MT frontend service's access-policy identity.
+func IsFrontendServiceIdentity(auth types.AuthInfo) bool {
+	if auth == nil {
+		return false
+	}
+	return auth.GetUID() == types.NewTypeID(types.TypeAccessPolicy, frontendServiceIdentity)
 }
