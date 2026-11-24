@@ -21,6 +21,7 @@ var allowedResourcePaths = map[string][]struct {
 		{http.MethodGet, regexp.MustCompile(`(?i)^/subscriptions/[^/%]+/providers/microsoft\.operationalinsights/workspaces$`)},
 		{http.MethodGet, regexp.MustCompile(`(?i)^/subscriptions/[^%]+/providers/microsoft\.insights/metricnamespaces$`)},
 		{http.MethodGet, regexp.MustCompile(`(?i)^/subscriptions/[^%]+/providers/microsoft\.insights/metricdefinitions$`)},
+		{http.MethodGet, regexp.MustCompile(`(?i)^/subscriptions/[^%]+/providers/microsoft\.insights/metrics$`)},
 		{http.MethodGet, regexp.MustCompile(`(?i)^/subscriptions/[^%]+/providers/microsoft\.operationalinsights/workspaces/[^/%]+/tables/[^/%]+$`)},
 	},
 	azureLogAnalytics: {
