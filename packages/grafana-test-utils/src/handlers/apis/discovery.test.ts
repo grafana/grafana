@@ -2,7 +2,12 @@ import { getResponse } from 'msw';
 import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { getAPIDiscoveryHandlers, SERVED_API_VERSIONS } from './discovery';
+import {
+  getAPIDiscoveryHandlers,
+  getAPIResourceDiscoveryHandlers,
+  SERVED_API_RESOURCES,
+  SERVED_API_VERSIONS,
+} from './discovery';
 
 // The handlers use relative paths, which MSW resolves against the page in jsdom. The package tests
 // run in Node, so the origin is passed explicitly.
@@ -77,6 +82,64 @@ describe('API discovery handlers', () => {
     const folder = await request('/apis/folder.grafana.app/', undefined, handlers);
 
     expect(list.groups.map((group: { name: string }) => group.name)).toEqual(['iam.grafana.app']);
+    expect(folder?.status).toBe(404);
+  });
+});
+
+describe('API resource discovery handlers', () => {
+  it('list resources only for served group versions', () => {
+    for (const groupVersion of Object.keys(SERVED_API_RESOURCES)) {
+      const [group, version] = groupVersion.split('/');
+
+      expect(SERVED_API_VERSIONS[group]).toContain(version);
+    }
+  });
+
+  it('answer GET /apis/<group>/<version> with an APIResourceList', async () => {
+    const response = await request('/apis/folder.grafana.app/v1beta1', undefined, getAPIResourceDiscoveryHandlers());
+    const body = await response?.json();
+
+    expect(body).toMatchObject({ kind: 'APIResourceList', groupVersion: 'folder.grafana.app/v1beta1' });
+    expect(body.resources).toContainEqual({
+      name: 'folders',
+      namespaced: true,
+      kind: 'Folder',
+      verbs: ['create', 'get', 'list', 'patch', 'update'],
+    });
+    expect(body.resources).toContainEqual({ name: 'folders/access', namespaced: true, kind: '', verbs: ['get'] });
+  });
+
+  it.each([
+    ['a version that serves routes only', '/apis/quotas.grafana.app/v0alpha1'],
+    ['a version that is not served', '/apis/folder.grafana.app/v1'],
+    ['a group that is not served', '/apis/annotation.grafana.app/v0alpha1'],
+  ])('answer 404 for %s', async (_, path) => {
+    const response = await request(path, undefined, getAPIResourceDiscoveryHandlers());
+
+    expect(response?.status).toBe(404);
+  });
+
+  it('serve only the given resources', async () => {
+    const teams = { resource: 'teams', kind: 'Team', verbs: ['list'], namespaced: false };
+    const handlers = getAPIResourceDiscoveryHandlers(
+      { 'iam.grafana.app': ['v0alpha1'] },
+      { 'iam.grafana.app/v0alpha1': [teams] }
+    );
+
+    const list = await (await request('/apis/iam.grafana.app/v0alpha1', undefined, handlers))?.json();
+    const folder = await request('/apis/folder.grafana.app/v1beta1', undefined, handlers);
+
+    expect(list.resources).toEqual([{ name: 'teams', namespaced: false, kind: 'Team', verbs: ['list'] }]);
+    expect(folder?.status).toBe(404);
+  });
+
+  it('serve the default resources only for the given group versions', async () => {
+    const handlers = getAPIResourceDiscoveryHandlers({ 'iam.grafana.app': ['v0alpha1'] });
+
+    const teams = await request('/apis/iam.grafana.app/v0alpha1', undefined, handlers);
+    const folder = await request('/apis/folder.grafana.app/v1beta1', undefined, handlers);
+
+    expect(teams?.status).toBe(200);
     expect(folder?.status).toBe(404);
   });
 });
