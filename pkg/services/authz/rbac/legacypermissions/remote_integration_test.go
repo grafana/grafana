@@ -87,7 +87,7 @@ func TestIntegrationRemoteLegacyPermissionsGRPC(t *testing.T) {
 		return types.WithAuthInfo(ctx, authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{Rest: authn.AccessTokenClaims{Namespace: "*", Permissions: []string{"authz.grafana.app/userpermissions:get"}}})), nil
 	}
 	server := grpc.NewServer(grpc.StreamInterceptor(grpcAuth.StreamServerInterceptor(authenticate)))
-	authzv1.RegisterLegacyAuthzServiceServer(server, &remoteIntegrationServer{handler: legacypermissions.NewRemoteServer(loader)})
+	authzv1.RegisterLegacyAuthzServiceServer(server, &remoteIntegrationServer{handler: legacypermissions.NewRemoteServer(loader, nil)})
 	go func() { _ = server.Serve(listener) }()
 	t.Cleanup(server.Stop)
 	t.Cleanup(func() { _ = listener.Close() })

@@ -6,6 +6,7 @@ import (
 
 	authn "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -53,7 +54,7 @@ func TestRemoteRejectsBeforeLoading(t *testing.T) {
 			if tc.change != nil {
 				tc.change(req)
 			}
-			err := NewRemoteServer(nil).LegacyGetUserPermissions(req, remoteTestStream{ctx: tc.ctx})
+			err := NewRemoteServer(nil, nil).LegacyGetUserPermissions(req, remoteTestStream{ctx: tc.ctx})
 			require.Equal(t, tc.code, status.Code(err))
 		})
 	}
@@ -76,6 +77,30 @@ func TestRemoteCacheIsolationAndRefresh(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "stacks-2", got[0].Action)
 	}
+}
+
+func TestRemoteAndEmbeddedMetricsShareRegistry(t *testing.T) {
+	reg := prometheus.NewRegistry()
+	newEmbeddedClient(nil, nil, reg)
+	NewRemoteServer(nil, reg)
+	families, err := reg.Gather()
+	require.NoError(t, err)
+	for _, family := range families {
+		if family.GetName() == "grafana_authz_legacy_get_user_permissions_duration_seconds" {
+			require.Len(t, family.Metric, 4)
+			implementations := map[string]int{}
+			for _, metric := range family.Metric {
+				for _, label := range metric.Label {
+					if label.GetName() == "implementation" {
+						implementations[label.GetValue()]++
+					}
+				}
+			}
+			require.Equal(t, map[string]int{"embedded": 2, "remote": 2}, implementations)
+			return
+		}
+	}
+	t.Fatal("missing permission enumeration metric")
 }
 
 func TestRemoteIdentityKeysIgnoreCallerCacheKey(t *testing.T) {

@@ -163,7 +163,11 @@ func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPerm
 	} else if req.NoOrgMembership {
 		orgID = -1
 	}
-	return s.loader.streamPermissions(ctx, req, stream, namespace, orgID)
+	if err := s.loader.streamPermissions(ctx, req, stream, namespace, orgID); err != nil {
+		return err
+	}
+	result = "ok"
+	return nil
 }
 
 func (l *Loader) streamPermissions(ctx context.Context, req *authzv1.LegacyGetUserPermissionsRequest, stream authzv1.LegacyAuthzService_LegacyGetUserPermissionsServer, namespace string, orgID int64) error {
@@ -196,7 +200,6 @@ func (l *Loader) streamPermissions(ctx context.Context, req *authzv1.LegacyGetUs
 			return err
 		}
 	}
-	result = "ok"
 	return nil
 }
 
