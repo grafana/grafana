@@ -45,8 +45,8 @@ Use Alerts to inform users of updates, changes, or issues. Providing users feedb
 - Don't use Primary calls to actions.
 - Don't hide other content with inline notifications.
 - Don't repeat the alert copy/title on the details message.
-- Do give every alert a title. Titles are required, and should be concise, human-focused and jargon free.
-- Do keep call to action labels short, a few words at most.
+- Do give every alert a title. Titles are required, always, and should be concise, human-focused and jargon free so users can easily understand them.
+- Do keep call to action labels concise and short (a few words at most), and make the action the user can take clear.
 
 ### Placement and links
 
@@ -144,7 +144,7 @@ Within Grafana, we have two different types of alerts and they can be used depen
 
 Inline Banners are task-oriented alerts that notify users of the status of an action or system. These alerts are contextual, appearing above or below main content areas, allowing users to address issues or to read messages quickly.
 
-Place an inline banner immediately above or below the related element.
+For where to place it, see Placement and links under Do's and don'ts.
 
 ### Toast
 
@@ -170,18 +170,18 @@ Grafana renders the toast for you, as an elevated, dismissible `Alert`, when you
 - Icon status: represents the importance of the message through the color and icon for each status.
 - Alert title: should be explicit, clear and short, conveying the most important part of the information.
 - Details: precise description for the notification, telling users what they need to do.
-- Button and text links: only persistent notifications should contain text links or buttons.
+- Button and text links: actions related to the message. See Placement and links under Do's and don'ts for which notifications can contain them.
 - Close icon: appears when the notification can be dismissed by the user.
 
 ### Content
 
-**Title:** Titles in Alerts are required, always. They should be concise, human-focused and jargon free so users can easily understand them.
+**Title:** the main message of the alert. See Writing content under Do's and don'ts.
 
 **Description:** Description copy is optional and should be used sparingly. Keep the description copy short and focused on the reason for the Alert and include possible solutions or paths forward to prevent users from being blocked.
 
 **Content guidelines (how to write):** It is important to always use simple and concise language when crafting messaging for Alerts. Avoid using jargon or system errors in the content of the Alerts. Provide users with a path forward or possible solution. For more recommendations on writing, view the [UX writing guidelines](https://grafana.com/docs/writers-toolkit/write/style-guide/ux-writing/).
 
-**Calls to action:** Alerts (Inline Alerts specifically) can contain calls to action (CTAs), especially if there is an action a user can take to remedy or correct the reason the Alert is being shown. When providing a CTA within an Alert be sure to keep the label concise and ensure the action the user can take is clear, and try to keep the labels short (a few words at most). See Grafana's [UX Writing guidelines](https://grafana.com/docs/writers-toolkit/write/style-guide/ux-writing/).
+**Calls to action:** Alerts (Inline Alerts specifically) can contain calls to action (CTAs), especially if there is an action a user can take to remedy or correct the reason the Alert is being shown. For CTA labels, see Writing content under Do's and don'ts and Grafana's [UX Writing guidelines](https://grafana.com/docs/writers-toolkit/write/style-guide/ux-writing/).
 
 ### Further reading
 
