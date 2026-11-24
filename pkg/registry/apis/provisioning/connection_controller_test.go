@@ -35,7 +35,9 @@ func TestConnectionControllerService_IsDisabled(t *testing.T) {
 // newTestConnectionControllerService records the rest config the controller
 // would run with, and runs until ctx is done or fails with runErr.
 func newTestConnectionControllerService(runErr error) (*ConnectionControllerService, *APIBuilder, <-chan *clientrest.Config) {
-	builder := &APIBuilder{loopbackReady: make(chan struct{})}
+	// bootstrapDone stays open: only the repository controller waits for the
+	// bootstrap repository.
+	builder := &APIBuilder{loopbackReady: make(chan struct{}), bootstrapDone: make(chan struct{})}
 	svc := ProvideConnectionControllerService(builder)
 	got := make(chan *clientrest.Config, 1)
 	svc.run = func(ctx context.Context, restConfig *clientrest.Config) error {
