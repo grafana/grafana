@@ -24,10 +24,11 @@ func NewAdmissionMutator() *AdmissionMutator {
 	return &AdmissionMutator{}
 }
 
-// Mutate stamps the author annotations on Job creation from the requesting user and drops
-// explicitly empty optional fields.
+// Mutate drops explicitly empty optional fields on every write, and stamps the author
+// annotations on Job creation from the requesting user.
 func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
-	if a.GetOperation() != admission.Create {
+	op := a.GetOperation()
+	if op != admission.Create && op != admission.Update {
 		return nil
 	}
 
@@ -37,6 +38,9 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 	}
 
 	clearEmptyOptionalFields(job)
+	if op != admission.Create {
+		return nil
+	}
 
 	if job.Annotations == nil {
 		job.Annotations = map[string]string{}
