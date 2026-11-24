@@ -29,6 +29,7 @@ The Field component is suitable for various scenarios where you need to incorpor
 - Do provide a description for the field to help users understand the purpose of the input.
 - Don't use the `description` prop without also providing a label.
 - Don't use the `invalid` prop without also providing an error message.
+- Don't set `useFieldset` for anything other than a `RadioButtonGroup`. `Field` already sets it for a `RadioButtonGroup` child.
 
 ### Show state through the field
 
@@ -54,7 +55,7 @@ To make a field narrower, size its container. `Input` fills the width it's given
 
 ```tsx
 // Don't
-<Field label="Name" className={css({ marginBottom: 0, '& > div': { width: 200 } })}>
+<Field label="Name" className={css({ '& > div': { width: 200 } })}>
   <Input id="name" />
 </Field>
 

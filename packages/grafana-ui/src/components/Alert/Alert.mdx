@@ -45,6 +45,13 @@ Use Alerts to inform users of updates, changes, or issues. Providing users feedb
 - Don't use Primary calls to actions.
 - Don't hide other content with inline notifications.
 - Don't repeat the alert copy/title on the details message.
+- Do give every alert a title. Titles are required, and should be concise, human-focused and jargon free.
+- Do keep call to action labels short, a few words at most.
+
+### Placement and links
+
+- Do place an inline banner immediately above or below the related element.
+- Only persistent notifications should contain text links or buttons. Don't add them to passive notifications.
 
 ### Actions
 
@@ -156,13 +163,7 @@ appEvents.publish({
 });
 ```
 
-The toast itself is an elevated, dismissible `Alert`:
-
-```tsx
-<Alert title={title} severity={severity} onRemove={onRemove} elevated>
-  Child content that includes some alert details, like maybe what actually happened.
-</Alert>
-```
+Grafana renders the toast for you, as an elevated, dismissible `Alert`, when you publish the `appEvent`.
 
 ### Main elements
 

@@ -46,7 +46,7 @@ Use the prop the component provides for that state:
 <Tab label="Overview" active={activeTab === 'overview'} onChangeTab={() => setActiveTab('overview')} />
 ```
 
-`variant="active"` only styles `ToolbarButton`, so also set `aria-pressed` for a toggle, or `aria-expanded` when it opens something. `Tab` sets `aria-selected` from `active` for you. To choose one value from a small set, use `RadioButtonGroup` with `options`, `value` and `onChange`.
+`variant="active"` only styles `ToolbarButton`, so also set `aria-pressed` for a toggle. When the button opens something, such as a menu, use `isOpen` instead: it sets `aria-expanded` and adds the open or closed chevron. `Tab` sets `aria-selected` from `active` for you. To choose one value from a small set, use `RadioButtonGroup` with `options`, `value` and `onChange`.
 
 ## Invalid
 
