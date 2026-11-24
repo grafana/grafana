@@ -416,6 +416,7 @@ type Cfg struct {
 	DataProxyIdleConnTimeout       int
 	ResponseLimit                  int64
 	DataProxyRowLimit              int64
+	DataProxySeriesLimit           int64
 	DataProxyUserAgent             string
 	DataProxyForwardUserAgent      bool
 
