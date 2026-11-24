@@ -204,6 +204,28 @@ func TestIsProvisioningServiceIdentity(t *testing.T) {
 	})
 }
 
+func TestIsFrontendServiceIdentity(t *testing.T) {
+	t.Run("nil does not match", func(t *testing.T) {
+		require.False(t, identity.IsFrontendServiceIdentity(nil))
+	})
+
+	t.Run("access-policy UIDs", func(t *testing.T) {
+		for uid, want := range map[string]bool{
+			"frontend-service-system": true,
+			"service":                 false,
+			"provisioning":            false,
+		} {
+			r := &identity.StaticRequester{Type: authtypes.TypeAccessPolicy, UserUID: uid}
+			require.Equal(t, want, identity.IsFrontendServiceIdentity(r), uid)
+		}
+	})
+
+	t.Run("non-access-policy identity does not match", func(t *testing.T) {
+		auth := fakeAuthInfo{StaticRequester: &identity.StaticRequester{}, uid: "user:42"}
+		require.False(t, identity.IsFrontendServiceIdentity(auth))
+	})
+}
+
 func TestWithServiceIdentity(t *testing.T) {
 	t.Run("with a custom service identity name", func(t *testing.T) {
 		customName := "custom-service"
