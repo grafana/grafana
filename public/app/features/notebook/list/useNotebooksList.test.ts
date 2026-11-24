@@ -4,7 +4,12 @@ import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
 import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { type ResultItem, type SearchResults, useSearchNotebooksInfiniteQuery } from './notebookSearchApi';
+import {
+  type NotebookSearchQuery,
+  type ResultItem,
+  type SearchResults,
+  useSearchNotebooksInfiniteQuery,
+} from './notebookSearchApi';
 import { NOTEBOOKS_PAGE_LIMIT, useNotebooksList } from './useNotebooksList';
 
 jest.mock('app/api/clients/iam/v0alpha1', () => ({
@@ -134,6 +139,15 @@ function lastSearchArg() {
   return calls[calls.length - 1][0];
 }
 
+/** The last body the hook asked for, for tests that read its parts: a skipped request has none. */
+function lastSearchBody(): NotebookSearchQuery {
+  const arg = lastSearchArg();
+  if (arg === skipToken) {
+    throw new Error('the search was skipped');
+  }
+  return arg;
+}
+
 /** contextSrv.user is a plain property, so tests that swap it register their own undo here. */
 const afterEachRestore: Array<() => void> = [];
 
@@ -186,6 +200,33 @@ describe('useNotebooksList', () => {
       await waitFor(() => {
         expect(lastSearchArg()).toMatchObject({ where: { text: { value: 'checkout' } } });
       });
+    });
+
+    it('searches the title alone unless the caller opts in to content', async () => {
+      const { result } = setupHook();
+
+      act(() => {
+        result.current.setSearchQuery('checkout');
+      });
+
+      await waitFor(() => {
+        expect(lastSearchBody().where).toEqual({ text: { value: 'checkout' } });
+      });
+    });
+
+    it('also searches the Markdown content when the caller opts in', async () => {
+      const wrapper = getWrapper({ renderWithRouter: false });
+      const { result } = renderHook(() => useNotebooksList({ enabled: true, searchContent: true }), { wrapper });
+
+      act(() => {
+        result.current.setSearchQuery('checkout');
+      });
+
+      await waitFor(() => {
+        expect(lastSearchBody().where).toEqual({ text: { value: 'checkout', fields: ['title', 'content'] } });
+      });
+      // Searched but never projected: a row has no use for the text of a cell.
+      expect(lastSearchBody().fields).not.toContain('content');
     });
 
     it('trims the search term before sending it', async () => {

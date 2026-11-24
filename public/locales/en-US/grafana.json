@@ -14123,7 +14123,7 @@
       "new-notebook": "New notebook",
       "no-results": "No notebooks found",
       "partial-load-error": "Some notebooks could not be loaded",
-      "search-placeholder": "Search notebooks by title...",
+      "search-placeholder": "Search notebooks by title or content...",
       "table": {
         "author": "Author",
         "copy-link": "Copy link",

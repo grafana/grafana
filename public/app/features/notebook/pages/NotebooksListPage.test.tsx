@@ -281,7 +281,7 @@ describe('NotebooksListPage', () => {
 
     render(<NotebooksListPage />);
 
-    await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
+    await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title or content...'), 'latency');
 
     await screen.findByText('Q2 latency regression');
     await waitFor(() => {
@@ -290,7 +290,7 @@ describe('NotebooksListPage', () => {
     expect(screen.getByText('Q2 latency regression')).toBeInTheDocument();
     // The narrowing came from the request, not from re-filtering what was already on screen.
     expect(mockUseSearchNotebooksQuery).toHaveBeenLastCalledWith(
-      expect.objectContaining({ where: { text: { value: 'latency' } } })
+      expect.objectContaining({ where: { text: { value: 'latency', fields: ['title', 'content'] } } })
     );
   });
 
@@ -383,7 +383,7 @@ describe('NotebooksListPage', () => {
 
     expect(await screen.findByRole('link', { name: 'Checkout error spike' })).toBeInTheDocument();
 
-    await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'zzz');
+    await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title or content...'), 'zzz');
 
     // Not the create call-to-action: notebooks exist, they just did not match.
     expect(await screen.findByText('No notebooks found')).toBeInTheDocument();
@@ -420,7 +420,7 @@ describe('NotebooksListPage', () => {
     render(<NotebooksListPage />);
 
     expect(await screen.findByText('Failed to load notebooks')).toBeInTheDocument();
-    expect(screen.queryByPlaceholderText('Search notebooks by title...')).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Search notebooks by title or content...')).not.toBeInTheDocument();
     expect(screen.queryByText('No notebooks found')).not.toBeInTheDocument();
   });
 
@@ -432,7 +432,7 @@ describe('NotebooksListPage', () => {
 
     render(<NotebooksListPage />);
 
-    const input = await screen.findByPlaceholderText('Search notebooks by title...');
+    const input = await screen.findByPlaceholderText('Search notebooks by title or content...');
     await userEvent.type(input, 'zzz');
 
     expect(await screen.findByText('Failed to load notebooks')).toBeInTheDocument();
@@ -506,7 +506,7 @@ describe('NotebooksListPage', () => {
     expect(await screen.findByText(`${ROWS_PER_PAGE * 3} notebooks`)).toBeInTheDocument();
     await userEvent.click(await screen.findByRole('button', { name: '3' }));
 
-    await userEvent.type(screen.getByPlaceholderText('Search notebooks by title...'), 'needle');
+    await userEvent.type(screen.getByPlaceholderText('Search notebooks by title or content...'), 'needle');
 
     expect(await screen.findByText('1 notebook')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'needle' })).toBeInTheDocument();
@@ -557,7 +557,7 @@ describe('NotebooksListPage', () => {
     expect(await screen.findByText('Some notebooks could not be loaded')).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: 'Checkout error spike' })).toBeInTheDocument();
     // The filters stay usable, and the fatal alert does not appear.
-    expect(screen.getByPlaceholderText('Search notebooks by title...')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Search notebooks by title or content...')).toBeInTheDocument();
     expect(screen.queryByText('Failed to load notebooks')).not.toBeInTheDocument();
   });
 
@@ -577,7 +577,7 @@ describe('NotebooksListPage', () => {
     expect(await screen.findByRole('status', { name: 'Loading notebooks' })).toBeInTheDocument();
     expect(screen.queryByText('No notebooks found')).not.toBeInTheDocument();
     // The filters stay put, caret and all.
-    expect(screen.getByPlaceholderText('Search notebooks by title...')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Search notebooks by title or content...')).toBeInTheDocument();
   });
 
   // The counts come from the same absent data as the rows, so leaving them rendered would claim
@@ -630,7 +630,7 @@ describe('NotebooksListPage', () => {
 
     render(<NotebooksListPage />);
 
-    await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
+    await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title or content...'), 'latency');
 
     expect(await screen.findByRole('link', { name: 'Q2 latency regression' })).toBeInTheDocument();
 
@@ -685,7 +685,7 @@ describe('NotebooksListPage', () => {
 
       render(<NotebooksListPage />);
 
-      await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
+      await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title or content...'), 'latency');
 
       await waitFor(() =>
         expect(mockListFiltered).toHaveBeenCalledWith('search', { queryLength: 7, tagCount: 0, createdByMe: false })
@@ -740,7 +740,7 @@ describe('NotebooksListPage', () => {
 
       // A change that does report, so the silence above has something arriving to measure it
       // against rather than a wait that was already over.
-      await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
+      await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title or content...'), 'latency');
 
       await waitFor(() =>
         expect(mockListFiltered).toHaveBeenCalledWith('search', {
@@ -825,7 +825,7 @@ describe('NotebooksListPage', () => {
 
       render(<NotebooksListPage />);
 
-      const searchBox = await screen.findByPlaceholderText('Search notebooks by title...');
+      const searchBox = await screen.findByPlaceholderText('Search notebooks by title or content...');
       await userEvent.type(searchBox, 'latency');
       await waitFor(() => expect(mockListFiltered).toHaveBeenCalledTimes(1));
 
@@ -846,7 +846,7 @@ describe('NotebooksListPage', () => {
 
       render(<NotebooksListPage />);
 
-      const searchBox = await screen.findByPlaceholderText('Search notebooks by title...');
+      const searchBox = await screen.findByPlaceholderText('Search notebooks by title or content...');
       await userEvent.type(searchBox, 'latency');
       await waitFor(() =>
         expect(mockListFiltered).toHaveBeenCalledWith('search', { queryLength: 7, tagCount: 0, createdByMe: false })
@@ -871,13 +871,13 @@ describe('NotebooksListPage', () => {
 
       // Nothing lands for the new filters from here on.
       setNotebooks(twoNotebooks(), { isReloading: true });
-      await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
+      await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title or content...'), 'latency');
 
       // The request carrying the new text is what says the debounce committed. The skeleton alone
       // would not: it appears on the first keystroke, before the debounce fires.
       await waitFor(() =>
         expect(mockUseSearchNotebooksQuery).toHaveBeenLastCalledWith(
-          expect.objectContaining({ where: { text: { value: 'latency' } } })
+          expect.objectContaining({ where: { text: { value: 'latency', fields: ['title', 'content'] } } })
         )
       );
 
@@ -895,7 +895,7 @@ describe('NotebooksListPage', () => {
 
       render(<NotebooksListPage />);
 
-      await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
+      await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title or content...'), 'latency');
 
       expect(await screen.findByText('Failed to load notebooks')).toBeInTheDocument();
       expect(mockListFiltered).toHaveBeenCalledWith('search', { queryLength: 7, tagCount: 0, createdByMe: false });

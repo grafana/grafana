@@ -15,11 +15,12 @@ import {
 } from './notebookSearchApi';
 
 /**
- * Field names as the index declares them (resource.SEARCH_FIELD_* on the backend). Only the
- * ones this page projects.
+ * Field names as the index declares them (resource.SEARCH_FIELD_* on the backend). The ones this
+ * page projects, plus `content`, which is only searched and never returned.
  */
 const SearchField = {
   title: 'title',
+  content: 'content',
   tags: 'tags',
   createdBy: 'createdBy',
   created: 'created',
@@ -68,9 +69,14 @@ export interface NotebookRow {
 interface UseNotebooksListOptions {
   /** Skips every request when the feature is disabled, so a gated page issues no traffic. */
   enabled: boolean;
+  /**
+   * Also matches the search text against the Markdown cells, not only the title. Opt-in because a
+   * caller's search box has to say it does this, and the picker's does not.
+   */
+  searchContent?: boolean;
 }
 
-export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
+export function useNotebooksList({ enabled, searchContent = false }: UseNotebooksListOptions) {
   const [searchQuery, setSearchQuery] = useState('');
   const [createdByMe, setCreatedByMe] = useState(false);
   const [tagFilter, setTagFilter] = useState<string[]>([]);
@@ -96,8 +102,8 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
   }, []);
 
   const searchBody = useMemo(
-    () => buildSearchQuery(debouncedSearch, filterByAuthor ? currentUserUid : undefined, tagFilter),
-    [debouncedSearch, filterByAuthor, currentUserUid, tagFilter]
+    () => buildSearchQuery(debouncedSearch, filterByAuthor ? currentUserUid : undefined, tagFilter, searchContent),
+    [debouncedSearch, filterByAuthor, currentUserUid, tagFilter, searchContent]
   );
 
   const search = useSearchNotebooksInfiniteQuery(enabled ? searchBody : skipToken);
@@ -255,13 +261,20 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
  * notebook — and flattened to a single leaf when only one predicate applies, because v1
  * accepts just a top-level leaf or one `and` of leaves.
  */
-function buildSearchQuery(search: string, authorUid: string | undefined, tags: string[]): NotebookSearchQuery {
+function buildSearchQuery(
+  search: string,
+  authorUid: string | undefined,
+  tags: string[],
+  searchContent: boolean
+): NotebookSearchQuery {
   const leaves: WhereNode[] = [];
   const needle = search.trim();
   if (needle) {
-    // Fields default to the kind's text fields, which is `title` — the one thing this box
-    // searches.
-    leaves.push({ text: { value: needle } });
+    // Fields default to the kind's text fields, which is `title`. Content is named explicitly,
+    // because it is not a default and only the callers that say so should search it.
+    leaves.push({
+      text: { value: needle, ...(searchContent ? { fields: [SearchField.title, SearchField.content] } : {}) },
+    });
   }
   if (authorUid) {
     // Only the `user:<uid>` form: that is what the apiserver records on create. Author *names* are

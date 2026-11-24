@@ -46,7 +46,7 @@ export function NotebooksListPage() {
     isReloading,
     filterKey,
     error,
-  } = useNotebooksList({ enabled: notebooksEnabled });
+  } = useNotebooksList({ enabled: notebooksEnabled, searchContent: true });
 
   /**
    * The filters the last report went out for, seeded so arriving at the page reports nothing.
@@ -173,7 +173,7 @@ export function NotebooksListPage() {
                   value={searchQuery}
                   onChange={setSearchQuery}
                   escapeRegex={false}
-                  placeholder={t('notebooks.list.search-placeholder', 'Search notebooks by title...')}
+                  placeholder={t('notebooks.list.search-placeholder', 'Search notebooks by title or content...')}
                   data-testid={selectors.pages.Notebooks.List.searchInput}
                 />
                 <Stack justifyContent="space-between" alignItems="center" gap={2} wrap="wrap">
