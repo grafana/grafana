@@ -29,13 +29,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardpreferences"
 )
 
 const (
 	// The most folders a list page covers: each costs a read of its folder tier.
 	dashboardPreferencesListPageSize = 500
-	// How many folder tiers a list page reads at once.
-	dashboardPreferencesFolderTierReads = 16
+	// How many tiers a list page or a merge reads at once.
+	dashboardPreferencesTierReads = 16
 )
 
 // Embeds grafanarest.Storage, which has no rest.Watcher or rest.CollectionDeleter, so watch and
@@ -48,7 +49,8 @@ type dashboardPreferencesStorage struct {
 	accessClient authlib.AccessClient
 	// Nil where the API runs apart from Grafana.
 	accessControl accesscontrol.AccessControl
-	// Lists, as the caller, the folders whose tiers a list reads.
+	// Lists, as the caller, the folders whose tiers a list reads, and reads a folder's ancestry for merged as
+	// Grafana's service identity.
 	folders client.K8sHandlerProvider
 }
 
@@ -58,7 +60,8 @@ func newDashboardPreferencesStorage(store grafanarest.Storage, gvk schema.GroupV
 
 func (s *dashboardPreferencesStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	updated, created, err := s.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
-	if err == nil || !isDashboardPreferencesNotFound(err, name) {
+	// Only this object's NotFound: another, such as a missing folder's, must not turn an update into a create.
+	if err == nil || !dashboardpreferences.IsNotFound(err, name) {
 		return updated, created, err
 	}
 	notFound := err
@@ -124,8 +127,9 @@ func dashboardPreferencesCreateOptionsFrom(options *metav1.UpdateOptions) *metav
 	return opts
 }
 
-// True only for this resource and name: other NotFounds (for example a missing folder) must not turn an update into a create.
-func isDashboardPreferencesNotFound(err error, name string) bool {
+// True only for a NotFound whose details name this resource and object. A 404 that names nothing, such as one
+// for an unserved path, says nothing about the object.
+func isNotFoundForObject(err error, gr schema.GroupResource, name string) bool {
 	if !apierrors.IsNotFound(err) {
 		return false
 	}
@@ -134,7 +138,6 @@ func isDashboardPreferencesNotFound(err error, name string) bool {
 		return false
 	}
 	details := status.Status().Details
-	gr := dashv2beta1.DashboardPreferencesResourceInfo.GroupResource()
 	return details != nil && details.Group == gr.Group && details.Kind == gr.Resource && details.Name == name
 }
 
@@ -300,12 +303,21 @@ func (s *dashboardPreferencesStorage) visibleFolderTier(ctx context.Context, req
 
 // getStoredFolderTiers returns, in order, the folder tier of each folder that has one.
 func (s *dashboardPreferencesStorage) getStoredFolderTiers(ctx context.Context, folderUIDs []string) ([]dashv2beta1.DashboardPreferences, error) {
-	found := make([][]dashv2beta1.DashboardPreferences, len(folderUIDs))
+	names := make([]string, 0, len(folderUIDs))
+	for _, folderUID := range folderUIDs {
+		names = append(names, dashv2beta1.DashboardPreferencesFolderName(folderUID))
+	}
+	return s.getStoredTiers(ctx, names)
+}
+
+// getStoredTiers returns, in order, the named objects that are stored.
+func (s *dashboardPreferencesStorage) getStoredTiers(ctx context.Context, names []string) ([]dashv2beta1.DashboardPreferences, error) {
+	found := make([][]dashv2beta1.DashboardPreferences, len(names))
 	g, gctx := errgroup.WithContext(ctx)
-	g.SetLimit(dashboardPreferencesFolderTierReads)
-	for i, folderUID := range folderUIDs {
+	g.SetLimit(dashboardPreferencesTierReads)
+	for i, name := range names {
 		g.Go(func() error {
-			items, err := s.getStored(gctx, dashv2beta1.DashboardPreferencesFolderName(folderUID))
+			items, err := s.getStored(gctx, name)
 			found[i] = items
 			return err
 		})
@@ -357,14 +369,14 @@ type batchItemErrorClient struct {
 func (c batchItemErrorClient) BatchCheck(ctx context.Context, info authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
 	resp, err := c.AccessClient.BatchCheck(ctx, info, req)
 	if err != nil {
-		logging.FromContext(ctx).Error("dashboard preferences list failed to check folder access",
+		logging.FromContext(ctx).Error("dashboard preferences failed to check folder access",
 			"namespace", req.Namespace, "err", err)
 		return authlib.BatchCheckResponse{}, &accessCheckError{subject: "folder", cause: err}
 	}
 	// In request order, because the results are a map and the first failure should not vary.
 	for _, check := range req.Checks {
 		if result := resp.Results[check.CorrelationID]; result.Error != nil {
-			logging.FromContext(ctx).Error("dashboard preferences list failed to check folder access",
+			logging.FromContext(ctx).Error("dashboard preferences failed to check folder access",
 				"namespace", req.Namespace, "folder", check.Name, "err", result.Error)
 			return authlib.BatchCheckResponse{}, &accessCheckError{subject: "folder", cause: result.Error}
 		}

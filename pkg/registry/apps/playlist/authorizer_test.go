@@ -203,7 +203,7 @@ func TestGetAuthorizer(t *testing.T) {
 				ctx = identity.WithRequester(ctx, &identity.StaticRequester{
 					OrgID:   1,
 					UserID:  1,
-					OrgRole: identity.RoleViewer,
+					OrgRole: authlib.RoleViewer,
 				})
 			}
 
@@ -241,12 +241,12 @@ func TestGetAuthorizerToggleOff(t *testing.T) {
 	noneCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 		OrgID:   1,
 		UserID:  1,
-		OrgRole: identity.RoleNone,
+		OrgRole: authlib.RoleNone,
 	})
 	viewerCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 		OrgID:   1,
 		UserID:  2,
-		OrgRole: identity.RoleViewer,
+		OrgRole: authlib.RoleViewer,
 	})
 
 	t.Run("non-resource request defers regardless of role", func(t *testing.T) {

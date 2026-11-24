@@ -42,15 +42,7 @@ import { locationUtil } from '../utils/location';
 
 import { type FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
-import {
-  getVarMappingKind,
-  getVarMappingOptions,
-  type VarMappingKind,
-  resolveVarMapping,
-  resolveVarMappingBoolean,
-  resolveVarMappingOption,
-  resolveVarMappingString,
-} from './overrides/processors';
+import { getVarMappingKind, resolveVarMapping, resolveVarMappingString } from './overrides/processors';
 import { getMinMaxAndDelta } from './scale';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 
@@ -439,6 +431,19 @@ export interface FieldOverrideEnv extends FieldOverrideContext {
   varMappings?: Record<string, string>;
 }
 
+let isVarMappingsEnabled = () => false;
+
+/**
+ * Used by Grafana internals to decide whether `varMappings` are resolved. Grafana backs it with the
+ * grafana.panelOptionInterpolation flag. While it returns false every panel uses its stored values
+ * and the expressions stay in the saved JSON.
+ *
+ * @internal
+ */
+export function setVarMappingsEnabledResolver(resolver: () => boolean) {
+  isVarMappingsEnabled = resolver;
+}
+
 /**
  * Returns the resolved expression for an eligible property when it resolves to a usable value of
  * the property's kind, otherwise the stored value, so an unresolvable expression falls back
@@ -452,30 +457,13 @@ function resolveVarMappingInput(
 ): unknown {
   const kind = getVarMappingKind(item);
   const expr = context.varMappings?.[varMappingId];
-  if (!kind || typeof expr !== 'string') {
+  if (!kind || typeof expr !== 'string' || !isVarMappingsEnabled()) {
     return rawValue;
   }
 
-  const resolved = resolveVarMappingByKind(kind, expr, item, context);
+  const resolved =
+    kind === 'number' ? resolveVarMapping(expr, context, item.settings) : resolveVarMappingString(expr, context);
   return resolved !== undefined ? resolved : rawValue;
-}
-
-function resolveVarMappingByKind(
-  kind: VarMappingKind,
-  expr: string,
-  item: FieldConfigPropertyItem,
-  context: FieldOverrideEnv
-): unknown {
-  switch (kind) {
-    case 'number':
-      return resolveVarMapping(expr, context, item.settings);
-    case 'string':
-      return resolveVarMappingString(expr, context);
-    case 'option':
-      return resolveVarMappingOption(expr, context, getVarMappingOptions(item.settings));
-    case 'boolean':
-      return resolveVarMappingBoolean(expr, context);
-  }
 }
 
 export function setDynamicConfigValue(

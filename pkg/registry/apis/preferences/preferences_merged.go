@@ -43,6 +43,9 @@ func newMerger(cfg *setting.Cfg) *merger {
 // preference defines. It is also what merging resolves to for a requester
 // with no preferences at all (e.g. an unauthenticated request).
 func DefaultSpec(cfg *setting.Cfg) preferences.PreferencesSpec {
+	if cfg == nil {
+		cfg = &setting.Cfg{}
+	}
 	spec := preferences.PreferencesSpec{
 		Theme:     &cfg.DefaultTheme,
 		Timezone:  &cfg.DateFormats.DefaultTimezone,

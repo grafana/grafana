@@ -2,14 +2,15 @@ import { type ListAlertRuleSearchRulesV0Alpha1RequestBody } from '@grafana/api-c
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
 import { type SourcedLeaf, buildHealthLeaves, buildSharedLeaves, toWhere } from '../rule-search/searchQueryLeaves';
+import { type RuleSearchApiArgs } from '../rule-search/sharedRuleFilter';
 
 import { type AlertFilterKey, type AlertRuleFilter, DEFAULT_POLICY, STATE_API_VALUES } from './alertRuleFilters';
 
-export function buildAlertRuleSearchQuery(filter: AlertRuleFilter, continueToken?: string) {
+export function buildAlertRuleSearchQuery(apiArgs: RuleSearchApiArgs<AlertRuleFilter>, continueToken?: string) {
   return {
     apiVersion: 'search.grafana.app/v0alpha1',
     kind: 'SearchQuery',
-    where: toWhere(buildAlertRuleLeaves(filter)),
+    where: toWhere(buildAlertRuleLeaves(apiArgs)),
     sort: [{ field: 'title', direction: 'asc' }],
     fields: ALERT_RULE_FIELDS,
     limit: DEFAULT_PER_PAGE_PAGINATION,
@@ -18,8 +19,8 @@ export function buildAlertRuleSearchQuery(filter: AlertRuleFilter, continueToken
 }
 
 /** The request's leaves in order, each with the filter it came from. */
-export function buildAlertRuleLeaves(filter: AlertRuleFilter): Array<SourcedLeaf<AlertFilterKey>> {
-  return [...buildSharedLeaves(filter), ...buildRoutingLeaves(filter), ...buildStatusLeaves(filter)];
+export function buildAlertRuleLeaves(apiArgs: RuleSearchApiArgs<AlertRuleFilter>): Array<SourcedLeaf<AlertFilterKey>> {
+  return [...buildSharedLeaves(apiArgs), ...buildRoutingLeaves(apiArgs.filter), ...buildStatusLeaves(apiArgs.filter)];
 }
 
 function buildRoutingLeaves(filter: AlertRuleFilter): Array<SourcedLeaf<AlertFilterKey>> {
@@ -43,10 +44,6 @@ function buildRoutingLeaves(filter: AlertRuleFilter): Array<SourcedLeaf<AlertFil
   // The default policy needs NotIn on notificationType, which the rule search refuses, so it has no leaf.
   if (filter.policy && filter.policy !== DEFAULT_POLICY) {
     leaves.push({ key: 'policy', leaf: { filter: { field: 'routingTree', operator: 'In', values: [filter.policy] } } });
-  }
-  if (filter.paused) {
-    // NotIn is only accepted on labels, state and health, so "not paused" is paused=false.
-    leaves.push({ key: 'paused', leaf: { filter: { field: 'paused', operator: 'In', values: [filter.paused] } } });
   }
 
   return leaves;

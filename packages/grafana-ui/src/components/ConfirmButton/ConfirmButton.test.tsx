@@ -1,7 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { Button } from '../Button/Button';
+
 import { ConfirmButton } from './ConfirmButton';
+import { DeleteButton } from './DeleteButton';
 
 describe('ConfirmButton', () => {
   it('should show confirm delete when clicked', async () => {
@@ -66,5 +69,45 @@ describe('ConfirmButton', () => {
 
     // Cancel button should not be visible after click
     expect(screen.queryByRole('button', { name: 'Cancel' })).not.toBeInTheDocument();
+  });
+
+  it('forwards data attributes to the button that opens the confirmation', () => {
+    render(
+      <ConfirmButton onConfirm={() => {}} data-analytics-id="settings_value_edited">
+        Edit
+      </ConfirmButton>
+    );
+
+    expect(screen.getByRole('button', { name: 'Edit' })).toHaveAttribute('data-analytics-id', 'settings_value_edited');
+  });
+
+  it('forwards data attributes to a custom trigger element', () => {
+    render(
+      <ConfirmButton onConfirm={() => {}} data-analytics-id="settings_value_edited">
+        <Button>Edit</Button>
+      </ConfirmButton>
+    );
+
+    expect(screen.getByRole('button', { name: 'Edit' })).toHaveAttribute('data-analytics-id', 'settings_value_edited');
+  });
+
+  it('does not forward non-data props that arrive through an object spread', () => {
+    const spreadProps = { 'aria-label': 'Overridden', 'data-analytics-id': 'settings_value_edited' };
+
+    render(
+      <ConfirmButton onConfirm={() => {}} {...spreadProps}>
+        <Button aria-label="Edit value">Edit</Button>
+      </ConfirmButton>
+    );
+
+    const button = screen.getByRole('button', { name: 'Edit value' });
+    expect(button).toHaveAttribute('data-analytics-id', 'settings_value_edited');
+    expect(button).toHaveAttribute('aria-label', 'Edit value');
+  });
+
+  it('forwards data attributes through DeleteButton to its delete button', () => {
+    render(<DeleteButton onConfirm={() => {}} aria-label="Delete row" data-analytics-id="row_deleted" />);
+
+    expect(screen.getByRole('button', { name: 'Delete row' })).toHaveAttribute('data-analytics-id', 'row_deleted');
   });
 });

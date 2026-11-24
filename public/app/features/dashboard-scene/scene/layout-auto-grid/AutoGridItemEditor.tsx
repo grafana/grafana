@@ -5,7 +5,8 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
 
 import { edit } from '../../actions/utils/edit';
-import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
+import { getConditionalRenderingEditor } from '../../conditional-rendering/utils/getConditionalRenderingEditor';
+import { trackPanelSettingChange } from '../../utils/trackPanelSettingChange';
 
 import { type AutoGridItem } from './AutoGridItem';
 import { isAutoHeightPanelsEnabled } from './AutoGridLayoutManager';
@@ -52,7 +53,7 @@ export function getOptions(model: AutoGridItem): OptionsPaneCategoryDescriptor[]
     })
   );
 
-  const conditionalRenderingCategory = useConditionalRenderingEditor(model.state.conditionalRendering)!;
+  const conditionalRenderingCategory = getConditionalRenderingEditor(model.state.conditionalRendering)!;
 
   return [...categories, repeatCategory, conditionalRenderingCategory];
 }
@@ -102,6 +103,9 @@ function RepeatByOption({ item, id }: { item: AutoGridItem; id?: string }) {
           perform: () => item.setRepeatByVariable(value),
           undo: () => item.setRepeatByVariable(variableName),
         });
+        if (value !== variableName) {
+          trackPanelSettingChange(item.state.body, 'change_panel_repeat');
+        }
       }}
     />
   );

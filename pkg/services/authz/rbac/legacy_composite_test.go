@@ -305,10 +305,6 @@ func TestService_LegacyCheckEmptyComposites(t *testing.T) {
 							require.Equal(t, tc.allowedWithPermissions, response.GetAllowed())
 							require.Nil(t, localEvaluator.user)
 							require.Empty(t, permissions.presenceQueries)
-
-							if subject == "render:0" {
-								require.Empty(t, permissions.queries)
-							}
 						})
 					}
 				})

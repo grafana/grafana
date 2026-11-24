@@ -450,13 +450,24 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
 
   if (shouldUseGmaOnlyListView()) {
     // The GMA-only Alert rules page requires Grafana-managed read only, not the legacy GMA-or-DMA combo.
+    const gmaAlertRulesPage = importAlertingComponent(
+      () =>
+        import(
+          /* webpackChunkName: "GmaAlertRulesPage" */ 'app/features/alerting/unified/gma-rule-list/alert-rules/AlertRulesPage'
+        )
+    );
     routes.push({
       path: '/alerting/rules/alert',
       roles: evaluateAccess([AccessControlAction.AlertingRuleRead]),
+      component: gmaAlertRulesPage,
+    });
+    routes.push({
+      path: '/alerting/rules/alert/deleted',
+      roles: () => ['Admin'],
       component: importAlertingComponent(
         () =>
           import(
-            /* webpackChunkName: "GmaAlertRulesPage" */ 'app/features/alerting/unified/gma-rule-list/alert-rules/AlertRulesPage'
+            /* webpackChunkName: "GmaAlertRulesDeletedPage" */ 'app/features/alerting/unified/gma-rule-list/alert-rules/AlertRulesDeletedPage'
           )
       ),
     });
@@ -467,6 +478,16 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         () =>
           import(
             /* webpackChunkName: "GmaRecordingRulesPage" */ 'app/features/alerting/unified/gma-rule-list/recording-rules/RecordingRulesPage'
+          )
+      ),
+    });
+    routes.push({
+      path: '/alerting/rules/recording/deleted',
+      roles: () => ['Admin'],
+      component: importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "GmaRecordingRulesDeletedPage" */ 'app/features/alerting/unified/gma-rule-list/recording-rules/RecordingRulesDeletedPage'
           )
       ),
     });

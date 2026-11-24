@@ -370,10 +370,6 @@ type KVBackendOptions struct {
 	// ResourceVersionMaxWait bounds write latency from recoverable RV drift.
 	// Zero uses the default (1s); a negative value disables waiting.
 	ResourceVersionMaxWait time.Duration
-
-	// FastLatestKeyLookup resolves latest-version reads with a single-row
-	// descending lookup instead of scanning the resource's history.
-	FastLatestKeyLookup bool
 }
 
 // NewKVBackendOptions returns the options that come from Grafana's config. The
@@ -393,7 +389,6 @@ func NewKVBackendOptions(cfg *setting.Cfg) KVBackendOptions {
 		WatchOptions:              WatchOptions{SettleDelay: cfg.NotifierSettleDelay},
 		DashboardVersionsToKeep:   cfg.DashboardVersionsToKeep,
 		MigrationStatementTimeout: cfg.MigrationStatementTimeout,
-		FastLatestKeyLookup:       cfg.FastLatestKeyLookupEnabled,
 		TenantWatcherConfig:       NewTenantWatcherConfig(cfg),
 		TenantDeleterConfig:       NewTenantDeleterConfig(cfg),
 		// Callers that know better override this. Without a default, a wiring
@@ -470,7 +465,6 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 	leaseManager := lease.NewManager(kv, holder, "storage", opts.Reg)
 
 	dataStore := newDataStore(kv)
-	dataStore.fastLatestKeyLookup = opts.FastLatestKeyLookup
 
 	backend := &kvStorageBackend{
 		kv:         kv,
@@ -797,7 +791,7 @@ func (b *kvStorageBackend) initGarbageCollection(ctx context.Context) error {
 func (b *kvStorageBackend) runGarbageCollectionWithLease(ctx context.Context, cutoffTimeStamp int64) {
 	// Own the complete resource and blob pass, including dry runs. This lease
 	// coordinates collectors; it does not fence in-flight storage operations.
-	ctx, release, err := b.acquireStorageLeases(ctx, []string{"garbage-collection"}, lease.WithAutoRenew())
+	ctx, release, err := b.acquireStorageLeases(ctx, "garbage collection", []string{"garbage-collection"}, lease.WithAutoRenew())
 	if err != nil {
 		if errors.Is(err, lease.ErrLeaseAlreadyHeld) {
 			b.log.Debug("Garbage collection is running on another instance; skipping this cycle")
@@ -1072,7 +1066,9 @@ func conflictError(event WriteEvent, message string) error {
 
 // acquireStorageLeases cancels the returned context if any lease is lost.
 // Partial acquisitions are released on failure; callers must defer release on success.
-func (k *kvStorageBackend) acquireStorageLeases(ctx context.Context, names []string, opts ...lease.AcquireOption) (context.Context, func(), error) {
+// Failures other than [lease.ErrLeaseAlreadyHeld] and request cancellation are
+// logged and returned as a generic internal error naming only kind.
+func (k *kvStorageBackend) acquireStorageLeases(ctx context.Context, kind string, names []string, opts ...lease.AcquireOption) (context.Context, func(), error) {
 	leaseCtx, cancel := context.WithCancel(ctx)
 	leases := make([]*lease.Lease, 0, len(names))
 	var watchers sync.WaitGroup
@@ -1092,8 +1088,13 @@ func (k *kvStorageBackend) acquireStorageLeases(ctx context.Context, names []str
 	for _, name := range names {
 		l, err := k.leaseManager.Acquire(leaseCtx, name, opts...)
 		if err != nil {
+			// Checked before release, which ignores cancellation and can outlast the request.
+			requestErr := ctx.Err()
 			release()
-			return nil, nil, fmt.Errorf("acquiring lease %q: %w", name, err)
+			if errors.Is(err, lease.ErrLeaseAlreadyHeld) {
+				return nil, nil, fmt.Errorf("acquiring lease %q: %w", name, err)
+			}
+			return nil, nil, k.leaseAcquisitionError(ctx, requestErr, kind, name, err)
 		}
 		leases = append(leases, l)
 		watchers.Add(1)
@@ -1118,15 +1119,29 @@ func (k *kvStorageBackend) acquireWriteLease(ctx context.Context, event WriteEve
 	if k.leaseTTL > 0 {
 		opts = append(opts, lease.WithTTL(k.leaseTTL))
 	}
-	leaseCtx, release, err := k.acquireStorageLeases(ctx, []string{name}, opts...)
-	if err != nil {
-		if errors.Is(err, lease.ErrLeaseAlreadyHeld) {
-			k.metrics.recordConflict(event)
-			return nil, nil, conflictError(event, "concurrent modification on the same resource, please retry")
-		}
-		return nil, nil, fmt.Errorf("acquiring write lease: %w", err)
+	leaseCtx, release, err := k.acquireStorageLeases(ctx, "write", []string{name}, opts...)
+	if errors.Is(err, lease.ErrLeaseAlreadyHeld) {
+		k.metrics.recordConflict(event)
+		return nil, nil, conflictError(event, "concurrent modification on the same resource, please retry")
 	}
-	return leaseCtx, release, nil
+	return leaseCtx, release, err
+}
+
+// leaseAcquisitionError keeps lease keys and raw store errors out of client
+// responses. A remote KV reports failed batches, database errors included, as
+// gRPC Aborted, which would otherwise be classified as a 409 conflict.
+func (k *kvStorageBackend) leaseAcquisitionError(ctx context.Context, requestErr error, kind, name string, err error) error {
+	// A remote KV timeout also looks like cancellation, so require the request itself to have ended.
+	if requestErr != nil && resourceutil.OnlyCancellationErrors(err) {
+		return requestErr
+	}
+	k.log.WithContext(ctx).Error("failed to acquire storage lease", "kind", kind, "name", name, "error", err)
+	return &apierrors.StatusError{ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    http.StatusInternalServerError,
+		Reason:  metav1.StatusReasonInternalError,
+		Message: fmt.Sprintf("failed to acquire %s lease", kind),
+	}}
 }
 
 func (k *kvStorageBackend) acquireBulkLeases(ctx context.Context, collection []*resourcepb.ResourceKey) (context.Context, func(), error) {
@@ -1136,7 +1151,7 @@ func (k *kvStorageBackend) acquireBulkLeases(ctx context.Context, collection []*
 	}
 	slices.Sort(names)
 	names = slices.Compact(names)
-	leaseCtx, release, err := k.acquireStorageLeases(ctx, names, lease.WithAutoRenew())
+	leaseCtx, release, err := k.acquireStorageLeases(ctx, "bulk", names, lease.WithAutoRenew())
 	if errors.Is(err, lease.ErrLeaseAlreadyHeld) {
 		return nil, nil, &apierrors.StatusError{ErrStatus: metav1.Status{
 			Code:    http.StatusPreconditionFailed,
@@ -1934,12 +1949,8 @@ type kvListKeyIterator struct {
 	clusterWide           bool
 	next                  func() (DataKey, error, bool)
 	stopFn                func()
-	started               bool
 	current               DataKey
-	nextKey               DataKey
 	err                   error
-	nextErr               error
-	hasMore               bool
 }
 
 func newKvListKeyIterator(keys iter.Seq2[DataKey, error], listRV int64, includeTokenNamespace, keysOnly, clusterWide bool) *kvListKeyIterator {
@@ -1961,20 +1972,12 @@ func (i *kvListKeyIterator) stop() {
 }
 
 func (i *kvListKeyIterator) Next() bool {
-	if !i.started {
-		i.started = true
-		i.nextKey, i.nextErr, i.hasMore = i.next()
-	}
-	if !i.hasMore {
+	key, err, ok := i.next()
+	if !ok {
 		return false
 	}
-
-	i.current, i.err = i.nextKey, i.nextErr
-	if i.err != nil {
-		return false
-	}
-	i.nextKey, i.nextErr, i.hasMore = i.next()
-	return true
+	i.current, i.err = key, err
+	return i.err == nil
 }
 
 func (i *kvListKeyIterator) Error() error {
@@ -1983,13 +1986,13 @@ func (i *kvListKeyIterator) Error() error {
 
 func (i *kvListKeyIterator) Item() BackendListKey {
 	token := ContinueToken{
-		Name:            i.nextKey.Name,
+		Name:            i.current.Name,
 		ResourceVersion: i.listRV,
 		KeysOnly:        i.keysOnly,
 		ClusterWide:     i.clusterWide,
 	}
 	if i.includeTokenNamespace {
-		token.Namespace = i.nextKey.Namespace
+		token.Namespace = i.current.Namespace
 	}
 	return BackendListKey{
 		Key: &resourcepb.ResourceKey{
@@ -2047,13 +2050,9 @@ type kvListIterator struct {
 	stopFn func()
 
 	// current item state
-	started        bool
 	currentDataObj DataObj
 	value          []byte
 	err            error
-	nextDataObj    DataObj
-	nextErr        error
-	hasMore        bool
 }
 
 // stop closes the underlying pull. Callers should defer this.
@@ -2064,16 +2063,12 @@ func (i *kvListIterator) stop() {
 }
 
 func (i *kvListIterator) Next() bool {
-	if !i.started {
-		i.started = true
-		i.nextDataObj, i.nextErr, i.hasMore = i.next()
-	}
-
-	if !i.hasMore {
+	obj, err, ok := i.next()
+	if !ok {
 		return false
 	}
 
-	i.currentDataObj, i.err = i.nextDataObj, i.nextErr
+	i.currentDataObj, i.err = obj, err
 	if i.err != nil {
 		return false
 	}
@@ -2084,8 +2079,6 @@ func (i *kvListIterator) Next() bool {
 			return false
 		}
 	}
-
-	i.nextDataObj, i.nextErr, i.hasMore = i.next()
 	return true
 }
 
@@ -2095,11 +2088,11 @@ func (i *kvListIterator) Error() error {
 
 func (i *kvListIterator) ContinueToken() string {
 	token := ContinueToken{
-		Name:            i.nextDataObj.Key.Name,
+		Name:            i.currentDataObj.Key.Name,
 		ResourceVersion: i.listRV,
 	}
 	if i.includeTokenNamespace {
-		token.Namespace = i.nextDataObj.Key.Namespace
+		token.Namespace = i.currentDataObj.Key.Namespace
 	}
 	if i.keysOnly {
 		token.KeysOnly = true
@@ -2232,6 +2225,9 @@ func applyPagination(keys []DataKey, lastSeenRV int64, sortAscending bool) []Dat
 	return pagedKeys
 }
 
+// A page or value read can stall, but a healthy scan may need many reads.
+const listModifiedSinceReadTimeout = 30 * time.Second
+
 // ListModifiedSince returns all resources that have changed since the given
 // resource version. If searchLookback is non-zero, a lookback window is applied
 // so that events committed concurrently with the previous call are not missed.
@@ -2288,7 +2284,12 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 	// Events past the retention period may already be pruned.
 	useDataStore := time.Since(effectiveRvTime) > k.maxEventStoreAge()
 
-	latestEvent, err := k.eventStore.LastEventKey(ctx)
+	readCtx, cancel := context.WithTimeout(ctx, listModifiedSinceReadTimeout)
+	latestEvent, err := k.eventStore.LastEventKey(readCtx)
+	if readErr := readCtx.Err(); readErr != nil {
+		err = readErr
+	}
+	cancel()
 	if errors.Is(err, ErrNotFound) {
 		// A write committed since the caller's last successful call would still
 		// have its event, so an empty event store means nothing changed since.
@@ -2363,6 +2364,9 @@ func convertEventType(action DataAction) resourcepb.WatchEvent_Type {
 }
 
 func (k *kvStorageBackend) getValueFromDataStore(ctx context.Context, dataKey DataKey) ([]byte, error) {
+	ctx, cancel := context.WithTimeout(ctx, listModifiedSinceReadTimeout)
+	defer cancel()
+
 	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.getValueFromDataStore")
 	defer span.End()
 
@@ -2376,7 +2380,7 @@ func (k *kvStorageBackend) getValueFromDataStore(ctx context.Context, dataKey Da
 		return []byte{}, err
 	}
 
-	return value, nil
+	return value, ctx.Err()
 }
 
 // listModifiedSinceDataStore skips resources whose latest version is at or above belowRv.
@@ -2384,7 +2388,7 @@ func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key N
 	return func(yield func(*ModifiedResource, error) bool) {
 		var lastSeenResource *ModifiedResource
 		var lastSeenDataKey DataKey
-		for dataKey, err := range k.dataStore.Keys(ctx, ListRequestKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}, SortOrderAsc) {
+		for dataKey, err := range k.dataStore.keys(ctx, ListRequestKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}, SortOrderAsc, listModifiedSinceReadTimeout) {
 			if err != nil {
 				yield(&ModifiedResource{}, err)
 				return
@@ -2461,7 +2465,7 @@ func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key 
 	return func(yield func(*ModifiedResource, error) bool) {
 		// we only care about the latest revision of every resource in the list
 		seen := make(map[string]struct{})
-		for evtKeyStr, err := range k.eventStore.ListKeysSince(ctx, sinceRv, SortOrderDesc) {
+		for evtKeyStr, err := range k.eventStore.listKeysSince(ctx, sinceRv, SortOrderDesc, listModifiedSinceReadTimeout) {
 			if err != nil {
 				yield(&ModifiedResource{}, err)
 				return

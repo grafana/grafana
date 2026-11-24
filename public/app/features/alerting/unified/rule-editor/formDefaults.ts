@@ -7,7 +7,7 @@ import { alertingAlertRuleFormSchema } from 'app/features/plugins/components/res
 import { type RuleWithLocation } from 'app/types/unified-alerting';
 import { GrafanaAlertStateDecision, type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { shouldUseRulesAPIV2 } from '../featureToggles';
+import { shouldUseGmaOnlyListView } from '../featureToggles';
 import { RuleFormType, type RuleFormValues } from '../types/rule-form';
 // TODO Ideally all of these should be moved here
 import { getRulesAccess } from '../utils/access-control';
@@ -61,8 +61,7 @@ export const getDefaultFormValues = (ruleType?: RuleFormType): RuleFormValues =>
     dataSourceName: GRAFANA_RULES_SOURCE_NAME, // let's use Grafana-managed alert rule by default
     type, // viewers can't create prom alerts
     group: '',
-    // New Grafana rules default to ungrouped when the v2 API is enabled; flag-off keeps the legacy grouped flow.
-    isUngroupedRuleGroup: shouldUseRulesAPIV2(),
+    isUngroupedRuleGroup: shouldUseGmaOnlyListView(),
 
     // grafana
     folder: undefined,
