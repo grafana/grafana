@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"slices"
 	"strings"
+	gosync "sync"
 	"time"
 
 	"github.com/open-feature/go-sdk/openfeature"
@@ -168,6 +169,17 @@ type APIBuilder struct {
 	// bootstrapConfig is the read-only local repository registered from
 	// [provisioning] bootstrap_path, empty when none is configured.
 	bootstrapConfig bootstrap.Config
+
+	// The informer metrics register once per process and are shared by the
+	// controllers started from the post-start hook and from Wire.
+	informerMetricsOnce     gosync.Once
+	relistProjectionMetrics *informer.RelistProjectionMetrics
+	freshnessMetrics        *informer.FreshnessMetrics
+
+	// loopbackConfig is the rest config the post-start hook resolved, set
+	// before loopbackReady is closed.
+	loopbackConfig *clientrest.Config
+	loopbackReady  chan struct{}
 }
 
 // NewAPIBuilder creates an API builder for the provisioning API.
@@ -268,6 +280,7 @@ func NewAPIBuilder(
 		maxFileSize: maxFileSize,
 		// Request body cap for job creation. Non-positive (<=0) uses the default.
 		maxJobBodySize: maxJobBodySize,
+		loopbackReady:  make(chan struct{}),
 	}
 
 	b.setResourceLister(resources.NewResourceLister(unified, clients, supportedResourceProvider.Get()))
@@ -277,6 +290,41 @@ func NewAPIBuilder(
 	}
 
 	return b, nil
+}
+
+// resyncInterval is the informer resync interval used for health check and
+// reconciliation of the repository and connection controllers (the jobs
+// informer uses job_poll_interval). Configurable via [provisioning]
+// resync_interval; <=0 falls back to the default.
+func (b *APIBuilder) resyncInterval() time.Duration {
+	if b.controllerResyncInterval <= 0 {
+		return setting.ProvisioningControllerResyncIntervalDefault
+	}
+	return b.controllerResyncInterval
+}
+
+func (b *APIBuilder) publishLoopbackConfig(config *clientrest.Config) {
+	b.loopbackConfig = config
+	close(b.loopbackReady)
+}
+
+// awaitLoopbackConfig blocks until the post-start hook has run, which is when
+// the provisioning API is served, and returns the rest config it resolved.
+func (b *APIBuilder) awaitLoopbackConfig(ctx context.Context) (*clientrest.Config, error) {
+	select {
+	case <-b.loopbackReady:
+		return b.loopbackConfig, nil
+	case <-ctx.Done():
+		return nil, context.Cause(ctx)
+	}
+}
+
+func (b *APIBuilder) informerMetrics() (*informer.RelistProjectionMetrics, *informer.FreshnessMetrics) {
+	b.informerMetricsOnce.Do(func() {
+		b.relistProjectionMetrics = informer.NewRelistProjectionMetrics(b.registry)
+		b.freshnessMetrics = informer.NewFreshnessMetrics(b.registry)
+	})
+	return b.relistProjectionMetrics, b.freshnessMetrics
 }
 
 func (b *APIBuilder) SetRepoValidatorOptions(opts ...repository.ValidatorOption) {
@@ -1096,6 +1144,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			b.client = c.ProvisioningV0alpha1()
+			b.publishLoopbackConfig(config)
 
 			// Initialize the API client-based job store
 			b.jobs, err = jobs.NewJobStore(b.client, jobClaimExpiry, b.registry)
@@ -1124,14 +1173,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				return nil
 			}
 
-			// Informer resync interval used for health check and reconciliation of
-			// the repository and connection controllers (the jobs informer uses
-			// job_poll_interval, below). Configurable via [provisioning]
-			// resync_interval; <=0 falls back to the default.
-			informerFactoryResyncInterval := b.controllerResyncInterval
-			if informerFactoryResyncInterval <= 0 {
-				informerFactoryResyncInterval = setting.ProvisioningControllerResyncIntervalDefault
-			}
+			informerFactoryResyncInterval := b.resyncInterval()
 			if nats.Enabled(b.natsSubscriber) {
 				logging.DefaultLogger.Info("provisioning controllers using NATS-backed informer")
 			}
@@ -1164,10 +1206,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				webhookSecretRotationInterval = 30 * 24 * time.Hour
 			}
 
-			// One per process; see RelistProjectionMetrics.
-			relistProjectionMetrics := informer.NewRelistProjectionMetrics(b.registry)
-			// Likewise one per process; see FreshnessMetrics.
-			freshnessMetrics := informer.NewFreshnessMetrics(b.registry)
+			relistProjectionMetrics, freshnessMetrics := b.informerMetrics()
 
 			// The repository delta source and the getter it backs.
 			repoKeys := keysapi.NewGRPCLister(b.unified, provisioning.RepositoryResourceInfo.GroupVersionResource())
@@ -1208,38 +1247,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 					return
 				}
 				repoController.Run(postStartHookCtx.Context, repoControllerWorkers, func() {}, func() {})
-			}()
-
-			// Create and run connection controller
-			connStatusPatcher := appcontroller.NewConnectionStatusPatcher(b.GetClient())
-			connTester := connection.NewSimpleConnectionTester(b.connectionFactory)
-			connHealthChecker := controller.NewConnectionHealthChecker(connTester, healthMetricsRecorder)
-			connKeys := keysapi.NewGRPCLister(b.unified, provisioning.ConnectionResourceInfo.GroupVersionResource())
-			connSource, connGetter := informer.NewConnectionDeltaSource(b.natsSubscriber, c, connKeys, informerFactoryResyncInterval, relistProjectionMetrics, freshnessMetrics)
-			connController := controller.NewConnectionController(
-				connGetter,
-				connStatusPatcher,
-				connHealthChecker,
-				b.connectionFactory,
-				informerFactoryResyncInterval,
-				30*time.Second,
-				b.registry,
-				b.tracer,
-				nats.Enabled(b.natsSubscriber),
-			)
-			connReg, err := connSource.AddEventHandler(connController.EventHandler())
-			if err != nil {
-				return fmt.Errorf("add connection controller event handler: %w", err)
-			}
-			go connSource.Run(postStartHookCtx.Done())
-
-			// Same as the repository controller above: wait for cache sync off
-			// the hot path so apiserver startup isn't blocked.
-			go func() {
-				if !cache.WaitForCacheSync(postStartHookCtx.Done(), connReg.HasSynced) {
-					return
-				}
-				connController.Run(postStartHookCtx.Context, repoControllerWorkers, func() {}, func() {})
 			}()
 
 			return nil
