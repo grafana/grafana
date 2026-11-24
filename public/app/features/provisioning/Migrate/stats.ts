@@ -62,6 +62,8 @@ export function computeKindTotals(data: ResourceStats | undefined, kinds: Resour
  */
 export function computeFolderCounts(data: ResourceStats | undefined): FolderCounts {
   const { folder } = resourceKindInfos;
+  // Compatibility hack: also accept the legacy `folders` group, which older stats responses may send.
+  // Every other kind lookup requires the real API group.
   const isFolder = (group: string, resource: string) =>
     resource === folder.resource && (group === folder.group || group === folder.resource);
 
