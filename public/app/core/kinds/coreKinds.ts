@@ -161,12 +161,6 @@ export function findKindByResource(group: string, resource: string): KindInfo | 
   return getKinds().find((row) => row.resource === resource && coversGroup(row, group));
 }
 
-/** The group that names an object's kind: the collection's group for a collection member, else `group`. */
-export function getKindGroup(group: string, kind: string): string {
-  const info = findKind(group, kind);
-  return info?.collectionGroup ? info.group : group;
-}
-
 /** The kinds that app plugins add. */
 export function getAppKinds(): KindInfo[] {
   return [...appKinds.values()];
