@@ -166,6 +166,7 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
               hostContextItems={template ? [template.contextItem] : []}
               onHostContextItemRemove={templates.removePill}
               renderHostActions={showTemplates ? templates.renderToggle : undefined}
+              focusRequest={templates.focusRequest}
             />
           </div>
         </div>

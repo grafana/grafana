@@ -27,6 +27,8 @@ interface StandalonePromptProps {
    * element does not survive the clone. Older plugin versions do not show them.
    */
   renderHostActions?: () => ReactNode;
+  /** Focuses the prompt's text box each time the value changes. Older plugin versions ignore it. */
+  focusRequest?: number;
 }
 
 interface DashboardLandingPromptProps {
@@ -36,6 +38,7 @@ interface DashboardLandingPromptProps {
   hostContextItems?: ChatContextItem[];
   onHostContextItemRemove?: (id: string) => void;
   renderHostActions?: () => ReactNode;
+  focusRequest?: number;
 }
 
 /** The plugin's text box with one line of text: the loading slot takes it, and the host keeps it as a floor. */
@@ -61,6 +64,7 @@ export function DashboardLandingPrompt({
   hostContextItems,
   onHostContextItemRemove,
   renderHostActions,
+  focusRequest,
 }: DashboardLandingPromptProps) {
   const { component: Prompt, isLoading } = usePluginComponent<StandalonePromptProps>(STANDALONE_PROMPT_COMPONENT_ID);
   const submit = useCallback(
@@ -93,6 +97,7 @@ export function DashboardLandingPrompt({
         hostContextItems={hostContextItems}
         onHostContextItemRemove={onHostContextItemRemove}
         renderHostActions={renderHostActions}
+        focusRequest={focusRequest}
       />
     </Suspense>
   );
