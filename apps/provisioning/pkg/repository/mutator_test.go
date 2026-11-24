@@ -500,7 +500,7 @@ func TestAdmissionMutator_Mutate_NormalizesConditions(t *testing.T) {
 				LastTransitionTime: new("yesterday"),
 				ObservedGeneration: new(int64(0)),
 			},
-			want: `[{"type":"Ready","status":"True","observedGeneration":0,"lastTransitionTime":"yesterday","reason":"Available","message":"ok"}]`,
+			want: `[{"type":"Ready","status":"True","lastTransitionTime":"yesterday","reason":"Available","message":"ok"}]`,
 		},
 	}
 
