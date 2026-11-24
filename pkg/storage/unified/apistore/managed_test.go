@@ -23,10 +23,10 @@ import (
 
 	authtypes "github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secret "github.com/grafana/grafana/pkg/storage/unified/apistore/securevalue"
@@ -137,7 +137,7 @@ func TestRepositoryExists(t *testing.T) {
 
 		provider := &identityCapturingRestConfigProvider{fakeRestConfigProvider: fakeRestConfigProvider{host: server.URL}}
 		s := &Storage{configProvider: provider}
-		callerCtx := identity.WithRequester(t.Context(), &identity.StaticRequester{Login: "caller", OrgRole: identity.RoleNone})
+		callerCtx := identity.WithRequester(t.Context(), &identity.StaticRequester{Login: "caller", OrgRole: authtypes.RoleNone})
 
 		exists, err := s.repositoryExists(callerCtx, "org-2", "my-repo")
 
@@ -563,7 +563,7 @@ func TestPrepareObjectForUpdateOrphanedDelete(t *testing.T) {
 
 	t.Run("rejects a replaced secure value", func(t *testing.T) {
 		secureStore := secret.NewMockInlineSecureValueSupport(t)
-		secureStore.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("new-secret"), (*string)(nil)).
+		secureStore.On("CreateInline", mock.Anything, mock.Anything, resource.RawSecureValue("new-secret"), (*string)(nil)).
 			Return("sv-2", nil).Once()
 		s := newStorage(t, secureStore)
 		previous := managedUnstructured(t, true, false, secure("sv-1"))
@@ -599,14 +599,14 @@ func TestPrepareObjectForUpdateOrphanedDelete(t *testing.T) {
 	})
 
 	// The accessor returns this form as the live map, so preparing the update must not change the previous one.
-	liveSecure := func(values common.InlineSecureValues) map[string]any {
+	liveSecure := func(values resource.InlineSecureValues) map[string]any {
 		return map[string]any{"secure": values}
 	}
 
 	t.Run("allows the terminating label alone when the secure values are a live map", func(t *testing.T) {
 		s := newStorage(t, secret.NewMockInlineSecureValueSupport(t))
-		previous := managedUnstructured(t, true, false, liveSecure(common.InlineSecureValues{"token": {Name: "sv-1"}}))
-		obj := managedUnstructured(t, true, true, liveSecure(common.InlineSecureValues{"token": {Name: "sv-1"}}))
+		previous := managedUnstructured(t, true, false, liveSecure(resource.InlineSecureValues{"token": {Name: "sv-1"}}))
+		obj := managedUnstructured(t, true, true, liveSecure(resource.InlineSecureValues{"token": {Name: "sv-1"}}))
 
 		_, err := s.prepareObjectForUpdate(testContext(t), obj, previous)
 		require.NoError(t, err)
@@ -614,8 +614,8 @@ func TestPrepareObjectForUpdateOrphanedDelete(t *testing.T) {
 
 	t.Run("rejects a removed secure value when the secure values are a live map", func(t *testing.T) {
 		s := newStorage(t, secret.NewMockInlineSecureValueSupport(t))
-		previous := managedUnstructured(t, true, false, liveSecure(common.InlineSecureValues{"token": {Name: "sv-1"}}))
-		obj := managedUnstructured(t, true, true, liveSecure(common.InlineSecureValues{"token": {Remove: true}}))
+		previous := managedUnstructured(t, true, false, liveSecure(resource.InlineSecureValues{"token": {Name: "sv-1"}}))
+		obj := managedUnstructured(t, true, true, liveSecure(resource.InlineSecureValues{"token": {Remove: true}}))
 
 		_, err := s.prepareObjectForUpdate(testContext(t), obj, previous)
 		require.ErrorIs(t, err, errResourceIsManagedInRepository)
@@ -662,7 +662,7 @@ func TestPrepareObjectForUpdateOrphanedDelete(t *testing.T) {
 // repository still manages, even when the repository is gone.
 func TestPrepareObjectForUpdateOrphanedRelease(t *testing.T) {
 	editor := func(t *testing.T) context.Context {
-		return identity.WithRequester(t.Context(), &identity.StaticRequester{Type: authtypes.TypeUser, UserID: 2, OrgRole: identity.RoleEditor})
+		return identity.WithRequester(t.Context(), &identity.StaticRequester{Type: authtypes.TypeUser, UserID: 2, OrgRole: authtypes.RoleEditor})
 	}
 	storageWithParent := func(t *testing.T, parentManaged bool) *Storage {
 		t.Helper()

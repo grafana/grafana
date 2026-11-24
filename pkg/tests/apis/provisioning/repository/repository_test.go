@@ -22,6 +22,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -2918,6 +2919,26 @@ func detailsKind(err error) string {
 	return status.ErrStatus.Details.Kind
 }
 
+// dashboardCopyForRepo writes a copy of a test dashboard with the repository name added to its name.
+// Orphaned dashboards stay managed by their deleted repository, so a second repository in the same
+// test cannot sync the same dashboard name.
+func dashboardCopyForRepo(t *testing.T, from, repo string) string {
+	t.Helper()
+	raw, err := os.ReadFile(from) //nolint:gosec
+	require.NoError(t, err)
+	var dashboard map[string]any
+	require.NoError(t, json.Unmarshal(raw, &dashboard))
+	metadata, ok := dashboard["metadata"].(map[string]any)
+	require.True(t, ok, "%s has no metadata", from)
+	metadata["name"] = fmt.Sprintf("%s-%s", metadata["name"], repo)
+
+	out, err := json.Marshal(dashboard)
+	require.NoError(t, err)
+	copyPath := filepath.Join(t.TempDir(), filepath.Base(from))
+	require.NoError(t, os.WriteFile(copyPath, out, 0o600))
+	return copyPath
+}
+
 // orphanedRepoResources syncs a folder-target repository with a nested directory, then deletes the
 // repository while keeping only the cleanup finalizer so its resources are left behind. It returns
 // the names of the resources that outlived it.
@@ -2928,8 +2949,8 @@ func orphanedRepoResources(t *testing.T, helper *common.ProvisioningTestHelper, 
 		Name:       repo,
 		SyncTarget: "folder",
 		Copies: map[string]string{
-			"../testdata/all-panels.json":   "dashboard.json",
-			"../testdata/text-options.json": "nested/nested-dashboard.json",
+			dashboardCopyForRepo(t, "../testdata/all-panels.json", repo):   "dashboard.json",
+			dashboardCopyForRepo(t, "../testdata/text-options.json", repo): "nested/nested-dashboard.json",
 		},
 	})
 
@@ -3017,23 +3038,10 @@ func TestIntegrationProvisioning_DeleteOrphanedManagedResources(t *testing.T) {
 }
 
 // TestIntegrationProvisioning_ReleaseOrphanedManagedResources covers detaching resources whose
-// repository is gone. Releasing a repo-managed resource is otherwise reserved for admins.
+// repository is gone. With the repository gone, the caller needs no admin role, only the permission
+// to update the resource.
 func TestIntegrationProvisioning_ReleaseOrphanedManagedResources(t *testing.T) {
 	helper := sharedHelper(t)
-
-	const repo = "orphan-release-test"
-	_, nestedDashboard, nestedFolder := orphanedRepoResources(t, helper, repo)
-
-	editorFolders := helper.GetResourceClient(apis.ResourceClientArgs{
-		User:      helper.Org1.Editor,
-		Namespace: "default",
-		GVR:       folder.FolderResourceInfo.GroupVersionResource(),
-	})
-	editorDashboards := helper.GetResourceClient(apis.ResourceClientArgs{
-		User:      helper.Org1.Editor,
-		Namespace: "default",
-		GVR:       dashboardV1.DashboardResourceInfo.GroupVersionResource(),
-	})
 
 	release := func(t *testing.T, client *apis.K8sResourceClient, name string) error {
 		t.Helper()
@@ -3053,27 +3061,55 @@ func TestIntegrationProvisioning_ReleaseOrphanedManagedResources(t *testing.T) {
 		return err
 	}
 
-	// Released top-down: ensureSameRepoManager rejects an unmanaged resource inside a folder that is
-	// still repo-managed, so a parent has to be released before its children.
-	t.Run("an editor can release an orphaned root folder", func(t *testing.T) {
-		require.NoError(t, release(t, editorFolders, repo))
+	for _, caller := range []struct {
+		role    string
+		user    apis.User
+		allowed bool
+	}{
+		{role: "viewer", user: helper.Org1.Viewer, allowed: false},
+		{role: "editor", user: helper.Org1.Editor, allowed: true},
+		{role: "admin", user: helper.Org1.Admin, allowed: true},
+	} {
+		t.Run(caller.role, func(t *testing.T) {
+			repo := "orphan-release-" + caller.role
+			rootDashboard, _, nestedFolder := orphanedRepoResources(t, helper, repo)
 
-		released, err := helper.Folders.Resource.Get(t.Context(), repo, metav1.GetOptions{})
-		require.NoError(t, err)
-		require.NotContains(t, released.GetAnnotations(), utils.AnnoKeyManagerKind)
-		require.NotContains(t, released.GetAnnotations(), utils.AnnoKeyManagerIdentity)
-	})
+			// ensureSameRepoManager rejects an unmanaged resource inside a folder that is still
+			// repo-managed. Release the root folder first, so only the caller's permissions decide
+			// the releases below.
+			require.NoError(t, release(t, helper.Folders, repo))
 
-	t.Run("an editor can release an orphaned nested folder", func(t *testing.T) {
-		require.NoError(t, release(t, editorFolders, nestedFolder))
-	})
+			for _, resource := range []struct {
+				kind  string
+				gvr   schema.GroupVersionResource
+				admin *apis.K8sResourceClient
+				name  string
+			}{
+				{kind: "folder", gvr: folder.FolderResourceInfo.GroupVersionResource(), admin: helper.Folders, name: nestedFolder},
+				{kind: "dashboard", gvr: dashboardV1.DashboardResourceInfo.GroupVersionResource(), admin: helper.DashboardsV1, name: rootDashboard},
+			} {
+				t.Run(resource.kind, func(t *testing.T) {
+					client := helper.GetResourceClient(apis.ResourceClientArgs{
+						User:      caller.user,
+						Namespace: "default",
+						GVR:       resource.gvr,
+					})
 
-	t.Run("an editor can release an orphaned dashboard", func(t *testing.T) {
-		require.NoError(t, release(t, editorDashboards, nestedDashboard))
+					err := release(t, client, resource.name)
 
-		released, err := helper.DashboardsV1.Resource.Get(t.Context(), nestedDashboard, metav1.GetOptions{})
-		require.NoError(t, err)
-		require.NotContains(t, released.GetAnnotations(), utils.AnnoKeyManagerKind)
-		require.NotContains(t, released.GetAnnotations(), utils.AnnoKeySourcePath)
-	})
+					stored, getErr := resource.admin.Resource.Get(t.Context(), resource.name, metav1.GetOptions{})
+					require.NoError(t, getErr)
+					if caller.allowed {
+						require.NoError(t, err)
+						require.NotContains(t, stored.GetAnnotations(), utils.AnnoKeyManagerKind)
+						require.NotContains(t, stored.GetAnnotations(), utils.AnnoKeyManagerIdentity)
+						require.NotContains(t, stored.GetAnnotations(), utils.AnnoKeySourcePath)
+						return
+					}
+					require.True(t, apierrors.IsForbidden(err), "a %s without update permission must not release: %v", caller.role, err)
+					require.Equal(t, repo, stored.GetAnnotations()[utils.AnnoKeyManagerIdentity], "the resource must stay managed")
+				})
+			}
+		})
+	}
 }
