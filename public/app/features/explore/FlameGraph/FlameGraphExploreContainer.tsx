@@ -1,13 +1,16 @@
 import { css } from '@emotion/css';
 
-import { type DataFrame, type GrafanaTheme2, CoreApp } from '@grafana/data';
+import { type DataFrame, type DataQueryRequest, type GrafanaTheme2, CoreApp } from '@grafana/data';
 import { FlameGraph } from '@grafana/flamegraph';
 import { config, reportInteraction } from '@grafana/runtime';
 import { useFlagFlameGraphTableNg, useFlagTableAutoColumnWidths, useFlagTableRefresh } from '@grafana/runtime/internal';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 
+import { useFlameGraphDataSourceType } from './getFlameGraphDataSourceType';
+
 interface Props {
   dataFrames: DataFrame[];
+  request?: DataQueryRequest;
 }
 
 function interaction(name: string, context: Record<string, string | number> = {}) {
@@ -24,11 +27,13 @@ export const FlameGraphExploreContainer = (props: Props) => {
   const useTableNG = useFlagFlameGraphTableNg();
   const tableRefreshEnabled = useFlagTableRefresh();
   const contentAwareWidthsEnabled = useFlagTableAutoColumnWidths();
+  const dataSource = useFlameGraphDataSourceType(props.request);
 
   return (
     <div className={styles.container}>
       <FlameGraph
         data={props.dataFrames[0]}
+        dataSource={dataSource}
         stickyHeader={true}
         getTheme={() => theme}
         useTableNG={useTableNG}

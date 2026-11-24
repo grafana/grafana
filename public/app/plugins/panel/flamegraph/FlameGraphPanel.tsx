@@ -3,6 +3,7 @@ import { FlameGraph, checkFields, getMessageCheckFieldsResult } from '@grafana/f
 import { PanelDataErrorView, reportInteraction, config } from '@grafana/runtime';
 import { useFlagFlameGraphTableNg, useFlagTableAutoColumnWidths, useFlagTableRefresh } from '@grafana/runtime/internal';
 import { useTheme2 } from '@grafana/ui';
+import { useFlameGraphDataSourceType } from 'app/features/explore/FlameGraph/getFlameGraphDataSourceType';
 
 import { type Options } from './types';
 
@@ -19,6 +20,8 @@ export const FlameGraphPanel = (props: PanelProps<Options>) => {
   const useTableNG = useFlagFlameGraphTableNg();
   const tableRefreshEnabled = useFlagTableRefresh();
   const contentAwareWidthsEnabled = useFlagTableAutoColumnWidths();
+  const dataSource = useFlameGraphDataSourceType(props.data.request);
+
   const wrongFields = checkFields(props.data.series[0]);
   if (wrongFields) {
     return (
@@ -29,6 +32,7 @@ export const FlameGraphPanel = (props: PanelProps<Options>) => {
   return (
     <FlameGraph
       data={props.data.series[0]}
+      dataSource={dataSource}
       stickyHeader={false}
       getTheme={() => theme}
       fillHeight={true}

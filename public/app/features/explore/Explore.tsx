@@ -558,7 +558,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
         title={t('explore.explore.title-flame-graph', 'Flame graph')}
         icon="fire"
       >
-        <FlameGraphExploreContainer dataFrames={queryResponse.flameGraphFrames} />
+        <FlameGraphExploreContainer dataFrames={queryResponse.flameGraphFrames} request={queryResponse.request} />
       </ContentOutlineItem>
     );
   }

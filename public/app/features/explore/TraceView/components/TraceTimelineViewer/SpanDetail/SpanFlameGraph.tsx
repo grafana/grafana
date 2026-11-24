@@ -22,6 +22,7 @@ import {
   useDataSourceInstanceSettings,
 } from '@grafana/runtime';
 import { useStyles2, useTheme2 } from '@grafana/ui';
+import { dataSourceTypeFromPluginId } from 'app/features/explore/FlameGraph/getFlameGraphDataSourceType';
 import { type PyroscopeQuery } from 'app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/pyroscope-types';
 
 import {
@@ -64,6 +65,7 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
   const { settings: loadedProfilesSettings } = useDataSourceInstanceSettings(profilesUid);
   // Undefined ref resolves to the default DS — only use settings when a profiles UID is configured.
   const profilesDataSourceSettings = profilesUid ? loadedProfilesSettings : undefined;
+  const dataSource = dataSourceTypeFromPluginId(profilesDataSourceSettings?.type);
   const theme = useTheme2();
 
   const profileTag = span.tags.filter((tag) => tag.key === pyroscopeProfileIdTagKey);
@@ -189,6 +191,7 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
       </div>
       <FlameGraph
         data={traceFlameGraphs[profileTagValue]}
+        dataSource={dataSource}
         getTheme={() => theme}
         showFlameGraphOnly={true}
         disableCollapsing={true}
