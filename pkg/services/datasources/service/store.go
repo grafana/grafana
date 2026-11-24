@@ -137,7 +137,7 @@ func (ss *SqlStore) GetDataSources(ctx context.Context, query *datasources.GetDa
 		if query.DataSourceLimit <= 0 {
 			sess = dbSess.Where("org_id=?", query.OrgID).Asc("name")
 		} else {
-			sess = dbSess.Limit(query.DataSourceLimit, 0).Where("org_id=?", query.OrgID).Asc("name")
+			sess = dbSess.Limit(query.DataSourceLimit, query.Offset).Where("org_id=?", query.OrgID).Asc("name")
 		}
 
 		return sess.Find(&dataSources)

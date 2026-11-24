@@ -60,12 +60,15 @@ type QueryAPIBuilder struct {
 	converter              *expr.ResultConverter
 	queryTypes             *datasourceV0.QueryTypeDefinitionList
 	legacyDatasourceLookup service.LegacyDataSourceLookup
-	connections            datasourceV0.DataSourceConnectionProvider
 	reportStatus           func(context.Context, int)
 	datasources            *dataSourcesOptions
+
+	// lister serves the datasources resource and the connections route; set with the storage
+	lister *dataSourceLister
 }
 
-// dataSourcesOptions are what the datasources resource reads from. Without them it is not served.
+// dataSourcesOptions are what the cross-type datasource listings read from. Without them neither
+// the datasources resource nor the connections route is served.
 type dataSourcesOptions struct {
 	legacy        legacyDataSources
 	storageStatus dualwrite.Service
@@ -81,7 +84,6 @@ func NewQueryAPIBuilder(
 	registerer prometheus.Registerer,
 	tracer tracing.Tracer,
 	legacyDatasourceLookup service.LegacyDataSourceLookup,
-	connections datasourceV0.DataSourceConnectionProvider,
 	concurrentQueryLimit int,
 	reportStatus func(context.Context, int),
 	datasources *dataSourcesOptions,
@@ -112,7 +114,6 @@ func NewQueryAPIBuilder(
 		tracer:               tracer,
 		features:             features,
 		queryTypes:           queryTypes,
-		connections:          connections,
 		converter: &expr.ResultConverter{
 			Features: features,
 			Tracer:   tracer,
@@ -178,7 +179,6 @@ func RegisterAPIService(
 		registerer,
 		tracer,
 		legacyDatasourceLookup,
-		dataSourcesService, // datasourceV0.DataSourceConnectionProvider
 		cfg.SectionWithEnvOverrides("query").Key("concurrent_query_limit").MustInt(runtime.NumCPU()),
 		reportStatus,
 		&dataSourcesOptions{
@@ -210,16 +210,22 @@ func addKnownTypes(scheme *apiruntime.Scheme, gv schema.GroupVersion) {
 	)
 }
 
+// addDataSourceTypes registers the stored datasource, which the collection is decoded into, and
+// the metadata-only form the datasources resource serves.
 func addDataSourceTypes(scheme *apiruntime.Scheme, gv schema.GroupVersion) {
-	scheme.AddKnownTypeWithName(gv.WithKind(dataSourceKind), &dataSourceMetadata{})
-	scheme.AddKnownTypeWithName(gv.WithKind(dataSourceListKind), &dataSourceMetadataList{})
+	scheme.AddKnownTypes(gv,
+		&datasourceV0.DataSource{},
+		&datasourceV0.DataSourceList{},
+	)
+	scheme.AddKnownTypeWithName(gv.WithKind(dataSourceMetadataKind), &dataSourceMetadata{})
+	scheme.AddKnownTypeWithName(gv.WithKind(dataSourceMetadataListKind), &dataSourceMetadataList{})
 }
 
 func (b *QueryAPIBuilder) InstallSchema(scheme *apiruntime.Scheme) error {
 	gv := b.GetGroupVersion()
 	addKnownTypes(scheme, gv)
 
-	// The datasources resource, with the internal version its registry store needs
+	// The datasources listing, with the internal version its registry store needs
 	addDataSourceTypes(scheme, gv)
 	addDataSourceTypes(scheme, schema.GroupVersion{Group: gv.Group, Version: apiruntime.APIVersionInternal})
 	metav1.AddToGroupVersion(scheme, gv)

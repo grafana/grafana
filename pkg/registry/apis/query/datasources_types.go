@@ -13,19 +13,18 @@ import (
 )
 
 const (
-	dataSourceKind     = "DataSource"
-	dataSourceListKind = "DataSourceList"
+	dataSourceMetadataKind     = "DataSourceMetadata"
+	dataSourceMetadataListKind = "DataSourceMetadataList"
 )
 
-// dataSourceMetadata is a datasource without its spec and secure values. Its apiVersion names the
-// group that serves and writes the datasource.
+// dataSourceMetadata is a datasource without its spec and secure values.
 type dataSourceMetadata struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`
 }
 
 func (dataSourceMetadata) OpenAPIModelName() string {
-	return datasourceV0.OpenAPIPrefix + "DataSourceMetadata"
+	return datasourceV0.OpenAPIPrefix + dataSourceMetadataKind
 }
 
 func (in *dataSourceMetadata) DeepCopyObject() runtime.Object {
@@ -34,15 +33,13 @@ func (in *dataSourceMetadata) DeepCopyObject() runtime.Object {
 	return &out
 }
 
-// pointAtServingGroup sets the identity of the object to the group named by its label.
-// An object without the label keeps the group it was read from.
-func (in *dataSourceMetadata) pointAtServingGroup() {
-	plugin := in.Labels[datasourceV0.LabelKeyGroup]
-	if plugin == "" {
+// pointAt names the group that serves and writes the datasource as the item's identity.
+func (in *dataSourceMetadata) pointAt(group string) {
+	if group == "" {
 		return
 	}
-	in.APIVersion = plugin + "." + datasourceV0.GROUP + "/" + datasourceV0.VERSION
-	in.Kind = dataSourceKind
+	in.APIVersion = group + "/" + datasourceV0.VERSION
+	in.Kind = datasourceV0.DataSourceResourceInfo.GroupVersionKind().Kind
 }
 
 type dataSourceMetadataList struct {
@@ -53,7 +50,7 @@ type dataSourceMetadataList struct {
 }
 
 func (dataSourceMetadataList) OpenAPIModelName() string {
-	return datasourceV0.OpenAPIPrefix + "DataSourceMetadataList"
+	return datasourceV0.OpenAPIPrefix + dataSourceMetadataListKind
 }
 
 func (in *dataSourceMetadataList) DeepCopyObject() runtime.Object {
@@ -71,7 +68,7 @@ func (in *dataSourceMetadataList) DeepCopyObject() runtime.Object {
 
 func newDataSourcesResourceInfo(group string) utils.ResourceInfo {
 	return utils.NewResourceInfo(group, datasourceV0.VERSION,
-		"datasources", "datasource", dataSourceKind,
+		"datasources", "datasource", dataSourceMetadataKind,
 		func() runtime.Object { return &dataSourceMetadata{} },
 		func() runtime.Object { return &dataSourceMetadataList{} },
 		utils.TableColumns{

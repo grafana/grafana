@@ -239,7 +239,6 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		// Record a manager on the stored copy, the way Git Sync does
 		rsp, err := storage.Read(svcCtx, &resourcepb.ReadRequest{Key: key})
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		stored := &unstructured.Unstructured{}
 		require.NoError(t, stored.UnmarshalJSON(rsp.Value))
 		stored.SetAnnotations(map[string]string{
@@ -248,9 +247,8 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		})
 		value, err := stored.MarshalJSON()
 		require.NoError(t, err)
-		updated, err := storage.Update(svcCtx, &resourcepb.UpdateRequest{Key: key, ResourceVersion: rsp.ResourceVersion, Value: value})
+		_, err = storage.Update(svcCtx, &resourcepb.UpdateRequest{Key: key, ResourceVersion: rsp.ResourceVersion, Value: value})
 		require.NoError(t, err)
-		require.Nil(t, updated.Error)
 
 		all := helper.Org1.Admin.ResourceClient(t, schema.GroupVersionResource{
 			Group:    datasourceV0alpha1.GROUP,
@@ -272,7 +270,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 
 			rsp := apis.DoRequest(helper, apis.RequestParams{
 				User: helper.Org1.Admin,
-				Path: "/apis/datasource.grafana.app/v0alpha1/namespaces/default/datasources/test",
+				Path: "/apis/datasource.grafana.app/v0alpha1/namespaces/default/datasources",
 			}, &json.RawMessage{})
 			require.Equal(t, http.StatusOK, rsp.Response.StatusCode, string(rsp.Body))
 			require.NotContains(t, string(rsp.Body), `"spec"`)
@@ -289,10 +287,9 @@ func TestIntegrationTestDatasource(t *testing.T) {
 			require.Empty(t, list.Items)
 		})
 
-		t.Run("get by name", func(t *testing.T) {
-			got, err := all.Get(ctx, "test", metav1.GetOptions{})
-			require.NoError(t, err)
-			require.Equal(t, "my-repo", got.GetAnnotations()[utils.AnnoKeyManagerIdentity])
+		t.Run("a single datasource is read through its own group", func(t *testing.T) {
+			_, err := all.Get(ctx, "test", metav1.GetOptions{})
+			require.True(t, apierrors.IsNotFound(err), "got %v", err)
 		})
 
 		t.Run("returns only the metadata when asked", func(t *testing.T) {
@@ -309,9 +306,16 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		})
 
 		t.Run("is read only", func(t *testing.T) {
-			err := all.Delete(ctx, "test", metav1.DeleteOptions{})
-			require.Error(t, err)
+			_, err := all.Create(ctx, &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": "datasource.grafana.app/v0alpha1",
+				"kind":       "DataSourceMetadata",
+				"metadata":   map[string]any{"name": "new"},
+			}}, metav1.CreateOptions{})
 			require.True(t, apierrors.IsMethodNotSupported(err), "got %v", err)
+
+			// Without a single-object endpoint there is nothing to delete or update by name
+			err = all.Delete(ctx, "test", metav1.DeleteOptions{})
+			require.True(t, apierrors.IsNotFound(err), "got %v", err)
 		})
 
 		t.Run("hides what the user cannot read", func(t *testing.T) {

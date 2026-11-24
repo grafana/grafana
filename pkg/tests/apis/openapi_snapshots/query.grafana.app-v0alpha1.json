@@ -112,10 +112,10 @@
     "/apis/query.grafana.app/v0alpha1/namespaces/{namespace}/datasources": {
       "get": {
         "tags": [
-          "DataSource"
+          "DataSourceMetadata"
         ],
-        "description": "list objects of kind DataSource",
-        "operationId": "listDataSource",
+        "description": "list objects of kind DataSourceMetadata",
+        "operationId": "listDataSourceMetadata",
         "responses": {
           "200": {
             "description": "OK",
@@ -142,7 +142,7 @@
         "x-kubernetes-group-version-kind": {
           "group": "query.grafana.app",
           "version": "v0alpha1",
-          "kind": "DataSource"
+          "kind": "DataSourceMetadata"
         }
       },
       "parameters": [
@@ -261,69 +261,6 @@
           "description": "Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion.",
           "schema": {
             "type": "boolean",
-            "uniqueItems": true
-          }
-        }
-      ]
-    },
-    "/apis/query.grafana.app/v0alpha1/namespaces/{namespace}/datasources/{name}": {
-      "get": {
-        "tags": [
-          "DataSource"
-        ],
-        "description": "read the specified DataSource",
-        "operationId": "getDataSource",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSourceMetadata"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSourceMetadata"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "get",
-        "x-kubernetes-group-version-kind": {
-          "group": "query.grafana.app",
-          "version": "v0alpha1",
-          "kind": "DataSource"
-        }
-      },
-      "parameters": [
-        {
-          "name": "name",
-          "in": "path",
-          "description": "name of the DataSource",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "namespace",
-          "in": "path",
-          "description": "object name and auth scope, such as for teams and projects",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "pretty",
-          "in": "query",
-          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
-          "schema": {
-            "type": "string",
             "uniqueItems": true
           }
         }
@@ -494,7 +431,7 @@
         "x-kubernetes-group-version-kind": [
           {
             "group": "query.grafana.app",
-            "kind": "DataSource",
+            "kind": "DataSourceMetadata",
             "version": "v0alpha1"
           }
         ]
@@ -532,7 +469,7 @@
         "x-kubernetes-group-version-kind": [
           {
             "group": "query.grafana.app",
-            "kind": "DataSourceList",
+            "kind": "DataSourceMetadataList",
             "version": "v0alpha1"
           }
         ]
