@@ -95,7 +95,7 @@ func (s *RepositoryControllerService) Run(ctx context.Context) error {
 		Registry:                      b.registry,
 		Tracer:                        b.tracer,
 		ParallelOperations:            10,
-		ResyncInterval:                b.informerResyncInterval(),
+		ResyncInterval:                b.resyncInterval(),
 		MinSyncInterval:               b.minSyncInterval,
 		DrainTimeout:                  30 * time.Second,
 		WebhookSecretRotationInterval: webhookSecretRotationInterval,
