@@ -1,8 +1,12 @@
-import { SceneObjectStateChangedEvent } from '@grafana/scenes';
+import { SceneObjectStateChangedEvent, VizPanel } from '@grafana/scenes';
 import { type Dashboard } from '@grafana/schema';
 import { type CorsWorker } from 'app/core/utils/CorsWorker';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
+import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
+import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
+import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
 
 import { DashboardSceneChangeTracker } from './DashboardSceneChangeTracker';
 import * as createDetectChangesWorker from './createDetectChangesWorker';
@@ -43,6 +47,31 @@ describe('DashboardSceneChangeTracker', () => {
       tracker.terminate();
     }
   );
+
+  it('marks the dashboard dirty while a library panel has unsaved option changes', () => {
+    const libraryPanel = new LibraryPanelBehavior({ uid: 'lib-1', name: 'Shared CPU', isLoaded: true });
+    const panel = new VizPanel({ key: 'panel-1', options: { showLegend: true }, $behaviors: [libraryPanel] });
+    const { scene, tracker, worker } = buildChangeTracker(
+      new AutoGridLayoutManager({ layout: new AutoGridLayout({ children: [new AutoGridItem({ body: panel })] }) })
+    );
+    const replyWithoutSaveModelChanges = () => {
+      const request = worker.postMessage.mock.calls.at(-1)![0];
+      worker.onmessage?.(new MessageEvent('message', { data: { generation: request.generation, hasChanges: false } }));
+    };
+    tracker.startTrackingChanges();
+
+    libraryPanel.recordSavedOptions();
+    panel.setState({ options: { showLegend: false } });
+    scene.setState({ title: 'Updated title' });
+    replyWithoutSaveModelChanges();
+    expect(scene.state.isDirty).toBe(true);
+
+    panel.setState({ options: { showLegend: true } });
+    scene.setState({ title: 'Initial dashboard' });
+    replyWithoutSaveModelChanges();
+    expect(scene.state.isDirty).toBe(false);
+    tracker.terminate();
+  });
 
   it('when resumed after discarding pending checks, an old reply cannot overwrite a fresh result', () => {
     const { scene, tracker, worker } = buildChangeTracker();
@@ -177,8 +206,8 @@ describe('DashboardSceneChangeTracker', () => {
   });
 });
 
-function buildChangeTracker() {
-  const scene = new DashboardScene({ title: 'Initial dashboard', isEditing: true, isDirty: false });
+function buildChangeTracker(body?: DashboardScene['state']['body']) {
+  const scene = new DashboardScene({ title: 'Initial dashboard', isEditing: true, isDirty: false, body });
   scene.setInitialSaveModel({ title: 'Initial dashboard', schemaVersion: 30 });
   const worker = {
     postMessage: jest.fn<void, [DashboardChangesRequest]>(),

@@ -291,7 +291,8 @@ export interface OptionPaneRenderProps2 {
   instanceState: unknown;
   currentOptions: Record<string, unknown>;
   currentFieldConfig: FieldConfigSource;
-  reportInteractionUI: 'panel-edit' | 'view-panel';
+  /** Leave unset to skip interaction reporting */
+  reportInteractionUI?: 'panel-edit' | 'view-panel';
   onOptionsChange?: (options: Record<string, unknown>, name: string, category: string) => void;
   onFieldConfigChange?: (fieldConfig: FieldConfigSource, name: string, category: string) => void;
   varMappingsEnabled?: boolean;
@@ -339,13 +340,15 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
         panel.onOptionsChange(newOptions);
       }
       // Record interaction for analytics
-      DashboardInteractions.setVisualOption({
-        ui: props.reportInteractionUI,
-        option: path,
-        ...getReportableOptionValue(value, option?.settings),
-        panel_type: plugin.meta.id,
-        panel_id: getPanelIdForVizPanel(panel),
-      });
+      if (props.reportInteractionUI) {
+        DashboardInteractions.setVisualOption({
+          ui: props.reportInteractionUI,
+          option: path,
+          ...getReportableOptionValue(value, option?.settings),
+          panel_type: plugin.meta.id,
+          panel_id: getPanelIdForVizPanel(panel),
+        });
+      }
     },
   };
 
@@ -406,13 +409,15 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
             }
 
             // Record interaction for analytics
-            DashboardInteractions.setVisualOption({
-              ui: props.reportInteractionUI,
-              option: `?${fieldOption.isCustom ? 'custom.' : ''}${fieldOption.path}`,
-              ...getReportableOptionValue(v, fieldOption.settings),
-              panel_type: plugin.meta.id,
-              panel_id: getPanelIdForVizPanel(panel),
-            });
+            if (props.reportInteractionUI) {
+              DashboardInteractions.setVisualOption({
+                ui: props.reportInteractionUI,
+                option: `?${fieldOption.isCustom ? 'custom.' : ''}${fieldOption.path}`,
+                ...getReportableOptionValue(v, fieldOption.settings),
+                panel_type: plugin.meta.id,
+                panel_id: getPanelIdForVizPanel(panel),
+              });
+            }
           };
 
           return <Editor value={value} onChange={onChange} item={fieldOption} context={context} id={htmlId} />;
