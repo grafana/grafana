@@ -13,7 +13,6 @@ import {
   type BackendSrv,
   createQueryRunner,
   getBackendSrv,
-  getDataSourceInstance,
   getDataSourceInstanceList,
   getDefaultDataSourceInstanceListItem,
 } from '@grafana/runtime';
@@ -25,13 +24,11 @@ import {
   fetchSyntheticsSuccessSeries,
   probeSyntheticChecks,
 } from './syntheticsData';
-import { healthCheckThrough } from './test-utils';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   createQueryRunner: jest.fn(),
   getBackendSrv: jest.fn(),
-  getDataSourceInstance: jest.fn(),
   getDataSourceInstanceList: jest.fn(),
   getDefaultDataSourceInstanceListItem: jest.fn(),
 }));
@@ -91,7 +88,6 @@ beforeEach(() => {
   // Health gate: every candidate healthy unless a test overrides by uid.
   healthGet.mockResolvedValue({ status: 'OK' });
   jest.mocked(getBackendSrv).mockReturnValue({ get: healthGet } as unknown as BackendSrv);
-  jest.mocked(getDataSourceInstance).mockImplementation(healthCheckThrough(healthGet));
   resetProbeHealth();
   dataByUid = {};
   probeErrorUids = new Set();

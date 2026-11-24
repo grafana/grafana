@@ -7,9 +7,10 @@ import {
   getBackendSrv,
   getDataSourceInstance,
   getDataSourceInstanceList,
+  getDataSourceInstanceSettings,
   getDefaultDataSourceInstanceListItem,
 } from '@grafana/runtime';
-import { FlagKeys } from '@grafana/runtime/internal';
+import { FlagKeys, getHealthCheckUrl } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import {
@@ -26,14 +27,19 @@ import {
   withDeadline,
 } from './probeUtils';
 import { detectSignal, SIGNAL_BUDGET_MS } from './solutionState';
-import { backendInstance, deferred, healthCheckThrough } from './test-utils';
+import { backendInstance, deferred } from './test-utils';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: jest.fn(),
   getDataSourceInstance: jest.fn(),
   getDataSourceInstanceList: jest.fn(),
+  getDataSourceInstanceSettings: jest.fn(),
   getDefaultDataSourceInstanceListItem: jest.fn(),
+}));
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  getHealthCheckUrl: jest.fn(),
 }));
 const getDataSourceInstanceListMock = jest.mocked(getDataSourceInstanceList);
 const healthGetMock = jest.fn();
@@ -328,7 +334,10 @@ describe('isDatasourceHealthy', () => {
   beforeEach(() => {
     resetProbeHealth();
     healthGetMock.mockReset();
-    jest.mocked(getDataSourceInstance).mockImplementation(healthCheckThrough(healthGetMock));
+    jest.mocked(getBackendSrv).mockReturnValue({ get: healthGetMock } as unknown as BackendSrv);
+    // No instance settings: the probe keeps the legacy route.
+    jest.mocked(getDataSourceInstanceSettings).mockReset();
+    jest.mocked(getHealthCheckUrl).mockReset();
   });
 
   it('reports a datasource whose health check answers OK as healthy', async () => {
@@ -336,8 +345,28 @@ describe('isDatasourceHealthy', () => {
 
     await expect(isDatasourceHealthy('healthy')).resolves.toBe(true);
     expect(healthGetMock).toHaveBeenCalledWith('/api/datasources/uid/healthy/health', undefined, undefined, {
+      showErrorAlert: false,
       abortSignal: expect.any(AbortSignal),
     });
+  });
+
+  it('checks health on the route the datasource API rollout selects for the datasource', async () => {
+    const settings = { uid: 'rolled-out', type: 'loki' } as Awaited<ReturnType<typeof getDataSourceInstanceSettings>>;
+    jest.mocked(getDataSourceInstanceSettings).mockResolvedValue(settings);
+    jest.mocked(getHealthCheckUrl).mockReturnValue('/apis/loki.datasource.grafana.app/rolled-out/health');
+    healthGetMock.mockResolvedValue({ status: 'OK' });
+
+    await expect(isDatasourceHealthy('rolled-out')).resolves.toBe(true);
+    expect(getHealthCheckUrl).toHaveBeenCalledWith(settings);
+    expect(healthGetMock).toHaveBeenCalledWith(
+      '/apis/loki.datasource.grafana.app/rolled-out/health',
+      undefined,
+      undefined,
+      {
+        showErrorAlert: false,
+        abortSignal: expect.any(AbortSignal),
+      }
+    );
   });
 
   it('reports a non-OK status as unhealthy', async () => {
@@ -350,13 +379,6 @@ describe('isDatasourceHealthy', () => {
     healthGetMock.mockRejectedValue(new Error('connection refused'));
 
     await expect(isDatasourceHealthy('broken')).resolves.toBe(false);
-  });
-
-  it('reports a datasource without a backend as unhealthy without sending a health check', async () => {
-    jest.mocked(getDataSourceInstance).mockResolvedValue({} as never);
-
-    await expect(isDatasourceHealthy('frontend-only')).resolves.toBe(false);
-    expect(healthGetMock).not.toHaveBeenCalled();
   });
 
   it('reports a health check that hangs past the cutoff as unhealthy', async () => {
@@ -443,7 +465,7 @@ describe('findDatasourceWithData', () => {
     resetProbeHealth();
     healthGetMock.mockReset();
     healthGetMock.mockResolvedValue({ status: 'OK' });
-    jest.mocked(getDataSourceInstance).mockImplementation(healthCheckThrough(healthGetMock));
+    jest.mocked(getBackendSrv).mockReturnValue({ get: healthGetMock } as unknown as BackendSrv);
   });
 
   it('prefers the first candidate in priority order even when a later one settles sooner', async () => {

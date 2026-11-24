@@ -33,9 +33,10 @@ import {
 } from '../services';
 import { getDataSourceInstanceSettings } from '../services/dataSource/settings';
 
+import { getHealthCheckUrl, supportsDatasourceApi } from './datasourceApi';
 import { ExpressionDatasourceRef, isExpressionReference } from './expressionRef';
 import { publicDashboardQueryHandler } from './publicDashboardQueryHandler';
-import { isDatasourceAuthCompatible, isQueryServiceCompatible } from './qscheck';
+import { isQueryServiceCompatible } from './qscheck';
 import { type BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
 import { UserStorage } from './userStorage';
 
@@ -432,32 +433,15 @@ class DataSourceWithBackend<
   }
 
   private supportsDatasourceApi(endpoint: 'resources' | 'health'): boolean {
-    // @ts-expect-error featuremgmt/registry.go does not support object feature flags yet
-    const allowedTypes = getFeatureFlagClient().getObjectValue('datasources.apiserver.fe-allowed-types', {
-      resources: [],
-      health: [],
-    });
-    if (!allowedTypes || typeof allowedTypes !== 'object' || Array.isArray(allowedTypes)) {
-      return false;
-    }
-    const pluginIds = allowedTypes[endpoint];
-    return (
-      Array.isArray(pluginIds) &&
-      (pluginIds.includes('*') || pluginIds.includes(this.meta?.id ?? this.type)) &&
-      isDatasourceAuthCompatible(this.datasourceInstanceSettings)
-    );
+    return supportsDatasourceApi(endpoint, this.datasourceInstanceSettings);
   }
 
   /**
    * Run the datasource healthcheck
-   *
-   * @param options.abortSignal - cancels the in-flight request, e.g. when the caller enforces a deadline.
    */
-  async callHealthCheck(options?: { abortSignal?: AbortSignal }): Promise<HealthCheckResult> {
+  async callHealthCheck(): Promise<HealthCheckResult> {
     const useNewApi = this.supportsDatasourceApi('health');
-    const healthCheckURL = useNewApi
-      ? `/apis/${this.meta?.id ?? this.type}.datasource.grafana.app/v0alpha1/namespaces/${config.namespace}/datasources/${this.uid}/health`
-      : `/api/datasources/uid/${this.uid}/health`;
+    const healthCheckURL = getHealthCheckUrl(this.datasourceInstanceSettings);
 
     if (useNewApi) {
       return lastValueFrom(
@@ -466,7 +450,6 @@ class DataSourceWithBackend<
           url: healthCheckURL,
           showErrorAlert: false,
           headers: this.getRequestHeaders(),
-          abortSignal: options?.abortSignal,
         })
       )
         .then((v: FetchResponse<DatasourcesV0HealthCheckResult>) => toHealthCheckResult(v.data))
@@ -488,7 +471,6 @@ class DataSourceWithBackend<
         url: healthCheckURL,
         showErrorAlert: false,
         headers: this.getRequestHeaders(),
-        abortSignal: options?.abortSignal,
       })
     )
       .then((v: FetchResponse<HealthCheckResult>) => v.data)

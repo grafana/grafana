@@ -8,9 +8,10 @@ import {
   getBackendSrv,
   getDataSourceInstance,
   getDataSourceInstanceList,
+  getDataSourceInstanceSettings,
   getDefaultDataSourceInstanceListItem,
 } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { FlagKeys, getFeatureFlagClient, getHealthCheckUrl } from '@grafana/runtime/internal';
 
 /**
  * A lazily-started, shared solution fact derived from the solution's datasource: the first read
@@ -218,13 +219,21 @@ export async function listProbeCandidates(
 const healthCache = new Map<string, TtlCachedPromise<boolean>>();
 
 /**
+ * Health URL on the route the datasource API rollout selects. Built from instance settings, not the plugin
+ * instance, so probing never loads plugin code; an unknown uid keeps the legacy route.
+ */
+async function healthCheckUrl(uid: string): Promise<string> {
+  const settings = await getDataSourceInstanceSettings(uid);
+  return settings ? getHealthCheckUrl(settings) : `/api/datasources/uid/${encodeURIComponent(uid)}/health`;
+}
+
+/**
  * Whether /health reports OK for `uid`, shared by every scan that meets the datasource within the
  * TTL window. Rejections and the 3s cutoff read as unhealthy and are cached like any answer; each
  * health check owns its cutoff, which cancels the request.
  */
 export function isDatasourceHealthy(uid: string): Promise<boolean> {
-  // The multi-tenant homepage does not probe health at all: the probe query (which has its own deadline)
-  // decides on its own.
+  // The multi-tenant homepage skips the health probe: the probe query (which has its own deadline) decides on its own.
   if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaMultiTenantHomepage, false)) {
     return Promise.resolve(true);
   }
@@ -232,17 +241,17 @@ export function isDatasourceHealthy(uid: string): Promise<boolean> {
   if (!cache) {
     cache = createTtlCachedPromise(
       () =>
-        // callHealthCheck() picks the legacy /api or the datasource API server route per datasource, so
-        // the probe follows the `datasources.apiserver.fe-allowed-types` rollout instead of pinning /api.
-        withDeadline(HEALTH_CHECK_TIMEOUT_MS, undefined, async (signal) => {
-          const instance = await resolveBackendInstance(uid);
-          // No backend means no health endpoint to ask, and a deadline during the lookup must not send one.
-          if (!instance || signal.aborted) {
-            return false;
-          }
-          const res = await instance.callHealthCheck({ abortSignal: signal });
-          return res?.status === 'OK';
-        }).catch(() => false),
+        healthCheckUrl(uid)
+          .then((url) =>
+            withDeadline(HEALTH_CHECK_TIMEOUT_MS, undefined, (signal) =>
+              getBackendSrv().get<{ status?: string }>(url, undefined, undefined, {
+                showErrorAlert: false,
+                abortSignal: signal,
+              })
+            )
+          )
+          .then((res) => res?.status === 'OK')
+          .catch(() => false),
       PROBE_TTL_MS
     );
     healthCache.set(uid, cache);
