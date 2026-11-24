@@ -7,13 +7,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
 
 	dbproxyv1 "github.com/grafana/grafana/pkg/storage/dbproxy/api/dbproxy/v1"
 	"github.com/grafana/grafana/pkg/storage/dbproxy/sqldriver"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -48,14 +48,13 @@ func TestStandaloneExecReturnsResultAndExecutionIdentity(t *testing.T) {
 
 func assertResult(t *testing.T, result sql.Result, affected, id int64) {
 	t.Helper()
+	require.NotNil(t, result)
 	rows, err := result.RowsAffected()
-	if err != nil || rows != affected {
-		t.Fatalf("RowsAffected = %d, %v", rows, err)
-	}
+	require.NoError(t, err)
+	require.Equal(t, affected, rows, "RowsAffected")
 	last, err := result.LastInsertId()
-	if err != nil || last != id {
-		t.Fatalf("LastInsertId = %d, %v", last, err)
-	}
+	require.NoError(t, err)
+	require.Equal(t, id, last, "LastInsertId")
 }
 
 func TestTransactionKeepsNamespaceAndCompletesQueriesBeforeCommit(t *testing.T) {
@@ -193,18 +192,38 @@ func TestRecoverableTransactionErrorPreservesDatabaseDetail(t *testing.T) {
 	}
 }
 
-func TestLostStandaloneExecReplyHasUnknownOutcome(t *testing.T) {
-	var calls atomic.Int32
-	pool := openServerPool(t, &queryServer{exec: func(context.Context, *dbproxyv1.ExecRequest) (*dbproxyv1.ExecResponse, error) {
-		calls.Add(1)
-		return nil, status.Error(codes.Unavailable, "connection lost")
-	}})
-	_, err := pool.ExecContext(sqldriver.WithQuery(context.Background(), "stacks-1", "write.uncertain"), "INSERT INTO t VALUES (1)")
-	if !errors.Is(err, sqldriver.ErrOutcomeUnknown) || status.Code(err) != codes.Unavailable {
-		t.Fatalf("error=%v", err)
-	}
-	if got := calls.Load(); got != 1 {
-		t.Fatalf("write replayed %d times", got)
+func TestStandaloneExecUnknownOutcomeDoesNotRetry(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		serverErr error
+		decorate  func(dbproxyv1.DatabaseProxyServiceClient) dbproxyv1.DatabaseProxyServiceClient
+	}{
+		{name: "unavailable", serverErr: status.Error(codes.Unavailable, "connection lost")},
+		{name: "bad connection after dispatch", decorate: func(client dbproxyv1.DatabaseProxyServiceClient) dbproxyv1.DatabaseProxyServiceClient {
+			return lostExecReplyClient{DatabaseProxyServiceClient: client}
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var calls atomic.Int32
+			pool := openServerPoolWithClient(t, &queryServer{exec: func(context.Context, *dbproxyv1.ExecRequest) (*dbproxyv1.ExecResponse, error) {
+				calls.Add(1)
+				if tc.serverErr != nil {
+					return nil, tc.serverErr
+				}
+				return &dbproxyv1.ExecResponse{RowsAffected: 1}, nil
+			}}, tc.decorate)
+			ctx := sqldriver.WithQuery(t.Context(), testStack, "write.reply_lost")
+			_, err := pool.ExecContext(ctx, updateN)
+
+			require.Equal(t, int32(1), calls.Load(), "server executions")
+			require.ErrorIs(t, err, sqldriver.ErrOutcomeUnknown)
+			require.NotErrorIs(t, err, driver.ErrBadConn)
+			if tc.serverErr != nil {
+				require.Equal(t, codes.Unavailable, status.Code(err))
+			} else {
+				require.ErrorContains(t, err, "lost write reply")
+			}
+		})
 	}
 }
 
@@ -217,24 +236,6 @@ func (c lostExecReplyClient) Exec(ctx context.Context, req *dbproxyv1.ExecReques
 		return nil, err
 	}
 	return nil, fmt.Errorf("lost write reply: %w", driver.ErrBadConn)
-}
-
-func TestStandaloneExecDoesNotRetryDispatchedBadConn(t *testing.T) {
-	var calls atomic.Int32
-	pool := openServerPoolWithClient(t, &queryServer{exec: func(context.Context, *dbproxyv1.ExecRequest) (*dbproxyv1.ExecResponse, error) {
-		calls.Add(1)
-		return &dbproxyv1.ExecResponse{RowsAffected: 1}, nil
-	}}, func(client dbproxyv1.DatabaseProxyServiceClient) dbproxyv1.DatabaseProxyServiceClient {
-		return lostExecReplyClient{DatabaseProxyServiceClient: client}
-	})
-	ctx := sqldriver.WithQuery(t.Context(), "stacks-1", "write.reply_lost")
-	_, err := pool.ExecContext(ctx, "UPDATE t SET n=1")
-	if got := calls.Load(); got != 1 {
-		t.Errorf("server executions = %d, want 1", got)
-	}
-	if !errors.Is(err, sqldriver.ErrOutcomeUnknown) || errors.Is(err, driver.ErrBadConn) || !strings.Contains(err.Error(), "lost write reply") {
-		t.Errorf("exec error = %v, want unknown outcome without retry sentinel", err)
-	}
 }
 
 func TestTransactionCloseDiscoversErrorAndBlocksLaterWrites(t *testing.T) {
