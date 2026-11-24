@@ -14,7 +14,7 @@ type NamespaceProvider interface {
 
 // AudienceProvider is a strategy for determining the audiences to use in token exchange requests.
 type AudienceProvider interface {
-	GetAudiences(ctx context.Context) []string
+	GetAudiences(req *http.Request) []string
 }
 
 // StaticNamespaceProvider returns a fixed namespace for all requests.
@@ -41,13 +41,8 @@ func NewStaticAudienceProvider(audiences ...string) *StaticAudienceProvider {
 	return &StaticAudienceProvider{audiences: audiences}
 }
 
-func (p *StaticAudienceProvider) GetAudiences(ctx context.Context) []string {
+func (p *StaticAudienceProvider) GetAudiences(_ *http.Request) []string {
 	return p.audiences
-}
-
-type RequestAudienceProvider interface {
-	AudienceProvider
-	GetRequestAudiences(req *http.Request) []string
 }
 
 type RequestGroupAudienceProvider struct {
@@ -58,11 +53,7 @@ func NewRequestGroupAudienceProvider(fallback string) *RequestGroupAudienceProvi
 	return &RequestGroupAudienceProvider{fallback: fallback}
 }
 
-func (p *RequestGroupAudienceProvider) GetAudiences(ctx context.Context) []string {
-	return []string{p.fallback}
-}
-
-func (p *RequestGroupAudienceProvider) GetRequestAudiences(req *http.Request) []string {
+func (p *RequestGroupAudienceProvider) GetAudiences(req *http.Request) []string {
 	if group := utils.APIGroupFromRequest(req); group != "" {
 		return []string{group}
 	}

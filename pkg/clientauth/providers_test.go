@@ -66,7 +66,7 @@ func TestStaticAudienceProvider(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			provider := NewStaticAudienceProvider(tt.audiences...)
-			result := provider.GetAudiences(context.Background())
+			result := provider.GetAudiences(httptest.NewRequest("GET", "/apis", nil))
 			require.Equal(t, tt.expectedAudiences, result)
 		})
 	}
@@ -80,14 +80,13 @@ func TestRequestGroupAudienceProvider(t *testing.T) {
 		"/apis":       {"grafana"},
 		"/openapi/v3": {"grafana"},
 	} {
-		require.Equal(t, want, provider.GetRequestAudiences(httptest.NewRequest("GET", path, nil)), path)
+		require.Equal(t, want, provider.GetAudiences(httptest.NewRequest("GET", path, nil)), path)
 	}
-	require.Equal(t, []string{"grafana"}, provider.GetAudiences(context.Background()))
 }
 
 func TestProviderInterfaces(t *testing.T) {
 	// Verify that all providers implement their interfaces
 	var _ NamespaceProvider = (*StaticNamespaceProvider)(nil)
 	var _ AudienceProvider = (*StaticAudienceProvider)(nil)
-	var _ RequestAudienceProvider = (*RequestGroupAudienceProvider)(nil)
+	var _ AudienceProvider = (*RequestGroupAudienceProvider)(nil)
 }
