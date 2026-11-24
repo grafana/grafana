@@ -385,6 +385,19 @@ func (c *cache) getStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
 }
 
 // removeByRuleUID deletes all entries in the state cache that match the given UID. Returns removed states
+// getRuleKeys returns the keys of all rules that currently have states in the cache.
+func (c *cache) getRuleKeys() []ngModels.AlertRuleKey {
+	c.mtxStates.RLock()
+	defer c.mtxStates.RUnlock()
+	keys := make([]ngModels.AlertRuleKey, 0, len(c.states))
+	for orgID, orgStates := range c.states {
+		for alertRuleUID := range orgStates {
+			keys = append(keys, ngModels.AlertRuleKey{OrgID: orgID, UID: alertRuleUID})
+		}
+	}
+	return keys
+}
+
 func (c *cache) removeByRuleUID(orgID int64, uid string) []*State {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
