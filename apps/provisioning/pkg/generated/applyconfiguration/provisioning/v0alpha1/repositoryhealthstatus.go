@@ -8,13 +8,13 @@ import (
 	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
-// HealthStatusApplyConfiguration represents a declarative configuration of the HealthStatus type for use
+// RepositoryHealthStatusApplyConfiguration represents a declarative configuration of the RepositoryHealthStatus type for use
 // with apply.
-type HealthStatusApplyConfiguration struct {
+type RepositoryHealthStatusApplyConfiguration struct {
 	// When not healthy, requests will not be executed
 	Healthy *bool `json:"healthy,omitempty"`
 	// The type of the error
-	Error *provisioningv0alpha1.HealthFailureType `json:"error,omitempty"`
+	Error *provisioningv0alpha1.RepositoryHealthFailureType `json:"error,omitempty"`
 	// When the health was checked last time
 	Checked *int64 `json:"checked,omitempty"`
 	// Summary messages (can be shown to users)
@@ -22,16 +22,16 @@ type HealthStatusApplyConfiguration struct {
 	Message []string `json:"message,omitempty"`
 }
 
-// HealthStatusApplyConfiguration constructs a declarative configuration of the HealthStatus type for use with
+// RepositoryHealthStatusApplyConfiguration constructs a declarative configuration of the RepositoryHealthStatus type for use with
 // apply.
-func HealthStatus() *HealthStatusApplyConfiguration {
-	return &HealthStatusApplyConfiguration{}
+func RepositoryHealthStatus() *RepositoryHealthStatusApplyConfiguration {
+	return &RepositoryHealthStatusApplyConfiguration{}
 }
 
 // WithHealthy sets the Healthy field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Healthy field is set to the value of the last call.
-func (b *HealthStatusApplyConfiguration) WithHealthy(value bool) *HealthStatusApplyConfiguration {
+func (b *RepositoryHealthStatusApplyConfiguration) WithHealthy(value bool) *RepositoryHealthStatusApplyConfiguration {
 	b.Healthy = &value
 	return b
 }
@@ -39,7 +39,7 @@ func (b *HealthStatusApplyConfiguration) WithHealthy(value bool) *HealthStatusAp
 // WithError sets the Error field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Error field is set to the value of the last call.
-func (b *HealthStatusApplyConfiguration) WithError(value provisioningv0alpha1.HealthFailureType) *HealthStatusApplyConfiguration {
+func (b *RepositoryHealthStatusApplyConfiguration) WithError(value provisioningv0alpha1.RepositoryHealthFailureType) *RepositoryHealthStatusApplyConfiguration {
 	b.Error = &value
 	return b
 }
@@ -47,7 +47,7 @@ func (b *HealthStatusApplyConfiguration) WithError(value provisioningv0alpha1.He
 // WithChecked sets the Checked field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Checked field is set to the value of the last call.
-func (b *HealthStatusApplyConfiguration) WithChecked(value int64) *HealthStatusApplyConfiguration {
+func (b *RepositoryHealthStatusApplyConfiguration) WithChecked(value int64) *RepositoryHealthStatusApplyConfiguration {
 	b.Checked = &value
 	return b
 }
@@ -55,7 +55,7 @@ func (b *HealthStatusApplyConfiguration) WithChecked(value int64) *HealthStatusA
 // WithMessage adds the given value to the Message field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the Message field.
-func (b *HealthStatusApplyConfiguration) WithMessage(values ...string) *HealthStatusApplyConfiguration {
+func (b *RepositoryHealthStatusApplyConfiguration) WithMessage(values ...string) *RepositoryHealthStatusApplyConfiguration {
 	for i := range values {
 		b.Message = append(b.Message, values[i])
 	}

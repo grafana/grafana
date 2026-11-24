@@ -209,6 +209,7 @@ type Cfg struct {
 	// ProvisioningResourceListerPageSize is how many items the "apis" lister asks for per request
 	// when it reads a whole list. Non-positive (<=0) uses resources.DefaultListPageSize.
 	ProvisioningResourceListerPageSize int64
+	ProvisioningRouterClient           bool
 	// ProvisioningBootstrapPath is the directory Grafana registers a local repository over
 	// at startup, so the mounted files can declare the instance's own provisioning config.
 	ProvisioningBootstrapPath                 string
@@ -422,6 +423,7 @@ type Cfg struct {
 	DataProxyIdleConnTimeout       int
 	ResponseLimit                  int64
 	DataProxyRowLimit              int64
+	DataProxySeriesLimit           int64
 	DataProxyUserAgent             string
 	DataProxyForwardUserAgent      bool
 
@@ -2711,6 +2713,7 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	}
 	cfg.ProvisioningResourceLister = strings.TrimSpace(iniFile.Section("provisioning").Key("resource_lister").String())
 	cfg.ProvisioningResourceListerPageSize = iniFile.Section("provisioning").Key("resource_lister_page_size").MustInt64(0)
+	cfg.ProvisioningRouterClient = iniFile.Section("provisioning").Key("router_client").MustBool(false)
 	cfg.ProvisioningBootstrapPath = strings.TrimSpace(valueAsString(iniFile.Section("provisioning"), "bootstrap_path", ""))
 	cfg.ProvisioningAllowImageRendering = iniFile.Section("provisioning").Key("allow_image_rendering").MustBool(true)
 	cfg.ProvisioningAllowInsecure = iniFile.Section("provisioning").Key("allow_insecure").MustBool(false)

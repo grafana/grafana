@@ -194,6 +194,21 @@
     },
     {
       "metadata": {
+        "name": "alerting.ruleQualityFixAll",
+        "resourceVersion": "1795202555249",
+        "creationTimestamp": "2026-11-20T19:22:35Z"
+      },
+      "spec": {
+        "description": "Enable bulk fixes for alert rule quality issues on the alert quality page.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alerting.ruleQualityTeamPolicies",
         "resourceVersion": "1794592743390",
         "creationTimestamp": "2026-11-13T17:59:03Z"
@@ -2037,6 +2052,20 @@
       },
       "spec": {
         "description": "Data source query gateway guardrails",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasources.gatewayQueryUsage",
+        "resourceVersion": "1795014708911",
+        "creationTimestamp": "2026-11-18T15:11:48Z"
+      },
+      "spec": {
+        "description": "Record billed query usage (Mimir samples read, Loki bytes processed) in query gateway audit events",
         "stage": "experimental",
         "codeowner": "@grafana/data-sources-plugins",
         "hideFromDocs": true,
@@ -5424,6 +5453,20 @@
     },
     {
       "metadata": {
+        "name": "plugins.useMTPluginInstall",
+        "resourceVersion": "1795439959840",
+        "creationTimestamp": "2026-11-23T13:19:19Z"
+      },
+      "spec": {
+        "description": "Installs, updates and uninstalls plugins through the plugins API only, and falls back to the legacy API if that call fails",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-catalog",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "plugins.useMTPluginSettings",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-05-08T08:32:12Z"
@@ -6262,7 +6305,8 @@
       "metadata": {
         "name": "savedQueriesRBAC",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-01-27T13:12:08Z"
+        "creationTimestamp": "2026-01-27T13:12:08Z",
+        "deletionTimestamp": "2026-11-02T20:38:39Z"
       },
       "spec": {
         "description": "Enables Saved queries (query library) RBAC permissions",

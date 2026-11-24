@@ -15,14 +15,16 @@ jest.mock('./state/correlations', () => ({
   ...jest.requireActual('./state/correlations'),
   saveCurrentCorrelation: jest.fn(() => ({ type: 'mock/saveCurrentCorrelation' })),
 }));
-jest.mock('./state/query', () => ({
-  ...jest.requireActual('./state/query'),
-  runQueries: jest.fn(() => ({ type: 'mock/runQueries' })),
-}));
-jest.mock('./state/explorePane', () => ({
-  ...jest.requireActual('./state/explorePane'),
-  changeCorrelationHelperData: jest.fn(() => ({ type: 'mock/changeCorrelationHelperData' })),
-}));
+jest.mock('./state/query', () =>
+  jest
+    .requireActual('test/helpers/partialMock')
+    .partialMock(jest.requireActual('./state/query'), { runQueries: jest.fn(() => ({ type: 'mock/runQueries' })) })
+);
+jest.mock('./state/explorePane', () =>
+  jest.requireActual('test/helpers/partialMock').partialMock(jest.requireActual('./state/explorePane'), {
+    changeCorrelationHelperData: jest.fn(() => ({ type: 'mock/changeCorrelationHelperData' })),
+  })
+);
 
 const changeDatasourceMock = jest.mocked(changeDatasource);
 const CHANGE_DATASOURCE_ACTION = { type: 'mock/changeDatasource' };

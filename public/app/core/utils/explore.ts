@@ -12,7 +12,6 @@ import {
   getNextRefId,
   type IntervalValues,
   locationUtil,
-  LogsDedupStrategy,
   LogsSortOrder,
   rangeUtil,
   type RawTimeRange,
@@ -28,10 +27,6 @@ import { getDataSourceInstance } from '@grafana/runtime';
 import { RefreshPicker } from '@grafana/ui';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { type QueryOptions, type QueryTransaction } from 'app/types/explore';
-
-export const DEFAULT_UI_STATE = {
-  dedupStrategy: LogsDedupStrategy.none,
-};
 
 export const ID_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz';
 const nanoid = customAlphabet(ID_ALPHABET, 3);
@@ -165,7 +160,7 @@ export const safeStringifyValue = (value: unknown, space?: number) => {
   return '';
 };
 
-export function generateKey(index = 0): string {
+function generateKey(index = 0): string {
   return `Q-${generateUUID()}-${index}`;
 }
 
@@ -302,7 +297,7 @@ export const stopQueryState = (querySubscription: Unsubscribable | undefined) =>
   }
 };
 
-export function getIntervals(range: TimeRange, lowLimit?: string, resolution?: number): IntervalValues {
+function getIntervals(range: TimeRange, lowLimit?: string, resolution?: number): IntervalValues {
   if (!resolution) {
     return { interval: '1s', intervalMs: 1000 };
   }

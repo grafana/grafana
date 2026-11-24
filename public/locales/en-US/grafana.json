@@ -3030,12 +3030,12 @@
       },
       "empty": "No recently deleted rules found",
       "error": "Failed to load deleted rules",
-      "load-more": "Load more",
       "restore": {
         "body": "Restore \"{{title}}\"?",
         "confirm": "Restore",
         "conflict": "A rule with this name already exists.",
         "error": "Failed to restore rule. Please try again.",
+        "recording-title": "Restore recording rule",
         "restoring": "Restoring…",
         "title": "Restore alert rule"
       },
@@ -6740,7 +6740,8 @@
           "title": "Paste panel"
         },
         "question": {
-          "label": "Question"
+          "label": "Question",
+          "tooltip": "Add a question viewers can ask about the panels"
         },
         "row": {
           "add-label": "Add row",
@@ -7207,6 +7208,8 @@
     },
     "transformation-operation-row": {
       "body-delete": "Note that removing one transformation may break others. If there is only a single transformation, you will go back to the main selection screen.",
+      "expander-close": "Collapse transformation row {{number}} - {{name}}",
+      "expander-open": "Expand transformation row {{number}} - {{name}}",
       "render-actions": {
         "confirmText-delete": "Delete",
         "title-debug": "Debug",
@@ -9965,10 +9968,6 @@
       "of": "OF",
       "to": "TO",
       "when": "WHEN"
-    },
-    "expression-query-editor": {
-      "helper-text-sql": "Run MySQL-dialect SQL against the tables returned from your data sources. Data source queries (ie \"A\", \"B\") are available as tables and referenced by query-name. Fields are available as columns, as returned from the data source.",
-      "label-operation": "Operation"
     },
     "math": {
       "available-math-functions": "Available math functions",
@@ -13792,12 +13791,11 @@
     },
     "megamenu-item": {
       "children-error": "Failed to load items",
+      "children-partial-error": "Failed to load some items",
       "collapse-aria-label": "Collapse section: {{sectionName}}",
       "expand-aria-label": "Expand section: {{sectionName}}",
       "loading-aria-label": "Loading {{sectionName}}",
-      "reorder-aria-label": "Reorder {{itemName}}",
-      "starred-dashboard-icon": "Dashboard",
-      "starred-folder-icon": "Folder"
+      "reorder-aria-label": "Reorder {{itemName}}"
     },
     "org-switcher": {
       "aria-label": "Change organization"
@@ -14253,32 +14251,6 @@
     },
     "units": {
       "clear-tooltip": "Clear unit selection"
-    },
-    "var-mapping-checks": {
-      "data-macro": "Resolves for each field when the panel renders",
-      "not-allowed": "Current value \"{{current}}\" isn't allowed, so the fallback is used",
-      "not-found": "Variable not found, so the fallback is used",
-      "not-number": "Current value \"{{current}}\" isn't a number, so the fallback is used",
-      "not-one-value": "The variable doesn't have exactly one value selected, so the fallback is used",
-      "out-of-range": "Current value {{current}} is out of range, so the fallback is used. {{range}}",
-      "resolves": "Resolves to: {{resolved}}",
-      "values": "These values use the fallback: {{values}}"
-    },
-    "var-mapping-toggle": {
-      "aria-label-picker": "Variable for {{name}}",
-      "fallback-off": "Off",
-      "fallback-on": "On",
-      "group-matching": "Matching values",
-      "group-other": "Other variables",
-      "hint-boolean": "Allowed values: true, false. Falls back to: {{fallback}}",
-      "hint-number": "Falls back to: {{fallback}}",
-      "hint-option": "Allowed values: {{values}}. Falls back to: {{fallback}}",
-      "hint-option-no-fallback": "Allowed values: {{values}}",
-      "new-variable": "New variable with these values",
-      "option-current": "Current: {{current}}",
-      "placeholder": "Choose a variable",
-      "use-fixed-value": "Use a fixed value",
-      "use-variable": "Use variable"
     }
   },
   "org": {
@@ -14375,7 +14347,8 @@
     },
     "get-panel-links-variable-suggestions": {
       "label": {
-        "all-variables": "All variables"
+        "all-variables": "All variables",
+        "current-dashboard-tabs": "Current dashboard tabs"
       }
     },
     "header-menu": {
@@ -17527,6 +17500,7 @@
     "description-page-size": "Number of rows per page. When empty, the page size is based on the panel height.",
     "description-show-columns-sidebar": "Open the column management sidebar with the panel, rather than from a column menu",
     "description-show-row-numbers": "Show the position of each row in the displayed table",
+    "description-sparkline-select-time-range": "Drag to select a time range. Disabled for fields with data links or actions.",
     "description-styling-from-field": "A field containing JSON objects with CSS properties",
     "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
     "description-zebra-striping": "Alternate the background color of every other row",
@@ -17571,6 +17545,7 @@
     "name-show-columns-sidebar": "Show columns sidebar",
     "name-show-row-numbers": "Show row numbers",
     "name-show-table-header": "Show table header",
+    "name-sparkline-select-time-range": "Enable time range selection",
     "name-sparkline-show-tooltip": "Show hover tooltip",
     "name-styling-from-field": "Styling from field",
     "name-tooltip-from-field": "Tooltip from field",

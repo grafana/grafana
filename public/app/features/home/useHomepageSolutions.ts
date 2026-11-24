@@ -1,4 +1,4 @@
-import memoize from 'micro-memoize';
+import { memoize } from 'micro-memoize';
 import { useMemo } from 'react';
 
 import { useStoredString } from 'app/core/hooks/useStored';
