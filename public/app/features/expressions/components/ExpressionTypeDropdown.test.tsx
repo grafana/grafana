@@ -15,7 +15,6 @@ describe('ExpressionTypeDropdown', () => {
         <Button>Add expression</Button>
       </ExpressionTypeDropdown>
     );
-
     await user.click(screen.getByRole('button', { name: 'Add expression' }));
     const menu = await screen.findByRole('menu');
     const math = within(menu).getByRole('menuitem', { name: 'Math' });
@@ -39,31 +38,31 @@ describe('ExpressionTypeDropdown', () => {
         <Button>Add expression</Button>
       </ExpressionTypeDropdown>
     );
-
     await user.click(screen.getByRole('button', { name: 'Add expression' }));
     const menu = await screen.findByRole('menu');
     const math = within(menu).getByRole('menuitem', { name: 'Math' });
     expect(math).toBeDisabled();
     await user.click(math);
     expect(onSelect).not.toHaveBeenCalled();
-
     await user.click(within(menu).getByRole('menuitem', { name: 'Reduce' }));
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(onSelect).toHaveBeenCalledWith(ExpressionQueryType.reduce);
   });
 
   it('makes the info icon for each expression type keyboard focusable', async () => {
-        const onSelect = jest.fn();
-        const user = userEvent.setup();
+    const onSelect = jest.fn();
+    const user = userEvent.setup();
     render(
-            <ExpressionTypeDropdown handleOnSelect={onSelect}>
-                      <Button>Add expression</Button>
-            </ExpressionTypeDropdown>
-          );
-
-        await user.click(screen.getByRole('button', { name: 'Add expression' }));
-        const menu = await screen.findByRole('menu');
-        const math = within(menu).getByRole('menuitem', { name: 'Math' });
-        expect(math.querySelectorAll('svg[tabindex="0"]')).toHaveLength(1);
-  });  
+      <ExpressionTypeDropdown handleOnSelect={onSelect}>
+        <Button>Add expression</Button>
+      </ExpressionTypeDropdown>
+    );
+    await user.click(screen.getByRole('button', { name: 'Add expression' }));
+    const menu = await screen.findByRole('menu');
+    const math = within(menu).getByRole('menuitem', { name: 'Math' });
+    const infoIcon = math.querySelector('svg');
+    expect(infoIcon).not.toBeNull();
+    expect(infoIcon).toHaveAttribute('tabindex', '0');
+    expect(math.querySelectorAll('svg[tabindex="0"]')).toHaveLength(1);
+  });
 });
