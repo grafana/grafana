@@ -267,7 +267,7 @@ func TestDashboardPreferencesMergedFolders(t *testing.T) {
 	nsCtx := k8srequest.WithNamespace(context.Background(), "stacks-1")
 	nsInfo, err := authlib.ParseNamespace("stacks-1")
 	require.NoError(t, err)
-	u1 := dashboardPreferencesRequester(authlib.TypeUser, "u1", identity.RoleViewer)
+	u1 := dashboardPreferencesRequester(authlib.TypeUser, "u1", authlib.RoleViewer)
 	get := []string{utils.VerbGet}
 
 	long10 := make([]string, 0, 10)
@@ -579,10 +579,10 @@ func TestDashboardPreferencesMerged(t *testing.T) {
 		return newDashboardPreferencesStorage(store, dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind(), accessClient, nil, &staticHandlerProvider{handler: parents})
 	}
 
-	u1 := dashboardPreferencesRequester(authlib.TypeUser, "u1", identity.RoleViewer)
-	serviceAccount := dashboardPreferencesRequester(authlib.TypeServiceAccount, "sa", identity.RoleAdmin)
+	u1 := dashboardPreferencesRequester(authlib.TypeUser, "u1", authlib.RoleViewer)
+	serviceAccount := dashboardPreferencesRequester(authlib.TypeServiceAccount, "sa", authlib.RoleAdmin)
 	_, service := identity.WithServiceIdentity(context.Background(), 1)
-	noIdentifier := dashboardPreferencesRequester(authlib.TypeUser, "", identity.RoleViewer)
+	noIdentifier := dashboardPreferencesRequester(authlib.TypeUser, "", authlib.RoleViewer)
 
 	fromUser := dashv2beta1.DashboardPreferencesMergedSource{Tier: dashv2beta1.DashboardPreferencesMergedTierUser, Name: "user-u1"}
 	fromC := dashv2beta1.DashboardPreferencesMergedSource{Tier: dashv2beta1.DashboardPreferencesMergedTierFolder, Name: "folder-c"}
@@ -931,7 +931,7 @@ func dashboardPreferencesSchemaRefs(value any) []string {
 
 func TestDashboardPreferencesMergedHandler(t *testing.T) {
 	get := []string{utils.VerbGet}
-	u1 := dashboardPreferencesRequester(authlib.TypeUser, "u1", identity.RoleViewer)
+	u1 := dashboardPreferencesRequester(authlib.TypeUser, "u1", authlib.RoleViewer)
 	// g is the top-level parent of c, and the caller can't read it. The parents fake has no chain for x, so x
 	// is a folder the caller can read that doesn't exist.
 	newStorage := func(t *testing.T, accessClient *dashboardPreferencesAccessClient) *dashboardPreferencesStorage {

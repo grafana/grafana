@@ -1,4 +1,4 @@
-import { useState, type ChangeEvent, useEffect } from 'react';
+import { useState, type ChangeEvent } from 'react';
 
 import { type ResourceDependencyDto } from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
 import { Trans } from '@grafana/i18n';
@@ -43,16 +43,12 @@ function resourceTypeOrder(resourceTypes: ResourceTypeId[]): ResourceTypeId[] {
 
 export function ConfigureSnapshot(props: ConfigureSnapshotProps) {
   const { disabled, isLoading, onClick, resourceDependencies } = props;
-  const [selectedTypes, setSelectedTypes] = useState<Set<ResourceTypeId>>(new Set());
-  const [includeAll, setIncludeAll] = useState(true);
-
   const { dependencyMap, dependentMap } = buildDependencyMaps(resourceDependencies);
   const resourceTypes = resourceTypeOrder(Array.from(dependencyMap.keys()));
 
-  // Initialize with all items selected when component mounts once.
-  useEffect(() => {
-    setSelectedTypes(new Set(resourceTypes));
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // Start with all items selected.
+  const [selectedTypes, setSelectedTypes] = useState<Set<ResourceTypeId>>(() => new Set(resourceTypes));
+  const [includeAll, setIncludeAll] = useState(true);
 
   const handleIncludeAllChange = (e: ChangeEvent<HTMLInputElement>) => {
     const checked = e.target.checked;

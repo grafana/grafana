@@ -21,7 +21,7 @@ labels:
     - enterprise
     - oss
 title: View active notifications
-weight: 800
+weight: 700
 ---
 
 # View active notifications
