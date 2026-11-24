@@ -605,8 +605,8 @@ importers:
         specifier: 9.3.0
         version: 9.3.0(@types/react@19.2.18)(react@19.2.8)(redux@5.0.1)
       react-resizable:
-        specifier: 3.0.5
-        version: 3.0.5(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        specifier: 4.0.2
+        version: 4.0.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       react-router:
         specifier: 5.3.4
         version: 5.3.4(react@19.2.8)
@@ -860,9 +860,6 @@ importers:
       '@types/react-refresh':
         specifier: ^0
         version: 0.14.7
-      '@types/react-resizable':
-        specifier: 3.0.8
-        version: 3.0.8
       '@types/react-router':
         specifier: 5.1.20
         version: 5.1.20
@@ -7327,9 +7324,6 @@ packages:
   '@types/react-refresh@0.14.7':
     resolution: {integrity: sha512-XIdFxBMm9VdO49M+Nn4Ud3eVwRub6vhJjCzd7g09kUF5NKsITGoCEwCXE1YupIRPo7A6JGc5fUV2Y5l31OYxcA==}
 
-  '@types/react-resizable@3.0.8':
-    resolution: {integrity: sha512-Pcvt2eGA7KNXldt1hkhVhAgZ8hK41m0mp89mFgQi7LAAEZiaLgm4fHJ5zbJZ/4m2LVaAyYrrRRv1LHDcrGQanA==}
-
   '@types/react-router-dom@5.3.3':
     resolution: {integrity: sha512-kpqnYK4wcdm5UaWI3fLcELopqLrHgLqNsdpHauzlQktfkHL3npOSwtj1Uz9oKBAzs7lFtVkV8j83voAz2D8fhw==}
 
@@ -13329,6 +13323,12 @@ packages:
     resolution: {integrity: sha512-vKpeHhI5OZvYn82kXOs1bC8aOXktGU5AmKAgaZS4F5JPburCtbmDPqE7Pzp+1kN4+Wb81LlF33VpGwWwtXem+w==}
     peerDependencies:
       react: '>= 16.3'
+
+  react-resizable@4.0.2:
+    resolution: {integrity: sha512-jZD9ghYRmyJCw0+awYctSZ+9pmX1WXQvzDrTovELYc8obC/BShTI2r4c14LIVzeQ+vJZNb0yKM7bG2eqv7Vfyg==}
+    peerDependencies:
+      react: '>= 16.3'
+      react-dom: '>= 16.3'
 
   react-router-dom-v5-compat@6.30.6:
     resolution: {integrity: sha512-I54amXpivD3V0r1BYUIj1qLOljXx+UpbLG63Bqbm3BdKH62z4H3znC0L7SyMTYAMEDZuUjDSlqtkBRG/OEDXBg==}
@@ -20688,10 +20688,6 @@ snapshots:
       '@types/babel__core': 7.20.5
       csstype: 3.2.3
 
-  '@types/react-resizable@3.0.8':
-    dependencies:
-      '@types/react': 19.2.18
-
   '@types/react-router-dom@5.3.3':
     dependencies:
       '@types/history': 4.7.11
@@ -27930,6 +27926,13 @@ snapshots:
       react-draggable: 4.7.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
     transitivePeerDependencies:
       - react-dom
+
+  react-resizable@4.0.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+    dependencies:
+      prop-types: 15.8.1
+      react: 19.2.8
+      react-dom: 19.2.8(react@19.2.8)
+      react-draggable: 4.7.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
 
   react-router-dom-v5-compat@6.30.6(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8):
     dependencies:
