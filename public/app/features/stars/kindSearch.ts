@@ -82,8 +82,9 @@ async function searchNames(url: string, names: string[]): Promise<GlobalResultIt
 async function searchStarredRows(kind: StarredAppKind, names: string[]): Promise<DashboardQueryResult[]> {
   let items: GlobalResultItem[];
   try {
-    // Asked with every search, not kept: an update of the plugin may change the version it serves. The kind is
-    // taken to be served at its group's preferred version
+    // TODO: Resolve the version through the shared API discovery service once there is one. Until then the kind
+    // is taken to be served at its group's preferred version, which is asked for with every search, not kept:
+    // an update of the plugin may change it
     const group = await getAPIGroupVersions(kind.group);
     const version = group?.preferred ?? group?.versions.values().next().value;
     if (!version) {
