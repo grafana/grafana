@@ -27,16 +27,13 @@ import { SubMenu } from './SubMenu';
 export type MenuItemElement = HTMLAnchorElement & HTMLButtonElement & HTMLDivElement;
 
 /** @internal */
-export type MenuItemVariant = 'default' | 'link';
-
-/** @internal */
 export interface MenuItemProps<T = unknown> {
   /** Label of the menu item */
   label: string;
   /** Overrides the parent menu density. */
   size?: 'sm' | 'md';
   /** Visual treatment for the menu item. */
-  variant?: MenuItemVariant;
+  variant?: 'default' | 'link';
   /** Description of item */
   description?: string;
   /** Aria label for accessibility support */
