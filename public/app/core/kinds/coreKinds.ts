@@ -146,16 +146,19 @@ export function coversGroup(kind: KindInfo, group: string): boolean {
   return kind.group === group || (kind.collectionGroup === true && group.endsWith(`.${kind.group}`));
 }
 
+/** Every kind: the ones Grafana serves itself, then the ones app plugins add. */
+export function getKinds(): KindInfo[] {
+  return [...kinds, ...appKinds.values()];
+}
+
 /** The kind an object of this API group and Kubernetes kind belongs to, among core and app kinds. */
 export function findKind(group: string, kind: string): KindInfo | undefined {
-  return [...kinds, ...appKinds.values()].find((row) => row.kind === kind && coversGroup(row, group));
+  return getKinds().find((row) => row.kind === kind && coversGroup(row, group));
 }
 
 /** The kind behind a plural resource name, among core and app kinds; narrowed by `group` when given. */
 export function findKindByResource(resource: string, group?: string): KindInfo | undefined {
-  return [...kinds, ...appKinds.values()].find(
-    (row) => row.resource === resource && (group === undefined || coversGroup(row, group))
-  );
+  return getKinds().find((row) => row.resource === resource && (group === undefined || coversGroup(row, group)));
 }
 
 /** The group that names an object's kind: the collection's group for a collection member, else `group`. */
