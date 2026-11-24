@@ -55,6 +55,22 @@ export interface APIResourceInfo {
   subresources: readonly string[];
 }
 
+/**
+ * What {@link isAPIResourceAvailable} looks for.
+ *
+ * @alpha
+ */
+export interface APIResourceQuery {
+  group: string;
+  version: string;
+  /** The plural name used in URLs, such as `dashboards`. */
+  resource: string;
+  /** A subresource of `resource`, such as `status`. */
+  subresource?: string;
+  /** A verb the resource has to support, such as `create`. With a subresource, the subresource has to support it. */
+  verb?: string;
+}
+
 export interface K8sAPIResource {
   name: string;
   kind?: string;

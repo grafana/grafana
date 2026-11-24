@@ -4,8 +4,15 @@ import { config } from '../../config';
 import { type BackendSrv, type FetchError, setBackendSrv } from '../backendSrv';
 import { setLogger } from '../logging/registry';
 
-import { API_DISCOVERY_TIMEOUT_MS, getAPIGroup, invalidateAPIDiscovery, setAPIDiscoveryForTesting } from './discovery';
-import { type K8sAPIGroup, type K8sAPIGroupList } from './types';
+import {
+  API_DISCOVERY_TIMEOUT_MS,
+  getAPIGroup,
+  getAPIResources,
+  invalidateAPIDiscovery,
+  isAPIResourceAvailable,
+  setAPIDiscoveryForTesting,
+} from './discovery';
+import { type K8sAPIGroup, type K8sAPIGroupList, type K8sAPIResourceList } from './types';
 
 const backendGet = jest.fn();
 const logError = jest.fn();
@@ -328,5 +335,205 @@ describe('setAPIDiscoveryForTesting', () => {
 
     await expect(getAPIGroup('dashboard.grafana.app')).resolves.toBeUndefined();
     expect(requestedUrls()).toEqual(['/apis']);
+  });
+});
+
+const FOLDER_RESOURCES_URL = '/apis/folder.grafana.app/v1beta1';
+
+const folderResourceList: K8sAPIResourceList = {
+  resources: [
+    {
+      name: 'folders',
+      namespaced: true,
+      kind: 'Folder',
+      verbs: ['create', 'delete', 'get', 'list', 'patch', 'update'],
+    },
+    { name: 'folders/access', namespaced: true, kind: 'FolderAccessInfo', verbs: ['get'] },
+  ],
+};
+
+const foldersInfo = {
+  group: 'folder.grafana.app',
+  version: 'v1beta1',
+  resource: 'folders',
+  kind: 'Folder',
+  namespaced: true,
+  verbs: ['create', 'delete', 'get', 'list', 'patch', 'update'],
+  subresources: ['access'],
+};
+
+describe('getAPIResources', () => {
+  describe('when the group version is served', () => {
+    beforeEach(() => {
+      respondTo({ [FOLDER_RESOURCES_URL]: () => Promise.resolve(folderResourceList) });
+    });
+
+    it('returns its resources', async () => {
+      await expect(getAPIResources('folder.grafana.app', 'v1beta1')).resolves.toEqual([foldersInfo]);
+    });
+
+    it('requests the resource list without an error toast', async () => {
+      await getAPIResources('folder.grafana.app', 'v1beta1');
+
+      expect(backendGet).toHaveBeenCalledWith(
+        FOLDER_RESOURCES_URL,
+        undefined,
+        undefined,
+        expect.objectContaining({ showErrorAlert: false })
+      );
+    });
+
+    it('caches the list per group version', async () => {
+      await getAPIResources('folder.grafana.app', 'v1beta1');
+      await getAPIResources('folder.grafana.app', 'v1');
+      await getAPIResources('folder.grafana.app', 'v1beta1');
+      await getAPIResources('folder.grafana.app', 'v1');
+
+      expect(requestedUrls()).toEqual([FOLDER_RESOURCES_URL, '/apis/folder.grafana.app/v1']);
+    });
+
+    it('shares one in-flight request between concurrent callers', async () => {
+      const results = await Promise.all([
+        getAPIResources('folder.grafana.app', 'v1beta1'),
+        getAPIResources('folder.grafana.app', 'v1beta1'),
+        isAPIResourceAvailable({ group: 'folder.grafana.app', version: 'v1beta1', resource: 'folders' }),
+      ]);
+
+      expect(results).toEqual([[foldersInfo], [foldersInfo], true]);
+      expect(requestedUrls()).toEqual([FOLDER_RESOURCES_URL]);
+    });
+
+    it('requests the list again after invalidateAPIDiscovery()', async () => {
+      await getAPIResources('folder.grafana.app', 'v1beta1');
+      invalidateAPIDiscovery();
+      await getAPIResources('folder.grafana.app', 'v1beta1');
+
+      expect(requestedUrls()).toEqual([FOLDER_RESOURCES_URL, FOLDER_RESOURCES_URL]);
+    });
+  });
+
+  it('returns undefined when the server has no list for the group version, caches it, and does not log', async () => {
+    respondTo({});
+
+    await expect(getAPIResources('folder.grafana.app', 'v1beta1')).resolves.toBeUndefined();
+    await expect(getAPIResources('folder.grafana.app', 'v1beta1')).resolves.toBeUndefined();
+
+    expect(requestedUrls()).toEqual([FOLDER_RESOURCES_URL]);
+    expect(logError).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['a server error', () => Promise.reject(fetchError(500))],
+    ['a 401', () => Promise.reject(fetchError(401))],
+    ['a 403', () => Promise.reject(fetchError(403))],
+    ['a response that is not a resource list', () => Promise.resolve('<!doctype html>')],
+  ])('returns undefined on %s, logs it once, and retries on the next call', async (_, answer) => {
+    respondTo({ [FOLDER_RESOURCES_URL]: answer });
+
+    const results = await Promise.all([
+      getAPIResources('folder.grafana.app', 'v1beta1'),
+      getAPIResources('folder.grafana.app', 'v1beta1'),
+    ]);
+
+    expect(results).toEqual([undefined, undefined]);
+    expect(logError).toHaveBeenCalledTimes(1);
+    expect(logError).toHaveBeenCalledWith(expect.any(Error), expect.objectContaining({ url: FOLDER_RESOURCES_URL }));
+
+    respondTo({ [FOLDER_RESOURCES_URL]: () => Promise.resolve(folderResourceList) });
+
+    await expect(getAPIResources('folder.grafana.app', 'v1beta1')).resolves.toEqual([foldersInfo]);
+    expect(requestedUrls()).toEqual([FOLDER_RESOURCES_URL, FOLDER_RESOURCES_URL]);
+  });
+
+  it('treats a request that outlasts the timeout as unknown', async () => {
+    jest.useFakeTimers();
+    backendGet.mockReturnValue(new Promise(() => {}));
+
+    const pending = getAPIResources('folder.grafana.app', 'v1beta1');
+    await jest.advanceTimersByTimeAsync(API_DISCOVERY_TIMEOUT_MS);
+
+    await expect(pending).resolves.toBeUndefined();
+    expect(logError).toHaveBeenCalledWith(expect.any(Error), expect.objectContaining({ reason: 'timeout' }));
+  });
+
+  it('returns undefined without a request when there is no session', async () => {
+    setBootUser(undefined);
+
+    await expect(getAPIResources('folder.grafana.app', 'v1beta1')).resolves.toBeUndefined();
+    expect(backendGet).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['../api', 'v1'],
+    ['folder.grafana.app', '../v1'],
+    ['folder.grafana.app', 'v1/folders'],
+    ['folder.grafana.app', ''],
+  ])(
+    'returns undefined without a request for %s and %s, which are not a group and a version',
+    async (group, version) => {
+      await expect(getAPIResources(group, version)).resolves.toBeUndefined();
+      expect(backendGet).not.toHaveBeenCalled();
+      expect(logWarning).toHaveBeenCalledTimes(1);
+    }
+  );
+
+  it('warns about a version that is not an API version', async () => {
+    await getAPIResources('folder.grafana.app', 'beta1');
+
+    expect(logWarning).toHaveBeenCalledWith(expect.stringContaining('not a valid API version'), {
+      group: 'folder.grafana.app',
+      version: 'beta1',
+    });
+  });
+
+  it('does not warn about a valid group and version', async () => {
+    respondTo({});
+
+    await getAPIResources('folder.grafana.app', 'v1beta1');
+
+    expect(logWarning).not.toHaveBeenCalled();
+  });
+});
+
+describe('isAPIResourceAvailable', () => {
+  const folders = { group: 'folder.grafana.app', version: 'v1beta1', resource: 'folders' };
+
+  beforeEach(() => {
+    respondTo({ [FOLDER_RESOURCES_URL]: () => Promise.resolve(folderResourceList) });
+  });
+
+  it('is true for a served resource', async () => {
+    await expect(isAPIResourceAvailable(folders)).resolves.toBe(true);
+  });
+
+  it('checks the verb on the resource', async () => {
+    await expect(isAPIResourceAvailable({ ...folders, verb: 'create' })).resolves.toBe(true);
+    await expect(isAPIResourceAvailable({ ...folders, verb: 'watch' })).resolves.toBe(false);
+  });
+
+  it('checks the verb on the subresource, which has verbs of its own', async () => {
+    await expect(isAPIResourceAvailable({ ...folders, subresource: 'access' })).resolves.toBe(true);
+    await expect(isAPIResourceAvailable({ ...folders, subresource: 'access', verb: 'get' })).resolves.toBe(true);
+    await expect(isAPIResourceAvailable({ ...folders, subresource: 'access', verb: 'update' })).resolves.toBe(false);
+  });
+
+  it('is false for a resource or subresource the group version does not serve', async () => {
+    await expect(isAPIResourceAvailable({ ...folders, resource: 'dashboards' })).resolves.toBe(false);
+    await expect(isAPIResourceAvailable({ ...folders, subresource: 'proxy' })).resolves.toBe(false);
+  });
+
+  it('is false when the group version is not served, or discovery cannot answer', async () => {
+    respondTo({ '/apis/folder.grafana.app/v1': () => Promise.reject(fetchError(500)) });
+
+    await expect(isAPIResourceAvailable({ ...folders, version: 'v2' })).resolves.toBe(false);
+    await expect(isAPIResourceAvailable({ ...folders, version: 'v1' })).resolves.toBe(false);
+  });
+
+  it('shares requests and answers with getAPIResources', async () => {
+    await getAPIResources('folder.grafana.app', 'v1beta1');
+    await isAPIResourceAvailable({ ...folders, verb: 'list' });
+    await isAPIResourceAvailable({ ...folders, subresource: 'access' });
+
+    expect(requestedUrls()).toEqual([FOLDER_RESOURCES_URL]);
   });
 });

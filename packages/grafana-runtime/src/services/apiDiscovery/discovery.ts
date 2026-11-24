@@ -2,10 +2,18 @@ import { isObject } from '@grafana/data';
 
 import { getFetchErrorContext } from '../../utils/getCachedPromise';
 import { getBackendSrv, isFetchError } from '../backendSrv';
+import { API_VERSION_PATTERN } from '../pluginUtils';
 import { isSignedInOrAnonymous } from '../user';
 
 import { logAPIDiscoveryError, logAPIDiscoveryWarning } from './logging';
-import { type K8sAPIGroup, type K8sAPIGroupList, type APIGroupInfo } from './types';
+import { fromK8sAPIResourceList, isK8sAPIResourceList, type ResourceList } from './resources';
+import {
+  type K8sAPIGroup,
+  type K8sAPIGroupList,
+  type APIGroupInfo,
+  type APIResourceInfo,
+  type APIResourceQuery,
+} from './types';
 
 /** `unknown` means discovery could not answer. It is never cached, so the next caller asks again. */
 type Outcome<T> = { kind: 'known'; value: T } | { kind: 'unknown' };
@@ -63,6 +71,7 @@ class OutcomeCache<T> {
 
 const rootCache = new OutcomeCache<GroupsByName>();
 const groupCache = new OutcomeCache<APIGroupInfo | undefined>();
+const resourceListCache = new OutcomeCache<ResourceList | undefined>();
 
 /**
  * Returns the versions the server serves for an `/apis` group, such as `dashboard.grafana.app`.
@@ -82,8 +91,7 @@ const groupCache = new OutcomeCache<APIGroupInfo | undefined>();
  * @alpha
  */
 export async function getAPIGroup(group: string): Promise<APIGroupInfo | undefined> {
-  if (!GROUP_NAME_PATTERN.test(group)) {
-    logAPIDiscoveryWarning('API discovery: not a valid API group name, such as dashboard.grafana.app', { group });
+  if (!isValidGroupName(group)) {
     return undefined;
   }
 
@@ -102,6 +110,58 @@ export async function getAPIGroup(group: string): Promise<APIGroupInfo | undefin
 }
 
 /**
+ * Returns the resources that one version of an `/apis` group serves, such as `dashboards` in
+ * `dashboard.grafana.app/v1beta1`, in the order the server lists them.
+ *
+ * Resolves `undefined` when the server has no resource list for the group version, which is cached, or when
+ * discovery can't answer, which is not cached (see {@link getAPIGroup}). A group version that serves routes
+ * only, and no resources, has no resource list. It never rejects and never shows an error to the user.
+ *
+ * The first call for a group version fetches `GET /apis/<group>/<version>`. Later calls reuse the answer
+ * until {@link invalidateAPIDiscovery} or a page reload.
+ *
+ * @alpha
+ */
+export async function getAPIResources(group: string, version: string): Promise<readonly APIResourceInfo[] | undefined> {
+  return (await getResourceList(group, version))?.resources;
+}
+
+/**
+ * Resolves `true` when a version of an `/apis` group serves a resource, and optionally a subresource and a
+ * verb. A subresource has verbs of its own, so with a subresource the verb is checked on the subresource.
+ *
+ * Resolves `false` when it isn't served, and when discovery can't answer. It shares requests and answers
+ * with {@link getAPIResources}. Like the rest of discovery, it says what the server serves, not what the
+ * current user may do.
+ *
+ * The `health`, `resources` and `proxy` endpoints of an app plugin aren't registered subresources of its
+ * `app` resource, so they resolve `false` even when the plugin serves them.
+ *
+ * @example
+ * ```ts
+ * const canCreate = await isAPIResourceAvailable({
+ *   group: 'dashboard.grafana.app',
+ *   version: 'v0alpha1',
+ *   resource: 'librarypanels',
+ *   verb: 'create',
+ * });
+ * ```
+ *
+ * @alpha
+ */
+export async function isAPIResourceAvailable({
+  group,
+  version,
+  resource,
+  subresource,
+  verb,
+}: APIResourceQuery): Promise<boolean> {
+  const list = await getResourceList(group, version);
+  const verbs = list?.verbs.get(subresource ? `${resource}/${subresource}` : resource);
+  return verbs !== undefined && (!verb || verbs.includes(verb));
+}
+
+/**
  * Forgets every cached discovery answer, so the next call asks the server again. Call it after
  * something changes which groups the server serves, such as installing or removing an app plugin.
  *
@@ -110,6 +170,7 @@ export async function getAPIGroup(group: string): Promise<APIGroupInfo | undefin
 export function invalidateAPIDiscovery(): void {
   rootCache.clear();
   groupCache.clear();
+  resourceListCache.clear();
 }
 
 /**
@@ -161,6 +222,46 @@ async function fetchAPIGroup(group: string): Promise<Outcome<APIGroupInfo | unde
       throw new Error('API discovery: the response is not an APIGroup');
     }
     return { kind: 'known', value: toAPIGroupInfo(response) };
+  } catch (error) {
+    if (isFetchError(error) && error.status === 404) {
+      return { kind: 'known', value: undefined };
+    }
+    logRequestFailure(url, error);
+    return UNKNOWN;
+  }
+}
+
+function isValidGroupName(group: string): boolean {
+  if (GROUP_NAME_PATTERN.test(group)) {
+    return true;
+  }
+  logAPIDiscoveryWarning('API discovery: not a valid API group name, such as dashboard.grafana.app', { group });
+  return false;
+}
+
+async function getResourceList(group: string, version: string): Promise<ResourceList | undefined> {
+  if (!isValidGroupName(group)) {
+    return undefined;
+  }
+  if (!API_VERSION_PATTERN.test(version)) {
+    logAPIDiscoveryWarning('API discovery: not a valid API version, such as v1beta1', { group, version });
+    return undefined;
+  }
+  return valueOf(await resourceListCache.get(`${group}/${version}`, () => fetchResourceList(group, version)));
+}
+
+async function fetchResourceList(group: string, version: string): Promise<Outcome<ResourceList | undefined>> {
+  if (!isSignedInOrAnonymous()) {
+    return UNKNOWN;
+  }
+
+  const url = `${ROOT_URL}/${group}/${version}`;
+  try {
+    const response = await getWithTimeout(url);
+    if (!isK8sAPIResourceList(response)) {
+      throw new Error('API discovery: the response is not an APIResourceList');
+    }
+    return { kind: 'known', value: fromK8sAPIResourceList(group, version, response) };
   } catch (error) {
     if (isFetchError(error) && error.status === 404) {
       return { kind: 'known', value: undefined };
