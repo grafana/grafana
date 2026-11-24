@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/mail"
 	"net/textproto"
+	"runtime/debug"
 	"strconv"
 	"strings"
 
@@ -20,11 +21,13 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	gomail "gopkg.in/mail.v2"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/notifications")
+var smtpLogger = log.New("notifications.smtp")
 
 type SmtpClient struct {
 	cfg setting.SmtpSettings
@@ -114,6 +117,7 @@ func (sc *SmtpClient) dialAndSend(dialer *gomail.Dialer, m *gomail.Message) erro
 func (sc *SmtpClient) sendWithRecover(sender gomail.Sender, m ...*gomail.Message) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
+			smtpLogger.Error("Recovered from panic while sending email", "panic", r, "stack", string(debug.Stack()))
 			err = fmt.Errorf("panic while sending email: %v", r)
 		}
 	}()
