@@ -2,12 +2,13 @@ import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
 import { useEffect, useState } from 'react';
 import { useMatch, useParams } from 'react-router-dom-v5-compat';
+import { useMedia } from 'react-use';
 
 import { PageLayoutType } from '@grafana/data';
 import { locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
 import { UrlSyncContextProvider } from '@grafana/scenes';
-import { Box, useStyles2 } from '@grafana/ui';
+import { Box, useStyles2, useTheme2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
@@ -108,6 +109,10 @@ function NotebookDocument({ scene, isNew }: { scene: NotebookScene; isNew: boole
   const headerHeight = useChromeHeaderHeight();
   const [controlsHeight, setControlsHeight] = useState(0);
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
+  // Same breakpoint NotebookSceneControls sticks from: below it the row scrolls away, so it takes no
+  // room from the sidebar or from heading jumps.
+  const controlsAreSticky = useMedia(`(min-width: ${theme.breakpoints.values.md}px)`);
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
 
@@ -144,7 +149,7 @@ function NotebookDocument({ scene, isNew }: { scene: NotebookScene; isNew: boole
         </div>
         {/* A display someone has put a notebook on has nobody navigating it, same as the dashboard. */}
         {kioskMode !== KioskMode.Full && (
-          <NotebookSidebar scene={scene} stickyTop={(headerHeight ?? 0) + controlsHeight} />
+          <NotebookSidebar scene={scene} stickyTop={(headerHeight ?? 0) + (controlsAreSticky ? controlsHeight : 0)} />
         )}
       </div>
       <NotebookPrompt scene={scene} />

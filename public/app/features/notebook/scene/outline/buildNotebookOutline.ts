@@ -167,14 +167,28 @@ function extractHeadings(text: string): ExtractedHeading[] {
 
 /** The heading's text as rendered, without its markup: what a reader sees, and what search matches. */
 function inlineText(tokens: Token[]): string {
-  return tokens
-    .map((token) => {
-      if ('tokens' in token && token.tokens) {
-        return inlineText(token.tokens);
-      }
-      return 'text' in token && typeof token.text === 'string' ? token.text : '';
-    })
-    .join('');
+  return decodeEntities(
+    tokens
+      .map((token) => {
+        // A tag renders as an element, not as text, so only what it wraps is left.
+        if (token.type === 'html') {
+          return '';
+        }
+        if ('tokens' in token && token.tokens) {
+          return inlineText(token.tokens);
+        }
+        return 'text' in token && typeof token.text === 'string' ? token.text : '';
+      })
+      .join('')
+  );
+}
+
+// The rendered heading's textContent has `&amp;` as `&`, and scrollToHeading matches on that.
+function decodeEntities(text: string): string {
+  if (!text.includes('&')) {
+    return text;
+  }
+  return new DOMParser().parseFromString(text, 'text/html').documentElement.textContent ?? text;
 }
 
 // marked's Token union includes a generic `{ type: string }` member, so checking `type` alone does not

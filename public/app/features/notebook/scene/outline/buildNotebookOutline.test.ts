@@ -47,6 +47,14 @@ describe('buildNotebookOutline', () => {
     );
   });
 
+  it('labels a heading with the text it renders, decoding entities and dropping inline html', () => {
+    expect(
+      summarize([markdown('a', '## Errors &amp; retries\n\n## <em>Latency</em> &lt;p99&gt;')]).map(
+        (entry) => entry.label
+      )
+    ).toEqual(['Errors & retries', 'Latency <p99>']);
+  });
+
   it('finds setext headings and headings inside quotes and lists, as the markdown renderer does', () => {
     const text = [
       'Overview',
