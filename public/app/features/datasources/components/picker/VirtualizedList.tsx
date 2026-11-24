@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCallback, useEffect, useRef } from 'react';
 import type * as React from 'react';
@@ -7,6 +7,7 @@ import type { Observable } from 'rxjs';
 import type { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
 import type { FavoriteDatasources } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
+import { getFocusStyles } from '@grafana/ui/internal';
 
 import { useKeyboardNavigatableList } from '../../hooks';
 
@@ -15,6 +16,8 @@ import { isDataSourceMatch } from './utils';
 
 const VIRTUAL_OVERSCAN_ITEMS = 4;
 const ESTIMATED_ITEM_HEIGHT = 48;
+// Space left between a scrolled item and the list edge, so the focus ring is not cut off
+const FOCUS_RING_SCROLL_PADDING = 4;
 
 export type VirtualizedListProps = {
   sortedDataSources: DataSourceInstanceSettings[];
@@ -29,6 +32,8 @@ export type VirtualizedListProps = {
   listboxId?: string;
   /** Reports the DOM id of the keyboard-highlighted option, for aria-activedescendant on the input */
   onActiveItemChange?: (id: string | undefined) => void;
+  /** Show a focus ring on the highlighted option */
+  showFocusRing?: boolean;
 };
 
 const optionId = (listboxId: string, uid: string) => `${listboxId}-${uid}`;
@@ -44,6 +49,7 @@ export function VirtualizedList({
   scrollRef,
   listboxId,
   onActiveItemChange,
+  showFocusRing = false,
 }: VirtualizedListProps) {
   const styles = useStyles2(getStyles);
 
@@ -52,6 +58,8 @@ export function VirtualizedList({
     getScrollElement: () => scrollRef.current,
     estimateSize: () => ESTIMATED_ITEM_HEIGHT,
     overscan: VIRTUAL_OVERSCAN_ITEMS,
+    scrollPaddingStart: FOCUS_RING_SCROLL_PADDING,
+    scrollPaddingEnd: FOCUS_RING_SCROLL_PADDING,
   });
 
   const virtualizerRef = useRef(rowVirtualizer);
@@ -94,10 +102,11 @@ export function VirtualizedList({
     >
       {rowVirtualizer.getVirtualItems().map((virtualRow) => {
         const ds = sortedDataSources[virtualRow.index];
+        const isHighlighted = !!enableKeyboardNavigation && virtualRow.index === selectedIndex;
         return (
           <div
             key={ds.uid}
-            className={styles.virtualizedItem}
+            className={cx(styles.virtualizedItem, isHighlighted && showFocusRing && styles.focusRing)}
             style={{
               height: virtualRow.size,
               transform: `translateY(${virtualRow.start}px)`,
@@ -116,7 +125,7 @@ export function VirtualizedList({
           >
             <DataSourceCardItem
               ds={ds}
-              isSelected={!!enableKeyboardNavigation && virtualRow.index === selectedIndex}
+              isSelected={isHighlighted}
               enableKeyboardNavigation={enableKeyboardNavigation}
               current={current}
               favoriteDataSources={favoriteDataSources}
@@ -141,6 +150,12 @@ function getStyles(theme: GrafanaTheme2) {
       top: 0,
       left: 0,
       width: '100%',
+    }),
+    focusRing: css({
+      ...getFocusStyles(theme),
+      borderRadius: theme.shape.radius.default,
+      // Keep the ring above the items next to it
+      zIndex: 1,
     }),
   };
 }

@@ -346,6 +346,35 @@ describe('DataSourcePicker', () => {
       expect(selected).toHaveAccessibleName(mockDS1.name);
     });
 
+    it('should show a focus ring on the highlighted item only when the keyboard is used', async () => {
+      await setupOpenDropdown(user, { onChange: jest.fn(), current: mockDS1.name });
+
+      const focusRing = { outline: '2px dotted transparent' };
+      const searchBox = screen.getByRole('combobox');
+      const activeOption = () => document.getElementById(searchBox.getAttribute('aria-activedescendant')!);
+
+      // Opened with the mouse, so the first item has no ring
+      expect(activeOption()).toHaveAccessibleName(mockDS1.name);
+      expect(activeOption()).not.toHaveStyle(focusRing);
+
+      await user.keyboard('[ArrowDown]');
+      expect(activeOption()).toHaveAccessibleName(mockDS2.name);
+      expect(activeOption()).toHaveStyle(focusRing);
+      expect(screen.getByRole('option', { name: mockDS1.name })).not.toHaveStyle(focusRing);
+    });
+
+    it('should show a focus ring on the first item when opened with the keyboard', async () => {
+      render(<DataSourcePicker onChange={jest.fn()} current={mockDS1.name} />);
+
+      const searchBox = screen.getByRole('combobox');
+      await user.tab();
+      await user.keyboard('[ArrowDown]');
+
+      const activeOption = document.getElementById(searchBox.getAttribute('aria-activedescendant')!);
+      expect(activeOption).toHaveAccessibleName(mockDS1.name);
+      expect(activeOption).toHaveStyle({ outline: '2px dotted transparent' });
+    });
+
     it('should be searchable', async () => {
       await setupOpenDropdown(user, { onChange: jest.fn() });
 

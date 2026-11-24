@@ -104,6 +104,8 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
   const [filterTerm, setFilterTerm] = useState<string>('');
   const listboxId = useId();
   const [activeItemId, setActiveItemId] = useState<string>();
+  // Show the focus ring only when the keyboard is used, same as Select and Combobox
+  const [showFocusRing, setShowFocusRing] = useState(false);
   const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
   const ref = useRef<HTMLDivElement>(null);
   const debouncedTrackSearch = useMemo(
@@ -276,6 +278,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
   }
 
   function onKeyDownInput(keyEvent: React.KeyboardEvent<HTMLInputElement>) {
+    setShowFocusRing(true);
     // From the input, it navigates to the footer
     if (keyEvent.key === 'Tab' && !keyEvent.shiftKey && isOpen) {
       keyEvent.preventDefault();
@@ -328,6 +331,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
       <div
         className={styles.trigger}
         onClick={() => {
+          setShowFocusRing(false);
           openDropdown();
           reportInteraction(INTERACTION_EVENT_NAME, {
             item: INTERACTION_ITEM.OPEN_DROPDOWN,
@@ -383,6 +387,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
               current={currentValue}
               filterTerm={filterTerm}
               keyboardEvents={keyboardEvents}
+              showFocusRing={showFocusRing}
               onChange={(ds: DataSourceInstanceSettings, defaultQueries?: DataQuery[] | GrafanaQuery[]) => {
                 if (ds.uid !== currentValue?.uid) {
                   closeHandedOff();
@@ -458,6 +463,7 @@ interface PickerContentProps extends DataSourcePickerProps {
   favoriteDataSources: FavoriteDatasources;
   listboxId: string;
   onActiveItemChange: (id: string | undefined) => void;
+  showFocusRing: boolean;
 }
 
 const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((props, ref) => {
