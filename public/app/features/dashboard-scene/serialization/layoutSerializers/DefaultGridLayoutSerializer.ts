@@ -1,4 +1,4 @@
-import { type SceneGridItemLike, SceneGridLayout, VizPanel } from '@grafana/scenes';
+import { type SceneGridItemLike, SceneGridLayout, SceneGridRow, VizPanel } from '@grafana/scenes';
 import {
   type Spec as DashboardV2Spec,
   type GridLayoutItemKind,
@@ -8,10 +8,13 @@ import {
   type GridLayoutItemSpec,
   type PanelKind,
   type LibraryPanelKind,
+  type RowsLayoutKind,
+  type RowsLayoutRowKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
+import { RowRepeaterBehavior } from '../../scene/layout-default/RowRepeaterBehavior';
 import { getIsLazy } from '../../scene/layouts-shared/utils';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { calculateGridItemDimensions, isLibraryPanel } from '../../utils/utils';
@@ -22,12 +25,74 @@ export function serializeDefaultGridLayout(
   layoutManager: DefaultGridLayoutManager,
   isSnapshot?: boolean
 ): DashboardV2Spec['layout'] {
+  const children = layoutManager.state.grid.state.children;
+
+  // A v1 scene keeps its rows as SceneGridRow children of the grid, which a v2 GridLayout cannot hold.
+  if (children.some((child) => child instanceof SceneGridRow)) {
+    return serializeGridRowsAsRowsLayout(children, isSnapshot);
+  }
+
   return {
     kind: 'GridLayout',
     spec: {
-      items: getGridLayoutItems(layoutManager, isSnapshot),
+      items: getGridLayoutItems(children, isSnapshot),
     },
   };
+}
+
+// Panels before the first row go into a row with a hidden header, as in the v1 to v2 save model conversion.
+// The live grid items are read in place: rebuilding the rows as RowItems (RowsLayoutManager.createFromLayout)
+// would reparent them out of the scene being serialized.
+function serializeGridRowsAsRowsLayout(children: SceneGridItemLike[], isSnapshot?: boolean): RowsLayoutKind {
+  const sections: Array<{ row?: SceneGridRow; items: SceneGridItemLike[] }> = [];
+
+  for (const child of children) {
+    if (child instanceof SceneGridRow) {
+      sections.push({ row: child, items: child.state.children });
+      continue;
+    }
+
+    const last = sections.at(-1);
+    if (last && !last.row) {
+      last.items.push(child);
+    } else {
+      sections.push({ items: [child] });
+    }
+  }
+
+  const rows = sections
+    // Repeated row clones are rebuilt from the source row's repeat when the dashboard loads.
+    .filter(({ row }) => !row?.state.repeatSourceKey)
+    .map(({ row, items }): RowsLayoutRowKind => {
+      const layout: GridLayoutKind = {
+        kind: 'GridLayout',
+        spec: { items: toRowRelativeY(getGridLayoutItems(items, isSnapshot)) },
+      };
+
+      if (!row) {
+        return { kind: 'RowsLayoutRow', spec: { title: '', collapse: false, hideHeader: true, layout } };
+      }
+
+      const repeat = row.state.$behaviors?.find((behavior) => behavior instanceof RowRepeaterBehavior);
+      return {
+        kind: 'RowsLayoutRow',
+        spec: {
+          title: row.state.title,
+          collapse: Boolean(row.state.isCollapsed),
+          layout,
+          ...(repeat && { repeat: { mode: 'variable', value: repeat.state.variableName } }),
+        },
+      };
+    });
+
+  return { kind: 'RowsLayout', spec: { rows } };
+}
+
+// v1 grid items hold absolute y, and a collapsed row's panels keep the y they had when it was collapsed,
+// so offset from the topmost item rather than from the row.
+function toRowRelativeY(items: GridLayoutItemKind[]): GridLayoutItemKind[] {
+  const minY = Math.min(...items.map((item) => item.spec.y));
+  return items.map((item) => ({ ...item, spec: { ...item.spec, y: item.spec.y - minY } }));
 }
 
 export function deserializeDefaultGridLayout(
@@ -47,9 +112,9 @@ export function deserializeDefaultGridLayout(
   });
 }
 
-function getGridLayoutItems(body: DefaultGridLayoutManager, isSnapshot?: boolean): GridLayoutItemKind[] {
+function getGridLayoutItems(children: SceneGridItemLike[], isSnapshot?: boolean): GridLayoutItemKind[] {
   let items: GridLayoutItemKind[] = [];
-  for (const child of body.state.grid.state.children) {
+  for (const child of children) {
     if (child instanceof DashboardGridItem) {
       // TODO: handle panel repeater scenario
       if (child.state.variableName) {
