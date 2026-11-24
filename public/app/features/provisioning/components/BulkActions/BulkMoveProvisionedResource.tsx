@@ -9,6 +9,7 @@ import { Button, Field, Stack } from '@grafana/ui';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 import { AffectedFolderContents } from 'app/features/browse-dashboards/components/BrowseActions/AffectedFolderContents';
 import { collectSelectedItems, getSelectedUIDs } from 'app/features/browse-dashboards/utils/dashboards';
 import { getCanPushToConfiguredBranch } from 'app/features/provisioning/components/defaults';
@@ -207,7 +208,7 @@ function FormContent({
                 />
               </Field>
               <ResourceEditFormSharedFields
-                resourceType="folder"
+                resourceType={CORE_KINDS.folder.kind}
                 isNew={false}
                 canPushToConfiguredBranch={canPushToConfiguredBranch}
                 repository={repository}

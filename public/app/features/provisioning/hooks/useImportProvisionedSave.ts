@@ -55,7 +55,7 @@ export function useImportProvisionedSave({ repository }: { repository?: Reposito
   const [createFile, request] = useCreateOrUpdateRepositoryFile();
 
   const { handleSuccess } = useProvisionedRequestHandler({
-    resourceType: 'dashboard',
+    resourceType: CORE_KINDS.dashboard.kind,
     repository,
   });
 
@@ -97,7 +97,7 @@ export function useImportProvisionedSave({ repository }: { repository?: Reposito
             comment: form.comment,
             repository,
             action: 'create',
-            resourceKind: 'dashboard',
+            resourceKind: CORE_KINDS.dashboard.kind,
             resourceID: uid ?? '',
             title,
           }),

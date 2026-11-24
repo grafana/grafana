@@ -171,7 +171,7 @@ export function SaveProvisionedDashboardForm({
 
   const templateVars: CommitTemplateVars = {
     action: createsFile ? 'create' : 'update',
-    resourceKind: 'dashboard',
+    resourceKind: CORE_KINDS.dashboard.kind,
     resourceID: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
     title: title ?? '',
     ...getCurrentCommitUser(),
@@ -343,7 +343,7 @@ export function SaveProvisionedDashboardForm({
           comment: '',
           repository,
           action: 'create',
-          resourceKind: 'folder',
+          resourceKind: CORE_KINDS.folder.kind,
           resourceID: '',
           title: folderName,
           ...getCurrentCommitUser(),
@@ -390,7 +390,7 @@ export function SaveProvisionedDashboardForm({
 
   const { handleSuccess } = useProvisionedRequestHandler<Dashboard>({
     folderUID: defaultValues.folder?.uid,
-    resourceType: 'dashboard',
+    resourceType: CORE_KINDS.dashboard.kind,
     repository,
     isNewBranch,
     handlers: {
@@ -597,7 +597,7 @@ export function SaveProvisionedDashboardForm({
           {!isNew && !readOnly && <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />}
 
           <ResourceEditFormSharedFields
-            resourceType="dashboard"
+            resourceType={CORE_KINDS.dashboard.kind}
             readOnly={readOnly}
             canPushToConfiguredBranch={canPushToConfiguredBranch}
             repository={repository}

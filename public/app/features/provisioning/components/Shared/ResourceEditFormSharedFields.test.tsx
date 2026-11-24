@@ -100,7 +100,7 @@ function setup(options: SetupOptions = {}) {
 
   return render(
     <FormWrapper>
-      <ResourceEditFormSharedFields {...componentProps} resourceType="dashboard" />
+      <ResourceEditFormSharedFields {...componentProps} resourceType="Dashboard" />
     </FormWrapper>
   );
 }
@@ -149,7 +149,7 @@ describe('ResourceEditFormSharedFields', () => {
     });
 
     it('should make comment field readonly but not disabled when lockComment is true', () => {
-      const commitMessage = 'feat(dashboards): update My dashboard';
+      const commitMessage = 'feat(Dashboards): update My dashboard';
       setup({ lockComment: true, commitMessage });
 
       const commentTextarea = screen.getByRole('textbox', { name: /comment/i });
@@ -360,7 +360,7 @@ describe('ResourceEditFormSharedFields', () => {
 
         return (
           <FormProvider {...methods}>
-            <ResourceEditFormSharedFields canPushToConfiguredBranch={true} isNew={true} resourceType="dashboard" />
+            <ResourceEditFormSharedFields canPushToConfiguredBranch={true} isNew={true} resourceType="Dashboard" />
           </FormProvider>
         );
       };
@@ -389,7 +389,7 @@ describe('ResourceEditFormSharedFields', () => {
 
         return (
           <FormProvider {...methods}>
-            <ResourceEditFormSharedFields canPushToConfiguredBranch={true} isNew={true} resourceType="dashboard" />
+            <ResourceEditFormSharedFields canPushToConfiguredBranch={true} isNew={true} resourceType="Dashboard" />
           </FormProvider>
         );
       };
@@ -442,7 +442,7 @@ describe('ResourceEditFormSharedFields', () => {
               <ResourceEditFormSharedFields
                 canPushToConfiguredBranch={false}
                 repository={{ ...mockRepo.github, branch: 'main' }}
-                resourceType="dashboard"
+                resourceType="Dashboard"
               />
               <button type="submit">Submit</button>
             </form>

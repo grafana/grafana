@@ -15,12 +15,11 @@ import { useDispatch } from 'app/types/store';
 
 import { ensureFolderPathTrailingSlash } from '../components/utils/path';
 import { getRepoFileUrl } from '../utils/git';
-import { type AnyResourceKindKey } from '../utils/resourceKinds';
 
 import { PushSuccessMessage } from './PushSuccessMessage';
 import { useLastBranch } from './useLastBranch';
 
-type ResourceType = AnyResourceKindKey;
+type ResourceType = string;
 
 // Information object that gets passed to all handlers
 interface ProvisionedOperationInfo {

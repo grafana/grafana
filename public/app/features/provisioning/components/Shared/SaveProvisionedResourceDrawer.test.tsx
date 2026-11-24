@@ -152,7 +152,7 @@ describe('SaveProvisionedResourceDrawer', () => {
       expect(req.url.pathname).toContain('/repositories/test-repo/files/playlists/test-playlist.json');
       // Write workflow commits to the configured branch (no ref query param).
       expect(req.url.searchParams.get('ref')).toBeNull();
-      expect(req.url.searchParams.get('message')).toBe('Save playlist: Test Playlist');
+      expect(req.url.searchParams.get('message')).toBe('Save Playlist: Test Playlist');
       // The drawer builds the committed file from the resource (apiVersion/kind/metadata/spec).
       expect(req.body).toEqual({
         apiVersion: 'playlist.grafana.app/v0alpha1',
@@ -257,7 +257,7 @@ describe('SaveProvisionedResourceDrawer', () => {
       const req = requireCapturedRequest(capturedRequest);
       // Path is derived from the title (slugified).
       expect(req.url.pathname).toContain('/repositories/test-repo/files/my-new-playlist.json');
-      expect(req.url.searchParams.get('message')).toBe('Create playlist: My New Playlist');
+      expect(req.url.searchParams.get('message')).toBe('Create Playlist: My New Playlist');
       // A new resource with no name gets a generated k8s-safe name in the committed file.
       const body = req.body as { metadata?: { name?: string } };
       expect(body.metadata?.name).toMatch(/^[a-z0-9]{12}$/);
@@ -318,7 +318,7 @@ describe('SaveProvisionedResourceDrawer', () => {
       const req = requireCapturedRequest(capturedRequest);
       expect(req.method).toBe('DELETE');
       expect(req.url.pathname).toContain('/repositories/test-repo/files/playlists/test-playlist.json');
-      expect(req.url.searchParams.get('message')).toBe('Delete playlist: Test Playlist');
+      expect(req.url.searchParams.get('message')).toBe('Delete Playlist: Test Playlist');
     });
 
     it('shows the read-only banner when the repository cannot be edited', () => {
@@ -404,7 +404,7 @@ describe('SaveProvisionedResourceDrawer', () => {
     await user.click(screen.getByRole('button', { name: /^save$/i }));
 
     await waitFor(() => expect(capturedRequest).not.toBeNull());
-    expect(requireCapturedRequest(capturedRequest).url.searchParams.get('message')).toBe('Save thing: My thing');
+    expect(requireCapturedRequest(capturedRequest).url.searchParams.get('message')).toBe('Save Thing: My thing');
   });
 
   it('renders nothing and warns in dev when the resource is not a registered provisioning kind', () => {

@@ -62,8 +62,8 @@ type OnCoreKinds = {
  * shared description in {@link CORE_KINDS} (identity, icon, label, pages) and adds what only
  * provisioning needs.
  *
- * `as const` preserves the literal field types so the keys ({@link ResourceKindKey}) and tree labels
- * ({@link ResourceKindName}) are derived from this object: adding a kind is ONE entry here and one in
+ * `as const` preserves the literal field types so the tree labels ({@link ResourceKindName}) are
+ * derived from this object: adding a kind is ONE entry here and one in
  * {@link CORE_KINDS} (plus, if needed, enabling it on the backend so it appears in the settings
  * endpoint's `availableResources`) — no parallel unions to keep in sync. Entries are validated
  * against {@link ResourceKindInfo} where `allKindInfos` is built below; `as const` is used instead of
@@ -124,22 +124,12 @@ export const resourceKindInfos = {
 } as const satisfies OnCoreKinds;
 
 /**
- * Stable per-kind key (`folder`, `dashboard`, `playlist`, ...) used to identify a provisioning
- * resource kind across the UI: the commit-message noun, branch-name prefix, telemetry and the shared
- * edit-form fields all use this. Derived from the registry keys, so a new kind only needs its
- * registry entry.
- */
-export type ResourceKindKey = keyof typeof resourceKindInfos;
-
-export type AnyResourceKindKey = ResourceKindKey | (string & {});
-
-/**
  * Tree-view labels for the provisioning *resource* kinds (`Folder`, `Dashboard`, ...), derived from
  * the registry's `kind`s so the set stays in lockstep with the kinds above. The full tree
  * {@link TreeItemKind} (these labels plus the `File` fallback) is assembled from this in `../types`, so a
  * new kind needs no edit there either.
  */
-export type ResourceKindName = (typeof resourceKindInfos)[ResourceKindKey]['kind'];
+export type ResourceKindName = (typeof resourceKindInfos)[keyof typeof resourceKindInfos]['kind'];
 
 /**
  * Consumer-facing shape of a registry entry: the kind's shared description plus what provisioning
@@ -183,25 +173,9 @@ export interface ResourceKindInfo extends KindInfo {
 // each call site. The registry keys and literal `kind` values stay the source of truth for the unions above.
 const allKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
 
-function isResourceKindKey(key: string): key is ResourceKindKey {
-  return key in resourceKindInfos;
-}
-
-const allKindKeys = Object.keys(resourceKindInfos).filter(isResourceKindKey);
-
-/**
- * Look up a kind's registry key from a resource or a job summary row, which carry both the API group
- * (`dashboard.grafana.app`) and the Kubernetes Kind (`Dashboard`). Matches on whichever identifiers
- * are present so partially-populated summary rows still resolve.
- */
-export function getKindKeyByGroupKind(group?: string, kind?: string): ResourceKindKey | undefined {
-  if (!group && !kind) {
-    return undefined;
-  }
-  return allKindKeys.find((key) => {
-    const info: ResourceKindInfo = resourceKindInfos[key];
-    return (!group || coversGroup(info, group)) && (!kind || info.kind === kind);
-  });
+/** The Git Sync details provisioning keeps for a kind, if it keeps any. */
+export function findResourceKindInfo(kind: Pick<KindInfo, 'group' | 'kind'>): ResourceKindInfo | undefined {
+  return allKindInfos.find((info) => info.group === kind.group && info.kind === kind.kind);
 }
 
 /**

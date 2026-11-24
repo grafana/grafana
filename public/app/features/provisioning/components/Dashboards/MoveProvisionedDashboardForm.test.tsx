@@ -238,7 +238,7 @@ describe('MoveProvisionedDashboardForm', () => {
     await user.click(screen.getByRole('button', { name: /move dashboard/i }));
 
     await waitFor(() => expect(posted.body).not.toBeNull());
-    expect(posted.body!.message).toBe('chore(dashboards): move Test Dashboard');
+    expect(posted.body!.message).toBe('chore(Dashboards): move Test Dashboard');
   });
 
   it('navigates to the PR redirect URL once a branch move job finishes', async () => {

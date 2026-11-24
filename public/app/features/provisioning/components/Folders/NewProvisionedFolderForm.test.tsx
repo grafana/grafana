@@ -270,7 +270,7 @@ describe('NewProvisionedFolderForm', () => {
     expect(request.url.pathname).toBe(
       '/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/test-repo/files/dashboards/My%20Team/'
     );
-    expect(request.url.searchParams.get('message')).toBe('Create folder: My Team');
+    expect(request.url.searchParams.get('message')).toBe('Create Folder: My Team');
     expect(request.body).toEqual({ title: 'My Team', type: 'folder' });
   });
 
@@ -322,7 +322,7 @@ describe('NewProvisionedFolderForm', () => {
     expect(request.url.pathname).toContain('/repositories/test-repo/files/');
     expect(request.url.pathname).toContain('Branch%20Folder');
     expect(request.url.searchParams.get('ref')).toBe('feature/new-folder');
-    expect(request.url.searchParams.get('message')).toBe('Create folder: Branch Folder');
+    expect(request.url.searchParams.get('message')).toBe('Create Folder: Branch Folder');
     expect(request.body).toEqual({ title: 'Branch Folder', type: 'folder' });
   });
 
@@ -358,7 +358,7 @@ describe('NewProvisionedFolderForm', () => {
     });
 
     const request = requireCapturedRequest(capturedRequest);
-    expect(request.url.searchParams.get('message')).toBe('chore(folders): create Templated Folder');
+    expect(request.url.searchParams.get('message')).toBe('chore(Folders): create Templated Folder');
   });
 
   it('should send correct request body and show the error when folder creation fails', async () => {
@@ -386,7 +386,7 @@ describe('NewProvisionedFolderForm', () => {
     const request = requireCapturedRequest(capturedRequest);
     expect(request.url.pathname).toContain('/repositories/test-repo/files/');
     expect(request.url.pathname).toContain('Error%20Folder');
-    expect(request.url.searchParams.get('message')).toBe('Create folder: Error Folder');
+    expect(request.url.searchParams.get('message')).toBe('Create Folder: Error Folder');
     expect(request.body).toEqual({ title: 'Error Folder', type: 'folder' });
 
     // The form catches the error and surfaces it in an alert; it stays open
@@ -464,7 +464,7 @@ describe('NewProvisionedFolderForm', () => {
       expect(request.url.pathname).toBe(
         '/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/folderless-repo/files/My%20Team/'
       );
-      expect(request.url.searchParams.get('message')).toBe('Create folder: My Team');
+      expect(request.url.searchParams.get('message')).toBe('Create Folder: My Team');
       expect(request.body).toEqual({ title: 'My Team', type: 'folder' });
     });
 
@@ -575,7 +575,7 @@ describe('NewProvisionedFolderForm commit message template', () => {
     await user.type(await screen.findByRole('textbox', { name: /folder name/i }), 'Reports');
 
     const comment = screen.getByRole('textbox', { name: /comment/i });
-    await waitFor(() => expect(comment).toHaveValue('feat(folders): create Reports'));
+    await waitFor(() => expect(comment).toHaveValue('feat(Folders): create Reports'));
     expect(comment).not.toHaveAttribute('readonly');
   });
 

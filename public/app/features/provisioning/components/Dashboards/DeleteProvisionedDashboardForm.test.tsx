@@ -139,7 +139,7 @@ describe('DeleteProvisionedDashboardForm', () => {
       expect(posted.body!.delete?.resources).toEqual([
         { name: 'test-uid', group: 'dashboard.grafana.app', kind: 'Dashboard' },
       ]);
-      expect(posted.body!.message).toBe('Delete dashboard: Test Dashboard');
+      expect(posted.body!.message).toBe('Delete Dashboard: Test Dashboard');
     });
 
     it('holds submission until the refs classify the branch, so the job gets the template branch', async () => {
@@ -231,7 +231,7 @@ describe('DeleteProvisionedDashboardForm', () => {
       await user.click(screen.getByRole('button', { name: /delete dashboard/i }));
 
       await waitFor(() => expect(posted.body).not.toBeNull());
-      expect(posted.body!.message).toBe('chore(dashboards): delete Test Dashboard');
+      expect(posted.body!.message).toBe('chore(Dashboards): delete Test Dashboard');
     });
 
     it('should handle missing repository name', async () => {

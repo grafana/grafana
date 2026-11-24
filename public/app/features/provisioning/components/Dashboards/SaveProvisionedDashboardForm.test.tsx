@@ -419,7 +419,7 @@ describe('SaveProvisionedDashboardForm', () => {
       expect(capturedRequest).not.toBeNull();
     });
     const request = requireCapturedRequest(capturedRequest);
-    expect(request.url.searchParams.get('message')).toBe('feat(dashboards): create Test Dashboard');
+    expect(request.url.searchParams.get('message')).toBe('feat(Dashboards): create Test Dashboard');
   });
 
   it('should update an existing dashboard successfully', async () => {
@@ -1167,7 +1167,7 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(request.url.searchParams.get('originalPath')).toBeNull();
     expect(putCalled).toBe(false);
     // The commit template must describe the same operation the request performs.
-    expect(request.url.searchParams.get('message')).toBe('feat(dashboards): create Test Dashboard');
+    expect(request.url.searchParams.get('message')).toBe('feat(Dashboards): create Test Dashboard');
   });
 
   it('lands on the saved dashboard after a deleted-branch recovery that writes to the configured branch', async () => {
@@ -2238,7 +2238,7 @@ describe('SaveProvisionedDashboardForm', () => {
 
     await waitFor(() => expect(folderRequest).not.toBeNull());
     // a dedicated folder commit message is sent; ref is omitted for write workflow
-    expect(folderRequest!.url.searchParams.get('message')).toContain('Create folder: Team A');
+    expect(folderRequest!.url.searchParams.get('message')).toContain('Create Folder: Team A');
     expect(folderRequest!.url.searchParams.get('ref')).toBeNull();
   });
 
@@ -2329,7 +2329,7 @@ describe('SaveProvisionedDashboardForm commit message template', () => {
     });
 
     const comment = await screen.findByRole('textbox', { name: /comment/i });
-    await waitFor(() => expect(comment).toHaveValue('feat(dashboards): create Test Dashboard'));
+    await waitFor(() => expect(comment).toHaveValue('feat(Dashboards): create Test Dashboard'));
     expect(comment).not.toHaveAttribute('readonly');
   });
 });

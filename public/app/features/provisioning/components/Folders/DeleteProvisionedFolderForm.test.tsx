@@ -226,7 +226,7 @@ describe('DeleteProvisionedFolderForm', () => {
       // The configured branch omits ref; the job names the folder, so authorization runs against that resource
       expect(posted.body).toEqual({
         action: 'delete',
-        message: 'Delete folder: Test Folder',
+        message: 'Delete Folder: Test Folder',
         delete: {
           resources: [{ name: 'folder-uid', group: 'folder.grafana.app', kind: 'Folder' }],
         },
@@ -265,7 +265,7 @@ describe('DeleteProvisionedFolderForm', () => {
       await clickDeleteButton();
 
       await waitFor(() => expect(posted.body).toBeDefined());
-      expect(posted.body!.message).toBe('chore(folders): delete Test Folder');
+      expect(posted.body!.message).toBe('chore(Folders): delete Test Folder');
     });
 
     it('should not submit if repository name is missing', async () => {

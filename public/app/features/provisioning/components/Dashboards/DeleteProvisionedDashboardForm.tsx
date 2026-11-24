@@ -53,7 +53,7 @@ export function DeleteProvisionedDashboardForm({
 
   const templateVars: CommitTemplateVars = {
     action: 'delete',
-    resourceKind: 'dashboard',
+    resourceKind: CORE_KINDS.dashboard.kind,
     resourceID: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
     title: dashboard.state.title ?? '',
     ...getCurrentCommitUser(),
@@ -151,7 +151,7 @@ export function DeleteProvisionedDashboardForm({
               )}
 
               <ResourceEditFormSharedFields
-                resourceType="dashboard"
+                resourceType={CORE_KINDS.dashboard.kind}
                 isNew={isNew}
                 readOnly={readOnly}
                 canPushToConfiguredBranch={canPushToConfiguredBranch}

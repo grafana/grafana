@@ -46,7 +46,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
 
   const templateVars: CommitTemplateVars = {
     action: 'delete',
-    resourceKind: 'folder',
+    resourceKind: CORE_KINDS.folder.kind,
     resourceID: parentFolder?.uid ?? '',
     title: parentFolder?.title ?? '',
     ...getCurrentCommitUser(),
@@ -137,7 +137,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
               />
 
               <ResourceEditFormSharedFields
-                resourceType="folder"
+                resourceType={CORE_KINDS.folder.kind}
                 isNew={false}
                 canPushToConfiguredBranch={canPushToConfiguredBranch}
                 repository={repository}

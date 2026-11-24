@@ -23,15 +23,11 @@ import { useGetResourceRepositoryView } from '../../hooks/useGetResourceReposito
 import { useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { useProvisionedResourceDrawerHandlers } from '../../hooks/useProvisionedResourceDrawerHandlers';
 import { type BaseProvisionedFormData } from '../../types/form';
+import { sanitizeBranchName } from '../../utils/branchName';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { getManagerIdentity, getSourcePath, type ManagedResource } from '../../utils/managedResource';
-import {
-  type AnyResourceKindKey,
-  getKindKeyByGroupKind,
-  type ResourceKindInfo,
-  resourceKindInfos,
-} from '../../utils/resourceKinds';
+import { findResourceKindInfo } from '../../utils/resourceKinds';
 import { getRequestRef } from '../../utils/workflow';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { getCanPushToConfiguredBranch, getDefaultRef } from '../defaults';
@@ -61,8 +57,8 @@ type ProvisionedResource = ManagedResource & {
 const generateResourceName = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789', 12);
 
 /** Builds the repository file path for a new resource from its title, falling back to the kind key. */
-function getNewResourcePath(title: string, kindKey: string): string {
-  return `${slugifyForFilename(title) || kindKey}.json`;
+function getNewResourcePath(title: string, kindName: string): string {
+  return `${slugifyForFilename(title) || slugifyForFilename(kindName)}.json`;
 }
 
 interface BaseDrawerProps {
@@ -103,7 +99,6 @@ export type SaveProvisionedResourceDrawerProps = BaseDrawerProps &
   ({ action: 'create'; repositoryName: string } | { action: 'update' | 'delete'; repositoryName?: never });
 
 interface FormProps {
-  kindKey: AnyResourceKindKey;
   kind: KindInfo;
   redirectUrl: string;
   resourceName: string;
@@ -119,7 +114,6 @@ interface FormProps {
 }
 
 function FormContent({
-  kindKey,
   kind,
   redirectUrl,
   resourceName,
@@ -145,13 +139,15 @@ function FormContent({
   const { handleSubmit, watch, formState } = methods;
   const ref = watch('ref') ?? '';
 
-  const coreKey = getKindKeyByGroupKind(kind.group, kind.kind);
-  const coreInfo: ResourceKindInfo | undefined = coreKey && resourceKindInfos[coreKey];
-  const { onWriteSuccess, onBranchSuccess } = useProvisionedResourceDrawerHandlers(coreInfo ?? {}, redirectUrl, action);
+  const { onWriteSuccess, onBranchSuccess } = useProvisionedResourceDrawerHandlers(
+    findResourceKindInfo(kind) ?? {},
+    redirectUrl,
+    action
+  );
 
   const templateVars: CommitTemplateVars = {
     action,
-    resourceKind: kindKey,
+    resourceKind: kind.kind,
     resourceID: resourceName,
     title,
     ...getCurrentCommitUser(),
@@ -179,7 +175,7 @@ function FormContent({
 
   const { handleSuccess } = useProvisionedRequestHandler({
     isNewBranch,
-    resourceType: kindKey,
+    resourceType: kind.kind,
     repository,
     successMessage,
     handlers: {
@@ -212,7 +208,7 @@ function FormContent({
     const branchRef = getRequestRef(repository, ref);
 
     reportInteraction('grafana_provisioning_resource_save_submitted', {
-      resourceType: kindKey,
+      resourceType: kind.kind,
       workflow,
       repositoryName: repoName,
       repositoryType: repository?.type ?? 'unknown',
@@ -233,7 +229,7 @@ function FormContent({
       <form onSubmit={handleSubmit(doSave)}>
         <Stack direction="column" gap={2}>
           <ResourceEditFormSharedFields
-            resourceType={kindKey}
+            resourceType={kind.kind}
             isNew={isNew}
             canPushToConfiguredBranch={canPushToConfiguredBranch}
             repository={repository}
@@ -281,8 +277,7 @@ export function SaveProvisionedResourceDrawer(props: SaveProvisionedResourceDraw
   // the registry key, so callers don't pass the kind separately.
   const group = props.resource.apiVersion?.split('/')[0];
   const kind = group && props.resource.kind ? findKind(group, props.resource.kind) : undefined;
-  const kindKey = getKindKeyByGroupKind(group, props.resource.kind) ?? kind?.kind.toLowerCase();
-  if (!kind || !kindKey) {
+  if (!kind) {
     // Pages only open this for known managed resources, so an unresolved kind means a bad fixture or a
     // new kind wired into a page before its registry entry exists. Warn in dev so it's a visible signal
     // rather than a silent no-op where the user clicks save/delete and nothing happens.
@@ -293,16 +288,14 @@ export function SaveProvisionedResourceDrawer(props: SaveProvisionedResourceDraw
     }
     return null;
   }
-  return <ResourceDrawerContent {...props} kindKey={kindKey} kind={kind} />;
+  return <ResourceDrawerContent {...props} kind={kind} />;
 }
 
 type ResourceDrawerContentProps = SaveProvisionedResourceDrawerProps & {
-  kindKey: AnyResourceKindKey;
   kind: KindInfo;
 };
 
 function ResourceDrawerContent({
-  kindKey,
   kind,
   redirectUrl,
   resource,
@@ -332,7 +325,7 @@ function ResourceDrawerContent({
           annotations: {
             [AnnoKeyManagerKind]: ManagerKind.Repo,
             [AnnoKeyManagerIdentity]: repositoryName ?? '',
-            [AnnoKeySourcePath]: getNewResourcePath(title, kindKey),
+            [AnnoKeySourcePath]: getNewResourcePath(title, kind.kind),
           },
         },
       }
@@ -344,7 +337,7 @@ function ResourceDrawerContent({
     : { apiVersion: resource.apiVersion, kind: resource.kind, metadata: { name: resourceName }, spec: resource.spec };
 
   // Branch names can't contain spaces, so prefix from the stable kind key, not the display noun.
-  const prefix = branchPrefix ?? kindKey;
+  const prefix = branchPrefix ?? sanitizeBranchName(kind.kind);
   const { repository, isLoading, isReadOnlyRepo, isMissingRepo } = useGetResourceRepositoryView({
     name: getManagerIdentity(managedResource),
   });
@@ -397,7 +390,6 @@ function ResourceDrawerContent({
       >
         {initialValues && (
           <FormContent
-            kindKey={kindKey}
             kind={kind}
             redirectUrl={redirectUrl}
             resourceName={resourceName}

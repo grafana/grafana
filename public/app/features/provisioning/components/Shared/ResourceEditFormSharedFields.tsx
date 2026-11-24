@@ -10,6 +10,7 @@ import {
   useGetRepositoryRefsQuery,
   useLazyGetRepositoryFilesWithPathQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 import { BranchValidationError } from 'app/features/provisioning/Shared/BranchValidationError';
 import { stripSlashes, validateBranchName } from 'app/features/provisioning/utils/git';
 import { isGitProvider } from 'app/features/provisioning/utils/repositoryTypes';
@@ -19,14 +20,13 @@ import { useGetRepositoryFolders } from '../../hooks/useGetRepositoryFolders';
 import { useLastBranch } from '../../hooks/useLastBranch';
 import { usePRBranch } from '../../hooks/usePRBranch';
 import { type BaseProvisionedFormData } from '../../types/form';
-import { type AnyResourceKindKey } from '../../utils/resourceKinds';
 import { isKnownRef } from '../../utils/workflow';
 import { joinPath, splitPath } from '../utils/path';
 
 type SharedFieldName = 'path' | 'comment';
 
 interface DashboardEditFormSharedFieldsProps {
-  resourceType: AnyResourceKindKey;
+  resourceType: string;
   canPushToConfiguredBranch: boolean;
   isNew?: boolean;
   readOnly?: boolean;
@@ -85,7 +85,8 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
 
     // New resources with an editable path (dashboards, playlists) get a path-exists check so a
     // duplicate path is caught before submit rather than only by the API.
-    const shouldValidatePath = isNew && (resourceType === 'dashboard' || resourceType === 'playlist');
+    const shouldValidatePath =
+      isNew && (resourceType === CORE_KINDS.dashboard.kind || resourceType === CORE_KINDS.playlist.kind);
 
     const canPushToNonConfiguredBranch = repository?.workflows?.includes('branch');
     const canOnlyPushToConfiguredBranch = canPushToConfiguredBranch && !canPushToNonConfiguredBranch;
@@ -113,7 +114,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
       canPushToNonConfiguredBranch,
     });
 
-    const showFolderFilename = (isNew || allowPathEdit) && resourceType === 'dashboard';
+    const showFolderFilename = (isNew || allowPathEdit) && resourceType === CORE_KINDS.dashboard.kind;
     const configuredRepoPath = isGitProvider(repository?.type) ? stripSlashes(repository?.path ?? '') : undefined;
 
     // A new branch only exists after the save creates it; until the selected branch is a known
@@ -127,7 +128,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
     });
 
     const pathText =
-      resourceType === 'folder'
+      resourceType === CORE_KINDS.folder.kind
         ? t(
             'provisioned-resource-form.save-or-delete-resource-shared-fields.description-folder-path',
             'Folder path inside the repository'

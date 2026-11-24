@@ -63,7 +63,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
   const title = watch('title');
   const templateVars: CommitTemplateVars = {
     action: 'create',
-    resourceKind: 'folder',
+    resourceKind: CORE_KINDS.folder.kind,
     resourceID: '',
     title: title ?? '',
     ...getCurrentCommitUser(),
@@ -152,7 +152,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
     folderUID: folder?.metadata.name ?? GENERAL_FOLDER_UID,
     isNewBranch,
     repository,
-    resourceType: 'folder',
+    resourceType: CORE_KINDS.folder.kind,
     handlers: {
       onDismiss,
       onBranchSuccess,
@@ -246,7 +246,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
           )}
 
           <ResourceEditFormSharedFields
-            resourceType="folder"
+            resourceType={CORE_KINDS.folder.kind}
             isNew
             canPushToConfiguredBranch={canPushToConfiguredBranch}
             repository={repository}

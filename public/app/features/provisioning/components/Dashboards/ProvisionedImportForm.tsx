@@ -7,6 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { Alert, Button, Field, Input, Stack, useStyles2 } from '@grafana/ui';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { getUidFieldDescription, getUidFieldLabel } from 'app/features/manage-dashboards/import/utils/uidFieldText';
 import { validateUid } from 'app/features/manage-dashboards/import/utils/validation';
@@ -223,7 +224,7 @@ export function ProvisionedImportForm({
 
         {!isLibraryPanelImportBlocked && !isReadOnlyRepo && (
           <ResourceEditFormSharedFields
-            resourceType="dashboard"
+            resourceType={CORE_KINDS.dashboard.kind}
             isNew
             canPushToConfiguredBranch={canPushToConfiguredBranch}
             repository={repository}

@@ -4,6 +4,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Drawer, Stack } from '@grafana/ui';
 import { type Job, type RepositoryView, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import { type StepStatusInfo } from 'app/features/provisioning/Wizard/types';
 
@@ -150,7 +151,7 @@ function FixFolderMetadataForm({
         <Stack direction="column" gap={2}>
           <ProvisioningAlert error={submitError} />
           <ResourceEditFormSharedFields
-            resourceType="folder"
+            resourceType={CORE_KINDS.folder.kind}
             canPushToConfiguredBranch={canPushToConfiguredBranch}
             repository={repository}
             hiddenFields={['path', 'comment']}

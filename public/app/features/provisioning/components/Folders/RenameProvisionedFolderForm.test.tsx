@@ -195,7 +195,7 @@ describe('RenameProvisionedFolderForm', () => {
       const request = requireCapturedRequest(capturedRequest);
       expect(request.url.pathname).toContain('/repositories/test-repo/files/');
       expect(request.url.searchParams.get('ref')).toBe('my-branch');
-      expect(request.url.searchParams.get('message')).toBe('Rename folder: Test Folder');
+      expect(request.url.searchParams.get('message')).toBe('Rename Folder: Test Folder');
       // No metadata.name — omitting the ID lets the backend preserve the existing UID from the repo.
       expect(request.body).toEqual({
         spec: { title: 'Test Folder' },
@@ -229,7 +229,7 @@ describe('RenameProvisionedFolderForm', () => {
         expect(capturedRequest).not.toBeNull();
       });
       const request = requireCapturedRequest(capturedRequest);
-      expect(request.url.searchParams.get('message')).toBe('chore(folders): rename Test Folder');
+      expect(request.url.searchParams.get('message')).toBe('chore(Folders): rename Test Folder');
     });
 
     it('should clear ref on the configured branch', async () => {
@@ -430,7 +430,7 @@ describe('RenameProvisionedFolderForm commit message template', () => {
     );
 
     const comment = await screen.findByRole('textbox', { name: /comment/i });
-    await waitFor(() => expect(comment).toHaveValue('feat(folders): rename Test Folder'));
+    await waitFor(() => expect(comment).toHaveValue('feat(Folders): rename Test Folder'));
     expect(comment).not.toHaveAttribute('readonly');
   });
 });
