@@ -733,6 +733,7 @@ import (
 	_ "k8s.io/apimachinery/pkg/api/equality"
 	_ "k8s.io/apimachinery/pkg/api/errors"
 	_ "k8s.io/apimachinery/pkg/api/meta"
+	_ "k8s.io/apimachinery/pkg/api/resource"
 	_ "k8s.io/apimachinery/pkg/api/validate/content"
 	_ "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	_ "k8s.io/apimachinery/pkg/apis/meta/v1"
