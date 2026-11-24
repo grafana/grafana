@@ -161,6 +161,46 @@ describe('settings', () => {
         );
       });
 
+      it('should preserve omitted fields and secure values', async () => {
+        // stored value
+        backendSrv.get = jest.fn().mockResolvedValue({
+          ...myOrgTestAppSettings,
+          spec: { enabled: true, pinned: true, jsonData: { apiUrl: 'https://www.grafana.com/' } },
+          secure: {
+            apiKey: { name: 'some-secret-apiKey' },
+          },
+        });
+
+        // value after patch: only the passed fields change
+        backendSrv.patch = jest.fn().mockResolvedValue({
+          ...myOrgTestAppSettings,
+          spec: { enabled: true, pinned: true, jsonData: { apiUrl: 'https://grafana.com/' } },
+          secure: {
+            apiKey: { name: 'some-secret-apiKey' },
+          },
+        });
+
+        await updateAppPluginSettings(myOrgTestAppSettings.metadata.name, {
+          jsonData: { apiUrl: 'https://grafana.com/' },
+        });
+
+        // Only the provided jsonData key is patched; omitted spec fields and
+        // the existing secure value are left untouched (no remove ops).
+        expect(backendSrv.patch).toHaveBeenCalledTimes(1);
+        expect(backendSrv.patch).toHaveBeenCalledWith(
+          '/apis/myorg-test-app/v0alpha1/namespaces/default/app/instance',
+          [
+            { op: 'test', path: '/metadata/resourceVersion', value: '' },
+            {
+              op: 'replace',
+              path: '/spec/jsonData/apiUrl',
+              value: 'https://grafana.com/',
+            },
+          ],
+          { validatePath: true, headers: { 'Content-Type': 'application/json-patch+json' } }
+        );
+      });
+
       it('should cache updated settings from new apis', async () => {
         // stored value
         backendSrv.get = jest.fn().mockResolvedValue({
