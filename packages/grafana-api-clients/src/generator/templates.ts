@@ -6,6 +6,8 @@ export interface TemplateInput {
   version: string;
   reducerPath: string;
   endpoints: string;
+  /** Other versions with the same schema that the client can call. Which ones is a human decision. */
+  compatibleVersions?: readonly string[];
 }
 
 /** Strip surrounding quotes from a string, if present. */
@@ -23,6 +25,11 @@ export function formatEndpoints(endpointsInput: string): string {
     .join(', ');
 }
 
+function renderCompatibleVersions({ version, compatibleVersions = [] }: TemplateInput): string {
+  const others = compatibleVersions.filter((other) => other !== version).map((other) => `'${other}'`);
+  return ['API_VERSION', ...others].join(', ');
+}
+
 export function renderBaseAPI(input: TemplateInput, variant: Variant): string {
   const imports = variant.baseAPIImports;
 
@@ -32,12 +39,13 @@ ${imports}
 
 export const API_GROUP = '${input.group}' as const;
 export const API_VERSION = '${input.version}' as const;
+export const COMPATIBLE_VERSIONS = [${renderCompatibleVersions(input)}] as const;
 export const BASE_URL = getAPIBaseURL(API_GROUP, API_VERSION);
 
 export const api = createApi({
   reducerPath: '${input.reducerPath}',
   baseQuery: createBaseQuery({
-    baseURL: BASE_URL,
+    getBaseURL: () => resolveAPIBaseURLWithFallback(API_GROUP, COMPATIBLE_VERSIONS, BASE_URL),
   }),
   endpoints: () => ({}),
 });

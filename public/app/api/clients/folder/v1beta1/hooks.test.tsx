@@ -3,7 +3,6 @@ import { type Store } from 'redux';
 import { testWithStarsUser } from 'test/helpers/testWithStarsUser';
 import { act, renderHook, getWrapper, waitFor, screen, within } from 'test/test-utils';
 
-import { folderAPIVersionResolver } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { config, setAppEvents, setBackendSrv } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
@@ -66,7 +65,6 @@ const renderFolderHookPhases = (store?: Store<StoreState>) => {
 };
 
 const setupUpdateFolderHandler = (onPatch?: jest.Mock) => {
-  folderAPIVersionResolver.set('v1beta1');
   server.use(
     http.patch('/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:name', async ({ params, request }) => {
       const body = await request.json();
@@ -91,7 +89,6 @@ const setupUpdateFolderHandler = (onPatch?: jest.Mock) => {
 };
 
 const setupCreateFolderHandler = (onCreate?: jest.Mock) => {
-  folderAPIVersionResolver.set('v1beta1');
   server.use(
     http.post('/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders', async ({ request }) => {
       const body = await request.json();
@@ -373,7 +370,6 @@ describe('useMoveFolders', () => {
   });
   afterEach(() => {
     consoleErrorSpy.mockRestore();
-    folderAPIVersionResolver.reset();
   });
 
   it('moves multiple folders and publishes success alert', async () => {
@@ -408,13 +404,6 @@ describe('useMoveFolders', () => {
 });
 
 describe('app platform folder create/update', () => {
-  beforeEach(() => {
-    folderAPIVersionResolver.set('v1beta1');
-  });
-  afterEach(() => {
-    folderAPIVersionResolver.reset();
-  });
-
   describe('useCreateFolder', () => {
     it('creates a folder at the root level', async () => {
       const { user, store } = setupCreateFolder();
@@ -524,13 +513,11 @@ describe('useUpdateFolder starred rows', () => {
   beforeEach(() => {
     config.appSubUrl = '';
     config.bootData.navTree = [{ id: 'starred', text: 'Starred', children: [] }];
-    folderAPIVersionResolver.set('v1beta1');
     setupUpdateFolderHandler();
   });
 
   afterEach(() => {
     config.appSubUrl = originalAppSubUrl;
-    folderAPIVersionResolver.set('v1beta1');
   });
 
   /** Renames `uid` through the hook while the Starred nav is on screen, with the search answering `titleAfter` */
@@ -587,10 +574,6 @@ describe('getCombinedFolder', () => {
   beforeEach(() => {
     // getCombinedFolder dispatches on the global store, so register a fresh one per test
     configureStore();
-    folderAPIVersionResolver.set('v1beta1');
-  });
-  afterEach(() => {
-    folderAPIVersionResolver.reset();
   });
 
   it('throws the original error with HTTP status when the folder API returns 403', async () => {

@@ -2,7 +2,6 @@ import { type Middleware, type UnknownAction, isAnyOf } from '@reduxjs/toolkit';
 import { http, HttpResponse } from 'msw';
 import { waitFor } from 'test/test-utils';
 
-import { folderAPIVersionResolver } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import * as quotasAPI from '@grafana/api-clients/rtkq/quotas/v0alpha1';
 import { config, setBackendSrv } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
@@ -71,7 +70,6 @@ describe('browseDashboardsAPI', () => {
     originalProvisioningEnabled = config.provisioningEnabled;
     config.provisioningEnabled = false;
     getDashboardAPIMock.mockReset();
-    folderAPIVersionResolver.set('v1beta1');
     server.use(http.get('/api/access-control/user/actions', () => HttpResponse.json({})));
   });
 

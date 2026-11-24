@@ -1,4 +1,4 @@
-import { config, isFetchError } from '@grafana/runtime';
+import { config, isFetchError, resolveAPIBaseURL } from '@grafana/runtime';
 
 export const getAPINamespace = () => config.namespace;
 
@@ -10,6 +10,22 @@ export const getAPINamespace = () => config.namespace;
  */
 export const getAPIBaseURL = (group: string, version: string) => {
   return `/apis/${group}/${version}/namespaces/${getAPINamespace()}` as const;
+};
+
+/**
+ * Picks the version of `group` to call from `versions` through API discovery. Resolves `fallbackURL` when
+ * discovery can't answer, the server serves none of `versions`, or the host runtime predates discovery.
+ */
+export const resolveAPIBaseURLWithFallback = async (
+  group: string,
+  versions: readonly string[],
+  fallbackURL: string
+): Promise<string> => {
+  // The package supports runtimes from 11.6, which don't export resolveAPIBaseURL.
+  if (typeof resolveAPIBaseURL !== 'function') {
+    return fallbackURL;
+  }
+  return (await resolveAPIBaseURL(group, versions)) ?? fallbackURL;
 };
 
 /**
