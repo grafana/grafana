@@ -1,8 +1,11 @@
+import { type CurrentUserDTO, OrgRole } from '@grafana/data';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
+import { config } from '../../config';
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { invalidateCachedPromisesCache, getCachedPromise } from '../../utils/getCachedPromise';
 import { type MonitoringLogger } from '../../utils/logging';
+import { getAPIGroup, invalidateAPIDiscovery, setAPIDiscoveryForTesting } from '../apiDiscovery/discovery';
 import { type BackendSrv, setBackendSrv } from '../backendSrv';
 import { setLogger, initializeLoggersRegistry } from '../logging/registry';
 import { getPluginMetaFromCache, refetchPluginMeta } from '../pluginMeta/plugins';
@@ -308,6 +311,101 @@ describe('settings', () => {
 
         expect(backendSrv.get).not.toHaveBeenCalled();
         expect(getPluginMetaFromCacheMock).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('API discovery', () => {
+    const originalUser = config.bootData.user;
+    const cachedGroup = { group: 'myorg-test-app', versions: ['v0alpha1'], preferredVersion: 'v0alpha1' };
+    const serverGroupList = {
+      groups: [
+        {
+          name: 'myorg-test-app',
+          versions: [{ groupVersion: 'myorg-test-app/v1', version: 'v1' }],
+          preferredVersion: { groupVersion: 'myorg-test-app/v1', version: 'v1' },
+        },
+      ],
+    };
+
+    // The cache and the server disagree on the preferred version, so the answer shows which one discovery used.
+    async function discoveredPreferredVersion(): Promise<string | undefined> {
+      backendSrv.get = jest.fn().mockResolvedValue(serverGroupList);
+      return (await getAPIGroup(cachedGroup.group))?.preferredVersion;
+    }
+
+    beforeEach(() => {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      config.bootData.user = { isSignedIn: true, orgRole: OrgRole.Admin } as CurrentUserDTO;
+      setAPIDiscoveryForTesting([cachedGroup]);
+    });
+
+    afterEach(() => {
+      config.bootData.user = originalUser;
+      invalidateAPIDiscovery();
+    });
+
+    describe.each([
+      ['enabled', true],
+      ['disabled', false],
+    ])('when plugins.useMTPluginSettings flag is %s', (_, useMTPluginSettings) => {
+      beforeAll(() => {
+        setTestFlags({ [FlagKeys.PluginsUseMTPluginSettings]: useMTPluginSettings });
+      });
+
+      afterAll(() => {
+        setTestFlags({});
+      });
+
+      beforeEach(() => {
+        refetchPluginMetaMock.mockResolvedValue(myOrgTestAppMeta);
+        backendSrv.get = jest
+          .fn()
+          .mockResolvedValue(useMTPluginSettings ? myOrgTestAppSettings : legacyMyOrgTestAppSettings);
+        backendSrv.patch = jest.fn().mockResolvedValue(myOrgTestAppSettings);
+        backendSrv.post = jest.fn().mockResolvedValue(undefined);
+      });
+
+      it.each([true, false])('asks the server again after setting enabled to %s', async (enabled) => {
+        await updateAppPluginSettings(cachedGroup.group, { enabled });
+
+        await expect(discoveredPreferredVersion()).resolves.toBe('v1');
+      });
+
+      it('keeps the cached answer when the update does not set enabled', async () => {
+        await updateAppPluginSettings(cachedGroup.group, { jsonData: { apiUrl: 'https://grafana.com/' } });
+
+        await expect(discoveredPreferredVersion()).resolves.toBe('v0alpha1');
+      });
+
+      it('keeps the cached answer when the update fails', async () => {
+        const failure = new Error('update failed');
+        backendSrv.patch = jest.fn().mockRejectedValue(failure);
+        backendSrv.post = jest.fn().mockRejectedValue(failure);
+
+        await expect(updateAppPluginSettings(cachedGroup.group, { enabled: true })).rejects.toBe(failure);
+
+        await expect(discoveredPreferredVersion()).resolves.toBe('v0alpha1');
+      });
+    });
+
+    describe('when the plugin meta is missing and the update falls back to the legacy API', () => {
+      beforeAll(() => {
+        setTestFlags({ [FlagKeys.PluginsUseMTPluginSettings]: true });
+      });
+
+      afterAll(() => {
+        setTestFlags({});
+      });
+
+      it('asks the server again after setting enabled', async () => {
+        refetchPluginMetaMock.mockResolvedValue(null);
+        backendSrv.post = jest.fn().mockResolvedValue(undefined);
+        backendSrv.get = jest.fn().mockResolvedValue(legacyMyOrgTestAppSettings);
+
+        await updateAppPluginSettings(cachedGroup.group, { enabled: true });
+
+        await expect(discoveredPreferredVersion()).resolves.toBe('v1');
       });
     });
   });

@@ -5,6 +5,7 @@ import { type PluginMeta } from '@grafana/data';
 import { getFeatureFlagClient } from '../../internal/openFeature';
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { replaceCachedPromise } from '../../utils/getCachedPromise';
+import { invalidateAPIDiscovery } from '../apiDiscovery/discovery';
 import { getBackendSrv } from '../backendSrv';
 import { refetchPluginMeta } from '../pluginMeta/plugins';
 import { assertPluginIdFormat, getApiVersion, getCacheKey, getNamespace } from '../pluginUtils';
@@ -15,14 +16,22 @@ import { inlineSecureValuesMapper, settingsSpecMapper } from './mappers/v0alpha1
 import { refetchCachedAppSettings, refetchCachedLegacySettings } from './refetchPluginSettings';
 import { type Settings as v0alpha1Settings } from './types';
 
-function updateLegacySettings(pluginId: string, data: Partial<PluginMeta>): Promise<void> {
+// Enabling or disabling an app plugin changes which API groups the server serves.
+function invalidateAPIDiscoveryIfSetsEnabled(data: Partial<PluginMeta>): void {
+  if (data.enabled !== undefined) {
+    invalidateAPIDiscovery();
+  }
+}
+
+async function updateLegacySettings(pluginId: string, data: Partial<PluginMeta>): Promise<void> {
   logPluginSettingsDebug('PluginSettings: updating legacy plugin settings', { pluginId });
-  return getBackendSrv()
+  await getBackendSrv()
     .post<void>(`/api/plugins/${pluginId}/settings`, data, { validatePath: true })
     .catch((err) => {
       logPluginSettingsError('PluginSettings: updating legacy plugin settings failed', err, { pluginId });
       return Promise.reject(err);
     });
+  invalidateAPIDiscoveryIfSetsEnabled(data);
 }
 
 async function internalUpdateAppPluginSettings(pluginId: string, data: Partial<PluginMeta>): Promise<v0alpha1Settings> {
@@ -52,6 +61,7 @@ async function internalUpdateAppPluginSettings(pluginId: string, data: Partial<P
       logPluginSettingsError('PluginSettings: updating plugin settings failed', err, { pluginId });
       return Promise.reject(err);
     });
+  invalidateAPIDiscoveryIfSetsEnabled(data);
 
   return updated;
 }
