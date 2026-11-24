@@ -94,9 +94,7 @@ import { Button } from '@grafana/ui';
 ```
 
 - `variant`: `primary`, `secondary`, `accent`, `destructive` or `success`. Defaults to `primary`, or to `accent` when `fill` is `text`.
-  - `accent` uses the theme's accent color. In the default themes that is the same color as `primary`.
-  - `success` uses the theme's success color.
-  - No guidance on when to choose `accent` or `success` over `primary` is documented yet.
+  - See Variants for what `accent` and `success` are used for.
 - `fill`: `solid` (default), `outline` or `text`.
 - `size`: `sm`, `md` (default) or `lg`.
 - `icon` adds an icon, and `iconPlacement` puts it on the `left` (default) or `right` of the label.
@@ -152,6 +150,33 @@ import { Button } from '@grafana/ui';
         surroundings: 1. When next to the primary Button, the Secondary style can for example be used for "Cancel" or
         "Abort" actions. 2. When there is no main important action on a given page, all Button components should use the
         secondary style.
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">Accent</th>
+      <td>
+        <p>Filled</p>
+        <p>Outline</p>
+        <p>Text</p>
+      </td>
+      <td>Not documented</td>
+      <td>
+        The default variant for <code>fill="text"</code>. It uses the theme's accent color, which is the same color as
+        Primary in the default themes. In Grafana it is also set on a few calls to action, such as starting a playlist.
+        No further usage guidance is documented yet.
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">Success</th>
+      <td>
+        <p>Filled</p>
+        <p>Outline</p>
+        <p>Text</p>
+      </td>
+      <td>Not documented</td>
+      <td>
+        Uses the theme's success color. <code>ClipboardButton</code> switches to this variant to confirm a successful
+        copy. No further usage guidance is documented yet.
       </td>
     </tr>
   </tbody>
