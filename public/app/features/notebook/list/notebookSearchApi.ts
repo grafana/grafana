@@ -190,8 +190,7 @@ const notebookSearchAPI = dashboardAPIv2beta1.injectEndpoints({
     }),
 
     /**
-     * Title and Markdown content matches for the command palette. Only the title is returned, since
-     * that is all a palette row shows.
+     * Title matches for the command palette.
      *
      * Provides the `Notebook` tag that the generated notebook mutations invalidate, so a notebook
      * deleted between two identical searches stops being offered — untagged, the cached entry would
@@ -205,7 +204,7 @@ const notebookSearchAPI = dashboardAPIv2beta1.injectEndpoints({
         body: {
           apiVersion: SEARCH_API_VERSION,
           kind: SEARCH_QUERY_KIND,
-          where: { text: { value: query, fields: ['title', 'content'] } },
+          where: { text: { value: query, fields: ['title'] } },
           fields: ['title'],
           limit,
         },
