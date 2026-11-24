@@ -1,4 +1,4 @@
-package common
+package common_test
 
 import (
 	"context"
@@ -15,6 +15,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -26,8 +27,8 @@ func TestList(t *testing.T) {
 	t.Run("should allow all items if no access client is passed", func(t *testing.T) {
 		ctx := newContext("stacks-1", newIdent())
 
-		res, err := List(ctx, utils.NewResourceInfo("", "", "items", "", "", nil, nil, utils.TableColumns{}), nil, Pagination{Limit: 2}, func(ctx context.Context, ns authlib.NamespaceInfo, p Pagination) (*ListResponse[item], error) {
-			return &ListResponse[item]{
+		res, err := common.List(ctx, utils.NewResourceInfo("", "", "items", "", "", nil, nil, utils.TableColumns{}), nil, common.Pagination{Limit: 2}, func(ctx context.Context, ns authlib.NamespaceInfo, p common.Pagination) (*common.ListResponse[item], error) {
+			return &common.ListResponse[item]{
 				Items: []item{{"1"}, {"2"}},
 			}, nil
 		})
@@ -42,8 +43,8 @@ func TestList(t *testing.T) {
 			Resource: "items",
 			Attr:     "uid",
 		})
-		res, err := List(ctx, utils.NewResourceInfo("", "", "items", "", "", nil, nil, utils.TableColumns{}), a, Pagination{Limit: 2}, func(ctx context.Context, ns authlib.NamespaceInfo, p Pagination) (*ListResponse[item], error) {
-			return &ListResponse[item]{
+		res, err := common.List(ctx, utils.NewResourceInfo("", "", "items", "", "", nil, nil, utils.TableColumns{}), a, common.Pagination{Limit: 2}, func(ctx context.Context, ns authlib.NamespaceInfo, p common.Pagination) (*common.ListResponse[item], error) {
+			return &common.ListResponse[item]{
 				Items: []item{{"1"}, {"2"}},
 			}, nil
 		})
@@ -64,15 +65,15 @@ func TestList(t *testing.T) {
 
 		var called bool
 
-		res, err := List(ctx, utils.NewResourceInfo("", "", "items", "", "", nil, nil, utils.TableColumns{}), a, Pagination{Limit: 2}, func(ctx context.Context, ns authlib.NamespaceInfo, p Pagination) (*ListResponse[item], error) {
+		res, err := common.List(ctx, utils.NewResourceInfo("", "", "items", "", "", nil, nil, utils.TableColumns{}), a, common.Pagination{Limit: 2}, func(ctx context.Context, ns authlib.NamespaceInfo, p common.Pagination) (*common.ListResponse[item], error) {
 			if called {
-				return &ListResponse[item]{
+				return &common.ListResponse[item]{
 					Items: []item{{"3"}},
 				}, nil
 			}
 
 			called = true
-			return &ListResponse[item]{
+			return &common.ListResponse[item]{
 				Items:    []item{{"1"}, {"2"}},
 				Continue: 3,
 			}, nil
@@ -89,7 +90,7 @@ func TestList(t *testing.T) {
 		a := accesscontrol.NewLegacyAccessClient(ac, accesscontrol.ResourceAuthorizerOptions{Resource: "items", Attr: "uid"})
 
 		fn, calls := pagedItems(6)
-		res, err := List(ctx, utils.NewResourceInfo("", "", "items", "", "", nil, nil, utils.TableColumns{}), a, Pagination{Limit: 2}, fn)
+		res, err := common.List(ctx, utils.NewResourceInfo("", "", "items", "", "", nil, nil, utils.TableColumns{}), a, common.Pagination{Limit: 2}, fn)
 		require.NoError(t, err)
 
 		require.Len(t, res.Items, 1)
@@ -106,7 +107,7 @@ func TestList(t *testing.T) {
 		a := accesscontrol.NewLegacyAccessClient(ac, accesscontrol.ResourceAuthorizerOptions{Resource: "items", Attr: "uid"})
 
 		fn, _ := pagedItems(6)
-		res, err := List(ctx, utils.NewResourceInfo("", "", "items", "", "", nil, nil, utils.TableColumns{}), a, Pagination{Limit: 2}, fn)
+		res, err := common.List(ctx, utils.NewResourceInfo("", "", "items", "", "", nil, nil, utils.TableColumns{}), a, common.Pagination{Limit: 2}, fn)
 		require.NoError(t, err)
 
 		require.Len(t, res.Items, 2)
@@ -120,7 +121,7 @@ func TestList(t *testing.T) {
 		a := accesscontrol.NewLegacyAccessClient(ac, accesscontrol.ResourceAuthorizerOptions{Resource: "items", Attr: "uid"})
 
 		fn, calls := pagedItems(6)
-		res, err := List(ctx, utils.NewResourceInfo("", "", "items", "", "", nil, nil, utils.TableColumns{}), a, Pagination{Limit: 2}, fn)
+		res, err := common.List(ctx, utils.NewResourceInfo("", "", "items", "", "", nil, nil, utils.TableColumns{}), a, common.Pagination{Limit: 2}, fn)
 		require.NoError(t, err)
 
 		assert.Empty(t, res.Items)
@@ -129,9 +130,9 @@ func TestList(t *testing.T) {
 	})
 }
 
-func pagedItems(total int64) (ListFunc[item], *int) {
+func pagedItems(total int64) (common.ListFunc[item], *int) {
 	calls := 0
-	return func(ctx context.Context, ns authlib.NamespaceInfo, p Pagination) (*ListResponse[item], error) {
+	return func(ctx context.Context, ns authlib.NamespaceInfo, p common.Pagination) (*common.ListResponse[item], error) {
 		calls++
 		if calls > 20 {
 			return nil, fmt.Errorf("list was called %d times without finishing", calls)
@@ -142,7 +143,7 @@ func pagedItems(total int64) (ListFunc[item], *int) {
 			start = 1
 		}
 
-		res := &ListResponse[item]{}
+		res := &common.ListResponse[item]{}
 		for id := start; id <= total && int64(len(res.Items)) < p.Limit; id++ {
 			res.Items = append(res.Items, item{strconv.FormatInt(id, 10)})
 		}
