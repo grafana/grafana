@@ -87,6 +87,7 @@ export const InlineField = ({
     <FieldContext.Provider
       value={{
         id: inputId,
+        labelId: typeof label === 'string' ? labelId : undefined,
         invalid,
         disabled,
         loading,

@@ -1,12 +1,33 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { Field } from '../Forms/Field';
+import { InlineField } from '../Forms/InlineField';
+
 import { ColorPicker } from './ColorPicker';
 
 describe('ColorPicker', () => {
   it('renders ColorPickerTrigger component by default', () => {
     render(<ColorPicker color="#EAB839" onChange={() => {}} />);
     expect(screen.getByRole('button', { name: '#EAB839 color' })).toBeInTheDocument();
+  });
+
+  it('adds the label of the surrounding InlineField to its name', () => {
+    render(
+      <InlineField label="Background">
+        <ColorPicker color="#EAB839" onChange={() => {}} />
+      </InlineField>
+    );
+    expect(screen.getByRole('button', { name: 'Background #EAB839 color' })).toBeInTheDocument();
+  });
+
+  it('adds the label of the surrounding Field to its name', () => {
+    render(
+      <Field label="Background">
+        <ColorPicker color="#EAB839" onChange={() => {}} />
+      </Field>
+    );
+    expect(screen.getByRole('button', { name: 'Background #EAB839 color' })).toBeInTheDocument();
   });
 
   it('should not have buttons with default submit type', async () => {

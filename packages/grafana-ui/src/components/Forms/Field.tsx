@@ -80,6 +80,7 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
     const useFieldset = useFieldsetProp ?? children.type === RadioButtonGroup;
     const label = typeof labelProp === 'string' ? `${labelProp}${required ? ' *' : ''}` : labelProp;
     const fieldId = useId();
+    const labelId = useId();
     const errorId = useId();
     const inputId = htmlFor ?? getChildId(children) ?? fieldId;
 
@@ -98,7 +99,7 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
       }
     } else if (typeof label === 'string') {
       labelElement = (
-        <Label htmlFor={inputId} description={description}>
+        <Label htmlFor={inputId} id={labelId} description={description}>
           {label}
         </Label>
       );
@@ -115,6 +116,7 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
       <FieldContext.Provider
         value={{
           id: inputId,
+          labelId: !useFieldset && typeof label === 'string' ? labelId : undefined,
           invalid,
           disabled,
           loading,

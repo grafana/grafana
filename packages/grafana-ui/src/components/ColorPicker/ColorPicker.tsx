@@ -5,6 +5,7 @@ import {
   type PropsWithChildren,
   type ReactNode,
   type RefObject,
+  useId,
   useRef,
 } from 'react';
 
@@ -12,6 +13,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { closePopover } from '../../utils/closePopover';
+import { useFieldContext } from '../Forms/FieldContext';
 import { Popover } from '../Tooltip/Popover';
 import { PopoverController } from '../Tooltip/PopoverController';
 
@@ -40,6 +42,9 @@ const colorPickerFactory = <T extends ColorPickerProps>(
 ) => {
   const ColorPickerComponent = (props: T & { children?: ColorPickerTriggerRenderer }) => {
     const { children, onChange, color, id } = props;
+    const { labelId } = useFieldContext();
+    const generatedId = useId();
+    const swatchId = id ?? generatedId;
     const theme = useTheme2();
     const pickerTriggerRef = useRef<any>(null);
     const styles = getStyles(theme);
@@ -78,12 +83,14 @@ const colorPickerFactory = <T extends ColorPickerProps>(
                 })
               ) : (
                 <ColorSwatch
-                  id={id}
+                  id={swatchId}
                   ref={pickerTriggerRef}
                   onClick={showPopper}
                   onMouseLeave={hidePopper}
                   color={theme.visualization.getColorByName(color || '#000000')}
                   aria-label={color}
+                  // Inside a field, the name is the field label followed by the color
+                  aria-labelledby={labelId ? `${labelId} ${swatchId}` : undefined}
                 />
               )}
             </>
