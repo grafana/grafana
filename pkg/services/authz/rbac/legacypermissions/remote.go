@@ -50,13 +50,18 @@ func (s *RemoteServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPermis
 	} else if req.NoOrgMembership {
 		orgID = -1
 	}
+	resolutionNamespace := req.Namespace
+	if original := req.Identity.RequesterNamespace; original != nil {
+		resolutionNamespace = *original
+	}
 	identity, err := s.loadIdentity(ctx, ns, req.Identity, orgID)
 	if err != nil {
 		return err
 	}
+	identity.RequesterNamespace = &resolutionNamespace
 	req = proto.Clone(req).(*authzv1.LegacyGetUserPermissionsRequest)
 	req.Identity = identity
-	if err := s.loader.streamPermissions(ctx, req, stream, req.Namespace, orgID); err != nil {
+	if err := s.loader.streamPermissions(ctx, req, stream, resolutionNamespace, orgID); err != nil {
 		return err
 	}
 	result = "ok"
@@ -85,7 +90,10 @@ func authorizeRemoteRequest(ctx context.Context, req *authzv1.LegacyGetUserPermi
 		return types.NamespaceInfo{}, status.Error(codes.InvalidArgument, "global org and no org membership are mutually exclusive")
 	}
 	original := req.Identity.GetRequesterNamespace()
-	if original != "" && original != req.Namespace {
+	sentinel := ns.StackID == 0 &&
+		((req.GlobalOrg && original == types.OrgNamespaceFormatter(ac.GlobalOrgID)) ||
+			(req.NoOrgMembership && original == types.OrgNamespaceFormatter(ac.NoOrgID)))
+	if original != "" && original != req.Namespace && !sentinel {
 		return types.NamespaceInfo{}, status.Error(codes.PermissionDenied, "requester namespace does not match tenant scope")
 	}
 	id := req.Identity
@@ -111,14 +119,15 @@ func tenantCacheKey(ctx context.Context, key string) string {
 func remoteIdentityCacheKey(id *authzv1.LegacyPermissionIdentity, namespace string, orgID int64) string {
 	// Ignore caller-selected cache keys. Include claims that can affect nested resolvers.
 	claims := struct {
-		Namespace       string
-		OrgID           int64
-		Type, UID, Role string
-		InternalID      int64
-		Admin, Unique   bool
-		Teams           []int64
-		Groups          []string
-	}{namespace, orgID, id.Type, id.Uid, id.OrgRole, id.GetInternalId(), id.IsGrafanaAdmin, id.HasUniqueId, id.TeamIds, id.Groups}
+		Namespace           string
+		ResolutionNamespace string
+		OrgID               int64
+		Type, UID, Role     string
+		InternalID          int64
+		Admin, Unique       bool
+		Teams               []int64
+		Groups              []string
+	}{namespace, id.GetRequesterNamespace(), orgID, id.Type, id.Uid, id.OrgRole, id.GetInternalId(), id.IsGrafanaAdmin, id.HasUniqueId, id.TeamIds, id.Groups}
 	data, _ := json.Marshal(claims)
 	return fmt.Sprintf("%x", sha256.Sum256(data))
 }
