@@ -1124,7 +1124,7 @@ describe('AppChrome', () => {
         expect(container.style.minWidth).toBe('360px');
       });
 
-      it('starts after the section side panel, so it does not cover it', async () => {
+      it('goes before the section side panel, which moves over for it', async () => {
         mockUseMediaQueryMinWidth.mockReturnValue(true);
         mockUseExtensionSidebarContext.mockReturnValue(dockedLeftContext);
         setTestFlags({ 'grafana.navigationAdminSubNav': true });
@@ -1133,7 +1133,9 @@ describe('AppChrome', () => {
           await screen.findByRole('navigation', { name: 'Administration' });
           const container = (await screen.findByTestId('ext-sidebar-stub')).parentElement!;
 
-          expect(stylesFor(container)).toContain('left: calc(320px + 240px)');
+          expect(stylesFor(container)).toContain('left: 320px');
+          const sidePanel = (await screen.findByRole('navigation', { name: 'Administration' })).parentElement!;
+          expect(stylesFor(sidePanel)).toContain('left: calc(320px + 300px)');
           expect(stylesFor(document.getElementById('pageContent')!)).toContain(
             'padding-left: calc(calc(320px + 240px) + 300px)'
           );
