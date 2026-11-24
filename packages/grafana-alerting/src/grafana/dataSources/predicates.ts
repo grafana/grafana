@@ -7,6 +7,7 @@ export const SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES = [
   'prometheus',
   'grafana-amazonprometheus-datasource',
   'grafana-azureprometheus-datasource',
+  'victoriametrics-metrics-datasource',
 ] as const;
 
 export type SupportedExternalPrometheusFlavoredRulesSourceType =
@@ -33,14 +34,20 @@ export function isValidRecordingRulesTarget(ds: DataSourceInstanceSettings): boo
   return isSupportedExternalPrometheusFlavoredRulesSourceType(ds.type) && isDataSourceAllowedAsRecordingRulesTarget(ds);
 }
 
-export type SupportedExternalRulesSourceType = 'loki' | SupportedExternalPrometheusFlavoredRulesSourceType;
+export const VICTORIA_LOGS_RULES_SOURCE_TYPE = 'victoriametrics-logs-datasource';
+
+export type SupportedExternalRulesSourceType =
+  | 'loki'
+  | typeof VICTORIA_LOGS_RULES_SOURCE_TYPE
+  | SupportedExternalPrometheusFlavoredRulesSourceType;
 export const SUPPORTED_EXTERNAL_RULE_SOURCE_TYPES = [
   'loki',
+  VICTORIA_LOGS_RULES_SOURCE_TYPE,
   ...SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES,
 ] as const;
 
 /**
- * Check if the given type is a supported external rules source type. Includes Loki and Prometheus flavored types.
+ * Check if the given type is a supported external rules source type. Includes Loki, VictoriaLogs and Prometheus flavored types.
  */
 export function isSupportedExternalRulesSourceType(type: string): type is SupportedExternalRulesSourceType {
   return SUPPORTED_EXTERNAL_RULE_SOURCE_TYPES.find((t) => t === type) !== undefined;

@@ -1,9 +1,6 @@
 import { produce } from 'immer';
 
-import {
-  isSupportedExternalPrometheusFlavoredRulesSourceType,
-  isSupportedExternalRulesSourceType,
-} from '@grafana/alerting/internal';
+import { isSupportedExternalPrometheusFlavoredRulesSourceType } from '@grafana/alerting/internal';
 import {
   type IntervalValues,
   type RelativeTimeRange,
@@ -58,7 +55,7 @@ import {
 } from '../types/rule-form';
 
 import { Annotation, GRAFANA_RULES_SOURCE_NAME } from './constants';
-import { getDefaultOrFirstCompatibleDataSource } from './datasource';
+import { getDefaultOrFirstCompatibleDataSource, hasPromOrLokiQueryModel } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
 import {
   isGrafanaAlertingRuleByType,
@@ -610,7 +607,7 @@ export const getDefaultQueries = (isRecordingRule = false): AlertQuery[] => {
   const relativeTimeRange = getDefaultRelativeTimeRange();
 
   const expressions = isRecordingRule ? getDefaultExpressionsForRecording('B') : getDefaultExpressions('B', 'C');
-  const isLokiOrPrometheus = dataSource ? isSupportedExternalRulesSourceType(dataSource.type) : false;
+  const isLokiOrPrometheus = dataSource ? hasPromOrLokiQueryModel(dataSource.type) : false;
   return [
     {
       refId: 'A',
@@ -941,7 +938,7 @@ export function getInstantFromDataQuery(query: AlertQuery<AlertDataQuery>): bool
   }
 
   // if the datasource is not a supported prometheus flavor or loki, return "undefined"
-  if (!isSupportedExternalRulesSourceType(type)) {
+  if (!hasPromOrLokiQueryModel(type)) {
     return undefined;
   }
 
