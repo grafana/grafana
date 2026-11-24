@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/simple"
+	"github.com/open-feature/go-sdk/openfeature"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	restclient "k8s.io/client-go/rest"
 
@@ -22,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var _ appsdkapiserver.AppInstaller = (*DashValidatorAppInstaller)(nil)
@@ -99,6 +101,11 @@ func (a *DashValidatorAppInstaller) GetAuthorizer() authorizer.Authorizer {
 			user, err := identity.GetRequester(ctx)
 			if err != nil {
 				return authorizer.DecisionDeny, "authentication required", err
+			}
+
+			// Evaluated per request so GOFF targeting (namespace, version, ...) applies.
+			if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagDashboardValidatorApp, false, openfeature.TransactionContext(ctx)) {
+				return authorizer.DecisionDeny, "dashboard validator is not enabled", nil
 			}
 
 			// For now we only support /check, which is a POST and we don't support any other verbs
