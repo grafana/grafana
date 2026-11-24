@@ -26,6 +26,12 @@ import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-
 
 import { RuleAction } from '../../hooks/abilities/types';
 
+jest.mock('app/features/alerting/unified/utils/misc', () =>
+  jest
+    .requireActual('test/helpers/partialMock')
+    .partialMock(jest.requireActual('app/features/alerting/unified/utils/misc'), { createShareLink: jest.fn() })
+);
+
 const mockOpenAssistant = jest.fn();
 jest.mock('@grafana/assistant', () => ({
   useAssistant: jest.fn(),
@@ -111,6 +117,10 @@ describe('AlertRuleMenu', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest
+      .mocked(miscUtils.createShareLink)
+      .mockReset()
+      .mockImplementation(jest.requireActual('app/features/alerting/unified/utils/misc').createShareLink);
     mockPauseExecute.mockResolvedValue(undefined);
     mockOpenAssistant.mockClear();
     // Default: assistant unavailable
@@ -1564,7 +1574,7 @@ describe('AlertRuleMenu', () => {
         config.buildInfo.env = 'production';
 
         // Mock createShareLink to return undefined
-        const createShareLinkSpy = jest.spyOn(miscUtils, 'createShareLink');
+        const createShareLinkSpy = jest.mocked(miscUtils.createShareLink);
         createShareLinkSpy.mockReturnValue(undefined);
 
         render(
@@ -1587,7 +1597,9 @@ describe('AlertRuleMenu', () => {
         expect(menuItems.length).toBe(0);
         expect(linkItems.length).toBe(0);
 
-        createShareLinkSpy.mockRestore();
+        createShareLinkSpy
+          .mockReset()
+          .mockImplementation(jest.requireActual('app/features/alerting/unified/utils/misc').createShareLink);
       });
     });
 
