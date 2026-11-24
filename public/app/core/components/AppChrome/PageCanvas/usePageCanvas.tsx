@@ -6,8 +6,7 @@ import { ASSISTANT_PLUGIN_ID } from 'app/core/constants';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { useSelector } from 'app/types/store';
 
-import { Branding } from '../../Branding/Branding';
-import { getPageTitleParts } from '../../Page/usePageTitle';
+import { getPageName } from '../../Page/usePageTitle';
 import { type AppChromeState, getPageTitle } from '../AppChromeService';
 
 import { type PageCanvasModel, type PageCanvasProps, parsePageCanvasModel } from './types';
@@ -42,14 +41,13 @@ export function usePageCanvas(enabled: boolean, chromeState: AppChromeState): Pa
 }
 
 /**
- * The first part of the browser tab's title, from the same navigation, so the plugin can label the page's tab
- * without waiting for `document.title`. Undefined until the page sets its navigation, and never the bare app title.
+ * The page's name from the chrome's navigation, so the plugin can label the page's tab without waiting for
+ * `document.title`. Undefined until the page sets its navigation.
  */
 function usePageTitleForCanvas(chromeState: AppChromeState): string | undefined {
   const homeNav = useSelector((state) => state.navIndex)?.[HOME_NAV_ID];
   if (getPageTitle(chromeState) === undefined) {
     return undefined;
   }
-  const [title] = getPageTitleParts(chromeState.sectionNav, chromeState.pageNav, homeNav);
-  return title !== Branding.AppTitle ? title : undefined;
+  return getPageName(chromeState.sectionNav, chromeState.pageNav, homeNav);
 }

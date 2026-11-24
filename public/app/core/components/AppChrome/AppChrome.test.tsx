@@ -1622,8 +1622,12 @@ describe('AppChrome', () => {
       act(() => context.chrome.update({ actions: [] }));
       expect(mockPageCanvasPlugin.props?.page).toBe(page);
 
-      act(() => context.chrome.update({ pageNav: { text: 'Edit rule' } }));
-      expect(mockPageCanvasPlugin.props?.page).toEqual({ title: 'Edit rule' });
+      act(() => context.chrome.update({ pageNav: { text: 'CPU usage', url: '/d/cpu/cpu-usage' } }));
+      expect(mockPageCanvasPlugin.props?.page).toEqual({ title: 'CPU usage' });
+
+      // As Explore does: a pageNav without a link names the data source, not the page.
+      act(() => context.chrome.update({ pageNav: { text: 'loki' } }));
+      expect(mockPageCanvasPlugin.props?.page).toEqual({ title: 'Child1' });
     });
 
     it('passes no page until a page sets its navigation', async () => {
