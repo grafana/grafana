@@ -18,8 +18,12 @@ Use `Button` to trigger an action, such as saving a form, running a query or ope
 ## Never use for
 
 - **Navigation.** To add an anchor that looks like a button, use the `<LinkButton>` component and pass an `href` prop. For a link inside text, use `TextLink`.
-- **An icon without a label.** Before using buttons without text, always consider using [IconButton](/docs/inputs-iconbutton--docs) instead. The exception is an icon-only `Button` inside a `ButtonGroup`, such as the menu toggle of a split button, which needs an `aria-label`.
+- **An icon-only action.** Use [`IconButton`](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/components/IconButton/IconButton.mdx) instead. When an icon-only `Button` is the right fit, such as the menu toggle of a split button inside a `ButtonGroup`, give it an `aria-label` or a `tooltip`. The types require one of them.
 - **An action inside a sentence or a line of data.** Use [`InlineButton` for inline actions](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/guidance/patterns/inline-actions.md).
+- **Toolbar actions and toggles.** Use `ToolbarButton`, which is built to form a toolbar with other `ToolbarButton`s and has an `active` variant for a toggled-on state.
+- **Copying text to the clipboard.** Use `ClipboardButton`, which copies the text returned by `getText`.
+- **Confirming a destructive action.** Use `ConfirmButton` to replace the action with an inline confirmation, or `ConfirmModal` to ask for confirmation in a dialog, for example before deleting items.
+- **Picking one value from a set.** Use `RadioButtonGroup` for a single value from mutually exclusive options.
 
 ## Do's and don'ts
 
@@ -32,7 +36,7 @@ Use `Button` to trigger an action, such as saving a form, running a query or ope
 - Don't use buttons with icons and buttons without icons in a button group.
 - Don't have more than one primary action.
 - Don't pair a solid primary and solid destructive button -- one must take precedence over the other.
-- Don't use buttons with icons only (in case this is impossible please always add text for a tooltip and an aria label as they are needed to meet accessible requirements). Inside a `ButtonGroup`, an icon-only `Button` with an `aria-label` is fine, as in the split button example below.
+- Don't use buttons with icons only. Follow the icon-only rule under Never use for, as in the split button example below.
 
 To join buttons, such as a split button, wrap them in `ButtonGroup`. It removes the inner border radius between adjacent buttons, so don't reset it with `:nth-child` rules.
 
@@ -90,6 +94,9 @@ import { Button } from '@grafana/ui';
 ```
 
 - `variant`: `primary`, `secondary`, `accent`, `destructive` or `success`. Defaults to `primary`, or to `accent` when `fill` is `text`.
+  - `accent` uses the theme's accent color. In the default themes that is the same color as `primary`.
+  - `success` uses the theme's success color.
+  - No guidance on when to choose `accent` or `success` over `primary` is documented yet.
 - `fill`: `solid` (default), `outline` or `text`.
 - `size`: `sm`, `md` (default) or `lg`.
 - `icon` adds an icon, and `iconPlacement` puts it on the `left` (default) or `right` of the label.
@@ -137,7 +144,7 @@ import { Button } from '@grafana/ui';
       <td>
         <p>Filled</p>
         <p>Outline</p>
-        <p>Ghost</p>
+        <p>Text</p>
       </td>
       <td>Default</td>
       <td>
@@ -190,7 +197,7 @@ The secondary `Button` is the default button style and can trigger various actio
 ### Destructive
 
 Used for triggering a removing or deleting action. Because of its dominant coloring, it should be used sparingly. If you need multiple Destructive `Button` components in one view, we recommend using a secondary `Button` or a `fill="text"` `Button` instead and only use the Destructive variant to double confirm.
-If a destructive action has a confirmation step it does not need to be destructive, as long as the confirmation step has a destructive button. In tables containing delete actions we recommend using a secondary variant `Button` with trash-alt icon.
+If a destructive action has a confirmation step it does not need to be destructive, as long as the confirmation step has a destructive button. In tables containing delete actions we recommend using a secondary variant `Button` with trash-alt icon. If it shows only the icon, follow the icon-only rule under Never use for.
 
 <ExampleFrame>
   <Button variant="destructive" size="sm" style={{ margin: '5px' }}>
@@ -289,7 +296,7 @@ To add an anchor that looks like a button use the `<LinkButton>` component and p
 
 #### Icon Button
 
-**Note:** Before using buttons without text always consider using [IconButton](/docs/inputs-iconbutton--docs) instead.
+**Note:** Before using buttons without text always consider using [`IconButton`](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/components/IconButton/IconButton.mdx) instead, and follow the icon-only rule under Never use for.
 
 1. Solid container (optional)
 2. Icon
