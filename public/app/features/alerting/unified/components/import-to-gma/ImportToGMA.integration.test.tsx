@@ -18,6 +18,7 @@ import { ALERTING_API_SERVER_BASE_URL } from '../../mocks/server/utils';
 import { setupDataSources } from '../../testSetup/datasources';
 
 import { ImportRulesPage, ImportWizardGate } from './ImportToGMA';
+import { WIZARD_STEPS } from './Wizard/steps';
 
 // The real Step 1 and Step 2 inside the real wizard. ImportToGMA.test.tsx stubs both steps, so nothing
 // else checks that what the steps put in the form is what the wizard validates and sends.
@@ -334,6 +335,13 @@ describe('ImportToGMA wizard — user who can only import rules', () => {
     expect(notificationsImports).toBe(0);
     // The staged config is read from the Alertmanager config, which an editor can't read.
     expect(requestedUrls.filter((url) => url.includes('/alertmanager/grafana/config'))).toEqual([]);
+  });
+
+  it('keeps the notifications step out even when asked for the full list', async () => {
+    render(<ImportWizardGate stepKeys={WIZARD_STEPS.full} />);
+
+    await screen.findByRole('button', { name: /review & import/i });
+    expect(screen.queryByRole('button', { name: /notification configuration/i })).not.toBeInTheDocument();
   });
 
   it('does not read the auto-sync config, even when allowed to', async () => {

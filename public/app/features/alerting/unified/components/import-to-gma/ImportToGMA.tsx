@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
@@ -46,7 +46,11 @@ export function ImportWizardGate({ stepKeys: forcedStepKeys }: { stepKeys?: Step
   const importAlertmanagerAPIEnabled = useFlagAlertingImportAlertmanagerAPI();
   // Without notifications permission there is no notifications step, so nothing to lock and nothing to read.
   const { canImportNotifications } = useCanImportToGMA();
-  const stepKeys = forcedStepKeys ?? (canImportNotifications ? WIZARD_STEPS.full : WIZARD_STEPS.rulesOnly);
+  const stepKeys = useMemo(
+    () =>
+      (forcedStepKeys ?? WIZARD_STEPS.full).filter((key) => key !== StepKey.Notifications || canImportNotifications),
+    [forcedStepKeys, canImportNotifications]
+  );
   const hasNotificationsStep = stepKeys.includes(StepKey.Notifications);
   const { isActive, isLoading } = useIsAutoSyncActive({ skip: !hasNotificationsStep });
   const { stagedConfig, isLoading: isStagedConfigLoading } = useStagedConfig({
