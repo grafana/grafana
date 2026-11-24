@@ -20,7 +20,7 @@ Use `Button` to trigger an action, such as saving a form, running a query or ope
 - **Navigation.** To add an anchor that looks like a button, use the `<LinkButton>` component and pass an `href` prop. For a link inside text, use `TextLink`.
 - **An icon-only action.** Use [`IconButton`](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/components/IconButton/IconButton.mdx) instead. When an icon-only `Button` is the right fit, such as the menu toggle of a split button inside a `ButtonGroup`, give it an `aria-label` or a `tooltip`. The types require one of them. A `tooltip` is preferred, because it also shows the label to sighted users.
 - **An action inside a sentence or a line of data.** Use [`InlineButton` for inline actions](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/guidance/patterns/inline-actions.md).
-- **Toolbar actions and toggles.** Use [`ToolbarButton`](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/components/ToolbarButton/ToolbarButton.mdx), which is built to form a toolbar with other `ToolbarButton`s and has an `active` variant for a toggled-on state.
+- **Toolbar actions and toggles.** Use [`ToolbarButton`](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/components/ToolbarButton/ToolbarButton.mdx), which is built to form a toolbar with other `ToolbarButton`s and has an `active` variant for a toggled-on state. See [Toggle, selected and expanded states](#toggle-selected-and-expanded-states) for `aria-pressed`.
 - **Copying text to the clipboard.** Use [`ClipboardButton`](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/components/ClipboardButton/ClipboardButton.mdx), which copies the text returned by `getText`.
 - **Confirming a destructive action.** Use [`ConfirmButton`](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/components/ConfirmButton/ConfirmButton.mdx) to replace the action with an inline confirmation, or [`ConfirmModal`](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/components/ConfirmModal/ConfirmModal.mdx) to ask for confirmation in a dialog, for example before deleting items.
 - **Picking one value from a set.** Use [`RadioButtonGroup`](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/components/Forms/RadioButtonGroup/RadioButtonGroup.mdx) for a single value from mutually exclusive options.
@@ -82,6 +82,8 @@ Set `disabled` to disable a button. Don't fake it with `opacity` or `pointer-eve
   Save
 </Button>
 ```
+
+Don't add local `active` or `selected` classes, or `!important` borders, to `Button` to show state. Screen readers don't announce a class, and local styles drift from the theme. See [Toggle, selected and expanded states](#toggle-selected-and-expanded-states) for the component or attribute to use instead.
 
 ## Usage
 
@@ -354,6 +356,95 @@ To add an anchor that looks like a button use the `<LinkButton>` component and p
 - Text link
   - Inside cards on the top-right
   - Inside cards on the bottom-center
+
+### Toggle, selected and expanded states
+
+`Button` has no `active` or `selected` prop. When a control needs to show that something is on, selected or open, use the component or ARIA attribute made for that need:
+
+<table>
+  <thead>
+    <tr>
+      <th scope="col">Need</th>
+      <th scope="col">Use</th>
+      <th scope="col">Semantics</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th scope="row">Pick one of a few options</th>
+      <td>[RadioButtonGroup](?path=/docs/inputs-radiobuttongroup--docs)</td>
+      <td>Radio group</td>
+    </tr>
+    <tr>
+      <th scope="row">Turn a filter on or off</th>
+      <td>[FilterPill](?path=/docs/inputs-filterpill--docs)</td>
+      <td>`aria-pressed`, set by the component</td>
+    </tr>
+    <tr>
+      <th scope="row">Toolbar toggle</th>
+      <td>
+        [ToolbarButton](?path=/docs/navigation-toolbarbutton--docs) with `variant="active"` while on, plus
+        `aria-pressed`
+      </td>
+      <td>`aria-pressed`</td>
+    </tr>
+    <tr>
+      <th scope="row">Open and close a side pane</th>
+      <td>[Sidebar.Button](?path=/docs/overlays-sidebar--docs) with `active` while its pane is open</td>
+      <td>`aria-expanded`, set by the component</td>
+    </tr>
+    <tr>
+      <th scope="row">Switch between views</th>
+      <td>[Tab](?path=/docs/navigation-tabs--docs) in `TabsBar`, with `active` on the current tab</td>
+      <td>`aria-selected`, set by the component</td>
+    </tr>
+    <tr>
+      <th scope="row">Show or hide a section below</th>
+      <td>`Button` with `aria-expanded` and `aria-controls`</td>
+      <td>`aria-expanded`</td>
+    </tr>
+    <tr>
+      <th scope="row">Action whose label changes, such as "Add to favorites" and "Remove from favorites"</th>
+      <td>`Button` or [IconButton](?path=/docs/inputs-iconbutton--docs), swapping the label and icon</td>
+      <td>No `aria-pressed`</td>
+    </tr>
+    <tr>
+      <th scope="row">On or off setting</th>
+      <td>[Switch](?path=/docs/inputs-switch--docs)</td>
+      <td>Switch</td>
+    </tr>
+  </tbody>
+</table>
+
+- For a labeled section that expands, use [CollapsableSection](?path=/docs/layout-collapsablesection--docs) or [ControlledCollapse](?path=/docs/layout-collapse--docs). A hand-built `Button` with `aria-expanded` is for triggers that aren't section headers.
+- A toggle keeps the same label in both states, and `aria-pressed` tells assistive technology whether it's on. If the label changes between states, don't add `aria-pressed`, because the label already describes the state. See the [ARIA APG button pattern](https://www.w3.org/WAI/ARIA/apg/patterns/button/).
+- To choose between `RadioButtonGroup` and other controls, see [Never use for](?path=/docs/inputs-radiobuttongroup--docs#never-use-for) in the `RadioButtonGroup` docs.
+
+A toolbar toggle:
+
+```tsx
+<ToolbarButton icon="eye" variant={isVisible ? 'active' : 'default'} aria-pressed={isVisible} onClick={toggle}>
+  Show legend
+</ToolbarButton>
+```
+
+A button that shows or hides a section below it:
+
+```tsx
+<Button
+  variant="secondary"
+  fill="text"
+  icon={isOpen ? 'angle-down' : 'angle-right'}
+  aria-expanded={isOpen}
+  aria-controls="advanced-options"
+  onClick={toggle}
+>
+  Advanced options
+</Button>
+<div id="advanced-options" hidden={!isOpen}>
+  ...
+</div>
+```
 
 ### Further reading
 
