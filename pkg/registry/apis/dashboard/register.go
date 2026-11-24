@@ -791,9 +791,10 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	// Legacy only (for now) and only v0alpha1
 	if snapshots != nil && dashboards.GroupVersion().Version == "v0alpha1" {
 		snapshotLegacyStore := &snapshot.SnapshotLegacyStore{
-			ResourceInfo: *snapshots,
-			Service:      b.snapshotService,
-			Namespacer:   b.namespacer,
+			ResourceInfo:  *snapshots,
+			Service:       b.snapshotService,
+			Namespacer:    b.namespacer,
+			AccessControl: b.accessControl,
 		}
 		storage[snapshots.StoragePath()] = snapshotLegacyStore
 		storage[snapshots.StoragePath("dashboard")], err = snapshot.NewDashboardREST(dashboards, b.snapshotService)

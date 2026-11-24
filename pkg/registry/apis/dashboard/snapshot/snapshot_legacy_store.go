@@ -11,6 +11,7 @@ import (
 	dashV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 )
@@ -25,9 +26,10 @@ var (
 )
 
 type SnapshotLegacyStore struct {
-	ResourceInfo utils.ResourceInfo
-	Service      dashboardsnapshots.Service
-	Namespacer   request.NamespaceMapper
+	ResourceInfo  utils.ResourceInfo
+	Service       dashboardsnapshots.Service
+	Namespacer    request.NamespaceMapper
+	AccessControl ac.AccessControl
 }
 
 func (s *SnapshotLegacyStore) New() runtime.Object {
@@ -71,6 +73,10 @@ func (s *SnapshotLegacyStore) Delete(ctx context.Context, name string, deleteVal
 	}
 	if snap.OrgID != ns.OrgID {
 		return nil, false, s.ResourceInfo.NewNotFound(name)
+	}
+
+	if err := authorizeSnapshotDelete(ctx, snap, s.AccessControl); err != nil {
+		return nil, false, err
 	}
 
 	// Delete the external one first

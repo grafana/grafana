@@ -2,6 +2,8 @@ package api
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -23,7 +25,6 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	loginservice "github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -117,7 +118,7 @@ func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
 		return
 	}
 
-	if loginError, ok := hs.tryGetEncryptedCookie(c, loginErrorCookieName); ok {
+	if loginError, ok := hs.tryGetSignedCookie(c, loginErrorCookieName); ok {
 		// this cookie is only set whenever an OAuth login fails
 		// therefore the loginError should be passed to the view data
 		// and the view should return immediately before attempting
@@ -322,30 +323,47 @@ func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
 	c.Redirect(redirect.URL)
 }
 
-func (hs *HTTPServer) tryGetEncryptedCookie(ctx *contextmodel.ReqContext, cookieName string) (string, bool) {
+// signedCookieMaxValueLen bounds the value accepted from a client-supplied signed cookie.
+const signedCookieMaxValueLen = 1024
+
+// signedCookieMAC returns the MAC binding value to the given cookie name. The value is a
+// server-generated, non-secret string, so it needs integrity rather than confidentiality.
+// The general-purpose secrets service must not be used here: its Decrypt accepts any
+// ciphertext the instance produced, which turns the endpoint into a decryption oracle.
+func (hs *HTTPServer) signedCookieMAC(cookieName, value string) []byte {
+	mac := hmac.New(sha256.New, []byte(hs.Cfg.SecretKey))
+	mac.Write([]byte("signed-cookie:" + cookieName + ":" + value))
+	return mac.Sum(nil)
+}
+
+func (hs *HTTPServer) tryGetSignedCookie(ctx *contextmodel.ReqContext, cookieName string) (string, bool) {
 	cookie := ctx.GetCookie(cookieName)
-	if cookie == "" {
+	if cookie == "" || len(cookie) > 2*(sha256.Size+signedCookieMaxValueLen) {
 		return "", false
 	}
 
 	decoded, err := hex.DecodeString(cookie)
-	if err != nil {
+	if err != nil || len(decoded) < sha256.Size {
 		return "", false
 	}
 
-	decryptedError, err := hs.SecretsService.Decrypt(ctx.Req.Context(), decoded)
-	return string(decryptedError), err == nil
-}
-
-func (hs *HTTPServer) trySetEncryptedCookie(ctx *contextmodel.ReqContext, cookieName string, value string, maxAge int) error {
-	encryptedError, err := hs.SecretsService.Encrypt(ctx.Req.Context(), []byte(value), secrets.WithoutScope())
-	if err != nil {
-		return err
+	tag, value := decoded[:sha256.Size], string(decoded[sha256.Size:])
+	if !hmac.Equal(tag, hs.signedCookieMAC(cookieName, value)) {
+		return "", false
 	}
 
-	cookies.WriteCookie(ctx.Resp, cookieName, hex.EncodeToString(encryptedError), maxAge, hs.CookieOptionsFromCfg)
+	return value, true
+}
 
-	return nil
+func (hs *HTTPServer) setSignedCookie(ctx *contextmodel.ReqContext, cookieName string, value string, maxAge int) {
+	if len(value) > signedCookieMaxValueLen {
+		value = value[:signedCookieMaxValueLen]
+	}
+
+	// hex encoding keeps the cookie recognizable to the frontend service, which does not
+	// reflect hex values.
+	payload := append(hs.signedCookieMAC(cookieName, value), value...)
+	cookies.WriteCookie(ctx.Resp, cookieName, hex.EncodeToString(payload), maxAge, hs.CookieOptionsFromCfg)
 }
 
 func (hs *HTTPServer) redirectWithError(c *contextmodel.ReqContext, err error, v ...any) {
@@ -360,9 +378,7 @@ func (hs *HTTPServer) RedirectResponseWithError(c *contextmodel.ReqContext, err 
 }
 
 func (hs *HTTPServer) redirectURLWithErrorCookie(c *contextmodel.ReqContext, err error) string {
-	if err := hs.trySetEncryptedCookie(c, loginErrorCookieName, getLoginExternalError(err), 60); err != nil {
-		hs.log.Error("Failed to set encrypted cookie", "err", err)
-	}
+	hs.setSignedCookie(c, loginErrorCookieName, getLoginExternalError(err), 60)
 
 	return hs.Cfg.AppSubURL + "/login"
 }

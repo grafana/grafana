@@ -42,7 +42,7 @@ func TestSnapshotLegacyStore_Delete(t *testing.T) {
 		store, mockService := makeStore(t)
 		mockService.On("DeleteDashboardSnapshot", mock.Anything, mock.Anything).Return(nil)
 
-		_, deleted, err := store.Delete(ctxForOrg(1), "snap-1", nil, &metav1.DeleteOptions{})
+		_, deleted, err := store.Delete(ctxForUser(1, 2), "snap-1", nil, &metav1.DeleteOptions{})
 		require.NoError(t, err)
 		assert.True(t, deleted)
 	})
