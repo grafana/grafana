@@ -2128,11 +2128,11 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 			Scheduled: now.UnixMilli(),
 			LastRef:   firstReconciledRepo.Status.Sync.LastRef,
 		}
-		firstReconciledRepo.Status.Health = provisioning.HealthStatus{
+		firstReconciledRepo.Status.Health = provisioning.RepositoryHealthStatus{
 			Healthy: true,
 			Checked: now.UnixMilli(),
 		}
-		firstReconciledRepo.Status.Token = provisioning.TokenStatus{
+		firstReconciledRepo.Status.Token = provisioning.RepositoryTokenStatus{
 			LastUpdated: now.Add(-2 * time.Minute).UnixMilli(),
 			Expiration:  now.Add(-time.Minute).UnixMilli(),
 		}
