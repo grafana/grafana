@@ -33,7 +33,12 @@ func ProvideService(cfg *setting.Cfg, pCcfg *config.PluginManagementCfg, cdnServ
 	}
 }
 
-func (s *Service) List(_ context.Context) []plugins.PluginSource {
+func (s *Service) List(ctx context.Context) []plugins.PluginSource {
+	return append(s.remoteSources(), s.LocalSources(ctx)...)
+}
+
+// LocalSources provides the sources that are read from disk.
+func (s *Service) LocalSources(_ context.Context) []plugins.PluginSource {
 	r := []plugins.PluginSource{ //nolint:prealloc
 		sources.NewLocalSource(
 			plugins.ClassCore,
@@ -42,7 +47,6 @@ func (s *Service) List(_ context.Context) []plugins.PluginSource {
 	}
 	r = append(r, s.externalPluginSources()...)
 	r = append(r, s.pluginSettingSources()...)
-	r = append(r, s.remoteSources()...)
 	return r
 }
 

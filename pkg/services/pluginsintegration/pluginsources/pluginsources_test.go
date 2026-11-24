@@ -17,21 +17,31 @@ import (
 )
 
 func TestSources_List(t *testing.T) {
-	t.Run("A remote source is only listed in dev mode", func(t *testing.T) {
+	t.Run("A remote source is only listed, first, in dev mode and never as a local source", func(t *testing.T) {
 		testdata := testDataDir(t)
 		cfg := &setting.Cfg{StaticRootPath: testdata}
 
-		for _, devMode := range []bool{false, true} {
-			pCfg := &config.PluginManagementCfg{DevMode: devMode}
-			srcs := ProvideService(cfg, pCfg, pluginscdn.ProvideService(pCfg), pluginerrs.ProvideErrorTracker()).List(context.Background())
-
-			remote := 0
+		countRemote := func(srcs []plugins.PluginSource) int {
+			n := 0
 			for _, src := range srcs {
 				if _, ok := src.(*cdn.Source); ok {
-					remote++
+					n++
 				}
 			}
-			require.Equal(t, map[bool]int{false: 0, true: 1}[devMode], remote, "devMode=%v", devMode)
+			return n
+		}
+
+		for _, devMode := range []bool{false, true} {
+			pCfg := &config.PluginManagementCfg{DevMode: devMode}
+			s := ProvideService(cfg, pCfg, pluginscdn.ProvideService(pCfg), pluginerrs.ProvideErrorTracker())
+
+			srcs := s.List(context.Background())
+			require.Equal(t, map[bool]int{false: 0, true: 1}[devMode], countRemote(srcs), "devMode=%v", devMode)
+			if devMode {
+				_, ok := srcs[0].(*cdn.Source)
+				require.True(t, ok, "the remote source is listed first")
+			}
+			require.Zero(t, countRemote(s.LocalSources(context.Background())), "devMode=%v", devMode)
 		}
 	})
 
