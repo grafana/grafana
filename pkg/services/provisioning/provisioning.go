@@ -466,7 +466,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 	templateService := provisioning.NewTemplateService(configStore, ps.provenanceStore, ps.alertingStore, ps.log, validation.ValidateProvenanceRelaxed)
 	cfg := prov_alerting.ProvisionerConfig{
 		Path:                       alertingPath,
-		RuleService:                *ruleService,
+		RuleService:                ruleService,
 		FolderService:              ps.folderService,
 		DashboardProvService:       ps.dashboardProvisioningService,
 		ContactPointService:        *contactPointService,
