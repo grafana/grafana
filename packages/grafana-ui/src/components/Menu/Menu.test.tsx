@@ -97,6 +97,23 @@ it('keeps replacement items reachable by Tab without stealing focus', async () =
   expect(screen.getByRole('menuitem', { name: 'Open dashboard' })).toHaveFocus();
 });
 
+it('allows Tab to leave a non-autofocus menu without an onClose handler', async () => {
+  const user = userEvent.setup();
+  render(
+    <>
+      <Menu autoFocus={false}>
+        <MenuItem label="Open dashboard" />
+      </Menu>
+      <button>After menu</button>
+    </>
+  );
+
+  await user.tab();
+  expect(screen.getByRole('menuitem', { name: 'Open dashboard' })).toHaveFocus();
+  await user.tab();
+  expect(screen.getByRole('button', { name: 'After menu' })).toHaveFocus();
+});
+
 it('keeps a tab stop when the focused item is removed', async () => {
   const user = userEvent.setup();
   const renderMenu = (labels: string[]) => (
