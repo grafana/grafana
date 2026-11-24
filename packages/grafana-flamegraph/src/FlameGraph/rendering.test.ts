@@ -213,7 +213,7 @@ describe('walkTree with HiDPI (devicePixelRatio=2)', () => {
       1,
       100,
       container.getCollapsedMap(),
-      (item, x, y, width, height, label, muted) => {
+      (item, x, y, width, height, label, filename, muted) => {
         renderData.push({ item, x, y, width, height, label, muted });
       },
       2
@@ -243,7 +243,7 @@ describe('walkTree with HiDPI (devicePixelRatio=2)', () => {
       1,
       100,
       container.getCollapsedMap(),
-      (item, x, y, width, height, label, muted) => {
+      (item, x, y, width, height, label, filename, muted) => {
         renderData.push({ item, x, y, width, height, label, muted });
       },
       2
@@ -272,7 +272,7 @@ describe('walkTree with HiDPI (devicePixelRatio=2)', () => {
         1,
         14,
         container.getCollapsedMap(),
-        (item, x, y, width, height, label, muted) => {
+        (item, x, y, width, height, label, filename, muted) => {
           data.push({ item, x, y, width, height, label, muted });
         },
         dpr
@@ -316,7 +316,7 @@ describe('walkTree with browser zoom (devicePixelRatio=1.5)', () => {
       1,
       100,
       container.getCollapsedMap(),
-      (item, x, y, width, height, label, muted) => {
+      (item, x, y, width, height, label, filename, muted) => {
         renderData.push({ item, x, y, width, height, label, muted });
       },
       1.5
