@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import { type OAuthConnectionType } from '../types';
 import { buildOAuthAuthorizeUrl, onOAuthAuthorizationComplete } from '../utils/connectionOAuth';
@@ -24,7 +24,9 @@ export function useOAuthAuthorization(onComplete: (connectionName: string, error
   const [pendingName, setPendingName] = useState<string>();
   const [isPending, setIsPending] = useState(false);
   const onCompleteRef = useRef(onComplete);
-  onCompleteRef.current = onComplete;
+  useLayoutEffect(() => {
+    onCompleteRef.current = onComplete;
+  });
 
   useEffect(() => {
     if (!pendingName) {

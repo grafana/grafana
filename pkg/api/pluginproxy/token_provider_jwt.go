@@ -3,6 +3,7 @@ package pluginproxy
 import (
 	"context"
 
+	"github.com/grafana/grafana-app-sdk/routes"
 	googletokenprovider "github.com/grafana/grafana-google-sdk-go/pkg/tokenprovider"
 	"github.com/grafana/grafana/pkg/plugins"
 )
@@ -13,7 +14,7 @@ type jwtAccessTokenProvider struct {
 }
 
 func newJwtAccessTokenProvider(ctx context.Context, ds DSInfo, pluginRoute *plugins.Route,
-	authParams *plugins.JWTTokenAuth) *jwtAccessTokenProvider {
+	authParams *routes.ProxyTokenAuth) *jwtAccessTokenProvider {
 	jwtConf := &googletokenprovider.JwtTokenConfig{}
 	if val, ok := authParams.Params["client_email"]; ok {
 		jwtConf.Email = val

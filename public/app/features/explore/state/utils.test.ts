@@ -4,6 +4,8 @@ import * as exploreUtils from 'app/core/utils/explore';
 
 import { loadAndInitDatasource, getRange, fromURLRange, MAX_HISTORY_AUTOCOMPLETE_ITEMS } from './utils';
 
+jest.mock('app/core/utils/explore', () => makeSpyable('app/core/utils/explore'));
+
 const mockGetDataSourceInstance = jest.fn();
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

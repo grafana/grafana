@@ -27,7 +27,8 @@ export function UPlotChart({ data, width, height, config, children, plotRef }: P
   }, [data]);
 
   useLayoutEffect(() => {
-    if (width === 0 && height === 0) {
+    const container = plotContainer.current;
+    if (!container || (width === 0 && height === 0)) {
       return;
     }
 
@@ -38,7 +39,12 @@ export function UPlotChart({ data, width, height, config, children, plotRef }: P
     };
 
     pluginLog('UPlot', false, 'Reinitializing plot', options);
-    const plot = new uPlot(options, data as AlignedData, plotContainer.current!);
+    // uPlot checks `instanceof HTMLElement` to tell a container from a mount callback. That check fails for elements
+    // in another window (e.g. a Document Picture-in-Picture window), so always mount through the callback.
+    const plot = new uPlot(options, data as AlignedData, (u, init) => {
+      container.appendChild(u.root);
+      init();
+    });
 
     plotInstance.current = plot;
     plotRef?.(plot);

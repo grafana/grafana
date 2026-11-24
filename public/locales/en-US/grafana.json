@@ -3030,12 +3030,12 @@
       },
       "empty": "No recently deleted rules found",
       "error": "Failed to load deleted rules",
-      "load-more": "Load more",
       "restore": {
         "body": "Restore \"{{title}}\"?",
         "confirm": "Restore",
         "conflict": "A rule with this name already exists.",
         "error": "Failed to restore rule. Please try again.",
+        "recording-title": "Restore recording rule",
         "restoring": "Restoring…",
         "title": "Restore alert rule"
       },
@@ -3190,10 +3190,6 @@
         "group-name": "Evaluation group name",
         "group-text": "All rules in the selected group are evaluated every {{evaluateEvery}}.",
         "interval-label": "Evaluation interval",
-        "mode": {
-          "legacy": "Use groups (Legacy)",
-          "new": "Set interval"
-        },
         "new-group": "New evaluation group",
         "pause": {
           "alerting": "Turn on to pause evaluation for this alert rule.",
@@ -7211,6 +7207,8 @@
     },
     "transformation-operation-row": {
       "body-delete": "Note that removing one transformation may break others. If there is only a single transformation, you will go back to the main selection screen.",
+      "expander-close": "Collapse transformation row {{number}} - {{name}}",
+      "expander-open": "Expand transformation row {{number}} - {{name}}",
       "render-actions": {
         "confirmText-delete": "Delete",
         "title-debug": "Debug",
@@ -14257,32 +14255,6 @@
     },
     "units": {
       "clear-tooltip": "Clear unit selection"
-    },
-    "var-mapping-checks": {
-      "data-macro": "Resolves for each field when the panel renders",
-      "not-allowed": "Current value \"{{current}}\" isn't allowed, so the fallback is used",
-      "not-found": "Variable not found, so the fallback is used",
-      "not-number": "Current value \"{{current}}\" isn't a number, so the fallback is used",
-      "not-one-value": "The variable doesn't have exactly one value selected, so the fallback is used",
-      "out-of-range": "Current value {{current}} is out of range, so the fallback is used. {{range}}",
-      "resolves": "Resolves to: {{resolved}}",
-      "values": "These values use the fallback: {{values}}"
-    },
-    "var-mapping-toggle": {
-      "aria-label-picker": "Variable for {{name}}",
-      "fallback-off": "Off",
-      "fallback-on": "On",
-      "group-matching": "Matching values",
-      "group-other": "Other variables",
-      "hint-boolean": "Allowed values: true, false. Falls back to: {{fallback}}",
-      "hint-number": "Falls back to: {{fallback}}",
-      "hint-option": "Allowed values: {{values}}. Falls back to: {{fallback}}",
-      "hint-option-no-fallback": "Allowed values: {{values}}",
-      "new-variable": "New variable with these values",
-      "option-current": "Current: {{current}}",
-      "placeholder": "Choose a variable",
-      "use-fixed-value": "Use a fixed value",
-      "use-variable": "Use variable"
     }
   },
   "org": {
@@ -14379,7 +14351,8 @@
     },
     "get-panel-links-variable-suggestions": {
       "label": {
-        "all-variables": "All variables"
+        "all-variables": "All variables",
+        "current-dashboard-tabs": "Current dashboard tabs"
       }
     },
     "header-menu": {
@@ -15290,7 +15263,6 @@
     "finish-step": {
       "description-enable-previews": "Adds an image preview of dashboard changes in pull requests. Images of your Grafana dashboards will be shared in your Git repository and visible to anyone with repository access.",
       "description-image-rendering": "Requires image rendering. <2>Set up image rendering</2>",
-      "description-read-only": "Resources can't be modified through Grafana.",
       "description-sync-interval": "How often to sync changes from the repository",
       "error-sync-interval-required": "Sync interval is required",
       "label-enable-previews": "Enable dashboard previews in pull requests",
@@ -16067,6 +16039,17 @@
       "button-submitting": "Submitting...",
       "error-instance-repository-exists": "Instance repository already exists",
       "error-save-repository-setting": "Failed to save repository setting"
+    },
+    "workflow": {
+      "direct-push": "Direct push",
+      "direct-push-description": "Changes are committed straight to {{branch}}.",
+      "direct-push-description-no-branch": "Changes are committed straight to the synchronized branch.",
+      "merge-request": "Merge request",
+      "merge-request-description": "Changes are saved to another branch, ready for you to open a merge request into {{branch}}.",
+      "merge-request-description-no-branch": "Changes are saved to another branch, ready for you to open a merge request.",
+      "pull-request": "Pull request",
+      "pull-request-description": "Changes are saved to another branch, ready for you to open a pull request into {{branch}}.",
+      "pull-request-description-no-branch": "Changes are saved to another branch, ready for you to open a pull request."
     }
   },
   "public-dashboard": {

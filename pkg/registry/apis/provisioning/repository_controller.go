@@ -75,13 +75,7 @@ func (s *RepositoryControllerService) Run(ctx context.Context) error {
 		webhookSecretRotationInterval = defaultWebhookSecretRotationInterval
 	}
 
-	var repoKeys keysapi.Lister
-	if b.keysOnlyReList {
-		gvr := provisioningapis.RepositoryResourceInfo.GroupVersionResource()
-		repoKeys = keysapi.NewGRPCLister(b.unified, gvr)
-		logging.DefaultLogger.Info("provisioning re-list will ask for keys only", "transport", "storage", "resource", gvr.Resource)
-	}
-
+	repoKeys := keysapi.NewGRPCLister(b.unified, provisioningapis.RepositoryResourceInfo.GroupVersionResource())
 	relistProjectionMetrics, freshnessMetrics := b.informerMetrics()
 	repoController, source, hasSynced, err := controller.ProvideRepositoryController(controller.RepositoryControllerDeps{
 		ProvisioningClient:            client,

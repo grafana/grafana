@@ -1534,6 +1534,9 @@
         "alert-rules_other": "{{formatted}}個のアラートルール",
         "recording-rules_other": "{{formatted}}個の記録ルール"
       },
+      "saved-searches": {
+        "applied-default": ""
+      },
       "search": {
         "default-policy-unavailable": "デフォルトポリシーによるフィルタリングはまだ利用できません。",
         "folders-disabled": "フォルダー別に表示するには、フィルターをクリアしてください",
@@ -3003,12 +3006,12 @@
       },
       "empty": "",
       "error": "",
-      "load-more": "",
       "restore": {
         "body": "",
         "confirm": "",
         "conflict": "",
         "error": "",
+        "recording-title": "",
         "restoring": "",
         "title": ""
       },
@@ -3163,10 +3166,6 @@
         "group-name": "評価グループ名",
         "group-text": "選択したグループ内のすべてのルールは、{{evaluateEvery}}毎に評価されます。",
         "interval-label": "評価間隔",
-        "mode": {
-          "legacy": "グループを使用（レガシー）",
-          "new": "間隔を設定"
-        },
         "new-group": "新しい評価グループ",
         "pause": {
           "alerting": "このアラートルールの評価を一時停止するには、オンにします。",
@@ -6690,6 +6689,9 @@
           "description": "クリックまたはドラッグしてパネルを貼り付け",
           "title": "パネルを貼り付け"
         },
+        "question": {
+          "label": ""
+        },
         "row": {
           "add-label": "行を追加",
           "group-label": "行にまとめる"
@@ -6813,6 +6815,7 @@
         "objects": "オブジェクト",
         "panel": "パネル",
         "panels": "パネル",
+        "question": "",
         "row": "行",
         "rows": "行",
         "section-filters-set": "フィルター",
@@ -6862,6 +6865,34 @@
           "empty": "（空白）",
           "no-title": "<タイトルなし>"
         }
+      },
+      "questions": {
+        "add-question": "",
+        "description-dashboard": "",
+        "description-row": "",
+        "description-tab": "",
+        "new-question": "",
+        "placeholder": "",
+        "question": "",
+        "question-title": "",
+        "question-title-description": "",
+        "question-title-placeholder": "",
+        "sources": {
+          "collapse": "",
+          "description-dashboard": "",
+          "description-row": "",
+          "description-tab": "",
+          "entire-dashboard": "",
+          "expand": "",
+          "label": "",
+          "no-panels": "",
+          "unavailable-panel": "",
+          "untitled-row": "",
+          "untitled-tab": "",
+          "panel-count_other": "",
+          "picked-count_other": ""
+        },
+        "title": ""
       },
       "row": {
         "header": {
@@ -7123,6 +7154,8 @@
     },
     "transformation-operation-row": {
       "body-delete": "1つの変換を削除すると、他の変換が破損する可能性があることに注意してください。変換が1つしかない場合は、メインの選択画面に戻ります。",
+      "expander-close": "",
+      "expander-open": "",
       "render-actions": {
         "confirmText-delete": "削除",
         "title-debug": "デバッグ",
@@ -8090,6 +8123,20 @@
       },
       "selection-options": "選択オプション",
       "static-options-legend": "スタティックオプション"
+    },
+    "question-actions": {
+      "add": "",
+      "remove": "",
+      "reorder": "",
+      "update": ""
+    },
+    "question-edit": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
+    "question-edit-actions": {
+      "tooltip-question-settings": ""
     },
     "refresh-select": {
       "options": {
@@ -14093,32 +14140,6 @@
     },
     "units": {
       "clear-tooltip": "単位選択をクリア"
-    },
-    "var-mapping-checks": {
-      "data-macro": "",
-      "not-allowed": "",
-      "not-found": "",
-      "not-number": "",
-      "not-one-value": "",
-      "out-of-range": "",
-      "resolves": "",
-      "values": ""
-    },
-    "var-mapping-toggle": {
-      "aria-label-picker": "",
-      "fallback-off": "",
-      "fallback-on": "",
-      "group-matching": "",
-      "group-other": "",
-      "hint-boolean": "",
-      "hint-number": "",
-      "hint-option": "",
-      "hint-option-no-fallback": "",
-      "new-variable": "",
-      "option-current": "",
-      "placeholder": "",
-      "use-fixed-value": "",
-      "use-variable": ""
     }
   },
   "org": {
@@ -14215,7 +14236,8 @@
     },
     "get-panel-links-variable-suggestions": {
       "label": {
-        "all-variables": "すべての変数"
+        "all-variables": "すべての変数",
+        "current-dashboard-tabs": ""
       }
     },
     "header-menu": {
@@ -15123,7 +15145,6 @@
     "finish-step": {
       "description-enable-previews": "プルリクエストによるダッシュボードの変更の画像プレビューを追加します。Grafanaダッシュボードの画像はGitリポジトリで共有され、リポジトリにアクセスできる全ユーザーが閲覧できます。",
       "description-image-rendering": "画像レンダリングが必要です。<2>画像レンダリングを設定</2>",
-      "description-read-only": "Grafanaではリソースを変更できません。",
       "description-sync-interval": "リポジトリからの変更を同期する頻度",
       "error-sync-interval-required": "同期間隔が必要です",
       "label-enable-previews": "プルリクエストでダッシュボードのプレビューを有効にする",
@@ -15885,6 +15906,17 @@
       "button-submitting": "送信中…",
       "error-instance-repository-exists": "インスタンスリポジトリはすでに存在します",
       "error-save-repository-setting": "リポジトリ設定の保存に失敗しました"
+    },
+    "workflow": {
+      "direct-push": "",
+      "direct-push-description": "",
+      "direct-push-description-no-branch": "",
+      "merge-request": "",
+      "merge-request-description": "",
+      "merge-request-description-no-branch": "",
+      "pull-request": "",
+      "pull-request-description": "",
+      "pull-request-description-no-branch": ""
     }
   },
   "public-dashboard": {
