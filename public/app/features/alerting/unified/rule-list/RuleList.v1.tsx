@@ -49,7 +49,8 @@ const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 const RuleListV1 = () => {
   const { navId, pageNav } = useAlertRulesNav();
   const dispatch = useDispatch();
-  const { items: rulesDataSources, isLoading: isLoadingRulesSources } = useDataSourcesForRules();
+  const rulesSources = useDataSourcesForRules();
+  const { items: rulesDataSources, isLoading: isLoadingRulesSources } = rulesSources;
   const [expandAll, setExpandAll] = useState(false);
 
   const onFilterCleared = useCallback(() => setExpandAll(false), []);
@@ -144,7 +145,7 @@ const RuleListV1 = () => {
       <Stack direction="column">
         <RuleListV1DeprecationNotice />
         {showImportToGMABanner && <ImportToGMABanner />}
-        <RuleListErrors />
+        <RuleListErrors rulesSources={rulesSources} />
         <RulesFilter onClear={onFilterCleared} />
         {hasAlertRulesCreated && (
           <Stack direction="row" alignItems="center">
@@ -163,7 +164,9 @@ const RuleListV1 = () => {
         )}
         <RuleStats namespaces={filteredNamespaces} />
         {hasNoAlertRulesCreatedYet && <NoRulesSplash />}
-        {hasAlertRulesCreated && <ViewComponent expandAll={expandAll} namespaces={filteredNamespaces} />}
+        {hasAlertRulesCreated && (
+          <ViewComponent expandAll={expandAll} namespaces={filteredNamespaces} rulesSources={rulesSources} />
+        )}
       </Stack>
     </AlertingPageWrapper>
   );

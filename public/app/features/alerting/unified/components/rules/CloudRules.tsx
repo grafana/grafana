@@ -12,7 +12,7 @@ import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
-import { useDataSourcesForRules } from '../../hooks/useDataSourcesForRules';
+import { type DataSourcesForRulesResult } from '../../hooks/useDataSourcesForRules';
 import { usePagination } from '../../hooks/usePagination';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { getPaginationStyles } from '../../styles/pagination';
@@ -27,13 +27,14 @@ import { useCombinedGroupNamespace } from './useCombinedGroupNamespace';
 interface Props {
   namespaces: CombinedRuleNamespace[];
   expandAll: boolean;
+  rulesSources: DataSourcesForRulesResult;
 }
 
-export const CloudRules = ({ namespaces, expandAll }: Props) => {
+export const CloudRules = ({ namespaces, expandAll, rulesSources }: Props) => {
   const styles = useStyles2(getStyles);
 
   const promRules = useUnifiedAlertingSelector((state) => state.promRules);
-  const { items: rulesDataSources, isLoading: isLoadingRulesSources } = useDataSourcesForRules();
+  const { items: rulesDataSources, isLoading: isLoadingRulesSources, error: rulesSourcesError } = rulesSources;
   const groupsWithNamespaces = useCombinedGroupNamespace(namespaces);
 
   const dataSourcesLoading = useMemo(
@@ -98,7 +99,7 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
         />
       ))}
 
-      {!isLoadingRulesSources && !hasDataSourcesConfigured && (
+      {!isLoadingRulesSources && !rulesSourcesError && !hasDataSourcesConfigured && (
         <p>
           <Trans i18nKey="alerting.list-view.no-prom-or-loki-rules">
             There are no Prometheus or Loki data sources configured

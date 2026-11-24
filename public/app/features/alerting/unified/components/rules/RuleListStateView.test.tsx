@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from 'test/test-utils';
+import { render, screen, within } from 'test/test-utils';
 
 import { setPluginLinksHook } from '@grafana/runtime';
 import { RuleListStateView } from 'app/features/alerting/unified/components/rules/RuleListStateView';
@@ -11,6 +11,7 @@ import {
 } from 'app/features/alerting/unified/mocks';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
+import { type DataSourcesForRulesResult } from '../../hooks/useDataSourcesForRules';
 import { KnownProvenance } from '../../types/knownProvenance';
 
 jest.mock('@grafana/assistant', () => ({
@@ -55,6 +56,8 @@ const namespaces = [
   }),
 ];
 
+const rulesSources: DataSourcesForRulesResult = { items: [], isLoading: false };
+
 describe('RuleListStateView', () => {
   it.each([
     { provenance: KnownProvenance.ConvertedPrometheus, badge: 'Imported' },
@@ -66,17 +69,15 @@ describe('RuleListStateView', () => {
     });
     const namespaces = [mockCombinedRuleNamespace({ groups: [mockCombinedRuleGroup('Provisioned rules', [rule])] })];
 
-    const { user } = render(<RuleListStateView namespaces={namespaces} />);
+    const { user } = render(<RuleListStateView namespaces={namespaces} rulesSources={rulesSources} />);
     await user.click(within(screen.getByRole('treeitem', { name: 'Firing 1' })).getByRole('button'));
 
     expect(screen.getByText(badge)).toBeInTheDocument();
     expect(screen.queryByText(badge === 'Imported' ? 'Provisioned' : 'Imported')).not.toBeInTheDocument();
   });
 
-  it('renders differing prom rule states correctly and does not crash with missing state', async () => {
-    render(<RuleListStateView namespaces={namespaces} />);
-    // The loading bar shows until the rules source list loads.
-    await waitFor(() => expect(screen.queryByRole('status')).not.toBeInTheDocument());
+  it('renders differing prom rule states correctly and does not crash with missing state', () => {
+    render(<RuleListStateView namespaces={namespaces} rulesSources={rulesSources} />);
 
     expect(screen.getByRole('treeitem', { name: 'Firing 1' })).toBeInTheDocument();
     expect(screen.getByRole('treeitem', { name: 'Pending 1' })).toBeInTheDocument();

@@ -8,6 +8,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import * as analytics from '../../Analytics';
+import { type DataSourcesForRulesResult } from '../../hooks/useDataSourcesForRules';
 import { setupMswServer } from '../../mockApi';
 import { mockCombinedRule } from '../../mocks';
 import { mimirDataSource } from '../../mocks/server/configure';
@@ -107,8 +108,10 @@ describe('RuleListGroupView', () => {
   });
 });
 
+const rulesSources: DataSourcesForRulesResult = { items: [], isLoading: false };
+
 function renderRuleList(namespaces: CombinedRuleNamespace[]) {
-  render(<RuleListGroupView namespaces={namespaces} expandAll />);
+  render(<RuleListGroupView namespaces={namespaces} expandAll rulesSources={rulesSources} />);
 }
 
 function getGrafanaNamespace(): CombinedRuleNamespace {

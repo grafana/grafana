@@ -3349,6 +3349,7 @@
       "button-errors_one": "{{count}} errors",
       "button-errors_other": "{{count}} errors",
       "cloud-rulessource-errors-title-errors-loading-rules": "Errors loading rules",
+      "failed-to-load-data-sources": "Failed to load data sources:",
       "failed-to-load-grafana-rules-config": "Failed to load Grafana rules config:",
       "failed-to-load-grafana-rules-state": "Failed to load Grafana rules state:",
       "failed-to-load-rules-config": "Failed to load rules config from <2>{{dataSource}}</2>",

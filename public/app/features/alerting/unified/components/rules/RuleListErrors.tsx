@@ -8,19 +8,23 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { useDataSourcesForRules } from '../../hooks/useDataSourcesForRules';
+import { type DataSourcesForRulesResult } from '../../hooks/useDataSourcesForRules';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeDataSourceLink } from '../../utils/misc';
 import { isRulerNotSupportedResponse } from '../../utils/rules';
 
-export function RuleListErrors(): ReactElement {
+interface Props {
+  rulesSources: DataSourcesForRulesResult;
+}
+
+export function RuleListErrors({ rulesSources }: Props): ReactElement {
   const [expanded, setExpanded] = useState(false);
   const [closed, setClosed] = useLocalStorage('grafana.unifiedalerting.hideErrors', false);
   const promRuleRequests = useUnifiedAlertingSelector((state) => state.promRules);
   const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
   const styles = useStyles2(getStyles);
-  const { items: rulesDataSources } = useDataSourcesForRules();
+  const { items: rulesDataSources, error: rulesSourcesError } = rulesSources;
 
   const errors = useMemo((): JSX.Element[] => {
     const [promRequestErrors, rulerRequestErrors] = [promRuleRequests, rulerRuleRequests].map((requests) =>
@@ -63,6 +67,15 @@ export function RuleListErrors(): ReactElement {
       );
     }
 
+    if (rulesSourcesError) {
+      result.push(
+        <>
+          <Trans i18nKey="alerting.rule-list-errors.failed-to-load-data-sources">Failed to load data sources:</Trans>{' '}
+          {rulesSourcesError.message || unknownError}
+        </>
+      );
+    }
+
     promRequestErrors.forEach(({ dataSource, error }) =>
       result.push(
         <>
@@ -98,7 +111,7 @@ export function RuleListErrors(): ReactElement {
     );
 
     return result;
-  }, [promRuleRequests, rulerRuleRequests, rulesDataSources, styles.dsLink]);
+  }, [promRuleRequests, rulerRuleRequests, rulesDataSources, rulesSourcesError, styles.dsLink]);
 
   return (
     <>
