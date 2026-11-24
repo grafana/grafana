@@ -48,6 +48,7 @@ type Loader struct {
 	catalog           *RoleCatalog
 	actions           ac.ActionResolver
 	cache             *localcache.CacheService
+	cacheTTLOverride  *time.Duration
 	cfg               *setting.Cfg
 	features          featuremgmt.FeatureToggles
 	openFeatureClient *openfeature.Client
@@ -74,14 +75,28 @@ func NewLoader(sql db.DB, catalog *RoleCatalog, actionResolver ac.ActionResolver
 func NewEnforcedLoader(database legacysql.LegacyDatabaseProvider, actions ac.ActionResolver,
 	cache *localcache.CacheService, cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	zanzana MigratedPermissions, scopeResolver legacyscopes.ScopeResolver,
+	options ...LoaderOption,
 ) *Loader {
-	loader := newLoader(database, actions, cache, cfg, features, zanzana)
+	loader := newLoader(database, actions, cache, cfg, features, zanzana, options...)
 	loader.enforced = true
 	loader.scopeResolver = scopeResolver
 	return loader
 }
 
 type LoaderOption func(*Loader)
+
+// WithPermissionCacheTTL configures standalone permission cache expiry.
+// Non-positive durations bypass cache storage without changing permission assembly.
+func WithPermissionCacheTTL(ttl time.Duration) LoaderOption {
+	return func(loader *Loader) { loader.cacheTTLOverride = &ttl }
+}
+
+func (l *Loader) permissionCacheTTL() time.Duration {
+	if l.cacheTTLOverride != nil {
+		return *l.cacheTTLOverride
+	}
+	return cacheTTL
+}
 
 func WithLicensing(license licensing.Licensing) LoaderOption {
 	return func(loader *Loader) {
@@ -317,7 +332,7 @@ func (l *Loader) cachedTeams(ctx context.Context, user identity.Requester, optio
 	ctx, span := tracer.Start(ctx, "authz.legacypermissions.cache.teams")
 	span.SetAttributes(attribute.Bool("cache.reload", options.ReloadCache), attribute.Bool("permission.shadow", shadow.IsShadow(ctx)))
 	defer func() { endPermissionSpan(span, err) }()
-	if _, remote := ctx.Value(remoteNamespaceKey{}).(string); remote {
+	if _, remote := ctx.Value(remoteNamespaceKey{}).(string); remote || l.permissionCacheTTL() <= 0 {
 		return l.remoteCachedTeams(ctx, user, options, p)
 	}
 	var permissions [][]ac.Permission
@@ -347,7 +362,7 @@ func (l *Loader) cachedTeams(ctx context.Context, user identity.Requester, optio
 	for teamID, grants := range teams {
 		grants = l.actions.ExpandActionSets(grants)
 		if !shadow.IsShadow(ctx) {
-			l.cache.Set(tenantCacheKey(ctx, ac.GetTeamPermissionCacheKey(teamID, user.GetOrgID())), grants, cacheTTL)
+			l.cache.Set(tenantCacheKey(ctx, ac.GetTeamPermissionCacheKey(teamID, user.GetOrgID())), grants, l.permissionCacheTTL())
 		}
 		permissions = append(permissions, grants)
 	}
@@ -359,6 +374,10 @@ func (l *Loader) cached(ctx context.Context, source, key string, options ac.Opti
 	ctx, span := tracer.Start(ctx, "authz.legacypermissions.cache")
 	span.SetAttributes(attribute.String("cache.source", source), attribute.Bool("cache.reload", options.ReloadCache), attribute.Bool("permission.shadow", shadow.IsShadow(ctx)), attribute.Bool("cache.load_executed", false))
 	defer func() { endPermissionSpan(span, err) }()
+	if l.permissionCacheTTL() <= 0 {
+		span.SetAttributes(attribute.Bool("cache.load_executed", true))
+		return load(ctx)
+	}
 	if !options.ReloadCache {
 		value, ok := l.cache.Get(key)
 		span.SetAttributes(attribute.Bool("cache.hit", ok))
@@ -381,12 +400,12 @@ func (l *Loader) cached(ctx context.Context, source, key string, options ac.Opti
 		return fresh, err
 	}
 	if options.ReloadCache {
-		if err := l.cache.ExclusiveSet(key, get, cacheTTL); err != nil {
+		if err := l.cache.ExclusiveSet(key, get, l.permissionCacheTTL()); err != nil {
 			return nil, err
 		}
 		return fresh, nil
 	}
-	value, err := l.cache.GetOrExclusiveSet(key, get, cacheTTL)
+	value, err := l.cache.GetOrExclusiveSet(key, get, l.permissionCacheTTL())
 	if err != nil {
 		return nil, err
 	}
