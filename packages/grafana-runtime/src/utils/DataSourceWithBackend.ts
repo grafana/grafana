@@ -33,10 +33,9 @@ import {
 } from '../services';
 import { getDataSourceInstanceSettings } from '../services/dataSource/settings';
 
-import { getHealthCheckUrl, supportsDatasourceApi } from './datasourceApi';
 import { ExpressionDatasourceRef, isExpressionReference } from './expressionRef';
 import { publicDashboardQueryHandler } from './publicDashboardQueryHandler';
-import { isQueryServiceCompatible } from './qscheck';
+import { isDatasourceAuthCompatible, isQueryServiceCompatible } from './qscheck';
 import { type BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
 import { UserStorage } from './userStorage';
 
@@ -122,6 +121,36 @@ function toHealthCheckResult(v: DatasourcesV0HealthCheckResult): HealthCheckResu
     message: v.message,
     details: v.details,
   };
+}
+
+/**
+ * Whether `endpoint` calls for this datasource go to the datasource API server (`/apis/...`) instead of the
+ * legacy `/api/datasources/uid/...` routes. Reads only instance settings, so callers can decide without loading
+ * the plugin.
+ */
+function supportsDatasourceApi(endpoint: 'resources' | 'health', settings: DataSourceInstanceSettings): boolean {
+  // @ts-expect-error featuremgmt/registry.go does not support object feature flags yet
+  const allowedTypes = getFeatureFlagClient().getObjectValue('datasources.apiserver.fe-allowed-types', {
+    resources: [],
+    health: [],
+  });
+  if (!allowedTypes || typeof allowedTypes !== 'object' || Array.isArray(allowedTypes)) {
+    return false;
+  }
+  const pluginIds = allowedTypes[endpoint];
+  return (
+    Array.isArray(pluginIds) &&
+    (pluginIds.includes('*') || pluginIds.includes(settings.meta?.id ?? settings.type)) &&
+    isDatasourceAuthCompatible(settings)
+  );
+}
+
+/** Health check URL for the datasource, on the route `supportsDatasourceApi('health', settings)` selects. */
+export function getHealthCheckUrl(settings: DataSourceInstanceSettings): string {
+  if (supportsDatasourceApi('health', settings)) {
+    return `/apis/${settings.meta?.id ?? settings.type}.datasource.grafana.app/v0alpha1/namespaces/${config.namespace}/datasources/${settings.uid}/health`;
+  }
+  return `/api/datasources/uid/${settings.uid}/health`;
 }
 
 interface PreparedQuery {

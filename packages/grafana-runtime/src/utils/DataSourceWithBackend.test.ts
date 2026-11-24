@@ -19,6 +19,7 @@ import { type BackendSrv, type BackendSrvRequest, type FetchResponse } from '../
 
 import {
   DataSourceWithBackend,
+  getHealthCheckUrl,
   type HealthCheckResult,
   HealthStatus,
   standardStreamOptionsProvider,
@@ -1115,3 +1116,34 @@ function createMockDatasource(settingsOverrides: Partial<DataSourceInstanceSetti
   const ds = new MyDataSource(settings);
   return { ds, mock: mockDatasourceRequest.mock };
 }
+
+describe('getHealthCheckUrl', () => {
+  const settings = {
+    uid: 'abc',
+    type: 'alias',
+    meta: { id: 'canonical-id' } as DataSourcePluginMeta,
+    jsonData: {},
+  } as DataSourceInstanceSettings;
+
+  afterEach(() => {
+    mockGetObjectValue.mockReturnValue({ types: ['prometheus'] });
+  });
+
+  test('builds the legacy URL from settings when the plugin is not in the health list', () => {
+    mockGetObjectValue.mockImplementation((key, defaultValue) =>
+      key === 'datasources.apiserver.fe-allowed-types' ? { health: [], resources: [] } : defaultValue
+    );
+
+    expect(getHealthCheckUrl(settings)).toBe('/api/datasources/uid/abc/health');
+  });
+
+  test('builds the new URL from settings when the plugin is in the health list', () => {
+    mockGetObjectValue.mockImplementation((key, defaultValue) =>
+      key === 'datasources.apiserver.fe-allowed-types' ? { health: ['canonical-id'], resources: [] } : defaultValue
+    );
+
+    expect(getHealthCheckUrl(settings)).toBe(
+      `/apis/canonical-id.datasource.grafana.app/v0alpha1/namespaces/${config.namespace}/datasources/abc/health`
+    );
+  });
+});

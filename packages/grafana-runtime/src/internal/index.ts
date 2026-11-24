@@ -17,8 +17,11 @@ export { type PageInfoItem, setPluginPage } from '../components/PluginPage';
 
 export { type LegacyFeatureToggleMode } from '../utils/legacyFeatureToggles';
 export { ExpressionDatasourceRef } from '../utils/expressionRef';
-export { standardStreamOptionsProvider, toStreamingDataResponse } from '../utils/DataSourceWithBackend';
-export { getHealthCheckUrl } from '../utils/datasourceApi';
+export {
+  getHealthCheckUrl,
+  standardStreamOptionsProvider,
+  toStreamingDataResponse,
+} from '../utils/DataSourceWithBackend';
 
 export {
   setGetObservablePluginComponents,
