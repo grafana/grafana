@@ -330,7 +330,7 @@ func (s *Service) asConnection(ds *datasources.DataSource) (*queryV0.DataSourceC
 // DataSourceConnection.Annotations.
 func connectionAnnotations(ds *datasources.DataSource) map[string]string {
 	var annotations map[string]string
-	for k, v := range ds.AsAnnotations(datasources.AnnotationPolicy) {
+	for k, v := range ds.AsAnnotations() {
 		if strings.HasPrefix(k, grafanaAnnotationPrefix) {
 			if annotations == nil {
 				annotations = map[string]string{}

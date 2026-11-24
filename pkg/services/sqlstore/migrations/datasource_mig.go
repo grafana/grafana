@@ -157,5 +157,5 @@ func addDataSourceMigration(mg *Migrator) {
 	// metadata.annotations of the app platform API, with the manager in columns of
 	// its own so it stays queryable. Shape, width and index all come from the package
 	// that reads and writes them.
-	legacyannotations.AddMigrations(mg, tableV2, "org_id")
+	legacyannotations.AddMigrations(mg, tableV2)
 }

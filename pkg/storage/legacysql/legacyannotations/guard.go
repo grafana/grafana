@@ -10,12 +10,15 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
+	authtypes "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // Guard applies the write rules for a legacy store's objects, so a store gets them by
-// calling three methods rather than reimplementing them:
+// calling three methods rather than reimplementing them. It guards the k8s API only: a
+// writer that calls the datasource service directly does not pass through it.
 //
 //	guard := legacyannotations.Guard{Resource: resourceInfo.GroupResource()}
 //
@@ -36,7 +39,10 @@ func (g Guard) OnCreate(ctx context.Context, obj metav1.Object) error {
 	if err != nil {
 		return err
 	}
-	return g.forbid(identity.CheckManagerOnCreate(auth, accessorOf(obj)))
+	if err := g.forbid(identity.CheckManagerOnCreate(auth, accessorOf(obj))); err != nil {
+		return err
+	}
+	return g.checkFileProvisionedAssignment(auth, obj, nil)
 }
 
 // OnUpdate refuses an update the manager rules or the file-provisioning policy do not
@@ -48,6 +54,9 @@ func (g Guard) OnUpdate(ctx context.Context, proposed, old metav1.Object) error 
 			return err
 		}
 		if err := g.forbid(identity.CheckManagerOnUpdate(auth, accessorOf(proposed), accessorOf(old))); err != nil {
+			return err
+		}
+		if err := g.checkFileProvisionedAssignment(auth, proposed, old); err != nil {
 			return err
 		}
 	}
@@ -76,6 +85,7 @@ func (g Guard) OnDelete(ctx context.Context, obj metav1.Object) error {
 // would strip provenance, and an admin -- who is allowed to release a repo-managed
 // resource -- would detach it without meaning to.
 //
+// It exists for UI clients that cannot yet send annotations; remove it when they do.
 // Call it from admission, which runs once per store: during dual write the legacy and
 // the unified copy are each updated from the same request, and retaining on only one
 // of them leaves the other released. Removing a manager stays possible with a PATCH
@@ -88,6 +98,20 @@ func RetainOnPut(ctx context.Context, proposed, old metav1.Object) {
 		return
 	}
 	proposed.SetAnnotations(maps.Clone(old.GetAnnotations()))
+}
+
+// checkFileProvisionedAssignment refuses a caller other than the provisioner assigning a
+// file-provisioned manager, which would make a resource nobody else can edit or delete.
+func (g Guard) checkFileProvisionedAssignment(auth authtypes.AuthInfo, proposed, old metav1.Object) error {
+	kind := utils.ParseManagerKindString(proposed.GetAnnotations()[utils.AnnoKeyManagerKind])
+	if !utils.IsFileProvisioned(kind) || identity.IsServiceIdentityAuth(auth) {
+		return nil
+	}
+	if old != nil && utils.ParseManagerKindString(old.GetAnnotations()[utils.AnnoKeyManagerKind]) == kind {
+		return nil // already assigned
+	}
+	return apierrors.NewForbidden(g.Resource, proposed.GetName(),
+		errors.New("only the file provisioner may assign this resource manager"))
 }
 
 // checkFileProvisioned refuses a write to a resource provisioned from a file whose

@@ -159,7 +159,6 @@
 "add data_source.annotations column"
 "add data_source.manager_kind column"
 "add data_source.manager_identity column"
-"add index data_source.manager"
 "create api_key table"
 "add index api_key.account_id"
 "add index api_key.key"

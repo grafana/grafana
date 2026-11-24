@@ -30,7 +30,7 @@ func TestProvisioningCommandsCarryTheManager(t *testing.T) {
 	// Reads resolve the manager from its columns, so leaving it in the blob makes a
 	// file-provisioned data source look unmanaged to /apis.
 	want := legacyannotations.Columns{
-		ManagerKind:     "classic-file-provisioning",
+		ManagerKind:     "file-provisioning",
 		ManagerIdentity: "prometheus.yaml",
 		Annotations: map[string]string{
 			utils.AnnoKeySourcePath:         "prometheus.yaml",
@@ -50,9 +50,9 @@ func TestProvisioningCommandsCarryTheManager(t *testing.T) {
 		require.NotContains(t, readOnly.Annotations, utils.AnnoKeyManagerAllowsEdits)
 	})
 
-	t.Run("a classic kind needs no identity", func(t *testing.T) {
+	t.Run("a config with no file records no identity", func(t *testing.T) {
 		noFile := createInsertCommand(&upsertDataSourceFromConfig{Name: "test"}, "")
-		require.Equal(t, "classic-file-provisioning", noFile.ManagerKind)
+		require.Equal(t, "file-provisioning", noFile.ManagerKind)
 		require.Empty(t, noFile.ManagerIdentity)
 		require.Empty(t, noFile.Annotations)
 	})

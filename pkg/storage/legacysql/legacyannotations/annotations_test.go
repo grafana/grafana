@@ -11,7 +11,7 @@ import (
 
 // dashboardLike derives more from columns than a data source does, which is the
 // whole reason the derived set is per-resource.
-var dashboardLike = NewPolicy(utils.AnnoKeyUpdatedTimestamp, utils.AnnoKeyFolder, utils.AnnoKeyMessage)
+var dashboardLike = newPolicy(utils.AnnoKeyUpdatedTimestamp, utils.AnnoKeyFolder, utils.AnnoKeyMessage)
 
 func TestPolicyToStore(t *testing.T) {
 	tests := []struct {
@@ -59,7 +59,7 @@ func TestPolicyToStore(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			obj := &metav1.ObjectMeta{Annotations: tt.annotations}
-			require.Equal(t, tt.want, dashboardLike.ToStore(obj))
+			require.Equal(t, tt.want, dashboardLike.toStore(obj))
 		})
 	}
 }
@@ -71,7 +71,7 @@ func TestPolicyApply(t *testing.T) {
 			utils.AnnoKeyFolder:           "from-the-column",
 		}}
 
-		dashboardLike.Apply(obj, map[string]string{
+		dashboardLike.apply(obj, map[string]string{
 			utils.AnnoKeyUpdatedTimestamp: "stale",
 			utils.AnnoKeyFolder:           "stale",
 			utils.AnnoKeyManagerKind:      "repo",
@@ -86,7 +86,7 @@ func TestPolicyApply(t *testing.T) {
 
 	t.Run("nothing stored leaves the object alone", func(t *testing.T) {
 		obj := &metav1.ObjectMeta{}
-		dashboardLike.Apply(obj, nil)
+		dashboardLike.apply(obj, nil)
 		require.Nil(t, obj.Annotations)
 	})
 
@@ -97,13 +97,13 @@ func TestPolicyApply(t *testing.T) {
 			utils.AnnoKeySourcePath:      "dashboards/a.json",
 		}
 		obj := &metav1.ObjectMeta{}
-		dashboardLike.Apply(obj, stored)
-		require.Equal(t, stored, dashboardLike.ToStore(obj))
+		dashboardLike.apply(obj, stored)
+		require.Equal(t, stored, dashboardLike.toStore(obj))
 	})
 }
 
 func TestPolicyDropping(t *testing.T) {
-	policy := dashboardLike.Dropping(utils.AnnoKeyKubectlLastAppliedConfig)
+	policy := dashboardLike.dropping(utils.AnnoKeyKubectlLastAppliedConfig)
 
 	obj := &metav1.ObjectMeta{Annotations: map[string]string{
 		utils.AnnoKeyKubectlLastAppliedConfig: `{"secure":{"password":{"create":"hunter2"}}}`,
@@ -111,13 +111,13 @@ func TestPolicyDropping(t *testing.T) {
 	}}
 
 	t.Run("a dropped annotation is never stored", func(t *testing.T) {
-		require.Equal(t, map[string]string{utils.AnnoKeyManagerKind: "repo"}, policy.ToStore(obj))
+		require.Equal(t, map[string]string{utils.AnnoKeyManagerKind: "repo"}, policy.toStore(obj))
 	})
 
 	t.Run("and does not come back from a row that already has one", func(t *testing.T) {
 		// Rows written before the key was dropped must not replay it onto a read.
 		out := &metav1.ObjectMeta{}
-		policy.Apply(out, map[string]string{
+		policy.apply(out, map[string]string{
 			utils.AnnoKeyKubectlLastAppliedConfig: `{"secure":{"password":{"create":"hunter2"}}}`,
 			utils.AnnoKeyManagerKind:              "repo",
 		})
@@ -125,6 +125,6 @@ func TestPolicyDropping(t *testing.T) {
 	})
 
 	t.Run("the policy it was derived from is unchanged", func(t *testing.T) {
-		require.Contains(t, dashboardLike.ToStore(obj), utils.AnnoKeyKubectlLastAppliedConfig)
+		require.Contains(t, dashboardLike.toStore(obj), utils.AnnoKeyKubectlLastAppliedConfig)
 	})
 }

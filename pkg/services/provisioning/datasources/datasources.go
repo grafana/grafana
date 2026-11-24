@@ -79,9 +79,8 @@ func (dc *DatasourceProvisioner) provisionDataSources(ctx context.Context, cfg *
 		} else {
 			if managedElsewhere(dataSource) {
 				// Matching is by name, so a file can land on a data source another
-				// manager already owns. Taking it over would rewrite its manager to
-				// classic-file-provisioning, which the app platform refuses for any
-				// other writer; doing it here silently is worse, not better.
+				// manager already owns; taking it over would silently change who
+				// manages it.
 				dc.log.Warn("skipping datasource managed by another manager",
 					"name", dataSource.Name, "uid", dataSource.UID,
 					"managedBy", dataSource.ManagerKind, "managerId", dataSource.ManagerIdentity,

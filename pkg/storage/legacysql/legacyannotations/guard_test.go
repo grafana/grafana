@@ -85,8 +85,8 @@ func TestGuard(t *testing.T) {
 	})
 
 	t.Run("a file-provisioned resource that allows no edits is read-only except to the provisioner", func(t *testing.T) {
-		locked := managedBy(utils.ManagerKindClassicFP, "prom.yaml")   //nolint:staticcheck
-		editable := managedBy(utils.ManagerKindClassicFP, "prom.yaml", //nolint:staticcheck
+		locked := managedBy(utils.ManagerKindClassicFP, "prom.yaml") //nolint:staticcheck
+		editable := managedBy(utils.ManagerKindFileProvisioning, "prom.yaml",
 			utils.AnnoKeyManagerAllowsEdits, "true")
 		serviceCtx := identity.WithServiceIdentityContext(context.Background(), 1)
 
@@ -94,6 +94,12 @@ func TestGuard(t *testing.T) {
 		require.True(t, apierrors.IsForbidden(guard.OnDelete(userCtx, locked)))
 		require.NoError(t, guard.OnUpdate(userCtx, editable, editable))
 		require.NoError(t, guard.OnUpdate(serviceCtx, locked, locked))
+
+		// Assigning it would leave a resource nobody but the provisioner can touch.
+		fresh := managedBy(utils.ManagerKindFileProvisioning, "prom.yaml")
+		require.True(t, apierrors.IsForbidden(guard.OnCreate(userCtx, fresh)))
+		require.True(t, apierrors.IsForbidden(guard.OnUpdate(userCtx, fresh, unmanaged())))
+		require.NoError(t, guard.OnCreate(serviceCtx, fresh))
 
 		terraform := managedBy(utils.ManagerKindTerraform, "tf")
 		require.NoError(t, guard.OnUpdate(userCtx, terraform, terraform),

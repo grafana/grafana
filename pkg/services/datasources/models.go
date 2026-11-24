@@ -264,18 +264,6 @@ func (cmd *UpdateDataSourceCommand) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// AnnotationPolicy is how a data source splits its annotations between columns and the
-// annotation blob.
-var AnnotationPolicy = legacyannotations.DefaultPolicy()
-
-// GetDataSourcesByManagerQuery finds the data sources a given manager owns. Identity
-// is optional: leaving it empty matches every data source of that kind, which is what
-// the classic kinds need since their identity is absent or unstable.
-type GetDataSourcesByManagerQuery struct {
-	OrgID int64
-	legacyannotations.ManagerQuery
-}
-
 // DeleteDataSourceCommand will delete a DataSource based on OrgID as well as the UID (preferred), ID, or Name.
 // At least one of the UID, ID, or Name properties must be set in addition to OrgID.
 type DeleteDataSourceCommand struct {

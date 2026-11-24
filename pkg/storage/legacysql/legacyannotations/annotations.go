@@ -8,11 +8,9 @@
 // the unified copy of a create is built from the object legacy returned.
 //
 // The fix is one nullable text column per table holding the annotations the table
-// does not already model, and a Policy saying which those are. What differs between
-// resources is only that set: a data source derives its updated timestamp from a
-// column, a dashboard additionally derives its folder, message and manager from
-// columns of its own. Everything here takes a metav1.Object, which both the typed
-// and the unstructured form of every resource already satisfies.
+// does not already model, and a policy saying which those are. The manager has columns
+// of its own so it stays queryable. Everything here takes a metav1.Object, which both
+// the typed and the unstructured form of every resource already satisfies.
 //
 // # Writing
 //
@@ -25,9 +23,7 @@
 // With xorm that distinction is the difference between letting an empty map fall
 // through the zero-value skip and forcing the column with MustCols:
 //
-//	if cmd.UpdateAnnotations {
-//		sess.MustCols("annotations")
-//	}
+//	sess.MustCols(cmd.ColumnsToWrite()...)
 //
 // Getting this wrong is not theoretical: is_prunable is UseBool'd and never set by
 // pkg/api/datasources.go, so every legacy data source edit silently zeroes it.
@@ -39,50 +35,45 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// Policy describes which annotations a legacy SQL table stores in its annotation
+// policy describes which annotations a legacy SQL table stores in its annotation
 // column, by listing the ones it does not: those it derives from real columns.
-type Policy struct {
+type policy struct {
 	derived map[string]bool
 	dropped map[string]bool
 }
 
-// NewPolicy returns a Policy for a table that derives the named annotations from
+// newPolicy returns a policy for a table that derives the named annotations from
 // its own columns. Everything else is stored verbatim, so an annotation added to
 // the API later needs no migration and no change here.
-func NewPolicy(derived ...string) Policy {
+func newPolicy(derived ...string) policy {
 	keys := make(map[string]bool, len(derived))
 	for _, k := range derived {
 		keys[k] = true
 	}
-	return Policy{derived: keys}
+	return policy{derived: keys}
 }
 
-// Dropping returns a copy of p that never stores the named annotations at all.
+// dropping returns a copy of p that never stores the named annotations at all.
 // Unlike a derived annotation, a dropped one has no column behind it and does not
 // come back on read: the row is the wrong place for it. An annotation a client can
 // fill with content the column is not allowed to hold -- a secret, or a copy of the
 // whole object -- belongs here.
-func (p Policy) Dropping(keys ...string) Policy {
+func (p policy) dropping(keys ...string) policy {
 	dropped := make(map[string]bool, len(p.dropped)+len(keys))
 	maps.Copy(dropped, p.dropped)
 	for _, k := range keys {
 		dropped[k] = true
 	}
-	return Policy{derived: p.derived, dropped: dropped}
+	return policy{derived: p.derived, dropped: dropped}
 }
 
-// Derives reports whether key comes from a column rather than the annotation blob.
-func (p Policy) Derives(key string) bool {
-	return p.derived[key]
-}
-
-// ToStore returns the annotations of obj to persist in the annotation column, which
+// toStore returns the annotations of obj to persist in the annotation column, which
 // is all of them except the derived ones. Persisting a derived annotation as well
 // would let the row disagree with itself once the column it mirrors changes.
 //
 // Returns nil when nothing is left to store, so an unmanaged resource writes NULL
 // rather than an empty JSON object.
-func (p Policy) ToStore(obj metav1.Object) map[string]string {
+func (p policy) toStore(obj metav1.Object) map[string]string {
 	annotations := obj.GetAnnotations()
 	stored := make(map[string]string, len(annotations))
 	for k, v := range annotations {
@@ -96,11 +87,11 @@ func (p Policy) ToStore(obj metav1.Object) map[string]string {
 	return stored
 }
 
-// Apply merges stored annotations onto obj. Derived annotations are skipped, and so
-// is any key the caller has already set from a column, so Apply can run before or
+// apply merges stored annotations onto obj. Derived annotations are skipped, and so
+// is any key the caller has already set from a column, so apply can run before or
 // after the rest of the conversion and a stale stored copy can never win over the
 // column it mirrors.
-func (p Policy) Apply(obj metav1.Object, stored map[string]string) {
+func (p policy) apply(obj metav1.Object, stored map[string]string) {
 	if len(stored) == 0 {
 		return
 	}

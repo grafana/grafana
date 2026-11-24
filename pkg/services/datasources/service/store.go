@@ -176,21 +176,6 @@ func (ss *SqlStore) GetDataSourcesByType(ctx context.Context, query *datasources
 	})
 }
 
-// GetDataSourcesByManager answers "everything this manager owns" from SQL, without
-// the unified search index. The manager lives in columns rather than the annotation
-// blob precisely so this query is possible.
-func (ss *SqlStore) GetDataSourcesByManager(ctx context.Context, query *datasources.GetDataSourcesByManagerQuery) ([]*datasources.DataSource, error) {
-	where, args, err := query.Filter("org_id", query.OrgID)
-	if err != nil {
-		return nil, err
-	}
-
-	dataSources := make([]*datasources.DataSource, 0)
-	return dataSources, ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		return sess.Where(where, args...).Asc("id").Find(&dataSources)
-	})
-}
-
 // GetPrunableProvisionedDataSources returns all data sources that can be pruned
 func (ss *SqlStore) GetPrunableProvisionedDataSources(ctx context.Context) ([]*datasources.DataSource, error) {
 	prunableQuery := "is_prunable  = ?"

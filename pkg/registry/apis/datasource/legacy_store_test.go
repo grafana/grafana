@@ -109,7 +109,7 @@ func TestPrepareUpdateRefusesFileProvisionedEdits(t *testing.T) {
 		meta, err := utils.MetaAccessor(ds)
 		require.NoError(t, err)
 		meta.SetManagerProperties(utils.ManagerProperties{
-			Kind:        utils.ManagerKindClassicFP, //nolint:staticcheck
+			Kind:        utils.ManagerKindFileProvisioning,
 			Identity:    "prometheus.yaml",
 			AllowsEdits: allowsEdits,
 		})

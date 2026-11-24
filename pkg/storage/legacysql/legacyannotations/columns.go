@@ -1,7 +1,6 @@
 package legacyannotations
 
 import (
-	"fmt"
 	"maps"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,10 +26,9 @@ const (
 //		legacyannotations.Columns `xorm:"extends"`
 //	}
 //
-// The manager has columns of its own so that "everything this manager owns" is
-// answerable in SQL; everything else the table does not model goes in the blob. A
-// Policy decides which annotations are which, and the two helpers below move them
-// between an API object and these fields so a service never handles the split itself.
+// The manager has columns of its own so it stays queryable; everything else the table
+// does not model goes in the blob. FromObject and ToObject move them between an API object and these fields, so a
+// service never handles the split itself.
 type Columns struct {
 	// swagger:ignore
 	Annotations map[string]string `json:"-" xorm:"annotations"`
@@ -40,18 +38,18 @@ type Columns struct {
 	ManagerIdentity string `json:"-" xorm:"manager_identity"`
 }
 
-// Read fills c from obj: the manager into its columns, everything the policy does not
-// derive or drop into the blob.
-func (c *Columns) Read(p Policy, obj metav1.Object) {
+// FromObject fills c from obj: the manager into its columns, everything the policy does
+// not derive or drop into the blob.
+func (c *Columns) FromObject(obj metav1.Object) {
 	annotations := obj.GetAnnotations()
-	c.Annotations = p.ToStore(obj)
+	c.Annotations = defaultPolicy.toStore(obj)
 	c.ManagerKind = annotations[utils.AnnoKeyManagerKind]
 	c.ManagerIdentity = annotations[utils.AnnoKeyManagerIdentity]
 }
 
-// Write puts c back onto obj, the manager first so Policy.Apply cannot overwrite it
-// with a stale copy from a row written before the columns existed.
-func (c Columns) Write(p Policy, obj metav1.Object) {
+// ToObject puts c back onto obj, the manager first so the blob cannot overwrite it with
+// a stale copy from a row written before the columns existed.
+func (c Columns) ToObject(obj metav1.Object) {
 	if manager := c.manager(); len(manager) > 0 {
 		annotations := maps.Clone(obj.GetAnnotations())
 		if annotations == nil {
@@ -60,14 +58,14 @@ func (c Columns) Write(p Policy, obj metav1.Object) {
 		maps.Copy(annotations, manager)
 		obj.SetAnnotations(annotations)
 	}
-	p.Apply(obj, c.Annotations)
+	defaultPolicy.apply(obj, c.Annotations)
 }
 
 // AsAnnotations returns every annotation the row holds -- the manager and the blob --
 // for a caller that wants them without an object to put them on.
-func (c Columns) AsAnnotations(p Policy) map[string]string {
+func (c Columns) AsAnnotations() map[string]string {
 	obj := &metav1.ObjectMeta{}
-	c.Write(p, obj)
+	c.ToObject(obj)
 	return obj.Annotations
 }
 
@@ -97,10 +95,11 @@ type UpdateColumns struct {
 	UpdateAnnotations bool `json:"-" xorm:"-"`
 }
 
-// Read fills the columns from obj, as the caller that is the source of truth for
-// them: unlike Columns.Read, it marks them to be written as given, including cleared.
-func (u *UpdateColumns) Read(p Policy, obj metav1.Object) {
-	u.Columns.Read(p, obj)
+// FromObject fills the columns from obj, as the caller that is the source of truth for
+// them: unlike Columns.FromObject, it marks them to be written as given, including
+// cleared.
+func (u *UpdateColumns) FromObject(obj metav1.Object) {
+	u.Columns.FromObject(obj)
 	u.UpdateAnnotations = true
 }
 
@@ -121,29 +120,24 @@ func (u UpdateColumns) ColumnsToWrite() []string {
 	return []string{annotationColumn, managerKindColumn, managerIdentityColumn}
 }
 
-// DefaultPolicy is the policy that goes with Columns: the manager lives in columns of
-// its own and the updated timestamp comes from one, so none of the three are stored in
-// the blob. Pass any further annotations the table derives from its own columns.
+// defaultPolicy: the manager lives in columns of its own and the updated timestamp
+// comes from one, so none of the three are stored in the blob.
 //
-// The dropped keys are not optional, which is why they are here rather than left to
-// each caller to remember. A kubectl-managed resource records the manifest it applied,
-// and that manifest can carry raw secure values; the blob is unencrypted and returned
-// on every read. Attribution is dropped because a legacy table has no trusted value
-// for it, so storing what the client sent would let a read report any author it liked.
-func DefaultPolicy(derived ...string) Policy {
-	return NewPolicy(append(derived,
-		utils.AnnoKeyManagerKind,
-		utils.AnnoKeyManagerIdentity,
-		utils.AnnoKeyUpdatedTimestamp,
-	)...).Dropping(
-		utils.AnnoKeyKubectlLastAppliedConfig,
-		utils.AnnoKeyCreatedBy,
-		utils.AnnoKeyUpdatedBy,
-	)
-}
+// The dropped keys are not optional. A kubectl-managed resource records the manifest it
+// applied, and that manifest can carry raw secure values; the blob is unencrypted and
+// returned on every read. Attribution is dropped because a legacy table has no trusted
+// value for it, so storing what the client sent would let a read report any author.
+var defaultPolicy = newPolicy(
+	utils.AnnoKeyManagerKind,
+	utils.AnnoKeyManagerIdentity,
+	utils.AnnoKeyUpdatedTimestamp,
+).dropping(
+	utils.AnnoKeyKubectlLastAppliedConfig,
+	utils.AnnoKeyCreatedBy,
+	utils.AnnoKeyUpdatedBy,
+)
 
-// FileProvisioned returns the columns for a resource provisioned from a config file,
-// the way the dashboard provisioner records its origin. sourceFile is both the manager
+// FileProvisioned returns the columns for a resource provisioned from a config file. sourceFile is both the manager
 // identity and the source path: a provisioning config has no provisioner name of its
 // own the way a dashboard config does.
 //
@@ -151,7 +145,7 @@ func DefaultPolicy(derived ...string) Policy {
 // resource can be editable at all. Leaving it false is what makes Guard refuse writes.
 func FileProvisioned(sourceFile string, allowsEdits bool) Columns {
 	columns := Columns{
-		ManagerKind:     string(utils.ManagerKindClassicFP), //nolint:staticcheck
+		ManagerKind:     string(utils.ManagerKindFileProvisioning),
 		ManagerIdentity: sourceFile,
 	}
 	annotations := map[string]string{}
@@ -176,38 +170,4 @@ func FileProvisionedUpdate(sourceFile string, allowsEdits bool) UpdateColumns {
 		Columns:           FileProvisioned(sourceFile, allowsEdits),
 		UpdateAnnotations: true,
 	}
-}
-
-// ManagerQuery is embedded in a query that looks a manager up, so a store does not
-// restate the filter. Identity is optional: leaving it empty matches every resource of
-// that kind, which is what the classic kinds need since their identity is absent or
-// unstable.
-type ManagerQuery struct {
-	ManagerKind     string
-	ManagerIdentity string
-}
-
-// Filter returns the where clause and arguments for "everything this manager owns",
-// scoped by the column the index leads with:
-//
-//	where, args, err := query.Filter("org_id", query.OrgID)
-//	sess.Where(where, args...).Find(&rows)
-//
-// Pass an empty column for a table with no such scope.
-func (q ManagerQuery) Filter(scopeColumn string, scopeValue any) (string, []any, error) {
-	if q.ManagerKind == "" {
-		return "", nil, fmt.Errorf("manager kind cannot be empty")
-	}
-
-	where := managerKindColumn + "=?"
-	args := []any{q.ManagerKind}
-	if scopeColumn != "" {
-		where = scopeColumn + "=? AND " + where
-		args = append([]any{scopeValue}, args...)
-	}
-	if q.ManagerIdentity != "" {
-		where += " AND " + managerIdentityColumn + "=?"
-		args = append(args, q.ManagerIdentity)
-	}
-	return where, args, nil
 }
