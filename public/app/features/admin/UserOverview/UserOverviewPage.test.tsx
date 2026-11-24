@@ -83,10 +83,10 @@ afterEach(() => {
 function setup(tab = 'details', id = 'alice') {
   return render(
     <Routes>
-      <Route path="/admin/users/edit/:id" element={<UserOverviewPage />} />
+      <Route path="/admin/users/edit/:id/:page?" element={<UserOverviewPage />} />
     </Routes>,
     {
-      historyOptions: { initialEntries: [`/admin/users/edit/${id}?tab=${tab}`] },
+      historyOptions: { initialEntries: [`/admin/users/edit/${id}${tab === 'details' ? '' : `/${tab}`}`] },
     }
   );
 }
@@ -517,13 +517,23 @@ describe('account actions', () => {
 });
 
 describe('teams', () => {
+  it.each(['unknown', 'authentication'])('falls back to details for an unavailable page: %s', async (page) => {
+    setup(page);
+    expect(await screen.findByRole('row', { name: 'Name Alice Example' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'User details' })).toHaveAttribute('aria-selected', 'true');
+  });
+
   it('navigates between tabs and links to the team edit page', async () => {
     const { user } = setup();
     await screen.findByRole('row', { name: 'Name Alice Example' });
     await user.click(screen.getByRole('tab', { name: 'Teams' }));
     expect(await screen.findByRole('link', { name: 'Platform' })).toHaveAttribute('href', '/org/teams/edit/platform');
     expect(screen.getByText('platform@example.com')).toBeInTheDocument();
-    expect(locationService.getLocation().search).toBe('?tab=teams');
+    expect(locationService.getLocation().pathname).toBe('/admin/users/edit/alice/teams');
+    expect(locationService.getLocation().search).toBe('');
+    await user.click(screen.getByRole('tab', { name: 'User details' }));
+    expect(await screen.findByRole('row', { name: 'Name Alice Example' })).toBeInTheDocument();
+    expect(locationService.getLocation().pathname).toBe('/admin/users/edit/alice');
   });
 
   it('reads teams from the legacy API while the teams API flag is off', async () => {
@@ -968,7 +978,7 @@ describe('sessions', () => {
     );
     const { user } = setup('sessions', 'bob');
     expect(await screen.findByRole('heading', { name: 'bob' })).toBeInTheDocument();
-    act(() => locationService.push('/admin/users/edit/alice?tab=sessions'));
+    act(() => locationService.push('/admin/users/edit/alice/sessions'));
     expect(await screen.findByRole('heading', { name: 'alice' })).toBeInTheDocument();
     await user.click(await screen.findByRole('button', { name: 'Force logout from all devices' }));
     expect(screen.getByRole('dialog')).toBeInTheDocument();

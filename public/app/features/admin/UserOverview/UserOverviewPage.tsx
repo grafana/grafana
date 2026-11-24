@@ -1,5 +1,5 @@
 import { Fragment } from 'react';
-import { useLocation, useParams, useSearchParams } from 'react-router-dom-v5-compat';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import { isTruthy } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -19,9 +19,8 @@ import { UserTeams } from './UserTeams';
 import { useUserOverview } from './hooks';
 
 export default function UserOverviewPage() {
-  const { pathname } = useLocation();
-  const { id: uid = '' } = useParams();
-  const [params] = useSearchParams();
+  const { id: uid = '', page = 'details' } = useParams();
+  const baseUrl = `/admin/users/edit/${encodeURIComponent(uid)}`;
   const { user, profile, account, members } = useUserOverview(uid);
   const hasLdapSync =
     profile?.isExternal &&
@@ -63,7 +62,7 @@ export default function UserOverviewPage() {
         render: () => <AuthenticationTab user={profile} />,
       },
   ].filter(isTruthy);
-  const active = tabs.find(({ id }) => id === params.get('tab')) ?? tabs[0];
+  const active = tabs.find(({ id }) => id === page) ?? tabs[0];
   const error = account.error || members.error;
 
   return (
@@ -74,7 +73,11 @@ export default function UserOverviewPage() {
         subTitle: user?.email,
         img: user?.avatarUrl,
         children: user
-          ? tabs.map(({ id, label }) => ({ text: label, url: `${pathname}?tab=${id}`, active: id === active.id }))
+          ? tabs.map(({ id, label }) => ({
+              text: label,
+              url: id === 'details' ? baseUrl : `${baseUrl}/${id}`,
+              active: id === active.id,
+            }))
           : [],
       }}
     >
