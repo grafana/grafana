@@ -1,8 +1,5 @@
-import { lazy, Suspense } from 'react';
-
 import { PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   BigValueColorMode,
   BigValueGraphMode,
@@ -19,19 +16,7 @@ import { defaultOptions, type Options } from './panelcfg.gen';
 import { statPresetsSupplier } from './presets';
 import { statSuggestionsSupplier } from './suggestions';
 
-const StatPanelV2 = lazy(() =>
-  import(/* webpackChunkName: "statPanelV2" */ './v2/StatPanel').then((module) => ({ default: module.StatPanel }))
-);
-
-const Panel = getFeatureFlagClient().getBooleanValue('dataviz.statRefresh', false)
-  ? (props: React.ComponentProps<typeof StatPanel>) => (
-      <Suspense fallback={null}>
-        <StatPanelV2 {...props} />
-      </Suspense>
-    )
-  : StatPanel;
-
-export const plugin = new PanelPlugin<Options>(Panel)
+export const plugin = new PanelPlugin<Options>(StatPanel)
   .useFieldConfig()
   .setPanelOptions((builder) => {
     const mainCategory = [t('stat.category-stat-styles', 'Stat styles')];

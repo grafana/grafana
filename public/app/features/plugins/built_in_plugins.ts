@@ -1,3 +1,5 @@
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
+
 const dashboardDSPlugin = async () =>
   await import(/* webpackChunkName "dashboardDSPlugin" */ 'app/plugins/datasource/dashboard/module');
 const grafanaPlugin = async () =>
@@ -33,7 +35,10 @@ const logsTablePanel = async () =>
 const newsPanel = async () => await import(/* webpackChunkName: "newsPanel" */ 'app/plugins/panel/news/module');
 const pieChartPanel = async () =>
   await import(/* webpackChunkName: "pieChartPanel" */ 'app/plugins/panel/piechart/module');
-const statPanel = async () => await import(/* webpackChunkName: "statPanel" */ 'app/plugins/panel/stat/module');
+const statPanel = async () =>
+  getFeatureFlagClient().getBooleanValue('dataviz.statRefresh', false)
+    ? await import(/* webpackChunkName: "statPanelV2" */ 'app/plugins/panel/stat/v2/module')
+    : await import(/* webpackChunkName: "statPanel" */ 'app/plugins/panel/stat/module');
 const stateTimelinePanel = async () =>
   await import(/* webpackChunkName: "stateTimelinePanel" */ 'app/plugins/panel/state-timeline/module');
 const statusHistoryPanel = async () =>

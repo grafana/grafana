@@ -15,7 +15,8 @@ Isolation is the highest priority. Changes to this experiment must not change St
 v1, other visualizations, or Grafana behavior when `dataviz.statRefresh` is disabled.
 Keep the flag experimental and disabled by default.
 
-- Keep experimental implementation changes in this directory.
+- Keep experimental implementation changes in this directory. Register v2-specific
+  panel options in `module.tsx` here; `../module.tsx` belongs to Stat v1.
 - If a change requires modifying a component or utility in `@grafana/ui`,
   `@grafana/data`, or another shared package, first copy the necessary implementation
   into this directory and modify the local copy. This is "clone and own": Stat v2
@@ -34,7 +35,7 @@ Keep the flag experimental and disabled by default.
 
 Stat v2 development must not increase Grafana's base JavaScript bundle size.
 Experimental code and its dependencies must stay behind the existing dynamic import
-in `../module.tsx` and load only when the Stat v2 implementation is used.
+in `public/app/features/plugins/built_in_plugins.ts` and load only when the Stat v2 implementation is used.
 
 - Do not add static runtime imports or re-exports of v2 code from the shared Stat
   entry point, shared packages, or other eagerly loaded modules.
