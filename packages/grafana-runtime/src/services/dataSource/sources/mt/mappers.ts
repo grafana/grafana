@@ -28,14 +28,7 @@ function getConnectionPluginType(connection: DataSourceConnection): string {
   return connection.plugin || connection.group.replace(/\.datasource\.grafana\.app$/, '');
 }
 
-/**
- * Join connections with plugin metas into a list snapshot, the way boot data builds its list:
- * - a connection whose plugin has no meta is dropped
- * - `type` is the plugin id, so aliased types are normalized
- * - built-in data sources are synthesized from the metas flagged `builtIn`
- * - the default is the connection labelled `default`, else `-- Grafana --`
- */
-export function toListSnapshot(connections: DataSourceConnection[], metas: DataSourcePluginMeta[]): MappedListSnapshot {
+function indexMetasByType(metas: DataSourcePluginMeta[]): Map<string, DataSourcePluginMeta> {
   const metaByType = new Map<string, DataSourcePluginMeta>();
   for (const meta of metas) {
     for (const alias of meta.aliasIDs ?? []) {
@@ -46,6 +39,38 @@ export function toListSnapshot(connections: DataSourceConnection[], metas: DataS
   for (const meta of metas) {
     metaByType.set(meta.id, meta);
   }
+  return metaByType;
+}
+
+/**
+ * The API group of each connection, by uid, from the canonical plugin id: `connection.group` is built
+ * from the stored type, so an alias points at a group nobody serves. Orphans are left out.
+ */
+export function getDataSourceGroupsByUid(
+  connections: DataSourceConnection[],
+  metas: DataSourcePluginMeta[]
+): Map<string, string> {
+  const metaByType = indexMetasByType(metas);
+  const groups = new Map<string, string>();
+  for (const connection of connections) {
+    const meta = metaByType.get(getConnectionPluginType(connection));
+    if (meta) {
+      // The server registers one group per plugin, under its canonical id.
+      groups.set(connection.name, `${meta.id}.datasource.grafana.app`);
+    }
+  }
+  return groups;
+}
+
+/**
+ * Join connections with plugin metas into a list snapshot, the way boot data builds its list:
+ * - a connection whose plugin has no meta is dropped
+ * - `type` is the plugin id, so aliased types are normalized
+ * - built-in data sources are synthesized from the metas flagged `builtIn`
+ * - the default is the connection labelled `default`, else `-- Grafana --`
+ */
+export function toListSnapshot(connections: DataSourceConnection[], metas: DataSourcePluginMeta[]): MappedListSnapshot {
+  const metaByType = indexMetasByType(metas);
 
   const items: DataSourceInstanceListItem[] = [];
   const droppedTypes: string[] = [];

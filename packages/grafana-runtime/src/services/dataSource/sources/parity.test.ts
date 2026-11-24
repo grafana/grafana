@@ -10,6 +10,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { config } from '../../../config';
 import { FlagKeys } from '../../../internal/openFeature/openfeature.gen';
 import { invalidateCachedPromisesCache } from '../../../utils/getCachedPromise';
+import { invalidateAPIDiscovery, setAPIDiscoveryForTesting } from '../../apiDiscovery/discovery';
 import { type BackendSrv, setBackendSrv } from '../../backendSrv';
 import { type DataSourceSrv, setDataSourceSrv } from '../../dataSourceSrv';
 import { setDatasourcePluginMetas } from '../../pluginMeta/datasources';
@@ -168,10 +169,16 @@ function connections(): DataSourceConnection[] {
   ];
 }
 
+// The server registers each data source API group under the canonical plugin id, never an alias.
+function canonicalGroup(storedType: string): string {
+  const pluginMeta = Object.values(metas).find((m) => m.id === storedType || m.aliasIDs?.includes(storedType));
+  return `${pluginMeta?.id ?? storedType}.datasource.grafana.app`;
+}
+
 function resources(): Record<string, DataSourceResource> {
   const byUrl: Record<string, DataSourceResource> = {};
   for (const f of fixtures) {
-    const url = `apis/${f.storedType}.datasource.grafana.app/v0alpha1/namespaces/default/datasources/${f.uid}`;
+    const url = `/apis/${canonicalGroup(f.storedType)}/v0alpha1/namespaces/default/datasources/${f.uid}`;
     byUrl[url] = {
       metadata: {
         name: f.uid,
@@ -237,6 +244,7 @@ function normalize(answers: Answers) {
 
 afterAll(() => {
   setTestFlags({});
+  invalidateAPIDiscovery();
 });
 
 beforeEach(() => {
@@ -263,8 +271,15 @@ async function answersFromMT(): Promise<Answers> {
     [FlagKeys.PluginsUseMTPlugins]: true,
     [FlagKeys.DatasourcesConfigUiUseNewDatasourceCRUDAPIs]: true,
   });
+  setAPIDiscoveryForTesting(
+    ['query.grafana.app', ...fixtures.map((f) => canonicalGroup(f.storedType))].map((group) => ({
+      group,
+      versions: ['v0alpha1'],
+      preferredVersion: 'v0alpha1',
+    }))
+  );
   const byUrl: Record<string, unknown> = {
-    'apis/query.grafana.app/v0alpha1/namespaces/default/connections': { items: connections() },
+    '/apis/query.grafana.app/v0alpha1/namespaces/default/connections': { items: connections() },
     ...resources(),
   };
   setBackendSrv({

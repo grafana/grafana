@@ -10,7 +10,9 @@ import { getDatasourcePluginMetas } from '../../../pluginMeta/datasources';
 import {
   DIRECT_ACCESS_UNSUPPORTED_WARNING,
   MISSING_PLUGIN_DROPPED_WARNING,
+  MT_API_DISCOVERY_UNKNOWN_WARNING,
   MT_FILL_FAILED,
+  MT_GROUP_NOT_SERVED_DROPPED_WARNING,
   MT_SETTINGS_FETCH_FAILED,
   MT_SETTINGS_NOT_FOUND_STALE_LIST_WARNING,
 } from '../../constants';
@@ -18,8 +20,8 @@ import { DataSourceListFetchError, DataSourceSettingsFetchError } from '../../er
 import { logDataSourceInstanceError, logDataSourceWarning } from '../../logging';
 import { type DataSourceCacheSource, type DataSourceListSnapshot } from '../types';
 
-import { fetchConnections, fetchDataSourceResource } from './api';
-import { toInstanceSettings, toListSnapshot } from './mappers';
+import { fetchConnections, fetchDataSourceResource, getLegacyMTApiBaseUrl, resolveMTApiBaseUrl } from './api';
+import { getDataSourceGroupsByUid, toInstanceSettings, toListSnapshot } from './mappers';
 import { type DataSourceConnection } from './types';
 
 const MAX_LOGGED_TYPES = 20;
@@ -42,8 +44,10 @@ export class MTDataSource implements DataSourceCacheSource {
   // The list of the latest list fetch, kept to find the API group and version of a uid. Only the
   // latest fetch writes it, so it always matches the list that the cache applies.
   private connectionsByUid = new Map<string, DataSourceConnection>();
+  private baseUrlsByUid = new Map<string, string | undefined>();
   private itemsByUid = new Map<string, DataSourceInstanceListItem>();
   private loggedDirectAccess = new Set<string>();
+  private loggedDiscoveryUnknown = false;
   // Per instance, so a list fetch of an earlier instance is never joined or cancelled.
   private readonly listKey = `grafana-runtime:ds-cache-mt-list:${++instanceCount}`;
   private listGeneration = 0;
@@ -74,14 +78,15 @@ export class MTDataSource implements DataSourceCacheSource {
 
   async loadSettings(uid: string): Promise<DataSourceInstanceSettings | undefined> {
     const connection = this.connectionsByUid.get(uid);
+    const baseUrl = this.baseUrlsByUid.get(uid);
     const item = this.itemsByUid.get(uid);
-    if (!connection || !item) {
+    if (!connection || !baseUrl || !item) {
       return undefined;
     }
 
     let resource;
     try {
-      resource = await fetchDataSourceResource(connection);
+      resource = await fetchDataSourceResource(baseUrl, uid);
     } catch (error) {
       logDataSourceInstanceError(MT_SETTINGS_FETCH_FAILED, error, {
         uid,
@@ -126,16 +131,28 @@ export class MTDataSource implements DataSourceCacheSource {
 
   private async fetchList(generation: number): Promise<ListFetchResult> {
     const isCurrent = () => generation === this.listGeneration;
+    let discoveryUnknown = false;
+    const onDiscoveryUnknown = (group: string) => {
+      discoveryUnknown = true;
+      this.logDiscoveryUnknown(group);
+    };
     try {
-      const list = await fetchConnections({ requestId: this.listKey, isCurrent });
+      const list = await fetchConnections({ requestId: this.listKey, isCurrent, onDiscoveryUnknown });
       if (!list) {
         return { status: 'superseded' };
       }
       const metas = await getDatasourcePluginMetas();
+      const connections = list.items ?? [];
+      const groupsByUid = getDataSourceGroupsByUid(connections, metas);
+      // Discovery never caches an unknown answer, so asking again in this fill would only repeat its timeouts.
+      const resolveBaseUrl = discoveryUnknown
+        ? async (group: string) => getLegacyMTApiBaseUrl(group)
+        : (group: string) => resolveMTApiBaseUrl(group, onDiscoveryUnknown);
+      const baseUrlsByUid = await resolveBaseUrlsByUid(groupsByUid, resolveBaseUrl);
       if (!isCurrent()) {
         return { status: 'superseded' };
       }
-      return { status: 'done', snapshot: this.buildSnapshot(list.items ?? [], metas) };
+      return { status: 'done', snapshot: this.buildSnapshot(connections, metas, groupsByUid, baseUrlsByUid) };
     } catch (error) {
       // A newer fetch cancels this one's request, so a failure of a replaced fetch is expected.
       return isCurrent() ? { status: 'failed', error } : { status: 'superseded' };
@@ -147,8 +164,38 @@ export class MTDataSource implements DataSourceCacheSource {
     }
   }
 
-  private buildSnapshot(latest: DataSourceConnection[], metas: DataSourcePluginMeta[]): DataSourceListSnapshot {
-    const { snapshot, droppedTypes } = toListSnapshot(latest, metas);
+  private logDiscoveryUnknown(group: string): void {
+    if (!this.loggedDiscoveryUnknown) {
+      this.loggedDiscoveryUnknown = true;
+      logDataSourceWarning(MT_API_DISCOVERY_UNKNOWN_WARNING, { group });
+    }
+  }
+
+  private buildSnapshot(
+    latest: DataSourceConnection[],
+    metas: DataSourcePluginMeta[],
+    groupsByUid: Map<string, string>,
+    baseUrlsByUid: Map<string, string | undefined>
+  ): DataSourceListSnapshot {
+    // Dropped before the join, as orphans are, so one can't become the default. No group means no plugin,
+    // which the join drops and logs.
+    const unservedGroups = new Set<string>();
+    const served = latest.filter((connection) => {
+      const group = groupsByUid.get(connection.name);
+      if (group === undefined || baseUrlsByUid.get(connection.name) !== undefined) {
+        return true;
+      }
+      unservedGroups.add(group);
+      return false;
+    });
+    if (unservedGroups.size > 0) {
+      logDataSourceWarning(MT_GROUP_NOT_SERVED_DROPPED_WARNING, {
+        count: String(latest.length - served.length),
+        groups: Array.from(unservedGroups).slice(0, MAX_LOGGED_TYPES).join(','),
+      });
+    }
+
+    const { snapshot, droppedTypes } = toListSnapshot(served, metas);
 
     if (droppedTypes.length > 0) {
       logDataSourceWarning(MISSING_PLUGIN_DROPPED_WARNING, {
@@ -157,8 +204,21 @@ export class MTDataSource implements DataSourceCacheSource {
       });
     }
 
-    this.connectionsByUid = new Map(latest.map((connection) => [connection.name, connection]));
+    this.connectionsByUid = new Map(served.map((connection) => [connection.name, connection]));
+    this.baseUrlsByUid = baseUrlsByUid;
     this.itemsByUid = new Map(snapshot.items.map((item) => [item.uid, item]));
     return snapshot;
   }
+}
+
+// Resolved once per fill and reused by the settings loads, which would otherwise ask discovery per uid.
+// Concurrent, so the groups share one discovery request.
+async function resolveBaseUrlsByUid(
+  groupsByUid: Map<string, string>,
+  resolveBaseUrl: (group: string) => Promise<string | undefined>
+): Promise<Map<string, string | undefined>> {
+  const groups = Array.from(new Set(groupsByUid.values()));
+  const baseUrls = await Promise.all(groups.map(resolveBaseUrl));
+  const baseUrlsByGroup = new Map(groups.map((group, index) => [group, baseUrls[index]]));
+  return new Map(Array.from(groupsByUid, ([uid, group]) => [uid, baseUrlsByGroup.get(group)]));
 }
