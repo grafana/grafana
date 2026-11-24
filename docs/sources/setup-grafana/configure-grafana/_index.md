@@ -758,6 +758,10 @@ Limits the amount of bytes that Grafana reads from responses of outgoing HTTP re
 
 Limits the number of rows that Grafana processes from SQL data sources. Default is `1000000`.
 
+#### `series_limit`
+
+Limits the number of series that Grafana processes from one Prometheus query. A query that returns more series fails with an error. Default is `0`, which means no limit.
+
 #### `user_agent`
 
 Sets a custom value for the `User-Agent` header for outgoing data proxy requests. If empty, the default value is `Grafana/<BuildVersion>` (for example `Grafana/13.0.0`).
