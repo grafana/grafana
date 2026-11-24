@@ -29,6 +29,7 @@ import { SidebarCategoryType } from '../types';
 
 import {
   openAddQuestionPane,
+  openEditQuestionPane,
   QuestionTitleInput,
   QuestionEdit,
   QuestionSourcesField,
@@ -229,6 +230,39 @@ describe('editing questions', () => {
     act(() => dashboard.state.sidebar.undoAction());
 
     expect(dashboard.state.questions).toEqual(questions);
+  });
+
+  // The list sits in the dashboard's options, so the options must stay open for the author to keep working in them.
+  it('keeps the dashboard options open when a question is deleted from the list', async () => {
+    const dashboard = setup([{ text: 'What stands out?' }, { text: 'Why did errors rise?' }]);
+    const { sidebar } = dashboard.state;
+    act(() => sidebar.openElementSettings(dashboard));
+    const publish = jest.spyOn(appEvents, 'publish');
+    renderList(dashboard);
+
+    await userEvent.click(
+      screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.List.ListItem.deleteButton('0'))
+    );
+    const confirm = publish.mock.calls.map(([event]) => event).find((event) => event instanceof ShowConfirmModalEvent);
+    act(() => confirm?.payload.onConfirm?.());
+
+    expect(dashboard.state.questions).toEqual([{ text: 'Why did errors rise?' }]);
+    expect(sidebar.state.openPane?.getId()).toBe('element');
+    expect(sidebar.getSelectedObject()).toBe(dashboard);
+  });
+
+  it('returns to the dashboard options when the question open in the sidebar is deleted', () => {
+    const dashboard = setup([{ text: 'What stands out?' }, { text: 'Why did errors rise?' }]);
+    const { sidebar } = dashboard.state;
+    act(() => openEditQuestionPane(dashboard, 'dashboard', 1));
+    const open = sidebar.getSelectedObject();
+    expect(open).toBeInstanceOf(QuestionEdit);
+
+    act(() => open instanceof QuestionEdit && open.onDelete());
+
+    expect(dashboard.state.questions).toEqual([{ text: 'What stands out?' }]);
+    expect(sidebar.state.openPane?.getId()).toBe('element');
+    expect(sidebar.getSelectedObject()).toBe(dashboard);
   });
 
   it('duplicates a question at the end of the list', async () => {
