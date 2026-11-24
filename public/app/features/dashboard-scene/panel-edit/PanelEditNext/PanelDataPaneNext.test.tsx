@@ -14,6 +14,8 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
+import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
+import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
 
 import { PanelTimeRange, type PanelTimeRangeState } from '../../scene/panel-timerange/PanelTimeRange';
 
@@ -27,6 +29,16 @@ jest.mock('@grafana/runtime', () => ({
   reportInteraction: jest.fn(),
   getDataSourceInstance: (ref?: unknown, scopedVars?: unknown) => mockGetDataSourceInstance(ref, scopedVars),
   getDataSourceInstanceSettings: (ref?: unknown, scopedVars?: unknown) => mockGetInstanceSettings(ref, scopedVars),
+}));
+
+jest.mock('app/features/dashboard/utils/dashboard', () => ({
+  ...jest.requireActual('app/features/dashboard/utils/dashboard'),
+  getLastUsedDatasourceFromStorage: jest.fn(),
+}));
+
+jest.mock('app/features/datasources/components/picker/utils', () => ({
+  ...jest.requireActual('app/features/datasources/components/picker/utils'),
+  storeLastUsedDataSourceInLocalStorage: jest.fn(),
 }));
 // Mutable state object for the mock queryRunner
 const mockQueryRunnerState: {
@@ -64,10 +76,11 @@ jest.mock('../../utils/getQueryRunnerFor', () => ({
   getQueryRunnerFor: () => mockQueryRunner,
 }));
 
-jest.mock('../../utils/utils', () => ({
-  ...jest.requireActual('../../utils/utils'),
-  getDashboardSceneFor: (sceneObject: unknown) => mockGetDashboardSceneFor(sceneObject),
-}));
+jest.mock('../../utils/utils', () =>
+  jest.requireActual('test/helpers/partialMock').partialMock(jest.requireActual('../../utils/utils'), {
+    getDashboardSceneFor: (sceneObject: unknown) => mockGetDashboardSceneFor(sceneObject),
+  })
+);
 
 // Mock sceneGraph.getTimeRange
 jest.spyOn(sceneGraph, 'getTimeRange').mockReturnValue({} as ReturnType<typeof sceneGraph.getTimeRange>);
@@ -89,6 +102,18 @@ describe('PanelDataPaneNext', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest
+      .mocked(getLastUsedDatasourceFromStorage)
+      .mockReset()
+      .mockImplementation(
+        jest.requireActual('app/features/dashboard/utils/dashboard').getLastUsedDatasourceFromStorage
+      );
+    jest
+      .mocked(storeLastUsedDataSourceInLocalStorage)
+      .mockReset()
+      .mockImplementation(
+        jest.requireActual('app/features/datasources/components/picker/utils').storeLastUsedDataSourceInLocalStorage
+      );
 
     // Default getDashboardSceneFor to throw (tests that need it should mock it explicitly)
     mockGetDashboardSceneFor.mockImplementation(() => {
@@ -768,7 +793,7 @@ describe('PanelDataPaneNext', () => {
       type: 'testdata',
     };
 
-    let mockGetLastUsed: jest.Mock;
+    const mockGetLastUsed = jest.mocked(getLastUsedDatasourceFromStorage);
     let testDataPane: PanelDataPaneNext;
 
     const callResolveDatasourceRef = () =>
@@ -779,10 +804,7 @@ describe('PanelDataPaneNext', () => {
       ).resolveDatasourceRef();
 
     beforeEach(() => {
-      mockGetLastUsed = jest.fn();
-      jest
-        .spyOn(require('app/features/dashboard/utils/dashboard'), 'getLastUsedDatasourceFromStorage')
-        .mockImplementation(mockGetLastUsed);
+      mockGetLastUsed.mockReset();
 
       mockGetDashboardSceneFor.mockReturnValue({ state: { uid: 'test-dashboard-uid' } });
 
@@ -795,7 +817,7 @@ describe('PanelDataPaneNext', () => {
     });
 
     it('should return the localStorage datasource ref when it is available and resolvable', async () => {
-      mockGetLastUsed.mockReturnValue({ datasourceUid: promSettings.uid });
+      mockGetLastUsed.mockReturnValue({ dashboardUid: 'test-dashboard-uid', datasourceUid: promSettings.uid });
       mockGetInstanceSettings.mockImplementation((ref: { uid?: string } | string) => {
         const uid = typeof ref === 'string' ? ref : ref?.uid;
         return uid === promSettings.uid ? promSettings : undefined;
@@ -809,7 +831,7 @@ describe('PanelDataPaneNext', () => {
     });
 
     it('should return the default datasource ref when the localStorage UID is stale (not found in registry)', async () => {
-      mockGetLastUsed.mockReturnValue({ datasourceUid: 'deleted-or-renamed-uid' });
+      mockGetLastUsed.mockReturnValue({ dashboardUid: 'test-dashboard-uid', datasourceUid: 'deleted-or-renamed-uid' });
       mockGetInstanceSettings.mockImplementation((ref: string) => {
         // Stale UID resolves to nothing; default resolves correctly.
         if (ref === config.defaultDatasource) {
@@ -876,9 +898,7 @@ describe('PanelDataPaneNext', () => {
 
     describe('integration with loadDatasource', () => {
       beforeEach(() => {
-        jest
-          .spyOn(require('app/features/datasources/components/picker/utils'), 'storeLastUsedDataSourceInLocalStorage')
-          .mockImplementation(jest.fn());
+        jest.mocked(storeLastUsedDataSourceInLocalStorage).mockImplementation(jest.fn());
       });
 
       const callLoadDatasource = (resolvedRef?: ReturnType<typeof getDataSourceRef>) =>
@@ -920,7 +940,7 @@ describe('PanelDataPaneNext', () => {
       it('should result in a loaded datasource after resolveDatasourceRef + loadDatasource when localStorage has a valid entry', async () => {
         const promDatasource = { uid: promSettings.uid, type: promSettings.type };
 
-        mockGetLastUsed.mockReturnValue({ datasourceUid: promSettings.uid });
+        mockGetLastUsed.mockReturnValue({ dashboardUid: 'test-dashboard-uid', datasourceUid: promSettings.uid });
 
         mockGetDataSourceInstance.mockResolvedValue(promDatasource);
         mockGetInstanceSettings.mockReturnValue(promSettings);
@@ -994,9 +1014,7 @@ describe('PanelDataPaneNext', () => {
       mockGetDataSourceInstance.mockReset();
       mockGetInstanceSettings.mockReset();
 
-      jest
-        .spyOn(require('app/features/datasources/components/picker/utils'), 'storeLastUsedDataSourceInLocalStorage')
-        .mockImplementation(jest.fn());
+      jest.mocked(storeLastUsedDataSourceInLocalStorage).mockImplementation(jest.fn());
 
       testDataPane = new PanelDataPaneNext({
         panelRef: { resolve: () => mockPanel } as SceneObjectRef<VizPanel>,
@@ -1039,10 +1057,7 @@ describe('PanelDataPaneNext', () => {
     });
 
     it('should store the datasource in localStorage after a successful load', async () => {
-      const mockStore = jest.spyOn(
-        require('app/features/datasources/components/picker/utils'),
-        'storeLastUsedDataSourceInLocalStorage'
-      );
+      const mockStore = jest.mocked(storeLastUsedDataSourceInLocalStorage);
       mockQueryRunnerState.datasource = { uid: 'prom-uid', type: 'prometheus' };
       mockGetDataSourceInstance.mockResolvedValue(promDatasource);
       mockGetInstanceSettings.mockReturnValue(promSettings);

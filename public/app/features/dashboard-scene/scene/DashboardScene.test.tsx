@@ -39,6 +39,7 @@ import { appEvents } from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY, LS_STYLES_COPY_KEY } from 'app/core/constants';
 import { AnnoKeyManagerKind, AnnoKeyUseCrossDashboardVariables, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 import { setDesktopViewport, setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
@@ -64,7 +65,6 @@ import { isEditEntryBlocked } from '../utils/mobileEditDeprecation';
 import { toControlSourceRef } from '../utils/predefinedVariables';
 import { createDeferred } from '../utils/test-utils';
 import { getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
-import * as utils from '../utils/utils';
 
 import { DashboardControls } from './DashboardControls';
 import { DashboardScene } from './DashboardScene';
@@ -84,6 +84,22 @@ import { setPendingPlanBuild, takePendingPlanBuild } from './pendingPlanBuild';
 import { DashboardPlanningEvent } from './planningEvents';
 import { allowOrigins, getAllowedOrigins } from './sandbox-consent/sandboxConsent';
 import { isFullDashboardEditing, type DashboardSceneLike, type DashboardSceneState } from './types/dashboard';
+
+jest.mock('../settings/enterprise-components/DashboardTemplateExtension', () => ({
+  ...jest.requireActual('../settings/enterprise-components/DashboardTemplateExtension'),
+  getDashboardTemplateExtension: jest.fn(() =>
+    jest.requireActual('../settings/enterprise-components/DashboardTemplateExtension').getDashboardTemplateExtension()
+  ),
+}));
+
+afterEach(() => {
+  jest
+    .mocked(DashboardTemplateExtensionModule.getDashboardTemplateExtension)
+    .mockReset()
+    .mockImplementation(
+      jest.requireActual('../settings/enterprise-components/DashboardTemplateExtension').getDashboardTemplateExtension
+    );
+});
 
 const mockRestoreDashboardVersion = jest.fn();
 
@@ -983,7 +999,7 @@ describe('DashboardScene', () => {
         scene.setState({ meta: { ...scene.state.meta, canSave: true } });
 
         const publishSpy = jest.spyOn(appEvents, 'publish');
-        const hasActualSaveChangesSpy = jest.spyOn(utils, 'hasActualSaveChanges').mockReturnValue(true);
+        scene.setInitialSaveModel(scene.getSaveModel() as Dashboard);
 
         try {
           scene.setState({ title: 'Updated title' });
@@ -1007,7 +1023,6 @@ describe('DashboardScene', () => {
           expect(scene.state.isEditing).toBe(false);
         } finally {
           publishSpy.mockRestore();
-          hasActualSaveChangesSpy.mockRestore();
         }
       });
 
@@ -1015,7 +1030,7 @@ describe('DashboardScene', () => {
         scene.setState({ meta: { ...scene.state.meta, canSave: false } });
 
         const publishSpy = jest.spyOn(appEvents, 'publish');
-        const hasActualSaveChangesSpy = jest.spyOn(utils, 'hasActualSaveChanges').mockReturnValue(true);
+        scene.setInitialSaveModel(scene.getSaveModel() as Dashboard);
 
         scene.setState({ title: 'Updated title' });
         expect(scene.state.isDirty).toBe(true);
@@ -1029,7 +1044,6 @@ describe('DashboardScene', () => {
         expect(modalEvent.payload.onAltAction).toBeUndefined();
 
         publishSpy.mockRestore();
-        hasActualSaveChangesSpy.mockRestore();
       });
 
       it('Should start the detect changes worker', () => {
@@ -2618,9 +2632,7 @@ describe('DashboardScene', () => {
 
       dashboardWatcher.editing = false;
       const dash = { uid: 'dash-1', hasUnsavedChanges: () => true };
-      const getDashboardSrvSpy = jest
-        .spyOn(require('app/features/dashboard/services/DashboardSrv'), 'getDashboardSrv')
-        .mockReturnValue({ getCurrent: () => dash });
+      const getDashboardSrvSpy = jest.spyOn(getDashboardSrv(), 'getCurrent').mockReturnValue(dash as DashboardModel);
 
       dashboardWatcher.observer.next({
         type: LiveChannelEventType.Message,
@@ -2660,7 +2672,7 @@ describe('DashboardScene', () => {
       scene.onEnterEditMode();
 
       const restoreSpy = jest.fn().mockResolvedValue(true);
-      jest.spyOn(DashboardTemplateExtensionModule, 'getDashboardTemplateExtension').mockReturnValue({
+      jest.mocked(DashboardTemplateExtensionModule.getDashboardTemplateExtension).mockReturnValue({
         loadTemplate: jest.fn(),
         listHistory: jest.fn(),
         restore: restoreSpy,

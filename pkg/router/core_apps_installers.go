@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/home"
 	prefsapi "github.com/grafana/grafana/pkg/registry/apis/preferences"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/manifestroles"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -193,7 +194,7 @@ func withOwnAccessKinds(manifest *app.ManifestData) *app.ManifestData {
 	if manifest.ExtraPermissions != nil {
 		perms.AccessKinds = slices.Clone(manifest.ExtraPermissions.AccessKinds)
 	}
-	for _, resource := range slices.Sorted(maps.Values(kindResourceNames(manifest))) {
+	for _, resource := range slices.Sorted(maps.Values(manifestroles.ResourceNames(manifest))) {
 		if slices.ContainsFunc(perms.AccessKinds, func(k app.KindPermission) bool {
 			return k.Group == manifest.Group && k.Resource == resource
 		}) {

@@ -5,7 +5,7 @@ import { DashListItem } from 'app/plugins/panel/dashlist/DashListItem';
 import { HomeList } from '../HomeList';
 
 import { DashboardTabEmptyState } from './DashboardTabEmptyState';
-import { DashboardTabError } from './DashboardTabError';
+import { DashboardTabError, DashboardTabErrorAlert } from './DashboardTabError';
 
 interface Props {
   dashboards: DashboardQueryResult[];
@@ -36,7 +36,8 @@ export function DashboardListTab({
     return <PageLoader text={loadingText} />;
   }
 
-  if (error) {
+  // Without a row to show, the error is the whole tab
+  if (error && dashboards.length === 0) {
     return <DashboardTabError title={errorTitle} retry={retry} />;
   }
 
@@ -45,19 +46,23 @@ export function DashboardListTab({
   }
 
   return (
-    <HomeList>
-      {dashboards.map((dash) => (
-        <li key={`${dash.kind}-${dash.uid}`}>
-          <DashListItem
-            dashboard={dash}
-            url={dash.url}
-            showFolderNames={true}
-            locationInfo={foldersByUid[dash.location]}
-            layoutMode="list"
-            source={source}
-          />
-        </li>
-      ))}
-    </HomeList>
+    <>
+      {/* Not every row could be loaded; those that were still show */}
+      {error && <DashboardTabErrorAlert title={errorTitle} retry={retry} />}
+      <HomeList>
+        {dashboards.map((dash) => (
+          <li key={`${dash.kind}-${dash.uid}`}>
+            <DashListItem
+              dashboard={dash}
+              url={dash.url}
+              showFolderNames={true}
+              locationInfo={foldersByUid[dash.location]}
+              layoutMode="list"
+              source={source}
+            />
+          </li>
+        ))}
+      </HomeList>
+    </>
   );
 }

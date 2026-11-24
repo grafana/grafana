@@ -1,5 +1,5 @@
 import hoistNonReactStatics from 'hoist-non-react-statics';
-import memoize from 'micro-memoize';
+import { memoize } from 'micro-memoize';
 import { useContext } from 'react';
 import * as React from 'react';
 

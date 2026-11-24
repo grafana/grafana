@@ -61,7 +61,7 @@ func newKindsEnv(t *testing.T) *kindsEnv {
 	provenance.GetManagerPropertiesFunc = func(_ context.Context, o models.Provisionable, _ int64) (utils.ManagerProperties, error) {
 		return managers[o.ResourceID()], nil
 	}
-	service := &LegacyRuleService{
+	service := &legacyRuleService{
 		ruleStore:       ruleStore,
 		provenanceStore: provenance,
 		log:             log.New("testing"),
@@ -74,8 +74,8 @@ func newKindsEnv(t *testing.T) *kindsEnv {
 		recording: recording,
 		ruleStore: ruleStore,
 		managers:  managers,
-		alerts:    NewAlertRules(service, nsMapperForTest()),
-		records:   NewRecordingRules(service, nsMapperForTest()),
+		alerts:    newAlertRules(service, nsMapperForTest()),
+		records:   newRecordingRules(service, nsMapperForTest()),
 	}
 }
 

@@ -14,7 +14,8 @@ import { GraphGradientMode, TableCellDisplayMode } from '@grafana/schema';
 import { applyDefaultUPlotAxisMeasureTextMock, removeCanvasTransforms } from '@grafana/test-utils/canvas';
 
 import { measureText as uPlotAxisMeasureText } from '../../../../utils/measureText';
-import * as sparklineUtils from '../../../Sparkline/utils';
+import { prepareConfig } from '../../../Sparkline/utils';
+import type * as SparklineUtils from '../../../Sparkline/utils';
 import { type UPlotConfigBuilder } from '../../../uPlot/config/UPlotConfigBuilder';
 
 import { SparklineCell } from './SparklineCell';
@@ -60,10 +61,12 @@ jest.mock('../../../../utils/measureText', () =>
   require('@grafana/test-utils/canvas').createGrafanaUiMeasureTextJestMock(() => uPlotInstance)
 );
 
-describe('TableNG SparklineCell threshold wiring (canvas)', () => {
-  const realPrepareConfig = sparklineUtils.prepareConfig;
-  let prepareConfigSpy: jest.SpyInstance;
+jest.mock('../../../Sparkline/utils', () => ({
+  ...jest.requireActual('../../../Sparkline/utils'),
+  prepareConfig: jest.fn(),
+}));
 
+describe('TableNG SparklineCell threshold wiring (canvas)', () => {
   const assertCanvasOutput = async () => {
     await waitFor(() => expect(uPlotInstance?.status).toBe(1));
     await waitFor(() => expect(document.querySelector('.u-over')).toBeInTheDocument());
@@ -75,8 +78,10 @@ describe('TableNG SparklineCell threshold wiring (canvas)', () => {
 
     uPlotInstance = undefined;
 
-    prepareConfigSpy = jest.spyOn(sparklineUtils, 'prepareConfig').mockImplementation((...args) => {
-      const builder: UPlotConfigBuilder = realPrepareConfig(...args);
+    jest.mocked(prepareConfig).mockImplementation((...args) => {
+      const builder: UPlotConfigBuilder = jest
+        .requireActual<typeof SparklineUtils>('../../../Sparkline/utils')
+        .prepareConfig(...args);
       builder.addHook('drawAxes', (u: uPlot) => {
         u.ctx.__clearEvents();
         uPlotInstance = u;
@@ -86,7 +91,7 @@ describe('TableNG SparklineCell threshold wiring (canvas)', () => {
   });
 
   afterEach(() => {
-    prepareConfigSpy.mockRestore();
+    jest.mocked(prepareConfig).mockReset();
   });
 
   it('renders scheme gradient w/ Thresholds color mode', async () => {
@@ -156,7 +161,7 @@ describe('TableNG SparklineCell threshold wiring (canvas)', () => {
     renderSparklineCell(sparklineField({ custom: { cellOptions: { type: TableCellDisplayMode.Sparkline } } }));
 
     await waitFor(() => expect(uPlotInstance?.status).toBe(1));
-    expect(prepareConfigSpy.mock.calls.at(-1)?.[4]).toBe(false);
+    expect(jest.mocked(prepareConfig).mock.calls.at(-1)?.[4]).toBe(false);
   });
 
   it('enables hover when showTooltip is on', async () => {
@@ -165,6 +170,6 @@ describe('TableNG SparklineCell threshold wiring (canvas)', () => {
     );
 
     await waitFor(() => expect(uPlotInstance?.status).toBe(1));
-    expect(prepareConfigSpy.mock.calls.at(-1)?.[4]).toBe(true);
+    expect(jest.mocked(prepareConfig).mock.calls.at(-1)?.[4]).toBe(true);
   });
 });

@@ -36,47 +36,74 @@ async function loadPluginMetas(): Promise<PluginMetasResponse> {
   return result;
 }
 
-export async function installPluginMeta(pluginId: string, version: string): Promise<void> {
+export async function installPluginMeta(
+  pluginId: string,
+  version: string,
+  { updateExisting = false }: { updateExisting?: boolean } = {}
+): Promise<void> {
   assertPluginIdFormat(pluginId);
 
-  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
-    return;
+  const apiVersion = await getApiVersion();
+  const pluginsUrl = `apis/plugins.grafana.app/${apiVersion}/namespaces/${config.namespace}/plugins`;
+
+  if (!updateExisting) {
+    return createPluginMeta(pluginsUrl, apiVersion, pluginId, version);
   }
 
-  const apiVersion = await getApiVersion();
-  const spec = { ...defaultSpec(), id: pluginId, version };
-  const metadata = { name: pluginId, namespace: config.namespace };
+  const pluginUrl = `${pluginsUrl}/${pluginId}`;
+  const existingResult = await fetch(pluginUrl);
+  if (existingResult.status === 404) {
+    return createPluginMeta(pluginsUrl, apiVersion, pluginId, version);
+  }
+
+  throwIfNotOk(existingResult, 'install', pluginId);
+  const existing: Plugin = await existingResult.json();
+
+  const updated = await fetch(pluginUrl, {
+    method: 'PUT',
+    body: JSON.stringify({ ...existing, spec: { ...existing.spec, version } }),
+    headers: { 'content-type': 'application/json' },
+  });
+  throwIfNotOk(updated, 'install', pluginId);
+}
+
+async function createPluginMeta(
+  pluginsUrl: string,
+  apiVersion: string,
+  pluginId: string,
+  version: string
+): Promise<void> {
   const data: Plugin = {
     apiVersion: `plugins.grafana.app/${apiVersion}`,
     kind: 'Plugin',
-    metadata,
-    spec,
+    metadata: { name: pluginId, namespace: config.namespace },
+    spec: { ...defaultSpec(), id: pluginId, version },
     status: {},
   };
-
-  const result = await fetch(`apis/plugins.grafana.app/${apiVersion}/namespaces/${config.namespace}/plugins`, {
+  const created = await fetch(pluginsUrl, {
     method: 'POST',
     body: JSON.stringify(data),
     headers: { 'content-type': 'application/json' },
   });
+  throwIfNotOk(created, 'install', pluginId);
+}
 
-  if (!result.ok) {
-    const error = new Error(`Failed to install plugin ${pluginId} ${result.status}:${result.statusText}`);
-    logPluginMetaError('PluginMeta: failed to install plugin', error, {
-      pluginId,
-      status: String(result.status),
-      statusText: result.statusText,
-    });
-    throw error;
+function throwIfNotOk(result: Response, action: 'install' | 'uninstall', pluginId: string): void {
+  if (result.ok) {
+    return;
   }
+
+  const error = new Error(`Failed to ${action} plugin ${pluginId} ${result.status}:${result.statusText}`);
+  logPluginMetaError(`PluginMeta: failed to ${action} plugin`, error, {
+    pluginId,
+    status: String(result.status),
+    statusText: result.statusText,
+  });
+  throw error;
 }
 
 export async function uninstallPluginMeta(pluginId: string): Promise<void> {
   assertPluginIdFormat(pluginId);
-
-  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
-    return;
-  }
 
   const result = await fetch(
     `apis/plugins.grafana.app/${await getApiVersion()}/namespaces/${config.namespace}/plugins/${pluginId}`,
@@ -85,15 +112,7 @@ export async function uninstallPluginMeta(pluginId: string): Promise<void> {
     }
   );
 
-  if (!result.ok) {
-    const error = new Error(`Failed to uninstall plugin ${pluginId} ${result.status}:${result.statusText}`);
-    logPluginMetaError('PluginMeta: failed to uninstall plugin', error, {
-      pluginId,
-      status: String(result.status),
-      statusText: result.statusText,
-    });
-    throw error;
-  }
+  throwIfNotOk(result, 'uninstall', pluginId);
 }
 
 export function initPluginMetas(): Promise<PluginMetasResponse | null> {

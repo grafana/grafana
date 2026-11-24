@@ -1,4 +1,4 @@
-// Package sqldriver adapts the V1 read-only proxy to database/sql.
+// Package sqldriver adapts the V1 proxy to database/sql.
 package sqldriver
 
 import (
@@ -15,7 +15,6 @@ import (
 
 	"github.com/grafana/authlib/types"
 	dbproxyv1 "github.com/grafana/grafana/pkg/storage/dbproxy/api/dbproxy/v1"
-	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -70,21 +69,24 @@ func (c *connector) Connect(ctx context.Context) (driver.Conn, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	return &conn{c.driver.client}, nil
+	return &conn{client: c.driver.client}, nil
 }
 func (c *connector) Driver() driver.Driver { return c.driver }
 
 type conn struct {
 	client dbproxyv1.DatabaseProxyServiceClient
+	tx     *transaction
 }
 
-func (*conn) Close() error { return nil }
+func (c *conn) Close() error {
+	if c.tx != nil {
+		c.tx.abort()
+	}
+	return nil
+}
 
-// Begin and BeginTx are unsupported because V1 cannot retain a transaction
-// across requests, including read-only transactions.
-func (*conn) Begin() (driver.Tx, error) { return nil, ErrUnsupported }
-func (*conn) BeginTx(context.Context, driver.TxOptions) (driver.Tx, error) {
-	return nil, ErrUnsupported
+func (*conn) Begin() (driver.Tx, error) {
+	return nil, errors.New("single-tenant database proxy: transaction context required")
 }
 
 // Without this method, db.Ping would succeed without contacting the proxy.
@@ -98,29 +100,12 @@ func (c *conn) PrepareContext(ctx context.Context, query string) (driver.Stmt, e
 	return &stmt{query: query, conn: c}, nil
 }
 func (c *conn) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Rows, error) {
-	identity, ok := ctx.Value(queryContextKey{}).(queryIdentity)
-	if !ok {
-		return nil, errors.New("single-tenant database proxy: stack namespace and query name missing from context")
+	identity, parameters, err := statementArgs(ctx, query, args)
+	if err != nil {
+		return nil, err
 	}
-	if !validNamespace(identity.namespace) {
-		return nil, errors.New("single-tenant database proxy: invalid stack namespace: must identify a stack with a positive ID")
-	}
-	if !queryNamePattern.MatchString(identity.name) {
-		return nil, errors.New("single-tenant database proxy: invalid query name: must match " + queryNamePattern.String())
-	}
-	if query == "" {
-		return nil, errors.New("single-tenant database proxy: empty SQL")
-	}
-	parameters := make([]*dbproxyv1.Value, 0, len(args))
-	for _, arg := range args {
-		if arg.Name != "" {
-			return nil, errors.New("single-tenant database proxy: named arguments unsupported")
-		}
-		v, err := parameterValue(arg.Value)
-		if err != nil {
-			return nil, fmt.Errorf("parameter %d: %w", arg.Ordinal, err)
-		}
-		parameters = append(parameters, v)
+	if c.tx != nil {
+		return c.tx.query(ctx, identity, query, parameters)
 	}
 	rpcCtx, cancel := context.WithCancel(ctx)
 	stream, err := c.client.Query(rpcCtx, &dbproxyv1.QueryRequest{Namespace: identity.namespace, QueryName: identity.name, Sql: query, Parameters: parameters})
@@ -143,9 +128,53 @@ func (c *conn) QueryContext(ctx context.Context, query string, args []driver.Nam
 	return &rows{columns: first.Columns, stream: stream, cancel: cancel}, nil
 }
 
-// ExecContext is unsupported because V1 only supports reads returning rows via QueryContext.
-func (*conn) ExecContext(context.Context, string, []driver.NamedValue) (driver.Result, error) {
-	return nil, ErrUnsupported
+func statementArgs(ctx context.Context, query string, args []driver.NamedValue) (queryIdentity, []*dbproxyv1.Value, error) {
+	identity, ok := ctx.Value(queryContextKey{}).(queryIdentity)
+	if !ok {
+		return identity, nil, errors.New("single-tenant database proxy: stack namespace and query name missing from context")
+	}
+	if !validNamespace(identity.namespace) {
+		return identity, nil, errors.New("single-tenant database proxy: invalid stack namespace: must identify a stack with a positive ID")
+	}
+	if !queryNamePattern.MatchString(identity.name) {
+		return identity, nil, errors.New("single-tenant database proxy: invalid query name: must match " + queryNamePattern.String())
+	}
+	if query == "" {
+		return identity, nil, errors.New("single-tenant database proxy: empty SQL")
+	}
+	parameters := make([]*dbproxyv1.Value, 0, len(args))
+	for _, arg := range args {
+		if arg.Name != "" {
+			return identity, nil, errors.New("single-tenant database proxy: named arguments unsupported")
+		}
+		v, err := parameterValue(arg.Value)
+		if err != nil {
+			return identity, nil, fmt.Errorf("parameter %d: %w", arg.Ordinal, err)
+		}
+		parameters = append(parameters, v)
+	}
+	return identity, parameters, nil
+}
+
+func (c *conn) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Result, error) {
+	identity, parameters, err := statementArgs(ctx, query, args)
+	if err != nil {
+		return nil, err
+	}
+	if c.tx != nil {
+		return c.tx.exec(ctx, identity, query, parameters)
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	response, err := c.client.Exec(ctx, &dbproxyv1.ExecRequest{Namespace: identity.namespace, QueryName: identity.name, Sql: query, Parameters: parameters})
+	if err != nil {
+		return nil, standaloneExecError(err)
+	}
+	if response == nil {
+		return nil, errors.New("proxy exec: missing response")
+	}
+	return execResult{response.RowsAffected, response.LastInsertId}, nil
 }
 func (*conn) CheckNamedValue(v *driver.NamedValue) error {
 	converted, err := convertArgument(v.Value)
@@ -164,10 +193,11 @@ type stmt struct {
 func (*stmt) Close() error  { return nil }
 func (*stmt) NumInput() int { return -1 }
 
-// Exec and ExecContext are unsupported because V1 only supports reads returning rows via QueryContext.
-func (*stmt) Exec([]driver.Value) (driver.Result, error) { return nil, ErrUnsupported }
-func (*stmt) ExecContext(context.Context, []driver.NamedValue) (driver.Result, error) {
-	return nil, ErrUnsupported
+func (*stmt) Exec([]driver.Value) (driver.Result, error) {
+	return nil, errors.New("single-tenant database proxy: exec context required")
+}
+func (s *stmt) ExecContext(ctx context.Context, args []driver.NamedValue) (driver.Result, error) {
+	return s.conn.ExecContext(ctx, s.query, args)
 }
 
 // Query has no context to supply the required stack and query name; use QueryContext.
@@ -311,11 +341,13 @@ func knownType(v dbproxyv1.ValueType) bool {
 
 type rows struct {
 	columns []*dbproxyv1.Column
-	stream  grpc.ServerStreamingClient[dbproxyv1.QueryResponse]
-	cancel  context.CancelFunc
-	batch   []*dbproxyv1.Row
-	index   int
-	done    bool
+	stream  interface {
+		Recv() (*dbproxyv1.QueryResponse, error)
+	}
+	cancel context.CancelFunc
+	batch  []*dbproxyv1.Row
+	index  int
+	done   bool
 }
 
 func (r *rows) Columns() []string {
