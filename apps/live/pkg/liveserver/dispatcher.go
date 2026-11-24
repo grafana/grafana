@@ -96,6 +96,8 @@ type Options struct {
 	// MaxConnections is the most clients the node accepts; negative means no
 	// limit.
 	MaxConnections int
+	// Observer is optional and receives subscribe and disconnect events.
+	Observer Observer
 }
 
 // Dispatcher handles the events of the clients connected to a Centrifuge node.
@@ -202,6 +204,7 @@ func (d *Dispatcher) onConnect(client *centrifuge.Client) {
 
 		cbWithSpan := func(resp centrifuge.SubscribeReply, err error) {
 			defer span.End()
+			d.observeSubscribe(e.Channel, err)
 			if err != nil {
 				span.SetStatus(codes.Error, err.Error())
 			} else {
@@ -261,6 +264,8 @@ func (d *Dispatcher) onConnect(client *centrifuge.Client) {
 	client.OnDisconnect(func(e centrifuge.DisconnectEvent) {
 		_, span := tracer.Start(client.Context(), "live.OnDisconnect")
 		defer span.End()
+
+		d.observeDisconnect(e.Code)
 
 		reason := e.Reason
 		if e.Code == 3001 { // Shutdown
