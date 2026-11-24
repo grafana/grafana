@@ -83,6 +83,7 @@ func TestRepositoryControllerRunner_Run(t *testing.T) {
 
 			err = runner.Run(ctx, 1, func() { t.Error("onStarted must not be called") }, func() {})
 			require.ErrorIs(t, err, context.Canceled)
+			require.True(t, runner.controller.queue.ShuttingDown(), "a failed sync must release the queue")
 		})
 	})
 
@@ -99,4 +100,12 @@ func TestRepositoryControllerRunner_Run(t *testing.T) {
 			require.NotErrorIs(t, err, context.Canceled, "a dependency failure must not read as a clean stop")
 		})
 	})
+}
+
+func TestRepositoryController_ShutDownQueue(t *testing.T) {
+	runner, err := ProvideRepositoryController(testRepositoryControllerDeps())
+	require.NoError(t, err)
+
+	runner.controller.ShutDownQueue()
+	require.True(t, runner.controller.queue.ShuttingDown(), "a controller whose Run never starts must release its queue")
 }

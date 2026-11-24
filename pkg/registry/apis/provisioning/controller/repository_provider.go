@@ -130,7 +130,7 @@ func (r *RepositoryControllerRunner) Run(ctx context.Context, workers int, onSta
 	go r.source.Run(ctx.Done())
 
 	if !cache.WaitForCacheSync(ctx.Done(), r.registration.HasSynced) {
-		r.controller.queue.ShutDown()
+		r.controller.ShutDownQueue()
 		// The cause tells a dependency failure, such as the NATS subscriber
 		// stopping, apart from a shutdown: callers treat context.Canceled as
 		// a clean stop.
