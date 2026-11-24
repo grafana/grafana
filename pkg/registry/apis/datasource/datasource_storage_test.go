@@ -10,10 +10,12 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	registry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -146,23 +148,93 @@ func TestDatasourceStoragePreservesOptionalInterfacesByMode(t *testing.T) {
 	for mode := grafanarest.Mode0; mode <= grafanarest.Mode5; mode++ {
 		t.Run(fmt.Sprintf("mode %d", mode), func(t *testing.T) {
 			wrapped, _, _, underlying := newDatasourceLifecycleStorage(t, mode, permissions)
-			_, underlyingCollectionDelete := underlying.(rest.CollectionDeleter)
-			_, wrappedCollectionDelete := wrapped.(rest.CollectionDeleter)
-			_, underlyingWatch := underlying.(rest.Watcher)
-			_, wrappedWatch := wrapped.(rest.Watcher)
-			_, underlyingVersionProvider := underlying.(rest.StorageVersionProvider)
-			_, wrappedVersionProvider := wrapped.(rest.StorageVersionProvider)
-			_, underlyingResetFields := underlying.(rest.ResetFieldsStrategy)
-			_, wrappedResetFields := wrapped.(rest.ResetFieldsStrategy)
-			_, underlyingCreateUpdateResetFields := underlying.(rest.CreateUpdateResetFieldsStrategy)
-			_, wrappedCreateUpdateResetFields := wrapped.(rest.CreateUpdateResetFieldsStrategy)
-			require.Equal(t, underlyingCollectionDelete, wrappedCollectionDelete, "collection delete support")
-			require.Equal(t, underlyingWatch, wrappedWatch, "watch support")
-			require.Equal(t, underlyingVersionProvider, wrappedVersionProvider, "storage version provider support")
-			require.Equal(t, underlyingResetFields, wrappedResetFields, "reset fields support")
-			require.Equal(t, underlyingCreateUpdateResetFields, wrappedCreateUpdateResetFields, "create/update reset fields support")
+			version, hasVersion := underlying.(rest.StorageVersionProvider)
+			if hasVersion {
+				require.Equal(t, version.StorageVersion(), wrapped.(rest.StorageVersionProvider).StorageVersion())
+			} else {
+				require.Nil(t, wrapped.(rest.StorageVersionProvider).StorageVersion(), "legacy storage has no version provider")
+			}
+			resetFields, hasResetFields := underlying.(rest.ResetFieldsStrategy)
+			if hasResetFields {
+				require.Equal(t, resetFields.GetResetFields(), wrapped.(rest.ResetFieldsStrategy).GetResetFields())
+			} else {
+				require.Nil(t, wrapped.(rest.ResetFieldsStrategy).GetResetFields(), "legacy storage has no reset strategy")
+			}
 		})
 	}
+}
+
+func TestDatasourceStorageDelegatesOptionalOperations(t *testing.T) {
+	watchResult := watch.NewFake()
+	collectionResult := &unstructured.Unstructured{}
+	readinessErr := errors.New("storage is not ready")
+	corruptDeleter := &optionalDatasourceGracefulDeleter{}
+	inner := &optionalDatasourceStorage{
+		watchResult:       watchResult,
+		collectionResult:  collectionResult,
+		readinessErr:      readinessErr,
+		corruptObjDeleter: corruptDeleter,
+	}
+	wrapped := newDatasourceStorage(inner, nil, nil)
+
+	gotWatch, err := wrapped.(rest.Watcher).Watch(t.Context(), &internalversion.ListOptions{})
+	require.NoError(t, err)
+	require.Same(t, watchResult, gotWatch)
+	gotCollection, err := wrapped.(rest.CollectionDeleter).DeleteCollection(t.Context(), nil, &metav1.DeleteOptions{}, &internalversion.ListOptions{})
+	require.NoError(t, err)
+	require.Same(t, collectionResult, gotCollection)
+	require.True(t, inner.watchCalled)
+	require.True(t, inner.collectionDeleteCalled)
+	require.ErrorIs(t, wrapped.(rest.StorageWithReadiness).ReadinessCheck(), readinessErr)
+	require.Same(t, corruptDeleter, wrapped.(rest.CorruptObjectDeleterProvider).GetCorruptObjDeleter())
+}
+
+func TestDatasourceStorageOptionalOperationsReturnUnsupportedErrors(t *testing.T) {
+	wrapped := newDatasourceStorage(&commonOnlyDatasourceStorage{}, nil, nil)
+	gotWatch, err := wrapped.(rest.Watcher).Watch(t.Context(), &internalversion.ListOptions{})
+	require.Nil(t, gotWatch)
+	require.ErrorIs(t, err, errWatchUnsupported)
+	gotCollection, err := wrapped.(rest.CollectionDeleter).DeleteCollection(t.Context(), nil, &metav1.DeleteOptions{}, &internalversion.ListOptions{})
+	require.Nil(t, gotCollection)
+	require.EqualError(t, err, "datasource storage does not support collection delete")
+	require.NoError(t, wrapped.(rest.StorageWithReadiness).ReadinessCheck())
+	require.Nil(t, wrapped.(rest.CorruptObjectDeleterProvider).GetCorruptObjDeleter())
+}
+
+type commonOnlyDatasourceStorage struct{ grafanarest.Storage }
+
+type optionalDatasourceStorage struct {
+	grafanarest.Storage
+	watchResult            watch.Interface
+	collectionResult       runtime.Object
+	readinessErr           error
+	corruptObjDeleter      rest.GracefulDeleter
+	watchCalled            bool
+	collectionDeleteCalled bool
+}
+
+func (s *optionalDatasourceStorage) Watch(context.Context, *internalversion.ListOptions) (watch.Interface, error) {
+	s.watchCalled = true
+	return s.watchResult, nil
+}
+
+func (s *optionalDatasourceStorage) DeleteCollection(context.Context, rest.ValidateObjectFunc, *metav1.DeleteOptions, *internalversion.ListOptions) (runtime.Object, error) {
+	s.collectionDeleteCalled = true
+	return s.collectionResult, nil
+}
+
+func (s *optionalDatasourceStorage) ReadinessCheck() error { return s.readinessErr }
+
+func (s *optionalDatasourceStorage) GetCorruptObjDeleter() rest.GracefulDeleter {
+	return s.corruptObjDeleter
+}
+
+type optionalDatasourceGracefulDeleter struct{}
+
+func (*optionalDatasourceGracefulDeleter) New() runtime.Object { return &unstructured.Unstructured{} }
+
+func (*optionalDatasourceGracefulDeleter) Delete(context.Context, string, rest.ValidateObjectFunc, *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	return nil, false, nil
 }
 
 func TestDatasourceUpdateKeepsCustomPermissions(t *testing.T) {
