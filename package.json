@@ -407,7 +407,7 @@
     "systemjs": "6.15.1",
     "tinycolor2": "1.6.0",
     "tslib": "2.9.1",
-    "type-fest": "^4.18.2",
+    "type-fest": "^6.0.0",
     "uplot": "1.6.32",
     "vis-data": "^8.0.0",
     "vis-network": "10.1.5"
