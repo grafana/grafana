@@ -70,8 +70,8 @@ func ResourceNames(manifest *app.ManifestData) map[string]string {
 // RoleActions returns the scopeless RBAC actions one manifest role grants,
 // sorted and deduplicated. resources is the manifest's ResourceNames.
 //
-// A role kind lists Kubernetes verbs or names a permission set. It may name a
-// kind's custom route, as Kind/<route>, which grants the <resource>/<route>
+// A role kind lists Kubernetes verbs or names a permission set, and names its
+// kind in any case. It may name a kind's custom route, as Kind/<route>, which grants the <resource>/<route>
 // subresource a route's declared access check asks for.
 //
 // Anything that cannot name an action some check asks for is logged and
@@ -80,10 +80,17 @@ func ResourceNames(manifest *app.ManifestData) map[string]string {
 // Grafana does not authorize. A role whose kinds all fall out grants nothing,
 // and its caller decides what to do with it.
 func RoleActions(group string, role app.ManifestRole, resources map[string]string, logger logging.Logger) []string {
+	// The app SDK validates a role kind against the manifest's kinds ignoring
+	// case, so a manifest may write "widget" for Widget.
+	byLowerKind := make(map[string]string, len(resources))
+	for kind, resource := range resources {
+		byLowerKind[strings.ToLower(kind)] = resource
+	}
+
 	actions := map[string]bool{}
 	for _, kind := range role.Kinds {
 		base, sub, isSub := strings.Cut(kind.Kind, "/")
-		resource, ok := resources[base]
+		resource, ok := byLowerKind[strings.ToLower(base)]
 		if !ok {
 			logger.Warn("skipping manifest role kind that no served version declares",
 				"group", group, "kind", kind.Kind)

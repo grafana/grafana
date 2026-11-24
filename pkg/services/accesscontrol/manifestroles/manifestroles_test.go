@@ -81,6 +81,16 @@ func TestRoleActions(t *testing.T) {
 			testGroup+"/testkinds:set_permissions")
 	})
 
+	t.Run("kinds match ignoring case, as the app SDK validates them", func(t *testing.T) {
+		require.Equal(t, []string{
+			testGroup + "/people:get",
+			testGroup + "/testkinds/render:get",
+		}, actions(
+			app.ManifestRoleKind{Kind: "person", PermissionSet: set("viewer")},
+			app.ManifestRoleKind{Kind: "TESTKIND/render", Verbs: []string{"get"}},
+		))
+	})
+
 	t.Run("verbs and permission sets mix within a role", func(t *testing.T) {
 		require.Equal(t, []string{
 			testGroup + "/testkinds/health:get",
