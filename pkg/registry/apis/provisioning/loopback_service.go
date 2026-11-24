@@ -21,6 +21,9 @@ type loopbackService struct {
 
 	builder *APIBuilder
 	run     func(ctx context.Context, restConfig *clientrest.Config) error
+	// awaitBootstrap also delays run until the bootstrap repository is
+	// reconciled.
+	awaitBootstrap bool
 }
 
 func newLoopbackService(name string, builder *APIBuilder, run func(ctx context.Context, restConfig *clientrest.Config) error) *loopbackService {
@@ -44,6 +47,9 @@ func (s *loopbackService) Run(ctx context.Context) error {
 
 func (s *loopbackService) running(ctx context.Context) error {
 	restConfig, err := s.builder.awaitLoopbackConfig(ctx)
+	if err == nil && s.awaitBootstrap {
+		err = s.builder.awaitBootstrapReconciled(ctx)
+	}
 	if err == nil {
 		err = s.run(ctx, restConfig)
 	}
