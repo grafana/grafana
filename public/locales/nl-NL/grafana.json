@@ -1543,6 +1543,9 @@
         "recording-rules_one": "{{formatted}} opnameregel",
         "recording-rules_other": "{{formatted}} opnameregels"
       },
+      "saved-searches": {
+        "applied-default": ""
+      },
       "search": {
         "default-policy-unavailable": "Filteren op het standaardbeleid is nog niet beschikbaar.",
         "folders-disabled": "Filters wissen om op map te bladeren",
@@ -1550,7 +1553,8 @@
           "contact-point": "Direct contactpunt (sluit elkaar uit met beleid:).",
           "dashboard": "Dashboard waaraan de regel is gekoppeld (de canonieke waarde is de UID van het dashboard).",
           "datasource": "Querygegevensbron waarnaar de regel verwijst (canonieke waarde: de UID)",
-          "folder": "Map (de canonieke waarde is de UID van de map).",
+          "folder": "",
+          "folder-uid": "",
           "health": "Status van regel: ok, geen gegevens, fout of onbekend.",
           "label": "Labelmatcher: label:key (bestaat), label:!key (afwezig), label:key=value (gelijk aan), label:key!=value (niet gelijk aan), label:key=~re (regex), label:key!~re (geen regex). Zet een waarde met spaties tussen aanhalingstekens: label:team=\"a b\".",
           "metric": "Geregistreerde metricnaam (exacte overeenkomst).",
@@ -1571,12 +1575,14 @@
         "invalid-tokens": "Sommige filters konden niet worden toegepast: {{tokens}}",
         "invalid-value": "Gebruik een van deze waarden voor {{key}}: {{values}}",
         "label": "Zoeken",
+        "missing-value": "",
         "placeholder": "Zoeken op naam of filterquery invoeren...",
         "property": {
           "contact-point": "Contactpunt",
           "dashboard": "Dashboard",
           "datasource": "Querygegevensbron",
           "folder": "Map",
+          "folder-uid": "",
           "health": "Gezondheid",
           "labels": "Labels",
           "metric": "Geregistreerde metric",
@@ -1612,6 +1618,8 @@
         "tooltip-with-interval": ""
       },
       "shared": {
+        "folder-search-limit": "",
+        "folder-search-limit-description": "",
         "load-more": "Meer laden",
         "load-more-error": "Kan geen extra resultaten laden",
         "loading-rules": "Regels laden",
@@ -1990,6 +1998,7 @@
         "routing": "Meldingsroutering",
         "routing-none": "Geen beleidsboom geselecteerd",
         "routing-tree": "Beleidsboom: {{name}}",
+        "rules-error": "",
         "rules-skipped": "Waarschuwingsregels worden niet geïmporteerd.",
         "rules-title": "",
         "skipped": "Overgeslagen",
@@ -2002,6 +2011,7 @@
         "validation-warning": "Sommige bronnen krijgen een nieuwe naam om conflicten te voorkomen.",
         "will-import-config": "Deze configuratie wordt geïmporteerd",
         "will-import-rules": "Zal regels importeren",
+        "yaml-datasource": "",
         "will-import-rules-count_one": "Zal  {{count}} regels importeren",
         "will-import-rules-count_other": "Zal  {{count}} regels importeren"
       },
@@ -2108,9 +2118,14 @@
         "target-datasource-required": "Selecteer eerst een doelgegevensbron",
         "target-folder": "Doelmap",
         "target-folder-desc": "Map waar de geïmporteerde regels worden opgeslagen",
+        "yaml-empty-group": "",
         "yaml-error": "Kan YAML-bestand niet parseren: {{error}}",
         "yaml-file": "YAML-bestand met regels",
-        "yaml-required": "Selecteer een bestand"
+        "yaml-no-rules": "",
+        "yaml-required": "Selecteer een bestand",
+        "yaml-target-datasource": "",
+        "yaml-target-datasource-desc": "",
+        "yaml-target-datasource-required": ""
       },
       "success": "Waarschuwingsregels zijn geïmporteerd naar door Grafana beheerde regels.",
       "target-folder": {
@@ -3015,12 +3030,12 @@
       },
       "empty": "",
       "error": "",
-      "load-more": "",
       "restore": {
         "body": "",
         "confirm": "",
         "conflict": "",
         "error": "",
+        "recording-title": "",
         "restoring": "",
         "title": ""
       },
@@ -3175,10 +3190,6 @@
         "group-name": "Naam evaluatiegroep",
         "group-text": "Alle regels in de geselecteerde groep worden elke {{evaluateEvery}} geëvalueerd.",
         "interval-label": "Evaluatie-interval",
-        "mode": {
-          "legacy": "Groepen gebruiken (verouderd)",
-          "new": "Interval instellen"
-        },
         "new-group": "Nieuwe evaluatiegroep",
         "pause": {
           "alerting": "Schakel in om de evaluatie voor deze waarschuwingsregel te pauzeren.",
@@ -5741,6 +5752,10 @@
       "label": "",
       "label-plural": ""
     },
+    "notebook": {
+      "label": "",
+      "label-plural": ""
+    },
     "playlist": {
       "label": "",
       "label-plural": ""
@@ -6254,7 +6269,10 @@
       "add-visualization-body": "Selecteer een gegevensbron en zoek en visualiseer je gegevens met grafieken, statistieken en tabellen of maak lijsten, prijsverlagingen en andere widgets.",
       "add-visualization-button": "Visualisatie toevoegen",
       "add-visualization-header": "Begin je nieuwe dashboard door een visualisatie toe te voegen",
+      "assistant-limit-reached": "",
       "assistant-placeholder": "Beschrijf je dashboard. Hiermee wordt de assistentchat geopend en wordt een gesprek gestart.",
+      "assistant-placeholder-template": "",
+      "assistant-sign-in": "",
       "auto-grid": "Automatisch raster",
       "auto-grid-description": "Panelen verkleinen zodat ze passen en uniforme rasters vormen",
       "build-assistant": "Je dashboard maken met Assistant",
@@ -6268,6 +6286,8 @@
       "mobile-not-available": "",
       "or-start-blank": "Of bouw het zelf",
       "select-layout-header": "Indeling selecteren",
+      "templates-empty": "",
+      "templates-title": "",
       "title": "Nieuw dashboard"
     },
     "errors": {
@@ -6719,6 +6739,9 @@
           "description": "Klik of sleep om paneel te plakken",
           "title": "Paneel plakken"
         },
+        "question": {
+          "label": ""
+        },
         "row": {
           "add-label": "Rij toevoegen",
           "group-label": "Groeperen in rijen"
@@ -6842,6 +6865,7 @@
         "objects": "Objecten",
         "panel": "Paneel",
         "panels": "Panelen",
+        "question": "",
         "row": "Rij",
         "rows": "Rijen",
         "section-filters-set": "Filters",
@@ -6892,6 +6916,36 @@
           "empty": "(leeg)",
           "no-title": "<geen titel>"
         }
+      },
+      "questions": {
+        "add-question": "",
+        "description-dashboard": "",
+        "description-row": "",
+        "description-tab": "",
+        "new-question": "",
+        "placeholder": "",
+        "question": "",
+        "question-title": "",
+        "question-title-description": "",
+        "question-title-placeholder": "",
+        "sources": {
+          "collapse": "",
+          "description-dashboard": "",
+          "description-row": "",
+          "description-tab": "",
+          "entire-dashboard": "",
+          "expand": "",
+          "label": "",
+          "no-panels": "",
+          "unavailable-panel": "",
+          "untitled-row": "",
+          "untitled-tab": "",
+          "panel-count_one": "",
+          "panel-count_other": "",
+          "picked-count_one": "",
+          "picked-count_other": ""
+        },
+        "title": ""
       },
       "row": {
         "header": {
@@ -7153,6 +7207,8 @@
     },
     "transformation-operation-row": {
       "body-delete": "Let op: het verwijderen van één transformatie kan invloed hebben op andere. Als er maar één transformatie is, keer je terug naar het hoofdselectiescherm.",
+      "expander-close": "",
+      "expander-open": "",
       "render-actions": {
         "confirmText-delete": "Verwijderen",
         "title-debug": "Fouten opsporen",
@@ -7238,6 +7294,7 @@
   },
   "dashboard-library": {
     "card": {
+      "attach-template-button-label": "",
       "community-badge": "Community",
       "customize-with-assistant-button": "Aanpassen met assistent",
       "customize-with-assistant-button-label": "Aanpassen met assistent: {{title}}",
@@ -7254,6 +7311,9 @@
       "edit-template-menu-item": "Bewerken",
       "more-actions-label": "Meer acties voor {{title}}",
       "no-preview": "Geen voorbeeld beschikbaar ",
+      "preview-template-button": "",
+      "preview-template-button-label": "",
+      "provisioned-by-grafana": "",
       "use-template-button": "Sjabloon gebruiken",
       "use-template-button-label": "Sjabloon gebruiken: {{title}}",
       "view-dashboard-button": "Dashboard bekijken",
@@ -7289,6 +7349,10 @@
     "custom-dashboard-template-filters": {
       "creator-placeholder": "Filteren op aangemaakt door",
       "search-placeholder": "Zoeken",
+      "sort": {
+        "asc": "",
+        "desc": ""
+      },
       "sort-placeholder": "Sorteren"
     },
     "dashboard-card": {
@@ -8117,6 +8181,20 @@
       },
       "selection-options": "Selectiemogelijkheden",
       "static-options-legend": "Statische opties"
+    },
+    "question-actions": {
+      "add": "",
+      "remove": "",
+      "reorder": "",
+      "update": ""
+    },
+    "question-edit": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
+    "question-edit-actions": {
+      "tooltip-question-settings": ""
     },
     "refresh-select": {
       "options": {
@@ -11982,13 +12060,19 @@
       "filter-apps": "Apps",
       "filter-dashboards": "Dashboards",
       "filter-explore": "Verkennen",
+      "filter-folders": "",
       "filter-label": "Alleen weergeven",
+      "filter-notebooks": "",
       "filter-pages": "Pagina's",
+      "filter-playlists": "",
       "kind-alerting": "Alerting",
       "kind-app": "App",
       "kind-dashboard": "Dashboard",
       "kind-explore": "Verkennen",
+      "kind-folder": "",
+      "kind-notebook": "",
       "kind-page": "Pagina",
+      "kind-playlist": "",
       "loading": "Je recente activiteit wordt geladen..."
     },
     "recommendations": {
@@ -13628,7 +13712,7 @@
       "page-assistant-below": "",
       "page-floating-assistant": "",
       "page-only": "",
-      "pop-up": "",
+      "pop-out": "",
       "right": ""
     },
     "assistant-workspace": {
@@ -13932,8 +14016,8 @@
       "list-none": "Je hebt nog geen notitieboeken. Maak er in plaats daarvan een aan.",
       "list-none-read-only": "Je hebt nog geen notitieboeken en geen toestemming om er een te maken.",
       "list-truncated": "Niet elk notitieboek wordt weergegeven. Verfijn de zoekopdracht om andere te vinden.",
-      "lock-time-range": "Vastzetten op {{range}}",
       "lock-time-range-description": "Houd deze visualisatie in het venster waarin deze is vastgelegd. Als het niet is vastgezet, volgt het paneel het tijdsbereik van het notitieboek.",
+      "lock-time-range-short": "",
       "lock-time-ranges": "Panelen vergrendelen op de tijdsbereiken die ze hebben weergegeven",
       "lock-time-ranges-description": "Houd elke visualisatie in het venster waarin deze is vastgelegd. Als ze niet zijn vastgezet, volgen de panelen het tijdsbereik van het notitieboek.",
       "note-description": "",
@@ -14169,32 +14253,6 @@
     },
     "units": {
       "clear-tooltip": "Eenheidsselectie wissen"
-    },
-    "var-mapping-checks": {
-      "data-macro": "",
-      "not-allowed": "",
-      "not-found": "",
-      "not-number": "",
-      "not-one-value": "",
-      "out-of-range": "",
-      "resolves": "",
-      "values": ""
-    },
-    "var-mapping-toggle": {
-      "aria-label-picker": "",
-      "fallback-off": "",
-      "fallback-on": "",
-      "group-matching": "",
-      "group-other": "",
-      "hint-boolean": "",
-      "hint-number": "",
-      "hint-option": "",
-      "hint-option-no-fallback": "",
-      "new-variable": "",
-      "option-current": "",
-      "placeholder": "",
-      "use-fixed-value": "",
-      "use-variable": ""
     }
   },
   "org": {
@@ -14291,7 +14349,8 @@
     },
     "get-panel-links-variable-suggestions": {
       "label": {
-        "all-variables": "Alle variabelen"
+        "all-variables": "Alle variabelen",
+        "current-dashboard-tabs": ""
       }
     },
     "header-menu": {
@@ -15202,7 +15261,6 @@
     "finish-step": {
       "description-enable-previews": "Voegt een afbeeldingsvoorbeeld toe van dashboardwijzigingen in pull requests. Afbeeldingen van je Grafana-dashboards worden gedeeld in je Git-repository en zijn zichtbaar voor iedereen met toegang tot de repository.",
       "description-image-rendering": "Vereist beeldweergave. <2>Beeldweergave instellen</2>",
-      "description-read-only": "Bronnen kunnen niet worden gewijzigd via Grafana.",
       "description-sync-interval": "Hoe vaak wijzigingen uit de repository moeten worden gesynchroniseerd",
       "error-sync-interval-required": "Synchronisatie-interval is vereist",
       "label-enable-previews": "Dashboardvoorbeelden inschakelen in pull requests",
@@ -15979,6 +16037,17 @@
       "button-submitting": "Indienen...",
       "error-instance-repository-exists": "Er bestaat al een instantierepository",
       "error-save-repository-setting": "Kan de repository-instelling niet opslaan"
+    },
+    "workflow": {
+      "direct-push": "",
+      "direct-push-description": "",
+      "direct-push-description-no-branch": "",
+      "merge-request": "",
+      "merge-request-description": "",
+      "merge-request-description-no-branch": "",
+      "pull-request": "",
+      "pull-request-description": "",
+      "pull-request-description-no-branch": ""
     }
   },
   "public-dashboard": {
@@ -17642,6 +17711,16 @@
       "text_one": "",
       "text_other": ""
     },
+    "display-completion": {
+      "color": "",
+      "helper": "",
+      "icon": "",
+      "numeric": "",
+      "percent": "",
+      "prefix": "",
+      "suffix": "",
+      "text": ""
+    },
     "editor": {
       "aria-label-content": "Tekstinhoud",
       "aria-label-mode": "Tekstmodus: {{mode}}",
@@ -17785,7 +17864,6 @@
     },
     "time-range": {
       "apply": "Tijdsbereik toepassen",
-      "aria-role": "Tijdsbereikselectie",
       "default-title": "Tijdsbereik",
       "dialog-label": "Relatieve tijdsbereikkiezer",
       "example-title": "Voorbeeld tijdsbereiken",

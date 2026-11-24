@@ -16,7 +16,7 @@ import (
 // sessionAccessChecker implements AccessChecker using Grafana session identity.
 type sessionAccessChecker struct {
 	inner        authlib.AccessChecker
-	fallbackRole identity.RoleType
+	fallbackRole authlib.RoleType
 }
 
 // NewSessionAccessChecker creates an AccessChecker that gets identity from Grafana
@@ -30,7 +30,7 @@ func NewSessionAccessChecker(inner authlib.AccessChecker) AccessChecker {
 }
 
 // WithFallbackRole returns a new AccessChecker with the specified fallback role.
-func (c *sessionAccessChecker) WithFallbackRole(role identity.RoleType) AccessChecker {
+func (c *sessionAccessChecker) WithFallbackRole(role authlib.RoleType) AccessChecker {
 	return &sessionAccessChecker{
 		inner:        c.inner,
 		fallbackRole: role,

@@ -10,11 +10,11 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 // mockDecryptService implements decrypt.DecryptService for testing
@@ -73,7 +73,7 @@ func TestSecureValues_PrivateKey(t *testing.T) {
 		connection    *provisioning.Connection
 		mockResults   map[string]decrypt.DecryptResult
 		mockErr       error
-		expectedValue common.RawSecureValue
+		expectedValue resource.RawSecureValue
 		expectedError string
 	}{
 		{
@@ -84,12 +84,12 @@ func TestSecureValues_PrivateKey(t *testing.T) {
 					Namespace: "default",
 				},
 				Secure: provisioning.ConnectionSecure{
-					PrivateKey: common.InlineSecureValue{
-						Create: common.NewSecretValue("create-private-key"),
+					PrivateKey: resource.InlineSecureValue{
+						Create: resource.NewSecretValue("create-private-key"),
 					},
 				},
 			},
-			expectedValue: common.RawSecureValue("create-private-key"),
+			expectedValue: resource.RawSecureValue("create-private-key"),
 		},
 		{
 			name: "returns empty when Name is empty",
@@ -99,7 +99,7 @@ func TestSecureValues_PrivateKey(t *testing.T) {
 					Namespace: "default",
 				},
 				Secure: provisioning.ConnectionSecure{
-					PrivateKey: common.InlineSecureValue{},
+					PrivateKey: resource.InlineSecureValue{},
 				},
 			},
 			expectedValue: "",
@@ -112,7 +112,7 @@ func TestSecureValues_PrivateKey(t *testing.T) {
 					Namespace: "default",
 				},
 				Secure: provisioning.ConnectionSecure{
-					PrivateKey: common.InlineSecureValue{
+					PrivateKey: resource.InlineSecureValue{
 						Name: "private-key-ref",
 					},
 				},
@@ -120,7 +120,7 @@ func TestSecureValues_PrivateKey(t *testing.T) {
 			mockResults: map[string]decrypt.DecryptResult{
 				"private-key-ref": newDecryptResult("decrypted-private-key"),
 			},
-			expectedValue: common.RawSecureValue("decrypted-private-key"),
+			expectedValue: resource.RawSecureValue("decrypted-private-key"),
 		},
 		{
 			name: "returns error when decrypt service fails",
@@ -130,7 +130,7 @@ func TestSecureValues_PrivateKey(t *testing.T) {
 					Namespace: "default",
 				},
 				Secure: provisioning.ConnectionSecure{
-					PrivateKey: common.InlineSecureValue{
+					PrivateKey: resource.InlineSecureValue{
 						Name: "private-key-ref",
 					},
 				},
@@ -146,7 +146,7 @@ func TestSecureValues_PrivateKey(t *testing.T) {
 					Namespace: "default",
 				},
 				Secure: provisioning.ConnectionSecure{
-					PrivateKey: common.InlineSecureValue{
+					PrivateKey: resource.InlineSecureValue{
 						Name: "missing-key",
 					},
 				},
@@ -162,7 +162,7 @@ func TestSecureValues_PrivateKey(t *testing.T) {
 					Namespace: "default",
 				},
 				Secure: provisioning.ConnectionSecure{
-					PrivateKey: common.InlineSecureValue{
+					PrivateKey: resource.InlineSecureValue{
 						Name: "private-key-ref",
 					},
 				},
@@ -203,7 +203,7 @@ func TestSecureValues_ClientSecret(t *testing.T) {
 		connection    *provisioning.Connection
 		mockResults   map[string]decrypt.DecryptResult
 		mockErr       error
-		expectedValue common.RawSecureValue
+		expectedValue resource.RawSecureValue
 		expectedError string
 	}{
 		{
@@ -214,12 +214,12 @@ func TestSecureValues_ClientSecret(t *testing.T) {
 					Namespace: "default",
 				},
 				Secure: provisioning.ConnectionSecure{
-					ClientSecret: common.InlineSecureValue{
-						Create: common.NewSecretValue("create-client-secret"),
+					ClientSecret: resource.InlineSecureValue{
+						Create: resource.NewSecretValue("create-client-secret"),
 					},
 				},
 			},
-			expectedValue: common.RawSecureValue("create-client-secret"),
+			expectedValue: resource.RawSecureValue("create-client-secret"),
 		},
 		{
 			name: "returns empty when Name is empty",
@@ -229,7 +229,7 @@ func TestSecureValues_ClientSecret(t *testing.T) {
 					Namespace: "default",
 				},
 				Secure: provisioning.ConnectionSecure{
-					ClientSecret: common.InlineSecureValue{},
+					ClientSecret: resource.InlineSecureValue{},
 				},
 			},
 			expectedValue: "",
@@ -242,7 +242,7 @@ func TestSecureValues_ClientSecret(t *testing.T) {
 					Namespace: "default",
 				},
 				Secure: provisioning.ConnectionSecure{
-					ClientSecret: common.InlineSecureValue{
+					ClientSecret: resource.InlineSecureValue{
 						Name: "client-secret-ref",
 					},
 				},
@@ -250,7 +250,7 @@ func TestSecureValues_ClientSecret(t *testing.T) {
 			mockResults: map[string]decrypt.DecryptResult{
 				"client-secret-ref": newDecryptResult("decrypted-client-secret"),
 			},
-			expectedValue: common.RawSecureValue("decrypted-client-secret"),
+			expectedValue: resource.RawSecureValue("decrypted-client-secret"),
 		},
 		{
 			name: "returns error when decrypt service fails",
@@ -260,7 +260,7 @@ func TestSecureValues_ClientSecret(t *testing.T) {
 					Namespace: "default",
 				},
 				Secure: provisioning.ConnectionSecure{
-					ClientSecret: common.InlineSecureValue{
+					ClientSecret: resource.InlineSecureValue{
 						Name: "client-secret-ref",
 					},
 				},
@@ -299,7 +299,7 @@ func TestSecureValues_Token(t *testing.T) {
 		connection    *provisioning.Connection
 		mockResults   map[string]decrypt.DecryptResult
 		mockErr       error
-		expectedValue common.RawSecureValue
+		expectedValue resource.RawSecureValue
 		expectedError string
 	}{
 		{
@@ -310,12 +310,12 @@ func TestSecureValues_Token(t *testing.T) {
 					Namespace: "default",
 				},
 				Secure: provisioning.ConnectionSecure{
-					Token: common.InlineSecureValue{
-						Create: common.NewSecretValue("create-token"),
+					Token: resource.InlineSecureValue{
+						Create: resource.NewSecretValue("create-token"),
 					},
 				},
 			},
-			expectedValue: common.RawSecureValue("create-token"),
+			expectedValue: resource.RawSecureValue("create-token"),
 		},
 		{
 			name: "returns empty when Name is empty",
@@ -325,7 +325,7 @@ func TestSecureValues_Token(t *testing.T) {
 					Namespace: "default",
 				},
 				Secure: provisioning.ConnectionSecure{
-					Token: common.InlineSecureValue{},
+					Token: resource.InlineSecureValue{},
 				},
 			},
 			expectedValue: "",
@@ -338,7 +338,7 @@ func TestSecureValues_Token(t *testing.T) {
 					Namespace: "default",
 				},
 				Secure: provisioning.ConnectionSecure{
-					Token: common.InlineSecureValue{
+					Token: resource.InlineSecureValue{
 						Name: "token-ref",
 					},
 				},
@@ -346,7 +346,7 @@ func TestSecureValues_Token(t *testing.T) {
 			mockResults: map[string]decrypt.DecryptResult{
 				"token-ref": newDecryptResult("decrypted-token"),
 			},
-			expectedValue: common.RawSecureValue("decrypted-token"),
+			expectedValue: resource.RawSecureValue("decrypted-token"),
 		},
 		{
 			name: "returns error when decrypt service fails",
@@ -356,7 +356,7 @@ func TestSecureValues_Token(t *testing.T) {
 					Namespace: "default",
 				},
 				Secure: provisioning.ConnectionSecure{
-					Token: common.InlineSecureValue{
+					Token: resource.InlineSecureValue{
 						Name: "token-ref",
 					},
 				},
@@ -372,7 +372,7 @@ func TestSecureValues_Token(t *testing.T) {
 					Namespace: "default",
 				},
 				Secure: provisioning.ConnectionSecure{
-					Token: common.InlineSecureValue{
+					Token: resource.InlineSecureValue{
 						Name: "missing-token",
 					},
 				},
@@ -388,7 +388,7 @@ func TestSecureValues_Token(t *testing.T) {
 					Namespace: "default",
 				},
 				Secure: provisioning.ConnectionSecure{
-					Token: common.InlineSecureValue{
+					Token: resource.InlineSecureValue{
 						Name: "token-ref",
 					},
 				},
@@ -427,7 +427,7 @@ func TestSecureValues_NotFoundSentinel(t *testing.T) {
 	conn := &provisioning.Connection{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-connection", Namespace: "default"},
 		Secure: provisioning.ConnectionSecure{
-			Token: common.InlineSecureValue{Name: "token-ref"},
+			Token: resource.InlineSecureValue{Name: "token-ref"},
 		},
 	}
 
@@ -467,7 +467,7 @@ func TestSecureValues_NotFoundSentinel(t *testing.T) {
 	t.Run("missing private key does not carry ErrTokenNotFound", func(t *testing.T) {
 		pkConn := &provisioning.Connection{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-connection", Namespace: "default"},
-			Secure:     provisioning.ConnectionSecure{PrivateKey: common.InlineSecureValue{Name: "pk-ref"}},
+			Secure:     provisioning.ConnectionSecure{PrivateKey: resource.InlineSecureValue{Name: "pk-ref"}},
 		}
 		decrypter := connection.ProvideDecrypter(&mockDecryptService{results: map[string]decrypt.DecryptResult{}}, nil)
 		_, err := decrypter(pkConn).PrivateKey(context.Background())
@@ -479,7 +479,7 @@ func TestSecureValues_NotFoundSentinel(t *testing.T) {
 func TestSecureValues_DecryptTimeout(t *testing.T) {
 	conn := &provisioning.Connection{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-connection", Namespace: "default"},
-		Secure:     provisioning.ConnectionSecure{Token: common.InlineSecureValue{Name: "token-ref"}},
+		Secure:     provisioning.ConnectionSecure{Token: resource.InlineSecureValue{Name: "token-ref"}},
 	}
 
 	t.Run("bounds a deadline-less caller context", func(t *testing.T) {
@@ -519,13 +519,13 @@ func TestSecureValues_MultipleFields(t *testing.T) {
 				Namespace: "default",
 			},
 			Secure: provisioning.ConnectionSecure{
-				PrivateKey: common.InlineSecureValue{
+				PrivateKey: resource.InlineSecureValue{
 					Name: "private-key-ref",
 				},
-				ClientSecret: common.InlineSecureValue{
+				ClientSecret: resource.InlineSecureValue{
 					Name: "client-secret-ref",
 				},
-				Token: common.InlineSecureValue{
+				Token: resource.InlineSecureValue{
 					Name: "token-ref",
 				},
 			},
@@ -544,15 +544,15 @@ func TestSecureValues_MultipleFields(t *testing.T) {
 
 		privateKey, err := secureVals.PrivateKey(context.Background())
 		require.NoError(t, err)
-		assert.Equal(t, common.RawSecureValue("decrypted-private-key"), privateKey)
+		assert.Equal(t, resource.RawSecureValue("decrypted-private-key"), privateKey)
 
 		clientSecret, err := secureVals.ClientSecret(context.Background())
 		require.NoError(t, err)
-		assert.Equal(t, common.RawSecureValue("decrypted-client-secret"), clientSecret)
+		assert.Equal(t, resource.RawSecureValue("decrypted-client-secret"), clientSecret)
 
 		token, err := secureVals.Token(context.Background())
 		require.NoError(t, err)
-		assert.Equal(t, common.RawSecureValue("decrypted-token"), token)
+		assert.Equal(t, resource.RawSecureValue("decrypted-token"), token)
 	})
 
 	t.Run("should handle mix of Create and Name references", func(t *testing.T) {
@@ -562,14 +562,14 @@ func TestSecureValues_MultipleFields(t *testing.T) {
 				Namespace: "default",
 			},
 			Secure: provisioning.ConnectionSecure{
-				PrivateKey: common.InlineSecureValue{
-					Create: common.NewSecretValue("inline-private-key"),
+				PrivateKey: resource.InlineSecureValue{
+					Create: resource.NewSecretValue("inline-private-key"),
 				},
-				ClientSecret: common.InlineSecureValue{
+				ClientSecret: resource.InlineSecureValue{
 					Name: "client-secret-ref",
 				},
-				Token: common.InlineSecureValue{
-					Create: common.NewSecretValue("inline-token"),
+				Token: resource.InlineSecureValue{
+					Create: resource.NewSecretValue("inline-token"),
 				},
 			},
 		}
@@ -586,16 +586,16 @@ func TestSecureValues_MultipleFields(t *testing.T) {
 		// PrivateKey should return Create value without calling decrypt
 		privateKey, err := secureVals.PrivateKey(context.Background())
 		require.NoError(t, err)
-		assert.Equal(t, common.RawSecureValue("inline-private-key"), privateKey)
+		assert.Equal(t, resource.RawSecureValue("inline-private-key"), privateKey)
 
 		// ClientSecret should decrypt
 		clientSecret, err := secureVals.ClientSecret(context.Background())
 		require.NoError(t, err)
-		assert.Equal(t, common.RawSecureValue("decrypted-client-secret"), clientSecret)
+		assert.Equal(t, resource.RawSecureValue("decrypted-client-secret"), clientSecret)
 
 		// Token should return Create value without calling decrypt
 		token, err := secureVals.Token(context.Background())
 		require.NoError(t, err)
-		assert.Equal(t, common.RawSecureValue("inline-token"), token)
+		assert.Equal(t, resource.RawSecureValue("inline-token"), token)
 	})
 }

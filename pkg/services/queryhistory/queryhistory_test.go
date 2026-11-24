@@ -10,10 +10,10 @@ import (
 	"testing"
 	"time"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -76,7 +76,7 @@ func testScenario(t *testing.T, desc string, isViewer bool, hasDatasourceExplore
 		)
 		require.NoError(t, err)
 
-		var role identity.RoleType
+		var role authlib.RoleType
 		if isViewer {
 			role = org.RoleViewer
 		} else {

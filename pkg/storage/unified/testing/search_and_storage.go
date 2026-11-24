@@ -27,7 +27,7 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 		UserID:         123,
 		UserUID:        "u123",
 		Namespace:      nsPrefix,
-		OrgRole:        identity.RoleAdmin,
+		OrgRole:        claims.RoleAdmin,
 		IsGrafanaAdmin: true,
 	}
 	ctx = claims.WithAuthInfo(ctx, testUser)
