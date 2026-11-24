@@ -9,6 +9,7 @@ import { type K8sAPIGroup, type K8sAPIGroupList } from './types';
 
 const backendGet = jest.fn();
 const logError = jest.fn();
+const logWarning = jest.fn();
 const originalUser = config.bootData.user;
 const originalPublicDashboardAccessToken = config.publicDashboardAccessToken;
 
@@ -58,7 +59,7 @@ beforeEach(() => {
     logError,
     logInfo: jest.fn(),
     logMeasurement: jest.fn(),
-    logWarning: jest.fn(),
+    logWarning,
   });
   setBootUser({ isSignedIn: true, orgRole: OrgRole.Viewer });
   config.publicDashboardAccessToken = undefined;
@@ -291,6 +292,22 @@ describe('getAPIGroup', () => {
   it('returns undefined without a request for a group name that is not a valid API group', async () => {
     await expect(getAPIGroup('../api/admin')).resolves.toBeUndefined();
     expect(backendGet).not.toHaveBeenCalled();
+  });
+
+  it('warns about a group name that is not a valid API group', async () => {
+    await getAPIGroup('Dashboard.grafana.app');
+
+    expect(logWarning).toHaveBeenCalledWith(expect.stringContaining('not a valid API group name'), {
+      group: 'Dashboard.grafana.app',
+    });
+  });
+
+  it('does not warn about a valid group name', async () => {
+    respondTo({ '/apis': () => Promise.resolve(groupList) });
+
+    await getAPIGroup('annotation.grafana.app');
+
+    expect(logWarning).not.toHaveBeenCalled();
   });
 });
 

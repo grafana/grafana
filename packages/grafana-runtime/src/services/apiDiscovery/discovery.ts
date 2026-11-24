@@ -1,8 +1,10 @@
+import { isObject } from '@grafana/data';
+
 import { getFetchErrorContext } from '../../utils/getCachedPromise';
 import { getBackendSrv, isFetchError } from '../backendSrv';
 import { isSignedInOrAnonymous } from '../user';
 
-import { logAPIDiscoveryError } from './logging';
+import { logAPIDiscoveryError, logAPIDiscoveryWarning } from './logging';
 import { type K8sAPIGroup, type K8sAPIGroupList, type APIGroupInfo } from './types';
 
 /** `unknown` means discovery could not answer. It is never cached, so the next caller asks again. */
@@ -81,6 +83,7 @@ const groupCache = new OutcomeCache<APIGroupInfo | undefined>();
  */
 export async function getAPIGroup(group: string): Promise<APIGroupInfo | undefined> {
   if (!GROUP_NAME_PATTERN.test(group)) {
+    logAPIDiscoveryWarning('API discovery: not a valid API group name, such as dashboard.grafana.app', { group });
     return undefined;
   }
 
@@ -209,18 +212,16 @@ function toAPIGroupInfo(apiGroup: K8sAPIGroup): APIGroupInfo | undefined {
 }
 
 function isK8sAPIGroupList(value: unknown): value is K8sAPIGroupList {
-  return isObject(value) && Array.isArray(value.groups) && value.groups.every(isK8sAPIGroup);
+  return isObject(value) && 'groups' in value && Array.isArray(value.groups) && value.groups.every(isK8sAPIGroup);
 }
 
 function isK8sAPIGroup(value: unknown): value is K8sAPIGroup {
   return (
     isObject(value) &&
+    'name' in value &&
     typeof value.name === 'string' &&
+    'versions' in value &&
     Array.isArray(value.versions) &&
-    value.versions.every((v) => isObject(v) && typeof v.version === 'string')
+    value.versions.every((v) => isObject(v) && 'version' in v && typeof v.version === 'string')
   );
-}
-
-function isObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
 }
