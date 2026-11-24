@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { type Property } from 'csstype';
-import memoize, { type Key, type RawKey } from 'micro-memoize';
+import { memoize, type Key } from 'micro-memoize';
 
 import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 
@@ -48,7 +48,7 @@ export const IS_SAFARI_26 = (() => {
  * @internal
  * a method that can be used with micro-memoize as a cache key equality comparator.
  */
-export const isTableCellStylesKeyEqual = (cacheKey: Key, key: RawKey): boolean =>
+export const isTableCellStylesKeyEqual = (cacheKey: Key, key: Key): boolean =>
   cacheKey[0] === key[0] &&
   cacheKey[1].shouldOverflow === key[1].shouldOverflow &&
   cacheKey[1].hoverOverflow === key[1].hoverOverflow &&
@@ -542,7 +542,7 @@ export const getDefaultCellStyles: TableCellStyles = memoize(
         '.table-cell-actions': { display: 'flex' },
       },
     }),
-  { isMatchingKey: isTableCellStylesKeyEqual }
+  { isKeyEqual: isTableCellStylesKeyEqual }
 );
 
 export const getMaxHeightCellStyles: TableCellStyles = memoize(
@@ -560,7 +560,7 @@ export const getMaxHeightCellStyles: TableCellStyles = memoize(
         minHeight: '100%',
       },
     }),
-  { isMatchingKey: isTableCellStylesKeyEqual }
+  { isKeyEqual: isTableCellStylesKeyEqual }
 );
 
 export const getCellActionStyles = memoize((theme: GrafanaTheme2, textAlign: TextAlign, tableRefreshEnabled = false) =>
