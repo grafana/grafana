@@ -289,6 +289,8 @@ const (
 	previousReadsMaxBytes = 32 << 20 // 32 MiB
 	previousReadsMaxItems = 4096
 	previousReadsTTL      = 30 * time.Second
+	// Match Unified Storage's default QoS worker count when QoS is off.
+	previousReadsMaxInline = 16
 )
 
 // previousReads shares raw previous revisions between watches. Each watch
@@ -298,6 +300,7 @@ type previousReads struct {
 	flights map[string]*previousReadFlight
 	cache   *simplelru.LRU[string, previousRead]
 	bytes   int
+	inline  chan struct{}
 }
 
 type previousRead struct {
@@ -311,10 +314,7 @@ type previousReadResult struct {
 	err      error
 }
 
-// previousReadLookup runs inside the QoS slot and can reuse or publish a raw read.
-type previousReadLookup func(fetch func() *BackendReadResponse) *BackendReadResponse
-
-type previousReadLoader func(context.Context, previousReadLookup) previousReadResult
+type previousReadLoader func(context.Context, func(*BackendReadResponse)) previousReadResult
 
 type previousReadFlight struct {
 	waiters int
@@ -325,7 +325,10 @@ type previousReadFlight struct {
 }
 
 func newPreviousReads() *previousReads {
-	p := &previousReads{flights: make(map[string]*previousReadFlight)}
+	p := &previousReads{
+		flights: make(map[string]*previousReadFlight),
+		inline:  make(chan struct{}, previousReadsMaxInline),
+	}
 	// Only fails for a non-positive size.
 	p.cache, _ = simplelru.NewLRU(previousReadsMaxItems, func(_ string, read previousRead) {
 		p.bytes -= cap(read.rsp.Value)
@@ -376,32 +379,9 @@ func (p *previousReads) read(ctx context.Context, key *resourcepb.ResourceKey, r
 	if hasDeadline && !time.Now().Before(deadline) {
 		return previousReadResult{err: context.DeadlineExceeded}
 	}
-	// Retry through QoS with this watch's own context. Joining another
-	// retry could give this watch a shorter deadline than it has left.
-	return p.retry(ctx, id, rv, load)
-}
-
-func (p *previousReads) retry(ctx context.Context, id string, rv int64, load previousReadLoader) previousReadResult {
-	return runPreviousRead(ctx, func() previousReadResult {
-		return load(ctx, func(fetch func() *BackendReadResponse) *BackendReadResponse {
-			// Another retry may have filled the cache while this one queued.
-			p.mu.Lock()
-			rsp, ok := p.get(id)
-			p.mu.Unlock()
-			if ok {
-				return rsp
-			}
-			rsp = fetch()
-			if rsp != nil {
-				p.mu.Lock()
-				if ctx.Err() == nil {
-					p.cacheResponse(id, rv, rsp)
-				}
-				p.mu.Unlock()
-			}
-			return rsp
-		})
-	})
+	// A retry has its own shared budget. Each caller can leave on its own deadline.
+	result, _ = p.readOnce(ctx, id, rv, timeout, load)
+	return result
 }
 
 func (p *previousReads) readOnce(ctx context.Context, id string, rv int64, timeout time.Duration, load previousReadLoader) (result previousReadResult, follower bool) {
@@ -479,13 +459,9 @@ func (p *previousReads) runFlight(ctx context.Context, id string, rv int64, flig
 	stop := context.AfterFunc(ctx, func() { finish(previousReadResult{err: context.Cause(ctx)}) })
 	defer stop()
 
-	result := load(ctx, func(fetch func() *BackendReadResponse) *BackendReadResponse {
+	result := load(ctx, func(rsp *BackendReadResponse) {
 		// Followers can authorize as soon as the backend read completes.
-		rsp := fetch()
-		if rsp != nil {
-			finish(previousReadResult{backend: rsp})
-		}
-		return rsp
+		finish(previousReadResult{backend: rsp})
 	})
 	// Release followers even if the backend read never produced a result.
 	finish(previousReadResult{err: result.err})
@@ -524,28 +500,23 @@ func (s *server) readPrevious(ctx context.Context, user claims.AuthInfo, key *re
 	ctx, cancel := context.WithTimeout(ctx, s.queueConfig.Timeout)
 	defer cancel()
 	req := &resourcepb.ReadRequest{Key: key, ResourceVersion: rv}
-	result := s.previousReads.read(ctx, key, rv, s.queueConfig.Timeout, func(sharedCtx context.Context, lookup previousReadLookup) (result previousReadResult) {
+	result := s.previousReads.read(ctx, key, rv, s.queueConfig.Timeout, func(sharedCtx context.Context, publish func(*BackendReadResponse)) (result previousReadResult) {
 		defer s.recoverPreviousRead(sharedCtx, &result.err)
 		var ownerResult previousReadResult
-		if err := s.runInQueue(sharedCtx, key.Namespace, "read", func(queueCtx context.Context) {
+		if err := s.runPreviousReadInQueue(sharedCtx, key.Namespace, func(queueCtx context.Context) {
 			// The queue may run this callback in its own worker goroutine.
 			defer s.recoverPreviousRead(queueCtx, &ownerResult.err)
 			if queueCtx.Err() != nil {
 				return
 			}
-			rsp := lookup(func() *BackendReadResponse {
-				rsp := s.backend.ReadResource(queueCtx, req)
-				if queueCtx.Err() != nil {
-					return nil
-				}
-				if rsp == nil {
-					panic("previous version backend returned no response")
-				}
-				return rsp
-			})
+			rsp := s.backend.ReadResource(queueCtx, req)
 			if queueCtx.Err() != nil {
 				return
 			}
+			if rsp == nil {
+				panic("previous version backend returned no response")
+			}
+			publish(rsp)
 			// The owner authorizes in this slot with its own deadline and
 			// identity. If it left, only the other watches need the result.
 			if ctx.Err() == nil {
@@ -570,7 +541,7 @@ func (s *server) readPrevious(ctx context.Context, user claims.AuthInfo, key *re
 	auth := runPreviousRead(ctx, func() (authResult previousReadResult) {
 		defer s.recoverPreviousRead(ctx, &authResult.err)
 		var authorized previousReadResult
-		if err := s.runInQueue(ctx, key.Namespace, "read", func(ctx context.Context) {
+		if err := s.runPreviousReadInQueue(ctx, key.Namespace, func(ctx context.Context) {
 			defer s.recoverPreviousRead(ctx, &authorized.err)
 			if ctx.Err() == nil {
 				authorized.response, authorized.err = s.readResponse(ctx, user, key, result.backend)
@@ -584,6 +555,21 @@ func (s *server) readPrevious(ctx context.Context, user claims.AuthInfo, key *re
 		return nil, previousReadRPCError(auth.err)
 	}
 	return auth.response, nil
+}
+
+func (s *server) runPreviousReadInQueue(ctx context.Context, namespace string, run func(context.Context)) error {
+	if _, inline := s.queue.(*scheduler.NoopQueue); inline {
+		// Release on callback completion so a timed-out watch cannot free
+		// the slot while its backend or authorization call is still running.
+		slots := s.previousReads.inline
+		select {
+		case slots <- struct{}{}:
+			defer func() { <-slots }()
+		case <-ctx.Done():
+			return context.Cause(ctx)
+		}
+	}
+	return s.runInQueue(ctx, namespace, "read", run)
 }
 
 func previousReadRPCError(err error) error {

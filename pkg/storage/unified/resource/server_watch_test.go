@@ -1468,39 +1468,61 @@ func TestWatchPreviousReadAuthorizesUnderQoS(t *testing.T) {
 	}
 }
 
-func TestWatchPreviousReadRetriesUseIndependentDeadlines(t *testing.T) {
+func TestWatchPreviousReadSharesRetriesButKeepsIndependentDeadlines(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		const budget = 100 * time.Millisecond
-		retryDeadlines := make(chan time.Time, 2)
+		release := make(chan struct{})
+		releaseRetry := sync.OnceFunc(func() { close(release) })
+		defer releaseRetry()
 		srv, backend := newPreviousReadTestServer(t, func(ctx context.Context, attempt int64) {
 			if attempt == 1 {
 				<-ctx.Done()
-				return
-			}
-			deadline, _ := ctx.Deadline()
-			retryDeadlines <- deadline
-			select {
-			case <-ctx.Done():
-			case <-time.After(2 * time.Millisecond):
+			} else {
+				<-release
 			}
 		})
 		srv.queueConfig.Timeout = budget
 
 		first := startPreviousRead(t.Context(), srv)
 		time.Sleep(time.Millisecond)
-		earlyDeadline := time.Now().Add(budget)
 		early := startPreviousRead(t.Context(), srv)
 		time.Sleep(budget/2 - time.Millisecond)
-		lateDeadline := time.Now().Add(budget)
-		require.EqualValues(t, 1, backend.reads.Load(), "the first read is still in flight")
+		late := startPreviousRead(t.Context(), srv)
+		time.Sleep(budget / 2)
+		synctest.Wait()
+		require.EqualValues(t, 2, backend.reads.Load(), "both followers must join one fresh flight")
 
-		rsp, err := readPreviousForTest(t.Context(), srv)
-		require.NoError(t, err, "the late caller has time for its own retry")
-		require.EqualValues(t, previousReadTestRV, rsp.ResourceVersion)
+		newcomer := startPreviousRead(t.Context(), srv)
+		require.EqualValues(t, 2, backend.reads.Load(), "a new caller must join the retry already in flight")
+		time.Sleep(time.Millisecond)
+		synctest.Wait()
 		require.Equal(t, codes.DeadlineExceeded, status.Code(<-first))
+		require.Len(t, early, 1, "the first follower must stop waiting at its deadline")
 		require.Equal(t, codes.DeadlineExceeded, status.Code(<-early))
-		require.EqualValues(t, 3, backend.reads.Load(), "both followers must start independent retries")
-		require.ElementsMatch(t, []time.Time{earlyDeadline, lateDeadline}, []time.Time{<-retryDeadlines, <-retryDeadlines})
+		releaseRetry()
+		require.NoError(t, <-late, "the later follower still has time left")
+		require.NoError(t, <-newcomer)
+	})
+}
+
+func TestWatchPreviousReadBoundsStalledInlineWork(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		release := make(chan struct{})
+		unblock := sync.OnceFunc(func() { close(release) })
+		defer unblock()
+		srv, backend := newPreviousReadTestServer(t, func(context.Context, int64) { <-release })
+		srv.queueConfig.Timeout = time.Millisecond
+
+		for range previousReadsMaxInline + 1 {
+			_, err := readPreviousForTest(t.Context(), srv)
+			require.Equal(t, codes.DeadlineExceeded, status.Code(err))
+		}
+		synctest.Wait()
+		require.EqualValues(t, previousReadsMaxInline, backend.reads.Load(), "timing out must not free a slot while its callback is still running")
+		unblock()
+		synctest.Wait()
+		_, err := readPreviousForTest(t.Context(), srv)
+		require.NoError(t, err, "a finished callback releases its slot")
 	})
 }
 
@@ -1654,7 +1676,7 @@ func (q heldPreviousReadQueue) Enqueue(ctx context.Context, _ string, run func()
 	}
 }
 
-func TestWatchPreviousReadRetryRechecksCacheAfterAdmission(t *testing.T) {
+func TestWatchPreviousReadRetriesShareBackendAdmission(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		const budget = 100 * time.Millisecond
 		srv, backend := newPreviousReadTestServer(t, func(ctx context.Context, attempt int64) {
@@ -1680,14 +1702,16 @@ func TestWatchPreviousReadRetryRechecksCacheAfterAdmission(t *testing.T) {
 		time.Sleep(budget / 2)
 		synctest.Wait()
 		require.Equal(t, codes.DeadlineExceeded, status.Code(<-first))
-		require.Len(t, queue, 2, "both retries reached the queue before either one completed")
+		require.Len(t, queue, 1, "only one retry should queue a backend read")
 
 		(<-queue)()
+		synctest.Wait()
+		require.Len(t, queue, 1, "the follower still needs a slot to authorize")
 		(<-queue)()
 		synctest.Wait()
 		require.NoError(t, <-lateA)
 		require.NoError(t, <-lateB)
-		require.EqualValues(t, 2, backend.reads.Load(), "the second admitted retry must use the cached result")
+		require.EqualValues(t, 2, backend.reads.Load(), "only the initial read and shared retry reach the backend")
 		require.Equal(t, 2, checks, "both callers must still authorize the revision")
 	})
 }
@@ -1697,8 +1721,9 @@ func TestPreviousReadsCache(t *testing.T) {
 		p := newPreviousReads()
 		key := bookmarkWrittenEvent(200).Key
 		read := func(rv int64, next *BackendReadResponse) *BackendReadResponse {
-			result := p.read(t.Context(), key, rv, time.Second, func(_ context.Context, lookup previousReadLookup) previousReadResult {
-				return previousReadResult{backend: lookup(func() *BackendReadResponse { return next })}
+			result := p.read(t.Context(), key, rv, time.Second, func(_ context.Context, publish func(*BackendReadResponse)) previousReadResult {
+				publish(next)
+				return previousReadResult{backend: next}
 			})
 			require.NoError(t, result.err)
 			return result.backend
