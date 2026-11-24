@@ -3,7 +3,9 @@ package state
 import (
 	"context"
 	"errors"
+	"runtime"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -88,6 +90,22 @@ func (b *blockingSeriesStore) SaveRecordingSeriesForRule(ctx context.Context, ke
 
 func newBlockingSeriesStore() *blockingSeriesStore {
 	return &blockingSeriesStore{fakeSeriesStore: &fakeSeriesStore{}, entered: make(chan struct{}), release: make(chan struct{})}
+}
+
+// waitBlockedOnMutex waits until a goroutine running fn is blocked on a mutex. A mutex wait is not
+// durably blocking for testing/synctest, so the stacks are the only proof that the call is waiting.
+func waitBlockedOnMutex(t *testing.T, fn string) {
+	t.Helper()
+	require.Eventually(t, func() bool {
+		buf := make([]byte, 1<<20)
+		buf = buf[:runtime.Stack(buf, true)]
+		for _, g := range strings.Split(string(buf), "\n\n") {
+			if strings.Contains(g, "Mutex.Lock]") && strings.Contains(g, fn) {
+				return true
+			}
+		}
+		return false
+	}, 10*time.Second, time.Millisecond, "no goroutine is blocked on a mutex in "+fn)
 }
 
 type fakeInstanceAndSeriesStore struct {
@@ -284,6 +302,19 @@ func TestRecordingSeriesManager_Budget(t *testing.T) {
 		require.EqualValues(t, 1, m.Tracked())
 	})
 
+	t.Run("a target change at a full budget keeps tracking the series", func(t *testing.T) {
+		b := NewSeriesBudget(3)
+		m, _ := newSeriesTestManager(RecordingSeriesCfg{Budget: b}, nil)
+		rule := seriesTestRule("r")
+		m.Track(rule, seriesTarget1, seriesTick0, seriesLabels(1, 2, 3))
+
+		stale := m.Track(rule, seriesTarget2, seriesTick1, seriesLabels(1, 2, 3))
+
+		require.Empty(t, labelIDs(stale), "the series are still output, so the old target gets no marker")
+		require.EqualValues(t, 3, m.Tracked(), "the room of the old target was free for the new one")
+		require.EqualValues(t, 3, b.Used())
+	})
+
 	t.Run("a series the budget refused is still live when the target changes", func(t *testing.T) {
 		b := NewSeriesBudget(2)
 		m, _ := newSeriesTestManager(RecordingSeriesCfg{Budget: b}, nil)
@@ -292,8 +323,8 @@ func TestRecordingSeriesManager_Budget(t *testing.T) {
 
 		stale := m.Track(rule, seriesTarget2, seriesTick1, seriesLabels(1, 2, 3))
 
-		require.Empty(t, labelIDs(stale), "series 1 and 2 are still output, even though the full budget kept them out of the new target")
-		require.Zero(t, b.Used())
+		require.Empty(t, labelIDs(stale), "series 1 and 2 are still output")
+		require.EqualValues(t, 2, b.Used(), "series 3 is refused, 1 and 2 are tracked at the new target")
 	})
 
 	t.Run("without a budget there is no limit", func(t *testing.T) {
@@ -492,9 +523,11 @@ func TestRecordingSeriesManager_Persist(t *testing.T) {
 			defer close(flushed)
 			flushErr = m.Flush(ctx, key)
 		}()
+		waitBlockedOnMutex(t, "RecordingSeriesManager).save")
 		select {
 		case <-flushed:
-		case <-time.After(100 * time.Millisecond):
+			t.Fatal("flush saved while an older save was in flight")
+		default:
 		}
 		close(store.release)
 		require.NoError(t, <-persisted)
@@ -522,11 +555,11 @@ func TestRecordingSeriesManager_Persist(t *testing.T) {
 			defer close(deleted)
 			deleteErr = m.Delete(ctx, key)
 		}()
+		waitBlockedOnMutex(t, "RecordingSeriesManager).Delete")
 		select {
 		case <-deleted:
-			close(store.release)
 			t.Fatal("delete returned while a save was in flight")
-		case <-time.After(100 * time.Millisecond):
+		default:
 		}
 		close(store.release)
 		require.NoError(t, <-persisted)

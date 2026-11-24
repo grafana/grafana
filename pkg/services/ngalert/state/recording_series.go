@@ -115,6 +115,8 @@ func (m *RecordingSeriesManager) Track(rule *models.AlertRule, target SeriesTarg
 	tr := m.lockRule(key)
 	defer tr.mtx.Unlock()
 	c := tr.cache(target)
+	// The old target gives its room back first, so a rule with no budget headroom keeps tracking.
+	stale := m.takeOtherTargets(tr, key, target, series)
 
 	// An entry whose time is the tick was output in it. Counting them avoids a set per tick.
 	seen := 0
@@ -141,8 +143,7 @@ func (m *RecordingSeriesManager) Track(rule *models.AlertRule, target SeriesTarg
 		m.reportUntracked(key, tr, untracked)
 	}
 
-	stale := m.takeMissing(rule, c, target, at, seen)
-	stale = append(stale, m.takeOtherTargets(tr, key, target, series)...)
+	stale = append(stale, m.takeMissing(rule, c, target, at, seen)...)
 	if len(stale) > 0 {
 		tr.dirty = true
 	}
