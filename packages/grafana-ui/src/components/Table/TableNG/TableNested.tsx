@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
 import memoize from 'micro-memoize';
-import { useCallback, useId, useMemo, useRef, useState } from 'react';
+import { forwardRef, useCallback, useId, useMemo, useRef, useState, type ForwardedRef } from 'react';
 
 import { type DataFrame, type Field, FieldType } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -53,12 +53,14 @@ import {
   useColumnBuilderFromFields,
   useDataGridRows,
 } from './render-hooks';
+import { useTableScrollHandle } from './scrollApi';
 import { getGridStyles, IS_SAFARI_26 } from './styles';
 import {
   type CellRootRenderer,
   type FromFieldsResult,
   type InspectCellProps,
   type TableColumn,
+  type TableNGApi,
   type TableNGProps,
   type TableRow,
   type TableSummaryRow,
@@ -79,7 +81,10 @@ import {
 const EXPANDED_COLUMN_KEY = 'expanded';
 type OnCellClick = NonNullable<DataGridProps<TableRow, TableSummaryRow>['onCellClick']>;
 
-export function TableNested(props: TableNGProps & { nestedFramesField: Field<DataFrame[]> }) {
+function TableNestedView(
+  props: TableNGProps & { nestedFramesField: Field<DataFrame[]> },
+  ref: ForwardedRef<TableNGApi>
+) {
   const {
     cellHeight,
     data,
@@ -398,6 +403,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     tableRefreshEnabled,
     transparent,
   });
+  useTableScrollHandle(ref, gridRef, paginatedRows.length);
 
   const displayedParentRowNumbers = useMemo(
     () => getDisplayedParentRowNumbers(paginatedRows, pageRangeStart),
@@ -808,3 +814,6 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     />
   );
 }
+
+export const TableNested = forwardRef(TableNestedView);
+TableNested.displayName = 'TableNested';

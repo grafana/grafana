@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { Suspense, useMemo, useRef } from 'react';
+import { forwardRef, Suspense, useMemo, useRef } from 'react';
 
 import { cacheFieldDisplayNames, type DataFrame, type Field, FieldType } from '@grafana/data';
 
@@ -10,7 +10,7 @@ import { TableFilterProvider } from './TableFilterContext';
 import { TableFlat } from './TableFlat';
 import { TableNested } from './TableNested';
 import { IS_SAFARI_26 } from './styles';
-import { type TableNGProps } from './types';
+import { type TableNGApi, type TableNGProps } from './types';
 import { getDisplayName } from './utils';
 
 // Display names are cached (or not) across the whole frame at once, so a sample of the first
@@ -35,7 +35,7 @@ function Safari26Wrapper(props: { children: React.ReactNode }) {
   return <div className={className}>{props.children}</div>;
 }
 
-export function TableNG(props: TableNGProps) {
+export const TableNG = forwardRef<TableNGApi, TableNGProps>(function TableNG(props, ref) {
   const preparedFrames = useRef({
     structureRev: props.structureRev,
     cache: new WeakMap<
@@ -171,9 +171,9 @@ export function TableNG(props: TableNGProps) {
   const tableHasGeoCell = useMemo(() => hasGeoCell(data), [data]);
 
   const inner = nestedDataField ? (
-    <TableNested {...props} data={data} nestedFramesField={nestedDataField} />
+    <TableNested {...props} data={data} nestedFramesField={nestedDataField} ref={ref} />
   ) : (
-    <TableFlat {...props} data={data} />
+    <TableFlat {...props} data={data} ref={ref} />
   );
   const rendered = IS_SAFARI_26 ? <Safari26Wrapper>{inner}</Safari26Wrapper> : inner;
   const table = tableHasGeoCell ? (
@@ -185,4 +185,4 @@ export function TableNG(props: TableNGProps) {
   );
 
   return <TableFilterProvider props={props}>{table}</TableFilterProvider>;
-}
+});
