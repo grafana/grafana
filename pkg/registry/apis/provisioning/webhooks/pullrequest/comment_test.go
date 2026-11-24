@@ -101,6 +101,25 @@ func TestGenerateComment_AnnotationWarnings(t *testing.T) {
 	require.NotContains(t, body, "old-key")
 }
 
+func TestGenerateComment_AnnotationWarningLimits(t *testing.T) {
+	prefix := strings.Repeat("x", maxErrorLength-1)
+	parsed := &resources.ParsedResource{
+		InvalidAnnotations: []string{"a", "b", "c", "d", prefix + "é", "hidden-key"},
+		DryRunResponse:     &unstructured.Unstructured{},
+	}
+	changes := make([]fileChangeInfo, maxDisplayedChanges+2)
+	for i := range changes {
+		changes[i] = fileChangeInfo{Change: repository.VersionedFileChange{Path: fmt.Sprintf("dash-%d.yaml", i)}, Parsed: parsed}
+	}
+
+	body, err := NewCommenter(false, URLProvider{}).(*commenter).generateComment(t.Context(), changeInfo{Changes: changes})
+	require.NoError(t, err)
+	require.Contains(t, body, fmt.Sprintf("    %q: \"a\" \"b\" \"c\" \"d\" %q … (1 more)\n", "dash-9.yaml", prefix+"…"))
+	require.NotContains(t, body, "hidden-key")
+	require.NotContains(t, body, "dash-10.yaml")
+	require.Contains(t, body, "\n\n2 more files with ignored annotations.")
+}
+
 func TestCommenter_Comment_FailedToComment(t *testing.T) {
 	repo, client := newPullRequestRepo(t)
 	client.On("CreatePullRequestComment", context.Background(), 1, mock.Anything).Return(errors.New("failed"))
