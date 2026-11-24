@@ -1534,6 +1534,9 @@
         "alert-rules_other": "{{formatted}} 警示規則",
         "recording-rules_other": "{{formatted}} 錄製規則"
       },
+      "saved-searches": {
+        "applied-default": ""
+      },
       "search": {
         "default-policy-unavailable": "目前尚不支援依預設政策篩選。",
         "folders-disabled": "清除篩選條件以按資料夾瀏覽",
@@ -3003,12 +3006,12 @@
       },
       "empty": "",
       "error": "",
-      "load-more": "",
       "restore": {
         "body": "",
         "confirm": "",
         "conflict": "",
         "error": "",
+        "recording-title": "",
         "restoring": "",
         "title": ""
       },
@@ -3163,10 +3166,6 @@
         "group-name": "評估群組名稱",
         "group-text": "所選群組中的所有規則都會每 {{evaluateEvery}} 評估一次。",
         "interval-label": "評估間隔",
-        "mode": {
-          "legacy": "使用群組（舊版）",
-          "new": "設定間隔時間"
-        },
         "new-group": "新的評估群組",
         "pause": {
           "alerting": "開啟以暫停評估此警報規則。",
@@ -6690,6 +6689,9 @@
           "description": "按一下或拖曳以貼上面板",
           "title": "貼上面板"
         },
+        "question": {
+          "label": ""
+        },
         "row": {
           "add-label": "新增列",
           "group-label": "分組為列"
@@ -6813,6 +6815,7 @@
         "objects": "對象",
         "panel": "面板",
         "panels": "面板",
+        "question": "",
         "row": "列",
         "rows": "列",
         "section-filters-set": "篩選條件",
@@ -6862,6 +6865,34 @@
           "empty": "（空）",
           "no-title": "<無標題>"
         }
+      },
+      "questions": {
+        "add-question": "",
+        "description-dashboard": "",
+        "description-row": "",
+        "description-tab": "",
+        "new-question": "",
+        "placeholder": "",
+        "question": "",
+        "question-title": "",
+        "question-title-description": "",
+        "question-title-placeholder": "",
+        "sources": {
+          "collapse": "",
+          "description-dashboard": "",
+          "description-row": "",
+          "description-tab": "",
+          "entire-dashboard": "",
+          "expand": "",
+          "label": "",
+          "no-panels": "",
+          "unavailable-panel": "",
+          "untitled-row": "",
+          "untitled-tab": "",
+          "panel-count_other": "",
+          "picked-count_other": ""
+        },
+        "title": ""
       },
       "row": {
         "header": {
@@ -7123,6 +7154,8 @@
     },
     "transformation-operation-row": {
       "body-delete": "請注意，移除一個轉換可能會破壞其他轉換。如果只有一個轉換，您將返回主選擇畫面。",
+      "expander-close": "",
+      "expander-open": "",
       "render-actions": {
         "confirmText-delete": "刪除",
         "title-debug": "除錯",
@@ -8090,6 +8123,20 @@
       },
       "selection-options": "選擇選項",
       "static-options-legend": "靜態選項"
+    },
+    "question-actions": {
+      "add": "",
+      "remove": "",
+      "reorder": "",
+      "update": ""
+    },
+    "question-edit": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
+    "question-edit-actions": {
+      "tooltip-question-settings": ""
     },
     "refresh-select": {
       "options": {
@@ -14093,32 +14140,6 @@
     },
     "units": {
       "clear-tooltip": "清除單元選擇"
-    },
-    "var-mapping-checks": {
-      "data-macro": "",
-      "not-allowed": "",
-      "not-found": "",
-      "not-number": "",
-      "not-one-value": "",
-      "out-of-range": "",
-      "resolves": "",
-      "values": ""
-    },
-    "var-mapping-toggle": {
-      "aria-label-picker": "",
-      "fallback-off": "",
-      "fallback-on": "",
-      "group-matching": "",
-      "group-other": "",
-      "hint-boolean": "",
-      "hint-number": "",
-      "hint-option": "",
-      "hint-option-no-fallback": "",
-      "new-variable": "",
-      "option-current": "",
-      "placeholder": "",
-      "use-fixed-value": "",
-      "use-variable": ""
     }
   },
   "org": {
@@ -14215,7 +14236,8 @@
     },
     "get-panel-links-variable-suggestions": {
       "label": {
-        "all-variables": "所有變數"
+        "all-variables": "所有變數",
+        "current-dashboard-tabs": ""
       }
     },
     "header-menu": {
@@ -15123,7 +15145,6 @@
     "finish-step": {
       "description-enable-previews": "在拉取請求中新增儀表板變更的圖片預覽。您的 Grafana 儀表板圖像將在您的 Git 儲存庫中共用，並且任何具有儲存庫存取權限者都可以看見。",
       "description-image-rendering": "需要圖片轉譯。<2>設定圖片轉譯</2>",
-      "description-read-only": "無法透過 Grafana 修改資源。",
       "description-sync-interval": "從儲存庫同步變更的頻率",
       "error-sync-interval-required": "同步間隔為必填",
       "label-enable-previews": "在拉取請求中啟用儀表板預覽",
@@ -15885,6 +15906,17 @@
       "button-submitting": "正在提交…",
       "error-instance-repository-exists": "執行個體儲存庫已存在",
       "error-save-repository-setting": "無法儲存儲存庫設定"
+    },
+    "workflow": {
+      "direct-push": "",
+      "direct-push-description": "",
+      "direct-push-description-no-branch": "",
+      "merge-request": "",
+      "merge-request-description": "",
+      "merge-request-description-no-branch": "",
+      "pull-request": "",
+      "pull-request-description": "",
+      "pull-request-description-no-branch": ""
     }
   },
   "public-dashboard": {
