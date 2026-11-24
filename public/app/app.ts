@@ -105,6 +105,7 @@ import { JourneyTrackerImpl } from './core/services/journey/JourneyTrackerImpl';
 import { JOURNEY_REGISTRY } from './core/services/journey/journeyRegistry';
 import { KeybindingSrv } from './core/services/keybindingSrv';
 import { pageHistorySrv } from './core/services/pageHistory/pageHistorySrv';
+import { toPageHistoryItem } from './core/services/pageHistory/toPageHistoryItem';
 import { getMessageFromError } from './core/utils/errors';
 import { isFrontendService } from './core/utils/isFrontendService';
 import { startMeasure, stopMeasure } from './core/utils/metrics';
@@ -251,8 +252,8 @@ export class GrafanaApp {
       setLocationSrv(locationService);
       setCorrelationsService(new CorrelationsService());
       setKindRegistry(kindRegistry);
-      // Only reading is exposed: not the service's `clear` or `start`.
-      setPageHistoryService({ getEntries: () => pageHistorySrv.getEntries() });
+      // Only reading is exposed, not the service's `clear` or `start`, and only the public fields of each row, copied.
+      setPageHistoryService({ getEntries: async () => (await pageHistorySrv.getEntries()).map(toPageHistoryItem) });
       setPanelScreenshotService(new PanelScreenshotServiceImpl());
       setEmbeddedDashboard(EmbeddedDashboardLazy);
       setTimeZoneResolver(() => contextSrv.user.timezone);
