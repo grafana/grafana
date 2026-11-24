@@ -130,11 +130,53 @@ function listResources(
     : undefined;
 }
 
+function toAPIResourceDiscovery({ resource, kind, verbs, namespaced = true, subresources = {} }: ServedAPIResource) {
+  const subresourceList = Object.entries(subresources).map(([subresource, subresourceVerbs]) => ({
+    subresource,
+    verbs: subresourceVerbs,
+  }));
+  return {
+    resource,
+    responseKind: { group: '', version: '', kind },
+    scope: namespaced ? 'Namespaced' : 'Cluster',
+    singularResource: '',
+    verbs,
+    subresources: subresourceList.length > 0 ? subresourceList : undefined,
+  };
+}
+
+function toAPIGroupDiscoveryList(
+  served: Readonly<Record<string, readonly string[]>>,
+  resources: Readonly<Record<string, readonly ServedAPIResource[]>>
+) {
+  const items = Object.entries(served).map(([group, versions]) => ({
+    metadata: { name: group },
+    versions: versions.map((version) => {
+      const list = listResources(served, resources, group, version) ?? [];
+      return {
+        version,
+        freshness: 'Current',
+        resources: list.length > 0 ? list.map(toAPIResourceDiscovery) : undefined,
+      };
+    }),
+  }));
+  return { kind: 'APIGroupDiscoveryList', apiVersion: 'apidiscovery.k8s.io/v2', metadata: {}, items };
+}
+
 export function getAPIResourceDiscoveryHandlers(
   served: Readonly<Record<string, readonly string[]>> = SERVED_API_VERSIONS,
   resources: Readonly<Record<string, readonly ServedAPIResource[]>> = SERVED_API_RESOURCES
 ) {
   return [
+    http.get('/apis', ({ request }) => {
+      if (!isAggregatedDiscoveryRequest(request)) {
+        return undefined;
+      }
+      return HttpResponse.json(toAPIGroupDiscoveryList(served, resources), {
+        headers: { 'Content-Type': 'application/json;g=apidiscovery.k8s.io;v=v2;as=APIGroupDiscoveryList' },
+      });
+    }),
+
     http.get('/apis/:group/:version', ({ params }) => {
       const group = String(params.group);
       const version = String(params.version);

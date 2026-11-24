@@ -2,7 +2,7 @@ import { getResponse } from 'msw';
 import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-import {
+import discoveryHandlers, {
   getAPIDiscoveryHandlers,
   getAPIResourceDiscoveryHandlers,
   SERVED_API_RESOURCES,
@@ -141,5 +141,73 @@ describe('API resource discovery handlers', () => {
 
     expect(teams?.status).toBe(200);
     expect(folder?.status).toBe(404);
+  });
+
+  it('answer aggregated GET /apis with every served group version and its resources', async () => {
+    const response = await request(
+      '/apis',
+      { headers: { Accept: AGGREGATED_ACCEPT } },
+      getAPIResourceDiscoveryHandlers()
+    );
+    const body = await response?.json();
+
+    expect(response?.headers.get('Content-Type')).toContain('as=APIGroupDiscoveryList');
+    expect(body.kind).toBe('APIGroupDiscoveryList');
+    expect(body.items.map((item: { metadata: { name: string } }) => item.metadata.name)).toEqual(
+      Object.keys(SERVED_API_VERSIONS)
+    );
+    expect(body.items).toContainEqual({
+      metadata: { name: 'folder.grafana.app' },
+      versions: [
+        {
+          version: 'v1beta1',
+          freshness: 'Current',
+          resources: [
+            {
+              resource: 'folders',
+              responseKind: { group: '', version: '', kind: 'Folder' },
+              scope: 'Namespaced',
+              singularResource: '',
+              verbs: ['create', 'get', 'list', 'patch', 'update'],
+              subresources: [
+                { subresource: 'access', verbs: ['get'] },
+                { subresource: 'counts', verbs: ['get'] },
+                { subresource: 'parents', verbs: ['get'] },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  it('list a version without resources the way Kubernetes does, and keep versions in order of preference', async () => {
+    const response = await request(
+      '/apis',
+      { headers: { Accept: AGGREGATED_ACCEPT } },
+      getAPIResourceDiscoveryHandlers()
+    );
+    const { items } = await response?.json();
+    const versionsOf = (group: string) =>
+      items.find((item: { metadata: { name: string } }) => item.metadata.name === group).versions;
+
+    expect(versionsOf('quotas.grafana.app')).toEqual([{ version: 'v0alpha1', freshness: 'Current' }]);
+    expect(versionsOf('dashboard.grafana.app').map(({ version }: { version: string }) => version)).toEqual(
+      SERVED_API_VERSIONS['dashboard.grafana.app']
+    );
+  });
+
+  it('leave plain group list requests to the other handlers', async () => {
+    await expect(request('/apis', undefined, getAPIResourceDiscoveryHandlers())).resolves.toBeUndefined();
+  });
+
+  it('answer both forms of GET /apis by default', async () => {
+    const plain = await (await request('/apis', undefined, discoveryHandlers))?.json();
+    const aggregated = await (
+      await request('/apis', { headers: { Accept: AGGREGATED_ACCEPT } }, discoveryHandlers)
+    )?.json();
+
+    expect(plain.kind).toBe('APIGroupList');
+    expect(aggregated.kind).toBe('APIGroupDiscoveryList');
   });
 });
