@@ -8,6 +8,7 @@ import {
   findKindByResource,
   getAppKinds,
   getKindGroup,
+  getKinds,
 } from './coreKinds';
 
 describe('getRoute', () => {
@@ -115,6 +116,7 @@ describe('app kinds', () => {
     expect(findKind(group, 'Note')).toBe(note);
     expect(findKind('other.ext.grafana.app', 'Note')).toBeUndefined();
     expect(findKindByResource('notes', group)).toBe(note);
+    expect(getKinds()).toEqual(expect.arrayContaining([CORE_KINDS.dashboard, note]));
   });
 
   it('keeps the core row when a plugin adds a kind that Grafana serves', () => {
