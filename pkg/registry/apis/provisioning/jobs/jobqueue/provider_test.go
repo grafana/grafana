@@ -18,15 +18,15 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
 )
 
 func TestNewWorkers_EachActionHasExactlyOneWorker(t *testing.T) {
-	extra := &actionWorker{action: provisioning.JobActionPullRequest}
-
 	deps := Dependencies{
 		Tracer:             tracing.NewNoopTracerService(),
+		Registry:           prometheus.NewPedanticRegistry(),
 		PerformanceEnabled: func(context.Context) bool { return true },
-		ExtraWorkers:       []jobs.Worker{extra},
+		ScreenshotRenderer: pullrequest.NewNoOpRenderer(),
 	}
 	workers := newWorkers(Config{MaxSyncWorkers: 1}, deps, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
 
@@ -51,13 +51,28 @@ func TestNewWorkers_EachActionHasExactlyOneWorker(t *testing.T) {
 		}
 		assert.Len(t, supporting, 1, "action %q", action)
 	}
-	assert.Same(t, extra, workers[len(workers)-1], "extra workers are appended after the built-in ones")
+}
+
+func TestNewWorkers_AppendsExtraWorkers(t *testing.T) {
+	extra := &actionWorker{action: "custom"}
+	deps := Dependencies{
+		Tracer:             tracing.NewNoopTracerService(),
+		Registry:           prometheus.NewPedanticRegistry(),
+		PerformanceEnabled: func(context.Context) bool { return false },
+		ScreenshotRenderer: pullrequest.NewNoOpRenderer(),
+		ExtraWorkers:       []jobs.Worker{extra},
+	}
+	workers := newWorkers(Config{MaxSyncWorkers: 1}, deps, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+
+	assert.Same(t, extra, workers[len(workers)-1])
 }
 
 func TestNewWorkers_PerformanceDisabledSkipsTestJobs(t *testing.T) {
 	deps := Dependencies{
 		Tracer:             tracing.NewNoopTracerService(),
+		Registry:           prometheus.NewPedanticRegistry(),
 		PerformanceEnabled: func(context.Context) bool { return false },
+		ScreenshotRenderer: pullrequest.NewNoOpRenderer(),
 	}
 	workers := newWorkers(Config{MaxSyncWorkers: 1}, deps, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
 
@@ -83,6 +98,7 @@ func TestProvideJobQueue(t *testing.T) {
 			Tracer:             tracing.NewNoopTracerService(),
 			Registry:           prometheus.NewPedanticRegistry(),
 			PerformanceEnabled: func(context.Context) bool { return false },
+			ScreenshotRenderer: pullrequest.NewNoOpRenderer(),
 		}
 	}
 
@@ -121,7 +137,7 @@ func TestProvideJobQueue(t *testing.T) {
 	})
 }
 
-// actionWorker stands in for a caller-provided worker such as the pull request one.
+// actionWorker stands in for a caller-provided extra worker.
 type actionWorker struct {
 	jobs.Worker
 	action provisioning.JobAction

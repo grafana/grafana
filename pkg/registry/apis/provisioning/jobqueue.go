@@ -12,8 +12,11 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/jobqueue"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
 	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 var _ registry.CanBeDisabled = (*JobQueueService)(nil)
@@ -23,11 +26,19 @@ var _ registry.CanBeDisabled = (*JobQueueService)(nil)
 type JobQueueService struct {
 	builder            *APIBuilder
 	configProvider     apiserver.RestConfigProvider
+	screenshotRenderer pullrequest.ScreenshotRenderer
+	pullRequestURLs    pullrequest.URLProvider
 	disableControllers bool
 	cfg                jobqueue.Config
 }
 
-func ProvideJobQueueService(cfg *setting.Cfg, builder *APIBuilder, configProvider apiserver.RestConfigProvider) *JobQueueService {
+func ProvideJobQueueService(
+	cfg *setting.Cfg,
+	builder *APIBuilder,
+	configProvider apiserver.RestConfigProvider,
+	renderer rendering.Service,
+	blobstore resource.ResourceClient,
+) *JobQueueService {
 	// The jobs informer resyncs on job_poll_interval rather than the controllers'
 	// resync_interval, preserving the job pickup cadence (and config key) of the
 	// polling design this replaced. The driver gets the same value so its
@@ -40,6 +51,8 @@ func ProvideJobQueueService(cfg *setting.Cfg, builder *APIBuilder, configProvide
 	return &JobQueueService{
 		builder:            builder,
 		configProvider:     configProvider,
+		screenshotRenderer: pullrequest.NewScreenshotRenderer(renderer, blobstore),
+		pullRequestURLs:    pullrequest.URLsFromConfig(cfg),
 		disableControllers: cfg.DisableControllers,
 		cfg: jobqueue.Config{
 			ConcurrentDrivers: 3,
@@ -56,6 +69,7 @@ func ProvideJobQueueService(cfg *setting.Cfg, builder *APIBuilder, configProvide
 			MaxSyncWorkers:       10,
 			MaxFileSize:          cfg.ProvisioningMaxFileSize,
 			SyncResourceTimeout:  cfg.ProvisioningSyncResourceTimeout,
+			AllowImageRendering:  cfg.ProvisioningAllowImageRendering,
 		},
 	}
 }
@@ -103,6 +117,8 @@ func (s *JobQueueService) Run(ctx context.Context) error {
 		Tracer:              b.tracer,
 		Registry:            b.registry,
 		PerformanceEnabled:  performanceEnabled,
+		ScreenshotRenderer:  s.screenshotRenderer,
+		PullRequestURLs:     s.pullRequestURLs,
 		ExtraWorkers:        b.extraWorkers,
 	})
 	if err != nil {

@@ -26,20 +26,26 @@ func TestProvideJobQueueService(t *testing.T) {
 		cfg.ProvisioningJobPollInterval = 45 * time.Second
 		cfg.ProvisioningMaxFileSize = 1024
 		cfg.ProvisioningSyncResourceTimeout = 5 * time.Second
+		cfg.ProvisioningAllowImageRendering = true
+		cfg.AppURL = "https://grafana.internal/"
+		cfg.ProvisioningPublicRootURL = "https://grafana.example.com/"
 
-		s := ProvideJobQueueService(cfg, &APIBuilder{}, apiserver.WithoutRestConfig)
+		s := ProvideJobQueueService(cfg, &APIBuilder{}, apiserver.WithoutRestConfig, nil, nil)
 
 		assert.Equal(t, 45*time.Second, s.cfg.JobInterval)
 		assert.Equal(t, int64(1024), s.cfg.MaxFileSize)
 		assert.Equal(t, 5*time.Second, s.cfg.SyncResourceTimeout)
 		assert.Equal(t, jobClaimExpiry/3, s.cfg.LeaseRenewalInterval)
+		assert.True(t, s.cfg.AllowImageRendering)
+		assert.Equal(t, "https://grafana.internal/", s.pullRequestURLs.Internal(t.Context(), "ns"))
+		assert.Equal(t, "https://grafana.example.com/", s.pullRequestURLs.Public(t.Context(), "ns"))
 	})
 
 	t.Run("falls back to the default poll interval", func(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.ProvisioningJobPollInterval = 0
 
-		s := ProvideJobQueueService(cfg, &APIBuilder{}, apiserver.WithoutRestConfig)
+		s := ProvideJobQueueService(cfg, &APIBuilder{}, apiserver.WithoutRestConfig, nil, nil)
 
 		assert.Equal(t, setting.ProvisioningJobPollIntervalDefault, s.cfg.JobInterval)
 	})
@@ -59,7 +65,7 @@ func TestJobQueueService_IsDisabled(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := &setting.Cfg{DisableControllers: tc.disableControllers}
-			assert.Equal(t, tc.disabled, ProvideJobQueueService(cfg, tc.builder, apiserver.WithoutRestConfig).IsDisabled())
+			assert.Equal(t, tc.disabled, ProvideJobQueueService(cfg, tc.builder, apiserver.WithoutRestConfig, nil, nil).IsDisabled())
 		})
 	}
 }
@@ -99,11 +105,11 @@ func TestJobQueueService_Run(t *testing.T) {
 		})
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
-		require.NoError(t, ProvideJobQueueService(&setting.Cfg{}, &APIBuilder{}, configProvider).Run(ctx))
+		require.NoError(t, ProvideJobQueueService(&setting.Cfg{}, &APIBuilder{}, configProvider, nil, nil).Run(ctx))
 	})
 
 	t.Run("returns the rest config error", func(t *testing.T) {
-		err := ProvideJobQueueService(&setting.Cfg{}, &APIBuilder{}, apiserver.WithoutRestConfig).Run(context.Background())
+		err := ProvideJobQueueService(&setting.Cfg{}, &APIBuilder{}, apiserver.WithoutRestConfig, nil, nil).Run(context.Background())
 		require.Error(t, err)
 	})
 }
@@ -117,7 +123,7 @@ func runJobQueueService(t *testing.T, configProvider apiserver.RestConfigProvide
 	builder := &APIBuilder{tracer: tracing.NewNoopTracerService(), registry: prometheus.NewPedanticRegistry()}
 	done := make(chan error, 1)
 	go func() {
-		done <- ProvideJobQueueService(&setting.Cfg{}, builder, configProvider).Run(ctx)
+		done <- ProvideJobQueueService(&setting.Cfg{}, builder, configProvider, nil, nil).Run(ctx)
 	}()
 	return done, cancel
 }

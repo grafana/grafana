@@ -24,6 +24,7 @@ import (
 	releaseresourcespkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/releaseresources"
 	jobsync "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
 )
 
 // orphanCleanupConcurrency bounds the parallel resource operations of the
@@ -43,6 +44,8 @@ type Config struct {
 	// MaxFileSize caps the size in bytes of files read during sync. <=0 disables the check.
 	MaxFileSize         int64
 	SyncResourceTimeout time.Duration
+	// AllowImageRendering embeds dashboard screenshots in pull request comments.
+	AllowImageRendering bool
 }
 
 // Dependencies are the services the job queue is built from. They differ
@@ -64,7 +67,11 @@ type Dependencies struct {
 	Registry            prometheus.Registerer
 	// PerformanceEnabled is evaluated per job to gate the synthetic load-testing worker.
 	PerformanceEnabled func(ctx context.Context) bool
-	// ExtraWorkers are appended to the built-in workers, e.g. the pull request worker.
+	// ScreenshotRenderer and PullRequestURLs back the pull request worker's
+	// comments. Use pullrequest.NewNoOpRenderer where nothing can render dashboards.
+	ScreenshotRenderer pullrequest.ScreenshotRenderer
+	PullRequestURLs    pullrequest.URLProvider
+	// ExtraWorkers are appended to the built-in workers.
 	ExtraWorkers []jobs.Worker
 }
 
@@ -162,6 +169,11 @@ func newWorkers(cfg Config, deps Dependencies, metrics jobs.JobMetrics) []jobs.W
 		migrateExportWorker,
 		syncWorker,
 	)
+	pullRequestWorker := pullrequest.NewPullRequestWorker(
+		pullrequest.NewEvaluator(deps.ScreenshotRenderer, resources.NewParserFactory(deps.Clients), deps.PullRequestURLs, deps.Registry),
+		pullrequest.NewCommenter(cfg.AllowImageRendering, deps.PullRequestURLs),
+		deps.Registry,
+	)
 
 	return append([]jobs.Worker{
 		syncWorker,
@@ -174,5 +186,6 @@ func newWorkers(cfg Config, deps Dependencies, metrics jobs.JobMetrics) []jobs.W
 		deleteresourcespkg.NewWorker(deps.ResourceLister, deps.Clients, orphanCleanupConcurrency),
 		// A no-op unless provisioning.performance is enabled.
 		perftest.NewWorker(deps.PerformanceEnabled),
+		pullRequestWorker,
 	}, deps.ExtraWorkers...)
 }

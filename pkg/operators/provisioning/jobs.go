@@ -49,9 +49,9 @@ func buildJobQueue(
 		return nil, fmt.Errorf("failed to get repository factory: %w", err)
 	}
 
-	prWorker, err := buildPullRequestWorker(&controllerCfg.ControllerConfig, parsers, registry)
+	urlProvider, err := controllerCfg.URLProvider()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get URL provider: %w", err)
 	}
 
 	return jobqueue.ProvideJobQueue(
@@ -77,21 +77,11 @@ func buildJobQueue(
 			Tracer:              tracer,
 			Registry:            registry,
 			PerformanceEnabled:  performanceEnabled,
-			ExtraWorkers:        []jobs.Worker{prWorker},
+			// The operator has no rendering service, so pull request comments carry no screenshots.
+			ScreenshotRenderer: pullrequest.NewNoOpRenderer(),
+			PullRequestURLs:    pullrequest.URLProvider{Internal: urlProvider, Public: urlProvider},
 		},
 	)
-}
-
-func buildPullRequestWorker(controllerCfg *ControllerConfig, parsers resources.ParserFactory, registry prometheus.Registerer) (jobs.Worker, error) {
-	urlProvider, err := controllerCfg.URLProvider()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get URL provider: %w", err)
-	}
-
-	urls := pullrequest.URLProvider{Internal: urlProvider, Public: urlProvider}
-	evaluator := pullrequest.NewEvaluator(pullrequest.NewNoOpRenderer(), parsers, urls, registry)
-	commenter := pullrequest.NewCommenter(false, urls)
-	return pullrequest.NewPullRequestWorker(evaluator, commenter, registry), nil
 }
 
 // performanceEnabled is evaluated per job via OpenFeature so the flag behaves

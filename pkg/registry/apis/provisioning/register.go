@@ -371,7 +371,6 @@ func RegisterAPIService(
 	orgSvc org.Service,
 	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
-	extraWorkers []jobs.Worker,
 	repoFactory repository.Factory,
 	connectionFactory connection.Factory,
 	quotaGetter quotas.QuotaGetter,
@@ -433,7 +432,7 @@ func RegisterAPIService(
 		access,
 		tracer,
 		extraBuilders,
-		extraWorkers,
+		nil, // extraWorkers: JobQueueService builds every worker
 		jobHistoryConfig,
 		allowedTargets,
 		supportedResourceProvider,
@@ -485,7 +484,7 @@ func RegisterAPIService(
 		access,
 		tracer,
 		extraBuilders,
-		extraWorkers,
+		nil, // extraWorkers: JobQueueService builds every worker
 		jobHistoryConfig,
 		allowedTargets,
 		supportedResourceProvider,

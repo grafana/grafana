@@ -65,7 +65,6 @@ import (
 	provisioning3 "github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/extras"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
 	query2 "github.com/grafana/grafana/pkg/registry/apis/query"
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/clock"
@@ -966,33 +965,31 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	supportedResourceProvider, err := provisioning3.ProvideSupportedResourceProvider(cfg)
-	if err != nil {
-		return nil, err
-	}
-	webhookExtraBuilder := webhooks.ProvideWebhooksWithImages(cfg, renderingService, v5, eventualRestConfigProvider, supportedResourceProvider, registerer)
+	webhookExtraBuilder := webhooks.ProvideWebhooksWithImages(cfg, renderingService, v5, registerer)
 	v13 := extras.ProvideProvisioningExtraAPIs(webhookExtraBuilder)
-	pullRequestWorker := pullrequest.ProvidePullRequestWorker(cfg, renderingService, v5, eventualRestConfigProvider, supportedResourceProvider, registerer)
-	v14 := extras.ProvideExtraWorkers(pullRequestWorker)
 	factory := github.ProvideFactory()
-	v15 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, decryptService, factory, webhookExtraBuilder, registerer)
-	repositoryFactory, err := extras.ProvideFactoryFromConfig(cfg, tracingService, v15)
+	v14 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, decryptService, factory, webhookExtraBuilder, registerer)
+	repositoryFactory, err := extras.ProvideFactoryFromConfig(cfg, tracingService, v14)
 	if err != nil {
 		return nil, err
 	}
 	githubFactory := github2.ProvideFactory()
-	v16 := extras.ProvideProvisioningOSSConnectionExtras(cfg, decryptService, githubFactory, factory, registerer)
-	connectionFactory, err := extras.ProvideConnectionFactoryFromConfig(cfg, tracingService, v16)
+	v15 := extras.ProvideProvisioningOSSConnectionExtras(cfg, decryptService, githubFactory, factory, registerer)
+	connectionFactory, err := extras.ProvideConnectionFactoryFromConfig(cfg, tracingService, v15)
 	if err != nil {
 		return nil, err
 	}
 	quotaGetter := extras.ProvideQuotaGetter(cfg)
-	apiBuilder, err := provisioning3.RegisterAPIService(ctx, cfg, featureToggles, apiserverService, registerer, v5, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, orgService, tracingService, v13, v14, repositoryFactory, connectionFactory, quotaGetter, subscriberService, grafanaRouter, supportedResourceProvider)
+	supportedResourceProvider, err := provisioning3.ProvideSupportedResourceProvider(cfg)
+	if err != nil {
+		return nil, err
+	}
+	apiBuilder, err := provisioning3.RegisterAPIService(ctx, cfg, featureToggles, apiserverService, registerer, v5, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, orgService, tracingService, v13, repositoryFactory, connectionFactory, quotaGetter, subscriberService, grafanaRouter, supportedResourceProvider)
 	if err != nil {
 		return nil, err
 	}
 	historyJobCleanupService := provisioning3.ProvideHistoryJobCleanupService(cfg, apiBuilder, eventualRestConfigProvider)
-	jobQueueService := provisioning3.ProvideJobQueueService(cfg, apiBuilder, eventualRestConfigProvider)
+	jobQueueService := provisioning3.ProvideJobQueueService(cfg, apiBuilder, eventualRestConfigProvider, renderingService, v5)
 	healthService := grpcserver.ProvideHealthService(grpcserverProvider)
 	reflectionService, err := grpcserver.ProvideReflectionService(cfg, grpcserverProvider)
 	if err != nil {
@@ -1774,33 +1771,31 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	supportedResourceProvider, err := provisioning3.ProvideSupportedResourceProvider(cfg)
-	if err != nil {
-		return nil, err
-	}
-	webhookExtraBuilder := webhooks.ProvideWebhooksWithImages(cfg, renderingService, v5, eventualRestConfigProvider, supportedResourceProvider, registerer)
+	webhookExtraBuilder := webhooks.ProvideWebhooksWithImages(cfg, renderingService, v5, registerer)
 	v13 := extras.ProvideProvisioningExtraAPIs(webhookExtraBuilder)
-	pullRequestWorker := pullrequest.ProvidePullRequestWorker(cfg, renderingService, v5, eventualRestConfigProvider, supportedResourceProvider, registerer)
-	v14 := extras.ProvideExtraWorkers(pullRequestWorker)
 	factory := github.ProvideFactory()
-	v15 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, decryptService, factory, webhookExtraBuilder, registerer)
-	repositoryFactory, err := extras.ProvideFactoryFromConfig(cfg, tracingService, v15)
+	v14 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, decryptService, factory, webhookExtraBuilder, registerer)
+	repositoryFactory, err := extras.ProvideFactoryFromConfig(cfg, tracingService, v14)
 	if err != nil {
 		return nil, err
 	}
 	githubFactory := github2.ProvideFactory()
-	v16 := extras.ProvideProvisioningOSSConnectionExtras(cfg, decryptService, githubFactory, factory, registerer)
-	connectionFactory, err := extras.ProvideConnectionFactoryFromConfig(cfg, tracingService, v16)
+	v15 := extras.ProvideProvisioningOSSConnectionExtras(cfg, decryptService, githubFactory, factory, registerer)
+	connectionFactory, err := extras.ProvideConnectionFactoryFromConfig(cfg, tracingService, v15)
 	if err != nil {
 		return nil, err
 	}
 	quotaGetter := extras.ProvideQuotaGetter(cfg)
-	apiBuilder, err := provisioning3.RegisterAPIService(ctx, cfg, featureToggles, apiserverService, registerer, v5, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, orgService, tracingService, v13, v14, repositoryFactory, connectionFactory, quotaGetter, subscriberService, grafanaRouter, supportedResourceProvider)
+	supportedResourceProvider, err := provisioning3.ProvideSupportedResourceProvider(cfg)
+	if err != nil {
+		return nil, err
+	}
+	apiBuilder, err := provisioning3.RegisterAPIService(ctx, cfg, featureToggles, apiserverService, registerer, v5, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, orgService, tracingService, v13, repositoryFactory, connectionFactory, quotaGetter, subscriberService, grafanaRouter, supportedResourceProvider)
 	if err != nil {
 		return nil, err
 	}
 	historyJobCleanupService := provisioning3.ProvideHistoryJobCleanupService(cfg, apiBuilder, eventualRestConfigProvider)
-	jobQueueService := provisioning3.ProvideJobQueueService(cfg, apiBuilder, eventualRestConfigProvider)
+	jobQueueService := provisioning3.ProvideJobQueueService(cfg, apiBuilder, eventualRestConfigProvider, renderingService, v5)
 	healthService := grpcserver.ProvideHealthService(grpcserverProvider)
 	reflectionService, err := grpcserver.ProvideReflectionService(cfg, grpcserverProvider)
 	if err != nil {
