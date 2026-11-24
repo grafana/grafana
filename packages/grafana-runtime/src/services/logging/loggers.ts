@@ -8,6 +8,7 @@ export const Loggers = {
   'grafana/runtime.plugins.settings': { logToConsole: true },
   'grafana/runtime.plugins.datasource': { logToConsole: true },
   'grafana/runtime.utils.getCachedPromise': {},
+  'grafana/runtime.apis.discovery': {},
 
   /* existing loggers that keep their existing source name */
   sandbox: {},
