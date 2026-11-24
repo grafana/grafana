@@ -263,6 +263,8 @@ func (c *ControllerConfig) NewSupportedResourceProvider() (resources.SupportedRe
 	return resources.NewSupportedResourceProvider(configured), nil
 }
 
+const routerAudience = "grafana"
+
 // Clients Clients are clients that are used to connect to the different API servers.
 func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 	if c.clients != nil {
@@ -344,9 +346,10 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		}
 		if group == resources.AnyGroup {
 			audiences = []string{provisioning.GROUP}
-			if c.Settings.ProvisioningRouterClient {
-				audiences = append(audiences, resources.DashboardResource.Group, resources.FolderResource.Group)
-			}
+		}
+		var audienceProvider clientauth.AudienceProvider = clientauth.NewStaticAudienceProvider(audiences...)
+		if group == resources.AnyGroup && c.Settings.ProvisioningRouterClient {
+			audienceProvider = clientauth.NewRequestGroupAudienceProvider(routerAudience, provisioning.GROUP)
 		}
 
 		config := &rest.Config{
@@ -354,7 +357,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 			Host:    url,
 			WrapTransport: clientauth.NewTokenExchangeTransportWrapper(
 				tokenExchangeClient,
-				clientauth.NewStaticAudienceProvider(audiences...),
+				audienceProvider,
 				clientauth.NewStaticNamespaceProvider(clientauth.WildcardNamespace),
 			),
 			Transport: &http.Transport{
@@ -368,9 +371,13 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		configProviders[group] = NewDirectConfigProvider(config)
 	}
 
+	discoveryAudience := provisioning.GROUP
+	if c.Settings.ProvisioningRouterClient {
+		discoveryAudience = routerAudience
+	}
 	c.manifestWatcher, err = resources.NewRemoteManifestWatcher(supportedResourceProvider, c.Registry(), resource.ManifestWatcherConfig{
 		DiscoveryURL:      aggregatedServerURL,
-		DiscoveryAudience: provisioning.GROUP,
+		DiscoveryAudience: discoveryAudience,
 		Exchanger:         tokenExchangeClient,
 		TLS:               &tlsConfig,
 		PollInterval:      time.Minute,

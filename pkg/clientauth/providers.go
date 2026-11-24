@@ -2,6 +2,10 @@ package clientauth
 
 import (
 	"context"
+	"net/http"
+	"slices"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // NamespaceProvider is a strategy for determining the namespace to use in token exchange requests.
@@ -40,4 +44,40 @@ func NewStaticAudienceProvider(audiences ...string) *StaticAudienceProvider {
 
 func (p *StaticAudienceProvider) GetAudiences(ctx context.Context) []string {
 	return p.audiences
+}
+
+type RequestAudienceProvider interface {
+	AudienceProvider
+	GetRequestAudiences(req *http.Request) []string
+}
+
+type RequestGroupAudienceProvider struct {
+	fallback string
+	extra    []string
+}
+
+func NewRequestGroupAudienceProvider(fallback string, extra ...string) *RequestGroupAudienceProvider {
+	return &RequestGroupAudienceProvider{fallback: fallback, extra: extra}
+}
+
+func (p *RequestGroupAudienceProvider) GetAudiences(ctx context.Context) []string {
+	return p.audiencesFor(p.fallback)
+}
+
+func (p *RequestGroupAudienceProvider) GetRequestAudiences(req *http.Request) []string {
+	group := utils.APIGroupFromRequest(req)
+	if group == "" {
+		group = p.fallback
+	}
+	return p.audiencesFor(group)
+}
+
+func (p *RequestGroupAudienceProvider) audiencesFor(group string) []string {
+	audiences := []string{group}
+	for _, a := range p.extra {
+		if !slices.Contains(audiences, a) {
+			audiences = append(audiences, a)
+		}
+	}
+	return audiences
 }
