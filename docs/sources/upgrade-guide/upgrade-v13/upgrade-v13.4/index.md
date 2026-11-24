@@ -176,3 +176,18 @@ VACUUM;
 ```
 
 These operations require a lock on the table and may take significant time depending on the table size. Plan to run these during a low-traffic period.
+
+### Memory limits for backend plugin processes
+
+Grafana v13.2 moved several data sources out of the Grafana server binary into separate backend plugin processes.
+Prometheus is one of them.
+Each process has its own Go runtime and its own heap.
+
+Unless a plugin is listed in `forward_host_env_vars`, its process doesn't inherit `GOMEMLIMIT` or `GOGC` from the Grafana server environment.
+A `GOMEMLIMIT` set on the container or service applies to the Grafana server process only, and plugin processes run without a memory limit.
+To set a limit for every plugin process, use `default_memory_limit` in the `[plugins]` section.
+To set a limit for one plugin, use `memory_limit` in its `[plugin.<plugin_id>]` section.
+To pass the server's `GOMEMLIMIT` and `GOGC` to every plugin process instead, set `forward_go_runtime_env_vars` to `true`.
+
+Size the container for the Grafana server plus each backend plugin process.
+For more information, refer to [`default_memory_limit`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#default_memory_limit) and [`memory_limit`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#memory_limit).
