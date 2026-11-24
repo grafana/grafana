@@ -30,8 +30,6 @@ export type MenuItemElement = HTMLAnchorElement & HTMLButtonElement & HTMLDivEle
 export interface MenuItemProps<T = unknown> {
   /** Label of the menu item */
   label: string;
-  /** Overrides the parent menu density. */
-  size?: 'sm' | 'md';
   /** Visual treatment for the menu item. */
   variant?: 'default' | 'link';
   /** Description of item */
@@ -102,7 +100,7 @@ export const MenuItem = React.memo(
       ...rest
     } = props;
     const menuSize = useContext(MenuSizeContext);
-    const styles = useStyles2(getStyles, props.size ?? menuSize);
+    const styles = useStyles2(getStyles, menuSize);
     // Ignore iconColor when destructive or disabled — those states own the colors.
     const resolvedIconColor = iconColor && !destructive && !disabled ? iconColor : undefined;
     const [isActive, setIsActive] = useState(active);
@@ -280,14 +278,14 @@ export const MenuItem = React.memo(
 
 MenuItem.displayName = 'MenuItem';
 
-const getStyles = (theme: GrafanaTheme2, size: 'sm' | 'md') => {
+const getStyles = (theme: GrafanaTheme2, size: 'sm' | 'md' | undefined) => {
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   const menuPadding = theme.components.menu.padding * theme.spacing.gridSize;
   const linkLabel = css({ color: theme.colors.text.primary });
 
   return {
     item: css({
-      ...(size === 'sm' ? theme.typography.bodySmall : theme.typography.body),
+      ...(size === 'sm' ? theme.typography.bodySmall : size === 'md' ? theme.typography.body : {}),
       background: 'none',
       cursor: 'pointer',
       whiteSpace: 'nowrap',

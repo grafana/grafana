@@ -4,7 +4,7 @@ import { useClickAway } from 'react-use';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import { Menu } from '../Menu/Menu';
+import { Menu, type MenuProps } from '../Menu/Menu';
 import { Portal } from '../Portal/Portal';
 
 export interface ContextMenuProps {
@@ -16,6 +16,8 @@ export interface ContextMenuProps {
   onClose?: () => void;
   /** On menu open focus the first element */
   focusOnOpen?: boolean;
+  /** Controls density for every item in the menu. */
+  size?: MenuProps['size'];
   /** RenderProp function that returns menu items to display */
   renderMenuItems?: () => React.ReactNode;
   /** A function that returns header element */
@@ -28,7 +30,7 @@ export interface ContextMenuProps {
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/overlays-contextmenu--docs
  */
 export const ContextMenu = React.memo(
-  ({ x, y, onClose, focusOnOpen = true, renderMenuItems, renderHeader }: ContextMenuProps) => {
+  ({ x, y, onClose, focusOnOpen = true, size, renderMenuItems, renderHeader }: ContextMenuProps) => {
     const menuRef = useRef<HTMLDivElement>(null);
     const [positionStyles, setPositionStyles] = useState({});
 
@@ -71,6 +73,7 @@ export const ContextMenu = React.memo(
     return (
       <Portal>
         <Menu
+          size={size}
           header={header}
           ref={menuRef}
           style={positionStyles}
