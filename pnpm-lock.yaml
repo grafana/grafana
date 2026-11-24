@@ -686,8 +686,8 @@ importers:
         specifier: 2.9.1
         version: 2.9.1
       type-fest:
-        specifier: ^4.18.2
-        version: 4.41.0
+        specifier: ^6.0.0
+        version: 6.0.3
       uplot:
         specifier: 1.6.32
         version: 1.6.32
@@ -1398,8 +1398,8 @@ importers:
         specifier: ^1.6.0
         version: 1.6.0
       type-fest:
-        specifier: ^4.40.0
-        version: 4.41.0
+        specifier: ^6.0.0
+        version: 6.0.3
     devDependencies:
       '@grafana/test-utils':
         specifier: workspace:*
@@ -14416,6 +14416,10 @@ packages:
   tabbable@6.5.0:
     resolution: {integrity: sha512-wieBHXygIm7OyQOu5hQlkk62/WyCFYGlWg7L6/ZCUZwx0o398Zkn4pVmMyfYhfMG8kGrj/Krt8eIk6UKC6VzwA==}
 
+  tagged-tag@1.0.0:
+    resolution: {integrity: sha512-yEFYrVhod+hdNyx7g5Bnkkb0G6si8HJurOoOEgC8B/O0uXLHlaey/65KRv6cuWBNhBgHKAROVpc7QyYqE5gFng==}
+    engines: {node: '>=20'}
+
   tapable@2.3.3:
     resolution: {integrity: sha512-uxc/zpqFg6x7C8vOE7lh6Lbda8eEL9zmVm/PLeTPBRhh1xCgdWaQ+J1CUieGpIfm2HdtsUpRv+HshiasBMcc6A==}
     engines: {node: '>=6'}
@@ -14773,6 +14777,10 @@ packages:
   type-fest@4.41.0:
     resolution: {integrity: sha512-TeTSQ6H5YHvpqVwBRcnLDCBnDOHWYu7IvGbHT6N8AOymcr9PJGjc1GTtiWZTYg0NCgYwvnYWEkVChQAr9bjfwA==}
     engines: {node: '>=16'}
+
+  type-fest@6.0.3:
+    resolution: {integrity: sha512-MOJXegkac3h+sWdVb6VY/ACclsa71z3BprNpedGV8ljIzYCo+LRWgyIkWhidKNoiNJOb6kUds1pNCyzQ2p6hJQ==}
+    engines: {node: '>=22'}
 
   type-is@2.1.0:
     resolution: {integrity: sha512-faYHw0anBbc/kWF3zFTEnxSFOAGUX9GFbOBthvDdLsIlEoWOFOtS0zgCiQYwIskL9iGXZL3kAXD8OoZ4GmMATA==}
@@ -29428,6 +29436,8 @@ snapshots:
 
   tabbable@6.5.0: {}
 
+  tagged-tag@1.0.0: {}
+
   tapable@2.3.3: {}
 
   tar-stream@2.2.0:
@@ -29761,6 +29771,10 @@ snapshots:
   type-fest@3.13.1: {}
 
   type-fest@4.41.0: {}
+
+  type-fest@6.0.3:
+    dependencies:
+      tagged-tag: 1.0.0
 
   type-is@2.1.0:
     dependencies:

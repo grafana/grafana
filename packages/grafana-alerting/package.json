@@ -123,6 +123,6 @@
     "lodash": "^4.17.21",
     "micro-memoize": "^4.1.2",
     "tinycolor2": "^1.6.0",
-    "type-fest": "^4.40.0"
+    "type-fest": "^6.0.0"
   }
 }
