@@ -90,8 +90,12 @@ export function buildCellHeightMeasurers(
         setupMeasurerForIdx(TableCellDisplayMode.DataLinks, fieldIdx);
       } else if (cellType === TableCellDisplayMode.Pill) {
         setupMeasurerForIdx(TableCellDisplayMode.Pill, fieldIdx);
-      } else if (rendersAsJson(field) || getCellRenderer(field, getCellOptions(field)) === AutoCellRenderer) {
-        // JSON and Auto cells can produce multiline formatted strings, so both need measurement.
+      } else if (
+        cellType === TableCellDisplayMode.Status ||
+        rendersAsJson(field) ||
+        getCellRenderer(field, getCellOptions(field)) === AutoCellRenderer
+      ) {
+        // JSON, Status and Auto cells can produce multiline formatted strings, so all need measurement.
         setupMeasurerForIdx(TableCellDisplayMode.Auto, fieldIdx);
       } else {
         // no measurer was configured for this cell type

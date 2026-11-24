@@ -1,4 +1,5 @@
 import { type GrafanaTheme2 } from '@grafana/data';
+import { dashVar } from 'app/core/dashboardStyle/cssVars';
 
 /**
  * Locally installed book faces only; nothing is downloaded. Ends in the generic
@@ -16,11 +17,12 @@ export const REPORT_PROSE_MEASURE = '68ch';
  */
 export function getReportProseStyles(theme: GrafanaTheme2) {
   return {
-    fontFamily: REPORT_SERIF_STACK,
+    // A dashboard style supplies its body face and ink; without one, prose stays in the serif stack.
+    fontFamily: dashVar('fontBody', REPORT_SERIF_STACK),
     fontSize: '1.0625rem',
     lineHeight: 1.6,
     fontWeight: theme.typography.fontWeightRegular,
-    color: theme.colors.text.primary,
+    color: dashVar('ink', theme.colors.text.primary),
     maxWidth: REPORT_PROSE_MEASURE,
     // Lining figures keep numbers in prose consistent with the stat values beside them.
     fontVariantNumeric: 'lining-nums proportional-nums',
@@ -98,7 +100,7 @@ export function getEditorialMarkdownStyles(theme: GrafanaTheme2) {
     '&.markdown-html': {
       ...getReportProseStyles(theme),
       '& h1, & h2, & h3, & h4, & h5, & h6': {
-        fontFamily: REPORT_SERIF_STACK,
+        fontFamily: dashVar('fontDisplay', REPORT_SERIF_STACK),
         fontWeight: theme.typography.fontWeightMedium,
         letterSpacing: '-0.01em',
         lineHeight: 1.25,

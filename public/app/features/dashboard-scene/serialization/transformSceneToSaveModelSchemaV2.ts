@@ -110,6 +110,9 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     title: sceneDash.title,
     preferences,
     description: sceneDash.description || undefined,
+    // Only authored values are written, so saving an existing dashboard adds neither field.
+    ...(sceneDash.style?.pack && { style: sceneDash.style }),
+    ...(sceneDash.lede?.trim() && { lede: sceneDash.lede }),
     cursorSync: getCursorSync(sceneDash),
     liveNow: getLiveNow(sceneDash),
     preload: sceneDash.preload ?? defaultDashboardV2Spec().preload,

@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
@@ -21,6 +21,8 @@ import { AppNotificationSeverity } from 'app/types/appNotifications';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { type DashboardScene } from '../scene/DashboardScene';
+import { DashboardMasthead } from '../style/DashboardMasthead';
+import { DashboardStyleProvider, getStyleCanvasProps, useDashboardStyle } from '../style/DashboardStyleScope';
 
 import { getDashboardScenePageStateManager, type LoadError } from './DashboardScenePageStateManager';
 
@@ -82,6 +84,8 @@ function PublicDashboardSceneRenderer({ model }: SceneComponentProps<DashboardSc
   const { timePicker, refreshPicker, hideTimeControls } = controls!.useState();
   const styles = useStyles2(getStyles);
   const conf = useGetPublicDashboardConfig();
+  const styleValue = useDashboardStyle(model);
+  const canvasProps = getStyleCanvasProps(styleValue);
 
   useEffect(() => {
     return refreshPicker.activate();
@@ -114,9 +118,15 @@ function PublicDashboardSceneRenderer({ model }: SceneComponentProps<DashboardSc
           </Stack>
         )}
       </div>
-      <div className={styles.body}>
-        <body.Component model={body} />
-      </div>
+      <DashboardStyleProvider value={styleValue}>
+        <div
+          {...canvasProps}
+          className={cx(styles.body, canvasProps.className && [styles.styledBody, canvasProps.className])}
+        >
+          <DashboardMasthead dashboard={model} />
+          <body.Component model={body} />
+        </div>
+      </DashboardStyleProvider>
       <DashboardBrandingFooter />
     </Page>
   );
@@ -167,6 +177,11 @@ function getStyles(theme: GrafanaTheme2) {
       flex: 1,
       flexDirection: 'column',
       overflowY: 'auto',
+    }),
+    // The style's canvas colour reaches the page edges instead of stopping at the page padding.
+    styledBody: css({
+      margin: theme.spacing(0, -2),
+      padding: theme.spacing(0, 2, 2),
     }),
   };
 }

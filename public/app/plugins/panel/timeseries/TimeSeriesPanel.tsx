@@ -24,6 +24,7 @@ import {
 import { type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { getAssistantTooltipContext } from 'app/core/components/AssistantTooltip/buildAssistantContext';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
+import { readDashVar } from 'app/core/dashboardStyle/cssVars';
 import { getFilterByGroupedLabels } from 'app/features/panel/filters/adhoc';
 
 import { TimeSeriesTooltip } from './TimeSeriesTooltip';
@@ -31,6 +32,8 @@ import { type Options } from './panelcfg.gen';
 import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
 import { ExemplarsPlugin, getVisibleLabels } from './plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
+import { StoryPlugin } from './plugins/StoryPlugin';
+import { applyStoryHighlight, type StoryColors } from './plugins/story';
 import { getXAnnotationFrames } from './plugins/utils';
 import { getPrepareTimeseriesSuggestion } from './suggestions';
 import { getComparisonFieldPairs, getTimezones, prepareGraphableFields } from './utils';
@@ -64,6 +67,19 @@ export const TimeSeriesPanel = ({
     openExemplar,
   } = usePanelContext();
   const theme = useTheme2();
+  const [storyRoot, setStoryRoot] = useState<HTMLDivElement | null>(null);
+  const story = options.story;
+  const highlight = story?.highlight?.trim() || undefined;
+  const storyColors = useMemo<StoryColors | undefined>(
+    () =>
+      highlight && storyRoot
+        ? {
+            subject: readDashVar(storyRoot, 'accent', theme.colors.primary.main),
+            context: readDashVar(storyRoot, 'context', theme.colors.text.disabled),
+          }
+        : undefined,
+    [highlight, storyRoot, theme]
+  );
   const getVisibleExemplarLabels = useMemo(() => memoizeOne(getVisibleLabels), []);
 
   const { dataLinkPostProcessor } = useDataLinksContext();
@@ -75,12 +91,17 @@ export const TimeSeriesPanel = ({
   const {
     frames,
     compareDiffMs,
+    subjects,
     warning: prepWarning,
   } = useMemo(() => {
-    const { frames: graphable, warn } = prepareGraphableFields(data.series, theme, timeRange);
+    const { frames: prepared, warn } = prepareGraphableFields(data.series, theme, timeRange);
     if (warn) {
-      return { frames: graphable, warning: warn };
+      return { frames: prepared, warning: warn };
     }
+
+    const { frames: graphable, subjects } = storyColors
+      ? applyStoryHighlight(prepared, highlight, storyColors, theme)
+      : { frames: prepared, subjects: undefined };
 
     const compareDiffMs: number[] = [0];
 
@@ -106,8 +127,8 @@ export const TimeSeriesPanel = ({
       return frame;
     });
 
-    return { frames, compareDiffMs };
-  }, [data.series, timeRange, theme]);
+    return { frames, compareDiffMs, subjects };
+  }, [data.series, timeRange, theme, highlight, storyColors]);
 
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
   const suggestions = useMemo(() => {
@@ -154,7 +175,7 @@ export const TimeSeriesPanel = ({
     );
   }
 
-  return (
+  const chart = (
     <TimeSeries
       frames={frames}
       structureRev={data.structureRev}
@@ -255,6 +276,15 @@ export const TimeSeriesPanel = ({
                   maxHeight={options.tooltip.maxHeight}
                   maxWidth={options.tooltip.maxWidth}
                 />
+                {story && (story.directLabels || story.annotationLabels) && (
+                  <StoryPlugin
+                    config={uplotConfig}
+                    alignedFrame={alignedFrame}
+                    annotations={data.annotations}
+                    story={story}
+                    subjects={subjects}
+                  />
+                )}
               </>
             )}
           </>
@@ -262,4 +292,11 @@ export const TimeSeriesPanel = ({
       }}
     </TimeSeries>
   );
+
+  if (!highlight) {
+    return chart;
+  }
+
+  // the style variables that colour the highlight are read from this element, so the chart waits for it
+  return <div ref={setStoryRoot}>{storyRoot && chart}</div>;
 };

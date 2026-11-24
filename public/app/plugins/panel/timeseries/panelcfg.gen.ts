@@ -22,10 +22,17 @@ export const defaultTimeSeriesLegendOptions: Partial<TimeSeriesLegendOptions> = 
   facetedFilterPinned: false,
 };
 
+export interface StoryOptions {
+  annotationLabels?: boolean;
+  directLabels?: boolean;
+  highlight?: string;
+}
+
 export interface Options extends common.OptionsWithTimezones, common.OptionsWithAnnotations {
   disableKeyboardEvents?: boolean;
   legend: TimeSeriesLegendOptions;
   orientation?: common.VizOrientation;
+  story?: StoryOptions;
   timeCompare?: common.TimeCompareOptions;
   tooltip: common.VizTooltipOptions;
 }

@@ -521,6 +521,7 @@ const TEXT_CELL_TYPES = new Set<TableCellDisplayMode>([
   TableCellDisplayMode.Auto,
   TableCellDisplayMode.ColorText,
   TableCellDisplayMode.ColorBackground,
+  TableCellDisplayMode.Status,
 ]);
 
 /**
@@ -1481,6 +1482,11 @@ const measureTextColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx
 // width so it sizes to its header and wraps to extra height instead.
 const measureMarkdownColWidth: MeasureColWidth = () => 0;
 
+// Status cells put a shape before the text, so they need its width on top of the text measure.
+const measureStatusColWidth: MeasureColWidth = (field, sampleSize, ctx) =>
+  measureTextColWidth(field, sampleSize, ctx) +
+  (ctx.theme?.typography.fontSize ?? 14) * (TABLE.STATUS_SHAPE_SIZE_EM + TABLE.STATUS_SHAPE_GAP_EM);
+
 // JSON pretty-prints to a multi-line block, but its layout depends on wrapping: wrapped renders as
 // `pre`/`pre-line` (newlines preserved), so width is the widest line; unwrapped collapses to a
 // single line, so width is the whole value. Measuring an unwrapped column by its widest line would
@@ -1502,6 +1508,7 @@ const COL_WIDTH_MEASURERS: Partial<Record<TableCellDisplayMode, MeasureColWidth>
   [TableCellDisplayMode.Image]: measureImageColWidth,
   [TableCellDisplayMode.Geo]: measureGraphicalColWidth,
   [TableCellDisplayMode.Pill]: measurePillColWidth,
+  [TableCellDisplayMode.Status]: measureStatusColWidth,
   [TableCellDisplayMode.Actions]: measureActionsColWidth,
   [TableCellDisplayMode.DataLinks]: measureDataLinksColWidth,
   [TableCellDisplayMode.Markdown]: measureMarkdownColWidth,

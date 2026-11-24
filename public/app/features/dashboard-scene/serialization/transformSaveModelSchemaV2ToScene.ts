@@ -217,6 +217,8 @@ export function transformSaveModelSchemaV2ToScene(
           }
         : undefined,
       description: dashboard.description,
+      style: dashboard.style,
+      lede: dashboard.lede,
       editable: dashboard.editable,
       preload: dashboard.preload,
       questions: deserializeQuestions(dashboard.prompts, dashboard.elements),

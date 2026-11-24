@@ -177,8 +177,13 @@ function getStyles(theme: GrafanaTheme2) {
       },
     }),
     wrapperReport: css({
-      paddingTop: theme.spacing(2),
+      // A style pack opens each section with its rule; without one there is no rule.
+      borderTop: 'var(--dash-section-rule, none)',
+      marginTop: theme.spacing(3),
+      paddingTop: theme.spacing(1.5),
       '&:first-child': {
+        borderTop: 'none',
+        marginTop: 0,
         paddingTop: 0,
       },
     }),

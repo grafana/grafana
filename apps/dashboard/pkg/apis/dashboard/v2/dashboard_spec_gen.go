@@ -1496,7 +1496,9 @@ type DashboardAutoGridLayoutSpec struct {
 	MaxHeightMode   *DashboardAutoGridLayoutSpecMaxHeightMode  `json:"maxHeightMode,omitempty"`
 	MaxHeight       *float64                                   `json:"maxHeight,omitempty"`
 	MatchRowHeights *bool                                      `json:"matchRowHeights,omitempty"`
-	// Gives one of exactly two saved, non-repeated items a 2:1 share of the row.
+	// "split-wide-first" and "split-wide-second" give one of exactly two saved, non-repeated items
+	// a 2:1 share of the row. "rail" puts the first item beside a narrow column that stacks the
+	// rest. "margin-note" sets the last item as a narrow ruled note beside the others.
 	// Absent means the regular column settings apply.
 	ColumnLayout *DashboardAutoGridColumnLayout    `json:"columnLayout,omitempty"`
 	Items        []DashboardAutoGridLayoutItemKind `json:"items"`
@@ -1526,6 +1528,8 @@ type DashboardAutoGridColumnLayout string
 const (
 	DashboardAutoGridColumnLayoutSplitWideFirst  DashboardAutoGridColumnLayout = "split-wide-first"
 	DashboardAutoGridColumnLayoutSplitWideSecond DashboardAutoGridColumnLayout = "split-wide-second"
+	DashboardAutoGridColumnLayoutRail            DashboardAutoGridColumnLayout = "rail"
+	DashboardAutoGridColumnLayoutMarginNote      DashboardAutoGridColumnLayout = "margin-note"
 )
 
 // OpenAPIModelName returns the OpenAPI model name for DashboardAutoGridColumnLayout.
@@ -2630,6 +2634,28 @@ func (DashboardPreferences) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
+type DashboardDashboardStyle struct {
+	// Style pack id, for example "newsroom" or "field-guide".
+	Pack string `json:"pack"`
+	// One of the pack's palettes. Absent means the pack default.
+	Palette *string `json:"palette,omitempty"`
+	// One of the pack's accents. Absent means the palette's own accent.
+	Accent *string `json:"accent,omitempty"`
+	// One of the pack's typography options. Absent means the pack default.
+	Typography *string `json:"typography,omitempty"`
+}
+
+// NewDashboardDashboardStyle creates a new DashboardDashboardStyle object.
+func NewDashboardDashboardStyle() *DashboardDashboardStyle {
+	return &DashboardDashboardStyle{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardDashboardStyle.
+func (DashboardDashboardStyle) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardDashboardStyle"
+}
+
+// +k8s:openapi-gen=true
 type DashboardSpec struct {
 	Annotations []DashboardAnnotationQueryKind `json:"annotations"`
 	// Configuration of dashboard cursor sync behavior.
@@ -2664,6 +2690,12 @@ type DashboardSpec struct {
 	// Prompts viewers can run on the dashboard, offered by plugins in the dashboard controls.
 	Prompts     []DashboardPrompt     `json:"prompts,omitempty"`
 	Preferences *DashboardPreferences `json:"preferences,omitempty"`
+	// Visual style of the dashboard: art direction, palette, accent and typography.
+	// Content stays the same in every style. Absent means the Grafana theme.
+	Style *DashboardDashboardStyle `json:"style,omitempty"`
+	// The dashboard's main finding, in one or two sentences of Markdown. When set, the
+	// dashboard opens on a masthead with the title, an automatic scope line and this text.
+	Lede *string `json:"lede,omitempty"`
 }
 
 // NewDashboardSpec creates a new DashboardSpec object.

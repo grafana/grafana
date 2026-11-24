@@ -1,7 +1,10 @@
 import { type ReactNode, useId, useMemo } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
-import { useFlagGrafanaDashboardGlobalVariables } from '@grafana/runtime/internal';
+import {
+  useFlagGrafanaDashboardGlobalVariables,
+  useFlagGrafanaDashboardsReportLayouts,
+} from '@grafana/runtime/internal';
 import { type SceneObject, SceneVariableSet } from '@grafana/scenes';
 import { Button } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -17,6 +20,7 @@ import {
 } from '../../scene/types/EditableDashboardElement';
 import { DashboardLinksSet } from '../../settings/links/DashboardLinksSet';
 import { DashboardFiltersSet } from '../../settings/variables/DashboardFiltersSet';
+import { useReportCategories } from '../../style/DashboardStyleEditor';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { VariablesDependenciesButton } from '../../variables/VariablesDependenciesButton';
 import { useQuestionsCategory } from '../questions/QuestionsList';
@@ -34,7 +38,9 @@ import {
 } from './partitionSidebarVariables';
 
 function useDashboardSidebarOptions(dashboard: DashboardScene): OptionsPaneCategoryDescriptor[] {
-  const { body } = dashboard.useState();
+  const { body, style, lede } = dashboard.useState();
+  const reportCategories = useReportCategories(dashboard);
+  const showReport = useFlagGrafanaDashboardsReportLayouts() || Boolean(style) || Boolean(lede);
   const dashboardTitleInputId = useId();
   const dashboardDescriptionInputId = useId();
 
@@ -65,6 +71,7 @@ function useDashboardSidebarOptions(dashboard: DashboardScene): OptionsPaneCateg
 
   return [
     dashboardOptions,
+    ...(showReport ? reportCategories : []),
     ...layoutCategory,
     ...filtersCategory,
     ...variablesCategory,

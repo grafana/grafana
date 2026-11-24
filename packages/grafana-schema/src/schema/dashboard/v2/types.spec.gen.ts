@@ -979,7 +979,9 @@ export interface AutoGridLayoutSpec {
 	maxHeightMode?: "unlimited" | "short" | "standard" | "tall" | "custom";
 	maxHeight?: number;
 	matchRowHeights?: boolean;
-	// Gives one of exactly two saved, non-repeated items a 2:1 share of the row.
+	// "split-wide-first" and "split-wide-second" give one of exactly two saved, non-repeated items
+	// a 2:1 share of the row. "rail" puts the first item beside a narrow column that stacks the
+	// rest. "margin-note" sets the last item as a narrow ruled note beside the others.
 	// Absent means the regular column settings apply.
 	columnLayout?: AutoGridColumnLayout;
 	items: AutoGridLayoutItemKind[];
@@ -995,7 +997,7 @@ export const defaultAutoGridLayoutSpec = (): AutoGridLayoutSpec => ({
 	items: [],
 });
 
-export type AutoGridColumnLayout = "split-wide-first" | "split-wide-second";
+export type AutoGridColumnLayout = "split-wide-first" | "split-wide-second" | "rail" | "margin-note";
 
 export const defaultAutoGridColumnLayout = (): AutoGridColumnLayout => ("split-wide-first");
 
@@ -1760,6 +1762,21 @@ export interface Preferences {
 export const defaultPreferences = (): Preferences => ({
 });
 
+export interface DashboardStyle {
+	// Style pack id, for example "newsroom" or "field-guide".
+	pack: string;
+	// One of the pack's palettes. Absent means the pack default.
+	palette?: string;
+	// One of the pack's accents. Absent means the palette's own accent.
+	accent?: string;
+	// One of the pack's typography options. Absent means the pack default.
+	typography?: string;
+}
+
+export const defaultDashboardStyle = (): DashboardStyle => ({
+	pack: "",
+});
+
 export interface Spec {
 	annotations: AnnotationQueryKind[];
 	// Configuration of dashboard cursor sync behavior.
@@ -1794,6 +1811,12 @@ export interface Spec {
 	// Prompts viewers can run on the dashboard, offered by plugins in the dashboard controls.
 	prompts?: Prompt[];
 	preferences?: Preferences;
+	// Visual style of the dashboard: art direction, palette, accent and typography.
+	// Content stays the same in every style. Absent means the Grafana theme.
+	style?: DashboardStyle;
+	// The dashboard's main finding, in one or two sentences of Markdown. When set, the
+	// dashboard opens on a masthead with the title, an automatic scope line and this text.
+	lede?: string;
 }
 
 export const defaultSpec = (): Spec => ({

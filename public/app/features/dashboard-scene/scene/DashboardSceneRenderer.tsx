@@ -21,6 +21,7 @@ import { useSelector } from 'app/types/store';
 import { ComposerOverlay } from '../composer/ComposerOverlay';
 import { DashboardSidebarSplitter } from '../sidebar/DashboardSidebarSplitter';
 import { SoloPanelContextProvider, useDefineSoloPanelContext } from '../solo/SoloPanelContext';
+import { DashboardMasthead } from '../style/DashboardMasthead';
 
 import { DashboardOverlay } from './DashboardOverlay';
 import { type DashboardScene } from './DashboardScene';
@@ -153,7 +154,12 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
       );
     }
 
-    return <body.Component model={body} />;
+    return (
+      <>
+        <DashboardMasthead dashboard={model} />
+        <body.Component model={body} />
+      </>
+    );
   }
 
   /**

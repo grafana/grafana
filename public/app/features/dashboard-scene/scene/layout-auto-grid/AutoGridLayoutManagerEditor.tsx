@@ -44,6 +44,7 @@ import {
   type AutoGridMinHeight,
   type AutoGridRowHeight,
   type AutoGridLayoutManager,
+  COLUMN_LAYOUT_ITEM_LIMITS,
 } from './AutoGridLayoutManager';
 
 export function getSidebarOptions(layoutManager: AutoGridLayoutManager): OptionsPaneItemDescriptor[] {
@@ -120,7 +121,24 @@ function GridLayoutColumnSplit({ layoutManager }: { layoutManager: AutoGridLayou
         'The second panel takes two thirds of the row'
       ),
     },
+    {
+      label: t('dashboard.auto-grid.options.column-layout-rail', 'Figure rail'),
+      value: 'rail',
+      description: t(
+        'dashboard.auto-grid.options.column-layout-rail-description',
+        'The first panel is the graphic; the rest stack beside it as figures'
+      ),
+    },
+    {
+      label: t('dashboard.auto-grid.options.column-layout-margin-note', 'Margin note'),
+      value: 'margin-note',
+      description: t(
+        'dashboard.auto-grid.options.column-layout-margin-note-description',
+        'The last panel sits in a narrow margin beside the others'
+      ),
+    },
   ];
+  const limits = split.columnLayout ? COLUMN_LAYOUT_ITEM_LIMITS[split.columnLayout] : undefined;
 
   return (
     <div
@@ -138,9 +156,9 @@ function GridLayoutColumnSplit({ layoutManager }: { layoutManager: AutoGridLayou
       {split.isActive && (
         <div className={styles.splitNote}>
           <Text element="p" variant="bodySmall" color="secondary">
-            <Trans i18nKey="dashboard.auto-grid.options.column-layout-active">
-              Splits 2:1 when the section is wide enough and stacks in order when it is narrow. The column options below
-              apply only when the split is inactive.
+            <Trans i18nKey="dashboard.auto-grid.options.column-layout-active-arranged">
+              Arranges the panels when the section is wide enough and stacks them in order when it is narrow. The column
+              options below apply only when the arrangement is inactive.
             </Trans>
           </Text>
         </div>
@@ -148,7 +166,7 @@ function GridLayoutColumnSplit({ layoutManager }: { layoutManager: AutoGridLayou
       {split.columnLayout && !split.isActive && (
         <Alert
           severity="info"
-          title={t('dashboard.auto-grid.options.column-layout-inactive-title', 'Split is inactive')}
+          title={t('dashboard.auto-grid.options.column-layout-inactive-heading', 'Arrangement is inactive')}
           topSpacing={1}
           bottomSpacing={0}
         >
@@ -156,13 +174,19 @@ function GridLayoutColumnSplit({ layoutManager }: { layoutManager: AutoGridLayou
             {split.inactiveReason === 'repeat'
               ? t(
                   'dashboard.auto-grid.options.column-layout-inactive-repeat',
-                  'A repeated panel can produce any number of items, so the regular column options apply. The split returns when the repeat is removed.'
+                  'A repeated panel can produce any number of items, so the regular column options apply. The arrangement returns when the repeat is removed.'
                 )
-              : t(
-                  'dashboard.auto-grid.options.column-layout-inactive-count',
-                  'The split needs exactly two panels; this grid has {{panelCount}}. The regular column options apply until it has two again.',
-                  { panelCount: children.length }
-                )}
+              : limits && limits.min === limits.max
+                ? t(
+                    'dashboard.auto-grid.options.column-layout-inactive-count',
+                    'The split needs exactly two panels; this grid has {{panelCount}}. The regular column options apply until it has two again.',
+                    { panelCount: children.length }
+                  )
+                : t(
+                    'dashboard.auto-grid.options.column-layout-inactive-range',
+                    'This arrangement needs {{min}} to {{max}} panels; this grid has {{panelCount}}. The regular column options apply until it fits again.',
+                    { min: limits?.min, max: limits?.max, panelCount: children.length }
+                  )}
             <Button
               size="sm"
               variant="secondary"

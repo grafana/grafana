@@ -8,6 +8,7 @@ import { type PanelEditor } from '../../panel-edit/PanelEditor';
 import { type SceneQuestion } from '../../questions/types';
 import { type DashboardEditView } from '../../settings/utils';
 import { type DashboardSidebarLike } from '../../sidebar/types';
+import { type DashboardStyleChoice } from '../../style/types';
 import { type DashboardControls } from '../DashboardControls';
 import { type DashboardLayoutOrchestrator } from '../DashboardLayoutOrchestrator';
 import {
@@ -59,6 +60,10 @@ export interface DashboardSceneState extends SceneObjectState, DashboardViewStat
   title: string;
   /** The description */
   description?: string;
+  /** Visual style: pack, palette, accent and typography */
+  style?: DashboardStyleChoice;
+  /** The main finding, shown in the masthead with the title and scope line */
+  lede?: string;
   /** Tags */
   tags?: string[];
   /** Links */

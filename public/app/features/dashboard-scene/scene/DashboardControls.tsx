@@ -33,6 +33,7 @@ import { KioskMode } from 'app/types/dashboard';
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { type PanelEditor } from '../panel-edit/PanelEditor';
 import { usePanelEditDirty } from '../panel-edit/usePanelEditDirty';
+import { DashboardStyleSwitcher } from '../style/DashboardStyleSwitcher';
 import { useIsMobileEditDeprecated } from '../utils/mobileEditDeprecation';
 import { findVizPanelByPathId } from '../utils/pathId';
 import { getDashboardSceneFor, isLibraryPanel } from '../utils/utils';
@@ -377,6 +378,7 @@ function DashboardControlActions({
 
   return (
     <>
+      {!editPanel && <DashboardStyleSwitcher dashboard={dashboard} />}
       {showShareButton && <ShareDashboardButton dashboard={dashboard} />}
       <DashboardEditHistoryControls dashboard={dashboard} />
       {showSaveButton && <SaveDashboard dashboard={dashboard} />}

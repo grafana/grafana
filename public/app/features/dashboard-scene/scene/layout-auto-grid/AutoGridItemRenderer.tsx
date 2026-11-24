@@ -11,6 +11,9 @@ import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types
 import { type ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { useSoloPanelContext, renderMatchingSoloPanels } from '../../solo/SoloPanelContext';
+import { useDashboardStyleContext } from '../../style/DashboardStyleScope';
+import { PanelSourceLine, SOURCE_LINE_HEIGHT } from '../../style/PanelSourceLine';
+import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import { useDashboardState } from '../../utils/utils';
 import { SoloPanelContextValueWithSearchStringFilter } from '../PanelSearchLayout';
 import { PanelActionsWrapper } from '../edit-actions-popover/PanelActionsPopover';
@@ -27,6 +30,7 @@ import {
 import { AutoGridResizeIntercept } from './AutoGridResizeIntercept';
 import {
   AUTO_GRID_HIDDEN_ITEM_CLASS,
+  AUTO_GRID_ITEM_ATTR,
   DRAGGED_ITEM_HEIGHT,
   DRAGGED_ITEM_LEFT,
   DRAGGED_ITEM_TOP,
@@ -42,6 +46,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
   const styles = useStyles2(getStyles);
   const soloPanelContext = useSoloPanelContext();
   const isLazy = useMemo(() => getIsLazy(preload), [preload]);
+  const showSourceLine = useDashboardStyleContext()?.style.pack.treatments.sourceLines === true;
 
   const layoutManager = sceneGraph.getAncestor(model, AutoGridLayoutManager);
   const {
@@ -118,12 +123,15 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           // Only the last panel gets the intercept, so a repeat shows one handle for the group.
           const showResizeIntercept = isEditing && isLastPanel && !isDragged;
 
+          const hasSourceLine = showSourceLine && hasSourceableGraphic(item);
+
           const wrapperClass = cx(
             conditionalRenderingClass,
             styles.wrapper,
             isDragged && !isRepeat && styles.draggedWrapper,
             isDragged && isRepeat && styles.draggedRepeatWrapper,
-            isSelected && 'dashboard-selected-element'
+            isSelected && 'dashboard-selected-element',
+            hasSourceLine && styles.wrapperWithSourceLine
           );
 
           const wrapperContent = (
@@ -135,6 +143,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
               ) : (
                 <item.Component model={item} />
               )}
+              {hasSourceLine && <PanelSourceLine panel={item} />}
               {conditionalRenderingOverlay}
               {showResizeIntercept && <AutoGridResizeIntercept item={model} />}
             </>
@@ -143,8 +152,12 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           return isConditionallyHidden && !isEditing && !renderHidden ? null : (
             <div
               {...(addDndContainer
-                ? { ref: model.containerRef, [AUTO_GRID_ITEM_DROP_TARGET_ATTR]: showDropTarget ? key : undefined }
-                : {})}
+                ? {
+                    ref: model.containerRef,
+                    [AUTO_GRID_ITEM_DROP_TARGET_ATTR]: showDropTarget ? key : undefined,
+                    [AUTO_GRID_ITEM_ATTR]: '',
+                  }
+                : { [AUTO_GRID_ITEM_ATTR]: '' })}
               className={cx(
                 isConditionallyHidden && !isEditing && styles.hidden,
                 // Stable hook for the split layout, which widens the remaining sibling.
@@ -182,6 +195,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
       fitMinHeightPx,
       fitMaxHeightPx,
       autoHeightPanelsEnabled,
+      showSourceLine,
     ]
   );
 
@@ -228,6 +242,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
 
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({ width: '100%', height: '100%', position: 'relative' }),
+  wrapperWithSourceLine: css({ paddingBottom: SOURCE_LINE_HEIGHT + 4, boxSizing: 'border-box' }),
   draggedWrapper: css({
     position: 'absolute',
     zIndex: 1000,
@@ -270,3 +285,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
 });
+
+/**
+ * Source lines credit graphics: a figure or note reads as part of the graphic it sits beside, and
+ * crediting each one repeats the same provenance down a rail.
+ */
+function hasSourceableGraphic(panel: VizPanel): boolean {
+  return !UNSOURCED_PLUGINS.has(panel.state.pluginId) && Boolean(getQueryRunnerFor(panel)?.state.queries.length);
+}
+
+const UNSOURCED_PLUGINS = new Set(['stat', 'text']);

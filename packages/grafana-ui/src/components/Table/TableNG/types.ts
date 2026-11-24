@@ -300,6 +300,8 @@ export interface AutoCellProps {
   rowIdx: number;
 }
 
+export type StatusCellProps = AutoCellProps;
+
 export interface MarkdownCellProps {
   field: Field;
   rowIdx: number;

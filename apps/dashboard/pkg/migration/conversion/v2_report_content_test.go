@@ -131,14 +131,36 @@ func TestV2ReportSummaryIsNotSilentlyDropped(t *testing.T) {
 	}
 }
 
+func TestV2LedeIsNotSilentlyDropped(t *testing.T) {
+	scheme := newReportTestScheme(t)
+
+	for target, newOut := range olderDashboardTargets() {
+		t.Run(target, func(t *testing.T) {
+			// A styled dashboard whose only authored report text is the lede.
+			in := newReportDashboard(t, func(spec map[string]any) {
+				delete(reportRowSpec(spec), "summary")
+				spec["lede"] = "Wave 3 holds; proceed on Thursday."
+				spec["style"] = map[string]any{"pack": "field-guide"}
+			})
+			out := newOut()
+			require.NoError(t, scheme.Convert(in, out, nil))
+
+			status := statusOf(t, out)
+			require.True(t, status.failed, "conversion must fail instead of dropping the lede")
+			require.Contains(t, status.err, "dashboard lede")
+		})
+	}
+}
+
 func TestV2ReportPresentationOnlyStillConverts(t *testing.T) {
 	scheme := newReportTestScheme(t)
 
 	for target, newOut := range olderDashboardTargets() {
 		t.Run(target, func(t *testing.T) {
-			// Header style and split are presentation; without authored text the existing projection applies.
+			// Header style, split and dashboard style are presentation; without authored text the existing projection applies.
 			in := newReportDashboard(t, func(spec map[string]any) {
 				delete(reportRowSpec(spec), "summary")
+				spec["style"] = map[string]any{"pack": "newsroom", "palette": "salmon"}
 			})
 			out := newOut()
 			require.NoError(t, scheme.Convert(in, out, nil))

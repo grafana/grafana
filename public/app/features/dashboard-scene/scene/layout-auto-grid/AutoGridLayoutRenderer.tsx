@@ -17,7 +17,7 @@ import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 
 import { type AutoGridLayout, type AutoGridLayoutState } from './AutoGridLayout';
 import { type AutoGridColumnLayout, AutoGridLayoutManager } from './AutoGridLayoutManager';
-import { AUTO_GRID_HIDDEN_ITEM_CLASS } from './const';
+import { AUTO_GRID_HIDDEN_ITEM_CLASS, AUTO_GRID_ITEM_ATTR } from './const';
 
 export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLayout>) {
   const { children, isHidden, draggedChildren } = model.useState();
@@ -73,6 +73,17 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
     return result;
   };
 
+  const itemCount = children.length;
+  const noteColumns = Math.min(Math.max(itemCount - 1, 1), 3);
+  const arrangementVars = split?.isActive
+    ? {
+        '--auto-grid-rail-span': String(Math.max(itemCount - 1, 1)),
+        '--auto-grid-note-columns': String(noteColumns),
+        '--auto-grid-note-span': String(Math.ceil((itemCount - 1) / noteColumns)),
+        '--auto-grid-note-fr': `${(noteColumns / 3).toFixed(3)}fr`,
+      }
+    : undefined;
+
   const grid = (
     <div
       data-testid={selectors.components.LayoutContainer(getTestIdForLayout(model))}
@@ -84,6 +95,9 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
         noStretchSiblings && styles.containerNoStretch,
         isEditing && styles.containerEditing
       )}
+      // Custom properties are not in CSSProperties.
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      style={arrangementVars as React.CSSProperties}
       ref={model.containerRef}
       {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: layoutManager.state.key }}
     >
@@ -96,14 +110,27 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
     return grid;
   }
 
-  // The split reacts to the section's width, not the window's, so a docked sidebar or a
-  // nested row stacks the pair as soon as the section itself gets narrow.
+  // Arrangements react to the section's width, not the window's, so a docked sidebar or a
+  // nested row stacks the items as soon as the section itself gets narrow.
   return <div className={cx(splitStyles.container, fillScreen && splitStyles.containerFillScreen)}>{grid}</div>;
 }
 
+/** Positional selectors count only grid items; the edit-mode add actions share the grid. */
+const ITEM = `[${AUTO_GRID_ITEM_ATTR}]`;
+const FIRST = `& > :nth-child(1 of ${ITEM})`;
+const LAST = `& > :nth-last-child(1 of ${ITEM})`;
+const SECOND = `& > :nth-child(2 of ${ITEM})`;
+const AFTER_FIRST = `& > ${ITEM}:not(:nth-child(1 of ${ITEM}))`;
+
+/** A hairline between columns when the dashboard style asks for one. */
+const columnRule = {
+  borderLeft: 'var(--dash-column-rule, none)',
+  paddingLeft: 'var(--dash-column-rule-pad, 0px)',
+};
+
 const getSplitStyles = (theme: GrafanaTheme2) => {
-  // Theme-owned threshold: below this section width the pair stacks in document order.
-  const twoColumns = `@container (min-width: ${theme.breakpoints.values.md}px)`;
+  // Theme-owned threshold: below this section width the items stack in document order.
+  const columns = `@container (min-width: ${theme.breakpoints.values.md}px)`;
   return {
     container: css({
       containerType: 'inline-size',
@@ -119,8 +146,31 @@ const getSplitStyles = (theme: GrafanaTheme2) => {
         gridColumn: '1 / -1',
       },
     }),
-    'split-wide-first': css({ [twoColumns]: { gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)' } }),
-    'split-wide-second': css({ [twoColumns]: { gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 2fr)' } }),
+    'split-wide-first': css({
+      [columns]: { gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', [SECOND]: columnRule },
+    }),
+    'split-wide-second': css({
+      [columns]: { gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 2fr)', [SECOND]: columnRule },
+    }),
+    // The lead item spans the height of the stacked rail beside it. Stacked, it keeps two rows so
+    // a graphic sized for the rail's short rows still has room to plot.
+    rail: css({
+      [FIRST]: { gridRow: 'span 2' },
+      [columns]: {
+        gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)',
+        gridAutoFlow: 'row dense',
+        [FIRST]: { gridColumn: 1, gridRow: '1 / span var(--auto-grid-rail-span)' },
+        [AFTER_FIRST]: { gridColumn: 2, ...columnRule },
+      },
+    }),
+    // The last item is a narrow note that runs beside every row of the others.
+    'margin-note': css({
+      [columns]: {
+        gridTemplateColumns:
+          'repeat(var(--auto-grid-note-columns), minmax(0, 1fr)) minmax(12rem, var(--auto-grid-note-fr))',
+        [LAST]: { gridColumn: '-2 / -1', gridRow: '1 / span var(--auto-grid-note-span)', ...columnRule },
+      },
+    }),
   } satisfies Record<'container' | 'containerFillScreen' | 'split' | AutoGridColumnLayout, string>;
 };
 

@@ -61,7 +61,7 @@ interface AutoGridLayoutManagerState extends SceneObjectState {
   maxHeightMode?: AutoGridMaxHeightMode;
   maxHeight?: number;
   matchRowHeights?: boolean;
-  /** Two-item split; see {@link AutoGridLayoutManager.getColumnSplit} for when it applies. */
+  /** Column arrangement; see {@link AutoGridLayoutManager.getColumnSplit} for when it applies. */
   columnLayout?: AutoGridColumnLayout;
   /** Whether this grid is currently a drop target */
   isDropTarget?: boolean;
@@ -74,7 +74,15 @@ export type AutoGridRowHeight = 'short' | 'standard' | 'tall' | 'custom' | numbe
 /** Min height for content-fit panels: `'none'` means no floor (the analog of max height's `'unlimited'`). */
 export type AutoGridMinHeight = 'none' | AutoGridRowHeight;
 export type AutoGridMaxHeightMode = 'unlimited' | 'short' | 'standard' | 'tall' | 'custom';
-export type AutoGridColumnLayout = 'split-wide-first' | 'split-wide-second';
+export type AutoGridColumnLayout = 'split-wide-first' | 'split-wide-second' | 'rail' | 'margin-note';
+
+/** How many saved items each arrangement accepts. */
+export const COLUMN_LAYOUT_ITEM_LIMITS: Record<AutoGridColumnLayout, { min: number; max: number }> = {
+  'split-wide-first': { min: 2, max: 2 },
+  'split-wide-second': { min: 2, max: 2 },
+  rail: { min: 2, max: 6 },
+  'margin-note': { min: 2, max: 7 },
+};
 
 export interface AutoGridColumnSplit {
   columnLayout: AutoGridColumnLayout | undefined;
@@ -407,8 +415,8 @@ export class AutoGridLayoutManager
   }
 
   /**
-   * A split applies only to exactly two saved, non-repeated items. Otherwise the saved
-   * choice is kept and the regular column settings render, so adding a third panel or a
+   * An arrangement applies only to saved, non-repeated items within its item limits. Otherwise
+   * the saved choice is kept and the regular column settings render, so adding a panel or a
    * repeat never loses the author's intent.
    */
   public getColumnSplit(children: AutoGridItem[] = this.state.layout.state.children): AutoGridColumnSplit {
@@ -416,7 +424,8 @@ export class AutoGridLayoutManager
     if (!columnLayout) {
       return { columnLayout, isActive: false };
     }
-    if (children.length !== 2) {
+    const { min, max } = COLUMN_LAYOUT_ITEM_LIMITS[columnLayout];
+    if (children.length < min || children.length > max) {
       return { columnLayout, isActive: false, inactiveReason: 'item-count' };
     }
     if (children.some((child) => child.state.variableName)) {

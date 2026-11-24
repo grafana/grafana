@@ -5918,12 +5918,17 @@
       "name": "Auto",
       "options": {
         "column-layout": "Column layout",
-        "column-layout-active": "Splits 2:1 when the section is wide enough and stacks in order when it is narrow. The column options below apply only when the split is inactive.",
+        "column-layout-active-arranged": "Arranges the panels when the section is wide enough and stacks them in order when it is narrow. The column options below apply only when the arrangement is inactive.",
         "column-layout-even": "Even",
         "column-layout-even-description": "Panels share the row equally using the column options below",
         "column-layout-inactive-count": "The split needs exactly two panels; this grid has {{panelCount}}. The regular column options apply until it has two again.",
-        "column-layout-inactive-repeat": "A repeated panel can produce any number of items, so the regular column options apply. The split returns when the repeat is removed.",
-        "column-layout-inactive-title": "Split is inactive",
+        "column-layout-inactive-heading": "Arrangement is inactive",
+        "column-layout-inactive-range": "This arrangement needs {{min}} to {{max}} panels; this grid has {{panelCount}}. The regular column options apply until it fits again.",
+        "column-layout-inactive-repeat": "A repeated panel can produce any number of items, so the regular column options apply. The arrangement returns when the repeat is removed.",
+        "column-layout-margin-note": "Margin note",
+        "column-layout-margin-note-description": "The last panel sits in a narrow margin beside the others",
+        "column-layout-rail": "Figure rail",
+        "column-layout-rail-description": "The first panel is the graphic; the rest stack beside it as figures",
         "column-layout-reset": "Reset to even",
         "column-layout-wide-first": "Wide first",
         "column-layout-wide-first-description": "The first panel takes two thirds of the row",
@@ -6209,6 +6214,7 @@
       "collapse-all-rows": "Collapse all rows",
       "collapse-row": "Collapse row",
       "dashboard-description": "Change dashboard description",
+      "dashboard-style": "Change dashboard style",
       "dashboard-title": "Change dashboard title",
       "duplicate": "Duplicate {{typeName}}",
       "duplicate-panel": "Duplicate panel",
@@ -6500,6 +6506,11 @@
       "sidebar": "Loading sidebar",
       "sidebar-title": "Loading…"
     },
+    "masthead": {
+      "as-of": "As of {{time}}",
+      "local-time": "local time",
+      "sources": "Source: {{sources}}"
+    },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} of {{numberOfPages}}",
       "tooltip-next": "Next",
@@ -6660,7 +6671,26 @@
       "note-title": "Note"
     },
     "review": {
-      "no-changes": "No changes to save"
+      "clear": "Nothing to flag. The dashboard opens on a finding and every section says what it shows.",
+      "headline-label": "\"{{title}}\" names a topic. A heading that states the result tells readers why to look.",
+      "kpi-wall_one": "{{count}} stat tile sits beside the others. Lead with the one that matters, or set them as figures in a rail beside the chart that explains them.",
+      "kpi-wall_other": "{{count}} stat tiles sit side by side. Lead with the one that matters, or set them as figures in a rail beside the chart that explains them.",
+      "lede-long_one": "The lede has {{count}} word. Keep it to one sentence of about 25 and move context beside the evidence.",
+      "lede-long_other": "The lede has {{count}} words. Keep it to one sentence of about 25 and move context beside the evidence.",
+      "lede-missing": "Add a lede: one sentence with the main finding, so the dashboard opens on its answer.",
+      "no-changes": "No changes to save",
+      "panel-caps": "\"{{title}}\" is in capitals. Sentence case reads faster.",
+      "rule": {
+        "headlines": "Write headlines, not labels",
+        "kpi-wall": "Avoid a wall of KPI tiles",
+        "lede": "Open on the finding",
+        "summary": "Say what each section shows",
+        "units": "Show units beside numbers"
+      },
+      "summary-missing": "\"{{title}}\" has no summary.",
+      "title-caps": "The title is in capitals. Sentence case reads faster.",
+      "unit-missing": "\"{{title}}\" has no unit.",
+      "untitled": "Untitled panel"
     },
     "rows-layout": {
       "cancel": "Cancel",
@@ -6991,6 +7021,20 @@
         },
         "title": "Questions"
       },
+      "report": {
+        "accent": "Accent",
+        "lede": "Lede",
+        "lede-description": "One sentence with the main finding. Opens the dashboard with the title and an automatic scope line.",
+        "lede-placeholder": "Checkout overspent its error budget; two more SLOs are close.",
+        "palette": "Palette",
+        "review": "Editorial review",
+        "specimen-glyphs": "Aa",
+        "style": "Style",
+        "style-description": "Typography, colour, surfaces and rules. Content stays the same in every style.",
+        "style-none": "No style",
+        "style-none-description": "The dashboard as Grafana draws it",
+        "title": "Report"
+      },
       "row": {
         "header": {
           "hide": "Hide",
@@ -7095,8 +7139,26 @@
         }
       }
     },
+    "source-line": {
+      "interval": "{{interval}} interval",
+      "label": "Source",
+      "queries_one": "{{count}} query",
+      "queries_other": "{{count}} queries"
+    },
     "source-link": {
       "tooltip": "View source file in repository"
+    },
+    "style": {
+      "figure-number": "Fig. {{number}}"
+    },
+    "style-switcher": {
+      "accent": "Accent",
+      "accent-palette": "Palette accent",
+      "description": "{{pack}} style. Your choice is saved in this browser only.",
+      "palette": "Palette",
+      "reset": "Use the author's style",
+      "tooltip": "Change palette, accent and type",
+      "typography": "Typography"
     },
     "tabs-layout": {
       "delete-tab-text": "Deleting this tab will also remove all panels. Are you sure you want to continue?",
@@ -8432,6 +8494,7 @@
       "aria-label-sharedropdownmenu": "Toggle share menu"
     },
     "share-export-tab": {
+      "classic-report-lede-error": "Classic export is unavailable: the dashboard lede cannot be represented in the classic format and would be lost. Export the V2 resource instead.",
       "classic-report-summary-error": "Classic export is unavailable: report section summaries ({{titles}}) cannot be represented in the classic format and would be lost. Export the V2 resource instead."
     },
     "sharing": {
@@ -17311,7 +17374,14 @@
       "label-value": "Value"
     },
     "description-graph-mode": "Stat panel graph / sparkline mode",
+    "description-presentation": "Figure renders each value as an editorial figure with a label, change line and caption",
     "description-text-mode": "Control if name and value is displayed or just name",
+    "figure": {
+      "change-down": "down {{change}} vs start of range",
+      "change-none": "unchanged vs start of range",
+      "change-reference": "vs start of range",
+      "change-up": "up {{change}} vs start of range"
+    },
     "graph-mode": {
       "options": {
         "label-area": "Area",
@@ -17322,6 +17392,7 @@
       "label": "Color mode"
     },
     "name-graph-mode": "Graph mode",
+    "name-presentation": "Presentation",
     "name-show-percent-change": "Show percent change",
     "name-text-alignment": "Text alignment",
     "name-text-mode": "Text mode",
@@ -17331,6 +17402,10 @@
       "label-inverted": "Inverted",
       "label-same-as-value": "Same as Value",
       "label-standard": "Standard"
+    },
+    "presentation-options": {
+      "label-default": "Default",
+      "label-figure": "Figure"
     },
     "presets": {
       "horizontal-threshold-value": "Horizontal threshold value",
@@ -17527,7 +17602,8 @@
       "json": "JSON View",
       "markdown": "Markdown + HTML",
       "pill": "Pill",
-      "sparkline": "Sparkline"
+      "sparkline": "Sparkline",
+      "status": "Status"
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "If selected the entire row will be colored as this cell would be.",
@@ -18050,6 +18126,16 @@
         "label-never": "Never",
         "label-threshold": "Threshold"
       }
+    },
+    "story": {
+      "category": "Story",
+      "description-annotation-labels": "Show the text of each annotation above the plot, with a leader line to its time",
+      "description-direct-labels": "Label each series with its name and last value at the end of its line. Usually paired with a hidden legend.",
+      "description-highlight": "Series whose display name matches are drawn in the accent colour and the rest recede. Use an exact name, part of a name, or /regex/.",
+      "name-annotation-labels": "Annotation labels",
+      "name-direct-labels": "Direct labels",
+      "name-highlight": "Highlight series",
+      "placeholder-highlight": "Series name or /regex/"
     },
     "suggestions": {
       "area": "Area chart",

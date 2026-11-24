@@ -28,6 +28,7 @@ import { EditActionsLayoutProvider } from '../scene/edit-actions-popover/EditAct
 import { PublicDashboardBadge } from '../scene/new-toolbar/actions/PublicDashboardBadge';
 import { StarButton } from '../scene/new-toolbar/actions/StarButton';
 import { getPlanningGround } from '../scene/planningGround';
+import { DashboardStyleProvider, getStyleCanvasProps, useDashboardStyle } from '../style/DashboardStyleScope';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { DashboardSidebarRenderer } from './DashboardSidebarRenderer';
@@ -93,6 +94,8 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, 
   }, [isEditing, sidebar]);
 
   const theme = useTheme2();
+  const styleValue = useDashboardStyle(dashboard);
+  const canvasProps = getStyleCanvasProps(styleValue);
   const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
   const sidebarContext = useSidebar({
     hasOpenPane: Boolean(openPane) || Boolean(isLoading),
@@ -138,10 +141,18 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, 
     if (renderWithoutSidebar) {
       return (
         <div
-          className={cx(styles.bodyWrapper, styles.bodyWrapperKiosk, isPlanning && styles.planningCanvas)}
+          {...canvasProps}
+          className={cx(
+            styles.bodyWrapper,
+            styles.bodyWrapperKiosk,
+            isPlanning && styles.planningCanvas,
+            canvasProps.className
+          )}
           data-testid={selectors.components.DashboardSidebarSplitter.primaryBody}
         >
-          <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>{body}</NativeScrollbar>
+          <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>
+            <DashboardStyleProvider value={styleValue}>{body}</DashboardStyleProvider>
+          </NativeScrollbar>
         </div>
       );
     }
@@ -153,10 +164,12 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, 
         {...(renderWithoutSidebar ? {} : sidebarContext.outerWrapperProps)}
       >
         <div
+          {...canvasProps}
           className={cx(
             styles.scrollContainer,
             (renderWithoutSidebar || sidebarContext.isHiddenPreference) && styles.scrollContainerNoSidebar,
-            isPlanning && styles.planningCanvas
+            isPlanning && styles.planningCanvas,
+            canvasProps.className
           )}
           ref={onBodyRef}
           onPointerDown={onClearSelection}
@@ -167,7 +180,7 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, 
           tabIndex={0}
           aria-label={t('dashboard.layout.scroll-content', 'Dashboard content')}
         >
-          {body}
+          <DashboardStyleProvider value={styleValue}>{body}</DashboardStyleProvider>
         </div>
 
         {!renderWithoutSidebar && (
@@ -187,7 +200,11 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, 
         isHidden={sidebarContext.isHidden}
       >
         <ElementSelectionContext.Provider value={selectionContext}>
-          <DashboardControlsChrome onPointerDown={onClearSelection}>{controls}</DashboardControlsChrome>
+          <DashboardStyleProvider value={styleValue}>
+            <div {...canvasProps} className={cx(styles.controlsScope, canvasProps.className)}>
+              <DashboardControlsChrome onPointerDown={onClearSelection}>{controls}</DashboardControlsChrome>
+            </div>
+          </DashboardStyleProvider>
           {renderBody()}
         </ElementSelectionContext.Provider>
       </EditActionsLayoutProvider>
@@ -314,6 +331,9 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     scrollContainerNoSidebar: css({
       paddingRight: theme.spacing(2),
+    }),
+    controlsScope: css({
+      display: 'contents',
     }),
     body: css({
       label: 'body',

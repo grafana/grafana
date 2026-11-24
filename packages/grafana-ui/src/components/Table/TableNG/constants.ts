@@ -37,6 +37,9 @@ export const TABLE = {
   // content out of reach again. Capping the width lets `pre-wrap` wrap instead of growing, and the
   // height cap keeps the overlay scrollable in place; the inspector remains the full-value view.
   JSON_OVERFLOW_MAX_WIDTH: 600,
+  // Status cell shape size and its gap to the text, in em of the cell font.
+  STATUS_SHAPE_SIZE_EM: 0.7,
+  STATUS_SHAPE_GAP_EM: 0.45,
   JSON_OVERFLOW_MAX_HEIGHT: '40vh',
 };
 

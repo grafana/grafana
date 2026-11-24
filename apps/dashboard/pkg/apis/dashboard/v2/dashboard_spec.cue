@@ -53,6 +53,25 @@ DashboardSpec: {
 	prompts?: [...Prompt]
 
 	preferences?: Preferences
+
+	// Visual style of the dashboard: art direction, palette, accent and typography.
+	// Content stays the same in every style. Absent means the Grafana theme.
+	style?: DashboardStyle
+
+	// The dashboard's main finding, in one or two sentences of Markdown. When set, the
+	// dashboard opens on a masthead with the title, an automatic scope line and this text.
+	lede?: string
+}
+
+DashboardStyle: {
+	// Style pack id, for example "newsroom" or "field-guide".
+	pack: string
+	// One of the pack's palettes. Absent means the pack default.
+	palette?: string
+	// One of the pack's accents. Absent means the palette's own accent.
+	accent?: string
+	// One of the pack's typography options. Absent means the pack default.
+	typography?: string
 }
 
 // A prompt viewers can run on a dashboard, row, or tab, offered by plugins in its controls.
@@ -717,13 +736,15 @@ AutoGridLayoutSpec: {
 	maxHeightMode?:   "unlimited" | "short" | "standard" | "tall" | "custom"
 	maxHeight?:       number
 	matchRowHeights?: bool | *true
-	// Gives one of exactly two saved, non-repeated items a 2:1 share of the row.
+	// "split-wide-first" and "split-wide-second" give one of exactly two saved, non-repeated items
+	// a 2:1 share of the row. "rail" puts the first item beside a narrow column that stacks the
+	// rest. "margin-note" sets the last item as a narrow ruled note beside the others.
 	// Absent means the regular column settings apply.
 	columnLayout?: AutoGridColumnLayout
 	items: [...AutoGridLayoutItemKind]
 }
 
-AutoGridColumnLayout: "split-wide-first" | "split-wide-second"
+AutoGridColumnLayout: "split-wide-first" | "split-wide-second" | "rail" | "margin-note"
 
 AutoGridLayoutItemKind: {
 	kind: "AutoGridLayoutItem"

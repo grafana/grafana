@@ -18,16 +18,20 @@ type ReportSummaryNotRepresentableError struct {
 
 func (e *ReportSummaryNotRepresentableError) Error() string {
 	return fmt.Sprintf(
-		"dashboard has report section summaries (%s) that %s cannot represent; read and write it with %s",
+		"dashboard has report text (%s) that %s cannot represent; read and write it with %s",
 		strings.Join(e.RowTitles, ", "), e.TargetAPIVersion, dashv2.APIVERSION,
 	)
 }
 
 // checkReportSummariesRepresentable rejects a conversion from v2 that would silently drop authored
-// report summaries. Header style and the paired column layout only affect presentation, so the
-// existing projection may drop them.
+// report text: row summaries and the dashboard lede. Header style, column layouts and the dashboard
+// style only affect presentation, so the existing projection may drop them.
 func checkReportSummariesRepresentable(in *dashv2.Dashboard, targetAPIVersion string) error {
-	titles := collectReportSummaryRowTitles(in.Spec.Layout.RowsLayoutKind, in.Spec.Layout.TabsLayoutKind, nil)
+	var titles []string
+	if in.Spec.Lede != nil && strings.TrimSpace(*in.Spec.Lede) != "" {
+		titles = append(titles, "dashboard lede")
+	}
+	titles = collectReportSummaryRowTitles(in.Spec.Layout.RowsLayoutKind, in.Spec.Layout.TabsLayoutKind, titles)
 	if len(titles) == 0 {
 		return nil
 	}

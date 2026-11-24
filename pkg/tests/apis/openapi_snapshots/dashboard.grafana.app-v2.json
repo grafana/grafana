@@ -1361,7 +1361,7 @@
         ],
         "properties": {
           "columnLayout": {
-            "description": "Gives one of exactly two saved, non-repeated items a 2:1 share of the row. Absent means the regular column settings apply.",
+            "description": "\"split-wide-first\" and \"split-wide-second\" give one of exactly two saved, non-repeated items a 2:1 share of the row. \"rail\" puts the first item beside a narrow column that stacks the rest. \"margin-note\" sets the last item as a narrow ruled note beside the others. Absent means the regular column settings apply.",
             "type": "string"
           },
           "columnWidth": {
@@ -1866,6 +1866,31 @@
           },
           "url": {
             "description": "Link URL. Only required/valid if the type is link",
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardDashboardStyle": {
+        "type": "object",
+        "required": [
+          "pack"
+        ],
+        "properties": {
+          "accent": {
+            "description": "One of the pack's accents. Absent means the palette's own accent.",
+            "type": "string"
+          },
+          "pack": {
+            "description": "Style pack id, for example \"newsroom\" or \"field-guide\".",
+            "type": "string",
+            "default": ""
+          },
+          "palette": {
+            "description": "One of the pack's palettes. Absent means the pack default.",
+            "type": "string"
+          },
+          "typography": {
+            "description": "One of the pack's typography options. Absent means the pack default.",
             "type": "string"
           }
         }
@@ -3488,6 +3513,10 @@
           "layout": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind"
           },
+          "lede": {
+            "description": "The dashboard's main finding, in one or two sentences of Markdown. When set, the dashboard opens on a masthead with the title, an automatic scope line and this text.",
+            "type": "string"
+          },
           "links": {
             "description": "Links with references to other dashboards or external websites.",
             "type": "array",
@@ -3518,6 +3547,14 @@
             "description": "Plugins only. The version of the dashboard installed together with the plugin. This is used to determine if the dashboard should be updated when the plugin is updated.",
             "type": "integer",
             "format": "int32"
+          },
+          "style": {
+            "description": "Visual style of the dashboard: art direction, palette, accent and typography. Content stays the same in every style. Absent means the Grafana theme.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardDashboardStyle"
+              }
+            ]
           },
           "tags": {
             "description": "Tags associated with dashboard.",

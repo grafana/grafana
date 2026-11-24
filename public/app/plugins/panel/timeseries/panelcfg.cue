@@ -27,6 +27,11 @@ composableKinds: PanelCfg: lineage: {
 				enableFacetedFilter?: bool | *false
 				facetedFilterPinned?: bool | *false
 			} @cuetsy(kind="interface")
+			StoryOptions: {
+				highlight?:        string
+				directLabels?:     bool
+				annotationLabels?: bool
+			} @cuetsy(kind="interface")
 			Options: {
 				common.OptionsWithTimezones
 				common.OptionsWithAnnotations
@@ -36,6 +41,7 @@ composableKinds: PanelCfg: lineage: {
 				timeCompare?:           common.TimeCompareOptions
 				orientation?:           common.VizOrientation
 				annotations?:           common.VizAnnotations
+				story?:                 StoryOptions
 				disableKeyboardEvents?: bool
 			} @cuetsy(kind="interface")
 

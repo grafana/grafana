@@ -15,7 +15,8 @@ import { BigValueTextMode, BigValueGraphMode } from '@grafana/schema';
 import { BigValue, DataLinksContextMenu, useTheme2, VizRepeater, type VizRepeaterRenderValueProps } from '@grafana/ui';
 import { type DataLinksContextMenuApi } from '@grafana/ui/internal';
 
-import { type Options } from './panelcfg.gen';
+import { StatFigures } from './StatFigures';
+import { type Options, StatPresentation } from './panelcfg.gen';
 
 export const StatPanel = memo(
   ({
@@ -126,11 +127,15 @@ export const StatPanel = memo(
         replaceVariables,
         theme,
         data: data.series,
-        sparkline: options.graphMode !== BigValueGraphMode.None,
+        sparkline: options.graphMode !== BigValueGraphMode.None && options.presentation !== StatPresentation.Figure,
         percentChange: options.showPercentChange,
         timeZone,
       });
     }, [data, fieldConfig, theme, options, replaceVariables, timeZone]);
+
+    if (options.presentation === StatPresentation.Figure) {
+      return <StatFigures values={getValues()} options={options} width={width} height={height} />;
+    }
 
     return (
       <VizRepeater

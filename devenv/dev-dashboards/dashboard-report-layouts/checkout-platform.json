@@ -1,0 +1,1328 @@
+{
+  "apiVersion": "dashboard.grafana.app/v2",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "report-checkout-platform"
+  },
+  "spec": {
+    "title": "Checkout platform: payments needs attention",
+    "description": "",
+    "annotations": [
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "query": {
+            "kind": "DataQuery",
+            "group": "grafana",
+            "version": "v0",
+            "datasource": {
+              "name": "-- Grafana --"
+            },
+            "spec": {}
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "builtIn": true
+        }
+      },
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "query": {
+            "kind": "DataQuery",
+            "group": "grafana",
+            "version": "v0",
+            "datasource": {
+              "name": "-- Grafana --"
+            },
+            "spec": {
+              "type": "tags",
+              "tags": [
+                "report-checkout"
+              ],
+              "matchAny": true,
+              "limit": 100
+            }
+          },
+          "enable": true,
+          "hide": false,
+          "iconColor": "rgba(140, 140, 150, 1)",
+          "name": "Changes"
+        }
+      }
+    ],
+    "cursorSync": "Crosshair",
+    "editable": true,
+    "elements": {
+      "service-register": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "Service register, most urgent first",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "csv_content",
+                        "csvContent": "Service,Status,Owner,SLO,Availability 30d,Error budget left,Error rate now\npayments,breaching,Checkout,99.9,99.71,-14,5.71\nsearch,watch,Discovery,99.5,99.58,18,2.12\nauth,healthy,Platform,99.95,99.982,64,0.21\ncart,healthy,Checkout,99.9,99.952,52,0.33\nnotifications,healthy,Messaging,99.5,99.861,72,0.28\ninventory,healthy,Fulfilment,99.9,99.968,68,0.18\ncheckout-web,healthy,Checkout,99.9,99.941,41,0.39\napi-gateway,healthy,Edge,99.95,99.977,55,0.12"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "",
+            "spec": {
+              "options": {
+                "showHeader": true,
+                "cellHeight": "md",
+                "footer": {
+                  "show": false
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "minWidth": 56
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Status"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "status"
+                        }
+                      },
+                      {
+                        "id": "mappings",
+                        "value": [
+                          {
+                            "type": "value",
+                            "options": {
+                              "healthy": {
+                                "text": "Healthy",
+                                "color": "green",
+                                "index": 0
+                              },
+                              "watch": {
+                                "text": "Watch",
+                                "color": "orange",
+                                "index": 1
+                              },
+                              "breaching": {
+                                "text": "Breaching",
+                                "color": "red",
+                                "index": 2
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "id": "custom.width",
+                        "value": 130
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "SLO"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "percent"
+                      },
+                      {
+                        "id": "decimals",
+                        "value": 2
+                      },
+                      {
+                        "id": "custom.width",
+                        "value": 80
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Availability 30d"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "percent"
+                      },
+                      {
+                        "id": "decimals",
+                        "value": 3
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Error budget left"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "gauge",
+                          "mode": "basic",
+                          "valueDisplayMode": "text"
+                        }
+                      },
+                      {
+                        "id": "unit",
+                        "value": "percent"
+                      },
+                      {
+                        "id": "min",
+                        "value": 0
+                      },
+                      {
+                        "id": "max",
+                        "value": 100
+                      },
+                      {
+                        "id": "color",
+                        "value": {
+                          "mode": "thresholds"
+                        }
+                      },
+                      {
+                        "id": "thresholds",
+                        "value": {
+                          "mode": "absolute",
+                          "steps": [
+                            {
+                              "value": null,
+                              "color": "red"
+                            },
+                            {
+                              "value": 25,
+                              "color": "orange"
+                            },
+                            {
+                              "value": 50,
+                              "color": "green"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Error rate now"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "percent"
+                      },
+                      {
+                        "id": "decimals",
+                        "value": 2
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Owner"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 110
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "transparent": true
+        }
+      },
+      "errors-by-service": {
+        "kind": "Panel",
+        "spec": {
+          "id": 2,
+          "title": "Error rate by service",
+          "description": "Share of requests that returned 5xx, per service.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "csv_metric_values",
+                        "stringInput": "0.399,0.378,0.438,0.369,0.424,0.404,0.367,0.421,0.364,0.412,0.368,0.371,0.411,0.459,0.375,0.387,0.435,0.474,0.429,0.408,0.477,0.366,5.763,5.695,5.677,5.674,5.697,5.758,5.682,5.73,5.737,5.705,5.726,5.668,5.667,5.685",
+                        "alias": "payments"
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "B",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "csv_metric_values",
+                        "stringInput": "0.629,0.633,0.66,0.749,0.773,0.793,0.917,0.947,0.919,1.017,1.054,1.155,1.177,1.151,1.307,1.214,1.307,1.406,1.354,1.453,1.426,1.572,1.632,1.647,1.74,1.695,1.801,1.83,1.873,1.898,2.004,2.066,2.036,2.111,2.06,2.207",
+                        "alias": "search"
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "C",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "csv_metric_values",
+                        "stringInput": "0.231,0.279,0.255,0.18,0.194,0.234,0.143,0.205,0.164,0.156,0.148,0.248,0.158,0.175,0.195,0.262,0.151,0.203,0.217,0.264,0.255,0.261,0.179,0.198,0.19,0.264,0.274,0.161,0.165,0.172,0.173,0.208,0.222,0.177,0.141,0.199",
+                        "alias": "auth"
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "D",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "csv_metric_values",
+                        "stringInput": "0.312,0.339,0.393,0.357,0.332,0.346,0.355,0.268,0.386,0.369,0.382,0.372,0.315,0.316,0.274,0.349,0.269,0.269,0.289,0.283,0.308,0.267,0.26,0.281,0.274,0.311,0.264,0.382,0.346,0.281,0.295,0.309,0.311,0.277,0.379,0.399",
+                        "alias": "cart"
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "E",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "csv_metric_values",
+                        "stringInput": "0.275,0.278,0.222,0.224,0.258,0.247,0.326,0.233,0.213,0.343,0.284,0.231,0.286,0.214,0.284,0.347,0.331,0.307,0.247,0.261,0.233,0.318,0.285,0.319,0.256,0.241,0.324,0.348,0.329,0.323,0.325,0.314,0.242,0.282,0.26,0.214",
+                        "alias": "notifications"
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "F",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "csv_metric_values",
+                        "stringInput": "0.114,0.149,0.146,0.207,0.244,0.173,0.241,0.248,0.244,0.161,0.141,0.142,0.138,0.139,0.197,0.236,0.228,0.177,0.201,0.222,0.122,0.202,0.237,0.22,0.215,0.177,0.135,0.22,0.157,0.222,0.246,0.165,0.166,0.243,0.211,0.134",
+                        "alias": "inventory"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "showLegend": false,
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                },
+                "story": {
+                  "highlight": "payments",
+                  "directLabels": true,
+                  "annotationLabels": true
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "percent",
+                  "custom": {
+                    "lineWidth": 1.5,
+                    "fillOpacity": 0,
+                    "showPoints": "never",
+                    "drawStyle": "line",
+                    "spanNulls": true,
+                    "axisBorderShow": false,
+                    "lineInterpolation": "smooth",
+                    "thresholdsStyle": {
+                      "mode": "dashed"
+                    }
+                  },
+                  "decimals": 1,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "transparent"
+                      },
+                      {
+                        "value": 1,
+                        "color": "red"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "figure-error-rate": {
+        "kind": "Panel",
+        "spec": {
+          "id": 3,
+          "title": "",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "csv_metric_values",
+                        "stringInput": "0.399,0.378,0.438,0.369,0.424,0.404,0.367,0.421,0.364,0.412,0.368,0.371,0.411,0.459,0.375,0.387,0.435,0.474,0.429,0.408,0.477,0.366,5.763,5.695,5.677,5.674,5.697,5.758,5.682,5.73,5.737,5.705,5.726,5.668,5.667,5.685",
+                        "alias": "payments error rate"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "presentation": "figure",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "colorMode": "none",
+                "graphMode": "none",
+                "textMode": "auto",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "showPercentChange": true,
+                "percentChangeColorMode": "inverted"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "percent",
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "decimals": 1,
+                  "description": "5xx share of payments requests"
+                },
+                "overrides": []
+              }
+            }
+          },
+          "transparent": true
+        }
+      },
+      "figure-budget": {
+        "kind": "Panel",
+        "spec": {
+          "id": 4,
+          "title": "",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "csv_metric_values",
+                        "stringInput": "1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,9.8,10.2,10.6,11.0,11.4,11.8,12.2,12.6,13.0,13.4,13.8,14.2,14.6,15.0",
+                        "alias": "Budget burn since deploy"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "presentation": "figure",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "colorMode": "none",
+                "graphMode": "none",
+                "textMode": "auto",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "showPercentChange": true,
+                "percentChangeColorMode": "inverted"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "x",
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "decimals": 1,
+                  "description": "Times the sustainable rate"
+                },
+                "overrides": []
+              }
+            }
+          },
+          "transparent": true
+        }
+      },
+      "figure-requests": {
+        "kind": "Panel",
+        "spec": {
+          "id": 5,
+          "title": "",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "csv_metric_values",
+                        "stringInput": "1195.245,1198.138,1288.582,1276.78,1197.541,1279.181,1297.637,1258.872,1222.049,1245.839,1195.718,1181.709,1296.507,1257.961,1243.19,1292.035,1232.057,1284.609,1279.139,1205.325,1210.22,1215.156,1208.865,1250.372,1211.124,1230.282,1195.729,1289.202,1222.454,1234.979,1250.002,1288.516,1230.475,1290.127,1240.198,1243.819",
+                        "alias": "Requests per second"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "presentation": "figure",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "colorMode": "none",
+                "graphMode": "none",
+                "textMode": "auto",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "showPercentChange": true,
+                "percentChangeColorMode": "standard"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "reqps",
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "decimals": 2,
+                  "description": "Checkout traffic is normal"
+                },
+                "overrides": []
+              }
+            }
+          },
+          "transparent": true
+        }
+      },
+      "latency": {
+        "kind": "Panel",
+        "spec": {
+          "id": 6,
+          "title": "p95 latency, payments and its dependencies",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "csv_metric_values",
+                        "stringInput": "182.564,170.449,180.563,174.395,170.094,189.18,174.136,181.364,187.405,183.355,177.824,182.44,183.331,188.823,172.547,183.447,175.964,176.646,188.534,182.185,183.482,188.24,199.9,188.638,192.701,190.133,190.292,194.626,188.856,190.799,189.473,200.596,194.781,199.037,200.612,184.23",
+                        "alias": "payments"
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "B",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "csv_metric_values",
+                        "stringInput": "41.476,44.546,43.72,38.097,37.973,40.537,37.58,38.925,37.585,42.356,43.271,44.176,38.236,42.729,42.282,38.144,44.063,44.74,38.757,44.62,40.186,40.898,44.919,43.66,38.292,40.452,41.125,39.713,38.566,39.548,42.777,37.156,41.432,40.524,37.145,39.652",
+                        "alias": "payments-db"
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "C",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "csv_metric_values",
+                        "stringInput": "97.983,96.196,89.029,103.761,100.614,103.547,89.676,92.249,88.633,100.464,92.327,90.073,94.756,102.583,101.104,92.138,90.39,102.707,97.13,99.207,89.431,88.92,99.011,94.805,89.159,103.014,98.151,100.826,89.34,101.7,89.066,101.804,95.26,93.426,96.849,102.827",
+                        "alias": "fraud-check"
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "D",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "csv_metric_values",
+                        "stringInput": "60.214,58.551,63.323,59.861,58.313,58.937,57.605,59.421,60.744,60.66,66.114,60.48,63.001,59.135,61.164,57.218,60.005,57.184,65.797,63.613,59.273,62.697,68.216,58.275,66.827,62.186,62.94,67.015,61.717,63.08,65.253,68.789,61.112,66.987,65.481,64.632",
+                        "alias": "card-vault"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "showLegend": false,
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                },
+                "story": {
+                  "highlight": "payments",
+                  "directLabels": true
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "ms",
+                  "custom": {
+                    "lineWidth": 1.5,
+                    "fillOpacity": 0,
+                    "showPoints": "never",
+                    "drawStyle": "line",
+                    "spanNulls": true,
+                    "axisBorderShow": false,
+                    "lineInterpolation": "smooth"
+                  },
+                  "decimals": 0
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "latency-note": {
+        "kind": "Panel",
+        "spec": {
+          "id": 7,
+          "title": "",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "",
+            "spec": {
+              "options": {
+                "mode": "markdown",
+                "content": "**Why this is not capacity.** p95 latency rose by only 8 ms at the deploy, and none of the dependencies moved. The errors are immediate `402` responses from the new card-token validation, not timeouts.\n\n- Roll back `payments` to v4.11.3, or\n- ship the validation fix behind its flag.\n\n*Owner:* checkout on-call.",
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "textStyle": "editorial"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          },
+          "transparent": true
+        }
+      },
+      "ctx-traffic": {
+        "kind": "Panel",
+        "spec": {
+          "id": 8,
+          "title": "Traffic",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "csv_metric_values",
+                        "stringInput": "1228.564,1221.706,1186.527,1195.578,1188.487,1268.907,1210.671,1199.59,1190.138,1280.952,1284.465,1260.465,1213.832,1209.066,1215.167,1235.134,1198.904,1233.499,1211.589,1295.414,1296.715,1245.649,1209.334,1295.88,1217.146,1222.79,1180.128,1225.795,1236.957,1240.332,1204.118,1240.568,1180.594,1211.7,1190.77,1227.941",
+                        "alias": "requests"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "showLegend": false,
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "reqps",
+                  "custom": {
+                    "lineWidth": 1.5,
+                    "fillOpacity": 10,
+                    "showPoints": "never",
+                    "drawStyle": "line",
+                    "spanNulls": true,
+                    "axisBorderShow": false,
+                    "lineInterpolation": "smooth"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "ctx-saturation": {
+        "kind": "Panel",
+        "spec": {
+          "id": 9,
+          "title": "CPU saturation",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "csv_metric_values",
+                        "stringInput": "41.417,41.225,44.042,43.328,46.856,46.292,48.505,47.575,48.16,49.791,44.895,44.261,50.847,42.495,48.242,47.432,41.438,49.353,49.919,47.273,48.339,49.122,42.393,46.238,46.044,49.349,49.047,49.264,46.841,49.928,47.829,47.933,43.299,41.312,42.331,44.607",
+                        "alias": "payments pods"
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "B",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "csv_metric_values",
+                        "stringInput": "66.259,75.03,71.702,72.533,72.515,73.168,70.872,65.04,74.572,73.979,71.036,71.422,72.912,65.793,73.841,68.026,65.893,68.187,73.752,67.463,73.878,76.709,70.927,69.591,70.748,73.204,74.204,72.404,72.713,65.93,66.769,68.047,73.919,68.653,71.813,65.15",
+                        "alias": "search pods"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "showLegend": false,
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                },
+                "story": {
+                  "directLabels": true
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "percent",
+                  "custom": {
+                    "lineWidth": 1.5,
+                    "fillOpacity": 0,
+                    "showPoints": "never",
+                    "drawStyle": "line",
+                    "spanNulls": true,
+                    "axisBorderShow": false,
+                    "lineInterpolation": "smooth"
+                  },
+                  "decimals": 0
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "ctx-queue": {
+        "kind": "Panel",
+        "spec": {
+          "id": 10,
+          "title": "Payment queue depth",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "csv_metric_values",
+                        "stringInput": "10.485,12.15,15.376,15.537,15.406,12.327,14.132,13.717,13.731,10.948,17.149,11.594,17.825,17.49,10.14,13.672,16.559,17.745,13.596,12.149,11.679,17.565,17.686,20.652,17.134,20.193,23.622,17.061,22.562,20.07,23.095,21.627,17.851,23.182,19.889,16.199",
+                        "alias": "queued"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "showLegend": false,
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "custom": {
+                    "lineWidth": 1.5,
+                    "fillOpacity": 10,
+                    "showPoints": "never",
+                    "drawStyle": "line",
+                    "spanNulls": true,
+                    "axisBorderShow": false,
+                    "lineInterpolation": "smooth"
+                  },
+                  "decimals": 0
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "RowsLayout",
+      "spec": {
+        "rows": [
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "1 to act on, 1 to watch, 6 within SLO",
+              "collapse": false,
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 1,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "custom",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "service-register"
+                        }
+                      }
+                    }
+                  ],
+                  "rowHeight": 470
+                }
+              },
+              "headerStyle": "report",
+              "summary": "Sorted by how close each service is to breaching. Budget is the share of the 30-day error allowance still unspent; a negative value means it is gone."
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Payments errors jumped at the 09:40 deploy and have not come back down",
+              "collapse": false,
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 2,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "short",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "errors-by-service"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "figure-error-rate"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "figure-budget"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "figure-requests"
+                        }
+                      }
+                    }
+                  ],
+                  "columnLayout": "rail"
+                }
+              },
+              "headerStyle": "report",
+              "summary": "The new card-token validation rejects about **one in eighteen** payments. Search is rising slowly and will reach its threshold in about a day at this pace."
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Latency held, so this is a code problem, not a capacity one",
+              "collapse": false,
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 2,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "custom",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "latency"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "latency-note"
+                        }
+                      }
+                    }
+                  ],
+                  "columnLayout": "margin-note",
+                  "rowHeight": 400
+                }
+              },
+              "headerStyle": "report",
+              "summary": "If the deploy had overloaded payments, latency would have climbed with the errors. It held within 8 ms, and every dependency stayed flat."
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Live context",
+              "collapse": false,
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 3,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "short",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "ctx-traffic"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "ctx-saturation"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "ctx-queue"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "links": [],
+    "liveNow": false,
+    "preload": false,
+    "tags": [
+      "report-layouts",
+      "newsroom",
+      "slo"
+    ],
+    "timeSettings": {
+      "timezone": "browser",
+      "from": "now-6h",
+      "to": "now",
+      "autoRefresh": "",
+      "autoRefreshIntervals": [
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h"
+      ],
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "variables": [],
+    "style": {
+      "pack": "newsroom"
+    },
+    "lede": "*payments* has spent its error budget since the 09:40 deploy and is failing **5.7%** of requests. *search* is on watch; the other six services are inside their SLOs."
+  }
+}

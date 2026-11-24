@@ -21,6 +21,7 @@ import { JsonCell } from './JsonCell';
 import { MarkdownCell, getStyles as getMarkdownCellStyles } from './MarkdownCell';
 import { PillCell, getStyles as getPillStyles } from './PillCell';
 import { SparklineCell, getStyles as getSparklineCellStyles } from './SparklineCell';
+import { StatusCell, getStyles as getStatusStyles } from './StatusCell';
 
 const wrapComponentInMemo = <P extends object>(fn: React.FunctionComponent<P>, name: string) => {
   const result = memo<P>(fn);
@@ -147,6 +148,20 @@ const CELL_REGISTRY: Record<TableCellOptions['type'], CellRegistryEntry> = {
     testField: (field: Field) =>
       field.type === FieldType.string ||
       (field.type === FieldType.other && field.values.some((val) => Array.isArray(val))),
+  },
+  [TableCellDisplayMode.Status]: {
+    renderer: wrapComponentInMemo(
+      (props: TableCellRendererProps) => (
+        <StatusCell
+          value={props.value}
+          field={props.field}
+          rowIdx={props.rowIdx}
+          tableRefreshEnabled={props.tableRefreshEnabled}
+        />
+      ),
+      'StatusCellRenderer'
+    ),
+    getStyles: getStatusStyles,
   },
   [TableCellDisplayMode.Markdown]: {
     renderer: wrapComponentInMemo(

@@ -7,6 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import { clearButtonStyles, ClipboardButton, Icon, Tooltip, useElementSelection, useStyles2 } from '@grafana/ui';
 import { ReportProse } from 'app/core/components/ReportProse/ReportProse';
 import { REPORT_SERIF_STACK } from 'app/core/components/ReportProse/styles';
+import { dashVar } from 'app/core/dashboardStyle/cssVars';
 
 import { toggleRowCollapse } from '../../actions/layout/toggleRowCollapse';
 import { useDashboardState, useInterpolatedTitle } from '../../utils/utils';
@@ -288,20 +289,24 @@ function getStyles(theme: GrafanaTheme2) {
         color: theme.colors.text.primary,
       },
     }),
-    reportTitle: css({
-      fontFamily: REPORT_SERIF_STACK,
-      fontSize: '1.75rem',
-      lineHeight: 1.2,
-      fontWeight: 600,
-      letterSpacing: '-0.01em',
-      color: theme.colors.text.primary,
-      whiteSpace: 'normal',
-      textWrap: 'balance',
-      overflow: 'visible',
-      gap: theme.spacing(1),
-    }),
+    reportTitle: cx(
+      'dashboard-report-title',
+      css({
+        fontFamily: dashVar('fontDisplay', REPORT_SERIF_STACK),
+        fontSize: 'var(--dash-heading-size, 1.75rem)',
+        lineHeight: 1.15,
+        fontWeight: dashVar('headingWeight', '600'),
+        letterSpacing: dashVar('headingTracking', '-0.01em'),
+        color: dashVar('ink', theme.colors.text.primary),
+        whiteSpace: 'normal',
+        textWrap: 'balance',
+        overflow: 'visible',
+        gap: theme.spacing(1),
+        display: 'inline',
+      })
+    ),
     reportTitleNested: css({
-      fontSize: '1.3rem',
+      fontSize: 'calc(var(--dash-heading-size, 1.75rem) * 0.72)',
     }),
     reportChevron: cx(
       'report-chevron',
@@ -314,14 +319,19 @@ function getStyles(theme: GrafanaTheme2) {
         },
       })
     ),
-    reportSummary: css({
-      margin: theme.spacing(0, 0, 2),
-    }),
+    reportSummary: cx(
+      'dashboard-emphasis',
+      css({
+        margin: theme.spacing(0, 0, 2),
+        fontFamily: dashVar('fontBody', REPORT_SERIF_STACK),
+        color: dashVar('ink', theme.colors.text.primary),
+      })
+    ),
     reportSummaryHidden: css({
       opacity: 0.6,
     }),
     reportSummaryPlaceholder: css({
-      fontFamily: REPORT_SERIF_STACK,
+      fontFamily: dashVar('fontBody', REPORT_SERIF_STACK),
       fontStyle: 'italic',
       fontSize: '1.0625rem',
       color: theme.colors.text.disabled,

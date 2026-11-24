@@ -25,6 +25,7 @@ composableKinds: PanelCfg: {
 		schemas: [{
 			version: [0, 0]
 			schema: {
+				StatPresentation: "default" | "figure" @cuetsy(kind="enum", memberNames="Default|Figure")
 				Options: {
 					common.SingleStatBaseOptions
 					graphMode:              common.BigValueGraphMode & (*"area" | _)
@@ -34,6 +35,7 @@ composableKinds: PanelCfg: {
 					wideLayout:             bool | *true
 					showPercentChange:      bool | *false
 					percentChangeColorMode: common.PercentChangeColorMode & (*"standard" | _)
+					presentation?:          StatPresentation
 				} @cuetsy(kind="interface")
 			}
 		}]

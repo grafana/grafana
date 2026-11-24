@@ -767,6 +767,7 @@ export enum TableCellDisplayMode {
   Markdown = 'markdown',
   Pill = 'pill',
   Sparkline = 'sparkline',
+  Status = 'status',
 }
 
 /**
@@ -870,6 +871,14 @@ export interface TableColoredBackgroundCellOptions {
 
 export interface TablePillCellOptions {
   type: TableCellDisplayMode.Pill;
+}
+
+/**
+ * Status cell options. Shows a shape and the formatted text; the shape follows the
+ * threshold step (or coloured value mapping) order: first circle, second triangle, then diamond.
+ */
+export interface TableStatusCellOptions {
+  type: TableCellDisplayMode.Status;
 }
 
 /**
@@ -1007,7 +1016,7 @@ export enum TableCellHeight {
  * Table cell options. Each cell has a display mode
  * and other potential options for that display.
  */
-export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TablePillCellOptions | TableDataLinksCellOptions | TableActionsCellOptions | TableJsonViewCellOptions | TableMarkdownCellOptions | {
+export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TablePillCellOptions | TableStatusCellOptions | TableDataLinksCellOptions | TableActionsCellOptions | TableJsonViewCellOptions | TableMarkdownCellOptions | {
     type: TableCellDisplayMode.Geo
   });
 

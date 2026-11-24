@@ -42,6 +42,40 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TimeSeriesPanel)
     });
 
     addAnnotationOptions(builder);
+
+    const storyCategory = [t('timeseries.story.category', 'Story')];
+
+    builder
+      .addTextInput({
+        path: 'story.highlight',
+        name: t('timeseries.story.name-highlight', 'Highlight series'),
+        description: t(
+          'timeseries.story.description-highlight',
+          'Series whose display name matches are drawn in the accent colour and the rest recede. Use an exact name, part of a name, or /regex/.'
+        ),
+        category: storyCategory,
+        settings: {
+          placeholder: t('timeseries.story.placeholder-highlight', 'Series name or /regex/'),
+        },
+      })
+      .addBooleanSwitch({
+        path: 'story.directLabels',
+        name: t('timeseries.story.name-direct-labels', 'Direct labels'),
+        description: t(
+          'timeseries.story.description-direct-labels',
+          'Label each series with its name and last value at the end of its line. Usually paired with a hidden legend.'
+        ),
+        category: storyCategory,
+      })
+      .addBooleanSwitch({
+        path: 'story.annotationLabels',
+        name: t('timeseries.story.name-annotation-labels', 'Annotation labels'),
+        description: t(
+          'timeseries.story.description-annotation-labels',
+          'Show the text of each annotation above the plot, with a leader line to its time'
+        ),
+        category: storyCategory,
+      });
   })
   .setSuggestionsSupplier(timeseriesSuggestionsSupplier)
   .setPresetsSupplier(timeseriesPresetsSupplier)

@@ -1904,6 +1904,26 @@ export const versionedComponents = {
       [MIN_GRAFANA_VERSION]: 'data-testid-colorswatch',
     },
   },
+  DashboardStyle: {
+    masthead: {
+      '13.3.0': 'data-testid dashboard masthead',
+    },
+    switcher: {
+      '13.3.0': 'data-testid dashboard style switcher',
+    },
+    sourceLine: {
+      '13.3.0': 'data-testid panel source line',
+    },
+    picker: {
+      '13.3.0': 'data-testid dashboard style picker',
+    },
+    ledeInput: {
+      '13.3.0': 'data-testid dashboard lede input',
+    },
+    review: {
+      '13.3.0': 'data-testid dashboard editorial review',
+    },
+  },
   DashboardRow: {
     title: {
       [MIN_GRAFANA_VERSION]: (title: string) => `data-testid dashboard-row-title-${title}`,

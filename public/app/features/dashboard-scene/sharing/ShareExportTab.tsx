@@ -113,12 +113,23 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
     initialSaveModelVersion: 'v1' | 'v2';
   }> => {
     try {
-      // The classic model has no field for report summaries, so a classic copy would drop authored text.
+      // The classic model has no field for the lede or report summaries, so a classic copy would
+      // drop authored text.
+      const dashboard = getDashboardSceneFor(this);
+      if (dashboard.state.lede?.trim()) {
+        return {
+          json: {
+            error: t(
+              'dashboard-scene.share-export-tab.classic-report-lede-error',
+              'Classic export is unavailable: the dashboard lede cannot be represented in the classic format and would be lost. Export the V2 resource instead.'
+            ),
+          },
+          initialSaveModelVersion,
+          hasLibraryPanels: undefined,
+        };
+      }
       const summarizedRows = sceneGraph
-        .findAllObjects(
-          getDashboardSceneFor(this),
-          (obj) => obj instanceof RowItem && Boolean(obj.state.summary?.trim())
-        )
+        .findAllObjects(dashboard, (obj) => obj instanceof RowItem && Boolean(obj.state.summary?.trim()))
         .map((row) => (row instanceof RowItem ? row.state.title : undefined));
       if (summarizedRows.length > 0) {
         return {

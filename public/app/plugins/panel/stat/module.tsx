@@ -12,7 +12,7 @@ import { commonOptionsBuilder, sharedSingleStatMigrationHandler } from '@grafana
 import { statPanelChangedHandler } from './StatMigrations';
 import { StatPanel } from './StatPanel';
 import { addStandardDataReduceOptions, addOrientationOption } from './common';
-import { defaultOptions, type Options } from './panelcfg.gen';
+import { defaultOptions, type Options, StatPresentation } from './panelcfg.gen';
 import { statPresetsSupplier } from './presets';
 import { statSuggestionsSupplier } from './suggestions';
 
@@ -26,6 +26,21 @@ export const plugin = new PanelPlugin<Options>(StatPanel)
     commonOptionsBuilder.addTextSizeOptions(builder, { withTitle: true, withValue: true, withPercentChange: true });
 
     builder
+      .addRadio({
+        path: 'presentation',
+        name: t('stat.name-presentation', 'Presentation'),
+        description: t(
+          'stat.description-presentation',
+          'Figure renders each value as an editorial figure with a label, change line and caption'
+        ),
+        category: mainCategory,
+        settings: {
+          options: [
+            { value: StatPresentation.Default, label: t('stat.presentation-options.label-default', 'Default') },
+            { value: StatPresentation.Figure, label: t('stat.presentation-options.label-figure', 'Figure') },
+          ],
+        },
+      })
       .addSelect({
         path: 'textMode',
         name: t('stat.name-text-mode', 'Text mode'),

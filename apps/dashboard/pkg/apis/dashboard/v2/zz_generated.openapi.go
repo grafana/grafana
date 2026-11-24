@@ -49,6 +49,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		DashboardCustomVariableKind{}.OpenAPIModelName():                                                                                    schema_pkg_apis_dashboard_v2_DashboardCustomVariableKind(ref),
 		DashboardCustomVariableSpec{}.OpenAPIModelName():                                                                                    schema_pkg_apis_dashboard_v2_DashboardCustomVariableSpec(ref),
 		DashboardDashboardLink{}.OpenAPIModelName():                                                                                         schema_pkg_apis_dashboard_v2_DashboardDashboardLink(ref),
+		DashboardDashboardStyle{}.OpenAPIModelName():                                                                                        schema_pkg_apis_dashboard_v2_DashboardDashboardStyle(ref),
 		DashboardDataLink{}.OpenAPIModelName():                                                                                              schema_pkg_apis_dashboard_v2_DashboardDataLink(ref),
 		DashboardDataQueryKind{}.OpenAPIModelName():                                                                                         schema_pkg_apis_dashboard_v2_DashboardDataQueryKind(ref),
 		DashboardDatasourceControlSourceRef{}.OpenAPIModelName():                                                                            schema_pkg_apis_dashboard_v2_DashboardDatasourceControlSourceRef(ref),
@@ -1055,7 +1056,7 @@ func schema_pkg_apis_dashboard_v2_DashboardAutoGridLayoutSpec(ref common.Referen
 					},
 					"columnLayout": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Gives one of exactly two saved, non-repeated items a 2:1 share of the row. Absent means the regular column settings apply.",
+							Description: "\"split-wide-first\" and \"split-wide-second\" give one of exactly two saved, non-repeated items a 2:1 share of the row. \"rail\" puts the first item beside a narrow column that stacks the rest. \"margin-note\" sets the last item as a narrow ruled note beside the others. Absent means the regular column settings apply.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -1775,6 +1776,48 @@ func schema_pkg_apis_dashboard_v2_DashboardDashboardLink(ref common.ReferenceCal
 		},
 		Dependencies: []string{
 			DashboardDatasourceControlSourceRef{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2_DashboardDashboardStyle(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"pack": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Style pack id, for example \"newsroom\" or \"field-guide\".",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"palette": {
+						SchemaProps: spec.SchemaProps{
+							Description: "One of the pack's palettes. Absent means the pack default.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"accent": {
+						SchemaProps: spec.SchemaProps{
+							Description: "One of the pack's accents. Absent means the palette's own accent.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"typography": {
+						SchemaProps: spec.SchemaProps{
+							Description: "One of the pack's typography options. Absent means the pack default.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"pack"},
+			},
+		},
 	}
 }
 
@@ -4376,12 +4419,25 @@ func schema_pkg_apis_dashboard_v2_DashboardSpec(ref common.ReferenceCallback) co
 							Ref: ref(DashboardPreferences{}.OpenAPIModelName()),
 						},
 					},
+					"style": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Visual style of the dashboard: art direction, palette, accent and typography. Content stays the same in every style. Absent means the Grafana theme.",
+							Ref:         ref(DashboardDashboardStyle{}.OpenAPIModelName()),
+						},
+					},
+					"lede": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The dashboard's main finding, in one or two sentences of Markdown. When set, the dashboard opens on a masthead with the title, an automatic scope line and this text.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"annotations", "cursorSync", "elements", "layout", "links", "preload", "tags", "timeSettings", "title", "variables"},
 			},
 		},
 		Dependencies: []string{
-			DashboardAnnotationQueryKind{}.OpenAPIModelName(), DashboardDashboardLink{}.OpenAPIModelName(), DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{}.OpenAPIModelName(), DashboardPanelKindOrLibraryPanelKind{}.OpenAPIModelName(), DashboardPreferences{}.OpenAPIModelName(), DashboardPrompt{}.OpenAPIModelName(), DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(), DashboardTimeSettingsSpec{}.OpenAPIModelName()},
+			DashboardAnnotationQueryKind{}.OpenAPIModelName(), DashboardDashboardLink{}.OpenAPIModelName(), DashboardDashboardStyle{}.OpenAPIModelName(), DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{}.OpenAPIModelName(), DashboardPanelKindOrLibraryPanelKind{}.OpenAPIModelName(), DashboardPreferences{}.OpenAPIModelName(), DashboardPrompt{}.OpenAPIModelName(), DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(), DashboardTimeSettingsSpec{}.OpenAPIModelName()},
 	}
 }
 

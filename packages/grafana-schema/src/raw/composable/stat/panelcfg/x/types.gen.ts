@@ -14,11 +14,17 @@ import * as common from '@grafana/schema';
 
 export const pluginVersion = "13.4.0-pre";
 
+export enum StatPresentation {
+  Default = 'default',
+  Figure = 'figure',
+}
+
 export interface Options extends common.SingleStatBaseOptions {
   colorMode: common.BigValueColorMode;
   graphMode: common.BigValueGraphMode;
   justifyMode: common.BigValueJustifyMode;
   percentChangeColorMode: common.PercentChangeColorMode;
+  presentation?: StatPresentation;
   showPercentChange: boolean;
   textMode: common.BigValueTextMode;
   wideLayout: boolean;
