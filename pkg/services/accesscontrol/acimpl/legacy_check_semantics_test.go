@@ -5,23 +5,32 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
+
+	"github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/authz/rbac"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func TestLegacyCheckReference_EmptyExpressions(t *testing.T) {
 	for _, tc := range []struct {
-		name      string
-		evaluator accesscontrol.Evaluator
-		allowed   bool
+		name          string
+		evaluator     accesscontrol.Evaluator
+		allowed       bool
+		allowedWithXY bool
 	}{
 		{
-			name:      "empty all",
-			evaluator: accesscontrol.EvalAll(),
-			allowed:   true,
+			name:          "empty all",
+			evaluator:     accesscontrol.EvalAll(),
+			allowed:       true,
+			allowedWithXY: true,
 		},
 		{
 			name:      "empty any",
@@ -33,7 +42,8 @@ func TestLegacyCheckReference_EmptyExpressions(t *testing.T) {
 				accesscontrol.EvalPermission("dashboards:read", "dashboards:uid:dash-1"),
 				accesscontrol.EvalAll(),
 			),
-			allowed: true,
+			allowed:       true,
+			allowedWithXY: true,
 		},
 		{
 			name: "nested empty any",
@@ -41,6 +51,18 @@ func TestLegacyCheckReference_EmptyExpressions(t *testing.T) {
 				accesscontrol.EvalAny(),
 				accesscontrol.EvalPermission("dashboards:read", "dashboards:uid:dash-1"),
 			),
+		},
+		{
+			name:      "empty action",
+			evaluator: accesscontrol.EvalPermission(""),
+		},
+		{
+			name: "empty action in any",
+			evaluator: accesscontrol.EvalAny(
+				accesscontrol.EvalPermission(""),
+				accesscontrol.EvalPermission("x:y"),
+			),
+			allowedWithXY: true,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -67,6 +89,50 @@ func TestLegacyCheckReference_EmptyExpressions(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, tc.allowed, allowed)
 			})
+
+			for _, grants := range []struct {
+				name    string
+				grant   accesscontrol.Permission
+				allowed bool
+			}{
+				{
+					name:    "LegacyCheck agrees with unrelated permissions",
+					grant:   accesscontrol.Permission{Action: "folders:read", Scope: "folders:uid:folder-1"},
+					allowed: tc.allowed,
+				},
+				{
+					name:    "LegacyCheck agrees with x:y permission",
+					grant:   accesscontrol.Permission{Action: "x:y", Scope: "*"},
+					allowed: tc.allowedWithXY,
+				},
+			} {
+				t.Run(grants.name, func(t *testing.T) {
+					ident := legacyReferenceUser(12, map[string][]string{
+						grants.grant.Action: {grants.grant.Scope},
+					})
+					localAllowed, err := acimpl.ProvideAccessControlTest().Evaluate(t.Context(), ident, tc.evaluator)
+					require.NoError(t, err)
+					require.Equal(t, grants.allowed, localAllowed)
+
+					expression, err := accesscontrol.ToLegacyExpression(tc.evaluator)
+					require.NoError(t, err)
+
+					ctx := types.WithAuthInfo(t.Context(), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+						Claims: jwt.Claims{Subject: "service-account:test"},
+						Rest:   authn.AccessTokenClaims{Namespace: "org-12"},
+					}))
+					service := rbac.NewTestService(ident.UserUID, []accesscontrol.Permission{grants.grant}, nil)
+					response, err := service.LegacyCheck(ctx, &authzextv1.LegacyCheckRequest{
+						Namespace:      "org-12",
+						RequesterOrgId: proto.Int64(12),
+						Subject:        "user:" + ident.UserUID,
+						Expression:     expression,
+					})
+					require.NoError(t, err)
+					require.Empty(t, response.GetError())
+					require.Equal(t, localAllowed, response.GetAllowed())
+				})
+			}
 		})
 	}
 }

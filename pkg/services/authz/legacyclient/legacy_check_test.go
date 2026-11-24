@@ -233,6 +233,14 @@ func TestClient_LegacyCheckRequest(t *testing.T) {
 			},
 		},
 		{
+			name: "empty action is sent as a never-true any",
+			req:  LegacyCheckRequest{Namespace: "org-12", Subject: "user:u-1", Evaluator: accesscontrol.EvalPermission("")},
+			want: &authzextv1.LegacyCheckRequest{
+				Namespace: "org-12", Subject: "user:u-1",
+				Expression: &authzextv1.LegacyExpression{Node: &authzextv1.LegacyExpression_Any{Any: &authzextv1.LegacyExpressionList{}}},
+			},
+		},
+		{
 			name: "global evaluation preserves requester org",
 			req: LegacyCheckRequest{
 				Namespace: "default", Subject: "user:checked-user", Evaluator: accesscontrol.EvalPermission("users:read"),
@@ -275,7 +283,6 @@ func TestClient_LegacyCheckRejectsInvalidEvaluator(t *testing.T) {
 		wantErr   string
 	}{
 		{name: "missing evaluator", wantErr: "legacy evaluator is required"},
-		{name: "empty action", evaluator: accesscontrol.EvalPermission(""), wantErr: "legacy permission action is required"},
 		{name: "custom evaluator", evaluator: unsupportedLegacyCheckEvaluator{}, wantErr: "unsupported legacy evaluator type"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

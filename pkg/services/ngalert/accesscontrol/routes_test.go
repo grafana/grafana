@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -1070,6 +1071,23 @@ func TestRouteAccessAuthorizeProvisioning(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 			}
+		})
+	}
+}
+
+func TestDefaultRouteOnlyToLegacyExpression(t *testing.T) {
+	access := defaultRouteOnly[testRoute](ac.EvalPermission(ac.ActionAlertingRoutesRead))
+
+	for name, evaluator := range map[string]ac.Evaluator{
+		"authorizeSome":            access.authorizeSome,
+		"authorizeAll":             access.authorizeAll,
+		"authorizeOne default":     access.authorizeOne(testRoute{name: models.DefaultRoutingTreeName}),
+		"authorizeOne non-default": access.authorizeOne(testRoute{name: "route-1"}),
+	} {
+		t.Run(name, func(t *testing.T) {
+			expression, err := ac.ToLegacyExpression(evaluator)
+			require.NoError(t, err)
+			require.NotNil(t, expression)
 		})
 	}
 }
