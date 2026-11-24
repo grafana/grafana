@@ -3,7 +3,7 @@ import { isEmpty } from 'lodash';
 
 import { locationService, logMeasurement, logWarning } from '@grafana/runtime';
 import { type AlertManagerCortexConfig, type Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { type ThunkResult } from 'app/types/store';
+import { type ThunkDispatch, type ThunkResult } from 'app/types/store';
 import { type RuleIdentifier, type RuleNamespace, type StateHistoryItem } from 'app/types/unified-alerting';
 import { type RulerRuleDTO, type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
@@ -124,14 +124,26 @@ interface FetchPromRulesRulesActionProps {
   state?: string[];
 }
 
-/** The names of all rules sources that the user can see, as `getAllRulesSourceNames` returns them. */
-async function getRulesSourceNames(): Promise<string[]> {
-  let names: string[] = [];
-  try {
-    names = (await getDataSourcesForRules()).map((ds) => ds.name);
-  } catch (error) {
-    // The Grafana-managed rules must still load when the data source list fails.
-    logWarning('Failed to load the rules source list', { error: String(error) });
+/** Loads the names of the external rules sources that the user can see. The error stays in `state.rulesSourceList`. */
+export const fetchRulesSourceListAction = createAsyncThunk(
+  alertingActionTypePrefix.fetchRulesSourceList,
+  async (): Promise<string[]> => {
+    const dataSources = await withSerializedError(getDataSourcesForRules());
+    return dataSources.map((ds) => ds.name);
+  }
+);
+
+/**
+ * The names of all rules sources that the user can see, as `getAllRulesSourceNames` returns them.
+ * When the external list fails, the failure is stored in `state.rulesSourceList` and the Grafana-managed source is
+ * still returned.
+ */
+async function getRulesSourceNames(dispatch: ThunkDispatch): Promise<string[]> {
+  const result = await dispatch(fetchRulesSourceListAction());
+  const names = fetchRulesSourceListAction.fulfilled.match(result) ? [...result.payload] : [];
+
+  if (fetchRulesSourceListAction.rejected.match(result)) {
+    logWarning('Failed to load the rules source list', { error: result.error.message ?? 'unknown' });
   }
 
   if (getGlobalRuleAbility(RuleAction.View).granted) {
@@ -148,7 +160,7 @@ export function fetchAllPromAndRulerRulesAction(
   return async (dispatch, getStore) => {
     const allStartLoadingTs = performance.now();
 
-    const rulesSourceNames = await getRulesSourceNames();
+    const rulesSourceNames = await getRulesSourceNames(dispatch);
 
     await Promise.allSettled(
       rulesSourceNames.map(async (rulesSourceName) => {
@@ -183,7 +195,7 @@ export function fetchAllPromRulesAction(
   options: FetchPromRulesRulesActionProps = {}
 ): ThunkResult<Promise<void>> {
   return async (dispatch, getStore) => {
-    const rulesSourceNames = await getRulesSourceNames();
+    const rulesSourceNames = await getRulesSourceNames(dispatch);
     const { promRules } = getStore().unifiedAlerting;
     rulesSourceNames.map((rulesSourceName) => {
       if (force || !promRules[rulesSourceName]?.loading) {

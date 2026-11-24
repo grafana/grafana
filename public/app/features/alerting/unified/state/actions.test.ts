@@ -42,6 +42,22 @@ describe('fetchAllPromRulesAction', () => {
     await store.dispatch(fetchAllPromRulesAction());
 
     await waitFor(() => expect(Object.keys(store.getState().unifiedAlerting.promRules)).toEqual(['grafana']));
+    expect(store.getState().unifiedAlerting.rulesSourceList.error?.message).toBe('list failed');
     listSpy.mockRestore();
+  });
+
+  it('clears the rules source list error when a later fetch succeeds', async () => {
+    const listSpy = jest
+      .spyOn(dataSourcesForRulesModule, 'getDataSourcesForRules')
+      .mockRejectedValueOnce(new Error('list failed'));
+    const store = configureStore();
+
+    await store.dispatch(fetchAllPromRulesAction());
+    expect(store.getState().unifiedAlerting.rulesSourceList.error?.message).toBe('list failed');
+
+    listSpy.mockRestore();
+    await store.dispatch(fetchAllPromRulesAction());
+
+    expect(store.getState().unifiedAlerting.rulesSourceList.error).toBeUndefined();
   });
 });
