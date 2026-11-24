@@ -4,9 +4,10 @@ import { t } from '@grafana/i18n';
 import { type SceneObject } from '@grafana/scenes';
 
 import { useCanEditQuestions } from '../../scene/DashboardControlsExtensionPoint';
-import { isTabItem } from '../../scene/types/LayoutItemTypeGuards';
+import { type RowItem } from '../../scene/layout-rows/RowItem';
+import { type TabItem } from '../../scene/layout-tabs/TabItem';
+import { isRowItem, isTabItem } from '../../scene/types/LayoutItemTypeGuards';
 import { type DashboardSceneLike } from '../../scene/types/dashboard';
-import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { openAddQuestionPane, QuestionEdit } from '../questions/QuestionEdit';
 import { type QuestionsOwner, type QuestionsOwnerKind } from '../questions/types';
@@ -51,10 +52,19 @@ function getQuestionsOwner(
     return { owner: selectedElement.state.ownerRef.resolve(), ownerKind: selectedElement.state.ownerKind };
   }
 
-  const sectionOwner = dashboardSceneGraph.findSectionOwner(selectedElement);
-  if (sectionOwner) {
-    return { owner: sectionOwner, ownerKind: isTabItem(sectionOwner) ? 'tab' : 'row' };
+  for (let element = selectedElement; element; element = element.parent) {
+    if (isSection(element)) {
+      return { owner: element, ownerKind: isTabItem(element) ? 'tab' : 'row' };
+    }
   }
 
   return { owner: dashboard, ownerKind: 'dashboard' };
+}
+
+/**
+ * Whether the element is a row or a tab. Read from their layout item type rather than with `instanceof`, which would
+ * make this a dependency of their classes, the dashboard, and the sidebar that renders this pane.
+ */
+function isSection(element: SceneObject): element is RowItem | TabItem {
+  return isRowItem(element) || isTabItem(element);
 }
