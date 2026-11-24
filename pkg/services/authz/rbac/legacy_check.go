@@ -89,7 +89,7 @@ func (s *Service) legacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 	// TODO: Complete in subsequent PRs:
 	//   - Standalone scope resolution: replace embedded service dependencies with namespace-aware providers.
 	//			MT AuthZ: https://github.com/grafana/identity-access-team/issues/2436
-	ns, err := validateNamespace(ctx, req.GetNamespace())
+	ns, err := s.validateLegacyCheckNamespace(ctx, req)
 	if err != nil {
 		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
 	}
@@ -178,6 +178,27 @@ func (s *Service) legacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 	}
 
 	return &authzextv1.LegacyCheckResponse{Allowed: allowed}, nil
+}
+
+func (s *Service) validateLegacyCheckNamespace(ctx context.Context, req *authzextv1.LegacyCheckRequest) (types.NamespaceInfo, error) {
+	namespace := req.GetNamespace()
+	if namespace == "*" {
+		if s.legacyScopeNamespace == nil {
+			return types.NamespaceInfo{}, errors.New("wildcard legacy namespace requires the embedded server")
+		}
+		if req.RequesterOrgId == nil {
+			return types.NamespaceInfo{}, errors.New("legacy check requires requester org ID")
+		}
+
+		orgID := req.GetRequesterOrgId()
+		if orgID < 1 {
+			return types.NamespaceInfo{}, errors.New("wildcard legacy namespace requires a positive requester org ID")
+		}
+		namespace = s.legacyScopeNamespace(orgID)
+	}
+
+	// Authorize the concrete target, including when the credential has a wildcard namespace.
+	return validateNamespace(ctx, namespace)
 }
 
 func legacyRequesterOrgID(req *authzextv1.LegacyCheckRequest, namespace types.NamespaceInfo) (int64, error) {
