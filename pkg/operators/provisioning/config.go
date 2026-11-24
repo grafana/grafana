@@ -347,7 +347,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		}
 		var audienceProvider clientauth.AudienceProvider = clientauth.NewStaticAudienceProvider(audiences...)
 		if group == resources.AnyGroup && c.Settings.ProvisioningRouterClient {
-			audienceProvider = clientauth.NewRequestGroupAudienceProvider(setting.ExtJWTAccessTokenExpectAudience, provisioning.GROUP)
+			audienceProvider = clientauth.NewRequestGroupAudienceProvider(setting.ExtJWTAccessTokenExpectAudience)
 		}
 
 		config := &rest.Config{

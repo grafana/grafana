@@ -3,7 +3,6 @@ package clientauth
 import (
 	"context"
 	"net/http"
-	"slices"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -53,31 +52,19 @@ type RequestAudienceProvider interface {
 
 type RequestGroupAudienceProvider struct {
 	fallback string
-	extra    []string
 }
 
-func NewRequestGroupAudienceProvider(fallback string, extra ...string) *RequestGroupAudienceProvider {
-	return &RequestGroupAudienceProvider{fallback: fallback, extra: extra}
+func NewRequestGroupAudienceProvider(fallback string) *RequestGroupAudienceProvider {
+	return &RequestGroupAudienceProvider{fallback: fallback}
 }
 
 func (p *RequestGroupAudienceProvider) GetAudiences(ctx context.Context) []string {
-	return p.audiencesFor(p.fallback)
+	return []string{p.fallback}
 }
 
 func (p *RequestGroupAudienceProvider) GetRequestAudiences(req *http.Request) []string {
-	group := utils.APIGroupFromRequest(req)
-	if group == "" {
-		group = p.fallback
+	if group := utils.APIGroupFromRequest(req); group != "" {
+		return []string{group}
 	}
-	return p.audiencesFor(group)
-}
-
-func (p *RequestGroupAudienceProvider) audiencesFor(group string) []string {
-	audiences := []string{group}
-	for _, a := range p.extra {
-		if !slices.Contains(audiences, a) {
-			audiences = append(audiences, a)
-		}
-	}
-	return audiences
+	return []string{p.fallback}
 }

@@ -218,7 +218,7 @@ func TestClientsUseTheRouterForDashboardsWithTheRouterClientSetting(t *testing.T
 	_, err = client.List(t.Context(), metav1.ListOptions{})
 	require.NoError(t, err)
 
-	require.Equal(t, "Bearer token-for-dashboard.grafana.app,"+apisprovisioning.GROUP, router.AccessToken(dashboards))
+	require.Equal(t, "Bearer token-for-dashboard.grafana.app", router.AccessToken(dashboards))
 }
 
 // Production has no aggregated server yet, so the operators must run with the configured

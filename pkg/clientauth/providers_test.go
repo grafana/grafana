@@ -73,16 +73,16 @@ func TestStaticAudienceProvider(t *testing.T) {
 }
 
 func TestRequestGroupAudienceProvider(t *testing.T) {
-	provider := NewRequestGroupAudienceProvider("grafana", "provisioning.grafana.app")
+	provider := NewRequestGroupAudienceProvider("grafana")
 	for path, want := range map[string][]string{
-		"/apis/dashboard.grafana.app/v1/namespaces/default/dashboards": {"dashboard.grafana.app", "provisioning.grafana.app"},
+		"/apis/dashboard.grafana.app/v1/namespaces/default/dashboards": {"dashboard.grafana.app"},
 		"/apis/provisioning.grafana.app/v0alpha1":                      {"provisioning.grafana.app"},
-		"/apis":       {"grafana", "provisioning.grafana.app"},
-		"/openapi/v3": {"grafana", "provisioning.grafana.app"},
+		"/apis":       {"grafana"},
+		"/openapi/v3": {"grafana"},
 	} {
 		require.Equal(t, want, provider.GetRequestAudiences(httptest.NewRequest("GET", path, nil)), path)
 	}
-	require.Equal(t, []string{"grafana", "provisioning.grafana.app"}, provider.GetAudiences(context.Background()))
+	require.Equal(t, []string{"grafana"}, provider.GetAudiences(context.Background()))
 }
 
 func TestProviderInterfaces(t *testing.T) {
