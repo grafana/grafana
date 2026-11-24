@@ -5,11 +5,7 @@ import { getLogger } from '@grafana/runtime/unstable';
 import { transformPluginSourceForCDN } from '../cdn/utils';
 
 import { LOAD_PLUGIN_CSS_REGEX, JS_CONTENT_TYPE_REGEX, SHARED_DEPENDENCY_PREFIX } from './constants';
-
-import { getPluginInfoFromCache, resolvePluginUrlWithBuildHash } from './pluginInfoCache';
-
-import { extractCacheKeyFromPath, getPluginInfoFromCache, resolvePluginUrlWithCache } from './pluginInfoCache';
-
+import { extractCacheKeyFromPath, getPluginInfoFromCache, resolvePluginUrlWithBuildHash } from './pluginInfoCache';
 // SystemJS has to be imported before the sharedDependenciesMap
 import { SystemJS } from './systemjs';
 // eslint-disable-next-line import/order
