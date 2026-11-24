@@ -459,7 +459,7 @@ func TestIntegrationFolderCascadeDeleteFinalizer(t *testing.T) {
 		const label = "collection-delete"
 		for _, name := range []string{"coll-a-plain", "coll-b-final"} {
 			obj := newFolderObject(gvr.GroupVersion().String(), name)
-			obj.SetLabels(map[string]string{label: "true"})
+			obj.SetLabels(map[string]string{label: "true", name: "true"})
 			_, err := client.Resource.Create(ctx, obj, metav1.CreateOptions{})
 			require.NoError(t, err)
 		}
@@ -489,6 +489,10 @@ func TestIntegrationFolderCascadeDeleteFinalizer(t *testing.T) {
 		err = client.Resource.DeleteCollection(ctx, metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: label + "=true"})
 		require.True(t, apierrors.IsBadRequest(err), "expected 400, got %v", err)
 		require.Contains(t, err.Error(), "coll-b-final")
+
+		// A selector matching only the plain folder must pass the preflight, so it honors the selector.
+		err = client.Resource.DeleteCollection(ctx, metav1.DeleteOptions{DryRun: []string{metav1.DryRunAll}}, metav1.ListOptions{LabelSelector: "coll-a-plain=true"})
+		require.NoError(t, err)
 
 		for name, rv := range before {
 			got, err := client.Resource.Get(ctx, name, metav1.GetOptions{})
