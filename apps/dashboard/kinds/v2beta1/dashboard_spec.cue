@@ -57,7 +57,14 @@ Prompt: {
 	title?: string
 	// The panels to answer it from. Unset for every panel in the dashboard, row, or tab the prompt is saved on.
 	sources?: [...PromptSource]
+	// Placement can be used to display the prompt somewhere else on the dashboard other than above the visualisations.
+	// Only prompts saved on the dashboard have a controls menu to be placed in. Rows and tabs ignore it.
+	placement?: PromptPlacement
 }
+
+// Prompt placement. Defines where the prompt should be displayed.
+// - "inControlsMenu" renders the prompt in the dashboard controls dropdown menu
+PromptPlacement: "inControlsMenu"
 
 // A panel that a prompt is answered from.
 PromptSource: {
