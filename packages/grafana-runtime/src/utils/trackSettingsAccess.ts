@@ -1,16 +1,17 @@
 import { isPlainObject } from 'lodash';
 
-import { defineFeatureEvents } from '../analyticsFramework/main';
 import { getEchoSrv } from '../services/EchoSrv';
 
 export type SettingsAccessSource = 'config' | 'bootData';
 
-const createBootDataEvents = defineFeatureEvents('grafana', 'bootdata');
+export type SettingsAccessReporter = (props: { path: string; source: SettingsAccessSource; count: number }) => void;
 
-/** Fired periodically with how many times a bootdata setting was read since the previous flush. */
-const settingAccessed = createBootDataEvents<{ path: string; source: SettingsAccessSource; count: number }>(
-  'setting_accessed'
-);
+let report: SettingsAccessReporter | undefined;
+
+// Injected by the app: importing the analytics framework here would create a cycle back to config.ts.
+export function setSettingsAccessReporter(reporter: SettingsAccessReporter) {
+  report = reporter;
+}
 
 const FLUSH_INTERVAL_MS = 30_000;
 
@@ -22,9 +23,13 @@ const counts = new Map<string, { source: SettingsAccessSource; path: string; cou
 let flushTimer: ReturnType<typeof setInterval> | undefined;
 
 function flushSettingsAccessCounts() {
+  // Counts accumulate until the app has wired up a reporter.
+  if (!report) {
+    return;
+  }
   for (const { source, path, count } of counts.values()) {
     try {
-      settingAccessed({ source, path, count });
+      report({ source, path, count });
     } catch {}
   }
   counts.clear();

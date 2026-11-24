@@ -1,13 +1,16 @@
 import { config, registerEchoBackend, setEchoSrv } from '@grafana/runtime';
+import { setSettingsAccessReporter } from '@grafana/runtime/internal';
 import { reportMetricPerformanceMark } from 'app/core/utils/metrics';
 
 import { contextSrv } from '../context_srv';
 
 import { Echo } from './Echo';
+import { settingAccessed } from './bootDataEvents';
 
 // Initialise EchoSrv backends, calls during frontend app startup
 export async function initEchoSrv() {
   setEchoSrv(new Echo({ debug: process.env.NODE_ENV === 'development' }));
+  setSettingsAccessReporter(settingAccessed);
 
   window.addEventListener('load', (e) => {
     const loadMetricName = 'frontend_boot_load_time_seconds';

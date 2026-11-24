@@ -16,6 +16,7 @@ export { setPanelRenderer } from '../components/PanelRenderer';
 export { type PageInfoItem, setPluginPage } from '../components/PluginPage';
 
 export { type LegacyFeatureToggleMode } from '../utils/legacyFeatureToggles';
+export { setSettingsAccessReporter, type SettingsAccessSource } from '../utils/trackSettingsAccess';
 export { ExpressionDatasourceRef } from '../utils/expressionRef';
 export { standardStreamOptionsProvider, toStreamingDataResponse } from '../utils/DataSourceWithBackend';
 
