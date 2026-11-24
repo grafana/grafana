@@ -60,6 +60,18 @@ func GlobalSearchResourceTypes() []schema.GroupResource {
 	return slices.Clone(globalSearchCoverage().types)
 }
 
+// BuiltinGlobalSearchResourceTypes lists, sorted, the resource types a
+// namespace-wide index covers according to the manifests of the apps in this
+// repository alone. Unlike GlobalSearchResourceTypes, it leaves out what a
+// distribution adds with RegisterAppManifest, so it is the same in every build.
+func BuiltinGlobalSearchResourceTypes() []schema.GroupResource {
+	return slices.Clone(builtinGlobalSearchCoverage().types)
+}
+
+var builtinGlobalSearchCoverage = sync.OnceValue(func() globalSearchTypes {
+	return globalSearchCoverageOf(generatedAppManifests())
+})
+
 // GlobalSearchKinds names the Kubernetes kind of each covered resource type,
 // which a result reports and which its group and resource do not say.
 func GlobalSearchKinds() map[schema.GroupResource]string {
