@@ -27,7 +27,21 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-func TestProvidePullRequestWorker_SupportedResources(t *testing.T) {
+func TestURLsFromConfig(t *testing.T) {
+	t.Run("images prefer the public root URL", func(t *testing.T) {
+		urls := URLsFromConfig(&setting.Cfg{AppURL: "https://grafana.internal/", ProvisioningPublicRootURL: "https://grafana.example.com/"})
+		require.Equal(t, "https://grafana.internal/", urls.Internal(t.Context(), "ns"))
+		require.Equal(t, "https://grafana.example.com/", urls.Public(t.Context(), "ns"))
+	})
+
+	t.Run("images fall back to the app URL", func(t *testing.T) {
+		urls := URLsFromConfig(&setting.Cfg{AppURL: "https://grafana.example.com/"})
+		require.Equal(t, "https://grafana.example.com/", urls.Internal(t.Context(), "ns"))
+		require.Equal(t, "https://grafana.example.com/", urls.Public(t.Context(), "ns"))
+	})
+}
+
+func TestPullRequestWorker_SupportedResources(t *testing.T) {
 	router := routertest.NewServer(t, map[string]string{
 		"/apis/discovery/v1alpha2/manifests": `{"apiVersion":"apps.grafana.app/v1alpha2","kind":"AppManifestList","items":[{"apiVersion":"apps.grafana.app/v1alpha2","kind":"AppManifest","metadata":{"name":"example"},"spec":{"appName":"example","group":"example.ext.grafana.app","versions":[{"name":"v1","served":true,"kinds":[{"kind":"Widget","scope":"Namespaced","extensions":{"provisioning":{"enabled":true}}}]}]}}]}`,
 		"/apis/example.ext.grafana.app/v1":   `{"kind":"APIResourceList","apiVersion":"v1","groupVersion":"example.ext.grafana.app/v1","resources":[{"name":"widgets","namespaced":true,"kind":"Widget","verbs":["get","list","create"]}]}`,
@@ -36,7 +50,9 @@ func TestProvidePullRequestWorker_SupportedResources(t *testing.T) {
 		return &rest.Config{Host: router.URL}, nil
 	})
 	supportedResourceProvider := resources.NewSupportedResourceProvider(nil)
-	worker := ProvidePullRequestWorker(&setting.Cfg{}, nil, nil, configProvider, supportedResourceProvider, prometheus.NewRegistry())
+	parsers := resources.NewParserFactory(resources.NewClientFactory(configProvider, supportedResourceProvider))
+	registry := prometheus.NewRegistry()
+	worker := NewPullRequestWorker(NewEvaluator(NewNoOpRenderer(), parsers, URLProvider{}, registry), NewCommenter(false, URLProvider{}), registry)
 
 	repo := repository.NewMockReader(t)
 	repo.EXPECT().Config().Return(&provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "repo", Namespace: "default"}})

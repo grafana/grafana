@@ -1060,6 +1060,51 @@ func TestWatchNegativeSinceReplaysCache(t *testing.T) {
 	}
 }
 
+func TestWatchRefillsOverflowAsConsumerCatchesUp(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), newWatchTestUser()))
+		defer cancel()
+		srv, err := NewUninitializedResourceServer(ResourceServerOptions{Backend: &UnimplementedStorageBackend{}})
+		require.NoError(t, err)
+		defer srv.cancel()
+		events := make(chan *WrittenEvent)
+		b := newBroadcasterWithSizes(ctx, events, 1, 2, newBroadcasterMetrics(prometheus.NewRegistry()), writtenEventIdentity, nil)
+		srv.setWatchState(b, nil)
+
+		req := bookmarkWatchRequest()
+		req.Since = -1
+		req.AllowWatchBookmarks = false
+		stream := newMockWatchServer(ctx)
+		stream.events = make(chan *resourcepb.WatchEvent)
+		done := make(chan error, 1)
+		go func() { done <- srv.Watch(req, stream) }()
+		synctest.Wait()
+
+		// Block the first send, fill the delivery channel, and fill overflow to its cap.
+		events <- bookmarkWrittenEvent(1)
+		synctest.Wait()
+		for rv := int64(2); rv <= 4; rv++ {
+			events <- bookmarkWrittenEvent(rv)
+		}
+		foreign := bookmarkWrittenEvent(5)
+		foreign.Key.Namespace = "other"
+		events <- foreign
+
+		for rv := int64(1); rv <= 4; rv++ {
+			synctest.Wait()
+			select {
+			case event := <-stream.events:
+				require.Equal(t, rv, event.Resource.Version)
+			default:
+				t.Fatalf("watch did not deliver RV %d before the next drain tick", rv)
+			}
+		}
+
+		cancel()
+		require.NoError(t, <-done)
+	})
+}
+
 func TestLegacyWatchFromNowWithoutCurrentRV(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		events := make(chan *WrittenEvent)
@@ -1165,6 +1210,44 @@ func TestKVWatchBookmarksIgnoreProgressBeforeSubscribing(t *testing.T) {
 		bookmark := <-stream.events
 		require.Equal(t, resourcepb.WatchEvent_BOOKMARK, bookmark.Type)
 		require.Equal(t, base+300, bookmark.Resource.Version)
+		cancel()
+		require.NoError(t, <-done)
+	})
+}
+
+// A late KV write in another namespace of the watched collection still
+// advances the bookmark, as it did when the watch received and filtered it.
+func TestKVWatchBookmarksFollowLateSameCollectionWrites(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		base := snowflakeFromTime(advanceBookmarkClock().Add(-time.Hour))
+		events := make(chan *WrittenEvent)
+		defer close(events)
+		srv := initWatchServerWithSeededWatches(t, &unseededKVWatchBackend{events: events}, false)
+		dashboard := bookmarkWrittenEvent(base + 300)
+		dashboard.Key = &resourcepb.ResourceKey{Group: "dashboard.grafana.app", Resource: "dashboards", Namespace: watchTestNamespace, Name: "d"}
+		events <- dashboard
+		synctest.Wait()
+
+		ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), newWatchTestUser()))
+		defer cancel()
+		req := bookmarkWatchRequest()
+		req.Options.Key.Name = ""
+		req.Since = base + 100
+		stream := newMockWatchServer(ctx)
+		done := make(chan error, 1)
+		go func() { done <- srv.Watch(req, stream) }()
+		synctest.Wait()
+
+		late := bookmarkWrittenEvent(base + 200)
+		late.Key.Namespace = "other"
+		events <- late
+		synctest.Wait()
+		time.Sleep(time.Second)
+		synctest.Wait()
+		require.NotEmpty(t, stream.events, "the late write must advance the bookmark")
+		bookmark := <-stream.events
+		require.Equal(t, resourcepb.WatchEvent_BOOKMARK, bookmark.Type)
+		require.Equal(t, base+200, bookmark.Resource.Version)
 		cancel()
 		require.NoError(t, <-done)
 	})
