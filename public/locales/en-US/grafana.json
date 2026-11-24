@@ -6740,7 +6740,8 @@
           "title": "Paste panel"
         },
         "question": {
-          "label": "Question"
+          "label": "Question",
+          "tooltip": "Add a question viewers can ask about the panels"
         },
         "row": {
           "add-label": "Add row",
