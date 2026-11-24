@@ -1,0 +1,65 @@
+import { ArgTypes, Canvas, Meta } from '@storybook/addon-docs/blocks';
+import { GradientButton } from './GradientButton';
+import * as GradientButtonStories from './GradientButton.story';
+
+<Meta title="MDX|GradientButton" component={GradientButton} />
+
+# GradientButton
+
+`GradientButton` is a secondary `Button` with a violet to orange gradient from the `theme.colors.gradients.button` theme token.
+
+## When to use
+
+Use `GradientButton` for the entry point to Grafana Assistant or another AI feature, such as "Analyze with Assistant".
+
+<Canvas of={GradientButtonStories.Examples} />
+
+## Never use for
+
+- **Ordinary actions.** Use [`Button`](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/components/Button/Button.mdx). The gradient loses its meaning when it shows up on unrelated actions.
+- **A decorative highlight.** Don't use the gradient to draw attention to something that isn't an AI action.
+- **Navigation.** `GradientButton` always renders a `<button>`. Use [`LinkButton`](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/components/Button/Button.mdx#links) for a link that looks like a button.
+
+## Do's and don'ts
+
+### Use the ai-sparkle icon
+
+Pair the label with the `ai-sparkle` icon, so the button reads as an AI action even without the gradient.
+
+### Keep the Assistant logic in @grafana/assistant
+
+`GradientButton` is only the visual treatment. Opening Assistant, checking whether it is available and tracking usage stay in `@grafana/assistant`, for example in `OpenAssistantButton`. Don't rebuild that logic around a plain `GradientButton`.
+
+### Don't restyle the gradient
+
+Don't override the border, background or text color with `className`. Change the `theme.colors.gradients.button` token in the theme instead.
+
+## Usage
+
+```tsx
+import { GradientButton } from '@grafana/ui';
+
+<GradientButton icon="ai-sparkle" onClick={openAssistant}>
+  Analyze with Assistant
+</GradientButton>;
+```
+
+- `fill="outline"` (default) draws a 1px gradient border on the secondary button color.
+- `fill="solid"` fills the button with the gradient, with text in the canvas color.
+- `size`, `icon`, `iconPlacement`, `tooltip`, `fullWidth` and `disabled` work the same as on `Button`.
+- When the button opens a menu, `aria-expanded="true"` keeps the hover background while the menu is open. `Dropdown` sets this on its trigger.
+
+## Accessibility
+
+`GradientButton` renders `Button`'s markup, so it handles the same things:
+
+- **Element:** it renders a native `<button>`.
+- **Icon-only buttons:** a button without children must have an `aria-label` or a `tooltip`. A string `tooltip` becomes the accessible name when there is no `aria-label`.
+- **Disabled:** a disabled button doesn't call `onClick` and drops the gradient, so it looks like any disabled `Button`. With a `tooltip`, it sets `aria-disabled` instead of the native `disabled` attribute, so the tooltip stays reachable.
+- **Focus:** it shows the `Button` focus ring for keyboard focus and hides it for mouse focus.
+
+The gradient stops have at least 3:1 contrast with the theme canvas in the dark and light themes, and the `fill="solid"` text has at least 4.5:1 against both stops. The gradient is decorative, so don't rely on it to tell users what the button does. The label or `tooltip` has to do that.
+
+## Props
+
+<ArgTypes of={GradientButton} />
