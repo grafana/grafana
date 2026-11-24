@@ -1,6 +1,6 @@
 import { getNamespace } from '../pluginUtils';
 
-import { getAPIGroup } from './discovery';
+import { getAPIGroup, getAPIGroupOutcome, type Outcome } from './discovery';
 import { selectAPIVersion } from './versions';
 
 /**
@@ -47,9 +47,29 @@ export async function resolveAPIBaseURL(
   { namespaced = true }: ResolveAPIBaseURLOptions = {}
 ): Promise<string | undefined> {
   const version = await resolveAPIVersion(group, supported);
-  if (!version) {
-    return undefined;
+  return version ? toBaseURL(group, version, namespaced) : undefined;
+}
+
+/**
+ * Like {@link resolveAPIBaseURL}, but tells a group that is not served in a supported version
+ * (`known` with `undefined`) apart from discovery that could not answer (`unknown`).
+ *
+ * @internal
+ */
+export async function resolveAPIBaseURLOutcome(
+  group: string,
+  supported: readonly string[],
+  { namespaced = true }: ResolveAPIBaseURLOptions = {}
+): Promise<Outcome<string | undefined>> {
+  const outcome = await getAPIGroupOutcome(group);
+  if (outcome.kind === 'unknown') {
+    return outcome;
   }
+  const version = outcome.value && selectAPIVersion(outcome.value, supported);
+  return { kind: 'known', value: version ? toBaseURL(group, version, namespaced) : undefined };
+}
+
+export function toBaseURL(group: string, version: string, namespaced = true): string {
   const base = `/apis/${group}/${version}`;
   return namespaced ? `${base}/namespaces/${getNamespace()}` : base;
 }

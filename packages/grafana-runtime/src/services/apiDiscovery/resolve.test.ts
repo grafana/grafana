@@ -1,13 +1,15 @@
 import { config } from '../../config';
 
-import { getAPIGroup } from './discovery';
-import { resolveAPIBaseURL, resolveAPIVersion } from './resolve';
+import { getAPIGroup, getAPIGroupOutcome } from './discovery';
+import { resolveAPIBaseURL, resolveAPIBaseURLOutcome, resolveAPIVersion } from './resolve';
 
 jest.mock('./discovery', () => ({
   getAPIGroup: jest.fn(),
+  getAPIGroupOutcome: jest.fn(),
 }));
 
 const getAPIGroupMock = jest.mocked(getAPIGroup);
+const getAPIGroupOutcomeMock = jest.mocked(getAPIGroupOutcome);
 const originalNamespace = config.namespace;
 
 const dashboardGroup = {
@@ -67,5 +69,42 @@ describe('resolveAPIBaseURL', () => {
     getAPIGroupMock.mockResolvedValue(undefined);
 
     await expect(resolveAPIBaseURL('dashboard.grafana.app', ['v1beta1'])).resolves.toBeUndefined();
+  });
+});
+
+describe('resolveAPIBaseURLOutcome', () => {
+  it('returns the base URL of a served group', async () => {
+    getAPIGroupOutcomeMock.mockResolvedValue({ kind: 'known', value: dashboardGroup });
+
+    await expect(resolveAPIBaseURLOutcome('dashboard.grafana.app', ['v0alpha1', 'v1beta1'])).resolves.toEqual({
+      kind: 'known',
+      value: '/apis/dashboard.grafana.app/v1beta1/namespaces/stacks-12345',
+    });
+  });
+
+  it.each([
+    ['is not served', { kind: 'known' as const, value: undefined }],
+    ['is served in no supported version', { kind: 'known' as const, value: dashboardGroup }],
+  ])('is known with no URL when the group %s', async (_, outcome) => {
+    getAPIGroupOutcomeMock.mockResolvedValue(outcome);
+
+    await expect(resolveAPIBaseURLOutcome('dashboard.grafana.app', ['v2'])).resolves.toEqual({
+      kind: 'known',
+      value: undefined,
+    });
+  });
+
+  it('is unknown when discovery cannot answer', async () => {
+    getAPIGroupOutcomeMock.mockResolvedValue({ kind: 'unknown' });
+
+    await expect(resolveAPIBaseURLOutcome('dashboard.grafana.app', ['v1beta1'])).resolves.toEqual({ kind: 'unknown' });
+  });
+
+  it('returns the cluster-scoped base URL with namespaced: false', async () => {
+    getAPIGroupOutcomeMock.mockResolvedValue({ kind: 'known', value: dashboardGroup });
+
+    await expect(
+      resolveAPIBaseURLOutcome('dashboard.grafana.app', ['v1beta1'], { namespaced: false })
+    ).resolves.toEqual({ kind: 'known', value: '/apis/dashboard.grafana.app/v1beta1' });
   });
 });
