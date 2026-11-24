@@ -277,11 +277,6 @@ func createUpdateCommand(ds *upsertDataSourceFromConfig, id int64, sourceFile st
 
 		// The file is the source of truth on every boot, so a renamed or edited
 		// config rewrites the annotations rather than merging into stale ones.
-		UpdateColumns: legacyannotations.UpdateColumns{
-			Columns: legacyannotations.FileProvisioned(sourceFile, ds.Editable),
-			// The file is the source of truth on every boot, so a renamed or edited
-			// config rewrites the columns rather than merging into stale ones.
-			UpdateAnnotations: true,
-		},
+		UpdateColumns: legacyannotations.FileProvisionedUpdate(sourceFile, ds.Editable),
 	}
 }

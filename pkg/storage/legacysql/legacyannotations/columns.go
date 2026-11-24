@@ -143,6 +143,17 @@ func FileProvisioned(sourceFile string, allowsEdits bool) Columns {
 	return columns
 }
 
+// FileProvisionedUpdate is FileProvisioned for an update command. The file is the
+// source of truth on every boot, so a provisioner is always authoritative for these
+// columns: a renamed or edited config has to rewrite them rather than merge into stale
+// ones. Forgetting that is why it is bundled here rather than left to the caller.
+func FileProvisionedUpdate(sourceFile string, allowsEdits bool) UpdateColumns {
+	return UpdateColumns{
+		Columns:           FileProvisioned(sourceFile, allowsEdits),
+		UpdateAnnotations: true,
+	}
+}
+
 // ManagerQuery is embedded in a query that looks a manager up, so a store does not
 // restate the filter. Identity is optional: leaving it empty matches every resource of
 // that kind, which is what the classic kinds need since their identity is absent or

@@ -194,3 +194,12 @@ func TestManagerQueryFilter(t *testing.T) {
 		require.Equal(t, []any{"repo"}, args)
 	})
 }
+
+func TestFileProvisionedUpdateIsAuthoritative(t *testing.T) {
+	// A provisioner rewrites from the file on every boot, so a renamed config has to
+	// replace the stored columns rather than merge into them.
+	update := FileProvisionedUpdate("prometheus.yaml", false)
+	require.True(t, update.UpdateAnnotations)
+	require.Equal(t, FileProvisioned("prometheus.yaml", false), update.Columns)
+	require.NotEmpty(t, update.ColumnsToWrite())
+}
