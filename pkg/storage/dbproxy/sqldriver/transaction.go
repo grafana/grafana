@@ -290,7 +290,17 @@ func (t *transaction) query(ctx context.Context, identity queryIdentity, query s
 		t.abort()
 		return nil, fmt.Errorf("proxy transaction query: %w", err)
 	}
-	return &transactionRows{tx: t, rows: &rows{columns: result.Query.Columns, stream: transactionQueryStream{tx: t}, cancel: func() { done() }}}, nil
+	r := &transactionRows{tx: t}
+	r.rows = &rows{
+		columns: result.Query.Columns,
+		stream:  transactionQueryStream{tx: t},
+		cancel: func() {
+			if !done() {
+				r.completionErr = ctx.Err()
+			}
+		},
+	}
+	return r, nil
 }
 func (t *transaction) end(commit bool) error {
 	defer t.finish()
@@ -344,7 +354,8 @@ func commandError(e *dbproxyv1.TransactionCommandError) error {
 
 type transactionRows struct {
 	*rows
-	tx *transaction
+	tx            *transaction
+	completionErr error
 }
 
 const rowsDrainTimeout = time.Second
@@ -372,7 +383,7 @@ func (r *transactionRows) drain() error {
 	// Consume the terminal frame before allowing another command on the stream.
 	values := make([]driver.Value, len(r.columns))
 	for {
-		err := r.rows.Next(values)
+		err := r.next(values)
 		if errors.Is(err, io.EOF) {
 			return nil
 		}
@@ -381,8 +392,20 @@ func (r *transactionRows) drain() error {
 		}
 	}
 }
-func (r *transactionRows) Next(dest []driver.Value) error {
+func (r *transactionRows) next(dest []driver.Value) error {
+	if r.done {
+		return io.EOF
+	}
 	err := r.rows.Next(dest)
+	// Next runs the cleanup callback before reporting the terminal frame.
+	if errors.Is(err, io.EOF) && r.completionErr != nil {
+		return r.completionErr
+	}
+	return err
+}
+
+func (r *transactionRows) Next(dest []driver.Value) error {
+	err := r.next(dest)
 	if err != nil && !errors.Is(err, io.EOF) && !recoverableError(err) {
 		r.tx.abort()
 	}
