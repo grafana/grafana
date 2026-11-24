@@ -14,7 +14,7 @@ type ProvisionerConfig struct {
 	Path                       string
 	FolderService              folder.Service
 	DashboardProvService       dashboards.DashboardProvisioningService
-	RuleService                provisioning.AlertRuleService
+	RuleService                RuleService
 	ContactPointService        provisioning.ContactPointService
 	NotificiationPolicyService provisioning.NotificationPolicyService
 	MuteTimingService          provisioning.MuteTimingService
