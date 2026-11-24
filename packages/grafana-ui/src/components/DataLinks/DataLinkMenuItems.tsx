@@ -2,9 +2,9 @@ import { type LinkModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { Menu } from '../Menu/Menu';
-import { type MenuItemVariant } from '../Menu/MenuItem';
+import { type MenuItemProps } from '../Menu/MenuItem';
 
-export function DataLinkMenuItems({ links, variant }: { links: LinkModel[]; variant?: MenuItemVariant }) {
+export function DataLinkMenuItems({ links, variant }: { links: LinkModel[]; variant?: MenuItemProps['variant'] }) {
   return links.map((link, index) => (
     <Menu.Item
       size="sm"
