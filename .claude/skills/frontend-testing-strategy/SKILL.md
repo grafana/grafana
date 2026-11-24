@@ -120,7 +120,7 @@ assert. A test earns its place only if you can name a code change it would catch
 "renders without crashing" (unless there's a known crash bug), "initial value is empty
 string", or a boolean branch with no real logic behind it.
 
-**Never unit-test visual styling through CSS rules or selector matches. Use Meticulous.**
+**Never unit-test visual styling through CSS rules or selector matches. Rely on Meticulous for visual testing.**
 
 **Prove the assertion has teeth.** Before landing, mutate the asserted value (or the source it
 derives from) and confirm the test goes **red**. A test that stays green — because its expectation
