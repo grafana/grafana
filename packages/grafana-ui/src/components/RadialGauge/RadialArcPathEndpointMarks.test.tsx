@@ -89,7 +89,7 @@ describe('RadialArcPathEndpointMarks', () => {
           <RadialArcPathEndpointMarks {...defaultProps} {...glowEndpoints} endpointMarker="glow" color="#FF0000" />
         </svg>
       ),
-      '<svg role=\"img\"><path d=\"M 178.78462024097664 113.89185421335442 A 80 80 0 0 0 180 100\" fill=\"none\" stroke-width=\"20\" stroke-linecap=\"round\"/></svg>'
+      '<svg role=\"img\"><path d=\"M 178.78462024097664 86.10814578664558 A 80 80 0 0 1 180 100\" fill=\"none\" stroke-width=\"20\" stroke-linecap=\"round\"/></svg>'
     );
   });
 
@@ -108,7 +108,7 @@ describe('RadialArcPathEndpointMarks', () => {
           />
         </svg>
       ),
-      '<svg role=\"img\"><path d=\"M 178.78462024097664 113.89185421335442 A 80 80 0 0 0 180 100\" fill=\"none\" stroke-width=\"20\" stroke-linecap=\"round\"/></svg>'
+      '<svg role=\"img\"><path d=\"M 178.78462024097664 86.10814578664558 A 80 80 0 0 1 180 100\" fill=\"none\" stroke-width=\"20\" stroke-linecap=\"round\"/></svg>'
     );
   });
 
@@ -125,7 +125,7 @@ describe('RadialArcPathEndpointMarks', () => {
           />
         </svg>
       ),
-      '<svg role=\"img\"><path d=\"M 86.10814578664558 21.215379759023364 A 80 80 0 0 1 100 20\" fill=\"none\" stroke-width=\"20\" stroke-linecap=\"round\"/></svg>'
+      '<svg role=\"img\"><path d=\"M 113.89185421335443 21.215379759023364 A 80 80 0 0 0 100 20\" fill=\"none\" stroke-width=\"20\" stroke-linecap=\"round\"/></svg>'
     );
   });
 
