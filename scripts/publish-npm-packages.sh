@@ -51,15 +51,15 @@ for file in ./npm-artifacts/*.tgz; do
         continue
     fi
 
-    if view_output=$(npm view "$spec" version --registry "$registry" 2>&1); then
+    if view_output=$(npm view "$spec" version --json --silent --registry "$registry"); then
         echo "Skipping $spec: it is already published."
         continue
     fi
 
     # Only E404 means that the version is not published. Any other error, such as a network failure, says nothing about it.
-    if [[ "$view_output" != *E404* ]]; then
-        echo "$view_output"
-        echo "ERROR: Could not check whether $spec is already published."
+    error_code=$(jq -r '.error.code // empty' <<<"$view_output" 2>/dev/null)
+    if [[ "$error_code" != "E404" ]]; then
+        echo "ERROR: Could not check whether $spec is already published (${error_code:-no error code})."
         failed_packages+=("$file")
         continue
     fi
