@@ -16,6 +16,51 @@ export interface APIGroupInfo {
   preferredVersion: string;
 }
 
+/**
+ * A resource the server serves in one group version, as returned by {@link getAPIResources}.
+ *
+ * A simplified version of the Kubernetes discovery entries, not the entries themselves, so the public
+ * API and the plugin-compat wrappers don't depend on the Kubernetes format. Kubernetes describes a
+ * resource in two shapes, an `APIResourceList` entry and an aggregated `APIResourceDiscovery`, and
+ * this one type stands for both: each entry carries its group and version, subresources are folded
+ * into their resource, and the scope is a boolean.
+ *
+ * @alpha
+ */
+export interface APIResourceInfo {
+  /** The group name, such as `dashboard.grafana.app`. */
+  group: string;
+  /** Such as `v1beta1`. */
+  version: string;
+  /** The plural name used in URLs, such as `dashboards`. */
+  resource: string;
+  /** Such as `Dashboard`. Empty when the server doesn't name it. */
+  kind: string;
+  /** Whether the resource lives in a namespace. `false` for cluster-scoped resources. */
+  namespaced: boolean;
+  /** The Kubernetes verbs it supports, such as `get`, `list` and `watch`. */
+  verbs: readonly string[];
+  /** Such as `status`. Empty when the resource has none. */
+  subresources: readonly string[];
+}
+
+/**
+ * What {@link isAPIResourceAvailable} checks.
+ *
+ * Kubernetes has no type for this question, so it names only what a caller checks: `subresource` and
+ * `verb` are optional and narrow the check.
+ *
+ * @alpha
+ */
+export interface APIResourceQuery {
+  group: string;
+  version: string;
+  resource: string;
+  subresource?: string;
+  /** Checked against the subresource's verbs when `subresource` is set, otherwise the resource's. */
+  verb?: string;
+}
+
 interface GroupVersionForDiscovery {
   groupVersion: string;
   version: string;
@@ -31,4 +76,51 @@ export interface K8sAPIGroup {
 /** The Kubernetes `APIGroupList`, served by `GET /apis`. */
 export interface K8sAPIGroupList {
   groups: K8sAPIGroup[];
+}
+
+// Kubernetes writes an empty list as `null`, and leaves out the aggregated fields marked `omitempty`.
+
+/** An entry of the Kubernetes `APIResourceList`. Subresources are entries named `<resource>/<subresource>`. */
+interface K8sAPIResource {
+  name: string;
+  kind: string;
+  namespaced: boolean;
+  verbs: string[] | null;
+}
+
+/** The Kubernetes `APIResourceList`, served by `GET /apis/<group>/<version>`. */
+export interface K8sAPIResourceList {
+  groupVersion: string;
+  resources: K8sAPIResource[] | null;
+}
+
+interface K8sAPISubresourceDiscovery {
+  subresource: string;
+  verbs: string[] | null;
+}
+
+interface K8sAPIResourceDiscovery {
+  resource: string;
+  responseKind?: { kind?: string };
+  scope: 'Namespaced' | 'Cluster';
+  verbs: string[] | null;
+  subresources?: K8sAPISubresourceDiscovery[];
+}
+
+interface K8sAPIVersionDiscovery {
+  version: string;
+  /** `Stale` when the server couldn't read the version, and lists the resources it last knew of. */
+  freshness?: string;
+  /** Left out for a version that serves routes only. */
+  resources?: K8sAPIResourceDiscovery[];
+}
+
+interface K8sAPIGroupDiscovery {
+  metadata: { name: string };
+  versions?: K8sAPIVersionDiscovery[];
+}
+
+/** The Kubernetes aggregated discovery `APIGroupDiscoveryList`, served by `GET /apis` on request. */
+export interface K8sAPIGroupDiscoveryList {
+  items: K8sAPIGroupDiscovery[] | null;
 }
