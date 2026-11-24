@@ -228,6 +228,18 @@ func TestTransactionStatementReceiveDeadline(t *testing.T) {
 }
 
 func TestTransactionRollbackWhileNextIsBlocked(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		warnings bool
+	}{
+		{name: "stalled stream"},
+		{name: "warning-only frames", warnings: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) { testTransactionRollbackWhileNextIsBlocked(t, tc.warnings) })
+	}
+}
+
+func testTransactionRollbackWhileNextIsBlocked(t *testing.T, warnings bool) {
 	synctest.Test(t, func(t *testing.T) {
 		stream := &stalledTransactionStream{responses: []*dbproxyv1.TransactionResponse{
 			{Result: &dbproxyv1.TransactionResponse_Ok{Ok: &emptypb.Empty{}}},
@@ -235,6 +247,20 @@ func TestTransactionRollbackWhileNextIsBlocked(t *testing.T) {
 				Columns: []*dbproxyv1.Column{{Name: "n", ValueType: dbproxyv1.ValueType_VALUE_TYPE_INT64}},
 			}}},
 		}}
+		if warnings {
+			warning := &dbproxyv1.TransactionResponse{Result: &dbproxyv1.TransactionResponse_Query{Query: &dbproxyv1.QueryResponse{
+				Warnings: []*dbproxyv1.Warning{{}},
+			}}}
+			stream.responses = append(stream.responses, warning, warning, warning)
+			stream.beforeReply = func(reply *dbproxyv1.TransactionResponse) {
+				if reply == warning {
+					select {
+					case <-time.After(20 * time.Second):
+					case <-stream.ctx.Done():
+					}
+				}
+			}
+		}
 		ctx := sqldriver.WithQuery(t.Context(), "stacks-1", "read.stalled")
 		tx := beginFakeTransaction(t, ctx, stream)
 		rows, err := tx.QueryContext(ctx, "SELECT n")
@@ -245,8 +271,12 @@ func TestTransactionRollbackWhileNextIsBlocked(t *testing.T) {
 		go func() { next <- rows.Next() }()
 		synctest.Wait() // Next is blocked in Recv before rollback starts.
 
+		start := time.Now()
 		if err := tx.Rollback(); err == nil {
 			t.Fatal("rollback succeeded without acknowledgement")
+		}
+		if elapsed := time.Since(start); elapsed > 30*time.Second {
+			t.Errorf("rollback took %v, want at most one I/O timeout", elapsed)
 		}
 		if <-next || !errors.Is(rows.Err(), context.DeadlineExceeded) {
 			t.Fatalf("rows error = %v, want I/O deadline exceeded", rows.Err())
@@ -273,12 +303,93 @@ func beginFakeTransaction(t *testing.T, ctx context.Context, stream *stalledTran
 	return tx
 }
 
+func TestTransactionCommitAcknowledgementAtIOTimeout(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		beginOK := &dbproxyv1.TransactionResponse{Result: &dbproxyv1.TransactionResponse_Ok{Ok: &emptypb.Empty{}}}
+		commitOK := &dbproxyv1.TransactionResponse{Result: &dbproxyv1.TransactionResponse_Ok{Ok: &emptypb.Empty{}}}
+		stream := &stalledTransactionStream{responses: []*dbproxyv1.TransactionResponse{beginOK, commitOK}}
+		stream.beforeReply = func(reply *dbproxyv1.TransactionResponse) {
+			if reply == commitOK {
+				<-stream.ctx.Done()
+			}
+		}
+		ctx := sqldriver.WithQuery(t.Context(), "stacks-1", "")
+		if err := beginFakeTransaction(t, ctx, stream).Commit(); err != nil {
+			t.Fatalf("acknowledged commit failed: %v", err)
+		}
+	})
+}
+
+func TestTransactionStreamSetupTimeout(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		client := stalledTransactionClient{beforeOpen: func(ctx context.Context) error {
+			<-ctx.Done()
+			return ctx.Err()
+		}}
+		connector, err := sqldriver.New(client).OpenConnector("")
+		if err != nil {
+			t.Fatal(err)
+		}
+		pool := sql.OpenDB(connector)
+		t.Cleanup(func() { _ = pool.Close() })
+		ctx := sqldriver.WithQuery(t.Context(), "stacks-1", "")
+		if _, err := pool.BeginTx(ctx, nil); !errors.Is(err, context.DeadlineExceeded) {
+			t.Fatalf("BeginTx error = %v, want I/O deadline exceeded", err)
+		}
+	})
+}
+
+// delayedAfterFuncContext lets the test delay delivery of the cancellation
+// callback independently from the statement context's cancellation state.
+type delayedAfterFuncContext struct {
+	context.Context
+	callbackContext context.Context
+}
+
+func (c delayedAfterFuncContext) Value(any) any { return nil }
+
+func (c delayedAfterFuncContext) AfterFunc(f func()) func() bool {
+	return context.AfterFunc(c.callbackContext, f)
+}
+
+func TestTransactionExecWithCanceledContextBeforeCallback(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		beginOK := &dbproxyv1.TransactionResponse{Result: &dbproxyv1.TransactionResponse_Ok{Ok: &emptypb.Empty{}}}
+		execOK := &dbproxyv1.TransactionResponse{Result: &dbproxyv1.TransactionResponse_Exec{Exec: &dbproxyv1.ExecResponse{RowsAffected: 1}}}
+		ctx := sqldriver.WithQuery(t.Context(), "stacks-1", "write.cancel")
+		stmt, cancel := context.WithCancel(ctx)
+		defer cancel()
+		callbackCtx, cancelCallback := context.WithCancel(ctx)
+		defer cancelCallback()
+		stream := &stalledTransactionStream{responses: []*dbproxyv1.TransactionResponse{beginOK, execOK, beginOK}}
+		stream.beforeReply = func(reply *dbproxyv1.TransactionResponse) {
+			if reply == execOK {
+				cancel()
+			}
+		}
+		tx := beginFakeTransaction(t, ctx, stream)
+		stmtCtx := sqldriver.WithQuery(delayedAfterFuncContext{Context: stmt, callbackContext: callbackCtx}, "stacks-1", "write.cancel")
+		if result, err := tx.ExecContext(stmtCtx, "UPDATE t SET n=1"); result != nil || !errors.Is(err, context.Canceled) {
+			t.Errorf("ExecContext = (%v, %v), want canceled without a result", result, err)
+		}
+		if err := tx.Commit(); err == nil || len(stream.requests) != 2 {
+			t.Fatalf("Commit = %v, requests = %v; want failure before dispatch", err, stream.requests)
+		}
+	})
+}
+
 type stalledTransactionClient struct {
 	dbproxyv1.DatabaseProxyServiceClient
-	stream *stalledTransactionStream
+	stream     *stalledTransactionStream
+	beforeOpen func(context.Context) error
 }
 
 func (c stalledTransactionClient) Transaction(ctx context.Context, _ ...grpc.CallOption) (grpc.BidiStreamingClient[dbproxyv1.TransactionRequest, dbproxyv1.TransactionResponse], error) {
+	if c.beforeOpen != nil {
+		if err := c.beforeOpen(ctx); err != nil {
+			return nil, err
+		}
+	}
 	c.stream.ctx = ctx
 	return c.stream, nil
 }

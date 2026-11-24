@@ -21,9 +21,9 @@ import (
 )
 
 func TestStandaloneExecReturnsResultAndExecutionIdentity(t *testing.T) {
-	var got *dbproxyv1.ExecRequest
+	requests := make(chan *dbproxyv1.ExecRequest, 1)
 	pool := openServerPool(t, &queryServer{exec: func(_ context.Context, req *dbproxyv1.ExecRequest) (*dbproxyv1.ExecResponse, error) {
-		got = req
+		requests <- req
 		return &dbproxyv1.ExecResponse{RowsAffected: 3, LastInsertId: 17}, nil
 	}})
 	stmt, err := pool.PrepareContext(sqldriver.WithQuery(context.Background(), "stacks-1", "prepare.old"), "INSERT INTO things VALUES (?)")
@@ -40,6 +40,7 @@ func TestStandaloneExecReturnsResultAndExecutionIdentity(t *testing.T) {
 		t.Fatal(err)
 	}
 	assertResult(t, result, 3, 17)
+	got := <-requests
 	if got.GetNamespace() != "stacks-2" || got.GetQueryName() != "write.things" || got.GetSql() != "INSERT INTO things VALUES (?)" || got.GetParameters()[0].GetInt64Value() != 9 {
 		t.Fatalf("request = %v", got)
 	}
@@ -193,17 +194,17 @@ func TestRecoverableTransactionErrorPreservesDatabaseDetail(t *testing.T) {
 }
 
 func TestLostStandaloneExecReplyHasUnknownOutcome(t *testing.T) {
-	calls := 0
+	var calls atomic.Int32
 	pool := openServerPool(t, &queryServer{exec: func(context.Context, *dbproxyv1.ExecRequest) (*dbproxyv1.ExecResponse, error) {
-		calls++
+		calls.Add(1)
 		return nil, status.Error(codes.Unavailable, "connection lost")
 	}})
 	_, err := pool.ExecContext(sqldriver.WithQuery(context.Background(), "stacks-1", "write.uncertain"), "INSERT INTO t VALUES (1)")
 	if !errors.Is(err, sqldriver.ErrOutcomeUnknown) || status.Code(err) != codes.Unavailable {
 		t.Fatalf("error=%v", err)
 	}
-	if calls != 1 {
-		t.Fatalf("write replayed %d times", calls)
+	if got := calls.Load(); got != 1 {
+		t.Fatalf("write replayed %d times", got)
 	}
 }
 
@@ -328,13 +329,13 @@ func TestCommitLostReplyHasUnknownOutcome(t *testing.T) {
 }
 
 func TestBeginHonorsReadOnlyAndRejectsCustomIsolation(t *testing.T) {
-	beginCount := 0
+	var beginCount atomic.Int32
 	pool := openServerPool(t, &queryServer{transaction: func(s grpc.BidiStreamingServer[dbproxyv1.TransactionRequest, dbproxyv1.TransactionResponse]) error {
 		req, err := s.Recv()
 		if err != nil {
 			return err
 		}
-		beginCount++
+		beginCount.Add(1)
 		if req.GetBegin() == nil || !req.GetBegin().ReadOnly || req.GetBegin().Namespace != "stacks-7" {
 			return status.Error(codes.InvalidArgument, "read-only begin not forwarded")
 		}
@@ -361,8 +362,8 @@ func TestBeginHonorsReadOnlyAndRejectsCustomIsolation(t *testing.T) {
 	if err := tx.Rollback(); err != nil {
 		t.Fatal(err)
 	}
-	if beginCount != 1 {
-		t.Fatalf("remote begins = %d", beginCount)
+	if got := beginCount.Load(); got != 1 {
+		t.Fatalf("remote begins = %d", got)
 	}
 }
 

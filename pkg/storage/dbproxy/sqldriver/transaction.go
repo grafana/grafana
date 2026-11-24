@@ -100,12 +100,14 @@ func (c *conn) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.Tx, e
 		return nil, errTransactionAborted
 	}
 	life, cancel := context.WithCancel(ctx)
+	tx := &transaction{conn: c, namespace: identity.namespace, life: life, cancel: cancel}
+	stop := tx.armIOTimeout()
 	stream, err := c.client.Transaction(life)
-	if err != nil {
+	if err := stop(err); err != nil {
 		cancel()
-		return nil, fmt.Errorf("proxy begin: %w", err)
+		return nil, fmt.Errorf("proxy begin: open stream: %w", err)
 	}
-	tx := &transaction{conn: c, namespace: identity.namespace, stream: stream, life: life, cancel: cancel}
+	tx.stream = stream
 	context.AfterFunc(life, tx.abort)
 	if err := tx.send(ctx, &dbproxyv1.TransactionRequest{Command: &dbproxyv1.TransactionRequest_Begin{Begin: &dbproxyv1.BeginRequest{Namespace: identity.namespace, ReadOnly: opts.ReadOnly}}}); err != nil {
 		tx.abort()
@@ -150,7 +152,7 @@ func (t *transaction) start(ctx context.Context) (func() bool, error) {
 	}
 	stop := context.AfterFunc(ctx, t.abort)
 	return func() bool {
-		completed := stop()
+		completed := stop() && ctx.Err() == nil
 		if !completed {
 			// The cancellation callback may still be running. Mark the transaction
 			// aborted before allowing another command to start.
@@ -206,7 +208,7 @@ const transactionIOTimeout = 30 * time.Second
 
 func (t *transaction) armIOTimeout() func(error) error {
 	// Rollback cannot reach the driver while database/sql holds the connection
-	// lock for a blocked Send or Recv, so bound each stream operation itself.
+	// lock for blocked stream I/O, so bound the operation itself.
 	timer := time.AfterFunc(transactionIOTimeout, t.abort)
 	return func(err error) error {
 		if timer.Stop() {
@@ -224,7 +226,7 @@ func (t *transaction) receive() (*dbproxyv1.TransactionResponse, error) {
 }
 
 func (t *transaction) recv() (*dbproxyv1.TransactionResponse, error) {
-	reply, err := t.receive()
+	reply, err := t.stream.Recv()
 	if err != nil {
 		t.abort()
 		if errors.Is(err, io.EOF) {
@@ -259,7 +261,9 @@ func (t *transaction) exec(ctx context.Context, identity queryIdentity, query st
 		}
 		return nil, fmt.Errorf("proxy transaction exec: %w", err)
 	}
+	stop := t.armIOTimeout()
 	reply, err := t.recv()
+	err = stop(err)
 	if !done() {
 		return nil, fmt.Errorf("proxy transaction exec: %w", ctx.Err())
 	}
@@ -299,8 +303,9 @@ func (t *transaction) query(ctx context.Context, identity queryIdentity, query s
 		}
 		return nil, fmt.Errorf("proxy transaction query: %w", err)
 	}
+	stop := t.armIOTimeout()
 	reply, err := t.recv()
-	if err != nil {
+	if err := stop(err); err != nil {
 		if !done() {
 			return nil, fmt.Errorf("proxy transaction query: %w", ctx.Err())
 		}
@@ -358,7 +363,13 @@ func (t *transaction) end(commit bool) error {
 		}
 		return fmt.Errorf("proxy rollback: %w", err)
 	}
-	reply, err := t.recv()
+	stop := t.armIOTimeout()
+	reply, recvErr := t.recv()
+	err = stop(recvErr)
+	// A received commit acknowledgement is authoritative even if the timer fired.
+	if commit && recvErr == nil && reply.GetOk() != nil {
+		return nil
+	}
 	if err != nil {
 		if commit {
 			return fmt.Errorf("proxy commit: %w: %w", ErrOutcomeUnknown, err)
@@ -433,7 +444,8 @@ func (r *transactionRows) next(dest []driver.Value) error {
 	if r.done {
 		return io.EOF
 	}
-	err := r.rows.Next(dest)
+	stop := r.tx.armIOTimeout()
+	err := stop(r.rows.Next(dest))
 	// Next runs the cleanup callback before reporting the terminal frame.
 	if err != nil && r.completionErr != nil {
 		return r.completionErr
