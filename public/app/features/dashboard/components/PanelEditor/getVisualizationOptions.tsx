@@ -14,23 +14,28 @@ import {
   type FieldConfigPropertyItem,
   PanelOptionsEditorBuilder,
 } from '@grafana/data';
-import { getVarMappingKind, isVarMappingExpressionInput } from '@grafana/data/internal';
+import { isVarMappingExpressionInput } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
-import { type VizPanel } from '@grafana/scenes';
+import { VizPanel } from '@grafana/scenes';
 import { Input } from '@grafana/ui';
 import { VarMappingNumberValueEditor } from 'app/core/components/OptionsUI/number';
-import { getVarMappingToggleKind, VarMappingToggleEditor } from 'app/core/components/OptionsUI/varMappingToggle';
-import { type VarMappingVariableSource } from 'app/core/components/OptionsUI/varMappingVariables';
 import { LibraryVizPanelInfo } from 'app/features/dashboard-scene/panel-edit/LibraryVizPanelInfo';
 import { type LibraryPanelBehavior } from 'app/features/dashboard-scene/scene/LibraryPanelBehavior';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
+import { getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/utils-panels';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
+import { getReportableOptionValue } from './getReportableOptionValue';
 import { getOptionOverrides, getVarMappingOptionOverrides } from './state/getOptionOverrides';
 import { type OptionPaneRenderProps } from './types';
-import { setOptionImmutably, updateDefaultFieldConfigValue, updateDefaultFieldConfigVarMapping } from './utils';
+import {
+  getVarMappingEditingKind,
+  setOptionImmutably,
+  updateDefaultFieldConfigValue,
+  updateDefaultFieldConfigVarMapping,
+} from './utils';
 
 type categoryGetter = (categoryNames?: string[]) => OptionsPaneCategoryDescriptor;
 
@@ -117,18 +122,13 @@ function getDefaultsEditing(
   const writeValue = (config: FieldConfigSource, v: unknown) =>
     updateDefaultFieldConfigValue(config, fieldOption.path, v, fieldOption.isCustom);
 
-  const kind = varMappingsEnabled ? getVarMappingKind(fieldOption) : undefined;
-  const expression = kind ? defaults.varMappings?.[fieldOption.id] : undefined;
-  const toggleKind = getVarMappingToggleKind(fieldOption, kind);
+  const kind = varMappingsEnabled ? getVarMappingEditingKind(fieldOption) : undefined;
 
   return {
     // The unit picker already accepts custom text, so it can take an expression as is
-    Editor: fieldOption.editor,
-    numberExpressions: kind === 'number' && !toggleKind,
+    Editor: kind === 'number' ? VarMappingNumberValueEditor : fieldOption.editor,
     storedValue,
-    // Toggle editors show the stored value and the expression separately
-    value: toggleKind ? storedValue : (expression ?? storedValue),
-    toggle: toggleKind ? { kind: toggleKind, expression } : undefined,
+    value: (kind ? defaults.varMappings?.[fieldOption.id] : undefined) ?? storedValue,
     toFieldConfig: (v: unknown) => {
       if (kind && isVarMappingExpressionInput(kind, v)) {
         return updateDefaultFieldConfigVarMapping(fieldConfig, fieldOption.id, v);
@@ -251,7 +251,20 @@ export function getLibraryVizPanelOptionsCategory(libraryPanel: LibraryPanelBeha
               id={descriptor.props.id}
               data-testid="library panel name input"
               defaultValue={libraryPanel.state.name}
-              onBlur={(e) => libraryPanel.setState({ name: e.currentTarget.value })}
+              onBlur={(e) => {
+                const name = e.currentTarget.value;
+                const renamed = name !== libraryPanel.state.name;
+                libraryPanel.setState({ name });
+                const panel = libraryPanel.parent;
+                if (renamed && panel instanceof VizPanel) {
+                  DashboardInteractions.panelActionClicked(
+                    'rename_library_panel',
+                    getPanelIdForVizPanel(panel),
+                    'panel_editor',
+                    panel.state.pluginId
+                  );
+                }
+              }}
             />
           );
         },
@@ -282,7 +295,6 @@ export interface OptionPaneRenderProps2 {
   onOptionsChange?: (options: Record<string, unknown>, name: string, category: string) => void;
   onFieldConfigChange?: (fieldConfig: FieldConfigSource, name: string, category: string) => void;
   varMappingsEnabled?: boolean;
-  varMappingVariables?: VarMappingVariableSource;
 }
 
 export function getVisualizationOptions2(props: OptionPaneRenderProps2): OptionsPaneCategoryDescriptor[] {
@@ -295,7 +307,6 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
     currentOptions,
     currentFieldConfig,
     varMappingsEnabled = false,
-    varMappingVariables,
   } = props;
 
   const categoryIndex: Record<string, OptionsPaneCategoryDescriptor> = {};
@@ -321,8 +332,8 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
       // Merged rather than replaced, so an editor that drops a key from an object value keeps the old
       // key — clearing requires setting it to undefined. Documented on StandardEditorProps.onChange.
       // Switching to replace here would break editors that emit partial values for their own path.
+      const option = panelOptionItems.find((item) => item.path === path);
       if (props.onOptionsChange) {
-        const option = panelOptionItems.find((item) => item.path === path);
         props.onOptionsChange(newOptions, option?.name ?? path, option?.category?.[0] ?? plugin.meta.name);
       } else {
         panel.onOptionsChange(newOptions);
@@ -331,7 +342,9 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
       DashboardInteractions.setVisualOption({
         ui: props.reportInteractionUI,
         option: path,
-        value: JSON.stringify(value),
+        ...getReportableOptionValue(value, option?.settings),
+        panel_type: plugin.meta.id,
+        panel_id: getPanelIdForVizPanel(panel),
       });
     },
   };
@@ -361,7 +374,7 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
     }
 
     const category = getOptionsPaneCategory(fieldOption.category);
-    const { Editor, numberExpressions, storedValue, value, toggle, toFieldConfig } = getDefaultsEditing(
+    const { Editor, storedValue, value, toFieldConfig } = getDefaultsEditing(
       fieldOption,
       currentFieldConfig,
       varMappingsEnabled
@@ -396,38 +409,11 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
             DashboardInteractions.setVisualOption({
               ui: props.reportInteractionUI,
               option: `?${fieldOption.isCustom ? 'custom.' : ''}${fieldOption.path}`,
-              value: JSON.stringify(value),
+              ...getReportableOptionValue(v, fieldOption.settings),
+              panel_type: plugin.meta.id,
+              panel_id: getPanelIdForVizPanel(panel),
             });
           };
-
-          if (numberExpressions) {
-            return (
-              <VarMappingNumberValueEditor
-                value={typeof value === 'number' || typeof value === 'string' ? value : undefined}
-                onChange={onChange}
-                item={fieldOption}
-                context={context}
-                id={htmlId}
-                variables={varMappingVariables}
-              />
-            );
-          }
-
-          if (toggle) {
-            return (
-              <VarMappingToggleEditor
-                editor={Editor}
-                kind={toggle.kind}
-                expression={toggle.expression}
-                variables={varMappingVariables}
-                value={value}
-                onChange={onChange}
-                item={fieldOption}
-                context={context}
-                id={htmlId}
-              />
-            );
-          }
 
           return <Editor value={value} onChange={onChange} item={fieldOption} context={context} id={htmlId} />;
         },

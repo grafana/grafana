@@ -177,8 +177,7 @@ func NewStorageBackend(
 		for _, opt := range opts {
 			opt(&kvOpts)
 		}
-		blobURL, err := resolvedBlobURL(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("blob_url").MustString(""), cfg.DataPath)
-		if err != nil {
+		if err := resource.ValidateBlobURL(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("blob_url").MustString("")); err != nil {
 			return nil, err
 		}
 		return NewBackend(BackendOptions{
@@ -189,7 +188,6 @@ func NewStorageBackend(
 			LastImportTimeMaxAge:      cfg.MaxFileIndexAge,
 			GCGate:                    gcGate,
 			GarbageCollection:         NewGarbageCollectionConfig(cfg),
-			BlobURL:                   blobURL,
 			SimulatedNetworkLatency:   cfg.SimulatedNetworkLatency,
 			MigrationParquetBuffer:    cfg.MigrationParquetBuffer,
 			MigrationChunkedWrites:    cfg.MigrationChunkedWrites,
@@ -279,7 +277,6 @@ func NewFileBackend(cfg *setting.Cfg, kvStore kv.KV) (resource.StorageBackend, e
 		Log:                     logging.DefaultLogger.With("logger", "storage-backend"),
 		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
 		ResourceVersionMaxWait:  cfg.ResourceVersionMaxWait,
-		FastLatestKeyLookup:     cfg.FastLatestKeyLookupEnabled,
 	})
 }
 
@@ -329,9 +326,6 @@ type BackendOptions struct {
 	// BatchTransactionTimeout bounds one batched WithTx in the resource version
 	// manager. Zero selects the rvmanager default.
 	BatchTransactionTimeout time.Duration
-
-	// BlobURL selects the same external blob backend as the resource server.
-	BlobURL string
 
 	// EventPublisher announces committed writes on NATS.
 	EventPublisher resource.EventPublisher
@@ -386,7 +380,6 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		batchTxnTimeout:           opts.BatchTransactionTimeout,
 		garbageCollection:         garbageCollection,
 		blobGCMetrics:             resource.NewBlobGCMetricsIfEnabled(opts.Reg, "sql", garbageCollection.Enabled && garbageCollection.BlobEnabled),
-		blobURL:                   opts.BlobURL,
 		gcGate:                    opts.GCGate,
 
 		watchPublisher:            resource.NewWatchNotificationPublisher(opts.EventPublisher, opts.Reg, logging.DefaultLogger.With("logger", "sql-resource-server")),
@@ -464,7 +457,6 @@ type backend struct {
 	gcGate            *resource.GCGate
 	blobGC            *resource.BlobGarbageCollector
 	blobGCMetrics     *resource.BlobGCMetrics
-	blobURL           string
 
 	// When true, bulk migrations buffer data through a temporary Parquet file
 	migrationParquetBuffer bool

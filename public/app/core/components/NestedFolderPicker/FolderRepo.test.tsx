@@ -123,19 +123,20 @@ describe('FolderRepo', () => {
   it('renders the read-only badge when the repository has no workflows', async () => {
     mockRepositories([{ ...REPOSITORY, workflows: [] }]);
 
-    render(<FolderRepo folder={ROOT_FOLDER} canEdit />);
+    const { user } = render(<FolderRepo folder={ROOT_FOLDER} canEdit />);
+    await user.hover(await screen.findByTestId('icon-exchange-alt-lock'));
 
-    expect(await screen.findByText('Read only')).toBeInTheDocument();
+    expect(await screen.findByText('Read only, Managed by: Repository My Repo')).toBeInTheDocument();
   });
 
-  it('keeps the managed badge but drops the read-only badge when the user cannot edit the folder', async () => {
+  it('keeps the managed badge but drops the lock when the user cannot edit the folder', async () => {
     mockRepositories([{ ...REPOSITORY, workflows: [] }]);
 
     const { user } = render(<FolderRepo folder={ROOT_FOLDER} canEdit={false} />);
     await user.hover(screen.getByTestId('icon-exchange-alt'));
 
     expect(await screen.findByText('Managed by: Repository My Repo')).toBeInTheDocument();
-    expect(screen.queryByText('Read only')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('icon-exchange-alt-lock')).not.toBeInTheDocument();
   });
 
   it('renders the orphaned badge when the manager id names a deleted repository', async () => {
@@ -168,9 +169,9 @@ describe('FolderRepo', () => {
     mockRepositories([REPOSITORY]);
 
     const { user } = render(<FolderRepo folder={ROOT_FOLDER} enableRepositoryLink sourcePath="dashboards" canEdit />);
-    await user.click(await screen.findByRole('button', { name: 'Managed by: Repository My Repo' }));
+    await user.click(await screen.findByRole('button', { name: 'Managed resource actions' }));
 
-    expect(await screen.findByRole('menuitem', { name: /view source file/i })).toHaveAttribute(
+    expect(await screen.findByRole('menuitem', { name: /view source/i })).toHaveAttribute(
       'href',
       'https://github.com/grafana/repo/tree/main/dashboards'
     );

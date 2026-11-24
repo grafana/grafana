@@ -2,6 +2,7 @@ package search
 
 import (
 	"net/http"
+	"slices"
 	"strings"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -153,7 +154,7 @@ func searchRouteSpec(kindName, version string) *spec3.PathProps {
 func globalSearchRouteSpec() *spec3.PathProps {
 	return routeSpec(routeSpecArgs{
 		operationID:  "listGlobalSearch" + capitalize(searchv0.VERSION),
-		description:  globalSearchDescription(),
+		description:  globalSearchDescription(resource.BuiltinGlobalSearchResourceTypes(), resource.GlobalSearchResourceTypes()),
 		requestKind:  searchv0.KindSearchQuery,
 		requestGo:    globalSearchQueryGoName,
 		responseKind: searchv0.KindGlobalSearchResults,
@@ -164,12 +165,13 @@ func globalSearchRouteSpec() *spec3.PathProps {
 
 // globalSearchDescription says what this search adds to the search of one kind,
 // which is all a caller cannot learn from the shared request schema.
-func globalSearchDescription() string {
-	types := make([]string, 0, len(resource.GlobalSearchResourceTypes()))
-	for _, gr := range resource.GlobalSearchResourceTypes() {
-		types = append(types, "`"+gr.Group+"/"+gr.Resource+"`")
-	}
-	return "Search resources of several types in a namespace: " + strings.Join(types, ", ") + ". " +
+//
+// It names the types this repository's apps opt in, so it reads the same in
+// every build. A type a distribution adds goes in a closing paragraph starting
+// with GlobalSearchDeploymentTypesPrefix, which the OSS OpenAPI snapshot drops.
+func globalSearchDescription(builtin, all []schema.GroupResource) string {
+	extra := slices.DeleteFunc(slices.Clone(all), func(gr schema.GroupResource) bool { return slices.Contains(builtin, gr) })
+	description := "Search resources of several types in a namespace: " + formatGroupResources(builtin) + ". " +
 		"Each result names its own group, resource and kind, and is authorized on its own. " +
 		"`folderPaths` gives the path of each folder the results are in, listing ancestors before descendants and ending with the containing folder. " +
 		"Like the folder API's parents, the nearest unreadable folder or folder missing from the global index appears first, by name only and marked `detached`. " +
@@ -186,6 +188,23 @@ func globalSearchDescription() string {
 		"A namespace's index is opened when it is first searched, and closed again after some hours without a search. " +
 		"The first search after that can wait a few seconds, or get 503 while the index is still being built; retry it shortly. " +
 		"It can also miss changes made while the index was closed, until the index catches up with storage."
+	if len(extra) > 0 {
+		description += "\n\n" + GlobalSearchDeploymentTypesPrefix + formatGroupResources(extra) + "."
+	}
+	return description
+}
+
+// GlobalSearchDeploymentTypesPrefix starts the paragraph of the global search
+// description that names the types a distribution adds to those of this
+// repository's apps.
+const GlobalSearchDeploymentTypesPrefix = "This deployment also searches: "
+
+func formatGroupResources(types []schema.GroupResource) string {
+	out := make([]string, 0, len(types))
+	for _, gr := range types {
+		out = append(out, "`"+gr.Group+"/"+gr.Resource+"`")
+	}
+	return strings.Join(out, ", ")
 }
 
 // globalSearchExample searches one folder and everything below it for

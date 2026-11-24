@@ -25,6 +25,9 @@ import { configureStore } from 'app/store/configureStore';
 import { LogsPanel } from './LogsPanel';
 import * as useDatasourcesFromTargetsModule from './useDatasourcesFromTargets';
 
+jest.mock('@grafana/ui', () => makeSpyable('@grafana/ui'));
+jest.mock('./useDatasourcesFromTargets', () => makeSpyable('./useDatasourcesFromTargets'));
+
 type LogsPanelProps = ComponentProps<typeof LogsPanel>;
 type LogLineContextProps = ComponentProps<typeof LogLineContext>;
 
@@ -32,6 +35,19 @@ const logLineContextMock = jest.fn().mockReturnValue(<div>LogLineContext</div>);
 jest.mock('app/features/logs/components/panel/LogLineContext', () => ({
   LogLineContext: (props: LogLineContextProps) => logLineContextMock(props),
 }));
+
+const logListMock = jest.fn();
+jest.mock('app/features/logs/components/panel/LogList', () => {
+  const actual = jest.requireActual('app/features/logs/components/panel/LogList');
+  const { createElement } = jest.requireActual('react');
+  return {
+    ...actual,
+    LogList: (props: ComponentProps<typeof actual.LogList>) => {
+      logListMock(props);
+      return createElement(actual.LogList, props);
+    },
+  };
+});
 
 const defaultDs = new MockDataSourceApi('default datasource', { data: ['default data'] });
 const noShowContextDs = new MockDataSourceApi('no-show-context');
@@ -198,6 +214,31 @@ describe('LogsPanel missing time field', () => {
     expect(await screen.findByText('No data')).toBeInTheDocument();
     expect(screen.queryByText('Data is missing a time field')).not.toBeInTheDocument();
   });
+});
+
+describe('Infinite scrolling from the top', () => {
+  afterEach(() => {
+    useFlagMock.mockImplementation((_: string, defaultValue: boolean) => ({ value: defaultValue }));
+  });
+
+  it.each([
+    { flag: true, enableInfiniteScrolling: true, expected: true },
+    { flag: false, enableInfiniteScrolling: true, expected: false },
+    { flag: true, enableInfiniteScrolling: false, expected: false },
+  ])(
+    'passes infiniteScrollTop=$expected when flag=$flag and enableInfiniteScrolling=$enableInfiniteScrolling',
+    async ({ flag, enableInfiniteScrolling, expected }) => {
+      useFlagMock.mockImplementation((key: string, defaultValue: boolean) => ({
+        value: key === 'grafana.logsInfiniteScrollTop' ? flag : defaultValue,
+      }));
+      logListMock.mockClear();
+
+      setup({ options: { ...defaultProps.options, enableInfiniteScrolling } });
+
+      await screen.findByText('logline text');
+      expect(logListMock).toHaveBeenLastCalledWith(expect.objectContaining({ infiniteScrollTop: expected }));
+    }
+  );
 });
 
 describe.each([false, true])('LogsPanel with controls = %s', (showControls: boolean) => {

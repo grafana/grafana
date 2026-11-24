@@ -17,6 +17,9 @@ WHERE org_user.org_id = {{ .Arg .OrgID }}
 {{ if .FilterByUserID -}}
   AND org_user.user_id = {{ .Arg .UserID }}
 {{ end -}}
+{{ if .UserUID -}}
+  AND u.uid = {{ .Arg .UserUID }}
+{{ end -}}
   AND u.is_service_account = FALSE
 {{ if .AccessUserIDs -}}
   AND org_user.user_id IN ({{ .ArgList .AccessUserIDs }})

@@ -4,7 +4,7 @@ import { createSelector } from 'reselect';
 
 import { STARRED_FOLDERS_UID } from 'app/features/search/constants';
 import { type DashboardViewItem } from 'app/features/search/types';
-import { useStarredSearch } from 'app/features/stars/hooks';
+import { useStarredDashboardsAndFolders } from 'app/features/stars/hooks';
 import { type StoreState, useDispatch, useSelector } from 'app/types/store';
 
 import { PAGE_SIZE } from '../api/constants';
@@ -53,10 +53,9 @@ const flatTreeSelector = createSelector(
  * land, which the tree shows like any folder whose first page is in flight.
  */
 function useStarredFoldersCollection(): DashboardViewItemCollection | undefined {
-  const { rows, error } = useStarredSearch();
+  const { rows, error } = useStarredDashboardsAndFolders();
   return useMemo(() => {
-    // A star set that can't be read (an anonymous user's 403s) has no rows coming, so the root shows empty rather
-    // than loading forever
+    // A star set that can't be read has no rows coming, so the root shows empty rather than loading forever
     if (!rows && !error) {
       return undefined;
     }
