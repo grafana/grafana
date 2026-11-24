@@ -16,7 +16,7 @@ export function Preview({ rawSql, datasourceType }: PreviewProps) {
   const styles = useStyles2(getStyles);
 
   const copyPreview = (rawSql: string) => {
-    copyTextToClipboard(rawSql).catch();
+    copyTextToClipboard(rawSql).catch(() => {});
     reportInteraction('grafana_sql_preview_copied', {
       datasource: datasourceType,
     });

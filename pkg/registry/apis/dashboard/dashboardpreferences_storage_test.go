@@ -446,15 +446,15 @@ func TestDashboardPreferencesStorageList(t *testing.T) {
 		return &metainternalversion.ListOptions{FieldSelector: fields.OneTermEqualSelector("metadata.name", name)}
 	}
 
-	u1 := dashboardPreferencesRequester(authlib.TypeUser, "u1", identity.RoleViewer)
-	u3 := dashboardPreferencesRequester(authlib.TypeUser, "u3", identity.RoleViewer)
-	serviceAccount := dashboardPreferencesRequester(authlib.TypeServiceAccount, "sa", identity.RoleAdmin)
-	serviceAccountU1 := dashboardPreferencesRequester(authlib.TypeServiceAccount, "u1", identity.RoleAdmin)
-	render := dashboardPreferencesRequester(authlib.TypeRenderService, "", identity.RoleViewer)
-	grafanaAdmin := dashboardPreferencesRequester(authlib.TypeUser, "u1", identity.RoleAdmin)
+	u1 := dashboardPreferencesRequester(authlib.TypeUser, "u1", authlib.RoleViewer)
+	u3 := dashboardPreferencesRequester(authlib.TypeUser, "u3", authlib.RoleViewer)
+	serviceAccount := dashboardPreferencesRequester(authlib.TypeServiceAccount, "sa", authlib.RoleAdmin)
+	serviceAccountU1 := dashboardPreferencesRequester(authlib.TypeServiceAccount, "u1", authlib.RoleAdmin)
+	render := dashboardPreferencesRequester(authlib.TypeRenderService, "", authlib.RoleViewer)
+	grafanaAdmin := dashboardPreferencesRequester(authlib.TypeUser, "u1", authlib.RoleAdmin)
 	grafanaAdmin.IsGrafanaAdmin = true
 	// Grafana admins pass the namespace authorizer for every namespace.
-	otherNamespace := dashboardPreferencesRequester(authlib.TypeUser, "u1", identity.RoleAdmin)
+	otherNamespace := dashboardPreferencesRequester(authlib.TypeUser, "u1", authlib.RoleAdmin)
 	otherNamespace.IsGrafanaAdmin = true
 	otherNamespace.Namespace = "stacks-2"
 

@@ -4,6 +4,7 @@ import { isAssistantAvailable } from '@grafana/assistant';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import {
+  buildOpenTemplateContextItem,
   buildTemplateContextData,
   buildTemplateContextTitle,
   isSuggestedDashboardAssistantEnabled,
@@ -14,6 +15,7 @@ import { createMockGnetDashboard, createMockPluginDashboard } from './test-utils
 jest.mock('@grafana/assistant', () => ({
   ...jest.requireActual('@grafana/assistant'),
   isAssistantAvailable: jest.fn(() => of(true)),
+  createAssistantContextItem: jest.fn((type: string, data: object) => ({ type, ...data })),
 }));
 
 describe('assistantHelpers', () => {
@@ -111,6 +113,21 @@ describe('assistantHelpers', () => {
       expect(buildTemplateContextData(withoutDescription, 'template_dashboard').instructions).not.toContain(
         'Description:'
       );
+    });
+  });
+
+  describe('buildOpenTemplateContextItem', () => {
+    it('attaches the open template by its bare name, under a key the template tools do not match', () => {
+      const item = buildOpenTemplateContextItem({ name: 'RED metrics', description: 'Rate, errors and duration' });
+
+      expect(item).toMatchObject({
+        type: 'structured',
+        hidden: false,
+        title: 'RED metrics',
+        data: { name: 'RED metrics', description: 'Rate, errors and duration' },
+      });
+      expect(item).not.toHaveProperty('data.templateName');
+      expect(item).toHaveProperty('data.instructions', expect.stringContaining('Adapt that dashboard in place'));
     });
   });
 });

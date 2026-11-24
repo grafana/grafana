@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"slices"
 	"strings"
+	gosync "sync"
 	"time"
 
 	"github.com/open-feature/go-sdk/openfeature"
@@ -182,11 +183,16 @@ type APIBuilder struct {
 	// [provisioning] bootstrap_path, empty when none is configured.
 	bootstrapConfig bootstrap.Config
 
-	// keysOnlyReList makes the connection informer's periodic re-list ask storage
-	// for keys instead of whole objects. Off by default: it changes what the
-	// informer feeds its Store, so it is validated per deployment before the
-	// default flips.
-	keysOnlyReList bool
+	// The informer metrics register once per process and are shared by the
+	// controllers started from the post-start hook and from Wire.
+	informerMetricsOnce     gosync.Once
+	relistProjectionMetrics *informer.RelistProjectionMetrics
+	freshnessMetrics        *informer.FreshnessMetrics
+
+	// loopbackConfig is the rest config the post-start hook resolved, set
+	// before loopbackReady is closed.
+	loopbackConfig *clientrest.Config
+	loopbackReady  chan struct{}
 }
 
 // NewAPIBuilder creates an API builder for the provisioning API.
@@ -271,9 +277,9 @@ func NewAPIBuilder(
 		parsers:                             parsers,
 		unified:                             unified,
 		access:                              accessChecker,
-		accessWithAdmin:                     accessChecker.WithFallbackRole(identity.RoleAdmin),
-		accessWithEditor:                    accessChecker.WithFallbackRole(identity.RoleEditor),
-		accessWithViewer:                    accessChecker.WithFallbackRole(identity.RoleViewer),
+		accessWithAdmin:                     accessChecker.WithFallbackRole(authlib.RoleAdmin),
+		accessWithEditor:                    accessChecker.WithFallbackRole(authlib.RoleEditor),
+		accessWithViewer:                    accessChecker.WithFallbackRole(authlib.RoleViewer),
 		jobHistoryConfig:                    jobHistoryConfig,
 		extraWorkers:                        extraWorkers,
 		restConfigGetter:                    restConfigGetter,
@@ -287,6 +293,7 @@ func NewAPIBuilder(
 		maxFileSize: maxFileSize,
 		// Request body cap for job creation. Non-positive (<=0) uses the default.
 		maxJobBodySize: maxJobBodySize,
+		loopbackReady:  make(chan struct{}),
 	}
 
 	b.setResourceLister(resources.NewResourceLister(unified, clients, supportedResourceProvider.Get()))
@@ -296,6 +303,41 @@ func NewAPIBuilder(
 	}
 
 	return b, nil
+}
+
+// resyncInterval is the informer resync interval used for health check and
+// reconciliation of the repository and connection controllers (the jobs
+// informer uses job_poll_interval). Configurable via [provisioning]
+// resync_interval; <=0 falls back to the default.
+func (b *APIBuilder) resyncInterval() time.Duration {
+	if b.controllerResyncInterval <= 0 {
+		return setting.ProvisioningControllerResyncIntervalDefault
+	}
+	return b.controllerResyncInterval
+}
+
+func (b *APIBuilder) publishLoopbackConfig(config *clientrest.Config) {
+	b.loopbackConfig = config
+	close(b.loopbackReady)
+}
+
+// awaitLoopbackConfig blocks until the post-start hook has run, which is when
+// the provisioning API is served, and returns the rest config it resolved.
+func (b *APIBuilder) awaitLoopbackConfig(ctx context.Context) (*clientrest.Config, error) {
+	select {
+	case <-b.loopbackReady:
+		return b.loopbackConfig, nil
+	case <-ctx.Done():
+		return nil, context.Cause(ctx)
+	}
+}
+
+func (b *APIBuilder) informerMetrics() (*informer.RelistProjectionMetrics, *informer.FreshnessMetrics) {
+	b.informerMetricsOnce.Do(func() {
+		b.relistProjectionMetrics = informer.NewRelistProjectionMetrics(b.registry)
+		b.freshnessMetrics = informer.NewFreshnessMetrics(b.registry)
+	})
+	return b.relistProjectionMetrics, b.freshnessMetrics
 }
 
 func (b *APIBuilder) SetRepoValidatorOptions(opts ...repository.ValidatorOption) {
@@ -425,7 +467,6 @@ func RegisterAPIService(
 		return nil, fmt.Errorf("invalid allowed_git_urls configuration: %w", err)
 	}
 	urlValidator := repository.NewURLValidator(allowlist, net.DefaultResolver.LookupIPAddr)
-	keysOnlyReList := provisioningSec.Key("keys_only_relist").MustBool(false)
 	repoValidatorOpts := []repository.ValidatorOption{repository.WithURLValidator(urlValidator)}
 
 	// Register v0alpha1 (preferred version)
@@ -476,7 +517,6 @@ func RegisterAPIService(
 	builder.jobPollInterval = cfg.ProvisioningJobPollInterval
 	builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
 	builder.natsSubscriber = natsSubscriber
-	builder.keysOnlyReList = keysOnlyReList
 	// Only the preferred version registers the bootstrap repository: it is the one that runs
 	// the post-start hook's controllers, and two of them would race on the same object.
 	builder.bootstrapConfig = bootstrapConfig
@@ -530,7 +570,6 @@ func RegisterAPIService(
 	}
 	v1beta1Builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
 	v1beta1Builder.natsSubscriber = natsSubscriber
-	v1beta1Builder.keysOnlyReList = keysOnlyReList
 	apiregistration.RegisterAPI(v1beta1Builder)
 
 	// Return the preferred (v0alpha1) builder since it runs controllers/workers
@@ -1123,6 +1162,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			b.client = c.ProvisioningV0alpha1()
+			b.publishLoopbackConfig(config)
 
 			// Initialize the API client-based job store
 			b.jobs, err = jobs.NewJobStore(b.client, jobClaimExpiry, b.registry)
@@ -1151,14 +1191,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				return nil
 			}
 
-			// Informer resync interval used for health check and reconciliation of
-			// the repository and connection controllers (the jobs informer uses
-			// job_poll_interval, below). Configurable via [provisioning]
-			// resync_interval; <=0 falls back to the default.
-			informerFactoryResyncInterval := b.controllerResyncInterval
-			if informerFactoryResyncInterval <= 0 {
-				informerFactoryResyncInterval = setting.ProvisioningControllerResyncIntervalDefault
-			}
+			informerFactoryResyncInterval := b.resyncInterval()
 			if nats.Enabled(b.natsSubscriber) {
 				logging.DefaultLogger.Info("provisioning controllers using NATS-backed informer")
 			}
@@ -1317,17 +1350,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				webhookSecretRotationInterval = 30 * 24 * time.Hour
 			}
 
-			// One per process; see RelistProjectionMetrics.
-			relistProjectionMetrics := informer.NewRelistProjectionMetrics(b.registry)
-			// Likewise one per process; see FreshnessMetrics.
-			freshnessMetrics := informer.NewFreshnessMetrics(b.registry)
+			relistProjectionMetrics, freshnessMetrics := b.informerMetrics()
 
 			// The repository delta source and the getter it backs.
-			var repoKeys keysapi.Lister
-			if b.keysOnlyReList {
-				repoKeys = keysapi.NewGRPCLister(b.unified, provisioning.RepositoryResourceInfo.GroupVersionResource())
-				logging.FromContext(postStartHookCtx.Context).Info("provisioning re-list will ask for keys only", "transport", "storage", "resource", provisioning.RepositoryResourceInfo.GroupVersionResource().Resource)
-			}
+			repoKeys := keysapi.NewGRPCLister(b.unified, provisioning.RepositoryResourceInfo.GroupVersionResource())
 			repoSource, reconcileRepoGetter := informer.NewRepositoryDeltaSource(b.natsSubscriber, c, repoKeys, informerFactoryResyncInterval, relistProjectionMetrics, freshnessMetrics)
 			repoController := controller.NewRepositoryController(
 				b.GetClient(),
@@ -1366,65 +1392,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				}
 				repoController.Run(postStartHookCtx.Context, repoControllerWorkers, func() {}, func() {})
 			}()
-
-			// Create and run connection controller
-			connStatusPatcher := appcontroller.NewConnectionStatusPatcher(b.GetClient())
-			connTester := connection.NewSimpleConnectionTester(b.connectionFactory)
-			connHealthChecker := controller.NewConnectionHealthChecker(connTester, healthMetricsRecorder)
-			// nil keeps the full-object re-list; see NewConnectionDeltaSource.
-			var connKeys keysapi.Lister
-			if b.keysOnlyReList {
-				connKeys = keysapi.NewGRPCLister(b.unified, provisioning.ConnectionResourceInfo.GroupVersionResource())
-				logging.FromContext(postStartHookCtx.Context).Info("provisioning re-list will ask for keys only", "transport", "storage", "resource", provisioning.ConnectionResourceInfo.GroupVersionResource().Resource)
-			}
-			connSource, connGetter := informer.NewConnectionDeltaSource(b.natsSubscriber, c, connKeys, informerFactoryResyncInterval, relistProjectionMetrics, freshnessMetrics)
-			connController := controller.NewConnectionController(
-				connGetter,
-				connStatusPatcher,
-				connHealthChecker,
-				b.connectionFactory,
-				informerFactoryResyncInterval,
-				30*time.Second,
-				b.registry,
-				b.tracer,
-				nats.Enabled(b.natsSubscriber),
-			)
-			connReg, err := connSource.AddEventHandler(connController.EventHandler())
-			if err != nil {
-				return fmt.Errorf("add connection controller event handler: %w", err)
-			}
-			go connSource.Run(postStartHookCtx.Done())
-
-			// Same as the repository controller above: wait for cache sync off
-			// the hot path so apiserver startup isn't blocked.
-			go func() {
-				if !cache.WaitForCacheSync(postStartHookCtx.Done(), connReg.HasSynced) {
-					return
-				}
-				connController.Run(postStartHookCtx.Context, repoControllerWorkers, func() {}, func() {})
-			}()
-
-			// If Loki not used, initialize the API client-based history writer and start the controller for history jobs
-			if b.jobHistoryLoki == nil {
-				// Periodically clean up expired historic jobs. Cleanup is age-based and
-				// needs no live events: with NATS off the source is an apiserver
-				// informer (watch-fed cache replayed on resync), with NATS on it is a
-				// cron-style periodic re-list. Configurable via [provisioning]
-				// history_expiration; <=0 falls back to the default.
-				historyJobExpiration := b.historyExpiration
-				if historyJobExpiration <= 0 {
-					historyJobExpiration = setting.ProvisioningHistoryExpirationDefault
-				}
-				historyJobController := appcontroller.NewHistoryJobController(
-					b.GetClient(),
-					historyJobExpiration,
-				)
-				historySource := informer.NewHistoricJobDeltaSource(nats.Enabled(b.natsSubscriber), c, historyJobExpiration)
-				if _, err := historySource.AddEventHandler(historyJobController.EventHandler()); err != nil {
-					return fmt.Errorf("add history job controller event handler: %w", err)
-				}
-				go historySource.Run(postStartHookCtx.Done())
-			}
 
 			return nil
 		},

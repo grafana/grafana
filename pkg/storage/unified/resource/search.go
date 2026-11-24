@@ -2739,6 +2739,9 @@ func (s *searchServer) buildWithOptions(ctx context.Context, nsr NamespacedResou
 		if err != nil {
 			return 0, 0, err
 		}
+		if err := ctx.Err(); err != nil {
+			return 0, 0, err
+		}
 
 		// Update timestamp of calling the given `sinceRV` to be used the next
 		// time this function is called.
