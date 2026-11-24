@@ -153,6 +153,8 @@ func (d *Dispatcher) onConnect(client *centrifuge.Client) {
 			"user", client.UserID(), "client", client.ID(), "limit", d.opts.MaxConnections,
 		)
 		connectSpan.AddEvent("disconnect", trace.WithAttributes(attribute.String("reason", "connection limit reached")))
+		// The disconnect handler below is not registered yet, so report this one here.
+		d.observeDisconnect(centrifuge.DisconnectConnectionLimit.Code)
 		client.Disconnect(centrifuge.DisconnectConnectionLimit)
 		return
 	}
