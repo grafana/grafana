@@ -2334,7 +2334,7 @@ This section configures where Grafana Alerting writes alert state history. Refer
 
 #### `enabled `
 
-Enables recording alert state history. Default is `false`.
+Enables recording alert state history. Default is `true`.
 
 #### `backend `
 
