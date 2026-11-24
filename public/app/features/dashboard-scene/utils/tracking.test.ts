@@ -365,14 +365,59 @@ describe('dashboard tracking', () => {
       trackDashboardSceneLoaded(scene, 42);
       await trackDashboardSceneCreatedOrSaved(false, scene, { name: 'name', url: 'url', diff_count: 0 });
 
-      for (const trigger of ['load', 'save']) {
-        expect(reportInteraction).toHaveBeenCalledWith('dashboards_panel_option_variable_usage', {
-          ...counts,
-          trigger,
-          dashboard_uid: 'dashboard-test',
-          isDynamicDashboard: true,
-        });
-      }
+      expect(reportInteraction).toHaveBeenCalledWith('dashboards_panel_option_variable_usage', {
+        ...counts,
+        trigger: 'load',
+        dashboard_uid: 'dashboard-test',
+        isDynamicDashboard: true,
+      });
+      expect(reportInteraction).toHaveBeenCalledWith('dashboards_panel_option_variable_usage', {
+        ...counts,
+        options: 'mappings:1,min:1,thresholds:1,unit:1',
+        trigger: 'save',
+        dashboard_uid: 'dashboard-test',
+        isDynamicDashboard: true,
+      });
+    });
+
+    it('adds the options used, with how many panels use each, to the save event', async () => {
+      const thresholds = { mode: 'absolute', steps: [{ value: 0, color: 'red', valueExpr: '$t' }] };
+      const scene = buildSceneWithTextPanels(
+        [{}, {}, {}, {}, {}],
+        [
+          {
+            defaults: { varMappings: { min: '$min', 'custom.fillOpacity': '$o' } },
+            overrides: [
+              { matcher: { id: 'byName', options: 'A' }, properties: [{ id: 'varMappings.min', value: '$m' }] },
+            ],
+          },
+          { defaults: { varMappings: { min: '$min' } }, overrides: [] },
+          {
+            defaults: {},
+            overrides: [
+              { matcher: { id: 'byName', options: 'A' }, properties: [{ id: 'thresholds', value: thresholds }] },
+            ],
+          },
+          {
+            defaults: { mappings: [{ type: MappingType.ValueToText, options: { 1: { text: 'Host ${host}' } } }] },
+            overrides: [],
+          },
+          { defaults: { min: 0 }, overrides: [] },
+        ]
+      );
+
+      await trackDashboardSceneCreatedOrSaved(false, scene, { name: 'name', url: 'url', diff_count: 0 });
+
+      expect(reportInteraction).toHaveBeenCalledWith('dashboards_panel_option_variable_usage', {
+        panel_count: 4,
+        field_config_count: 2,
+        threshold_count: 1,
+        value_mapping_count: 1,
+        options: 'custom.fillOpacity:1,mappings:1,min:2,thresholds:1',
+        trigger: 'save',
+        dashboard_uid: 'dashboard-test',
+        isDynamicDashboard: true,
+      });
     });
 
     it.each([

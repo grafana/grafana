@@ -521,6 +521,8 @@ export const DashboardInteractions = {
     field_config_count: number;
     threshold_count: number;
     value_mapping_count: number;
+    // Saves only: the option ids set from variables with how many panels set each, as `min:2,unit:1`
+    options?: string;
     dashboard_uid?: string;
   }) => {
     reportDashboardInteraction('panel_option_variable_usage', properties);
