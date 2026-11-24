@@ -1534,6 +1534,9 @@
         "alert-rules_other": "{{formatted}} 警报规则",
         "recording-rules_other": "{{formatted}} 录制规则"
       },
+      "saved-searches": {
+        "applied-default": ""
+      },
       "search": {
         "default-policy-unavailable": "按默认策略筛选的功能尚不可用。",
         "folders-disabled": "清除筛选条件以按文件夹浏览",
@@ -3003,12 +3006,12 @@
       },
       "empty": "",
       "error": "",
-      "load-more": "",
       "restore": {
         "body": "",
         "confirm": "",
         "conflict": "",
         "error": "",
+        "recording-title": "",
         "restoring": "",
         "title": ""
       },
@@ -3163,10 +3166,6 @@
         "group-name": "评估组名称",
         "group-text": "系统每隔 {{evaluateEvery}} 会对所选组中的所有规则进行评估。",
         "interval-label": "评估间隔",
-        "mode": {
-          "legacy": "使用组（旧版）",
-          "new": "设置间隔"
-        },
         "new-group": "新的评估组",
         "pause": {
           "alerting": "开启以暂停此提醒规则的评估。",
@@ -6690,6 +6689,9 @@
           "description": "点击或拖动以粘贴面板",
           "title": "粘贴面板"
         },
+        "question": {
+          "label": ""
+        },
         "row": {
           "add-label": "添加行",
           "group-label": "分组成行"
@@ -6813,6 +6815,7 @@
         "objects": "对象",
         "panel": "面板",
         "panels": "面板",
+        "question": "",
         "row": "行",
         "rows": "行",
         "section-filters-set": "筛选条件",
@@ -6862,6 +6865,34 @@
           "empty": "（空）",
           "no-title": "< 无标题 >"
         }
+      },
+      "questions": {
+        "add-question": "",
+        "description-dashboard": "",
+        "description-row": "",
+        "description-tab": "",
+        "new-question": "",
+        "placeholder": "",
+        "question": "",
+        "question-title": "",
+        "question-title-description": "",
+        "question-title-placeholder": "",
+        "sources": {
+          "collapse": "",
+          "description-dashboard": "",
+          "description-row": "",
+          "description-tab": "",
+          "entire-dashboard": "",
+          "expand": "",
+          "label": "",
+          "no-panels": "",
+          "unavailable-panel": "",
+          "untitled-row": "",
+          "untitled-tab": "",
+          "panel-count_other": "",
+          "picked-count_other": ""
+        },
+        "title": ""
       },
       "row": {
         "header": {
@@ -7123,6 +7154,8 @@
     },
     "transformation-operation-row": {
       "body-delete": "请注意，移除一个转换可能会破坏其他转换。如果只有一个转换，您将返回主选择屏幕。",
+      "expander-close": "",
+      "expander-open": "",
       "render-actions": {
         "confirmText-delete": "删除",
         "title-debug": "调试",
@@ -8090,6 +8123,20 @@
       },
       "selection-options": "选择内容选项",
       "static-options-legend": "静态选项"
+    },
+    "question-actions": {
+      "add": "",
+      "remove": "",
+      "reorder": "",
+      "update": ""
+    },
+    "question-edit": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
+    "question-edit-actions": {
+      "tooltip-question-settings": ""
     },
     "refresh-select": {
       "options": {
@@ -14093,32 +14140,6 @@
     },
     "units": {
       "clear-tooltip": "清除单位选择"
-    },
-    "var-mapping-checks": {
-      "data-macro": "",
-      "not-allowed": "",
-      "not-found": "",
-      "not-number": "",
-      "not-one-value": "",
-      "out-of-range": "",
-      "resolves": "",
-      "values": ""
-    },
-    "var-mapping-toggle": {
-      "aria-label-picker": "",
-      "fallback-off": "",
-      "fallback-on": "",
-      "group-matching": "",
-      "group-other": "",
-      "hint-boolean": "",
-      "hint-number": "",
-      "hint-option": "",
-      "hint-option-no-fallback": "",
-      "new-variable": "",
-      "option-current": "",
-      "placeholder": "",
-      "use-fixed-value": "",
-      "use-variable": ""
     }
   },
   "org": {
@@ -14215,7 +14236,8 @@
     },
     "get-panel-links-variable-suggestions": {
       "label": {
-        "all-variables": "所有变量"
+        "all-variables": "所有变量",
+        "current-dashboard-tabs": ""
       }
     },
     "header-menu": {
@@ -15123,7 +15145,6 @@
     "finish-step": {
       "description-enable-previews": "在拉取请求中添加数据面板更改的图像预览。Grafana 数据面板的图像将在 Git 存储库中共享，并对具有存储库访问权限的任何人可见。",
       "description-image-rendering": "需要图像渲染。<2>设置图像渲染</2>",
-      "description-read-only": "无法通过 Grafana 修改资源。",
       "description-sync-interval": "从存储库同步更改的频率",
       "error-sync-interval-required": "同步间隔为必填项",
       "label-enable-previews": "在拉取请求中启用数据面板预览",
@@ -15885,6 +15906,17 @@
       "button-submitting": "正在提交...",
       "error-instance-repository-exists": "实例存储库已存在",
       "error-save-repository-setting": "保存存储库设置失败"
+    },
+    "workflow": {
+      "direct-push": "",
+      "direct-push-description": "",
+      "direct-push-description-no-branch": "",
+      "merge-request": "",
+      "merge-request-description": "",
+      "merge-request-description-no-branch": "",
+      "pull-request": "",
+      "pull-request-description": "",
+      "pull-request-description-no-branch": ""
     }
   },
   "public-dashboard": {
