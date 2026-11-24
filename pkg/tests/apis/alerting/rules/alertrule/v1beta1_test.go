@@ -102,9 +102,6 @@ func TestIntegrationRuleUpdatePreconditions(t *testing.T) {
 							require.NoError(t, err)
 							name := field(t, created, "metadata", "name").(string)
 							t.Cleanup(func() { _ = client.delete(ctx, resource, name) })
-							if mode == grafanarest.Mode2 {
-								readUnified(t, helper, resource, name)
-							}
 
 							baseline, err := client.get(ctx, resource, name)
 							require.NoError(t, err)
