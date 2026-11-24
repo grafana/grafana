@@ -348,6 +348,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/accesscontrol/api"
 	_ "github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	_ "github.com/grafana/grafana/pkg/services/accesscontrol/dualwrite"
+	_ "github.com/grafana/grafana/pkg/services/accesscontrol/manifestroles"
 	_ "github.com/grafana/grafana/pkg/services/accesscontrol/migrator"
 	_ "github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	_ "github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
