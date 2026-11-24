@@ -10,7 +10,7 @@ import {
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { evaluateAccess } from './routePermissions';
+import { allowIf, evaluateAccess } from './routePermissions';
 import { canImportRulesToGMA } from './unified/components/import-to-gma/useCanImportToGMA';
 import {
   isImportWizardEnabled,
@@ -319,7 +319,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     },
     {
       path: '/alerting/import-datasource-managed-rules',
-      roles: () => (canImportRulesToGMA() ? [] : ['Reject']),
+      roles: allowIf(canImportRulesToGMA),
       // Admins get the full wizard in Settings > Import; everyone else, who can't open Settings, gets rules only.
       component: migrationWizardEnabled
         ? ImportRulesRoute
