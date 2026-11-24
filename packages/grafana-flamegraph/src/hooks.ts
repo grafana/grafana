@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { type FlameGraphDataContainer } from './FlameGraph/dataTransform';
-import { ColorScheme, ColorSchemeDiff } from './types';
+import { ColorScheme, ColorSchemeDiff, DataSourceType } from './types';
 
 /**
  * Manages the color scheme state, resetting it when the data changes between
@@ -17,5 +17,10 @@ export function useColorScheme(dataContainer: FlameGraphDataContainer | undefine
     setColorScheme(defaultColorScheme);
   }
 
-  return [colorScheme, setColorScheme] as const;
+  // kernel/user space scheme is only offered for Pyroscope data, so never apply it to anything else.
+  const isSpaceSchemeAvailable = dataContainer?.getDataSource() === DataSourceType.PprofPyroscope;
+  const effectiveColorScheme =
+    colorScheme === ColorScheme.SpaceBased && !isSpaceSchemeAvailable ? defaultColorScheme : colorScheme;
+
+  return [effectiveColorScheme, setColorScheme] as const;
 }
