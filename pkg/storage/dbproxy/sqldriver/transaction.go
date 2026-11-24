@@ -28,7 +28,14 @@ func (r execResult) RowsAffected() (int64, error) { return r.affected, nil }
 func (r execResult) LastInsertId() (int64, error) { return r.id, nil }
 
 func standaloneExecError(err error) error {
-	if errors.Is(err, client.ErrNotSent) || status.Code(err) == codes.Unimplemented || definiteRejection(err) {
+	if errors.Is(err, client.ErrNotSent) {
+		return fmt.Errorf("proxy exec: %w", err)
+	}
+	if errors.Is(err, driver.ErrBadConn) {
+		// database/sql retries ErrBadConn. After dispatch, the write may have run.
+		return fmt.Errorf("proxy exec: %w: %v", ErrOutcomeUnknown, err)
+	}
+	if status.Code(err) == codes.Unimplemented || definiteRejection(err) {
 		return fmt.Errorf("proxy exec: %w", err)
 	}
 	return fmt.Errorf("proxy exec: %w: %w", ErrOutcomeUnknown, err)
@@ -104,7 +111,7 @@ func (c *conn) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.Tx, e
 		tx.abort()
 		return nil, fmt.Errorf("proxy begin: %w", err)
 	}
-	reply, err := stream.Recv()
+	reply, err := tx.receive()
 	if err != nil {
 		tx.abort()
 		return nil, fmt.Errorf("proxy begin: %w", err)
@@ -180,11 +187,12 @@ func (t *transaction) send(ctx context.Context, request *dbproxyv1.TransactionRe
 		}
 		request.Timeout = durationpb.New(remaining)
 	}
-	if err := t.stream.Send(request); err != nil {
+	stop := t.armIOTimeout()
+	if err := stop(t.stream.Send(request)); err != nil {
 		if errors.Is(err, io.EOF) {
 			// gRPC can report a terminated stream as EOF from Send while the
 			// server's actual status and details are still waiting in Recv.
-			if _, finalErr := t.stream.Recv(); finalErr != nil && !errors.Is(finalErr, io.EOF) {
+			if _, finalErr := t.receive(); finalErr != nil && !errors.Is(finalErr, io.EOF) {
 				return finalErr
 			}
 			return errors.New("proxy transaction: stream ended while sending command")
@@ -193,8 +201,30 @@ func (t *transaction) send(ctx context.Context, request *dbproxyv1.TransactionRe
 	}
 	return nil
 }
-func (t *transaction) recv() (*dbproxyv1.TransactionResponse, error) {
+
+const transactionIOTimeout = 30 * time.Second
+
+func (t *transaction) armIOTimeout() func(error) error {
+	// Rollback cannot reach the driver while database/sql holds the connection
+	// lock for a blocked Send or Recv, so bound each stream operation itself.
+	timer := time.AfterFunc(transactionIOTimeout, t.abort)
+	return func(err error) error {
+		if timer.Stop() {
+			return err
+		}
+		t.abort()
+		return fmt.Errorf("transaction stream I/O: %w", context.DeadlineExceeded)
+	}
+}
+
+func (t *transaction) receive() (*dbproxyv1.TransactionResponse, error) {
+	stop := t.armIOTimeout()
 	reply, err := t.stream.Recv()
+	return reply, stop(err)
+}
+
+func (t *transaction) recv() (*dbproxyv1.TransactionResponse, error) {
+	reply, err := t.receive()
 	if err != nil {
 		t.abort()
 		if errors.Is(err, io.EOF) {
@@ -224,16 +254,17 @@ func (t *transaction) exec(ctx context.Context, identity queryIdentity, query st
 	}
 	if err := t.send(ctx, &dbproxyv1.TransactionRequest{Command: &dbproxyv1.TransactionRequest_Exec{Exec: &dbproxyv1.Statement{QueryName: identity.name, Sql: query, Parameters: params}}}); err != nil {
 		t.abort()
-		done()
+		if !done() {
+			err = ctx.Err()
+		}
 		return nil, fmt.Errorf("proxy transaction exec: %w", err)
 	}
 	reply, err := t.recv()
-	completed := done()
+	if !done() {
+		return nil, fmt.Errorf("proxy transaction exec: %w", ctx.Err())
+	}
 	if err != nil {
 		return nil, err
-	}
-	if !completed {
-		return nil, fmt.Errorf("proxy transaction exec: %w", ctx.Err())
 	}
 	switch result := reply.Result.(type) {
 	case *dbproxyv1.TransactionResponse_Exec:
@@ -262,17 +293,23 @@ func (t *transaction) query(ctx context.Context, identity queryIdentity, query s
 		return nil, err
 	}
 	if err := t.send(ctx, &dbproxyv1.TransactionRequest{Command: &dbproxyv1.TransactionRequest_Query{Query: &dbproxyv1.Statement{QueryName: identity.name, Sql: query, Parameters: params}}}); err != nil {
-		done()
 		t.abort()
+		if !done() {
+			err = ctx.Err()
+		}
 		return nil, fmt.Errorf("proxy transaction query: %w", err)
 	}
 	reply, err := t.recv()
 	if err != nil {
-		done()
+		if !done() {
+			return nil, fmt.Errorf("proxy transaction query: %w", ctx.Err())
+		}
 		return nil, err
 	}
 	if result, ok := reply.Result.(*dbproxyv1.TransactionResponse_Error); ok {
-		done()
+		if !done() {
+			return nil, fmt.Errorf("proxy transaction query: %w", ctx.Err())
+		}
 		if result.Error == nil {
 			t.abort()
 			return nil, errors.New("proxy transaction query: missing error")
@@ -398,7 +435,7 @@ func (r *transactionRows) next(dest []driver.Value) error {
 	}
 	err := r.rows.Next(dest)
 	// Next runs the cleanup callback before reporting the terminal frame.
-	if errors.Is(err, io.EOF) && r.completionErr != nil {
+	if err != nil && r.completionErr != nil {
 		return r.completionErr
 	}
 	return err

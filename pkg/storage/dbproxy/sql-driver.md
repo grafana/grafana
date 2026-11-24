@@ -83,6 +83,7 @@ Provide `WithQuery` on each execution context, even when you prepared the statem
 Use `BeginTx` with a concrete stack namespace and the default isolation level.
 You can request `ReadOnly` through `sql.TxOptions`.
 The Begin context owns the transaction lifetime, and each statement context supplies its own query name and deadline.
+The driver also limits each transaction stream send and receive to 30 seconds. If one stalls, the driver cancels the stream and aborts the transaction, even if no caller deadline was set.
 All statements in a transaction must use the same namespace.
 
 For example, run one write and commit it:

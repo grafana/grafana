@@ -11,6 +11,8 @@ import (
 	dbproxyv1 "github.com/grafana/grafana/pkg/storage/dbproxy/api/dbproxy/v1"
 	"github.com/grafana/grafana/pkg/storage/dbproxy/sqldriver"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -199,6 +201,78 @@ func TestTransactionRowsDeadlineAtCompletion(t *testing.T) {
 	}
 }
 
+func TestTransactionStatementReceiveDeadline(t *testing.T) {
+	for _, operation := range []string{"exec", "query"} {
+		t.Run(operation, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				stream := &stalledTransactionStream{responses: []*dbproxyv1.TransactionResponse{
+					{Result: &dbproxyv1.TransactionResponse_Ok{Ok: &emptypb.Empty{}}},
+				}}
+				ctx := sqldriver.WithQuery(t.Context(), "stacks-1", "statement.deadline")
+				tx := beginFakeTransaction(t, ctx, stream)
+				stmtCtx, cancel := context.WithTimeout(ctx, time.Second)
+				defer cancel()
+
+				var err error
+				if operation == "exec" {
+					_, err = tx.ExecContext(stmtCtx, "UPDATE t SET n=1")
+				} else {
+					_, err = tx.QueryContext(stmtCtx, "SELECT n")
+				}
+				if !errors.Is(err, context.DeadlineExceeded) {
+					t.Fatalf("%s error = %v, want statement deadline exceeded", operation, err)
+				}
+			})
+		})
+	}
+}
+
+func TestTransactionRollbackWhileNextIsBlocked(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		stream := &stalledTransactionStream{responses: []*dbproxyv1.TransactionResponse{
+			{Result: &dbproxyv1.TransactionResponse_Ok{Ok: &emptypb.Empty{}}},
+			{Result: &dbproxyv1.TransactionResponse_Query{Query: &dbproxyv1.QueryResponse{
+				Columns: []*dbproxyv1.Column{{Name: "n", ValueType: dbproxyv1.ValueType_VALUE_TYPE_INT64}},
+			}}},
+		}}
+		ctx := sqldriver.WithQuery(t.Context(), "stacks-1", "read.stalled")
+		tx := beginFakeTransaction(t, ctx, stream)
+		rows, err := tx.QueryContext(ctx, "SELECT n")
+		if err != nil {
+			t.Fatal(err)
+		}
+		next := make(chan bool, 1)
+		go func() { next <- rows.Next() }()
+		synctest.Wait() // Next is blocked in Recv before rollback starts.
+
+		if err := tx.Rollback(); err == nil {
+			t.Fatal("rollback succeeded without acknowledgement")
+		}
+		if <-next || !errors.Is(rows.Err(), context.DeadlineExceeded) {
+			t.Fatalf("rows error = %v, want I/O deadline exceeded", rows.Err())
+		}
+		if stream.ctx.Err() == nil || len(stream.requests) != 2 {
+			t.Fatalf("expected stream cancellation without sending rollback, got %v, %v", stream.ctx.Err(), stream.requests)
+		}
+	})
+}
+
+func beginFakeTransaction(t *testing.T, ctx context.Context, stream *stalledTransactionStream) *sql.Tx {
+	t.Helper()
+	connector, err := sqldriver.New(stalledTransactionClient{stream: stream}).OpenConnector("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	pool := sql.OpenDB(connector)
+	t.Cleanup(func() { _ = pool.Close() })
+	tx, err := pool.BeginTx(ctx, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = tx.Rollback() })
+	return tx
+}
+
 type stalledTransactionClient struct {
 	dbproxyv1.DatabaseProxyServiceClient
 	stream *stalledTransactionStream
@@ -225,7 +299,7 @@ func (s *stalledTransactionStream) Send(req *dbproxyv1.TransactionRequest) error
 func (s *stalledTransactionStream) Recv() (*dbproxyv1.TransactionResponse, error) {
 	if len(s.responses) == 0 {
 		<-s.ctx.Done()
-		return nil, s.ctx.Err()
+		return nil, status.Error(codes.Canceled, s.ctx.Err().Error())
 	}
 	resp := s.responses[0]
 	s.responses = s.responses[1:]

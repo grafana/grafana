@@ -3,8 +3,12 @@ package sqldriver_test
 import (
 	"context"
 	"database/sql"
+	"database/sql/driver"
 	"errors"
+	"fmt"
 	"io"
+	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -200,6 +204,35 @@ func TestLostStandaloneExecReplyHasUnknownOutcome(t *testing.T) {
 	}
 	if calls != 1 {
 		t.Fatalf("write replayed %d times", calls)
+	}
+}
+
+type lostExecReplyClient struct {
+	dbproxyv1.DatabaseProxyServiceClient
+}
+
+func (c lostExecReplyClient) Exec(ctx context.Context, req *dbproxyv1.ExecRequest, opts ...grpc.CallOption) (*dbproxyv1.ExecResponse, error) {
+	if _, err := c.DatabaseProxyServiceClient.Exec(ctx, req, opts...); err != nil {
+		return nil, err
+	}
+	return nil, fmt.Errorf("lost write reply: %w", driver.ErrBadConn)
+}
+
+func TestStandaloneExecDoesNotRetryDispatchedBadConn(t *testing.T) {
+	var calls atomic.Int32
+	pool := openServerPoolWithClient(t, &queryServer{exec: func(context.Context, *dbproxyv1.ExecRequest) (*dbproxyv1.ExecResponse, error) {
+		calls.Add(1)
+		return &dbproxyv1.ExecResponse{RowsAffected: 1}, nil
+	}}, func(client dbproxyv1.DatabaseProxyServiceClient) dbproxyv1.DatabaseProxyServiceClient {
+		return lostExecReplyClient{DatabaseProxyServiceClient: client}
+	})
+	ctx := sqldriver.WithQuery(t.Context(), "stacks-1", "write.reply_lost")
+	_, err := pool.ExecContext(ctx, "UPDATE t SET n=1")
+	if got := calls.Load(); got != 1 {
+		t.Errorf("server executions = %d, want 1", got)
+	}
+	if !errors.Is(err, sqldriver.ErrOutcomeUnknown) || errors.Is(err, driver.ErrBadConn) || !strings.Contains(err.Error(), "lost write reply") {
+		t.Errorf("exec error = %v, want unknown outcome without retry sentinel", err)
 	}
 }
 
