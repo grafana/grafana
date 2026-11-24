@@ -37,6 +37,7 @@ import { grantPermissionsHelper } from '../../test/test-utils';
 import { setupDataSources } from '../../testSetup/datasources';
 import { Annotation } from '../../utils/constants';
 import { DataSourceType } from '../../utils/datasource';
+import { isAdmin } from '../../utils/environment';
 import { GRAFANA_ORIGIN_LABEL } from '../../utils/labels';
 import * as ruleId from '../../utils/rule-id';
 import { stringifyIdentifier } from '../../utils/rule-id';
@@ -48,6 +49,11 @@ import { addRulePageEnrichmentSection } from './tabs/extensions/RuleViewerExtens
 
 jest.mock('@grafana/assistant', () => ({
   useAssistant: () => ({ isAvailable: false, openAssistant: jest.fn() }),
+}));
+
+jest.mock('../../utils/environment', () => ({
+  ...jest.requireActual('../../utils/environment'),
+  isAdmin: jest.fn(),
 }));
 
 // metadata and interactive elements
@@ -116,6 +122,7 @@ afterEach(() => {
 });
 
 beforeEach(() => {
+  jest.mocked(isAdmin).mockReset().mockImplementation(jest.requireActual('../../utils/environment').isAdmin);
   grantPermissionsHelper([
     AccessControlAction.AlertingRuleCreate,
     AccessControlAction.AlertingRuleRead,
@@ -742,7 +749,7 @@ describe('RuleViewer', () => {
 
     it('should show enrichment tab for admin users', async () => {
       grantPermissionsHelper([AccessControlAction.AlertingRuleRead]);
-      jest.spyOn(require('../../utils/misc'), 'isAdmin').mockReturnValue(true);
+      jest.mocked(isAdmin).mockReturnValue(true);
 
       await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.Query);
 

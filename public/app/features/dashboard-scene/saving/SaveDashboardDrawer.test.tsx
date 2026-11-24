@@ -34,7 +34,7 @@ import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSce
 import { createDeferred } from '../utils/test-utils';
 
 import { type SaveDashboardDrawer } from './SaveDashboardDrawer';
-import * as createDetectChangesWorker from './createDetectChangesWorker';
+import { createWorker } from './createDetectChangesWorker';
 import {
   registerSaveAsTemplateForm,
   type SaveAsTemplateFormProps,
@@ -44,6 +44,17 @@ import {
   type SaveDashboardTemplateFormProps,
 } from './enterprise-components/SaveDashboardTemplateFormExtension';
 import { type DashboardChangesRequest, type DashboardChangesResponse } from './shared';
+
+jest.mock('./createDetectChangesWorker', () => ({
+  createWorker: jest.fn(() => jest.requireActual('./__mocks__/createDetectChangesWorker').createWorker()),
+}));
+
+afterEach(() => {
+  jest
+    .mocked(createWorker)
+    .mockReset()
+    .mockImplementation(jest.requireActual('./__mocks__/createDetectChangesWorker').createWorker);
+});
 
 jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => ({
   validationSrv: {
@@ -105,7 +116,7 @@ const ui = {
 
 describe('SaveDashboardDrawer', () => {
   beforeEach(() => {
-    const worker = createDetectChangesWorker.createWorker();
+    const worker = createWorker();
     jest.mocked(worker.postMessage).mockImplementation(({ initial, changed, generation }: DashboardChangesRequest) => {
       worker.onmessage?.(new MessageEvent('message', { data: { generation, hasChanges: !isEqual(initial, changed) } }));
     });
@@ -1364,7 +1375,7 @@ function buildControlledWorker() {
     onmessage: null as ((event: MessageEvent<DashboardChangesResponse>) => void) | null,
     terminate: jest.fn(),
   };
-  jest.spyOn(createDetectChangesWorker, 'createWorker').mockReturnValue(worker as unknown as CorsWorker);
+  jest.mocked(createWorker).mockReturnValue(worker as unknown as CorsWorker);
   return worker;
 }
 

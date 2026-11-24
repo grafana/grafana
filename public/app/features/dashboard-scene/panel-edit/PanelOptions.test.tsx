@@ -18,7 +18,7 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { DashboardInteractions } from '../utils/interactions';
 import { activateFullSceneTree } from '../utils/test-utils';
-import * as utils from '../utils/utils';
+import { getDashboardSceneFor } from '../utils/utils';
 
 import { PanelOptions } from './PanelOptions';
 import { PanelOptionsPane } from './PanelOptionsPane';
@@ -30,6 +30,11 @@ jest.mock('app/core/components/SuggestionsInput/getVariableSuggestions', () => (
   ],
 }));
 
+jest.mock('../utils/utils', () =>
+  jest
+    .requireActual('test/helpers/partialMock')
+    .partialMock(jest.requireActual('../utils/utils'), { getDashboardSceneFor: jest.fn() })
+);
 jest.mock('app/features/dashboard/components/GenAI/LazyGenAIButtons', () => ({
   LazyGenAIPanelTitleButton: () => null,
   LazyGenAIPanelDescriptionButton: () => null,
@@ -82,7 +87,7 @@ function placeInDashboard(panel: VizPanel, serializerVersion?: 'v1' | 'v2') {
 }
 
 // Needed when the panel is not part of an DashboardScene
-jest.spyOn(utils, 'getDashboardSceneFor').mockReturnValue(new DashboardScene({}));
+jest.mocked(getDashboardSceneFor).mockReturnValue(new DashboardScene({}));
 
 interface SetupOptions {
   panel?: VizPanel;

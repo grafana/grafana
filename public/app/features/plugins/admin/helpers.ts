@@ -403,10 +403,6 @@ export function isPreinstalledPlugin(id: string): { found: boolean; withVersion:
   return { found: !!plugin?.id, withVersion: !!plugin?.version };
 }
 
-export function isLocalCorePlugin(local?: LocalPlugin): boolean {
-  return Boolean(local?.signature === 'internal');
-}
-
 function getId(inputString: string): string {
   const parts = inputString.split(' - ');
   return parts[0];
@@ -534,7 +530,7 @@ function formatVersion(major: number, minor: number, patch: number): string {
   return `${major}.${minor}.${patch}`;
 }
 
-export function mergeCloudState(
+function mergeCloudState(
   catalogPlugin: CatalogPlugin,
   instanceMap: Map<string, InstancePlugin>,
   isProvisioned: boolean,

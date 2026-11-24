@@ -6,7 +6,6 @@ import { type DataSourceApi } from '@grafana/data';
 import { type PromOptions } from '@grafana/prometheus';
 import { config, locationService, setPluginLinksHook } from '@grafana/runtime';
 import * as ruler from 'app/features/alerting/unified/api/ruler';
-import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import * as alertingAbilities from 'app/features/alerting/unified/hooks/useAbilities';
 import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import {
@@ -30,7 +29,7 @@ import { type AlertQuery, type PromRulesResponse } from 'app/types/unified-alert
 
 import { createDashboardSceneFromDashboardModel } from '../../serialization/transformSaveModelToScene';
 import { findVizPanelByKey } from '../../utils/findVizPanel';
-import * as utils from '../../utils/utils';
+import { getDashboardSceneFor } from '../../utils/utils';
 import { getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 
 import { PanelDataAlertingTab, PanelDataAlertingTabRendered } from './PanelDataAlertingTab';
@@ -46,9 +45,15 @@ jest.mock('@grafana/assistant', () => ({
   useAssistant: () => ({ isAvailable: false, openAssistant: jest.fn() }),
 }));
 
-jest.spyOn(ruleActionButtons, 'matchesWidth').mockReturnValue(false);
-jest.spyOn(ruler, 'rulerUrlBuilder');
-jest.spyOn(alertingAbilities, 'useAlertRuleAbility');
+jest.mock('app/features/alerting/unified/hooks/useAbilities', () => ({
+  ...jest.requireActual('app/features/alerting/unified/hooks/useAbilities'),
+  useAlertRuleAbility: jest.fn(),
+}));
+jest.mock('../../utils/utils', () =>
+  jest
+    .requireActual('test/helpers/partialMock')
+    .partialMock(jest.requireActual('../../utils/utils'), { getDashboardSceneFor: jest.fn() })
+);
 
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
@@ -379,6 +384,6 @@ function createModel(dashboard: DashboardModel, dto: DashboardDataDTO) {
   const scene = createDashboardSceneFromDashboardModel(dashboard, dto);
   const vizPanel = findVizPanelByKey(scene, getVizPanelKeyForPanelId(34))!;
   const model = new PanelDataAlertingTab({ panelRef: vizPanel.getRef() });
-  jest.spyOn(utils, 'getDashboardSceneFor').mockReturnValue(scene);
+  jest.mocked(getDashboardSceneFor).mockReturnValue(scene);
   return model;
 }
