@@ -850,9 +850,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
     let mode = this.state.mode ?? 'edit';
     if (source === 'assistant' && currentMode === 'view') {
-      // With Composer, Assistant edits from Viewing open in Editing, which Composer runs over. Composer needs a
-      // saved dashboard, so a new one keeps Agent editing.
-      mode = dashboardComposerEnabled() && this.state.uid ? 'edit' : 'agent';
+      // With Composer, Assistant edits from Viewing open in Editing, which Composer runs over.
+      mode = dashboardComposerEnabled() ? 'edit' : 'agent';
     } else if (source === 'user' && currentMode === 'agent') {
       mode = 'edit';
     }

@@ -680,12 +680,12 @@ describe('Assistant edits from Viewing while Composer is on', () => {
     expect(scene.state.title).toBe('Assistant draft');
   });
 
-  it('keeps Agent editing on a dashboard without a uid, which Composer cannot enter', async () => {
+  it('uses Editing on a dashboard without a uid too, though Composer waits for the first save', async () => {
     const scene = setup(false, true);
 
     expect((await assistantChangesTitle(scene, 'Assistant draft')).success).toBe(true);
 
-    expect(getDashboardMode(scene.state)).toBe('agent');
+    expect(getDashboardMode(scene.state)).toBe('edit');
   });
 });
 
