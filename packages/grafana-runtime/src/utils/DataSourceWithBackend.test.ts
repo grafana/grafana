@@ -19,6 +19,7 @@ import { type BackendSrv, type BackendSrvRequest, type FetchResponse } from '../
 
 import {
   DataSourceWithBackend,
+  getDatasourceProxyUrl,
   type HealthCheckResult,
   HealthStatus,
   standardStreamOptionsProvider,
@@ -1115,3 +1116,61 @@ function createMockDatasource(settingsOverrides: Partial<DataSourceInstanceSetti
   const ds = new MyDataSource(settings);
   return { ds, mock: mockDatasourceRequest.mock };
 }
+
+describe('getDatasourceProxyUrl', () => {
+  const settings = {
+    uid: 'abc',
+    type: 'alias',
+    meta: { id: 'canonical-id' } as DataSourcePluginMeta,
+    jsonData: {},
+  } as DataSourceInstanceSettings;
+
+  function allowProxy(proxy: string[]) {
+    mockGetObjectValue.mockImplementation((key, defaultValue) =>
+      key === 'datasources.apiserver.fe-allowed-types' ? { health: [], resources: [], proxy } : defaultValue
+    );
+  }
+
+  afterEach(() => {
+    mockGetObjectValue.mockReturnValue({ types: ['prometheus'] });
+  });
+
+  test('uses the legacy proxy URL when the plugin is not in the proxy list', () => {
+    allowProxy([]);
+
+    expect(getDatasourceProxyUrl(settings, 'api/search')).toBe('/api/datasources/proxy/uid/abc/api/search');
+  });
+
+  test('uses the legacy proxy URL when the flag has no proxy list', () => {
+    mockGetObjectValue.mockImplementation((key, defaultValue) =>
+      key === 'datasources.apiserver.fe-allowed-types'
+        ? { health: ['canonical-id'], resources: ['canonical-id'] }
+        : defaultValue
+    );
+
+    expect(getDatasourceProxyUrl(settings, 'api/search')).toBe('/api/datasources/proxy/uid/abc/api/search');
+  });
+
+  test('uses the datasource API server proxy subresource, by plugin id, when the plugin is in the proxy list', () => {
+    allowProxy(['canonical-id']);
+
+    expect(getDatasourceProxyUrl(settings, 'api/search')).toBe(
+      `/apis/canonical-id.datasource.grafana.app/v0alpha1/namespaces/${config.namespace}/datasources/abc/proxy/api/search`
+    );
+  });
+
+  test.each([true, false])('strips leading slashes from the path (proxy list enabled: %s)', (enabled) => {
+    allowProxy(enabled ? ['canonical-id'] : []);
+
+    expect(getDatasourceProxyUrl(settings, '//api/search')).toMatch(/\/proxy(\/uid\/abc)?\/api\/search$/);
+    expect(getDatasourceProxyUrl(settings, '//api/search')).not.toContain('//api');
+  });
+
+  test('keeps OAuth pass-through datasources on the legacy proxy URL', () => {
+    allowProxy(['canonical-id']);
+
+    expect(getDatasourceProxyUrl({ ...settings, jsonData: { oauthPassThru: true } }, 'api/search')).toBe(
+      '/api/datasources/proxy/uid/abc/api/search'
+    );
+  });
+});

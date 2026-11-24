@@ -8,9 +8,10 @@ import {
   getBackendSrv,
   getDataSourceInstance,
   getDataSourceInstanceList,
+  getDataSourceInstanceSettings,
   getDefaultDataSourceInstanceListItem,
 } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { FlagKeys, getDatasourceProxyUrl, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 /**
  * A lazily-started, shared solution fact derived from the solution's datasource: the first read
@@ -73,9 +74,11 @@ export async function resolveBackendInstance(uid: string): Promise<DataSourceWit
 }
 
 /**
- * GET through the classic datasource proxy, deadline-bounded, never toasts. Some datasource
- * backends (e.g. Tempo) serve their HTTP API only here, not on the resource router. An abort
- * also unsubscribes, so a request still queued in BackendSrv leaves the queue unsent.
+ * GET through the datasource HTTP proxy, deadline-bounded, never toasts. Some datasource
+ * backends (e.g. Tempo) serve their HTTP API only here, not on the resource router. The proxy
+ * route follows the datasource API rollout; the settings lookup shares the deadline, since it
+ * fetches on stacks that load datasource settings from the API server. An abort also
+ * unsubscribes, so a request still queued in BackendSrv leaves the queue unsent.
  */
 export async function probeProxyGet<T>(
   uid: string,
@@ -84,17 +87,26 @@ export async function probeProxyGet<T>(
   timeoutMs = PROBE_TIMEOUT_MS,
   signal?: AbortSignal
 ): Promise<T> {
-  const url = `/api/datasources/proxy/uid/${encodeURIComponent(uid)}/${path}`;
-  return withDeadline(timeoutMs, signal, (s) =>
-    lastValueFrom(
+  return withDeadline(timeoutMs, signal, async (s) => {
+    const url = await datasourceProxyUrl(uid, path);
+    // An abort during the lookup is caught by takeUntil, which errors before the request starts.
+    return lastValueFrom(
       getBackendSrv()
         .fetch<T>({ url, params, method: 'GET', showErrorAlert: false, abortSignal: s })
         .pipe(
           map((res) => res.data),
           takeUntil(abortNotifier(s))
         )
-    )
-  );
+    );
+  });
+}
+
+/** Proxy URL from the datasource's instance settings; a failed or empty lookup keeps the legacy route. */
+async function datasourceProxyUrl(uid: string, path: string): Promise<string> {
+  const settings = await getDataSourceInstanceSettings(uid).catch(() => undefined);
+  return settings
+    ? getDatasourceProxyUrl(settings, path)
+    : `/api/datasources/proxy/uid/${encodeURIComponent(uid)}/${path}`;
 }
 
 /**

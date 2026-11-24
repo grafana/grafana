@@ -123,6 +123,43 @@ function toHealthCheckResult(v: DatasourcesV0HealthCheckResult): HealthCheckResu
   };
 }
 
+/**
+ * Whether `endpoint` calls for this datasource go to the datasource API server (`/apis/...`) instead of the
+ * legacy `/api/datasources/...` routes. Reads only instance settings, so callers can decide without loading
+ * the plugin.
+ */
+function supportsDatasourceApi(
+  endpoint: 'resources' | 'health' | 'proxy',
+  settings: DataSourceInstanceSettings
+): boolean {
+  // @ts-expect-error featuremgmt/registry.go does not support object feature flags yet
+  const allowedTypes = getFeatureFlagClient().getObjectValue('datasources.apiserver.fe-allowed-types', {
+    resources: [],
+    health: [],
+  });
+  if (!allowedTypes || typeof allowedTypes !== 'object' || Array.isArray(allowedTypes)) {
+    return false;
+  }
+  const pluginIds = allowedTypes[endpoint];
+  return (
+    Array.isArray(pluginIds) &&
+    (pluginIds.includes('*') || pluginIds.includes(settings.meta?.id ?? settings.type)) &&
+    isDatasourceAuthCompatible(settings)
+  );
+}
+
+/**
+ * Datasource HTTP proxy URL for `path`, on the route `supportsDatasourceApi('proxy', settings)` selects: the
+ * datasource API server's proxy subresource, or the legacy `/api/datasources/proxy/uid/...` route.
+ */
+export function getDatasourceProxyUrl(settings: DataSourceInstanceSettings, path: string): string {
+  const subPath = path.replace(/^\/+/, '');
+  if (supportsDatasourceApi('proxy', settings)) {
+    return `/apis/${settings.meta?.id ?? settings.type}.datasource.grafana.app/v0alpha1/namespaces/${config.namespace}/datasources/${settings.uid}/proxy/${subPath}`;
+  }
+  return `/api/datasources/proxy/uid/${settings.uid}/${subPath}`;
+}
+
 interface PreparedQuery {
   query: DataQuery;
   /** Absent for expression queries, which are not backed by a data source instance. */
@@ -422,7 +459,7 @@ class DataSourceWithBackend<
    */
   buildResourcesDatasourceUrl(rawPath: string): string {
     const path = rawPath.replace(/^\/+/, '');
-    if (this.supportsDatasourceApi('resources')) {
+    if (supportsDatasourceApi('resources', this.datasourceInstanceSettings)) {
       // example:
       // /apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/stacks-1/datasources/local-prometheus/resources/api/v1/labels
       const apiVersion = 'v0alpha1';
@@ -431,28 +468,11 @@ class DataSourceWithBackend<
     return `/api/datasources/uid/${this.uid}/resources/${path}`;
   }
 
-  private supportsDatasourceApi(endpoint: 'resources' | 'health'): boolean {
-    // @ts-expect-error featuremgmt/registry.go does not support object feature flags yet
-    const allowedTypes = getFeatureFlagClient().getObjectValue('datasources.apiserver.fe-allowed-types', {
-      resources: [],
-      health: [],
-    });
-    if (!allowedTypes || typeof allowedTypes !== 'object' || Array.isArray(allowedTypes)) {
-      return false;
-    }
-    const pluginIds = allowedTypes[endpoint];
-    return (
-      Array.isArray(pluginIds) &&
-      (pluginIds.includes('*') || pluginIds.includes(this.meta?.id ?? this.type)) &&
-      isDatasourceAuthCompatible(this.datasourceInstanceSettings)
-    );
-  }
-
   /**
    * Run the datasource healthcheck
    */
   async callHealthCheck(): Promise<HealthCheckResult> {
-    const useNewApi = this.supportsDatasourceApi('health');
+    const useNewApi = supportsDatasourceApi('health', this.datasourceInstanceSettings);
     const healthCheckURL = useNewApi
       ? `/apis/${this.meta?.id ?? this.type}.datasource.grafana.app/v0alpha1/namespaces/${config.namespace}/datasources/${this.uid}/health`
       : `/api/datasources/uid/${this.uid}/health`;

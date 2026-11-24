@@ -7,9 +7,10 @@ import {
   getBackendSrv,
   getDataSourceInstance,
   getDataSourceInstanceList,
+  getDataSourceInstanceSettings,
   getDefaultDataSourceInstanceListItem,
 } from '@grafana/runtime';
-import { FlagKeys } from '@grafana/runtime/internal';
+import { FlagKeys, getDatasourceProxyUrl } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import {
@@ -33,7 +34,12 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: jest.fn(),
   getDataSourceInstance: jest.fn(),
   getDataSourceInstanceList: jest.fn(),
+  getDataSourceInstanceSettings: jest.fn(),
   getDefaultDataSourceInstanceListItem: jest.fn(),
+}));
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  getDatasourceProxyUrl: jest.fn(),
 }));
 const getDataSourceInstanceListMock = jest.mocked(getDataSourceInstanceList);
 const healthGetMock = jest.fn();
@@ -155,6 +161,32 @@ describe('probeProxyGet', () => {
   beforeEach(() => {
     mockFetch.mockReset();
     jest.mocked(getBackendSrv).mockReturnValue({ fetch: mockFetch } as unknown as BackendSrv);
+    // No instance settings: the probe keeps the legacy proxy route.
+    jest.mocked(getDataSourceInstanceSettings).mockReset().mockResolvedValue(undefined);
+    jest.mocked(getDatasourceProxyUrl).mockReset();
+  });
+
+  it('proxies on the route the datasource API rollout selects for the datasource', async () => {
+    const settings = { uid: 'tempo', type: 'tempo' } as Awaited<ReturnType<typeof getDataSourceInstanceSettings>>;
+    jest.mocked(getDataSourceInstanceSettings).mockResolvedValue(settings);
+    jest.mocked(getDatasourceProxyUrl).mockReturnValue('/apis/tempo.datasource.grafana.app/tempo/proxy/api/search');
+    mockFetch.mockReturnValue(of({ data: { traces: [] } }));
+
+    await expect(probeProxyGet('tempo', 'api/search', params)).resolves.toEqual({ traces: [] });
+    expect(getDatasourceProxyUrl).toHaveBeenCalledWith(settings, 'api/search');
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.objectContaining({ url: '/apis/tempo.datasource.grafana.app/tempo/proxy/api/search' })
+    );
+  });
+
+  it('keeps the legacy proxy route when the settings lookup fails', async () => {
+    jest.mocked(getDataSourceInstanceSettings).mockRejectedValue(new Error('settings unavailable'));
+    mockFetch.mockReturnValue(of({ data: { traces: [] } }));
+
+    await expect(probeProxyGet('tempo', 'api/search', params)).resolves.toEqual({ traces: [] });
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.objectContaining({ url: '/api/datasources/proxy/uid/tempo/api/search' })
+    );
   });
 
   it('resolves with the response body of a proxied GET', async () => {
@@ -175,11 +207,26 @@ describe('probeProxyGet', () => {
     mockFetch.mockReturnValue(new Observable(() => teardown));
     const controller = new AbortController();
     const promise = probeProxyGet('tempo', 'api/search', params, PROBE_TIMEOUT_MS, controller.signal);
+    // Let the proxy URL lookup settle so the request is in flight.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(mockFetch).toHaveBeenCalled();
 
     controller.abort();
 
     await expect(promise).rejects.toMatchObject({ name: 'AbortError' });
     expect(teardown).toHaveBeenCalled();
+  });
+
+  it('never sends the request when the parent aborts during the proxy URL lookup', async () => {
+    const subscribe = jest.fn();
+    mockFetch.mockReturnValue(new Observable(subscribe));
+    const controller = new AbortController();
+    const promise = probeProxyGet('tempo', 'api/search', params, PROBE_TIMEOUT_MS, controller.signal);
+
+    controller.abort();
+
+    await expect(promise).rejects.toMatchObject({ name: 'AbortError' });
+    expect(subscribe).not.toHaveBeenCalled();
   });
 
   it('unsubscribes a request still pending at the deadline', async () => {
