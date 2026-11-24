@@ -1,7 +1,7 @@
 /* eslint-disable testing-library/render-result-naming-convention */
 import { render, renderHook, screen } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
-import memoize from 'micro-memoize';
+import { memoize } from 'micro-memoize';
 import { Children, type ComponentProps, createRef, isValidElement, type Key, type ReactNode } from 'react';
 
 import {
