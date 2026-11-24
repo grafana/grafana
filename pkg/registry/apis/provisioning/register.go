@@ -1136,13 +1136,17 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 					return err
 				}
 			}
+			// The background services wait for this config, so they start only
+			// after the bootstrap repository is reconciled. Deferred so that every
+			// later return publishes it; otherwise they would wait forever.
+			defer b.publishLoopbackConfig(config)
+
 			c, err := clientset.NewForConfig(config)
 			if err != nil {
 				return err
 			}
 
 			b.client = c.ProvisioningV0alpha1()
-			b.publishLoopbackConfig(config)
 
 			// Initialize the API client-based job store
 			b.jobs, err = jobs.NewJobStore(b.client, jobClaimExpiry, b.registry)

@@ -38,3 +38,16 @@ func TestProvideRepositoryController_EnqueuesExistingRepositoriesOnSync(t *testi
 	key, _ := rc.queue.Get()
 	require.Equal(t, "default/repo-a", key)
 }
+
+func TestRepositoryController_ShutDownQueue(t *testing.T) {
+	rc, _, _, err := ProvideRepositoryController(RepositoryControllerDeps{
+		ProvisioningClient: fake.NewClientset(),
+		Registry:           prometheus.NewRegistry(),
+		ParallelOperations: 1,
+		ResyncInterval:     time.Minute,
+	})
+	require.NoError(t, err)
+
+	rc.ShutDownQueue()
+	require.True(t, rc.queue.ShuttingDown(), "a controller whose Run never starts must release its queue")
+}

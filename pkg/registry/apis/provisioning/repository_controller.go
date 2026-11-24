@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/grafana/dskit/services"
-	"github.com/grafana/grafana-app-sdk/logging"
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 
@@ -122,10 +121,9 @@ func (s *RepositoryControllerService) runController(ctx context.Context, restCon
 	go source.Run(ctx.Done())
 
 	if !cache.WaitForCacheSync(ctx.Done(), hasSynced) {
-		// Shut down before the initial list was processed.
-		return nil
+		repoController.ShutDownQueue()
+		return fmt.Errorf("repository controller informer cache sync failed: %w", context.Cause(ctx))
 	}
-	logging.DefaultLogger.Info("starting repository controller")
 	repoController.Run(ctx, repoControllerWorkers, func() {}, func() {})
 	return nil
 }

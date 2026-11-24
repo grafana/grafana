@@ -136,6 +136,7 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (r
 	go repoSource.Run(ctx.Done())
 
 	if !cache.WaitForCacheSync(ctx.Done(), hasSynced) {
+		repoController.ShutDownQueue()
 		return fmt.Errorf("failed to sync repository informer cache")
 	}
 
