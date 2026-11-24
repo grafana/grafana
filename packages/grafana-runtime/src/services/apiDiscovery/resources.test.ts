@@ -115,6 +115,13 @@ describe('fromK8sAPIResourceList', () => {
       },
     ]);
   });
+
+  it('reads an empty list written as null', () => {
+    const { resources, verbs } = fromK8sAPIResourceList('search.grafana.app', 'v0alpha1', { resources: null });
+
+    expect(resources).toEqual([]);
+    expect(verbs.size).toBe(0);
+  });
 });
 
 describe('fromK8sAPIGroupDiscoveryList', () => {
@@ -177,6 +184,11 @@ describe('fromK8sAPIGroupDiscoveryList', () => {
       },
     ]);
   });
+
+  it('reads an empty list written as null', () => {
+    expect(fromK8sAPIGroupDiscoveryList({ items: null })).toEqual([]);
+    expect(hasStaleVersion({ items: null })).toBe(false);
+  });
 });
 
 describe('hasStaleVersion', () => {
@@ -194,6 +206,17 @@ describe('hasStaleVersion', () => {
 });
 
 describe('isK8sAPIResourceList', () => {
+  it('accepts an empty list, which Go writes as null', () => {
+    const empty = {
+      kind: 'APIResourceList',
+      apiVersion: 'v1',
+      groupVersion: 'search.grafana.app/v0alpha1',
+      resources: null,
+    };
+
+    expect(isK8sAPIResourceList(empty)).toBe(true);
+  });
+
   it('accepts a resource list, also with null verbs', () => {
     expect(isK8sAPIResourceList(folderResourceList)).toBe(true);
     expect(isK8sAPIResourceList({ resources: [{ name: 'gadgets', verbs: null }] })).toBe(true);
@@ -211,6 +234,10 @@ describe('isK8sAPIResourceList', () => {
 });
 
 describe('isK8sAPIGroupDiscoveryList', () => {
+  it('accepts an empty list, which Go writes as null', () => {
+    expect(isK8sAPIGroupDiscoveryList({ kind: 'APIGroupDiscoveryList', items: null })).toBe(true);
+  });
+
   it('accepts aggregated discovery, also when a version has no resources', () => {
     const routeOnly = {
       metadata: { name: 'quotas.grafana.app' },

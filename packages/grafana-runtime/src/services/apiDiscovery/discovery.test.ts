@@ -13,12 +13,7 @@ import {
   isAPIResourceAvailable,
   setAPIDiscoveryForTesting,
 } from './discovery';
-import {
-  type K8sAPIGroup,
-  type K8sAPIGroupDiscoveryList,
-  type K8sAPIGroupList,
-  type K8sAPIResourceList,
-} from './types';
+import { type K8sAPIGroup, type K8sAPIGroupDiscovery, type K8sAPIGroupList, type K8sAPIResourceList } from './types';
 
 const backendGet = jest.fn();
 const logError = jest.fn();
@@ -418,6 +413,19 @@ describe('getAPIResources', () => {
     });
   });
 
+  it('returns no resources for a group version whose list is empty, caches it, and does not log', async () => {
+    const empty = { kind: 'APIResourceList', groupVersion: 'folder.grafana.app/v1beta1', resources: null };
+    respondTo({ [FOLDER_RESOURCES_URL]: () => Promise.resolve(empty) });
+
+    await expect(getAPIResources('folder.grafana.app', 'v1beta1')).resolves.toEqual([]);
+    await expect(
+      isAPIResourceAvailable({ group: 'folder.grafana.app', version: 'v1beta1', resource: 'folders' })
+    ).resolves.toBe(false);
+
+    expect(requestedUrls()).toEqual([FOLDER_RESOURCES_URL]);
+    expect(logError).not.toHaveBeenCalled();
+  });
+
   it('returns undefined when the server has no list for the group version, caches it, and does not log', async () => {
     respondTo({});
 
@@ -547,7 +555,7 @@ describe('isAPIResourceAvailable', () => {
 const AGGREGATED_ACCEPT =
   'application/json;g=apidiscovery.k8s.io;v=v2;as=APIGroupDiscoveryList,application/json;g=apidiscovery.k8s.io;v=v2beta1;as=APIGroupDiscoveryList,application/json';
 
-const discoveryList: K8sAPIGroupDiscoveryList = {
+const discoveryList: { items: K8sAPIGroupDiscovery[] } = {
   items: [
     {
       metadata: { name: 'dashboard.grafana.app' },

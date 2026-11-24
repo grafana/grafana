@@ -79,7 +79,7 @@ export interface K8sAPIResource {
 }
 
 export interface K8sAPIResourceList {
-  resources: K8sAPIResource[];
+  resources: K8sAPIResource[] | null;
 }
 
 export interface K8sAPISubresourceDiscovery {
@@ -107,5 +107,5 @@ export interface K8sAPIGroupDiscovery {
 }
 
 export interface K8sAPIGroupDiscoveryList {
-  items: K8sAPIGroupDiscovery[];
+  items: K8sAPIGroupDiscovery[] | null;
 }

@@ -19,10 +19,11 @@ export interface ResourceList {
 type ResourceBuilder = APIResourceInfo & { subresources: string[] };
 
 export function fromK8sAPIResourceList(group: string, version: string, list: K8sAPIResourceList): ResourceList {
+  const entries = list.resources ?? [];
   const resources = new Map<string, ResourceBuilder>();
   const verbs = new Map<string, readonly string[]>();
 
-  for (const { name, kind = '', namespaced = false, verbs: resourceVerbs } of list.resources) {
+  for (const { name, kind = '', namespaced = false, verbs: resourceVerbs } of entries) {
     if (!name.includes('/') && !resources.has(name)) {
       resources.set(name, {
         group,
@@ -37,7 +38,7 @@ export function fromK8sAPIResourceList(group: string, version: string, list: K8s
     }
   }
 
-  for (const { name, namespaced = false, verbs: subresourceVerbs } of list.resources) {
+  for (const { name, namespaced = false, verbs: subresourceVerbs } of entries) {
     const slash = name.indexOf('/');
     if (slash === -1) {
       continue;
@@ -57,7 +58,7 @@ export function fromK8sAPIResourceList(group: string, version: string, list: K8s
 }
 
 export function fromK8sAPIGroupDiscoveryList(list: K8sAPIGroupDiscoveryList): APIResourceInfo[] {
-  return list.items.flatMap(({ metadata, versions }) =>
+  return (list.items ?? []).flatMap(({ metadata, versions }) =>
     (versions ?? []).flatMap(({ version, resources }) =>
       (resources ?? []).map(({ resource, responseKind, scope, verbs, subresources }) => ({
         group: metadata.name,
@@ -73,17 +74,15 @@ export function fromK8sAPIGroupDiscoveryList(list: K8sAPIGroupDiscoveryList): AP
 }
 
 export function hasStaleVersion(list: K8sAPIGroupDiscoveryList): boolean {
-  return list.items.some(({ versions }) => (versions ?? []).some(({ freshness }) => freshness === 'Stale'));
+  return (list.items ?? []).some(({ versions }) => (versions ?? []).some(({ freshness }) => freshness === 'Stale'));
 }
 
 export function isK8sAPIResourceList(value: unknown): value is K8sAPIResourceList {
-  return (
-    isObject(value) && 'resources' in value && Array.isArray(value.resources) && value.resources.every(isK8sAPIResource)
-  );
+  return isObject(value) && 'resources' in value && isNullableList(value.resources, isK8sAPIResource);
 }
 
 export function isK8sAPIGroupDiscoveryList(value: unknown): value is K8sAPIGroupDiscoveryList {
-  return isObject(value) && 'items' in value && Array.isArray(value.items) && value.items.every(isK8sAPIGroupDiscovery);
+  return isObject(value) && 'items' in value && isNullableList(value.items, isK8sAPIGroupDiscovery);
 }
 
 function isK8sAPIResource(value: unknown): value is K8sAPIResource {
