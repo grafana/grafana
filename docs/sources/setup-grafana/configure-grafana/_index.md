@@ -2172,7 +2172,7 @@ Enables recording alert state history. Default is `false`.
 
 #### `backend `
 
-Select the backend used to store alert state history. Supported values: `loki`, `prometheus`, `multiple`.
+Select the backend used to store alert state history. Supported values: `loki`, `prometheus`, `annotations`, `multiple`.
 
 #### `loki_remote_url `
 
@@ -2202,7 +2202,7 @@ Used only when `backend = multiple`. Comma-separated list of secondary backends 
 
 ### `[unified_alerting.state_history.annotations]`
 
-This section controls retention of annotations automatically created while evaluating alert rules when alerting state history backend is configured to be annotations (see setting [unified_alerting.state_history].backend)
+This section controls retention of annotations automatically created while evaluating alert rules when alerting state history backend is configured to be `annotations` (see setting [unified_alerting.state_history].backend)
 
 #### `max_age`
 
