@@ -74,7 +74,7 @@ const openedSidebars = () =>
 it("opens the closed Assistant sidebar and hands the Assistant's edit to the listener it registers", () => {
   jest.mocked(useExtensionSidebarContext).mockReturnValue(sidebarContext('available'));
 
-  renderHook(() => useComposerOverAssistantEdit(TARGET.uid));
+  renderHook(() => useComposerOverAssistantEdit(TARGET.uid, true));
 
   expect(openedSidebars()).toEqual([{ pluginId: ASSISTANT, componentTitle: TITLE }]);
   expect(getEffectiveExtensionSidebarPresentation(ASSISTANT)).toBe('floating');
@@ -91,7 +91,7 @@ it("opens the closed Assistant sidebar and hands the Assistant's edit to the lis
 
 it('waits until the sidebar knows the Assistant, then asks once', () => {
   jest.mocked(useExtensionSidebarContext).mockReturnValue(sidebarContext('loading'));
-  const { rerender } = renderHook(() => useComposerOverAssistantEdit(TARGET.uid));
+  const { rerender } = renderHook(() => useComposerOverAssistantEdit(TARGET.uid, true));
   expect(openedSidebars()).toEqual([]);
 
   jest.mocked(useExtensionSidebarContext).mockReturnValue(sidebarContext('available'));
@@ -104,7 +104,22 @@ it('waits until the sidebar knows the Assistant, then asks once', () => {
 it('asks nothing for a dashboard the page did not open an Assistant edit on', () => {
   jest.mocked(useExtensionSidebarContext).mockReturnValue(sidebarContext('available'));
 
-  renderHook(() => useComposerOverAssistantEdit('other-dashboard'));
+  renderHook(() => useComposerOverAssistantEdit('other-dashboard', true));
 
   expect(openedSidebars()).toEqual([]);
+});
+
+it('drops the request when the user leaves Editing before the sidebar knows the Assistant', () => {
+  jest.mocked(useExtensionSidebarContext).mockReturnValue(sidebarContext('loading'));
+  const { rerender } = renderHook(({ isEditing }) => useComposerOverAssistantEdit(TARGET.uid, isEditing), {
+    initialProps: { isEditing: true },
+  });
+
+  jest.mocked(useExtensionSidebarContext).mockReturnValue(sidebarContext('available'));
+  rerender({ isEditing: false });
+  // Editing again later is the user's own edit session, not the Assistant's.
+  rerender({ isEditing: true });
+
+  expect(openedSidebars()).toEqual([]);
+  expect(takeComposerRequestOverAssistantEdit).toHaveBeenCalledWith(TARGET.uid);
 });
