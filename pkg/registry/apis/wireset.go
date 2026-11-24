@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/service"
 	"github.com/grafana/grafana/pkg/registry/apis/userstorage"
+	"github.com/grafana/grafana/pkg/services/apiserver/informers"
 	"github.com/grafana/grafana/pkg/services/folder/cleaner"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute/appsettings"
@@ -86,6 +87,7 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(folders.FolderContentsDeleter), new(*cleaner.ContentsCleaner)),
 	folders.RegisterAPIService,
 	iam.RegisterAPIService,
+	informers.ProvideSupplier,
 	provisioning.RegisterAPIService,
 	provisioning.ProvideConnectionControllerService,
 	provisioning.ProvideHistoryJobCleanupService,

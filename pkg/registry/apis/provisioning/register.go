@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"slices"
 	"strings"
-	gosync "sync"
 	"time"
 
 	"github.com/open-feature/go-sdk/openfeature"
@@ -30,6 +29,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana-app-sdk/operator"
 	appadmission "github.com/grafana/grafana/apps/provisioning/pkg/apis/admission"
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -69,7 +69,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
+	apiinformers "github.com/grafana/grafana/pkg/services/apiserver/informers"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -178,16 +178,13 @@ type APIBuilder struct {
 	// handler on each notification; the controllers re-fetch from the API in their
 	// reconcile. Otherwise the controllers use the apiserver informer.
 	natsSubscriber nats.Subscriber
+	// informers is the decider each controller's informer is built with. Nil
+	// gives every controller the apiserver watch.
+	informers operator.InformerSupplier
 
 	// bootstrapConfig is the read-only local repository registered from
 	// [provisioning] bootstrap_path, empty when none is configured.
 	bootstrapConfig bootstrap.Config
-
-	// The informer metrics register once per process and are shared by the
-	// controllers started from the post-start hook and from Wire.
-	informerMetricsOnce     gosync.Once
-	relistProjectionMetrics *informer.RelistProjectionMetrics
-	freshnessMetrics        *informer.FreshnessMetrics
 
 	// loopbackConfig is the rest config the post-start hook resolved, set
 	// before loopbackReady is closed.
@@ -332,14 +329,6 @@ func (b *APIBuilder) awaitLoopbackConfig(ctx context.Context) (*clientrest.Confi
 	}
 }
 
-func (b *APIBuilder) informerMetrics() (*informer.RelistProjectionMetrics, *informer.FreshnessMetrics) {
-	b.informerMetricsOnce.Do(func() {
-		b.relistProjectionMetrics = informer.NewRelistProjectionMetrics(b.registry)
-		b.freshnessMetrics = informer.NewFreshnessMetrics(b.registry)
-	})
-	return b.relistProjectionMetrics, b.freshnessMetrics
-}
-
 func (b *APIBuilder) SetRepoValidatorOptions(opts ...repository.ValidatorOption) {
 	b.repoValidatorOpts = opts
 }
@@ -431,6 +420,7 @@ func RegisterAPIService(
 	connectionFactory connection.Factory,
 	quotaGetter quotas.QuotaGetter,
 	natsSubscriber nats.Subscriber,
+	informerSupplier operator.InformerSupplier,
 	manifests resource.ManifestDiscovery,
 	supportedResourceProvider resources.SupportedResourceProvider,
 ) (*APIBuilder, error) {
@@ -517,6 +507,7 @@ func RegisterAPIService(
 	builder.jobPollInterval = cfg.ProvisioningJobPollInterval
 	builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
 	builder.natsSubscriber = natsSubscriber
+	builder.informers = informerSupplier
 	// Only the preferred version registers the bootstrap repository: it is the one that runs
 	// the post-start hook's controllers, and two of them would race on the same object.
 	builder.bootstrapConfig = bootstrapConfig
@@ -570,6 +561,7 @@ func RegisterAPIService(
 	}
 	v1beta1Builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
 	v1beta1Builder.natsSubscriber = natsSubscriber
+	v1beta1Builder.informers = informerSupplier
 	apiregistration.RegisterAPI(v1beta1Builder)
 
 	// Return the preferred (v0alpha1) builder since it runs controllers/workers
@@ -1160,6 +1152,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			if err != nil {
 				return err
 			}
+			informerClients := apiinformers.Clients(config)
 
 			b.client = c.ProvisioningV0alpha1()
 			b.publishLoopbackConfig(config)
@@ -1326,7 +1319,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// jobs and is the driver's only recovery path. The handler must be
 			// registered before the informer runs: the NATS-backed source has no
 			// cache to replay for late handlers.
-			jobSource := informer.NewJobDeltaSource(b.natsSubscriber, c, jobPollInterval, b.registry)
+			jobSource, err := informer.NewJobDeltaSource(b.informers, informerClients, jobPollInterval, b.registry)
+			if err != nil {
+				return fmt.Errorf("job source: %w", err)
+			}
 			if _, err := jobSource.AddEventHandler(driver.EventHandler()); err != nil {
 				return fmt.Errorf("add job event handler: %w", err)
 			}
@@ -1350,11 +1346,11 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				webhookSecretRotationInterval = 30 * 24 * time.Hour
 			}
 
-			relistProjectionMetrics, freshnessMetrics := b.informerMetrics()
-
 			// The repository delta source and the getter it backs.
-			repoKeys := keysapi.NewGRPCLister(b.unified, provisioning.RepositoryResourceInfo.GroupVersionResource())
-			repoSource, reconcileRepoGetter := informer.NewRepositoryDeltaSource(b.natsSubscriber, c, repoKeys, informerFactoryResyncInterval, relistProjectionMetrics, freshnessMetrics)
+			repoSource, reconcileRepoGetter, err := informer.NewRepositoryDeltaSource(b.informers, informerClients, c, informerFactoryResyncInterval)
+			if err != nil {
+				return fmt.Errorf("repository source: %w", err)
+			}
 			repoController := controller.NewRepositoryController(
 				b.GetClient(),
 				reconcileRepoGetter,

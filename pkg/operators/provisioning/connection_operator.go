@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-app-sdk/logging"
 
-	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/operators/internal/supervision"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/server"
@@ -60,19 +59,18 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 		return fmt.Errorf("failed to get tracer: %w", err)
 	}
 
-	connKeys, err := controllerCfg.ProvisioningKeysLister(apisprovisioning.ConnectionResourceInfo.GroupVersionResource())
+	informerClients, err := controllerCfg.InformerClients()
 	if err != nil {
 		return err
 	}
 
 	connController, err := controller.ProvideConnectionController(controller.ConnectionControllerDeps{
 		Subscriber:        controllerCfg.natsSubscriber,
+		Informers:         controllerCfg.informers,
+		InformerClients:   informerClients,
 		Client:            provisioningClient,
-		Keys:              connKeys,
 		ConnectionFactory: connectionFactory,
 		HealthMetrics:     healthMetricsRecorder,
-		RelistMetrics:     controllerCfg.RelistProjectionMetrics(),
-		FreshnessMetrics:  controllerCfg.FreshnessMetrics(),
 		Registry:          controllerCfg.Registry(),
 		Tracer:            tracer,
 		ResyncInterval:    controllerCfg.ResyncInterval(),

@@ -88,9 +88,9 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 		return fmt.Errorf("failed to start manifest watcher: %w", err)
 	}
 
-	// Jobs informer feeding the driver's work queue with job keys. Under the NATS
-	// watch the source is a NATS-backed informer; otherwise an apiserver-backed
-	// one. Both satisfy DeltaSource, so the rest of the wiring is identical. The
+	// Jobs informer feeding the driver's work queue with job keys. The informer
+	// supplier selects the watch mechanism; the rest of the wiring is the same
+	// whichever it picks. The
 	// informer's periodic resync/re-list is the driver's only recovery path for
 	// unclaimed jobs (rolled-back claims, dropped keys, missed notifications), so
 	// the handler must be registered before the informer runs: the NATS-backed
@@ -99,7 +99,14 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 	// The jobs informer resyncs on job_interval (default 30s) rather than the
 	// controllers' resync_interval, preserving the job pickup cadence (and config
 	// key) of the polling design this replaced.
-	jobInformer := informer.NewJobDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.jobInterval, deps.Registerer)
+	informerClients, err := controllerCfg.InformerClients()
+	if err != nil {
+		return err
+	}
+	jobInformer, err := informer.NewJobDeltaSource(controllerCfg.informers, informerClients, controllerCfg.jobInterval, deps.Registerer)
+	if err != nil {
+		return fmt.Errorf("failed to build job source: %w", err)
+	}
 	reg, err := jobInformer.AddEventHandler(driver.EventHandler())
 	if err != nil {
 		return fmt.Errorf("failed to add job event handler: %w", err)

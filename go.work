@@ -48,3 +48,6 @@ use (
 	./pkg/storage/unified/resourcepb
 	./pkg/util/sqlite
 )
+
+// Prototype: informer mechanism selection (grafana-app-sdk PR 1687), not yet released.
+replace github.com/grafana/grafana-app-sdk => github.com/grafana/grafana-app-sdk v0.62.2-0.20261123120815-00bd8aea8935

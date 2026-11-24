@@ -9,10 +9,9 @@ import (
 	"github.com/grafana/dskit/services"
 	clientrest "k8s.io/client-go/rest"
 
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
-	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
+	apiinformers "github.com/grafana/grafana/pkg/services/apiserver/informers"
 )
 
 // ConnectionControllerServiceName is the background-service module name of
@@ -73,16 +72,13 @@ func (s *ConnectionControllerService) runController(ctx context.Context, restCon
 	}
 
 	b := s.builder
-	relistMetrics, freshnessMetrics := b.informerMetrics()
-
 	connController, err := controller.ProvideConnectionController(controller.ConnectionControllerDeps{
 		Subscriber:        b.natsSubscriber,
+		Informers:         b.informers,
+		InformerClients:   apiinformers.Clients(restConfig),
 		Client:            client,
-		Keys:              keysapi.NewGRPCLister(b.unified, provisioning.ConnectionResourceInfo.GroupVersionResource()),
 		ConnectionFactory: b.connectionFactory,
 		HealthMetrics:     controller.NewHealthMetricsRecorder(b.registry),
-		RelistMetrics:     relistMetrics,
-		FreshnessMetrics:  freshnessMetrics,
 		Registry:          b.registry,
 		Tracer:            b.tracer,
 		ResyncInterval:    b.resyncInterval(),

@@ -6,6 +6,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
@@ -14,6 +15,8 @@ import (
 
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/nats"
+	apiinformers "github.com/grafana/grafana/pkg/services/apiserver/informers"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -31,6 +34,11 @@ var (
 type fakeSubscriber struct {
 	mu       sync.Mutex
 	handlers map[string]nats.MessageHandler
+}
+
+// natsSupplier is the supplier of a deployment with NATS configured.
+func natsSupplier() operator.InformerSupplier {
+	return apiinformers.ProvideSupplier(&setting.Cfg{NATS: setting.NATSSettings{Enabled: true}})
 }
 
 func newFakeSubscriber() *fakeSubscriber {

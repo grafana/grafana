@@ -13,7 +13,7 @@ import (
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
+	"github.com/grafana/grafana/pkg/services/apiserver/informers/informerstest"
 )
 
 // gatedSource is a delta source whose initial sync completes when the test
@@ -48,14 +48,13 @@ func (s *gatedSource) Done() <-chan struct{}               { return s.synced }
 func testConnectionControllerDeps() ConnectionControllerDeps {
 	reg := prometheus.NewRegistry()
 	return ConnectionControllerDeps{
-		Client:           fake.NewClientset(),
-		HealthMetrics:    NewHealthMetricsRecorder(reg),
-		RelistMetrics:    informer.NewRelistProjectionMetrics(reg),
-		FreshnessMetrics: informer.NewFreshnessMetrics(reg),
-		Registry:         reg,
-		Tracer:           tracing.NewNoopTracerService(),
-		ResyncInterval:   time.Minute,
-		DrainTimeout:     time.Second,
+		InformerClients: informerstest.NewClients(),
+		Client:          fake.NewClientset(),
+		HealthMetrics:   NewHealthMetricsRecorder(reg),
+		Registry:        reg,
+		Tracer:          tracing.NewNoopTracerService(),
+		ResyncInterval:  time.Minute,
+		DrainTimeout:    time.Second,
 	}
 }
 

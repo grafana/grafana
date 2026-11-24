@@ -11,13 +11,13 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/dynamic/dynamicinformer"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/operators/internal/supervision"
 	"github.com/grafana/grafana/pkg/server"
-	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
+	"github.com/grafana/grafana/pkg/services/apiserver/informers"
 	"github.com/grafana/grafana/pkg/services/folder/cascadedelete"
 )
 
@@ -37,19 +37,21 @@ var dashboardGVR = schema.GroupVersionResource{
 // RunFolderController runs the folder cascade-delete controller: it watches Folder objects and, for
 // each terminating folder carrying the cascade finalizer, deletes its contents and releases it.
 //
-// The delta source is NATS-backed when [nats] is enabled — falling back to
-// re-list-only if the live subscription can't open, rather than blocking
-// readiness on it — otherwise a plain apiserver watch, matching the pattern
-// in pkg/registry/apis/provisioning/informer's delta sources.
+// The folder informer is built with the informer supplier shared with the
+// provisioning controllers, which selects its watch mechanism.
 func RunFolderController(ctx context.Context, deps server.OperatorDependencies) (runErr error) {
 	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	})).With("logger", "folder-controller")
 	logger.Info("starting folder controller")
 
-	restClient, err := buildRESTClient(deps.Config, "folders_server_url", folderGVR.Group)
+	folderConfig, err := buildRESTConfig(deps.Config, "folders_server_url", folderGVR.Group)
 	if err != nil {
 		return err
+	}
+	restClient, err := rest.UnversionedRESTClientFor(dynamic.ConfigFor(folderConfig))
+	if err != nil {
+		return fmt.Errorf("failed to create %s REST client: %w", folderGVR.Group, err)
 	}
 	dashboardClient, err := buildRESTClient(deps.Config, "dashboards_server_url", dashboardGVR.Group)
 	if err != nil {
@@ -79,7 +81,6 @@ func RunFolderController(ctx context.Context, deps server.OperatorDependencies) 
 
 	subscriber := nats.ProvideSubscriber(nats.ProvideNATSConfig(deps.Config, nil), deps.Registerer)
 
-	var reg cache.ResourceEventHandlerRegistration
 	if nats.Enabled(subscriber) {
 		var stopSubscriber func() error
 		ctx, stopSubscriber = supervision.Watch(ctx, subscriber)
@@ -93,24 +94,17 @@ func RunFolderController(ctx context.Context, deps server.OperatorDependencies) 
 			}
 			return fmt.Errorf("failed to start NATS subscriber: %w", err)
 		}
-
-		inf := newFolderInformer(subscriber, keysapi.NewHTTPLister(restClient, folderGVR))
-
-		reg, err = inf.AddEventHandler(handler)
-		if err != nil {
-			return err
-		}
-		go inf.Run(ctx.Done())
-	} else {
-		factory := dynamicinformer.NewFilteredDynamicSharedInformerFactory(folders, cascadedelete.ResyncPeriod, "", nil)
-		informer := factory.ForResource(folderGVR).Informer()
-
-		reg, err = informer.AddEventHandler(handler)
-		if err != nil {
-			return err
-		}
-		factory.Start(ctx.Done())
 	}
+
+	source, err := newFolderSource(informers.ProvideSupplier(deps.Config), informers.Clients(folderConfig))
+	if err != nil {
+		return err
+	}
+	reg, err := source.AddEventHandler(handler)
+	if err != nil {
+		return err
+	}
+	go source.Run(ctx.Done())
 
 	if !cache.WaitForCacheSync(ctx.Done(), reg.HasSynced) {
 		logger.Error("failed to sync folder informer cache")

@@ -10,6 +10,8 @@ import (
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana-app-sdk/operator"
+	sdkresource "github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -45,6 +47,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
+	apiinformers "github.com/grafana/grafana/pkg/services/apiserver/informers"
 	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 )
 
@@ -65,6 +68,7 @@ type ControllerConfig struct {
 	provisioningClient    *client.Clientset
 	provisioningRESTCfg   *rest.Config
 	natsSubscriber        *nats.SubscriberService
+	informers             operator.InformerSupplier
 	unified               resources.ResourceStore
 	clients               resources.ClientFactory
 	manifestWatcher       services.Service
@@ -145,6 +149,7 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*Control
 		workerCount:    operatorSec.Key("worker_count").MustInt(1),
 		drainTimeout:   operatorSec.Key("drain_timeout").MustDuration(30 * time.Second),
 	}
+	controllerCfg.informers = apiinformers.ProvideSupplier(cfg)
 
 	for _, opt := range registeredConfigOptions {
 		if err := opt(context.Background(), controllerCfg); err != nil {
@@ -517,6 +522,16 @@ func (c *ControllerConfig) Registry() prometheus.Registerer {
 	c.registry = prometheus.NewPedanticRegistry()
 
 	return c.registry
+}
+
+// InformerClients returns the client generator the informers list and watch the
+// provisioning apiserver through. It shares the clientset's config, so building
+// the clientset first is what supplies it.
+func (c *ControllerConfig) InformerClients() (sdkresource.ClientGenerator, error) {
+	if _, err := c.ProvisioningClient(); err != nil {
+		return nil, err
+	}
+	return apiinformers.Clients(c.provisioningRESTCfg), nil
 }
 
 // RelistProjectionMetrics returns the process's re-list projection metrics.

@@ -394,7 +394,7 @@ func TestObserveRepositoryFreshness(t *testing.T) {
 
 // End-to-end over the real informer: the notification raises the announcement,
 // the getter the same delta source returns compares its read against it.
-func TestNewRepositoryDeltaSource_ObservesReadFreshness(t *testing.T) {
+func TestNATSRepositorySource_ObservesReadFreshness(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		const res = "repositories"
 		subject := resourcewatch.Subject(repoGVR, "")
@@ -413,7 +413,7 @@ func TestNewRepositoryDeltaSource_ObservesReadFreshness(t *testing.T) {
 
 		reg := prometheus.NewRegistry()
 		sub := newFakeSubscriber()
-		source, getter := NewRepositoryDeltaSource(sub, client, nil, time.Minute, nil, NewFreshnessMetrics(reg))
+		source, getter := natsRepositorySource(sub, client, nil, time.Minute, nil, NewFreshnessMetrics(reg))
 
 		stop := make(chan struct{})
 		t.Cleanup(func() { close(stop) })
@@ -454,7 +454,7 @@ func TestNewRepositoryDeltaSource_ObservesReadFreshness(t *testing.T) {
 // The create -> delete -> queued read case, end to end: the DELETED forgets the
 // announcement, so the correct NotFound the queued read returns is not counted
 // at all — not as behind, and not even as the ambiguous not_found.
-func TestNewRepositoryDeltaSource_DeleteLeavesNoAnnouncement(t *testing.T) {
+func TestNATSRepositorySource_DeleteLeavesNoAnnouncement(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		const res = "repositories"
 		subject := resourcewatch.Subject(repoGVR, "")
@@ -462,7 +462,7 @@ func TestNewRepositoryDeltaSource_DeleteLeavesNoAnnouncement(t *testing.T) {
 
 		reg := prometheus.NewRegistry()
 		sub := newFakeSubscriber()
-		source, getter := NewRepositoryDeltaSource(sub, client, nil, time.Minute, nil, NewFreshnessMetrics(reg))
+		source, getter := natsRepositorySource(sub, client, nil, time.Minute, nil, NewFreshnessMetrics(reg))
 
 		stop := make(chan struct{})
 		t.Cleanup(func() { close(stop) })
@@ -489,14 +489,7 @@ func TestNewRepositoryDeltaSource_DeleteLeavesNoAnnouncement(t *testing.T) {
 	})
 }
 
-// The getter the apiserver path returns is not wrapped: a watch-fed cache has no
-// cross-replica read visibility to measure.
-func TestNewRepositoryDeltaSource_NoFreshnessOnTheAPIServerPath(t *testing.T) {
-	_, getter := NewRepositoryDeltaSource(nil, fake.NewClientset(), nil, time.Minute, nil, NewFreshnessMetrics(prometheus.NewRegistry()))
-	assert.IsType(t, cachedRepositoryGetter{}, getter)
-}
-
-func TestNewConnectionDeltaSource_ObservesReadFreshness(t *testing.T) {
+func TestNATSConnectionSource_ObservesReadFreshness(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		const res = "connections"
 		subject := resourcewatch.Subject(connGVR, "")
@@ -509,7 +502,7 @@ func TestNewConnectionDeltaSource_ObservesReadFreshness(t *testing.T) {
 
 		reg := prometheus.NewRegistry()
 		sub := newFakeSubscriber()
-		source, getter := NewConnectionDeltaSource(sub, client, nil, time.Minute, nil, NewFreshnessMetrics(reg))
+		source, getter := natsConnectionSource(sub, client, nil, time.Minute, nil, NewFreshnessMetrics(reg))
 
 		stop := make(chan struct{})
 		t.Cleanup(func() { close(stop) })

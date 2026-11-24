@@ -155,11 +155,14 @@ func waitForRun(t *testing.T, done <-chan error) error {
 // blocking handlers must also return on t.Context() so that close cannot hang.
 func startFakeHistoricJobsAPI(t *testing.T, onDelete http.HandlerFunc) *httptest.Server {
 	historicJob := func(name string, age time.Duration) provisioning.HistoricJob {
-		return provisioning.HistoricJob{ObjectMeta: metav1.ObjectMeta{
-			Namespace:         "ns",
-			Name:              name,
-			CreationTimestamp: metav1.NewTime(time.Now().Add(-age)),
-		}}
+		return provisioning.HistoricJob{
+			TypeMeta: metav1.TypeMeta{APIVersion: provisioning.SchemeGroupVersion.String(), Kind: "HistoricJob"},
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace:         "ns",
+				Name:              name,
+				CreationTimestamp: metav1.NewTime(time.Now().Add(-age)),
+			},
+		}
 	}
 	list := provisioning.HistoricJobList{
 		TypeMeta: metav1.TypeMeta{APIVersion: provisioning.SchemeGroupVersion.String(), Kind: "HistoricJobList"},

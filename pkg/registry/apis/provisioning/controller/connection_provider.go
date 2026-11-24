@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/operator"
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/client-go/tools/cache"
 
@@ -14,26 +16,25 @@ import (
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
-	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 )
 
 // ConnectionControllerDeps are the dependencies of a connection controller,
 // shared by the in-process apiserver and the standalone connection operator.
 type ConnectionControllerDeps struct {
 	Subscriber nats.Subscriber
-	Client     versioned.Interface
-	// Keys makes the NATS re-list keys-only; nil keeps the full-object re-list.
-	Keys              keysapi.Lister
+	// Informers decides how the connection informer is built; nil gives the
+	// apiserver watch.
+	Informers         operator.InformerSupplier
+	InformerClients   resource.ClientGenerator
+	Client            versioned.Interface
 	ConnectionFactory connection.Factory
-	// The metrics below register once per process, so callers that run other
-	// controllers pass the same instances to all of them.
-	HealthMetrics    HealthMetricsRecorder
-	RelistMetrics    *informer.RelistProjectionMetrics
-	FreshnessMetrics *informer.FreshnessMetrics
-	Registry         prometheus.Registerer
-	Tracer           tracing.Tracer
-	ResyncInterval   time.Duration
-	DrainTimeout     time.Duration
+	// HealthMetrics registers once per process, so callers that run other
+	// controllers pass the same instance to all of them.
+	HealthMetrics  HealthMetricsRecorder
+	Registry       prometheus.Registerer
+	Tracer         tracing.Tracer
+	ResyncInterval time.Duration
+	DrainTimeout   time.Duration
 }
 
 // ConnectionControllerRunner is a connection controller wired to its delta source.
@@ -46,7 +47,10 @@ type ConnectionControllerRunner struct {
 // ProvideConnectionController builds the connection controller and its delta
 // source, and registers the controller's event handler with the source.
 func ProvideConnectionController(deps ConnectionControllerDeps) (*ConnectionControllerRunner, error) {
-	source, getter := informer.NewConnectionDeltaSource(deps.Subscriber, deps.Client, deps.Keys, deps.ResyncInterval, deps.RelistMetrics, deps.FreshnessMetrics)
+	source, getter, err := informer.NewConnectionDeltaSource(deps.Informers, deps.InformerClients, deps.Client, deps.ResyncInterval)
+	if err != nil {
+		return nil, fmt.Errorf("connection source: %w", err)
+	}
 	return newConnectionControllerRunner(source, getter, deps)
 }
 

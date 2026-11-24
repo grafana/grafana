@@ -370,6 +370,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/apiserver/builder"
 	_ "github.com/grafana/grafana/pkg/services/apiserver/client"
 	_ "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	_ "github.com/grafana/grafana/pkg/services/apiserver/informers"
 	_ "github.com/grafana/grafana/pkg/services/apiserver/keysroutes"
 	_ "github.com/grafana/grafana/pkg/services/apiserver/options"
 	_ "github.com/grafana/grafana/pkg/services/apiserver/restcfg"
