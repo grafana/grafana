@@ -16,6 +16,8 @@ import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
 
 import { RuleListGroupView } from './RuleListGroupView';
 
+jest.mock('../../Analytics', () => makeSpyable('../../Analytics'));
+
 jest.mock('@grafana/assistant', () => ({
   useAssistant: () => ({ isAvailable: false, openAssistant: jest.fn() }),
 }));

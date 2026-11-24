@@ -9,7 +9,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getMouseFocusStyles, mediaUp } from '../../themes/mixins';
 import { type IconSize } from '../../types/icon';
-import { getActiveButtonStyles, getPropertiesForVariant } from '../Button/Button';
+import { getActiveButtonStyles, getPropertiesForVariant } from '../Button/StyledButton.styles';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
 

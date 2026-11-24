@@ -56,7 +56,9 @@ export function useStackedItemScroll({
 
   // Latest selected item, read by the resize/scroll callbacks without making them reactive deps.
   const selectedItemRef = useRef(selectedItem);
-  selectedItemRef.current = selectedItem;
+  useLayoutEffect(() => {
+    selectedItemRef.current = selectedItem;
+  });
 
   const scrollSelectedIntoView = useCallback(
     (behavior: ScrollBehavior) => {

@@ -45,10 +45,6 @@ function buildRoutingLeaves(filter: AlertRuleFilter): Array<SourcedLeaf<AlertFil
   if (filter.policy && filter.policy !== DEFAULT_POLICY) {
     leaves.push({ key: 'policy', leaf: { filter: { field: 'routingTree', operator: 'In', values: [filter.policy] } } });
   }
-  if (filter.paused) {
-    // NotIn is only accepted on labels, state and health, so "not paused" is paused=false.
-    leaves.push({ key: 'paused', leaf: { filter: { field: 'paused', operator: 'In', values: [filter.paused] } } });
-  }
 
   return leaves;
 }

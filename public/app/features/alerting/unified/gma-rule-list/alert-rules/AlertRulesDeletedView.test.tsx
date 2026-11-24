@@ -1,6 +1,7 @@
 import { HttpResponse, http } from 'msw';
-import { render, screen, userEvent } from 'test/test-utils';
+import { render, screen, userEvent, waitFor } from 'test/test-utils';
 
+import { locationService } from '@grafana/runtime';
 import server from '@grafana/test-utils/server';
 
 jest.mock('@grafana/runtime', () => ({
@@ -9,7 +10,14 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 import { setupMswServer } from '../../mockApi';
-import { FOLDER_PARENTS_URL, TRASH_RULES_URL, makeDeletedRule, mockTrashRules } from '../mocks/handlers';
+import { confirmRestore } from '../deleted-rules/deletedRulesPageFixture';
+import {
+  FOLDER_PARENTS_URL,
+  TRASH_RULES_URL,
+  makeDeletedRule,
+  mockRuleCreate,
+  mockTrashRules,
+} from '../mocks/handlers';
 
 import { AlertRulesDeletedView } from './AlertRulesDeletedView';
 
@@ -68,12 +76,34 @@ describe('AlertRulesDeletedView', () => {
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
   });
 
-  it('opens Restore modal when Restore is clicked', async () => {
+  it('restores the rule and opens it', async () => {
     mockTrashRules([makeDeletedRule()]);
+    mockRuleCreate('alert');
     render(<AlertRulesDeletedView />);
-    await screen.findByText('Test Admin');
-    await userEvent.click(screen.getByRole('button', { name: /Restore/i }));
-    expect(await screen.findByText(/Restore "Deleted rule"/i)).toBeInTheDocument();
+    await confirmRestore('Test Admin');
+    await waitFor(() => expect(locationService.getLocation().pathname).toBe('/alerting/grafana/deleted-rule-uid/view'));
+  });
+
+  it('shows a conflict when a rule with the same UID exists', async () => {
+    mockTrashRules([makeDeletedRule()]);
+    mockRuleCreate('alert', { existingNames: ['deleted-rule-uid'] });
+    render(<AlertRulesDeletedView />);
+    await confirmRestore('Test Admin');
+    expect(await screen.findByText(/already exists/i)).toBeInTheDocument();
+  });
+
+  it('keeps the loaded rules and shows the error when Load more fails', async () => {
+    server.use(
+      http.get(TRASH_RULES_URL, ({ request }) =>
+        new URL(request.url).searchParams.has('continue')
+          ? HttpResponse.json({ message: 'boom' }, { status: 500 })
+          : HttpResponse.json({ metadata: { continue: 'page-2' }, items: [makeDeletedRule()] })
+      )
+    );
+    render(<AlertRulesDeletedView />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Load more' }));
+    expect(await screen.findByText('Failed to load more results')).toBeInTheDocument();
+    expect(screen.getByText('Deleted rule')).toBeInTheDocument();
   });
 
   it('shows error state with retry on fetch failure', async () => {
