@@ -139,6 +139,37 @@ func TestTransactionExecDeadlineAtReply(t *testing.T) {
 	}
 }
 
+func TestTransactionQueryDeadlineAtSchema(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		ctx := sqldriver.WithQuery(t.Context(), "stacks-1", "read.deadline")
+		stmtCtx, cancel := context.WithTimeout(ctx, time.Second)
+		defer cancel()
+		schema := &dbproxyv1.TransactionResponse{Result: &dbproxyv1.TransactionResponse_Query{Query: &dbproxyv1.QueryResponse{
+			Columns: []*dbproxyv1.Column{{Name: "n", ValueType: dbproxyv1.ValueType_VALUE_TYPE_INT64}},
+		}}}
+		stream := &stalledTransactionStream{
+			responses: []*dbproxyv1.TransactionResponse{
+				{Result: &dbproxyv1.TransactionResponse_Ok{Ok: &emptypb.Empty{}}},
+				schema,
+			},
+			beforeReply: func(reply *dbproxyv1.TransactionResponse) {
+				if reply == schema {
+					<-stmtCtx.Done()
+					synctest.Wait() // Let cancellation abort the stream before delivering the buffered schema.
+				}
+			},
+		}
+		tx := beginFakeTransaction(t, ctx, stream)
+		rows, err := tx.QueryContext(stmtCtx, "SELECT n")
+		if rows != nil || !errors.Is(err, context.DeadlineExceeded) {
+			t.Fatalf("QueryContext returned rows=%t, err=%v; want no rows and statement deadline exceeded", rows != nil, err)
+		}
+		if err := tx.Commit(); err == nil || errors.Is(err, sqldriver.ErrOutcomeUnknown) || len(stream.requests) != 2 {
+			t.Fatalf("Commit = %v, requests = %v; want failure before dispatch", err, stream.requests)
+		}
+	})
+}
+
 func TestTransactionRowsDeadlineAtCompletion(t *testing.T) {
 	for _, earlyClose := range []bool{false, true} {
 		name := "iterate"

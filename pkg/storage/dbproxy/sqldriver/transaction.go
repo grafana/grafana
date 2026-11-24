@@ -336,6 +336,12 @@ func (t *transaction) query(ctx context.Context, identity queryIdentity, query s
 		t.abort()
 		return nil, fmt.Errorf("proxy transaction query: %w", err)
 	}
+	// Recv can deliver a buffered schema even after cancellation. Keep the
+	// callback armed only when handing off a live query to the row iterator.
+	if err := ctx.Err(); err != nil {
+		done()
+		return nil, fmt.Errorf("proxy transaction query: %w", err)
+	}
 	r := &transactionRows{tx: t}
 	r.rows = &rows{
 		columns: result.Query.Columns,
