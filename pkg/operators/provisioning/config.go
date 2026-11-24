@@ -263,8 +263,6 @@ func (c *ControllerConfig) NewSupportedResourceProvider() (resources.SupportedRe
 	return resources.NewSupportedResourceProvider(configured), nil
 }
 
-const routerAudience = "grafana"
-
 // Clients Clients are clients that are used to connect to the different API servers.
 func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 	if c.clients != nil {
@@ -349,7 +347,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		}
 		var audienceProvider clientauth.AudienceProvider = clientauth.NewStaticAudienceProvider(audiences...)
 		if group == resources.AnyGroup && c.Settings.ProvisioningRouterClient {
-			audienceProvider = clientauth.NewRequestGroupAudienceProvider(routerAudience, provisioning.GROUP)
+			audienceProvider = clientauth.NewRequestGroupAudienceProvider(setting.ExtJWTAccessTokenExpectAudience, provisioning.GROUP)
 		}
 
 		config := &rest.Config{
@@ -373,7 +371,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 
 	c.manifestWatcher, err = resources.NewRemoteManifestWatcher(supportedResourceProvider, c.Registry(), resource.ManifestWatcherConfig{
 		DiscoveryURL:      aggregatedServerURL,
-		DiscoveryAudience: routerAudience,
+		DiscoveryAudience: setting.ExtJWTAccessTokenExpectAudience,
 		Exchanger:         tokenExchangeClient,
 		TLS:               &tlsConfig,
 		PollInterval:      time.Minute,
