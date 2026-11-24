@@ -276,6 +276,11 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 	}
 }
 
+// GetCachedRuleKeys returns the keys of all rules that currently have states in the cache.
+func (st *Manager) GetCachedRuleKeys() []ngModels.AlertRuleKey {
+	return st.cache.getRuleKeys()
+}
+
 func (st *Manager) Get(orgID int64, alertRuleUID string, stateId data.Fingerprint) *State {
 	return st.cache.get(orgID, alertRuleUID, stateId)
 }
