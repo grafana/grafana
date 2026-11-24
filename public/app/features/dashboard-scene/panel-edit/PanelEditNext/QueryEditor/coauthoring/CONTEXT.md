@@ -65,6 +65,6 @@ After Prometheus and expressions implement the contracts, compare their needs an
 - Explicit `runQueries` invalidates the Proposal even with unchanged text. Mutations that also run queries advance the revision for the mutation, once.
 - `QueryCoauthoringRuns` retains a separate copy of cached and projected frame values, schedules Options in rank order, and never projects a background run. A time-range change replaces the pass without advancing the revision.
 - Canonical health derives only from canonical results. Projection and restoration carry an identity marker so neither is interpreted as a canonical run.
-- `closeCoauthoringSession` supplies the flag-off and panel-leave reasons; pane deactivation disposes the owner. Removing or renaming the Focus closes the session, while other canonical changes make the Proposal stale.
+- `closeCoauthoringSession` supplies the flag-off and panel-leave reasons. Ending panel edit or replacing the panel's `$data` disposes the owner. Query-pane remounts keep the session open. Removing or renaming the Focus closes the session, while other canonical changes make the Proposal stale.
 
 The Surface work wires listener gating, selection, row/editor projection, the restricted API, flags, badges and telemetry. It must use the session state subscription to rerender proposed rows and pass the editor selection callback when entering; preview itself never changes the selected query. Closing or moving the Assistant must not call the session's exit operation.
