@@ -3113,3 +3113,64 @@ func TestIntegrationProvisioning_ReleaseOrphanedManagedResources(t *testing.T) {
 		})
 	}
 }
+
+// TestIntegrationProvisioning_DeleteOrphanedManagedResourcesByRole covers who may delete a resource
+// whose repository is gone. The caller needs no admin role, only the permission to delete the resource.
+func TestIntegrationProvisioning_DeleteOrphanedManagedResourcesByRole(t *testing.T) {
+	helper := sharedHelper(t)
+
+	for _, caller := range []struct {
+		role    string
+		user    apis.User
+		allowed bool
+	}{
+		// viewer does not have folders:delete permission
+		{role: "viewer", user: helper.Org1.Viewer, allowed: false},
+		{role: "editor", user: helper.Org1.Editor, allowed: true},
+		{role: "admin", user: helper.Org1.Admin, allowed: true},
+	} {
+		t.Run(caller.role, func(t *testing.T) {
+			repo := "orphan-delete-" + caller.role
+			_, nestedDashboard, nestedFolder := orphanedRepoResources(t, helper, repo)
+
+			// The dashboard goes first: a folder is deleted once it is empty.
+			for _, resource := range []struct {
+				kind  string
+				gvr   schema.GroupVersionResource
+				admin *apis.K8sResourceClient
+				name  string
+			}{
+				{kind: "dashboard", gvr: dashboardV1.DashboardResourceInfo.GroupVersionResource(), admin: helper.DashboardsV1, name: nestedDashboard},
+				{kind: "folder", gvr: folder.FolderResourceInfo.GroupVersionResource(), admin: helper.Folders, name: nestedFolder},
+			} {
+				t.Run(resource.kind, func(t *testing.T) {
+					if resource.kind == "folder" {
+						// A caller who cannot delete the dashboard leaves it in the folder, and a folder that is
+						// not empty is refused whatever the caller's permissions. Empty it as an admin, so the
+						// result depends on the permissions of the caller only.
+						err := helper.DashboardsV1.Resource.Delete(t.Context(), nestedDashboard, metav1.DeleteOptions{})
+						if err != nil {
+							require.True(t, apierrors.IsNotFound(err), "empty the folder: %v", err)
+						}
+					}
+					client := helper.GetResourceClient(apis.ResourceClientArgs{
+						User:      caller.user,
+						Namespace: "default",
+						GVR:       resource.gvr,
+					})
+
+					err := client.Resource.Delete(t.Context(), resource.name, metav1.DeleteOptions{})
+
+					_, getErr := resource.admin.Resource.Get(t.Context(), resource.name, metav1.GetOptions{})
+					if caller.allowed {
+						require.NoError(t, err)
+						require.True(t, apierrors.IsNotFound(getErr), "the %s should be deleted, got: %v", resource.kind, getErr)
+						return
+					}
+					require.True(t, apierrors.IsForbidden(err), "a %s without delete permission must not delete: %v", caller.role, err)
+					require.NoError(t, getErr, "the %s must still exist", resource.kind)
+				})
+			}
+		})
+	}
+}
