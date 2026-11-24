@@ -102,18 +102,21 @@ export function RepositoryListItem({ repository }: Props) {
           {spec?.description && <Text>{spec.description}</Text>}
           {status?.stats?.length && (
             <Stack gap={1} direction="row" wrap>
-              {status.stats.map((stat, index) => (
-                <LinkButton
-                  key={index}
-                  fill="outline"
-                  size="md"
-                  variant="secondary"
-                  icon={findKindByResource(stat.resource)?.icon ?? 'file-alt'}
-                  href={getRepositoryResourcesUrl(name, stat.resource)}
-                >
-                  {`${stat.count} ${findKindByResource(stat.resource)?.getPluralLabel({ upperFirst: false }) ?? stat.resource}`}
-                </LinkButton>
-              ))}
+              {status.stats.map((stat, index) => {
+                const kind = findKindByResource(stat.resource);
+                return (
+                  <LinkButton
+                    key={index}
+                    fill="outline"
+                    size="md"
+                    variant="secondary"
+                    icon={kind?.icon ?? 'file-alt'}
+                    href={getRepositoryResourcesUrl(name, stat.resource)}
+                  >
+                    {`${stat.count} ${kind?.getPluralLabel({ upperFirst: false }) ?? stat.resource}`}
+                  </LinkButton>
+                );
+              })}
             </Stack>
           )}
         </Stack>
