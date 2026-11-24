@@ -1,3 +1,5 @@
+import { isEqual } from 'lodash';
+
 import { FieldConfigProperty, MappingType, store, type ThresholdsConfig, type ValueMapping } from '@grafana/data';
 import { hasVarMappingVariableReference, isVarMappingProp, unwrapVarMappingPropId } from '@grafana/data/internal';
 import { config, locationService } from '@grafana/runtime';
@@ -214,6 +216,23 @@ function getTextPanelUsage(panels: VizPanel[]) {
 }
 
 /**
+ * Each open dashboard's usage when it loaded or was last saved, so a save only reports a change. Saves carry the
+ * options and loads don't, so the options count what dashboards hold rather than how often they're viewed.
+ */
+const panelOptionVariableUsageBaselines = new WeakMap<
+  DashboardScene,
+  { uid: string; usage: PanelOptionVariableUsage }
+>();
+
+const NO_PANEL_OPTION_VARIABLE_USAGE: PanelOptionVariableUsage = {
+  panel_count: 0,
+  field_config_count: 0,
+  threshold_count: 0,
+  value_mapping_count: 0,
+  options: '',
+};
+
+/**
  * Counts the panels whose saved field config sets options from variables, so the counts follow what
  * dashboards hold, whichever way an option got or lost its variable
  */
@@ -222,16 +241,23 @@ function trackPanelOptionVariableUsage(dashboard: DashboardScene, trigger: 'load
     return;
   }
 
-  const { options, ...counts } = getPanelOptionVariableUsage(dashboard);
+  const usage = getPanelOptionVariableUsage(dashboard);
+  const uid = dashboard.state.uid ?? '';
+  const baseline = panelOptionVariableUsageBaselines.get(dashboard);
+  panelOptionVariableUsageBaselines.set(dashboard, { uid, usage });
 
-  if (counts.panel_count > 0) {
-    DashboardInteractions.panelOptionVariableUsage({
-      ...counts,
-      // Only saves carry the options, so they count what dashboards hold rather than how often they're viewed
-      ...(trigger === 'save' && { options }),
-      trigger,
-      dashboard_uid: dashboard.state.uid,
-    });
+  if (trigger === 'load') {
+    const { options, ...counts } = usage;
+    if (counts.panel_count > 0) {
+      DashboardInteractions.panelOptionVariableUsage({ ...counts, trigger, dashboard_uid: dashboard.state.uid });
+    }
+    return;
+  }
+
+  // A first save or Save as gives the dashboard a new uid, so it is compared with no usage
+  const previous = baseline?.uid === uid ? baseline.usage : NO_PANEL_OPTION_VARIABLE_USAGE;
+  if (!isEqual(usage, previous)) {
+    DashboardInteractions.panelOptionVariableUsage({ ...usage, trigger, dashboard_uid: dashboard.state.uid });
   }
 }
 
