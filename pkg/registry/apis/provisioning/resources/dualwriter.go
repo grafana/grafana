@@ -33,11 +33,12 @@ import (
 
 // TODO: it does not support folders yet
 type DualReadWriter struct {
-	repo                  repository.ReaderWriter
-	parser                Parser
-	folders               *FolderManager
-	authorizer            Authorizer
-	folderMetadataEnabled bool
+	repo       repository.ReaderWriter
+	parser     Parser
+	folders    *FolderManager
+	authorizer Authorizer
+	// maxFileSize caps the bytes committed for a file; zero disables the check.
+	maxFileSize int64
 }
 
 type DualWriteOptions struct {
@@ -53,8 +54,14 @@ type DualWriteOptions struct {
 	Branch       string // Configured default branch
 }
 
-func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, authorizer Authorizer, folderMetadataEnabled bool) *DualReadWriter {
-	return &DualReadWriter{repo: repo, parser: parser, folders: folders, authorizer: authorizer, folderMetadataEnabled: folderMetadataEnabled}
+func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, authorizer Authorizer, maxFileSize int64) *DualReadWriter {
+	return &DualReadWriter{
+		repo:        repo,
+		parser:      parser,
+		folders:     folders,
+		authorizer:  authorizer,
+		maxFileSize: maxFileSize,
+	}
 }
 
 func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*ParsedResource, error) {
@@ -363,6 +370,13 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 		return nil, err
 	}
 
+	if !create {
+		if err := r.keepCommittedSecureValues(ctx, parsed, opts.Path, opts.Ref); err != nil {
+			return nil, err
+		}
+	}
+
+	// Guard what will be written, so the restored values are checked too.
 	if err := checkSecureValues(parsed); err != nil {
 		return nil, err
 	}
@@ -393,6 +407,10 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 
 	data, err := parsed.ToSaveBytes()
 	if err != nil {
+		return nil, err
+	}
+
+	if err := r.checkFileSize(data, opts.Path); err != nil {
 		return nil, err
 	}
 
@@ -625,7 +643,8 @@ func (r *DualReadWriter) moveDirectory(ctx context.Context, opts DualWriteOption
 }
 
 func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*ParsedResource, error) {
-	// Read the original file to get its content for parsing and authorization
+	// Stays on the configured branch: the Authorizer forbids resolving the folder
+	// behind the delete check from a caller-supplied ref.
 	originalFile, err := r.repo.Read(ctx, opts.OriginalPath, "")
 	if err != nil {
 		return nil, fmt.Errorf("read original file: %w", err)
@@ -663,6 +682,10 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 		return nil, fmt.Errorf("parse new file: %w", err)
 	}
 
+	if len(opts.Data) > 0 && newParsed.Repo.Type.AllowsSecureValues() {
+		keepPlaintextSecureValues(parsed.Obj, newParsed.Obj)
+	}
+
 	// This path writes the resource to storage below, so it is guarded whether or
 	// not the caller supplied content: relocating a file that already carries a
 	// secret would otherwise replay its create or remove against the secret store.
@@ -698,6 +721,13 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 	data, err := newParsed.ToSaveBytes()
 	if err != nil {
 		return nil, err
+	}
+
+	// Only a content-bearing move writes these bytes; a rename moves the file as it stands.
+	if len(opts.Data) > 0 {
+		if err := r.checkFileSize(data, opts.Path); err != nil {
+			return nil, err
+		}
 	}
 
 	// Always use the provisioning identity when writing
@@ -856,4 +886,53 @@ func (r *DualReadWriter) shouldUpdateGrafanaDB(opts DualWriteOptions, parsed *Pa
 	}
 
 	return r.isConfiguredBranch(opts)
+}
+
+// checkFileSize rejects a write over the configured limit. The body is capped before
+// it is re-serialized here, and a file over the limit can no longer be read back.
+func (r *DualReadWriter) checkFileSize(data []byte, path string) error {
+	if r.maxFileSize <= 0 || int64(len(data)) <= r.maxFileSize {
+		return nil
+	}
+
+	return apierrors.NewRequestEntityTooLargeError(
+		fmt.Sprintf("file %q is %d bytes once written; max allowed is %d bytes", path, len(data), r.maxFileSize))
+}
+
+// readWithRefFallback reads path on ref, falling back to the branch a new ref starts from.
+func (r *DualReadWriter) readWithRefFallback(ctx context.Context, path, ref string) (*repository.FileInfo, error) {
+	info, err := r.repo.Read(ctx, path, ref)
+	if errors.Is(err, repository.ErrRefNotFound) && ref != "" {
+		return r.repo.Read(ctx, path, "")
+	}
+	return info, err
+}
+
+// keepCommittedSecureValues restores the committed plaintext for keys the update
+// never mentions; a client that does not model the field would drop them.
+func (r *DualReadWriter) keepCommittedSecureValues(ctx context.Context, parsed *ParsedResource, path, ref string) error {
+	// Plaintext is inert where the type forbids it: checkSecureValues and sync both refuse it.
+	if !parsed.Repo.Type.AllowsSecureValues() {
+		return nil
+	}
+
+	committed, err := r.readWithRefFallback(ctx, path, ref)
+	if err != nil {
+		// Nothing to keep, and an oversized file must stay replaceable by one that fits.
+		if errors.Is(err, repository.ErrFileNotFound) || errors.Is(err, repository.ErrRefNotFound) ||
+			apierrors.IsNotFound(err) || apierrors.IsRequestEntityTooLargeError(err) {
+			return nil
+		}
+		return fmt.Errorf("read committed file: %w", err)
+	}
+
+	obj, _, _, parseErr := ParseFileResource(ctx, committed)
+	if parseErr != nil {
+		// Not a resource we can read, so it holds no secure values to keep.
+		return nil
+	}
+
+	keepPlaintextSecureValues(obj, parsed.Obj)
+
+	return nil
 }

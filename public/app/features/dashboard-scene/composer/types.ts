@@ -102,11 +102,22 @@ export interface ElementPoint {
 }
 
 /**
- * What a press does while a pick is pending. 'select' (the default) picks an element on click and draws a
- * region on drag; 'text' lets the browser select text inside an element and picks it on release; 'remove'
- * picks an element on click, to mark it for removal, and draws nothing on drag.
+ * What a press does while a pick is pending. 'select' (the default) picks an element on click; a drag
+ * draws a region, or picks the elements it covers when the pick asks for that (`PickElementOptions.drag`).
+ * 'text' lets the browser select text inside an element and picks it on release. 'remove' picks an element
+ * on click, to mark it for removal, and draws nothing on drag. 'screenshot' draws a region on drag, for
+ * `captureRegion`, and ignores a click.
  */
-export type ComposerTool = 'select' | 'text' | 'remove';
+export type ComposerTool = 'select' | 'text' | 'remove' | 'screenshot';
+
+export interface PickElementOptions {
+  /**
+   * What a drag with Select picks. 'region' (the default, what older consumers get) draws a region;
+   * 'elements' picks the elements the rectangle covers, as an `ElementsPick`, and outlines them while the
+   * drag runs. The Screenshot tool always draws a region.
+   */
+  drag?: 'region' | 'elements';
+}
 
 /** A rectangle normalised to 0..1 of an element's bounds. */
 export interface ElementRect {
@@ -149,6 +160,21 @@ export interface ElementPick {
   tool?: Exclude<ComposerTool, 'select'>;
   /** The Text tool's selection. Present exactly when `tool` is 'text'. */
   text?: PickedText;
+}
+
+/**
+ * A Select drag with `drag: 'elements'`: the panels, variable controls and annotation or data layer controls
+ * (on a notebook, cells) the rectangle overlaps with a positive area, in layout order. A drag that covers none
+ * picks nothing and the pick stays pending.
+ */
+export interface ElementsPick {
+  /**
+   * At least one, at most 20. Each element's `point` is where the drag ended, kept inside that element, so
+   * the last one's pin sits by the pointer.
+   */
+  elements: ElementPick[];
+  /** Whether ⌘ (macOS) or Ctrl was held when the drag ended: see `ElementPick.additive`. */
+  additive?: boolean;
 }
 
 /**
@@ -230,6 +256,19 @@ interface ComposerSaveOutcome {
   message?: string;
 }
 
+/**
+ * Why a session ended, as `signal.reason` reports it once the signal has aborted. A path that names no
+ * reason leaves the signal's default reason, which is not one of these.
+ */
+export type ComposerExitReason =
+  | 'sidebar_closed'
+  | 'toolbar_button'
+  | 'mode_change'
+  | 'manual_edit'
+  | 'navigation'
+  | 'flag_off'
+  | 'plugin_exit';
+
 /** What a session reports once it has ended. Dashboards never save, so theirs carries no `save`. */
 export interface ComposerExitResult {
   save?: ComposerSaveOutcome;
@@ -237,7 +276,7 @@ export interface ComposerExitResult {
 
 export interface ComposerSessionAPI<Spec = ComposerDashboardSpec> {
   readonly target: ComposerTarget;
-  /** Aborted on exit, navigation away, scene deactivation or flag-off. */
+  /** Aborted on exit, navigation away, scene deactivation or flag-off. Its `reason` is a `ComposerExitReason`. */
   readonly signal: AbortSignal;
 
   /** The tools this session offers, in display order. */
@@ -256,11 +295,16 @@ export interface ComposerSessionAPI<Spec = ComposerDashboardSpec> {
   getToolsHost(): HTMLElement | null;
 
   /**
-   * Resolves with the clicked element, or with a region when the user drags at least 8x8 CSS px while it
-   * is pending (a smaller drag stays a click; a press on a tab header switches tabs).
+   * Resolves with the clicked element, or, when the user drags while it is pending, with a region or the
+   * elements the drag covers (`options.drag`). A drag starts after 8 CSS px of movement on either axis; less
+   * stays a click. A region needs at least 8x8. A press on a tab header switches tabs. With the Screenshot
+   * tool, only a drag picks, and always a region.
    * Null when cancelled (Escape, `signal`, pause or session end). Cancelling a drag keeps the pick pending.
    */
-  pickElement(signal: AbortSignal): Promise<ElementPick | RegionPick | null>;
+  pickElement(
+    signal: AbortSignal,
+    options?: PickElementOptions
+  ): Promise<ElementPick | ElementsPick | RegionPick | null>;
   /**
    * Draws a region only: a plain click does nothing. Kept for compatibility; `pickElement` draws regions
    * on drag too.
@@ -341,7 +385,7 @@ export interface ComposerSessionAPI<Spec = ComposerDashboardSpec> {
    * autosave paused for the session, so leaving makes the one save of everything applied, and this
    * resolves with its outcome (the same result as `closed`).
    */
-  exit(): void | Promise<ComposerExitResult>;
+  exit(reason?: ComposerExitReason): void | Promise<ComposerExitResult>;
   /**
    * Resolves once, after the session has ended by any path (exit, navigation away, disposal or flag-off)
    * and a notebook's exit save has settled.

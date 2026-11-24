@@ -174,7 +174,9 @@ describe('GMA-only Alert rules route', () => {
     expect(routesOn.map((route) => route.path)).toEqual([
       ...routesOff.map((route) => route.path),
       '/alerting/rules/alert',
+      '/alerting/rules/alert/deleted',
       '/alerting/rules/recording',
+      '/alerting/rules/recording/deleted',
     ]);
   });
 

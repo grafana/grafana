@@ -1042,6 +1042,62 @@ func TestRunBackfillJob_ResumesFromLastSeenKey(t *testing.T) {
 	require.Len(t, vec.completedJobIDs, 1)
 }
 
+// A checkpoint written in a token format the storage backend no longer accepts
+// must not wedge the job: the collection scan restarts and already embedded
+// items are skipped.
+func TestRunBackfillJob_RejectedCheckpointToken_RestartsCollectionScan(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{
+		makeListItem("ns", "a", 1),
+		makeListItem("ns", "b", 2),
+		makeListItem("ns", "c", 3),
+	}
+	storage.rejectedTokens = map[string]bool{"tok-old-format": true}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{
+		ID: 1, Model: "test-model", StoppingRV: 100,
+		LastSeenKey: encodeCursor("dashboards", "tok-old-format"),
+	}}
+	vec.jobContentVersion = map[int64]int{1: dashboard.New().Version()}
+	vec.seedEmbeddedRows("ns", "test-model", "dashboards", "a", dashboard.New().Version(), "panel/1")
+
+	o := newBackfiller(t, storage, vec)
+	o.runBackfill(context.Background())
+
+	require.GreaterOrEqual(t, len(storage.listCalls), 2)
+	assert.Equal(t, []string{"tok-old-format", ""}, storage.listCalls[:2], "the scan restarts from the beginning")
+	upserted := make([]string, 0, len(vec.upserts))
+	for _, batch := range vec.upserts {
+		upserted = append(upserted, batch[0].UID)
+	}
+	assert.Equal(t, []string{"b", "c"}, upserted, "already embedded items are skipped")
+	assert.Empty(t, vec.errorMarks)
+	require.Equal(t, []int64{1}, vec.completedJobIDs)
+}
+
+// The restart covers the persisted cursor only. A rejection on a fresh scan is
+// not something a restart can fix, so it fails the job instead of looping.
+func TestRunBackfillJob_RejectedAfterRestart_FailsJob(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{makeListItem("ns", "a", 1)}
+	storage.rejectedTokens = map[string]bool{"tok-old-format": true, "": true}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{
+		ID: 1, Model: "test-model", StoppingRV: 100,
+		LastSeenKey: encodeCursor("dashboards", "tok-old-format"),
+	}}
+	vec.jobContentVersion = map[int64]int{1: dashboard.New().Version()}
+
+	o := newBackfiller(t, storage, vec)
+	o.runBackfill(context.Background())
+
+	assert.Equal(t, []string{"tok-old-format", ""}, storage.listCalls)
+	assert.Len(t, vec.errorMarks, 1)
+	assert.Empty(t, vec.completedJobIDs)
+}
+
 func TestRunBackfillJob_CursorForUnknownResource_StartsFromScratch(t *testing.T) {
 	storage := newFakeStorage()
 	storage.listItems = []listItem{

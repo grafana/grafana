@@ -15,12 +15,9 @@ import (
 	"k8s.io/client-go/tools/cache"
 
 	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/operators/internal/supervision"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/server"
 )
 
@@ -56,6 +53,9 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (r
 	if err != nil {
 		return fmt.Errorf("failed to get clients: %w", err)
 	}
+	if err := services.StartAndAwaitRunning(ctx, controllerCfg.manifestWatcher); err != nil {
+		return fmt.Errorf("failed to start manifest watcher: %w", err)
+	}
 
 	resourceLister, err := controllerCfg.ResourceLister()
 	if err != nil {
@@ -72,7 +72,8 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (r
 		return fmt.Errorf("failed to get repository factory: %w", err)
 	}
 
-	allowImageRendering := controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("allow_image_rendering").MustBool(false)
+	provisioningSec := controllerCfg.Settings.SectionWithEnvOverrides("provisioning")
+	allowImageRendering := provisioningSec.Key("allow_image_rendering").MustBool(false)
 	validator := repository.NewValidator(allowImageRendering, repoFactory)
 	statusPatcher := appcontroller.NewRepositoryStatusPatcher(provisioningClient.ProvisioningV0alpha1())
 	// Health checker uses basic validation only - no need to validate against existing repositories
@@ -101,50 +102,45 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (r
 		return fmt.Errorf("failed to get quota getter: %w", err)
 	}
 
-	// nil unless keys_only_relist is on, which keeps the full-object re-list.
-	repoKeys, err := controllerCfg.ProvisioningKeysLister(logger, apisprovisioning.RepositoryResourceInfo.GroupVersionResource())
+	repoKeys, err := controllerCfg.ProvisioningKeysLister(apisprovisioning.RepositoryResourceInfo.GroupVersionResource())
 	if err != nil {
 		return err
 	}
 
-	// The repository delta source and the getter it backs.
-	repoSource, repoGetter := informer.NewRepositoryDeltaSource(controllerCfg.natsSubscriber, provisioningClient, repoKeys, controllerCfg.ResyncInterval(), controllerCfg.RelistProjectionMetrics(), controllerCfg.FreshnessMetrics())
-	controller := controller.NewRepositoryController(
-		provisioningClient.ProvisioningV0alpha1(),
-		repoGetter,
-		repoFactory,
-		connectionFactory,
-		resourceLister,
-		clients,
-		jobs,
-		healthChecker,
-		statusPatcher,
-		deps.Registerer,
-		tracer,
-		controllerCfg.Settings.SectionWithEnvOverrides("operator").Key("parallel_operations").MustInt(10),
-		controllerCfg.ResyncInterval(),
-		controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("min_sync_interval").MustDuration(1*time.Minute),
-		controllerCfg.DrainTimeout(),
-		quotaGetter,
-		controller.NewRepositoryQuotaChecker(repoGetter),
-		repository.NewIncrementalSyncPolicy(
-			resources.IsFolderMetadataEnabled(controllerCfg.Settings),
-			controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("max_incremental_changes").MustInt(100),
-		),
-		controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30*24*time.Hour),
-		nats.Enabled(controllerCfg.natsSubscriber),
-	)
-	reg, err := repoSource.AddEventHandler(controller.EventHandler())
+	repoController, repoSource, hasSynced, err := controller.ProvideRepositoryController(controller.RepositoryControllerDeps{
+		ProvisioningClient:            provisioningClient,
+		NATSSubscriber:                controllerCfg.natsSubscriber,
+		KeysLister:                    repoKeys,
+		RelistProjectionMetrics:       controllerCfg.RelistProjectionMetrics(),
+		FreshnessMetrics:              controllerCfg.FreshnessMetrics(),
+		RepoFactory:                   repoFactory,
+		ConnectionFactory:             connectionFactory,
+		ResourceLister:                resourceLister,
+		Clients:                       clients,
+		Jobs:                          jobs,
+		HealthChecker:                 healthChecker,
+		StatusPatcher:                 statusPatcher,
+		QuotaGetter:                   quotaGetter,
+		IncrementalPolicy:             repository.NewIncrementalSyncPolicy(provisioningSec.Key("max_incremental_changes").MustInt(100)),
+		Registry:                      deps.Registerer,
+		Tracer:                        tracer,
+		ParallelOperations:            controllerCfg.Settings.SectionWithEnvOverrides("operator").Key("parallel_operations").MustInt(10),
+		ResyncInterval:                controllerCfg.ResyncInterval(),
+		MinSyncInterval:               provisioningSec.Key("min_sync_interval").MustDuration(1 * time.Minute),
+		DrainTimeout:                  controllerCfg.DrainTimeout(),
+		WebhookSecretRotationInterval: provisioningSec.Key("webhook_secret_rotation_interval").MustDuration(30 * 24 * time.Hour),
+	})
 	if err != nil {
-		return fmt.Errorf("failed to add repository event handler: %w", err)
+		return err
 	}
 	go repoSource.Run(ctx.Done())
 
-	if !cache.WaitForCacheSync(ctx.Done(), reg.HasSynced) {
+	if !cache.WaitForCacheSync(ctx.Done(), hasSynced) {
+		repoController.ShutDownQueue()
 		return fmt.Errorf("failed to sync repository informer cache")
 	}
 
-	controller.Run(ctx, controllerCfg.NumberOfWorkers(), func() {
+	repoController.Run(ctx, controllerCfg.NumberOfWorkers(), func() {
 		logger.Info("repository operator is ready")
 		deps.HealthNotifier.SetReady()
 	}, func() {

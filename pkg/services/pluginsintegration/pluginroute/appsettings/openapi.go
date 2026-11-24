@@ -5,12 +5,15 @@ import (
 	"net/http"
 	"slices"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
 	kcommon "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
@@ -47,8 +50,8 @@ func (b *Builder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error)
 	root := fmt.Sprintf("/apis/%s/%s/", b.group, version)
 
 	// The subresources are plain handlers, so the API server documents none of
-	// them. Explicit resource and proxy routes replace these if the schema
-	// defines any.
+	// them. The settings manifest's resource and proxy routes are published
+	// here; the schema's routes, if it defines any, are added after them.
 	if err := b.addSubresourcePaths(oas, root+"namespaces/{namespace}/app/{name}", version); err != nil {
 		return nil, err
 	}
@@ -129,16 +132,136 @@ func (b *Builder) addSubresourcePaths(oas *spec3.OpenAPI, item, version string) 
 	oas.Paths.Paths[item+"/health"] = operation("getSettingsHealth", "connect GET requests to health of Settings",
 		"HealthCheckResult", spec.RefSchema("#/components/schemas/"+health))
 
-	subresources := []string{"resources"}
-	if b.registersProxy() {
-		subresources = append(subresources, "proxy")
-	}
-	for _, v := range subresources {
-		oas.Paths.Paths[item+"/"+v] = operation("getSettings"+strings.ToUpper(v[:1])+v[1:],
-			"Get resources in the "+v+" plugin. NOTE, additional routes may exist, but are not exposed via OpenAPI",
+	routes := b.settingsRoutes()
+	if len(routes.resources) == 0 {
+		oas.Paths.Paths[item+"/resources"] = operation("getSettingsResources",
+			"Get resources in the resources plugin. NOTE, additional routes may exist, but are not exposed via OpenAPI",
 			"Status", spec.StringProperty())
 	}
+	publish := func(subresource string, paths map[string]spec3.PathProps) {
+		for specPath, props := range paths {
+			props.Parameters = append(slices.Clone(params), props.Parameters...)
+			props.Parameters = append(props.Parameters, undeclaredPathParameters(specPath, &props)...)
+			for method, op := range map[string]**spec3.Operation{
+				http.MethodGet: &props.Get, http.MethodHead: &props.Head, http.MethodPost: &props.Post,
+				http.MethodPut: &props.Put, http.MethodPatch: &props.Patch, http.MethodDelete: &props.Delete,
+				http.MethodOptions: &props.Options,
+			} {
+				if *op != nil {
+					tagged := **op
+					tagged.Tags = []string{"Settings"}
+					if tagged.OperationId == "" {
+						tagged.OperationId = subresourceOperationID(method, subresource, specPath)
+					}
+					*op = &tagged
+				}
+			}
+			// A trailing slash is part of a declared route, so only the
+			// separator before an empty path is dropped.
+			published := item + "/" + subresource + "/" + specPath
+			if specPath == "" {
+				published = strings.TrimSuffix(published, "/")
+			}
+			oas.Paths.Paths[published] = &spec3.Path{PathProps: props}
+		}
+	}
+	publish("resources", routes.resources)
+	if b.registersProxy() {
+		publish("proxy", b.proxyRoutes().paths)
+	}
+	b.addComponents(oas, routes.components)
 	return nil
+}
+
+// subresourceOperationID names an operation the settings manifest leaves
+// unnamed, since the generated name repeats the whole settings path. GET
+// proxy/set-k8s/{path:*} is proxyGetSetK8sPath: the subresource comes first,
+// so its operations are listed together.
+func subresourceOperationID(method, subresource, specPath string) string {
+	var id strings.Builder
+	id.WriteString(subresource)
+	words := strings.FieldsFunc(strings.ToLower(method)+"/"+strings.ReplaceAll(specPath, ":*", ""), func(r rune) bool {
+		return !unicode.IsLetter(r) && !unicode.IsDigit(r)
+	})
+	for _, word := range words {
+		first, size := utf8.DecodeRuneInString(word)
+		id.WriteRune(unicode.ToUpper(first))
+		id.WriteString(word[size:])
+	}
+	return id.String()
+}
+
+// addComponents publishes the components the settings manifest's routes refer
+// to. One named as a generated component, such as the settings kind, is left
+// out: the API server describes what it serves.
+func (b *Builder) addComponents(oas *spec3.OpenAPI, components app.ManifestVersionOpenAPIComponents) {
+	if len(components.Schemas)+len(components.Responses)+len(components.Examples) == 0 {
+		return
+	}
+	if oas.Components == nil {
+		oas.Components = &spec3.Components{}
+	}
+	skipped := func(kind, name string) {
+		logger.Warn("settings manifest component is not published: the name is taken", "plugin", b.group, "component", kind, "name", name)
+	}
+	for name, s := range components.Schemas {
+		if _, ok := oas.Components.Schemas[name]; ok {
+			skipped("schema", name)
+			continue
+		}
+		if oas.Components.Schemas == nil {
+			oas.Components.Schemas = map[string]*spec.Schema{}
+		}
+		oas.Components.Schemas[name] = &s
+	}
+	addMissing(&oas.Components.Responses, components.Responses, func(name string) { skipped("response", name) })
+	addMissing(&oas.Components.Examples, components.Examples, func(name string) { skipped("example", name) })
+}
+
+func addMissing[T any](dst *map[string]T, src map[string]T, taken func(string)) {
+	for name, v := range src {
+		if _, ok := (*dst)[name]; ok {
+			taken(name)
+			continue
+		}
+		if *dst == nil {
+			*dst = map[string]T{}
+		}
+		(*dst)[name] = v
+	}
+}
+
+// undeclaredPathParameters documents the parameters of a route's path that
+// neither the path nor its operations declare, as strings.
+func undeclaredPathParameters(path string, props *spec3.PathProps) []*spec3.Parameter {
+	declared := map[string]bool{}
+	for _, p := range props.Parameters {
+		declared[p.Name] = true
+	}
+	ops := []*spec3.Operation{props.Get, props.Head, props.Post, props.Put, props.Patch, props.Delete, props.Options}
+	var missing []*spec3.Parameter
+	for _, segment := range strings.Split(path, "/") {
+		if !strings.HasPrefix(segment, "{") || !strings.HasSuffix(segment, "}") {
+			continue
+		}
+		name := segment[1 : len(segment)-1]
+		if declared[name] {
+			continue
+		}
+		inOps := false
+		for _, op := range ops {
+			if op != nil && slices.ContainsFunc(op.Parameters, func(p *spec3.Parameter) bool { return p.Name == name && p.In == "path" }) {
+				inOps = true
+			}
+		}
+		if !inOps {
+			declared[name] = true
+			missing = append(missing, &spec3.Parameter{ParameterProps: spec3.ParameterProps{
+				Name: name, In: "path", Required: true, Schema: spec.StringProperty(),
+			}})
+		}
+	}
+	return missing
 }
 
 func defaultSchema() *pluginschema.PluginSchema {

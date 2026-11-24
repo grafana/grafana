@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 func ProvideLoader(sql db.DB, catalog *RoleCatalog, actions ac.ActionResolver,
@@ -30,8 +31,8 @@ func ProvideLoader(sql db.DB, catalog *RoleCatalog, actions ac.ActionResolver,
 	return loader
 }
 
-func ProvideClient(loader *Loader, cfg *setting.Cfg) legacyclient.Service {
-	return NewEmbeddedClient(loader, cfg)
+func ProvideClient(loader *Loader, cfg *setting.Cfg, reg prometheus.Registerer) legacyclient.LegacyUserPermissionsClient {
+	return newEmbeddedClient(loader, cfg, reg)
 }
 
 func NewPermissionScopeResolver(features featuremgmt.FeatureToggles, restConfig restcfg.RestConfigProvider) legacyscopes.ScopeResolver {

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/authlib/authn"
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -27,7 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 
-	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	githubconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
@@ -67,6 +67,7 @@ type ControllerConfig struct {
 	natsSubscriber        *nats.SubscriberService
 	unified               resources.ResourceStore
 	clients               resources.ClientFactory
+	manifestWatcher       services.Service
 	tokenExchangeClient   *authn.TokenExchangeClient
 	tlsConfig             *rest.TLSClientConfig
 	decryptService        decrypt.DecryptService
@@ -213,7 +214,8 @@ func (c *ControllerConfig) UnifiedStorageClient() (resources.ResourceStore, erro
 }
 
 // ResourceLister builds the lister named by [provisioning] resource_lister. Unified storage is
-// only dialled for the mode that reads its managed-object index.
+// only dialled for the mode that reads its managed-object index, and the provisioning API server is
+// only called for the mode that reads its repository subresources.
 func (c *ControllerConfig) ResourceLister() (resources.ResourceLister, error) {
 	mode := c.Settings.ProvisioningResourceLister
 
@@ -233,7 +235,15 @@ func (c *ControllerConfig) ResourceLister() (resources.ResourceLister, error) {
 			return nil, fmt.Errorf("failed to get unified storage client: %w", err)
 		}
 	}
-	return resources.NewResourceListerForMode(mode, store, clients, supportedResources)
+
+	var provisioningAPI rest.Interface
+	if mode == resources.ListerAPIs {
+		provisioningAPI, err = c.ProvisioningRESTClient()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create provisioning REST client: %w", err)
+		}
+	}
+	return resources.NewResourceListerForMode(mode, store, clients, supportedResources, provisioningAPI, c.Settings.ProvisioningResourceListerPageSize)
 }
 
 // SupportedResources is the configured provisionable set, which may name collections as wildcards.
@@ -243,6 +253,14 @@ func (c *ControllerConfig) SupportedResources() ([]resources.SupportedResource, 
 		return nil, fmt.Errorf("invalid [provisioning] resources configuration: %w", err)
 	}
 	return supported, nil
+}
+
+func (c *ControllerConfig) NewSupportedResourceProvider() (resources.SupportedResourceProvider, error) {
+	configured, err := c.SupportedResources()
+	if err != nil {
+		return nil, err
+	}
+	return resources.NewSupportedResourceProvider(configured), nil
 }
 
 // Clients Clients are clients that are used to connect to the different API servers.
@@ -281,7 +299,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		provisioning.GROUP:                provisioningServerURL,
 	}
 
-	supportedResources, err := c.SupportedResources()
+	supportedResourceProvider, err := c.NewSupportedResourceProvider()
 	if err != nil {
 		return nil, err
 	}
@@ -291,7 +309,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 	// "no clients provider for group" at request time. A collection is registered under the
 	// collection group, not its members: those cannot be discovered before there is a client to
 	// discover through.
-	for _, r := range supportedResources {
+	for _, r := range supportedResourceProvider.Configured() {
 		if !r.IsActive() {
 			continue
 		}
@@ -306,7 +324,9 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		if aggregatedServerURL == "" {
 			return nil, fmt.Errorf("aggregated_server_url is required in [operator] section to serve resource %s/%s", r.Group, r.Kind)
 		}
-		apiServerURLs[group] = aggregatedServerURL
+	}
+	if aggregatedServerURL != "" {
+		apiServerURLs[resources.AnyGroup] = aggregatedServerURL
 	}
 
 	configProviders := make(map[string]apiserver.RestConfigProvider)
@@ -321,6 +341,9 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		audiences := []string{group}
 		if group != provisioning.GROUP {
 			audiences = append(audiences, provisioning.GROUP)
+		}
+		if group == resources.AnyGroup {
+			audiences = []string{provisioning.GROUP}
 		}
 
 		config := &rest.Config{
@@ -342,7 +365,18 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		configProviders[group] = NewDirectConfigProvider(config)
 	}
 
-	clients := resources.NewClientFactoryForMultipleAPIServers(configProviders, supportedResources...)
+	c.manifestWatcher, err = resources.NewRemoteManifestWatcher(supportedResourceProvider, c.Registry(), resource.ManifestWatcherConfig{
+		DiscoveryURL:      aggregatedServerURL,
+		DiscoveryAudience: provisioning.GROUP,
+		Exchanger:         tokenExchangeClient,
+		TLS:               &tlsConfig,
+		PollInterval:      time.Minute,
+		Log:               c.Settings.Logger,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create manifest watcher: %w", err)
+	}
+	clients := resources.NewClientFactoryForMultipleAPIServers(configProviders, supportedResourceProvider)
 	c.clients = clients
 	return clients, nil
 }
@@ -506,20 +540,13 @@ func (c *ControllerConfig) FreshnessMetrics() *informer.FreshnessMetrics {
 	return c.freshness
 }
 
-// ProvisioningKeysLister returns a keys lister for one kind when [provisioning]
-// keys_only_relist is set, and nil otherwise, which keeps the full-object
-// re-list.
-func (c *ControllerConfig) ProvisioningKeysLister(logger logging.Logger, gvr schema.GroupVersionResource) (keysapi.Lister, error) {
-	if !c.Settings.SectionWithEnvOverrides("provisioning").Key("keys_only_relist").MustBool(false) {
-		return nil, nil
-	}
-
+// ProvisioningKeysLister returns the keys lister the informer re-list reads one
+// kind through.
+func (c *ControllerConfig) ProvisioningKeysLister(gvr schema.GroupVersionResource) (keysapi.Lister, error) {
 	restClient, err := c.ProvisioningRESTClient()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create provisioning REST client: %w", err)
 	}
-
-	logger.Info("provisioning re-list will ask for keys only", "transport", "http", "resource", gvr.Resource)
 
 	return keysapi.NewHTTPLister(restClient, gvr), nil
 }
@@ -890,11 +917,9 @@ func (r *directConfigProvider) GetRestConfig(ctx context.Context) (*rest.Config,
 }
 
 func defaultConnectionTypes(extras []connection.Extra) []string {
-	types := []string{string(provisioning.GithubConnectionType)}
+	types := make([]string, 0, len(extras))
 	for _, extra := range extras {
-		if extra.Type() == provisioning.GithubEnterpriseConnectionType {
-			types = append(types, string(extra.Type()))
-		}
+		types = append(types, string(extra.Type()))
 	}
 	return types
 }

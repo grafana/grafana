@@ -68,10 +68,10 @@ var appManifestData = app.ManifestData{
 					Scope:      "Namespaced",
 					Conversion: false,
 					Storage: &app.ManifestVersionKindStorage{
-						ListKeys: func(b bool) *bool { return &b }(false),
+						ListKeys: new(false),
 					},
 					Search: &app.ManifestVersionKindSearch{
-						Endpoint: func(b bool) *bool { return &b }(false),
+						Endpoint: new(false),
 					},
 				},
 
@@ -122,6 +122,14 @@ var appManifestData = app.ManifestData{
 							Capabilities:     []string{"filter", "retrieve"},
 							EmitZeroIfAbsent: true,
 							Description:      "Whether the user is disabled",
+						},
+						{
+							Name:             "provisioned",
+							Path:             "spec.provisioned",
+							Type:             "boolean",
+							Capabilities:     []string{"retrieve"},
+							EmitZeroIfAbsent: true,
+							Description:      "Whether the user is provisioned",
 						},
 						{
 							Name:         "externalAuthModules",

@@ -1,4 +1,12 @@
-import { assertPluginIdFormat, assertApiVersion } from './pluginUtils';
+import { assertPluginIdFormat, assertApiVersion, getApiVersion, assertUIDFormat } from './pluginUtils';
+
+describe('getApiVersion', () => {
+  it('should resolve the current API version', async () => {
+    const url = await getApiVersion();
+
+    expect(url).toBe('v0alpha1');
+  });
+});
 
 describe('assertPluginIdFormat', () => {
   it.each([
@@ -79,5 +87,63 @@ describe('assertApiVersion', () => {
     expect(() => assertApiVersion('v1\n')).toThrow(`Invalid API version "v1\n"`);
     expect(() => assertApiVersion('v1\r')).toThrow(`Invalid API version "v1\r"`);
     expect(() => assertApiVersion('v1\0')).toThrow(`Invalid API version "v1\0"`);
+  });
+});
+
+describe('assertUIDFormat', () => {
+  it.each(['grafanacloud-traces', 'Grafana_cloud-Traces-123', 'tempo'])(
+    'should not throw for uids with valid format %s',
+    (uid) => {
+      expect(assertUIDFormat(uid)).toBeUndefined();
+    }
+  );
+
+  it.each([
+    '',
+    undefined,
+    123,
+    true,
+    ' ',
+    '.',
+    '..',
+    '...',
+    'grafana-exploretraces-app.',
+    'grafana-exploretraces-app..',
+    'grafana-exploretraces-app...',
+    './grafana-exploretraces-app',
+    '../grafana-exploretraces-app',
+    '.../grafana-exploretraces-app',
+    'grafana-exploretraces-app/.',
+    'grafana-exploretraces-app/..',
+    'grafana-exploretraces-app/../secret',
+    'grafana-exploretraces-app/secret',
+    'grafana-exploretraces-app\\secret',
+    'grafana-exploretraces-app?x=',
+    'grafana-exploretraces-app?x=secret',
+    'grafana-exploretraces-app#ignored',
+    'grafana-exploretraces-app/%2e%2e/secret',
+    'grafana-exploretraces-app%2fsecret',
+    'grafana-exploretraces-app%5csecret',
+    'grafana-exploretraces-app%252fsecret',
+    'grafana-exploretraces-app\t',
+    'grafana-exploretraces-app\n',
+    'grafana-exploretraces-app\r',
+    'grafana-exploretraces-app\0',
+  ])('should throw for uids with invalid format %s', (uid) => {
+    expect(() => assertUIDFormat(uid as unknown as string)).toThrow(`Invalid UID "${uid ?? ''}"`);
+  });
+
+  it('should return undefined for an uid with one char', () => {
+    expect(assertUIDFormat('a')).toBeUndefined();
+  });
+
+  it('should return undefined for an uid with 40 chars', () => {
+    expect(assertUIDFormat('0123456789012345678901234567890123456789')).toBeUndefined();
+  });
+
+  it('should throw for an uid with 41 chars', () => {
+    expect(() => assertUIDFormat('01234567890123456789012345678901234567890')).toThrow(
+      `Invalid UID "01234567890123456789012345678901234567890"`
+    );
   });
 });

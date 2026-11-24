@@ -84,7 +84,7 @@ func TestProvideRoutesLoader_NeverLoadsCloudSources(t *testing.T) {
 		} {
 			t.Run(name+"/"+key, func(t *testing.T) {
 				deps := PluginLoaderDependencies{PluginDependencies: PluginDependencies{Features: features}}
-				loader, err := ProvideRoutesLoader(cfgWithCloudRouterSection(t, map[string]string{key: value}), deps)
+				loader, err := ProvideRoutesLoader(cfgWithCloudRouterSection(t, map[string]string{key: value}), deps, nil)
 				require.NoError(t, err)
 				require.IsType(t, noRoutesLoader{}, loader)
 			})
@@ -101,5 +101,5 @@ func TestProvideCloudRoutesLoader_StandaloneIgnoresMiddlewareFlag(t *testing.T) 
 	loader, err := ProvideCloudRoutesLoader(cfg, RoutesLoaderClients{}, tracing.InitializeTracerForTest(), features, prometheus.NewRegistry())
 	require.NoError(t, err)
 	require.IsType(t, &cloudLoader{}, loader)
-	require.False(t, middlewareEnabled(cfg, features))
+	require.False(t, MiddlewareEnabled(cfg, features))
 }

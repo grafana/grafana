@@ -13,6 +13,7 @@ import {
   SLO_APP_ID,
   SYNTHETIC_MONITORING_APP_ID,
 } from 'app/core/appPluginIds';
+import { ASSISTANT_PAGES_PATH } from 'app/core/constants';
 
 import { NavID, type NavId, NavWeight } from './constants';
 import { getRegisteredAppNavConfig } from './registry';
@@ -312,7 +313,7 @@ const APP_NAV_PATH_CONFIG: Record<string, AppNavConfig> = {
     text: 'Coding agent',
     isNew: true,
   },
-  [`/a/${ASSISTANT_APP_ID}/pages`]: {
+  [ASSISTANT_PAGES_PATH]: {
     sectionId: NavID.root,
     sortWeight: NavWeight.dashboards + 1,
     icon: 'pages',

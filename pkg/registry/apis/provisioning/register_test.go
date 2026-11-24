@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
@@ -22,12 +23,38 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
+func TestProvideSupportedResourceProvider(t *testing.T) {
+	t.Run("returns an empty provider when provisioning is disabled", func(t *testing.T) {
+		supportedResourceProvider, err := ProvideSupportedResourceProvider(&setting.Cfg{ProvisioningResources: []string{"invalid"}})
+		require.NoError(t, err)
+		require.Empty(t, supportedResourceProvider.Configured())
+	})
+
+	t.Run("returns the configured resources", func(t *testing.T) {
+		supportedResourceProvider, err := ProvideSupportedResourceProvider(&setting.Cfg{
+			ProvisioningEnabled:   true,
+			ProvisioningResources: []string{"folder.grafana.app/Folder:folder"},
+		})
+		require.NoError(t, err)
+		require.Equal(t, []resources.SupportedResource{{
+			GroupKind:    resources.FolderKind.GroupKind(),
+			Capabilities: sets.New(resources.CapabilityFolder),
+		}}, supportedResourceProvider.Configured())
+	})
+
+	t.Run("rejects an invalid configuration", func(t *testing.T) {
+		_, err := ProvideSupportedResourceProvider(&setting.Cfg{ProvisioningEnabled: true, ProvisioningResources: []string{"invalid"}})
+		require.ErrorContains(t, err, "invalid [provisioning] resources configuration")
+	})
+}
+
 func TestSetResourceListerMode(t *testing.T) {
 	newBuilder := func() *APIBuilder {
 		return &APIBuilder{
-			unified:  resource.NewMockResourceClient(t),
-			clients:  resources.NewMockClientFactory(t),
-			features: featuremgmt.WithFeatures(),
+			unified:                   resource.NewMockResourceClient(t),
+			clients:                   resources.NewMockClientFactory(t),
+			features:                  featuremgmt.WithFeatures(),
+			supportedResourceProvider: resources.NewSupportedResourceProvider(nil),
 		}
 	}
 
@@ -40,6 +67,12 @@ func TestSetResourceListerMode(t *testing.T) {
 			require.NotNil(t, b.repositoryResources)
 		})
 	}
+
+	t.Run("apis reads the index in here, not a client pointed at ourselves", func(t *testing.T) {
+		b := newBuilder()
+		require.NoError(t, b.SetResourceListerMode(resources.ListerAPIs))
+		require.IsType(t, &resources.ResourceListerFromSearch{}, b.resourceLister)
+	})
 
 	t.Run("an unknown mode is rejected and leaves the lister alone", func(t *testing.T) {
 		b := newBuilder()

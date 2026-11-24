@@ -32,7 +32,7 @@ func TestAuthorizer_Authorize(t *testing.T) {
 	userABC := &identity.StaticRequester{
 		UserUID: "abc",
 		Groups:  []string{"XYZ"},
-		OrgRole: identity.RoleViewer,
+		OrgRole: authlib.RoleViewer,
 		AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{
 			Rest: authn.AccessTokenClaims{
 				DelegatedPermissions: []string{"group/stars:*", "group/preferences:*", "group/ns:*"},
@@ -63,7 +63,7 @@ func TestAuthorizer_Authorize(t *testing.T) {
 	orgAdmin := &identity.StaticRequester{
 		UserUID: "admin",
 		Groups:  []string{}, // not a member of any team
-		OrgRole: identity.RoleAdmin,
+		OrgRole: authlib.RoleAdmin,
 		AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{
 			Rest: authn.AccessTokenClaims{
 				DelegatedPermissions: []string{"group/preferences:*"},
@@ -285,7 +285,7 @@ func TestAuthorizer_Authorize(t *testing.T) {
 				name: "org admin",
 				user: &identity.StaticRequester{
 					UserUID: "abc",
-					OrgRole: identity.RoleAdmin,
+					OrgRole: authlib.RoleAdmin,
 					AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{
 						Rest: authn.AccessTokenClaims{
 							DelegatedPermissions: []string{"group/ns:create"},
@@ -554,7 +554,7 @@ func TestAuthorizer_TeamAccessClient(t *testing.T) {
 	adminNotInTeam := &identity.StaticRequester{
 		UserUID: "admin-not-in-team",
 		Groups:  []string{}, // not a member of any team
-		OrgRole: identity.RoleAdmin,
+		OrgRole: authlib.RoleAdmin,
 		AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{
 			Rest: authn.AccessTokenClaims{
 				DelegatedPermissions: []string{"group/preferences:*"},

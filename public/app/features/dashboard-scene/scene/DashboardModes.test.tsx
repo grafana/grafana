@@ -10,6 +10,7 @@ import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import {
   createDashboardMutationApi,
   setDashboardMutationClientForTests,
@@ -262,6 +263,7 @@ it('disables the mode picker in Viewing on mobile when mobileEditDeprecation is 
     'grafana.dashboardPreviewMode': true,
     'grafana.mobileEditDeprecation': true,
   });
+  setMobileViewport();
   const dashboard = setup();
   render(
     <TestProvider>

@@ -57,16 +57,71 @@ export interface ExtensionSidebarAPI {
   /** Sets the layout. `floating` is ignored while `canFloat()` is false. */
   setPresentation(presentation: 'docked' | 'floating'): void;
   /**
-   * Calls `listener` when the user asks to collapse the floating sidebar, by dragging it to the bottom edge of the
-   * page. The extension owns what collapsed means. Core offers the drag only while a listener is subscribed, so
+   * Calls `listener` when the user asks to collapse the floating sidebar: by dragging it to the bottom edge of the
+   * page (`method: 'drag'`), or by resizing it down to its collapsed height (`method: 'resize'`, see `setSizing`).
+   * `input` says whether the pointer or the keyboard asked, so the extension can move focus after a keyboard
+   * collapse. The extension owns what collapsed means. Core offers both only while a listener is subscribed, so
    * subscribe only while there is something to collapse. Returns the unsubscribe.
    */
-  subscribeToCollapse(listener: () => void): () => void;
+  subscribeToCollapse(
+    listener: (request?: { method: 'drag' | 'resize'; input: 'pointer' | 'keyboard' }) => void
+  ): () => void;
   /**
    * Whether dragging the extension's drag handle (`data-extension-floating-drag-handle`) out of the docked sidebar
    * onto the page floats it there. Show a handle in the docked sidebar only while this is true.
    */
   canDragToFloat(): boolean;
+  /**
+   * Tells core which sizes the extension can show, so core's resize handles keep to them. Each call replaces the
+   * previous one; a layout or axis left out, or `null`, gets core's default. Core forgets it when the sidebar closes
+   * or shows another extension. Absent on a Grafana that resizes nothing on the extension's behalf.
+   */
+  setSizing?(
+    sizing: {
+      floating?: {
+        /**
+         * Lets core resize the floating sidebar's height from its top edge and top-left corner, as it resizes the
+         * width from its left edge. Once the user resizes it, core sets `--extension-sidebar-floating-height` on the
+         * sidebar for the extension to size its surface with; until then the extension's own height applies. Left
+         * out, for example while the extension is collapsed, core shows no height handles.
+         */
+        height?: {
+          /** The least height the user can resize it to, in px. */
+          min: number;
+          /**
+           * The extension's collapsed height, in px. While `subscribeToCollapse` has a listener, a drag follows below
+           * `min` down to it, and a release nearer to it than to `min` asks the extension to collapse.
+           */
+          collapsed?: number;
+        };
+      };
+    } | null
+  ): void;
+  // The five members below are absent while `grafana.extensionSidebarPlacements` is off, so an extension keeps the
+  // controls it shows on a Grafana without them.
+  /**
+   * Calls `listener` when the user asks to open the extension in a new window, from the top bar Chat button's menu.
+   * Core opens the sidebar first if it is closed, and calls `listener` during the user's click, so the extension can
+   * open a window then. Core offers the request only while a listener is subscribed, so subscribe only while the
+   * browser can open the window. Returns the unsubscribe.
+   */
+  subscribeToPopOut?(listener: () => void): () => void;
+  /**
+   * Tells core the extension shows in a window of its own until the returned function is called, so the top bar Chat
+   * button's menu marks it there. When the user moves the sidebar from that menu, core calls `popIn` first, so the
+   * extension can bring itself back before core moves it.
+   */
+  trackPopOut?(popIn: () => void): () => void;
+  /**
+   * Where the extension's sidebar shows, or opens while it is closed: docked on the `left`, `right` or `bottom` edge
+   * of the page, or `floating` over it. The same placement core's top bar menu shows. Only an extension that can float
+   * moves; any other always docks on the right.
+   */
+  getPlacement?(): 'left' | 'right' | 'bottom' | 'floating';
+  /** Moves the sidebar there, for every page, as core's top bar menu does. */
+  setPlacement?(placement: 'left' | 'right' | 'bottom' | 'floating'): void;
+  /** Calls `listener` whenever the placement may have changed, from any control. Returns the unsubscribe. */
+  subscribeToPlacement?(listener: () => void): () => void;
 }
 
 interface RestrictedGrafanaApisContextTypeInternal {

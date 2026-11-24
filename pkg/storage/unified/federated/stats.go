@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 )
 
 // folderBatchSize caps how many folder UIDs are bound into a single IN (...)
@@ -34,7 +35,8 @@ const (
 )
 
 // LegacyCountedResources is guarded by a test: once one of these gets a migration
-// registered, legacyTableIsStale has to read the migration status instead of config.
+// registered, it needs an entry in migrationLogIDs so legacyTableIsStale reads the
+// migration log for it.
 var LegacyCountedResources = []string{alertRuleResource, recordingRuleResource}
 
 // Read stats from legacy SQL
@@ -59,48 +61,59 @@ func (e *CountError) Unwrap() error { return e.Err }
 
 var ErrLegacyStatsUnavailable = errors.New("legacy stats source is unavailable")
 
-// kv_store convention used to mark a resource as fully migrated for one stack: namespace
-// "unified_storage.is_migrated", key "<resource>.<group>" (the same string shape as our own
-// alertRuleResource-style constants), org_id always 0 for this entry specifically (unlike
-// every other row in these stack databases, which use 1).
-const (
-	migratedKVNamespace = "unified_storage.is_migrated"
-	migratedKVValue     = "true"
-)
+// migrationLogIDs maps the resources whose legacy table can be migrated to the
+// unifiedstorage_migration_log ID that marks the migration as done. Resources absent here
+// (alert and recording rules) are not migrated yet, so their legacy table is never stale
+// because of a migration.
+var migrationLogIDs = map[string]string{
+	libraryPanelResource: libraryPanelMigration,
+}
 
 // From mode 4 on nothing writes the legacy table, so its rows are leftovers and counting
-// them would warn about resources that no longer exist. Library panels can also be
-// migrated while still in mode 1, so their successful migration log takes precedence
-// over config, as it does for the dual-writer's storage mode resolution.
-//
-// A caller with no DualWriterMode config at all (nil Cfg) falls back to a per-stack kv_store
-// marker instead -- the only signal that exists there today.
+// them would warn about resources that no longer exist. A successful migration log entry
+// marks a table stale and takes precedence over config, as it does for the dual-writer's
+// storage mode resolution. That holds for callers without config too, since they have no
+// other way to know a resource lives only in unified storage.
 func (s *LegacyStatsGetter) legacyTableIsStale(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper, resource string) (bool, error) {
-	if s.Cfg != nil {
-		if resource == libraryPanelResource {
-			exists, err := sess.IsTableExist(helper.Table(migrationLogTable))
+	if id, ok := migrationLogIDs[resource]; ok {
+		exists, err := tableExists(sess, helper, helper.Table(migrationLogTable))
+		if err != nil {
+			return false, err
+		}
+		if exists {
+			count, err := sess.Table(helper.Table(migrationLogTable)).
+				Where("migration_id = ? AND success = ?", id, true).
+				Count()
 			if err != nil {
 				return false, err
 			}
-			if exists {
-				count, err := sess.Table(helper.Table(migrationLogTable)).
-					Where("migration_id = ? AND success = ?", libraryPanelMigration, true).
-					Count()
-				if err != nil {
-					return false, err
-				}
-				if count > 0 {
-					return true, nil
-				}
+			if count > 0 {
+				return true, nil
 			}
 		}
+	}
+	if s.Cfg != nil {
 		return s.Cfg.UnifiedStorage[resource].DualWriterMode >= grafanarest.Mode4, nil
 	}
+	return false, nil
+}
 
-	count, err := sess.Table(helper.Table("kv_store")).
-		Where("org_id = 0 AND namespace = ? AND "+helper.DB.Quote("key")+" = ? AND value = ?", migratedKVNamespace, resource, migratedKVValue).
-		Count()
-	if err != nil {
+// tableExists reports whether table exists. A helper can name its tables with a schema, as
+// when one connection serves several databases, and IsTableExist would then look for a table
+// literally named "schema.table" in the connection's default schema, which never exists.
+func tableExists(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper, table string) (bool, error) {
+	schema, name, qualified := strings.Cut(table, ".")
+	if !qualified {
+		return sess.IsTableExist(table)
+	}
+	query := "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = ? AND table_name = ?"
+	args := []any{schema, name}
+	if helper.DB.GetDBType() == core.SQLITE {
+		query = "SELECT COUNT(*) FROM " + helper.DB.Quote(schema) + ".sqlite_master WHERE type = 'table' AND name = ?"
+		args = []any{name}
+	}
+	var count int64
+	if _, err := sess.SQL(query, args...).Get(&count); err != nil {
 		return false, err
 	}
 	return count > 0, nil

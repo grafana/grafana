@@ -7,9 +7,7 @@ description: Write and run unit and E2E tests for Grafana frontend code (React/T
 
 Write tests for Grafana frontend code that pass review on the first pass. Goals:
 **assert concrete behavior, not existence**; keep test descriptions honest; verify the test
-actually exercises the target code path; and stabilize the known flake classes. Several codeowner
-paths are opted into the gating `check-frontend-test-coverage.yml` check, so coverage that drops
-fails CI.
+actually exercises the target code path; and stabilize the known flake classes.
 
 ## Running Playwright E2E tests
 
