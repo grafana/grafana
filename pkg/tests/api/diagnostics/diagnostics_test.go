@@ -380,17 +380,33 @@ type environmentArtifact struct {
 // test can check environment.json against Grafana's own answer instead of a hardcoded string.
 func serverBuildInfo(t *testing.T, addr string) (version, commit string) {
 	t.Helper()
-	resp, err := http.Get(fmt.Sprintf("http://%s/api/health", addr)) //nolint:gosec // test-local address
-	require.NoError(t, err)
-	defer func() { require.NoError(t, resp.Body.Close()) }()
-	require.Equal(t, http.StatusOK, resp.StatusCode)
 
-	var health struct {
-		Version string `json:"version"`
-		Commit  string `json:"commit"`
+	// /api/health can return 503 transiently under load; retry, and only trust a 200 body.
+	var lastStatus int
+	var lastBody []byte
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		resp, err := http.Get(fmt.Sprintf("http://%s/api/health", addr)) //nolint:gosec // test-local address
+		require.NoError(t, err)
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(t, resp.Body.Close())
+		require.NoError(t, err)
+
+		if resp.StatusCode == http.StatusOK {
+			var health struct {
+				Version string `json:"version"`
+				Commit  string `json:"commit"`
+			}
+			require.NoError(t, json.Unmarshal(body, &health))
+			return health.Version, health.Commit
+		}
+
+		lastStatus, lastBody = resp.StatusCode, body
+		if time.Now().After(deadline) {
+			require.FailNowf(t, "health endpoint not OK", "status %d: %s", lastStatus, string(lastBody))
+		}
+		time.Sleep(100 * time.Millisecond)
 	}
-	require.NoError(t, json.NewDecoder(resp.Body).Decode(&health))
-	return health.Version, health.Commit
 }
 
 func addTestDataSource(t *testing.T, ctx context.Context, testEnv *server.TestEnv, uid string) string {
