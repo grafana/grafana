@@ -6,7 +6,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"testing/synctest"
 	"time"
+
+	"github.com/grafana/dskit/services"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
@@ -16,7 +19,6 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -30,7 +32,7 @@ func TestProvideJobQueueService(t *testing.T) {
 		cfg.AppURL = "https://grafana.internal/"
 		cfg.ProvisioningPublicRootURL = "https://grafana.example.com/"
 
-		s := ProvideJobQueueService(cfg, &APIBuilder{}, apiserver.WithoutRestConfig, nil, nil)
+		s := ProvideJobQueueService(cfg, &APIBuilder{}, nil, nil)
 
 		assert.Equal(t, 45*time.Second, s.cfg.JobInterval)
 		assert.Equal(t, int64(1024), s.cfg.MaxFileSize)
@@ -45,7 +47,7 @@ func TestProvideJobQueueService(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.ProvisioningJobPollInterval = 0
 
-		s := ProvideJobQueueService(cfg, &APIBuilder{}, apiserver.WithoutRestConfig, nil, nil)
+		s := ProvideJobQueueService(cfg, &APIBuilder{}, nil, nil)
 
 		assert.Equal(t, setting.ProvisioningJobPollIntervalDefault, s.cfg.JobInterval)
 	})
@@ -53,27 +55,30 @@ func TestProvideJobQueueService(t *testing.T) {
 
 func TestJobQueueService_IsDisabled(t *testing.T) {
 	tests := []struct {
-		name               string
-		builder            *APIBuilder
-		disableControllers bool
-		disabled           bool
+		name     string
+		builder  *APIBuilder
+		disabled bool
 	}{
 		{name: "provisioning disabled", builder: nil, disabled: true},
-		{name: "controllers disabled", builder: &APIBuilder{}, disableControllers: true, disabled: true},
+		{name: "controllers disabled", builder: &APIBuilder{onlyApiServer: true}, disabled: true},
 		{name: "controllers enabled", builder: &APIBuilder{}, disabled: false},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cfg := &setting.Cfg{DisableControllers: tc.disableControllers}
-			assert.Equal(t, tc.disabled, ProvideJobQueueService(cfg, tc.builder, apiserver.WithoutRestConfig, nil, nil).IsDisabled())
+			svc := ProvideJobQueueService(setting.NewCfg(), tc.builder, nil, nil)
+			assert.Equal(t, tc.disabled, svc.IsDisabled())
+			// The background service manager looks up this name in its
+			// dependency map; any other name would start it after Core.
+			assert.Equal(t, JobQueueServiceName, svc.ServiceName())
 		})
 	}
 }
 
 func TestJobQueueService_Run(t *testing.T) {
-	t.Run("claims pending jobs once the API server is ready", func(t *testing.T) {
+	t.Run("claims pending jobs on the post-start hook's loopback config once the provisioning API is served", func(t *testing.T) {
 		claimed := make(chan string, 1)
 		server := startFakeJobsAPI(t, func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "Bearer loopback-token", r.Header.Get("Authorization"))
 			claimed <- r.PathValue("name")
 			// The job is gone by the time it is claimed, so the driver drops it.
 			w.Header().Set("Content-Type", "application/json")
@@ -81,51 +86,53 @@ func TestJobQueueService_Run(t *testing.T) {
 			assert.NoError(t, json.NewEncoder(w).Encode(metav1.Status{Status: metav1.StatusFailure, Reason: metav1.StatusReasonNotFound, Code: http.StatusNotFound}))
 		})
 
-		ready := make(chan struct{})
-		done, cancel := runJobQueueService(t, apiserver.RestConfigProviderFunc(func(ctx context.Context) (*clientrest.Config, error) {
-			select {
-			case <-ready:
-				return &clientrest.Config{Host: server.URL}, nil
-			case <-ctx.Done():
-				return nil, ctx.Err()
-			}
-		}))
+		svc, builder := newTestJobQueueService(t)
+		done := runJobQueueService(t, svc)
 
-		close(ready)
+		builder.publishLoopbackConfig(&clientrest.Config{Host: server.URL, BearerToken: "loopback-token"})
 		assert.Equal(t, "pending", receive(t, claimed, done))
 
-		cancel()
+		svc.StopAsync()
 		require.NoError(t, waitForRun(t, done))
+		require.Equal(t, services.Terminated, svc.State())
 	})
 
-	t.Run("returns nil when shut down before the API server is ready", func(t *testing.T) {
-		configProvider := apiserver.RestConfigProviderFunc(func(ctx context.Context) (*clientrest.Config, error) {
-			<-ctx.Done()
-			return nil, ctx.Err()
+	t.Run("stops cleanly when cancelled while waiting for the provisioning API", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			svc, _ := newTestJobQueueService(t)
+			runErr := make(chan error, 1)
+			go func() { runErr <- svc.Run(t.Context()) }()
+			synctest.Wait()
+
+			svc.StopAsync()
+			require.NoError(t, <-runErr)
+			require.Equal(t, services.Terminated, svc.State())
 		})
-		ctx, cancel := context.WithCancel(context.Background())
-		cancel()
-		require.NoError(t, ProvideJobQueueService(&setting.Cfg{}, &APIBuilder{}, configProvider, nil, nil).Run(ctx))
-	})
-
-	t.Run("returns the rest config error", func(t *testing.T) {
-		err := ProvideJobQueueService(&setting.Cfg{}, &APIBuilder{}, apiserver.WithoutRestConfig, nil, nil).Run(context.Background())
-		require.Error(t, err)
 	})
 }
 
-// runJobQueueService starts Run in the background and returns its result channel
-// and a cancel func. Cancel is also registered as a cleanup, so a failing test
-// still stops the service before the fake API server is closed.
-func runJobQueueService(t *testing.T, configProvider apiserver.RestConfigProvider) (<-chan error, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(context.Background())
-	t.Cleanup(cancel)
-	builder := &APIBuilder{tracer: tracing.NewNoopTracerService(), registry: prometheus.NewPedanticRegistry()}
+func newTestJobQueueService(t *testing.T) (*JobQueueService, *APIBuilder) {
+	t.Helper()
+	builder := &APIBuilder{
+		tracer:        tracing.NewNoopTracerService(),
+		registry:      prometheus.NewPedanticRegistry(),
+		loopbackReady: make(chan struct{}),
+	}
+	return ProvideJobQueueService(setting.NewCfg(), builder, nil, nil), builder
+}
+
+// runJobQueueService starts Run in the background and returns its result
+// channel. Stopping the service is also registered as a cleanup, so a failing
+// test still stops it before the fake API server is closed.
+func runJobQueueService(t *testing.T, svc *JobQueueService) <-chan error {
+	t.Helper()
 	done := make(chan error, 1)
-	go func() {
-		done <- ProvideJobQueueService(&setting.Cfg{}, builder, configProvider, nil, nil).Run(ctx)
-	}()
-	return done, cancel
+	go func() { done <- svc.Run(context.Background()) }()
+	t.Cleanup(func() {
+		svc.StopAsync()
+		_ = svc.AwaitTerminated(context.Background())
+	})
+	return done
 }
 
 // startFakeJobsAPI serves one pending Job, holds watches open, and hands the

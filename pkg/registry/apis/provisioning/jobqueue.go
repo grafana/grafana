@@ -2,10 +2,14 @@ package provisioning
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-app-sdk/logging"
+	clientrest "k8s.io/client-go/rest"
+
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/pkg/registry"
@@ -13,29 +17,33 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/jobqueue"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
+// JobQueueServiceName is the background-service module name of [JobQueueService].
+const JobQueueServiceName = "provisioning-job-queue"
+
 var _ registry.CanBeDisabled = (*JobQueueService)(nil)
 
-// JobQueueService runs the provisioning job driver. Run blocks until the Grafana
-// API server is running, then processes jobs until shutdown.
+// JobQueueService runs the provisioning job driver in the Grafana process once
+// the provisioning API is served, and processes jobs until shutdown.
 type JobQueueService struct {
+	services.NamedService
+
 	builder            *APIBuilder
-	configProvider     apiserver.RestConfigProvider
 	screenshotRenderer pullrequest.ScreenshotRenderer
 	pullRequestURLs    pullrequest.URLProvider
-	disableControllers bool
 	cfg                jobqueue.Config
 }
 
+// ProvideJobQueueService is called by Wire. Depending on the builder orders it
+// after [RegisterAPIService], which registers the provisioning API group with
+// the API server.
 func ProvideJobQueueService(
 	cfg *setting.Cfg,
 	builder *APIBuilder,
-	configProvider apiserver.RestConfigProvider,
 	renderer rendering.Service,
 	blobstore resource.ResourceClient,
 ) *JobQueueService {
@@ -48,12 +56,10 @@ func ProvideJobQueueService(
 		jobPollInterval = setting.ProvisioningJobPollIntervalDefault
 	}
 
-	return &JobQueueService{
+	s := &JobQueueService{
 		builder:            builder,
-		configProvider:     configProvider,
 		screenshotRenderer: pullrequest.NewScreenshotRenderer(renderer, blobstore),
 		pullRequestURLs:    pullrequest.URLsFromConfig(cfg),
-		disableControllers: cfg.DisableControllers,
 		cfg: jobqueue.Config{
 			ConcurrentDrivers: 3,
 			MaxJobTimeout:     20 * time.Minute,
@@ -72,23 +78,38 @@ func ProvideJobQueueService(
 			AllowImageRendering:  cfg.ProvisioningAllowImageRendering,
 		},
 	}
+	s.NamedService = services.NewBasicService(nil, s.running, nil).WithName(JobQueueServiceName)
+	return s
 }
 
-// IsDisabled reports whether this instance processes no jobs: the builder is nil
-// when provisioning is disabled, and controllers can be turned off by configuration.
+// IsDisabled implements registry.CanBeDisabled.
 func (s *JobQueueService) IsDisabled() bool {
-	return s.builder == nil || s.disableControllers
+	return s.builder == nil || s.builder.onlyApiServer
 }
 
+// Run implements registry.BackgroundService.
 func (s *JobQueueService) Run(ctx context.Context) error {
-	restConfig, err := s.configProvider.GetRestConfig(ctx)
-	if ctx.Err() != nil {
-		// Shut down before the API server became ready.
+	if err := s.StartAsync(ctx); err != nil {
+		return err
+	}
+	return s.AwaitTerminated(context.Background())
+}
+
+func (s *JobQueueService) running(ctx context.Context) error {
+	// Job claims, status patches and repository status patches carry the
+	// provisioning requester. A routed config would send them through the
+	// router, which strips the loopback credentials before a remote backend.
+	restConfig, err := s.builder.awaitLoopbackConfig(ctx)
+	if err == nil {
+		err = s.runQueue(ctx, restConfig)
+	}
+	if errors.Is(err, context.Canceled) && ctx.Err() != nil {
 		return nil
 	}
-	if err != nil {
-		return fmt.Errorf("get rest config: %w", err)
-	}
+	return err
+}
+
+func (s *JobQueueService) runQueue(ctx context.Context, restConfig *clientrest.Config) error {
 	client, err := clientset.NewForConfig(restConfig)
 	if err != nil {
 		return fmt.Errorf("create provisioning clientset: %w", err)
