@@ -759,8 +759,8 @@ importers:
         specifier: 2.2.1
         version: 2.2.1(@rspack/core@2.2.4(@swc/helpers@0.5.17))
       '@rspack/plugin-react-refresh':
-        specifier: 2.0.2
-        version: 2.0.2(@rspack/core@2.2.4(@swc/helpers@0.5.17))(react-refresh@0.18.0)
+        specifier: 2.0.3
+        version: 2.0.3(@rspack/core@2.2.4(@swc/helpers@0.5.17))(react-refresh@0.18.0)
       '@stylistic/eslint-plugin':
         specifier: 5.10.0
         version: 5.10.0(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0))
@@ -6347,8 +6347,8 @@ packages:
   '@rspack/lite-tapable@1.1.5':
     resolution: {integrity: sha512-uzB782zJbFTM3ta+e2Glikx36dca/6Y+DXyvFN+wb0Tx5ItIW+g03A0t3amP3LGzPHSkb0k81VHCm4jxLQwfag==}
 
-  '@rspack/plugin-react-refresh@2.0.2':
-    resolution: {integrity: sha512-dGNZiCxQxgAUI9sah7gd8u+O7OJZRCmqtEJNDOd8xW5RqcieC86F7p5qcShyw6onH5pKf57evpr2VjGbaFGkZg==}
+  '@rspack/plugin-react-refresh@2.0.3':
+    resolution: {integrity: sha512-/K86+2fzdtGdqorm8IwxaouAr5uXFdn7yej0P6/JtuqVYEo9tAUMypGbepAZgt3ClVevn6sC8Oo+fUCLhR10zg==}
     peerDependencies:
       '@rspack/core': ^2.0.0
       react-refresh: '>=0.10.0 <1.0.0'
@@ -19077,7 +19077,7 @@ snapshots:
 
   '@rsbuild/plugin-react@2.1.0(@rsbuild/core@2.2.5(core-js@3.44.0))(@rspack/core@2.2.4(@swc/helpers@0.5.17))':
     dependencies:
-      '@rspack/plugin-react-refresh': 2.0.2(@rspack/core@2.2.4(@swc/helpers@0.5.17))(react-refresh@0.18.0)
+      '@rspack/plugin-react-refresh': 2.0.3(@rspack/core@2.2.4(@swc/helpers@0.5.17))(react-refresh@0.18.0)
       react-refresh: 0.18.0
     optionalDependencies:
       '@rsbuild/core': 2.2.5(core-js@3.44.0)
@@ -19086,7 +19086,7 @@ snapshots:
 
   '@rsbuild/plugin-react@2.1.0(@rsbuild/core@2.2.5(core-js@3.44.0))(@rspack/core@2.2.4(@swc/helpers@0.5.23))':
     dependencies:
-      '@rspack/plugin-react-refresh': 2.0.2(@rspack/core@2.2.4(@swc/helpers@0.5.23))(react-refresh@0.18.0)
+      '@rspack/plugin-react-refresh': 2.0.3(@rspack/core@2.2.4(@swc/helpers@0.5.23))(react-refresh@0.18.0)
       react-refresh: 0.18.0
     optionalDependencies:
       '@rsbuild/core': 2.2.5(core-js@3.44.0)
@@ -19329,13 +19329,13 @@ snapshots:
 
   '@rspack/lite-tapable@1.1.5': {}
 
-  '@rspack/plugin-react-refresh@2.0.2(@rspack/core@2.2.4(@swc/helpers@0.5.17))(react-refresh@0.18.0)':
+  '@rspack/plugin-react-refresh@2.0.3(@rspack/core@2.2.4(@swc/helpers@0.5.17))(react-refresh@0.18.0)':
     dependencies:
       react-refresh: 0.18.0
     optionalDependencies:
       '@rspack/core': 2.2.4(@swc/helpers@0.5.17)
 
-  '@rspack/plugin-react-refresh@2.0.2(@rspack/core@2.2.4(@swc/helpers@0.5.23))(react-refresh@0.18.0)':
+  '@rspack/plugin-react-refresh@2.0.3(@rspack/core@2.2.4(@swc/helpers@0.5.23))(react-refresh@0.18.0)':
     dependencies:
       react-refresh: 0.18.0
     optionalDependencies:

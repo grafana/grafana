@@ -114,7 +114,7 @@
     "@rspack/cli": "^2",
     "@rspack/core": "^2.1.7",
     "@rspack/dev-server": "2.2.1",
-    "@rspack/plugin-react-refresh": "2.0.2",
+    "@rspack/plugin-react-refresh": "2.0.3",
     "@stylistic/eslint-plugin": "5.10.0",
     "@swc/core": "1.13.3",
     "@swc/helpers": "0.5.17",
