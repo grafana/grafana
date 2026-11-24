@@ -423,7 +423,7 @@ class DataSourceWithBackend<
    */
   buildResourcesDatasourceUrl(rawPath: string): string {
     const path = rawPath.replace(/^\/+/, '');
-    if (this.supportsDatasourceApi('resources')) {
+    if (supportsDatasourceApi('resources', this.datasourceInstanceSettings)) {
       // example:
       // /apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/stacks-1/datasources/local-prometheus/resources/api/v1/labels
       const apiVersion = 'v0alpha1';
@@ -432,15 +432,11 @@ class DataSourceWithBackend<
     return `/api/datasources/uid/${this.uid}/resources/${path}`;
   }
 
-  private supportsDatasourceApi(endpoint: 'resources' | 'health'): boolean {
-    return supportsDatasourceApi(endpoint, this.datasourceInstanceSettings);
-  }
-
   /**
    * Run the datasource healthcheck
    */
   async callHealthCheck(): Promise<HealthCheckResult> {
-    const useNewApi = this.supportsDatasourceApi('health');
+    const useNewApi = supportsDatasourceApi('health', this.datasourceInstanceSettings);
     const healthCheckURL = getHealthCheckUrl(this.datasourceInstanceSettings);
 
     if (useNewApi) {
