@@ -64,3 +64,19 @@ func TestReadProvisioningResourceLister(t *testing.T) {
 		assert.Equal(t, int64(50), cfg.ProvisioningResourceListerPageSize)
 	})
 }
+
+func TestReadProvisioningSettings_RouterClient(t *testing.T) {
+	t.Run("defaults to off", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte(``))
+		require.NoError(t, err)
+
+		assert.False(t, cfg.ProvisioningRouterClient)
+	})
+
+	t.Run("reads the key", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte("[provisioning]\nrouter_client = true\n"))
+		require.NoError(t, err)
+
+		assert.True(t, cfg.ProvisioningRouterClient)
+	})
+}
