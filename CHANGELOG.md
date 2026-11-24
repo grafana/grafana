@@ -1,3 +1,17 @@
+<!-- 13.3.2 START -->
+
+# 13.3.2 (2026-11-24)
+
+### Security
+
+- Security: Fix CVE-2026-107561
+- Security: Fix CVE-2026-88960
+
+### Features and enhancements
+
+- **Provisioning:** Preserve existing folder identities when creating children [#137552](https://github.com/grafana/grafana/pull/137552), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+
+<!-- 13.3.2 END -->
 <!-- 13.3.1 START -->
 
 # 13.3.1 (2026-11-10)
@@ -200,6 +214,17 @@
 - **Runtime:** Stabilize plugin settings APIs [#134723](https://github.com/grafana/grafana/pull/134723), [@leventebalogh](https://github.com/leventebalogh)
 
 <!-- 13.3.0 END -->
+<!-- 13.2.7 START -->
+
+# 13.2.7 (2026-11-24)
+
+## Security
+
+- Security: Fix CVE-2026-107561
+- Security: Fix CVE-2026-88943
+- Security: Fix CVE-2026-88960
+
+<!-- 13.2.7 END -->
 <!-- 13.2.6 START -->
 
 # 13.2.6 (2026-11-10)
@@ -500,6 +525,17 @@
 - **Tag:** Fix crash when picking an out of bounds `colorIndex` [#129579](https://github.com/grafana/grafana/pull/129579), [@ashharrison90](https://github.com/ashharrison90)
 
 <!-- 13.2.0 END -->
+<!-- 13.1.11 START -->
+
+# 13.1.11 (2026-11-24)
+
+## Security
+
+- Security: Fix CVE-2026-107561
+- Security: Fix CVE-2026-88943
+- Security: Fix CVE-2026-88960
+
+<!-- 13.1.11 END -->
 <!-- 13.1.10 START -->
 
 # 13.1.10 (2026-11-10)
@@ -871,6 +907,23 @@
 - **TimeOfDayPicker:** use Combobox [#123777](https://github.com/grafana/grafana/pull/123777), [@leeoniya](https://github.com/leeoniya)
 
 <!-- 13.1.0 END -->
+<!-- 13.0.14 START -->
+
+# 13.0.14 (2026-11-24)
+
+### Security
+
+- Security: Fix CVE-2026-107561
+- Security: Fix CVE-2026-88943
+- Security: Fix CVE-2026-88960
+- Security: Fix CVE-2026-107561
+- Security: Fix CVE-2026-88943
+- Security: Fix CVE-2026-88960
+- Security: Fix CVE-2026-107561
+- Security: Fix CVE-2026-88943
+- Security: Fix CVE-2026-88960
+
+<!-- 13.0.14 END -->
 <!-- 13.0.13 START -->
 
 # 13.0.13 (2026-11-10)
@@ -1431,6 +1484,20 @@
 - **TextLink:** Fix icon positioning if text wraps [#118233](https://github.com/grafana/grafana/pull/118233), [@ashharrison90](https://github.com/ashharrison90)
 
 <!-- 13.0.0 END -->
+<!-- 12.4.16 START -->
+
+# 12.4.16 (2026-11-24)
+
+### Security
+
+- Security: Fix CVE-2026-107561
+- Security: Fix CVE-2026-88943
+- Security: Fix CVE-2026-88960
+- Security: Fix CVE-2026-107561
+- Security: Fix CVE-2026-88943
+- Security: Fix CVE-2026-88960
+
+<!-- 12.4.16 END -->
 <!-- 12.4.15 START -->
 
 # 12.4.15 (2026-11-10)
