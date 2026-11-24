@@ -112,21 +112,15 @@ export const FilterByValueTransformerEditor = (props: TransformerUIProps<FilterB
       <InlineField
         label={t('transformers.filter-by-value-transformer-editor.label-filter-type', 'Filter type')}
         labelWidth={16}
-        useFieldset
       >
-        <div className="width-15">
-          <RadioButtonGroup options={filterTypes} value={options.type} onChange={onChangeType} fullWidth />
-        </div>
+        <RadioButtonGroup options={filterTypes} value={options.type} onChange={onChangeType} />
       </InlineField>
       {options.filters.length > 1 && (
         <InlineField
           label={t('transformers.filter-by-value-transformer-editor.label-conditions', 'Conditions')}
           labelWidth={16}
-          useFieldset
         >
-          <div className="width-15">
-            <RadioButtonGroup options={filterMatch} value={options.match} onChange={onChangeMatch} fullWidth />
-          </div>
+          <RadioButtonGroup options={filterMatch} value={options.match} onChange={onChangeMatch} />
         </InlineField>
       )}
       <Box paddingLeft={2}>
