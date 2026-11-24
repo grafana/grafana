@@ -272,6 +272,8 @@ function FormContent({
 interface SuccessProps {
   outcome: ProvisionedCommitOutcome;
   onDismiss: () => void;
+  onBack?: () => void;
+  backLabel?: string;
 }
 
 interface RepositoryStepProps {
@@ -313,9 +315,11 @@ function RepositoryStep({ onSelect, onDismiss }: RepositoryStepProps) {
   );
 }
 
-function SuccessContent({ outcome, onDismiss }: SuccessProps) {
+function SuccessContent({ outcome, onDismiss, onBack, backLabel }: SuccessProps) {
   return (
-    <ProvisionedDrawerLayout footer={<ProvisionedCommitSteps outcome={outcome} onDismiss={onDismiss} />}>
+    <ProvisionedDrawerLayout
+      footer={<ProvisionedCommitSteps outcome={outcome} onDismiss={onDismiss} onBack={onBack} backLabel={backLabel} />}
+    >
       <ProvisionedCommitSuccess outcome={outcome} />
     </ProvisionedDrawerLayout>
   );
@@ -354,7 +358,12 @@ export function CommitOutcomeDrawer({ stored, onDismiss }: { stored: string; onD
       title={getDrawerTitle(parsed.outcome.action === 'delete', parsed.kindLabel)}
       onClose={dismiss}
     >
-      <SuccessContent outcome={parsed.outcome} onDismiss={dismiss} />
+      <SuccessContent
+        outcome={parsed.outcome}
+        onDismiss={dismiss}
+        onBack={parsed.redirectUrl ? dismiss : undefined}
+        backLabel={parsed.pluralLabel}
+      />
     </Drawer>
   );
 }
@@ -440,6 +449,7 @@ function ResourceDrawerContent({
   const sourcePath = getSourcePath(managedResource);
 
   const kindLabel = resourceKindInfos[kindKey].getLabel({ upperFirst: false });
+  const pluralLabel = resourceKindInfos[kindKey].getPluralLabel({ upperFirst: false });
   const drawerTitle = getDrawerTitle(isDelete, kindLabel);
 
   const onCommitted = (committed: ProvisionedCommitOutcome) => {
@@ -447,7 +457,7 @@ function ResourceDrawerContent({
       return;
     }
     setOutcome(committed);
-    storeCommitOutcome({ outcome: committed, kindLabel, redirectUrl });
+    storeCommitOutcome({ outcome: committed, kindLabel, pluralLabel, redirectUrl });
   };
 
   const dismiss = () => {
@@ -483,7 +493,12 @@ function ResourceDrawerContent({
       onClose={dismiss}
     >
       {outcome ? (
-        <SuccessContent outcome={outcome} onDismiss={dismiss} />
+        <SuccessContent
+          outcome={outcome}
+          onDismiss={dismiss}
+          onBack={redirectUrl ? dismiss : undefined}
+          backLabel={pluralLabel}
+        />
       ) : isNew && !selectedRepository ? (
         <RepositoryStep onSelect={setSelectedRepository} onDismiss={onDismiss} />
       ) : (

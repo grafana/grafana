@@ -53,15 +53,16 @@ export function isDirectCommit({ branch, configuredBranch }: ProvisionedCommitOu
 export interface StoredCommitOutcome {
   outcome: ProvisionedCommitOutcome;
   kindLabel: string;
+  pluralLabel?: string;
   redirectUrl?: string;
 }
 
-export function storeCommitOutcome({ outcome, kindLabel, redirectUrl }: StoredCommitOutcome) {
+export function storeCommitOutcome({ outcome, kindLabel, pluralLabel, redirectUrl }: StoredCommitOutcome) {
   const path = locationService.getLocation().pathname;
   try {
     window.sessionStorage.setItem(
       COMMIT_OUTCOME_STORAGE_KEY,
-      JSON.stringify({ ...outcome, kindLabel, redirectUrl, path })
+      JSON.stringify({ ...outcome, kindLabel, pluralLabel, redirectUrl, path })
     );
   } catch {}
 }
@@ -103,6 +104,7 @@ export function parseStoredCommitOutcome(raw: string, pathname: string): StoredC
   const redirectUrl = text('redirectUrl');
   return {
     kindLabel,
+    pluralLabel: text('pluralLabel'),
     redirectUrl: redirectUrl?.startsWith('/') ? redirectUrl : undefined,
     outcome: {
       action,
