@@ -351,7 +351,7 @@ export class FlameGraphDataContainer {
 
   getFrameType(index: number): FrameType {
     if (this.dataSource === DataSourceType.PprofPyroscope) {
-      return getFrameTypeByFilename(this.filenameField!.values[index]);
+      return getFrameTypeByFilename(this.getFilename(index));
     }
     return this.frameTypeField?.values[index] ?? FrameType.Unknown;
   }
