@@ -4,6 +4,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
+	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/installsync"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
@@ -61,6 +62,14 @@ const (
 	NATSPublisher  = nats.PublisherServiceName
 	NATSSubscriber = nats.SubscriberServiceName
 
+	// ProvisioningConnectionController is the module name of the in-process
+	// provisioning connection controller.
+	ProvisioningConnectionController = provisioningapis.ConnectionControllerServiceName
+
+	// ProvisioningJobQueue is the module name of the in-process provisioning
+	// job queue.
+	ProvisioningJobQueue = provisioningapis.JobQueueServiceName
+
 	// SQLStore is the module name for the SQLStore background service.
 	// It is the root of the dependency graph so that the database engine is
 	// closed last during shutdown, after every other service has stopped.
@@ -80,16 +89,20 @@ func dependencyMap() map[string][]string {
 		NATSSubscriber: {NATSServer},
 		// API server post-start hooks start NATS informers, and its writes
 		// publish watch notifications.
-		GrafanaAPIServer:   {Tracing, NATSPublisher, NATSSubscriber},
-		Router:             {GrafanaAPIServer},
-		PluginStore:        {GrafanaAPIServer},
-		PluginInstaller:    {PluginStore},
-		IAMRolesSyncer:     {GrafanaAPIServer},
-		FixedRolesLoader:   {PluginInstaller, IAMRolesSyncer},
-		Provisioning:       {PluginStore, PluginInstaller, FixedRolesLoader},
-		InstallSync:        {Provisioning},
-		GlobalRoleSeeder:   {GrafanaAPIServer},
-		Core:               {GrafanaAPIServer, PluginStore, PluginInstaller, FixedRolesLoader, Provisioning, InstallSync, GlobalRoleSeeder},
-		BackgroundServices: {Core, Router},
+		GrafanaAPIServer: {Tracing, NATSPublisher, NATSSubscriber},
+		Router:           {GrafanaAPIServer},
+		PluginStore:      {GrafanaAPIServer},
+		PluginInstaller:  {PluginStore},
+		IAMRolesSyncer:   {GrafanaAPIServer},
+		FixedRolesLoader: {PluginInstaller, IAMRolesSyncer},
+		Provisioning:     {PluginStore, PluginInstaller, FixedRolesLoader},
+		InstallSync:      {Provisioning},
+		GlobalRoleSeeder: {GrafanaAPIServer},
+		Core:             {GrafanaAPIServer, PluginStore, PluginInstaller, FixedRolesLoader, Provisioning, InstallSync, GlobalRoleSeeder},
+		// Not behind Core: classic provisioning retries would delay connection
+		// token refresh and Git Sync job processing.
+		ProvisioningConnectionController: {GrafanaAPIServer},
+		ProvisioningJobQueue:             {GrafanaAPIServer},
+		BackgroundServices:               {Core, Router, ProvisioningConnectionController, ProvisioningJobQueue},
 	}
 }

@@ -1,24 +1,29 @@
-import { type AlertRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, type Column, EmptyState, InteractiveTable, Spinner, Stack } from '@grafana/ui';
+import { Button, type Column, EmptyState, InteractiveTable, Stack } from '@grafana/ui';
 
 import { FolderByUid } from '../folder-browsing/FolderByUid';
+import { LoadMoreFooter } from '../shared/LoadMoreFooter';
+import { type PagedFailure } from '../shared/PagedFailureAlert';
 
-interface DeletedRulesTableProps {
-  rules: AlertRule[];
+import { type DeletedRule } from './deletedRulesPage';
+
+interface DeletedRulesTableProps<Rule extends DeletedRule> {
+  rules: Rule[];
   /** Pre-resolved folder paths: uid → display path string (override for tests) */
   folderPaths: Record<string, string>;
   /** Pre-resolved user names from IAM getDisplayMapping: uid → display name */
   userNames: Record<string, string>;
-  onReview: (rule: AlertRule) => void;
-  onRestore: (rule: AlertRule) => void;
+  onReview: (rule: Rule) => void;
+  onRestore: (rule: Rule) => void;
   hasMore: boolean;
   isLoadingMore: boolean;
+  failure?: PagedFailure;
   onLoadMore: () => void;
+  onRetry: () => void;
 }
 
-export function DeletedRulesTable({
+export function DeletedRulesTable<Rule extends DeletedRule>({
   rules,
   folderPaths,
   userNames,
@@ -26,8 +31,10 @@ export function DeletedRulesTable({
   onRestore,
   hasMore,
   isLoadingMore,
+  failure,
   onLoadMore,
-}: DeletedRulesTableProps) {
+  onRetry,
+}: DeletedRulesTableProps<Rule>) {
   if (rules.length === 0) {
     return (
       <EmptyState
@@ -37,7 +44,7 @@ export function DeletedRulesTable({
     );
   }
 
-  const columns: Array<Column<AlertRule>> = [
+  const columns: Array<Column<Rule>> = [
     {
       id: 'title',
       header: t('alerting.recently-deleted.table.title', 'Title'),
@@ -102,12 +109,14 @@ export function DeletedRulesTable({
 
   return (
     <Stack direction="column" gap={2}>
-      <InteractiveTable columns={columns} data={rules} getRowId={(rule) => rule.metadata?.name ?? ''} />
-      {hasMore && (
-        <Button variant="secondary" onClick={onLoadMore} disabled={isLoadingMore}>
-          {isLoadingMore ? <Spinner /> : <Trans i18nKey="alerting.recently-deleted.load-more">Load more</Trans>}
-        </Button>
-      )}
+      <InteractiveTable<Rule> columns={columns} data={rules} getRowId={(rule) => rule.metadata?.name ?? ''} />
+      <LoadMoreFooter
+        hasMore={hasMore}
+        isLoadingMore={isLoadingMore}
+        failure={failure}
+        onLoadMore={onLoadMore}
+        onRetry={onRetry}
+      />
     </Stack>
   );
 }

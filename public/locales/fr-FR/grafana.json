@@ -1543,6 +1543,9 @@
         "recording-rules_one": "{{formatted}} règle d’enregistrement",
         "recording-rules_other": "{{formatted}} règles d’enregistrement"
       },
+      "saved-searches": {
+        "applied-default": ""
+      },
       "search": {
         "default-policy-unavailable": "Le filtrage par politique par défaut n’est pas encore disponible.",
         "folders-disabled": "Effacer les filtres pour parcourir par dossier",
@@ -3027,12 +3030,12 @@
       },
       "empty": "",
       "error": "",
-      "load-more": "",
       "restore": {
         "body": "",
         "confirm": "",
         "conflict": "",
         "error": "",
+        "recording-title": "",
         "restoring": "",
         "title": ""
       },
@@ -3187,10 +3190,6 @@
         "group-name": "Nom du groupe d'évaluation",
         "group-text": "Toutes les règles du groupe sélectionné sont évaluées tous les {{evaluateEvery}}.",
         "interval-label": "Intervalle d’évaluation",
-        "mode": {
-          "legacy": "Utiliser les groupes (hérité)",
-          "new": "Définissez l’intervalle"
-        },
         "new-group": "Nouveau groupe d'évaluation",
         "pause": {
           "alerting": "Activez pour mettre en pause l'évaluation de cette règle d'alerte.",
@@ -6740,6 +6739,9 @@
           "description": "Cliquez ou faites glisser pour coller le panneau",
           "title": "Coller le panneau"
         },
+        "question": {
+          "label": ""
+        },
         "row": {
           "add-label": "Ajoutez une ligne",
           "group-label": "Regrouper sur des lignes"
@@ -6863,6 +6865,7 @@
         "objects": "Objets",
         "panel": "Panneau",
         "panels": "Panneaux",
+        "question": "",
         "row": "Ligne",
         "rows": "Lignes",
         "section-filters-set": "Filtres",
@@ -6913,6 +6916,36 @@
           "empty": "(vide)",
           "no-title": "<sans titre>"
         }
+      },
+      "questions": {
+        "add-question": "",
+        "description-dashboard": "",
+        "description-row": "",
+        "description-tab": "",
+        "new-question": "",
+        "placeholder": "",
+        "question": "",
+        "question-title": "",
+        "question-title-description": "",
+        "question-title-placeholder": "",
+        "sources": {
+          "collapse": "",
+          "description-dashboard": "",
+          "description-row": "",
+          "description-tab": "",
+          "entire-dashboard": "",
+          "expand": "",
+          "label": "",
+          "no-panels": "",
+          "unavailable-panel": "",
+          "untitled-row": "",
+          "untitled-tab": "",
+          "panel-count_one": "",
+          "panel-count_other": "",
+          "picked-count_one": "",
+          "picked-count_other": ""
+        },
+        "title": ""
       },
       "row": {
         "header": {
@@ -7174,6 +7207,8 @@
     },
     "transformation-operation-row": {
       "body-delete": "Remarque : la suppression d’une transformation peut en perturber d’autres. S’il n’en reste qu’une, vous serez redirigé vers l’écran principal de sélection.",
+      "expander-close": "",
+      "expander-open": "",
       "render-actions": {
         "confirmText-delete": "Supprimer",
         "title-debug": "Déboguer",
@@ -8146,6 +8181,20 @@
       },
       "selection-options": "Options de sélection",
       "static-options-legend": "Options statiques"
+    },
+    "question-actions": {
+      "add": "",
+      "remove": "",
+      "reorder": "",
+      "update": ""
+    },
+    "question-edit": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
+    "question-edit-actions": {
+      "tooltip-question-settings": ""
     },
     "refresh-select": {
       "options": {
@@ -14204,32 +14253,6 @@
     },
     "units": {
       "clear-tooltip": "Effacer la sélection de l’unité"
-    },
-    "var-mapping-checks": {
-      "data-macro": "",
-      "not-allowed": "",
-      "not-found": "",
-      "not-number": "",
-      "not-one-value": "",
-      "out-of-range": "",
-      "resolves": "",
-      "values": ""
-    },
-    "var-mapping-toggle": {
-      "aria-label-picker": "",
-      "fallback-off": "",
-      "fallback-on": "",
-      "group-matching": "",
-      "group-other": "",
-      "hint-boolean": "",
-      "hint-number": "",
-      "hint-option": "",
-      "hint-option-no-fallback": "",
-      "new-variable": "",
-      "option-current": "",
-      "placeholder": "",
-      "use-fixed-value": "",
-      "use-variable": ""
     }
   },
   "org": {
@@ -14326,7 +14349,8 @@
     },
     "get-panel-links-variable-suggestions": {
       "label": {
-        "all-variables": "Tous les variables"
+        "all-variables": "Tous les variables",
+        "current-dashboard-tabs": ""
       }
     },
     "header-menu": {
@@ -15237,7 +15261,6 @@
     "finish-step": {
       "description-enable-previews": "Ajoute un aperçu des images des modifications apportées au tableau de bord dans les demandes de fusion. Les images de vos tableaux de bord Grafana seront partagées dans votre référentiel Git et visibles par toute personne ayant accès au référentiel.",
       "description-image-rendering": "Nécessite un rendu d’image. <2>Configurer le rendu d’image</2>",
-      "description-read-only": "Les ressources ne peuvent pas être modifiées via Grafana.",
       "description-sync-interval": "Fréquence de synchronisation des changements depuis le dépôt",
       "error-sync-interval-required": "L’intervalle de synchronisation est requis",
       "label-enable-previews": "Activer les aperçus du tableau de bord dans les demandes de fusion",
@@ -16014,6 +16037,17 @@
       "button-submitting": "Envoi…",
       "error-instance-repository-exists": "Le référentiel d’instances existe déjà",
       "error-save-repository-setting": "Échec de l’enregistrement des paramètres du référentiel"
+    },
+    "workflow": {
+      "direct-push": "",
+      "direct-push-description": "",
+      "direct-push-description-no-branch": "",
+      "merge-request": "",
+      "merge-request-description": "",
+      "merge-request-description-no-branch": "",
+      "pull-request": "",
+      "pull-request-description": "",
+      "pull-request-description-no-branch": ""
     }
   },
   "public-dashboard": {

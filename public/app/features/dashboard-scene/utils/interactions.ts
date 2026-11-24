@@ -526,10 +526,6 @@ export const DashboardInteractions = {
     reportDashboardInteraction('panel_option_variable_usage', properties);
   },
 
-  panelOptionVariableCreated: (properties: { type: 'custom' | 'switch' }) => {
-    reportDashboardInteraction('panel_option_variable_created', properties);
-  },
-
   // tracks attempts to resize a panel that is managed by auto layout
   autoLayoutResizeIntercepted: (properties: { scope: AutoLayoutScope; trigger: 'hover' | 'drag' }) => {
     reportDashboardInteraction('auto_layout_resize_intercepted', properties);
