@@ -49,7 +49,7 @@
     "typecheck": "tsc --emitDeclarationOnly false --noEmit"
   },
   "devDependencies": {
-    "@types/node": "26.6.5",
+    "@types/node": "26.6.6",
     "@types/semver": "7.8.0",
     "@typescript/native": "npm:typescript@^7.0.2",
     "acorn": "8.15.0",
