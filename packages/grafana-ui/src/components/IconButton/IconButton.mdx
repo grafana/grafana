@@ -68,8 +68,9 @@ The IconButton used to have a property called `ariaLabel` which got deprecated. 
       <th scope="row">Warning</th>
       <td>Ghost</td>
       <td>
-        Use this if the icon marks a section or setting that has a problem, for example a warning next to a log source.
-        For a risky action, use Destructive instead.
+        Use this when the icon opens or points to something that needs attention, for example a warning next to a log
+        source. Color alone isn't enough, so the tooltip or `aria-label` has to say what the problem is. For a risky
+        action, use Destructive instead.
       </td>
     </tr>
     <tr>
@@ -165,6 +166,7 @@ The IconButton used to have a property called `ariaLabel` which got deprecated. 
 
 - Add a text for tooltip (it will also be used as the aria-label).
 - In exceptional cases where the tooltip does not make sense add the aria-label.
+- Color alone isn't enough for `warning`, so the tooltip or aria-label has to say what the problem is.
 
 ## Behaviours
 
