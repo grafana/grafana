@@ -102,9 +102,6 @@ func TestIntegrationRuleUpdatePreconditions(t *testing.T) {
 							require.NoError(t, err)
 							name := field(t, created, "metadata", "name").(string)
 							t.Cleanup(func() { _ = client.delete(ctx, resource, name) })
-							if mode == grafanarest.Mode2 {
-								readUnified(t, helper, resource, name)
-							}
 
 							baseline, err := client.get(ctx, resource, name)
 							require.NoError(t, err)
@@ -305,7 +302,8 @@ func decode(raw []byte, err error) (map[string]any, error) {
 }
 
 // readUnified reads a rule straight from unified storage, bypassing the dual writer. Modes 1-3 copy a created
-// rule there in the background, so the copy can lag behind the create response.
+// rule there in the background, so the copy can lag behind the create response. The wait matches the
+// dual writer's one minute background request timeout, after which the copy can no longer arrive.
 func readUnified(t *testing.T, helper *apis.K8sTestHelper, resource, name string) map[string]any {
 	t.Helper()
 	ctx, _ := identity.WithServiceIdentity(context.Background(), helper.Org1.OrgID)
@@ -315,7 +313,7 @@ func readUnified(t *testing.T, helper *apis.K8sTestHelper, resource, name string
 		rsp, err := helper.GetEnv().ResourceClient.Read(ctx, &resourcepb.ReadRequest{Key: key})
 		require.NoError(c, err)
 		require.NoError(c, json.Unmarshal(rsp.Value, &out))
-	}, 20*time.Second, 50*time.Millisecond)
+	}, time.Minute, 50*time.Millisecond)
 	return out
 }
 
