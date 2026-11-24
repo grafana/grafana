@@ -1,3 +1,17 @@
+<!-- 13.3.2 START -->
+
+# 13.3.2 (2026-11-24)
+
+### Security
+
+- Security: Fix CVE-2026-107561
+- Security: Fix CVE-2026-88960
+
+### Features and enhancements
+
+- **Provisioning:** Preserve existing folder identities when creating children [#137552](https://github.com/grafana/grafana/pull/137552), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+
+<!-- 13.3.2 END -->
 <!-- 13.3.1 START -->
 
 # 13.3.1 (2026-11-10)
