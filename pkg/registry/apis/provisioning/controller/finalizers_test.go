@@ -183,7 +183,7 @@ func TestFinalizer_process(t *testing.T) {
 				resourceLister := resources.NewMockResourceLister(t)
 
 				resourceLister.
-					On("List", mock.Anything, "default", "my-repo").
+					On("List", mock.Anything, "default", "my-repo", resources.ListOptions{}).
 					Once().
 					Return(&provisioning.ResourceList{
 						Items: []provisioning.ResourceListItem{
@@ -239,7 +239,7 @@ func TestFinalizer_process(t *testing.T) {
 				resourceLister := resources.NewMockResourceLister(t)
 
 				resourceLister.
-					On("List", mock.Anything, "default", "my-repo").
+					On("List", mock.Anything, "default", "my-repo", resources.ListOptions{}).
 					Once().
 					Return(&provisioning.ResourceList{
 						Items: []provisioning.ResourceListItem{
@@ -318,7 +318,7 @@ func TestFinalizer_process(t *testing.T) {
 				resourceLister := resources.NewMockResourceLister(t)
 
 				resourceLister.
-					On("List", mock.Anything, "default", "my-repo").
+					On("List", mock.Anything, "default", "my-repo", resources.ListOptions{}).
 					Once().
 					Return(nil, assert.AnError)
 
@@ -351,7 +351,7 @@ func TestFinalizer_process(t *testing.T) {
 				resourceLister := resources.NewMockResourceLister(t)
 
 				resourceLister.
-					On("List", mock.Anything, "default", "my-repo").
+					On("List", mock.Anything, "default", "my-repo", resources.ListOptions{}).
 					Once().
 					Return(&provisioning.ResourceList{
 						Items: []provisioning.ResourceListItem{
@@ -400,7 +400,7 @@ func TestFinalizer_process(t *testing.T) {
 				resourceLister := resources.NewMockResourceLister(t)
 
 				resourceLister.
-					On("List", mock.Anything, "default", "my-repo").
+					On("List", mock.Anything, "default", "my-repo", resources.ListOptions{}).
 					Once().
 					Return(&provisioning.ResourceList{
 						Items: []provisioning.ResourceListItem{
@@ -457,7 +457,7 @@ func TestFinalizer_process(t *testing.T) {
 				resourceLister := resources.NewMockResourceLister(t)
 
 				resourceLister.
-					On("List", mock.Anything, "default", "my-repo").
+					On("List", mock.Anything, "default", "my-repo", resources.ListOptions{}).
 					Once().
 					Return(&provisioning.ResourceList{
 						Items: []provisioning.ResourceListItem{
@@ -703,7 +703,7 @@ func TestDeleteExistingItems_ResourcesBeforeFolders(t *testing.T) {
 	}
 
 	resourceLister := resources.NewMockResourceLister(t)
-	resourceLister.On("List", mock.Anything, "default", "my-repo").Return(&items, nil)
+	resourceLister.On("List", mock.Anything, "default", "my-repo", resources.ListOptions{}).Return(&items, nil)
 
 	clientFactory := resources.NewMockClientFactory(t)
 	clients := resources.NewMockResourceClients(t)
@@ -751,7 +751,7 @@ func TestDeleteExistingItems_ReportsFirstNonEmptyFolder(t *testing.T) {
 		{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "managed-dashboard", Path: "shared/nested/dashboard.json", Folder: "nested-folder"},
 	}}
 	resourceLister := resources.NewMockResourceLister(t)
-	resourceLister.On("List", mock.Anything, "default", "my-repo").Return(&items, nil)
+	resourceLister.On("List", mock.Anything, "default", "my-repo", resources.ListOptions{}).Return(&items, nil)
 
 	clientFactory := resources.NewMockClientFactory(t)
 	clients := resources.NewMockResourceClients(t)
@@ -807,7 +807,7 @@ func TestReleaseExistingItems_FoldersBeforeResources(t *testing.T) {
 	}
 
 	resourceLister := resources.NewMockResourceLister(t)
-	resourceLister.On("List", mock.Anything, "default", "my-repo").Return(&items, nil)
+	resourceLister.On("List", mock.Anything, "default", "my-repo", resources.ListOptions{}).Return(&items, nil)
 
 	clientFactory := resources.NewMockClientFactory(t)
 	clients := resources.NewMockResourceClients(t)
@@ -860,7 +860,7 @@ func TestFinalizer_RoutesItemsToVersionlessClient(t *testing.T) {
 		}
 
 		resourceLister := resources.NewMockResourceLister(t)
-		resourceLister.On("List", mock.Anything, "default", "my-repo").Return(&items, nil)
+		resourceLister.On("List", mock.Anything, "default", "my-repo", resources.ListOptions{}).Return(&items, nil)
 
 		clientFactory := resources.NewMockClientFactory(t)
 		clients := resources.NewMockResourceClients(t)
@@ -909,7 +909,7 @@ func TestFinalizer_RoutesItemsToVersionlessClient(t *testing.T) {
 		}
 
 		resourceLister := resources.NewMockResourceLister(t)
-		resourceLister.On("List", mock.Anything, "default", "my-repo").Return(&items, nil)
+		resourceLister.On("List", mock.Anything, "default", "my-repo", resources.ListOptions{}).Return(&items, nil)
 
 		clientFactory := resources.NewMockClientFactory(t)
 		clients := resources.NewMockResourceClients(t)
@@ -969,7 +969,7 @@ func TestReleaseExistingItems_ResourcesConcurrent(t *testing.T) {
 		}
 
 		resourceLister := resources.NewMockResourceLister(t)
-		resourceLister.On("List", mock.Anything, "default", "my-repo").Return(&items, nil)
+		resourceLister.On("List", mock.Anything, "default", "my-repo", resources.ListOptions{}).Return(&items, nil)
 
 		clientFactory := resources.NewMockClientFactory(t)
 		clients := resources.NewMockResourceClients(t)
@@ -1074,7 +1074,7 @@ func TestFinalizer_processExistingItems_Concurrency(t *testing.T) {
 
 				resourceLister := resources.NewMockResourceLister(t)
 				resourceLister.
-					On("List", mock.Anything, "default", "my-repo").
+					On("List", mock.Anything, "default", "my-repo", resources.ListOptions{}).
 					Return(&items, nil)
 
 				clientFactory := resources.NewMockClientFactory(t)
@@ -1158,7 +1158,7 @@ func TestReleaseExistingItems_RetriesOnConflict(t *testing.T) {
 	}
 
 	resourceLister := resources.NewMockResourceLister(t)
-	resourceLister.On("List", mock.Anything, "default", "my-repo").Return(&items, nil)
+	resourceLister.On("List", mock.Anything, "default", "my-repo", resources.ListOptions{}).Return(&items, nil)
 
 	clientFactory := resources.NewMockClientFactory(t)
 	clients := resources.NewMockResourceClients(t)
@@ -1206,7 +1206,7 @@ func TestDeleteExistingItems_RetriesOnConflict(t *testing.T) {
 	}
 
 	resourceLister := resources.NewMockResourceLister(t)
-	resourceLister.On("List", mock.Anything, "default", "my-repo").Return(&items, nil)
+	resourceLister.On("List", mock.Anything, "default", "my-repo", resources.ListOptions{}).Return(&items, nil)
 
 	clientFactory := resources.NewMockClientFactory(t)
 	clients := resources.NewMockResourceClients(t)
@@ -1253,7 +1253,7 @@ func TestReleaseExistingItems_ReturnsErrorWhenConflictPersists(t *testing.T) {
 	}
 
 	resourceLister := resources.NewMockResourceLister(t)
-	resourceLister.On("List", mock.Anything, "default", "my-repo").Return(&items, nil)
+	resourceLister.On("List", mock.Anything, "default", "my-repo", resources.ListOptions{}).Return(&items, nil)
 
 	clientFactory := resources.NewMockClientFactory(t)
 	clients := resources.NewMockResourceClients(t)
@@ -1421,7 +1421,7 @@ func TestProcess_RemoveOrphanResourcesFinalizer_NonEmptyFolderRecordsUserCause(t
 		{Group: folders.GroupVersion.Group, Resource: "folders", Name: "shared-folder", Title: "Shared folder", Path: "shared"},
 	}}
 	resourceLister := resources.NewMockResourceLister(t)
-	resourceLister.On("List", mock.Anything, "default", "my-repo").Return(&items, nil)
+	resourceLister.On("List", mock.Anything, "default", "my-repo", resources.ListOptions{}).Return(&items, nil)
 
 	clientFactory := resources.NewMockClientFactory(t)
 	clients := resources.NewMockResourceClients(t)

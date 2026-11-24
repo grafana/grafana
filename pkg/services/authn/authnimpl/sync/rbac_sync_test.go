@@ -274,6 +274,41 @@ func TestRBACSync_FetchPermissions(t *testing.T) {
 	}
 }
 
+// Plugin app platform actions are named like K8s permissions but have no
+// mapping; a token delegating one must keep it when the identity holds it.
+func TestRBACSync_FetchPermissions_PluginAppPlatformRestriction(t *testing.T) {
+	const pagesCreate = "assistant.ext.grafana.app/pages:create"
+	acMock := &acmock.Mock{
+		GetUserPermissionsFunc: func(ctx context.Context, siu identity.Requester, o accesscontrol.Options) ([]accesscontrol.Permission, error) {
+			return []accesscontrol.Permission{
+				{Action: pagesCreate},
+				{Action: "assistant.ext.grafana.app/pages:delete"},
+				{Action: "dashboards:read", Scope: "dashboards:uid:*"},
+			}, nil
+		},
+	}
+	s := &RBACSync{
+		ac:           acMock,
+		log:          log.NewNopLogger(),
+		tracer:       tracing.InitializeTracerForTest(),
+		permRegistry: permreg.ProvidePermissionRegistry(t),
+		mapper:       rbac.NewMapperRegistry(),
+	}
+	ident := &authn.Identity{
+		ID: "2", Type: claims.TypeServiceAccount, OrgID: 1,
+		ClientParams: authn.ClientParams{
+			SyncPermissions: true,
+			FetchPermissionsParams: authn.FetchPermissionsParams{
+				// pages:delete is held but not delegated; workflows is delegated but not held.
+				K8sRestrictedActions: []string{pagesCreate, "workflows.ext.grafana.app/definitions:get"},
+			},
+		},
+	}
+
+	require.NoError(t, s.SyncPermissionsHook(context.Background(), ident, &authn.Request{}))
+	require.Equal(t, map[string][]string{pagesCreate: {""}}, ident.Permissions[ident.OrgID])
+}
+
 func TestRBACSync_FetchPermissions_AccessPolicyNoTokenPermissions(t *testing.T) {
 	acMock := &acmock.Mock{
 		GetUserPermissionsFunc: func(ctx context.Context, siu identity.Requester, o accesscontrol.Options) ([]accesscontrol.Permission, error) {

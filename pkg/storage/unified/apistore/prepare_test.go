@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/snowflake"
+	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	grpccodes "google.golang.org/grpc/codes"
@@ -23,9 +24,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/storage"
-
-	authlib "github.com/grafana/authlib/types"
 
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -59,6 +59,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 	t.Run("Error getting auth info from context", func(t *testing.T) {
 		_, err := s.prepareObjectForStorage(context.Background(), nil)
 		require.Error(t, err)
+		require.True(t, apierrors.IsUnauthorized(err))
 		require.Contains(t, err.Error(), "missing auth info")
 	})
 
@@ -418,6 +419,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 
 		_, err = s.prepareObjectForUpdate(ctx, &dashv1.Dashboard{}, &dashv1.Dashboard{})
 		require.Error(t, err)
+		require.True(t, apierrors.IsBadRequest(err))
 		require.Contains(t, err.Error(), "updated object must have a name")
 
 		_, err = s.prepareObjectForUpdate(ctx, &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{
@@ -426,6 +428,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 			Name: "not-the-same-name",
 		}})
 		require.Error(t, err)
+		require.True(t, apierrors.IsBadRequest(err))
 		require.Contains(t, err.Error(), "name mismatch between")
 
 		_, err = s.prepareObjectForStorage(ctx, &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{
@@ -434,6 +437,82 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		}})
 		require.Error(t, err)
 		require.Equal(t, storage.ErrResourceVersionSetOnCreate, err)
+	})
+}
+
+func TestPrepareObjectForUpdateNamespace(t *testing.T) {
+	s := &Storage{serializer: &jsonSerializer{}, opts: StorageOptions{GVK: dashv1.DashboardResourceInfo.GroupVersionKind()}}
+	for _, namespace := range []string{"", "default", "other"} {
+		t.Run(fmt.Sprintf("submitted namespace %q", namespace), func(t *testing.T) {
+			ctx := request.WithNamespace(testContext(t), "default")
+			previous := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{
+				Name: "test", Namespace: "default", UID: "original-uid", Generation: 5,
+			}}
+			updated := previous.DeepCopy()
+			updated.Namespace = namespace
+			result, err := s.prepareObjectForUpdate(ctx, updated, previous)
+			require.NoError(t, err)
+			require.False(t, result.hasChanged)
+			stored := &dashv1.Dashboard{}
+			require.NoError(t, json.Unmarshal(result.raw, stored))
+			require.Equal(t, "default", stored.Namespace)
+			require.Equal(t, int64(5), stored.Generation)
+			require.Equal(t, "default", previous.Namespace)
+		})
+	}
+}
+
+func TestPrepareObjectMetadataIdentity(t *testing.T) {
+	s := &Storage{serializer: &jsonSerializer{}, opts: StorageOptions{GVK: dashv1.DashboardResourceInfo.GroupVersionKind()}}
+	ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{UserID: 1, UserUID: "caller", Type: authlib.TypeUser})
+	for _, tt := range []struct {
+		name, originalUID, wantUID string
+	}{
+		{name: "original identity", originalUID: "user:original", wantUID: "user:original"},
+		{name: "empty identity falls back to caller", wantUID: "user:caller"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := identity.WithOriginalIdentityUID(ctx, tt.originalUID)
+			dashboard := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "test"}}
+			created := getPreparedObject(t, ctx, s, dashboard, nil)
+			require.Equal(t, tt.wantUID, created.GetCreatedBy())
+			require.Equal(t, tt.wantUID, created.GetUpdatedBy())
+
+			previous := dashboard.DeepCopy()
+			previous.Annotations[utils.AnnoKeyCreatedBy] = "user:creator"
+			previous.Annotations[utils.AnnoKeyUpdatedBy] = "user:previous-editor"
+			updated := previous.DeepCopy()
+			updated.Spec = v0alpha1.Unstructured{Object: map[string]any{"title": "changed"}}
+			stored := getPreparedObject(t, ctx, s, updated, previous)
+			require.Equal(t, "user:creator", stored.GetCreatedBy())
+			require.Equal(t, tt.wantUID, stored.GetUpdatedBy())
+			require.Equal(t, previous.Generation+1, stored.GetGeneration())
+
+			unchanged := getPreparedObject(t, ctx, s, previous.DeepCopy(), previous)
+			require.Equal(t, "user:previous-editor", unchanged.GetUpdatedBy())
+			require.Equal(t, previous.Generation, unchanged.GetGeneration())
+		})
+	}
+}
+
+func TestPrepareRejectsObjectsWithoutMetadata(t *testing.T) {
+	s := &Storage{}
+	ctx := testContext(t)
+	valid := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "test"}}
+	t.Run("create", func(t *testing.T) {
+		result, err := s.prepareObjectForStorage(ctx, &runtime.Unknown{})
+		require.Error(t, err)
+		require.Empty(t, result.raw)
+	})
+	t.Run("update", func(t *testing.T) {
+		result, err := s.prepareObjectForUpdate(ctx, &runtime.Unknown{}, valid)
+		require.Error(t, err)
+		require.Empty(t, result.raw)
+	})
+	t.Run("previous object", func(t *testing.T) {
+		result, err := s.prepareObjectForUpdate(ctx, valid, &runtime.Unknown{})
+		require.Error(t, err)
+		require.Empty(t, result.raw)
 	})
 }
 
@@ -569,20 +648,20 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 			wantMessage string
 		}{
 			{
-				name:        "response error: not found",
-				rsp:         &resourcepb.ReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusNotFound, Message: "folder not found"}},
+				name:        "gRPC detail: not found",
+				err:         withErrorResult(grpccodes.NotFound, &resourcepb.ErrorResult{Code: http.StatusNotFound, Message: "folder not found"}),
 				wantCode:    http.StatusNotFound,
 				wantMessage: "folder not found",
 			},
 			{
-				name:        "response error: not found without a message",
-				rsp:         &resourcepb.ReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusNotFound}},
+				name:        "gRPC detail: not found without a message",
+				err:         withErrorResult(grpccodes.NotFound, &resourcepb.ErrorResult{Code: http.StatusNotFound}),
 				wantCode:    http.StatusNotFound,
 				wantMessage: "failed to read folder some-folder",
 			},
 			{
-				name:        "response error: forbidden",
-				rsp:         &resourcepb.ReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusForbidden, Message: "not allowed to read folders"}},
+				name:        "gRPC detail: forbidden",
+				err:         withErrorResult(grpccodes.PermissionDenied, &resourcepb.ErrorResult{Code: http.StatusForbidden, Message: "not allowed to read folders"}),
 				wantCode:    http.StatusForbidden,
 				wantMessage: "not allowed to read folders",
 			},
@@ -595,12 +674,6 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 			{
 				name:        "gRPC error: permission denied",
 				err:         grpcstatus.Error(grpccodes.PermissionDenied, "not allowed to read folders"),
-				wantCode:    http.StatusForbidden,
-				wantMessage: "not allowed to read folders",
-			},
-			{
-				name:        "gRPC error with an error result",
-				err:         withErrorResult(grpccodes.PermissionDenied, &resourcepb.ErrorResult{Code: http.StatusForbidden, Message: "not allowed to read folders"}),
 				wantCode:    http.StatusForbidden,
 				wantMessage: "not allowed to read folders",
 			},
@@ -635,6 +708,43 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 				require.Contains(t, status.Message, tc.wantMessage)
 			})
 		}
+	})
+
+	t.Run("invalid folder responses fail closed", func(t *testing.T) {
+		for _, rsp := range []*resourcepb.ReadResponse{nil, {}, {Value: []byte(`invalid JSON`)}} {
+			s := &Storage{
+				opts: StorageOptions{EnableFolderSupport: true},
+				store: &folderReadStore{read: func(context.Context, *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
+					return rsp, nil
+				}},
+			}
+			err := s.ensureRepoManagedByParentFolder(context.Background(), makeDashboard(t, "some-folder", nil))
+			require.ErrorContains(t, err, "failed to decode folder some-folder")
+		}
+	})
+
+	t.Run("preserves folder error details", func(t *testing.T) {
+		st, err := grpcstatus.New(grpccodes.InvalidArgument, "invalid folder").WithDetails(&resourcepb.ErrorResult{
+			Code: http.StatusUnprocessableEntity, Reason: string(v1.StatusReasonInvalid), Message: "invalid folder",
+			Details: &resourcepb.ErrorDetails{Group: folders.GROUP, Kind: "Folder", Name: "some-folder",
+				Causes: []*resourcepb.ErrorCause{{Reason: string(v1.CauseTypeFieldValueInvalid), Field: "metadata.name", Message: "invalid name"}}},
+		})
+		require.NoError(t, err)
+		s := &Storage{
+			opts: StorageOptions{EnableFolderSupport: true},
+			store: &folderReadStore{read: func(context.Context, *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
+				return nil, st.Err()
+			}},
+		}
+		err = s.ensureRepoManagedByParentFolder(context.Background(), makeDashboard(t, "some-folder", nil))
+		require.Error(t, err)
+		apiStatus, ok := err.(apierrors.APIStatus) //nolint:errorlint // the API server requires an unwrapped APIStatus
+		require.True(t, ok)
+		got := apiStatus.Status()
+		require.Equal(t, int32(http.StatusUnprocessableEntity), got.Code)
+		require.Equal(t, v1.StatusReasonInvalid, got.Reason)
+		require.Equal(t, &v1.StatusDetails{Group: folders.GROUP, Kind: "Folder", Name: "some-folder",
+			Causes: []v1.StatusCause{{Type: v1.CauseTypeFieldValueInvalid, Field: "metadata.name", Message: "invalid name"}}}, got.Details)
 	})
 
 	t.Run("create: dashboard in an unmanaged folder works", func(t *testing.T) {
@@ -920,6 +1030,56 @@ func TestVerifyFolder(t *testing.T) {
 			acc.SetFolder(parent)
 		}
 		return acc
+	}
+
+	for _, tt := range []struct {
+		name          string
+		enableSupport bool
+		requireFolder bool
+		folder        string
+		cause         v1.CauseType
+		message       string
+	}{
+		{name: "optional folder accepts root", enableSupport: true, folder: "general"},
+		{name: "required folder accepts non-root", enableSupport: true, requireFolder: true, folder: "my-folder"},
+		{name: "required folder rejects missing annotation", enableSupport: true, requireFolder: true,
+			cause: v1.CauseTypeFieldValueRequired, message: "folder is required"},
+		{name: "required folder rejects root", enableSupport: true, requireFolder: true, folder: "general",
+			cause: v1.CauseTypeForbidden, message: "cannot be created in the root folder"},
+		{name: "disabled support rejects root", folder: "general",
+			cause: v1.CauseTypeForbidden, message: "folders are not supported"},
+		{name: "disabled support takes precedence over required folder", requireFolder: true},
+		{name: "disabled support rejects a required folder", requireFolder: true, folder: "my-folder",
+			cause: v1.CauseTypeForbidden, message: "folders are not supported"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			s := &Storage{
+				gr:   dashv1.DashboardResourceInfo.GroupResource(),
+				opts: StorageOptions{EnableFolderSupport: tt.enableSupport, RequireFolder: tt.requireFolder},
+			}
+			obj := makeDash(t, tt.folder)
+			err := s.verifyFolder(obj)
+			require.Equal(t, tt.folder, obj.GetFolder())
+			if tt.cause == "" {
+				require.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			require.True(t, apierrors.IsInvalid(err))
+			var status *apierrors.StatusError
+			require.ErrorAs(t, err, &status)
+			require.Equal(t, int32(http.StatusUnprocessableEntity), status.ErrStatus.Code)
+			details := status.ErrStatus.Details
+			require.NotNil(t, details)
+			require.Equal(t, obj.GetName(), details.Name)
+			require.Equal(t, obj.GetGroupVersionKind().Group, details.Group)
+			require.Equal(t, obj.GetGroupVersionKind().Kind, details.Kind)
+			require.Len(t, details.Causes, 1)
+			require.Equal(t, tt.cause, details.Causes[0].Type)
+			require.Equal(t, "metadata.annotations[grafana.app/folder]", details.Causes[0].Field)
+			require.Contains(t, details.Causes[0].Message, tt.message)
+			require.Contains(t, details.Causes[0].Message, s.gr.String())
+		})
 	}
 
 	t.Run("support enabled, empty folder passes", func(t *testing.T) {

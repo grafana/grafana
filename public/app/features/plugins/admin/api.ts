@@ -1,6 +1,13 @@
 import { type PluginError, renderMarkdown } from '@grafana/data';
-import { getBackendSrv, isFetchError } from '@grafana/runtime';
-import { installPluginMeta, logPluginMetaError, uninstallPluginMeta } from '@grafana/runtime/internal';
+import { config, getBackendSrv, isFetchError } from '@grafana/runtime';
+import {
+  assertPluginIdFormat,
+  FlagKeys,
+  getFeatureFlagClient,
+  installPluginMeta,
+  logPluginMetaError,
+  uninstallPluginMeta,
+} from '@grafana/runtime/internal';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { isVersionGtOrEq } from 'app/core/utils/version';
 
@@ -18,6 +25,8 @@ import {
 } from './types';
 
 export async function getPluginDetails(id: string): Promise<CatalogPluginDetails> {
+  assertPluginIdFormat(id);
+
   const remote = await getRemotePlugin(id);
   const isPublished = Boolean(remote);
   const [localPlugins, versions, localReadme, localChangelog] = await Promise.all([
@@ -65,6 +74,8 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
 }
 
 export async function getPluginInsights(id: string, version: string | undefined): Promise<CatalogPluginInsights> {
+  assertPluginIdFormat(id);
+
   if (!version) {
     throw new Error('Version is required');
   }
@@ -221,20 +232,28 @@ export async function getProvisionedPlugins(): Promise<ProvisionedPlugin[]> {
 }
 
 export async function installPlugin(id: string, version?: string) {
-  // Install via K8s PluginMeta API (no-op when plugins.useMTPlugins is off).
-  // We call both this and the legacy path because the K8s settings API doesn't cover all
-  // plugin types yet — the legacy call keeps the UI in sync across browser refreshes.
-  // TODO(@hugohaggmark): return early once all plugin types support the K8s Settings API.
-  try {
-    await installPluginMeta(id, version ?? '');
-  } catch (error: unknown) {
-    logPluginMetaError(`installPluginMeta: Failed to install plugin`, error, {
-      pluginId: id,
-      pluginVersion: version ?? '',
-    });
+  assertPluginIdFormat(id);
+
+  if (isMTPluginInstallEnabled()) {
+    try {
+      return await installPluginMeta(id, version ?? '', { updateExisting: true });
+    } catch (error: unknown) {
+      logPluginMetaError(`installPluginMeta: Failed to install plugin, falling back to the legacy API`, error, {
+        pluginId: id,
+        pluginVersion: version ?? '',
+      });
+    }
+  } else if (isMTPluginsEnabled()) {
+    try {
+      await installPluginMeta(id, version ?? '');
+    } catch (error: unknown) {
+      logPluginMetaError(`installPluginMeta: Failed to install plugin`, error, {
+        pluginId: id,
+        pluginVersion: version ?? '',
+      });
+    }
   }
 
-  // Legacy install path — kept until K8s settings API covers all plugin types.
   return await getBackendSrv().post(
     `${API_ROOT}/${id}/install`,
     { version },
@@ -246,23 +265,45 @@ export async function installPlugin(id: string, version?: string) {
 }
 
 export async function uninstallPlugin(id: string) {
-  // Uninstall via K8s PluginMeta API (no-op when plugins.useMTPlugins is off).
-  // We call both this and the legacy path because the K8s settings API doesn't cover all
-  // plugin types yet — the legacy call keeps the UI in sync across browser refreshes.
-  // TODO(@hugohaggmark): return early once all plugin types support the K8s Settings API.
-  try {
-    await uninstallPluginMeta(id);
-  } catch (error: unknown) {
-    logPluginMetaError(`uninstallPluginMeta: Failed to uninstall plugin`, error, {
-      pluginId: id,
-    });
+  assertPluginIdFormat(id);
+
+  if (isMTPluginInstallEnabled()) {
+    try {
+      return await uninstallPluginMeta(id);
+    } catch (error: unknown) {
+      logPluginMetaError(`uninstallPluginMeta: Failed to uninstall plugin, falling back to the legacy API`, error, {
+        pluginId: id,
+      });
+    }
+  } else if (isMTPluginsEnabled()) {
+    try {
+      await uninstallPluginMeta(id);
+    } catch (error: unknown) {
+      logPluginMetaError(`uninstallPluginMeta: Failed to uninstall plugin`, error, {
+        pluginId: id,
+      });
+    }
   }
 
-  // Legacy uninstall path — kept until K8s settings API covers all plugin types.
   return await getBackendSrv().post(`${API_ROOT}/${id}/uninstall`);
 }
 
+// Only externally managed instances record installs in grafana.com from the plugins API write, through a
+// background hook that can still fail after the call succeeds.
+function isMTPluginInstallEnabled(): boolean {
+  return (
+    config.pluginAdminExternalManageEnabled &&
+    getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPluginInstall, false)
+  );
+}
+
+function isMTPluginsEnabled(): boolean {
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false);
+}
+
 export async function getPluginEntitlement(id: string): Promise<boolean> {
+  assertPluginIdFormat(id);
+
   try {
     await getBackendSrv().get(`${GCOM_API_ROOT}/plugins/${id}/entitlement`);
     return true;

@@ -1,7 +1,7 @@
 // Code based on Material UI
 // The MIT License (MIT)
 // Copyright (c) 2014 Call-Em-All
-import * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { type ThemeColors } from './createColors';
 
@@ -42,42 +42,42 @@ export interface ThemeTypographyVariant {
 }
 
 // sizes are in px, matching the defaults passed to buildVariant
-const ThemeTypographyVariantInputSchema = z
-  .object({
+const ThemeTypographyVariantInputSchema = z.partial(
+  z.object({
     fontFamily: z.string(),
-    fontWeight: z.number().positive(),
-    fontSize: z.number().positive(),
-    lineHeight: z.number().positive(),
+    fontWeight: z.number().check(z.positive()),
+    fontSize: z.number().check(z.positive()),
+    lineHeight: z.number().check(z.positive()),
     letterSpacing: z.number(),
   })
-  .partial();
+);
 
 export const ThemeTypographyInputSchema = z.object({
-  fontFamily: z.string().optional(),
-  fontFamilyMonospace: z.string().optional(),
-  fontSize: z.number().positive().optional(),
-  fontWeightLight: z.number().positive().optional(),
-  fontWeightRegular: z.number().positive().optional(),
-  fontWeightMedium: z.number().positive().optional(),
-  fontWeightBold: z.number().positive().optional(),
+  fontFamily: z.optional(z.string()),
+  fontFamilyMonospace: z.optional(z.string()),
+  fontSize: z.optional(z.number().check(z.positive())),
+  fontWeightLight: z.optional(z.number().check(z.positive())),
+  fontWeightRegular: z.optional(z.number().check(z.positive())),
+  fontWeightMedium: z.optional(z.number().check(z.positive())),
+  fontWeightBold: z.optional(z.number().check(z.positive())),
   // what's the font-size on the html element.
   // 16px is the default font-size used by browsers.
-  htmlFontSize: z.number().positive().optional(),
-  xxl: ThemeTypographyVariantInputSchema.optional(),
-  xl: ThemeTypographyVariantInputSchema.optional(),
-  lg: ThemeTypographyVariantInputSchema.optional(),
-  md: ThemeTypographyVariantInputSchema.optional(),
-  base: ThemeTypographyVariantInputSchema.optional(),
-  sm: ThemeTypographyVariantInputSchema.optional(),
-  code: ThemeTypographyVariantInputSchema.optional(),
-  h1: ThemeTypographyVariantInputSchema.optional(),
-  h2: ThemeTypographyVariantInputSchema.optional(),
-  h3: ThemeTypographyVariantInputSchema.optional(),
-  h4: ThemeTypographyVariantInputSchema.optional(),
-  h5: ThemeTypographyVariantInputSchema.optional(),
-  h6: ThemeTypographyVariantInputSchema.optional(),
-  body: ThemeTypographyVariantInputSchema.optional(),
-  bodySmall: ThemeTypographyVariantInputSchema.optional(),
+  htmlFontSize: z.optional(z.number().check(z.positive())),
+  xxl: z.optional(ThemeTypographyVariantInputSchema),
+  xl: z.optional(ThemeTypographyVariantInputSchema),
+  lg: z.optional(ThemeTypographyVariantInputSchema),
+  md: z.optional(ThemeTypographyVariantInputSchema),
+  base: z.optional(ThemeTypographyVariantInputSchema),
+  sm: z.optional(ThemeTypographyVariantInputSchema),
+  code: z.optional(ThemeTypographyVariantInputSchema),
+  h1: z.optional(ThemeTypographyVariantInputSchema),
+  h2: z.optional(ThemeTypographyVariantInputSchema),
+  h3: z.optional(ThemeTypographyVariantInputSchema),
+  h4: z.optional(ThemeTypographyVariantInputSchema),
+  h5: z.optional(ThemeTypographyVariantInputSchema),
+  h6: z.optional(ThemeTypographyVariantInputSchema),
+  body: z.optional(ThemeTypographyVariantInputSchema),
+  bodySmall: z.optional(ThemeTypographyVariantInputSchema),
 });
 
 export type ThemeTypographyInput = z.infer<typeof ThemeTypographyInputSchema>;

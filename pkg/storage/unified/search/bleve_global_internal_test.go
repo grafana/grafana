@@ -72,7 +72,6 @@ func TestGlobalIndexHoldsSeveralResourceTypes(t *testing.T) {
 			Limit: 100,
 		}, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		names := make([]string, 0, len(rsp.Rows))
 		for _, row := range rsp.Rows {
 			names = append(names, row.Key.Name)
@@ -118,7 +117,6 @@ func TestGlobalIndexHoldsSeveralResourceTypes(t *testing.T) {
 			Limit:   100,
 		}, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 
 		names := make([]string, 0, len(rsp.Rows))
 		for _, row := range rsp.Rows {
@@ -133,7 +131,6 @@ func TestGlobalIndexHoldsSeveralResourceTypes(t *testing.T) {
 			Limit:   100,
 		}, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 
 		found := map[string]string{}
 		for _, row := range rsp.Rows {
@@ -171,7 +168,6 @@ func TestSearchResponseResourceVersion(t *testing.T) {
 				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			}, nil, nil)
 			require.NoError(t, err)
-			require.Nil(t, response.Error)
 			assert.Equal(t, int64(1), response.TotalHits)
 			assert.Equal(t, tc.rv, response.ResourceVersion)
 		})
@@ -243,6 +239,15 @@ func TestGlobalIndexSearchFields(t *testing.T) {
 	_, ok = perResource.keywordFields[resource.SEARCH_FIELD_GROUP_RESOURCE]
 	assert.False(t, ok, "the resource type must stay unavailable to per-resource search")
 
+	// The creator is faceted only here; per-resource search still filters on it.
+	f, ok = global.keywordFields[resource.SEARCH_FIELD_CREATED_BY]
+	require.True(t, ok)
+	assert.True(t, f.facetable)
+	f, ok = perResource.keywordFields[resource.SEARCH_FIELD_CREATED_BY]
+	require.True(t, ok)
+	assert.True(t, f.filterable)
+	assert.False(t, f.facetable)
+
 	// Timestamps are sortable in both, so results can be ordered by time.
 	for _, name := range []string{resource.SEARCH_FIELD_CREATED, resource.SEARCH_FIELD_UPDATED} {
 		assert.True(t, global.sortableFields[name], name)
@@ -311,7 +316,6 @@ func TestGlobalIndexPagesThroughSameNamedDocuments(t *testing.T) {
 			SearchAfter: after,
 		}, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		if len(rsp.Rows) == 0 {
 			break
 		}
@@ -326,6 +330,59 @@ func TestGlobalIndexPagesThroughSameNamedDocuments(t *testing.T) {
 		"dashboard.grafana.app/dashboards/zzz",
 	}, seen)
 	assert.Len(t, seen, 3, "no document is repeated")
+}
+
+// Counts per creator cover every document the caller may read, and nothing else,
+// so a client can group hits by owner. An unreadable document is left out even
+// when its type is readable. A document without a creator adds no term.
+func TestGlobalIndexFacetsOnCreator(t *testing.T) {
+	backend, _ := setupBleveBackend(t)
+	ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "default"})
+	key := resource.GlobalSearchKey("default")
+
+	doc := func(group, res, name, createdBy string) *resource.BulkIndexItem {
+		return &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				RV:        1,
+				Name:      name,
+				Title:     name,
+				CreatedBy: createdBy,
+				Key:       &resourcepb.ResourceKey{Namespace: key.Namespace, Group: group, Resource: res, Name: name},
+			},
+		}
+	}
+	index, err := backend.BuildIndex(ctx, key, 5, "test", func(index resource.ResourceIndex) (int64, error) {
+		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+			doc("dashboard.grafana.app", "dashboards", "a", "user:alice"),
+			doc("dashboard.grafana.app", "dashboards", "b", "user:alice"),
+			doc("folder.grafana.app", "folders", "c", "user:bob"),
+			doc("folder.grafana.app", "folders", "d", "user:carol"),
+			doc("dashboard.grafana.app", "dashboards", "e", ""),
+		}})
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+	require.NoError(t, err)
+
+	// Bob's folder stays readable; Carol's is denied by name.
+	access := &folderAccessClient{denied: map[string]bool{"d": true}}
+	rsp, err := index.Search(ctx, access, &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: key.Namespace}},
+		Limit:   10,
+		Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
+			resource.SEARCH_FIELD_CREATED_BY: {Field: resource.SEARCH_FIELD_CREATED_BY, Limit: 10},
+		},
+	}, nil, nil)
+	require.NoError(t, err)
+
+	facet := rsp.Facet[resource.SEARCH_FIELD_CREATED_BY]
+	require.NotNil(t, facet)
+	counts := map[string]int64{}
+	for _, term := range facet.Terms {
+		counts[term.Term] = term.Count
+	}
+	assert.Equal(t, map[string]int64{"user:alice": 2, "user:bob": 1}, counts)
+	assert.Equal(t, int64(3), facet.Total)
+	assert.Equal(t, int64(1), facet.Missing, "the readable document without a creator")
 }
 
 var (
@@ -517,7 +574,6 @@ func searchFolderTree(t *testing.T, index resource.ResourceIndex, folders ...str
 		Limit: 100,
 	}, nil, nil)
 	require.NoError(t, err)
-	require.Nil(t, rsp.Error)
 	names := make([]string, 0, len(rsp.Rows))
 	for _, row := range rsp.Rows {
 		names = append(names, row.Key.Name)
@@ -645,7 +701,6 @@ func searchFolderPaths(t *testing.T, index resource.ResourceIndex, access authli
 		Limit:   100,
 	}, nil, nil)
 	require.NoError(t, err)
-	require.Nil(t, rsp.Error)
 	require.NotEmpty(t, rsp.Rows)
 	if rsp.FolderPaths == nil {
 		return nil
@@ -821,9 +876,7 @@ func (c verbAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, req 
 // when the search does not return the folder field, and a verb that cannot be
 // checked for a type is left out rather than answered no.
 func TestSearchReturnsRowAccess(t *testing.T) {
-	// Both authorization paths build the rows differently.
-	t.Run("in-searcher authz", func(t *testing.T) { testSearchReturnsRowAccess(t) })
-	t.Run("post-rank authz", func(t *testing.T) { testSearchReturnsRowAccess(t, withPostRankAuthzEnabled()) })
+	testSearchReturnsRowAccess(t)
 }
 
 func testSearchReturnsRowAccess(t *testing.T, options ...setupOption) {
@@ -847,7 +900,6 @@ func testSearchReturnsRowAccess(t *testing.T, options ...setupOption) {
 			AccessVerbs: verbs,
 		}, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		access := map[string]map[string]bool{}
 		for _, row := range rsp.Rows {
 			access[row.Key.Resource+"/"+row.Key.Name] = row.Access
@@ -928,84 +980,80 @@ func buildFolderTreeIndex(t *testing.T, backend *bleveBackend, key resource.Name
 
 func TestPerResourceFolderTreeSearch(t *testing.T) {
 	for _, limit := range []int{folderTermFilterLimit, 0} {
-		for _, postRank := range []bool{false, true} {
-			t.Run(fmt.Sprintf("terms=%d/postRank=%t", limit, postRank), func(t *testing.T) {
-				defer func(old int) { folderTermFilterLimit = old }(folderTermFilterLimit)
-				folderTermFilterLimit = limit
-				backend, _ := setupBleveBackend(t, withFileThreshold(100), func(opts *BleveOptions) {
-					opts.PostRankAuthzEnabled = postRank
-					opts.TrashRetention.Enabled = true
-				})
-				folderKey := resource.NamespacedResource{Namespace: "default", Group: "folder.grafana.app", Resource: "folders"}
-				dashKey := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
-				folders := buildFolderTreeIndex(t, backend, folderKey,
-					folderTreeDoc(folderKey, "folders", "top", ""),
-					folderTreeDoc(folderKey, "folders", "mid", "top"),
-					folderTreeDoc(folderKey, "folders", "leaf", "mid"),
-					folderTreeDoc(folderKey, "folders", "other", "general"))
-				dashboards := buildFolderTreeIndex(t, backend, dashKey,
-					folderTreeDoc(dashKey, "dashboards", "dash-top", "top"),
-					folderTreeDoc(dashKey, "dashboards", "dash-mid", "mid"),
-					folderTreeDoc(dashKey, "dashboards", "dash-leaf", "leaf"),
-					folderTreeDoc(dashKey, "dashboards", "dash-other", "other"),
-					folderTreeDoc(dashKey, "dashboards", "dash-root", ""))
-				ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "default"})
-				filter := func(roots ...string) *resourcepb.Requirement {
-					return &resourcepb.Requirement{Key: resource.SEARCH_FIELD_FOLDER_TREE, Operator: string(selection.In), Values: roots}
-				}
-				search := func(fields ...*resourcepb.Requirement) []string {
-					t.Helper()
-					req := &resourcepb.ResourceSearchRequest{
-						Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: dashKey.Namespace, Group: dashKey.Group, Resource: dashKey.Resource}, Fields: fields},
-						Limit:   100,
-					}
-					before := proto.Clone(req)
-					rsp, err := dashboards.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), req, &resource.SearchIndexes{Folders: folders}, nil)
-					require.NoError(t, err)
-					require.Nil(t, rsp.Error)
-					assert.True(t, proto.Equal(before, req), "the caller's filters must not change")
-					names := make([]string, 0, len(rsp.Rows))
-					for _, row := range rsp.Rows {
-						assert.Equal(t, "dashboards", row.Key.Resource)
-						names = append(names, row.Key.Name)
-					}
-					return names
-				}
-
-				assert.ElementsMatch(t, []string{"dash-top", "dash-mid", "dash-leaf"}, search(filter("top")))
-				assert.ElementsMatch(t, []string{"dash-top", "dash-mid", "dash-leaf"}, search(filter("top", "mid")))
-				assert.ElementsMatch(t, []string{"dash-top", "dash-mid", "dash-leaf"}, search(&resourcepb.Requirement{
-					Key: resource.SEARCH_FIELD_FOLDER_TREE, Operator: "=", Values: []string{"top"},
-				}))
-				assert.ElementsMatch(t, []string{"dash-mid", "dash-leaf"}, search(filter("top"), filter("mid")))
-				assert.ElementsMatch(t, []string{"dash-leaf", "dash-other"}, search(filter("leaf", "other")))
-				assert.Empty(t, search(filter("missing")))
-				assert.Empty(t, search(filter()))
-				assert.Len(t, search(filter("general")), 5)
-				assert.Len(t, search(filter("")), 5)
-
-				require.NoError(t, folders.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{folderTreeDoc(folderKey, "folders", "mid", "other")}}))
-				assert.ElementsMatch(t, []string{"dash-top"}, search(filter("top")))
-				assert.ElementsMatch(t, []string{"dash-mid", "dash-leaf", "dash-other"}, search(filter("other")))
-
-				deleted := folderTreeDoc(folderKey, "folders", "mid", "other")
-				deleted.Doc.IsDeleted = new(true)
-				require.NoError(t, folders.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{deleted}}))
-				count, err := folders.deletedDocCount(ctx)
-				require.NoError(t, err)
-				require.Equal(t, int64(1), count, "the folder stays indexed for trash search")
-				assert.ElementsMatch(t, []string{"dash-other"}, search(filter("other")))
-
-				folders.folders.mu.Lock()
-				folders.folders.loaded = false
-				folders.folders.parent, folders.folders.children = nil, nil
-				folders.folders.mu.Unlock()
-				assert.ElementsMatch(t, []string{"dash-other"}, search(filter("other")), "loading excludes the same deleted folders as incremental updates")
-
-				require.NoError(t, folders.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{folderTreeDoc(folderKey, "folders", "mid", "top")}}))
-				assert.ElementsMatch(t, []string{"dash-top", "dash-mid", "dash-leaf"}, search(filter("top")))
+		t.Run(fmt.Sprintf("terms=%d", limit), func(t *testing.T) {
+			defer func(old int) { folderTermFilterLimit = old }(folderTermFilterLimit)
+			folderTermFilterLimit = limit
+			backend, _ := setupBleveBackend(t, withFileThreshold(100), func(opts *BleveOptions) {
+				opts.TrashRetention.Enabled = true
 			})
-		}
+			folderKey := resource.NamespacedResource{Namespace: "default", Group: "folder.grafana.app", Resource: "folders"}
+			dashKey := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
+			folders := buildFolderTreeIndex(t, backend, folderKey,
+				folderTreeDoc(folderKey, "folders", "top", ""),
+				folderTreeDoc(folderKey, "folders", "mid", "top"),
+				folderTreeDoc(folderKey, "folders", "leaf", "mid"),
+				folderTreeDoc(folderKey, "folders", "other", "general"))
+			dashboards := buildFolderTreeIndex(t, backend, dashKey,
+				folderTreeDoc(dashKey, "dashboards", "dash-top", "top"),
+				folderTreeDoc(dashKey, "dashboards", "dash-mid", "mid"),
+				folderTreeDoc(dashKey, "dashboards", "dash-leaf", "leaf"),
+				folderTreeDoc(dashKey, "dashboards", "dash-other", "other"),
+				folderTreeDoc(dashKey, "dashboards", "dash-root", ""))
+			ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "default"})
+			filter := func(roots ...string) *resourcepb.Requirement {
+				return &resourcepb.Requirement{Key: resource.SEARCH_FIELD_FOLDER_TREE, Operator: string(selection.In), Values: roots}
+			}
+			search := func(fields ...*resourcepb.Requirement) []string {
+				t.Helper()
+				req := &resourcepb.ResourceSearchRequest{
+					Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: dashKey.Namespace, Group: dashKey.Group, Resource: dashKey.Resource}, Fields: fields},
+					Limit:   100,
+				}
+				before := proto.Clone(req)
+				rsp, err := dashboards.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), req, &resource.SearchIndexes{Folders: folders}, nil)
+				require.NoError(t, err)
+				assert.True(t, proto.Equal(before, req), "the caller's filters must not change")
+				names := make([]string, 0, len(rsp.Rows))
+				for _, row := range rsp.Rows {
+					assert.Equal(t, "dashboards", row.Key.Resource)
+					names = append(names, row.Key.Name)
+				}
+				return names
+			}
+
+			assert.ElementsMatch(t, []string{"dash-top", "dash-mid", "dash-leaf"}, search(filter("top")))
+			assert.ElementsMatch(t, []string{"dash-top", "dash-mid", "dash-leaf"}, search(filter("top", "mid")))
+			assert.ElementsMatch(t, []string{"dash-top", "dash-mid", "dash-leaf"}, search(&resourcepb.Requirement{
+				Key: resource.SEARCH_FIELD_FOLDER_TREE, Operator: "=", Values: []string{"top"},
+			}))
+			assert.ElementsMatch(t, []string{"dash-mid", "dash-leaf"}, search(filter("top"), filter("mid")))
+			assert.ElementsMatch(t, []string{"dash-leaf", "dash-other"}, search(filter("leaf", "other")))
+			assert.Empty(t, search(filter("missing")))
+			assert.Empty(t, search(filter()))
+			assert.Len(t, search(filter("general")), 5)
+			assert.Len(t, search(filter("")), 5)
+
+			require.NoError(t, folders.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{folderTreeDoc(folderKey, "folders", "mid", "other")}}))
+			assert.ElementsMatch(t, []string{"dash-top"}, search(filter("top")))
+			assert.ElementsMatch(t, []string{"dash-mid", "dash-leaf", "dash-other"}, search(filter("other")))
+
+			deleted := folderTreeDoc(folderKey, "folders", "mid", "other")
+			deleted.Doc.IsDeleted = new(true)
+			require.NoError(t, folders.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{deleted}}))
+			count, err := folders.deletedDocCount(ctx)
+			require.NoError(t, err)
+			require.Equal(t, int64(1), count, "the folder stays indexed for trash search")
+			assert.ElementsMatch(t, []string{"dash-other"}, search(filter("other")))
+
+			folders.folders.mu.Lock()
+			folders.folders.loaded = false
+			folders.folders.parent, folders.folders.children = nil, nil
+			folders.folders.mu.Unlock()
+			assert.ElementsMatch(t, []string{"dash-other"}, search(filter("other")), "loading excludes the same deleted folders as incremental updates")
+
+			require.NoError(t, folders.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{folderTreeDoc(folderKey, "folders", "mid", "top")}}))
+			assert.ElementsMatch(t, []string{"dash-top", "dash-mid", "dash-leaf"}, search(filter("top")))
+		})
 	}
 }
 
@@ -1028,7 +1076,6 @@ func TestPerResourceFolderTreeUsesCurrentFolderIndex(t *testing.T) {
 	}
 	rsp, err := search(folders)
 	require.NoError(t, err)
-	require.Nil(t, rsp.Error)
 	require.Len(t, rsp.Rows, 1)
 
 	current, err := backend.BuildIndex(ctx, folderKey, 1, "test", func(index resource.ResourceIndex) (int64, error) {
@@ -1040,7 +1087,6 @@ func TestPerResourceFolderTreeUsesCurrentFolderIndex(t *testing.T) {
 	assert.Contains(t, resourceutil.ErrorResultFromGRPCDetails(err).GetMessage(), bleve.ErrorIndexClosed.Error())
 	rsp, err = search(current)
 	require.NoError(t, err)
-	require.Nil(t, rsp.Error)
 	assert.Empty(t, rsp.Rows)
 
 	for name, source := range map[string]resource.ResourceIndex{
@@ -1083,7 +1129,6 @@ func TestPerResourceFolderTreeReopensFromDisk(t *testing.T) {
 		}, Limit: 10,
 	}, &resource.SearchIndexes{Folders: folders}, nil)
 	require.NoError(t, err)
-	require.Nil(t, rsp.Error)
 	require.Len(t, rsp.Rows, 1)
 	assert.Equal(t, "dash", rsp.Rows[0].Key.Name)
 }
@@ -1115,7 +1160,6 @@ func TestPerResourceFolderTreeRestoresSnapshot(t *testing.T) {
 		Fields: []*resourcepb.Requirement{{Key: resource.SEARCH_FIELD_FOLDER_TREE, Operator: "in", Values: []string{"top"}}},
 	}, Limit: 10}, &resource.SearchIndexes{Folders: folderIndex}, nil)
 	require.NoError(t, err)
-	require.Nil(t, rsp.Error)
 	require.Len(t, rsp.Rows, 1)
 	assert.Equal(t, "dash", rsp.Rows[0].Key.Name)
 }
@@ -1152,9 +1196,7 @@ func TestPerResourceFolderTreeSharedDuringMoves(t *testing.T) {
 			for range 20 {
 				rsp, err := idx.Search(t.Context(), nil, req, &resource.SearchIndexes{Folders: folders}, nil)
 				assert.NoError(t, err)
-				if rsp != nil {
-					assert.Nil(t, rsp.Error)
-				}
+				assert.NotNil(t, rsp)
 			}
 		})
 	}
@@ -1179,7 +1221,7 @@ func TestPerResourceFolderTreePreparedFiltersSurviveMoves(t *testing.T) {
 	require.Nil(t, errResult)
 	require.NoError(t, folders.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{folderTreeDoc(folderKey, "folders", "mid", "other")}}))
 	for _, postRank := range []bool{true, false} {
-		converted, errResult := dashboards.toBleveSearchRequest(t.Context(), req, nil, postRank, nil, filters)
+		converted, errResult := dashboards.toBleveSearchRequest(t.Context(), req, postRank, filters)
 		require.Nil(t, errResult)
 		rsp, err := dashboards.index.SearchInContext(t.Context(), converted)
 		require.NoError(t, err)
@@ -1367,7 +1409,7 @@ func BenchmarkPerResourceFolderTree(b *testing.B) {
 						for b.Loop() {
 							rsp, err := dashboards.Search(b.Context(), nil, req, &resource.SearchIndexes{Folders: folders}, nil)
 							require.NoError(b, err)
-							require.Nil(b, rsp.Error)
+							require.NotNil(b, rsp)
 						}
 					})
 				}
@@ -1471,7 +1513,6 @@ func BenchmarkGlobalFolderTree(b *testing.B) {
 			Limit: 10,
 		}, nil, nil)
 		require.NoError(b, err)
-		require.Nil(b, rsp.Error)
 		require.Len(b, rsp.Rows, 10)
 	}
 
@@ -1648,7 +1689,6 @@ func TestFolderSetCheckErrorsReachTheSearchWithATextQuery(t *testing.T) {
 			Limit: 10,
 		}, nil, nil)
 	require.NoError(t, err)
-	require.Nil(t, rsp.Error)
 	require.Len(t, rsp.Rows, 1)
 	assert.Equal(t, "dash-top", rsp.Rows[0].Key.Name)
 
@@ -1686,7 +1726,6 @@ func TestSearchReturnsManagerAllowEdits(t *testing.T) {
 				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			}, nil, nil)
 			require.NoError(t, err)
-			require.Nil(t, rsp.Error)
 			require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, rsp.ResultFormat)
 			assert.Equal(t, map[string]any{"editable": true, "locked": false, "unmanaged": nil}, allowEditsByName(t, rsp))
 		})

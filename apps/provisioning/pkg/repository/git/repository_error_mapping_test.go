@@ -7,8 +7,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/nanogit/protocol"
 	"github.com/grafana/nanogit/protocol/client"
 )
 
@@ -71,7 +73,10 @@ func TestMapNanogitError(t *testing.T) {
 }
 
 // TestWrapNanogitError verifies that wrapNanogitError prefixes the operation
-// context, routes the underlying error through mapNanogitError, and handles nil.
+// context, routes the underlying error through mapNanogitError, handles nil,
+// and returns a mapped API-status error (e.g. the 413 from a capped response)
+// unwrapped so responsewriters.ErrorToAPIStatus — which type-switches on the
+// concrete error rather than unwrapping — still emits the intended status code.
 func TestWrapNanogitError(t *testing.T) {
 	t.Run("nil error returns nil", func(t *testing.T) {
 		require.NoError(t, wrapNanogitError("list refs", nil))
@@ -87,6 +92,50 @@ func TestWrapNanogitError(t *testing.T) {
 		require.ErrorIs(t, got, repository.ErrUnauthorized)
 		require.Contains(t, got.Error(), "list refs")
 	})
+
+	t.Run("status error is returned unwrapped", func(t *testing.T) {
+		got := wrapNanogitError("list refs", &client.ErrResponseTooLarge{Limit: 1024, Op: "ls-refs"})
+
+		// A direct type assertion (what ErrorToAPIStatus does) must succeed.
+		_, ok := got.(apierrors.APIStatus)
+		require.True(t, ok, "mapped status error must not be wrapped")
+		require.True(t, apierrors.IsRequestEntityTooLargeError(got))
+	})
+}
+
+// TestMapNanogitError_ResponseTooLarge verifies that nanogit's response byte
+// limit error is surfaced as a 413 Request Entity Too Large.
+func TestMapNanogitError_ResponseTooLarge(t *testing.T) {
+	got := mapNanogitError(&client.ErrResponseTooLarge{Limit: 1024, Op: "fetch"})
+	require.Error(t, got)
+
+	var statusErr apierrors.APIStatus
+	require.True(t, errors.As(got, &statusErr), "mapped error should implement APIStatus interface")
+	require.Equal(t, int32(http.StatusRequestEntityTooLarge), statusErr.Status().Code)
+}
+
+// TestMapNanogitError_ObjectTooLarge verifies that nanogit's decoded-object
+// cap error (the decompression-bomb defense) is surfaced as a 413.
+func TestMapNanogitError_ObjectTooLarge(t *testing.T) {
+	got := mapNanogitError(&protocol.ObjectTooLargeError{Size: 1 << 30, Limit: 10 << 20})
+	require.Error(t, got)
+
+	var statusErr apierrors.APIStatus
+	require.True(t, errors.As(got, &statusErr), "mapped error should implement APIStatus interface")
+	require.Equal(t, int32(http.StatusRequestEntityTooLarge), statusErr.Status().Code)
+}
+
+// TestCheckHTTPError_ResponseTooLarge verifies that a capped operation's 413
+// surfaces as a 413 TestResults rather than falling through to the generic 400
+// that Test() returns for unrecognized errors.
+func TestCheckHTTPError_ResponseTooLarge(t *testing.T) {
+	err := mapNanogitError(&client.ErrResponseTooLarge{Limit: 1024, Op: "ls-refs"})
+	result := checkHTTPError(err, field.NewPath("spec", "git", "branch"))
+
+	require.NotNil(t, result)
+	require.Equal(t, http.StatusRequestEntityTooLarge, result.Code)
+	require.False(t, result.Success)
+	require.Len(t, result.Errors, 1)
 }
 
 // TestMapNanogitError_HTTPStatusCodes verifies that mapped errors have correct HTTP status codes

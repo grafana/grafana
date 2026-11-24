@@ -8,6 +8,18 @@ import { installControllableIntersectionObserver } from '../../mocks/intersectio
 import RecordingRulesPage from './RecordingRulesPage';
 import { findFolderRow, setup } from './recordingRulesPageFixture';
 
+jest.mock('@grafana/runtime', () => {
+  const actual = jest.requireActual('@grafana/runtime');
+  return {
+    ...actual,
+    // The render helper replaces the location service for each test.
+    get locationService() {
+      return actual.locationService;
+    },
+    reportInteraction: jest.fn(),
+  };
+});
+
 setupMswServer();
 
 function folderToggles() {
@@ -22,16 +34,19 @@ describe('RecordingRulesPage folder list', () => {
 
   beforeEach(() => {
     intersection = installControllableIntersectionObserver();
-    reportInteraction = jest.spyOn(runtime, 'reportInteraction').mockImplementation(() => {});
+    reportInteraction = jest
+      .mocked(runtime.reportInteraction)
+      .mockReset()
+      .mockImplementation(() => {});
   });
 
   afterEach(() => {
     intersection.restore();
-    reportInteraction.mockRestore();
+    jest.mocked(runtime.reportInteraction).mockReset();
   });
 
   it('opens in Folders mode with collapsed folder rows, in the order the search returns them', async () => {
-    setup();
+    const backend = setup();
 
     render(<RecordingRulesPage />);
 
@@ -41,6 +56,11 @@ describe('RecordingRulesPage folder list', () => {
     );
     expect(folderToggles()).toEqual(['Expand Infra', 'Expand Team Metrics', 'Expand Zeta Alerts']);
     expect(screen.getByRole('radio', { name: 'Folders' })).toBeChecked();
+    expect(backend.folderSearches).toEqual([
+      expect.objectContaining({
+        labelSelector: { matchLabels: { 'alerting.grafana.app/has-recording-rules': 'true' } },
+      }),
+    ]);
     expect(reportInteraction).toHaveBeenCalledWith('grafana_alerting_gma_rule_list_view', {
       kind: 'recording',
       mode: 'folders',
@@ -72,7 +92,7 @@ describe('RecordingRulesPage folder list', () => {
   it('lists only the filtered folder and stays in Folders mode', async () => {
     setup();
 
-    render(<RecordingRulesPage />, { historyOptions: { initialEntries: ['/?search=folder%3Ateam'] } });
+    render(<RecordingRulesPage />, { historyOptions: { initialEntries: ['/?search=folder%3A%22team%20metrics%22'] } });
 
     expect(await screen.findByRole('link', { name: 'Team Metrics' })).toBeInTheDocument();
     expect(folderToggles()).toEqual(['Expand Team Metrics']);
@@ -116,16 +136,14 @@ describe('RecordingRulesPage folder list', () => {
 
   it('restarts the folder list, collapsed, when the folder filter changes', async () => {
     setup({ pageSize: { folders: 1 } });
-    const { user } = render(<RecordingRulesPage />, {
-      historyOptions: { initialEntries: [`/?${new URLSearchParams({ search: 'folder:infra folder:team' })}`] },
-    });
+    const { user } = render(<RecordingRulesPage />);
     await user.click(await screen.findByRole('button', { name: 'Expand Infra' }));
     await screen.findByRole('link', { name: 'latency:p99' });
     intersection.intersectObserved();
     expect(await screen.findByRole('link', { name: 'Team Metrics' })).toBeInTheDocument();
 
     await user.tripleClick(screen.getByRole('textbox', { name: 'Search' }));
-    await user.keyboard('folder:infra{Enter}');
+    await user.keyboard('folder:Infra{Enter}');
 
     // The same folder reappears under the new filter, but no longer expanded.
     expect(await screen.findByRole('button', { name: 'Expand Infra' })).toHaveAttribute('aria-expanded', 'false');

@@ -493,7 +493,9 @@ export const getAllStandardFieldConfigs = () => {
     editor: standardEditorsRegistry.get('mappings').editor,
     override: standardEditorsRegistry.get('mappings').editor,
     process: valueMappingsOverrideProcessor,
-    settings: {},
+    settings: {
+      interpolateText: getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPanelOptionInterpolation, false),
+    },
     defaultValue: [],
     shouldApply: (x) => x.type !== FieldType.time,
     category: [t('options-ui.registry.standard-field-configs.category-value-mappings', 'Value mappings')],

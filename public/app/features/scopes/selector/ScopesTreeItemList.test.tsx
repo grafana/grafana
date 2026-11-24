@@ -8,9 +8,7 @@ import { type NodesMap, type SelectedScope, type TreeNode } from './types';
 // Mock the ScopesContextProvider hook since it requires a full context setup
 jest.mock('../ScopesContextProvider', () => ({
   useScopesServices: () => ({
-    scopesSelectorService: {
-      closeAndApply: jest.fn(),
-    },
+    scopesSelectorService: {},
   }),
 }));
 
@@ -18,12 +16,14 @@ jest.mock('../ScopesContextProvider', () => ({
 const mockSelectScope = jest.fn();
 const mockDeselectScope = jest.fn();
 const mockToggleExpandedNode = jest.fn();
+const mockCloseAndApply = jest.fn();
 
 jest.mock('./useScopeActions', () => ({
   useScopeActions: () => ({
     selectScope: mockSelectScope,
     deselectScope: mockDeselectScope,
     toggleExpandedNode: mockToggleExpandedNode,
+    closeAndApply: mockCloseAndApply,
   }),
 }));
 

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { type Property } from 'csstype';
-import memoize, { type Key, type RawKey } from 'micro-memoize';
+import { memoize, type Key } from 'micro-memoize';
 
 import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 
@@ -48,7 +48,7 @@ export const IS_SAFARI_26 = (() => {
  * @internal
  * a method that can be used with micro-memoize as a cache key equality comparator.
  */
-export const isTableCellStylesKeyEqual = (cacheKey: Key, key: RawKey): boolean =>
+export const isTableCellStylesKeyEqual = (cacheKey: Key, key: Key): boolean =>
   cacheKey[0] === key[0] &&
   cacheKey[1].shouldOverflow === key[1].shouldOverflow &&
   cacheKey[1].hoverOverflow === key[1].hoverOverflow &&
@@ -173,8 +173,6 @@ export const getGridStyles = memoize(
 
         blockSize: '100%',
         scrollbarWidth: 'thin',
-        // Keep elastic overscroll from pulling the header away from the fixed frame and sidebar divider.
-        ...(tableRefreshEnabled && { overscrollBehaviorY: 'none' }),
         scrollbarColor: theme.isDark ? '#fff5 #fff1' : '#0005 #0001',
 
         border: 'none',
@@ -189,6 +187,11 @@ export const getGridStyles = memoize(
 
         '.rdg-cell': {
           padding: TABLE.CELL_PADDING,
+
+          '&.grafana-row-number-gutter': {
+            backgroundColor: theme.colors.background.secondary,
+            borderInlineEnd: `1px solid ${theme.components.table.border}`,
+          },
 
           '&:last-child': {
             borderInlineEnd: 'none',
@@ -539,7 +542,7 @@ export const getDefaultCellStyles: TableCellStyles = memoize(
         '.table-cell-actions': { display: 'flex' },
       },
     }),
-  { isMatchingKey: isTableCellStylesKeyEqual }
+  { isKeyEqual: isTableCellStylesKeyEqual }
 );
 
 export const getMaxHeightCellStyles: TableCellStyles = memoize(
@@ -557,7 +560,7 @@ export const getMaxHeightCellStyles: TableCellStyles = memoize(
         minHeight: '100%',
       },
     }),
-  { isMatchingKey: isTableCellStylesKeyEqual }
+  { isKeyEqual: isTableCellStylesKeyEqual }
 );
 
 export const getCellActionStyles = memoize((theme: GrafanaTheme2, textAlign: TextAlign, tableRefreshEnabled = false) =>
@@ -688,7 +691,7 @@ const getHoverOnlyCellSelector = memoize((isNested?: boolean) => {
   return isNested ? '.rdg-cell:hover &' : '&:hover';
 });
 
-export const getScrollShadowStyles = (theme: GrafanaTheme2, top: boolean, bottom: boolean) => {
+export const getScrollShadowStyles = (theme: GrafanaTheme2) => {
   const scrollShadowColor = `rgba(0, 0, 0, ${theme.isDark ? 0.25 : 0.08})`;
   return {
     scrollShadows: css({
@@ -707,12 +710,12 @@ export const getScrollShadowStyles = (theme: GrafanaTheme2, top: boolean, bottom
       },
       '&::before': {
         top: 'var(--table-scroll-shadow-top)',
-        opacity: top ? 1 : 0,
+        opacity: 'var(--table-scroll-shadow-top-opacity)',
         background: `linear-gradient(0deg, transparent, ${scrollShadowColor})`,
       },
       '&::after': {
         bottom: 'var(--table-scroll-shadow-bottom)',
-        opacity: bottom ? 1 : 0,
+        opacity: 'var(--table-scroll-shadow-bottom-opacity)',
         background: `linear-gradient(180deg, transparent, ${scrollShadowColor})`,
       },
     }),

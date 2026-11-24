@@ -10,7 +10,6 @@ import {
   type RuleGroupIdentifier,
   type RuleGroupIdentifierV2,
   type RuleIdentifier,
-  type RuleWithLocation,
 } from 'app/types/unified-alerting';
 import {
   type Annotations,
@@ -23,7 +22,7 @@ import {
 import { logError } from '../Analytics';
 import { shouldUsePrometheusRulesPrimary } from '../featureToggles';
 
-import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from './constants';
 import {
   getRuleName,
   isCloudRuleIdentifier,
@@ -100,10 +99,6 @@ export function fromCombinedRule(ruleSourceName: string, rule: CombinedRule): Ru
   }
 
   throw new Error('Could not create an id for a rule that is missing both `rulerRule` and `promRule`.');
-}
-
-export function fromRuleWithLocation(rule: RuleWithLocation): RuleIdentifier {
-  return fromRulerRule(rule.ruleSourceName, rule.namespace, rule.group.name, rule.rule);
 }
 
 export function equal(a: RuleIdentifier, b: RuleIdentifier) {

@@ -7,6 +7,7 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { useNavTree } from 'app/core/navtree/useNavTree';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StPodStatus } from 'app/core/services/StPodReadyService';
 import { useSelector } from 'app/types/store';
@@ -51,7 +52,7 @@ export const PageFallbackLoader = ({ steps }: PageFallbackLoaderProps) => {
   const styles = useStyles2(getStyles);
   const { chrome, stPodReady } = useGrafana();
   const location = useLocation();
-  const navTree = useSelector((state) => state.navBarTree);
+  const navTree = useNavTree();
   const navIndex = useSelector((state) => state.navIndex);
   const stPodStatus = stPodReady.useStatus();
   const hasErrored = stPodStatus === StPodStatus.Error;

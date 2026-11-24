@@ -11,6 +11,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/bwmarrin/snowflake"
@@ -1079,6 +1080,50 @@ func testDataStoreIntegration(t *testing.T, ctx context.Context, ds *dataStore) 
 	})
 }
 
+type scriptedKeyPages struct {
+	KV
+	keys func(context.Context, ListOptions) iter.Seq2[string, error]
+}
+
+func (s scriptedKeyPages) Keys(ctx context.Context, _ string, opts ListOptions) iter.Seq2[string, error] {
+	return s.keys(ctx, opts)
+}
+
+func TestPagedKeysTimeoutAppliesPerPage(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		const timeout = 10 * time.Second
+		var pages int
+		store := scriptedKeyPages{keys: func(ctx context.Context, _ ListOptions) iter.Seq2[string, error] {
+			return func(yield func(string, error) bool) {
+				pages++
+				deadline, ok := ctx.Deadline()
+				require.True(t, ok)
+				require.Equal(t, timeout, time.Until(deadline))
+				if pages == 3 {
+					<-ctx.Done()
+					// A scan that stops yielding on cancellation must not look like EOF.
+					return
+				}
+				synctest.Sleep(6 * time.Second)
+				require.NoError(t, ctx.Err())
+				yield(fmt.Sprintf("key-%d", 3-pages), nil)
+			}
+		}}
+
+		var keys []string
+		var scanErr error
+		for key, err := range pagedKeysWithTimeout(t.Context(), store, kv.EventsSection, ListOptions{Sort: SortOrderDesc}, 1, timeout) {
+			if err != nil {
+				scanErr = err
+				break
+			}
+			keys = append(keys, key)
+		}
+		require.Equal(t, []string{"key-2", "key-1"}, keys)
+		require.ErrorIs(t, scanErr, context.DeadlineExceeded)
+	})
+}
+
 type noNULCursorKV struct{ kv.KV }
 
 func (s noNULCursorKV) Keys(ctx context.Context, section string, opt kv.ListOptions) iter.Seq2[string, error] {
@@ -1700,20 +1745,9 @@ func testDataStoreLastResourceVersion(t *testing.T, ctx context.Context, ds *dat
 	})
 }
 
-// runLatestKeyLookupTest runs testFn on both KV engines, with the fast
-// latest-key lookup off and on.
 func runLatestKeyLookupTest(t *testing.T, testFn func(*testing.T, context.Context, *dataStore)) {
-	for _, fast := range []bool{false, true} {
-		withFast := func(newStore func(*testing.T) *dataStore) func(*testing.T) *dataStore {
-			return func(t *testing.T) *dataStore {
-				ds := newStore(t)
-				ds.fastLatestKeyLookup = fast
-				return ds
-			}
-		}
-		runDataStoreTestWith(t, fmt.Sprintf("badger/fast=%t", fast), withFast(setupTestDataStore), testFn)
-		runDataStoreTestWith(t, fmt.Sprintf("sqlkv/fast=%t", fast), withFast(setupTestDataStoreSqlKv), testFn)
-	}
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testFn)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testFn)
 }
 
 func TestIntegrationDataStore_GetLatestResourceKey(t *testing.T) {
@@ -1920,11 +1954,10 @@ func (k *keysRecordingKV) Keys(ctx context.Context, section string, opt ListOpti
 	return k.KV.Keys(ctx, section, opt)
 }
 
-func TestDataStore_GetLatestResourceKey_FastLookupOption(t *testing.T) {
+func TestDataStore_GetLatestResourceKey_ReadsOnlyNewestKey(t *testing.T) {
 	ctx := context.Background()
 	recorder := &keysRecordingKV{KV: setupBadgerKV(t)}
 	ds := newDataStore(recorder)
-	require.False(t, ds.fastLatestKeyLookup, "fast latest-key lookup must be off by default")
 
 	key := GetRequestKey{Group: "apps", Resource: "resources", Namespace: "default", Name: "test-resource"}
 	var latest DataKey
@@ -1940,28 +1973,14 @@ func TestDataStore_GetLatestResourceKey_FastLookupOption(t *testing.T) {
 		require.NoError(t, ds.Save(ctx, latest, bytes.NewReader([]byte("v"))))
 	}
 
-	t.Run("disabled scans the history in ascending order", func(t *testing.T) {
-		ds.fastLatestKeyLookup = false
-		recorder.calls = nil
-		got, err := ds.GetResourceKeyAtRevision(ctx, key, 0, false)
-		require.NoError(t, err)
-		require.Equal(t, latest, got)
+	recorder.calls = nil
+	got, err := ds.GetResourceKeyAtRevision(ctx, key, 0, false)
+	require.NoError(t, err)
+	require.Equal(t, latest, got)
 
-		require.Len(t, recorder.calls, 1)
-		require.Equal(t, SortOrderAsc, recorder.calls[0].Sort)
-	})
-
-	t.Run("enabled reads only the newest key", func(t *testing.T) {
-		ds.fastLatestKeyLookup = true
-		recorder.calls = nil
-		got, err := ds.GetResourceKeyAtRevision(ctx, key, 0, false)
-		require.NoError(t, err)
-		require.Equal(t, latest, got)
-
-		require.Len(t, recorder.calls, 1)
-		require.Equal(t, SortOrderDesc, recorder.calls[0].Sort)
-		require.Equal(t, int64(1), recorder.calls[0].Limit)
-	})
+	require.Len(t, recorder.calls, 1)
+	require.Equal(t, SortOrderDesc, recorder.calls[0].Sort)
+	require.Equal(t, int64(1), recorder.calls[0].Limit)
 }
 
 func TestIntegrationDataStore_ListLatestResourceKeys(t *testing.T) {

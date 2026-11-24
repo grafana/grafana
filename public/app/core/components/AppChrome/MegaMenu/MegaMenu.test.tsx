@@ -1,15 +1,20 @@
 import { HttpResponse } from 'msw';
+import { testWithAppKind } from 'test/helpers/testWithAppKind';
+import { testWithStarsUser } from 'test/helpers/testWithStarsUser';
 import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, reportInteraction, setBackendSrv } from '@grafana/runtime';
+import { getAPIGroupHandler, getKindSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import {
   customGetUserPreferencesHandler,
   customPatchUserPreferencesHandler,
   getFolderFixtures,
+  MOCK_APP_KIND,
   mockUserPreferences,
+  setMockStarredAppKind,
   setMockStarredDashboards,
   setMockStarredFolders,
   setMockUserPreferences,
@@ -88,6 +93,9 @@ const renderMegaMenu = ({
 
   return render(<MegaMenu onClose={() => {}} />, { preloadedState: { navBarTree } });
 };
+
+testWithStarsUser();
+testWithAppKind();
 
 describe('MegaMenu', () => {
   beforeEach(() => {
@@ -206,6 +214,64 @@ describe('MegaMenu', () => {
         expect(screen.queryByRole('link', { name: 'Home' })).not.toBeInTheDocument();
       }
     );
+  });
+
+  describe('administration section nav', () => {
+    const administrationTree: NavModelItem[] = [
+      { id: 'dashboards', text: 'Dashboards', url: '/dashboards' },
+      {
+        id: 'cfg',
+        text: 'Administration',
+        url: '/admin',
+        icon: 'cog',
+        children: [
+          {
+            id: 'cfg/general',
+            text: 'General',
+            url: '/admin/general',
+            children: [{ id: 'org-settings', text: 'Default preferences', url: '/org' }],
+          },
+          {
+            id: 'cfg/access',
+            text: 'Users and access',
+            url: '/admin/access',
+            children: [{ id: 'global-users', text: 'Users', url: '/admin/users' }],
+          },
+        ],
+      },
+    ];
+
+    it.each([false, true])(
+      'shows Administration as a single row without destinations when the flag is on, regardless of the refresh flag: refresh %s',
+      async (refresh) => {
+        setTestFlags({ 'grafana.navigationAdminSubNav': true, 'grafana.navigationInfoArchRefresh': refresh });
+        renderMegaMenu({ navBarTree: administrationTree });
+
+        expect(await screen.findByRole('link', { name: 'Administration' })).toHaveAttribute('href', '/admin');
+        expect(screen.queryByRole('button', { name: 'Expand section: Administration' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: 'General' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: 'Users and access' })).not.toBeInTheDocument();
+      }
+    );
+
+    it('lists its destinations as before when the flag is off', async () => {
+      setTestFlags({ 'grafana.navigationAdminSubNav': false });
+      const { user } = renderMegaMenu({ navBarTree: administrationTree });
+
+      await user.click(await screen.findByRole('button', { name: 'Expand section: Administration' }));
+
+      expect(screen.getByRole('link', { name: 'General' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Users and access' })).toBeInTheDocument();
+    });
+
+    it('leaves other sections with destinations alone when the flag is on', async () => {
+      setTestFlags({ 'grafana.navigationAdminSubNav': true });
+      const { user } = renderMegaMenu({ navBarTree: nestedNavTree });
+
+      await user.click(await screen.findByRole('button', { name: 'Expand section: Section name' }));
+
+      expect(await screen.findByRole('link', { name: 'Child1' })).toBeInTheDocument();
+    });
   });
 
   describe('customisation', () => {
@@ -351,6 +417,28 @@ describe('MegaMenu', () => {
 
     describe('pinning', () => {
       const pinnedRegion = () => within(screen.getByRole('list', { name: 'Pinned items' }));
+
+      it('keeps a pinned administration page in the pinned box while Administration is a single row', async () => {
+        setTestFlags({ [CUSTOMISE_FLAG]: true, 'grafana.navigationAdminSubNav': true });
+        renderMegaMenu({ bookmarkUrls: ['/admin/settings'] });
+
+        await screen.findByRole('list', { name: 'Pinned items' });
+        expect(pinnedRegion().getByRole('link', { name: /Settings/ })).toBeInTheDocument();
+        expect(pinnedRegion().getByText('Administration')).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Expand section: Administration' })).not.toBeInTheDocument();
+      });
+
+      it('lets Administration be hidden while it is a single row', async () => {
+        setTestFlags({ [CUSTOMISE_FLAG]: true, 'grafana.navigationAdminSubNav': true });
+        const { user } = renderMegaMenu();
+
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
+        await user.click(await screen.findByRole('button', { name: 'Hide Administration' }));
+        await user.click(await screen.findByRole('button', { name: 'Done' }));
+
+        expect(getStoredHiddenItems()).toEqual(['cfg']);
+        expect(screen.queryByRole('link', { name: 'Administration' })).not.toBeInTheDocument();
+      });
 
       it('shows a pinned child as a breadcrumb in the grey box, and keeps it in the nav', async () => {
         const { user } = renderMegaMenu({ bookmarkUrls: ['/playlists'] });
@@ -642,6 +730,68 @@ describe('MegaMenu', () => {
     });
   });
 
+  describe('empty Starred and Bookmarks sections', () => {
+    beforeEach(() => {
+      setTestFlags({ 'grafana.navigationInfoArchRefresh': true });
+      contextSrv.isSignedIn = true;
+      contextSrv.user.isSignedIn = true;
+    });
+
+    afterEach(() => {
+      contextSrv.isSignedIn = false;
+      contextSrv.user.isSignedIn = false;
+    });
+
+    it('keeps both empty sections when the refresh flag is off', async () => {
+      setTestFlags({ 'grafana.navigationInfoArchRefresh': false });
+      setMockStarredDashboards([]);
+      renderMegaMenu();
+
+      expect(await screen.findByRole('link', { name: 'Bookmarks' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Starred' })).toBeInTheDocument();
+    });
+
+    it('hides both sections when nothing is starred or bookmarked', async () => {
+      setMockStarredDashboards([]);
+      renderMegaMenu();
+
+      expect(await screen.findByRole('link', { name: 'Explore' })).toBeInTheDocument();
+      await waitFor(() => expect(screen.queryByRole('link', { name: 'Starred' })).not.toBeInTheDocument());
+      expect(screen.queryByRole('link', { name: 'Bookmarks' })).not.toBeInTheDocument();
+    });
+
+    it('shows Starred when something is starred', async () => {
+      renderMegaMenu();
+
+      expect(await screen.findByRole('button', { name: 'Expand section: Starred' })).toBeInTheDocument();
+    });
+
+    it('keeps Starred visible with its error state when the starred fetch fails', async () => {
+      jest.mocked(getGrafanaSearcher).mockReturnValue({
+        search: jest.fn(() => Promise.reject(new Error('boom'))),
+      } as unknown as ReturnType<typeof getGrafanaSearcher>);
+      const { user } = renderMegaMenu({
+        navBarTree: customisableNavTree.map((item) => (item.id === 'starred' ? { ...item, children: [] } : item)),
+      });
+
+      await user.click(await screen.findByRole('button', { name: 'Expand section: Starred' }));
+      expect(await screen.findByText('Failed to load items')).toBeInTheDocument();
+    });
+
+    it('shows Bookmarks when a bookmark matches a nav item', async () => {
+      renderMegaMenu({ bookmarkUrls: ['/explore'] });
+
+      expect(await screen.findByRole('button', { name: 'Expand section: Bookmarks' })).toBeInTheDocument();
+    });
+
+    it('hides Bookmarks when the only bookmarks match no nav item', async () => {
+      renderMegaMenu({ bookmarkUrls: ['/orphaned-not-in-nav'] });
+
+      expect(await screen.findByRole('link', { name: 'Explore' })).toBeInTheDocument();
+      await waitFor(() => expect(screen.queryByRole('link', { name: 'Bookmarks' })).not.toBeInTheDocument());
+    });
+  });
+
   it('renders a starred folder and a same-named starred dashboard as two distinct, per-kind-iconed rows', async () => {
     const dashUid = dashbdE.item.uid;
     const folderUid = folderB.item.uid;
@@ -671,5 +821,45 @@ describe('MegaMenu', () => {
     // so screen readers don't hear the two rows as identical links.
     expect(starredSection().getByTitle('Dashboard')).toBe(starredSection().getByTestId('icon-apps'));
     expect(starredSection().getByTitle('Folder')).toBe(starredSection().getByTestId('icon-folder'));
+  });
+
+  it('renders a starred app object with its kind icon titled for screen readers, linking into the plugin', async () => {
+    setMockStarredDashboards([]);
+    setMockStarredAppKind(MOCK_APP_KIND.group, MOCK_APP_KIND.kind, ['t1']);
+    server.use(
+      getAPIGroupHandler(MOCK_APP_KIND.group, MOCK_APP_KIND.version),
+      getKindSearchHandler(MOCK_APP_KIND, [{ name: 't1', title: 'Capacity review' }])
+    );
+    setupSearcher([]);
+
+    const { user } = renderMegaMenu();
+
+    await user.click(await screen.findByRole('button', { name: 'Expand section: Starred' }));
+
+    // Waits on the row's text: a role query polled over the whole menu is slow
+    await screen.findByText('Capacity review');
+    const starredSection = within(screen.getByRole('link', { name: 'Starred' }).closest('li')!);
+    expect(starredSection.getByRole('link', { name: 'Capacity review' })).toHaveAttribute(
+      'href',
+      '/a/test-things-app/things/t1'
+    );
+
+    // The kind icon doubles as the row's accessible kind, like the dashboard/folder icons do.
+    expect(starredSection.getByTitle('Thing')).toBe(starredSection.getByTestId('icon-cube'));
+  });
+
+  it('reports a click on a starred row as a click on a starred item of its kind', async () => {
+    const { user } = renderMegaMenu();
+
+    await user.click(await screen.findByRole('button', { name: 'Expand section: Starred' }));
+    // Waits on the row's text: a role query polled over the whole menu is slow
+    await screen.findByText(STARRED_DASHBOARD.name);
+    const starredSection = within(screen.getByRole('link', { name: 'Starred' }).closest('li')!);
+    await user.click(starredSection.getByRole('link', { name: STARRED_DASHBOARD.name }));
+
+    expect(reportInteraction).toHaveBeenCalledWith(
+      'grafana_navigation_item_clicked',
+      expect.objectContaining({ path: STARRED_DASHBOARD.url, itemIsStarred: true, itemKind: 'dashboard' })
+    );
   });
 });

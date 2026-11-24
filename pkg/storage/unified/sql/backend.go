@@ -177,28 +177,27 @@ func NewStorageBackend(
 		for _, opt := range opts {
 			opt(&kvOpts)
 		}
-		blobURL, err := resolvedBlobURL(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("blob_url").MustString(""), cfg.DataPath)
-		if err != nil {
+		if err := resource.ValidateBlobURL(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("blob_url").MustString("")); err != nil {
 			return nil, err
 		}
 		return NewBackend(BackendOptions{
-			DBProvider:              eDB,
-			Reg:                     reg,
-			IsHA:                    isHA,
-			storageMetrics:          storageMetrics,
-			LastImportTimeMaxAge:    cfg.MaxFileIndexAge,
-			GCGate:                  gcGate,
-			GarbageCollection:       NewGarbageCollectionConfig(cfg),
-			BlobURL:                 blobURL,
-			SimulatedNetworkLatency: cfg.SimulatedNetworkLatency,
-			MigrationParquetBuffer:  cfg.MigrationParquetBuffer,
-			MigrationChunkedWrites:  cfg.MigrationChunkedWrites,
-			MigrationChunkMaxBytes:  cfg.MigrationChunkMaxBytes,
-			TmpDir:                  tmpDir(cfg.DataPath),
-			DisableStorageServices:  disableStorageServices,
-			DisablePruner:           cfg.DisablePruner,
-			DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
-			BatchTransactionTimeout: cfg.ResourceVersionBatchTransactionTimeout,
+			DBProvider:                eDB,
+			Reg:                       reg,
+			IsHA:                      isHA,
+			storageMetrics:            storageMetrics,
+			LastImportTimeMaxAge:      cfg.MaxFileIndexAge,
+			GCGate:                    gcGate,
+			GarbageCollection:         NewGarbageCollectionConfig(cfg),
+			SimulatedNetworkLatency:   cfg.SimulatedNetworkLatency,
+			MigrationParquetBuffer:    cfg.MigrationParquetBuffer,
+			MigrationChunkedWrites:    cfg.MigrationChunkedWrites,
+			MigrationChunkMaxBytes:    cfg.MigrationChunkMaxBytes,
+			MigrationStatementTimeout: cfg.MigrationStatementTimeout,
+			TmpDir:                    tmpDir(cfg.DataPath),
+			DisableStorageServices:    disableStorageServices,
+			DisablePruner:             cfg.DisablePruner,
+			DashboardVersionsToKeep:   cfg.DashboardVersionsToKeep,
+			BatchTransactionTimeout:   cfg.ResourceVersionBatchTransactionTimeout,
 
 			EventPublisher:            kvOpts.EventPublisher,
 			WatchNotificationMetadata: kvOpts.WatchNotificationMetadata,
@@ -278,7 +277,6 @@ func NewFileBackend(cfg *setting.Cfg, kvStore kv.KV) (resource.StorageBackend, e
 		Log:                     logging.DefaultLogger.With("logger", "storage-backend"),
 		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
 		ResourceVersionMaxWait:  cfg.ResourceVersionMaxWait,
-		FastLatestKeyLookup:     cfg.FastLatestKeyLookupEnabled,
 	})
 }
 
@@ -310,6 +308,10 @@ type BackendOptions struct {
 	// when MigrationChunkedWrites is enabled.
 	MigrationChunkMaxBytes int64
 
+	// MigrationStatementTimeout overrides the Postgres statement_timeout for bulk migration
+	// transactions only. Zero keeps the database or role setting.
+	MigrationStatementTimeout time.Duration
+
 	// Directory for temporary Parquet files during bulk migration.
 	// Defaults to the OS temp dir when empty. Set to cfg.DataPath/tmp to
 	// support containers with readonlyRootFilesystem enabled.
@@ -324,9 +326,6 @@ type BackendOptions struct {
 	// BatchTransactionTimeout bounds one batched WithTx in the resource version
 	// manager. Zero selects the rvmanager default.
 	BatchTransactionTimeout time.Duration
-
-	// BlobURL selects the same external blob backend as the resource server.
-	BlobURL string
 
 	// EventPublisher announces committed writes on NATS.
 	EventPublisher resource.EventPublisher
@@ -357,31 +356,31 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		garbageCollection.BatchWait = defaultGarbageCollectionBatchWait
 	}
 	backend := &backend{
-		isHA:                    opts.IsHA,
-		disableStorageServices:  opts.DisableStorageServices,
-		disablePruner:           opts.DisablePruner,
-		dashboardVersionsToKeep: opts.DashboardVersionsToKeep,
-		done:                    ctx.Done(),
-		cancel:                  cancel,
-		log:                     logging.DefaultLogger.With("logger", "sql-resource-server"),
-		reg:                     opts.Reg,
-		dbProvider:              opts.DBProvider,
-		pollingInterval:         opts.PollingInterval,
-		watchBufferSize:         opts.WatchBufferSize,
-		storageMetrics:          opts.storageMetrics,
-		bulkLock:                &bulkLock{running: make(map[string]bool)},
-		analyzeBulkRowThreshold: analyzeResourceHistoryRowThreshold,
-		simulatedNetworkLatency: opts.SimulatedNetworkLatency,
-		migrationParquetBuffer:  opts.MigrationParquetBuffer,
-		migrationChunkedWrites:  opts.MigrationChunkedWrites,
-		migrationChunkMaxBytes:  opts.MigrationChunkMaxBytes,
-		tmpDir:                  opts.TmpDir,
-		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
-		batchTxnTimeout:         opts.BatchTransactionTimeout,
-		garbageCollection:       garbageCollection,
-		blobGCMetrics:           resource.NewBlobGCMetricsIfEnabled(opts.Reg, "sql", garbageCollection.Enabled && garbageCollection.BlobEnabled),
-		blobURL:                 opts.BlobURL,
-		gcGate:                  opts.GCGate,
+		isHA:                      opts.IsHA,
+		disableStorageServices:    opts.DisableStorageServices,
+		disablePruner:             opts.DisablePruner,
+		dashboardVersionsToKeep:   opts.DashboardVersionsToKeep,
+		done:                      ctx.Done(),
+		cancel:                    cancel,
+		log:                       logging.DefaultLogger.With("logger", "sql-resource-server"),
+		reg:                       opts.Reg,
+		dbProvider:                opts.DBProvider,
+		pollingInterval:           opts.PollingInterval,
+		watchBufferSize:           opts.WatchBufferSize,
+		storageMetrics:            opts.storageMetrics,
+		bulkLock:                  &bulkLock{running: make(map[string]bool)},
+		analyzeBulkRowThreshold:   analyzeResourceHistoryRowThreshold,
+		simulatedNetworkLatency:   opts.SimulatedNetworkLatency,
+		migrationParquetBuffer:    opts.MigrationParquetBuffer,
+		migrationChunkedWrites:    opts.MigrationChunkedWrites,
+		migrationChunkMaxBytes:    opts.MigrationChunkMaxBytes,
+		migrationStatementTimeout: opts.MigrationStatementTimeout,
+		tmpDir:                    opts.TmpDir,
+		lastImportTimeMaxAge:      opts.LastImportTimeMaxAge,
+		batchTxnTimeout:           opts.BatchTransactionTimeout,
+		garbageCollection:         garbageCollection,
+		blobGCMetrics:             resource.NewBlobGCMetricsIfEnabled(opts.Reg, "sql", garbageCollection.Enabled && garbageCollection.BlobEnabled),
+		gcGate:                    opts.GCGate,
 
 		watchPublisher:            resource.NewWatchNotificationPublisher(opts.EventPublisher, opts.Reg, logging.DefaultLogger.With("logger", "sql-resource-server")),
 		watchNotificationMetadata: opts.WatchNotificationMetadata,
@@ -458,7 +457,6 @@ type backend struct {
 	gcGate            *resource.GCGate
 	blobGC            *resource.BlobGarbageCollector
 	blobGCMetrics     *resource.BlobGCMetrics
-	blobURL           string
 
 	// When true, bulk migrations buffer data through a temporary Parquet file
 	migrationParquetBuffer bool
@@ -467,6 +465,8 @@ type backend struct {
 	migrationChunkedWrites bool
 	// migrationChunkMaxBytes is the soft maximum byte budget per migration chunk.
 	migrationChunkMaxBytes int64
+	// migrationStatementTimeout overrides the Postgres statement_timeout in bulk migration transactions.
+	migrationStatementTimeout time.Duration
 
 	// tmpDir is the directory for temporary Parquet files; empty means OS default.
 	tmpDir string
@@ -1240,6 +1240,11 @@ func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, c
 		clusterWide: req.KeysOnly && req.Options.Key.Namespace == "",
 	}
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
+		if resource.MigrationReadFromContext(ctx) {
+			if err := b.setMigrationStatementTimeout(ctx, tx); err != nil {
+				return err
+			}
+		}
 		var err error
 		iter.listRV, err = b.fetchLatestRV(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
 		if err != nil {
@@ -1629,6 +1634,24 @@ func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.Writte
 		return nil, fmt.Errorf("watcher is not enabled")
 	}
 	return b.notifier.notify(ctx)
+}
+
+// WatchResumeFloorsEnabled: only the NATS stream starts at one known point.
+func (b *backend) WatchResumeFloorsEnabled() bool {
+	_, ok := b.notifier.(*natsNotifier)
+	return ok
+}
+
+func (b *backend) WatchWriteEventsWithResumeFloors(ctx context.Context, floors resource.ResumeFloors, captured func()) (map[resource.GroupResource]int64, <-chan *resource.WrittenEvent, error) {
+	n, ok := b.notifier.(*natsNotifier)
+	if !ok {
+		return nil, nil, errors.New("watch resume floors need the NATS notifier")
+	}
+	initial, events, err := n.watchWithFloors(ctx, floors, captured)
+	if err != nil {
+		return nil, nil, fmt.Errorf("start watch with resume floors: %w", err)
+	}
+	return initial, events, nil
 }
 
 // listLatestRVs returns the latest resource version for each (Group, Resource) pair.

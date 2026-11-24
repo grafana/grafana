@@ -6,7 +6,7 @@ import { logError } from '@grafana/runtime';
 import { Badge, ConfirmModal, Tooltip, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { CodeText } from 'app/features/alerting/unified/components/common/TextVariants';
-import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
 
 import { isGranted } from '../../hooks/abilities/abilityUtils';
 import { useNotificationTemplateAbility } from '../../hooks/abilities/alertmanager/useNotificationTemplateAbility';

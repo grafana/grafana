@@ -8,16 +8,21 @@ import { useEffect, useState, type ReactNode, type RefObject } from 'react';
 import { type GrafanaTheme2, type IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { floatingUtils, Portal, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
-import { toggleLinePrefix, toggleOrderedList, toggleSurround } from 'app/plugins/panel/text/v2/editor/editorCommands';
+import { toggleOrderedList } from 'app/plugins/panel/text/v2/editor/editorCommands';
 
 import {
   BOLD_NODE,
   enclosingListKind,
   findEnclosingMarkNode,
+  inlineMarkRange,
   INLINE_CODE_NODE,
   ITALIC_NODE,
   LINK_NODE,
   STRIKETHROUGH_NODE,
+  toggleChecklist,
+  toggleBulletedList,
+  toggleInlineMark,
+  toggleSurroundInline,
 } from './markdownLivePreview';
 
 export const MARKDOWN_FORMAT_TOOLBAR_TEST_ID = 'notebook-markdown-format-toolbar';
@@ -42,42 +47,49 @@ function actions(): FormatAction[] {
       tooltip: t('notebook.cell.markdown.tooltip-bold', 'Bold'),
       label: <strong>{t('notebook.cell.markdown.format-bold', 'B')}</strong>,
       isActive: (tree, pos) => Boolean(findEnclosingMarkNode(tree, pos, [BOLD_NODE])),
-      run: (view) => toggleSurround(view, '**'),
+      run: (view) => toggleInlineMark(view, 'bold'),
     },
     {
       key: 'italic',
       tooltip: t('notebook.cell.markdown.tooltip-italic', 'Italic'),
       label: <em>{t('notebook.cell.markdown.format-italic', 'I')}</em>,
       isActive: (tree, pos) => Boolean(findEnclosingMarkNode(tree, pos, [ITALIC_NODE])),
-      run: (view) => toggleSurround(view, '*'),
+      run: (view) => toggleInlineMark(view, 'italic'),
     },
     {
       key: 'strikethrough',
       tooltip: t('notebook.cell.markdown.tooltip-strikethrough', 'Strikethrough'),
       label: <s>{t('notebook.cell.markdown.format-strikethrough', 'S')}</s>,
       isActive: (tree, pos) => Boolean(findEnclosingMarkNode(tree, pos, [STRIKETHROUGH_NODE])),
-      run: (view) => toggleSurround(view, '~~'),
+      run: (view) => toggleInlineMark(view, 'strikethrough'),
     },
     {
       key: 'code',
       tooltip: t('notebook.cell.markdown.tooltip-code', 'Code'),
       icon: 'brackets-curly',
       isActive: (tree, pos) => Boolean(findEnclosingMarkNode(tree, pos, [INLINE_CODE_NODE])),
-      run: (view) => toggleSurround(view, '`'),
+      run: (view) => toggleInlineMark(view, 'code'),
     },
     {
       key: 'link',
       tooltip: t('notebook.cell.markdown.tooltip-link', 'Link'),
       icon: 'link',
       isActive: (tree, pos) => Boolean(findEnclosingMarkNode(tree, pos, [LINK_NODE])),
-      run: (view) => toggleSurround(view, '[', '](https://)'),
+      run: (view) => toggleSurroundInline(view, '[', '](https://)'),
     },
     {
       key: 'bulleted-list',
       tooltip: t('notebook.cell.markdown.tooltip-bulleted-list', 'Bulleted list'),
       icon: 'list-ul',
       isActive: (tree, pos) => enclosingListKind(tree, pos) === 'bullet',
-      run: (view) => toggleLinePrefix(view, '- '),
+      run: toggleBulletedList,
+    },
+    {
+      key: 'checklist',
+      tooltip: t('notebook.cell.markdown.tooltip-checklist', 'Checklist'),
+      icon: 'check-square',
+      isActive: (tree, pos) => enclosingListKind(tree, pos) === 'checklist',
+      run: toggleChecklist,
     },
     {
       key: 'numbered-list',
@@ -111,9 +123,18 @@ function selectionVirtualElement(view: EditorView): VirtualElement {
 }
 
 /**
- * Floating bold/italic/strikethrough/code/link/list bar that appears while the reader has text selected inside a
- * markdown cell's editor. Positioned off the CodeMirror
- * selection's own coordinates.
+ * The notebook reads as one document, so leaving a cell clears its selection instead of leaving a stale
+ * highlight behind. Switching windows keeps it, like any editor does.
+ */
+function collapseSelection(view: EditorView | null) {
+  if (document.hasFocus() && view && !view.state.selection.main.empty) {
+    view.dispatch({ selection: { anchor: view.state.selection.main.head } });
+  }
+}
+
+/**
+ * Floating bold/italic/strikethrough/code/link/list bar that appears while a markdown cell's editor has focus and
+ * a non-empty selection. Positioned off the CodeMirror selection's own coordinates.
  */
 export function MarkdownFormatToolbar({ editorContainerRef }: Props) {
   const styles = useStyles2(getStyles);
@@ -122,7 +143,13 @@ export function MarkdownFormatToolbar({ editorContainerRef }: Props) {
 
   const { refs, floatingStyles, update, context } = useFloating({
     open: hasSelection,
-    onOpenChange: setHasSelection,
+    onOpenChange: (open, _event, reason) => {
+      setHasSelection(open);
+      // The press unmounts the toolbar before the editor or toolbar blur fires, so those handlers never run.
+      if (!open && reason === 'outside-press' && editorContainerRef.current) {
+        collapseSelection(EditorView.findFromDOM(editorContainerRef.current));
+      }
+    },
     placement: 'top',
     strategy: 'fixed',
     middleware: [offset(8), ...floatingUtils.getPositioningMiddleware('top')],
@@ -143,22 +170,39 @@ export function MarkdownFormatToolbar({ editorContainerRef }: Props) {
       const currentView = EditorView.findFromDOM(container);
       setView(currentView);
 
-      const selection = currentView?.state.selection.main;
-      const nonEmpty = Boolean(selection && !selection.empty);
-      setHasSelection(nonEmpty);
+      // CM6 keeps its selection after blur, so a non-empty selection alone would reopen the toolbar of a
+      // cell the user has already left. root.activeElement is used because view.hasFocus also depends on
+      // document.hasFocus(), which is false in background windows.
+      const focused = Boolean(currentView && currentView.root.activeElement === currentView.contentDOM);
+      const visible = focused && !currentView?.state.selection.main.empty;
+      setHasSelection(visible);
 
-      if (nonEmpty && currentView) {
+      if (visible && currentView) {
         refs.setReference(selectionVirtualElement(currentView));
         update();
       }
     };
 
+    const onFocusOut = (event: FocusEvent) => {
+      const next = event.relatedTarget;
+      // The format toolbar is portaled outside the container; moving focus onto it must not dismiss it.
+      if (next instanceof Node && (container.contains(next) || refs.floating.current?.contains(next))) {
+        return;
+      }
+      setHasSelection(false);
+      collapseSelection(EditorView.findFromDOM(container));
+    };
+
     container.addEventListener('mouseup', checkSelection);
     container.addEventListener('keyup', checkSelection);
+    container.addEventListener('focusin', checkSelection);
+    container.addEventListener('focusout', onFocusOut);
     document.addEventListener('selectionchange', checkSelection);
     return () => {
       container.removeEventListener('mouseup', checkSelection);
       container.removeEventListener('keyup', checkSelection);
+      container.removeEventListener('focusin', checkSelection);
+      container.removeEventListener('focusout', onFocusOut);
       document.removeEventListener('selectionchange', checkSelection);
     };
   }, [editorContainerRef, refs, update]);
@@ -168,13 +212,15 @@ export function MarkdownFormatToolbar({ editorContainerRef }: Props) {
   }
 
   const tree = syntaxTree(view.state);
-  const pos = view.state.selection.main.from;
+  const pos = inlineMarkRange(view.state)?.from ?? view.state.selection.main.from;
 
   const runAction = (action: FormatAction) => {
     action.run(view);
     // toggleSurround already calls view.focus() and may collapse the selection (e.g. removing
     // markers moves the caret) — re-check once the dispatch has settled rather than assume it stays.
-    requestAnimationFrame(() => setHasSelection(!view.state.selection.main.empty));
+    requestAnimationFrame(() =>
+      setHasSelection(view.root.activeElement === view.contentDOM && !view.state.selection.main.empty)
+    );
   };
 
   return (
@@ -195,6 +241,18 @@ export function MarkdownFormatToolbar({ editorContainerRef }: Props) {
           // Suppressing the default here keeps focus (and the CM6 selection) exactly where it was; the
           // click still fires normally afterward.
           onMouseDown: (event) => event.preventDefault(),
+          // The editor's focusout ignores focus moving onto the toolbar, so tabbing on past it has to dismiss here.
+          onBlur: (event) => {
+            const next = event.relatedTarget;
+            if (
+              next instanceof Node &&
+              (event.currentTarget.contains(next) || editorContainerRef.current?.contains(next))
+            ) {
+              return;
+            }
+            setHasSelection(false);
+            collapseSelection(view);
+          },
         })}
       >
         <Stack direction="row" gap={0.5} alignItems="center">

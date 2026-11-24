@@ -9,6 +9,7 @@
         "@grafana/dataviz-squad"
       ],
       "area_labels": [
+        "area/correlations",
         "area/dataviz"
       ],
       "enabled": {
@@ -18,7 +19,9 @@
         "fr_weekly": true,
         "issue_notify": true,
         "issue_weekly": true,
-        "agent_review": false
+        "agent_review": false,
+        "pr_status": true,
+        "issue_status": true
       }
     },
     {
@@ -29,6 +32,7 @@
         "@grafana/dashboards-squad"
       ],
       "area_labels": [
+        "area/transformations",
         "area/dashboard"
       ],
       "enabled": {
@@ -38,7 +42,9 @@
         "fr_weekly": true,
         "issue_notify": false,
         "issue_weekly": true,
-        "agent_review": false
+        "agent_review": false,
+        "pr_status": true,
+        "issue_status": true
       }
     },
     {
@@ -59,7 +65,9 @@
         "fr_weekly": true,
         "issue_notify": true,
         "issue_weekly": true,
-        "agent_review": false
+        "agent_review": false,
+        "pr_status": true,
+        "issue_status": true
       }
     },
     {
@@ -82,30 +90,9 @@
         "fr_weekly": true,
         "issue_notify": true,
         "issue_weekly": true,
-        "agent_review": false
-      }
-    },
-    {
-      "name": "datapro",
-      "kickoff_date": "2026-06-08",
-      "adoption_date": "2025-06-08",
-      "codeowners_teams": [
-        "@grafana/datapro"
-      ],
-      "area_labels": [
-        "area/explore",
-        "area/transformations",
-        "area/correlations",
-        "area/expressions"
-      ],
-      "enabled": {
-        "pr_notify": true,
-        "pr_weekly": true,
-        "fr_notify": true,
-        "fr_weekly": true,
-        "issue_notify": true,
-        "issue_weekly": true,
-        "agent_review": true
+        "agent_review": false,
+        "pr_status": true,
+        "issue_status": true
       }
     },
     {
@@ -116,6 +103,7 @@
         "@grafana/sharing-squad"
       ],
       "area_labels": [
+        "area/explore",
         "area/dashboard/snapshot",
         "area/frontend/library-panels",
         "area/library-panel",
@@ -130,7 +118,9 @@
         "fr_weekly": true,
         "issue_notify": true,
         "issue_weekly": true,
-        "agent_review": false
+        "agent_review": false,
+        "pr_status": true,
+        "issue_status": true
       }
     }
   ]

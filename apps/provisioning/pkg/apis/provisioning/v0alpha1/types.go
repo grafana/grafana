@@ -32,15 +32,15 @@ func (Repository) OpenAPIModelName() string {
 
 type SecureValues struct {
 	// Token used to connect the configured repository
-	Token common.InlineSecureValue `json:"token,omitzero,omitempty"`
+	Token resource.InlineSecureValue `json:"token,omitzero,omitempty"`
 
 	// Some webhooks (including github) require a secret key value
-	WebhookSecret common.InlineSecureValue `json:"webhookSecret,omitzero,omitempty"`
+	WebhookSecret resource.InlineSecureValue `json:"webhookSecret,omitzero,omitempty"`
 
 	// Private key used to sign commits the repository writes back. The format
 	// is selected by spec.commit.signingMethod. When unset, commits are
 	// unsigned.
-	CommitSigningKey common.InlineSecureValue `json:"commitSigningKey,omitzero,omitempty"`
+	CommitSigningKey resource.InlineSecureValue `json:"commitSigningKey,omitzero,omitempty"`
 }
 
 func (SecureValues) OpenAPIModelName() string {
@@ -618,7 +618,7 @@ type RepositoryStatus struct {
 	// FieldErrors are errors that occurred during validation of the repository spec.
 	// These errors are intended to help users identify and fix issues in the spec.
 	// +listType=atomic
-	FieldErrors []ErrorDetails `json:"fieldErrors,omitempty"`
+	FieldErrors []RepositoryErrorDetails `json:"fieldErrors,omitempty"`
 
 	// Conditions represent the latest available observations of the repository's state.
 	// +listType=map
@@ -628,7 +628,7 @@ type RepositoryStatus struct {
 	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
 
 	// This will get updated with the current health status (and updated periodically)
-	Health HealthStatus `json:"health"`
+	Health RepositoryHealthStatus `json:"health"`
 
 	// Sync information with the last sync information
 	Sync SyncStatus `json:"sync"`
@@ -641,7 +641,7 @@ type RepositoryStatus struct {
 	Webhook *WebhookStatus `json:"webhook"`
 
 	// Token will get updated with current token information
-	Token TokenStatus `json:"token,omitempty"`
+	Token RepositoryTokenStatus `json:"token,omitempty"`
 
 	// Error information during repository deletion (if any).
 	// Deprecated: prefer the structured Deletion field. Retained for
@@ -663,7 +663,7 @@ func (RepositoryStatus) OpenAPIModelName() string {
 
 type SyncStatus struct {
 	// pending, running, success, error
-	State JobState `json:"state"`
+	State RepositoryJobState `json:"state"`
 
 	// The ID for the job that ran this sync
 	JobID string `json:"job,omitempty"`
@@ -710,14 +710,16 @@ func (WebhookStatus) OpenAPIModelName() string {
 	return OpenAPIPrefix + "WebhookStatus"
 }
 
-type TokenStatus struct {
+type RepositoryTokenStatus struct {
 	LastUpdated int64 `json:"lastUpdated,omitempty"`
 	Expiration  int64 `json:"expiration,omitempty"`
 }
 
-func (TokenStatus) OpenAPIModelName() string {
+func (RepositoryTokenStatus) OpenAPIModelName() string {
 	return OpenAPIPrefix + "TokenStatus"
 }
+
+type ConnectionTokenStatus = RepositoryTokenStatus
 
 // QuotaStatus represents the quota limits configured for this repository.
 type QuotaStatus struct {
@@ -983,6 +985,20 @@ func (ResourceCount) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ResourceCount"
 }
 
+// What a single manager manages.
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type ResourceCountList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	// +listType=atomic
+	Items []ResourceCount `json:"items"`
+}
+
+func (ResourceCountList) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ResourceCountList"
+}
+
 // TestResults is the result of a test connection operation
 // Deprecated: this will go way when we deprecate the test endpoint
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -1107,6 +1123,11 @@ func (in *ErrorDetails) DeepCopyInto(out *ErrorDetails) {
 func (ErrorDetails) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ErrorDetails"
 }
+
+type (
+	RepositoryErrorDetails = ErrorDetails
+	ConnectionErrorDetails = ErrorDetails
+)
 
 // DeletionState is the phase of an in-progress repository deletion.
 // +enum

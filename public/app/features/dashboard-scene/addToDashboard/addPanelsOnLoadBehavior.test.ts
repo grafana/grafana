@@ -1,6 +1,7 @@
 import { store } from '@grafana/data';
 import { SceneGridLayout, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import { DASHBOARD_FROM_LS_KEY, type DashboardDTO } from 'app/types/dashboard';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -115,11 +116,7 @@ describe('addPanelsOnLoadBehavior', () => {
   describe('when edit mode is blocked on mobile', () => {
     beforeEach(() => {
       setTestFlags({ dashboardNewLayouts: true, 'grafana.mobileEditDeprecation': true });
-      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
-    });
-
-    afterEach(() => {
-      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
+      setMobileViewport();
     });
 
     it('warns once, adds nothing and discards the payload', () => {

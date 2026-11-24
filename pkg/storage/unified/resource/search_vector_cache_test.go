@@ -139,7 +139,7 @@ func TestVectorSearch_SharedCollectionQueryPolicyUsesCallerNamespace(t *testing.
 	for _, namespace := range []string{"tenant-a", "tenant-b"} {
 		resp, err := search(namespace)
 		require.NoError(t, err)
-		require.Nil(t, resp.Error)
+		require.NotNil(t, resp)
 		require.Len(t, resp.Results, 1)
 		assert.Equal(t, "published", resp.Results[0].Name)
 		assert.Equal(t, namespace, provider.gotIn.Tenant)
@@ -150,14 +150,14 @@ func TestVectorSearch_SharedCollectionQueryPolicyUsesCallerNamespace(t *testing.
 
 	resp, err := search("tenant-a")
 	require.NoError(t, err)
-	require.Nil(t, resp.Error)
+	require.NotNil(t, resp)
 	assert.Equal(t, 2, cache.putCalls, "a cached repeat does not embed again")
 	resp, err = search("tenant-a")
 	require.Nil(t, resp)
 	require.Equal(t, codes.ResourceExhausted, status.Code(err))
 	resp, err = search("tenant-b")
 	require.NoError(t, err)
-	require.Nil(t, resp.Error)
+	require.NotNil(t, resp)
 	assert.Equal(t, map[string]int64{"tenant-a": 3, "tenant-b": 2}, limiter.counts)
 }
 

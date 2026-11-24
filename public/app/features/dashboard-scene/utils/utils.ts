@@ -23,6 +23,7 @@ import kbn from 'app/core/utils/kbn';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { type RowItem } from 'app/features/dashboard-scene/scene/layout-rows/RowItem';
 import { type TabItem } from 'app/features/dashboard-scene/scene/layout-tabs/TabItem';
+import { createDefaultQuery } from 'app/features/query/state/queryDefaults';
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
@@ -182,6 +183,12 @@ export function getCurrentValueForOldIntervalModel(variable: IntervalVariableMod
   return intervals[0];
 }
 
+/** Whether the object is in a dashboard that is saved with the v2 schema */
+export function isInV2Dashboard(sceneObject: SceneObject): boolean {
+  const root = sceneObject.getRoot();
+  return root instanceof DashboardScene && root.isV2();
+}
+
 export function getDashboardSceneFor(sceneObject: SceneObject): DashboardScene {
   const root = sceneObject.getRoot();
 
@@ -204,7 +211,7 @@ export function getClosestVizPanel(sceneObject: SceneObject): VizPanel | null {
   return null;
 }
 
-export function getDefaultPluginId(): string {
+function getDefaultPluginId(): string {
   return isDashboardNewLayoutsEnabled() ? UNCONFIGURED_PANEL_PLUGIN_ID : 'timeseries';
 }
 
@@ -233,7 +240,7 @@ export async function getDefaultVizPanel(): Promise<VizPanel> {
     $data: datasourceSettings
       ? new SceneDataTransformer({
           $data: new SceneQueryRunner({
-            queries: [{ refId: 'A' }],
+            queries: [createDefaultQuery()],
             datasource: getDataSourceRef(datasourceSettings),
             $behaviors: [new DashboardDatasourceBehaviour({})],
           }),
@@ -289,41 +296,6 @@ export function activateSceneObjectAndParentTree(so: SceneObject): CancelActivat
     cancel();
   };
 }
-
-/**
- * Adaptation of activateSceneObjectAndParentTree specific for PanelSearchLayout use case with
- *   with panelSearch and panelsPerRow custom panel filtering logic.
- *
- * Activating the whole tree because dashboard does not react to variable updates such as panel repeats
- */
-export function forceActivateFullSceneObjectTree(so: SceneObject): CancelActivationHandler | undefined {
-  let cancel: CancelActivationHandler | undefined;
-  let parentCancel: CancelActivationHandler | undefined;
-
-  if (so.parent) {
-    parentCancel = forceActivateFullSceneObjectTree(so.parent);
-  }
-
-  if (!so.isActive) {
-    cancel = so.activate();
-    return () => {
-      parentCancel?.();
-      cancel?.();
-    };
-  }
-
-  return () => {
-    parentCancel?.();
-    cancel?.();
-  };
-}
-
-/**
- * @deprecated use activateSceneObjectAndParentTree instead.
- * Activates any inactive ancestors of the scene object.
- * Useful when rendering a scene object out of context of it's parent
- */
-export const activateInActiveParents = activateSceneObjectAndParentTree;
 
 export function useDashboard(scene: SceneObject): DashboardScene {
   return getDashboardSceneFor(scene);

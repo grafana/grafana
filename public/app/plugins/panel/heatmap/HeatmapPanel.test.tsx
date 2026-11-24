@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import type uPlot from 'uplot';
 
 import {
   type DataFrame,
@@ -10,22 +11,26 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TooltipDisplayMode } from '@grafana/schema';
-import { type FacetedData } from '@grafana/ui/internal';
+import { type UPlotConfigBuilder } from '@grafana/ui';
 
 import { getPanelProps } from '../test-utils';
 
 import { HeatmapPanel } from './HeatmapPanel';
+import { prepareHeatmapData } from './fields';
 import { defaultOptions, type Options } from './panelcfg.gen';
 import { defaultOptions as fullDefaultOptions } from './types';
+import { prepConfig } from './utils';
 
-let mockUPlotData: FacetedData | undefined;
+const { prepConfig: realPrepConfig } = jest.requireActual('./utils');
 
-jest.mock('@grafana/ui', () => ({
-  ...jest.requireActual('@grafana/ui'),
-  UPlotChart: ({ data }: { data: FacetedData }) => {
-    mockUPlotData = data;
-    return null;
-  },
+jest.mock('./utils', () => ({
+  ...jest.requireActual('./utils'),
+  prepConfig: jest.fn((...args) => jest.requireActual('./utils').prepConfig(...args)),
+}));
+
+jest.mock('./fields', () => ({
+  ...jest.requireActual('./fields'),
+  prepareHeatmapData: jest.fn((...args) => jest.requireActual('./fields').prepareHeatmapData(...args)),
 }));
 
 /**
@@ -154,8 +159,7 @@ describe('HeatmapPanel', () => {
 
   it('shows error view when prepareHeatmapData throws', () => {
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-    const fieldsModule = require('./fields');
-    const prepareSpy = jest.spyOn(fieldsModule, 'prepareHeatmapData').mockImplementation(() => {
+    const prepareMock = jest.mocked(prepareHeatmapData).mockImplementation(() => {
       throw new Error('prepare failed');
     });
 
@@ -164,7 +168,7 @@ describe('HeatmapPanel', () => {
     expect(screen.getByText(/prepare failed/)).toBeVisible();
     expect(screen.queryByTestId(selectors.components.VizLayout.container)).not.toBeInTheDocument();
 
-    prepareSpy.mockRestore();
+    prepareMock.mockReset().mockImplementation(jest.requireActual('./fields').prepareHeatmapData);
     consoleSpy.mockRestore();
   });
 
@@ -183,25 +187,45 @@ describe('HeatmapPanel', () => {
     expect(screen.getByTestId(selectors.components.VizLayout.container)).toBeVisible();
   });
 
-  it('rebuilds faceted plot data when a sparse frame object is reused with new values', async () => {
-    const frame = createSparseHeatmapCellsFrame();
-    const initialProps = getPanelProps<Options>(defaultPanelOptions, {
-      data: {
-        state: LoadingState.Done,
-        series: [frame],
-        timeRange: getDefaultTimeRange(),
-      },
+  describe('uPlot data updates', () => {
+    let plot: uPlot | undefined;
+
+    beforeEach(() => {
+      jest.mocked(prepConfig).mockImplementation((opts) => {
+        const builder: UPlotConfigBuilder = realPrepConfig(opts);
+        builder.addHook('setData', (u: uPlot) => {
+          plot = u;
+        });
+        return builder;
+      });
     });
-    const { rerender } = render(<HeatmapPanel {...initialProps} />);
 
-    await waitFor(() => expect(mockUPlotData?.[1]?.[0]).toHaveLength(4));
-
-    frame.fields.forEach((field) => {
-      field.values = field.values.slice(0, 2);
+    afterEach(() => {
+      jest.restoreAllMocks();
+      jest.mocked(prepConfig).mockImplementation(realPrepConfig);
+      plot = undefined;
     });
-    rerender(<HeatmapPanel {...initialProps} data={{ ...initialProps.data, series: [frame] }} />);
 
-    await waitFor(() => expect(mockUPlotData?.[1]?.[0]).toHaveLength(2));
+    it('sets new data on uPlot when a sparse frame object is reused with fewer cells', async () => {
+      const frame = createSparseHeatmapCellsFrame();
+      const initialProps = getPanelProps<Options>(defaultPanelOptions, {
+        data: {
+          state: LoadingState.Done,
+          series: [frame],
+          timeRange: getDefaultTimeRange(),
+        },
+      });
+      const { rerender } = render(<HeatmapPanel {...initialProps} />);
+
+      await waitFor(() => expect(plot?.data[1][0]).toHaveLength(4));
+
+      frame.fields.forEach((field) => {
+        field.values = field.values.slice(0, 2);
+      });
+      rerender(<HeatmapPanel {...initialProps} data={{ ...initialProps.data, series: [frame] }} />);
+
+      await waitFor(() => expect(plot?.data[1][0]).toHaveLength(2));
+    });
   });
 
   describe('Regression: negative values (PR #98887, #96741)', () => {

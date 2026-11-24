@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { type MouseEvent, useCallback, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -152,7 +152,6 @@ function VariableValuesWithoutPropsPreview({
 }) {
   const styles = useStyles2(getStyles);
   const [previewLimit, setPreviewLimit] = useState(Number(pageSize) > 0 ? Number(pageSize) : DEFAULT_PAGE_SIZE);
-  const [previewOptions, setPreviewOptions] = useState<VariableValueOption[]>([]);
   const showMoreOptions = useCallback(
     (event: MouseEvent) => {
       event.preventDefault();
@@ -160,7 +159,7 @@ function VariableValuesWithoutPropsPreview({
     },
     [previewLimit, setPreviewLimit]
   );
-  useEffect(() => setPreviewOptions(options.slice(0, previewLimit)), [previewLimit, options]);
+  const previewOptions = useMemo(() => options.slice(0, previewLimit), [previewLimit, options]);
 
   return (
     <>

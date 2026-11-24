@@ -3728,8 +3728,27 @@
         "tags": [
           "Repository"
         ],
-        "description": "connect GET requests to resources of Repository",
+        "description": "Get the resources this repository manages",
         "operationId": "getRepositoryResources",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "maximum number of items to return; omit for all of them",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "continue",
+            "in": "query",
+            "description": "continue token from the metadata of the previous page",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -3754,6 +3773,56 @@
           "name": "name",
           "in": "path",
           "description": "name of the ResourceList",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/apis/provisioning.grafana.app/v1beta1/namespaces/{namespace}/repositories/{name}/stats": {
+      "get": {
+        "tags": [
+          "Repository"
+        ],
+        "summary": "Repository resource stats",
+        "description": "Count the resources this repository manages",
+        "operationId": "getRepositoryStats",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.ResourceCountList"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v1beta1",
+          "kind": "ResourceCountList"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the ResourceCountList",
           "required": true,
           "schema": {
             "type": "string",
@@ -4232,6 +4301,59 @@
   },
   "components": {
     "schemas": {
+      "com.github.grafana.grafana-app-sdk.resource.InlineSecureValue": {
+        "type": "object",
+        "oneOf": [
+          {
+            "required": [
+              "create"
+            ]
+          },
+          {
+            "required": [
+              "name"
+            ]
+          },
+          {
+            "required": [
+              "remove"
+            ]
+          }
+        ],
+        "not": {
+          "required": [
+            "description"
+          ],
+          "not": {
+            "required": [
+              "create"
+            ]
+          }
+        },
+        "properties": {
+          "create": {
+            "description": "Plaintext value to create in the secret service. Used only in create or update requests.",
+            "type": "string",
+            "maxLength": 24576,
+            "minLength": 1
+          },
+          "description": {
+            "description": "Optional description for a newly created secret. Only valid when create is set.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Reference to an existing value in the secret service.",
+            "type": "string",
+            "maxLength": 253,
+            "minLength": 1
+          },
+          "remove": {
+            "description": "Remove this entry from the secure value map, deleting the secret if it is owned by this resource.",
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.Author": {
         "type": "object",
         "required": [
@@ -6034,6 +6156,37 @@
           }
         }
       },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.ResourceCountList": {
+        "description": "What a single manager manages.",
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.ResourceCount"
+                }
+              ]
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {}
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.ResourceList": {
         "description": "Information we can get just from the file listing",
         "type": "object",
@@ -6623,49 +6776,6 @@
             "type": "string"
           }
         }
-      },
-      "com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue": {
-        "description": "Allow access to a secure value inside",
-        "oneOf": [
-          {
-            "required": [
-              "name"
-            ]
-          },
-          {
-            "required": [
-              "create"
-            ]
-          },
-          {
-            "required": [
-              "remove"
-            ]
-          }
-        ],
-        "properties": {
-          "create": {
-            "description": "Create a secure value -- this is only used for POST/PUT",
-            "type": "string",
-            "maxLength": 24576,
-            "minLength": 1
-          },
-          "description": {
-            "description": "Optionally when creating a secure value, you can pass a custom description.",
-            "type": "string"
-          },
-          "name": {
-            "description": "Name in the secret service (reference)",
-            "type": "string",
-            "maxLength": 253,
-            "minLength": 1
-          },
-          "remove": {
-            "description": "Remove this value from the secure value map Values owned by this resource will be deleted if necessary",
-            "type": "boolean"
-          }
-        },
-        "additionalProperties": false
       },
       "com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured": {
         "type": "object",

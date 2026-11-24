@@ -13,14 +13,16 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
@@ -84,17 +86,10 @@ func NewConnectionController(
 	natsBacked bool,
 ) *ConnectionController {
 	cc := &ConnectionController{
-		conns:     conns,
-		tracer:    tracer,
-		processed: usinformer.NewProcessedMetrics(registry, "connections", natsBacked),
-		triggers:  make(map[string]usinformer.ProcessTrigger),
-		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-			workqueue.DefaultTypedControllerRateLimiter[string](),
-			workqueue.TypedRateLimitingQueueConfig[string]{
-				Name:            "provisioningConnectionController",
-				MetricsProvider: newWorkerQueueWaitProvider(registry, "connection"),
-			},
-		),
+		conns:             conns,
+		tracer:            tracer,
+		processed:         usinformer.NewProcessedMetrics(registry, "connections", natsBacked),
+		triggers:          make(map[string]usinformer.ProcessTrigger),
 		statusPatcher:     statusPatcher,
 		healthChecker:     healthChecker,
 		connectionFactory: connectionFactory,
@@ -104,6 +99,10 @@ func NewConnectionController(
 		drainTimeout:      drainTimeout,
 	}
 
+	cc.queue = newWorkerQueue(&cc.queueLag, workqueue.DefaultTypedControllerRateLimiter[string](), workqueue.TypedQueueConfig[string]{
+		Name:            "provisioningConnectionController",
+		MetricsProvider: newWorkerQueueWaitProvider(registry, "connection"),
+	})
 	cc.processFn = cc.process
 
 	// Expose the local work-queue depth as a scrape-time gauge. The queue is
@@ -124,7 +123,7 @@ func NewConnectionController(
 	registry.MustRegister(prometheus.NewGaugeFunc(
 		prometheus.GaugeOpts{
 			Name: "grafana_provisioning_connection_worker_queue_lag_seconds",
-			Help: "Age in seconds of the oldest unfinished connection key (waiting or in flight) in this replica's queue, measured from first enqueue.",
+			Help: "Age in seconds of the oldest unfinished connection queue entry (waiting or in flight) in this replica, measured from that entry's enqueue, excluding retry backoff.",
 		},
 		func() float64 { return cc.queueLag.lag().Seconds() },
 	))
@@ -153,7 +152,6 @@ func (cc *ConnectionController) enqueue(obj interface{}, trigger usinformer.Proc
 	}
 	// Store the attribution before a worker can pick up the key.
 	cc.setTrigger(key, trigger)
-	cc.queueLag.add(key)
 	cc.queue.Add(key)
 	namespace, name, _ := cache.SplitMetaNamespaceKey(key)
 	// Log lag at enqueue so backlog is visible on add, not only at pickup.
@@ -285,10 +283,9 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 		return true
 	}
 
-	// On error the key stays in flight so a retry (below) inherits its original
-	// enqueue time; the deferred done clears it once this attempt ends.
 	logger = logger.With("queue_lag", cc.queueLag.lag(), "error", err, "attempts", attempts)
 	logger.Error("ConnectionController failed to process key")
+	cc.queueLag.done(key)
 
 	if attempts >= connectionMaxAttempts {
 		logger.Error("ConnectionController failed too many times")
@@ -308,7 +305,6 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 	if ok {
 		cc.setTrigger(key, trigger)
 	}
-	cc.queueLag.add(key)
 	cc.queue.AddRateLimited(key)
 	logger.Info("ConnectionController will retry as service is unavailable", "queue_len", cc.queue.Len())
 
@@ -358,6 +354,16 @@ func (cc *ConnectionController) process(ctx context.Context, key string) (err er
 	logger = logger.With("namespace", namespace, "connection", name)
 	ctx = logging.Context(ctx, logger)
 
+	// The status patches and minted tokens below are writes, and a repository-managed
+	// connection only accepts them from the provisioning identity, as RepositoryController
+	// does for repositories.
+	ctx, _, err = identity.WithProvisioningIdentity(ctx, namespace)
+	if err != nil {
+		return err
+	}
+	ctx = request.WithNamespace(ctx, namespace)
+	logger = logger.WithContext(ctx)
+
 	// Skip if being deleted
 	if conn.DeletionTimestamp != nil {
 		logger.Info("connection is being deleted, skipping")
@@ -392,7 +398,6 @@ func (cc *ConnectionController) process(ctx context.Context, key string) (err er
 			// be readable from the store yet. Wait for it rather than regenerating, which
 			// would delete it and can loop under secret-store read-after-write lag.
 			if tokenRecentlyCreated(time.UnixMilli(conn.Status.Token.LastUpdated)) {
-				cc.queueLag.add(key)
 				cc.queue.AddAfter(key, tokenWriteRetryDelay)
 				logger.Info("connection token secret not yet readable after recent write; will retry",
 					"error", err, "retry_after", tokenWriteRetryDelay, "queue_len", cc.queue.Len())
@@ -400,7 +405,7 @@ func (cc *ConnectionController) process(ctx context.Context, key string) (err er
 			}
 			logger.Warn("connection token secret could not be decrypted, regenerating", "error", err)
 			conn = conn.DeepCopy()
-			conn.Secure.Token = common.InlineSecureValue{}
+			conn.Secure.Token = resource.InlineSecureValue{}
 			c, err = cc.connectionFactory.Build(ctx, conn)
 		}
 		if err != nil {
@@ -463,7 +468,7 @@ func (cc *ConnectionController) process(ctx context.Context, key string) (err er
 			// live re-validation. Use "add": status.token is a newly introduced field
 			// that may be absent on Connections created before this change, and "add"
 			// both creates and replaces.
-			tokenStatus := provisioning.TokenStatus{LastUpdated: time.Now().UnixMilli()}
+			tokenStatus := provisioning.ConnectionTokenStatus{LastUpdated: time.Now().UnixMilli()}
 			if !tokenExpiresAt.IsZero() {
 				tokenStatus.Expiration = tokenExpiresAt.UnixMilli()
 			}
@@ -472,7 +477,7 @@ func (cc *ConnectionController) process(ctx context.Context, key string) (err er
 				"path":  "/status/token",
 				"value": tokenStatus,
 			})
-			conn.Secure.Token = common.InlineSecureValue{Create: token}
+			conn.Secure.Token = resource.InlineSecureValue{Create: token}
 		}
 	}
 
@@ -588,7 +593,7 @@ func (cc *ConnectionController) shouldGenerateToken(
 func (cc *ConnectionController) generateConnectionToken(
 	ctx context.Context,
 	conn connection.TokenConnection,
-) (token common.RawSecureValue, expiresAt time.Time, patchOperations []map[string]interface{}, err error) {
+) (token resource.RawSecureValue, expiresAt time.Time, patchOperations []map[string]interface{}, err error) {
 	logger := logging.FromContext(ctx)
 
 	start := time.Now()

@@ -1,9 +1,17 @@
-import { render, screen } from 'test/test-utils';
+import { http, HttpResponse } from 'msw';
+import { testWithAppKind } from 'test/helpers/testWithAppKind';
+import { testWithStarsUser } from 'test/helpers/testWithStarsUser';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import {
+  getFolderFixtures,
+  MOCK_APP_KIND,
+  setMockStarredAppKind,
+  setMockStarredFolders,
+} from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 
@@ -33,6 +41,9 @@ const defaultOptions: Options = {
 const findStarButton = (title: string, isStarred: boolean) =>
   screen.findByRole('button', { name: new RegExp(`^${isStarred ? 'unmark' : 'mark'} "${title}" as favorite`, 'i') });
 
+testWithStarsUser();
+testWithAppKind();
+
 describe('DashList', () => {
   it('renders different groups of dashboards', async () => {
     const props = getPanelProps({
@@ -57,6 +68,29 @@ describe('DashList', () => {
     expect(folderTitle).toBeInTheDocument();
   });
 
+  it('does not render starred folders in the starred section', async () => {
+    setMockStarredFolders([folderA.item.uid]);
+    const props = getPanelProps({ ...defaultOptions, showStarred: true });
+    render(<DashList {...props} />);
+
+    // A starred dashboard still shows...
+    expect(await screen.findByText(folderA_dashbdD.item.title)).toBeInTheDocument();
+    // ...but the starred folder does not.
+    expect(screen.queryByText(folderA.item.title)).not.toBeInTheDocument();
+  });
+
+  it('lists starred dashboards without asking for the API of the app kinds the stars also hold', async () => {
+    setMockStarredAppKind(MOCK_APP_KIND.group, MOCK_APP_KIND.kind, ['t1']);
+    const group = jest.fn(() => new HttpResponse(null, { status: 404 }));
+    server.use(http.get(`/apis/${MOCK_APP_KIND.group}/`, group));
+    const props = getPanelProps({ ...defaultOptions, showStarred: true });
+    render(<DashList {...props} />);
+
+    expect(await screen.findByText(folderA_dashbdD.item.title)).toBeInTheDocument();
+    // The panel lists dashboards alone, so a plugin's API has no say in whether or how fast they show
+    expect(group).not.toHaveBeenCalled();
+  });
+
   it('renders empty state', async () => {
     const props = getPanelProps({
       ...defaultOptions,
@@ -74,15 +108,16 @@ describe('DashList', () => {
       ...defaultOptions,
       showStarred: true,
     });
-    const { user } = render(<DashList {...props} />, {
-      preloadedState: { navIndex: { starred: { text: 'Starred', children: [] } } },
-    });
+    const { user } = render(<DashList {...props} />);
 
     const starButton = await findStarButton(folderA_dashbdD.item.title, true);
 
     await user.click(starButton);
 
-    expect(screen.queryByText(folderA_dashbdD.item.title)).not.toBeInTheDocument();
+    // The row leaves once the stars refetch re-searches, not on a local state write
+    await waitFor(() => {
+      expect(screen.queryByText(folderA_dashbdD.item.title)).not.toBeInTheDocument();
+    });
   });
 
   it('allows starring a dashboard', async () => {
@@ -92,9 +127,7 @@ describe('DashList', () => {
       showSearch: true,
     });
 
-    const { user } = render(<DashList {...props} />, {
-      preloadedState: { navIndex: { starred: { text: 'Starred', children: [] } } },
-    });
+    const { user } = render(<DashList {...props} />);
 
     const starButton = await findStarButton(dashbdE.item.title, false);
 

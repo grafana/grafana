@@ -42,6 +42,29 @@ func TestServiceIdentityPluginGroups(t *testing.T) {
 	}
 }
 
+func TestServiceIdentityReportingPermissions(t *testing.T) {
+	_, service := identity.WithServiceIdentity(t.Context(), 1)
+	for name, requester := range map[string]authtypes.AuthInfo{
+		"service": service,
+		"delegated user": &identity.StaticRequester{
+			Type: authtypes.TypeUser, UserUID: "reader", AccessTokenClaims: identity.ServiceIdentityClaims,
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			for _, resource := range []string{"reports", "reportsettings"} {
+				for _, verb := range []string{"get", "list", "watch", "create", "update", "patch", "delete"} {
+					t.Run(resource+"/"+verb, func(t *testing.T) {
+						result := authz.CheckServicePermissions(requester, "reporting.grafana.app", resource, verb)
+						require.Equal(t, name == "service", result.ServiceCall)
+						require.True(t, result.Allowed)
+					})
+				}
+			}
+			require.False(t, authz.CheckServicePermissions(requester, "reporting.grafana.app", "unknown", "get").Allowed)
+		})
+	}
+}
+
 func TestServiceIdentityAlertReviewStoragePermissions(t *testing.T) {
 	_, requester := identity.WithServiceIdentity(context.Background(), 42)
 	for _, verb := range []string{"get", "create", "update"} {
@@ -112,8 +135,7 @@ func TestWithProvisioningIdentity(t *testing.T) {
 }
 
 // fakeAuthInfo drives GetUID and GetAudience independently. It embeds StaticRequester to satisfy
-// the rest of the authtypes.AuthInfo interface; StaticRequester.GetAudience returns an org-scoped
-// value, so it cannot exercise the token-audience branch on its own.
+// the rest of the authtypes.AuthInfo interface.
 type fakeAuthInfo struct {
 	*identity.StaticRequester
 	uid      string
@@ -134,14 +156,31 @@ func TestIsProvisioningServiceIdentity(t *testing.T) {
 		require.True(t, identity.IsProvisioningServiceIdentity(r))
 	})
 
-	t.Run("matches by provisioning group audience", func(t *testing.T) {
-		// UID is unrelated, so only the audience branch can satisfy the check.
+	t.Run("matches by provisioning service identity", func(t *testing.T) {
+		r := &identity.StaticRequester{
+			Type:              authtypes.TypeAccessPolicy,
+			UserUID:           "provisioningoperators",
+			AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{Rest: authn.AccessTokenClaims{ServiceIdentity: "provisioning.grafana.app"}},
+		}
+		require.True(t, identity.IsProvisioningServiceIdentity(r))
+	})
+
+	t.Run("a user acting through the provisioning service does not match", func(t *testing.T) {
+		r := &identity.StaticRequester{
+			Type:              authtypes.TypeUser,
+			UserUID:           "abc123",
+			AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{Rest: authn.AccessTokenClaims{ServiceIdentity: "provisioning.grafana.app"}},
+		}
+		require.False(t, identity.IsProvisioningServiceIdentity(r))
+	})
+
+	t.Run("the provisioning group audience does not match", func(t *testing.T) {
 		auth := fakeAuthInfo{
 			StaticRequester: &identity.StaticRequester{},
-			uid:             "user:42",
-			audience:        []string{"org:1", "provisioning.grafana.app"},
+			uid:             "access-policy:mycap",
+			audience:        []string{"dashboard.grafana.app", "provisioning.grafana.app"},
 		}
-		require.True(t, identity.IsProvisioningServiceIdentity(auth))
+		require.False(t, identity.IsProvisioningServiceIdentity(auth))
 	})
 
 	t.Run("the generic service identity does not match", func(t *testing.T) {

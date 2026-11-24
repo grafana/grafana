@@ -1,6 +1,7 @@
 import { type FC, type SyntheticEvent } from 'react';
 
 import {
+  type AbsoluteTimeRange,
   type DataFrame,
   type Field,
   type GrafanaTheme2,
@@ -10,7 +11,6 @@ import {
   type ActionModel,
   type FieldType,
   type DataFrameWithValue,
-  type FieldState,
 } from '@grafana/data';
 import { type CellRendererProps, type Column } from '@grafana/react-data-grid';
 import { type MatcherScope, type TableCellHeight } from '@grafana/schema';
@@ -98,7 +98,13 @@ export interface TableSortByFieldState {
  */
 export type SortByBehavior = 'initial' | 'managed';
 
+export interface TableFilterInteraction {
+  filter_type: 'local' | 'transformation' | 'adhoc';
+  filter_kind: 'values' | 'numeric_range' | 'date_range' | 'other';
+}
+
 interface BaseTableProps {
+  onFilterInteraction?: (interaction: TableFilterInteraction) => void;
   /** Experimental transformation-backed table view, explicitly owned by its host. */
   rowTransformationsEnabled?: boolean;
   rowTransformations?: TableRowTransformations;
@@ -148,6 +154,8 @@ interface BaseTableProps {
   noValue?: string;
   /** used by SparklineCell when provided */
   timeRange?: TimeRange;
+  /** Lets sparkline cells set the dashboard time range; omitted when the feature is off. */
+  onTimeRangeSelected?: (range: AbsoluteTimeRange) => void;
   /** Timezone used by the field display processors and value-filter matcher. */
   timeZone?: string;
   enableSharedCrosshair?: boolean;
@@ -183,6 +191,9 @@ interface BaseTableProps {
   rangeFiltersEnabled?: boolean;
   // alternates the background color of every other row (table.refreshNewFeatures)
   zebraStriping?: boolean;
+  /** Display generated row positions in a presentation-only gutter. */
+  showRowNumbers?: boolean;
+  /** Offer a local show/hide control for row numbers in the columns sidebar (feature-gated). */
   /** Initial sidebar state. Later prop changes also update the sidebar. */
   showColumnsSidebar?: boolean;
   /** Controlled column order, by display name. */
@@ -206,6 +217,7 @@ export interface TableCellRendererProps {
   rowIdx: number;
   frame: DataFrame;
   timeRange?: TimeRange;
+  onTimeRangeSelected?: (range: AbsoluteTimeRange) => void;
   value: TableCellValue;
   height: number;
   // flags that are static per column
@@ -255,6 +267,7 @@ export interface SparklineCellProps {
   rowIdx: number;
   theme: GrafanaTheme2;
   timeRange?: TimeRange;
+  onTimeRangeSelected?: (range: AbsoluteTimeRange) => void;
   value: TableCellValue;
   width: number;
 }
@@ -402,8 +415,4 @@ export type CellRootRenderer = (key: React.Key, props: CellRendererProps<TableRo
 export interface FromFieldsResult {
   columns: TableColumn[];
   cellRootRenderers: Record<string, CellRootRenderer>;
-}
-
-export interface FooterFieldState extends FieldState {
-  lastProcessedRowCount: number;
 }

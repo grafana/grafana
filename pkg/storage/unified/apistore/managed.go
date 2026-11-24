@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
-	"regexp"
+	"maps"
+	"slices"
 
+	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -17,205 +18,23 @@ import (
 	"k8s.io/client-go/rest"
 
 	authtypes "github.com/grafana/authlib/types"
-
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-var (
-	errResourceIsManagedInRepository = fmt.Errorf("this resource is managed by a repository")
-
-	// terraformUserAgentPattern matches the User-Agent based manager ID format used by Terraform providers.
-	// Format: "Terraform/{version} (+https://www.terraform.io) terraform-provider-{name}/{version}"
-	// Example: "Terraform/1.5.0 (+https://www.terraform.io) terraform-provider-grafana/v3.0.0"
-	terraformUserAgentPattern = regexp.MustCompile(`^Terraform/[^ ]+ \(\+https://www\.terraform\.io\) terraform-provider-[^/]+/.+$`)
+const (
+	provisioningGroup    = "provisioning.grafana.app"
+	provisioningVersion  = "v0alpha1"
+	repositoriesResource = "repositories"
 )
 
-// isTerraformUserAgentID checks if a Terraform manager identity uses the
-// DEPRECATED User-Agent based format (e.g., "Terraform/1.5.0 (+https://www.terraform.io) terraform-provider-grafana/v3.0.0").
-// Modern approach uses stable custom IDs like "grafana-terraform-provider" or "my-terraform-provider".
-//
-// HACK: This is a workaround to allow migration from User-Agent based manager IDs to stable custom IDs.
-// The Terraform provider historically used the HTTP User-Agent header as the manager identity, which:
-//   - Changes with every Terraform/provider version update
-//   - Was never intended to be a stable identifier
-//   - Cannot be customized by users
-//
-// This function enables one-way migration to user-defined stable IDs by detecting the User-Agent
-// format and blocking reversion back to it. This special-casing for Terraform violates the general
-// principle that manager identities should be immutable, but is necessary to fix the original
-// design mistake of using User-Agent as an identifier.
-//
-// Reference: https://github.com/grafana/terraform-provider-grafana/blob/main/pkg/provider/framework_provider.go#L307
-// Format: "Terraform/{version} (+https://www.terraform.io) terraform-provider-{name}/{version}"
-func isTerraformUserAgentID(identity string) bool {
-	// Use regex to precisely validate the User-Agent format structure
-	return terraformUserAgentPattern.MatchString(identity)
-}
-
-func checkManagerPropertiesOnDelete(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
-	return enforceManagerProperties(auth, obj)
-}
-
-func checkManagerPropertiesOnCreate(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
-	return enforceManagerProperties(auth, obj)
-}
-
-func checkManagerPropertiesOnUpdateSpec(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor, old utils.GrafanaMetaAccessor) error {
-	managerNew, hasNew := obj.GetManagerProperties()
-	managerOld, hasOld := old.GetManagerProperties()
-
-	if !hasNew && !hasOld {
-		return nil // neither old nor new are managed
-	}
-
-	// Removing a manager: the caller must be authorized for the *old* manager.
-	if !hasNew && hasOld {
-		if err := enforceManagerProperties(auth, old); err != nil {
-			// Allow admins to release repo-managed resources. There is no
-			// reconciliation loop that automatically releases orphaned
-			// resources, so admins need the ability to detach manually.
-			if errors.Is(err, errResourceIsManagedInRepository) {
-				if requester, ok := auth.(identity.Requester); ok &&
-					(requester.GetIsGrafanaAdmin() || requester.HasRole(identity.RoleAdmin)) {
-					return nil
-				}
-			}
-			return &apierrors.StatusError{ErrStatus: metav1.Status{
-				Status:  metav1.StatusFailure,
-				Code:    http.StatusForbidden,
-				Reason:  metav1.StatusReasonForbidden,
-				Message: "Can not remove resource manager from resource",
-			}}
-		}
-		return nil
-	}
-
-	// Changing the manager kind is not allowed.
-	// Remove the old manager first, then add a new one with a different kind.
-	if hasOld && managerNew.Kind != managerOld.Kind {
-		return utils.NewForbiddenManagerKindChangeError(managerOld, managerNew)
-	}
-
-	// For non-Terraform managers, identity changes are also blocked.
-	// Remove the old manager first, then add a new one with a different identity.
-	//
-	// Classic shim kinds are exempt: their identity is absent or unstable (e.g. a
-	// file-provisioning reader name, or empty for API/converted-Prometheus origins),
-	// so it is not a user-defined stable ID and must not be treated as immutable.
-	if hasOld && managerNew.Kind != utils.ManagerKindTerraform && !managerNew.Kind.IsClassic() && managerNew.Identity != managerOld.Identity {
-		return &apierrors.StatusError{ErrStatus: metav1.Status{
-			Status:  metav1.StatusFailure,
-			Code:    http.StatusForbidden,
-			Reason:  metav1.StatusReasonForbidden,
-			Message: "Cannot change resource manager identity; remove the existing manager first, then add the new one",
-		}}
-	}
-
-	// HACK: Terraform managers get special treatment for identity changes.
-	// See isTerraformUserAgentID() for full explanation of why this exists.
-	//
-	// We allow one-way migration from deprecated User-Agent based IDs to stable custom IDs.
-	// Once migrated to a custom ID, that identity is locked (cannot be changed).
-	// User-Agent IDs can still be updated to other User-Agent IDs (for version updates).
-	if hasOld && managerNew.Kind == utils.ManagerKindTerraform && managerNew.Identity != managerOld.Identity {
-		oldIsUserAgent := isTerraformUserAgentID(managerOld.Identity)
-		newIsUserAgent := isTerraformUserAgentID(managerNew.Identity)
-
-		// Block: custom ID → User-Agent (reverting to deprecated format)
-		if !oldIsUserAgent && newIsUserAgent {
-			return &apierrors.StatusError{ErrStatus: metav1.Status{
-				Status:  metav1.StatusFailure,
-				Code:    http.StatusForbidden,
-				Reason:  metav1.StatusReasonForbidden,
-				Message: "Cannot change Terraform manager ID back to User-Agent format; stable custom IDs are immutable",
-			}}
-		}
-
-		// Block: custom ID → different custom ID (identity is locked after migration)
-		if !oldIsUserAgent && !newIsUserAgent {
-			return &apierrors.StatusError{ErrStatus: metav1.Status{
-				Status:  metav1.StatusFailure,
-				Code:    http.StatusForbidden,
-				Reason:  metav1.StatusReasonForbidden,
-				Message: "Cannot change Terraform manager ID; stable custom IDs are immutable",
-			}}
-		}
-	}
-
-	// Adding a manager or updating flags on the same owner.
-	return enforceManagerProperties(auth, obj)
-}
-
-func ensureSameRepoManager(folder utils.GrafanaMetaAccessor, resource utils.GrafanaMetaAccessor) error {
-	folderManager, ok := folder.GetManagerProperties()
-	if !ok || folderManager.Kind != utils.ManagerKindRepo {
-		return nil
-	}
-
-	resourceManager, resourceManaged := resource.GetManagerProperties()
-	if !resourceManaged {
-		return &apierrors.StatusError{ErrStatus: metav1.Status{
-			Status:  metav1.StatusFailure,
-			Code:    http.StatusForbidden,
-			Reason:  metav1.StatusReasonForbidden,
-			Message: fmt.Sprintf("folder is managed by %s:%s, but the resource is not managed", folderManager.Kind, folderManager.Identity),
-		}}
-	}
-
-	if resourceManager.Kind != folderManager.Kind || resourceManager.Identity != folderManager.Identity {
-		return &apierrors.StatusError{ErrStatus: metav1.Status{
-			Status: metav1.StatusFailure,
-			Code:   http.StatusForbidden,
-			Reason: metav1.StatusReasonForbidden,
-			Message: fmt.Sprintf("resource manager (%s:%s) does not match folder manager (%s:%s); resources must be managed by the same manager as their containing folder",
-				resourceManager.Kind, resourceManager.Identity,
-				folderManager.Kind, folderManager.Identity),
-		}}
-	}
-
-	return nil
-}
-
-func enforceManagerProperties(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
-	kind := obj.GetAnnotation(utils.AnnoKeyManagerKind)
-	if kind == "" {
-		return nil
-	}
-
-	switch utils.ParseManagerKindString(kind) {
-	case utils.ManagerKindUnknown:
-		return nil // not managed
-
-	case utils.ManagerKindRepo:
-		if identity.IsProvisioningServiceIdentity(auth) {
-			return nil // OK!
-		}
-		// This can fallback to writing the value with a provisioning client
-		return errResourceIsManagedInRepository
-
-	case utils.ManagerKindPlugin,
-		utils.ManagerKindClassicFP,                  // nolint:staticcheck
-		utils.ManagerKindClassicAPI,                 // nolint:staticcheck
-		utils.ManagerKindClassicConvertedPrometheus: // nolint:staticcheck
-		// ?? what identity do we use for legacy internal requests?
-		return nil // no error
-
-	case utils.ManagerKindTerraform, utils.ManagerKindKubectl:
-		manager, _ := obj.GetManagerProperties()
-		if manager.AllowsEdits {
-			return nil // no error anyone can do it
-		}
-		// TODO: check the kubectl+terraform resource
-		return nil
-
-	case utils.ManagerKindGrafana:
-		// Used for global role management.
-		return nil // Let the api admission hooks handle it
-	}
-	return nil
-}
+var (
+	// Aliased so the routing in handleManagedResourceRouting keeps matching on it.
+	errResourceIsManagedInRepository = identity.ErrResourceIsManagedInRepository
+	errManagerGone                   = errors.New("the repository managing this resource no longer exists")
+)
 
 // managedResourceCommitMessage returns the git commit message to use when
 // forwarding a managed-resource write to the provisioning files endpoint. It
@@ -234,6 +53,198 @@ func managedResourceCommitMessage(obj utils.GrafanaMetaAccessor, action resource
 	default:
 		return fmt.Sprintf("Update %s", obj.GetName())
 	}
+}
+
+func (s *Storage) provisioningClient(ctx context.Context) (rest.Interface, error) {
+	cfg, err := s.configProvider.GetRestConfig(ctx)
+	if err != nil {
+		return nil, err
+	}
+	cfg.NegotiatedSerializer = serializer.WithoutConversionCodecFactory{CodecFactory: scheme.Codecs}
+	cfg.GroupVersion = &schema.GroupVersion{
+		Group:   provisioningGroup,
+		Version: provisioningVersion,
+	}
+	return rest.RESTClientFor(cfg)
+}
+
+// The lookup runs as the service identity of the namespace, because a caller may be allowed to write a resource
+// without being allowed to read repositories, and this is only an existence probe. The provisioning identity is
+// not used: it means that provisioning acts for itself, not that another service reads from provisioning.
+func (s *Storage) repositoryExists(ctx context.Context, namespace, name string) (exists bool, err error) {
+	if s.configProvider == nil || name == "" {
+		return true, nil
+	}
+	ns, err := authtypes.ParseNamespace(namespace)
+	if err != nil {
+		return false, err
+	}
+	ctx, _ = identity.WithServiceIdentity(ctx, ns.OrgID, func(r *identity.StaticRequester) {
+		r.Namespace = ns.Value
+	})
+	client, err := s.provisioningClient(ctx)
+	if err != nil {
+		return false, err
+	}
+	err = client.Get().
+		Namespace(namespace).
+		Resource(repositoriesResource).
+		Name(name).
+		Do(ctx).
+		Error()
+	switch {
+	case err == nil:
+		return true, nil
+	case isRepositoryNotFound(err, name):
+		return false, nil
+	default:
+		return false, err
+	}
+}
+
+// repositoryGoneError tells a caller that the write is not allowed, because the stored resource names a
+// repository that no longer exists.
+func repositoryGoneError(name string) error {
+	return apierrors.NewForbidden(schema.GroupResource{Group: provisioningGroup, Resource: repositoriesResource}, name, errManagerGone)
+}
+
+func isRepositoryNotFound(err error, name string) bool {
+	statusErr, ok := errors.AsType[*apierrors.StatusError](err)
+	if !ok || statusErr.ErrStatus.Reason != metav1.StatusReasonNotFound {
+		return false
+	}
+	details := statusErr.ErrStatus.Details
+	if details == nil ||
+		details.Group != provisioningGroup ||
+		details.Kind != repositoriesResource ||
+		details.Name != name {
+		return false
+	}
+	// When provisioning is disabled, the API Server returns a 404,
+	// which should not count as the repository is gone
+	for _, cause := range details.Causes {
+		if cause.Type == metav1.CauseTypeUnexpectedServerResponse {
+			return false
+		}
+	}
+	return true
+}
+
+func (s *Storage) managerRepositoryGone(ctx context.Context, obj utils.GrafanaMetaAccessor) bool {
+	manager, ok := obj.GetManagerProperties()
+	if !ok || manager.Kind != utils.ManagerKindRepo {
+		return false
+	}
+	exists, err := s.repositoryExists(ctx, obj.GetNamespace(), manager.Identity)
+	if err != nil {
+		// A failed lookup must not count as a deleted repository, but it must not be silent either.
+		logging.FromContext(ctx).Warn("unable to check that the repository of a managed resource exists",
+			"namespace", obj.GetNamespace(), "repository", manager.Identity, "err", err)
+		return false
+	}
+	return !exists
+}
+
+// The root folder stands for the repository itself rather than a
+// file so it has no source path. If there's no repository, nothing can be routed to the root folder and it is orphaned.
+func (s *Storage) isOrphanedRepositoryRootFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) bool {
+	if src, ok := obj.GetSourceProperties(); ok && src.Path != "" {
+		return false
+	}
+	return s.managerRepositoryGone(ctx, obj)
+}
+
+// allowOrphanedUpdateBypass allows orphan updates when:
+// 1. the parent folder does not change
+// AND
+// 2. One of:
+//   - drops the manager annotations, which releases it from the manager
+//   - marks the resource for delete (i.e. with the folder terminating label), with no spec change
+//
+// Other updates keep the original error.
+func (s *Storage) allowOrphanedUpdateBypass(ctx context.Context, obj, previous utils.GrafanaMetaAccessor) bool {
+	sameFolder := obj.GetFolder() == previous.GetFolder()
+	return sameFolder &&
+		(isManagerRelease(obj, previous) ||
+			isMarkForDeleteOnly(obj, previous)) &&
+		s.managerRepositoryGone(ctx, previous)
+}
+
+func isManagerRelease(obj, previous utils.GrafanaMetaAccessor) bool {
+	_, managed := obj.GetManagerProperties()
+	_, wasManaged := previous.GetManagerProperties()
+	_, hasManagerAnnotation := obj.GetAnnotations()[utils.AnnoKeyManagerKind]
+
+	return !managed && wasManaged && !hasManagerAnnotation
+}
+
+// isMarkForDeleteOnly ignores the annotations that prepareObjectForUpdate sets itself. The manager
+// and source annotations must not change. Blobs are not checked here: only the serializer can read them,
+// so checkManagerOnUpdate compares them.
+func isMarkForDeleteOnly(obj, previous utils.GrafanaMetaAccessor) bool {
+	if !maps.Equal(mapWithout(obj.GetLabels(), utils.LabelKeyFolderTerminating), mapWithout(previous.GetLabels(), utils.LabelKeyFolderTerminating)) {
+		return false
+	}
+	serverAnnotations := []string{utils.AnnoKeyUpdatedBy, utils.AnnoKeyUpdatedTimestamp, utils.AnnoKeyGrantPermissions}
+	if !maps.Equal(mapWithout(obj.GetAnnotations(), serverAnnotations...), mapWithout(previous.GetAnnotations(), serverAnnotations...)) {
+		return false
+	}
+	if !finalizersUnchangedOrReleased(obj, previous) ||
+		!apiequality.Semantic.DeepEqual(obj.GetOwnerReferences(), previous.GetOwnerReferences()) {
+		return false
+	}
+	terminating := obj.GetLabels()[utils.LabelKeyFolderTerminating] == utils.LabelValueFolderTerminating
+	if !terminating && obj.GetDeletionTimestamp() == nil {
+		return false
+	}
+	return contentUnchanged(obj, previous)
+}
+
+// finalizersUnchangedOrReleased lets the owners of finalizers remove them after the delete starts.
+// Kubernetes deletes the resource when the last finalizer is gone, so a delete cannot finish
+// without these writes.
+func finalizersUnchangedOrReleased(obj, previous utils.GrafanaMetaAccessor) bool {
+	finalizers, oldFinalizers := obj.GetFinalizers(), previous.GetFinalizers()
+	if slices.Equal(finalizers, oldFinalizers) {
+		return true
+	}
+	if obj.GetDeletionTimestamp() == nil || previous.GetDeletionTimestamp() == nil {
+		return false
+	}
+	for _, f := range finalizers {
+		if !slices.Contains(oldFinalizers, f) {
+			return false
+		}
+	}
+	return true
+}
+
+func mapWithout(m map[string]string, keys ...string) map[string]string {
+	m = maps.Clone(m)
+	for _, key := range keys {
+		delete(m, key)
+	}
+	return m
+}
+
+// contentUnchanged reports whether a write left the folder, the spec and the secure values as they were.
+// Preparing an update has already replaced new secure values with the names of the secrets it created,
+// so a replaced, added or removed value shows up as a difference here.
+func contentUnchanged(obj, previous utils.GrafanaMetaAccessor) bool {
+	if obj.GetFolder() != previous.GetFolder() {
+		return false
+	}
+	spec, specErr := obj.GetSpec()
+	oldSpec, oldSpecErr := previous.GetSpec()
+	if specErr != nil || oldSpecErr != nil || !apiequality.Semantic.DeepEqual(spec, oldSpec) {
+		return false
+	}
+	secure, secureErr := obj.GetSecureValues()
+	oldSecure, oldSecureErr := previous.GetSecureValues()
+	if secureErr != nil || oldSecureErr != nil {
+		return false
+	}
+	return apiequality.Semantic.DeepEqual(secure, oldSecure)
 }
 
 // handleManagedResourceRouting re-routes a write for a repo-managed resource to the provisioning
@@ -268,16 +279,7 @@ func (s *Storage) handleManagedResourceRouting(ctx context.Context,
 		return true, fmt.Errorf("managed resource is missing source path annotation")
 	}
 
-	cfg, err := s.configProvider.GetRestConfig(ctx)
-	if err != nil {
-		return true, err
-	}
-	cfg.NegotiatedSerializer = serializer.WithoutConversionCodecFactory{CodecFactory: scheme.Codecs}
-	cfg.GroupVersion = &schema.GroupVersion{
-		Group:   "provisioning.grafana.app",
-		Version: "v0alpha1",
-	}
-	client, err := rest.RESTClientFor(cfg)
+	client, err := s.provisioningClient(ctx)
 	if err != nil {
 		return true, err
 	}
@@ -294,7 +296,14 @@ func (s *Storage) handleManagedResourceRouting(ctx context.Context,
 			Suffix("files", src.Path).
 			Param("message", managedResourceCommitMessage(obj, action)).
 			Do(ctx)
-		return false, result.Error()
+		if err := result.Error(); err != nil {
+			// The repository was deleted between reading the resource and this call.
+			if isRepositoryNotFound(err, repo.Identity) {
+				return true, errManagerGone
+			}
+			return false, err
+		}
+		return false, nil
 	}
 
 	var req *rest.Request
@@ -321,6 +330,9 @@ func (s *Storage) handleManagedResourceRouting(ctx context.Context,
 		Param("message", managedResourceCommitMessage(obj, action)).
 		Do(ctx)
 	if err = result.Error(); err != nil {
+		if isRepositoryNotFound(err, repo.Identity) {
+			return true, repositoryGoneError(repo.Identity)
+		}
 		// The files endpoint may commit the repository file before returning an error
 		// (e.g. a 409 after the write), so any post-send failure is ambiguous: keep the
 		// secret rather than orphan a committed reference.

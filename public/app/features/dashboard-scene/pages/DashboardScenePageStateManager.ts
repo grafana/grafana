@@ -69,9 +69,11 @@ import {
   pendingChangesIdFromLocation,
   previewedDashboardUid,
   proposesNewDashboard,
+  stopPreviewingPendingChanges,
 } from '../lifecycle/pendingChangePreview';
 import { resumeRecordingPendingChanges } from '../lifecycle/pendingChangesHistory';
-import { setPendingChangesPageReload } from '../lifecycle/pendingChangesPageReload';
+import { setPendingChangesPageClose, setPendingChangesPageReload } from '../lifecycle/pendingChangesPageReload';
+import { openPendingChangesForEditing } from '../lifecycle/pendingChangesSave';
 import { type PanelEditor } from '../panel-edit/PanelEditor';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { buildNewDashboardSaveModel, buildNewDashboardSaveModelV2 } from '../serialization/buildNewDashboardSaveModel';
@@ -85,6 +87,7 @@ import {
 import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
 import { registerDashboardPageStateCaches } from '../utils/cache';
 import {
+  applyUseCrossDashboardVariables,
   countPredefinedVariableOrigins,
   getGlobalVariablesMode,
   mayInjectAnyPredefinedVariables,
@@ -494,6 +497,10 @@ abstract class DashboardScenePageStateManagerBase<T>
         Boolean(options.uid)
       ) {
         restoreDashboardStateFromLocalStorage(dashboard);
+      }
+
+      if (options.route === DashboardRoutes.Normal) {
+        openPendingChangesForEditing(dashboard);
       }
 
       this.setState({ dashboard: dashboard, isLoading: false });
@@ -1126,9 +1133,14 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
         annotations[key] = value;
       }
     }
-    const resolutionInput = { annotations };
+    const localVariableNames = [
+      ...(rsp.spec.variables ?? []).map((variable) => variable.spec.name),
+      ...(options.defaultVariables ?? []).map((variable) => variable.spec.name),
+    ];
+    const resolutionInput = { annotations, localVariableNames };
 
-    const mode = getGlobalVariablesMode(parseUseCrossDashboardVariables(resolutionInput.annotations));
+    const selection = parseUseCrossDashboardVariables(resolutionInput.annotations);
+    const mode = getGlobalVariablesMode(selection);
 
     if (!mayInjectAnyPredefinedVariables(resolutionInput)) {
       DashboardInteractions.predefinedVariablesLoaded({
@@ -1146,7 +1158,10 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     // Fail open on initial load: a null fetch (error) is treated as no predefined variables.
     const candidates = (await fetchPredefinedVariables(folderUid)) ?? [];
     const predefinedVariables = resolvePredefinedVariablesForDashboard(candidates, resolutionInput);
-    const counts = countPredefinedVariableOrigins(predefinedVariables);
+    // Count what the user selected, not the datasource dependencies injected alongside it.
+    const counts = countPredefinedVariableOrigins(
+      selection ? applyUseCrossDashboardVariables(predefinedVariables, selection) : []
+    );
 
     DashboardInteractions.predefinedVariablesLoaded({
       ...counts,
@@ -1565,6 +1580,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     route: DashboardRoutes
   ): Promise<DashboardWithAccessInfo<DashboardV2Spec>> {
     const created = await buildNewDashboardSaveModelV2();
+    preview.newDashboard = structuredClone(created.spec);
     if (route === DashboardRoutes.Embedded) {
       // Embedded like a saved dashboard in that route: view-only, so it can't be edited or saved there.
       created.metadata.annotations = { ...created.metadata.annotations, [AnnoKeyEmbedded]: 'embedded' };
@@ -1597,10 +1613,11 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
       }
       // Editable as far as the requester may edit the dashboard itself.
       const editable = Boolean(preview.pending.history) && options.route === DashboardRoutes.Normal;
+      // Copies: building the scene adds defaults to the spec it is given, and Save's changes are
+      // measured between the two as stored.
+      preview.saved = { spec: structuredClone(saved.spec), generation: saved.metadata.generation ?? 0 };
       const previewRsp = {
         ...saved,
-        // A copy: building the scene adds defaults to the spec it is given, and the banner
-        // diffs the pending changes as saved.
         spec: structuredClone(preview.pending.proposed),
         access: editable
           ? { ...saved.access, canDelete: false }
@@ -1807,6 +1824,17 @@ setPendingChangesPageReload(async (uid, editing) => {
     reloaded.onEnterEditMode();
   }
   return false;
+});
+
+// Once pending changes are saved or discarded, the page shows the saved dashboard and a URL without them.
+setPendingChangesPageClose(async (uid) => {
+  const manager = getDashboardScenePageStateManager();
+  // The page loads the dashboard for the new URL: fresh, as reloadDashboardFresh does.
+  manager.clearDashboardCache();
+  manager.removeSceneCache(uid);
+  if (!stopPreviewingPendingChanges()) {
+    await manager.reloadDashboardFresh({ uid, route: DashboardRoutes.Normal });
+  }
 });
 
 /** Each scene's in-place reloads, one at a time, and the latest one asked for. */

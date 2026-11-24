@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import memoize from 'micro-memoize';
+import { memoize } from 'micro-memoize';
 import { type CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
 import { type Count, type uWrap, varPreLine } from 'uwrap';
@@ -16,11 +16,13 @@ import {
   type DisplayProcessor,
   isDataFrame,
   isDataFrameWithValue,
+  isTimeSeriesFrame,
   reduceField,
   ReducerID,
   type FieldSparkline,
   type DecimalCount,
 } from '@grafana/data';
+import { getPillElements } from '@grafana/data/internal';
 import type { ColumnWidth, ColumnWidths, SortColumn } from '@grafana/react-data-grid';
 import {
   BarGaugeDisplayMode,
@@ -35,7 +37,6 @@ import { TableCellInspectorMode } from '../TableCellInspector';
 import { type OpenLayersContextValue, isGeometry } from '../geo';
 import { type TableCellOptions } from '../types';
 
-import { AutoCellRenderer, getAutoRendererDisplayMode, getCellRenderer } from './Cells/renderers';
 import { getCellLinks } from './cellLinks';
 import {
   CELL_HORIZONTAL_CHROME,
@@ -63,81 +64,14 @@ import type {
   MeasureCellHeightEntry,
   GetActionsFunctionLocal,
   TableColumn,
-  TextWrapFallback,
 } from './types';
 
 // inferPills lives here rather than in PillCell.tsx to avoid a circular dependency:
 // styles.ts → utils.tsx → renderers.tsx → PillCell.tsx → styles.ts
 /* ---------------------------- Pill inference ----------------------------- */
-const SPLIT_RE = /\s*,\s*/;
-
-function inferPillsImpl(rawValue: unknown): unknown[] {
-  if (rawValue === '' || rawValue == null) {
-    return [];
-  }
-
-  if (Array.isArray(rawValue)) {
-    return rawValue.filter((v) => v != null).map((v) => String(v).trim());
-  }
-
-  const value = String(rawValue);
-
-  if (value[0] === '[') {
-    try {
-      return JSON.parse(value);
-    } catch {
-      return value.trim().split(SPLIT_RE);
-    }
-  }
-
-  return value.trim().split(SPLIT_RE);
-}
-
-/**
- * @internal
- * A bounded cache with O(1) inserts and no per-insert eviction scan. It keeps two generations:
- * writes go to `primary`; when `primary` fills, it becomes `secondary` (whatever was in the old
- * `secondary` is dropped) and a fresh `primary` starts. Reads check both generations and promote a
- * survivor back into `primary`, which approximates LRU. Total live entries stay within ~2x maxSize.
- */
-export function createBoundedCache<K, V>(maxSize: number) {
-  let primary = new Map<K, V>();
-  let secondary = new Map<K, V>();
-
-  // Every write to `primary` — whether a fresh `set` or a promotion from `secondary` in `get` — goes
-  // through here so the rotation check runs on all growth paths. (Rotating only in `set` let `get`'s
-  // promotions grow `primary` past `maxSize` between writes, breaking the ~2x bound.)
-  const put = (key: K, value: V): void => {
-    primary.set(key, value);
-    if (primary.size >= maxSize) {
-      secondary = primary;
-      primary = new Map<K, V>();
-    }
-  };
-
-  return {
-    get(key: K): V | undefined {
-      const fromPrimary = primary.get(key);
-      if (fromPrimary !== undefined) {
-        return fromPrimary;
-      }
-      const fromSecondary = secondary.get(key);
-      if (fromSecondary !== undefined) {
-        put(key, fromSecondary); // promote into the current generation, keeping the size bound
-      }
-      return fromSecondary;
-    },
-    set: put,
-  };
-}
-
-// inferPills is pure and its inputs are stable across resizes, so we cache results. Array/object
-// values are cached by reference in a WeakMap (unbounded-safe, auto-GC'd). Primitive (string) values
-// persist for the whole app lifetime across every table, so they use a generational bounded cache
-// (see createBoundedCache) sized generously enough that a large table mostly hits.
-const arrayPillCache = new WeakMap<object, unknown[]>();
-const primitivePillCache = createBoundedCache<string, unknown[]>(15000);
-
+// The parsing and caches live in @grafana/data's shared pill elements so value
+// filtering reuses what rendering already inferred. Behavior is unchanged from
+// the old local copy, including the untrimmed '[' check.
 // Accepts an arbitrary raw cell value: pill columns hold string arrays (not in TableCellValue), and
 // values can be null, so this is deliberately typed `unknown` and narrowed at runtime.
 export function inferPills(rawValue: unknown): unknown[] {
@@ -145,22 +79,7 @@ export function inferPills(rawValue: unknown): unknown[] {
     return [];
   }
 
-  if (typeof rawValue === 'object') {
-    let cached = arrayPillCache.get(rawValue);
-    if (cached === undefined) {
-      cached = inferPillsImpl(rawValue);
-      arrayPillCache.set(rawValue, cached);
-    }
-    return cached;
-  }
-
-  const key = String(rawValue);
-  let cached = primitivePillCache.get(key);
-  if (cached === undefined) {
-    cached = inferPillsImpl(rawValue);
-    primitivePillCache.set(key, cached);
-  }
-  return cached;
+  return getPillElements(rawValue);
 }
 
 /* ---------------------------- Cell calculations --------------------------- */
@@ -205,6 +124,24 @@ export function shouldTextWrap(field: Field): boolean {
   return Boolean(field.config.custom?.wrapText);
 }
 
+/** @internal */
+export function getAutoRendererDisplayMode(field: Field): TableCellOptions['type'] {
+  if (field.type === FieldType.geo) {
+    return TableCellDisplayMode.Geo;
+  }
+  if (field.type === FieldType.frame) {
+    const firstValue = field.values[0];
+    if (isDataFrame(firstValue) && isTimeSeriesFrame(firstValue)) {
+      return TableCellDisplayMode.Sparkline;
+    }
+  }
+  // `other` values have no scalar form, so Auto pretty-prints them as JSON.
+  if (field.type === FieldType.other) {
+    return TableCellDisplayMode.JSONView;
+  }
+  return TableCellDisplayMode.Auto;
+}
+
 /**
  * @internal
  * Returns true if the field's cells pretty-print their value as JSON. An `other` field only does so
@@ -216,16 +153,6 @@ export function rendersAsJson(field: Field, cellType = getCellOptions(field).typ
     ((cellType == null || cellType === TableCellDisplayMode.Auto) &&
       getAutoRendererDisplayMode(field) === TableCellDisplayMode.JSONView)
   );
-}
-
-/**
- * @internal wrap a cell height measurer to clamp its output to the maxHeight defined in the field, if any.
- */
-function clampByMaxHeight(measurer: MeasureCellHeight, maxHeight = Infinity): MeasureCellHeight {
-  return (value, width, field, rowIdx, lineHeight) => {
-    const rawHeight = measurer(value, width, field, rowIdx, lineHeight);
-    return Math.min(rawHeight, maxHeight);
-  };
 }
 
 /**
@@ -375,7 +302,7 @@ export function getDataLinksHeightMeasurer(): MeasureCellHeight {
   };
 }
 
-const getPillMetrics = (theme?: GrafanaTheme2) => {
+export const getPillMetrics = (theme?: GrafanaTheme2) => {
   if (!theme) {
     throw new Error('A theme is required to measure pill cells');
   }
@@ -480,88 +407,6 @@ export function buildHeaderHeightMeasurers(
 }
 
 const spaceRegex = /[\s-]/;
-
-/**
- * @internal return a text height measurer for every field which has wrapHeaderText enabled. we do this once as we're rendering
- * the table, and then getRowHeight uses the output of this to caluclate the height of each row.
- */
-export function buildCellHeightMeasurers(
-  fields: Field[],
-  typographyCtx: TypographyCtx,
-  theme: GrafanaTheme2,
-  maxHeight?: number,
-  wrapFallback?: TextWrapFallback
-): MeasureCellHeightEntry[] | undefined {
-  const result: Record<string, MeasureCellHeightEntry> = {};
-  let wrappedFields = 0;
-
-  const measurerFactory: Record<
-    TableCellDisplayMode.Auto | TableCellDisplayMode.DataLinks | TableCellDisplayMode.Pill,
-    () => [MeasureCellHeight, MeasureCellHeight?]
-  > = {
-    // for string fields, we estimate the length of a line using `avgCharWidth` to limit expensive calls `count`.
-    [TableCellDisplayMode.Auto]: () => [typographyCtx.measureHeight, typographyCtx.estimateHeight],
-    [TableCellDisplayMode.DataLinks]: () => [getDataLinksHeightMeasurer(), undefined],
-    // pills use a different font size, so they require their own typography context.
-    [TableCellDisplayMode.Pill]: () => {
-      const { fontSize, spacing, gap } = getPillMetrics(theme);
-      const pillTypographyCtx = createTypographyContext(
-        fontSize,
-        typographyCtx.fontFamily,
-        typographyCtx.letterSpacing
-      );
-      return [
-        getPillCellHeightMeasurer((value) => pillTypographyCtx.ctx.measureText(value).width, spacing, gap),
-        undefined,
-      ];
-    },
-  } as const;
-
-  const setupMeasurerForIdx = (measurerFactoryKey: keyof typeof measurerFactory, fieldIdx: number) => {
-    if (!result[measurerFactoryKey]) {
-      const [measure, estimate] = measurerFactory[measurerFactoryKey]();
-      const guard = (measurer: MeasureCellHeight): MeasureCellHeight => {
-        if (measurerFactoryKey !== TableCellDisplayMode.Auto || wrapFallback == null) {
-          return measurer;
-        }
-        return (value, width, field, rowIdx, lineHeight) =>
-          wrapFallback.shouldDisable(field, value) ? -1 : measurer(value, width, field, rowIdx, lineHeight);
-      };
-      result[measurerFactoryKey] = {
-        measure: guard(clampByMaxHeight(measure, maxHeight)),
-        estimate: estimate != null ? guard(clampByMaxHeight(estimate, maxHeight)) : undefined,
-        fieldIdxs: [],
-      };
-    }
-    result[measurerFactoryKey].fieldIdxs.push(fieldIdx);
-  };
-
-  for (let fieldIdx = 0; fieldIdx < fields.length; fieldIdx++) {
-    const field = fields[fieldIdx];
-    if (shouldTextWrap(field) && !wrapFallback?.disabledFields.has(getDisplayName(field))) {
-      wrappedFields++;
-
-      const cellType = getCellOptions(field).type;
-      if (cellType === TableCellDisplayMode.DataLinks) {
-        setupMeasurerForIdx(TableCellDisplayMode.DataLinks, fieldIdx);
-      } else if (cellType === TableCellDisplayMode.Pill) {
-        setupMeasurerForIdx(TableCellDisplayMode.Pill, fieldIdx);
-      } else if (rendersAsJson(field) || getCellRenderer(field, getCellOptions(field)) === AutoCellRenderer) {
-        // JSON and Auto cells can produce multiline formatted strings, so both need measurement.
-        setupMeasurerForIdx(TableCellDisplayMode.Auto, fieldIdx);
-      } else {
-        // no measurer was configured for this cell type
-        wrappedFields--;
-      }
-    }
-  }
-
-  if (wrappedFields === 0) {
-    return undefined;
-  }
-
-  return Object.values(result);
-}
 
 // in some cases, the estimator might return a value that is less than 1, but when calculated by the measurer, it actually
 // realizes that it's a multi-line cell. to avoid this, we want to give a little buffer away from 1 before we fully trust
