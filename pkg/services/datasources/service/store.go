@@ -180,15 +180,9 @@ func (ss *SqlStore) GetDataSourcesByType(ctx context.Context, query *datasources
 // the unified search index. The manager lives in columns rather than the annotation
 // blob precisely so this query is possible.
 func (ss *SqlStore) GetDataSourcesByManager(ctx context.Context, query *datasources.GetDataSourcesByManagerQuery) ([]*datasources.DataSource, error) {
-	if query.ManagerKind == "" {
-		return nil, fmt.Errorf("manager kind cannot be empty")
-	}
-
-	where := "org_id=? AND manager_kind=?"
-	args := []any{query.OrgID, query.ManagerKind}
-	if query.ManagerIdentity != "" {
-		where += " AND manager_identity=?"
-		args = append(args, query.ManagerIdentity)
+	where, args, err := query.Filter("org_id", query.OrgID)
+	if err != nil {
+		return nil, err
 	}
 
 	dataSources := make([]*datasources.DataSource, 0)

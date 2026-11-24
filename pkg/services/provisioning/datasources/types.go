@@ -5,22 +5,11 @@ import (
 	"fmt"
 	"strings"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
 	"github.com/grafana/grafana/pkg/storage/legacysql/legacyannotations"
-)
-
-// provisioningPolicy mirrors the data_source policy: the manager lives in columns, the
-// updated timestamp comes from one, and the rest goes to the blob.
-var provisioningPolicy = legacyannotations.NewPolicy(
-	utils.AnnoKeyManagerKind,
-	utils.AnnoKeyManagerIdentity,
-	utils.AnnoKeyUpdatedTimestamp,
 )
 
 // ConfigVersion is used to figure out which API version a config uses.
@@ -216,32 +205,6 @@ func (cfg *configsV0) mapToDatasourceFromConfig(apiVersion int64) *configs {
 	return r
 }
 
-// provisioningColumns marks a data source as provisioned from a config file, the way
-// the dashboard provisioner records its origin.
-//
-// Built through the package that stores them so the split is not restated here: the
-// manager lands in its columns and the rest in the blob. Getting that backwards leaves
-// a file-provisioned data source looking unmanaged to /apis, since reads resolve the
-// manager from the columns.
-func provisioningColumns(ds *upsertDataSourceFromConfig, sourceFile string) legacyannotations.Columns {
-	obj := &metav1.ObjectMeta{Annotations: map[string]string{
-		utils.AnnoKeyManagerKind: string(utils.ManagerKindClassicFP), //nolint:staticcheck
-	}}
-	if sourceFile != "" {
-		// The config has no provisioner name the way a dashboard config does, so the
-		// file is both the identity and the path.
-		obj.Annotations[utils.AnnoKeyManagerIdentity] = sourceFile
-		obj.Annotations[utils.AnnoKeySourcePath] = sourceFile
-	}
-	if ds.Editable {
-		obj.Annotations[utils.AnnoKeyManagerAllowsEdits] = "true"
-	}
-
-	var columns legacyannotations.Columns
-	columns.Read(provisioningPolicy, obj)
-	return columns
-}
-
 func createInsertCommand(ds *upsertDataSourceFromConfig, sourceFile string) *datasources.AddDataSourceCommand {
 	jsonData := simplejson.New()
 	if len(ds.JSONData) > 0 {
@@ -267,7 +230,7 @@ func createInsertCommand(ds *upsertDataSourceFromConfig, sourceFile string) *dat
 		ReadOnly:        !ds.Editable,
 		UID:             ds.UID,
 		IsPrunable:      ds.IsPrunable,
-		Columns:         provisioningColumns(ds, sourceFile),
+		Columns:         legacyannotations.FileProvisioned(sourceFile, ds.Editable),
 	}
 
 	if cmd.UID == "" {
@@ -315,7 +278,7 @@ func createUpdateCommand(ds *upsertDataSourceFromConfig, id int64, sourceFile st
 		// The file is the source of truth on every boot, so a renamed or edited
 		// config rewrites the annotations rather than merging into stale ones.
 		UpdateColumns: legacyannotations.UpdateColumns{
-			Columns: provisioningColumns(ds, sourceFile),
+			Columns: legacyannotations.FileProvisioned(sourceFile, ds.Editable),
 			// The file is the source of truth on every boot, so a renamed or edited
 			// config rewrites the columns rather than merging into stale ones.
 			UpdateAnnotations: true,

@@ -104,3 +104,93 @@ func TestColumnsToWrite(t *testing.T) {
 	require.Empty(t, blind.ColumnsToWrite(),
 		"a caller that knows nothing about annotations leaves the stored ones alone")
 }
+
+func TestDefaultPolicyDropsWhatAClientCouldFill(t *testing.T) {
+	policy := DefaultPolicy()
+	obj := &metav1.ObjectMeta{Annotations: map[string]string{
+		utils.AnnoKeyKubectlLastAppliedConfig: `{"secure":{"password":{"create":"hunter2"}}}`,
+		utils.AnnoKeyCreatedBy:                "user:someone-else",
+		utils.AnnoKeyUpdatedBy:                "user:someone-else",
+		utils.AnnoKeySourcePath:               "datasources/prom.yaml",
+	}}
+
+	require.Equal(t, map[string]string{utils.AnnoKeySourcePath: "datasources/prom.yaml"},
+		policy.ToStore(obj), "a secret or an untrusted author never reaches the row")
+
+	t.Run("a table can derive more of its own", func(t *testing.T) {
+		withFolder := DefaultPolicy(utils.AnnoKeyFolder)
+		require.True(t, withFolder.Derives(utils.AnnoKeyFolder))
+		require.True(t, withFolder.Derives(utils.AnnoKeyManagerKind), "and still the defaults")
+	})
+}
+
+func TestFileProvisioned(t *testing.T) {
+	require.Equal(t, Columns{
+		ManagerKind:     "classic-file-provisioning",
+		ManagerIdentity: "prometheus.yaml",
+		Annotations: map[string]string{
+			utils.AnnoKeySourcePath:         "prometheus.yaml",
+			utils.AnnoKeyManagerAllowsEdits: "true",
+		},
+	}, FileProvisioned("prometheus.yaml", true))
+
+	t.Run("a config without editable allows none", func(t *testing.T) {
+		require.NotContains(t, FileProvisioned("prometheus.yaml", false).Annotations,
+			utils.AnnoKeyManagerAllowsEdits)
+	})
+
+	t.Run("a classic kind needs no identity", func(t *testing.T) {
+		columns := FileProvisioned("", false)
+		require.Equal(t, "classic-file-provisioning", columns.ManagerKind)
+		require.Empty(t, columns.ManagerIdentity)
+		require.Empty(t, columns.Annotations)
+	})
+}
+
+func TestManagerQueryFilter(t *testing.T) {
+	tests := []struct {
+		name      string
+		query     ManagerQuery
+		wantWhere string
+		wantArgs  []any
+		wantErr   bool
+	}{
+		{
+			name:      "kind and identity, scoped",
+			query:     ManagerQuery{ManagerKind: "repo", ManagerIdentity: "my-repo"},
+			wantWhere: "org_id=? AND manager_kind=? AND manager_identity=?",
+			wantArgs:  []any{int64(10), "repo", "my-repo"},
+		},
+		{
+			name:      "identity omitted matches every resource of the kind",
+			query:     ManagerQuery{ManagerKind: "classic-file-provisioning"},
+			wantWhere: "org_id=? AND manager_kind=?",
+			wantArgs:  []any{int64(10), "classic-file-provisioning"},
+		},
+		{
+			name:    "the kind is required",
+			query:   ManagerQuery{ManagerIdentity: "my-repo"},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			where, args, err := tt.query.Filter("org_id", int64(10))
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tt.wantWhere, where)
+			require.Equal(t, tt.wantArgs, args)
+		})
+	}
+
+	t.Run("a table with no scope", func(t *testing.T) {
+		where, args, err := ManagerQuery{ManagerKind: "repo"}.Filter("", nil)
+		require.NoError(t, err)
+		require.Equal(t, "manager_kind=?", where)
+		require.Equal(t, []any{"repo"}, args)
+	})
+}

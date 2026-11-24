@@ -25,26 +25,9 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
-// annotationPolicy records which annotations the data_source table keeps in columns
-// of its own -- the updated timestamp, and the manager so it stays queryable. Every
-// other annotation goes to the `annotations` blob.
-var annotationPolicy = legacyannotations.NewPolicy(
-	utils.AnnoKeyUpdatedTimestamp,
-	utils.AnnoKeyManagerKind,
-	utils.AnnoKeyManagerIdentity,
-).Dropping(
-	// kubectl apply records the manifest it sent, and a data source manifest can
-	// carry raw secure.<key>.create values. The annotations column is not encrypted
-	// and is returned on every read, so this one is never stored. kubectl falls back
-	// to a two-way merge without it, which loses field deletions but not secrets.
-	utils.AnnoKeyKubectlLastAppliedConfig,
-
-	// Attribution the legacy path has no trusted value for. Storing what the client
-	// sent would let a read report an arbitrary creator or editor; the row has no
-	// column behind these, so they are dropped rather than echoed back.
-	utils.AnnoKeyCreatedBy,
-	utils.AnnoKeyUpdatedBy,
-)
+// annotationPolicy is the default: the manager in columns, the updated timestamp from
+// its own column, and the keys a client could fill with a secret never stored.
+var annotationPolicy = legacyannotations.DefaultPolicy()
 
 type Converter struct {
 	mapper request.NamespaceMapper

@@ -1,6 +1,8 @@
 package legacyannotations
 
 import (
+	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -93,4 +95,84 @@ func (u UpdateColumns) ColumnsToWrite() []string {
 		return nil
 	}
 	return []string{annotationColumn, managerKindColumn, managerIdentityColumn}
+}
+
+// DefaultPolicy is the policy that goes with Columns: the manager lives in columns of
+// its own and the updated timestamp comes from one, so none of the three are stored in
+// the blob. Pass any further annotations the table derives from its own columns.
+//
+// The dropped keys are not optional, which is why they are here rather than left to
+// each caller to remember. A kubectl-managed resource records the manifest it applied,
+// and that manifest can carry raw secure values; the blob is unencrypted and returned
+// on every read. Attribution is dropped because a legacy table has no trusted value
+// for it, so storing what the client sent would let a read report any author it liked.
+func DefaultPolicy(derived ...string) Policy {
+	return NewPolicy(append(derived,
+		utils.AnnoKeyManagerKind,
+		utils.AnnoKeyManagerIdentity,
+		utils.AnnoKeyUpdatedTimestamp,
+	)...).Dropping(
+		utils.AnnoKeyKubectlLastAppliedConfig,
+		utils.AnnoKeyCreatedBy,
+		utils.AnnoKeyUpdatedBy,
+	)
+}
+
+// FileProvisioned returns the columns for a resource provisioned from a config file,
+// the way the dashboard provisioner records its origin. sourceFile is both the manager
+// identity and the source path: a provisioning config has no provisioner name of its
+// own the way a dashboard config does.
+//
+// allowsEdits comes from the config, and is the whole reason a file-provisioned
+// resource can be editable at all. Leaving it false is what makes Guard refuse writes.
+func FileProvisioned(sourceFile string, allowsEdits bool) Columns {
+	columns := Columns{
+		ManagerKind:     string(utils.ManagerKindClassicFP), //nolint:staticcheck
+		ManagerIdentity: sourceFile,
+	}
+	annotations := map[string]string{}
+	if sourceFile != "" {
+		annotations[utils.AnnoKeySourcePath] = sourceFile
+	}
+	if allowsEdits {
+		annotations[utils.AnnoKeyManagerAllowsEdits] = "true"
+	}
+	if len(annotations) > 0 {
+		columns.Annotations = annotations
+	}
+	return columns
+}
+
+// ManagerQuery is embedded in a query that looks a manager up, so a store does not
+// restate the filter. Identity is optional: leaving it empty matches every resource of
+// that kind, which is what the classic kinds need since their identity is absent or
+// unstable.
+type ManagerQuery struct {
+	ManagerKind     string
+	ManagerIdentity string
+}
+
+// Filter returns the where clause and arguments for "everything this manager owns",
+// scoped by the column the index leads with:
+//
+//	where, args, err := query.Filter("org_id", query.OrgID)
+//	sess.Where(where, args...).Find(&rows)
+//
+// Pass an empty column for a table with no such scope.
+func (q ManagerQuery) Filter(scopeColumn string, scopeValue any) (string, []any, error) {
+	if q.ManagerKind == "" {
+		return "", nil, fmt.Errorf("manager kind cannot be empty")
+	}
+
+	where := managerKindColumn + "=?"
+	args := []any{q.ManagerKind}
+	if scopeColumn != "" {
+		where = scopeColumn + "=? AND " + where
+		args = append([]any{scopeValue}, args...)
+	}
+	if q.ManagerIdentity != "" {
+		where += " AND " + managerIdentityColumn + "=?"
+		args = append(args, q.ManagerIdentity)
+	}
+	return where, args, nil
 }

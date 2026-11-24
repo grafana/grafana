@@ -268,9 +268,8 @@ func (cmd *UpdateDataSourceCommand) UnmarshalJSON(data []byte) error {
 // is optional: leaving it empty matches every data source of that kind, which is what
 // the classic kinds need since their identity is absent or unstable.
 type GetDataSourcesByManagerQuery struct {
-	OrgID           int64
-	ManagerKind     string
-	ManagerIdentity string
+	OrgID int64
+	legacyannotations.ManagerQuery
 }
 
 // DeleteDataSourceCommand will delete a DataSource based on OrgID as well as the UID (preferred), ID, or Name.
