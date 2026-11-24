@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 
 import { createDataFrame, type Field, FieldType, makeTimeRange } from '@grafana/data';
 import { TooltipDisplayMode } from '@grafana/ui';
-import { ZERO_DURATION_END_OFFSET } from 'app/core/components/TimelineChart/utils';
+import { fmtDuration, ZERO_DURATION_END_OFFSET } from 'app/core/components/TimelineChart/utils';
 
 import { StateTimelineTooltip } from './StateTimelineTooltip';
 
@@ -70,7 +70,7 @@ describe('StateTimelineTooltip', () => {
       it('shows a zero duration that ends at its start time', () => {
         renderState(ZERO_DURATION_END_OFFSET);
 
-        expect(screen.queryByText('0ms')).toBeInTheDocument();
+        expect(screen.queryByText(fmtDuration(0))).toBeInTheDocument();
         expect(screen.queryByText(/1000 -\s+1000$/)).toBeInTheDocument();
       });
 

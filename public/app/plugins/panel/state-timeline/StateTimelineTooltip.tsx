@@ -61,8 +61,8 @@ export const StateTimelineTooltip = ({
     const stateTs = xField.values[dataIdx!];
     let duration: string;
 
-    if (nextStateTs - stateTs === ZERO_DURATION_END_OFFSET) {
-      duration = '0ms';
+    if (nextStateTs != null && nextStateTs - stateTs === ZERO_DURATION_END_OFFSET) {
+      duration = fmtDuration(0);
       endTime = stateTs;
     } else if (nextStateTs) {
       duration = nextStateTs && fmtDuration(nextStateTs - stateTs);

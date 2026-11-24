@@ -300,7 +300,7 @@ describe('prepare timeline graph', () => {
       return { frame, fields: info.frames![0].fields.map((f) => f.values) };
     };
 
-    it('ends a state that ends when it starts just after its start', () => {
+    it('handles when the end and the start time are equal by moving the end to just after the start', () => {
       const { fields } = prepare([10, 20, 30], [20, 20, 31]);
 
       expect(fields).toEqual([
