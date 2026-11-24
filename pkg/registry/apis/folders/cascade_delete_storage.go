@@ -219,6 +219,7 @@ func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteVa
 		}
 		// Stamped after the delete so the write lands on a terminating folder, which the API-version cap exempts.
 		// If it fails the folder stays terminating and a retry stamps it, so the error is returned rather than hidden.
+		// Not atomic with the transition: concurrent deletes record the first stamper, not necessarily the first deleter.
 		if err := s.writeCascadeDeleteRequester(identity.WithServiceIdentityContext(ctx, ns.OrgID), name, f.UID, current, value); err != nil && !apierrors.IsNotFound(err) && !errors.Is(err, errSkipStamp) {
 			return nil, false, err
 		}
