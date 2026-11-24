@@ -3,16 +3,16 @@
 Status: in progress, updated 2026-11-24. Supersedes the October explorations ("Multi-tenant Live
 service", "Datasource streams via Live Redis") where they disagree.
 
-| Step    | PR                               | State                                                             |
-| ------- | -------------------------------- | ----------------------------------------------------------------- |
-| 1       | grafana/grafana#138603           | Merged                                                            |
-| 2, 3, 5 | grafana/grafana#138604           | Merged                                                            |
-| —       | grafana/grafana#138607           | Merged; route-only versions in discovery                          |
-| 4       | grafana/grafana#138625           | Merged; frontend toggle and enabled discovery test                |
-| 6a      | grafana/grafana-enterprise#15116 | Merged                                                            |
-| 6b      | grafana/grafana-enterprise#15175 | Draft; server core, wiring, limit, first metrics                  |
-| 6b      | grafana/grafana#138724           | Draft; dispatcher `Observer` for subscribe and disconnect metrics |
-| rest    | —                                | Not started                                                       |
+| Step    | PR                               | State                                                               |
+| ------- | -------------------------------- | ------------------------------------------------------------------- |
+| 1       | grafana/grafana#138603           | Merged                                                              |
+| 2, 3, 5 | grafana/grafana#138604           | Merged                                                              |
+| —       | grafana/grafana#138607           | Merged; route-only versions in discovery                            |
+| 4       | grafana/grafana#138625           | Merged; frontend toggle and enabled discovery test                  |
+| 6a      | grafana/grafana-enterprise#15116 | Merged                                                              |
+| 6b      | grafana/grafana-enterprise#15175 | Draft; server, wiring, limit, metrics; needs the OSS workspace sync |
+| 6b      | grafana/grafana#138724           | Merged; dispatcher `Observer` and per-namespace connection limit    |
+| rest    | —                                | Not started                                                         |
 
 ## Goal
 
@@ -289,6 +289,12 @@ frontend PR.
 | 7     | deployment_tools            | mt-service for dev0, dev1 and ops; flags, Redis credentials, HPA, PDB, alerts                                                                                                                                                                                                                    | 6b                              | Not started      |
 | 8     | deployment_tools            | Gateway direct route, GOFF routing and authn rules, auth-api audiences                                                                                                                                                                                                                           | 7                               | Not started      |
 | Later | grafana, grafana-enterprise | Push on MT: move the push handler to `apps/live/pkg`, raw push routes with `streams`/`create` → `live:push`, a runner per Redis instance                                                                                                                                                         | gateway service account support | Postponed        |
+
+Enterprise code that imports new packages needs the OSS side kept in step. The "Go Workspace Check"
+fails until `make update-workspace` has been run in OSS (with the enterprise branch checked out
+beside it) and its changes to `go.mod` and `pkg/extensions/enterprise_imports*.go` are merged.
+6b needs this once, for `centrifuge`, `gorilla/websocket` (now a direct dependency), the plugin
+SDK `live` package and four `apps/live/pkg` packages.
 
 Possible follow-ups outside Live: raw routes as a first-class app-sdk feature, and router support
 for groups that only have routes.
