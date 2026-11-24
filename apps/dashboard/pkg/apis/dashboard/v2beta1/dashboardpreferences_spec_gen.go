@@ -9,15 +9,8 @@ type DashboardPreferencesDashboardDefaults struct {
 	AutoRefresh          *string                                                `json:"autoRefresh,omitempty"`
 	AutoRefreshIntervals []string                                               `json:"autoRefreshIntervals,omitempty"`
 	TimeRange            *DashboardPreferencesV2beta1DashboardDefaultsTimeRange `json:"timeRange,omitempty"`
-	// 0 is January.
-	FiscalYearStartMonth *int64  `json:"fiscalYearStartMonth,omitempty"`
-	NowDelay             *string `json:"nowDelay,omitempty"`
-	HideTimepicker       *bool   `json:"hideTimepicker,omitempty"`
 	// Same values as the dashboard's cursorSync.
 	CursorSync *DashboardPreferencesDashboardDefaultsCursorSync `json:"cursorSync,omitempty"`
-	Layout     *DashboardPreferencesDashboardDefaultsLayout     `json:"layout,omitempty"`
-	// Applies only when the merged layout is AutoGridLayout.
-	AutoGrid *DashboardPreferencesV2beta1DashboardDefaultsAutoGrid `json:"autoGrid,omitempty"`
 }
 
 // NewDashboardPreferencesDashboardDefaults creates a new DashboardPreferencesDashboardDefaults object.
@@ -36,11 +29,7 @@ func (DashboardPreferencesDashboardDefaults) OpenAPIModelName() string {
 type DashboardPreferencesPanelDefaults struct {
 	Legend  *DashboardPreferencesV2beta1PanelDefaultsLegend  `json:"legend,omitempty"`
 	Tooltip *DashboardPreferencesV2beta1PanelDefaultsTooltip `json:"tooltip,omitempty"`
-	Axis    *DashboardPreferencesV2beta1PanelDefaultsAxis    `json:"axis,omitempty"`
-	// Time series, trend and candlestick only.
-	Graph *DashboardPreferencesV2beta1PanelDefaultsGraph `json:"graph,omitempty"`
-	Field *DashboardPreferencesV2beta1PanelDefaultsField `json:"field,omitempty"`
-	Frame *DashboardPreferencesV2beta1PanelDefaultsFrame `json:"frame,omitempty"`
+	Field   *DashboardPreferencesV2beta1PanelDefaultsField   `json:"field,omitempty"`
 }
 
 // NewDashboardPreferencesPanelDefaults creates a new DashboardPreferencesPanelDefaults object.
@@ -59,40 +48,18 @@ func (DashboardPreferencesPanelDefaults) OpenAPIModelName() string {
 type DashboardPreferencesResetPath string
 
 const (
-	DashboardPreferencesResetPathDashboardPreload                 DashboardPreferencesResetPath = "dashboard.preload"
-	DashboardPreferencesResetPathDashboardAutoRefresh             DashboardPreferencesResetPath = "dashboard.autoRefresh"
-	DashboardPreferencesResetPathDashboardAutoRefreshIntervals    DashboardPreferencesResetPath = "dashboard.autoRefreshIntervals"
-	DashboardPreferencesResetPathDashboardTimeRange               DashboardPreferencesResetPath = "dashboard.timeRange"
-	DashboardPreferencesResetPathDashboardFiscalYearStartMonth    DashboardPreferencesResetPath = "dashboard.fiscalYearStartMonth"
-	DashboardPreferencesResetPathDashboardNowDelay                DashboardPreferencesResetPath = "dashboard.nowDelay"
-	DashboardPreferencesResetPathDashboardHideTimepicker          DashboardPreferencesResetPath = "dashboard.hideTimepicker"
-	DashboardPreferencesResetPathDashboardCursorSync              DashboardPreferencesResetPath = "dashboard.cursorSync"
-	DashboardPreferencesResetPathDashboardLayout                  DashboardPreferencesResetPath = "dashboard.layout"
-	DashboardPreferencesResetPathDashboardAutoGridMaxColumnCount  DashboardPreferencesResetPath = "dashboard.autoGrid.maxColumnCount"
-	DashboardPreferencesResetPathDashboardAutoGridColumnWidthMode DashboardPreferencesResetPath = "dashboard.autoGrid.columnWidthMode"
-	DashboardPreferencesResetPathDashboardAutoGridColumnWidth     DashboardPreferencesResetPath = "dashboard.autoGrid.columnWidth"
-	DashboardPreferencesResetPathDashboardAutoGridRowHeightMode   DashboardPreferencesResetPath = "dashboard.autoGrid.rowHeightMode"
-	DashboardPreferencesResetPathDashboardAutoGridRowHeight       DashboardPreferencesResetPath = "dashboard.autoGrid.rowHeight"
-	DashboardPreferencesResetPathDashboardAutoGridFillScreen      DashboardPreferencesResetPath = "dashboard.autoGrid.fillScreen"
-	DashboardPreferencesResetPathPanelsLegendShowLegend           DashboardPreferencesResetPath = "panels.legend.showLegend"
-	DashboardPreferencesResetPathPanelsLegendPlacement            DashboardPreferencesResetPath = "panels.legend.placement"
-	DashboardPreferencesResetPathPanelsLegendDisplayMode          DashboardPreferencesResetPath = "panels.legend.displayMode"
-	DashboardPreferencesResetPathPanelsTooltipMode                DashboardPreferencesResetPath = "panels.tooltip.mode"
-	DashboardPreferencesResetPathPanelsTooltipSort                DashboardPreferencesResetPath = "panels.tooltip.sort"
-	DashboardPreferencesResetPathPanelsTooltipHideZeros           DashboardPreferencesResetPath = "panels.tooltip.hideZeros"
-	DashboardPreferencesResetPathPanelsAxisAxisPlacement          DashboardPreferencesResetPath = "panels.axis.axisPlacement"
-	DashboardPreferencesResetPathPanelsAxisAxisGridShow           DashboardPreferencesResetPath = "panels.axis.axisGridShow"
-	DashboardPreferencesResetPathPanelsAxisAxisBorderShow         DashboardPreferencesResetPath = "panels.axis.axisBorderShow"
-	DashboardPreferencesResetPathPanelsAxisAxisCenteredZero       DashboardPreferencesResetPath = "panels.axis.axisCenteredZero"
-	DashboardPreferencesResetPathPanelsAxisScale                  DashboardPreferencesResetPath = "panels.axis.scale"
-	DashboardPreferencesResetPathPanelsGraphLineInterpolation     DashboardPreferencesResetPath = "panels.graph.lineInterpolation"
-	DashboardPreferencesResetPathPanelsGraphLineWidth             DashboardPreferencesResetPath = "panels.graph.lineWidth"
-	DashboardPreferencesResetPathPanelsGraphFillOpacity           DashboardPreferencesResetPath = "panels.graph.fillOpacity"
-	DashboardPreferencesResetPathPanelsGraphGradientMode          DashboardPreferencesResetPath = "panels.graph.gradientMode"
-	DashboardPreferencesResetPathPanelsGraphShowPoints            DashboardPreferencesResetPath = "panels.graph.showPoints"
-	DashboardPreferencesResetPathPanelsGraphPointSize             DashboardPreferencesResetPath = "panels.graph.pointSize"
-	DashboardPreferencesResetPathPanelsFieldDecimals              DashboardPreferencesResetPath = "panels.field.decimals"
-	DashboardPreferencesResetPathPanelsFrameTransparent           DashboardPreferencesResetPath = "panels.frame.transparent"
+	DashboardPreferencesResetPathDashboardPreload              DashboardPreferencesResetPath = "dashboard.preload"
+	DashboardPreferencesResetPathDashboardAutoRefresh          DashboardPreferencesResetPath = "dashboard.autoRefresh"
+	DashboardPreferencesResetPathDashboardAutoRefreshIntervals DashboardPreferencesResetPath = "dashboard.autoRefreshIntervals"
+	DashboardPreferencesResetPathDashboardTimeRange            DashboardPreferencesResetPath = "dashboard.timeRange"
+	DashboardPreferencesResetPathDashboardCursorSync           DashboardPreferencesResetPath = "dashboard.cursorSync"
+	DashboardPreferencesResetPathPanelsLegendShowLegend        DashboardPreferencesResetPath = "panels.legend.showLegend"
+	DashboardPreferencesResetPathPanelsLegendPlacement         DashboardPreferencesResetPath = "panels.legend.placement"
+	DashboardPreferencesResetPathPanelsLegendDisplayMode       DashboardPreferencesResetPath = "panels.legend.displayMode"
+	DashboardPreferencesResetPathPanelsTooltipMode             DashboardPreferencesResetPath = "panels.tooltip.mode"
+	DashboardPreferencesResetPathPanelsTooltipSort             DashboardPreferencesResetPath = "panels.tooltip.sort"
+	DashboardPreferencesResetPathPanelsTooltipHideZeros        DashboardPreferencesResetPath = "panels.tooltip.hideZeros"
+	DashboardPreferencesResetPathPanelsFieldDecimals           DashboardPreferencesResetPath = "panels.field.decimals"
 )
 
 // OpenAPIModelName returns the OpenAPI model name for DashboardPreferencesResetPath.
@@ -137,28 +104,6 @@ func (DashboardPreferencesV2beta1DashboardDefaultsTimeRange) OpenAPIModelName() 
 }
 
 // +k8s:openapi-gen=true
-type DashboardPreferencesV2beta1DashboardDefaultsAutoGrid struct {
-	MaxColumnCount  *int64                                                               `json:"maxColumnCount,omitempty"`
-	ColumnWidthMode *DashboardPreferencesV2beta1DashboardDefaultsAutoGridColumnWidthMode `json:"columnWidthMode,omitempty"`
-	// Pixels; used when columnWidthMode is custom.
-	ColumnWidth   *int64                                                             `json:"columnWidth,omitempty"`
-	RowHeightMode *DashboardPreferencesV2beta1DashboardDefaultsAutoGridRowHeightMode `json:"rowHeightMode,omitempty"`
-	// Pixels; used when rowHeightMode is custom.
-	RowHeight  *int64 `json:"rowHeight,omitempty"`
-	FillScreen *bool  `json:"fillScreen,omitempty"`
-}
-
-// NewDashboardPreferencesV2beta1DashboardDefaultsAutoGrid creates a new DashboardPreferencesV2beta1DashboardDefaultsAutoGrid object.
-func NewDashboardPreferencesV2beta1DashboardDefaultsAutoGrid() *DashboardPreferencesV2beta1DashboardDefaultsAutoGrid {
-	return &DashboardPreferencesV2beta1DashboardDefaultsAutoGrid{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardPreferencesV2beta1DashboardDefaultsAutoGrid.
-func (DashboardPreferencesV2beta1DashboardDefaultsAutoGrid) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardPreferencesV2beta1DashboardDefaultsAutoGrid"
-}
-
-// +k8s:openapi-gen=true
 type DashboardPreferencesV2beta1PanelDefaultsLegend struct {
 	ShowLegend  *bool                                                      `json:"showLegend,omitempty"`
 	Placement   *DashboardPreferencesV2beta1PanelDefaultsLegendPlacement   `json:"placement,omitempty"`
@@ -193,45 +138,6 @@ func (DashboardPreferencesV2beta1PanelDefaultsTooltip) OpenAPIModelName() string
 }
 
 // +k8s:openapi-gen=true
-type DashboardPreferencesV2beta1PanelDefaultsAxis struct {
-	AxisPlacement    *DashboardPreferencesV2beta1PanelDefaultsAxisAxisPlacement `json:"axisPlacement,omitempty"`
-	AxisGridShow     *bool                                                      `json:"axisGridShow,omitempty"`
-	AxisBorderShow   *bool                                                      `json:"axisBorderShow,omitempty"`
-	AxisCenteredZero *bool                                                      `json:"axisCenteredZero,omitempty"`
-	Scale            *DashboardPreferencesV2beta1PanelDefaultsAxisScale         `json:"scale,omitempty"`
-}
-
-// NewDashboardPreferencesV2beta1PanelDefaultsAxis creates a new DashboardPreferencesV2beta1PanelDefaultsAxis object.
-func NewDashboardPreferencesV2beta1PanelDefaultsAxis() *DashboardPreferencesV2beta1PanelDefaultsAxis {
-	return &DashboardPreferencesV2beta1PanelDefaultsAxis{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardPreferencesV2beta1PanelDefaultsAxis.
-func (DashboardPreferencesV2beta1PanelDefaultsAxis) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardPreferencesV2beta1PanelDefaultsAxis"
-}
-
-// +k8s:openapi-gen=true
-type DashboardPreferencesV2beta1PanelDefaultsGraph struct {
-	LineInterpolation *DashboardPreferencesV2beta1PanelDefaultsGraphLineInterpolation `json:"lineInterpolation,omitempty"`
-	LineWidth         *int64                                                          `json:"lineWidth,omitempty"`
-	FillOpacity       *int64                                                          `json:"fillOpacity,omitempty"`
-	GradientMode      *DashboardPreferencesV2beta1PanelDefaultsGraphGradientMode      `json:"gradientMode,omitempty"`
-	ShowPoints        *DashboardPreferencesV2beta1PanelDefaultsGraphShowPoints        `json:"showPoints,omitempty"`
-	PointSize         *int64                                                          `json:"pointSize,omitempty"`
-}
-
-// NewDashboardPreferencesV2beta1PanelDefaultsGraph creates a new DashboardPreferencesV2beta1PanelDefaultsGraph object.
-func NewDashboardPreferencesV2beta1PanelDefaultsGraph() *DashboardPreferencesV2beta1PanelDefaultsGraph {
-	return &DashboardPreferencesV2beta1PanelDefaultsGraph{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardPreferencesV2beta1PanelDefaultsGraph.
-func (DashboardPreferencesV2beta1PanelDefaultsGraph) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardPreferencesV2beta1PanelDefaultsGraph"
-}
-
-// +k8s:openapi-gen=true
 type DashboardPreferencesV2beta1PanelDefaultsField struct {
 	// Number of decimal places, 0 to 15.
 	Decimals *int64 `json:"decimals,omitempty"`
@@ -248,21 +154,6 @@ func (DashboardPreferencesV2beta1PanelDefaultsField) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
-type DashboardPreferencesV2beta1PanelDefaultsFrame struct {
-	Transparent *bool `json:"transparent,omitempty"`
-}
-
-// NewDashboardPreferencesV2beta1PanelDefaultsFrame creates a new DashboardPreferencesV2beta1PanelDefaultsFrame object.
-func NewDashboardPreferencesV2beta1PanelDefaultsFrame() *DashboardPreferencesV2beta1PanelDefaultsFrame {
-	return &DashboardPreferencesV2beta1PanelDefaultsFrame{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardPreferencesV2beta1PanelDefaultsFrame.
-func (DashboardPreferencesV2beta1PanelDefaultsFrame) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardPreferencesV2beta1PanelDefaultsFrame"
-}
-
-// +k8s:openapi-gen=true
 type DashboardPreferencesDashboardDefaultsCursorSync string
 
 const (
@@ -274,49 +165,6 @@ const (
 // OpenAPIModelName returns the OpenAPI model name for DashboardPreferencesDashboardDefaultsCursorSync.
 func (DashboardPreferencesDashboardDefaultsCursorSync) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardPreferencesDashboardDefaultsCursorSync"
-}
-
-// +k8s:openapi-gen=true
-type DashboardPreferencesDashboardDefaultsLayout string
-
-const (
-	DashboardPreferencesDashboardDefaultsLayoutGridLayout     DashboardPreferencesDashboardDefaultsLayout = "GridLayout"
-	DashboardPreferencesDashboardDefaultsLayoutAutoGridLayout DashboardPreferencesDashboardDefaultsLayout = "AutoGridLayout"
-)
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardPreferencesDashboardDefaultsLayout.
-func (DashboardPreferencesDashboardDefaultsLayout) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardPreferencesDashboardDefaultsLayout"
-}
-
-// +k8s:openapi-gen=true
-type DashboardPreferencesV2beta1DashboardDefaultsAutoGridColumnWidthMode string
-
-const (
-	DashboardPreferencesV2beta1DashboardDefaultsAutoGridColumnWidthModeNarrow   DashboardPreferencesV2beta1DashboardDefaultsAutoGridColumnWidthMode = "narrow"
-	DashboardPreferencesV2beta1DashboardDefaultsAutoGridColumnWidthModeStandard DashboardPreferencesV2beta1DashboardDefaultsAutoGridColumnWidthMode = "standard"
-	DashboardPreferencesV2beta1DashboardDefaultsAutoGridColumnWidthModeWide     DashboardPreferencesV2beta1DashboardDefaultsAutoGridColumnWidthMode = "wide"
-	DashboardPreferencesV2beta1DashboardDefaultsAutoGridColumnWidthModeCustom   DashboardPreferencesV2beta1DashboardDefaultsAutoGridColumnWidthMode = "custom"
-)
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardPreferencesV2beta1DashboardDefaultsAutoGridColumnWidthMode.
-func (DashboardPreferencesV2beta1DashboardDefaultsAutoGridColumnWidthMode) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardPreferencesV2beta1DashboardDefaultsAutoGridColumnWidthMode"
-}
-
-// +k8s:openapi-gen=true
-type DashboardPreferencesV2beta1DashboardDefaultsAutoGridRowHeightMode string
-
-const (
-	DashboardPreferencesV2beta1DashboardDefaultsAutoGridRowHeightModeShort    DashboardPreferencesV2beta1DashboardDefaultsAutoGridRowHeightMode = "short"
-	DashboardPreferencesV2beta1DashboardDefaultsAutoGridRowHeightModeStandard DashboardPreferencesV2beta1DashboardDefaultsAutoGridRowHeightMode = "standard"
-	DashboardPreferencesV2beta1DashboardDefaultsAutoGridRowHeightModeTall     DashboardPreferencesV2beta1DashboardDefaultsAutoGridRowHeightMode = "tall"
-	DashboardPreferencesV2beta1DashboardDefaultsAutoGridRowHeightModeCustom   DashboardPreferencesV2beta1DashboardDefaultsAutoGridRowHeightMode = "custom"
-)
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardPreferencesV2beta1DashboardDefaultsAutoGridRowHeightMode.
-func (DashboardPreferencesV2beta1DashboardDefaultsAutoGridRowHeightMode) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardPreferencesV2beta1DashboardDefaultsAutoGridRowHeightMode"
 }
 
 // +k8s:openapi-gen=true
@@ -371,77 +219,4 @@ const (
 // OpenAPIModelName returns the OpenAPI model name for DashboardPreferencesV2beta1PanelDefaultsTooltipSort.
 func (DashboardPreferencesV2beta1PanelDefaultsTooltipSort) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardPreferencesV2beta1PanelDefaultsTooltipSort"
-}
-
-// +k8s:openapi-gen=true
-type DashboardPreferencesV2beta1PanelDefaultsAxisAxisPlacement string
-
-const (
-	DashboardPreferencesV2beta1PanelDefaultsAxisAxisPlacementAuto   DashboardPreferencesV2beta1PanelDefaultsAxisAxisPlacement = "auto"
-	DashboardPreferencesV2beta1PanelDefaultsAxisAxisPlacementLeft   DashboardPreferencesV2beta1PanelDefaultsAxisAxisPlacement = "left"
-	DashboardPreferencesV2beta1PanelDefaultsAxisAxisPlacementRight  DashboardPreferencesV2beta1PanelDefaultsAxisAxisPlacement = "right"
-	DashboardPreferencesV2beta1PanelDefaultsAxisAxisPlacementHidden DashboardPreferencesV2beta1PanelDefaultsAxisAxisPlacement = "hidden"
-)
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardPreferencesV2beta1PanelDefaultsAxisAxisPlacement.
-func (DashboardPreferencesV2beta1PanelDefaultsAxisAxisPlacement) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardPreferencesV2beta1PanelDefaultsAxisAxisPlacement"
-}
-
-// +k8s:openapi-gen=true
-type DashboardPreferencesV2beta1PanelDefaultsAxisScale string
-
-const (
-	DashboardPreferencesV2beta1PanelDefaultsAxisScaleLinear DashboardPreferencesV2beta1PanelDefaultsAxisScale = "linear"
-	DashboardPreferencesV2beta1PanelDefaultsAxisScaleLog2   DashboardPreferencesV2beta1PanelDefaultsAxisScale = "log2"
-	DashboardPreferencesV2beta1PanelDefaultsAxisScaleLog10  DashboardPreferencesV2beta1PanelDefaultsAxisScale = "log10"
-)
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardPreferencesV2beta1PanelDefaultsAxisScale.
-func (DashboardPreferencesV2beta1PanelDefaultsAxisScale) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardPreferencesV2beta1PanelDefaultsAxisScale"
-}
-
-// +k8s:openapi-gen=true
-type DashboardPreferencesV2beta1PanelDefaultsGraphLineInterpolation string
-
-const (
-	DashboardPreferencesV2beta1PanelDefaultsGraphLineInterpolationLinear     DashboardPreferencesV2beta1PanelDefaultsGraphLineInterpolation = "linear"
-	DashboardPreferencesV2beta1PanelDefaultsGraphLineInterpolationSmooth     DashboardPreferencesV2beta1PanelDefaultsGraphLineInterpolation = "smooth"
-	DashboardPreferencesV2beta1PanelDefaultsGraphLineInterpolationStepBefore DashboardPreferencesV2beta1PanelDefaultsGraphLineInterpolation = "stepBefore"
-	DashboardPreferencesV2beta1PanelDefaultsGraphLineInterpolationStepAfter  DashboardPreferencesV2beta1PanelDefaultsGraphLineInterpolation = "stepAfter"
-)
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardPreferencesV2beta1PanelDefaultsGraphLineInterpolation.
-func (DashboardPreferencesV2beta1PanelDefaultsGraphLineInterpolation) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardPreferencesV2beta1PanelDefaultsGraphLineInterpolation"
-}
-
-// +k8s:openapi-gen=true
-type DashboardPreferencesV2beta1PanelDefaultsGraphGradientMode string
-
-const (
-	DashboardPreferencesV2beta1PanelDefaultsGraphGradientModeNone    DashboardPreferencesV2beta1PanelDefaultsGraphGradientMode = "none"
-	DashboardPreferencesV2beta1PanelDefaultsGraphGradientModeOpacity DashboardPreferencesV2beta1PanelDefaultsGraphGradientMode = "opacity"
-	DashboardPreferencesV2beta1PanelDefaultsGraphGradientModeHue     DashboardPreferencesV2beta1PanelDefaultsGraphGradientMode = "hue"
-	DashboardPreferencesV2beta1PanelDefaultsGraphGradientModeScheme  DashboardPreferencesV2beta1PanelDefaultsGraphGradientMode = "scheme"
-)
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardPreferencesV2beta1PanelDefaultsGraphGradientMode.
-func (DashboardPreferencesV2beta1PanelDefaultsGraphGradientMode) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardPreferencesV2beta1PanelDefaultsGraphGradientMode"
-}
-
-// +k8s:openapi-gen=true
-type DashboardPreferencesV2beta1PanelDefaultsGraphShowPoints string
-
-const (
-	DashboardPreferencesV2beta1PanelDefaultsGraphShowPointsAuto   DashboardPreferencesV2beta1PanelDefaultsGraphShowPoints = "auto"
-	DashboardPreferencesV2beta1PanelDefaultsGraphShowPointsAlways DashboardPreferencesV2beta1PanelDefaultsGraphShowPoints = "always"
-	DashboardPreferencesV2beta1PanelDefaultsGraphShowPointsNever  DashboardPreferencesV2beta1PanelDefaultsGraphShowPoints = "never"
-)
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardPreferencesV2beta1PanelDefaultsGraphShowPoints.
-func (DashboardPreferencesV2beta1PanelDefaultsGraphShowPoints) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardPreferencesV2beta1PanelDefaultsGraphShowPoints"
 }

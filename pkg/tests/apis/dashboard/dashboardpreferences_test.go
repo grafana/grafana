@@ -124,7 +124,7 @@ func TestIntegrationDashboardPreferencesV2Beta1(t *testing.T) {
 	})
 
 	t.Run("PATCH validates the spec of an existing org tier", func(t *testing.T) {
-		_, err := admin.Resource.Patch(ctx, "namespace", types.MergePatchType, dashboardPreferencesPatch(t, `{"spec":{"dashboard":{"fiscalYearStartMonth":12}}}`), metav1.PatchOptions{})
+		_, err := admin.Resource.Patch(ctx, "namespace", types.MergePatchType, dashboardPreferencesPatch(t, `{"spec":{"dashboard":{"cursorSync":"Bogus"}}}`), metav1.PatchOptions{})
 		require.True(t, apierrors.IsInvalid(err), "expected Invalid, got %v", err)
 	})
 
@@ -169,7 +169,7 @@ func TestIntegrationDashboardPreferencesV2Beta1(t *testing.T) {
 
 	t.Run("invalid spec", func(t *testing.T) {
 		_, err := admin.Resource.Update(ctx, buildDashboardPreferencesObject(t, "namespace", map[string]any{
-			"dashboard": map[string]any{"fiscalYearStartMonth": int64(12)},
+			"dashboard": map[string]any{"cursorSync": "Bogus"},
 		}), metav1.UpdateOptions{})
 		require.True(t, apierrors.IsInvalid(err), "expected Invalid, got %v", err)
 	})
@@ -200,19 +200,19 @@ func TestIntegrationDashboardPreferencesV2Beta1(t *testing.T) {
 	t.Run("reset", func(t *testing.T) {
 		_, err := admin.Resource.Update(ctx, buildDashboardPreferencesObject(t, "namespace", map[string]any{
 			"dashboard": map[string]any{"preload": true},
-			"reset":     []any{"dashboard.nowDelay"},
+			"reset":     []any{"dashboard.cursorSync"},
 		}), metav1.UpdateOptions{})
 		require.NoError(t, err)
 		got, err := admin.Resource.Get(ctx, "namespace", metav1.GetOptions{})
 		require.NoError(t, err)
 		reset, _, err := unstructured.NestedStringSlice(got.Object, "spec", "reset")
 		require.NoError(t, err)
-		require.Equal(t, []string{"dashboard.nowDelay"}, reset)
+		require.Equal(t, []string{"dashboard.cursorSync"}, reset)
 
 		// A merge-patch keeps the stored list, so setting the field alone would leave it both set and reset.
-		_, err = admin.Resource.Patch(ctx, "namespace", types.MergePatchType, dashboardPreferencesPatch(t, `{"spec":{"dashboard":{"nowDelay":"1m"}}}`), metav1.PatchOptions{})
+		_, err = admin.Resource.Patch(ctx, "namespace", types.MergePatchType, dashboardPreferencesPatch(t, `{"spec":{"dashboard":{"cursorSync":"Crosshair"}}}`), metav1.PatchOptions{})
 		require.True(t, apierrors.IsInvalid(err), "expected Invalid, got %v", err)
-		_, err = admin.Resource.Patch(ctx, "namespace", types.MergePatchType, dashboardPreferencesPatch(t, `{"spec":{"dashboard":{"nowDelay":"1m"},"reset":null}}`), metav1.PatchOptions{})
+		_, err = admin.Resource.Patch(ctx, "namespace", types.MergePatchType, dashboardPreferencesPatch(t, `{"spec":{"dashboard":{"cursorSync":"Crosshair"},"reset":null}}`), metav1.PatchOptions{})
 		require.NoError(t, err)
 
 		_, err = admin.Resource.Patch(ctx, "namespace", types.MergePatchType, dashboardPreferencesPatch(t, `{"spec":{"reset":["dashboard.preload","dashboard.preload"]}}`), metav1.PatchOptions{})
@@ -348,13 +348,13 @@ func TestIntegrationDashboardPreferencesV2Beta1Authz(t *testing.T) {
 		_, err := editor.Resource.Update(ctx, buildDashboardPreferencesObject(t, editorTier, preloadDashboardPreferencesSpec()), metav1.UpdateOptions{})
 		require.NoError(t, err, "owner PUT")
 
-		_, err = editor.Resource.Patch(ctx, editorTier, types.MergePatchType, dashboardPreferencesPatch(t, `{"spec":{"dashboard":{"hideTimepicker":true}}}`), metav1.PatchOptions{})
+		_, err = editor.Resource.Patch(ctx, editorTier, types.MergePatchType, dashboardPreferencesPatch(t, `{"spec":{"dashboard":{"cursorSync":"Tooltip"}}}`), metav1.PatchOptions{})
 		require.NoError(t, err, "owner PATCH")
 		got, err := editor.Resource.Get(ctx, editorTier, metav1.GetOptions{})
 		require.NoError(t, err, "owner GET")
-		hideTimepicker, _, err := unstructured.NestedBool(got.Object, "spec", "dashboard", "hideTimepicker")
+		cursorSync, _, err := unstructured.NestedString(got.Object, "spec", "dashboard", "cursorSync")
 		require.NoError(t, err)
-		require.True(t, hideTimepicker, "the owner's PATCH must be stored")
+		require.Equal(t, "Tooltip", cursorSync, "the owner's PATCH must be stored")
 		preload, _, err := unstructured.NestedBool(got.Object, "spec", "dashboard", "preload")
 		require.NoError(t, err)
 		require.True(t, preload, "a merge PATCH must keep what the PUT set")

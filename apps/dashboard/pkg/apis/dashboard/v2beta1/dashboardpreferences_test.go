@@ -14,14 +14,10 @@ func TestNewDashboardPreferencesSpecHasNoDefaults(t *testing.T) {
 		NewDashboardPreferencesSpec(),
 		NewDashboardPreferences().Spec,
 		NewDashboardPreferencesDashboardDefaults(),
-		NewDashboardPreferencesV2beta1DashboardDefaultsAutoGrid(),
 		NewDashboardPreferencesPanelDefaults(),
 		NewDashboardPreferencesV2beta1PanelDefaultsLegend(),
 		NewDashboardPreferencesV2beta1PanelDefaultsTooltip(),
-		NewDashboardPreferencesV2beta1PanelDefaultsAxis(),
-		NewDashboardPreferencesV2beta1PanelDefaultsGraph(),
 		NewDashboardPreferencesV2beta1PanelDefaultsField(),
-		NewDashboardPreferencesV2beta1PanelDefaultsFrame(),
 	} {
 		b, err := json.Marshal(v)
 		require.NoError(t, err)

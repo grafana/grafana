@@ -88,12 +88,12 @@ func TestIntegrationDashboardPreferencesMerged(t *testing.T) {
 		spec map[string]any
 	}{
 		{"namespace", map[string]any{"dashboard": map[string]any{
-			"preload": false, "autoRefresh": "1m", "nowDelay": "1m", "timeRange": map[string]any{"from": "now-6h", "to": "now"},
+			"preload": false, "autoRefresh": "1m", "timeRange": map[string]any{"from": "now-6h", "to": "now"},
 		}}},
-		{gTier, map[string]any{"dashboard": map[string]any{"preload": true, "hideTimepicker": true, "cursorSync": "Tooltip"}}},
+		{gTier, map[string]any{"dashboard": map[string]any{"preload": true, "autoRefreshIntervals": []any{"1m", "5m"}, "cursorSync": "Tooltip"}}},
 		{pTier, map[string]any{"dashboard": map[string]any{"preload": false, "cursorSync": "Crosshair"}}},
 		{cTier, map[string]any{
-			"dashboard": map[string]any{"preload": true, "autoGrid": map[string]any{"columnWidth": int64(300)}},
+			"dashboard": map[string]any{"preload": true},
 			"reset":     []any{"dashboard.timeRange"},
 		}},
 	} {
@@ -102,7 +102,7 @@ func TestIntegrationDashboardPreferencesMerged(t *testing.T) {
 	}
 	_, err = editor.Resource.Update(ctx, buildDashboardPreferencesObject(t, editorTier, map[string]any{
 		"dashboard": map[string]any{"preload": false},
-		"reset":     []any{"dashboard.layout"},
+		"reset":     []any{"dashboard.autoRefresh"},
 	}), metav1.UpdateOptions{})
 	require.NoError(t, err, "editor PUT %s", editorTier)
 
@@ -111,20 +111,17 @@ func TestIntegrationDashboardPreferencesMerged(t *testing.T) {
 	t.Run("each field comes from its highest tier", func(t *testing.T) {
 		rsp := getMergedDashboardPreferences(t, helper, helper.Org1.Editor, inC)
 		require.Equal(t, http.StatusOK, rsp.Response.StatusCode, string(rsp.Body))
-		require.JSONEq(t, `{"dashboard":{"preload":false,"autoRefresh":"1m","nowDelay":"1m","hideTimepicker":true,"cursorSync":"Crosshair","autoGrid":{"columnWidth":300}}}`,
+		require.JSONEq(t, `{"dashboard":{"preload":false,"autoRefreshIntervals":["1m","5m"],"cursorSync":"Crosshair"}}`,
 			mergedDashboardPreferencesSpecJSON(t, rsp))
 		require.Equal(t, map[string]source{
-			"dashboard.preload":              {Tier: tierUser, Name: editorTier},
-			"dashboard.layout":               {Tier: tierUser, Name: editorTier, Reset: true},
-			"dashboard.autoGrid.columnWidth": {Tier: tierFolder, Name: cTier},
-			// The org's timeRange doesn't apply.
-			"dashboard.timeRange": {Tier: tierFolder, Name: cTier, Reset: true},
+			"dashboard.preload": {Tier: tierUser, Name: editorTier},
+			// Neither the org's autoRefresh nor its timeRange applies.
+			"dashboard.autoRefresh": {Tier: tierUser, Name: editorTier, Reset: true},
+			"dashboard.timeRange":   {Tier: tierFolder, Name: cTier, Reset: true},
 			// P is nearer than G.
 			"dashboard.cursorSync": {Tier: tierFolder, Name: pTier},
 			// G applies, but the editor can't read it.
-			"dashboard.hideTimepicker": {Tier: tierFolder},
-			"dashboard.autoRefresh":    {Tier: tierOrg, Name: "namespace"},
-			"dashboard.nowDelay":       {Tier: tierOrg, Name: "namespace"},
+			"dashboard.autoRefreshIntervals": {Tier: tierFolder},
 		}, rsp.Result.Sources)
 	})
 
@@ -138,11 +135,12 @@ func TestIntegrationDashboardPreferencesMerged(t *testing.T) {
 		require.JSONEq(t, mergedDashboardPreferencesSpecJSON(t, asAdmin), mergedDashboardPreferencesSpecJSON(t, asEditor))
 		editorSources, adminSources := asEditor.Result.Sources, asAdmin.Result.Sources
 		require.Equal(t, source{Tier: tierFolder, Name: cTier}, editorSources["dashboard.preload"])
-		require.NotContains(t, editorSources, "dashboard.layout")
-		require.Equal(t, source{Tier: tierFolder}, editorSources["dashboard.hideTimepicker"])
-		require.Equal(t, source{Tier: tierFolder, Name: gTier}, adminSources["dashboard.hideTimepicker"])
-		delete(editorSources, "dashboard.hideTimepicker")
-		delete(adminSources, "dashboard.hideTimepicker")
+		// The editor's own reset doesn't apply.
+		require.Equal(t, source{Tier: tierOrg, Name: "namespace"}, editorSources["dashboard.autoRefresh"])
+		require.Equal(t, source{Tier: tierFolder}, editorSources["dashboard.autoRefreshIntervals"])
+		require.Equal(t, source{Tier: tierFolder, Name: gTier}, adminSources["dashboard.autoRefreshIntervals"])
+		delete(editorSources, "dashboard.autoRefreshIntervals")
+		delete(adminSources, "dashboard.autoRefreshIntervals")
 		require.Equal(t, adminSources, editorSources)
 	})
 
@@ -153,13 +151,11 @@ func TestIntegrationDashboardPreferencesMerged(t *testing.T) {
 		require.Equal(t, http.StatusOK, general.Response.StatusCode, string(general.Body))
 
 		require.Equal(t, top.Result, general.Result)
-		require.JSONEq(t, `{"dashboard":{"preload":false,"autoRefresh":"1m","nowDelay":"1m","timeRange":{"from":"now-6h","to":"now"}}}`,
+		require.JSONEq(t, `{"dashboard":{"preload":false,"timeRange":{"from":"now-6h","to":"now"}}}`,
 			mergedDashboardPreferencesSpecJSON(t, top))
 		require.Equal(t, map[string]source{
 			"dashboard.preload":     {Tier: tierUser, Name: editorTier},
-			"dashboard.layout":      {Tier: tierUser, Name: editorTier, Reset: true},
-			"dashboard.autoRefresh": {Tier: tierOrg, Name: "namespace"},
-			"dashboard.nowDelay":    {Tier: tierOrg, Name: "namespace"},
+			"dashboard.autoRefresh": {Tier: tierUser, Name: editorTier, Reset: true},
 			"dashboard.timeRange":   {Tier: tierOrg, Name: "namespace"},
 		}, top.Result.Sources)
 	})

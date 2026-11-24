@@ -4,12 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"regexp"
 	"slices"
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -259,40 +257,7 @@ func (b *DashboardsAPIBuilder) validateDashboardPreferencesDashboard(ctx context
 		}
 	}
 
-	if d.NowDelay != nil && !isValidDashboardPreferencesNowDelay(*d.NowDelay) {
-		errs = append(errs, field.Invalid(path.Child("nowDelay"), *d.NowDelay, "must be one amount and unit such as 30s or 1m"))
-	}
-
-	// The layout editor's minimums; the schema only bounds these at 0.
-	if grid := d.AutoGrid; grid != nil {
-		gridPath := path.Child("autoGrid")
-		if grid.MaxColumnCount != nil && *grid.MaxColumnCount < 1 {
-			errs = append(errs, field.Invalid(gridPath.Child("maxColumnCount"), *grid.MaxColumnCount, "must be at least 1"))
-		}
-		if grid.ColumnWidth != nil && *grid.ColumnWidth < 50 {
-			errs = append(errs, field.Invalid(gridPath.Child("columnWidth"), *grid.ColumnWidth, "must be at least 50"))
-		}
-		if grid.RowHeight != nil && *grid.RowHeight < 50 {
-			errs = append(errs, field.Invalid(gridPath.Child("rowHeight"), *grid.RowHeight, "must be at least 50"))
-		}
-	}
-
 	return errs
-}
-
-// Dashboards apply nowDelay as the date math "now-" + nowDelay, so a value must be one amount and one unit
-// that the frontend's date math knows. Compounds such as 1m+1h could end the range after now.
-var dashboardPreferencesNowDelayFormat = regexp.MustCompile(`^[0-9]{1,5}[smhdwMQy]$`)
-
-func isValidDashboardPreferencesNowDelay(value string) bool {
-	if !dashboardPreferencesNowDelayFormat.MatchString(value) {
-		return false
-	}
-
-	now := time.Now()
-	end, err := gtime.TimeRange{From: "now", To: "now-" + value, Now: now}.ParseTo()
-	// 0m is valid date math, but it ends the range at now, so it delays nothing.
-	return err == nil && end.Before(now)
 }
 
 // Nothing manages dashboard preferences: the authorizer denies Git Sync writes, and the storage layer

@@ -1080,57 +1080,22 @@ export type ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
-export type DashboardPreferencesV2Beta1DashboardDefaultsAutoGrid = {
-  /** Pixels; used when columnWidthMode is custom. */
-  columnWidth?: number;
-  columnWidthMode?: string;
-  fillScreen?: boolean;
-  maxColumnCount?: number;
-  /** Pixels; used when rowHeightMode is custom. */
-  rowHeight?: number;
-  rowHeightMode?: string;
-};
 export type DashboardPreferencesV2Beta1DashboardDefaultsTimeRange = {
   from: string;
   to: string;
 };
 export type DashboardPreferencesDashboardDefaults = {
-  /** Applies only when the merged layout is AutoGridLayout. */
-  autoGrid?: DashboardPreferencesV2Beta1DashboardDefaultsAutoGrid;
   /** An empty string turns auto refresh off. */
   autoRefresh?: string;
   autoRefreshIntervals?: string[];
   /** Same values as the dashboard's cursorSync. */
   cursorSync?: string;
-  /** 0 is January. */
-  fiscalYearStartMonth?: number;
-  hideTimepicker?: boolean;
-  layout?: string;
-  nowDelay?: string;
   preload?: boolean;
   timeRange?: DashboardPreferencesV2Beta1DashboardDefaultsTimeRange;
-};
-export type DashboardPreferencesV2Beta1PanelDefaultsAxis = {
-  axisBorderShow?: boolean;
-  axisCenteredZero?: boolean;
-  axisGridShow?: boolean;
-  axisPlacement?: string;
-  scale?: string;
 };
 export type DashboardPreferencesV2Beta1PanelDefaultsField = {
   /** Number of decimal places, 0 to 15. */
   decimals?: number;
-};
-export type DashboardPreferencesV2Beta1PanelDefaultsFrame = {
-  transparent?: boolean;
-};
-export type DashboardPreferencesV2Beta1PanelDefaultsGraph = {
-  fillOpacity?: number;
-  gradientMode?: string;
-  lineInterpolation?: string;
-  lineWidth?: number;
-  pointSize?: number;
-  showPoints?: string;
 };
 export type DashboardPreferencesV2Beta1PanelDefaultsLegend = {
   displayMode?: string;
@@ -1143,11 +1108,7 @@ export type DashboardPreferencesV2Beta1PanelDefaultsTooltip = {
   sort?: string;
 };
 export type DashboardPreferencesPanelDefaults = {
-  axis?: DashboardPreferencesV2Beta1PanelDefaultsAxis;
   field?: DashboardPreferencesV2Beta1PanelDefaultsField;
-  frame?: DashboardPreferencesV2Beta1PanelDefaultsFrame;
-  /** Time series, trend and candlestick only. */
-  graph?: DashboardPreferencesV2Beta1PanelDefaultsGraph;
   legend?: DashboardPreferencesV2Beta1PanelDefaultsLegend;
   tooltip?: DashboardPreferencesV2Beta1PanelDefaultsTooltip;
 };
@@ -1204,7 +1165,7 @@ export type DashboardPreferencesMerged = {
   apiVersion?: string;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
-  /** Where each field came from, keyed by its path as in spec.reset, such as "dashboard.autoGrid.columnWidth". A field with no entry uses Grafana's built-in default. */
+  /** Where each field came from, keyed by its path as in spec.reset, such as "panels.legend.placement". A field with no entry uses Grafana's built-in default. */
   sources: {
     [key: string]: DashboardPreferencesMergedSource;
   };

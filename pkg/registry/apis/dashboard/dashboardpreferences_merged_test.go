@@ -95,13 +95,13 @@ func TestMergeDashboardPreferences(t *testing.T) {
 		{
 			name: "false and 0 are values",
 			tiers: []dashboardPreferencesMergeTier{
-				tier(dashboardPreferencesTierUser, "user-u1", `{"dashboard":{"preload":false,"fiscalYearStartMonth":0}}`),
-				tier(dashboardPreferencesTierOrg, dashv2beta1.DashboardPreferencesOrgName, `{"dashboard":{"preload":true,"fiscalYearStartMonth":3}}`),
+				tier(dashboardPreferencesTierUser, "user-u1", `{"dashboard":{"preload":false},"panels":{"field":{"decimals":0}}}`),
+				tier(dashboardPreferencesTierOrg, dashv2beta1.DashboardPreferencesOrgName, `{"dashboard":{"preload":true},"panels":{"field":{"decimals":3}}}`),
 			},
-			wantSpec: `{"dashboard":{"preload":false,"fiscalYearStartMonth":0}}`,
+			wantSpec: `{"dashboard":{"preload":false},"panels":{"field":{"decimals":0}}}`,
 			wantSources: map[string]dashv2beta1.DashboardPreferencesMergedSource{
-				"dashboard.preload":              fromUser,
-				"dashboard.fiscalYearStartMonth": fromUser,
+				"dashboard.preload":     fromUser,
+				"panels.field.decimals": fromUser,
 			},
 		},
 		{
@@ -116,16 +116,16 @@ func TestMergeDashboardPreferences(t *testing.T) {
 			},
 		},
 		{
-			name: "each autoGrid member is its own field",
+			name: "each legend member is its own field",
 			tiers: []dashboardPreferencesMergeTier{
-				tier(dashboardPreferencesTierFolder, "folder-c", `{"dashboard":{"autoGrid":{"columnWidth":300}}}`),
-				tier(dashboardPreferencesTierOrg, dashv2beta1.DashboardPreferencesOrgName, `{"dashboard":{"layout":"AutoGridLayout","autoGrid":{"columnWidth":200,"rowHeight":150}}}`),
+				tier(dashboardPreferencesTierFolder, "folder-c", `{"panels":{"legend":{"placement":"right"}}}`),
+				tier(dashboardPreferencesTierOrg, dashv2beta1.DashboardPreferencesOrgName, `{"dashboard":{"cursorSync":"Tooltip"},"panels":{"legend":{"placement":"bottom","displayMode":"table"}}}`),
 			},
-			wantSpec: `{"dashboard":{"layout":"AutoGridLayout","autoGrid":{"columnWidth":300,"rowHeight":150}}}`,
+			wantSpec: `{"dashboard":{"cursorSync":"Tooltip"},"panels":{"legend":{"placement":"right","displayMode":"table"}}}`,
 			wantSources: map[string]dashv2beta1.DashboardPreferencesMergedSource{
-				"dashboard.layout":               fromOrg,
-				"dashboard.autoGrid.columnWidth": fromFolder,
-				"dashboard.autoGrid.rowHeight":   fromOrg,
+				"dashboard.cursorSync":      fromOrg,
+				"panels.legend.placement":   fromFolder,
+				"panels.legend.displayMode": fromOrg,
 			},
 		},
 		{
@@ -143,12 +143,12 @@ func TestMergeDashboardPreferences(t *testing.T) {
 		{
 			name: "a reset leaves no empty object",
 			tiers: []dashboardPreferencesMergeTier{
-				tier(dashboardPreferencesTierUser, "user-u1", `{"reset":["dashboard.autoGrid.columnWidth"]}`),
-				tier(dashboardPreferencesTierOrg, dashv2beta1.DashboardPreferencesOrgName, `{"dashboard":{"autoGrid":{"columnWidth":200}}}`),
+				tier(dashboardPreferencesTierUser, "user-u1", `{"reset":["panels.legend.placement"]}`),
+				tier(dashboardPreferencesTierOrg, dashv2beta1.DashboardPreferencesOrgName, `{"panels":{"legend":{"placement":"right"}}}`),
 			},
 			wantSpec: `{}`,
 			wantSources: map[string]dashv2beta1.DashboardPreferencesMergedSource{
-				"dashboard.autoGrid.columnWidth": reset(fromUser),
+				"panels.legend.placement": reset(fromUser),
 			},
 		},
 		{
@@ -215,7 +215,7 @@ func TestMergeDashboardPreferences(t *testing.T) {
 }
 
 func TestMergeDashboardPreferencesEveryField(t *testing.T) {
-	const everyField = `{"dashboard":{"preload":true,"autoRefresh":"1m","autoRefreshIntervals":["30s","1m"],"timeRange":{"from":"now-6h","to":"now"},"fiscalYearStartMonth":3,"nowDelay":"1m","hideTimepicker":true,"cursorSync":"Crosshair","layout":"AutoGridLayout","autoGrid":{"maxColumnCount":4,"columnWidthMode":"custom","columnWidth":300,"rowHeightMode":"custom","rowHeight":200,"fillScreen":true}},"panels":{"legend":{"showLegend":true,"placement":"right","displayMode":"table"},"tooltip":{"mode":"multi","sort":"desc","hideZeros":true},"axis":{"axisPlacement":"left","axisGridShow":true,"axisBorderShow":true,"axisCenteredZero":true,"scale":"log2"},"graph":{"lineInterpolation":"smooth","lineWidth":2,"fillOpacity":10,"gradientMode":"opacity","showPoints":"never","pointSize":5},"field":{"decimals":2},"frame":{"transparent":true}}}`
+	const everyField = `{"dashboard":{"preload":true,"autoRefresh":"1m","autoRefreshIntervals":["30s","1m"],"timeRange":{"from":"now-6h","to":"now"},"cursorSync":"Crosshair"},"panels":{"legend":{"showLegend":true,"placement":"right","displayMode":"table"},"tooltip":{"mode":"multi","sort":"desc","hideZeros":true},"field":{"decimals":2}}}`
 	fixture := dashboardPreferencesSpecFromJSON(t, everyField)
 	paths := dashboardPreferencesSchemaResetPaths(t)
 
@@ -553,11 +553,11 @@ func TestDashboardPreferencesMerged(t *testing.T) {
 	get := []string{utils.VerbGet}
 	specs := map[string]string{
 		"namespace": `{"dashboard":{"autoRefresh":"1m","preload":false}}`,
-		"folder-g":  `{"dashboard":{"hideTimepicker":true,"preload":true}}`,
+		"folder-g":  `{"dashboard":{"autoRefreshIntervals":["1m","5m"],"preload":true}}`,
 		"folder-p":  `{"dashboard":{"cursorSync":"Crosshair"}}`,
 		"folder-c":  `{"dashboard":{"preload":true},"reset":["dashboard.timeRange"]}`,
 		"user-u1":   `{"dashboard":{"preload":false}}`,
-		"user-u2":   `{"dashboard":{"nowDelay":"5m"}}`,
+		"user-u2":   `{"dashboard":{"autoRefresh":"5m"}}`,
 	}
 	newStored := func() map[string]*dashv2beta1.DashboardPreferences {
 		stored := make(map[string]*dashv2beta1.DashboardPreferences, len(specs))
@@ -595,13 +595,13 @@ func TestDashboardPreferencesMerged(t *testing.T) {
 
 	withUserGets := []string{"user-u1", "folder-c", "folder-p", "folder-g", "namespace"}
 	withoutUserGets := []string{"folder-c", "folder-p", "folder-g", "namespace"}
-	const withoutUserSpec = `{"dashboard":{"preload":true,"autoRefresh":"1m","hideTimepicker":true,"cursorSync":"Crosshair"}}`
+	const withoutUserSpec = `{"dashboard":{"preload":true,"autoRefresh":"1m","autoRefreshIntervals":["1m","5m"],"cursorSync":"Crosshair"}}`
 	withoutUserSources := map[string]dashv2beta1.DashboardPreferencesMergedSource{
-		"dashboard.preload":        fromC,
-		"dashboard.timeRange":      resetByC,
-		"dashboard.cursorSync":     fromP,
-		"dashboard.hideTimepicker": fromG,
-		"dashboard.autoRefresh":    fromOrg,
+		"dashboard.preload":              fromC,
+		"dashboard.timeRange":            resetByC,
+		"dashboard.cursorSync":           fromP,
+		"dashboard.autoRefreshIntervals": fromG,
+		"dashboard.autoRefresh":          fromOrg,
 	}
 
 	tests := []struct {
@@ -625,13 +625,13 @@ func TestDashboardPreferencesMerged(t *testing.T) {
 			folder:      "c",
 			includeUser: true,
 			wantGets:    withUserGets,
-			wantSpec:    `{"dashboard":{"preload":false,"autoRefresh":"1m","hideTimepicker":true,"cursorSync":"Crosshair"}}`,
+			wantSpec:    `{"dashboard":{"preload":false,"autoRefresh":"1m","autoRefreshIntervals":["1m","5m"],"cursorSync":"Crosshair"}}`,
 			wantSources: map[string]dashv2beta1.DashboardPreferencesMergedSource{
-				"dashboard.preload":        fromUser,
-				"dashboard.timeRange":      resetByC,
-				"dashboard.cursorSync":     fromP,
-				"dashboard.hideTimepicker": fromG,
-				"dashboard.autoRefresh":    fromOrg,
+				"dashboard.preload":              fromUser,
+				"dashboard.timeRange":            resetByC,
+				"dashboard.cursorSync":           fromP,
+				"dashboard.autoRefreshIntervals": fromG,
+				"dashboard.autoRefresh":          fromOrg,
 			},
 			// The ancestry check left c out: the caller had to read it to get this far.
 			wantBatchCheck: []string{"p", "g"},
@@ -698,12 +698,12 @@ func TestDashboardPreferencesMerged(t *testing.T) {
 				p.chains["c"] = dashboardPreferencesFolderChain("g", "has space", "c")
 			},
 			wantGets: []string{"user-u1", "folder-c", "folder-g", "namespace"},
-			wantSpec: `{"dashboard":{"preload":false,"autoRefresh":"1m","hideTimepicker":true}}`,
+			wantSpec: `{"dashboard":{"preload":false,"autoRefresh":"1m","autoRefreshIntervals":["1m","5m"]}}`,
 			wantSources: map[string]dashv2beta1.DashboardPreferencesMergedSource{
-				"dashboard.preload":        fromUser,
-				"dashboard.timeRange":      resetByC,
-				"dashboard.hideTimepicker": fromG,
-				"dashboard.autoRefresh":    fromOrg,
+				"dashboard.preload":              fromUser,
+				"dashboard.timeRange":            resetByC,
+				"dashboard.autoRefreshIntervals": fromG,
+				"dashboard.autoRefresh":          fromOrg,
 			},
 			wantBatchCheck: []string{"g"},
 		},
@@ -728,12 +728,12 @@ func TestDashboardPreferencesMerged(t *testing.T) {
 				stored["folder-c"].DeletionTimestamp = &deleting
 			},
 			wantGets: withoutUserGets,
-			wantSpec: `{"dashboard":{"preload":true,"autoRefresh":"1m","hideTimepicker":true,"cursorSync":"Crosshair"}}`,
+			wantSpec: `{"dashboard":{"preload":true,"autoRefresh":"1m","autoRefreshIntervals":["1m","5m"],"cursorSync":"Crosshair"}}`,
 			wantSources: map[string]dashv2beta1.DashboardPreferencesMergedSource{
-				"dashboard.preload":        fromG,
-				"dashboard.cursorSync":     fromP,
-				"dashboard.hideTimepicker": fromG,
-				"dashboard.autoRefresh":    fromOrg,
+				"dashboard.preload":              fromG,
+				"dashboard.cursorSync":           fromP,
+				"dashboard.autoRefreshIntervals": fromG,
+				"dashboard.autoRefresh":          fromOrg,
 			},
 			wantBatchCheck: []string{"p", "g"},
 		},
@@ -936,7 +936,7 @@ func TestDashboardPreferencesMergedHandler(t *testing.T) {
 	// is a folder the caller can read that doesn't exist.
 	newStorage := func(t *testing.T, accessClient *dashboardPreferencesAccessClient) *dashboardPreferencesStorage {
 		g := newDashboardPreferences("folder-g")
-		g.Spec = dashboardPreferencesSpecFromJSON(t, `{"dashboard":{"hideTimepicker":true}}`)
+		g.Spec = dashboardPreferencesSpecFromJSON(t, `{"dashboard":{"autoRefreshIntervals":["1m","5m"]}}`)
 		store := newDashboardPreferencesListStore(t, map[string]*dashv2beta1.DashboardPreferences{"folder-g": g})
 		parents := &dashboardPreferencesFolderParents{chains: map[string][]folders.FolderInfo{"c": dashboardPreferencesFolderChain("g", "p", "c")}}
 		return newDashboardPreferencesStorage(store, dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind(), accessClient, nil, &staticHandlerProvider{handler: parents})
@@ -1022,7 +1022,7 @@ func TestDashboardPreferencesMergedHandler(t *testing.T) {
 				require.NoError(t, decoder.Decode(&merged))
 				require.Equal(t, dashv2beta1.DashboardPreferencesMergedKind, merged.Kind)
 				require.Equal(t, dashv2beta1.APIVERSION, merged.APIVersion)
-				require.Equal(t, dashv2beta1.DashboardPreferencesMergedSource{Tier: dashv2beta1.DashboardPreferencesMergedTierFolder}, merged.Sources["dashboard.hideTimepicker"])
+				require.Equal(t, dashv2beta1.DashboardPreferencesMergedSource{Tier: dashv2beta1.DashboardPreferencesMergedTierFolder}, merged.Sources["dashboard.autoRefreshIntervals"])
 				return
 			}
 			// A k8s Status, which is what a k8s client decodes from an error.

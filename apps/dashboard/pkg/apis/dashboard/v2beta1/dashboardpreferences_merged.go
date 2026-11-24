@@ -10,7 +10,7 @@ type DashboardPreferencesMerged struct {
 	metav1.TypeMeta `json:",inline"`
 	// Only the fields some tier set. A field that is absent uses Grafana's built-in default.
 	Spec DashboardPreferencesMergedSpec `json:"spec"`
-	// Where each field came from, keyed by its path as in spec.reset, such as "dashboard.autoGrid.columnWidth".
+	// Where each field came from, keyed by its path as in spec.reset, such as "panels.legend.placement".
 	// A field with no entry uses Grafana's built-in default.
 	Sources map[string]DashboardPreferencesMergedSource `json:"sources"`
 }

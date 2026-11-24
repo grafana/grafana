@@ -29,36 +29,14 @@ ResetPath: "dashboard.preload" |
 	"dashboard.autoRefresh" |
 	"dashboard.autoRefreshIntervals" |
 	"dashboard.timeRange" |
-	"dashboard.fiscalYearStartMonth" |
-	"dashboard.nowDelay" |
-	"dashboard.hideTimepicker" |
 	"dashboard.cursorSync" |
-	"dashboard.layout" |
-	"dashboard.autoGrid.maxColumnCount" |
-	"dashboard.autoGrid.columnWidthMode" |
-	"dashboard.autoGrid.columnWidth" |
-	"dashboard.autoGrid.rowHeightMode" |
-	"dashboard.autoGrid.rowHeight" |
-	"dashboard.autoGrid.fillScreen" |
 	"panels.legend.showLegend" |
 	"panels.legend.placement" |
 	"panels.legend.displayMode" |
 	"panels.tooltip.mode" |
 	"panels.tooltip.sort" |
 	"panels.tooltip.hideZeros" |
-	"panels.axis.axisPlacement" |
-	"panels.axis.axisGridShow" |
-	"panels.axis.axisBorderShow" |
-	"panels.axis.axisCenteredZero" |
-	"panels.axis.scale" |
-	"panels.graph.lineInterpolation" |
-	"panels.graph.lineWidth" |
-	"panels.graph.fillOpacity" |
-	"panels.graph.gradientMode" |
-	"panels.graph.showPoints" |
-	"panels.graph.pointSize" |
-	"panels.field.decimals" |
-	"panels.frame.transparent"
+	"panels.field.decimals"
 
 DashboardDefaults: {
 	preload?: bool
@@ -69,24 +47,8 @@ DashboardDefaults: {
 		from: string & strings.MinRunes(1) & strings.MaxRunes(64)
 		to:   string & strings.MinRunes(1) & strings.MaxRunes(64)
 	}
-	// 0 is January.
-	fiscalYearStartMonth?: int & >-1 & <=11
-	nowDelay?:             string & strings.MinRunes(1) & strings.MaxRunes(32)
-	hideTimepicker?:       bool
 	// Same values as the dashboard's cursorSync.
 	cursorSync?: "Off" | "Crosshair" | "Tooltip"
-	layout?:     "GridLayout" | "AutoGridLayout"
-	// Applies only when the merged layout is AutoGridLayout.
-	autoGrid?: {
-		maxColumnCount?:  int & >-1 & <=10
-		columnWidthMode?: "narrow" | "standard" | "wide" | "custom"
-		// Pixels; used when columnWidthMode is custom.
-		columnWidth?:   int & >-1 & <=2000
-		rowHeightMode?: "short" | "standard" | "tall" | "custom"
-		// Pixels; used when rowHeightMode is custom.
-		rowHeight?:  int & >-1 & <=2000
-		fillScreen?: bool
-	}
 }
 
 // Names and values follow Grafana's shared visualization options. Each value is written only into
@@ -102,27 +64,8 @@ PanelDefaults: {
 		sort?:      "none" | "asc" | "desc"
 		hideZeros?: bool
 	}
-	axis?: {
-		axisPlacement?:    "auto" | "left" | "right" | "hidden"
-		axisGridShow?:     bool
-		axisBorderShow?:   bool
-		axisCenteredZero?: bool
-		scale?:            "linear" | "log2" | "log10"
-	}
-	// Time series, trend and candlestick only.
-	graph?: {
-		lineInterpolation?: "linear" | "smooth" | "stepBefore" | "stepAfter"
-		lineWidth?:         int & >-1 & <=10
-		fillOpacity?:       int & >-1 & <=100
-		gradientMode?:      "none" | "opacity" | "hue" | "scheme"
-		showPoints?:        "auto" | "always" | "never"
-		pointSize?:         int & >-1 & <=40
-	}
 	field?: {
 		// Number of decimal places, 0 to 15.
 		decimals?: int & >-1 & <=15
-	}
-	frame?: {
-		transparent?: bool
 	}
 }

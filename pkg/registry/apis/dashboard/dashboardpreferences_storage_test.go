@@ -156,18 +156,15 @@ func TestDashboardPreferencesStorageUpdate(t *testing.T) {
 	// Dropping an emptied object is Mutate's job, so storage hands back what the patch made.
 	t.Run("a patch that nulls the last member of an object leaves the empty object", func(t *testing.T) {
 		existing := stored("namespace")
-		existing.Spec.Dashboard = &dashv2beta1.DashboardPreferencesDashboardDefaults{
-			AutoGrid: &dashv2beta1.DashboardPreferencesV2beta1DashboardDefaultsAutoGrid{FillScreen: new(true)},
-		}
+		existing.Spec.Dashboard = &dashv2beta1.DashboardPreferencesDashboardDefaults{Preload: new(true)}
 		fake := newFakeDashboardPreferencesStore(existing)
 
-		obj, created, err := newStore(fake).Update(ctx, "namespace", mergePatch("namespace", `{"spec":{"dashboard":{"autoGrid":{"fillScreen":null}}}}`), nil, nil, false, &metav1.UpdateOptions{})
+		obj, created, err := newStore(fake).Update(ctx, "namespace", mergePatch("namespace", `{"spec":{"dashboard":{"preload":null}}}`), nil, nil, false, &metav1.UpdateOptions{})
 		require.NoError(t, err)
 		require.False(t, created)
 
 		got := requireDashboardPreferences(t, obj)
-		require.NotNil(t, got.Spec.Dashboard)
-		require.Equal(t, &dashv2beta1.DashboardPreferencesV2beta1DashboardDefaultsAutoGrid{}, got.Spec.Dashboard.AutoGrid)
+		require.Equal(t, &dashv2beta1.DashboardPreferencesDashboardDefaults{}, got.Spec.Dashboard)
 	})
 
 	t.Run("losing a create race patches the object that won", func(t *testing.T) {
