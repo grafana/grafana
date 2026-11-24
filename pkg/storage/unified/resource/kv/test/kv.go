@@ -825,6 +825,47 @@ func runTestKVBatchGet(t *testing.T, kv kvpkg.KV, nsPrefix string) {
 		assert.Equal(t, keys, actualKeys, "BatchGet must return keys in request order")
 	})
 
+	t.Run("batch get with identical consecutive keys", func(t *testing.T) {
+		key := namespacedKey(nsPrefix, "consecutive-key")
+		saveKVHelper(t, kv, ctx, testSection, key, strings.NewReader("value"))
+
+		var kvs []kvpkg.KeyValue
+		var errs []error
+		for item, err := range kv.BatchGet(ctx, testSection, []string{key, key}) {
+			if err != nil {
+				errs = append(errs, err)
+				continue
+			}
+			kvs = append(kvs, item)
+		}
+
+		require.Len(t, errs, 1)
+		assert.Contains(t, errs[0].Error(), "identical consecutive keys")
+		assert.Empty(t, kvs)
+	})
+
+	t.Run("batch get with non-consecutive duplicate keys", func(t *testing.T) {
+		testData := map[string]string{
+			namespacedKey(nsPrefix, "dup-key1"): "value1",
+			namespacedKey(nsPrefix, "dup-key2"): "value2",
+		}
+		for key, value := range testData {
+			saveKVHelper(t, kv, ctx, testSection, key, strings.NewReader(value))
+		}
+
+		keys := namespacedKeys(nsPrefix, []string{"dup-key1", "dup-key2", "dup-key1"})
+		actualKeys := make([]string, 0, len(keys))
+		for item, err := range kv.BatchGet(ctx, testSection, keys) {
+			require.NoError(t, err)
+			value, err := io.ReadAll(item.Value)
+			require.NoError(t, err)
+			require.NoError(t, item.Value.Close())
+			assert.Equal(t, testData[item.Key], string(value), "key = %s", item.Key)
+			actualKeys = append(actualKeys, item.Key)
+		}
+		assert.Equal(t, keys, actualKeys)
+	})
+
 	t.Run("batch get with empty section", func(t *testing.T) {
 		var kvs []kvpkg.KeyValue
 		var errs []error

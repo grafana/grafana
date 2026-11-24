@@ -349,6 +349,10 @@ func (k *SqlKV) BatchGet(ctx context.Context, section string, keys []string) ite
 			yield(KeyValue{}, err)
 			return
 		}
+		if err := validateBatchGetKeys(keys); err != nil {
+			yield(KeyValue{}, err)
+			return
+		}
 
 		keyPaths := getKeyPaths(section, keys)
 		query, args := qb.buildBatchGetQuery(keyPaths)

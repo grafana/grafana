@@ -17,6 +17,7 @@ var ErrNotFound = errors.New("key not found")
 var ErrEmptyValue = errors.New("key must have a value")
 var ErrKeyAlreadyExists = errors.New("key already exists")
 var ErrBatchNotSupportedOnDataSection = errors.New("batch operations are not supported on the data section")
+var ErrIdenticalConsecutiveKeys = errors.New("batch get keys must not contain identical consecutive keys")
 
 // ErrRetryable marks a transient error that a caller iterating a KV stream
 // (Keys, Get, BatchGet) may retry by re-opening the call from a known
@@ -115,6 +116,15 @@ func (e *BatchError) Unwrap() error {
 	return e.Err
 }
 
+func validateBatchGetKeys(keys []string) error {
+	for i := 1; i < len(keys); i++ {
+		if keys[i] == keys[i-1] {
+			return fmt.Errorf("%w: %q at index %d", ErrIdenticalConsecutiveKeys, keys[i], i)
+		}
+	}
+	return nil
+}
+
 type KV interface {
 	// Keys returns all the keys in the store
 	Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error]
@@ -125,6 +135,10 @@ type KV interface {
 	// BatchGet retrieves multiple values for the given keys from the store.
 	// Non-existent entries will not appear in the result.
 	// The order of the keys is retained in the result.
+	// A key may be requested more than once, but never twice in a row: results
+	// are identified by their key, so two consecutive results for the same key
+	// can't be told apart from each other. Identical consecutive keys return
+	// ErrIdenticalConsecutiveKeys before any result is yielded.
 	BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[KeyValue, error]
 
 	// Save a new value - returns a WriteCloser to write the value to.
@@ -215,6 +229,11 @@ func (k *badgerKV) BatchGet(ctx context.Context, section string, keys []string) 
 	if section == "" {
 		return func(yield func(KeyValue, error) bool) {
 			yield(KeyValue{}, fmt.Errorf("section is required"))
+		}
+	}
+	if err := validateBatchGetKeys(keys); err != nil {
+		return func(yield func(KeyValue, error) bool) {
+			yield(KeyValue{}, err)
 		}
 	}
 
