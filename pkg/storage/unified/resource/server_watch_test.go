@@ -19,6 +19,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
+	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
 func initWatchServer(t *testing.T, backend StorageBackend) *server {
@@ -1539,6 +1540,109 @@ func TestWatchPreviousReadStopsWaitingForStalledInlineRetry(t *testing.T) {
 	}
 }
 
+func TestWatchPreviousReadRetriesWhenInitialInlineReadStalls(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		release := make(chan struct{})
+		defer close(release)
+		srv, backend := newPreviousReadTestServer(t, func(_ context.Context, attempt int64) {
+			if attempt == 1 {
+				<-release
+			}
+		})
+		const budget = 100 * time.Millisecond
+		srv.queueConfig.Timeout = budget
+
+		first := startPreviousRead(t.Context(), srv)
+		time.Sleep(budget / 2)
+		rsp, err := readPreviousForTest(t.Context(), srv)
+		require.NoError(t, err, "the follower must retry while the initial read is still blocked")
+		require.EqualValues(t, previousReadTestRV, rsp.ResourceVersion)
+		require.Equal(t, codes.DeadlineExceeded, status.Code(<-first))
+		require.EqualValues(t, 2, backend.reads.Load())
+	})
+}
+
+type previousReadQueueFunc func(func()) error
+
+func (q previousReadQueueFunc) Enqueue(_ context.Context, _ string, run func()) error {
+	return q(run)
+}
+
+func TestWatchPreviousReadFollowerRetriesQueueFull(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		srv, backend := newPreviousReadTestServer(t, nil)
+		srv.queueConfig.MinBackoff = time.Millisecond
+		srv.queueConfig.MaxBackoff = time.Millisecond
+		srv.queueConfig.MaxRetries = 1
+		release := make(chan struct{})
+		unblock := sync.OnceFunc(func() { close(release) })
+		defer unblock()
+		var admissions atomic.Int64
+		srv.queue = previousReadQueueFunc(func(run func()) error {
+			if admissions.Add(1) <= 2 {
+				<-release
+				return scheduler.ErrTenantQueueFull
+			}
+			run()
+			return nil
+		})
+
+		first := startPreviousRead(t.Context(), srv)
+		follower := startPreviousRead(t.Context(), srv)
+		unblock()
+		require.Equal(t, codes.ResourceExhausted, status.Code(<-first))
+		require.NoError(t, <-follower, "the follower still has its own admission budget")
+		require.EqualValues(t, 1, backend.reads.Load())
+	})
+}
+
+func TestWatchPreviousReadStopsWaitingForStalledAuthorization(t *testing.T) {
+	for _, caller := range []string{"follower", "cache hit"} {
+		t.Run(caller, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				readGate, authGate := make(chan struct{}), make(chan struct{})
+				releaseRead := sync.OnceFunc(func() { close(readGate) })
+				defer releaseRead()
+				defer close(authGate)
+				srv, backend := newPreviousReadTestServer(t, func(context.Context, int64) { <-readGate })
+				user := newWatchTestUser()
+				user.UserUID = "blocked"
+				authStarted := make(chan struct{}, 1)
+				srv.access = previousReadAccess{srv.access, func(_ context.Context, u authlib.AuthInfo, _ string) (authlib.CheckResponse, error) {
+					if u.GetUID() == user.GetUID() {
+						authStarted <- struct{}{}
+						<-authGate
+					}
+					return allow()
+				}}
+
+				first := startPreviousRead(t.Context(), srv)
+				if caller == "cache hit" {
+					releaseRead()
+					require.NoError(t, <-first)
+				}
+				done := make(chan error, 1)
+				go func() {
+					_, err := srv.readPrevious(t.Context(), user, bookmarkWrittenEvent(200).Key, previousReadTestRV)
+					done <- err
+				}()
+				synctest.Wait()
+				if caller == "follower" {
+					releaseRead()
+					require.NoError(t, <-first)
+				}
+				synctest.Wait()
+				require.Len(t, authStarted, 1)
+				time.Sleep(srv.queueConfig.Timeout)
+				synctest.Wait()
+				require.Len(t, done, 1, "the watch must return while authorization is still blocked")
+				require.Equal(t, codes.DeadlineExceeded, status.Code(<-done))
+				require.EqualValues(t, 1, backend.reads.Load())
+			})
+		})
+	}
+}
+
 type heldPreviousReadQueue chan func()
 
 func (q heldPreviousReadQueue) Enqueue(ctx context.Context, _ string, run func()) error {
@@ -1593,7 +1697,7 @@ func TestPreviousReadsCache(t *testing.T) {
 		p := newPreviousReads()
 		key := bookmarkWrittenEvent(200).Key
 		read := func(rv int64, next *BackendReadResponse) *BackendReadResponse {
-			result := p.read(t.Context(), key, rv, func(_ context.Context, lookup previousReadLookup) previousReadResult {
+			result := p.read(t.Context(), key, rv, time.Second, func(_ context.Context, lookup previousReadLookup) previousReadResult {
 				return previousReadResult{backend: lookup(func() *BackendReadResponse { return next })}
 			})
 			require.NoError(t, result.err)
