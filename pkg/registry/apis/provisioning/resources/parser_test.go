@@ -90,7 +90,7 @@ spec:
 		require.EqualError(t, err, "resource validation failed: name.metadata.name: Required value: missing name in resource")
 	})
 
-	t.Run("drops only the annotations whose values are not strings", func(t *testing.T) {
+	t.Run("filters file annotations before stamping Grafana metadata", func(t *testing.T) {
 		parsed, err := parser.Parse(t.Context(), &repository.FileInfo{
 			Path: "dashboard.yaml",
 			Data: []byte(`apiVersion: dashboard.grafana.app/v1
@@ -99,6 +99,10 @@ metadata:
   name: dash
   annotations:
     grafana.app/useCrossDashboardVariables: '{"global":"all"}'
+    grafana.app.thisShouldBeIgnored: "yes"
+    grafana.app/alsoThisOne: "ok"
+    grafana.app/invalid: true
+    grafana.app/managerId: "foreign-repo"
     example.com/enabled: true
     example.com/owner: team-a
 `),
@@ -109,6 +113,10 @@ metadata:
 		require.Equal(t, `{"global":"all"}`, annotations[AnnoKeyUseCrossDashboardVariables])
 		require.Equal(t, "team-a", annotations["example.com/owner"])
 		require.NotContains(t, annotations, "example.com/enabled")
+		require.NotContains(t, annotations, "grafana.app.thisShouldBeIgnored")
+		require.NotContains(t, annotations, "grafana.app/alsoThisOne")
+		require.NotContains(t, annotations, "grafana.app/invalid")
+		require.Equal(t, "repo", annotations[utils.AnnoKeyManagerIdentity])
 		require.Equal(t, string(utils.ManagerKindRepo), annotations[utils.AnnoKeyManagerKind], "Grafana still stamps its own annotations")
 	})
 

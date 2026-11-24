@@ -33,6 +33,12 @@ func TestOmitAnnotationFromFile(t *testing.T) {
 		"cloud.grafana.com/x",
 		"GRAFANA.APP/x",
 		"grafana.app/a/b",
+		"grafana.app.thisShouldBeIgnored",
+		"grafana.app/alsoThisOne",
+		"grafana.app",
+		"grafana.app.user.example/foo",
+		"notgrafana.app/x",
+		"example.com/grafana.app",
 		"grafana.app/usecrossdashboardvariables", // the allowlist is an exact match
 	}
 	for _, key := range omitted {
@@ -44,13 +50,9 @@ func TestOmitAnnotationFromFile(t *testing.T) {
 	user := []string{
 		AnnoKeyUseCrossDashboardVariables,
 		"team",
-		"grafana.app",
 		"/foo",
 		"",
 		"example.com/owner",
-		"grafana.app.user.example/foo",
-		"notgrafana.app/x",
-		"example.com/grafana.app",
 		"kubernetes.io/change-cause",
 		"k8s.io/x",
 	}
@@ -61,7 +63,7 @@ func TestOmitAnnotationFromFile(t *testing.T) {
 	}
 }
 
-func TestDropNonStringAnnotations(t *testing.T) {
+func TestFilterFileAnnotations(t *testing.T) {
 	obj := map[string]any{"metadata": map[string]any{"annotations": map[string]any{
 		"example.com/owner": "team-a",
 		"example.com/empty": nil,
@@ -72,12 +74,12 @@ func TestDropNonStringAnnotations(t *testing.T) {
 		"example.com/list":  []any{"a"},
 	}}}
 
-	dropped := dropNonStringAnnotations(obj)
+	dropped := filterFileAnnotations(obj)
 
 	require.Equal(t, []string{"example.com/count", "example.com/flag", "example.com/list", "example.com/map", "example.com/ratio"}, dropped)
 	require.Equal(t, map[string]any{"metadata": map[string]any{"annotations": map[string]any{
 		"example.com/owner": "team-a",
 		"example.com/empty": nil,
 	}}}, obj)
-	require.Nil(t, dropNonStringAnnotations(map[string]any{"metadata": map[string]any{"name": "dash"}}))
+	require.Nil(t, filterFileAnnotations(map[string]any{"metadata": map[string]any{"name": "dash"}}))
 }

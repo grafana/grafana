@@ -1964,6 +1964,8 @@ func TestDualReadWriter_UpdateResourceWritesOnlyUserAnnotations(t *testing.T) {
 			"annotations": map[string]any{
 				AnnoKeyUseCrossDashboardVariables: `{"global":"all","folder":"none"}`,
 				"example.com/owner":               "team-a",
+				"grafana.app.thisShouldBeIgnored": "yes",
+				"grafana.app/alsoThisOne":         "ok",
 			},
 		},
 		"spec": map[string]any{"title": "Dash renamed"},

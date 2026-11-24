@@ -74,7 +74,11 @@ func TestIntegrationGitFiles_AnnotationOnlyUpdate(t *testing.T) {
 		Name(repoName).
 		SubResource("files", path).
 		Param("message", message).
-		Body(dashboard(t, map[string]any{crossVarsKey: crossVars})).
+		Body(dashboard(t, map[string]any{
+			crossVarsKey:                      crossVars,
+			"grafana.app.thisShouldBeIgnored": "yes",
+			"grafana.app/alsoThisOne":         "ok",
+		})).
 		SetHeader("Content-Type", "application/json").
 		Do(t.Context())
 	require.NoError(t, updated.Error(), "an annotation-only update should be committed, not refused as nothing to commit")
@@ -92,7 +96,11 @@ func TestIntegrationGitFiles_AnnotationOnlyUpdate(t *testing.T) {
 	// A separate Git commit exercises incremental sync independently of the files API's dual write.
 	_, err = local.Git("merge", "--ff-only", "origin/main")
 	require.NoError(t, err)
-	require.NoError(t, local.UpdateFile(path, string(dashboard(t, map[string]any{crossVarsKey: fromGit}))))
+	require.NoError(t, local.UpdateFile(path, string(dashboard(t, map[string]any{
+		crossVarsKey:                      fromGit,
+		"grafana.app.thisShouldBeIgnored": "yes",
+		"grafana.app/alsoThisOne":         "ok",
+	}))))
 	gitCommitPush(t, local, "Change the variable selection in Git")
 	helper.SyncAndWaitIncremental(t, repoName)
 
@@ -100,6 +108,8 @@ func TestIntegrationGitFiles_AnnotationOnlyUpdate(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, fromGit, live.GetAnnotations()[crossVarsKey],
 		"incremental sync should apply the selection committed in Git")
+	require.NotContains(t, live.GetAnnotations(), "grafana.app.thisShouldBeIgnored")
+	require.NotContains(t, live.GetAnnotations(), "grafana.app/alsoThisOne")
 	require.Equal(t, repoName, live.GetAnnotations()[utils.AnnoKeyManagerIdentity])
 
 	read, err := helper.AdminREST.Get().

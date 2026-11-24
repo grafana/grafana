@@ -82,8 +82,7 @@ type fileChangeInfo struct {
 	PreviewURL           string
 	PreviewScreenshotURL string
 
-	// HasRemovedMetadata is true when the original file contains metadata fields
-	// (namespace, labels, or annotations omitted on write) that will be removed when parsing the resource.
+	// HasRemovedMetadata controls the notice about metadata stripped from the file.
 	HasRemovedMetadata bool
 }
 
@@ -293,15 +292,9 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 	info.Title = info.Parsed.Meta.FindTitle(obj.GetName())
 
 	if change.Action == repository.FileActionUpdated {
-		// Detect metadata stripped by resource parser.
-		// Read the file from the default branch (empty ref) and compare its
-		// metadata against the PR-branch parsed version.
-		baseFileInfo, baseErr := repo.Read(ctx, change.Path, "")
-		if baseErr == nil && baseFileInfo != nil {
-			baseObj, _, _, parseErr := resources.ParseFileResource(ctx, baseFileInfo)
-			if parseErr == nil && baseObj != nil {
-				info.HasRemovedMetadata = hasRemovedMetadata(change.Path, baseObj, info.Parsed.Obj)
-			}
+		base, readErr := repo.Read(ctx, change.Path, "")
+		if readErr == nil && base != nil {
+			info.HasRemovedMetadata = fileHasRemovedMetadata(ctx, base, fileInfo, obj)
 		}
 	}
 
@@ -476,23 +469,34 @@ func renderPath(grafanaBaseURL, urlPath string) string {
 	return path
 }
 
-// hasRemovedMetadata returns true if the original object (from the file)
-// contains metadata fields (namespace, labels, or annotations omitted on write) that
-// are absent or different in the parsed object (post-Parse).
-func hasRemovedMetadata(path string, original, parsed *unstructured.Unstructured) bool {
-	if original.GetNamespace() != "" && parsed.GetNamespace() != original.GetNamespace() {
+func fileHasRemovedMetadata(ctx context.Context, base, head *repository.FileInfo, parsed *unstructured.Unstructured) bool {
+	original, _, _, err := resources.ParseFileResource(ctx, base)
+	if err != nil {
+		return false
+	}
+	if resources.IsFolderMetadataFile(head.Path) {
+		return hasRemovedMetadata(head.Path, original, parsed)
+	}
+	// Compare repository contents before Parse drops or stamps annotations.
+	updated, _, _, err := resources.ParseFileResource(ctx, head)
+	return err == nil && hasRemovedMetadata(head.Path, original, updated)
+}
+
+func hasRemovedMetadata(path string, original, updated *unstructured.Unstructured) bool {
+	if original.GetNamespace() != "" && updated.GetNamespace() != original.GetNamespace() {
 		return true
 	}
-	if len(original.GetLabels()) > 0 && hasMissingKeys(original.GetLabels(), parsed.GetLabels()) {
+	if len(original.GetLabels()) > 0 && hasMissingKeys(original.GetLabels(), updated.GetLabels()) {
 		return true
 	}
-	originalAnnotations, parsedAnnotations := original.GetAnnotations(), parsed.GetAnnotations()
 	if resources.IsFolderMetadataFile(path) {
-		return hasMissingKeys(originalAnnotations, parsedAnnotations)
+		return hasMissingKeys(original.GetAnnotations(), updated.GetAnnotations())
 	}
 	// User annotations can be deleted intentionally in the PR. Report only keys Git Sync strips.
-	for k := range originalAnnotations {
-		if _, exists := parsedAnnotations[k]; !exists && resources.OmitAnnotationFromFile(k) {
+	originalKeys, _, _ := unstructured.NestedMap(original.Object, "metadata", "annotations")
+	updatedKeys, _, _ := unstructured.NestedMap(updated.Object, "metadata", "annotations")
+	for k := range originalKeys {
+		if _, exists := updatedKeys[k]; !exists && resources.OmitAnnotationFromFile(k) {
 			return true
 		}
 	}

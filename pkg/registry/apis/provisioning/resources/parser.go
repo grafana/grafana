@@ -237,7 +237,7 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	obj.SetNamespace(r.repo.Namespace)
 
 	if !IsFolderMetadataFile(info.Path) {
-		parsed.InvalidAnnotations = dropNonStringAnnotations(obj.Object)
+		parsed.InvalidAnnotations = filterFileAnnotations(obj.Object)
 	}
 	parsed.Meta.SetManagerProperties(utils.ManagerProperties{
 		Kind:     utils.ManagerKindRepo,

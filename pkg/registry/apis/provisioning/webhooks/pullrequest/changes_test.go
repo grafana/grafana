@@ -2099,15 +2099,20 @@ func TestRenderScreenshotFromGrafanaURL(t *testing.T) {
 func TestEvaluateFile_UserAnnotations(t *testing.T) {
 	const manifest = "apiVersion: dashboard.grafana.app/v1\nkind: Dashboard\nmetadata:\n  name: my-dash\n"
 	const selection = "  annotations:\n    grafana.app/useCrossDashboardVariables: '{\"global\":\"all\"}'\n"
+	const reserved = "    grafana.app/alsoThisOne: ok\n"
 	const mixedAnnotations = selection + "    example.com/enabled: true\n"
 	for _, tt := range []struct {
 		name          string
 		action        repository.FileAction
 		annotations   string
+		baseExtra     string
+		wantRemoved   bool
 		wantWarning   bool
 		renderFailure bool
 	}{
 		{name: "screenshot fails after dropping an annotation", action: repository.FileActionCreated, annotations: mixedAnnotations, wantWarning: true, renderFailure: true},
+		{name: "ignored key still present in Git", action: repository.FileActionUpdated, annotations: mixedAnnotations + reserved, baseExtra: reserved, wantWarning: true},
+		{name: "ignored key removed from Git", action: repository.FileActionUpdated, annotations: selection, baseExtra: reserved, wantRemoved: true},
 		{name: "intentional deletion", action: repository.FileActionUpdated},
 		{name: "valid selection", action: repository.FileActionCreated, annotations: selection},
 		{name: "selection retained alongside an unquoted boolean", action: repository.FileActionUpdated, annotations: mixedAnnotations, wantWarning: true},
@@ -2118,7 +2123,7 @@ func TestEvaluateFile_UserAnnotations(t *testing.T) {
 			head := &repository.FileInfo{Path: change.Path, Ref: change.Ref, Data: []byte(manifest + tt.annotations)}
 			reader := repository.NewMockReader(t)
 			if tt.action == repository.FileActionUpdated {
-				base := &repository.FileInfo{Path: change.Path, Data: []byte(manifest + selection)}
+				base := &repository.FileInfo{Path: change.Path, Data: []byte(manifest + selection + tt.baseExtra)}
 				reader.EXPECT().Read(mock.Anything, change.Path, "").Return(base, nil)
 			}
 			reader.EXPECT().Read(mock.Anything, change.Path, change.Ref).Return(head, nil)
@@ -2127,6 +2132,7 @@ func TestEvaluateFile_UserAnnotations(t *testing.T) {
 			// it loads the PR file.
 			obj, gvk, _, err := resources.ParseFileResource(t.Context(), head)
 			require.NoError(t, err)
+			unstructured.RemoveNestedField(obj.Object, "metadata", "annotations", "grafana.app/alsoThisOne")
 			var invalid []string
 			if tt.wantWarning {
 				unstructured.RemoveNestedField(obj.Object, "metadata", "annotations", "example.com/enabled")
@@ -2149,7 +2155,7 @@ func TestEvaluateFile_UserAnnotations(t *testing.T) {
 			}
 			info := eval.evaluateFile(t.Context(), reader, "http://host", "", 0, change, provisioning.PullRequestJobOptions{}, parser, tt.renderFailure)
 			require.NotEmpty(t, info.PreviewURL, "the preview link is kept either way")
-			require.False(t, info.HasRemovedMetadata)
+			require.Equal(t, tt.wantRemoved, info.HasRemovedMetadata)
 			commenter := NewCommenter(false, URLProvider{}).(*commenter)
 			body, err := commenter.generateComment(t.Context(), changeInfo{Changes: []fileChangeInfo{info}})
 			require.NoError(t, err)
