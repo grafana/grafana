@@ -140,7 +140,7 @@ function FormContent({
   const ref = watch('ref') ?? '';
 
   const { onWriteSuccess, onBranchSuccess } = useProvisionedResourceDrawerHandlers(
-    findResourceKindInfo(kind) ?? {},
+    findResourceKindInfo(kind),
     redirectUrl,
     action
   );

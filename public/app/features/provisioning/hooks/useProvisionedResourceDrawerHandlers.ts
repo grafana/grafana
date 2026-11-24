@@ -40,7 +40,7 @@ export interface ProvisionedResourceDrawerHandlers {
  * `invalidateListTags` (if any) is dispatched so the committed change shows up there.
  */
 export function useProvisionedResourceDrawerHandlers(
-  kind: Pick<ResourceKindInfo, 'invalidateListTags'>,
+  kind: ResourceKindInfo | undefined,
   redirectUrl: string,
   action: ResourceBranchAction
 ): ProvisionedResourceDrawerHandlers {
@@ -48,7 +48,7 @@ export function useProvisionedResourceDrawerHandlers(
   const navigate = useNavigate();
 
   const invalidate = () => {
-    const invalidateAction = kind.invalidateListTags?.();
+    const invalidateAction = kind?.invalidateListTags?.();
     if (invalidateAction) {
       dispatch(invalidateAction);
     }

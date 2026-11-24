@@ -2,14 +2,13 @@ import { HttpResponse, http } from 'msw';
 
 import server from '@grafana/test-utils/server';
 import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
-import { addKinds, CORE_KINDS } from 'app/core/kinds/coreKinds';
+import { addKinds, findKind } from 'app/core/kinds/coreKinds';
 
 import { setupProvisioningMswServer } from '../mocks/server';
 
 import {
   type ResourceKindInfo,
   resourceKindInfos,
-  getAvailableResourceKinds,
   getMigratableKinds,
   isResourceKindAvailable,
   readImmediateParent,
@@ -96,20 +95,8 @@ describe('getRoute', () => {
   });
 });
 
-describe('getAvailableResourceKinds', () => {
-  it('falls back to all known kinds when availableResources is unset', () => {
-    expect(getAvailableResourceKinds(undefined)).toEqual([
-      resourceKindInfos.folder,
-      resourceKindInfos.dashboard,
-      resourceKindInfos.playlist,
-      resourceKindInfos.librarypanel,
-      resourceKindInfos.repository,
-      resourceKindInfos.connection,
-      resourceKindInfos.datasource,
-    ]);
-  });
-
-  it('only returns kinds present and not disabled', () => {
+describe('isResourceKindAvailable', () => {
+  it('only reports kinds present and not disabled', () => {
     const available: SupportedResource[] = [
       { group: 'dashboard.grafana.app', kind: 'Dashboard' },
       { group: 'folder.grafana.app', kind: 'Folder', disabled: true },
@@ -117,16 +104,13 @@ describe('getAvailableResourceKinds', () => {
       { group: 'playlist.grafana.app', kind: 'Playlist', disabled: true },
     ];
 
-    const result = getAvailableResourceKinds(available);
-
-    expect(result).toEqual([CORE_KINDS.dashboard]);
     expect(isResourceKindAvailable(resourceKindInfos.dashboard, available)).toBe(true);
     expect(isResourceKindAvailable(resourceKindInfos.folder, available)).toBe(false);
     expect(isResourceKindAvailable(resourceKindInfos.playlist, available)).toBe(false);
   });
 
-  it('returns no kinds when none are declared', () => {
-    expect(getAvailableResourceKinds([])).toEqual([]);
+  it('reports no kind when none are declared', () => {
+    expect(isResourceKindAvailable(resourceKindInfos.dashboard, [])).toBe(false);
   });
 
   it('matches on group/kind, not object identity', () => {
@@ -333,7 +317,9 @@ describe('plugin kinds', () => {
   });
 
   it('reports a plugin kind as available once the backend enables it', () => {
-    expect(getAvailableResourceKinds([{ group, kind: 'Thing' }]).map((info) => info.kind)).toEqual(['Thing']);
+    const thing = findKind(group, 'Thing');
+
+    expect(thing && isResourceKindAvailable(thing, [{ group, kind: 'Thing' }])).toBe(true);
   });
 
   it('does not offer a plugin kind for migration', () => {

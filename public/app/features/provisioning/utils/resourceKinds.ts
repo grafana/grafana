@@ -5,7 +5,7 @@ import { type KindInfo } from '@grafana/runtime/unstable';
 import { playlistAPIv1 } from 'app/api/clients/playlist/v1';
 import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
-import { CORE_KINDS, coversGroup, getKinds } from 'app/core/kinds/coreKinds';
+import { CORE_KINDS, coversGroup } from 'app/core/kinds/coreKinds';
 import { getAPIGroupDiscoveryList } from 'app/features/apiserver/discovery';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
@@ -156,32 +156,12 @@ export function findResourceKindInfo(kind: Pick<KindInfo, 'group' | 'kind'>): Re
 }
 
 /**
- * Resolves which kinds the backend currently exposes for provisioning, gating on
- * the config-derived `availableResources` from the settings endpoint. Disabled
- * kinds (declared but not acted on) are excluded.
- *
- * When `availableResources` is unset (e.g. settings not loaded yet) we fall back
- * to the full registry as a best-effort default — this can include kinds the
- * backend currently ships disabled (e.g. playlists), so callers that must respect
- * the disabled state should wait for `availableResources` to be populated.
+ * Whether a given kind is currently enabled for provisioning per the settings endpoint's
+ * `availableResources`. Disabled kinds (declared but not acted on) are excluded.
  */
-export function getAvailableResourceKinds(availableResources?: SupportedResource[]): KindInfo[] {
-  if (!availableResources) {
-    return allKindInfos;
-  }
-  return getKinds().filter((info) =>
-    availableResources.some(
-      (r) => r.group !== undefined && coversGroup(info, r.group) && r.kind === info.kind && !r.disabled
-    )
-  );
-}
-
-/** Whether a given kind is currently enabled for provisioning per the settings endpoint. */
-export function isResourceKindAvailable(info: KindInfo, availableResources?: SupportedResource[]): boolean {
-  // Compare on group/kind rather than object identity so callers can pass an
-  // equivalent descriptor that isn't the exact registry instance.
-  return getAvailableResourceKinds(availableResources).some(
-    (available) => available.group === info.group && available.kind === info.kind
+export function isResourceKindAvailable(info: KindInfo, availableResources: SupportedResource[]): boolean {
+  return availableResources.some(
+    (r) => r.group !== undefined && coversGroup(info, r.group) && r.kind === info.kind && !r.disabled
   );
 }
 
