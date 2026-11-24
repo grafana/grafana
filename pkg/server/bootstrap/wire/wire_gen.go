@@ -616,8 +616,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	datasourcePermissionsService := ossaccesscontrol.ProvideDatasourcePermissionsService(cfg, featureToggles, sqlStore)
 	dataSourceRetriever := service6.ProvideDataSourceRetriever(sqlStore, featureToggles)
 	rpclientClient := datasource.ProvideNilDatasourceResourcePermissions()
-	permissionsDeleter := datasource.ProvidePermissionsDeleter(rpclientClient)
-	service13, err := service6.ProvideService(sqlStore, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, dataSourceRetriever, permissionsDeleter)
+	datasourcePermissionsClient := datasource.ProvideDatasourcePermissionsClient(rpclientClient)
+	service13, err := service6.ProvideService(sqlStore, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, dataSourceRetriever, datasourcePermissionsClient)
 	if err != nil {
 		return nil, err
 	}
@@ -1428,8 +1428,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	datasourcePermissionsService := ossaccesscontrol.ProvideDatasourcePermissionsService(cfg, featureToggles, sqlStore)
 	dataSourceRetriever := service6.ProvideDataSourceRetriever(sqlStore, featureToggles)
 	rpclientClient := datasource.ProvideNilDatasourceResourcePermissions()
-	permissionsDeleter := datasource.ProvidePermissionsDeleter(rpclientClient)
-	service13, err := service6.ProvideService(sqlStore, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, dataSourceRetriever, permissionsDeleter)
+	datasourcePermissionsClient := datasource.ProvideDatasourcePermissionsClient(rpclientClient)
+	service13, err := service6.ProvideService(sqlStore, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, dataSourceRetriever, datasourcePermissionsClient)
 	if err != nil {
 		return nil, err
 	}
@@ -2259,8 +2259,8 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	datasourcePermissionsService := ossaccesscontrol.ProvideDatasourcePermissionsService(cfg, featureToggles, sqlStore)
 	dataSourceRetriever := service6.ProvideDataSourceRetriever(sqlStore, featureToggles)
 	rpclientClient := datasource.ProvideNilDatasourceResourcePermissions()
-	permissionsDeleter := datasource.ProvidePermissionsDeleter(rpclientClient)
-	service13, err := service6.ProvideService(sqlStore, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, dataSourceRetriever, permissionsDeleter)
+	datasourcePermissionsClient := datasource.ProvideDatasourcePermissionsClient(rpclientClient)
+	service13, err := service6.ProvideService(sqlStore, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, dataSourceRetriever, datasourcePermissionsClient)
 	if err != nil {
 		return nil, err
 	}

@@ -240,6 +240,10 @@ var _ PluginDatasourceProvider = (*mockDatasources)(nil)
 type mockDatasources struct {
 }
 
+func (mockDatasources) PermissionsOnCreation(context.Context, string) (bool, error) {
+	return false, nil
+}
+
 // CreateDataSource implements PluginDatasourceProvider.
 func (m mockDatasources) CreateDataSource(ctx context.Context, ds *v0alpha1.DataSource) (*v0alpha1.DataSource, error) {
 	return nil, nil

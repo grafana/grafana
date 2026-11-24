@@ -2,9 +2,7 @@ package datasource
 
 import (
 	"context"
-	"fmt"
 
-	authlib "github.com/grafana/authlib/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	registry "k8s.io/apiserver/pkg/registry/generic/registry"
@@ -12,86 +10,90 @@ import (
 	"k8s.io/apiserver/pkg/util/dryrun"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission/rpclient"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
-type unifiedDatasourceStorage struct {
-	*registry.Store
-	resourcePermissions *rpclient.Client
+type datasourcePermissionStorage struct {
+	grafanarest.Storage
+	permissionClient      *rpclient.Client
+	permissionsOnCreation func(context.Context, string) (bool, error)
 }
 
-func (s *unifiedDatasourceStorage) Create(ctx context.Context, obj runtime.Object, validate rest.ValidateObjectFunc, opts *metav1.CreateOptions) (runtime.Object, error) {
-	if err := consumeDefaultPermissionsAnnotation(obj); err != nil {
-		return nil, err
+type datasourceRegistryStorage struct {
+	*registry.Store
+	hooks *datasourcePermissionStorage
+}
+
+func (s *datasourceRegistryStorage) Create(ctx context.Context, obj runtime.Object, validate rest.ValidateObjectFunc, opts *metav1.CreateOptions) (runtime.Object, error) {
+	return s.hooks.Create(ctx, obj, validate, opts)
+}
+
+func (s *datasourceRegistryStorage) Update(ctx context.Context, name string, info rest.UpdatedObjectInfo, validateCreate rest.ValidateObjectFunc, validateUpdate rest.ValidateObjectUpdateFunc, forceAllowCreate bool, opts *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	return s.hooks.Update(ctx, name, info, validateCreate, validateUpdate, forceAllowCreate, opts)
+}
+
+type datasourceStorageWithCollectionDelete struct {
+	grafanarest.Storage
+	rest.CollectionDeleter
+}
+
+func newDatasourceStorage(store grafanarest.Storage, permissions *rpclient.Client, policy func(context.Context, string) (bool, error)) grafanarest.Storage {
+	if registryStore, ok := store.(*registry.Store); ok {
+		return &datasourceRegistryStorage{
+			Store: registryStore,
+			hooks: &datasourcePermissionStorage{Storage: registryStore, permissionClient: permissions, permissionsOnCreation: policy},
+		}
 	}
-	created, err := s.Store.Create(ctx, obj, validate, opts)
-	if err != nil || dryrun.IsDryRun(opts.DryRun) || dualwrite.IsMirroredCreate(ctx) {
+	wrapped := &datasourcePermissionStorage{Storage: store, permissionClient: permissions, permissionsOnCreation: policy}
+	collectionDeleter, supportsCollectionDelete := store.(rest.CollectionDeleter)
+	if supportsCollectionDelete {
+		return &datasourceStorageWithCollectionDelete{Storage: wrapped, CollectionDeleter: collectionDeleter}
+	}
+	return wrapped
+}
+
+func (s *datasourcePermissionStorage) Create(ctx context.Context, obj runtime.Object, validate rest.ValidateObjectFunc, opts *metav1.CreateOptions) (runtime.Object, error) {
+	created, err := s.Storage.Create(ctx, obj, validate, opts)
+	if err != nil || s.permissionClient == nil || dryrun.IsDryRun(opts.DryRun) {
 		return created, err
 	}
-	if err := s.setDefaults(ctx, created); err != nil {
-		return nil, err
-	}
+	s.setDefaultsIfEnabled(ctx, created)
 	return created, nil
 }
 
-func (s *unifiedDatasourceStorage) Update(ctx context.Context, name string, info rest.UpdatedObjectInfo, validateCreate rest.ValidateObjectFunc, validateUpdate rest.ValidateObjectUpdateFunc, forceAllowCreate bool, opts *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	info = rest.WrapUpdatedObjectInfo(info, func(_ context.Context, obj, _ runtime.Object) (runtime.Object, error) {
-		return obj, consumeDefaultPermissionsAnnotation(obj)
-	})
-	obj, created, err := s.Store.Update(ctx, name, info, validateCreate, validateUpdate, forceAllowCreate, opts)
-	if err != nil || !created || dryrun.IsDryRun(opts.DryRun) || dualwrite.IsMirroredUpdate(ctx) {
+func (s *datasourcePermissionStorage) Update(ctx context.Context, name string, info rest.UpdatedObjectInfo, validateCreate rest.ValidateObjectFunc, validateUpdate rest.ValidateObjectUpdateFunc, forceAllowCreate bool, opts *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	obj, created, err := s.Storage.Update(ctx, name, info, validateCreate, validateUpdate, forceAllowCreate, opts)
+	if err != nil || !created || s.permissionClient == nil || dryrun.IsDryRun(opts.DryRun) {
 		return obj, created, err
 	}
-	if err := s.setDefaults(ctx, obj); err != nil {
-		return nil, false, err
-	}
+	s.setDefaultsIfEnabled(ctx, obj)
 	return obj, true, nil
 }
 
-// Some clients still omit grafana.app/grant-permissions, so the datasource store
-// grants defaults on create. Strip "default" so UniStore skips its own hook.
-//
-// Switch to UniStore's hook once clients request defaults explicitly, UniStore
-// owns datasource writes, and IAM serves datasource permissions in all Cloud clusters.
-func consumeDefaultPermissionsAnnotation(obj runtime.Object) error {
+func (s *datasourcePermissionStorage) setDefaultsIfEnabled(ctx context.Context, obj runtime.Object) {
 	meta, err := utils.MetaAccessor(obj)
 	if err != nil {
-		return err
+		logging.FromContext(ctx).Error("Failed to access datasource metadata for default permissions", "error", err)
+		return
 	}
-	if meta.GetAnnotation(utils.AnnoKeyGrantPermissions) == utils.AnnoGrantPermissionsDefault {
-		meta.SetAnnotation(utils.AnnoKeyGrantPermissions, "")
+	if s.permissionsOnCreation == nil {
+		logging.FromContext(ctx).Error("Missing datasource default permission policy")
+		return
 	}
-	return nil
-}
-
-func (s *unifiedDatasourceStorage) setDefaults(ctx context.Context, obj runtime.Object) error {
-	meta, err := utils.MetaAccessor(obj)
+	enabled, err := s.permissionsOnCreation(ctx, meta.GetNamespace())
 	if err != nil {
-		return err
+		logging.FromContext(ctx).Error("Failed to read datasource default permission policy", "namespace", meta.GetNamespace(), "error", err)
+		return
 	}
-	permissions := []iamv0.ResourcePermissionspecPermission{
-		{Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole, Name: "Viewer", Verb: "query"},
-		{Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole, Name: "Editor", Verb: "query"},
+	if !enabled {
+		return
 	}
-	if actor, ok := authlib.AuthInfoFrom(ctx); ok && actor.GetIdentifier() != "" {
-		var kind iamv0.ResourcePermissionSpecPermissionKind
-		if identityType := actor.GetIdentityType(); identityType == authlib.TypeUser {
-			kind = iamv0.ResourcePermissionSpecPermissionKindUser
-		} else if identityType == authlib.TypeServiceAccount {
-			kind = iamv0.ResourcePermissionSpecPermissionKindServiceAccount
-		}
-		if kind != "" {
-			permissions = append(permissions, iamv0.ResourcePermissionspecPermission{Kind: kind, Name: actor.GetIdentifier(), Verb: "admin"})
-		}
+	if err := s.permissionClient.SetDefault(ctx, meta.GetNamespace(), meta.GetName(), datasources.DefaultDatasourceResourcePermissions(ctx)); err != nil {
+		logging.FromContext(ctx).Error("Failed to set default datasource permissions", "namespace", meta.GetNamespace(), "uid", meta.GetName(), "error", err)
 	}
-	if err := s.resourcePermissions.SetDefault(ctx, meta.GetNamespace(), meta.GetName(), permissions); err != nil {
-		return fmt.Errorf("set default datasource permissions: %w", err)
-	}
-	return nil
 }
 
 // afterDelete runs only after unified storage deleted the datasource, including for each item of a
@@ -105,7 +107,7 @@ func (b *DataSourceAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteO
 
 	ctx, cancel := context.WithTimeout(context.Background(), datasources.PermissionsDeleteTimeout)
 	defer cancel()
-	if err := b.resourcePermissions.DeletePermissions(ctx, meta.GetNamespace(), meta.GetName()); err != nil {
+	if err := b.permissionClient.DeletePermissions(ctx, meta.GetNamespace(), meta.GetName()); err != nil {
 		logging.DefaultLogger.Error("Failed to delete datasource permissions", "error", err)
 	}
 }

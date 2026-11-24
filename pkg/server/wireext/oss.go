@@ -139,7 +139,7 @@ var BasicSet = wire.NewSet(
 	ossaccesscontrol.ProvideDatasourcePermissionsService,
 	wire.Bind(new(accesscontrol.DatasourcePermissionsService), new(*ossaccesscontrol.DatasourcePermissionsService)),
 	datasource.ProvideNilDatasourceResourcePermissions,
-	datasource.ProvidePermissionsDeleter,
+	datasource.ProvideDatasourcePermissionsClient,
 	pluginsintegration.WireExtensionSet,
 	publicdashboards.ProvideMiddleware,
 	publicdashboards.ProvideServiceWrapper,

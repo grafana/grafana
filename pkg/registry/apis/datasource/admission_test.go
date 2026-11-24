@@ -116,6 +116,52 @@ func TestDataSourceCreateAdmissionFlagDisabled(t *testing.T) {
 	require.NoError(t, admissionPlugin.Validate(context.Background(), attrs, nil))
 }
 
+func TestDataSourceAdmissionRemovesDefaultPermissionAnnotation(t *testing.T) {
+	featuremgmt.WithDisabledFlags(t, featuremgmt.FlagDatasourcesTeamHttpHeadersWriteGuard)
+	resourceInfo := datasourceV0.DataSourceResourceInfo.WithGroupAndShortName("prometheus.datasource.grafana.app", "prometheus")
+	permissions, _ := newTestDatasourceResourcePermissions()
+
+	for _, operation := range []admission.Operation{admission.Create, admission.Update} {
+		for _, tt := range []struct {
+			name             string
+			permissionClient bool
+			annotation       string
+			wantAnnotation   bool
+		}{
+			{name: "default with client", permissionClient: true, annotation: utils.AnnoGrantPermissionsDefault},
+			{name: "default without client", annotation: utils.AnnoGrantPermissionsDefault, wantAnnotation: true},
+			{name: "other annotation", permissionClient: true, annotation: "custom", wantAnnotation: true},
+		} {
+			t.Run(string(operation)+"/"+tt.name, func(t *testing.T) {
+				apiBuilder := &DataSourceAPIBuilder{datasourceResourceInfo: resourceInfo}
+				if tt.permissionClient {
+					apiBuilder.permissionClient = permissions
+				}
+				admissionPlugin := builder.NewAdmissionFromBuilders([]builder.APIGroupBuilder{apiBuilder})
+				ds := &datasourceV0.DataSource{ObjectMeta: metav1.ObjectMeta{
+					Name: "example", Namespace: "default", Annotations: map[string]string{
+						utils.AnnoKeyGrantPermissions: tt.annotation,
+						"other":                       "keep",
+					},
+				}}
+				var options runtime.Object = &metav1.CreateOptions{}
+				if operation == admission.Update {
+					options = &metav1.UpdateOptions{}
+				}
+				attrs := admission.NewAttributesRecord(ds, nil, resourceInfo.GroupVersionKind(), ds.Namespace, ds.Name,
+					resourceInfo.GroupVersionResource(), "", operation, options, false, nil)
+				require.NoError(t, admissionPlugin.Admit(context.Background(), attrs, nil))
+				if tt.wantAnnotation {
+					require.Equal(t, tt.annotation, ds.Annotations[utils.AnnoKeyGrantPermissions])
+				} else {
+					require.NotContains(t, ds.Annotations, utils.AnnoKeyGrantPermissions)
+				}
+				require.Equal(t, "keep", ds.Annotations["other"])
+			})
+		}
+	}
+}
+
 type countingCreateDatasourceProvider struct {
 	PluginDatasourceProvider
 	creates int

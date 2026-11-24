@@ -43,6 +43,10 @@ type resourceMockDatasourceProvider struct {
 	instanceSettingsErr error
 }
 
+func (*resourceMockDatasourceProvider) PermissionsOnCreation(context.Context, string) (bool, error) {
+	return false, nil
+}
+
 func (m *resourceMockDatasourceProvider) GetDataSource(ctx context.Context, uid string) (*datasourceV0.DataSource, error) {
 	return nil, nil
 }

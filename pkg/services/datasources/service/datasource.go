@@ -57,7 +57,7 @@ type Service struct {
 	db                 db.DB
 	pluginStore        pluginstore.Store
 	retriever          DataSourceRetriever
-	permissionsDeleter datasources.PermissionsDeleter
+	permissionsClient  datasources.DatasourcePermissionsClient
 
 	ptc proxyTransportCache
 }
@@ -78,7 +78,7 @@ func ProvideService(
 	features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, datasourcePermissionsService accesscontrol.DatasourcePermissionsService,
 	quotaService quota.Service, pluginStore pluginstore.Store,
 	retriever DataSourceRetriever,
-	permissionsDeleter datasources.PermissionsDeleter,
+	permissionsClient datasources.DatasourcePermissionsClient,
 ) (*Service, error) {
 	dslogger := log.New("datasources")
 	store := &SqlStore{db: db, logger: dslogger, features: features}
@@ -97,7 +97,7 @@ func ProvideService(
 		db:                 db,
 		pluginStore:        pluginStore,
 		retriever:          retriever,
-		permissionsDeleter: permissionsDeleter,
+		permissionsClient:  permissionsClient,
 	}
 
 	ac.RegisterScopeAttributeResolver(NewNameScopeResolver(store))
@@ -320,6 +320,9 @@ func (s *Service) asConnection(ds *datasources.DataSource) (*queryV0.DataSourceC
 }
 
 func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error) {
+	grantDefaults := !cmd.SkipDefaultPermissions && s.cfg.RBAC.PermissionsOnCreation("datasource")
+	useIAMDefaults := grantDefaults && s.permissionsClient != nil
+	useLegacyDefaults := grantDefaults && s.permissionsClient == nil
 	dataSources, err := s.SQLStore.GetDataSources(ctx, &datasources.GetDataSourcesQuery{OrgID: cmd.OrgID})
 	if err != nil {
 		return nil, err
@@ -404,7 +407,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 			return err
 		}
 
-		if s.cfg.RBAC.PermissionsOnCreation("datasource") {
+		if useLegacyDefaults {
 			// This belongs in Data source permissions, and we probably want
 			// to do this with a hook in the store and rollback on fail.
 			// We can't use events, because there's no way to communicate
@@ -426,6 +429,11 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 	})
 	if err != nil {
 		return nil, err
+	}
+	if useIAMDefaults {
+		if err := s.permissionsClient.SetDefault(ctx, request.GetNamespaceMapper(s.cfg)(dataSource.OrgID), dataSource.UID, datasources.DefaultDatasourceResourcePermissions(ctx)); err != nil {
+			s.logger.Error("Failed to set default datasource permissions", "namespace", request.GetNamespaceMapper(s.cfg)(dataSource.OrgID), "uid", dataSource.UID, "error", err)
+		}
 	}
 
 	return dataSource, nil
@@ -472,12 +480,12 @@ func (s *Service) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteD
 			return err
 		}
 
-		if s.permissionsDeleter != nil {
+		if s.permissionsClient != nil {
 			return nil
 		}
 		return s.permissionsService.DeleteResourcePermissions(ctx, cmd.OrgID, cmd.UID)
 	})
-	if err != nil || s.permissionsDeleter == nil {
+	if err != nil || s.permissionsClient == nil {
 		return err
 	}
 
@@ -485,7 +493,7 @@ func (s *Service) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteD
 	// cleanup must not be canceled with the request.
 	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), datasources.PermissionsDeleteTimeout)
 	defer cancel()
-	if err := s.permissionsDeleter.DeletePermissions(ctx, request.GetNamespaceMapper(s.cfg)(cmd.OrgID), cmd.UID); err != nil {
+	if err := s.permissionsClient.DeletePermissions(ctx, request.GetNamespaceMapper(s.cfg)(cmd.OrgID), cmd.UID); err != nil {
 		s.logger.Error("Failed to delete datasource permissions", "error", err)
 	}
 	return nil

@@ -22,6 +22,8 @@ import (
 // Authorization checks will happen within each function, and the user in ctx will
 // limit which namespace/tenant/org we are talking to
 type PluginDatasourceProvider interface {
+	// PermissionsOnCreation reports whether defaults should be created for this tenant.
+	PermissionsOnCreation(ctx context.Context, namespace string) (bool, error)
 	// Get a single data source (any type)
 	GetDataSource(ctx context.Context, uid string) (*datasourceV0.DataSource, error)
 
@@ -43,7 +45,7 @@ type PluginDatasourceProvider interface {
 }
 
 type ScopedPluginDatasourceProvider interface {
-	GetDatasourceProvider(pluginJson plugins.JSONData) PluginDatasourceProvider
+	GetDatasourceProvider(pluginJson plugins.JSONData, skipDefaultPermissions bool) PluginDatasourceProvider
 }
 
 // PluginContext requires adding system settings (feature flags, etc) to the datasource config
@@ -62,6 +64,7 @@ func ProvideDefaultPluginConfigs(
 		dsCache:         dsCache,
 		contextProvider: contextProvider,
 		converter:       converter.NewConverter(request.GetNamespaceMapper(cfg), "", "", nil),
+		cfg:             cfg,
 	}
 }
 
@@ -70,24 +73,29 @@ type cachingDatasourceProvider struct {
 	dsCache         datasources.CacheService
 	contextProvider *plugincontext.Provider
 	converter       *converter.Converter
+	cfg             *setting.Cfg
 }
 
-func (q *cachingDatasourceProvider) GetDatasourceProvider(pluginJson plugins.JSONData) PluginDatasourceProvider {
+func (q *cachingDatasourceProvider) GetDatasourceProvider(pluginJson plugins.JSONData, skipDefaultPermissions bool) PluginDatasourceProvider {
 	return &scopedDatasourceProvider{
-		plugin:          pluginJson,
-		dsService:       q.dsService,
-		dsCache:         q.dsCache,
-		contextProvider: q.contextProvider,
-		converter:       converter.NewConverter(q.converter.Mapper(), pluginJson.ID, pluginJson.ID, pluginJson.AliasIDs),
+		plugin:                 pluginJson,
+		dsService:              q.dsService,
+		dsCache:                q.dsCache,
+		contextProvider:        q.contextProvider,
+		converter:              converter.NewConverter(q.converter.Mapper(), pluginJson.ID, pluginJson.ID, pluginJson.AliasIDs),
+		cfg:                    q.cfg,
+		skipDefaultPermissions: skipDefaultPermissions,
 	}
 }
 
 type scopedDatasourceProvider struct {
-	plugin          plugins.JSONData
-	dsService       datasources.DataSourceService
-	dsCache         datasources.CacheService
-	contextProvider *plugincontext.Provider
-	converter       *converter.Converter
+	plugin                 plugins.JSONData
+	dsService              datasources.DataSourceService
+	dsCache                datasources.CacheService
+	contextProvider        *plugincontext.Provider
+	converter              *converter.Converter
+	cfg                    *setting.Cfg
+	skipDefaultPermissions bool
 }
 
 var (
@@ -100,6 +108,10 @@ func (q *scopedDatasourceProvider) GetInstanceSettings(ctx context.Context, uid 
 		return nil, fmt.Errorf("missing contextProvider")
 	}
 	return q.contextProvider.GetDataSourceInstanceSettings(ctx, uid)
+}
+
+func (q *scopedDatasourceProvider) PermissionsOnCreation(_ context.Context, _ string) (bool, error) {
+	return q.cfg.RBAC.PermissionsOnCreation("datasource"), nil
 }
 
 // CreateDataSource implements PluginDatasourceProvider.
@@ -117,6 +129,8 @@ func (q *scopedDatasourceProvider) CreateDataSource(ctx context.Context, ds *dat
 		return nil, err
 	}
 	cmd.UserID = userID
+	// The outer datasource storage wrapper grants defaults after the authoritative write.
+	cmd.SkipDefaultPermissions = q.skipDefaultPermissions
 	out, err := q.dsService.AddDataSource(ctx, cmd)
 	if err != nil {
 		return nil, err

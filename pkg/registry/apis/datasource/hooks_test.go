@@ -3,6 +3,7 @@ package datasource
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"testing/synctest"
 
@@ -38,19 +39,19 @@ func newTestDatasourceResourcePermissions() (*rpclient.Client, *dynamicfake.Fake
 	return rpclient.New(rpclient.Static(resource), datasourceV0.DataSourceResourceInfo.GroupResource()), dyn
 }
 
-func TestProvidePermissionsDeleter(t *testing.T) {
-	if deleter := ProvidePermissionsDeleter(ProvideNilDatasourceResourcePermissions()); deleter != nil {
-		t.Fatalf("expected nil permissions deleter in OSS wiring, got %T", deleter)
+func TestProvideDatasourcePermissionsClient(t *testing.T) {
+	if client := ProvideDatasourcePermissionsClient(ProvideNilDatasourceResourcePermissions()); client != nil {
+		t.Fatalf("expected nil permissions client in OSS wiring, got %T", client)
 	}
 	permissions, _ := newTestDatasourceResourcePermissions()
-	require.Same(t, permissions, ProvidePermissionsDeleter(permissions))
+	require.Same(t, permissions, ProvideDatasourcePermissionsClient(permissions))
 }
 
 func TestAfterDeleteDeletesPermissions(t *testing.T) {
 	const namespace, uid = "stacks-2", "ds-uid"
 	permissions, dyn := newTestDatasourceResourcePermissions()
 	require.NoError(t, permissions.SetDefault(t.Context(), namespace, uid, nil))
-	b := &DataSourceAPIBuilder{resourcePermissions: permissions}
+	b := &DataSourceAPIBuilder{permissionClient: permissions}
 
 	b.afterDelete(&datasourceV0.DataSource{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: uid}}, nil)
 
@@ -69,20 +70,18 @@ func TestDatasourceCreatePermissions(t *testing.T) {
 		wantLegacy    bool
 		wantUnified   bool
 		wantDefaults  bool
-		annotated     bool
 		dryRun        bool
 		permissionErr error
 	}{
-		{name: "legacy", mode: grafanarest.Mode0, wantLegacy: true},
-		{name: "mode 1", mode: grafanarest.Mode1, wantLegacy: true, wantUnified: true},
-		{name: "mode 2", mode: grafanarest.Mode2, wantLegacy: true, wantUnified: true},
-		{name: "mode 3", mode: grafanarest.Mode3, wantLegacy: true, wantUnified: true},
+		{name: "legacy", mode: grafanarest.Mode0, wantLegacy: true, wantDefaults: true},
+		{name: "mode 1", mode: grafanarest.Mode1, wantLegacy: true, wantUnified: true, wantDefaults: true},
+		{name: "mode 2", mode: grafanarest.Mode2, wantLegacy: true, wantUnified: true, wantDefaults: true},
+		{name: "mode 3", mode: grafanarest.Mode3, wantLegacy: true, wantUnified: true, wantDefaults: true},
 		{name: "mode 4 user", mode: grafanarest.Mode4, actor: authlib.TypeUser, creator: iamv0.ResourcePermissionSpecPermissionKindUser, wantUnified: true, wantDefaults: true},
 		{name: "mode 5 service account", mode: grafanarest.Mode5, actor: authlib.TypeServiceAccount, creator: iamv0.ResourcePermissionSpecPermissionKindServiceAccount, wantUnified: true, wantDefaults: true},
 		{name: "provisioner", mode: grafanarest.Mode5, actor: authlib.TypeAccessPolicy, wantUnified: true, wantDefaults: true},
-		{name: "explicit default annotation", mode: grafanarest.Mode5, annotated: true, wantUnified: true, wantDefaults: true},
 		{name: "dry run", mode: grafanarest.Mode5, actor: authlib.TypeUser, dryRun: true},
-		{name: "IAM error after persistence", mode: grafanarest.Mode5, wantUnified: true, wantDefaults: true, permissionErr: errors.New("IAM unavailable")},
+		{name: "IAM error after persistence", mode: grafanarest.Mode5, wantUnified: true, permissionErr: errors.New("IAM unavailable")},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
@@ -98,26 +97,22 @@ func TestDatasourceCreatePermissions(t *testing.T) {
 						return true, nil, tt.permissionErr
 					})
 				}
-				store, legacy, storage := newDatasourceLifecycleStorage(t, tt.mode, permissions)
+				store, legacy, storage, _ := newDatasourceLifecycleStorage(t, tt.mode, permissions)
 				obj := &datasourceV0.DataSource{ObjectMeta: metav1.ObjectMeta{Name: "test-ds", Namespace: namespace}}
-				if tt.annotated {
-					obj.Annotations = map[string]string{utils.AnnoKeyGrantPermissions: utils.AnnoGrantPermissionsDefault}
-				}
 				opts := &metav1.CreateOptions{}
 				if tt.dryRun {
 					opts.DryRun = []string{metav1.DryRunAll}
 				}
-				_, err := store.Create(ctx, obj, nil, opts)
-				if tt.permissionErr != nil {
-					require.ErrorIs(t, err, tt.permissionErr)
-				} else {
-					require.NoError(t, err)
-				}
+				created, err := store.Create(ctx, obj, nil, opts)
+				require.NoError(t, err)
+				require.Equal(t, "test-ds", created.(*datasourceV0.DataSource).Name)
 				synctest.Wait()
 				require.Equal(t, tt.wantLegacy, legacy.creates == 1)
 				require.Equal(t, tt.wantUnified, storage.saved != nil)
-				if tt.annotated {
-					require.NotContains(t, storage.saved.Annotations, utils.AnnoKeyGrantPermissions)
+				if tt.permissionErr != nil {
+					require.NotNil(t, storage.saved, "datasource creation must succeed when IAM is unavailable")
+					require.Len(t, dyn.Actions(), 2, "the default permission write was attempted")
+					return
 				}
 				if !tt.wantDefaults {
 					require.Empty(t, dyn.Actions())
@@ -136,6 +131,55 @@ func TestDatasourceCreatePermissions(t *testing.T) {
 	}
 }
 
+func TestDatasourceCreatePermissionsPolicyControlsIAMDefaults(t *testing.T) {
+	for _, tt := range []struct {
+		name        string
+		enabled     bool
+		policyError error
+	}{
+		{name: "disabled"},
+		{name: "policy error", policyError: errors.New("tenant settings unavailable")},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := request.WithNamespace(t.Context(), "stacks-2")
+			permissions, dyn := newTestDatasourceResourcePermissions()
+			store, provider, storage, _ := newDatasourceLifecycleStorage(t, grafanarest.Mode5, permissions)
+			provider.permissionsOnCreation = tt.enabled
+			provider.permissionsError = tt.policyError
+			obj := &datasourceV0.DataSource{ObjectMeta: metav1.ObjectMeta{Name: "test-ds", Namespace: "stacks-2"}}
+			created, err := store.Create(ctx, obj, nil, &metav1.CreateOptions{})
+			require.NoError(t, err)
+			require.Equal(t, obj.Name, created.(*datasourceV0.DataSource).Name)
+			require.NotNil(t, storage.saved)
+			require.Empty(t, dyn.Actions())
+		})
+	}
+}
+
+func TestDatasourceStoragePreservesOptionalInterfacesByMode(t *testing.T) {
+	permissions, _ := newTestDatasourceResourcePermissions()
+	for mode := grafanarest.Mode0; mode <= grafanarest.Mode5; mode++ {
+		t.Run(fmt.Sprintf("mode %d", mode), func(t *testing.T) {
+			wrapped, _, _, underlying := newDatasourceLifecycleStorage(t, mode, permissions)
+			_, underlyingCollectionDelete := underlying.(rest.CollectionDeleter)
+			_, wrappedCollectionDelete := wrapped.(rest.CollectionDeleter)
+			_, underlyingWatch := underlying.(rest.Watcher)
+			_, wrappedWatch := wrapped.(rest.Watcher)
+			_, underlyingVersionProvider := underlying.(rest.StorageVersionProvider)
+			_, wrappedVersionProvider := wrapped.(rest.StorageVersionProvider)
+			_, underlyingResetFields := underlying.(rest.ResetFieldsStrategy)
+			_, wrappedResetFields := wrapped.(rest.ResetFieldsStrategy)
+			_, underlyingCreateUpdateResetFields := underlying.(rest.CreateUpdateResetFieldsStrategy)
+			_, wrappedCreateUpdateResetFields := wrapped.(rest.CreateUpdateResetFieldsStrategy)
+			require.Equal(t, underlyingCollectionDelete, wrappedCollectionDelete, "collection delete support")
+			require.Equal(t, underlyingWatch, wrappedWatch, "watch support")
+			require.Equal(t, underlyingVersionProvider, wrappedVersionProvider, "storage version provider support")
+			require.Equal(t, underlyingResetFields, wrappedResetFields, "reset fields support")
+			require.Equal(t, underlyingCreateUpdateResetFields, wrappedCreateUpdateResetFields, "create/update reset fields support")
+		})
+	}
+}
+
 func TestDatasourceUpdateKeepsCustomPermissions(t *testing.T) {
 	for _, tt := range []struct {
 		name        string
@@ -149,7 +193,7 @@ func TestDatasourceUpdateKeepsCustomPermissions(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
 				ctx := request.WithNamespace(t.Context(), "stacks-2")
 				permissions, dyn := newTestDatasourceResourcePermissions()
-				store, _, storage := newDatasourceLifecycleStorage(t, tt.mode, permissions)
+				store, _, storage, _ := newDatasourceLifecycleStorage(t, tt.mode, permissions)
 				obj := &datasourceV0.DataSource{ObjectMeta: metav1.ObjectMeta{Name: "test-ds", Namespace: "stacks-2"}}
 				created, err := store.Create(ctx, obj, nil, &metav1.CreateOptions{})
 				require.NoError(t, err)
@@ -173,23 +217,53 @@ func TestDatasourceUpdateKeepsCustomPermissions(t *testing.T) {
 }
 
 func TestDatasourceCreateThroughUpdateSetsDefaults(t *testing.T) {
+	for _, tt := range []struct {
+		name          string
+		permissionErr error
+	}{
+		{name: "success"},
+		{name: "IAM failure preserves persisted result", permissionErr: errors.New("IAM unavailable")},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := request.WithNamespace(t.Context(), "stacks-2")
+			permissions, dyn := newTestDatasourceResourcePermissions()
+			if tt.permissionErr != nil {
+				gvr := iamv0.ResourcePermissionInfo.GroupVersionResource()
+				dyn.PrependReactor("create", gvr.Resource, func(clienttesting.Action) (bool, runtime.Object, error) {
+					return true, nil, tt.permissionErr
+				})
+			}
+			store, _, storage, _ := newDatasourceLifecycleStorage(t, grafanarest.Mode5, permissions)
+			obj := &datasourceV0.DataSource{ObjectMeta: metav1.ObjectMeta{Name: "test-ds", Namespace: "stacks-2"}}
+			result, wasCreated, err := store.Update(ctx, obj.Name, rest.DefaultUpdatedObjectInfo(obj), nil, nil, true, &metav1.UpdateOptions{})
+			require.NoError(t, err)
+			require.True(t, wasCreated)
+			require.Equal(t, "test-ds", result.(*datasourceV0.DataSource).Name)
+			require.NotNil(t, storage.saved)
+			require.Equal(t, "test-ds", storage.saved.Name)
+			if tt.permissionErr != nil {
+				require.Len(t, dyn.Actions(), 2, "the default permission write was attempted")
+				return
+			}
+			requireDatasourcePermissionCreate(t, dyn.Actions(), obj.Namespace, obj.Name, []any{
+				map[string]any{"kind": "BasicRole", "name": "Viewer", "verb": "query"},
+				map[string]any{"kind": "BasicRole", "name": "Editor", "verb": "query"},
+			})
+		})
+	}
+}
+
+func TestDatasourceCreateThroughUpdateDoesNotSetDefaultsWhenPersistenceFails(t *testing.T) {
 	ctx := request.WithNamespace(t.Context(), "stacks-2")
 	permissions, dyn := newTestDatasourceResourcePermissions()
-	store, _, storage := newDatasourceLifecycleStorage(t, grafanarest.Mode5, permissions)
+	store, _, storage, _ := newDatasourceLifecycleStorage(t, grafanarest.Mode5, permissions)
+	storage.createErr = errors.New("storage unavailable")
 	obj := &datasourceV0.DataSource{ObjectMeta: metav1.ObjectMeta{Name: "test-ds", Namespace: "stacks-2"}}
-	info := rest.DefaultUpdatedObjectInfo(obj, func(_ context.Context, obj, _ runtime.Object) (runtime.Object, error) {
-		obj.(*datasourceV0.DataSource).Annotations = map[string]string{utils.AnnoKeyGrantPermissions: utils.AnnoGrantPermissionsDefault}
-		return obj, nil
-	})
-	_, wasCreated, err := store.Update(ctx, obj.Name, info, nil, nil, true, &metav1.UpdateOptions{})
-	require.NoError(t, err)
-	require.True(t, wasCreated)
-	require.NotNil(t, storage.saved)
-	require.NotContains(t, storage.saved.Annotations, utils.AnnoKeyGrantPermissions)
-	requireDatasourcePermissionCreate(t, dyn.Actions(), obj.Namespace, obj.Name, []any{
-		map[string]any{"kind": "BasicRole", "name": "Viewer", "verb": "query"},
-		map[string]any{"kind": "BasicRole", "name": "Editor", "verb": "query"},
-	})
+
+	_, _, err := store.Update(ctx, obj.Name, rest.DefaultUpdatedObjectInfo(obj), nil, nil, true, &metav1.UpdateOptions{})
+	require.ErrorIs(t, err, storage.createErr)
+	require.Nil(t, storage.saved)
+	require.Empty(t, dyn.Actions(), "defaults must wait until the PUT-created datasource is persisted")
 }
 
 func requireDatasourcePermissionCreate(t *testing.T, actions []clienttesting.Action, namespace, uid string, grants []any) {
@@ -211,10 +285,10 @@ func requireDatasourcePermissionCreate(t *testing.T, actions []clienttesting.Act
 	}, obj.Object["spec"])
 }
 
-func newDatasourceLifecycleStorage(t *testing.T, mode grafanarest.DualWriterMode, permissions *rpclient.Client) (grafanarest.Storage, *lifecycleDatasourceProvider, *datasourceTestStorage) {
+func newDatasourceLifecycleStorage(t *testing.T, mode grafanarest.DualWriterMode, permissions *rpclient.Client) (grafanarest.Storage, *lifecycleDatasourceProvider, *datasourceTestStorage, grafanarest.Storage) {
 	t.Helper()
 	info := datasourceV0.DataSourceResourceInfo.WithGroupAndShortName("test.datasource.grafana.app", "test")
-	provider := &lifecycleDatasourceProvider{}
+	provider := &lifecycleDatasourceProvider{permissionsOnCreation: true}
 	legacy := &legacyStorage{datasources: provider, resourceInfo: &info}
 	scheme := runtime.NewScheme()
 	addKnownTypes(scheme, info.GroupVersion())
@@ -234,14 +308,20 @@ func newDatasourceLifecycleStorage(t *testing.T, mode grafanarest.DualWriterMode
 	}
 	cfg := dualwrite.NewFakeConfig()
 	cfg.UnifiedStorage[info.GroupResource().String()] = setting.UnifiedStorageConfig{DualWriterMode: mode}
-	store, err := dualwrite.ProvideServiceForTests(cfg).NewStorage(info.GroupResource(), legacy, &unifiedDatasourceStorage{Store: unified, resourcePermissions: permissions})
+	store, err := dualwrite.ProvideServiceForTests(cfg).NewStorage(info.GroupResource(), legacy, unified)
 	require.NoError(t, err)
-	return store, provider, storage
+	return newDatasourceStorage(store, permissions, provider.PermissionsOnCreation), provider, storage, store
 }
 
 type lifecycleDatasourceProvider struct {
 	countingUpdateDatasourceProvider
-	creates int
+	creates               int
+	permissionsOnCreation bool
+	permissionsError      error
+}
+
+func (p *lifecycleDatasourceProvider) PermissionsOnCreation(context.Context, string) (bool, error) {
+	return p.permissionsOnCreation || p.permissionsError != nil, p.permissionsError
 }
 
 func (p *lifecycleDatasourceProvider) CreateDataSource(_ context.Context, ds *datasourceV0.DataSource) (*datasourceV0.DataSource, error) {
@@ -252,12 +332,16 @@ func (p *lifecycleDatasourceProvider) CreateDataSource(_ context.Context, ds *da
 
 type datasourceTestStorage struct {
 	storage.Interface
-	saved *datasourceV0.DataSource
+	saved     *datasourceV0.DataSource
+	createErr error
 }
 
 func (*datasourceTestStorage) Versioner() storage.Versioner { return storage.APIObjectVersioner{} }
 
 func (s *datasourceTestStorage) Create(_ context.Context, _ string, obj, out runtime.Object, _ uint64) error {
+	if s.createErr != nil {
+		return s.createErr
+	}
 	ds := obj.(*datasourceV0.DataSource)
 	if ds.Annotations[utils.AnnoKeyGrantPermissions] == utils.AnnoGrantPermissionsDefault {
 		return errors.New("missing default permission creator")

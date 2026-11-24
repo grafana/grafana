@@ -6,16 +6,18 @@ import (
 	"time"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	queryV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 )
 
-// PermissionsDeleter removes a deleted datasource's permissions in place of the SQL permission cleanup.
+// DatasourcePermissionsClient manages datasource resource permissions in place of SQL permission writes.
 // It is an extension point that is nil by default. Callers should only call it once the deletion has
 // committed, and should log its error rather than fail the deletion.
-type PermissionsDeleter interface {
+type DatasourcePermissionsClient interface {
 	DeletePermissions(ctx context.Context, namespace, name string) error
+	SetDefault(ctx context.Context, namespace, name string, permissions []iamv0.ResourcePermissionspecPermission) error
 }
 
 // PermissionsDeleteTimeout is how long a datasource deletion waits for its permissions cleanup.

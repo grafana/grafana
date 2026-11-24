@@ -78,7 +78,7 @@ type DataSourceAPIBuilder struct {
 	// health), matching the legacy HTTP API behavior.
 	dataSourceRequestValidator validations.DataSourceRequestValidator
 
-	resourcePermissions *rpclient.Client
+	permissionClient *rpclient.Client
 
 	// Legacy or Unified -- depending on config
 	store grafanarest.Storage
@@ -88,7 +88,7 @@ func ProvideNilDatasourceResourcePermissions() *rpclient.Client {
 	return nil
 }
 
-func ProvidePermissionsDeleter(client *rpclient.Client) datasources.PermissionsDeleter {
+func ProvideDatasourcePermissionsClient(client *rpclient.Client) datasources.DatasourcePermissionsClient {
 	// A nil interface keeps SQL permission cleanup enabled.
 	if client == nil {
 		return nil
@@ -108,7 +108,7 @@ func RegisterAPIService(
 	pluginSources sources.Registry,
 	dataSourceRequestValidator validations.DataSourceRequestValidator,
 	proxyDependencies ProxyDependenciesProvider,
-	resourcePermissions *rpclient.Client,
+	permissionClient *rpclient.Client,
 ) (*DataSourceAPIBuilder, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagDatasourceUseNewCRUDAPIs) {
@@ -163,14 +163,14 @@ func RegisterAPIService(
 			groupName,
 			plugin.JSONData,
 			client,
-			datasources.GetDatasourceProvider(plugin.JSONData),
+			datasources.GetDatasourceProvider(plugin.JSONData, permissionClient != nil),
 			contextProvider,
 			accessClient,
 			decrypter,
 			flags,
 			dataSourceRequestValidator,
 			proxyDependencies,
-			resourcePermissions,
+			permissionClient,
 		)
 		if err != nil {
 			return nil, err
@@ -209,7 +209,7 @@ func NewDataSourceAPIBuilder(
 	cfg DataSourceAPIBuilderConfig,
 	dataSourceRequestValidator validations.DataSourceRequestValidator,
 	proxyDependencies ProxyDependenciesProvider,
-	resourcePermissions *rpclient.Client,
+	permissionClient *rpclient.Client,
 ) (*DataSourceAPIBuilder, error) {
 	registerSubresourceMetrics(prometheus.DefaultRegisterer)
 
@@ -224,7 +224,7 @@ func NewDataSourceAPIBuilder(
 		cfg:                        cfg,
 		dataSourceRequestValidator: dataSourceRequestValidator,
 		proxyDependencies:          proxyDependencies,
-		resourcePermissions:        resourcePermissions,
+		permissionClient:           permissionClient,
 	}
 	return builder, nil
 }
@@ -329,13 +329,15 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 			return err
 		}
 		var unifiedStore grafanarest.Storage = unified
-		if b.resourcePermissions != nil {
+		if b.permissionClient != nil {
 			unified.AfterDelete = b.afterDelete
-			unifiedStore = &unifiedDatasourceStorage{Store: unified, resourcePermissions: b.resourcePermissions}
 		}
 		b.store, err = opts.DualWriteBuilder(ds.GroupResource(), legacyStore, unifiedStore)
 		if err != nil {
 			return err
+		}
+		if b.permissionClient != nil {
+			b.store = newDatasourceStorage(b.store, b.permissionClient, b.datasources.PermissionsOnCreation)
 		}
 		storage[ds.StoragePath()] = b.store
 		storage[ds.StoragePath("access")] = &subAccessREST{
