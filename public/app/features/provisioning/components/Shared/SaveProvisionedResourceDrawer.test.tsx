@@ -411,6 +411,23 @@ describe('SaveProvisionedResourceDrawer', () => {
       expect(mockNavigate).toHaveBeenCalledWith('/playlists');
     });
 
+    it('offers going back to the list named by the kind', async () => {
+      respondWith({ path: 'playlists/test-playlist.json', resource: { upsert: {} } });
+
+      const { user } = render(
+        <SaveProvisionedResourceDrawer
+          resource={mockPlaylist}
+          title="Test Playlist"
+          action="update"
+          redirectUrl="/playlists"
+        />
+      );
+      await user.click(await screen.findByRole('button', { name: /^commit/i }));
+      await user.click(await screen.findByRole('button', { name: 'Back to all playlists' }));
+
+      expect(mockNavigate).toHaveBeenCalledWith('/playlists');
+    });
+
     it('stores the outcome for a reload until the drawer goes away', async () => {
       respondWith({ path: 'playlists/test-playlist.json', resource: { upsert: {} } });
 
