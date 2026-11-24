@@ -263,7 +263,8 @@ type StorageBackend interface {
 	// Return the revisionVersion for this event or error
 	WriteEvent(context.Context, WriteEvent) (int64, error)
 
-	// Read a resource from storage optionally at an explicit version
+	// ReadResource reads a resource, optionally at an explicit version.
+	// It returns a non-nil response with any error in the Error field.
 	ReadResource(context.Context, *resourcepb.ReadRequest) *BackendReadResponse
 
 	// BatchReadResource reads several resources, yielding one response per request
@@ -2567,6 +2568,9 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 					prevObj, err := s.readPrevious(ctx, user, event.Key, event.PreviousRV)
 					if errors.Is(err, errPreviousReadPanic) {
 						return status.Error(codes.Internal, "internal server error")
+					} else if errors.Is(err, errPreviousReadAuthTimeout) {
+						// Relist so selectors can recover the transition that needs Previous.
+						return expired()
 					} else if err != nil && AsErrorResult(err).Code == http.StatusNotFound {
 						// History pruning can remove the previous revision while the event is still replayable.
 						s.log.Debug("previous object no longer available", "key", event.Key, "resource_version", event.PreviousRV)
