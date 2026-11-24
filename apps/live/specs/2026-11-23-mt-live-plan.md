@@ -3,16 +3,18 @@
 Status: in progress, updated 2026-11-24. Supersedes the October explorations ("Multi-tenant Live
 service", "Datasource streams via Live Redis") where they disagree.
 
-| Step    | PR                               | State                                                               |
-| ------- | -------------------------------- | ------------------------------------------------------------------- |
-| 1       | grafana/grafana#138603           | Merged                                                              |
-| 2, 3, 5 | grafana/grafana#138604           | Merged                                                              |
-| —       | grafana/grafana#138607           | Merged; route-only versions in discovery                            |
-| 4       | grafana/grafana#138625           | Merged; frontend toggle and enabled discovery test                  |
-| 6a      | grafana/grafana-enterprise#15116 | Merged                                                              |
-| 6b      | grafana/grafana-enterprise#15175 | Draft; server, wiring, limit, metrics; needs the OSS workspace sync |
-| 6b      | grafana/grafana#138724           | Merged; dispatcher `Observer` and per-namespace connection limit    |
-| rest    | —                                | Not started                                                         |
+| Step    | PR                               | State                                                                  |
+| ------- | -------------------------------- | ---------------------------------------------------------------------- |
+| 1       | grafana/grafana#138603           | Merged                                                                 |
+| 2, 3, 5 | grafana/grafana#138604           | Merged                                                                 |
+| —       | grafana/grafana#138607           | Merged; route-only versions in discovery                               |
+| 4       | grafana/grafana#138625           | Merged; frontend toggle and enabled discovery test                     |
+| 6a      | grafana/grafana-enterprise#15116 | Merged                                                                 |
+| 6b      | grafana/grafana-enterprise#15175 | Merged; server, wiring, limit, metrics                                 |
+| 6b      | grafana/grafana#138724           | Merged; dispatcher `Observer` and per-namespace connection limit       |
+| 6b      | grafana/grafana#138728           | Merged; workspace sync for the enterprise imports                      |
+| 7, 8    | grafana/deployment_tools#830981  | Draft; service in `hosted-grafana`, gateway route, GOFF rules, toggles |
+| Push    | —                                | Postponed                                                              |
 
 ## Goal
 
@@ -35,6 +37,12 @@ The version has no kinds; `/ws` is its only route.
 
 The frontend uses the same path in both modes. Moving a stack between ST and MT is a gateway
 routing decision only.
+
+**Only HA stacks can be routed to MT.** The MT service and a stack's own pods share events through
+the Live Redis, and a stack only publishes to Redis when it runs the Redis Live engine, which hgapi
+turns on only for HA stacks. A stack that is not HA keeps every Live event in its one pod, so MT
+would connect but never receive a dashboard save or a stream frame. See
+[Stack prerequisites](#stack-prerequisites-for-mt-routing).
 
 ## Non-goals (first pass)
 
@@ -89,6 +97,17 @@ routing decision only.
    stacks. _Resolved in step 1 (`orgchannel.UserID`), used by ST and later MT._
 8. **Origin checks live in the handler.** The HG gateway doesn't check Origin on GET. ST checks it
    in the Live websocket handler; the MT handler must do the same against the stack URL.
+
+9. **The Redis Live engine runs only on HA stacks.** hgapi enables it through `haEnabled`: an HA
+   plan, `hosted_grafana.replicas` above 1, or `hosted_grafana.hpa_enabled`. A non-HA stack never
+   publishes to Redis. _A stack must be HA to be routed to MT; see Stack prerequisites._
+10. **A namespace can only read its own Vault paths.** The cluster Vault policy
+    (`terraform/modules/vault_cluster_auth/kube-policy.tpl`) lets a service account read
+    `common/*`, `common/<cluster>/*` and `<namespace>/<cluster>/*`, and the `lint-manifests`
+    conftest policy enforces the same rule. The Live Redis passwords are secrets in
+    `hosted-grafana`, so a service in another namespace cannot read them from Vault, in either the
+    global or the regional mount, and new entries on the global-mount allowlist are refused.
+    _Resolved: the MT service runs in `hosted-grafana`._
 
 Already fine:
 
@@ -258,37 +277,75 @@ frontend PR.
 
 ### Deployment (deployment_tools)
 
-- **Placement:** an mt-service alongside hosted Grafana, where the Live Redis credentials and
-  instance list are already available.
+- **Placement:** an app in the `hosted-grafana` MT services deployment (`mt-services/grafana-live`),
+  next to features, settings and annotation. The Live Redis instances and their password secrets
+  are in that namespace, and a namespace can only read its own Vault paths (finding 10), so the
+  service reads the secrets hgapi already uses, with no new Vault path or allowlist entry.
+  Datasource apiservers that need Live later should publish through the Live service, not hold
+  Redis credentials.
 - **Waves:** dev0, then dev1, then ops.
-- **Overrides:** graceful shutdown long enough to drain; HPA on open connections (min 2, with a
-  PDB); check Redis connection headroom (`replicas × (broker + presence pool)` per instance).
+- **Redis:** every Live Redis instance of the cluster as `--live.redis-instance`, paired by position
+  with `--live.redis-password-env`. The names and secret layout come from the same rule hgapi uses.
+- **Autoscaling:** HPA on open connections (`grafana_live_mt_connections`, 500 per replica in dev,
+  min 2), a PDB, and the graceful shutdown from the shared app library.
 - **Gateway:** `mt_direct_routes` for `/apis/live.grafana.app`; GOFF `hggateway.mt-routing-mode`
-  `direct` rule on `urlPath` targeted per stack; add the prefix to `hggateway.mt-authn-service`;
-  add `live.grafana.app` to the allowed audiences.
-- Scrape configs, CODEOWNERS and SLOs, the same way `grafana-query-caching` does.
+  `direct` rule on `urlPath` and slug, ahead of the router rules; the matching
+  `hggateway.mt-authn-service` rule; `live.grafana.app` is already an allowed audience in dev
+  auth-api.
+- **Toggles:** `live.runAPIServer` and `live.useAPIServerWebsocket` on for the same slugs through
+  GOFF, so the browser uses the new path and the stack's own pod can serve it again on rollback.
+- Scrape config and CODEOWNERS, the same way the other MT services do.
 
 ### Stack prerequisites for MT routing
 
-- `RedisLiveEngine` is enabled for the stack. Non-HA stacks don't use Redis, so MT would never see
-  their events.
+- **The stack is HA.** `RedisLiveEngine` is enabled only when hgapi's `haEnabled` is true: the plan
+  is in `ha.plans`, `hosted_grafana.replicas` is above 1, or `hosted_grafana.hpa_enabled` is on.
+  Check a stack with its pod log: `GrafanaLive initialization ha=true` (`ha=false` means no Redis
+  engine). To make a test stack HA, set `hosted_grafana.replicas` to 2 with
+  `POST /instances/{slug}/config` on gcom, and set it back to 1 to undo.
 - `live.keepHAPrefixInCloud` is off.
 - The ST image includes step 1.
 - The stack doesn't depend on `ds/` streaming panels, until the datasource-streams plan lands.
 
+### Redis capacity and non-HA stacks
+
+Making every stack publish to the Live Redis would remove the HA requirement, but the production
+instances have no room for it. From the production ops Prometheus on 2026-11-24 (one-hour averages):
+
+- Each Live Redis instance already uses about one CPU core (the ten largest clusters average 0.82
+  to 0.98 per instance). Redis runs commands on one thread unless I/O threads are configured, so
+  this is close to its limit. Memory and the 30,000 client limit are not the constraint.
+- A pod that is a Redis client costs about 5.4 connections, 11 commands per second and 1.8
+  millicores in prod-us-east-0, whether or not anyone has Live open.
+- prod-us-east-0 has 1,417 HA stacks (3,047 pods) and 1,692 non-HA stacks (1,692 pods) on 6
+  instances at 0.92 cores each. Adding the non-HA pods would raise the load by 56%, to 1.43 cores
+  per instance, so holding today's per-instance load would take 10 instances instead of 6.
+- Across the 27 clusters that host HA stacks there are 13,581 HA and 26,269 non-HA stacks on 47
+  instances. Adding every non-HA stack means about 131,000 more connections (+93%), about 2.8 times
+  the instances, and 20 of the 27 clusters would average past one core per instance.
+- Adding instances changes `StackID % len(nodes)` and moves most stacks to a different instance,
+  in hgapi and in the MT service together.
+
+The projection assumes a non-HA pod costs what an HA pod costs, and CPU is an average, so peaks
+are higher. A Redis engine for MT-routed stacks only, through a per-stack condition in hgapi
+(`RedisLiveEngine` is enabled by `haEnabled` alone today), would let a pilot of tens or hundreds of
+stacks run on the current instances: 1,000 one-pod stacks cost roughly 5,000 connections, 10,000
+commands per second and 1.5 to 1.8 cores of Redis CPU.
+
 ## Work breakdown
 
-| #     | Repo                        | Change                                                                                                                                                                                                                                                                                           | Depends on                      | Status           |
-| ----- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------- | ---------------- |
-| 1     | grafana                     | Centrifuge `UserID` = `orgchannel.UserID(user)` (`GetNamespace() + "/" + GetUID()`)                                                                                                                                                                                                              | none                            | Merged (#138603) |
-| 2+3   | grafana                     | ST (on-prem, dev mode) only: `rawroutes` and the ST mount; `/ws` raw route backed by `GrafanaLive`; manifest-documented `/ws` with 426 fallback (no kinds); `NewAppInstaller(websocket)` and `rawroutes.NewHandler` for MT; integration test `pkg/tests/apis/live` (runs with router middleware) | 1                               | Merged (#138604) |
-| 4     | grafana (frontend)          | `live.useAPIServerWebsocket` toggle for the `/apis/live.grafana.app/...` ws URL                                                                                                                                                                                                                  | 2+3                             | Merged (#138625) |
-| 5     | grafana                     | `apps/live/pkg/liveserver` (Redis engine setup, Origin check, `Dispatcher` with per-scope handlers) and `apps/live/pkg/features` (dashboard handler behind `DashboardAccess`, namespace fix); `GrafanaLive` wires its scopes into it                                                             | 1                               | Merged (#138604) |
-| 6a    | grafana-enterprise          | Register `live.grafana.app` in the standalone factory with a stub provider; collect, validate and mount raw routes after authn                                                                                                                                                                   | 2+3                             | Merged (#15116)  |
-| 6b    | grafana-enterprise          | MT live server: per-instance nodes, stack→node selection, origin, expiry, shutdown, limits, metrics                                                                                                                                                                                              | 5, 6a                           | In progress      |
-| 7     | deployment_tools            | mt-service for dev0, dev1 and ops; flags, Redis credentials, HPA, PDB, alerts                                                                                                                                                                                                                    | 6b                              | Not started      |
-| 8     | deployment_tools            | Gateway direct route, GOFF routing and authn rules, auth-api audiences                                                                                                                                                                                                                           | 7                               | Not started      |
-| Later | grafana, grafana-enterprise | Push on MT: move the push handler to `apps/live/pkg`, raw push routes with `streams`/`create` → `live:push`, a runner per Redis instance                                                                                                                                                         | gateway service account support | Postponed        |
+| #     | Repo                        | Change                                                                                                                                                                                                                                                                                           | Depends on                      | Status                            |
+| ----- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------- | --------------------------------- |
+| 1     | grafana                     | Centrifuge `UserID` = `orgchannel.UserID(user)` (`GetNamespace() + "/" + GetUID()`)                                                                                                                                                                                                              | none                            | Merged (#138603)                  |
+| 2+3   | grafana                     | ST (on-prem, dev mode) only: `rawroutes` and the ST mount; `/ws` raw route backed by `GrafanaLive`; manifest-documented `/ws` with 426 fallback (no kinds); `NewAppInstaller(websocket)` and `rawroutes.NewHandler` for MT; integration test `pkg/tests/apis/live` (runs with router middleware) | 1                               | Merged (#138604)                  |
+| 4     | grafana (frontend)          | `live.useAPIServerWebsocket` toggle for the `/apis/live.grafana.app/...` ws URL                                                                                                                                                                                                                  | 2+3                             | Merged (#138625)                  |
+| 5     | grafana                     | `apps/live/pkg/liveserver` (Redis engine setup, Origin check, `Dispatcher` with per-scope handlers) and `apps/live/pkg/features` (dashboard handler behind `DashboardAccess`, namespace fix); `GrafanaLive` wires its scopes into it                                                             | 1                               | Merged (#138604)                  |
+| 6a    | grafana-enterprise          | Register `live.grafana.app` in the standalone factory with a stub provider; collect, validate and mount raw routes after authn                                                                                                                                                                   | 2+3                             | Merged (#15116)                   |
+| 6b    | grafana, grafana-enterprise | MT live server: per-instance nodes, stack→node selection, origin, expiry, shutdown, limits, metrics; dispatcher observer and namespace limit; workspace sync                                                                                                                                     | 5, 6a                           | Merged (#15175, #138724, #138728) |
+| 7     | deployment_tools            | The service as an app in the `hosted-grafana` MT services deployment for dev0 and dev1: flags, Redis instances and password secrets, HPA, PDB, scrape config; ops later                                                                                                                          | 6b                              | #830981                           |
+| 8     | deployment_tools            | Gateway direct route, GOFF routing and authn rules, and the toggles for the test stack                                                                                                                                                                                                           | 7                               | #830981                           |
+| 9     | hosted-grafana              | Decide on a Redis engine for non-HA stacks, for example per stack for MT-routed stacks, and plan Live Redis capacity                                                                                                                                                                             | measurements above              | Open                              |
+| Later | grafana, grafana-enterprise | Push on MT: move the push handler to `apps/live/pkg`, raw push routes with `streams`/`create` → `live:push`, a runner per Redis instance                                                                                                                                                         | gateway service account support | Postponed                         |
 
 Enterprise code that imports new packages needs the OSS side kept in step. The "Go Workspace Check"
 fails until `make update-workspace` has been run in OSS (with the enterprise branch checked out
@@ -304,9 +361,10 @@ for groups that only have routes.
 1. **ST first.** Steps 1–4 are merged. Turn on `live.runAPIServer` and the frontend toggle for dev
    stacks. The browser now uses
    `/apis/live.grafana.app/.../ws`, served by ST.
-2. **MT in dev0.** Deploy 6b–7. Add GOFF `direct` for a few internal HA stacks. Open the same
-   dashboard in a tab routed to MT and one routed to ST, save it in one, and confirm the event
-   reaches both.
+2. **MT in dev0.** Deploy 6b–7. Confirm the Redis password env vars resolve and that
+   `grafana_live_mt_redis_up` is 1 for every instance. Add GOFF `direct` for a few internal
+   stacks, each confirmed HA first (`ha=true` in its pod log). Open the same dashboard in a tab
+   routed to MT and one routed to ST, save it in one, and confirm the event reaches both.
 3. **Watch:** connections and reconnect rate around rollouts and token expiry; Redis client counts
    per instance; subscribe errors by scope.
 4. **dev1, then ops.**
@@ -323,8 +381,9 @@ Local development uses mt-tilt with ST Grafana, the MT live server and Redis.
 2. Should `[live]` go into the hgapi MT config allowlist (`GetMTConfig`), so MT reads the stack's
    Redis node from cloudconfig instead of re-deriving hgapi's rule from flags? That would put the
    password in StackInfo.
-3. Should MT serve stacks without the Redis engine at all? This only works for connection-local
-   features, which today means none.
+3. Should non-HA stacks use the Live Redis, and if so only the ones routed to MT? Every stack
+   would need about 2.8 times today's instances (see Redis capacity above). Serving a stack
+   without the Redis engine only works for connection-local features, which today means none.
 4. Should the per-namespace connection limit come from the stack's `[live] max_connections`?
 5. Which follows dashboards on MT: `ds/` (needs the datasource-streams plan) or `watch/`?
 6. When push moves to MT, should the gateway rewrite `/api/live/push/:streamId` to the new path
