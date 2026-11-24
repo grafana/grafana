@@ -86,6 +86,8 @@ func newBroadcasterWithSizes[T any](ctx context.Context, input <-chan T, subBufS
 		subs:           make(map[<-chan T]*subscription[T]),
 		scoped:         make(map[GroupResource]*collectionSubscribers[T]),
 		overflowing:    make(map[<-chan T]*subscription[T]),
+		refills:        make(map[*subscription[T]]struct{}),
+		refillReady:    make(chan struct{}, 1),
 		terminated:     make(chan struct{}),
 		metrics:        metrics,
 		watchBufSize:   subBufSize,
@@ -123,9 +125,10 @@ type subscription[T any] struct {
 	gr        GroupResource // also the metric label for subscriber-attributed metrics
 	namespace string        // empty to receive every namespace
 	// collection is the index the subscriber is registered in.
-	collection *collectionSubscribers[T]
-	ch         chan T
-	overflow   []T // pending items when channel is full, nil when not overflowing
+	collection  *collectionSubscribers[T]
+	ch          chan T
+	overflow    []T // pending items when channel is full, nil when not overflowing
+	hasOverflow atomic.Bool
 	// delivered counts events handed to the subscriber, through ch or overflow.
 	// Its watch reads it to tell whether it has consumed them all.
 	delivered atomic.Int64
@@ -172,6 +175,10 @@ type broadcaster[T any] struct {
 	overflowing  map[<-chan T]*subscription[T] // subscriptions with pending overflow
 	metrics      *BroadcasterMetrics
 	submissionMu sync.RWMutex // serializes enqueueing with shutdown's pending-subscription cleanup
+
+	refillMu    sync.Mutex
+	refills     map[*subscription[T]]struct{} // pending consumer refill requests, guarded by refillMu
+	refillReady chan struct{}
 
 	// configuration
 
@@ -353,6 +360,24 @@ func (s *watchSubscription[T]) events() <-chan T {
 	return s.sub.ch
 }
 
+// requestRefill is called after consuming an event. Watches without a backlog
+// stay off the refill queue, and multiple reads can share one drain attempt.
+func (s *watchSubscription[T]) requestRefill() {
+	if !s.sub.hasOverflow.Load() {
+		return
+	}
+	b := s.b
+	b.refillMu.Lock()
+	if s.sub.hasOverflow.Load() {
+		b.refills[s.sub] = struct{}{}
+		select {
+		case b.refillReady <- struct{}{}:
+		default:
+		}
+	}
+	b.refillMu.Unlock()
+}
+
 // rv returns the highest RV the broadcaster has received once the watch has
 // consumed every event delivered to it, or 0 while some are pending, before
 // anything newer than the watch's start arrived, or after the subscription was
@@ -406,6 +431,11 @@ func (b *broadcaster[T]) drainOverflow(sub *subscription[T]) {
 			return
 		}
 	}
+	b.clearOverflow(sub)
+}
+
+func (b *broadcaster[T]) clearOverflow(sub *subscription[T]) {
+	sub.hasOverflow.Store(false)
 	sub.overflow = nil
 	delete(b.overflowing, sub.ch)
 }
@@ -434,6 +464,9 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 		for recv := range b.subs {
 			b.removeSubscriber(recv, unsubscriptionReasonShutdown)
 		}
+		b.refillMu.Lock()
+		clear(b.refills)
+		b.refillMu.Unlock()
 	}()
 
 	if b.initialize != nil {
@@ -467,6 +500,7 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 	drainTicker := time.NewTicker(drainInterval)
 	defer drainTicker.Stop()
 
+	refills := make(map[*subscription[T]]struct{})
 	for {
 		select {
 		case <-b.ctx.Done(): // service context cancelled
@@ -518,6 +552,15 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 			}
 			b.received.Store(b.cache.maxRV)
 
+		case <-b.refillReady:
+			b.refillMu.Lock()
+			refills, b.refills = b.refills, refills
+			b.refillMu.Unlock()
+			for sub := range refills {
+				b.drainOverflow(sub)
+			}
+			clear(refills)
+
 		case <-drainTicker.C:
 			for _, sub := range b.overflowing {
 				b.drainOverflow(sub)
@@ -551,6 +594,10 @@ func (b *broadcaster[T]) deliver(sub *subscription[T], item T) bool {
 	default:
 		sub.overflow = append(sub.overflow, item)
 		b.overflowing[sub.ch] = sub
+		sub.hasOverflow.Store(true)
+		// A consumer could have freed space between the failed send and
+		// observing hasOverflow.
+		b.drainOverflow(sub)
 		b.metrics.OverflowEventsTotal.WithLabelValues(sub.gr.Resource).Inc()
 		b.overflowCount++
 		now := time.Now()
@@ -625,9 +672,8 @@ func (b *broadcaster[T]) removeSubscriber(recv <-chan T, reason string) {
 	if !ok {
 		return
 	}
-	sub.overflow = nil
+	b.clearOverflow(sub)
 	delete(b.subs, recv)
-	delete(b.overflowing, recv)
 	sub.removed.Store(true)
 	collection := sub.collection
 	delete(collection.bucket(sub.namespace), recv)

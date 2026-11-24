@@ -2538,6 +2538,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 				s.log.Debug("watch events closed")
 				return nil
 			}
+			sub.requestRefill()
 			consumed++
 			if event.ResourceVersion <= since {
 				continue
