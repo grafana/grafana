@@ -9,13 +9,23 @@ import { Menu } from './Menu';
 
 A simple menu component.
 
-### When to use
+## When to use
 
 When you need to display a list of actions or navigation options, often used in combination with Dropdown.
 
 Use `variant="link"` on a `Menu.Item` when a navigation item should retain menu semantics while receiving link styling. Link variants keep the menu text color and underline on hover or keyboard focus without adding a menu-item background.
 
-### Usage
+Set `size` on `Menu` to apply one consistent density to every item, including nested submenus.
+
+## Never use for
+
+No component-specific guidance documented yet.
+
+## Do's and don'ts
+
+No component-specific guidance documented yet.
+
+## Usage
 
 ```tsx
 import { Dropdown, Menu, Button } from '@grafana/ui';
@@ -32,5 +42,9 @@ return (
   </Dropdown>
 );
 ```
+
+## Accessibility
+
+## Props
 
 <ArgTypes of={Menu} />

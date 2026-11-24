@@ -47,26 +47,34 @@ describe('Menu', () => {
   });
 });
 
-it('applies compact density to grouped menu items while allowing an item override', () => {
+it.each([
+  {
+    name: 'compact',
+    size: 'sm' as const,
+    fontSize: createTheme().typography.bodySmall.fontSize,
+    padding: '4px 4px',
+    minHeight: '24px',
+  },
+  {
+    name: 'regular',
+    size: 'md' as const,
+    fontSize: createTheme().typography.body.fontSize,
+    padding: '4px 12px',
+    minHeight: '32px',
+  },
+])('applies $name density to every grouped menu item', ({ size, fontSize, padding, minHeight }) => {
   render(
-    <Menu size="sm">
+    <Menu size={size}>
       <MenuGroup label="Actions">
-        <MenuItem label="Compact" />
-        <MenuItem label="Regular" size="md" />
+        <MenuItem label="First" />
+        <MenuItem label="Second" />
       </MenuGroup>
     </Menu>
   );
 
-  expect(screen.getByRole('menuitem', { name: 'Compact' })).toHaveStyle({
-    fontSize: createTheme().typography.bodySmall.fontSize,
-    padding: '4px 4px',
-    minHeight: '24px',
-  });
-  expect(screen.getByRole('menuitem', { name: 'Regular' })).toHaveStyle({
-    fontSize: createTheme().typography.body.fontSize,
-    padding: '4px 12px',
-    minHeight: '32px',
-  });
+  for (const item of screen.getAllByRole('menuitem')) {
+    expect(item).toHaveStyle({ fontSize, padding, minHeight });
+  }
 });
 
 it('keeps replacement items reachable by Tab without stealing focus', async () => {
