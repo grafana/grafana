@@ -307,5 +307,5 @@ func IsProvisioningServiceIdentity(auth types.AuthInfo) bool {
 		return false
 	}
 	return auth.GetUID() == types.NewTypeID(types.TypeAccessPolicy, serviceNameForProvisioning) ||
-		slices.Contains(auth.GetExtra()[authn.ServiceIdentityKey], provisioningServiceIdentity)
+		(auth.GetIdentityType() == types.TypeAccessPolicy && slices.Contains(auth.GetExtra()[authn.ServiceIdentityKey], provisioningServiceIdentity))
 }

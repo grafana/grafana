@@ -165,6 +165,15 @@ func TestIsProvisioningServiceIdentity(t *testing.T) {
 		require.True(t, identity.IsProvisioningServiceIdentity(r))
 	})
 
+	t.Run("a user acting through the provisioning service does not match", func(t *testing.T) {
+		r := &identity.StaticRequester{
+			Type:              authtypes.TypeUser,
+			UserUID:           "abc123",
+			AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{Rest: authn.AccessTokenClaims{ServiceIdentity: "provisioning.grafana.app"}},
+		}
+		require.False(t, identity.IsProvisioningServiceIdentity(r))
+	})
+
 	t.Run("the provisioning group audience does not match", func(t *testing.T) {
 		auth := fakeAuthInfo{
 			StaticRequester: &identity.StaticRequester{},
