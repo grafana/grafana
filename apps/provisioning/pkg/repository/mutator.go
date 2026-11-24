@@ -45,6 +45,7 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 		return fmt.Errorf("expected repository configuration, got %T", obj)
 	}
 	clearZeroPointers(reflect.ValueOf(&r.Status).Elem())
+	r.Status.Conditions = provisioning.NormalizeConditions(r.Status.Conditions)
 
 	if a.GetSubresource() != "" && !provisioningadmission.SpecAndSecureChanged(a) {
 		return nil // pure status patch: spec/secure untouched, nothing to (re)mutate

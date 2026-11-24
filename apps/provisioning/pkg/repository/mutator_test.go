@@ -478,6 +478,48 @@ func TestAdmissionMutator_Mutate_StoresZeroStatusFieldsAsAbsent(t *testing.T) {
 	}`, string(got))
 }
 
+func TestAdmissionMutator_Mutate_NormalizesConditions(t *testing.T) {
+	tests := []struct {
+		name string
+		in   provisioning.RepositoryCondition
+		want string
+	}{
+		{
+			name: "re-encodes the timestamp in UTC whole seconds and drops observedGeneration 0",
+			in: provisioning.RepositoryCondition{
+				Type: "Ready", Status: "True", Reason: "Available", Message: "ok",
+				LastTransitionTime: new("2026-01-02T03:04:05.123+01:00"),
+				ObservedGeneration: new(int64(0)),
+			},
+			want: `[{"type":"Ready","status":"True","lastTransitionTime":"2026-01-02T02:04:05Z","reason":"Available","message":"ok"}]`,
+		},
+		{
+			name: "leaves an unparsable timestamp for the validator to reject",
+			in: provisioning.RepositoryCondition{
+				Type: "Ready", Status: "True", Reason: "Available", Message: "ok",
+				LastTransitionTime: new("yesterday"),
+				ObservedGeneration: new(int64(0)),
+			},
+			want: `[{"type":"Ready","status":"True","observedGeneration":0,"lastTransitionTime":"yesterday","reason":"Available","message":"ok"}]`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			old := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "test"}}
+			repo := old.DeepCopy()
+			repo.Status.Conditions = []provisioning.RepositoryCondition{tt.in}
+
+			m := NewAdmissionMutator(NewMockFactory(t), 0)
+			require.NoError(t, m.Mutate(context.Background(), newMutatorTestAttributesWithSubresource(repo, old, admission.Update, "status"), nil))
+
+			got, err := json.Marshal(repo.Status.Conditions)
+			require.NoError(t, err)
+			assert.JSONEq(t, tt.want, string(got))
+		})
+	}
+}
+
 func TestCopySecureValues(t *testing.T) {
 	tests := []struct {
 		name           string

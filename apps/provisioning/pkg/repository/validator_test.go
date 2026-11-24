@@ -987,6 +987,43 @@ func TestAdmissionValidator_Validate_SkipsSubresourcePatches(t *testing.T) {
 	require.NoError(t, admissionValidator.Validate(context.Background(), attr, nil))
 }
 
+func TestAdmissionValidator_Validate_RejectsUnparsableConditionTimestamps(t *testing.T) {
+	tests := []struct {
+		name               string
+		lastTransitionTime *string
+		wantErr            bool
+	}{
+		{name: "RFC3339 timestamp", lastTransitionTime: new("2026-01-02T03:04:05Z")},
+		{name: "null timestamp"},
+		{name: "unparsable timestamp", lastTransitionTime: new("yesterday"), wantErr: true},
+		{name: "empty timestamp", lastTransitionTime: new(""), wantErr: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// No factory EXPECT(): a status patch must not reach the spec validators.
+			admissionValidator := NewAdmissionValidator(
+				[]provisioning.RepositorySyncOptionsTarget{provisioning.RepositorySyncOptionsTargetFolder},
+				NewValidator(false, NewMockFactory(t)),
+			)
+			old := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "test"}}
+			repo := old.DeepCopy()
+			repo.Status.Conditions = []provisioning.RepositoryCondition{{
+				Type: "Ready", Status: "True", Reason: "Available", LastTransitionTime: tt.lastTransitionTime,
+			}}
+
+			err := admissionValidator.Validate(context.Background(),
+				newAdmissionValidatorTestAttributesWithSubresource(repo, old, admission.Update, "status"), nil)
+			if !tt.wantErr {
+				require.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "status.conditions[0].lastTransitionTime")
+		})
+	}
+}
+
 func TestAdmissionValidator_Validate_RunsForBundledSpecChange(t *testing.T) {
 	old := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{

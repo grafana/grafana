@@ -357,13 +357,23 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 		return nil
 	}
 
-	if a.GetSubresource() != "" && !provisioningadmission.SpecAndSecureChanged(a) {
-		return nil // pure status patch: spec/secure untouched, nothing to (re)validate
-	}
-
 	obj := a.GetObject()
 	if obj == nil {
 		return nil
+	}
+
+	r, ok := obj.(*provisioning.Repository)
+	if !ok {
+		return fmt.Errorf("expected repository configuration, got %T", obj)
+	}
+
+	// Conditions arrive through /status, so this runs before the status-only return.
+	if list := provisioning.ValidateConditions(field.NewPath("status", "conditions"), r.Status.Conditions); len(list) > 0 {
+		return invalidRepositoryError(a.GetName(), list)
+	}
+
+	if a.GetSubresource() != "" && !provisioningadmission.SpecAndSecureChanged(a) {
+		return nil // pure status patch: spec/secure untouched, nothing to (re)validate
 	}
 
 	// Do not validate objects we are trying to delete
@@ -376,11 +386,6 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 	// Allows for updates that remove the pending-delete label (explicit unlock).
 	if err := provisioningadmission.ValidatePendingDeletion(a, meta); err != nil {
 		return err
-	}
-
-	r, ok := obj.(*provisioning.Repository)
-	if !ok {
-		return fmt.Errorf("expected repository configuration, got %T", obj)
 	}
 
 	// Copy previous values if they exist
