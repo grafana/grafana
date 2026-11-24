@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -10,7 +11,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -151,6 +155,67 @@ func TestUpdateRecordsPhaseMetrics(t *testing.T) {
 	require.Equal(t, 2.0, testutil.ToFloat64(metrics.BuildDocuments.WithLabelValues(append([]string{IndexPhaseFetch}, labels...)...)))
 	require.Equal(t, 2.0, testutil.ToFloat64(metrics.BuildDocuments.WithLabelValues(append([]string{IndexPhaseConvert}, labels...)...)))
 	require.Positive(t, testutil.ToFloat64(metrics.BuildSourceBytes.WithLabelValues(labels...)))
+}
+
+type interruptibleDocumentBuilder struct {
+	DocumentBuilder
+	err error
+}
+
+func (b *interruptibleDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*IndexableDocument, error) {
+	if b.err != nil {
+		return nil, b.err
+	}
+	return b.DocumentBuilder.BuildDocument(ctx, key, rv, value)
+}
+
+func TestUpdateDoesNotSkipInterruptedDocument(t *testing.T) {
+	key := NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+	value := testObjectJSON("one", "One")
+	storage := &trashStorageBackend{modified: []*ModifiedResource{{
+		Action:          resourcepb.WatchEvent_MODIFIED,
+		Key:             resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "one"},
+		ResourceVersion: 2,
+		Value:           value,
+	}}}
+	server := &searchServer{storage: storage}
+	logger := log.NewNopLogger()
+	for _, tc := range []struct {
+		name string
+		err  error
+	}{
+		{name: "context deadline", err: fmt.Errorf("read blob: %w", context.DeadlineExceeded)},
+		{name: "gRPC deadline", err: fmt.Errorf("read blob: %w", status.Error(codes.DeadlineExceeded, "read timed out"))},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			builder := &interruptibleDocumentBuilder{DocumentBuilder: &testDocumentBuilder{}, err: tc.err}
+			index := &MockResourceIndex{}
+			phases := newBuildPhaseRecorder(nil, IndexPathUpdate, key)
+			dedup := newModifiedDedup(time.Minute)
+
+			rv, _, err := server.applyModifiedSince(t.Context(), index, key, builder, 1, nil, dedup, phases, logger)
+			require.ErrorIs(t, err, tc.err)
+			require.Zero(t, rv)
+			require.Empty(t, index.indexedItems())
+
+			builder.err = nil
+			rv, docs, err := server.applyModifiedSince(t.Context(), index, key, builder, 1, nil, dedup, phases, logger)
+			require.NoError(t, err)
+			require.Equal(t, int64(2), rv)
+			require.Equal(t, 1, docs)
+			require.Len(t, index.indexedItems(), 1)
+		})
+	}
+}
+
+func TestBuildDoesNotSkipInterruptedDocument(t *testing.T) {
+	key := NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+	builder := &interruptibleDocumentBuilder{err: context.DeadlineExceeded}
+	server := &searchServer{storage: &docStorageBackend{values: [][]byte{testObjectJSON("one", "One")}}}
+	index := &MockResourceIndex{}
+	_, _, err := server.indexResourceType(t.Context(), index, key, builder, newBuildPhaseRecorder(nil, IndexPathBuild, key), log.NewNopLogger())
+	require.ErrorIs(t, err, context.DeadlineExceeded)
+	require.Empty(t, index.indexedItems())
 }
 
 // Storage that fails before handing over an iterator still spent time doing so,

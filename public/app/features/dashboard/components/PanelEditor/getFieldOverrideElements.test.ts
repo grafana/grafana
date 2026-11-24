@@ -814,7 +814,6 @@ describe('getFieldOverrideCategories change reporting', () => {
       jest.fn(),
       undefined,
       false,
-      undefined,
       onOverrideChanged
     );
     const findItem = (fragment: string) => categories[0].items.find((item) => item.props.id?.includes(fragment))!;

@@ -110,7 +110,7 @@ example.com/grafana/removed 200
 	}
 }
 
-func TestSQLIntegrationRunnerRunsEachBinaryOnce(t *testing.T) {
+func TestSQLIntegrationRunner(t *testing.T) {
 	root := t.TempDir()
 	require.NoError(t, os.WriteFile(filepath.Join(root, "go.mod"), []byte("module example.com/integration\n"), 0o600))
 	// Assemble the fixture test names so discovery only finds them in the generated files.
@@ -127,24 +127,6 @@ import (
 	"testing"
 )
 
-func TestMain(m *testing.M) {
-	marker, err := os.ReadFile("marker")
-	if err != nil {
-		panic(err)
-	}
-	file, err := os.OpenFile(os.Getenv("TEST_INVOCATIONS"), os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
-	if err != nil {
-		panic(err)
-	}
-	if _, err := file.Write(marker); err != nil {
-		panic(err)
-	}
-	if err := file.Close(); err != nil {
-		panic(err)
-	}
-	os.Exit(m.Run())
-}
-
 func `+"TestIntegrationFixture"+`(t *testing.T) {
 	if timeout := flag.Lookup("test.timeout").Value.String(); timeout != "12m0s" {
 		t.Fatalf("unexpected timeout %s", timeout)
@@ -152,6 +134,18 @@ func `+"TestIntegrationFixture"+`(t *testing.T) {
 	marker, err := os.ReadFile("marker")
 	if err != nil {
 		t.Fatal(err)
+	}
+	file, err := os.OpenFile(os.Getenv("TEST_INVOCATIONS"), os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, writeErr := file.Write(marker)
+	closeErr := file.Close()
+	if writeErr != nil {
+		t.Fatal(writeErr)
+	}
+	if closeErr != nil {
+		t.Fatal(closeErr)
 	}
 	if strings.TrimSpace(string(marker)) == os.Getenv("FAIL_PACKAGE") {
 		t.Fatal("intentional test failure")
@@ -183,17 +177,18 @@ func `+"TestIntegrationIgnored"+`() {}
 	}{
 		{name: "all packages pass"},
 		{name: "continues after a failure", fail: "first/api"},
-		{name: "SQLite uses the compiled binaries", sqlite: true},
+		{name: "SQLite", sqlite: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			invocations := filepath.Join(t.TempDir(), "invocations")
+			runnerTemp := t.TempDir()
 			args := []string{script}
 			if tc.sqlite {
 				args = append(args, "--sqlite")
 			}
 			cmd := exec.CommandContext(t.Context(), "bash", append(args, "1/1")...)
 			cmd.Dir = root
-			cmd.Env = append(cmd.Environ(), "GOWORK=off", "GOPROXY=off", "RUNNER_TEMP="+t.TempDir(),
+			cmd.Env = append(cmd.Environ(), "GOWORK=off", "GOPROXY=off", "RUNNER_TEMP="+runnerTemp,
 				"GOMAXPROCS=2", "TEST_INVOCATIONS="+invocations, "FAIL_PACKAGE="+tc.fail)
 			output, err := cmd.CombinedOutput()
 			if tc.fail == "" {
@@ -205,7 +200,9 @@ func `+"TestIntegrationIgnored"+`() {}
 			calls, err := os.ReadFile(invocations)
 			require.NoError(t, err)
 			require.ElementsMatch(t, []string{"first/api", "second/api"}, strings.Fields(string(calls)))
-			require.Contains(t, string(output), "Compiling test binaries")
+			entries, err := os.ReadDir(runnerTemp)
+			require.NoError(t, err)
+			require.Empty(t, entries, "Go should manage temporary test binaries")
 			require.Regexp(t, `(?m)^ok\s+example\.com/integration/second/api\s+`, string(output))
 			require.Regexp(t, `(?m)^\?\s+example\.com/integration/inactive\s+\[no test files\]`, string(output))
 		})

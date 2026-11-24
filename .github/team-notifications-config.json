@@ -9,6 +9,7 @@
         "@grafana/dataviz-squad"
       ],
       "area_labels": [
+        "area/correlations",
         "area/dataviz"
       ],
       "enabled": {
@@ -31,6 +32,7 @@
         "@grafana/dashboards-squad"
       ],
       "area_labels": [
+        "area/transformations",
         "area/dashboard"
       ],
       "enabled": {
@@ -89,30 +91,6 @@
         "issue_notify": true,
         "issue_weekly": true,
         "agent_review": false,
-        "pr_status": true,
-        "issue_status": true
-      }
-    },
-    {
-      "name": "datapro",
-      "kickoff_date": "2026-06-08",
-      "adoption_date": "2025-06-08",
-      "codeowners_teams": [
-        "@grafana/datapro"
-      ],
-      "area_labels": [
-        "area/transformations",
-        "area/correlations",
-        "area/expressions"
-      ],
-      "enabled": {
-        "pr_notify": true,
-        "pr_weekly": true,
-        "fr_notify": true,
-        "fr_weekly": true,
-        "issue_notify": true,
-        "issue_weekly": true,
-        "agent_review": true,
         "pr_status": true,
         "issue_status": true
       }
