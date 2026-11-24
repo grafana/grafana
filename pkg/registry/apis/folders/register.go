@@ -556,6 +556,9 @@ func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _
 		f.Spec.Title = strings.Trim(f.Spec.Title, " ")
 		if verb == admission.Create {
 			applyCascadeDeleteFinalizerOnCreate(f, folderAsyncCascadeDeleteEnabled(ctx))
+			if !identity.IsServiceIdentity(ctx) {
+				delete(f.Annotations, annoKeyCascadeDeleteRequester) // server-owned; dropped so exported manifests can be re-created
+			}
 			return nil
 		}
 		old, ok := a.GetOldObject().(*foldersv1.Folder)
@@ -563,6 +566,7 @@ func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _
 			return fmt.Errorf("old obj is not folders.Folder")
 		}
 		preserveCascadeDeleteFinalizerOnUpdate(f, old)
+		restoreCascadeDeleteRequester(f, old)
 		return nil
 	}
 	return nil
@@ -609,6 +613,9 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 			return fmt.Errorf("obj is not folders.Folder")
 		}
 		if err := validateOwnerReferencesOnManagedFolder(f, old); err != nil {
+			return err
+		}
+		if err := validateCascadeDeleteRequester(f, old); err != nil {
 			return err
 		}
 		return validateOnUpdate(ctx, f, old, b.storage, b.parents, b.searcher, b.accessClient, b.maxNestedFolderDepth)
