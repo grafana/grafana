@@ -20,9 +20,6 @@ export {
   type KindLabelOptions,
   type KindRegistry,
 } from './services/KindRegistry';
-export { getApiGroup, invalidateApiDiscovery } from './services/apiDiscovery/discovery';
-export { resolveApiBaseURL, resolveApiVersion, type ResolveApiBaseURLOptions } from './services/apiDiscovery/resolve';
-export { type ApiGroupInfo } from './services/apiDiscovery/types';
 // Plugins bundling @grafana/plugin-compat < 0.5.0 only look for these here.
 export {
   /** @deprecated Import from `@grafana/runtime` instead. */

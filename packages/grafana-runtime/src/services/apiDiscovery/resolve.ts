@@ -7,14 +7,17 @@ import { selectApiVersion } from './versions';
  * @alpha
  */
 export interface ResolveApiBaseURLOptions {
-  /** Whether the URL ends in the current namespace. Defaults to `true`. */
+  /** Whether the URL ends in the current namespace. Set `false` for cluster-scoped resources. Defaults to `true`. */
   namespaced?: boolean;
 }
 
 /**
- * Resolves the version of `group` to use: the server's preferred version if `supported` lists it,
- * otherwise the most stable version both sides have. Returns `undefined` when there is none, or when
- * discovery cannot answer. It never picks a legacy fallback; that is the caller's decision.
+ * Picks the version of `group` to call from the versions in `supported`: the server's preferred
+ * version if `supported` lists it, otherwise the most stable version both sides have (`v1`, then
+ * `v1beta1`, then `v1alpha1`). It never returns a version that `supported` doesn't list.
+ *
+ * Resolves `undefined` when the group is not served, when there is no version in common, or when
+ * discovery can't answer (see {@link getApiGroup}). The fallback is up to the caller.
  *
  * @alpha
  */
@@ -24,8 +27,17 @@ export async function resolveApiVersion(group: string, supported: readonly strin
 }
 
 /**
- * Resolves the base URL for `group`, such as `/apis/<group>/<version>/namespaces/<namespace>`, using
- * the version from {@link resolveApiVersion}. Returns `undefined` when no version resolves.
+ * Like {@link resolveApiVersion}, but resolves the base URL to call:
+ * `/apis/<group>/<version>/namespaces/<namespace>` for the current namespace, or
+ * `/apis/<group>/<version>` with `{ namespaced: false }`. Resolves `undefined` when no version resolves.
+ *
+ * @example
+ * ```ts
+ * const baseURL = await resolveApiBaseURL('dashboard.grafana.app', ['v1beta1', 'v2beta1']);
+ * if (!baseURL) {
+ *   // Not served or unknown: use the legacy API instead.
+ * }
+ * ```
  *
  * @alpha
  */

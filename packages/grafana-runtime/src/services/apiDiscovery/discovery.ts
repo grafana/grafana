@@ -63,8 +63,19 @@ const rootCache = new OutcomeCache<GroupsByName>();
 const groupCache = new OutcomeCache<ApiGroupInfo | undefined>();
 
 /**
- * Returns the API group if the server serves it, or `undefined` if it does not or discovery could
- * not answer (no session, an error, or a timeout). Never shows an error to the user.
+ * Returns the versions the server serves for an `/apis` group, such as `dashboard.grafana.app`.
+ *
+ * Resolves `undefined` in two cases you can't tell apart:
+ * - **Not served**: the server doesn't list the group, or answers 404 for it. This is cached.
+ * - **Unknown**: there is no user session (e.g. a public dashboard), or the request failed or timed
+ *   out. This is not cached, so a later call asks the server again.
+ *
+ * It never rejects and never shows an error to the user. It says what the server serves, not what the
+ * current user may do, so a request to a served group can still fail with a 403. What to do on
+ * `undefined`, such as calling a legacy API, is up to the caller.
+ *
+ * The first call fetches `GET /apis`. Later calls reuse the answer until {@link invalidateApiDiscovery}
+ * or a page reload.
  *
  * @alpha
  */
@@ -88,7 +99,8 @@ export async function getApiGroup(group: string): Promise<ApiGroupInfo | undefin
 }
 
 /**
- * Forgets every discovery answer, so the next caller asks the server again.
+ * Forgets every cached discovery answer, so the next call asks the server again. Call it after
+ * something changes which groups the server serves, such as installing or removing an app plugin.
  *
  * @alpha
  */
