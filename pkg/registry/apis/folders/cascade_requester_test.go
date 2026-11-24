@@ -258,18 +258,10 @@ func TestCascadeDelete_RefusesBeforeDeleteWhenAnnotationsDoNotFit(t *testing.T) 
 	f := finalizerFolder("f")
 	// Valid on its own, one byte under the limit; only adding the requester overflows it.
 	f.Annotations = map[string]string{"big": strings.Repeat("x", validation.TotalAnnotationSizeLimitB-len("big")-1)}
-	require.Less(t, annotationSize(f), validation.TotalAnnotationSizeLimitB+1, "fixture must fit before the requester is added")
+	require.NoError(t, validation.ValidateAnnotationsSize(f.Annotations), "fixture must fit before the requester is added")
 	store := newTerminatingStore(f)
 	err := forceDeleteAs(store, userA, forceDelete(), nil)
 	require.True(t, apierrors.IsBadRequest(err))
 	require.Nil(t, store.deleteOptions, "delete must not start")
 	require.Nil(t, f.DeletionTimestamp)
-}
-
-func annotationSize(f *foldersv1.Folder) int {
-	n := 0
-	for k, v := range f.Annotations {
-		n += len(k) + len(v)
-	}
-	return n
 }
