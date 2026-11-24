@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { Icon, Link, useStyles2 } from '@grafana/ui';
-import { getSvgSize } from '@grafana/ui/internal';
 
 import { hiddenKey } from '../MegaMenu/utils';
 
@@ -45,13 +44,7 @@ function SectionNavLink({ item, isActive }: { item: NavModelItem; isActive: bool
         className={isActive ? styles.linkActive : styles.link}
         aria-current={isActive ? 'page' : undefined}
       >
-        {item.icon ? (
-          <span className={styles.iconSlot}>
-            <Icon name={item.icon} size="md" />
-          </span>
-        ) : (
-          <span className={styles.iconSlot} aria-hidden />
-        )}
+        {item.icon && <Icon name={item.icon} size="md" />}
         {item.text}
       </Link>
     </li>
@@ -60,7 +53,7 @@ function SectionNavLink({ item, isActive }: { item: NavModelItem; isActive: bool
 
 const getStyles = (theme: GrafanaTheme2) => {
   const row = {
-    alignItems: 'flex-start',
+    alignItems: 'center',
     borderRadius: theme.shape.radius.default,
     display: 'flex',
     gap: theme.spacing(1),
@@ -96,15 +89,6 @@ const getStyles = (theme: GrafanaTheme2) => {
         background: theme.colors.action.hover,
         color: theme.colors.text.maxContrast,
       },
-    }),
-    // As tall as a line of text and holding an icon's width, so the icon sits level with the first line,
-    // and a link without one still lines up with the rest
-    iconSlot: css({
-      alignItems: 'center',
-      display: 'flex',
-      flexShrink: 0,
-      height: '1lh',
-      width: getSvgSize('md'),
     }),
     linkActive: css(row, {
       background: theme.colors.action.selected,
