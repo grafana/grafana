@@ -96,7 +96,9 @@ export function AppChrome({ children }: Props) {
     extensionSidebarWidth,
     floatingExtensionSidebarWidth,
     navOffset,
-    extensionSidebarHeight
+    extensionSidebarHeight,
+    showSidePanel ? SIDE_PANEL_WIDTH : undefined,
+    visualRefreshEnabled
   );
   const dragStyles = useStyles2(getDragStyles, 'middle');
   const isSmallScreen = !useMediaQueryMinWidth('sm');
@@ -605,19 +607,25 @@ const getContentSizeStyles = (
   extensionSidebarWidth = 0,
   floatingExtensionSidebarWidth = 0,
   navOffset = '0px',
-  extensionSidebarHeight = 0
+  extensionSidebarHeight = 0,
+  sidePanelWidth?: string,
+  visualRefreshEnabled = false
 ) => {
+  // The side panel sits against the nav, so a sidebar docked on the left starts after it too, where the page does.
+  const sidebarOffset = sidePanelWidth
+    ? `calc(${navOffset} + ${sidePanelWidth}${visualRefreshEnabled ? ` + ${theme.spacing(0.5)}` : ''})`
+    : navOffset;
   return {
     contentWidth: css({
       maxWidth: `calc(100% - ${extensionSidebarWidth}px) !important`,
     }),
     // Replaces `pageContainerMenuDocked*`'s padding, which only reserves the nav.
     contentDockedLeft: css({
-      paddingLeft: `calc(${navOffset} + ${extensionSidebarWidth}px) !important`,
+      paddingLeft: `calc(${sidebarOffset} + ${extensionSidebarWidth}px) !important`,
     }),
     // Docked on the left or at the bottom, the sidebar starts where the page content does, past the nav.
     sidebarAfterNav: css({
-      left: navOffset,
+      left: sidebarOffset,
     }),
     // The page keeps its width and ends where the sidebar starts, rather than scrolling under it.
     contentDockedBottom: css({
