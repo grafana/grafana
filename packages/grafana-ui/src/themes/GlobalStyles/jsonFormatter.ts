@@ -16,6 +16,17 @@ export function getJsonFormatterStyles(theme: GrafanaTheme2) {
         marginLeft: theme.spacing(2),
       },
 
+      'button.json-formatter-toggler-link': {
+        background: 'none',
+        border: 'none',
+        borderRadius: theme.shape.radius.default,
+        fontFamily: 'inherit',
+        letterSpacing: 'inherit',
+        padding: 0,
+        textAlign: 'left',
+        userSelect: 'text',
+      },
+
       '.json-formatter-children': {
         '&.json-formatter-empty': {
           opacity: 0.5,
