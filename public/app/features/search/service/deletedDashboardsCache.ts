@@ -1,9 +1,3 @@
-import {
-  type ResultItem,
-  type SortField,
-  type TrashQuery,
-  type WhereNode,
-} from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { iamAPIv0alpha1, type DisplayList } from 'app/api/clients/iam/v0alpha1';
 import { dispatch } from 'app/types/store';
 
@@ -16,6 +10,10 @@ import {
   TRASH_FIELD_FOLDER,
   TRASH_FIELD_TAGS,
   TRASH_FIELD_TITLE,
+  type SortField,
+  type TrashItem,
+  type TrashQuery,
+  type WhereNode,
 } from './trashSearchApi';
 import { type SearchHit } from './unified';
 import { DELETED_BY_REMOVED, DELETED_BY_UNKNOWN } from './utils';
@@ -57,7 +55,7 @@ const MAX_TRASH_PAGES = 8;
  * us about from every other one.
  */
 type TrashFetchResult =
-  | { failed: false; items: ResultItem[]; truncated: boolean }
+  | { failed: false; items: TrashItem[]; truncated: boolean }
   | { failed: true; unavailable: boolean };
 
 /**
@@ -253,7 +251,7 @@ class DeletedDashboardsCache {
    */
   private async fetchTrash(query: DeletedDashboardsQuery): Promise<TrashFetchResult> {
     try {
-      const items: ResultItem[] = [];
+      const items: TrashItem[] = [];
       let continueToken: string | undefined;
       let pages = 0;
 
@@ -397,13 +395,13 @@ function extractDisplayData(
 }
 
 /** Reads one string field off a trash item. Absent fields are omitted by the server. */
-function readString(item: ResultItem, name: string): string | undefined {
+function readString(item: TrashItem, name: string): string | undefined {
   const value = item.fields?.[name];
   return typeof value === 'string' && value !== '' ? value : undefined;
 }
 
 /** Converts a trash result item to the SearchHit shape the deleted dashboards view renders. */
-function trashItemToSearchResult(item: ResultItem, deletedByDisplayMap: Map<string, string>): SearchHit {
+function trashItemToSearchResult(item: TrashItem, deletedByDisplayMap: Map<string, string>): SearchHit {
   const field: Record<string, string | number> = {};
 
   // The endpoint reports the deletion time as unix millis; the rest of the UI expects the

@@ -3,12 +3,16 @@ import { compact, uniq } from 'lodash';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDebounce } from 'react-use';
 
-import { type ResultItem, type WhereNode } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { t } from '@grafana/i18n';
 import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { useSearchNotebooksInfiniteQuery, type NotebookSearchQuery } from './notebookSearchApi';
+import {
+  useSearchNotebooksInfiniteQuery,
+  type NotebookSearchQuery,
+  type ResultItem,
+  type WhereNode,
+} from './notebookSearchApi';
 
 /**
  * Field names as the index declares them (resource.SEARCH_FIELD_* on the backend). Only the

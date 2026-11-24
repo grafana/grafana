@@ -1,9 +1,8 @@
-import { type ResultItem } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { iamAPIv0alpha1, type Display, type DisplayList } from 'app/api/clients/iam/v0alpha1';
 import { dispatch } from 'app/types/store';
 
 import { DELETED_DASHBOARDS_LIMIT, deletedDashboardsCache, resolveDeletedByDisplayMap } from './deletedDashboardsCache';
-import { fetchTrashPage } from './trashSearchApi';
+import { fetchTrashPage, type TrashItem } from './trashSearchApi';
 import { DELETED_BY_REMOVED, DELETED_BY_UNKNOWN } from './utils';
 
 jest.mock('app/api/clients/iam/v0alpha1', () => ({
@@ -341,7 +340,7 @@ describe('deletedDashboardsCache', () => {
     deletedDashboardsCache.clear();
   });
 
-  function makeItem(name: string, overrides: Record<string, unknown> = {}): ResultItem {
+  function makeItem(name: string, overrides: Record<string, unknown> = {}): TrashItem {
     return {
       resource: { group: 'dashboard.grafana.app', resource: 'dashboards', kind: 'Dashboard', name },
       fields: {
@@ -356,7 +355,7 @@ describe('deletedDashboardsCache', () => {
     };
   }
 
-  function page(items: ResultItem[], continueToken?: string) {
+  function page(items: TrashItem[], continueToken?: string) {
     return {
       metadata: { totalHits: items.length, totalHitsRelation: 'eq' as const, continue: continueToken },
       items,

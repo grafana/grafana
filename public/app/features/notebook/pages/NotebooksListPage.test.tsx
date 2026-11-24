@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { act, render, screen, waitFor, within } from 'test/test-utils';
 
-import { type ResultItem, type WhereNode } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { locationService } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
@@ -15,6 +14,8 @@ import { ROWS_PER_PAGE } from '../list/NotebooksTable';
 import {
   useLazyNotebookFieldFacetQuery,
   type NotebookSearchQuery,
+  type ResultItem,
+  type WhereNode,
   useSearchNotebooksInfiniteQuery,
 } from '../list/notebookSearchApi';
 import { NOTEBOOKS_PAGE_LIMIT } from '../list/useNotebooksList';
