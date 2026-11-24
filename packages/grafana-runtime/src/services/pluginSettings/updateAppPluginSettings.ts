@@ -17,7 +17,7 @@ import { refetchCachedAppSettings, refetchCachedLegacySettings } from './refetch
 import { type Settings as v0alpha1Settings } from './types';
 
 // Enabling or disabling an app plugin changes which API groups the server serves.
-function invalidateAPIDiscoveryIfSetsEnabled(data: Partial<PluginMeta>): void {
+function invalidateAPIDiscoveryIfEnabledChanges(data: Partial<PluginMeta>): void {
   if (data.enabled !== undefined) {
     invalidateAPIDiscovery();
   }
@@ -31,7 +31,7 @@ async function updateLegacySettings(pluginId: string, data: Partial<PluginMeta>)
       logPluginSettingsError('PluginSettings: updating legacy plugin settings failed', err, { pluginId });
       return Promise.reject(err);
     });
-  invalidateAPIDiscoveryIfSetsEnabled(data);
+  invalidateAPIDiscoveryIfEnabledChanges(data);
 }
 
 async function internalUpdateAppPluginSettings(pluginId: string, data: Partial<PluginMeta>): Promise<v0alpha1Settings> {
@@ -61,7 +61,7 @@ async function internalUpdateAppPluginSettings(pluginId: string, data: Partial<P
       logPluginSettingsError('PluginSettings: updating plugin settings failed', err, { pluginId });
       return Promise.reject(err);
     });
-  invalidateAPIDiscoveryIfSetsEnabled(data);
+  invalidateAPIDiscoveryIfEnabledChanges(data);
 
   return updated;
 }
