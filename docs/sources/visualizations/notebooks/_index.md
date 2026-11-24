@@ -249,7 +249,7 @@ The **Add panel to notebook** dialog box has the following options:
 | Filter by tags                          | Available when you add the panel to an existing notebook. Filter the list by tag, sort the list, or select **Created by me** to narrow the results. Then select the notebook in the list. |
 | Text above the panel (optional)         | Enter text to add to the notebook as a text block before the panel. Use it to explain why you added the panel. |
 | Lock time range                         | Select to keep the panel on the time range shown in the dashboard or Explore when you added it. Clear to have the panel follow the notebook time range. This option is selected by default when the source uses an absolute time range, such as after you zoom in on a graph. For more information, refer to the [Panel time range](#panel-time-range) section of this page. |
-| Convert to an absolute time range       | Available when the source uses a relative time range, such as **Last 1 hour**, and you've selected **Lock time range**. Select to lock the panel to the exact start and end times that the relative range covers when you add the panel, so it keeps showing that investigation window. |
+Convert to an absolute time range       | Displayed when the source uses a relative time range, such as **Last 1 hour**. The option is enabled when you've selected **Lock time range**; select it to lock the panel to the exact start and end times that the relative range covers when you add the panel, so it keeps showing that investigation window.
 <!-- prettier-ignore-end -->
 
 ## Create notebooks from Grafana Assistant Workspace
