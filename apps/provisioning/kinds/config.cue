@@ -2,12 +2,15 @@ package repository
 
 config: {
 	codegen: {
-		goGenPath:                      "./pkg/apis"
+		// The kinds are still served from hand-written Go types; only the manifest is generated.
+		goEnabled:                      false
 		enableOperatorStatusGeneration: false
 	}
 	definitions: {
-		genManifest: false
-		genCRDs:     false
+		genManifest:      true
+		genCRDs:          false
+		path:             "./definitions"
+		manifestFileName: "provisioning-manifest.json"
 	}
 	kinds: {
 		grouping: "group"
