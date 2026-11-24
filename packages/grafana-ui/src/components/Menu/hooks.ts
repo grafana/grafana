@@ -5,6 +5,9 @@ const modulo = (a: number, n: number) => ((a % n) + n) % n;
 const UNFOCUSED = -1;
 const MENU_ITEM_SELECTOR = '[data-role="menuitem"]:not([data-disabled])';
 
+// Menu refs point either to the menu itself or, for submenus, to a floating wrapper around it. Resolve the owned menu
+// before collecting items so each focus manager controls only its direct menu. Otherwise, a parent rerender can
+// overwrite tab stops managed by an open submenu.
 const getMenuItems = (container: HTMLElement | null) => {
   const menu =
     container?.getAttribute('role') === 'menu'
