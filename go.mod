@@ -34,11 +34,11 @@ require (
 	github.com/aws/aws-sdk-go v1.55.8 // @grafana/aws-datasources
 	github.com/aws/aws-sdk-go-v2 v1.42.0 // @grafana/aws-datasources
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.24 // @grafana/grafana-operator-experience-squad
-	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.45.3 // @grafana/aws-datasources
+	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.52.2 // @grafana/aws-datasources
 	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.73.0 // @grafana/aws-datasources
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.307.0 // @grafana/aws-datasources
-	github.com/aws/aws-sdk-go-v2/service/oam v1.18.3 // @grafana/aws-datasources
-	github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.26.6 // @grafana/aws-datasources
+	github.com/aws/aws-sdk-go-v2/service/oam v1.23.4 // @grafana/aws-datasources
+	github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.30.12 // @grafana/aws-datasources
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.40.1 // @grafana/grafana-operator-experience-squad
 	github.com/aws/aws-sdk-go-v2/service/sts v1.43.3 // @grafana/grafana-operator-experience-squad
 	github.com/aws/smithy-go v1.27.2 // @grafana/aws-datasources

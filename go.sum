@@ -864,8 +864,8 @@ github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.29 h1:RdwIf/CuUsvJX3RgJa
 github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.29/go.mod h1:71wt8W2EgswdZy9Mf9KNnzxZ3TiZlv4caKghPktDOkA=
 github.com/aws/aws-sdk-go-v2/internal/v4a v1.4.30 h1:VTGy885W5DKBxWRUJbym9hytNaYzsyaPkCHGRRMAOhU=
 github.com/aws/aws-sdk-go-v2/internal/v4a v1.4.30/go.mod h1:AS0HycUvJRFvTt613AYDOgO2jzw+00cVSMny8XB3yMY=
-github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.45.3 h1:Nn3qce+OHZuMj/edx4its32uxedAmquCDxtZkrdeiD4=
-github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.45.3/go.mod h1:aqsLGsPs+rJfwDBwWHLcIV8F7AFcikFTPLwUD4RwORQ=
+github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.52.2 h1:x70m+BDz3StqBNip5ymfwaLq2T5smsNwtCe7ygN2/v4=
+github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.52.2/go.mod h1:KSWhI1V5x80r8NUqs8QDkOazDolFqFUAjsyE5nYjKro=
 github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.73.0 h1:JmrHkELR2Q0O28swrFMm0hZNwpQrV8qmbhnb7suKIfc=
 github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.73.0/go.mod h1:MLJu3PUd8fp5Qvj4CiLvyY5H8y7kxHKlTp060Wsd+Vc=
 github.com/aws/aws-sdk-go-v2/service/ec2 v1.307.0 h1:ZQMhFWDFhwJbq3xCggO0gh3AW+yu65QtcT9F5HfdZhY=
@@ -888,12 +888,12 @@ github.com/aws/aws-sdk-go-v2/service/kms v1.41.2 h1:zJeUxFP7+XP52u23vrp4zMcVhShT
 github.com/aws/aws-sdk-go-v2/service/kms v1.41.2/go.mod h1:Pqd9k4TuespkireN206cK2QBsaBTL6X+VPAez5Qcijk=
 github.com/aws/aws-sdk-go-v2/service/lightsail v1.56.1 h1:bbOZEcMgnUQocfDoaaU2f148Te/MpUk6FkOGtJyfwlg=
 github.com/aws/aws-sdk-go-v2/service/lightsail v1.56.1/go.mod h1:428ttHou5n2J4/oQAQS9EmOU6LrBv48F2bGk+Ta7EF4=
-github.com/aws/aws-sdk-go-v2/service/oam v1.18.3 h1:teOWtElLARLOhpYWwupjLbY9j5I/yZ/H1I8jg41An78=
-github.com/aws/aws-sdk-go-v2/service/oam v1.18.3/go.mod h1:wGhpdyftHX6/1U4egowHkYdypwBMjpb+KjAAprv6z20=
+github.com/aws/aws-sdk-go-v2/service/oam v1.23.4 h1:Lyu5p6EP+3qmS9XjFnoZCuTwpodRJSOY7qhYdpemUuM=
+github.com/aws/aws-sdk-go-v2/service/oam v1.23.4/go.mod h1:pz+AbYsaeY7dySgPSGl/Zr1zPJMOyOE/mR9+XtyhV9c=
 github.com/aws/aws-sdk-go-v2/service/rds v1.119.3 h1:SIGdk+wA+xGXgN+L7Jr3Ot83Mjh3jpjyJIwZd3DqAnU=
 github.com/aws/aws-sdk-go-v2/service/rds v1.119.3/go.mod h1:zCRPUdp05FEZG3OO7LmJq9xkSDjMEhkiVrZV0oJs2a0=
-github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.26.6 h1:PwbxovpcJvb25k019bkibvJfCpCmIANOFrXZIFPmRzk=
-github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.26.6/go.mod h1:Z4xLt5mXspLKjBV92i165wAJ/3T6TIv4n7RtIS8pWV0=
+github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.30.12 h1:7b7DlIKtrqSzikjsQSQ7IJ661CJXKSIlNHvSru/yQ3c=
+github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.30.12/go.mod h1:+nL0z6xUm9NK9bOAkam66NQDgNH8Qa6T6SS3f8dkzXU=
 github.com/aws/aws-sdk-go-v2/service/s3 v1.101.0 h1:etqBTKY581iwLL/H/S2sVgk3C9lAsTJFeXWFDsDcWOU=
 github.com/aws/aws-sdk-go-v2/service/s3 v1.101.0/go.mod h1:L2dcoOgS2VSgbPLvpak2NyUPsO1TBN7M45Z4H7DlRc4=
 github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.40.1 h1:w6a0H79HrHf3lr+zrw+pSzR5B+caiQFAKiNHlrUcnoc=
