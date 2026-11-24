@@ -4,7 +4,7 @@ import { getEchoSrv } from '../services/EchoSrv';
 
 export type SettingsAccessSource = 'config' | 'bootData';
 
-export type SettingsAccessReporter = (props: { path: string; source: SettingsAccessSource; count: number }) => void;
+type SettingsAccessReporter = (props: { path: string; source: SettingsAccessSource; count: number }) => void;
 
 let report: SettingsAccessReporter | undefined;
 
