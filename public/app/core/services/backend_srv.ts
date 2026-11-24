@@ -105,7 +105,9 @@ export class BackendSrv implements BackendService {
     this.fetchQueue = new FetchQueue();
     this.responseQueue = new ResponseQueue(this.fetchQueue, this.internalFetch);
 
-    this.initGrafanaDeviceID();
+    if (config.anonymousEnabled) {
+      this.initGrafanaDeviceID();
+    }
 
     new FetchQueueWorker(this.fetchQueue, this.responseQueue, getConfig());
   }
