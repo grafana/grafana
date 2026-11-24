@@ -63,6 +63,8 @@ export interface DashboardSceneSerializerLike<T, M, I = T, E = T | { error: unkn
   getK8SMetadata: () => Partial<ObjectMeta> | undefined;
   /** Replace k8s annotations on the serializer metadata (V1 nests under meta.k8s; V2 is ObjectMeta). */
   setK8SAnnotations: (annotations: Record<string, string>) => void;
+  /** Replace k8s labels on the serializer metadata (V1 nests under meta.k8s; V2 is ObjectMeta). */
+  setK8SLabels: (labels: Record<string, string>) => void;
 }
 
 export interface DashboardTrackingInfo {
@@ -244,6 +246,16 @@ export class V1DashboardSerializer
       k8s: {
         ...this.metadata?.k8s,
         annotations,
+      },
+    };
+  }
+
+  setK8SLabels(labels: Record<string, string>) {
+    this.metadata = {
+      ...this.metadata,
+      k8s: {
+        ...this.metadata?.k8s,
+        labels,
       },
     };
   }
@@ -483,6 +495,17 @@ export class V2DashboardSerializer
         creationTimestamp: '',
       }),
       annotations,
+    };
+  }
+
+  setK8SLabels(labels: Record<string, string>) {
+    this.metadata = {
+      ...(this.metadata ?? {
+        name: '',
+        resourceVersion: '',
+        creationTimestamp: '',
+      }),
+      labels,
     };
   }
 

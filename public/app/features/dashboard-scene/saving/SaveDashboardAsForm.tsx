@@ -12,6 +12,7 @@ import { type DashboardScene } from '../scene/DashboardScene';
 
 import { FolderDescription } from './FolderDescription';
 import { type SaveDashboardDrawer } from './SaveDashboardDrawer';
+import { getDraftDashboardExtension } from './enterprise-components/DraftDashboardExtension';
 import { getSaveDashboardErrorInfo } from './saveErrors';
 import {
   type DashboardChangeInfo,
@@ -108,7 +109,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, drawer, isHeld }: P
     [setValue, trigger]
   );
 
-  const onSave = async (overwrite: boolean) => {
+  const onSave = async (overwrite: boolean, publish = false) => {
     if (isHeld) {
       return;
     }
@@ -134,6 +135,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, drawer, isHeld }: P
 
     const result = await onSaveDashboard(dashboard, {
       overwrite,
+      publish,
       folderUid: data.folder.uid,
       rawDashboardJSON: changedSaveModel,
 
@@ -176,6 +178,10 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, drawer, isHeld }: P
       <SaveButton isValid={isValid} isLoading={state.loading} disabled={isHeld} onSave={onSave} overwrite={overwrite} />
     );
   };
+  const SaveAndPublishButton = getDraftDashboardExtension()?.isEnabled()
+    ? getDraftDashboardExtension()?.SaveAndPublishButton
+    : undefined;
+
   function renderFooter(error?: Error) {
     const formValuesMatchContentSent =
       formValues.title.trim() === contentSent.title?.trim() && formValues.folder.uid === contentSent.folderUid;
@@ -190,6 +196,9 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, drawer, isHeld }: P
         {errorInfo && <SaveDashboardErrorAlert info={errorInfo} />}
         <Stack alignItems="center">
           {saveButton(false)}
+          {SaveAndPublishButton && (
+            <SaveAndPublishButton disabled={!isValid || state.loading || isHeld} onClick={() => onSave(false, true)} />
+          )}
           {cancelButton}
         </Stack>
       </>

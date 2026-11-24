@@ -23,6 +23,7 @@ import { useSelector } from 'app/types/store';
 import { selectFolderRepository } from '../../provisioning/utils/selectors';
 import { savesPendingChanges } from '../lifecycle/pendingChangesSave';
 import { openPanelEditor } from '../panel-edit/openPanelEditor';
+import { getDraftDashboardExtension } from '../saving/enterprise-components/DraftDashboardExtension';
 import ExportButton from '../sharing/ExportButton/ExportButton';
 import ShareButton from '../sharing/ShareButton/ShareButton';
 import { DashboardInteractions } from '../utils/interactions';
@@ -36,6 +37,7 @@ import { ManagedDashboardNavBarBadge } from './ManagedDashboardNavBarBadge';
 import { Actions } from './new-toolbar/Actions';
 import { BreadcrumbActions } from './new-toolbar/BreadcrumbActions';
 import { PlanningBanner } from './new-toolbar/PlanningBanner';
+import { DraftDashboardBadge } from './new-toolbar/actions/DraftDashboardBadge';
 import { PublicDashboardBadge } from './new-toolbar/actions/PublicDashboardBadge';
 
 interface Props {
@@ -109,6 +111,7 @@ export function ToolbarActions({ dashboard }: Props) {
     folderName: folderUid,
   });
   const isMobileEditDeprecated = useIsMobileEditDeprecated();
+  const isDraftWithExtension = Boolean(uid) && Boolean(getDraftDashboardExtension()) && dashboard.isDraft(meta);
 
   if (!isEditingPanel) {
     // This adds the presence indicators in enterprise
@@ -140,6 +143,12 @@ export function ToolbarActions({ dashboard }: Props) {
     render: () => {
       return <PublicDashboardBadge key="public-dashboard-badge" dashboard={dashboard} />;
     },
+  });
+
+  toolbarActions.push({
+    group: 'icon-actions',
+    condition: isDraftWithExtension,
+    render: () => <DraftDashboardBadge key="draft-dashboard-badge" dashboard={dashboard} />,
   });
 
   // Only users who could otherwise edit need to know why they can't.

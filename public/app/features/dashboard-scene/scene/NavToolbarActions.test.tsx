@@ -8,6 +8,7 @@ import { LocationServiceProvider, locationService } from '@grafana/runtime';
 import { SceneQueryRunner, SceneTimeRange, UrlSyncContextProvider, VizPanel } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { mockLocalStorage } from 'app/features/alerting/unified/testSetup/mockLocalStorage';
+import { LabelKeyLifecycle, LifecycleDraft } from 'app/features/apiserver/types';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import {
   RepoViewStatus,
@@ -17,6 +18,7 @@ import {
 import { type DashboardMeta } from 'app/types/dashboard';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
+import { registerDraftDashboardExtension } from '../saving/enterprise-components/DraftDashboardExtension';
 import { DashboardInteractions } from '../utils/interactions';
 
 import { DashboardScene } from './DashboardScene';
@@ -248,6 +250,34 @@ describe('NavToolbarActions', () => {
       });
 
       expect(screen.queryByTestId('button-snapshot')).toBeInTheDocument();
+    });
+  });
+
+  describe('Draft dashboards', () => {
+    beforeEach(() => {
+      registerDraftDashboardExtension({
+        isEnabled: () => true,
+        getCreateLabels: async () => ({}),
+        DraftBadge: () => <span>Draft badge</span>,
+        SaveAndPublishButton: () => null,
+      });
+    });
+
+    afterEach(() => {
+      registerDraftDashboardExtension(null);
+    });
+
+    it('shows the draft badge for a draft', async () => {
+      setup({ k8s: { labels: { [LabelKeyLifecycle]: LifecycleDraft } } });
+
+      expect(await screen.findByText('Draft badge')).toBeInTheDocument();
+    });
+
+    it('does not show the draft badge for a published dashboard', async () => {
+      setup();
+
+      expect(await screen.findByText('Share')).toBeInTheDocument();
+      expect(screen.queryByText('Draft badge')).not.toBeInTheDocument();
     });
   });
 

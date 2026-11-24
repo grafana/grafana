@@ -11,7 +11,10 @@ import {
   AnnoKeyMessage,
   AnnoKeySavedFromUI,
   DeprecatedInternalId,
+  LabelKeyLifecycle,
+  LifecycleDraft,
 } from 'app/features/apiserver/types';
+import { registerDraftDashboardExtension } from 'app/features/dashboard-scene/saving/enterprise-components/DraftDashboardExtension';
 
 import { dashboardAPIVersionResolver } from './DashboardAPIVersionResolver';
 import { type DashboardWithAccessInfo, type DashboardWithLoadInfo } from './types';
@@ -380,6 +383,91 @@ describe('v2 dashboard API', () => {
       expect(requestBody.metadata.annotations).toEqual(
         expect.objectContaining({ [AnnoKeyGrantPermissions]: 'default' })
       );
+    });
+  });
+
+  describe('draft dashboard create labels', () => {
+    const getCreateLabels = jest.fn().mockResolvedValue({ [LabelKeyLifecycle]: LifecycleDraft });
+
+    beforeEach(() => {
+      registerDraftDashboardExtension({
+        isEnabled: () => true,
+        getCreateLabels,
+        DraftBadge: () => null,
+        SaveAndPublishButton: () => null,
+      });
+    });
+
+    afterEach(() => {
+      registerDraftDashboardExtension(null);
+    });
+
+    it('adds the extension labels when creating a dashboard', async () => {
+      const api = new K8sDashboardV2API();
+      await api.saveDashboard({ dashboard: defaultDashboardV2Spec(), k8s: {} });
+
+      expect(mockPost).toHaveBeenCalledTimes(1);
+      expect(mockPost.mock.calls[0][1].metadata.labels).toEqual({ [LabelKeyLifecycle]: LifecycleDraft });
+    });
+
+    it('does not add the extension labels when creating a dashboard published', async () => {
+      const api = new K8sDashboardV2API();
+      await api.saveDashboard({ dashboard: defaultDashboardV2Spec(), k8s: {}, publish: true });
+
+      expect(mockPost).toHaveBeenCalledTimes(1);
+      expect(mockPost.mock.calls[0][1].metadata.labels).toBeUndefined();
+      expect(getCreateLabels).not.toHaveBeenCalled();
+    });
+
+    it('removes the draft label when saving a draft published', async () => {
+      const api = new K8sDashboardV2API();
+      await api.saveDashboard({
+        dashboard: defaultDashboardV2Spec(),
+        k8s: { name: 'test-dash', labels: { [LabelKeyLifecycle]: LifecycleDraft } },
+        publish: true,
+      });
+
+      expect(mockPut).toHaveBeenCalledTimes(1);
+      expect(mockPut.mock.calls[0][1].metadata.labels).toEqual({});
+    });
+
+    it('does not add the extension labels when draft mode is off', async () => {
+      registerDraftDashboardExtension({
+        isEnabled: () => false,
+        getCreateLabels,
+        DraftBadge: () => null,
+        SaveAndPublishButton: () => null,
+      });
+      const api = new K8sDashboardV2API();
+      await api.saveDashboard({ dashboard: defaultDashboardV2Spec(), k8s: {} });
+
+      expect(mockPost).toHaveBeenCalledTimes(1);
+      expect(mockPost.mock.calls[0][1].metadata.labels).toBeUndefined();
+      expect(getCreateLabels).not.toHaveBeenCalled();
+    });
+
+    it('leaves the caller labels untouched when saving published fails', async () => {
+      mockPut.mockRejectedValueOnce(new Error('save failed'));
+      const labels = { [LabelKeyLifecycle]: LifecycleDraft };
+      const api = new K8sDashboardV2API();
+
+      await expect(
+        api.saveDashboard({ dashboard: defaultDashboardV2Spec(), k8s: { name: 'test-dash', labels }, publish: true })
+      ).rejects.toThrow('save failed');
+
+      expect(labels).toEqual({ [LabelKeyLifecycle]: LifecycleDraft });
+    });
+
+    it('does not ask for or add the extension labels when updating a dashboard', async () => {
+      const api = new K8sDashboardV2API();
+      await api.saveDashboard({
+        dashboard: defaultDashboardV2Spec(),
+        k8s: { name: 'test-dash' },
+      });
+
+      expect(mockPut).toHaveBeenCalledTimes(1);
+      expect(mockPut.mock.calls[0][1].metadata.labels).toBeUndefined();
+      expect(getCreateLabels).not.toHaveBeenCalled();
     });
   });
 
