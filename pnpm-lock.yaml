@@ -863,9 +863,6 @@ importers:
       '@types/react-refresh':
         specifier: ^0
         version: 0.14.7
-      '@types/react-resizable':
-        specifier: 4.0.0
-        version: 4.0.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@types/react-router':
         specifier: 5.1.20
         version: 5.1.20
@@ -7335,10 +7332,6 @@ packages:
 
   '@types/react-refresh@0.14.7':
     resolution: {integrity: sha512-XIdFxBMm9VdO49M+Nn4Ud3eVwRub6vhJjCzd7g09kUF5NKsITGoCEwCXE1YupIRPo7A6JGc5fUV2Y5l31OYxcA==}
-
-  '@types/react-resizable@4.0.0':
-    resolution: {integrity: sha512-zEMfyoFP/I6L796+dIjXeAVL2q7C4vwCXwQW2be79uPZAQLsI/pU1NOVqqfVQG3FkIxr/n96KjhzdRnWGZcTcg==}
-    deprecated: This is a stub types definition. react-resizable provides its own type definitions, so you do not need this installed.
 
   '@types/react-router-dom@5.3.3':
     resolution: {integrity: sha512-kpqnYK4wcdm5UaWI3fLcELopqLrHgLqNsdpHauzlQktfkHL3npOSwtj1Uz9oKBAzs7lFtVkV8j83voAz2D8fhw==}
@@ -20671,13 +20664,6 @@ snapshots:
     dependencies:
       '@types/babel__core': 7.20.5
       csstype: 3.2.3
-
-  '@types/react-resizable@4.0.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
-    dependencies:
-      react-resizable: 4.0.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-    transitivePeerDependencies:
-      - react
-      - react-dom
 
   '@types/react-router-dom@5.3.3':
     dependencies:
