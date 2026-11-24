@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 
 	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -24,10 +23,14 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (r
 		return fmt.Errorf("failed to setup provisioning controller: %w", err)
 	}
 
-	ctx, stopSubscriber, err := supervision.Start(ctx, controllerCfg.natsSubscriber)
+	manifestWatcher, err := controllerCfg.ManifestWatcher()
+	if err != nil {
+		return err
+	}
+	ctx, stopServices, err := supervision.Start(ctx, controllerCfg.natsSubscriber, manifestWatcher)
 	defer func() {
 		deps.HealthNotifier.SetNotReady()
-		runErr = errors.Join(runErr, stopSubscriber())
+		runErr = errors.Join(runErr, stopServices())
 	}()
 	if err != nil {
 		return err
@@ -41,9 +44,6 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (r
 	clients, err := controllerCfg.Clients()
 	if err != nil {
 		return fmt.Errorf("failed to get clients: %w", err)
-	}
-	if err := services.StartAndAwaitRunning(ctx, controllerCfg.manifestWatcher); err != nil {
-		return fmt.Errorf("failed to start manifest watcher: %w", err)
 	}
 
 	resourceLister, err := controllerCfg.ResourceLister()

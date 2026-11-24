@@ -233,10 +233,12 @@ func TestControllersOwnNATSSubscriber(t *testing.T) {
 	for _, controller := range []struct {
 		name string
 		run  func(context.Context, server.OperatorDependencies) error
+		// Controllers that read managed resources keep their kinds current.
+		watchesManifests bool
 	}{
-		{"repository", RunRepoController},
-		{"connection", RunConnectionController},
-		{"job queue", RunJobQueueController},
+		{"repository", RunRepoController, true},
+		{"connection", RunConnectionController, false},
+		{"job queue", RunJobQueueController, true},
 	} {
 		t.Run(controller.name, func(t *testing.T) {
 			srv, err := natsserver.NewServer(&natsserver.Options{Host: "127.0.0.1", Port: natsserver.RANDOM_PORT, NoLog: true, NoSigs: true})
@@ -267,12 +269,13 @@ func TestControllersOwnNATSSubscriber(t *testing.T) {
 			restCfg := &rest.Config{Host: api.URL, APIPath: "/apis"}
 			provisioningClient, err := client.NewForConfig(restCfg)
 			require.NoError(t, err)
+			manifestWatcher := services.NewIdleService(nil, nil)
 			registeredConfigOptions = []ConfigOption{func(_ context.Context, cfg *ControllerConfig) error {
 				cfg.tracer = tracing.NewNoopTracerService()
 				cfg.provisioningClient = provisioningClient
 				cfg.provisioningRESTCfg = restCfg
 				cfg.clients = resources.NewMockClientFactory(t)
-				cfg.manifestWatcher = services.NewIdleService(nil, nil)
+				cfg.manifestWatcher = manifestWatcher
 				// Empty resource lists must not access unified storage.
 				cfg.unified = &struct{ resources.ResourceStore }{}
 				cfg.repositoryFactory, err = repository.ProvideFactory(nil, nil, cfg.tracer)
@@ -306,6 +309,11 @@ func TestControllersOwnNATSSubscriber(t *testing.T) {
 				t.Fatal("controller did not stop")
 			}
 			require.Eventually(t, func() bool { return srv.NumClients() == 0 }, time.Second, time.Millisecond, "controller must close its subscriber on shutdown")
+			if controller.watchesManifests {
+				require.Equal(t, services.Terminated, manifestWatcher.State(), "controller must stop its manifest watcher on shutdown")
+			} else {
+				require.Equal(t, services.New, manifestWatcher.State())
+			}
 		})
 	}
 }

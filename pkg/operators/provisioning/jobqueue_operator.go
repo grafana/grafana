@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/operators/internal/supervision"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/server"
@@ -25,10 +24,14 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 		return fmt.Errorf("failed to setup operator: %w", err)
 	}
 
-	ctx, stopSubscriber, err := supervision.Start(ctx, controllerCfg.natsSubscriber)
+	manifestWatcher, err := controllerCfg.ManifestWatcher()
+	if err != nil {
+		return err
+	}
+	ctx, stopServices, err := supervision.Start(ctx, controllerCfg.natsSubscriber, manifestWatcher)
 	defer func() {
 		deps.HealthNotifier.SetNotReady()
-		runErr = errors.Join(runErr, stopSubscriber())
+		runErr = errors.Join(runErr, stopServices())
 	}()
 	if err != nil {
 		return err
@@ -48,9 +51,6 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 	queue, err := buildJobQueue(controllerCfg, deps.Registerer, jobStore, jobHistoryWriter)
 	if err != nil {
 		return fmt.Errorf("build job queue: %w", err)
-	}
-	if err := services.StartAndAwaitRunning(ctx, controllerCfg.manifestWatcher); err != nil {
-		return fmt.Errorf("failed to start manifest watcher: %w", err)
 	}
 
 	var wg sync.WaitGroup

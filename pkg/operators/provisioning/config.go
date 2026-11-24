@@ -263,6 +263,15 @@ func (c *ControllerConfig) NewSupportedResourceProvider() (resources.SupportedRe
 	return resources.NewSupportedResourceProvider(configured), nil
 }
 
+// ManifestWatcher returns the unstarted service that keeps the supported
+// resources of [ControllerConfig.Clients] in sync with the API servers.
+func (c *ControllerConfig) ManifestWatcher() (services.Service, error) {
+	if _, err := c.Clients(); err != nil {
+		return nil, fmt.Errorf("failed to get clients: %w", err)
+	}
+	return c.manifestWatcher, nil
+}
+
 // Clients Clients are clients that are used to connect to the different API servers.
 func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 	if c.clients != nil {

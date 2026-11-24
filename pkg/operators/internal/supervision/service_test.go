@@ -33,7 +33,7 @@ func TestWatch(t *testing.T) {
 					return nil
 				}
 			}, nil)
-			ctx, stop := Watch(t.Context(), svc)
+			ctx, stop := watch(t.Context(), svc)
 			defer func() { require.ErrorIs(t, stop(), failure) }()
 			if phase == "startup" {
 				require.Error(t, services.StartAndAwaitRunning(ctx, svc))
@@ -57,7 +57,7 @@ func TestWatch(t *testing.T) {
 	for name, started := range map[string]bool{"cleanup before startup": false, "normal shutdown": true} {
 		t.Run(name, func(t *testing.T) {
 			svc := services.NewIdleService(nil, nil)
-			ctx, stop := Watch(t.Context(), svc)
+			ctx, stop := watch(t.Context(), svc)
 			if started {
 				require.NoError(t, services.StartAndAwaitRunning(ctx, svc))
 			}
@@ -72,7 +72,7 @@ func TestWatch(t *testing.T) {
 		parent, cancel := context.WithCancel(t.Context())
 		defer cancel()
 		svc := services.NewIdleService(nil, nil)
-		ctx, stop := Watch(parent, svc)
+		ctx, stop := watch(parent, svc)
 		defer func() { require.NoError(t, stop()) }()
 		require.NoError(t, services.StartAndAwaitRunning(ctx, svc))
 		cancel()
@@ -105,5 +105,69 @@ func TestStart(t *testing.T) {
 		require.NoError(t, ctx.Err())
 		require.NoError(t, stop())
 		require.Equal(t, services.Terminated, svc.State())
+	})
+}
+
+func TestStart_MultipleServices(t *testing.T) {
+	t.Run("a later startup failure still stops the services already started", func(t *testing.T) {
+		failure := errors.New("manifest watcher failed")
+		first := services.NewIdleService(nil, nil)
+		second := services.NewBasicService(func(context.Context) error { return failure }, func(ctx context.Context) error {
+			<-ctx.Done()
+			return nil
+		}, nil)
+
+		_, stop, err := Start(t.Context(), first, second)
+		require.ErrorIs(t, err, failure)
+		require.ErrorIs(t, stop(), failure)
+		require.Equal(t, services.Terminated, first.State())
+	})
+
+	t.Run("a running failure cancels the operator and stop reports it", func(t *testing.T) {
+		failure := errors.New("subscriber failed")
+		fail := make(chan struct{})
+		failing := services.NewBasicService(nil, func(ctx context.Context) error {
+			select {
+			case <-fail:
+				return failure
+			case <-ctx.Done():
+				return nil
+			}
+		}, nil)
+		healthy := services.NewIdleService(nil, nil)
+
+		ctx, stop, err := Start(t.Context(), failing, healthy)
+		require.NoError(t, err)
+		close(fail)
+		select {
+		case <-ctx.Done():
+			require.ErrorIs(t, context.Cause(ctx), failure)
+		case <-time.After(time.Second):
+			t.Fatal("service failure did not cancel operator")
+		}
+		require.ErrorIs(t, stop(), failure)
+		require.Equal(t, services.Terminated, healthy.State())
+	})
+
+	t.Run("stops services in reverse start order", func(t *testing.T) {
+		var stopped []string
+		newService := func(name string) services.Service {
+			return services.NewIdleService(nil, func(error) error {
+				stopped = append(stopped, name)
+				return nil
+			})
+		}
+
+		_, stop, err := Start(t.Context(), newService("subscriber"), newService("watcher"))
+		require.NoError(t, err)
+		require.NoError(t, stop())
+		require.Equal(t, []string{"watcher", "subscriber"}, stopped)
+	})
+
+	t.Run("no services", func(t *testing.T) {
+		ctx, stop, err := Start(t.Context())
+		require.NoError(t, err)
+		require.NoError(t, ctx.Err())
+		require.NoError(t, stop())
 	})
 }
