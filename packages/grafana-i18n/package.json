@@ -60,7 +60,7 @@
     "i18next": "^27.0.0",
     "i18next-browser-languagedetector": "^8.0.0",
     "i18next-pseudo": "^2.2.1",
-    "micro-memoize": "^4.1.2",
+    "micro-memoize": "^5.0.0",
     "react-i18next": "^18.0.0"
   },
   "devDependencies": {
