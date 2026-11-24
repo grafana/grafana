@@ -11,6 +11,7 @@ import { serializeStateToUrlParam, toURLRange } from './url';
 
 export const DataLinkBuiltInVars = {
   keepTime: '__url_time_range',
+  keepTabs: '__url_tab_state',
   timeRangeFrom: '__from',
   timeRangeTo: '__to',
   includeVars: '__all_variables',

@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 var (
@@ -49,9 +49,9 @@ const (
 type Decrypter = func(r *provisioning.Repository) SecureValues
 
 type SecureValues interface {
-	Token(ctx context.Context) (common.RawSecureValue, error)
-	WebhookSecret(ctx context.Context) (common.RawSecureValue, error)
-	CommitSigningKey(ctx context.Context) (common.RawSecureValue, error)
+	Token(ctx context.Context) (resource.RawSecureValue, error)
+	WebhookSecret(ctx context.Context) (resource.RawSecureValue, error)
+	CommitSigningKey(ctx context.Context) (resource.RawSecureValue, error)
 }
 
 type secureValues struct {
@@ -61,7 +61,7 @@ type secureValues struct {
 	namespace string
 }
 
-func (s *secureValues) get(ctx context.Context, sv common.InlineSecureValue, st secretTypeLabel) (_ common.RawSecureValue, err error) {
+func (s *secureValues) get(ctx context.Context, sv resource.InlineSecureValue, st secretTypeLabel) (_ resource.RawSecureValue, err error) {
 	if !sv.Create.IsZero() {
 		return sv.Create, nil // If this was called before the value is actually saved
 	}
@@ -103,7 +103,7 @@ func (s *secureValues) get(ctx context.Context, sv common.InlineSecureValue, st 
 		return "", fmt.Errorf("%w: decrypt %q: %w", ErrSecretDecryptFailed, sv.Name, err)
 	}
 
-	return common.RawSecureValue(*v.Value()), nil
+	return resource.RawSecureValue(*v.Value()), nil
 }
 
 // isNotFoundErr reports whether a per-item decrypt error means the secret does not
@@ -112,7 +112,7 @@ func isNotFoundErr(err error) bool {
 	return err != nil && strings.Contains(strings.ToLower(err.Error()), "not found")
 }
 
-func (s *secureValues) Token(ctx context.Context) (common.RawSecureValue, error) {
+func (s *secureValues) Token(ctx context.Context) (resource.RawSecureValue, error) {
 	v, err := s.get(ctx, s.names.Token, secretTypeToken)
 	if errors.Is(err, ErrSecretNotFound) {
 		return "", fmt.Errorf("%w: %w", ErrTokenNotFound, err)
@@ -120,11 +120,11 @@ func (s *secureValues) Token(ctx context.Context) (common.RawSecureValue, error)
 	return v, err
 }
 
-func (s *secureValues) WebhookSecret(ctx context.Context) (common.RawSecureValue, error) {
+func (s *secureValues) WebhookSecret(ctx context.Context) (resource.RawSecureValue, error) {
 	return s.get(ctx, s.names.WebhookSecret, secretTypeWebhookSecret)
 }
 
-func (s *secureValues) CommitSigningKey(ctx context.Context) (common.RawSecureValue, error) {
+func (s *secureValues) CommitSigningKey(ctx context.Context) (resource.RawSecureValue, error) {
 	return s.get(ctx, s.names.CommitSigningKey, secretTypeCommitSigningKey)
 }
 

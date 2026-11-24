@@ -304,7 +304,9 @@ func decode(raw []byte, err error) (map[string]any, error) {
 	return out, json.Unmarshal(raw, &out)
 }
 
-// readUnified reads a rule straight from unified storage, bypassing the dual writer.
+// readUnified reads a rule straight from unified storage, bypassing the dual writer. Modes 1-3 copy a created
+// rule there in the background, so the copy can lag behind the create response. The wait matches the
+// dual writer's one minute background request timeout, after which the copy can no longer arrive.
 func readUnified(t *testing.T, helper *apis.K8sTestHelper, resource, name string) map[string]any {
 	t.Helper()
 	ctx, _ := identity.WithServiceIdentity(context.Background(), helper.Org1.OrgID)
@@ -314,7 +316,7 @@ func readUnified(t *testing.T, helper *apis.K8sTestHelper, resource, name string
 		rsp, err := helper.GetEnv().ResourceClient.Read(ctx, &resourcepb.ReadRequest{Key: key})
 		require.NoError(c, err)
 		require.NoError(c, json.Unmarshal(rsp.Value, &out))
-	}, 5*time.Second, 50*time.Millisecond)
+	}, time.Minute, 50*time.Millisecond)
 	return out
 }
 

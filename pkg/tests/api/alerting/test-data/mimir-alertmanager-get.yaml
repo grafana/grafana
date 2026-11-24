@@ -126,9 +126,12 @@ receivers:
           follow_redirects: true
           enable_http2: true
         api_url: http://localhost/jira
+        api_type: auto
         project: PROJ
-        summary: '{{ template "jira.default.summary" . }}'
-        description: '{{ template "jira.default.description" . }}'
+        summary:
+          template: '{{ template "jira.default.summary" . }}'
+        description:
+          template: '{{ template "jira.default.description" . }}'
         labels:
           - alertmanager
           - '{{ .CommonLabels.severity }}'

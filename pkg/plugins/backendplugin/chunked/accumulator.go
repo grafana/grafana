@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/datasourcetest"
@@ -48,6 +49,8 @@ func AccumulateJSONLines(jsonl io.Reader) (*backend.QueryDataResponse, error) {
 					chunk.Error, err = readStringValue(decoder)
 				case "errorSource":
 					chunk.ErrorSource, err = readStringValue(decoder)
+				case "status":
+					chunk.Status, err = readInt32Value(decoder)
 
 				case "frame":
 					val, err = decoder.ReadValue()
@@ -58,6 +61,9 @@ func AccumulateJSONLines(jsonl io.Reader) (*backend.QueryDataResponse, error) {
 
 				default:
 					err = fmt.Errorf("unsupported property: %s (offset:%d)", key, decoder.InputOffset())
+				}
+				if err != nil {
+					break
 				}
 			}
 
@@ -99,4 +105,22 @@ func readStringValue(d *jsontext.Decoder) (string, error) {
 		return "", fmt.Errorf("expected string")
 	}
 	return val.String(), nil
+}
+
+func readInt32Value(d *jsontext.Decoder) (int32, error) {
+	val, err := d.ReadToken()
+	if err != nil {
+		return 0, err
+	}
+	if val.Kind() != '0' {
+		return 0, fmt.Errorf("expected number (offset:%d)", d.InputOffset())
+	}
+	n, err := val.Int()
+	if err != nil {
+		return 0, err
+	}
+	if n < math.MinInt32 || n > math.MaxInt32 {
+		return 0, fmt.Errorf("number out of range: %d", n)
+	}
+	return int32(n), nil
 }

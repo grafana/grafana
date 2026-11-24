@@ -428,9 +428,8 @@ func TestUpdateTeamLBACRulesAPIGroupWithNoopInstaller(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Equal(t, authorizer.DecisionDeny, decision)
-	storage := map[string]rest.Storage{
-		iamv0.TeamResourceInfo.StoragePath(): &noopstorage.NoopREST{ResourceInfo: iamv0.TeamResourceInfo},
-	}
+	b.teamStorage = &noopstorage.NoopREST{ResourceInfo: iamv0.TeamResourceInfo}
+	storage := map[string]rest.Storage{}
 
 	err = b.UpdateTeamLBACRulesAPIGroup(&genericapiserver.APIGroupInfo{}, builder.APIGroupOptions{}, storage)
 	require.NoError(t, err)
