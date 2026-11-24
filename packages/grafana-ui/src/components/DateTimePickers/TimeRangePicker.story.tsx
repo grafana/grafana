@@ -5,6 +5,7 @@ import { useArgs } from 'storybook/preview-api';
 import { dateTime, DefaultTimeZone } from '@grafana/data';
 
 import { ExperimentalTimeRangePicker as TimeRangePicker } from './TimeRangePicker';
+import mdx from './TimeRangePicker.mdx';
 
 const to = dateTime();
 const from = to.subtract(6, 'h');
@@ -25,6 +26,9 @@ const meta: Meta<typeof TimeRangePicker> = {
     history: [],
   },
   parameters: {
+    docs: {
+      page: mdx,
+    },
     controls: {
       exclude: [
         'onChange',
