@@ -47,9 +47,6 @@ type pluginKey struct {
 //   - [plugin.<id>] cdn_url = <url>: the plugin is served from the URL (declarative). Nested plugins listed in the
 //     plugin's "includes" are discovered relative to that URL, so only the parent needs to be configured.
 //   - [plugins] cdn_base_url plus [plugin.<id>] cdn = true and cdn_version: the URL is built from a template.
-//
-// This is not a supported way for customers to install plugins. It exists for hosted environments, and for
-// plugin frontend development (e.g. pointing at a local dev server).
 type Source struct {
 	cdnService *pluginscdn.Service
 	cfg        *config.PluginManagementCfg

@@ -285,7 +285,7 @@ func TestRemoteProvider_AssetPath(t *testing.T) {
 				grafanaCDNURL:  "https://cdn.example.com",
 				staticRootPath: "/usr/share/grafana/public",
 				pluginsCDN: pluginscdn.ProvideService(&config.PluginManagementCfg{
-					PluginsCDNURLTemplate: "https://plugins-cdn.grafana.com",
+					PluginsCDNURLTemplate: "https://plugins-cdn.example.com",
 					PluginSettings: map[string]map[string]string{
 						"cdn-plugin": {"cdn": "true"},
 					},
@@ -301,7 +301,7 @@ func TestRemoteProvider_AssetPath(t *testing.T) {
 				FS:    plugins.NewLocalFS("/var/lib/grafana/plugins/cdn-plugin"),
 			},
 			assetPath: []string{"module.js"},
-			expected:  "https://plugins-cdn.grafana.com/cdn-plugin/1.0.0/public/plugins/cdn-plugin/module.js",
+			expected:  "https://plugins-cdn.example.com/cdn-plugin/1.0.0/public/plugins/cdn-plugin/module.js",
 		},
 		{
 			name: "child plugin with parent supported by CDN",
@@ -309,7 +309,7 @@ func TestRemoteProvider_AssetPath(t *testing.T) {
 				grafanaCDNURL:  "https://cdn.example.com",
 				staticRootPath: "/usr/share/grafana/public",
 				pluginsCDN: pluginscdn.ProvideService(&config.PluginManagementCfg{
-					PluginsCDNURLTemplate: "https://plugins-cdn.grafana.com",
+					PluginsCDNURLTemplate: "https://plugins-cdn.example.com",
 					PluginSettings: map[string]map[string]string{
 						"parent-app": {"cdn": "true"},
 					},
@@ -329,7 +329,7 @@ func TestRemoteProvider_AssetPath(t *testing.T) {
 				},
 			},
 			assetPath: []string{"module.js"},
-			expected:  "https://plugins-cdn.grafana.com/parent-app/2.0.0/public/plugins/parent-app/panels/child/module.js",
+			expected:  "https://plugins-cdn.example.com/parent-app/2.0.0/public/plugins/parent-app/panels/child/module.js",
 		},
 		{
 			name: "fallback to local provider when not under static root and not CDN supported",

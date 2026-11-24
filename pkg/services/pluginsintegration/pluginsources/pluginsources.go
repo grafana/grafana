@@ -51,8 +51,7 @@ func (s *Service) LocalSources(_ context.Context) []plugins.PluginSource {
 }
 
 // remoteSources provides the source for plugins that are served from a remote URL ([plugin.<id>] cdn_url).
-// This is only available in development mode, e.g. to load a plugin's frontend from a dev server. It is not
-// a supported way to install plugins.
+// It is only registered in development mode.
 func (s *Service) remoteSources() []plugins.PluginSource {
 	if !s.cfg.DevMode {
 		return nil
