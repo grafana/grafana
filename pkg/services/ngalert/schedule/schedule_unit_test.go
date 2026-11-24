@@ -1533,3 +1533,45 @@ func assertScheduledContains(t *testing.T, scheduled []readyToRunItem, rule *mod
 	}
 	require.True(t, contains, "Expected a scheduled rule with key %s title %s but didn't get one, scheduled rules were %v", rule.GetKey(), rule.Title, scheduled)
 }
+
+func TestProcessTickOrphanedStateCleanup(t *testing.T) {
+	ctx := context.Background()
+	gen := models.RuleGen
+
+	// A rule whose state was warmed into the cache but that no longer exists
+	// in the store, as if it was deleted between the state cache warmup and
+	// the scheduler's first tick.
+	orphanedRule := gen.With(gen.WithOrgID(1), gen.WithInterval(time.Second)).GenerateRef()
+	existingRule := gen.With(gen.WithOrgID(1), gen.WithInterval(time.Second)).GenerateRef()
+
+	sender := NewSyncAlertsSenderMock()
+	// A resolved notification should be sent for the orphaned firing alert,
+	// just like when a registered rule's routine is stopped with errRuleDeleted.
+	sender.EXPECT().Send(mock.Anything, orphanedRule.GetKey(), mock.Anything).Return().Once()
+
+	ruleStore := newFakeRulesStore()
+	instanceStore := &state.FakeInstanceStore{}
+	registry := prometheus.NewPedanticRegistry()
+	sch := setupScheduler(t, ruleStore, instanceStore, registry, sender, nil, nil, withSchedulerClock(clock.NewMock()))
+
+	sch.stateManager.Put([]*state.State{
+		stateForRule(orphanedRule, sch.clock.Now(), eval.Alerting),
+		stateForRule(existingRule, sch.clock.Now(), eval.Alerting),
+	})
+	ruleStore.PutRule(ctx, existingRule)
+
+	dispatcherGroup, ctx := errgroup.WithContext(ctx)
+	tick := sch.clock.Now()
+
+	_, _, _ = sch.processTick(ctx, dispatcherGroup, tick)
+
+	// The orphaned state should be removed on the first tick, the existing
+	// rule's state kept.
+	require.Equal(t, []models.AlertRuleKey{existingRule.GetKey()}, sch.stateManager.GetCachedRuleKeys())
+	sender.AssertExpectations(t)
+
+	// The cleanup runs only on the first tick.
+	sch.stateManager.Put([]*state.State{stateForRule(orphanedRule, sch.clock.Now(), eval.Alerting)})
+	_, _, _ = sch.processTick(ctx, dispatcherGroup, tick.Add(time.Second))
+	require.Len(t, sch.stateManager.GetCachedRuleKeys(), 2, "cleanup should not run again on subsequent ticks")
+}
