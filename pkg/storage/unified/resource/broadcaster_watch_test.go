@@ -34,6 +34,12 @@ func cacheEvent(gr GroupResource, rv int64) *WrittenEvent {
 	return &WrittenEvent{Key: &resourcepb.ResourceKey{Group: gr.Group, Resource: gr.Resource}, ResourceVersion: rv}
 }
 
+func namespacedCacheEvent(gr GroupResource, namespace string, rv int64) *WrittenEvent {
+	event := cacheEvent(gr, rv)
+	event.Key.Namespace = namespace
+	return event
+}
+
 func newWatchBroadcaster(t *testing.T, floor int64, seed ...*WrittenEvent) (*broadcaster[*WrittenEvent], chan<- *WrittenEvent) {
 	t.Helper()
 	input := make(chan *WrittenEvent)
@@ -443,6 +449,50 @@ func TestBroadcasterWatchProgress(t *testing.T) {
 	})
 }
 
+func TestBroadcasterWatchCollectionProgress(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		gr := GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
+		b, input := newWatchBroadcaster(t, 0)
+		existing, err := b.subscribeWatch(t.Context(), "second", gr, "second", nil)
+		require.NoError(t, err)
+
+		input <- namespacedCacheEvent(gr, "second", 10)
+		synctest.Wait()
+		require.Equal(t, int64(10), (<-existing.events()).ResourceVersion)
+		require.Equal(t, int64(10), existing.collectionRV(1))
+
+		sub, err := b.subscribeWatch(t.Context(), "first", gr, "first", nil)
+		require.NoError(t, err)
+		require.Zero(t, sub.collectionRV(0), "progress must exclude writes before registration")
+
+		input <- namespacedCacheEvent(gr, "second", 20)
+		synctest.Wait()
+		require.Empty(t, sub.events())
+		require.Equal(t, int64(20), sub.collectionRV(0))
+
+		input <- namespacedCacheEvent(gr, "first", 30)
+		input <- namespacedCacheEvent(gr, "second", 40)
+		synctest.Wait()
+		require.Len(t, sub.events(), 1)
+		require.Zero(t, sub.collectionRV(0), "a matching event is still unread")
+		require.Equal(t, int64(30), (<-sub.events()).ResourceVersion)
+		require.Equal(t, int64(40), sub.collectionRV(1))
+
+		b.Unsubscribe(existing.events())
+		b.Unsubscribe(sub.events())
+		synctest.Wait()
+		require.Zero(t, sub.collectionRV(1), "a removed subscription has no progress")
+		require.NotContains(t, b.scoped, gr)
+
+		fresh, err := b.subscribeWatch(t.Context(), "first", gr, "first", nil)
+		require.NoError(t, err)
+		defer b.Unsubscribe(fresh.events())
+		input <- namespacedCacheEvent(gr, "second", 35)
+		synctest.Wait()
+		require.Equal(t, int64(35), fresh.collectionRV(0), "the previous collection watermark was discarded")
+	})
+}
+
 func TestCheckedWatchRoutesByNamespace(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		gr := GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
@@ -453,18 +503,16 @@ func TestCheckedWatchRoutesByNamespace(t *testing.T) {
 		all, err := b.subscribeWatch(t.Context(), "all", gr, "", nil)
 		require.NoError(t, err)
 
-		event := func(namespace string, rv int64) *WrittenEvent {
-			event := cacheEvent(gr, rv)
-			event.Key.Namespace = namespace
-			return event
-		}
-		input <- event("second", 1)
-		input <- event("first", 2)
+		input <- namespacedCacheEvent(gr, "second", 1)
+		input <- namespacedCacheEvent(gr, "first", 2)
+		input <- cacheEvent(gr, 3)
 		synctest.Wait()
+		require.Len(t, first.events(), 1)
 		require.Equal(t, int64(2), (<-first.events()).ResourceVersion)
-		require.Empty(t, first.events(), "watches of a namespace must not receive other namespaces' events")
+		require.Len(t, all.events(), 3)
 		require.Equal(t, int64(1), (<-all.events()).ResourceVersion)
 		require.Equal(t, int64(2), (<-all.events()).ResourceVersion)
+		require.Equal(t, int64(3), (<-all.events()).ResourceVersion)
 		b.Unsubscribe(first.events())
 		b.Unsubscribe(all.events())
 	})
@@ -480,22 +528,24 @@ func TestCheckedWatchDrainsOverflowOnOtherNamespaceWrites(t *testing.T) {
 		b := newBroadcasterWithSizes(t.Context(), input, subBuf, defaultOverflowCap, newBroadcasterMetrics(prometheus.NewRegistry()), writtenEventIdentity, nil)
 		sub, err := b.subscribeWatch(t.Context(), "first", gr, "first", nil)
 		require.NoError(t, err)
-		defer b.Unsubscribe(sub.events())
 
-		event := func(namespace string, rv int64) *WrittenEvent {
-			event := cacheEvent(gr, rv)
-			event.Key.Namespace = namespace
-			return event
-		}
 		for rv := int64(1); rv <= 5; rv++ {
-			input <- event("first", rv)
+			input <- namespacedCacheEvent(gr, "first", rv)
 		}
 		synctest.Wait()
 		require.Equal(t, int64(1), (<-sub.events()).ResourceVersion)
 		require.Equal(t, int64(2), (<-sub.events()).ResourceVersion)
 
-		input <- event("second", 6)
+		input <- namespacedCacheEvent(gr, "second", 6)
 		synctest.Wait()
 		require.Len(t, sub.events(), subBuf, "the overflow must be drained without waiting for the ticker")
+
+		collection := sub.sub.collection
+		require.Contains(t, collection.overflowing["first"], sub.events())
+		b.Unsubscribe(sub.events())
+		synctest.Wait()
+		require.Empty(t, collection.overflowing)
+		require.Empty(t, collection.byNamespace)
+		require.Empty(t, b.scoped)
 	})
 }
