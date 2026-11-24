@@ -56,7 +56,7 @@ type ProvisionedResource = ManagedResource & {
 // resource has one). Generate an RFC 1123-safe UID.
 const generateResourceName = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789', 12);
 
-/** Builds the repository file path for a new resource from its title, falling back to the kind key. */
+/** Builds the repository file path for a new resource from its title, falling back to the kind name. */
 function getNewResourcePath(title: string, kindName: string): string {
   return `${slugifyForFilename(title) || slugifyForFilename(kindName)}.json`;
 }
@@ -274,7 +274,7 @@ function FormContent({
  */
 export function SaveProvisionedResourceDrawer(props: SaveProvisionedResourceDrawerProps) {
   // The resource carries its own identity: its API group (from apiVersion) + Kubernetes kind resolve
-  // the registry key, so callers don't pass the kind separately.
+  // its registry entry, so callers don't pass the kind separately.
   const group = props.resource.apiVersion?.split('/')[0];
   const kind = group && props.resource.kind ? findKind(group, props.resource.kind) : undefined;
   if (!kind) {
@@ -336,7 +336,7 @@ function ResourceDrawerContent({
     ? undefined
     : { apiVersion: resource.apiVersion, kind: resource.kind, metadata: { name: resourceName }, spec: resource.spec };
 
-  // Branch names can't contain spaces, so prefix from the stable kind key, not the display noun.
+  // Branch names can't contain spaces, so prefix from the sanitized kind, not the display noun.
   const prefix = branchPrefix ?? sanitizeBranchName(kind.kind);
   const { repository, isLoading, isReadOnlyRepo, isMissingRepo } = useGetResourceRepositoryView({
     name: getManagerIdentity(managedResource),

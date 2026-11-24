@@ -56,9 +56,7 @@ type OnCoreKinds = {
 };
 
 /**
- * Registry of provisioning resource kinds, keyed by a stable identifier — the single source of truth
- * the UI reads from instead of scattering per-kind knowledge across switch statements (tree labels,
- * count labels, resource-ref unions, how to enumerate each kind). Each entry builds on the kind's
+ * Git Sync details for the core kinds that provisioning manages. Each entry builds on the kind's
  * shared description in {@link CORE_KINDS} (identity, icon, label, pages) and adds what only
  * provisioning needs.
  *
@@ -122,12 +120,6 @@ export const resourceKindInfos = {
 /**
  * Consumer-facing shape of a registry entry: the kind's shared description plus what provisioning
  * needs to know about it.
- *
- * This is the single source of truth the UI reads from instead of scattering per-kind knowledge
- * across switch statements (tree labels, count labels, resource-ref unions, how to enumerate each
- * kind). Adding a new provisioning kind is one {@link resourceKindInfos} entry on top of its
- * {@link CORE_KINDS} one, plus (if needed) enabling it on the backend so it appears in the settings
- * `availableResources`.
  */
 export interface ResourceKindInfo extends KindInfo {
   /**
@@ -155,7 +147,7 @@ export interface ResourceKindInfo extends KindInfo {
 
 // Widening the `as const` registry to ResourceKindInfo[] here also validates every entry against the
 // interface — a missing or mis-typed field (e.g. an unknown `icon`) fails at this line rather than at
-// each call site. The registry keys and literal `kind` values stay the source of truth for the unions above.
+// each call site.
 const allKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
 
 /** The Git Sync details provisioning keeps for a kind, if it keeps any. */

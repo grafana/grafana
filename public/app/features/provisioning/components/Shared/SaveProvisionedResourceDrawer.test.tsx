@@ -364,7 +364,7 @@ describe('SaveProvisionedResourceDrawer', () => {
     });
   });
 
-  it('opens for a plugin kind with its label and commits under its lowercased kind', async () => {
+  it('opens for a plugin kind with its label and commits under its kind', async () => {
     addKinds([
       {
         group: 'example.ext.grafana.app',

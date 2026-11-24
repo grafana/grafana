@@ -121,9 +121,6 @@ export interface StatusInfo {
   message?: string | string[];
 }
 
-// Tree view types for combined Resources/Files view. An item's `type` is its kind (`Dashboard`,
-// `Playlist`, ...), or `File` for plain files/directories that don't map to a known kind;
-// `getTreeItemKind` also infers `Folder` from plain directory paths that have no backing resource.
 export type SyncStatus = 'synced' | 'pending';
 
 export interface TreeItem {
