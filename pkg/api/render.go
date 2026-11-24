@@ -73,11 +73,15 @@ func (hs *HTTPServer) RenderHandler(c *contextmodel.ReqContext) {
 	encoding := queryReader.Get("encoding", "")
 
 	renderType := rendering.RenderPNG
+	// The limit placeholder is a PNG, which must not be served as a PDF.
+	var errorOpts rendering.ErrorOpts
 	if encoding == "pdf" {
 		renderType = rendering.RenderPDF
+		errorOpts.ErrorConcurrentLimitReached = true
 	}
 
 	result, err := hs.RenderService.Render(c.Req.Context(), renderType, rendering.Opts{
+		ErrorOpts: errorOpts,
 		CommonOpts: rendering.CommonOpts{
 			TimeoutOpts: rendering.TimeoutOpts{
 				Timeout: time.Duration(timeout) * time.Second,
@@ -99,6 +103,11 @@ func (hs *HTTPServer) RenderHandler(c *contextmodel.ReqContext) {
 	})
 	if err != nil {
 		if errors.Is(err, rendering.ErrTooManyRequests) {
+			c.JsonApiErr(http.StatusTooManyRequests, "Too many rendering requests", err)
+			return
+		}
+
+		if errors.Is(err, rendering.ErrConcurrentLimitReached) {
 			c.JsonApiErr(http.StatusTooManyRequests, "Too many rendering requests", err)
 			return
 		}
