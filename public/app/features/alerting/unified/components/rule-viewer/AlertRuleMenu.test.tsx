@@ -18,6 +18,7 @@ import {
   mockRulerGrafanaRecordingRule,
 } from 'app/features/alerting/unified/mocks';
 import { setFolderAccessControl } from 'app/features/alerting/unified/mocks/server/configure';
+import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import * as miscUtils from 'app/features/alerting/unified/utils/misc';
 import { fromCombinedRule } from 'app/features/alerting/unified/utils/rule-id';
@@ -375,6 +376,78 @@ describe('AlertRuleMenu', () => {
       expect(await ui.menuItems.resume.find()).toBeInTheDocument();
       expect(ui.menuItems.pause.query()).not.toBeInTheDocument();
     });
+
+    // A bare menu: unlike a row, nothing else here subscribes to what the abilities load.
+    const ruleFolderUid = 'NAMESPACE_UID'; // the folder of every mocked Grafana rule
+    it.each([
+      { gesture: 'hovering over', reachMoreButton: () => user.hover(ui.moreButton.get()) },
+      { gesture: 'tabbing to', reachMoreButton: () => user.tab() },
+    ])(
+      'opens on loaded data, with the first item focused and no new requests, after $gesture the More button',
+      async ({ reachMoreButton }) => {
+        const folderAccessControl = {
+          [AccessControlAction.AlertingRuleRead]: true,
+          [AccessControlAction.AlertingRuleUpdate]: true,
+          [AccessControlAction.AlertingSilenceCreate]: true,
+          [AccessControlAction.FoldersRead]: true,
+        };
+        grantUserPermissions([
+          AccessControlAction.AlertingRuleRead,
+          AccessControlAction.AlertingRuleUpdate,
+          AccessControlAction.AlertingInstanceCreate,
+          AccessControlAction.AlertingSilenceCreate,
+          AccessControlAction.FoldersRead,
+        ]);
+        setFolderAccessControl(folderAccessControl);
+        mockFolderApi(server).folder(
+          ruleFolderUid,
+          mockFolder({ uid: ruleFolderUid, title: 'Test Folder', accessControl: folderAccessControl })
+        );
+
+        const answeredPaths: string[] = [];
+        const recordAnswer = ({ request }: { request: Request }) => answeredPaths.push(new URL(request.url).pathname);
+        server.events.on('response:mocked', recordAnswer);
+        const requests = await captureRequests();
+        // Plugin settings are left out: "Declare incident" fetches its own whenever the menu opens
+        const requestedPaths = () =>
+          requests.map((request) => new URL(request.url).pathname).filter((path) => !path.startsWith('/api/plugins/'));
+
+        const { mockRule, identifier, groupIdentifier } = createDefaultRuleSetup();
+        render(
+          <AlertRuleMenu
+            promRule={mockRule.promRule}
+            rulerRule={mockRule.rulerRule}
+            identifier={identifier}
+            groupIdentifier={groupIdentifier}
+            handleSilence={handleSilence}
+            handleDelete={handleDelete}
+            handleDuplicateRule={handleDuplicateRule}
+          />
+        );
+        expect(await ui.moreButton.find()).toBeInTheDocument();
+        expect(requestedPaths()).toEqual([]);
+
+        await reachMoreButton();
+        await waitFor(() =>
+          expect(answeredPaths).toEqual(
+            expect.arrayContaining([
+              '/api/v1/ngalert',
+              expect.stringMatching(new RegExp(`/folders/${ruleFolderUid}$`)),
+              expect.stringMatching(new RegExp(`/folders/${ruleFolderUid}/access$`)),
+              expect.stringMatching(new RegExp(`/folders/${ruleFolderUid}/parents$`)),
+            ])
+          )
+        );
+        const pathsBeforeOpen = requestedPaths();
+
+        await openMenu();
+        server.events.removeListener('response:mocked', recordAnswer);
+
+        expect(ui.menuItems.silence.get()).toBeInTheDocument();
+        expect(ui.menuItems.pause.get()).toHaveFocus();
+        expect(requestedPaths()).toEqual(pathsBeforeOpen);
+      }
+    );
   });
 
   describe('Permissions', () => {
