@@ -60,6 +60,7 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
         isSelected={isSelected}
         isMultiSelected={isMultiSelected}
         item={item}
+        extraActions={<QueryCoauthoringCard refId={query.refId} part="actions" />}
         onSelect={() => setSelectedQuery(query)}
         onToggleMultiSelect={(modifiers) => toggleQuerySelection(query, modifiers)}
         onDelete={() => deleteQuery(query.refId)}
@@ -72,7 +73,7 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
           <Icon name={typeConfig[editorType].icon} color={typeConfig[editorType].color} size="sm" />
         )}
         <CardTitle title={query.refId} isHidden={isHidden} />
-        <QueryCoauthoringCard refId={query.refId} />
+        <QueryCoauthoringCard refId={query.refId} part="badges" />
       </SidebarCard>
       {pendingExpression?.insertAfter === query.refId && (
         <GhostSidebarCard id={PENDING_CARD_ID.expression} type={QueryEditorType.Expression} />

@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 
 import { LoadingState } from '@grafana/data';
+import { SceneQueryRunner } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 
 import { type QueryEditorCoauthoringAdapterV1 } from './internalCoauthoringContract';
@@ -148,4 +149,48 @@ describe('useQueryProposalTransaction', () => {
     expect(runQueries).toHaveBeenCalledTimes(1);
     act(() => expect(result.current.preview(proposedQuery)).toBe(true));
   });
+});
+
+it('clears an inline proposal during host handoff without changing canonical queries or reporting a manual Run', () => {
+  const canonical = new SceneQueryRunner({ queries: [queryA, queryB] });
+  const updateQuery = jest.fn();
+  const runQueries = jest.fn();
+  const dispose = jest.fn();
+  const startQueryPreview = jest.fn(() => ({
+    dispose,
+    select: () => true,
+    peek: () => true,
+    stopPeek: jest.fn(),
+    subscribeToData: () => () => {},
+    subscribeToState: () => () => {},
+  }));
+  const { result, unmount } = renderHook(() =>
+    useQueryProposalTransaction({
+      query: canonical.state.queries[0],
+      queries: canonical.state.queries,
+      queryKey: 'prometheus:A',
+      updateQuery,
+      runQueries,
+      startQueryPreview,
+    })
+  );
+  act(() => {
+    expect(result.current.preview(proposedQuery)).toBe(true);
+  });
+  act(() => {
+    result.current.clear();
+  });
+  expect(result.current.editorQuery).toEqual(queryA);
+  expect(dispose).toHaveBeenCalledTimes(1);
+  expect(canonical.state.queries).toEqual([queryA, queryB]);
+  expect(updateQuery).not.toHaveBeenCalled();
+  expect(runQueries).not.toHaveBeenCalled();
+  act(() => {
+    expect(result.current.preview(proposedQuery)).toBe(true);
+    result.current.revert();
+  });
+  expect(runQueries).toHaveBeenCalledTimes(1);
+  unmount();
+  expect(dispose).toHaveBeenCalledTimes(2);
+  expect(runQueries).toHaveBeenCalledTimes(1);
 });

@@ -41,6 +41,7 @@ const CHECKBOX_SLOT_OPEN_WIDTH = CHECKBOX_BOX_SIZE + CHECKBOX_HIT_PADDING * 2;
 
 interface SidebarCardProps {
   children: React.ReactNode;
+  extraActions?: React.ReactNode;
   id: string;
   isSelected: boolean;
   isMultiSelected?: boolean;
@@ -55,6 +56,7 @@ interface SidebarCardProps {
 
 export const SidebarCard = ({
   children,
+  extraActions,
   id,
   isSelected,
   isMultiSelected = false,
@@ -191,6 +193,7 @@ export const SidebarCard = ({
               </div>
             )}
           </div>
+          {extraActions}
           {/* Siblings of the select control, not children, so buttons never nest inside role="button". */}
           {hasActions && !multiSelectMode && (
             <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>

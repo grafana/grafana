@@ -630,7 +630,7 @@ class Session implements QueryCoauthoringSession {
       for (const query of baseline) {
         const resolved = await resolveCoauthoringQuery(this.panel, query, datasource, controller.signal, false);
         if (controller.signal.aborted || generation !== this.staging) {
-          return proposal.map(() => ({ status: this.signal.aborted ? 'closed' : 'aborted' }));
+          return proposal.map((): QueryCoauthoringStageResult => fence() ?? { status: 'aborted' });
         }
         this.owner.observeResolver(query.refId, resolved.identity);
         sources.push({ refId: query.refId, resolved });
@@ -671,7 +671,7 @@ class Session implements QueryCoauthoringSession {
         try {
           const current = await resolved.current();
           if (controller.signal.aborted || generation !== this.staging) {
-            return proposal.map(() => ({ status: this.signal.aborted ? 'closed' : 'aborted' }));
+            return proposal.map((): QueryCoauthoringStageResult => fence() ?? { status: 'aborted' });
           }
           if (!current) {
             this.owner.invalidateContext();

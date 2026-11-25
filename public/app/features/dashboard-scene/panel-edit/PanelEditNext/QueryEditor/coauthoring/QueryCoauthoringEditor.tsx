@@ -5,7 +5,12 @@ import { type DataQuery } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, Portal, Stack } from '@grafana/ui';
 
-import { getCoauthoringSurface, isQueryCoauthoringSurfaceActive, requestCoauthoringEntry } from './queryCoauthoringApi';
+import {
+  getCoauthoringSurface,
+  isQueryCoauthoringSurfaceActive,
+  requestCoauthoringEntry,
+  requestCoauthoringResume,
+} from './queryCoauthoringApi';
 import {
   isQueryCoauthoringEditorHandle,
   type QueryCoauthoringEditorHandle,
@@ -143,10 +148,16 @@ export function useCoauthoringEditor(query: DataQuery | null, queries: DataQuery
           onMouseDown={(event) => event.preventDefault()}
         >
           <Stack>
-            <Button size="sm" onClick={() => request('explain_or_modify')}>
-              {t('query-coauthoring.surface.explain-modify', 'Explain or modify')}
-            </Button>
-            {broken && (
+            {diff ? (
+              <Button size="sm" onClick={() => requestCoauthoringResume(refId, 'highlight')}>
+                {t('query-coauthoring.surface.resume', 'Resume')}
+              </Button>
+            ) : (
+              <Button size="sm" onClick={() => request('explain_or_modify')}>
+                {t('query-coauthoring.surface.explain-modify', 'Explain or modify')}
+              </Button>
+            )}
+            {!diff && broken && (
               <Button size="sm" onClick={() => request('debug')}>
                 {t('query-coauthoring.surface.debug', 'Debug query')}
               </Button>

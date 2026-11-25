@@ -3,6 +3,7 @@ import { Observable, of, type Subscriber } from 'rxjs';
 
 import {
   AlertState,
+  dateTime,
   type DataQuery,
   type DataQueryRequest,
   FieldType,
@@ -17,6 +18,7 @@ import { getMockDataSource } from 'app/features/query/state/mocks/mockDataSource
 import { PanelDataPaneNext } from '../../PanelDataPaneNext';
 
 import { QueryCoauthoringSessionEngine } from './QueryCoauthoringSessionEngine';
+import * as coauthoringContext from './queryCoauthoringContext';
 import {
   type QueryCoauthoringLanguage,
   type QueryCoauthoringSession,
@@ -1592,4 +1594,80 @@ it.each([
   ).toEqual([{ status: 'failed', issue: { kind: issue, refId: 'A' } }]);
   expect(logError).toHaveBeenCalledWith(failure, { component: 'query-coauthoring', phase });
   expect(session.getState().proposal).toEqual([]);
+});
+
+it('ignores variable scene references and unrelated panel changes in resolver generations', () => {
+  const { panel, session } = setupContext();
+  const variable = new ConstantVariable({
+    name: 'source',
+    value: 'prom',
+    $behaviors: [new SceneQueryRunner({ queries: [] })],
+  });
+  panel.setState({ $variables: new SceneVariableSet({ variables: [variable] }) });
+  const before = session.getState();
+  panel.setState({ title: 'Unrelated title change' });
+  expect(session.getState().contextGeneration).toBe(before.contextGeneration);
+  variable.setState({ value: 'other' });
+  expect(session.getState()).toMatchObject({
+    revision: before.revision,
+    contextGeneration: before.contextGeneration + 1,
+  });
+});
+
+it('ignores evaluated refresh timestamps while fencing raw time-range changes', () => {
+  const { session, timeRange } = setupContext();
+  timeRange.setState({ from: 'now-1h', to: 'now' });
+  const before = session.getState();
+  timeRange.setState({
+    value: {
+      ...timeRange.state.value,
+      from: dateTime(timeRange.state.value.from.valueOf() + 60000),
+      to: dateTime(timeRange.state.value.to.valueOf() + 60000),
+    },
+  });
+  expect(session.getState()).toMatchObject({ revision: before.revision, contextGeneration: before.contextGeneration });
+  timeRange.setState({ from: 'now-2h' });
+  expect(session.getState()).toMatchObject({
+    revision: before.revision,
+    contextGeneration: before.contextGeneration + 1,
+  });
+});
+
+it.each(['resolution', 'validation'])('reports stale after a manual Run during stage %s', async (phase) => {
+  const { session, pane } = setupContext();
+  let pending = false;
+  let release: (() => void) | undefined;
+  if (phase === 'resolution') {
+    mockGetDataSource.mockImplementation(() => {
+      pending = true;
+      return new Promise(() => {});
+    });
+  } else {
+    const resolve = coauthoringContext.resolveCoauthoringQuery;
+    let first = true;
+    jest.spyOn(coauthoringContext, 'resolveCoauthoringQuery').mockImplementation(async (...args) => {
+      const resolved = await resolve(...args);
+      if (!first) {
+        return resolved;
+      }
+      first = false;
+      return {
+        ...resolved,
+        current: () => {
+          pending = true;
+          return new Promise<boolean>((resolve) => {
+            release = () => resolve(true);
+          });
+        },
+      };
+    });
+  }
+  const staging = session.stageProposal([{ changes: [{ refId: 'A', text: 'sum(up)' }] }], {
+    baseRevision: session.getState().revision,
+    baseContextGeneration: session.getState().contextGeneration,
+  });
+  await waitFor(() => expect(pending).toBe(true));
+  pane.runQueries();
+  release?.();
+  expect(await staging).toEqual([{ status: 'stale' }]);
 });

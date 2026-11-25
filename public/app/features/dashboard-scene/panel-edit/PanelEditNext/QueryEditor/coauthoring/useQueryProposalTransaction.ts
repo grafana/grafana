@@ -209,6 +209,7 @@ export function useQueryProposalTransaction({
 
   return {
     accept,
+    clear,
     editorQueries: proposal
       ? queries.map((candidate) => (candidate.refId === proposal.refId ? proposal : candidate))
       : queries,

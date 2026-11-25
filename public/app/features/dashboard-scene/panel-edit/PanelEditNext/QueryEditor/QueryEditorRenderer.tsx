@@ -148,12 +148,12 @@ export function QueryEditorPanel({
     },
     [onQueryEdited, onTransactionChange]
   );
-  const revertInline = proposalTransaction.revert;
-  useEffect(() => {
+  const clearInline = proposalTransaction.clear;
+  useLayoutEffect(() => {
     if (coauthoring.active) {
-      revertInline();
+      clearInline();
     }
-  }, [coauthoring.active, revertInline]);
+  }, [coauthoring.active, clearInline]);
 
   const coauthoringHost = useMemo(
     () => ({

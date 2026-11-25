@@ -1,5 +1,5 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useLayoutEffect, useRef } from 'react';
 import { of } from 'rxjs';
@@ -34,13 +34,14 @@ import { QueryCard } from '../Sidebar/Cards/QueryCard';
 import { ds1SettingsMock } from '../testUtils';
 
 import { QueryCoauthoringCard } from './QueryCoauthoringCard';
-import { requestCoauthoringEntry } from './queryCoauthoringApi';
+import { getCoauthoringSurface, requestCoauthoringEntry } from './queryCoauthoringApi';
 import * as contextResolver from './queryCoauthoringContext';
 import {
   isQueryCoauthoringAPI,
   isQueryCoauthoringSession,
   type QueryCoauthoringEditorHandle,
   type QueryCoauthoringSession,
+  type QueryCoauthoringTarget,
   type QueryEditorPropsWithCoauthoring,
   type RestrictedGrafanaApisWithQueryCoauthoring,
 } from './queryCoauthoringContracts';
@@ -293,7 +294,7 @@ async function enterTarget(selectedTarget: { panelId: number; refId: string; das
     stop();
   }
 }
-async function enter(selectedTarget = target) {
+async function enter(selectedTarget: QueryCoauthoringTarget = target) {
   await waitFor(() => expect(api().canEnter(target)).toEqual({ ok: true }));
   let session: unknown;
   await act(async () => {
@@ -428,7 +429,7 @@ it.each(['exit', 'replaced', 'left_panel_edit', 'flag_off', 'focus_removed'] as 
         session.exit();
       }
       if (reason === 'replaced') {
-        await enterTarget(target);
+        await enterTarget({ ...target, refId: 'A' });
       }
       if (reason === 'left_panel_edit') {
         leavePanelEdit();
@@ -662,7 +663,7 @@ it('retains the open session when the Assistant closes, collapses, moves, or unr
   act(() => resetExtensionSidebarPresentationForTests());
 });
 
-it('replaces the open session when the Assistant consumes a new query entry', async () => {
+it('unprojected entry replaces a staged session and restores canonical text', async () => {
   setup();
   const session = await enter();
   await propose(session);
@@ -1137,4 +1138,115 @@ it('does not report a support scan failure after its editor unmounts', async () 
     reject(new Error('Late support scan failure'));
   });
   expect(logError).not.toHaveBeenCalled();
+});
+
+it('resumes projected-row highlights without consuming proposal-relative ranges or replacing the session', async () => {
+  const { entry, select } = setup();
+  const resume = jest.fn();
+  unlisten.push(api().onResumeRequested(resume));
+  const session = await enter();
+  const id = await propose(session);
+  entry.mockClear();
+  act(() => {
+    selection = true;
+    notifySelection();
+  });
+  expect(screen.queryByRole('button', { name: 'Explain or modify' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Debug query' })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Shortcut' }));
+  await waitFor(() => expect(resume).toHaveBeenCalledWith({ sessionId: session.getState().sessionId }));
+  expect(entry).not.toHaveBeenCalled();
+  expect(session.signal.aborted).toBe(false);
+  expect(session.getState().previewedOption).toBe(id);
+  expect(select).toHaveBeenLastCalledWith('B');
+  expect(reportInteraction).toHaveBeenCalledWith(
+    'grafana_query_coauthoring_session_resumed',
+    expect.objectContaining({ sessionId: session.getState().sessionId })
+  );
+});
+
+it('activates real QueryCard Entry and Resume with Enter and Space outside the select control', async () => {
+  const { dashboard, view } = setupCards();
+  const user = userEvent.setup();
+  const entry = jest.fn();
+  const resume = jest.fn();
+  act(() => {
+    unlisten.push(api().onEnterRequested(entry), api().onResumeRequested(resume));
+  });
+  const button = await screen.findByRole('button', { name: 'Explain or modify query B' });
+  act(() => button.focus());
+  await user.keyboard('{Enter}');
+  await waitFor(() => expect(entry).toHaveBeenCalledTimes(1));
+  expect(button.closest('[role="button"]')).toBeNull();
+  let session: unknown;
+  await act(async () => {
+    session = await api().enter(
+      { ...target, dashboardUid: dashboard.state.uid },
+      { entryId: entry.mock.calls[0][0].entryId }
+    );
+  });
+  if (!isQueryCoauthoringSession(session)) {
+    throw new Error('Missing session');
+  }
+  const sessionId = session.getState().sessionId;
+  const resumeButton = screen.getByRole('button', { name: 'Resume' });
+  act(() => resumeButton.focus());
+  await user.keyboard(' ');
+  expect(resume).toHaveBeenCalledWith({ sessionId });
+  expect(resumeButton.closest('[role="button"]')).toBeNull();
+  await waitFor(() => expect(screen.getByRole('textbox', { name: 'Query text' })).toHaveValue('$A + 1'));
+  await act(async () => view.unmount());
+});
+
+it('resumes stale Review without applying it and creates a fresh entry after explicit Exit', async () => {
+  const { pane, canonical, entry } = setup();
+  const resume = jest.fn();
+  unlisten.push(api().onResumeRequested(resume));
+  const session = await enter();
+  const id = await propose(session);
+  act(() => pane.runQueries());
+  fireEvent.click(screen.getByRole('button', { name: 'Resume' }));
+  expect(resume).toHaveBeenCalledWith({ sessionId: session.getState().sessionId });
+  expect(session.getState()).toMatchObject({ stale: true, step: 'review' });
+  expect(await session.accept(id, { baseRevision: 0 })).toEqual({ status: 'stale' });
+  expect(canonical.state.queries).toEqual(original);
+  act(() => session.exit());
+  entry.mockClear();
+  fireEvent.click(screen.getByRole('button', { name: 'Shortcut' }));
+  await waitFor(() => expect(entry).toHaveBeenCalledTimes(1));
+  expect(entry.mock.calls[0][0].entryId).not.toBe(session.getState().sessionId);
+});
+
+it('shows the explicitly selected proposed row after Resume while retaining the original Focus', async () => {
+  const { dashboard } = setupCards();
+  const session = await enter({ ...target, refId: 'A', dashboardUid: dashboard.state.uid });
+  await act(async () => {
+    const [result] = await session.stageProposal(
+      [
+        {
+          changes: [
+            { refId: 'A', text: '2' },
+            { refId: 'B', text: '3' },
+          ],
+        },
+      ],
+      {
+        baseRevision: session.getState().revision,
+        baseContextGeneration: session.getState().contextGeneration,
+      }
+    );
+    if (result.status !== 'staged') {
+      throw new Error(result.status);
+    }
+    session.preview(result.id);
+  });
+  const row = screen.getByRole('button', { name: 'Select card B' }).parentElement;
+  if (!row) {
+    throw new Error('Missing card row');
+  }
+  await act(async () => fireEvent.click(within(row).getByRole('button', { name: 'Resume' })));
+  expect(screen.getByRole('button', { name: 'Select card B' })).toHaveAttribute('aria-pressed', 'true');
+  await waitFor(() => expect(screen.getByRole('textbox', { name: 'Query text' })).toHaveValue('3'));
+  expect(getCoauthoringSurface()?.focus).toBe('A');
+  expect(session.signal.aborted).toBe(false);
 });

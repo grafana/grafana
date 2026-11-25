@@ -124,12 +124,17 @@ export function requestCoauthoringEntry(
     void requestEntry(request, source);
   }
 }
-export function requestCoauthoringResume() {
+export function requestCoauthoringResume(refId?: string, source = 'query_button') {
   const current = getCoauthoringSurface()?.session;
   if (!current || current.signal.aborted || !isQueryCoauthoringSurfaceActive()) {
     return;
   }
-  resumeListeners.forEach((listener) => listener({ sessionId: current.getState().sessionId }));
+  if (refId) {
+    current.select(refId);
+  }
+  const sessionId = current.getState().sessionId;
+  track('session_resumed', sessionId, { source });
+  resumeListeners.forEach((listener) => listener({ sessionId }));
 }
 
 function availability() {
@@ -227,6 +232,13 @@ async function requestEntry(request: Omit<QueryCoauthoringEntryRequest, 'entryId
   const runner = getQueryRunnerFor(panel);
   const query = cloneDeep(pane.getCoauthoringEditorQueries()?.find((query) => query.refId === request.target.refId));
   if (!runner || !query) {
+    return;
+  }
+  const activeSession = sessionPanel === panel && !session?.signal.aborted ? session : undefined;
+  const snapshot = activeSession?.getState();
+  const projected = snapshot?.proposal?.find((option) => option.id === snapshot.previewedOption);
+  if (projected?.diffs.some((diff) => diff.refId === request.target.refId)) {
+    requestCoauthoringResume(request.target.refId, source);
     return;
   }
   const engine = QueryCoauthoringSessionEngine.getOrCreate(panel);

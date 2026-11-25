@@ -1,4 +1,4 @@
-import { cloneDeep, isEqual } from 'lodash';
+import { cloneDeep, isEqual, pick } from 'lodash';
 
 import { type DataQuery, type ScopedVars } from '@grafana/data';
 import { getDataSourceInstance, getDataSourceInstanceSettings, logError } from '@grafana/runtime';
@@ -25,19 +25,34 @@ export function reportCoauthoringError(error: unknown, signal: AbortSignal, phas
   });
 }
 
+// Exclude live Scene references and transient UI state from resolver identity.
+const RESOLVER_VARIABLE_STATE_FIELDS = [
+  'name',
+  'type',
+  'value',
+  'text',
+  'query',
+  'datasource',
+  'filters',
+  'baseFilters',
+  'includeAll',
+  'allValue',
+  'isMulti',
+  'groupByKeys',
+];
+
 export function resolverInputs(panel: VizPanel, runner: SceneQueryRunner) {
   const variables: unknown[] = [];
   for (let object: SceneObject | undefined = panel; object; object = object.parent) {
-    variables.push(object.state.$variables?.state.variables.map((variable) => variable.state));
+    variables.push(
+      object.state.$variables?.state.variables.map((variable) => pick(variable.state, RESOLVER_VARIABLE_STATE_FIELDS))
+    );
   }
-  const range = sceneGraph.getTimeRange(panel).state.value;
   return cloneDeep({
     rawFrom: sceneGraph.getTimeRange(panel).state.from,
     rawTo: sceneGraph.getTimeRange(panel).state.to,
     datasource: runner.state.datasource,
     variables,
-    from: range.from.valueOf(),
-    to: range.to.valueOf(),
   });
 }
 
