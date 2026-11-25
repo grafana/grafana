@@ -370,7 +370,7 @@ describe('MegaMenu', () => {
 
         /**
          * jsdom has no layout, so the panes measure what the splitter's inline styles ask for: an 800px menu, and a
-         * navigation 400px tall by its content, at least 80px and at most 640px, as the section keeps 160px.
+         * navigation 400px tall by its content, at least 160px and at most 640px, as the section keeps 160px too.
          */
         const measuredHeight = (element: HTMLElement) => {
           const handle = screen.queryByRole('separator', { name: 'Resize navigation' });
@@ -382,7 +382,7 @@ describe('MegaMenu', () => {
               return 640;
             }
             if (['0', '0px'].includes(element.style.flexBasis)) {
-              return 80;
+              return 160;
             }
             return parseFloat(element.style.flexBasis) || 400;
           }
@@ -459,11 +459,14 @@ describe('MegaMenu', () => {
           expect(storedHeight()).toBeNull();
         });
 
-        it('keeps the section at least 160px tall when the handle is dragged down, whatever the menu height', async () => {
+        it('keeps the navigation and the section at least 160px tall, whichever way the handle is dragged', async () => {
           renderMegaMenu();
-          await findHandle();
+          const handle = await findHandle();
 
-          // A fixed height, like the navigation's 80px, so the limit is the same on a tall screen as on a short one.
+          // The same fixed height both ways, so the limits match, on a tall screen as on a short one.
+          expect(document.getElementById(handle.getAttribute('aria-controls') ?? '')).toHaveStyle({
+            minHeight: '160px',
+          });
           expect(screen.getByTestId('mega-menu-section')).toHaveStyle({ minHeight: '160px' });
         });
       });

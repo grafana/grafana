@@ -10,11 +10,11 @@ import { getFocusStyles } from '@grafana/ui/internal';
 export const MEGA_MENU_NAV_HEIGHT_STORAGE_KEY = 'grafana.navigation.megaMenuNavHeight';
 
 /**
- * The plugin section's height when the user drags the handle all the way down, in theme spacing units: 160px, room for
- * its heading, a search field and a few rows. A fixed height, like the navigation's, so the limit is the same on every
- * screen; the section folds to its heading for less.
+ * The height each pane keeps when the user drags the handle all the way, in theme spacing units: 160px, room for a few
+ * navigation items above, or the section's heading, a search field and a few rows below. The same fixed height both
+ * ways, so the limits match and are the same on every screen; the section folds to its heading for less.
  */
-const SECTION_MIN_SPACING = 20;
+const PANE_MIN_SPACING = 20;
 
 /** On the plugin section's region, so the layout can tell whether the section shows anything. */
 const SECTION_ATTRIBUTE = 'data-mega-menu-section';
@@ -114,7 +114,7 @@ export function useMegaMenuSectionSplitter(hasSection: boolean, collapsed: boole
       ? {
           ...primaryProps.style,
           flexBasis: navHeight === undefined ? 'auto' : `${navHeight}px`,
-          minHeight: theme.spacing(10),
+          minHeight: theme.spacing(PANE_MIN_SPACING),
         }
       : { ...primaryProps.style, flexGrow: 1, flexShrink: 1, flexBasis: 0, minHeight: 0, maxHeight: 'none' };
 
@@ -151,7 +151,7 @@ export function useMegaMenuSectionSplitter(hasSection: boolean, collapsed: boole
       // far the navigation can grow. Collapsed, the section is as tall as its heading.
       style: collapsed
         ? { ...secondaryProps.style, flexGrow: 0, flexShrink: 0, flexBasis: 'auto', minHeight: 0 }
-        : { ...secondaryProps.style, minHeight: theme.spacing(SECTION_MIN_SPACING) },
+        : { ...secondaryProps.style, minHeight: theme.spacing(PANE_MIN_SPACING) },
       [SECTION_ATTRIBUTE]: '',
     },
   };
