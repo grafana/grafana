@@ -1,21 +1,30 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import * as runtime from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { TestVariable } from '@grafana/scenes';
 
-import * as utils from '../../variables/utils';
-import { type UsagesToNetwork } from '../../variables/utils';
+import { getUnknownsNetwork, type UsagesToNetwork } from '../../variables/utils';
 
 import { VariablesUnknownTable, type VariablesUnknownTableProps } from './VariablesUnknownTable';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
+
+jest.mock('../../variables/utils', () => ({
+  ...jest.requireActual('../../variables/utils'),
+  getUnknownsNetwork: jest.fn(),
+}));
 
 async function getTestContext(
   overrides: Partial<VariablesUnknownTableProps> | undefined = {},
   usages: UsagesToNetwork[] = []
 ) {
   jest.clearAllMocks();
-  const reportInteractionSpy = jest.spyOn(runtime, 'reportInteraction').mockImplementation();
-  const getUnknownsNetworkSpy = jest.spyOn(utils, 'getUnknownsNetwork').mockResolvedValue(usages);
+  const reportInteractionSpy = jest.mocked(reportInteraction);
+  const getUnknownsNetworkSpy = jest.mocked(getUnknownsNetwork).mockResolvedValue(usages);
   const defaults: VariablesUnknownTableProps = {
     variables: [],
     dashboard: null,

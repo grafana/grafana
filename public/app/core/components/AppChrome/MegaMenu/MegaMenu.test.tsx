@@ -151,73 +151,6 @@ describe('MegaMenu', () => {
     expect(screen.queryByLabelText('Profile')).not.toBeInTheDocument();
   });
 
-  describe('profile', () => {
-    const PROFILE_FLAG = 'grafana.megaMenuProfile';
-    const renderWithProfile = (onClose = () => {}) =>
-      render(<MegaMenu onClose={onClose} />, {
-        preloadedState: {
-          navBarTree: nestedNavTree,
-          navIndex: {
-            profile: {
-              id: 'profile',
-              text: 'Test User',
-              url: '/profile',
-              children: [{ id: 'profile/settings', text: 'Profile', url: '/profile' }],
-            },
-          },
-        },
-      });
-
-    it('shows the profile at the bottom of the menu while grafana.megaMenuProfile is on', async () => {
-      setTestFlags({ [PROFILE_FLAG]: true });
-      const { user } = renderWithProfile();
-
-      await user.click(await screen.findByRole('button', { name: /profile/i }));
-
-      expect(await screen.findByRole('menuitem', { name: /sign out/i })).toBeInTheDocument();
-    });
-
-    it('closes the menu, when it is not docked, once the user follows a link to a profile page', async () => {
-      setTestFlags({ [PROFILE_FLAG]: true });
-      const onClose = jest.fn();
-      const { user } = renderWithProfile(onClose);
-
-      await user.click(await screen.findByRole('button', { name: /profile/i }));
-      const link = await screen.findByRole('menuitem', { name: 'Profile' });
-      // jsdom does not navigate.
-      link.addEventListener('click', (event) => event.preventDefault());
-      await user.click(link);
-
-      expect(onClose).toHaveBeenCalledTimes(1);
-    });
-
-    it('offers Customise navigation as a button below the profile, with a line between them', async () => {
-      setTestFlags({ [PROFILE_FLAG]: true, [CUSTOMISE_FLAG]: true });
-      const { user } = renderWithProfile();
-
-      const customise = await screen.findByRole('button', { name: 'Customise navigation' });
-      const profile = screen.getByRole('button', { name: /profile/i });
-      const follows = (a: Node, b: Node) => Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
-      expect(follows(profile, customise)).toBe(true);
-      expect(screen.getAllByRole('separator').some((line) => follows(profile, line) && follows(line, customise))).toBe(
-        true
-      );
-
-      await user.click(customise);
-
-      expect(await screen.findByRole('button', { name: 'Done' })).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Customise navigation' })).not.toBeInTheDocument();
-    });
-
-    it('leaves the profile to the top bar while the toggle is off', async () => {
-      setTestFlags({ [PROFILE_FLAG]: false });
-      renderWithProfile();
-
-      await screen.findByTestId(selectors.components.NavMenu.Menu);
-      expect(screen.queryByRole('button', { name: /profile/i })).not.toBeInTheDocument();
-    });
-  });
-
   it('should filter out home', async () => {
     renderMegaMenu({ navBarTree: nestedNavTree });
 
@@ -437,7 +370,7 @@ describe('MegaMenu', () => {
 
         /**
          * jsdom has no layout, so the panes measure what the splitter's inline styles ask for: an 800px menu, and a
-         * navigation 400px tall by its content, at least 80px and at most 600px.
+         * navigation 400px tall by its content, at least 160px and at most 640px, as the section keeps 160px too.
          */
         const measuredHeight = (element: HTMLElement) => {
           const handle = screen.queryByRole('separator', { name: 'Resize navigation' });
@@ -446,10 +379,10 @@ describe('MegaMenu', () => {
           }
           if (handle && element.id === handle.getAttribute('aria-controls')) {
             if (element.style.flexGrow === '100') {
-              return 600;
+              return 640;
             }
             if (['0', '0px'].includes(element.style.flexBasis)) {
-              return 80;
+              return 160;
             }
             return parseFloat(element.style.flexBasis) || 400;
           }
@@ -457,6 +390,8 @@ describe('MegaMenu', () => {
         };
 
         beforeEach(() => {
+          // The section starts folded, without the handle; these users have unfolded it.
+          window.localStorage.setItem(MEGA_MENU_SECTION_COLLAPSED_STORAGE_KEY, 'false');
           rectSpy = jest.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
             this: HTMLElement
           ) {
@@ -523,6 +458,17 @@ describe('MegaMenu', () => {
           expect(navigationPane(handle)).toHaveStyle({ flexBasis: 'auto' });
           expect(storedHeight()).toBeNull();
         });
+
+        it('keeps the navigation and the section at least 160px tall, whichever way the handle is dragged', async () => {
+          renderMegaMenu();
+          const handle = await findHandle();
+
+          // The same fixed height both ways, so the limits match, on a tall screen as on a short one.
+          expect(document.getElementById(handle.getAttribute('aria-controls') ?? '')).toHaveStyle({
+            minHeight: '160px',
+          });
+          expect(screen.getByTestId('mega-menu-section')).toHaveStyle({ minHeight: '160px' });
+        });
       });
 
       describe('folding it to its heading', () => {
@@ -548,33 +494,31 @@ describe('MegaMenu', () => {
           }));
         });
 
-        it('folds and unfolds from the section, without the resize handle while folded, and remembers it', async () => {
+        it('starts folded, without the resize handle, then unfolds and folds from the section and remembers it', async () => {
           const { user } = renderMegaMenu();
           const toggle = await screen.findByRole('button', { name: 'Conversations' });
+          expect(toggle).toHaveAttribute('aria-expanded', 'false');
+          expect(screen.queryByRole('separator', { name: 'Resize navigation' })).not.toBeInTheDocument();
+
+          await user.click(toggle);
+
           expect(toggle).toHaveAttribute('aria-expanded', 'true');
+          expect(screen.getByRole('separator', { name: 'Resize navigation' })).toBeInTheDocument();
+          expect(storedCollapsed()).toBe('false');
 
           await user.click(toggle);
 
           expect(toggle).toHaveAttribute('aria-expanded', 'false');
           expect(screen.queryByRole('separator', { name: 'Resize navigation' })).not.toBeInTheDocument();
           expect(storedCollapsed()).toBe('true');
-
-          await user.click(toggle);
-
-          expect(toggle).toHaveAttribute('aria-expanded', 'true');
-          expect(screen.getByRole('separator', { name: 'Resize navigation' })).toBeInTheDocument();
-          expect(storedCollapsed()).toBeNull();
         });
 
-        it('opens with the section folded when the user left it folded', async () => {
-          window.localStorage.setItem(MEGA_MENU_SECTION_COLLAPSED_STORAGE_KEY, 'true');
+        it('opens with the section unfolded when the user left it unfolded', async () => {
+          window.localStorage.setItem(MEGA_MENU_SECTION_COLLAPSED_STORAGE_KEY, 'false');
           renderMegaMenu();
 
-          expect(await screen.findByRole('button', { name: 'Conversations' })).toHaveAttribute(
-            'aria-expanded',
-            'false'
-          );
-          expect(screen.queryByRole('separator', { name: 'Resize navigation' })).not.toBeInTheDocument();
+          expect(await screen.findByRole('button', { name: 'Conversations' })).toHaveAttribute('aria-expanded', 'true');
+          expect(screen.getByRole('separator', { name: 'Resize navigation' })).toBeInTheDocument();
         });
       });
     });

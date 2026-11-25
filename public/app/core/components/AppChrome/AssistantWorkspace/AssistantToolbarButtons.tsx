@@ -5,16 +5,11 @@ import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 import { useObservable } from '@grafana/data/unstable';
 import { t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import {
-  useFlagAssistantFullscreenWorkspace,
-  useFlagGrafanaAssistantPageCanvas,
-  useFlagGrafanaMegaMenuProfile,
-} from '@grafana/runtime/internal';
+import { useFlagAssistantFullscreenWorkspace, useFlagGrafanaAssistantPageCanvas } from '@grafana/runtime/internal';
 import { Icon, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { getAssistantChatIdToContinue } from 'app/core/assistant/assistantSidebarState';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
-import { useSelector } from 'app/types/store';
 
 import { useExtensionSidebarContext } from '../ExtensionSidebar/ExtensionSidebarProvider';
 import {
@@ -81,10 +76,6 @@ export function AssistantToolbarButtons() {
   const styles = useStyles2(getStyles);
   const workspaceEnabled = useFlagAssistantFullscreenWorkspace();
   const pageCanvasEnabled = useFlagGrafanaAssistantPageCanvas();
-  // The trailing separator sets these buttons apart from the profile button, or the sign-in link for a signed-out user.
-  // It goes only when there is a profile and it sits in the mega menu instead.
-  const hasProfile = useSelector((store) => store.navIndex['profile']) !== undefined;
-  const profileInMegaMenu = useFlagGrafanaMegaMenuProfile() && hasProfile;
   const isSmallScreen = !useMediaQueryMinWidth('sm');
   const { availableComponents, dockedComponentId, floatingHidden } = useExtensionSidebarContext();
   // The top bar also renders outside a router, so the location comes from the location service.
@@ -122,7 +113,7 @@ export function AssistantToolbarButtons() {
         >
           {t('navigation.assistant-workspace.exit', 'Exit Workspace')}
         </ToolbarButton>
-        {!profileInMegaMenu && <NavToolbarSeparator className={styles.separator} />}
+        <NavToolbarSeparator className={styles.separator} />
       </>
     );
   }
@@ -166,7 +157,7 @@ export function AssistantToolbarButtons() {
           </ToolbarButton>
         </>
       )}
-      {!profileInMegaMenu && <NavToolbarSeparator className={styles.separator} />}
+      <NavToolbarSeparator className={styles.separator} />
     </>
   );
 }

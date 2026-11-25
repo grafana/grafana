@@ -70,8 +70,8 @@ export function AppChromeMenu({}: Props) {
     ref
   );
 
-  // Focus stays in the open menu, but the menu owns its portal content here too: a dropdown its profile or a section
-  // opens there has to take focus. React Aria's containment counts anything under [data-react-aria-top-layer] as
+  // Focus stays in the open menu, but the menu owns its portal content here too: a dropdown a section opens there has
+  // to take focus. React Aria's containment counts anything under [data-react-aria-top-layer] as
   // inside the scope, so the container carries it while the menu contains focus.
   const containsFocus = isOpen && !isPeek;
   useEffect(() => {

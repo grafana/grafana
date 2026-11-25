@@ -1,12 +1,13 @@
 import { type UserEvent } from '@testing-library/user-event';
+import { HttpResponse, http } from 'msw';
 import { GrafanaRuleFormStep, renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { cleanup, screen } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
-import * as runtime from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { mockBoundingClientRect } from '@grafana/test-utils';
+import server from '@grafana/test-utils/server';
 import { testWithFlags } from '@grafana/test-utils/unstable';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -56,9 +57,13 @@ describe('RuleEditor cloud', () => {
     localStorage.removeItem(SIMPLIFIED_QUERY_EDITOR_KEY);
     localStorage.removeItem(MANUAL_ROUTING_KEY);
 
-    // Mock getPluginSettings to ensure labels plugin is not detected
+    // No plugin is installed, so the labels plugin is not detected.
     // This ensures consistent test behavior across OSS and Enterprise environments
-    jest.spyOn(runtime, 'getPluginSettings').mockRejectedValue(new Error('Plugin not found'));
+    server.use(
+      http.get('/api/plugins/:pluginId/settings', () =>
+        HttpResponse.json({ message: 'Plugin not found' }, { status: 404 })
+      )
+    );
 
     grantUserPermissions([
       AccessControlAction.AlertingRuleRead,

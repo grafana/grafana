@@ -94,24 +94,26 @@ jest.mock('app/features/logs/components/panel/LogList', () => {
 });
 
 const fakeChangePanelState = jest.fn().mockReturnValue({ type: 'fakeAction' });
-jest.mock('../state/explorePane', () => ({
-  ...jest.requireActual('../state/explorePane'),
-  changePanelState: (exploreId: string, panel: 'logs', panelState: {} | ExploreLogsPanelState) => {
-    return fakeChangePanelState(exploreId, panel, panelState);
-  },
-}));
+jest.mock('../state/explorePane', () =>
+  jest.requireActual('test/helpers/partialMock').partialMock(jest.requireActual('../state/explorePane'), {
+    changePanelState: (exploreId: string, panel: 'logs', panelState: {} | ExploreLogsPanelState) => {
+      return fakeChangePanelState(exploreId, panel, panelState);
+    },
+  })
+);
 
 const fakeChangeQueries = jest.fn().mockReturnValue({ type: 'fakeChangeQueries' });
 const fakeRunQueries = jest.fn().mockReturnValue({ type: 'fakeRunQueries' });
-jest.mock('../state/query', () => ({
-  ...jest.requireActual('../state/query'),
-  changeQueries: (args: { queries: DataQuery[]; exploreId: string | undefined }) => {
-    return fakeChangeQueries(args);
-  },
-  runQueries: (args: { queries: DataQuery[]; exploreId: string | undefined }) => {
-    return fakeRunQueries(args);
-  },
-}));
+jest.mock('../state/query', () =>
+  jest.requireActual('test/helpers/partialMock').partialMock(jest.requireActual('../state/query'), {
+    changeQueries: (args: { queries: DataQuery[]; exploreId: string | undefined }) => {
+      return fakeChangeQueries(args);
+    },
+    runQueries: (args: { queries: DataQuery[]; exploreId: string | undefined }) => {
+      return fakeRunQueries(args);
+    },
+  })
+);
 
 describe('Logs', () => {
   let originalHref = window.location.href;

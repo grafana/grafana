@@ -11,8 +11,8 @@ export interface MegaMenuSectionProps {
    */
   onNavigate?: () => void;
   /**
-   * Whether the user has folded the section to its heading, at the bottom of the menu. A folded section renders
-   * only its heading; the navigation takes the rest of the menu.
+   * Whether the section is folded to its heading, at the bottom of the menu. It starts folded, until the user unfolds
+   * it. A folded section renders only its heading; the navigation takes the rest of the menu.
    */
   collapsed: boolean;
   /** Folds the section to its heading, or unfolds it, from a control in its heading. The menu remembers it. */

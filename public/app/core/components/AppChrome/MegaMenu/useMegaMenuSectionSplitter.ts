@@ -9,8 +9,12 @@ import { getFocusStyles } from '@grafana/ui/internal';
 /** The navigation's height above the plugin section, once the user has resized it. */
 export const MEGA_MENU_NAV_HEIGHT_STORAGE_KEY = 'grafana.navigation.megaMenuNavHeight';
 
-/** The smallest share of the menu the plugin section keeps when the user drags the handle down. */
-const SECTION_MIN_HEIGHT = '25%';
+/**
+ * The height each pane keeps when the user drags the handle all the way, in theme spacing units: 160px, room for a few
+ * navigation items above, or the section's heading, a search field and a few rows below. The same fixed height both
+ * ways, so the limits match and are the same on every screen; the section folds to its heading for less.
+ */
+const PANE_MIN_SPACING = 20;
 
 /** On the plugin section's region, so the layout can tell whether the section shows anything. */
 const SECTION_ATTRIBUTE = 'data-mega-menu-section';
@@ -37,20 +41,21 @@ function storeNavHeight(height: number | undefined): void {
   }
 }
 
-/** Whether the user has folded the plugin section down to its heading. */
+/** Whether the plugin section is folded down to its heading: `'false'` once the user unfolds it, folded otherwise. */
 export const MEGA_MENU_SECTION_COLLAPSED_STORAGE_KEY = 'grafana.navigation.megaMenuSectionCollapsed';
 
+// The section starts folded, so it adds only its heading to the menu until the user opens it.
 function readStoredCollapsed(): boolean {
   try {
-    return store.getBool(MEGA_MENU_SECTION_COLLAPSED_STORAGE_KEY, false);
+    return store.getBool(MEGA_MENU_SECTION_COLLAPSED_STORAGE_KEY, true);
   } catch {
-    return false;
+    return true;
   }
 }
 
 /**
  * Whether the plugin section is folded to its heading at the bottom of the menu, and a setter the section calls from
- * its own heading. Remembered across page loads. Separate from the splitter, as the section needs it to render and the
+ * its own heading. Folded until the user unfolds it, and remembered across page loads. Separate from the splitter, as the section needs it to render and the
  * splitter needs to know whether the section rendered.
  */
 export function useMegaMenuSectionCollapsed(): [boolean, (collapsed: boolean) => void] {
@@ -58,11 +63,7 @@ export function useMegaMenuSectionCollapsed(): [boolean, (collapsed: boolean) =>
   const onCollapsedChange = useCallback((next: boolean) => {
     setCollapsed(next);
     try {
-      if (next) {
-        store.set(MEGA_MENU_SECTION_COLLAPSED_STORAGE_KEY, 'true');
-      } else {
-        store.delete(MEGA_MENU_SECTION_COLLAPSED_STORAGE_KEY);
-      }
+      store.set(MEGA_MENU_SECTION_COLLAPSED_STORAGE_KEY, String(next));
     } catch {
       // Kept for this page load only.
     }
@@ -113,7 +114,7 @@ export function useMegaMenuSectionSplitter(hasSection: boolean, collapsed: boole
       ? {
           ...primaryProps.style,
           flexBasis: navHeight === undefined ? 'auto' : `${navHeight}px`,
-          minHeight: theme.spacing(10),
+          minHeight: theme.spacing(PANE_MIN_SPACING),
         }
       : { ...primaryProps.style, flexGrow: 1, flexShrink: 1, flexBasis: 0, minHeight: 0, maxHeight: 'none' };
 
@@ -150,7 +151,7 @@ export function useMegaMenuSectionSplitter(hasSection: boolean, collapsed: boole
       // far the navigation can grow. Collapsed, the section is as tall as its heading.
       style: collapsed
         ? { ...secondaryProps.style, flexGrow: 0, flexShrink: 0, flexBasis: 'auto', minHeight: 0 }
-        : { ...secondaryProps.style, minHeight: SECTION_MIN_HEIGHT },
+        : { ...secondaryProps.style, minHeight: theme.spacing(PANE_MIN_SPACING) },
       [SECTION_ATTRIBUTE]: '',
     },
   };

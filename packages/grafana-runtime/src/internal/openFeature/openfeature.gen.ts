@@ -28,6 +28,8 @@ export const FlagKeys = {
   AlertingRuleQuality: "alerting.ruleQuality",
   /** Enable fixing alert rule quality issues with Grafana Assistant on the alert quality page. */
   AlertingRuleQualityFix: "alerting.ruleQualityFix",
+  /** Enable bulk fixes for alert rule quality issues on the alert quality page. */
+  AlertingRuleQualityFixAll: "alerting.ruleQualityFixAll",
   /** Enable assistant reviews on the alert quality page. */
   AlertingRuleReviews: "alerting.ruleReviews",
   /** Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source */
@@ -236,8 +238,6 @@ export const FlagKeys = {
   GrafanaLogsInfiniteScrollTop: "grafana.logsInfiniteScrollTop",
   /** Opens the mega menu over the page while the pointer rests on its toggle, and docks it when the toggle is clicked on wide screens. The toggle in the docked menu's header closes it, in place of the footer's dock button */
   GrafanaMegaMenuPeekAndDock: "grafana.megaMenuPeekAndDock",
-  /** Moves the signed-in user's profile menu from the top bar to the bottom of the mega menu */
-  GrafanaMegaMenuProfile: "grafana.megaMenuProfile",
   /** Disables dashboard edit mode (manual and assistant-driven) on mobile/small-screen viewports */
   GrafanaMobileEditDeprecation: "grafana.mobileEditDeprecation",
   /** Enables multi-tenant fallback behavior */
@@ -268,6 +268,8 @@ export const FlagKeys = {
   GrafanaPanelOptionInterpolation: "grafana.panelOptionInterpolation",
   /** Let panel plugins register system transformations */
   GrafanaPanelPluginTransformations: "grafana.panelPluginTransformations",
+  /** Adds quick edits for a panel's most-changed options to the panel edit popover in dashboard edit mode */
+  GrafanaPanelQuickEdits: "grafana.panelQuickEdits",
   /** Pass React elements in plugin extension props by reference */
   GrafanaPluginExtensionReactElementProps: "grafana.pluginExtensionReactElementProps",
   /** Nest app plugin navigation items in the mega menu based on their URL path hierarchy */
@@ -386,8 +388,6 @@ export const FlagKeys = {
   ReportingHeaderSettings: "reportingHeaderSettings",
   /** Enables the new role picker drawer design */
   RolePickerDrawer: "rolePickerDrawer",
-  /** Enables Saved queries (query library) RBAC permissions */
-  SavedQueriesRBAC: "savedQueriesRBAC",
   /** Enables the use of scope filters in Grafana */
   ScopeFilters: "scopeFilters",
   /** Enable scope search to include all levels of the scope node tree */
@@ -509,6 +509,17 @@ export const useFlagAlertingRuleQuality = (options?: ReactFlagEvaluationOptions)
  */
 export const useFlagAlertingRuleQualityFix = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("alerting.ruleQualityFix", false, options).value;
+};
+
+/**
+ * Enable bulk fixes for alert rule quality issues on the alert quality page.
+ *
+ * **Details:**
+ * - flag key: `alerting.ruleQualityFixAll`
+ * - default value: `false`
+ */
+export const useFlagAlertingRuleQualityFixAll = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alerting.ruleQualityFixAll", false, options).value;
 };
 
 /**
@@ -1656,17 +1667,6 @@ export const useFlagGrafanaMegaMenuPeekAndDock = (options?: ReactFlagEvaluationO
 };
 
 /**
- * Moves the signed-in user's profile menu from the top bar to the bottom of the mega menu
- *
- * **Details:**
- * - flag key: `grafana.megaMenuProfile`
- * - default value: `false`
- */
-export const useFlagGrafanaMegaMenuProfile = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.megaMenuProfile", false, options).value;
-};
-
-/**
  * Disables dashboard edit mode (manual and assistant-driven) on mobile/small-screen viewports
  *
  * **Details:**
@@ -1829,6 +1829,17 @@ export const useFlagGrafanaPanelOptionInterpolation = (options?: ReactFlagEvalua
  */
 export const useFlagGrafanaPanelPluginTransformations = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.panelPluginTransformations", false, options).value;
+};
+
+/**
+ * Adds quick edits for a panel's most-changed options to the panel edit popover in dashboard edit mode
+ *
+ * **Details:**
+ * - flag key: `grafana.panelQuickEdits`
+ * - default value: `false`
+ */
+export const useFlagGrafanaPanelQuickEdits = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.panelQuickEdits", false, options).value;
 };
 
 /**
@@ -2478,17 +2489,6 @@ export const useFlagReportingHeaderSettings = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagRolePickerDrawer = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("rolePickerDrawer", false, options).value;
-};
-
-/**
- * Enables Saved queries (query library) RBAC permissions
- *
- * **Details:**
- * - flag key: `savedQueriesRBAC`
- * - default value: `true`
- */
-export const useFlagSavedQueriesRBAC = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("savedQueriesRBAC", true, options).value;
 };
 
 /**

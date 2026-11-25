@@ -8,7 +8,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import {
   useFlagGrafanaMegaMenuPeekAndDock,
-  useFlagGrafanaMegaMenuProfile,
   useFlagGrafanaScopesDashboardsMegaMenu,
   useFlagGrafanaVisualDesignRefresh,
 } from '@grafana/runtime/internal';
@@ -16,14 +15,12 @@ import { ErrorBoundaryAlert, ScrollContainer, Text, useStyles2, Button, IconButt
 import { useDragAndDrop } from '@grafana/ui/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { ScopesDashboardsMegaMenuSection } from 'app/features/scopes/dashboards/ScopesDashboardsMegaMenuSection';
-import { useSelector } from 'app/types/store';
 
 import { MegaMenuCustomiseControls } from './MegaMenuCustomiseControls';
 import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
 import { DOCK_MENU_BUTTON_ID, MegaMenuHeader } from './MegaMenuHeader';
 import { MegaMenuItem } from './MegaMenuItem';
 import { MegaMenuPinnedItem } from './MegaMenuPinnedItem';
-import { MegaMenuProfile } from './MegaMenuProfile';
 import { useMegaMenuSectionExtension } from './MegaMenuSectionExtensionPoint';
 import { MegaMenuSkeleton } from './MegaMenuSkeleton';
 import { useNavCustomization } from './hooks';
@@ -80,9 +77,6 @@ export const MegaMenu = memo(
     );
 
     const peekAndDock = useFlagGrafanaMegaMenuPeekAndDock();
-    // Only a signed-in user has a profile; anonymous users sign in from the top bar.
-    const profileNode = useSelector((store) => store.navIndex['profile']);
-    const showProfile = useFlagGrafanaMegaMenuProfile() && profileNode !== undefined;
     const showFooter = editMode || (canCustomise && !isLoading) || !peekAndDock;
 
     const handleDockedMenu = () => {
@@ -304,7 +298,7 @@ export const MegaMenu = memo(
             {section && (
               <>
                 {sectionCollapsed ? (
-                  <hr className={styles.sectionDivider} />
+                  <hr className={styles.dividerLine} />
                 ) : (
                   <div {...separatorProps} className={cx(separatorProps.className, styles.sectionSeparator)} />
                 )}
@@ -314,16 +308,7 @@ export const MegaMenu = memo(
               </>
             )}
           </div>
-          {showProfile && (
-            <>
-              <hr className={styles.sectionDivider} />
-              <div className={styles.profile}>
-                <MegaMenuProfile profileNode={profileNode} onNavigate={state.megaMenuDocked ? undefined : onClose} />
-              </div>
-            </>
-          )}
-          {/* Below the profile, a line sets the footer's buttons apart from it. */}
-          {showFooter && <hr className={showProfile ? styles.sectionDivider : styles.dividerLine} />}
+          {showFooter && <hr className={styles.dividerLine} />}
           {showFooter && (
             <div className={cx(styles.footer, editMode && styles.footerEditMode)}>
               {editMode && (
@@ -433,26 +418,6 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
       height: 1,
       background: `linear-gradient(90deg, transparent 0%, ${theme.colors.border.weak} 20%, ${theme.colors.border.weak} 80%, transparent 100%)`,
       margin: theme.spacing(1),
-    }),
-    // A plain line between the navigation, the plugin section and the profile, as the resize handle draws, in place
-    // of the footer divider's fade.
-    sectionDivider: css({
-      border: 'none',
-      flexShrink: 0,
-      height: 1,
-      background: theme.colors.border.weak,
-      margin: theme.spacing(1),
-    }),
-    // The profile at the bottom of the menu, inset as the navigation items are. The lines around it give it space;
-    // as the menu's last row it also keeps a gap below.
-    profile: css({
-      display: 'flex',
-      flexDirection: 'column',
-      flexShrink: 0,
-      padding: theme.spacing(0, 1),
-      '&:last-child': {
-        paddingBottom: theme.spacing(1),
-      },
     }),
     // Edit-mode footer: the Reset/Cancel/Done controls
     footer: css({
