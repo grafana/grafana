@@ -2,7 +2,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { getFieldDisplayName } from '../../field/fieldState';
-import { type DataFrame, FieldType } from '../../types/dataFrame';
+import { type DataFrame, type FieldDTO, FieldType } from '../../types/dataFrame';
 import { type DataTransformerConfig } from '../../types/transformations';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { createFieldReferenceResolver, getFieldReferences } from '../frameIdentity';
@@ -336,6 +336,76 @@ describe('OrganizeFields Transformer', () => {
         )
       );
       expect(organized.fields.map((field) => field.values[0])).toEqual([3, 1]);
+    });
+
+    it.each<{
+      name: string;
+      fields: FieldDTO[];
+      names: string[];
+      options: Partial<OrganizeFieldsTransformerOptions>;
+      shown: string[];
+    }>([
+      {
+        name: 'one of three same-named fields is hidden',
+        fields: [1, 2, 3].map((value) => ({ name: 'x', type: FieldType.number, values: [value] })),
+        names: ['x 1', 'x 2', 'x 3'],
+        options: { excludeByName: { 'x 2': true } },
+        shown: ['x:x 1', 'x:x 3'],
+      },
+      {
+        name: 'two of three same-named fields are included',
+        fields: [1, 2, 3].map((value) => ({ name: 'x', type: FieldType.number, values: [value] })),
+        names: ['x 1', 'x 2', 'x 3'],
+        options: { includeByName: { 'x 1': true, 'x 3': true } },
+        shown: ['x:x 1', 'x:x 3'],
+      },
+      {
+        name: 'the only field with another label key is hidden',
+        fields: [
+          { name: 'Value', type: FieldType.number, values: [1], labels: { host: 'a' } },
+          { name: 'Value', type: FieldType.number, values: [2], labels: { region: 'eu' } },
+        ],
+        names: ['{host="a"}', '{region="eu"}'],
+        options: { excludeByName: { '{region="eu"}': true } },
+        shown: ['Value:{host="a"}'],
+      },
+    ])(
+      'keeps the display names fields have in the input when $name by reference',
+      async ({ fields, names, options, shown }) => {
+        const frame = toDataFrame({ fields });
+        const references = getFieldReferences(frame);
+
+        expect(
+          await organize(frame, {
+            ...options,
+            referenceByName: Object.fromEntries(names.map((name, index) => [name, references[index]])),
+          })
+        ).toEqual(shown);
+      }
+    );
+
+    it('keeps the display names fields have in the input when a field in one of several frames is hidden by reference', async () => {
+      const repeated = toDataFrame({
+        fields: [1, 2, 3].map((value) => ({ name: 'x', type: FieldType.number, values: [value] })),
+      });
+      const other = toDataFrame({ fields: [{ name: 'y', type: FieldType.number, values: [4] }] });
+
+      const output = await lastValueFrom(
+        transformDataFrame(
+          [
+            {
+              id: DataTransformerID.organize,
+              options: { excludeByName: { 'x 2': true }, referenceByName: { 'x 2': getFieldReferences(repeated)[1] } },
+            },
+          ],
+          [repeated, other]
+        )
+      );
+
+      expect(output.map((frame) => frame.fields.map((field) => field.state?.displayName))).toEqual([
+        ['x 1', 'x 3'],
+        ['y'],
+      ]);
     });
 
     it('leaves other fields alone when the referenced field is gone', async () => {

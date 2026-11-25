@@ -240,6 +240,7 @@ function organizeByReference(data: DataFrame[], options: OrganizeFieldsTransform
   const includeMatcher = getNamesMatcher(include.byName);
   const including = Boolean(includeMatcher) || hasDecisiveValue(include.byReference);
   const filtering = including || Boolean(excludeMatcher) || hasDecisiveValue(exclude.byReference);
+  const filteringByReference = exclude.byReference.length > 0 || include.byReference.length > 0;
   const ordering = options.orderByMode !== OrderByMode.Auto;
   const renaming = rename.byReference.length > 0 || Object.keys(rename.byName).length > 0;
 
@@ -258,6 +259,11 @@ function organizeByReference(data: DataFrame[], options: OrganizeFieldsTransform
       });
       if (fields.length === 0) {
         continue;
+      }
+      if (filteringByReference) {
+        for (const field of fields) {
+          getFieldDisplayName(field, frame, data);
+        }
       }
     }
     filtered.push({

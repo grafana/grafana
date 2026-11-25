@@ -134,6 +134,23 @@ describe('prepareColumnContext', () => {
     expect(prepareColumnContext([repeated], 0)?.catalog).toEqual(['value 1', 'value 2']);
   });
 
+  it('keeps the repeated field names after the organize transformation hides one of them', async () => {
+    const repeated = createDataFrame({
+      refId: 'A',
+      fields: [1, 2, 3].map((value) => ({ name: 'value', type: FieldType.number, values: [value] })),
+    });
+    const configs = columnTransformations.columnVisibility.write(
+      [],
+      new Set(['value 2']),
+      prepareColumnContext([repeated], 0)!
+    );
+
+    const output = await lastValueFrom(transformDataFrame([...configs], [repeated]));
+
+    expect(output[0].fields.map((field) => field.state?.displayName)).toEqual(['value 1', 'value 3']);
+    expect(prepareColumnContext([repeated], 0)?.catalog).toEqual(['value 1', 'value 2', 'value 3']);
+  });
+
   it('shows source names when there is no display series', () => {
     expect(prepareColumnContext([source], 0)?.displayNames).toEqual(['customer_id', 'region_name']);
   });
