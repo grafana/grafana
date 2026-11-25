@@ -81,7 +81,7 @@ export const getGradientButtonStyles = (
 };
 
 /** A disabled GradientButton has no gradient, and looks like any disabled solid Button. */
-export function getGradientButtonDisabledStyles(theme: GrafanaTheme2) {
+function getGradientButtonDisabledStyles(theme: GrafanaTheme2) {
   return {
     cursor: 'not-allowed',
     boxShadow: 'none',
