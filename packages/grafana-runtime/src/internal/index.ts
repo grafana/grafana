@@ -79,6 +79,7 @@ export {
 } from '../utils/getCachedPromise';
 export { type JourneyStartOptions, setJourneyTracker, setJourneyRegistry } from '../services/JourneyTracker';
 export { setKindRegistry } from '../services/KindRegistry';
+export { setStarsSrv } from '../services/StarsSrv';
 export {
   getListedPanelPluginMetas,
   getPanelPluginMeta,

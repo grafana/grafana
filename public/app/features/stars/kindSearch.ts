@@ -8,13 +8,12 @@ import {
 } from '@grafana/api-clients/rtkq/search/v0alpha1';
 import { locationUtil } from '@grafana/data';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
-import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
 import { getAPIGroupVersions } from 'app/features/apiserver/discovery';
-import { type ThunkResult } from 'app/types/store';
+import { type SearchRow } from 'app/features/search/service/types';
 
 import { getStarredAppKinds, type StarredAppKind } from './kinds';
-import { type StarredNames, type StarredRow, starsHoldName, userStarsFieldSelector } from './utils';
+import { type StarredNames } from './utils';
 
 /**
  * TODO: Switch to the global search when it is enabled, and delete this file. One search across
@@ -83,7 +82,7 @@ async function searchNames(url: string, names: string[]): Promise<ResultItem[]> 
 }
 
 /** A hit of a kind's search as a starred row, which carries the kind and links to the page of the object. */
-function toRow(kind: StarredAppKind, item: ResultItem): StarredRow {
+function toRow(kind: StarredAppKind, item: ResultItem): SearchRow {
   // The generated type leaves the values unchecked
   const fields: Record<string, unknown> = item.fields ?? {};
   const { name } = item.resource;
@@ -99,7 +98,7 @@ function toRow(kind: StarredAppKind, item: ResultItem): StarredRow {
 }
 
 /** The starred objects of a kind that the user may read, as rows. Rejects when the kind's search fails. */
-async function searchStarredRows(kind: StarredAppKind, names: string[]): Promise<StarredRow[]> {
+async function searchStarredRows(kind: StarredAppKind, names: string[]): Promise<SearchRow[]> {
   const url = await resolveSearchURL(kind);
   if (!url) {
     return [];
@@ -111,39 +110,39 @@ async function searchStarredRows(kind: StarredAppKind, names: string[]): Promise
   return batches.flat().map((item) => toRow(kind, item));
 }
 
+/**
+ * The starred rows of one kind, or none when the kind's API is unavailable (plugin not installed, apiserver down,
+ * search opted out of): its stars go unshown rather than failing the list around them.
+ */
+async function searchStarredKind({ kind: searchKind, names }: StarredNames): Promise<SearchRow[]> {
+  const kind = getStarredAppKinds().find((candidate) => candidate.searchKind === searchKind);
+  if (!kind) {
+    return [];
+  }
+  try {
+    return await searchStarredRows(kind, names);
+  } catch (err) {
+    if (isFetchError(err) && err.status === 405) {
+      // The kind is served with no search endpoint: it opted out of search, or it is not namespaced
+      console.warn(
+        `${kind.group}/${kind.kind} can be starred, but it is served without a search endpoint, so its stars cannot be shown`
+      );
+    } else {
+      console.error(`Failed to resolve starred ${kind.group}/${kind.kind}`, err);
+    }
+    return [];
+  }
+}
+
 // An endpoint of the search client, not of the stars client: a request that is still out holds back every
 // invalidation in the client it belongs to, and a star toggle must not wait for a plugin's API
 const kindSearchAPI = searchAPI.enhanceEndpoints({ addTagTypes: [STARRED_APP_SEARCH_TAG] }).injectEndpoints({
   endpoints: (build) => ({
-    /**
-     * Starred objects of app kinds as rows, each kind through its own search endpoint, in no order. A kind whose
-     * API is unavailable (plugin not installed, apiserver down, search opted out of) yields nothing: its stars go
-     * unshown rather than failing the list around them.
-     */
-    searchStarredAppKinds: build.query<StarredRow[], StarredNames[]>({
+    /** Starred objects of app kinds as rows, each kind through its own search endpoint, in no order. */
+    searchStarredAppKinds: build.query<SearchRow[], StarredNames[]>({
       providesTags: [STARRED_APP_SEARCH_TAG],
       queryFn: async (starred) => {
-        const rows = await Promise.all(
-          starred.map(async ({ kind: searchKind, names }) => {
-            const kind = getStarredAppKinds().find((candidate) => candidate.searchKind === searchKind);
-            if (!kind) {
-              return [];
-            }
-            try {
-              return await searchStarredRows(kind, names);
-            } catch (err) {
-              if (isFetchError(err) && err.status === 405) {
-                // The kind is served with no search endpoint: it opted out of search, or it is not namespaced
-                console.warn(
-                  `${kind.group}/${kind.kind} can be starred, but it is served without a search endpoint, so its stars cannot be shown`
-                );
-              } else {
-                console.error(`Failed to resolve starred ${kind.group}/${kind.kind}`, err);
-              }
-              return [];
-            }
-          })
-        );
+        const rows = await Promise.all(starred.map(searchStarredKind));
         return { data: rows.flat() };
       },
     }),
@@ -152,20 +151,5 @@ const kindSearchAPI = searchAPI.enhanceEndpoints({ addTagTypes: [STARRED_APP_SEA
 
 /** Re-searches the starred rows of app kinds, for a view that refreshes on its own schedule. */
 export const refetchStarredAppKinds = () => kindSearchAPI.util.invalidateTags([STARRED_APP_SEARCH_TAG]);
-
-/**
- * Re-searches the starred rows of app kinds when one of `names` is starred as an object of one. A write to an
- * unstarred object changes no row, so the search is spared.
- */
-export const refetchStarredAppKindsFor =
-  (names: string[]): ThunkResult<void> =>
-  (dispatch, getState) => {
-    const { data } = collectionsAPIv1alpha1.endpoints.listStars.select({ fieldSelector: userStarsFieldSelector() })(
-      getState()
-    );
-    if (starsHoldName(data, getStarredAppKinds(), names)) {
-      dispatch(refetchStarredAppKinds());
-    }
-  };
 
 export const { useSearchStarredAppKindsQuery } = kindSearchAPI;

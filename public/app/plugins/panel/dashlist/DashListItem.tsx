@@ -1,7 +1,7 @@
 import { reportInteraction } from '@grafana/runtime';
 import { Card, Icon, Link, Stack, Text, useStyles2 } from '@grafana/ui';
 import { DescriptionTooltip } from 'app/features/search/components/DescriptionTooltip';
-import { type DashboardQueryResult, type LocationInfo } from 'app/features/search/service/types';
+import { type LocationInfo, type SearchRow } from 'app/features/search/service/types';
 import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
 import { findStarredKindBySearchKind } from 'app/features/stars/kinds';
 
@@ -9,8 +9,7 @@ import { ListRow } from './ListRow';
 import { getStyles } from './styles';
 
 interface Props {
-  // The fields the row reads, which an object of any kind has: not every row is a dashboard search row
-  dashboard: Pick<DashboardQueryResult, 'kind' | 'uid' | 'name' | 'description'>;
+  dashboard: SearchRow;
   url: string;
   showFolderNames: boolean;
   locationInfo?: LocationInfo;

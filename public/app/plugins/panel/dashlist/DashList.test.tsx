@@ -3,13 +3,12 @@ import { testWithAppKind } from 'test/helpers/testWithAppKind';
 import { testWithStarsUser } from 'test/helpers/testWithStarsUser';
 import { render, screen, waitFor } from 'test/test-utils';
 
-import { setBackendSrv, setStarsSrv } from '@grafana/runtime';
+import { setBackendSrv } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures, MOCK_APP_KIND, setMockStarred, setMockStarredFolders } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
-import { CollectionsStarsSrv } from 'app/features/stars/service';
 
 import { getPanelProps } from '../test-utils';
 
@@ -19,7 +18,6 @@ import { type Options } from './panelcfg.gen';
 const [_, { folderA, folderA_dashbdD, dashbdE }] = getFolderFixtures();
 
 setBackendSrv(backendSrv);
-setStarsSrv(new CollectionsStarsSrv());
 setupMockServer();
 
 const defaultOptions: Options = {

@@ -1,5 +1,5 @@
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
-import { type DashboardQueryResult, type LocationInfo } from 'app/features/search/service/types';
+import { type LocationInfo, type SearchRow } from 'app/features/search/service/types';
 import { DashListItem } from 'app/plugins/panel/dashlist/DashListItem';
 
 import { HomeList } from '../HomeList';
@@ -8,8 +8,7 @@ import { DashboardTabEmptyState } from './DashboardTabEmptyState';
 import { DashboardTabError, DashboardTabErrorAlert } from './DashboardTabError';
 
 interface Props {
-  // The fields the tab and its rows read, which an object of any kind has
-  dashboards: Array<Pick<DashboardQueryResult, 'kind' | 'uid' | 'name' | 'url' | 'description' | 'location'>>;
+  dashboards: SearchRow[];
   loading: boolean;
   error: boolean;
   retry: () => void;

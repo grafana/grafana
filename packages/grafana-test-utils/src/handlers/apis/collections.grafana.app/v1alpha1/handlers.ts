@@ -33,8 +33,7 @@ const getStarsHandler = () =>
     return HttpResponse.json(mockStarsResponse);
   });
 
-const UPDATE_STARS_URL =
-  '/apis/collections.grafana.app/v1alpha1/namespaces/:namespace/stars/:name/update/:group/:kind/:id';
+export const starUpdateRoute = `${starsRoute}/:name/update/:group/:kind/:id`;
 
 type UpdateOrDeleteStarsParams = {
   namespace: string;
@@ -52,14 +51,14 @@ const successResponse = {
 };
 
 const addStarHandler = () =>
-  http.put<UpdateOrDeleteStarsParams>(UPDATE_STARS_URL, ({ params }) => {
+  http.put<UpdateOrDeleteStarsParams>(starUpdateRoute, ({ params }) => {
     const { id, group, kind } = params;
     getMockStarSet(group, kind).add(id);
     return HttpResponse.json(successResponse);
   });
 
 const removeStarHandler = () =>
-  http.delete<UpdateOrDeleteStarsParams>(UPDATE_STARS_URL, ({ params }) => {
+  http.delete<UpdateOrDeleteStarsParams>(starUpdateRoute, ({ params }) => {
     const { id, group, kind } = params;
     getMockStarSet(group, kind).delete(id);
     return HttpResponse.json(successResponse);
