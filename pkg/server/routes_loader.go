@@ -24,10 +24,11 @@ import (
 func (s *ModuleServer) provideRoutesLoader() (router.RoutesLoader, error) {
 	defaultRouterCoreURL(s.cfg, s.log)
 
-	accessClient, err := authz.ProvideStandaloneAuthZClient(s.cfg, s.features, s.tracer, s.registerer)
+	authzClients, err := authz.ProvideStandaloneAuthZClients(s.cfg, s.features, s.tracer, s.registerer)
 	if err != nil {
 		return nil, fmt.Errorf("creating router authorization client: %w", err)
 	}
+	accessClient := authz.ProvideAuthZAccessClient(authzClients)
 
 	client, err := s.routerStorageClient(accessClient)
 	if err != nil {
@@ -37,6 +38,7 @@ func (s *ModuleServer) provideRoutesLoader() (router.RoutesLoader, error) {
 		Resource:           client,
 		RESTConfigProvider: router.NewLoopbackRestConfigProvider(s.httpServerRouter),
 		Access:             accessClient,
+		LegacyAccess:       authz.ProvideAuthZLegacyAccessClient(authzClients),
 	}
 	clients.SecureValues, err = routerSecureValues(s.cfg, s.tracer, accessClient)
 	if err != nil {
@@ -45,7 +47,7 @@ func (s *ModuleServer) provideRoutesLoader() (router.RoutesLoader, error) {
 
 	// Only the local plugin loader needs the SQL database, which
 	// InitializeRoutesLoader opens and migrates.
-	if cloud, err := router.ProvideCloudRoutesLoader(s.cfg, clients, s.tracer, s.features, s.registerer); err != nil || cloud != nil {
+	if cloud, err := InitializeCloudRoutesLoader(s.cfg, clients, s.tracer, s.features, s.registerer); err != nil || cloud != nil {
 		return cloud, err
 	}
 	return InitializeRoutesLoader(s.cfg, clients)

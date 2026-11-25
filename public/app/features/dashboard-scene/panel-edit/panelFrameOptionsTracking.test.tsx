@@ -29,7 +29,7 @@ setPluginImportUtils({
   getPanelPluginFromCache: () => undefined,
 });
 
-function setup({ description = 'Original description' }: { description?: string } = {}) {
+function setup({ description = 'Original description', subtitle }: { description?: string; subtitle?: string } = {}) {
   const links = new VizPanelLinks({
     rawLinks: [
       { title: 'Docs', url: '/docs' },
@@ -41,6 +41,7 @@ function setup({ description = 'Original description' }: { description?: string 
     key: 'panel-2',
     title: 'Original title',
     description,
+    subtitle,
     pluginId: 'timeseries',
     titleItems: [links],
   });
@@ -138,6 +139,21 @@ describe('panel frame option tracking', () => {
 
     expect(screen.getByRole('switch')).toBeInTheDocument();
     expect(panelSettingChanged).not.toHaveBeenCalled();
+  });
+
+  // Saved v2 dashboards store a subtitle-only panel with an empty description.
+  it('shows and keeps a subtitle when the description is an empty string', async () => {
+    const { panel } = setup({ description: '', subtitle: 'Original subtitle' });
+    render(<PanelDescriptionTextArea panel={panel} />);
+
+    const textarea = screen.getByRole('textbox');
+    expect(textarea).toHaveValue('Original subtitle');
+    expect(screen.getByRole('switch')).toBeChecked();
+
+    await userEvent.click(textarea);
+    await userEvent.tab();
+
+    expect(panel.state.subtitle).toBe('Original subtitle');
   });
 
   it('reports a transparent background change', async () => {

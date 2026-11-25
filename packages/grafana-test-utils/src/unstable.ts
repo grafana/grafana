@@ -18,7 +18,7 @@ export {
   customPatchUserPreferencesHandler,
 } from './handlers/apis/preferences.grafana.app/v1/handlers';
 export { mockUserPreferences, setupMockUserPreferences, setMockUserPreferences } from './fixtures/preferences';
-export { setMockStarredAppKind, setMockStarredDashboards, setMockStarredFolders } from './fixtures/starred';
+export { setMockStarred, setMockStarredDashboards, setMockStarredFolders } from './fixtures/starred';
 export { MOCK_APP_KIND } from './fixtures/appKinds';
 export { mockPluginMeta, setMockPluginMetas, type MockPluginMeta } from './fixtures/pluginMetas';
 export { customSetTeamRolesHandler } from './handlers/api/access-control/handlers';
