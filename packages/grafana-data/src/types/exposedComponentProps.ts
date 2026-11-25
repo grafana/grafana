@@ -26,6 +26,10 @@ export type PrometheusQueryResultsV1Props = {
   dataLinkPostProcessor?: DataLinkPostProcessor;
 };
 
+export type ManagedBadgeV1AlphaProps = {
+  resource: { metadata?: { annotations?: Record<string, string | undefined> } };
+};
+
 export type SaveResourceDrawerV1AlphaProps = {
   resource: {
     apiVersion?: string;
