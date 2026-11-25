@@ -170,6 +170,7 @@ function versionsAt(commit: string, packages: IndependentPackage[]): Versions {
       try {
         return [manifestPath, JSON.parse(run('git', ['show', `${commit}:${manifestPath}`])).version];
       } catch (error) {
+        // A package added after this commit has no package.json here, so it has no version yet.
         if (/does not exist in|exists on disk, but not in/.test(stderrOf(error))) {
           return [manifestPath, null];
         }
