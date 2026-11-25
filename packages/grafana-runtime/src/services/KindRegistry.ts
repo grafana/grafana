@@ -38,9 +38,23 @@ export interface KindInfo {
   readonly iconColor?: ThemeVizHue['shades'][number]['name'];
   /**
    * Builds the path of the page for one object from its `metadata.name`, without the app sub path.
+   * `title` is the object's title where the caller knows it, for a kind whose paths carry one.
    * Absent when the kind has no page for a single object.
    */
-  readonly getRoute?: (name: string) => string;
+  readonly getRoute?: (name: string, title?: string) => string;
+}
+
+/**
+ * A kind an app plugin serves, as the plugin describes it to {@link KindRegistry.addKinds}: a
+ * {@link KindInfo} whose labels are plain text. Grafana shows the text as given and only cases its
+ * first letter. It has no translations for a plugin's kinds, so a plugin that has translations
+ * passes text it already translated. The text is read once, when the kind is added.
+ */
+export interface AppKind extends Omit<KindInfo, 'getLabel' | 'getPluralLabel'> {
+  /** Name as it reads inside a sentence, e.g. `dashboard`. Grafana uppercases its first letter for a title. */
+  readonly label: string;
+  /** The plural of `label`, e.g. `dashboards`. */
+  readonly pluralLabel: string;
 }
 
 /** The key each of Grafana's own kinds has in {@link KindRegistry.coreKinds}. */
@@ -71,7 +85,7 @@ export interface KindRegistry {
   /** The kinds that app plugins add. A kind that Grafana serves itself is never among them. */
   readonly getAppKinds: () => KindInfo[];
   /** Adds the kinds an app plugin serves. A kind that Grafana serves itself keeps its core row. */
-  readonly addKinds: (kinds: KindInfo[]) => void;
+  readonly addKinds: (kinds: AppKind[]) => void;
 }
 
 let singletonInstance: KindRegistry | undefined;

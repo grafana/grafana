@@ -86,12 +86,13 @@ function toRow(kind: StarredAppKind, item: ResultItem): SearchRow {
   // The generated type leaves the values unchecked
   const fields: Record<string, unknown> = item.fields ?? {};
   const { name } = item.resource;
+  const title = typeof fields.title === 'string' && fields.title ? fields.title : undefined;
   return {
     kind: kind.searchKind,
     uid: name,
-    name: typeof fields.title === 'string' && fields.title ? fields.title : name,
+    name: title ?? name,
     // A kind's route leaves out the app sub path, which a link carries
-    url: locationUtil.assureBaseUrl(kind.getRoute(name)),
+    url: locationUtil.assureBaseUrl(kind.getRoute(name, title)),
     description: typeof fields.description === 'string' ? fields.description : '',
     location: typeof fields.folder === 'string' ? fields.folder : '',
   };

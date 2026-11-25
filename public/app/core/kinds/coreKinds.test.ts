@@ -1,6 +1,6 @@
-import { type KindInfo } from '@grafana/runtime/unstable';
+import { type AppKind } from '@grafana/runtime/unstable';
 
-import { addKinds, CORE_KINDS, coversGroup, findKind, getAppKinds } from './coreKinds';
+import { addKinds, CORE_KINDS, coversGroup, findKind, getAppKinds, subscribeToAppKinds } from './coreKinds';
 
 describe('getRoute', () => {
   it('encodes the object name', () => {
@@ -61,38 +61,60 @@ describe('findKind', () => {
 describe('app kinds', () => {
   const group = 'example.ext.grafana.app';
 
-  function appKind(kind: string, label: string): KindInfo {
+  function appKind(kind: string, label: string): AppKind {
     return {
       group,
       kind,
       resource: `${kind.toLowerCase()}s`,
       folderScoped: false,
-      getLabel: () => label,
-      getPluralLabel: () => `${label}s`,
+      label,
+      pluralLabel: `${label}s`,
       icon: 'tag-alt',
     };
   }
 
   it('finds a kind that a plugin adds by its group and kind', () => {
-    const note = appKind('Note', 'Note');
-    addKinds([note]);
+    addKinds([appKind('Note', 'note')]);
 
-    expect(findKind(group, 'Note')).toBe(note);
+    expect(findKind(group, 'Note')).toMatchObject({ group, kind: 'Note', resource: 'notes', icon: 'tag-alt' });
     expect(findKind('other.ext.grafana.app', 'Note')).toBeUndefined();
   });
 
+  it('cases the labels of a kind that a plugin adds, from the label as it reads inside a sentence', () => {
+    addKinds([appKind('Report', 'weekly report')]);
+    const report = findKind(group, 'Report');
+
+    expect(report?.getLabel()).toBe('Weekly report');
+    expect(report?.getLabel({ upperFirst: false })).toBe('weekly report');
+    expect(report?.getPluralLabel()).toBe('Weekly reports');
+  });
+
   it('keeps the core row when a plugin adds a kind that Grafana serves', () => {
-    addKinds([{ ...appKind('Dashboard', 'Plugin dashboard'), group: 'dashboard.grafana.app' }]);
+    addKinds([{ ...appKind('Dashboard', 'plugin dashboard'), group: 'dashboard.grafana.app' }]);
 
     expect(findKind('dashboard.grafana.app', 'Dashboard')).toBe(CORE_KINDS.dashboard);
     expect(getAppKinds().some((kind) => kind.kind === 'Dashboard')).toBe(false);
   });
 
   it('replaces a kind that a plugin adds again', () => {
-    addKinds([appKind('Widget', 'Old widget')]);
-    addKinds([appKind('Widget', 'New widget')]);
+    addKinds([appKind('Widget', 'old widget')]);
+    addKinds([appKind('Widget', 'new widget')]);
 
     expect(getAppKinds().filter((kind) => kind.kind === 'Widget')).toHaveLength(1);
     expect(findKind(group, 'Widget')?.getLabel()).toBe('New widget');
+  });
+
+  it('tells a listener each time a plugin adds a kind, until the listener unsubscribes', () => {
+    const listener = jest.fn();
+    const unsubscribe = subscribeToAppKinds(listener);
+
+    addKinds([appKind('Gadget', 'gadget')]);
+    // Grafana serves dashboards itself, so this adds nothing
+    addKinds([{ ...appKind('Dashboard', 'plugin dashboard'), group: 'dashboard.grafana.app' }]);
+    expect(listener).toHaveBeenCalledTimes(1);
+
+    unsubscribe();
+    addKinds([appKind('Gizmo', 'gizmo')]);
+    expect(listener).toHaveBeenCalledTimes(1);
   });
 });

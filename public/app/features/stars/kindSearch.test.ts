@@ -5,10 +5,16 @@ import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
 import { type SearchQuery } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { AppEvents } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
-import { getAPIGroupHandler, getKindSearchHandler, kindSearchRoute } from '@grafana/test-utils/handlers';
+import {
+  getAPIGroupHandler,
+  getAppKindHandlers,
+  getKindSearchHandler,
+  kindSearchRoute,
+} from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { MOCK_APP_KIND } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
+import { addKinds } from 'app/core/kinds/coreKinds';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { useSearchStarredAppKindsQuery } from './kindSearch';
@@ -100,6 +106,32 @@ describe('useSearchStarredAppKindsQuery', () => {
 
     await waitFor(() => {
       expect(result.current.data?.map((row) => row.name)).toEqual(['t1']);
+    });
+  });
+
+  it('hands the title of the object to the route, for a kind whose links carry it', async () => {
+    const titled = { group: 'titled.ext.grafana.app', version: 'v1', kind: 'Titled', resource: 'titleds' };
+    addKinds([
+      {
+        group: titled.group,
+        kind: titled.kind,
+        resource: titled.resource,
+        folderScoped: false,
+        label: 'titled object',
+        pluralLabel: 'titled objects',
+        icon: 'cube',
+        getRoute: (name, title) => `/a/titled-app/${name}/${title}`,
+      },
+    ]);
+    server.use(...getAppKindHandlers(titled, [{ name: 'x1', title: 'report' }]));
+
+    const { result } = renderHook(
+      () => useSearchStarredAppKindsQuery([{ kind: 'titled.ext.grafana.app/Titled', names: ['x1'] }]),
+      { wrapper: getWrapper({}) }
+    );
+
+    await waitFor(() => {
+      expect(result.current.data?.map((row) => row.url)).toEqual(['/a/titled-app/x1/report']);
     });
   });
 

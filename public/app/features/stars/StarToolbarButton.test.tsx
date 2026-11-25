@@ -12,6 +12,7 @@ import server, { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
+import { store } from 'app/store/store';
 
 import { StarToolbarButton, StarToolbarButtonExposed } from './StarToolbarButton';
 import { itemStarred } from './analytics/main';
@@ -58,6 +59,21 @@ describe('StarToolbarButton', () => {
 
     await user.click(await findStarButton(itemToStar.title, true));
     expect(await findStarButton(itemToStar.title, false)).toBeInTheDocument();
+  });
+
+  it('confirms the star, then the unstar, with a notification', async () => {
+    const { user } = setup(itemToStar);
+
+    await user.click(await findStarButton(itemToStar.title, false));
+    await user.click(await findStarButton(itemToStar.title, true));
+    await findStarButton(itemToStar.title, false);
+
+    await waitFor(() =>
+      expect(Object.values(store.getState().appNotifications.byId).map(({ title }) => title)).toEqual([
+        'Added to starred',
+        'Removed from starred',
+      ])
+    );
   });
 
   it('shows spinner initially and transitions to empty star when loading completes with no starred items', async () => {
