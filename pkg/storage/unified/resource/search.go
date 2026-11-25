@@ -2613,9 +2613,6 @@ func (s *searchServer) buildWithOptions(ctx context.Context, nsr NamespacedResou
 	var builderMu sync.Mutex
 	builders := map[NamespacedResource]DocumentBuilder{}
 	getBuilder := func(ctx context.Context, src NamespacedResource) (DocumentBuilder, error) {
-		if nsr.IsGlobal() {
-			return &globalDocumentBuilder{blob: s.builders.blob}, nil
-		}
 		builderMu.Lock()
 		defer builderMu.Unlock()
 		if b, ok := builders[src]; ok {
@@ -2650,6 +2647,16 @@ func (s *searchServer) buildWithOptions(ctx context.Context, nsr NamespacedResou
 		// A build lists everything, which is as good as comparing with storage.
 		listedAt := time.Now()
 
+		// A cold global build can leave a missing document for reconciliation.
+		// A replacement keeps the document searchable using the fields it has.
+		var globalBuilder DocumentBuilder
+		deferInterruptedDocs := false
+		if nsr.IsGlobal() {
+			replacing := rebuild || s.search.PeekIndex(nsr) != nil
+			globalBuilder = &globalDocumentBuilder{blob: s.builders.blob, allowBlobFallback: replacing}
+			deferInterruptedDocs = !replacing
+		}
+
 		// The oldest resource version of the listings, so a change made while a
 		// later listing ran is replayed by the updater rather than missed.
 		indexRV := int64(0)
@@ -2665,12 +2672,16 @@ func (s *searchServer) buildWithOptions(ctx context.Context, nsr NamespacedResou
 				}
 			}
 
-			builder, err := getBuilder(ctx, src)
-			if err != nil {
-				return indexRV, err
+			builder := globalBuilder
+			if builder == nil {
+				var err error
+				builder, err = getBuilder(ctx, src)
+				if err != nil {
+					return indexRV, err
+				}
 			}
-			listRV, docs, skipped, err := s.indexResourceType(ctx, index, src, builder, phases, logger, nsr.IsGlobal())
-			incomplete = incomplete || skipped
+			listRV, docs, partial, err := s.indexResourceType(ctx, index, src, builder, phases, logger, deferInterruptedDocs)
+			incomplete = incomplete || partial
 			indexedDocs[src.GroupResource()] += docs
 			if indexRV == 0 || (listRV > 0 && listRV < indexRV) {
 				indexRV = listRV
@@ -2805,7 +2816,7 @@ func (s *searchServer) indexResourceType(
 	phases *buildPhaseRecorder,
 	logger log.Logger,
 	deferInterruptedDocs bool,
-) (rv int64, docs int, skipped bool, err error) {
+) (rv int64, docs int, incomplete bool, err error) {
 	span := trace.SpanFromContext(ctx)
 	// Storage does some of its work before handing over the iterator, so the
 	// fetch phase starts here rather than at the first document. When storage
@@ -2850,7 +2861,8 @@ func (s *searchServer) indexResourceType(
 
 			span.AddEvent("building document", trace.WithAttributes(attribute.String("name", iter.Name())))
 			convertStart := time.Now()
-			doc, err := builder.BuildDocument(ctx, key, iter.ResourceVersion(), value)
+			resourceVersion := iter.ResourceVersion()
+			doc, err := builder.BuildDocument(ctx, key, resourceVersion, value)
 			phases.recordConvert(time.Since(convertStart), err == nil)
 			if err != nil {
 				span.RecordError(err)
@@ -2861,10 +2873,14 @@ func (s *searchServer) indexResourceType(
 					if !deferInterruptedDocs {
 						return err
 					}
-					skipped = true
+					incomplete = true
 				}
 				logger.Error("error building search document", "key", SearchID(key), "err", err)
 				continue
+			}
+			if doc.RV == 0 && resourceVersion != 0 {
+				incomplete = true
+				logger.Warn("indexed document without blob fields; reconciliation will retry it", "key", SearchID(key))
 			}
 			if err := batch.add(&BulkIndexItem{Action: ActionIndex, Doc: doc}); err != nil {
 				return err
@@ -2883,7 +2899,7 @@ func (s *searchServer) indexResourceType(
 	if !gotIterator {
 		phases.recordFetchWithNoValue(time.Since(listStart))
 	}
-	return rv, docs, skipped, err
+	return rv, docs, incomplete, err
 }
 
 // applyModifiedSince applies what one resource type changed since sinceRV. It

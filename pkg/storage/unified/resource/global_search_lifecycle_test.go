@@ -403,7 +403,8 @@ type reconcileStorage struct {
 	afterList func()
 	onListed  func(name string)
 	// Simulates storage being unavailable.
-	readErr error
+	readErr    error
+	readErrors map[string]*resourcepb.ErrorResult
 	// Answers one more batch read than was asked for, as a misbehaving reader would.
 	extraBatchResponse bool
 	// Titles of stored objects, by name, where a test needs to tell versions apart.
@@ -464,6 +465,9 @@ func (m *reconcileStorage) ReadResource(_ context.Context, request *resourcepb.R
 func (m *reconcileStorage) readOne(request *resourcepb.ReadRequest) *BackendReadResponse {
 	key := request.GetKey()
 	m.read = append(m.read, key.GetName())
+	if err := m.readErrors[key.GetName()]; err != nil {
+		return &BackendReadResponse{Error: err}
+	}
 
 	src := NamespacedResource{Namespace: key.GetNamespace(), Group: key.GetGroup(), Resource: key.GetResource()}
 	rv := m.storedRV(src, key.GetName())
@@ -548,6 +552,95 @@ func TestColdGlobalIndexBuildSkipsTimedOutBlob(t *testing.T) {
 				require.NoError(t, err)
 				require.True(t, lastReconcile.IsZero(), "a build missing a document must not be marked reconciled")
 				require.Equal(t, 1, server.reconcileQueue.Len())
+			})
+		})
+	}
+}
+
+type retryIndexBlob struct {
+	stalledIndexBlob
+	calls           int
+	succeedsOnRetry bool
+}
+
+func (b *retryIndexBlob) GetResourceBlob(ctx context.Context, key *resourcepb.ResourceKey, info *utils.BlobInfo, proxy bool) (*resourcepb.GetBlobResponse, error) {
+	b.calls++
+	if b.calls == 2 && b.succeedsOnRetry {
+		return &resourcepb.GetBlobResponse{Value: []byte(`{"title":"Dashboard title","tags":["blob-tag"]}`)}, nil
+	}
+	return b.stalledIndexBlob.GetResourceBlob(ctx, key, info, proxy)
+}
+
+func TestGlobalIndexReplacementRetriesTimedOutBlob(t *testing.T) {
+	for _, tc := range []struct {
+		name            string
+		succeedsOnRetry bool
+		cancelBuild     bool
+	}{
+		{name: "retry succeeds", succeedsOnRetry: true},
+		{name: "retry times out"},
+		{name: "build context expires", cancelBuild: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			src := dashboardType("ns")
+			key := GlobalSearchKey(src.Namespace)
+			storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+				live:    map[NamespacedResource][]string{src: {"dash-a", "dash-b"}},
+				listRVs: map[NamespacedResource]int64{src: 50},
+				bodies: map[string][]byte{"dash-b": fmt.Appendf(nil,
+					`{"metadata":{"name":"dash-b","labels":{"team":"search"},"annotations":{%q:"blob-uid"}}}`, utils.AnnoKeyBlob)},
+			}}
+			server, serving := repairServer(t, storage, nil)
+			blob := &retryIndexBlob{succeedsOnRetry: tc.succeedsOnRetry}
+			server.builders.blob = blob
+
+			synctest.Test(t, func(t *testing.T) {
+				ctx := t.Context()
+				if tc.cancelBuild {
+					var cancel context.CancelFunc
+					ctx, cancel = context.WithTimeout(ctx, 45*time.Second)
+					defer cancel()
+				}
+				idx, err := server.build(ctx, key, 2, "test", true, time.Time{})
+				require.Equal(t, 2, blob.calls)
+				if tc.cancelBuild {
+					require.ErrorIs(t, err, context.DeadlineExceeded)
+					require.Nil(t, idx)
+					require.Same(t, serving, server.search.PeekIndex(key))
+					return
+				}
+
+				require.NoError(t, err)
+				built := idx.(*MockResourceIndex)
+				require.Equal(t, map[NamespacedResource][]string{src: {"dash-a", "dash-b"}}, indexedNames(t, built))
+				doc := built.indexedItems()[1].Doc
+				require.Equal(t, "search", doc.Labels["team"])
+				if tc.succeedsOnRetry {
+					require.Equal(t, "Dashboard title", doc.Title)
+					require.Equal(t, int64(50), doc.RV)
+					return
+				}
+
+				require.Equal(t, "dash-b", doc.Title)
+				require.Empty(t, doc.Tags)
+				require.Zero(t, doc.RV)
+				reconciledAt, err := built.ReconciledAt()
+				require.NoError(t, err)
+				require.True(t, reconciledAt.IsZero())
+				require.Equal(t, 1, server.reconcileQueue.Len())
+
+				// The next reconcile reads the fallback document even though its
+				// resource has not changed since the replacement was built.
+				built.documentRefs = map[schema.GroupResource][]DocumentRef{
+					dashboardsGroupResource: {{Name: "dash-a", RV: 50}, {Name: doc.Name, RV: doc.RV}},
+				}
+				server.builders.blob = &globalDocumentBlob{response: &resourcepb.GetBlobResponse{Value: []byte(`{"title":"Dashboard title"}`)}}
+				_, err = server.reconcileResourceType(ctx, built, key, src)
+				require.NoError(t, err)
+				require.Equal(t, []string{"dash-b"}, storage.read)
+				doc = built.indexedItems()[2].Doc
+				require.Equal(t, "Dashboard title", doc.Title)
+				require.Equal(t, int64(50), doc.RV)
 			})
 		})
 	}
@@ -783,6 +876,26 @@ func TestReconcileReturnsStorageFailures(t *testing.T) {
 	_, err := server.reconcileResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
 	require.Error(t, err)
 	assert.Empty(t, idx.indexedItems())
+}
+
+func TestReconcileKeepsMissingDocumentRepairsWhenExistingReadFails(t *testing.T) {
+	src := dashboardType("ns")
+	storage := &reconcileStorage{
+		multiTypeStorage: multiTypeStorage{
+			live:    map[NamespacedResource][]string{src: {"existing", "missing"}},
+			listRVs: map[NamespacedResource]int64{src: 50},
+		},
+		readErrors: map[string]*resourcepb.ErrorResult{"existing": {Code: http.StatusServiceUnavailable, Message: "storage unavailable"}},
+	}
+	server, idx := repairServer(t, storage, map[schema.GroupResource][]DocumentRef{
+		dashboardsGroupResource: {{Name: "existing", RV: 40}},
+	})
+
+	res, err := server.reconcileResourceType(t.Context(), idx, GlobalSearchKey(src.Namespace), src)
+	require.ErrorContains(t, err, "storage unavailable")
+	require.Equal(t, repairResult{Reindexed: 1}, res)
+	require.Equal(t, []string{"missing", "existing"}, storage.read)
+	require.Equal(t, map[NamespacedResource][]string{src: {"missing"}}, indexedNames(t, idx))
 }
 
 // A build failure does not stop a reconcile, and the next one retries it. This is

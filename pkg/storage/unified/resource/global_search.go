@@ -227,7 +227,8 @@ func globalSearchCoverageOf(sources ...[]*app.ManifestData) globalSearchTypes {
 
 // Type-specific builders can fetch external data that this index never uses.
 type globalDocumentBuilder struct {
-	blob BlobSupport
+	blob              BlobSupport
+	allowBlobFallback bool
 }
 
 // Unexpected field types must not exclude an otherwise searchable resource.
@@ -260,21 +261,32 @@ func (b *globalDocumentBuilder) BuildDocument(ctx context.Context, key *resource
 			return nil, fmt.Errorf("blob support is not configured")
 		}
 		body, err := ReadBlobForIndex(ctx, b.blob, key, info)
+		mayFallback := func(err error) bool {
+			return b.allowBlobFallback && ctx.Err() == nil && isDocumentBuildInterrupted(err)
+		}
+		if mayFallback(err) {
+			body, err = ReadBlobForIndex(ctx, b.blob, key, info)
+		}
 		if err != nil {
-			return nil, err
-		}
-		var content struct {
-			globalDocumentSpec
-			Spec *globalDocumentSpec `json:"spec"`
-		}
-		if err := json.Unmarshal(body, &content); err != nil {
-			return nil, err
-		}
-		// Blobs can hold a full resource or just its spec. Keep the stored
-		// metadata, which may have changed since the blob was written.
-		spec = content.globalDocumentSpec
-		if content.Spec != nil {
-			spec = *content.Spec
+			if !mayFallback(err) {
+				return nil, err
+			}
+			// Without a version, reconciliation will retry this partial document.
+			rv = 0
+		} else {
+			var content struct {
+				globalDocumentSpec
+				Spec *globalDocumentSpec `json:"spec"`
+			}
+			if err := json.Unmarshal(body, &content); err != nil {
+				return nil, err
+			}
+			// Blobs can hold a full resource or just its spec. Keep the stored
+			// metadata, which may have changed since the blob was written.
+			spec = content.globalDocumentSpec
+			if content.Spec != nil {
+				spec = *content.Spec
+			}
 		}
 	}
 
@@ -1039,12 +1051,15 @@ func (s *searchServer) reindex(ctx context.Context, index ResourceIndex, src Nam
 				}
 			}
 		}
+		if err := ctx.Err(); err != nil {
+			return result, err
+		}
+		// A read failure in the next pass must not discard these repairs.
+		if err := flush(); err != nil {
+			return result, errors.Join(err, interrupted)
+		}
 	}
-	if err := ctx.Err(); err != nil {
-		return result, err
-	}
-	err := flush()
-	return result, errors.Join(interrupted, err)
+	return result, interrupted
 }
 
 // watchRetryDelay is how long to wait before asking storage for a new
