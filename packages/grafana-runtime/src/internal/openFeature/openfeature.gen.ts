@@ -14,6 +14,8 @@ import {
 
 // Flag key constants for programmatic access
 export const FlagKeys = {
+  /** Enables multiple points of integration for Adaptive Logs Time Machine. */
+  AdaptivelogsEnableTimeMachine: "adaptivelogs.enableTimeMachine",
   /** Enable configuration of alert enrichments in Grafana Cloud. */
   AlertEnrichment: "alertEnrichment",
   /** Enables the alert rule restore feature */
@@ -314,8 +316,6 @@ export const FlagKeys = {
   LibraryelementsKubernetesLibraryPanels: "libraryelements.kubernetesLibraryPanels",
   /** Connects Grafana Live to the live.grafana.app websocket instead of /api/live/ws */
   LiveUseAPIServerWebsocket: "live.useAPIServerWebsocket",
-  /** Enables multiple points of integration for Adaptive Logs Time Machine. */
-  LogsEnableTimeMachine: "logs.enableTimeMachine",
   /** Enables the logs tableNG panel to replace existing tableRT */
   LogsTablePanelNG: "logsTablePanelNG",
   /** Changes logs responses from Loki to be compliant with the dataplane specification. */
@@ -433,6 +433,17 @@ export const FlagKeys = {
   /** Allows authenticated API calls in actions */
   VizActionsAuth: "vizActionsAuth",
 } as const;
+
+/**
+ * Enables multiple points of integration for Adaptive Logs Time Machine.
+ *
+ * **Details:**
+ * - flag key: `adaptivelogs.enableTimeMachine`
+ * - default value: `false`
+ */
+export const useFlagAdaptivelogsEnableTimeMachine = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("adaptivelogs.enableTimeMachine", false, options).value;
+};
 
 /**
  * Enable configuration of alert enrichments in Grafana Cloud.
@@ -2082,17 +2093,6 @@ export const useFlagLibraryelementsKubernetesLibraryPanels = (options?: ReactFla
  */
 export const useFlagLiveUseAPIServerWebsocket = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("live.useAPIServerWebsocket", false, options).value;
-};
-
-/**
- * Enables multiple points of integration for Adaptive Logs Time Machine.
- *
- * **Details:**
- * - flag key: `logs.enableTimeMachine`
- * - default value: `false`
- */
-export const useFlagLogsEnableTimeMachine = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("logs.enableTimeMachine", false, options).value;
 };
 
 /**
