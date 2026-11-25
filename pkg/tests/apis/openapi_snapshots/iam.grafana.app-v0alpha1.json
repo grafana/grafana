@@ -4902,6 +4902,13 @@
               "type": "boolean"
             }
           },
+          "authLabels": {
+            "description": "Display labels of the auth provider the user last signed in with, e.g. \"LDAP\".",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "created": {
             "description": "Creation timestamp, in epoch milliseconds.",
             "type": "integer",
