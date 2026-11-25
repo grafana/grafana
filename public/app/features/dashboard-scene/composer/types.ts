@@ -26,6 +26,15 @@ export interface ComposerTarget {
 /** The document types Composer edits. */
 export type ComposerResource = 'dashboard' | 'notebook';
 
+/** What asked for a Composer entry. */
+export interface ComposerEnterRequest {
+  /**
+   * Grafana opened the Assistant's own edit (a chat's pending changes) in Editing, for Composer to run over,
+   * rather than the user asking from Grafana's UI.
+   */
+  assistantEdit: boolean;
+}
+
 export interface ComposerEnterRequestOptions {
   /**
    * The document types this listener enters Composer on. Grafana offers Composer only for types some live
@@ -69,10 +78,11 @@ export interface ComposerAPI {
    * Core does not enter Composer itself: the listener calls `enter` as usual. A listener that will not take
    * a request returns `false`: the request then ends at once (the sidebar goes back to its layout, the
    * picker or switch stops showing it pending) and goes to no other listener. Any other return leaves it
-   * outstanding until `enter` settles it or 10 seconds pass. Returns an unsubscribe.
+   * outstanding until `enter` settles it or 10 seconds pass. `request` says what asked for it. Returns an
+   * unsubscribe.
    */
   onEnterRequested(
-    listener: (target: ComposerTarget) => boolean | void,
+    listener: (target: ComposerTarget, request: ComposerEnterRequest) => boolean | void,
     options?: ComposerEnterRequestOptions
   ): () => void;
 }
