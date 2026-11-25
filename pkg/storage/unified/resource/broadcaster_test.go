@@ -80,7 +80,7 @@ func TestBroadcaster(t *testing.T) {
 		b := newBroadcaster(ctx, ch, metrics, intIdentity)
 
 		// Resume so events cached before registration are replayed.
-		sub, err := b.subscribeWatch(ctx, "test", intGR, intResume(0))
+		sub, err := b.subscribeWatch(ctx, "test", intGR, "", intResume(0))
 		require.NoError(t, err)
 
 		for _, expected := range input {
@@ -121,11 +121,11 @@ func TestBroadcasterUnsubscribe(t *testing.T) {
 		b := newBroadcaster(ctx, ch, metrics, intIdentity)
 
 		// subscribe three, then unsubscribe all
-		sub1, err := b.subscribeWatch(ctx, "sub1", intGR, nil)
+		sub1, err := b.subscribeWatch(ctx, "sub1", intGR, "", nil)
 		require.NoError(t, err)
-		sub2, err := b.subscribeWatch(ctx, "sub2", intGR, nil)
+		sub2, err := b.subscribeWatch(ctx, "sub2", intGR, "", nil)
 		require.NoError(t, err)
-		sub3, err := b.subscribeWatch(ctx, "sub3", intGR, nil)
+		sub3, err := b.subscribeWatch(ctx, "sub3", intGR, "", nil)
 		require.NoError(t, err)
 
 		b.Unsubscribe(sub1.events())
@@ -141,7 +141,7 @@ func TestBroadcasterUnsubscribe(t *testing.T) {
 		require.False(t, ok)
 
 		// broadcaster should still work — new subscriber receives data
-		sub4, err := b.subscribeWatch(ctx, "sub4", intGR, nil)
+		sub4, err := b.subscribeWatch(ctx, "sub4", intGR, "", nil)
 		require.NoError(t, err)
 
 		ch <- 42
@@ -173,7 +173,7 @@ func TestBroadcasterSlowConsumerDeadlock(t *testing.T) {
 	// internal unsubscribe channel buffer and exercise bulk disconnect.
 	const numSubs = internalChanSize + 1
 	for range numSubs {
-		_, err := b.subscribeWatch(ctx, "test", intGR, nil)
+		_, err := b.subscribeWatch(ctx, "test", intGR, "", nil)
 		require.NoError(t, err)
 	}
 
@@ -206,7 +206,7 @@ func TestBroadcasterOverflowSpoolsInsteadOfDisconnecting(t *testing.T) {
 	const ovfCap = 100
 	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, nil, intIdentity, nil)
 
-	sub, err := b.subscribeWatch(ctx, "test", intGR, nil)
+	sub, err := b.subscribeWatch(ctx, "test", intGR, "", nil)
 	require.NoError(t, err)
 
 	// Send more items than the subscriber buffer can hold.
@@ -230,6 +230,35 @@ func TestBroadcasterOverflowSpoolsInsteadOfDisconnecting(t *testing.T) {
 	}
 }
 
+func TestBroadcasterRefillsOverflowWhenDeliveryBufferRunsLow(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		ctx := t.Context()
+		input := make(chan int)
+		defer close(input)
+		b := newBroadcasterWithSizes(ctx, input, 4, 4, nil, intIdentity, nil)
+		sub, err := b.subscribeWatch(ctx, "test", intGR, "", nil)
+		require.NoError(t, err)
+		events := sub.events()
+
+		for rv := 1; rv <= 8; rv++ {
+			input <- rv
+		}
+		synctest.Wait()
+
+		for i, buffered := range []int{3, 4, 3, 4, 3, 2, 1, 0} {
+			select {
+			case rv := <-events:
+				require.Equal(t, i+1, rv)
+			default:
+				t.Fatal("delivery stalled before the next drain tick")
+			}
+			sub.requestRefill()
+			synctest.Wait()
+			require.Len(t, events, buffered)
+		}
+	})
+}
+
 func TestBroadcasterDisconnectsOnOverflowCapExceeded(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		ctx := t.Context()
@@ -243,7 +272,7 @@ func TestBroadcasterDisconnectsOnOverflowCapExceeded(t *testing.T) {
 		const ovfCap = 20
 		b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, metrics, intIdentity, nil)
 
-		sub, err := b.subscribeWatch(ctx, "test", intGR, nil)
+		sub, err := b.subscribeWatch(ctx, "test", intGR, "", nil)
 		require.NoError(t, err)
 
 		// Send enough items to fill buffer + exceed overflow cap.
@@ -304,7 +333,7 @@ func TestBroadcasterReplayLeavesChannelHeadroom(t *testing.T) {
 	}
 
 	// A resume sends the cached events into the subscriber channel.
-	sub, err := b.subscribeWatch(ctx, "test", intGR, intResume(0))
+	sub, err := b.subscribeWatch(ctx, "test", intGR, "", intResume(0))
 	require.NoError(t, err)
 
 	// Read one cached item to confirm the subscription is active.
@@ -346,7 +375,7 @@ func TestBroadcasterOverflowMemoryReleasedWhenCaughtUp(t *testing.T) {
 		const ovfCap = 100
 		b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, metrics, intIdentity, nil)
 
-		sub, err := b.subscribeWatch(ctx, "test", intGR, nil)
+		sub, err := b.subscribeWatch(ctx, "test", intGR, "", nil)
 		require.NoError(t, err)
 
 		// Send more items than the channel buffer can hold, causing overflow.
@@ -413,7 +442,7 @@ func TestBroadcasterMetricsSubscribeFailures(t *testing.T) {
 			watchBufSize: watchChanSize,
 		}
 
-		_, err := b.subscribeWatch(subCtx, "sub1", intGR, nil)
+		_, err := b.subscribeWatch(subCtx, "sub1", intGR, "", nil)
 		require.Error(t, err)
 
 		requireMetricValue(t, metrics.SubscriptionsTotal.WithLabelValues("r", subscriptionResultCtxCanceled), 1)
@@ -429,7 +458,7 @@ func TestBroadcasterMetricsSubscribeFailures(t *testing.T) {
 		close(input)
 		<-b.terminated
 
-		_, err := b.subscribeWatch(ctx, "sub1", intGR, nil)
+		_, err := b.subscribeWatch(ctx, "sub1", intGR, "", nil)
 		require.ErrorIs(t, err, io.EOF)
 
 		requireMetricValue(t, metrics.SubscriptionsTotal.WithLabelValues("r", subscriptionResultTerminated), 1)

@@ -19,6 +19,11 @@
  */
 export interface FeatureToggles {
   /**
+  * Enable tabs and an inline calendar in the compact time range picker
+  * @default false
+  */
+  ['grafana.responsiveTimePickerTabs']?: boolean;
+  /**
   * Search for dashboards using panel title
   * @default false
   */
@@ -429,11 +434,6 @@ export interface FeatureToggles {
   * @default false
   */
   playlistsRBAC?: boolean;
-  /**
-  * Enables Saved queries (query library) RBAC permissions
-  * @default true
-  */
-  savedQueriesRBAC?: boolean;
   /**
   * Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page
   * @default false

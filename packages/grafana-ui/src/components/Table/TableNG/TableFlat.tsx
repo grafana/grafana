@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import memoize from 'micro-memoize';
+import { memoize } from 'micro-memoize';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { type Field } from '@grafana/data';
@@ -88,6 +88,7 @@ export function TableFlat(props: TableNGProps) {
     hoverOverflow,
     disableSanitizeHtml,
     autoDetectJsonEnabled,
+    onTimeRangeSelected,
     jsonSyntaxHighlightingEnabled,
     enablePagination = false,
     enableSharedCrosshair = false,
@@ -630,6 +631,7 @@ export function TableFlat(props: TableNGProps) {
       hoverOverflow,
       disableSanitizeHtml,
       autoDetectJsonEnabled,
+      onTimeRangeSelected,
       jsonSyntaxHighlightingEnabled,
       showTypeIcons,
       timeRange,
@@ -663,6 +665,7 @@ export function TableFlat(props: TableNGProps) {
       hoverOverflow,
       disableSanitizeHtml,
       autoDetectJsonEnabled,
+      onTimeRangeSelected,
       jsonSyntaxHighlightingEnabled,
       showTypeIcons,
       timeRange,

@@ -6690,7 +6690,8 @@
           "title": "粘贴面板"
         },
         "question": {
-          "label": ""
+          "label": "",
+          "tooltip": ""
         },
         "row": {
           "add-label": "添加行",
@@ -9893,10 +9894,6 @@
       "of": "OF",
       "to": "至",
       "when": "满足以下条件时"
-    },
-    "expression-query-editor": {
-      "helper-text-sql": "对从数据源返回的表运行 MySQL 方言 SQL。数据源查询（即“A”、“B”）可作为表提供，并由查询名称引用。字段可作为从数据源返回的列使用。",
-      "label-operation": "运算"
     },
     "math": {
       "available-math-functions": "可用的数学函数",
@@ -13685,12 +13682,11 @@
     },
     "megamenu-item": {
       "children-error": "加载项目失败",
+      "children-partial-error": "",
       "collapse-aria-label": "收起部分：{{sectionName}}",
       "expand-aria-label": "展开部分：{{sectionName}}",
       "loading-aria-label": "正在加载 {{sectionName}}",
-      "reorder-aria-label": "对{{itemName}}重新排序",
-      "starred-dashboard-icon": "数据面板",
-      "starred-folder-icon": "文件夹"
+      "reorder-aria-label": "对{{itemName}}重新排序"
     },
     "org-switcher": {
       "aria-label": "更改组织"
@@ -17359,6 +17355,7 @@
     "description-page-size": "每页行数。为空时，页面大小基于面板高度。",
     "description-show-columns-sidebar": "使用面板打开列管理侧边栏，而不是从列菜单打开",
     "description-show-row-numbers": "",
+    "description-sparkline-select-time-range": "",
     "description-styling-from-field": "包含具有 CSS 属性的 JSON 对象的字段",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "每隔一行交替背景颜色",
@@ -17403,6 +17400,7 @@
     "name-show-columns-sidebar": "显示列侧边栏",
     "name-show-row-numbers": "",
     "name-show-table-header": "显示表格表头",
+    "name-sparkline-select-time-range": "",
     "name-sparkline-show-tooltip": "显示悬停工具提示",
     "name-styling-from-field": "字段中的样式",
     "name-tooltip-from-field": "",

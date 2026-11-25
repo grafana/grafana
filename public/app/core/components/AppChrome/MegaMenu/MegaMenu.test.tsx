@@ -1,16 +1,21 @@
 import { HttpResponse } from 'msw';
+import { type JSX } from 'react';
+import { testWithAppKind } from 'test/helpers/testWithAppKind';
 import { testWithStarsUser } from 'test/helpers/testWithStarsUser';
-import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils';
+import { act, fireEvent, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
-import { type NavModelItem } from '@grafana/data';
+import { type NavModelItem, PluginExtensionPoints } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, reportInteraction, setBackendSrv } from '@grafana/runtime';
+import { config, reportInteraction, setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
+import { getAppKindHandlers } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import {
   customGetUserPreferencesHandler,
   customPatchUserPreferencesHandler,
   getFolderFixtures,
+  MOCK_APP_KIND,
   mockUserPreferences,
+  setMockStarred,
   setMockStarredDashboards,
   setMockStarredFolders,
   setMockUserPreferences,
@@ -18,11 +23,17 @@ import {
 } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
+import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
 import { MegaMenu } from './MegaMenu';
+import { type MegaMenuSectionProps } from './MegaMenuSectionExtensionPoint';
 import { customisableNavTree, nestedNavTree } from './__mocks__/fixtures';
 import { HIDDEN_ITEMS_STORAGE_KEY, SECTION_ORDER_STORAGE_KEY } from './hooks';
+import {
+  MEGA_MENU_NAV_HEIGHT_STORAGE_KEY,
+  MEGA_MENU_SECTION_COLLAPSED_STORAGE_KEY,
+} from './useMegaMenuSectionSplitter';
 import { HIDDEN_NAV_ITEMS } from './utils';
 
 // The org switcher fetches user orgs on mount when signed in, which is irrelevant here.
@@ -91,6 +102,7 @@ const renderMegaMenu = ({
 };
 
 testWithStarsUser();
+testWithAppKind();
 
 describe('MegaMenu', () => {
   beforeEach(() => {
@@ -312,6 +324,203 @@ describe('MegaMenu', () => {
       // The nav still renders (skeleton), but there's no way into edit mode while preferences load.
       await screen.findByRole('list', { name: 'Navigation' });
       expect(screen.queryByRole('button', { name: 'Customise navigation' })).not.toBeInTheDocument();
+    });
+
+    describe('plugin section', () => {
+      // Built once: a new component type per render would remount the section.
+      const conversationsSection = createComponentWithMeta<Partial<MegaMenuSectionProps> & JSX.IntrinsicAttributes>(
+        {
+          pluginId: 'grafana-assistant-app',
+          title: 'Conversations',
+          component: () => <div>Conversations section</div>,
+        },
+        PluginExtensionPoints.MegaMenuSection
+      );
+
+      beforeEach(() => {
+        setPluginComponentsHook(({ extensionPointId }) => ({
+          isLoading: false,
+          components: extensionPointId === PluginExtensionPoints.MegaMenuSection ? [conversationsSection] : [],
+        }));
+      });
+
+      afterEach(() => {
+        setPluginComponentsHook(() => ({ components: [], isLoading: false }));
+      });
+
+      it('shows the Assistant section below the navigation', async () => {
+        renderMegaMenu();
+
+        const section = await screen.findByTestId('mega-menu-section');
+        expect(within(section).getByText('Conversations section')).toBeInTheDocument();
+      });
+
+      it('hides the section while customising the navigation', async () => {
+        const { user } = renderMegaMenu();
+        await screen.findByText('Conversations section');
+
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
+
+        expect(screen.queryByText('Conversations section')).not.toBeInTheDocument();
+        expect(screen.queryByRole('separator', { name: 'Resize navigation' })).not.toBeInTheDocument();
+      });
+
+      describe('resizing the navigation above it', () => {
+        let rectSpy: jest.SpyInstance;
+
+        /**
+         * jsdom has no layout, so the panes measure what the splitter's inline styles ask for: an 800px menu, and a
+         * navigation 400px tall by its content, at least 160px and at most 640px, as the section keeps 160px too.
+         */
+        const measuredHeight = (element: HTMLElement) => {
+          const handle = screen.queryByRole('separator', { name: 'Resize navigation' });
+          if (handle?.parentElement === element) {
+            return 800;
+          }
+          if (handle && element.id === handle.getAttribute('aria-controls')) {
+            if (element.style.flexGrow === '100') {
+              return 640;
+            }
+            if (['0', '0px'].includes(element.style.flexBasis)) {
+              return 160;
+            }
+            return parseFloat(element.style.flexBasis) || 400;
+          }
+          return 0;
+        };
+
+        beforeEach(() => {
+          // The section starts folded, without the handle; these users have unfolded it.
+          window.localStorage.setItem(MEGA_MENU_SECTION_COLLAPSED_STORAGE_KEY, 'false');
+          rectSpy = jest.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
+            this: HTMLElement
+          ) {
+            const height = measuredHeight(this);
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- a measured box without toJSON
+            return { x: 0, y: 0, top: 0, left: 0, width: 320, height, right: 320, bottom: height } as DOMRect;
+          });
+        });
+
+        afterEach(() => {
+          rectSpy.mockRestore();
+        });
+
+        const findHandle = async () => {
+          const handle = await screen.findByRole('separator', { name: 'Resize navigation' });
+          handle.setPointerCapture = jest.fn();
+          handle.releasePointerCapture = jest.fn();
+          return handle;
+        };
+        const navigationPane = (handle: HTMLElement) => document.getElementById(handle.getAttribute('aria-controls')!)!;
+        const storedHeight = () => window.localStorage.getItem(MEGA_MENU_NAV_HEIGHT_STORAGE_KEY);
+
+        it('keeps the navigation at its own height until the handle is dragged, then remembers the height', async () => {
+          const { user } = renderMegaMenu();
+          const handle = await findHandle();
+          expect(navigationPane(handle)).toHaveStyle({ flexBasis: 'auto' });
+
+          await user.pointer([
+            { keys: '[MouseLeft>]', target: handle, coords: { clientX: 0, clientY: 500 } },
+            { target: handle, coords: { clientX: 0, clientY: 400 } },
+            { keys: '[/MouseLeft]', target: handle, coords: { clientX: 0, clientY: 400 } },
+          ]);
+
+          expect(navigationPane(handle)).toHaveStyle({ flexBasis: '300px' });
+          expect(storedHeight()).toBe('300');
+        });
+
+        it('opens with the height the navigation was given, and a double-click gives it its own height back', async () => {
+          window.localStorage.setItem(MEGA_MENU_NAV_HEIGHT_STORAGE_KEY, '300');
+          const { user } = renderMegaMenu();
+          const handle = await findHandle();
+          expect(navigationPane(handle)).toHaveStyle({ flexBasis: '300px' });
+
+          await user.dblClick(handle);
+
+          expect(navigationPane(handle)).toHaveStyle({ flexBasis: 'auto' });
+          expect(storedHeight()).toBeNull();
+        });
+
+        it('starts a drag without selecting text, which would have the browser cancel it', async () => {
+          renderMegaMenu();
+          const handle = await findHandle();
+
+          // `false`: the press was default-prevented.
+          expect(fireEvent.pointerDown(handle, { button: 0 })).toBe(false);
+        });
+
+        it('does not pin the navigation when the handle is only clicked', async () => {
+          const { user } = renderMegaMenu();
+          const handle = await findHandle();
+
+          await user.click(handle);
+
+          expect(navigationPane(handle)).toHaveStyle({ flexBasis: 'auto' });
+          expect(storedHeight()).toBeNull();
+        });
+
+        it('keeps the navigation and the section at least 160px tall, whichever way the handle is dragged', async () => {
+          renderMegaMenu();
+          const handle = await findHandle();
+
+          // The same fixed height both ways, so the limits match, on a tall screen as on a short one.
+          expect(document.getElementById(handle.getAttribute('aria-controls') ?? '')).toHaveStyle({
+            minHeight: '160px',
+          });
+          expect(screen.getByTestId('mega-menu-section')).toHaveStyle({ minHeight: '160px' });
+        });
+      });
+
+      describe('folding it to its heading', () => {
+        // Built once: a new component type per render would remount the section.
+        const foldableSection = createComponentWithMeta<Partial<MegaMenuSectionProps> & JSX.IntrinsicAttributes>(
+          {
+            pluginId: 'grafana-assistant-app',
+            title: 'Conversations',
+            component: ({ collapsed, onCollapsedChange }) => (
+              <button type="button" aria-expanded={!collapsed} onClick={() => onCollapsedChange?.(!collapsed)}>
+                Conversations
+              </button>
+            ),
+          },
+          PluginExtensionPoints.MegaMenuSection
+        );
+        const storedCollapsed = () => window.localStorage.getItem(MEGA_MENU_SECTION_COLLAPSED_STORAGE_KEY);
+
+        beforeEach(() => {
+          setPluginComponentsHook(({ extensionPointId }) => ({
+            isLoading: false,
+            components: extensionPointId === PluginExtensionPoints.MegaMenuSection ? [foldableSection] : [],
+          }));
+        });
+
+        it('starts folded, without the resize handle, then unfolds and folds from the section and remembers it', async () => {
+          const { user } = renderMegaMenu();
+          const toggle = await screen.findByRole('button', { name: 'Conversations' });
+          expect(toggle).toHaveAttribute('aria-expanded', 'false');
+          expect(screen.queryByRole('separator', { name: 'Resize navigation' })).not.toBeInTheDocument();
+
+          await user.click(toggle);
+
+          expect(toggle).toHaveAttribute('aria-expanded', 'true');
+          expect(screen.getByRole('separator', { name: 'Resize navigation' })).toBeInTheDocument();
+          expect(storedCollapsed()).toBe('false');
+
+          await user.click(toggle);
+
+          expect(toggle).toHaveAttribute('aria-expanded', 'false');
+          expect(screen.queryByRole('separator', { name: 'Resize navigation' })).not.toBeInTheDocument();
+          expect(storedCollapsed()).toBe('true');
+        });
+
+        it('opens with the section unfolded when the user left it unfolded', async () => {
+          window.localStorage.setItem(MEGA_MENU_SECTION_COLLAPSED_STORAGE_KEY, 'false');
+          renderMegaMenu();
+
+          expect(await screen.findByRole('button', { name: 'Conversations' })).toHaveAttribute('aria-expanded', 'true');
+          expect(screen.getByRole('separator', { name: 'Resize navigation' })).toBeInTheDocument();
+        });
+      });
     });
 
     describe('reordering top-level sections', () => {
@@ -816,5 +1025,42 @@ describe('MegaMenu', () => {
     // so screen readers don't hear the two rows as identical links.
     expect(starredSection().getByTitle('Dashboard')).toBe(starredSection().getByTestId('icon-apps'));
     expect(starredSection().getByTitle('Folder')).toBe(starredSection().getByTestId('icon-folder'));
+  });
+
+  it('renders a starred app object with its kind icon titled for screen readers, linking into the plugin', async () => {
+    setMockStarredDashboards([]);
+    setMockStarred(MOCK_APP_KIND.group, MOCK_APP_KIND.kind, ['t1']);
+    server.use(...getAppKindHandlers(MOCK_APP_KIND, [{ name: 't1', title: 'Capacity review' }]));
+    setupSearcher([]);
+
+    const { user } = renderMegaMenu();
+
+    await user.click(await screen.findByRole('button', { name: 'Expand section: Starred' }));
+
+    // Waits on the row's text: a role query polled over the whole menu is slow
+    await screen.findByText('Capacity review');
+    const starredSection = within(screen.getByRole('link', { name: 'Starred' }).closest('li')!);
+    expect(starredSection.getByRole('link', { name: 'Capacity review' })).toHaveAttribute(
+      'href',
+      '/a/test-things-app/things/t1'
+    );
+
+    // The kind icon doubles as the row's accessible kind, like the dashboard/folder icons do.
+    expect(starredSection.getByTitle('Thing')).toBe(starredSection.getByTestId('icon-cube'));
+  });
+
+  it('reports a click on a starred row as a click on a starred item of its kind', async () => {
+    const { user } = renderMegaMenu();
+
+    await user.click(await screen.findByRole('button', { name: 'Expand section: Starred' }));
+    // Waits on the row's text: a role query polled over the whole menu is slow
+    await screen.findByText(STARRED_DASHBOARD.name);
+    const starredSection = within(screen.getByRole('link', { name: 'Starred' }).closest('li')!);
+    await user.click(starredSection.getByRole('link', { name: STARRED_DASHBOARD.name }));
+
+    expect(reportInteraction).toHaveBeenCalledWith(
+      'grafana_navigation_item_clicked',
+      expect.objectContaining({ path: STARRED_DASHBOARD.url, itemIsStarred: true, itemKind: 'dashboard' })
+    );
   });
 });

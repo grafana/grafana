@@ -7,6 +7,7 @@ require (
 	github.com/fsnotify/fsnotify v1.10.1
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/google/go-github/v82 v82.0.0
+	github.com/grafana/authlib v0.0.0-20261120113603-423cd15e9545
 	github.com/grafana/authlib/types v0.0.0-20261120113603-423cd15e9545
 	github.com/grafana/grafana-app-sdk v0.63.3
 	github.com/grafana/grafana-app-sdk/logging v0.63.3
@@ -68,7 +69,6 @@ require (
 	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
-	github.com/grafana/authlib v0.0.0-20261120113603-423cd15e9545 // indirect
 	github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect

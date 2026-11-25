@@ -23,7 +23,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	clientrest "k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/cache"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
@@ -60,7 +59,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -180,6 +178,9 @@ type APIBuilder struct {
 	// before loopbackReady is closed.
 	loopbackConfig *clientrest.Config
 	loopbackReady  chan struct{}
+	// bootstrapDone is closed when the post-start hook returns, after it has
+	// reconciled the bootstrap repository.
+	bootstrapDone chan struct{}
 }
 
 // NewAPIBuilder creates an API builder for the provisioning API.
@@ -281,6 +282,7 @@ func NewAPIBuilder(
 		// Request body cap for job creation. Non-positive (<=0) uses the default.
 		maxJobBodySize: maxJobBodySize,
 		loopbackReady:  make(chan struct{}),
+		bootstrapDone:  make(chan struct{}),
 	}
 
 	b.setResourceLister(resources.NewResourceLister(unified, clients, supportedResourceProvider.Get()))
@@ -316,6 +318,18 @@ func (b *APIBuilder) awaitLoopbackConfig(ctx context.Context) (*clientrest.Confi
 		return b.loopbackConfig, nil
 	case <-ctx.Done():
 		return nil, context.Cause(ctx)
+	}
+}
+
+// awaitBootstrapReconciled blocks until the post-start hook has reconciled the
+// bootstrap repository, so a changed or cleared bootstrap_path is applied
+// before anything syncs the repository it replaces.
+func (b *APIBuilder) awaitBootstrapReconciled(ctx context.Context) error {
+	select {
+	case <-b.bootstrapDone:
+		return nil
+	case <-ctx.Done():
+		return context.Cause(ctx)
 	}
 }
 
@@ -1128,6 +1142,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 	hookName := fmt.Sprintf("grafana-provisioning-%s", b.gv.Version)
 	postStartHooks := map[string]genericapiserver.PostStartHookFunc{
 		hookName: func(postStartHookCtx genericapiserver.PostStartHookContext) error {
+			// Deferred so that every return signals it; otherwise the repository
+			// controller would wait forever.
+			defer close(b.bootstrapDone)
+
 			var config *clientrest.Config
 			var err error
 			if b.restConfigGetter == nil {
@@ -1138,13 +1156,14 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 					return err
 				}
 			}
+			b.publishLoopbackConfig(config)
+
 			c, err := clientset.NewForConfig(config)
 			if err != nil {
 				return err
 			}
 
 			b.client = c.ProvisioningV0alpha1()
-			b.publishLoopbackConfig(config)
 
 			// Initialize the API client-based job store
 			b.jobs, err = jobs.NewJobStore(b.client, jobClaimExpiry, b.registry)
@@ -1173,81 +1192,11 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				return nil
 			}
 
-			informerFactoryResyncInterval := b.resyncInterval()
 			if nats.Enabled(b.natsSubscriber) {
 				logging.DefaultLogger.Info("provisioning controllers using NATS-backed informer")
 			}
 			usageMetricCollector := usage.MetricCollector(b.tracer, b.usageNamespaceLister, b.repoLister.List, connection.NewStorageLister(b.connectionStore).List, b.unified)
 			b.usageStats.RegisterMetricsFunc(usageMetricCollector)
-
-			var jobHistoryWriter jobs.HistoryWriter
-			if b.jobHistoryLoki != nil {
-				jobHistoryWriter = b.jobHistoryLoki
-			} else {
-				jobHistoryWriter = jobs.NewAPIClientHistoryWriter(b.GetClient())
-			}
-
-			// Create job cleanup controller
-			jobCleanupController := jobs.NewJobCleanupController(
-				b.jobs,
-				jobHistoryWriter,
-				jobClaimExpiry,
-			)
-
-			go func() {
-				if err := jobCleanupController.Run(postStartHookCtx.Context); err != nil {
-					logging.FromContext(postStartHookCtx.Context).Error("job cleanup controller failed", "error", err)
-				}
-			}()
-
-			webhookSecretRotationInterval := b.webhookSecretRotationInterval
-			if webhookSecretRotationInterval <= 0 {
-				// If webhookSecretRotationInterval is not set, use the default value
-				webhookSecretRotationInterval = 30 * 24 * time.Hour
-			}
-
-			relistProjectionMetrics, freshnessMetrics := b.informerMetrics()
-
-			// The repository delta source and the getter it backs.
-			repoKeys := keysapi.NewGRPCLister(b.unified, provisioning.RepositoryResourceInfo.GroupVersionResource())
-			repoSource, reconcileRepoGetter := informer.NewRepositoryDeltaSource(b.natsSubscriber, c, repoKeys, informerFactoryResyncInterval, relistProjectionMetrics, freshnessMetrics)
-			repoController := controller.NewRepositoryController(
-				b.GetClient(),
-				reconcileRepoGetter,
-				b.repoFactory,
-				b.connectionFactory,
-				b.resourceLister,
-				b.clients,
-				b.jobs,
-				b.GetHealthChecker(),
-				b.statusPatcher,
-				b.registry,
-				b.tracer,
-				10,
-				informerFactoryResyncInterval,
-				b.minSyncInterval,
-				30*time.Second,
-				b.quotaGetter,
-				controller.NewRepositoryQuotaChecker(reconcileRepoGetter),
-				b.incrementalPolicy,
-				webhookSecretRotationInterval,
-				nats.Enabled(b.natsSubscriber),
-			)
-			repoReg, err := repoSource.AddEventHandler(repoController.EventHandler())
-			if err != nil {
-				return fmt.Errorf("add repository controller event handler: %w", err)
-			}
-			go repoSource.Run(postStartHookCtx.Done())
-
-			// Wait for the cache to sync off the hot path so we don't block
-			// apiserver startup; the controller only starts its workers once
-			// its handler has processed the initial list.
-			go func() {
-				if !cache.WaitForCacheSync(postStartHookCtx.Done(), repoReg.HasSynced) {
-					return
-				}
-				repoController.Run(postStartHookCtx.Context, repoControllerWorkers, func() {}, func() {})
-			}()
 
 			return nil
 		},
