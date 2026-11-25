@@ -27,7 +27,7 @@ func TestBootstrapService_IsDisabled(t *testing.T) {
 		want    bool
 	}{
 		{name: "provisioning disabled", builder: nil, want: true},
-		{name: "controllers disabled", builder: &APIBuilder{onlyApiServer: true}, want: true},
+		{name: "controllers disabled", builder: &APIBuilder{onlyApiServer: true}, want: false},
 		{name: "controllers enabled", builder: &APIBuilder{}, want: false},
 	}
 	for _, tt := range tests {
@@ -157,6 +157,25 @@ func TestBootstrapService_Run(t *testing.T) {
 		})
 	})
 
+	t.Run("reconciles when controllers are disabled", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			repos := &fakeBootstrapRepositories{}
+			svc, builder, _ := newTestBootstrapService(bootstrap.Config{Path: "/bootstrap", Namespace: "default"}, repos)
+			builder.onlyApiServer = true
+			require.False(t, svc.IsDisabled())
+			runErr := make(chan error, 1)
+			go func() { runErr <- svc.Run(t.Context()) }()
+
+			builder.publishLoopbackConfig(&clientrest.Config{})
+			synctest.Wait()
+			require.Len(t, repos.created, 1)
+			require.True(t, isClosed(svc.Done()))
+
+			svc.StopAsync()
+			require.NoError(t, <-runErr)
+		})
+	})
+
 	t.Run("signals done and keeps running when reconcile fails", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			repos := &fakeBootstrapRepositories{getErr: apierrors.NewInternalError(errors.New("boom"))}
@@ -225,9 +244,29 @@ func TestBootstrapService_Run(t *testing.T) {
 		t.Cleanup(svc.StopAsync)
 
 		receive(t, svc.Done(), runErr)
-		require.Equal(t, "GET /apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/bootstrap", <-requested)
+		require.Equal(t, "GET /apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/bootstrap", receive(t, requested, runErr))
 
 		svc.StopAsync()
 		require.NoError(t, waitForRun(t, runErr))
+	})
+}
+
+func TestAPIBuilder_GetReadyzChecks(t *testing.T) {
+	t.Run("has no check without a bootstrap service", func(t *testing.T) {
+		require.Empty(t, (&APIBuilder{}).GetReadyzChecks())
+	})
+
+	t.Run("is not ready until the bootstrap repository is reconciled", func(t *testing.T) {
+		builder := &APIBuilder{}
+		svc, err := ProvideBootstrapService(setting.NewCfg(), builder)
+		require.NoError(t, err)
+
+		checks := builder.GetReadyzChecks()
+		require.Len(t, checks, 1)
+		require.Equal(t, BootstrapServiceName, checks[0].Name())
+		require.Error(t, checks[0].Check(nil))
+
+		close(svc.done)
+		require.NoError(t, checks[0].Check(nil))
 	})
 }

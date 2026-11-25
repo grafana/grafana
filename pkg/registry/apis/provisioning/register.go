@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -22,6 +23,7 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/apiserver/pkg/server/healthz"
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
@@ -174,6 +176,10 @@ type APIBuilder struct {
 	// before loopbackReady is closed.
 	loopbackConfig *clientrest.Config
 	loopbackReady  chan struct{}
+
+	// bootstrapDone is [BootstrapService.Done], set before the API server is
+	// built; nil when no bootstrap service runs, as in the standalone API server.
+	bootstrapDone <-chan struct{}
 }
 
 // NewAPIBuilder creates an API builder for the provisioning API.
@@ -311,6 +317,23 @@ func (b *APIBuilder) awaitLoopbackConfig(ctx context.Context) (*clientrest.Confi
 	case <-ctx.Done():
 		return nil, context.Cause(ctx)
 	}
+}
+
+// GetReadyzChecks keeps /readyz failing until the bootstrap repository has been
+// reconciled, so clients that wait for readiness see the configured repository.
+func (b *APIBuilder) GetReadyzChecks() []healthz.HealthChecker {
+	done := b.bootstrapDone
+	if done == nil {
+		return nil
+	}
+	return []healthz.HealthChecker{healthz.NamedCheck(BootstrapServiceName, func(*http.Request) error {
+		select {
+		case <-done:
+			return nil
+		default:
+			return errors.New("bootstrap repository not reconciled yet")
+		}
+	})}
 }
 
 func (b *APIBuilder) informerMetrics() (*informer.RelistProjectionMetrics, *informer.FreshnessMetrics) {

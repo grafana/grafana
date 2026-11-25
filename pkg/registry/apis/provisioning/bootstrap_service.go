@@ -43,14 +43,16 @@ func ProvideBootstrapService(cfg *setting.Cfg, builder *APIBuilder) (*BootstrapS
 			return nil, err
 		}
 		s.config = config
+		builder.bootstrapDone = s.done
 	}
 	s.NamedService = services.NewBasicService(nil, s.running, nil).WithName(BootstrapServiceName)
 	return s, nil
 }
 
-// IsDisabled implements registry.CanBeDisabled.
+// IsDisabled implements registry.CanBeDisabled. disable_controllers does not
+// disable it: the bootstrap repository is configuration, not a controller.
 func (s *BootstrapService) IsDisabled() bool {
-	return s.builder == nil || s.builder.onlyApiServer
+	return s.builder == nil
 }
 
 // Run implements registry.BackgroundService.
