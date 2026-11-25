@@ -161,12 +161,10 @@ func (c cascadeCollectionDeleter) firstFinalizerFolder(ctx context.Context, list
 	}
 }
 
-// Delete removes a folder and, when cascade delete is enabled, its entire subtree. With the async
-// flag on, the folder is stamped with the cascade finalizer and handed to the cascade controller
-// (see deleteAsync). With it off, a leftover finalizer is removed, so the flag alone decides the
-// mode, and for forced deletes the subtree is walked depth-first: each folder is stamped with a
-// terminating label on the way down, and folders are deleted on the way back up once they have no
-// remaining child folders (i.e. leaves first).
+// Delete removes a folder and, when cascade delete is enabled, its entire subtree. With the async flag
+// on, the delete is handed to the cascade controller through the finalizer. Otherwise the subtree is
+// walked depth-first: each folder is stamped with a terminating label on the way down, and folders are
+// deleted on the way back up once they have no remaining child folders (i.e. leaves first).
 func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
@@ -183,17 +181,16 @@ func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteVa
 	if !ok {
 		return nil, false, fmt.Errorf("obj is not folders.Folder")
 	}
-	// Capture the requester before any switch to the service identity, so the access checks and the
-	// per-folder checks in the cascade run as the user rather than the service.
+	// Capture the requester before switching to the service identity, so the access checks run as the
+	// user rather than the service.
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, false, err
 	}
 	if folderAsyncCascadeDeleteEnabled(ctx) {
-		// With the async flag on, the delete is handled by the cascade controller.
 		return s.deleteAsync(ctx, ns, f, user, deleteValidation, options)
 	}
-	// With the async flag off, a leftover finalizer is removed so the delete runs synchronously.
+	// A leftover finalizer is removed so the delete runs synchronously.
 	if hasCascadeDeleteFinalizer(f) {
 		parentUID := f.GetAnnotations()[utils.AnnoKeyFolder]
 		isCascadeSubfolder, err := s.isCascadeSubfolderDelete(ctx, user, parentUID)
@@ -211,7 +208,6 @@ func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteVa
 		if f, options, err = s.setCascadeFinalizer(ctx, ns, f, user, false, deleteValidation, options); err != nil {
 			return nil, false, err
 		}
-		// Continue the delete with the folder as stored without the finalizer.
 		obj = f
 	}
 
@@ -588,23 +584,19 @@ func (s *cascadeDeleteStorage) isCascadeSubfolderDelete(ctx context.Context, use
 	return ok && parent.DeletionTimestamp != nil && hasCascadeDeleteFinalizer(parent), nil
 }
 
-// deleteAsync deletes f with the async flag on: a folder without the cascade finalizer is stamped,
-// then the delete goes to storage, which marks it terminating for the controller. Validation
-// rejects a non-empty folder unless the delete is forced.
-//
-// The requester's access to the folder's contents is checked either way (see delegateToController),
-// since the controller deletes them as the service identity. The controller deleting a subfolder of
-// a terminating folder is exempt from the requester checks, as the root delete was authorized.
+// deleteAsync hands f to the cascade controller: a folder without the finalizer is stamped, then
+// storage marks it terminating. The controller deleting a subfolder of a terminating folder is exempt
+// from the requester checks, as the root delete was authorized.
 func (s *cascadeDeleteStorage) deleteAsync(ctx context.Context, ns authlib.NamespaceInfo, f *foldersv1.Folder, user identity.Requester, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	parentUID := f.GetAnnotations()[utils.AnnoKeyFolder]
 	isCascadeSubfolderDelete, err := s.isCascadeSubfolderDelete(ctx, user, parentUID)
 	if err != nil {
 		return nil, false, err
 	}
-	// A terminating folder was authorized when it was marked, so there is nothing left to stamp.
+	// A terminating folder was already authorized when it was marked.
 	if f.DeletionTimestamp == nil && !hasCascadeDeleteFinalizer(f) {
-		// The finalizer is written as the service identity, so the requester's delete permission is
-		// checked first. The contents check in delegateToController runs only after the write.
+		// The stamp is written as the service identity, so the delete permission is checked before it;
+		// the contents check in delegateToController comes after.
 		if !isCascadeSubfolderDelete {
 			if err := s.checkFolderDeleteAccess(ctx, user, ns.Value, f.Name, parentUID); err != nil {
 				return nil, false, err
@@ -617,11 +609,9 @@ func (s *cascadeDeleteStorage) deleteAsync(ctx context.Context, ns authlib.Names
 	return s.delegateToController(ctx, ns, f, user, isCascadeSubfolderDelete, deleteValidation, options)
 }
 
-// delegateToController deletes a finalizer folder, which only marks it terminating: walking the
-// subtree here would bypass the controller's batching and status. The controller removes the
-// contents as the service identity, so the requester's access to them is verified here, before the
-// folder is marked terminating, whether or not the delete is forced. A terminating folder was
-// checked when it was marked, and the controller deleting a subfolder was authorized at the root.
+// delegateToController deletes a finalizer folder, which only marks it terminating. The controller
+// removes the contents as the service identity, so the requester's access to them is checked first,
+// forced or not. Terminating folders and the controller's subfolder deletes were authorized earlier.
 func (s *cascadeDeleteStorage) delegateToController(ctx context.Context, ns authlib.NamespaceInfo, f *foldersv1.Folder, user identity.Requester, isCascadeSubfolderDelete bool, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	if f.DeletionTimestamp == nil && !isCascadeSubfolderDelete {
 		if err := s.checkFolderContentsAccess(ctx, user, ns.Value, f.Name, f.GetAnnotations()[utils.AnnoKeyFolder]); err != nil {
@@ -636,13 +626,10 @@ func (s *cascadeDeleteStorage) delegateToController(ctx context.Context, ns auth
 	return s.Storage.Delete(ctx, f.Name, deleteValidation, options)
 }
 
-// setCascadeFinalizer stores f with its cascade finalizer stamped or removed, and returns the folder
-// and options the delete should continue with. The caller has authorized the requester.
-//
-// It validates what the delete will see once aligned, since validation treats a finalizer folder's
-// forced delete differently from a plain one, and checks the caller's preconditions first, so a
-// rejected delete leaves nothing behind. A dry run only aligns an in-memory copy. The write bypasses
-// the update admission, which would otherwise restore the stored finalizer state.
+// setCascadeFinalizer stores f with the cascade finalizer stamped or removed and returns the folder and
+// options to continue with. Validation runs on the aligned folder because it treats a finalizer
+// folder's forced delete differently. The write bypasses the update admission, which would restore
+// the stored finalizer state.
 func (s *cascadeDeleteStorage) setCascadeFinalizer(ctx context.Context, ns authlib.NamespaceInfo, f *foldersv1.Folder, user identity.Requester, present bool, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (*foldersv1.Folder, *metav1.DeleteOptions, error) {
 	aligned := f.DeepCopy()
 	setCascadeDeleteFinalizer(aligned, present)
@@ -662,8 +649,7 @@ func (s *cascadeDeleteStorage) setCascadeFinalizer(ctx context.Context, ns authl
 	if err != nil {
 		return nil, nil, err
 	}
-	// The caller's resourceVersion precondition was honored above and our write moved it on. The UID
-	// pin stays; the delete paths pin the new version themselves where they need to.
+	// Our write moved the resourceVersion the caller's precondition was checked against; the UID pin stays.
 	pinned := options.DeepCopy()
 	if pinned == nil {
 		pinned = &metav1.DeleteOptions{}
@@ -674,8 +660,7 @@ func (s *cascadeDeleteStorage) setCascadeFinalizer(ctx context.Context, ns authl
 	return updated, pinned, nil
 }
 
-// writeCascadeFinalizer stores f with its cascade finalizer set to present, failing with a conflict
-// if f changed since it was read.
+// writeCascadeFinalizer stores f with the finalizer set to present, conflicting if f changed since it was read.
 func (s *cascadeDeleteStorage) writeCascadeFinalizer(ctx context.Context, f *foldersv1.Folder, present bool) (*foldersv1.Folder, error) {
 	objInfo := rest.DefaultUpdatedObjectInfo(nil, func(_ context.Context, _, oldObj runtime.Object) (runtime.Object, error) {
 		cur, ok := oldObj.(*foldersv1.Folder)
@@ -700,9 +685,8 @@ func (s *cascadeDeleteStorage) writeCascadeFinalizer(ctx context.Context, f *fol
 	return updated, nil
 }
 
-// checkFolderDeleteAccess denies the request unless the requester may delete the folder. The
-// finalizer write runs as the service identity, so this stands in for the check storage would do as
-// the requester. No-op when no access client is wired (e.g. tests).
+// checkFolderDeleteAccess denies the request unless the requester may delete the folder. It runs before
+// service-identity writes, which would otherwise check update permission only. No-op without an access client.
 func (s *cascadeDeleteStorage) checkFolderDeleteAccess(ctx context.Context, user identity.Requester, namespace, name, parentUID string) error {
 	if s.accessClient == nil {
 		return nil

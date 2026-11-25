@@ -451,9 +451,8 @@ type fakeFolderStorage struct {
 	existing map[string]*foldersv1.Folder
 	deleted  []string
 	stamped  []string
-	// updates counts Update calls, finalizer alignment writes included.
-	updates int
-	getErr  map[string]error
+	updates  int
+	getErr   map[string]error
 	// beforeDelete runs at the start of Delete, to simulate a concurrent change.
 	beforeDelete  func()
 	deleteOptions *metav1.DeleteOptions
