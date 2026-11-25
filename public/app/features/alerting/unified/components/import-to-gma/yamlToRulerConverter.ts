@@ -117,7 +117,8 @@ export function parseYamlToRulerRulesConfigDTO(
   yamlAsString: string,
   defaultNamespace: string
 ): RulerCloudRulesConfigDTO {
-  const obj = load(yamlAsString);
+  // don't attempt to load empty YAML
+  const obj = yamlAsString.trim() ? load(yamlAsString) : undefined;
   const validation = validatePrometheusYamlFile(obj);
 
   if (!validation.isValid) {

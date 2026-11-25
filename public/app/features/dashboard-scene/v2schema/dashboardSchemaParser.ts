@@ -1,10 +1,10 @@
-import yaml from 'js-yaml';
+import { load } from 'js-yaml';
 
 import { type SchemaEditorFormat } from './DashboardSchemaEditor';
 
 export function parseDashboardSchema(text: string, format: SchemaEditorFormat) {
   try {
-    const json = format === 'yaml' ? JSON.stringify(yaml.load(text), null, 2) : text;
+    const json = format === 'yaml' ? JSON.stringify(load(text), null, 2) : text;
     if (json === undefined) {
       throw new Error('YAML must contain a JSON value');
     }
