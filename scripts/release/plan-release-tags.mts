@@ -11,26 +11,26 @@ import { execFileSync } from 'node:child_process';
 
 import { getIndependentPackages, tagFor, type IndependentPackage } from './lib/independent-packages.mts';
 
-export interface PendingPr {
+interface PendingPr {
   number: number;
   mergeCommit: string;
 }
 
 // The version of each package, by the path of its package.json, or null when the file did not exist.
-export type Versions = Record<string, string | null>;
+type Versions = Record<string, string | null>;
 
 export interface VersionedPr extends PendingPr {
   before: Versions;
   after: Versions;
 }
 
-export interface PlannedTag {
+interface PlannedTag {
   name: string;
   tag: string;
   commit: string;
 }
 
-export interface Plan {
+interface Plan {
   pr: number | null;
   sha: string;
   tagged: PlannedTag[];
