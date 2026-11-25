@@ -397,6 +397,8 @@ func (b *manifestBuilder) buildHandlerChain(builders []builder.APIGroupBuilder, 
 		if b.documents != nil {
 			next = b.documents(next)
 		}
+		// Custom routes must dispatch before serveWrites: their POST/PUT bodies
+		// belong to the plugin and must not be decoded as resource objects.
 		return strategicMergeAsMergePatch(chain(b.routeMux(next, reg), c))
 	}
 }

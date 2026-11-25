@@ -4,12 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"sync/atomic"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -20,6 +22,7 @@ import (
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -164,6 +167,58 @@ func TestIntegrationPluginManifestWrites(t *testing.T) {
 		}
 	}
 
+	t.Run("custom POST and PUT routes bypass resource decoding", func(t *testing.T) {
+		before := readStored(t, "json-same-version")
+		root := "/apis/" + testAppGroup + "/v2"
+		for _, route := range []string{
+			root + "/echo",
+			root + "/namespaces/default/echo/item",
+			path + "/" + before.GetName() + "/reload",
+			path + "/" + before.GetName() + "/files/nested/file",
+		} {
+			for _, method := range []string{http.MethodPost, http.MethodPut} {
+				for _, payload := range []struct{ contentType, body string }{
+					{"text/plain", "opaque plugin body"},
+					{"application/json", `{"apiVersion":"` + testAppGroup + `/v1","kind":"CustomCommand","metadata":42}`},
+					{"application/yaml", "kind: CustomCommand\ncommand: reload\n"},
+				} {
+					t.Run(method+"/"+route+"/"+payload.contentType, func(t *testing.T) {
+						calls, reviews, routes := converter.calls.Load(), converter.reviews.Load(), converter.routes.Load()
+						raw, err := client.Verb(method).AbsPath(route).Param("fieldValidation", "Strict").
+							SetHeader("Content-Type", payload.contentType).Body([]byte(payload.body)).DoRaw(ctx)
+						require.NoError(t, err)
+						require.Equal(t, payload.body, string(raw), "the plugin must receive the original bytes")
+						require.Equal(t, routes+1, converter.routes.Load())
+						require.Equal(t, calls, converter.calls.Load(), "custom request bodies must not be converted")
+						require.Equal(t, reviews, converter.reviews.Load(), "custom requests must not run resource admission")
+					})
+				}
+			}
+		}
+		require.Equal(t, before.Object, readStored(t, before.GetName()).Object)
+	})
+
+	t.Run("undeclared custom route methods do not fall through to writes", func(t *testing.T) {
+		calls, reviews, routes := converter.calls.Load(), converter.reviews.Load(), converter.routes.Load()
+		for _, method := range []string{http.MethodPost, http.MethodPut} {
+			err := client.Verb(method).AbsPath(path+"/json-same-version/readonly").
+				SetHeader("Content-Type", "text/plain").Body([]byte("not a resource")).Do(ctx).Error()
+			require.True(t, apierrors.IsMethodNotSupported(err), "%s: %v", method, err)
+		}
+		require.Equal(t, calls, converter.calls.Load())
+		require.Equal(t, reviews, converter.reviews.Load())
+		require.Equal(t, routes, converter.routes.Load())
+	})
+
+	t.Run("search POST bypasses resource decoding", func(t *testing.T) {
+		calls, reviews := converter.calls.Load(), converter.reviews.Load()
+		query := `{"apiVersion":"` + searchv0.APIVERSION + `","kind":"` + searchv0.KindSearchQuery + `"}`
+		_, err := client.Post().AbsPath(path+"/search").SetHeader("Content-Type", "application/json").Body([]byte(query)).DoRaw(ctx)
+		require.NoError(t, err)
+		require.Equal(t, calls, converter.calls.Load())
+		require.Equal(t, reviews, converter.reviews.Load())
+	})
+
 	t.Run("dry run converts without saving", func(t *testing.T) {
 		body := newThing("dry-run", map[string]any{"foo": "preview"})
 		raw, err := body.MarshalJSON()
@@ -273,7 +328,19 @@ func writeManifest(t *testing.T) []byte {
 	fields["bar"] = fields["foo"]
 	delete(fields, "foo")
 	v2Spec["required"] = []any{"bar"}
-	spec["versions"] = append(versions, map[string]any{"name": "v2", "kinds": []any{v2Kind}})
+	operation := map[string]any{"responses": map[string]any{"200": map[string]any{"description": "OK"}}}
+	writes := map[string]any{"post": operation, "put": operation}
+	v2Kind["routes"] = map[string]any{
+		"reload": writes, "files/{path:*}": writes,
+		"readonly": map[string]any{"get": operation},
+	}
+	spec["versions"] = append(versions, map[string]any{
+		"name": "v2", "kinds": []any{v2Kind},
+		"routes": map[string]any{
+			"cluster":    map[string]any{"/echo": writes},
+			"namespaced": map[string]any{"/echo/{id}": writes},
+		},
+	})
 	raw, err = json.Marshal(manifest)
 	require.NoError(t, err)
 	return raw
@@ -288,7 +355,29 @@ func (b *writeBackend) ClientV3(context.Context) (appclientv3.Client, bool) { re
 
 type writeConverter struct {
 	appclientv3.Client
-	calls, reviews atomic.Int64
+	calls, reviews, routes atomic.Int64
+}
+
+func (c *writeConverter) CallRoute(_ context.Context, req *pluginv3.CallRouteRequest) (grpc.ServerStreamingClient[pluginv3.CallRouteResponse], error) {
+	c.routes.Add(1)
+	return &writeRouteStream{body: req.GetBody()}, nil
+}
+
+type writeRouteStream struct {
+	grpc.ServerStreamingClient[pluginv3.CallRouteResponse]
+	body []byte
+	sent bool
+}
+
+func (s *writeRouteStream) Recv() (*pluginv3.CallRouteResponse, error) {
+	if s.sent {
+		return nil, io.EOF
+	}
+	s.sent = true
+	rsp := &pluginv3.CallRouteResponse{}
+	rsp.SetCode(http.StatusOK)
+	rsp.SetBody(s.body)
+	return rsp, nil
 }
 
 func (c *writeConverter) ConvertObjects(_ context.Context, req *pluginv3.ConvertObjectsRequest) (*pluginv3.ConvertObjectsResponse, error) {

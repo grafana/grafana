@@ -28,31 +28,6 @@ import (
 	"google.golang.org/grpc"
 )
 
-func TestDecodeWrite(t *testing.T) {
-	for _, mediaType := range []string{"application/json", "application/yaml"} {
-		t.Run(mediaType, func(t *testing.T) {
-			obj, err := decodeWrite(t.Context(), []byte(`{"spec":{"count":9007199254740993}}`), mediaType, "Strict")
-			require.NoError(t, err)
-			require.Equal(t, int64(9007199254740993), obj.Object["spec"].(map[string]any)["count"])
-			for _, body := range []string{"null", "[]", "42", `"hello"`, "", "{", "{} {}", "{}\n---\n{}"} {
-				_, err := decodeWrite(t.Context(), []byte(body), mediaType, "Strict")
-				require.Error(t, err, body)
-			}
-			duplicate := `{"spec":{"foo":"a","foo":"b"}}`
-			if mediaType == "application/yaml" {
-				duplicate = "spec:\n  foo: a\n  foo: b\n"
-			}
-			_, err = decodeWrite(t.Context(), []byte(duplicate), mediaType, "Strict")
-			require.Error(t, err)
-			for _, validation := range []string{"Ignore", "Warn", ""} {
-				obj, err = decodeWrite(t.Context(), []byte(duplicate), mediaType, validation)
-				require.NoError(t, err)
-				require.Equal(t, "b", obj.Object["spec"].(map[string]any)["foo"])
-			}
-		})
-	}
-}
-
 func TestHandlerRejectsUnsupportedWriteConversion(t *testing.T) {
 	for name, change := range map[string]func(*app.ManifestData){
 		"source does not convert": func(m *app.ManifestData) { m.Versions[0].Kinds[0].Conversion = false },

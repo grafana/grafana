@@ -8,13 +8,14 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
 )
 
 type writeSerializer struct {
 	runtime.NegotiatedSerializer
-	builder       *manifestBuilder
+	decoder       *kindstore.WriteDecoder
 	ctx           context.Context
-	gvr           schema.GroupVersionResource
 	namespace     string
 	validation    string
 	conversionErr error
@@ -47,11 +48,7 @@ type writeDecoder struct {
 
 func (d writeDecoder) Decode(raw []byte, _ *schema.GroupVersionKind, _ runtime.Object) (runtime.Object, *schema.GroupVersionKind, error) {
 	s := d.owner
-	obj, err := decodeWrite(s.ctx, raw, d.mediaType, s.validation)
-	if err != nil {
-		return nil, nil, err
-	}
-	obj, err = s.builder.normalizeWrite(s.ctx, s.namespace, obj, s.gvr, s.builder.writeKind(s.gvr))
+	obj, err := s.decoder.Decode(s.ctx, s.namespace, raw, d.mediaType, s.validation)
 	if err != nil {
 		if apierrors.IsInternalError(err) {
 			s.conversionErr = err

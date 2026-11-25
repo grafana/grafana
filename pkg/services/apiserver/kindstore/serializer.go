@@ -28,9 +28,9 @@ type conversionSerializer struct {
 	client appclientv3.ConversionClient
 }
 
-// ConvertObject uses the same conversion checks and metadata preservation for
+// convertObject uses the same conversion checks and metadata preservation for
 // incoming writes as for objects read from storage.
-func ConvertObject(ctx context.Context, client appclientv3.ConversionClient, target schema.GroupVersionKind, obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+func convertObject(ctx context.Context, client appclientv3.ConversionClient, target schema.GroupVersionKind, obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
 	if obj.GroupVersionKind() == target {
 		return obj, nil
 	}

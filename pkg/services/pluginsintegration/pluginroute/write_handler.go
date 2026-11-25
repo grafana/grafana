@@ -21,6 +21,9 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"sigs.k8s.io/structured-merge-diff/v6/fieldpath"
+
+	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
 )
 
 type writeEndpointKey struct {
@@ -31,6 +34,7 @@ type writeEndpointKey struct {
 type writeEndpoint struct {
 	scope      handlers.RequestScope
 	storage    rest.Storage
+	decoder    *kindstore.WriteDecoder
 	admission  admission.Interface
 	namespaced bool
 	timeout    time.Duration
@@ -78,6 +82,7 @@ func (b *manifestBuilder) configureWrites(info *genericapiserver.APIGroupInfo, c
 			}
 			b.writes[writeEndpointKey{gvr, subresource}] = &writeEndpoint{
 				scope: scope, storage: storage, admission: config.AdmissionControl,
+				decoder:    b.newWriteDecoder(gvr, kind),
 				namespaced: b.kinds[gvr].NamespaceScoped(), timeout: timeout,
 			}
 		}
@@ -110,8 +115,8 @@ func (b *manifestBuilder) serveWrites(next http.Handler) http.Handler {
 		}
 		r = r.WithContext(ctx)
 		serializer := &writeSerializer{
-			NegotiatedSerializer: endpoint.scope.Serializer, builder: b, ctx: ctx,
-			gvr: gvr, namespace: info.Namespace, validation: r.URL.Query().Get("fieldValidation"),
+			NegotiatedSerializer: endpoint.scope.Serializer, decoder: endpoint.decoder, ctx: ctx,
+			namespace: info.Namespace, validation: r.URL.Query().Get("fieldValidation"),
 		}
 		// Native handlers have no request-context argument on their decoder.
 		// Only this copy captures the caller; the shared scope stays immutable.
@@ -136,6 +141,38 @@ func (b *manifestBuilder) serveWrites(next http.Handler) http.Handler {
 		metrics.InstrumentHandlerFunc(r.Method, gvr.Group, gvr.Version, gvr.Resource,
 			info.Subresource, metricScope, metrics.APIServerComponent, false, "", write)(w, r)
 	})
+}
+
+func (b *manifestBuilder) writeKind(gvr schema.GroupVersionResource) *app.ManifestVersionKind {
+	if gvr.Group != b.group {
+		return nil
+	}
+	version := b.servedVersion(gvr.GroupVersion())
+	if version != nil {
+		for _, kind := range version.Kinds {
+			if kind.Resource == gvr.Resource {
+				return &kind
+			}
+		}
+	}
+	return nil
+}
+
+func (b *manifestBuilder) newWriteDecoder(gvr schema.GroupVersionResource, target *app.ManifestVersionKind) *kindstore.WriteDecoder {
+	var sources []schema.GroupVersion
+	if target.Conversion {
+		for _, version := range b.manifest.Versions {
+			if !version.Served || version.Name == gvr.Version {
+				continue
+			}
+			for _, kind := range version.Kinds {
+				if kind.Resource == gvr.Resource && kind.Kind == target.Kind && kind.Conversion {
+					sources = append(sources, schema.GroupVersion{Group: b.group, Version: version.Name})
+				}
+			}
+		}
+	}
+	return kindstore.NewWriteDecoder(gvr.GroupVersion().WithKind(target.Kind), sources, b.clientV3)
 }
 
 type writeObjectCreator struct {

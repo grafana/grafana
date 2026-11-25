@@ -1,4 +1,4 @@
-package pluginroute
+package kindstore
 
 import (
 	"bytes"
@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"slices"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,11 +18,34 @@ import (
 	"sigs.k8s.io/yaml"
 	yamlv2 "sigs.k8s.io/yaml/goyaml.v2"
 
-	"github.com/grafana/grafana-app-sdk/app"
-	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
+	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 )
 
-func (b *manifestBuilder) normalizeWrite(ctx context.Context, namespace string, obj *unstructured.Unstructured, gvr schema.GroupVersionResource, kind *app.ManifestVersionKind) (*unstructured.Unstructured, error) {
+// WriteDecoder prepares unstructured writes before admission and storage.
+// Its configuration is immutable; request context and namespace are supplied to Decode.
+type WriteDecoder struct {
+	target          schema.GroupVersionKind
+	convertibleFrom []schema.GroupVersion
+	client          appclientv3.ConversionClient
+}
+
+// NewWriteDecoder accepts the endpoint's target kind and the source versions
+// its caller permits converting. Writes already at the target version need no conversion.
+func NewWriteDecoder(target schema.GroupVersionKind, convertibleFrom []schema.GroupVersion, client appclientv3.ConversionClient) *WriteDecoder {
+	return &WriteDecoder{target: target, convertibleFrom: slices.Clone(convertibleFrom), client: client}
+}
+
+// Decode returns the object in the endpoint's version so admission and field
+// management see the same representation that will be saved.
+func (d *WriteDecoder) Decode(ctx context.Context, namespace string, raw []byte, mediaType, validation string) (*unstructured.Unstructured, error) {
+	obj, err := decodeWrite(ctx, raw, mediaType, validation)
+	if err != nil {
+		return nil, err
+	}
+	return d.normalize(ctx, namespace, obj)
+}
+
+func (d *WriteDecoder) normalize(ctx context.Context, namespace string, obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
 	// Unstructured accessors silently ignore fields of the wrong type. Validate
 	// metadata before those accessors or conversion can hide malformed input.
 	if value, found := obj.Object["metadata"]; found {
@@ -33,7 +57,7 @@ func (b *manifestBuilder) normalizeWrite(ctx context.Context, namespace string, 
 			return nil, apierrors.NewBadRequest("invalid metadata: " + err.Error())
 		}
 	}
-	target := gvr.GroupVersion().WithKind(kind.Kind)
+	target := d.target
 	for field, fallback := range map[string]string{"apiVersion": target.GroupVersion().String(), "kind": target.Kind} {
 		value, found := obj.Object[field]
 		if !found {
@@ -50,8 +74,7 @@ func (b *manifestBuilder) normalizeWrite(ctx context.Context, namespace string, 
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("unsupported apiVersion %q for %s", obj.GetAPIVersion(), target.Kind))
 	}
 	if source != target.GroupVersion() {
-		sourceKind := b.writeKind(source.WithResource(gvr.Resource))
-		if sourceKind == nil || sourceKind.Kind != target.Kind || !sourceKind.Conversion || !kind.Conversion {
+		if !slices.Contains(d.convertibleFrom, source) {
 			return nil, apierrors.NewBadRequest(fmt.Sprintf("cannot convert %s from %s to %s", target.Kind, source, target.GroupVersion()))
 		}
 		// The URL supplies the namespace even when the body omits it. Reject a
@@ -61,29 +84,12 @@ func (b *manifestBuilder) normalizeWrite(ctx context.Context, namespace string, 
 			return nil, apierrors.NewBadRequest("metadata.namespace does not match the request namespace")
 		}
 		obj.SetNamespace(namespace)
-		obj, err = kindstore.ConvertObject(ctx, b.clientV3, target, obj)
+		obj, err = convertObject(ctx, d.client, target, obj)
 		if err != nil {
 			return nil, apierrors.NewInternalError(err)
 		}
 	}
 	return obj, nil
-}
-
-func (b *manifestBuilder) writeKind(gvr schema.GroupVersionResource) *app.ManifestVersionKind {
-	if gvr.Group != b.group || b.manifest == nil {
-		return nil
-	}
-	for _, version := range b.manifest.Versions {
-		if version.Name != gvr.Version || !version.Served {
-			continue
-		}
-		for _, kind := range version.Kinds {
-			if kind.Resource == gvr.Resource {
-				return &kind
-			}
-		}
-	}
-	return nil
 }
 
 func decodeWrite(ctx context.Context, raw []byte, mediaType, validation string) (*unstructured.Unstructured, error) {
