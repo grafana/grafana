@@ -116,14 +116,30 @@ func TestEnsureCollectionRejectsScopeChange(t *testing.T) {
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 }
 
-func TestResolveCollectionRejectsInvalidCatalogScope(t *testing.T) {
+func TestResolveCollectionSkipsUnsupportedCatalogScopes(t *testing.T) {
 	rdb := test.NewDBProviderNopSQL(t)
 	b := NewPgvectorBackend(t.Context(), rdb.DB, 1000, 0, false, nil)
-	rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(
-		sqlmock.NewRows([]string{"group_name", "resource", "partition_key", "is_external", "scope"}).
-			AddRow("docs.example.com", "articles", "articles_external", true, "mystery"))
-	_, _, err := b.ResolveCollection(t.Context(), "docs.example.com", "articles")
-	require.ErrorContains(t, err, "invalid collection scope")
+	rows := func() *sqlmock.Rows {
+		return sqlmock.NewRows([]string{"group_name", "resource", "partition_key", "is_external", "scope"}).
+			AddRow("example.test", "future", "future", false, "future-scope").
+			AddRow("example.test", "articles", "articles_external", true, "tenant")
+	}
+	rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(rows())
+	c, found, err := b.ResolveCollection(t.Context(), "example.test", "articles")
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, "articles_external", c.PartitionKey)
+
+	rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(rows())
+	_, found, err = b.ResolveCollection(t.Context(), "example.test", "future")
+	require.NoError(t, err)
+	require.False(t, found)
+
+	rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(rows())
+	_, found, err = b.collectionByPartitionKey(t.Context(), "future")
+	require.NoError(t, err)
+	require.False(t, found)
+	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 }
 
 func TestEnsureCollectionRejectsConcurrentDifferentScope(t *testing.T) {

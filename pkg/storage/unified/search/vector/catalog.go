@@ -25,6 +25,8 @@ const (
 
 var ErrCollectionScopeMismatch = errors.New("collection scope mismatch")
 
+var errUnsupportedCollectionScope = errors.New("unsupported collection scope")
+
 // Collection is one row of the embedding_collections catalog: a (group,
 // resource) pair provisioned for vector storage. The catalog does two
 // things: maps resource names to partition keys (resource names may contain
@@ -201,6 +203,10 @@ func (b *pgvectorBackend) listCollections(ctx context.Context) ([]Collection, er
 	out := make([]Collection, 0, len(rows))
 	for _, r := range rows {
 		if err := validateCollectionScope(CollectionScope(r.Scope), r.IsExternal); err != nil {
+			if errors.Is(err, errUnsupportedCollectionScope) {
+				// A newer writer may populate scopes this reader cannot authorize.
+				continue
+			}
 			return nil, fmt.Errorf("collection %s/%s: %w", r.GroupName, r.Resource, err)
 		}
 		out = append(out, Collection{
@@ -216,7 +222,7 @@ func (b *pgvectorBackend) listCollections(ctx context.Context) ([]Collection, er
 
 func validateCollectionScope(scope CollectionScope, isExternal bool) error {
 	if scope != ScopeTenant && scope != ScopeShared {
-		return fmt.Errorf("invalid collection scope %q", scope)
+		return fmt.Errorf("%w %q", errUnsupportedCollectionScope, scope)
 	}
 	if scope == ScopeShared && !isExternal {
 		return fmt.Errorf("shared scope requires an external collection")
