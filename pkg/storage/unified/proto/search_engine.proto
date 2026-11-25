@@ -1,0 +1,219 @@
+syntax = "proto3";
+
+package grafana.search.engine.v1alpha1;
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/empty.proto";
+import "resource.proto";
+import "search.proto";
+
+option go_package = "github.com/grafana/grafana/pkg/storage/unified/search/enginepb";
+
+service SearchEngine {
+  // Finds ordered matches. Only requested fields are included, not full items.
+  rpc SearchCandidates(SearchCandidatesRequest) returns (SearchCandidatesResponse);
+  // Reads known IDs, omitting documents that disappeared.
+  // With query set, also omits documents that no longer match it.
+  rpc ReadDocuments(ReadDocumentsRequest) returns (ReadDocumentsResponse);
+  // Creates the configured index, or verifies that it was created for this scope.
+  rpc EnsureIndex(EnsureIndexRequest) returns (google.protobuf.Empty);
+  // Applies one batch of distinct document keys. Success means its effects are visible to search.
+  // Submit batches sequentially. On failure some items may already have been applied.
+  rpc WriteDocuments(WriteDocumentsRequest) returns (google.protobuf.Empty);
+}
+
+message EnsureIndexRequest {
+  IndexScope index_scope = 1;
+  // Do not reuse an index from a previous build without a saved checkpoint.
+  bool require_new = 2;
+}
+
+message WriteDocumentsRequest {
+  IndexScope index_scope = 1;
+  // Type and array declarations for app-defined fields in this batch.
+  repeated resource.ResourceSearchField fields = 2;
+  repeated DocumentWrite writes = 3;
+}
+
+message DocumentWrite {
+  resource.ResourceKey key = 1;
+  oneof action {
+    SearchDocument upsert = 2;
+    google.protobuf.Empty delete = 3;
+  }
+}
+
+// Already built by Grafana. Physical index fields are added by the adapter.
+message SearchDocument {
+  int64 resource_version = 1;
+  string title = 2;
+  string description = 3;
+  string folder = 4;
+  repeated string tags = 5;
+  map<string, string> labels = 6;
+  map<string, string> selectable_fields = 7;
+  int64 created = 8;
+  int64 updated = 9;
+  string created_by = 10;
+  string updated_by = 11;
+  repeated string owner_references = 12;
+  repeated resource.ResourceSearchValue values = 13;
+  string manager_kind = 14;
+  string manager_id = 15;
+  bool manager_allows_edits = 16;
+  string source_path = 17;
+  string source_checksum = 18;
+  int64 source_timestamp_millis = 19;
+  repeated DocumentReference references = 20;
+}
+
+message DocumentReference {
+  string kind = 1;
+  string name = 2;
+}
+
+message SearchCandidatesRequest {
+  IndexScope index_scope = 1;
+  QuerySpec query = 2;
+  uint32 window_size = 3;
+  // Empty means no stored fields, not all fields.
+  repeated RequestedField fields = 4;
+  // The start position limits traversal, not query membership.
+  oneof start_position {
+    Cursor search_after = 5;
+    int64 deleted_resource_version_lower_bound = 6;
+  }
+  // Reverses the complete order, including the unique tie-breaker.
+  bool reverse = 7;
+}
+
+message SearchCandidatesResponse {
+  // A successful short window means traversal is exhausted, not a partial result.
+  repeated Hit hits = 1;
+  // Exact matches before the start position, window size and Grafana authorization.
+  uint64 total_matches = 2;
+  optional double max_score = 3;
+  google.protobuf.Duration took = 4;
+  // Existing ResourceSearchResponse.query_cost; omit when unavailable.
+  optional uint64 index_bytes_read = 5;
+  // Names are requested response keys; hit values use field_index into this list.
+  repeated resource.ResourceSearchField fields = 6;
+}
+
+message ReadDocumentsRequest {
+  IndexScope index_scope = 1;
+  // Existing namespace/group/resource/name keys from resource.proto.
+  repeated resource.ResourceKey keys = 2;
+  repeated RequestedField fields = 3;
+  // Omit for metadata-only reads; include to recheck the original query.
+  QuerySpec query = 4;
+}
+
+message ReadDocumentsResponse {
+  repeated Hit hits = 1;
+  google.protobuf.Duration took = 2;
+  optional uint64 index_bytes_read = 3;
+  repeated resource.ResourceSearchField fields = 4;
+}
+
+message IndexScope {
+  string namespace = 1;
+  repeated IndexReference indexes = 2;
+  // Reject requests with any required feature the adapter does not support.
+  repeated string required_features = 3;
+}
+
+// Together with namespace, group/resource matches the existing NamespacedResource.
+// The adapter resolves this to a local Bleve index or native engine index.
+message IndexReference {
+  string group = 1;
+  string resource = 2;
+  string generation = 3;
+  string schema_revision = 4;
+}
+
+// Existing query matching and sorting, without authorization or page-fill policy.
+message QuerySpec {
+  string text = 1;
+  repeated QueryField query_fields = 2;
+  repeated Requirement requirements = 3;
+  repeated Sort sort = 4;
+  DocumentScope document_scope = 5;
+}
+
+message QueryField {
+  string name = 1;
+  float boost = 2;
+}
+
+message Requirement {
+  string key = 1;
+  SelectorOperator operator = 2;
+  repeated string values = 3;
+}
+
+enum SelectorOperator {
+  SELECTOR_OPERATOR_UNSPECIFIED = 0;
+  SELECTOR_OPERATOR_EQUALS = 1;
+  SELECTOR_OPERATOR_EXACT_EQUALS = 2;
+  SELECTOR_OPERATOR_IN = 3;
+  SELECTOR_OPERATOR_NOT_IN = 4;
+  SELECTOR_OPERATOR_GREATER_THAN = 5;
+  SELECTOR_OPERATOR_GREATER_THAN_OR_EQUAL = 6;
+  SELECTOR_OPERATOR_LESS_THAN = 7;
+  SELECTOR_OPERATOR_LESS_THAN_OR_EQUAL = 8;
+  SELECTOR_OPERATOR_REGEX = 9;
+  SELECTOR_OPERATOR_NOT_REGEX = 10;
+}
+
+// Existing logical field names, such as title, fields.summary or labels.team.
+message Sort {
+  string field = 1;
+  SortDirection direction = 2;
+}
+
+enum SortDirection {
+  SORT_DIRECTION_UNSPECIFIED = 0;
+  SORT_DIRECTION_ASCENDING = 1;
+  SORT_DIRECTION_DESCENDING = 2;
+}
+
+message DocumentScope {
+  DocumentState state = 1;
+  optional int64 deletion_time_cutoff_unix_ms = 2;
+}
+
+enum DocumentState {
+  DOCUMENT_STATE_UNSPECIFIED = 0;
+  DOCUMENT_STATE_LIVE = 1;
+  DOCUMENT_STATE_TRASH = 2;
+}
+
+message RequestedField {
+  string name = 1;
+  bool facet_values = 2;
+  // Distinguishes original and facet values when both are requested.
+  string response_key = 3;
+}
+
+message Hit {
+  resource.ResourceKey key = 1;
+  optional double score = 2;
+  // Uses the enclosing response's fields and the existing scalar/array encoding.
+  repeated resource.ResourceSearchValue values = 3;
+  // Required for candidate search, not for reads of known IDs.
+  Cursor cursor = 4;
+  // Required when query matching/sorting was requested.
+  StableSortKey stable_sort_key = 5;
+  optional int64 resource_version = 6;
+}
+
+message Cursor {
+  // Opaque, tied to the query and index generations, usable in either direction.
+  repeated string parts = 1;
+}
+
+message StableSortKey {
+  // Excludes score. Equal across candidate and document reads if order did not change.
+  bytes value = 1;
+}
