@@ -41,7 +41,7 @@ You can use variables in:
 - [Dashboard and panel links](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/manage-dashboard-links/)
 - Titles
 - Descriptions
-- [Panel options](#variables-in-panel-options) that you type a number or text into
+- [Some panel options](#variables-in-panel-options), such as **Min**, **Max**, **Unit**, and thresholds
 - [Transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/transform-data/)
 
 To work with variables, you typically do the following:
