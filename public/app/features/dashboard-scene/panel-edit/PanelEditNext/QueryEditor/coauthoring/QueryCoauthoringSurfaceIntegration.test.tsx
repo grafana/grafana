@@ -56,6 +56,14 @@ import {
 } from './queryCoauthoringContracts';
 import { useMountedCoauthoringPanel } from './useCoauthoringSurface';
 
+jest.mock('./queryCoauthoringContext', () => {
+  const actual = jest.requireActual<typeof contextResolver>('./queryCoauthoringContext');
+  return { ...actual, resolveCoauthoringQuery: jest.fn(actual.resolveCoauthoringQuery) };
+});
+jest.mock('./previewRunner', () => {
+  const actual = jest.requireActual<typeof previewRunner>('./previewRunner');
+  return { ...actual, copyPanelData: jest.fn(actual.copyPanelData) };
+});
 jest.mock('@grafana/faro-web-sdk', () => ({
   ...jest.requireActual('@grafana/faro-web-sdk'),
   faro: { api: { startUserAction: jest.fn() } },
@@ -153,6 +161,13 @@ const target = { panelId: 1, refId: 'B' };
 let unlisten: Array<() => void>;
 let cleanupOwners: Array<() => void>;
 beforeEach(() => {
+  jest
+    .mocked(contextResolver.resolveCoauthoringQuery)
+    .mockReset()
+    .mockImplementation(
+      jest.requireActual<typeof contextResolver>('./queryCoauthoringContext').resolveCoauthoringQuery
+    );
+  jest.mocked(previewRunner.copyPanelData).mockClear();
   unlisten = [];
   cleanupOwners = [];
   showChanges.mockClear();
@@ -1057,8 +1072,8 @@ it('hands projection from the retained Surface to inline coauthoring and back wi
 it('reports a current entry resolver failure without delivering a successful baseline', async () => {
   const { entry } = setup();
   const failure = new Error('Resolver validation failed');
-  const resolve = contextResolver.resolveCoauthoringQuery;
-  jest.spyOn(contextResolver, 'resolveCoauthoringQuery').mockImplementationOnce(async (...args) => ({
+  const { resolveCoauthoringQuery: resolve } = jest.requireActual<typeof contextResolver>('./queryCoauthoringContext');
+  jest.mocked(contextResolver.resolveCoauthoringQuery).mockImplementationOnce(async (...args) => ({
     ...(await resolve(...args)),
     current: async () => {
       throw failure;
@@ -1078,9 +1093,10 @@ it.each(['superseded', 'unmounted'] as const)(
   'does not report a late %s entry failure as an operational error',
   async (reason) => {
     const { entry, unmount } = setup();
-    const resolve = contextResolver.resolveCoauthoringQuery;
+    const { resolveCoauthoringQuery: resolve } =
+      jest.requireActual<typeof contextResolver>('./queryCoauthoringContext');
     let reject!: (error: Error) => void;
-    jest.spyOn(contextResolver, 'resolveCoauthoringQuery').mockImplementationOnce(async (...args) => ({
+    jest.mocked(contextResolver.resolveCoauthoringQuery).mockImplementationOnce(async (...args) => ({
       ...(await resolve(...args)),
       current: () =>
         new Promise<boolean>((_resolve, fail) => {
@@ -1107,8 +1123,8 @@ it.each(['superseded', 'unmounted'] as const)(
 
 it('does not report an AbortError from entry validation as an operational failure', async () => {
   const { entry } = setup();
-  const resolve = contextResolver.resolveCoauthoringQuery;
-  jest.spyOn(contextResolver, 'resolveCoauthoringQuery').mockImplementationOnce(async (...args) => ({
+  const { resolveCoauthoringQuery: resolve } = jest.requireActual<typeof contextResolver>('./queryCoauthoringContext');
+  jest.mocked(contextResolver.resolveCoauthoringQuery).mockImplementationOnce(async (...args) => ({
     ...(await resolve(...args)),
     current: async () => {
       throw new DOMException('Aborted', 'AbortError');
@@ -1270,7 +1286,7 @@ it('shows the explicitly selected proposed row after Resume while retaining the 
 });
 
 it('reads pre-entry health without copying frames or constructing a session owner', async () => {
-  const copy = jest.spyOn(previewRunner, 'copyPanelData');
+  const copy = jest.mocked(previewRunner.copyPanelData);
   const { canonical, panel, pane } = setup(false);
   await waitFor(() => expect(getCoauthoringSurface()?.pane.getCoauthoringHealth().A).toBe('ok'));
   expect(getCoauthoringSurface()?.supported.size).toBe(0);
@@ -1306,9 +1322,9 @@ it('accepts an entry target with its optional dashboard UID omitted', async () =
 
 it('fences departed owners before delivering delayed entry or click telemetry', async () => {
   const { entry, leavePanelEdit } = setup();
-  const resolve = contextResolver.resolveCoauthoringQuery;
+  const { resolveCoauthoringQuery: resolve } = jest.requireActual<typeof contextResolver>('./queryCoauthoringContext');
   let finish: ((value: boolean) => void) | undefined;
-  jest.spyOn(contextResolver, 'resolveCoauthoringQuery').mockImplementationOnce(async (...args) => ({
+  jest.mocked(contextResolver.resolveCoauthoringQuery).mockImplementationOnce(async (...args) => ({
     ...(await resolve(...args)),
     current: () =>
       new Promise((done) => {
@@ -1331,8 +1347,8 @@ it('does not invalidate a retained session over a transient entry validation fai
   setup();
   const session = await enter();
   const before = session.getState();
-  const resolve = contextResolver.resolveCoauthoringQuery;
-  jest.spyOn(contextResolver, 'resolveCoauthoringQuery').mockImplementationOnce(async (...args) => ({
+  const { resolveCoauthoringQuery: resolve } = jest.requireActual<typeof contextResolver>('./queryCoauthoringContext');
+  jest.mocked(contextResolver.resolveCoauthoringQuery).mockImplementationOnce(async (...args) => ({
     ...(await resolve(...args)),
     current: async () => {
       throw new Error('Transient mock entry failure');
@@ -1439,8 +1455,9 @@ it.each(['validation', 'delivered'] as const)('Exit cancels a pending replacemen
   jest.mocked(reportInteraction).mockClear();
   let finish: ((value: boolean) => void) | undefined;
   if (phase === 'validation') {
-    const resolve = contextResolver.resolveCoauthoringQuery;
-    jest.spyOn(contextResolver, 'resolveCoauthoringQuery').mockImplementationOnce(async (...args) => ({
+    const { resolveCoauthoringQuery: resolve } =
+      jest.requireActual<typeof contextResolver>('./queryCoauthoringContext');
+    jest.mocked(contextResolver.resolveCoauthoringQuery).mockImplementationOnce(async (...args) => ({
       ...(await resolve(...args)),
       current: () =>
         new Promise((done) => {
