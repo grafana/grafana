@@ -295,6 +295,31 @@ describe('tooltip utils', () => {
     });
   });
 
+  // A Document Picture-in-Picture window (the Grafana Assistant pop-out) is another realm, as an iframe is: the map's
+  // pointer events there are that window's, not this one's.
+  describe('in another window', () => {
+    it('finds the hovered features for a pointer event from that window, placed by that window', () => {
+      const iframe = document.createElement('iframe');
+      document.body.appendChild(iframe);
+      const otherWindow = iframe.contentDocument!.defaultView!;
+      const scrollY = Object.getOwnPropertyDescriptor(window, 'scrollY');
+      // this window is scrolled; the one the map is in is not
+      Object.defineProperty(window, 'scrollY', { value: 50, configurable: true });
+      const mouseEvent = new otherWindow.MouseEvent('pointermove', { view: otherWindow });
+      Object.defineProperty(mouseEvent, 'pageY', { value: 100 });
+
+      try {
+        pointerMoveListener({ originalEvent: mouseEvent } as unknown as MapBrowserEvent<PointerEvent>, panel);
+
+        expect(panel.hoverPayload.layers?.[0]?.features).toEqual([feature1]);
+        expect(panel.hoverPayload.pageY).toBe(100);
+      } finally {
+        Object.defineProperty(window, 'scrollY', scrollY!);
+        iframe.remove();
+      }
+    });
+  });
+
   describe('layer filter', () => {
     afterEach(() =>
       jest

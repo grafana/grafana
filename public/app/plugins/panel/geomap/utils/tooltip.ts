@@ -55,7 +55,10 @@ export const pointerMoveListener = (evt: MapBrowserEvent, panel: GeomapPanel) =>
     return false;
   }
 
-  if (!(evt.originalEvent instanceof MouseEvent)) {
+  // The map can render in another window than this one, such as a Document Picture-in-Picture window, whose events
+  // are that window's.
+  const eventWindow = evt.originalEvent?.view ?? window;
+  if (!(evt.originalEvent instanceof eventWindow.MouseEvent)) {
     return false;
   }
 
@@ -65,7 +68,7 @@ export const pointerMoveListener = (evt: MapBrowserEvent, panel: GeomapPanel) =>
 
   const { hoverPayload } = panel;
   hoverPayload.pageX = mouse.pageX;
-  hoverPayload.pageY = mouse.pageY - window.scrollY;
+  hoverPayload.pageY = mouse.pageY - eventWindow.scrollY;
   hoverPayload.point = {
     lat: hover[1],
     lon: hover[0],
