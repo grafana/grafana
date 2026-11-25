@@ -4,8 +4,8 @@
 //
 // Usage: node scripts/release/plan-release-tags.mts >> "$GITHUB_OUTPUT"
 // Reads its input from the environment: GITHUB_REPOSITORY, GITHUB_SHA and a GH_TOKEN that may read pull requests.
-// Prints pr (the PR to finish, empty when there is none), tagged (a JSON list of {name, version, tag, path,
-// commit}), matrix (the same list in the form a job matrix reads), release_created and sha to stdout.
+// Prints pr (the PR to finish, empty when there is none), tagged (a JSON list of {name, tag, commit}), matrix
+// (the same list in the form a job matrix reads), release_created and sha to stdout.
 
 import { execFileSync } from 'node:child_process';
 
@@ -26,9 +26,7 @@ export interface VersionedPr extends PendingPr {
 
 export interface PlannedTag {
   name: string;
-  version: string;
   tag: string;
-  path: string;
   commit: string;
 }
 
@@ -44,7 +42,7 @@ function changedPackages(packages: IndependentPackage[], pr: VersionedPr): Plann
     if (version === null || version === (pr.before[pkg.manifestPath] ?? null)) {
       return [];
     }
-    return [{ name: pkg.name, version, tag: tagFor(pkg.name, version), path: pkg.root, commit: pr.mergeCommit }];
+    return [{ name: pkg.name, tag: tagFor(pkg.name, version), commit: pr.mergeCommit }];
   });
 }
 

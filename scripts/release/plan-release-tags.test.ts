@@ -26,9 +26,7 @@ const other: IndependentPackage = {
 
 const pluginCompatTag = {
   name: '@grafana/plugin-compat',
-  version: '0.12.0',
   tag: PLUGIN_COMPAT_TAG,
-  path: 'packages/grafana-plugin-compat',
   commit: 'm1',
 };
 
