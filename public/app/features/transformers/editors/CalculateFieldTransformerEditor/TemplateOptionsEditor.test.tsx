@@ -132,6 +132,27 @@ describe('TemplateOptionsEditor', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Out of range. Range: 0 to 15');
   });
 
+  it('shows a template replaced from outside but keeps an unsaved draft across other re-renders', async () => {
+    const onChange = jest.fn();
+    const renderWith = (template: string, names: string[]) => (
+      <TemplateOptionsEditor
+        options={{ mode: CalculateFieldMode.Template, template: { template } }}
+        onChange={onChange}
+        names={names}
+        input={input}
+      />
+    );
+    const { rerender } = render(renderWith('first', ['host']));
+    const textbox = screen.getByRole('textbox');
+
+    await userEvent.type(textbox, ' draft');
+    rerender(renderWith('first', ['host', 'host.name']));
+    expect(textbox).toHaveValue('first draft');
+
+    rerender(renderWith('second', ['host', 'host.name']));
+    expect(textbox).toHaveValue('second');
+  });
+
   it('lists only references that match no field name, display name or field type', () => {
     setup('${__data.fields.host} ${__data.fields.Value} ${__data.fields.State} ${__data.fields.missing}');
 

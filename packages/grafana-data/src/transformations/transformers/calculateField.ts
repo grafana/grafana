@@ -689,7 +689,7 @@ function getUnaryCreator(options: UnaryOptions, allFrames: DataFrame[]): ValuesC
 }
 
 // Name-based subset of the data link syntax; `__data` survives the dashboard variable interpolation that runs first.
-const FIELD_REFERENCE_PATTERN = /\$\{__data\.fields(?:\.(\w+)|\["([^"]*)"\]|\['([^']*)'\])\}/g;
+const FIELD_REFERENCE_PATTERN = /\$\{__data\.fields(?:\.(\w+)|\["((?:[^"\\]|\\.)*)"\]|\['((?:[^'\\]|\\.)*)'\])\}/g;
 
 export function parseFieldTemplate(template: string): FieldTemplatePart[] {
   const parts: FieldTemplatePart[] = [];
@@ -701,7 +701,7 @@ export function parseFieldTemplate(template: string): FieldTemplatePart[] {
     if (match.index > lastIndex) {
       parts.push({ text: template.slice(lastIndex, match.index) });
     }
-    parts.push({ field: match[1] ?? match[2] ?? match[3] });
+    parts.push({ field: match[1] ?? (match[2] ?? match[3]).replace(/\\(.)/g, '$1') });
     lastIndex = regex.lastIndex;
   }
 
@@ -716,7 +716,7 @@ export function getFieldTemplateReference(name: string): string {
   if (/^\w+$/.test(name)) {
     return `\${__data.fields.${name}}`;
   }
-  return name.includes('"') ? `\${__data.fields['${name}']}` : `\${__data.fields["${name}"]}`;
+  return `\${__data.fields["${name.replace(/[\\"]/g, '\\$&')}"]}`;
 }
 
 function getTemplateCreator(options: TemplateOptions, allFrames: DataFrame[]): ValuesCreator {
@@ -730,9 +730,10 @@ function getTemplateCreator(options: TemplateOptions, allFrames: DataFrame[]): V
       if ('text' in part) {
         return part.text;
       }
+      // Display names first: Insert field inserts them, and computed ones are deduplicated per frame.
       const field =
-        frame.fields.find((f) => f.name === part.field) ??
-        frame.fields.find((f) => getFieldDisplayName(f, frame, allFrames) === part.field);
+        frame.fields.find((f) => getFieldDisplayName(f, frame, allFrames) === part.field) ??
+        frame.fields.find((f) => f.name === part.field);
       if (!field) {
         return '';
       }

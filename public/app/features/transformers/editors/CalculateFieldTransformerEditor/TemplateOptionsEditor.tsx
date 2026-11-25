@@ -20,8 +20,16 @@ export const TemplateOptionsEditor = (props: {
   onChange: (options: CalculateFieldTransformerOptions) => void;
 }) => {
   const { options, onChange } = props;
-  const [template, setTemplate] = useState(options.template?.template ?? '');
+  const savedTemplate = options.template?.template ?? '';
+  const [template, setTemplate] = useState(savedTemplate);
+  const [prevSavedTemplate, setPrevSavedTemplate] = useState(savedTemplate);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Options can be replaced from outside (e.g. undo) while mounted; an unsaved draft survives other re-renders.
+  if (savedTemplate !== prevSavedTemplate) {
+    setPrevSavedTemplate(savedTemplate);
+    setTemplate(savedTemplate);
+  }
 
   const updateTemplate = (value: string) => {
     setTemplate(value);

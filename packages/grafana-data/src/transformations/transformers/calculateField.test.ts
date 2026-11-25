@@ -1524,14 +1524,39 @@ describe('calculateField transformer template mode', () => {
     expect(frame.fields.map((f) => f.name)).toEqual(['test1', 'test2', 'test3']);
   });
 
-  it('resolves a reference by display name', async () => {
+  it.each([
+    { by: 'display name', template: '${__data.fields.Speed} km/h' },
+    { by: 'raw name', template: '${__data.fields.Value} km/h' },
+  ])('resolves a reference by $by', async ({ template }) => {
     const frame = toDataFrame({
       fields: [{ name: 'Value', type: FieldType.number, values: [7], config: { displayName: 'Speed' } }],
     });
 
-    const [result] = await runTemplate('${__data.fields.Speed} km/h', [frame]);
+    const [result] = await runTemplate(template, [frame]);
 
     expect(result.fields[1].values).toEqual(['7 km/h']);
+  });
+
+  it('resolves a picked display name to that column when it collides with another raw name', async () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'hostname', type: FieldType.string, values: ['web-1'], config: { displayName: 'Host' } },
+        { name: 'Host', type: FieldType.string, values: ['legacy-1'], config: { displayName: 'Legacy host' } },
+      ],
+    });
+
+    const [result] = await runTemplate(getFieldTemplateReference('Host'), [frame]);
+
+    expect(result.fields[2].values).toEqual(['web-1']);
+  });
+
+  it('resolves a generated reference to a name containing both quote types and a backslash', async () => {
+    const name = `say "it's" C:\\temp`;
+    const frame = toDataFrame({ fields: [{ name, type: FieldType.string, values: ['ok'] }] });
+
+    const [result] = await runTemplate(getFieldTemplateReference(name), [frame]);
+
+    expect(result.fields[1].values).toEqual(['ok']);
   });
 
   it('keeps literal dollar text and unsupported references as written', async () => {
@@ -1571,13 +1596,21 @@ describe('parseFieldTemplate', () => {
       { field: 'y.z' },
     ]);
   });
+
+  it('unescapes quotes and backslashes inside bracket references', () => {
+    expect(parseFieldTemplate(`\${__data.fields["a \\"b\\" \\\\c"]} \${__data.fields['it\\'s']}`)).toEqual([
+      { field: 'a "b" \\c' },
+      { text: ' ' },
+      { field: "it's" },
+    ]);
+  });
 });
 
 describe('getFieldTemplateReference', () => {
   it.each([
     { name: 'host', expected: '${__data.fields.host}' },
     { name: 'host.name', expected: '${__data.fields["host.name"]}' },
-    { name: 'say "hi"', expected: `\${__data.fields['say "hi"']}` },
+    { name: 'say "hi"', expected: '${__data.fields["say \\"hi\\""]}' },
   ])('builds $expected for $name', ({ name, expected }) => {
     expect(getFieldTemplateReference(name)).toBe(expected);
   });
