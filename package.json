@@ -136,7 +136,6 @@
     "@types/ini": "^4",
     "@types/jest": "29.5.14",
     "@types/jquery": "3.5.33",
-    "@types/js-yaml": "^4.0.5",
     "@types/lodash": "^4.17.25",
     "@types/logfmt": "^1.2.3",
     "@types/mdx": "^2.0.14",
