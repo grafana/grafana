@@ -15,6 +15,7 @@ import {
 } from '../analytics/types';
 import { DeleteNotebookModal } from '../delete/DeleteNotebookModal';
 import { useDeleteNotebook } from '../delete/useDeleteNotebook';
+import { NotebookCreatePageMenuItem } from '../export/NotebookCreatePageMenuItem';
 import { NotebookExportMenu } from '../export/NotebookExportMenu';
 import { AttachToIncidentModal } from '../incidents/AttachToIncidentModal';
 import { DeclareIncidentModal } from '../incidents/DeclareIncidentModal';
@@ -92,6 +93,11 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
         getSpec={async () => transformNotebookSceneToSaveModel(scene)}
         flushPendingChanges={() => scene.autosave.awaitPendingSave()}
         source={NOTEBOOK_EXPORT_SOURCE.NOTEBOOK_TOOLBAR}
+      />
+      <NotebookCreatePageMenuItem
+        uid={uid}
+        getSpec={async () => transformNotebookSceneToSaveModel(scene)}
+        flushPendingChanges={() => scene.autosave.awaitPendingSave()}
       />
       <IrmMenuItem
         onDeclare={() => {
