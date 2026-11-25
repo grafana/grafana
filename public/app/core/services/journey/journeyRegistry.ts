@@ -8,6 +8,13 @@ import type { JourneyMeta } from '@grafana/runtime';
  */
 export const JOURNEY_REGISTRY: JourneyMeta[] = [
   {
+    type: 'query_coauthoring',
+    description: 'User enters coauthoring and receives the first proposal preview outcome',
+    owner: 'grafana-datapro',
+    timeoutMs: 5 * 60_000,
+    parents: ['panel_edit'],
+  },
+  {
     type: 'search_to_resource',
     description: 'User searches for and navigates to a resource (dashboard, folder, alert, etc.)',
     owner: 'grafana-dashboards',

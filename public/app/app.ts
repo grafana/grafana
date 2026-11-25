@@ -231,6 +231,7 @@ export class GrafanaApp {
           import('./core/journeys/browseToResource'),
           import('./core/journeys/dashboardEdit'),
           import('./core/journeys/panelEdit'),
+          import('./core/journeys/queryCoauthoring'),
           import('./core/journeys/datasourceConfigure'),
           import('./core/journeys/exploreToDashboard'),
           import('./core/journeys/datasourcePickerSelect'),
