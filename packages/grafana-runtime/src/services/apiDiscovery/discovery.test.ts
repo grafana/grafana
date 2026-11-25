@@ -1,15 +1,15 @@
 import { type CurrentUserDTO, OrgRole } from '@grafana/data';
+import { mockLogger } from '@grafana/test-utils/unstable';
 
 import { config } from '../../config';
+import { type MonitoringLogger } from '../../utils/logging';
 import { type BackendSrv, type FetchError, setBackendSrv } from '../backendSrv';
-import { setLogger } from '../logging/registry';
 
 import { API_DISCOVERY_TIMEOUT_MS, getAPIGroup, invalidateAPIDiscovery, setAPIDiscoveryForTesting } from './discovery';
 import { type K8sAPIGroup, type K8sAPIGroupList } from './types';
 
 const backendGet = jest.fn();
-const logError = jest.fn();
-const logWarning = jest.fn();
+let logger: MonitoringLogger;
 const originalUser = config.bootData.user;
 const originalPublicDashboardAccessToken = config.publicDashboardAccessToken;
 
@@ -54,13 +54,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   invalidateAPIDiscovery();
   setBackendSrv({ get: backendGet } as unknown as BackendSrv);
-  setLogger('grafana/runtime.apis.discovery', {
-    logDebug: jest.fn(),
-    logError,
-    logInfo: jest.fn(),
-    logMeasurement: jest.fn(),
-    logWarning,
-  });
+  logger = mockLogger('grafana/runtime.apis.discovery');
   setBootUser({ isSignedIn: true, orgRole: OrgRole.Viewer });
   config.publicDashboardAccessToken = undefined;
 });
@@ -97,7 +91,7 @@ describe('getAPIGroup', () => {
 
     it('returns undefined for a group the server does not list, without logging', async () => {
       await expect(getAPIGroup('annotation.grafana.app')).resolves.toBeUndefined();
-      expect(logError).not.toHaveBeenCalled();
+      expect(logger.logError).not.toHaveBeenCalled();
     });
 
     it('caches the list for served and unlisted groups', async () => {
@@ -190,8 +184,8 @@ describe('getAPIGroup', () => {
 
       await Promise.all([getAPIGroup('annotation.grafana.app'), getAPIGroup('annotation.grafana.app')]);
 
-      expect(logError).toHaveBeenCalledTimes(1);
-      expect(logError).toHaveBeenCalledWith(
+      expect(logger.logError).toHaveBeenCalledTimes(1);
+      expect(logger.logError).toHaveBeenCalledWith(
         expect.any(Error),
         expect.objectContaining({ url: '/apis', status: '500' })
       );
@@ -219,8 +213,8 @@ describe('getAPIGroup', () => {
 
       await getAPIGroup('dashboard.grafana.app');
 
-      expect(logError).toHaveBeenCalledTimes(2);
-      expect(logError).toHaveBeenCalledWith(
+      expect(logger.logError).toHaveBeenCalledTimes(2);
+      expect(logger.logError).toHaveBeenCalledWith(
         expect.any(Error),
         expect.objectContaining({ url: '/apis/dashboard.grafana.app/' })
       );
@@ -235,8 +229,8 @@ describe('getAPIGroup', () => {
       await jest.advanceTimersByTimeAsync(API_DISCOVERY_TIMEOUT_MS);
 
       await expect(pending).resolves.toBeUndefined();
-      expect(logError).toHaveBeenCalledTimes(2);
-      expect(logError).toHaveBeenCalledWith(expect.any(Error), expect.objectContaining({ reason: 'timeout' }));
+      expect(logger.logError).toHaveBeenCalledTimes(2);
+      expect(logger.logError).toHaveBeenCalledWith(expect.any(Error), expect.objectContaining({ reason: 'timeout' }));
 
       respondTo({ '/apis': () => Promise.resolve(groupList) });
       await expect(getAPIGroup('dashboard.grafana.app')).resolves.toEqual(dashboardInfo);
@@ -266,7 +260,7 @@ describe('getAPIGroup', () => {
 
       await expect(getAPIGroup('dashboard.grafana.app')).resolves.toBeUndefined();
       expect(backendGet).not.toHaveBeenCalled();
-      expect(logError).not.toHaveBeenCalled();
+      expect(logger.logError).not.toHaveBeenCalled();
     });
 
     // Public dashboard viewers have no session, and `/apis` requires one.
@@ -297,7 +291,7 @@ describe('getAPIGroup', () => {
   it('warns about a group name that is not a valid API group', async () => {
     await getAPIGroup('Dashboard.grafana.app');
 
-    expect(logWarning).toHaveBeenCalledWith(expect.stringContaining('not a valid API group name'), {
+    expect(logger.logWarning).toHaveBeenCalledWith(expect.stringContaining('not a valid API group name'), {
       group: 'Dashboard.grafana.app',
     });
   });
@@ -307,7 +301,7 @@ describe('getAPIGroup', () => {
 
     await getAPIGroup('annotation.grafana.app');
 
-    expect(logWarning).not.toHaveBeenCalled();
+    expect(logger.logWarning).not.toHaveBeenCalled();
   });
 });
 
