@@ -3244,6 +3244,52 @@ func testDataStoreGetGroupResources(t *testing.T, ctx context.Context, ds *dataS
 	}
 }
 
+func TestDataStore_TrashAwareResourceStats(t *testing.T) {
+	ctx := t.Context()
+	kv := &keysRecordingKV{KV: setupBadgerKV(t)}
+	ds := newDataStore(kv)
+	key := func(ns string) NamespacedResource {
+		return NamespacedResource{Namespace: ns, Group: "apps", Resource: "deployments"}
+	}
+	save := func(ns, name string, actions ...DataAction) int64 {
+		t.Helper()
+		var rv int64
+		for _, action := range actions {
+			rv = node.Generate().Int64()
+			require.NoError(t, ds.Save(ctx, DataKey{
+				Namespace: ns, Group: "apps", Resource: "deployments", Name: name,
+				Action: action, ResourceVersion: rv,
+			}, strings.NewReader("{}")))
+		}
+		return rv
+	}
+
+	save("ns-a", "a-gone", DataActionCreated, DataActionDeleted, DataActionCreated, DataActionDeleted)
+	save("ns-a", "b-back", DataActionCreated, DataActionDeleted, DataActionCreated)
+	latest := save("ns-a", "c-skipped", DataActionCreated, DataActionDeleted)
+	onlyDeleted := save("ns-b", "only", DataActionCreated, DataActionDeleted)
+
+	live, err := ds.GetResourceStats(ctx, NamespacedResource{}, 0)
+	require.NoError(t, err)
+	require.Equal(t, []ResourceStats{{NamespacedResource: key("ns-a"), Count: 1, ResourceVersion: latest}}, live)
+
+	kv.calls = nil
+	exact, err := ds.resourceStatsWithLimit(ctx, NamespacedResource{}, 0, 0, true)
+	require.NoError(t, err)
+	require.Len(t, kv.calls, 1, "collect both counts in the same history scan")
+	require.Equal(t, []ResourceStats{
+		{NamespacedResource: key("ns-a"), Count: 1, DeletedCount: 2, ResourceVersion: latest},
+		{NamespacedResource: key("ns-b"), DeletedCount: 1, ResourceVersion: onlyDeleted},
+	}, exact)
+
+	kv.calls = nil
+	capped, err := ds.resourceStatsWithLimit(ctx, NamespacedResource{}, 1, 2, true)
+	require.NoError(t, err)
+	require.Len(t, kv.calls, 2, "seek to the next namespace after reaching the cap")
+	require.Equal(t, PrefixRangeEnd("apps/deployments/ns-a/"), kv.calls[1].StartKey)
+	require.Equal(t, []ResourceStats{{NamespacedResource: key("ns-a"), Count: 1, DeletedCount: 1}}, capped)
+}
+
 func TestIntegrationDataStore_GetResourceStatsWithLimit(t *testing.T) {
 	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreGetResourceStatsWithLimit)
 	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetResourceStatsWithLimit)
@@ -3300,7 +3346,7 @@ func testDataStoreGetResourceStatsWithLimit(t *testing.T, ctx context.Context, d
 	// With a limit of 5: ns-big is capped (counted early-exit, not the full 8),
 	// ns-small stays exact because it is below the limit.
 	const countLimit = 5
-	capped, err := ds.GetResourceStatsWithLimit(ctx, NamespacedResource{}, 0, countLimit)
+	capped, err := ds.resourceStatsWithLimit(ctx, NamespacedResource{}, 0, countLimit, false)
 	require.NoError(t, err)
 	got := byNamespace(capped)
 	require.Contains(t, got, "ns-big")
@@ -3312,7 +3358,7 @@ func testDataStoreGetResourceStatsWithLimit(t *testing.T, ctx context.Context, d
 	// minCount still excludes small namespaces when a valid countLimit (> minCount)
 	// caps a large one: ns-big (8 live) is capped and passes, ns-small (4 live) is
 	// excluded.
-	filtered, err := ds.GetResourceStatsWithLimit(ctx, NamespacedResource{}, 4, 6)
+	filtered, err := ds.resourceStatsWithLimit(ctx, NamespacedResource{}, 4, 6, false)
 	require.NoError(t, err)
 	gotFiltered := byNamespace(filtered)
 	require.GreaterOrEqual(t, gotFiltered["ns-big"], int64(6))
@@ -3320,7 +3366,7 @@ func testDataStoreGetResourceStatsWithLimit(t *testing.T, ctx context.Context, d
 	require.NotContains(t, gotFiltered, "ns-small", "namespace at or below minCount must be excluded")
 
 	// countLimit <= 0 behaves like the exact path.
-	unlimited, err := ds.GetResourceStatsWithLimit(ctx, NamespacedResource{}, 0, 0)
+	unlimited, err := ds.resourceStatsWithLimit(ctx, NamespacedResource{}, 0, 0, false)
 	require.NoError(t, err)
 	require.Equal(t, map[string]int64{"ns-big": 8, "ns-small": 4}, byNamespace(unlimited))
 }
@@ -3368,7 +3414,7 @@ func testDataStoreGetResourceStatsWithLimitClusterScoped(t *testing.T, ctx conte
 	require.NotNil(t, cs, "cluster-scoped resource must appear in exact stats")
 	require.Equal(t, int64(8), cs.Count)
 
-	capped, err := ds.GetResourceStatsWithLimit(ctx, NamespacedResource{}, 0, 5)
+	capped, err := ds.resourceStatsWithLimit(ctx, NamespacedResource{}, 0, 5, false)
 	require.NoError(t, err)
 	cs = find(capped)
 	require.NotNil(t, cs, "cluster-scoped resource must appear in limited stats")
