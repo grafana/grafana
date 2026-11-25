@@ -5,11 +5,11 @@ import { t } from '@grafana/i18n';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { Icon, IconButton, Spinner, useStyles2 } from '@grafana/ui';
 
-import { useScopesServices } from '../ScopesContextProvider';
 import { useScopeActions } from '../selector/useScopeActions';
 
 import { ScopesDashboardsTree } from './ScopesDashboardsTree';
 import { type OnFolderUpdate, type SuggestedNavigationsFolder, type SuggestedNavigationsFoldersMap } from './types';
+import { useGetNavigationScope, useScopesDashboardsActions } from './useScopesDashboardsState';
 
 export interface ScopesDashboardsTreeFolderItemProps {
   folder: SuggestedNavigationsFolder;
@@ -41,7 +41,8 @@ export function ScopesDashboardsTreeFolderItem({
   const styles = useStyles2(getStyles, megaMenuStyle, visualRefreshEnabled);
 
   const { isScopesServiceAvailable, changeScopes } = useScopeActions();
-  const scopesDashboardsService = useScopesServices()?.scopesDashboardsService ?? undefined;
+  const { setNavigationScope } = useScopesDashboardsActions();
+  const getNavigationScope = useGetNavigationScope();
   return (
     <div className={styles.container} role="treeitem" aria-selected={folder.expanded}>
       <div className={styles.row}>
@@ -72,14 +73,13 @@ export function ScopesDashboardsTreeFolderItem({
               e.preventDefault();
               e.stopPropagation();
               if (folder.subScopeName && isScopesServiceAvailable) {
-                const activeSubScopePath = scopesDashboardsService?.state.navScopePath;
+                const activeSubScopePath = getNavigationScope().navScopePath;
                 // Check if the active scope is a child of the current folder's scope
                 const activeScope = activeSubScopePath?.[activeSubScopePath.length - 1];
                 const folderLocationInActivePath = activeSubScopePath?.indexOf(folder.subScopeName) ?? -1;
 
-                await scopesDashboardsService?.setNavigationScope(
+                await setNavigationScope(
                   folderLocationInActivePath >= 0 ? folder.subScopeName : undefined,
-                  undefined,
                   activeSubScopePath?.slice(folderLocationInActivePath + 1) ?? []
                 );
                 // Now changeScopes will skip fetchDashboards because navigationScope is set

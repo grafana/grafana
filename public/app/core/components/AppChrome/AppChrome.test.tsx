@@ -780,6 +780,18 @@ describe('AppChrome', () => {
       expect(context.chrome.state.getValue().megaMenuOpen).toBe(false);
     });
 
+    it('does not open when there are navigations but no scope names to attribute them to', () => {
+      // The default fixture carries navigations, so only the empty scope names can keep the menu closed.
+      mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent({ forScopeNames: [] }));
+      const { context } = setup(<Page navId="child1">Children</Page>);
+
+      act(() => {
+        context.chrome.update({ actions: [] });
+      });
+
+      expect(context.chrome.state.getValue().megaMenuOpen).toBe(false);
+    });
+
     it('does not re-open the mega menu when returning to the same scope after a real disable/enable cycle', async () => {
       // Regression test for returning to a still-applied scope: forScopeNames/scopeNavigations never
       // actually change for this case (fetchDashboards only re-runs when the applied scopes

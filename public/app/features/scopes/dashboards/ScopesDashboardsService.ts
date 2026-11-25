@@ -15,7 +15,7 @@ import {
   type SuggestedNavigationsMap,
 } from './types';
 
-interface ScopesDashboardsServiceState {
+export interface ScopesDashboardsServiceState {
   // State of the drawer showing related dashboards
   drawerOpened: boolean;
   // by keeping a track of the raw response, it's much easier to check if we got any navigations for the currently selected scopes
@@ -32,19 +32,22 @@ interface ScopesDashboardsServiceState {
   navScopePath?: string[];
 }
 
+// Also the state the hooks in useScopesDashboardsState.ts fall back to when the service is missing.
+export const DEFAULT_DASHBOARDS_STATE: ScopesDashboardsServiceState = {
+  drawerOpened: false,
+  scopeNavigations: [],
+  filteredFolders: {},
+  folders: {},
+  forScopeNames: [],
+  loading: false,
+  searchQuery: '',
+  navScopePath: undefined,
+};
+
 export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsServiceState> {
   private locationSubscription: Subscription | undefined;
   constructor(private apiClient: ScopesApiClient) {
-    super({
-      drawerOpened: false,
-      scopeNavigations: [],
-      filteredFolders: {},
-      folders: {},
-      forScopeNames: [],
-      loading: false,
-      searchQuery: '',
-      navScopePath: undefined,
-    });
+    super({ ...DEFAULT_DASHBOARDS_STATE });
 
     if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaScopesDashboardsMegaMenu, false)) {
       // With the mega-menu flag on, ScopesDashboardsMegaMenuSection renders this tree independent of

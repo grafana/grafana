@@ -1,16 +1,14 @@
 import { useEffect, useRef } from 'react';
-import { Observable } from 'rxjs';
 
-import { useObservable } from '@grafana/data/unstable';
 import { useScopes } from '@grafana/runtime';
-import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
+import {
+  useDashboardsLoading,
+  useForScopeNames,
+  useScopeNavigations,
+} from 'app/features/scopes/dashboards/useScopesDashboardsState';
 import { useDebouncedScopesEnabled } from 'app/features/scopes/useDebouncedScopesEnabled';
 
 import { type AppChromeService } from './AppChromeService';
-
-// Stable fallback so `useObservable` doesn't re-subscribe on every render when there's no scope
-// service - a fresh `new Observable()` per render would otherwise look like a new source each time.
-const EMPTY_OBSERVABLE = new Observable();
 
 // Opening the overlay mega menu auto-focuses it (FocusScope in AppChromeMenu.tsx), which would
 // otherwise yank focus away from whatever the user is typing in - e.g. a panel editor field - the
@@ -40,21 +38,16 @@ function useAutoOpenMegaMenuForScopedContent(chrome: AppChromeService) {
   // for content that was already seen, since genuinely new content only ever arrives together with
   // a real scope-apply action, which only happens on a page where scopes are already enabled.
   const showAsEnabled = useDebouncedScopesEnabled(scopes?.state.enabled ?? false);
-  const scopeServices = useScopesServices();
-  const dashboardsState = scopeServices?.scopesDashboardsService.state;
-  useObservable(scopeServices?.scopesDashboardsService.stateObservable ?? EMPTY_OBSERVABLE, dashboardsState);
+  const loading = useDashboardsLoading();
+  const forScopeNames = useForScopeNames();
+  const scopeNavigations = useScopeNavigations();
 
   // `loading` must gate this too: fetchDashboards() writes the new scope's forScopeNames and
   // loading:true synchronously, but leaves the *previous* scope's scopeNavigations in
   // place until the fetch resolves. Without this, that stale leftover data reads as "the new scope
   // has content" and can force-open the menu before we actually know whether it does.
-  const scopeContentKey =
-    dashboardsState && !dashboardsState.loading && dashboardsState.forScopeNames.length > 0
-      ? JSON.stringify(dashboardsState.forScopeNames)
-      : null;
-  const hasScopedDashboardsContent = Boolean(
-    scopeContentKey && dashboardsState && dashboardsState.scopeNavigations.length > 0
-  );
+  const scopeContentKey = !loading && forScopeNames.length > 0 ? JSON.stringify(forScopeNames) : null;
+  const hasScopedDashboardsContent = Boolean(scopeContentKey && scopeNavigations.length > 0);
 
   // Tracks the key for the content we've last seen - null when there's currently none - so that
   // clearing scopes and then re-applying the *same* one is treated as fresh content (the service
@@ -88,8 +81,8 @@ function useAutoOpenMegaMenuForScopedContent(chrome: AppChromeService) {
 /**
  * Renders nothing - just mounts `useAutoOpenMegaMenuForScopedContent`. AppChrome mounts this
  * conditionally (only when the mega menu flag is on) rather than calling the hook unconditionally,
- * so the scopes-dashboards-service subscription above - and the re-renders it would otherwise cause
- * on every emission - don't exist at all on the flag-off path.
+ * so the scopes-dashboards-service subscriptions above - and the re-renders they would otherwise cause
+ * when the loading flag, scope names, or navigations change - don't exist at all on the flag-off path.
  */
 export function AutoOpenMegaMenuForScopedContent({ chrome }: { chrome: AppChromeService }) {
   useAutoOpenMegaMenuForScopedContent(chrome);

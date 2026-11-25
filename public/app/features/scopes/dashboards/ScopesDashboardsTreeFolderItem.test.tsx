@@ -1,5 +1,5 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
-import { render as rtlRender, screen } from '@testing-library/react';
+import { render as rtlRender, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation } from 'react-router-dom-v5-compat';
 
@@ -198,6 +198,40 @@ describe('ScopesDashboardsTreeFolderItem', () => {
     await user.click(exchangeButton);
 
     expect(mockScopesSelectorService.changeScopes).toHaveBeenCalledWith(['subScope1'], undefined, undefined, false);
+  });
+
+  it('reads the active path when the exchange icon is clicked and applies scopes only after the navigation scope is set', async () => {
+    const user = userEvent.setup();
+    const folder = createMockFolder({ subScopeName: 'subScope1' });
+    mockScopesDashboardsService.state.navScopePath = ['subScope1', 'child'];
+
+    render(
+      <ScopesDashboardsTreeFolderItem
+        folder={folder}
+        folderPath={['']}
+        folders={createMockFolders}
+        onFolderUpdate={mockOnFolderUpdate}
+      />
+    );
+
+    // The path changes after the render, so only a read made at click time sees it.
+    mockScopesDashboardsService.state.navScopePath = ['subScope1', 'other'];
+    let finishSettingNavigationScope: () => void = () => {};
+    mockScopesDashboardsService.setNavigationScope.mockReturnValueOnce(
+      new Promise<void>((resolve) => (finishSettingNavigationScope = resolve))
+    );
+
+    await user.click(screen.getByRole('button', { name: /change root scope/i }));
+
+    expect(mockScopesDashboardsService.setNavigationScope).toHaveBeenCalledWith('subScope1', undefined, ['other']);
+    // The navigation scope is still being set, so scopes must not be applied yet.
+    expect(mockScopesSelectorService.changeScopes).not.toHaveBeenCalled();
+
+    finishSettingNavigationScope();
+
+    await waitFor(() => {
+      expect(mockScopesSelectorService.changeScopes).toHaveBeenCalledWith(['other'], undefined, undefined, false);
+    });
   });
 
   it('passes subScope prop to ScopesDashboardsTree when folder is expanded', () => {

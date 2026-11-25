@@ -232,8 +232,8 @@ describe('ScopesNavigationTreeLink', () => {
       const link = screen.getByTestId('scopes-dashboards-test-id');
       await userEvent.click(link);
 
-      // Should not call setNavigationScope with currentScope since it's already set
-      expect(mockScopesDashboardsService.setNavigationScope).not.toHaveBeenCalledWith('currentScope');
+      // The real call carries three arguments, so a one-argument matcher could never fail here.
+      expect(mockScopesDashboardsService.setNavigationScope).not.toHaveBeenCalled();
     });
 
     it('should call changeScopes with subScope', async () => {
