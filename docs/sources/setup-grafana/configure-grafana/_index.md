@@ -758,6 +758,10 @@ Limits the amount of bytes that Grafana reads from responses of outgoing HTTP re
 
 Limits the number of rows that Grafana processes from SQL data sources. Default is `1000000`.
 
+#### `series_limit`
+
+Limits the number of series that Grafana processes from one Prometheus query. A query that returns more series fails with an error. Default is `0`, which means no limit.
+
 #### `user_agent`
 
 Sets a custom value for the `User-Agent` header for outgoing data proxy requests. If empty, the default value is `Grafana/<BuildVersion>` (for example `Grafana/13.0.0`).
@@ -2330,11 +2334,11 @@ This section configures where Grafana Alerting writes alert state history. Refer
 
 #### `enabled `
 
-Enables recording alert state history. Default is `false`.
+Enables recording alert state history. Default is `true`.
 
 #### `backend `
 
-Select the backend used to store alert state history. Supported values: `loki`, `prometheus`, `multiple`.
+Select the backend used to store alert state history. Supported values: `loki`, `prometheus`, `annotations`, `multiple`.
 
 #### `loki_remote_url `
 
@@ -2364,7 +2368,7 @@ Used only when `backend = multiple`. Comma-separated list of secondary backends 
 
 ### `[unified_alerting.state_history.annotations]`
 
-This section controls retention of annotations automatically created while evaluating alert rules when alerting state history backend is configured to be annotations (see setting [unified_alerting.state_history].backend)
+This section controls retention of annotations automatically created while evaluating alert rules when alerting state history backend is configured to be `annotations` (see setting [unified_alerting.state_history].backend)
 
 #### `max_age`
 
