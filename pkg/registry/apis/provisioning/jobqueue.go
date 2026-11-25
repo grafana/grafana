@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/prometheus/client_golang/prometheus"
 	clientrest "k8s.io/client-go/rest"
 
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/pkg/infra/nats"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/jobqueue"
@@ -32,6 +33,8 @@ type JobQueueService struct {
 	*loopbackService
 
 	subscriber         nats.Subscriber
+	registry           prometheus.Registerer
+	tracer             tracing.Tracer
 	screenshotRenderer pullrequest.ScreenshotRenderer
 	pullRequestURLs    pullrequest.URLProvider
 	cfg                jobqueue.Config
@@ -43,9 +46,11 @@ type JobQueueService struct {
 func ProvideJobQueueService(
 	cfg *setting.Cfg,
 	builder *APIBuilder,
+	subscriber nats.Subscriber,
+	registry prometheus.Registerer,
+	tracer tracing.Tracer,
 	renderer rendering.Service,
 	blobstore resource.ResourceClient,
-	subscriber nats.Subscriber,
 ) *JobQueueService {
 	// The jobs informer resyncs on job_poll_interval rather than the controllers'
 	// resync_interval, preserving the job pickup cadence (and config key) of the
@@ -58,6 +63,8 @@ func ProvideJobQueueService(
 
 	s := &JobQueueService{
 		subscriber:         subscriber,
+		registry:           registry,
+		tracer:             tracer,
 		screenshotRenderer: pullrequest.NewScreenshotRenderer(renderer, blobstore),
 		pullRequestURLs:    pullrequest.URLsFromConfig(cfg),
 		cfg: jobqueue.Config{
@@ -78,18 +85,18 @@ func ProvideJobQueueService(
 			AllowImageRendering:  cfg.ProvisioningAllowImageRendering,
 		},
 	}
-	s.loopbackService = newLoopbackService(JobQueueServiceName, builder, s.runQueue)
+	s.loopbackService = newLoopbackService(JobQueueServiceName, builder, s.runController)
 	return s
 }
 
-func (s *JobQueueService) runQueue(ctx context.Context, restConfig *clientrest.Config) error {
+func (s *JobQueueService) runController(ctx context.Context, restConfig *clientrest.Config) error {
 	client, err := clientset.NewForConfig(restConfig)
 	if err != nil {
 		return fmt.Errorf("create provisioning clientset: %w", err)
 	}
 
 	b := s.builder
-	store, err := jobs.NewJobStore(client.ProvisioningV0alpha1(), jobs.ClaimExpiry, b.registry)
+	store, err := jobs.NewJobStore(client.ProvisioningV0alpha1(), jobs.ClaimExpiry, s.registry)
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
@@ -108,16 +115,14 @@ func (s *JobQueueService) runQueue(ctx context.Context, restConfig *clientrest.C
 		Store:               store,
 		RepoGetter:          resources.NewRepositoryGetter(b.repoFactory, client.ProvisioningV0alpha1()),
 		HistoryWriter:       historyWriter,
-		Tracer:              b.tracer,
-		Registry:            b.registry,
+		Tracer:              s.tracer,
+		Registry:            s.registry,
 		PerformanceEnabled:  performanceEnabled,
 		ScreenshotRenderer:  s.screenshotRenderer,
 		PullRequestURLs:     s.pullRequestURLs,
-		ExtraWorkers:        b.extraWorkers,
 	})
 	if err != nil {
 		return err
 	}
-	logging.DefaultLogger.Info("starting provisioning job queue", "drivers", s.cfg.ConcurrentDrivers)
 	return queue.Run(ctx)
 }

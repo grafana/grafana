@@ -86,6 +86,7 @@ var WireSet = wire.NewSet(
 	provisioning.RegisterAPIService,
 	provisioning.ProvideConnectionControllerService,
 	provisioning.ProvideHistoryJobCleanupService,
+	provisioning.ProvideBootstrapService,
 	provisioning.ProvideRepositoryControllerService,
 	provisioning.ProvideJobQueueService,
 	provisioning.ProvideJobCleanupService,

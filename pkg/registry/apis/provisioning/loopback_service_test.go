@@ -26,16 +26,46 @@ func TestLoopbackService_Run(t *testing.T) {
 		})
 	})
 
-	t.Run("runs on the loopback config without waiting for the bootstrap repository unless asked to", func(t *testing.T) {
+	t.Run("waits for waitFor before running", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
-			builder := &APIBuilder{loopbackReady: make(chan struct{}), bootstrapDone: make(chan struct{})}
+			builder := &APIBuilder{loopbackReady: make(chan struct{})}
 			builder.publishLoopbackConfig(&clientrest.Config{})
-			svc := newLoopbackService("test", builder, func(ctx context.Context, _ *clientrest.Config) error {
+			ran := make(chan struct{})
+			svc := newLoopbackService("test", builder, func(context.Context, *clientrest.Config) error {
+				close(ran)
 				return nil
 			})
+			waitFor := make(chan struct{})
+			svc.waitFor = waitFor
 
-			require.NoError(t, svc.Run(t.Context()))
-			require.False(t, isClosed(builder.bootstrapDone))
+			runErr := make(chan error, 1)
+			go func() { runErr <- svc.Run(t.Context()) }()
+			synctest.Wait()
+			require.False(t, isClosed(ran))
+
+			close(waitFor)
+			require.NoError(t, <-runErr)
+			require.True(t, isClosed(ran))
+		})
+	})
+
+	t.Run("calls onStop when stopped before the API is served", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			builder := &APIBuilder{loopbackReady: make(chan struct{})}
+			svc := newLoopbackService("test", builder, func(context.Context, *clientrest.Config) error {
+				t.Error("run must not be called before the API is served")
+				return nil
+			})
+			stopped := make(chan struct{})
+			svc.onStop = func() { close(stopped) }
+
+			runErr := make(chan error, 1)
+			go func() { runErr <- svc.Run(t.Context()) }()
+			synctest.Wait()
+
+			svc.StopAsync()
+			require.NoError(t, <-runErr)
+			require.True(t, isClosed(stopped))
 		})
 	})
 

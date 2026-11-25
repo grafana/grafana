@@ -11,10 +11,15 @@ import (
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/pkg/infra/nats"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
+
+// repoControllerWorkers is the worker count of the repository and connection controllers.
+const repoControllerWorkers = 1
 
 const defaultWebhookSecretRotationInterval = 30 * 24 * time.Hour
 
@@ -38,6 +43,8 @@ type RepositoryControllerService struct {
 
 	subscriber                    nats.Subscriber
 	registry                      prometheus.Registerer
+	tracer                        tracing.Tracer
+	unified                       resource.ResourceClient
 	informerMetrics               *InformerMetrics
 	resyncInterval                time.Duration
 	webhookSecretRotationInterval time.Duration
@@ -49,8 +56,11 @@ type RepositoryControllerService struct {
 func ProvideRepositoryControllerService(
 	cfg *setting.Cfg,
 	builder *APIBuilder,
+	bootstrap *BootstrapService,
 	subscriber nats.Subscriber,
 	registry prometheus.Registerer,
+	tracer tracing.Tracer,
+	unified resource.ResourceClient,
 	informerMetrics *InformerMetrics,
 ) *RepositoryControllerService {
 	webhookSecretRotationInterval := cfg.ProvisioningWebhookSecretRotationInterval
@@ -60,6 +70,8 @@ func ProvideRepositoryControllerService(
 	s := &RepositoryControllerService{
 		subscriber:                    subscriber,
 		registry:                      registry,
+		tracer:                        tracer,
+		unified:                       unified,
 		informerMetrics:               informerMetrics,
 		resyncInterval:                controllerResyncInterval(cfg),
 		webhookSecretRotationInterval: webhookSecretRotationInterval,
@@ -67,7 +79,7 @@ func ProvideRepositoryControllerService(
 	s.loopbackService = newLoopbackService(RepositoryControllerServiceName, builder, s.runController)
 	// A changed or cleared bootstrap_path must be applied before the
 	// controller syncs the repository it replaces.
-	s.awaitBootstrap = true
+	s.waitFor = bootstrap.Done()
 	return s
 }
 
@@ -82,7 +94,7 @@ func (s *RepositoryControllerService) runController(ctx context.Context, restCon
 	repoController, err := controller.ProvideRepositoryController(controller.RepositoryControllerDeps{
 		ProvisioningClient:            client,
 		NATSSubscriber:                s.subscriber,
-		KeysLister:                    keysapi.NewGRPCLister(b.unified, provisioningapis.RepositoryResourceInfo.GroupVersionResource()),
+		KeysLister:                    keysapi.NewGRPCLister(s.unified, provisioningapis.RepositoryResourceInfo.GroupVersionResource()),
 		RelistProjectionMetrics:       relistProjectionMetrics,
 		FreshnessMetrics:              freshnessMetrics,
 		HealthMetrics:                 controller.NewHealthMetricsRecorder(s.registry),
@@ -94,7 +106,7 @@ func (s *RepositoryControllerService) runController(ctx context.Context, restCon
 		QuotaGetter:                   b.quotaGetter,
 		IncrementalPolicy:             b.incrementalPolicy,
 		Registry:                      s.registry,
-		Tracer:                        b.tracer,
+		Tracer:                        s.tracer,
 		ParallelOperations:            10,
 		ResyncInterval:                s.resyncInterval,
 		MinSyncInterval:               b.minSyncInterval,

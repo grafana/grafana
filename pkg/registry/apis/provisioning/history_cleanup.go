@@ -5,58 +5,50 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana-app-sdk/logging"
+	clientrest "k8s.io/client-go/rest"
+
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+// HistoryJobCleanupServiceName is the background-service module name of
+// [HistoryJobCleanupService].
+const HistoryJobCleanupServiceName = "provisioning-history-job-cleanup"
+
 var _ registry.CanBeDisabled = (*HistoryJobCleanupService)(nil)
 
-// HistoryJobCleanupService periodically deletes expired HistoricJobs. Run blocks
-// until the Grafana API server is running, then runs the cleanup until shutdown.
+// HistoryJobCleanupService deletes expired HistoricJobs in the Grafana process
+// once the provisioning API is served, until shutdown.
 type HistoryJobCleanupService struct {
-	builder            *APIBuilder
-	configProvider     apiserver.RestConfigProvider
-	subscriber         nats.Subscriber
-	expiration         time.Duration
-	disableControllers bool
+	*loopbackService
+
+	subscriber nats.Subscriber
+	expiration time.Duration
 }
 
-func ProvideHistoryJobCleanupService(cfg *setting.Cfg, builder *APIBuilder, configProvider apiserver.RestConfigProvider, subscriber nats.Subscriber) *HistoryJobCleanupService {
+// ProvideHistoryJobCleanupService is called by Wire. Depending on the builder
+// orders it after [RegisterAPIService], which registers the provisioning API
+// group with the API server.
+func ProvideHistoryJobCleanupService(cfg *setting.Cfg, builder *APIBuilder, subscriber nats.Subscriber) *HistoryJobCleanupService {
 	expiration := cfg.ProvisioningHistoryExpiration
 	if expiration <= 0 {
 		expiration = setting.ProvisioningHistoryExpirationDefault
 	}
-	return &HistoryJobCleanupService{
-		builder:            builder,
-		configProvider:     configProvider,
-		subscriber:         subscriber,
-		expiration:         expiration,
-		disableControllers: cfg.DisableControllers,
-	}
+	s := &HistoryJobCleanupService{subscriber: subscriber, expiration: expiration}
+	s.loopbackService = newLoopbackService(HistoryJobCleanupServiceName, builder, s.runController)
+	return s
 }
 
-// IsDisabled reports whether there is nothing for this instance to clean: the
-// builder is nil when provisioning is disabled, controllers can be turned off by
-// configuration, and Loki-backed history stores no HistoricJobs.
+// IsDisabled implements registry.CanBeDisabled. Loki-backed history stores no
+// HistoricJobs, so there is nothing to clean.
 func (s *HistoryJobCleanupService) IsDisabled() bool {
-	b := s.builder
-	return b == nil || s.disableControllers || (b.jobHistoryConfig != nil && b.jobHistoryConfig.Loki != nil)
+	return s.loopbackService.IsDisabled() || (s.builder.jobHistoryConfig != nil && s.builder.jobHistoryConfig.Loki != nil)
 }
 
-func (s *HistoryJobCleanupService) Run(ctx context.Context) error {
-	restConfig, err := s.configProvider.GetRestConfig(ctx)
-	if ctx.Err() != nil {
-		// Shut down before the API server became ready.
-		return nil
-	}
-	if err != nil {
-		return fmt.Errorf("get rest config: %w", err)
-	}
+func (s *HistoryJobCleanupService) runController(ctx context.Context, restConfig *clientrest.Config) error {
 	client, err := clientset.NewForConfig(restConfig)
 	if err != nil {
 		return fmt.Errorf("create provisioning clientset: %w", err)
@@ -66,7 +58,6 @@ func (s *HistoryJobCleanupService) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	logging.DefaultLogger.Info("starting historic job cleanup", "expiration", s.expiration.String())
 	source.Run(ctx.Done())
 	return nil
 }

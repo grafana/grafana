@@ -1524,6 +1524,7 @@ func TestCascadeDelete_MatchingPreconditionProceeds(t *testing.T) {
 }
 
 func TestCascadeDelete_ForwardsOptionalInterfaces(t *testing.T) {
+	setAsyncCascadeDeleteOff(t)
 	setKubernetesFolderCascadeDeleteToggle(t, false)
 
 	inner := &watchableFolderStorage{fakeFolderStorage: &fakeFolderStorage{existing: map[string]*foldersv1.Folder{}}}
@@ -1546,7 +1547,7 @@ func TestCascadeDelete_RejectsForcedCollectionDelete(t *testing.T) {
 	// A forced collection delete skips the contents check, so it is rejected with the flag on or off.
 	for name, enabled := range map[string]bool{"cascade flag on": true, "cascade flag off": false} {
 		t.Run(name, func(t *testing.T) {
-			setKubernetesFolderCascadeDeleteToggle(t, enabled)
+			setOpenFeatureToggles(t, map[string]bool{featuremgmt.FlagKubernetesFolderCascadeDelete: enabled, featuremgmt.FlagFolderAsyncCascadeDeleteThroughController: false})
 
 			inner := &watchableFolderStorage{fakeFolderStorage: &fakeFolderStorage{existing: map[string]*foldersv1.Folder{}}}
 			deleter := newCascadeDeleteStorage(inner, &fakeCascadeSearcher{}, nilDashboardClient, nilVariableClient, nil, nil).(rest.CollectionDeleter)
@@ -1563,6 +1564,35 @@ func TestCascadeDelete_RejectsForcedCollectionDelete(t *testing.T) {
 	}
 }
 
+func TestCascadeDelete_CollectionDeleteNotSupportedWithAsyncCascade(t *testing.T) {
+	for name, opts := range map[string]*metav1.DeleteOptions{"plain": {}, "forced": forceDelete(), "dry run": {DryRun: []string{metav1.DryRunAll}}} {
+		t.Run(name, func(t *testing.T) {
+			setOpenFeatureToggles(t, map[string]bool{featuremgmt.FlagFolderAsyncCascadeDeleteThroughController: true})
+			inner := &watchableFolderStorage{fakeFolderStorage: &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"a": newFolder("a")}}}
+			deleter := newCascadeDeleteStorage(inner, &fakeCascadeSearcher{}, nilDashboardClient, nilVariableClient, nil, nil).(rest.CollectionDeleter)
+
+			_, err := deleter.DeleteCollection(ctxWithNamespace(), nil, opts, nil)
+			require.True(t, apierrors.IsMethodNotSupported(err), "got %v", err)
+			require.False(t, inner.deletedCollection, "underlying collection delete must not run")
+		})
+	}
+
+	t.Run("flag off still forwards", func(t *testing.T) {
+		setOpenFeatureToggles(t, map[string]bool{featuremgmt.FlagFolderAsyncCascadeDeleteThroughController: false})
+		inner := &watchableFolderStorage{fakeFolderStorage: &fakeFolderStorage{existing: map[string]*foldersv1.Folder{}}}
+		deleter := newCascadeDeleteStorage(inner, &fakeCascadeSearcher{}, nilDashboardClient, nilVariableClient, nil, nil).(rest.CollectionDeleter)
+		_, err := deleter.DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, nil)
+		require.NoError(t, err)
+		require.True(t, inner.deletedCollection)
+	})
+}
+
+// setAsyncCascadeDeleteOff turns the async cascade flag off for t; flag state is per (sub)test.
+func setAsyncCascadeDeleteOff(t *testing.T) {
+	t.Helper()
+	setOpenFeatureToggles(t, map[string]bool{featuremgmt.FlagFolderAsyncCascadeDeleteThroughController: false})
+}
+
 func TestCascadeDelete_RejectsCollectionDeleteOfFinalizerFolders(t *testing.T) {
 	finalizerFolder := func(name string) *foldersv1.Folder {
 		f := newFolder(name)
@@ -1576,13 +1606,14 @@ func TestCascadeDelete_RejectsCollectionDeleteOfFinalizerFolders(t *testing.T) {
 		}
 		return store
 	}
-	deleter := func(store *watchableFolderStorage) rest.CollectionDeleter {
+	deleter := func(t *testing.T, store *watchableFolderStorage) rest.CollectionDeleter {
+		setAsyncCascadeDeleteOff(t)
 		return newCascadeDeleteStorage(store, &fakeCascadeSearcher{}, nilDashboardClient, nilVariableClient, nil, nil).(rest.CollectionDeleter)
 	}
 
 	t.Run("a selection with a finalizer folder is rejected before anything is deleted", func(t *testing.T) {
 		store := newStore(newFolder("a"), finalizerFolder("b"))
-		_, err := deleter(store).DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, nil)
+		_, err := deleter(t, store).DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, nil)
 		require.True(t, apierrors.IsBadRequest(err), "got %v", err)
 		require.Contains(t, err.Error(), `"b"`)
 		require.False(t, store.deletedCollection, "underlying collection delete must not run")
@@ -1590,7 +1621,7 @@ func TestCascadeDelete_RejectsCollectionDeleteOfFinalizerFolders(t *testing.T) {
 
 	t.Run("a dry run is rejected too", func(t *testing.T) {
 		store := newStore(finalizerFolder("a"))
-		_, err := deleter(store).DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{DryRun: []string{metav1.DryRunAll}}, nil)
+		_, err := deleter(t, store).DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{DryRun: []string{metav1.DryRunAll}}, nil)
 		require.True(t, apierrors.IsBadRequest(err), "got %v", err)
 		require.False(t, store.deletedCollection)
 	})
@@ -1598,7 +1629,7 @@ func TestCascadeDelete_RejectsCollectionDeleteOfFinalizerFolders(t *testing.T) {
 	t.Run("a finalizer folder on a later page is found", func(t *testing.T) {
 		store := newStore(newFolder("a"), newFolder("b"), finalizerFolder("c"))
 		store.pageSize = 1
-		_, err := deleter(store).DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, nil)
+		_, err := deleter(t, store).DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, nil)
 		require.True(t, apierrors.IsBadRequest(err), "got %v", err)
 		require.False(t, store.deletedCollection)
 	})
@@ -1606,7 +1637,7 @@ func TestCascadeDelete_RejectsCollectionDeleteOfFinalizerFolders(t *testing.T) {
 	t.Run("resource version constraints are accepted with a limit and reach the preflight", func(t *testing.T) {
 		store := newStore(newFolder("a"), newFolder("b"))
 		opts := &metainternalversion.ListOptions{Limit: 1, ResourceVersion: "7", ResourceVersionMatch: metav1.ResourceVersionMatchNotOlderThan}
-		_, err := deleter(store).DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, opts)
+		_, err := deleter(t, store).DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, opts)
 		require.NoError(t, err)
 		require.True(t, store.deletedCollection)
 		require.Len(t, store.listCalls, 1)
@@ -1622,7 +1653,7 @@ func TestCascadeDelete_RejectsCollectionDeleteOfFinalizerFolders(t *testing.T) {
 		} {
 			t.Run(name, func(t *testing.T) {
 				store := newStore(newFolder("a"))
-				_, err := deleter(store).DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, opts)
+				_, err := deleter(t, store).DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, opts)
 				require.True(t, apierrors.IsBadRequest(err), "got %v", err)
 				require.False(t, store.deletedCollection)
 				require.Empty(t, store.listCalls, "rejected before listing")
@@ -1633,20 +1664,20 @@ func TestCascadeDelete_RejectsCollectionDeleteOfFinalizerFolders(t *testing.T) {
 	t.Run("a caller limit selects only the first page, as the registry does", func(t *testing.T) {
 		store := newStore(newFolder("a"), finalizerFolder("b"))
 		store.pageSize = 1
-		_, err := deleter(store).DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, &metainternalversion.ListOptions{Limit: 1})
+		_, err := deleter(t, store).DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, &metainternalversion.ListOptions{Limit: 1})
 		require.NoError(t, err)
 		require.True(t, store.deletedCollection)
 	})
 
 	t.Run("the preflight pages with the registry's page size unless the caller sets a limit", func(t *testing.T) {
 		store := newStore(newFolder("a"))
-		_, err := deleter(store).DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, nil)
+		_, err := deleter(t, store).DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, nil)
 		require.NoError(t, err)
 		require.NotEmpty(t, store.listCalls)
 		require.EqualValues(t, deleteCollectionPageSize, store.listCalls[0].Limit)
 
 		store = newStore(newFolder("a"), newFolder("b"))
-		_, err = deleter(store).DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, &metainternalversion.ListOptions{Limit: 1})
+		_, err = deleter(t, store).DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, &metainternalversion.ListOptions{Limit: 1})
 		require.NoError(t, err)
 		require.EqualValues(t, 1, store.listCalls[0].Limit)
 	})
@@ -1654,13 +1685,14 @@ func TestCascadeDelete_RejectsCollectionDeleteOfFinalizerFolders(t *testing.T) {
 	t.Run("folders without the finalizer are forwarded", func(t *testing.T) {
 		store := newStore(newFolder("a"), newFolder("b"))
 		store.pageSize = 1
-		_, err := deleter(store).DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, nil)
+		_, err := deleter(t, store).DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, nil)
 		require.NoError(t, err)
 		require.True(t, store.deletedCollection)
 	})
 
 	t.Run("a list error is returned and nothing is deleted", func(t *testing.T) {
 		store := &watchableFolderStorage{fakeFolderStorage: &fakeFolderStorage{}}
+		setAsyncCascadeDeleteOff(t)
 		c := cascadeCollectionDeleter{lister: failingLister{}, inner: store}
 		_, err := c.DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, nil)
 		require.Error(t, err)
@@ -1669,6 +1701,7 @@ func TestCascadeDelete_RejectsCollectionDeleteOfFinalizerFolders(t *testing.T) {
 
 	t.Run("a list without list metadata fails closed", func(t *testing.T) {
 		store := &watchableFolderStorage{fakeFolderStorage: &fakeFolderStorage{}}
+		setAsyncCascadeDeleteOff(t)
 		c := cascadeCollectionDeleter{lister: noListMetaLister{}, inner: store}
 		_, err := c.DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, nil)
 		require.Error(t, err)
@@ -1677,7 +1710,7 @@ func TestCascadeDelete_RejectsCollectionDeleteOfFinalizerFolders(t *testing.T) {
 
 	t.Run("a folder created after the listing is rejected when it is about to be deleted", func(t *testing.T) {
 		store := newStore(newFolder("a"))
-		_, err := deleter(store).DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, nil)
+		_, err := deleter(t, store).DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, nil)
 		require.NoError(t, err)
 		require.NotNil(t, store.collectionValidation)
 
@@ -1690,7 +1723,7 @@ func TestCascadeDelete_RejectsCollectionDeleteOfFinalizerFolders(t *testing.T) {
 		store := newStore(newFolder("a"))
 		denied := errors.New("denied")
 		var seen runtime.Object
-		_, err := deleter(store).DeleteCollection(ctxWithNamespace(), func(_ context.Context, obj runtime.Object) error {
+		_, err := deleter(t, store).DeleteCollection(ctxWithNamespace(), func(_ context.Context, obj runtime.Object) error {
 			seen = obj
 			return denied
 		}, &metav1.DeleteOptions{}, nil)
