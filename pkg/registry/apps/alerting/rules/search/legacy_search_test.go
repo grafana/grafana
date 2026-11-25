@@ -70,9 +70,9 @@ func (s *ruleSearchStore) ListAlertRulesPaginated(ctx context.Context, query *ng
 }
 
 func legacyBackendForTest(store *ruleSearchStore) *legacyClient {
-	service := legacy.NewLegacyRuleService(store, fakes.NewFakeProvisioningStore(), nil, nil, nil,
-		60, &logtest.Fake{}, nil, statusSearchAccessControl{}, nil)
-	return NewLegacyClient(*service)
+	service := legacy.New(store, fakes.NewFakeProvisioningStore(), nil, nil, nil,
+		60, &logtest.Fake{}, nil, statusSearchAccessControl{}, nil, nil)
+	return NewLegacyClient(service.Searcher())
 }
 
 func TestLegacyBackendFilteringAndPagination(t *testing.T) {

@@ -25,7 +25,7 @@ func TestRedirectLimitMiddleware(t *testing.T) {
 			t.Cleanup(server.Close)
 
 			mw := RedirectLimitMiddleware(&fakeValidator{err: errors.New("this wont be called")})
-			rt := mw.CreateMiddleware(httpclient.Options{}, http.DefaultTransport)
+			rt := mw.CreateMiddleware(httpclient.Options{}, server.Client().Transport)
 			require.NotNil(t, rt)
 
 			middlewareName, ok := mw.(httpclient.MiddlewareName)
@@ -59,7 +59,7 @@ func TestRedirectLimitMiddleware(t *testing.T) {
 				fakeErr := errors.New("fake error")
 
 				mw := RedirectLimitMiddleware(&fakeValidator{err: fakeErr})
-				rt := mw.CreateMiddleware(httpclient.Options{}, http.DefaultTransport)
+				rt := mw.CreateMiddleware(httpclient.Options{}, server.Client().Transport)
 				require.NotNil(t, rt)
 
 				middlewareName, ok := mw.(httpclient.MiddlewareName)
@@ -88,7 +88,7 @@ func TestRedirectLimitMiddleware(t *testing.T) {
 				t.Cleanup(server.Close)
 
 				mw := RedirectLimitMiddleware(&fakeValidator{})
-				rt := mw.CreateMiddleware(httpclient.Options{}, http.DefaultTransport)
+				rt := mw.CreateMiddleware(httpclient.Options{}, server.Client().Transport)
 				require.NotNil(t, rt)
 
 				middlewareName, ok := mw.(httpclient.MiddlewareName)

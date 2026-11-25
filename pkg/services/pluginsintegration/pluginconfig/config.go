@@ -82,7 +82,8 @@ type PluginInstanceCfg struct {
 
 	UserFacingDefaultError string
 
-	DataProxyRowLimit int64
+	DataProxyRowLimit    int64
+	DataProxySeriesLimit int64
 
 	SQLDatasourceMaxOpenConnsDefault    int
 	SQLDatasourceMaxIdleConnsDefault    int
@@ -139,6 +140,7 @@ func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provi
 		ConcurrentQueryCount:                cfg.ConcurrentQueryCount,
 		UserFacingDefaultError:              cfg.UserFacingDefaultError,
 		DataProxyRowLimit:                   cfg.DataProxyRowLimit,
+		DataProxySeriesLimit:                cfg.DataProxySeriesLimit,
 		SQLDatasourceMaxOpenConnsDefault:    cfg.SqlDatasourceMaxOpenConnsDefault,
 		SQLDatasourceMaxIdleConnsDefault:    cfg.SqlDatasourceMaxIdleConnsDefault,
 		SQLDatasourceMaxConnLifetimeDefault: cfg.SqlDatasourceMaxConnLifetimeDefault,

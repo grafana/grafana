@@ -6,17 +6,33 @@ import { ColorPickerInput } from './ColorPickerInput';
 
 # ColorPicker
 
+## When to use
+
+No component-specific guidance documented yet.
+
+## Never use for
+
+No component-specific guidance documented yet.
+
+## Do's and don'ts
+
+No component-specific guidance documented yet.
+
+## Usage
+
 The `ColorPicker` component group consists of several building blocks that are combined in Grafana to create the `ColorPicker`: popover, pickers and palettes. There are different combinations of these building blocks depending on where the `ColorPicker` is used in Grafana.
 
 The `Popover` is a tabbed view where you can switch between `Palettes`. The `NamedColorsPalette` shows an arrangement of preset colors, while the `SpectrumPalette` is an unlimited HSB color picker. The preset colors are optimized to work well with both light and dark theme. `Popover` is triggered, for example, by the series legend of graphs, or by `Pickers`.
 
 The `Pickers` are by default single circular color fields that show the currently picked color. On click, they open the `Popover`.
 
-## ColorPickerInput
+### ColorPickerInput
 
 Color picker component, modified to be used inside forms. Supports all usual input props. Allows manually typing in color value as well as selecting it from the popover.
 
-The format in which the color is returned to the `onChange` callback can be customised via `returnColorAs` prop.
+The format in which the color is returned to the `onChange` callback can be customized via `returnColorAs` prop.
+
+## Accessibility
 
 ## Props
 

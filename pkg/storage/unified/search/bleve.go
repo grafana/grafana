@@ -1954,9 +1954,9 @@ type bleveIndex struct {
 	// RV returned by last List/ListModifiedSince operation. Updated when updating index.
 	resourceVersion atomic.Int64
 
-	// Timestamp when the last update to the index was done (started).
-	// Subsequent update requests only trigger new update if minUpdateInterval has elapsed.
+	// Requests arriving before this time reuse the last update's result, including failures.
 	nextUpdateTime time.Time
+	lastUpdateErr  error
 
 	standard resource.SearchableDocumentFields
 	fields   resource.SearchableDocumentFields
@@ -4077,7 +4077,11 @@ func (b *bleveIndex) runUpdater(ctx context.Context) {
 		for ix := 0; ix < len(batch); {
 			req := batch[ix]
 			if req.requestTime.Before(b.nextUpdateTime) {
-				req.callback <- updateResult{rv: b.resourceVersion.Load()}
+				if b.lastUpdateErr != nil {
+					req.callback <- updateResult{err: b.lastUpdateErr}
+				} else {
+					req.callback <- updateResult{rv: b.resourceVersion.Load()}
+				}
 				batch = append(batch[:ix], batch[ix+1:]...)
 			} else {
 				// Keep in the batch
@@ -4090,13 +4094,13 @@ func (b *bleveIndex) runUpdater(ctx context.Context) {
 			continue
 		}
 
-		// Bump next update time
-		b.nextUpdateTime = time.Now().Add(b.minUpdateInterval)
-
 		var rv int64
 		var err = ctx.Err()
 		if err == nil {
+			started := time.Now()
 			rv, err = b.updateIndexWithLatestModifications(ctx, len(batch))
+			b.nextUpdateTime = started.Add(b.minUpdateInterval)
+			b.lastUpdateErr = err
 		}
 		for _, req := range batch {
 			req.callback <- updateResult{rv: rv, err: err}
@@ -4113,6 +4117,9 @@ func (b *bleveIndex) updateIndexWithLatestModifications(ctx context.Context, req
 
 	startTime := time.Now()
 	listRV, docs, err := b.updaterFn(ctx, b, sinceRV)
+	if err == nil {
+		err = ctx.Err()
+	}
 	if err == nil && listRV > 0 && listRV != sinceRV {
 		err = b.advanceResourceVersion(listRV, docs) // updates b.resourceVersion
 	}

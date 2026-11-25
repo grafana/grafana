@@ -1,29 +1,32 @@
 import { type DataSourceApi } from '@grafana/data';
-import { type DataQuery, type DataSourceRef } from '@grafana/schema';
+import { getDataSourceInstance } from '@grafana/runtime';
+import { type DataQuery } from '@grafana/schema';
 import * as correlationsUtils from 'app/features/correlations/utils';
 import { type ExploreItemState } from 'app/types/explore';
 import { type StoreState, type ThunkDispatch } from 'app/types/store';
 
-import { configureStore } from '../../../store/configureStore';
+import { addExtraMiddleware, configureStore } from '../../../store/configureStore';
 
 import { updateDatasourceInstanceAction, datasourceReducer, changeDatasource } from './datasource';
-import * as queryActions from './query';
 import { createDefaultInitialState } from './testHelpers';
-import * as utils from './utils';
 import { createEmptyQueryResponse } from './utils';
+
+jest.mock('app/features/correlations/utils', () =>
+  jest
+    .requireActual('test/helpers/partialMock')
+    .partialMock(jest.requireActual('app/features/correlations/utils'), { getCorrelationsFromStorage: jest.fn() })
+);
+
+const recordAction = jest.fn();
+addExtraMiddleware(() => (next) => (action) => {
+  recordAction(action);
+  return next(action);
+});
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
-  getDataSourceInstance: (ref?: DataSourceRef | string) => {
-    const uid = typeof ref === 'string' ? ref : (ref?.uid ?? 'mock-uid');
-    const type = typeof ref === 'object' ? (ref?.type ?? 'prometheus') : 'prometheus';
-    return Promise.resolve({
-      uid,
-      type,
-      getRef: () => ({ uid, type }),
-    });
-  },
+  getDataSourceInstance: jest.fn(),
 }));
 
 describe('Datasource reducer', () => {
@@ -71,8 +74,10 @@ describe('Datasource reducer', () => {
 });
 
 describe('changeDatasource', () => {
-  afterEach(() => {
-    jest.restoreAllMocks();
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.mocked(getDataSourceInstance).mockReset();
+    jest.mocked(correlationsUtils.getCorrelationsFromStorage).mockReset();
   });
 
   it('should import queries, fall back to empty correlations, and run queries when correlations lookup fails', async () => {
@@ -83,14 +88,9 @@ describe('changeDatasource', () => {
       getRef: () => ({ uid: 'prom-target', type: 'prometheus' }),
     } as unknown as DataSourceApi;
 
-    jest.spyOn(utils, 'loadAndInitDatasource').mockResolvedValue({
-      history: [],
-      instance: targetDS,
-    });
+    jest.mocked(getDataSourceInstance).mockResolvedValue(targetDS);
 
-    jest
-      .spyOn(correlationsUtils, 'getCorrelationsFromStorage')
-      .mockRejectedValue(new Error('Correlations fetch failed'));
+    jest.mocked(correlationsUtils.getCorrelationsFromStorage).mockRejectedValue(new Error('Correlations fetch failed'));
 
     const sourceDS = {
       uid: 'prom-source',
@@ -115,9 +115,6 @@ describe('changeDatasource', () => {
       },
     } as unknown as Partial<StoreState>);
 
-    jest.spyOn(queryActions, 'importQueries');
-    jest.spyOn(queryActions, 'runQueries');
-
     await dispatch(
       changeDatasource({
         exploreId: 'left',
@@ -126,14 +123,32 @@ describe('changeDatasource', () => {
       })
     );
 
-    // Queries should be imported before correlations lookup
-    expect(queryActions.importQueries).toHaveBeenCalledWith('left', initialQueries, sourceDS, targetDS);
+    // Importing preserves the query and moves it to the selected datasource before correlations lookup.
+    expect(getDataSourceInstance).toHaveBeenCalledWith(targetDS.getRef());
+    expect(getState().explore.panes.left!.datasourceInstance).toBe(targetDS);
+    expect(recordAction).toHaveBeenCalledWith({
+      type: 'explore/queriesImported',
+      payload: {
+        exploreId: 'left',
+        queries: [expect.objectContaining({ refId: 'A', expr: 'up', datasource: targetDS.getRef() })],
+      },
+    });
+    expect(correlationsUtils.getCorrelationsFromStorage).toHaveBeenCalledWith(
+      expect.any(Function),
+      [expect.objectContaining({ refId: 'A', expr: 'up', datasource: targetDS.getRef() })],
+      targetDS.uid
+    );
 
     // Correlations should fall back to empty array
     expect(getState().explore.panes.left!.correlations).toEqual([]);
 
-    // runQueries should still be called even though correlations failed
-    expect(queryActions.runQueries).toHaveBeenCalledWith({ exploreId: 'left' });
+    // Queries should still run even though correlations failed.
+    expect(recordAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'explore/runQueries/pending',
+        meta: expect.objectContaining({ arg: { exploreId: 'left' } }),
+      })
+    );
   });
 
   it('should call importQueries when switching from Mixed to single datasource', async () => {
@@ -151,12 +166,18 @@ describe('changeDatasource', () => {
       getRef: () => ({ uid: 'prom-target', type: 'prometheus' }),
     } as unknown as DataSourceApi;
 
-    jest.spyOn(utils, 'loadAndInitDatasource').mockResolvedValue({
-      history: [],
-      instance: targetDS,
-    });
+    jest
+      .mocked(getDataSourceInstance)
+      .mockResolvedValue(targetDS)
+      .mockResolvedValueOnce(targetDS)
+      .mockResolvedValueOnce(targetDS)
+      .mockResolvedValueOnce({
+        uid: 'loki-source',
+        meta: { id: 'loki' },
+        getRef: () => ({ uid: 'loki-source', type: 'loki' }),
+      } as DataSourceApi);
 
-    jest.spyOn(correlationsUtils, 'getCorrelationsFromStorage').mockResolvedValue({
+    jest.mocked(correlationsUtils.getCorrelationsFromStorage).mockResolvedValue({
       correlations: [],
       page: 0,
       limit: 100,
@@ -182,8 +203,6 @@ describe('changeDatasource', () => {
       },
     } as unknown as Partial<StoreState>);
 
-    jest.spyOn(queryActions, 'importQueries');
-
     await dispatch(
       changeDatasource({
         exploreId: 'left',
@@ -192,6 +211,18 @@ describe('changeDatasource', () => {
       })
     );
 
-    expect(queryActions.importQueries).toHaveBeenCalledWith('left', initialQueries, mixedDS, targetDS);
+    expect(getDataSourceInstance).toHaveBeenCalledWith(targetDS.getRef());
+    expect(recordAction).toHaveBeenCalledWith({
+      type: 'explore/queriesImported',
+      payload: {
+        exploreId: 'left',
+        queries: [expect.objectContaining({ refId: 'A', expr: 'up', datasource: targetDS.getRef() })],
+      },
+    });
+    expect(correlationsUtils.getCorrelationsFromStorage).toHaveBeenCalledWith(
+      expect.any(Function),
+      [expect.objectContaining({ refId: 'A', expr: 'up', datasource: targetDS.getRef() })],
+      targetDS.uid
+    );
   });
 });

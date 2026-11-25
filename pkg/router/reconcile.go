@@ -166,7 +166,13 @@ type groupLoadFailure struct {
 func (r *GrafanaRouter) storeServing(ctx context.Context, err error) {
 	r.reconciles.Add(1)
 	r.lastReconcile.Store(time.Now().UnixNano())
-	if err != nil {
+	switch {
+	case errors.Is(err, errFirstPollPending):
+		// Expected at startup: the router stays unready until every source has
+		// polled once. This is a wait, not a failure, so it is not an error in
+		// the log or in reconcile_errors_total.
+		logging.FromContext(ctx).Info("router: waiting for sources to poll before serving", "err", err)
+	case err != nil:
 		r.reconcileErrors.Add(1)
 		logging.FromContext(ctx).Error("router: reconcile completed with errors, serving last-known-good", "err", err)
 	}

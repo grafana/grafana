@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import memoize from 'micro-memoize';
+import { memoize } from 'micro-memoize';
 import { useMemo } from 'react';
 
 import {
@@ -235,5 +235,5 @@ export const getStyles: TableCellStyles = memoize(
         },
       }),
     }),
-  { isMatchingKey: isTableCellStylesKeyEqual }
+  { isKeyEqual: isTableCellStylesKeyEqual }
 );

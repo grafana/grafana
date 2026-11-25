@@ -94,7 +94,7 @@ require (
 	github.com/bradfitz/gomemcache v0.0.0-20260422231931-4d751bb6e37c // @grafana/grafana-backend-group
 	github.com/bwmarrin/snowflake v0.3.0 // @grafana/grafana-app-platform-squad
 	github.com/cenkalti/backoff/v4 v4.3.0 // @grafana/alerting-backend
-	github.com/centrifugal/centrifuge v0.39.0 // @grafana/grafana-app-platform-squad
+	github.com/centrifugal/centrifuge v0.40.1 // @grafana/grafana-app-platform-squad
 	github.com/cespare/xxhash/v2 v2.3.0 // @grafana/identity-access-team
 	github.com/charmbracelet/bubbles v1.0.0 // @grafana/grafana-app-platform-squad
 	github.com/charmbracelet/bubbletea v1.3.10 // @grafana/grafana-app-platform-squad
@@ -131,7 +131,8 @@ require (
 	github.com/google/wire v0.7.0 // @grafana/grafana-backend-group
 	github.com/googleapis/gax-go/v2 v2.24.1 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
-	github.com/grafana/alerting v0.0.0-20261120142630-6b20a0ecf293 // @grafana/alerting-backend
+	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // @grafana/grafana-app-platform-squad
+	github.com/grafana/alerting v0.0.0-20261124162315-60774c99f9aa // @grafana/alerting-backend
 	github.com/grafana/alerting/apps/historian v0.0.0-20260729133334-340f1168af6c // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20261120113603-423cd15e9545 // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20261120113603-423cd15e9545 // @grafana/identity-access-team
@@ -230,7 +231,7 @@ require (
 	github.com/openai/openai-go/v3 v3.16.0 // @grafana/grafana-search-and-storage
 	github.com/openfga/api/proto v0.0.0-20260319214821-f153694bfc20 // @grafana/identity-access-team
 	github.com/openfga/language/pkg/go v0.3.2-0.20260730144454-83fedf8a4e70 // @grafana/identity-access-team
-	github.com/openfga/openfga v1.18.3 // @grafana/identity-access-team
+	github.com/openfga/openfga v1.19.0 // @grafana/identity-access-team
 	github.com/patrickmn/go-cache v2.1.0+incompatible // @grafana/alerting-backend
 	github.com/pgvector/pgvector-go v0.4.1 // @grafana/grafana-search-and-storage
 	github.com/pressly/goose/v3 v3.27.3 // @grafana/identity-access-team
@@ -335,7 +336,6 @@ require (
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
 	github.com/Azure/go-ntlmssp v0.1.1 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.8.0 // indirect
-	github.com/FZambia/eagle v0.2.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.35.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.57.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.57.0 // indirect
@@ -395,7 +395,8 @@ require (
 	github.com/bufbuild/protocompile v0.14.1 // indirect
 	github.com/buger/jsonparser v1.6.1 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
-	github.com/centrifugal/protocol v0.22.1 // indirect
+	github.com/centrifugal/fdelta v0.0.3 // indirect
+	github.com/centrifugal/protocol v0.23.1 // indirect
 	github.com/charmbracelet/colorprofile v0.4.2 // indirect
 	github.com/charmbracelet/x/ansi v0.11.6 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.15 // indirect
@@ -478,7 +479,6 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.20 // indirect
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
-	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // indirect; @grafana/grafana-app-platform-squad
 	github.com/grafana/nanogit v1.7.5 // indirect
 	github.com/grafana/otel-profiling-go v0.7.0 // indirect
 	github.com/grafana/regexp v0.0.0-20250905093917-f7b3be9d1853 // indirect
@@ -511,7 +511,6 @@ require (
 	github.com/jessevdk/go-flags v1.6.1 // indirect
 	github.com/jhump/protoreflect v1.17.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
-	github.com/josharian/intern v1.0.0 // indirect
 	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/jszwedko/go-datemath v0.1.1-0.20260113213115-7f666eef0523 // indirect
 	github.com/jtolds/gls v4.20.0+incompatible // indirect
@@ -525,14 +524,13 @@ require (
 	github.com/lufia/plan9stats v0.0.0-20260802145828-341c2f0c90b5 // indirect
 	github.com/magefile/mage v1.17.2 // indirect
 	github.com/magiconair/properties v1.18.12 // indirect
-	github.com/mailru/easyjson v0.9.2 // indirect
 	github.com/matryer/is v1.4.1 // indirect
 	github.com/mattetti/filebuffer v1.0.1 // indirect
 	github.com/mattn/go-colorable v0.1.16 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect; @grafana/grafana-backend-group
 	github.com/mattn/go-localereader v0.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.31 // indirect
-	github.com/maypok86/otter/v2 v2.3.0 // indirect
+	github.com/maypok86/otter/v2 v2.4.0 // indirect
 	github.com/mdlayher/socket v0.6.1 // indirect
 	github.com/mdlayher/vsock v1.3.0 // indirect
 	github.com/mfridman/interpolate v0.0.2 // indirect
@@ -604,19 +602,16 @@ require (
 	github.com/protocolbuffers/txtpbfmt v0.0.0-20261013103202-7c8a61a7a736 // indirect
 	github.com/quagmt/udecimal v1.10.1 // indirect
 	github.com/redis/go-redis/extra/rediscmd/v9 v9.22.0 // indirect
-	github.com/redis/rueidis v1.0.77 // indirect
+	github.com/redis/rueidis v1.0.79 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/sagikazarmark/locafero v0.11.0 // indirect
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3 // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
-	github.com/segmentio/asm v1.2.1 // indirect
-	github.com/segmentio/encoding v0.5.4 // indirect
 	github.com/sercand/kuberesolver/v6 v6.0.1 // indirect
 	github.com/sergi/go-diff v1.4.0 // indirect
 	github.com/sethvargo/go-retry v0.4.0 // indirect
-	github.com/shadowspore/fossil-delta v0.0.0-20241213113458-1d797d70cbe3 // indirect
 	github.com/shirou/gopsutil/v4 v4.26.9 // indirect
 	github.com/shurcooL/httpfs v0.0.0-20230704072500-f1e31cf0ba5c // indirect
 	github.com/shurcooL/vfsgen v0.0.0-20230704071429-0000e147ea92 // indirect
@@ -644,7 +639,6 @@ require (
 	github.com/unknwon/com v1.0.1 // indirect
 	github.com/unknwon/log v0.0.0-20200308114134-929b1006e34a // indirect
 	github.com/urfave/cli v1.22.17 // indirect
-	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
@@ -728,7 +722,7 @@ replace (
 	github.com/hashicorp/memberlist => github.com/grafana/memberlist v0.3.1-0.20260515134459-1798cf41aca7
 
 	// Use our fork of the upstream Alertmanager.
-	github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20261119191137-fc531ea850e6
+	github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20261120195026-a99cad413f34
 )
 
 // This was retracted, but seems to be known by the Go module proxy,
