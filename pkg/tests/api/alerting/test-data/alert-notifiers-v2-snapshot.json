@@ -6498,6 +6498,24 @@
             "subformOptions": null
           },
           {
+            "element": "checkbox",
+            "inputType": "",
+            "label": "Monospace",
+            "description": "Displays the message in a monospace font. Cannot be used with HTML formatting.",
+            "placeholder": "",
+            "propertyName": "monospace",
+            "selectOptions": null,
+            "showWhen": {
+              "field": "",
+              "is": ""
+            },
+            "required": false,
+            "validationRule": "",
+            "secure": false,
+            "dependsOn": "",
+            "subformOptions": null
+          },
+          {
             "element": "subform",
             "inputType": "",
             "label": "HTTP Config",
