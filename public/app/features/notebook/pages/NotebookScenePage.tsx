@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
 import { useEffect, useState } from 'react';
 import { useMatch, useParams } from 'react-router-dom-v5-compat';
@@ -8,7 +7,7 @@ import { PageLayoutType } from '@grafana/data';
 import { locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
 import { UrlSyncContextProvider } from '@grafana/scenes';
-import { Box, useStyles2, useTheme2 } from '@grafana/ui';
+import { Box, useTheme2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
@@ -108,7 +107,6 @@ function NotebookDocument({ scene, isNew }: { scene: NotebookScene; isNew: boole
   // Varies with the mega menu, and this page is what knows there is an app header at all.
   const headerHeight = useChromeHeaderHeight();
   const [controlsHeight, setControlsHeight] = useState(0);
-  const styles = useStyles2(getStyles);
   const theme = useTheme2();
   // Same breakpoint NotebookSceneControls sticks from: below it the row scrolls away, so it takes no
   // room from the sidebar or from heading jumps.
@@ -143,31 +141,18 @@ function NotebookDocument({ scene, isNew }: { scene: NotebookScene; isNew: boole
           property of the surface. Page's own wrapper is already a flex column, so this and the
           document below sit in it as siblings. The toolbar rides inside the row. */}
       <NotebookSceneControls model={scene} stickyOffset={headerHeight ?? 0} onHeightChange={setControlsHeight} />
-      <div className={styles.documentRow}>
-        <div className={styles.document}>
+      <Box display="flex" grow={1}>
+        <Box display="flex" direction="column" flex={1} minWidth={0}>
           <scene.Component model={scene} />
-        </div>
+        </Box>
         {/* A display someone has put a notebook on has nobody navigating it, same as the dashboard. */}
         {kioskMode !== KioskMode.Full && (
           <NotebookSidebar scene={scene} stickyTop={(headerHeight ?? 0) + (controlsAreSticky ? controlsHeight : 0)} />
         )}
-      </div>
+      </Box>
       <NotebookPrompt scene={scene} />
     </Page>
   );
 }
-
-const getStyles = () => ({
-  documentRow: css({
-    display: 'flex',
-    flexGrow: 1,
-  }),
-  document: css({
-    display: 'flex',
-    flexDirection: 'column',
-    flex: 1,
-    minWidth: 0,
-  }),
-});
 
 export default NotebookScenePage;

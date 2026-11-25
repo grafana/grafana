@@ -30,7 +30,7 @@ export function NotebookSidebar({ scene, stickyTop }: Props) {
   const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
   const [isOutlineOpen, setIsOutlineOpen] = useState(false);
   // Held here rather than in the pane, which unmounts whenever it closes.
-  const [collapsedState] = useState(() => new Map<string, boolean>());
+  const [collapsedState, setCollapsedState] = useState<Record<string, boolean>>({});
 
   const sidebarContext = useSidebar({
     hasOpenPane: isOutlineOpen,
@@ -53,7 +53,12 @@ export function NotebookSidebar({ scene, stickyTop }: Props) {
       <Sidebar contextValue={sidebarContext}>
         {isOutlineOpen && (
           <Sidebar.OpenPane>
-            <NotebookOutline scene={scene} stickyTop={stickyTop} collapsedState={collapsedState} />
+            <NotebookOutline
+              scene={scene}
+              stickyTop={stickyTop}
+              collapsedState={collapsedState}
+              onToggleCollapse={(id, isCollapsed) => setCollapsedState((prev) => ({ ...prev, [id]: isCollapsed }))}
+            />
           </Sidebar.OpenPane>
         )}
         <Sidebar.Toolbar>

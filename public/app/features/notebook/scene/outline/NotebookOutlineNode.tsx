@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { useState } from 'react';
 
 import { type GrafanaTheme2, type IconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -22,8 +21,9 @@ interface Props {
   /** Whether the node can hold children at all, which is what shows its caret and "(empty)". */
   isContainer: boolean;
   depth: number;
-  /** Survives the pane closing, so reopening it keeps what the reader expanded. */
-  collapsedState: Map<string, boolean>;
+  /** What the reader has collapsed or expanded, by node id. A node absent from it is in its default state. */
+  collapsedState: Readonly<Record<string, boolean>>;
+  onToggleCollapse: (id: string, isCollapsed: boolean) => void;
   search?: OutlineSearch;
   onSelect: (id: string) => void;
 }
@@ -41,12 +41,13 @@ export function NotebookOutlineNode({
   isContainer,
   depth,
   collapsedState,
+  onToggleCollapse,
   search,
   onSelect,
 }: Props) {
   const styles = useStyles2(getStyles);
   // Same default as the dashboard outline: only the root starts expanded.
-  const [isCollapsed, setIsCollapsed] = useState(() => collapsedState.get(id) ?? depth > 0);
+  const isCollapsed = collapsedState[id] ?? depth > 0;
 
   const isSearching = search !== undefined;
   const isSearchMatch = isSearching && search.matchingIds.has(id);
@@ -54,12 +55,6 @@ export function NotebookOutlineNode({
     ? childNodes.filter((child) => search.visibleIds.has(child.entry.id))
     : childNodes;
   const effectiveCollapsed = isSearching ? false : isCollapsed;
-
-  const onToggleCollapse = () => {
-    const next = !isCollapsed;
-    setIsCollapsed(next);
-    collapsedState.set(id, next);
-  };
 
   return (
     <li
@@ -75,7 +70,7 @@ export function NotebookOutlineNode({
         {isContainer && !isSearching && (
           <button
             className={styles.angleButton}
-            onClick={onToggleCollapse}
+            onClick={() => onToggleCollapse(id, !isCollapsed)}
             aria-label={
               isCollapsed
                 ? t('notebook.outline.tree-item.expand', 'Expand {{label}}', { label })
@@ -110,6 +105,7 @@ export function NotebookOutlineNode({
                 isContainer={child.children.length > 0}
                 depth={depth + 1}
                 collapsedState={collapsedState}
+                onToggleCollapse={onToggleCollapse}
                 search={search}
                 onSelect={onSelect}
               />

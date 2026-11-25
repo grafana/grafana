@@ -32,14 +32,15 @@ interface Props {
   scene: NotebookScene;
   /** Height of everything sticky above the document — the app header plus the controls row. */
   stickyTop: number;
-  collapsedState: Map<string, boolean>;
+  collapsedState: Readonly<Record<string, boolean>>;
+  onToggleCollapse: (id: string, isCollapsed: boolean) => void;
 }
 
 /**
  * The outline pane, laid out like the dashboard's DashboardOutlineRenderer: header, search, then a tree
  * rooted at the notebook itself.
  */
-export function NotebookOutline({ scene, stickyTop, collapsedState }: Props) {
+export function NotebookOutline({ scene, stickyTop, collapsedState, onToggleCollapse }: Props) {
   const { body, title } = scene.useState();
 
   // Keyed by the layout: a whole-document swap (APPLY_NOTEBOOK_SPEC) hands over a new one, and
@@ -51,6 +52,7 @@ export function NotebookOutline({ scene, stickyTop, collapsedState }: Props) {
       title={title}
       stickyTop={stickyTop}
       collapsedState={collapsedState}
+      onToggleCollapse={onToggleCollapse}
     />
   );
 }
@@ -59,10 +61,11 @@ interface LayoutOutlineProps {
   body: NotebookLayoutManager;
   title: string;
   stickyTop: number;
-  collapsedState: Map<string, boolean>;
+  collapsedState: Readonly<Record<string, boolean>>;
+  onToggleCollapse: (id: string, isCollapsed: boolean) => void;
 }
 
-function LayoutOutline({ body, title, stickyTop, collapsedState }: LayoutOutlineProps) {
+function LayoutOutline({ body, title, stickyTop, collapsedState, onToggleCollapse }: LayoutOutlineProps) {
   const styles = useStyles2(getStyles);
   const entries = useOutlineEntries(body);
   const tree = useMemo(() => nestNotebookOutline(entries), [entries]);
@@ -102,7 +105,8 @@ function LayoutOutline({ body, title, stickyTop, collapsedState }: LayoutOutline
       </div>
       <ScrollContainer showScrollIndicators={true}>
         <Box
-          padding={1}
+          paddingX={1}
+          paddingTop={1}
           gap={0}
           display="flex"
           direction="column"
@@ -121,6 +125,7 @@ function LayoutOutline({ body, title, stickyTop, collapsedState }: LayoutOutline
               isContainer={true}
               depth={0}
               collapsedState={collapsedState}
+              onToggleCollapse={onToggleCollapse}
               search={search}
               onSelect={onSelect}
             />
@@ -225,7 +230,11 @@ function scrollToHeading(
       return false;
     }
     const pos = view.state.doc.line(line + 1).from;
-    view.dispatch({ effects: EditorView.scrollIntoView(pos, { y: 'start', yMargin: stickyTop }) });
+    // The page scrolls, not the editor, and CodeMirror caps yMargin at the editor's own height, which a
+    // one-line heading cell is shorter than. So it only makes sure the line is drawn, and the page is
+    // scrolled to it the way a rendered heading is.
+    view.dispatch({ effects: EditorView.scrollIntoView(pos, { y: 'nearest', yMargin: 0 }) });
+    requestAnimationFrame(() => scrollToElement(editorLineElement(view, pos), stickyTop));
     return true;
   }
 
@@ -239,6 +248,12 @@ function scrollToHeading(
   }
   scrollToElement(target, stickyTop);
   return true;
+}
+
+function editorLineElement(view: EditorView, pos: number): HTMLElement | null {
+  const { node } = view.domAtPos(pos);
+  const element = node instanceof HTMLElement ? node : node.parentElement;
+  return element?.closest<HTMLElement>('.cm-line') ?? null;
 }
 
 function normalizeWhitespace(text: string): string {
