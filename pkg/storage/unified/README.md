@@ -458,12 +458,11 @@ Before rolling back server support, disable the collection on every serving rout
 
 ### Cluster-scoped internal vector collections
 
-First deploy catalog readers that skip unsupported scopes to every process
-sharing the vector database. Next deploy cluster support to storage-api,
-search-api, and the distributor. Only then add the cluster `group/resource`
-pairs to `[unified_storage] vector_allowed_internal_collections` on storage-api
-and search-api. Remove those entries before rolling back cluster support,
-and roll back only to versions that skip unsupported catalog scopes.
+Deploy cluster support to storage-api, search-api, and the distributor before
+adding cluster `group/resource` pairs to
+`[unified_storage] vector_allowed_internal_collections` on storage-api and
+search-api. Keep all processes that share the vector database on a version
+that understands cluster scope while cluster collections exist in the catalog.
 
 The live AppManifest must declare cluster scope and version-specific
 `embed.fields`, and supply a positive `reembedVersion`. The reconciler

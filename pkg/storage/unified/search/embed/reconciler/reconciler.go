@@ -419,25 +419,27 @@ func (s *Reconciler) ensureResourceInitialized(ctx context.Context, b embed.Buil
 	return collection.PartitionKey, nil
 }
 
-// Cluster kinds can be enrolled after their last write. Use a storage-list
-// watermark to backfill the existing corpus and seed reconciliation.
-func (s *Reconciler) initializeClusterCollection(ctx context.Context, builder embed.Builder) error {
-	gr := schema.GroupResource{Group: builder.Group(), Resource: builder.Resource()}
-	if _, initialized := s.ensuredResources[gr]; initialized {
-		return nil
+// Sample the initial backfill bounds before seeding the shared checkpoint.
+// No job may persist with one of these bounds until the checkpoint is durable.
+func (s *Reconciler) clusterBackfillWatermarks(ctx context.Context, builders []embed.Builder) map[schema.GroupResource]int64 {
+	watermarks := make(map[schema.GroupResource]int64)
+	for _, builder := range builders {
+		if !embed.IsClusterScoped(builder) {
+			continue
+		}
+		gr := schema.GroupResource{Group: builder.Group(), Resource: builder.Resource()}
+		if _, initialized := s.ensuredResources[gr]; initialized {
+			continue
+		}
+		rv, err := resource.ListResourceWatermark(ctx, s.storage, gr.Group, gr.Resource)
+		if err != nil || rv <= 0 {
+			s.log.Error("reconciler: read cluster backfill watermark", "group", gr.Group, "resource", gr.Resource, "rv", rv, "err", err)
+			continue
+		}
+		watermarks[gr] = rv
+		s.observeSeedRV(rv)
 	}
-	rv, err := resource.ListResourceWatermark(ctx, s.storage, gr.Group, gr.Resource)
-	if err != nil {
-		return err
-	}
-	if rv <= 0 {
-		return fmt.Errorf("invalid cluster backfill watermark %d", rv)
-	}
-	if _, err := s.ensureResourceInitialized(ctx, builder, rv); err != nil {
-		return err
-	}
-	s.observeSeedRV(rv)
-	return nil
+	return watermarks
 }
 
 // sweep embeds everything written since the checkpoint. It is the only
@@ -453,15 +455,7 @@ func (s *Reconciler) sweep(ctx context.Context) {
 		s.lastSweepBuilders = snapshot
 		return
 	}
-	for _, builder := range builders {
-		if !embed.IsClusterScoped(builder) {
-			continue
-		}
-		if err := s.initializeClusterCollection(ctx, builder); err != nil {
-			s.log.Error("reconciler: initialize cluster collection", "group", builder.Group(), "resource", builder.Resource(), "err", err)
-			return
-		}
-	}
+	watermarks := s.clusterBackfillWatermarks(ctx, builders)
 
 	sinceRv, err := s.ensureCheckpoint(ctx)
 	if err != nil {
@@ -493,7 +487,8 @@ func (s *Reconciler) sweep(ctx context.Context) {
 		if s.lastSweepSinceRv == sinceRv && !s.lastSweepAt.IsZero() && s.lastSweepBuilders.Has(b.Group(), b.Resource()) {
 			calledAt = new(s.lastSweepAt)
 		}
-		proven, complete, failed := s.reconcileCollection(ctx, b, sinceRv, calledAt)
+		gr := schema.GroupResource{Group: b.Group(), Resource: b.Resource()}
+		proven, complete, failed := s.reconcileCollection(ctx, b, sinceRv, calledAt, watermarks[gr])
 		hasFailures = hasFailures || failed
 		if !complete {
 			return
@@ -527,12 +522,23 @@ func (s *Reconciler) sweep(ctx context.Context) {
 	s.embedBackoff = nil
 }
 
-func (s *Reconciler) reconcileCollection(ctx context.Context, builder embed.Builder, sinceRv int64, lastCalledAt *time.Time) (proven int64, complete, failed bool) {
+func (s *Reconciler) reconcileCollection(ctx context.Context, builder embed.Builder, sinceRv int64, lastCalledAt *time.Time, backfillRV int64) (proven int64, complete, failed bool) {
 	if !embed.IsClusterScoped(builder) {
 		return s.reconcileSince(ctx, builder, sinceRv, lastCalledAt)
 	}
 	gr := schema.GroupResource{Group: builder.Group(), Resource: builder.Resource()}
 	partition := s.ensuredResources[gr]
+	if partition == "" {
+		if backfillRV == 0 {
+			return sinceRv, true, true
+		}
+		var err error
+		partition, err = s.ensureResourceInitialized(ctx, builder, backfillRV)
+		if err != nil {
+			s.log.Error("reconciler: initialize cluster collection", "group", gr.Group, "resource", gr.Resource, "err", err)
+			return sinceRv, true, true
+		}
+	}
 	// An empty UID reserves the collection lock for revision handoff. A
 	// backfill cannot open a new revision while this sweep can still write.
 	err := s.vectorBackend.WithEntityLock(ctx, resource.ClusterNamespace, partition, "", func(ctx context.Context) error {

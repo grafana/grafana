@@ -20,6 +20,7 @@ on:
       - '**/go.work.sum'
       - pkg/storage/unified/search/vector/**
       - pkg/storage/unified/search/embed/**
+      - pkg/storage/unified/sql/cluster_embeddings_test.go
       - devenv/docker/blocks/pgvector/**
       - devenv/.env
       - .github/actions/setup-go/**
@@ -68,6 +69,8 @@ jobs:
         run: |
           set -euo pipefail
           CGO_ENABLED=0 go test -p=1 -count=1 -timeout=8m -run '^TestIntegration' ./pkg/storage/unified/search/vector/...
+      - name: Run cluster embedding lifecycle test
+        run: CGO_ENABLED=0 go test -p=1 -count=1 -timeout=8m -run '^TestIntegrationClusterEmbeddingLifecycle$' ./pkg/storage/unified/sql
       - name: Cleanup pgvector
         if: always()
         run: make devenv-down sources=pgvector

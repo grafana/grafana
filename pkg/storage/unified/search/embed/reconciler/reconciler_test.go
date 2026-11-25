@@ -2233,6 +2233,56 @@ func TestClusterCollectionBackfillsWithoutNewWrites(t *testing.T) {
 	require.Equal(t, snowflakeRV(120), vec.latestRV)
 }
 
+type clusterTestBuilder struct{ fakeBuilder }
+
+func (clusterTestBuilder) ClusterScoped() bool { return true }
+
+func TestReconciler_ClusterBootstrapPersistsCheckpointBeforeBackfill(t *testing.T) {
+	cluster := clusterTestBuilder{fakeBuilder{group: "catalog.example.test", resource: "systemschemas"}}
+	head := snowflakeRV(100)
+	st := &fakeStorage{latestRvOverride: resource.SubtractDurationFromSnowflake(head, 10*time.Second)}
+	vec := newFakeVector()
+	vec.setLatestRVErr = errBoom
+	s := newReconcilerWithBuilders(t, st, vec, cluster)
+
+	s.sweep(t.Context())
+	require.Zero(t, vec.latestRV)
+	require.Empty(t, vec.backfillJobs, "a restart must not retain a backfill bound without its checkpoint")
+
+	st.latestRvOverride = head
+	vec.setLatestRVErr = nil
+	s = newReconcilerWithBuilders(t, st, vec, cluster)
+	s.sweep(t.Context())
+	require.Len(t, vec.backfillJobs, 1)
+	assert.Equal(t, head, vec.backfillJobs[0].StoppingRV)
+	assert.Equal(t, head, vec.latestRV)
+}
+
+func TestReconciler_ClusterInitializationFailureKeepsIndexingTenantWrites(t *testing.T) {
+	cluster := clusterTestBuilder{fakeBuilder{group: "catalog.example.test", resource: "systemschemas"}}
+	tenant := fakeBuilder{group: "tenant.example.test", resource: "widgets"}
+	st := &fakeStorage{latestRvOverride: snowflakeRV(120), changes: []*resource.ModifiedResource{
+		change(cluster.group, cluster.resource, "", "schema", snowflakeRV(110), []byte(`{"spec":{}}`)),
+		change(tenant.group, tenant.resource, "ns", "widget", snowflakeRV(120), []byte(`{"spec":{}}`)),
+	}}
+	vec := newFakeVector()
+	vec.latestRV = snowflakeRV(100)
+	s := newReconcilerWithBuilders(t, st, vec, cluster, tenant)
+	_, err := s.ensureResourceInitialized(t.Context(), tenant, vec.latestRV)
+	require.NoError(t, err)
+	vec.ensurePartitionErr = errBoom
+
+	s.sweep(t.Context())
+	assert.True(t, vec.hasUpsertFor("ns", tenant.resource, "widget"))
+	assert.False(t, vec.hasUpsertFor(resource.ClusterNamespace, cluster.resource, "schema"))
+	assert.Equal(t, snowflakeRV(100), vec.latestRV)
+
+	vec.ensurePartitionErr = nil
+	s.sweep(t.Context())
+	assert.True(t, vec.hasUpsertFor(resource.ClusterNamespace, cluster.resource, "schema"))
+	assert.Equal(t, snowflakeRV(120), vec.latestRV)
+}
+
 func TestReconciler_ClusterRevisionMismatchKeepsIndexingTenantWrites(t *testing.T) {
 	const group, plural = "catalog.example.test", "systemschemas"
 	const storedRevision = 2
