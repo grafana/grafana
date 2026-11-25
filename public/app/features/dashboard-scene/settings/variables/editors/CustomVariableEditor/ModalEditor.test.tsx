@@ -24,7 +24,7 @@ function renderModal(props: React.ComponentProps<typeof ModalEditor>) {
         selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.customValueInput
       ) as HTMLTextAreaElement,
     nonMultiPropsPreviewLabels: () =>
-      renderResult.getAllByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption),
+      renderResult.findAllByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption),
     multiPropsPreviewTable: () =>
       // the <InteractiveTable /> is wrapped in a div because it does not allow a data-testid attribute
       within(
@@ -48,13 +48,13 @@ function renderModal(props: React.ComponentProps<typeof ModalEditor>) {
 
 describe('ModalEditor', () => {
   describe('Values preview', () => {
-    it('shows CSV draft values when the textarea changes', () => {
+    it('shows CSV draft values when the textarea changes', async () => {
       const { variable, onClose } = buildCustomVariable({ valuesFormat: 'csv', query: '' });
       const { actions, elements } = renderModal({ variable, onClose });
 
       actions.updateTextArea('alpha, beta');
 
-      const labels = elements.nonMultiPropsPreviewLabels();
+      const labels = await elements.nonMultiPropsPreviewLabels();
 
       expect(labels).toHaveLength(2);
       expect(labels[0]).toHaveTextContent('alpha');

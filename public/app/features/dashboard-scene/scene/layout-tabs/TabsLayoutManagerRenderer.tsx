@@ -8,7 +8,7 @@ import { t, Trans } from '@grafana/i18n';
 import { MultiValueVariable, type SceneComponentProps, sceneGraph, useSceneObjectState } from '@grafana/scenes';
 import { Button, IconButton, TabsBar, useStyles2 } from '@grafana/ui';
 import { useDragAndDrop } from '@grafana/ui/internal';
-import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
+import { canArrangeLayout, isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
@@ -37,7 +37,7 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
   const isNestedInTab = useMemo(() => model.parent instanceof TabItem, [model.parent]);
   const soloPanelContext = useSoloPanelContext();
   const isMultiSelection = useIsMultiSelection();
-  const { DragDropContext, Droppable } = useDragAndDrop(isEditing && !soloPanelContext);
+  const { DragDropContext, Droppable } = useDragAndDrop(canArrangeLayout(dashboardState) && !soloPanelContext);
 
   const { scrollRef, scrollEl, canScrollLeft, canScrollRight, scrollBy } = useHorizontalOverflow();
 
@@ -85,7 +85,7 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
   };
 
   const onDragEnd = (result: DropResult) => {
-    if (!isFullDashboardEditing(dashboard.state)) {
+    if (!canArrangeLayout(dashboard.state)) {
       return;
     }
     const targetIndex = result.destination?.index;

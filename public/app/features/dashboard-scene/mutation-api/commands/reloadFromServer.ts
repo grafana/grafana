@@ -6,6 +6,8 @@
  * caller can let the user decide.
  */
 
+import * as z from 'zod/mini';
+
 import { locationService } from '@grafana/runtime';
 
 import {
@@ -22,7 +24,7 @@ import { readOnly, type MutationCommand } from './types';
 
 export const reloadFromServerCommand: MutationCommand<{ pendingChanges?: string | null }> = {
   name: 'RELOAD_FROM_SERVER',
-  description: payloads.reloadFromServer.description ?? '',
+  description: z.globalRegistry.get(payloads.reloadFromServer)?.description ?? '',
 
   payloadSchema: payloads.reloadFromServer,
   // Reloading never writes; the server already holds the newer version.
@@ -39,7 +41,11 @@ export const reloadFromServerCommand: MutationCommand<{ pendingChanges?: string 
     // Pending changes whose history the plugin keeps record each edit as it is made: what's left
     // is defaults the scene filled in since, which reloading loses nothing of, unless an edit failed
     // to record.
-    if ((scene.state.isDirty && !getPendingChangesHistory(scene.state)) || hasUnrecordedPendingChange(scene)) {
+    if (
+      scene.state.editPanel?.hasUnsavedChangesForReload() ||
+      (scene.state.isDirty && !getPendingChangesHistory(scene.state)) ||
+      hasUnrecordedPendingChange(scene)
+    ) {
       return { success: true, data: { reloaded: false, reason: 'unsaved-changes' }, changes: [] };
     }
     const preview = payload.pendingChanges;

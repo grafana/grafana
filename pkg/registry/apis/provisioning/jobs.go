@@ -21,7 +21,6 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -40,7 +39,6 @@ type jobsConnector struct {
 	historic              jobs.HistoryReader
 	access                auth.AccessChecker
 	clients               resources.ClientFactory
-	folderMetadataEnabled bool
 	perfTestingEnabled    func(ctx context.Context) bool
 	// maxBodySize caps the size in bytes of a job request body.
 	maxBodySize int64
@@ -53,7 +51,6 @@ func NewJobsConnector(
 	historic jobs.HistoryReader,
 	access auth.AccessChecker,
 	clients resources.ClientFactory,
-	folderMetadataEnabled bool,
 	perfTestingEnabled func(ctx context.Context) bool,
 ) *jobsConnector {
 	return &jobsConnector{
@@ -63,7 +60,6 @@ func NewJobsConnector(
 		historic:              historic,
 		access:                access,
 		clients:               clients,
-		folderMetadataEnabled: folderMetadataEnabled,
 		perfTestingEnabled:    perfTestingEnabled,
 		maxBodySize:           setting.ProvisioningMaxJobBodySizeDefault,
 	}
@@ -419,8 +415,8 @@ func (c *jobsConnector) newJobAuthorizer(ctx context.Context, repo repository.Re
 	if err != nil {
 		return nil, fmt.Errorf("get folder client for authorization: %w", err)
 	}
-	folders := resources.NewFolderManager(rw, folderClient, resources.NewEmptyFolderTree(), folderGVK, resources.WithFolderMetadataEnabled(c.folderMetadataEnabled))
-	return resources.NewAuthorizer(cfg, rw, c.access, clients, folders, c.folderMetadataEnabled), nil
+	folders := resources.NewFolderManager(rw, folderClient, resources.NewEmptyFolderTree(), folderGVK)
+	return resources.NewAuthorizer(cfg, rw, c.access, clients, folders), nil
 }
 
 // authorizeResourceRefs fetches each referenced resource and checks that the user
@@ -476,7 +472,7 @@ func (c *jobsConnector) authorizeResourceRefs(ctx context.Context, authorizer re
 // trigger admin-restricted jobs (pull, releaseResources, deleteResources).
 // The fallback role still allows admins whose RBAC isn't explicitly set up.
 func (c *jobsConnector) authorizeAdminJob(ctx context.Context, cfg *provisioning.Repository) error {
-	return c.access.WithFallbackRole(identity.RoleAdmin).Check(ctx, authlib.CheckRequest{
+	return c.access.WithFallbackRole(authlib.RoleAdmin).Check(ctx, authlib.CheckRequest{
 		Verb:      utils.VerbUpdate,
 		Group:     provisioning.GROUP,
 		Resource:  provisioning.RepositoryResourceInfo.GetName(),

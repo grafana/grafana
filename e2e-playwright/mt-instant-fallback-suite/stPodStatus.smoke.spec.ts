@@ -7,7 +7,7 @@ const NON_ALLOWLISTED_URL_B = '/alerting';
 const LOADER_TESTID = 'page-fallback-loader';
 const ERROR_CARD_TESTID = 'st-pod-error-card';
 
-async function mockGatewayStatus(page: Page, status: 'active' | 'error' | 'captcha'): Promise<void> {
+async function mockGatewayStatus(page: Page, status: 'active' | 'error' | 'captcha' | 'starting'): Promise<void> {
   await page.route('**/_/status', (route) =>
     route.fulfill({
       status: status === 'error' ? 500 : 200,
@@ -31,7 +31,9 @@ test.describe(
     tag: ['@mt-instant-fallback'],
   },
   () => {
-    test('allowlisted route renders without the ST pod loading state', async ({ page }) => {
+    test('allowlisted route polls the gateway but renders without the full-page ST pod loading state', async ({
+      page,
+    }) => {
       let statusHits = 0;
       await page.route('**/_/status', (route) => {
         statusHits++;
@@ -46,7 +48,24 @@ test.describe(
 
       await expect(page.getByRole('heading', { name: /dashboards/i }).first()).toBeVisible();
       await expect(page.getByTestId(LOADER_TESTID)).toHaveCount(0);
-      expect(statusHits).toBe(0);
+      await expect.poll(() => statusHits).toBeGreaterThan(0);
+    });
+
+    test('allowlisted route shows mega menu preparing indicators for non-allowlisted items while pod is warming', async ({
+      page,
+    }) => {
+      await mockGatewayStatus(page, 'starting');
+
+      await page.goto(ALLOWLISTED_URL);
+
+      await test.step('allowlisted page renders without the full-page suspense fallback', async () => {
+        await expect(page.getByRole('heading', { name: /dashboards/i }).first()).toBeVisible();
+        await expect(page.getByTestId(LOADER_TESTID)).toHaveCount(0);
+      });
+
+      await test.step('non-allowlisted mega menu items show the preparing indicator', async () => {
+        await expect(page.getByRole('img', { name: /^Preparing / }).first()).toBeVisible();
+      });
     });
 
     test('non-allowlisted route surfaces the error state when the gateway reports error', async ({ page }) => {

@@ -716,6 +716,12 @@ export type MetaExtensions = {
     id: string;
     title?: string;
   }[];
+  /** Bundled Markdown skills keyed by plugin-local slug. */
+  skills?: {
+    [key: string]: {
+      path: string;
+    };
+  };
 };
 export type MetaIam = {
   /** +listType=atomic */

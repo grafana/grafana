@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 func TestGenerateJWTToken(t *testing.T) {
@@ -18,7 +18,7 @@ func TestGenerateJWTToken(t *testing.T) {
 	appID := "123456"
 
 	t.Run("generates valid JWT token", func(t *testing.T) {
-		token, _, err := github.GenerateJWTToken(appID, common.RawSecureValue(privateKeyBase64))
+		token, _, err := github.GenerateJWTToken(appID, resource.RawSecureValue(privateKeyBase64))
 		require.NoError(t, err)
 		assert.NotEmpty(t, token)
 
@@ -42,7 +42,7 @@ func TestGenerateJWTToken(t *testing.T) {
 
 	t.Run("fails with invalid PEM", func(t *testing.T) {
 		invalidPEM := base64.StdEncoding.EncodeToString([]byte("not a PEM"))
-		_, _, err := github.GenerateJWTToken(appID, common.RawSecureValue(invalidPEM))
+		_, _, err := github.GenerateJWTToken(appID, resource.RawSecureValue(invalidPEM))
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "parse private key")
 	})

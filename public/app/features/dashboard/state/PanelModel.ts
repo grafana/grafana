@@ -13,13 +13,12 @@ import {
   type ScopedVars,
   type PanelModel as IPanelModel,
   type DataSourceRef,
-  filterFieldConfigOverrides,
   getPanelOptionsWithDefaults,
-  isStandardFieldProp,
   restoreCustomOverrideRules,
   getNextRefId,
   generateUUID,
 } from '@grafana/data';
+import { clearCustomFieldConfig } from '@grafana/data/internal';
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
 import { getPanelPluginMetaSync } from '@grafana/runtime/internal';
 import { type LibraryPanel, type LibraryPanelRef } from '@grafana/schema';
@@ -451,14 +450,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.options = {};
 
     // clear custom options
-    this.fieldConfig = {
-      defaults: {
-        ...this.fieldConfig.defaults,
-        custom: {},
-      },
-      // filter out custom overrides
-      overrides: filterFieldConfigOverrides(this.fieldConfig.overrides, isStandardFieldProp),
-    };
+    this.fieldConfig = clearCustomFieldConfig(this.fieldConfig);
   }
 
   // Let panel plugins inspect options from previous panel and keep any that it can use

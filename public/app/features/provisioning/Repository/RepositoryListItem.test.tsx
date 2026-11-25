@@ -114,7 +114,7 @@ describe('RepositoryListItem', () => {
   });
 
   describe('resource stats', () => {
-    it('renders registered kinds with a friendly label linking to the repository folder', () => {
+    it('links each kind to the repository resources tab filtered by that kind', () => {
       const repo = createMockRepository({
         status: {
           health: { healthy: true, checked: Date.now() },
@@ -123,82 +123,30 @@ describe('RepositoryListItem', () => {
           webhook: {},
           stats: [
             { group: 'dashboard.grafana.app', resource: 'dashboards', count: 2 },
-            { group: 'folder.grafana.app', resource: 'folders', count: 1 },
+            { group: 'example.grafana.app', resource: 'widgets', count: 3 },
           ],
         },
       });
       render(<RepositoryListItem repository={repo} />);
 
-      expect(screen.getByRole('link', { name: '2 dashboards' })).toHaveAttribute('href', '/dashboards/f/test-repo');
-      expect(screen.getByRole('link', { name: '1 folders' })).toHaveAttribute('href', '/dashboards/f/test-repo');
-    });
-
-    it('links non-foldered kinds to their own collection', () => {
-      const repo = createMockRepository({
-        status: {
-          health: { healthy: true, checked: Date.now() },
-          sync: { state: 'success', message: [] },
-          observedGeneration: 1,
-          webhook: {},
-          stats: [{ group: 'playlist.grafana.app', resource: 'playlists', count: 3 }],
-        },
-      });
-      render(<RepositoryListItem repository={repo} />);
-
-      expect(screen.getByRole('link', { name: '3 playlists' })).toHaveAttribute('href', '/playlists');
-    });
-
-    it('links registered kinds to the top level for non-folder targets', () => {
-      const repo = createMockRepository({
-        spec: {
-          title: 'Test Repository',
-          type: 'github',
-          sync: { target: 'instance', enabled: true },
-          workflows: [],
-        },
-        status: {
-          health: { healthy: true, checked: Date.now() },
-          sync: { state: 'success', message: [] },
-          observedGeneration: 1,
-          webhook: {},
-          stats: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 2 }],
-        },
-      });
-      render(<RepositoryListItem repository={repo} />);
-
-      expect(screen.getByRole('link', { name: '2 dashboards' })).toHaveAttribute('href', '/dashboards');
-    });
-
-    it('renders a non-interactive badge with the raw name for unknown kinds', () => {
-      const repo = createMockRepository({
-        status: {
-          health: { healthy: true, checked: Date.now() },
-          sync: { state: 'success', message: [] },
-          observedGeneration: 1,
-          webhook: {},
-          stats: [{ group: 'example.grafana.app', resource: 'widgets', count: 3 }],
-        },
-      });
-      render(<RepositoryListItem repository={repo} />);
-
-      expect(screen.queryByRole('link', { name: /widgets/ })).not.toBeInTheDocument();
-      expect(screen.getByRole('button', { name: '3 widgets' })).toBeDisabled();
+      expect(screen.getByRole('link', { name: '2 dashboards' })).toHaveAttribute(
+        'href',
+        '/admin/provisioning/test-repo?tab=resources&resource=dashboards'
+      );
+      expect(screen.getByRole('link', { name: '3 widgets' })).toHaveAttribute(
+        'href',
+        '/admin/provisioning/test-repo?tab=resources&resource=widgets'
+      );
     });
   });
 
-  // On a repository card the badge is about the repository itself, not about a resource it
-  // provisions, so it says what Grafana does with it rather than telling the reader to go to
-  // the page they are already on.
-  it('marks a repository without a write workflow as pull only', async () => {
+  it('marks a repository without a workflow as read only and explains it on hover', async () => {
     const repo = createMockRepository({ spec: { ...createMockRepository().spec!, workflows: [] } });
     const { user } = render(<RepositoryListItem repository={repo} />);
 
-    expect(screen.getByText('Pull only')).toBeInTheDocument();
-    expect(screen.queryByText('Read only')).not.toBeInTheDocument();
+    await user.hover(screen.getByText('Read only'));
 
-    await user.hover(screen.getByText('Pull only'));
-
-    expect(await screen.findByText(/Grafana only reads from this repository/)).toBeInTheDocument();
+    expect(await screen.findByText("Resources can't be modified through Grafana.")).toBeInTheDocument();
   });
 
   describe('export', () => {
@@ -244,7 +192,7 @@ describe('RepositoryListItem', () => {
       render(<RepositoryListItem repository={terraformRepo()} />);
 
       expectSettingsUnreachable();
-      expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
+      expect(screen.getByTestId('icon-exchange-alt-lock')).toBeInTheDocument();
     });
 
     it('names the owning plugin in the badge tooltip, not the repository', async () => {
@@ -254,9 +202,9 @@ describe('RepositoryListItem', () => {
       });
       const { user } = render(<RepositoryListItem repository={repo} />);
 
-      await user.hover(screen.getByTestId('icon-exchange-alt'));
+      await user.hover(screen.getByTestId('icon-exchange-alt-lock'));
 
-      expect(await screen.findByText('Managed by: Plugin grafana-slo-app')).toBeInTheDocument();
+      expect(await screen.findByText('Read only, Managed by: Plugin grafana-slo-app')).toBeInTheDocument();
     });
 
     it('explains why Settings is unavailable on hover', async () => {
@@ -274,7 +222,7 @@ describe('RepositoryListItem', () => {
       expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
     });
 
-    it('keeps Settings reachable when the manager allows edits', () => {
+    it('keeps Settings reachable and drops the lock when the manager allows edits', () => {
       const repo = managedRepo({
         [AnnoKeyManagerKind]: ManagerKind.Terraform,
         [AnnoKeyManagerIdentity]: 'terraform',
@@ -284,6 +232,7 @@ describe('RepositoryListItem', () => {
       render(<RepositoryListItem repository={repo} />);
 
       expectSettingsReachable();
+      expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
     });
 
     // A repository declared by another repository (e.g. the bootstrap one) is configured in that
@@ -295,8 +244,7 @@ describe('RepositoryListItem', () => {
       render(<RepositoryListItem repository={repo} />);
 
       expectSettingsUnreachable();
-      expect(screen.getByText('Read only')).toBeInTheDocument();
-      expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
+      expect(screen.getByTestId('icon-exchange-alt-lock')).toBeInTheDocument();
     });
 
     it('badges the file-provisioned bootstrap repository read-only', () => {
@@ -307,7 +255,7 @@ describe('RepositoryListItem', () => {
 
       render(<RepositoryListItem repository={repo} />);
 
-      expect(screen.getByText('Read only')).toBeInTheDocument();
+      expect(screen.getByTestId('icon-exchange-alt-lock')).toBeInTheDocument();
     });
 
     it('names the Grafana configuration as the manager of a file-provisioned repository', async () => {
@@ -318,9 +266,9 @@ describe('RepositoryListItem', () => {
       const { user } = render(<RepositoryListItem repository={repo} />);
 
       expectSettingsUnreachable();
-      await user.hover(screen.getByTestId('icon-exchange-alt'));
+      await user.hover(screen.getByTestId('icon-exchange-alt-lock'));
 
-      expect(await screen.findByText('Managed by: Grafana configuration')).toBeInTheDocument();
+      expect(await screen.findByText('Read only, Managed by: Grafana configuration')).toBeInTheDocument();
     });
   });
 });

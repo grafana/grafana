@@ -1,0 +1,72 @@
+# The smoke checks find the containers by name, so the project name is fixed.
+name: ha-test-nats
+
+services:
+  db:
+    extends:
+      file: ./db-${GRAFANA_DB:-mysql}.yml
+      service: db
+
+  # Instances start one after another: concurrent first-start migrations race on the migration lock.
+  # Each one advertises its hostname: container IPs change on restart, and the certificates carry DNS names only.
+  grafana1:
+    extends:
+      file: ./grafana-service.yml
+      service: grafana
+    hostname: grafana1
+    environment:
+      - GF_NATS_ADVERTISE_ADDRESS=grafana1
+    volumes:
+      - ./certs/out/grafana1:/certs:ro
+    depends_on:
+      db:
+        condition: service_healthy
+
+  grafana2:
+    extends:
+      file: ./grafana-service.yml
+      service: grafana
+    hostname: grafana2
+    environment:
+      - GF_NATS_ADVERTISE_ADDRESS=grafana2
+    volumes:
+      - ./certs/out/grafana2:/certs:ro
+    depends_on:
+      grafana1:
+        condition: service_healthy
+
+  grafana3:
+    extends:
+      file: ./grafana-service.yml
+      service: grafana
+    hostname: grafana3
+    environment:
+      - GF_NATS_ADVERTISE_ADDRESS=grafana3
+    volumes:
+      - ./certs/out/grafana3:/certs:ro
+    depends_on:
+      grafana2:
+        condition: service_healthy
+
+  nginx-proxy:
+    image: nginx:alpine
+    ports:
+      - "${HTTP_PORT:-3000}:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      grafana3:
+        condition: service_healthy
+
+  # Runs the smoke checks from inside the compose network, so ports 6222 and 4222 are never published.
+  # Start it with `docker compose run --rm --build smoke`.
+  smoke:
+    build: ./smoke
+    profiles: [smoke]
+    environment:
+      - GRAFANA_DB=${GRAFANA_DB:-mysql}
+      - SKIP_KILL=${SKIP_KILL:-}
+    volumes:
+      - ./certs/out:/certs:ro
+      # The node loss check kills grafana1.
+      - /var/run/docker.sock:/var/run/docker.sock

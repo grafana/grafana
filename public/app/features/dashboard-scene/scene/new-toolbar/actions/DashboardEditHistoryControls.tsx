@@ -17,11 +17,12 @@ export function DashboardEditHistoryControls({ dashboard }: ToolbarActionProps) 
   const dashboardUndoRedo = useFlagDashboardUndoRedo();
 
   // The edit history is driven by the edit sidebar, which only exists with new layouts, is not part of
-  // panel edit, and is not rendered on a full kiosk display.
+  // panel edit, and is not rendered on a full kiosk display. Pending changes step through their plugin's
+  // history in Agent editing too, where Undo is the way back to the saved version.
   const isVisible =
     dashboardUndoRedo &&
     isDashboardNewLayoutsEnabled() &&
-    isFullDashboardEditing(dashboardState) &&
+    (isFullDashboardEditing(dashboardState) || dashboardState.sidebar.stepsPendingChangesHistory()) &&
     !dashboardState.editPanel &&
     kioskMode !== KioskMode.Full;
 

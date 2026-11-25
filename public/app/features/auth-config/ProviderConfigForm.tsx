@@ -167,7 +167,7 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
             reset();
           }}
         />
-        <Field label={t('auth-config.provider-config-form.label-enabled', 'Enabled')} hidden={true}>
+        <Field label={t('auth-config.provider-config-form.label-enabled', 'Enabled')} hidden={true} noMargin>
           <Switch
             {...register('enabled')}
             id="enabled"

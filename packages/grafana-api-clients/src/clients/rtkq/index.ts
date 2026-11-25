@@ -25,6 +25,7 @@ import { generatedAPI as provisioningAPIv0alpha1 } from './provisioning/v0alpha1
 import { generatedAPI as quotasAPIv0alpha1 } from './quotas/v0alpha1';
 import { generatedAPI as rulesAlertingAPIv0alpha1 } from './rules.alerting/v0alpha1';
 import { generatedAPI as rulesAlertingAPIv1beta1 } from './rules.alerting/v1beta1';
+import { generatedAPI as searchAPIv0alpha1 } from './search/v0alpha1';
 import { generatedAPI as shortURLAPIv1beta1 } from './shorturl/v1beta1';
 // GENERATED:IMPORT
 
@@ -55,6 +56,7 @@ export const allMiddleware = [
   pluginsAPIv0alpha1.middleware,
   preferencesAPIv1.middleware,
   rulesAlertingAPIv1beta1.middleware,
+  searchAPIv0alpha1.middleware,
   // GENERATED:MIDDLEWARE
 ] as const;
 
@@ -85,6 +87,7 @@ export const allReducers = {
   [pluginsAPIv0alpha1.reducerPath]: pluginsAPIv0alpha1.reducer,
   [preferencesAPIv1.reducerPath]: preferencesAPIv1.reducer,
   [rulesAlertingAPIv1beta1.reducerPath]: rulesAlertingAPIv1beta1.reducer,
+  [searchAPIv0alpha1.reducerPath]: searchAPIv0alpha1.reducer,
   // GENERATED:REDUCER
 };
 

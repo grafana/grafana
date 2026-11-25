@@ -63,6 +63,8 @@ export const RenderInfoViewer = ({ data, options }: Props) => {
     schemaChanged: false,
   };
   counters.render++;
+  // this is a debug panel - it's whole point is to track render times
+  // eslint-disable-next-line react-hooks/purity
   const now = Date.now();
   const elapsed = now - lastRender.current;
   lastRender.current = now;

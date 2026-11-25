@@ -43,7 +43,7 @@ import {
   isGrafanaGroupUpdatedResponse,
 } from '../../../api/alertRuleModel';
 import { alertingApi } from '../../../api/alertingApi';
-import { shouldUseRulesAPIV2 } from '../../../featureToggles';
+import { shouldUseGmaOnlyListView } from '../../../featureToggles';
 import { useAddRuleToRuleGroup, useUpdateRuleInRuleGroup } from '../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
 import { useUpsertUngroupedGrafanaRule } from '../../../hooks/useUpsertUngroupedGrafanaRule';
 import {
@@ -177,49 +177,8 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
 
     const errorTitle = t('alerting.alert-rule-form.error-title', 'Failed to save alert rule');
 
-    // TODO(alerting.rulesAPIV2): remove this branch once the flag is rolled out — the v2 path below covers the same flows.
-    const shouldUseLegacyGroupsApi = !shouldUseRulesAPIV2();
-    if (shouldUseLegacyGroupsApi) {
+    if (grafanaTypeRule && shouldUseGmaOnlyListView()) {
       try {
-        let saveResult: RulerGroupUpdatedResponse;
-        if (!existing) {
-          // when creating a new rule, we save the manual routing setting and editorSettings.simplifiedQueryEditor to the local storage
-          storeInLocalStorageValues(values);
-          // save the rule to the rule group
-          saveResult = await addRuleToRuleGroup.execute(ruleGroupIdentifier, ruleDefinition, evaluateEvery);
-          // track the new Grafana-managed rule creation in the analytics
-          if (grafanaTypeRule) {
-            const dataQueries = values.queries.filter((query) => !isExpressionQuery(query.model));
-            const expressionQueries = values.queries.filter((query) => isExpressionQueryInAlert(query));
-            trackNewGrafanaAlertRuleFormSavedSuccess({
-              simplifiedQueryEditor: values.editorSettings?.simplifiedQueryEditor ?? false,
-              simplifiedNotificationEditor: values.editorSettings?.simplifiedNotificationEditor ?? false,
-              canBeTransformedToSimpleQuery: areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries),
-            });
-          }
-        } else {
-          // when updating an existing rule
-          const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, existing.rule);
-          saveResult = await updateRuleInRuleGroup.execute(
-            ruleGroupIdentifier,
-            ruleIdentifier,
-            ruleDefinition,
-            targetRuleGroupIdentifier,
-            evaluateEvery
-          );
-        }
-
-        redirectToDetailsPage(ruleDefinition, targetRuleGroupIdentifier, saveResult);
-      } catch (err) {
-        notifyApp.error(errorTitle, stringifyErrorLike(err));
-      }
-      return;
-    }
-
-    const targetIsUngrouped = values.isUngroupedRuleGroup;
-
-    try {
-      if (grafanaTypeRule && targetIsUngrouped) {
         if (!existing) {
           storeInLocalStorageValues(values);
         }
@@ -234,7 +193,7 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
             : t('alerting.alert-rule-form.no-group-success', 'Rule added successfully')
         );
 
-        if (!existing && grafanaTypeRule) {
+        if (!existing) {
           const dataQueries = values.queries.filter((query) => !isExpressionQuery(query.model));
           const expressionQueries = values.queries.filter((query) => isExpressionQueryInAlert(query));
           trackNewGrafanaAlertRuleFormSavedSuccess({
@@ -246,13 +205,20 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
 
         redirectToGrafanaRuleByUid(savedUid);
         return;
+      } catch (err) {
+        notifyApp.error(errorTitle, stringifyErrorLike(err));
+        return;
       }
+    }
 
+    try {
       let saveResult: RulerGroupUpdatedResponse;
       if (!existing) {
+        // when creating a new rule, we save the manual routing setting and editorSettings.simplifiedQueryEditor to the local storage
         storeInLocalStorageValues(values);
+        // save the rule to the rule group
         saveResult = await addRuleToRuleGroup.execute(ruleGroupIdentifier, ruleDefinition, evaluateEvery);
-
+        // track the new Grafana-managed rule creation in the analytics
         if (grafanaTypeRule) {
           const dataQueries = values.queries.filter((query) => !isExpressionQuery(query.model));
           const expressionQueries = values.queries.filter((query) => isExpressionQueryInAlert(query));
@@ -263,6 +229,7 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
           });
         }
       } else {
+        // when updating an existing rule
         const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, existing.rule);
         saveResult = await updateRuleInRuleGroup.execute(
           ruleGroupIdentifier,

@@ -32,8 +32,10 @@ func ToDashboardErrorResponse(ctx context.Context, pluginStore pluginstore.Store
 	}
 
 	// --- 400 Bad Request ---
-	if errors.Is(err, dashboards.ErrFolderNotFound) ||
-		errors.Is(err, folder.ErrNameExists) {
+	if errors.Is(err, dashboards.ErrFolderNotFound) {
+		return response.Error(http.StatusBadRequest, dashboards.ErrFolderNotFound.Error(), nil)
+	}
+	if errors.Is(err, folder.ErrNameExists) {
 		return response.Error(http.StatusBadRequest, err.Error(), nil)
 	}
 

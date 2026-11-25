@@ -49,13 +49,6 @@ const TextEdit = (props: CanvasElementProps<TextConfig, TextData>) => {
 
   const textRef = useRef<string>(config.text?.fixed ?? '');
 
-  // Save text on TextEdit unmount
-  useEffect(() => {
-    return () => {
-      saveText(textRef.current);
-    };
-  });
-
   const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
       event.preventDefault();
@@ -93,6 +86,13 @@ const TextEdit = (props: CanvasElementProps<TextConfig, TextData>) => {
     },
     [context.instanceState?.scene, context.instanceState?.selected]
   );
+
+  // Save text on TextEdit unmount
+  useEffect(() => {
+    return () => {
+      saveText(textRef.current);
+    };
+  });
 
   const styles = useStyles2(getStyles(data));
   return (

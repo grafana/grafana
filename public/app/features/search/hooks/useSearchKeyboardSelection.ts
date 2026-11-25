@@ -7,9 +7,9 @@ import { locationService } from '@grafana/runtime';
 import { type QueryResponse } from '../service/types';
 
 export function useKeyNavigationListener() {
-  const eventsRef = useRef(new Subject<React.KeyboardEvent>());
+  const [keyboardEvents] = useState(() => new Subject<React.KeyboardEvent>());
   return {
-    keyboardEvents: eventsRef.current,
+    keyboardEvents,
     onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => {
       switch (e.code) {
         case 'ArrowDown':
@@ -18,7 +18,7 @@ export function useKeyNavigationListener() {
         case 'ArrowRight':
         case 'Enter':
         case 'Escape':
-          eventsRef.current.next(e);
+          keyboardEvents.next(e);
         default:
         // ignore
       }

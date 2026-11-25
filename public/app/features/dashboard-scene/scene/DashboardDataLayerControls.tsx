@@ -82,7 +82,7 @@ export function DataLayerControlEditWrapper({ layer, inMenu }: { layer: SceneDat
 
   const onClickEditLayer = useCallback(() => {
     const dashboard = sceneGraph.getAncestor(sourceLayer, DashboardScene);
-    dashboard.state.sidebar.selectObject(sourceLayer);
+    dashboard.state.sidebar.openElementSettings(sourceLayer);
   }, [sourceLayer]);
 
   const onClickEditLayerQuery = useCallback(() => {
@@ -129,7 +129,7 @@ export function DataLayerControlEditWrapper({ layer, inMenu }: { layer: SceneDat
           <AnnotationQueryEditorModal layer={sourceLayer} onClose={() => setIsQueryEditorOpen(false)} />
         </Suspense>
       )}
-      <EditActionsPopover content={editActions}>
+      <EditActionsPopover keyboardAccessible content={editActions}>
         <div className={styles.container}>
           <DataLayerControl layer={layer} inMenu={inMenu} />
         </div>

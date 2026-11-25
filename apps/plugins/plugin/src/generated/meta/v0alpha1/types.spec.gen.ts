@@ -245,6 +245,10 @@ export const defaultRole = (): Role => ({
 });
 
 export interface Extensions {
+	// Bundled Markdown skills keyed by plugin-local slug.
+	skills?: Record<string, {
+		path: string;
+	}>;
 	// +listType=atomic
 	addedComponents?: {
 		// +listType=set

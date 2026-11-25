@@ -7,10 +7,8 @@ import { getWrapper } from 'test/test-utils';
 import { VariableRefresh } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { setPluginLinksHook } from '@grafana/runtime';
-import { FlagKeys } from '@grafana/runtime/internal';
 import { CustomVariable, QueryVariable, SceneTimeRange, type SceneVariable, SceneVariableSet } from '@grafana/scenes';
 import { mockBoundingClientRect } from '@grafana/test-utils';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { Sidebar, useSidebar } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent } from 'app/types/events';
@@ -314,7 +312,6 @@ describe('VariableEditableElement undo/redo', () => {
   });
 
   it('records a query variable refresh change as one undoable action', async () => {
-    setTestFlags({ [FlagKeys.GrafanaQueryVarEditorRedesign]: true });
     mockBoundingClientRect();
     const variable = new QueryVariable({ name: 'query', refresh: VariableRefresh.onDashboardLoad });
     jest.spyOn(variable, 'validateAndUpdate').mockReturnValue(of({}));

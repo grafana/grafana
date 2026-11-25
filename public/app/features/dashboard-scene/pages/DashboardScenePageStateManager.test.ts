@@ -30,8 +30,11 @@ import { DASHBOARD_FROM_LS_KEY, type DashboardDataDTO, type DashboardDTO, Dashbo
 
 import {
   getPendingChangePreview,
+  getScenePendingChangePreview,
   isPreviewingPendingChanges,
   loadPendingChangePreview,
+  type PendingChangePreview,
+  type PendingChangesHistory,
 } from '../lifecycle/pendingChangePreview';
 import { reloadPendingChangesPage } from '../lifecycle/pendingChangesPageReload';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -46,6 +49,23 @@ import {
   DASHBOARD_CACHE_TTL,
   getDashboardScenePageStateManager,
 } from './DashboardScenePageStateManager';
+
+jest.mock('../settings/enterprise-components/DashboardTemplateExtension', () => ({
+  ...jest.requireActual('../settings/enterprise-components/DashboardTemplateExtension'),
+  getDashboardTemplateExtension: jest.fn(() =>
+    jest.requireActual('../settings/enterprise-components/DashboardTemplateExtension').getDashboardTemplateExtension()
+  ),
+}));
+
+afterEach(() => {
+  jest
+    .mocked(DashboardTemplateExtensionModule.getDashboardTemplateExtension)
+    .mockReset()
+    .mockImplementation(
+      jest.requireActual('../settings/enterprise-components/DashboardTemplateExtension').getDashboardTemplateExtension
+    );
+});
+
 const fetchMock = jest.fn();
 
 jest.mock('@grafana/runtime', () => {
@@ -156,6 +176,7 @@ jest.mock('../lifecycle/pendingChangePreview', () => {
     isPreviewingPendingChanges: jest.fn(actual.isPreviewingPendingChanges),
     loadPendingChangePreview: jest.fn(actual.loadPendingChangePreview),
     getPendingChangePreview: jest.fn(actual.getPendingChangePreview),
+    getScenePendingChangePreview: jest.fn(actual.getScenePendingChangePreview),
   };
 });
 
@@ -2125,7 +2146,7 @@ describe('DashboardScenePageStateManager v2', () => {
 
     beforeEach(() => {
       loadTemplateSpy = jest.fn().mockResolvedValue(fakeTemplateResource);
-      jest.spyOn(DashboardTemplateExtensionModule, 'getDashboardTemplateExtension').mockReturnValue({
+      jest.mocked(DashboardTemplateExtensionModule.getDashboardTemplateExtension).mockReturnValue({
         loadTemplate: loadTemplateSpy,
         listHistory: jest.fn(),
         restore: jest.fn(),
@@ -2323,6 +2344,69 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       expect(manager.state.isLoading).toBe(false);
       expect(manager.state.loadError?.status).toBe(404);
       expect(manager.state.loadError?.message).toBe('Dashboard not found');
+    });
+
+    describe('pending changes to a saved dashboard', () => {
+      const saved = {
+        access: { canEdit: true, canSave: true },
+        apiVersion: 'v2beta1',
+        kind: 'DashboardWithAccessInfo',
+        metadata: { name: 'fake-dash', creationTimestamp: '', resourceVersion: '4', generation: 4 },
+        spec: { ...defaultDashboardV2Spec(), title: 'Saved' },
+      } satisfies DashboardWithAccessInfo<DashboardV2Spec>;
+      const proposal = (history?: PendingChangesHistory): PendingChangePreview => ({
+        id: 'chat-1',
+        previewing: true,
+        pending: {
+          baseGeneration: 4,
+          proposed: { ...defaultDashboardV2Spec(), title: 'Proposed' },
+          apply: jest.fn(),
+          discard: jest.fn(),
+          history,
+        },
+      });
+      const history: PendingChangesHistory = {
+        record: jest.fn(),
+        undo: jest.fn(),
+        redo: jest.fn(),
+        getState: () => ({}),
+        subscribe: () => () => {},
+      };
+
+      async function loadWithPendingChanges(preview: PendingChangePreview, route = DashboardRoutes.Normal) {
+        setTestFlags({ dashboardNewLayouts: false });
+        setupV1FailureV2Success(saved);
+        const manager = new UnifiedDashboardScenePageStateManager({});
+        jest.mocked(loadPendingChangePreview).mockResolvedValueOnce(preview);
+        // The page's registry holds what the load asked for, as loadPendingChangePreview records it.
+        jest.mocked(getScenePendingChangePreview).mockReturnValue(preview);
+        await manager.loadDashboard({ uid: 'fake-dash', route, pendingChanges: 'chat-1' });
+        return manager.state.dashboard!;
+      }
+
+      afterEach(() => {
+        jest
+          .mocked(getScenePendingChangePreview)
+          .mockImplementation(jest.requireActual('../lifecycle/pendingChangePreview').getScenePendingChangePreview);
+      });
+
+      it('opens them in edit mode on the page, as unsaved changes to the saved version', async () => {
+        const preview = proposal(history);
+        const scene = await loadWithPendingChanges(preview);
+
+        expect(scene.state.title).toBe('Proposed');
+        expect(scene.state.isEditing).toBe(true);
+        expect(preview.saved).toEqual({ spec: saved.spec, generation: 4 });
+        // Save would save the pending changes over the saved version.
+        expect(Object.keys(scene.getDashboardChanges().diffs)).toEqual(['title']);
+      });
+
+      it('keeps them read-only where their plugin keeps no history to record edits in', async () => {
+        const scene = await loadWithPendingChanges(proposal());
+
+        expect(scene.state.title).toBe('Proposed');
+        expect(Boolean(scene.state.isEditing)).toBe(false);
+      });
     });
 
     describe('a new dashboard proposed as pending changes', () => {
@@ -3192,7 +3276,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
           dashboard: { ...defaultDashboardV2Spec(), title: 'Embedded' },
         },
       };
-      jest.spyOn(DashboardTemplateExtensionModule, 'getDashboardTemplateExtension').mockReturnValue({
+      jest.mocked(DashboardTemplateExtensionModule.getDashboardTemplateExtension).mockReturnValue({
         loadTemplate: jest.fn().mockResolvedValue(fakeTemplateResource),
         listHistory: jest.fn(),
         restore: jest.fn(),

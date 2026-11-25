@@ -24,8 +24,10 @@ func embeddingTestVersion(version string, fields ...app.ManifestVersionKindEmbed
 		Name:   version,
 		Served: true,
 		Kinds: []app.ManifestVersionKind{{
-			Kind:  "Widget",
-			Embed: &app.ManifestVersionKindEmbed{Fields: fields},
+			Kind:     "Widget",
+			Plural:   "Widgets",
+			Resource: "widgets",
+			Embed:    &app.ManifestVersionKindEmbed{Fields: fields},
 		}},
 	}
 }
@@ -85,10 +87,10 @@ func TestEmbeddingConfigRegistry_AbsentAndEmpty(t *testing.T) {
 		Versions: []app.ManifestVersion{{
 			Name: "v1",
 			Kinds: []app.ManifestVersionKind{
-				{Kind: "Widget"},
-				{Kind: "Gadget"},
-				{Kind: "Note", Embed: &app.ManifestVersionKindEmbed{}},
-				{Kind: "Entry", Plural: "entries", Embed: &app.ManifestVersionKindEmbed{Fields: []app.ManifestVersionKindEmbedField{}}},
+				{Kind: "Widget", Plural: "Widgets", Resource: "widgets"},
+				{Kind: "Gadget", Plural: "Gadgets", Resource: "gadgets"},
+				{Kind: "Note", Plural: "Notes", Resource: "notes", Embed: &app.ManifestVersionKindEmbed{}},
+				{Kind: "Entry", Plural: "entries", Resource: "entries", Embed: &app.ManifestVersionKindEmbed{Fields: []app.ManifestVersionKindEmbedField{}}},
 			},
 		}},
 	}
@@ -121,10 +123,10 @@ func TestEmbeddingConfigRegistry_ResourcePrecedence(t *testing.T) {
 	builtin := embeddingTestManifest(3, embeddingTestVersion("v1", oldFields...), embeddingTestVersion("v2", oldFields...))
 	builtin.Embed["gadgets"] = app.ManifestResourceEmbed{ReembedVersion: 5}
 	builtin.Versions[0].Kinds = append(builtin.Versions[0].Kinds, app.ManifestVersionKind{
-		Kind: "Gadget", Embed: &app.ManifestVersionKindEmbed{Fields: oldFields},
+		Kind: "Gadget", Plural: "Gadgets", Resource: "gadgets", Embed: &app.ManifestVersionKindEmbed{Fields: oldFields},
 	})
 	live := embeddingTestManifest(8, embeddingTestVersion("v2", newFields...))
-	rootOnly := embeddingTestManifest(9, app.ManifestVersion{Name: "v2", Kinds: []app.ManifestVersionKind{{Kind: "Widget"}}})
+	rootOnly := embeddingTestManifest(9, app.ManifestVersion{Name: "v2", Kinds: []app.ManifestVersionKind{{Kind: "Widget", Plural: "Widgets", Resource: "widgets"}}})
 	noEmbed := &app.ManifestData{Group: builtin.Group, Versions: rootOnly.Versions}
 	noEmbed.Versions[0].Kinds[0].SearchFields = []app.ManifestVersionKindSearchField{
 		{Name: "title", Path: "spec.title", Type: "string", Capabilities: []string{"filter"}},
@@ -181,7 +183,7 @@ func TestEmbeddingConfigRegistry_Reload(t *testing.T) {
 	replacement := embeddingTestManifest(2, embeddingTestVersion("v2", newFields...))
 	replacement.Embed["zebras"] = app.ManifestResourceEmbed{ReembedVersion: 6}
 	replacement.Versions[0].Kinds = append(replacement.Versions[0].Kinds, app.ManifestVersionKind{
-		Kind: "Zebra", Embed: &app.ManifestVersionKindEmbed{Fields: newFields},
+		Kind: "Zebra", Plural: "Zebras", Resource: "zebras", Embed: &app.ManifestVersionKindEmbed{Fields: newFields},
 	})
 	got, ok := registry.For(embeddingTestGVR("v1", "widgets"))
 	require.True(t, ok)

@@ -48,6 +48,7 @@ func setupTestZanzana(t *testing.T) (*apis.K8sTestHelper, *apis.K8sResourceClien
 	helper, client := setupTestWithOpts(t, testinfra.GrafanaOpts{
 		AppModeProduction:                   false,
 		DisableAnonymous:                    true,
+		DBMaxConns:                          10,
 		EnableAnnotationAppPlatform:         true,
 		DisableAuthZClientCache:             true,
 		DisableZanzanaServerCheckQueryCache: true,

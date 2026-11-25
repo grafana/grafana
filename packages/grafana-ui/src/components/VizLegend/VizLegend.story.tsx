@@ -1,5 +1,5 @@
 import { type StoryFn, type Meta } from '@storybook/react';
-import { type FC, useEffect, useState } from 'react';
+import { type FC, useState } from 'react';
 
 import { type DisplayValue, type GrafanaTheme2 } from '@grafana/data';
 import { LegendDisplayMode, type LegendOverflow, type LegendPlacement } from '@grafana/schema';
@@ -44,28 +44,13 @@ interface LegendStoryDemoProps {
 
 const LegendStoryDemo: FC<LegendStoryDemoProps> = ({ displayMode, seriesCount, name, placement, stats, overflow }) => {
   const theme = useTheme2();
-  const [items, setItems] = useState<VizLegendItem[]>(generateLegendItems(seriesCount, theme, stats));
-
-  useEffect(() => {
-    setItems(generateLegendItems(seriesCount, theme, stats));
-  }, [seriesCount, theme, stats]);
+  const [enabledLabel, setEnabledLabel] = useState<string>();
+  const items = generateLegendItems(seriesCount, theme, stats).map((item) =>
+    enabledLabel === undefined ? item : { ...item, disabled: item.label !== enabledLabel }
+  );
 
   const onLabelClick = (clickItem: VizLegendItem) => {
-    setItems(
-      items.map((item) => {
-        if (item !== clickItem) {
-          return {
-            ...item,
-            disabled: true,
-          };
-        } else {
-          return {
-            ...item,
-            disabled: false,
-          };
-        }
-      })
-    );
+    setEnabledLabel(clickItem.label);
   };
 
   return (

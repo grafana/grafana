@@ -3,20 +3,13 @@ import { render, screen, userEvent } from 'test/test-utils';
 
 import { API_GROUP, API_VERSION, type AlertRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { useAssistant } from '@grafana/assistant';
+import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { useAlertingAbility } from '../../hooks/useAbilities';
 import { setupMswServer } from '../../mockApi';
+import { setFolderResponse } from '../../mocks/server/configure';
 import { grantPermissionsHelper } from '../../test/test-utils';
-import { K8sAnnotations } from '../../utils/k8s/constants';
 import { mockK8sAlertRule } from '../mocks/handlers';
-
-// Default: org admin has create permission. Override per-test for permission-gating tests.
-jest.mock('../../hooks/useAbilities', () => ({
-  ...jest.requireActual('../../hooks/useAbilities'),
-  useAlertingAbility: jest.fn(),
-}));
-const mockUseAlertingAbility = jest.mocked(useAlertingAbility);
 
 jest.mock('@grafana/assistant', () => ({
   ...jest.requireActual('@grafana/assistant'),
@@ -37,25 +30,28 @@ function setAssistantAvailable(isAvailable: boolean) {
 import { AlertRuleActions } from './AlertRuleActions';
 const server = setupMswServer();
 
+const RULE_FOLDER_UID = 'rule-folder';
+
+const canRead = { [AccessControlAction.AlertingRuleRead]: true, [AccessControlAction.FoldersRead]: true };
+const canWrite = { [AccessControlAction.AlertingRuleUpdate]: true };
+const canDelete = { [AccessControlAction.AlertingRuleDelete]: true };
+
+function setRuleFolderAccess(accessControl: Record<string, boolean>) {
+  setFolderResponse({ uid: RULE_FOLDER_UID, accessControl: { ...canRead, ...accessControl } });
+}
+
 function ruleWithPerms({
-  canWrite = true,
-  canDelete = true,
   paused = false,
-  isProvisioned = false,
 }: {
-  canWrite?: boolean;
-  canDelete?: boolean;
   paused?: boolean;
-  isProvisioned?: boolean;
 } = {}): AlertRule {
+  setRuleFolderAccess({ ...canWrite, ...canDelete });
   return {
     ...mockK8sAlertRule({ uid: 'rule-1', title: 'CPU high' }),
     metadata: {
       name: 'rule-1',
       annotations: {
-        [K8sAnnotations.AccessWrite]: String(canWrite),
-        [K8sAnnotations.AccessDelete]: String(canDelete),
-        ...(isProvisioned ? { [K8sAnnotations.Provenance]: 'terraform' } : {}),
+        [AnnoKeyFolder]: RULE_FOLDER_UID,
       },
     },
     spec: {
@@ -81,8 +77,7 @@ function renderActions(rule: AlertRule) {
 
 describe('AlertRuleActions', () => {
   beforeEach(() => {
-    // Default: org admin has create permission so Duplicate is visible.
-    mockUseAlertingAbility.mockReturnValue([true, true]);
+    grantPermissionsHelper([AccessControlAction.AlertingRuleCreate]);
     setAssistantAvailable(false);
   });
 
@@ -90,41 +85,39 @@ describe('AlertRuleActions', () => {
     jest.restoreAllMocks();
   });
 
-  it('renders Edit and More buttons when canEdit is true', () => {
-    renderActions(ruleWithPerms());
+  it('shows Edit, Pause and Duplicate with write access to the rule folder and the create permission', async () => {
+    const rule = ruleWithPerms();
+    setRuleFolderAccess(canWrite);
+    renderActions(rule);
 
-    expect(screen.getByRole('link', { name: 'Edit' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'More' })).toBeInTheDocument();
-  });
-
-  it('hides Edit when canEdit is false after loading', () => {
-    renderActions(ruleWithPerms({ canWrite: false }));
-
-    expect(screen.queryByRole('link', { name: 'Edit' })).not.toBeInTheDocument();
-    // More is still there
-    expect(screen.getByRole('button', { name: 'More' })).toBeInTheDocument();
-  });
-
-  it('shows Pause in More menu when canPause is true and rule is active', async () => {
-    renderActions(ruleWithPerms({ paused: false }));
-
+    expect(await screen.findByRole('link', { name: 'Edit' })).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'More' }));
     expect(await screen.findByRole('menuitem', { name: /Pause/i })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /Duplicate/i })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: /Delete/i })).not.toBeInTheDocument();
   });
 
-  it('shows Resume in More menu when rule is paused', async () => {
+  it('shows Delete, Silence, View and Copy link with delete and silence access to the rule folder', async () => {
+    grantPermissionsHelper([]);
+    const rule = ruleWithPerms();
+    setRuleFolderAccess({ ...canDelete, [AccessControlAction.AlertingSilenceCreate]: true });
+    renderActions(rule);
+
+    await userEvent.click(screen.getByRole('button', { name: 'More' }));
+    expect(await screen.findByRole('menuitem', { name: /Silence notifications/i })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /Delete/i })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /View/i })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /Copy link/i })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Edit' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: /Pause/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: /Duplicate/i })).not.toBeInTheDocument();
+  });
+
+  it('shows Resume when rule is paused', async () => {
     renderActions(ruleWithPerms({ paused: true }));
 
     await userEvent.click(screen.getByRole('button', { name: 'More' }));
     expect(await screen.findByRole('menuitem', { name: /Resume/i })).toBeInTheDocument();
-  });
-
-  it('hides Pause and Delete from More menu when user has no write/delete permission', async () => {
-    renderActions(ruleWithPerms({ canWrite: false, canDelete: false }));
-
-    await userEvent.click(screen.getByRole('button', { name: 'More' }));
-    expect(screen.queryByRole('menuitem', { name: /Pause/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('menuitem', { name: /Delete/i })).not.toBeInTheDocument();
   });
 
   it('shows Delete confirmation dialog on Delete click', async () => {
@@ -133,23 +126,6 @@ describe('AlertRuleActions', () => {
     await userEvent.click(screen.getByRole('button', { name: 'More' }));
     await userEvent.click(await screen.findByRole('menuitem', { name: /Delete/i }));
     expect(await screen.findByRole('dialog')).toHaveTextContent('Delete "CPU high"?');
-  });
-
-  it('hides Edit and Pause/Delete for provisioned rules', async () => {
-    renderActions(ruleWithPerms({ isProvisioned: true }));
-
-    expect(screen.queryByRole('link', { name: 'Edit' })).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'More' }));
-    expect(screen.queryByRole('menuitem', { name: /Pause/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('menuitem', { name: /Delete/i })).not.toBeInTheDocument();
-  });
-
-  it('always shows View and Copy link in More menu regardless of permissions', async () => {
-    renderActions(ruleWithPerms({ canWrite: false, canDelete: false }));
-
-    await userEvent.click(screen.getByRole('button', { name: 'More' }));
-    expect(await screen.findByRole('menuitem', { name: /View/i })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: /Copy link/i })).toBeInTheDocument();
   });
 
   it('shows Analyze in More menu only when the assistant is available', async () => {
@@ -166,37 +142,6 @@ describe('AlertRuleActions', () => {
     await userEvent.click(screen.getByRole('button', { name: 'More' }));
     await screen.findByRole('menuitem', { name: /View/i });
     expect(screen.queryByRole('menuitem', { name: /Analyze rule/i })).not.toBeInTheDocument();
-  });
-
-  it('shows Duplicate when user has create permission and rule is not plugin-managed', async () => {
-    renderActions(ruleWithPerms());
-
-    await userEvent.click(screen.getByRole('button', { name: 'More' }));
-    expect(await screen.findByRole('menuitem', { name: /Duplicate/i })).toBeInTheDocument();
-  });
-
-  it('hides Duplicate when user lacks create permission', async () => {
-    mockUseAlertingAbility.mockReturnValue([true, false]);
-    renderActions(ruleWithPerms());
-
-    await userEvent.click(screen.getByRole('button', { name: 'More' }));
-    await screen.findByRole('menuitem', { name: /View/i });
-    expect(screen.queryByRole('menuitem', { name: /Duplicate/i })).not.toBeInTheDocument();
-  });
-
-  it('hides Duplicate for plugin-managed rules', async () => {
-    const pluginRule = {
-      ...ruleWithPerms(),
-      spec: {
-        ...ruleWithPerms().spec,
-        labels: { __grafana_origin: 'plugin/my-plugin' },
-      },
-    };
-    renderActions(pluginRule);
-
-    await userEvent.click(screen.getByRole('button', { name: 'More' }));
-    await screen.findByRole('menuitem', { name: /View/i });
-    expect(screen.queryByRole('menuitem', { name: /Duplicate/i })).not.toBeInTheDocument();
   });
 
   it('calls DELETE to delete the rule after confirmation', async () => {
@@ -224,13 +169,5 @@ describe('AlertRuleActions', () => {
     await userEvent.click(await screen.findByRole('menuitem', { name: /Silence notifications/i }));
 
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
-  });
-
-  it('hides Silence when user lacks AlertingInstanceCreate and folder silence permission', async () => {
-    renderActions(ruleWithPerms());
-
-    await userEvent.click(screen.getByRole('button', { name: 'More' }));
-    await screen.findByRole('menuitem', { name: /View/i });
-    expect(screen.queryByRole('menuitem', { name: /Silence/i })).not.toBeInTheDocument();
   });
 });

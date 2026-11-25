@@ -34,13 +34,21 @@ describe('query runner defaults', () => {
     expect(runner.isDataReadyToDisplay()).toBe(true);
   });
 
-  it('preserves a configured query', () => {
-    const runner = new SceneQueryRunner({ queries: [{ refId: 'A', hide: true }] });
+  it('preserves an empty query with a selected datasource', () => {
+    const runner = new SceneQueryRunner({
+      queries: [{ refId: 'A', datasource: { uid: 'test', type: 'testdata' }, hide: false }],
+    });
+    clearDefaultQuery(new VizPanel({ pluginId: 'custom', $data: runner }));
+    expect(runner.state.queries).toEqual([{ refId: 'A', datasource: { uid: 'test', type: 'testdata' }, hide: false }]);
+  });
+
+  it.each([true, false])('preserves a query with hide=%s', (hide) => {
+    const runner = new SceneQueryRunner({ queries: [{ refId: 'A', hide }] });
     const panel = new VizPanel({ pluginId: 'custom', $data: runner });
 
     clearDefaultQuery(panel);
 
-    expect(runner.state.queries).toEqual([{ refId: 'A', hide: true }]);
+    expect(runner.state.queries).toEqual([{ refId: 'A', hide }]);
   });
 
   it('cancels the starter query and replaces its data with an empty result', () => {

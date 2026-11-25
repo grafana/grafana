@@ -1,4 +1,5 @@
 import { type HybridSearchResultItem } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
 import { dispatch } from 'app/types/store';
 
@@ -22,6 +23,7 @@ export async function searchDashboardsHybrid(
           apiVersion: 'search.grafana.app/v0alpha1',
           kind: 'HybridSearchQuery',
           query,
+          skipRerank: getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaCmdkHybridSearchSkipRerank, false),
           ...(limit !== undefined && { limit }),
         },
       },

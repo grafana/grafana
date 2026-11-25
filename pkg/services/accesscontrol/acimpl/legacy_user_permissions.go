@@ -21,7 +21,7 @@ func LegacyUserPermissionsEnabled(ctx context.Context) bool {
 	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagAuthzLegacyUserPermissions, false, openfeature.TransactionContext(ctx))
 }
 
-func GetLegacyUserPermissions(ctx context.Context, client legacyclient.Service, usr identity.Requester, options ac.Options, cfg *setting.Cfg) (permissions []ac.Permission, err error) {
+func GetLegacyUserPermissions(ctx context.Context, client legacyclient.LegacyUserPermissionsClient, usr identity.Requester, options ac.Options, cfg *setting.Cfg) (permissions []ac.Permission, err error) {
 	ctx, span := tracer.Start(ctx, "accesscontrol.GetLegacyUserPermissions")
 	defer func() {
 		if err != nil {
@@ -88,7 +88,7 @@ func legacyUserPermissionsRequest(usr identity.Requester, options ac.Options, cf
 	}, nil
 }
 
-func loadLegacyUserPermissions(ctx context.Context, client legacyclient.Service, req legacyclient.LegacyGetUserPermissionsRequest) ([]ac.Permission, error) {
+func loadLegacyUserPermissions(ctx context.Context, client legacyclient.LegacyUserPermissionsClient, req legacyclient.LegacyGetUserPermissionsRequest) ([]ac.Permission, error) {
 	if client == nil {
 		return nil, fmt.Errorf("embedded legacy AuthZ client is not configured")
 	}

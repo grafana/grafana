@@ -54,8 +54,8 @@ func decodeListBatch(ctx context.Context, data [][]byte) ([]runtime.Object, erro
 func listBatchResponse(t *testing.T, count, padding int) *resourcepb.ListResponse {
 	t.Helper()
 	response := &resourcepb.ListResponse{ResourceVersion: 1000, NextPageToken: "next", RemainingItemCount: 3}
-	for i := 0; i < count; i++ {
-		value := []byte(fmt.Sprintf(`{"apiVersion":"example.grafana.app/v1","kind":"Example","metadata":{"name":"item-%d","labels":{"keep":"%t"}},"spec":{"padding":"%s"}}`, i, i%2 == 0, strings.Repeat("x", padding)))
+	for i := range count {
+		value := fmt.Appendf(nil, `{"apiVersion":"example.grafana.app/v1","kind":"Example","metadata":{"name":"item-%d","labels":{"keep":"%t"}},"spec":{"padding":"%s"}}`, i, i%2 == 0, strings.Repeat("x", padding))
 		response.Items = append(response.Items, &resourcepb.ResourceWrapper{Value: value, ResourceVersion: int64(i + 1)})
 	}
 	return response

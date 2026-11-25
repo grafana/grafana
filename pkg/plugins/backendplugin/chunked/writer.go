@@ -29,6 +29,13 @@ var (
 type rawChunkWriter struct {
 	w       http.ResponseWriter
 	flusher http.Flusher
+	// started holds the frames that already have a line with the schema.
+	started map[frameKey]bool
+}
+
+type frameKey struct {
+	refID   string
+	frameID string
 }
 
 func NewChunkedHTTPWriter(w http.ResponseWriter) *rawChunkWriter {
@@ -37,6 +44,7 @@ func NewChunkedHTTPWriter(w http.ResponseWriter) *rawChunkWriter {
 	return &rawChunkWriter{
 		w:       w,
 		flusher: flusher,
+		started: make(map[frameKey]bool),
 	}
 }
 
@@ -58,7 +66,19 @@ func (r *rawChunkWriter) OnChunk(chunk *pluginv2.QueryChunkedDataResponse) error
 			if err != nil {
 				return fmt.Errorf("failed to unmarshal frame: %w", err)
 			}
-			chunk.Frame, err = tmp.MarshalJSON()
+			// Each Arrow chunk has the schema, but receivers append a later JSON chunk of the
+			// same frame with data.AppendJSONData, which rejects a schema. A chunk without a
+			// frame ID is a separate frame, so it keeps the schema.
+			include := data.IncludeAll
+			if chunk.FrameId != "" {
+				key := frameKey{refID: chunk.RefId, frameID: chunk.FrameId}
+				if r.started[key] {
+					include = data.IncludeDataOnly
+				} else {
+					r.started[key] = true
+				}
+			}
+			chunk.Frame, err = data.FrameToJSON(tmp, include)
 			if err != nil {
 				return fmt.Errorf("failed to marshal frame to JSON: %w", err)
 			}
@@ -66,6 +86,10 @@ func (r *rawChunkWriter) OnChunk(chunk *pluginv2.QueryChunkedDataResponse) error
 
 		_, _ = r.w.Write([]byte(`,"frame":`))
 		_, _ = r.w.Write(chunk.Frame) // raw JSON bytes
+	}
+
+	if chunk.Status != 0 {
+		_, _ = fmt.Fprintf(r.w, `,"status":%d`, chunk.Status)
 	}
 
 	if chunk.Error != "" {
@@ -92,9 +116,18 @@ func (r *rawChunkWriter) writeField(f string, v string) {
 	_, _ = r.w.Write(b)
 }
 
-// WriteError implements [backend.ChunkedDataWriter].
-func (r *rawChunkWriter) WriteError(ctx context.Context, refID string, status backend.Status, err error) error {
-	return fmt.Errorf("rawChunkWriter does not support: WriteError")
+// WriteError implements [backend.ChunkedDataWriter]. It writes the line of an error chunk, so that a
+// middleware can reject one query of a chunked request and let the other queries run.
+func (r *rawChunkWriter) WriteError(_ context.Context, refID string, status backend.Status, err error) error {
+	chunk := &pluginv2.QueryChunkedDataResponse{
+		RefId:  refID,
+		Status: int32(status), //nolint:gosec // HTTP status codes fit in int32
+	}
+	if err != nil {
+		chunk.Error = err.Error()
+		chunk.ErrorSource = string(backend.ErrorSourceFromError(err))
+	}
+	return r.OnChunk(chunk)
 }
 
 // WriteFrame implements [backend.ChunkedDataWriter].

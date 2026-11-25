@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState } from 'react';
 
 import { type DataFrame, type TraceLog } from '@grafana/data';
 
@@ -11,10 +11,12 @@ import { type TraceSpanReference } from './components/types/trace';
 export function useDetailState(frame: DataFrame) {
   const [detailStates, setDetailStates] = useState(new Map<string, DetailState>());
 
+  const [prevFrame, setPrevFrame] = useState(frame);
   // Clear detail state when new trace arrives
-  useEffect(() => {
+  if (frame !== prevFrame) {
+    setPrevFrame(frame);
     setDetailStates(new Map<string, DetailState>());
-  }, [frame, setDetailStates]);
+  }
 
   const toggleDetail = useCallback(
     function toggleDetail(spanID: string) {

@@ -43,7 +43,7 @@ func TestMapperRegistry_DatasourceAliases(t *testing.T) {
 func TestMapperRegistry_DatasourceSharedGroup(t *testing.T) {
 	reg := NewMapperRegistry()
 
-	for _, subresource := range []string{"", "query", "caching"} {
+	for _, subresource := range []string{"", "query", "caching", "alertrules", "alertinstances", "alertnotifications"} {
 		shared, ok := reg.Get("datasource.grafana.app", "datasources", subresource)
 		require.True(t, ok)
 		plugin, ok := reg.Get("loki.datasource.grafana.app", "datasources", subresource)
@@ -109,7 +109,10 @@ func TestMapperRegistry_DatasourceEnumeration(t *testing.T) {
 	for _, mapping := range mappings {
 		resources = append(resources, mapping.APIResource)
 	}
-	assert.ElementsMatch(t, []string{"datasources", "datasources/query", "datasources/caching"}, resources)
+	assert.ElementsMatch(t, []string{
+		"datasources", "datasources/query", "datasources/caching",
+		"datasources/alertrules", "datasources/alertinstances", "datasources/alertnotifications",
+	}, resources)
 
 	// A plugin's own registered resources must not be replaced with shared datasource mappings.
 	reg.(mapper)["loki.datasource.grafana.app"] = map[string]translation{
@@ -166,6 +169,19 @@ func TestMapperRegistry_DatasourceCachingSubresource(t *testing.T) {
 
 	_, ok := reg.Get("dashboard.grafana.app", "datasources", "caching")
 	assert.False(t, ok, "caching subresource must not resolve outside the datasource groups")
+}
+
+// Managed datasource grants can be stored only as action sets, and every
+// permission level includes datasources:query.
+func TestMapperRegistry_DatasourceQueryActionSets(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	for _, group := range []string{"datasource.grafana.app", "prometheus.datasource.grafana.app"} {
+		mapping, ok := reg.Get(group, "datasources", "query")
+		require.True(t, ok)
+		assert.ElementsMatch(t, []string{"datasources:query", "datasources:edit", "datasources:admin"},
+			mapping.ActionSets(utils.VerbCreate), "group %q", group)
+	}
 }
 
 // Mapping :edit or :query here would grant caching to users who lack it.
@@ -247,6 +263,32 @@ func TestMapperRegistry_Playlist(t *testing.T) {
 		assert.True(t, mapping.SkipScope(verb), "verb %q must skip scope; playlist roles are unscoped", verb)
 	}
 	assert.False(t, mapping.HasFolderSupport(), "playlists are not folder-scoped")
+}
+
+// TestMapperRegistry_DashboardTemplates verifies dashboard templates use the same
+// unscoped read/write actions their API authorizer checks.
+func TestMapperRegistry_DashboardTemplates(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	mapping, ok := reg.Get("dashboardtemplates.grafana.app", "dashboardtemplates", "")
+	require.True(t, ok, "dashboardtemplates should be registered in the mapper")
+	require.NotNil(t, mapping)
+
+	for _, verb := range []string{utils.VerbGet, utils.VerbList, utils.VerbWatch} {
+		action, ok := mapping.Action(verb)
+		assert.True(t, ok)
+		assert.Equal(t, "dashboardtemplates:read", action, "verb %q should map to read", verb)
+	}
+	for _, verb := range []string{utils.VerbCreate, utils.VerbUpdate, utils.VerbPatch, utils.VerbDelete, utils.VerbDeleteCollection} {
+		action, ok := mapping.Action(verb)
+		assert.True(t, ok)
+		assert.Equal(t, "dashboardtemplates:write", action, "verb %q should map to write (no create/delete action exists)", verb)
+	}
+
+	for _, verb := range []string{utils.VerbGet, utils.VerbList, utils.VerbWatch, utils.VerbCreate, utils.VerbUpdate, utils.VerbPatch, utils.VerbDelete, utils.VerbDeleteCollection} {
+		assert.True(t, mapping.SkipScope(verb), "verb %q must skip scope; dashboard template roles are unscoped", verb)
+	}
+	assert.False(t, mapping.HasFolderSupport(), "dashboard templates are not folder-scoped")
 }
 
 func TestMapperRegistry_InvalidDatasourceGroups(t *testing.T) {
@@ -693,6 +735,24 @@ func TestMapper_AnnotationSubresource_ActionSets(t *testing.T) {
 			assert.ElementsMatch(t, tt.expected, mapping.ActionSets(tt.verb))
 		})
 	}
+}
+
+func TestMapperRegistry_Banners(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	mapping, ok := reg.Get("banners.grafana.app", "announcement-banners", "")
+	require.True(t, ok, "announcement-banners should be registered in the mapper")
+
+	for _, verb := range []string{
+		utils.VerbGet, utils.VerbList, utils.VerbWatch,
+		utils.VerbCreate, utils.VerbUpdate, utils.VerbPatch, utils.VerbDelete, utils.VerbDeleteCollection,
+	} {
+		action, ok := mapping.Action(verb)
+		assert.True(t, ok)
+		assert.Equal(t, "banners:write", action, "verb %q", verb)
+		assert.True(t, mapping.SkipScope(verb), "verb %q", verb)
+	}
+	assert.False(t, mapping.HasFolderSupport())
 }
 
 func TestMapperRegistry_Settings(t *testing.T) {

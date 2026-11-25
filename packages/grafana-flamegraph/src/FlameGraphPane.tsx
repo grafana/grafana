@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { escapeStringForRegex } from '@grafana/data';
 
@@ -10,7 +10,7 @@ import { type FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
 import { FLAMEGRAPH_CONTAINER_HEIGHT } from './constants';
 import { useColorScheme } from './hooks';
-import { type ClickedItemData, PaneView, type ViewMode, type TextAlign } from './types';
+import { type ClickedItemData, PaneView, type SymbolLabel, type TextAlign, type ViewMode } from './types';
 
 type FlameGraphPaneProps = {
   paneView: PaneView;
@@ -69,6 +69,7 @@ const FlameGraphPane = ({
   const [rangeMin, setRangeMin] = useState(0);
   const [rangeMax, setRangeMax] = useState(1);
   const [textAlign, setTextAlign] = useState<TextAlign>('left');
+  const [symbolLabel, setSymbolLabel] = useState<SymbolLabel>('full');
   const [localSandwichItem, setLocalSandwichItem] = useState<string>();
 
   const isUsingSharedSandwich = setSharedSandwichItem !== undefined;
@@ -88,18 +89,22 @@ const FlameGraphPane = ({
 
   const styles = getStyles(Boolean(fillHeight));
 
-  useLayoutEffect(() => {
+  const [prevDataContainer, setPrevDataContainer] = useState(dataContainer);
+  if (prevDataContainer !== dataContainer) {
+    setPrevDataContainer(dataContainer);
     setCollapsedMap(dataContainer.getCollapsedMap());
-  }, [dataContainer]);
+  }
 
-  useEffect(() => {
+  const [prevResetKey, setPrevResetKey] = useState(resetKey);
+  if (prevResetKey !== resetKey) {
+    setPrevResetKey(resetKey);
     if (resetKey !== undefined && resetKey > 0) {
       setFocusedItemData(undefined);
       setRangeMin(0);
       setRangeMax(1);
       setLocalSandwichItem(undefined);
     }
-  }, [resetKey]);
+  }
 
   useEffect(() => {
     if (!keepFocusOnDataChange) {
@@ -274,10 +279,12 @@ const FlameGraphPane = ({
           }}
           focusedItemData={focusedItemData}
           textAlign={textAlign}
+          symbolLabel={symbolLabel}
           onTextAlignChange={(align) => {
             setTextAlign(align);
             onTextAlignSelected?.(align);
           }}
+          onSymbolLabelChange={setSymbolLabel}
           sandwichItem={sandwichItem}
           onSandwich={(label: string) => {
             resetFocus();

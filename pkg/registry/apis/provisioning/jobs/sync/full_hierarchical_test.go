@@ -411,7 +411,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 
 			tt.setupMocks(repo, repoResources, clients, progress, dynamicClient)
 
-			compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tt.changes, nil, nil, nil)
+			compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tt.changes, nil, nil, nil)
 			progress.On("SetTotal", mock.Anything, len(tt.changes)).Return()
 			progress.On("TooManyErrors").Return(nil).Maybe()
 
@@ -420,7 +420,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 			quotaTracker.EXPECT().Release().Maybe()
 			quotaTracker.EXPECT().AllowOverLimit(mock.Anything).Maybe()
 
-			err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotaTracker, false, 0)
+			err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotaTracker, 0)
 
 			if tt.expectError {
 				require.Error(t, err)

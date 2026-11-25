@@ -12,10 +12,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection/oauth"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 func TestExtra_Type(t *testing.T) {
@@ -41,7 +41,7 @@ func TestExtra_Build(t *testing.T) {
 			},
 			setup: func(m *connection.MockSecureValues) {
 				m.EXPECT().ClientSecret(mock.Anything).Return("client-secret", nil)
-				m.EXPECT().Token(mock.Anything).Return(common.RawSecureValue(`{"access_token":"token"}`), nil)
+				m.EXPECT().Token(mock.Anything).Return(resource.RawSecureValue(`{"access_token":"token"}`), nil)
 			},
 		},
 		{
@@ -112,10 +112,10 @@ func TestExtra_Build(t *testing.T) {
 func TestExtra_Build_PassesAccessToken(t *testing.T) {
 	tests := []struct {
 		name      string
-		token     common.RawSecureValue
+		token     resource.RawSecureValue
 		wantToken string
 	}{
-		{name: "stored token is passed to the provider", token: common.RawSecureValue(`{"access_token":"stored-token"}`), wantToken: "stored-token"},
+		{name: "stored token is passed to the provider", token: resource.RawSecureValue(`{"access_token":"stored-token"}`), wantToken: "stored-token"},
 		{name: "missing token builds provider with empty token", token: "", wantToken: ""},
 	}
 
@@ -225,7 +225,7 @@ func TestExtra_Validate(t *testing.T) {
 					OAuth: &provisioning.ConnectionOAuthConfig{},
 				},
 				Secure: provisioning.ConnectionSecure{
-					ClientSecret: common.InlineSecureValue{Create: common.NewSecretValue("client-secret")},
+					ClientSecret: resource.InlineSecureValue{Create: resource.NewSecretValue("client-secret")},
 				},
 			},
 			errorContains: []string{"clientID must be specified"},
@@ -248,7 +248,7 @@ func TestExtra_Validate(t *testing.T) {
 					OAuth: &provisioning.ConnectionOAuthConfig{ClientID: "client-id"},
 				},
 				Secure: provisioning.ConnectionSecure{
-					ClientSecret: common.InlineSecureValue{Remove: true},
+					ClientSecret: resource.InlineSecureValue{Remove: true},
 				},
 			},
 			errorContains: []string{"clientSecret must be specified"},
@@ -261,8 +261,8 @@ func TestExtra_Validate(t *testing.T) {
 					OAuth: &provisioning.ConnectionOAuthConfig{ClientID: "client-id"},
 				},
 				Secure: provisioning.ConnectionSecure{
-					ClientSecret: common.InlineSecureValue{Create: common.NewSecretValue("client-secret")},
-					PrivateKey:   common.InlineSecureValue{Create: common.NewSecretValue("private-key")},
+					ClientSecret: resource.InlineSecureValue{Create: resource.NewSecretValue("client-secret")},
+					PrivateKey:   resource.InlineSecureValue{Create: resource.NewSecretValue("private-key")},
 				},
 			},
 			errorContains: []string{"privateKey is forbidden"},
@@ -275,7 +275,7 @@ func TestExtra_Validate(t *testing.T) {
 					OAuth: &provisioning.ConnectionOAuthConfig{ClientID: "client-id"},
 				},
 				Secure: provisioning.ConnectionSecure{
-					ClientSecret: common.InlineSecureValue{Create: common.NewSecretValue("client-secret")},
+					ClientSecret: resource.InlineSecureValue{Create: resource.NewSecretValue("client-secret")},
 				},
 			},
 			validateSpec: func(_ provisioning.ConnectionSpec) field.ErrorList {
@@ -291,7 +291,7 @@ func TestExtra_Validate(t *testing.T) {
 					OAuth: &provisioning.ConnectionOAuthConfig{ClientID: "client-id"},
 				},
 				Secure: provisioning.ConnectionSecure{
-					ClientSecret: common.InlineSecureValue{Create: common.NewSecretValue("client-secret")},
+					ClientSecret: resource.InlineSecureValue{Create: resource.NewSecretValue("client-secret")},
 				},
 			},
 		},

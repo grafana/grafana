@@ -30,16 +30,17 @@ export function OwnersFilter({ values, onChange }: OwnersFilterProps) {
   // In this case we show a warning tooltip and don't show the allTeamsValue as we cannot really select *all* the teams
   // if we cannot load them.
   const hasMoreTeamsThanLimit = (data?.totalCount ?? 0) > TEAM_OPTIONS_LIMIT;
+  const teams = data?.teams;
   const teamOptions = useMemo<Array<SelectableValue<string>>>(() => {
-    if (!data?.teams) {
+    if (!teams) {
       return [];
     }
-    return data.teams.map((team) => ({
+    return teams.map((team) => ({
       label: team.name,
       value: teamOwnerRef(team),
       imgUrl: team.avatarUrl,
     }));
-  }, [data?.teams]);
+  }, [teams]);
 
   const allTeamsValue = useMemo(() => {
     return {

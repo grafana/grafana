@@ -9,8 +9,10 @@ import {
   type FieldOverrideContext,
   type GrafanaTheme2,
 } from '@grafana/data';
+import { type VarMappingKind } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { Counter, Field, Stack, IconButton, Label, useStyles2 } from '@grafana/ui';
+import { VarMappingNumberValueEditor } from 'app/core/components/OptionsUI/number';
 
 import { OptionsPaneCategory } from './OptionsPaneCategory';
 
@@ -22,6 +24,7 @@ interface DynamicConfigValueEditorProps {
   onRemove: () => void;
   isSystemOverride?: boolean;
   searchQuery: string;
+  varMappingKind?: VarMappingKind;
 }
 
 export const DynamicConfigValueEditor = ({
@@ -32,6 +35,7 @@ export const DynamicConfigValueEditor = ({
   onRemove,
   isSystemOverride,
   searchQuery,
+  varMappingKind,
 }: DynamicConfigValueEditorProps) => {
   const styles = useStyles2(getStyles);
 
@@ -42,6 +46,8 @@ export const DynamicConfigValueEditor = ({
   if (!item) {
     return null;
   }
+
+  const Override = varMappingKind === 'number' ? VarMappingNumberValueEditor : item.override;
 
   const isCollapsible =
     Array.isArray(property.value) ||
@@ -99,7 +105,7 @@ export const DynamicConfigValueEditor = ({
         isNested
         isOpenDefault={property.value !== undefined}
       >
-        <item.override
+        <Override
           value={property.value}
           onChange={(value) => {
             onChange(value);
@@ -113,7 +119,7 @@ export const DynamicConfigValueEditor = ({
     editor = (
       <div>
         <Field label={renderLabel()()} description={item.description}>
-          <item.override
+          <Override
             value={property.value}
             onChange={(value) => {
               onChange(value);

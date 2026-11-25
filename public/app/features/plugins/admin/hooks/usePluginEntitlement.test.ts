@@ -1,6 +1,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 
 import { PluginSignatureStatus } from '@grafana/data';
+import { mockLogger } from '@grafana/test-utils/unstable';
 
 import { getPluginEntitlement } from '../api';
 import { type CatalogPlugin } from '../types';
@@ -157,5 +158,25 @@ describe('usePluginEntitlement', () => {
 
     // If the cancelled flag works correctly, no error is thrown and no state update occurs
     expect(mockGetPluginEntitlement).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns not entitled, logs the error, and does not cache when the API call rejects', async () => {
+    const logger = mockLogger('features.plugins');
+    const error = new Error('Invalid plugin ID "test-plugin"');
+    mockGetPluginEntitlement.mockRejectedValue(error);
+
+    const { result, unmount } = renderHook(() => usePluginEntitlement(marketplacePlugin));
+
+    await waitFor(() => {
+      expect(result.current).toEqual({ entitled: false, isLoading: false });
+    });
+    expect(logger.logError).toHaveBeenCalledWith(error, { pluginId: 'test-plugin' });
+
+    unmount();
+    renderHook(() => usePluginEntitlement(marketplacePlugin));
+
+    await waitFor(() => {
+      expect(mockGetPluginEntitlement).toHaveBeenCalledTimes(2);
+    });
   });
 });

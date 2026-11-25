@@ -172,6 +172,7 @@ export const ConfirmConversionModal = ({ importPayload, isOpen, onDismiss }: Mod
         targetDatasourceUid: targetDatasourceUID,
         // Imported rules stay editable in the UI.
         disableProvenance: true,
+        source: 'wizard',
       }).unwrap();
 
       const isRootFolder = isEmpty(targetFolder?.uid);

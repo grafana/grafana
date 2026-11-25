@@ -63,20 +63,24 @@ The examples in the following sections use `v1`, except for [Use the v2 schema](
 
 ## Requirements
 
-If you're running Grafana Enterprise, you'll need to have specific permissions for some endpoints. Refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
+If you're running Grafana Enterprise or Grafana Cloud, some endpoints require specific permissions. For more information, refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/).
 
 ## Endpoints
 
 These are the available endpoints:
 
-| Method | Summary                                                               | URI                                                                          |
-| ------ | --------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| POST   | [Create Dashboard](#create-dashboard)                                 | `/apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards`           |
-| PUT    | [Update Dashboard](#update-dashboard)                                 | `/apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/{uid}`     |
-| GET    | [Get Dashboard](#get-dashboard)                                       | `/apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/{uid}`     |
-| GET    | [Get Dashboard (DTO format)](#retrieve-additional-access-information) | `/apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/{uid}/dto` |
-| GET    | [List Dashboards](#list-dashboards)                                   | `/apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards`           |
-| DELETE | [Delete Dashboard](#delete-dashboard)                                 | `/apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/{uid}`     |
+**Base path:** `/apis/dashboard.grafana.app/v1/namespaces/{namespace}/`
+
+Replace `{namespace}` with your namespace. To learn which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+| Method | Summary                                                               | Path                   |
+| ------ | --------------------------------------------------------------------- | ---------------------- |
+| POST   | [Create Dashboard](#create-dashboard)                                 | `dashboards`           |
+| PUT    | [Update Dashboard](#update-dashboard)                                 | `dashboards/{uid}`     |
+| GET    | [Get Dashboard](#get-dashboard)                                       | `dashboards/{uid}`     |
+| GET    | [Get Dashboard (DTO format)](#retrieve-additional-access-information) | `dashboards/{uid}/dto` |
+| GET    | [List Dashboards](#list-dashboards)                                   | `dashboards`           |
+| DELETE | [Delete Dashboard](#delete-dashboard)                                 | `dashboards/{uid}`     |
 
 ## Create Dashboard
 
@@ -90,7 +94,7 @@ Creates a new dashboard.
 
 **Required permissions**:
 
-See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
+See note in the [introduction](#dashboard-api) for an explanation.
 
 <!-- prettier-ignore-start -->
 | Action              | Scope                                                                                                   |
@@ -285,7 +289,7 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 JSON body schema:
 
-- **metadata.name** – The Grafana [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}). If you do not want to provide this, set metadata.generateName instead to the prefix you would like for the randomly generated `uid` (cannot be an empty string).
+- **metadata.name** – The Grafana [unique identifier](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/#name-name). If you do not want to provide this, set metadata.generateName instead to the prefix you would like for the randomly generated `uid` (cannot be an empty string).
 - **metadata.annotations.grafana.app/folder** - Optional field, the unique identifier of the folder under which the dashboard should be created.
 - **spec** – The dashboard JSON.
 
@@ -526,21 +530,11 @@ Content-Length: 485
   "status": {}
 ```
 
-### Status codes
-
-- **201:** Created
-- **400:** Errors (invalid JSON, missing or invalid fields)
-- **401:** Unauthorized
-- **403:** Access denied, for example because you can't access the folder or the dashboard quota is reached
-- **404:** The folder doesn't exist
-- **409:** Conflict (a dashboard with the same `uid` already exists)
-- **422:** The dashboard doesn't match the schema
-
 ## Update Dashboard
 
 `PUT /apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/{uid}`
 
-Updates an existing dashboard via the dashboard `uid`.
+Updates an existing dashboard via the dashboard `uid`. If no dashboard with that `uid` exists and the request body doesn't include `metadata.resourceVersion`, Grafana creates the dashboard and returns `201 Created`.
 
 **Path parameters**:
 
@@ -549,7 +543,7 @@ Updates an existing dashboard via the dashboard `uid`.
 
 **Required permissions**:
 
-See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
+See note in the [introduction](#dashboard-api) for an explanation.
 
 <!-- prettier-ignore-start -->
 | Action              | Scope                                                                                                   |
@@ -574,7 +568,7 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
     "annotations": {
       "grafana.app/folder": "fef30w4jaxla8b",
       "grafana.app/message": "commit message"
-    },
+    }
   },
   "spec": {
     "title": "New dashboard - updated",
@@ -586,7 +580,7 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 JSON body schema:
 
-- **metadata.name** – The [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}).
+- **metadata.name** – The [unique identifier](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/#name-name).
 - **metadata.annotations.grafana.app/folder** - Optional field, the unique identifier of the folder under which the dashboard should be created.
 - **metadata.annotations.grafana.app/message** - Optional field, to set a commit message for the version history.
 - **spec** – The dashboard JSON.
@@ -629,17 +623,6 @@ Content-Length: 485
 }
 ```
 
-### Status codes
-
-- **200:** OK
-- **201:** Created, if the dashboard doesn't exist
-- **400:** Errors (invalid JSON, missing or invalid fields)
-- **401:** Unauthorized
-- **403:** Access denied, for example because you can't access the folder
-- **404:** The folder doesn't exist
-- **409:** Conflict (the dashboard changed since you read it)
-- **422:** The dashboard doesn't match the schema
-
 ## Get Dashboard
 
 `GET /apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/{uid}`
@@ -653,7 +636,7 @@ Gets a dashboard via the dashboard `uid`.
 
 **Required permissions**:
 
-See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
+See note in the [introduction](#dashboard-api) for an explanation.
 
 <!-- prettier-ignore-start -->
 | Action            | Scope                                                                                                   |
@@ -706,13 +689,6 @@ Content-Length: 485
 }
 ```
 
-### Status codes
-
-- **200:** OK
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Not found
-
 ### Retrieve additional access information
 
 `GET /apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/{uid}/dto`
@@ -739,13 +715,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 The `GET` response includes an additional `access` section with data such as if it's a public dashboard, or the dashboard permissions (admin, editor) of the user who made the request. For the rest of the response, refer to the response in [Get Dashboard](#get-dashboard).
 
-#### Status codes
-
-- **200:** Found
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Not found
-
 ## List Dashboards
 
 `GET /apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards`
@@ -763,7 +732,7 @@ Lists all dashboards in the given organization. You can control the maximum numb
 
 **Required permissions**:
 
-See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
+See note in the [introduction](#dashboard-api) for an explanation.
 
 <!-- prettier-ignore-start -->
 | Action            | Scope                                                                                                   |
@@ -883,12 +852,6 @@ Content-Type: application/json; charset=UTF-8
 
 Continue making requests with the updated `continue` token until you receive a response without a `continue` field in the metadata, indicating you've reached the last page.
 
-### Status codes
-
-- **200:** OK
-- **401:** Unauthorized
-- **403:** Access denied
-
 ## List dashboard history
 
 You can retrieve the full version history of a dashboard using the List endpoint with specific query parameters. For details and examples, refer to [Resource history HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/resource-history/).
@@ -906,7 +869,7 @@ Deletes a dashboard via the dashboard `uid`.
 
 **Required permissions**:
 
-See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
+See note in the [introduction](#dashboard-api) for an explanation.
 
 <!-- prettier-ignore-start -->
 | Action              | Scope                                                                                                   |
@@ -948,13 +911,6 @@ Content-Length: 78
   }
 }
 ```
-
-### Status codes
-
-- **200:** OK
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Not found
 
 ## Use the v2 schema
 
@@ -1082,7 +1038,7 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 JSON body schema:
 
-- **metadata.name** – The Grafana [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}). If you don't want to provide one, set `metadata.generateName` to the prefix you want for the generated UID.
+- **metadata.name** – The Grafana [unique identifier](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/#name-name). If you don't want to provide one, set `metadata.generateName` to the prefix you want for the generated UID.
 - **metadata.annotations.grafana.app/folder** – Optional. The unique identifier of the folder to create the dashboard in.
 - **spec.title**, **spec.description**, **spec.tags** – The title, description, and tags of the dashboard.
 - **spec.elements** – The panels and library panels of the dashboard, keyed by a name that's unique within the dashboard.
@@ -1126,16 +1082,6 @@ Content-Type: application/json; charset=UTF-8
 }
 ```
 
-#### Status codes
-
-- **201:** Created
-- **400:** Errors (invalid JSON, missing or invalid fields)
-- **401:** Unauthorized
-- **403:** Access denied, for example because you can't access the folder or the dashboard quota is reached
-- **404:** The folder doesn't exist
-- **409:** Conflict (a dashboard with the same `uid` already exists)
-- **422:** The dashboard doesn't match the schema
-
 ### Read a dashboard saved in a different schema
 
 When you read a dashboard with a version that doesn't match the schema it was saved in, Grafana converts it. For example, you can read a dashboard saved with `v1` through the `v2` endpoint.
@@ -1168,3 +1114,24 @@ The `status.conversion` object contains the following fields:
 - **failed** – Whether the conversion failed. If `true`, the `spec` in the response isn't valid. Read the dashboard again with the version in `storedVersion`.
 - **storedVersion** – The version the dashboard was saved with. Reading the dashboard with this version always succeeds.
 - **error** – The conversion error message.
+
+## Status codes
+
+The endpoints on this page return the following status codes:
+
+| Code  | Meaning                                                                                           | Returned by                                                                                                                                                    |
+| ----- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `200` | OK.                                                                                               | [Update](#update-dashboard), [Get](#get-dashboard), [Retrieve](#retrieve-additional-access-information), [List](#list-dashboards), [Delete](#delete-dashboard) |
+| `201` | Created.                                                                                          | [Create Dashboard](#create-dashboard), [Create a dashboard with the v2 schema](#create-a-dashboard-with-the-v2-schema)                                         |
+| `201` | Created, if the dashboard doesn't exist.                                                          | [Update](#update-dashboard)                                                                                                                                    |
+| `400` | Bad request (invalid JSON, missing or invalid fields).                                            | [Create Dashboard](#create-dashboard), [Update](#update-dashboard), [Create a dashboard with the v2 schema](#create-a-dashboard-with-the-v2-schema)            |
+| `400` | Bad request (the dashboard is provisioned from a file).                                           | [Delete](#delete-dashboard)                                                                                                                                    |
+| `401` | Unauthorized.                                                                                     | All endpoints                                                                                                                                                  |
+| `403` | Access denied, for example because you can't access the folder or the dashboard quota is reached. | [Create Dashboard](#create-dashboard), [Create a dashboard with the v2 schema](#create-a-dashboard-with-the-v2-schema)                                         |
+| `403` | Access denied, for example because you can't access the folder.                                   | [Update](#update-dashboard)                                                                                                                                    |
+| `403` | Access denied.                                                                                    | [Get](#get-dashboard), [Retrieve](#retrieve-additional-access-information), [List](#list-dashboards), [Delete](#delete-dashboard)                              |
+| `404` | The folder doesn't exist.                                                                         | [Create Dashboard](#create-dashboard), [Update](#update-dashboard), [Create a dashboard with the v2 schema](#create-a-dashboard-with-the-v2-schema)            |
+| `404` | Not found.                                                                                        | [Get](#get-dashboard), [Retrieve](#retrieve-additional-access-information), [Delete](#delete-dashboard)                                                        |
+| `409` | Conflict (a dashboard with the same `uid` already exists).                                        | [Create Dashboard](#create-dashboard), [Create a dashboard with the v2 schema](#create-a-dashboard-with-the-v2-schema)                                         |
+| `409` | Conflict (the dashboard changed since you read it).                                               | [Update](#update-dashboard)                                                                                                                                    |
+| `422` | The dashboard doesn't match the schema.                                                           | [Create Dashboard](#create-dashboard), [Update](#update-dashboard), [Create a dashboard with the v2 schema](#create-a-dashboard-with-the-v2-schema)            |

@@ -1,4 +1,4 @@
-import { State } from 'centrifuge';
+import { Centrifuge, State } from 'centrifuge';
 import { of, lastValueFrom, toArray } from 'rxjs';
 
 import {
@@ -105,6 +105,21 @@ describe('CentrifugeService', () => {
     onError({ type: 'transport', error: { code: 2, message: 'transport closed' } });
 
     expect(get).toHaveBeenCalledWith('/api/login/ping', undefined, undefined, { showErrorAlert: false });
+  });
+
+  it('connects to /api/live/ws by default', () => {
+    new CentrifugeService(makeDeps());
+    expect(Centrifuge).toHaveBeenCalledWith('ws://localhost:3000/api/live/ws', expect.anything());
+  });
+
+  it('connects to the configured websocket path', () => {
+    new CentrifugeService(
+      makeDeps({ websocketPath: '/apis/live.grafana.app/v1alpha1/namespaces/stacks-1/ws', grafanaAuthToken: 'abc' })
+    );
+    expect(Centrifuge).toHaveBeenCalledWith(
+      'ws://localhost:3000/apis/live.grafana.app/v1alpha1/namespaces/stacks-1/ws?auth_token=abc',
+      expect.anything()
+    );
   });
 
   it('should immediately shut down channel when liveEnabled is false', async () => {

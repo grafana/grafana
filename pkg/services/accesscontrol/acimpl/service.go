@@ -66,10 +66,10 @@ func ProvideService(
 	lock *serverlock.ServerLockService, zanzanaClient zanzana.Client,
 	restConfigProvider restcfg.RestConfigProvider,
 	iamFeatures IAMFeatures,
-	legacyClient legacyclient.Service, roleCatalog *legacypermissions.RoleCatalog,
+	legacyClient legacyclient.LegacyUserPermissionsClient, roleCatalog *legacypermissions.RoleCatalog,
 	reg prometheus.Registerer,
 ) (*Service, error) {
-	service := ProvideOSSService(
+	service, err := ProvideOSSService(
 		cfg,
 		database.ProvideService(db),
 		actionResolver,
@@ -83,8 +83,14 @@ func ProvideService(
 		legacyClient, roleCatalog,
 	)
 
+	if err != nil {
+		return nil, err
+	}
 	service.scopeResolver = legacypermissions.NewPermissionScopeResolver(features, restConfigProvider)
-	service.legacyShadow = NewLegacyUserPermissionsShadow(reg, cfg.RBAC.LegacyUserPermissionsShadowMaxConcurrent)
+	service.legacyShadow, err = NewLegacyUserPermissionsShadow(reg, cfg.RBAC.LegacyUserPermissionsShadowMaxConcurrent)
+	if err != nil {
+		return nil, err
+	}
 
 	api.NewAccessControlAPI(routeRegister, accessControl, service, userService).RegisterAPIEndpoints()
 	if err := accesscontrol.DeclareFixedRoles(service); err != nil {
@@ -116,8 +122,12 @@ func ProvideOSSService(
 	cache *localcache.CacheService, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
 	db db.DB, permRegistry permreg.PermissionRegistry, lock *serverlock.ServerLockService,
 	iamFeatures IAMFeatures,
-	legacyClient legacyclient.Service, roleCatalog *legacypermissions.RoleCatalog,
-) *Service {
+	legacyClient legacyclient.LegacyUserPermissionsClient, roleCatalog *legacypermissions.RoleCatalog,
+) (*Service, error) {
+	legacyShadow, err := NewLegacyUserPermissionsShadow(nil, cfg.RBAC.LegacyUserPermissionsShadowMaxConcurrent)
+	if err != nil {
+		return nil, err
+	}
 	s := &Service{
 		actionResolver:            actionResolver,
 		cache:                     cache,
@@ -130,7 +140,7 @@ func ProvideOSSService(
 		permRegistry:              permRegistry,
 		sql:                       db,
 		serverLock:                lock,
-		legacyShadow:              NewLegacyUserPermissionsShadow(nil, cfg.RBAC.LegacyUserPermissionsShadowMaxConcurrent),
+		legacyShadow:              legacyShadow,
 		legacyClient:              legacyClient,
 		roleCatalog:               roleCatalog,
 	}
@@ -140,7 +150,7 @@ func ProvideOSSService(
 		s.seeder = seeding.New(log.New("accesscontrol.seeder"), backend, backend)
 	}
 
-	return s
+	return s, nil
 }
 
 // Service is the service implementing role based access control.
@@ -163,7 +173,7 @@ type Service struct {
 	serverLock                *serverlock.ServerLockService
 	singleFlight              singleflight.Group
 	legacyShadow              *LegacyUserPermissionsShadow
-	legacyClient              legacyclient.Service
+	legacyClient              legacyclient.LegacyUserPermissionsClient
 	userPermissionsClient     accesscontrol.UserPermissionsClient
 	zanzanaResolver           *ZanzanaPermissionResolver
 	scopeResolver             legacyscopes.ScopeResolver

@@ -21,10 +21,13 @@ import { type Repository, type ResourceCount } from 'app/api/clients/provisionin
 import { RecentJobs } from '../Job/RecentJobs';
 import { QuotaLimitNote } from '../Shared/QuotaLimitNote';
 import { MissingFolderMetadataBanner } from '../components/Folders/MissingFolderMetadataBanner';
+import { WorkflowBadges } from '../components/WorkflowBadges';
 import { hasMissingFolderMetadata } from '../utils/folderMetadata';
+import { getRemoteConfig } from '../utils/git';
 import { isQuotaReachedOrExceeded } from '../utils/quota';
+import { getRepositoryResourcesUrl } from '../utils/repository';
 import { isGitHubBased } from '../utils/repositoryTypes';
-import { getKindInfoByStat, getRepositoryRoute } from '../utils/resourceKinds';
+import { getKindInfoByStat } from '../utils/resourceKinds';
 import { formatTimestamp } from '../utils/time';
 
 import { RepositoryHealthCard } from './RepositoryHealthCard';
@@ -77,14 +80,9 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
         id: 'actions',
         header: '',
         cell: ({ row: { original } }: StatCell) => {
-          const info = getKindInfoByStat(original);
-          // Unknown kinds have no destination, so no action.
-          if (!info) {
-            return null;
-          }
           return (
             <Stack justifyContent="flex-end">
-              <LinkButton href={getRepositoryRoute(info, repo)} size="sm" variant="secondary">
+              <LinkButton href={getRepositoryResourcesUrl(repoName, original.resource)} size="sm" variant="secondary">
                 <Trans i18nKey="provisioning.repository-overview.view-resource">View</Trans>
               </LinkButton>
             </Stack>
@@ -93,7 +91,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
         size: 100,
       },
     ],
-    [repo]
+    [repoName]
   );
   return (
     <Box padding={2}>
@@ -110,7 +108,14 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
               data-testid={selectors.pages.Provisioning.RepositoryOverview.resourcesCard}
             >
               <Card.Heading>
-                <Trans i18nKey="provisioning.repository-overview.resources">Resources</Trans>
+                <Stack direction="row" gap={1} alignItems="center" wrap>
+                  <Trans i18nKey="provisioning.repository-overview.resources">Resources</Trans>
+                  <WorkflowBadges
+                    workflows={repo.spec?.workflows}
+                    type={repo.spec?.type}
+                    branch={getRemoteConfig(repo.spec)?.branch}
+                  />
+                </Stack>
               </Card.Heading>
               <Card.Description>
                 {status?.stats ? (

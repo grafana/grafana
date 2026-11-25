@@ -1,19 +1,42 @@
 package router
 
 import (
+	"context"
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+func TestProvideCloudRoutesLoader_LegacySettingsProvider(t *testing.T) {
+	cfg := cfgWithCloudRouterSection(t, map[string]string{"plugins_url": "https://plugins.invalid/plugins"})
+	var gotID string
+	var gotContext context.Context
+	provider := func(ctx context.Context, id string) (grafanarest.Storage, error) {
+		gotContext, gotID = ctx, id
+		return nil, nil
+	}
+	loader, err := ProvideCloudRoutesLoader(cfg, RoutesLoaderClients{}, CloudSettingsDependencies{LegacyStore: provider},
+		tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), prometheus.NewRegistry())
+	require.NoError(t, err)
+	target := pluginManifestsTargetOf(loader.(*cloudLoader), sourcePlugins)
+	require.NotNil(t, target.deps.Settings.LegacyStore)
+	require.Empty(t, gotID, "constructing the cloud loader must not select a plugin or tenant")
+	ctx := t.Context()
+	_, err = target.deps.Settings.LegacyStore(ctx, "example-app")
+	require.NoError(t, err)
+	require.Equal(t, "example-app", gotID)
+	require.Equal(t, ctx, gotContext)
+}
+
 func provideTestCloudRoutesLoader(cfg *setting.Cfg, reg prometheus.Registerer) (RoutesLoader, error) {
-	return ProvideCloudRoutesLoader(cfg, RoutesLoaderClients{}, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), reg)
+	return ProvideCloudRoutesLoader(cfg, RoutesLoaderClients{}, CloudSettingsDependencies{}, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), reg)
 }
 
 func TestProvideCloudRoutesLoader_NotConfigured(t *testing.T) {
@@ -84,7 +107,7 @@ func TestProvideRoutesLoader_NeverLoadsCloudSources(t *testing.T) {
 		} {
 			t.Run(name+"/"+key, func(t *testing.T) {
 				deps := PluginLoaderDependencies{PluginDependencies: PluginDependencies{Features: features}}
-				loader, err := ProvideRoutesLoader(cfgWithCloudRouterSection(t, map[string]string{key: value}), deps)
+				loader, err := ProvideRoutesLoader(cfgWithCloudRouterSection(t, map[string]string{key: value}), deps, nil)
 				require.NoError(t, err)
 				require.IsType(t, noRoutesLoader{}, loader)
 			})
@@ -98,8 +121,8 @@ func TestProvideCloudRoutesLoader_StandaloneIgnoresMiddlewareFlag(t *testing.T) 
 	cfg := cfgWithCloudRouterSection(t, map[string]string{"plugins_url": "https://plugins.invalid/plugins"})
 	cfg.Target = []string{"router"}
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware) //nolint:staticcheck
-	loader, err := ProvideCloudRoutesLoader(cfg, RoutesLoaderClients{}, tracing.InitializeTracerForTest(), features, prometheus.NewRegistry())
+	loader, err := ProvideCloudRoutesLoader(cfg, RoutesLoaderClients{}, CloudSettingsDependencies{}, tracing.InitializeTracerForTest(), features, prometheus.NewRegistry())
 	require.NoError(t, err)
 	require.IsType(t, &cloudLoader{}, loader)
-	require.False(t, middlewareEnabled(cfg, features))
+	require.False(t, MiddlewareEnabled(cfg, features))
 }

@@ -15,12 +15,18 @@ import { transformSaveModelToScene } from '../serialization/transformSaveModelTo
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { findVizPanelByKey } from '../utils/findVizPanel';
 import { activateFullSceneTree } from '../utils/test-utils';
-import * as utils from '../utils/utils';
+import { getDashboardSceneFor } from '../utils/utils';
 
 import { PanelOptionsPane } from './PanelOptionsPane';
 import { testDashboard } from './testfiles/testDashboard';
 
-jest.spyOn(utils, 'getDashboardSceneFor').mockReturnValue(new DashboardScene({}));
+jest.mock('../utils/utils', () =>
+  jest
+    .requireActual('test/helpers/partialMock')
+    .partialMock(jest.requireActual('../utils/utils'), { getDashboardSceneFor: jest.fn() })
+);
+
+jest.mocked(getDashboardSceneFor).mockReturnValue(new DashboardScene({}));
 
 const pluginWithFieldConfig = getPanelPlugin({
   id: 'TestPanel',
@@ -211,6 +217,30 @@ describe('PanelOptionsPane', () => {
       expect(mergedConfig.defaults.unit).toBe('bytes');
     });
 
+    it('Should drop restored custom option expressions when a suggestion sets the custom options', () => {
+      const { optionsPane, panel } = setupTest('panel-1');
+      panel.setState({ fieldConfig: { defaults: { unit: 'bytes', varMappings: { unit: '$unit' } }, overrides: [] } });
+      optionsPane['_cachedPluginOptions']['table'] = {
+        options: {},
+        fieldConfig: {
+          defaults: { custom: { lineWidth: 2 }, varMappings: { 'custom.lineWidth': '$width' } },
+          overrides: [],
+        },
+      };
+
+      const mockOnFieldConfigChange = jest.fn();
+      panel.onFieldConfigChange = mockOnFieldConfigChange;
+
+      optionsPane.onChangePanel({
+        pluginId: 'table',
+        fieldConfig: { defaults: { custom: { lineWidth: 7 } }, overrides: [] },
+      });
+
+      const { defaults } = mockOnFieldConfigChange.mock.calls[0][0];
+      expect(defaults.custom).toEqual({ lineWidth: 7 });
+      expect(defaults.varMappings).toEqual({ unit: '$unit' });
+    });
+
     it('Should use plugin preferred color when suggestion has no color', () => {
       const { optionsPane, panel } = setupTest('panel-1');
 
@@ -368,6 +398,80 @@ function setupTest(panelId: string) {
 describe('initial query defaults', () => {
   afterEach(() => setPanelPluginMetas({}));
 
+  it.each([false, undefined])('restores a default query when switching to skipDefaultQuery=%s', (skipDefaultQuery) => {
+    setPanelPluginMetas({
+      custom: { skipDefaultQuery: true } as PanelPluginMeta,
+      normal: { skipDefaultQuery } as PanelPluginMeta,
+    });
+    const runner = new SceneQueryRunner({ queries: [{ refId: 'A' }] });
+    const runQueries = jest.spyOn(runner, 'runQueries').mockImplementation(() => {});
+    const panel = new VizPanel({ pluginId: 'timeseries', $data: runner });
+    jest.spyOn(panel, 'changePluginType').mockResolvedValue();
+    const pane = new PanelOptionsPane({
+      panelRef: panel.getRef(),
+      isNewPanel: true,
+      isVizPickerOpen: true,
+      searchQuery: '',
+      listMode: OptionFilter.All,
+    });
+
+    pane.onChangePanel({ pluginId: 'custom' });
+    expect(runner.state.queries).toEqual([]);
+    pane.onToggleVizPicker();
+    pane.onChangePanel({ pluginId: 'normal' });
+    expect(runner.state.queries).toEqual([{ refId: 'A' }]);
+    expect(runQueries).toHaveBeenCalledTimes(1);
+    pane.onToggleVizPicker();
+    pane.onChangePanel({ pluginId: 'custom' });
+    expect(runner.state.queries).toEqual([]);
+  });
+
+  it('does not execute a default query when switching to a queryless plugin', () => {
+    setPanelPluginMetas({
+      custom: { skipDefaultQuery: true } as PanelPluginMeta,
+      normal: { skipDataQuery: true } as PanelPluginMeta,
+    });
+    const runner = new SceneQueryRunner({ queries: [{ refId: 'A' }] });
+    const runQueries = jest.spyOn(runner, 'runQueries').mockImplementation(() => {});
+    const panel = new VizPanel({ pluginId: 'timeseries', $data: runner });
+    jest.spyOn(panel, 'changePluginType').mockResolvedValue();
+    const pane = new PanelOptionsPane({
+      panelRef: panel.getRef(),
+      isNewPanel: true,
+      isVizPickerOpen: true,
+      searchQuery: '',
+      listMode: OptionFilter.All,
+    });
+
+    pane.onChangePanel({ pluginId: 'custom' });
+    expect(runner.state.queries).toEqual([]);
+    pane.onToggleVizPicker();
+    pane.onChangePanel({ pluginId: 'normal' });
+    expect(runner.state.queries).toEqual([]);
+    expect(runQueries).not.toHaveBeenCalled();
+    pane.onToggleVizPicker();
+    pane.onChangePanel({ pluginId: 'custom' });
+    expect(runner.state.queries).toEqual([]);
+  });
+
+  it('preserves configured queries when switching back to a plugin that skips the default query', () => {
+    setPanelPluginMetas({ custom: { skipDefaultQuery: true } as PanelPluginMeta });
+    const queries = [{ refId: 'A', expr: 'up' }];
+    const runner = new SceneQueryRunner({ queries });
+    const panel = new VizPanel({ pluginId: 'timeseries', $data: runner });
+    jest.spyOn(panel, 'changePluginType').mockResolvedValue();
+    const pane = new PanelOptionsPane({
+      panelRef: panel.getRef(),
+      hasPickedViz: true,
+      isVizPickerOpen: true,
+      searchQuery: '',
+      listMode: OptionFilter.All,
+    });
+
+    pane.onChangePanel({ pluginId: 'custom' });
+    expect(runner.state.queries).toEqual([{ refId: 'A', expr: 'up' }]);
+  });
+
   it.each(['normal', 'custom', 'close'])('preserves queries during preview, then commits %s', (selection) => {
     setPanelPluginMetas({ custom: { skipDefaultQuery: true } as PanelPluginMeta });
     const runner = new SceneQueryRunner({ queries: [{ refId: 'A' }] });
@@ -394,23 +498,20 @@ describe('initial query defaults', () => {
     expect(runner.state.queries).toEqual(selection === 'normal' ? [{ refId: 'A' }] : []);
   });
 
-  it.each([false, true])(
-    'only clears the starter on the first visualization choice (already picked=%s)',
-    (hasPickedViz) => {
-      setPanelPluginMetas({ custom: { skipDefaultQuery: true } as PanelPluginMeta });
-      const runner = new SceneQueryRunner({ queries: [{ refId: 'A' }] });
-      const panel = new VizPanel({ pluginId: 'timeseries', $data: runner });
-      jest.spyOn(panel, 'changePluginType').mockResolvedValue();
-      const pane = new PanelOptionsPane({
-        panelRef: panel.getRef(),
-        isNewPanel: true,
-        hasPickedViz,
-        isVizPickerOpen: true,
-        searchQuery: '',
-        listMode: OptionFilter.All,
-      });
-      pane.onChangePanel({ pluginId: 'custom' });
-      expect(runner.state.queries).toEqual(hasPickedViz ? [{ refId: 'A' }] : []);
-    }
-  );
+  it.each([false, true])('clears the untouched starter on visualization choice (already picked=%s)', (hasPickedViz) => {
+    setPanelPluginMetas({ custom: { skipDefaultQuery: true } as PanelPluginMeta });
+    const runner = new SceneQueryRunner({ queries: [{ refId: 'A' }] });
+    const panel = new VizPanel({ pluginId: 'timeseries', $data: runner });
+    jest.spyOn(panel, 'changePluginType').mockResolvedValue();
+    const pane = new PanelOptionsPane({
+      panelRef: panel.getRef(),
+      isNewPanel: true,
+      hasPickedViz,
+      isVizPickerOpen: true,
+      searchQuery: '',
+      listMode: OptionFilter.All,
+    });
+    pane.onChangePanel({ pluginId: 'custom' });
+    expect(runner.state.queries).toEqual([]);
+  });
 });

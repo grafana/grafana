@@ -113,3 +113,22 @@ describe.each([
     expect(override.pattern('anyName', operation(path, verb))).toBe(overridden);
   });
 });
+
+describe('rule search configuration in rules.alerting/v0alpha1', () => {
+  if (!('outputFiles' in config)) {
+    throw new Error('expected output files');
+  }
+  const apiConfig = config.outputFiles['../clients/rtkq/rules.alerting/v0alpha1/endpoints.gen.ts'];
+
+  it.each([
+    ['/searchAlertRules', 'post', true],
+    ['/searchRecordingRules', 'post', true],
+    ['/alertrules', 'post', false],
+  ] as const)('overrides %s %s as a query: %s', (path, verb, overridden) => {
+    const override = apiConfig.endpointOverrides?.[0];
+    if (typeof override?.pattern !== 'function') {
+      throw new Error('expected an endpoint matcher');
+    }
+    expect(override.pattern('anyName', operation(path, verb))).toBe(overridden);
+  });
+});

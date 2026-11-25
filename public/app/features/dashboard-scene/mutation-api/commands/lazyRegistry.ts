@@ -79,6 +79,7 @@ export const LAZY_DASHBOARD_COMMANDS: LazyMutationCommand[] = [
   { name: 'REDO', load: () => import('./history').then((module) => module.redoCommand) },
   { name: 'RENDER_PLAN', load: () => import('./renderPlan').then((module) => module.renderPlanCommand) },
   { name: 'END_PLANNING', load: () => import('./endPlanning').then((module) => module.endPlanningCommand) },
+  { name: 'GET_PLAN', readOnly: true, load: () => import('./getPlan').then((module) => module.getPlanCommand) },
   {
     name: 'RELOAD_FROM_SERVER',
     readOnly: true,

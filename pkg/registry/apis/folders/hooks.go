@@ -2,16 +2,13 @@ package folders
 
 import (
 	"context"
-	"fmt"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/util"
@@ -91,23 +88,15 @@ func (b *FolderAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteOptio
 		}
 	}
 
-	resourcePermissionsSvc, err := b.resourcePermissionsClient(ctx)
-	if err != nil {
-		log.Error("failed to get resource permissions client", "error", err)
-		return
-	}
-	if resourcePermissionsSvc != nil {
+	if b.resourcePermissions != nil {
 		log.Debug("deleting folder permissions", "uid", meta.GetName(), "namespace", meta.GetNamespace())
-		client := (*resourcePermissionsSvc).Namespace(meta.GetNamespace())
-		err := client.Delete(ctx, fmt.Sprintf("%s-%s-%s", folders.FolderResourceInfo.GroupVersionResource().Group, folders.FolderResourceInfo.GroupVersionResource().Resource, meta.GetName()), metav1.DeleteOptions{})
-		if err != nil && !apierrors.IsNotFound(err) {
+		if err := b.resourcePermissions.DeletePermissions(ctx, meta.GetNamespace(), meta.GetName()); err != nil {
 			log.Error("failed to delete folder permissions", "error", err)
 		}
 		return
 	}
 
-	// TODO: once the feature flag kubernetesAuthzResourcePermissionApis is removed, we should initialize resourcePermissionsSvc
-	// in the RegisterAPIService function and the below should be removed
+	// TODO: once the feature flag kubernetesAuthzResourcePermissionApis is removed, the legacy service path below can be removed.
 	if !util.IsInterfaceNil(b.folderPermissionsSvc) {
 		ns, err := claims.ParseNamespace(meta.GetNamespace())
 		if err != nil {

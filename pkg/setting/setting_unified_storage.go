@@ -99,8 +99,8 @@ var MigratedUnifiedResources = map[string]bool{
 	ShortURLResource:         true,  // Only Mode5!
 	SnapshotResource:         false, // Requires kubernetesSnapshots to be enabled by default
 	LibraryPanelResource:     false, // Explicit migration opt-in; legacy storage remains the default
-	StarsResource:            false,
-	PreferencesResource:      true, // Only Mode5!
+	StarsResource:            true,  // Only Mode5!
+	PreferencesResource:      true,  // Only Mode5!
 	DataSourceResources:      false,
 	QueryCacheConfigResource: false,
 }
@@ -252,6 +252,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.SearchPostRankAuthzMaxWindow = section.Key("search_post_rank_authz_max_window").MustInt(0)
 	cfg.SearchPostRankAuthzMaxCandidates = section.Key("search_post_rank_authz_max_candidates").MustInt(0)
 	cfg.SearchPostRankAuthzFacetSampleSize = section.Key("search_post_rank_authz_facet_sample_size").MustInt(0)
+	cfg.SearchPostRankAuthzExactCountThreshold = max(0, section.Key("search_post_rank_authz_exact_count_threshold").MustInt(0))
 	cfg.EnableVectorBackend = section.Key("vector_backend").MustBool(false)
 	cfg.EnableVectorStore = section.Key("vector_store_enabled").MustBool(false)
 	cfg.VectorAllowedInternalCollections = section.Key("vector_allowed_internal_collections").Strings(",")
@@ -292,6 +293,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// default to 24 hours because usage insights summarizes the data every 24 hours
 	cfg.IndexRebuildInterval = section.Key("index_rebuild_interval").MustDuration(24 * time.Hour)
 	cfg.IndexCacheTTL = section.Key("index_cache_ttl").MustDuration(10 * time.Minute)
+	cfg.IndexCacheTTLIdleOnly = section.Key("index_cache_ttl_idle_only").MustBool(false)
 	cfg.IndexMinUpdateInterval = section.Key("index_min_update_interval").MustDuration(0)
 	cfg.IndexModificationCacheTTL = section.Key("index_modification_cache_ttl").MustDuration(0)
 	// Off by default: this builds a global index per namespace, holding the
@@ -348,8 +350,9 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.EventRetentionPeriod = section.Key("event_retention_period").MustDuration(1 * time.Hour)
 	cfg.EventPruningInterval = section.Key("event_pruning_interval").MustDuration(5 * time.Minute)
 	cfg.SearchLookback = section.Key("search_lookback").MustDuration(1 * time.Second)
-	cfg.NotifierSettleDelay = section.Key("notifier_settle_delay").MustDuration(3 * time.Second)
-	cfg.FastLatestKeyLookupEnabled = section.Key("fast_latest_key_lookup_enabled").MustBool(false)
+	// Unset leaves each notifier its own default: 100ms for legacy SQL watches
+	// fed from NATS, 3s otherwise.
+	cfg.NotifierSettleDelay = section.Key("notifier_settle_delay").MustDuration(0)
 	cfg.ResourceVersionBatchTransactionTimeout = section.Key("resource_version_batch_transaction_timeout").MustDuration(5 * time.Second)
 	cfg.ResourceVersionMaxWait = section.Key("resource_version_max_wait").MustDuration(time.Second)
 
@@ -672,12 +675,30 @@ func explicitlySet(section *ini.Section, key string) bool {
 	return section.HasKey(key) && strings.TrimSpace(section.Key(key).String()) != ""
 }
 
-// UnifiedStorageConfig returns the UnifiedStorageConfig for a resource.
+// AppPluginSettingsWildcard is a config key that applies to all app plugin settings
+// resources when no plugin-specific override exists. Configure it as:
+//
+//	[unified_storage.app.*-app]
+//	dualWriterMode = 1 // or 5
+const AppPluginSettingsWildcard = "app.*-app"
+
+// UnifiedStorageConfig returns the UnifiedStorageConfig for a resource. An app plugin's
+// settings resource ("app.<plugin-id>") without its own entry takes the dual writer mode
+// of AppPluginSettingsWildcard. Plugins can load after startup, so this resolves the
+// wildcard on read instead of writing an entry for each plugin into the shared map.
 func (cfg *Cfg) UnifiedStorageConfig(resource string) UnifiedStorageConfig {
 	if cfg.UnifiedStorage == nil {
 		return UnifiedStorageConfig{}
 	}
-	return cfg.UnifiedStorage[resource]
+	if config, ok := cfg.UnifiedStorage[resource]; ok {
+		return config
+	}
+	if strings.HasPrefix(resource, "app.") && strings.HasSuffix(resource, "-app") {
+		if fallback, ok := cfg.UnifiedStorage[AppPluginSettingsWildcard]; ok {
+			return UnifiedStorageConfig{DualWriterMode: fallback.DualWriterMode}
+		}
+	}
+	return UnifiedStorageConfig{}
 }
 
 // EnableMode5 enables migration and sets mode 5 for a resource.

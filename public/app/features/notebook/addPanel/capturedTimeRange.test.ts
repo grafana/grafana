@@ -7,6 +7,7 @@ import {
   captureTimeRange,
   describeCapturedTimeRange,
   shouldLockCapturedTimeRange,
+  toAbsoluteCapturedTimeRange,
   withCapturedTimeRange,
 } from './capturedTimeRange';
 
@@ -143,5 +144,34 @@ describe('withCapturedTimeRange', () => {
     const reference = defaultLibraryPanelKind();
 
     expect(withCapturedTimeRange(reference, { from: '2026-10-05T08:00:00.000Z', to: 'now' })).toEqual(reference);
+  });
+});
+
+describe('toAbsoluteCapturedTimeRange', () => {
+  it('resolves both relative ends to ISO instants', () => {
+    const range = toAbsoluteCapturedTimeRange({ from: 'now-1h', to: 'now', timeZone: 'utc' });
+
+    expect(range.from).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(range.to).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(Date.parse(range.to) - Date.parse(range.from)).toBeGreaterThanOrEqual(3600 * 1000 - 1000);
+    expect(range.timeZone).toBe('utc');
+  });
+
+  it('keeps an absolute end as written', () => {
+    const range = toAbsoluteCapturedTimeRange({ from: '2026-01-01T00:00:00.000Z', to: 'now' });
+
+    expect(range.from).toBe('2026-01-01T00:00:00.000Z');
+    expect(range.to).not.toBe('now');
+  });
+});
+
+describe('toAbsoluteCapturedTimeRange with a fiscal calendar', () => {
+  // Under an April fiscal year, the start of the fiscal year is not 1 January.
+  it('resolves date math against the source fiscal year', () => {
+    const jan = toAbsoluteCapturedTimeRange({ from: 'now/fy', to: 'now', timeZone: 'utc', fiscalYearStartMonth: 0 });
+    const apr = toAbsoluteCapturedTimeRange({ from: 'now/fy', to: 'now', timeZone: 'utc', fiscalYearStartMonth: 3 });
+
+    expect(new Date(jan.from).getUTCMonth()).toBe(0);
+    expect(new Date(apr.from).getUTCMonth()).toBe(3);
   });
 });

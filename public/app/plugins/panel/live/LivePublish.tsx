@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { type LiveChannelAddress, isValidLiveChannelAddress } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -25,7 +25,11 @@ export function LivePublish({ height, mode, body, addr, onSave }: Props) {
   }, [mode, body]);
   const [draft, setDraft] = useState(txt);
 
-  useEffect(() => setDraft(txt), [txt]);
+  const [prevTxt, setPrevTxt] = useState(txt);
+  if (txt !== prevTxt) {
+    setPrevTxt(txt);
+    setDraft(txt);
+  }
 
   const doSave = (v: string) => {
     if (mode === MessagePublishMode.JSON) {

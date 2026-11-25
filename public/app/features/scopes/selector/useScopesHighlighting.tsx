@@ -1,11 +1,10 @@
 import { useState } from 'react';
 
-import { useScopesServices } from '../ScopesContextProvider';
-
 import { getTreeItemElementId } from './ScopesTreeItem';
 import { isNodeExpandable, isNodeSelectable } from './scopesTreeUtils';
 import { type NodesMap, type SelectedScope, type TreeNode } from './types';
 import { KeyboardAction, useKeyboardInteraction } from './useKeyboardInteractions';
+import { useScopeActions } from './useScopeActions';
 
 interface UseScopesHighlightingParams {
   selectedNodes: TreeNode[];
@@ -30,8 +29,7 @@ export function useScopesHighlighting({
 }: UseScopesHighlightingParams) {
   // Enable keyboard highlighting when the search field is focused
   const [highlightEnabled, setHighlightEnabled] = useState(false);
-  const services = useScopesServices();
-  const { changeScopes } = services?.scopesSelectorService || {};
+  const { changeScopes } = useScopeActions();
 
   const items = [...selectedNodes, ...resultNodes];
 
@@ -61,8 +59,8 @@ export function useScopesHighlighting({
         ? scopeNodes[scopeNodes[nodeId]?.spec.parentName]
         : undefined;
 
-      if (parentNode?.spec.disableMultiSelect && changeScopes && scopeNodes[nodeId]?.spec.linkId) {
-        changeScopes([scopeNodes[nodeId].spec.linkId], undefined, nodeId);
+      if (parentNode?.spec.disableMultiSelect && scopeNodes[nodeId]?.spec.linkId) {
+        changeScopes([scopeNodes[nodeId].spec.linkId], { scopeNodeId: nodeId });
         return;
       }
 

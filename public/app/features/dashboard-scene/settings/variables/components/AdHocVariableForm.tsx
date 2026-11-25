@@ -89,6 +89,7 @@ export function AdHocVariableForm({
           tooltip={infoText}
         >
           <DataSourcePicker
+            journeySurface="variable_editor"
             current={datasource}
             onChange={onDataSourceChange}
             width={inline ? undefined : 30}

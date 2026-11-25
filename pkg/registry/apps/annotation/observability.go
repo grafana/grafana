@@ -29,6 +29,8 @@ func statusLabel(err error) string {
 		return "forbidden"
 	case isBadRequest(err):
 		return "bad_request"
+	case isCanceledErr(err):
+		return "canceled"
 	default:
 		return "error"
 	}
@@ -37,7 +39,7 @@ func statusLabel(err error) string {
 // isExpectedClientError reports whether err is part of normal API traffic
 // useful to choose appropriate spans / events / label
 func isExpectedClientError(err error) bool {
-	return isNotFound(err) || isAlreadyExists(err) || isForbidden(err) || isBadRequest(err)
+	return isNotFound(err) || isAlreadyExists(err) || isForbidden(err) || isBadRequest(err) || isCanceledErr(err)
 }
 
 func isNotFound(err error) bool {

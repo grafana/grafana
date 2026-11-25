@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { OrgRole } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -29,7 +29,14 @@ export const AddPermission = ({
   const [teamUid, setTeamUid] = useState('');
   const [userUid, setUserUid] = useState('');
   const [builtInRole, setBuiltinRole] = useState('');
-  const [permission, setPermission] = useState('');
+  const [permission, setPermission] = useState(permissions.length > 0 ? permissions[0] : '');
+  const [prevPermissions, setPrevPermissions] = useState(permissions);
+  if (prevPermissions !== permissions) {
+    setPrevPermissions(permissions);
+    if (permissions.length > 0) {
+      setPermission(permissions[0]);
+    }
+  }
 
   const targetOptions = useMemo(() => {
     const options = [];
@@ -53,12 +60,6 @@ export const AddPermission = ({
     }
     return options;
   }, [assignments]);
-
-  useEffect(() => {
-    if (permissions.length > 0) {
-      setPermission(permissions[0]);
-    }
-  }, [permissions]);
 
   const isValid = () =>
     (target === PermissionTarget.Team && teamUid) ||

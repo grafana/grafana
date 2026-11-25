@@ -1,0 +1,13 @@
+apiVersion: notifications.alerting.grafana.app/v1beta1
+kind: Receiver
+metadata:
+  annotations:
+    # The server derives the name from the spec.
+    compat.grafana.app/server-named: "true"
+spec:
+  title: compat-smoke-receiver
+  integrations:
+    - type: email
+      version: v1
+      settings:
+        addresses: compat-smoke@example.com

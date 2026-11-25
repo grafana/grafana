@@ -1,0 +1,12 @@
+apiVersion: notifications.alerting.grafana.app/v1beta1
+kind: TimeInterval
+metadata:
+  annotations:
+    # The server derives the name from the spec.
+    compat.grafana.app/server-named: "true"
+spec:
+  name: compat-smoke-interval
+  time_intervals:
+    - times:
+        - start_time: "00:00"
+          end_time: "01:00"

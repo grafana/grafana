@@ -305,11 +305,12 @@ func TestZanzanaPermissionResolver_MergeSearch(t *testing.T) {
 
 func setupServiceWithFakeStore(t *testing.T, store accesscontrol.Store, zClient zanzana.Client, userSvc user.Service) *Service {
 	cfg := setting.NewCfg()
-	svc := ProvideOSSService(
+	svc, initErr := ProvideOSSService(
 		cfg, store, resourcepermissions.NewActionSetService(), localcache.ProvideService(),
 		featuremgmt.WithFeatures(featuremgmt.FlagZanzanaMergeUserPermissions), tracing.InitializeTracerForTest(),
 		nil, permreg.ProvidePermissionRegistry(), nil, iam.Features{}, nil, nil,
 	)
+	require.NoError(t, initErr)
 	if zClient != nil {
 		svc.zanzanaResolver = NewZanzanaPermissionResolver(zClient, userSvc, nil, false)
 	}

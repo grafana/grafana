@@ -1619,6 +1619,18 @@
           },
           "additionalProperties": false
         },
+        "navmenu": {
+          "type": "object",
+          "properties": {
+            "activeItemBackground": {
+              "type": "string"
+            },
+            "activeItemText": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
         "horizontalDrawer": {
           "type": "object",
           "properties": {

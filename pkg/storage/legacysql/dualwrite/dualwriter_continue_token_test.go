@@ -1,9 +1,15 @@
 package dualwrite
 
 import (
+	"context"
+	"encoding/base64"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
+
+	"github.com/grafana/grafana/pkg/apiserver/rest"
 )
 
 func TestParseContinueTokens(t *testing.T) {
@@ -95,4 +101,21 @@ func TestInvalidToken(t *testing.T) {
 	invalidToken := "325232ff4fF->"
 	_, _, err := parseContinueTokens(invalidToken)
 	require.Error(t, err)
+	require.True(t, apierrors.IsBadRequest(err))
+}
+
+func TestListRejectsMalformedContinueToken(t *testing.T) {
+	for _, token := range []string{
+		"not-base64!",
+		base64.StdEncoding.EncodeToString([]byte("legacy,unified,extra")),
+		base64.StdEncoding.EncodeToString([]byte(",")),
+	} {
+		legacy, unified := &fakeStorage{}, &fakeStorage{}
+		store, err := newStorage(kind, rest.Mode1, legacy, unified)
+		require.NoError(t, err)
+		_, err = store.List(context.Background(), &metainternalversion.ListOptions{Continue: token})
+		require.True(t, apierrors.IsBadRequest(err), "got %v", err)
+		require.Empty(t, legacy.listCalls)
+		require.Empty(t, unified.listCalls)
+	}
 }

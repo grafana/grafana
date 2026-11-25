@@ -3092,6 +3092,25 @@
       {
         "element": "input",
         "inputType": "text",
+        "label": "API URL",
+        "description": "Telegram Bot API base URL. Leave empty to use the default Telegram API.",
+        "placeholder": "https://api.telegram.org",
+        "propertyName": "api_url",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": false,
+        "protected": true,
+        "validationRule": "",
+        "secure": false,
+        "dependsOn": "",
+        "subformOptions": null
+      },
+      {
+        "element": "input",
+        "inputType": "text",
         "label": "BOT API Token",
         "description": "",
         "placeholder": "Telegram BOT API Token",
@@ -3239,6 +3258,24 @@
         "description": "Sends the message silently. Users will receive a notification with no sound.",
         "placeholder": "",
         "propertyName": "disable_notifications",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": false,
+        "validationRule": "",
+        "secure": false,
+        "dependsOn": "",
+        "subformOptions": null
+      },
+      {
+        "element": "checkbox",
+        "inputType": "",
+        "label": "Send Message as Image Caption",
+        "description": "Sends a notification with one screenshot and a short message as a single Telegram photo with caption. Longer messages and notifications with multiple screenshots are sent separately.",
+        "placeholder": "",
+        "propertyName": "send_message_as_caption",
         "selectOptions": null,
         "showWhen": {
           "field": "",

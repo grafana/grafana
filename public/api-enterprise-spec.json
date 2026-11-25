@@ -780,6 +780,143 @@
         }
       }
     },
+    "/dashboards/variables/promote": {
+      "post": {
+        "description": "Creates the Variable if it does not exist yet, then removes the local variable from each\ndashboard and opts the dashboard in to the shared one. Provisioned dashboards and ones\nthis tool cannot convert are skipped and reported in `results`. A cluster with more than\n200 dashboards is promoted in batches: pass up to 200 `dashboardUIDs` per call and repeat\nuntil `remaining` is 0.\n\nRequires the same permissions as `GET /dashboards/variables/shared-clusters`, plus\n`variables:create` with scope `folders:*`.",
+        "tags": [
+          "dashboard_variables",
+          "enterprise"
+        ],
+        "summary": "Turns a cluster into a shared Variable and removes the matching local copies from its\ndashboards.",
+        "operationId": "promoteSharedVariableCluster",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SharedVariablePromoteRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/promoteSharedVariableClusterResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/dashboards/variables/shared-clusters": {
+      "get": {
+        "description": "The scan runs in the background, so this returns immediately. While a scan runs, `status`\nis `scanning` and `clusters` holds the previous result. At most 50 clusters are returned,\nlargest first; `truncated` is set when there are more. Opening this endpoint marks the org\nas active, which keeps its scheduled scans running.\n\nRequires the `dashboardGlobalVariables` and `dashboardVariablesMigration` feature toggles;\nevery endpoint returns 404 while either is off. Requires `dashboards:read` and\n`dashboards:write` on every dashboard in the org (scope `dashboards:*` or `folders:*`).",
+        "tags": [
+          "dashboard_variables",
+          "enterprise"
+        ],
+        "summary": "Returns the dashboard variables that are defined identically in several dashboards, from\nthe org's latest background scan.",
+        "operationId": "getSharedVariableClusters",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getSharedVariableClustersResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/dashboards/variables/shared-clusters/occurrences": {
+      "get": {
+        "description": "Requires the same permissions as `GET /dashboards/variables/shared-clusters`.",
+        "tags": [
+          "dashboard_variables",
+          "enterprise"
+        ],
+        "summary": "Returns the dashboards in one cluster from the org's latest scan, and whether this tool\ncan update each one.",
+        "operationId": "getSharedVariableClusterOccurrences",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The cluster's id, from `GET /dashboards/variables/shared-clusters`.",
+            "name": "id",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getSharedVariableClusterOccurrencesResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/dashboards/variables/shared-clusters/rescan": {
+      "post": {
+        "description": "Requires the same permissions as `GET /dashboards/variables/shared-clusters`.",
+        "tags": [
+          "dashboard_variables",
+          "enterprise"
+        ],
+        "summary": "Starts a background scan of the org's dashboards. Poll\n`GET /dashboards/variables/shared-clusters` for progress. If a scan is already running,\nthis does not start another.",
+        "operationId": "rescanSharedVariableClusters",
+        "responses": {
+          "202": {
+            "$ref": "#/responses/rescanSharedVariableClustersResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/datasources/uid/{uid}/lbac/teams": {
       "get": {
         "tags": [
@@ -7602,6 +7739,225 @@
     "ShareType": {
       "type": "string"
     },
+    "SharedVariableCluster": {
+      "description": "SharedVariableCluster is a set of dashboards that share an identical local variable\ndefinition.",
+      "type": "object",
+      "properties": {
+        "conflictReason": {
+          "type": "string"
+        },
+        "count": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "fingerprint": {
+          "type": "string"
+        },
+        "folderUID": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "nameConflict": {
+          "type": "boolean"
+        },
+        "noWritableDashboards": {
+          "description": "NoWritableDashboards means promote would change nothing: every dashboard is locked.",
+          "type": "boolean"
+        },
+        "promoted": {
+          "description": "Promoted means the Variable exists and only local copies remain to strip.",
+          "type": "boolean"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "spec": {}
+      }
+    },
+    "SharedVariableClusters": {
+      "type": "object",
+      "title": "SharedVariableClusters is the org's latest scan result.",
+      "properties": {
+        "clusters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SharedVariableCluster"
+          }
+        },
+        "dashboards": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "error": {
+          "type": "string"
+        },
+        "progress": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "scannedAt": {
+          "description": "ScannedAt is when the clusters were computed; dashboards may have changed since.",
+          "type": "string",
+          "format": "date-time"
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "description": "Status is \"scanning\", \"ready\" or \"failed\". While scanning, clusters are the previous result.",
+          "type": "string"
+        },
+        "totalClusters": {
+          "description": "TotalClusters counts every qualifying cluster; Truncated is set when clusters holds\nonly the largest of them.",
+          "type": "integer",
+          "format": "int64"
+        },
+        "truncated": {
+          "type": "boolean"
+        }
+      }
+    },
+    "SharedVariableDashboardPromoteResult": {
+      "type": "object",
+      "title": "DashboardPromoteResult is the outcome for one dashboard update.",
+      "properties": {
+        "dashboardUID": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "skipReason": {
+          "description": "SkipReason is the scanner's reason for a dashboard this tool cannot write.",
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
+    "SharedVariableOccurrence": {
+      "type": "object",
+      "title": "Occurrence is one dashboard that contains a matching local variable.",
+      "properties": {
+        "dashboardUID": {
+          "type": "string"
+        },
+        "folderUID": {
+          "type": "string"
+        },
+        "markedReadOnly": {
+          "description": "MarkedReadOnly is a dashboard whose own Editable setting is off. That is not a lock:\nanyone who can edit the dashboard can still save it, so promote still writes it. But it\noften means the dashboard is maintained as code elsewhere, whose next push would bring\nthe local copy back, so the UI calls it out.",
+          "type": "boolean"
+        },
+        "skipReason": {
+          "type": "string"
+        },
+        "storedVersion": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "writable": {
+          "type": "boolean"
+        }
+      }
+    },
+    "SharedVariableOccurrences": {
+      "type": "object",
+      "title": "SharedVariableOccurrences lists the dashboards in one cluster.",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "occurrences": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SharedVariableOccurrence"
+          }
+        }
+      }
+    },
+    "SharedVariablePromoteRequest": {
+      "description": "PromoteRequest creates/ensures a cluster's Variable and strips matching locals from its\ndashboards.",
+      "type": "object",
+      "properties": {
+        "clusterId": {
+          "description": "ClusterID is the cluster to promote, from the org's latest snapshot.",
+          "type": "string"
+        },
+        "dashboardUIDs": {
+          "description": "DashboardUIDs limits which dashboards are updated, at most MaxPromoteBatch (200). Empty means\nthe whole cluster, which is allowed only when it fits in one batch.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "folderUID": {
+          "description": "FolderUID is the folder for a folder Scope override.",
+          "type": "string"
+        },
+        "scope": {
+          "$ref": "#/definitions/SharedVariableScope"
+        }
+      }
+    },
+    "SharedVariablePromoteResult": {
+      "type": "object",
+      "title": "PromoteResult is the promote API response.",
+      "properties": {
+        "clusterId": {
+          "type": "string"
+        },
+        "folderUID": {
+          "type": "string"
+        },
+        "remaining": {
+          "description": "Remaining counts the cluster's dashboards in the snapshot still to strip after this\nbatch; ones this tool cannot write, or that the Variable's scope does not cover, are\nnot counted.",
+          "type": "integer",
+          "format": "int64"
+        },
+        "results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SharedVariableDashboardPromoteResult"
+          }
+        },
+        "scope": {
+          "$ref": "#/definitions/SharedVariableScope"
+        },
+        "variableAction": {
+          "type": "string"
+        },
+        "variableName": {
+          "type": "string"
+        }
+      }
+    },
+    "SharedVariableRescanResult": {
+      "type": "object",
+      "title": "SharedVariableRescanResult acknowledges a scan request.",
+      "properties": {
+        "status": {
+          "description": "Status is always \"scanning\".",
+          "type": "string"
+        }
+      }
+    },
+    "SharedVariableScope": {
+      "type": "string",
+      "title": "Scope is the recommended Variable resource scope for a cluster: \"global\" or \"folder\"."
+    },
     "SignatureAlgorithm": {
       "type": "integer",
       "format": "int64"
@@ -9759,6 +10115,18 @@
         }
       }
     },
+    "getSharedVariableClusterOccurrencesResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/SharedVariableOccurrences"
+      }
+    },
+    "getSharedVariableClustersResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/SharedVariableClusters"
+      }
+    },
     "getSharingOptionsResponse": {
       "description": "",
       "schema": {
@@ -10140,6 +10508,12 @@
         "$ref": "#/definitions/ErrorResponseBody"
       }
     },
+    "promoteSharedVariableClusterResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/SharedVariablePromoteResult"
+      }
+    },
     "publicErrorResponse": {
       "description": "",
       "schema": {
@@ -10174,6 +10548,12 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/ActiveUserStats"
+      }
+    },
+    "rescanSharedVariableClustersResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/SharedVariableRescanResult"
       }
     },
     "resourceDependenciesResponse": {

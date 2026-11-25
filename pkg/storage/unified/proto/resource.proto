@@ -133,8 +133,8 @@ message CreateRequest {
 }
 
 message CreateResponse {
-  // Error details
-  ErrorResult error = 1;
+  reserved 1;
+  reserved "error";
 
   // The updated resource version
   int64 resource_version = 2;
@@ -152,8 +152,8 @@ message UpdateRequest {
 }
 
 message UpdateResponse {
-  // Error details
-  ErrorResult error = 1;
+  reserved 1;
+  reserved "error";
 
   // The updated resource version
   int64 resource_version = 2;
@@ -168,11 +168,16 @@ message DeleteRequest {
   // Preconditions: make sure the uid matches the current saved value
   // +optional
   string uid = 3;
+
+  // The user to record as the deleter (updatedBy on the deletion marker) when the caller acts on
+  // that user's behalf. Only honored when the caller is a service identity; ignored otherwise.
+  // +optional
+  string acting_user_uid = 4;
 }
 
 message DeleteResponse {
-  // Error details
-  ErrorResult error = 1;
+  reserved 1;
+  reserved "error";
 
   // The resource version for the deletion marker
   int64 resource_version = 2;
@@ -186,8 +191,8 @@ message ReadRequest {
 }
 
 message ReadResponse {
-  // Error details
-  ErrorResult error = 1;
+  reserved 1;
+  reserved "error";
 
   // The new resource version
   int64 resource_version = 2;
@@ -294,8 +299,8 @@ message ListResponse {
   // +optional
   int64 remaining_item_count = 4; // 0 won't be set either (no next page token)
 
-  // Error details
-  ErrorResult error = 5;
+  reserved 5;
+  reserved "error";
 }
 
 message WatchRequest {
@@ -397,8 +402,8 @@ message BulkResponse {
     string              error  = 3;
   }
 
-  // Error details
-  ErrorResult error = 1;
+  reserved 1;
+  reserved "error";
 
   // Total events processed
   int64 processed = 2;
@@ -453,8 +458,8 @@ message ListManagedObjectsResponse {
   // More results exist... pass this in the next request
   string next_page_token = 2;
 
-  // Error details
-  ErrorResult error = 3;
+  reserved 3;
+  reserved "error";
 }
 
 // Count the items that exist with
@@ -482,8 +487,8 @@ message CountManagedObjectsResponse {
   // Resource counts
   repeated ResourceCount items = 1;
 
-  // Error details
-  ErrorResult error = 2;
+  reserved 2;
+  reserved "error";
 }
 
 message HealthCheckRequest {
@@ -506,8 +511,8 @@ message QuotaUsageRequest {
 }
 
 message QuotaUsageResponse {
-  // Error details
-  ErrorResult error = 1;
+  reserved 1;
+  reserved "error";
 
   // Current usage
   int64 usage = 2;

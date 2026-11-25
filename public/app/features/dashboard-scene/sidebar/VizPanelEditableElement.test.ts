@@ -1,5 +1,7 @@
 import { waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { testWithFeatureToggles } from 'test/helpers/testWithFeatureToggles';
+import { render, screen } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
@@ -53,8 +55,8 @@ describe('VizPanelEditableElement with dashboardNewLayouts enabled', () => {
         }))
       ).toEqual([{ description: 'Remove panels (2)', meta: { actionId: 'panel.remove', scope: 'multiple' } }]);
       expect(track.mock.calls).toEqual([
-        ['delete', 1, 'edit_pane'],
-        ['delete', 2, 'edit_pane'],
+        ['delete', 1, 'edit_pane', 'timeseries'],
+        ['delete', 2, 'edit_pane', 'timeseries'],
       ]);
 
       scene.state.sidebar.undoAction();
@@ -179,6 +181,30 @@ describe('VizPanelEditableElement', () => {
 
       const element = new VizPanelEditableElement(panel);
       expect(element.getEditableElementInfo().isHidden).toBeUndefined();
+    });
+  });
+
+  describe('Edit visualization button', () => {
+    let track: jest.SpyInstance;
+
+    beforeEach(() => {
+      track = jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
+    });
+
+    afterEach(() => {
+      track.mockRestore();
+    });
+
+    it('reports the configure click with the panel id and the panel type', async () => {
+      const panel = new VizPanel({ key: 'panel-4', pluginId: 'barchart' });
+      new DashboardGridItem({ body: panel, x: 0, y: 0, width: 12, height: 6 });
+      const element = new VizPanelEditableElement(panel);
+
+      render(element.renderTopButton());
+      await userEvent.click(screen.getByRole('button', { name: 'Edit visualization' }));
+
+      expect(track).toHaveBeenCalledTimes(1);
+      expect(track).toHaveBeenCalledWith('configure', 4, 'edit_pane', 'barchart');
     });
   });
 });

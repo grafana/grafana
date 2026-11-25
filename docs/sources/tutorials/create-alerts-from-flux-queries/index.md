@@ -85,7 +85,7 @@ And here is a preview of this alert when the state is `Alerting`:
 
 Note that the Reduce expression above is needed. Without it, when previewing the results, Grafana would display `invalid format of evaluation results for the alert definition B: looks like time series data, only reduced data can be alerted on`.
 
-💡Tip: In case your locale is still stubbornly using Fahrenheit, we can modify the above Flux query by adding (before the aggregateWindow statement) a map() function to to convert (or map) the values from °C to °F. Note that we are not creating a new field. We are simply remapping the existing value.
+💡Tip: In case your locale is still stubbornly using Fahrenheit, we can modify the above Flux query by adding (before the aggregateWindow statement) a map() function to convert (or map) the values from °C to °F. Note that we are not creating a new field. We are simply remapping the existing value.
 
 ```flux
 |> map(fn: (r) => ({r with _value: r._value * 1.8 + 32.0}))

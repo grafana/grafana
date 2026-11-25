@@ -1,0 +1,7 @@
+apiVersion: dashboard.grafana.app/v1
+kind: Dashboard
+spec:
+  title: Compat smoke dashboard
+  schemaVersion: 42
+  tags:
+    - compat

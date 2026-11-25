@@ -56,6 +56,24 @@ describe('DraggableList', () => {
     await waitFor(() => expect(getDragHandle('Item A')).toBeInTheDocument());
   });
 
+  it('does not expose the drag handle as a button wrapping the rendered item', async () => {
+    render(
+      <DraggableList<TestItem>
+        droppableId="test-droppable"
+        items={items}
+        keyExtractor={(item) => item.id}
+        renderItem={(item) => <button type="button">{item.label}</button>}
+        onDragEnd={() => {}}
+      />
+    );
+
+    await waitFor(() => expect(getDragHandle('Item A')).toBeInTheDocument());
+
+    expect(getDragHandle('Item A')).not.toHaveAttribute('role');
+    expect(getDragHandle('Item A')).not.toHaveAttribute('aria-describedby');
+    expect(screen.getAllByRole('button').map((button) => button.textContent)).toEqual(['Item A', 'Item B']);
+  });
+
   it('disables dragging when isDragDisabled is true', async () => {
     const { container } = renderList(true);
 

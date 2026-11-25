@@ -77,7 +77,7 @@ function getAppHealth(pluginId: string, apiVersion: string, showErrorAlert?: boo
 export async function getAppPluginHealth(
   pluginId: string,
   showErrorAlert = false,
-  apiVersion = getApiVersion()
+  apiVersion?: string
 ): Promise<HealthCheckResult | undefined> {
   assertPluginIdFormat(pluginId);
 
@@ -95,7 +95,7 @@ export async function getAppPluginHealth(
     return undefined;
   }
 
-  const resolvedApiVersion = apiVersion ?? getApiVersion();
+  const resolvedApiVersion = apiVersion ?? (await getApiVersion());
   assertApiVersion(resolvedApiVersion);
 
   return getAppHealth(pluginId, resolvedApiVersion, showErrorAlert);

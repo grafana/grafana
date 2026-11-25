@@ -90,7 +90,7 @@ func (tc *preferencesTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) b
 		}
 	}
 
-	return true // will exist in mode0
+	return false // always mode5: legacy rows are not served over k8s until migrated
 }
 
 func (tc *preferencesTestCase) Verify(t *testing.T, helper *apis.K8sTestHelper, shouldExist bool) {

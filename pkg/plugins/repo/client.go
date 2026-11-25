@@ -15,6 +15,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -178,9 +179,16 @@ func (c *Client) downloadFile(ctx context.Context, tmpFile *os.File, pluginURL, 
 		}
 	}()
 
+	// Abort the download if no bytes arrive for downloadIdleTimeout. Total time is not capped.
+	body := newIdleReader(bodyReader)
+
 	w := bufio.NewWriter(tmpFile)
 	h := sha256.New()
-	if _, err = io.Copy(w, io.TeeReader(bodyReader, h)); err != nil {
+	if _, err = io.Copy(w, io.TeeReader(body, h)); err != nil {
+		if body.stalled.Load() {
+			c.log.Warn("Plugin download stalled", "url", pluginURL, "idleTimeout", downloadIdleTimeout)
+			return errDownloadStalled
+		}
 		return fmt.Errorf("%v: %w", "failed to compute SHA256 checksum", err)
 	}
 	if err = w.Flush(); err != nil {
@@ -194,6 +202,34 @@ func (c *Client) downloadFile(ctx context.Context, tmpFile *os.File, pluginURL, 
 	c.retryCount = 0
 
 	return nil
+}
+
+var (
+	downloadIdleTimeout = 60 * time.Second
+	errDownloadStalled  = errors.New("download stalled: no data received")
+)
+
+// idleReader closes r when a single Read blocks for longer than downloadIdleTimeout.
+type idleReader struct {
+	r       io.ReadCloser
+	t       *time.Timer
+	stalled atomic.Bool
+}
+
+func newIdleReader(r io.ReadCloser) *idleReader {
+	i := &idleReader{r: r}
+	i.t = time.AfterFunc(downloadIdleTimeout, func() {
+		i.stalled.Store(true)
+		_ = r.Close()
+	})
+	i.t.Stop()
+	return i
+}
+
+func (i *idleReader) Read(p []byte) (int, error) {
+	i.t.Reset(downloadIdleTimeout)
+	defer i.t.Stop()
+	return i.r.Read(p)
 }
 
 func (c *Client) sendReqNoTimeout(ctx context.Context, url *url.URL, compatOpts CompatOpts) (io.ReadCloser, error) {
@@ -282,6 +318,7 @@ func MakeHttpClient(skipTLSVerify bool, timeout time.Duration) http.Client {
 				Timeout:   30 * time.Second,
 				KeepAlive: 30 * time.Second,
 			}).DialContext,
+			ResponseHeaderTimeout: 30 * time.Second,
 			MaxIdleConns:          100,
 			IdleConnTimeout:       90 * time.Second,
 			TLSHandshakeTimeout:   10 * time.Second,

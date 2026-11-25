@@ -1,4 +1,4 @@
-import { type ReactElement, useCallback, useEffect, useMemo, useState } from 'react';
+import { type ReactElement, useCallback, useMemo } from 'react';
 
 import { rangeUtil, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -104,9 +104,7 @@ export class ConditionalRenderingTimeRangeSize extends SceneObjectBase<Condition
 
 function ConditionalRenderingTimeRangeSizeRenderer({ model }: SceneComponentProps<ConditionalRenderingTimeRangeSize>) {
   const { value } = model.useState();
-  const [isValid, setIsValid] = useState(model.validateIntervalRegex.test(value));
-
-  useEffect(() => setIsValid(model.validateIntervalRegex.test(value)), [model, value]);
+  const isValid = useMemo(() => model.validateIntervalRegex.test(value), [model, value]);
 
   const staticOptions = useMemo<Array<SelectableValue<string>>>(
     () => [

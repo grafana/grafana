@@ -35,6 +35,12 @@ func TestGlobalSearchFieldDefinitions(t *testing.T) {
 	assert.True(t, gr.HasCapability(SearchCapabilityFilter))
 	assert.True(t, gr.HasCapability(SearchCapabilityFacet))
 
+	// The creator is faceted here, so a client can group hits by owner.
+	createdBy := fieldByName(t, global, SEARCH_FIELD_CREATED_BY)
+	assert.True(t, createdBy.HasCapability(SearchCapabilityFilter))
+	assert.True(t, createdBy.HasCapability(SearchCapabilityRetrieve))
+	assert.True(t, createdBy.HasCapability(SearchCapabilityFacet))
+
 	// Timestamps are filterable and sortable here, so hits of different resource
 	// types can be ordered by time.
 	for _, name := range []string{SEARCH_FIELD_CREATED, SEARCH_FIELD_UPDATED} {
@@ -44,13 +50,24 @@ func TestGlobalSearchFieldDefinitions(t *testing.T) {
 	}
 }
 
-// The global index adds only the resource type to the standard set, so a field
-// behaves the same in global and per-resource search.
-func TestGlobalSearchFieldDefinitionsAddOnlyTheResourceType(t *testing.T) {
+// The global index adds the resource type to the standard set and a facet on the
+// creator, so every other field behaves the same in global and per-resource
+// search. The facet is kept out of the standard set because changing that set
+// rebuilds every per-resource index.
+func TestGlobalSearchFieldDefinitionsAddTheResourceTypeAndCreatorFacet(t *testing.T) {
 	global := GlobalSearchFieldDefinitions()
+	standard := StandardSearchFieldDefinitions()
 	require.NotEmpty(t, global)
 	assert.Equal(t, SEARCH_FIELD_GROUP_RESOURCE, global[0].Name)
-	assert.Equal(t, StandardSearchFieldDefinitions(), global[1:])
+	require.Len(t, global[1:], len(standard))
+	for i, want := range standard {
+		got := global[i+1]
+		if want.Name == SEARCH_FIELD_CREATED_BY {
+			assert.False(t, want.HasCapability(SearchCapabilityFacet), "the standard creator must stay unfaceted")
+			want.Capabilities = append(slices.Clone(want.Capabilities), SearchCapabilityFacet)
+		}
+		assert.Equal(t, want, got, want.Name)
+	}
 
 	for _, def := range StandardSearchFieldDefinitions() {
 		assert.NotEqual(t, SEARCH_FIELD_GROUP_RESOURCE, def.Name)
@@ -134,6 +151,25 @@ func TestGlobalDocumentBuilder(t *testing.T) {
 	}
 }
 
+func TestGlobalDocumentBuilderVariable(t *testing.T) {
+	key := &resourcepb.ResourceKey{Namespace: "ns", Group: "dashboard.grafana.app", Resource: "variables", Name: "region--folder-a"}
+	value := []byte(`{
+		"apiVersion": "dashboard.grafana.app/v2beta1", "kind": "Variable",
+		"metadata": {
+			"name": "region--folder-a", "namespace": "ns",
+			"annotations": {"grafana.app/folder": "folder-a"}
+		},
+		"spec": {"kind": "CustomVariable", "spec": {"name": "region", "query": "us-east,us-west"}}
+	}`)
+
+	doc, err := (&globalDocumentBuilder{}).BuildDocument(t.Context(), key, 20, value)
+	require.NoError(t, err)
+	assert.Equal(t, "region", doc.Title)
+	assert.Equal(t, "region--folder-a", doc.Name)
+	assert.Equal(t, key, doc.Key)
+	assert.Equal(t, "folder-a", doc.Folder)
+}
+
 func TestGlobalDocumentBuilderToleratesSpecFields(t *testing.T) {
 	for _, tc := range []struct {
 		name      string
@@ -142,7 +178,11 @@ func TestGlobalDocumentBuilderToleratesSpecFields(t *testing.T) {
 		wantTags  []string
 	}{
 		{name: "name fallback", spec: `{"name":"Spec name"}`, wantTitle: "Spec name"},
-		{name: "title takes precedence", spec: `{"title":"Title","name":"Name"}`, wantTitle: "Title"},
+		{name: "title takes precedence", spec: `{"title":"Title","name":"Name","spec":{"name":"Nested"}}`, wantTitle: "Title"},
+		{name: "name takes precedence", spec: `{"name":"Name","spec":{"name":"Nested"}}`, wantTitle: "Name"},
+		{name: "empty name uses nested name", spec: `{"name":"","spec":{"name":"Nested"}}`, wantTitle: "Nested"},
+		{name: "invalid nested spec", spec: `{"spec":42}`},
+		{name: "invalid nested name", spec: `{"spec":{"name":42}}`},
 		{name: "mixed tags", spec: `{"tags":[null,42,{},[],"","ops"]}`, wantTags: []string{"ops"}},
 		{name: "non-list tags", spec: `{"tags":"ops"}`},
 		{name: "invalid field types", spec: `{"title":42,"description":{},"tags":null}`},
@@ -201,20 +241,30 @@ func (b *globalDocumentBlob) GetResourceBlob(_ context.Context, key *resourcepb.
 
 func TestGlobalDocumentBuilderLoadsBlob(t *testing.T) {
 	spec := `{"title":"Blob title","description":"Blob description","tags":["blob-tag",null,42,{},[],""],"views_total":42}`
+	variableSpec := `{"kind":"CustomVariable","spec":{"name":"region","query":"us-east,us-west"}}`
 	for _, tc := range []struct {
-		name  string
-		value string
+		name            string
+		resource        string
+		value           string
+		wantTitle       string
+		wantDescription string
+		wantTags        []string
 	}{
-		{name: "spec", value: spec},
 		{
-			name:  "resource",
-			value: `{"metadata":{"name":"old-name","annotations":{"grafana.app/folder":"old-folder"}},"spec":` + spec + `}`,
+			name: "spec", resource: "dashboards", value: spec,
+			wantTitle: "Blob title", wantDescription: "Blob description", wantTags: []string{"blob-tag"},
 		},
+		{
+			name: "resource", resource: "dashboards",
+			value:     `{"metadata":{"name":"old-name","annotations":{"grafana.app/folder":"old-folder"}},"spec":` + spec + `}`,
+			wantTitle: "Blob title", wantDescription: "Blob description", wantTags: []string{"blob-tag"},
+		},
+		{name: "variable spec", resource: "variables", value: variableSpec, wantTitle: "region"},
+		{name: "variable resource", resource: "variables", value: `{"spec":` + variableSpec + `}`, wantTitle: "region"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			key := &resourcepb.ResourceKey{Namespace: "ns", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "item"}
+			key := &resourcepb.ResourceKey{Namespace: "ns", Group: "dashboard.grafana.app", Resource: tc.resource, Name: "item"}
 			value := fmt.Appendf(nil, `{
-				"apiVersion": "dashboard.grafana.app/v0alpha1", "kind": "Dashboard",
 				"metadata": {
 					"name": "item", "namespace": "ns",
 					"labels": {"team": "search"},
@@ -232,9 +282,9 @@ func TestGlobalDocumentBuilderLoadsBlob(t *testing.T) {
 			assert.Equal(t, key, doc.Key)
 			assert.Equal(t, "item", doc.Name)
 			assert.Equal(t, int64(20), doc.RV)
-			assert.Equal(t, "Blob title", doc.Title)
-			assert.Equal(t, "Blob description", doc.Description)
-			assert.Equal(t, []string{"blob-tag"}, doc.Tags)
+			assert.Equal(t, tc.wantTitle, doc.Title)
+			assert.Equal(t, tc.wantDescription, doc.Description)
+			assert.Equal(t, tc.wantTags, doc.Tags)
 			assert.Equal(t, "current-folder", doc.Folder)
 			assert.Equal(t, map[string]string{"team": "search"}, doc.Labels)
 			assert.Empty(t, doc.Fields)
@@ -312,13 +362,17 @@ func TestGlobalSearchCoversTheKindsThatOptIn(t *testing.T) {
 	folders := schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}
 	notebooks := schema.GroupResource{Group: "dashboard.grafana.app", Resource: "notebooks"}
 	playlists := schema.GroupResource{Group: "playlist.grafana.app", Resource: "playlists"}
+	variables := schema.GroupResource{Group: "dashboard.grafana.app", Resource: "variables"}
 	got := globalSearchCoverageOf(AppManifests())
-	assert.Equal(t, []schema.GroupResource{dashboards, folders, notebooks, playlists}, got.types)
+	assert.Equal(t, []schema.GroupResource{dashboards, folders, notebooks, playlists, variables}, got.types)
+	// Nothing is registered in this repository, so its own apps cover the same types.
+	assert.Equal(t, got.types, BuiltinGlobalSearchResourceTypes())
 	assert.Equal(t, map[schema.GroupResource]string{
 		dashboards: "Dashboard",
 		folders:    "Folder",
 		notebooks:  "Notebook",
 		playlists:  "Playlist",
+		variables:  "Variable",
 	}, got.kinds)
 }
 
@@ -376,7 +430,7 @@ func TestGlobalSearchKindsServeGenericReads(t *testing.T) {
 }
 
 func testGlobalKind(name, plural string, global *bool) app.ManifestVersionKind {
-	k := app.ManifestVersionKind{Kind: name, Plural: plural, Scope: namespacedScope}
+	k := app.ManifestVersionKind{Kind: name, Plural: plural, Resource: strings.ToLower(plural), Scope: namespacedScope}
 	if global != nil {
 		k.Search = &app.ManifestVersionKindSearch{Global: global}
 	}
@@ -398,7 +452,7 @@ func TestGlobalSearchCoverageOf(t *testing.T) {
 	got := globalSearchCoverageOf([]*app.ManifestData{
 		nil,
 		{Group: "b.grafana.app", Versions: []app.ManifestVersion{
-			{Name: "v1", Kinds: []app.ManifestVersionKind{testGlobalKind("Widget", "", &yes), testGlobalKind("Gadget", "Gadgets", &no), clusterScoped}},
+			{Name: "v1", Kinds: []app.ManifestVersionKind{testGlobalKind("Widget", "Widgets", &yes), testGlobalKind("Gadget", "Gadgets", &no), clusterScoped}},
 		}},
 		{Group: "a.grafana.app", Versions: []app.ManifestVersion{
 			{Name: "v1", Kinds: []app.ManifestVersionKind{testGlobalKind("Thing", "Things", nil), testGlobalKind("Secret", "Secrets", &yes)}},
@@ -408,7 +462,7 @@ func TestGlobalSearchCoverageOf(t *testing.T) {
 	assert.Equal(t, []schema.GroupResource{
 		{Group: "a.grafana.app", Resource: "things"},
 		{Group: "b.grafana.app", Resource: "widgets"},
-	}, got.types, "sorted; opted in on one version is enough; the plural defaults to the kind plus s; "+
+	}, got.types, "sorted; opted in on one version is enough; "+
 		"a kind without search or list-keys on any version, or not namespaced, is left out")
 	assert.Equal(t, map[schema.GroupResource]string{
 		{Group: "a.grafana.app", Resource: "things"}:  "Thing",
@@ -445,8 +499,8 @@ func TestGlobalSearchCoverageOfNamesRenamedKinds(t *testing.T) {
 
 func TestManifestKindsInclude(t *testing.T) {
 	m := &app.ManifestData{Group: "a.grafana.app", PreferredVersion: "v2", Versions: []app.ManifestVersion{
-		{Name: "v1", Kinds: []app.ManifestVersionKind{{Kind: "Widget", Plural: "widgets"}}},
-		{Name: "v2", Kinds: []app.ManifestVersionKind{{Kind: "Gadget", Plural: "widgets"}}},
+		{Name: "v1", Kinds: []app.ManifestVersionKind{{Kind: "Widget", Plural: "widgets", Resource: "widgets"}}},
+		{Name: "v2", Kinds: []app.ManifestVersionKind{{Kind: "Gadget", Plural: "widgets", Resource: "widgets"}}},
 	}}
 	onlyV1 := func(v app.ManifestVersion, _ app.ManifestVersionKind) bool { return v.Name == "v1" }
 	assert.Equal(t, map[schema.GroupResource]schema.GroupVersionKind{

@@ -2,6 +2,7 @@ import { useMemo, type JSX } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
+import { useFlagGrafanaDashboardSidebarExplicitOpen } from '@grafana/runtime/internal';
 import { type VizPanel } from '@grafana/scenes';
 import { Text, useStyles2, useTheme2 } from '@grafana/ui';
 
@@ -25,12 +26,14 @@ import {
 } from './EditActions';
 import { useEditActionsLayout } from './EditActionsLayoutContext';
 import { EditActionsPopover, useHoverPopoverSupported } from './EditActionsPopover';
+import { PanelActionsWithQuickEdits, useOffersQuickEdits } from './PanelQuickEditActions';
 
 export function PanelEditActionsWrapper({ panel, children }: { panel: VizPanel; children: JSX.Element }) {
   const theme = useTheme2();
   // Repeat clones are selected through their source panel, so the selection never holds a clone key.
   const selectionCount = useSelectionCountFor(panel.state.repeatSourceKey ?? panel.state.key);
   const isPopoverSupported = useHoverPopoverSupported();
+  const sidebarExplicitOpen = useFlagGrafanaDashboardSidebarExplicitOpen();
   const { getPortalRoot, getSidebarShiftPadding } = useEditActionsLayout();
 
   // Branching stays on the selected element count so a lone repeat keeps the single panel actions.
@@ -41,8 +44,9 @@ export function PanelEditActionsWrapper({ panel, children }: { panel: VizPanel; 
 
   return (
     <EditActionsPopover
+      keyboardAccessible
       content={editActions}
-      disabled={!isPopoverSupported}
+      disabled={!sidebarExplicitOpen && !isPopoverSupported}
       placement="top-end"
       portalRoot={getPortalRoot}
       zIndex={theme.zIndex.dropdown}
@@ -56,28 +60,33 @@ export function PanelEditActionsWrapper({ panel, children }: { panel: VizPanel; 
 export function PanelEditActionsSingle({ panel }: { panel: VizPanel }) {
   const styles = useStyles2(getActionStyles);
   const isRepeated = isRepeatCloneOrChildOf(panel);
+  const offersQuickEdits = useOffersQuickEdits(panel);
 
   const onClickEdit = () => {
-    DashboardInteractions.panelActionClicked('settings', getPanelIdForVizPanel(panel), 'edit_popover');
-    const { selectionContext } = getDashboardSceneLike(panel).state.sidebar.state;
-    selectionContext.onSelect({ id: panel.state.key! }, { force: true });
+    DashboardInteractions.panelActionClicked(
+      'settings',
+      getPanelIdForVizPanel(panel),
+      'edit_popover',
+      panel.state.pluginId
+    );
+    getDashboardSceneLike(panel).state.sidebar.openElementSettings(panel);
   };
 
   const onClickEditVisualization = () => {
     const panelId = getPanelIdForVizPanel(panel);
-    DashboardInteractions.panelActionClicked('configure', panelId, 'edit_popover');
+    DashboardInteractions.panelActionClicked('configure', panelId, 'edit_popover', panel.state.pluginId);
     locationService.partial({ editPanel: panelId });
   };
 
   const onClickCopy = () => {
     const panelId = getPanelIdForVizPanel(panel);
-    DashboardInteractions.panelActionClicked('copy', panelId, 'edit_popover');
+    DashboardInteractions.panelActionClicked('copy', panelId, 'edit_popover', panel.state.pluginId);
     getDashboardSceneLike(panel).copyPanel(panel);
   };
 
   const onClickDuplicate = () => {
     const panelId = getPanelIdForVizPanel(panel);
-    DashboardInteractions.panelActionClicked('duplicate', panelId, 'edit_popover');
+    DashboardInteractions.panelActionClicked('duplicate', panelId, 'edit_popover', panel.state.pluginId);
     duplicatePanel(panel);
   };
 
@@ -87,7 +96,7 @@ export function PanelEditActionsSingle({ panel }: { panel: VizPanel }) {
     DashboardInteractions.trackDeleteDashboardElement('panel', 'edit_popover');
   };
 
-  return (
+  const actions = (
     <>
       <EditActionButton
         onClick={onClickEditVisualization}
@@ -130,6 +139,11 @@ export function PanelEditActionsSingle({ panel }: { panel: VizPanel }) {
       />
     </>
   );
+
+  if (!offersQuickEdits) {
+    return actions;
+  }
+  return <PanelActionsWithQuickEdits panel={panel}>{actions}</PanelActionsWithQuickEdits>;
 }
 
 export function PanelEditActionsBulk({ panel }: { panel: VizPanel }) {

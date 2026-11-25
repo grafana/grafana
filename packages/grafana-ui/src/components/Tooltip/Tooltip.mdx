@@ -3,29 +3,15 @@ import { Tooltip } from './Tooltip';
 
 # Tooltip
 
+## When to use
+
 Tooltips display additional information upon hover or focus. The information included should be contextual, helpful, and non-critical to the user's task-at-hand. The information should be concise and provide clarity to the user.
 
-## Theme
+## Never use for
 
-There are currently themes available for the Tooltip.
+If interactive elements are needed, consider using a [Toggletip](/docs/overlays-toggletip--docs).
 
-- Info
-- Error
-- Info-alt (alternative)
-
-### Info
-
-This is the default theme, usually used in forms to show more information.
-
-### Error
-
-Tooltip with a red background.
-
-### Info alternative
-
-We added this to be able to add a `<JSONFormatter />` in the tooltip.
-
-## Do's
+## Do's and don'ts
 
 - Provide supportive, explanatory text for icons (i.e. "search" as a label for a magnifying glass icon).
 - Offer concise information about the intended use of an element.
@@ -33,15 +19,34 @@ We added this to be able to add a `<JSONFormatter />` in the tooltip.
 - Use arrows to indicate which element the tooltip relates to.
 - Use tooltips consistently (i.e., all icon buttons have them, all tooltips are styled the same).
 - Use ARIA tags when building tooltips to ensure they are accessible.
+- Don't house information critical to a user's task completion in the tooltip.
+- Don't duplicate information such as labels for calls to action, as this creates information pollution.
+- Don't use interactive components within a tooltip.
+- Don't force the user to dismiss the tooltip.
 
-## Don'ts
+## Usage
 
-- Do not house information critical to a user's task completion in the tooltip.
-- Do not duplicate information such as labels for calls to action, as this creates information pollution.
-- Do not use interactive components within a tooltip.
-- Do not force the user to dismiss the tooltip.
+### Theme
 
-## Variants
+There are currently themes available for the Tooltip.
+
+- Info
+- Error
+- Info-alt (alternative)
+
+#### Info
+
+This is the default theme, usually used in forms to show more information.
+
+#### Error
+
+Tooltip with a red background.
+
+#### Info alternative
+
+We added this to be able to add a `<JSONFormatter />` in the tooltip.
+
+### Variants
 
 <table>
   <thead>
@@ -66,16 +71,9 @@ We added this to be able to add a `<JSONFormatter />` in the tooltip.
   </tbody>
 </table>
 
-## Accessibility
+### Formatting
 
-- Use ARIA tags when building tooltips to ensure they are accessible:
-- Use `aria-labelledby` if the tooltip acts as a primary label (i.e., to name an IconButton action).
-- Use `aria-describedby` if the tooltip acts as a supporting label (i.e., to provide additional information on an input).
-- Tooltips must be visible when their trigger is tabbed to or focused on via keyboard navigation.
-
-## Formatting
-
-### Anatomy
+#### Anatomy
 
 ![Image calling out parts of the tooltip](./images/tooltip.anatomy.png 'Image calling out parts of the tooltip')
 
@@ -83,7 +81,7 @@ We added this to be able to add a `<JSONFormatter />` in the tooltip.
 2. **Tip** -- The triangle piece that points to the trigger element.
 3. **Body** -- The container that houses the content of the tooltip.
 
-### Placement
+#### Placement
 
 - Auto: Displays tooltip on the side with most space available.
   - Auto-start: Aligns to the top of the trigger.
@@ -106,27 +104,32 @@ We added this to be able to add a `<JSONFormatter />` in the tooltip.
   - Right-Center
   - Right-Bottom
 
-## Behaviors
+### Behaviors
 
-### Triggers
+#### Triggers
 
 - Icons (commonly information icon)
 - Buttons
 - Links
 
-### User Interactions
+#### User interactions
 
 Tooltips are triggered when the mouse hovers over or focuses on the UI trigger. The tooltip persists as long as the mouse remains over the active container or the UI trigger, or there is focus on the active container or UI trigger. The tooltip is dismissed by hovering away or moving focus to another element.
 
-## Related
-
-If interactive elements are needed, consider using a [Toggletip](/docs/overlays-toggletip--docs).
-
-## Further Reading
+### Further reading
 
 - [Inclusive Components; Tooltips and Toggletips](https://inclusive-components.design/tooltips-toggletips/)
 - [NNG; Tooltip Guidelines](https://www.nngroup.com/articles/tooltip-guidelines/)
 - [Using the aria-describedby property to provide a descriptive label for user interface controls](https://www.w3.org/WAI/WCAG21/Techniques/aria/ARIA1)
 - [Providing Accessible Names and Descriptions](https://www.w3.org/WAI/ARIA/apg/practices/names-and-descriptions/)
+
+## Accessibility
+
+- Use ARIA tags when building tooltips to ensure they are accessible:
+- Use `aria-labelledby` if the tooltip acts as a primary label (i.e., to name an IconButton action).
+- Use `aria-describedby` if the tooltip acts as a supporting label (i.e., to provide additional information on an input).
+- Tooltips must be visible when their trigger is tabbed to or focused on via keyboard navigation.
+
+## Props
 
 <ArgTypes of={Tooltip} />

@@ -7,9 +7,12 @@ import (
 
 	"github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
+	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	secretinline "github.com/grafana/grafana/pkg/registry/apis/secret/inline"
 	"github.com/grafana/grafana/pkg/router"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/authz"
@@ -21,10 +24,11 @@ import (
 func (s *ModuleServer) provideRoutesLoader() (router.RoutesLoader, error) {
 	defaultRouterCoreURL(s.cfg, s.log)
 
-	accessClient, err := authz.ProvideStandaloneAuthZClient(s.cfg, s.features, s.tracer, s.registerer)
+	authzClients, err := authz.ProvideStandaloneAuthZClients(s.cfg, s.features, s.tracer, s.registerer)
 	if err != nil {
 		return nil, fmt.Errorf("creating router authorization client: %w", err)
 	}
+	accessClient := authz.ProvideAuthZAccessClient(authzClients)
 
 	client, err := s.routerStorageClient(accessClient)
 	if err != nil {
@@ -34,14 +38,30 @@ func (s *ModuleServer) provideRoutesLoader() (router.RoutesLoader, error) {
 		Resource:           client,
 		RESTConfigProvider: router.NewLoopbackRestConfigProvider(s.httpServerRouter),
 		Access:             accessClient,
+		LegacyAccess:       authz.ProvideAuthZLegacyAccessClient(authzClients),
+	}
+	clients.SecureValues, err = routerSecureValues(s.cfg, s.tracer, accessClient)
+	if err != nil {
+		return nil, fmt.Errorf("creating router secure value client: %w", err)
 	}
 
 	// Only the local plugin loader needs the SQL database, which
 	// InitializeRoutesLoader opens and migrates.
-	if cloud, err := router.ProvideCloudRoutesLoader(s.cfg, clients, s.tracer, s.features, s.registerer); err != nil || cloud != nil {
+	if cloud, err := InitializeCloudRoutesLoader(s.cfg, clients, s.tracer, s.features, s.registerer); err != nil || cloud != nil {
 		return cloud, err
 	}
 	return InitializeRoutesLoader(s.cfg, clients)
+}
+
+// routerSecureValues returns the secrets manager's gRPC inline client, or nil
+// when it is disabled: the in-process implementation needs the SQL secrets
+// service, which the standalone router doesn't have. A nil client fails only
+// the writes that carry secure values.
+func routerSecureValues(cfg *setting.Cfg, tracer trace.Tracer, accessClient types.AccessClient) (secret.InlineSecureValueSupport, error) {
+	if !cfg.SecretsManagement.GrpcClientEnable {
+		return nil, nil
+	}
+	return secretinline.ProvideInlineSecureValueService(cfg, tracer, nil, accessClient)
 }
 
 // defaultRouterCoreURL points core_url at cloud-core-apps-server on this process's
