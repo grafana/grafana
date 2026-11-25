@@ -17,17 +17,22 @@ export const allGradientButtonFills: GradientButtonFill[] = ['outline', 'solid']
 export type GradientButtonProps = DistributiveOmit<ButtonProps, 'variant' | 'fill' | 'className'> & {
   /** `outline` draws a 1px gradient border on the secondary button color. `solid` fills the button with the gradient. */
   fill?: GradientButtonFill;
-  /** Defaults to `ai-sparkle`. Only override it for a loading or cancel state, such as `spinner` while a response is generating. */
+  /** Defaults to `ai-sparkle`. Swap it when the caller controls a start/stop or cancel state. */
   icon?: ButtonProps['icon'];
+  /** Shows a spinner in place of the icon and ignores clicks, without the disabled look. */
+  isLoading?: boolean;
 };
 
 /**
- * A button with a gradient border or fill from the `theme.colors.gradients.button` theme token.
+ * A button with a gradient border or fill from the `theme.colors.gradients.ai` theme token.
  *
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-gradientbutton--docs
  */
 export const GradientButton = React.forwardRef<HTMLButtonElement, GradientButtonProps>(
-  ({ fill = 'outline', size = 'md', fullWidth = false, icon = 'ai-sparkle', ...props }, ref) => {
+  (
+    { fill = 'outline', size = 'md', fullWidth = false, icon = 'ai-sparkle', isLoading = false, onClick, ...props },
+    ref
+  ) => {
     const styles = useStyles2(getGradientButtonStyles, fill, size, fullWidth, !props.children);
 
     return (
@@ -35,7 +40,10 @@ export const GradientButton = React.forwardRef<HTMLButtonElement, GradientButton
         {...props}
         ref={ref}
         as="button"
-        icon={icon}
+        icon={isLoading ? 'spinner' : icon}
+        // preventDefault also stops a submit button from submitting its form while loading
+        onClick={isLoading ? (event) => event.preventDefault() : onClick}
+        aria-busy={isLoading || undefined}
         className={cx(styles.button, { [styles.disabled]: props.disabled })}
         iconSize={size}
         iconClassName={styles.icon}

@@ -94,7 +94,7 @@ function getGradientButtonDisabledStyles(theme: GrafanaTheme2) {
 }
 
 export function getGradientButtonFillStyles(theme: GrafanaTheme2, fill: GradientButtonFill) {
-  const gradient = theme.colors.gradients.button;
+  const gradient = theme.colors.gradients.ai;
   const canvas = theme.colors.background.canvas;
   let background: string;
   let hoverBackground: string;

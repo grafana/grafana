@@ -61,8 +61,8 @@ const createThemeColorsBaseSchema = <TColor extends z.ZodMiniType>(color: TColor
       gradients: z.object({
         brandVertical: z.optional(z.string()),
         brandHorizontal: z.optional(z.string()),
-        /** Used by GradientButton, for its gradient border or fill */
-        button: z.optional(z.string()),
+        /** Used for AI features, such as the GradientButton border or fill */
+        ai: z.optional(z.string()),
       }),
 
       action: z.object({
@@ -207,7 +207,7 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   gradients = {
     brandHorizontal: 'linear-gradient(270deg, #F55F3E 0%, #FF8833 100%)',
     brandVertical: 'linear-gradient(0.01deg, #F55F3E 0.01%, #FF8833 99.99%)',
-    button: `linear-gradient(90deg, ${refreshPalette.violet400}, ${refreshPalette.orange400})`,
+    ai: `linear-gradient(90deg, ${refreshPalette.violet400}, ${refreshPalette.orange400})`,
   };
 
   scrollbar = `rgba(${this.whiteBase}, 0.3)`;
@@ -302,7 +302,7 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   gradients = {
     brandHorizontal: 'linear-gradient(90deg, #FF8833 0%, #F53E4C 100%)',
     brandVertical: 'linear-gradient(0.01deg, #F53E4C -31.2%, #FF8833 113.07%)',
-    button: `linear-gradient(90deg, ${refreshPalette.violet300}, ${refreshPalette.orange400})`,
+    ai: `linear-gradient(90deg, ${refreshPalette.violet300}, ${refreshPalette.orange400})`,
   };
 
   scrollbar = `rgba(${this.blackBase}, 0.3)`;

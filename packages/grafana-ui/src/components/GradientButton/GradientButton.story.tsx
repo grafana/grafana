@@ -1,5 +1,4 @@
 import { type StoryFn } from '@storybook/react';
-import { useEffect, useRef } from 'react';
 import { action } from 'storybook/actions';
 
 import { type ComponentSize } from '../../types/size';
@@ -30,6 +29,9 @@ export default {
       control: 'text',
     },
     disabled: {
+      control: 'boolean',
+    },
+    isLoading: {
       control: 'boolean',
     },
   },
@@ -67,7 +69,7 @@ export const Examples: StoryFn<typeof GradientButton> = () => {
               Disabled
             </GradientButton>
             <GradientButton fill={fill} tooltip="Assistant is unavailable" disabled />
-            <GradientButton fill={fill} icon="spinner" disabled>
+            <GradientButton fill={fill} isLoading>
               Analyzing
             </GradientButton>
           </Stack>
@@ -80,25 +82,7 @@ Examples.parameters = {
   docs: {
     description: {
       story:
-        'The first row of each fill shows the sizes and icon-only buttons. The second row shows the expanded, disabled and loading states. The loading button overrides the default `ai-sparkle` icon with `spinner`. Hover a button to see the hover state, which has the same background as the expanded state. The expanded state is set with `aria-expanded="true"`, for example by a `Dropdown` trigger.',
+        'The first row of each fill shows the sizes and icon-only buttons. The second row shows the expanded, disabled and loading states. The loading button uses `isLoading`. Hover a button to see the hover state, which has the same background as the expanded state. The expanded state is set with `aria-expanded="true"`, for example by a `Dropdown` trigger.',
     },
   },
 };
-
-export const FocusVisible: StoryFn<typeof GradientButton> = () => {
-  const ref = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    ref.current?.focus();
-  }, []);
-
-  return (
-    <Stack alignItems="center" gap={2}>
-      <GradientButton ref={ref}>Analyze with Assistant</GradientButton>
-      <GradientButton fill="solid">Analyze with Assistant</GradientButton>
-    </Stack>
-  );
-};
-FocusVisible.storyName = 'Focus visible';
-// Focusing on mount would scroll the docs page to this story
-FocusVisible.tags = ['!autodocs'];

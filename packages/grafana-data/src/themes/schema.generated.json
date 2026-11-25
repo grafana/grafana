@@ -572,7 +572,7 @@
             "brandHorizontal": {
               "type": "string"
             },
-            "button": {
+            "ai": {
               "type": "string"
             }
           },

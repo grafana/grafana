@@ -1,5 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { type FormEvent } from 'react';
 
 import { createTheme } from '@grafana/data';
 
@@ -26,13 +27,32 @@ describe('GradientButton', () => {
     render(
       <>
         <GradientButton>Analyze</GradientButton>
-        <GradientButton icon="spinner">Analyzing</GradientButton>
+        <GradientButton icon="square-shape">Stop</GradientButton>
       </>
     );
     expect(within(screen.getByRole('button', { name: 'Analyze' })).getByTestId('icon-ai-sparkle')).toBeInTheDocument();
-    const loading = screen.getByRole('button', { name: 'Analyzing' });
-    expect(within(loading).getByTestId('icon-spinner')).toBeInTheDocument();
-    expect(within(loading).queryByTestId('icon-ai-sparkle')).not.toBeInTheDocument();
+    const stop = screen.getByRole('button', { name: 'Stop' });
+    expect(within(stop).getByTestId('icon-square-shape')).toBeInTheDocument();
+    expect(within(stop).queryByTestId('icon-ai-sparkle')).not.toBeInTheDocument();
+  });
+
+  it('shows a spinner and ignores clicks when isLoading', async () => {
+    const onClick = jest.fn();
+    const onSubmit = jest.fn((event: FormEvent) => event.preventDefault());
+    render(
+      <form onSubmit={onSubmit}>
+        <GradientButton type="submit" icon="square-shape" onClick={onClick} isLoading>
+          Analyzing
+        </GradientButton>
+      </form>
+    );
+    const button = screen.getByRole('button', { name: 'Analyzing' });
+    expect(within(button).getByTestId('icon-spinner')).toBeInTheDocument();
+    expect(within(button).queryByTestId('icon-square-shape')).not.toBeInTheDocument();
+    expect(button).toHaveAttribute('aria-busy', 'true');
+    await userEvent.click(button);
+    expect(onClick).not.toHaveBeenCalled();
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 
   it('does not accept className', () => {
@@ -102,10 +122,10 @@ describe('GradientButton', () => {
 describe('getGradientButtonFillStyles', () => {
   const theme = createTheme();
 
-  it('draws a 1px border from the button gradient token behind the secondary color with fill outline', () => {
+  it('draws a 1px border from the ai gradient token behind the secondary color with fill outline', () => {
     const styles = getGradientButtonFillStyles(theme, 'outline');
     expect(styles.border).toBe('1px solid transparent');
-    expect(styles.background).toContain(`${theme.colors.gradients.button} border-box`);
+    expect(styles.background).toContain(`${theme.colors.gradients.ai} border-box`);
     expect(styles.background).toContain(
       `linear-gradient(${theme.colors.secondary.main}, ${theme.colors.secondary.main}) padding-box`
     );
@@ -131,7 +151,7 @@ describe('getGradientButtonFillStyles', () => {
 
   it('fills the button with the gradient and uses the canvas color for text in dark mode with fill solid', () => {
     const styles = getGradientButtonFillStyles(theme, 'solid');
-    expect(styles.background).toBe(`${theme.colors.gradients.button} border-box`);
+    expect(styles.background).toBe(`${theme.colors.gradients.ai} border-box`);
     expect(styles.color).toBe(theme.colors.background.canvas);
     expect(styles).toHaveProperty(['&:hover', 'background'], expect.stringContaining(theme.colors.action.hover));
   });
