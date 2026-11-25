@@ -143,4 +143,6 @@ v0alpha1: {
 	accessControl?: {[string]: bool}
 	// Auth module identifiers the user is externally synced with.
 	externalAuthModules?: [...string]
+	// Display labels of the auth provider the user last signed in with, e.g. "LDAP".
+	authLabels?: [...string]
 }
