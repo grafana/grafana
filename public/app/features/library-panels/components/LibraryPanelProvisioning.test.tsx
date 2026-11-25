@@ -21,6 +21,7 @@ import { SaveProvisionedLibraryPanelDrawer } from './SaveProvisionedLibraryPanel
 
 setupProvisioningMswServer();
 
+jest.mock('../state/api', () => makeSpyable('../state/api'));
 const navigate = jest.fn();
 jest.mock('react-router-dom-v5-compat', () => ({
   ...jest.requireActual('react-router-dom-v5-compat'),
@@ -286,6 +287,32 @@ it.each([
   await clickCreate(user);
   await waitFor(() => expect(onCreated).toHaveBeenCalledWith(panel));
   expect(api.addLibraryPanel).toHaveBeenCalledTimes(1);
+  expect(writes).toEqual([]);
+});
+
+it('warns about a folder whose repository is gone and keeps the Grafana save, like a new dashboard', async () => {
+  server.use(
+    http.get('/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/orphan', () =>
+      HttpResponse.json({
+        ...managedFolder,
+        metadata: {
+          name: 'orphan',
+          annotations: { ...managedFolder.metadata.annotations, 'grafana.app/managerId': 'deleted-repo' },
+        },
+      })
+    )
+  );
+  const onCreated = jest.fn();
+  const { user } = render(
+    <AddLibraryPanelContents
+      panel={new PanelModel({ title: 'CPU', type: 'text' })}
+      initialFolderUid="orphan"
+      onCreateLibraryPanel={onCreated}
+    />
+  );
+  expect(await screen.findByText('The selected folder cannot be saved to')).toBeInTheDocument();
+  await clickCreate(user);
+  await waitFor(() => expect(onCreated).toHaveBeenCalledWith(panel));
   expect(writes).toEqual([]);
 });
 

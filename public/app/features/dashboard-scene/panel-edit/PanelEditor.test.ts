@@ -4,6 +4,7 @@ import { of } from 'rxjs';
 import { render } from 'test/test-utils';
 
 import {
+  AppEvents,
   type DataQueryRequest,
   type DataQuery,
   type DataSourceApi,
@@ -31,6 +32,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { appEvents } from 'app/core/app_events';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { mockDataSource } from 'app/features/alerting/unified/testSetup/mockDataSource';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
@@ -952,6 +954,26 @@ describe('PanelEditor', () => {
       expect(reload).toHaveBeenCalledWith('lib-uid', true);
       await waitFor(() => expect(libraryPanel.state._loadedPanel).toBe(committed));
       reload.mockRestore();
+    });
+
+    it('warns that the commit landed when the committed panel cannot be reloaded', async () => {
+      const libraryPanel = createLoadedLibraryPanel(repoAnnotations);
+      const loadedPanel = libraryPanel.state._loadedPanel;
+      const { panelEditor } = await setup({ libraryPanel });
+      const reload = jest.spyOn(libAPI, 'getLibraryPanel').mockRejectedValue(new Error('network down'));
+      const emit = jest.spyOn(appEvents, 'emit');
+
+      panelEditor.onConfirmSaveLibraryPanel();
+      const drawer = renderGitDrawer(panelEditor);
+      act(() => drawer.onWriteSuccess?.());
+
+      await waitFor(() =>
+        expect(emit).toHaveBeenCalledWith(AppEvents.alertWarning, [expect.stringContaining('reloading it failed')])
+      );
+      expect(libraryPanel.state._loadedPanel).toBe(loadedPanel);
+      expect(panelEditor.state.isDirty).toBe(false);
+      reload.mockRestore();
+      emit.mockRestore();
     });
 
     it('does not resume navigation after a branch save or a dismissed Git drawer', async () => {

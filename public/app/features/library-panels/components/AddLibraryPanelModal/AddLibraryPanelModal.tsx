@@ -10,6 +10,7 @@ import { Button, Field, Input, Stack } from '@grafana/ui';
 import { isK8sLibraryPanelsClientEnabled } from 'app/api/clients/dashboard/v0alpha1/libraryPanels';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
+import { FolderDeadEndAlert } from 'app/features/provisioning/components/Dashboards/FolderDeadEndAlert';
 import { useResourceRepositorySelection } from 'app/features/provisioning/hooks/useResourceRepositorySelection';
 import { getSaveTarget, useSaveRepositoryView } from 'app/features/provisioning/hooks/useSaveRepositoryView';
 import { resourceKindInfos } from 'app/features/provisioning/utils/resourceKinds';
@@ -45,10 +46,9 @@ export const AddLibraryPanelContents = ({
   // The panel is committed to the repository that manages its folder, like a new dashboard. The
   // root of a folderless repository could go either way, and keeps the Grafana save.
   const folderView = useSaveRepositoryView({ folderUid, isNew: true });
+  const canUseGit = isAvailable && k8sClient.value;
   const repositoryName =
-    isAvailable && k8sClient.value && getSaveTarget(folderView, 'database') === 'repository'
-      ? folderView.repository?.name
-      : undefined;
+    canUseGit && getSaveTarget(folderView, 'database') === 'repository' ? folderView.repository?.name : undefined;
   const [provisionedPanel, setProvisionedPanel] = useState<Pick<LibraryPanel, 'uid' | 'name' | 'model'>>();
 
   useEffect(() => setWaiting(true), [panelName]);
@@ -116,6 +116,8 @@ export const AddLibraryPanelContents = ({
       >
         <FolderPicker onChange={(uid) => setFolderUid(uid)} value={folderUid} />
       </Field>
+      {/* Like a new dashboard: say why Create falls back to the Grafana save when the folder's repository can't be resolved */}
+      {canUseGit && <FolderDeadEndAlert status={folderView.status} error={folderView.error} />}
       <Stack gap={1} justifyContent={'start'}>
         <Button
           onClick={onCreate}

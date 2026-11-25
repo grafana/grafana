@@ -2,7 +2,7 @@ import deepEqual from 'fast-deep-equal';
 import type * as H from 'history';
 import { debounce } from 'lodash';
 
-import { type NavIndex, type PanelPlugin } from '@grafana/data';
+import { AppEvents, type NavIndex, type PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
@@ -20,6 +20,7 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { type Panel } from '@grafana/schema';
+import { appEvents } from 'app/core/app_events';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
@@ -562,7 +563,16 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   public onLibraryPanelCommitted = () => {
     const libraryPanel = this.getLibraryPanelBehavior();
     if (libraryPanel) {
-      getLibraryPanel(libraryPanel.state.uid, true).then((libPanel) => libraryPanel.setPanelFromLibPanel(libPanel));
+      getLibraryPanel(libraryPanel.state.uid, true)
+        .then((libPanel) => libraryPanel.setPanelFromLibPanel(libPanel))
+        .catch(() =>
+          appEvents.emit(AppEvents.alertWarning, [
+            t(
+              'dashboard-scene.panel-editor.library-panel-reload-failed',
+              'The library panel was committed, but reloading it failed. Refresh the page to see the latest version.'
+            ),
+          ])
+        );
     }
     this.onLibraryPanelSaved();
   };
