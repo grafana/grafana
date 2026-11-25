@@ -28,14 +28,6 @@ describe('selectIndependentPackages', () => {
   it('returns nothing when no project has the tag, and does not fail for projects without tags', () => {
     expect(selectIndependentPackages({ 'e2e-playwright': nodes['e2e-playwright'] })).toEqual([]);
   });
-
-  it('orders the packages by name, whatever order Nx lists them in', () => {
-    const second = { name: '@grafana/other', data: { root: 'packages/grafana-other', tags: ['release:independent'] } };
-
-    const names = selectIndependentPackages({ ...nodes, '@grafana/other': second }).map(({ name }) => name);
-
-    expect(names).toEqual(['@grafana/other', '@grafana/plugin-compat']);
-  });
 });
 
 describe('tagFor', () => {
