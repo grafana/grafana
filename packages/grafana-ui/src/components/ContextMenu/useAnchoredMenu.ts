@@ -20,12 +20,18 @@ export function useAnchoredMenu(anchor: MenuAnchor | undefined, onClose?: () => 
     }
     const { clientX, clientY, contextElement } = anchor;
     const initialRect = contextElement?.getBoundingClientRect();
+    let lastPosition = { x: clientX, y: clientY };
     return {
       contextElement,
       getBoundingClientRect() {
-        const rect = contextElement?.getBoundingClientRect();
-        const x = clientX + (rect && initialRect ? rect.left - initialRect.left : 0);
-        const y = clientY + (rect && initialRect ? rect.top - initialRect.top : 0);
+        if (contextElement?.isConnected && initialRect) {
+          const rect = contextElement.getBoundingClientRect();
+          lastPosition = {
+            x: clientX + rect.left - initialRect.left,
+            y: clientY + rect.top - initialRect.top,
+          };
+        }
+        const { x, y } = lastPosition;
         return { x, y, left: x, top: y, right: x, bottom: y, width: 0, height: 0 };
       },
     };
@@ -57,10 +63,19 @@ export function useAnchoredMenu(anchor: MenuAnchor | undefined, onClose?: () => 
       );
     };
 
+    const observer = new MutationObserver(() => {
+      if (!reference.contextElement?.isConnected) {
+        update();
+      }
+    });
+    observer.observe(reference.contextElement.ownerDocument, { childList: true, subtree: true });
+    update();
+
     // Capture includes scrolling inside dashboard and panel containers.
     window.addEventListener('scroll', update, true);
     window.addEventListener('resize', update);
     return () => {
+      observer.disconnect();
       window.removeEventListener('scroll', update, true);
       window.removeEventListener('resize', update);
     };
