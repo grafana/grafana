@@ -67,7 +67,7 @@ replace (
 	github.com/grafana/grafana/pkg/storage/unified/resourcepb => ../../pkg/storage/unified/resourcepb
 	github.com/grafana/grafana/pkg/util/sqlite => ../../pkg/util/sqlite
 
-	github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20261119191137-fc531ea850e6
+	github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20261120195026-a99cad413f34
 )
 
 require (
@@ -186,7 +186,7 @@ require (
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/alerting v0.0.0-20261120142630-6b20a0ecf293 // indirect
+	github.com/grafana/alerting v0.0.0-20261124162315-60774c99f9aa // indirect
 	github.com/grafana/authlib v0.0.0-20261120113603-423cd15e9545 // indirect
 	github.com/grafana/dataplane/sdata v0.0.10 // indirect
 	github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600 // indirect

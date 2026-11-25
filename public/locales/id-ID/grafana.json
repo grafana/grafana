@@ -6690,7 +6690,8 @@
           "title": "Tempel panel"
         },
         "question": {
-          "label": ""
+          "label": "",
+          "tooltip": ""
         },
         "row": {
           "add-label": "Tambahkan baris",
@@ -9893,10 +9894,6 @@
       "of": "DARI",
       "to": "KE",
       "when": "KAPAN"
-    },
-    "expression-query-editor": {
-      "helper-text-sql": "Jalankan SQL berformat MySQL terhadap tabel yang dikembalikan dari sumber data Anda. Kueri sumber data (yaitu \"A\", \"B\") tersedia sebagai tabel dan direferensikan oleh nama kueri. Bidang tersedia sebagai kolom, seperti yang dikembalikan dari sumber data.",
-      "label-operation": "Pengoperasian"
     },
     "math": {
       "available-math-functions": "Fungsi matematika yang tersedia",
@@ -13685,12 +13682,11 @@
     },
     "megamenu-item": {
       "children-error": "Gagal memuat item",
+      "children-partial-error": "",
       "collapse-aria-label": "Ciutkan bagian: {{sectionName}}",
       "expand-aria-label": "Perluas bagian: {{sectionName}}",
       "loading-aria-label": "Memuat {{sectionName}}",
-      "reorder-aria-label": "Susun ulang {{itemName}}",
-      "starred-dashboard-icon": "Dasbor",
-      "starred-folder-icon": "Folder"
+      "reorder-aria-label": "Susun ulang {{itemName}}"
     },
     "org-switcher": {
       "aria-label": "Ubah organisasi"
@@ -17359,6 +17355,7 @@
     "description-page-size": "Jumlah baris per halaman. Saat kosong, ukuran halaman didasarkan pada tinggi panel.",
     "description-show-columns-sidebar": "Buka bilah sisi pengelolaan kolom dengan panel, bukan dari menu kolom",
     "description-show-row-numbers": "",
+    "description-sparkline-select-time-range": "",
     "description-styling-from-field": "Bidang yang berisi objek JSON dengan properti CSS",
     "description-tooltip-from-field": "Render sel dari bidang (tersembunyi atau terlihat) dalam tooltip",
     "description-zebra-striping": "Ganti warna latar belakang setiap baris berikutnya",
@@ -17403,6 +17400,7 @@
     "name-show-columns-sidebar": "Tampilkan bilah sisi kolom",
     "name-show-row-numbers": "",
     "name-show-table-header": "Tampilkan header tabel",
+    "name-sparkline-select-time-range": "",
     "name-sparkline-show-tooltip": "Tampilkan tooltip saat kursor diarahkan",
     "name-styling-from-field": "Penataan dari bidang",
     "name-tooltip-from-field": "Tooltip dari bidang",

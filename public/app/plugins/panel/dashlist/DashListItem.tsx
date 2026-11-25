@@ -1,16 +1,15 @@
 import { reportInteraction } from '@grafana/runtime';
 import { Card, Icon, Link, Stack, Text, useStyles2 } from '@grafana/ui';
 import { DescriptionTooltip } from 'app/features/search/components/DescriptionTooltip';
-import { type LocationInfo } from 'app/features/search/service/types';
+import { type LocationInfo, type SearchRow } from 'app/features/search/service/types';
 import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
 import { findStarredKindBySearchKind } from 'app/features/stars/kinds';
 
-import { type Dashboard } from './DashList';
 import { ListRow } from './ListRow';
 import { getStyles } from './styles';
 
 interface Props {
-  dashboard: Dashboard;
+  dashboard: SearchRow;
   url: string;
   showFolderNames: boolean;
   locationInfo?: LocationInfo;

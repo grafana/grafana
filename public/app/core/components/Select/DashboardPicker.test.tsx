@@ -8,6 +8,18 @@ import * as dashboardApi from 'app/features/dashboard/api/dashboard_api';
 
 import { DashboardPicker } from './DashboardPicker';
 
+jest.mock('app/features/dashboard/api/dashboard_api', () => ({
+  ...jest.requireActual('app/features/dashboard/api/dashboard_api'),
+  getDashboardAPI: jest.fn(),
+}));
+
+beforeEach(() => {
+  jest
+    .mocked(dashboardApi.getDashboardAPI)
+    .mockReset()
+    .mockImplementation(jest.requireActual('app/features/dashboard/api/dashboard_api').getDashboardAPI);
+});
+
 setBackendSrv(backendSrv);
 setupMockServer();
 
@@ -93,8 +105,8 @@ describe('DashboardPicker', () => {
           dashboard: { uid: folderA_dashbdD.item.uid, title: folderA_dashbdD.item.title },
           meta: { folderTitle: folderA.item.title, folderUid: folderA.item.uid },
         });
-      const apiSpy = jest
-        .spyOn(dashboardApi, 'getDashboardAPI')
+      jest
+        .mocked(dashboardApi.getDashboardAPI)
         .mockResolvedValue({ getDashboardDTO } as unknown as Awaited<ReturnType<typeof dashboardApi.getDashboardAPI>>);
 
       const { rerender } = render(<DashboardPicker value={unknownUid} showUnknown />);
@@ -108,19 +120,16 @@ describe('DashboardPicker', () => {
       await waitFor(() => {
         expect(screen.queryByText(`Unknown dashboard (${unknownUid})`)).not.toBeInTheDocument();
       });
-
-      apiSpy.mockRestore();
     });
 
     it('should render a static option for its value without fetching a dashboard', async () => {
-      const apiSpy = jest.spyOn(dashboardApi, 'getDashboardAPI');
+      const apiSpy = jest.mocked(dashboardApi.getDashboardAPI);
       const pinned = { value: { uid: 'pinned', name: 'Pinned' }, label: 'Pinned' };
 
       render(<DashboardPicker value="pinned" staticOptions={[pinned]} />);
 
       expect(await screen.findByText('Pinned')).toBeInTheDocument();
       expect(apiSpy).not.toHaveBeenCalled();
-      apiSpy.mockRestore();
     });
 
     it('should list static options ahead of search results and filter them by input', async () => {

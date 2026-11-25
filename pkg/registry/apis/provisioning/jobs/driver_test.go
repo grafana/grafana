@@ -444,7 +444,7 @@ func TestProcessJob_AuthFailureRepo_SkipsJob(t *testing.T) {
 	driver.currentJob = makeTestJob("1")
 
 	repoCfg := makeRepoConfig("test-repo", nil, nil)
-	repoCfg.Status.Health = provisioning.HealthStatus{
+	repoCfg.Status.Health = provisioning.RepositoryHealthStatus{
 		Healthy: false,
 		Error:   provisioning.HealthFailureHealth,
 		Checked: time.Now().UnixMilli(),
@@ -483,7 +483,7 @@ func TestProcessJob_AuthFailureRepo_TestActionStillRuns(t *testing.T) {
 	driver.currentJob.Spec.Action = provisioning.JobActionTest
 
 	repoCfg := makeRepoConfig("test-repo", nil, nil)
-	repoCfg.Status.Health = provisioning.HealthStatus{
+	repoCfg.Status.Health = provisioning.RepositoryHealthStatus{
 		Healthy: false,
 		Error:   provisioning.HealthFailureHealth,
 		Checked: time.Now().UnixMilli(),
@@ -523,7 +523,7 @@ func TestProcessJob_StaleAuthFailureCondition_CallsWorker(t *testing.T) {
 
 	repoCfg := makeRepoConfig("test-repo", nil, nil)
 	repoCfg.Generation = 2 // spec was just edited to repair credentials
-	repoCfg.Status.Health = provisioning.HealthStatus{
+	repoCfg.Status.Health = provisioning.RepositoryHealthStatus{
 		Healthy: false,
 		Error:   provisioning.HealthFailureHealth,
 		Checked: time.Now().UnixMilli(),
@@ -564,7 +564,7 @@ func TestProcessJob_UnhealthyButReachableRepo_CallsWorker(t *testing.T) {
 	driver.currentJob = makeTestJob("1")
 
 	repoCfg := makeRepoConfig("test-repo", nil, nil)
-	repoCfg.Status.Health = provisioning.HealthStatus{
+	repoCfg.Status.Health = provisioning.RepositoryHealthStatus{
 		Healthy: false,
 		Error:   provisioning.HealthFailureHealth,
 		Checked: time.Now().UnixMilli(),
@@ -604,7 +604,7 @@ func TestProcessJob_HookPermissionFailure_CallsWorker(t *testing.T) {
 	driver.currentJob = makeTestJob("1")
 
 	repoCfg := makeRepoConfig("test-repo", nil, nil)
-	repoCfg.Status.Health = provisioning.HealthStatus{
+	repoCfg.Status.Health = provisioning.RepositoryHealthStatus{
 		Healthy: false,
 		Error:   provisioning.HealthFailureHook,
 		Checked: time.Now().UnixMilli(),
@@ -640,7 +640,7 @@ func TestProcessJob_UncheckedHealth_CallsWorker(t *testing.T) {
 	driver.currentJob = makeTestJob("1")
 
 	repoCfg := makeRepoConfig("test-repo", nil, nil)
-	repoCfg.Status.Health = provisioning.HealthStatus{Healthy: false}
+	repoCfg.Status.Health = provisioning.RepositoryHealthStatus{Healthy: false}
 	mockRepo := &repository.MockRepository{}
 	mockRepo.On("Config").Return(repoCfg)
 
