@@ -168,23 +168,20 @@ describe('formatOutputs', () => {
   it('reports no release, no PR and an empty list when nothing is planned', () => {
     expect(formatOutputs({ pr: null, sha: 'head', tagged: [] })).toEqual({
       pr: '',
-      release_created: 'false',
-      tagged: '[]',
-      matrix: '{"include":[]}',
+      release_created: false,
+      tagged: [],
+      matrix: { include: [] },
       sha: 'head',
     });
   });
 
-  it('reports the PR, the planned tags as one line of JSON, and the same list as a job matrix', () => {
-    const outputs = formatOutputs({ pr: 7, sha: 'm1', tagged: [pluginCompatTag] });
-
-    expect(outputs).toEqual({
+  it('reports the PR, the planned tags, and the same list as a job matrix', () => {
+    expect(formatOutputs({ pr: 7, sha: 'm1', tagged: [pluginCompatTag] })).toEqual({
       pr: '7',
-      release_created: 'true',
-      tagged: JSON.stringify([pluginCompatTag]),
-      matrix: JSON.stringify({ include: [pluginCompatTag] }),
+      release_created: true,
+      tagged: [pluginCompatTag],
+      matrix: { include: [pluginCompatTag] },
       sha: 'm1',
     });
-    expect(Object.values(outputs).every((value) => !value.includes('\n'))).toBe(true);
   });
 });

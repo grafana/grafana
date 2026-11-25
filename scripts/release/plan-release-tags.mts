@@ -80,12 +80,20 @@ export function planReleaseTags(
   return { plan: { pr: release.pr.number, sha: release.pr.mergeCommit, tagged: release.changed }, warnings };
 }
 
-export function formatOutputs(plan: Plan): Record<string, string> {
+interface PlanOutputs {
+  pr: string;
+  release_created: boolean;
+  tagged: PlannedTag[];
+  matrix: { include: PlannedTag[] };
+  sha: string;
+}
+
+export function formatOutputs(plan: Plan): PlanOutputs {
   return {
     pr: plan.pr === null ? '' : String(plan.pr),
-    release_created: String(plan.tagged.length > 0),
-    tagged: JSON.stringify(plan.tagged),
-    matrix: JSON.stringify({ include: plan.tagged }),
+    release_created: plan.tagged.length > 0,
+    tagged: plan.tagged,
+    matrix: { include: plan.tagged },
     sha: plan.sha,
   };
 }

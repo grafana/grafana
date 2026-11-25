@@ -59,7 +59,7 @@ if (import.meta.main) {
     // Without packages the project list would be empty, which Nx may read as "every project".
     if (packages.length === 0) {
       console.error('::notice::There are no independent packages to release.');
-      writeFileSync(outputPath, JSON.stringify({ changed: 'false' }));
+      writeFileSync(outputPath, JSON.stringify({ changed: false }));
       process.exit(0);
     }
 
@@ -88,7 +88,7 @@ if (import.meta.main) {
     const versionResult = await releaseVersion(options);
     if (!hasNewVersion(packages, versionResult.projectsVersionData)) {
       console.error('::notice::No package has releasable commits since its last release.');
-      writeFileSync(outputPath, JSON.stringify({ changed: 'false' }));
+      writeFileSync(outputPath, JSON.stringify({ changed: false }));
       process.exit(0);
     }
 
@@ -97,7 +97,7 @@ if (import.meta.main) {
       versionData: versionResult.projectsVersionData,
       releaseGraph: versionResult.releaseGraph,
     });
-    writeFileSync(outputPath, JSON.stringify({ changed: 'true' }));
+    writeFileSync(outputPath, JSON.stringify({ changed: true }));
   } catch (error) {
     console.error(`::error::${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);
