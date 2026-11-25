@@ -95,7 +95,6 @@ export const StateTimelinePanel = ({
   return (
     <div className={containerStyles}>
       <TimelineChart
-        theme={theme}
         frames={paginatedFrames}
         structureRev={data.structureRev}
         paginationRev={paginationRev}

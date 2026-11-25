@@ -9,9 +9,9 @@ import { GraphNG, type GraphNGProps, type PropDiffFn } from '../GraphNG/GraphNG'
 
 import { getXAxisConfig, preparePlotConfigBuilder } from './utils';
 
-const propsToDiff: Array<string | PropDiffFn> = ['legend', 'options', 'annotationLanes', 'theme'];
+const propsToDiff: Array<string | PropDiffFn> = ['legend', 'options', 'annotationLanes'];
 
-type TimeSeriesProps = Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend' | 'theme' | 'legend'> & {
+type TimeSeriesProps = Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend' | 'legend'> & {
   legend: TimeSeriesLegendOptions;
   onPinnedToSidebarChange?: (pinned: boolean) => void;
 };
@@ -52,7 +52,5 @@ export function TimeSeries(props: TimeSeriesProps) {
     [legend, frames, onPinnedToSidebarChange]
   );
 
-  return (
-    <GraphNG {...props} theme={theme} prepConfig={prepConfig} propsToDiff={propsToDiff} renderLegend={renderLegend} />
-  );
+  return <GraphNG {...props} prepConfig={prepConfig} propsToDiff={propsToDiff} renderLegend={renderLegend} />;
 }

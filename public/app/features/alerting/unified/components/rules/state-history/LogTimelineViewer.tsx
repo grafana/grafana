@@ -30,7 +30,6 @@ export const LogTimelineViewer = memo(({ frames, timeRange }: LogTimelineViewerP
           height={18 * frames.length + 50}
           width={width}
           showValue={VisibilityMode.Never}
-          theme={theme}
           rowHeight={0.8}
           legend={{
             calcs: [],

@@ -7,7 +7,7 @@ import {
   type VisibilityMode,
   type VizTooltipOptions,
 } from '@grafana/schema';
-import { type UPlotConfigBuilder, VizLayout, VizLegend, type VizLegendItem } from '@grafana/ui';
+import { type UPlotConfigBuilder, useTheme2, VizLayout, VizLegend, type VizLegendItem } from '@grafana/ui';
 import { shouldShowLegend } from '@grafana/ui/internal';
 
 import { GraphNG, type GraphNGProps } from '../GraphNG/GraphNG';
@@ -36,11 +36,11 @@ const propsToDiff = [
   'tooltip',
   'paginationRev',
   'annotationLanes',
-  'theme',
 ];
 
 export const TimelineChart = (props: TimelineProps) => {
   const { frames, timeZone, rowHeight, tooltip, legend, legendItems } = props;
+  const theme = useTheme2();
 
   const getValueColor = useCallback(
     (frameIdx: number, fieldIdx: number, value: unknown) => {
@@ -65,6 +65,7 @@ export const TimelineChart = (props: TimelineProps) => {
         getTimeRange,
         allFrames: frames,
         ...props,
+        theme,
 
         // Ensure timezones is passed as an array
         timeZones: Array.isArray(timeZone) ? timeZone : [timeZone],
@@ -77,7 +78,7 @@ export const TimelineChart = (props: TimelineProps) => {
         xAxisConfig: getXAxisConfig(props.annotationLanes),
       });
     },
-    [frames, props, timeZone, rowHeight, getValueColor, tooltip]
+    [frames, props, theme, timeZone, rowHeight, getValueColor, tooltip]
   );
 
   const renderLegend = useCallback(

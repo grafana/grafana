@@ -169,7 +169,6 @@ type Overrides = Partial<React.ComponentProps<typeof TimelineChart>>;
 
 function renderTimeline(frames: DataFrame[], overrides: Overrides = {}) {
   const props: React.ComponentProps<typeof TimelineChart> = {
-    theme,
     frames,
     structureRev: 1,
     width,
