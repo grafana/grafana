@@ -11,25 +11,97 @@ import { ExampleFrame } from '../../utils/storybook/ExampleFrame';
 
 Clickable elements that are used to trigger actions. Buttons communicate what action will occur when users interact with it.
 
-When using a button please always follow a11y rules (e.g. W3C Recommendation [3.3.2 Labels or instructions](https://www.w3.org/TR/WCAG21/#labels-or-instructions)) and make sure the context in which the button is located is also communicated by screen readers.
+## When to use
 
-### Do's
+Use `Button` to trigger an action, such as saving a form, running a query or opening a dialog.
 
-- Apply the same width of the container for all buttons when they are in a group.
-- Use only one primary button and two of the same lower emphasis when in the button group.
-- Maintain the same style about using or not an icon with the label text in the button group.
+## Never use for
 
-### Don'ts
+- **Navigation.** To add an anchor that looks like a button, use the `<LinkButton>` component and pass an `href` prop. For a link inside text, use `TextLink`.
+- **An icon-only action.** Use [`IconButton`](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/components/IconButton/IconButton.mdx) instead. When an icon-only `Button` is the right fit, such as the menu toggle of a split button inside a `ButtonGroup`, give it an `aria-label` or a `tooltip`. The types require one of them. A `tooltip` is preferred, because it also shows the label to sighted users.
+- **An action inside a sentence or a line of data.** Use [`InlineButton` for inline actions](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/guidance/patterns/inline-actions.md).
+- **Toolbar actions and toggles.** Use [`ToolbarButton`](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/components/ToolbarButton/ToolbarButton.mdx), which is built to form a toolbar with other `ToolbarButton`s and has an `active` variant for a toggled-on state.
+- **Copying text to the clipboard.** Use [`ClipboardButton`](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/components/ClipboardButton/ClipboardButton.mdx), which copies the text returned by `getText`.
+- **Confirming a destructive action.** Use [`ConfirmButton`](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/components/ConfirmButton/ConfirmButton.mdx) to replace the action with an inline confirmation, or [`ConfirmModal`](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/components/ConfirmModal/ConfirmModal.mdx) to ask for confirmation in a dialog, for example before deleting items.
+- **Picking one value from a set.** Use [`RadioButtonGroup`](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/components/Forms/RadioButtonGroup/RadioButtonGroup.mdx) for a single value from mutually exclusive options.
 
-- Don't strip a `Button`'s padding and border to make it look inline. Use [`InlineButton` for inline actions](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/guidance/patterns/inline-actions.md) or `TextLink` for navigation.
+## Do's and don'ts
 
-- Do not use two primary buttons in a button group.
-- Do not use buttons with icons and buttons without icons in a button group.
-- Do not have more than one primary action.
-- Do not pair a solid primary and solid destructive button -- one must take precedence over the other.
-- Do not use buttons with icons only (in case this is impossible please always add text for a tooltip and an aria label as they are needed to meet accessible requirements).
+### Button groups
 
-## Emphasis
+- Do apply the same width of the container for all buttons when they are in a group.
+- Do use only one primary button and two of the same lower emphasis when in the button group.
+- Do maintain the same style about using or not an icon with the label text in the button group.
+- Don't use two primary buttons in a button group.
+- Don't use buttons with icons and buttons without icons in a button group.
+- Don't have more than one primary action.
+- Don't pair a solid primary and solid destructive button -- one must take precedence over the other.
+- Don't use buttons with icons only. Follow the icon-only rule under Never use for, as in the split button example below.
+
+To join buttons, such as a split button, wrap them in `ButtonGroup`. It removes the inner border radius between adjacent buttons, so don't reset it with `:nth-child` rules.
+
+```tsx
+<ButtonGroup>
+  <Button icon="sync">Run query</Button>
+  <Button icon="angle-down" aria-label="Expand menu" />
+</ButtonGroup>
+```
+
+### Don't strip button styles
+
+Don't strip a `Button`'s padding and border to make it look inline, like a link or like a bare icon. Use [`InlineButton` for inline actions](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/guidance/patterns/inline-actions.md), `TextLink` for navigation, or `IconButton` for an icon-only action. See [icon and link actions](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/guidance/patterns/icon-and-link-actions.md).
+
+```tsx
+// Don't
+<Button
+  fill="text"
+  icon="times"
+  aria-label="Remove"
+  className={css({ padding: 0, height: 'auto', border: 'none' })}
+  onClick={onRemove}
+/>
+
+// Do
+<IconButton name="times" tooltip="Remove" onClick={onRemove} />
+```
+
+`Button fill="text"` without those overrides is fine for a low-emphasis action that should keep standard button sizing.
+
+### Don't force states with CSS
+
+Set `disabled` to disable a button. Don't fake it with `opacity` or `pointer-events`: assistive technology still reports the button as enabled, and it still runs `onClick` from the keyboard. Don't remove the focus ring either. See [interactive states](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/guidance/patterns/interactive-states.md).
+
+```tsx
+// Don't
+<Button className={css({ opacity: 0.5, pointerEvents: 'none' })} onClick={save}>
+  Save
+</Button>
+
+// Do
+<Button disabled onClick={save}>
+  Save
+</Button>
+```
+
+## Usage
+
+```tsx
+import { Button } from '@grafana/ui';
+
+<Button variant="primary" onClick={onSave}>
+  Save
+</Button>;
+```
+
+- `variant`: `primary`, `secondary`, `accent`, `destructive` or `success`. Defaults to `primary`, or to `accent` when `fill` is `text`.
+  - See Variants for what `accent` and `success` are used for.
+- `fill`: `solid` (default), `outline` or `text`.
+- `size`: `sm`, `md` (default) or `lg`.
+- `icon` adds an icon, and `iconPlacement` puts it on the `left` (default) or `right` of the label.
+- `fullWidth` makes the button grow to fill its container.
+- `type` defaults to `button`, so set `type="submit"` to submit a form.
+
+### Emphasis
 
 - **High:** Are used for the most important and common actions on the screen. These are Primary and Destructive buttons.
 - **Default:** Used as secondary actions that can be more than one on the same page. This is the most common button usage within Grafana.
@@ -37,7 +109,7 @@ When using a button please always follow a11y rules (e.g. W3C Recommendation [3.
 
 ![button emphasis](./images/button.emphasis.png 'Visual representation of button emphasis')
 
-## Variants
+### Variants
 
 <table>
   <thead>
@@ -70,7 +142,7 @@ When using a button please always follow a11y rules (e.g. W3C Recommendation [3.
       <td>
         <p>Filled</p>
         <p>Outline</p>
-        <p>Ghost</p>
+        <p>Text</p>
       </td>
       <td>Default</td>
       <td>
@@ -80,10 +152,121 @@ When using a button please always follow a11y rules (e.g. W3C Recommendation [3.
         secondary style.
       </td>
     </tr>
+    <tr>
+      <th scope="row">Accent</th>
+      <td>
+        <p>Filled</p>
+        <p>Outline</p>
+        <p>Text</p>
+      </td>
+      <td>Not documented</td>
+      <td>
+        The default variant for <code>fill="text"</code>. It uses the theme's accent color, which is the same color as
+        Primary in the default themes. In Grafana it is also set on a few calls to action, such as starting a playlist.
+        No further usage guidance is documented yet.
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">Success</th>
+      <td>
+        <p>Filled</p>
+        <p>Outline</p>
+        <p>Text</p>
+      </td>
+      <td>Not documented</td>
+      <td>
+        Uses the theme's success color. <code>ClipboardButton</code> switches to this variant to confirm a successful
+        copy. No further usage guidance is documented yet.
+      </td>
+    </tr>
   </tbody>
 </table>
 
-## Button Sizes and Label Typography
+### Primary
+
+Used for "call to action", i.e. triggering the main action. There should never be more than one on a page. If you need multiple buttons for different actions, decide which action is the most important and make that the primary `Button`. All other `Button` components should be secondary.
+
+If there is no primary action, all `Button` components should be secondary.
+
+<ExampleFrame>
+  <Button variant="primary" size="sm" style={{ margin: '5px' }}>
+    {'Small'}
+  </Button>
+  <Button variant="primary" size="md" style={{ margin: '5px' }}>
+    {'Medium'}
+  </Button>
+  <Button variant="primary" size="lg" style={{ margin: '5px' }}>
+    {'Large'}
+  </Button>
+</ExampleFrame>
+
+### Secondary
+
+The secondary `Button` is the default button style and can trigger various actions. How it is used depends on its surroundings:
+
+1. When next to the primary `Button`, the Secondary style can for example be used for "Cancel" or "Abort" actions.
+2. When there is no main important action on a given page, all `Button` components should use the secondary style.
+
+<ExampleFrame>
+  <Button variant="secondary" size="sm" style={{ margin: '5px' }}>
+    {'Small'}
+  </Button>
+  <Button variant="secondary" size="md" style={{ margin: '5px' }}>
+    {'Medium'}
+  </Button>
+  <Button variant="secondary" size="lg" style={{ margin: '5px' }}>
+    {'Large'}
+  </Button>
+</ExampleFrame>
+
+### Destructive
+
+Used for triggering a removing or deleting action. Because of its dominant coloring, it should be used sparingly. If you need multiple Destructive `Button` components in one view, we recommend using a secondary `Button` or a `fill="text"` `Button` instead and only use the Destructive variant to double confirm.
+If a destructive action has a confirmation step it does not need to be destructive, as long as the confirmation step has a destructive button. In tables containing delete actions we recommend `DeleteButton`. It renders a secondary `Button` with the trash-alt icon, gives it the accessible label "Delete" unless you pass `aria-label`, and asks for confirmation inline.
+
+<ExampleFrame>
+  <Button variant="destructive" size="sm" style={{ margin: '5px' }}>
+    {'Small'}
+  </Button>
+  <Button variant="destructive" size="md" style={{ margin: '5px' }}>
+    {'Medium'}
+  </Button>
+  <Button variant="destructive" size="lg" style={{ margin: '5px' }}>
+    {'Large'}
+  </Button>
+</ExampleFrame>
+
+### Text
+
+<ExampleFrame>
+  <Button fill="text" size="sm" style={{ margin: '5px' }}>
+    {'Small'}
+  </Button>
+  <Button fill="text" size="md" style={{ margin: '5px' }}>
+    {'Medium'}
+  </Button>
+  <Button fill="text" size="lg" style={{ margin: '5px' }}>
+    {'Large'}
+  </Button>
+</ExampleFrame>
+
+### Links
+
+To add an anchor that looks like a button use the `<LinkButton>` component and pass a href prop.
+
+<ExampleFrame>
+  <LinkButton href="/" size="sm" style={{ margin: '5px' }}>
+    {'Small'}
+  </LinkButton>
+  <LinkButton href="/" size="md" style={{ margin: '5px' }}>
+    {'Medium'}
+  </LinkButton>
+  <LinkButton href="/" size="lg" style={{ margin: '5px' }}>
+    {'Large'}
+  </LinkButton>
+</ExampleFrame>
+
+### Button sizes and label typography
 
 <table>
   <thead>
@@ -118,8 +301,6 @@ When using a button please always follow a11y rules (e.g. W3C Recommendation [3.
 
 ![button sizes](./images/button.sizes.png 'Visual representation of button sizes')
 
-## Formatting
-
 ### Anatomy
 
 <Stack direction="row" gap={4}>
@@ -136,11 +317,11 @@ When using a button please always follow a11y rules (e.g. W3C Recommendation [3.
   </div>
   <div>
 
-![Icon Button anatomy](./images/button.anatomy.b.png)
+![Icon-only Button anatomy](./images/button.anatomy.b.png)
 
-#### Icon Button
+#### Icon-only Button
 
-**Note:** Before using buttons without text always consider using [IconButton](/docs/inputs-iconbutton--docs) instead.
+**Note:** Before using buttons without text always consider using [`IconButton`](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/components/IconButton/IconButton.mdx) instead, and follow the icon-only rule under Never use for.
 
 1. Solid container (optional)
 2. Icon
@@ -148,7 +329,7 @@ When using a button please always follow a11y rules (e.g. W3C Recommendation [3.
   </div>
 </Stack>
 
-### Hierarchy and Button Pairings
+### Hierarchy and button pairings
 
 - **Primary/Destructive Button -- High Emphasis:**
 
@@ -174,101 +355,26 @@ When using a button please always follow a11y rules (e.g. W3C Recommendation [3.
   - Inside cards on the top-right
   - Inside cards on the bottom-center
 
-## Accessibility
-
-- Use ARIA tags when using buttons to ensure they are accessible.
-  - For example buttons represented by icons, the accessible name may be provided from the aria-label or aria-labelledby attributes.
-  - Using role="button" instead of the semantic `<button>` or `<input type="button">` (iOS "clickable elements" fix for role="button").
-
-## Primary
-
-Used for "call to action", i.e. triggering the main action. There should never be more than one on a page. If you need multiple buttons for different actions, decide which action is the most important and make that the primary `Button`. All other `Button` components should be secondary.
-
-If there is no primary action, all `Button` components should be secondary.
-
-<ExampleFrame>
-  <Button variant="primary" size="sm" style={{ margin: '5px' }}>
-    {'Small'}
-  </Button>
-  <Button variant="primary" size="md" style={{ margin: '5px' }}>
-    {'Medium'}
-  </Button>
-  <Button variant="primary" size="lg" style={{ margin: '5px' }}>
-    {'Large'}
-  </Button>
-</ExampleFrame>
-
-## Secondary
-
-The secondary `Button` is the default button style and can trigger various actions. How it is used depends on its surroundings:
-
-1. When next to the primary `Button`, the Secondary style can for example be used for "Cancel" or "Abort" actions.
-2. When there is no main important action on a given page, all `Button` components should use the secondary style.
-
-<ExampleFrame>
-  <Button variant="secondary" size="sm" style={{ margin: '5px' }}>
-    {'Small'}
-  </Button>
-  <Button variant="secondary" size="md" style={{ margin: '5px' }}>
-    {'Medium'}
-  </Button>
-  <Button variant="secondary" size="lg" style={{ margin: '5px' }}>
-    {'Large'}
-  </Button>
-</ExampleFrame>
-
-## Destructive
-
-Used for triggering a removing or deleting action. Because of its dominant coloring, it should be used sparingly. If you need multiple Destructive `Button` components in one view, we recommend using a secondary `Button` or Link variant instead and only use the Destructive variant to double confirm.
-If a destructive action has a confirmation step it does not need to be destructive, as long as the confirmation step has a destructive button. In tables containing delete actions we recommend using a secondary variant `Button` with trash-alt icon.
-
-<ExampleFrame>
-  <Button variant="destructive" size="sm" style={{ margin: '5px' }}>
-    {'Small'}
-  </Button>
-  <Button variant="destructive" size="md" style={{ margin: '5px' }}>
-    {'Medium'}
-  </Button>
-  <Button variant="destructive" size="lg" style={{ margin: '5px' }}>
-    {'Large'}
-  </Button>
-</ExampleFrame>
-
-## Text
-
-<ExampleFrame>
-  <Button fill="text" size="sm" style={{ margin: '5px' }}>
-    {'Small'}
-  </Button>
-  <Button fill="text" size="md" style={{ margin: '5px' }}>
-    {'Medium'}
-  </Button>
-  <Button fill="text" size="lg" style={{ margin: '5px' }}>
-    {'Large'}
-  </Button>
-</ExampleFrame>
-
-## Links
-
-To add an anchor that looks like a button use the `<LinkButton>` component and pass a href prop.
-
-<ExampleFrame>
-  <LinkButton href="/" size="sm" style={{ margin: '5px' }}>
-    {'Small'}
-  </LinkButton>
-  <LinkButton href="/" size="md" style={{ margin: '5px' }}>
-    {'Medium'}
-  </LinkButton>
-  <LinkButton href="/" size="lg" style={{ margin: '5px' }}>
-    {'Large'}
-  </LinkButton>
-</ExampleFrame>
-
-## Further Reading
+### Further reading
 
 - [Buttons UX best practices](https://uxplanet.org/5-best-practices-for-designing-effective-buttons-71a4a33e6d26)
 - [7 Basic Rules for Button Design](https://uxplanet.org/7-basic-rules-for-button-design-63dcdf5676b4)
 - [A comprehensive guide to designing UX buttons](https://www.invisionapp.com/inside-design/comprehensive-guide-designing-ux-buttons/)
+
+## Accessibility
+
+When using a button please always follow a11y rules (e.g. W3C Recommendation [3.3.2 Labels or instructions](https://www.w3.org/TR/WCAG21/#labels-or-instructions)) and make sure the context in which the button is located is also communicated by screen readers.
+
+- Use ARIA tags when using buttons to ensure they are accessible.
+  - For example buttons represented by icons, the accessible name may be provided from the aria-label or aria-labelledby attributes.
+  - Use `Button`, which renders a semantic `<button>`, rather than adding `role="button"` to another element.
+
+`Button` handles:
+
+- **Element:** it renders a native `<button>`.
+- **Icon-only buttons:** a button without children must have an `aria-label` or a `tooltip`. A string `tooltip` becomes the accessible name when there is no `aria-label`.
+- **Disabled:** a disabled button doesn't call `onClick`. With a `tooltip`, it sets `aria-disabled` instead of the native `disabled` attribute, so the tooltip stays reachable.
+- **Focus:** it shows a focus ring for keyboard focus and hides it for mouse focus. A disabled button shows no focus ring. That includes a disabled button with a `tooltip`, which stays focusable because it uses `aria-disabled`.
 
 ## Props
 

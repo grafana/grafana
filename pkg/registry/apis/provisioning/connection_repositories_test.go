@@ -13,10 +13,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 func TestConnectionRepositoriesConnector(t *testing.T) {
@@ -215,8 +215,8 @@ func TestConnectionRepositoriesConnector_WithGitHubConnection(t *testing.T) {
 				},
 			},
 			Secure: provisioning.ConnectionSecure{
-				Token: common.InlineSecureValue{
-					Create: common.NewSecretValue("test-token"),
+				Token: resource.InlineSecureValue{
+					Create: resource.NewSecretValue("test-token"),
 				},
 			},
 		}
@@ -232,10 +232,10 @@ func TestConnectionRepositoriesConnector_WithGitHubConnection(t *testing.T) {
 		}
 
 		mockFactory.EXPECT().
-			New(mock.Anything, common.RawSecureValue("test-token"), mock.Anything).
+			New(mock.Anything, resource.RawSecureValue("test-token"), mock.Anything).
 			Return(mockClient, nil)
 		mockFactory.EXPECT().
-			New(mock.Anything, common.RawSecureValue("someToken"), mock.Anything).
+			New(mock.Anything, resource.RawSecureValue("someToken"), mock.Anything).
 			Return(mockClient, nil)
 		mockClient.EXPECT().
 			CreateInstallationAccessToken(mock.Anything, "789012", "").
@@ -249,7 +249,7 @@ func TestConnectionRepositoriesConnector_WithGitHubConnection(t *testing.T) {
 			connObj,
 			mockFactory,
 			github.ConnectionSecrets{
-				Token: common.RawSecureValue("test-token"),
+				Token: resource.RawSecureValue("test-token"),
 			},
 		)
 
@@ -305,8 +305,8 @@ func TestConnectionRepositoriesConnector_WithGitHubConnection(t *testing.T) {
 				},
 			},
 			Secure: provisioning.ConnectionSecure{
-				Token: common.InlineSecureValue{
-					Create: common.NewSecretValue("test-token"),
+				Token: resource.InlineSecureValue{
+					Create: resource.NewSecretValue("test-token"),
 				},
 			},
 		}
@@ -316,10 +316,10 @@ func TestConnectionRepositoriesConnector_WithGitHubConnection(t *testing.T) {
 		mockClient := github.NewMockClient(t)
 
 		mockFactory.EXPECT().
-			New(mock.Anything, common.RawSecureValue("test-token"), mock.Anything).
+			New(mock.Anything, resource.RawSecureValue("test-token"), mock.Anything).
 			Return(mockClient, nil)
 		mockFactory.EXPECT().
-			New(mock.Anything, common.RawSecureValue("someToken"), mock.Anything).
+			New(mock.Anything, resource.RawSecureValue("someToken"), mock.Anything).
 			Return(mockClient, nil)
 		mockClient.EXPECT().
 			CreateInstallationAccessToken(mock.Anything, "789012", "").
@@ -333,7 +333,7 @@ func TestConnectionRepositoriesConnector_WithGitHubConnection(t *testing.T) {
 			connObj,
 			mockFactory,
 			github.ConnectionSecrets{
-				Token: common.RawSecureValue("test-token"),
+				Token: resource.RawSecureValue("test-token"),
 			},
 		)
 

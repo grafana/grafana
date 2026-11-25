@@ -15,6 +15,8 @@ import { AccessControlAction } from 'app/types/accessControl';
 import BrowseFolderVariablesPage from './BrowseFolderVariablesPage';
 import * as permissions from './permissions';
 
+jest.mock('./permissions', () => makeSpyable('./permissions'));
+
 const GLOBAL_DASHBOARD_VARIABLES_FLAG = 'grafana.dashboardGlobalVariables';
 
 setBackendSrv(backendSrv);

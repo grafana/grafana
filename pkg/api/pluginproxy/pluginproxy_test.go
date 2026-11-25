@@ -9,10 +9,11 @@ import (
 	"net/url"
 	"testing"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/routes"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -27,7 +28,7 @@ import (
 func TestPluginProxy(t *testing.T) {
 	t.Run("When getting proxy headers", func(t *testing.T) {
 		route := &plugins.Route{
-			Headers: []plugins.Header{
+			Headers: []routes.ProxyHeader{
 				{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
 			},
 		}

@@ -485,6 +485,16 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
           )
       ),
     });
+    routes.push({
+      path: '/alerting/rules/recording/deleted',
+      roles: () => ['Admin'],
+      component: importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "GmaRecordingRulesDeletedPage" */ 'app/features/alerting/unified/gma-rule-list/recording-rules/RecordingRulesDeletedPage'
+          )
+      ),
+    });
   }
 
   return routes;

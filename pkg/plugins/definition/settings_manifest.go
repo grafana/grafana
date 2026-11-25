@@ -13,7 +13,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	manifestroutes "github.com/grafana/grafana-app-sdk/routes"
+	"github.com/grafana/grafana-app-sdk/routes"
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
@@ -66,7 +66,7 @@ func settingsKind() app.ManifestVersionKind {
 
 // SettingsRouteOptions are the rules the settings manifest's routes are parsed
 // with, when it is loaded and when it is served.
-var SettingsRouteOptions = manifestroutes.Options{UnservedMethods: []string{http.MethodTrace}}
+var SettingsRouteOptions = routes.Options{UnservedMethods: []string{http.MethodTrace}}
 
 // NewSettingsManifest describes an app's settings API: the app resource,
 // served under the plugin ID, and the routes of its resources and proxy
@@ -124,6 +124,7 @@ func NewSettingsManifest(p PluginDefinition, match RouteMatcher) (manifest *app.
 			proxy[SettingsProxyRoot+path] = props
 		}
 	}
+	errs = append(errs, dropInvalidProxyOperations(proxy)...)
 	if len(proxy) == 0 {
 		return manifest, errors.Join(errs...)
 	}
@@ -166,9 +167,9 @@ func settingsRoutes(foundation *app.ManifestData) (resources, proxy map[string]s
 			case IsBelow(path, SettingsProxyRoot):
 				proxy[path] = props
 			case IsBelow(path, SettingsResourcesRoot):
-				for method, op := range manifestroutes.Operations(&props) {
-					if _, ok := op.Extensions[ExtensionProxy]; ok {
-						errs = append(errs, fmt.Errorf("%s %s: %s is only served below the proxy subresource", method, path, ExtensionProxy))
+				for method, op := range routes.Operations(&props) {
+					if _, ok := op.Extensions[routes.ExtensionProxy]; ok {
+						errs = append(errs, fmt.Errorf("%s %s: %s is only served below the proxy subresource", method, path, routes.ExtensionProxy))
 						props = WithoutProxyExtension(props)
 						break
 					}
@@ -180,6 +181,33 @@ func settingsRoutes(foundation *app.ManifestData) (resources, proxy map[string]s
 		}
 	}
 	return resources, proxy, components, errs
+}
+
+// dropInvalidProxyOperations removes from proxy each operation whose
+// ExtensionProxy is missing or does not decode, and returns why, so one bad
+// operation does not leave out every proxy route. A path left without
+// operations is removed.
+func dropInvalidProxyOperations(proxy map[string]spec3.PathProps) []error {
+	var errs []error
+	for _, path := range slices.Sorted(maps.Keys(proxy)) {
+		props := proxy[path]
+		ops := routes.Operations(&props)
+		for _, method := range slices.Sorted(maps.Keys(ops)) {
+			_, err := ProxyRouteFor(routes.Route{Declared: path}, method, ops[method])
+			if err == nil {
+				continue
+			}
+			errs = append(errs, fmt.Errorf("proxy route is left out: %w", err))
+			*operationFor(&props, method) = nil
+			delete(ops, method)
+		}
+		if len(ops) == 0 {
+			delete(proxy, path)
+			continue
+		}
+		proxy[path] = props
+	}
+	return errs
 }
 
 // withPaths returns version with paths added to its OpenAPI paths.
@@ -203,14 +231,14 @@ func (p *PluginDefinition) LoadSettings(match RouteMatcher) error {
 
 // ProxyRouteFor returns the plugin route a proxy route of the settings
 // manifest forwards an operation with.
-func ProxyRouteFor(route manifestroutes.Route, method string, op *spec3.Operation) (*plugins.Route, error) {
+func ProxyRouteFor(route routes.Route, method string, op *spec3.Operation) (*plugins.Route, error) {
 	rel := strings.TrimPrefix(route.Declared, SettingsProxyRoot)
 	forwarded, ok, err := ProxyRouteFromOperation(rel, method, op)
 	if err != nil {
 		return nil, fmt.Errorf("%s %s: %w", method, route.Declared, err)
 	}
 	if !ok {
-		return nil, fmt.Errorf("%s %s: a route below the proxy subresource must declare %s", method, route.Declared, ExtensionProxy)
+		return nil, fmt.Errorf("%s %s: a route below the proxy subresource must declare %s", method, route.Declared, routes.ExtensionProxy)
 	}
 	return forwarded, nil
 }
@@ -220,9 +248,9 @@ func ProxyRouteFor(route manifestroutes.Route, method string, op *spec3.Operatio
 // slash, as the plugin proxy does. A copy keeps the route's Declared path, so it
 // is served and published as that route. A path a route already matches is not
 // copied, nor is a copy that would conflict with another route: routes are
-// mounted on a ServeMux, which panics on a conflict, and manifestroutes.Parse
+// mounted on a ServeMux, which panics on a conflict, and routes.Parse
 // only checked the declared routes.
-func WithTrailingSlashes(routes []manifestroutes.Route) []manifestroutes.Route {
+func WithTrailingSlashes(routes []routes.Route) []routes.Route {
 	scratch := http.NewServeMux()
 	for _, r := range routes {
 		_ = registers(scratch, r)
@@ -243,13 +271,13 @@ func WithTrailingSlashes(routes []manifestroutes.Route) []manifestroutes.Route {
 
 // registers registers r's operations on mux, reporting false if one conflicts
 // with a pattern already registered, or is one.
-func registers(mux *http.ServeMux, r manifestroutes.Route) (ok bool) {
+func registers(mux *http.ServeMux, r routes.Route) (ok bool) {
 	defer func() {
 		if recover() != nil {
 			ok = false
 		}
 	}()
-	for method := range manifestroutes.Operations(&r.Operations) {
+	for method := range routes.Operations(&r.Operations) {
 		mux.Handle(method+" /"+r.Pattern, http.NotFoundHandler())
 	}
 	return true
@@ -265,7 +293,7 @@ func (matchedRoute) ServeHTTP(http.ResponseWriter, *http.Request) {}
 // proxy routes on a mux the way the settings API mounts them, relative to the
 // version.
 func settingsRouteMux(version app.ManifestVersion) (*http.ServeMux, error) {
-	parsed, problems := manifestroutes.Parse(version, SettingsRouteOptions)
+	parsed, problems := routes.Parse(version, SettingsRouteOptions)
 	if len(problems) > 0 {
 		errs := make([]error, len(problems))
 		for i, p := range problems {
@@ -278,7 +306,7 @@ func settingsRouteMux(version app.ManifestVersion) (*http.ServeMux, error) {
 		if !IsBelow(r.Declared, SettingsProxyRoot) {
 			continue
 		}
-		for method, op := range manifestroutes.Operations(&r.Operations) {
+		for method, op := range routes.Operations(&r.Operations) {
 			route, err := ProxyRouteFor(r, method, op)
 			if err != nil {
 				return nil, err

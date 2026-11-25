@@ -40,6 +40,7 @@ export type CentrifugeSrvDeps = {
   namespace: string; // k8s namespace
   orgRole: string;
   liveEnabled: boolean;
+  websocketPath?: string; // defaults to /api/live/ws
   dataStreamSubscriberReadiness: Observable<boolean>;
 };
 
@@ -79,7 +80,7 @@ export class CentrifugeService implements CentrifugeSrv {
   constructor(private deps: CentrifugeSrvDeps) {
     this.dataStreamSubscriberReadiness = deps.dataStreamSubscriberReadiness.pipe(share(), startWith(true));
 
-    let liveUrl = `${deps.appUrl.replace(/^http/, 'ws')}/api/live/ws`;
+    let liveUrl = `${deps.appUrl.replace(/^http/, 'ws')}${deps.websocketPath ?? '/api/live/ws'}`;
 
     const token = deps.grafanaAuthToken;
     if (token !== null && token !== '') {

@@ -174,7 +174,7 @@ func canWriteDashboardPreferencesOrgTier(ctx context.Context, accessControl acce
 		return false, nil
 	}
 	if accessControl == nil {
-		return requester.GetOrgRole() == identity.RoleAdmin, nil
+		return requester.GetOrgRole() == authlib.RoleAdmin, nil
 	}
 
 	allowed, err := accessControl.Evaluate(ctx, requester, accesscontrol.EvalPermission(accesscontrol.ActionOrgsPreferencesWrite))

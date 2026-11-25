@@ -8,6 +8,7 @@
 package v0alpha1
 
 import (
+	resource "github.com/grafana/grafana-app-sdk/resource"
 	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
 	datasourcev0alpha1 "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	commonv0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -122,7 +123,7 @@ func schema_pkg_apis_datasource_v0alpha1_DataSource(ref common.ReferenceCallback
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref(commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()),
+										Ref: ref(resource.InlineSecureValue{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -133,7 +134,7 @@ func schema_pkg_apis_datasource_v0alpha1_DataSource(ref common.ReferenceCallback
 			},
 		},
 		Dependencies: []string{
-			commonv0alpha1.InlineSecureValue{}.OpenAPIModelName(), UnstructuredSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			resource.InlineSecureValue{}.OpenAPIModelName(), UnstructuredSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 

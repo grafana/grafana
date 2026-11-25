@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -12,7 +13,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
@@ -31,7 +31,7 @@ func TestValidateOnCreate(t *testing.T) {
 			name: "valid team binding create",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			obj: &iamv0alpha1.TeamBinding{
 				Spec: iamv0alpha1.TeamBindingSpec{
@@ -53,7 +53,7 @@ func TestValidateOnCreate(t *testing.T) {
 			name: "invalid team binding - invalid subject kind",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			obj: &iamv0alpha1.TeamBinding{
 				Spec: iamv0alpha1.TeamBindingSpec{
@@ -73,7 +73,7 @@ func TestValidateOnCreate(t *testing.T) {
 			name: "invalid team binding - empty subject kind",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			obj: &iamv0alpha1.TeamBinding{
 				Spec: iamv0alpha1.TeamBindingSpec{
@@ -93,7 +93,7 @@ func TestValidateOnCreate(t *testing.T) {
 			name: "invalid team binding - invalid permission",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			obj: &iamv0alpha1.TeamBinding{
 				Spec: iamv0alpha1.TeamBindingSpec{
@@ -113,7 +113,7 @@ func TestValidateOnCreate(t *testing.T) {
 			name: "invalid team binding - no subject",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			obj: &iamv0alpha1.TeamBinding{
 				Spec: iamv0alpha1.TeamBindingSpec{
@@ -133,7 +133,7 @@ func TestValidateOnCreate(t *testing.T) {
 			name: "invalid team binding - no teamRef",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			obj: &iamv0alpha1.TeamBinding{
 				Spec: iamv0alpha1.TeamBindingSpec{
@@ -170,7 +170,7 @@ func TestValidateOnCreate(t *testing.T) {
 			name: "invalid team binding - team does not exist",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			obj: &iamv0alpha1.TeamBinding{
 				Spec: iamv0alpha1.TeamBindingSpec{
@@ -192,7 +192,7 @@ func TestValidateOnCreate(t *testing.T) {
 			name: "invalid team binding - user does not exist",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			obj: &iamv0alpha1.TeamBinding{
 				Spec: iamv0alpha1.TeamBindingSpec{
@@ -214,7 +214,7 @@ func TestValidateOnCreate(t *testing.T) {
 			name: "team getter returns unexpected error",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			obj: &iamv0alpha1.TeamBinding{
 				Spec: iamv0alpha1.TeamBindingSpec{
@@ -236,7 +236,7 @@ func TestValidateOnCreate(t *testing.T) {
 			name: "service identity skips existence validation",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeServiceAccount,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			obj: &iamv0alpha1.TeamBinding{
 				Spec: iamv0alpha1.TeamBindingSpec{
@@ -286,7 +286,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			name: "valid update - permission change",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			old: &iamv0alpha1.TeamBinding{
 				Spec: iamv0alpha1.TeamBindingSpec{
@@ -320,7 +320,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			name: "invalid update - invalid subject kind",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			old: &iamv0alpha1.TeamBinding{
 				Spec: iamv0alpha1.TeamBindingSpec{
@@ -354,7 +354,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			name: "valid update - no changes",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			old: &iamv0alpha1.TeamBinding{
 				Spec: iamv0alpha1.TeamBindingSpec{
@@ -388,7 +388,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			name: "invalid update - teamRef change",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			old: &iamv0alpha1.TeamBinding{
 				Spec: iamv0alpha1.TeamBindingSpec{
@@ -422,7 +422,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			name: "invalid update - subject change",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			old: &iamv0alpha1.TeamBinding{
 				Spec: iamv0alpha1.TeamBindingSpec{
@@ -456,7 +456,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			name: "invalid update - external change",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			old: &iamv0alpha1.TeamBinding{
 				Spec: iamv0alpha1.TeamBindingSpec{
@@ -490,7 +490,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			name: "invalid update - invalid permission",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			old: &iamv0alpha1.TeamBinding{
 				Spec: iamv0alpha1.TeamBindingSpec{

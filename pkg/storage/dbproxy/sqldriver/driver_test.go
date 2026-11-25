@@ -28,20 +28,40 @@ import (
 
 type queryServer struct {
 	dbproxyv1.UnimplementedDatabaseProxyServiceServer
-	query func(*dbproxyv1.QueryRequest, grpc.ServerStreamingServer[dbproxyv1.QueryResponse]) error
+	query       func(*dbproxyv1.QueryRequest, grpc.ServerStreamingServer[dbproxyv1.QueryResponse]) error
+	exec        func(context.Context, *dbproxyv1.ExecRequest) (*dbproxyv1.ExecResponse, error)
+	transaction func(grpc.BidiStreamingServer[dbproxyv1.TransactionRequest, dbproxyv1.TransactionResponse]) error
 }
 
 func (s *queryServer) Query(req *dbproxyv1.QueryRequest, stream grpc.ServerStreamingServer[dbproxyv1.QueryResponse]) error {
 	return s.query(req, stream)
 }
+func (s *queryServer) Exec(ctx context.Context, req *dbproxyv1.ExecRequest) (*dbproxyv1.ExecResponse, error) {
+	if s.exec == nil {
+		return nil, status.Error(codes.Unimplemented, "exec unavailable")
+	}
+	return s.exec(ctx, req)
+}
+func (s *queryServer) Transaction(stream grpc.BidiStreamingServer[dbproxyv1.TransactionRequest, dbproxyv1.TransactionResponse]) error {
+	if s.transaction == nil {
+		return status.Error(codes.Unimplemented, "transaction unavailable")
+	}
+	return s.transaction(stream)
+}
 func openPool(t *testing.T, query func(*dbproxyv1.QueryRequest, grpc.ServerStreamingServer[dbproxyv1.QueryResponse]) error) *sql.DB {
+	return openServerPool(t, &queryServer{query: query})
+}
+func openServerPool(t *testing.T, handler *queryServer) *sql.DB {
+	return openServerPoolWithClient(t, handler, nil)
+}
+func openServerPoolWithClient(t *testing.T, handler *queryServer, decorate func(dbproxyv1.DatabaseProxyServiceClient) dbproxyv1.DatabaseProxyServiceClient) *sql.DB {
 	t.Helper()
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		t.Fatal(err)
 	}
 	server := grpc.NewServer()
-	dbproxyv1.RegisterDatabaseProxyServiceServer(server, &queryServer{query: query})
+	dbproxyv1.RegisterDatabaseProxyServiceServer(server, handler)
 	go func() { _ = server.Serve(listener) }()
 	t.Cleanup(server.Stop)
 	conn, err := grpc.NewClient(listener.Addr().String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -49,7 +69,11 @@ func openPool(t *testing.T, query func(*dbproxyv1.QueryRequest, grpc.ServerStrea
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = conn.Close() })
-	connector, err := sqldriver.New(dbproxyv1.NewDatabaseProxyServiceClient(conn)).OpenConnector("")
+	client := dbproxyv1.NewDatabaseProxyServiceClient(conn)
+	if decorate != nil {
+		client = decorate(client)
+	}
+	connector, err := sqldriver.New(client).OpenConnector("")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -363,7 +387,7 @@ func TestMalformedStreamFails(t *testing.T) {
 	}
 }
 
-func TestMissingIdentityAndWritesFailLocally(t *testing.T) {
+func TestMissingIdentityFailsLocallyAndPingIsUnsupported(t *testing.T) {
 	var attempts atomic.Int32
 	pool := openPool(t, func(*dbproxyv1.QueryRequest, grpc.ServerStreamingServer[dbproxyv1.QueryResponse]) error {
 		attempts.Add(1)
@@ -382,10 +406,10 @@ func TestMissingIdentityAndWritesFailLocally(t *testing.T) {
 			t.Fatalf("invalid identity error = %v, want reason %q", err, tc.reason)
 		}
 	}
-	if _, err := pool.ExecContext(context.Background(), "DELETE FROM t"); !errors.Is(err, sqldriver.ErrUnsupported) {
+	if _, err := pool.ExecContext(context.Background(), "DELETE FROM t"); err == nil || !strings.Contains(err.Error(), "stack namespace") {
 		t.Fatalf("exec = %v", err)
 	}
-	if _, err := pool.BeginTx(context.Background(), nil); !errors.Is(err, sqldriver.ErrUnsupported) {
+	if _, err := pool.BeginTx(context.Background(), nil); err == nil || !strings.Contains(err.Error(), "stack namespace") {
 		t.Fatalf("begin = %v", err)
 	}
 	if err := pool.PingContext(context.Background()); !errors.Is(err, sqldriver.ErrUnsupported) {

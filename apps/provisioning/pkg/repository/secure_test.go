@@ -8,10 +8,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
-	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 func TestRepositorySecureValues(t *testing.T) {
@@ -32,7 +32,7 @@ func TestRepositorySecureValues(t *testing.T) {
 			name: "referenced by name",
 			config: &provisioning.Repository{
 				Secure: provisioning.SecureValues{
-					Token: v0alpha1.InlineSecureValue{
+					Token: resource.InlineSecureValue{
 						Name: "secret",
 					},
 				},
@@ -52,7 +52,7 @@ func TestRepositorySecureValues(t *testing.T) {
 			name: "when create exists, use it",
 			config: &provisioning.Repository{
 				Secure: provisioning.SecureValues{
-					Token: v0alpha1.InlineSecureValue{
+					Token: resource.InlineSecureValue{
 						Create: "secret",
 					},
 				},
@@ -79,7 +79,7 @@ func TestRepositorySecureValues(t *testing.T) {
 			name: "propagate error from service",
 			config: &provisioning.Repository{
 				Secure: provisioning.SecureValues{
-					WebhookSecret: v0alpha1.InlineSecureValue{
+					WebhookSecret: resource.InlineSecureValue{
 						Name: "secret",
 					},
 				},
@@ -98,7 +98,7 @@ func TestRepositorySecureValues(t *testing.T) {
 			name: "not found",
 			config: &provisioning.Repository{
 				Secure: provisioning.SecureValues{
-					Token: v0alpha1.InlineSecureValue{
+					Token: resource.InlineSecureValue{
 						Name: "secret",
 					},
 				},
@@ -114,7 +114,7 @@ func TestRepositorySecureValues(t *testing.T) {
 			name: "not found",
 			config: &provisioning.Repository{
 				Secure: provisioning.SecureValues{
-					WebhookSecret: v0alpha1.InlineSecureValue{
+					WebhookSecret: resource.InlineSecureValue{
 						Name: "secret",
 					},
 				},
@@ -130,7 +130,7 @@ func TestRepositorySecureValues(t *testing.T) {
 			name: "commit signing key referenced by name",
 			config: &provisioning.Repository{
 				Secure: provisioning.SecureValues{
-					CommitSigningKey: v0alpha1.InlineSecureValue{
+					CommitSigningKey: resource.InlineSecureValue{
 						Name: "secret",
 					},
 				},
@@ -150,7 +150,7 @@ func TestRepositorySecureValues(t *testing.T) {
 			name: "commit signing key with create set",
 			config: &provisioning.Repository{
 				Secure: provisioning.SecureValues{
-					CommitSigningKey: v0alpha1.InlineSecureValue{
+					CommitSigningKey: resource.InlineSecureValue{
 						Create: "secret",
 					},
 				},
@@ -167,7 +167,7 @@ func TestRepositorySecureValues(t *testing.T) {
 			name: "commit signing key decrypt service error",
 			config: &provisioning.Repository{
 				Secure: provisioning.SecureValues{
-					CommitSigningKey: v0alpha1.InlineSecureValue{
+					CommitSigningKey: resource.InlineSecureValue{
 						Name: "secret",
 					},
 				},
@@ -224,7 +224,7 @@ func TestRepositorySecureValues_NotFoundSentinel(t *testing.T) {
 	}
 
 	t.Run("per-item non-not-found error is surfaced, not treated as missing", func(t *testing.T) {
-		cfg := &provisioning.Repository{Secure: provisioning.SecureValues{Token: v0alpha1.InlineSecureValue{Name: "secret"}}}
+		cfg := &provisioning.Repository{Secure: provisioning.SecureValues{Token: resource.InlineSecureValue{Name: "secret"}}}
 		decrypter := ProvideDecrypter(&dummyDecryptService{t: t, fn: unreadable}, nil)
 		_, err := decrypter(cfg).Token(context.Background())
 		require.Error(t, err)
@@ -235,7 +235,7 @@ func TestRepositorySecureValues_NotFoundSentinel(t *testing.T) {
 	})
 
 	t.Run("missing token wraps both ErrSecretNotFound and ErrTokenNotFound", func(t *testing.T) {
-		cfg := &provisioning.Repository{Secure: provisioning.SecureValues{Token: v0alpha1.InlineSecureValue{Name: "secret"}}}
+		cfg := &provisioning.Repository{Secure: provisioning.SecureValues{Token: resource.InlineSecureValue{Name: "secret"}}}
 		decrypter := ProvideDecrypter(&dummyDecryptService{t: t, fn: missing}, nil)
 		_, err := decrypter(cfg).Token(context.Background())
 		require.ErrorIs(t, err, ErrTokenNotFound)
@@ -243,7 +243,7 @@ func TestRepositorySecureValues_NotFoundSentinel(t *testing.T) {
 	})
 
 	t.Run("transient token error is not treated as not-found", func(t *testing.T) {
-		cfg := &provisioning.Repository{Secure: provisioning.SecureValues{Token: v0alpha1.InlineSecureValue{Name: "secret"}}}
+		cfg := &provisioning.Repository{Secure: provisioning.SecureValues{Token: resource.InlineSecureValue{Name: "secret"}}}
 		decrypter := ProvideDecrypter(&dummyDecryptService{t: t, fn: transient}, nil)
 		_, err := decrypter(cfg).Token(context.Background())
 		require.Error(t, err)
@@ -254,7 +254,7 @@ func TestRepositorySecureValues_NotFoundSentinel(t *testing.T) {
 	})
 
 	t.Run("missing non-token secret does not carry ErrTokenNotFound", func(t *testing.T) {
-		cfg := &provisioning.Repository{Secure: provisioning.SecureValues{CommitSigningKey: v0alpha1.InlineSecureValue{Name: "secret"}}}
+		cfg := &provisioning.Repository{Secure: provisioning.SecureValues{CommitSigningKey: resource.InlineSecureValue{Name: "secret"}}}
 		decrypter := ProvideDecrypter(&dummyDecryptService{t: t, fn: missing}, nil)
 		_, err := decrypter(cfg).CommitSigningKey(context.Background())
 		require.ErrorIs(t, err, ErrSecretNotFound)
@@ -263,7 +263,7 @@ func TestRepositorySecureValues_NotFoundSentinel(t *testing.T) {
 }
 
 func TestRepositorySecureValues_DecryptTimeout(t *testing.T) {
-	cfg := &provisioning.Repository{Secure: provisioning.SecureValues{Token: v0alpha1.InlineSecureValue{Name: "secret"}}}
+	cfg := &provisioning.Repository{Secure: provisioning.SecureValues{Token: resource.InlineSecureValue{Name: "secret"}}}
 
 	t.Run("bounds a deadline-less caller context", func(t *testing.T) {
 		svc := &ctxCapturingDecryptService{}

@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -21,7 +22,7 @@ func (f *fakeSecureValueSupport) CanReference(_ context.Context, _ common.Object
 	return f.canReferenceErr
 }
 
-func (f *fakeSecureValueSupport) CreateInline(_ context.Context, _ common.ObjectReference, _ common.RawSecureValue, _ *string) (string, error) {
+func (f *fakeSecureValueSupport) CreateInline(_ context.Context, _ common.ObjectReference, _ resource.RawSecureValue, _ *string) (string, error) {
 	return "", fmt.Errorf("not expected")
 }
 
@@ -49,8 +50,8 @@ func TestSecureValues(t *testing.T) {
 
 	t.Run("Invalid input", func(t *testing.T) {
 		raw.Object["secure"] = map[string]any{
-			"A": common.InlineSecureValue{
-				Create: common.NewSecretValue("XXX"),
+			"A": resource.InlineSecureValue{
+				Create: resource.NewSecretValue("XXX"),
 			},
 		}
 		fake := &fakeSecureValueSupport{}
@@ -59,8 +60,8 @@ func TestSecureValues(t *testing.T) {
 
 		t.Run("create", func(t *testing.T) {
 			raw.Object["secure"] = map[string]any{
-				"A": common.InlineSecureValue{
-					Create: common.NewSecretValue("XXX"),
+				"A": resource.InlineSecureValue{
+					Create: resource.NewSecretValue("XXX"),
 				},
 			}
 			pberr = canReferenceSecureValues(context.Background(), obj, nil, fake)
@@ -70,7 +71,7 @@ func TestSecureValues(t *testing.T) {
 
 		t.Run("remove", func(t *testing.T) {
 			raw.Object["secure"] = map[string]any{
-				"A": common.InlineSecureValue{
+				"A": resource.InlineSecureValue{
 					Remove: true,
 				},
 			}
@@ -81,7 +82,7 @@ func TestSecureValues(t *testing.T) {
 
 		t.Run("missing name", func(t *testing.T) {
 			raw.Object["secure"] = map[string]any{
-				"A": common.InlineSecureValue{
+				"A": resource.InlineSecureValue{
 					Name: "", // EMPTY
 				},
 			}
@@ -93,10 +94,10 @@ func TestSecureValues(t *testing.T) {
 
 	t.Run("OnCreate", func(t *testing.T) {
 		raw.Object["secure"] = map[string]any{
-			"A": common.InlineSecureValue{
+			"A": resource.InlineSecureValue{
 				Name: "111",
 			},
-			"B": common.InlineSecureValue{
+			"B": resource.InlineSecureValue{
 				Name: "111", // duplicate reference, but only checked once
 			},
 		}
@@ -107,10 +108,10 @@ func TestSecureValues(t *testing.T) {
 
 	t.Run("OnUpdate", func(t *testing.T) {
 		raw.Object["secure"] = map[string]any{
-			"A": common.InlineSecureValue{
+			"A": resource.InlineSecureValue{
 				Name: "111",
 			},
-			"B": common.InlineSecureValue{
+			"B": resource.InlineSecureValue{
 				Name: "222",
 			},
 		}
@@ -123,10 +124,10 @@ func TestSecureValues(t *testing.T) {
 
 	t.Run("OnUpdate with same keys", func(t *testing.T) {
 		raw.Object["secure"] = map[string]any{
-			"A": common.InlineSecureValue{
+			"A": resource.InlineSecureValue{
 				Name: "111",
 			},
-			"B": common.InlineSecureValue{
+			"B": resource.InlineSecureValue{
 				Name: "222",
 			},
 		}
@@ -134,10 +135,10 @@ func TestSecureValues(t *testing.T) {
 		old, _ := utils.MetaAccessor(&unstructured.Unstructured{
 			Object: map[string]any{
 				"secure": map[string]any{
-					"A": common.InlineSecureValue{
+					"A": resource.InlineSecureValue{
 						Name: "111", // same
 					},
-					"B": common.InlineSecureValue{
+					"B": resource.InlineSecureValue{
 						Name: "Not222",
 					},
 				}}})
@@ -148,7 +149,7 @@ func TestSecureValues(t *testing.T) {
 
 	t.Run("Update without changes should skip CanReference", func(t *testing.T) {
 		raw.Object["secure"] = map[string]any{
-			"A": common.InlineSecureValue{
+			"A": resource.InlineSecureValue{
 				Name: "111",
 			},
 		}
@@ -162,7 +163,7 @@ func TestSecureValues(t *testing.T) {
 
 	t.Run("upstream errors", func(t *testing.T) {
 		raw.Object["secure"] = map[string]any{
-			"A": common.InlineSecureValue{
+			"A": resource.InlineSecureValue{
 				Name: "111",
 			},
 		}

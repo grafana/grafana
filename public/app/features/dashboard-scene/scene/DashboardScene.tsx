@@ -198,7 +198,17 @@ import {
   type DashboardSceneState,
 } from './types/dashboard';
 
-export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
+export const PERSISTED_PROPS = [
+  'title',
+  'description',
+  'tags',
+  'editable',
+  'graphTooltip',
+  'links',
+  'meta',
+  'preload',
+  'questions',
+];
 const PANEL_SEARCH_VAR = 'systemPanelFilterVar';
 const PANELS_PER_ROW_VAR = 'systemDynamicRowSizeVar';
 
@@ -840,7 +850,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
     let mode = this.state.mode ?? 'edit';
     if (source === 'assistant' && currentMode === 'view') {
-      mode = 'agent';
+      // With Composer, Assistant edits from Viewing open in Editing, which Composer runs over.
+      mode = dashboardComposerEnabled() ? 'edit' : 'agent';
     } else if (source === 'user' && currentMode === 'agent') {
       mode = 'edit';
     }

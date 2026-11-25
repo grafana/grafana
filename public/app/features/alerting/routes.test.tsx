@@ -204,6 +204,7 @@ describe('GMA-only Alert rules route', () => {
       '/alerting/rules/alert',
       '/alerting/rules/alert/deleted',
       '/alerting/rules/recording',
+      '/alerting/rules/recording/deleted',
     ]);
   });
 

@@ -12,7 +12,7 @@ import (
 
 	types "k8s.io/apimachinery/pkg/types"
 
-	v0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana-app-sdk/resource"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -1251,23 +1251,23 @@ func (_c *MockGrafanaMetaAccessor_GetRuntimeObject_Call) RunAndReturn(run func()
 }
 
 // GetSecureValues provides a mock function with no fields
-func (_m *MockGrafanaMetaAccessor) GetSecureValues() (map[string]v0alpha1.InlineSecureValue, error) {
+func (_m *MockGrafanaMetaAccessor) GetSecureValues() (map[string]resource.InlineSecureValue, error) {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetSecureValues")
 	}
 
-	var r0 map[string]v0alpha1.InlineSecureValue
+	var r0 map[string]resource.InlineSecureValue
 	var r1 error
-	if rf, ok := ret.Get(0).(func() (map[string]v0alpha1.InlineSecureValue, error)); ok {
+	if rf, ok := ret.Get(0).(func() (map[string]resource.InlineSecureValue, error)); ok {
 		return rf()
 	}
-	if rf, ok := ret.Get(0).(func() map[string]v0alpha1.InlineSecureValue); ok {
+	if rf, ok := ret.Get(0).(func() map[string]resource.InlineSecureValue); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[string]v0alpha1.InlineSecureValue)
+			r0 = ret.Get(0).(map[string]resource.InlineSecureValue)
 		}
 	}
 
@@ -1297,12 +1297,12 @@ func (_c *MockGrafanaMetaAccessor_GetSecureValues_Call) Run(run func()) *MockGra
 	return _c
 }
 
-func (_c *MockGrafanaMetaAccessor_GetSecureValues_Call) Return(_a0 map[string]v0alpha1.InlineSecureValue, _a1 error) *MockGrafanaMetaAccessor_GetSecureValues_Call {
+func (_c *MockGrafanaMetaAccessor_GetSecureValues_Call) Return(_a0 map[string]resource.InlineSecureValue, _a1 error) *MockGrafanaMetaAccessor_GetSecureValues_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockGrafanaMetaAccessor_GetSecureValues_Call) RunAndReturn(run func() (map[string]v0alpha1.InlineSecureValue, error)) *MockGrafanaMetaAccessor_GetSecureValues_Call {
+func (_c *MockGrafanaMetaAccessor_GetSecureValues_Call) RunAndReturn(run func() (map[string]resource.InlineSecureValue, error)) *MockGrafanaMetaAccessor_GetSecureValues_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -2429,7 +2429,7 @@ func (_c *MockGrafanaMetaAccessor_SetResourceVersionInt64_Call) RunAndReturn(run
 }
 
 // SetSecureValues provides a mock function with given fields: _a0
-func (_m *MockGrafanaMetaAccessor) SetSecureValues(_a0 map[string]v0alpha1.InlineSecureValue) error {
+func (_m *MockGrafanaMetaAccessor) SetSecureValues(_a0 map[string]resource.InlineSecureValue) error {
 	ret := _m.Called(_a0)
 
 	if len(ret) == 0 {
@@ -2437,7 +2437,7 @@ func (_m *MockGrafanaMetaAccessor) SetSecureValues(_a0 map[string]v0alpha1.Inlin
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(map[string]v0alpha1.InlineSecureValue) error); ok {
+	if rf, ok := ret.Get(0).(func(map[string]resource.InlineSecureValue) error); ok {
 		r0 = rf(_a0)
 	} else {
 		r0 = ret.Error(0)
@@ -2452,14 +2452,14 @@ type MockGrafanaMetaAccessor_SetSecureValues_Call struct {
 }
 
 // SetSecureValues is a helper method to define mock.On call
-//   - _a0 map[string]v0alpha1.InlineSecureValue
+//   - _a0 map[string]resource.InlineSecureValue
 func (_e *MockGrafanaMetaAccessor_Expecter) SetSecureValues(_a0 interface{}) *MockGrafanaMetaAccessor_SetSecureValues_Call {
 	return &MockGrafanaMetaAccessor_SetSecureValues_Call{Call: _e.mock.On("SetSecureValues", _a0)}
 }
 
-func (_c *MockGrafanaMetaAccessor_SetSecureValues_Call) Run(run func(_a0 map[string]v0alpha1.InlineSecureValue)) *MockGrafanaMetaAccessor_SetSecureValues_Call {
+func (_c *MockGrafanaMetaAccessor_SetSecureValues_Call) Run(run func(_a0 map[string]resource.InlineSecureValue)) *MockGrafanaMetaAccessor_SetSecureValues_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(map[string]v0alpha1.InlineSecureValue))
+		run(args[0].(map[string]resource.InlineSecureValue))
 	})
 	return _c
 }
@@ -2469,7 +2469,7 @@ func (_c *MockGrafanaMetaAccessor_SetSecureValues_Call) Return(_a0 error) *MockG
 	return _c
 }
 
-func (_c *MockGrafanaMetaAccessor_SetSecureValues_Call) RunAndReturn(run func(map[string]v0alpha1.InlineSecureValue) error) *MockGrafanaMetaAccessor_SetSecureValues_Call {
+func (_c *MockGrafanaMetaAccessor_SetSecureValues_Call) RunAndReturn(run func(map[string]resource.InlineSecureValue) error) *MockGrafanaMetaAccessor_SetSecureValues_Call {
 	_c.Call.Return(run)
 	return _c
 }

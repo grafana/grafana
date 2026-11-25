@@ -12,9 +12,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 
+	authlib "github.com/grafana/authlib/types"
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 )
 
@@ -129,10 +129,10 @@ func Test_ReadPluginJSON(t *testing.T) {
 				},
 
 				Includes: []*Includes{
-					{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: identity.RoleViewer, Action: ActionAppAccess},
-					{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: identity.RoleViewer, Action: ActionAppAccess},
-					{Name: "Nginx Panel", Type: "panel", Role: identity.RoleViewer, Action: ActionAppAccess},
-					{Name: "Nginx Datasource", Type: "datasource", Role: identity.RoleViewer, Action: ActionAppAccess},
+					{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: authlib.RoleViewer, Action: ActionAppAccess},
+					{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: authlib.RoleViewer, Action: ActionAppAccess},
+					{Name: "Nginx Panel", Type: "panel", Role: authlib.RoleViewer, Action: ActionAppAccess},
+					{Name: "Nginx Datasource", Type: "datasource", Role: authlib.RoleViewer, Action: ActionAppAccess},
 				},
 				Backend: false,
 			},
@@ -182,7 +182,7 @@ func Test_ReadPluginJSON(t *testing.T) {
 				},
 
 				Includes: []*Includes{
-					{Name: "Pie Charts", Path: "dashboards/demo.json", Type: "dashboard", Role: identity.RoleViewer},
+					{Name: "Pie Charts", Path: "dashboards/demo.json", Type: "dashboard", Role: authlib.RoleViewer},
 				},
 			},
 		},

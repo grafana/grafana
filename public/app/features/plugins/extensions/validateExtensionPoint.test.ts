@@ -6,6 +6,8 @@ import { ExtensionsLog } from './logs/log';
 import { validateExtensionPoint } from './validateExtensionPoint';
 import * as validators from './validators';
 
+jest.mock('./validators', () => makeSpyable('./validators'));
+
 jest.mock('./isGrafanaDevMode', () => ({
   isGrafanaDevMode: jest.fn().mockReturnValue(false),
 }));

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import memoize from 'micro-memoize';
+import { memoize } from 'micro-memoize';
 
 import { getJustifyContent, isTableCellStylesKeyEqual } from '../styles';
 import { type DataLinksCellProps, type TableCellStyles } from '../types';
@@ -42,5 +42,5 @@ export const getStyles: TableCellStyles = memoize(
         }),
       },
     }),
-  { isMatchingKey: isTableCellStylesKeyEqual }
+  { isKeyEqual: isTableCellStylesKeyEqual }
 );

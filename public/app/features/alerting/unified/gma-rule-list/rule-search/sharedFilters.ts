@@ -12,7 +12,15 @@ import {
   type SharedRuleFilter,
 } from './sharedRuleFilter';
 
-export type SharedFilterKey = 'rule' | 'folder' | 'folderUid' | 'datasource' | 'label' | 'plugins' | 'health';
+export type SharedFilterKey =
+  | 'rule'
+  | 'folder'
+  | 'folderUid'
+  | 'datasource'
+  | 'label'
+  | 'plugins'
+  | 'health'
+  | 'paused';
 
 /** The filters both pages support. */
 export const sharedFilters = {
@@ -113,6 +121,20 @@ export const sharedFilters = {
         return false;
       }
       filter.health = health;
+      return true;
+    },
+  },
+  paused: {
+    key: 'paused',
+    label: () => t('alerting.gma-rule-list.search.property.paused', 'Paused'),
+    description: () => t('alerting.gma-rule-list.search.help.paused', 'paused:true shows only paused rules.'),
+    example: 'paused:true',
+    values: ['true'],
+    apply: (filter, value) => {
+      if (value.toLowerCase() !== 'true') {
+        return false;
+      }
+      filter.paused = 'true';
       return true;
     },
   },

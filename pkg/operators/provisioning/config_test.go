@@ -23,11 +23,12 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/rest"
 
-	"github.com/grafana/grafana-app-sdk/logging"
 	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	storagev0 "github.com/grafana/grafana/pkg/apis/storage/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/router/routertest"
@@ -195,9 +196,37 @@ func TestClientsServeManifestKindsFromTheAggregatedServer(t *testing.T) {
 	_, err = client.List(t.Context(), metav1.ListOptions{})
 	require.NoError(t, err)
 
-	token := "Bearer token-for-" + apisprovisioning.GROUP
-	require.Equal(t, token, router.AccessToken("/apis/discovery/v1alpha2/manifests"))
-	require.Equal(t, token, router.AccessToken("/apis/"+stubRouterGroup+"/v1/namespaces/default/widgets"))
+	require.Equal(t, "Bearer token-for-grafana", router.AccessToken("/apis/discovery/v1alpha2/manifests"))
+	require.Equal(t, "Bearer token-for-"+apisprovisioning.GROUP, router.AccessToken("/apis/"+stubRouterGroup+"/v1/namespaces/default/widgets"))
+}
+
+func TestClientsUseTheRouterForDashboardsWithTheRouterClientSetting(t *testing.T) {
+	dashboards := "/apis/dashboard.grafana.app/v1/namespaces/default/dashboards"
+	router := routertest.NewServer(t, map[string]string{
+		"/apis/dashboard.grafana.app/v1": `{"kind":"APIResourceList","apiVersion":"v1","groupVersion":"dashboard.grafana.app/v1","resources":[{"name":"dashboards","namespaced":true,"kind":"Dashboard","verbs":["list"]}]}`,
+		dashboards:                       `{"apiVersion":"dashboard.grafana.app/v1","kind":"DashboardList","items":[]}`,
+	})
+	cfg := newClientsConfig(t, newStubSigner(t).URL, map[string]string{"aggregated_server_url": router.URL})
+	cfg.Settings.ProvisioningRouterClient = true
+
+	factory, err := cfg.Clients()
+	require.NoError(t, err)
+	clients, err := factory.Clients(t.Context(), "default")
+	require.NoError(t, err)
+	client, _, err := clients.ForKind(t.Context(), resources.DashboardResource.GroupVersion().WithKind("Dashboard"))
+	require.NoError(t, err)
+	_, err = client.List(t.Context(), metav1.ListOptions{})
+	require.NoError(t, err)
+
+	require.Equal(t, "Bearer token-for-dashboard.grafana.app", router.AccessToken(dashboards))
+}
+
+func TestClientsRequireTheAggregatedServerWithTheRouterClientSetting(t *testing.T) {
+	cfg := newClientsConfig(t, newStubSigner(t).URL, nil)
+	cfg.Settings.ProvisioningRouterClient = true
+
+	_, err := cfg.Clients()
+	require.ErrorContains(t, err, "aggregated_server_url is required")
 }
 
 // Production has no aggregated server yet, so the operators must run with the configured
@@ -248,6 +277,11 @@ func TestControllersOwnNATSSubscriber(t *testing.T) {
 			cfg.NATS = setting.NATSSettings{Enabled: true, Mode: setting.NATSModeExternal, ClientURLs: []string{srv.ClientURL()}}
 
 			api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				if strings.HasSuffix(r.URL.Path, "/"+utils.ListKeysPathSegment) {
+					_, _ = fmt.Fprintf(w, `{"apiVersion":%q,"kind":%q,"resourceVersion":"1","items":[]}`, storagev0.APIVERSION, storagev0.KindListKeyResponse)
+					return
+				}
 				kinds := map[string]string{"repositories": "RepositoryList", "connections": "ConnectionList", "jobs": "JobList"}
 				kind := kinds[r.URL.Path[strings.LastIndex(r.URL.Path, "/")+1:]]
 				if kind == "" {
@@ -255,15 +289,16 @@ func TestControllersOwnNATSSubscriber(t *testing.T) {
 					http.NotFound(w, r)
 					return
 				}
-				w.Header().Set("Content-Type", "application/json")
 				_, _ = fmt.Fprintf(w, `{"apiVersion":"provisioning.grafana.app/v0alpha1","kind":%q,"metadata":{"resourceVersion":"1"},"items":[]}`, kind)
 			}))
 			t.Cleanup(api.Close)
-			provisioningClient, err := client.NewForConfig(&rest.Config{Host: api.URL})
+			restCfg := &rest.Config{Host: api.URL, APIPath: "/apis"}
+			provisioningClient, err := client.NewForConfig(restCfg)
 			require.NoError(t, err)
 			registeredConfigOptions = []ConfigOption{func(_ context.Context, cfg *ControllerConfig) error {
 				cfg.tracer = tracing.NewNoopTracerService()
 				cfg.provisioningClient = provisioningClient
+				cfg.provisioningRESTCfg = restCfg
 				cfg.clients = resources.NewMockClientFactory(t)
 				cfg.manifestWatcher = services.NewIdleService(nil, nil)
 				// Empty resource lists must not access unified storage.
@@ -313,29 +348,13 @@ func TestRelistProjectionMetricsIsMemoized(t *testing.T) {
 	require.Same(t, first, cfg.RelistProjectionMetrics())
 }
 
-// nil keeps the full-object re-list, so the flag is the whole gate.
-func TestProvisioningKeysListerFollowsTheSetting(t *testing.T) {
-	gvr := apisprovisioning.RepositoryResourceInfo.GroupVersionResource()
+// Building the REST client fails rather than returning a nil lister, which
+// would silently fall back to the full-object re-list.
+func TestProvisioningKeysListerRequiresARESTClient(t *testing.T) {
+	cfg := &ControllerConfig{Settings: &setting.Cfg{Raw: ini.Empty()}}
 
-	t.Run("off by default", func(t *testing.T) {
-		cfg := &ControllerConfig{Settings: &setting.Cfg{Raw: ini.Empty()}}
-
-		lister, err := cfg.ProvisioningKeysLister(logging.DefaultLogger, gvr)
-		require.NoError(t, err)
-		assert.Nil(t, lister, "without the setting the re-list must stay on full objects")
-	})
-
-	t.Run("on requires a REST client", func(t *testing.T) {
-		raw := ini.Empty()
-		_, err := raw.Section("provisioning").NewKey("keys_only_relist", "true")
-		require.NoError(t, err)
-		cfg := &ControllerConfig{Settings: &setting.Cfg{Raw: raw}}
-
-		// Building the REST client fails rather than returning a nil lister that
-		// reads as "off".
-		_, err = cfg.ProvisioningKeysLister(logging.DefaultLogger, gvr)
-		require.Error(t, err)
-	})
+	_, err := cfg.ProvisioningKeysLister(apisprovisioning.RepositoryResourceInfo.GroupVersionResource())
+	require.Error(t, err)
 }
 
 func TestControllerConfigResourceLister(t *testing.T) {

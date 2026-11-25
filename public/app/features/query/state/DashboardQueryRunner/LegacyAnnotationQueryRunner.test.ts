@@ -7,6 +7,8 @@ import * as store from '../../../../store/store';
 import { LegacyAnnotationQueryRunner } from './LegacyAnnotationQueryRunner';
 import { type AnnotationQueryRunnerOptions } from './types';
 
+jest.mock('../../../../store/store', () => makeSpyable('../../../../store/store'));
+
 function getDefaultOptions(annotationQuery?: jest.Mock): AnnotationQueryRunnerOptions {
   const annotation = {} as AnnotationQuery;
   const dashboard = createDashboardModelFixture();

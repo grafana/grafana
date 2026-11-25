@@ -24,7 +24,6 @@ import (
 	manifestroutes "github.com/grafana/grafana-app-sdk/routes"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
-	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/keysroutes"
 	"github.com/grafana/grafana/pkg/services/apiserver/searchroutes"
@@ -120,11 +119,11 @@ func manifestPaths(version app.ManifestVersion, skip func(manifestroutes.Problem
 	paths := make(map[string]spec3.PathProps, len(version.OpenAPI.Paths))
 	for path, props := range version.OpenAPI.Paths {
 		for method, op := range manifestroutes.Operations(&props) {
-			if _, ok := op.Extensions[definition.ExtensionProxy]; !ok {
+			if _, ok := op.Extensions[manifestroutes.ExtensionProxy]; !ok {
 				continue
 			}
 			skip(manifestroutes.Problem{Version: version.Name, Path: path, Method: method,
-				Reason: definition.ExtensionProxy + " is only served by the app settings API, declared in the manifest whose group is the plugin ID"})
+				Reason: manifestroutes.ExtensionProxy + " is only served by the app settings API, declared in the manifest whose group is the plugin ID"})
 			props = withoutOperation(props, method)
 		}
 		paths[path] = props
