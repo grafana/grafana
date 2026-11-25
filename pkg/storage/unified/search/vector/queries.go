@@ -67,13 +67,8 @@ type sqlVectorCollectionUpsertRequest struct {
 	sqltemplate.SQLTemplate
 	Resource  string
 	Vector    *Vector
-	Embedding any // pgvector.HalfVector
-}
-
-// ComputeTS gates the stored tsvector to external rows; internal rows
-// keep NULL (bleve is their lexical index).
-func (r *sqlVectorCollectionUpsertRequest) ComputeTS() bool {
-	return isExternalPartitionKey(r.Resource)
+	Embedding any  // pgvector.HalfVector
+	ComputeTS bool // PostgreSQL lexical search uses a stored tsvector.
 }
 
 func (r *sqlVectorCollectionUpsertRequest) Validate() error {

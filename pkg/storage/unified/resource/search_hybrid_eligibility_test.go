@@ -389,3 +389,79 @@ func TestHybridSearch_LiveOptOutRejectsWholeRequest(t *testing.T) {
 		assert.Len(t, index.requests, 2)
 	}
 }
+
+func TestClusterSearchRPCsRequireWildcardResourceReadGrant(t *testing.T) {
+	const group, plural = "catalog.example.test", "systemschemas"
+	backend := &fakeVectorBackend{
+		collection: &vector.Collection{Group: group, Resource: plural, PartitionKey: plural, Scope: vector.CollectionScope("cluster")},
+		results:    []vector.VectorSearchResult{{UID: "database", Title: "Database", Content: "connection pooling"}},
+	}
+	s, index, _ := newHybridTestServer(lexFieldValueResponse(), backend)
+	s.collectionAllowlist = vector.NewCollectionAllowlist([]string{group + "/" + plural}, nil)
+	s.embeddingBuilders = embeddingBuilderProvider{has: func(g, r string) bool { return g == group && r == plural }}
+	manifest := []*app.ManifestData{{
+		Group: group, Versions: []app.ManifestVersion{{Name: "v1alpha1", Served: true, Kinds: []app.ManifestVersionKind{{
+			Kind: "SystemSchema", Resource: plural, Scope: "Cluster", Search: &app.ManifestVersionKindSearch{Hybrid: ptr.To(true)},
+		}}}},
+	}}
+	s.hybridSearchConfig = NewHybridSearchConfigRegistry(manifest)
+	lexical := &fakeLexicalSearcher{}
+	s.externalLexical = lexical
+
+	for _, tc := range []struct {
+		name, identityNamespace, requestedNamespace, grant string
+		identity                                           authlib.IdentityType
+		want                                               codes.Code
+	}{
+		{"allowed", "*", "", group + "/" + plural + ":get", authlib.TypeAccessPolicy, codes.OK},
+		{"missing read grant", "*", "", group + "/" + plural + ":update", authlib.TypeAccessPolicy, codes.PermissionDenied},
+		{"namespaced caller", "stacks-1", "", group + "/" + plural + ":get", authlib.TypeAccessPolicy, codes.PermissionDenied},
+		{"user cannot call directly", "*", "", group + "/" + plural + ":get", authlib.TypeUser, codes.PermissionDenied},
+		{"private marker", "*", "**cluster**", group + "/" + plural + ":get", authlib.TypeAccessPolicy, codes.PermissionDenied},
+		{"tenant query cannot see cluster", "*", "stacks-1", group + "/" + plural + ":get", authlib.TypeAccessPolicy, codes.NotFound},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{
+				Type: tc.identity, Namespace: tc.identityNamespace, AccessToken: "verified",
+				AccessTokenClaims: &authnlib.Claims[authnlib.AccessTokenClaims]{Rest: authnlib.AccessTokenClaims{Permissions: []string{tc.grant}}},
+			})
+			req := &resourcepb.HybridSearchRequest{
+				Namespace: tc.requestedNamespace, Resources: []*resourcepb.HybridSearchRequest_Resource{{Group: group, Resource: plural}},
+				Query: "database connectivity", SkipRerank: true,
+			}
+			hybrid, err := s.HybridSearch(ctx, req)
+			require.Equal(t, tc.want, status.Code(err), "%v", err)
+			result, err := s.VectorSearch(ctx, &resourcepb.VectorSearchRequest{
+				Key: &resourcepb.ResourceKey{Namespace: tc.requestedNamespace, Group: group, Resource: plural}, Query: req.Query,
+			})
+			require.Equal(t, tc.want, status.Code(err), "%v", err)
+			if tc.want == codes.OK {
+				require.Len(t, hybrid.GetResults(), 1)
+				require.Equal(t, "database", hybrid.GetResults()[0].GetKey().GetName())
+				require.Empty(t, hybrid.GetResults()[0].GetKey().GetNamespace())
+				require.Equal(t, "connection pooling", hybrid.GetResults()[0].GetChunks()[0].GetContent())
+				require.Equal(t, "SystemSchema", hybrid.GetKinds()[group+"/"+plural])
+				require.Len(t, result.GetResults(), 1)
+				require.Equal(t, "database", result.GetResults()[0].GetName())
+				require.Nil(t, index.gotReq)
+				require.Equal(t, "**cluster**", lexical.gotQ.Namespace)
+				require.Equal(t, "**cluster**", backend.gotNamespace)
+			}
+		})
+	}
+	t.Run("removed opt-in disables both RPCs", func(t *testing.T) {
+		manifest[0].Versions[0].Kinds[0].Search.Hybrid = ptr.To(false)
+		s.hybridSearchConfig.Reload(manifest)
+		ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{
+			Type: authlib.TypeAccessPolicy, Namespace: "*", AccessToken: "verified",
+			AccessTokenClaims: &authnlib.Claims[authnlib.AccessTokenClaims]{Rest: authnlib.AccessTokenClaims{
+				Permissions: []string{group + "/" + plural + ":get"},
+			}},
+		})
+		key := &resourcepb.ResourceKey{Group: group, Resource: plural}
+		_, err := s.HybridSearch(ctx, &resourcepb.HybridSearchRequest{Key: key, Query: "database"})
+		require.Equal(t, codes.NotFound, status.Code(err), "%v", err)
+		_, err = s.VectorSearch(ctx, &resourcepb.VectorSearchRequest{Key: key, Query: "database"})
+		require.Equal(t, codes.NotFound, status.Code(err), "%v", err)
+	})
+}

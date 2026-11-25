@@ -456,6 +456,25 @@ An unset value or `{}` leaves both search methods unchanged; invalid values prev
 Deploy support to every serving storage and search server before setting the restriction because older versions ignore it.
 Before rolling back server support, disable the collection on every serving route.
 
+### Cluster-scoped internal vector collections
+
+First deploy catalog readers that skip unsupported scopes to every process
+sharing the vector database. Next deploy cluster support to storage-api,
+search-api, and the distributor. Only then add the cluster `group/resource`
+pairs to `[unified_storage] vector_allowed_internal_collections` on storage-api
+and search-api. Remove those entries before rolling back cluster support,
+and roll back only to versions that skip unsupported catalog scopes.
+
+The live AppManifest must declare cluster scope and version-specific
+`embed.fields`, and supply a positive `reembedVersion`. The reconciler
+backfills existing objects even if the kind receives no new writes. Keep
+enrolled kinds installed so the shared reconciler checkpoint can cover
+all of their writes and deletes.
+`HybridSearch` and `VectorSearch` accept a single enrolled kind with an empty
+namespace. The caller needs a wildcard-scoped access-policy token with the
+parent resource's read grant. The served kind must opt into hybrid search.
+These RPCs support an exact `uid` filter.
+
 ### Publish and search a shared external collection
 
 In `custom.ini` on every serving storage and search server, map each shared `group/resource` collection to its allowed publisher service identities.

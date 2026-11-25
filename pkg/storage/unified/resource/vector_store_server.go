@@ -157,6 +157,9 @@ type writeTarget struct {
 // resolveWriteTarget checks the authenticated publisher and enrollment before
 // validation and storage. Its scope is never derived from request namespace spelling.
 func (s *VectorStoreServer) resolveWriteTarget(ctx context.Context, namespace, group, resource string) (writeTarget, error) {
+	if namespace == ClusterNamespace {
+		return writeTarget{}, status.Error(codes.PermissionDenied, "reserved search namespace")
+	}
 	if namespace == "" || group == "" || resource == "" {
 		return writeTarget{}, status.Error(codes.InvalidArgument, "namespace, group and resource are required")
 	}

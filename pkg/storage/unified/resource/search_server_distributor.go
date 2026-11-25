@@ -153,26 +153,29 @@ func (ds *distributorServer) VectorSearch(ctx context.Context, r *resourcepb.Vec
 	ctx, span := ds.tracing.Start(ctx, "distributor.VectorSearch")
 	defer span.End()
 
+	return distributeVectorQuery(ctx, ds, r.GetKey().GetNamespace(), "VectorSearch", r, ResourceClient.VectorSearch)
+}
+
+func distributeVectorQuery[Req, Resp any](ctx context.Context, ds *distributorServer, namespace, method string, r Req,
+	call func(ResourceClient, context.Context, Req, ...grpc.CallOption) (Resp, error),
+) (Resp, error) {
+	var zero Resp
 	// No per-namespace locality — every search pod hits the same pgvector
 	// backend — so pick any healthy instance.
 	rs, err := ds.ring.GetAllHealthy(ds.searchRingRead)
 	if err != nil || len(rs.Instances) == 0 {
-		return nil, fmt.Errorf("no healthy search instances available: %w", err)
-	}
-	var ns string
-	if r.Key != nil {
-		ns = r.Key.Namespace
+		return zero, fmt.Errorf("no healthy search instances available: %w", err)
 	}
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		md = make(metadata.MD)
 	}
-	ctx = userutils.InjectOrgID(metadata.NewOutgoingContext(ctx, md), ns)
-	logger := ds.log.New("method", "VectorSearch", "namespace", ns)
+	ctx = userutils.InjectOrgID(metadata.NewOutgoingContext(ctx, md), namespace)
+	logger := ds.log.New("method", method, "namespace", namespace)
 	// Any instance can answer, so a few of them are enough for failover.
 	instances := shuffled(rs.Instances)
 	instances = instances[:min(minDistributeAttempts, len(instances))]
-	resp, _, err := callWithRetries(ctx, logger, ds.clientPool, instances, r, ResourceClient.VectorSearch)
+	resp, _, err := callWithRetries(ctx, logger, ds.clientPool, instances, r, call)
 	return resp, err
 }
 
@@ -187,6 +190,9 @@ func (ds *distributorServer) HybridSearch(ctx context.Context, r *resourcepb.Hyb
 	//nolint:staticcheck // Continue routing requests from older clients.
 	if r.GetKey() != nil {
 		ns = r.GetKey().GetNamespace()
+	}
+	if ns == "" {
+		return distributeVectorQuery(ctx, ds, ns, "HybridSearch", r, ResourceClient.HybridSearch)
 	}
 	return distributeWithFailover(ctx, ds, ns, "HybridSearch", r, ResourceClient.HybridSearch)
 }

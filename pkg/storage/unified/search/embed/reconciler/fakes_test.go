@@ -89,6 +89,9 @@ func (f *fakeStorage) ReadResource(_ context.Context, req *resourcepb.ReadReques
 	value, _ := json.Marshal(map[string]any{"spec": map[string]any{"title": title}})
 	return &resource.BackendReadResponse{Value: value}
 }
+func (f *fakeStorage) ResourceListWatermark(context.Context, string, string) (int64, error) {
+	return f.latestRvOverride, f.listErr
+}
 func (f *fakeStorage) ListIterator(context.Context, *resourcepb.ListRequest, func(resource.ListIterator) error) (int64, error) {
 	panic("not implemented")
 }
@@ -278,8 +281,9 @@ type fakeVector struct {
 	ensuredPartitions  []string
 	ensurePartitionErr error
 
-	backfillJobs      []backfillJobCall
-	createBackfillErr error
+	backfillJobs        []backfillJobCall
+	createBackfillErr   error
+	reopenBackfillCalls int
 
 	counts    []vector.EmbeddingCount
 	countsErr error
@@ -522,7 +526,19 @@ func (f *fakeVector) CreateBackfillJob(_ context.Context, model, res string, sto
 	return nil
 }
 
+func (f *fakeVector) BackfillContentVersion(_ context.Context, model, partition string) (int, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	for _, job := range f.backfillJobs {
+		if job.Model == model && job.Resource == partition {
+			return job.ContentVersion, nil
+		}
+	}
+	return 0, nil
+}
+
 func (f *fakeVector) ReopenStaleBackfillJobs(context.Context, string, string, int, int64) (bool, error) {
+	f.reopenBackfillCalls++
 	return false, nil
 }
 func (f *fakeVector) UpdateBackfillJobCheckpoint(context.Context, int64, string, string) error {

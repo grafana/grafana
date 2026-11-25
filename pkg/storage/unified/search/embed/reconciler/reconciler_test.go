@@ -2191,3 +2191,100 @@ func TestReconciler_SeedPredecessorSurvivesSQLRVConversion(t *testing.T) {
 	predecessor := resource.SubtractDurationFromSnowflake(seed, seedLookback)
 	assert.Less(t, rvmanager.RVFromSnowflake(predecessor), sqlSeed)
 }
+
+func TestClusterCollectionBackfillsWithoutNewWrites(t *testing.T) {
+	const group, plural = "catalog.example.test", "systemschemas"
+	st := &fakeStorage{latestRvOverride: snowflakeRV(100)}
+	manifest := &app.ManifestData{
+		Group: group,
+		Embed: map[string]app.ManifestResourceEmbed{plural: {ReembedVersion: 1}},
+		Versions: []app.ManifestVersion{{
+			Name: "v1alpha1", Kinds: []app.ManifestVersionKind{{
+				Kind: "SystemSchema", Plural: plural, Resource: plural, Scope: "Cluster",
+				Embed: &app.ManifestVersionKindEmbed{Fields: []app.ManifestVersionKindEmbedField{{Name: "description", Path: "spec.description"}}},
+			}},
+		}},
+	}
+	registry, err := enrollment.New(resource.NewEmbeddingConfigRegistry([]*app.ManifestData{manifest}), []string{group + "/" + plural}, nil, nil)
+	require.NoError(t, err)
+	vec := newFakeVector()
+	s, err := New(Options{
+		Storage: st, VectorBackend: vec, BuilderProvider: registry,
+		BatchEmbedder: embedder.NewBatchEmbedder(*newFakeEmbedder(&fakeText{dim: 4})),
+	})
+	require.NoError(t, err)
+
+	s.sweep(t.Context())
+	require.Equal(t, []backfillJobCall{{Model: testModel, Resource: plural, StoppingRV: snowflakeRV(100), ContentVersion: 1}}, vec.backfillJobs)
+	require.Equal(t, snowflakeRV(100), vec.latestRV)
+
+	require.Zero(t, vec.reopenBackfillCalls, "only the backfiller can reset an in-progress job")
+
+	value := []byte(`{"apiVersion":"catalog.example.test/v1alpha1","spec":{"description":"connection pooling"}}`)
+	st.changes = []*resource.ModifiedResource{
+		change(group, plural, "", "database", snowflakeRV(110), value),
+		change(group, plural, "stacks-1", "database", snowflakeRV(120), value),
+	}
+	st.latestRvOverride = snowflakeRV(120)
+	s.sweep(t.Context())
+	require.Len(t, vec.upserts, 1)
+	require.Equal(t, "**cluster**", vec.upserts[0][0].Namespace)
+	require.Equal(t, "description: connection pooling", vec.upserts[0][0].Content)
+	require.Equal(t, snowflakeRV(120), vec.latestRV)
+}
+
+func TestReconciler_ClusterRevisionMismatchKeepsIndexingTenantWrites(t *testing.T) {
+	const group, plural = "catalog.example.test", "systemschemas"
+	const storedRevision = 2
+	tenant := fakeBuilder{group: "tenant.example.test", resource: "widgets"}
+	for _, tc := range []struct {
+		name             string
+		manifestRevision int
+	}{
+		{"manifest rolled back", storedRevision - 1},
+		{"backfill has not reopened", storedRevision + 1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			manifest := &app.ManifestData{
+				Group: group,
+				Embed: map[string]app.ManifestResourceEmbed{plural: {ReembedVersion: tc.manifestRevision}},
+				Versions: []app.ManifestVersion{{
+					Name: "v1alpha1", Kinds: []app.ManifestVersionKind{{
+						Kind: "SystemSchema", Resource: plural, Scope: "Cluster",
+						Embed: &app.ManifestVersionKindEmbed{Fields: []app.ManifestVersionKindEmbedField{{Name: "description", Path: "spec.description"}}},
+					}},
+				}},
+			}
+			configs := resource.NewEmbeddingConfigRegistry([]*app.ManifestData{manifest})
+			registry, err := enrollment.New(configs, []string{group + "/" + plural, tenant.group + "/" + tenant.resource}, []embed.Builder{tenant}, nil)
+			require.NoError(t, err)
+			clusterValue := []byte(`{"apiVersion":"catalog.example.test/v1alpha1","spec":{"description":"connection pooling"}}`)
+			st := &fakeStorage{latestRvOverride: snowflakeRV(120), lookback: 10, changes: []*resource.ModifiedResource{
+				change(group, plural, "", "schema", snowflakeRV(110), clusterValue),
+				change(group, plural, "", "late-schema", snowflakeRV(95), clusterValue),
+				change(tenant.group, tenant.resource, "ns", "widget", snowflakeRV(120), []byte(`{"spec":{}}`)),
+			}}
+			vec := newFakeVector()
+			vec.latestRV = snowflakeRV(100)
+			require.NoError(t, vec.CreateBackfillJob(t.Context(), testModel, plural, vec.latestRV, storedRevision))
+			s, err := New(Options{
+				Storage: st, VectorBackend: vec, BuilderProvider: registry,
+				BatchEmbedder: embedder.NewBatchEmbedder(*newFakeEmbedder(&fakeText{dim: 4})),
+			})
+			require.NoError(t, err)
+
+			s.sweep(t.Context())
+			assert.True(t, vec.hasUpsertFor("ns", tenant.resource, "widget"))
+			assert.False(t, vec.hasUpsertFor(resource.ClusterNamespace, plural, "schema"))
+			assert.False(t, vec.hasUpsertFor(resource.ClusterNamespace, plural, "late-schema"))
+			assert.Equal(t, snowflakeRV(100), vec.latestRV)
+
+			manifest.Embed[plural] = app.ManifestResourceEmbed{ReembedVersion: storedRevision}
+			configs.Reload([]*app.ManifestData{manifest})
+			s.sweep(t.Context())
+			assert.True(t, vec.hasUpsertFor(resource.ClusterNamespace, plural, "schema"))
+			assert.True(t, vec.hasUpsertFor(resource.ClusterNamespace, plural, "late-schema"))
+			assert.Equal(t, snowflakeRV(120), vec.latestRV)
+		})
+	}
+}

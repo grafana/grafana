@@ -168,6 +168,10 @@ func (f *fakeVectorBackend) SetLatestRV(context.Context, int64) error   { return
 func (f *fakeVectorBackend) TryAcquireReconcilerLock(context.Context) (func(), bool, error) {
 	return func() {}, true, nil
 }
+func (f *fakeVectorBackend) BackfillContentVersion(context.Context, string, string) (int, error) {
+	return 0, nil
+}
+
 func (f *fakeVectorBackend) ListIncompleteBackfillJobs(context.Context, string) ([]vector.BackfillJob, error) {
 	return nil, nil
 }

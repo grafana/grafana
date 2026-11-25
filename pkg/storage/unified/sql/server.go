@@ -324,7 +324,8 @@ func withSearch(opts *ServerOptions, resourceOpts *resource.ResourceServerOption
 				configs = resource.NewEmbeddingConfigRegistry(resource.AppManifests())
 				resourceOpts.Search.EmbeddingConfig = configs
 			}
-			registry, err := enrollment.New(configs, opts.Cfg.VectorAllowedInternalCollections, []embed.Builder{dashboard.New()}, resourceOpts.VectorMetrics.EmbedSkippedVersionsTotal)
+			external := append(slices.Clone(opts.Cfg.VectorAllowedExternalCollections), resourceOpts.Search.SharedExternalCollections...)
+			registry, err := enrollment.New(configs, opts.Cfg.VectorAllowedInternalCollections, []embed.Builder{dashboard.New()}, resourceOpts.VectorMetrics.EmbedSkippedVersionsTotal, external...)
 			if err != nil {
 				return fmt.Errorf("embedding enrollment: %w", err)
 			}

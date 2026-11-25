@@ -20,6 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 
 	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/authz"
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
@@ -72,6 +73,12 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 		return nil, err
 	}
 	namespace := keys[0].Namespace
+	if namespace == ClusterNamespace {
+		return nil, status.Error(codes.PermissionDenied, "reserved search namespace")
+	}
+	if namespace == "" && !s.isClusterSearchTarget(keys[0].Group, keys[0].Resource) {
+		return nil, status.Error(codes.InvalidArgument, "missing namespace")
+	}
 	// Global callers can supply arbitrary resource names, including rejected targets.
 	if req.RequireHybridEnabled || len(keys) > 1 {
 		group, resource = GlobalSearchGroup, GlobalSearchResource
@@ -103,6 +110,9 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 		return nil, status.Error(codes.PermissionDenied, "namespace mismatch")
 	}
 	for _, key := range keys {
+		if err := s.authorizeClusterSearch(user, key, req.Filters); err != nil {
+			return nil, err
+		}
 		if err := s.checkAllowedReadService(user, key.Group, key.Resource); err != nil {
 			return nil, err
 		}
@@ -114,7 +124,7 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 	}
 	semanticEnabled := s.embedder != nil && s.vectorBackend != nil
 	if semanticEnabled {
-		if err := s.checkVectorSearchRateLimit(ctx, namespace); err != nil {
+		if err := s.checkVectorSearchRateLimit(ctx, searchQuotaNamespace(namespace)); err != nil {
 			return nil, err
 		}
 	}
@@ -136,7 +146,9 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 	if len(results) > limit {
 		results = results[:limit]
 	}
-	s.enrichHybridResults(ctx, namespace, candidates, results)
+	if namespace != "" {
+		s.enrichHybridResults(ctx, namespace, candidates, results)
+	}
 	kinds := make(map[string]string, len(targets))
 	for _, target := range targets {
 		if target.kind != "" {
@@ -144,6 +156,40 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 		}
 	}
 	return &resourcepb.HybridSearchResponse{Results: results, Kinds: kinds}, nil
+}
+
+// authorizeClusterSearch checks the collection-wide read grant before fetching
+// any candidates. CRDs may be exempt from the tenant result-level RBAC path.
+func (s *searchServer) authorizeClusterSearch(user types.AuthInfo, key *resourcepb.ResourceKey, filters []*resourcepb.Requirement) error {
+	if key.Namespace != "" {
+		return nil
+	}
+	permission := authz.CheckServicePermissions(user, key.Group, key.Resource, "get")
+	if user.GetNamespace() != "*" || !permission.ServiceCall || !permission.Allowed {
+		return status.Error(codes.PermissionDenied, "cluster resource read grant required")
+	}
+	if !s.hybridSearchConfig.lookup(key.Group, key.Resource).clusterEnabled ||
+		s.embeddingBuilders == nil || !s.embeddingBuilders.Has(key.Group, key.Resource) {
+		return status.Error(codes.NotFound, "cluster collection not enabled")
+	}
+	for _, filter := range filters {
+		if filter.GetKey() != "uid" {
+			return status.Error(codes.InvalidArgument, "cluster search supports only the uid filter")
+		}
+	}
+	return nil
+}
+
+func searchQuotaNamespace(namespace string) string {
+	if namespace == "" {
+		return ClusterNamespace
+	}
+	return namespace
+}
+
+func (s *searchServer) isClusterSearchTarget(group, resource string) bool {
+	return s.collectionAllowlist.Allows(vector.Collection{Group: group, Resource: resource}) &&
+		s.hybridSearchConfig.lookup(group, resource).cluster
 }
 
 func (s *searchServer) checkAllowedReadService(user types.AuthInfo, group, resource string) error {
@@ -178,6 +224,9 @@ func (s *searchServer) prepareHybridTargets(ctx context.Context, req *resourcepb
 	targets := make([]hybridTarget, len(keys))
 	for i, key := range keys {
 		target := hybridTarget{key: key, storageNamespace: key.Namespace}
+		if key.Namespace == "" && (s.vectorBackend == nil || s.embedder == nil || s.externalLexical == nil) {
+			return nil, status.Error(codes.Unavailable, "cluster hybrid search backend unavailable")
+		}
 		sharedConfigured := s.sharedCollectionAllowlist.Allows(vector.Collection{Group: key.Group, Resource: key.Resource, IsExternal: true})
 		if s.vectorBackend != nil {
 			resolved, allowed, err := s.resolveAllowedCollection(ctx, key.Namespace, key.Group, key.Resource)
@@ -185,7 +234,7 @@ func (s *searchServer) prepareHybridTargets(ctx context.Context, req *resourcepb
 				return nil, s.grpcStatusError(ctx, "hybrid search: resolve collection", err)
 			}
 			if !allowed {
-				if s.embedder != nil || sharedConfigured || resolved.collection.IsExternal || resolved.collection.Scope == vector.ScopeShared {
+				if s.embedder != nil || sharedConfigured || resolved.collection.IsExternal || (resolved.collection.Scope == vector.ScopeShared || resolved.collection.Scope == vector.ScopeCluster) {
 					return nil, status.Error(codes.NotFound, "collection not found")
 				}
 			} else {
@@ -206,7 +255,7 @@ func (s *searchServer) prepareHybridTargets(ctx context.Context, req *resourcepb
 		if !target.collection.IsExternal {
 			config = s.hybridSearchConfig.lookup(key.Group, key.Resource)
 		}
-		if req.RequireHybridEnabled && !target.collection.IsExternal && !config.enabled {
+		if req.RequireHybridEnabled && !target.collection.IsExternal && !config.enabled && !(key.Namespace == "" && config.clusterEnabled) {
 			return nil, status.Errorf(codes.InvalidArgument, "hybrid search is not enabled for %s/%s", key.Group, key.Resource)
 		}
 		if err := validateHybridSearchFilters(req.Filters, key, target.collection.IsExternal); err != nil {
@@ -225,7 +274,7 @@ func (s *searchServer) hybridSearchCandidates(ctx context.Context, user types.Au
 	// All semantic legs share one vector while lexical retrieval runs concurrently.
 	// The shared group lets either leg cancel embedding without waiting on another resource.
 	embedding := sync.OnceValues(func() ([]float32, error) {
-		return s.embedVectorSearchQuery(gctx, targets[0].key.Namespace, semanticQuery)
+		return s.embedVectorSearchQuery(gctx, searchQuotaNamespace(targets[0].key.Namespace), semanticQuery)
 	})
 	lex := make([][]lexicalHit, len(targets))
 	sem := make([][]vector.VectorSearchResult, len(targets))
@@ -276,12 +325,11 @@ func (s *searchServer) hybridSearchCandidates(ctx context.Context, user types.Au
 	return candidates, nil
 }
 
-// hybridLexicalLeg runs the lexical retrieval: FTS over stored rows for
-// external collections (authz-filtered per hit), bleve for internal (the
-// index enforces authz itself).
+// hybridLexicalLeg uses PostgreSQL for cluster and external collections
+// and Bleve for tenant-internal collections.
 func (s *searchServer) hybridLexicalLeg(ctx context.Context, user types.AuthInfo, req *resourcepb.HybridSearchRequest, target hybridTarget, depth int, filters []vector.SearchFilter) ([]lexicalHit, error) {
 	key, coll := target.key, target.collection
-	if !coll.IsExternal {
+	if !coll.IsExternal && coll.Scope != vector.ScopeCluster {
 		lexReq := hybridLexicalRequest(req, key, depth)
 		lexResp, err := s.searchWithIndex(ctx, lexReq, func(idx ResourceIndex) {
 			queryFields, rerankFields := hybridLexicalFields(idx.SearchFieldDefinitions(), s.reranker != nil && !req.SkipRerank)
@@ -320,7 +368,7 @@ func (s *searchServer) hybridLexicalLeg(ctx context.Context, user types.AuthInfo
 	for i, h := range hits {
 		items[i] = vector.VectorSearchResult{UID: h.UID, Folder: h.Folder}
 	}
-	allowed, err := s.authorizeVectorSearchResults(ctx, user, key, target.shared, items)
+	allowed, err := s.authorizeVectorSearchResults(ctx, user, key, target.shared || coll.Scope == vector.ScopeCluster, items)
 	if err != nil {
 		return nil, fmt.Errorf("authz batch check: %w", err)
 	}
@@ -352,7 +400,7 @@ func (s *searchServer) hybridSemanticLeg(ctx context.Context, user types.AuthInf
 	if err != nil {
 		return nil, fmt.Errorf("vector backend: %w", err)
 	}
-	allowed, err := s.authorizeVectorSearchResults(ctx, user, key, target.shared, results)
+	allowed, err := s.authorizeVectorSearchResults(ctx, user, key, target.shared || coll.Scope == vector.ScopeCluster, results)
 	if err != nil {
 		return nil, fmt.Errorf("authz batch check: %w", err)
 	}
@@ -497,6 +545,19 @@ func (s *searchServer) resolveAllowedCollection(ctx context.Context, namespace, 
 		return resolvedReadTarget{}, false, err
 	}
 	if !found {
+		return resolvedReadTarget{}, false, nil
+	}
+	cluster := s.isClusterSearchTarget(group, resource)
+	if cluster || coll.Scope == vector.ScopeCluster {
+		if cluster && (coll.Scope != vector.ScopeCluster || coll.IsExternal) {
+			return resolvedReadTarget{}, false, status.Error(codes.Internal, "cluster collection policy mismatch")
+		}
+		if !cluster || namespace != "" {
+			return resolvedReadTarget{collection: coll}, false, nil
+		}
+		return resolvedReadTarget{collection: coll, storageNamespace: ClusterNamespace}, true, nil
+	}
+	if namespace == "" {
 		return resolvedReadTarget{}, false, nil
 	}
 	shared := s.sharedCollectionAllowlist.Allows(vector.Collection{Group: group, Resource: resource, IsExternal: true})

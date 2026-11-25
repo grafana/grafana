@@ -129,6 +129,9 @@ type VectorBackend interface {
 	// CreateBackfillJob creates a job stamped with the builder's contentVersion; no-op if one exists for (model, resource).
 	CreateBackfillJob(ctx context.Context, model, resource string, stoppingRV int64, contentVersion int) error
 
+	// BackfillContentVersion returns the job's extractor revision, or zero if no job exists.
+	BackfillContentVersion(ctx context.Context, model, resource string) (int, error)
+
 	// ReopenStaleBackfillJobs reopens (cursor reset) the resource-specific and ''-catch-all jobs whose content_version trails version.
 	ReopenStaleBackfillJobs(ctx context.Context, model, resource string, version int, stoppingRV int64) (reopened bool, err error)
 

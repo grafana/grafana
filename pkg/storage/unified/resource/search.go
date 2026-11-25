@@ -517,9 +517,7 @@ type searchServer struct {
 	log           log.Logger
 	storage       StorageBackend
 	vectorBackend vector.VectorBackend
-	// Lexical leg for external collections (internal use bleve); nil = unsupported.
-	// Interim until bleve indexes external kinds — then external routes down
-	// the existing bleve leg and this field (and the FTS impl) gets deleted.
+	// PostgreSQL lexical leg for external and cluster collections.
 	externalLexical   vector.LexicalSearcher
 	embedder          *embedder.Embedder
 	reranker          *rerank.Reranker
@@ -1158,10 +1156,19 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		return nil, GRPCStatusError(errRes)
 	}
 
+	if req.Key.Namespace == ClusterNamespace {
+		return nil, status.Error(codes.PermissionDenied, "reserved search namespace")
+	}
+	if req.Key.Namespace == "" && !s.isClusterSearchTarget(req.Key.Group, req.Key.Resource) {
+		return nil, status.Error(codes.InvalidArgument, "missing namespace")
+	}
 	if errRes := requireUserNamespace(ctx, req.Key.Namespace); errRes != nil {
 		return nil, GRPCStatusError(errRes)
 	}
 	user, _ := types.AuthInfoFrom(ctx)
+	if err := s.authorizeClusterSearch(user, req.Key, req.Filters); err != nil {
+		return nil, err
+	}
 	if err := s.checkAllowedReadService(user, req.Key.Group, req.Key.Resource); err != nil {
 		return nil, err
 	}
@@ -1181,7 +1188,7 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		attribute.Int("limit", limit),
 	)
 
-	if err := s.checkVectorSearchRateLimit(ctx, req.Key.Namespace); err != nil {
+	if err := s.checkVectorSearchRateLimit(ctx, searchQuotaNamespace(req.Key.Namespace)); err != nil {
 		return nil, err
 	}
 
@@ -1196,7 +1203,7 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		return nil, GRPCStatusError(NewNotFoundError(req.Key))
 	}
 
-	dense, err := s.embedVectorSearchQuery(ctx, req.Key.Namespace, req.Query)
+	dense, err := s.embedVectorSearchQuery(ctx, searchQuotaNamespace(req.Key.Namespace), req.Query)
 	if err != nil {
 		return nil, err
 	}
@@ -1215,7 +1222,7 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 	// Using authz post-filtering for now
 	// Downside is that the results could be lower than expected
 	// For example: VectorSearch returns 10 results, user has access to 3 items, we would only return 3 items
-	allowed, err := s.authorizeVectorSearchResults(ctx, user, req.Key, target.shared, results)
+	allowed, err := s.authorizeVectorSearchResults(ctx, user, req.Key, target.shared || target.collection.Scope == vector.ScopeCluster, results)
 	if err != nil {
 		if ctx.Err() != nil {
 			return nil, status.FromContextError(ctx.Err()).Err()
@@ -1249,7 +1256,7 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 // Pulled out of VectorSearch to keep that function under the cyclomatic
 // complexity threshold.
 func validateVectorSearchRequest(req *resourcepb.VectorSearchRequest) *resourcepb.ErrorResult {
-	if req.Key == nil || req.Key.Namespace == "" || req.Key.Group == "" || req.Key.Resource == "" {
+	if req.GetKey().GetGroup() == "" || req.GetKey().GetResource() == "" {
 		return NewBadRequestError("missing namespace, group or resource")
 	}
 	if strings.TrimSpace(req.Query) == "" {
@@ -1378,8 +1385,8 @@ func (s *searchServer) storeCachedQueryEmbedding(ctx context.Context, namespace,
 }
 
 // authorizeVectorSearchResults applies the resolved collection's read policy.
-func (s *searchServer) authorizeVectorSearchResults(ctx context.Context, user types.AuthInfo, key *resourcepb.ResourceKey, shared bool, results []vector.VectorSearchResult) (map[vectorAuthzKey]bool, error) {
-	if !shared {
+func (s *searchServer) authorizeVectorSearchResults(ctx context.Context, user types.AuthInfo, key *resourcepb.ResourceKey, kindLevelRead bool, results []vector.VectorSearchResult) (map[vectorAuthzKey]bool, error) {
+	if !kindLevelRead {
 		return s.batchCheckVectorSearchResults(ctx, user, key, results)
 	}
 	allowed := make(map[vectorAuthzKey]bool, len(results))

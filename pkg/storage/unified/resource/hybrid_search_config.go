@@ -16,8 +16,10 @@ type HybridSearchConfigRegistry struct {
 }
 
 type hybridSearchConfig struct {
-	enabled bool
-	kind    string
+	enabled        bool
+	cluster        bool
+	clusterEnabled bool
+	kind           string
 }
 
 func NewHybridSearchConfigRegistry(manifests []*app.ManifestData) *HybridSearchConfigRegistry {
@@ -54,11 +56,23 @@ func (r *HybridSearchConfigRegistry) Reload(sources ...[]*app.ManifestData) {
 				for _, kind := range version.Kinds {
 					key := schema.GroupResource{Group: manifest.Group, Resource: kind.Resource}
 					config := declared[key]
+					config.cluster = config.cluster || kind.Scope == "Cluster"
 					if config.kind == "" {
 						config.kind = kind.Kind
 					}
-					if !config.enabled && version.Served && kind.Scope == "Namespaced" && kind.HasHybridEndpoint() {
-						config = hybridSearchConfig{enabled: true, kind: kind.Kind}
+					if version.Served && kind.HasHybridEndpoint() {
+						switch kind.Scope {
+						case "Namespaced":
+							if !config.enabled {
+								config.enabled = true
+								config.kind = kind.Kind
+							}
+						case "Cluster":
+							if !config.clusterEnabled {
+								config.clusterEnabled = true
+								config.kind = kind.Kind
+							}
+						}
 					}
 					declared[key] = config
 				}

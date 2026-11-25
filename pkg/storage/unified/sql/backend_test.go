@@ -516,6 +516,17 @@ type readHistoryRow struct {
 	value            string
 }
 
+func TestBackendResourceListWatermarkReadsOnlyRevision(t *testing.T) {
+	b, ctx := setupBackendTest(t)
+	b.SQLMock.ExpectQuery("select resource_version from resource_version").
+		WithArgs("catalog.example.test", "systemschemas").
+		WillReturnRows(sqlmock.NewRows([]string{"resource_version", "unix_timestamp"}).AddRow(1234, 0))
+	rv, err := resource.ListResourceWatermark(ctx, b.backend, "catalog.example.test", "systemschemas")
+	require.NoError(t, err)
+	require.Equal(t, int64(1234), rv)
+	require.NoError(t, b.SQLMock.ExpectationsWereMet())
+}
+
 func TestBackend_ReadResource(t *testing.T) {
 	t.Parallel()
 

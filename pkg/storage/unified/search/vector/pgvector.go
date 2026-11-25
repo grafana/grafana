@@ -113,14 +113,19 @@ func truncateRunes(s string, max int) string {
 // partition keys via ResolveCollection first; internal callers (reconciler,
 // backfill) work in partition keys directly.
 func (b *pgvectorBackend) validateResource(ctx context.Context, resource string) error {
-	ok, err := b.hasPartitionKey(ctx, resource)
+	_, err := b.requirePartition(ctx, resource)
+	return err
+}
+
+func (b *pgvectorBackend) requirePartition(ctx context.Context, resource string) (Collection, error) {
+	collection, ok, err := b.collectionByPartitionKey(ctx, resource)
 	if err != nil {
-		return fmt.Errorf("resolve resource %q: %w", resource, err)
+		return Collection{}, fmt.Errorf("resolve resource %q: %w", resource, err)
 	}
 	if !ok {
-		return fmt.Errorf("unsupported resource %q (no embeddings sub-tree provisioned)", resource)
+		return Collection{}, fmt.Errorf("unsupported resource %q (no embeddings sub-tree provisioned)", resource)
 	}
-	return nil
+	return collection, nil
 }
 
 func (b *pgvectorBackend) Upsert(ctx context.Context, vectors []Vector) (retErr error) {
@@ -155,12 +160,13 @@ func (b *pgvectorBackend) Upsert(ctx context.Context, vectors []Vector) (retErr 
 				i, vectors[i].Resource, vectors[0].Resource)
 		}
 	}
-	if err := b.validateResource(ctx, vectors[0].Resource); err != nil {
+	collection, err := b.requirePartition(ctx, vectors[0].Resource)
+	if err != nil {
 		return err
 	}
 
 	return b.db.WithTx(ctx, nil, func(ctx context.Context, tx db.Tx) error {
-		return b.upsertAll(ctx, tx, vectors)
+		return b.upsertAll(ctx, tx, vectors, collection.usesPostgresLexicalSearch())
 	})
 }
 
@@ -173,7 +179,8 @@ func (b *pgvectorBackend) UpsertReplaceSubresources(ctx context.Context, namespa
 	if model == "" {
 		return fmt.Errorf("model must not be empty")
 	}
-	if err := b.validateResource(ctx, resource); err != nil {
+	collection, err := b.requirePartition(ctx, resource)
+	if err != nil {
 		return err
 	}
 	// Enforce the documented contract that every changed vector belongs to
@@ -246,7 +253,7 @@ func (b *pgvectorBackend) UpsertReplaceSubresources(ctx context.Context, namespa
 			}
 		}
 		if len(changed) > 0 {
-			if err := b.upsertAll(ctx, tx, changed); err != nil {
+			if err := b.upsertAll(ctx, tx, changed, collection.usesPostgresLexicalSearch()); err != nil {
 				return err
 			}
 		}
@@ -279,7 +286,7 @@ func (b *pgvectorBackend) UpsertReplaceSubresources(ctx context.Context, namespa
 // upsertAll does the per-vector INSERT/UPSERT loop. Caller owns the
 // transaction and must have validated every vector's resource against the
 // catalog BEFORE opening it — no catalog queries in here.
-func (b *pgvectorBackend) upsertAll(ctx context.Context, tx db.Tx, vectors []Vector) error {
+func (b *pgvectorBackend) upsertAll(ctx context.Context, tx db.Tx, vectors []Vector, fullText bool) error {
 	for i := range vectors {
 		emb, err := fitEmbedding(vectors[i].Embedding, EmbeddingDim)
 		if err != nil {
@@ -295,6 +302,7 @@ func (b *pgvectorBackend) upsertAll(ctx context.Context, tx db.Tx, vectors []Vec
 			Resource:    vectors[i].Resource,
 			Vector:      &vectors[i],
 			Embedding:   pgvector.NewHalfVector(emb),
+			ComputeTS:   fullText,
 		}
 		if _, err := dbutil.Exec(ctx, tx, sqlVectorCollectionUpsert, req); err != nil {
 			return fmt.Errorf("upsert vector %s/%s: %w", vectors[i].UID, vectors[i].Subresource, err)
@@ -693,6 +701,10 @@ func (b *pgvectorBackend) ListIncompleteBackfillJobs(ctx context.Context, model 
 // its metadata index. The per-resource advisory lock serializes the attach
 // (ACCESS EXCLUSIVE on the parent) so concurrent replicas don't race it.
 func (b *pgvectorBackend) EnsureResourcePartition(ctx context.Context, resource string) error {
+	return b.ensureResourcePartition(ctx, resource, isExternalPartitionKey(resource))
+}
+
+func (b *pgvectorBackend) ensureResourcePartition(ctx context.Context, resource string, fullText bool) error {
 	// resource is interpolated unquoted into the DDL below; reject anything
 	// sanitizeIdentifier would alter to keep it injection-safe.
 	if resource == "" || sanitizeIdentifier(resource) != resource {
@@ -703,10 +715,9 @@ func (b *pgvectorBackend) EnsureResourcePartition(ctx context.Context, resource 
 	}
 	leaf := subtreeName(resource) // embeddings_<resource>
 	idx := leaf + "_metadata_idx"
-	// Only external partitions index ts (bleve is the internal lexical
-	// index). Name budget: 11+39+7 = 57 < 63.
+	// Tenant-internal collections use Bleve. Name budget: 11+39+7 = 57 < 63.
 	ftsIdx := ""
-	if isExternalPartitionKey(resource) {
+	if fullText {
 		ftsIdx = leaf + "_ts_idx"
 	}
 
@@ -958,6 +969,20 @@ func (b *pgvectorBackend) SetLatestRV(ctx context.Context, rv int64) error {
 		return fmt.Errorf("set vector_latest_rv: %w", err)
 	}
 	return nil
+}
+
+func (b *pgvectorBackend) BackfillContentVersion(ctx context.Context, model, partition string) (int, error) {
+	var version int
+	err := b.db.QueryRowContext(ctx,
+		`SELECT content_version FROM vector_backfill_jobs WHERE model = $1 AND resource = $2`, model, partition,
+	).Scan(&version)
+	if errors.Is(err, sql.ErrNoRows) {
+		return 0, nil
+	}
+	if err != nil {
+		return 0, fmt.Errorf("read backfill content version for %q: %w", partition, err)
+	}
+	return version, nil
 }
 
 func (b *pgvectorBackend) TryAcquireReconcilerLock(ctx context.Context) (func(), bool, error) {

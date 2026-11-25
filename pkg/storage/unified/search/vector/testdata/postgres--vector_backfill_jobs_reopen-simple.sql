@@ -6,6 +6,11 @@ UPDATE vector_backfill_jobs
         "last_error"       = NULL,
         "updated_at"       = CURRENT_TIMESTAMP
     WHERE "model" = 'text-embedding-005'
-      AND "resource" IN ('dashboards', '')
+      AND (
+          "resource" = 'dashboards'
+          OR ("resource" = '' AND NOT EXISTS (
+              SELECT 1 FROM embedding_collections WHERE partition_key = 'dashboards' AND scope = 'cluster'
+          ))
+      )
       AND "content_version" < 2
 ;

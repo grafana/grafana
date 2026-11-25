@@ -78,13 +78,14 @@ func NewLowerGroupResource(group, resource string) LowerGroupResource {
 	return LowerGroupResource{Group: strings.ToLower(group), Resource: strings.ToLower(resource)}
 }
 
-const clusterNamespace = "**cluster**"
+// ClusterNamespace encodes an empty cluster namespace in internal storage keys.
+const ClusterNamespace = "**cluster**"
 
 // Convert the key to a search ID string
 func SearchID(x *resourcepb.ResourceKey) string {
 	var sb strings.Builder
 	if x.Namespace == "" {
-		sb.WriteString(clusterNamespace)
+		sb.WriteString(ClusterNamespace)
 	} else {
 		sb.WriteString(x.Namespace)
 	}
@@ -112,7 +113,7 @@ func ReadSearchID(x *resourcepb.ResourceKey, v string) error {
 		x.Name = parts[3]
 	}
 
-	if x.Namespace == clusterNamespace {
+	if x.Namespace == ClusterNamespace {
 		x.Namespace = ""
 	}
 	return nil
@@ -127,7 +128,7 @@ func NSGR(x *resourcepb.ResourceKey) string {
 
 func appendNSGR(sb *strings.Builder, x *resourcepb.ResourceKey) string {
 	if x.Namespace == "" {
-		sb.WriteString(clusterNamespace)
+		sb.WriteString(ClusterNamespace)
 	} else {
 		sb.WriteString(x.Namespace)
 	}
