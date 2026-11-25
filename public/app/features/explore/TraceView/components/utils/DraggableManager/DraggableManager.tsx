@@ -37,6 +37,9 @@ export default class DraggableManager {
   // cache the last known DraggableBounds (invalidate via `#resetBounds())
   _bounds: DraggableBounds | TNil;
   _isDragging: boolean;
+  // The window the current drag happens in. The element can render in another window than this one, such as a
+  // Document Picture-in-Picture window, and only that window sees the drag's mouse moves and release.
+  _dragWindow: Window = window;
   // optional callbacks for various dragging events
   _onMouseEnter: ((update: DraggingUpdate) => void) | TNil;
   _onMouseLeave: ((update: DraggingUpdate) => void) | TNil;
@@ -120,9 +123,9 @@ export default class DraggableManager {
   }
 
   _stopDragging() {
-    window.removeEventListener('mousemove', this._handleDragEvent);
-    window.removeEventListener('mouseup', this._handleDragEvent);
-    const style = _get(document, 'body.style');
+    this._dragWindow.removeEventListener('mousemove', this._handleDragEvent);
+    this._dragWindow.removeEventListener('mouseup', this._handleDragEvent);
+    const style = _get(this._dragWindow.document, 'body.style');
     if (style) {
       style.userSelect = 'auto';
     }
@@ -194,9 +197,10 @@ export default class DraggableManager {
       if (this._isDragging || button !== LEFT_MOUSE_BUTTON) {
         return;
       }
-      window.addEventListener('mousemove', this._handleDragEvent);
-      window.addEventListener('mouseup', this._handleDragEvent);
-      const style = _get(document, 'body.style');
+      this._dragWindow = ('nativeEvent' in event ? event.nativeEvent.view : event.view) ?? window;
+      this._dragWindow.addEventListener('mousemove', this._handleDragEvent);
+      this._dragWindow.addEventListener('mouseup', this._handleDragEvent);
+      const style = _get(this._dragWindow.document, 'body.style');
       if (style) {
         style.userSelect = 'none';
       }

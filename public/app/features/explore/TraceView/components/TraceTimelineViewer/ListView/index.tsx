@@ -381,9 +381,11 @@ export default class ListView extends React.Component<TListViewProps> {
     // https://jsperf.com/large-htmlcollection-vs-large-nodelist
     const nodes = this._itemHolderElm.childNodes;
     const max = nodes.length;
+    // the list can render in another window than this one, such as a Document Picture-in-Picture window
+    const itemHolderWindow = this._itemHolderElm.ownerDocument.defaultView ?? window;
     for (let i = 0; i < max; i++) {
       const node = nodes[i];
-      if (node instanceof HTMLElement) {
+      if (node instanceof itemHolderWindow.HTMLElement) {
         // use `.getAttribute(...)` instead of `.dataset` for jest / JSDOM
         const itemKey = node.getAttribute('data-item-key');
         if (!itemKey) {
