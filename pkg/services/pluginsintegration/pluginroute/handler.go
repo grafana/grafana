@@ -58,13 +58,14 @@ import (
 type StorageProvider func(*runtime.Scheme, serializer.CodecFactory, []schema.GroupVersion) (generic.RESTOptionsGetter, error)
 
 type Options struct {
-	PluginInfo      plugins.Info
-	Storage         StorageProvider
-	PluginClient    appsettings.PluginClient
-	ClientV3        appclientv3.Client
-	ContextProvider appsettings.PluginContextWrapper
-	Decrypter       decrypt.DecryptService
-	AccessChecker   pluginaccesscontrol.AppAccessChecker
+	PluginInfo          plugins.Info
+	Storage             StorageProvider
+	PluginClient        appsettings.PluginClient
+	ClientV3            appclientv3.Client
+	ContextProvider     appsettings.PluginContextWrapper
+	Decrypter           decrypt.DecryptService
+	AccessChecker       pluginaccesscontrol.AppAccessChecker
+	NamespaceAuthorizer authorizer.Authorizer
 	// AccessClient runs the access checks a manifest declares on its routes.
 	// A route that declares one is refused without it.
 	AccessClient     authlib.AccessChecker
@@ -180,9 +181,13 @@ func NewAppSettingsHandler(plugin definition.PluginDefinition, opts Options) (*H
 	if reg == nil {
 		reg = prometheus.NewRegistry()
 	}
+	namespaceAuthorizer := opts.NamespaceAuthorizer
+	if namespaceAuthorizer == nil {
+		namespaceAuthorizer = apiserverauthorizer.NewNamespaceAuthorizer()
+	}
 	authz, err := union.New(
 		union.NamedAuthorizer{AuthorizerName: "impersonation", Authorizer: apiserverauthorizer.NewImpersonationAuthorizer()},
-		union.NamedAuthorizer{AuthorizerName: "namespace", Authorizer: apiserverauthorizer.NewNamespaceAuthorizer()},
+		union.NamedAuthorizer{AuthorizerName: "namespace", Authorizer: namespaceAuthorizer},
 		union.NamedAuthorizer{AuthorizerName: "plugin", Authorizer: b.GetAuthorizer()},
 	)
 	if err != nil {
@@ -282,7 +287,7 @@ func newServerHandler(b builder.APIGroupBuilder, opts Options, reg prometheus.Re
 	}); err != nil {
 		return nil, fmt.Errorf("%s: build group: %w", group, err)
 	}
-	info.NegotiatedSerializer = grafanarest.DefaultNoProtobufNegotiatedSerializer(codecs)
+	info.NegotiatedSerializer = typeMetaDefaulting{grafanarest.DefaultNoProtobufNegotiatedSerializer(codecs)}
 	if err := server.InstallAPIGroup(&info); err != nil {
 		return nil, fmt.Errorf("%s: install group: %w", group, err)
 	}
