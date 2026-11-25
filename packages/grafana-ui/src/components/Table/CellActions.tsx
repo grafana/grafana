@@ -66,6 +66,7 @@ export function CellActions({
               if (setInspectCell) {
                 let mode = TableCellInspectorMode.text;
                 let inspectValue = cell.value;
+                let plainText: string | undefined;
                 try {
                   const parsed = typeof inspectValue === 'string' ? JSON.parse(inspectValue) : inspectValue;
                   const isPlainObj =
@@ -74,13 +75,14 @@ export function CellActions({
                     !Array.isArray(parsed) &&
                     (Object.getPrototypeOf(parsed) === Object.prototype || Object.getPrototypeOf(parsed) === null);
                   if (Array.isArray(parsed) || isPlainObj) {
+                    plainText = typeof cell.value === 'string' ? cell.value : JSON.stringify(cell.value);
                     inspectValue = JSON.stringify(parsed, null, 2);
                     mode = TableCellInspectorMode.code;
                   }
                 } catch {
                   // do nothing
                 }
-                setInspectCell({ value: inspectValue, mode });
+                setInspectCell({ value: inspectValue, mode, plainText });
               }
             }}
             {...commonButtonProps}
