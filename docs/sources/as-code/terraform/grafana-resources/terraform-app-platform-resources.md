@@ -13,7 +13,9 @@ labels:
 title: Configure the Grafana provider for App Platform resources in Grafana Cloud
 menuTitle: Configure App Platform resources
 weight: 250
-canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/terraform-app-platform-resources/
+canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/grafana-resources/terraform-app-platform-resources/
+aliases:
+  - ../terraform-app-platform-resources/
 ---
 
 # Configure the Grafana provider for App Platform resources in Grafana Cloud
@@ -63,7 +65,7 @@ You can set `stack_id` in a provider that manages both kinds of resources.
 
 Before you begin, ensure you have the following:
 
-- **Grafana Cloud stack:** You need a Grafana Cloud stack to provision resources into. To create one, refer to [Create and manage a Grafana Cloud stack using Terraform](../terraform-cloud-stack/).
+- **Grafana Cloud stack:** You need a Grafana Cloud stack to provision resources into. To create one, refer to [Create and manage a Grafana Cloud stack using Terraform](../../terraform-cloud-stack/).
 - **Terraform CLI:** Install [Terraform](https://developer.hashicorp.com/terraform/install) on your machine.
 - **Grafana Terraform provider:** Use `grafana/grafana` version 4.44.0 or later, which adds the `grafana_apps_servicemodel_component_v1alpha1` resource that this guide uses.
 

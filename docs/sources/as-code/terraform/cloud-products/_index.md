@@ -7,7 +7,7 @@ keywords:
 labels:
   products:
     - cloud
-menuTitle: Manage other Grafana Cloud products
+menuTitle: Grafana Cloud products
 title: Manage other Grafana Cloud products with Terraform
 weight: 400
 canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/cloud-products/

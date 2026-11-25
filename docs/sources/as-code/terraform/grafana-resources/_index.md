@@ -1,5 +1,5 @@
 ---
-description: Manage dashboards, saved queries, and plugins with the Grafana Terraform provider.
+description: Manage dashboards, saved queries, App Platform resources, and plugins with the Grafana Terraform provider.
 keywords:
   - Infrastructure as Code
   - Terraform
@@ -9,12 +9,12 @@ labels:
     - enterprise
     - oss
 menuTitle: Manage Grafana resources
-title: Manage Grafana resources with Terraform
+title: Use Terraform to work with Grafana resources
 weight: 300
 canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/grafana-resources/
 ---
 
-# Manage Grafana resources with Terraform
+# Use Terraform to work with Grafana resources
 
 Use these guides to manage resources inside a Grafana instance or Grafana Cloud stack with Terraform. Some resources are only available in Grafana Cloud or Grafana Enterprise. Each guide lists its requirements.
 
