@@ -300,4 +300,41 @@ describe('useStarredSearch', () => {
       expect(starred.rowNames()).toEqual(['Second thing']);
     });
   });
+
+  it.each([
+    {
+      desc: 'a dashboard',
+      ref: { group: 'dashboard.grafana.app', kind: 'Dashboard', name: DASHBOARD.name },
+      serve: (title: string) => server.use(getCustomSearchHandler([{ ...DASHBOARD, title }])),
+    },
+    {
+      desc: 'an app object',
+      ref: { group: GROUP, kind: KIND, name: 't1' },
+      serve: (title: string) => server.use(...getAppKindHandlers(MOCK_APP_KIND, [{ name: 't1', title }])),
+    },
+  ])('searches again for $desc that is starred again, as it may have changed meanwhile', async ({ ref, serve }) => {
+    setMockStarred(ref.group, ref.kind, [ref.name]);
+    serve('Old title');
+    const starred = renderStarredSearch();
+    await waitFor(() => {
+      expect(starred.rowNames()).toEqual(['Old title']);
+    });
+
+    await act(async () => {
+      await starsSrv.unstar(ref);
+    });
+    await waitFor(() => {
+      expect(starred.rowNames()).toEqual([]);
+    });
+
+    // Renamed while no star set held it, so no starred row called for a new search
+    serve('New title');
+    await act(async () => {
+      await starsSrv.star(ref);
+    });
+
+    await waitFor(() => {
+      expect(starred.rowNames()).toEqual(['New title']);
+    });
+  });
 });

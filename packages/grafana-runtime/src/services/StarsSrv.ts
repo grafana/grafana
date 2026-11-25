@@ -12,17 +12,20 @@ export interface StarredResourceRef {
  *
  * Grafana stores a star of any kind. It lists the stars of dashboards and folders, and of the app
  * plugin kinds that have a page, in its Starred navigation and on Home.
- * {@link StarsSrv.showsStarsOf} tells whether it lists a kind.
+ * {@link StarsSrv.canShowStarsOf} tells whether it can list a kind.
  *
  * The lists follow every star change. Grafana cannot see a plugin save or delete an object, so the
  * plugin reports that through {@link StarsSrv.resourceUpdated} and {@link StarsSrv.resourceDeleted}.
  */
 export interface StarsSrv {
   /**
-   * Whether Grafana lists starred objects of the kind. It stores a star of an unlisted kind all the
-   * same. A plugin adds its kinds when its module loads, so the answer can change.
+   * Whether Grafana can list starred objects of the kind: the kind is a dashboard or folder, or a
+   * plugin added it to the kind registry with a page. Grafana finds a starred object through its
+   * kind's search endpoint, so the objects of a kind served without one are still not listed. A star
+   * of any kind is stored all the same. A plugin adds its kinds when its module loads, so the answer
+   * can change.
    */
-  showsStarsOf(group: string, kind: string): boolean;
+  canShowStarsOf(group: string, kind: string): boolean;
   /**
    * Stars the object, and shows Grafana's toast for the result. The Starred lists update on success.
    * Rejects when the server refuses, and for a user who cannot have stars, such as an anonymous user.
@@ -37,8 +40,9 @@ export interface StarsSrv {
    * The names (`metadata.name`) of the user's starred objects of a kind. Emits the current set on
    * subscribe, and again on each change, wherever in Grafana the change was made.
    *
-   * Never errors. A set Grafana cannot read is emitted as empty, and the real set follows once a
-   * read succeeds. For a user who cannot have stars it emits one empty set and completes.
+   * Never errors. If the first read fails it emits an empty set. If a later read fails it keeps the
+   * set it last read. Either way the current set follows once a read succeeds. For a user who cannot
+   * have stars it emits one empty set and completes.
    */
   starred(group: string, kind: string): Observable<readonly string[]>;
   /** Tells Grafana the object was saved. A starred object is searched again and listed under its saved title. */

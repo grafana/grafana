@@ -1,4 +1,6 @@
+import { configureStore } from '@reduxjs/toolkit';
 import { http, HttpResponse } from 'msw';
+import { Provider } from 'react-redux';
 import { testWithStarsUser } from 'test/helpers/testWithStarsUser';
 import { render, screen, waitFor } from 'test/test-utils';
 
@@ -173,6 +175,19 @@ describe('StarToolbarButtonExposed', () => {
   it('stars the object a plugin names', async () => {
     const { user } = render(
       <StarToolbarButtonExposed title="Capacity review" group="things.ext.grafana.app" kind="Thing" name="t1" />
+    );
+
+    await user.click(await findStarButton('Capacity review', false));
+
+    expect(await findStarButton('Capacity review', true)).toBeInTheDocument();
+  });
+
+  it('stars inside a Redux provider of the plugin that renders it', async () => {
+    const pluginStore = configureStore({ reducer: () => ({}) });
+    const { user } = render(
+      <Provider store={pluginStore}>
+        <StarToolbarButtonExposed title="Capacity review" group="things.ext.grafana.app" kind="Thing" name="t1" />
+      </Provider>
     );
 
     await user.click(await findStarButton('Capacity review', false));

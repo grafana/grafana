@@ -141,6 +141,9 @@ const kindSearchAPI = searchAPI.enhanceEndpoints({ addTagTypes: [STARRED_APP_SEA
     /** Starred objects of app kinds as rows, each kind through its own search endpoint, in no order. */
     searchStarredAppKinds: build.query<SearchRow[], StarredNames[]>({
       providesTags: [STARRED_APP_SEARCH_TAG],
+      // Dropped once no view shows it, like the search of the dashboards and folders: an object starred again is
+      // searched again, as it may have changed while no star set held it
+      keepUnusedDataFor: 0,
       queryFn: async (starred) => {
         const rows = await Promise.all(starred.map(searchStarredKind));
         return { data: rows.flat() };

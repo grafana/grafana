@@ -33,6 +33,9 @@ const starsAPI = collectionsAPIv1alpha1.enhanceEndpoints({ addTagTypes: [STARRED
      */
     searchStarred: build.query<DashboardQueryResult[], StarredNames[]>({
       providesTags: [STARRED_SEARCH_TAG],
+      // Dropped once no view shows it. A write re-searches only while its object is starred, so the search of
+      // an earlier star set would keep the row as it was, and show it again once the object is starred again
+      keepUnusedDataFor: 0,
       queryFn: async (starred) => {
         const uids = [...new Set(starred.flatMap(({ names }) => names))].sort();
         if (uids.length === 0) {
@@ -87,9 +90,8 @@ export const setStarred =
 
 /**
  * Re-searches the starred rows. Renames and deletions change a row without changing the star set, so nothing the
- * star mutations invalidate would refresh it. Subscribed entries refetch; unmounted ones are dropped and searched
- * again on their next mount. A write to named items goes through `invalidateStarredSearchFor` instead; this form
- * is for a folder delete, which cascades to descendants the client never listed.
+ * star mutations invalidate would refresh it. A write to named items goes through `invalidateStarredSearchFor`
+ * instead; this form is for a folder delete, which cascades to descendants the client never listed.
  */
 export const invalidateStarredSearch = () => starsAPI.util.invalidateTags([STARRED_SEARCH_TAG]);
 
