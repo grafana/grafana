@@ -1156,11 +1156,8 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		return nil, GRPCStatusError(errRes)
 	}
 
-	if req.Key.Namespace == ClusterNamespace {
-		return nil, status.Error(codes.PermissionDenied, "reserved search namespace")
-	}
-	if req.Key.Namespace == "" && !s.isClusterSearchTarget(req.Key.Group, req.Key.Resource) {
-		return nil, status.Error(codes.InvalidArgument, "missing namespace")
+	if err := s.validateVectorSearchNamespace(req.Key); err != nil {
+		return nil, err
 	}
 	if errRes := requireUserNamespace(ctx, req.Key.Namespace); errRes != nil {
 		return nil, GRPCStatusError(errRes)

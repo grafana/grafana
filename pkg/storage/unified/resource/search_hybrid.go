@@ -73,11 +73,8 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 		return nil, err
 	}
 	namespace := keys[0].Namespace
-	if namespace == ClusterNamespace {
-		return nil, status.Error(codes.PermissionDenied, "reserved search namespace")
-	}
-	if namespace == "" && !s.isClusterSearchTarget(keys[0].Group, keys[0].Resource) {
-		return nil, status.Error(codes.InvalidArgument, "missing namespace")
+	if err := s.validateVectorSearchNamespace(keys[0]); err != nil {
+		return nil, err
 	}
 	// Global callers can supply arbitrary resource names, including rejected targets.
 	if req.RequireHybridEnabled || len(keys) > 1 {
@@ -156,6 +153,16 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 		}
 	}
 	return &resourcepb.HybridSearchResponse{Results: results, Kinds: kinds}, nil
+}
+
+func (s *searchServer) validateVectorSearchNamespace(key *resourcepb.ResourceKey) error {
+	if key.Namespace == ClusterNamespace {
+		return status.Error(codes.PermissionDenied, "reserved search namespace")
+	}
+	if key.Namespace == "" && !s.isClusterSearchTarget(key.Group, key.Resource) {
+		return status.Error(codes.InvalidArgument, "missing namespace")
+	}
+	return nil
 }
 
 // authorizeClusterSearch checks the collection-wide read grant before fetching
@@ -255,7 +262,7 @@ func (s *searchServer) prepareHybridTargets(ctx context.Context, req *resourcepb
 		if !target.collection.IsExternal {
 			config = s.hybridSearchConfig.lookup(key.Group, key.Resource)
 		}
-		if req.RequireHybridEnabled && !target.collection.IsExternal && !config.enabled && !(key.Namespace == "" && config.clusterEnabled) {
+		if req.RequireHybridEnabled && !target.collection.IsExternal && !config.enabled && (key.Namespace != "" || !config.clusterEnabled) {
 			return nil, status.Errorf(codes.InvalidArgument, "hybrid search is not enabled for %s/%s", key.Group, key.Resource)
 		}
 		if err := validateHybridSearchFilters(req.Filters, key, target.collection.IsExternal); err != nil {
