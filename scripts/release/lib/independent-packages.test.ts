@@ -19,7 +19,6 @@ describe('selectIndependentPackages', () => {
     expect(selectIndependentPackages(nodes)).toEqual([
       {
         name: '@grafana/plugin-compat',
-        root: 'packages/grafana-plugin-compat',
         manifestPath: 'packages/grafana-plugin-compat/package.json',
       },
     ]);

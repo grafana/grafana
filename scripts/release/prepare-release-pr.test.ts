@@ -5,12 +5,10 @@ import { findMissingTag, hasNewVersion } from './prepare-release-pr.mjs';
 
 const pluginCompat: IndependentPackage = {
   name: '@grafana/plugin-compat',
-  root: 'packages/grafana-plugin-compat',
   manifestPath: 'packages/grafana-plugin-compat/package.json',
 };
 const other: IndependentPackage = {
   name: '@grafana/other',
-  root: 'packages/grafana-other',
   manifestPath: 'packages/grafana-other/package.json',
 };
 

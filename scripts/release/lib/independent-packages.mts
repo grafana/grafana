@@ -4,7 +4,6 @@ export const INDEPENDENT_TAG = 'release:independent';
 
 export interface IndependentPackage {
   name: string;
-  root: string;
   manifestPath: string;
 }
 
@@ -16,7 +15,7 @@ interface ProjectNode {
 export function selectIndependentPackages(nodes: Record<string, ProjectNode>): IndependentPackage[] {
   return Object.values(nodes)
     .filter(({ data }) => data.tags?.includes(INDEPENDENT_TAG))
-    .map(({ name, data }) => ({ name, root: data.root, manifestPath: `${data.root}/package.json` }));
+    .map(({ name, data }) => ({ name, manifestPath: `${data.root}/package.json` }));
 }
 
 // The packages that are released on their own are the projects Nx knows with the release:independent tag. A project
