@@ -23,7 +23,7 @@ import {
 } from '@grafana/scenes';
 import { type LibraryPanel } from '@grafana/schema';
 import { setTestFlags } from '@grafana/test-utils/feature-flags';
-import * as libpanels from 'app/features/library-panels/state/api';
+import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { NEW_LINK } from '../settings/links/utils';
@@ -36,6 +36,18 @@ import { type VizPanelLinks } from './PanelLinks';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { PanelTimeRange } from './panel-timerange/PanelTimeRange';
+
+jest.mock('app/features/library-panels/state/api', () =>
+  jest
+    .requireActual('test/helpers/partialMock')
+    .partialMock(jest.requireActual('app/features/library-panels/state/api'), {
+      getLibraryPanel: jest.fn(),
+    })
+);
+
+beforeEach(() => {
+  jest.mocked(getLibraryPanel).mockReset();
+});
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
@@ -593,7 +605,7 @@ async function buildTestSceneWithLibraryPanel(options: BuildTestSceneOptions = {
     version: 1,
   };
 
-  const spy = jest.spyOn(libpanels, 'getLibraryPanel').mockResolvedValue(libraryPanel);
+  const spy = jest.mocked(getLibraryPanel).mockResolvedValue(libraryPanel);
 
   const gridItem = new DashboardGridItem({
     key: 'griditem-1',

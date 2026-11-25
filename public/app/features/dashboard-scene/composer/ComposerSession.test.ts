@@ -308,6 +308,20 @@ describe('entering and leaving Composer', () => {
     expect(getDashboardMode(scene.state)).toBe('edit');
   });
 
+  // With Composer on, an Assistant edit from Viewing opens in Editing, not Agent editing.
+  it('opens an Assistant edit from Viewing in Editing, which Composer writes over', () => {
+    const scene = setup();
+    scene.onEnterEditMode('assistant');
+    expect(getDashboardMode(scene.state)).toBe('edit');
+
+    const session = ComposerSession.enter(scene);
+
+    expect(scene.canComposerWrite()).toBe(true);
+    expect(getPickerMode(scene.state)).toBe('edit');
+    session.exit();
+    expect(getDashboardMode(scene.state)).toBe('edit');
+  });
+
   it('aborts when the scene deactivates and does not come back in Composer', () => {
     const scene = setup();
     const session = enter(scene);

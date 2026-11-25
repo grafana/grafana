@@ -6840,7 +6840,8 @@
           "title": "Vložit panel"
         },
         "question": {
-          "label": ""
+          "label": "",
+          "tooltip": ""
         },
         "row": {
           "add-label": "Přidat řádek",
@@ -10115,10 +10116,6 @@
       "of": "Z",
       "to": "DO",
       "when": "KDY"
-    },
-    "expression-query-editor": {
-      "helper-text-sql": "Spusťte SQL v dialektu MySQL na tabulkách vrácených z vašich zdrojů dat. Dotazy na zdroje dat (tj. „A“, „B“) jsou k dispozici jako tabulky a jsou odkazovány podle názvu dotazu. Pole jsou k dispozici jako sloupce, jak jsou vráceny ze zdroje dat.",
-      "label-operation": "Činnost"
     },
     "math": {
       "available-math-functions": "Dostupné matematické funkce",
@@ -14006,12 +14003,11 @@
     },
     "megamenu-item": {
       "children-error": "Položky se nepodařilo načíst",
+      "children-partial-error": "",
       "collapse-aria-label": "Sbalit sekci: {{sectionName}}",
       "expand-aria-label": "Rozbalit sekci: {{sectionName}}",
       "loading-aria-label": "Načítání {{sectionName}}",
-      "reorder-aria-label": "Změnit pořadí {{itemName}}",
-      "starred-dashboard-icon": "Nástěnka",
-      "starred-folder-icon": "Složka"
+      "reorder-aria-label": "Změnit pořadí {{itemName}}"
     },
     "org-switcher": {
       "aria-label": "Změnit organizaci"
@@ -17788,6 +17784,7 @@
     "description-page-size": "Počet řádků na stránku. Pokud je prázdné, velikost stránky vychází z výšky panelu.",
     "description-show-columns-sidebar": "Otevřete postranní panel pro správu sloupců pomocí panelu, nikoli z nabídky sloupce",
     "description-show-row-numbers": "",
+    "description-sparkline-select-time-range": "",
     "description-styling-from-field": "Pole obsahující objekty JSON s vlastnostmi CSS",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Střídat barvu pozadí každého druhého řádku",
@@ -17832,6 +17829,7 @@
     "name-show-columns-sidebar": "Zobrazit postranní panel sloupců",
     "name-show-row-numbers": "",
     "name-show-table-header": "Zobrazit záhlaví tabulky",
+    "name-sparkline-select-time-range": "",
     "name-sparkline-show-tooltip": "Zobrazit popisek při najetí kurzorem",
     "name-styling-from-field": "Styling z pole",
     "name-tooltip-from-field": "",

@@ -87,12 +87,13 @@ jest.mock('app/types/store', () => ({
 
 const splitOpenSym = Symbol('splitOpen');
 const splitOpen = jest.fn().mockReturnValue(splitOpenSym);
-jest.mock('app/features/explore/state/main', () => ({
-  ...jest.requireActual('app/features/explore/state/main'),
-  splitOpen: (arg?: SplitOpenOptions) => {
-    return splitOpen(arg);
-  },
-}));
+jest.mock('app/features/explore/state/main', () =>
+  jest.requireActual('test/helpers/partialMock').partialMock(jest.requireActual('app/features/explore/state/main'), {
+    splitOpen: (arg?: SplitOpenOptions) => {
+      return splitOpen(arg);
+    },
+  })
+);
 
 jest.mocked(getDisplayedFieldsForLogs).mockReturnValue([]);
 jest.mocked(identifyOTelLanguages).mockReturnValue([]);
