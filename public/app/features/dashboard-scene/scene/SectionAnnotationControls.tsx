@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { type SceneObject, type SceneVariables } from '@grafana/scenes';
@@ -8,7 +9,14 @@ import { DataLayerControlEditWrapper } from './DashboardDataLayerControls';
 import { DashboardDataLayerSet } from './DashboardDataLayerSet';
 import { SectionVariableControls } from './VariableControls';
 
-export function SectionControlsRow({ variableSet, data }: { variableSet?: SceneVariables; data?: SceneObject }) {
+interface SectionControlsRowProps {
+  variableSet?: SceneVariables;
+  data?: SceneObject;
+  /** More controls after the variables and annotations, such as the ones plugins add to the section. */
+  children?: ReactNode;
+}
+
+export function SectionControlsRow({ variableSet, data, children }: SectionControlsRowProps) {
   const styles = useStyles2(getStyles);
 
   return (
@@ -21,6 +29,7 @@ export function SectionControlsRow({ variableSet, data }: { variableSet?: SceneV
     >
       {variableSet && <SectionVariableControls variableSet={variableSet} />}
       <SectionAnnotationControls data={data} />
+      {children}
     </div>
   );
 }

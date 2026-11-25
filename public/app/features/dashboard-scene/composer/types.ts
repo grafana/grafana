@@ -256,6 +256,19 @@ interface ComposerSaveOutcome {
   message?: string;
 }
 
+/**
+ * Why a session ended, as `signal.reason` reports it once the signal has aborted. A path that names no
+ * reason leaves the signal's default reason, which is not one of these.
+ */
+export type ComposerExitReason =
+  | 'sidebar_closed'
+  | 'toolbar_button'
+  | 'mode_change'
+  | 'manual_edit'
+  | 'navigation'
+  | 'flag_off'
+  | 'plugin_exit';
+
 /** What a session reports once it has ended. Dashboards never save, so theirs carries no `save`. */
 export interface ComposerExitResult {
   save?: ComposerSaveOutcome;
@@ -263,7 +276,7 @@ export interface ComposerExitResult {
 
 export interface ComposerSessionAPI<Spec = ComposerDashboardSpec> {
   readonly target: ComposerTarget;
-  /** Aborted on exit, navigation away, scene deactivation or flag-off. */
+  /** Aborted on exit, navigation away, scene deactivation or flag-off. Its `reason` is a `ComposerExitReason`. */
   readonly signal: AbortSignal;
 
   /** The tools this session offers, in display order. */
@@ -372,7 +385,7 @@ export interface ComposerSessionAPI<Spec = ComposerDashboardSpec> {
    * autosave paused for the session, so leaving makes the one save of everything applied, and this
    * resolves with its outcome (the same result as `closed`).
    */
-  exit(): void | Promise<ComposerExitResult>;
+  exit(reason?: ComposerExitReason): void | Promise<ComposerExitResult>;
   /**
    * Resolves once, after the session has ended by any path (exit, navigation away, disposal or flag-off)
    * and a notebook's exit save has settled.

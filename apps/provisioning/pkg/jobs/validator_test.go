@@ -12,6 +12,7 @@ import (
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authentication/user"
 
+	"github.com/grafana/authlib/authn"
 	authlib "github.com/grafana/authlib/types"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -1346,7 +1347,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			v := NewAdmissionValidator(nil, func(context.Context) bool { return tt.perfEnabled })
+			v := NewAdmissionValidator(func() []provisioning.SupportedResource { return nil }, func(context.Context) bool { return tt.perfEnabled })
 
 			var obj runtime.Object
 			if tt.obj != nil {
@@ -1355,7 +1356,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 
 			attr := newAdmissionTestAttributes(obj, tt.operation)
 
-			err := v.Validate(context.Background(), attr, nil)
+			err := v.Validate(t.Context(), attr, nil)
 
 			if tt.wantErr {
 				require.Error(t, err)
@@ -1368,6 +1369,31 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 			require.NoError(t, err)
 		})
 	}
+}
+
+// The supported resources can change while the process runs, so the validator reads them on
+// each validation.
+func TestAdmissionValidator_ReadsTheSupportedResourcesOnEachValidation(t *testing.T) {
+	dashboard := provisioning.SupportedResource{Group: "dashboard.grafana.app", Kind: "Dashboard"}
+	widget := provisioning.SupportedResource{Group: "example.ext.grafana.app", Kind: "Widget"}
+	supported := []provisioning.SupportedResource{dashboard}
+	v := NewAdmissionValidator(func() []provisioning.SupportedResource { return supported }, nil)
+	job := &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+		Spec: provisioning.JobSpec{
+			Action:     provisioning.JobActionPush,
+			Repository: "test-repo",
+			Push: &provisioning.ExportJobOptions{
+				Resources: []provisioning.ResourceRef{{Name: "widget-1", Kind: "Widget", Group: "example.ext.grafana.app"}},
+			},
+		},
+	}
+
+	err := v.Validate(t.Context(), newAdmissionTestAttributes(job, admission.Create), nil)
+	require.ErrorContains(t, err, "kind is not supported for export")
+
+	supported = []provisioning.SupportedResource{dashboard, widget}
+	require.NoError(t, v.Validate(t.Context(), newAdmissionTestAttributes(job, admission.Create), nil))
 }
 
 func newAdmissionTestAttributes(obj runtime.Object, op admission.Operation) admission.Attributes {
@@ -1511,15 +1537,10 @@ func newHistoricJobAdmissionTestAttributes(obj runtime.Object, op admission.Oper
 	)
 }
 
-// fakeProvisioningAuthInfo embeds StaticRequester to satisfy the Requester
-// interface while overriding the audience, so the token-audience branch of
-// IsProvisioningServiceIdentity can be exercised.
-type fakeProvisioningAuthInfo struct {
-	*identity.StaticRequester
-	audience []string
+func withProvisioningServiceIdentity(r identity.StaticRequester) *identity.StaticRequester {
+	r.AccessTokenClaims = &authn.Claims[authn.AccessTokenClaims]{Rest: authn.AccessTokenClaims{ServiceIdentity: "provisioning.grafana.app"}}
+	return &r
 }
-
-func (f fakeProvisioningAuthInfo) GetAudience() []string { return f.audience }
 
 func TestValidateAuthor(t *testing.T) {
 	requester := &identity.StaticRequester{
@@ -1531,10 +1552,7 @@ func TestValidateAuthor(t *testing.T) {
 	userCtx := identity.WithRequester(t.Context(), requester)
 	serviceCtx, _, err := identity.WithProvisioningIdentity(t.Context(), "default")
 	require.NoError(t, err)
-	audienceCtx := identity.WithRequester(t.Context(), fakeProvisioningAuthInfo{
-		StaticRequester: &identity.StaticRequester{Type: authlib.TypeAccessPolicy, UserUID: "42"},
-		audience:        []string{"provisioning.grafana.app"},
-	})
+	serviceIdentityCtx := identity.WithRequester(t.Context(), withProvisioningServiceIdentity(identity.StaticRequester{Type: authlib.TypeAccessPolicy, UserUID: "42"}))
 
 	annotations := map[string]string{
 		AnnoAuthor:       requester.GetName(),
@@ -1598,17 +1616,14 @@ func TestValidateAuthor(t *testing.T) {
 			wantErrContains: AnnoAuthorEmail + " may not be set by the provisioning service",
 		},
 		{
-			name:        "create by audience-based provisioning identity",
-			ctx:         audienceCtx,
+			name:        "create by the provisioning service identity",
+			ctx:         serviceIdentityCtx,
 			operation:   admission.Create,
 			annotations: map[string]string{AnnoAuthor: "grot", AnnoAuthorID: "123", AnnoAuthorOrigin: "github"},
 		},
 		{
-			name: "create by a user whose token carries the provisioning audience",
-			ctx: identity.WithRequester(t.Context(), fakeProvisioningAuthInfo{
-				StaticRequester: requester,
-				audience:        []string{"provisioning.grafana.app"},
-			}),
+			name:        "create by a user whose token carries the provisioning service identity",
+			ctx:         identity.WithRequester(t.Context(), withProvisioningServiceIdentity(*requester)),
 			operation:   admission.Create,
 			annotations: annotations,
 		},

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import memoize from 'micro-memoize';
+import { memoize } from 'micro-memoize';
 import { useCallback, useEffect, useMemo } from 'react';
 import * as React from 'react';
 import { FixedSizeList as List, type ListChildComponentProps } from 'react-window';

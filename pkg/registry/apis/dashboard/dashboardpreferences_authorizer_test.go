@@ -50,23 +50,23 @@ func TestDashboardPreferencesAuthorizer(t *testing.T) {
 	}}
 	authz := newDashboardPreferencesAuthorizer(accessClient, nil, grafanaauthorizer.NewServiceAuthorizer())
 
-	viewer := dashboardPreferencesRequester(authlib.TypeUser, "viewer", identity.RoleViewer)
-	editor := dashboardPreferencesRequester(authlib.TypeUser, "editor", identity.RoleEditor)
-	admin := dashboardPreferencesRequester(authlib.TypeUser, "admin", identity.RoleAdmin)
-	serviceAccountAdmin := dashboardPreferencesRequester(authlib.TypeServiceAccount, "sa", identity.RoleAdmin)
-	apiKeyAdmin := dashboardPreferencesRequester(authlib.TypeAPIKey, "key", identity.RoleAdmin)
-	serviceAccountU1 := dashboardPreferencesRequester(authlib.TypeServiceAccount, "u1", identity.RoleAdmin)
-	u1 := dashboardPreferencesRequester(authlib.TypeUser, "u1", identity.RoleViewer)
-	u2 := dashboardPreferencesRequester(authlib.TypeUser, "u2", identity.RoleViewer)
-	anonymous := dashboardPreferencesRequester(authlib.TypeAnonymous, "", identity.RoleViewer)
-	render := dashboardPreferencesRequester(authlib.TypeRenderService, "", identity.RoleViewer)
-	adminWithoutGrant := dashboardPreferencesRequester(authlib.TypeUser, "admin", identity.RoleAdmin)
+	viewer := dashboardPreferencesRequester(authlib.TypeUser, "viewer", authlib.RoleViewer)
+	editor := dashboardPreferencesRequester(authlib.TypeUser, "editor", authlib.RoleEditor)
+	admin := dashboardPreferencesRequester(authlib.TypeUser, "admin", authlib.RoleAdmin)
+	serviceAccountAdmin := dashboardPreferencesRequester(authlib.TypeServiceAccount, "sa", authlib.RoleAdmin)
+	apiKeyAdmin := dashboardPreferencesRequester(authlib.TypeAPIKey, "key", authlib.RoleAdmin)
+	serviceAccountU1 := dashboardPreferencesRequester(authlib.TypeServiceAccount, "u1", authlib.RoleAdmin)
+	u1 := dashboardPreferencesRequester(authlib.TypeUser, "u1", authlib.RoleViewer)
+	u2 := dashboardPreferencesRequester(authlib.TypeUser, "u2", authlib.RoleViewer)
+	anonymous := dashboardPreferencesRequester(authlib.TypeAnonymous, "", authlib.RoleViewer)
+	render := dashboardPreferencesRequester(authlib.TypeRenderService, "", authlib.RoleViewer)
+	adminWithoutGrant := dashboardPreferencesRequester(authlib.TypeUser, "admin", authlib.RoleAdmin)
 	adminWithoutGrant.AccessTokenClaims.Rest.DelegatedPermissions = []string{"dashboard.grafana.app/dashboards:*"}
 	token := dashboardPreferencesToken("dashboard.grafana.app/dashboardpreferences:*")
 	deleteToken := dashboardPreferencesToken("dashboard.grafana.app/dashboardpreferences:delete")
 	getToken := dashboardPreferencesToken("dashboard.grafana.app/dashboardpreferences:get")
 	// Grafana admins pass the namespace authorizer for every namespace.
-	grafanaAdmin := dashboardPreferencesRequester(authlib.TypeUser, "admin", identity.RoleAdmin)
+	grafanaAdmin := dashboardPreferencesRequester(authlib.TypeUser, "admin", authlib.RoleAdmin)
 	grafanaAdmin.IsGrafanaAdmin = true
 	_, service := identity.WithServiceIdentity(context.Background(), 1)
 	_, provisioning, err := identity.WithProvisioningIdentity(context.Background(), "stacks-1")
@@ -245,13 +245,13 @@ func TestDashboardPreferencesAuthorizerOrgTierTakesTheOrgPreferencesPermission(t
 		wantAllow  bool
 		wantReason string
 	}{
-		{name: "an editor with the permission changes the org tier", requester: dashboardPreferencesRequesterWith(authlib.TypeUser, identity.RoleEditor, "orgs.preferences:write"), verbs: writes, wantAllow: true},
-		{name: "a service account with the permission changes the org tier", requester: dashboardPreferencesRequesterWith(authlib.TypeServiceAccount, identity.RoleEditor, "orgs.preferences:write"), verbs: []string{"update"}, wantAllow: true},
-		{name: "an admin without the permission can't", requester: dashboardPreferencesRequesterWith(authlib.TypeUser, identity.RoleAdmin, "orgs.preferences:read"), verbs: writes, wantReason: notOrgAdmin},
-		{name: "an API key with the permission can't", requester: dashboardPreferencesRequesterWith(authlib.TypeAPIKey, identity.RoleAdmin, "orgs.preferences:write"), verbs: []string{"update"}, wantReason: notOrgAdmin},
+		{name: "an editor with the permission changes the org tier", requester: dashboardPreferencesRequesterWith(authlib.TypeUser, authlib.RoleEditor, "orgs.preferences:write"), verbs: writes, wantAllow: true},
+		{name: "a service account with the permission changes the org tier", requester: dashboardPreferencesRequesterWith(authlib.TypeServiceAccount, authlib.RoleEditor, "orgs.preferences:write"), verbs: []string{"update"}, wantAllow: true},
+		{name: "an admin without the permission can't", requester: dashboardPreferencesRequesterWith(authlib.TypeUser, authlib.RoleAdmin, "orgs.preferences:read"), verbs: writes, wantReason: notOrgAdmin},
+		{name: "an API key with the permission can't", requester: dashboardPreferencesRequesterWith(authlib.TypeAPIKey, authlib.RoleAdmin, "orgs.preferences:write"), verbs: []string{"update"}, wantReason: notOrgAdmin},
 		// Everyone who creates a dashboard needs the org defaults, and only org admins hold
 		// orgs.preferences:read by default.
-		{name: "reading the org tier takes no permission", requester: dashboardPreferencesRequesterWith(authlib.TypeUser, identity.RoleViewer), verbs: []string{"get", "list"}, wantAllow: true},
+		{name: "reading the org tier takes no permission", requester: dashboardPreferencesRequesterWith(authlib.TypeUser, authlib.RoleViewer), verbs: []string{"get", "list"}, wantAllow: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -276,7 +276,7 @@ func TestDashboardPreferencesAuthorizerOrgTierTakesTheOrgPreferencesPermission(t
 	t.Run("a permission check that fails denies with a masked error", func(t *testing.T) {
 		checkErr := errors.New("permission backend failed")
 		failing := newDashboardPreferencesAuthorizer(&dashboardPreferencesAccessClient{}, actest.FakeAccessControl{ExpectedEvaluate: true, ExpectedErr: checkErr}, grafanaauthorizer.NewServiceAuthorizer())
-		ctx := identity.WithRequester(context.Background(), dashboardPreferencesRequester(authlib.TypeUser, "admin", identity.RoleAdmin))
+		ctx := identity.WithRequester(context.Background(), dashboardPreferencesRequester(authlib.TypeUser, "admin", authlib.RoleAdmin))
 
 		decision, reason, err := failing.Authorize(ctx, dashboardPreferencesAuthzAttributes("update", "namespace"))
 
@@ -309,8 +309,8 @@ func TestDashboardPreferencesAuthorizerProvisioningRuleIsForAccessPolicyIdentiti
 		wantAllow  bool
 		wantReason string
 	}{
-		{name: "a user is always judged by the tier rules", requester: dashboardPreferencesRequester(authlib.TypeUser, "u2", identity.RoleViewer), verbs: []string{"get", "list", "update", "delete"}, wantReason: notOwner},
-		{name: "a service account is always judged by the tier rules", requester: dashboardPreferencesRequester(authlib.TypeServiceAccount, "sa", identity.RoleAdmin), verbs: []string{"get", "update"}, wantReason: notOwner},
+		{name: "a user is always judged by the tier rules", requester: dashboardPreferencesRequester(authlib.TypeUser, "u2", authlib.RoleViewer), verbs: []string{"get", "list", "update", "delete"}, wantReason: notOwner},
+		{name: "a service account is always judged by the tier rules", requester: dashboardPreferencesRequester(authlib.TypeServiceAccount, "sa", authlib.RoleAdmin), verbs: []string{"get", "update"}, wantReason: notOwner},
 		{name: "an access-policy identity gets the provisioning rule for reads and deletes", requester: token, verbs: []string{"get", "list", "delete"}, wantAllow: true},
 		// The token's writes would otherwise get the access-policy token reason, so this row shows the stand-in
 		// took effect.
@@ -351,8 +351,8 @@ func TestDashboardPreferencesAuthorizerNeverNoOpinion(t *testing.T) {
 		name      string
 		requester identity.Requester
 	}{
-		{name: "user u1", requester: dashboardPreferencesRequester(authlib.TypeUser, "u1", identity.RoleAdmin)},
-		{name: "anonymous", requester: dashboardPreferencesRequester(authlib.TypeAnonymous, "", identity.RoleViewer)},
+		{name: "user u1", requester: dashboardPreferencesRequester(authlib.TypeUser, "u1", authlib.RoleAdmin)},
+		{name: "anonymous", requester: dashboardPreferencesRequester(authlib.TypeAnonymous, "", authlib.RoleViewer)},
 		{name: "service identity", requester: service},
 		{name: "provisioning identity", requester: provisioning},
 		{name: "access-policy token", requester: dashboardPreferencesToken("dashboard.grafana.app/dashboardpreferences:*")},
@@ -386,7 +386,7 @@ func TestDashboardPreferencesAuthorizerNeverNoOpinion(t *testing.T) {
 
 func TestDashboardPreferencesFolderCheckRequest(t *testing.T) {
 	setDashboardPreferencesToggle(t, true)
-	requester := dashboardPreferencesRequester(authlib.TypeUser, "editor", identity.RoleEditor)
+	requester := dashboardPreferencesRequester(authlib.TypeUser, "editor", authlib.RoleEditor)
 	ctx := identity.WithRequester(context.Background(), requester)
 
 	tests := []struct{ verb, wantVerb string }{
@@ -420,7 +420,7 @@ func TestDashboardPreferencesFolderCheckRequest(t *testing.T) {
 
 	t.Run("a requester from another namespace is denied without a check", func(t *testing.T) {
 		accessClient := &dashboardPreferencesAccessClient{grants: map[string][]string{"f1": {utils.VerbGet}}}
-		other := dashboardPreferencesRequester(authlib.TypeUser, "editor", identity.RoleEditor)
+		other := dashboardPreferencesRequester(authlib.TypeUser, "editor", authlib.RoleEditor)
 		other.Namespace = "stacks-2"
 
 		allowed, err := checkDashboardPreferencesFolderAccess(context.Background(), accessClient, other, "stacks-1", "f1", utils.VerbGet)
@@ -441,7 +441,7 @@ func TestDashboardPreferencesFolderCheckRequest(t *testing.T) {
 func TestDashboardsAPIBuilderGetAuthorizerRoutesDashboardPreferences(t *testing.T) {
 	accessClient := &dashboardPreferencesAccessClient{grants: map[string][]string{"f1": {utils.VerbGet}}}
 	authz := (&DashboardsAPIBuilder{accessClient: accessClient}).GetAuthorizer()
-	ctx := identity.WithRequester(context.Background(), dashboardPreferencesRequester(authlib.TypeUser, "editor", identity.RoleEditor))
+	ctx := identity.WithRequester(context.Background(), dashboardPreferencesRequester(authlib.TypeUser, "editor", authlib.RoleEditor))
 
 	t.Run("denies while the feature is off", func(t *testing.T) {
 		setDashboardPreferencesToggle(t, false)
@@ -457,7 +457,7 @@ func TestDashboardsAPIBuilderGetAuthorizerRoutesDashboardPreferences(t *testing.
 		setDashboardPreferencesToggle(t, true)
 		authz := (&DashboardsAPIBuilder{accessClient: accessClient, accessControl: acimpl.ProvideAccessControl(featuremgmt.WithFeatures())}).GetAuthorizer()
 		// Without the builder's access control, the editor role would decide and deny.
-		ctx := identity.WithRequester(context.Background(), dashboardPreferencesRequesterWith(authlib.TypeUser, identity.RoleEditor, "orgs.preferences:write"))
+		ctx := identity.WithRequester(context.Background(), dashboardPreferencesRequesterWith(authlib.TypeUser, authlib.RoleEditor, "orgs.preferences:write"))
 
 		decision, reason, err := authz.Authorize(ctx, dashboardPreferencesAuthzAttributes("update", "namespace"))
 
@@ -526,7 +526,7 @@ func (c *dashboardPreferencesAccessClient) BatchCheck(_ context.Context, authInf
 }
 
 // The delegated grant is what a Cloud token needs to reach dashboard preferences at all.
-func dashboardPreferencesRequester(identityType authlib.IdentityType, uid string, role identity.RoleType) *identity.StaticRequester {
+func dashboardPreferencesRequester(identityType authlib.IdentityType, uid string, role authlib.RoleType) *identity.StaticRequester {
 	return &identity.StaticRequester{
 		Type:      identityType,
 		UserUID:   uid,
@@ -542,7 +542,7 @@ func dashboardPreferencesRequester(identityType authlib.IdentityType, uid string
 }
 
 // dashboardPreferencesRequesterWith is a requester in org 1 that holds exactly the given actions, unscoped.
-func dashboardPreferencesRequesterWith(identityType authlib.IdentityType, role identity.RoleType, actions ...string) *identity.StaticRequester {
+func dashboardPreferencesRequesterWith(identityType authlib.IdentityType, role authlib.RoleType, actions ...string) *identity.StaticRequester {
 	requester := dashboardPreferencesRequester(identityType, "caller", role)
 	permissions := make(map[string][]string, len(actions))
 	for _, action := range actions {

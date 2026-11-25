@@ -61,7 +61,7 @@
   },
   "dependencies": {
     "@grafana/data": "workspace:*",
-    "@grafana/faro-web-sdk": "^2.12.0",
+    "@grafana/faro-web-sdk": "2.15.0-alpha.0",
     "@grafana/schema": "workspace:*",
     "@grafana/ui": "workspace:*",
     "@openfeature/core": "^1.12.0",

@@ -43,7 +43,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `grafana.filterablePanels`                   | Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels              | Yes                |
 | `cloudWatchNewLabelParsing`                  | Updates CloudWatch label parsing to be more accurate                                                                                | Yes                |
 | `playlistsRBAC`                              | Enables RBAC for playlists                                                                                                          |                    |
-| `savedQueriesRBAC`                           | Enables Saved queries (query library) RBAC permissions                                                                              | Yes                |
 | `alertingListViewV2`                         | Enables the new alert list view design                                                                                              | Yes                |
 | `alertingNavigationV2`                       | Enables the new Alerting navigation structure with improved menu grouping                                                           | Yes                |
 | `pluginProxyPreserveTrailingSlash`           | Preserve plugin proxy trailing slash.                                                                                               |                    |
@@ -60,6 +59,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingNotificationHistory`                | Enables the notification history feature                                                                                            | Yes                |
 | `newClickhouseConfigPageDesign`              | Enables new design for the Clickhouse data source configuration page                                                                | Yes                |
 | `azureResourcePickerUpdates`                 | Enables the updated Azure Monitor resource picker                                                                                   | Yes                |
+| `queryEditorNext`                            | Enables next generation query editor experience                                                                                     | Yes                |
 | `inlineLogDetailsNoScrolls`                  | Enables an inline version of Log Details that creates no new scrolls                                                                | Yes                |
 | `lokiAlignedQuerySplitting`                  | Aligns query splitting chunks with UTC midnight                                                                                     | Yes                |
 | `profilesHeatmap`                            | Enables heatmap visualization support for Pyroscope profiles                                                                        | Yes                |
@@ -100,7 +100,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `transformationsEmptyPlaceholder`    | Show transformation quick-start cards in empty transformations state                                                           |
 | `grafana.dashboardGlobalVariables`   | Enables global and folder-scoped dashboard variables via dashboard.grafana.app                                                 |
 | `pyroscopeUTF8LabelNames`            | Enables support for UTF-8 label names in Pyroscope label selectors                                                             |
-| `queryEditorNext`                    | Enables next generation query editor experience                                                                                |
 | `grafana.viewPanelPane`              | Enables the sidebar pane with new toggles and options in panel view mode                                                       |
 | `splashScreen`                       | Enables the splash screen modal for introducing new Grafana features on first session                                          |
 | `dataviz.tabularNums`                | Enables tabular numerals for visualization legend values                                                                       |

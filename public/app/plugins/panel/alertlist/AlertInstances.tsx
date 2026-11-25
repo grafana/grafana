@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { noop } from 'lodash';
 import pluralize from 'pluralize';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2, type PanelProps } from '@grafana/data';
 import { Button, clearButtonStyles, Icon, useStyles2 } from '@grafana/ui';
@@ -61,11 +61,9 @@ export const AlertInstances = ({
   const uncollapsible = filteredAlerts.length > 0;
   const toggleShowInstances = uncollapsible ? toggleDisplayInstances : noop;
 
-  useEffect(() => {
-    if (filteredAlerts.length === 0) {
-      setDisplayInstances(false);
-    }
-  }, [filteredAlerts]);
+  if (filteredAlerts.length === 0 && displayInstances) {
+    setDisplayInstances(false);
+  }
 
   const onShowAllClick = async () => {
     if (!handleInstancesLimit) {

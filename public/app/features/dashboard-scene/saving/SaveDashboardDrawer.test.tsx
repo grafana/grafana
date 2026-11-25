@@ -23,6 +23,7 @@ import {
 import { RepoViewStatus } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
+import { savesPendingChanges } from '../lifecycle/pendingChangesSave';
 import { DashboardOverlay } from '../scene/DashboardOverlay';
 import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
 import { type DashboardSceneState } from '../scene/types/dashboard';
@@ -33,7 +34,7 @@ import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSce
 import { createDeferred } from '../utils/test-utils';
 
 import { type SaveDashboardDrawer } from './SaveDashboardDrawer';
-import * as createDetectChangesWorker from './createDetectChangesWorker';
+import { createWorker } from './createDetectChangesWorker';
 import {
   registerSaveAsTemplateForm,
   type SaveAsTemplateFormProps,
@@ -43,6 +44,17 @@ import {
   type SaveDashboardTemplateFormProps,
 } from './enterprise-components/SaveDashboardTemplateFormExtension';
 import { type DashboardChangesRequest, type DashboardChangesResponse } from './shared';
+
+jest.mock('./createDetectChangesWorker', () => ({
+  createWorker: jest.fn(() => jest.requireActual('./__mocks__/createDetectChangesWorker').createWorker()),
+}));
+
+afterEach(() => {
+  jest
+    .mocked(createWorker)
+    .mockReset()
+    .mockImplementation(jest.requireActual('./__mocks__/createDetectChangesWorker').createWorker);
+});
 
 jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => ({
   validationSrv: {
@@ -75,6 +87,15 @@ jest.mock('app/features/provisioning/components/Dashboards/SaveProvisionedDashbo
   ),
 }));
 
+jest.mock('../lifecycle/pendingChangesSave', () => ({
+  ...jest.requireActual('../lifecycle/pendingChangesSave'),
+  savesPendingChanges: jest.fn(() => false),
+}));
+
+jest.mock('../lifecycle/SavePendingChangesForm', () => ({
+  SavePendingChangesForm: () => <div data-testid="pending-changes-form" />,
+}));
+
 jest.mock('app/features/dashboard/api/dashboard_api', () => ({
   ...jest.requireActual('app/features/dashboard/api/dashboard_api'),
   getDashboardAPI: jest.fn().mockResolvedValue({
@@ -95,7 +116,7 @@ const ui = {
 
 describe('SaveDashboardDrawer', () => {
   beforeEach(() => {
-    const worker = createDetectChangesWorker.createWorker();
+    const worker = createWorker();
     jest.mocked(worker.postMessage).mockImplementation(({ initial, changed, generation }: DashboardChangesRequest) => {
       worker.onmessage?.(new MessageEvent('message', { data: { generation, hasChanges: !isEqual(initial, changed) } }));
     });
@@ -683,6 +704,36 @@ describe('SaveDashboardDrawer', () => {
       await openAndRender();
 
       expect(screen.queryByRole('tab', { name: /Changes/ })).toBeInTheDocument();
+    });
+
+    describe('with pending changes', () => {
+      beforeEach(() => {
+        jest.mocked(savesPendingChanges).mockReturnValue(true);
+      });
+
+      afterEach(() => {
+        jest.mocked(savesPendingChanges).mockReturnValue(false);
+      });
+
+      it('commits them to the repository that keeps the dashboard', async () => {
+        const { openAndRender } = setup({
+          meta: { k8s: { annotations: { [AnnoKeyManagerKind]: ManagerKind.Repo } } },
+        });
+
+        await openAndRender();
+
+        expect(await screen.findByTestId('provisioned-form')).toBeInTheDocument();
+        expect(screen.queryByTestId('pending-changes-form')).not.toBeInTheDocument();
+      });
+
+      it('saves them through their plugin when no repository keeps the dashboard', async () => {
+        const { openAndRender } = setup();
+
+        await openAndRender();
+
+        expect(await screen.findByTestId('pending-changes-form')).toBeInTheDocument();
+        expect(screen.queryByTestId('provisioned-form')).not.toBeInTheDocument();
+      });
     });
 
     it('It should not show the changes tab if the resource cannot be edited; kubectl', async () => {
@@ -1324,7 +1375,7 @@ function buildControlledWorker() {
     onmessage: null as ((event: MessageEvent<DashboardChangesResponse>) => void) | null,
     terminate: jest.fn(),
   };
-  jest.spyOn(createDetectChangesWorker, 'createWorker').mockReturnValue(worker as unknown as CorsWorker);
+  jest.mocked(createWorker).mockReturnValue(worker as unknown as CorsWorker);
   return worker;
 }
 

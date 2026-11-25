@@ -13,12 +13,14 @@ const esModules = [
   'delaunator',
   'get-user-locale',
   'internmap',
+  'is-any-array',
   'robust-predicates',
   'leven',
   'nanoid',
   'marked',
   'memoize',
   'mimic-function',
+  'ml-regression-polynomial',
   'monaco-promql',
   'react-calendar',
   '@kusto/monaco-kusto',
@@ -44,6 +46,21 @@ const esModules = [
   'yaml',
 ].join('|');
 
+// Keep these options in line with createSwcRule in scripts/rspack/rspack.common.ts so tests
+// compile code the same way as the production build (for example, swc's default
+// useDefineForClassFields: true, which tsconfig's es2018 target would otherwise turn off).
+function swcTransform(parser) {
+  return [
+    require.resolve('@swc/jest'),
+    {
+      jsc: {
+        parser,
+        transform: { react: { runtime: 'automatic' } },
+      },
+    },
+  ];
+}
+
 module.exports = {
   verbose: false,
   // Recycle a worker once it exceeds this cap so heap growth over a run (most acute during
@@ -55,7 +72,9 @@ module.exports = {
     customExportConditions: ['@grafana-app/source', 'browser'],
   },
   transform: {
-    '^.+\\.(ts|tsx|js|jsx|mjs)$': [require.resolve('ts-jest')],
+    '^.+\\.ts$': swcTransform({ syntax: 'typescript' }),
+    '^.+\\.tsx$': swcTransform({ syntax: 'typescript', tsx: true }),
+    '^.+\\.(js|jsx|mjs)$': swcTransform({ syntax: 'ecmascript', jsx: true }),
   },
   transformIgnorePatterns: [
     // Transform listed ESM packages at the top level or nested under another package
@@ -85,7 +104,7 @@ module.exports = {
   moduleNameMapper: {
     '\\.(svg|png|jpg)': '<rootDir>/public/test/mocks/images.ts',
     '\\.css': '<rootDir>/public/test/mocks/style.ts',
-    'react-inlinesvg': '<rootDir>/public/test/mocks/react-inlinesvg.tsx',
+    '^react-inlinesvg$': '<rootDir>/public/test/mocks/react-inlinesvg.tsx',
     // resolve directly as monaco and kusto don't have main property in package.json which jest needs
     '^monaco-editor$': 'monaco-editor/esm/vs/editor/editor.api.js',
     '@kusto/monaco-kusto': '@kusto/monaco-kusto/release/esm/monaco.contribution.js',

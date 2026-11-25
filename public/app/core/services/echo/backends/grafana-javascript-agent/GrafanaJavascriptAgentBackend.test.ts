@@ -134,6 +134,18 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
     expect(end - start).toBeLessThanOrEqual(maxExecutionTime);
   });
 
+  it('registers Grafana Faro as the routing fallback provider', () => {
+    new GrafanaJavascriptAgentBackend(options);
+
+    const instrumentations = initializeFaroMock.mock.calls[0][0].instrumentations;
+    const tracingInstrumentation = instrumentations?.find(
+      (instrumentation) => instrumentation instanceof TracingInstrumentation
+    );
+
+    expect(tracingInstrumentation).toBeDefined();
+    expect(Reflect.get(tracingInstrumentation!, 'options')).toEqual({ mode: 'routing', fallback: true });
+  });
+
   it('correctly set instrumentation based on options', async () => {
     let opts = {
       ...options,

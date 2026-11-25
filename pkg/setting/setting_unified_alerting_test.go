@@ -630,3 +630,38 @@ func TestHasAlertStateMetrics(t *testing.T) {
 		})
 	}
 }
+
+func TestReadMaxTrackedSeries(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		value       string
+		expected    int64
+		expectedErr string
+	}{
+		{desc: "defaults to one million", expected: 1_000_000},
+		{desc: "accepts a limit", value: "5000", expected: 5000},
+		{desc: "zero turns the limit off", value: "0", expected: 0},
+		{desc: "rejects a negative value", value: "-1", expectedErr: "max_tracked_series"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			f := ini.Empty()
+			section, err := f.NewSection("recording_rules")
+			require.NoError(t, err)
+			if tc.value != "" {
+				_, err = section.NewKey("max_tracked_series", tc.value)
+				require.NoError(t, err)
+			}
+
+			cfg := NewCfg()
+			err = cfg.ReadUnifiedAlertingSettings(f)
+			if tc.expectedErr != "" {
+				require.ErrorContains(t, err, tc.expectedErr)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, cfg.UnifiedAlerting.RecordingRules.MaxTrackedSeries)
+		})
+	}
+}

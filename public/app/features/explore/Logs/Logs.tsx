@@ -895,6 +895,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
               height={tableHeight}
               onClickFilterLabel={onClickFilterLabel}
               onClickFilterOutLabel={onClickFilterOutLabel}
+              onClickFilterString={props.onClickFilterString}
+              onClickFilterOutString={props.onClickFilterOutString}
               onOptionsChange={onTableOptionsChange}
               onChangeTimeRange={onChangeTime}
             />

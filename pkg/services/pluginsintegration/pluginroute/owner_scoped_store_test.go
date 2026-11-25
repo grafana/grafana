@@ -14,9 +14,11 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -212,4 +214,196 @@ func (failingUpdate) Preconditions() *metav1.Preconditions { return nil }
 
 func (f failingUpdate) UpdatedObject(context.Context, runtime.Object) (runtime.Object, error) {
 	return nil, f.err
+}
+
+func TestOwnerScopedStoreCreate(t *testing.T) {
+	user := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "abc", OrgRole: authlib.RoleEditor}
+
+	newStore := func(owned *ownerFromName) (*ownerScopedStore, *[]string) {
+		var created []string
+		return &ownerScopedStore{
+			owned:    owned,
+			resource: schema.GroupResource{Group: "test.grafana.app", Resource: "owned"},
+			create: func(_ context.Context, obj runtime.Object, _ rest.ValidateObjectFunc, _ *metav1.CreateOptions) (runtime.Object, error) {
+				m, err := meta.Accessor(obj)
+				require.NoError(t, err)
+				created = append(created, m.GetName())
+				return obj, nil
+			},
+		}, &created
+	}
+
+	t.Run("the owner's name is created", func(t *testing.T) {
+		store, created := newStore(namespaceUserTeamOwner())
+		_, err := store.Create(ctxFor(user), objectNamed("user-abc"), nil, &metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.Equal(t, []string{"user-abc"}, *created)
+	})
+
+	t.Run("another owner's name is invalid", func(t *testing.T) {
+		store, created := newStore(namespaceUserTeamOwner())
+		_, err := store.Create(ctxFor(user), objectNamed("user-other"), nil, &metav1.CreateOptions{})
+		require.True(t, apierrors.IsInvalid(err), "want an invalid error, got %v", err)
+		require.Empty(t, *created)
+	})
+
+	t.Run("a name without an owner is invalid", func(t *testing.T) {
+		store, created := newStore(namespaceUserTeamOwner())
+		_, err := store.Create(ctxFor(user), objectNamed("something"), nil, &metav1.CreateOptions{})
+		require.True(t, apierrors.IsInvalid(err), "want an invalid error, got %v", err)
+		require.Empty(t, *created)
+	})
+
+	t.Run("an access policy is left to its token's permissions", func(t *testing.T) {
+		store, created := newStore(namespaceUserTeamOwner())
+		_, err := store.Create(ctxFor(&identity.StaticRequester{Type: authlib.TypeAccessPolicy, UserUID: "svc"}), objectNamed("user-other"), nil, &metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.Equal(t, []string{"user-other"}, *created)
+	})
+
+	t.Run("user storage names", func(t *testing.T) {
+		store, created := newStore(hardcodedOwnerFromName("userstorage.grafana.app", "user-storage"))
+		_, err := store.Create(ctxFor(user), objectNamed("svc:abc"), nil, &metav1.CreateOptions{})
+		require.NoError(t, err)
+		_, err = store.Create(ctxFor(user), objectNamed("svc:other"), nil, &metav1.CreateOptions{})
+		require.True(t, apierrors.IsInvalid(err), "want an invalid error, got %v", err)
+		_, err = store.Create(ctxFor(&identity.StaticRequester{Type: authlib.TypeUser, UserUID: "root", IsGrafanaAdmin: true}), objectNamed("svc:other"), nil, &metav1.CreateOptions{})
+		require.NoError(t, err, "a server admin may create any user's object")
+		require.Equal(t, []string{"svc:abc", "svc:other"}, *created)
+	})
+}
+
+func TestOwnerScopedStoreGrafanaAdminListsAll(t *testing.T) {
+	store := &ownerScopedStore{owned: hardcodedOwnerFromName("userstorage.grafana.app", "user-storage")}
+	admin := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "root", IsGrafanaAdmin: true}
+	_, all, err := store.ownedObjects(ctxFor(admin))
+	require.NoError(t, err)
+	require.True(t, all)
+}
+
+func TestOwnerScopedStoreReadAll(t *testing.T) {
+	owned := &ownerFromName{owners: []resource.Owner{resource.UserResourceOwner}, ownerOfName: parseServiceUserName, readScope: readAll}
+	user := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "abc", OrgRole: authlib.RoleViewer}
+
+	// Every object is listed, and any one may be read...
+	_, all, err := (&ownerScopedStore{owned: owned}).ownedObjects(ctxFor(user))
+	require.NoError(t, err)
+	require.True(t, all)
+	for verb, want := range map[string]authorizer.Decision{
+		"get":    authorizer.DecisionAllow,
+		"update": authorizer.DecisionDeny, // ...but only the owner's written
+		"delete": authorizer.DecisionDeny,
+	} {
+		got, _, err := owned.authorize(context.Background(), user, authorizer.AttributesRecord{Verb: verb, Name: "svc:other", ResourceRequest: true}, nil)
+		require.NoError(t, err)
+		require.Equal(t, want, got, verb)
+	}
+	got, _, err := owned.authorize(context.Background(), user, authorizer.AttributesRecord{Verb: "update", Name: "svc:abc", ResourceRequest: true}, nil)
+	require.NoError(t, err)
+	require.Equal(t, authorizer.DecisionAllow, got)
+}
+
+func TestOwnerScopedStoreCreateGeneratedName(t *testing.T) {
+	generated := func() *unstructured.Unstructured {
+		u := &unstructured.Unstructured{}
+		u.SetGenerateName("user-")
+		return u
+	}
+	var created int
+	store := &ownerScopedStore{
+		owned:    namespaceUserTeamOwner(),
+		resource: schema.GroupResource{Group: "test.grafana.app", Resource: "owned"},
+		create: func(_ context.Context, obj runtime.Object, _ rest.ValidateObjectFunc, _ *metav1.CreateOptions) (runtime.Object, error) {
+			created++
+			return obj, nil
+		},
+	}
+
+	// The name would be generated after the check, so it could not be authorized.
+	user := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "abc", OrgRole: authlib.RoleEditor}
+	_, err := store.Create(ctxFor(user), generated(), nil, &metav1.CreateOptions{})
+	require.True(t, apierrors.IsInvalid(err), "want an invalid error, got %v", err)
+	require.Zero(t, created)
+
+	userStorage := *store
+	userStorage.owned = hardcodedOwnerFromName("userstorage.grafana.app", "user-storage")
+	_, err = userStorage.Create(ctxFor(user), generated(), nil, &metav1.CreateOptions{})
+	require.True(t, apierrors.IsInvalid(err), "want an invalid error, got %v", err)
+	require.Zero(t, created)
+
+	// One who may do anything to the kind may still have a name generated.
+	admin := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "root", OrgRole: authlib.RoleAdmin}
+	orgAdmins := *store
+	orgAdmins.owned = namespaceUserTeamOwner()
+	orgAdmins.owned.allowOrgAdmin = true
+	_, err = orgAdmins.Create(ctxFor(admin), generated(), nil, &metav1.CreateOptions{})
+	require.NoError(t, err)
+	require.Equal(t, 1, created)
+}
+
+// recordingChecker records the verbs it is asked about, and allows none.
+type recordingChecker struct{ verbs []string }
+
+func (c *recordingChecker) Check(_ context.Context, _ authlib.AuthInfo, req authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
+	c.verbs = append(c.verbs, req.Verb)
+	return authlib.CheckResponse{}, nil
+}
+
+func (c *recordingChecker) Compile(context.Context, authlib.AuthInfo, authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
+	return nil, nil, errors.New("not used")
+}
+
+func TestOwnerScopedStoreUpdateCreatesMissing(t *testing.T) {
+	gr := schema.GroupResource{Group: "test.grafana.app", Resource: "owned"}
+	newStore := func(owned *ownerFromName) (*ownerScopedStore, *recordingChecker, *[]string) {
+		checker := &recordingChecker{}
+		var created []string
+		return &ownerScopedStore{
+			owned:    owned,
+			access:   checker,
+			resource: gr,
+			newObj:   func() runtime.Object { return &unstructured.Unstructured{} },
+			update: func(_ context.Context, name string, _ rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, _ rest.ValidateObjectUpdateFunc, _ bool, _ *metav1.UpdateOptions) (runtime.Object, bool, error) {
+				return nil, false, apierrors.NewNotFound(gr, name)
+			},
+			create: func(_ context.Context, obj runtime.Object, _ rest.ValidateObjectFunc, _ *metav1.CreateOptions) (runtime.Object, error) {
+				m, err := meta.Accessor(obj)
+				require.NoError(t, err)
+				created = append(created, m.GetName())
+				return obj, nil
+			},
+		}, checker, &created
+	}
+	// A team admin who may write the team but not create teams.
+	teamAdmin := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "abc", OrgRole: authlib.RoleEditor}
+	write := func(name string) rest.UpdatedObjectInfo {
+		return rest.DefaultUpdatedObjectInfo(objectNamed(name))
+	}
+
+	t.Run("the name was authorized for the update, so the create is not checked again", func(t *testing.T) {
+		owned := namespaceUserTeamOwner()
+		owned.createOnUpdate = true
+		store, checker, created := newStore(owned)
+		_, isNew, err := store.Update(ctxFor(teamAdmin), "team-t1", write("team-t1"), nil, nil, false, &metav1.UpdateOptions{})
+		require.NoError(t, err)
+		require.True(t, isNew)
+		require.Equal(t, []string{"team-t1"}, *created)
+		require.Empty(t, checker.verbs, "creating the team's object must not need permission to create teams")
+	})
+
+	t.Run("the object must keep the name it is written to", func(t *testing.T) {
+		owned := namespaceUserTeamOwner()
+		owned.createOnUpdate = true
+		store, _, created := newStore(owned)
+		_, _, err := store.Update(ctxFor(teamAdmin), "team-t1", write("team-other"), nil, nil, false, &metav1.UpdateOptions{})
+		require.True(t, apierrors.IsBadRequest(err), "got %v", err)
+		require.Empty(t, *created)
+	})
+
+	t.Run("without create on update, a missing object is not found", func(t *testing.T) {
+		store, _, created := newStore(hardcodedOwnerFromName("userstorage.grafana.app", "user-storage"))
+		_, _, err := store.Update(ctxFor(teamAdmin), "svc:abc", write("svc:abc"), nil, nil, false, &metav1.UpdateOptions{})
+		require.True(t, apierrors.IsNotFound(err), "got %v", err)
+		require.Empty(t, *created)
+	})
 }

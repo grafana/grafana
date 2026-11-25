@@ -154,7 +154,13 @@ export function TablePanel(props: Props) {
     [sourceSeries, sourceFramesWithOverrides]
   );
   const columnManagementEnabled = adHocTransformationsEnabled && supportsColumnManagement(rawMain);
-  const adHocColumns = useAdHocColumnState(frames, currentIndex, adHocTransformationsEnabled, configuredSourceSeries);
+  const adHocColumns = useAdHocColumnState(
+    frames,
+    currentIndex,
+    adHocTransformationsEnabled,
+    configuredSourceSeries,
+    sourceFramesWithOverrides
+  );
   const main = useMemo(
     () =>
       tableRefreshNewFeaturesEnabled && rawMain
@@ -241,6 +247,7 @@ export function TablePanel(props: Props) {
       onFieldAddToAssistant={onFieldAddToAssistant}
       onCellAddToAssistant={onCellAddToAssistant}
       timeRange={timeRange}
+      onTimeRangeSelected={tableRefreshNewFeaturesEnabled ? props.onChangeTimeRange : undefined}
       timeZone={props.timeZone}
       enableSharedCrosshair={enableSharedCrosshair}
       fieldConfig={fieldConfig}

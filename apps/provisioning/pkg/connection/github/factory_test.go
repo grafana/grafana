@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana-app-sdk/resource"
 )
 
 // TestFactoryNew_EnterpriseBaseURL verifies that a resolved REST API base URL (as produced by
@@ -38,7 +38,7 @@ func TestFactoryNew_EnterpriseBaseURL(t *testing.T) {
 	factory := &Factory{}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c, err := factory.New(context.Background(), common.RawSecureValue(""), WithCustomServerURL(tt.serverURL))
+			c, err := factory.New(context.Background(), resource.RawSecureValue(""), WithCustomServerURL(tt.serverURL))
 			require.NoError(t, err)
 
 			gc, ok := c.(*githubClient)

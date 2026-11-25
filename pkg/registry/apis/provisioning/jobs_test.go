@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -21,11 +22,9 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/dynamic"
 
-	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -1103,7 +1102,7 @@ func TestHandleOrphanCleanupJob_RepoNotFound_AdminAllowed(t *testing.T) {
 			adminChecker := auth.NewMockAccessChecker(t)
 			adminChecker.EXPECT().Check(mock.Anything, mock.Anything, "").Return(nil)
 			accessMock := auth.NewMockAccessChecker(t)
-			accessMock.EXPECT().WithFallbackRole(identity.RoleAdmin).Return(adminChecker)
+			accessMock.EXPECT().WithFallbackRole(authlib.RoleAdmin).Return(adminChecker)
 
 			queueMock := &jobs.MockQueue{}
 			createdJob := &provisioning.Job{
@@ -1150,7 +1149,7 @@ func TestHandleOrphanCleanupJob_RepoTerminating_Allowed(t *testing.T) {
 	adminChecker := auth.NewMockAccessChecker(t)
 	adminChecker.EXPECT().Check(mock.Anything, mock.Anything, "").Return(nil)
 	accessMock := auth.NewMockAccessChecker(t)
-	accessMock.EXPECT().WithFallbackRole(identity.RoleAdmin).Return(adminChecker)
+	accessMock.EXPECT().WithFallbackRole(authlib.RoleAdmin).Return(adminChecker)
 
 	queueMock := &jobs.MockQueue{}
 	createdJob := &provisioning.Job{
@@ -1216,7 +1215,7 @@ func TestHandleOrphanCleanupJob_NonAdminForbidden(t *testing.T) {
 	adminChecker := auth.NewMockAccessChecker(t)
 	adminChecker.EXPECT().Check(mock.Anything, mock.Anything, "").Return(forbidden)
 	accessMock := auth.NewMockAccessChecker(t)
-	accessMock.EXPECT().WithFallbackRole(identity.RoleAdmin).Return(adminChecker)
+	accessMock.EXPECT().WithFallbackRole(authlib.RoleAdmin).Return(adminChecker)
 
 	c := &jobsConnector{
 		repoGetter: repoGetter,
@@ -1281,7 +1280,7 @@ func TestHandleOrphanCleanupJob_InsertError(t *testing.T) {
 	adminChecker := auth.NewMockAccessChecker(t)
 	adminChecker.EXPECT().Check(mock.Anything, mock.Anything, "").Return(nil)
 	accessMock := auth.NewMockAccessChecker(t)
-	accessMock.EXPECT().WithFallbackRole(identity.RoleAdmin).Return(adminChecker)
+	accessMock.EXPECT().WithFallbackRole(authlib.RoleAdmin).Return(adminChecker)
 
 	queueMock := &jobs.MockQueue{}
 	queueMock.EXPECT().Insert(mock.Anything, "default", mock.Anything).
@@ -1368,7 +1367,7 @@ func TestAuthorizeAdminJob(t *testing.T) {
 		}), "").Return(nil)
 
 		accessMock := auth.NewMockAccessChecker(t)
-		accessMock.EXPECT().WithFallbackRole(identity.RoleAdmin).Return(adminChecker)
+		accessMock.EXPECT().WithFallbackRole(authlib.RoleAdmin).Return(adminChecker)
 
 		c := &jobsConnector{access: accessMock}
 		err := c.authorizeAdminJob(ctx, cfg)
@@ -1384,7 +1383,7 @@ func TestAuthorizeAdminJob(t *testing.T) {
 		}), "").Return(apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("admin role is required")))
 
 		accessMock := auth.NewMockAccessChecker(t)
-		accessMock.EXPECT().WithFallbackRole(identity.RoleAdmin).Return(adminChecker)
+		accessMock.EXPECT().WithFallbackRole(authlib.RoleAdmin).Return(adminChecker)
 
 		c := &jobsConnector{access: accessMock}
 		err := c.authorizeAdminJob(ctx, cfg)
@@ -1410,7 +1409,7 @@ func TestJobsConnector_AuthorizeJobCreate(t *testing.T) {
 		adminChecker := auth.NewMockAccessChecker(t)
 		adminChecker.EXPECT().Check(mock.Anything, mock.Anything, "").Return(err)
 		access := auth.NewMockAccessChecker(t)
-		access.EXPECT().WithFallbackRole(identity.RoleAdmin).Return(adminChecker)
+		access.EXPECT().WithFallbackRole(authlib.RoleAdmin).Return(adminChecker)
 		return access
 	}
 

@@ -10,7 +10,7 @@ import impressionSrv from 'app/core/services/impression_srv';
 import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult, type QueryResponse, type SearchQuery } from 'app/features/search/service/types';
-import { useStarredSearch } from 'app/features/stars/hooks';
+import { useStarredDashboardsAndFolders } from 'app/features/stars/hooks';
 
 import { DashListItem } from './DashListItem';
 import { type Options } from './panelcfg.gen';
@@ -100,7 +100,7 @@ export function DashList(props: PanelProps<Options>) {
 
   // Searched again on each mount like the other groups. Dashboards only: the panel lists dashboards. The rows come
   // in title order, so the cut keeps the first `maxItems` alphabetically
-  const { rows: starredRows, refetch: refetchStarred } = useStarredSearch({
+  const { rows: starredRows, refetch: refetchStarred } = useStarredDashboardsAndFolders({
     skip: !showStarred,
     refetchOnMountOrArgChange: true,
   });

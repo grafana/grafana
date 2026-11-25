@@ -94,12 +94,20 @@ var (
 			Name:            "live.runAPIServer",
 			Description:     "Registers a live apiserver",
 			Stage:           FeatureStageExperimental,
-			RequiresDevMode: true,
 			HideFromDocs:    true,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true,
 			Expression:      "false",
 			Generate:        Generate{Go: true},
+		},
+		{
+			Name:         "live.useAPIServerWebsocket",
+			Description:  "Connects Grafana Live to the live.grafana.app websocket instead of /api/live/ws",
+			Stage:        FeatureStageExperimental,
+			HideFromDocs: true,
+			Owner:        grafanaAppPlatformSquad,
+			Expression:   "false",
+			Generate:     Generate{React: true},
 		},
 		{
 			Name:            "live.keepHAPrefixInCloud",
@@ -1040,14 +1048,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "savedQueriesRBAC",
-			Description: "Enables Saved queries (query library) RBAC permissions",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaSharingSquad,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
-			Expression:  "true",                                                      // enabled by default
-		},
-		{
 			Name:        "dashboardLibrary",
 			Description: "Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page",
 			Stage:       FeatureStageExperimental,
@@ -1505,6 +1505,15 @@ var (
 		{
 			Name:         "alerting.ruleQualityFix",
 			Description:  "Enable fixing alert rule quality issues with Grafana Assistant on the alert quality page.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "alerting.ruleQualityFixAll",
+			Description:  "Enable bulk fixes for alert rule quality issues on the alert quality page.",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
@@ -2208,6 +2217,15 @@ var (
 			Expression:   "false",
 			HideFromDocs: true,
 		},
+		{
+			Name:         "plugins.useMTPluginInstall",
+			Description:  "Installs, updates and uninstalls plugins through the plugins API only, and falls back to the legacy API if that call fails",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaCatalogSquad,
+			Generate:     Generate{Go: true, React: true},
+			Expression:   "false",
+			HideFromDocs: true,
+		},
 		// Deprecated: prefer grafana.dashboardGlobalVariables. Kept registered so
 		// cloud enablement via the legacy wave remains valid until that flag is
 		// removed in a follow-up after all consumers read the new key.
@@ -2298,10 +2316,10 @@ var (
 		{
 			Name:        "queryEditorNext",
 			Description: "Enables next generation query editor experience",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaDataProSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "queryeditor.coauthoringUi",
@@ -2914,7 +2932,7 @@ var (
 			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
-			Expression:   "true",
+			Expression:   "false",
 			Generate:     Generate{React: true},
 		},
 		{
@@ -3534,6 +3552,15 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:         "grafana.panelQuickEdits",
+			Description:  "Adds quick edits for a panel's most-changed options to the panel edit popover in dashboard edit mode",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:         "grafana.folderPickerFolderEditAccess",
 			Description:  "Shows folders the user cannot edit as read only in the folder picker, instead of hiding them",
 			Stage:        FeatureStageExperimental,
@@ -3560,6 +3587,15 @@ var (
 			Generate:     Generate{Go: true, React: true},
 		},
 		{
+			Name:         "datasources.gatewayQueryUsage",
+			Description:  "Record billed query usage (Mimir samples read, Loki bytes processed) in query gateway audit events",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataSourcesPlugins,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:         "plugins.disableMTPluginsFallback",
 			Description:  "Disables the ST fallback for multi-tenant plugin api calls",
 			Stage:        FeatureStageExperimental,
@@ -3576,6 +3612,15 @@ var (
 			Generate:     Generate{React: true},
 			Expression:   "false",
 			HideFromDocs: true,
+		},
+		{
+			Name:         "grafana.dashboardQuestions",
+			Description:  "Lets editors save questions on dashboards, rows, and tabs, which plugins offer to viewers in the dashboard controls",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
 		},
 
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!

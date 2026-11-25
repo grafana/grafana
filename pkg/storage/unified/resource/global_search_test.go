@@ -35,6 +35,12 @@ func TestGlobalSearchFieldDefinitions(t *testing.T) {
 	assert.True(t, gr.HasCapability(SearchCapabilityFilter))
 	assert.True(t, gr.HasCapability(SearchCapabilityFacet))
 
+	// The creator is faceted here, so a client can group hits by owner.
+	createdBy := fieldByName(t, global, SEARCH_FIELD_CREATED_BY)
+	assert.True(t, createdBy.HasCapability(SearchCapabilityFilter))
+	assert.True(t, createdBy.HasCapability(SearchCapabilityRetrieve))
+	assert.True(t, createdBy.HasCapability(SearchCapabilityFacet))
+
 	// Timestamps are filterable and sortable here, so hits of different resource
 	// types can be ordered by time.
 	for _, name := range []string{SEARCH_FIELD_CREATED, SEARCH_FIELD_UPDATED} {
@@ -44,13 +50,24 @@ func TestGlobalSearchFieldDefinitions(t *testing.T) {
 	}
 }
 
-// The global index adds only the resource type to the standard set, so a field
-// behaves the same in global and per-resource search.
-func TestGlobalSearchFieldDefinitionsAddOnlyTheResourceType(t *testing.T) {
+// The global index adds the resource type to the standard set and a facet on the
+// creator, so every other field behaves the same in global and per-resource
+// search. The facet is kept out of the standard set because changing that set
+// rebuilds every per-resource index.
+func TestGlobalSearchFieldDefinitionsAddTheResourceTypeAndCreatorFacet(t *testing.T) {
 	global := GlobalSearchFieldDefinitions()
+	standard := StandardSearchFieldDefinitions()
 	require.NotEmpty(t, global)
 	assert.Equal(t, SEARCH_FIELD_GROUP_RESOURCE, global[0].Name)
-	assert.Equal(t, StandardSearchFieldDefinitions(), global[1:])
+	require.Len(t, global[1:], len(standard))
+	for i, want := range standard {
+		got := global[i+1]
+		if want.Name == SEARCH_FIELD_CREATED_BY {
+			assert.False(t, want.HasCapability(SearchCapabilityFacet), "the standard creator must stay unfaceted")
+			want.Capabilities = append(slices.Clone(want.Capabilities), SearchCapabilityFacet)
+		}
+		assert.Equal(t, want, got, want.Name)
+	}
 
 	for _, def := range StandardSearchFieldDefinitions() {
 		assert.NotEqual(t, SEARCH_FIELD_GROUP_RESOURCE, def.Name)
@@ -345,13 +362,17 @@ func TestGlobalSearchCoversTheKindsThatOptIn(t *testing.T) {
 	folders := schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}
 	notebooks := schema.GroupResource{Group: "dashboard.grafana.app", Resource: "notebooks"}
 	playlists := schema.GroupResource{Group: "playlist.grafana.app", Resource: "playlists"}
+	variables := schema.GroupResource{Group: "dashboard.grafana.app", Resource: "variables"}
 	got := globalSearchCoverageOf(AppManifests())
-	assert.Equal(t, []schema.GroupResource{dashboards, folders, notebooks, playlists}, got.types)
+	assert.Equal(t, []schema.GroupResource{dashboards, folders, notebooks, playlists, variables}, got.types)
+	// Nothing is registered in this repository, so its own apps cover the same types.
+	assert.Equal(t, got.types, BuiltinGlobalSearchResourceTypes())
 	assert.Equal(t, map[schema.GroupResource]string{
 		dashboards: "Dashboard",
 		folders:    "Folder",
 		notebooks:  "Notebook",
 		playlists:  "Playlist",
+		variables:  "Variable",
 	}, got.kinds)
 }
 

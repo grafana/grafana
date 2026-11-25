@@ -8,6 +8,9 @@ import { isSignedIn, type NavEntryBuilder } from '../utils';
 // tree: useNavTree derives them from the stars query. Bookmarks are filled from preferences.
 
 export const starredNavEntry: NavEntryBuilder = {
+  // TODO: Gate on the signed-in user, as Bookmarks is. Stars are of any kind now, so a user who can read no
+  // dashboard can still have stars to list, and gets no section for them. The server-built tree has the same
+  // gate. Both change in a separate PR.
   when: () => contextSrv.hasPermission(AccessControlAction.DashboardsRead),
   build: () => ({
     text: 'Starred',

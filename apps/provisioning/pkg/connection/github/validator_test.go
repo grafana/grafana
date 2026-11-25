@@ -10,8 +10,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 func TestValidate(t *testing.T) {
@@ -84,7 +84,7 @@ func TestValidate(t *testing.T) {
 					},
 				},
 				Secure: provisioning.ConnectionSecure{
-					PrivateKey: common.InlineSecureValue{
+					PrivateKey: resource.InlineSecureValue{
 						Create: "invalid",
 					},
 				},
@@ -106,8 +106,8 @@ func TestValidate(t *testing.T) {
 					},
 				},
 				Secure: provisioning.ConnectionSecure{
-					PrivateKey: common.InlineSecureValue{
-						Create: common.NewSecretValue(invalidBase64),
+					PrivateKey: resource.InlineSecureValue{
+						Create: resource.NewSecretValue(invalidBase64),
 					},
 				},
 			},
@@ -128,8 +128,8 @@ func TestValidate(t *testing.T) {
 					},
 				},
 				Secure: provisioning.ConnectionSecure{
-					PrivateKey: common.InlineSecureValue{
-						Create: common.NewSecretValue(privateKeyBase64),
+					PrivateKey: resource.InlineSecureValue{
+						Create: resource.NewSecretValue(privateKeyBase64),
 					},
 				},
 			},
@@ -149,14 +149,14 @@ func TestValidate(t *testing.T) {
 					},
 				},
 				Secure: provisioning.ConnectionSecure{
-					PrivateKey: common.InlineSecureValue{
-						Create: common.NewSecretValue("test-key"),
+					PrivateKey: resource.InlineSecureValue{
+						Create: resource.NewSecretValue("test-key"),
 					},
-					Token: common.InlineSecureValue{
-						Create: common.NewSecretValue("test-token"),
+					Token: resource.InlineSecureValue{
+						Create: resource.NewSecretValue("test-token"),
 					},
-					ClientSecret: common.InlineSecureValue{
-						Create: common.NewSecretValue("test-secret"),
+					ClientSecret: resource.InlineSecureValue{
+						Create: resource.NewSecretValue("test-secret"),
 					},
 				},
 			},
@@ -176,11 +176,11 @@ func TestValidate(t *testing.T) {
 					},
 				},
 				Secure: provisioning.ConnectionSecure{
-					PrivateKey: common.InlineSecureValue{
-						Create: common.NewSecretValue("test-key"),
+					PrivateKey: resource.InlineSecureValue{
+						Create: resource.NewSecretValue("test-key"),
 					},
-					Token: common.InlineSecureValue{
-						Create: common.NewSecretValue("test-token"),
+					Token: resource.InlineSecureValue{
+						Create: resource.NewSecretValue("test-token"),
 					},
 				},
 			},
@@ -200,11 +200,11 @@ func TestValidate(t *testing.T) {
 					},
 				},
 				Secure: provisioning.ConnectionSecure{
-					PrivateKey: common.InlineSecureValue{
-						Create: common.NewSecretValue("test-key"),
+					PrivateKey: resource.InlineSecureValue{
+						Create: resource.NewSecretValue("test-key"),
 					},
-					Token: common.InlineSecureValue{
-						Create: common.NewSecretValue("test-token"),
+					Token: resource.InlineSecureValue{
+						Create: resource.NewSecretValue("test-token"),
 					},
 				},
 			},
@@ -225,8 +225,8 @@ func TestValidate(t *testing.T) {
 					},
 				},
 				Secure: provisioning.ConnectionSecure{
-					PrivateKey: common.InlineSecureValue{
-						Create: common.NewSecretValue(privateKeyBase64),
+					PrivateKey: resource.InlineSecureValue{
+						Create: resource.NewSecretValue(privateKeyBase64),
 					},
 				},
 			},
@@ -247,8 +247,8 @@ func TestValidate(t *testing.T) {
 					},
 				},
 				Secure: provisioning.ConnectionSecure{
-					PrivateKey: common.InlineSecureValue{
-						Create: common.NewSecretValue(privateKeyBase64),
+					PrivateKey: resource.InlineSecureValue{
+						Create: resource.NewSecretValue(privateKeyBase64),
 					},
 				},
 			},
@@ -269,8 +269,8 @@ func TestValidate(t *testing.T) {
 					},
 				},
 				Secure: provisioning.ConnectionSecure{
-					PrivateKey: common.InlineSecureValue{
-						Create: common.NewSecretValue(privateKeyBase64),
+					PrivateKey: resource.InlineSecureValue{
+						Create: resource.NewSecretValue(privateKeyBase64),
 					},
 				},
 			},
@@ -291,11 +291,11 @@ func TestValidate(t *testing.T) {
 					},
 				},
 				Secure: provisioning.ConnectionSecure{
-					PrivateKey: common.InlineSecureValue{
-						Create: common.NewSecretValue(privateKeyBase64),
+					PrivateKey: resource.InlineSecureValue{
+						Create: resource.NewSecretValue(privateKeyBase64),
 					},
-					Token: common.InlineSecureValue{
-						Create: common.NewSecretValue("test-token"),
+					Token: resource.InlineSecureValue{
+						Create: resource.NewSecretValue("test-token"),
 					},
 				},
 			},

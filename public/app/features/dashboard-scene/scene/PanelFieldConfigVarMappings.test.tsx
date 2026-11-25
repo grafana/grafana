@@ -10,12 +10,13 @@ import {
   standardFieldConfigEditorRegistry,
   toDataFrame,
 } from '@grafana/data';
+import { setVarMappingsEnabledResolver } from '@grafana/data/internal';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils, setRunRequest } from '@grafana/runtime';
 import { CustomVariable, SceneQueryRunner, SceneVariableSet, VizPanel, sceneGraph } from '@grafana/scenes';
 import { type LibraryPanel } from '@grafana/schema';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
-import * as libraryPanelsApi from 'app/features/library-panels/state/api';
+import { getLibraryPanel, libraryVizPanelToSaveModel } from 'app/features/library-panels/state/api';
 
 import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-utils';
 
@@ -33,6 +34,12 @@ setPluginImportUtils({
   importPanelPlugin: () => Promise.resolve(getPanelPlugin({}).useFieldConfig()),
   getPanelPluginFromCache: () => undefined,
 });
+
+jest.mock('app/features/library-panels/state/api', () =>
+  jest
+    .requireActual('test/helpers/partialMock')
+    .partialMock(jest.requireActual('app/features/library-panels/state/api'), { getLibraryPanel: jest.fn() })
+);
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -90,6 +97,9 @@ async function tick() {
 }
 
 describe('Variables in panel field config via varMappings (dashboard scene)', () => {
+  beforeAll(() => setVarMappingsEnabledResolver(() => true));
+  afterAll(() => setVarMappingsEnabledResolver(() => false));
+
   it('resolves defaults.varMappings.min through the real sceneGraph.interpolate path and reacts to variable change', async () => {
     // CustomVariable rather than ConstantVariable + setState: only changeValueTo publishes the
     // SceneVariableValueChangedEvent that VizPanel's field config cache invalidation listens for.
@@ -122,6 +132,32 @@ describe('Variables in panel field config via varMappings (dashboard scene)', ()
     expect(reprocessed.series[0].fields[0].config.min).toEqual(75);
 
     deactivate();
+  });
+
+  it('keeps the stored value and ignores varMappings while resolution is turned off', async () => {
+    setVarMappingsEnabledResolver(() => false);
+    try {
+      const varVariable = new CustomVariable({ name: 'myVar', query: '50,75', value: '50', text: '50' });
+      const panel = buildPanel({ min: 0, varMappings: { min: '$myVar' } });
+      const scene = buildScene(panel, new SceneVariableSet({ variables: [varVariable] }));
+
+      const deactivate = activateFullSceneTree(scene);
+      await tick();
+
+      const min = () => panel.applyFieldConfig(sceneGraph.getData(panel).state.data!).series[0].fields[0].config.min;
+      expect(min()).toEqual(0);
+
+      varVariable.changeValueTo('75', '75');
+      await tick();
+      expect(min()).toEqual(0);
+
+      // the expression is left untouched in the panel's saved field config
+      expect(panel.state.fieldConfig.defaults.varMappings).toEqual({ min: '$myVar' });
+
+      deactivate();
+    } finally {
+      setVarMappingsEnabledResolver(() => true);
+    }
   });
 
   it('resolves a threshold step valueExpr and updates it on variable change', async () => {
@@ -247,7 +283,7 @@ describe('Variables in panel field config via varMappings (dashboard scene)', ()
       },
       version: 1,
     };
-    jest.spyOn(libraryPanelsApi, 'getLibraryPanel').mockResolvedValue(libraryPanel);
+    jest.mocked(getLibraryPanel).mockResolvedValue(libraryPanel);
 
     const panel = new VizPanel({
       title: 'Library panel',
@@ -297,7 +333,7 @@ describe('Variables in panel field config via varMappings (dashboard scene)', ()
     expect(config.min).toEqual(50);
     expect(config.max).toEqual(50);
 
-    const saved = libraryPanelsApi.libraryVizPanelToSaveModel(panel).model.fieldConfig;
+    const saved = libraryVizPanelToSaveModel(panel).model.fieldConfig;
     expect(saved?.defaults).toMatchObject(fieldConfig.defaults);
     expect(saved?.overrides).toEqual(fieldConfig.overrides);
 

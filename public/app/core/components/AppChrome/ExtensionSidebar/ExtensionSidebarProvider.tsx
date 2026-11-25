@@ -4,6 +4,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useState,
   useMemo,
   useRef,
@@ -26,6 +27,7 @@ import {
   DEFAULT_EXTENSION_SIDEBAR_WIDTH,
   DEFAULT_FLOATING_EXTENSION_SIDEBAR_WIDTH,
   getMaxExtensionSidebarHeight,
+  getMaxFloatingExtensionSidebarHeight,
   MAX_EXTENSION_SIDEBAR_WIDTH,
   MIN_EXTENSION_SIDEBAR_HEIGHT,
   MIN_EXTENSION_SIDEBAR_WIDTH,
@@ -35,8 +37,10 @@ import {
 import {
   type ExtensionSidebarDockSide,
   type ExtensionSidebarPresentation,
+  type FloatingExtensionSidebarHeightOptions,
   getEffectiveExtensionSidebarPresentation,
   getExtensionSidebarPlacement,
+  getFloatingExtensionSidebarHeightOptions,
   getRequestedExtensionSidebarDockSide,
   getRequestedExtensionSidebarPresentation,
   holdFloatingExtensionSidebar,
@@ -46,6 +50,7 @@ import {
   releaseFloatingExtensionSidebarHolds,
   resolveExtensionSidebarDockSide,
   resolveExtensionSidebarPresentation,
+  setFloatingExtensionSidebarHeightOptions,
   subscribeToExtensionSidebarPresentation,
 } from './extensionSidebarLayout';
 import { EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY, getComponentMetaFromComponentId } from './extensionSidebarUtils';
@@ -53,6 +58,7 @@ import { EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY, getComponentMetaFromCompone
 const EXTENSION_SIDEBAR_WIDTH_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarWidth';
 const EXTENSION_SIDEBAR_HEIGHT_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarHeight';
 const FLOATING_EXTENSION_SIDEBAR_WIDTH_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarFloatingWidth';
+const FLOATING_EXTENSION_SIDEBAR_HEIGHT_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarFloatingHeight';
 const PERMITTED_EXTENSION_SIDEBAR_PLUGINS = [
   'grafana-assistant-app',
   'grafana-assistant-onboarding-app',
@@ -106,6 +112,18 @@ export type ExtensionSidebarContextType = {
    */
   setFloatingExtensionSidebarWidth: (width: number) => void;
   /**
+   * The heights the floating sidebar's extension lets core resize it between, or `null` while it lets core resize
+   * none: core then shows no top or corner handle.
+   */
+  floatingHeightOptions: FloatingExtensionSidebarHeightOptions | null;
+  /**
+   * The floating sidebar's height once the user resized it, within `floatingHeightOptions` and the window; `undefined`
+   * before, or while the extension lets core resize none, and the extension's own height applies.
+   */
+  floatingExtensionSidebarHeight: number | undefined;
+  /** Set the floating sidebar's height; `undefined` goes back to the extension's own. */
+  setFloatingExtensionSidebarHeight: (height: number | undefined) => void;
+  /**
    * How the open sidebar is laid out. `floating` takes no width from the page; the container and the
    * extension component stay mounted when this changes.
    */
@@ -134,6 +152,9 @@ const ExtensionSidebarContext = createContext<ExtensionSidebarContextType>({
   setExtensionSidebarHeight: () => {},
   floatingExtensionSidebarWidth: DEFAULT_FLOATING_EXTENSION_SIDEBAR_WIDTH,
   setFloatingExtensionSidebarWidth: () => {},
+  floatingHeightOptions: null,
+  floatingExtensionSidebarHeight: undefined,
+  setFloatingExtensionSidebarHeight: () => {},
   presentation: 'docked',
   dockSide: 'right',
   floatingHidden: false,
@@ -186,6 +207,14 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
   const [extensionSidebarHeight, setExtensionSidebarHeight] = useLocalStorage(
     EXTENSION_SIDEBAR_HEIGHT_LOCAL_STORAGE_KEY,
     DEFAULT_EXTENSION_SIDEBAR_HEIGHT
+  );
+  // Absent until the user resizes the floating height, so the extension's own height applies until then.
+  const [storedFloatingHeight, setStoredFloatingHeight, removeStoredFloatingHeight] = useLocalStorage<number>(
+    FLOATING_EXTENSION_SIDEBAR_HEIGHT_LOCAL_STORAGE_KEY
+  );
+  const floatingHeightOptions = useSyncExternalStore(
+    subscribeToExtensionSidebarPresentation,
+    getFloatingExtensionSidebarHeightOptions
   );
   // The bottom dock's limit follows the window, so shrinking it never leaves the page less than half.
   const { height: windowHeight } = useWindowSize();
@@ -344,6 +373,9 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
       notifyExtensionSidebarClosed();
     }
   }, [dockedComponentId]);
+  // The sizes were the shown extension's. A layout cleanup runs before the next extension's effects, where it declares
+  // its own; the close notice above runs after them, so clearing there would drop that declaration.
+  useLayoutEffect(() => () => setFloatingExtensionSidebarHeightOptions(null), [dockedComponentId]);
 
   // update the stored docked component id when it changes
   useEffect(() => {
@@ -401,6 +433,16 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
           MAX_FLOATING_EXTENSION_SIDEBAR_WIDTH
         ),
         setFloatingExtensionSidebarWidth,
+        floatingHeightOptions,
+        floatingExtensionSidebarHeight:
+          floatingHeightOptions && typeof storedFloatingHeight === 'number'
+            ? Math.min(
+                Math.max(storedFloatingHeight, floatingHeightOptions.minHeight),
+                getMaxFloatingExtensionSidebarHeight(windowHeight)
+              )
+            : undefined,
+        setFloatingExtensionSidebarHeight: (height) =>
+          height === undefined ? removeStoredFloatingHeight() : setStoredFloatingHeight(height),
         presentation,
         dockSide: resolveExtensionSidebarDockSide(requestedDockSide, canPlace, dockedPluginId),
         floatingHidden,

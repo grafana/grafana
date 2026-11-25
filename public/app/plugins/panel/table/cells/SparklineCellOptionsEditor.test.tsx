@@ -42,6 +42,31 @@ describe('SparklineCellOptionsEditor', () => {
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ lineWidth: 5, hideValue: true }));
   });
 
+  describe('Time range selection', () => {
+    afterEach(() => setTestFlags({}));
+
+    it.each([
+      [false, false],
+      [false, true],
+      [true, false],
+      [true, true],
+    ])('gates time selection with refresh=%s and new features=%s', async (refresh, enabled) => {
+      setTestFlags({ [FlagKeys.TableRefresh]: refresh, [FlagKeys.TableRefreshNewFeatures]: enabled });
+      const { onChange } = await setup({ lineWidth: 5 });
+      expect(screen.getByLabelText('Hide value')).toBeInTheDocument();
+      if (refresh && enabled) {
+        await userEvent.click(screen.getByLabelText('Enable time range selection'));
+        expect(onChange).toHaveBeenCalledWith({
+          type: TableCellDisplayMode.Sparkline,
+          lineWidth: 5,
+          selectTimeRange: true,
+        });
+      } else {
+        expect(screen.queryByLabelText('Enable time range selection')).not.toBeInTheDocument();
+      }
+    });
+  });
+
   describe('Show hover tooltip', () => {
     afterEach(() => {
       setTestFlags({});

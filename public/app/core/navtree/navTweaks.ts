@@ -65,8 +65,7 @@ const NAV_TWEAKS: NavTweak[] = [
         (current, id) => moveNavItemToSection(current, id, NavID.cfgGeneral),
         placed
       );
-      // Without General nothing was regrouped, so there is nothing to restyle either
-      return findNavById(regrouped, NavID.cfgGeneral) ? landOnDefaultPreferences(regrouped) : regrouped;
+      return landOnFirstDestination(regrouped);
     },
   },
 ];
@@ -78,21 +77,35 @@ function ungroupedAdministrationIds(tree: NavModelItem[]): string[] {
 }
 
 /**
- * Points Administration and General at Default preferences, which the section
- * nav lists first, so neither needs a landing page of its own, and drops General
- * from breadcrumbs for the same reason. Left alone when the user has no Default
- * preferences.
+ * The first destination the section nav lists: the first link of the first
+ * group that has one, in the order the nav tree already holds.
  */
-function landOnDefaultPreferences(tree: NavModelItem[]): NavModelItem[] {
-  const url = findNavById(tree, 'org-settings')?.url;
+function firstAdministrationDestination(tree: NavModelItem[]): NavModelItem | undefined {
+  return (findNavById(tree, NavID.cfg)?.children ?? [])
+    .filter((group) => !group.isCreateAction)
+    .flatMap((group) => (group.children ?? []).filter((child) => !child.isCreateAction))
+    .find((child) => child.url);
+}
+
+/**
+ * Points Administration at the first destination the section nav lists, and
+ * General at its own first, so neither needs a landing page of its own, and
+ * drops General from breadcrumbs for the same reason. That is Default
+ * preferences for anyone who has it. Left alone when there is no destination.
+ */
+function landOnFirstDestination(tree: NavModelItem[]): NavModelItem[] {
+  const url = firstAdministrationDestination(tree)?.url;
   if (!url) {
     return tree;
   }
+  const generalUrl = (findNavById(tree, NavID.cfgGeneral)?.children ?? []).find(
+    (child) => !child.isCreateAction && child.url
+  )?.url;
   const retarget = (nodes: NavModelItem[]): NavModelItem[] =>
     nodes.map((node) => ({
       ...node,
       ...(node.id === NavID.cfg ? { url } : {}),
-      ...(node.id === NavID.cfgGeneral ? { url, hideFromBreadcrumbs: true } : {}),
+      ...(node.id === NavID.cfgGeneral && generalUrl ? { url: generalUrl, hideFromBreadcrumbs: true } : {}),
       ...(node.children ? { children: retarget(node.children) } : {}),
     }));
   return retarget(tree);

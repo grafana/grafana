@@ -6,7 +6,7 @@ import { type GrafanaConfig, LayoutModes, locationUtil, PluginType } from '@graf
 import { setPluginLinksHook, setPluginComponentsHook, setPluginFunctionsHook } from '@grafana/runtime';
 import { setDatasourcePluginMetas } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
-import * as api from 'app/features/datasources/api';
+import { getDataSources } from 'app/features/datasources/api';
 import { getMockDataSources } from 'app/features/datasources/mocks/dataSourcesMocks';
 import { configureStore } from 'app/store/configureStore';
 
@@ -14,6 +14,11 @@ import { getPluginsStateMock } from '../../../plugins/admin/mocks/mockHelpers';
 import Connections from '../../Connections';
 import { ROUTES } from '../../constants';
 import { navIndex } from '../../mocks/store.navIndex.mock';
+
+jest.mock('app/features/datasources/api', () => ({
+  ...jest.requireActual('app/features/datasources/api'),
+  getDataSources: jest.fn(),
+}));
 
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 setPluginComponentsHook(() => ({ components: [], isLoading: false }));
@@ -147,8 +152,8 @@ jest.mock('@grafana/runtime', () => {
 describe('DataSourceEditTabs', () => {
   beforeEach(() => {
     process.env.NODE_ENV = 'test';
-    (api.getDataSources as jest.Mock) = jest.fn().mockResolvedValue(mockDatasources);
-    (contextSrv.hasPermission as jest.Mock) = jest.fn().mockReturnValue(true);
+    jest.mocked(getDataSources).mockResolvedValue(mockDatasources);
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
     setDatasourcePluginMetas({
       [mockDatasources[0].type]: {
         id: mockDatasources[0].type,
@@ -171,6 +176,7 @@ describe('DataSourceEditTabs', () => {
 
   afterEach(() => {
     setDatasourcePluginMetas({});
+    jest.restoreAllMocks();
   });
 
   it('should render Permissions and Insights tabs', async () => {

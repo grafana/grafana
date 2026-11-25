@@ -24,7 +24,12 @@ import { type BaseProvisionedFormData } from '../../types/form';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { getManagerIdentity, getSourcePath, type ManagedResource } from '../../utils/managedResource';
-import { getKindInfoByGroupKind, type ResourceKindInfo } from '../../utils/resourceKinds';
+import {
+  getKindKeyByGroupKind,
+  resourceKindInfos,
+  type ResourceKindInfo,
+  type ResourceKindKey,
+} from '../../utils/resourceKinds';
 import { getRequestRef } from '../../utils/workflow';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { getCanPushToConfiguredBranch, getDefaultRef } from '../defaults';
@@ -110,7 +115,7 @@ export type SaveProvisionedResourceDrawerProps = BaseDrawerProps &
   );
 
 interface FormProps {
-  kind: ResourceKindInfo;
+  kindKey: ResourceKindKey;
   redirectUrl: string;
   resourceName: string;
   title: string;
@@ -127,7 +132,7 @@ interface FormProps {
 }
 
 function FormContent({
-  kind,
+  kindKey,
   redirectUrl,
   resourceName,
   title,
@@ -143,8 +148,7 @@ function FormContent({
   onDismiss,
 }: FormProps) {
   const [error, setError] = useState<string | undefined>(undefined);
-  // The kind's stable key is the UI-facing resource type for the commit message, telemetry and fields.
-  const resourceType = kind.key;
+  const kind: ResourceKindInfo = resourceKindInfos[kindKey];
   const isDelete = action === 'delete';
   // New resources are POSTed (create), existing ones PUT (replace). The wrapper keys off the
   // original path: passing it selects update, omitting it selects create.
@@ -160,7 +164,7 @@ function FormContent({
 
   const templateVars: CommitTemplateVars = {
     action,
-    resourceKind: resourceType,
+    resourceKind: kindKey,
     resourceID: resourceName,
     title,
     ...getCurrentCommitUser(),
@@ -188,7 +192,7 @@ function FormContent({
 
   const { handleSuccess } = useProvisionedRequestHandler({
     isNewBranch,
-    resourceType,
+    resourceType: kindKey,
     repository,
     successMessage,
     handlers: {
@@ -223,7 +227,7 @@ function FormContent({
     const branchRef = getRequestRef(repository, ref);
 
     reportInteraction('grafana_provisioning_resource_save_submitted', {
-      resourceType,
+      resourceType: kindKey,
       workflow,
       repositoryName: repoName,
       repositoryType: repository?.type ?? 'unknown',
@@ -244,7 +248,7 @@ function FormContent({
       <form onSubmit={handleSubmit(doSave)}>
         <Stack direction="column" gap={2}>
           <ResourceEditFormSharedFields
-            resourceType={resourceType}
+            resourceType={kindKey}
             isNew={isNew}
             canPushToConfiguredBranch={canPushToConfiguredBranch}
             repository={repository}
@@ -289,9 +293,9 @@ function FormContent({
  */
 export function SaveProvisionedResourceDrawer(props: SaveProvisionedResourceDrawerProps) {
   // The resource carries its own identity: its API group (from apiVersion) + Kubernetes kind resolve
-  // the registry descriptor, so callers don't pass the kind separately.
-  const kind = getKindInfoByGroupKind(props.resource.apiVersion?.split('/')[0], props.resource.kind);
-  if (!kind) {
+  // the registry key, so callers don't pass the kind separately.
+  const kindKey = getKindKeyByGroupKind(props.resource.apiVersion?.split('/')[0], props.resource.kind);
+  if (!kindKey) {
     // Pages only open this for known managed resources, so an unresolved kind means a bad fixture or a
     // new kind wired into a page before its registry entry exists. Warn in dev so it's a visible signal
     // rather than a silent no-op where the user clicks save/delete and nothing happens.
@@ -302,13 +306,13 @@ export function SaveProvisionedResourceDrawer(props: SaveProvisionedResourceDraw
     }
     return null;
   }
-  return <ResourceDrawerContent {...props} kind={kind} />;
+  return <ResourceDrawerContent {...props} kindKey={kindKey} />;
 }
 
-type ResourceDrawerContentProps = SaveProvisionedResourceDrawerProps & { kind: ResourceKindInfo };
+type ResourceDrawerContentProps = SaveProvisionedResourceDrawerProps & { kindKey: ResourceKindKey };
 
 function ResourceDrawerContent({
-  kind,
+  kindKey,
   redirectUrl,
   resource,
   body: fileBody,
@@ -341,7 +345,7 @@ function ResourceDrawerContent({
           annotations: {
             [AnnoKeyManagerKind]: ManagerKind.Repo,
             [AnnoKeyManagerIdentity]: repositoryName ?? '',
-            [AnnoKeySourcePath]: getNewResourcePath(title, kind.key, folderPath),
+            [AnnoKeySourcePath]: getNewResourcePath(title, kindKey, folderPath),
           },
         },
       }
@@ -357,8 +361,8 @@ function ResourceDrawerContent({
         spec: resource.spec,
       });
 
-  // Branch names can't contain spaces, so prefix from the stable `key`, not the display noun.
-  const prefix = branchPrefix ?? kind.key;
+  // Branch names can't contain spaces, so prefix from the stable kind key, not the display noun.
+  const prefix = branchPrefix ?? kindKey;
   const { repository, isLoading, isReadOnlyRepo, isMissingRepo } = useGetResourceRepositoryView({
     name: getManagerIdentity(managedResource),
   });
@@ -367,7 +371,7 @@ function ResourceDrawerContent({
 
   // Title combines a shared translated template with the kind's translated noun (interpolated, so
   // translators control word order), instead of a per-kind "Save/Delete provisioned <kind>" string.
-  const resourceLabel = kind.getLabel();
+  const resourceLabel = resourceKindInfos[kindKey].getLabel({ upperFirst: false });
   const drawerTitle = isDelete
     ? t('provisioning.save-resource.drawer-title-delete', 'Delete provisioned {{resource}}', {
         resource: resourceLabel,
@@ -411,7 +415,7 @@ function ResourceDrawerContent({
       >
         {initialValues && (
           <FormContent
-            kind={kind}
+            kindKey={kindKey}
             redirectUrl={redirectUrl}
             resourceName={resourceName}
             title={title}

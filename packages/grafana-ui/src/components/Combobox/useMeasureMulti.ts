@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import { useMeasure } from 'react-use';
 
 import { measureText } from '../../utils/measureText';
@@ -18,14 +18,16 @@ export function useMeasureMulti<T extends string | number>(
   width?: number | 'auto',
   disabled?: boolean
 ) {
-  const [shownItems, setShownItems] = useState<number>(selectedItems.length);
   const [measureRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
   const [counterMeasureRef, { width: counterWidth }] = useMeasure<HTMLDivElement>();
   const [suffixMeasureRef, { width: suffixWidth }] = useMeasure<HTMLDivElement>();
 
   const finalWidth = width && width !== 'auto' ? width : containerWidth;
 
-  useEffect(() => {
+  const shownItems = useMemo(() => {
+    if (!finalWidth) {
+      return selectedItems.length;
+    }
     const maxWidth = finalWidth - counterWidth - suffixWidth;
     let currWidth = 0;
     for (let i = 0; i < selectedItems.length; i++) {
@@ -36,15 +38,11 @@ export function useMeasureMulti<T extends string | number>(
       if (currWidth > maxWidth) {
         // If there is no space for that item, show the current number of items,
         // but always show at least 1 item. Cap at maximum number of items.
-        setShownItems(Math.min(i, MAX_SHOWN_ITEMS) || 1);
-        break;
-      }
-      if (i === selectedItems.length - 1) {
-        // If it is the last item, show all items
-        setShownItems(selectedItems.length);
+        return Math.min(i, MAX_SHOWN_ITEMS) || 1;
       }
     }
-  }, [finalWidth, counterWidth, suffixWidth, selectedItems, setShownItems, disabled]);
+    return selectedItems.length;
+  }, [finalWidth, counterWidth, suffixWidth, selectedItems, disabled]);
 
   return { measureRef, counterMeasureRef, suffixMeasureRef, shownItems };
 }

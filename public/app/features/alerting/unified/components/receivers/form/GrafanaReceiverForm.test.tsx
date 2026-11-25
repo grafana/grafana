@@ -1281,10 +1281,7 @@ describe('GrafanaReceiverForm', () => {
 
       // 4xx responses are the user's invalid payload, not an app failure → warn, not error
       await waitFor(() => {
-        expect(jest.mocked(logWarning)).toHaveBeenCalledWith(
-          'Failed to save the contact point',
-          expect.objectContaining({ status: '400' })
-        );
+        expect(jest.mocked(logWarning)).toHaveBeenCalledWith('Failed to save the contact point', { status: '400' });
       });
       expect(jest.mocked(logError)).not.toHaveBeenCalled();
     });
@@ -1322,8 +1319,11 @@ describe('GrafanaReceiverForm', () => {
       await waitFor(() => {
         expect(jest.mocked(logError)).toHaveBeenCalledTimes(1);
       });
-      expect(jest.mocked(logError).mock.calls[0][0]).toBeInstanceOf(Error);
-      expect(jest.mocked(logError).mock.calls[0][0].message).toBe('Failed to save the contact point');
+      const [loggedError, context] = jest.mocked(logError).mock.calls[0];
+      expect(loggedError).toBeInstanceOf(Error);
+      expect(loggedError.message).toBe('Failed to save the contact point');
+      expect(loggedError).not.toHaveProperty('cause');
+      expect(context).toEqual({ status: '500' });
       expect(jest.mocked(logWarning)).not.toHaveBeenCalled();
     });
   });

@@ -134,7 +134,7 @@ func TestBulkProcessNegotiatedBlobUploadWithSQLite(t *testing.T) {
 }
 
 func testBulkBlobRequester() *identity.StaticRequester {
-	return &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", OrgRole: identity.RoleAdmin, Namespace: "default"}
+	return &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", OrgRole: authlib.RoleAdmin, Namespace: "default"}
 }
 
 type bulkBlobContextStream struct {
