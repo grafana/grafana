@@ -1,4 +1,4 @@
-import { type RefObject, useEffect, useLayoutEffect, useState } from 'react';
+import { type RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
 const modulo = (a: number, n: number) => ((a % n) + n) % n;
@@ -46,6 +46,7 @@ export const useMenuFocus = ({
   onKeyDown,
 }: UseMenuFocusProps): UseMenuFocusReturn => {
   const [focusedItem, setFocusedItem] = useState(UNFOCUSED);
+  const previousItemCount = useRef(0);
 
   useEffect(() => {
     if (isMenuOpen) {
@@ -66,7 +67,13 @@ export const useMenuFocus = ({
   useLayoutEffect(() => {
     const menuItems = getMenuItems(localRef.current);
     const itemCount = menuItems.length;
-    const reconciledFocusedItem = focusedItem === UNFOCUSED || focusedItem < itemCount ? focusedItem : itemCount - 1;
+    const reconciledFocusedItem =
+      isMenuOpen && previousItemCount.current === 0 && itemCount > 0 && focusedItem === UNFOCUSED
+        ? 0
+        : focusedItem === UNFOCUSED || focusedItem < itemCount
+          ? focusedItem
+          : itemCount - 1;
+    previousItemCount.current = itemCount;
 
     menuItems.forEach((menuItem, i) => {
       menuItem.tabIndex = i === reconciledFocusedItem ? 0 : -1;
