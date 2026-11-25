@@ -348,7 +348,11 @@ type ModifiedResource struct {
 type ResourceStats struct {
 	NamespacedResource
 
-	Count           int64
+	// Count is the live count from storage, or the saved document count for an open index.
+	Count int64
+	// DeletedCount is populated only by trash-aware storage discovery. Both
+	// counts are lower bounds when discovery stops at the combined count limit.
+	DeletedCount    int64
 	ResourceVersion int64
 
 	// LastSearchedAt carries idle time across restarts. Zero when unknown.
