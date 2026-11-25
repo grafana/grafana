@@ -10,7 +10,7 @@ labels:
   products:
     - cloud
   stage: general-availability
-menuTitle: Manage secrets in Grafana Cloud
+menuTitle: Manage secrets
 title: Manage secrets in Grafana Cloud using Terraform
 weight: 600
 review_date: '2026-09-14'

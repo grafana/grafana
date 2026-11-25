@@ -6,7 +6,7 @@ keywords:
   - Grafana Cloud
   - Terraform
   - Cloud Provider Observability
-menuTitle: Manage Cloud Provider Observability in Grafana Cloud
+menuTitle: Manage Cloud Provider Observability
 title: Manage Cloud Provider Observability in Grafana Cloud using Terraform
 weight: 100
 canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/cloud-products/terraform-cloud-provider-o11y/

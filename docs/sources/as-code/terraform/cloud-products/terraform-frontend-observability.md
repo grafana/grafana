@@ -6,7 +6,7 @@ keywords:
   - Grafana Cloud
   - Terraform
   - Frontend Observability
-menuTitle: Manage Frontend Observability in Grafana Cloud
+menuTitle: Manage Frontend Observability
 title: Manage Frontend Observability in Grafana Cloud with Terraform
 weight: 300
 canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/cloud-products/terraform-frontend-observability/
