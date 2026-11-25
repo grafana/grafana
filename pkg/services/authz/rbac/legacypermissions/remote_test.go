@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	authzv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
@@ -53,7 +54,7 @@ func TestRemoteRejectsBeforeLoading(t *testing.T) {
 			if tc.change != nil {
 				tc.change(req)
 			}
-			err := NewRemoteServer(nil, nil, nil).LegacyGetUserPermissions(req, remoteTestStream{ctx: tc.ctx})
+			err := NewRemoteServer(nil, nil, tracing.InitializeTracerForTest()).LegacyGetUserPermissions(req, remoteTestStream{ctx: tc.ctx})
 			require.Equal(t, tc.code, status.Code(err))
 		})
 	}

@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -42,7 +44,15 @@ func (s *RemoteServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPermis
 		}
 		s.metrics.observe(started, result)
 	}()
-	ctx := stream.Context()
+	ctx, span := s.tracer.Start(stream.Context(), "authz.legacypermissions.remote.LegacyGetUserPermissions")
+	defer func() { endPermissionSpan(span, err) }()
+	span.SetAttributes(
+		attribute.String("namespace", req.GetNamespace()),
+		attribute.String("requester_namespace", req.GetIdentity().GetRequesterNamespace()),
+		attribute.String("identity.type", req.GetIdentity().GetType()),
+		attribute.Bool("global_org", req.GetGlobalOrg()),
+		attribute.Bool("no_org_membership", req.GetNoOrgMembership()),
+	)
 	ns, err := authorizeRemoteRequest(ctx, req)
 	if err != nil {
 		return err
@@ -97,6 +107,7 @@ func authorizeRemoteRequest(ctx context.Context, req *authzv1.LegacyGetUserPermi
 	sentinel := ns.StackID == 0 &&
 		((req.GlobalOrg && original == types.OrgNamespaceFormatter(ac.GlobalOrgID)) ||
 			(req.NoOrgMembership && original == types.OrgNamespaceFormatter(ac.NoOrgID)))
+	trace.SpanFromContext(ctx).SetAttributes(attribute.Bool("requester_namespace.sentinel", sentinel))
 	if original != "" && original != req.Namespace && !sentinel {
 		return types.NamespaceInfo{}, status.Errorf(codes.PermissionDenied,
 			"requester namespace %q does not match tenant namespace %q (global_org=%t, no_org_membership=%t)",

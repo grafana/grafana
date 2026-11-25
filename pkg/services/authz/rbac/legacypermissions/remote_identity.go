@@ -11,10 +11,22 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	authzv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
+	"go.opentelemetry.io/otel/attribute"
 )
 
-func (s *RemoteServer) loadIdentity(ctx context.Context, ns types.NamespaceInfo, subject *authzv1.LegacyPermissionIdentity, orgID int64) (*authzv1.LegacyPermissionIdentity, error) {
-	identity := &authzv1.LegacyPermissionIdentity{Type: subject.Type, Groups: slices.Clone(subject.Groups), OrgRole: string(types.RoleNone)}
+func (s *RemoteServer) loadIdentity(ctx context.Context, ns types.NamespaceInfo, subject *authzv1.LegacyPermissionIdentity, orgID int64) (_ *authzv1.LegacyPermissionIdentity, err error) {
+	ctx, span := s.tracer.Start(ctx, "authz.legacypermissions.remote.loadIdentity")
+	teamPages := 0
+	var identity *authzv1.LegacyPermissionIdentity
+	defer func() {
+		span.SetAttributes(attribute.Int("team.pages", teamPages))
+		if identity != nil {
+			span.SetAttributes(attribute.Int("team.count", len(identity.TeamIds)), attribute.String("identity.role", identity.OrgRole))
+		}
+		endPermissionSpan(span, err)
+	}()
+	span.SetAttributes(attribute.String("identity.type", subject.Type), attribute.Int64("org_id", orgID))
+	identity = &authzv1.LegacyPermissionIdentity{Type: subject.Type, Groups: slices.Clone(subject.Groups), OrgRole: string(types.RoleNone)}
 	if types.IdentityType(subject.Type) == types.TypeAnonymous {
 		if orgID > 0 {
 			identity.OrgRole = s.loader.cfg.Anonymous.OrgRole
@@ -50,6 +62,7 @@ func (s *RemoteServer) loadIdentity(ctx context.Context, ns types.NamespaceInfo,
 	teams := legacy.NewLegacySQLStores(s.loader.store.database)
 	teamQuery := legacy.ListUserTeamsQuery{UserUID: identifiers.UID, Pagination: common.Pagination{Limit: 50}}
 	for {
+		teamPages++
 		page, err := teams.ListUserTeams(ctx, ns, teamQuery)
 		if err != nil {
 			return nil, fmt.Errorf("load remote user teams: %w", err)
